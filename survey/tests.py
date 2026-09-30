@@ -17,7 +17,7 @@ from . import export as _export
 
 from .models import (
     Organization, SurveyHeader, SurveySection, Question,
-    SurveySession, Answer, ChoicesValidator, Story,
+    SurveySession, Answer, ChoicesValidator, Story, StoryImage,
     Membership, SurveyCollaborator, Invitation,
     PublicResultsPage, PublicResultsBlock, CreatorPreferences,
 )
@@ -4972,6 +4972,178 @@ class StoryDetailViewTest(TestCase):
         )
         response = self.client.get('/stories/with-survey/')
         self.assertContains(response, "linked_surv")
+
+
+class StoryShowcaseTest(TestCase):
+    """Change customer-stories-showcase: the story page, the landing carousel and body images."""
+
+    def setUp(self):
+        from django.utils import timezone
+        self.client = Client()
+        self.story = Story.objects.create(
+            title="Olney counts", slug="olney-counts", story_type="case-study",
+            is_published=True, published_date=timezone.now(),
+            place="Olney, Illinois", sector="Municipality",
+            summary="Home of the White Squirrels.", credit="City of Olney",
+            credit_note="administered by the City Clerk",
+            facts=[{"value": "1977", "label": "first count", "chip": "Since 1977"}],
+            body='<p>Route map:</p><img src="{img:routes}"><img src="{img:missing}">',
+        )
+
+    def _png(self, name="routes.png"):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        # A 1x1 PNG; ImageField validates the header on assignment.
+        data = (b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00'
+                b'\x1f\x15\xc4\x89\x00\x00\x00\rIDATx\x9cc\xf8\x0f\x00\x00\x01\x01\x00\x05\x18\xd8N\x00\x00\x00'
+                b'\x00IEND\xaeB`\x82')
+        return SimpleUploadedFile(name, data, content_type="image/png")
+
+    def test_detail_renders_showcase_fields_and_resolves_image_tokens(self):
+        """
+        GIVEN a published story with place, summary, credit, a fact and a body that references
+              one stored image and one unknown key
+        WHEN its page is requested
+        THEN the eyebrow, lead, credit and fact render, the known token becomes the stored
+             file's URL and the unknown token becomes an empty src instead of a 500
+        """
+        img = StoryImage.objects.create(story=self.story, key="routes", image=self._png())
+        response = self.client.get('/stories/olney-counts/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Olney, Illinois · Municipality")
+        self.assertContains(response, "Home of the White Squirrels.")
+        self.assertContains(response, "City of Olney")
+        self.assertContains(response, "administered by the City Clerk")
+        self.assertContains(response, "<b>1977</b>first count", html=False)
+        self.assertContains(response, f'<img src="{img.image.url}">', html=False)
+        self.assertContains(response, '<img src="">', html=False)
+        self.assertNotContains(response, "{img:")
+
+    def test_landing_carousel_shows_published_and_omits_draft(self):
+        """
+        GIVEN one published and one draft story
+        WHEN the landing page is rendered
+        THEN the "From the field" carousel holds the published story's card with its chip and
+             credit, and the draft appears nowhere
+        """
+        Story.objects.create(title="Secret", slug="secret", story_type="article", is_published=False)
+        response = self.client.get('/')
+        self.assertContains(response, 'class="stories-carousel"')
+        self.assertContains(response, 'href="/stories/olney-counts/"')
+        self.assertContains(response, "Since 1977")
+        self.assertContains(response, "City of Olney")
+        self.assertNotContains(response, "Secret")
+        self.assertNotContains(response, "/stories/secret/")
+
+    def test_landing_omits_carousel_without_published_stories(self):
+        """
+        GIVEN no published story
+        WHEN the landing page is rendered
+        THEN the carousel section is absent, not empty
+        """
+        Story.objects.update(is_published=False)
+        response = self.client.get('/')
+        self.assertNotContains(response, 'class="stories-carousel"')
+
+    def test_stories_index_uses_the_same_card(self):
+        """
+        GIVEN a published story
+        WHEN /stories/ is rendered
+        THEN its card carries the place, summary and credit like the landing card
+        """
+        response = self.client.get('/stories/')
+        self.assertContains(response, 'href="/stories/olney-counts/"')
+        self.assertContains(response, "Olney, Illinois")
+        self.assertContains(response, "Home of the White Squirrels.")
+
+
+class SeedStoryTest(TestCase):
+    """`seed_story`: a customer story installed from survey/story_data/<slug>/."""
+
+    SLUG = 'olney-white-squirrel-count'
+
+    def _seed(self, *args):
+        from io import StringIO
+        from django.core.management import call_command
+        out = StringIO()
+        call_command('seed_story', self.SLUG, *args, stdout=out)
+        return out.getvalue()
+
+    def test_fresh_install_publishes_the_story_with_its_pictures(self):
+        """
+        GIVEN a database without the Olney story
+        WHEN seed_story runs
+        THEN a published case study exists with the showcase fields, cover, card image, credit
+             logo and every body image named in story.json, and its page renders every picture
+        """
+        out = self._seed()
+        story = Story.objects.get(slug=self.SLUG)
+        self.assertTrue(story.is_published)
+        self.assertEqual(story.story_type, 'case-study')
+        self.assertEqual(story.place, 'Olney, Illinois')
+        self.assertEqual(story.credit, 'City of Olney, Illinois')
+        self.assertEqual(len(story.facts), 4)
+        self.assertTrue(story.cover_image and story.card_image and story.credit_logo)
+        self.assertEqual(story.images.count(), 9)
+        self.assertIn('installed (published)', out)
+        response = Client().get(f'/stories/{self.SLUG}/')
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, '{img:')
+        self.assertNotContains(response, 'src=""')
+        self.assertContains(response, 'City Clerk Kelsie Sterchi administers the count')
+
+    def test_rerun_updates_in_place_and_keeps_the_date(self):
+        """
+        GIVEN the story already installed and then edited in the admin
+        WHEN seed_story runs again
+        THEN the same row (id, published_date) carries the repo's text again and the image set
+             is unchanged in size
+        """
+        self._seed()
+        story = Story.objects.get(slug=self.SLUG)
+        first_id, first_date = story.id, story.published_date
+        Story.objects.filter(pk=first_id).update(title='Edited by hand', body='')
+        out = self._seed()
+        story.refresh_from_db()
+        self.assertEqual((story.id, story.published_date), (first_id, first_date))
+        self.assertEqual(story.title, "Olney's white squirrel count, from paper maps to mobile devices")
+        self.assertIn('{img:route-zones}', story.body)
+        self.assertEqual(story.images.count(), 9)
+        self.assertEqual(Story.objects.filter(slug=self.SLUG).count(), 1)
+        self.assertIn('refreshed', out)
+
+    def test_draft_leaves_the_story_unpublished(self):
+        """
+        GIVEN nothing installed
+        WHEN seed_story runs with --draft
+        THEN the row exists, is unpublished, and the landing page does not show it
+        """
+        self._seed('--draft')
+        story = Story.objects.get(slug=self.SLUG)
+        self.assertFalse(story.is_published)
+        self.assertEqual(Client().get(f'/stories/{self.SLUG}/').status_code, 404)
+        self.assertNotContains(Client().get('/'), 'class="stories-carousel"')
+
+    def test_unknown_slug_fails_and_changes_nothing(self):
+        """
+        GIVEN a slug with no data directory
+        WHEN seed_story runs
+        THEN it raises CommandError and creates no row
+        """
+        from django.core.management import call_command
+        from django.core.management.base import CommandError
+        with self.assertRaises(CommandError):
+            call_command('seed_story', 'no-such-story')
+        self.assertFalse(Story.objects.exists())
+
+    def test_sitemap_lists_the_seeded_story(self):
+        """
+        GIVEN the story installed
+        WHEN sitemap.xml is requested
+        THEN it lists the story URL with the published date
+        """
+        self._seed()
+        body = Client().get('/sitemap.xml').content.decode()
+        self.assertIn(f'/stories/{self.SLUG}/</loc><lastmod>2026-10-01</lastmod>', body)
 
 
 class AnswerPrepopulationTest(TestCase):

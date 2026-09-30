@@ -9,7 +9,7 @@ from .models import (
     Organization, SurveyHeader, SurveySection, Question, Answer,
     SurveySession,
     SurveySectionTranslation, QuestionTranslation,
-    Story, FunnelReport, SignupAttribution, AuditLog,
+    Story, StoryImage, FunnelReport, SignupAttribution, AuditLog,
     Cohort, CohortDimension, UserCohort, DomainSegmentRule,
     CreatorNote, CreatorProfile,
     PublicResultsPage, PublicResultsBlock,
@@ -67,10 +67,24 @@ admin.site.register(SurveySession)
 admin.site.register(Answer)
 
 
+class StoryImageInline(admin.TabularInline):
+    model = StoryImage
+    extra = 0
+    fields = ('key', 'image')
+
+
 class StoryAdmin(admin.ModelAdmin):
     list_display = ('title', 'story_type', 'is_published', 'published_date')
     list_filter = ('story_type', 'is_published')
     prepopulated_fields = {'slug': ('title',)}
+    fieldsets = (
+        (None, {'fields': ('title', 'slug', 'story_type', 'survey', 'is_published', 'published_date')}),
+        ('Showcase', {'fields': ('place', 'sector', 'summary', 'credit', 'credit_note', 'credit_logo', 'facts')}),
+        ('Pictures', {'fields': ('cover_image', 'cover_alt', 'cover_credit', 'card_image')}),
+        ('Body', {'description': 'HTML. Pictures: <code>{img:key}</code> for a StoryImage below.',
+                  'fields': ('body',)}),
+    )
+    inlines = [StoryImageInline]
 
 
 admin.site.register(Story, StoryAdmin)

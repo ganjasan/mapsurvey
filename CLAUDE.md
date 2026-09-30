@@ -289,6 +289,19 @@ row past `queued` and returns.
 
 **Public results page**: Creators expose aggregated results at `/r/<slug>/` via `PublicResultsPage` (1:1 with `SurveyHeader`) + ordered `PublicResultsBlock`s. Config tab at `/editor/surveys/<uuid>/public-results/`. Rendering logic in `survey/public_results.py` (`PublicResultsService`, `render_page_data`, `freeze_page`/`unfreeze_page`); editor views in `survey/public_results_editor.py`. Aggregates run over CLEAN sessions only (not deleted, excludes `not_approved`/`on_hold`) across the canonical survey + all versions. Privacy: k-anonymity masks buckets `<K` (default 3); geo popups expose only creator-selected `geo_label_fields`; individual free-text answers are never published. Hybrid `live` (60s cache) vs `frozen` (snapshot) mode. Visibility `public` (indexed, in sitemap) vs `unlisted` (noindex). The page config is intentionally NOT included in survey ZIP export/import.
 
+**Customer stories (`Story`, `StoryImage`; change `customer-stories-showcase`)**: the homepage
+"From the field" carousel and `/stories/<slug>/` are DB rows, but the REPO is the source:
+`survey/story_data/<slug>/` holds `story.json` (fields, cover/card/logo file names, `images`
+key→file), `body.html` and `images/`; `python manage.py seed_story <slug> [--draft]` installs or
+refreshes the row (idempotent by slug, keeps id and first `published_date`, uploads pictures to
+the public media tier). Body pictures are `{img:<key>}` tokens resolved by
+`survey/stories.py::render_body` against the story's `StoryImage`s, so one body works on
+production, previews and laptops whose media prefixes differ. The body is staff-authored HTML
+rendered `|safe` — not creator input. The admin is for `is_published` and typos; a re-run of
+the command overwrites admin edits. Publishing on production = running the command there by
+hand, after the customer's written OK on text and pictures (each `story_data` dir carries a
+`CREDITS.md`).
+
 **Mobile-adaptive layouts (two kill switches)**: `MOBILE_EDITOR_NAV` gives the editor
 two-level contextual navigation below 768px: top strip = page tabs, bottom bar = panes of
 the active page — Survey and Public results share the Structure/Edit/Preview vocabulary,

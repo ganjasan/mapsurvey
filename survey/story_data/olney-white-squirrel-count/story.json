@@ -1,0 +1,32 @@
+{
+  "title": "Olney's white squirrel count, from paper maps to mobile devices",
+  "story_type": "case-study",
+  "published_date": "2026-10-01T12:00:00",
+  "place": "Olney, Illinois",
+  "sector": "Municipality",
+  "summary": "Olney, Illinois, calls itself the Home of the White Squirrels. The City has counted them every year since 1977. This year the count moved online and expanded.",
+  "credit": "City of Olney, Illinois",
+  "credit_note": "White Squirrel Count, administered by City Clerk Kelsie Sterchi",
+  "credit_logo": "city-logo.png",
+  "cover": "cover.jpg",
+  "cover_alt": "An Olney family on a residential street pointing up at a squirrel in the trees, one of them writing on a clipboard",
+  "cover_credit": "Counting on a residential street. Photo: City of Olney.",
+  "card_image": "resident-squirrel-wide.jpg",
+  "facts": [
+    {"value": "1977", "label": "first count", "chip": "Since 1977"},
+    {"value": "35", "label": "count areas", "chip": "35 count areas"},
+    {"value": "~100", "label": "volunteers each October", "chip": "~100 volunteers"},
+    {"value": "Year-round", "label": "reporting since 2026", "chip": "Year-round reporting"}
+  ],
+  "images": {
+    "welcome-sign": "welcome-sign.jpg",
+    "route-zones": "route-zones.png",
+    "phone-intro": "phone-intro.png",
+    "phone-zones": "phone-zones.png",
+    "phone-buttons": "phone-buttons.png",
+    "phone-popup": "phone-popup.png",
+    "poster": "wsw.jpg",
+    "resident-squirrel": "resident-squirrel.jpg",
+    "sightings-heatmap": "sightings-heatmap.png"
+  }
+}
