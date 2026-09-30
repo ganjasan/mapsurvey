@@ -5044,6 +5044,24 @@ class StoryShowcaseTest(TestCase):
         response = self.client.get('/')
         self.assertNotContains(response, 'class="stories-carousel"')
 
+    def test_detail_ships_the_picture_lightbox(self):
+        """
+        GIVEN a published story, with or without pictures
+        WHEN its page is requested
+        THEN it carries the lightbox dialog (close, previous, next, caption) and the script that
+             drives it, and the script is served by the static pipeline
+        """
+        response = self.client.get('/stories/olney-counts/')
+        self.assertContains(response, 'id="storyLightbox"')
+        self.assertContains(response, 'role="dialog"')
+        self.assertContains(response, 'story-lightbox__close')
+        self.assertContains(response, 'data-dir="-1"')
+        self.assertContains(response, 'data-dir="1"')
+        self.assertContains(response, 'id="storyLightboxCaption"')
+        self.assertContains(response, 'js/story_lightbox')
+        from django.contrib.staticfiles import finders
+        self.assertIsNotNone(finders.find('js/story_lightbox.js'))
+
     def test_stories_index_uses_the_same_card(self):
         """
         GIVEN a published story
