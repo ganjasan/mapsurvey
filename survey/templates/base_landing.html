@@ -23,7 +23,7 @@
     <meta property="og:url" content="{% block og_url %}https://mapsurvey.org/{% endblock %}">
     <meta property="og:title" content="{% block og_title %}{% trans "Mapsurvey — Open-Source Participatory Mapping" %}{% endblock %}">
     <meta property="og:description" content="{% trans "Create map-based surveys where people mark places, draw routes, and outline areas. Free & open source." %}">
-    <meta property="og:image" content="{% static 'favicon-512x512.png' %}">
+    <meta property="og:image" content="{% block og_image %}{% static 'favicon-512x512.png' %}{% endblock %}">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{% trans "Mapsurvey — Open-Source Participatory Mapping" %}">
     <meta name="twitter:description" content="{% trans "Create map-based surveys where people mark places, draw routes, and outline areas. Free & open source." %}">

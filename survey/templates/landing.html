@@ -37,6 +37,55 @@
     </div>
 </section>
 
+{# ===== From the field: customer stories ===== #}
+{% comment %}
+Published Story rows, newest first (change customer-stories-showcase). The section is
+omitted, not emptied, when nothing is published — the spec promises that. One card
+partial serves this carousel and /stories/.
+{% endcomment %}
+{% if stories %}
+<section class="stories-carousel" id="stories">
+    <div class="landing-inner">
+        <div class="stories-carousel__head">
+            <div>
+                <p class="section-eyebrow">{% trans "From the field" %}</p>
+                <h2 class="section-heading">{% trans "Used by cities, planners and town-planning societies" %}</h2>
+            </div>
+            <div class="stories-carousel__nav">
+                <a class="stories-carousel__all" href="{% url 'stories_index' %}">{% trans "All stories" %} &rarr;</a>
+                <button class="stories-carousel__btn" type="button" data-dir="-1" aria-label="{% trans 'Previous story' %}">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <button class="stories-carousel__btn" type="button" data-dir="1" aria-label="{% trans 'Next story' %}">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+            </div>
+        </div>
+        <div class="stories-carousel__track" tabindex="0" aria-label="{% trans 'Customer stories' %}">
+            {% for story in stories %}
+            {% include "partials/_story_card.html" %}
+            {% endfor %}
+        </div>
+    </div>
+</section>
+<script>
+(function () {
+    var track = document.querySelector('.stories-carousel__track');
+    var btns = document.querySelectorAll('.stories-carousel__btn');
+    if (!track || btns.length < 2) return;
+    function step() { var c = track.querySelector('.story-card'); return c ? c.offsetWidth + 20 : track.clientWidth; }
+    function sync() {
+        btns[0].disabled = track.scrollLeft <= 2;
+        btns[1].disabled = track.scrollLeft + track.clientWidth >= track.scrollWidth - 2;
+    }
+    btns.forEach(function (b) { b.addEventListener('click', function () { track.scrollBy({ left: step() * Number(b.dataset.dir) }); }); });
+    track.addEventListener('scroll', sync, { passive: true });
+    window.addEventListener('resize', sync);
+    sync();
+})();
+</script>
+{% endif %}
+
 {# ===== Product showcase ===== #}
 {% comment %}
 Screenshots are taken from the "Cycling in Copenhagen" demo (seed_demo_survey), so the

@@ -1194,10 +1194,20 @@ STORY_TYPE_CHOICES = (
     ("open-data", _("Open Data")),
     ("results", _("Results")),
     ("article", _("Article")),
+    ("case-study", _("Case study")),
 )
 
 
 class Story(models.Model):
+    """A customer story shown on the homepage carousel and at /stories/<slug>/.
+
+    Written by us, in the repo (`survey/story_data/<slug>/`), and installed by
+    `seed_story` (change customer-stories-showcase); the admin is for toggling
+    `is_published` and fixing typos. `body` is HTML rendered `|safe` — staff-only
+    input, so `coerce_creator_html` does not apply. Pictures inside the body are
+    `StoryImage` rows referenced as `{img:<key>}` and resolved to storage URLs at
+    render time, so the same body works wherever the media prefix differs.
+    """
     title = models.CharField(max_length=256)
     slug = models.SlugField(max_length=256, unique=True)
     body = models.TextField(blank=True)
@@ -1206,6 +1216,19 @@ class Story(models.Model):
     survey = models.ForeignKey("SurveyHeader", on_delete=models.SET_NULL, null=True, blank=True)
     is_published = models.BooleanField(default=False)
     published_date = models.DateTimeField(null=True, blank=True)
+    # Showcase fields: the eyebrow (place · sector), the lead, the byline and the fact strip.
+    place = models.CharField(max_length=128, blank=True)
+    sector = models.CharField(max_length=64, blank=True)
+    summary = models.TextField(blank=True)
+    credit = models.CharField(max_length=256, blank=True)
+    credit_note = models.CharField(max_length=256, blank=True)
+    credit_logo = models.ImageField(upload_to='stories/', null=True, blank=True)
+    # The card may open on a different picture than the page (Olney: the resident's
+    # squirrel on the card, the volunteers on the page); falls back to `cover_image`.
+    card_image = models.ImageField(upload_to='stories/', null=True, blank=True)
+    cover_alt = models.CharField(max_length=512, blank=True)
+    cover_credit = models.CharField(max_length=256, blank=True)
+    facts = models.JSONField(default=list, blank=True)  # [{"value": "1977", "label": "first count"}]
 
     class Meta:
         app_label = 'survey'
@@ -1216,6 +1239,26 @@ class Story(models.Model):
 
     def get_story_type_display_label(self):
         return dict(STORY_TYPE_CHOICES).get(self.story_type, self.story_type)
+
+    @property
+    def card_picture(self):
+        return self.card_image or self.cover_image
+
+
+class StoryImage(models.Model):
+    """A picture inside a story body, addressed as `{img:<key>}` (public media tier)."""
+    story = models.ForeignKey(Story, on_delete=models.CASCADE, related_name='images')
+    key = models.SlugField(max_length=64)
+    image = models.ImageField(upload_to='stories/')
+
+    class Meta:
+        app_label = 'survey'
+        constraints = [
+            models.UniqueConstraint(fields=['story', 'key'], name='story_image_key_unique'),
+        ]
+
+    def __str__(self):
+        return f"{self.story.slug}:{self.key}"
 
 
 class AbuseEvent(models.Model):

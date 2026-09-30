@@ -1,17 +1,28 @@
-{# One story card for the stories index. Expects `story` in context. #}
-<a class="story-card" href="/stories/{{ story.slug }}/">
-  <div class="story-card__media story-card__media--{{ story.story_type }}">
-    {% if story.cover_image %}
-    <img src="{{ story.cover_image.url }}" alt="{{ story.title }}" loading="lazy">
-    {% else %}
-    <span class="story-card__placeholder">{{ story.get_story_type_display }}</span>
-    {% endif %}
+{% load i18n %}
+{% comment %}
+One story card, shared by the landing carousel and /stories/. Expects `story` in context
+(change customer-stories-showcase). The picture is `card_image`, falling back to `cover_image`;
+a fact renders as its `chip` when it has one, else as its `value`.
+{% endcomment %}
+<a class="story-card" href="{% url 'story_detail' story.slug %}">
+  {% with picture=story.card_picture %}
+  <div class="story-card__cover{% if not picture %} story-card__cover--empty{% endif %}">
+    {% if picture %}<img src="{{ picture.url }}" alt="{{ story.cover_alt }}" loading="lazy">{% endif %}
+    <span class="story-card__type">{{ story.get_story_type_display }}</span>
   </div>
+  {% endwith %}
   <div class="story-card__body">
-    <span class="story-card__badge">{{ story.get_story_type_display }}</span>
-    <h3 class="story-card__title">{{ story.title }}</h3>
-    {% if story.published_date %}
-    <time class="story-card__date" datetime="{{ story.published_date|date:'Y-m-d' }}">{{ story.published_date|date:"j M Y" }}</time>
+    {% if story.place or story.sector %}
+    <p class="story-card__where">{{ story.place }}{% if story.place and story.sector %} · {% endif %}{{ story.sector }}</p>
     {% endif %}
+    <h3 class="story-card__title">{{ story.title }}</h3>
+    {% if story.summary %}<p class="story-card__text">{{ story.summary }}</p>{% endif %}
+    {% if story.facts %}
+    <div class="story-card__chips">{% for fact in story.facts|slice:":6" %}<span>{{ fact.chip|default:fact.value }}</span>{% endfor %}</div>
+    {% endif %}
+    <div class="story-card__foot">
+      <span class="story-card__org">{% if story.credit_logo %}<img src="{{ story.credit_logo.url }}" alt="">{% endif %}{% if story.credit %}{{ story.credit }}{% elif story.published_date %}{{ story.published_date|date:"j M Y" }}{% endif %}</span>
+      <span class="story-card__more">{% trans "Read the story" %} &rarr;</span>
+    </div>
   </div>
 </a>

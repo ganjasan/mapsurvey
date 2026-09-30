@@ -1,41 +1,70 @@
 {% extends "base_landing.html" %}
+{% load i18n %}
 
 {% block title %}{{ story.title }} — Mapsurvey{% endblock %}
 {% block meta_description %}{{ meta_description }}{% endblock %}
 {% block canonical_url %}{{ canonical }}{% endblock %}
 {% block og_url %}{{ canonical }}{% endblock %}
 {% block og_title %}{{ story.title }}{% endblock %}
+{% block og_image %}{% if story.card_picture %}{{ story.card_picture.url }}{% else %}{{ block.super }}{% endif %}{% endblock %}
 
 {% block structured_data %}
 {% if breadcrumb_jsonld %}<script type="application/ld+json">{{ breadcrumb_jsonld|safe }}</script>{% endif %}
 {% endblock %}
 
 {% block content %}
+{% comment %}
+Layout after docs/marketing/homepage/olney-story.mockup.html (change customer-stories-showcase):
+eyebrow, title, lead, byline, captioned cover, fact strip, body, shared CTA. `body_html` is the
+story body with `{img:key}` tokens resolved by survey/stories.py; it is staff-authored HTML.
+{% endcomment %}
 <article class="story-detail">
     <div class="landing-inner">
-        <div class="story-detail__header">
-            <h1 class="story-detail__title">{{ story.title }}</h1>
-            <div class="story-detail__meta">
-                <span class="story-card__badge">{{ story.get_story_type_display }}</span>
-                {% if story.published_date %}
-                <span>{{ story.published_date|date:"j M Y" }}</span>
-                {% endif %}
-            </div>
+        <nav class="sd-crumbs"><a href="/">{% trans "Home" %}</a> / <a href="{% url 'stories_index' %}">{% trans "Stories" %}</a> / {{ story.place|default:story.title }}</nav>
+        {% if story.place or story.sector %}
+        <p class="sd-eyebrow">{{ story.place }}{% if story.place and story.sector %} · {% endif %}{{ story.sector }}</p>
+        {% endif %}
+        <h1 class="story-detail__title">{{ story.title }}</h1>
+        {% if story.summary %}<p class="sd-lead">{{ story.summary }}</p>{% endif %}
+
+        <div class="sd-byline">
+            {% if story.credit %}
+            <span class="sd-org">
+                {% if story.credit_logo %}<img src="{{ story.credit_logo.url }}" alt="">{% endif %}
+                <span>{{ story.credit }}{% if story.credit_note %}<small>{{ story.credit_note }}</small>{% endif %}</span>
+            </span>
+            {% endif %}
+            <span>{{ story.get_story_type_display }}{% if story.published_date %} · {{ story.published_date|date:"F Y" }}{% endif %}</span>
         </div>
 
         {% if story.cover_image %}
-        <img src="{{ story.cover_image.url }}" alt="{{ story.title }}" class="story-detail__cover">
+        <figure class="sd-figure sd-figure--hero">
+            <img src="{{ story.cover_image.url }}" alt="{{ story.cover_alt }}" class="story-detail__cover">
+            {% if story.cover_credit %}<figcaption>{{ story.cover_credit }}</figcaption>{% endif %}
+        </figure>
+        {% endif %}
+
+        {% if story.facts %}
+        <div class="sd-facts">
+            {% for fact in story.facts %}<div><b>{{ fact.value }}</b>{{ fact.label }}</div>{% endfor %}
+        </div>
         {% endif %}
 
         <div class="story-detail__body">
-            {{ story.body|safe }}
+            {{ body_html|safe }}
         </div>
 
         {% if story.survey %}
         <div class="story-detail__survey-link">
-            <p>Related survey: <a href="/surveys/{{ story.survey.uuid }}/">{{ story.survey.name }}</a></p>
+            <p>{% trans "Related survey" %}: <a href="/surveys/{{ story.survey.uuid }}/">{{ story.survey.name }}</a></p>
         </div>
         {% endif %}
+
+        <div class="sd-cta">
+            <h2>{% trans "Planning a count, a consultation or a survey like this one?" %}</h2>
+            <p>{% trans "Draw your zones, write your questions and share one link. Free to start." %}</p>
+            <a href="{% url 'django_registration_register' %}" class="btn-primary-landing">{% trans "Create your map survey" %}</a>
+        </div>
     </div>
 </article>
 {% endblock %}
