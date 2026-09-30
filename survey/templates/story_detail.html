@@ -1,5 +1,5 @@
 {% extends "base_landing.html" %}
-{% load i18n %}
+{% load i18n static %}
 
 {% block title %}{{ story.title }} — Mapsurvey{% endblock %}
 {% block meta_description %}{{ meta_description }}{% endblock %}
@@ -17,6 +17,7 @@
 Layout after docs/marketing/homepage/olney-story.mockup.html (change customer-stories-showcase):
 eyebrow, title, lead, byline, captioned cover, fact strip, body, shared CTA. `body_html` is the
 story body with `{img:key}` tokens resolved by survey/stories.py; it is staff-authored HTML.
+Every picture opens in the lightbox below (js/story_lightbox.js, change story-image-lightbox).
 {% endcomment %}
 <article class="story-detail">
     <div class="landing-inner">
@@ -67,4 +68,22 @@ story body with `{img:key}` tokens resolved by survey/stories.py; it is staff-au
         </div>
     </div>
 </article>
+
+<div class="story-lightbox" id="storyLightbox" role="dialog" aria-modal="true" aria-label="{% trans 'Picture' %}" aria-describedby="storyLightboxCaption" hidden>
+    <button type="button" class="story-lightbox__close" aria-label="{% trans 'Close' %}">&times;</button>
+    <button type="button" class="story-lightbox__nav story-lightbox__nav--prev" data-dir="-1" aria-label="{% trans 'Previous picture' %}">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <div class="story-lightbox__stage">
+        <figure class="story-lightbox__figure">
+            <img class="story-lightbox__img" alt="">
+            <figcaption class="story-lightbox__caption" id="storyLightboxCaption"></figcaption>
+        </figure>
+    </div>
+    <button type="button" class="story-lightbox__nav story-lightbox__nav--next" data-dir="1" aria-label="{% trans 'Next picture' %}">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+    </button>
+    <span class="story-lightbox__counter" aria-live="polite"></span>
+</div>
+<script src="{% static 'js/story_lightbox.js' %}" defer></script>
 {% endblock %}
