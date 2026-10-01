@@ -1,0 +1,44 @@
+{
+  "title": "Whitehouse residents pin where the dog bins should go",
+  "story_type": "case-study",
+  "published_date": "2026-10-01T12:00:00",
+  "place": "Milton Keynes, England",
+  "sector": "Parish council",
+  "summary": "Whitehouse, a new estate on the western edge of Milton Keynes, has outgrown its dog bins. The community council asked residents to drop a pin where a bin was missing. 39 did so in nine days, and the council's next paper recommended six new bins.",
+  "credit": "Whitehouse Community Council",
+  "credit_note": "Dog-bin provision survey, Councillor Julian Thomas",
+  "credit_logo": "credit-logo.png",
+  "cover": "cover.jpg",
+  "cover_alt": "The council's map of Whitehouse: the 14 existing dog bins as blue circles and the six recommended new bins as numbered yellow markers, with their locations listed",
+  "cover_credit": "The 14 existing bins and the six recommended additions, from the council's September 2026 paper. Map: Whitehouse Community Council.",
+  "card_image": "card.jpg",
+  "facts": [
+    {
+      "value": "39",
+      "label": "residents in nine days",
+      "chip": "39 residents"
+    },
+    {
+      "value": "37",
+      "label": "locations suggested",
+      "chip": "37 locations"
+    },
+    {
+      "value": "38 of 39",
+      "label": "answered on a phone",
+      "chip": "Answered on phones"
+    },
+    {
+      "value": "6",
+      "label": "new bins recommended",
+      "chip": "6 new bins"
+    }
+  ],
+  "images": {
+    "phone-intro": "phone-intro.png",
+    "phone-map": "phone-map.jpg",
+    "phone-about": "phone-about.png",
+    "heat-suggestions": "heat-suggestions.jpg",
+    "phone-popup": "phone-popup.png"
+  }
+}
