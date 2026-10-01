@@ -4973,6 +4973,38 @@ class StoryDetailViewTest(TestCase):
         response = self.client.get('/stories/with-survey/')
         self.assertContains(response, "linked_surv")
 
+    def test_credit_links_when_urls_set(self):
+        """
+        GIVEN a published story whose credit and credit note carry URLs
+        WHEN viewing the story detail
+        THEN the credit and the note render as links to those URLs
+        """
+        from django.utils import timezone
+        Story.objects.create(
+            title="Credited", slug="credited", story_type="case-study",
+            is_published=True, published_date=timezone.now(),
+            credit="GRIA", credit_url="https://griaonline.org/",
+            credit_note="survey by Unknown Studio", credit_note_url="https://unknownstudio.la/",
+        )
+        response = self.client.get('/stories/credited/')
+        self.assertContains(response, '<a href="https://griaonline.org/" rel="noopener">GRIA</a>', html=False)
+        self.assertContains(response, '<a href="https://unknownstudio.la/" rel="noopener">survey by Unknown Studio</a>', html=False)
+
+    def test_credit_plain_when_no_urls(self):
+        """
+        GIVEN a published story with a credit but no URLs
+        WHEN viewing the story detail
+        THEN the credit renders as text, not as a link
+        """
+        from django.utils import timezone
+        Story.objects.create(
+            title="Plain", slug="plain-credit", story_type="case-study",
+            is_published=True, published_date=timezone.now(), credit="Town Council",
+        )
+        response = self.client.get('/stories/plain-credit/')
+        self.assertContains(response, "Town Council")
+        self.assertNotContains(response, 'rel="noopener">Town Council')
+
 
 class StoryShowcaseTest(TestCase):
     """Change customer-stories-showcase: the story page, the landing carousel and body images."""
@@ -5086,14 +5118,14 @@ class SeedStoryTest(TestCase):
         call_command('seed_story', self.SLUG, *args, stdout=out)
         return out.getvalue()
 
-    def test_fresh_install_publishes_the_story_with_its_pictures(self):
+    def test_fresh_install_with_publish_publishes_the_story_with_its_pictures(self):
         """
         GIVEN a database without the Olney story
-        WHEN seed_story runs
+        WHEN seed_story runs with --publish
         THEN a published case study exists with the showcase fields, cover, card image, credit
              logo and every body image named in story.json, and its page renders every picture
         """
-        out = self._seed()
+        out = self._seed('--publish')
         story = Story.objects.get(slug=self.SLUG)
         self.assertTrue(story.is_published)
         self.assertEqual(story.story_type, 'case-study')
@@ -5116,7 +5148,7 @@ class SeedStoryTest(TestCase):
         THEN the same row (id, published_date) carries the repo's text again and the image set
              is unchanged in size
         """
-        self._seed()
+        self._seed('--publish')
         story = Story.objects.get(slug=self.SLUG)
         first_id, first_date = story.id, story.published_date
         Story.objects.filter(pk=first_id).update(title='Edited by hand', body='')
@@ -5128,6 +5160,7 @@ class SeedStoryTest(TestCase):
         self.assertEqual(story.images.count(), 9)
         self.assertEqual(Story.objects.filter(slug=self.SLUG).count(), 1)
         self.assertIn('refreshed', out)
+        self.assertTrue(story.is_published, 'a re-run without flags keeps a published story published')
 
     def test_draft_leaves_the_story_unpublished(self):
         """
@@ -5155,11 +5188,11 @@ class SeedStoryTest(TestCase):
 
     def test_sitemap_lists_the_seeded_story(self):
         """
-        GIVEN the story installed
+        GIVEN the story installed and published
         WHEN sitemap.xml is requested
         THEN it lists the story URL with the published date
         """
-        self._seed()
+        self._seed('--publish')
         body = Client().get('/sitemap.xml').content.decode()
         self.assertIn(f'/stories/{self.SLUG}/</loc><lastmod>2026-10-01</lastmod>', body)
 
@@ -45718,3 +45751,161 @@ class EditorMapSizingGuardTest(SimpleTestCase):
         tpl = self._read('survey', 'templates', 'editor', 'partials', 'analytics_overview_pane.html')
         self.assertIn('center: [0, 0], zoom: 2', tpl)
         self.assertNotIn('m.setView(', tpl)
+
+
+class StoryDataDirectoriesTest(TestCase):
+    """Every directory under survey/story_data/ is a story `seed_story` can install."""
+
+    def test_every_story_directory_installs_and_renders_all_its_pictures(self):
+        """
+        GIVEN the story directories checked into the repo
+        WHEN each one is seeded as a draft and its page is opened by a staff user
+        THEN the row exists with a title, cover and credit, no {img:key} token is left unresolved
+             (every key in story.json names a file that was uploaded) and the page renders 200
+        """
+        from django.core.management import call_command
+        from survey.management.commands.seed_story import DATA_ROOT
+        from survey.stories import IMAGE_TOKEN, render_body
+        slugs = sorted(p.name for p in DATA_ROOT.iterdir() if (p / 'story.json').is_file())
+        self.assertGreaterEqual(len(slugs), 1)
+        for slug in slugs:
+            with self.subTest(slug=slug):
+                call_command('seed_story', slug, '--draft', stdout=StringIO())
+                story = Story.objects.get(slug=slug)
+                self.assertTrue(story.title and story.cover_image and story.credit, slug)
+                self.assertFalse(story.is_published)
+                keys = set(IMAGE_TOKEN.findall(story.body))
+                owned = {img.key for img in story.images.all() if img.image}
+                self.assertEqual(keys - owned, set(), f'{slug}: body references pictures story.json does not list')
+                self.assertNotIn('src=""', render_body(story), slug)
+                story.is_published = True
+                story.save(update_fields=['is_published'])
+                self.assertEqual(self.client.get(f'/stories/{slug}/').status_code, 200)
+
+
+class StoryLessonsLearnedTest(TestCase):
+    """Change story-lessons-learned: the callout marks a story, and its card shows a badge."""
+
+    def setUp(self):
+        from django.utils import timezone
+        self.with_lessons = Story.objects.create(
+            title="Dog bins", slug="dog-bins", story_type="case-study", is_published=True,
+            published_date=timezone.now(),
+            body='<p>Intro</p><aside class="sd-lessons" aria-label="Lessons learned"><h3>Lessons learned</h3></aside>',
+        )
+        self.without = Story.objects.create(
+            title="Squirrels", slug="squirrels", story_type="case-study", is_published=True,
+            published_date=timezone.now(), body='<p>No lessons here.</p>',
+        )
+
+    def test_has_lessons_reads_the_body(self):
+        """GIVEN one story with the callout and one without
+        WHEN has_lessons is read
+        THEN it is True only for the story with the callout"""
+        self.assertTrue(self.with_lessons.has_lessons)
+        self.assertFalse(self.without.has_lessons)
+
+    def test_card_badge_only_on_stories_with_lessons(self):
+        """GIVEN two published stories, one with the callout
+        WHEN the stories index renders
+        THEN exactly one card carries the Lessons learned badge"""
+        from django.urls import reverse
+        response = self.client.get(reverse('stories_index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'story-card__lessons', count=1)
+
+
+class StoryDraftPublishingTest(TestCase):
+    """Change story-draft-publishing: drafts on production, published from the admin."""
+
+    SLUG = 'olney-white-squirrel-count'
+
+    def _seed(self, *args):
+        from io import StringIO
+        from django.core.management import call_command
+        call_command('seed_story', self.SLUG, *args, stdout=StringIO())
+        return Story.objects.get(slug=self.SLUG)
+
+    def test_new_story_is_installed_as_a_draft(self):
+        """GIVEN an empty database
+        WHEN seed_story runs without flags
+        THEN the story is unpublished, 404 for visitors, and absent from /stories/ and the sitemap"""
+        story = self._seed()
+        self.assertFalse(story.is_published)
+        self.assertEqual(Client().get(f'/stories/{self.SLUG}/').status_code, 404)
+        self.assertNotContains(Client().get('/stories/'), self.SLUG)
+        self.assertNotContains(Client().get('/sitemap.xml'), self.SLUG)
+
+    def test_rerun_keeps_a_draft_a_draft(self):
+        """GIVEN a draft story
+        WHEN seed_story runs again without flags
+        THEN it is still a draft"""
+        self._seed()
+        self.assertFalse(self._seed().is_published)
+
+    def test_staff_preview_has_banner_and_noindex(self):
+        """GIVEN a draft story and a staff user
+        WHEN the staff user opens its URL
+        THEN the page renders with the draft banner and a noindex robots meta"""
+        from django.contrib.auth.models import User
+        self._seed()
+        staff = User.objects.create_user('staff', password='x', is_staff=True)
+        client = Client(); client.force_login(staff)
+        response = client.get(f'/stories/{self.SLUG}/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'sd-draft-banner')
+        self.assertContains(response, 'noindex')
+
+    def test_signed_in_non_staff_still_gets_404(self):
+        """GIVEN a draft story and a signed-in creator who is not staff
+        WHEN they open its URL
+        THEN the response is 404"""
+        from django.contrib.auth.models import User
+        self._seed()
+        user = User.objects.create_user('creator', password='x')
+        client = Client(); client.force_login(user)
+        self.assertEqual(client.get(f'/stories/{self.SLUG}/').status_code, 404)
+
+    def test_admin_publish_action_publishes_and_dates(self):
+        """GIVEN a draft story without a date and a superuser
+        WHEN the admin "Publish" action runs on it
+        THEN it is published with a date and shows on /stories/ without the banner"""
+        from django.contrib.auth.models import User
+        story = self._seed()
+        Story.objects.filter(pk=story.pk).update(published_date=None)
+        admin_user = User.objects.create_superuser('boss', 'b@example.org', 'x')
+        client = Client(); client.force_login(admin_user)
+        response = client.post('/admin/survey/story/', {'action': 'publish_stories', '_selected_action': [story.pk]})
+        self.assertEqual(response.status_code, 302)
+        story.refresh_from_db()
+        self.assertTrue(story.is_published)
+        self.assertIsNotNone(story.published_date)
+        self.assertContains(Client().get('/stories/'), self.SLUG)
+        self.assertNotContains(Client().get(f'/stories/{self.SLUG}/'), 'sd-draft-banner')
+
+    def test_admin_unpublish_action_hides_the_story(self):
+        """GIVEN a published story
+        WHEN the admin "Unpublish" action runs on it
+        THEN visitors get 404 again"""
+        from django.contrib.auth.models import User
+        story = self._seed('--publish')
+        admin_user = User.objects.create_superuser('boss', 'b@example.org', 'x')
+        client = Client(); client.force_login(admin_user)
+        client.post('/admin/survey/story/', {'action': 'unpublish_stories', '_selected_action': [story.pk]})
+        self.assertEqual(Client().get(f'/stories/{self.SLUG}/').status_code, 404)
+
+    def test_from_dir_installs_a_story_kept_outside_the_repo(self):
+        """GIVEN a story directory outside survey/story_data/ (a draft not yet approved)
+        WHEN seed_story runs with --from that directory
+        THEN the story is installed as a draft under the given slug"""
+        import shutil, tempfile
+        from pathlib import Path
+        from survey.management.commands.seed_story import DATA_ROOT
+        tmp = Path(tempfile.mkdtemp()) / 'elsewhere'
+        shutil.copytree(DATA_ROOT / self.SLUG, tmp)
+        from io import StringIO
+        from django.core.management import call_command
+        call_command('seed_story', 'kept-outside', '--from', str(tmp), stdout=StringIO())
+        story = Story.objects.get(slug='kept-outside')
+        self.assertFalse(story.is_published)
+        self.assertTrue(story.cover_image)

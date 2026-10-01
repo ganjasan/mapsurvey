@@ -1643,14 +1643,18 @@ def story_detail(request, slug):
 	from django.utils.html import strip_tags
 	from .stories import render_body
 	try:
-		story = Story.objects.select_related('survey').prefetch_related('images').get(slug=slug, is_published=True)
+		story = Story.objects.select_related('survey').prefetch_related('images').get(slug=slug)
 	except Story.DoesNotExist:
+		raise Http404
+	# Change story-draft-publishing: a draft is visible to staff only, for a check on production.
+	if not story.is_published and not (request.user.is_authenticated and request.user.is_staff):
 		raise Http404
 	excerpt = " ".join(strip_tags(story.summary or story.body or "").split())
 	meta_description = (excerpt[:155].rstrip() + "…") if len(excerpt) > 155 else (excerpt or story.title)
 	breadcrumbs = (HOME, STORIES_CRUMB, Crumb(story.title, f"/stories/{story.slug}/"))
 	context = {
 		'story': story,
+		'is_draft_preview': not story.is_published,
 		'body_html': render_body(story),
 		'canonical': f"https://mapsurvey.org/stories/{story.slug}/",
 		'meta_description': meta_description,

@@ -1,0 +1,24 @@
+<!--
+"Lessons learned" callout for a story body (change story-lessons-learned). Copy into body.html
+before "What's next" and fill in. Same look in every story; the marks are declared once here.
+In Mapsurvey line: class "sd-lesson__ms" + tag Available / Built for <customer>;
+for a gap use class "sd-lesson__ms is-gap", the #sd-ms-gap mark and the tag Not yet.
+-->
+<aside class="sd-lessons" aria-label="Lessons learned">
+  <svg class="sd-lessons__sprite" aria-hidden="true">
+    <symbol id="sd-ll" viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" fill="none" stroke="currentColor" stroke-width="2.5"/><circle cx="24" cy="24" r="17.5" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="2 2.2"/><path d="M24 11c-5 0-8.6 3.7-8.6 8.4 0 6.1 8.6 16.6 8.6 16.6s8.6-10.5 8.6-16.6C32.6 14.7 29 11 24 11z" fill="currentColor"/><path d="M24 15.6v7.6M20.2 19.4h7.6" stroke="#fff" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="sd-ms" viewBox="0 0 24 24"><rect x="2.5" y="2.5" width="19" height="19" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7.5 12.3l3 3 6-6.6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="sd-ms-gap" viewBox="0 0 24 24"><rect x="2.5" y="2.5" width="19" height="19" rx="5" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="3 2.4"/><path d="M12 7.5v5.2M12 16.2v.3" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  </svg>
+  <div class="sd-lessons__head"><svg aria-hidden="true"><use href="#sd-ll"/></svg><div><h3>Lessons learned</h3><p>What CUSTOMER found out running its first map survey</p></div></div>
+  <div class="sd-lesson"><span class="sd-lesson__n">01</span><div>
+    <h4>Short imperative headline.</h4>
+    <p>One sentence of evidence, with the number behind it.</p>
+    <div class="sd-lesson__ms"><svg aria-hidden="true"><use href="#sd-ms"/></svg><span><b>In Mapsurvey:</b> what the product has for it, checked in the code.<span class="sd-lesson__tag">Available</span></span></div>
+  </div></div>
+  <div class="sd-lesson"><span class="sd-lesson__n">02</span><div>
+    <h4>A lesson the product does not answer yet.</h4>
+    <p>Evidence.</p>
+    <div class="sd-lesson__ms is-gap"><svg aria-hidden="true"><use href="#sd-ms-gap"/></svg><span><b>In Mapsurvey:</b> what exists today and what we are working on.<span class="sd-lesson__tag">Not yet</span></span></div>
+  </div></div>
+</aside>
