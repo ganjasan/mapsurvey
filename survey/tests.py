@@ -45909,3 +45909,47 @@ class StoryDraftPublishingTest(TestCase):
         story = Story.objects.get(slug='kept-outside')
         self.assertFalse(story.is_published)
         self.assertTrue(story.cover_image)
+
+
+class StoryDisplayOrderTest(TestCase):
+    """Change story-display-order: the admin decides which stories come first."""
+
+    def setUp(self):
+        from datetime import timedelta
+        from django.utils import timezone
+        now = timezone.now()
+        mk = lambda slug, days, pos=None: Story.objects.create(
+            title=slug, slug=slug, story_type="case-study", is_published=True,
+            published_date=now - timedelta(days=days), position=pos)
+        self.newest = mk('newest', 0)
+        self.older = mk('older', 5)
+        self.second = mk('second', 3, pos=2)
+        self.first = mk('first', 9, pos=1)
+
+    def test_positioned_first_then_newest(self):
+        """GIVEN two stories with positions 1 and 2 and two without
+        WHEN they are put in showcase order
+        THEN position 1, position 2, then the unpositioned ones newest first"""
+        order = [s.slug for s in Story.in_showcase_order()]
+        self.assertEqual(order, ['first', 'second', 'newest', 'older'])
+
+    def test_stories_index_and_landing_follow_the_order(self):
+        """GIVEN the same four stories
+        WHEN /stories/ and the landing render
+        THEN the cards appear in showcase order"""
+        for url in ('/stories/', '/'):
+            body = self.client.get(url).content.decode()
+            idx = [body.find(f'/stories/{slug}/') for slug in ('first', 'second', 'newest', 'older')]
+            self.assertTrue(all(i > 0 for i in idx), url)
+            self.assertEqual(idx, sorted(idx), url)
+
+    def test_seed_story_keeps_the_position(self):
+        """GIVEN the Olney story installed with position 1 set in the admin
+        WHEN seed_story runs again
+        THEN the position is still 1"""
+        from io import StringIO
+        from django.core.management import call_command
+        call_command('seed_story', 'olney-white-squirrel-count', stdout=StringIO())
+        Story.objects.filter(slug='olney-white-squirrel-count').update(position=1)
+        call_command('seed_story', 'olney-white-squirrel-count', stdout=StringIO())
+        self.assertEqual(Story.objects.get(slug='olney-white-squirrel-count').position, 1)

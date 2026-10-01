@@ -76,8 +76,12 @@ class StoryImageInline(admin.TabularInline):
 class StoryAdmin(admin.ModelAdmin):
     # Change story-draft-publishing: stories reach production as drafts (seed_story) and are
     # published here after the customer's written OK. A draft is visible to staff at its URL.
-    list_display = ('title', 'story_type', 'is_published', 'published_date', 'view_link')
-    list_editable = ('is_published',)
+    list_display = ('title', 'position', 'story_type', 'is_published', 'published_date', 'view_link')
+    list_editable = ('position', 'is_published')
+
+    def get_queryset(self, request):
+        # Same order as the landing and /stories/ (change story-display-order).
+        return Story.in_showcase_order(super().get_queryset(request))
     list_filter = ('story_type', 'is_published')
     actions = ('publish_stories', 'unpublish_stories')
 
@@ -104,7 +108,7 @@ class StoryAdmin(admin.ModelAdmin):
 
     prepopulated_fields = {'slug': ('title',)}
     fieldsets = (
-        (None, {'fields': ('title', 'slug', 'story_type', 'survey', 'is_published', 'published_date')}),
+        (None, {'fields': ('title', 'slug', 'story_type', 'survey', 'is_published', 'published_date', 'position')}),
         ('Showcase', {'fields': ('place', 'sector', 'summary', 'credit', 'credit_note', 'credit_logo', 'facts')}),
         ('Pictures', {'fields': ('cover_image', 'cover_alt', 'cover_credit', 'card_image')}),
         ('Body', {'description': 'HTML. Pictures: <code>{img:key}</code> for a StoryImage below.',

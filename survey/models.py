@@ -1226,6 +1226,9 @@ class Story(models.Model):
     # Where the credit and its note link to (Remington: GRIA's site, the studio's site). Only the
     # story page renders them — the card is one <a> already.
     credit_url = models.URLField(max_length=512, blank=True)
+    # Showcase order, set in the admin (change story-display-order): 1 comes first; empty =
+    # after every numbered story, newest first. seed_story never touches it.
+    position = models.PositiveSmallIntegerField(null=True, blank=True)
     credit_note_url = models.URLField(max_length=512, blank=True)
     # The card may open on a different picture than the page (Olney: the resident's
     # squirrel on the card, the volunteers on the page); falls back to `cover_image`.
@@ -1243,6 +1246,14 @@ class Story(models.Model):
 
     def get_story_type_display_label(self):
         return dict(STORY_TYPE_CHOICES).get(self.story_type, self.story_type)
+
+    @classmethod
+    def in_showcase_order(cls, queryset=None):
+        """Stories as the landing and /stories/ list them (change story-display-order): by the
+        admin-set `position` (1 first), stories without one after them, newest first."""
+        from django.db.models import F
+        qs = cls.objects.all() if queryset is None else queryset
+        return qs.order_by(F('position').asc(nulls_last=True), '-published_date')
 
     @property
     def card_picture(self):
