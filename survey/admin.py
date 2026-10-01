@@ -74,8 +74,34 @@ class StoryImageInline(admin.TabularInline):
 
 
 class StoryAdmin(admin.ModelAdmin):
-    list_display = ('title', 'story_type', 'is_published', 'published_date')
+    # Change story-draft-publishing: stories reach production as drafts (seed_story) and are
+    # published here after the customer's written OK. A draft is visible to staff at its URL.
+    list_display = ('title', 'story_type', 'is_published', 'published_date', 'view_link')
+    list_editable = ('is_published',)
     list_filter = ('story_type', 'is_published')
+    actions = ('publish_stories', 'unpublish_stories')
+
+    @admin.display(description='Page')
+    def view_link(self, obj):
+        from django.utils.html import format_html
+        return format_html('<a href="/stories/{}/" target="_blank">{}</a>', obj.slug,
+                           'view' if obj.is_published else 'preview draft')
+
+    @admin.action(description='Publish selected stories')
+    def publish_stories(self, request, queryset):
+        from django.utils import timezone
+        for story in queryset:
+            story.is_published = True
+            if not story.published_date:
+                story.published_date = timezone.now()
+            story.save(update_fields=['is_published', 'published_date'])
+        self.message_user(request, f'Published {queryset.count()} stor(y/ies).')
+
+    @admin.action(description='Unpublish selected stories')
+    def unpublish_stories(self, request, queryset):
+        n = queryset.update(is_published=False)
+        self.message_user(request, f'Unpublished {n} stor(y/ies).')
+
     prepopulated_fields = {'slug': ('title',)}
     fieldsets = (
         (None, {'fields': ('title', 'slug', 'story_type', 'survey', 'is_published', 'published_date')}),

@@ -1237,6 +1237,8 @@ html.js-reveal .reveal.is-visible {
 .sd-org { display: flex; align-items: center; gap: 12px; color: var(--color-text); font-weight: 600; }
 .sd-org img { height: 44px; width: auto; background: #fff; border-radius: 6px; padding: 3px 6px; border: 1px solid var(--color-border-light); }
 .sd-org small { display: block; font-weight: 400; color: var(--color-text-tertiary); font-size: 0.78rem; }
+.sd-org a { color: inherit; text-decoration: none; border-bottom: 1px solid var(--color-border); }
+.sd-org a:hover { border-bottom-color: currentColor; }
 .sd-figure { margin: 0 0 2.5rem; }
 .sd-figure img { width: 100%; max-height: 540px; object-fit: cover; border: 1px solid var(--color-border); border-radius: var(--radius-md); display: block; margin: 0; }
 .sd-figure figcaption { font-family: var(--font-display); font-size: 0.8rem; color: var(--color-text-tertiary); margin-top: 0.6rem; }
@@ -1794,6 +1796,13 @@ html.js-reveal .reveal.is-visible {
     font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase;
     padding: 3px 9px; border-radius: 20px; background: rgba(255, 255, 255, 0.92); color: #1B2A4A;
 }
+.story-card__lessons {
+    position: absolute; right: 12px; top: 12px; display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 3px 10px 3px 4px; border-radius: 20px; background: #C0622B; color: #fff; box-shadow: 0 2px 6px rgba(27, 42, 74, 0.25);
+}
+.story-card__lessons svg { width: 18px; height: 18px; color: #fff; }
+.story-card__lessons svg path:last-child { stroke: #C0622B; }
 .story-card__body { padding: 1.25rem 1.4rem 1.4rem; display: flex; flex-direction: column; flex: 1; }
 .story-card__where { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-accent); margin-bottom: 0.5rem; }
 .story-card__title {
@@ -2043,3 +2052,30 @@ html.js-reveal .reveal.is-visible {
     .pro-promise__grid { grid-template-columns: 1fr; }
     .pro-card { padding: 1.75rem 1.25rem; }
 }
+
+/* ── Story "Lessons learned" callout (same look in every story) ─────────────
+   <aside class="sd-lessons"> with a head (LL mark + title) and .sd-lesson rows;
+   each row may end with .sd-lesson__ms ("In Mapsurvey"), .is-gap for "Not yet".
+   Marks are inline SVG <symbol>s #sd-ll / #sd-ms / #sd-ms-gap declared once in the aside. */
+.sd-lessons{--ll:#C0622B;--ll-bg:#FBF3EC;position:relative;margin:2.5rem 0;padding:1.4rem 1.5rem .5rem;background:var(--ll-bg);border-top:3px solid var(--ll);border-radius:0 0 10px 10px}
+.sd-lessons__sprite{position:absolute;width:0;height:0;overflow:hidden}
+.sd-lessons__head{display:flex;align-items:center;gap:14px;margin-bottom:.4rem}
+.sd-lessons__head svg{flex:none;width:44px;height:44px;color:var(--ll)}
+.sd-lessons__head h3{margin:0;font-family:var(--font-mono);font-weight:700;font-size:.82rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ll)}
+.sd-lessons__head p{margin:0;font-family:var(--font-display);font-size:.88rem;color:var(--text-secondary,#5A6680)}
+.sd-lesson{display:grid;grid-template-columns:44px 1fr;gap:0 14px;padding:1rem 0;border-top:1px solid #EBD9C9}
+.sd-lesson:first-of-type{border-top:0}
+.sd-lesson__n{font-family:var(--font-mono);font-weight:700;font-size:1.5rem;line-height:1;color:var(--ll);padding-top:3px}
+.sd-lesson h4{margin:0 0 .2rem;font-family:var(--font-display);font-weight:700;font-size:1.08rem}
+.sd-lesson p{margin:0}
+.sd-lesson__ms{display:flex;gap:10px;align-items:flex-start;margin-top:.65rem;padding:.55rem .75rem;background:#fff;border:1px solid #E4E0D8;border-radius:8px;font-family:var(--font-display);font-size:.88rem;line-height:1.5;color:var(--text-secondary,#5A6680)}
+.sd-lesson__ms svg{flex:none;width:18px;height:18px;margin-top:2px;color:#0FA58E}
+.sd-lesson__ms b{color:var(--text-primary,#1B2A4A);font-weight:600}
+.sd-lesson__ms.is-gap{border-style:dashed}
+.sd-lesson__ms.is-gap svg{color:#8A94A8}
+.sd-lesson__tag{display:inline-block;font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:1px 6px;border-radius:8px;background:#E3F5F1;color:#0B7D6C;margin-left:6px;white-space:nowrap}
+.sd-lesson__ms.is-gap .sd-lesson__tag{background:#F1EEE8;color:#5A6680}
+@media (max-width:600px){.sd-lessons{padding:1.1rem 1rem .4rem}.sd-lesson{grid-template-columns:30px 1fr;gap:0 10px}.sd-lesson__n{font-size:1.2rem}}
+
+/* Change story-draft-publishing: staff-only banner on an unpublished story */
+.sd-draft-banner{margin:0 0 1.2rem;padding:.6rem .9rem;border:1.5px dashed #C0622B;border-radius:8px;background:#FBF3EC;color:#8C3F19;font-family:var(--font-display);font-size:.9rem;font-weight:600}

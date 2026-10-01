@@ -8,6 +8,7 @@
 {% block og_title %}{{ story.title }}{% endblock %}
 {% block og_image %}{% if story.card_picture %}{{ story.card_picture.url }}{% else %}{{ block.super }}{% endif %}{% endblock %}
 
+{% block extra_head %}{% if is_draft_preview %}<meta name="robots" content="noindex, nofollow">{% endif %}{% endblock %}
 {% block structured_data %}
 {% if breadcrumb_jsonld %}<script type="application/ld+json">{{ breadcrumb_jsonld|safe }}</script>{% endif %}
 {% endblock %}
@@ -21,6 +22,7 @@ Every picture opens in the lightbox below (js/story_lightbox.js, change story-im
 {% endcomment %}
 <article class="story-detail">
     <div class="landing-inner">
+        {% if is_draft_preview %}<p class="sd-draft-banner">Draft — not public. Only staff see this page; publish it from the admin after the customer's written OK.</p>{% endif %}
         <nav class="sd-crumbs"><a href="/">{% trans "Home" %}</a> / <a href="{% url 'stories_index' %}">{% trans "Stories" %}</a> / {{ story.place|default:story.title }}</nav>
         {% if story.place or story.sector %}
         <p class="sd-eyebrow">{{ story.place }}{% if story.place and story.sector %} · {% endif %}{{ story.sector }}</p>
@@ -32,7 +34,7 @@ Every picture opens in the lightbox below (js/story_lightbox.js, change story-im
             {% if story.credit %}
             <span class="sd-org">
                 {% if story.credit_logo %}<img src="{{ story.credit_logo.url }}" alt="">{% endif %}
-                <span>{{ story.credit }}{% if story.credit_note %}<small>{{ story.credit_note }}</small>{% endif %}</span>
+                <span>{% if story.credit_url %}<a href="{{ story.credit_url }}" rel="noopener">{{ story.credit }}</a>{% else %}{{ story.credit }}{% endif %}{% if story.credit_note %}<small>{% if story.credit_note_url %}<a href="{{ story.credit_note_url }}" rel="noopener">{{ story.credit_note }}</a>{% else %}{{ story.credit_note }}{% endif %}</small>{% endif %}</span>
             </span>
             {% endif %}
             <span>{{ story.get_story_type_display }}{% if story.published_date %} · {{ story.published_date|date:"F Y" }}{% endif %}</span>

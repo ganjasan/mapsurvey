@@ -1223,6 +1223,10 @@ class Story(models.Model):
     credit = models.CharField(max_length=256, blank=True)
     credit_note = models.CharField(max_length=256, blank=True)
     credit_logo = models.ImageField(upload_to='stories/', null=True, blank=True)
+    # Where the credit and its note link to (Remington: GRIA's site, the studio's site). Only the
+    # story page renders them — the card is one <a> already.
+    credit_url = models.URLField(max_length=512, blank=True)
+    credit_note_url = models.URLField(max_length=512, blank=True)
     # The card may open on a different picture than the page (Olney: the resident's
     # squirrel on the card, the volunteers on the page); falls back to `cover_image`.
     card_image = models.ImageField(upload_to='stories/', null=True, blank=True)
@@ -1243,6 +1247,11 @@ class Story(models.Model):
     @property
     def card_picture(self):
         return self.card_image or self.cover_image
+
+    @property
+    def has_lessons(self):
+        """True when the body carries the "Lessons learned" callout (change story-lessons-learned)."""
+        return 'class="sd-lessons"' in (self.body or '')
 
 
 class StoryImage(models.Model):

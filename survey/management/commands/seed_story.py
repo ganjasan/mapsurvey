@@ -1,7 +1,7 @@
 """Install or refresh one customer story from the repo (change customer-stories-showcase).
 
     python manage.py seed_story olney-white-squirrel-count
-    python manage.py seed_story olney-white-squirrel-count --draft
+    python manage.py seed_story olney-white-squirrel-count [--publish | --draft]
 
 The story lives in survey/story_data/<slug>/: `story.json` (every scalar field, the
 cover/card/logo file names and `images: {key: file}`), `body.html` (the body, with
@@ -28,20 +28,23 @@ from survey.models import Story, StoryImage
 DATA_ROOT = Path(__file__).resolve().parents[2] / 'story_data'
 SCALAR_FIELDS = (
     'title', 'story_type', 'place', 'sector', 'summary', 'credit', 'credit_note',
+    'credit_url', 'credit_note_url',
     'cover_alt', 'cover_credit', 'facts',
 )
 FILE_FIELDS = {'cover': 'cover_image', 'card_image': 'card_image', 'credit_logo': 'credit_logo'}
 
 
-def story_dir(slug):
-    return DATA_ROOT / slug
+def story_dir(slug, source=None):
+    """survey/story_data/<slug>/, or `source` when given (change story-draft-publishing: a story
+    whose customer has not approved it yet is copied to the server, never pushed to the public repo)."""
+    return Path(source) if source else DATA_ROOT / slug
 
 
-def load_story_data(slug):
+def load_story_data(slug, source=None):
     """(meta dict, body html) for a slug, or CommandError when the directory is missing."""
-    base = story_dir(slug)
+    base = story_dir(slug, source)
     if not (base / 'story.json').is_file():
-        raise CommandError(f"No story data at {base.relative_to(DATA_ROOT.parents[1])}.")
+        raise CommandError(f"No story data at {base}.")
     meta = json.loads((base / 'story.json').read_text(encoding='utf-8'))
     body = (base / 'body.html').read_text(encoding='utf-8') if (base / 'body.html').is_file() else ''
     return meta, body
@@ -61,13 +64,20 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('slug')
-        parser.add_argument('--draft', action='store_true',
-                            help='Leave the story unpublished (is_published=False).')
+        parser.add_argument('--from', dest='source', metavar='DIR',
+                            help='Read the story from DIR instead of survey/story_data/<slug>/ '
+                                 '(drafts not yet approved stay out of the public repo).')
+        state = parser.add_mutually_exclusive_group()
+        state.add_argument('--publish', action='store_true',
+                           help='Publish the story. Without it a new story is installed as a draft and a '
+                                're-run keeps the current state; publish from the admin after the customer OK.')
+        state.add_argument('--draft', action='store_true',
+                           help='Unpublish the story (is_published=False).')
 
     def handle(self, *args, **opts):
         slug = opts['slug']
-        meta, body = load_story_data(slug)
-        base = story_dir(slug)
+        meta, body = load_story_data(slug, opts.get('source'))
+        base = story_dir(slug, opts.get('source'))
 
         with transaction.atomic():
             story, created = Story.objects.get_or_create(slug=slug, defaults={'title': meta['title']})
@@ -75,7 +85,10 @@ class Command(BaseCommand):
                 if name in meta:
                     setattr(story, name, meta[name])
             story.body = body
-            story.is_published = not opts['draft']
+            if opts['publish']:
+                story.is_published = True
+            elif opts['draft'] or created:
+                story.is_published = False
             if not story.published_date:
                 stamp = meta.get('published_date')
                 story.published_date = (
@@ -93,6 +106,6 @@ class Command(BaseCommand):
                 image.save()
 
         verb = 'installed' if created else 'refreshed'
-        state = 'draft' if opts['draft'] else 'published'
+        state = 'published' if story.is_published else 'draft'
         self.stdout.write(self.style.SUCCESS(
             f'Story {verb} ({state}): /stories/{story.slug}/ with {len(wanted)} body image(s).'))

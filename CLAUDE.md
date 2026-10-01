@@ -297,10 +297,22 @@ refreshes the row (idempotent by slug, keeps id and first `published_date`, uplo
 the public media tier). Body pictures are `{img:<key>}` tokens resolved by
 `survey/stories.py::render_body` against the story's `StoryImage`s, so one body works on
 production, previews and laptops whose media prefixes differ. The body is staff-authored HTML
-rendered `|safe` — not creator input. The admin is for `is_published` and typos; a re-run of
-the command overwrites admin edits. Publishing on production = running the command there by
-hand, after the customer's written OK on text and pictures (each `story_data` dir carries a
-`CREDITS.md`).
+rendered `|safe` — not creator input. A re-run of the command overwrites admin text edits.
+**Publishing is a separate step (change `story-draft-publishing`)**: `seed_story <slug>` installs
+a NEW story as a draft and a re-run keeps the current state (`--publish` / `--draft` force it), so
+prepared stories can sit on production unpublished. The repo is public: a story whose customer
+has not approved it yet is NOT committed; copy its directory to the server and run
+`seed_story <slug> --from <dir>`. Staff open a draft at its normal URL (draft
+banner, `noindex`); everyone else gets 404, and drafts stay off the landing, `/stories/` and the
+sitemap. The customer's written OK on text and pictures (each `story_data` dir carries a
+`CREDITS.md`) → the admin's "Publish" action or the list checkbox. A story body may carry the
+**Lessons learned** callout (`<aside class="sd-lessons">`, change `story-lessons-learned`): one
+look in every story, each lesson with an "In Mapsurvey" line tagged Available / Built for … /
+Not yet; `Story.has_lessons` puts a badge on the card. The whole path from consent to `seed_story` — prod-DB facts, heat maps and phone
+screenshots taken on a LOCAL import of the survey (opening the live one creates an `external`
+session in the customer's data), the approval HTML (`scripts/story_approval_html.py`) and cover
+letter — is the `customer-story` skill (`.claude/skills/customer-story/SKILL.md`);
+`StoryDataDirectoriesTest` seeds every `story_data` dir.
 
 **Mobile-adaptive layouts (two kill switches)**: `MOBILE_EDITOR_NAV` gives the editor
 two-level contextual navigation below 768px: top strip = page tabs, bottom bar = panes of
