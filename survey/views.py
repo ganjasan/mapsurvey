@@ -568,7 +568,7 @@ def index(request):
 			)
 		)
 	)
-	stories = Story.objects.filter(is_published=True).order_by('-published_date')
+	stories = Story.in_showcase_order(Story.objects.filter(is_published=True))
 	return render(request, 'landing.html', {
 		'surveys': surveys,
 		'stories': stories,
@@ -1629,7 +1629,7 @@ STORIES_CRUMB = Crumb("Stories", "/stories/")
 
 def stories_index(request):
 	"""Public stories hub at /stories/ — card grid of published stories, newest first."""
-	stories = list(Story.objects.filter(is_published=True).order_by('-published_date'))
+	stories = list(Story.in_showcase_order(Story.objects.filter(is_published=True)))
 	breadcrumbs = (HOME, STORIES_CRUMB)
 	context = {
 		'stories': stories,

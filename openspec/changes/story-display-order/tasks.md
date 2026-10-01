@@ -1,0 +1,4 @@
+- [x] 1.1 `Story.position` + migration
+- [x] 1.2 `Story.in_showcase_order()`; landing and `/stories/` use it
+- [x] 1.3 Admin: `position` in the list (editable) and the form; list in showcase order
+- [x] 2.1 Tests (GIVEN / WHEN / THEN): order rule, both pages follow it, seed keeps the position
