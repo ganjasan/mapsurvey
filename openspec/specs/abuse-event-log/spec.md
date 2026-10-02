@@ -19,7 +19,7 @@ The system SHALL provide an `AbuseEvent` Django model that records every trigger
 #### Scenario: Defense slug is constrained to known values
 
 - **WHEN** `AbuseEvent` is created
-- **THEN** the `defense` field SHALL be one of `"captcha"`, `"ratelimit"`, `"honeypot"`, or `"email_domain"` (the last reserved for Phase 2 use)
+- **THEN** the `defense` field SHALL be one of `"captcha"`, `"ratelimit"`, `"honeypot"`, `"email_domain"` (reserved for Phase 2 use), or `"content_screen"`
 
 #### Scenario: Detail field captures defense-specific context
 
@@ -29,6 +29,14 @@ The system SHALL provide an `AbuseEvent` Django model that records every trigger
 - **THEN** the `detail` field SHALL contain `"siteverify_rejected"`
 - **WHEN** a rate-limit defense fires
 - **THEN** the `detail` field SHALL contain the violated limit identifier (e.g., `"3_per_hour"` or `"10_per_day"`)
+
+#### Scenario: Content screening events carry ids, never identities
+
+- **WHEN** a survey is held, released, confirmed as phishing, or reported by a respondent
+- **THEN** one `AbuseEvent` row with `defense='content_screen'` SHALL be written
+- **AND** `detail` SHALL start with `hold survey=<id> score=<n>`, `release survey=<id>`, `confirm survey=<id> user=<id>` or `report survey=<id>` respectively
+- **AND** `detail` SHALL contain neither an email address nor a username
+- **AND** `ip` MAY be null when the event is written outside a request (Celery or a decision helper)
 
 ### Requirement: Indexed for analytical queries
 

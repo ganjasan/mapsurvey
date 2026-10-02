@@ -56,4 +56,4 @@
 
 - [x] 9.1 `CLAUDE.md`: a "Content screening (phishing)" paragraph — where the signals live, the hold model, the never-auto-ban rule, the kill switch and rollback.
 - [x] 9.2 Run `./run_tests.sh survey` once before and once after; record the delta. (2026-10-02: 2247 tests OK, skipped=1, 33 new; origin/master baseline 2214 — no regressions.)
-- [ ] 9.3 Update GitHub issue #225 with the change link and what is deferred (disposable-domain registration block, Web Risk, periodic scan, Discord).
+- [x] 9.3 Update GitHub issue #225 with the change link and what is deferred — PR #236 carries `Closes #225`; deferred items are listed in the proposal and in #225 itself.
