@@ -193,6 +193,26 @@ def verify_turnstile(token, remote_ip=""):
     return bool(result.get("success", False))
 
 
+def log_abuse_event_noreq(defense, detail="", ip=None, user_agent=""):
+    """`log_abuse_event` for callers that have no request — the content-review
+    decision helpers and the Celery notice task. Same single write path, same
+    swallowed DB failure, same log line; `ip` is null unless the caller knows it.
+    """
+    from .models import AbuseEvent
+
+    logger = logging.getLogger(f"abuse.{defense}")
+    try:
+        AbuseEvent.objects.create(
+            defense=defense,
+            ip=ip or None,
+            user_agent=(user_agent or "")[:1024],
+            detail=detail,
+        )
+    except Exception:
+        logger.exception("Failed to persist AbuseEvent for defense=%s", defense)
+    logger.warning("%s triggered ip=%s detail=%s", defense, ip, detail)
+
+
 def log_abuse_event(defense, request, detail=""):
     """Persist one AbuseEvent row and emit one log line on the abuse logger.
 

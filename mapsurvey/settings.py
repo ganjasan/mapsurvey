@@ -592,6 +592,20 @@ RESPONSES_V2 = os.environ.get('RESPONSES_V2', 'True').lower() in ('true', '1')
 PUBLIC_RESULTS_PREVIEW_FALLBACK = os.environ.get(
     'PUBLIC_RESULTS_PREVIEW_FALLBACK', 'True').lower() in ('true', '1')
 
+# Content screening (openspec: phishing-content-review). A survey whose creator
+# text scores at or above the threshold is HELD — respondents see a neutral
+# page — until the owner releases it or confirms phishing from the review mail.
+# Nothing is ever banned automatically. Off: no scoring, no new holds; an
+# existing hold still waits for the owner (released from the admin).
+CONTENT_SCREENING = os.environ.get('CONTENT_SCREENING', 'True').lower() in ('true', '1')
+CONTENT_SCREENING_HOLD_THRESHOLD = int(os.environ.get('CONTENT_SCREENING_HOLD_THRESHOLD', '7'))
+# Where the review mail goes. The owner's address by default (CONTACT_EMAIL).
+ABUSE_REVIEW_EMAIL = os.environ.get('ABUSE_REVIEW_EMAIL', '') or CONTACT_EMAIL
+# Extra disposable-mail domains (comma-separated) on top of the built-in list.
+DISPOSABLE_EMAIL_DOMAINS = [
+    d.strip().lower() for d in os.environ.get('DISPOSABLE_EMAIL_DOMAINS', '').split(',') if d.strip()
+]
+
 # Celery
 CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')

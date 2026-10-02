@@ -46838,3 +46838,578 @@ class EmptySessionCommentLabelTest(_EmptySessionFixture):
         self.assertEqual(session_label(self.survey, a, a.id), 'Response #1')
         self.assertEqual(session_label(self.survey, c, c.id), 'Response #2')
         self.assertEqual(session_label(self.survey, b, b.id), 'Response without answers')
+
+# =============================================================================
+# Content screening — phishing hold + owner review (openspec: phishing-content-review)
+# =============================================================================
+from django.core import mail as _cs_mail
+from .content_screening import (
+    ScreenInput as _ScreenInput, score as _cs_score, fingerprint as _cs_fingerprint,
+    hold_threshold as _cs_threshold, review_token as _cs_review_token,
+)
+from .models import ContentReview, AbuseEvent, AuditLog
+
+_XFINITY_SUBHEADING = (
+    '<p style="text-align:center"><strong>XFINITY</strong></p>'
+    "<p style=\"text-align:center\">You're almost set! Access your Everymail email securely. "
+    'Manage communications to your account from anywhere seamlessly.</p>'
+    '<p style="text-align:center"><strong><a href="https://go.xaply.in/fp5qs" target="_blank" '
+    'rel="noopener noreferrer">CLICK HERE TO PROCEED</a></strong></p>'
+    + '<p style="text-align:center"><br></p>' * 74
+)
+_TRACKER_URL = ('https://sender10.zohoinsights.com/ck1/2d6f.327230a/52aab750-89e2-11f1-a2db-525400d4bb1c/'
+                '0a29489b5ad81b76b5b8b74af2d72eca13465dd1/2?e=EmhJ3GkUtbm')
+
+
+def _cs_input(texts, redirect='', questions=1, age_hours=0.03, domain='gmail.com'):
+    return _ScreenInput(texts=[('t', t) for t in texts], redirect_url=redirect,
+                        question_count=questions, account_age_hours=age_hours, email_domain=domain)
+
+
+class ContentScoringTest(SimpleTestCase):
+    """The scorer alone — no database, pinned to the 2026-10-02 scan."""
+
+    def test_xfinity_lure_scores_above_threshold(self):
+        """
+        GIVEN the XFINITY lure: brand, "almost set", CLICK HERE link to a shortener, 74 empty paragraphs, one question, a two-minute-old account on a disposable domain
+        WHEN it is scored
+        THEN the score reaches the hold threshold and names shortener, brand, padding and external link
+        """
+        result = _cs_score(_cs_input(['Untitled survey', 'Section 1', _XFINITY_SUBHEADING, 'XFINITY'],
+                                     questions=1, age_hours=0.03, domain='betterr.org'))
+        self.assertGreaterEqual(result.score, _cs_threshold())
+        keys = {s['key'] for s in result.signals}
+        self.assertTrue({'shortener', 'brand', 'padding', 'external_link', 'disposable_domain'} <= keys, keys)
+
+    def test_redirect_tracker_lure_scores_above_threshold(self):
+        """
+        GIVEN a survey whose only content is a question named "PDF Document" and a redirect_url on an email click tracker, published two minutes after registration
+        WHEN it is scored
+        THEN the score reaches the hold threshold and the tracker host from redirect_url is a signal
+        """
+        result = _cs_score(_cs_input(['PDF Document', 'PDF Document'], redirect=_TRACKER_URL, questions=1, age_hours=0.03))
+        self.assertGreaterEqual(result.score, _cs_threshold())
+        self.assertIn('tracker', {s['key'] for s in result.signals})
+
+    def test_legitimate_surveys_from_the_scan_stay_below_threshold(self):
+        """
+        GIVEN the nine legitimate surveys the 2026-10-02 heuristic flagged (own S3 media, Facebook, a project site, a retailer image, "click here" in a real description)
+        WHEN each is scored
+        THEN none reaches the hold threshold
+        """
+        with override_settings(AWS_S3_CUSTOM_DOMAIN='mapsurvey-media-prod.s3.ap-southeast-2.amazonaws.com'):
+            cases = [
+                (['Stroud-Bristol coach', 'Click here to see the timetable <img src="https://mapsurvey-media-prod.s3.ap-southeast-2.amazonaws.com/x.png">'], '', 13, 0.01),
+                (['Tahanan_Padayon', 'Follow us on <a href="https://www.facebook.com/tahanan">Facebook</a>'], '', 1, 0.1),
+                (['Vrienden Weekend 2026', 'Zie <a href="https://ishet.al/weekend">de site</a>'], '', 1, 0.28),
+                (['czy wiesz gdzie to jest', 'https://m.media-amazon.com/images/I/71dEnbFkofL.jpg'], '', 5, 0.04),
+                (['The Bench Map', 'More at https://thebenchmap.ie'], '', 0, 0.2),
+                (['Test Roy', 'varanger-ak.no'], '', 0, 0.27),
+                (['Noise map', 'Where do you hear the most noise? Sign in to the council portal for details.'], '', 6, 300),
+                (['Parking survey'], 'https://example-council.gov.uk/thanks', 4, 50),
+                (['Heat survey', 'Mark where it feels hottest. Password for the gate is on the flyer.'], '', 3, 2),
+            ]
+            for texts, redirect, questions, age in cases:
+                result = _cs_score(_cs_input(texts, redirect=redirect, questions=questions, age_hours=age))
+                self.assertLess(result.score, _cs_threshold(), (texts[0], result.signals))
+
+    def test_fresh_account_and_single_question_cannot_hold_alone(self):
+        """
+        GIVEN a one-question survey with no links or lure words from an account registered one minute ago
+        WHEN it is scored
+        THEN the score stays below the hold threshold
+        """
+        result = _cs_score(_cs_input(['My first survey', 'Where do you live?'], questions=1, age_hours=0.02))
+        self.assertLess(result.score, _cs_threshold())
+
+    def test_fingerprint_follows_the_text_not_the_account(self):
+        """
+        GIVEN two inputs with the same text and a different account age, and a third with a changed redirect_url
+        WHEN fingerprinted
+        THEN the first two match and the third differs
+        """
+        a = _cs_fingerprint(_cs_input(['A', 'B'], age_hours=0.1))
+        b = _cs_fingerprint(_cs_input(['A', 'B'], age_hours=500))
+        c = _cs_fingerprint(_cs_input(['A', 'B'], redirect='https://example.com/x'))
+        self.assertEqual(a, b)
+        self.assertNotEqual(a, c)
+
+
+def _eager_notice():
+    """Run the review notice inline: `.delay` becomes the task (no broker in the suite)."""
+    from .tasks import send_abuse_review_notice
+    return patch('survey.tasks.send_abuse_review_notice.delay',
+                 side_effect=lambda review_id: send_abuse_review_notice(review_id))
+
+
+class _ContentScreeningBase(TestCase):
+    def setUp(self):
+        self.org = _make_org('ScreenOrg')
+        self.owner = User.objects.create_user(username='screen_owner', password='pass', email='owner@example.org')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(name='screen_test', organization=self.org, created_by=self.owner)
+        SurveyCollaborator.objects.create(user=self.owner, survey=self.survey, role='owner')
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True, title='Section 1',
+        )
+        self.question = Question.objects.create(
+            survey_section=self.section, code='Q_SCR1', name='Where?', input_type='text',
+        )
+        self.client.login(username='screen_owner', password='pass')
+        _cs_mail.outbox = []
+
+    def _make_lure(self):
+        self.section.subheading = _XFINITY_SUBHEADING
+        self.section.save(update_fields=['subheading'])
+        self.question.name = 'XFINITY'
+        self.question.save(update_fields=['name'])
+
+    def _transition(self, status='published'):
+        return self.client.post(f'/editor/surveys/{self.survey.uuid}/transition/',
+                                {'status': status, 'ack_translation_gaps': 'true'}, HTTP_HX_REQUEST='true')
+
+    def _publish(self):
+        with _eager_notice():
+            response = self._transition('published')
+        self.survey.refresh_from_db()
+        return response
+
+    def _anon(self):
+        return Client()
+
+
+class ContentScreeningFlowTest(_ContentScreeningBase):
+    """Publish-time screening: hold, dedupe, fail-open, kill switch, live edits."""
+
+    def test_publishing_a_lure_holds_it_and_mails_the_owner(self):
+        """
+        GIVEN a draft survey carrying the XFINITY lure
+        WHEN the owner publishes it
+        THEN the publish succeeds, one pending review exists, one hold AbuseEvent is written and one mail reaches ABUSE_REVIEW_EMAIL with the review link and signals
+        """
+        self._make_lure()
+        response = self._publish()
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(self.survey.status, 'published')
+        review = ContentReview.objects.get(survey=self.survey)
+        self.assertEqual((review.status, review.source, review.trigger), ('pending', 'screen', 'publish'))
+        self.assertGreaterEqual(review.score, _cs_threshold())
+        events = AbuseEvent.objects.filter(defense='content_screen')
+        self.assertEqual(events.count(), 1)
+        self.assertTrue(events[0].detail.startswith(f'hold survey={self.survey.id} score='))
+        self.assertEqual(len(_cs_mail.outbox), 1)
+        msg = _cs_mail.outbox[0]
+        self.assertEqual(msg.to, [settings.ABUSE_REVIEW_EMAIL])
+        self.assertIn('screen_test', msg.subject)
+        self.assertIn(str(review.score), msg.subject)
+        self.assertIn('/editor/abuse-review/', msg.body)
+        self.assertIn('shortener', msg.body)
+
+    def test_second_publish_while_pending_creates_nothing_new(self):
+        """
+        GIVEN a held survey
+        WHEN it goes back to draft and is published again
+        THEN the same review row is updated and no second mail is sent
+        """
+        self._make_lure()
+        self._publish()
+        self._transition('draft')
+        self._publish()
+        self.assertEqual(ContentReview.objects.filter(survey=self.survey).count(), 1)
+        self.assertEqual(len(_cs_mail.outbox), 1)
+
+    def test_clean_survey_leaves_no_trace(self):
+        """
+        GIVEN an ordinary survey
+        WHEN it is published
+        THEN no review row, no AbuseEvent and no mail exist
+        """
+        self._publish()
+        self.assertFalse(ContentReview.objects.exists())
+        self.assertFalse(AbuseEvent.objects.filter(defense='content_screen').exists())
+        self.assertEqual(len(_cs_mail.outbox), 0)
+
+    def test_scorer_exception_does_not_block_publishing(self):
+        """
+        GIVEN a scorer that raises
+        WHEN the owner publishes a lure
+        THEN the publish completes as usual and no review exists
+        """
+        self._make_lure()
+        with patch('survey.content_screening.collect_text', side_effect=RuntimeError('boom')):
+            response = self._publish()
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(self.survey.status, 'published')
+        self.assertFalse(ContentReview.objects.exists())
+
+    @override_settings(CONTENT_SCREENING=False)
+    def test_kill_switch_off_skips_screening(self):
+        """
+        GIVEN CONTENT_SCREENING off
+        WHEN a lure is published
+        THEN no review is created and anonymous respondents reach the survey
+        """
+        self._make_lure()
+        self._publish()
+        self.assertFalse(ContentReview.objects.exists())
+        self.assertEqual(self._anon().get(f'/surveys/{self.survey.uuid}/').status_code, 302)
+
+    @override_settings(CONTENT_SCREENING=False)
+    def test_kill_switch_off_keeps_an_existing_hold(self):
+        """
+        GIVEN a survey with a pending review and CONTENT_SCREENING off
+        WHEN an anonymous respondent opens it
+        THEN the unavailable page is still served
+        """
+        self.survey.status = 'published'
+        self.survey.save(update_fields=['status'])
+        ContentReview.objects.create(survey=self.survey, status='pending', score=9)
+        self.assertEqual(self._anon().get(f'/surveys/{self.survey.uuid}/').status_code, 404)
+
+    def test_testing_transition_is_not_screened(self):
+        """
+        GIVEN a lure survey
+        WHEN the owner moves it to testing
+        THEN no review is created
+        """
+        self._make_lure()
+        with _eager_notice():
+            self._transition('testing')
+        self.assertFalse(ContentReview.objects.exists())
+
+    def test_live_redirect_edit_rescreens_a_published_survey(self):
+        """
+        GIVEN a published survey that passed screening with a "PDF Document" question
+        WHEN the owner sets redirect_url to an email click tracker through the settings panel
+        THEN a pending review with trigger live_edit is created
+        """
+        self.question.name = 'PDF Document'
+        self.question.save(update_fields=['name'])
+        self._publish()
+        self.assertFalse(ContentReview.objects.exists())
+        with _eager_notice():
+            response = self.client.post(
+                f'/editor/surveys/{self.survey.uuid}/settings-panel/',
+                {'name': 'screen_test', 'visibility': 'private', 'redirect_url': _TRACKER_URL},
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+            )
+        self.assertEqual(response.status_code, 200, response.content[:300])
+        review = ContentReview.objects.get(survey=self.survey)
+        self.assertEqual((review.status, review.trigger), ('pending', 'live_edit'))
+
+    def test_released_content_is_not_held_again_until_it_changes(self):
+        """
+        GIVEN a held survey the owner released
+        WHEN it is republished unchanged, and then republished with a changed thanks page
+        THEN the unchanged publish creates no review and the changed one creates a new pending review
+        """
+        self._make_lure()
+        self._publish()
+        review = ContentReview.objects.get(survey=self.survey)
+        review.status = 'cleared'
+        review.save(update_fields=['status'])
+        self._transition('draft')
+        self._publish()
+        self.assertEqual(ContentReview.objects.filter(survey=self.survey).count(), 1)
+        self.survey.thanks_html = {'en': '<p>Verify your password at <a href="https://bit.ly/zz">bit.ly</a></p>'}
+        self.survey.save(update_fields=['thanks_html'])
+        self._transition('draft')
+        self._publish()
+        self.assertEqual(ContentReview.objects.filter(survey=self.survey, status='pending').count(), 1)
+
+    def test_draft_publish_anchors_the_review_to_the_canonical_survey(self):
+        """
+        GIVEN a published survey with a draft copy that received the lure
+        WHEN the draft is published
+        THEN the pending review points at the canonical survey with trigger draft_publish
+        """
+        self._publish()
+        response = self.client.post(f'/editor/surveys/{self.survey.uuid}/create-draft/')
+        draft = SurveyHeader.objects.get(published_version=self.survey)
+        section = SurveySection.objects.get(survey_header=draft, is_head=True)
+        section.subheading = _XFINITY_SUBHEADING
+        section.save(update_fields=['subheading'])
+        with _eager_notice():
+            response = self.client.post(f'/editor/surveys/{draft.uuid}/publish-draft/', {'ack_translation_gaps': 'true'})
+        self.assertEqual(response.status_code, 302, response.content[:300])
+        review = ContentReview.objects.get()
+        self.assertEqual(review.survey_id, self.survey.id)
+        self.assertEqual(review.trigger, 'draft_publish')
+
+    def test_broker_failure_sends_the_notice_inline(self):
+        """
+        GIVEN a Celery broker that refuses the task
+        WHEN a lure is published
+        THEN the mail is still sent and the review stays pending
+        """
+        self._make_lure()
+        with patch('survey.tasks.send_abuse_review_notice.delay', side_effect=OSError('broker down')):
+            self._transition('published')
+        self.assertEqual(ContentReview.objects.get().status, 'pending')
+        self.assertEqual(len(_cs_mail.outbox), 1)
+
+    def test_notice_never_goes_to_the_creator_and_names_no_email(self):
+        """
+        GIVEN a lure published by a creator with an email address
+        WHEN the notice is sent
+        THEN only the review address receives it and the AbuseEvent detail carries no email or username
+        """
+        self._make_lure()
+        self._publish()
+        for msg in _cs_mail.outbox:
+            self.assertNotIn(self.owner.email, msg.to)
+        for ev in AbuseEvent.objects.filter(defense='content_screen'):
+            self.assertNotIn('@', ev.detail)
+            self.assertNotIn(self.owner.username, ev.detail)
+
+
+class ContentScreeningHoldGateTest(_ContentScreeningBase):
+    """What respondents and the creator see while a survey is held."""
+
+    def setUp(self):
+        super().setUp()
+        self._make_lure()
+        self._publish()
+        self.assertTrue(ContentReview.objects.filter(survey=self.survey, status='pending').exists())
+
+    def test_anonymous_respondent_gets_the_unavailable_page_and_no_session(self):
+        """
+        GIVEN a held survey
+        WHEN an anonymous visitor opens the entry URL and the section URL
+        THEN both answer 404 with the unavailable page and no SurveySession is created
+        """
+        anon = self._anon()
+        for url in (f'/surveys/{self.survey.uuid}/', f'/surveys/{self.survey.uuid}/s1/'):
+            response = anon.get(url)
+            self.assertEqual(response.status_code, 404, url)
+            self.assertContains(response, 'available', status_code=404)
+            self.assertNotContains(response, 'XFINITY', status_code=404)
+        self.assertEqual(SurveySession.objects.filter(survey=self.survey).count(), 0)
+
+    def test_owner_still_reaches_the_survey(self):
+        """
+        GIVEN a held survey
+        WHEN its owner opens the respondent entry URL
+        THEN the usual redirect to the first section is returned
+        """
+        self.assertEqual(self.client.get(f'/surveys/{self.survey.uuid}/').status_code, 302)
+
+    def test_creator_banner_without_reasons(self):
+        """
+        GIVEN a held survey
+        WHEN the owner opens the editor page
+        THEN a review banner is shown and it lists none of the signals
+        """
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-testid="review-banner"')
+        self.assertContains(response, 'being reviewed')
+        body = response.content.decode()
+        banner = body[body.index('review-banner'):body.index('review-banner') + 600]
+        for word in ('shortener', 'brand', 'padding', 'score', 'xaply'):
+            self.assertNotIn(word, banner.lower())
+
+    def test_reported_only_survey_keeps_serving(self):
+        """
+        GIVEN a published survey with only a reported review
+        WHEN an anonymous respondent opens it
+        THEN the survey serves as usual
+        """
+        ContentReview.objects.filter(survey=self.survey).update(status='reported', source='report')
+        self.assertEqual(self._anon().get(f'/surveys/{self.survey.uuid}/').status_code, 302)
+
+
+class AbuseReviewPageTest(_ContentScreeningBase):
+    """The staff review page and the two decisions."""
+
+    def setUp(self):
+        super().setUp()
+        self._make_lure()
+        self._publish()
+        self.review = ContentReview.objects.get(survey=self.survey)
+        self.url = f'/editor/abuse-review/{_cs_review_token(self.review)}/'
+        self.staff = User.objects.create_user(username='screen_staff', password='pass', is_staff=True)
+        self.staff_client = Client()
+        self.staff_client.login(username='screen_staff', password='pass')
+        AbuseEvent.objects.all().delete()
+
+    def test_get_is_404_for_everyone_but_staff(self):
+        """
+        GIVEN the review link
+        WHEN an anonymous client and the (non-staff) survey owner open it
+        THEN both get 404 and the review is unchanged
+        """
+        self.assertEqual(self._anon().get(self.url).status_code, 404)
+        self.assertEqual(self.client.get(self.url).status_code, 404)
+        self.review.refresh_from_db()
+        self.assertEqual(self.review.status, 'pending')
+
+    def test_bad_and_expired_tokens_are_404(self):
+        """
+        GIVEN a staff user
+        WHEN a tampered token and an expired token are opened
+        THEN both answer 404
+        """
+        self.assertEqual(self.staff_client.get('/editor/abuse-review/not-a-token/').status_code, 404)
+        with patch('survey.content_screening.REVIEW_TOKEN_MAX_AGE', -1):
+            self.assertEqual(self.staff_client.get(self.url).status_code, 404)
+
+    def test_staff_sees_the_evidence(self):
+        """
+        GIVEN a staff user
+        WHEN the review page is opened
+        THEN it shows the signals, the account facts and both actions
+        """
+        response = self.staff_client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'shortener')
+        self.assertContains(response, 'screen_owner')
+        self.assertContains(response, 'value="release"')
+        self.assertContains(response, 'value="confirm"')
+
+    def test_release_restores_the_survey(self):
+        """
+        GIVEN a held survey
+        WHEN staff posts release
+        THEN the review is cleared with decided_by set, respondents reach the survey and a release AbuseEvent exists
+        """
+        response = self.staff_client.post(self.url, {'action': 'release'})
+        self.assertEqual(response.status_code, 302)
+        self.review.refresh_from_db()
+        self.assertEqual(self.review.status, 'cleared')
+        self.assertEqual(self.review.decided_by, self.staff)
+        self.assertIsNotNone(self.review.decided_at)
+        self.assertEqual(self._anon().get(f'/surveys/{self.survey.uuid}/').status_code, 302)
+        self.assertTrue(AbuseEvent.objects.filter(defense='content_screen', detail__startswith=f'release survey={self.survey.id}').exists())
+
+    def test_confirm_deactivates_the_account_and_closes_its_surveys(self):
+        """
+        GIVEN a held survey whose creator also has a draft and is logged in
+        WHEN staff posts confirm
+        THEN the creator is inactive, both surveys are closed with audit rows, the creator's session is gone, the review is confirmed and a confirm AbuseEvent exists
+        """
+        other = SurveyHeader.objects.create(name='screen_other', organization=self.org, created_by=self.owner)
+        from django.contrib.sessions.models import Session
+        self.assertEqual(sum(1 for s in Session.objects.all() if s.get_decoded().get('_auth_user_id') == str(self.owner.id)), 1)
+
+        response = self.staff_client.post(self.url, {'action': 'confirm'})
+        self.assertEqual(response.status_code, 302)
+
+        self.owner.refresh_from_db()
+        self.assertFalse(self.owner.is_active)
+        self.survey.refresh_from_db()
+        other.refresh_from_db()
+        self.assertEqual((self.survey.status, other.status), ('closed', 'closed'))
+        self.assertEqual(AuditLog.objects.filter(action='content_screen_close').count(), 2)
+        self.assertEqual(sum(1 for s in Session.objects.all() if s.get_decoded().get('_auth_user_id') == str(self.owner.id)), 0)
+        self.review.refresh_from_db()
+        self.assertEqual(self.review.status, 'confirmed')
+        self.assertTrue(AbuseEvent.objects.filter(
+            defense='content_screen', detail__startswith=f'confirm survey={self.survey.id} user={self.owner.id}').exists())
+        self.assertEqual(self.staff_client.get(self.url).status_code, 200)
+
+    def test_decided_review_accepts_no_action(self):
+        """
+        GIVEN a released review
+        WHEN staff posts confirm on it
+        THEN nothing changes and the page shows the decision
+        """
+        self.staff_client.post(self.url, {'action': 'release'})
+        self.staff_client.post(self.url, {'action': 'confirm'})
+        self.review.refresh_from_db()
+        self.owner.refresh_from_db()
+        self.assertEqual(self.review.status, 'cleared')
+        self.assertTrue(self.owner.is_active)
+        self.assertContains(self.staff_client.get(self.url), 'Released')
+
+    def test_admin_lists_the_pending_review_with_a_link(self):
+        """
+        GIVEN a superuser
+        WHEN the ContentReview admin changelist is opened filtered by pending
+        THEN the held survey appears with a link to the review page
+        """
+        admin_user = User.objects.create_superuser(username='screen_admin', password='pass', email='a@example.org')
+        c = Client()
+        c.login(username='screen_admin', password='pass')
+        response = c.get('/admin/survey/contentreview/?status__exact=pending')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'screen_test')
+        self.assertContains(response, '/editor/abuse-review/')
+
+
+class RespondentReportTest(_ContentScreeningBase):
+    """The safety footer and the report form."""
+
+    def setUp(self):
+        super().setUp()
+        self._publish()
+        self.report_url = f'/surveys/{self.survey.uuid}/report/'
+
+    def test_footer_on_section_and_thanks_pages(self):
+        """
+        GIVEN a published survey
+        WHEN a respondent opens a section page and the thanks page
+        THEN both carry the safety notice and the report link
+        """
+        anon = self._anon()
+        for url in (f'/surveys/{self.survey.uuid}/s1/', f'/surveys/{self.survey.uuid}/thanks/'):
+            response = anon.get(url)
+            self.assertEqual(response.status_code, 200, url)
+            self.assertContains(response, 'Never enter passwords')
+            self.assertContains(response, self.report_url)
+
+    def test_first_report_opens_a_review_and_mails_once(self):
+        """
+        GIVEN a published survey with no open review
+        WHEN a respondent reports it as phishing
+        THEN a reported review with report_count 1 exists, one mail is sent, a report AbuseEvent is written and the survey still serves
+        """
+        with _eager_notice():
+            response = self._anon().post(self.report_url, {'reason': 'phishing', 'message': 'asks for my password'},
+                                         REMOTE_ADDR='10.%d.%d.%d' % tuple(uuid.uuid4().bytes[:3]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Thank you')
+        review = ContentReview.objects.get(survey=self.survey)
+        self.assertEqual((review.status, review.source, review.report_count), ('reported', 'report', 1))
+        self.assertEqual(len(_cs_mail.outbox), 1)
+        self.assertIn('reported', _cs_mail.outbox[0].subject)
+        self.assertTrue(AbuseEvent.objects.filter(detail__startswith=f'report survey={self.survey.id}').exists())
+        self.assertEqual(self._anon().get(f'/surveys/{self.survey.uuid}/').status_code, 302)
+
+    def test_repeated_reports_count_but_do_not_mail(self):
+        """
+        GIVEN a survey already reported
+        WHEN a second report arrives from another address
+        THEN report_count becomes 2 and no second mail is sent
+        """
+        with _eager_notice():
+            self._anon().post(self.report_url, {'reason': 'scam'}, REMOTE_ADDR='10.%d.%d.%d' % tuple(uuid.uuid4().bytes[:3]))
+            self._anon().post(self.report_url, {'reason': 'other', 'message': 'odd'}, REMOTE_ADDR='10.%d.%d.%d' % tuple(uuid.uuid4().bytes[:3]))
+        self.assertEqual(ContentReview.objects.get(survey=self.survey).report_count, 2)
+        self.assertEqual(len(_cs_mail.outbox), 1)
+
+    def test_fourth_report_from_one_address_is_rate_limited(self):
+        """
+        GIVEN three reports from one IP within an hour
+        WHEN a fourth arrives
+        THEN it answers 429 and the review is not touched
+        """
+        # The counter lives in Redis and outlives the test database, so a fixed
+        # IP would carry the previous run's budget into this one.
+        ip = '10.%d.%d.%d' % tuple(uuid.uuid4().bytes[:3])
+        with _eager_notice():
+            for _ in range(3):
+                self.assertEqual(self._anon().post(self.report_url, {'reason': 'scam'}, REMOTE_ADDR=ip).status_code, 200)
+            response = self._anon().post(self.report_url, {'reason': 'scam'}, REMOTE_ADDR=ip)
+        self.assertEqual(response.status_code, 429)
+        self.assertEqual(ContentReview.objects.get(survey=self.survey).report_count, 3)
+
+    def test_unknown_and_draft_surveys_are_404(self):
+        """
+        GIVEN a UUID that names nothing and a draft survey
+        WHEN their report pages are requested
+        THEN both answer 404
+        """
+        self.assertEqual(self._anon().get(f'/surveys/{uuid.uuid4()}/report/').status_code, 404)
+        draft = SurveyHeader.objects.create(name='screen_draft', organization=self.org, created_by=self.owner)
+        self.assertEqual(self._anon().get(f'/surveys/{draft.uuid}/report/').status_code, 404)

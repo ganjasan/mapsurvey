@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Report this survey" %} - Mapsurvey{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 560px; margin-top: 60px;">
+    <h3>{% trans "Report this survey" %}</h3>
+    <p class="text-muted">{% blocktrans with name=survey.name %}Tell us what is wrong with “{{ name }}”. A person reviews every report.{% endblocktrans %}</p>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            {% for radio in form.reason %}
+            <div class="form-check">
+                {{ radio.tag }}
+                <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+            </div>
+            {% endfor %}
+            {% if form.reason.errors %}<div class="text-danger small">{{ form.reason.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+            <label for="{{ form.message.id_for_label }}">{{ form.message.label }}</label>
+            {{ form.message }}
+            {% if form.message.errors %}<div class="text-danger small">{{ form.message.errors.0 }}</div>{% endif %}
+        </div>
+        <button type="submit" class="btn btn-primary">{% trans "Send report" %}</button>
+        <a href="{% url 'survey' survey.uuid %}" class="btn btn-link">{% trans "Cancel" %}</a>
+    </form>
+</div>
+{% endblock %}

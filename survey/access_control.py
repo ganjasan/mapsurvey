@@ -50,6 +50,13 @@ def check_survey_access(request, survey):
         return _check_testing_access(request, survey)
 
     if status == 'published':
+        # Held for the owner's phishing review (openspec: phishing-content-review):
+        # the same 404 page an unknown UUID gets, so a held lure is
+        # indistinguishable from a dead link — and no session is created.
+        from .content_screening import is_held
+        if is_held(survey):
+            request.survey_noindex = True
+            return render(request, 'survey_unavailable.html', status=404)
         return _check_published_access(request, survey)
 
     if status in ('closed', 'archived'):

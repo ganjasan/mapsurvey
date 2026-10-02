@@ -15,6 +15,16 @@
 
 {% include "editor/partials/_ai_feedback_strip.html" %}
 
+{% if pending_review %}
+{% comment %}Held for the owner's phishing review. Calm, and deliberately without
+reasons — the signals are not explained to the person who tripped them.{% endcomment %}
+<div class="alert alert-warning mb-0" style="flex-shrink:0;border-radius:0;" data-testid="review-banner">
+    <i class="fas fa-user-shield mr-1"></i>
+    <strong>{% trans "Your survey is being reviewed." %}</strong>
+    {% trans "Respondents will be able to open it once the review completes, usually within a day. You can keep editing in the meantime." %}
+</div>
+{% endif %}
+
 {% comment %}Persistent Build toolbar — survey-level status + Preview +
 lifecycle actions, always visible across section editing and the settings
 panel (moved out of the top navbar). The read-only banner is folded in:

@@ -9,6 +9,7 @@ from . import analytics_views
 from . import share_views
 from . import org_views
 from . import public_results_editor
+from . import abuse_review_views
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -45,6 +46,7 @@ urlpatterns = [
     # WYSIWYG survey editor
     path('editor/surveys/new/', editor_views.editor_survey_create, name='editor_survey_create'),
     path('editor/generation/<int:event_id>/', editor_views.editor_generation_status, name='editor_generation_status'),
+    path('editor/abuse-review/<str:token>/', abuse_review_views.abuse_review, name='abuse_review'),
     path('editor/surveys/<uuid:survey_uuid>/', editor_views.editor_survey_detail, name='editor_survey_detail'),
     path('editor/surveys/<uuid:survey_uuid>/settings/', editor_views.editor_survey_settings, name='editor_survey_settings'),
     path('editor/surveys/<uuid:survey_uuid>/settings-panel/', editor_views.editor_survey_settings_panel, name='editor_survey_settings_panel'),
@@ -162,6 +164,7 @@ urlpatterns = [
     path('surveys/<str:survey_slug>/language/', views.survey_language_select, name='survey_language_select'),
     path('surveys/<str:survey_slug>/password/', views.survey_password_gate, name='survey_password_gate'),
     path('surveys/<str:survey_slug>/thanks/', views.survey_thanks, name='survey_thanks'),
+    path('surveys/<str:survey_slug>/report/', abuse_review_views.survey_report, name='survey_report'),
     # Before the <section_name> catch-all, or 'upload' would resolve as a section.
     path('surveys/<str:survey_slug>/upload/', views.survey_upload, name='survey_upload'),
     path('surveys/<str:survey_slug>/layers/<int:layer_id>.geojson', views.survey_layer_geojson, name='survey_layer_geojson'),
