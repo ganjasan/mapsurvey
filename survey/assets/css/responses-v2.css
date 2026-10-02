@@ -143,6 +143,13 @@
 .rv2-kpi b.rv2-plain { color: #111827; }
 .rv2-kpi span { font-size: 0.72rem; color: #6b7280; }
 .rv2-kpi .rv2-delta { font-size: 0.72rem; color: #16a34a; font-weight: 600; }
+/* Empty-session line + Show/Hide (spec responses-empty-sessions). */
+.rv2-empty-line { font-size: 0.72rem; color: #6b7280; }
+.rv2-kpi .rv2-empty-line { display: block; }
+.rv2-empty-toggle {
+    background: none; border: 0; padding: 0; font: inherit;
+    color: var(--accent, #2563eb); text-decoration: underline; cursor: pointer;
+}
 .rv2-kpi.rv2-flag { border-color: #fcd34d; background: #fffbeb; }
 .rv2-kpi.rv2-flag b { color: #d97706; }
 

@@ -1,0 +1,17 @@
+{% autoescape off %}Review: {{ review_url }}
+
+{% if review.source == 'report' %}A respondent reported "{{ survey.name }}"{% if reason_label %} — {{ reason_label }}{% endif %}. The survey still serves.{% if review.note %}
+Report: {{ review.note }}{% endif %}{% else %}"{{ survey.name }}" is HELD (score {{ review.score }}, trigger {{ review.trigger }}). Respondents see "not available" until you decide.{% endif %}
+
+Signals:{% for s in signals %}
+- {{ s.key }} (+{{ s.weight }}){% if s.excerpt %}: {{ s.excerpt }}{% endif %}{% empty %}
+- (none){% endfor %}
+
+Survey: {{ survey_url }}
+Editor: {{ editor_url }}
+{% if account %}
+Account: {{ account.username }} @{{ account.email_domain }}, joined {{ account.joined|date:"Y-m-d H:i" }} UTC, {{ account.surveys }} survey(s), {{ account.sessions }} session(s){% if not account.is_active %}, INACTIVE{% endif %}
+Prior reviews: {{ account.prior_reviews|length }}
+{% endif %}
+On the review page: Release (survey serves again) or Confirm phishing (account deactivated, all its surveys closed). Nothing happens until you click.
+{% endautoescape %}

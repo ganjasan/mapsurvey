@@ -57,6 +57,7 @@ the action-styled Trash button (openspec: responses-v2-refactor, 4.3).
         <span class="text-muted ml-2" style="font-size:0.85rem;">
             {{ total }} shown
         </span>
+        {% if not show_trash %}<span class="text-muted ml-2" style="font-size:0.85rem;">{% include "editor/partials/_empty_sessions_toggle.html" %}</span>{% endif %}
         <button type="button" id="show-all-rows-btn" class="btn btn-sm btn-link p-0 ml-2" style="font-size:0.75rem;color:#6b7280;display:none;" onclick="filterManager.showAll()">
             <i class="fas fa-eye"></i> Show hidden
         </button>
@@ -324,7 +325,7 @@ filter and the sort order move into the bottom sheet.
         {% endif %}
         {% for col in columns %}
         <td data-col="{{ col.key }}">
-            {% if col.key == 'id' %}{% if RESPONSES_V2 %}#{{ row.seq|default:row.id }}{% else %}#{{ row.id }}{% endif %}
+            {% if col.key == 'id' %}{% if RESPONSES_V2 %}{% if row.seq %}#{{ row.seq }}{% elif 'empty' in row.issues %}—{% else %}#{{ row.id }}{% endif %}{% else %}#{{ row.id }}{% endif %}
             {% elif col.key == 'duration' %}{{ row.duration_display|default:"—" }}
             {% elif col.key == 'validation_status' %}
                 {% if RESPONSES_V2 %}
@@ -407,7 +408,7 @@ is displayed; only one is ever visible.
 <div class="rv2-mcards">
     {% for row in rows %}
     <button type="button" class="rv2-feed-item rv2-mcard" onclick="rv2OpenSession({{ row.session_id }})">
-        <span class="rv2-feed-ava">#{{ row.seq|default:row.id }}</span>
+        <span class="rv2-feed-ava">{% if row.seq %}#{{ row.seq }}{% elif 'empty' in row.issues %}—{% else %}#{{ row.id }}{% endif %}</span>
         <span class="rv2-feed-mid">
             <b>{{ row.start_datetime|date:"j M H:i" }}{% if row.duration_display %} · {{ row.duration_display }}{% endif %}</b>
             <span>{% if row.m_geo %}{{ row.m_geo }} geo · {% endif %}{% if row.m_excerpt %}“{{ row.m_excerpt }}”{% elif not row.m_geo %}no answers{% endif %}</span>

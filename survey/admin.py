@@ -16,6 +16,7 @@ from .models import (
     AIGenerationEvent,
     ProInterest,
     CommentThread, Comment, CommentAttachment,
+    AbuseEvent, ContentReview,
 )
 from .funnel import dashboard_context
 from leaflet.admin import LeafletGeoAdmin
@@ -144,6 +145,42 @@ class AuditLogAdmin(admin.ModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(ContentReview)
+class ContentReviewAdmin(admin.ModelAdmin):
+    """Where a held survey is found when the review mail is lost
+    (change phishing-content-review). Decisions happen on the review page."""
+
+    list_display = ('created_at', 'status', 'survey', 'score', 'source', 'trigger', 'report_count', 'decided_at', 'review_link')
+    list_filter = ('status', 'source')
+    search_fields = ('survey__name', 'survey__uuid', 'survey__created_by__username')
+    readonly_fields = ('survey', 'source', 'trigger', 'score', 'signals', 'fingerprint', 'report_count',
+                       'created_at', 'decided_at', 'decided_by', 'review_link')
+    date_hierarchy = 'created_at'
+
+    @admin.display(description='Review page')
+    def review_link(self, obj):
+        from django.utils.html import format_html
+        from .content_screening import review_path
+        return format_html('<a href="{}">open</a>', review_path(obj))
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(AbuseEvent)
+class AbuseEventAdmin(admin.ModelAdmin):
+    list_display = ('created_at', 'defense', 'ip', 'detail')
+    list_filter = ('defense',)
+    search_fields = ('detail', 'ip')
+    date_hierarchy = 'created_at'
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
         return False
 
 

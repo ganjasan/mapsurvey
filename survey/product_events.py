@@ -45,6 +45,13 @@ COMMENT_THREAD_OPENED = 'comment_thread_opened'
 COMMENT_REPLY_POSTED = 'comment_reply_posted'
 COMMENT_THREAD_RESOLVED = 'comment_thread_resolved'
 
+# In-app changelog (change in-app-changelog): is anyone reading the entries.
+# `shown` is sent from the browser on card render; the other two from the
+# views that move the seen watermark. Every one carries `entry_id`.
+CHANGELOG_CARD_SHOWN = 'changelog_card_shown'
+CHANGELOG_CARD_DISMISSED = 'changelog_card_dismissed'   # how: got_it | close | muted
+CHANGELOG_PAGE_VIEWED = 'changelog_page_viewed'
+
 CREATOR_FUNNEL_EVENTS = (
     CREATOR_REGISTERED,
     CREATOR_ACTIVATED,

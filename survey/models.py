@@ -1299,6 +1299,7 @@ class AbuseEvent(models.Model):
         ('ratelimit', 'Rate Limit'),
         ('honeypot', 'Honeypot'),
         ('email_domain', 'Disposable Email Domain'),
+        ('content_screen', 'Content screening'),
     )
 
     defense = models.CharField(max_length=20, choices=DEFENSE_CHOICES, db_index=True)
@@ -1313,6 +1314,64 @@ class AbuseEvent(models.Model):
 
     def __str__(self):
         return f"{self.defense} from {self.ip} at {self.created_at}"
+
+
+class ContentReview(models.Model):
+    """A survey waiting for, or decided by, the owner's phishing review.
+
+    Written by `survey/content_screening.py` when a published survey's text
+    scores at or above the hold threshold (`source='screen'`, `status='pending'`)
+    or when a respondent reports it (`source='report'`, `status='reported'`).
+    A `pending` row is what makes `check_survey_access` serve the neutral
+    unavailable page; a `reported` row holds nothing — a report must never let
+    anyone take a competitor's survey offline. Decisions are the owner's only:
+    `cleared` (release) or `confirmed` (account deactivated, surveys closed).
+
+    Anchored to the CANONICAL survey — `publish_draft()` copies the draft's
+    text onto it, so the row survives versioning. `fingerprint` is the SHA-256
+    of the screened text: a cleared survey is not held again until its text
+    changes. See openspec/changes/phishing-content-review/design.md (D1, D4).
+    """
+
+    STATUS_CHOICES = (
+        ('pending', 'Held, waiting for review'),
+        ('reported', 'Reported by a respondent'),
+        ('cleared', 'Released'),
+        ('confirmed', 'Confirmed phishing'),
+    )
+    SOURCE_CHOICES = (
+        ('screen', 'Content screening'),
+        ('report', 'Respondent report'),
+    )
+    OPEN_STATUSES = ('pending', 'reported')
+
+    survey = models.ForeignKey('SurveyHeader', on_delete=models.CASCADE, related_name='content_reviews')
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default='pending')
+    source = models.CharField(max_length=8, choices=SOURCE_CHOICES, default='screen')
+    trigger = models.CharField(max_length=16, blank=True, default='')
+    score = models.IntegerField(default=0)
+    signals = models.JSONField(default=list, blank=True)
+    fingerprint = models.CharField(max_length=64, blank=True, default='')
+    report_count = models.PositiveIntegerField(default=0)
+    note = models.TextField(blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    decided_at = models.DateTimeField(null=True, blank=True)
+    decided_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='content_reviews_decided',
+    )
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['survey', 'status'], name='survey_contentreview_open_idx')]
+
+    def __str__(self):
+        return f"review #{self.pk} {self.status} survey={self.survey_id} score={self.score}"
+
+    @property
+    def is_open(self):
+        return self.status in self.OPEN_STATUSES
 
 
 class AuditLog(models.Model):
@@ -1337,6 +1396,7 @@ class AuditLog(models.Model):
         ('password_set', 'Survey password set'),
         ('password_remove', 'Survey password removed'),
         ('token_regenerate', 'Test token regenerated'),
+        ('content_screen_close', 'Survey closed after a confirmed phishing review'),
     )
 
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
@@ -1620,6 +1680,13 @@ class CreatorPreferences(models.Model):
         max_length=10, blank=True, default='',
         help_text=_('Creator interface language. Empty = follow the browser.'),
     )
+    # In-app changelog (change in-app-changelog). `changelog_seen` is a watermark,
+    # the id of the newest entry this creator has seen -- ids are `YYYY-MM-DD-slug`,
+    # so "unseen" is a string comparison and one column, not a row per entry.
+    # Empty = never looked, which is what a creator who predates the first entry
+    # must read as. `changelog_cards` off hides the card only; the page stays.
+    changelog_seen = models.CharField(max_length=80, blank=True, default='')
+    changelog_cards = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

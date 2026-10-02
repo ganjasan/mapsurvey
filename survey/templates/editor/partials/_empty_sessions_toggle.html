@@ -1,0 +1,22 @@
+{% load i18n %}
+{% comment %}
+Empty-session line + Show/Hide control (spec responses-empty-sessions). Rendered
+by the Overview KPI strip, its empty state and the Responses table toolbar, only
+when the version scope holds at least one empty session. The choice is the
+`rv2_show_empty` cookie, read server-side by analytics_dashboard and
+analytics_table, so the reload renders the right numbers first time.
+Context: empty_count, show_empty.
+{% endcomment %}
+{% if empty_count %}
+<span class="rv2-empty-line" data-testid="rv2-empty-sessions">
+    {% if show_empty %}
+    {% blocktrans count counter=empty_count %}including {{ counter }} opened without answering{% plural %}including {{ counter }} opened without answering{% endblocktrans %}
+    · <button type="button" class="rv2-empty-toggle" data-testid="rv2-empty-hide"
+              onclick="document.cookie='rv2_show_empty=;path=/editor/;max-age=0;samesite=lax';location.reload();">{% trans "Hide" %}</button>
+    {% else %}
+    {% blocktrans count counter=empty_count %}{{ counter }} opened without answering (hidden){% plural %}{{ counter }} opened without answering (hidden){% endblocktrans %}
+    · <button type="button" class="rv2-empty-toggle" data-testid="rv2-empty-show"
+              onclick="document.cookie='rv2_show_empty=1;path=/editor/;max-age=31536000;samesite=lax';location.reload();">{% trans "Show" %}</button>
+    {% endif %}
+</span>
+{% endif %}

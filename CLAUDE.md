@@ -231,6 +231,21 @@ Responses map alike; `layers.match_class` mirrors its matching for the server-si
 (`legend_for`, delivered as metadata). The object editor draws with its own code and does
 not honour rules yet.
 
+**In-app changelog (change `in-app-changelog`, issue #227)**: "What's new" entries are files in
+`survey/changelog/<YYYY-MM-DD>-<slug>.html` — a `---` header (`title`, `kind: new|fixed`,
+optional `link` URL name, optional `image` static path) followed by an HTML body, English only,
+shipped in the PR of the change they describe (format in `survey/changelog/README.md`; the loader
+is `survey/changelog.py`, read once per process). Seen-state is ONE watermark per creator,
+`CreatorPreferences.changelog_seen` = the newest id seen; ids start with the date, so "unseen" is a
+string comparison. The card (`editor/partials/_whats_new_card.html`, included from
+`editor_base.html` AND `base.html`, never from `base_survey_template.html`; the `whats_new`
+context processor also returns nothing under `/surveys/` and `/r/`) shows only the latest unseen
+entry, once; "Got it" / × / the page / "Don't show these" all move the watermark.
+`changelog_cards` off hides the card only — the page `/editor/whats-new/`, the gift icon and the
+account-menu item stay. New accounts start seen (`seed_changelog_watermark` in `signals.py`).
+`ChangelogEntriesTest.test_shipped_entries_load` parses every file, so a malformed entry fails CI,
+not every editor page. The first entry (`2026-10-02-whats-new.html`) announces the cards themselves; #226 (empty sessions hidden by default) writes the next.
+
 **Comment threads (`CommentThread`/`Comment`/`CommentAttachment`, spec `survey-comment-threads`)**:
 workspace members discuss a survey where it lives — the survey as a whole, a question, a section, a respondent
 session or a public-results block — in ONE slide-in drawer (`editor/partials/_comments_drawer.html`, included
@@ -258,6 +273,20 @@ place (`edited_at`, no re-notification). Response anchors are labelled with the 
 (`comments.session_seq`), never the session id.
 
 **Session Management**: Survey sessions are created on first section view and tracked via `request.session['survey_session_id']`.
+
+**Empty sessions (change `hide-empty-sessions`, issue #226)**: a session with no top-level `Answer`
+(`parent_answer_id IS NULL`) is EMPTY — someone opened the survey and left (71% of external
+sessions in Sept 2026). One definition, `analytics.nonempty_sessions(qs)` / `empty_sessions(qs)`;
+`compute_session_issues`, the v2 Responses page and `export.excluded_sessions` all go through it.
+The v2 page hides empties unless the `rv2_show_empty` cookie is `1` (`analytics_views._show_empty`;
+the legacy page and every other `SurveyAnalyticsService` caller keep `include_empty=True` and see
+all sessions). `service.empty_count` feeds the "N opened without answering" line
+(`editor/partials/_empty_sessions_toggle.html`). Response numbers `#N` come from
+`service.sequence_numbers()` — rank among non-empty sessions; empty rows carry none — and
+`comments.session_seq` follows the same rule. "Empty" is not an Issues-menu entry on v2. Exports
+never contain empty sessions, whatever `include_all` says. The funnel/Perf pane (`SurveyEvent`) and
+the public results `response_count` still count every session. The section POST treats
+whitespace-only values as blank and stores text/number values stripped.
 
 **Data export (`survey/export.py`, spec `responses-export-formats`)**: `download_data` is a thin
 view; the work is one collector and several writers. `collect()` walks the database ONCE into an
@@ -337,6 +366,29 @@ Leaflet.draw tooltips pick tap-phrased strings via `pointer: coarse`
 (`survey/templatetags/i18n_extras.py`).
 
 **Registration abuse prevention**: `/accounts/register/` is served by `AbuseProtectedRegistrationView` (subclass of `AsyncEmailRegistrationView`). Three layered defenses run in order: honeypot field `website` (silent fake-success redirect), per-IP rate limit (`django-ratelimit`, fail-open on Redis outage), Cloudflare Turnstile siteverify (fail-closed on network error, dev-bypass when `TURNSTILE_SECRET_KEY=""`). Helpers in `survey/abuse.py`. Audit log in `AbuseEvent` model. Real client IP via `survey.middleware.CloudflareIPMiddleware` reading `CF-Connecting-IP` only when `CLOUDFLARE_TRUSTED=True`.
+
+**Content screening (phishing hold, change `phishing-content-review`)**: registration defenses stop
+bots; `survey/content_screening.py` is for the human who publishes an "XFINITY — click here" page on
+our domain. `screen_survey(survey, trigger=…)` runs at the three moments creator text goes live —
+`editor_survey_transition` to `published`, `editor_publish_draft` (on the CANONICAL survey) and the
+live saves of `redirect_url`/`thanks_html` (`_rescreen_if_live`) — and NOWHERE else: drafts and
+`testing` are not screened. `collect_text()` gathers name, section/question text with translations,
+thanks page and `redirect_url`; `score()` is pure (no DB, no network) over the signal table at the top of
+the module (`WEIGHTS`, shorteners, trackers, brand terms, lure phrases, padding, ≤1 question, account
+age, disposable domain) — a new incident is a row there, never a new code path. At or above
+`CONTENT_SCREENING_HOLD_THRESHOLD` (7, calibrated on the 2026-10-02 scan: incidents 19 and 8, best
+legitimate 5) the survey keeps `status='published'` but gets a `ContentReview(status='pending')`;
+`check_survey_access` then serves the same 404 `survey_unavailable.html` an unknown UUID gets, the
+creator sees a calm banner with NO reasons, and `ABUSE_REVIEW_EMAIL` (default `CONTACT_EMAIL`) gets one
+mail with a signed link to `/editor/abuse-review/<token>/`. **Nothing bans automatically**: the staff-only
+page's Release / Confirm phishing are POSTs (mail scanners prefetch GETs), and `confirm_phishing` is the
+one place that deactivates an account, closes its surveys (audit rows), kills its sessions. A `cleared`
+review remembers the content `fingerprint`, so a released survey is re-screened only when its text
+changes. Screening fails OPEN (any exception → logged, publish completes), the notice falls back to a
+synchronous send if the broker refuses the task, and `CONTENT_SCREENING=False` stops new holds without
+releasing existing ones (that is the owner's click, or the admin). Respondent pages carry the
+`_abuse_footer.html` notice + `/surveys/<uuid>/report/`; a report opens a `reported` review that holds
+nothing. Every hold/release/confirm/report writes an `AbuseEvent(defense='content_screen')` with ids only.
 
 **Acquisition metrics (top of the funnel)**: search impressions and clicks, landing visits and the
 channel mix are read on the PostHog **AARRR** dashboard (`POSTHOG_AARRR_DASHBOARD_URL`, project

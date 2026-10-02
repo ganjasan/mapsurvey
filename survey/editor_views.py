@@ -11,7 +11,7 @@ from django.db import transaction
 from django.db import models
 from django.db.models import Q, Max, Count
 from django.http import HttpResponse, Http404, JsonResponse
-from django.urls import reverse
+from django.urls import reverse, NoReverseMatch
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.utils import timezone, translation
 from django.utils.html import strip_tags
@@ -38,6 +38,7 @@ from .question_types import CHOICE_TYPES
 from .cloning import clone_question, clone_section
 from .html_sanitize import coerce_creator_html
 from .translation_gaps import survey_translation_gaps
+from .content_screening import screen_survey, pending_review_for
 from .editor_forms import (
     SurveyHeaderForm, SurveyCreateForm, SurveyBriefForm, SurveyRenameForm,
     SurveySectionForm, QuestionForm,
@@ -539,6 +540,7 @@ def editor_survey_detail(request, survey_uuid):
             )
 
     return render(request, 'editor/survey_detail.html', {
+        'pending_review': pending_review_for(survey) if survey.status == 'published' else None,
         'thread_counts': _thread_counts(survey, request.user),
         'visibility_lint_hints': visibility_lint_hints,
         'session_count': survey.surveysession_set.count(),
@@ -562,6 +564,13 @@ def editor_survey_detail(request, survey_uuid):
 
 # ─── Survey settings ─────────────────────────────────────────────────────────
 
+def _rescreen_if_live(survey):
+    """`redirect_url` and `thanks_html` stay editable on a published survey —
+    the one way to put a lure on a live page after a clean publish."""
+    if survey.status == 'published':
+        screen_survey(survey, trigger='live_edit')
+
+
 @survey_permission_required('owner')
 def editor_survey_settings(request, survey_uuid):
     survey = request.survey
@@ -569,6 +578,7 @@ def editor_survey_settings(request, survey_uuid):
         form = SurveyHeaderForm(request.POST, request.FILES, instance=survey)
         if form.is_valid():
             form.save()
+            _rescreen_if_live(survey)
             return redirect('editor_survey_settings', survey_uuid=survey.uuid)
     else:
         form = SurveyHeaderForm(instance=survey)
@@ -617,6 +627,7 @@ def editor_survey_settings_panel(request, survey_uuid):
         form = SurveyHeaderForm(request.POST, request.FILES, instance=survey)
         if form.is_valid():
             form.save()
+            _rescreen_if_live(survey)
             if _is_ajax(request):
                 return JsonResponse({'ok': True})
             from django.urls import reverse
@@ -655,6 +666,7 @@ def editor_survey_thanks_panel(request, survey_uuid):
                 thanks[lang] = cleaned
         survey.thanks_html = thanks
         survey.save(update_fields=['thanks_html'])
+        _rescreen_if_live(survey)
         # The "See the results" toggle lives on the results page; save it here too.
         # A hidden marker tells us the checkbox was actually in the submitted form
         # (an unchecked box sends nothing), so a stale form can't clobber it.
@@ -2489,6 +2501,9 @@ def editor_survey_transition(request, survey_uuid):
             scaffold_page(survey)
         except Exception:
             logger.exception('public results scaffold failed for survey %s', survey.id)
+        # Phishing screening: may HOLD the survey (respondents see a neutral
+        # page) until the owner decides. Fails open inside, never blocks.
+        screen_survey(survey, trigger='publish')
 
     if request.headers.get('HX-Request'):
         return HttpResponse(status=204, headers={'HX-Trigger': 'statusChanged'})
@@ -2629,6 +2644,8 @@ def editor_publish_draft(request, survey_uuid):
         return JsonResponse({'issues': e.issues}, status=409)
 
     audit(request, 'draft_publish', canonical, draft_uuid=str(survey.uuid), version=canonical.version_number)
+    # The draft's text now lives on the canonical survey — screen that.
+    screen_survey(canonical, trigger='draft_publish')
     return redirect('editor_survey_detail', survey_uuid=canonical.uuid)
 
 
@@ -2705,3 +2722,94 @@ def set_creator_language(request):
         samesite=settings.LANGUAGE_COOKIE_SAMESITE,
     )
     return response
+
+
+# ── In-app changelog (change in-app-changelog, issue #227) ──────────────────
+
+def _changelog_prefs(user):
+    prefs, _created = CreatorPreferences.objects.get_or_create(user=user)
+    return prefs
+
+
+def _mark_changelog_seen(prefs):
+    """Move the watermark to the newest entry. Idempotent; a no-op with no entries."""
+    from . import changelog
+    newest = changelog.latest()
+    if newest is None or prefs.changelog_seen == newest.id:
+        return None
+    prefs.changelog_seen = newest.id
+    prefs.save(update_fields=['changelog_seen', 'updated_at'])
+    return newest
+
+
+@login_required
+def whats_new_page(request):
+    """Every entry, newest first; then the watermark moves.
+
+    A GET with a write, deliberately: the deep link from the card and the menu
+    item must count as "seen" without a round trip. The highlight is computed
+    BEFORE the watermark moves so this render shows what was new; a reload
+    shows nothing highlighted. The write is idempotent and only ever marks the
+    requester's own changelog read, so a forged GET gains nothing.
+    """
+    from . import changelog
+    prefs = _changelog_prefs(request.user)
+    unseen_ids = {e.id for e in changelog.unseen(prefs.changelog_seen)}
+    entries = changelog.entries()
+    newest = _mark_changelog_seen(prefs)
+    if newest is not None:
+        pe.emit(pe.CHANGELOG_PAGE_VIEWED, request.user.pk, {'entry_id': newest.id})
+    rows = []
+    for entry in entries:
+        link = ''
+        if entry.link:
+            try:
+                link = reverse(entry.link)
+            except NoReverseMatch:
+                # An entry pointing at a URL name that was renamed since: the page
+                # still renders, just without the "Open" link.
+                link = ''
+        rows.append({'entry': entry, 'is_new': entry.id in unseen_ids, 'link': link})
+    return render(request, 'editor/whats_new.html', {
+        'rows': rows,
+        'new_count': len(unseen_ids),
+        'cards_enabled': prefs.changelog_cards,
+    })
+
+
+@require_POST
+@login_required
+def whats_new_seen(request):
+    """The card's "Got it" / ×: everything seen, one event saying how."""
+    from . import changelog
+    how = request.POST.get('how', '')
+    if how not in ('got_it', 'close'):
+        return HttpResponse(status=400)
+    prefs = _changelog_prefs(request.user)
+    newest = changelog.latest()
+    _mark_changelog_seen(prefs)
+    if newest is not None:
+        pe.emit(pe.CHANGELOG_CARD_DISMISSED, request.user.pk,
+                {'entry_id': newest.id, 'how': how})
+    return HttpResponse(status=204)
+
+
+@require_POST
+@login_required
+def whats_new_cards(request):
+    """The "Tell me about updates" switch. Off also marks everything seen: the
+    creator muting the card has looked at what it says."""
+    from . import changelog
+    enabled = request.POST.get('enabled', '')
+    if enabled not in ('0', '1'):
+        return HttpResponse(status=400)
+    prefs = _changelog_prefs(request.user)
+    prefs.changelog_cards = enabled == '1'
+    prefs.save(update_fields=['changelog_cards', 'updated_at'])
+    if enabled == '0':
+        newest = changelog.latest()
+        _mark_changelog_seen(prefs)
+        if newest is not None:
+            pe.emit(pe.CHANGELOG_CARD_DISMISSED, request.user.pk,
+                    {'entry_id': newest.id, 'how': 'muted'})
+    return HttpResponse(status=204)

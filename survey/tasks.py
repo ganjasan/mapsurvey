@@ -55,6 +55,24 @@ def send_thread_notification(self, thread_id, comment_id, actor_id, recipient_id
         raise self.retry(exc=exc)
 
 
+@shared_task(bind=True, max_retries=3, default_retry_delay=60)
+def send_abuse_review_notice(self, review_id):
+    """Mail the owner about a held or reported survey (change phishing-content-review).
+    Same retry/report shape as the comment notification; the inline fallback
+    in `content_screening.notify_owner` covers a broker that is down."""
+    from .content_screening import send_notice
+    from .models import ContentReview
+
+    review = ContentReview.objects.select_related('survey', 'survey__created_by').filter(pk=review_id).first()
+    if review is None:
+        logger.warning('review notice %s: row gone before send', review_id)
+        return
+    try:
+        send_notice(review, fail_silently=False)
+    except Exception as exc:  # noqa: BLE001 — retry, then let task_failure report it
+        raise self.retry(exc=exc)
+
+
 @shared_task(bind=True)
 def run_survey_import(self, job_id):
     """Import the archive of a SurveyImportJob (change layer-memory-diet).

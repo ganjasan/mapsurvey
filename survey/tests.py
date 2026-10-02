@@ -12444,11 +12444,12 @@ class ResponsesV2NavigationTest(TestCase):
 
     def test_violations_badge_on_responses_pane_item(self):
         """
-        GIVEN a survey with one empty (flagged) session
+        GIVEN a survey with one empty (flagged) session and empty sessions shown
         WHEN GET the v2 dashboard
         THEN the Responses pane item carries the violations badge
         """
         SurveySession.objects.create(survey=self.survey)  # no answers → 'empty'
+        self.client.cookies['rv2_show_empty'] = '1'
         response = self.client.get(self.url)
         self.assertContains(response, 'rv2-responses-badge')
 
@@ -12617,6 +12618,9 @@ class ResponsesV2TableTest(TestCase):
         )
         self.sess_empty = SurveySession.objects.create(survey=self.survey)
         self.url = f'/editor/surveys/{self.survey.uuid}/analytics/table/'
+        # These tests exercise the table with its empty session listed, so they
+        # show empty sessions the way a creator does (spec responses-empty-sessions).
+        self.client.cookies['rv2_show_empty'] = '1'
 
     def test_duration_reads_the_session_row(self):
         """
@@ -12738,17 +12742,19 @@ class ResponsesV2TableTest(TestCase):
     @override_settings(RESPONSES_V2=True)
     def test_v2_sequence_numbers(self):
         """
-        GIVEN two sessions in start order
+        GIVEN two answered sessions in start order
         WHEN GET the table partial
         THEN rows show per-survey sequence numbers, not raw database ids
         """
+        Answer.objects.create(survey_session=self.sess_empty, question=self.q, text='now answered')
         extra = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=extra, question=self.q, text='also answered')
         self.sess_complete.is_deleted = True
         self.sess_complete.save()
         response = self.client.get(self.url)
         content = response.content.decode()
-        # Two active sessions → sequences 1 and 2; the newest session's raw pk
-        # is greater than any sequence and must not leak into the # column.
+        # Two active answered sessions → sequences 1 and 2; the newest session's
+        # raw pk is greater than any sequence and must not leak into the # column.
         self.assertIn('#1\n', content)
         self.assertIn('#2\n', content)
         self.assertNotIn(f'#{extra.id}\n', content)
@@ -12756,16 +12762,23 @@ class ResponsesV2TableTest(TestCase):
     @override_settings(RESPONSES_V2=True)
     def test_issues_menu_offers_individual_violation_types(self):
         """
-        GIVEN a survey with an empty session (one violation type)
+        GIVEN a survey whose answered session skipped the last section (one
+              violation type) and an empty session, shown
         WHEN GET the table partial
         THEN the Issues chip opens a multi-select menu and per-type counts ship
-             with the partial, so individual violations stay selectable
+             with the partial, so individual violations stay selectable — but
+             "empty" is not among them: the show/hide control owns empty sessions
         """
+        s2 = SurveySection.objects.create(survey_header=self.survey, name='s2', code='S2')
+        self.s1.next_section = s2
+        self.s1.save()
+        Question.objects.create(survey_section=s2, name='Last', code='q2', input_type='text', order_number=1)
         response = self.client.get(self.url)
         self.assertContains(response, 'rv2IssuesMenu(event,')
         self.assertContains(response, 'anomaly-counts-data')
         content = response.content.decode()
-        self.assertIn('"empty"', content)
+        self.assertIn('"incomplete"', content)
+        self.assertNotIn('"empty"', content.split('id="anomaly-counts-data">')[1].split('<')[0])
 
     @override_settings(RESPONSES_V2=True)
     def test_issues_multi_select_filters_rows(self):
@@ -15836,6 +15849,9 @@ class AutoValidationBasicTest(TestCase):
         session = self.client.session
         session['active_org_id'] = self.org.id
         session.save()
+        # Empty sessions are hidden by default on v2; the filter is exercised
+        # with them shown (spec responses-empty-sessions).
+        self.client.cookies['rv2_show_empty'] = '1'
         url = f'/editor/surveys/{self.survey.uuid}/analytics/table/?issues=empty'
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200)
@@ -43699,6 +43715,7 @@ class CommentDeepLinkTest(_CommentFixture):
         WHEN their deep-link paths are built
         THEN each points at the right editor page with the object selected and the thread fragment
         """
+        Answer.objects.create(survey_session=self.session, question=self.q1, text='answered')
         tq, _ = self._open('question', self.q2.id)
         ts, _ = self._open('section', self.s1.id)
         tse, _ = self._open('session', self.session.id)
@@ -43853,7 +43870,7 @@ class CommentA11yMarkupTest(_CommentFixture):
 
     def test_session_label_uses_the_responses_ordinal(self):
         """
-        GIVEN three sessions where the thread is on the second by start time
+        GIVEN three answered sessions where the thread is on the second by start time
         WHEN the anchor label is resolved
         THEN it reads Response #2, matching the Responses page numbering, not the database id
         """
@@ -43861,7 +43878,9 @@ class CommentA11yMarkupTest(_CommentFixture):
         base = timezone.now() - timedelta(days=1)
         SurveySession.objects.filter(pk=self.session.pk).update(start_datetime=base)
         s2 = SurveySession.objects.create(survey=self.survey, start_datetime=base + timedelta(hours=1))
-        SurveySession.objects.create(survey=self.survey, start_datetime=base + timedelta(hours=2))
+        s3 = SurveySession.objects.create(survey=self.survey, start_datetime=base + timedelta(hours=2))
+        for sess in (self.session, s2, s3):
+            Answer.objects.create(survey_session=sess, question=self.q1, text='answered')
         thread, _ = self._open('session', s2.id, 'second one')
         self.assertEqual(_cm.resolve_anchor(thread).label, 'Response #2')
 
@@ -45164,6 +45183,7 @@ class ExportFormatsTest(TestCase):
         THEN it has the documented columns and the end time, tags and notes
         """
         s = self._session(tags=['field', 'verified'], notes='called back')
+        Answer.objects.create(survey_session=s, question=self.q_weather, selected_choices=['sun'])
         s.mark_completed()
         wb = self._workbook(self._download(format='xlsx'))
         header, rows = self._rows(wb['sessions'])
@@ -45953,6 +45973,1446 @@ class StoryDisplayOrderTest(TestCase):
         Story.objects.filter(slug='olney-white-squirrel-count').update(position=1)
         call_command('seed_story', 'olney-white-squirrel-count', stdout=StringIO())
         self.assertEqual(Story.objects.get(slug='olney-white-squirrel-count').position, 1)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# In-app changelog (change in-app-changelog, issue #227)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _changelog_dir(files):
+    """A temporary entries directory with the given {filename: text}."""
+    import tempfile as _tempfile
+    directory = _tempfile.mkdtemp(prefix='changelog-')
+    for name, text in files.items():
+        with open(os.path.join(directory, name), 'w', encoding='utf-8') as fh:
+            fh.write(text)
+    return directory
+
+
+_ENTRY_A = """---
+title: Export as Excel
+kind: new
+---
+<p>Five formats in the Export dialog.</p>
+"""
+_ENTRY_B = """---
+title: Empty sessions are now hidden
+kind: new
+link: editor
+image: favicon-32x32.png
+---
+<p>Responses leave out sessions where nobody answered.</p>
+<p><strong>Why.</strong> They outnumbered real responses.</p>
+"""
+_ENTRY_FIX = """---
+title: Geo answer edit no longer fails
+kind: fixed
+---
+<p>It saves again.</p>
+"""
+
+
+class _ChangelogDirMixin:
+    """Point the loader at a temporary directory for the test's lifetime."""
+
+    def use_entries(self, files):
+        from survey import changelog
+        directory = _changelog_dir(files)
+        patcher = mock.patch.object(changelog, 'ENTRIES_DIR', directory)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        changelog.clear_cache()
+        self.addCleanup(changelog.clear_cache)
+        return directory
+
+
+class ChangelogEntriesTest(_ChangelogDirMixin, SimpleTestCase):
+    """The repo-authored entry files and their loader."""
+
+    def test_well_formed_entry_loads(self):
+        """
+        GIVEN an entry file with a valid header and body
+        WHEN the loader reads the directory
+        THEN the entry carries id, date, title, kind, link, image and body
+        """
+        from survey import changelog
+        self.use_entries({'2026-10-06-empty-sessions.html': _ENTRY_B})
+        [entry] = changelog.entries()
+        self.assertEqual(entry.id, '2026-10-06-empty-sessions')
+        self.assertEqual(entry.date, '2026-10-06')
+        self.assertEqual(entry.title, 'Empty sessions are now hidden')
+        self.assertEqual(entry.kind, 'new')
+        self.assertEqual(entry.link, 'editor')
+        self.assertEqual(entry.image, 'favicon-32x32.png')
+        self.assertIn('<strong>Why.</strong>', entry.body)
+        self.assertEqual(changelog.latest(), entry)
+
+    def test_newest_first_and_unseen_watermark(self):
+        """
+        GIVEN two entries on different dates
+        WHEN they are loaded
+        THEN the newer comes first, is `latest()`, and `unseen()` compares ids
+             against the watermark as strings
+        """
+        from survey import changelog
+        self.use_entries({'2026-09-29-export-formats.html': _ENTRY_A,
+                          '2026-10-06-empty-sessions.html': _ENTRY_B})
+        ids = [e.id for e in changelog.entries()]
+        self.assertEqual(ids, ['2026-10-06-empty-sessions', '2026-09-29-export-formats'])
+        self.assertEqual(changelog.latest().id, '2026-10-06-empty-sessions')
+        self.assertEqual(len(changelog.unseen('')), 2)
+        self.assertEqual([e.id for e in changelog.unseen('2026-09-29-export-formats')],
+                         ['2026-10-06-empty-sessions'])
+        self.assertEqual(changelog.unseen('2026-10-06-empty-sessions'), ())
+
+    def test_malformed_entries_are_rejected(self):
+        """
+        GIVEN entry files with a missing title, an unknown kind, a bad filename,
+              an unclosed header, an unknown key or an empty body
+        WHEN the loader reads them
+        THEN each raises ChangelogError naming the file
+        """
+        from survey import changelog
+        bad = {
+            '2026-10-06-no-title.html': "---\nkind: new\n---\n<p>x</p>\n",
+            '2026-10-06-bad-kind.html': "---\ntitle: T\nkind: shiny\n---\n<p>x</p>\n",
+            'Empty_Sessions.html': _ENTRY_B,
+            '2026-10-06-unclosed.html': "---\ntitle: T\nkind: new\n<p>x</p>\n",
+            '2026-10-06-unknown-key.html': "---\ntitle: T\nkind: new\ncolour: red\n---\n<p>x</p>\n",
+            '2026-10-06-no-body.html': "---\ntitle: T\nkind: new\n---\n\n",
+        }
+        for name, text in bad.items():
+            with self.subTest(name=name):
+                self.use_entries({name: text})
+                with self.assertRaises(changelog.ChangelogError) as ctx:
+                    changelog.entries()
+                self.assertIn(name, str(ctx.exception))
+
+    def test_no_entries(self):
+        """
+        GIVEN an entries directory with only the README
+        WHEN the loader reads it
+        THEN there are no entries and `latest()` is None
+        """
+        from survey import changelog
+        self.use_entries({'README.md': '# nothing'})
+        self.assertEqual(changelog.entries(), ())
+        self.assertIsNone(changelog.latest())
+
+    def test_shipped_entries_load(self):
+        """
+        GIVEN the real survey/changelog/ directory in this checkout
+        WHEN the loader reads it
+        THEN every file parses -- a malformed entry fails here, not on every
+             editor page in production
+        """
+        from survey import changelog
+        changelog.clear_cache()
+        self.addCleanup(changelog.clear_cache)
+        for entry in changelog.entries():
+            self.assertTrue(entry.title)
+            self.assertIn(entry.kind, changelog.KINDS)
+
+
+class ChangelogContextTest(_ChangelogDirMixin, TestCase):
+    """The lazy `whats_new` context processor behind the navbar and the card."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="WN Org")
+        self.user = User.objects.create_user('wn_creator', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.use_entries({'2026-09-29-export-formats.html': _ENTRY_A,
+                          '2026-10-06-empty-sessions.html': _ENTRY_B})
+
+    def _resolve(self, user, path='/editor/'):
+        from django.test import RequestFactory
+        from survey.context_processors import whats_new
+        request = RequestFactory().get(path)
+        request.user = user
+        value = whats_new(request)['whats_new']
+        return dict(value)
+
+    def test_respondent_surfaces_cost_no_query(self):
+        """
+        GIVEN a signed-in creator with unseen entries
+        WHEN the value is resolved on a /surveys/ or /r/ path
+        THEN it is the empty shape and no query ran -- a creator on their own
+             survey's password gate or public results page gets no card
+        """
+        for path in ('/surveys/abc/', '/surveys/abc/password/', '/r/slug/'):
+            with self.subTest(path=path), self.assertNumQueries(0):
+                value = self._resolve(self.user, path)
+            self.assertFalse(value['show_card'])
+            self.assertEqual(value['unseen_count'], 0)
+
+    def test_anonymous_costs_no_query(self):
+        """
+        GIVEN an anonymous request
+        WHEN the lazy value is resolved
+        THEN it is the empty shape and no query ran
+        """
+        from django.contrib.auth.models import AnonymousUser
+        with self.assertNumQueries(0):
+            value = self._resolve(AnonymousUser())
+        self.assertFalse(value['show_card'])
+        self.assertEqual(value['unseen_count'], 0)
+
+    def test_creator_with_no_preferences_row_sees_everything_unseen(self):
+        """
+        GIVEN a creator who predates the changelog (no CreatorPreferences row)
+        WHEN the value is resolved
+        THEN both entries are unseen and the card shows the newest
+        """
+        value = self._resolve(self.user)
+        self.assertTrue(value['show_card'])
+        self.assertEqual(value['unseen_count'], 2)
+        self.assertEqual(value['latest'].id, '2026-10-06-empty-sessions')
+
+    def test_seen_watermark_hides_the_card(self):
+        """
+        GIVEN the watermark at the newest entry
+        WHEN the value is resolved
+        THEN nothing is unseen and no card shows
+        """
+        CreatorPreferences.objects.create(user=self.user, changelog_seen='2026-10-06-empty-sessions')
+        value = self._resolve(self.user)
+        self.assertFalse(value['show_card'])
+        self.assertEqual(value['unseen_count'], 0)
+
+    def test_cards_off_keeps_the_indicator(self):
+        """
+        GIVEN cards switched off and an unseen entry
+        WHEN the value is resolved
+        THEN no card, but the unseen count still feeds the badge and the dot
+        """
+        CreatorPreferences.objects.create(user=self.user, changelog_cards=False)
+        value = self._resolve(self.user)
+        self.assertFalse(value['show_card'])
+        self.assertEqual(value['unseen_count'], 2)
+        self.assertFalse(value['cards'])
+
+    def test_no_entries_means_nothing(self):
+        """
+        GIVEN no entries shipped yet
+        WHEN the value is resolved for a signed-in creator
+        THEN the empty shape comes back without touching preferences
+        """
+        self.use_entries({})
+        with self.assertNumQueries(0):
+            value = self._resolve(self.user)
+        self.assertFalse(value['show_card'])
+        self.assertIsNone(value['latest'])
+
+
+class WhatsNewViewsTest(_ChangelogDirMixin, TestCase):
+    """The page, the two POST endpoints, registration seeding and the template guard."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="WN Views Org")
+        self.user = User.objects.create_user('wn_views', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.force_login(self.user)
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+        self.use_entries({'2026-09-24-geo-edit.html': _ENTRY_FIX,
+                          '2026-09-29-export-formats.html': _ENTRY_A,
+                          '2026-10-06-empty-sessions.html': _ENTRY_B})
+
+    def _seen(self):
+        prefs = CreatorPreferences.objects.filter(user=self.user).first()
+        return prefs.changelog_seen if prefs else ''
+
+    def test_page_highlights_unseen_then_marks_seen(self):
+        """
+        GIVEN a creator whose watermark is at the oldest entry
+        WHEN they open the page twice
+        THEN the first render highlights the two newer entries, the "Earlier"
+             divider sits before the old one, the watermark moves, the event
+             fires once, and the second render highlights nothing
+        """
+        CreatorPreferences.objects.create(user=self.user, changelog_seen='2026-09-24-geo-edit')
+        with patch('survey.editor_views.pe.emit') as emit:
+            first = self.client.get(reverse('whats_new'))
+        self.assertEqual(first.status_code, 200)
+        html = first.content.decode()
+        self.assertEqual(html.count('wn-entry wn-new'), 2)
+        self.assertIn('Earlier', html)
+        self.assertIn('Empty sessions are now hidden', html)
+        self.assertIn('Geo answer edit no longer fails', html)
+        self.assertIn('wn-tag wn-fixed', html)
+        # `link: editor` resolves to an "Open" link; the other entries have none.
+        self.assertEqual(html.count('class="wn-go"'), 1)
+        self.assertIn('favicon-32x32', html)
+        self.assertEqual(self._seen(), '2026-10-06-empty-sessions')
+        emit.assert_called_once_with('changelog_page_viewed', self.user.pk,
+                                     {'entry_id': '2026-10-06-empty-sessions'})
+
+        with patch('survey.editor_views.pe.emit') as emit:
+            second = self.client.get(reverse('whats_new'))
+        self.assertEqual(second.content.decode().count('wn-entry wn-new'), 0)
+        self.assertNotIn('Earlier', second.content.decode())
+        emit.assert_not_called()
+
+    def test_page_with_no_entries(self):
+        """
+        GIVEN no entries shipped
+        WHEN the page is opened
+        THEN it says so and writes nothing
+        """
+        self.use_entries({})
+        response = self.client.get(reverse('whats_new'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Nothing yet', response.content.decode())
+
+    def test_got_it_marks_everything_seen(self):
+        """
+        GIVEN a creator with three unseen entries
+        WHEN the card posts how=got_it
+        THEN the watermark is the newest id, the event says how, and the next
+             editor page carries no card
+        """
+        with patch('survey.editor_views.pe.emit') as emit:
+            response = self.client.post(reverse('whats_new_seen'), {'how': 'got_it'})
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(self._seen(), '2026-10-06-empty-sessions')
+        emit.assert_called_once_with('changelog_card_dismissed', self.user.pk,
+                                     {'entry_id': '2026-10-06-empty-sessions', 'how': 'got_it'})
+        page = self.client.get(reverse('editor') + '?dashboard=1')
+        self.assertNotIn('id="whatsNewCard"', page.content.decode())
+
+    def test_seen_rejects_unknown_how_and_anonymous(self):
+        """
+        GIVEN the seen endpoint
+        WHEN it is posted with an unknown `how`, or by an anonymous client
+        THEN it answers 400 / redirects to login and writes nothing
+        """
+        self.assertEqual(self.client.post(reverse('whats_new_seen'), {'how': 'later'}).status_code, 400)
+        self.client.logout()
+        response = self.client.post(reverse('whats_new_seen'), {'how': 'got_it'})
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/accounts/login', response['Location'])
+        self.assertEqual(self._seen(), '')
+
+    def test_mute_from_the_card_marks_seen_too(self):
+        """
+        GIVEN a creator with unseen entries
+        WHEN they post enabled=0 (Don't show these)
+        THEN cards are off, the watermark moved, the event says muted, and the
+             dashboard shows no card but still the unseen-free indicator
+        """
+        with patch('survey.editor_views.pe.emit') as emit:
+            response = self.client.post(reverse('whats_new_cards'), {'enabled': '0'})
+        self.assertEqual(response.status_code, 204)
+        prefs = CreatorPreferences.objects.get(user=self.user)
+        self.assertFalse(prefs.changelog_cards)
+        self.assertEqual(prefs.changelog_seen, '2026-10-06-empty-sessions')
+        emit.assert_called_once_with('changelog_card_dismissed', self.user.pk,
+                                     {'entry_id': '2026-10-06-empty-sessions', 'how': 'muted'})
+
+    def test_re_enable_does_not_resurface_seen_entries(self):
+        """
+        GIVEN cards muted and everything seen
+        WHEN the creator posts enabled=1 from the page switch
+        THEN cards are on and the dashboard still shows no card
+        """
+        CreatorPreferences.objects.create(user=self.user, changelog_cards=False,
+                                          changelog_seen='2026-10-06-empty-sessions')
+        with patch('survey.editor_views.pe.emit') as emit:
+            self.assertEqual(self.client.post(reverse('whats_new_cards'), {'enabled': '1'}).status_code, 204)
+        emit.assert_not_called()
+        self.assertTrue(CreatorPreferences.objects.get(user=self.user).changelog_cards)
+        page = self.client.get(reverse('editor') + '?dashboard=1')
+        self.assertNotIn('id="whatsNewCard"', page.content.decode())
+        self.assertEqual(self.client.post(reverse('whats_new_cards'), {'enabled': 'maybe'}).status_code, 400)
+
+    def test_dashboard_carries_card_and_indicator_for_unseen(self):
+        """
+        GIVEN a creator who has seen nothing and has three unseen entries
+        WHEN they open the dashboard
+        THEN the card with the newest entry renders, the navbar dot and the
+             menu badge "3" are there
+        """
+        page = self.client.get(reverse('editor') + '?dashboard=1')
+        html = page.content.decode()
+        self.assertIn('id="whatsNewCard"', html)
+        self.assertIn('data-entry-id="2026-10-06-empty-sessions"', html)
+        self.assertIn('Empty sessions are now hidden', html)
+        self.assertIn('class="wn-dot"', html)
+        self.assertIn('<span class="wn-badge">3</span>', html)
+
+    def test_respondent_page_never_carries_the_card(self):
+        """
+        GIVEN the same creator with unseen entries
+        WHEN they open their own survey as a respondent
+        THEN the page carries no card markup and no changelog chrome
+        """
+        survey = SurveyHeader.objects.create(name='wn_survey', organization=self.org, status='published')
+        SurveySection.objects.create(
+            survey_header=survey, name='s1', title='S1', code='S1', is_head=True,
+            start_map_postion=Point(30.5, 60.0), start_map_zoom=14,
+        )
+        response = self.client.get(reverse('survey', kwargs={'survey_slug': survey.uuid}), follow=True)
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertNotIn('whatsNewCard', html)
+        self.assertNotIn('wn-nav-icon', html)
+
+    def test_registration_seeds_the_watermark(self):
+        """
+        GIVEN entries exist
+        WHEN a new account registers
+        THEN its preferences start at the newest id, so the first editor page
+             shows no card
+        """
+        from django_registration.signals import user_registered
+        newcomer = User.objects.create_user('wn_newcomer', password='pw')
+        user_registered.send(sender=self.__class__, user=newcomer, request=None)
+        prefs = CreatorPreferences.objects.get(user=newcomer)
+        self.assertEqual(prefs.changelog_seen, '2026-10-06-empty-sessions')
+        self.assertTrue(prefs.changelog_cards)
+
+    def test_registration_with_no_entries_seeds_empty(self):
+        """
+        GIVEN no entries shipped
+        WHEN a new account registers
+        THEN the watermark is empty and nothing raised
+        """
+        from django_registration.signals import user_registered
+        self.use_entries({})
+        newcomer = User.objects.create_user('wn_newcomer2', password='pw')
+        user_registered.send(sender=self.__class__, user=newcomer, request=None)
+        self.assertEqual(CreatorPreferences.objects.get(user=newcomer).changelog_seen, '')
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Empty sessions hidden on Responses and left out of exports
+# (change hide-empty-sessions, issue #226, spec responses-empty-sessions)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class _EmptySessionFixture(TestCase):
+    """A survey with a text, a number and a point question (+ a sub-question)."""
+
+    def setUp(self):
+        self.org = _make_org('EmptySessOrg')
+        self.owner = User.objects.create_user('emptysessowner', password='pass')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.client.login(username='emptysessowner', password='pass')
+        s = self.client.session
+        s['active_org_id'] = self.org.id
+        s.save()
+        self.survey = SurveyHeader.objects.create(
+            name='empty_sess_survey', organization=self.org, created_by=self.owner,
+            status='published', redirect_url='/thanks/',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', title='S1', code='S1', is_head=True,
+        )
+        self.q_text = Question.objects.create(
+            survey_section=self.section, name='Comment', code='ES_T', input_type='text', order_number=1,
+        )
+        self.q_num = Question.objects.create(
+            survey_section=self.section, name='Count', code='ES_N', input_type='number', order_number=2,
+        )
+        self.q_point = Question.objects.create(
+            survey_section=self.section, name='Where', code='ES_P', input_type='point', order_number=3,
+        )
+        self.q_sub = Question.objects.create(
+            survey_section=self.section, name='Why', code='ES_P_W', input_type='text',
+            parent_question_id=self.q_point, order_number=1,
+        )
+        self.url = f'/editor/surveys/{self.survey.uuid}/analytics/'
+        self.table_url = f'/editor/surveys/{self.survey.uuid}/analytics/table/'
+        self._clock = timezone.now() - timezone.timedelta(days=2)
+
+    def _session(self, answered=True, **kwargs):
+        self._clock += timezone.timedelta(minutes=1)
+        kwargs.setdefault('start_datetime', self._clock)
+        sess = SurveySession.objects.create(survey=self.survey, **kwargs)
+        if answered:
+            Answer.objects.create(survey_session=sess, question=self.q_text, text='hello')
+        return sess
+
+
+class EmptySessionDefinitionTest(_EmptySessionFixture):
+    """One helper decides emptiness for every surface."""
+
+    def test_session_without_answers_is_empty(self):
+        """
+        GIVEN one answered and one unanswered session
+        WHEN the helpers split them
+        THEN only the unanswered one is empty
+        """
+        from .analytics import empty_sessions, nonempty_sessions
+        answered = self._session()
+        blank = self._session(answered=False)
+        qs = SurveySession.objects.filter(survey=self.survey)
+        self.assertEqual(list(empty_sessions(qs)), [blank])
+        self.assertEqual(list(nonempty_sessions(qs)), [answered])
+
+    def test_child_only_session_is_empty(self):
+        """
+        GIVEN a session whose only answer row has a parent answer
+        WHEN emptiness is decided
+        THEN the session is empty (only top-level answers count)
+        """
+        from .analytics import empty_sessions
+        other = self._session(answered=False)
+        parent = Answer.objects.create(survey_session=other, question=self.q_point, point=Point(1, 2))
+        child_only = self._session(answered=False)
+        Answer.objects.create(survey_session=child_only, question=self.q_sub,
+                              parent_answer_id=parent, text='x')
+        self.assertIn(child_only, empty_sessions(SurveySession.objects.all()))
+        self.assertNotIn(other, empty_sessions(SurveySession.objects.all()))
+
+    def test_hidden_answer_counts(self):
+        """
+        GIVEN a session whose only answer was hidden by moderation
+        WHEN emptiness is decided
+        THEN the session is not empty
+        """
+        from .analytics import empty_sessions
+        sess = self._session(answered=False)
+        Answer.objects.create(survey_session=sess, question=self.q_text, text='rude', hidden=True)
+        self.assertFalse(empty_sessions(SurveySession.objects.filter(pk=sess.pk)).exists())
+
+    def test_layer_object_answer_counts(self):
+        """
+        GIVEN a session whose only answer is about a layer object
+        WHEN emptiness is decided
+        THEN the session is not empty
+        """
+        from .analytics import empty_sessions
+        from .models import LayerObject, SurveyMapLayer
+        geojson, count, _ = _validated_geojson_text(_zones_geojson().encode())
+        layer = SurveyMapLayer.objects.create(
+            survey=self.survey, name='Zones', geojson=geojson, feature_count=count, size_bytes=len(geojson),
+        )
+        obj = LayerObject.objects.create(layer=layer, key='o-1', title='Zone 1', position=1,
+                                         geometry=Point(13.4, 52.5))
+        sess = self._session(answered=False)
+        Answer.objects.create(survey_session=sess, question=self.q_text, layer_object=obj, text='nice')
+        self.assertFalse(empty_sessions(SurveySession.objects.filter(pk=sess.pk)).exists())
+
+    def test_issue_and_helper_agree(self):
+        """
+        GIVEN an answered and an empty session
+        WHEN compute_session_issues runs
+        THEN exactly the helper's empty session carries the 'empty' issue
+        """
+        answered = self._session()
+        blank = self._session(answered=False)
+        issues = SurveyAnalyticsService(self.survey).compute_session_issues([answered.id, blank.id])
+        self.assertIn('empty', issues[blank.id])
+        self.assertNotIn('empty', issues[answered.id])
+
+
+class EmptySessionServiceTest(_EmptySessionFixture):
+    """SurveyAnalyticsService with include_empty False/True."""
+
+    def test_default_keeps_every_session(self):
+        """
+        GIVEN 3 answered and 2 empty sessions
+        WHEN the service is built with the default arguments
+        THEN it counts all 5 (survey list, legacy dashboard unchanged)
+        """
+        for _ in range(3):
+            self._session()
+        for _ in range(2):
+            self._session(answered=False)
+        self.assertEqual(SurveyAnalyticsService(self.survey).get_overview()['total_sessions'], 5)
+
+    def test_hidden_empties_leave_kpis(self):
+        """
+        GIVEN 2 sessions that answered the last section and 2 empty sessions
+        WHEN the service hides empty sessions
+        THEN total is 2, completion is 100%, nothing is flagged and empty_count is 2
+        """
+        self._session()
+        self._session()
+        self._session(answered=False)
+        self._session(answered=False)
+        service = SurveyAnalyticsService(self.survey, include_empty=False)
+        overview = service.get_overview()
+        self.assertEqual(overview['total_sessions'], 2)
+        self.assertEqual(overview['completion_rate'], 100)
+        self.assertEqual(overview['flagged_count'], 0)
+        self.assertEqual(service.empty_count, 2)
+
+    def test_empty_count_ignores_trash(self):
+        """
+        GIVEN one live empty session and one trashed empty session
+        WHEN empty_count is read
+        THEN it counts only the live one
+        """
+        self._session(answered=False)
+        self._session(answered=False, is_deleted=True)
+        self.assertEqual(SurveyAnalyticsService(self.survey, include_empty=False).empty_count, 1)
+
+    def test_feeds_skip_hidden_empties(self):
+        """
+        GIVEN 30 recent empty sessions and one older answered session
+        WHEN the overview extras are built with empties hidden
+        THEN neither feed lists an empty session
+        """
+        answered = self._session()
+        empties = [self._session(answered=False).id for _ in range(30)]
+        extras = SurveyAnalyticsService(self.survey, include_empty=False).get_overview_extras()
+        self.assertEqual([f['id'] for f in extras['latest_feed']], [answered.id])
+        self.assertFalse(set(empties) & {f['id'] for f in extras['needs_review']})
+
+    def test_sequence_numbers_count_responses_only(self):
+        """
+        GIVEN sessions A (answered), B (empty), C (answered) in start order
+        WHEN sequence numbers are read with empties hidden and shown
+        THEN A is #1, C is #2 both times and B has no number
+        """
+        a = self._session()
+        b = self._session(answered=False)
+        c = self._session()
+        for include_empty in (False, True):
+            service = SurveyAnalyticsService(self.survey, include_empty=include_empty)
+            page = service.get_table_page(v2=True)
+            seq = {r['session_id']: r['seq'] for r in page['rows']}
+            self.assertEqual(seq[a.id], 1)
+            self.assertEqual(seq[c.id], 2)
+            if include_empty:
+                self.assertIsNone(seq[b.id])
+            else:
+                self.assertNotIn(b.id, seq)
+
+    def test_table_counts_and_issue_menu(self):
+        """
+        GIVEN 2 answered and 3 empty sessions
+        WHEN the v2 table page is built with empties shown
+        THEN All counts 5 but the Issues count and menu leave 'empty' out
+        """
+        self._session()
+        self._session()
+        for _ in range(3):
+            self._session(answered=False)
+        page = SurveyAnalyticsService(self.survey, include_empty=True).get_table_page(v2=True)
+        self.assertEqual(page['v2_counts']['all'], 5)
+        self.assertEqual(page['v2_counts']['issues'], 0)
+        self.assertNotIn('empty', page['anomaly_counts'])
+
+
+@override_settings(RESPONSES_V2=True)
+class EmptySessionPageTest(_EmptySessionFixture):
+    """The v2 Responses page: default, cookie, headline, trash, empty state."""
+
+    def test_default_hides_and_states_the_count(self):
+        """
+        GIVEN 3 answered and 2 empty sessions
+        WHEN the creator opens Responses without the cookie
+        THEN the responses KPI reads 3 and the line says 2 opened without answering, with Show
+        """
+        for _ in range(3):
+            self._session()
+        for _ in range(2):
+            self._session(answered=False)
+        response = self.client.get(self.url)
+        self.assertEqual(response.context['total_sessions'], 3)
+        self.assertEqual(response.context['empty_count'], 2)
+        self.assertContains(response, '2 opened without answering (hidden)')
+        self.assertContains(response, 'rv2-empty-show')
+
+    def test_cookie_shows_them(self):
+        """
+        GIVEN the same sessions and the rv2_show_empty cookie
+        WHEN the creator opens Responses, also under a version scope
+        THEN all 5 are counted and the control offers Hide
+        """
+        for _ in range(3):
+            self._session()
+        for _ in range(2):
+            self._session(answered=False)
+        self.client.cookies['rv2_show_empty'] = '1'
+        for url in (self.url, self.url + '?version=all'):
+            response = self.client.get(url)
+            self.assertEqual(response.context['total_sessions'], 5)
+            self.assertContains(response, 'rv2-empty-hide')
+
+    def test_no_line_without_empties(self):
+        """
+        GIVEN only answered sessions
+        WHEN the creator opens Responses
+        THEN no empty-session line or toggle renders
+        """
+        self._session()
+        response = self.client.get(self.url)
+        self.assertNotContains(response, 'data-testid="rv2-empty-sessions"')
+
+    def test_only_empties_show_the_empty_state_with_count(self):
+        """
+        GIVEN 12 empty sessions and nothing else
+        WHEN the creator opens Responses
+        THEN the "No responses yet" state renders with "12 opened without answering" and Show
+        """
+        for _ in range(12):
+            self._session(answered=False)
+        response = self.client.get(self.url)
+        self.assertContains(response, 'No responses yet')
+        self.assertContains(response, '12 opened without answering')
+        self.assertContains(response, 'rv2-empty-show')
+
+    def test_table_hides_by_default_and_trash_ignores_the_choice(self):
+        """
+        GIVEN an answered session, a live empty session and a trashed empty session
+        WHEN the table loads normally and in trash mode
+        THEN the normal table lists only the answered one and trash lists the trashed empty one
+        """
+        answered = self._session()
+        self._session(answered=False)
+        trashed = self._session(answered=False, is_deleted=True)
+        normal = self.client.get(self.table_url)
+        self.assertEqual([r['session_id'] for r in normal.context['rows']], [answered.id])
+        self.assertContains(normal, '1 opened without answering (hidden)')
+        trash = self.client.get(self.table_url + '?trash=1')
+        self.assertEqual([r['session_id'] for r in trash.context['rows']], [trashed.id])
+
+    def test_shown_empty_row_has_no_number(self):
+        """
+        GIVEN an answered session and an empty one, empties shown
+        WHEN the table renders
+        THEN the answered row reads #1 and the empty row a dash
+        """
+        self._session()
+        self._session(answered=False)
+        self.client.cookies['rv2_show_empty'] = '1'
+        html = self.client.get(self.table_url).content.decode()
+        self.assertIn('#1', html)
+        self.assertRegex(html, r'<td data-col="id">\s*—')
+
+    @override_settings(RESPONSES_V2=False)
+    def test_legacy_dashboard_lists_every_session(self):
+        """
+        GIVEN 1 answered and 1 empty session and RESPONSES_V2 off
+        WHEN the legacy dashboard renders
+        THEN it counts both
+        """
+        self._session()
+        self._session(answered=False)
+        self.assertEqual(self.client.get(self.url).context['total_sessions'], 2)
+
+
+class EmptySessionExportTest(_EmptySessionFixture):
+    """Every export format leaves empty sessions out."""
+
+    def _download(self, **params):
+        from urllib.parse import urlencode
+        url = f'/surveys/{self.survey.uuid}/download'
+        if params:
+            url += '?' + urlencode(params)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        if hasattr(response, 'streaming_content'):
+            return b''.join(response.streaming_content)
+        return response.content
+
+    def _sheet_session_ids(self, body):
+        import openpyxl
+        ws = openpyxl.load_workbook(BytesIO(body))['sessions']
+        rows = list(ws.iter_rows(values_only=True))
+        col = list(rows[0]).index('session_id')
+        return {r[col] for r in rows[1:]}
+
+    def test_xlsx_leaves_empties_out(self):
+        """
+        GIVEN 3 answered and 2 empty sessions
+        WHEN the creator exports Excel
+        THEN the sessions sheet has the 3 answered sessions
+        """
+        answered = {self._session().id for _ in range(3)}
+        for _ in range(2):
+            self._session(answered=False)
+        self.assertEqual(self._sheet_session_ids(self._download(format='xlsx')), answered)
+
+    def test_include_all_does_not_bring_them_back(self):
+        """
+        GIVEN an answered trashed session and an empty session
+        WHEN the creator exports with include_all=1 and with completed_only=1 as well
+        THEN the trashed answered one is present with include_all and the empty one never is
+        """
+        trashed = self._session(is_deleted=True)
+        blank = self._session(answered=False)
+        ids = self._sheet_session_ids(self._download(format='xlsx', include_all='1'))
+        self.assertIn(trashed.id, ids)
+        self.assertNotIn(blank.id, ids)
+        ids = self._sheet_session_ids(self._download(format='xlsx', include_all='1', completed_only='1'))
+        self.assertNotIn(blank.id, ids)
+
+    def test_legacy_zip_and_csv_leave_empties_out(self):
+        """
+        GIVEN one answered and one empty session
+        WHEN the creator downloads the legacy archive and the CSV format
+        THEN neither carries the empty session's id
+        """
+        answered = self._session()
+        blank = self._session(answered=False)
+        for params in ({}, {'format': 'csv'}):
+            with zipfile.ZipFile(BytesIO(self._download(**params))) as zf:
+                text = ''.join(
+                    zf.read(n).decode('utf-8-sig', 'ignore') for n in zf.namelist() if n.endswith('.csv')
+                )
+            self.assertRegex(text, rf'(^|[,\n"]){answered.id}([,\r\n"]|$)')
+            self.assertNotRegex(text, rf'(^|[,\n"]){blank.id}([,\r\n"]|$)')
+
+    @override_settings(RESPONSES_V2=True)
+    def test_dialog_states_the_rule(self):
+        """
+        GIVEN a survey with responses
+        WHEN the Responses page renders the export dialog
+        THEN it says sessions without answers are never exported
+        """
+        self._session()
+        response = self.client.get(self.url)
+        self.assertContains(response, 'export-empty-note')
+
+
+class EmptySessionWhitespaceTest(_EmptySessionFixture):
+    """Whitespace-only values are blank in the section POST."""
+
+    def _post(self, data):
+        self.client.get('/surveys/empty_sess_survey/s1/')
+        session_id = self.client.session['survey_session_id']
+        response = self.client.post('/surveys/empty_sess_survey/s1/', data)
+        self.assertLess(response.status_code, 500)
+        return session_id
+
+    def test_spaces_create_no_answer(self):
+        """
+        GIVEN a respondent on the section
+        WHEN the only text field holds "   "
+        THEN no answer is stored and the session stays empty
+        """
+        sid = self._post({'ES_T': '   '})
+        self.assertFalse(Answer.objects.filter(survey_session_id=sid).exists())
+
+    def test_spaces_in_number_do_not_crash(self):
+        """
+        GIVEN a respondent on the section
+        WHEN the number field holds "  "
+        THEN the POST does not fail and no answer is stored for it
+        """
+        sid = self._post({'ES_N': '  '})
+        self.assertFalse(Answer.objects.filter(survey_session_id=sid, question=self.q_num).exists())
+
+    def test_surrounding_spaces_trimmed(self):
+        """
+        GIVEN a respondent on the section
+        WHEN the text field holds "  bus stop  " and the number " 4 "
+        THEN the stored text is "bus stop" and the number 4
+        """
+        sid = self._post({'ES_T': '  bus stop  ', 'ES_N': ' 4 '})
+        self.assertEqual(Answer.objects.get(survey_session_id=sid, question=self.q_text).text, 'bus stop')
+        self.assertEqual(Answer.objects.get(survey_session_id=sid, question=self.q_num).numeric, 4)
+
+    def test_object_answer_of_spaces_is_blank(self):
+        """
+        GIVEN posted object fields
+        WHEN an object's text value is only spaces
+        THEN the parser drops it and keeps the real value
+        """
+        from django.http import QueryDict
+        from .views import _parse_object_fields, OBJECT_FIELD_PREFIX
+        post = QueryDict(mutable=True)
+        post.setlist(f'{OBJECT_FIELD_PREFIX}o-1__C1', ['   '])
+        post.setlist(f'{OBJECT_FIELD_PREFIX}o-2__C1', [' ok '])
+        self.assertEqual(_parse_object_fields(post), {'o-2': {'C1': [' ok ']}})
+
+
+class EmptySessionCommentLabelTest(_EmptySessionFixture):
+    """Comment anchors number responses the way the table does."""
+
+    def test_labels_follow_response_numbers(self):
+        """
+        GIVEN sessions A (answered), B (empty), C (answered)
+        WHEN their comment anchor labels are built
+        THEN A is Response #1, C is Response #2 and B is a response without answers
+        """
+        from .comments import session_label
+        a = self._session()
+        b = self._session(answered=False)
+        c = self._session()
+        self.assertEqual(session_label(self.survey, a, a.id), 'Response #1')
+        self.assertEqual(session_label(self.survey, c, c.id), 'Response #2')
+        self.assertEqual(session_label(self.survey, b, b.id), 'Response without answers')
+
+# =============================================================================
+# Content screening — phishing hold + owner review (openspec: phishing-content-review)
+# =============================================================================
+from django.core import mail as _cs_mail
+from .content_screening import (
+    ScreenInput as _ScreenInput, score as _cs_score, fingerprint as _cs_fingerprint,
+    hold_threshold as _cs_threshold, review_token as _cs_review_token,
+)
+from .models import ContentReview, AbuseEvent, AuditLog
+
+_XFINITY_SUBHEADING = (
+    '<p style="text-align:center"><strong>XFINITY</strong></p>'
+    "<p style=\"text-align:center\">You're almost set! Access your Everymail email securely. "
+    'Manage communications to your account from anywhere seamlessly.</p>'
+    '<p style="text-align:center"><strong><a href="https://go.xaply.in/fp5qs" target="_blank" '
+    'rel="noopener noreferrer">CLICK HERE TO PROCEED</a></strong></p>'
+    + '<p style="text-align:center"><br></p>' * 74
+)
+_TRACKER_URL = ('https://sender10.zohoinsights.com/ck1/2d6f.327230a/52aab750-89e2-11f1-a2db-525400d4bb1c/'
+                '0a29489b5ad81b76b5b8b74af2d72eca13465dd1/2?e=EmhJ3GkUtbm')
+
+
+def _cs_input(texts, redirect='', questions=1, age_hours=0.03, domain='gmail.com'):
+    return _ScreenInput(texts=[('t', t) for t in texts], redirect_url=redirect,
+                        question_count=questions, account_age_hours=age_hours, email_domain=domain)
+
+
+class ContentScoringTest(SimpleTestCase):
+    """The scorer alone — no database, pinned to the 2026-10-02 scan."""
+
+    def test_xfinity_lure_scores_above_threshold(self):
+        """
+        GIVEN the XFINITY lure: brand, "almost set", CLICK HERE link to a shortener, 74 empty paragraphs, one question, a two-minute-old account on a disposable domain
+        WHEN it is scored
+        THEN the score reaches the hold threshold and names shortener, brand, padding and external link
+        """
+        result = _cs_score(_cs_input(['Untitled survey', 'Section 1', _XFINITY_SUBHEADING, 'XFINITY'],
+                                     questions=1, age_hours=0.03, domain='betterr.org'))
+        self.assertGreaterEqual(result.score, _cs_threshold())
+        keys = {s['key'] for s in result.signals}
+        self.assertTrue({'shortener', 'brand', 'padding', 'external_link', 'disposable_domain'} <= keys, keys)
+
+    def test_redirect_tracker_lure_scores_above_threshold(self):
+        """
+        GIVEN a survey whose only content is a question named "PDF Document" and a redirect_url on an email click tracker, published two minutes after registration
+        WHEN it is scored
+        THEN the score reaches the hold threshold and the tracker host from redirect_url is a signal
+        """
+        result = _cs_score(_cs_input(['PDF Document', 'PDF Document'], redirect=_TRACKER_URL, questions=1, age_hours=0.03))
+        self.assertGreaterEqual(result.score, _cs_threshold())
+        self.assertIn('tracker', {s['key'] for s in result.signals})
+
+    def test_legitimate_surveys_from_the_scan_stay_below_threshold(self):
+        """
+        GIVEN the nine legitimate surveys the 2026-10-02 heuristic flagged (own S3 media, Facebook, a project site, a retailer image, "click here" in a real description)
+        WHEN each is scored
+        THEN none reaches the hold threshold
+        """
+        with override_settings(AWS_S3_CUSTOM_DOMAIN='mapsurvey-media-prod.s3.ap-southeast-2.amazonaws.com'):
+            cases = [
+                (['Stroud-Bristol coach', 'Click here to see the timetable <img src="https://mapsurvey-media-prod.s3.ap-southeast-2.amazonaws.com/x.png">'], '', 13, 0.01),
+                (['Tahanan_Padayon', 'Follow us on <a href="https://www.facebook.com/tahanan">Facebook</a>'], '', 1, 0.1),
+                (['Vrienden Weekend 2026', 'Zie <a href="https://ishet.al/weekend">de site</a>'], '', 1, 0.28),
+                (['czy wiesz gdzie to jest', 'https://m.media-amazon.com/images/I/71dEnbFkofL.jpg'], '', 5, 0.04),
+                (['The Bench Map', 'More at https://thebenchmap.ie'], '', 0, 0.2),
+                (['Test Roy', 'varanger-ak.no'], '', 0, 0.27),
+                (['Noise map', 'Where do you hear the most noise? Sign in to the council portal for details.'], '', 6, 300),
+                (['Parking survey'], 'https://example-council.gov.uk/thanks', 4, 50),
+                (['Heat survey', 'Mark where it feels hottest. Password for the gate is on the flyer.'], '', 3, 2),
+            ]
+            for texts, redirect, questions, age in cases:
+                result = _cs_score(_cs_input(texts, redirect=redirect, questions=questions, age_hours=age))
+                self.assertLess(result.score, _cs_threshold(), (texts[0], result.signals))
+
+    def test_fresh_account_and_single_question_cannot_hold_alone(self):
+        """
+        GIVEN a one-question survey with no links or lure words from an account registered one minute ago
+        WHEN it is scored
+        THEN the score stays below the hold threshold
+        """
+        result = _cs_score(_cs_input(['My first survey', 'Where do you live?'], questions=1, age_hours=0.02))
+        self.assertLess(result.score, _cs_threshold())
+
+    def test_fingerprint_follows_the_text_not_the_account(self):
+        """
+        GIVEN two inputs with the same text and a different account age, and a third with a changed redirect_url
+        WHEN fingerprinted
+        THEN the first two match and the third differs
+        """
+        a = _cs_fingerprint(_cs_input(['A', 'B'], age_hours=0.1))
+        b = _cs_fingerprint(_cs_input(['A', 'B'], age_hours=500))
+        c = _cs_fingerprint(_cs_input(['A', 'B'], redirect='https://example.com/x'))
+        self.assertEqual(a, b)
+        self.assertNotEqual(a, c)
+
+
+def _eager_notice():
+    """Run the review notice inline: `.delay` becomes the task (no broker in the suite)."""
+    from .tasks import send_abuse_review_notice
+    return patch('survey.tasks.send_abuse_review_notice.delay',
+                 side_effect=lambda review_id: send_abuse_review_notice(review_id))
+
+
+class _ContentScreeningBase(TestCase):
+    def setUp(self):
+        self.org = _make_org('ScreenOrg')
+        self.owner = User.objects.create_user(username='screen_owner', password='pass', email='owner@example.org')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(name='screen_test', organization=self.org, created_by=self.owner)
+        SurveyCollaborator.objects.create(user=self.owner, survey=self.survey, role='owner')
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='s1', code='S1', is_head=True, title='Section 1',
+        )
+        self.question = Question.objects.create(
+            survey_section=self.section, code='Q_SCR1', name='Where?', input_type='text',
+        )
+        self.client.login(username='screen_owner', password='pass')
+        _cs_mail.outbox = []
+
+    def _make_lure(self):
+        self.section.subheading = _XFINITY_SUBHEADING
+        self.section.save(update_fields=['subheading'])
+        self.question.name = 'XFINITY'
+        self.question.save(update_fields=['name'])
+
+    def _transition(self, status='published'):
+        return self.client.post(f'/editor/surveys/{self.survey.uuid}/transition/',
+                                {'status': status, 'ack_translation_gaps': 'true'}, HTTP_HX_REQUEST='true')
+
+    def _publish(self):
+        with _eager_notice():
+            response = self._transition('published')
+        self.survey.refresh_from_db()
+        return response
+
+    def _anon(self):
+        return Client()
+
+
+class ContentScreeningFlowTest(_ContentScreeningBase):
+    """Publish-time screening: hold, dedupe, fail-open, kill switch, live edits."""
+
+    def test_publishing_a_lure_holds_it_and_mails_the_owner(self):
+        """
+        GIVEN a draft survey carrying the XFINITY lure
+        WHEN the owner publishes it
+        THEN the publish succeeds, one pending review exists, one hold AbuseEvent is written and one mail reaches ABUSE_REVIEW_EMAIL with the review link and signals
+        """
+        self._make_lure()
+        response = self._publish()
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(self.survey.status, 'published')
+        review = ContentReview.objects.get(survey=self.survey)
+        self.assertEqual((review.status, review.source, review.trigger), ('pending', 'screen', 'publish'))
+        self.assertGreaterEqual(review.score, _cs_threshold())
+        events = AbuseEvent.objects.filter(defense='content_screen')
+        self.assertEqual(events.count(), 1)
+        self.assertTrue(events[0].detail.startswith(f'hold survey={self.survey.id} score='))
+        self.assertEqual(len(_cs_mail.outbox), 1)
+        msg = _cs_mail.outbox[0]
+        self.assertEqual(msg.to, [settings.ABUSE_REVIEW_EMAIL])
+        self.assertIn('screen_test', msg.subject)
+        self.assertIn(str(review.score), msg.subject)
+        self.assertIn('/editor/abuse-review/', msg.body)
+        self.assertIn('shortener', msg.body)
+
+    def test_second_publish_while_pending_creates_nothing_new(self):
+        """
+        GIVEN a held survey
+        WHEN it goes back to draft and is published again
+        THEN the same review row is updated and no second mail is sent
+        """
+        self._make_lure()
+        self._publish()
+        self._transition('draft')
+        self._publish()
+        self.assertEqual(ContentReview.objects.filter(survey=self.survey).count(), 1)
+        self.assertEqual(len(_cs_mail.outbox), 1)
+
+    def test_clean_survey_leaves_no_trace(self):
+        """
+        GIVEN an ordinary survey
+        WHEN it is published
+        THEN no review row, no AbuseEvent and no mail exist
+        """
+        self._publish()
+        self.assertFalse(ContentReview.objects.exists())
+        self.assertFalse(AbuseEvent.objects.filter(defense='content_screen').exists())
+        self.assertEqual(len(_cs_mail.outbox), 0)
+
+    def test_scorer_exception_does_not_block_publishing(self):
+        """
+        GIVEN a scorer that raises
+        WHEN the owner publishes a lure
+        THEN the publish completes as usual and no review exists
+        """
+        self._make_lure()
+        with patch('survey.content_screening.collect_text', side_effect=RuntimeError('boom')):
+            response = self._publish()
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(self.survey.status, 'published')
+        self.assertFalse(ContentReview.objects.exists())
+
+    @override_settings(CONTENT_SCREENING=False)
+    def test_kill_switch_off_skips_screening(self):
+        """
+        GIVEN CONTENT_SCREENING off
+        WHEN a lure is published
+        THEN no review is created and anonymous respondents reach the survey
+        """
+        self._make_lure()
+        self._publish()
+        self.assertFalse(ContentReview.objects.exists())
+        self.assertEqual(self._anon().get(f'/surveys/{self.survey.uuid}/').status_code, 302)
+
+    @override_settings(CONTENT_SCREENING=False)
+    def test_kill_switch_off_keeps_an_existing_hold(self):
+        """
+        GIVEN a survey with a pending review and CONTENT_SCREENING off
+        WHEN an anonymous respondent opens it
+        THEN the unavailable page is still served
+        """
+        self.survey.status = 'published'
+        self.survey.save(update_fields=['status'])
+        ContentReview.objects.create(survey=self.survey, status='pending', score=9)
+        self.assertEqual(self._anon().get(f'/surveys/{self.survey.uuid}/').status_code, 404)
+
+    def test_testing_transition_is_not_screened(self):
+        """
+        GIVEN a lure survey
+        WHEN the owner moves it to testing
+        THEN no review is created
+        """
+        self._make_lure()
+        with _eager_notice():
+            self._transition('testing')
+        self.assertFalse(ContentReview.objects.exists())
+
+    def test_live_redirect_edit_rescreens_a_published_survey(self):
+        """
+        GIVEN a published survey that passed screening with a "PDF Document" question
+        WHEN the owner sets redirect_url to an email click tracker through the settings panel
+        THEN a pending review with trigger live_edit is created
+        """
+        self.question.name = 'PDF Document'
+        self.question.save(update_fields=['name'])
+        self._publish()
+        self.assertFalse(ContentReview.objects.exists())
+        with _eager_notice():
+            response = self.client.post(
+                f'/editor/surveys/{self.survey.uuid}/settings-panel/',
+                {'name': 'screen_test', 'visibility': 'private', 'redirect_url': _TRACKER_URL},
+                HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+            )
+        self.assertEqual(response.status_code, 200, response.content[:300])
+        review = ContentReview.objects.get(survey=self.survey)
+        self.assertEqual((review.status, review.trigger), ('pending', 'live_edit'))
+
+    def test_released_content_is_not_held_again_until_it_changes(self):
+        """
+        GIVEN a held survey the owner released
+        WHEN it is republished unchanged, and then republished with a changed thanks page
+        THEN the unchanged publish creates no review and the changed one creates a new pending review
+        """
+        self._make_lure()
+        self._publish()
+        review = ContentReview.objects.get(survey=self.survey)
+        review.status = 'cleared'
+        review.save(update_fields=['status'])
+        self._transition('draft')
+        self._publish()
+        self.assertEqual(ContentReview.objects.filter(survey=self.survey).count(), 1)
+        self.survey.thanks_html = {'en': '<p>Verify your password at <a href="https://bit.ly/zz">bit.ly</a></p>'}
+        self.survey.save(update_fields=['thanks_html'])
+        self._transition('draft')
+        self._publish()
+        self.assertEqual(ContentReview.objects.filter(survey=self.survey, status='pending').count(), 1)
+
+    def test_draft_publish_anchors_the_review_to_the_canonical_survey(self):
+        """
+        GIVEN a published survey with a draft copy that received the lure
+        WHEN the draft is published
+        THEN the pending review points at the canonical survey with trigger draft_publish
+        """
+        self._publish()
+        response = self.client.post(f'/editor/surveys/{self.survey.uuid}/create-draft/')
+        draft = SurveyHeader.objects.get(published_version=self.survey)
+        section = SurveySection.objects.get(survey_header=draft, is_head=True)
+        section.subheading = _XFINITY_SUBHEADING
+        section.save(update_fields=['subheading'])
+        with _eager_notice():
+            response = self.client.post(f'/editor/surveys/{draft.uuid}/publish-draft/', {'ack_translation_gaps': 'true'})
+        self.assertEqual(response.status_code, 302, response.content[:300])
+        review = ContentReview.objects.get()
+        self.assertEqual(review.survey_id, self.survey.id)
+        self.assertEqual(review.trigger, 'draft_publish')
+
+    def test_broker_failure_sends_the_notice_inline(self):
+        """
+        GIVEN a Celery broker that refuses the task
+        WHEN a lure is published
+        THEN the mail is still sent and the review stays pending
+        """
+        self._make_lure()
+        with patch('survey.tasks.send_abuse_review_notice.delay', side_effect=OSError('broker down')):
+            self._transition('published')
+        self.assertEqual(ContentReview.objects.get().status, 'pending')
+        self.assertEqual(len(_cs_mail.outbox), 1)
+
+    def test_notice_never_goes_to_the_creator_and_names_no_email(self):
+        """
+        GIVEN a lure published by a creator with an email address
+        WHEN the notice is sent
+        THEN only the review address receives it and the AbuseEvent detail carries no email or username
+        """
+        self._make_lure()
+        self._publish()
+        for msg in _cs_mail.outbox:
+            self.assertNotIn(self.owner.email, msg.to)
+        for ev in AbuseEvent.objects.filter(defense='content_screen'):
+            self.assertNotIn('@', ev.detail)
+            self.assertNotIn(self.owner.username, ev.detail)
+
+
+class ContentScreeningHoldGateTest(_ContentScreeningBase):
+    """What respondents and the creator see while a survey is held."""
+
+    def setUp(self):
+        super().setUp()
+        self._make_lure()
+        self._publish()
+        self.assertTrue(ContentReview.objects.filter(survey=self.survey, status='pending').exists())
+
+    def test_anonymous_respondent_gets_the_unavailable_page_and_no_session(self):
+        """
+        GIVEN a held survey
+        WHEN an anonymous visitor opens the entry URL and the section URL
+        THEN both answer 404 with the unavailable page and no SurveySession is created
+        """
+        anon = self._anon()
+        for url in (f'/surveys/{self.survey.uuid}/', f'/surveys/{self.survey.uuid}/s1/'):
+            response = anon.get(url)
+            self.assertEqual(response.status_code, 404, url)
+            self.assertContains(response, 'available', status_code=404)
+            self.assertNotContains(response, 'XFINITY', status_code=404)
+        self.assertEqual(SurveySession.objects.filter(survey=self.survey).count(), 0)
+
+    def test_owner_still_reaches_the_survey(self):
+        """
+        GIVEN a held survey
+        WHEN its owner opens the respondent entry URL
+        THEN the usual redirect to the first section is returned
+        """
+        self.assertEqual(self.client.get(f'/surveys/{self.survey.uuid}/').status_code, 302)
+
+    def test_creator_banner_without_reasons(self):
+        """
+        GIVEN a held survey
+        WHEN the owner opens the editor page
+        THEN a review banner is shown and it lists none of the signals
+        """
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-testid="review-banner"')
+        self.assertContains(response, 'being reviewed')
+        body = response.content.decode()
+        banner = body[body.index('review-banner'):body.index('review-banner') + 600]
+        for word in ('shortener', 'brand', 'padding', 'score', 'xaply'):
+            self.assertNotIn(word, banner.lower())
+
+    def test_reported_only_survey_keeps_serving(self):
+        """
+        GIVEN a published survey with only a reported review
+        WHEN an anonymous respondent opens it
+        THEN the survey serves as usual
+        """
+        ContentReview.objects.filter(survey=self.survey).update(status='reported', source='report')
+        self.assertEqual(self._anon().get(f'/surveys/{self.survey.uuid}/').status_code, 302)
+
+
+class AbuseReviewPageTest(_ContentScreeningBase):
+    """The staff review page and the two decisions."""
+
+    def setUp(self):
+        super().setUp()
+        self._make_lure()
+        self._publish()
+        self.review = ContentReview.objects.get(survey=self.survey)
+        self.url = f'/editor/abuse-review/{_cs_review_token(self.review)}/'
+        self.staff = User.objects.create_user(username='screen_staff', password='pass', is_staff=True)
+        self.staff_client = Client()
+        self.staff_client.login(username='screen_staff', password='pass')
+        AbuseEvent.objects.all().delete()
+
+    def test_get_is_404_for_everyone_but_staff(self):
+        """
+        GIVEN the review link
+        WHEN an anonymous client and the (non-staff) survey owner open it
+        THEN both get 404 and the review is unchanged
+        """
+        self.assertEqual(self._anon().get(self.url).status_code, 404)
+        self.assertEqual(self.client.get(self.url).status_code, 404)
+        self.review.refresh_from_db()
+        self.assertEqual(self.review.status, 'pending')
+
+    def test_bad_and_expired_tokens_are_404(self):
+        """
+        GIVEN a staff user
+        WHEN a tampered token and an expired token are opened
+        THEN both answer 404
+        """
+        self.assertEqual(self.staff_client.get('/editor/abuse-review/not-a-token/').status_code, 404)
+        with patch('survey.content_screening.REVIEW_TOKEN_MAX_AGE', -1):
+            self.assertEqual(self.staff_client.get(self.url).status_code, 404)
+
+    def test_staff_sees_the_evidence(self):
+        """
+        GIVEN a staff user
+        WHEN the review page is opened
+        THEN it shows the signals, the account facts and both actions
+        """
+        response = self.staff_client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'shortener')
+        self.assertContains(response, 'screen_owner')
+        self.assertContains(response, 'value="release"')
+        self.assertContains(response, 'value="confirm"')
+
+    def test_release_restores_the_survey(self):
+        """
+        GIVEN a held survey
+        WHEN staff posts release
+        THEN the review is cleared with decided_by set, respondents reach the survey and a release AbuseEvent exists
+        """
+        response = self.staff_client.post(self.url, {'action': 'release'})
+        self.assertEqual(response.status_code, 302)
+        self.review.refresh_from_db()
+        self.assertEqual(self.review.status, 'cleared')
+        self.assertEqual(self.review.decided_by, self.staff)
+        self.assertIsNotNone(self.review.decided_at)
+        self.assertEqual(self._anon().get(f'/surveys/{self.survey.uuid}/').status_code, 302)
+        self.assertTrue(AbuseEvent.objects.filter(defense='content_screen', detail__startswith=f'release survey={self.survey.id}').exists())
+
+    def test_confirm_deactivates_the_account_and_closes_its_surveys(self):
+        """
+        GIVEN a held survey whose creator also has a draft and is logged in
+        WHEN staff posts confirm
+        THEN the creator is inactive, both surveys are closed with audit rows, the creator's session is gone, the review is confirmed and a confirm AbuseEvent exists
+        """
+        other = SurveyHeader.objects.create(name='screen_other', organization=self.org, created_by=self.owner)
+        from django.contrib.sessions.models import Session
+        self.assertEqual(sum(1 for s in Session.objects.all() if s.get_decoded().get('_auth_user_id') == str(self.owner.id)), 1)
+
+        response = self.staff_client.post(self.url, {'action': 'confirm'})
+        self.assertEqual(response.status_code, 302)
+
+        self.owner.refresh_from_db()
+        self.assertFalse(self.owner.is_active)
+        self.survey.refresh_from_db()
+        other.refresh_from_db()
+        self.assertEqual((self.survey.status, other.status), ('closed', 'closed'))
+        self.assertEqual(AuditLog.objects.filter(action='content_screen_close').count(), 2)
+        self.assertEqual(sum(1 for s in Session.objects.all() if s.get_decoded().get('_auth_user_id') == str(self.owner.id)), 0)
+        self.review.refresh_from_db()
+        self.assertEqual(self.review.status, 'confirmed')
+        self.assertTrue(AbuseEvent.objects.filter(
+            defense='content_screen', detail__startswith=f'confirm survey={self.survey.id} user={self.owner.id}').exists())
+        self.assertEqual(self.staff_client.get(self.url).status_code, 200)
+
+    def test_decided_review_accepts_no_action(self):
+        """
+        GIVEN a released review
+        WHEN staff posts confirm on it
+        THEN nothing changes and the page shows the decision
+        """
+        self.staff_client.post(self.url, {'action': 'release'})
+        self.staff_client.post(self.url, {'action': 'confirm'})
+        self.review.refresh_from_db()
+        self.owner.refresh_from_db()
+        self.assertEqual(self.review.status, 'cleared')
+        self.assertTrue(self.owner.is_active)
+        self.assertContains(self.staff_client.get(self.url), 'Released')
+
+    def test_admin_lists_the_pending_review_with_a_link(self):
+        """
+        GIVEN a superuser
+        WHEN the ContentReview admin changelist is opened filtered by pending
+        THEN the held survey appears with a link to the review page
+        """
+        admin_user = User.objects.create_superuser(username='screen_admin', password='pass', email='a@example.org')
+        c = Client()
+        c.login(username='screen_admin', password='pass')
+        response = c.get('/admin/survey/contentreview/?status__exact=pending')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'screen_test')
+        self.assertContains(response, '/editor/abuse-review/')
+
+
+class RespondentReportTest(_ContentScreeningBase):
+    """The safety footer and the report form."""
+
+    def setUp(self):
+        super().setUp()
+        self._publish()
+        self.report_url = f'/surveys/{self.survey.uuid}/report/'
+
+    def test_footer_on_section_and_thanks_pages(self):
+        """
+        GIVEN a published survey
+        WHEN a respondent opens a section page and the thanks page
+        THEN both carry the safety notice and the report link
+        """
+        anon = self._anon()
+        for url in (f'/surveys/{self.survey.uuid}/s1/', f'/surveys/{self.survey.uuid}/thanks/'):
+            response = anon.get(url)
+            self.assertEqual(response.status_code, 200, url)
+            self.assertContains(response, 'Never enter passwords')
+            self.assertContains(response, self.report_url)
+
+    def test_first_report_opens_a_review_and_mails_once(self):
+        """
+        GIVEN a published survey with no open review
+        WHEN a respondent reports it as phishing
+        THEN a reported review with report_count 1 exists, one mail is sent, a report AbuseEvent is written and the survey still serves
+        """
+        with _eager_notice():
+            response = self._anon().post(self.report_url, {'reason': 'phishing', 'message': 'asks for my password'},
+                                         REMOTE_ADDR='10.%d.%d.%d' % tuple(uuid.uuid4().bytes[:3]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Thank you')
+        review = ContentReview.objects.get(survey=self.survey)
+        self.assertEqual((review.status, review.source, review.report_count), ('reported', 'report', 1))
+        self.assertEqual(len(_cs_mail.outbox), 1)
+        self.assertIn('reported', _cs_mail.outbox[0].subject)
+        self.assertTrue(AbuseEvent.objects.filter(detail__startswith=f'report survey={self.survey.id}').exists())
+        self.assertEqual(self._anon().get(f'/surveys/{self.survey.uuid}/').status_code, 302)
+
+    def test_repeated_reports_count_but_do_not_mail(self):
+        """
+        GIVEN a survey already reported
+        WHEN a second report arrives from another address
+        THEN report_count becomes 2 and no second mail is sent
+        """
+        with _eager_notice():
+            self._anon().post(self.report_url, {'reason': 'scam'}, REMOTE_ADDR='10.%d.%d.%d' % tuple(uuid.uuid4().bytes[:3]))
+            self._anon().post(self.report_url, {'reason': 'other', 'message': 'odd'}, REMOTE_ADDR='10.%d.%d.%d' % tuple(uuid.uuid4().bytes[:3]))
+        self.assertEqual(ContentReview.objects.get(survey=self.survey).report_count, 2)
+        self.assertEqual(len(_cs_mail.outbox), 1)
+
+    def test_fourth_report_from_one_address_is_rate_limited(self):
+        """
+        GIVEN three reports from one IP within an hour
+        WHEN a fourth arrives
+        THEN it answers 429 and the review is not touched
+        """
+        # The counter lives in Redis and outlives the test database, so a fixed
+        # IP would carry the previous run's budget into this one.
+        ip = '10.%d.%d.%d' % tuple(uuid.uuid4().bytes[:3])
+        with _eager_notice():
+            for _ in range(3):
+                self.assertEqual(self._anon().post(self.report_url, {'reason': 'scam'}, REMOTE_ADDR=ip).status_code, 200)
+            response = self._anon().post(self.report_url, {'reason': 'scam'}, REMOTE_ADDR=ip)
+        self.assertEqual(response.status_code, 429)
+        self.assertEqual(ContentReview.objects.get(survey=self.survey).report_count, 3)
+
+    def test_unknown_and_draft_surveys_are_404(self):
+        """
+        GIVEN a UUID that names nothing and a draft survey
+        WHEN their report pages are requested
+        THEN both answer 404
+        """
+        self.assertEqual(self._anon().get(f'/surveys/{uuid.uuid4()}/report/').status_code, 404)
+        draft = SurveyHeader.objects.create(name='screen_draft', organization=self.org, created_by=self.owner)
+        self.assertEqual(self._anon().get(f'/surveys/{draft.uuid}/report/').status_code, 404)
 
 
 class RepoHygieneTest(SimpleTestCase):
