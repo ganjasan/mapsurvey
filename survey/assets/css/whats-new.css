@@ -1,0 +1,59 @@
+/* In-app changelog (change in-app-changelog): the once-only card and the page. */
+
+/* ── navbar entry point ── */
+.wn-nav-icon { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 6px; color: #6b7280; }
+.wn-nav-icon:hover { background: #f9fafb; color: var(--accent); }
+.wn-nav-icon .wn-dot { position: absolute; top: 5px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: #ef4444; border: 2px solid #fff; }
+.wn-badge { float: right; background: var(--accent); color: #fff; border-radius: 999px; font-size: .68rem; padding: .05rem .45rem; font-weight: 700; margin-top: .15rem; }
+
+/* ── card ── */
+.wn-card { position: fixed; right: 1.25rem; bottom: 1.25rem; width: 360px; max-width: calc(100vw - 32px); background: #fff; border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,.1), 0 4px 12px rgba(0,0,0,.04); padding: 1rem 1.1rem; z-index: 1040; }
+.wn-card.wn-hidden { display: none; }
+.wn-card .wn-image { margin: -1rem -1.1rem .75rem; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 12px 12px 0 0; background: #f3f4f6; }
+.wn-card .wn-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.wn-card .wn-eyebrow { display: flex; align-items: center; gap: .5rem; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--accent); font-weight: 700; margin-bottom: .4rem; padding-right: 1.5rem; }
+.wn-card .wn-eyebrow .wn-date { color: #9ca3af; font-weight: 400; text-transform: none; letter-spacing: 0; margin-left: auto; }
+.wn-card h4 { margin: 0 0 .4rem; font-size: 1rem; font-weight: 700; }
+.wn-card .wn-body { font-size: .85rem; color: #374151; line-height: 1.45; margin-bottom: .75rem; }
+.wn-card .wn-body p { margin: 0 0 .5rem; }
+.wn-card .wn-body p:last-child { margin-bottom: 0; }
+.wn-card .wn-close { position: absolute; top: .55rem; right: .6rem; width: 26px; height: 26px; border: 0; background: transparent; color: #9ca3af; cursor: pointer; border-radius: 6px; font-size: .85rem; }
+.wn-card .wn-close:hover { background: #f9fafb; color: #1f2937; }
+.wn-card .wn-actions { display: flex; gap: .75rem; align-items: center; font-size: .82rem; flex-wrap: wrap; }
+.wn-card .wn-actions .wn-mute { margin-left: auto; color: #9ca3af; font-size: .78rem; background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit; }
+.wn-card .wn-actions .wn-mute:hover { color: #6b7280; }
+.wn-btn { display: inline-flex; align-items: center; gap: .4rem; padding: .4rem .8rem; border-radius: 6px; font-size: .82rem; font-weight: 500; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; font-family: inherit; }
+.wn-btn:hover { background: #4338ca; color: #fff; text-decoration: none; }
+@media (max-width: 480px) {
+  .wn-card { right: 16px; left: 16px; bottom: 16px; width: auto; }
+}
+/* Below the mobile tab bar when it is there. */
+body.mobile-nav-enabled .wn-card { bottom: calc(1.25rem + 56px); }
+@media (min-width: 768px) { body.mobile-nav-enabled .wn-card { bottom: 1.25rem; } }
+
+/* ── page ── */
+.wn-page { max-width: 720px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+.wn-page .wn-top { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.wn-page h1 { margin: 0; font-size: 1.5rem; }
+.wn-page .wn-pref { margin-left: auto; display: inline-flex; align-items: center; gap: .5rem; font-size: .82rem; color: #6b7280; background: #fff; border: 1px solid var(--border-color); border-radius: 999px; padding: .3rem .75rem; cursor: pointer; margin-bottom: 0; }
+.wn-sw { width: 30px; height: 16px; border-radius: 8px; background: var(--accent); position: relative; flex: 0 0 auto; transition: background .15s; }
+.wn-sw::after { content: ''; position: absolute; top: 2px; right: 2px; width: 12px; height: 12px; border-radius: 50%; background: #fff; }
+.wn-pref input:not(:checked) + .wn-sw { background: #d1d5db; }
+.wn-pref input:not(:checked) + .wn-sw::after { right: auto; left: 2px; }
+.wn-pref input { position: absolute; opacity: 0; width: 0; height: 0; }
+.wn-entry { background: #fff; border: 1px solid var(--border-color); border-radius: 12px; padding: 1.1rem 1.25rem; margin-bottom: .9rem; }
+.wn-entry.wn-new { border-color: #c7d2fe; }
+.wn-entry .wn-meta { display: flex; align-items: center; gap: .6rem; font-size: .75rem; color: #9ca3af; margin-bottom: .35rem; }
+.wn-tag { background: var(--accent-light); color: var(--accent); border-radius: 4px; padding: .1rem .4rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; font-size: .68rem; }
+.wn-tag.wn-fixed { background: #ecfdf5; color: #047857; }
+.wn-entry h3 { margin: 0 0 .4rem; font-size: 1.05rem; font-weight: 700; }
+.wn-entry .wn-body { font-size: .88rem; color: #374151; line-height: 1.5; }
+.wn-entry .wn-body p { margin: 0 0 .5rem; }
+.wn-entry .wn-body p:last-child { margin-bottom: 0; }
+.wn-entry .wn-entry-image { margin: .25rem 0 .75rem; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); }
+.wn-entry .wn-entry-image img { width: 100%; height: auto; display: block; }
+.wn-entry .wn-go { display: inline-block; margin-top: .5rem; font-size: .85rem; font-weight: 500; }
+.wn-entry .wn-go i { font-size: .75rem; margin-left: .25rem; }
+.wn-divider { display: flex; align-items: center; gap: .75rem; color: #9ca3af; font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; margin: 1.25rem 0 .9rem; }
+.wn-divider::before, .wn-divider::after { content: ''; flex: 1; border-top: 1px solid var(--border-color); }
+.wn-empty { color: #6b7280; font-size: .9rem; background: #fff; border: 1px dashed var(--border-color); border-radius: 12px; padding: 2rem; text-align: center; }

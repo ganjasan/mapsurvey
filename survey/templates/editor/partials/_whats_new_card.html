@@ -1,0 +1,60 @@
+{% load i18n %}
+{% load static %}
+{% comment %}
+The once-only "What's new" card (change in-app-changelog). Included from
+editor_base.html ONLY -- respondent templates never carry it. Renders when the
+context processor says `show_card`: an unseen entry exists and cards are on.
+"Got it" and × post the watermark; "All updates" is a plain link (the page marks
+seen itself); "Don't show these" posts the preference. A failed POST just hides
+the card for this page -- it comes back on the next one, the harmless direction.
+{% endcomment %}
+{% if whats_new.show_card %}
+{% with entry=whats_new.latest %}
+<div class="wn-card" id="whatsNewCard" role="dialog" aria-label="{% trans "What's new" %}" data-entry-id="{{ entry.id }}"
+     data-seen-url="{% url 'whats_new_seen' %}" data-cards-url="{% url 'whats_new_cards' %}">
+    {% if entry.image %}
+    <div class="wn-image"><img src="{% static entry.image %}" alt=""></div>
+    {% endif %}
+    <button type="button" class="wn-close" data-wn="close" aria-label="{% trans 'Dismiss' %}"><i class="fas fa-times"></i></button>
+    <div class="wn-eyebrow"><i class="fas fa-gift"></i> {% trans "What's new" %} <span class="wn-date">{{ entry.date }}</span></div>
+    <h4>{{ entry.title }}</h4>
+    <div class="wn-body">{{ entry.body|safe }}</div>
+    <div class="wn-actions">
+        <button type="button" class="wn-btn" data-wn="got_it">{% trans "Got it" %}</button>
+        <a href="{% url 'whats_new' %}">{% trans "All updates" %}</a>
+        <button type="button" class="wn-mute" data-wn="muted">{% trans "Don't show these" %}</button>
+    </div>
+</div>
+<script>
+(function () {
+    var card = document.getElementById('whatsNewCard');
+    if (!card) return;
+    var csrf = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+    var entryId = card.getAttribute('data-entry-id');
+    if (window.posthog && typeof window.posthog.capture === 'function') {
+        window.posthog.capture('changelog_card_shown', { entry_id: entryId });
+    }
+    function post(url, body) {
+        var data = new URLSearchParams(body);
+        return fetch(url, {
+            method: 'POST', credentials: 'same-origin',
+            headers: { 'X-CSRFToken': csrf, 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: data.toString()
+        });
+    }
+    card.querySelectorAll('[data-wn]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var how = btn.getAttribute('data-wn');
+            card.classList.add('wn-hidden');
+            var req = how === 'muted'
+                ? post(card.getAttribute('data-cards-url'), { enabled: '0' })
+                : post(card.getAttribute('data-seen-url'), { how: how });
+            req.then(function () {
+                document.querySelectorAll('.wn-dot, .wn-badge').forEach(function (el) { el.remove(); });
+            }).catch(function () { /* next page shows it again */ });
+        });
+    });
+})();
+</script>
+{% endwith %}
+{% endif %}

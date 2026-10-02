@@ -1620,6 +1620,13 @@ class CreatorPreferences(models.Model):
         max_length=10, blank=True, default='',
         help_text=_('Creator interface language. Empty = follow the browser.'),
     )
+    # In-app changelog (change in-app-changelog). `changelog_seen` is a watermark,
+    # the id of the newest entry this creator has seen -- ids are `YYYY-MM-DD-slug`,
+    # so "unseen" is a string comparison and one column, not a row per entry.
+    # Empty = never looked, which is what a creator who predates the first entry
+    # must read as. `changelog_cards` off hides the card only; the page stays.
+    changelog_seen = models.CharField(max_length=80, blank=True, default='')
+    changelog_cards = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

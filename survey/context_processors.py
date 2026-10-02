@@ -147,3 +147,46 @@ def icon_sprites(request):
         'ICON_SPRITES_JSON': json.dumps(marker_icons.sprite_urls()),
         'ICON_CATALOG_URL': static(marker_icons.CATALOG_STATIC_PATH),
     }
+
+
+def whats_new(request):
+    """In-app changelog state for the editor chrome (change in-app-changelog).
+
+    Lazy on purpose: this processor runs for every template, respondent pages
+    included, and only `editor_base.html` reads the value. Nothing is computed
+    -- and no query runs -- until a template touches `whats_new`. Anonymous
+    users resolve to the empty shape without a query either.
+    """
+    from django.utils.functional import SimpleLazyObject
+
+    def build():
+        from . import changelog
+        from .models import CreatorPreferences
+        empty = {'latest': None, 'unseen': (), 'unseen_count': 0,
+                 'show_card': False, 'cards': True}
+        user = getattr(request, 'user', None)
+        if user is None or not user.is_authenticated:
+            return empty
+        # A creator opening their own survey, its password gate or a public
+        # results page is on a respondent surface: no changelog chrome there,
+        # whichever base template the page happens to extend.
+        path = getattr(request, 'path', '') or ''
+        if any(path.startswith(prefix) for prefix in changelog.RESPONDENT_PREFIXES):
+            return empty
+        newest = changelog.latest()
+        if newest is None:
+            return empty
+        prefs = (CreatorPreferences.objects
+                 .filter(user=user)
+                 .values('changelog_seen', 'changelog_cards')
+                 .first()) or {'changelog_seen': '', 'changelog_cards': True}
+        unseen = changelog.unseen(prefs['changelog_seen'])
+        return {
+            'latest': newest,
+            'unseen': unseen,
+            'unseen_count': len(unseen),
+            'show_card': bool(unseen) and prefs['changelog_cards'],
+            'cards': prefs['changelog_cards'],
+        }
+
+    return {'whats_new': SimpleLazyObject(build)}
