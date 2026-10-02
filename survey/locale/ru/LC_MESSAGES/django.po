@@ -7131,3 +7131,47 @@ msgstr "Все версии"
 #: survey/templates/editor/partials/_export_modal.html survey/templates/editor/_survey_more_menu.html
 msgid "Current"
 msgstr "Текущая"
+
+#: survey/templates/base.html survey/templates/editor/editor_base.html survey/templates/editor/partials/_whats_new_card.html survey/templates/editor/whats_new.html
+msgid "What's new"
+msgstr "Что нового"
+
+#: survey/templates/editor/partials/_whats_new_card.html
+msgid "Got it"
+msgstr "Понятно"
+
+#: survey/templates/editor/partials/_whats_new_card.html
+msgid "All updates"
+msgstr "Все обновления"
+
+#: survey/templates/editor/partials/_whats_new_card.html
+msgid "Don't show these"
+msgstr "Больше не показывать"
+
+#: survey/templates/editor/whats_new.html
+msgid "What's new in Mapsurvey"
+msgstr "Что нового в Mapsurvey"
+
+#: survey/templates/editor/whats_new.html
+msgid "Show a card in the editor when something changed"
+msgstr "Показывать карточку в редакторе, когда что-то изменилось"
+
+#: survey/templates/editor/whats_new.html
+msgid "Tell me about updates in the editor"
+msgstr "Сообщать об обновлениях в редакторе"
+
+#: survey/templates/editor/whats_new.html
+msgid "Nothing yet. Updates will appear here as they ship."
+msgstr "Пока пусто. Обновления появятся здесь по мере выхода."
+
+#: survey/templates/editor/whats_new.html
+msgid "Earlier"
+msgstr "Ранее"
+
+#: survey/templates/editor/whats_new.html
+msgid "Fixed"
+msgstr "Исправлено"
+
+#: survey/templates/editor/whats_new.html
+msgid "New"
+msgstr "Новое"

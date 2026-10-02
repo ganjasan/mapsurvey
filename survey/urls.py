@@ -37,6 +37,11 @@ urlpatterns = [
     # and editor URLs must stay stable.
     path('editor/language/', editor_views.set_creator_language, name='set_creator_language'),
 
+    # In-app changelog (change in-app-changelog): the page marks everything seen on GET.
+    path('editor/whats-new/', editor_views.whats_new_page, name='whats_new'),
+    path('editor/whats-new/seen/', editor_views.whats_new_seen, name='whats_new_seen'),
+    path('editor/whats-new/cards/', editor_views.whats_new_cards, name='whats_new_cards'),
+
     # WYSIWYG survey editor
     path('editor/surveys/new/', editor_views.editor_survey_create, name='editor_survey_create'),
     path('editor/generation/<int:event_id>/', editor_views.editor_generation_status, name='editor_generation_status'),

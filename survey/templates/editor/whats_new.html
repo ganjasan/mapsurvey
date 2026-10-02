@@ -1,0 +1,74 @@
+{% extends "editor/editor_base.html" %}
+{% load i18n %}
+{% load static %}
+{% comment %}
+"What's new" (change in-app-changelog): every entry newest first. `rows` carry
+`is_new` computed before the view moved the watermark, so this render shows
+what was unseen and a reload shows nothing highlighted. The switch posts the
+card preference; the page itself is reachable whatever it says.
+{% endcomment %}
+
+{% block page_title %}{% trans "What's new" %}{% endblock %}
+
+{% block navbar_content %}
+<span class="survey-name">{% trans "What's new" %}</span>
+{% endblock %}
+
+{% block content %}
+<div class="wn-page">
+    <div class="wn-top">
+        <h1>{% trans "What's new in Mapsurvey" %}</h1>
+        <label class="wn-pref" title="{% trans 'Show a card in the editor when something changed' %}">
+            <input type="checkbox" id="whatsNewCards" {% if cards_enabled %}checked{% endif %}
+                   data-cards-url="{% url 'whats_new_cards' %}">
+            <span class="wn-sw" aria-hidden="true"></span>
+            {% trans "Tell me about updates in the editor" %}
+        </label>
+    </div>
+
+    {% if not rows %}
+    <div class="wn-empty">{% trans "Nothing yet. Updates will appear here as they ship." %}</div>
+    {% endif %}
+
+    {% for row in rows %}
+        {% if not row.is_new and forloop.counter0 == new_count and new_count > 0 %}
+        <div class="wn-divider">{% trans "Earlier" %}</div>
+        {% endif %}
+        <div class="wn-entry{% if row.is_new %} wn-new{% endif %}" id="entry-{{ row.entry.id }}">
+            <div class="wn-meta">
+                {% if row.entry.kind == 'fixed' %}
+                <span class="wn-tag wn-fixed">{% trans "Fixed" %}</span>
+                {% else %}
+                <span class="wn-tag">{% trans "New" %}</span>
+                {% endif %}
+                <span>{{ row.entry.date }}</span>
+            </div>
+            <h3>{{ row.entry.title }}</h3>
+            {% if row.entry.image %}
+            <div class="wn-entry-image"><img src="{% static row.entry.image %}" alt=""></div>
+            {% endif %}
+            <div class="wn-body">{{ row.entry.body|safe }}</div>
+            {% if row.link %}
+            <a class="wn-go" href="{{ row.link }}">{% trans "Open" %} <i class="fas fa-arrow-right"></i></a>
+            {% endif %}
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+    var box = document.getElementById('whatsNewCards');
+    if (!box) return;
+    var csrf = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+    box.addEventListener('change', function () {
+        fetch(box.getAttribute('data-cards-url'), {
+            method: 'POST', credentials: 'same-origin',
+            headers: { 'X-CSRFToken': csrf, 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'enabled=' + (box.checked ? '1' : '0')
+        }).catch(function () { box.checked = !box.checked; });
+    });
+})();
+</script>
+{% endblock %}

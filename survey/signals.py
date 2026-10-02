@@ -52,6 +52,26 @@ def create_personal_org_on_registration(sender, user, request, **kwargs):
 
 
 @receiver(user_registered)
+def seed_changelog_watermark(sender, user, request, **kwargs):
+    """A new account starts with every changelog entry seen (change in-app-changelog).
+
+    The card exists to tell an EXISTING creator that something they use changed;
+    a first login has nothing to compare against, and a backlog of cards would
+    be the first thing a new creator sees. Own receiver, same reason as the
+    analytics one below: this must not be able to break account creation.
+    """
+    try:
+        from . import changelog
+        from .models import CreatorPreferences
+        newest = changelog.latest()
+        CreatorPreferences.objects.update_or_create(
+            user=user, defaults={'changelog_seen': newest.id if newest else ''},
+        )
+    except Exception:  # a changelog problem never breaks registration
+        pass
+
+
+@receiver(user_registered)
 def emit_registration_event(sender, user, request, **kwargs):
     """First step of the creator funnel.
 

@@ -231,6 +231,21 @@ Responses map alike; `layers.match_class` mirrors its matching for the server-si
 (`legend_for`, delivered as metadata). The object editor draws with its own code and does
 not honour rules yet.
 
+**In-app changelog (change `in-app-changelog`, issue #227)**: "What's new" entries are files in
+`survey/changelog/<YYYY-MM-DD>-<slug>.html` — a `---` header (`title`, `kind: new|fixed`,
+optional `link` URL name, optional `image` static path) followed by an HTML body, English only,
+shipped in the PR of the change they describe (format in `survey/changelog/README.md`; the loader
+is `survey/changelog.py`, read once per process). Seen-state is ONE watermark per creator,
+`CreatorPreferences.changelog_seen` = the newest id seen; ids start with the date, so "unseen" is a
+string comparison. The card (`editor/partials/_whats_new_card.html`, included from
+`editor_base.html` AND `base.html`, never from `base_survey_template.html`; the `whats_new`
+context processor also returns nothing under `/surveys/` and `/r/`) shows only the latest unseen
+entry, once; "Got it" / × / the page / "Don't show these" all move the watermark.
+`changelog_cards` off hides the card only — the page `/editor/whats-new/`, the gift icon and the
+account-menu item stay. New accounts start seen (`seed_changelog_watermark` in `signals.py`).
+`ChangelogEntriesTest.test_shipped_entries_load` parses every file, so a malformed entry fails CI,
+not every editor page. The first entry (`2026-10-02-whats-new.html`) announces the cards themselves; #226 (empty sessions hidden by default) writes the next.
+
 **Comment threads (`CommentThread`/`Comment`/`CommentAttachment`, spec `survey-comment-threads`)**:
 workspace members discuss a survey where it lives — the survey as a whole, a question, a section, a respondent
 session or a public-results block — in ONE slide-in drawer (`editor/partials/_comments_drawer.html`, included

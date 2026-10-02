@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>In-app changelog — mockup</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --accent: #4f46e5;
+    --accent-light: #eef2ff;
+    --accent-hover: #4338ca;
+    --border-color: #e5e7eb;
+    --bg-muted: #f9fafb;
+    --text-primary: #1f2937;
+    --text-secondary: #6b7280;
+    --text-tertiary: #9ca3af;
+    --radius: 8px;
+    --radius-md: 12px;
+    --shadow-lg: 0 12px 40px rgba(0,0,0,.1), 0 4px 12px rgba(0,0,0,.04);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'DM Sans', system-ui, sans-serif; background: #e9ebef; color: var(--text-primary); }
+  a { color: var(--accent); text-decoration: none; }
+
+  /* ── mockup chrome (not part of the product) ── */
+  .mk-bar { background: #111827; color: #d1d5db; padding: .6rem 1rem; display: flex; gap: 1rem; align-items: center; font-size: .85rem; position: sticky; top: 0; z-index: 50; }
+  .mk-bar strong { color: #fff; }
+  .mk-bar button { background: #374151; color: #e5e7eb; border: 0; border-radius: 6px; padding: .35rem .7rem; font: inherit; cursor: pointer; }
+  .mk-bar button.on { background: var(--accent); color: #fff; }
+  .mk-note { max-width: 1180px; margin: 1rem auto 0; padding: 0 1rem; font-size: .85rem; color: #4b5563; }
+  .mk-note code { background: #fff; padding: 0 .3em; border-radius: 4px; }
+  .screen { max-width: 1180px; margin: 1rem auto 3rem; background: var(--bg-muted); border: 1px solid #d1d5db; border-radius: 10px; overflow: hidden; min-height: 640px; position: relative; display: none; }
+  .screen.on { display: block; }
+
+  /* ── editor navbar (copied look) ── */
+  .editor-navbar { background: #fff; border-bottom: 1px solid var(--border-color); padding: .5rem 1rem; display: flex; align-items: center; gap: .5rem 1rem; }
+  .editor-navbar a { color: var(--text-secondary); font-size: .9rem; }
+  .editor-navbar .survey-name { font-weight: 700; color: #111827; font-size: 1.1rem; }
+  .editor-navbar .spacer { flex: 1; }
+  .editor-navbar .tabs { display: flex; gap: .25rem; margin-left: .5rem; }
+  .editor-navbar .tabs a { padding: .35rem .7rem; border-radius: 6px; }
+  .editor-navbar .tabs a.active { background: var(--accent-light); color: var(--accent); font-weight: 500; }
+  .nav-icon { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 6px; color: var(--text-secondary); }
+  .nav-icon:hover { background: var(--bg-muted); color: var(--accent); }
+  .nav-icon .dot { position: absolute; top: 5px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: #ef4444; border: 2px solid #fff; }
+  .nav-account { font-size: .85rem; color: var(--text-secondary); }
+
+  /* ── responses page stand-in ── */
+  .page { padding: 1.25rem 1.5rem; }
+  .headline { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .headline h2 { margin: 0; font-size: 1.25rem; }
+  .headline .muted { color: var(--text-secondary); font-size: .9rem; }
+  .pill { display: inline-flex; gap: .4rem; align-items: center; background: #fff; border: 1px solid var(--border-color); border-radius: 999px; padding: .25rem .7rem; font-size: .8rem; color: var(--text-secondary); }
+  .pill .toggle { width: 26px; height: 14px; border-radius: 7px; background: #d1d5db; position: relative; }
+  .pill .toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; border-radius: 50%; background: #fff; }
+  table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid var(--border-color); border-radius: var(--radius); overflow: hidden; font-size: .85rem; }
+  th, td { text-align: left; padding: .55rem .75rem; border-bottom: 1px solid var(--border-color); }
+  th { background: #fff; color: var(--text-secondary); font-weight: 500; font-size: .75rem; text-transform: uppercase; letter-spacing: .03em; }
+  tr:last-child td { border-bottom: 0; }
+  .geo { color: var(--accent); }
+
+  /* ── the What's new card (state 1) ── */
+  .wn-card { position: absolute; right: 1.25rem; bottom: 1.25rem; width: 360px; background: #fff; border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); padding: 1rem 1.1rem; z-index: 10; }
+  .wn-card .eyebrow { display: flex; align-items: center; gap: .5rem; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--accent); font-weight: 700; margin-bottom: .4rem; }
+  .wn-card .eyebrow .date { color: var(--text-tertiary); font-weight: 400; text-transform: none; letter-spacing: 0; margin-left: auto; }
+  .wn-card h4 { margin: 0 0 .4rem; font-size: 1rem; }
+  .wn-card p { margin: 0 0 .75rem; font-size: .85rem; color: #374151; line-height: 1.45; }
+  .wn-card .close { position: absolute; top: .55rem; right: .6rem; width: 26px; height: 26px; border: 0; background: transparent; color: var(--text-tertiary); cursor: pointer; border-radius: 6px; font-size: .85rem; }
+  .wn-card .close:hover { background: var(--bg-muted); color: var(--text-primary); }
+  .wn-card .actions { display: flex; gap: .75rem; align-items: center; font-size: .82rem; }
+  .btn { display: inline-flex; align-items: center; gap: .4rem; padding: .4rem .8rem; border-radius: 6px; font-size: .82rem; font-weight: 500; border: 1px solid var(--border-color); background: #fff; color: var(--text-primary); cursor: pointer; font-family: inherit; }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .wn-card .actions .mute { margin-left: auto; color: var(--text-tertiary); font-size: .78rem; }
+  .wn-card .actions .mute:hover { color: var(--text-secondary); }
+
+  /* ── What's new page (state 2) ── */
+  .wn-page { max-width: 720px; margin: 0 auto; padding: 1.5rem 1.5rem 3rem; }
+  .wn-page .top { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+  .wn-page h1 { margin: 0; font-size: 1.5rem; }
+  .wn-page .top .pref { margin-left: auto; display: inline-flex; align-items: center; gap: .5rem; font-size: .82rem; color: var(--text-secondary); background: #fff; border: 1px solid var(--border-color); border-radius: 999px; padding: .3rem .75rem; }
+  .sw { width: 30px; height: 16px; border-radius: 8px; background: var(--accent); position: relative; }
+  .sw::after { content: ''; position: absolute; top: 2px; right: 2px; width: 12px; height: 12px; border-radius: 50%; background: #fff; }
+  .sw.off { background: #d1d5db; }
+  .sw.off::after { right: auto; left: 2px; }
+  .entry { background: #fff; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.1rem 1.25rem; margin-bottom: .9rem; position: relative; }
+  .entry.new { border-color: #c7d2fe; }
+  .entry .meta { display: flex; align-items: center; gap: .6rem; font-size: .75rem; color: var(--text-tertiary); margin-bottom: .35rem; }
+  .entry .meta .tag { background: var(--accent-light); color: var(--accent); border-radius: 4px; padding: .1rem .4rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; font-size: .68rem; }
+  .entry .meta .tag.fix { background: #ecfdf5; color: #047857; }
+  .entry h3 { margin: 0 0 .4rem; font-size: 1.05rem; }
+  .entry p { margin: 0 0 .5rem; font-size: .88rem; color: #374151; line-height: 1.5; }
+  .entry p:last-child { margin-bottom: 0; }
+  .entry .go { font-size: .85rem; font-weight: 500; }
+  .entry .go i { font-size: .75rem; margin-left: .25rem; }
+  .divider { display: flex; align-items: center; gap: .75rem; color: var(--text-tertiary); font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; margin: 1.25rem 0 .9rem; }
+  .divider::before, .divider::after { content: ''; flex: 1; border-top: 1px solid var(--border-color); }
+
+  /* ── dropdown (state 3) ── */
+  .dropdown-menu { position: absolute; top: 46px; right: 170px; width: 260px; background: #fff; border: 1px solid var(--border-color); border-radius: var(--radius); box-shadow: var(--shadow-lg); padding: .35rem 0; z-index: 20; font-size: .88rem; }
+  .dropdown-menu .dropdown-item { display: block; padding: .45rem 1rem; color: var(--text-primary); }
+  .dropdown-menu .dropdown-item:hover { background: var(--bg-muted); }
+  .dropdown-menu .dropdown-item i { width: 18px; margin-right: 4px; color: var(--text-secondary); }
+  .dropdown-menu .dropdown-item .badge { float: right; background: var(--accent); color: #fff; border-radius: 999px; font-size: .68rem; padding: .05rem .45rem; font-weight: 700; }
+  .dropdown-divider { border-top: 1px solid var(--border-color); margin: .35rem 0; }
+  .dropdown-header { padding: .35rem 1rem; font-size: .72rem; color: var(--text-tertiary); }
+  .callout { position: absolute; background: #fef3c7; border: 1px solid #fcd34d; color: #78350f; font-size: .75rem; padding: .3rem .55rem; border-radius: 6px; max-width: 220px; z-index: 30; }
+</style>
+</head>
+<body>
+
+<div class="mk-bar">
+  <strong>Mockup · In-app changelog</strong>
+  <button class="on" data-s="s1">1 · Card on first visit after release</button>
+  <button data-s="s2">2 · What's new page</button>
+  <button data-s="s3">3 · Entry point in the account menu</button>
+  <span style="margin-left:auto;color:#9ca3af">Entries are English only</span>
+</div>
+
+<!-- ───────────── STATE 1: card ───────────── -->
+<div class="screen on" id="s1">
+  <div class="editor-navbar">
+    <a href="#"><i class="fas fa-arrow-left"></i> Dashboard</a>
+    <span class="survey-name">Remington Neighborhood Plan</span>
+    <div class="tabs">
+      <a href="#">Survey</a><a href="#" class="active">Responses</a><a href="#">Public results</a>
+    </div>
+    <span class="spacer"></span>
+    <span class="nav-icon" title="What's new"><i class="fas fa-gift"></i><span class="dot"></span></span>
+    <span class="nav-account"><i class="fas fa-building"></i> Unknown Studio</span>
+    <span class="nav-account"><i class="fas fa-user"></i> amanda</span>
+  </div>
+
+  <div class="page">
+    <div class="headline">
+      <h2>146 responses</h2>
+      <span class="muted">204 opened without answering · hidden</span>
+      <span class="pill"><span class="toggle"></span> Show empty sessions</span>
+    </div>
+    <table>
+      <tr><th>#</th><th>Started</th><th>Where would you add a crosswalk?</th><th>Priority</th><th>Comment</th></tr>
+      <tr><td>146</td><td>Oct 1, 14:22</td><td class="geo"><i class="fas fa-map-marker-alt"></i> 2 points</td><td>Safety</td><td>Kids cross here every morning.</td></tr>
+      <tr><td>145</td><td>Oct 1, 13:58</td><td class="geo"><i class="fas fa-map-marker-alt"></i> 1 point</td><td>Traffic calming</td><td>—</td></tr>
+      <tr><td>144</td><td>Oct 1, 11:04</td><td class="geo"><i class="fas fa-map-marker-alt"></i> 3 points</td><td>Safety</td><td>Blind corner at 28th &amp; Huntingdon.</td></tr>
+      <tr><td>143</td><td>Sep 30, 19:41</td><td class="geo"><i class="fas fa-map-marker-alt"></i> 1 point</td><td>Lighting</td><td>Too dark after 8pm.</td></tr>
+      <tr><td>142</td><td>Sep 30, 18:12</td><td class="geo"><i class="fas fa-map-marker-alt"></i> 1 point</td><td>Safety</td><td>—</td></tr>
+      <tr><td>141</td><td>Sep 30, 16:50</td><td class="geo"><i class="fas fa-map-marker-alt"></i> 2 points</td><td>Parking</td><td>Cars block the ramp.</td></tr>
+      <tr><td>140</td><td>Sep 30, 15:07</td><td class="geo"><i class="fas fa-map-marker-alt"></i> 1 point</td><td>Safety</td><td>—</td></tr>
+      <tr><td>139</td><td>Sep 30, 12:33</td><td class="geo"><i class="fas fa-map-marker-alt"></i> 4 points</td><td>Traffic calming</td><td>Speed bump please.</td></tr>
+    </table>
+  </div>
+
+  <div class="wn-card" role="dialog" aria-label="What's new">
+    <button class="close" aria-label="Dismiss"><i class="fas fa-times"></i></button>
+    <div class="eyebrow"><i class="fas fa-gift"></i> What's new <span class="date">Oct 6, 2026</span></div>
+    <h4>Empty sessions are now hidden</h4>
+    <p>Responses, Overview, Map and exports now leave out sessions where nobody answered anything. Most of them were people opening the link and leaving, and on busy surveys they outnumbered real responses 3 to 1. The headline shows how many were hidden, and you can switch them back on at any time.</p>
+    <div class="actions">
+      <a class="btn btn-primary" href="#">Got it</a>
+      <a href="#">All updates</a>
+      <a href="#" class="mute">Don't show these</a>
+    </div>
+  </div>
+
+  <div class="callout" style="right:400px;bottom:150px">Shown once, on the first editor page after the release. Dismiss, "Got it" or opening the page all mark it seen.</div>
+  <div class="callout" style="right:60px;top:52px">Red dot = unseen entry. Goes away with the card.</div>
+</div>
+
+<!-- ───────────── STATE 2: page ───────────── -->
+<div class="screen" id="s2">
+  <div class="editor-navbar">
+    <a href="#"><i class="fas fa-arrow-left"></i> Dashboard</a>
+    <span class="survey-name">What's new</span>
+    <span class="spacer"></span>
+    <span class="nav-icon" title="What's new"><i class="fas fa-gift"></i></span>
+    <span class="nav-account"><i class="fas fa-building"></i> Unknown Studio</span>
+    <span class="nav-account"><i class="fas fa-user"></i> amanda</span>
+  </div>
+
+  <div class="wn-page">
+    <div class="top">
+      <h1>What's new in Mapsurvey</h1>
+      <label class="pref"><span class="sw"></span> Tell me about updates in the editor</label>
+    </div>
+
+    <div class="entry new">
+      <div class="meta"><span class="tag">New</span> Oct 6, 2026</div>
+      <h3>Empty sessions are now hidden</h3>
+      <p>Responses, Overview, Map and exports now leave out sessions where nobody answered anything. Most of them were people opening the link and leaving, and on busy surveys they outnumbered real responses 3 to 1. The headline shows how many were hidden, and you can switch them back on at any time.</p>
+      <p>Why: creators were deleting these rows one by one, and clients asked "how many people actually responded?" with no clear number to point at. The section funnel on the Perf tab still counts everyone who opened the survey.</p>
+      <a class="go" href="#">Open Responses <i class="fas fa-arrow-right"></i></a>
+    </div>
+
+    <div class="divider">Earlier</div>
+
+    <div class="entry">
+      <div class="meta"><span class="tag">New</span> Sep 29, 2026</div>
+      <h3>Export responses as Excel, GeoPackage, Shapefile or KML</h3>
+      <p>The Export dialog on the Responses page now offers five formats. GeoPackage and Shapefile keep every geo question as its own layer, with the sub-question answers as attributes.</p>
+      <a class="go" href="#">Open Responses <i class="fas fa-arrow-right"></i></a>
+    </div>
+
+    <div class="entry">
+      <div class="meta"><span class="tag fix">Fixed</span> Sep 24, 2026</div>
+      <h3>Editing a multi-feature geo answer no longer fails</h3>
+      <p>Inline editing of an answer with several points, lines or polygons returned an error. It saves again.</p>
+    </div>
+
+    <div class="entry">
+      <div class="meta"><span class="tag">New</span> Sep 18, 2026</div>
+      <h3>Reference layer styling</h3>
+      <p>A reference layer can be coloured by one of its properties: categories or graduated classes, with a legend on the respondent map and on Responses.</p>
+      <a class="go" href="#">Layer settings <i class="fas fa-arrow-right"></i></a>
+    </div>
+  </div>
+
+  <div class="callout" style="right:40px;top:120px">Off = no cards in the editor. The page and the menu entry stay.</div>
+</div>
+
+<!-- ───────────── STATE 3: menu ───────────── -->
+<div class="screen" id="s3">
+  <div class="editor-navbar">
+    <a href="#"><i class="fas fa-arrow-left"></i> Dashboard</a>
+    <span class="survey-name">Remington Neighborhood Plan</span>
+    <div class="tabs">
+      <a href="#" class="active">Survey</a><a href="#">Responses</a><a href="#">Public results</a>
+    </div>
+    <span class="spacer"></span>
+    <span class="nav-icon" title="What's new"><i class="fas fa-gift"></i><span class="dot"></span></span>
+    <span class="nav-account"><i class="fas fa-building"></i> Unknown Studio</span>
+    <span class="nav-account" style="color:var(--accent)"><i class="fas fa-user"></i> amanda ▾</span>
+  </div>
+
+  <div class="dropdown-menu" style="right:16px">
+    <div class="dropdown-header">amanda · Unknown Studio</div>
+    <a class="dropdown-item" href="#"><i class="fas fa-cog"></i>Organization settings</a>
+    <a class="dropdown-item" href="#"><i class="fas fa-users"></i>Members</a>
+    <div class="dropdown-divider"></div>
+    <a class="dropdown-item" href="#"><i class="fas fa-gift"></i>What's new <span class="badge">1</span></a>
+    <a class="dropdown-item" href="#"><i class="fas fa-comment-dots"></i>Help &amp; support</a>
+    <a class="dropdown-item" href="#"><i class="fas fa-sign-out-alt"></i>Logout</a>
+  </div>
+
+  <div class="page" style="opacity:.35">
+    <div class="headline"><h2>Sections</h2></div>
+    <table>
+      <tr><td>1 · Welcome</td><td>2 questions</td></tr>
+      <tr><td>2 · Where would you add a crosswalk?</td><td>4 questions</td></tr>
+      <tr><td>3 · About you</td><td>3 questions</td></tr>
+    </table>
+  </div>
+
+  <div class="callout" style="right:300px;top:60px">Two ways in: the gift icon (always visible, dot when unseen) and the account menu. Both open the page; on phones only the menu item.</div>
+</div>
+
+<div class="mk-note">
+  Decisions baked in: entries live in the repo and ship with the feature's PR; only the latest unseen entry becomes a card, older ones are reachable from the page; a new account starts with everything marked seen; the preference switch disables cards only.
+</div>
+
+<script>
+  document.querySelectorAll('.mk-bar button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.mk-bar button').forEach(x => x.classList.remove('on'));
+    document.querySelectorAll('.screen').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    document.getElementById(b.dataset.s).classList.add('on');
+  }));
+</script>
+</body>
+</html>

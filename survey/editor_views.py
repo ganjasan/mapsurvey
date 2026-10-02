@@ -11,7 +11,7 @@ from django.db import transaction
 from django.db import models
 from django.db.models import Q, Max, Count
 from django.http import HttpResponse, Http404, JsonResponse
-from django.urls import reverse
+from django.urls import reverse, NoReverseMatch
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.utils import timezone, translation
 from django.utils.html import strip_tags
@@ -2705,3 +2705,94 @@ def set_creator_language(request):
         samesite=settings.LANGUAGE_COOKIE_SAMESITE,
     )
     return response
+
+
+# ── In-app changelog (change in-app-changelog, issue #227) ──────────────────
+
+def _changelog_prefs(user):
+    prefs, _created = CreatorPreferences.objects.get_or_create(user=user)
+    return prefs
+
+
+def _mark_changelog_seen(prefs):
+    """Move the watermark to the newest entry. Idempotent; a no-op with no entries."""
+    from . import changelog
+    newest = changelog.latest()
+    if newest is None or prefs.changelog_seen == newest.id:
+        return None
+    prefs.changelog_seen = newest.id
+    prefs.save(update_fields=['changelog_seen', 'updated_at'])
+    return newest
+
+
+@login_required
+def whats_new_page(request):
+    """Every entry, newest first; then the watermark moves.
+
+    A GET with a write, deliberately: the deep link from the card and the menu
+    item must count as "seen" without a round trip. The highlight is computed
+    BEFORE the watermark moves so this render shows what was new; a reload
+    shows nothing highlighted. The write is idempotent and only ever marks the
+    requester's own changelog read, so a forged GET gains nothing.
+    """
+    from . import changelog
+    prefs = _changelog_prefs(request.user)
+    unseen_ids = {e.id for e in changelog.unseen(prefs.changelog_seen)}
+    entries = changelog.entries()
+    newest = _mark_changelog_seen(prefs)
+    if newest is not None:
+        pe.emit(pe.CHANGELOG_PAGE_VIEWED, request.user.pk, {'entry_id': newest.id})
+    rows = []
+    for entry in entries:
+        link = ''
+        if entry.link:
+            try:
+                link = reverse(entry.link)
+            except NoReverseMatch:
+                # An entry pointing at a URL name that was renamed since: the page
+                # still renders, just without the "Open" link.
+                link = ''
+        rows.append({'entry': entry, 'is_new': entry.id in unseen_ids, 'link': link})
+    return render(request, 'editor/whats_new.html', {
+        'rows': rows,
+        'new_count': len(unseen_ids),
+        'cards_enabled': prefs.changelog_cards,
+    })
+
+
+@require_POST
+@login_required
+def whats_new_seen(request):
+    """The card's "Got it" / ×: everything seen, one event saying how."""
+    from . import changelog
+    how = request.POST.get('how', '')
+    if how not in ('got_it', 'close'):
+        return HttpResponse(status=400)
+    prefs = _changelog_prefs(request.user)
+    newest = changelog.latest()
+    _mark_changelog_seen(prefs)
+    if newest is not None:
+        pe.emit(pe.CHANGELOG_CARD_DISMISSED, request.user.pk,
+                {'entry_id': newest.id, 'how': how})
+    return HttpResponse(status=204)
+
+
+@require_POST
+@login_required
+def whats_new_cards(request):
+    """The "Tell me about updates" switch. Off also marks everything seen: the
+    creator muting the card has looked at what it says."""
+    from . import changelog
+    enabled = request.POST.get('enabled', '')
+    if enabled not in ('0', '1'):
+        return HttpResponse(status=400)
+    prefs = _changelog_prefs(request.user)
+    prefs.changelog_cards = enabled == '1'
+    prefs.save(update_fields=['changelog_cards', 'updated_at'])
+    if enabled == '0':
+        newest = changelog.latest()
+        _mark_changelog_seen(prefs)
+        if newest is not None:
+            pe.emit(pe.CHANGELOG_CARD_DISMISSED, request.user.pk,
+                    {'entry_id': newest.id, 'how': 'muted'})
+    return HttpResponse(status=204)

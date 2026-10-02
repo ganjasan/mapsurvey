@@ -122,6 +122,7 @@ TEMPLATES = [
                 'survey.context_processors.analytics',
                 'survey.context_processors.mobile_adaptive',
                 'survey.context_processors.icon_sprites',
+                'survey.context_processors.whats_new',
             ],
         },
     },
