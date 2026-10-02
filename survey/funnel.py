@@ -41,7 +41,7 @@ ACTIVE_WINDOWS = (7, 30, 90)
 PUBLISH_WINDOW_DAYS = 14
 RESPONSE_WINDOW_DAYS = 30
 
-# GTM plan targets (docs/gtm/gtm-plan-2026-h2.md). Used by the goals block.
+# GTM plan targets (docs/gtm/gtm-plan-2026-h2.md in the private ops repo). Used by the goals block.
 GOAL_TARGETS = {
     "activated_30d": 25,   # activated creators / month, Oct target
     "regs_30d": 100,       # registrations / month, Oct target

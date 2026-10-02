@@ -34,7 +34,7 @@ iterate while collecting first responses — has no protection at all.
   moving the previous structure and sessions onto an archived header rather than deleting them
   (`versioning.py:236-260`). That is not theory: 61 archived headers currently hold 1060 questions
   and 3466 answers.
-- Reported by: Manuel Frost (manu04, Berlin Senate) 2026-08-04 — "I entered some test data into my
+- Reported by: lead-119 (Berlin Senate) 2026-08-04 — "I entered some test data into my
   test project, but upon export, only the last answer contains data; the rest are empty. I think
   you have changed some things and my data are older." His own reading was right; the trigger was
   his editing, not a deploy.

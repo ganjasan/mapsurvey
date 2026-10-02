@@ -22,7 +22,7 @@ their test data is unusable, which makes it more load-bearing than its priority 
 
 ## Notes
 
-- Asked for by: Manuel Frost (manu04, Berlin Senate) 2026-08-04 — "Maybe I need to clear all data
+- Asked for by: lead-119 (Berlin Senate) 2026-08-04 — "Maybe I need to clear all data
   an restart my Tests. Is there such a possibility?"
 - Reuse the existing deletion path and the `clear_test_data` audit action rather than adding a
   second way to delete sessions.

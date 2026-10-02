@@ -22,7 +22,7 @@ want horizontal room — sliders, scale strips, long choice labels, wide tables.
 
 ## Notes
 
-- Found 2026-08-05 while reproducing backlog #99. Manuel Frost reported the range slider as "too
+- Found 2026-08-05 while reproducing backlog #99. lead-119 reported the range slider as "too
   short"; the slider is `width: 100%` and behaving correctly, so this layout is the actual cause of
   what he saw. #99 fixed the label alignment, which was a separate and real defect, but not this.
 - The fix is not simply "hide the map when there are no geo questions" — decide first what the page

@@ -11,7 +11,7 @@ switch, so switching e.g. choice → point writes the stale list right back. Suc
 point question routes its GeoJSON payload into the choice branch — `int('{"type":"Feature"...')` —
 `ValueError`, an unhandled 500 on every submit of the section.
 
-This is what actually broke creator adorion@cabinworks.ca's "Finish doesn't submit" survey on
+This is what actually broke creator lead-059's "Finish doesn't submit" survey on
 2026-08-24 (PostHog exceptions show the exact ValueError with her question `Q_7633107523`,
 a `point` with 6 leftover choices). She deleted the survey and rebuilt it from scratch.
 Production has **10 poisoned geo questions across 4 creators**; three other creators' surveys

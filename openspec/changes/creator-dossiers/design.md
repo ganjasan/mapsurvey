@@ -88,7 +88,7 @@ The importer walks `docs/marketing/user-outreach/<username>/`:
    working file and a company-level dossier, neither of which describes a single
    account.
 
-   Group dossiers (`ftspk_class`, `mora_group`) contain several members' emails
+   Group dossiers (`lead-063`, `lead-136`) contain several members' emails
    and will attach to whichever member matches first. Accepted: one member
    carrying the group's story beats losing it, and the note names the group in
    its first line. Unmatched directories are reported, never guessed at.

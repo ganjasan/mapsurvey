@@ -15,8 +15,8 @@ show a ribbon reading:
 > Unlisted — viewable by direct link only, not indexed.
 
 So a page whose **Visibility is set to Public** shows that ribbon in its own preview. Verified on the
-`ameelia-mirt` page: `visibility='public'`, `is_published=True`, the editor's Visibility select reads
-"Public", and the preview pane still carries the Unlisted ribbon. The live page at `/r/ameelia-mirt/`
+`lead-020` page: `visibility='public'`, `is_published=True`, the editor's Visibility select reads
+"Public", and the preview pane still carries the Unlisted ribbon. The live page at `/r/lead-020/`
 correctly carries neither the ribbon nor a `noindex` robots tag — it serves
 `<meta name="robots" content="index, follow">`.
 

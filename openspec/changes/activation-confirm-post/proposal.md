@@ -4,8 +4,8 @@
 
 Render request logs (2026-07-27) show that **Microsoft Defender Safe Links consumes activation links before the human clicks them**, with plain GET requests from Azure IPs that carry a full Chrome user-agent. Two documented cases from a single day:
 
-- Claire Cameron (DECYP Tasmania, `.gov.au`): scanner GET at 01:01:54 activated the account; her own click at 01:07:33 landed on "Activation Failed" → she re-registered a second account and never signed in.
-- `js303643@student.polsl.pl`: identical sequence at 09:03–09:04, also ending in a duplicate account.
+- lead-045 (DECYP Tasmania, `.gov.au`): scanner GET at 01:01:54 activated the account; her own click at 01:07:33 landed on "Activation Failed" → she re-registered a second account and never signed in.
+- `lead-178`: identical sequence at 09:03–09:04, also ending in a duplicate account.
 
 15 of the 24 "activated but never logged in" accounts are on institutional domains (government, councils, universities) — precisely the mailboxes behind Microsoft 365, and precisely the outreach targets. The previous change (`activation-funnel-autologin`, archived 2026-07-27) softened the failure into a login redirect, but the original goal — the user lands signed-in without retyping credentials — is still unmet for every Microsoft-hosted mailbox, because the scanner, not the human, consumes the one inactive→active transition that triggers auto-login.
 

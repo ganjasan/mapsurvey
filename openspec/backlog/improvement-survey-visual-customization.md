@@ -20,7 +20,7 @@ rule between questions would carry most of the benefit on its own.
 
 ## Notes
 
-- Source: Manuel Frost (manu04) — nice to have
+- Source: lead-119 — nice to have
 - **2026-07-29**: this is the respondent-facing styling slice of
   [white-label branding](feature-white-label-branding.md) (#90) — build it there rather than
   twice, and treat it as the first shippable increment of that feature. Reclassified from
@@ -28,7 +28,7 @@ rule between questions would carry most of the benefit on its own.
   delivering to a municipality pays for. See [epics/pro-tier.md](epics/pro-tier.md).
 - Guardrail: constrain the palette so brand settings cannot break contrast or hide required
   legal links — no free-form CSS field.
-- **2026-08-04**: Manuel Frost repeated the request, specifically asking for a separator line
+- **2026-08-04**: lead-119 repeated the request, specifically asking for a separator line
   between questions and more air around the subheading. He also asked to "place a short text
   without an answer option" — that already exists as the `html` question type
   (`survey/forms.py:219`) and he did not find it. Treat the discoverability of `html` as part of

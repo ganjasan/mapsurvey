@@ -17,7 +17,7 @@ find it.
 
 ## The case that surfaced it
 
-`angele.trolliet@vaucluse.chambagri.fr`, 2026-08-04. Ten versions of the same survey between
+`lead-023`, 2026-08-04. Ten versions of the same survey between
 12:52 and 15:17, one afternoon:
 
 | Version | Sessions | Window |

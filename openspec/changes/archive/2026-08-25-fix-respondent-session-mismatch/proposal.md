@@ -13,7 +13,7 @@ Only the survey *entry* view (`/surveys/<slug>/`) clears the cookie. Every direc
 bypasses it — and direct section links are what actually circulate: the entry view itself redirects
 respondents to them, so that is what gets copied out of the address bar and shared.
 
-This is live: creator adorion@cabinworks.ca (user 390) wrote to support that Finish "doesn't
+This is live: creator lead-059 (user 390) wrote to support that Finish "doesn't
 submit". Render logs show her IP getting dozens of POST → 500 on her second survey right after she
 finished her first one (2026-08-24 23:12–23:15 UTC), and reproducing with a stale cookie against
 her survey returns `Server Error (500)`. Her Crime Watch survey went out to a Facebook group; any

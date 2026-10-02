@@ -3,7 +3,6 @@
 !.env.ports.example
 env/
 db.sqlite3
-user_surveys/
 .claude/mcp.json
 docs/
 staticfiles/
@@ -13,13 +12,18 @@ mediafiles/
 scripts/.outreach-sent.log
 
 # Local working directories — never for the public repo.
-# raw/ and exports/ can hold client and respondent data.
+# Operational material (marketing, outreach, plans, requirements, raw notes, exports)
+# lives in the private ops repo ../Mapsurvey-ops. The main checkout keeps symlinks to it
+# under these names; the patterns carry no trailing slash so they match the links too.
 .drydock/
-/backlog/
-designs/
-exports/
-raw/
-requirements/
+/backlog
+/designs
+/exports
+/raw
+/requirements
+/user_surveys
+/legal
+/.claude/skills/ai-visibility
 
 # Python bytecode
 __pycache__/

@@ -21,7 +21,7 @@ and should be resolved when this is built.
 
 ## Notes
 
-- Source: Manuel Frost (manu04) — originally 2026-03-26 for audio (his survey is about acoustic
+- Source: lead-119 — originally 2026-03-26 for audio (his survey is about acoustic
   quality of urban spaces, audio samples would be valuable); repeated 2026-08-04 asking for
   image, audio and video together: "The ability to upload images, audio, or videos is still
   missing."

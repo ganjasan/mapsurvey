@@ -27,7 +27,7 @@ Two independent confirmations, from opposite directions:
 - [Ideenkarte](../../docs/marketing/competitors/) — the first confirmed incumbent we are
   being measured against (ThINK Jena) — has like/dislike voting, and it sits in our recorded
   gap list against them alongside the public live map.
-- Marcus Wildner (ThINK) asked about exactly this territory on the 2026-07-31 call.
+- lead-139 (ThINK) asked about exactly this territory on the 2026-07-31 call.
 
 Everything else on the PARTIMAP list makes an existing scenario nicer. This one opens a
 scenario we cannot serve at all today, and it is the scenario municipalities buy.

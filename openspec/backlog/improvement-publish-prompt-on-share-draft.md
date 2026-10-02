@@ -23,7 +23,7 @@ for the public.
 
 ### Real incident (2026-07-06)
 
-Client `ali.ahmadi.2@ulaval.ca` (Université Laval) ran a July 2026 campaign
+Client `lead-017` (Université Laval) ran a July 2026 campaign
 (LinkedIn / Instagram / email) for survey **"Dorval Odor"**
 (`/surveys/02a92b93-ea46-4bbf-bf0b-3d23f0766474/`). The shared link 404'd for all
 recipients because the survey was left in **Draft**. The link itself was correct — the

@@ -6,7 +6,7 @@ the openable file is the empty one and the informative ones have no handler on a
 without a GIS. City of Olney (paying, $490/yr) reported exactly that on 2026-09-19 ("the Excel
 sheet was not as informative, and the other files are at type my computer cannot open") and needs a
 flat sheet of observations before the count goes year-round on 2026-10-03. GIS users pull the other
-way: Manuel Frost (Berlin Senate) asked for Shapefile/GeoPackage as "very important", and he also
+way: lead-119 (Berlin Senate) asked for Shapefile/GeoPackage as "very important", and he also
 mistook the survey backup ("Export") for the data download and reported GeoJSON as broken.
 
 Four backlog cards describe one surface — what the export dialog offers and what it produces:

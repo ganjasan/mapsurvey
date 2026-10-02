@@ -11,7 +11,7 @@ When a survey is republished as a new version, the analytics page and editor das
 
 ## Notes
 
-- Real-world trigger: bisqunours republished a 619-response survey to fix a single typo, and the new version shows 0 responses + 0 in the dashboard list
+- Real-world trigger: lead-035 republished a 619-response survey to fix a single typo, and the new version shows 0 responses + 0 in the dashboard list
 - Two categories of version changes:
   - **Compatible** (additive/cosmetic): typo fixes, text edits, new questions added, reordering — old responses remain valid and should be shown
   - **Incompatible** (breaking): questions removed or fundamentally changed — old responses may not map cleanly

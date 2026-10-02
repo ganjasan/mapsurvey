@@ -19,7 +19,7 @@ with no such column — with no error to explain the gap.
 
 ## Notes
 
-- Found 2026-08-04 while investigating Manuel Frost's export complaint.
+- Found 2026-08-04 while investigating lead-119's export complaint.
 - **2026-08-04 — FIXED** in change `export-data-integrity`, branch `fix/export-data-integrity`.
   `datetime` is exported as ISO 8601; values that do not parse pass through unchanged rather than
   being dropped.

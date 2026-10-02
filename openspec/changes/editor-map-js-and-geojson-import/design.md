@@ -172,7 +172,7 @@ Rollback is a revert — there is no data change and no kill switch to add.
 
 Verification after deploy: the PostHog issues
 `01a06dbf-…` (TypeError `'x'`) and the `Geometry has Z dimension` server issue should stop
-receiving events. Both have a named, reachable reporter — `dominik.toennes@viakoeln.de`
+receiving events. Both have a named, reachable reporter — `lead-199`
 hit all three defects — so a short note once it ships is warranted.
 
 ## Open Questions

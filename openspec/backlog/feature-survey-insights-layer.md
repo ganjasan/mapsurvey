@@ -61,4 +61,4 @@ Two tiers, strictly layered:
 - Pro-tier candidate: raw numbers free, insights and digest paid — fits the
   project-line-item model.
 - Origin: hand-made read-out for the Pszów survey, offered to its creator 2026-08-16
-  (`docs/marketing/user-outreach/patricio22/`). His reply is the first template test.
+  (`docs/marketing/user-outreach/lead-152/`). His reply is the first template test.

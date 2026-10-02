@@ -47,5 +47,5 @@
 - [x] 7.3 `openspec validate editor-map-js-and-geojson-import --strict`
 - [ ] 7.4 Open the PR against `master`; no kill switch and no migration, so rollback is a revert
 - [ ] 7.5 After deploy, confirm PostHog issues `01a06dbf-…` (TypeError `'x'`) and the `Geometry has Z dimension` server issue stop receiving events
-- [ ] 7.6 Write to `dominik.toennes@viakoeln.de`, who hit all three defects — thank and "fixed", no cause detail
+- [ ] 7.6 Write to `lead-199`, who hit all three defects — thank and "fixed", no cause detail
 - [x] 7.7 Update the `lesson-l10n-numbers-break-inline-js` memory: the guard reached the templates but not the test, so the next map template inherited the defect

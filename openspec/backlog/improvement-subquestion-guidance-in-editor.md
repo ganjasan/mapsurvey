@@ -23,7 +23,7 @@ attributes would never have attached to her observations, and nothing told her. 
 the sub-question model only on her second survey, by editing the AI draft's map question
 instead of building her own. The AI drafts already model this correctly (geo question with
 attribute sub-questions), which is currently the only place a creator can learn the pattern.
-See `docs/marketing/user-outreach/fallonmaps/profile.md` and memory
+See `docs/marketing/user-outreach/lead-059/profile.md` and memory
 [[architecture-subquestions-geojson]].
 
 Related: **#61 Sub-question Discoverability Testing** (2026-04-14) asks *whether* creators find

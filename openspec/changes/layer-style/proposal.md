@@ -1,6 +1,6 @@
 ## Why
 
-A reference layer has one colour. Sarasota/Manatee MPO (creator `mrgmiami`) loaded 6 119 road
+A reference layer has one colour. Sarasota/Manatee MPO (creator `lead-138`) loaded 6 119 road
 segments that already carry `priority_score` / `priority_class` and had to split them into
 four layers — one per class — to show priority at all, hitting the layer cap on the way. Every
 municipal dataset arrives with an attribute that *is* the story (status, class, score, year), and

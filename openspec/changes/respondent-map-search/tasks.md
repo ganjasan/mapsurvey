@@ -16,7 +16,7 @@
 - [x] 1.5 Return no control at all when the access token is empty.
 - [x] 1.6 Keyboard and screen-reader behaviour: arrow keys and Enter over the result list, Escape
       closes it, the input labelled, the list announced. Accessibility is procurement-relevant in
-      Germany (`docs/marketing/user-outreach/mw_think_jena/2026-07-31_call-notes.md:143`).
+      Germany (`docs/marketing/user-outreach/lead-139/2026-07-31_call-notes.md:143`).
 - [x] 1.7 Error path: a failed or empty geocoding response shows an inline message in the result
       list and leaves the map where it is. No alert, no console-only failure.
 

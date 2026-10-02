@@ -13,6 +13,6 @@ Migrate Mapsurvey hosting from Oregon, USA (Render.com) to Frankfurt, Germany fo
 
 ## Notes
 
-- Source: Manuel Frost (manu04) — Berlin Senate IT security requirement
+- Source: lead-119 — Berlin Senate IT security requirement
 - Render supports Frankfurt region
 - Promised to Manuel as an option in email reply 2026-03-26

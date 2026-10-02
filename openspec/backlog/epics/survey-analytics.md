@@ -40,7 +40,7 @@ async/defer JS, lazy-load Leaflet Draw, Font Awesome subset — reduce ~465KB bl
 
 ## Real-World Driver
 
-Lyon transit survey (bisqunours): 562 sessions, 98 completed, 83% abandon rate. Creator has no visibility into these metrics. Co-design partner for Phase 1.
+Lyon transit survey (lead-035): 562 sessions, 98 completed, 83% abandon rate. Creator has no visibility into these metrics. Co-design partner for Phase 1.
 
 ## Related Backlog Items
 

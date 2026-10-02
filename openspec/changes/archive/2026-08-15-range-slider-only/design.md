@@ -35,7 +35,7 @@ slider — the editor cannot even preview the removed combination.
 
 - The nine-point named-scale readability problem returns for range questions — by design: the
   answer is now "that is a rating question", and the picker's hints, examples and live preview
-  exist to route creators there. The two affected prod questions are one user's (jhmp), whose
+  exist to route creators there. The two affected prod questions are one user's (lead-093), whose
   case is exactly that.
 - Stacked branch: merges after PR #60; GitHub retargets to master automatically.
 

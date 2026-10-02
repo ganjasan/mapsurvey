@@ -26,7 +26,7 @@ Constraints:
   `osgeo` Python bindings are installed in the venv and none are wanted.
 - `TIME_ZONE='UTC'`, `USE_TZ=True`; the Responses page renders session times in UTC.
 - Deadline: City of Olney switches to year-round reporting on 2026-10-03 and needs the flat
-  Excel sheet before then. Manuel Frost's GIS formats have waited since March.
+  Excel sheet before then. lead-119's GIS formats have waited since March.
 
 ## Goals / Non-Goals
 

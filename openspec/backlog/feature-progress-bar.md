@@ -11,5 +11,5 @@ Add a visual progress bar showing how far the respondent is through the entire s
 
 ## Notes
 
-- Source: Manuel Frost (manu04) — nice to have, especially with 36 questions
+- Source: lead-119 — nice to have, especially with 36 questions
 - Current: section numbers shown (e.g. "3/8") but no visual bar

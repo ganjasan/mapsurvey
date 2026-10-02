@@ -467,6 +467,23 @@ This project uses **Spec Driven Development** via the `openspec` CLI. All change
 
 Never jump straight to code without a corresponding change in `openspec/changes/`.
 
+## Public repo vs. private ops repo
+
+This repository is **public**. Everything about running the business — outreach dossiers,
+customer stories, cohorts, GTM plans, competitor notes, requirements, raw notes, the DPA
+draft, the outreach sender — lives in the private repo `ganjasan/mapsurvey-ops`, checked
+out at `../Mapsurvey-ops` (layout mirrors the old in-repo paths: `docs/marketing/...`).
+Code reads it only through `settings.OPS_DIR` (env `MAPSURVEY_OPS_DIR`), and only from
+tooling; tests that need it skip when it is absent. The main checkout has gitignored
+symlinks (`docs/marketing`, `raw`, `requirements`, …) into it for convenience.
+
+- People are named in this repo only by pseudonym `lead-NNN`; the key is
+  `../Mapsurvey-ops/redaction/redaction-map.json`. Never paste a name, email, username
+  or dossier excerpt into `openspec/`, a commit message or a PR — write `lead-NNN`, or
+  describe the role ("a city planner in Berlin").
+- `RepoHygieneTest` fails when a real email address lands in a tracked text file.
+- Story data, respondent exports and ZIPs never enter git at all — not even the ops repo.
+
 ## Project Management
 
 **Task list**: See `TODO.md` for planned features and tasks

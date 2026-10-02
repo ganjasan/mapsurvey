@@ -9,7 +9,7 @@
 ## Description
 
 The answer lints on the Responses page (`compute_answer_lints`, the Violations panel, the
-yellow/red cell icons) read as errors to creators. A thesis user (marta25, PPGIS Húnaflói Bay)
+yellow/red cell icons) read as errors to creators. A thesis user (lead-127, PPGIS Húnaflói Bay)
 asked whether she can still download data that carries "warning signs". Nothing on the page says
 the hints are advisory and that nothing is excluded from the data or export.
 
@@ -53,5 +53,5 @@ Proposed minimum:
 6. Separately: `allowIntersection: false` in the polygon draw widget, removing the
    self-intersection error as a class.
 
-Source: marta25 emails 2026-09-04 and 2026-09-07
-(`docs/marketing/user-outreach/marta25/correspondence/`).
+Source: lead-127 emails 2026-09-04 and 2026-09-07
+(`docs/marketing/user-outreach/lead-127/correspondence/`).

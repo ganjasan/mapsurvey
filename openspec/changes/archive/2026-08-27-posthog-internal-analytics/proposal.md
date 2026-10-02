@@ -85,7 +85,7 @@ wrong number on the funnel dashboard. GSC is unaffected and stays.
 
 ## Risk — `/trust/` must be narrowed in this change, not later
 
-`/trust/` is the page we send IT security teams to; it is the answer to Manuel Frost's "my security
+`/trust/` is the page we send IT security teams to; it is the answer to lead-119's "my security
 team must approve this first". It currently claims, unscoped:
 
 - *"No cookies used for tracking or analytics purposes"* (line 37)

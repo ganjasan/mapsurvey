@@ -21,7 +21,7 @@ municipal client.
 
 ## Evidence
 
-- **Asked for, unprompted, by a real buyer.** Marcus Wildner (ThINK Jena, climate
+- **Asked for, unprompted, by a real buyer.** lead-139 (ThINK Jena, climate
   consultancy) on the call of 2026-07-31: can AI filter out irrelevant answers? He raised
   it himself, before any feature was pitched to him — and he had not engaged with survey
   *building* at all. The interest is in getting from raw responses to usable material,

@@ -11,7 +11,7 @@ Allow survey creators to set a maximum number of geopoints a respondent can plac
 
 ## Notes
 
-- Requested by: bisq (geography student)
+- Requested by: lead-035 (geography student)
 - Should apply to all geo question types (point, line, polygon)
 - Could be a `max_features` field on Question model, with null/0 meaning unlimited
 - Frontend Leaflet draw widget would need to enforce the limit (disable draw control when max reached)

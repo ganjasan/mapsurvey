@@ -1,6 +1,6 @@
 ## Why
 
-Survey creators have zero visibility into how their surveys perform. The Lyon transit survey (bisqunours) has 562 sessions but only 98 completed — an 83% abandon rate — and the creator has no way to know this. There is no response count, no completion rate, no answer distributions, no map of geo responses. The only way to see results is to download a CSV+GeoJSON ZIP and analyze manually.
+Survey creators have zero visibility into how their surveys perform. The Lyon transit survey (lead-035) has 562 sessions but only 98 completed — an 83% abandon rate — and the creator has no way to know this. There is no response count, no completion rate, no answer distributions, no map of geo responses. The only way to see results is to download a CSV+GeoJSON ZIP and analyze manually.
 
 This is Phase 1 of the survey-analytics epic. It delivers a read-only analytics dashboard built entirely from existing data, requiring no database migrations.
 

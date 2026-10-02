@@ -15,7 +15,7 @@ Today the app sends everything through PrivateEmail's shared outbound IP (`198.5
 
 ## Incident that triggered this
 
-On 2026-07-04, Tyler Mitchell (`spatialguru@shaw.ca`, `auth_user.id = 313`) — OSGeo co-founder and author of *Web Mapping Illustrated*, a high-value lead — signed up but never received his activation email. Shaw's mail filter (Cloudmark, `cloudfilter.net`) rejected it with:
+On 2026-07-04, lead-181 (`lead-181`, `auth_user.id = 313`) — OSGeo co-founder and author of *Web Mapping Illustrated*, a high-value lead — signed up but never received his activation email. Shaw's mail filter (Cloudmark, `cloudfilter.net`) rejected it with:
 
 ```
 552 5.2.0 ... mail accepted for delivery AUP#BL
@@ -66,6 +66,6 @@ On 2026-07-04, Tyler Mitchell (`spatialguru@shaw.ca`, `auth_user.id = 313`) — 
 
 ## Related
 
-- Incident record: `docs/marketing/user-outreach/spatialguru/` (Tyler Mitchell profile + correspondence)
+- Incident record: `docs/marketing/user-outreach/lead-181/` (lead-181 profile + correspondence)
 - Epic: [abuse-prevention](epics/abuse-prevention.md) — adjacent (also touches the registration/activation flow), but this is a delivery-transport concern, not an anti-abuse one
 - Sibling: [feature-email-verification-before-account.md](feature-email-verification-before-account.md) — reshapes *when* activation mail is sent; this reshapes *how* it's delivered

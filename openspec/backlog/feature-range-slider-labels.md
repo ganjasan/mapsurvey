@@ -11,5 +11,5 @@ Add descriptive labels below the range slider showing the "from" and "to" text. 
 
 ## Notes
 
-- Source: Manuel Frost (manu04) — his survey uses 9-point scales like "(positive) Geräusche" to "(negativer) Lärm"
+- Source: lead-119 — his survey uses 9-point scales like "(positive) Geräusche" to "(negativer) Lärm"
 - Quick fix — display first and last choice names as labels below the slider

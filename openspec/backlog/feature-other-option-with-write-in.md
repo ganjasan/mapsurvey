@@ -16,8 +16,8 @@ costs the creator two questions per "Other".
 
 ## Notes
 
-- Requested 2026-09-02 by Megan Critchley (BC3 Research,
-  [correspondence](../../docs/marketing/user-outreach/bc3_megan/correspondence/2026-09-02_reply-two-question-screening-and-other-option.md));
+- Requested 2026-09-02 by lead-034 (BC3 Research,
+  [correspondence](../../docs/marketing/user-outreach/lead-034/correspondence/2026-09-02_reply-two-question-screening-and-other-option.md));
   she was given the conditional-question workaround.
 - Standard feature in Google Forms / SurveyMonkey / Maptionnaire — parity item.
 - Export design is the real work: the write-in text belongs with the parent question's

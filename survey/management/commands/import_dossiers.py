@@ -22,7 +22,7 @@ User = get_user_model()
 
 
 class Command(BaseCommand):
-    help = 'Import docs/marketing/user-outreach/ dossiers into creator profiles and notes.'
+    help = 'Import outreach dossiers (<OPS_DIR>/docs/marketing/user-outreach/) into creator profiles and notes.'
 
     def add_arguments(self, parser):
         parser.add_argument('root', help='Directory holding <username>/profile.md subdirectories.')

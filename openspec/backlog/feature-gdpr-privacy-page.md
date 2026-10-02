@@ -7,7 +7,7 @@
 
 ## Description
 
-A public-facing page that answers all questions an IT security team would ask before approving Mapsurvey for institutional use. This is the #1 blocker for government and enterprise adoption — Manuel Frost (Berlin Senate) explicitly said his IT security team must approve before he can use the tool officially.
+A public-facing page that answers all questions an IT security team would ask before approving Mapsurvey for institutional use. This is the #1 blocker for government and enterprise adoption — lead-119 (Berlin Senate) explicitly said his IT security team must approve before he can use the tool officially.
 
 ## What the page should cover
 
@@ -48,7 +48,7 @@ A public-facing page that answers all questions an IT security team would ask be
 
 ## Notes
 
-- Source: Manuel Frost (manu04) — "If the data cannot be collected anonymously, I am not allowed to use it"
+- Source: lead-119 — "If the data cannot be collected anonymously, I am not allowed to use it"
 - His IT security team is "always very skeptical of unknown freeware tools"
 - URL: /security/ or /trust/ (not just /privacy/ — broader scope)
 - Consider adding a downloadable PDF version for IT teams to circulate internally

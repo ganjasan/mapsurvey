@@ -27,6 +27,14 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if load_dotenv:
     load_dotenv(Path(BASE_DIR) / '.env')
 
+# Operational material (outreach dossiers, cohorts, stories, plans) lives in a separate
+# private repository, never in this public one. Only tooling reads it -- management
+# commands and a few tests that skip when it is absent (CI, fresh clones, Render).
+OPS_DIR = os.environ.get(
+    'MAPSURVEY_OPS_DIR',
+    os.path.join(os.path.dirname(BASE_DIR), 'Mapsurvey-ops'),
+)
+
 SECRET_KEY = os.environ.get("SECRET_KEY", 'secret')
 
 DEBUG = int(os.environ.get("DEBUG", default=0))

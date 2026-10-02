@@ -14,8 +14,8 @@ A public-facing map page that displays all collected geometries from a survey. A
 
 ## Notes
 
-- Source: Marijana Jericevic (Galanthus) — wants to show collected snowdrop locations to her community
-- Also relevant for: lrbenedict12 (show all student polygon answers), Manuel Frost (show collected quiet zones)
+- Source: lead-065 (Galanthus) — wants to show collected snowdrop locations to her community
+- Also relevant for: lead-116 (show all student polygon answers), lead-119 (show collected quiet zones)
 - Related to "Results dashboard" feature but simpler — just a map with points/polygons, no stats
 - URL: /surveys/<uuid>/results/ (public or unlisted)
 - For live-updating (event) use, layer on [Real-time updates for public results (live delivery layer)](feature-realtime-public-results.md) (#83) — this page is the surface it updates
