@@ -56,7 +56,9 @@ with `UserActivity.DoesNotExist`.
 same map survey at once. It does **not** reproduce locally (a dev machine is far faster
 than the 0.5 CPU Render Starter instance previews run on; production is on Standard,
 1 CPU / 2 GB, since the 2026-09-15 memory-limit incident), so run it against a Render PR
-preview, never production. Seed the preview's empty database first with
+preview, never production. Previews are opt-in (`previews.generation: manual` in
+`render.yaml`): put `[render preview]` in the PR title to get one; it is deleted after a day
+without new commits. Seed the preview's empty database first with
 `python manage.py seed_loadtest_survey`. See `loadtest/README.md`.
 
 ## Architecture Overview

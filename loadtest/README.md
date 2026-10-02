@@ -16,6 +16,9 @@ on it.
 
 **Never run this against production.**
 
+Previews are opt-in: put `[render preview]` in the PR title (both PRs, for a
+baseline-vs-fix comparison). Render deletes a preview after a day without new commits.
+
 ## Setup
 
 Install k6 (single binary, no runtime):

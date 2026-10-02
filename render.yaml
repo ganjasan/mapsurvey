@@ -1,5 +1,11 @@
+# Previews are opt-in: put "[render preview]" in a pull request's title to get one.
+# Automatic previews were 60% of the September 2026 bill (~$105 of $179): 68 PRs,
+# ~1900 preview-hours, each a full stack — web, worker, paid Key Value, Postgres —
+# including archive and docs-only PRs nobody opened. A preview with no new commits
+# for a day is deleted; push a commit to the PR to get a fresh one.
 previews:
-    generation: automatic
+    generation: manual
+    expireAfterDays: 1
 
 databases:
   - name: mapsurvey-db
