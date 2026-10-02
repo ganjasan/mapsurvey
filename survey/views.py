@@ -1114,7 +1114,10 @@ def survey_section(request, survey_slug, section_name):
 			# An unanswered control still posts its name with an empty value —
 			# the dropdown's placeholder option is the case that surfaced this.
 			# Without the filter a blank ride-along becomes a stored answer.
-			result = [v for v in result if v != '']
+			# Whitespace-only counts as blank too: "   " used to become a
+			# top-level answer and made an abandoned session look answered
+			# (spec responses-empty-sessions).
+			result = [v for v in result if v.strip() != '']
 
 			if (result != []):
 				# Storage dispatches on input_type ONLY. It used to branch on
@@ -1198,13 +1201,12 @@ def survey_section(request, survey_slug, section_name):
 					# datetime keeps its raw datetime-local string; that is the
 					# form prepopulation and analytics read back from `text`.
 					answer = Answer(survey_session=survey_session, question=question)
-					answer.text = result[0]
+					answer.text = result[0].strip()
 					answer.save()
 
 				elif question.input_type in ('number', 'range'):
 					answer = Answer(survey_session=survey_session, question=question)
-					if result[0]:
-						answer.numeric = float(result[0])
+					answer.numeric = float(result[0].strip())
 					answer.save()
 
 				elif question.input_type == 'ranking':
@@ -1796,7 +1798,7 @@ def _parse_object_fields(post):
 		if '__' not in rest:
 			continue
 		key, code = rest.rsplit('__', 1)
-		values = [v for v in post.getlist(name) if v != '']
+		values = [v for v in post.getlist(name) if v.strip() != '']
 		if not key or not code or not values:
 			continue
 		parsed.setdefault(key, {})[code] = values
@@ -1827,7 +1829,7 @@ def _save_object_answers(post, survey_session, question):
 			if sub_q is None:
 				continue
 			answer = Answer(survey_session=survey_session, question=sub_q, layer_object=obj)
-			first = values[0]
+			first = values[0].strip()
 			if sub_q.input_type in ('text', 'text_line', 'datetime'):
 				answer.text = first
 			elif sub_q.input_type in ('number', 'range'):

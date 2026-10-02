@@ -97,6 +97,18 @@ def _resolve_filtered_session_ids(survey, filter_map, service=None):
     return session_sets if session_sets is not None else set()
 
 
+SHOW_EMPTY_COOKIE = 'rv2_show_empty'
+
+
+def _show_empty(request):
+    """Whether the Responses page lists empty sessions (spec
+    responses-empty-sessions). Hidden by default on the v2 page; the legacy
+    page (RESPONSES_V2 off) always lists every session."""
+    if not getattr(settings, 'RESPONSES_V2', False):
+        return True
+    return request.COOKIES.get(SHOW_EMPTY_COOKIE) == '1'
+
+
 @survey_permission_required('viewer')
 def analytics_dashboard(request, survey_uuid):
     """Full analytics dashboard page for a survey."""
@@ -105,7 +117,8 @@ def analytics_dashboard(request, survey_uuid):
     # project-shaped tool. Creator event, survey id only.
     pe.emit(pe.RESPONSES_VIEWED, request.user.pk, {'survey_id': str(survey.id)})
     version = request.GET.get('version', 'all')
-    service = SurveyAnalyticsService(survey, version=version)
+    show_empty = _show_empty(request)
+    service = SurveyAnalyticsService(survey, version=version, include_empty=show_empty)
 
     overview = service.get_overview()
     hourly_sessions = service.get_hourly_sessions()
@@ -158,6 +171,8 @@ def analytics_dashboard(request, survey_uuid):
         'completed_count': overview['completed_count'],
         'completion_rate': overview['completion_rate'],
         'flagged_count': overview['flagged_count'],
+        'show_empty': show_empty,
+        'empty_count': service.empty_count if responses_v2 else 0,
         'hourly_data_json': json.dumps(hourly_sessions),
         'session_hours_json': json.dumps(session_hours),
         'geo_json': json.dumps(geo_collection),
@@ -257,7 +272,10 @@ def analytics_table(request, survey_uuid):
     survey = request.survey
     show_trash = request.GET.get('trash') == '1'
     version = request.GET.get('version', 'all')
-    service = SurveyAnalyticsService(survey, include_deleted=show_trash, version=version)
+    show_empty = _show_empty(request)
+    service = SurveyAnalyticsService(
+        survey, include_deleted=show_trash, version=version, include_empty=show_empty,
+    )
 
     # Reuse existing filter parsing (ignored in trash mode)
     filter_map = _parse_filter_param(request.GET.get('filters', ''))
@@ -330,6 +348,8 @@ def analytics_table(request, survey_uuid):
         'survey': survey,
         'show_trash': show_trash,
         'trash_count': trash_count,
+        'show_empty': show_empty,
+        'empty_count': service.empty_count if responses_v2 else 0,
         'is_editor': request.effective_survey_role in ('editor', 'owner'),
         'page_size_options': [10, 25, 50, 100, 250, 500],
         'issues_filter': ','.join(issues_filter) if issues_filter else '',

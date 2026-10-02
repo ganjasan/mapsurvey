@@ -911,13 +911,17 @@ def build_export(bundle, fmt, include_files, workdir):
 # ---------------------------------------------------------------------------
 
 def excluded_sessions(version_surveys, include_all, completed_only):
-    """Session ids kept out of the export: trashed and not_approved unless
-    include_all, plus every non-completed session when completed_only.
+    """Session ids kept out of the export: empty sessions always, trashed and
+    not_approved unless include_all, plus every non-completed session when
+    completed_only.
     "Completed" is the Responses overview's definition, through one helper."""
-    from .analytics import completed_session_filter
+    from .analytics import completed_session_filter, empty_sessions
     headers = [header for header, _ in version_surveys]
-    excluded = set()
     qs = SurveySession.objects.filter(survey__in=headers)
+    # Sessions without a single answer are never exported, whatever
+    # include_all and completed_only say (spec responses-export-formats):
+    # they would only add blank rows.
+    excluded = set(empty_sessions(qs).values_list('id', flat=True))
     if not include_all:
         from django.db.models import Q
         excluded |= set(

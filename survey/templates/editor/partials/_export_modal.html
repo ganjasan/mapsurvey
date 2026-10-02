@@ -90,6 +90,8 @@ Requires: ogr_available (whether GeoPackage/Shapefile/KML can be produced).
           <small>{% trans "Photos, audio and documents respondents uploaded. The download becomes a ZIP with the file next to a files/ folder." %}</small>
         </div>
 
+        <p class="text-muted mb-2" style="font-size:0.8rem;" data-testid="export-empty-note">{% trans "Sessions where nobody answered anything are never exported." %}</p>
+
         <div class="export-url" id="exportUrl" title="{% trans 'The export is a link — copy it to repeat the same export later.' %}"></div>
       </div>
       <div class="modal-footer">

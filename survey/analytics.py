@@ -1,7 +1,7 @@
 import json
 import statistics
 
-from django.db.models import Count, Avg, Min, Max, Q
+from django.db.models import Count, Avg, Exists, Min, Max, OuterRef, Q
 from django.db.models.functions import TruncHour
 
 from django.utils import timezone
@@ -133,6 +133,29 @@ def _get_last_section(survey):
     return ordered[-1] if ordered else None
 
 
+def _has_top_level_answer():
+    return Exists(Answer.objects.filter(
+        survey_session_id=OuterRef('pk'), parent_answer_id__isnull=True,
+    ))
+
+
+def nonempty_sessions(qs):
+    """Sessions from ``qs`` with at least one top-level answer.
+
+    The ONE definition of "empty" (spec responses-empty-sessions): a session
+    is empty when it has no Answer with ``parent_answer_id IS NULL``. Answers
+    about layer objects are top-level rows and moderator-hidden answers are
+    still rows, so both count. The Responses page, ``compute_session_issues``
+    and the data export all decide emptiness here.
+    """
+    return qs.filter(_has_top_level_answer())
+
+
+def empty_sessions(qs):
+    """Sessions from ``qs`` with no top-level answer (see nonempty_sessions)."""
+    return qs.filter(~_has_top_level_answer())
+
+
 def completed_session_filter(qs, headers):
     """Sessions from ``qs`` that answered a question of their version's last
     section. The ONE definition of "completed": the Responses overview counts
@@ -161,7 +184,7 @@ class SurveyAnalyticsService:
     reported only under the explicit 'draft' scope.
     """
 
-    def __init__(self, survey, include_deleted=False, version='all'):
+    def __init__(self, survey, include_deleted=False, version='all', include_empty=True):
         self.survey = survey
         self.version = version
         self.scope = resolve_scope(survey, version)
@@ -170,6 +193,36 @@ class SurveyAnalyticsService:
             self.base_qs = SurveySession.objects.filter(survey_id__in=self.scope_ids)
         else:
             self.base_qs = SurveySession.objects.active().filter(survey_id__in=self.scope_ids)
+        # The v2 Responses page hides empty sessions unless the creator shows
+        # them (spec responses-empty-sessions). Every other caller keeps the
+        # default and sees every session, as before.
+        self.include_empty = include_empty
+        if not include_empty:
+            self.base_qs = nonempty_sessions(self.base_qs)
+
+    def _active_scope_qs(self):
+        return SurveySession.objects.active().filter(survey_id__in=self.scope_ids)
+
+    @property
+    def empty_count(self):
+        """Non-deleted empty sessions in scope, shown or not — the number the
+        headline states next to the responses count."""
+        if not hasattr(self, '_empty_count_cache'):
+            self._empty_count_cache = empty_sessions(self._active_scope_qs()).count()
+        return self._empty_count_cache
+
+    def sequence_numbers(self):
+        """{session_id: N} — the per-survey response number: rank by start
+        time among non-empty, non-deleted sessions of the scope. Empty
+        sessions get no number, so showing or hiding them never renumbers
+        responses, and the newest response carries the headline count."""
+        if not hasattr(self, '_seq_cache'):
+            ordered = (
+                nonempty_sessions(self._active_scope_qs())
+                .order_by('start_datetime', 'id').values_list('id', flat=True)
+            )
+            self._seq_cache = {sid: i + 1 for i, sid in enumerate(ordered)}
+        return self._seq_cache
 
     # ── Version-scope helpers ──────────────────────────────────────
 
@@ -348,26 +401,21 @@ class SurveyAnalyticsService:
                 'status': session.validation_status,
             }
 
-        total = len(session_pks)
+        seq_by_id = self.sequence_numbers()
         latest_sessions = list(self.base_qs.order_by('-start_datetime')[:5])
-        # Per-survey sequence number: 1-based position in start order.
-        latest_feed = []
-        for i, session in enumerate(latest_sessions):
-            latest_feed.append(_feed_entry(session, total - i))
+        latest_feed = [
+            _feed_entry(session, seq_by_id.get(session.id))
+            for session in latest_sessions
+        ]
 
         flagged_ids = [sid for sid, v in issues.items() if v]
         needs_review = []
         if flagged_ids:
-            seq_by_id = None
             flagged_sessions = list(
                 self.base_qs.filter(id__in=flagged_ids).order_by('-start_datetime')[:5]
             )
-            ordered_ids = list(
-                self.base_qs.order_by('start_datetime').values_list('id', flat=True)
-            )
-            seq_by_id = {sid: i + 1 for i, sid in enumerate(ordered_ids)}
             for session in flagged_sessions:
-                needs_review.append(_feed_entry(session, seq_by_id.get(session.id, 0)))
+                needs_review.append(_feed_entry(session, seq_by_id.get(session.id)))
 
         return {
             'responses_today': responses_today,
@@ -746,10 +794,10 @@ class SurveyAnalyticsService:
 
     def _stats_language(self):
         """Build a choices-style stat for the session language (multilingual surveys only)."""
-        langs = list(
-            SurveySession.objects.filter(survey_id__in=self.scope_ids, is_deleted=False)
-            .values_list('language', flat=True)
-        )
+        lang_qs = SurveySession.objects.filter(survey_id__in=self.scope_ids, is_deleted=False)
+        if not self.include_empty:
+            lang_qs = nonempty_sessions(lang_qs)
+        langs = list(lang_qs.values_list('language', flat=True))
         counts = {}
         for lang in langs:
             lang = lang or '—'
@@ -1046,14 +1094,10 @@ class SurveyAnalyticsService:
         issues = {sid: [] for sid in session_pks}
 
         # Rule 1: Empty sessions (0 top-level answers)
-        answer_counts = dict(
-            Answer.objects
-            .filter(survey_session_id__in=session_pks, parent_answer_id__isnull=True)
-            .values('survey_session_id')
-            .annotate(cnt=Count('id'))
-            .values_list('survey_session_id', 'cnt')
+        empty_sids = set(
+            empty_sessions(SurveySession.objects.filter(id__in=session_pks))
+            .values_list('id', flat=True)
         )
-        empty_sids = {sid for sid in session_pks if answer_counts.get(sid, 0) == 0}
         for sid in empty_sids:
             issues[sid].append('empty')
 
@@ -1607,10 +1651,7 @@ class SurveyAnalyticsService:
                 self._completed_filter_qs(self.base_qs).values_list('id', flat=True)
             )
         if v2:
-            ordered_ids = list(
-                self.base_qs.order_by('start_datetime').values_list('id', flat=True)
-            )
-            seq_by_id = {sid: i + 1 for i, sid in enumerate(ordered_ids)}
+            seq_by_id = self.sequence_numbers()
             # Duration comes off the session row: start → end_datetime when
             # the thanks page was reached, else start → last_activity_at
             # (the respondent left; shown with a trailing "+").
@@ -1674,10 +1715,17 @@ class SurveyAnalyticsService:
         # so the chips always show the whole (FilterManager-scoped) universe.
         v2_counts = None
         if v2:
+            # "Empty" is not an Issues entry on v2: the show/hide control is
+            # the control for empty sessions (spec analytics-data-workspace),
+            # and when they are shown they keep only their row badge.
+            anomaly_counts.pop('empty', None)
             v2_counts = {
                 'all': len(rows),
                 'complete': sum(1 for r in rows if r['session_id'] in completed_ids),
-                'issues': sum(1 for r in rows if r['issues'] or r['lints']),
+                'issues': sum(
+                    1 for r in rows
+                    if [i for i in r['issues'] if i != 'empty'] or r['lints']
+                ),
             }
 
         # Issues filter (issues_filter is a list of filter keys, or None)

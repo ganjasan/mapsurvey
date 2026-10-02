@@ -1,20 +1,4 @@
-# responses-overview Specification
-
-## Purpose
-TBD - created by archiving change responses-v2-refactor. Update Purpose after archive.
-## Requirements
-### Requirement: Overview is the default Responses pane
-The Responses tab SHALL open on the Overview pane by default on every form factor when
-`RESPONSES_V2` is on. A stored pane preference (URL hash or persisted layout) MAY override the
-default, but a first visit with no stored state SHALL land on Overview.
-
-#### Scenario: First visit lands on Overview
-- **WHEN** a creator opens `/editor/surveys/<uuid>/analytics/` with no stored layout and no URL hash
-- **THEN** the Overview pane is active and its KPI strip, map thumbnail, trend and feeds are rendered
-
-#### Scenario: Deep link overrides the default
-- **WHEN** the page is opened with `#responses` (or `#map`, `#charts`, `#performance`)
-- **THEN** that pane is active instead of Overview
+## MODIFIED Requirements
 
 ### Requirement: KPI strip with daily deltas
 The Overview pane SHALL show, for the selected version scope: total responses, completion rate,
@@ -74,31 +58,3 @@ how many people opened the survey without answering and offer the control that s
 - **WHEN** every one of 12 sessions in scope is empty and empty sessions are hidden
 - **THEN** the Overview shows the "No responses yet" state with Share and Preview actions and the
   line "12 opened without answering" with a Show control
-
-### Requirement: Overview map thumbnail and trend
-The Overview pane SHALL render a non-interactive (or view-only) map thumbnail of current geo
-features linking to the Map pane, and a responses-per-day trend for the last 7 days. Surveys with
-no geo questions SHALL omit the map thumbnail block. The thumbnail SHALL be mounted through the
-shared editor map helper and SHALL add its features and fit them only once its container has a
-size, rather than after a fixed delay.
-
-#### Scenario: Thumbnail opens the Map pane
-- **WHEN** the creator activates the map thumbnail or its "Open Map" action
-- **THEN** the Map pane becomes active
-
-#### Scenario: No geo questions
-- **WHEN** the survey has no point/line/polygon questions
-- **THEN** the Overview renders without a map thumbnail block
-
-#### Scenario: Thumbnail fits its features after layout, not after a timer
-- **WHEN** the Overview pane is the landing pane or is returned to from another pane
-- **THEN** the thumbnail shows the features fitted to view, with no dependency on a delay chosen by hand
-
-#### Scenario: Built while its pane was hidden
-- **WHEN** the thumbnail's map is constructed while its container measures 0×0 and the container is laid out later
-- **THEN** the helper SHALL notice the container's real size, and the thumbnail SHALL draw and fit the features
-
-#### Scenario: Container already laid out at mount
-- **WHEN** the container already has a size when the map is mounted, so the ready callback runs at once
-- **THEN** nothing after mounting SHALL reset the view, and the thumbnail SHALL stay fitted to the features
-

@@ -17,12 +17,14 @@ latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
     <a class="btn btn-outline-secondary btn-sm mt-2" href="/surveys/{{ survey.uuid }}" target="_blank" rel="noopener">
         <i class="fas fa-eye"></i> {% trans "Preview as respondent" %}
     </a>
+    {% if empty_count %}<p class="mt-3 mb-0">{% include "editor/partials/_empty_sessions_toggle.html" %}</p>{% endif %}
 </div>
 {% else %}
 <div class="rv2-kstrip" data-testid="rv2-kpi-strip">
     <div class="rv2-kpi">
         <b>{{ total_sessions }}</b><span>{% trans "responses" %}</span>
         {% if overview_extras.responses_today %}<span class="rv2-delta">+{{ overview_extras.responses_today }} {% trans "today" %}</span>{% endif %}
+        {% include "editor/partials/_empty_sessions_toggle.html" %}
     </div>
     <div class="rv2-kpi"><b class="rv2-green">{{ completion_rate }}%</b><span>{% trans "completion" %}</span></div>
     {% if overview_extras.median_display %}
@@ -90,7 +92,7 @@ latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
             <h6>{% trans "Needs review" %} <span class="rv2-badge">{{ flagged_count }}</span></h6>
             {% for item in overview_extras.needs_review %}
             <button type="button" class="rv2-feed-item" onclick="rv2OpenSession({{ item.id }})">
-                <span class="rv2-feed-ava">#{{ item.seq }}</span>
+                <span class="rv2-feed-ava">{% if item.seq %}#{{ item.seq }}{% else %}—{% endif %}</span>
                 <span class="rv2-feed-mid">
                     <b>{{ item.started|date:"j M H:i" }}{% if item.duration_display %} · {{ item.duration_display }}{% endif %}</b>
                     <span>{{ item.issues|join:", " }}</span>
@@ -106,7 +108,7 @@ latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
             </h6>
             {% for item in overview_extras.latest_feed %}
             <button type="button" class="rv2-feed-item" onclick="rv2OpenSession({{ item.id }})">
-                <span class="rv2-feed-ava">#{{ item.seq }}</span>
+                <span class="rv2-feed-ava">{% if item.seq %}#{{ item.seq }}{% else %}—{% endif %}</span>
                 <span class="rv2-feed-mid">
                     <b>{{ item.started|date:"j M H:i" }}{% if item.duration_display %} · {{ item.duration_display }}{% endif %}</b>
                     <span>{% if item.geo_count %}{{ item.geo_count }} {% trans "geo" %} · {% endif %}{% if item.text_excerpt %}“{{ item.text_excerpt }}”{% elif not item.geo_count %}{% trans "no answers" %}{% endif %}</span>
