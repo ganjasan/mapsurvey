@@ -38,6 +38,7 @@ from .question_types import CHOICE_TYPES
 from .cloning import clone_question, clone_section
 from .html_sanitize import coerce_creator_html
 from .translation_gaps import survey_translation_gaps
+from .content_screening import screen_survey, pending_review_for
 from .editor_forms import (
     SurveyHeaderForm, SurveyCreateForm, SurveyBriefForm, SurveyRenameForm,
     SurveySectionForm, QuestionForm,
@@ -539,6 +540,7 @@ def editor_survey_detail(request, survey_uuid):
             )
 
     return render(request, 'editor/survey_detail.html', {
+        'pending_review': pending_review_for(survey) if survey.status == 'published' else None,
         'thread_counts': _thread_counts(survey, request.user),
         'visibility_lint_hints': visibility_lint_hints,
         'session_count': survey.surveysession_set.count(),
@@ -562,6 +564,13 @@ def editor_survey_detail(request, survey_uuid):
 
 # ─── Survey settings ─────────────────────────────────────────────────────────
 
+def _rescreen_if_live(survey):
+    """`redirect_url` and `thanks_html` stay editable on a published survey —
+    the one way to put a lure on a live page after a clean publish."""
+    if survey.status == 'published':
+        screen_survey(survey, trigger='live_edit')
+
+
 @survey_permission_required('owner')
 def editor_survey_settings(request, survey_uuid):
     survey = request.survey
@@ -569,6 +578,7 @@ def editor_survey_settings(request, survey_uuid):
         form = SurveyHeaderForm(request.POST, request.FILES, instance=survey)
         if form.is_valid():
             form.save()
+            _rescreen_if_live(survey)
             return redirect('editor_survey_settings', survey_uuid=survey.uuid)
     else:
         form = SurveyHeaderForm(instance=survey)
@@ -617,6 +627,7 @@ def editor_survey_settings_panel(request, survey_uuid):
         form = SurveyHeaderForm(request.POST, request.FILES, instance=survey)
         if form.is_valid():
             form.save()
+            _rescreen_if_live(survey)
             if _is_ajax(request):
                 return JsonResponse({'ok': True})
             from django.urls import reverse
@@ -655,6 +666,7 @@ def editor_survey_thanks_panel(request, survey_uuid):
                 thanks[lang] = cleaned
         survey.thanks_html = thanks
         survey.save(update_fields=['thanks_html'])
+        _rescreen_if_live(survey)
         # The "See the results" toggle lives on the results page; save it here too.
         # A hidden marker tells us the checkbox was actually in the submitted form
         # (an unchecked box sends nothing), so a stale form can't clobber it.
@@ -2489,6 +2501,9 @@ def editor_survey_transition(request, survey_uuid):
             scaffold_page(survey)
         except Exception:
             logger.exception('public results scaffold failed for survey %s', survey.id)
+        # Phishing screening: may HOLD the survey (respondents see a neutral
+        # page) until the owner decides. Fails open inside, never blocks.
+        screen_survey(survey, trigger='publish')
 
     if request.headers.get('HX-Request'):
         return HttpResponse(status=204, headers={'HX-Trigger': 'statusChanged'})
@@ -2629,6 +2644,8 @@ def editor_publish_draft(request, survey_uuid):
         return JsonResponse({'issues': e.issues}, status=409)
 
     audit(request, 'draft_publish', canonical, draft_uuid=str(survey.uuid), version=canonical.version_number)
+    # The draft's text now lives on the canonical survey — screen that.
+    screen_survey(canonical, trigger='draft_publish')
     return redirect('editor_survey_detail', survey_uuid=canonical.uuid)
 
 

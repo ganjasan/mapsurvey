@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}Review: {{ survey.name }} - Mapsurvey{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 760px; margin-top: 40px;">
+    <h3>
+        {% if held %}<span class="badge badge-warning">Held</span>{% elif review.status == 'reported' %}<span class="badge badge-info">Reported</span>{% else %}<span class="badge badge-secondary">{{ status_label }}</span>{% endif %}
+        {{ survey.name }}
+    </h3>
+    <p class="text-muted">
+        {% if review.source == 'report' %}Reported by a respondent{% if reason_label %} — {{ reason_label }}{% endif %} · {{ review.report_count }} report(s){% else %}Score {{ review.score }} · trigger <code>{{ review.trigger }}</code>{% endif %}
+        · opened {{ review.created_at|date:"Y-m-d H:i" }} UTC
+    </p>
+
+    {% if decided %}
+    <div class="alert alert-secondary">
+        <strong>{{ status_label }}</strong>
+        {% if review.decided_by %}by {{ review.decided_by.username }}{% endif %}
+        {% if review.decided_at %}on {{ review.decided_at|date:"Y-m-d H:i" }} UTC{% endif %}.
+    </div>
+    {% endif %}
+
+    <h5 class="mt-4">Signals</h5>
+    {% if signals %}
+    <table class="table table-sm">
+        <tbody>
+        {% for s in signals %}
+        <tr><td style="white-space:nowrap;"><code>{{ s.key }}</code></td><td>+{{ s.weight }}</td><td class="text-muted">{{ s.excerpt }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}<p class="text-muted">None recorded.</p>{% endif %}
+    {% if review.note %}<pre class="small text-muted" style="white-space:pre-wrap;">{{ review.note }}</pre>{% endif %}
+
+    <p>
+        <a href="{{ survey_url }}" target="_blank" rel="noopener">Open the survey as a respondent</a> ·
+        <a href="{{ editor_url }}" target="_blank" rel="noopener">Open in the editor</a>
+    </p>
+
+    {% if account %}
+    <h5 class="mt-4">Account</h5>
+    <ul>
+        <li>{{ account.username }} @{{ account.email_domain }}{% if not account.is_active %} — <strong>inactive</strong>{% endif %}</li>
+        <li>Joined {{ account.joined|date:"Y-m-d H:i" }} UTC</li>
+        <li>{{ account.surveys }} survey(s), {{ account.sessions }} respondent session(s)</li>
+        <li>Prior reviews: {% if account.prior_reviews %}{% for r in account.prior_reviews %}#{{ r.id }} {{ r.status }} ({{ r.score }}){% if not forloop.last %}, {% endif %}{% endfor %}{% else %}none{% endif %}</li>
+    </ul>
+    {% endif %}
+
+    {% if not decided %}
+    <div class="row mt-4">
+        <div class="col-md-6 mb-3">
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="release">
+                <button type="submit" class="btn btn-success btn-block">{% if held %}Release{% else %}Dismiss report{% endif %}</button>
+                <small class="text-muted d-block mt-2">{% if held %}The survey serves to respondents again. This exact content will not be held again; edits are screened afresh.{% else %}Closes the report. Nothing changes for the survey.{% endif %}</small>
+            </form>
+        </div>
+        <div class="col-md-6 mb-3">
+            <form method="post" onsubmit="return confirm('Deactivate this account and close all of its surveys?');">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="confirm">
+                <button type="submit" class="btn btn-danger btn-block">Confirm phishing</button>
+                <small class="text-muted d-block mt-2">Deactivates the account, closes every survey it created, ends its login sessions. Reversible from the admin.</small>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -367,6 +367,29 @@ Leaflet.draw tooltips pick tap-phrased strings via `pointer: coarse`
 
 **Registration abuse prevention**: `/accounts/register/` is served by `AbuseProtectedRegistrationView` (subclass of `AsyncEmailRegistrationView`). Three layered defenses run in order: honeypot field `website` (silent fake-success redirect), per-IP rate limit (`django-ratelimit`, fail-open on Redis outage), Cloudflare Turnstile siteverify (fail-closed on network error, dev-bypass when `TURNSTILE_SECRET_KEY=""`). Helpers in `survey/abuse.py`. Audit log in `AbuseEvent` model. Real client IP via `survey.middleware.CloudflareIPMiddleware` reading `CF-Connecting-IP` only when `CLOUDFLARE_TRUSTED=True`.
 
+**Content screening (phishing hold, change `phishing-content-review`)**: registration defenses stop
+bots; `survey/content_screening.py` is for the human who publishes an "XFINITY — click here" page on
+our domain. `screen_survey(survey, trigger=…)` runs at the three moments creator text goes live —
+`editor_survey_transition` to `published`, `editor_publish_draft` (on the CANONICAL survey) and the
+live saves of `redirect_url`/`thanks_html` (`_rescreen_if_live`) — and NOWHERE else: drafts and
+`testing` are not screened. `collect_text()` gathers name, section/question text with translations,
+thanks page and `redirect_url`; `score()` is pure (no DB, no network) over the signal table at the top of
+the module (`WEIGHTS`, shorteners, trackers, brand terms, lure phrases, padding, ≤1 question, account
+age, disposable domain) — a new incident is a row there, never a new code path. At or above
+`CONTENT_SCREENING_HOLD_THRESHOLD` (7, calibrated on the 2026-10-02 scan: incidents 19 and 8, best
+legitimate 5) the survey keeps `status='published'` but gets a `ContentReview(status='pending')`;
+`check_survey_access` then serves the same 404 `survey_unavailable.html` an unknown UUID gets, the
+creator sees a calm banner with NO reasons, and `ABUSE_REVIEW_EMAIL` (default `CONTACT_EMAIL`) gets one
+mail with a signed link to `/editor/abuse-review/<token>/`. **Nothing bans automatically**: the staff-only
+page's Release / Confirm phishing are POSTs (mail scanners prefetch GETs), and `confirm_phishing` is the
+one place that deactivates an account, closes its surveys (audit rows), kills its sessions. A `cleared`
+review remembers the content `fingerprint`, so a released survey is re-screened only when its text
+changes. Screening fails OPEN (any exception → logged, publish completes), the notice falls back to a
+synchronous send if the broker refuses the task, and `CONTENT_SCREENING=False` stops new holds without
+releasing existing ones (that is the owner's click, or the admin). Respondent pages carry the
+`_abuse_footer.html` notice + `/surveys/<uuid>/report/`; a report opens a `reported` review that holds
+nothing. Every hold/release/confirm/report writes an `AbuseEvent(defense='content_screen')` with ids only.
+
 **Acquisition metrics (top of the funnel)**: search impressions and clicks, landing visits and the
 channel mix are read on the PostHog **AARRR** dashboard (`POSTHOG_AARRR_DASHBOARD_URL`, project
 248938 dashboard 941308), where Google Search Console and Bing Webmaster Tools are native warehouse
