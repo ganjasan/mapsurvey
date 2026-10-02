@@ -35,4 +35,4 @@
 - [x] 6.1 Changelog entry `survey/changelog/<release-date>-empty-sessions-hidden.html` (#227 format): what changed, why, and that response numbers now count responses only
 - [x] 6.2 Update `CLAUDE.md` Responses notes: empty-session helper, cookie, sequence rule, export exclusion
 - [x] 6.3 Measure `get_table_page` and the dashboard with the `Exists` filter — done locally on 2500 synthetic sessions (production psql was not reachable from the worktree sandbox): with planner statistics, hiding is as fast as or faster than showing (overview + extras 0.29 s vs 0.46 s); without ANALYZE each `Exists` query cost ~0.3 s, so a freshly loaded table can be slow until autovacuum analyzes it
-- [ ] 6.4 Run the full suite once; drive the Responses page in a browser with and without empty sessions shown
+- [x] 6.4 Run the full suite once (2262 tests, OK, 1 skipped); drive the Responses page in a browser with and without empty sessions shown
