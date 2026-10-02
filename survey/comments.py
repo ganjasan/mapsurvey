@@ -105,7 +105,7 @@ def resolve_anchor(thread):
     if thread.anchor_kind == 'session':
         sess = thread.session
         key = str(thread.session_id)
-        return Anchor('session', key, f'Response #{session_seq(canonical, sess) if sess else key}', sess is not None,
+        return Anchor('session', key, session_label(canonical, sess, key), sess is not None,
                       reverse('editor_survey_analytics', kwargs={'survey_uuid': uuid}) + f'?session={key}',
                       sess)
     block = thread.block
@@ -124,12 +124,25 @@ def resolve_anchor(thread):
 
 def session_seq(canonical, session):
     """The ordinal the Responses page prints for a session: its position among
-    the family's kept sessions ordered by start time (analytics' `seq_by_id`)."""
-    return (SurveySession.objects
-            .filter(survey_id__in=family_ids_with_draft(canonical), is_deleted=False,
-                    start_datetime__lte=session.start_datetime)
+    the family's kept NON-EMPTY sessions ordered by start time (analytics'
+    `sequence_numbers`). None for an empty session, which carries no number
+    (spec responses-empty-sessions)."""
+    from .analytics import nonempty_sessions
+    kept = SurveySession.objects.filter(
+        survey_id__in=family_ids_with_draft(canonical), is_deleted=False,
+    )
+    if not nonempty_sessions(SurveySession.objects.filter(pk=session.pk)).exists():
+        return None
+    return (nonempty_sessions(kept.filter(start_datetime__lte=session.start_datetime))
             .exclude(start_datetime=session.start_datetime, id__gt=session.id)
             .count())
+
+
+def session_label(canonical, session, key):
+    if session is None:
+        return f'Response #{key}'
+    seq = session_seq(canonical, session)
+    return f'Response #{seq}' if seq is not None else 'Response without answers'
 
 
 def thread_path(thread, anchor=None):

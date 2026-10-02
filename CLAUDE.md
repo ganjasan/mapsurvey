@@ -274,6 +274,20 @@ place (`edited_at`, no re-notification). Response anchors are labelled with the 
 
 **Session Management**: Survey sessions are created on first section view and tracked via `request.session['survey_session_id']`.
 
+**Empty sessions (change `hide-empty-sessions`, issue #226)**: a session with no top-level `Answer`
+(`parent_answer_id IS NULL`) is EMPTY — someone opened the survey and left (71% of external
+sessions in Sept 2026). One definition, `analytics.nonempty_sessions(qs)` / `empty_sessions(qs)`;
+`compute_session_issues`, the v2 Responses page and `export.excluded_sessions` all go through it.
+The v2 page hides empties unless the `rv2_show_empty` cookie is `1` (`analytics_views._show_empty`;
+the legacy page and every other `SurveyAnalyticsService` caller keep `include_empty=True` and see
+all sessions). `service.empty_count` feeds the "N opened without answering" line
+(`editor/partials/_empty_sessions_toggle.html`). Response numbers `#N` come from
+`service.sequence_numbers()` — rank among non-empty sessions; empty rows carry none — and
+`comments.session_seq` follows the same rule. "Empty" is not an Issues-menu entry on v2. Exports
+never contain empty sessions, whatever `include_all` says. The funnel/Perf pane (`SurveyEvent`) and
+the public results `response_count` still count every session. The section POST treats
+whitespace-only values as blank and stores text/number values stripped.
+
 **Data export (`survey/export.py`, spec `responses-export-formats`)**: `download_data` is a thin
 view; the work is one collector and several writers. `collect()` walks the database ONCE into an
 `ExportBundle` (per geo question a FeatureCollection plus the GEOS geometry and session of every

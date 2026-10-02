@@ -1803,7 +1803,7 @@ msgstr ""
 #: survey/templates/editor/analytics_dashboard.html:114
 #: survey/templates/editor/analytics_dashboard.html:132
 msgid "Hide"
-msgstr ""
+msgstr "Скрыть"
 
 #: survey/templates/editor/analytics_dashboard.html:115
 #: survey/templates/editor/analytics_dashboard.html:133
@@ -7175,3 +7175,29 @@ msgstr "Исправлено"
 #: survey/templates/editor/whats_new.html
 msgid "New"
 msgstr "Новое"
+
+#: survey/templates/editor/partials/_empty_sessions_toggle.html
+#, python-format
+msgid "including %(counter)s opened without answering"
+msgid_plural "including %(counter)s opened without answering"
+msgstr[0] "включая %(counter)s, открывшего и не ответившего"
+msgstr[1] "включая %(counter)s, открывших и не ответивших"
+msgstr[2] "включая %(counter)s, открывших и не ответивших"
+msgstr[3] "включая %(counter)s, открывших и не ответивших"
+
+#: survey/templates/editor/partials/_empty_sessions_toggle.html
+#, python-format
+msgid "%(counter)s opened without answering (hidden)"
+msgid_plural "%(counter)s opened without answering (hidden)"
+msgstr[0] "%(counter)s открыл и не ответил (скрыт)"
+msgstr[1] "%(counter)s открыли и не ответили (скрыты)"
+msgstr[2] "%(counter)s открыли и не ответили (скрыты)"
+msgstr[3] "%(counter)s открыли и не ответили (скрыты)"
+
+#: survey/templates/editor/partials/_empty_sessions_toggle.html
+msgid "Show"
+msgstr "Показать"
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "Sessions where nobody answered anything are never exported."
+msgstr "Сессии, в которых никто ничего не ответил, никогда не выгружаются."
