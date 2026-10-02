@@ -8,14 +8,14 @@ score, and averaging independent scores is not the same measurement as forcing a
 
 Two users asked; one is now blocking a launch on it:
 
-- **Jannis Hamp (jhmp)**, 2026-08-14 and again 2026-08-15. He built the workaround himself — a
+- **lead-093**, 2026-08-14 and again 2026-08-15. He built the workaround himself — a
   `range` question named "Rating" whose five *choices* are the items to be ranked, which lets a
   respondent pick one item instead of ordering all five, and collects badly (5 answer rows, 1
   with a value). Offered per-item rating, he rejected it with the reason that settles this: he
   needs a **strict total order**, one unique rank per item per respondent, because ties destroy
   what he is measuring. He also considered and rejected pairwise comparisons himself — they admit
   intransitive answers (A>B, B>C, C>A). He has asked for a shipping estimate.
-- **Manuel Frost (manu04)**, 2026-08-04, as one word in a list of nice-to-haves.
+- **lead-119**, 2026-08-04, as one word in a list of nice-to-haves.
 
 ## What Changes
 

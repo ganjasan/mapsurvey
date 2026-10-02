@@ -11,7 +11,7 @@ Test whether users can find and use the sub-question feature in the survey edito
 
 ## Proposed Approaches
 
-1. **Ask in outreach replies** — Add a question to follow-up emails with Manuel, Galanthus, hmsbrito7: "Did you know you can add follow-up questions to map points?" Quick, free, natural context. Downside: only 3 people.
+1. **Ask in outreach replies** — Add a question to follow-up emails with Manuel, Galanthus, lead-073: "Did you know you can add follow-up questions to map points?" Quick, free, natural context. Downside: only 3 people.
 
 2. **Micro-task usability test** — Email 5-10 Tier 1A users with a concrete task: "Try adding a follow-up question that appears after someone places a point on the map. Let me know if you can figure out how — and how long it took." Tests real discoverability without hinting where the button is. Downside: asking users to spend time, low conversion expected.
 
@@ -21,5 +21,5 @@ Test whether users can find and use the sub-question feature in the survey edito
 
 - Sub-question button: `fa-sitemap` icon, conditionally rendered only for point/line/polygon questions
 - No backend restriction — UI-only gating
-- Power user example: hmsbrito7 has 34 sub-questions (point → multichoice + text pattern)
+- Power user example: lead-073 has 34 sub-questions (point → multichoice + text pattern)
 - Consider improving discoverability regardless of test results (tooltip, help text, onboarding)

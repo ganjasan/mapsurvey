@@ -29,8 +29,8 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
-# Tooling and specs that no runtime code reads. `docs/` is deliberately NOT excluded:
-# survey/tests.py reads docs/marketing/cohorts/ and the suite can be run inside the image.
+# Tooling and specs that no runtime code reads. Operational material (cohorts, dossiers)
+# lives in the private ops repo outside this checkout and never enters the image.
 openspec/
 loadtest/
 .claude/

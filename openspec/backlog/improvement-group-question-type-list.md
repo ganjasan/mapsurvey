@@ -59,11 +59,11 @@ migration.
   [Color/Icon/Image shown on every type](bug-question-fields-shown-for-every-type.md): "в списке
   вопросов нет разделения на блоки… на вопросы, которые не вопросы, а просто тексты, картинки,
   видео, звуковые дорожки… на простые вопросы, на гео вопросы."
-- **2026-08-14 — discoverability failure in the wild.** Jannis Hamp (jhmp) emailed asking for a
+- **2026-08-14 — discoverability failure in the wild.** lead-093 emailed asking for a
   "ranking" question type ("order the fruits from 1 to 5"), a need that per-item `rating`
   questions already cover — he could not tell from the flat type list. Raised to **high**: the
   picker is now costing us feature-requests for capabilities we already have. See
-  `docs/marketing/user-outreach/jhmp/` and the ranking note in
+  `docs/marketing/user-outreach/lead-093/` and the ranking note in
   [additional scale question types](feature-additional-scale-question-types.md).
 - Small on its own, but it props up
   [Media upload question type](feature-audio-upload.md) (#41): once video and audio arrive the flat

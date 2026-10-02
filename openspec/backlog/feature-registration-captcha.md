@@ -48,7 +48,7 @@ Add Cloudflare Turnstile (or hCaptcha as fallback) to the registration form at `
 ## Open Questions
 
 - Should we also gate the survey-response endpoint? Probably not — that hurts respondent UX and bots have no incentive there (no email, no account).
-- If Turnstile is down / blocked in some regions (e.g. China, Iran — Hossein Vahidi's lab), do we fail-open or fail-closed? Default fail-closed. If we get reports, add a manual-review flow.
+- If Turnstile is down / blocked in some regions (e.g. China, Iran — lead-075's lab), do we fail-open or fail-closed? Default fail-closed. If we get reports, add a manual-review flow.
 
 ## Related
 

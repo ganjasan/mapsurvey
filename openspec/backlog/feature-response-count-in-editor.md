@@ -11,6 +11,6 @@ Show the number of responses (sessions) per survey on the /editor/ dashboard. Cu
 
 ## Notes
 
-- Source: Marijana Jericevic (Galanthus) — unsolicited follow-up, she came back on her own to suggest this
+- Source: lead-065 (Galanthus) — unsolicited follow-up, she came back on her own to suggest this
 - Quick win — just a COUNT query on survey_surveysession joined to the dashboard view
 - Every survey creator wants this. Basic expectation from any survey tool

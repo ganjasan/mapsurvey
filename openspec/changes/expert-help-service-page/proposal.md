@@ -1,6 +1,6 @@
 ## Why
 
-Every outreach lead worked so far (Jaakko, Decisio, MIG, Holly, Justin, SPEN)
+Every outreach lead worked so far (Jaakko, Decisio, MIG, lead-074, Justin, SPEN)
 builds and often publishes a survey, then gets **~0 real external responses**. The
 bottleneck is survey design and getting responses, not the tool. That is exactly
 what people pay for, and it points at a **paid service** (help design the survey +

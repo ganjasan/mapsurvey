@@ -2,7 +2,7 @@
 
 A subscription-bombing attack on 2026-05-07/08 created 41 bot accounts in 36 hours by automating POSTs to `/accounts/register/`. The attacker's goal was not to use Mapsurvey but to weaponize its welcome-email path against a list of harvested victim addresses (several email addresses appeared on multiple bot accounts). The attack continues at lower volume after manual cleanup — 2 more bot signups appeared within 24 hours.
 
-Without defenses, every additional burst chips at SMTP reputation, which silently degrades deliverability of the live user-outreach campaign (Decisio, StefSier, hmsbrito7 and ~30 other in-flight conversations). This is Phase 1 of the [abuse-prevention epic](../../backlog/epics/abuse-prevention.md) — three layered defenses on the registration endpoint that together block ~99% of automated subscription-bombing scripts.
+Without defenses, every additional burst chips at SMTP reputation, which silently degrades deliverability of the live user-outreach campaign (Decisio, StefSier, lead-073 and ~30 other in-flight conversations). This is Phase 1 of the [abuse-prevention epic](../../backlog/epics/abuse-prevention.md) — three layered defenses on the registration endpoint that together block ~99% of automated subscription-bombing scripts.
 
 ## What Changes
 

@@ -22,7 +22,7 @@ Publish to see what happens, then closes the survey to undo that, lands in this 
 
 ## Notes
 
-- Reported by: Manuel Frost (manu04, Berlin Senate) 2026-08-04 — "I clicked on the publish-Button
+- Reported by: lead-119 (Berlin Senate) 2026-08-04 — "I clicked on the publish-Button
   to see what happened. After that, i can't go back. So I closed the survey... Is there any
   possibility to unlock the survey to the edit-mode? I fixed that with a work-around: I make a copy
   to new one." The workaround was forced on him by the missing affordance, and it costs him the

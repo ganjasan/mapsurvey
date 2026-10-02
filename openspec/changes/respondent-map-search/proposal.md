@@ -19,7 +19,7 @@ besides) or pan-and-zoom on a phone. Both are worse than typing an address.
 Every incumbent we have profiled has this. Open Point does address search via Google Places / Mapbox
 Geocoding (`docs/marketing/competitors/openpoint.md:91`); Ideenkarte — the confirmed incumbent at
 ThINK Jena — ships a Nominatim geocoder in a PHP site built in the 2010s
-(`docs/marketing/user-outreach/mw_think_jena/2026-07-31_call-notes.md:98`). This is table stakes,
+(`docs/marketing/user-outreach/lead-139/2026-07-31_call-notes.md:98`). This is table stakes,
 not differentiation.
 
 The two surfaces should also not use two different geocoders. Today the editor calls public

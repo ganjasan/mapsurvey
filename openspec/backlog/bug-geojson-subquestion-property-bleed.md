@@ -34,7 +34,7 @@ attributes of a mapped object.
 
 ## Notes
 
-- Found 2026-08-04 while investigating Manuel Frost's export complaint; not what he reported, and
+- Found 2026-08-04 while investigating lead-119's export complaint; not what he reported, and
   he has not noticed it. His RuE noise-plan surveys use geo questions with sub-questions, so his
   exports are likely affected.
 - Second defect in the same block: `answer` is rebound to a sub-answer inside the loop

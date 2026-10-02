@@ -101,5 +101,5 @@ attribution is not optional — leaving it would credit a provider we no longer 
    Outdoors tiles and `© Mapbox © OpenStreetMap` attribution; open a `/r/<slug>/` page with a map
    block and confirm it no longer requests `tile.openstreetmap.org`.
 4. Rollback: revert the commit. No data is written, so there is nothing to undo.
-5. Reply to the reporting creator (`dawgranat@gmail.com`) once deployed — short, per the bug-fix
+5. Reply to the reporting creator (`lead-068`) once deployed — short, per the bug-fix
    email convention.

@@ -17,7 +17,7 @@ Scope here is deliberately narrow: **how fresh geometries reach an open browser 
 
 ## Evidence — the `Tahanan_Padayon` case (2026-07-04)
 
-Survey #334 (`ibmfph`, a Philippine campus-ministry group) revealed an emergent, unplanned use of the platform:
+Survey #334 (`lead-079`, a Philippine campus-ministry group) revealed an emergent, unplanned use of the platform:
 
 - A **single map, single `point` question**, no text/choices — respondents just drop pins.
 - **676 points from 44 sessions** (avg ~15/session; power users dropped 140, 95, 66) — used as a **collaborative pin-wall**, not a survey.

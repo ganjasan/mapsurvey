@@ -1,6 +1,6 @@
 ## Why
 
-Government and enterprise users require a clear, professional trust/security page before their IT security teams will approve Mapsurvey for institutional use. This is the #1 blocker for adoption — Manuel Frost (Berlin Senate) explicitly stated his IT security team must approve the tool before official use. No such page currently exists.
+Government and enterprise users require a clear, professional trust/security page before their IT security teams will approve Mapsurvey for institutional use. This is the #1 blocker for adoption — lead-119 (Berlin Senate) explicitly stated his IT security team must approve the tool before official use. No such page currently exists.
 
 ## What Changes
 

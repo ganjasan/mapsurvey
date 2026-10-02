@@ -11,7 +11,7 @@ The pattern matches a **subscription bombing / email-bomb** attack: the bot's go
 
 Mapsurvey is not the target — it is being used as an unwilling email cannon. The cost is real:
 
-- **SMTP reputation damage** — bursts of welcome emails to unrelated addresses look like spam to provider abuse-detection systems. Reputation loss makes legitimate outreach (Decisio, StefSier, hmsbrito7 etc.) start landing in spam folders.
+- **SMTP reputation damage** — bursts of welcome emails to unrelated addresses look like spam to provider abuse-detection systems. Reputation loss makes legitimate outreach (Decisio, StefSier, lead-073 etc.) start landing in spam folders.
 - **Blocklist exposure** — victims report mapsurvey.org as a spam source. Domain ends up on RBLs.
 - **Resource and metric pollution** — junk users in `auth_user`, distorted active-user counters, wasted email budget.
 - **Operational risk** — without rate limits, a single attacker can scale to hundreds/day at zero cost to themselves.
@@ -67,7 +67,7 @@ These three together block ~99% of automated subscription-bombing scripts and ca
 
 **2026-05-07/08 subscription-bombing attack.** 41 accounts in 36 hours; emails harvested from US, DE, UK, NL, AU domains; some emails repeated 2x; nobody logged in after registration; nobody created surveys.
 
-This was almost certainly **not** a one-time event — bot operators rotate target services. Without defenses, the next wave will be larger. The earlier incidents (`aew@bitoini.com`, `asef@bitoini.com` in February — 2 accounts that did create empty surveys) suggest the site has been on lower-volume bot lists for months; the 2026-05 incident is the escalation.
+This was almost certainly **not** a one-time event — bot operators rotate target services. Without defenses, the next wave will be larger. The earlier incidents (`abuser-a@<redacted>`, `abuser-b@<redacted>` in February — 2 accounts that did create empty surveys) suggest the site has been on lower-volume bot lists for months; the 2026-05 incident is the escalation.
 
 The cost of inaction = lost deliverability = the carefully-built outreach campaign (~30 emails, several active conversations) silently degrades.
 

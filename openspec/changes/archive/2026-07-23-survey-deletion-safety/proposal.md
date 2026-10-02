@@ -1,6 +1,6 @@
 ## Why
 
-A production incident (July 2026, user holly@agnewbeck.com) showed that a survey owner can irreversibly destroy a month of work in 13 seconds: login → dashboard → Delete → confirm. The investigation succeeded only through incidental artifacts (orphaned `SurveyEvent` rows, 30-day Render request logs) — the platform itself keeps **no record** of who deleted what and when, and offers **no recovery path**. Deletion also orphans media files (the survey's cover image is still on disk in prod).
+A production incident (July 2026, user lead-074) showed that a survey owner can irreversibly destroy a month of work in 13 seconds: login → dashboard → Delete → confirm. The investigation succeeded only through incidental artifacts (orphaned `SurveyEvent` rows, 30-day Render request logs) — the platform itself keeps **no record** of who deleted what and when, and offers **no recovery path**. Deletion also orphans media files (the survey's cover image is still on disk in prod).
 
 ## What Changes
 

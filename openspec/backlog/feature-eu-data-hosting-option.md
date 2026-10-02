@@ -83,12 +83,12 @@ check separately if a lead appears.
 - [Frankfurt server migration](improvement-frankfurt-server-migration.md) (#11) — the infra move
 - [DPA / AVV compliance pack](feature-dpa-compliance-pack.md) (#88) — the contractual half
 - [Plans & entitlements](feature-workspace-plans-entitlements.md) (#87) — the gate
-- Source of the original request: Manuel Frost (Berlin Senate IT security); ThINK Jena is
+- Source of the original request: lead-119 (Berlin Senate IT security); ThINK Jena is
   the current live driver
 
 ## Confirmed as a blocker on a live call (2026-07-31)
 
-ThINK Jena (Marcus Wildner + Heiko Griebsch) stated the requirement unprompted and
+ThINK Jena (lead-139 + lead-139) stated the requirement unprompted and
 specifically: **a server in Frankfurt, in Germany.** Not "in the EU" — in Germany. This
 matches the research above: the requirement arrives as institutional policy, and policy
 is not negotiable the way law sometimes is.

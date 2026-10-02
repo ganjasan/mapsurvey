@@ -22,7 +22,7 @@ keeping only the map. A professional GIS user wanted an incident-submission form
 of opinions. Her first attempt at reshaping the draft (repurposing a multichoice into a point
 question) is also what triggered the stale-choices 500 (fixed in PR #114) — a purpose-built
 template would have avoided the whole path. Details in
-`docs/marketing/user-outreach/fallonmaps/profile.md`.
+`docs/marketing/user-outreach/lead-059/profile.md`.
 
 Related segment signal: neighbourhood-watch / watch-map is a recurring self-serve shape
 (community observation maps); pairs with epic community-engagement, and the taxonomy she wrote

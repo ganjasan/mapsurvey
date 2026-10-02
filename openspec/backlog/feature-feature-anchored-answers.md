@@ -18,7 +18,7 @@ probably about the magenta line next to it".
 
 ### The case that surfaced it (2026-09-01)
 
-**Sarasota/Manatee MPO — Asset Prioritization Map** (creator `mrgmiami`, published
+**Sarasota/Manatee MPO — Asset Prioritization Map** (creator `lead-138`, published
 2026-08-28, 60 sessions, 12 geo answers). Five reference layers: four *Priority Score* classes
 of road segments (6 119 segments carrying `priority_score`, `priority_class`, simplestyle
 colours) plus the county boundary. One map section with **four point questions used as

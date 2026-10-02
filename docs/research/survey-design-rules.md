@@ -17,8 +17,8 @@ Both are operative *summaries*; this file is where the reasoning and citations l
 Note on sources: this file is the only tracked one — the rest of `docs/` is
 gitignored on purpose (the repository is public; the heat-domain notes carry
 client context, and the source PDFs/EPUBs are other people's copyright). Full
-heat/climate notes and the papers themselves live in the main checkout under
-`docs/research/ppgis-heat-participation.md` and `docs/papers/`.
+heat/climate notes and the papers themselves live in the private ops repo
+(`../Mapsurvey-ops`) under `docs/research/ppgis-heat-participation.md` and `docs/papers/`.
 
 ---
 

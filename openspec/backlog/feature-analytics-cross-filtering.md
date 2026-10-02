@@ -62,4 +62,4 @@ Two interaction patterns exist:
 ## Notes
 
 - Evaluate Option A first (minimal change) — if coordination becomes too complex, migrate to Option C
-- Consider this as Phase 1.5 — after MVP dashboard is validated with bisqunours but before Phase 2 event tracking
+- Consider this as Phase 1.5 — after MVP dashboard is validated with lead-035 but before Phase 2 event tracking

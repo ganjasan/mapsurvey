@@ -11,5 +11,5 @@ Allow survey creators to configure custom basemap layers via WMS or WFS URLs. Th
 
 ## Notes
 
-- Source: Manuel Frost (manu04) — "great and important!" for Berlin Senate workflows
+- Source: lead-119 — "great and important!" for Berlin Senate workflows
 - Leaflet supports WMS/WFS via L.tileLayer.wms — needs UI in survey editor to configure per-survey

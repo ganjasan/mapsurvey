@@ -1,7 +1,7 @@
 ## Why
 
 "Maptionnaire alternative" is the one validated commercial-intent query for Mapsurvey — Jaakko
-Huttunen found us searching exactly this. Today's SERP: Mapsurvey is absent and aggregators
+lead-083 found us searching exactly this. Today's SERP: Mapsurvey is absent and aggregators
 (Capterra, SaaSHub, Slashdot) own the page. A dedicated, honest comparison page targets that
 intent directly and is the strongest SEO asset we can ship end-to-end (H4).
 

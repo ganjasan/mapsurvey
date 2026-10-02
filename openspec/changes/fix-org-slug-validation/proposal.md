@@ -7,7 +7,7 @@ Two production organizations hold a slug that cannot appear in a URL:
 ```
  id  |          name          |              slug
   74 | Mount Vernon Studio    | Mount Vernon Studio Spring 2026
- 352 | MochiMargo's workspace | CBPR Summer 26' PM
+ 352 | lead-007's workspace | CBPR Summer 26' PM
 ```
 
 `survey/urls.py` routes organization pages as `^org/(?P<slug>[-.\w]+)/settings/$`. A slug with

@@ -18,7 +18,7 @@ and Tokyo were mostly wrong too — while OSM knew all of them, because the peop
 cities map them in OSM.
 
 This is not an edge case for us. Belo Horizonte is where our most active user of the last month
-works (`docs/marketing/user-outreach/adami/`), Tokyo is RPI Inc., and Bishkek is our own heat-map
+works (`docs/marketing/user-outreach/lead-016/`), Tokyo is RPI Inc., and Bishkek is our own heat-map
 project. A respondent there types the name of the market they mean and gets a street with a vaguely
 similar name — which reads as "the search is broken", the exact complaint that started this whole
 line of work.

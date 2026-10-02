@@ -72,5 +72,5 @@ different code path.
 - `survey/tests.py` — new value-level cases; existing export tests keep passing unmodified.
 - No model change, no migration, no template change.
 - Backlog items closed: 96, 97; 23 confirmed or refuted.
-- Anyone re-exporting a survey with sub-questions will see corrected attribute values. Manuel Frost
-  (Berlin Senate) and bisq both have affected exports in hand.
+- Anyone re-exporting a survey with sub-questions will see corrected attribute values. lead-119
+  (Berlin Senate) and lead-035 both have affected exports in hand.

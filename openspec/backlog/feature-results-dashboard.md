@@ -11,6 +11,6 @@ A live dashboard showing all collected geometries on a single map with response 
 
 ## Notes
 
-- Source: Manuel Frost (manu04) — "good, wants QGIS export"
-- Also relevant for lrbenedict12 (geography teacher) — wants to show all student polygon answers overlaid
+- Source: lead-119 — "good, wants QGIS export"
+- Also relevant for lead-116 (geography teacher) — wants to show all student polygon answers overlaid
 - Could be a public/unlisted page per survey: /surveys/<uuid>/results/

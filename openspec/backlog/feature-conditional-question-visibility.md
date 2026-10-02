@@ -13,7 +13,7 @@ Allow survey creators to define skip/branching logic so that questions are shown
 
 ## Second confirmed case — Sodankylä light-pollution study (2026-08-17)
 
-`mariaalatalo` / maria.alatalo@sodankyla.fi, Sodankylä municipality (Finland). Survey 404
+`lead-123` / lead-123, Sodankylä municipality (Finland). Survey 404
 "Valosaastekysely asukkaille ja sidosryhmille" (`b61ec821-8356-4307-a9f0-d2366ba30fe0`),
 published, open 2026-08-06 – 2026-09-27, part of the grant-funded **LOISTAVA** project. 12
 sections, 41 questions, 24 sessions and 4 completions at the time of writing.
@@ -54,10 +54,10 @@ funnel confirms the cost: section 5 is the only mid-survey step that loses respo
 
 ## Notes
 
-- Requested by: bisq (geography student)
+- Requested by: lead-035 (geography student)
 - The existing sub-question (parent_question / parent_answer) model may serve as a partial foundation, but full conditional visibility across arbitrary questions is a new capability
 - Should work within the same section and ideally across sections
-- **Real case (Lyon transit survey, bisqunours, 561 sessions):** Question "SI HABITANT DU 8E SEULEMENT: improvement suggestions for 8th arrondissement" is visible to all 98 respondents, but only ~16 selected arrondissement 8. Need: show question X only if answer to question Y = value Z
+- **Real case (Lyon transit survey, lead-035, 561 sessions):** Question "SI HABITANT DU 8E SEULEMENT: improvement suggestions for 8th arrondissement" is visible to all 98 respondents, but only ~16 selected arrondissement 8. Need: show question X only if answer to question Y = value Z
 - **Two halves, worth splitting.** (a) *Question-level `show_if`* — closes every "Mikäli…" case
   above, needs no navigation changes, and is where both confirmed cases hurt most. (b)
   *Section-level skip* — sections are a linked list (`next_section_id` / `prev_section_id`), so

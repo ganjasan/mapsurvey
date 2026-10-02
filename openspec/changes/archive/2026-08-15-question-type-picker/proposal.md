@@ -10,7 +10,7 @@ a `modal-lg` dialog. Three separate reports now trace back to it:
 - **2026-08-09** (backlog #111): Color, Icon class and Image are offered on every type and do
   nothing on most — Image being the damaging one, since an upload against a text question is
   accepted, stored, and never rendered, with no signal to the author.
-- **2026-08-14** (Jannis Hamp, jhmp): a user emailed asking for a "ranking" question type when
+- **2026-08-14** (lead-093, lead-093): a user emailed asking for a "ranking" question type when
   one `rating` question per item already covers his case — he could not tell from a flat list of
   names. The picker is now costing us feature requests for capabilities we already have.
 

@@ -2175,7 +2175,7 @@ def for_consultants(request):
 def social_pinpoint_alternative(request):
 	"""Public "open-source Social Pinpoint alternative" comparison page.
 
-	Claims restricted to the verified dossier (docs/marketing/competitors/openpoint.md).
+	Claims restricted to the verified dossier (docs/marketing/competitors/openpoint.md in the private ops repo).
 	CTAs carry utm_source=comparison / utm_medium=social_pinpoint_alt."""
 	return render_seo_landing(request, 'social_pinpoint_alternative')
 

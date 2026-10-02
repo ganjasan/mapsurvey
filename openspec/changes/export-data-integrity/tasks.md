@@ -97,12 +97,12 @@
   items 96-102 do not exist on this branch, which was cut from `origin/master`. The two branches
   merge into master independently.
 
-- [x] 6.3 Note in the change that affected creators (Manuel Frost, bisq) hold exports whose
+- [x] 6.3 Note in the change that affected creators (lead-119, lead-035) hold exports whose
       attribute values a re-export will change, and that this needs saying to them — decision and
       wording belong to the reply already owed, not to this change.
 
   Standing: anyone who exported a survey with sub-questions before this fix holds a file whose
   attribute values may be attached to the wrong attribute. A re-export will return different
-  numbers with no explanation attached. Manuel Frost is the known case; bisq's item turned out to
+  numbers with no explanation attached. lead-119 is the known case; lead-035's item turned out to
   be a different defect but he also has geo sub-questions. Telling them is a product decision that
   belongs with the reply already owed to Manuel, not with this branch.

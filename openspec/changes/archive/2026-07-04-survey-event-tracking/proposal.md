@@ -1,6 +1,6 @@
 ## Why
 
-The analytics dashboard shows response data (per-question stats, timeline, geo map) but has zero visibility into respondent behavior: where they drop off, how they found the survey, or how fast pages load. The Lyon transit survey (bisqunours) had 562 sessions and only 98 completions — 83% abandon rate — and the creator had no way to see this funnel breakdown.
+The analytics dashboard shows response data (per-question stats, timeline, geo map) but has zero visibility into respondent behavior: where they drop off, how they found the survey, or how fast pages load. The Lyon transit survey (lead-035) had 562 sessions and only 98 completions — 83% abandon rate — and the creator had no way to see this funnel breakdown.
 
 ## What Changes
 

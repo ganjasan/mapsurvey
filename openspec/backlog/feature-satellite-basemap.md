@@ -11,9 +11,9 @@ Add satellite imagery and topographic map options as basemap choices for surveys
 
 ## Notes
 
-- Source: Marijana Jericevic (Galanthus) — citizen science snowdrop mapping in rural Brittany
-- Also requested by Manuel Frost (manu04)
-- Also requested by Henrique (hmsbrito7, 2026-04-14) — also wants **street view** integration
+- Source: lead-065 (Galanthus) — citizen science snowdrop mapping in rural Brittany
+- Also requested by lead-119
+- Also requested by lead-073 (2026-04-14) — also wants **street view** integration
 - 3 independent users now requesting this — strong signal
 - Options: Esri World Imagery (free for non-commercial), Mapbox Satellite, OpenTopoMap
 - Street view: Google Street View embed or Mapillary (open-source alternative)

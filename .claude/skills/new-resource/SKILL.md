@@ -1,6 +1,6 @@
 ---
 name: new-resource
-description: Analyze a web resource and save it to docs/resources/ as an Obsidian-compatible markdown file. Use when the user provides a URL to add to the knowledge base.
+description: Analyze a web resource and save it to ../Mapsurvey-ops/docs/resources/ as an Obsidian-compatible markdown file. Use when the user provides a URL to add to the knowledge base.
 license: MIT
 metadata:
   author: mapsurvey
@@ -13,7 +13,7 @@ arguments:
 
 Fetch, analyze, and save a web resource to the knowledge base.
 
-**Output location**: `docs/resources/<generated-slug>.md`
+**Output location**: `../Mapsurvey-ops/docs/resources/<generated-slug>.md`
 
 ## Steps
 
@@ -47,7 +47,7 @@ Based on the content, generate 4-8 relevant tags. Common tag categories:
 
 ### 5. Create markdown file
 
-Write to `docs/resources/<slug>.md` with this structure:
+Write to `../Mapsurvey-ops/docs/resources/<slug>.md` with this structure:
 
 ```markdown
 ---
@@ -126,7 +126,7 @@ Use markdown tables when listing multiple similar items:
 
 ### 7. Check for existing file
 
-Before writing, check if `docs/resources/<slug>.md` exists:
+Before writing, check if `../Mapsurvey-ops/docs/resources/<slug>.md` exists:
 - If exists, ask user: "A file with this name already exists. Overwrite it?"
 - If user declines, ask for alternative filename
 
@@ -134,7 +134,7 @@ Before writing, check if `docs/resources/<slug>.md` exists:
 
 After writing the file, output:
 ```
-Created: docs/resources/<filename>.md
+Created: ../Mapsurvey-ops/docs/resources/<filename>.md
 
 Tags: #tag1, #tag2, #tag3
 
@@ -152,7 +152,7 @@ User: /new-resource https://example.org/gis-tools
 
 Claude: Fetching https://example.org/gis-tools...
 
-Created: docs/resources/gis-tools-collection.md
+Created: ../Mapsurvey-ops/docs/resources/gis-tools-collection.md
 
 Tags: #gis, #tools, #open-source, #mapping
 
@@ -172,4 +172,4 @@ Obsidian links added for: [[qgis]], [[leaflet]], [[postgis]]
 - Use consistent Obsidian link naming: lowercase, hyphenated
 - If WebFetch fails, inform user and ask for alternative URL
 - Never include paywalled/login-required content warnings as main content
-- Ensure `docs/resources/` directory exists before writing
+- Ensure `../Mapsurvey-ops/docs/resources/` directory exists before writing

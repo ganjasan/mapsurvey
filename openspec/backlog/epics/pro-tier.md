@@ -93,7 +93,7 @@ able to break anything. That is exactly the shape a grant project needs.
 
 ## Rollout discipline
 
-1. **Grandfather existing accounts.** Live users (Julian Oeser, ibmfph, ThINK and others)
+1. **Grandfather existing accounts.** Live users (lead-101, lead-079, ThINK and others)
    keep what they already use, on their current projects, indefinitely. The paywall
    applies to new projects and new accounts. Taking away working features from the very
    people we recruited as design partners is the fastest way to lose them.

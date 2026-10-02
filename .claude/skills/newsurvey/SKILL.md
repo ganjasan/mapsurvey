@@ -47,7 +47,7 @@ names are what make the data usable in QGIS afterwards.
 If the user asks for something these rules advise against (a polygon where a point would
 do, six required questions), say so once with the reason, then build what they asked for.
 
-**Output location**: `user_surveys/<survey_name>/`
+**Output location**: `../Mapsurvey-ops/user_surveys/<survey_name>/`
 - `survey.json` - Survey definition
 - `<survey_name>.zip` - Ready for import via `/editor/` → Import Survey
 
@@ -63,7 +63,7 @@ Validate: must be snake_case, Latin letters, numbers, underscores only. If inval
 ### 2. Create survey directory
 
 ```bash
-mkdir -p user_surveys/<survey_name>
+mkdir -p ../Mapsurvey-ops/user_surveys/<survey_name>
 ```
 
 ### 3. Interactive section loop
@@ -190,7 +190,7 @@ Create valid JSON in this exact format:
 ### 5. Create ZIP archive
 
 ```bash
-cd user_surveys/<survey_name> && zip <survey_name>.zip survey.json
+cd ../Mapsurvey-ops/user_surveys/<survey_name> && zip <survey_name>.zip survey.json
 ```
 
 ### 6. Show result
@@ -199,7 +199,7 @@ Output:
 - Path to the ZIP file
 - Import instructions:
   - **Web UI**: Go to `/editor/` → Click "Import Survey" → Upload the ZIP
-  - **CLI**: `python manage.py import_survey user_surveys/<name>/<name>.zip`
+  - **CLI**: `python manage.py import_survey ../Mapsurvey-ops/user_surveys/<name>/<name>.zip`
 
 ## Example Session
 
@@ -209,7 +209,7 @@ User: /newsurvey
 Claude: What should the survey be called? Use snake_case with Latin characters.
 User: park_survey
 
-Claude: Created directory user_surveys/park_survey/
+Claude: Created directory ../Mapsurvey-ops/user_surveys/park_survey/
          Let's add the first section.
          Section name (snake_case)?
 User: intro
@@ -234,12 +234,12 @@ Claude: Add another section?
 User: No
 
 Claude: Survey created!
-         - JSON: user_surveys/park_survey/survey.json
-         - ZIP:  user_surveys/park_survey/park_survey.zip
+         - JSON: ../Mapsurvey-ops/user_surveys/park_survey/survey.json
+         - ZIP:  ../Mapsurvey-ops/user_surveys/park_survey/park_survey.zip
 
          To import:
          - Web: /editor/ → Import Survey → upload park_survey.zip
-         - CLI: python manage.py import_survey user_surveys/park_survey/park_survey.zip
+         - CLI: python manage.py import_survey ../Mapsurvey-ops/user_surveys/park_survey/park_survey.zip
 ```
 
 ## Guardrails
@@ -259,4 +259,4 @@ Claude: Survey created!
 - Include the current timestamp in exported_at
 - **NEVER use dicts for `title`, `name`, `subheading`, `subtext`** — always plain strings. Translations go in `"translations"` arrays
 - **`start_map_position` must be WKT** (e.g., `"POINT(30.3 59.9)"`) or `null`, NEVER GeoJSON
-- Always use absolute paths when creating ZIP: `cd /abs/path/to/user_surveys/<name> && zip <name>.zip survey.json`
+- Always use absolute paths when creating ZIP: `cd /abs/path/to/Mapsurvey-ops/user_surveys/<name> && zip <name>.zip survey.json`

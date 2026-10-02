@@ -11,5 +11,5 @@ Pre-built templates for common answer choice sets: 5-point Likert scale, Yes/No/
 
 ## Notes
 
-- Source: Manuel Frost (manu04) — nice to have
+- Source: lead-119 — nice to have
 - Related to "copy answer options" feature — templates are a more structured approach

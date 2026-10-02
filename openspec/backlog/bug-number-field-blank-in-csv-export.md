@@ -7,11 +7,11 @@
 
 ## Description
 
-A number-type question exports as a completely blank column in the CSV download, even though respondents submitted values. Reported by user bisq, who used the field for a district number. The data appears to be collected (the geopoint is present in the GeoJSON), but the number value is missing from the CSV.
+A number-type question exports as a completely blank column in the CSV download, even though respondents submitted values. Reported by user lead-035, who used the field for a district number. The data appears to be collected (the geopoint is present in the GeoJSON), but the number value is missing from the CSV.
 
 ## Notes
 
-- Reported by: bisq (geography student conducting a city survey)
+- Reported by: lead-035 (geography student conducting a city survey)
 - Workaround: user derives the district from the geopoint coordinates in the GeoJSON export
 - Need to investigate whether the issue is in answer storage or CSV serialization
 - **2026-08-04**: two more defects found in the same export function while investigating a
@@ -24,7 +24,7 @@ A number-type question exports as a completely blank column in the CSV download,
   - a `number` sub-question of a geo question, answered, reaches the feature's properties
   - a top-level `number` question, answered, reaches its CSV column as `7.0`
   So a number answer that exists is exported correctly, before and after the fix. Whatever happened
-  to bisq's data lies elsewhere — most likely on the write path, not the read path. Both tests are
+  to lead-035's data lies elsewhere — most likely on the write path, not the read path. Both tests are
   in `ExportValueCorrectnessTest` and now serve as the reproduction this item previously lacked.
 - Next step for this item is therefore the *save* path, not the export. Prime suspect: sub-answer
   storage branches on whether `sub_question.choices` is set rather than on `input_type`

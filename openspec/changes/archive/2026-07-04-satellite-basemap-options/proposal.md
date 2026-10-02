@@ -1,6 +1,6 @@
 ## Why
 
-Survey maps currently show only one basemap (Mapbox streets). Users working with nature/ecology (Galanthus — snowdrop mapping in rural Brittany), urban research (hmsbrito7 — children's affordances), and municipal planning need satellite imagery and topographic views to orient respondents in their environment. Three independent users have requested this feature.
+Survey maps currently show only one basemap (Mapbox streets). Users working with nature/ecology (Galanthus — snowdrop mapping in rural Brittany), urban research (lead-073 — children's affordances), and municipal planning need satellite imagery and topographic views to orient respondents in their environment. Three independent users have requested this feature.
 
 ## What Changes
 

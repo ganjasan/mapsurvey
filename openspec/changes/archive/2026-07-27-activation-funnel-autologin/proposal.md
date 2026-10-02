@@ -8,7 +8,7 @@ Production funnel data (2026-07-27): of 269 registered users, **53 never activat
 2. `ACCOUNT_ACTIVATION_DAYS = 1`: the activation link dies after 24 hours (django-registration's own default is 7 days). Anyone who opens the email late is dead-ended.
 3. The "Activation Failed" page suggests "Try registering again" — which cannot succeed, because the inactive account still holds the username and email. There is no way to re-send an activation link.
 
-The duplicate-account pattern documented in `openspec/backlog/improvement-account-dedup-signup-ux.md` (same person registering 2–3 times: tcoombs/t.coombs, Fränze/fraenze, Echa/vnecha, Claire Cameron ×2) is a direct symptom of causes 2 and 3.
+The duplicate-account pattern documented in `openspec/backlog/improvement-account-dedup-signup-ux.md` (same person registering 2–3 times: lead-187/t.coombs, Fränze/fraenze, Echa/vnecha, lead-045 ×2) is a direct symptom of causes 2 and 3.
 
 ## What Changes
 

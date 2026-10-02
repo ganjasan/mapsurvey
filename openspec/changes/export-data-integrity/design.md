@@ -129,7 +129,7 @@ than it has now.
 **Re-exporting a survey now returns different attribute values than the file the customer already
 downloaded** → This is the fix working, but a creator who has published analysis from the old export
 will find the numbers moved and no explanation. Anyone with an affected export in hand (Manuel
-Frost, bisq) should be told directly rather than discovering it. Not a deploy blocker; it is a
+lead-119, lead-035) should be told directly rather than discovering it. Not a deploy blocker; it is a
 communication task attached to the release.
 
 **The refactor touches the CSV path, which nobody reported as broken** → Characterisation tests
@@ -156,7 +156,7 @@ on which version produced them.
 ## Open Questions
 
 - Should affected creators be notified that a re-export will yield corrected values, and does that
-  go out with the release or with the reply already owed to Manuel Frost? Product call, not a
+  go out with the release or with the reply already owed to lead-119? Product call, not a
   technical one.
-- Does #23's reporter (bisq) have a survey still in the database to verify the fix against real
+- Does #23's reporter (lead-035) have a survey still in the database to verify the fix against real
   rows, or is the mirrored test setup the only available evidence?

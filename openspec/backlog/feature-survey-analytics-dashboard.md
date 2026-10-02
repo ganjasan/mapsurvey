@@ -21,7 +21,7 @@ Analytics page at `/surveys/<uuid>/analytics/` accessible only to survey creator
 
 ## Notes
 
-- Real case: Lyon transit survey (bisqunours) — 562 sessions, 98 completed, 83% abandon rate. Creator cannot see this
-- bisqunours will be co-design partner for this feature
+- Real case: Lyon transit survey (lead-035) — 562 sessions, 98 completed, 83% abandon rate. Creator cannot see this
+- lead-035 will be co-design partner for this feature
 - No migrations — reads existing SurveySession + Answer data
 - Related to `feature-results-dashboard.md` (response data viz) but distinct — this is survey performance analytics

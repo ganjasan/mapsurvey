@@ -1,4 +1,5 @@
-"""Parsing of the hand-written outreach dossiers under docs/marketing/user-outreach/.
+"""Parsing of the hand-written outreach dossiers (docs/marketing/user-outreach/ in the
+private ops repo, settings.OPS_DIR -- never in this public repository).
 
 The files were written by hand over months and are inconsistent by nature: only
 29 of 125 carry an `Organization` header, and the same field appears as

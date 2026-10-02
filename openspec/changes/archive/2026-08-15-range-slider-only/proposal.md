@@ -8,7 +8,7 @@ data now says that was the wrong coupling:
 
 - Of 124 range questions, **122 render as the default slider**. The user whose nine-point named
   scale motivated the feature never switched styles.
-- The only two non-default range questions belong to jhmp (Jannis Hamp), are named **"Rating"**,
+- The only two non-default range questions belong to lead-093, are named **"Rating"**,
   and use `list_pips` — the one real use of the feature is a creator imitating the `rating` type
   because he could not find it. That is a type-discoverability failure (now addressed by the
   question-type-picker change), not a range-rendering need.
@@ -33,7 +33,7 @@ its live preview now actually leads creators there.
 - `rating` behaviour is untouched, including survey-wide default inheritance.
 
 Out of scope: merging range and rating into one scale type (that is the real long-term answer to
-the duplication and belongs to backlog #102's scale-family work); contacting jhmp about his two
+the duplication and belongs to backlog #102's scale-family work); contacting lead-093 about his two
 questions (his case is `rating`, and he is an active outreach contact).
 
 ## Capabilities

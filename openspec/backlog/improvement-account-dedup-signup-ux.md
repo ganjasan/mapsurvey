@@ -15,7 +15,7 @@ A meaningful share of users hold 2–3 accounts on the *same email address*, sig
 
 When grouping real registrations by email domain, most institutional "clusters" with ≥2 accounts turned out to be **the same person duplicated**, not teams:
 
-- rivco.org (ricastel + ricastell), ufu.br (jessicalvesfs ×2), rmit.edu.au (jessica.rivera ×2), columbia.edu (mountvernon + mountvernonstudio), lichtblick.de (Fränze + fraenze), line-grade.com (hannah + hannahetter).
+- rivco.org (lead-166 + lead-166), ufu.br (lead-091 ×2), rmit.edu.au (lead-090 ×2), columbia.edu (lead-137 + lead-137), lead-115.de (Fränze + fraenze), line-grade.com (hannah + hannahetter).
 - Plus many same-email pairs among gmail users (e.g. Echa/vnecha, abeee/abeeeeee, edginakyut/edginakyuttt, anin18/anin8, several FTSPK variants).
 
 These are not abuse — they're real users who registered twice. That points to a login/recovery UX gap.

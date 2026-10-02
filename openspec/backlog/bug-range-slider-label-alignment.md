@@ -25,7 +25,7 @@ The same user reports the result still does not read correctly:
 
 ## Notes
 
-- Reported by: Manuel Frost (manu04, Berlin Senate) 2026-08-04 — same user who requested #5. His
+- Reported by: lead-119 (Berlin Senate) 2026-08-04 — same user who requested #5. His
   surveys use 9-point scales such as "(positive) Geräusche" → "(negativer) Lärm".
 - Fix 1 and 2 are small and independent. Fix 1 is alignment only. Fix 2 needs a display decision:
   labelling every step breaks down past ~5 points on a phone, so it probably means an opt-in

@@ -51,7 +51,7 @@
 ## 6. Close the loop
 
 - [ ] 6.1 After merge and deploy, verify Topo on production and reply to the reporting creator
-      (`dawgranat@gmail.com`) — short, per the bug-fix email convention
+      (`lead-068`) — short, per the bug-fix email convention
 
 ## 7. Surfaces the first pass missed (reported again 2026-09-15, production Responses → Overview)
 

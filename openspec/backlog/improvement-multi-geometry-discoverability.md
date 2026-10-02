@@ -16,7 +16,7 @@ so, so authors assume one question means one feature and build around the assump
 
 ## The case that surfaced it
 
-`angele.trolliet@vaucluse.chambagri.fr`, Chambre d'agriculture de Vaucluse, 2026-08-04.
+`lead-023`, Chambre d'agriculture de Vaucluse, 2026-08-04.
 A farm survey for the Ansouis protected agricultural zone (ZAP), a real prefecture-level
 procedure. She built:
 
@@ -79,8 +79,8 @@ discoverability is fixed; the ceiling was never the thing people wanted.
 ## Notes
 
 - A corrected version of her survey (11 questions, one parcel question) was built and verified
-  by real import into a local DB: `docs/marketing/user-outreach/angele_trolliet/enquete-agricole-zap-ansouis-simplifiee.zip`.
-- Precedent that the mechanism works: the Berlin RuE survey (`manu04`) carries 30
+  by real import into a local DB: `docs/marketing/user-outreach/lead-023/enquete-agricole-zap-ansouis-simplifiee.zip`.
+- Precedent that the mechanism works: the Berlin RuE survey (`lead-119`) carries 30
   sub-question answers per drawn feature, several features per session.
 - Related: [Sub-question popup is too narrow](bug-subquestion-popup-too-narrow.md) — the same
   sub-question mechanism, failing at the next step. The more features a respondent draws, the

@@ -11,7 +11,7 @@
 > Note: this file was created retroactively on 2026-07-23 — INDEX #59 referenced it as a
 > dangling link. The **operations-audit slice** (destructive/lifecycle actions: delete,
 > restore, purge, status transitions, password ops) was promoted to the OpenSpec change
-> `survey-deletion-safety` after the Holly/Agnew::Beck incident (a user hard-deleted a
+> `survey-deletion-safety` after the lead-074/Agnew::Beck incident (a user hard-deleted a
 > month of work in 13 seconds with no trace and no recovery path). What remains here is
 > the **content edit-history** slice.
 

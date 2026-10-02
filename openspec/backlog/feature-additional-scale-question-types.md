@@ -24,8 +24,8 @@ Researchers used to standard survey tools expect more:
 
 ## Notes
 
-- Asked for by: Manuel Frost (manu04, Berlin Senate) 2026-08-04 — inbound message never filed,
-  reconstructed in `docs/marketing/user-outreach/manu04/correspondence/2026-08-04_ranking-request-unfiled.md`
+- Asked for by: lead-119 (Berlin Senate) 2026-08-04 — inbound message never filed,
+  reconstructed in `docs/marketing/user-outreach/lead-119/correspondence/2026-08-04_ranking-request-unfiled.md`
   — "It would be nice if you can
   implement more and different Input types (continuous scale, vertical scale, ranking, different
   styles)." Framed by him as nice-to-have, but he is the second user to push on scale rendering.
@@ -50,15 +50,15 @@ Researchers used to standard survey tools expect more:
 - Related: [Budget/token allocation question type](feature-budget-token-allocation.md) (#17), which
   is the same family of "distribute or order a fixed set" input.
 - **2026-08-10 — partially shipped.** Only the display-style slice landed (`survey/forms.py:175` `DISPLAY_STYLE_TYPES`, `survey/models.py:117`). Continuous scale, vertical scale and ranking are still absent from `INPUT_TYPE_CHOICES`.
-- **2026-08-14 — second ranking request.** Jannis Hamp (jhmp, private survey, found us via
+- **2026-08-14 — second ranking request.** lead-093 (private survey, found us via
   Google) asked for exactly the ranking type: "give a number of answers which the participants
   have to order according to a scale … from 1 (best) to 5 (worst)". Two independent requests
-  in ten days (Manuel Frost 2026-08-04, Jannis Hamp 2026-08-14).
+  in ten days (lead-119 2026-08-04, lead-093 2026-08-14).
   **Correction, 2026-08-15 — ranking is a real gap, raise it.** Reading Jannis's survey settled
   it: his `range` question named "Rating" carries the five items to be ranked *as its choices*, so
   a respondent picks one instead of ordering all five, and it collects badly (5 answer rows, 1
   with a value). Per-item `rating` is a workaround, not a match. Two askers in ten days (Manuel
-  Frost 2026-08-04, Jannis Hamp 2026-08-14) and one live broken workaround — **split ranking out
+  lead-119 2026-08-04, lead-093 2026-08-14) and one live broken workaround — **split ranking out
   as its own item and schedule it**. The picker rework
   ([#112](improvement-group-question-type-list.md), shipped) helps creators find the right type
   but cannot supply a type that does not exist.

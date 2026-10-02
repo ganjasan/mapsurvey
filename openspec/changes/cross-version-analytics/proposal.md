@@ -10,7 +10,7 @@ goes blind:
 
 - **Dashboard cards** count sessions of the canonical only → "1 started · 0 completed ·
   0% rate" right after publishing (real incidents: Ameelia Mirt 340→1 on 2026-07-06;
-  bisqunours republished a 619-response survey to fix a typo and saw 0).
+  lead-035 republished a 619-response survey to fix a typo and saw 0).
 - **Results (analytics)**: `AnalyticsService.base_qs = SurveySession.objects.filter(survey=survey)`
   — table, charts, geo layers, performance tab all show only the new, empty version.
 - **Public results blocks**: sessions are already family-wide, but `_answers()` filters
