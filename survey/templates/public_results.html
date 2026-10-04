@@ -269,6 +269,8 @@
       var base = BASEMAPS[b.basemap] || BASEMAPS.streets;
       L.tileLayer(base.url, base.opts).addTo(map);
 
+      if (b.data_type === 'grid') { return renderGrid(map, b); }
+
       var fc = b.feature_collection || { features: [] };
       var isHeat = (b.viz === 'heatmap' || b.viz === 'heat');
       var pts = [];
@@ -308,6 +310,32 @@
         if (bounds && bounds.isValid()) { map.fitBounds(bounds.pad(0.2)); }
         else { map.setView([52.52, 13.405], 11); }
       } catch (e) { map.setView([52.52, 13.405], 11); }
+    }
+
+    // Spray-cloud blocks (spec spraycan-density-views): a server-side grid of
+    // respondent counts per cell; opacity grows with the count. No popups, no dots.
+    function renderGrid(map, b){
+      var cells = b.cells || { features: [] };
+      var max = b.max || 1;
+      var paint = b.color || '#d6336c';   // the question's colour: the paint respondents used
+      var layer = L.geoJSON(cells, {
+        style: function(feat){
+          var n = (feat.properties || {}).respondents || 0;
+          return { stroke: false, fillColor: paint, fillOpacity: 0.15 + 0.6 * (n / max) };
+        }
+      }).addTo(map);
+      try {
+        var bounds = layer.getBounds();
+        if (bounds.isValid()) { map.fitBounds(bounds.pad(0.1)); } else { map.setView([52.52, 13.405], 11); }
+      } catch (e) { map.setView([52.52, 13.405], 11); }
+      var el = document.getElementById('map-' + b.id);
+      if (el && el.parentNode) {
+        var cap = document.createElement('div');
+        cap.className = 'pr-grid-caption';
+        cap.style.cssText = 'font-size:.8rem;color:#6b7280;margin-top:.35rem;';
+        cap.textContent = (b.respondents_total || 0) + ' respondents · ' + (b.cell_m ? Math.round(b.cell_m) + ' m cells' : '');
+        el.parentNode.insertBefore(cap, el.nextSibling);
+      }
     }
   })();
   </script>

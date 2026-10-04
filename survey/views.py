@@ -39,10 +39,12 @@ from django.urls import reverse
 from django.core.serializers import serialize
 import geojson
 from django.contrib.gis.geos import GEOSGeometry
+from survey.question_types import GEO_TYPES, geo_column, SPRAY_HARD_CEILING
 from django.contrib.gis.geos.error import GEOSException
 import sys
 from io import BytesIO
 import json
+import math
 import logging
 
 from .access_control import check_survey_access, mark_indexing
@@ -885,10 +887,10 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 		if not q_answers:
 			continue
 
-		if question.input_type in ('point', 'line', 'polygon'):
+		if question.input_type in GEO_TYPES:
 			features = []
 			for answer in q_answers:
-				geometry = getattr(answer, question.input_type)
+				geometry = answer.geometry
 				if geometry is None:
 					continue
 				feature = {
@@ -999,6 +1001,30 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 # Moved to survey/layers.py (shared with the Responses tab); kept under the old
 # name so the respondent shell's call site does not change.
 _build_map_layers_metadata = build_map_layers_metadata
+
+
+
+def _spray_cloud(geometry, max_dots=None):
+	"""Normalise a posted spray cloud (spec spraycan-question): a MultiPoint (a
+	lone Point is accepted as a one-dot cloud) whose coordinates are finite WGS
+	84 pairs, snapped to a one-metre grid with duplicates dropped
+	(survey/spray.py), truncated to the creator's `max_dots` when set, else to
+	SPRAY_HARD_CEILING (abuse backstop, not a product limit). Returns None when
+	the chunk is not a usable cloud — the caller skips it, exactly as it skips
+	an unreadable polygon chunk, so nothing is stored.
+	"""
+	from survey import spray
+	limit = max_dots if isinstance(max_dots, int) and max_dots > 0 else SPRAY_HARD_CEILING
+	if geometry.geom_type == 'Point':
+		coords = [geometry.coords]
+	elif geometry.geom_type == 'MultiPoint':
+		coords = list(geometry.coords)
+	else:
+		return None
+	dots = spray.normalize_dots(coords, limit)
+	if not dots:
+		return None
+	return spray.cloud_from_dots(dots)
 
 
 def survey_section(request, survey_slug, section_name):
@@ -1124,14 +1150,18 @@ def survey_section(request, survey_slug, section_name):
 				# whether `choices` was non-empty first, so a stale choices list
 				# left over from a type switch routed a point question's GeoJSON
 				# into int() — an unhandled 500 on every submit of the section.
-				if question.input_type in ('point', 'line', 'polygon'):
+				if question.input_type in GEO_TYPES:
 					geostr_list = [g for g in result[0].split('|') if g != '']
+					is_spray = question.input_type == 'spraycan'
 					# The UI enforces max_features; this clamp only keeps a
 					# tampered or scripted POST within bounds. The section
 					# POST has no error-render path (required is client-side
 					# too), so excess features are discarded, not rejected.
 					max_features = (question.validation_settings or {}).get('max_features')
-					if isinstance(max_features, int) and max_features > 0:
+					if is_spray:
+						# One cloud per respondent (spec spraycan-question).
+						geostr_list = geostr_list[:1]
+					elif isinstance(max_features, int) and max_features > 0:
 						geostr_list = geostr_list[:max_features]
 					for geostr in geostr_list:
 						if geostr != '':
@@ -1151,12 +1181,14 @@ def survey_section(request, survey_slug, section_name):
 									question.code, geostr[:40])
 								continue
 
-							if question.input_type == "point":
-								answer.point = resultToSave
-							elif question.input_type == "line":
-								answer.line = resultToSave
-							elif question.input_type == "polygon":
-								answer.polygon = resultToSave
+							if is_spray:
+								resultToSave = _spray_cloud(
+									resultToSave, (question.validation_settings or {}).get('max_dots'))
+								if resultToSave is None:
+									logger.warning(
+										"Skipping unusable spray cloud for %s", question.code)
+									continue
+							setattr(answer, geo_column(question.input_type), resultToSave)
 
 							answer.save()
 

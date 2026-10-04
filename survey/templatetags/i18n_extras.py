@@ -44,6 +44,16 @@ def i18n_json():
         'tapToContinueLine': _('Tap to add the next point.'),
         'tapLastPointToFinish': _('Tap the last point to finish the line.'),
 
+        # Spray area (spec spraycan-question): paint mode tools and hints
+        'spray': _('Spray'),
+        'erase': _('Erase'),
+        'moveMap': _('Move map'),
+        'clear': _('Clear'),
+        'finishSpraying': _('Finish'),
+        'sprayHint': _('Hold and drag to spray. Stay longer where you are more certain.'),
+        'tapSprayHint': _('Hold and drag a finger to spray. Stay longer where you are more certain.'),
+        'brushEmpty': _('The brush is empty — erase some paint to continue.'),
+
 
         # Error messages
         'shapeEdgesCannotIntersect': _('<strong>Error:</strong> Shape edges cannot intersect!'),

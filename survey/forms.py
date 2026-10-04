@@ -170,6 +170,9 @@ class LeafletDrawButtonWidget(widgets.Widget):
         context['widget']['required'] = context['widget']['required']
         context['widget']['min_features'] = context['widget']['attrs'].get('min_features', '')
         context['widget']['max_features'] = context['widget']['attrs'].get('max_features', '')
+        context['widget']['brush_px'] = context['widget']['attrs'].get('brush_px', '')
+        context['widget']['max_dots'] = context['widget']['attrs'].get('max_dots', '')
+        context['widget']['brush_sizes'] = context['widget']['attrs'].get('brush_sizes', '')
         return context
 
 class PointDrawButtonWidget(LeafletDrawButtonWidget):
@@ -183,6 +186,12 @@ class LineDrawButtonWidget(LeafletDrawButtonWidget):
 class PolygonDrawButtonWidget(LeafletDrawButtonWidget):
     draw_type = 'drawpolygon'
     template_name = 'polygon_draw_button.html'
+
+class SprayDrawButtonWidget(LeafletDrawButtonWidget):
+    """`spraycan`: the respondent paints a cloud of dots (spec spraycan-question).
+    `data-brush-px` / `data-max-dots` on the button drive the paint mode."""
+    draw_type = 'drawspray'
+    template_name = 'spray_draw_button.html'
 
 
 class ShowImageWidget(widgets.Widget):
@@ -203,7 +212,7 @@ class ShowImageWidget(widgets.Widget):
         return context
 
 class LeafletDrawButtonField(forms.Field):
-    def __init__(self,*, title, subtitle, color, icon_class, draw_icon_class, min_features=None, max_features=None, **kwargs):
+    def __init__(self,*, title, subtitle, color, icon_class, draw_icon_class, min_features=None, max_features=None, brush_px=None, max_dots=None, brush_sizes=None, **kwargs):
         self.title = title
         self.subtitle = subtitle
         self.color = color
@@ -211,6 +220,9 @@ class LeafletDrawButtonField(forms.Field):
         self.draw_icon_class = draw_icon_class
         self.min_features = min_features
         self.max_features = max_features
+        self.brush_px = brush_px
+        self.max_dots = max_dots
+        self.brush_sizes = brush_sizes
 
         super().__init__(**kwargs)
 
@@ -225,6 +237,12 @@ class LeafletDrawButtonField(forms.Field):
             attrs['min_features'] = self.min_features
         if self.max_features is not None:
             attrs['max_features'] = self.max_features
+        if self.brush_px is not None:
+            attrs['brush_px'] = self.brush_px
+        if self.max_dots is not None:
+            attrs['max_dots'] = self.max_dots
+        if self.brush_sizes is not None:
+            attrs['brush_sizes'] = self.brush_sizes
 
         return attrs
 
@@ -569,6 +587,20 @@ class SurveySectionAnswerForm(forms.Form):
             draw_icon_class = icon_class if icon_class else "fas fa-draw-polygon"
             vs = question.validation_settings or {}
             return LeafletDrawButtonField(widget=PolygonDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class=draw_icon_class, required=required, min_features=vs.get('min_features'), max_features=vs.get('max_features'))
+
+        elif input_type == 'spraycan':
+            from survey.question_types import SPRAY_BRUSH_PX, SPRAY_BRUSH_DEFAULT
+            draw_icon_class = icon_class if icon_class else "fas fa-spray-can"
+            brush_px = SPRAY_BRUSH_PX.get(question.spray_brush, SPRAY_BRUSH_PX[SPRAY_BRUSH_DEFAULT])
+            # Optional creator cap; absent = unlimited (no data-max-dots attribute).
+            max_dots = (question.validation_settings or {}).get('max_dots')
+            if not isinstance(max_dots, int) or max_dots <= 0:
+                max_dots = None
+            # One cloud per respondent: no min/max features (spec spraycan-question).
+            # The creator's size is the default; the respondent can switch in the
+            # paint toolbar, so the whole size map rides on the button.
+            import json as _json
+            return LeafletDrawButtonField(widget=SprayDrawButtonWidget, label=False, title = label, subtitle = sublabel, color=color, icon_class=icon_class, draw_icon_class=draw_icon_class, required=required, brush_px=brush_px, max_dots=max_dots, brush_sizes=_json.dumps(SPRAY_BRUSH_PX))
 
         elif input_type == 'image':
             return ShowImageField(widget=ShowImageWidget, label=False, image_source=image_source,

@@ -68,6 +68,7 @@ def clone_question(
         validation_settings=question.validation_settings,
         color=question.color,
         icon_class=question.icon_class,
+        spray_brush=question.spray_brush,
         image=question.image,
         display_style=question.display_style,
         visibility_rule=question.visibility_rule if same_survey else None,

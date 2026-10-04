@@ -22,7 +22,7 @@
     'use strict';
 
     var STORAGE_KEY = 'editor_clipboard';
-    var SUBQUESTION_DISALLOWED = ['point', 'line', 'polygon'];
+    var SUBQUESTION_DISALLOWED = ['point', 'line', 'polygon', 'spraycan'];
 
     // ─── Clipboard ──────────────────────────────────────────────────────────
     var Clipboard = {

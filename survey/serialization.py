@@ -204,6 +204,8 @@ def _serialize_question(question: Question) -> Dict[str, Any]:
         "visibility_rule": question.visibility_rule,
         "color": question.color,
         "icon_class": question.icon_class,
+        # `spraycan` only (spec spraycan-question); harmless on other types.
+        "spray_brush": question.spray_brush,
         "display_style": question.display_style,
         "image": question.image.name if question.image else None,
         "translations": [
@@ -309,6 +311,7 @@ def _serialize_answer(answer: Answer) -> Dict[str, Any]:
         "point": geo_to_wkt(answer.point),
         "line": geo_to_wkt(answer.line),
         "polygon": geo_to_wkt(answer.polygon),
+        "multipoint": geo_to_wkt(answer.multipoint),
         "choices": serialize_choices(answer),
         "sub_answers": [
             _serialize_answer(sub_a)
@@ -639,7 +642,7 @@ def import_structure_from_archive(
         section = sections.get(section_data["name"])
         if section:
             questions_data = section_data.get("questions", [])
-            create_questions(section, questions_data, legacy_option_groups, code_remap, layer_ids=layer_ids)
+            create_questions(section, questions_data, legacy_option_groups, code_remap, layer_ids=layer_ids, warnings=warnings)
 
     # Apply visibility rules once every question exists (a rule's controller is
     # earlier in survey order, but a post-pass is immune to creation order and
@@ -833,6 +836,7 @@ def _create_question(
     code_remap: Dict[str, str],
     parent: Optional[Question] = None,
     layer_ids: Optional[List[Optional[int]]] = None,
+    warnings: Optional[List[str]] = None,
 ) -> Question:
     """Create a single question, handling code collisions.
 
@@ -909,6 +913,7 @@ def _create_question(
         required=question_data.get("required", False),
         color=_archive_text(question_data, "color", "#000000", 7),
         icon_class=_archive_text(question_data, "icon_class", "", 80) or None,
+        spray_brush=_spray_brush_from_archive(question_data, original_code, warnings),
         display_style=display_style,
         layer_id=_layer_id_from_archive(question_data, input_type, layer_ids),
         min_objects=max(0, int(question_data.get("min_objects") or 0)) if input_type == 'layer_objects' else 0,
@@ -929,9 +934,23 @@ def _create_question(
 
     # Create sub-questions recursively
     for sub_q_data in question_data.get("sub_questions", []):
-        _create_question(section, sub_q_data, legacy_option_groups, code_remap, parent=question, layer_ids=layer_ids)
+        _create_question(section, sub_q_data, legacy_option_groups, code_remap, parent=question, layer_ids=layer_ids, warnings=warnings)
 
     return question
+
+
+def _spray_brush_from_archive(question_data, code, warnings):
+    """`spraycan` brush size, defaulting to medium with a report line when
+    the archive carries none or an unknown value (spec survey-serialization)."""
+    from survey.question_types import SPRAY_BRUSH_CHOICES, SPRAY_BRUSH_DEFAULT
+    value = question_data.get("spray_brush")
+    if value in {v for v, _ in SPRAY_BRUSH_CHOICES}:
+        return value
+    if question_data.get("input_type") == "spraycan" and warnings is not None:
+        warnings.append(
+            f"Question '{code}': spray_brush {value!r} not recognised, using '{SPRAY_BRUSH_DEFAULT}'"
+        )
+    return SPRAY_BRUSH_DEFAULT
 
 
 def _layer_id_from_archive(question_data, input_type, layer_ids):
@@ -950,10 +969,11 @@ def create_questions(
     legacy_option_groups: List[Dict[str, Any]],
     code_remap: Dict[str, str],
     layer_ids: Optional[List[Optional[int]]] = None,
+    warnings: Optional[List[str]] = None,
 ) -> None:
     """Create questions with hierarchy, updating code_remap for collisions."""
     for question_data in questions_data:
-        _create_question(section, question_data, legacy_option_groups, code_remap, layer_ids=layer_ids)
+        _create_question(section, question_data, legacy_option_groups, code_remap, layer_ids=layer_ids, warnings=warnings)
 
 
 def resolve_section_links(
@@ -1389,6 +1409,7 @@ def create_answer(
         point=wkt_to_geo(answer_data.get("point"), "point"),
         line=wkt_to_geo(answer_data.get("line"), "line"),
         polygon=wkt_to_geo(answer_data.get("polygon"), "polygon"),
+        multipoint=wkt_to_geo(answer_data.get("multipoint"), "multipoint"),
     )
 
     # Link choices by name -> code
@@ -1405,7 +1426,7 @@ def create_answer(
 
 
 def wkt_to_geo(wkt: Optional[str], field_type: str) -> Optional[GEOSGeometry]:
-    """Parse WKT string to geo field (point/line/polygon)."""
+    """Parse WKT string to geo field (point/line/polygon/multipoint)."""
     if not wkt:
         return None
     try:

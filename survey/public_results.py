@@ -12,6 +12,7 @@ snapshot, so one template renders both modes.
 """
 
 import json
+from survey.question_types import GEO_TYPES, geo_column
 import statistics
 import uuid as uuid_module
 
@@ -36,7 +37,7 @@ EXCLUDED_VALIDATION_STATUSES = ('not_approved', 'on_hold')
 # Question types whose individual answers are never published.
 TEXT_INPUT_TYPES = ('text', 'text_line')
 
-GEO_INPUT_TYPES = ('point', 'line', 'polygon')
+GEO_INPUT_TYPES = GEO_TYPES
 
 # Question types that aggregate into a chart block on the public page.
 CHART_INPUT_TYPES = ('choice', 'multichoice', 'rating', 'thumbs', 'number', 'range')
@@ -280,10 +281,12 @@ class PublicResultsService:
         question = block.question
         payload = self._base(block)
         payload['basemap'] = block.basemap or 'streets'
+        if question.input_type == 'spraycan':
+            return self._spray_grid_payload(block, payload)
         label_codes = set(block.geo_label_fields or [])
 
         features = []
-        geo_field = question.input_type if question.input_type in GEO_INPUT_TYPES else None
+        geo_field = geo_column(question.input_type) if question.input_type in GEO_INPUT_TYPES else None
         if geo_field is None:
             payload['data_type'] = 'geo'
             payload['feature_collection'] = {'type': 'FeatureCollection', 'features': []}
@@ -302,7 +305,7 @@ class PublicResultsService:
             labels_by_point = self._collect_point_labels(geo_answers, label_codes)
 
         for a in geo_answers:
-            geom = a.point or a.line or a.polygon
+            geom = a.geometry
             if geom is None:
                 continue
             features.append({
@@ -313,6 +316,42 @@ class PublicResultsService:
 
         payload['data_type'] = 'geo'
         payload['feature_collection'] = {'type': 'FeatureCollection', 'features': features}
+        payload['count'] = len(features)
+        return payload
+
+    # Spray clouds (spec spraycan-density-views): the public page never sees a
+    # respondent's dots. The service bins every dot of every clean session into
+    # Web Mercator cells, counts DISTINCT sessions per cell and drops the cells
+    # below the page's k — omitted, not "<K", because the cell's location is
+    # the sensitive fact. Cell size: the clouds' bbox is ~SPRAY_GRID_CELLS
+    # across its longer side, never finer than SPRAY_GRID_MIN_M.
+    SPRAY_GRID_CELLS = 40
+    SPRAY_GRID_MIN_M = 20.0
+
+    def _spray_grid_payload(self, block, payload):
+        from django.contrib.gis.geos import Polygon as GeosPolygon
+        from survey.public_results_grid import spray_grid
+
+        question = block.question
+        clouds = [
+            (a.survey_session_id, a.multipoint)
+            for a in self._answers(question).exclude(multipoint__isnull=True)
+        ]
+        grid = spray_grid(clouds, k=self.k, cells_across=self.SPRAY_GRID_CELLS,
+                          min_cell_m=self.SPRAY_GRID_MIN_M)
+        features = []
+        for cell in grid['cells']:
+            features.append({
+                'type': 'Feature',
+                'geometry': json.loads(GeosPolygon.from_bbox(cell['bbox']).geojson),
+                'properties': {'respondents': cell['respondents']},
+            })
+        payload['data_type'] = 'grid'
+        payload['color'] = question.color if (question.color or '').lower() not in ('', '#000000') else '#d6336c'
+        payload['cells'] = {'type': 'FeatureCollection', 'features': features}
+        payload['max'] = grid['max']
+        payload['respondents_total'] = grid['respondents_total']
+        payload['cell_m'] = grid['cell_m']
         payload['count'] = len(features)
         return payload
 

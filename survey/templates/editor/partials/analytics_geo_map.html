@@ -335,6 +335,31 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                     featureLayer.feature = f;
                     slot.allPoints.push([coords[1], coords[0]]);
+                } else if (f.geometry.type === 'MultiPoint') {
+                    // Spray cloud (spec spraycan-density-views): the question is
+                    // ONE heat surface over every cloud, each dot weighted 1/dots
+                    // so every respondent counts once. The per-session entry is an
+                    // invisible proxy at the cloud's centre, which is what
+                    // selection, filtering and zoom-to-layer read.
+                    var dots = f.geometry.coordinates;
+                    var w = dots.length ? 1 / dots.length : 0;
+                    var lat = 0, lng = 0, weighted = [];
+                    dots.forEach(function(c) { lat += c[1]; lng += c[0]; weighted.push([c[1], c[0], w]); });
+                    featureLayer = L.circleMarker(L.latLng(lat / dots.length, lng / dots.length), {
+                        radius: 0, opacity: 0, fillOpacity: 0, interactive: false, pane: paneName,
+                    });
+                    featureLayer.feature = f;
+                    featureLayer._sprayDots = weighted;
+                    // The paint colour the respondent used, unless the creator left
+                    // the default black — then the legend palette, like other layers.
+                    var paint = f.properties.color;
+                    if (/^#[0-9a-f]{6}$/i.test(paint || '') && paint.toLowerCase() !== '#000000') slot.color = paint;
+                    // Fit-to-data (rv2FitMap, zoom-to-layer) reads getBounds before
+                    // getLatLng; without this a one-cloud survey fits to a single
+                    // point and lands on zoom 23.
+                    var cloudBounds = L.latLngBounds(weighted.map(function(d) { return [d[0], d[1]]; }));
+                    featureLayer.getBounds = function() { return cloudBounds; };
+                    slot.spray = true;
                 } else {
                     featureLayer = L.geoJSON(f, {
                         style: function() { return { color: color, weight: 2, fillOpacity: 0.2 }; },
@@ -362,11 +387,40 @@ document.addEventListener('DOMContentLoaded', function() {
                 slot.features.push({ layer: featureLayer, sid: sid });
             });
 
+            if (slot.spray) this._attachSprayHeat(slot);
+
             this._slots.set(qName, slot);
             this._order.push(qName);
         }.bind(this));
 
         this._assignPaneZIndices();
+    };
+
+    // ── Spray cloud slots ─────────────────────────────────────────
+    // A `features` slot whose entries are spray clouds owns one agreement
+    // surface (L.SprayAgreementLayer: share of respondents per cell) in its
+    // own pane; the entries' proxy markers stay invisible. The surface is
+    // re-filtered whenever the session filter or the slot's visibility changes.
+    LayerManager.prototype._attachSprayHeat = function(slot) {
+        if (typeof L.SprayAgreementLayer !== 'function') return;
+        var clouds = slot.features.map(function(entry) {
+            return { id: entry.sid, dots: (entry.layer._sprayDots || []).map(function(d) { return [d[0], d[1]]; }) };
+        });
+        var surface = L.sprayAgreementLayer(clouds, { color: slot.color, pane: slot.pane });   // style 'grid' by default
+        slot.sprayHeat = surface;
+        surface.addTo(this._map);
+        this._rebuildSprayHeat(slot);
+    };
+
+    LayerManager.prototype._rebuildSprayHeat = function(slot) {
+        if (!slot.sprayHeat) return;
+        var surface = slot.sprayHeat;
+        if (!slot.visible) {
+            if (this._map.hasLayer(surface)) this._map.removeLayer(surface);
+            return;
+        }
+        if (!this._map.hasLayer(surface)) surface.addTo(this._map);
+        surface.setFilter(this._sids === null ? null : this._sids);
     };
 
     LayerManager.prototype._assignPaneZIndices = function() {
@@ -548,6 +602,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (slot.type === 'heat' && slot.visible) {
                 this._rebuildHeat(slot);
             }
+            if (slot.spray) this._rebuildSprayHeat(slot);
         }.bind(this));
     };
 
@@ -565,6 +620,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (this._map.hasLayer(entry.layer)) this._map.removeLayer(entry.layer);
                 }
             }.bind(this));
+            if (slot.spray) this._rebuildSprayHeat(slot);
         } else if (slot.type === 'heat') {
             this._rebuildHeat(slot);
         } else if (slot.type === 'reference') {
@@ -934,7 +990,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (slot.type === 'features') {
             // Geometry type icon (colored)
-            var geomIcons = { 'Point': 'fa-circle', 'LineString': 'fa-route', 'Polygon': 'fa-draw-polygon' };
+            var geomIcons = { 'Point': 'fa-circle', 'LineString': 'fa-route', 'Polygon': 'fa-draw-polygon', 'MultiPoint': 'fa-spray-can' };
             var geomIcon = document.createElement('i');
             geomIcon.className = 'fas ' + (geomIcons[slot.geomType] || 'fa-circle');
             geomIcon.className += ' geo-legend-geom-icon';
@@ -949,7 +1005,8 @@ document.addEventListener('DOMContentLoaded', function() {
             label.addEventListener('click', function() {
                 var bounds = L.latLngBounds([]);
                 slot.features.forEach(function(entry) {
-                    if (typeof entry.layer.getLatLng === 'function') bounds.extend(entry.layer.getLatLng());
+                    if (entry.layer._sprayDots) entry.layer._sprayDots.forEach(function(d) { bounds.extend([d[0], d[1]]); });
+                    else if (typeof entry.layer.getLatLng === 'function') bounds.extend(entry.layer.getLatLng());
                     else if (typeof entry.layer.getBounds === 'function') bounds.extend(entry.layer.getBounds());
                 });
                 if (bounds.isValid()) map.fitBounds(bounds.pad(0.02));

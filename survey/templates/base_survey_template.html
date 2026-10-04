@@ -47,6 +47,7 @@ locale.{% endcomment %}
    <script type="text/javascript" src="{% static 'js/marker_icon.js' %}"></script>
    <script type="text/javascript" src="{% static 'js/L.Icon.FontAwesome.js' %}"></script>
    <!--end fa markers -->
+   <script type="text/javascript" src="{% static 'js/spray_layer.js' %}"></script>
 
    <!-- HTMX -->
    <script src="https://unpkg.com/htmx.org@1.9.10" crossorigin="anonymous"></script>
@@ -124,8 +125,21 @@ locale.{% endcomment %}
 </div>
 
 <div id="drawbar" style="display: none;">
+    {% comment %}Spray area paint mode (spec spraycan-question): tool switch + Clear, shown only while painting{% endcomment %}
+    <div id="spray-tools" style="display: none;" role="group">
+        <button type="button" class="spray-tool is-active" data-tool="spray"><i class="fas fa-spray-can"></i> {% trans "Spray" %}</button>
+        <button type="button" class="spray-tool" data-tool="erase"><i class="fas fa-eraser"></i> {% trans "Erase" %}</button>
+        <button type="button" class="spray-tool" data-tool="move"><i class="fas fa-arrows-alt"></i> {% trans "Move map" %}</button>
+        <button type="button" id="spray-clear"><i class="far fa-trash-alt"></i> {% trans "Clear" %}</button>
+        <span class="spray-size-group" role="group" aria-label="{% trans 'Brush size' %}">
+            <button type="button" class="spray-size" data-size="small" title="{% trans 'Small brush' %}"><span class="spray-size-dot" style="width:6px;height:6px;"></span></button>
+            <button type="button" class="spray-size" data-size="medium" title="{% trans 'Medium brush' %}"><span class="spray-size-dot" style="width:11px;height:11px;"></span></button>
+            <button type="button" class="spray-size" data-size="large" title="{% trans 'Large brush' %}"><span class="spray-size-dot" style="width:17px;height:17px;"></span></button>
+        </span>
+    </div>
     <button type="button" id="draw-cancel"><i class="fas fa-times"></i> {% trans "Cancel" %}</button>
     <button type="button" id="draw-finish" disabled><i class="fas fa-check"></i> {% trans "Finish drawing" %}</button>
+    <div id="spray-hint" style="display: none;"></div>
 </div>
 
 <div id="crosshair-overlay" style="display: none;">
@@ -384,16 +398,27 @@ locale.{% endcomment %}
         } else if (mode === 'edit') {
             $cancel.hide();
             $finish.prop('disabled', false).html('<i class="fas fa-check"></i> ' + i18n.finishEditing);
+        } else if (mode === 'spray') {
+            $cancel.show();
+            $finish.prop('disabled', true).html('<i class="fas fa-check"></i> ' + i18n.finishSpraying);
         }
+        $('#spray-tools').toggle(mode === 'spray');
         toggleDrawbar(true);
     }
 
     function hideDrawbar() {
         toggleDrawbar(false);
+        $('#spray-tools').hide();
+        $('#spray-hint').hide();
         drawMinVertices = 0;
     }
 
     function startEditMode(layer){
+        if (layer instanceof L.SprayLayer) {
+            // A cloud is edited by painting, never by Leaflet.draw vertices.
+            startPaintMode(layer.feature.properties.question_id, layer);
+            return;
+        }
         toggleInfo(false);
         if (currentEditLayer) { currentEditLayer.editing.disable(); }
         layer.editing.enable();
@@ -473,6 +498,259 @@ locale.{% endcomment %}
         refreshGeoQuestionUI();
     });
 
+    // --- Spray paint mode (spec spraycan-question) ---
+    // The respondent paints a cloud of dots with a brush. Pointer events with
+    // capture (not Leaflet's handlers) give a continuous stroke on phones; the
+    // map's own dragging/zoom are switched off while Spray or Erase is active
+    // and back on under Move map. One L.SprayLayer is the whole answer.
+    var spray = {
+        active: false, q: null, layer: null, isEdit: false, originalDots: null,
+        tool: 'spray', brushPx: 40, maxDots: 0, down: false, lastPt: null,
+        timer: null, pointerId: null, ring: null, capped: false, sizes: {}
+    };
+    // Paint-style airbrush: many fine, nearly opaque grains per tick, so
+    // density reads as grain rather than as a soft blob.
+    var SPRAY_DOTS_PER_TICK = 10, SPRAY_DWELL_MS = 60;
+
+    function _sprayContainer() { return map.getContainer(); }
+
+    function startPaintMode(qid, editLayer) {
+        if (spray.active) { endPaintMode(false); }
+        if (currentDrawFeature) { currentDrawFeature.disable(); currentDrawFeature = null; }
+        var $btn = $('button.drawbutton[name="' + qid + '"]');
+        spray.active = true;
+        spray.q = qid;
+        spray.brushPx = parseInt($btn.attr('data-brush-px'), 10) || 40;
+        spray.maxDots = parseInt($btn.attr('data-max-dots'), 10) || 0;   // 0 = unlimited
+        // The creator's size is the default; the respondent may switch (S/M/L).
+        try { spray.sizes = JSON.parse($btn.attr('data-brush-sizes') || '{}'); } catch (e) { spray.sizes = {}; }
+        _spraySyncSizeButtons();
+        spray.capped = false;
+        spray.isEdit = !!editLayer;
+        if (editLayer) {
+            spray.layer = editLayer;
+            spray.originalDots = editLayer.getDots();
+            editLayer.closePopup();
+        } else {
+            spray.layer = L.sprayLayer([], { color: $btn.attr('data-color') || '#000000', interactive: true });
+            spray.layer.addTo(map);
+        }
+        map._sprayPaintActive = true;
+        currentQ = qid;
+        toggleInfo(false);
+        showDrawbar('spray');
+        _sprayShowHint(isCoarsePointer() ? i18n.tapSprayHint : i18n.sprayHint);
+        _sprayRingCreate();
+        _spraySetTool('spray');
+        var el = _sprayContainer();
+        el.addEventListener('pointerdown', _sprayDown);
+        el.addEventListener('pointermove', _sprayMove);
+        el.addEventListener('pointerup', _sprayUp);
+        el.addEventListener('pointercancel', _sprayUp);
+        el.addEventListener('pointerleave', _sprayLeave);
+        _spraySyncFinish();
+        refreshGeoQuestionUI();
+    }
+
+    function endPaintMode(finish) {
+        if (!spray.active) { return; }
+        var el = _sprayContainer();
+        el.removeEventListener('pointerdown', _sprayDown);
+        el.removeEventListener('pointermove', _sprayMove);
+        el.removeEventListener('pointerup', _sprayUp);
+        el.removeEventListener('pointercancel', _sprayUp);
+        el.removeEventListener('pointerleave', _sprayLeave);
+        _sprayStopStroke();
+        _sprayMapInteraction(true);
+        _sprayRingRemove();
+        el.classList.remove('spray-mode', 'spray-mode--erase', 'spray-mode--move');
+        map._sprayPaintActive = false;
+        hideDrawbar();
+        var layer = spray.layer, qid = spray.q, isEdit = spray.isEdit;
+        spray.active = false;
+        spray.layer = null;
+        if (finish && layer.count() > 0) {
+            if (isEdit) {
+                toggleInfo(true);
+                currentQ = null;
+                refreshGeoQuestionUI();
+            } else {
+                map.removeLayer(layer);
+                map.fire('draw:created', { layerType: 'spray', layer: layer });
+            }
+        } else {
+            if (isEdit) {
+                layer.setDots(spray.originalDots || []);
+            } else {
+                map.removeLayer(layer);
+            }
+            toggleInfo(true);
+            currentQ = null;
+            refreshGeoQuestionUI();
+        }
+        spray.originalDots = null;
+        spray.isEdit = false;
+        spray.q = null;
+    }
+
+    function _spraySetTool(tool) {
+        spray.tool = tool;
+        $('#spray-tools .spray-tool').each(function () {
+            $(this).toggleClass('is-active', $(this).attr('data-tool') === tool);
+        });
+        var el = _sprayContainer();
+        el.classList.add('spray-mode');
+        el.classList.toggle('spray-mode--erase', tool === 'erase');
+        el.classList.toggle('spray-mode--move', tool === 'move');
+        _sprayMapInteraction(tool === 'move');
+        // The ring appears on the first pointer move (_sprayRingMove); forcing it
+        // visible here would park it in the map's top-left corner.
+        if (spray.ring && tool === 'move') { spray.ring.style.display = 'none'; }
+    }
+
+    // Spray/Erase own the pointer: no panning, no pinch, no page scroll.
+    function _sprayMapInteraction(enable) {
+        var handlers = ['dragging', 'touchZoom', 'doubleClickZoom', 'boxZoom'];
+        for (var i = 0; i < handlers.length; i++) {
+            var h = map[handlers[i]];
+            if (!h) { continue; }
+            if (enable) { h.enable(); } else { h.disable(); }
+        }
+        _sprayContainer().style.touchAction = enable ? '' : 'none';
+    }
+
+    function _sprayRingCreate() {
+        _sprayRingRemove();
+        var ring = document.createElement('div');
+        ring.className = 'spray-brush-ring';
+        var d = spray.brushPx * 2;
+        ring.style.width = d + 'px';
+        ring.style.height = d + 'px';
+        ring.style.borderColor = spray.layer.options.color;
+        ring.style.display = 'none';
+        _sprayContainer().appendChild(ring);
+        spray.ring = ring;
+    }
+    function _sprayRingRemove() {
+        if (spray.ring && spray.ring.parentNode) { spray.ring.parentNode.removeChild(spray.ring); }
+        spray.ring = null;
+    }
+    function _sprayRingMove(pt) {
+        if (!spray.ring || spray.tool === 'move') { return; }
+        spray.ring.style.display = '';
+        spray.ring.style.transform = 'translate(' + (pt.x - spray.brushPx) + 'px,' + (pt.y - spray.brushPx) + 'px)';
+    }
+
+    function _sprayShowHint(text) {
+        $('#spray-hint').text(text).show();
+    }
+
+    function _spraySyncFinish() {
+        $('#draw-finish').prop('disabled', !spray.layer || spray.layer.count() === 0);
+    }
+
+    function _sprayPoint(ev) {
+        return map.mouseEventToContainerPoint(ev);
+    }
+
+    function _sprayApply(pt) {
+        if (spray.tool === 'spray') {
+            var room = SPRAY_DOTS_PER_TICK;
+            if (spray.maxDots > 0) {
+                room = Math.min(room, spray.maxDots - spray.layer.count());
+                if (room <= 0) {
+                    if (!spray.capped) { spray.capped = true; _sprayShowHint(i18n.brushEmpty); }
+                    return;
+                }
+            }
+            var pts = L.SprayLayer.scatter(pt, spray.brushPx, room);
+            var latlngs = [];
+            for (var i = 0; i < pts.length; i++) { latlngs.push(map.containerPointToLatLng(pts[i])); }
+            spray.layer.addDots(latlngs);
+        } else if (spray.tool === 'erase') {
+            if (spray.layer.eraseNear(pt, spray.brushPx) && spray.capped) {
+                spray.capped = false;
+                _sprayShowHint(isCoarsePointer() ? i18n.tapSprayHint : i18n.sprayHint);
+            }
+        }
+        _spraySyncFinish();
+    }
+
+    function _sprayDown(ev) {
+        if (!spray.active || spray.tool === 'move') { return; }
+        if (ev.button !== undefined && ev.button !== 0) { return; }
+        if (spray.down) { return; }   // a second finger does not start a second stroke
+        ev.preventDefault();
+        spray.down = true;
+        spray.pointerId = ev.pointerId;
+        try { _sprayContainer().setPointerCapture(ev.pointerId); } catch (e) {}
+        var pt = _sprayPoint(ev);
+        spray.lastPt = pt;
+        _sprayRingMove(pt);
+        _sprayApply(pt);
+        // Dwelling adds paint: density is the respondent's confidence.
+        spray.timer = setInterval(function () { if (spray.lastPt) { _sprayApply(spray.lastPt); } }, SPRAY_DWELL_MS);
+    }
+    function _sprayMove(ev) {
+        if (!spray.active || spray.tool === 'move') { return; }
+        var pt = _sprayPoint(ev);
+        _sprayRingMove(pt);
+        if (!spray.down || ev.pointerId !== spray.pointerId) { return; }
+        ev.preventDefault();
+        spray.lastPt = pt;
+        _sprayApply(pt);
+    }
+    function _sprayUp(ev) {
+        if (!spray.down || (ev.pointerId !== undefined && ev.pointerId !== spray.pointerId)) { return; }
+        _sprayStopStroke();
+    }
+    function _sprayLeave() {
+        if (spray.ring && !spray.down) { spray.ring.style.display = 'none'; }
+    }
+    function _sprayStopStroke() {
+        if (spray.timer) { clearInterval(spray.timer); spray.timer = null; }
+        if (spray.down && spray.pointerId !== null) {
+            try { _sprayContainer().releasePointerCapture(spray.pointerId); } catch (e) {}
+        }
+        spray.down = false;
+        spray.pointerId = null;
+        spray.lastPt = null;
+    }
+
+    function isCoarsePointer() {
+        return window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+    }
+
+    $(document).on('click', '#spray-tools .spray-tool', function () {
+        if (!spray.active) { return; }
+        _sprayStopStroke();
+        _spraySetTool($(this).attr('data-tool'));
+    });
+    function _spraySyncSizeButtons() {
+        $('#spray-tools .spray-size').each(function () {
+            var px = spray.sizes[$(this).attr('data-size')];
+            $(this).toggleClass('is-active', px === spray.brushPx);
+        });
+    }
+    $(document).on('click', '#spray-tools .spray-size', function () {
+        if (!spray.active) { return; }
+        var px = spray.sizes[$(this).attr('data-size')];
+        if (!px) { return; }
+        _sprayStopStroke();
+        spray.brushPx = px;
+        _spraySyncSizeButtons();
+        _sprayRingCreate();
+        if (spray.tool === 'move' && spray.ring) { spray.ring.style.display = 'none'; }
+    });
+    $(document).on('click', '#spray-clear', function () {
+        if (!spray.active) { return; }
+        _sprayStopStroke();
+        spray.layer.clear();
+        spray.capped = false;
+        _sprayShowHint(isCoarsePointer() ? i18n.tapSprayHint : i18n.sprayHint);
+        _spraySyncFinish();
+    });
+
     // --- Helpers ---
     function _buildPopupHtml(formId, sqHtml) {
         return '<form action="" onsubmit="return false;" id="' + formId + '">' + sqHtml
@@ -547,6 +825,7 @@ locale.{% endcomment %}
             var n = layers.length;
             var min = parseInt($btn.attr('data-min-features'), 10) || 0;
             var max = parseInt($btn.attr('data-max-features'), 10) || 0;   // 0 = unlimited
+            if ($btn.hasClass('drawspray')) { max = 1; }   // one cloud per respondent
             var single = max === 1;
             var atMax = max > 0 && n >= max;
             var origSubtitle = $btn.attr('data-orig-subtitle') || '';
@@ -690,7 +969,9 @@ locale.{% endcomment %}
         })
 
         $popup.find("button.layer-edit").click(function(){
-            if (tempLayer instanceof L.Marker) {
+            if (tempLayer instanceof L.SprayLayer) {
+                startPaintMode(tempLayer.feature.properties.question_id, tempLayer);
+            } else if (tempLayer instanceof L.Marker) {
                 var questionId = tempLayer.feature.properties.question_id;
                 var btn = $('button.drawbutton[name="' + questionId + '"]');
                 var color = btn.attr('data-color') || '#000000';
@@ -761,6 +1042,10 @@ locale.{% endcomment %}
                 } else if (geomType === 'Polygon') {
                     var latlngs = geoFeature.geometry.coordinates[0].map(function(c) { return [c[1], c[0]]; });
                     layer = L.polygon(latlngs, {color: attrs.color});
+                } else if (geomType === 'MultiPoint') {
+                    // Spray cloud (spec spraycan-question)
+                    var dots = geoFeature.geometry.coordinates.map(function(c) { return [c[1], c[0]]; });
+                    layer = L.sprayLayer(dots, {color: attrs.color});
                 }
 
                 if (layer) {
@@ -909,7 +1194,7 @@ locale.{% endcomment %}
                 }
             });
 
-            // 2) required geo questions (point / line / polygon draw buttons)
+            // 2) required geo questions (point / line / polygon / spray draw buttons)
             $('.geo-inp[data-required="true"]').each(function() {
                 if (this.disabled) { return; } // hidden by a visibility rule
                 if (!$(this).val()) {
@@ -952,7 +1237,12 @@ locale.{% endcomment %}
     });
 
     // --- Draw button handlers (delegated for HTMX swaps) ---
+    $(document).on('click', '.drawspray', function() {
+        startPaintMode($(this).attr('name'), null);
+    });
+
     $(document).on('click', '.drawpolygon', function() {
+        if (spray.active) { endPaintMode(false); }
         if (currentDrawFeature) { currentDrawFeature.disable(); currentDrawFeature = null; }
         currentDrawFeature = new L.Draw.Polygon(map);
         currentDrawFeature.setOptions({ shapeOptions: { color: $(this).attr('data-color') } });
@@ -965,6 +1255,7 @@ locale.{% endcomment %}
     });
 
     $(document).on('click', '.drawline', function() {
+        if (spray.active) { endPaintMode(false); }
         if (currentDrawFeature) { currentDrawFeature.disable(); currentDrawFeature = null; }
         currentDrawFeature = new L.Draw.Polyline(map);
         currentDrawFeature.setOptions({ shapeOptions: { color: $(this).attr('data-color') } });
@@ -977,6 +1268,7 @@ locale.{% endcomment %}
     });
 
     $(document).on('click', '.drawpoint', function() {
+        if (spray.active) { endPaintMode(false); }
         var color = $(this).attr('data-color');
         var icon = $(this).attr('data-icon');
         toggleInfo(false);
@@ -988,6 +1280,7 @@ locale.{% endcomment %}
 
     // --- Draw action bar buttons ---
     $('#draw-cancel').click(function() {
+        if (spray.active) { endPaintMode(false); return; }
         if (currentDrawFeature) { currentDrawFeature.disable(); currentDrawFeature = null; }
         hideDrawbar();
         toggleInfo(true);
@@ -996,6 +1289,7 @@ locale.{% endcomment %}
     });
 
     $('#draw-finish').click(function() {
+        if (spray.active) { endPaintMode(true); return; }
         if (currentEditLayer) {
             endEditMode(currentEditLayer);
         } else if (currentDrawFeature && currentDrawFeature.completeShape) {
@@ -1059,6 +1353,7 @@ locale.{% endcomment %}
         }
 
         // 1. Clear map state from previous section
+        if (spray.active) { endPaintMode(false); }
         editableLayers.clearLayers();
         if (currentDrawFeature) { currentDrawFeature.disable(); currentDrawFeature = null; }
         if (currentEditLayer) { currentEditLayer.editing.disable(); currentEditLayer = null; }

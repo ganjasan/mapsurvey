@@ -224,13 +224,29 @@ latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
                 center: [0, 0], zoom: 2,
             }, function (map) {
                 if (geo && geo.features && geo.features.length) {
-                    var layer = L.geoJSON(geo, {
-                        pointToLayer: function (f, latlng) {
-                            return L.circleMarker(latlng, { radius: 4, color: '#4f46e5', weight: 1.5, fillOpacity: 0.7 });
-                        },
-                        style: { color: '#4f46e5', weight: 2 },
-                    }).addTo(map);
-                    try { map.fitBounds(layer.getBounds().pad(0.06)); } catch (e) {}
+                    // Spray clouds (MultiPoint) become the same agreement surface
+                    // the Map pane draws; everything else stays markers and shapes.
+                    var bounds = L.latLngBounds([]);
+                    var clouds = L.SprayAgreementLayer ? L.SprayAgreementLayer.cloudsFromFeatures(geo.features) : [];
+                    var rest = { type: 'FeatureCollection', features: geo.features.filter(function (f) {
+                        return !(f.geometry && f.geometry.type === 'MultiPoint');
+                    }) };
+                    if (clouds.length) {
+                        var paint = (geo.features.find(function (f) { return f.geometry && f.geometry.type === 'MultiPoint' && f.properties && f.properties.color; }) || { properties: {} }).properties.color;
+                        if (!/^#[0-9a-f]{6}$/i.test(paint || '') || paint.toLowerCase() === '#000000') paint = '#4f46e5';
+                        var surface = L.sprayAgreementLayer(clouds, { color: paint }).addTo(map);
+                        bounds.extend(surface.getBounds());
+                    }
+                    if (rest.features.length) {
+                        var layer = L.geoJSON(rest, {
+                            pointToLayer: function (f, latlng) {
+                                return L.circleMarker(latlng, { radius: 4, color: '#4f46e5', weight: 1.5, fillOpacity: 0.7 });
+                            },
+                            style: { color: '#4f46e5', weight: 2 },
+                        }).addTo(map);
+                        bounds.extend(layer.getBounds());
+                    }
+                    try { if (bounds.isValid()) map.fitBounds(bounds.pad(0.06)); } catch (e) {}
                 }
             });
             /* Streets from Mapbox like every other map. This thumbnail never

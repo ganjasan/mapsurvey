@@ -34,7 +34,7 @@ from .layers import (
     MAX_LAYER_BYTES, MAX_LAYERS_PER_SURVEY,
 )
 from . import product_events as pe
-from .question_types import CHOICE_TYPES
+from .question_types import CHOICE_TYPES, MULTI_FEATURE_TYPES, SHARED_MAP_SOURCE_TYPES
 from .cloning import clone_question, clone_section
 from .html_sanitize import coerce_creator_html
 from .translation_gaps import survey_translation_gaps
@@ -737,7 +737,7 @@ def editor_survey_thanks_image(request, survey_uuid):
 def _source_layers_of(survey, question):
     """Names of the `question` layers reading this geo question — the form
     says so, since deleting the question is refused while they exist."""
-    if not settings.MAP_REFERENCE_LAYERS or question.input_type not in ('point', 'line', 'polygon') \
+    if not settings.MAP_REFERENCE_LAYERS or question.input_type not in SHARED_MAP_SOURCE_TYPES \
             or question.parent_question_id_id is not None:
         return []
     from .layers import question_layers_for
@@ -1552,11 +1552,21 @@ def editor_question_edit(request, survey_uuid, question_id):
                 if val:
                     try: vs['area_outlier_factor'] = float(val)
                     except ValueError: pass
+            elif q.input_type == 'spraycan':
+                # Optional cap on dots per respondent; empty = unlimited.
+                val = request.POST.get('vs_max_dots', '').strip()
+                if val:
+                    try:
+                        parsed = int(val)
+                        if parsed > 0:
+                            vs['max_dots'] = parsed
+                    except ValueError:
+                        pass
             elif q.input_type in ('photo', 'audio', 'document'):
                 vs = _parse_file_validation_settings(request, q, vs)
             # Feature-count limits apply to every geo type (polygon keeps its
             # area factor above as well, hence a separate `if`, not `elif`)
-            if q.input_type in ('point', 'line', 'polygon'):
+            if q.input_type in MULTI_FEATURE_TYPES:
                 for key, floor in (('min_features', 0), ('max_features', 1)):
                     val = request.POST.get(f'vs_{key}', '').strip()
                     if val:
@@ -1754,6 +1764,7 @@ def editor_question_preview_live(request, survey_uuid, section_id):
         choices=choices if input_type != 'thumbs' else None,
         color=request.POST.get('color', '').strip() or '#000000',
         icon_class=request.POST.get('icon_class', '').strip(),
+        spray_brush=request.POST.get('spray_brush') if request.POST.get('spray_brush') in ('small', 'medium', 'large') else 'medium',
         display_style=display_style,
         required=False,
         layer=draft_layer,
@@ -1811,7 +1822,7 @@ def editor_question_delete(request, survey_uuid, question_id):
     # it goes with its source question (change layers-by-question).
     from .layers import question_layers_for
     source_layers = list(question_layers_for(survey, question.code)) \
-        if question.input_type in ('point', 'line', 'polygon') else []
+        if question.input_type in SHARED_MAP_SOURCE_TYPES else []
     # Only readers in THIS header count: a draft's structure is the draft's
     # to change, and the published version's own Objects question keeps its
     # own copy of the geo question until the draft is published.

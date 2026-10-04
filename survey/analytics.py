@@ -2,6 +2,7 @@ import json
 import statistics
 
 from django.db.models import Count, Avg, Exists, Min, Max, OuterRef, Q
+from survey.question_types import GEO_TYPES, geo_column
 from django.db.models.functions import TruncHour
 
 from django.utils import timezone
@@ -336,6 +337,7 @@ class SurveyAnalyticsService:
 
         geo_q = (
             Q(point__isnull=False) | Q(line__isnull=False) | Q(polygon__isnull=False)
+            | Q(multipoint__isnull=False)
         )
         geo_answers = Answer.objects.filter(
             survey_session__in=self.base_qs,
@@ -546,7 +548,7 @@ class SurveyAnalyticsService:
             Answer.objects
             .filter(
                 question__survey_section__survey_header_id__in=self.scope_ids,
-                question__input_type__in=['point', 'line', 'polygon'],
+                question__input_type__in=GEO_TYPES,
                 survey_session__is_deleted=False,
             )
             .select_related('question')
@@ -561,19 +563,26 @@ class SurveyAnalyticsService:
 
         features = []
         for a in geo_answers:
-            geom = a.point or a.line or a.polygon
+            geom = a.geometry
             if geom is None:
                 continue
             rep = rep_by_qid.get(a.question_id, a.question)
+            properties = {
+                'question': rep.name,
+                'type': rep.input_type,
+                'session_id': a.survey_session_id,
+                'attributes': attributes_by_parent.get(a.id, []),
+            }
+            if geom.geom_type == 'MultiPoint':
+                # Spray cloud (spec spraycan-density-views): the dot count, and the
+                # question's colour — the paint the respondent used — so every read
+                # surface shows the cloud in the same colour.
+                properties['dots'] = len(geom)
+                properties['color'] = rep.color
             features.append({
                 'type': 'Feature',
                 'geometry': json.loads(geom.geojson),
-                'properties': {
-                    'question': rep.name,
-                    'type': rep.input_type,
-                    'session_id': a.survey_session_id,
-                    'attributes': attributes_by_parent.get(a.id, []),
-                },
+                'properties': properties,
             })
 
         return {
@@ -679,7 +688,7 @@ class SurveyAnalyticsService:
 
     def _stats_geo(self, question):
         """Compute stats for point/line/polygon questions (lineage-wide)."""
-        geo_field = question.input_type
+        geo_field = geo_column(question.input_type)
         return {
             'type': 'geo',
             'total_answers': (
@@ -774,6 +783,7 @@ class SurveyAnalyticsService:
         'point': _stats_geo,
         'line': _stats_geo,
         'polygon': _stats_geo,
+        'spraycan': _stats_geo,
     }
 
     def get_question_stats(self, question):
@@ -859,7 +869,7 @@ class SurveyAnalyticsService:
 
         stats = [
             self.get_question_stats(q) for q in questions
-            if q.input_type not in ('point', 'line', 'polygon')
+            if q.input_type not in GEO_TYPES
         ]
 
         # Archived lineages: represented by their newest question object.
@@ -871,7 +881,7 @@ class SurveyAnalyticsService:
             rep = entry['questions'][0]
             if rep.parent_question_id is not None:
                 continue
-            if rep.input_type in ('point', 'line', 'polygon', 'html', 'image'):
+            if rep.input_type in GEO_TYPES + ('html', 'image'):
                 continue
             stat = self.get_question_stats(rep)
             if stat.get('total_answers'):
@@ -990,13 +1000,13 @@ class SurveyAnalyticsService:
             .order_by('question__survey_section__id', 'question__order_number', 'id')
         )
 
-        geo_ids = [a.id for a in answers if a.question.input_type in ('point', 'line', 'polygon')]
+        geo_ids = [a.id for a in answers if a.question.input_type in GEO_TYPES]
         attributes_by_parent = self._subanswers_by_parent(geo_ids) if geo_ids else {}
         # One geo Answer is one drawn object; several objects for the same
         # question are sibling rows, numbered so their attributes read apart.
         geo_totals = {}
         for a in answers:
-            if a.id in geo_ids and (a.point or a.line or a.polygon):
+            if a.id in geo_ids and a.geometry is not None:
                 geo_totals[a.question_id] = geo_totals.get(a.question_id, 0) + 1
         geo_object_counts = {}
 
@@ -1013,15 +1023,17 @@ class SurveyAnalyticsService:
                 value = str(a.numeric) if a.numeric is not None else '\u2014'
             elif q.input_type in ('text', 'text_line', 'datetime'):
                 value = a.text or '\u2014'
-            elif q.input_type in ('point', 'line', 'polygon'):
-                geom = a.point or a.line or a.polygon
+            elif q.input_type in GEO_TYPES:
+                geom = a.geometry
                 if geom:
                     attributes = attributes_by_parent.get(a.id, [])
                     geo_object_counts[q.id] = geo_object_counts.get(q.id, 0) + 1
                     # The label disambiguates siblings ("point feature 2"); the
                     # row itself shows coordinates/vertices like the attribute
                     # table does, so the two surfaces agree on one answer.
-                    if geo_totals.get(q.id, 0) > 1:
+                    if q.input_type == 'spraycan':
+                        label = 'spray cloud'
+                    elif geo_totals.get(q.id, 0) > 1:
                         label = '%s feature %d' % (q.input_type, geo_object_counts[q.id])
                     else:
                         label = q.input_type + ' feature'
@@ -1445,6 +1457,12 @@ class SurveyAnalyticsService:
                 return '{} vertices'.format(answer.polygon.exterior_ring.num_points - 1)
             except Exception:
                 return 'polygon'
+        elif q.input_type == 'spraycan' and answer.multipoint:
+            try:
+                from survey import spray
+                return spray.describe(answer.multipoint)
+            except Exception:
+                return 'spray'
         elif q.input_type in ('photo', 'audio', 'document') and answer.upload_id:
             # The display string is the human filename; the signed link rides
             # separately in file_links so the template never builds markup
@@ -1667,7 +1685,7 @@ class SurveyAnalyticsService:
             ]
             geo_keys = [
                 c['key'] for c in question_cols
-                if c['input_type'] in ('point', 'line', 'polygon')
+                if c['input_type'] in GEO_TYPES
             ]
             for row in rows:
                 sid = row['session_id']
