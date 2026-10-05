@@ -150,6 +150,7 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
               </select>
             </div>
             {% elif selected_block.block_type == 'map' %}
+            {% if not selected_is_spray %}
             <div class="pr-field">
               <label>{% trans "Visualization" %}</label>
               <select class="form-control" name="viz">
@@ -158,6 +159,7 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
                 {% endfor %}
               </select>
             </div>
+            {% endif %}
             <div class="pr-field">
               <label>{% trans "Basemap" %}</label>
               <select class="form-control" name="basemap">
@@ -166,6 +168,9 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
                 {% endfor %}
               </select>
             </div>
+            {% if selected_is_spray %}
+            <div class="pr-help"><i class="fas fa-spray-can"></i> {% trans "Spray clouds are published as a density grid: each cell shows how many respondents painted there, and cells below the anonymity threshold are left out. No individual paint is ever shown." %}</div>
+            {% else %}
             <div class="pr-field">
               <label>{% trans "Point popup fields" %}</label>
               <div class="pr-help" style="margin-top:0;margin-bottom:.4rem;">{% trans "Attributes shown when a point is clicked — the sub-questions this respondent answered" %} <em>{% trans "for that point" %}</em>{% trans ". Empty = anonymous geometry only. Free-text answers can't be shown." %}</div>
@@ -179,6 +184,7 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
               <div class="pr-help" style="margin-top:0;"><i class="fas fa-info-circle"></i> {% trans "This map question has no sub-questions, so points are shown as anonymous geometry." %}</div>
               {% endfor %}
             </div>
+            {% endif %}
             {% elif selected_block.block_type == 'text' %}
             <div class="pr-field">
               <label>{% trans "Text" %}</label>

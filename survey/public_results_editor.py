@@ -142,6 +142,9 @@ def public_results_config(request, survey_uuid):
             ('donut', 'Donut'), ('table', 'Table'),
         ],
         'map_viz_options': [('auto', 'Markers'), ('heatmap', 'Heatmap')],
+        # A spray cloud block has one rendering (density grid) and no popups.
+        'selected_is_spray': bool(selected_block and selected_block.question_id
+                                  and selected_block.question.input_type == 'spraycan'),
         'basemap_choices': BASEMAP_CHOICES,
     }
     from django.shortcuts import render

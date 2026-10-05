@@ -226,6 +226,7 @@ filter and the sort order move into the bottom sheet.
         {% if col.input_type == 'point' %}<i class="fas fa-map-marker-alt" style="color:#1E88E5;width:16px;"></i>
         {% elif col.input_type == 'line' %}<i class="fas fa-route" style="color:#43A047;width:16px;"></i>
         {% elif col.input_type == 'polygon' %}<i class="fas fa-draw-polygon" style="color:#8E24AA;width:16px;"></i>
+        {% elif col.input_type == 'spraycan' %}<i class="fas fa-spray-can" style="color:#D81B60;width:16px;"></i>
         {% elif col.input_type == 'number' or col.input_type == 'range' %}<i class="fas fa-hashtag" style="color:#FB8C00;width:16px;"></i>
         {% elif col.input_type == 'choice' or col.input_type == 'multichoice' or col.input_type == 'rating' %}<i class="fas fa-list" style="color:#00897B;width:16px;"></i>
         {% elif col.input_type == 'datetime' %}<i class="fas fa-clock" style="color:#6b7280;width:16px;"></i>
@@ -255,6 +256,7 @@ filter and the sort order move into the bottom sheet.
                     {% if col.input_type == 'point' %}<i class="fas fa-map-marker-alt" style="color:#1E88E5;"></i>
                     {% elif col.input_type == 'line' %}<i class="fas fa-route" style="color:#43A047;"></i>
                     {% elif col.input_type == 'polygon' %}<i class="fas fa-draw-polygon" style="color:#8E24AA;"></i>
+                    {% elif col.input_type == 'spraycan' %}<i class="fas fa-spray-can" style="color:#D81B60;"></i>
                     {% elif col.input_type == 'number' or col.input_type == 'range' %}<i class="fas fa-hashtag" style="color:#FB8C00;"></i>
                     {% elif col.input_type == 'choice' or col.input_type == 'multichoice' or col.input_type == 'rating' %}<i class="fas fa-list" style="color:#00897B;"></i>
                     {% elif col.input_type == 'datetime' %}<i class="fas fa-clock" style="color:#6b7280;"></i>
@@ -563,7 +565,7 @@ var _filterCol = null;
 function _getFilterType(colKey, inputType) {
     if (colKey === 'start_datetime') return 'date_range';
     if (inputType === 'number' || inputType === 'range') return 'range';
-    if (inputType === 'text' || inputType === 'text_line' || inputType === 'point' || inputType === 'line' || inputType === 'polygon') return 'text';
+    if (inputType === 'text' || inputType === 'text_line' || inputType === 'point' || inputType === 'line' || inputType === 'polygon' || inputType === 'spraycan') return 'text';
     // Default: values (choice, status, language, etc.)
     return 'values';
 }

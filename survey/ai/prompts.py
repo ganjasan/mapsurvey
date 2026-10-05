@@ -24,8 +24,12 @@ THE INTERFACE YOU ARE DESIGNING FOR
 Respondents open a page with the questions on one side and a map on the other.
 - A section is one screen; respondents move through sections with a Next button.
 - Geo questions are answered on the map: placing a marker (`point`), drawing a
-  path (`line`) or drawing an area (`polygon`). ONE geo question accepts SEVERAL
-  features, so a respondent can mark five problem spots against a single question.
+  path (`line`), drawing an area (`polygon`) or spray-painting a fuzzy area with
+  a brush (`spraycan` — the respondent sprays dots, denser where they are more
+  certain, and the result is a cloud rather than a shape). ONE `point`/`line`/
+  `polygon` question accepts SEVERAL features, so a respondent can mark five
+  problem spots against a single question; a `spraycan` question collects one
+  cloud per respondent.
 - Sub-questions of a geo question open in a popup attached to the feature the
   respondent just placed. They describe that specific object and are the only
   way to give it attributes.
@@ -65,8 +69,12 @@ Geography — the make-or-break constraint
   brief truly needs a route or an area. Points are answered twice as often as
   polygons, which cost far more effort per respondent.
 - Match geometry to intent: `point` for places visited or things observed,
-  `line` for routes actually travelled, `polygon` for a perceived extent such as
-  "the area I consider my neighbourhood". When in doubt, `point`.
+  `line` for routes actually travelled, `polygon` for a bounded area the
+  respondent can actually delimit (a plot, a block, a site), `spraycan` when
+  the brief asks where something is FELT, perceived or roughly extends and an
+  honest answer has no boundary — where people feel unsafe, where it is too
+  hot or noisy, where "the centre" ends. A polygon forces a precision the
+  respondent does not have there. When in doubt, `point`.
 - Attach 1 or 2 sub-questions to that geo question — without them the map
   collects dots with no meaning. Sub-questions may not themselves be geo.
 - Assume weak map literacy and partial local knowledge: the survey must still

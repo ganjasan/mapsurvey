@@ -16,6 +16,7 @@ from django.utils.text import slugify
 from django.contrib.auth.hashers import make_password, check_password as django_check_password
 import random
 import re as re_module
+from survey.question_types import SPRAY_BRUSH_CHOICES, SPRAY_BRUSH_DEFAULT
 
 
 ORG_ROLE_CHOICES = (
@@ -118,6 +119,7 @@ INPUT_TYPE_CHOICES = (
     ("point", _("Geo Point")),
     ("line", _("Geo Line")),
     ("polygon", _("Geo Polygon")),
+    ("spraycan", _("Spray area")),
     ("image", _("Image")),
     ("text_line", _("Single Line Text")),
     ("html", _("HTML")),
@@ -529,7 +531,8 @@ class SurveyHeader(models.Model):
 
     def geo_questions(self):
         if not hasattr(self, "__gqcache"):
-            self.__gqcache = Question.objects.filter(Q(survey_section__in=SurveySection.objects.filter(survey_header=self)) & Q(input_type__in=['point','line','polygon']))
+            from survey.question_types import GEO_TYPES
+            self.__gqcache = Question.objects.filter(Q(survey_section__in=SurveySection.objects.filter(survey_header=self)) & Q(input_type__in=GEO_TYPES))
         return self.__gqcache
 
     def sessions(self):
@@ -913,6 +916,10 @@ class Question(models.Model):
     validation_settings = models.JSONField(default=dict, blank=True, help_text=_('Per-question validation: {min_value, max_value, outlier_sigma, min_length, area_outlier_factor}'))
     color = models.CharField(verbose_name=_(u'Color'), max_length=7, help_text=_(u'HEX color, as #RRGGBB'), default="#000000")
     icon_class = models.CharField(default="", max_length=80, help_text=_(u'Must be Font-Awesome class'), blank=True, null=True)
+    # `spraycan` only: brush radius in screen pixels, by size name
+    # (question_types.SPRAY_BRUSH_PX). A model field rather than a key of
+    # `validation_settings` because that JSON does not ride the survey ZIP.
+    spray_brush = models.CharField(max_length=6, choices=SPRAY_BRUSH_CHOICES, default=SPRAY_BRUSH_DEFAULT, help_text=_('`spraycan` only: brush size the respondent paints with.'))
     image = models.ImageField(upload_to ='images/', null=True, blank=True)
     display_style = models.CharField(max_length=20, choices=DISPLAY_STYLE_CHOICES, default="default", help_text=_('Rendering style: rating styles ("default" inherits the survey-wide style) or "dropdown" for choice questions'))
     # Same shape and semantics as SurveySection.visibility_rule; a question is visible
@@ -1140,6 +1147,10 @@ class Answer(models.Model):
     point = geomodels.PointField(null=True, blank=True)
     line = geomodels.LineStringField(null=True, blank=True)
     polygon = geomodels.PolygonField(null=True, blank=True)
+    # `spraycan` answers: one cloud of sprayed dots per respondent, in spray
+    # order (spec spraycan-question). Column name differs from the input type —
+    # resolve through `question_types.geo_column()` / `Answer.geometry`.
+    multipoint = geomodels.MultiPointField(null=True, blank=True)
     # SET_NULL, not CASCADE: reclaiming an orphaned Upload must never take a
     # submitted answer's row down with it (and an attached upload is never
     # reclaimed — see reclaim_orphan_uploads).
@@ -1164,6 +1175,28 @@ class Answer(models.Model):
                 name='answer_unique_per_session_question_object',
             ),
         ]
+
+    @property
+    def geometry(self):
+        """The geometry this answer carries, whatever its question's geo type.
+
+        Resolves the column through `question_types.GEO_COLUMNS` (one
+        attribute read, no extra query when `question` is cached or deferred —
+        `question_id` alone is not enough, so callers on hot paths should
+        `select_related('question')`). Falls back to the first non-null geo
+        column, which is what the old `point or line or polygon` did.
+        """
+        from survey.question_types import GEO_COLUMNS, geo_column
+        column = geo_column(self.question.input_type)
+        if column is not None:
+            value = getattr(self, column)
+            if value is not None:
+                return value
+        for column in GEO_COLUMNS.values():
+            value = getattr(self, column)
+            if value is not None:
+                return value
+        return None
 
     def get_selected_choice_names(self, lang=None):
         codes = self.selected_choices or []
@@ -1787,7 +1820,7 @@ PUBLIC_RESULTS_BLOCK_TYPE_CHOICES = (
 # Current snapshot serialization format. Bumped when the per-block payload
 # shape changes so a stale snapshot can show a "re-freeze needed" notice
 # instead of rendering wrong/broken data.
-PUBLIC_RESULTS_SNAPSHOT_VERSION = 1
+PUBLIC_RESULTS_SNAPSHOT_VERSION = 2   # 2: spraycan map blocks publish a density grid
 
 
 class PublicResultsPage(models.Model):

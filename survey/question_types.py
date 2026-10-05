@@ -49,6 +49,9 @@ PICKER_TYPES = {
                     "hint": "Respondent draws a route or line"},
     "polygon":     {"group": "geo", "icon": "fa-draw-polygon",
                     "hint": "Respondent outlines an area"},
+    "spraycan":    {"group": "geo", "icon": "fa-spray-can",
+                    "label": "Spray area",
+                    "hint": "Respondent sprays a fuzzy area with a brush — density shows confidence"},
     "layer_objects": {"group": "geo", "icon": "fa-map-marked-alt",
                     "label": "Objects on the map",
                     "hint": "Puts a reference layer on this section's map; add sub-questions to ask about each object"},
@@ -66,7 +69,54 @@ PICKER_TYPES = {
 }
 
 # Types whose Color / Icon class settings reach the respondent (map markers).
-GEO_TYPES = ("point", "line", "polygon")
+# `spraycan` (change spraycan-question-type) is the fourth: the respondent
+# paints a cloud of dots instead of drawing a shape.
+GEO_TYPES = ("point", "line", "polygon", "spraycan")
+
+# The ONE map from a geo input type to the `Answer` column that holds its
+# geometry. Before `spraycan` the column was named after the type and a dozen
+# call sites relied on it (`getattr(answer, input_type)`,
+# `f"{input_type}__isnull"`, `a.point or a.line or a.polygon`); a spray cloud is
+# a MultiPoint in `Answer.multipoint`, so the convention is gone. Use
+# `geo_column()` / `Answer.geometry`, never a literal.
+GEO_COLUMNS = {
+    "point": "point",
+    "line": "line",
+    "polygon": "polygon",
+    "spraycan": "multipoint",
+}
+
+
+def geo_column(input_type):
+    """`Answer` field name holding the geometry of a geo question, or None."""
+    return GEO_COLUMNS.get(input_type)
+
+
+# Geo types a shared-map (`question`-sourced) reference layer may materialise
+# from. Spray clouds are deliberately NOT a source: a layer object per cloud
+# makes no sense and the sync keys objects per single-part geometry.
+SHARED_MAP_SOURCE_TYPES = ("point", "line", "polygon")
+
+# Geo types where a respondent may place several features (min/max_features
+# in validation_settings). A spray cloud is one feature per respondent.
+MULTI_FEATURE_TYPES = ("point", "line", "polygon")
+
+# `spraycan` brush: a screen-pixel radius chosen by the creator in three sizes.
+# Pixels, not metres, so zooming in paints finer (spec spraycan-question).
+SPRAY_BRUSH_CHOICES = (
+    ("small", "Small"),
+    ("medium", "Medium"),
+    ("large", "Large"),
+)
+SPRAY_BRUSH_DEFAULT = "medium"
+SPRAY_BRUSH_PX = {"small": 20, "medium": 40, "large": 70}
+
+# Dots per spray cloud: NO product limit by default (owner decision
+# 2026-10-04). A creator may set `validation_settings['max_dots']` on the
+# question; the widget then stops emitting at it and the section POST keeps the
+# first `max_dots`. SPRAY_HARD_CEILING is an abuse backstop for scripted POSTs
+# only — a human cannot reach it (ten minutes of continuous spraying).
+SPRAY_HARD_CEILING = 100000
 
 # Types that put objects on the map and therefore own sub-questions: the
 # respondent's own geometry (geo types) and the creator's layer objects. One

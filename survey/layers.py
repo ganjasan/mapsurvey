@@ -14,6 +14,8 @@ import re
 
 from django.utils.text import slugify
 
+from survey.question_types import SHARED_MAP_SOURCE_TYPES
+
 MAX_LAYER_BYTES = 10 * 1024 * 1024
 MAX_LAYER_FEATURES = 5000
 MAX_LAYERS_PER_SURVEY = 10
@@ -589,7 +591,8 @@ import logging
 
 _log = logging.getLogger(__name__)
 
-GEO_INPUT_TYPES = ('point', 'line', 'polygon')
+# Spray clouds are not a source (question_types.SHARED_MAP_SOURCE_TYPES).
+GEO_INPUT_TYPES = SHARED_MAP_SOURCE_TYPES
 QUESTION_LAYER_KEY = 's{session}-{index}'
 
 
@@ -640,7 +643,7 @@ def question_layers_for(survey, code):
 
 
 def answer_geometry(answer):
-    return answer.point or answer.line or answer.polygon
+    return answer.geometry
 
 
 def label_for_answer(answer, label_code):

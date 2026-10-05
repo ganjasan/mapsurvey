@@ -10,6 +10,7 @@ content: creators hold old links and scripts, and the tests pin its values.
 """
 import csv
 import json
+from survey.question_types import GEO_TYPES
 import logging
 import os
 import re
@@ -73,7 +74,7 @@ EXPORT_VALUE_TYPES = frozenset({
 })
 
 # Exported as GeoJSON layers in their own right, never as a cell.
-EXPORT_GEOMETRY_TYPES = frozenset({'point', 'line', 'polygon'})
+EXPORT_GEOMETRY_TYPES = frozenset(GEO_TYPES)
 
 # Presentational; they collect nothing, so there is nothing to export.
 EXPORT_DISPLAY_ONLY_TYPES = frozenset({'image', 'html'})
@@ -82,13 +83,18 @@ EXPORT_DISPLAY_ONLY_TYPES = frozenset({'image', 'html'})
 # which is distinct from a question that produces an empty one.
 EXPORT_NO_COLUMN = object()
 
-GEOMETRY_TYPE_NAMES = {'point': 'Point', 'line': 'LineString', 'polygon': 'Polygon'}
-OGR_GEOMETRY_TYPES = {'point': 'wkbPoint', 'line': 'wkbLineString', 'polygon': 'wkbPolygon'}
+GEOMETRY_TYPE_NAMES = {'point': 'Point', 'line': 'LineString', 'polygon': 'Polygon',
+                       'spraycan': 'MultiPoint'}
+OGR_GEOMETRY_TYPES = {'point': 'wkbPoint', 'line': 'wkbLineString', 'polygon': 'wkbPolygon',
+                      'spraycan': 'wkbMultiPoint'}
 CRS84 = {"type": "name", "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}}
 
 # Metadata every feature carries besides the sub-question answers.
 FEATURE_META_KEYS = ('session', 'session_id', 'language', 'validation_status')
 SHARED_MAP_KEYS = ('mark_key', 'votes_up', 'votes_down', 'comments')
+# Spray clouds (spec spraycan-question): trailing column, present only when a
+# spraycan question is in scope, so existing scripts keep their column indices.
+SPRAY_KEYS = ('dot_count', 'area_m2')
 
 
 def _upload_archive_path(question, answer):
@@ -236,6 +242,10 @@ class ExportBundle:
     def has_verdicts(self):
         return any(layer.has_verdicts for part in self.parts for layer in part.geo_layers)
 
+    @property
+    def has_spray(self):
+        return any(layer.question.input_type == 'spraycan' for part in self.parts for layer in part.geo_layers)
+
 
 def collect(survey, version_surveys, excluded_session_ids=None):
     """Read every version in ``version_surveys`` (list of (header, prefix)) once."""
@@ -266,14 +276,16 @@ def _collect_part(survey, prefix, excluded_session_ids):
             if geo_answer.survey_session_id in excluded_session_ids:
                 continue
 
+            geom = geo_answer.geometry
+            if geom is None:
+                continue
             if geo_type == "polygon":
-                geom = geo_answer.polygon
                 coordinates = [[[i[0], i[1]] for i in geom.coords[0]]]
             elif geo_type == "line":
-                geom = geo_answer.line
+                coordinates = [[i[0], i[1]] for i in geom.coords]
+            elif geo_type == "spraycan":
                 coordinates = [[i[0], i[1]] for i in geom.coords]
             else:
-                geom = geo_answer.point
                 coordinates = [geom.coords[0], geom.coords[1]]
 
             properties = {}
@@ -292,6 +304,11 @@ def _collect_part(survey, prefix, excluded_session_ids):
             for key in properties:
                 if key not in layer.sub_columns:
                     layer.sub_columns.append(key)
+
+            if geo_type == "spraycan":
+                from survey import spray
+                properties["dot_count"] = len(geom)
+                properties["area_m2"] = int(round(spray.cloud_area_m2(geom)))
 
             session = geo_answer.survey_session
             properties["session"] = str(session)
@@ -532,12 +549,14 @@ def observation_columns(bundle):
                     columns.append(key)
     if bundle.has_verdicts:
         columns.extend(SHARED_MAP_KEYS)
+    if bundle.has_spray:
+        columns.extend(SPRAY_KEYS)
     return columns
 
 
 def observation_rows(bundle):
     """One row per placed feature. lat/lon are the point, or the centroid of a
-    line/polygon; wkt carries the full geometry on every row."""
+    line/polygon/spray cloud; wkt carries the full geometry on every row."""
     for part in bundle.parts:
         for layer in part.geo_layers:
             question = layer.question
@@ -562,6 +581,9 @@ def observation_rows(bundle):
                     row[key] = props.get(key, '')
                 if layer.has_verdicts:
                     for key in SHARED_MAP_KEYS:
+                        row[key] = props.get(key, '')
+                if question.input_type == 'spraycan':
+                    for key in SPRAY_KEYS:
                         row[key] = props.get(key, '')
                 yield row
 

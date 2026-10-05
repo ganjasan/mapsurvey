@@ -83,6 +83,7 @@ def _question_dict(question, languages, primary, order_number):
         # hallucinated "fab"/"far" variant can never reach the widget.
         "color": question.get('color') or '#000000',
         "icon_class": ('fas fa-%s' % icon) if icon else None,
+        "spray_brush": "medium",
         "translations": _translations(
             languages, {"name": localized_name, "subtext": localized_subtext},
         ),

@@ -191,6 +191,24 @@ Temaki checkouts (not vendored — see the script docstring); the per-language s
 nothing" report (PostHog `icon_search_miss`) is fixed by adding a row there and rebuilding. Keep the
 Font Awesome CDN link in the three base templates on the version the catalog was built from.
 
+**Spray area (`spraycan`, change `spraycan-question-type`)**: the fourth geo type. The respondent
+paints a cloud of dots with a brush (`js/spray_layer.js`, `L.SprayLayer`, one canvas per cloud,
+one pre-rendered airbrush sprite stamped per dot — never a marker per dot, never a path per dot;
+redraws only on `moveend`/`zoomend`); the answer is ONE `Answer` row per respondent with a `MultiPoint` in
+`Answer.multipoint` (no cap by default; `validation_settings.max_dots` is the creator's optional one, `SPRAY_HARD_CEILING` only bounds scripted POSTs), normalised on save by `survey/spray.py`
+(1 m grid, duplicates dropped — the count means painted area × dwell, not mouse events), brush
+size in `Question.spray_brush`; `spray.describe()` is the "N dots · area" every surface shows. The column
+is NOT named after the type, so the old convention `getattr(answer, input_type)` /
+`f"{input_type}__isnull"` / `a.point or a.line or a.polygon` is gone: use
+`question_types.geo_column()` and `Answer.geometry`, and take geo-type membership from
+`question_types.GEO_TYPES` (every module's `GEO_INPUT_TYPES` is an alias of it). Two deliberate
+exceptions: `MULTI_FEATURE_TYPES` (min/max features — a cloud is one feature) and
+`SHARED_MAP_SOURCE_TYPES` (`layers.GEO_INPUT_TYPES` — a cloud never feeds a shared-map layer).
+Responses (Map pane and Overview thumbnail) draws a spray question as one
+`L.SprayAgreementLayer` — the public grid's look: share of respondents per geographic cell,
+each counted once, NOT `leaflet.heat` (its zoom scaling flattens it); the public page gets a server-side grid of distinct-respondent counts per cell with cells below K
+omitted (`survey/public_results_grid.py`), never the dots.
+
 **Hierarchical Questions/Answers**: Both Question and Answer models support self-referential parent relationships via `parent_question_id` and `parent_answer_id` for conditional sub-questions.
 
 **Conditional visibility (`CONDITIONAL_VISIBILITY` kill switch, default ON)**: a

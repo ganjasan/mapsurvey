@@ -831,6 +831,118 @@ ul {
   cursor: not-allowed;
 }
 
+/* Spray area paint mode (spec spraycan-question): tool switch + Clear live in
+   the same bar; on a phone the bar wraps to two rows. */
+#drawbar {
+  flex-wrap: wrap;
+  justify-content: center;
+  /* A fixed-position flex box shrinks to its longest line; without an explicit
+     width the tool row (flex-basis 100%) measured as its own narrow line and
+     wrapped into four rows on a phone. */
+  width: max-content;
+  /* max-content of a wrapping flex box is every row on ONE line, so cap it:
+     wide enough for the tool row, never the whole desktop. */
+  max-width: min(calc(100vw - 24px), 560px);
+}
+
+#spray-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex-basis: 100%;
+  justify-content: center;
+}
+
+#spray-tools button {
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  #spray-tools button {
+    padding: 0 10px;
+    font-size: 13px;
+  }
+}
+
+#spray-tools button {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: #fff;
+  color: var(--text, #222);
+  font-size: 14px;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+}
+
+#spray-tools .spray-tool.is-active,
+#spray-tools .spray-size.is-active {
+  background: var(--primary, #1E88E5);
+  border-color: var(--primary, #1E88E5);
+  color: #fff;
+}
+
+.spray-size-group {
+  display: inline-flex;
+  gap: 2px;
+  margin-left: 6px;
+}
+
+#spray-tools .spray-size {
+  width: 40px;
+  padding: 0;
+  justify-content: center;
+}
+
+.spray-size-dot {
+  display: inline-block;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+#spray-hint {
+  flex-basis: 100%;
+  text-align: center;
+  font-size: 13px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+}
+
+.leaflet-container.spray-mode {
+  cursor: crosshair;
+}
+
+.leaflet-container.spray-mode--move {
+  cursor: grab;
+}
+
+.spray-brush-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border: 2px solid #000;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+  pointer-events: none;
+  z-index: 650;
+  opacity: 0.9;
+}
+
+.spray-mode--erase .spray-brush-ring {
+  border-style: dashed;
+}
+
+.leaflet-spray-layer {
+  position: absolute;
+}
+
 /* ============================================
    Crosshair overlay
    ============================================ */

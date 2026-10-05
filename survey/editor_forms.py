@@ -5,11 +5,11 @@ from survey import marker_icons
 from .models import SurveyHeader, SurveySection, Question, Organization, BASEMAP_CHOICES
 from .html_sanitize import coerce_creator_html
 from .layers import layers_for
-from .question_types import GEO_TYPES, MAP_ONLY_TYPES
+from .question_types import GEO_TYPES, MAP_ONLY_TYPES, SHARED_MAP_SOURCE_TYPES
 
 # Parent-capable types cannot themselves be sub-questions: a sub-question lives
 # inside an object's popup, and an object cannot contain more objects.
-SUBQUESTION_DISALLOWED_INPUT_TYPES = ('point', 'line', 'polygon', 'layer_objects')
+SUBQUESTION_DISALLOWED_INPUT_TYPES = ('point', 'line', 'polygon', 'spraycan', 'layer_objects')
 
 USE_CASE_CHOICES = (
     ('urban_planning', 'Urban planning'),
@@ -306,7 +306,7 @@ class SurveySectionForm(forms.ModelForm):
 class QuestionForm(forms.ModelForm):
     class Meta:
         model = Question
-        fields = ['name', 'subtext', 'input_type', 'required', 'color', 'icon_class', 'image', 'display_style',
+        fields = ['name', 'subtext', 'input_type', 'required', 'color', 'icon_class', 'spray_brush', 'image', 'display_style',
                   'layer', 'min_objects', 'objects_search', 'panel_mode', 'share_with_respondents']
         labels = {
             'name': _('Name'),
@@ -315,6 +315,7 @@ class QuestionForm(forms.ModelForm):
             'required': _('Required'),
             'color': _('Color'),
             'icon_class': _('Icon class'),
+            'spray_brush': _('Brush size'),
             'image': _('Image'),
             'display_style': _('Display style'),
             'layer': _('Layer'),
@@ -330,6 +331,7 @@ class QuestionForm(forms.ModelForm):
             'required': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'color': forms.TextInput(attrs={'class': 'form-control', 'type': 'color'}),
             'icon_class': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'fas fa-map-marker-alt'}),
+            'spray_brush': forms.Select(attrs={'class': 'form-control'}),
             'display_style': forms.RadioSelect(),
             'layer': forms.Select(attrs={'class': 'form-control'}),
             'min_objects': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
@@ -343,6 +345,8 @@ class QuestionForm(forms.ModelForm):
     def __init__(self, *args, is_subquestion=False, section=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['display_style'].required = False
+        # Only a spraycan question carries a brush; every other POST omits it.
+        self.fields['spray_brush'].required = False
         # A new question starts on a concrete type instead of the "---------"
         # empty option, so the picker cards and the live preview have a
         # selection to agree on from the first render.
@@ -372,7 +376,7 @@ class QuestionForm(forms.ModelForm):
         # question whose answers can become one (spec survey-editor
         # "Objects on the map source picker").
         geo_exists = bool(survey is not None and conf_settings.MAP_REFERENCE_LAYERS and Question.objects.filter(
-            survey_section__survey_header=survey, input_type__in=('point', 'line', 'polygon'),
+            survey_section__survey_header=survey, input_type__in=SHARED_MAP_SOURCE_TYPES,
             parent_question_id__isnull=True).exists())
         if (layer_qs is None or not layer_qs.exists()) and not geo_exists:
             field = self.fields['input_type']
@@ -405,6 +409,10 @@ class QuestionForm(forms.ModelForm):
                 (value, label) for value, label in field.choices
                 if value not in FILE_INPUT_TYPES
             ]
+
+    def clean_spray_brush(self):
+        from .question_types import SPRAY_BRUSH_DEFAULT
+        return self.cleaned_data.get('spray_brush') or SPRAY_BRUSH_DEFAULT
 
     def clean_icon_class(self):
         value = (self.cleaned_data.get('icon_class') or '').strip()

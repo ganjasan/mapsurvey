@@ -173,6 +173,9 @@
                     layer = L.circleMarker(L.latLng(c[1], c[0]), {
                         radius: 6, color: colors[ci], fillColor: colors[ci], fillOpacity: 0.8
                     });
+                } else if (f.geometry.type === 'MultiPoint' && L.sprayLayer) {
+                    layer = L.sprayLayer(f.geometry.coordinates.map(function (d) { return [d[1], d[0]]; }),
+                                         { color: colors[ci], interactive: false });
                 } else {
                     layer = L.geoJSON(f, { style: function() {
                         return { color: colors[ci], weight: 2, fillOpacity: 0.3 };

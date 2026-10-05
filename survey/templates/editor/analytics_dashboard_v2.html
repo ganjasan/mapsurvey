@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" crossorigin="anonymous"></script>
+<script src="{% static 'js/spray_layer.js' %}"></script>
 {% include "editor/partials/_analytics_styles.html" %}
 {# v2 sheet loads after the shared styles so its overrides win. #}
 <link rel="stylesheet" href="{% static 'css/responses-v2.css' %}">
@@ -1207,6 +1208,10 @@ function sessionGeoOpenMap(objectId) {
                 layer = L.circleMarker(L.latLng(c[1], c[0]), {
                     radius: 8, color: color, fillColor: color, fillOpacity: 0.85, weight: 2,
                 });
+            } else if (f.geometry.type === 'MultiPoint' && L.sprayLayer) {
+                // One respondent's spray cloud: the paint itself, not a density.
+                layer = L.sprayLayer(f.geometry.coordinates.map(function (d) { return [d[1], d[0]]; }),
+                                     { color: color });
             } else {
                 layer = L.geoJSON(f, { style: function () {
                     return { color: color, weight: 3, fillOpacity: 0.25 };

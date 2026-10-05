@@ -1,0 +1,19 @@
+---
+title: New question type: Spray area
+kind: new
+link: editor
+image: img/changelog/2026-10-04-spray-area.png
+---
+<p>A respondent can now <strong>spray-paint</strong> an area instead of drawing a polygon. Pick
+<em>Spray area</em> in the type picker and choose a default brush; the respondent paints with a
+mouse or a finger, switches between three brush sizes, erases, and paints thicker where they are
+more certain. It fits questions whose honest answer has no boundary — where does the centre end,
+where do you feel unsafe, where is it too hot in summer.</p>
+<p>Responses shows every cloud in the question's colour as a grid of agreement: darker cells are
+where more respondents painted, each counted once however long they held the brush. The same grid
+goes to the public results page, with cells below the anonymity threshold left out, and never a
+single respondent's paint. Exports carry each cloud as a MultiPoint with its dot count and painted
+area. Frozen public pages with a map block will ask you to re-freeze once.</p>
+<p><strong>Why.</strong> The method comes from PPGIS research (Map-Me, Huck et al. 2014): a
+hard-edged polygon forces a precision people do not have, so they skip the question or draw too
+much.</p>

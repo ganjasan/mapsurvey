@@ -281,7 +281,7 @@
 
         {# Settings follow the style choice: pick how the question renders first, then tune it. #}
         {% for field in form %}
-        {% if field.name == 'required' or field.name == 'color' or field.name == 'icon_class' or field.name == 'image' %}
+        {% if field.name == 'required' or field.name == 'color' or field.name == 'icon_class' or field.name == 'spray_brush' or field.name == 'image' %}
         <div class="form-group" id="fg-{{ field.name }}">
             {% if field.name == 'required' %}
                 <div class="form-check">
@@ -540,6 +540,16 @@
                        placeholder="10">
             </div>
         </div>
+        <div id="vs-spray-fields" style="display:none;" class="mt-2">
+            <label style="font-size:0.8rem;font-weight:600;"><i class="fas fa-cog"></i> {% trans "Validation" %}</label>
+            <div class="form-group">
+                <label style="font-size:0.75rem;">{% trans "Max dots per respondent" %}</label>
+                <input type="number" step="1" min="1" name="vs_max_dots" class="form-control form-control-sm" style="width:120px;"
+                       value="{% if question and question.validation_settings.max_dots %}{{ question.validation_settings.max_dots }}{% endif %}"
+                       placeholder="{% trans 'unlimited' %}">
+                <small class="text-muted" style="font-size:0.72rem;">{% trans "Empty = no limit. Set one only if you need to bound how much a single respondent can paint." %}</small>
+            </div>
+        </div>
         <div id="vs-file-fields" style="display:none;" class="mt-2">
             <label style="font-size:0.8rem;font-weight:600;"><i class="fas fa-cog"></i> {% trans "Validation" %}</label>
             <div class="form-group">
@@ -633,6 +643,13 @@
                     <li><b>{% trans "Describe each place with sub-questions." %}</b> {% trans "They pop up on every placed mark, and each becomes a column of your GeoJSON layer in QGIS. Without them the map collects dots with no meaning." %}</li>
                     <li><b>{% trans "Points get answered about twice as often" %}</b> {% trans "as polygons — draw requests cost respondents real effort. When in doubt, ask for a point." %}</li>
                 </ul>
+                <ul class="qtp-tips-list" data-tip-for="spraycan">
+                    <li><b>{% trans "Ask where something is felt, not where it is." %}</b> {% trans "Spray fits questions with no honest boundary — where the centre ends, where it feels unsafe, where it is too hot. If the area has edges a respondent could trace (a plot, a block, a site), ask for a polygon instead." %}</li>
+                    <li><b>{% trans "Density is the answer." %}</b> {% trans "Respondents spray more where they are sure and less where they are not; tell them so in the subtext (“spray thicker where you are certain”). One cloud per respondent — there is no “add another”." %}</li>
+                    <li><b>{% trans "Brush size sets the resolution." %}</b> {% trans "Small for a street-level question, large for a city-wide one. The brush is a screen size, so respondents can zoom in to paint finer." %}</li>
+                    <li><b>{% trans "Results come back as density." %}</b> {% trans "Responses shows all clouds as one heat surface where every respondent counts equally; the public page shows a grid of how many respondents painted each cell, never one person’s paint; the export has one MultiPoint per respondent." %}</li>
+                    <li><b>{% trans "Sub-questions still work." %}</b> {% trans "They open once the respondent finishes the cloud — one short “why there?” is usually enough." %}</li>
+                </ul>
                 <ul class="qtp-tips-list" data-tip-for="range rating">
                     <li><b>{% trans "The scale is built from your choice codes" %}</b> {% trans "— keep them integers in ascending order (1, 2, 3…)." %}</li>
                     <li>{% trans "Label at least the endpoints (“Not at all” … “Very much”) so the scale reads the same for everyone." %}</li>
@@ -715,7 +732,10 @@
         if (numEl) numEl.style.display = (t === 'number' || t === 'range') ? 'block' : 'none';
         if (textEl) textEl.style.display = (t === 'text' || t === 'text_line') ? 'block' : 'none';
         if (polyEl) polyEl.style.display = (t === 'polygon') ? 'block' : 'none';
-        if (geoEl) geoEl.style.display = (t === 'point' || t === 'line' || t === 'polygon') ? 'block' : 'none';
+        var sprayEl = document.getElementById('vs-spray-fields');
+        if (sprayEl) sprayEl.style.display = (t === 'spraycan') ? 'block' : 'none';
+        // Places per respondent: not for a spray cloud (one per respondent).
+        if (geoEl) geoEl.style.display = (MULTI_FEATURE_TYPES.indexOf(t) !== -1) ? 'block' : 'none';
         var fileEl = document.getElementById('vs-file-fields');
         if (fileEl) fileEl.style.display = (t === 'photo' || t === 'audio' || t === 'document') ? 'block' : 'none';
         // Empty input = this type's default; say which. Mirrors
@@ -816,10 +836,12 @@
     }
 
     // ── Type-scoped settings (#111): only fields the selected type consumes ──
-    var GEO_TYPES = ['point', 'line', 'polygon'];
+    // Mirrors survey.question_types.GEO_TYPES / MULTI_FEATURE_TYPES.
+    var GEO_TYPES = ['point', 'line', 'polygon', 'spraycan'];
+    var MULTI_FEATURE_TYPES = ['point', 'line', 'polygon'];
     var DISPLAY_BLOCK_TYPES = ['image', 'html'];
     // Mirrors survey.question_types.PARENT_TYPES / NOT_REQUIRABLE_TYPES.
-    var PARENT_TYPES = ['point', 'line', 'polygon', 'layer_objects'];
+    var PARENT_TYPES = ['point', 'line', 'polygon', 'spraycan', 'layer_objects'];
     var NOT_REQUIRABLE_TYPES = ['image', 'html', 'layer_objects'];
 
     // CSS-hidden inputs still submit, so stored values pass through a save
@@ -839,7 +861,9 @@
         var isStars = t === 'rating' && !!document.querySelector(
             '#display-style-fields input[value="stars"]:checked');
         show('fg-color', isGeo || isStars);
-        show('fg-icon_class', isGeo || isStars);
+        // A spray cloud has no marker: brush size instead of an icon.
+        show('fg-icon_class', (isGeo && t !== 'spraycan') || isStars);
+        show('fg-spray_brush', t === 'spraycan');
         // The stock placeholder is a map pin, which is the wrong suggestion
         // when the field is dressing a star rating.
         var iconInput = document.querySelector('#questionModalBody input[name="icon_class"]');
