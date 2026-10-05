@@ -269,6 +269,14 @@
         width: 20px; height: 6px; border-radius: 2px; flex-shrink: 0;
         background: linear-gradient(to right, #0000ff, #00ffff, #00ff00, #ffff00, #ff0000);
     }
+    /* Coverage row (spec responses-coverage-surface): cells in the layer colour,
+       opacity by share -- the swatch shows the same ramp in miniature. */
+    .geo-legend-coverage-swatch {
+        width: 20px; height: 6px; border-radius: 2px; flex-shrink: 0;
+        background: linear-gradient(to right, color-mix(in srgb, var(--cov, #4f46e5) 15%, transparent), var(--cov, #4f46e5));
+    }
+    .geo-legend-stats { font-size: 0.7rem; color: #6b7280; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .geo-heat-popover-stats { font-size: 0.75rem; color: #6b7280; margin: -0.2rem 0 0.4rem; font-variant-numeric: tabular-nums; }
     .geo-heat-settings-btn, .geo-layer-menu-btn {
         border: none; background: none; cursor: pointer;
         color: #9ca3af; font-size: 0.7rem; padding: 0 2px;

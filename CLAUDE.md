@@ -239,6 +239,17 @@ the sub-questions of an "Objects on the map" question bound to that layer; `show
 `LayerObject.status` / `Answer.hidden` are the creator's per-item moderation. The object
 editor is read-only for such layers; deleting the source geo question is refused.
 
+**Coverage surface (change `responses-coverage-surface`, issue #242, epic #245)**: on the Responses
+Map pane a LineString/Polygon answer layer's menu offers *Create Coverage*, a `coverage` slot of
+the `LayerManager` that draws, per world-anchored metre cell, the share of respondents whose shape
+covers it (polygons: inside, holes excluded; lines: within `corridorMeters`, default 20 m). It is
+`L.SprayAgreementLayer` (`js/spray_layer.js`) fed `{id, geometry}` members instead of `{id, dots}`
+clouds — ONE binning seam (`_bin` → `_rasterise`, an offscreen canvas at cell resolution clipped
+to the viewport, even-odd fill, stroke width = corridor in cells, alpha read-back) for spray,
+polygons and lines, so the three never disagree; do not add a second density renderer. Each
+respondent counts once per cell; the row reads "≤ N of M respondents". Derived in the browser
+only — exact counts for export and public results are #243, the agreement contour #244.
+
 **Reference layer style**: `SurveyMapLayer.style` (JSON) holds the base look beyond `color`
 (opacity, weight, fill_opacity, radius, icon) and at most one rule `by` one object property
 (categories or graduated classes, plus `other`). `layers.normalize_style` is the ONE validator

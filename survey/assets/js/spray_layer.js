@@ -252,11 +252,13 @@
     };
 })();
 
-/* L.SprayAgreementLayer — many clouds, one surface (spec spraycan-density-views).
+/* L.SprayAgreementLayer — many clouds (or shapes), one surface
+ * (specs spraycan-density-views, responses-coverage-surface).
  *
  * What the Responses map and the Overview thumbnail show for a spraycan
- * question: for every screen cell, the SHARE of respondents whose cloud touches
- * it. Every respondent counts once whatever their dot count, a lone respondent
+ * question, and what a Coverage layer shows over a line or polygon question:
+ * for every cell, the SHARE of respondents whose cloud touches it — or whose
+ * polygon contains it, or whose line passes within `corridorMeters` of it. Every respondent counts once whatever their dot count, a lone respondent
  * paints a flat full-strength area, and ten respondents who agree paint a dark
  * core with light fringes — the same statistic the public page publishes as a
  * grid. (leaflet.heat was tried first: it scales intensity by 2^(maxZoom-zoom),
@@ -285,6 +287,7 @@
             // the clouds' extent exactly as public_results_grid does.
             cellMeters: null,
             cellsAcross: 40, minCellMeters: 20,
+            corridorMeters: 20,  // shapes: a line covers the cells within this distance (one urban street)
             cellPx: 6,          // 'heat' style: screen px per cell; smoothing hides the grid
             blur: 2,            // 'heat' style: box-blur radius in cells
             minAlpha: 0.15,     // any painted cell stays visible
@@ -293,19 +296,35 @@
             pane: 'overlayPane'
         },
 
-        // clouds: [{ id, dots: [[lat, lng], ...] }]
-        initialize: function (clouds, options) {
+        // members: [{ id, dots: [[lat, lng], ...] }] — spray clouds — or
+        //          [{ id, geometry: <GeoJSON LineString|Polygon|Multi*> }] — drawn
+        //          shapes (change responses-coverage-surface). One id = one
+        //          respondent; a shape covers the cells inside it (polygons, holes
+        //          excluded) or within `corridorMeters` of it (lines).
+        initialize: function (members, options) {
             L.setOptions(this, options);
-            this._clouds = clouds || [];
+            this._clouds = members || [];
             this._active = null;   // Set of ids, or null = all
+            this._stats = { max: 0, respondents: 0 };
         },
-        setClouds: function (clouds) { this._clouds = clouds || []; this._cellM = null; this.redraw(); return this; },
+        setClouds: function (members) { this._clouds = members || []; this._cellM = null; this.redraw(); return this; },
+        setMembers: function (members) { return this.setClouds(members); },
         setFilter: function (ids) { this._active = ids || null; this.redraw(); return this; },
         setStyle: function (style) { L.setOptions(this, style); this._rgb = null; this._ramp = null; this.redraw(); return this; },
+        // {max, respondents} of the last redraw: the highest count in any cell
+        // and the members in scope. Fired as a 'stats' event after each redraw.
+        getStats: function () { return this._stats; },
 
         getBounds: function () {
             var b = L.latLngBounds([]);
-            this._clouds.forEach(function (c) { c.dots.forEach(function (d) { b.extend(d); }); });
+            var walk = function (coords) {
+                if (typeof coords[0] === 'number') { b.extend([coords[1], coords[0]]); return; }
+                for (var i = 0; i < coords.length; i++) { walk(coords[i]); }
+            };
+            this._clouds.forEach(function (c) {
+                if (c.dots) { c.dots.forEach(function (d) { b.extend(d); }); }
+                else if (c.geometry && c.geometry.coordinates) { walk(c.geometry.coordinates); }
+            });
             return b;
         },
 
@@ -328,6 +347,7 @@
         redraw: function () {
             if (!this._map || !this._canvas) { return this; }
             var map = this._map, size = map.getSize(), cell = this.options.cellPx;
+            if (!(size.x > 0 && size.y > 0)) { return this; }   // Map pane still hidden: nothing to measure against
             var ratio = window.devicePixelRatio || 1;
             if (this._canvas.width !== size.x * ratio || this._canvas.height !== size.y * ratio) {
                 this._canvas.width = size.x * ratio; this._canvas.height = size.y * ratio;
@@ -339,26 +359,14 @@
             ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
             if (this.options.style === 'grid') { return this._redrawGrid(ctx, size, ratio); }
 
-            // Bin: cell -> Set of cloud ids. Cells one step outside the view are
+            // Bin: cell -> number of members. Cells one step outside the view are
             // kept so the smoothing has neighbours at the edges.
             var cols = Math.ceil(size.x / cell) + 2, rows = Math.ceil(size.y / cell) + 2;
-            var hits = new Map(), n = 0;
-            for (var i = 0; i < this._clouds.length; i++) {
-                var c = this._clouds[i];
-                if (this._active && !this._active.has(c.id)) { continue; }
-                n++;
-                var seen = new Set();
-                for (var j = 0; j < c.dots.length; j++) {
-                    var p = map.latLngToContainerPoint(c.dots[j]);
-                    var cx = Math.floor(p.x / cell) + 1, cy = Math.floor(p.y / cell) + 1;
-                    if (cx < 0 || cy < 0 || cx >= cols || cy >= rows) { continue; }
-                    var key = cy * cols + cx;
-                    if (seen.has(key)) { continue; }
-                    seen.add(key);
-                    var s = hits.get(key);
-                    if (!s) { hits.set(key, 1); } else { hits.set(key, s + 1); }
-                }
-            }
+            var range = { x0: -1, y0: -1, x1: cols - 1, y1: rows - 1 };
+            var lat = map.getCenter().lat;
+            var corridorCells = this.options.corridorMeters / this._metersPerPixel(lat, map.getZoom()) / cell;
+            var bins = this._bin(function (ll) { return map.latLngToContainerPoint(ll); }, cell, range, corridorCells);
+            var hits = bins.hits, n = bins.n;
             if (!n || !hits.size) { return this; }
 
             // Agreement per cell (0..1), then a box blur so the surface falls
@@ -397,6 +405,120 @@
             return this;
         },
 
+        // ── binning (one seam for clouds and shapes) ─────────────────────
+        // Counts members per cell over the cell grid defined by `project`
+        // (latlng -> pixel point) and `cellPx`, restricted to `range`
+        // {x0, y0, x1, y1} in cell units (x1/y1 exclusive). Keys are row-major
+        // indices into the range; every member counts once per cell. Also
+        // records the stats and fires 'stats'.
+        _bin: function (project, cellPx, range, corridorCells) {
+            var hits = new Map(), n = 0, max = 0;
+            var w = range.x1 - range.x0;
+            var add = function (key) {
+                var c = (hits.get(key) || 0) + 1;
+                hits.set(key, c);
+                if (c > max) { max = c; }
+            };
+            for (var i = 0; i < this._clouds.length; i++) {
+                var m = this._clouds[i];
+                if (this._active && !this._active.has(m.id)) { continue; }
+                if (m.dots) {
+                    if (!m.dots.length) { continue; }
+                    n++;
+                    var seen = new Set();
+                    for (var j = 0; j < m.dots.length; j++) {
+                        var p = project(m.dots[j]);
+                        var cx = Math.floor(p.x / cellPx), cy = Math.floor(p.y / cellPx);
+                        if (cx < range.x0 || cy < range.y0 || cx >= range.x1 || cy >= range.y1) { continue; }
+                        var key = (cy - range.y0) * w + (cx - range.x0);
+                        if (seen.has(key)) { continue; }
+                        seen.add(key);
+                        add(key);
+                    }
+                } else if (m.geometry && m.geometry.coordinates && m.geometry.coordinates.length) {
+                    n++;
+                    this._rasterise(m.geometry, project, cellPx, range, corridorCells, add);
+                }
+            }
+            this._stats = { max: max, respondents: n };
+            this.fire('stats', this._stats);
+            return { hits: hits, n: n };
+        },
+
+        // A shape's covered cells: draw it onto an offscreen canvas whose pixel
+        // grid IS the cell grid (one pixel per cell), clipped to the shape's
+        // bounding box within `range`, and read the alpha channel back — the
+        // browser's rasteriser handles any ring count, holes (even-odd fill)
+        // and the line corridor (stroke width in cells) natively, and the
+        // precision is one cell, which is the resolution of the statistic.
+        _rasterise: function (geometry, project, cellPx, range, corridorCells, add) {
+            var minx = Infinity, miny = Infinity, maxx = -Infinity, maxy = -Infinity;
+            var walk = function (coords, fn) {
+                if (typeof coords[0] === 'number') { fn(coords); return; }
+                for (var i = 0; i < coords.length; i++) { walk(coords[i], fn); }
+            };
+            var toCell = function (c) {
+                var p = project([c[1], c[0]]);
+                return [p.x / cellPx, p.y / cellPx];
+            };
+            walk(geometry.coordinates, function (c) {
+                var q = toCell(c);
+                if (q[0] < minx) { minx = q[0]; } if (q[0] > maxx) { maxx = q[0]; }
+                if (q[1] < miny) { miny = q[1]; } if (q[1] > maxy) { maxy = q[1]; }
+            });
+            var pad = Math.ceil(corridorCells / 2) + 1;
+            var x0 = Math.max(range.x0, Math.floor(minx) - pad), y0 = Math.max(range.y0, Math.floor(miny) - pad);
+            var x1 = Math.min(range.x1, Math.ceil(maxx) + pad), y1 = Math.min(range.y1, Math.ceil(maxy) + pad);
+            var w = x1 - x0, h = y1 - y0;
+            if (w <= 0 || h <= 0) { return; }
+
+            var c = this._raster || (this._raster = document.createElement('canvas'));
+            if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+            var ctx = c.getContext('2d', { willReadFrequently: true });
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.clearRect(0, 0, w, h);
+            ctx.imageSmoothingEnabled = false;
+            ctx.fillStyle = '#000'; ctx.strokeStyle = '#000';
+            ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+            ctx.lineWidth = Math.max(1, corridorCells);
+
+            var path = function (ring, close) {
+                for (var i = 0; i < ring.length; i++) {
+                    var q = toCell(ring[i]);
+                    if (i) { ctx.lineTo(q[0] - x0, q[1] - y0); } else { ctx.moveTo(q[0] - x0, q[1] - y0); }
+                }
+                if (close) { ctx.closePath(); }
+            };
+            var type = geometry.type, coords = geometry.coordinates;
+            if (type === 'Polygon' || type === 'MultiPolygon') {
+                var polys = type === 'Polygon' ? [coords] : coords;
+                ctx.beginPath();
+                polys.forEach(function (rings) { rings.forEach(function (ring) { path(ring, true); }); });
+                ctx.fill('evenodd');
+            } else if (type === 'LineString' || type === 'MultiLineString') {
+                var lines = type === 'LineString' ? [coords] : coords;
+                ctx.beginPath();
+                lines.forEach(function (line) { path(line, false); });
+                ctx.stroke();
+            } else {
+                return;
+            }
+
+            var data = ctx.getImageData(0, 0, w, h).data;
+            var rw = range.x1 - range.x0;
+            for (var py = 0; py < h; py++) {
+                for (var px = 0; px < w; px++) {
+                    if (data[(py * w + px) * 4 + 3] < 128) { continue; }
+                    add((py + y0 - range.y0) * rw + (px + x0 - range.x0));
+                }
+            }
+        },
+
+        // metres per world pixel at this zoom and latitude
+        _metersPerPixel: function (lat, zoom) {
+            return 40075016.686 * Math.cos(lat * Math.PI / 180) / (256 * Math.pow(2, zoom));
+        },
+
         // ── 'grid' style ────────────────────────────────────────────────
         // Cell size in metres (public_results_grid's rule unless given), then
         // in world pixels at the current zoom; cells are indexed in projected
@@ -419,32 +541,26 @@
             var map = this._map, zoom = map.getZoom();
             var b = this.getBounds();
             var lat = b.isValid() ? (b.getNorth() + b.getSouth()) / 2 : map.getCenter().lat;
-            // metres per world pixel at this zoom and latitude
-            var mpp = 40075016.686 * Math.cos(lat * Math.PI / 180) / (256 * Math.pow(2, zoom));
-            var cellPx = this._cellMeters() / mpp;
+            var cellM = this._cellMeters();
+            var cellPx = cellM / this._metersPerPixel(lat, zoom);
             if (cellPx < 1.5) { cellPx = 1.5; }   // zoomed far out: never sub-pixel bins
             var origin = map.getPixelOrigin();
-            var hits = new Map(), n = 0;
-            for (var i = 0; i < this._clouds.length; i++) {
-                var c = this._clouds[i];
-                if (this._active && !this._active.has(c.id)) { continue; }
-                n++;
-                var seen = new Set();
-                for (var j = 0; j < c.dots.length; j++) {
-                    var p = map.project(c.dots[j], zoom);
-                    var cx = Math.floor(p.x / cellPx), cy = Math.floor(p.y / cellPx);
-                    var key = cx + ':' + cy;
-                    if (seen.has(key)) { continue; }
-                    seen.add(key);
-                    hits.set(key, (hits.get(key) || 0) + 1);
-                }
-            }
+            // Only the cells in view (plus one) are counted: a city-wide polygon
+            // at zoom 18 must not rasterise a million cells nobody sees.
+            var tl = map.containerPointToLayerPoint([0, 0]).add(origin);
+            var br = map.containerPointToLayerPoint([size.x, size.y]).add(origin);
+            var range = { x0: Math.floor(tl.x / cellPx) - 1, y0: Math.floor(tl.y / cellPx) - 1,
+                          x1: Math.floor(br.x / cellPx) + 2, y1: Math.floor(br.y / cellPx) + 2 };
+            var corridorCells = this.options.corridorMeters / cellM;
+            var bins = this._bin(function (ll) { return map.project(ll, zoom); }, cellPx, range, corridorCells);
+            var hits = bins.hits, n = bins.n;
             if (!n || !hits.size) { return this; }
             var rgb = this._rgbOf(this.options.color);
             var lo = this.options.minAlpha, hi = this.options.maxAlpha;
+            var rw = range.x1 - range.x0;
             ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
             hits.forEach(function (count, key) {
-                var parts = key.split(':'), cx = +parts[0], cy = +parts[1];
+                var cx = (key % rw) + range.x0, cy = Math.floor(key / rw) + range.y0;
                 var lp = L.point(cx * cellPx, cy * cellPx).subtract(origin);
                 var cp = map.layerPointToContainerPoint(lp);
                 // Snap both edges to whole pixels: neighbours share an edge exactly,
@@ -510,7 +626,20 @@
         }
     });
 
-    L.sprayAgreementLayer = function (clouds, options) { return new L.SprayAgreementLayer(clouds, options); };
+    L.sprayAgreementLayer = function (members, options) { return new L.SprayAgreementLayer(members, options); };
+
+    // GeoJSON LineString/Polygon/Multi* features (with properties.session_id)
+    // -> shape members for a coverage surface (change responses-coverage-surface).
+    L.SprayAgreementLayer.membersFromFeatures = function (features) {
+        var out = [];
+        var kinds = { LineString: 1, MultiLineString: 1, Polygon: 1, MultiPolygon: 1 };
+        (features || []).forEach(function (f, i) {
+            if (!f.geometry || !kinds[f.geometry.type]) { return; }
+            out.push({ id: (f.properties && f.properties.session_id) != null ? f.properties.session_id : i,
+                       geometry: f.geometry });
+        });
+        return out;
+    };
 
     // GeoJSON MultiPoint features (with properties.session_id) -> clouds.
     L.SprayAgreementLayer.cloudsFromFeatures = function (features) {
