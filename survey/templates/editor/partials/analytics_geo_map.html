@@ -216,7 +216,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // ── LayerManager ──────────────────────────────────────────────
     // Slots have two types:
     //   'features' — point/line/polygon features from a question
-    //   'heat'     — heatmap derived from a features slot
+    //   'heat'     — heatmap derived from a Point features slot
+    //   'coverage' — share of respondents covering each cell, derived from a
+    //                LineString/Polygon features slot (spec responses-coverage-surface)
     function LayerManager() {
         this._map = null;
         this._slots = new Map();
@@ -384,7 +386,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
 
                 featureLayer.addTo(map);
-                slot.features.push({ layer: featureLayer, sid: sid });
+                slot.features.push({ layer: featureLayer, sid: sid, feature: f });
             });
 
             if (slot.spray) this._attachSprayHeat(slot);
@@ -601,6 +603,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }.bind(this));
             } else if (slot.type === 'heat' && slot.visible) {
                 this._rebuildHeat(slot);
+            } else if (slot.type === 'coverage') {
+                this._rebuildCoverage(slot);
             }
             if (slot.spray) this._rebuildSprayHeat(slot);
         }.bind(this));
@@ -623,6 +627,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (slot.spray) this._rebuildSprayHeat(slot);
         } else if (slot.type === 'heat') {
             this._rebuildHeat(slot);
+        } else if (slot.type === 'coverage') {
+            this._rebuildCoverage(slot);
         } else if (slot.type === 'reference') {
             if (visible) {
                 if (!this._map.hasLayer(slot.layer)) slot.layer.addTo(this._map);
@@ -654,6 +660,96 @@ document.addEventListener('DOMContentLoaded', function() {
 
     LayerManager.prototype.hasHeatFor = function(sourceId) {
         return this._slots.has('heat:' + sourceId);
+    };
+
+    // ── Coverage slots (spec responses-coverage-surface) ──────────
+    // A line/polygon question's optional overlay: for every geographic cell,
+    // the share of respondents in scope whose shape covers it -- the same
+    // L.SprayAgreementLayer the spray clouds use, fed shapes instead of dots,
+    // so polygons, lines and spray are one statistic drawn one way. The
+    // heat-slot model: created from the layer menu, own pane, filtered with
+    // the session selection, removed by its row. Opacity is the pane's CSS
+    // opacity (the reference-layer pattern), options live on the layer.
+    var SHAPE_GEOMS = { 'LineString': 1, 'MultiLineString': 1, 'Polygon': 1, 'MultiPolygon': 1 };
+    var LINE_GEOMS = { 'LineString': 1, 'MultiLineString': 1 };
+
+    LayerManager.prototype.hasCoverageFor = function(sourceId) {
+        return this._slots.has('coverage:' + sourceId);
+    };
+
+    LayerManager.prototype.canCoverage = function(sourceId) {
+        var src = this._slots.get(sourceId);
+        return !!(src && src.type === 'features' && SHAPE_GEOMS[src.geomType] && src.features.length);
+    };
+
+    LayerManager.prototype.createCoverage = function(sourceId) {
+        if (!this.canCoverage(sourceId) || typeof L.SprayAgreementLayer !== 'function') return null;
+        var src = this._slots.get(sourceId);
+        var covId = 'coverage:' + sourceId;
+        if (this._slots.has(covId)) return null; // already exists
+
+        var members = L.SprayAgreementLayer.membersFromFeatures(
+            src.features.map(function(entry) { return entry.layer.feature || entry.feature; }));
+        var paneName = this._createPane();
+        var surface = L.sprayAgreementLayer(members, { color: src.color, pane: paneName });
+        var slot = {
+            id: covId,
+            type: 'coverage',
+            sourceId: sourceId,
+            isLine: !!LINE_GEOMS[src.geomType],
+            label: null,
+            color: src.color,
+            pane: paneName,
+            visible: true,
+            opacity: 1,
+            surface: surface,
+        };
+        this._slots.set(covId, slot);
+        // Insert right above source in order
+        var srcIdx = this._order.indexOf(sourceId);
+        this._order.splice(srcIdx + 1, 0, covId);
+        this._assignPaneZIndices();
+        // The surface measures the map on every redraw and returns early while
+        // the pane is 0x0; joining the map waits for a size like every layer here.
+        var self = this;
+        whenMapSized(function() { self._rebuildCoverage(slot); });
+        return covId;
+    };
+
+    LayerManager.prototype.removeCoverage = function(covId) {
+        var slot = this._slots.get(covId);
+        if (!slot || slot.type !== 'coverage') return;
+        if (this._map.hasLayer(slot.surface)) this._map.removeLayer(slot.surface);
+        var pane = this._map.getPane(slot.pane);
+        if (pane && pane.parentNode) pane.parentNode.removeChild(pane);
+        this._slots.delete(covId);
+        var idx = this._order.indexOf(covId);
+        if (idx !== -1) this._order.splice(idx, 1);
+        this._assignPaneZIndices();
+    };
+
+    LayerManager.prototype._rebuildCoverage = function(slot) {
+        if (!slot.surface) return;
+        var surface = slot.surface;
+        if (!slot.visible) {
+            if (this._map.hasLayer(surface)) this._map.removeLayer(surface);
+            return;
+        }
+        if (!this._map.hasLayer(surface)) surface.addTo(this._map);
+        surface.setFilter(this._sids === null ? null : this._sids);
+    };
+
+    LayerManager.prototype.setCoverageOptions = function(covId, opts) {
+        var slot = this._slots.get(covId);
+        if (!slot || !slot.surface) return;
+        slot.surface.setStyle(opts);
+    };
+
+    LayerManager.prototype.setCoverageOpacity = function(covId, value) {
+        var slot = this._slots.get(covId);
+        if (!slot || slot.type !== 'coverage') return;
+        slot.opacity = Math.max(0, Math.min(1, value));
+        this._map.getPane(slot.pane).style.opacity = slot.opacity;
     };
 
     // ── Instantiate ───────────────────────────────────────────────
@@ -1021,8 +1117,9 @@ document.addEventListener('DOMContentLoaded', function() {
             aimIcon.addEventListener('click', function() { label.click(); });
             row.appendChild(aimIcon);
 
-            // Menu button (for Point layers only)
-            if (slot.geomType === 'Point' && slot.allPoints.length > 0) {
+            // Menu button: Point layers offer a heatmap, line/polygon layers a
+            // coverage surface (spray clouds are already their own surface)
+            if ((slot.geomType === 'Point' && slot.allPoints.length > 0) || window.layerManager.canCoverage(id)) {
                 var menuBtn = document.createElement('button');
                 menuBtn.className = 'geo-layer-menu-btn';
                 menuBtn.title = 'Layer actions';
@@ -1096,6 +1193,71 @@ document.addEventListener('DOMContentLoaded', function() {
                 item.remove();
             });
             row.appendChild(delBtn);
+        } else if (slot.type === 'coverage') {
+            var cSwatch = document.createElement('span');
+            cSwatch.className = 'geo-legend-coverage-swatch';
+            cSwatch.style.setProperty('--cov', slot.color);
+            row.appendChild(cSwatch);
+
+            var cLabel = document.createElement('span');
+            cLabel.className = 'geo-legend-label geo-legend-heat-label';
+            cLabel.textContent = slot.label || slot.sourceId;
+            cLabel.title = 'Double-click to rename';
+            cLabel.addEventListener('dblclick', function(e) {
+                e.stopPropagation();
+                var input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'geo-legend-rename';
+                input.value = cLabel.textContent;
+                cLabel.replaceWith(input);
+                input.focus();
+                input.select();
+                function commit() {
+                    var val = input.value.trim() || slot.sourceId;
+                    slot.label = val;
+                    cLabel.textContent = val;
+                    input.replaceWith(cLabel);
+                }
+                input.addEventListener('blur', commit);
+                input.addEventListener('keydown', function(ke) {
+                    if (ke.key === 'Enter') input.blur();
+                    if (ke.key === 'Escape') { input.value = cLabel.textContent; input.blur(); }
+                });
+            });
+            row.appendChild(cLabel);
+
+            // The count is the point: "<= 7 of 12 respondents", never "hot".
+            var cStats = document.createElement('span');
+            cStats.className = 'geo-legend-stats';
+            cStats.textContent = _coverageStatsText(slot.surface.getStats());
+            slot.surface.on('stats', function(st) { cStats.textContent = _coverageStatsText(st); });
+            row.appendChild(cStats);
+
+            var cGear = document.createElement('button');
+            cGear.className = 'geo-heat-settings-btn';
+            cGear.title = 'Coverage settings';
+            var cGearIcon = document.createElement('i');
+            cGearIcon.className = 'fas fa-sliders-h';
+            cGear.appendChild(cGearIcon);
+            cGear.addEventListener('click', function(e) {
+                e.stopPropagation();
+                _openCoverageSettings(id);
+            });
+            row.appendChild(cGear);
+
+            var cDel = document.createElement('button');
+            cDel.className = 'geo-heat-settings-btn';
+            cDel.title = 'Remove coverage';
+            var cDelIcon = document.createElement('i');
+            cDelIcon.className = 'fas fa-times';
+            cDel.appendChild(cDelIcon);
+            cDel.addEventListener('click', function(e) {
+                e.stopPropagation();
+                _closeHeatSettings();
+                window.layerManager.removeCoverage(id);
+                item.remove();
+            });
+            row.appendChild(cDel);
         } else if (slot.type === 'reference') {
             var rSwatch = document.createElement('span');
             rSwatch.className = 'geo-legend-ref-swatch';
@@ -1145,6 +1307,105 @@ document.addEventListener('DOMContentLoaded', function() {
 
         item.appendChild(row);
         return item;
+    }
+
+    function _coverageStatsText(st) {
+        if (!st || !st.respondents) return '';
+        return '\u2264 ' + st.max + ' of ' + st.respondents + ' respondent' + (st.respondents === 1 ? '' : 's');
+    }
+
+    // Coverage settings: cell size, the line corridor, opacity, and the count
+    // line. The heat popover's skeleton.
+    function _openCoverageSettings(covId) {
+        _closeHeatSettings();
+        var slot = window.layerManager.getSlot(covId);
+        if (!slot || slot.type !== 'coverage') return;
+        var opts = slot.surface.options;
+
+        var pop = document.createElement('div');
+        pop.className = 'geo-heat-popover';
+        L.DomEvent.disableClickPropagation(pop);
+        L.DomEvent.disableScrollPropagation(pop);
+
+        var header = document.createElement('div');
+        header.className = 'geo-heat-popover-header';
+        var title = document.createElement('h6');
+        title.textContent = 'Coverage Settings';
+        header.appendChild(title);
+        var closeBtn = document.createElement('button');
+        closeBtn.className = 'close-btn';
+        var closeIcon = document.createElement('i');
+        closeIcon.className = 'fas fa-times';
+        closeBtn.appendChild(closeIcon);
+        closeBtn.addEventListener('click', _closeHeatSettings);
+        header.appendChild(closeBtn);
+        pop.appendChild(header);
+
+        var layerLabel = document.createElement('div');
+        layerLabel.className = 'geo-heat-popover-layer';
+        layerLabel.textContent = slot.sourceId;
+        layerLabel.title = slot.sourceId;
+        pop.appendChild(layerLabel);
+
+        var stats = document.createElement('div');
+        stats.className = 'geo-heat-popover-stats';
+        stats.textContent = _coverageStatsText(slot.surface.getStats());
+        slot.surface.on('stats', function(st) { stats.textContent = _coverageStatsText(st); });
+        pop.appendChild(stats);
+
+        var sliders = [
+            { key: 'cellMeters', label: 'Cell (m)', min: 10, max: 1000, step: 10, val: Math.round(slot.surface._cellMeters()) },
+        ];
+        if (slot.isLine) {
+            sliders.push({ key: 'corridorMeters', label: 'Corridor (m)', min: 5, max: 500, step: 5, val: opts.corridorMeters || 20 });
+        }
+        sliders.push({ key: 'opacity', label: 'Opacity', min: 5, max: 100, step: 5, val: Math.round(slot.opacity * 100) });
+        sliders.forEach(function(sl) {
+            var row = document.createElement('label');
+            var nameSpan = document.createElement('span');
+            nameSpan.textContent = sl.label;
+            row.appendChild(nameSpan);
+            var input = document.createElement('input');
+            input.type = 'range'; input.min = sl.min; input.max = sl.max;
+            input.step = sl.step; input.value = sl.val;
+            row.appendChild(input);
+            var valSpan = document.createElement('span');
+            valSpan.className = 'val';
+            valSpan.textContent = sl.val;
+            row.appendChild(valSpan);
+            input.addEventListener('input', function() {
+                var v = parseFloat(input.value);
+                valSpan.textContent = v;
+                if (sl.key === 'opacity') {
+                    window.layerManager.setCoverageOpacity(covId, v / 100);
+                } else {
+                    var u = {}; u[sl.key] = v;
+                    window.layerManager.setCoverageOptions(covId, u);
+                }
+            });
+            pop.appendChild(row);
+        });
+
+        var mapContainer = document.getElementById('analytics-map');
+        mapContainer.style.position = 'relative';
+        mapContainer.appendChild(pop);
+
+        var _dragOfs = null;
+        header.addEventListener('mousedown', function(e) {
+            if (e.target.closest('.close-btn')) return;
+            _dragOfs = { x: e.clientX - pop.offsetLeft, y: e.clientY - pop.offsetTop };
+            pop.style.transform = 'none';
+            e.preventDefault();
+        });
+        document.addEventListener('mousemove', function(e) {
+            if (!_dragOfs) return;
+            pop.style.left = (e.clientX - _dragOfs.x) + 'px';
+            pop.style.top = (e.clientY - _dragOfs.y) + 'px';
+        });
+        document.addEventListener('mouseup', function() { _dragOfs = null; });
+
+        _activePopover = pop;
+        setTimeout(function() { document.addEventListener('mousedown', _onDocClickClosePopover); }, 0);
     }
 
     // Opacity popover for a reference layer: the heat popover's skeleton with
@@ -1223,6 +1484,54 @@ document.addEventListener('DOMContentLoaded', function() {
         menu.className = 'geo-layer-menu';
         L.DomEvent.disableClickPropagation(menu);
 
+        var src = window.layerManager.getSlot(sourceId);
+        if (src && src.geomType !== 'Point') {
+            _appendCoverageMenuItem(menu, sourceId);
+        } else {
+            _appendHeatMenuItem(menu, sourceId);
+        }
+
+        // Position near anchor
+        document.body.appendChild(menu);
+        var rect = anchorEl.getBoundingClientRect();
+        menu.style.left = Math.min(rect.left, window.innerWidth - menu.offsetWidth - 8) + 'px';
+        menu.style.top = (rect.bottom + 4) + 'px';
+
+        _activeMenu = menu;
+        setTimeout(function() { document.addEventListener('mousedown', _onDocClickCloseMenu); }, 0);
+    }
+
+    // Insert a derived slot's row right under its source row in the panel.
+    function _insertDerivedLegendItem(sourceId, derivedId) {
+        if (!derivedId || !_legendBody) return;
+        var derivedSlot = window.layerManager.getSlot(derivedId);
+        var derivedItem = _buildLegendItem(derivedSlot);
+        var sourceItem = _legendBody.querySelector('[data-layer-id="' + CSS.escape(sourceId) + '"]');
+        if (sourceItem && sourceItem.nextSibling) {
+            _legendBody.insertBefore(derivedItem, sourceItem.nextSibling);
+        } else {
+            _legendBody.appendChild(derivedItem);
+        }
+    }
+
+    function _appendCoverageMenuItem(menu, sourceId) {
+        var hasCov = window.layerManager.hasCoverageFor(sourceId);
+        var covAction = document.createElement('div');
+        covAction.className = 'geo-layer-menu-item' + (hasCov ? ' disabled' : '');
+        var covIcon = document.createElement('i');
+        covIcon.className = 'fas fa-th';
+        covAction.appendChild(covIcon);
+        covAction.appendChild(document.createTextNode(hasCov ? ' Coverage exists' : ' Create Coverage'));
+        if (!hasCov) {
+            covAction.addEventListener('click', function() {
+                _insertDerivedLegendItem(sourceId, window.layerManager.createCoverage(sourceId));
+                _closeLayerMenu();
+            });
+        }
+        menu.appendChild(covAction);
+    }
+
+    function _appendHeatMenuItem(menu, sourceId) {
         var hasHeat = window.layerManager.hasHeatFor(sourceId);
 
         var heatAction = document.createElement('div');
@@ -1233,31 +1542,11 @@ document.addEventListener('DOMContentLoaded', function() {
         heatAction.appendChild(document.createTextNode(hasHeat ? ' Heatmap exists' : ' Create Heatmap'));
         if (!hasHeat) {
             heatAction.addEventListener('click', function() {
-                var heatId = window.layerManager.createHeat(sourceId);
-                if (heatId && _legendBody) {
-                    var heatSlot = window.layerManager.getSlot(heatId);
-                    var heatItem = _buildLegendItem(heatSlot);
-                    // Insert after source item in DOM
-                    var sourceItem = _legendBody.querySelector('[data-layer-id="' + CSS.escape(sourceId) + '"]');
-                    if (sourceItem && sourceItem.nextSibling) {
-                        _legendBody.insertBefore(heatItem, sourceItem.nextSibling);
-                    } else {
-                        _legendBody.appendChild(heatItem);
-                    }
-                }
+                _insertDerivedLegendItem(sourceId, window.layerManager.createHeat(sourceId));
                 _closeLayerMenu();
             });
         }
         menu.appendChild(heatAction);
-
-        // Position near anchor
-        document.body.appendChild(menu);
-        var rect = anchorEl.getBoundingClientRect();
-        menu.style.left = Math.min(rect.left, window.innerWidth - menu.offsetWidth - 8) + 'px';
-        menu.style.top = (rect.bottom + 4) + 'px';
-
-        _activeMenu = menu;
-        setTimeout(function() { document.addEventListener('mousedown', _onDocClickCloseMenu); }, 0);
     }
 
     var LegendControl = L.Control.extend({
