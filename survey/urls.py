@@ -13,6 +13,9 @@ from . import abuse_review_views
 
 urlpatterns = [
     path('', views.index, name='index'),
+    # Russian homepage (change ru-landing-hreflang). One route, not i18n_patterns:
+    # the editor's language must never come from the URL.
+    path('ru/', views.index_ru, name='index_ru'),
     path('editor/', views.editor, name='editor'),
     path('editor/export/<uuid:survey_uuid>/', views.export_survey, name='export_survey'),
     path('editor/import/', views.import_survey, name='import_survey'),

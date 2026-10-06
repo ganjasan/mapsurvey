@@ -546,7 +546,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:34
 #: survey/templates/org/org_members.html:112
 msgid "Email"
-msgstr "Электронная почта"
+msgstr "Эл. почта"
 
 #: survey/models.py:1184
 msgid "Call"
@@ -846,8 +846,8 @@ msgstr ""
 msgid ""
 "Mapsurvey — Open-Source Participatory Mapping Platform | Free PPGIS Tool"
 msgstr ""
-"Mapsurvey — Платформа для партисипативного картографирования с открытым "
-"исходным кодом | Бесплатный PPGIS инструмент"
+"Mapsurvey — опросы на карте и соучаствующее картографирование | Бесплатно, "
+"открытый код"
 
 #: survey/templates/base_landing.html:17
 msgid ""
@@ -855,25 +855,25 @@ msgid ""
 "areas. Free to start, open source, self-hostable. The open-source "
 "alternative to Maptionnaire."
 msgstr ""
-"Создавайте картографические опросы, где люди отмечают места, рисуют маршруты"
-" и выделяют территории. Бесплатно для старта, открытый исходный код, "
-"размещение на своём сервере. Альтернатива Maptionnaire с открытым кодом."
+"Создавайте опросы на карте: люди отмечают места, рисуют маршруты и обводят "
+"территории. Бесплатный старт, открытый код, можно развернуть на своём "
+"сервере. Открытая альтернатива Maptionnaire."
 
 #: survey/templates/base_landing.html:24 survey/templates/base_landing.html:28
 msgid "Mapsurvey — Open-Source Participatory Mapping"
-msgstr "Mapsurvey — Партисипативное картографирование с открытым кодом"
+msgstr "Mapsurvey — опросы на карте с открытым кодом"
 
 #: survey/templates/base_landing.html:25 survey/templates/base_landing.html:29
 msgid ""
 "Create map-based surveys where people mark places, draw routes, and outline "
 "areas. Free & open source."
 msgstr ""
-"Создавайте картографические опросы, где люди отмечают места, рисуют маршруты"
-" и выделяют территории. Бесплатно и с открытым кодом."
+"Создавайте опросы на карте: люди отмечают места, рисуют маршруты и обводят "
+"территории. Бесплатно и с открытым кодом."
 
 #: survey/templates/base_landing.html:97
 msgid "Toggle navigation"
-msgstr "Переключить навигацию"
+msgstr "Открыть меню"
 
 #: survey/templates/base_landing.html:102
 #: survey/templates/base_landing.html:164
@@ -882,36 +882,36 @@ msgstr "Возможности"
 
 #: survey/templates/base_landing.html:107
 msgid "Solutions"
-msgstr ""
+msgstr "Решения"
 
 #: survey/templates/base_landing.html:112
 #: survey/templates/base_landing.html:167
 msgid "For Urban Planners"
-msgstr ""
+msgstr "Для градостроителей"
 
 #: survey/templates/base_landing.html:113
 #: survey/templates/base_landing.html:168
 msgid "For Local Government"
-msgstr ""
+msgstr "Для местной власти"
 
 #: survey/templates/base_landing.html:114
 #: survey/templates/base_landing.html:169
 msgid "For Researchers"
-msgstr ""
+msgstr "Для исследователей"
 
 #: survey/templates/base_landing.html:115
 #: survey/templates/base_landing.html:170
 msgid "For Educators"
-msgstr ""
+msgstr "Для преподавателей"
 
 #: survey/templates/base_landing.html:116
 #: survey/templates/base_landing.html:171
 msgid "For Consultants"
-msgstr ""
+msgstr "Для консультантов"
 
 #: survey/templates/base_landing.html:119
 msgid "Trust"
-msgstr ""
+msgstr "Безопасность"
 
 #: survey/templates/base_landing.html:144
 #: survey/templates/editor/editor_base.html:879
@@ -930,11 +930,11 @@ msgstr "Войти"
 
 #: survey/templates/base_landing.html:148
 msgid "Sign Up Free"
-msgstr "Бесплатная регистрация"
+msgstr "Зарегистрироваться"
 
 #: survey/templates/base_landing.html:159
 msgid "Open-source platform for participatory mapping"
-msgstr "Платформа с открытым кодом для партисипативного картографирования"
+msgstr "Открытая платформа для соучаствующего картографирования"
 
 #: survey/templates/base_landing.html:162
 msgid "Product"
@@ -943,40 +943,40 @@ msgstr "Продукт"
 #: survey/templates/base_landing.html:166
 #: survey/templates/stories_index.html:18
 msgid "Stories"
-msgstr ""
+msgstr "Истории"
 
 #: survey/templates/base_landing.html:172
 #: survey/templates/civic_engagement.html:89
 #: survey/templates/community_engagement_platform.html:33
 msgid "Community Engagement Platform"
-msgstr ""
+msgstr "Платформа вовлечения жителей"
 
 #: survey/templates/base_landing.html:173
 #: survey/templates/civic_engagement.html:90
 #: survey/templates/public_consultation_software.html:29
 msgid "Public Consultation Software"
-msgstr ""
+msgstr "Общественные обсуждения онлайн"
 
 #: survey/templates/base_landing.html:174
 msgid "Civic Engagement"
-msgstr ""
+msgstr "Гражданское участие"
 
 #: survey/templates/base_landing.html:175
 #: survey/templates/civic_engagement.html:91
 msgid "Participatory Budgeting"
-msgstr ""
+msgstr "Инициативное бюджетирование"
 
 #: survey/templates/base_landing.html:176
 msgid "Maptionnaire alternative"
-msgstr ""
+msgstr "Альтернатива Maptionnaire"
 
 #: survey/templates/base_landing.html:177
 msgid "Social Pinpoint alternative"
-msgstr ""
+msgstr "Альтернатива Social Pinpoint"
 
 #: survey/templates/base_landing.html:178
 msgid "MetroQuest alternative"
-msgstr ""
+msgstr "Альтернатива MetroQuest"
 
 #: survey/templates/base_landing.html:183 survey/templates/landing.html:33
 msgid "Open Source"
@@ -984,15 +984,15 @@ msgstr "Открытый код"
 
 #: survey/templates/base_landing.html:190
 msgid "Legal"
-msgstr ""
+msgstr "Правовая информация"
 
 #: survey/templates/base_landing.html:192
 msgid "Trust & Security"
-msgstr ""
+msgstr "Доверие и безопасность"
 
 #: survey/templates/base_landing.html:196
 msgid "Connect"
-msgstr "Связь"
+msgstr "Связаться"
 
 #: survey/templates/base_landing.html:213
 msgid ""
@@ -1000,9 +1000,9 @@ msgid ""
 "href=\"https://www.gnu.org/licenses/agpl-3.0.html\" target=\"_blank\" "
 "rel=\"noopener\">AGPLv3</a>"
 msgstr ""
-"Mapsurvey — программное обеспечение с открытым исходным кодом, "
-"лицензированное под <a href=\"https://www.gnu.org/licenses/agpl-3.0.html\" "
-"target=\"_blank\" rel=\"noopener\">AGPLv3</a>"
+"Mapsurvey — открытое программное обеспечение под лицензией <a "
+"href=\"https://www.gnu.org/licenses/agpl-3.0.html\" target=\"_blank\" "
+"rel=\"noopener\">AGPLv3</a>"
 
 #: survey/templates/base_survey_template.html:125
 #: survey/templatetags/i18n_extras.py:18
@@ -1255,7 +1255,7 @@ msgstr ""
 #: survey/templates/community_engagement_platform.html:62
 #: survey/templates/for_government.html:58 survey/templates/services.html:39
 msgid "You own the data"
-msgstr ""
+msgstr "Данные принадлежат вам"
 
 #: survey/templates/community_engagement_platform.html:63
 msgid ""
@@ -1847,7 +1847,7 @@ msgstr ""
 #: survey/templates/editor/survey_share.html:256
 #: survey/templates/landing.html:95
 msgid "Close"
-msgstr ""
+msgstr "Закрыть"
 
 #: survey/templates/editor/analytics_dashboard.html:170
 msgid "Loading..."
@@ -1977,7 +1977,7 @@ msgstr ""
 #: survey/templates/editor/partials/_language_switcher.html:18
 #: survey/templates/editor/partials/analytics_performance.html:164
 msgid "Language"
-msgstr ""
+msgstr "Язык"
 
 #: survey/templates/editor/partials/_lifecycle_scripts.html:13
 msgid "Publish Survey"
@@ -4855,13 +4855,15 @@ msgstr ""
 
 #: survey/templates/landing.html:9
 msgid "The easiest way to collect geographic data"
-msgstr ""
+msgstr "Самый простой способ собирать геоданные"
 
 #: survey/templates/landing.html:11
 msgid ""
 "Think Google Forms — but people answer by drawing points, lines, and areas "
 "on a map. Free to start, no coding required."
 msgstr ""
+"Как Google Формы, только люди отвечают на карте: ставят точки, рисуют линии "
+"и обводят территории. Начать можно бесплатно и без программирования."
 
 #: survey/templates/landing.html:15 survey/templates/landing.html:251
 msgid "Go to Dashboard"
@@ -4882,7 +4884,7 @@ msgstr "Бесплатный старт"
 
 #: survey/templates/landing.html:35
 msgid "No Coding Required"
-msgstr ""
+msgstr "Без программирования"
 
 #: survey/templates/landing.html:36
 msgid "GDPR-Friendly"
@@ -4890,7 +4892,7 @@ msgstr "GDPR-совместим"
 
 #: survey/templates/landing.html:44
 msgid "See it in action"
-msgstr ""
+msgstr "Как это работает"
 
 #: survey/templates/landing.html:45
 msgid "From a blank map to shareable insight"
@@ -4899,7 +4901,7 @@ msgstr ""
 #: survey/templates/landing.html:49 survey/templates/landing.html:64
 #: survey/templates/landing.html:79
 msgid "Enlarge screenshot"
-msgstr ""
+msgstr "Увеличить скриншот"
 
 #: survey/templates/landing.html:51
 msgid ""
@@ -4909,7 +4911,7 @@ msgstr ""
 
 #: survey/templates/landing.html:56
 msgid "BUILD"
-msgstr ""
+msgstr "СОЗДАНИЕ"
 
 #: survey/templates/landing.html:57
 msgid "AI drafts it, you edit visually"
@@ -4929,7 +4931,7 @@ msgstr ""
 
 #: survey/templates/landing.html:71
 msgid "COLLECT"
-msgstr ""
+msgstr "СБОР"
 
 #: survey/templates/landing.html:72
 msgid "Collect on a map"
@@ -4947,7 +4949,7 @@ msgstr ""
 
 #: survey/templates/landing.html:86
 msgid "ANALYZE"
-msgstr ""
+msgstr "АНАЛИЗ"
 
 #: survey/templates/landing.html:87
 msgid "Analyze & share"
@@ -4965,7 +4967,7 @@ msgstr "Для кого"
 
 #: survey/templates/landing.html:123
 msgid "Built for people who shape places"
-msgstr "Создан для тех, кто формирует пространства"
+msgstr "Для тех, кто меняет города и территории"
 
 #: survey/templates/landing.html:129
 msgid "Urban Planners"
@@ -4977,12 +4979,13 @@ msgid ""
 "where parks are missing. People draw routes and outline neighborhoods — not "
 "just drop pins."
 msgstr ""
-"Спросите жителей, где нужны велодорожки, где переходы опасны, где не хватает"
-" парков. Люди рисуют маршруты и обводят районы — а не просто ставят точки."
+"Спросите жителей, где нужны велодорожки, какие переходы кажутся опасными, "
+"где не хватает парков. Люди рисуют маршруты и обводят кварталы, а не только "
+"ставят точки."
 
 #: survey/templates/landing.html:136
 msgid "Researchers & Students"
-msgstr ""
+msgstr "Исследователи и студенты"
 
 #: survey/templates/landing.html:137
 msgid ""
@@ -5000,6 +5003,9 @@ msgid ""
 "friendly, easy to share. Perfect for participatory budgeting and public "
 "space assessments."
 msgstr ""
+"Вовлекайте жителей в картирование того, что для них важно. Несколько языков,"
+" удобно с телефона, легко поделиться. Подходит для инициативного "
+"бюджетирования и оценки общественных пространств."
 
 #: survey/templates/landing.html:150
 msgid "Municipalities & Government"
@@ -5024,10 +5030,12 @@ msgid ""
 "Take a 2-minute demo survey — mark places, draw routes, answer questions on "
 "the map."
 msgstr ""
+"Пройдите демо-опрос за 2 минуты: отметьте места, нарисуйте маршруты, "
+"ответьте на вопросы на карте."
 
 #: survey/templates/landing.html:165
 msgid "Try the Demo Survey"
-msgstr ""
+msgstr "Пройти демо-опрос"
 
 #: survey/templates/landing.html:170
 msgid "Create your first survey"
@@ -7201,3 +7209,355 @@ msgstr "Показать"
 #: survey/templates/editor/partials/_export_modal.html
 msgid "Sessions where nobody answered anything are never exported."
 msgstr "Сессии, в которых никто ничего не ответил, никогда не выгружаются."
+
+# --- Russian homepage /ru/ (change ru-landing-hreflang, issue #248)
+#: survey/templates/base_landing.html
+msgid "Pro"
+msgstr "Pro"
+
+#: survey/templates/base_landing.html
+msgid "Services"
+msgstr "Услуги"
+
+#: survey/templates/base_landing.html
+msgid "Pro — early access"
+msgstr "Pro — ранний доступ"
+
+#: survey/templates/base_landing.html
+msgid "Project service"
+msgstr "Сопровождение проекта"
+
+#: survey/templates/base_landing.html
+msgid "Book a call"
+msgstr "Записаться на звонок"
+
+#: survey/templates/landing.html
+msgid "Create your Mapsurvey"
+msgstr "Создать опрос на карте"
+
+#: survey/templates/landing.html
+msgid "Book a 30-min call"
+msgstr "Записаться на звонок (30 мин)"
+
+#: survey/templates/landing.html
+msgid "or try a 2-minute demo survey"
+msgstr "или пройдите демо-опрос за 2 минуты"
+
+#: survey/templates/landing.html
+msgid "From the field"
+msgstr "Из практики"
+
+#: survey/templates/landing.html
+msgid "Used by cities, planners and town-planning societies"
+msgstr "Им пользуются города, проектировщики и градостроительные сообщества"
+
+#: survey/templates/landing.html
+msgid "All stories"
+msgstr "Все истории"
+
+#: survey/templates/landing.html
+msgid "Previous story"
+msgstr "Предыдущая история"
+
+#: survey/templates/landing.html
+msgid "Next story"
+msgstr "Следующая история"
+
+#: survey/templates/landing.html
+msgid "Customer stories"
+msgstr "Истории клиентов"
+
+#: survey/templates/landing.html
+msgid "From a brief to published results"
+msgstr "От задумки до опубликованных результатов"
+
+#: survey/templates/landing.html
+msgid ""
+"Mapsurvey layer editor: ten Copenhagen cycling bridges with categories, "
+"photos and descriptions"
+msgstr ""
+"Редактор слоёв Mapsurvey: десять велосипедных мостов Копенгагена с "
+"категориями, фото и описаниями"
+
+#: survey/templates/landing.html
+msgid "AI drafts it, your data goes on the map"
+msgstr "ИИ готовит черновик, ваши данные ложатся на карту"
+
+#: survey/templates/landing.html
+msgid ""
+"Describe the project and AI drafts the sections, questions and translations."
+" Then add your own layers — GeoJSON or CSV, with photos, categories and a "
+"legend — so people can answer about the places you already know."
+msgstr ""
+"Опишите проект, и ИИ подготовит разделы, вопросы и переводы. Затем добавьте "
+"свои слои — GeoJSON или CSV с фото, категориями и легендой, — чтобы люди "
+"отвечали про места, которые вы уже знаете."
+
+#: survey/templates/landing.html
+msgid ""
+"A respondent opens a bridge card with a photo, reactions from others and a "
+"thumbs up or down question"
+msgstr ""
+"Участник открывает карточку моста: фото, реакции других участников и вопрос "
+"«нравится или нет»"
+
+#: survey/templates/landing.html
+msgid "People answer on the map"
+msgstr "Люди отвечают прямо на карте"
+
+#: survey/templates/landing.html
+msgid ""
+"Respondents open your objects, rate them and comment, mark places, draw "
+"routes, add photos, and see what others marked. Questions adapt to earlier "
+"answers. It works on any phone, in their language."
+msgstr ""
+"Участники открывают ваши объекты, оценивают и комментируют их, отмечают "
+"места, рисуют маршруты, добавляют фото и видят, что отметили другие. Вопросы"
+" подстраиваются под предыдущие ответы. Работает на любом телефоне и на языке"
+" участника."
+
+#: survey/templates/landing.html
+msgid ""
+"Mapsurvey Responses map: routes, unsafe spots and bridges across Copenhagen"
+msgstr "Карта ответов Mapsurvey: маршруты, опасные места и мосты Копенгагена"
+
+#: survey/templates/landing.html
+msgid "Every answer on one map"
+msgstr "Все ответы на одной карте"
+
+#: survey/templates/landing.html
+msgid ""
+"Filter and select answers right on the map, flag and clean responses, and "
+"see where people drop off. Export to Excel, GeoPackage, Shapefile, KML or "
+"GeoJSON when the work moves to GIS."
+msgstr ""
+"Фильтруйте и выделяйте ответы прямо на карте, помечайте и чистите анкеты, "
+"смотрите, на каком шаге люди бросают опрос. Когда работа переходит в ГИС, "
+"выгружайте данные в Excel, GeoPackage, Shapefile, KML или GeoJSON."
+
+#: survey/templates/landing.html
+msgid ""
+"Public results page with the response count, a link to take the survey, and "
+"charts"
+msgstr ""
+"Публичная страница результатов: число ответов, ссылка на опрос и диаграммы"
+
+#: survey/templates/landing.html
+msgid "SHARE"
+msgstr "ПУБЛИКАЦИЯ"
+
+#: survey/templates/landing.html
+msgid "Publish what you heard"
+msgstr "Покажите, что вы услышали"
+
+#: survey/templates/landing.html
+msgid ""
+"Turn the answers into a public results page with maps and charts. Small "
+"groups are masked to protect privacy. Keep it live while the survey runs, or"
+" freeze it when the consultation closes."
+msgstr ""
+"Превратите ответы в публичную страницу результатов с картами и диаграммами. "
+"Малые группы скрываются, чтобы защитить приватность. Пока идёт опрос, "
+"страница обновляется сама, а после окончания обсуждения её можно "
+"зафиксировать."
+
+#: survey/templates/landing.html
+msgid ""
+"Run spatial studies without expensive platforms. Download GeoJSON, "
+"GeoPackage, Shapefile or CSV and analyze in QGIS, R, or Python. Cite the "
+"open-source tool in your papers."
+msgstr ""
+"Проводите пространственные исследования без дорогих платформ. Выгружайте "
+"GeoJSON, GeoPackage, Shapefile или CSV и анализируйте в QGIS, R или Python. "
+"Ссылайтесь на открытый инструмент в своих статьях."
+
+#: survey/templates/landing.html
+msgid ""
+"Collect citizen input on a map without a GIS team. Open source, no vendor "
+"lock-in, and every response exports to GeoJSON, Excel or Shapefile."
+msgstr ""
+"Собирайте мнения жителей на карте без отдела ГИС. Открытый код, никакой "
+"привязки к поставщику, а каждый ответ выгружается в GeoJSON, Excel или "
+"Shapefile."
+
+#: survey/templates/landing.html
+msgid "Everything a map-based consultation needs"
+msgstr "Всё для общественного обсуждения на карте"
+
+#: survey/templates/landing.html
+msgid "Questions made for maps"
+msgstr "Вопросы, созданные для карты"
+
+#: survey/templates/landing.html
+msgid ""
+"Points, lines and areas, as many as a person needs, each with its own "
+"follow-up questions and photo. Pick a marker icon from almost two thousand, "
+"and let people search for an address."
+msgstr ""
+"Точки, линии и полигоны, сколько нужно участнику, у каждого свои уточняющие "
+"вопросы и фото. Выберите значок маркера из почти двух тысяч и дайте людям "
+"искать по адресу."
+
+#: survey/templates/landing.html
+msgid "Your data on the map"
+msgstr "Ваши данные на карте"
+
+#: survey/templates/landing.html
+msgid ""
+"Upload GeoJSON or CSV layers with photos, categories and a legend, then ask "
+"about each object: thumbs up or down, a comment, a rating. Your list of "
+"sites becomes the survey."
+msgstr ""
+"Загрузите слои GeoJSON или CSV с фото, категориями и легендой и спрашивайте "
+"про каждый объект: нравится или нет, комментарий, оценка. Ваш перечень "
+"объектов становится опросом."
+
+#: survey/templates/landing.html
+msgid "A map people build together"
+msgstr "Карта, которую люди создают вместе"
+
+#: survey/templates/landing.html
+msgid ""
+"Respondents see what others marked and react to it, so a consultation turns "
+"into a conversation. You moderate what is shown, or approve each mark first."
+msgstr ""
+"Участники видят отметки других и реагируют на них, и опрос превращается в "
+"разговор. Вы модерируете то, что видно всем, или заранее одобряете каждую "
+"отметку."
+
+#: survey/templates/landing.html
+msgid "Built to be answered"
+msgstr "Опрос, который проходят до конца"
+
+#: survey/templates/landing.html
+msgid ""
+"AI drafts the survey from a short brief. Questions and sections adapt to "
+"earlier answers; star ratings, rankings, sliders and an “Other” option are "
+"built in. 75 languages, any phone."
+msgstr ""
+"ИИ готовит опрос по короткому описанию. Вопросы и разделы подстраиваются под"
+" предыдущие ответы; оценки звёздами, ранжирование, ползунки и вариант "
+"«Другое» уже встроены. 75 языков, любой телефон."
+
+#: survey/templates/landing.html
+msgid "Clean and analyse"
+msgstr "Очистка и анализ"
+
+#: survey/templates/landing.html
+msgid ""
+"Select and filter answers on the map, flag incomplete or doubtful responses,"
+" tag them and add notes. See completion, drop-off and which links brought "
+"people in."
+msgstr ""
+"Выделяйте и фильтруйте ответы на карте, помечайте неполные и сомнительные "
+"анкеты, добавляйте теги и заметки. Смотрите, сколько людей дошли до конца, "
+"где бросили и по каким ссылкам пришли."
+
+#: survey/templates/landing.html
+msgid "Export and publish"
+msgstr "Экспорт и публикация"
+
+#: survey/templates/landing.html
+msgid ""
+"Excel, GeoPackage, Shapefile, KML, GeoJSON and CSV for your GIS. A public "
+"results page with privacy masking, and comment threads so your team works in"
+" one place."
+msgstr ""
+"Excel, GeoPackage, Shapefile, KML, GeoJSON и CSV для вашей ГИС. Публичная "
+"страница результатов с защитой приватности и обсуждения в комментариях, "
+"чтобы команда работала в одном месте."
+
+#: survey/templates/landing.html
+msgid "How to start"
+msgstr "С чего начать"
+
+#: survey/templates/landing.html
+msgid "Two ways to get your map survey live"
+msgstr "Два способа запустить опрос на карте"
+
+#: survey/templates/landing.html
+msgid ""
+"Most people build it themselves in an afternoon. If you have a deadline, a "
+"council to report to, or no time, we build it with you."
+msgstr ""
+"Большинство собирают опрос сами за полдня. Если поджимают сроки, нужно "
+"отчитываться перед советом или просто нет времени, мы сделаем его вместе с "
+"вами."
+
+#: survey/templates/landing.html
+msgid "On your own · Free"
+msgstr "Самостоятельно · Бесплатно"
+
+#: survey/templates/landing.html
+msgid "Build it yourself"
+msgstr "Сделать самому"
+
+#: survey/templates/landing.html
+msgid "For anyone with a place and a question."
+msgstr "Для всех, у кого есть место и вопрос о нём."
+
+#: survey/templates/landing.html
+msgid "Describe the place and who should answer."
+msgstr "Опишите место и тех, кто должен ответить."
+
+#: survey/templates/landing.html
+msgid "AI drafts the survey in about a minute. Change anything."
+msgstr "ИИ подготовит опрос примерно за минуту. Меняйте что угодно."
+
+#: survey/templates/landing.html
+msgid "Publish, share the link or QR code, watch answers land on the map."
+msgstr ""
+"Опубликуйте, раздайте ссылку или QR-код и смотрите, как ответы появляются на"
+" карте."
+
+#: survey/templates/landing.html
+msgid "Free to start · no card · no coding"
+msgstr "Бесплатный старт · без банковской карты · без программирования"
+
+#: survey/templates/landing.html
+msgid "With us · Fixed quote"
+msgstr "Вместе с нами · Фиксированная цена"
+
+#: survey/templates/landing.html
+msgid "Build it with us"
+msgstr "Сделать вместе с нами"
+
+#: survey/templates/landing.html
+msgid ""
+"For councils, agencies and consultancies whose project depends on the "
+"responses."
+msgstr ""
+"Для администраций, ведомств и консалтинговых компаний, чей проект зависит от"
+" ответов."
+
+#: survey/templates/landing.html
+msgid "A 30-minute call about your project, audience and timeline."
+msgstr "Звонок на 30 минут о проекте, аудитории и сроках."
+
+#: survey/templates/landing.html
+msgid "A fixed quote. No retainer, no surprises."
+msgstr "Фиксированная цена. Без абонентской платы и сюрпризов."
+
+#: survey/templates/landing.html
+msgid ""
+"We set up the survey and help you reach a response target. Every response "
+"stays yours."
+msgstr ""
+"Мы настроим опрос и поможем набрать нужное число ответов. Все ответы "
+"остаются вашими."
+
+#: survey/templates/landing.html
+msgid "What's included"
+msgstr "Что входит"
+
+#: survey/templates/landing.html
+msgid "The call is free and commits you to nothing"
+msgstr "Звонок бесплатный и ни к чему не обязывает"
+
+#: survey/templates/partials/_story_card.html
+msgid "Lessons learned"
+msgstr "Извлечённые уроки"
+
+#: survey/templates/partials/_story_card.html
+msgid "Read the story"
+msgstr "Читать историю"
