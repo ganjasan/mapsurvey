@@ -16,4 +16,4 @@
 - [x] 3.2 `MarketGuideHubTest`: the contract scenarios (render, sitemap/robots/hreflang, gaps block, sources complete, links up/down, 301, alternatives tables from the registry, Maptionnaire page without Frankfurt, Social Pinpoint page without "no GeoJSON", a patched fact reaching both pages); update `test_breadcrumb_single_and_two_level`, the hreflang path list and any string the wave-2 tests asserted in the old tables
 - [x] 3.3 Run the landing/SEO test classes, then the full suite once
 - [x] 3.4 Open the hub and the three alternatives pages on the dev server at desktop and 390 px; table scrolls, sources links resolve, no console errors; parse FAQPage + BreadcrumbList JSON-LD
-- [ ] 3.5 PR notes: baseline, after-measurement query and date, the list of corrected cells, the request-indexing reminder
+- [x] 3.5 PR notes: baseline, after-measurement query and date, the list of corrected cells, the request-indexing reminder
