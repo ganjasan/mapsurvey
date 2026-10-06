@@ -2230,6 +2230,16 @@ def civic_engagement(request):
 	return render_seo_landing(request, 'civic_engagement')
 
 
+def citizen_engagement_platform(request):
+	"""Public category page owning the "citizen engagement platform" head term (#252).
+
+	The local-government BUYER's page: procurement questions (free plan vs trial, price for a
+	small jurisdiction, data ownership, uptime), compared against Go Vocal and Citizen Space.
+	The community page is the category/product, the civic page the methods; the three
+	cross-link so they do not cannibalise. CTAs carry utm_source=citizen_engagement."""
+	return render_seo_landing(request, 'citizen_engagement_platform')
+
+
 def participatory_budgeting(request):
 	"""Public use-case page for map-based participatory budgeting.
 

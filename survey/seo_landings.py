@@ -185,9 +185,8 @@ SEO_LANDINGS = (
                "Mapsurvey is free for a real project: unlimited surveys, respondents and "
                "team members at $0, hosted or self-hosted. Pro is $49 a month or $490 a "
                "year per workspace, with any number of users. The established vendors "
-               "sell by quote only; Social Pinpoint's last published price list (2021) "
-               "put map tools at about $8,600 a year, and buyers report budgets of "
-               "$15,000 to $40,000 a year for the category."),
+               "sell by quote only: none publishes a current price list, and a council "
+               "learns the figure from sales, usually per instance and per year."),
             QA("Is there a free community engagement platform for local government?",
                "Yes. Mapsurvey's Free plan is the full product, not a trial: every "
                "question type including point, line and polygon input, follow-up "
@@ -202,6 +201,57 @@ SEO_LANDINGS = (
                "own infrastructure; a choice of hosting region is on the Pro roadmap. "
                "Either way the data is yours to export and delete."),
             QA("Do we own the data we collect?", _A_EXPORT),
+        ),
+    ),
+    SeoLanding(
+        key="citizen_engagement_platform",
+        path="/citizen-engagement-platform/",
+        url_name="citizen_engagement_platform",
+        template="citizen_engagement_platform.html",
+        breadcrumbs=(HOME, Crumb("Citizen Engagement Platform", "/citizen-engagement-platform/")),
+        lastmod="2026-10-06",
+        # Change citizen-engagement-landing (#252): the questions are the ones Search Console
+        # shows for this cluster, in the buyer's words.
+        faq=(
+            QA("What is a citizen engagement platform?",
+               "Software a local government uses to involve residents in its decisions "
+               "online: consultations, surveys, idea collection and, in a map-based "
+               "platform like Mapsurvey, places. Vendors also call it a citizen "
+               "participation platform or citizen engagement software for local "
+               "government. Residents open a link, mark the locations their answer is "
+               "about and answer the questions attached to each one; the council gets a "
+               "map and a table of every response, exportable to its GIS."),
+            QA("Which citizen engagement platforms offer a free trial or a free plan for governments?",
+               "Mapsurvey offers a free plan rather than a trial: unlimited surveys, "
+               "respondents and team members at $0, hosted or self-hosted, with every "
+               "question type and every export format. Most established vendors offer a "
+               "demo or a scoped trial through their sales team; Go Vocal also publishes a "
+               "free self-hosted edition of its software."),
+            QA("What does a citizen engagement platform cost for a small jurisdiction?",
+               "On Mapsurvey the price is the same for a parish council and a county: "
+               "free, or Pro at $49 a month or $490 a year per workspace with any number "
+               "of users, surveys and responses. There is no per-resident, per-seat or "
+               "per-project metering. The established platforms license per instance "
+               "and per year, by quote; a small jurisdiction pays for the same instance "
+               "as a large one."),
+            QA("Who owns the data we collect, and can we export it?",
+               "You do. Every response, including the map geometry, exports at any time "
+               "as GeoJSON, CSV, Excel, GeoPackage, Shapefile or KML, so it goes straight "
+               "into QGIS, ArcGIS or a spreadsheet. A survey and its responses can be "
+               "deleted by its owner. Self-hosting the open-source code puts the database "
+               "itself on your servers."),
+            QA("What are the uptime and support arrangements?",
+               "The hosted service has no contractual SLA today. Deploys are zero-downtime, "
+               "the stack is monitored, and incidents are fixed by the developer who runs "
+               "it. A council that needs an uptime guarantee can self-host the same Docker "
+               "stack under its own IT policy. Pro includes direct support from the "
+               "developer; Free is supported by email and the public issue tracker."),
+            QA("Do residents need an account to take part?", _A_ACCOUNT),
+            QA("Where is the data hosted, and does it meet our residency rules?",
+               "The hosted service runs in the United States today (Render, Oregon). "
+               "Councils that need the data to stay in their own jurisdiction self-host "
+               "the Docker stack at no licence cost; a choice of hosting region is on the "
+               "Pro roadmap. Either way the data is yours to export and delete."),
         ),
     ),
     SeoLanding(
@@ -223,8 +273,8 @@ SEO_LANDINGS = (
                "cap on responses, and the open-source code can be hosted by a council's "
                "own IT. Pro, at $49 a month or $490 a year per workspace, adds public "
                "results pages and direct support. UK statutory platforms are licensed "
-               "per instance and per year; Citizen Space, for example, lists from about "
-               "£10,500 a year on G-Cloud."),
+               "per instance and per year, by quote; the rates sit on G-Cloud rather "
+               "than on the vendors' own sites."),
             QA("Can residents comment on a specific location in the proposal?", _A_GEO),
             QA("How do we show consultees the plans?",
                "Upload the proposal as a reference layer (GeoJSON, from any GIS). "

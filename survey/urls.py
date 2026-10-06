@@ -185,6 +185,7 @@ urlpatterns = [
     path('community-engagement-platform/', views.community_engagement_platform, name='community_engagement_platform'),
     path('public-consultation-software/', views.public_consultation_software, name='public_consultation_software'),
     path('civic-engagement/', views.civic_engagement, name='civic_engagement'),
+    path('citizen-engagement-platform/', views.citizen_engagement_platform, name='citizen_engagement_platform'),
     path('participatory-budgeting/', views.participatory_budgeting, name='participatory_budgeting'),
     path('for-consultants/', views.for_consultants, name='for_consultants'),
     path('alternatives/maptionnaire/', views.maptionnaire_alternative, name='maptionnaire_alternative'),

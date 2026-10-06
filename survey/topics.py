@@ -33,8 +33,8 @@ TOPICS = (
     Topic("research", "Research", "for_researchers"),
     Topic("education", "Education", "for_educators"),
     Topic("consultants", "Consultants", "for_consultants"),
+    Topic("citizen-engagement", "Citizen engagement", "citizen_engagement_platform"),
     # No page yet -- each is a candidate landing in epic #257.
-    Topic("citizen-engagement", "Citizen engagement"),
     Topic("neighbourhood-plan", "Neighbourhood plans"),
     Topic("parks-public-space", "Parks and public space"),
     Topic("transport-cycling", "Transport and cycling"),
