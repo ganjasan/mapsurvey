@@ -364,9 +364,16 @@ def render_seo_landing(request, key: str):
     """Render an SEO landing, injecting its FAQ + structured data from the registry."""
     from .events import capture_signup_source  # local import: events is import-light
 
+    from .topics import for_landing, stories_for
+
     landing = _BY_KEY[key]
     capture_signup_source(request)
+    # Change story-topics: the stories that prove this page, by the topic that owns it.
+    # Alternatives pages own no topic and render no block.
+    topic = for_landing(key)
     context = {
+        "topic": topic,
+        "topic_stories": list(stories_for(topic)) if topic else [],
         "faq_items": landing.faq,
         "faqpage_jsonld": build_faqpage_jsonld(landing.faq) if landing.faq else "",
         "breadcrumb_jsonld": build_breadcrumb_jsonld(landing.breadcrumbs) if landing.breadcrumbs else "",

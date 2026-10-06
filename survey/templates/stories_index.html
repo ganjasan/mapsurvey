@@ -24,6 +24,13 @@
 
 <section class="showcase" id="stories">
   <div class="landing-inner">
+    {% if topic_chips %}
+    {% comment %}Change story-topics: ?topic= filters the grid; canonical stays /stories/.{% endcomment %}
+    <nav class="topic-chips topic-filter" aria-label="{% trans 'Filter by topic' %}">
+      <a href="{% url 'stories_index' %}"{% if not active_topic %} class="is-active" aria-current="true"{% endif %}>{% trans "All" %}</a>
+      {% for topic in topic_chips %}<a href="{% url 'stories_index' %}?topic={{ topic.slug }}"{% if active_topic and active_topic.slug == topic.slug %} class="is-active" aria-current="true"{% endif %}>{{ topic.label }}</a>{% endfor %}
+    </nav>
+    {% endif %}
     {% if stories %}
     <div class="story-grid">
       {% for story in stories %}

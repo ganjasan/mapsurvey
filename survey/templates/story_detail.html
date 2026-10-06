@@ -28,6 +28,10 @@ Every picture opens in the lightbox below (js/story_lightbox.js, change story-im
         <p class="sd-eyebrow">{{ story.place }}{% if story.place and story.sector %} · {% endif %}{{ story.sector }}</p>
         {% endif %}
         <h1 class="story-detail__title">{{ story.title }}</h1>
+        {% if topic_chips %}
+        {% comment %}Change story-topics: a chip links to the landing page its topic owns; plain text when none exists yet.{% endcomment %}
+        <p class="topic-chips sd-topics">{% for label, path in topic_chips %}{% if path %}<a href="{{ path }}">{{ label }}</a>{% else %}<span>{{ label }}</span>{% endif %}{% endfor %}</p>
+        {% endif %}
         {% if story.summary %}<p class="sd-lead">{{ story.summary }}</p>{% endif %}
 
         <div class="sd-byline">

@@ -29,6 +29,7 @@ from .events import (
     capture_signup_source, persist_signup_attribution,
 )
 from .demo import record_demo_open
+from .topics import TOPICS
 from .seo_landings import (
     SEO_LANDINGS, render_seo_landing, Crumb, HOME,
     build_breadcrumb_jsonld, build_story_collection_jsonld,
@@ -1689,10 +1690,23 @@ STORIES_CRUMB = Crumb("Stories", "/stories/")
 
 def stories_index(request):
 	"""Public stories hub at /stories/ — card grid of published stories, newest first."""
-	stories = list(Story.in_showcase_order(Story.objects.filter(is_published=True)))
+	from .topics import by_slug
+	published = Story.objects.filter(is_published=True)
+	# Change story-topics: ?topic=<slug> filters the grid; the canonical stays /stories/, so
+	# the filter cannot mint indexable duplicates. Only topics some story carries are offered.
+	used = {slug for story in published.only('topics') for slug in (story.topics or [])}
+	topic_chips = [t for t in TOPICS if t.slug in used]
+	active = by_slug(request.GET.get('topic', ''))
+	if active and active.slug not in used:
+		active = None
+	if active:
+		published = published.filter(topics__contains=[active.slug])
+	stories = list(Story.in_showcase_order(published))
 	breadcrumbs = (HOME, STORIES_CRUMB)
 	context = {
 		'stories': stories,
+		'topic_chips': topic_chips,
+		'active_topic': active,
 		'breadcrumb_jsonld': build_breadcrumb_jsonld(breadcrumbs),
 		'collection_jsonld': build_story_collection_jsonld(request, stories) if stories else "",
 	}
@@ -1702,6 +1716,7 @@ def stories_index(request):
 def story_detail(request, slug):
 	from django.utils.html import strip_tags
 	from .stories import render_body
+	from .topics import chips_for
 	try:
 		story = Story.objects.select_related('survey').prefetch_related('images').get(slug=slug)
 	except Story.DoesNotExist:
@@ -1717,6 +1732,7 @@ def story_detail(request, slug):
 		'is_draft_preview': not story.is_published,
 		'body_html': render_body(story),
 		'canonical': f"https://mapsurvey.org/stories/{story.slug}/",
+		'topic_chips': chips_for(story),
 		'meta_description': meta_description,
 		'breadcrumb_jsonld': build_breadcrumb_jsonld(breadcrumbs),
 	}

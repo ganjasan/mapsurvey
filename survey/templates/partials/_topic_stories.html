@@ -1,0 +1,20 @@
+{% load i18n %}
+{% comment %}
+"From the field" on an SEO landing page (change story-topics): the published stories carrying
+the topic this page owns, from render_seo_landing (`topic`, `topic_stories`). Nothing renders
+when the page owns no topic (alternatives pages) or no story carries it.
+{% endcomment %}
+{% if topic_stories %}
+<section class="showcase topic-stories" id="from-the-field">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "From the field" %}</p>
+    <h2 class="section-heading">{% blocktrans with topic=topic.label %}{{ topic }} projects built with Mapsurvey{% endblocktrans %}</h2>
+    <div class="story-grid">
+      {% for story in topic_stories %}
+      {% include "partials/_story_card.html" %}
+      {% endfor %}
+    </div>
+    <p class="topic-stories__all"><a href="{% url 'stories_index' %}?topic={{ topic.slug }}">{% trans "All stories on this topic" %} &rarr;</a></p>
+  </div>
+</section>
+{% endif %}

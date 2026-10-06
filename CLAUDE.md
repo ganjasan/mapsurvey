@@ -374,6 +374,17 @@ session in the customer's data), the approval HTML (`scripts/story_approval_html
 letter — is the `customer-story` skill (`.claude/skills/customer-story/SKILL.md`);
 `StoryDataDirectoriesTest` seeds every `story_data` dir.
 
+**Story topics (change `story-topics`, issue #250)**: `Story.topics` is a list of slugs from the
+ONE registry `survey/topics.py` (`Topic(slug, label, landing_key)`); `seed_story` and the admin
+form refuse a slug that is not there, so a tag always means the same page. A topic whose
+`landing_key` names an entry of `SEO_LANDINGS` links both ways: the story page shows it as a chip
+linking to the landing, and `render_seo_landing` puts the published stories carrying it into the
+landing's "From the field" block (`partials/_topic_stories.html`, included before the FAQ on all
+12 landings; nothing renders for the alternatives pages, which own no topic). A topic without a
+landing is a plain chip and a candidate page for epic #257. `/stories/?topic=<slug>` filters the
+index; its canonical stays `/stories/`. Production stories seeded from the ops repo are tagged in
+the admin. A new landing page gets its topic by setting `landing_key`, never by a second list.
+
 **Mobile-adaptive layouts (two kill switches)**: `MOBILE_EDITOR_NAV` gives the editor
 two-level contextual navigation below 768px: top strip = page tabs, bottom bar = panes of
 the active page — Survey and Public results share the Structure/Edit/Preview vocabulary,
