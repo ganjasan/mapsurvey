@@ -49215,6 +49215,10 @@ class MarketGuideHubTest(TestCase):
         self.assertIn('href="/participatory-mapping-tools/"', related)
         footer = body[body.index("landing-footer"):]
         self.assertIn('href="/participatory-mapping-tools/"', footer)
+        nav = body[body.index('class="landing-nav__dd-menu"'):body.index("</ul>", body.index('class="landing-nav__dd-menu"'))]
+        self.assertIn('href="/participatory-mapping-tools/"', nav)  # Solutions dropdown, on every page
+        home = Client().get("/").content.decode()
+        self.assertIn('href="/participatory-mapping-tools/"', home[home.index('class="landing-nav__dd-menu"'):])
         hub = Client().get(self.PATH).content.decode()
         hub_related = hub[hub.index('id="related"'):]
         hub_related = hub_related[:hub_related.index("</section>")]

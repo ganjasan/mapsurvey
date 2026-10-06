@@ -126,6 +126,8 @@ homepage views set it (change ru-landing-hreflang).
                     <li><a href="{% url 'for_researchers' %}">{% trans "For Researchers" %}</a></li>
                     <li><a href="{% url 'for_educators' %}">{% trans "For Educators" %}</a></li>
                     <li><a href="{% url 'for_consultants' %}">{% trans "For Consultants" %}</a></li>
+                    {# Change market-guide-landscape-hub: the buyer's guide is the one way into the comparison pages from the chrome. #}
+                    <li class="landing-nav__dd-sep"><a href="{% url 'participatory_mapping_tools' %}">{% trans "Participatory mapping tools: compared" %}</a></li>
                 </ul>
             </li>
             <li><a href="{% url 'pro_early_access' %}">{% trans "Pro" %}</a></li>
