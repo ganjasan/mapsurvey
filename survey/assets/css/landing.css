@@ -315,6 +315,7 @@ a:hover { color: var(--color-accent-hover); }
 }
 
 .lang-switch__current {
+    font-family: var(--font-display);
     font-size: 0.8125rem;
     font-weight: 600;
     color: var(--color-text);
@@ -331,6 +332,8 @@ a:hover { color: var(--color-accent-hover); }
     border-radius: var(--radius-sm);
     padding: 0.2rem 0.375rem;
     cursor: pointer;
+    text-decoration: none;
+    line-height: 1.4;
     transition: all var(--transition-fast);
 }
 

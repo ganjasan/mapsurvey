@@ -554,8 +554,12 @@ def publicly_visible_surveys():
 	)
 
 
-@lang_override('en')
-def index(request):
+def _render_home(request, home_path):
+	"""The homepage body shared by `/` and its Russian twin `/ru/`.
+
+	The caller's `lang_override` decides the language; `home_path` keeps the
+	navbar brand and in-page anchors on the same language version.
+	"""
 	capture_signup_source(request)  # first-touch acquisition source for creator signups
 	surveys = (
 		publicly_visible_surveys()
@@ -574,7 +578,29 @@ def index(request):
 	return render(request, 'landing.html', {
 		'surveys': surveys,
 		'stories': stories,
+		'home_path': home_path,
+		'page_lang': translation.get_language(),
 	})
+
+
+@lang_override('en')
+def index(request):
+	return _render_home(request, '/')
+
+
+@lang_override('ru')
+def index_ru(request):
+	"""Russian homepage (change ru-landing-hreflang, issue #248).
+
+	A URL of its own because crawlers send no Accept-Language and keep no
+	cookie; `ru` is deliberately NOT in LANGUAGES (creator catalog incomplete),
+	and `override` resolves against the catalog on disk regardless.
+	LocaleMiddleware writes Content-Language from the language active after the
+	view returns -- English again once the override exits -- so set it here.
+	"""
+	response = _render_home(request, '/ru/')
+	response['Content-Language'] = 'ru'
+	return response
 
 @org_permission_required('viewer')
 def editor(request):
@@ -2278,6 +2304,27 @@ def _pro_initial(request):
 	return {}
 
 
+def _public_base_url(request):
+	"""Scheme + host the public reached us on, for sitemap and robots URLs.
+
+	Behind Cloudflare and Render `request.scheme` is `http`, which put 74
+	`http://` URLs into a sitemap whose canonicals are all `https://` (#248).
+	`SECURE_PROXY_SSL_HEADER` would fix that site-wide but also changes
+	`is_secure()` for CSRF, cookies and redirects -- out of proportion here.
+	"""
+	from urllib.parse import urlsplit
+	from django.conf import settings as conf_settings
+
+	host = request.get_host()
+	forwarded = request.META.get('HTTP_X_FORWARDED_PROTO', '').split(',')[0].strip().lower()
+	if forwarded in ('http', 'https'):
+		scheme = forwarded
+	else:
+		site = urlsplit(getattr(conf_settings, 'SITE_URL', '') or '')
+		scheme = site.scheme if site.scheme and site.netloc == host else request.scheme
+	return f"{scheme}://{host}"
+
+
 def robots_txt(request):
 	lines = [
 		"User-agent: *",
@@ -2286,6 +2333,7 @@ def robots_txt(request):
 		"Allow: /services/",
 		"Allow: /pro/",
 		"Allow: /r/",
+		"Allow: /ru/",
 	]
 	# SEO landing pages — derived from the single-source registry
 	# (survey/seo_landings.py) so a new landing can't silently miss the allow-list.
@@ -2296,17 +2344,27 @@ def robots_txt(request):
 		"Disallow: /editor/",
 		"Disallow: /accounts/",
 		"",
-		f"Sitemap: {request.scheme}://{request.get_host()}/sitemap.xml",
+		f"Sitemap: {_public_base_url(request)}/sitemap.xml",
 	]
 	return HttpResponse("\n".join(lines), content_type="text/plain")
 
 
 def sitemap_xml(request):
-	base = f"{request.scheme}://{request.get_host()}"
+	base = _public_base_url(request)
 	# Only surveys that actually open for an anonymous visitor. Before this,
 	# 108 of the 140 entries here were 404s, duplicates or dead ends.
 	surveys = publicly_visible_surveys()
-	urls = [f"  <url><loc>{base}/</loc></url>"]
+	# The homepage pair carries the same hreflang set as the pages' <head>
+	# (change ru-landing-hreflang); Google wants it reciprocal on both entries.
+	home_alternates = (
+		f'<xhtml:link rel="alternate" hreflang="en" href="{base}/"/>'
+		f'<xhtml:link rel="alternate" hreflang="ru" href="{base}/ru/"/>'
+		f'<xhtml:link rel="alternate" hreflang="x-default" href="{base}/"/>'
+	)
+	urls = [
+		f"  <url><loc>{base}/</loc>{home_alternates}</url>",
+		f"  <url><loc>{base}/ru/</loc>{home_alternates}</url>",
+	]
 	urls.append(f"  <url><loc>{base}/services/</loc></url>")
 	urls.append(f"  <url><loc>{base}/pro/</loc></url>")
 	# SEO landing pages with crawl hints — from the single-source registry.
@@ -2334,7 +2392,8 @@ def sitemap_xml(request):
 		urls.append(f"  <url><loc>{base}/r/{page.slug}/</loc></url>")
 	xml = (
 		'<?xml version="1.0" encoding="UTF-8"?>\n'
-		'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+		'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '
+		'xmlns:xhtml="http://www.w3.org/1999/xhtml">\n'
 		+ "\n".join(urls)
 		+ "\n</urlset>"
 	)

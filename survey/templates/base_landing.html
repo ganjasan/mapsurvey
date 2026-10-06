@@ -1,6 +1,10 @@
 {% load static i18n %}
 <!DOCTYPE html>
-<html lang="{{ LANGUAGE_CODE|default:'en' }}">
+{% comment %}
+page_lang, not LANGUAGE_CODE: no i18n context processor is installed, so LANGUAGE_CODE was always
+empty here, and the request language would label untranslated English pages as German. Only the
+homepage views set it (change ru-landing-hreflang).
+{% endcomment %}<html lang="{{ page_lang|default:'en' }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -17,6 +21,15 @@
     <meta name="description" content="{% block meta_description %}{% trans "Create map-based surveys where people mark places, draw routes, and outline areas. Free to start, open source, self-hostable. The open-source alternative to Maptionnaire." %}{% endblock %}">
     <meta name="keywords" content="{% block meta_keywords %}PPGIS, participatory mapping, open source GIS, map survey, spatial data collection, urban planning tool, community engagement, Maptionnaire alternative{% endblock %}">
     <link rel="canonical" href="{% block canonical_url %}https://mapsurvey.org/{% endblock %}">
+    {% comment %}
+    Language alternates (change ru-landing-hreflang). Every marketing page is the English and
+    the default version of itself; the homepage pair overrides this with the en/ru/x-default
+    triple. Built like the canonicals are: production host + path.
+    {% endcomment %}
+    {% block hreflang %}
+    <link rel="alternate" hreflang="en" href="https://mapsurvey.org{{ request.path }}">
+    <link rel="alternate" hreflang="x-default" href="https://mapsurvey.org{{ request.path }}">
+    {% endblock %}
 
     {# Open Graph #}
     <meta property="og:type" content="website">
@@ -89,7 +102,7 @@
 </head>
 <body class="landing-body">
     <nav class="landing-nav" id="main-nav">
-        <a href="/" class="landing-nav__brand">
+        <a href="{{ home_path|default:'/' }}" class="landing-nav__brand">
             <img class="landing-nav__logo" src="{% static 'favicon-32x32.png' %}" width="22" height="22" alt="" aria-hidden="true">
             Mapsurvey
         </a>
@@ -98,8 +111,8 @@
             <span></span><span></span><span></span>
         </button>
         <ul class="landing-nav__links" id="nav-links">
-            <li><a href="/#features">{% trans "Features" %}</a></li>
-            <li><a href="/#demo">{% trans "Demo" %}</a></li>
+            <li><a href="{{ home_path|default:'/' }}#features">{% trans "Features" %}</a></li>
+            <li><a href="{{ home_path|default:'/' }}#demo">{% trans "Demo" %}</a></li>
             <li class="landing-nav__dd">
                 <button type="button" class="landing-nav__dd-btn" aria-haspopup="true"
                         onclick="this.parentElement.classList.toggle('is-open')">
@@ -124,22 +137,24 @@
                 GitHub
             </a></li>
             {% endif %}
-            {% comment "Language switcher — disabled until RU translations are complete" %}
-            <li class="landing-nav__lang">
-                {% get_current_language as LANGUAGE_CODE %}
-                <form action="{% url 'set_language' %}" method="post" class="lang-switch">
-                    {% csrf_token %}
-                    <input type="hidden" name="next" value="{{ request.path }}">
-                    {% if LANGUAGE_CODE == 'ru' %}
-                    <button type="submit" name="language" value="en" class="lang-switch__btn" title="Switch to English">EN</button>
-                    <span class="lang-switch__current">RU</span>
-                    {% else %}
-                    <span class="lang-switch__current">EN</span>
-                    <button type="submit" name="language" value="ru" class="lang-switch__btn" title="Переключить на русский">RU</button>
-                    {% endif %}
-                </form>
-            </li>
+            {% comment %}
+            EN / RU switcher (change ru-landing-hreflang): plain links, because a crawler can follow a
+            link but not a language cookie. Only the homepage has a Russian twin, so only the homepage
+            pair (the views that set home_path) shows it; other pages link to /ru/ from the footer.
             {% endcomment %}
+            {% if home_path %}
+            <li class="landing-nav__lang">
+                <span class="lang-switch">
+                    {% if home_path == '/ru/' %}
+                    <a href="/" class="lang-switch__btn" hreflang="en" lang="en" title="English">EN</a>
+                    <span class="lang-switch__current" aria-current="page">RU</span>
+                    {% else %}
+                    <span class="lang-switch__current" aria-current="page">EN</span>
+                    <a href="/ru/" class="lang-switch__btn" hreflang="ru" lang="ru" title="Русский">RU</a>
+                    {% endif %}
+                </span>
+            </li>
+            {% endif %}
             <li><span class="nav-sep"></span></li>
             {% if user.is_authenticated %}
                 <li><a href="{% url 'editor' %}" class="btn-nav-action">{% trans "Dashboard" %}</a></li>
@@ -162,8 +177,8 @@
             <div class="landing-footer__col">
                 <div class="landing-footer__col-title">{% trans "Product" %}</div>
                 <ul class="landing-footer__links">
-                    <li><a href="/#features">{% trans "Features" %}</a></li>
-                    <li><a href="/#demo">{% trans "Demo" %}</a></li>
+                    <li><a href="{{ home_path|default:'/' }}#features">{% trans "Features" %}</a></li>
+                    <li><a href="{{ home_path|default:'/' }}#demo">{% trans "Demo" %}</a></li>
                     <li><a href="{% url 'pro_early_access' %}">{% trans "Pro — early access" %}</a></li>
                     <li><a href="{% url 'services' %}">{% trans "Project service" %}</a></li>
                     <li><a href="{% url 'stories_index' %}">{% trans "Stories" %}</a></li>
@@ -210,6 +225,14 @@
                     {% if GITHUB_REPO_URL %}
                     <li><a href="{{ GITHUB_REPO_URL }}" target="_blank" rel="noopener">GitHub</a></li>
                     {% endif %}
+                </ul>
+            </div>
+            <div class="landing-footer__col">
+                {% comment %}Each link is labelled in its own language, untranslated: a Russian reader on an English page must recognise "Русский".{% endcomment %}
+                <div class="landing-footer__col-title">{% trans "Language" %}</div>
+                <ul class="landing-footer__links">
+                    <li><a href="/" hreflang="en" lang="en">English</a></li>
+                    <li><a href="{% url 'index_ru' %}" hreflang="ru" lang="ru">Русский</a></li>
                 </ul>
             </div>
             <div class="landing-footer__bottom">

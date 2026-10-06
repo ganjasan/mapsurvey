@@ -419,6 +419,18 @@ releasing existing ones (that is the owner's click, or the admin). Respondent pa
 `_abuse_footer.html` notice + `/surveys/<uuid>/report/`; a report opens a `reported` review that holds
 nothing. Every hold/release/confirm/report writes an `AbuseEvent(defense='content_screen')` with ids only.
 
+**Russian homepage and hreflang (change `ru-landing-hreflang`, issue #248)**: `/ru/` is the
+homepage rendered by `views.index_ru` under `lang_override('ru')` — one route, NOT `i18n_patterns`,
+and `ru` stays out of `LANGUAGES` (the creator catalog is incomplete). `home_path` and `page_lang`
+in the context tell `base_landing.html` which twin it is rendering: brand/anchors stay on `/ru/`, the
+EN/RU switcher shows only on the pair, `<html lang>` comes from `page_lang` (there is no i18n context
+processor, so `LANGUAGE_CODE` is empty in templates). Every `base_landing` page emits `hreflang`
+`en` + `x-default` for itself; `landing.html` overrides that with the `en`/`ru`/`x-default` triple,
+which the sitemap repeats as `xhtml:link`. `RussianLandingHreflangTest` fails when a homepage msgid
+has no compiled `ru` translation — a new `{% trans %}` on the homepage needs its Russian in the same
+PR. Sitemap/robots URLs come from `_public_base_url` (`X-Forwarded-Proto`, else `SITE_URL`'s scheme
+on its host), because `request.scheme` is `http` behind the proxy.
+
 **Acquisition metrics (top of the funnel)**: search impressions and clicks, landing visits and the
 channel mix are read on the PostHog **AARRR** dashboard (`POSTHOG_AARRR_DASHBOARD_URL`, project
 248938 dashboard 941308), where Google Search Console and Bing Webmaster Tools are native warehouse

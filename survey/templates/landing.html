@@ -1,6 +1,19 @@
 {% extends "base_landing.html" %}
 {% load static i18n %}
 
+{% comment %}
+One template, two URLs: `/` (English) and `/ru/` (Russian), told apart by home_path
+(change ru-landing-hreflang). The hreflang set is identical on both — Google requires it
+reciprocal.
+{% endcomment %}
+{% block canonical_url %}https://mapsurvey.org{{ home_path|default:'/' }}{% endblock %}
+{% block og_url %}https://mapsurvey.org{{ home_path|default:'/' }}{% endblock %}
+{% block hreflang %}
+    <link rel="alternate" hreflang="en" href="https://mapsurvey.org/">
+    <link rel="alternate" hreflang="ru" href="https://mapsurvey.org/ru/">
+    <link rel="alternate" hreflang="x-default" href="https://mapsurvey.org/">
+{% endblock %}
+
 {% block content %}
 
 {# ===== Hero ===== #}
