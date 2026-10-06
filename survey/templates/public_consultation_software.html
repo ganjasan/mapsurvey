@@ -1,34 +1,25 @@
 {% extends "base_landing.html" %}
 {% load static i18n %}
+{% comment %}
+Category landing for "public consultation software" (change seo-landings-rewrite, #251).
+Variants from Search Console: council consultation software, online / digital public
+consultation platform, public consultation tools. Table facts dated in the note.
+{% endcomment %}
 
-{% block title %}{% trans "Public Consultation Software — Map-Based & Open Source | Mapsurvey" %}{% endblock %}
-{% block meta_description %}{% trans "Run map-based public consultation with Mapsurvey — open-source software for statutory consultation, planning applications, and infrastructure schemes. Stakeholders comment on the map; you export GIS-ready evidence. Self-hostable, GDPR-friendly." %}{% endblock %}
-{% block meta_keywords %}{% trans "public consultation software, online consultation software, online consultation, statutory consultation tool, planning consultation software, map-based consultation, community consultation platform, open source consultation" %}{% endblock %}
+{% block title %}{% trans "Public Consultation Software — Free, Map-Based, Council-Ready | Mapsurvey" %}{% endblock %}
+{% block meta_description %}{% trans "Map-based consultation software for councils and planners: comment on the exact site, export GeoJSON, Excel or Shapefile. Free to run, one flat Pro price." %}{% endblock %}
+{% block meta_keywords %}{% trans "public consultation software, council consultation software, online public consultation platform, digital public consultation platform, public consultation tools, consultation software, council consultation tool, planning consultation tool" %}{% endblock %}
 {% block canonical_url %}https://mapsurvey.org/public-consultation-software/{% endblock %}
 {% block og_url %}https://mapsurvey.org/public-consultation-software/{% endblock %}
-{% block og_title %}{% trans "Open-source, map-based public consultation software" %}{% endblock %}
+{% block og_title %}{% trans "Public consultation software that works on a map — free and open source" %}{% endblock %}
 {% block structured_data %}{% include "partials/_landing_structured_data.html" %}{% endblock %}
-
-{% block extra_head %}
-<style>
-  .aud-lead { max-width: 720px; margin: 0 auto; }
-  .aud-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; margin-top: 26px; }
-  .aud-card { background: #fff; border: 1px solid #e6eaef; border-radius: 12px; padding: 20px 22px; text-align: left; }
-  .aud-card h3 { font-size: 17px; margin: 0 0 6px; }
-  .aud-card p { font-size: 14px; color: #556; margin: 0; line-height: 1.5; }
-  .aud-steps { counter-reset: step; list-style: none; padding: 0; margin: 22px auto 0; max-width: 720px; text-align: left; }
-  .aud-steps li { counter-increment: step; padding: 12px 0 12px 46px; border-bottom: 1px solid #eef1f4; position: relative; font-size: 15px; color: #445; }
-  .aud-steps li::before { content: counter(step); position: absolute; left: 6px; top: 10px; width: 26px; height: 26px; border-radius: 50%; background: #2f6fb0; color: #fff; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
-  .aud-fair { background: #f7f8fa; border: 1px solid #e6eaef; border-radius: 14px; padding: 22px 26px; max-width: 820px; margin: 24px auto 0; text-align: left; font-size: 14.5px; color: #556; line-height: 1.6; }
-</style>
-{% endblock %}
 
 {% block content %}
 <section class="hero" id="hero">
   <div class="hero__content aud-lead">
     <h1 class="hero__headline">{% trans "Public Consultation Software" %}</h1>
     <p class="hero__description">
-      {% trans "Mapsurvey is open-source public consultation software built around the map. Run statutory consultations, planning applications, and infrastructure schemes where stakeholders comment exactly on the location in question — then export GIS-ready evidence for your report. Free to start, self-hostable, and GDPR-friendly." %}
+      {% trans "Mapsurvey is public consultation software built around the map. Show the proposal as a layer, let residents and stakeholders comment on the exact site, route or junction it concerns, and export every response with its location for the consultation report. It runs a statutory consultation, a planning application or an infrastructure scheme from one link that needs no account. Free to run, open source, and self-hostable for public-sector data rules." %}
     </p>
     <div class="hero__cta-group">
       <a href="{% url 'django_registration_register' %}?utm_source=consultation_software&amp;utm_medium=public_consultation_software" class="btn-primary-landing">{% trans "Start free — run a consultation" %}</a>
@@ -38,9 +29,55 @@
     </div>
     <div class="hero__badges">
       <span class="hero__badge">{% trans "Free & open source" %}</span>
-      <span class="hero__badge">{% trans "Map-based comments" %}</span>
-      <span class="hero__badge">{% trans "Exportable evidence" %}</span>
-      <span class="hero__badge">{% trans "GDPR / self-hostable" %}</span>
+      <span class="hero__badge">{% trans "Comments on the map" %}</span>
+      <span class="hero__badge">{% trans "Report-ready export" %}</span>
+      <span class="hero__badge">{% trans "Hosted or self-hosted" %}</span>
+    </div>
+  </div>
+</section>
+
+<section class="showcase showcase--center">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "What it is" %}</p>
+    <h2 class="section-heading">{% trans "What map-based consultation software does differently" %}</h2>
+    <div class="cat-def">
+      <p>{% trans "Public consultation software is the tool a council, a planning authority, a transport agency or a developer uses to publish a proposal, collect responses and account for them in a report. The established products grew out of the document: you upload the consultation paper, add a questionnaire, open a window, close it, and export a spreadsheet of answers. That shape fits a policy consultation. It fits a spatial scheme badly, because the thing people want to talk about is a place, and the questionnaire has no idea where it is." %}</p>
+      <p>{% trans "An online public consultation platform built on a map starts from the drawing. You upload the scheme as a layer: the new route, the site boundary, the junctions, the trees to be removed. Each feature carries its own questions. Residents open the link, find the part of the plan that affects them, and respond right there: support or object, say why, add a photo. They can also mark places the plan missed, as a point, a line or an outlined area. Every response arrives with coordinates and the feature it refers to, so the analysis is a map and a count, not a reading exercise." %}</p>
+      <p>{% trans "Council consultation software has to produce a defensible record. Mapsurvey exports every response, including the geometry, as GeoJSON, CSV, Excel, GeoPackage, Shapefile or KML, so the GIS team and the report author work from one file. Individual free-text responses stay in the export; the public results page shows aggregated counts and maps only, with small groups masked, so a consultation can be transparent without publishing anyone's words. The survey can be versioned, so a second round after a design change keeps the first round's data intact." %}</p>
+      <p>{% trans "Mapsurvey is open source (AGPLv3). The hosted service runs in the United States; a council that needs its respondents' data on its own servers runs the same Docker stack in-house at no licence cost. Pricing is published on this page. There is no per-consultation fee, so a planning department can run every consultation of the year on one workspace." %}</p>
+    </div>
+  </div>
+</section>
+
+<section class="showcase showcase--center">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "How a consultation runs" %}</p>
+    <h2 class="section-heading">{% trans "From proposal to evidence in four steps" %}</h2>
+    <div class="cat-shots">
+      <div class="cat-shot">
+        <div class="showcase-step">{% trans "1 · BUILD" %}</div>
+        <h3>{% trans "Put the proposal on the map" %}</h3>
+        <p>{% trans "Upload the scheme as GeoJSON from QGIS or ArcGIS, give each feature a title, a description and a photo, and attach the questions consultees should answer about it. Add open map questions for the places the plan missed." %}</p>
+        <a class="shot" href="{% static 'img/landing/build-full.webp' %}" target="_blank" rel="noopener"><span class="shot__chrome"><i></i><i></i><i></i></span><img src="{% static 'img/landing/build.webp' %}" alt="{% trans 'Mapsurvey layer editor: ten Copenhagen cycling bridges with categories, photos and descriptions' %}" loading="lazy"></a>
+      </div>
+      <div class="cat-shot">
+        <div class="showcase-step">{% trans "2 · COLLECT" %}</div>
+        <h3>{% trans "Open the consultation" %}</h3>
+        <p>{% trans "Share one link, a QR code on the site notice, or an embed on the council website. Consultees tap a feature, read the proposal card and answer, with no app and no account. Questions can be offered in 75 languages." %}</p>
+        <a class="shot" href="{% static 'img/landing/collect-full.webp' %}" target="_blank" rel="noopener"><span class="shot__chrome"><i></i><i></i><i></i></span><img src="{% static 'img/landing/collect.webp' %}" alt="{% trans 'A respondent opens a bridge card with a photo, reactions from others and a thumbs up or down question' %}" loading="lazy"></a>
+      </div>
+      <div class="cat-shot">
+        <div class="showcase-step">{% trans "3 · ANALYZE" %}</div>
+        <h3>{% trans "Read the responses as a map" %}</h3>
+        <p>{% trans "See support and objection per feature, filter by answer, switch to a heat map of the free-draw responses, and open any single submission. Remove test entries before the count is final." %}</p>
+        <a class="shot" href="{% static 'img/landing/analyze-full.webp' %}" target="_blank" rel="noopener"><span class="shot__chrome"><i></i><i></i><i></i></span><img src="{% static 'img/landing/analyze.webp' %}" alt="{% trans 'Mapsurvey Responses map: routes, unsafe spots and bridges across Copenhagen' %}" loading="lazy"></a>
+      </div>
+      <div class="cat-shot">
+        <div class="showcase-step">{% trans "4 · SHARE" %}</div>
+        <h3>{% trans "Write the report, close the loop" %}</h3>
+        <p>{% trans "Export the full dataset for the consultation statement and the GIS, then publish an aggregated results page so residents can see what was said and what changed." %}</p>
+        <a class="shot" href="{% static 'img/landing/share-full.webp' %}" target="_blank" rel="noopener"><span class="shot__chrome"><i></i><i></i><i></i></span><img src="{% static 'img/landing/share.webp' %}" alt="{% trans 'Public results page with the response count, a link to take the survey, and charts' %}" loading="lazy"></a>
+      </div>
     </div>
   </div>
 </section>
@@ -51,20 +88,28 @@
     <h2 class="section-heading">{% trans "Consultation that produces evidence, not just comments" %}</h2>
     <div class="aud-grid">
       <div class="aud-card">
-        <h3>{% trans "Comments on the map" %}</h3>
-        <p>{% trans "Stakeholders respond where the proposal is — a route, a site boundary, a junction — so responses are precise and easy to act on." %}</p>
+        <h3>{% trans "Comments on the proposal itself" %}</h3>
+        <p>{% trans "Consultees respond on the feature in question: this crossing, this stretch of road, this site boundary. No more guessing which 'the junction' a comment meant." %}</p>
+      </div>
+      <div class="aud-card">
+        <h3>{% trans "Draw, not just drop" %}</h3>
+        <p>{% trans "Points for places, lines for routes and desire lines, polygons for areas. Each with its own follow-up questions." %}</p>
       </div>
       <div class="aud-card">
         <h3>{% trans "Report-ready output" %}</h3>
-        <p>{% trans "Export every response as GeoJSON + CSV for your consultation report, GIS analysis, or committee evidence pack." %}</p>
+        <p>{% trans "Every response as GeoJSON, CSV, Excel, GeoPackage, Shapefile or KML, with one row per placed feature and the sub-question answers alongside." %}</p>
       </div>
       <div class="aud-card">
-        <h3>{% trans "Defensible & transparent" %}</h3>
-        <p>{% trans "Open source (AGPLv3) and self-hostable — auditable process, data under your control, GDPR-friendly by design." %}</p>
+        <h3>{% trans "Transparent by default" %}</h3>
+        <p>{% trans "A public results page shows aggregated maps and counts, masks small groups, and never publishes an individual free-text answer." %}</p>
+      </div>
+      <div class="aud-card">
+        <h3>{% trans "Defensible and auditable" %}</h3>
+        <p>{% trans "Open source (AGPLv3), versioned surveys, exports with timestamps. Self-host when the data must not leave your infrastructure." %}</p>
       </div>
       <div class="aud-card">
         <h3>{% trans "Fits any budget" %}</h3>
-        <p>{% trans "No per-project or per-response licensing. Run one consultation or a whole programme on the same free platform." %}</p>
+        <p>{% trans "No per-consultation or per-response licensing. Run one consultation or a whole programme on the same free platform." %}</p>
       </div>
     </div>
   </div>
@@ -72,25 +117,65 @@
 
 <section class="showcase showcase--center">
   <div class="landing-inner">
-    <p class="section-eyebrow">{% trans "How a consultation runs" %}</p>
-    <h2 class="section-heading">{% trans "From proposal to evidence in four steps" %}</h2>
-    <ol class="aud-steps">
-      <li>{% trans "Build the consultation — questions plus a map where people pin, draw, or outline." %}</li>
-      <li>{% trans "Share the link — no app or account needed for respondents." %}</li>
-      <li>{% trans "Collect location-specific responses from residents and stakeholders." %}</li>
-      <li>{% trans "Export GIS-ready data for your consultation report and analysis." %}</li>
-    </ol>
-    <div class="aud-fair">
-      {% trans "Used by councils, consultancies, developers, and infrastructure teams. If you need a specific fit, we keep dedicated pages for local government and the broader engagement platform." %}
-      <a href="{% url 'community_engagement_platform' %}">{% trans "See the community engagement platform →" %}</a>
+    <p class="section-eyebrow">{% trans "Compared" %}</p>
+    <h2 class="section-heading">{% trans "Mapsurvey vs Citizen Space and Commonplace" %}</h2>
+    <p class="aud-lead" style="color:#556;text-align:center;">{% trans "The two platforms a UK council is most likely to already have a quote from. Both are strong consultation suites; the differences are the price, the licence and whether the map is the centre or an add-on." %}</p>
+    <div class="cmp-table-wrap">
+      <table class="cmp">
+        <thead>
+          <tr><th>&nbsp;</th><th>Mapsurvey</th><th>Citizen Space (Delib)</th><th>Commonplace (Zencity)</th></tr>
+        </thead>
+        <tbody>
+          <tr><th>{% trans "Free tier for real projects" %}</th><td class="ms">{% trans "Yes, unlimited consultations and responses" %}</td><td class="mt">{% trans "No" %}</td><td class="mt">{% trans "No; four-week trial of basic features" %}</td></tr>
+          <tr><th>{% trans "Pricing" %}</th><td class="ms">{% trans "Published: free, or one flat workspace price" %}</td><td class="mt">{% trans "G-Cloud: £10,495 to £99,995 per instance a year" %}</td><td class="mt">{% trans "G-Cloud: £2,250 to £50,000 a licence, 12 to 36 months" %}</td></tr>
+          <tr><th>{% trans "Open source / self-hosting" %}</th><td class="ms">{% trans "Yes, AGPLv3, Docker on your servers" %}</td><td class="mt">{% trans "No, SaaS only" %}</td><td class="mt">{% trans "No, SaaS only" %}</td></tr>
+          <tr><th>{% trans "What a respondent can draw" %}</th><td class="ms">{% trans "Points, lines and polygons, each with follow-up questions" %}</td><td class="mt">{% trans "Pins, lines and polygons (Geospatial add-on)" %}</td><td class="mt">{% trans "Pin drop on the Community Heatmap; line or polygon drawing not published" %}</td></tr>
+          <tr><th>{% trans "GIS export of responses" %}</th><td class="ms">{% trans "GeoJSON, GeoPackage, Shapefile, KML, plus CSV and Excel" %}</td><td class="mt">{% trans "GeoJSON and Shapefile" %}</td><td class="mt">{% trans "CSV and PDF; GIS formats not published" %}</td></tr>
+          <tr><th>{% trans "Respondent account" %}</th><td class="ms">{% trans "None needed" %}</td><td class="mt">{% trans "Optional, configurable per consultation" %}</td><td class="mt">{% trans "Email verification before a contribution is published" %}</td></tr>
+          <tr><th>{% trans "Languages" %}</th><td class="ms">{% trans "75, included" %}</td><td class="mt">{% trans "Not published" %}</td><td class="mt">{% trans "Unlimited question translations; count not published" %}</td></tr>
+          <tr><th>{% trans "Hosting region" %}</th><td class="ms">{% trans "United States (hosted), or self-host anywhere" %}</td><td class="mt">{% trans "United Kingdom" %}</td><td class="mt">{% trans "United Kingdom (AWS London)" %}</td></tr>
+          <tr><th>{% trans "Accessibility statement" %}</th><td class="mt">{% trans "No formal conformance audit yet" %}</td><td class="mt">{% trans "WCAG 2.2, ISO 27001, text alternative for every map question" %}</td><td class="mt">{% trans "WCAG 2.1 AA, ISO 27001, Cyber Essentials" %}</td></tr>
+        </tbody>
+      </table>
     </div>
-    <div class="hero__cta-group" style="margin-top:28px;justify-content:center;">
-      <a href="{% url 'django_registration_register' %}?utm_source=consultation_software&amp;utm_medium=public_consultation_software" class="btn-primary-landing">{% trans "Run your first consultation — free" %}</a>
-      <a href="mailto:konuchovartem@mapsurvey.org?subject=Public%20consultation%20with%20Mapsurvey" class="btn-secondary-landing">{% trans "Talk to us about your consultation" %}</a>
+    <p class="cmp-note">{% trans "Competitor details reflect the vendors' published pages and UK G-Cloud listings as of October 2026 (Citizen Space read in July 2026); verify current specifics with the vendor. 'Not published' means the vendor's public material does not say." %}</p>
+    <div class="cmp-fair">
+      <h3>{% trans "When Citizen Space or Commonplace may fit better" %}</h3>
+      <ul>
+        <li>{% trans "You need a statutory consultation suite with document publishing, response management and a compliance stack your procurement already accepts, and UK data residency on the hosted service is non-negotiable." %}</li>
+        <li>{% trans "You run dozens of non-spatial policy consultations a year and the map is the exception, not the rule." %}</li>
+        <li>{% trans "You are mid-contract and the switching cost outweighs the savings. Mapsurvey can still run the map question of one scheme next to the suite." %}</li>
+      </ul>
+    </div>
+    <div class="cmp-maker">
+      <h3>{% trans "Evaluating consultation software? Ask the person who builds this one" %}</h3>
+      <p>{% trans "Mapsurvey is independent and founder-led. Send the scheme you are consulting on and the question you need answered, and you will get a reply from the developer, usually with a working survey attached." %}</p>
+      <a href="mailto:konuchovartem@mapsurvey.org?subject=Public%20consultation%20with%20Mapsurvey" class="btn-primary-landing">{% trans "Email the developer" %}</a>
     </div>
   </div>
 </section>
 
+<section class="showcase showcase--center">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "What teams consult on" %}</p>
+    <h2 class="section-heading">{% trans "Consultations that belong on a map" %}</h2>
+    <ul class="aud-ideas">
+      <li>{% trans "Local plans and site allocations: comment on each candidate site, propose others." %}</li>
+      <li>{% trans "Active travel and road schemes: support or object per junction, crossing and route segment." %}</li>
+      <li>{% trans "Planning applications and masterplans: reactions to the layout, the access and the open space, feature by feature." %}</li>
+      <li>{% trans "Parks, play and public realm: what to keep, add or remove, pinned to the exact spot." %}</li>
+      <li>{% trans "Flood, drainage and climate adaptation: residents report where water collects and which streets overheat." %}</li>
+      <li>{% trans "Community infrastructure levy and section 106 priorities: where the contributions should land." %}</li>
+    </ul>
+    <div class="hero__cta-group" style="margin-top:28px;justify-content:center;">
+      <a href="{% url 'django_registration_register' %}?utm_source=consultation_software&amp;utm_medium=public_consultation_software" class="btn-primary-landing">{% trans "Run your first consultation — free" %}</a>
+      <a href="{% url 'for_government' %}" class="btn-secondary-landing">{% trans "How councils use it" %}</a>
+    </div>
+  </div>
+</section>
+
+{% include "partials/_landing_pricing.html" %}
+{% include "partials/_landing_siblings.html" with current="public_consultation_software" audience="for_government" %}
 {% include "partials/_topic_stories.html" %}
 {% include "partials/_faq_section.html" %}
 

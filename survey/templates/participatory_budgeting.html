@@ -1,34 +1,26 @@
 {% extends "base_landing.html" %}
 {% load static i18n %}
+{% comment %}
+Category landing for "participatory budgeting" (change seo-landings-rewrite, #251). Search
+Console shows almost no variants yet; the page is written for participatory budgeting
+software / platform / tool / map. The scope sentence ("not a budget-allocation or voting
+module") is a tested requirement: Mapsurvey collects the where, not the how much.
+{% endcomment %}
 
-{% block title %}{% trans "Participatory Budgeting on a Map — Open-Source Tool | Mapsurvey" %}{% endblock %}
-{% block meta_description %}{% trans "Run the spatial side of participatory budgeting: residents pin exactly where investment is needed — playgrounds, crossings, lighting, greening. Open-source, free to start, GIS-ready results for your PB programme." %}{% endblock %}
-{% block meta_keywords %}{% trans "participatory budgeting, participatory budgeting software, participatory budgeting tool, PB programme, community budgeting, map-based budgeting, where to invest, civic engagement" %}{% endblock %}
+{% block title %}{% trans "Participatory Budgeting on a Map — Free Tool for Proposals and Priorities | Mapsurvey" %}{% endblock %}
+{% block meta_description %}{% trans "Collect where residents want investment: proposals pinned to the map, reactions on a shared map, GIS export. Free, open source, no per-project fees." %}{% endblock %}
+{% block meta_keywords %}{% trans "participatory budgeting, participatory budgeting software, participatory budgeting platform, participatory budgeting tool, PB map, participatory budgeting examples, idea collection map, community investment priorities" %}{% endblock %}
 {% block canonical_url %}https://mapsurvey.org/participatory-budgeting/{% endblock %}
 {% block og_url %}https://mapsurvey.org/participatory-budgeting/{% endblock %}
-{% block og_title %}{% trans "Participatory budgeting on a map — open source" %}{% endblock %}
+{% block og_title %}{% trans "Participatory budgeting on a map — free, open source" %}{% endblock %}
 {% block structured_data %}{% include "partials/_landing_structured_data.html" %}{% endblock %}
-
-{% block extra_head %}
-<style>
-  .aud-lead { max-width: 720px; margin: 0 auto; }
-  .aud-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; margin-top: 26px; }
-  .aud-card { background: #fff; border: 1px solid #e6eaef; border-radius: 12px; padding: 20px 22px; text-align: left; }
-  .aud-card h3 { font-size: 17px; margin: 0 0 6px; }
-  .aud-card p { font-size: 14px; color: #556; margin: 0; line-height: 1.5; }
-  .aud-steps { counter-reset: step; list-style: none; padding: 0; margin: 22px auto 0; max-width: 720px; text-align: left; }
-  .aud-steps li { counter-increment: step; padding: 12px 0 12px 46px; border-bottom: 1px solid #eef1f4; position: relative; font-size: 15px; color: #445; }
-  .aud-steps li::before { content: counter(step); position: absolute; left: 6px; top: 10px; width: 26px; height: 26px; border-radius: 50%; background: #2f6fb0; color: #fff; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
-  .aud-fair { background: #f7f8fa; border: 1px solid #e6eaef; border-radius: 14px; padding: 22px 26px; max-width: 820px; margin: 24px auto 0; text-align: left; font-size: 14.5px; color: #556; line-height: 1.6; }
-</style>
-{% endblock %}
 
 {% block content %}
 <section class="hero" id="hero">
   <div class="hero__content aud-lead">
     <h1 class="hero__headline">{% trans "Participatory budgeting, grounded in place" %}</h1>
     <p class="hero__description">
-      {% trans "The hardest question in participatory budgeting isn't how much — it's where. Mapsurvey collects the spatial half of your PB programme: residents pin the playground that needs repair, the dark street that needs lighting, the corner that needs greening. You get a prioritised, mappable picture of demand — free, open source, and exportable to GIS." %}
+      {% trans "The hardest question in participatory budgeting is not how much. It is where. Mapsurvey collects the spatial half of a PB programme: residents pin the playground that needs repair, the dark street that needs lighting, the corner that needs greening, and react to each other's proposals on a shared map. You get a prioritised, mappable picture of demand before a single euro is allocated. Free, open source, exportable to GIS." %}
     </p>
     <div class="hero__cta-group">
       <a href="{% url 'django_registration_register' %}?utm_source=participatory_budgeting&amp;utm_medium=participatory_budgeting" class="btn-primary-landing">{% trans "Start your PB map — free" %}</a>
@@ -39,8 +31,21 @@
     <div class="hero__badges">
       <span class="hero__badge">{% trans "Free & open source" %}</span>
       <span class="hero__badge">{% trans "Pin, draw, outline" %}</span>
-      <span class="hero__badge">{% trans "GeoJSON + CSV export" %}</span>
+      <span class="hero__badge">{% trans "Reactions on a shared map" %}</span>
       <span class="hero__badge">{% trans "No per-project fees" %}</span>
+    </div>
+  </div>
+</section>
+
+<section class="showcase showcase--center">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "What it is" %}</p>
+    <h2 class="section-heading">{% trans "Where participatory budgeting software usually goes wrong" %}</h2>
+    <div class="cat-def">
+      <p>{% trans "Participatory budgeting gives residents a direct say over part of a public budget: they propose projects, the administration checks feasibility and cost, and residents vote on what gets funded. Most participatory budgeting software is built for the last step. It is a ballot with a budget constraint: pick projects until the virtual money runs out, or drag sliders to balance a budget. That step matters, but it comes months after the step where most PB programmes lose their residents: idea collection." %}</p>
+      <p>{% trans "Idea collection usually happens in a form. 'Describe your proposal and where it would go.' The answers are paragraphs, the locations are addresses typed from memory, and someone in the council spends weeks geocoding and de-duplicating them before anyone can see that forty people asked for the same crossing. A participatory budgeting map turns that around. Residents put the proposal where it belongs, as a pin, a line or an outlined area, answer the questions attached to it, and add a photo. Duplicates become a cluster, and the cluster is the first result of the programme." %}</p>
+      <p>{% trans "Mapsurvey is that map. It is a participatory budgeting tool for the proposal and prioritisation rounds: collecting locations, showing them on a shared map so residents can react to each other's ideas with a thumbs up or down and a comment, and exporting the whole set to the GIS and the spreadsheet where feasibility and costing happen. It is not a budget-allocation or voting module. Reactions are one per session and do not verify voters; the binding vote on a fixed budget belongs in a PB voting tool or on paper, and many programmes combine the two." %}</p>
+      <p>{% trans "PB budgets should fund projects, not software licences. Mapsurvey is free to run, with no per-project or per-response fees, and open source under the AGPLv3 licence, so a city that wants its residents' proposals on its own servers can host the same software itself. The hosted version runs in the United States." %}</p>
     </div>
   </div>
 </section>
@@ -49,41 +54,129 @@
   <div class="landing-inner">
     <p class="section-eyebrow">{% trans "How it fits your PB cycle" %}</p>
     <h2 class="section-heading">{% trans "From idea collection to a funded map" %}</h2>
-    <ol class="aud-steps">
-      <li>{% trans "Idea collection — residents pin proposals where they belong, with photos and descriptions." %}</li>
-      <li>{% trans "Shortlisting — export the map, cluster demand by neighbourhood, and shortlist with your committee." %}</li>
-      <li>{% trans "Voting round — run a second map survey where residents support shortlisted locations." %}</li>
-      <li>{% trans "Show the results — publish what got funded, exactly where people asked for it." %}</li>
-    </ol>
-    <div class="aud-grid">
-      <div class="aud-card">
-        <h3>{% trans "Demand you can see" %}</h3>
-        <p>{% trans "Clusters of pins tell you which street, park, or block the community actually cares about — before a single euro is allocated." %}</p>
+    <div class="cat-shots">
+      <div class="cat-shot">
+        <div class="showcase-step">{% trans "1 · BUILD" %}</div>
+        <h3>{% trans "Set up the proposal map" %}</h3>
+        <p>{% trans "One map question for the where, a category, a short description, an optional photo and a cost guess as follow-up questions. Add the district boundary and the projects already funded last year as reference layers." %}</p>
+        <a class="shot" href="{% static 'img/landing/build-full.webp' %}" target="_blank" rel="noopener"><span class="shot__chrome"><i></i><i></i><i></i></span><img src="{% static 'img/landing/build.webp' %}" alt="{% trans 'Mapsurvey layer editor: ten Copenhagen cycling bridges with categories, photos and descriptions' %}" loading="lazy"></a>
       </div>
-      <div class="aud-card">
-        <h3>{% trans "Fair by design" %}</h3>
-        <p>{% trans "A public link reaches beyond the usual meeting crowd, and every neighbourhood's input lands on the same map." %}</p>
+      <div class="cat-shot">
+        <div class="showcase-step">{% trans "2 · COLLECT" %}</div>
+        <h3>{% trans "Idea collection, then reactions" %}</h3>
+        <p>{% trans "Residents pin proposals where they belong, with no account and from any phone. Show the collected proposals on a shared map and let people react to the ones they support, so the prioritisation starts in the collection round." %}</p>
+        <a class="shot" href="{% static 'img/landing/collect-full.webp' %}" target="_blank" rel="noopener"><span class="shot__chrome"><i></i><i></i><i></i></span><img src="{% static 'img/landing/collect.webp' %}" alt="{% trans 'A respondent opens a bridge card with a photo, reactions from others and a thumbs up or down question' %}" loading="lazy"></a>
       </div>
-      <div class="aud-card">
-        <h3>{% trans "Budget-friendly, literally" %}</h3>
-        <p>{% trans "PB budgets should fund projects, not software licences. Mapsurvey is free to run — no per-project or per-response fees." %}</p>
+      <div class="cat-shot">
+        <div class="showcase-step">{% trans "3 · ANALYZE" %}</div>
+        <h3>{% trans "Shortlist by cluster and category" %}</h3>
+        <p>{% trans "See the demand as a heat map, filter by category, read the reactions, export the lot and shortlist with your committee. The cluster of forty pins on one crossing is one project, costed once." %}</p>
+        <a class="shot" href="{% static 'img/landing/analyze-full.webp' %}" target="_blank" rel="noopener"><span class="shot__chrome"><i></i><i></i><i></i></span><img src="{% static 'img/landing/analyze.webp' %}" alt="{% trans 'Mapsurvey Responses map: routes, unsafe spots and bridges across Copenhagen' %}" loading="lazy"></a>
       </div>
-      <div class="aud-card">
-        <h3>{% trans "GIS-ready output" %}</h3>
-        <p>{% trans "GeoJSON + CSV export drops straight into QGIS or ArcGIS for analysis, costing, and the final report." %}</p>
+      <div class="cat-shot">
+        <div class="showcase-step">{% trans "4 · SHARE" %}</div>
+        <h3>{% trans "Vote elsewhere, show the result here" %}</h3>
+        <p>{% trans "Run the binding vote in your PB voting tool or on paper, then publish the funded projects on a public results page, exactly where people asked for them." %}</p>
+        <a class="shot" href="{% static 'img/landing/share-full.webp' %}" target="_blank" rel="noopener"><span class="shot__chrome"><i></i><i></i><i></i></span><img src="{% static 'img/landing/share.webp' %}" alt="{% trans 'Public results page with the response count, a link to take the survey, and charts' %}" loading="lazy"></a>
       </div>
-    </div>
-    <div class="aud-fair">
-      {% trans "Honest scope: Mapsurvey handles the spatial side of PB — collecting and prioritising locations. It is not a coin-allocation or budget-simulation module; if your process centres on residents distributing a virtual budget across fixed projects, a dedicated PB suite may fit that step better. Many programmes combine both: Mapsurvey for the \"where\", a spreadsheet or PB tool for the \"how much\"." %}
-      <a href="{% url 'civic_engagement' %}">{% trans "More civic engagement methods →" %}</a>
-    </div>
-    <div class="hero__cta-group" style="margin-top:28px;justify-content:center;">
-      <a href="{% url 'django_registration_register' %}?utm_source=participatory_budgeting&amp;utm_medium=participatory_budgeting" class="btn-primary-landing">{% trans "Create your PB survey — free" %}</a>
-      <a href="mailto:konuchovartem@mapsurvey.org?subject=Participatory%20budgeting%20with%20Mapsurvey" class="btn-secondary-landing">{% trans "Talk to us about your PB programme" %}</a>
     </div>
   </div>
 </section>
 
+<section class="showcase showcase--center">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "Why a map" %}</p>
+    <h2 class="section-heading">{% trans "What the map adds to a PB programme" %}</h2>
+    <div class="aud-grid">
+      <div class="aud-card">
+        <h3>{% trans "Demand you can see" %}</h3>
+        <p>{% trans "Clusters of pins tell you which street, park or block the community actually cares about, before a single euro is allocated." %}</p>
+      </div>
+      <div class="aud-card">
+        <h3>{% trans "Reactions, not just submissions" %}</h3>
+        <p>{% trans "Residents see what others proposed and give each proposal a thumbs up or down and a comment. The shortlist writes itself." %}</p>
+      </div>
+      <div class="aud-card">
+        <h3>{% trans "Fair by design" %}</h3>
+        <p>{% trans "A public link reaches beyond the usual meeting crowd, and every neighbourhood's input lands on the same map, in any of 75 languages." %}</p>
+      </div>
+      <div class="aud-card">
+        <h3>{% trans "Proposals with evidence" %}</h3>
+        <p>{% trans "A photo of the broken bench, a line along the missing pavement, a polygon around the lot. Costing starts from a place, not a paragraph." %}</p>
+      </div>
+      <div class="aud-card">
+        <h3>{% trans "GIS-ready output" %}</h3>
+        <p>{% trans "GeoJSON, CSV, Excel, GeoPackage, Shapefile or KML export drops straight into QGIS or ArcGIS for feasibility, costing and the final report." %}</p>
+      </div>
+      <div class="aud-card">
+        <h3>{% trans "Budget-friendly, literally" %}</h3>
+        <p>{% trans "PB budgets should fund projects, not software licences. Mapsurvey is free to run, with no per-project or per-response fees." %}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="showcase showcase--center">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "Compared" %}</p>
+    <h2 class="section-heading">{% trans "Mapsurvey vs Decidim and Balancing Act" %}</h2>
+    <p class="aud-lead" style="color:#556;text-align:center;">{% trans "Two participatory budgeting tools at opposite ends of the process: Decidim runs the whole programme including the vote, Balancing Act simulates the budget. Mapsurvey covers the part both leave thin: where the proposals are." %}</p>
+    <div class="cmp-table-wrap">
+      <table class="cmp">
+        <thead>
+          <tr><th>&nbsp;</th><th>Mapsurvey</th><th>Decidim</th><th>Balancing Act (Polco)</th></tr>
+        </thead>
+        <tbody>
+          <tr><th>{% trans "Free tier for real projects" %}</th><td class="ms">{% trans "Yes, hosted, unlimited proposals and respondents" %}</td><td class="mt">{% trans "Free software; you host it or pay a partner" %}</td><td class="mt">{% trans "Free trial; pricing on request" %}</td></tr>
+          <tr><th>{% trans "Pricing" %}</th><td class="ms">{% trans "Published: free, or one flat workspace price" %}</td><td class="mt">{% trans "Software free; managed hosting prices not published" %}</td><td class="mt">{% trans "Quote only" %}</td></tr>
+          <tr><th>{% trans "Open source / self-hosting" %}</th><td class="ms">{% trans "Yes, AGPLv3, Docker on your servers" %}</td><td class="mt">{% trans "Yes, AGPLv3; self-hosting is the default" %}</td><td class="mt">{% trans "No, SaaS only" %}</td></tr>
+          <tr><th>{% trans "What a respondent can draw" %}</th><td class="ms">{% trans "Points, lines and polygons, each with follow-up questions" %}</td><td class="mt">{% trans "An address geocoded to a pin on a proposal; no line or polygon drawing published" %}</td><td class="mt">{% trans "No map input published" %}</td></tr>
+          <tr><th>{% trans "GIS export" %}</th><td class="ms">{% trans "GeoJSON, GeoPackage, Shapefile, KML, plus CSV and Excel" %}</td><td class="mt">{% trans "CSV, JSON, Excel; coordinates not in the proposals export" %}</td><td class="mt">{% trans "Spreadsheet of record-level submissions" %}</td></tr>
+          <tr><th>{% trans "Respondent account" %}</th><td class="ms">{% trans "None needed" %}</td><td class="mt">{% trans "Registration required to propose, comment or vote" %}</td><td class="mt">{% trans "Not published for simulations; receipts are anonymous" %}</td></tr>
+          <tr><th>{% trans "Languages" %}</th><td class="ms">{% trans "75, included" %}</td><td class="mt">{% trans "18 or more, community-translated" %}</td><td class="mt">{% trans "English, Spanish, French; others on request" %}</td></tr>
+          <tr><th>{% trans "The budget vote" %}</th><td class="ms">{% trans "Reactions on a shared map; no ballot, no voter verification" %}</td><td class="mt">{% trans "Budgets component: vote on projects within a budget, thresholds, results to Accountability" %}</td><td class="mt">{% trans "Budget simulation, prioritisation and ranking of costed projects" %}</td></tr>
+          <tr><th>{% trans "Accessibility statement" %}</th><td class="mt">{% trans "No formal conformance audit yet" %}</td><td class="mt">{% trans "Follows WCAG; AA as objective" %}</td><td class="mt">{% trans "Polco states WCAG 2.1 AA on resident-facing parts" %}</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cmp-note">{% trans "Competitor details reflect the projects' and vendors' published pages and documentation as of October 2026; verify current specifics with them. 'Not published' means the public material does not say." %}</p>
+    <div class="cmp-fair">
+      <h3>{% trans "When Decidim or Balancing Act may fit better" %}</h3>
+      <ul>
+        <li>{% trans "You need the binding vote: a verified electorate choosing projects within a fixed budget, with the result published and tracked. That is Decidim's Budgets component or a dedicated PB voting tool, not Mapsurvey." %}</li>
+        <li>{% trans "Your programme is about the trade-offs in the whole municipal budget rather than a list of neighbourhood projects. That is a budget simulator." %}</li>
+        <li>{% trans "You already run a participation portal with proposals, debates and voting under one login. Mapsurvey can still run the proposal map and hand the layer back." %}</li>
+      </ul>
+    </div>
+    <div class="cmp-maker">
+      <h3>{% trans "Planning a PB round? Talk to the person who builds this" %}</h3>
+      <p>{% trans "Mapsurvey is independent and founder-led. Describe your programme, the budget line and the timeline, and you will get a reply from the developer with a draft proposal map you can open the same day." %}</p>
+      <a href="mailto:konuchovartem@mapsurvey.org?subject=Participatory%20budgeting%20with%20Mapsurvey" class="btn-primary-landing">{% trans "Email the developer" %}</a>
+    </div>
+  </div>
+</section>
+
+<section class="showcase showcase--center">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "Examples" %}</p>
+    <h2 class="section-heading">{% trans "Participatory budgeting rounds that belong on a map" %}</h2>
+    <ul class="aud-ideas">
+      <li>{% trans "Neighbourhood PB: small capital projects, pinned where they would go, with a photo of the problem." %}</li>
+      <li>{% trans "School and youth PB: pupils map the routes, crossings and spaces around their school and propose what to fix." %}</li>
+      <li>{% trans "Green PB: trees, pocket parks and rain gardens, outlined as areas so the parks team can cost them." %}</li>
+      <li>{% trans "Mobility PB: missing pavements, cycle links and lighting drawn as lines along the streets concerned." %}</li>
+      <li>{% trans "Rural and village PB: one map for a whole parish, with the proposals visible to every hamlet." %}</li>
+      <li>{% trans "Second-round reactions: shortlisted projects on a shared map, residents give a thumbs up or down before the vote." %}</li>
+    </ul>
+    <div class="hero__cta-group" style="margin-top:28px;justify-content:center;">
+      <a href="{% url 'django_registration_register' %}?utm_source=participatory_budgeting&amp;utm_medium=participatory_budgeting" class="btn-primary-landing">{% trans "Create your PB survey — free" %}</a>
+      <a href="{% url 'civic_engagement' %}" class="btn-secondary-landing">{% trans "More civic engagement methods" %}</a>
+    </div>
+  </div>
+</section>
+
+{% include "partials/_landing_pricing.html" %}
+{% include "partials/_landing_siblings.html" with current="participatory_budgeting" audience="for_government" %}
 {% include "partials/_topic_stories.html" %}
 {% include "partials/_faq_section.html" %}
 

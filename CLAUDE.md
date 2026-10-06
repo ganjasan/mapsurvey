@@ -349,6 +349,23 @@ row past `queued` and returns.
 
 **Public results page**: Creators expose aggregated results at `/r/<slug>/` via `PublicResultsPage` (1:1 with `SurveyHeader`) + ordered `PublicResultsBlock`s. Config tab at `/editor/surveys/<uuid>/public-results/`. Rendering logic in `survey/public_results.py` (`PublicResultsService`, `render_page_data`, `freeze_page`/`unfreeze_page`); editor views in `survey/public_results_editor.py`. Aggregates run over CLEAN sessions only (not deleted, excludes `not_approved`/`on_hold`) across the canonical survey + all versions. Privacy: k-anonymity masks buckets `<K` (default 3); geo popups expose only creator-selected `geo_label_fields`; individual free-text answers are never published. Hybrid `live` (60s cache) vs `frozen` (snapshot) mode. Visibility `public` (indexed, in sitemap) vs `unlisted` (noindex). The page config is intentionally NOT included in survey ZIP export/import.
 
+**Category landings (`/community-engagement-platform/`, `/civic-engagement/`,
+`/public-consultation-software/`, `/participatory-budgeting/`; change `seo-landings-rewrite`, #251)**:
+one section order on all four (hero → definition → four screenshot steps → feature grid → comparison
+table vs two incumbents + "when they fit better" → use cases → pricing → siblings → From the field →
+FAQ), styled from the "Category landings" block of `landing.css`, not per-template `<style>`. The Pro
+price ($49 a month / $490 a year per workspace) lives in `partials/_landing_pricing.html` and
+NOWHERE else on the site, including meta descriptions (`SeoCategoryLandingContractTest` fails if a
+template names it): taking the price off the site is one edit. `partials/_landing_siblings.html`
+links the four pages to each other (`current`, `audience`). Every comparison cell comes from the
+vendor's published pages, dated in the note under the table; "not published" is a valid cell, and
+the tables follow the vendors' pages over our older dossiers (Go Vocal draws lines and polygons and
+has an AGPL Free Edition; Social Pinpoint's Social Map exports GeoJSON). No marketing page may claim
+EU hosting: the hosted service is in the United States, self-hosting is the EU-residency answer.
+Rewriting a landing means bumping its `lastmod` in `seo_landings.py` and rewriting its FAQ for the
+variant queries Search Console shows it for (`googlesearchconsole_search_analytics_by_query_page`
+in PostHog).
+
 **Customer stories (`Story`, `StoryImage`; change `customer-stories-showcase`)**: the homepage
 "From the field" carousel and `/stories/<slug>/` are DB rows, but the REPO is the source:
 `survey/story_data/<slug>/` holds `story.json` (fields, cover/card/logo file names, `images`

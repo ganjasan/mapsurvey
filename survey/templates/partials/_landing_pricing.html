@@ -1,0 +1,50 @@
+{% load i18n %}
+{% comment %}
+Pricing block for the category landing pages (change seo-landings-rewrite). The ONLY place
+on the marketing site that names the Pro figure: $49 a month or $490 a year per workspace,
+the prices on file with the payment provider and quoted to the first paying customer.
+/pro/ deliberately quotes nothing and keeps asking what buyers need; this block links there.
+To take the price off the site, edit this file and nothing else.
+{% endcomment %}
+<section class="showcase showcase--center cat-pricing" id="pricing">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "Pricing" %}</p>
+    <h2 class="section-heading">{% trans "Free to run a real project. One flat price when you need more." %}</h2>
+    <div class="pricing__grid">
+      <div class="pricing-card">
+        <div class="pricing-card__header">
+          <div class="pricing-card__name">{% trans "Free" %}</div>
+          <div class="pricing-card__price">$0</div>
+          <div class="pricing-card__period">{% trans "forever, hosted or self-hosted" %}</div>
+        </div>
+        <p class="pricing-card__note">{% trans "Not a trial and not a sandbox: the whole collection and analysis product, with no cap on surveys, respondents or team members." %}</p>
+        <ul class="pricing-card__features">
+          <li>{% trans "Every question type, including point, line and polygon on the map" %}</li>
+          <li>{% trans "Follow-up questions attached to each place a respondent marks" %}</li>
+          <li>{% trans "Unlimited surveys, responses and team members" %}</li>
+          <li>{% trans "Survey text in 75 languages" %}</li>
+          <li>{% trans "Export as GeoJSON, CSV, Excel, GeoPackage, Shapefile or KML" %}</li>
+          <li>{% trans "Responses map, filters, heat maps and charts" %}</li>
+          <li>{% trans "Self-host the open-source code (AGPLv3) on your own servers" %}</li>
+        </ul>
+        <a href="{% url 'django_registration_register' %}?utm_source=pricing_block&amp;utm_medium=landing" class="btn-secondary-landing">{% trans "Create a free account" %}</a>
+      </div>
+      <div class="pricing-card">
+        <div class="pricing-card__header">
+          <div class="pricing-card__name">{% trans "Pro" %}<span class="pricing-card__tag">{% trans "early access" %}</span></div>
+          <div class="pricing-card__price">$49</div>
+          <div class="pricing-card__period">{% trans "a month, or $490 a year, per workspace" %}</div>
+        </div>
+        <p class="pricing-card__note">{% trans "One workspace, any number of users, surveys and responses. No per-project, per-seat or per-response metering, so a consultancy can run every engagement of the year on one line item." %}</p>
+        <ul class="pricing-card__features">
+          <li>{% trans "Everything in Free" %}</li>
+          <li>{% trans "Public results pages for residents and councillors" %}</li>
+          <li>{% trans "Direct support from the developer who builds the product" %}</li>
+          <li>{% trans "Read-only access for clients and committees, custom domain and branding, and a choice of hosting region, as they ship" %}</li>
+        </ul>
+        <a href="{% url 'pro_early_access' %}" class="btn-primary-landing">{% trans "See what Pro includes" %}</a>
+      </div>
+    </div>
+    <p class="cat-pricing__foot">{% trans "Pro is in early access: the workspace price is fixed, the feature list is being finished with the first customers, and existing accounts keep what they have. If a grant or a council budget needs an invoice rather than a card, write to us." %}</p>
+  </div>
+</section>
