@@ -1,0 +1,226 @@
+{% extends "base_landing.html" %}
+{% load static i18n %}
+{% comment %}
+Category landing for "citizen engagement platform" (change citizen-engagement-landing, #252).
+The local-government BUYER's page: the community page is the category/product, the civic page
+the methods; this one answers the procurement questions Search Console shows (free plan vs
+trial, price for a small jurisdiction, data ownership, uptime). Section order and shared blocks
+follow openspec/changes/seo-landings-rewrite/design.md; the extra Procurement section is
+described in openspec/changes/citizen-engagement-landing/design.md.
+Competitor cells come from the vendors' published pages, dated in the note under the table, and
+name NO price figure (owner rule 2026-10-06): pricing model and free tier only.
+Hosting wording follows /trust/: United States today, self-host for residency.
+{% endcomment %}
+
+{% block title %}{% trans "Citizen Engagement Platform — Free for Local Government, Open Source | Mapsurvey" %}{% endblock %}
+{% block meta_description %}{% trans "Citizen engagement platform for councils and cities, built on a map: residents pin places and draw routes, you export GIS data. Free plan, one flat Pro price." %}{% endblock %}
+{% block meta_keywords %}{% trans "citizen engagement platform, citizen participation platform, citizen engagement software for local government, citizen engagement software, citizen engagement tools, municipal engagement platform, resident engagement platform, free citizen engagement platform, citizen engagement platform pricing" %}{% endblock %}
+{% block canonical_url %}https://mapsurvey.org/citizen-engagement-platform/{% endblock %}
+{% block og_url %}https://mapsurvey.org/citizen-engagement-platform/{% endblock %}
+{% block og_title %}{% trans "Citizen engagement platform for local government — free, open source, on a map" %}{% endblock %}
+{% block structured_data %}{% include "partials/_landing_structured_data.html" %}{% endblock %}
+
+{% block content %}
+<section class="hero" id="hero">
+  <div class="hero__content aud-lead">
+    <h1 class="hero__headline">{% trans "Citizen Engagement Platform" %}</h1>
+    <p class="hero__description">
+      {% trans "Mapsurvey is a citizen engagement platform for councils, cities and counties that asks residents the question every local decision comes down to: where? Residents pin the places, draw the routes and outline the areas their answer is about, then answer the questions attached to each one. The council gets a map and a table of every response, exportable to its GIS, instead of a mailbox of free text. Free for a real project, one flat price when you need more, open source and self-hostable when the data has to stay in your jurisdiction." %}
+    </p>
+    <div class="hero__cta-group">
+      <a href="{% url 'django_registration_register' %}?utm_source=citizen_engagement&amp;utm_medium=citizen_engagement_platform" class="btn-primary-landing">{% trans "Start free" %}</a>
+      {% if DEMO_SURVEY_URL %}
+      <a href="{{ DEMO_SURVEY_URL }}" class="btn-secondary-landing" target="_blank" rel="noopener">{% trans "Try a live demo" %}</a>
+      {% endif %}
+    </div>
+    <div class="hero__badges">
+      <span class="hero__badge">{% trans "Free plan, not a trial" %}</span>
+      <span class="hero__badge">{% trans "No per-resident or per-seat fees" %}</span>
+      <span class="hero__badge">{% trans "Export everything, any time" %}</span>
+      <span class="hero__badge">{% trans "Open source, self-hostable" %}</span>
+    </div>
+  </div>
+</section>
+
+<section class="showcase showcase--center">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "What it is" %}</p>
+    <h2 class="section-heading">{% trans "What a citizen engagement platform is, and what the map adds" %}</h2>
+    <div class="cat-def">
+      <p>{% trans "A citizen engagement platform is the software a local government uses to involve residents in its decisions online: a consultation on a road scheme, a survey about a park, a call for ideas for the town centre, a participatory budget. Vendors also call it a citizen participation platform, citizen engagement software for local government, or a resident engagement platform; the job is the same. Residents are invited, they respond, and the council turns the responses into a report, a plan or a vote at committee." %}</p>
+      <p>{% trans "Most platforms are built around pages and forms. A map-based citizen engagement platform starts from the question local decisions actually turn on: where. Which crossing is unsafe, which street floods, which route do people cycle, which corner of the park should stay as it is. On Mapsurvey residents answer by marking the place, and each mark carries the follow-up questions you attach to it. A comment that says 'the junction by the school is dangerous' has to be read, interpreted and geocoded by an officer before it can be counted. A pin on that junction is already a data point; five hundred of them are evidence for a capital bid." %}</p>
+      <p>{% trans "That is also why the data comes out in a form a council can use. Every response exports with its geometry as GeoJSON, GeoPackage, Shapefile or KML for the GIS team, and as CSV or Excel for everyone else. The responses map inside the platform is the working view for the project officer: filter by question and answer, switch to a heat map, open any single response, clean out the test runs. A public results page shows residents that their input was counted." %}</p>
+      <p>{% trans "Mapsurvey is open source under the AGPLv3 licence. The hosted service runs on servers in the United States today; a council whose policy requires the data to stay inside its own jurisdiction runs the same Docker stack on its own infrastructure, at no licence cost, and a choice of hosting region is on the Pro roadmap. Either way the data is yours: every response exports, every survey can be deleted, and nothing is locked behind a tier." %}</p>
+      <p>{% trans "This page is written for the people who buy and procure the platform, and it answers the questions they ask: is there a free plan or only a trial, what does it cost a small jurisdiction, who owns the data, what happens when it goes down. The" %} <a href="{% url 'community_engagement_platform' %}">{% trans "community engagement platform" %}</a> {% trans "page describes the product itself, feature by feature, and the" %} <a href="{% url 'civic_engagement' %}">{% trans "civic engagement" %}</a> {% trans "page covers the methods: how to engage people on a map, from neighbourhood plans to safety audits." %}</p>
+    </div>
+  </div>
+</section>
+
+<section class="showcase showcase--center">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "How it works" %}</p>
+    <h2 class="section-heading">{% trans "From a council question to a map of answers in an afternoon" %}</h2>
+    <div class="cat-shots">
+      <div class="cat-shot">
+        <div class="showcase-step">{% trans "1 · BUILD" %}</div>
+        <h3>{% trans "Write the questions, add the map" %}</h3>
+        <p>{% trans "Pick a point, line or polygon question for the where, attach follow-up questions to each mark, and upload your own reference layer from the GIS, such as the proposed scheme or the existing network, so residents react to what you are actually planning." %}</p>
+        <a class="shot" href="{% static 'img/landing/build-full.webp' %}" target="_blank" rel="noopener"><span class="shot__chrome"><i></i><i></i><i></i></span><img src="{% static 'img/landing/build.webp' %}" alt="{% trans 'Mapsurvey layer editor: ten Copenhagen cycling bridges with categories, photos and descriptions' %}" loading="lazy"></a>
+      </div>
+      <div class="cat-shot">
+        <div class="showcase-step">{% trans "2 · COLLECT" %}</div>
+        <h3>{% trans "Share one link, no account needed" %}</h3>
+        <p>{% trans "Residents open the link on a phone or a desktop, mark the map, answer the questions on each place and submit. Survey text can be offered in 75 languages, and a QR code on a poster, a bus shelter or a council-tax letter brings in the residents who never visit the website." %}</p>
+        <a class="shot" href="{% static 'img/landing/collect-full.webp' %}" target="_blank" rel="noopener"><span class="shot__chrome"><i></i><i></i><i></i></span><img src="{% static 'img/landing/collect.webp' %}" alt="{% trans 'A respondent opens a bridge card with a photo, reactions from others and a thumbs up or down question' %}" loading="lazy"></a>
+      </div>
+      <div class="cat-shot">
+        <div class="showcase-step">{% trans "3 · ANALYZE" %}</div>
+        <h3>{% trans "See every answer on one map" %}</h3>
+        <p>{% trans "Filter by question and answer, switch to a heat map, open any single response, and clean out the test runs. The responses map is the project officer's working view, not a report that arrives from the vendor weeks later." %}</p>
+        <a class="shot" href="{% static 'img/landing/analyze-full.webp' %}" target="_blank" rel="noopener"><span class="shot__chrome"><i></i><i></i><i></i></span><img src="{% static 'img/landing/analyze.webp' %}" alt="{% trans 'Mapsurvey Responses map: routes, unsafe spots and bridges across Copenhagen' %}" loading="lazy"></a>
+      </div>
+      <div class="cat-shot">
+        <div class="showcase-step">{% trans "4 · SHARE" %}</div>
+        <h3>{% trans "Export to GIS, publish the results" %}</h3>
+        <p>{% trans "Download GeoJSON, CSV, Excel, GeoPackage, Shapefile or KML for the GIS team and the committee report, and publish an aggregated results page so residents and councillors see what came back." %}</p>
+        <a class="shot" href="{% static 'img/landing/share-full.webp' %}" target="_blank" rel="noopener"><span class="shot__chrome"><i></i><i></i><i></i></span><img src="{% static 'img/landing/share.webp' %}" alt="{% trans 'Public results page with the response count, a link to take the survey, and charts' %}" loading="lazy"></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="showcase showcase--center">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "Why councils choose it" %}</p>
+    <h2 class="section-heading">{% trans "Built for the budget and the procurement of a local government" %}</h2>
+    <div class="aud-grid">
+      <div class="aud-card">
+        <h3>{% trans "Location-specific input" %}</h3>
+        <p>{% trans "Residents respond exactly where the issue is: a junction, a route, a parcel. Points, lines and polygons, each with its own follow-up questions." %}</p>
+      </div>
+      <div class="aud-card">
+        <h3>{% trans "One price for every size" %}</h3>
+        <p>{% trans "A parish council and a county pay the same: free, or one flat workspace price. No per-resident, per-seat or per-project metering, so the second survey costs nothing more than the first." %}</p>
+      </div>
+      <div class="aud-card">
+        <h3>{% trans "Your scheme on the map" %}</h3>
+        <p>{% trans "Upload the proposal as a GeoJSON layer from any GIS. Residents comment on the features you drew, not on a blank basemap." %}</p>
+      </div>
+      <div class="aud-card">
+        <h3>{% trans "You own the data" %}</h3>
+        <p>{% trans "Export everything, including the geometry, at any time. Delete a survey and its responses when the retention period ends. Self-host if your policy requires it. No lock-in." %}</p>
+      </div>
+      <div class="aud-card">
+        <h3>{% trans "Open source (AGPLv3)" %}</h3>
+        <p>{% trans "Auditable code, no black box between the council and its residents' input, and a procurement route that needs no tender for the software itself." %}</p>
+      </div>
+      <div class="aud-card">
+        <h3>{% trans "Self-serve, with a person behind it" %}</h3>
+        <p>{% trans "Build and publish a survey in an afternoon without an implementation project. When you need help, you write to the developer who builds the product, not to a ticket queue." %}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="showcase showcase--center">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "Compared" %}</p>
+    <h2 class="section-heading">{% trans "Mapsurvey vs Go Vocal and Citizen Space" %}</h2>
+    <p class="aud-lead" style="color:#556;text-align:center;">{% trans "The two platforms a local-government buyer searching for a citizen engagement platform is most likely to be quoted: the suite that named the category, and the default consultation platform of UK local government. Both are capable; the differences are the price model, the licence and how much of a platform you need." %}</p>
+    <div class="cmp-table-wrap">
+      <table class="cmp">
+        <thead>
+          <tr><th>&nbsp;</th><th>Mapsurvey</th><th>Go Vocal (ex-CitizenLab)</th><th>Citizen Space (Delib)</th></tr>
+        </thead>
+        <tbody>
+          <tr><th>{% trans "Free tier for real projects" %}</th><td class="ms">{% trans "Yes, hosted, unlimited surveys and responses" %}</td><td class="mt">{% trans "Free Edition to run yourself; hosted plans by quote" %}</td><td class="mt">{% trans "No; demo on request" %}</td></tr>
+          <tr><th>{% trans "Pricing model" %}</th><td class="ms">{% trans "Published: free, or one flat workspace price" %}</td><td class="mt">{% trans "Quote only; per-licence, per-year rates listed on UK G-Cloud" %}</td><td class="mt">{% trans "Quote only; per-instance, per-year licence listed on UK G-Cloud" %}</td></tr>
+          <tr><th>{% trans "Open source / self-hosting" %}</th><td class="ms">{% trans "Yes, AGPLv3, Docker on your servers" %}</td><td class="mt">{% trans "Free Edition under AGPLv3; commercial edition SaaS only" %}</td><td class="mt">{% trans "No, SaaS only" %}</td></tr>
+          <tr><th>{% trans "What a respondent can draw" %}</th><td class="ms">{% trans "Points, lines and polygons, each with follow-up questions" %}</td><td class="mt">{% trans "Pins, lines and polygons" %}</td><td class="mt">{% trans "Pins, lines and polygons (Geospatial add-on)" %}</td></tr>
+          <tr><th>{% trans "GIS export of responses" %}</th><td class="ms">{% trans "GeoJSON, GeoPackage, Shapefile, KML, plus CSV and Excel" %}</td><td class="mt">{% trans "CSV, XLSX, PDF; a unified format described as importable in GIS tools" %}</td><td class="mt">{% trans "GeoJSON and Shapefile" %}</td></tr>
+          <tr><th>{% trans "Respondent account" %}</th><td class="ms">{% trans "None needed" %}</td><td class="mt">{% trans "Not published; identity federation offered" %}</td><td class="mt">{% trans "Optional, configurable per consultation" %}</td></tr>
+          <tr><th>{% trans "Languages" %}</th><td class="ms">{% trans "75, included" %}</td><td class="mt">{% trans "27, plus auto-translation on higher plans" %}</td><td class="mt">{% trans "Not published" %}</td></tr>
+          <tr><th>{% trans "Hosting region" %}</th><td class="ms">{% trans "United States (hosted), or self-host anywhere" %}</td><td class="mt">{% trans "Regional hosting offered; German data residency on the German site" %}</td><td class="mt">{% trans "United Kingdom" %}</td></tr>
+          <tr><th>{% trans "Scope" %}</th><td class="ms">{% trans "Map-based surveys, shared maps, results pages" %}</td><td class="mt">{% trans "Full participation suite: ideation, voting, participatory budgeting, surveys, maps" %}</td><td class="mt">{% trans "Statutory consultation suite: documents, surveys, maps, results publishing" %}</td></tr>
+          <tr><th>{% trans "Accessibility statement" %}</th><td class="mt">{% trans "No formal conformance audit yet" %}</td><td class="mt">{% trans "WCAG 2.2 AA, ISO 27001" %}</td><td class="mt">{% trans "WCAG 2.2, ISO 27001, text alternative for every map question" %}</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cmp-note">{% trans "Competitor details reflect the vendors' published pages, documentation and UK G-Cloud listings as of October 2026 (Citizen Space read in July 2026); verify current specifics with the vendor. 'Not published' means the public material does not say. We publish no other vendor's price: their listings are the vendors' to quote." %}</p>
+    <div class="cmp-fair">
+      <h3>{% trans "When Go Vocal or Citizen Space may fit better" %}</h3>
+      <ul>
+        <li>{% trans "You are procuring a standing participation portal for the whole council, with project pages, ideation, voting and a participatory budget under one login, and you have the officers to run it." %}</li>
+        <li>{% trans "Your procurement requires a vendor with a formal WCAG conformance report, an ISO 27001 certificate or a UK-hosted statutory consultation record today." %}</li>
+        <li>{% trans "You already run one. Mapsurvey can still carry the map question of a single project and hand the layer back to your GIS." %}</li>
+      </ul>
+    </div>
+    <div class="cmp-maker">
+      <h3>{% trans "Comparing platforms for a council? Talk to the person who builds this one" %}</h3>
+      <p>{% trans "Mapsurvey is independent and founder-led. Email the developer with a procurement, self-hosting, data-processing or 'does it do X?' question and you will get an answer from the person who can change the product, often with a draft survey you can open the same day." %}</p>
+      <a href="mailto:konuchovartem@mapsurvey.org?subject=Citizen%20engagement%20platform%20question" class="btn-primary-landing">{% trans "Email the developer" %}</a>
+    </div>
+  </div>
+</section>
+
+<section class="showcase showcase--center" id="procurement">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "Procurement" %}</p>
+    <h2 class="section-heading">{% trans "The questions a council asks before it buys" %}</h2>
+    <p class="aud-lead" style="color:#556;text-align:center;">{% trans "These are the questions local-government buyers actually search for when they compare citizen engagement platforms. The answers are the ones we give in writing, and they apply to the Free plan unless a line says Pro." %}</p>
+    <div class="aud-grid">
+      <div class="aud-card">
+        <h3>{% trans "Free plan, not a trial" %}</h3>
+        <p>{% trans "Most platforms offer governments a demo or a scoped trial through a sales team. Mapsurvey's Free plan is the whole product with no time limit and no cap on surveys, respondents or team members. A council can run its first consultation, read the results and export them without having spoken to anyone." %}</p>
+      </div>
+      <div class="aud-card">
+        <h3>{% trans "One price for every jurisdiction" %}</h3>
+        <p>{% trans "A town of two thousand and a county of two million pay the same: free, or the flat Pro workspace price below. There is no per-resident, per-seat or per-project metering, so the price does not change when a second department starts using it. Grants and council budgets that need an invoice rather than a card get one." %}</p>
+      </div>
+      <div class="aud-card">
+        <h3>{% trans "Data ownership and export" %}</h3>
+        <p>{% trans "The council owns the data. Every response, including the geometry, exports at any time as GeoJSON, CSV, Excel, GeoPackage, Shapefile or KML. Surveys and their responses are deleted by their owner when the retention period ends. Individual free-text answers are never published on a public results page." %}</p>
+      </div>
+      <div class="aud-card">
+        <h3>{% trans "Uptime and support" %}</h3>
+        <p>{% trans "The hosted service has no contractual SLA today, and we would rather say so than quote a number we do not sell. Deploys are zero-downtime, the stack is monitored, and an incident is handled by the developer who runs it. A council that needs an uptime guarantee self-hosts the same Docker stack under its own IT policy. Pro includes direct support from the developer; Free is supported by email and the public issue tracker." %}</p>
+      </div>
+      <div class="aud-card">
+        <h3>{% trans "Hosting and residency" %}</h3>
+        <p>{% trans "The hosted service runs in the United States today, on Render's Oregon region. Councils whose rules require the data to stay in their own jurisdiction self-host at no licence cost; the deployment is one Docker Compose file and a PostGIS database. A choice of hosting region for the hosted service is on the Pro roadmap." %}</p>
+      </div>
+      <div class="aud-card">
+        <h3>{% trans "Accessibility" %}</h3>
+        <p>{% trans "No formal WCAG conformance audit has been done yet; we say so rather than claim a level. The respondent page is plain HTML that works on any phone, question text can be offered in 75 languages, and a non-map text alternative for map questions is not offered today. If your procurement requires a conformance statement, ask: it is on the list, and a council asking is what moves it up." %}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="showcase showcase--center">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "What councils run on it" %}</p>
+    <h2 class="section-heading">{% trans "Citizen engagement projects that start with a where" %}</h2>
+    <p class="aud-lead" style="color:#556;text-align:center;">{% trans "Issue reporting, community mapping and consultation all come down to the same question. These are the projects councils and cities run on Mapsurvey most often:" %}</p>
+    <ul class="aud-ideas">
+      <li>{% trans "Issue reporting and asset condition: residents or volunteers report what they find at the place they found it, with a photo, from dog bins to broken paving." %}</li>
+      <li>{% trans "Neighbourhood and local plans: what to keep, fix or change, pinned to the map street by street." %}</li>
+      <li>{% trans "Active travel and road safety: cycle routes, barriers, dangerous crossings and desire lines drawn as lines, not described in words." %}</li>
+      <li>{% trans "Participatory budgeting: where residents want the money spent, with a reaction round on the shortlisted locations." %}</li>
+      <li>{% trans "Parks, public space and greening: location-specific priorities, from a bench to a whole park boundary." %}</li>
+      <li>{% trans "Statutory consultation: comments and objections tied to the exact site, route or junction in the proposal." %}</li>
+      <li>{% trans "Climate and heat planning: where residents feel the heat, the flooding or the noise, as evidence for the plan." %}</li>
+    </ul>
+    <div class="hero__cta-group" style="margin-top:28px;justify-content:center;">
+      <a href="{% url 'django_registration_register' %}?utm_source=citizen_engagement&amp;utm_medium=citizen_engagement_platform" class="btn-primary-landing">{% trans "Create your first survey — free" %}</a>
+      <a href="{% url 'for_government' %}" class="btn-secondary-landing">{% trans "See the local-government page" %}</a>
+    </div>
+  </div>
+</section>
+
+{% include "partials/_landing_pricing.html" %}
+{% include "partials/_landing_siblings.html" with current="citizen_engagement_platform" audience="for_government" %}
+{% include "partials/_topic_stories.html" %}
+{% include "partials/_faq_section.html" %}
+
+{% endblock %}
