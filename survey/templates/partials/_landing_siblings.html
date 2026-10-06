@@ -26,6 +26,9 @@ The current page is left out so a page never links to itself.
       {% if current != "participatory_budgeting" %}
       <a href="{% url 'participatory_budgeting' %}"><strong>{% trans "Participatory budgeting" %}</strong><span>{% trans "Where residents want the money spent, pinned to the map." %}</span></a>
       {% endif %}
+      {% if current != "participatory_mapping_tools" %}
+      <a href="{% url 'participatory_mapping_tools' %}"><strong>{% trans "Participatory mapping tools" %}</strong><span>{% trans "The buyer's guide: fifteen tools in five categories, every fact sourced and dated." %}</span></a>
+      {% endif %}
       {% if audience == "for_planners" %}
       <a href="{% url 'for_planners' %}"><strong>{% trans "For urban planners" %}</strong><span>{% trans "Participatory planning and place-based public input." %}</span></a>
       {% else %}

@@ -19929,7 +19929,9 @@ class LandingStructuredDataTest(TestCase):
         bc2 = next(b for b in two if b.get("@type") == "BreadcrumbList")
         items2 = bc2["itemListElement"]
         self.assertEqual([i["position"] for i in items2], [1, 2, 3])
-        self.assertEqual([i["name"] for i in items2], ["Home", "Alternatives", "Maptionnaire Alternative"])
+        # Change market-guide-landscape-hub: the parent crumb is the market guide.
+        self.assertEqual([i["name"] for i in items2], ["Home", "Participatory mapping tools", "Maptionnaire Alternative"])
+        self.assertEqual(items2[1]["item"], "https://mapsurvey.org/participatory-mapping-tools/")
 
     def test_sitewide_schema_preserved_on_landing(self):
         """
@@ -20177,6 +20179,16 @@ class CitizenEngagementLandingTest(TestCase):
             for qa in landing.faq:
                 found = set(figure.findall(qa.a))
                 self.assertFalse(found - self.OWN_PRICES, f"{landing.key} FAQ {qa.q!r}: {found}")
+        # Change market-guide-landscape-hub: the vendor registry and the hub it renders are under
+        # the same rule, so a figure in a Fact.text fails here, not on a reader's screen.
+        from survey.vendors import VENDORS
+        for vendor in VENDORS:
+            for fact in list(vendor.facts.values()) + [e.theirs for e in vendor.extras]:
+                found = set(figure.findall(fact.text))
+                self.assertFalse(found - self.OWN_PRICES, f"vendors.py {vendor.key}: {found}")
+        body = Client().get("/participatory-mapping-tools/").content.decode()
+        found = set(figure.findall(body))
+        self.assertFalse(found - self.OWN_PRICES, f"hub page: {found}")
 
     def test_faq_answers_the_procurement_questions(self):
         """
@@ -48598,7 +48610,7 @@ class RussianLandingHreflangTest(TestCase):
                  '/community-engagement-platform/', '/public-consultation-software/',
                  '/civic-engagement/', '/participatory-budgeting/',
                  '/alternatives/maptionnaire/', '/alternatives/social-pinpoint/',
-                 '/alternatives/metroquest/']
+                 '/alternatives/metroquest/', '/participatory-mapping-tools/']
         client = Client()
         for path in paths:
             with self.subTest(path=path):
@@ -48946,3 +48958,265 @@ class StoryTopicsTest(TestCase):
         response = Client().get('/alternatives/maptionnaire/')
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'id="from-the-field"')
+
+
+class VendorRegistryTest(TestCase):
+    """Change market-guide-landscape-hub (#259): survey/vendors.py is the one source of every
+    claim about another vendor — sourced, dated, complete, and free of price figures."""
+
+    def test_every_fact_is_sourced_dated_and_complete(self):
+        """
+        GIVEN the vendor registry
+        WHEN every vendor's facts and extras are inspected
+        THEN each criterion has a fact, every source is an https URL, every verified date is an
+             ISO date not after today, and every category key exists
+        """
+        from datetime import date
+        from survey.vendors import CATEGORIES, CRITERIA, VENDORS
+        categories = {c.key for c in CATEGORIES}
+        today = date.today().isoformat()
+        for vendor in VENDORS:
+            with self.subTest(vendor=vendor.key):
+                self.assertIn(vendor.category, categories)
+                self.assertEqual(set(vendor.facts), {c.key for c in CRITERIA})
+                for fact in list(vendor.facts.values()) + [e.theirs for e in vendor.extras]:
+                    self.assertTrue(fact.source.startswith("https://"), fact)
+                    self.assertEqual(date.fromisoformat(fact.verified).isoformat(), fact.verified)
+                    self.assertLessEqual(fact.verified, today)
+                self.assertTrue(vendor.summary and vendor.maker and vendor.url.startswith("https://"))
+
+    def test_not_published_facts_still_carry_a_source(self):
+        """
+        GIVEN facts whose text is "Not published"
+        WHEN they are read
+        THEN each still names the page that was read and the date, and at least one exists
+        """
+        from survey.vendors import VENDORS
+        unpublished = [f for v in VENDORS for f in v.facts.values() if f.text == "Not published"]
+        self.assertTrue(unpublished)
+        for fact in unpublished:
+            self.assertTrue(fact.source.startswith("https://"))
+            self.assertRegex(fact.verified, r"^\d{4}-\d{2}-\d{2}$")
+
+    def test_every_alternatives_landing_has_a_vendor(self):
+        """
+        GIVEN the /alternatives/ landings in the seo_landings registry
+        WHEN each is looked up in the vendor registry
+        THEN a vendor with that landing_key exists, and every landing_key resolves back
+        """
+        from survey.seo_landings import SEO_LANDINGS, get_landing
+        from survey.vendors import VENDORS, vendor_for_landing
+        alternatives = [l for l in SEO_LANDINGS if l.path.startswith("/alternatives/")]
+        self.assertEqual(len(alternatives), 3)
+        for landing in alternatives:
+            self.assertIsNotNone(vendor_for_landing(landing.key), landing.key)
+        for vendor in VENDORS:
+            if vendor.landing_key:
+                self.assertEqual(get_landing(vendor.landing_key).template, f"{vendor.landing_key}.html")
+
+    def test_helpers(self):
+        """
+        GIVEN a vendor with several facts on one page and extras
+        WHEN verified_on, sources and compare_rows are read
+        THEN the earliest date is reported, sources are distinct URLs in first-seen order with
+             hosts stripped of www, and the rows list the criteria before the extras
+        """
+        from survey.vendors import CRITERIA, compare_rows, get_vendor
+        mq = get_vendor("metroquest")
+        self.assertEqual(mq.verified_on, min(f.verified for f in mq.facts.values()))
+        urls = [s["url"] for s in mq.sources]
+        self.assertEqual(len(urls), len(set(urls)))
+        self.assertIn("socialpinpoint.com", [s["host"] for s in mq.sources])
+        rows = compare_rows(mq)
+        self.assertEqual([r["label"] for r in rows[:len(CRITERIA)]], [c.label for c in CRITERIA])
+        self.assertEqual(rows[-1]["label"], mq.extras[-1].label)
+        self.assertEqual(rows[0]["ours"], get_vendor("mapsurvey").facts["geometry"].text)
+
+
+class MarketGuideHubTest(TestCase):
+    """Change market-guide-landscape-hub (#259): /participatory-mapping-tools/ is the buyer's
+    guide above the /alternatives/ pages, and those pages render their tables from the registry."""
+
+    import re as _re
+    PATH = "/participatory-mapping-tools/"
+    _LD_RE = _re.compile(r'<script type="application/ld\+json">(.*?)</script>', _re.S)
+
+    @staticmethod
+    def _visible_words(body):
+        import re
+        text = re.sub(r"<script.*?</script>|<style.*?</style>", " ", body, flags=re.S)
+        text = re.sub(r"<[^>]+>", " ", text)
+        return [w for w in text.split() if any(ch.isalpha() for ch in w)]
+
+    def test_page_renders_the_contract(self):
+        """
+        GIVEN the hub landing
+        WHEN rendered
+        THEN it carries the H1, every vendor and category from the registry, the gaps block,
+             the sources list, links to every alternatives page, the pricing and sibling
+             sections, a FAQPage block and at least 1,500 visible words
+        """
+        import json
+        from survey.vendors import CATEGORIES, VENDORS
+        resp = Client().get(self.PATH)
+        self.assertEqual(resp.status_code, 200)
+        body = resp.content.decode()
+        self.assertRegex(body, r"<h1[^>]*>[^<]*Participatory mapping tools")
+        table = body[body.index('<table class="cmp guide-table">'):body.index("</table>")]
+        for vendor in VENDORS:
+            self.assertIn(vendor.name, table)
+            self.assertIn(f'id="row-{vendor.key}"', table)
+        for category in CATEGORIES:
+            self.assertIn(category.title, body)
+        gaps = body[body.index('id="gaps"'):body.index('id="sources"')]
+        for word in ("participatory budgeting", "SSO", "United States", "falls short"):
+            self.assertIn(word, gaps)
+        self.assertNotIn("EU-hosted", body)
+        self.assertNotIn("Frankfurt", body)
+        for href in ('href="/alternatives/maptionnaire/"', 'href="/alternatives/social-pinpoint/"',
+                     'href="/alternatives/metroquest/"', 'href="/pro/"'):
+            self.assertIn(href, body)
+        for anchor in ('id="pricing"', 'id="related"', 'id="table"', 'id="criteria"', 'id="categories"'):
+            self.assertIn(anchor, body)
+        self.assertIn("$49", body)
+        self.assertIn("$490", body)
+        blocks = [json.loads(m) for m in self._LD_RE.findall(body)]
+        self.assertEqual(sum(1 for b in blocks if b.get("@type") == "FAQPage"), 1)
+        self.assertGreaterEqual(len(self._visible_words(body)), 1500)
+
+    def test_sources_and_verified_dates_are_rendered(self):
+        """
+        GIVEN every vendor's facts carry a source URL and a date
+        WHEN the hub is rendered
+        THEN every distinct source URL is a link inside the sources section and the vendor's
+             earliest verified date sits in its table row, and every cell carries its source host
+        """
+        from survey.vendors import VENDORS
+        body = Client().get(self.PATH).content.decode()
+        sources = body[body.index('id="sources"'):body.index('id="compare"')]
+        table = body[body.index('<table class="cmp guide-table">'):body.index("</table>")]
+        for vendor in VENDORS:
+            with self.subTest(vendor=vendor.key):
+                self.assertIn(f'id="src-{vendor.key}"', sources)
+                for s in vendor.sources:
+                    self.assertIn(f'href="{s["url"]}"', sources)
+                row = table[table.index(f'id="row-{vendor.key}"'):]
+                row = row[:row.index("</tr>")]
+                self.assertIn(f'href="#src-{vendor.key}">{vendor.verified_on}</a>', row)
+                for fact in vendor.facts.values():
+                    self.assertIn(f"Source: {fact.host}, read {fact.verified}", row)
+
+    def test_registry_drives_sitemap_robots_and_hreflang(self):
+        """
+        GIVEN the hub is a registry landing with lastmod 2026-10-06
+        WHEN sitemap.xml, robots.txt and the page are fetched
+        THEN the sitemap lists it with that lastmod, robots allows it, and x-default equals the canonical
+        """
+        c = Client()
+        self.assertIn(f"<loc>http://testserver{self.PATH}</loc><lastmod>2026-10-06</lastmod>",
+                      c.get("/sitemap.xml").content.decode())
+        self.assertIn(f"Allow: {self.PATH}", c.get("/robots.txt").content.decode())
+        body = c.get(self.PATH).content.decode()
+        self.assertIn('<link rel="canonical" href="https://mapsurvey.org/participatory-mapping-tools/">', body)
+        self.assertIn('hreflang="x-default" href="https://mapsurvey.org/participatory-mapping-tools/"', body)
+
+    def test_alternatives_index_redirects_to_the_hub(self):
+        """
+        GIVEN /alternatives/ was a breadcrumb parent with no page behind it
+        WHEN it is requested
+        THEN it is a permanent redirect to the hub
+        """
+        resp = Client().get("/alternatives/")
+        self.assertEqual(resp.status_code, 301)
+        self.assertEqual(resp["Location"], self.PATH)
+
+    def test_alternatives_pages_link_up_and_render_from_the_registry(self):
+        """
+        GIVEN the three /alternatives/ pages
+        WHEN each is rendered
+        THEN its body links to the hub, its table carries the vendor's registry cells with their
+             source hosts, its note links the vendor's source pages, and the BreadcrumbList names
+             the hub as the parent
+        """
+        import json
+        from django.utils.html import escape
+        from survey.seo_landings import SEO_LANDINGS
+        from survey.vendors import CRITERIA, vendor_for_landing
+        for landing in [l for l in SEO_LANDINGS if l.path.startswith("/alternatives/")]:
+            with self.subTest(path=landing.path):
+                vendor = vendor_for_landing(landing.key)
+                body = Client().get(landing.path).content.decode()
+                self.assertIn('href="/participatory-mapping-tools/"', body)
+                for c in CRITERIA:
+                    fact = vendor.facts[c.key]
+                    self.assertIn(escape(fact.text), body)
+                    self.assertIn(f"Source: {fact.host}, read {fact.verified}", body)
+                for s in vendor.sources:
+                    self.assertIn(f'href="{s["url"]}"', body)
+                self.assertIn(f"read on {vendor.verified_on}", body)
+                blocks = [json.loads(m) for m in self._LD_RE.findall(body)]
+                crumbs = next(b for b in blocks if b.get("@type") == "BreadcrumbList")
+                self.assertEqual(crumbs["itemListElement"][1]["item"],
+                                 "https://mapsurvey.org/participatory-mapping-tools/")
+
+    def test_maptionnaire_page_no_longer_claims_eu_hosting(self):
+        """
+        GIVEN the Maptionnaire page carried "EU-hosted" and "Frankfurt" fourteen months after
+              production moved to Oregon
+        WHEN it is rendered from the registry
+        THEN the hosting cell says AWS in the US and Ireland for Maptionnaire, our own cell names
+             the United States, and neither false claim remains
+        """
+        body = Client().get("/alternatives/maptionnaire/").content.decode()
+        self.assertNotIn("Frankfurt", body)
+        self.assertNotIn("EU-hosted", body)
+        self.assertIn("AWS, US and Ireland", body)
+        self.assertIn("United States", body)
+        self.assertNotIn("prices listed on the vendor", body)
+
+    def test_social_pinpoint_page_agrees_with_itself_on_export(self):
+        """
+        GIVEN the Social Pinpoint page said "no GeoJSON export" in a card and listed GeoJSON in
+              its table
+        WHEN it is rendered from the registry
+        THEN GeoJSON appears in the export cell and the contradiction is gone
+        """
+        body = Client().get("/alternatives/social-pinpoint/").content.decode()
+        self.assertIn("XLS, CSV, PDF or GeoJSON", body)
+        self.assertNotIn("no GeoJSON export", body)
+        self.assertNotIn("there's no GeoJSON", body)
+
+    def test_a_registry_edit_reaches_both_pages(self):
+        """
+        GIVEN one Fact in the registry
+        WHEN its text is patched
+        THEN the hub and the alternatives page both render the new text
+        """
+        from unittest.mock import patch
+        from survey import vendors
+        from survey.vendors import Fact
+        mt = vendors.get_vendor("maptionnaire")
+        patched = dict(mt.facts)
+        patched["export"] = Fact("PATCHED EXPORT TEXT", mt.facts["export"].source, mt.facts["export"].verified)
+        with patch.dict(mt.facts, patched):
+            self.assertIn("PATCHED EXPORT TEXT", Client().get(self.PATH).content.decode())
+            self.assertIn("PATCHED EXPORT TEXT", Client().get("/alternatives/maptionnaire/").content.decode())
+
+    def test_category_pages_and_footer_link_down(self):
+        """
+        GIVEN the sibling partial and the landing footer
+        WHEN a category page is rendered
+        THEN its related block and its footer both link to the hub, and the hub's own related
+             block does not link to itself
+        """
+        body = Client().get("/community-engagement-platform/").content.decode()
+        related = body[body.index('id="related"'):]
+        related = related[:related.index("</section>")]
+        self.assertIn('href="/participatory-mapping-tools/"', related)
+        footer = body[body.index("landing-footer"):]
+        self.assertIn('href="/participatory-mapping-tools/"', footer)
+        hub = Client().get(self.PATH).content.decode()
+        hub_related = hub[hub.index('id="related"'):]
+        hub_related = hub_related[:hub_related.index("</section>")]
+        self.assertNotIn('href="/participatory-mapping-tools/"', hub_related)
+        self.assertIn('href="/community-engagement-platform/"', hub_related)

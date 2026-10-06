@@ -1,0 +1,189 @@
+{% extends "base_landing.html" %}
+{% load static i18n %}
+{% comment %}
+Change market-guide-landscape-hub (#259): the buyer's guide above every /alternatives/ page.
+Categories, criteria, vendors and every cell of the table come from survey/vendors.py through
+render_seo_landing (hub_context). Nothing about another vendor is written in this file: a claim
+without a Fact(source, verified) has no place on the page. Our own prices live in
+partials/_landing_pricing.html only.
+{% endcomment %}
+
+{% block title %}{% trans "Participatory Mapping Tools Compared: 15 Map-Based Survey and Engagement Platforms (2026)" %}{% endblock %}
+{% block meta_description %}{% trans "A buyer's guide to participatory mapping and map-based survey tools: five categories, fifteen tools, one table on geometry, export, hosting, pricing model and trial. Every fact sourced and dated." %}{% endblock %}
+{% block meta_keywords %}{% trans "participatory mapping tools, PPGIS software, map-based survey tool, public engagement platform comparison, community mapping software, Maptionnaire alternatives, geolocated survey platforms" %}{% endblock %}
+{% block canonical_url %}https://mapsurvey.org/participatory-mapping-tools/{% endblock %}
+{% block og_url %}https://mapsurvey.org/participatory-mapping-tools/{% endblock %}
+{% block og_title %}{% trans "Participatory mapping tools: a buyer's guide to map-based survey and engagement software" %}{% endblock %}
+{% block structured_data %}{% include "partials/_landing_structured_data.html" %}{% endblock %}
+
+{% block content %}
+<section class="hero" id="hero">
+  <div class="hero__content cmp-lead">
+    <p class="section-eyebrow">{% trans "Buyer's guide" %}</p>
+    <h1 class="hero__headline">{% trans "Participatory mapping tools: a buyer's guide to map-based survey and engagement software" %}</h1>
+    <p class="hero__description">
+      {% trans "Fifteen tools in five categories, compared on the nine questions a planning department, a consultancy or a parish council actually asks before buying: what residents can draw, what comes out, where the data lives, how it is priced, whether there is a free tier, and how you start. Every cell names the public page it was read from and the date. Mapsurvey is one row among the others, with its gaps stated." %}
+    </p>
+    <div class="hero__cta-group">
+      <a href="#table" class="btn-primary-landing">{% trans "Jump to the comparison table" %}</a>
+      <a href="{% url 'django_registration_register' %}?utm_source=market_guide&amp;utm_medium=hero" class="btn-secondary-landing">{% trans "Create your Mapsurvey — free" %}</a>
+    </div>
+    <div class="hero__badges">
+      <span class="hero__badge">{% trans "15 tools" %}</span>
+      <span class="hero__badge">{% trans "5 categories" %}</span>
+      <span class="hero__badge">{% trans "9 criteria" %}</span>
+      <span class="hero__badge">{% trans "Sources and dates on every cell" %}</span>
+    </div>
+  </div>
+</section>
+
+<section class="showcase showcase--center" id="how-to-read">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "How to read this guide" %}</p>
+    <h2 class="section-heading">{% trans "A landscape, not a sales page" %}</h2>
+    <div class="cat-def">
+      <p>{% trans "<strong>Who it is for.</strong> Someone who has to pick a tool for a project where the public, or a field team, puts things on a map: a cycle-network consultation, a call for sites, a neighbourhood plan, a heat survey, a volunteer census of street trees. You have a budget line, a procurement rule or two, a GIS person who will want the data back, and no time to read fifteen pricing pages." %}</p>
+      <p>{% trans "<strong>What we did.</strong> On 6 October 2026 we read each vendor's public pages (product page, documentation, and for UK vendors the G-Cloud marketplace listing) and wrote down what they state for nine criteria. Where a page does not say, the cell says <em>Not published</em>, and the source is the page we read: that is a finding, not a gap in our homework, and it is the question to put to the vendor. The sources list under the table shows every page per vendor with the date." %}</p>
+      <p>{% trans "<strong>What we do not do.</strong> We publish no other vendor's price. Most of them do not publish one, and a figure from a quote or a review site is a rumour that goes stale silently. We state the pricing model, the free tier or trial and its conditions, and whether a rate is listed anywhere public. We publish no market-size or market-share figures, and no claim we could not source to a page you can open." %}</p>
+      <p>{% blocktrans %}<strong>Who writes it.</strong> Mapsurvey, the developer of one of the tools in the first category. That is a conflict of interest, so the rules above apply to our own row too, and the section <a href="#gaps">where Mapsurvey falls short</a> is not small print.{% endblocktrans %}</p>
+    </div>
+  </div>
+</section>
+
+<section class="showcase showcase--center" id="categories">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "Five categories" %}</p>
+    <h2 class="section-heading">{% trans "Which kind of tool is the question" %}</h2>
+    <p class="aud-lead" style="color:#556;text-align:center;">{% trans "Most comparison pages line up tools that do different jobs. These five groups do five different jobs; the table further down puts them on the same criteria so the differences are visible rather than argued." %}</p>
+    <div class="guide-cats">
+      {% for row in categories %}
+      <div class="guide-cat" id="cat-{{ row.category.key }}">
+        <h3>{{ row.category.title }}</h3>
+        <p>{{ row.category.purpose }}</p>
+        <p class="guide-cat__buyers"><strong>{% trans "Who buys them:" %}</strong> {{ row.category.buyers }}</p>
+        <ul class="guide-cat__vendors">
+          {% for v in row.vendors %}
+          <li>
+            <strong>{% if v.landing_key %}<a href="{% url v.landing_key %}">{{ v.name }}</a>{% else %}{{ v.name }}{% endif %}</strong>
+            <span class="guide-cat__maker">{{ v.maker }}</span>
+            <span>{{ v.summary }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+        {% if row.category.key == "engagement" %}
+        <p class="guide-cat__more">{% url 'community_engagement_platform' as cep_url %}{% url 'citizen_engagement_platform' as cit_url %}{% blocktrans %}If this is the category you are procuring in, our <a href="{{ cep_url }}">community engagement platform</a> page describes the product side and the <a href="{{ cit_url }}">citizen engagement platform</a> page answers the local-government procurement questions.{% endblocktrans %}</p>
+        {% elif row.category.key == "ppgis" %}
+        <p class="guide-cat__more">{% url 'for_planners' as pl_url %}{% url 'for_researchers' as rs_url %}{% blocktrans %}This is Mapsurvey's own category. What a planning team or a research group does with such a tool is on the pages <a href="{{ pl_url }}">for urban planners</a> and <a href="{{ rs_url }}">for researchers</a>.{% endblocktrans %}</p>
+        {% elif row.category.key == "field" %}
+        <p class="guide-cat__more">{% trans "Field apps and participatory tools overlap on geometry and export and differ on who holds the phone: a trained collector with an account and an offline basemap, or an anonymous resident who followed a link. If both are true of your project (a volunteer census, say), you will be choosing between a field app with a public form and a survey tool with a good phone layout." %}</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="showcase showcase--center" id="criteria">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "Nine criteria" %}</p>
+    <h2 class="section-heading">{% trans "What to ask, whichever category you are in" %}</h2>
+    <ol class="aud-steps guide-criteria">
+      {% for c in criteria %}
+      <li><strong>{{ c.label }}.</strong> {{ c.ask }}</li>
+      {% endfor %}
+    </ol>
+    <p class="cmp-note" style="text-align:center;">{% trans "These are the columns of the table below. A tenth column, Verified, shows the earliest date among the row's sources; the title of every cell names its page." %}</p>
+  </div>
+</section>
+
+<section class="showcase showcase--center" id="table">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "The table" %}</p>
+    <h2 class="section-heading">{% trans "Fifteen tools on nine criteria" %}</h2>
+    <p class="aud-lead" style="color:#556;text-align:center;">{% trans "Scroll sideways on a phone; the tool name stays put. Hover a cell for its source. Green is the author's row." %}</p>
+    <div class="cmp-table-wrap guide-table-wrap">
+      <table class="cmp guide-table">
+        <thead>
+          <tr>
+            <th>{% trans "Tool" %}</th>
+            {% for c in criteria %}<th>{{ c.label }}</th>{% endfor %}
+            <th>{% trans "Verified" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in vendors %}
+          <tr{% if v.key == "mapsurvey" %} class="guide-table__ours"{% endif %} id="row-{{ v.key }}">
+            <th>
+              <span class="guide-table__name">{{ v.name }}</span>
+              <span class="guide-table__maker">{{ v.maker }}</span>
+              {% if v.landing_key %}<a class="guide-table__vs" href="{% url v.landing_key %}">{% trans "vs Mapsurvey in detail" %}</a>{% endif %}
+            </th>
+            {% for f in v.ordered_facts %}
+            <td class="{% if v.key == "mapsurvey" %}ms{% else %}mt{% endif %}" title="{% trans 'Source' %}: {{ f.host }}, {% trans 'read' %} {{ f.verified }}">{{ f.text }}</td>
+            {% endfor %}
+            <td class="mt"><a href="#src-{{ v.key }}">{{ v.verified_on }}</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="cmp-note">{% trans "Every cell was read from the vendor's own public page on the date in the Verified column; the sources list below names the pages. 'Not published' means the page read does not state it. Pricing cells carry the model and where a rate is listed, never a figure, for any vendor but Mapsurvey. A vendor who finds a cell wrong can write to the developer and it is corrected on every page that uses it." %}</p>
+  </div>
+</section>
+
+<section class="showcase showcase--center" id="gaps">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "Being fair" %}</p>
+    <h2 class="section-heading">{% trans "Where Mapsurvey falls short" %}</h2>
+    <div class="cmp-fair">
+      <p>{% trans "Mapsurvey is a map-based survey tool, not a participation portal, and the table shows the cost of that choice as plainly as the benefit. On the pages we read, these are the things the others do that we do not:" %}</p>
+      <ul>
+        {% for gap in mapsurvey.gaps %}<li>{{ gap }}</li>{% endfor %}
+      </ul>
+      <p>{% trans "What we do instead is narrow and complete: points, lines and polygons with a follow-up question on each, a public results page, six GIS and spreadsheet export formats, 75 languages, a free plan without a time limit, and the developer answering the mail. If your project needs the portal, buy the portal; if it needs the map, this is the row to try first." %}</p>
+    </div>
+  </div>
+</section>
+
+<section class="showcase showcase--center" id="sources">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "Sources" %}</p>
+    <h2 class="section-heading">{% trans "Every page the table was read from" %}</h2>
+    <div class="guide-sources">
+      {% for v in vendors %}
+      <div class="guide-source" id="src-{{ v.key }}">
+        <h3>{{ v.name }} <span class="guide-cat__maker">{{ v.maker }}</span></h3>
+        <ul>
+          {% for s in v.sources %}
+          <li><a href="{{ s.url }}" target="_blank" rel="noopener">{{ s.url }}</a> <span class="guide-source__when">{% trans "read" %} {{ s.verified }}</span></li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="showcase showcase--center" id="compare">
+  <div class="landing-inner">
+    <p class="section-eyebrow">{% trans "Compare in detail" %}</p>
+    <h2 class="section-heading">{% trans "One tool against Mapsurvey, side by side" %}</h2>
+    <p class="aud-lead" style="color:#556;text-align:center;">{% trans "The pages below take one vendor's row and set it against ours criterion by criterion, with the same sourced cells, plus the honest list of cases where the other tool is the better fit." %}</p>
+    <div class="aud-seg">
+      <a href="{% url 'maptionnaire_alternative' %}"><strong>{% trans "Mapsurvey vs Maptionnaire" %}</strong><span>{% trans "The reference PPGIS product: same geometry, different economics." %}</span></a>
+      <a href="{% url 'social_pinpoint_alternative' %}"><strong>{% trans "Mapsurvey vs Social Pinpoint (Open Point)" %}</strong><span>{% trans "An engagement hub with a map tool, against a map tool." %}</span></a>
+      <a href="{% url 'metroquest_alternative' %}"><strong>{% trans "Mapsurvey vs MetroQuest" %}</strong><span>{% trans "The transport-planning survey, now part of Open Point." %}</span></a>
+    </div>
+    <div class="cmp-maker">
+      <h3>{% trans "Comparing tools for a project? Ask the person who builds one of them" %}</h3>
+      <p>{% trans "Mapsurvey is independent and founder-led. Email the developer with a 'does it do X?' question, a migration from one of the tools above, or a correction to a cell in this table, and you will get an answer from the person who can change the product and the page." %}</p>
+      <a href="mailto:konuchovartem@mapsurvey.org?subject=Question%20from%20the%20participatory%20mapping%20tools%20guide" class="btn-primary-landing">{% trans "Email me — I answer personally" %}</a>
+    </div>
+  </div>
+</section>
+
+{% include "partials/_landing_pricing.html" %}
+{% include "partials/_landing_siblings.html" with current="participatory_mapping_tools" audience="for_planners" %}
+{% include "partials/_faq_section.html" %}
+
+{% endblock %}

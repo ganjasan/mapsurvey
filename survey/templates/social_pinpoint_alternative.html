@@ -64,19 +64,19 @@
     <div class="cmp-grid">
       <div class="cmp-card">
         <h3>{% trans "Draw, don't just drop pins" %}</h3>
-        <p>{% trans "The current-generation Social Map limits respondents to point markers. In Mapsurvey, people also draw routes and outline areas — essential for mobility, greenways, and land-use input." %}</p>
+        <p>{% trans "Open Point describes its Social Map as pinning a comment on the map and publishes nothing about drawing. In Mapsurvey, people also draw routes and outline areas — essential for mobility, greenways, and land-use input." %}</p>
       </div>
       <div class="cmp-card">
-        <h3>{% trans "GeoJSON out of the box" %}</h3>
-        <p>{% trans "Open Point's current platform exports XLSX/CSV/PDF; there's no GeoJSON export. Mapsurvey exports GeoJSON + CSV that opens directly in QGIS or ArcGIS." %}</p>
+        <h3>{% trans "Every GIS format, not one" %}</h3>
+        <p>{% trans "Social Map reporting exports GeoJSON beside XLS, CSV and PDF. Mapsurvey adds GeoPackage, Shapefile and KML, so the layer opens in QGIS or ArcGIS without a conversion step." %}</p>
       </div>
       <div class="cmp-card">
         <h3>{% trans "Public pricing: zero" %}</h3>
-        <p>{% trans "No quotes, no tiers gating the geo tools. Social Pinpoint sells by quote, with the map tools on higher tiers — Mapsurvey is free hosted or self-hosted." %}</p>
+        <p>{% trans "No quotes. Open Point prices by request after a solutions team reviews your project — Mapsurvey is free hosted or self-hosted, with one published price for Pro." %}</p>
       </div>
       <div class="cmp-card">
         <h3>{% trans "75 languages, included" %}</h3>
-        <p>{% trans "Multilingual engagement is a paid add-on there (up to 15 languages). Mapsurvey ships survey-content translation for 75 languages, free." %}</p>
+        <p>{% trans "Open Point's public pages do not state how many languages a survey can run in. Mapsurvey ships survey-content translation for 75 languages, free." %}</p>
       </div>
     </div>
   </div>
@@ -85,24 +85,9 @@
 <section class="showcase showcase--center">
   <div class="landing-inner">
     <p class="section-eyebrow">{% trans "Side by side" %}</p>
-    <h2 class="section-heading">{% trans "Mapsurvey vs Social Pinpoint (Social Point)" %}</h2>
-    <div class="cmp-table-wrap">
-      <table class="cmp">
-        <thead>
-          <tr><th>&nbsp;</th><th>Mapsurvey</th><th>Social Pinpoint / Social Point</th></tr>
-        </thead>
-        <tbody>
-          <tr><th>{% trans "Respondent map input" %}</th><td class="ms">{% trans "Points, lines, polygons" %}</td><td class="mt">{% trans "Point markers on the current-gen Social Map (drawing was a legacy-Classic feature)" %}</td></tr>
-          <tr><th>{% trans "Geo data export" %}</th><td class="ms">{% trans "GeoJSON + CSV, built in" %}</td><td class="mt">{% trans "XLSX / CSV / PDF / GeoJSON from Social Map reporting (shapefile in legacy Classic only)" %}</td></tr>
-          <tr><th>{% trans "Pricing" %}</th><td class="ms">{% trans "Free hosted; free self-hosted" %}</td><td class="mt">{% trans "Quote only; no current public price list, map tools on higher tiers" %}</td></tr>
-          <tr><th>{% trans "Open source" %}</th><td class="ms">{% trans "Yes — AGPLv3, code on GitHub" %}</td><td class="mt">{% trans "No — proprietary" %}</td></tr>
-          <tr><th>{% trans "Self-hosting" %}</th><td class="ms">{% trans "Yes — Docker, your infrastructure" %}</td><td class="mt">{% trans "No — SaaS only" %}</td></tr>
-          <tr><th>{% trans "Multilingual" %}</th><td class="ms">{% trans "75 languages, included" %}</td><td class="mt">{% trans "Paid add-on, up to 15 languages" %}</td></tr>
-          <tr><th>{% trans "Engagement-hub extras (forums, voting, budgeting)" %}</th><td class="ms">{% trans "No — focused on map surveys" %}</td><td class="mt">{% trans "Yes — 40+ tools incl. Fund It, Gather, Q&A" %}</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="cmp-note">{% trans "Social Pinpoint / Open Point details reflect their public documentation and live-platform behaviour as of July 2026 and may change; verify current specifics with the vendor. \"Social Pinpoint\" was rebranded to \"Social Point\" under Open Point in March 2026." %}</p>
+    <h2 class="section-heading">{% trans "Mapsurvey vs Social Pinpoint (Open Point)" %}</h2>
+    <p class="cmp-note" style="text-align:center;margin-top:8px;">{% url 'participatory_mapping_tools' as guide_url %}{% blocktrans %}This page is one entry in our <a href="{{ guide_url }}">guide to participatory mapping tools</a>; the cells below and the guide's table come from the same sourced facts. "Social Pinpoint" became "Social Point" under the Open Point umbrella in 2026.{% endblocktrans %}</p>
+    {% include "partials/_vendor_vs_table.html" %}
   </div>
 </section>
 
@@ -129,6 +114,7 @@
     <div class="hero__cta-group" style="margin-top:26px;justify-content:center;">
       <a href="{% url 'django_registration_register' %}?utm_source=comparison&amp;utm_medium=social_pinpoint_alt" class="btn-primary-landing">{% trans "Create your Mapsurvey — free" %}</a>
       <a href="{% url 'metroquest_alternative' %}" class="btn-secondary-landing">{% trans "Coming from MetroQuest?" %}</a>
+      <a href="{% url 'participatory_mapping_tools' %}" class="btn-secondary-landing">{% trans "All participatory mapping tools compared" %}</a>
     </div>
   </div>
 </section>
