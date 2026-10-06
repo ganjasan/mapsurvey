@@ -285,6 +285,7 @@ a:hover { color: var(--color-accent-hover); }
 .landing-nav__dd:focus-within .landing-nav__dd-menu,
 .landing-nav__dd.is-open .landing-nav__dd-menu { display: block; }
 
+.landing-nav__dd-sep { border-top: 1px solid #eef1f4; margin-top: 4px; padding-top: 4px; }
 .landing-nav__dd-menu a {
     display: block;
     padding: 0.45rem 1rem;
