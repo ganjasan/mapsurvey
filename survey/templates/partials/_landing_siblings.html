@@ -1,0 +1,33 @@
+{% load i18n %}
+{% comment %}
+Sibling links between the four category landing pages (change seo-landings-rewrite).
+Include with `current` = the including page's registry key and `audience` = the url name
+of the audience page that matches it:
+  {% include "partials/_landing_siblings.html" with current="civic_engagement" audience="for_planners" %}
+The current page is left out so a page never links to itself.
+{% endcomment %}
+<section class="showcase showcase--center" id="related">
+  <div class="landing-inner cat-siblings">
+    <p class="section-eyebrow">{% trans "Related" %}</p>
+    <h2 class="section-heading">{% trans "The same map, by the job you have" %}</h2>
+    <div class="aud-seg">
+      {% if current != "community_engagement_platform" %}
+      <a href="{% url 'community_engagement_platform' %}"><strong>{% trans "Community engagement platform" %}</strong><span>{% trans "The product page: features, hosting, data ownership, price." %}</span></a>
+      {% endif %}
+      {% if current != "public_consultation_software" %}
+      <a href="{% url 'public_consultation_software' %}"><strong>{% trans "Public consultation software" %}</strong><span>{% trans "Statutory and planning consultations answered on the map." %}</span></a>
+      {% endif %}
+      {% if current != "civic_engagement" %}
+      <a href="{% url 'civic_engagement' %}"><strong>{% trans "Civic engagement" %}</strong><span>{% trans "Methods that work on a map, from neighbourhood plans to safety audits." %}</span></a>
+      {% endif %}
+      {% if current != "participatory_budgeting" %}
+      <a href="{% url 'participatory_budgeting' %}"><strong>{% trans "Participatory budgeting" %}</strong><span>{% trans "Where residents want the money spent, pinned to the map." %}</span></a>
+      {% endif %}
+      {% if audience == "for_planners" %}
+      <a href="{% url 'for_planners' %}"><strong>{% trans "For urban planners" %}</strong><span>{% trans "Participatory planning and place-based public input." %}</span></a>
+      {% else %}
+      <a href="{% url 'for_government' %}"><strong>{% trans "For local government" %}</strong><span>{% trans "Councils, cities and agencies running engagement in-house." %}</span></a>
+      {% endif %}
+    </div>
+  </div>
+</section>

@@ -173,11 +173,34 @@ SEO_LANDINGS = (
         url_name="community_engagement_platform",
         template="community_engagement_platform.html",
         breadcrumbs=(HOME, Crumb("Community Engagement Platform", "/community-engagement-platform/")),
+        lastmod="2026-10-06",
         faq=(
-            QA("Is Mapsurvey a free, open-source community-engagement platform?", _A_FREE),
-            QA("Can we self-host it?", _A_SELFHOST),
-            QA("What map input can the community give?", _A_GEO),
+            QA("What is a community engagement platform?",
+               "Software a council, agency or consultancy uses to collect public input "
+               "online: surveys, comments and, in a map-based platform like Mapsurvey, "
+               "places. Residents open a link, mark the locations their answer is about "
+               "and answer the questions attached to each one; the team gets a map and a "
+               "table of every response instead of a mailbox of free text."),
+            QA("How much does a community engagement platform cost?",
+               "Mapsurvey is free for a real project: unlimited surveys, respondents and "
+               "team members at $0, hosted or self-hosted. Pro is $49 a month or $490 a "
+               "year per workspace, with any number of users. The established vendors "
+               "sell by quote only; Social Pinpoint's last published price list (2021) "
+               "put map tools at about $8,600 a year, and buyers report budgets of "
+               "$15,000 to $40,000 a year for the category."),
+            QA("Is there a free community engagement platform for local government?",
+               "Yes. Mapsurvey's Free plan is the full product, not a trial: every "
+               "question type including point, line and polygon input, follow-up "
+               "questions on each place, 75 languages and every export format. It is "
+               "open source (AGPLv3), so a council IT team can also run it on its own "
+               "servers at no licence cost."),
+            QA("What can residents mark on the map?", _A_GEO),
             QA("Do community members need an account to take part?", _A_ACCOUNT),
+            QA("Where is the data hosted, and can we self-host?",
+               "The hosted service runs in the United States today (Render, Oregon). "
+               "Teams that need EU data residency self-host the Docker stack on their "
+               "own infrastructure; a choice of hosting region is on the Pro roadmap. "
+               "Either way the data is yours to export and delete."),
             QA("Do we own the data we collect?", _A_EXPORT),
         ),
     ),
@@ -187,11 +210,32 @@ SEO_LANDINGS = (
         url_name="public_consultation_software",
         template="public_consultation_software.html",
         breadcrumbs=(HOME, Crumb("Public Consultation Software", "/public-consultation-software/")),
+        lastmod="2026-10-06",
         faq=(
-            QA("Is this free public-consultation software?", _A_FREE),
-            QA("Can residents comment on specific locations?", _A_GEO),
+            QA("What is public consultation software?",
+               "Software for running a consultation online: publishing a proposal, "
+               "collecting responses from residents and stakeholders, and turning them "
+               "into a report. Mapsurvey is the map-based kind: the scheme is shown on a "
+               "map, people comment on the exact site, route or junction, and every "
+               "response carries a location you can analyse in GIS."),
+            QA("Is there free council consultation software?",
+               "Yes. Mapsurvey's Free plan runs a complete consultation at $0, with no "
+               "cap on responses, and the open-source code can be hosted by a council's "
+               "own IT. Pro, at $49 a month or $490 a year per workspace, adds public "
+               "results pages and direct support. UK statutory platforms are licensed "
+               "per instance and per year; Citizen Space, for example, lists from about "
+               "£10,500 a year on G-Cloud."),
+            QA("Can residents comment on a specific location in the proposal?", _A_GEO),
+            QA("How do we show consultees the plans?",
+               "Upload the proposal as a reference layer (GeoJSON, from any GIS). "
+               "Respondents see the scheme on the map and can answer questions about "
+               "each feature in it, such as a proposed crossing or a new route, or mark "
+               "their own places alongside it."),
+            QA("How do responses get into the consultation report?",
+               "Export every response, including the geometry, as GeoJSON, CSV, Excel, "
+               "GeoPackage, Shapefile or KML, or publish an aggregated public results "
+               "page for the record. Individual free-text answers are never published."),
             QA("Do respondents need to sign up to give feedback?", _A_ACCOUNT),
-            QA("Can we export consultation responses for the record?", _A_EXPORT),
             QA("Can it be self-hosted for public-sector data rules?", _A_SELFHOST),
         ),
     ),
@@ -201,15 +245,35 @@ SEO_LANDINGS = (
         url_name="civic_engagement",
         template="civic_engagement.html",
         breadcrumbs=(HOME, Crumb("Civic Engagement", "/civic-engagement/")),
+        lastmod="2026-10-06",
         faq=(
             QA("What is map-based civic engagement?",
-               "It lets residents show exactly where something matters — pinning "
-               "places, drawing routes, outlining areas — instead of leaving vague "
-               "free-text comments, giving officials location-specific evidence."),
-            QA("Is Mapsurvey free for civic-engagement projects?", _A_FREE),
+               "It lets residents show exactly where something matters, by pinning "
+               "places, drawing routes and outlining areas, instead of leaving vague "
+               "free-text comments. Officials get location-specific evidence they can "
+               "count, map and act on."),
+            QA("How do you engage people on a map?",
+               "Ask one concrete question per map (\"Where do you feel unsafe "
+               "cycling?\"), let people answer by marking the place, attach one or two "
+               "short follow-up questions to each mark, share a link that needs no "
+               "account, and show the results back on a public map so participants see "
+               "their input was used."),
+            QA("What is the difference between civic engagement and community engagement?",
+               "In practice the terms overlap. Civic engagement usually means residents "
+               "taking part in public decisions, from consultations to participatory "
+               "budgeting; community engagement is the organisation's side of the same "
+               "relationship, and a community engagement platform is the software that "
+               "runs it. Mapsurvey serves both with the same map."),
+            QA("Is Mapsurvey free for civic engagement projects?",
+               "Yes. The Free plan is $0 with unlimited surveys and respondents; Pro is "
+               "$49 a month or $490 a year per workspace for teams that want public "
+               "results pages and direct support. No per-project fees either way."),
+            QA("Can one workspace run civic engagement for a whole city?",
+               "Yes. A workspace holds any number of surveys, team members and "
+               "respondents, each survey has its own public link and results page, and "
+               "every answer exports to the city's GIS."),
             QA("Do participants need an account?", _A_ACCOUNT),
             QA("Can we export the results?", _A_EXPORT),
-            QA("Can we self-host it?", _A_SELFHOST),
         ),
     ),
     SeoLanding(
@@ -218,15 +282,29 @@ SEO_LANDINGS = (
         url_name="participatory_budgeting",
         template="participatory_budgeting.html",
         breadcrumbs=(HOME, Crumb("Participatory Budgeting", "/participatory-budgeting/")),
+        lastmod="2026-10-06",
         faq=(
-            QA("Can Mapsurvey run the spatial side of participatory budgeting?",
-               "Yes — residents pin exactly where investment is needed "
-               "(playgrounds, crossings, lighting, greening). It captures the "
-               "location input for a PB programme; it is not a budget-allocation "
-               "or voting-ledger module."),
-            QA("Is it free to start?", _A_FREE),
-            QA("Do residents need an account to submit a location?", _A_ACCOUNT),
+            QA("Can Mapsurvey run participatory budgeting?",
+               "It runs the spatial side: residents pin exactly where investment is "
+               "needed, propose and describe projects in place, and react to shortlisted "
+               "locations on a shared map. It is not a budget-allocation or ballot "
+               "module; for the final vote on a fixed budget, use a PB voting tool."),
+            QA("What does participatory budgeting software cost?",
+               "Mapsurvey is free at $0 for unlimited proposals and respondents, and "
+               "$49 a month or $490 a year per workspace on Pro. Full PB suites are "
+               "mostly quote-only; open-source suites such as Decidim are free to "
+               "license but need hosting and setup."),
+            QA("How do residents propose a project on the map?",
+               "They open the link, drop a pin or outline an area, and answer the "
+               "questions attached to it: what to build, why, a photo. No account is "
+               "needed, and the map works on a phone."),
+            QA("Can residents react to each other's proposals?",
+               "Yes. Shortlisted proposals can be shown as a layer on the map, and an "
+               "\"objects on the map\" question lets residents give each one a thumbs "
+               "up or down and a comment. Reactions are one per session, without voter "
+               "authentication, so use them to prioritise, not as a binding ballot."),
             QA("Can we export the pinned proposals for scoring?", _A_EXPORT),
+            QA("Do residents need an account to submit a location?", _A_ACCOUNT),
             QA("Can we self-host it?", _A_SELFHOST),
         ),
     ),
@@ -252,6 +330,7 @@ SEO_LANDINGS = (
         url_name="social_pinpoint_alternative",
         template="social_pinpoint_alternative.html",
         breadcrumbs=(HOME, ALTERNATIVES, Crumb("Social Pinpoint Alternative", "/alternatives/social-pinpoint/")),
+        lastmod="2026-10-06",
         faq=(
             QA("Is Mapsurvey an open-source alternative to Social Pinpoint?",
                "Yes — it is an open-source, self-hostable alternative for "
