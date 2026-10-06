@@ -2165,3 +2165,37 @@ table.cmp tr:last-child td { border-bottom: 0; }
     .cat-pricing .pricing__grid { grid-template-columns: 1fr; }
     .cat-shots { grid-template-columns: 1fr; }
 }
+
+/* ============================
+   MARKET GUIDE (change market-guide-landscape-hub, #259)
+   /participatory-mapping-tools/: category cards, the fifteen-row table with a sticky
+   first column, and the per-vendor sources list.
+   ============================ */
+.guide-cats { display: grid; grid-template-columns: 1fr; gap: 18px; margin-top: 26px; max-width: 860px; margin-left: auto; margin-right: auto; }
+.guide-cat { background: #fff; border: 1px solid #e6eaef; border-radius: 12px; padding: 22px 24px; text-align: left; }
+.guide-cat h3 { font-size: 18px; margin: 0 0 8px; }
+.guide-cat p { font-size: 14.5px; color: #556; line-height: 1.6; margin: 0 0 8px; }
+.guide-cat__buyers { color: #445; }
+.guide-cat__vendors { list-style: none; padding: 0; margin: 12px 0 0; }
+.guide-cat__vendors li { padding: 8px 0; border-top: 1px solid #eef1f4; font-size: 14px; color: #556; line-height: 1.5; }
+.guide-cat__vendors li strong { color: #1b2a3a; margin-right: 6px; }
+.guide-cat__maker { color: #889; font-size: 12.5px; margin-right: 6px; }
+.guide-cat__more { margin-top: 12px !important; font-size: 14px !important; }
+.guide-criteria li strong { color: #1b2a3a; }
+.guide-table-wrap { max-width: 1200px; }
+table.guide-table { font-size: 13px; }
+table.guide-table th, table.guide-table td { min-width: 150px; padding: 9px 12px; }
+table.guide-table thead th { position: sticky; top: 0; z-index: 2; }
+table.guide-table th:first-child, table.guide-table td:first-child { position: sticky; left: 0; background: #fff; z-index: 1; min-width: 160px; box-shadow: 1px 0 0 #eef1f4; }
+table.guide-table thead th:first-child { background: #f4f8fb; z-index: 3; }
+table.guide-table tbody th { font-weight: 600; color: #1b2a3a; }
+table.guide-table .guide-table__name { display: block; }
+table.guide-table .guide-table__maker { display: block; font-weight: 400; color: #889; font-size: 12px; }
+table.guide-table .guide-table__vs { display: block; font-weight: 500; font-size: 12px; margin-top: 4px; }
+table.guide-table .guide-table__ours td, table.guide-table .guide-table__ours th { background: #f2f8f5; }
+table.guide-table td.ms { font-weight: 500; }
+.guide-sources { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px 22px; margin-top: 22px; text-align: left; }
+.guide-source h3 { font-size: 15px; margin: 0 0 4px; }
+.guide-source ul { list-style: none; padding: 0; margin: 0; }
+.guide-source li { font-size: 12.5px; line-height: 1.5; color: #556; word-break: break-all; }
+.guide-source__when { color: #889; white-space: nowrap; }

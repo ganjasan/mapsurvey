@@ -1,0 +1,30 @@
+{% load i18n %}
+{% comment %}
+Change market-guide-landscape-hub (#259): the "Mapsurvey vs <vendor>" table of an /alternatives/
+page, rendered from survey/vendors.py. Context (set by render_seo_landing for a landing whose key
+is a Vendor.landing_key): `vendor` and `vs_rows` (criteria rows, then the vendor's extras). The
+note names the pages the facts were read from and the date, so a reader can check any cell.
+Never add a hand-written cell here: a fact the registry lacks is a fact the hub lacks too.
+{% endcomment %}
+<div class="cmp-table-wrap">
+  <table class="cmp">
+    <thead>
+      <tr><th>&nbsp;</th><th>Mapsurvey</th><th>{{ vendor.name }}</th></tr>
+    </thead>
+    <tbody>
+      {% for row in vs_rows %}
+      <tr>
+        <th>{{ row.label }}</th>
+        <td class="ms">{{ row.ours }}</td>
+        <td class="mt" title="{% trans 'Source' %}: {{ row.theirs.host }}, {% trans 'read' %} {{ row.theirs.verified }}">{{ row.theirs.text }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p class="cmp-note">
+  {% blocktrans with name=vendor.name when=vendor.verified_on %}{{ name }} details come from the vendor's public pages, read on {{ when }}:{% endblocktrans %}
+  {% for s in vendor.sources %}<a href="{{ s.url }}" target="_blank" rel="noopener">{{ s.host }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}.
+  {% trans "'Not published' means the page we read does not say; verify current specifics with the vendor. We publish no other vendor's price: the model, the trial and where a rate is listed, nothing more." %}
+  <a href="{% url 'participatory_mapping_tools' %}#table">{% trans "Every tool in this category on one table" %}</a>.
+</p>

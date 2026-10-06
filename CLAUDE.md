@@ -209,6 +209,22 @@ Responses (Map pane and Overview thumbnail) draws a spray question as one
 each counted once, NOT `leaflet.heat` (its zoom scaling flattens it); the public page gets a server-side grid of distinct-respondent counts per cell with cells below K
 omitted (`survey/public_results_grid.py`), never the dots.
 
+**Vendor facts on comparison pages (`survey/vendors.py`, change `market-guide-landscape-hub`, #259)**:
+every claim the marketing site makes about another vendor is a `Fact(text, source, verified)` in
+ONE registry — the public `https://` page it was read from and the ISO date — grouped into
+`CATEGORIES` and `CRITERIA`. The market guide `/participatory-mapping-tools/` (the hub above the
+`/alternatives/` pages; `/alternatives/` 301s to it) renders vendors × criteria from it, and the
+three `/alternatives/` pages render criteria × (Mapsurvey, vendor) through
+`partials/_vendor_vs_table.html`, so one correction reaches every page. **Never hand-write a
+competitor cell in a template**; a fact the page does not state is `Fact("Not published", <page
+read>, <date>)`. No price figure for any vendor but Mapsurvey (owner rule 2026-10-06): the model,
+the trial and where a rate is listed; `test_no_competitor_price_figure_on_any_landing` scans
+every `Fact.text` and the rendered hub. Import-time `_validate()` and `VendorRegistryTest` refuse
+a fact without a source or with a bad date. The five category pages (#251/#252) still carry
+hand-written tables; moving them onto the registry is the follow-up after #253. Mapsurvey's own
+hosting fact is the United States (Render, Oregon) — the "EU-hosted / Frankfurt" wording that
+survived on the Maptionnaire page until this change must not come back.
+
 **Hierarchical Questions/Answers**: Both Question and Answer models support self-referential parent relationships via `parent_question_id` and `parent_answer_id` for conditional sub-questions.
 
 **Conditional visibility (`CONDITIONAL_VISIBILITY` kill switch, default ON)**: a

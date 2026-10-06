@@ -2265,11 +2265,26 @@ def social_pinpoint_alternative(request):
 
 
 def metroquest_alternative(request):
-	"""Public "MetroQuest alternative" page for customers of the sunset MetroQuest product.
+	"""Public "MetroQuest alternative" page for customers of the MetroQuest product.
 
-	Migration framing: metroquest.com now redirects into Open Point. CTAs carry
-	utm_source=comparison / utm_medium=metroquest_alt."""
+	Migration framing: MetroQuest was acquired by Social Pinpoint (Open Point) in July 2023.
+	Table cells come from survey/vendors.py. CTAs carry utm_source=comparison /
+	utm_medium=metroquest_alt."""
 	return render_seo_landing(request, 'metroquest_alternative')
+
+
+def participatory_mapping_tools(request):
+	"""The market guide (change market-guide-landscape-hub, #259): a buyer's guide to map-based
+	survey and engagement tools, the hub above every /alternatives/ page. Vendor facts, categories
+	and criteria come from survey/vendors.py."""
+	return render_seo_landing(request, 'participatory_mapping_tools')
+
+
+def alternatives_index(request):
+	"""/alternatives/ was the breadcrumb parent of the comparison pages for a year without a page
+	behind it; the market guide is that page."""
+	from django.shortcuts import redirect
+	return redirect('participatory_mapping_tools', permanent=True)
 
 
 def services(request):

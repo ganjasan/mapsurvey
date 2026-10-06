@@ -57,7 +57,8 @@ class SeoLanding:
 
 
 HOME = Crumb("Home", "/")
-ALTERNATIVES = Crumb("Alternatives", "/alternatives/")
+# Change market-guide-landscape-hub: the parent of every /alternatives/ page is the market guide.
+ALTERNATIVES = Crumb("Participatory mapping tools", "/participatory-mapping-tools/")
 
 # ---------------------------------------------------------------------------
 # Reusable answers (universal product facts shared across several pages). Keep
@@ -364,6 +365,7 @@ SEO_LANDINGS = (
         url_name="maptionnaire_alternative",
         template="maptionnaire_alternative.html",
         breadcrumbs=(HOME, ALTERNATIVES, Crumb("Maptionnaire Alternative", "/alternatives/maptionnaire/")),
+        lastmod="2026-10-06",
         faq=(
             QA("Is Mapsurvey a free alternative to Maptionnaire?",
                "Yes — Mapsurvey is a free, open-source alternative for map-based "
@@ -399,6 +401,7 @@ SEO_LANDINGS = (
         url_name="metroquest_alternative",
         template="metroquest_alternative.html",
         breadcrumbs=(HOME, ALTERNATIVES, Crumb("MetroQuest Alternative", "/alternatives/metroquest/")),
+        lastmod="2026-10-06",
         faq=(
             QA("Why look for a MetroQuest alternative?",
                "MetroQuest has been folded into the Open Point suite. Mapsurvey "
@@ -409,6 +412,61 @@ SEO_LANDINGS = (
                "questions."),
             QA("Can I export the results?", _A_EXPORT),
             QA("Is it free and self-hostable?", _A_SELFHOST),
+        ),
+    ),
+    SeoLanding(
+        key="participatory_mapping_tools",
+        path="/participatory-mapping-tools/",
+        url_name="participatory_mapping_tools",
+        template="participatory_mapping_tools.html",
+        breadcrumbs=(HOME, Crumb("Participatory mapping tools", "/participatory-mapping-tools/")),
+        lastmod="2026-10-06",
+        # Change market-guide-landscape-hub (#259): the buyer's guide above the /alternatives/
+        # pages. Vendor facts come from survey/vendors.py, never from this file.
+        faq=(
+            QA("What is a participatory mapping tool?",
+               "Software that asks the public questions on a map: respondents drop points, draw "
+               "routes or outline areas and answer follow-up questions about each, and the "
+               "organisers get a spatial dataset back. The research term is PPGIS, public "
+               "participation GIS. Engagement platforms, field-collection apps and form builders "
+               "can each put a pin on a map, which is why this guide compares all of them on the "
+               "same criteria."),
+            QA("What is the difference between a map-based survey tool and a community engagement platform?",
+               "A map-based survey tool is built around the map question and the data that comes "
+               "out of it; an engagement platform is built around a council's whole programme "
+               "(project pages, ideas, forums, participatory budgeting) and offers a map as one "
+               "tool among many, usually a pin with a comment. If the deliverable is a layer in "
+               "your GIS, start with the first group; if it is a standing portal, the second."),
+            QA("Which tools let respondents draw lines and polygons, not only drop a pin?",
+               "On the pages we read on 6 October 2026: Mapsurvey, Maptionnaire, PARTIMAP, Go "
+               "Vocal and Citizen Space state lines and polygons for respondents; ArcGIS "
+               "Survey123, KoboToolbox and Mergin Maps do too, for trained collectors. Open Point, "
+               "Commonplace, EngagementHQ, MetroQuest, Decidim, Consul and Jotform publish a pin or "
+               "an address and do not state drawing. The table on this page links the page each "
+               "statement comes from."),
+            QA("Which of these tools are open source?",
+               "Mapsurvey (AGPLv3), PARTIMAP (GPLv3), KoboToolbox (AGPL-3.0), Mergin Maps "
+               "(Community Edition), Decidim (AGPL-3.0) and Consul Democracy (AGPL v3) publish "
+               "their code and can be self-hosted; Go Vocal offers a self-hosted Free Edition under "
+               "AGPLv3 beside its commercial SaaS. The others are proprietary services."),
+            QA("Why does this guide not list what the other tools cost?",
+               "Because most of them do not publish it. We state the pricing model, whether a "
+               "free tier or trial exists and on what conditions, and whether a rate is listed "
+               "anywhere public (the vendor's site, the UK G-Cloud marketplace) or available from "
+               "sales only. 'On request' is itself the fact a buyer needs. Mapsurvey's own prices "
+               "are published on this page."),
+            QA("How do I check a hosting or GDPR claim before procurement?",
+               "Ask where the hosted service keeps the data (country and provider), whether you "
+               "can choose the region, whether a data-processing agreement is offered, and what "
+               "the vendor states about ISO 27001 and WCAG. The hosting column quotes what each "
+               "vendor's own page states; where the page is silent the cell says so. "
+               "Self-hosting, where offered, is the one answer that does not depend on the vendor."),
+            QA("How current are the facts in the table?",
+               "Every cell carries the public page it was read from and the date it was read; the "
+               "sources list below the table shows them per vendor. We re-read the pages when a "
+               "vendor tells us something changed or on our own schedule, and bump the date. If "
+               "you find a cell that is out of date, write to the developer and it will be fixed "
+               "on every page that uses it."),
         ),
     ),
 )
@@ -500,11 +558,19 @@ def render_seo_landing(request, key: str):
     # Change story-topics: the stories that prove this page, by the topic that owns it.
     # Alternatives pages own no topic and render no block.
     topic = for_landing(key)
+    # Change market-guide-landscape-hub: comparison cells come from survey/vendors.py. An
+    # /alternatives/ page gets its vendor and the two-column rows; the hub gets everything.
+    from .vendors import compare_rows, hub_context, vendor_for_landing
+    vendor = vendor_for_landing(key)
     context = {
+        "vendor": vendor,
+        "vs_rows": compare_rows(vendor) if vendor else [],
         "topic": topic,
         "topic_stories": list(stories_for(topic)) if topic else [],
         "faq_items": landing.faq,
         "faqpage_jsonld": build_faqpage_jsonld(landing.faq) if landing.faq else "",
         "breadcrumb_jsonld": build_breadcrumb_jsonld(landing.breadcrumbs) if landing.breadcrumbs else "",
     }
+    if key == "participatory_mapping_tools":
+        context.update(hub_context())
     return render(request, landing.template, context)

@@ -2,7 +2,7 @@
 {% load static i18n %}
 
 {% block title %}{% trans "Free, Open-Source Maptionnaire Alternative — Mapsurvey" %}{% endblock %}
-{% block meta_description %}{% trans "Mapsurvey is a free, open-source alternative to Maptionnaire for map-based surveys — point, line, and polygon input, GeoJSON/CSV export, EU-hosted or self-hostable. No per-survey fees, no free-tier gate." %}{% endblock %}
+{% block meta_description %}{% trans "Mapsurvey is a free, open-source alternative to Maptionnaire for map-based surveys — point, line, and polygon input, GeoJSON, GeoPackage and Shapefile export, self-hostable. No per-survey fees, no free-tier gate." %}{% endblock %}
 {% block meta_keywords %}{% trans "Maptionnaire alternative, open source Maptionnaire, free Maptionnaire alternative, Maptionnaire vs Mapsurvey, participatory mapping software, PPGIS tool" %}{% endblock %}
 {% block canonical_url %}https://mapsurvey.org/alternatives/maptionnaire/{% endblock %}
 {% block og_url %}https://mapsurvey.org/alternatives/maptionnaire/{% endblock %}
@@ -40,7 +40,7 @@
   <div class="hero__content cmp-lead">
     <h1 class="hero__headline">{% trans "A free, open-source Maptionnaire alternative" %}</h1>
     <p class="hero__description">
-      {% trans "Mapsurvey does the same core job as Maptionnaire — map-based surveys where people mark places, draw routes, and outline areas — with different economics: free to use, open source (AGPLv3), EU-hosted, and self-hostable. No per-survey fees, no free-tier gate on your first real project." %}
+      {% trans "Mapsurvey does the same core job as Maptionnaire — map-based surveys where people mark places, draw routes, and outline areas — with different economics: free to use, open source (AGPLv3), and self-hostable. No per-survey fees, no free-tier gate on your first real project." %}
     </p>
     <div class="hero__cta-group">
       <a href="{% url 'django_registration_register' %}?utm_source=comparison&amp;utm_medium=maptionnaire_alt" class="btn-primary-landing">{% trans "Create your Mapsurvey — free" %}</a>
@@ -52,7 +52,7 @@
       <span class="hero__badge">{% trans "Free" %}</span>
       <span class="hero__badge">{% trans "Open source (AGPLv3)" %}</span>
       <span class="hero__badge">{% trans "Self-hostable" %}</span>
-      <span class="hero__badge">{% trans "EU-hosted" %}</span>
+      <span class="hero__badge">{% trans "GIS export built in" %}</span>
     </div>
   </div>
 </section>
@@ -71,12 +71,12 @@
         <p>{% trans "Read the code, fork it, or run it yourself. No proprietary lock-in — useful for audits and academic publication." %}</p>
       </div>
       <div class="cmp-card">
-        <h3>{% trans "Self-host or EU cloud" %}</h3>
-        <p>{% trans "Use the hosted version (EU, Frankfurt) or self-host with Docker on your own infrastructure for full data sovereignty." %}</p>
+        <h3>{% trans "Self-host anywhere" %}</h3>
+        <p>{% trans "Use the hosted version or self-host with Docker on your own infrastructure for full data sovereignty — the route for EU data residency, since the hosted service runs in the United States." %}</p>
       </div>
       <div class="cmp-card">
         <h3>{% trans "Standard data out" %}</h3>
-        <p>{% trans "GeoJSON + CSV export built in — open in QGIS, ArcGIS, R, or Python with no conversion." %}</p>
+        <p>{% trans "GeoJSON, GeoPackage, Shapefile, KML, CSV and Excel export built in — open in QGIS, ArcGIS, R, or Python with no conversion." %}</p>
       </div>
     </div>
   </div>
@@ -86,24 +86,8 @@
   <div class="landing-inner">
     <p class="section-eyebrow">{% trans "Side by side" %}</p>
     <h2 class="section-heading">{% trans "Mapsurvey vs Maptionnaire" %}</h2>
-    <div class="cmp-table-wrap">
-      <table class="cmp">
-        <thead>
-          <tr><th>&nbsp;</th><th>Mapsurvey</th><th>Maptionnaire</th></tr>
-        </thead>
-        <tbody>
-          <tr><th>{% trans "Free tier for real projects" %}</th><td class="ms">{% trans "Yes — unlimited, free" %}</td><td class="mt">{% trans "No free tier" %}</td></tr>
-          <tr><th>{% trans "Pricing model" %}</th><td class="ms">{% trans "Free hosted; free self-hosted" %}</td><td class="mt">{% trans "Subscription by tier, 12-month minimum; prices listed on the vendor's site" %}</td></tr>
-          <tr><th>{% trans "Open source" %}</th><td class="ms">{% trans "Yes — AGPLv3, code on GitHub" %}</td><td class="mt">{% trans "No — proprietary" %}</td></tr>
-          <tr><th>{% trans "Self-hosting" %}</th><td class="ms">{% trans "Yes — Docker, your infrastructure" %}</td><td class="mt">{% trans "No — SaaS only" %}</td></tr>
-          <tr><th>{% trans "Map input (point / line / polygon)" %}</th><td class="ms">{% trans "Yes" %}</td><td class="mt">{% trans "Yes" %}</td></tr>
-          <tr><th>{% trans "Multilingual surveys" %}</th><td class="ms">{% trans "Yes — per-question translations" %}</td><td class="mt">{% trans "Yes" %}</td></tr>
-          <tr><th>{% trans "Data export" %}</th><td class="ms">{% trans "GeoJSON + CSV, built in" %}</td><td class="mt">{% trans "Yes" %}</td></tr>
-          <tr><th>{% trans "EU data residency" %}</th><td class="ms">{% trans "Frankfurt, or self-host anywhere" %}</td><td class="mt">{% trans "Finland" %}</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="cmp-note">{% trans "Maptionnaire details reflect their published product and pricing pages as of July 2026; verify current specifics on maptionnaire.com. Both platforms are GDPR-oriented and support point, line, and polygon input." %}</p>
+    <p class="cmp-note" style="text-align:center;margin-top:8px;">{% url 'participatory_mapping_tools' as guide_url %}{% blocktrans %}This page is one entry in our <a href="{{ guide_url }}">guide to participatory mapping tools</a>; the cells below and the guide's table come from the same sourced facts.{% endblocktrans %}</p>
+    {% include "partials/_vendor_vs_table.html" %}
   </div>
 </section>
 
@@ -128,9 +112,7 @@
 
     <div class="hero__cta-group" style="margin-top:26px;justify-content:center;">
       <a href="{% url 'django_registration_register' %}?utm_source=comparison&amp;utm_medium=maptionnaire_alt" class="btn-primary-landing">{% trans "Create your Mapsurvey — free" %}</a>
-      {% if DEMO_SURVEY_URL %}
-      <a href="{{ DEMO_SURVEY_URL }}" class="btn-secondary-landing" target="_blank" rel="noopener">{% trans "Try a live demo survey" %}</a>
-      {% endif %}
+      <a href="{% url 'participatory_mapping_tools' %}" class="btn-secondary-landing">{% trans "All participatory mapping tools compared" %}</a>
     </div>
   </div>
 </section>

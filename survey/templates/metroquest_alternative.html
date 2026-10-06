@@ -40,7 +40,7 @@
   <div class="hero__content cmp-lead">
     <h1 class="hero__headline">{% trans "Looking for a MetroQuest alternative?" %}</h1>
     <p class="hero__description">
-      {% trans "MetroQuest was acquired in 2023 and absorbed into Open Point — metroquest.com now redirects there, and the classic 5-screen survey is being rebuilt inside their platform. If what your team needs is map-based public input for transportation and planning projects, Mapsurvey is a self-serve replacement: free, open source, editable any time after launch, with points, lines, and polygons — and GeoJSON export for your GIS." %}
+      {% trans "MetroQuest was acquired by Social Pinpoint in July 2023 and is being integrated into the Open Point suite. If what your team needs is map-based public input for transportation and planning projects, Mapsurvey is a self-serve replacement: free, open source, editable any time after launch, with points, lines, and polygons — and GeoJSON export for your GIS." %}
     </p>
     <div class="hero__cta-group">
       <a href="{% url 'django_registration_register' %}?utm_source=comparison&amp;utm_medium=metroquest_alt" class="btn-primary-landing">{% trans "Build your survey — free" %}</a>
@@ -64,11 +64,11 @@
     <div class="cmp-grid">
       <div class="cmp-card">
         <h3>{% trans "Launch today, not in weeks" %}</h3>
-        <p>{% trans "MetroQuest builds typically ran on a multi-week lead time with the vendor. Mapsurvey is self-serve — draft, preview, and publish the same day." %}</p>
+        <p>{% trans "TxDOT's factsheet puts a MetroQuest build at six weeks' lead time with the vendor. Mapsurvey is self-serve — draft, preview, and publish the same day." %}</p>
       </div>
       <div class="cmp-card">
         <h3>{% trans "Fix typos after launch" %}</h3>
-        <p>{% trans "The classic MetroQuest format didn't allow post-launch edits. Mapsurvey has draft-and-publish versioning — revise safely while responses keep flowing." %}</p>
+        <p>{% trans "MetroQuest surveys cannot be edited after launch. Mapsurvey has draft-and-publish versioning — revise safely while responses keep flowing." %}</p>
       </div>
       <div class="cmp-card">
         <h3>{% trans "Real map input" %}</h3>
@@ -76,7 +76,7 @@
       </div>
       <div class="cmp-card">
         <h3>{% trans "More than 2 languages" %}</h3>
-        <p>{% trans "MetroQuest surveys supported two languages. Mapsurvey ships content translation for 75 — for the communities your projects actually serve." %}</p>
+        <p>{% trans "MetroQuest runs in English plus one manually translated language. Mapsurvey ships content translation for 75 — for the communities your projects actually serve." %}</p>
       </div>
     </div>
   </div>
@@ -85,25 +85,9 @@
 <section class="showcase showcase--center">
   <div class="landing-inner">
     <p class="section-eyebrow">{% trans "Side by side" %}</p>
-    <h2 class="section-heading">{% trans "Mapsurvey vs classic MetroQuest" %}</h2>
-    <div class="cmp-table-wrap">
-      <table class="cmp">
-        <thead>
-          <tr><th>&nbsp;</th><th>Mapsurvey</th><th>MetroQuest (classic)</th></tr>
-        </thead>
-        <tbody>
-          <tr><th>{% trans "Status" %}</th><td class="ms">{% trans "Active, open source" %}</td><td class="mt">{% trans "Absorbed into Open Point; metroquest.com redirects there; format rebuilt as Flex Forms" %}</td></tr>
-          <tr><th>{% trans "Setup" %}</th><td class="ms">{% trans "Self-serve, same day" %}</td><td class="mt">{% trans "Vendor-built; multi-week lead time reported (TxDOT factsheet)" %}</td></tr>
-          <tr><th>{% trans "Post-launch edits" %}</th><td class="ms">{% trans "Yes — draft & publish versioning" %}</td><td class="mt">{% trans "No" %}</td></tr>
-          <tr><th>{% trans "Survey structure" %}</th><td class="ms">{% trans "Unlimited sections & questions" %}</td><td class="mt">{% trans "Max 5 screens, 14 templates" %}</td></tr>
-          <tr><th>{% trans "Map input" %}</th><td class="ms">{% trans "Points, lines, polygons" %}</td><td class="mt">{% trans "Drag-and-drop markers" %}</td></tr>
-          <tr><th>{% trans "Languages" %}</th><td class="ms">{% trans "75, included" %}</td><td class="mt">{% trans "2 max" %}</td></tr>
-          <tr><th>{% trans "Geo export" %}</th><td class="ms">{% trans "GeoJSON + CSV" %}</td><td class="mt">{% trans "Via vendor reporting" %}</td></tr>
-          <tr><th>{% trans "Price" %}</th><td class="ms">{% trans "Free hosted; free self-hosted" %}</td><td class="mt">{% trans "Commercial licence (statewide deals existed, e.g. NCDOT)" %}</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="cmp-note">{% trans "MetroQuest details reflect the classic product's public documentation (incl. the TxDOT 2022 factsheet) and its post-acquisition status as of July 2026. For its successor inside Open Point, see our Social Pinpoint comparison." %}</p>
+    <h2 class="section-heading">{% trans "Mapsurvey vs MetroQuest" %}</h2>
+    <p class="cmp-note" style="text-align:center;margin-top:8px;">{% url 'participatory_mapping_tools' as guide_url %}{% url 'social_pinpoint_alternative' as sp_url %}{% blocktrans %}This page is one entry in our <a href="{{ guide_url }}">guide to participatory mapping tools</a>; the cells below and the guide's table come from the same sourced facts. For MetroQuest's successor inside Open Point, see the <a href="{{ sp_url }}">Social Pinpoint comparison</a>.{% endblocktrans %}</p>
+    {% include "partials/_vendor_vs_table.html" %}
   </div>
 </section>
 
@@ -129,6 +113,7 @@
     <div class="hero__cta-group" style="margin-top:26px;justify-content:center;">
       <a href="{% url 'django_registration_register' %}?utm_source=comparison&amp;utm_medium=metroquest_alt" class="btn-primary-landing">{% trans "Build your survey — free" %}</a>
       <a href="{% url 'social_pinpoint_alternative' %}" class="btn-secondary-landing">{% trans "See the Social Pinpoint comparison" %}</a>
+      <a href="{% url 'participatory_mapping_tools' %}" class="btn-secondary-landing">{% trans "All participatory mapping tools compared" %}</a>
     </div>
   </div>
 </section>
