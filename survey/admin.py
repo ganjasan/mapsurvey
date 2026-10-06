@@ -74,7 +74,23 @@ class StoryImageInline(admin.TabularInline):
     fields = ('key', 'image')
 
 
+class StoryAdminForm(forms.ModelForm):
+    """Change story-topics: the admin is where production stories seeded from the ops repo get
+    their topics; the same registry check as seed_story, so a typo cannot reach the page."""
+    class Meta:
+        model = Story
+        fields = '__all__'
+
+    def clean_topics(self):
+        from .topics import validate_slugs
+        try:
+            return validate_slugs(self.cleaned_data.get('topics') or [])
+        except ValueError as exc:
+            raise forms.ValidationError(str(exc))
+
+
 class StoryAdmin(admin.ModelAdmin):
+    form = StoryAdminForm
     # Change story-draft-publishing: stories reach production as drafts (seed_story) and are
     # published here after the customer's written OK. A draft is visible to staff at its URL.
     list_display = ('title', 'position', 'story_type', 'is_published', 'published_date', 'view_link')

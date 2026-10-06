@@ -1269,6 +1269,9 @@ class Story(models.Model):
     cover_alt = models.CharField(max_length=512, blank=True)
     cover_credit = models.CharField(max_length=256, blank=True)
     facts = models.JSONField(default=list, blank=True)  # [{"value": "1977", "label": "first count"}]
+    # Topic slugs from survey/topics.py (change story-topics): the chips on the story page and
+    # the "From the field" block on the matching landing page. Validated by seed_story and the admin.
+    topics = models.JSONField(default=list, blank=True)
 
     class Meta:
         app_label = 'survey'

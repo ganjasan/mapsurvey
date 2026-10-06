@@ -29,7 +29,7 @@ DATA_ROOT = Path(__file__).resolve().parents[2] / 'story_data'
 SCALAR_FIELDS = (
     'title', 'story_type', 'place', 'sector', 'summary', 'credit', 'credit_note',
     'credit_url', 'credit_note_url',
-    'cover_alt', 'cover_credit', 'facts',
+    'cover_alt', 'cover_credit', 'facts', 'topics',
 )
 FILE_FIELDS = {'cover': 'cover_image', 'card_image': 'card_image', 'credit_logo': 'credit_logo'}
 
@@ -78,6 +78,14 @@ class Command(BaseCommand):
         slug = opts['slug']
         meta, body = load_story_data(slug, opts.get('source'))
         base = story_dir(slug, opts.get('source'))
+
+        if 'topics' in meta:
+            # Change story-topics: a tag only earns a link when it names a registry topic.
+            from survey.topics import validate_slugs
+            try:
+                validate_slugs(meta['topics'])
+            except ValueError as exc:
+                raise CommandError(f"{slug}: {exc}")
 
         with transaction.atomic():
             story, created = Story.objects.get_or_create(slug=slug, defaults={'title': meta['title']})
