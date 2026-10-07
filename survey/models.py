@@ -415,6 +415,11 @@ class SurveyHeader(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True, blank=True, db_index=True, help_text=_('Set when the survey is moved to trash; purged permanently after the retention window.'))
+    # The FIRST transition to `published`, never moved by a reopen or by publishing a
+    # draft as a new version. NULL on surveys published before the audit log recorded
+    # transitions (migration 0035) — readers fall back to `created_at` as a proxy
+    # rather than this column holding a guess (change funnel-history-metrics, D4).
+    published_at = models.DateTimeField(null=True, blank=True, db_index=True)
 
     # Versioning fields
     canonical_survey = models.ForeignKey(
@@ -2284,3 +2289,29 @@ class SurveyImportJob(models.Model):
             except Exception:  # noqa: BLE001 — a missing object must not mask the outcome
                 pass
             self.file = None
+
+
+class MetricSnapshot(models.Model):
+    """One number on one day for the staff funnel dashboard.
+
+    Holds the `state` series of `survey/metrics.py` — values such as active
+    creators or publish rate that describe the present and cannot be recomputed
+    for a past day because the rows behind them keep only their latest moment.
+    Written only by `manage.py snapshot_metrics` (one row per day and key,
+    overwritten on rerun), read-only in the admin. Event series are NOT stored
+    here: they are computed live from timestamps. See
+    openspec/changes/funnel-history-metrics/design.md (D2, D3).
+    """
+
+    date = models.DateField()
+    key = models.CharField(max_length=40)
+    value = models.FloatField()
+
+    class Meta:
+        app_label = 'survey'
+        unique_together = (('date', 'key'),)
+        indexes = [models.Index(fields=['key', 'date'])]
+        ordering = ['-date', 'key']
+
+    def __str__(self):
+        return f"{self.key} @ {self.date} = {self.value}"

@@ -491,6 +491,26 @@ the window, registrations by first-touch source, and demo opens — total from `
 the user FK lives there and never on `SurveySession`, which must not link customers' respondents to
 platform accounts). Demo helpers live in `survey/demo.py`.
 
+**Funnel dashboard trends (change `funnel-history-metrics`)**: the Trends section at the top of
+`/admin/survey/funnelreport/` is driven by ONE registry, `survey/metrics.py::SERIES`, of two kinds.
+`event` series (registrations, activations, surveys created/published, first responses, responses,
+live surveys) are computed live from timestamps, bucketed by ISO week, retro-active to the first
+signup. `state` series (activated creators 30d, active 30d, returned %, publish rate, collecting
+unpublished) describe the present and cannot be recomputed for a past day, so their history is
+`MetricSnapshot(date, key, value)` written nightly by `manage.py snapshot_metrics` (Render cron
+`mapsurvey-metrics-snapshot`, idempotent per day, `--date` for tests — never a backfill) while
+their current value is still computed live from the same `CreatorFunnelService` methods the goal
+cards use. A new metric is a row in `SERIES` plus its branch in `_event_counts` / `current_state`;
+the dashboard, the command and the tests iterate the tuple, so do not add a second list of keys.
+Tiles are Chart.js 4 (same CDN/version as the Responses pages); value and delta are in the HTML so
+a blocked CDN loses the curve, not the number. The weekly tile compares the last COMPLETE week with
+the one before (the running week is the dashed last point), the daily tile today with seven days
+earlier, and a state tile with fewer than two snapshots says "history from <date>" instead of
+drawing. `SurveyHeader.published_at` is the FIRST transition to `published` (set in
+`editor_survey_transition`, backfilled by migration `0095` from `AuditLog` `status_transition`
+rows); it stays `NULL` for surveys published before the audit log existed, and every reader of a
+publish moment goes through `Coalesce(published_at, created_at)` — the column never holds a guess.
+
 **Signup attribution**: `FirstTouchMiddleware` writes a signed 90-day first-party cookie (`ms_ft`)
 on the first marketing-page response — referrer host, bucket, UTM triple, landing path, no
 identifier — and never on `/surveys/`, `/r/`, the editor or admin. `persist_signup_attribution`

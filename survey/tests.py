@@ -18745,7 +18745,7 @@ class DashboardContextSmokeTest(TestCase):
         ctx = _dashboard_context()
         for key in ("goals", "sources", "clusters", "abuse", "cohorts", "totals",
                     "active", "top_surveys", "ttv", "dormant_valuable", "collecting_unpublished",
-                    "signups_chart", "activity_chart"):
+                    "tiles"):
             self.assertIn(key, ctx)
         self.assertEqual(len(ctx["goals"]), 4)
         self.assertFalse(ctx["sources"]["available"])   # Phase 1 not shipped
@@ -49224,3 +49224,399 @@ class MarketGuideHubTest(TestCase):
         hub_related = hub_related[:hub_related.index("</section>")]
         self.assertNotIn('href="/participatory-mapping-tools/"', hub_related)
         self.assertIn('href="/community-engagement-platform/"', hub_related)
+
+
+# ---------------------------------------------------------------------------
+# Funnel history metrics (change funnel-history-metrics): the series registry,
+# MetricSnapshot + snapshot_metrics, SurveyHeader.published_at, the trend tiles.
+# ---------------------------------------------------------------------------
+
+from datetime import date as _date, datetime as _datetime, timedelta as _td
+from io import StringIO as _StringIO
+
+from django.core.management import call_command as _call_command
+from django.db import IntegrityError as _IntegrityError, transaction as _transaction
+
+from survey import metrics as _metrics
+from survey.models import AuditLog as _AuditLog, MetricSnapshot
+
+
+def _aware(y, m, d, h=12):
+    return timezone.make_aware(_datetime(y, m, d, h, 0, 0))
+
+
+class MetricSeriesTest(TestCase):
+    """Event series of survey/metrics.py: bucketed by ISO week from timestamps."""
+
+    def setUp(self):
+        self.org = _make_org("MetricsOrg")
+        # 2026-03-08 is a Sunday, 2026-03-09 a Monday.
+        self.sunday = _aware(2026, 3, 8)
+        self.monday = _aware(2026, 3, 9)
+
+    def test_regs_bucket_by_iso_week_and_exclude_staff(self):
+        """
+        GIVEN a real user who joined on a Sunday, one on the following Monday and a staff account
+        WHEN weekly_series('regs') is computed over that fortnight
+        THEN the two real users land in different buckets keyed by their Mondays and staff is not counted
+        """
+        _user_at("m_sun", self.sunday)
+        _user_at("m_mon", self.monday)
+        _user_at("m_staff", self.monday, is_staff=True)
+        points = _metrics.weekly_series("regs", self.sunday, self.monday)
+        self.assertEqual([(p["x"], p["y"]) for p in points],
+                         [("2026-03-02", 1), ("2026-03-09", 1)])
+
+    def test_surveys_created_counts_canonical_rows_only(self):
+        """
+        GIVEN a canonical survey with a draft copy and an archived version
+        WHEN weekly_series('surveys_created') is computed
+        THEN exactly one survey is counted, in the canonical row's week
+        """
+        u = _user_at("m_owner", self.monday)
+        canon = SurveyHeader.objects.create(name="canon", organization=self.org, created_by=u,
+                                            status="published")
+        SurveyHeader.objects.create(name="canon_draft", organization=self.org, created_by=u,
+                                    is_canonical=False, published_version=canon)
+        SurveyHeader.objects.create(name="canon_v1", organization=self.org, created_by=u,
+                                    is_canonical=False, canonical_survey=canon, version_number=1)
+        today = timezone.now()
+        points = _metrics.weekly_series("surveys_created", today, today)
+        self.assertEqual(sum(p["y"] for p in points), 1)
+
+    def test_first_responses_are_per_survey_and_external(self):
+        """
+        GIVEN a survey whose earliest session was opened by its owner and whose first external session came a week later
+        WHEN weekly_series('first_responses') is computed
+        THEN the survey is counted once, in the later week
+        """
+        u = _user_at("m_fr", self.monday)
+        sv = SurveyHeader.objects.create(name="fr", organization=self.org, created_by=u, status="published")
+        SurveySession.objects.create(survey=sv, start_datetime=self.monday,
+                                     opened_by_kind=SurveySession.OPENED_BY_OWNER)
+        SurveySession.objects.create(survey=sv, start_datetime=self.monday + _td(days=7))
+        SurveySession.objects.create(survey=sv, start_datetime=self.monday + _td(days=8))
+        points = _metrics.weekly_series("first_responses", self.monday, self.monday + _td(days=8))
+        self.assertEqual([(p["x"], p["y"]) for p in points],
+                         [("2026-03-09", 0), ("2026-03-16", 1)])
+
+    def test_live_surveys_count_distinct_surveys(self):
+        """
+        GIVEN one survey with five sessions and another with one in the same week
+        WHEN weekly_series('live_surveys') and ('responses') are computed for that week
+        THEN live_surveys is 2 and responses is 6
+        """
+        u = _user_at("m_live", self.monday)
+        a = SurveyHeader.objects.create(name="live_a", organization=self.org, created_by=u)
+        b = SurveyHeader.objects.create(name="live_b", organization=self.org, created_by=u)
+        for i in range(5):
+            SurveySession.objects.create(survey=a, start_datetime=self.monday + _td(hours=i))
+        SurveySession.objects.create(survey=b, start_datetime=self.monday)
+        live = _metrics.weekly_series("live_surveys", self.monday, self.monday)
+        resp = _metrics.weekly_series("responses", self.monday, self.monday)
+        self.assertEqual(live[0]["y"], 2)
+        self.assertEqual(resp[0]["y"], 6)
+
+    def test_state_series_reuse_the_goal_card_computation(self):
+        """
+        GIVEN a recent creator with five responses and an older one with none
+        WHEN current_state('activated_30d') is computed
+        THEN it equals the "Activated creators · 30d" goal card value
+        """
+        now = timezone.now()
+        u = _user_at("m_act", now - _td(days=3))
+        _user_at("m_old", now - _td(days=90))
+        sv = SurveyHeader.objects.create(name="act", organization=self.org, created_by=u, status="published")
+        for _ in range(5):
+            SurveySession.objects.create(survey=sv, start_datetime=now)
+        svc = CreatorFunnelService()
+        card = next(g for g in svc.goals() if g["label"].startswith("Activated"))
+        self.assertEqual(_metrics.current_state("activated_30d", service=svc), float(card["value"]))
+        self.assertEqual(card["value"], "1")
+
+    def test_registry_covers_every_computation(self):
+        """
+        GIVEN the series registry
+        WHEN every event series is bucketed and every state series read live on an empty database
+        THEN none raises and the kinds partition the registry
+        """
+        today = timezone.now()
+        for s in _metrics.EVENT_SERIES:
+            self.assertEqual(_metrics.weekly_series(s.key, today, today)[0]["y"], 0)
+        for s in _metrics.STATE_SERIES:
+            self.assertEqual(_metrics.current_state(s.key), 0.0)
+        self.assertEqual(len(_metrics.EVENT_SERIES) + len(_metrics.STATE_SERIES), len(_metrics.SERIES))
+
+
+class MetricSnapshotTest(TestCase):
+    """MetricSnapshot table, the snapshot_metrics command and the history reads."""
+
+    def test_one_row_per_day_and_key(self):
+        """
+        GIVEN a snapshot row for a date and key
+        WHEN a second row with the same date and key is inserted
+        THEN the unique constraint rejects it
+        """
+        MetricSnapshot.objects.create(date=_date(2026, 10, 1), key="active_30d", value=4)
+        with self.assertRaises(_IntegrityError), _transaction.atomic():
+            MetricSnapshot.objects.create(date=_date(2026, 10, 1), key="active_30d", value=5)
+
+    def test_admin_is_read_only(self):
+        """
+        GIVEN a staff user
+        WHEN they open the MetricSnapshot admin list and its add page
+        THEN the list renders and adding is forbidden
+        """
+        User.objects.create_superuser("snapboss", "snap@example.com", "x")
+        c = Client()
+        c.login(username="snapboss", password="x")
+        self.assertEqual(c.get(reverse("admin:survey_metricsnapshot_changelist")).status_code, 200)
+        self.assertEqual(c.get(reverse("admin:survey_metricsnapshot_add")).status_code, 403)
+
+    def test_command_writes_every_state_series_once(self):
+        """
+        GIVEN an empty snapshot table
+        WHEN snapshot_metrics runs
+        THEN there is exactly one row dated today per state series
+        """
+        out = _StringIO()
+        _call_command("snapshot_metrics", stdout=out)
+        today = timezone.localdate()
+        keys = sorted(MetricSnapshot.objects.filter(date=today).values_list("key", flat=True))
+        self.assertEqual(keys, sorted(s.key for s in _metrics.STATE_SERIES))
+        self.assertEqual(MetricSnapshot.objects.count(), len(_metrics.STATE_SERIES))
+        self.assertIn("snapshot_metrics:", out.getvalue())
+
+    def test_rerun_on_the_same_day_overwrites(self):
+        """
+        GIVEN a snapshot taken today and a creator who becomes active afterwards
+        WHEN snapshot_metrics runs again
+        THEN the table still holds one row per state series for today, carrying the later value
+        """
+        _call_command("snapshot_metrics", stdout=_StringIO())
+        before = MetricSnapshot.objects.get(date=timezone.localdate(), key="active_30d").value
+        _user_at("snap_user", timezone.now() - _td(days=1), last_login=timezone.now())
+        _call_command("snapshot_metrics", stdout=_StringIO())
+        rows = MetricSnapshot.objects.filter(date=timezone.localdate(), key="active_30d")
+        self.assertEqual(rows.count(), 1)
+        self.assertEqual(rows.get().value, before + 1)
+
+    def test_explicit_date(self):
+        """
+        GIVEN the --date option
+        WHEN snapshot_metrics --date 2026-10-01 runs
+        THEN the rows are dated 2026-10-01
+        """
+        _call_command("snapshot_metrics", "--date", "2026-10-01", stdout=_StringIO())
+        self.assertEqual(set(MetricSnapshot.objects.values_list("date", flat=True)), {_date(2026, 10, 1)})
+
+    def test_range_read_and_history_since(self):
+        """
+        GIVEN snapshots for a key on ten consecutive days
+        WHEN the last seven are read and history_since is asked
+        THEN seven points come back oldest first and history_since is the first day
+        """
+        first = _date(2026, 9, 1)
+        for i in range(10):
+            MetricSnapshot.objects.create(date=first + _td(days=i), key="publish_rate", value=i)
+        pts = _metrics.snapshot_series("publish_rate", first + _td(days=3), first + _td(days=9))
+        self.assertEqual([v for _, v in pts], [3, 4, 5, 6, 7, 8, 9])
+        self.assertEqual(_metrics.history_since("publish_rate"), first)
+        self.assertEqual(_metrics.snapshot_series("active_30d", first, first + _td(days=9)), [])
+        self.assertIsNone(_metrics.history_since("active_30d"))
+
+
+class PublishedAtTest(TestCase):
+    """SurveyHeader.published_at: set once by the transition, backfilled from AuditLog."""
+
+    def setUp(self):
+        self.org = _make_org("PubAtOrg")
+        self.owner = User.objects.create_user(username="pubat_owner", password="pass")
+        Membership.objects.create(user=self.owner, organization=self.org, role="owner")
+        self.survey = SurveyHeader.objects.create(name="pubat", organization=self.org, created_by=self.owner)
+        SurveyCollaborator.objects.create(user=self.owner, survey=self.survey, role="owner")
+        sec = SurveySection.objects.create(survey_header=self.survey, name="s1", code="S1", is_head=True)
+        Question.objects.create(survey_section=sec, code="Q_PA", name="Q", input_type="text")
+        self.client.login(username="pubat_owner", password="pass")
+
+    def _transition(self, status):
+        return self.client.post(f"/editor/surveys/{self.survey.uuid}/transition/",
+                                {"status": status}, HTTP_HX_REQUEST="true")
+
+    def test_first_publish_sets_it(self):
+        """
+        GIVEN a draft survey with structure
+        WHEN it is transitioned to published
+        THEN published_at is set to (about) the transition time
+        """
+        before = timezone.now()
+        self.assertEqual(self._transition("published").status_code, 204)
+        self.survey.refresh_from_db()
+        self.assertIsNotNone(self.survey.published_at)
+        self.assertGreaterEqual(self.survey.published_at, before)
+
+    def test_reopen_keeps_the_first_moment(self):
+        """
+        GIVEN a survey published, then closed
+        WHEN it is published again
+        THEN published_at is unchanged
+        """
+        self._transition("published")
+        self.survey.refresh_from_db()
+        first = self.survey.published_at
+        self.assertEqual(self._transition("closed").status_code, 204)
+        self.assertEqual(self._transition("published").status_code, 204)
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.published_at, first)
+
+    def test_backfill_takes_the_earliest_audit_row(self):
+        """
+        GIVEN a published survey with two publish transitions in AuditLog
+        WHEN the 0095 backfill runs
+        THEN published_at equals the earlier row's created_at
+        """
+        from importlib import import_module
+        from django.apps import apps as _apps
+        mig = import_module("survey.migrations.0095_backfill_published_at")
+        self.survey.status = "published"
+        self.survey.save(update_fields=["status"])
+        early = _AuditLog.objects.create(action="status_transition", survey_uuid=self.survey.uuid,
+                                         metadata={"old_status": "draft", "new_status": "published"})
+        late = _AuditLog.objects.create(action="status_transition", survey_uuid=self.survey.uuid,
+                                        metadata={"old_status": "closed", "new_status": "published"})
+        _AuditLog.objects.filter(pk=early.pk).update(created_at=timezone.now() - _td(days=30))
+        _AuditLog.objects.filter(pk=late.pk).update(created_at=timezone.now() - _td(days=1))
+        mig.backfill(_apps, None)
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.published_at, _AuditLog.objects.get(pk=early.pk).created_at)
+
+    def test_no_audit_row_no_guess(self):
+        """
+        GIVEN a published survey with no publish transition in AuditLog
+        WHEN the backfill runs and the cohort funnel reads the publish moment
+        THEN published_at stays NULL and the publish-window column falls back to created_at
+        """
+        from importlib import import_module
+        from django.apps import apps as _apps
+        mig = import_module("survey.migrations.0095_backfill_published_at")
+        self.survey.status = "published"
+        self.survey.save(update_fields=["status"])
+        mig.backfill(_apps, None)
+        self.survey.refresh_from_db()
+        self.assertIsNone(self.survey.published_at)
+        moments = CreatorFunnelService()._published_first_created()
+        self.assertEqual(moments[self.owner.id], self.survey.created_at)
+
+
+class TrendTilesDashboardTest(TestCase):
+    """The Trends section: one tile per series, deltas, forward-only states, the period selector."""
+
+    def setUp(self):
+        self.url = reverse("admin:survey_funnelreport_changelist")
+        User.objects.create_superuser("tileboss", "tile@example.com", "x")
+        self.client.login(username="tileboss", password="x")
+        self.org = _make_org("TilesOrg")
+
+    def _tile(self, tiles, key):
+        return next(t for t in tiles if t["key"] == key)
+
+    def test_tiles_render_for_every_registry_series(self):
+        """
+        GIVEN an empty database
+        WHEN the dashboard loads
+        THEN there is one tile per registry series, one JSON block and one Chart.js script tag
+        """
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 200)
+        html = resp.content.decode()
+        self.assertEqual(html.count('class="tile tile-'), len(_metrics.SERIES))
+        self.assertEqual(html.count('id="metric-tiles"'), 1)
+        self.assertEqual(html.count("chart.js@4.4.0"), 1)
+        for s in _metrics.SERIES:
+            self.assertIn(f'data-key="{s.key}"', html)
+
+    def test_running_week_is_not_compared(self):
+        """
+        GIVEN 3 registrations this week, 10 last week and 6 the week before
+        WHEN the tiles are built
+        THEN the regs tile shows 10 as current, +4 as delta, and the running week is the partial last point
+        """
+        now = timezone.now()
+        this_monday = timezone.make_aware(_datetime.combine(_metrics.week_start(now), _datetime.min.time())) + _td(hours=1)
+        for i in range(3):
+            _user_at(f"tw{i}", this_monday)
+        for i in range(10):
+            _user_at(f"lw{i}", this_monday - _td(days=7))
+        for i in range(6):
+            _user_at(f"pw{i}", this_monday - _td(days=14))
+        t = self._tile(_metrics.tiles(weeks=12, now=now), "regs")
+        self.assertEqual(t["current"], 10)
+        self.assertEqual(t["delta"], 4)
+        self.assertEqual(t["delta_display"], "+4")
+        self.assertTrue(t["partial_last"])
+        self.assertEqual(t["series"][-1]["y"], 3)
+        self.assertEqual(len(t["series"]), 13)   # 12 complete weeks + the running one
+
+    def test_state_delta_over_seven_days(self):
+        """
+        GIVEN active_30d snapshots of 36 seven days ago and 40 today
+        WHEN the tiles are built
+        THEN the active_30d tile shows 40 and +4 and charts the points
+        """
+        today = timezone.localdate()
+        MetricSnapshot.objects.create(date=today - _td(days=7), key="active_30d", value=36)
+        MetricSnapshot.objects.create(date=today, key="active_30d", value=40)
+        t = self._tile(_metrics.tiles(weeks=12), "active_30d")
+        self.assertEqual((t["current"], t["delta"], t["has_chart"]), (40, 4, True))
+        self.assertEqual(t["history_since"], (today - _td(days=7)).isoformat())
+
+    def test_deploy_day_state_tiles_show_live_value(self):
+        """
+        GIVEN an empty MetricSnapshot table and one creator active today
+        WHEN the dashboard loads
+        THEN every state tile shows its live value, no delta and a note that history starts today
+        """
+        _user_at("deploy_user", timezone.now() - _td(days=2), last_login=timezone.now())
+        resp = self.client.get(self.url)
+        tiles = resp.context["tiles"]
+        states = [t for t in tiles if t["kind"] == "state"]
+        self.assertEqual(len(states), len(_metrics.STATE_SERIES))
+        for t in states:
+            self.assertIsNone(t["delta"])
+            self.assertFalse(t["has_chart"])
+            self.assertEqual(t["history_since"], timezone.localdate().isoformat())
+        self.assertEqual(self._tile(states, "active_30d")["current"], 1.0)
+        self.assertContains(resp, f"history from {timezone.localdate().isoformat()}")
+
+    def test_second_day_state_tile_has_no_chart(self):
+        """
+        GIVEN exactly one snapshot per state series
+        WHEN the tiles are built
+        THEN each state tile shows that value, no chart and the snapshot's date as history start
+        """
+        day = timezone.localdate() - _td(days=1)
+        for s in _metrics.STATE_SERIES:
+            MetricSnapshot.objects.create(date=day, key=s.key, value=7)
+        for t in (t for t in _metrics.tiles(weeks=12) if t["kind"] == "state"):
+            self.assertEqual((t["current"], t["has_chart"], t["history_since"]), (7, False, day.isoformat()))
+
+    def test_period_selector_trims_every_tile(self):
+        """
+        GIVEN registrations and snapshots older than 12 weeks
+        WHEN the dashboard is opened with ?weeks=12
+        THEN event tiles carry at most 13 points, state tiles span at most 85 days, and the page is 200
+        """
+        now = timezone.now()
+        _user_at("old_reg", now - _td(days=200))
+        for i in range(0, 200, 10):
+            MetricSnapshot.objects.create(date=timezone.localdate() - _td(days=i), key="publish_rate", value=i)
+        resp = self.client.get(self.url + "?weeks=12")
+        self.assertEqual(resp.status_code, 200)
+        for t in resp.context["tiles"]:
+            if t["kind"] == "event":
+                self.assertLessEqual(len(t["series"]), 13)
+            elif t["series"]:
+                span = _date.fromisoformat(t["series"][-1]["x"]) - _date.fromisoformat(t["series"][0]["x"])
+                self.assertLessEqual(span.days, 85)
+        full = self.client.get(self.url + "?weeks=all")
+        self.assertGreater(len(self._tile(full.context["tiles"], "regs")["series"]), 13)

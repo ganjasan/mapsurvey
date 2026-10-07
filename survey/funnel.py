@@ -17,7 +17,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Max, Min, Sum
-from django.db.models.functions import TruncMonth, TruncWeek
+from django.db.models.functions import Coalesce, TruncMonth, TruncWeek
 from django.utils import timezone
 
 from .models import DemoOpen, SurveyHeader, Question, SurveySession, UserActivity
@@ -122,18 +122,19 @@ class CreatorFunnelService:
     # -- public API ---------------------------------------------------------------
 
     def _published_first_created(self):
-        """uid -> earliest created_at among the creator's published surveys.
+        """uid -> earliest publish moment among the creator's published surveys.
 
-        Proxy for "when did they publish" -- we lack a publish-transition
-        timestamp, so the publish-window metric uses survey creation of a
-        now-published survey. Documented as approximate in design.md.
+        `published_at` where the transition was recorded (set live since change
+        funnel-history-metrics, backfilled from AuditLog); survey creation as a
+        proxy for surveys published before that -- the column never holds a
+        guess, so the fallback lives here, at read time.
         """
         return {
             r["created_by_id"]: r["m"]
             for r in (SurveyHeader.objects
                       .filter(created_by__isnull=False, status__in=PUBLISHED_STATUSES)
                       .values("created_by_id")
-                      .annotate(m=Min("created_at")))
+                      .annotate(m=Min(Coalesce("published_at", "created_at"))))
         }
 
     def _session_times(self):
@@ -344,8 +345,10 @@ class CreatorFunnelService:
 
     # -- section blocks for the dashboard --------------------------------------
 
-    def goals(self, now=None):
-        """North-Star goal cards: current vs GTM target, with tone + bar %."""
+    def goal_values(self, now=None):
+        """The raw numbers behind the goal cards, so the trend tiles and the daily
+        snapshot (survey/metrics.py) read the SAME definition the cards show:
+        {regs_30, activated_30, pub_rate, coverage}."""
         now = now or timezone.now()
         users = self._real_users()
         cut30 = now - timedelta(days=30)
@@ -364,6 +367,14 @@ class CreatorFunnelService:
         attributed_30 = (SignupAttribution.objects.filter(user_id__in=recent_ids)
                          .values("user_id").distinct().count())
         coverage = round(100 * attributed_30 / regs_30) if regs_30 else 0
+        return {"regs_30": regs_30, "activated_30": activated_30,
+                "pub_rate": pub_rate, "coverage": coverage}
+
+    def goals(self, now=None):
+        """North-Star goal cards: current vs GTM target, with tone + bar %."""
+        v = self.goal_values(now)
+        regs_30, activated_30 = v["regs_30"], v["activated_30"]
+        pub_rate, coverage = v["pub_rate"], v["coverage"]
 
         def card(label, value_display, pct_to_target, target_display, note):
             pct = min(100, max(0, pct_to_target))
@@ -503,7 +514,7 @@ class CreatorFunnelService:
                                      "created_by_id", "created_at")
         first_pub = self._min_map(
             SurveyHeader.objects.filter(created_by__isnull=False, status__in=PUBLISHED_STATUSES),
-            "created_by_id", "created_at")
+            "created_by_id", Coalesce("published_at", "created_at"))
         first_resp = self._min_map(
             SurveySession.objects.filter(is_deleted=False, survey__created_by__isnull=False),
             "survey__created_by_id", "start_datetime")
@@ -746,14 +757,10 @@ def dashboard_context(weeks=None):
     """Full template context for the funnel dashboard. Recomputed per request --
     cheap at current scale; cache here first if it ever slows.
 
-    `weeks` (int) trims the two weekly charts to the most recent N weeks; None = all.
+    `weeks` (int) trims every trend tile to the most recent N weeks; None = all.
     """
+    from .metrics import tiles as metric_tiles
     s = CreatorFunnelService()
-    weekly = s.weekly_signups()
-    activity = s.weekly_activity()
-    if weeks:
-        weekly = weekly[-weeks:]
-        activity = activity[-weeks:]
     # The acquisition window follows the period selector so the top of the funnel and
     # the charts below describe the same stretch of time. "All" has no useful meaning
     # for it (GSC history only starts at property verification), so it falls back to
@@ -774,6 +781,7 @@ def dashboard_context(weeks=None):
         "ttv": s.time_to_value(),
         "dormant_valuable": s.dormant_valuable(),
         "collecting_unpublished": s.collecting_unpublished(),
-        "signups_chart": bar_chart_geometry(weekly, "signups"),
-        "activity_chart": bar_chart_geometry(activity, "responses"),
+        # Trend tiles (survey/metrics.py): event series from timestamps, state
+        # series from MetricSnapshot; the period selector governs both.
+        "tiles": metric_tiles(weeks=weeks, service=s),
     }

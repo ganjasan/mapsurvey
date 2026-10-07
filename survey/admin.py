@@ -16,7 +16,7 @@ from .models import (
     AIGenerationEvent,
     ProInterest,
     CommentThread, Comment, CommentAttachment,
-    AbuseEvent, ContentReview,
+    AbuseEvent, ContentReview, MetricSnapshot,
 )
 from .funnel import dashboard_context
 from leaflet.admin import LeafletGeoAdmin
@@ -143,6 +143,26 @@ class SignupAttributionAdmin(admin.ModelAdmin):
     list_filter = ('source_bucket', 'utm_source')
     search_fields = ('user__username', 'utm_source', 'utm_campaign', 'raw_referrer')
     readonly_fields = ('created_at',)
+
+
+@admin.register(MetricSnapshot)
+class MetricSnapshotAdmin(admin.ModelAdmin):
+    """Read-only view of the daily state-series snapshots behind the funnel
+    dashboard's trend tiles. Written by `snapshot_metrics` only; the newest
+    date at the top says at a glance whether last night's cron ran."""
+
+    list_display = ('date', 'key', 'value')
+    list_filter = ('key',)
+    date_hierarchy = 'date'
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(AuditLog)

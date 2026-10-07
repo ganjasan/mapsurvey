@@ -2489,12 +2489,19 @@ def editor_survey_transition(request, survey_uuid):
 
     audit(request, 'status_transition', survey, old_status=survey.status, new_status=new_status)
     survey.status = new_status
+    update_fields = ['status', 'is_archived']
 
     # Sync is_archived flag
     if new_status == 'archived':
         survey.is_archived = True
 
-    survey.save(update_fields=['status', 'is_archived'])
+    # First publish only: a reopen keeps the original moment, and a draft
+    # published as a new version never comes through here.
+    if new_status == 'published' and survey.published_at is None:
+        survey.published_at = timezone.now()
+        update_fields.append('published_at')
+
+    survey.save(update_fields=update_fields)
 
     # The real publish moment. Historical rows use survey creation as a proxy
     # (no transition timestamp existed before this), so from here the series

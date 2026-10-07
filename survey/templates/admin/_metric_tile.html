@@ -1,0 +1,21 @@
+{% comment %}
+One trend tile of the funnel dashboard (survey/metrics.py::tiles). Value and
+delta are plain HTML so the tile reads without Chart.js; the canvas is drawn
+by the inline script in funnel_dashboard.html from the #metric-tiles JSON.
+{% endcomment %}
+<div class="tile tile-{{ t.kind }}" data-key="{{ t.key }}">
+  <div class="lbl">{{ t.label }}</div>
+  <div class="val">
+    <span class="num">{{ t.current_display }}</span>
+    {% if t.delta_display %}<span class="delta {{ t.tone }}" title="{% if t.kind == 'event' %}vs the week before{% else %}vs 7 days earlier{% endif %}">{{ t.delta_display }}</span>{% endif %}
+  </div>
+  {% if t.has_chart %}
+  <div class="chart"><canvas id="tile-{{ t.key }}" height="72" aria-label="{{ t.label }} over time" role="img"></canvas></div>
+  {% else %}
+  <div class="chart empty subtle">{% if t.kind == 'state' %}history from {{ t.history_since }}{% else %}no data yet{% endif %}</div>
+  {% endif %}
+  <div class="note subtle">
+    {% if t.kind == 'event' %}last complete week{% if t.note %} · {{ t.note }}{% endif %}
+    {% else %}{% if t.has_chart %}history from {{ t.history_since }}{% else %}live value{% endif %}{% if t.note %} · {{ t.note }}{% endif %}{% endif %}
+  </div>
+</div>
