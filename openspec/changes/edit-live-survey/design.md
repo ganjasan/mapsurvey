@@ -38,10 +38,23 @@ Not versioning wording is also what keeps the data from splitting into v1/v2 ove
 
 The draft copy model, `clone_survey_for_draft`, the compatibility check and `publish_draft` stay as
 they are; what changes is when the draft is created (on the first structural edit, after one
-inline confirmation) and how it is presented. The structural action that triggered it is replayed
-into the draft by mapping the section/question by `code` (codes are preserved by the clone), so the
-creator's click is not lost. If replay fails (e.g. the target no longer maps) we land them on the
-same section in the draft with the action not applied and say so.
+inline confirmation) and how it is presented. Every structural control on a live survey carries
+`data-gate="<action>"` (and the section code) instead of its request; one capturing click
+listener opens the gate modal, whose form posts `then` + `section_code` to `editor_create_draft`.
+The draft opens on the section with the same `code` (codes are preserved by the clone).
+`add_question` and `add_section` are replayed by clicking the same control once on the draft
+page; the other actions (delete, duplicate, reorder, type, visibility) are not replayed — the
+creator lands on the same section, where the control now works, under a toast that says they are
+editing unpublished changes. Replaying a delete without a second look would be worse than one
+more click.
+
+Server side nothing structural becomes possible on a live survey: the structural endpoints keep
+`_check_structural_edit_allowed` (403); the content endpoints (`editor_section_detail` POST,
+`editor_question_edit`, `editor_question_share`, `editor_section_map_picker` POST) go through
+`_check_content_edit_allowed` and, for the fields a content form also carries, through
+`structural_question_changes` / `structural_section_changes`. `QuestionForm` and
+`SurveySectionForm` take `lock_structure=True`, which disables `input_type`, `layer` and the
+section `code` so a posted value is ignored rather than refused.
 
 ### D4. One editing surface per survey
 
@@ -68,5 +81,11 @@ the pill makes it visible.
 
 ## Rollout
 
-Kill switch `LIVE_SURVEY_EDITING` (default ON after review, like `EDITOR_AUTOSAVE`). Off ⇒ today's
-read-only behaviour, which is the rollback.
+Kill switch `LIVE_SURVEY_EDITING` (default ON, like `EDITOR_AUTOSAVE`). Off ⇒ the pre-change
+read-only behaviour and vocabulary, which is the rollback.
+
+## Translations
+
+The new strings are English only for now. The creator catalogs already lag the templates by about a
+thousand msgids (makemessages over the current tree), so adding these few would not make any
+language complete; the catalog refresh is its own piece of work.

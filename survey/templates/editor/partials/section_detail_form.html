@@ -111,16 +111,16 @@
     </ul>
 
     <button class="add-question-btn"
-            title="{% if is_read_only %}{% trans "Create a draft to edit" %}{% endif %}"
-            {% if not is_read_only %}
+            title="{% if is_read_only %}{% trans "Create a draft to edit" %}{% elif structure_locked %}{% trans "Adding a question starts unpublished changes" %}{% endif %}"
+            {% if not structure_locked %}
             hx-get="{% url 'editor_question_create' survey.uuid section.id %}"
             hx-target="#questionModalBody"
             hx-swap="innerHTML"
             data-toggle="modal" data-target="#questionModal"
-            {% else %}disabled{% endif %}>
+            {% elif is_read_only %}disabled{% else %}data-gate="add_question" data-gate-section="{{ section.code }}"{% endif %}>
         <i class="fas fa-plus"></i> {% trans "New Question" %}
     </button>
-    {% if not is_read_only %}
+    {% if not structure_locked %}
     <button class="paste-question-btn"
             hx-post="{% url 'editor_question_paste' survey.uuid section.id %}"
             hx-vals='js:{"source_survey_uuid": (Clipboard.peek()||{}).source_survey_uuid, "source_question_id": (Clipboard.peek()||{}).source_id}'

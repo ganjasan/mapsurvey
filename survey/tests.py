@@ -6258,9 +6258,10 @@ class EditorSubquestionTest(TestCase):
             f'/editor/surveys/{self.survey.uuid}/questions/{text_question.id}/subquestions/new/',
         )
 
+    @override_settings(LIVE_SURVEY_EDITING=False)
     def test_add_subquestion_button_disabled_in_readonly(self):
         """
-        GIVEN a published survey with a geo question
+        GIVEN a published survey with a geo question, live editing switched off
         WHEN the editor section detail is fetched
         THEN the Add Sub-question button is rendered disabled with the read-only tooltip
         """
@@ -9367,9 +9368,10 @@ class ReadOnlyLockTest(TestCase):
         })
         self.assertEqual(response.status_code, 403)
 
+    @override_settings(LIVE_SURVEY_EDITING=False)
     def test_question_edit_blocked_on_published(self):
         """
-        GIVEN a published survey
+        GIVEN a published survey and live editing switched off
         WHEN a POST to question edit is made
         THEN a 403 response is returned
         """
@@ -32331,10 +32333,10 @@ class SurveyStatusLineTest(TestCase):
         self.assertIn('editor_survey_password'.replace('editor_survey_password', f'/editor/surveys/{self.survey.uuid}/password/'), html)
         self.assertIn('Publish — open for everyone', html)
 
-    @override_settings(MOBILE_EDITOR_NAV=True)
+    @override_settings(MOBILE_EDITOR_NAV=True, LIVE_SURVEY_EDITING=False)
     def test_published_status_edit_and_share(self):
         """
-        GIVEN a published survey
+        GIVEN a published survey, live editing switched off
         WHEN the editor renders
         THEN the status line shows the live count with Edit + Share, the edit
              intercept sheet exists, and the ctx-bar Preview duplicate stays out
@@ -49224,3 +49226,309 @@ class MarketGuideHubTest(TestCase):
         hub_related = hub_related[:hub_related.index("</section>")]
         self.assertNotIn('href="/participatory-mapping-tools/"', hub_related)
         self.assertIn('href="/community-engagement-platform/"', hub_related)
+
+
+# ─── Editing a live survey (change edit-live-survey) ─────────────────────────
+
+from .versioning import (  # noqa: E402
+    removed_answered_choices, structural_question_changes, question_snapshot,
+)
+
+
+@override_settings(LIVE_SURVEY_EDITING=True, MOBILE_EDITOR_NAV=False)
+class LiveSurveyEditingTest(TestCase):
+    """Safe edits save to a published survey in place; structural ones become
+    unpublished changes (the draft copy) — spec live-survey-editing."""
+
+    def setUp(self):
+        self.org = _make_org('LiveOrg')
+        self.user = User.objects.create_user(username='liveowner', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='liveowner', password='pass')
+        self.survey = SurveyHeader.objects.create(
+            name='Live survey', organization=self.org, created_by=self.user,
+            status='published',
+        )
+        SurveyCollaborator.objects.create(user=self.user, survey=self.survey, role='owner')
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', title='Section 1', code='S1', is_head=True,
+        )
+        self.question = Question.objects.create(
+            survey_section=self.section, code='Q1', order_number=1,
+            name='Favourite colour?', input_type='choice',
+            choices=[{'code': 1, 'name': 'Red'}, {'code': 2, 'name': 'Blue'}],
+        )
+        session = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=session, question=self.question, selected_choices=[1])
+
+    def _edit_url(self):
+        return f'/editor/surveys/{self.survey.uuid}/questions/{self.question.id}/edit/'
+
+    def _post_question(self, **overrides):
+        data = {
+            'name': 'Favourite colour?', 'input_type': 'choice', 'color': '#000000',
+            'choices_json': json.dumps([{'code': 1, 'name': 'Red'}, {'code': 2, 'name': 'Blue'}]),
+            'autosave': '1',
+        }
+        data.update(overrides)
+        return self.client.post(self._edit_url(), data)
+
+    # ── classifier ──
+
+    def test_removing_an_answered_choice_is_structural(self):
+        """
+        GIVEN a choice that one answer selected
+        WHEN an edit drops it
+        THEN it is reported with its answer count, and an unanswered one is not
+        """
+        old = self.question.choices
+        self.assertEqual(
+            removed_answered_choices(self.question, old, [{'code': 2, 'name': 'Blue'}]),
+            [(1, 'Red', 1)])
+        self.assertEqual(
+            removed_answered_choices(self.question, old, [{'code': 1, 'name': 'Red'}]), [])
+
+    def test_wording_is_safe_and_type_is_structural(self):
+        """
+        GIVEN a snapshot of a question
+        WHEN only the name changes, and then the type
+        THEN only the type change yields a reason
+        """
+        before = question_snapshot(self.question)
+        self.question.name = 'Colour you like most?'
+        self.assertEqual(structural_question_changes(before, self.question), [])
+        self.question.input_type = 'multichoice'
+        self.assertEqual(structural_question_changes(before, self.question), ['the question type'])
+
+    # ── safe edits in place ──
+
+    def test_rewording_saves_to_the_live_survey(self):
+        """
+        GIVEN a published survey with answers
+        WHEN the question is reworded
+        THEN the live row changes, no draft exists and the version is unchanged
+        """
+        response = self._post_question(name='Which colour do you like most?')
+        self.assertEqual(response.status_code, 200)
+        self.question.refresh_from_db()
+        self.assertEqual(self.question.name, 'Which colour do you like most?')
+        self.survey.refresh_from_db()
+        self.assertFalse(self.survey.has_draft_copy())
+        self.assertEqual(self.survey.version_number, 1)
+
+    def test_adding_and_removing_unanswered_choices_is_safe(self):
+        """
+        GIVEN an answered choice question
+        WHEN an option is added and the unanswered one removed
+        THEN the edit saves
+        """
+        response = self._post_question(choices_json=json.dumps(
+            [{'code': 1, 'name': 'Red'}, {'code': 3, 'name': 'Green'}]))
+        self.assertEqual(response.status_code, 200)
+        self.question.refresh_from_db()
+        self.assertEqual({c['code'] for c in self.question.choices}, {1, 3})
+
+    def test_removing_an_answered_choice_is_refused(self):
+        """
+        GIVEN an answered choice question on a live survey
+        WHEN the answered option is removed
+        THEN the edit is refused with a pointer to unpublished changes
+        """
+        response = self._post_question(choices_json=json.dumps([{'code': 2, 'name': 'Blue'}]))
+        self.assertEqual(response.status_code, 422)
+        self.assertTrue(response.json()['needs_unpublished_changes'])
+        self.question.refresh_from_db()
+        self.assertEqual({c['code'] for c in self.question.choices}, {1, 2})
+
+    def test_posted_type_is_ignored_on_a_live_survey(self):
+        """
+        GIVEN a live choice question
+        WHEN a POST carries another input type
+        THEN the stored type stays
+        """
+        self._post_question(input_type='text')
+        self.question.refresh_from_db()
+        self.assertEqual(self.question.input_type, 'choice')
+
+    def test_section_title_saves_live_but_code_does_not(self):
+        """
+        GIVEN a live section
+        WHEN its title and code are posted
+        THEN the title changes and the code does not
+        """
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/',
+            {'title': 'Your colours', 'subheading': '', 'code': 'ZZ', 'layout': 'map'})
+        self.assertIn(response.status_code, (204, 302))
+        self.section.refresh_from_db()
+        self.assertEqual(self.section.title, 'Your colours')
+        self.assertEqual(self.section.code, 'S1')
+
+    def test_structural_endpoints_stay_refused(self):
+        """
+        GIVEN a live survey
+        WHEN a question is created directly
+        THEN the server refuses it
+        """
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/questions/new/',
+            {'name': 'New', 'input_type': 'text'})
+        self.assertEqual(response.status_code, 403)
+
+    # ── the Build page ──
+
+    def test_build_page_is_editable_with_a_structure_gate(self):
+        """
+        GIVEN a live survey without unpublished changes
+        WHEN the owner opens Build
+        THEN structural controls open the gate and the draft vocabulary is gone
+        """
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="structureGateModal"')
+        self.assertContains(response, 'data-gate="add_section"')
+        self.assertContains(response, 'Change structure')
+        self.assertNotContains(response, 'Draft new version')
+        self.assertNotContains(response, 'read-only')
+
+    def test_section_panel_gates_new_question(self):
+        """
+        GIVEN a live survey
+        WHEN the section panel renders
+        THEN "New Question" opens the gate and the form is not disabled
+        """
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/')
+        self.assertContains(response, 'data-gate="add_question"')
+        self.assertNotContains(response, 'el.disabled = true')
+
+    def test_question_modal_explains_the_live_wording(self):
+        """
+        GIVEN an answered question on a live survey
+        WHEN its edit modal opens
+        THEN it says edits go live and offers the type change through the gate
+        """
+        response = self.client.get(self._edit_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'live-wording-hint')
+        self.assertContains(response, 'data-gate="type"')
+
+    # ── unpublished changes ──
+
+    def test_gate_creates_draft_and_lands_on_the_same_section(self):
+        """
+        GIVEN the gate opened from "New Question" in section S1
+        WHEN the owner starts unpublished changes
+        THEN the draft opens on its S1 with the action to replay
+        """
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/create-draft/',
+            {'then': 'add_question', 'section_code': 'S1'})
+        draft = self.survey.get_draft_copy()
+        self.assertIsNotNone(draft)
+        draft_section = SurveySection.objects.get(survey_header=draft, code='S1')
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(str(draft.uuid), response['Location'])
+        self.assertIn(f'section={draft_section.id}', response['Location'])
+        self.assertIn('then=add_question', response['Location'])
+
+    def test_build_opens_the_unpublished_changes(self):
+        """
+        GIVEN a live survey with unpublished changes
+        WHEN the owner opens its Build page
+        THEN they are sent to the draft, and ?live=1 still shows the live one read-only
+        """
+        draft = clone_survey_for_draft(self.survey)
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/?section={self.section.id}')
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(str(draft.uuid), response['Location'])
+        live = self.client.get(f'/editor/surveys/{self.survey.uuid}/?live=1')
+        self.assertEqual(live.status_code, 200)
+        self.assertContains(live, 'Continue editing')
+
+    def test_live_edits_refused_while_unpublished_changes_exist(self):
+        """
+        GIVEN a live survey with unpublished changes
+        WHEN a safe edit is posted to the live survey
+        THEN it is refused, so publishing cannot silently drop it
+        """
+        clone_survey_for_draft(self.survey)
+        response = self._post_question(name='Sneaky')
+        self.assertEqual(response.status_code, 403)
+
+    def test_draft_page_speaks_unpublished_changes(self):
+        """
+        GIVEN unpublished changes
+        WHEN the owner opens them
+        THEN they read as the same survey with unpublished changes
+        """
+        draft = clone_survey_for_draft(self.survey)
+        response = self.client.get(f'/editor/surveys/{draft.uuid}/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Unpublished changes')
+        self.assertContains(response, 'Publish changes')
+        self.assertContains(response, 'View live version')
+        self.assertNotContains(response, 'Draft of')
+        self.assertNotContains(response, 'Publish Version')
+
+    def test_dashboard_marks_unpublished_changes(self):
+        """
+        GIVEN a survey with unpublished changes
+        WHEN the dashboard renders
+        THEN its card carries the badge
+        """
+        clone_survey_for_draft(self.survey)
+        response = self.client.get('/editor/?dashboard=1')
+        self.assertContains(response, 'Unpublished changes')
+
+    def test_viewer_still_sees_read_only(self):
+        """
+        GIVEN an org viewer
+        WHEN they open a live survey
+        THEN nothing is editable for them
+        """
+        viewer = User.objects.create_user(username='liveviewer', password='pass')
+        Membership.objects.create(user=viewer, organization=self.org, role='viewer')
+        self.client.login(username='liveviewer', password='pass')
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/')
+        self.assertContains(response, 'read-only')
+        self.assertNotContains(response, 'id="structureGateModal"')
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_mobile_status_line_offers_structure_and_share(self):
+        """
+        GIVEN a live survey and the mobile status line
+        WHEN Build renders
+        THEN it offers "Structure" (the gate) and Share, and no read-only intercept
+        """
+        html = self.client.get(f'/editor/surveys/{self.survey.uuid}/').content.decode()
+        self.assertIn('data-gate="edit"', html)
+        self.assertIn(f'/editor/surveys/{self.survey.uuid}/share/', html)
+        self.assertNotIn('id="editIntercept"', html)
+
+    def test_section_title_saves_despite_a_half_filled_visibility_rule(self):
+        """
+        GIVEN an ordinary draft survey (not live)
+        WHEN a section autosave carries a title and an incomplete visibility rule
+        THEN the title is still saved and the rule error is reported
+        """
+        self.survey.status = 'draft'
+        self.survey.save(update_fields=['status'])
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/',
+            {'title': 'Renamed', 'subheading': '', 'code': 'S1', 'layout': 'map',
+             'visibility_mode': 'conditional'})
+        self.assertEqual(response.status_code, 422)
+        self.section.refresh_from_db()
+        self.assertEqual(self.section.title, 'Renamed')
+
+    @override_settings(LIVE_SURVEY_EDITING=False)
+    def test_kill_switch_restores_read_only(self):
+        """
+        GIVEN live editing switched off
+        WHEN the owner opens Build and posts a rewording
+        THEN the old read-only page renders and the edit is refused
+        """
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/')
+        self.assertContains(response, 'Draft new version')
+        self.assertNotContains(response, 'id="structureGateModal"')
+        self.assertEqual(self._post_question(name='x').status_code, 403)

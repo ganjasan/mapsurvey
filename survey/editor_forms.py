@@ -260,11 +260,15 @@ class SurveySectionForm(forms.ModelForm):
             'next_label': _('Label of this section\'s forward button, e.g. "Start" on a welcome section. Empty = Next / Finish.'),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, lock_structure=False, **kwargs):
         super().__init__(*args, **kwargs)
         # A POST without the field (older open forms, tests) keeps the stored
         # layout instead of failing validation or silently flipping to map.
         self.fields['layout'].required = False
+        # On a live survey the code is structure (rules and comments point at
+        # it): rendered disabled, and a posted value is ignored.
+        if lock_structure:
+            self.fields['code'].disabled = True
 
     def clean_subheading(self):
         # Rendered |safe on the section page — and was already, before it had an
@@ -342,9 +346,12 @@ class QuestionForm(forms.ModelForm):
             'icon_class': _('Pick from the catalog, or type a <a href="https://fontawesome.com/v5/search" target="_blank" rel="noopener">Font Awesome</a> class or a map icon name such as <code>maki:bus</code>.'),
         }
 
-    def __init__(self, *args, is_subquestion=False, section=None, **kwargs):
+    def __init__(self, *args, is_subquestion=False, section=None, lock_structure=False, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['display_style'].required = False
+        # On a live survey the type and the bound layer are structure: the
+        # stored value wins whatever is posted (change edit-live-survey).
+        self.lock_structure = lock_structure
         # Only a spraycan question carries a brush; every other POST omits it.
         self.fields['spray_brush'].required = False
         # A new question starts on a concrete type instead of the "---------"
@@ -409,6 +416,10 @@ class QuestionForm(forms.ModelForm):
                 (value, label) for value, label in field.choices
                 if value not in FILE_INPUT_TYPES
             ]
+
+        if lock_structure and self.instance.pk:
+            self.fields['input_type'].disabled = True
+            self.fields['layer'].disabled = True
 
     def clean_spray_brush(self):
         from .question_types import SPRAY_BRUSH_DEFAULT

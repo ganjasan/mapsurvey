@@ -563,6 +563,11 @@ MOBILE_EDITOR_NAV = os.environ.get('MOBILE_EDITOR_NAV', 'True').lower() in ('tru
 # the one intentional desktop change of the refactor). Separate switch so desktop
 # autosave can be rolled back without touching the mobile navigation.
 EDITOR_AUTOSAVE = os.environ.get('EDITOR_AUTOSAVE', 'True').lower() in ('true', '1')
+# Editing a live survey (openspec: edit-live-survey). On: a published/closed
+# survey takes safe edits (wording, translations, added options, map settings)
+# in place, and structural edits go to "unpublished changes" (the draft copy).
+# Off: live surveys are read-only until a draft is created, as before.
+LIVE_SURVEY_EDITING = os.environ.get('LIVE_SURVEY_EDITING', 'True').lower() in ('true', '1')
 # Reference overlay layers on the respondent map (openspec: reference-overlay-layers).
 # Off: editor UI and section checklist disappear, layer endpoints 404, respondent
 # pages get no layer metadata. Stored layers are untouched — the flag gates surfaces.

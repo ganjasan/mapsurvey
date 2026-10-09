@@ -36,12 +36,18 @@ there.
 #### Scenario: Adding a question to a published survey
 - **WHEN** an editor clicks "Add question" on a published survey with no unpublished changes
 - **THEN** the editor explains that structural edits are kept as unpublished changes until published
-- **AND** on confirmation a draft copy is created and the question is added to it
+- **AND** on confirmation a draft copy is created and opens on the same section with the
+  new-question dialog open
 - **AND** respondents still see the live survey unchanged
 
 #### Scenario: The server enforces the classification
 - **WHEN** a structural edit is POSTed directly against a live survey
-- **THEN** it is refused with 403 and the live survey is unchanged
+- **THEN** it is refused (403 for structural endpoints, 422 for a structural change carried by a
+  content form) and the live survey is unchanged
+
+#### Scenario: Removing an answered option
+- **WHEN** an editor removes an option that answers use from a live question
+- **THEN** the edit is refused with a message pointing at unpublished changes
 
 ### Requirement: One editing surface per survey
 
@@ -56,7 +62,12 @@ changes" and a link to the live version. All Build edits SHALL go to the unpubli
 
 #### Scenario: Live version is still reachable
 - **WHEN** the owner follows "View live version"
-- **THEN** the canonical survey's Build page renders without redirecting
+- **THEN** the canonical survey's Build page renders without redirecting, read-only, with a link
+  back to the unpublished changes
+
+#### Scenario: Live edits wait while unpublished changes exist
+- **WHEN** a safe edit is POSTed to the live survey while it has unpublished changes
+- **THEN** it is refused, so that publishing the changes cannot silently drop it
 
 ### Requirement: The editor never shows a dead control
 

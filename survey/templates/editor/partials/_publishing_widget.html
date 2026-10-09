@@ -15,8 +15,12 @@ show_draft_actions, draft_copy, show_edit_published.
   A draft keeps a placeholder version_number of its own, so show the version it
   would become — the same number the publish dialog names.
   {% endcomment %}
+  {% if LIVE_SURVEY_EDITING %}
+  <span class="pub-chip badge-warning" title="{% trans 'Respondents keep the live survey until you publish these changes' %}">{% trans "Unpublished changes" %}</span>
+  {% else %}
   <span class="pub-chip badge-secondary"
         title="{% blocktrans with next=survey.published_version.version_number|add:1 %}Publishing this draft creates v{{ next }}{% endblocktrans %}">{% trans "Draft" %} → v{{ survey.published_version.version_number|add:1 }}</span>
+  {% endif %}
 {% elif effective_role == 'owner' and survey.status != 'archived' %}
 <div class="nav-action" id="publishing-widget">
   <button class="pub-chip badge-{{ survey.status|status_badge_class }}" onclick="navMenuToggle(this,event)">
@@ -71,7 +75,7 @@ show_draft_actions, draft_copy, show_edit_published.
     {% if show_edit_published %}
     <form method="post" action="{% url 'editor_create_draft' survey.uuid %}" style="margin:0;">
       {% csrf_token %}
-      <button type="submit" class="nm-item"><i class="fas fa-code-branch lead"></i> {% trans "Create a draft to edit" %}</button>
+      <button type="submit" class="nm-item"><i class="fas fa-code-branch lead"></i> {% if LIVE_SURVEY_EDITING %}{% trans "Change structure (unpublished changes)" %}{% else %}{% trans "Create a draft to edit" %}{% endif %}</button>
     </form>
     {% endif %}
     {% with archived_versions=survey.get_version_history %}

@@ -52,6 +52,15 @@ CHANGELOG_CARD_SHOWN = 'changelog_card_shown'
 CHANGELOG_CARD_DISMISSED = 'changelog_card_dismissed'   # how: got_it | close | muted
 CHANGELOG_PAGE_VIEWED = 'changelog_page_viewed'
 
+# Editing a live survey (change edit-live-survey). Whether creators who open a
+# published survey now manage to change it: safe edits saved in place, and the
+# lifecycle of "unpublished changes" (the draft copy). Ids only.
+LIVE_EDIT_SAVED = 'live_edit_saved'                         # kind: question | section | map
+UNPUBLISHED_CHANGES_STARTED = 'unpublished_changes_started'  # then: the action that asked for it
+UNPUBLISHED_CHANGES_PUBLISHED = 'unpublished_changes_published'
+UNPUBLISHED_CHANGES_DISCARDED = 'unpublished_changes_discarded'
+STRUCTURE_GATE_SHOWN = 'structure_gate_shown'               # browser: the prompt opened
+
 CREATOR_FUNNEL_EVENTS = (
     CREATOR_REGISTERED,
     CREATOR_ACTIVATED,

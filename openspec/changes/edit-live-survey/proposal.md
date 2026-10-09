@@ -58,8 +58,9 @@ left.
 
 ### Measuring it
 
-- New product events (`pe`): `live_edit_saved {kind: safe}`, `unpublished_changes_started`,
-  `unpublished_changes_published`, `unpublished_changes_discarded`, `read_only_intercept_shown`.
+- New product events (`pe`): `live_edit_saved {kind: question|section|map}`,
+  `unpublished_changes_started {then}`, `unpublished_changes_published`,
+  `unpublished_changes_discarded`, and `structure_gate_shown {action}` from the browser.
   Success = drop in creators who open a published survey's Build page, click an editing control and
   leave without a saved edit, compared over the four weeks before and after.
 
@@ -88,5 +89,5 @@ left.
   changes; structural-edit endpoint that creates the draft and replays.
 - Templates: `survey_detail.html` ctx-bar and mobile status bar, `_survey_title.html`,
   `_publishing_widget.html`, `_survey_primary_action.html`, dashboard card, question/section forms.
-- `survey/product_events.py` — the events above. Strings in `locale/` for every creator language.
+- `survey/product_events.py` — the events above. New strings are English only for now (design: Translations).
 - No migration.
