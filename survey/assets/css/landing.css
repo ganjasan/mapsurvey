@@ -2070,28 +2070,33 @@ html.js-reveal .reveal.is-visible {
    <aside class="sd-lessons"> with a head (LL mark + title) and .sd-lesson rows;
    each row may end with .sd-lesson__ms ("In Mapsurvey"), .is-gap for "Not yet".
    Marks are inline SVG <symbol>s #sd-ll / #sd-ms / #sd-ms-gap declared once in the aside. */
-.sd-lessons{--ll:#C0622B;--ll-bg:#FBF3EC;position:relative;margin:2.5rem 0;padding:1.4rem 1.5rem .5rem;background:var(--ll-bg);border-top:3px solid var(--ll);border-radius:0 0 10px 10px}
+.sd-lessons{--ll:#C0622B;--ll-bg:#FBF3EC;--ll-text:#1B2A4A;--ll-muted:#5A6680;--ll-rule:#EBD9C9;--ll-ms-bg:#fff;--ll-ms-border:#E4E0D8;--ll-ok:#0FA58E;--ll-gap:#8A94A8;--ll-tag-bg:#E3F5F1;--ll-tag:#0B7D6C;--ll-gap-tag-bg:#F1EEE8;position:relative;margin:2.5rem 0;padding:1.4rem 1.5rem .5rem;background:var(--ll-bg);color:var(--ll-text);border-top:3px solid var(--ll);border-radius:0 0 10px 10px}
 .sd-lessons__sprite{position:absolute;width:0;height:0;overflow:hidden}
 .sd-lessons__head{display:flex;align-items:center;gap:14px;margin-bottom:.4rem}
 .sd-lessons__head svg{flex:none;width:44px;height:44px;color:var(--ll)}
 .sd-lessons__head h3{margin:0;font-family:var(--font-mono);font-weight:700;font-size:.82rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ll)}
-.sd-lessons__head p{margin:0;font-family:var(--font-display);font-size:.88rem;color:var(--text-secondary,#5A6680)}
-.sd-lesson{display:grid;grid-template-columns:44px 1fr;gap:0 14px;padding:1rem 0;border-top:1px solid #EBD9C9}
+.sd-lessons__head p{margin:0;font-family:var(--font-display);font-size:.88rem;color:var(--ll-muted)}
+.sd-lesson{display:grid;grid-template-columns:44px 1fr;gap:0 14px;padding:1rem 0;border-top:1px solid var(--ll-rule)}
 .sd-lesson:first-of-type{border-top:0}
 .sd-lesson__n{font-family:var(--font-mono);font-weight:700;font-size:1.5rem;line-height:1;color:var(--ll);padding-top:3px}
-.sd-lesson h4{margin:0 0 .2rem;font-family:var(--font-display);font-weight:700;font-size:1.08rem}
-.sd-lesson p{margin:0}
-.sd-lesson__ms{display:flex;gap:10px;align-items:flex-start;margin-top:.65rem;padding:.55rem .75rem;background:#fff;border:1px solid #E4E0D8;border-radius:8px;font-family:var(--font-display);font-size:.88rem;line-height:1.5;color:var(--text-secondary,#5A6680)}
-.sd-lesson__ms svg{flex:none;width:18px;height:18px;margin-top:2px;color:#0FA58E}
-.sd-lesson__ms b{color:var(--text-primary,#1B2A4A);font-weight:600}
+.sd-lesson h4{margin:0 0 .2rem;font-family:var(--font-display);font-weight:700;font-size:1.08rem;color:var(--ll-text)}
+.sd-lesson p{margin:0;color:var(--ll-text)}
+.sd-lesson__ms{display:flex;gap:10px;align-items:flex-start;margin-top:.65rem;padding:.55rem .75rem;background:var(--ll-ms-bg);border:1px solid var(--ll-ms-border);border-radius:8px;font-family:var(--font-display);font-size:.88rem;line-height:1.5;color:var(--ll-muted)}
+.sd-lesson__ms svg{flex:none;width:18px;height:18px;margin-top:2px;color:var(--ll-ok)}
+.sd-lesson__ms b{color:var(--ll-text);font-weight:600}
 .sd-lesson__ms.is-gap{border-style:dashed}
-.sd-lesson__ms.is-gap svg{color:#8A94A8}
-.sd-lesson__tag{display:inline-block;font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:1px 6px;border-radius:8px;background:#E3F5F1;color:#0B7D6C;margin-left:6px;white-space:nowrap}
-.sd-lesson__ms.is-gap .sd-lesson__tag{background:#F1EEE8;color:#5A6680}
+.sd-lesson__ms.is-gap svg{color:var(--ll-gap)}
+.sd-lesson__tag{display:inline-block;font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:1px 6px;border-radius:8px;background:var(--ll-tag-bg);color:var(--ll-tag);margin-left:6px;white-space:nowrap}
+.sd-lesson__ms.is-gap .sd-lesson__tag{background:var(--ll-gap-tag-bg);color:var(--ll-muted)}
 @media (max-width:600px){.sd-lessons{padding:1.1rem 1rem .4rem}.sd-lesson{grid-template-columns:30px 1fr;gap:0 10px}.sd-lesson__n{font-size:1.2rem}}
+/* Dark theme: the callout sets its own text colour, so every colour above is a token redefined
+   here. It must still STAND OUT from the page as the beige card does in light mode: a warm surface
+   clearly lighter than the page, an accent outline, and the "In Mapsurvey" lines sunk into it. */
+@media (prefers-color-scheme: dark){.sd-lessons{--ll:#F0A06C;--ll-bg:#33231A;--ll-text:#F2ECE6;--ll-muted:#C4B5A8;--ll-rule:rgba(240,160,108,.22);--ll-ms-bg:rgba(0,0,0,.28);--ll-ms-border:rgba(240,160,108,.28);--ll-ok:#2DD4B8;--ll-gap:#A89A8E;--ll-tag-bg:rgba(45,212,184,.16);--ll-tag:#5AE0CA;--ll-gap-tag-bg:rgba(255,255,255,.08);border:1px solid rgba(240,160,108,.35);border-top:3px solid var(--ll);box-shadow:0 8px 28px rgba(240,160,108,.08)}}
 
 /* Change story-draft-publishing: staff-only banner on an unpublished story */
 .sd-draft-banner{margin:0 0 1.2rem;padding:.6rem .9rem;border:1.5px dashed #C0622B;border-radius:8px;background:#FBF3EC;color:#8C3F19;font-family:var(--font-display);font-size:.9rem;font-weight:600}
+@media (prefers-color-scheme: dark){.sd-draft-banner{border-color:#F0A06C;background:#33231A;color:#F0B48E}}
 
 /* ============================
    CATEGORY LANDINGS (change seo-landings-rewrite)
