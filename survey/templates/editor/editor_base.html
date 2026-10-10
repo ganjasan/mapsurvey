@@ -1067,6 +1067,10 @@
                     {% include "editor/partials/_language_switcher.html" %}
                     <div class="dropdown-divider"></div>
                     <a class="dropdown-item" href="{% url 'whats_new' %}"><i class="fas fa-gift" style="margin-right:4px;"></i>{% trans "What's new" %}{% if whats_new.unseen_count %} <span class="wn-badge">{{ whats_new.unseen_count }}</span>{% endif %}</a>
+                    {% comment %}Experienced creators switch the two confirmations off ("Don't
+                    ask again" in the dialogs); this is where they come back. Browser-only
+                    (localStorage), like the Responses layer panel state.{% endcomment %}
+                    <a class="dropdown-item editor-confirm-toggle" href="#" onclick="EditorConfirm.toggle(event)"><i class="fas fa-check-square" style="margin-right:4px;" data-confirm-icon></i>{% trans "Ask before publishing or changing structure" %}</a>
                     <a class="dropdown-item" href="#" onclick="openSupportChat(event)"><i class="fas fa-comment-dots" style="margin-right:4px;"></i>{% trans "Help & support" %}</a>
                     <a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt" style="margin-right:4px;"></i>{% trans "Logout" %}</a>
                 </div>
@@ -1098,6 +1102,7 @@
                     {% endif %}
                     <div class="dropdown-divider"></div>
                     <a class="dropdown-item" href="{% url 'whats_new' %}"><i class="fas fa-gift" style="margin-right:4px;"></i>{% trans "What's new" %}{% if whats_new.unseen_count %} <span class="wn-badge">{{ whats_new.unseen_count }}</span>{% endif %}</a>
+                    <a class="dropdown-item editor-confirm-toggle" href="#" onclick="EditorConfirm.toggle(event)"><i class="fas fa-check-square" style="margin-right:4px;" data-confirm-icon></i>{% trans "Ask before publishing or changing structure" %}</a>
                     {% if MOBILE_EDITOR_NAV %}
                     <a class="dropdown-item" href="#" onclick="openSupportChat(event)"><i class="fas fa-comment-dots" style="margin-right:4px;"></i>{% trans "Help & support" %}</a>
                     {% endif %}
@@ -1180,6 +1185,29 @@
     }
     document.addEventListener('DOMContentLoaded', function() { initPasswordToggles(); });
     document.body.addEventListener('htmx:afterSettle', function(e) { initPasswordToggles(e.detail.target); });
+    </script>
+    <script>
+    // One preference for the two confirmation dialogs of a live survey —
+    // "Publish changes" and the structure prompt. `off` skips both; the
+    // dialogs' "Don't ask again" box sets it, the account menu shows and
+    // flips it. Per browser, never the model (hotfix after #267).
+    window.EditorConfirm = (function () {
+        var KEY = 'msEditorConfirmations';
+        function get() { try { return localStorage.getItem(KEY) !== 'off'; } catch (e) { return true; } }
+        function set(on) { try { if (on) localStorage.removeItem(KEY); else localStorage.setItem(KEY, 'off'); } catch (e) {} paint(); }
+        function paint() {
+            document.querySelectorAll('.editor-confirm-toggle [data-confirm-icon]').forEach(function (icon) {
+                icon.className = 'fas ' + (get() ? 'fa-check-square' : 'fa-square');
+            });
+        }
+        document.addEventListener('DOMContentLoaded', paint);
+        return {
+            asks: get,
+            // Called from a dialog's confirm button with its "Don't ask again" box.
+            remember: function (checkbox) { if (checkbox && checkbox.checked) set(false); },
+            toggle: function (e) { if (e) e.preventDefault(); set(!get()); },
+        };
+    })();
     </script>
     {% block extra_scripts %}{% endblock %}
     <!--Start of Tawk.to Script-->

@@ -448,7 +448,11 @@ clicking one opens this. Text edits never reach it — they save to the live sur
         </div>
         <div class="modal-footer d-flex align-items-center">
             <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
-            <form method="post" action="{% url 'editor_create_draft' survey.uuid %}" class="d-inline mb-0" id="structureGateForm">{% csrf_token %}
+            <label class="mr-auto mb-0" style="font-size:.85rem;font-weight:400;display:flex;align-items:center;gap:.4rem;cursor:pointer;">
+                <input type="checkbox" id="structureGateDontAsk"> {% trans "Don’t ask again" %}
+            </label>
+            <form method="post" action="{% url 'editor_create_draft' survey.uuid %}" class="d-inline mb-0" id="structureGateForm"
+                  onsubmit="EditorConfirm.remember(document.getElementById('structureGateDontAsk'))">{% csrf_token %}
                 <input type="hidden" name="then" value="edit">
                 <input type="hidden" name="section_code" value="">
                 <button type="submit" class="btn btn-primary">{% trans "Start unpublished changes" %}</button>
@@ -485,6 +489,8 @@ var STRUCTURE_LOCKED = {% if structure_locked %}true{% else %}false{% endif %};
         if (form) {
             form.elements['then'].value = action || 'edit';
             form.elements['section_code'].value = sectionCode || currentSectionCode();
+            // "Don't ask again": start the changes at once, same request.
+            if (window.EditorConfirm && !EditorConfirm.asks()) { form.submit(); return; }
         }
         if (window.jQuery) {
             jQuery('#questionModal').modal('hide');
