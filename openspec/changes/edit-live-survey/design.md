@@ -64,6 +64,13 @@ stored name stays for admin/back-compat but is never rendered) plus an "Unpublis
 and a "View live version" link. Results/Share/Public-results tabs on the draft keep pointing at the
 canonical (already the case via `canonical_of`).
 
+### D4b. Who may start them
+
+Editors as well as owners (owner decision 2026-10-10): an editor may add a question to a draft
+survey, so refusing them the same edit on a live survey would bring the wall back for every team.
+Publishing and discarding stay owner-only — that is the moment respondents' survey changes — and an
+editor on the changes sees "The survey owner publishes these changes" where the button would be.
+
 ### D5. Safe edits while unpublished changes exist
 
 If a draft exists, *all* Build edits go to the draft (one editing surface, D4). A safe edit then

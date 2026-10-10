@@ -2721,10 +2721,16 @@ def editor_survey_password(request, survey_uuid):
 
 # ─── Versioning endpoints ──────────────────────────────────────────────────
 
-@survey_permission_required('owner')
+@survey_permission_required('editor')
 @require_POST
 def editor_create_draft(request, survey_uuid):
-    """Create a draft copy of a published survey for editing."""
+    """Create a draft copy of a published survey for editing.
+
+    Editors as well as owners: with live editing, this is what "Start
+    unpublished changes" does, and an editor who may add a question to a draft
+    survey must be able to add one to a live survey's changes. Publishing and
+    discarding them stay with the owner.
+    """
     survey = request.survey
 
     # Closed as well as published: a closed survey is read-only for the same

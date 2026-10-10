@@ -9516,15 +9516,28 @@ class EditorVersioningEndpointsTest(TestCase):
         response = self.client.post(url)
         self.assertEqual(response.status_code, 400)
 
-    def test_create_draft_403_for_non_owner(self):
+    def test_create_draft_allowed_for_editor(self):
         """
         GIVEN a published survey and an editor-role user
-        WHEN POST to create-draft
-        THEN a 403 response is returned
+        WHEN POST to create-draft ("Start unpublished changes")
+        THEN the draft is created — editors start changes, owners publish them
+             (change edit-live-survey)
         """
         self.client.login(username='ver_editor', password='pass')
         url = f'/editor/surveys/{self.survey.uuid}/create-draft/'
         response = self.client.post(url)
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(self.survey.has_draft_copy())
+
+    def test_publish_draft_403_for_editor(self):
+        """
+        GIVEN unpublished changes and an editor-role user
+        WHEN POST to publish-draft
+        THEN a 403 response is returned — publishing stays with the owner
+        """
+        draft = clone_survey_for_draft(self.survey)
+        self.client.login(username='ver_editor', password='pass')
+        response = self.client.post(f'/editor/surveys/{draft.uuid}/publish-draft/')
         self.assertEqual(response.status_code, 403)
 
     # ─── publish-draft ───────────────────────────────────────────────────────
@@ -49492,6 +49505,70 @@ class LiveSurveyEditingTest(TestCase):
         response = self.client.get(f'/editor/surveys/{self.survey.uuid}/')
         self.assertContains(response, 'read-only')
         self.assertNotContains(response, 'id="structureGateModal"')
+
+    def _login_editor(self):
+        editor = User.objects.create_user(username='liveeditor', password='pass')
+        Membership.objects.create(user=editor, organization=self.org, role='editor')
+        SurveyCollaborator.objects.create(user=editor, survey=self.survey, role='editor')
+        self.client.login(username='liveeditor', password='pass')
+        return editor
+
+    def test_editor_can_start_unpublished_changes(self):
+        """
+        GIVEN an editor collaborator on a live survey
+        WHEN they open Build and confirm the structure prompt
+        THEN the prompt offers the action and the draft is created
+        """
+        self._login_editor()
+        page = self.client.get(f'/editor/surveys/{self.survey.uuid}/')
+        self.assertContains(page, 'id="structureGateForm"')
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/create-draft/',
+            {'then': 'add_question', 'section_code': 'S1'})
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(self.survey.has_draft_copy())
+
+    def test_editor_on_the_changes_sees_who_publishes(self):
+        """
+        GIVEN unpublished changes opened by an editor
+        WHEN the page renders
+        THEN there is no Publish changes button, and the page says the owner publishes
+        """
+        draft = clone_survey_for_draft(self.survey)
+        self._login_editor()
+        response = self.client.get(f'/editor/surveys/{draft.uuid}/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'The survey owner publishes these changes')
+        self.assertNotContains(response, 'checkAndPublishDraft()"')
+
+    def test_collaborator_added_after_the_changes_can_open_them(self):
+        """
+        GIVEN unpublished changes created before an editor was added to the survey
+        WHEN that editor opens Build
+        THEN they are redirected to the changes and can open them (the draft
+             answers with the live survey's collaborators, not its snapshot)
+        """
+        draft = clone_survey_for_draft(self.survey)
+        outsider = User.objects.create_user(username='lateeditor', password='pass')
+        Membership.objects.create(user=outsider, organization=self.org, role='viewer')
+        SurveyCollaborator.objects.create(user=outsider, survey=self.survey, role='editor')
+        self.client.login(username='lateeditor', password='pass')
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/', follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.redirect_chain[-1][0], f'/editor/surveys/{draft.uuid}/')
+
+    def test_viewer_cannot_start_unpublished_changes(self):
+        """
+        GIVEN an org viewer
+        WHEN they post to create the changes
+        THEN they are refused
+        """
+        viewer = User.objects.create_user(username='liveviewer2', password='pass')
+        Membership.objects.create(user=viewer, organization=self.org, role='viewer')
+        self.client.login(username='liveviewer2', password='pass')
+        response = self.client.post(f'/editor/surveys/{self.survey.uuid}/create-draft/')
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(self.survey.has_draft_copy())
 
     @override_settings(MOBILE_EDITOR_NAV=True)
     def test_mobile_status_line_offers_structure_and_share(self):

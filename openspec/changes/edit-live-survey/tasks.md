@@ -13,6 +13,7 @@
 - [x] 3.2 Gate modal on every viewport (`data-gate` controls, drag handles); "Change structure" in the context bar, "✎ Structure" on mobile
 - [x] 3.3 `editor_survey_detail` redirects to the draft unless `?live=1`; "View live version"; live edits refused while a draft exists
 - [x] 3.4 Title without "Draft of"; "Unpublished changes" pill and status chip; dashboard badge
+- [x] 3.5 Editors start unpublished changes (`editor_create_draft` → `editor` role); publish/discard stay owner-only, editors see who publishes
 
 ## 4. Vocabulary
 - [x] 4.1 Publish changes / Discard changes in the context bar, mobile bar, account menu and modals

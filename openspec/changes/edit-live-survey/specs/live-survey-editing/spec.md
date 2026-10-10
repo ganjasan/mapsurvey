@@ -49,6 +49,24 @@ there.
 - **WHEN** an editor removes an option that answers use from a live question
 - **THEN** the edit is refused with a message pointing at unpublished changes
 
+### Requirement: Editors start unpublished changes, owners publish them
+
+An editor or owner SHALL be able to start unpublished changes from the structure prompt. Publishing
+and discarding them SHALL remain owner-only; an editor working on unpublished changes SHALL be told
+that the owner publishes them.
+
+#### Scenario: Editor starts unpublished changes
+- **WHEN** an editor collaborator confirms the structure prompt on a live survey
+- **THEN** the unpublished changes are created and opened
+
+#### Scenario: Editor cannot publish
+- **WHEN** an editor posts "Publish changes"
+- **THEN** it is refused, and their page shows "The survey owner publishes these changes" instead of the button
+
+#### Scenario: Viewer cannot start them
+- **WHEN** a viewer posts to start unpublished changes
+- **THEN** it is refused
+
 ### Requirement: One editing surface per survey
 
 While a survey has unpublished changes, opening its Build page SHALL show the unpublished changes,

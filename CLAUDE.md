@@ -328,7 +328,8 @@ copy, which every creator surface calls **"Unpublished changes"** (Publish chang
 content endpoints call `_check_content_edit_allowed`, structural ones keep
 `_check_structural_edit_allowed` (403). Templates gate structural controls on `structure_locked`
 with `data-gate="<action>"` (opens the gate modal in `survey_detail.html`, which posts `then` +
-`section_code` to `editor_create_draft`), content controls on `is_read_only`. A new editor
+`section_code` to `editor_create_draft`, `editor` role and up — owners alone publish/discard),
+content controls on `is_read_only`. A new editor
 control must pick one of the two — never `survey.status`. While a draft exists, Build redirects to
 it (`?live=1` shows the live survey read-only) and live content edits are refused, because
 publishing the draft replaces the live structure. Switch off ⇒ the old read-only page and "draft"

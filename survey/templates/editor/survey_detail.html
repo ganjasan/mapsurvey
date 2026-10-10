@@ -76,6 +76,9 @@ when the published survey is read-only the bar goes amber and carries the
     {% if survey.is_draft_copy and live_editing %}
     <a class="btn btn-sm btn-link" href="{% url 'editor_survey_detail' survey.published_version.uuid %}?live=1" title="{% trans 'What respondents see right now' %}">{% trans "View live version" %}</a>
     {% endif %}
+    {% if survey.is_draft_copy and live_editing and not is_owner %}
+    <span class="text-muted" style="font-size:.8rem;">{% trans "The survey owner publishes these changes" %}</span>
+    {% endif %}
     {% if show_draft_actions %}
     <button class="btn btn-sm btn-success" onclick="checkAndPublishDraft()">
         <i class="fas fa-upload"></i> {% if live_editing %}{% trans "Publish changes" %}{% else %}{% trans "Publish Version" %}{% endif %}
@@ -115,7 +118,9 @@ flow.{% endcomment %}
     mockup dropped the secondary text line.{% endcomment %}
     {% include "editor/partials/_publishing_widget.html" %}
     <span class="msb-spacer" style="flex:1;min-width:0;"></span>
-    {% if survey.is_draft_copy %}
+    {% if survey.is_draft_copy and not is_owner %}
+    <span class="msb-desktop text-muted" style="font-size:.8rem;">{% trans "The survey owner publishes these changes" %}</span>
+    {% elif survey.is_draft_copy %}
     <button class="msb-btn msb-green" onclick="checkAndPublishDraft()">{% if live_editing %}{% trans "🌐 Publish changes" %}{% else %}{% trans "🌐 Publish" %}{% endif %}</button>
     {% elif survey.status == 'draft' %}
     <button class="msb-btn msb-green" onclick="doTransition('published')">{% trans "🌐 Publish" %}</button>
@@ -440,19 +445,14 @@ clicking one opens this. Text edits never reach it — they save to the live sur
             <p class="text-muted" style="font-size:.85rem;">{% trans "Nothing has been collected yet, so you can also take the survey back to draft and edit it freely." %}
                 <a href="#" onclick="doTransition('draft'); return false;">{% trans "Back to draft" %}</a></p>
             {% endif %}
-            {% if not is_owner %}
-            <p class="text-warning" style="font-size:.85rem;">{% trans "Only the survey owner can start unpublished changes." %}</p>
-            {% endif %}
         </div>
         <div class="modal-footer d-flex align-items-center">
             <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
-            {% if is_owner %}
             <form method="post" action="{% url 'editor_create_draft' survey.uuid %}" class="d-inline mb-0" id="structureGateForm">{% csrf_token %}
                 <input type="hidden" name="then" value="edit">
                 <input type="hidden" name="section_code" value="">
                 <button type="submit" class="btn btn-primary">{% trans "Start unpublished changes" %}</button>
             </form>
-            {% endif %}
         </div>
     </div></div>
 </div>
