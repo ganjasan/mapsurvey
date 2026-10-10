@@ -1,4 +1,5 @@
 from django import template
+from django.conf import settings
 
 register = template.Library()
 
@@ -118,6 +119,8 @@ def survey_title(context, survey):
         # nothing on it to rename — the canonical header is where that happens.
         'can_rename': role == 'owner' and not survey.is_draft_copy,
         'name_max_length': SurveyHeader._meta.get_field('name').max_length,
+        # An inclusion tag gets a fresh context: context processors don't reach it.
+        'LIVE_SURVEY_EDITING': getattr(settings, 'LIVE_SURVEY_EDITING', False),
     }
 
 

@@ -11,6 +11,20 @@
 
   <div class="pr-scroll">
 
+    {% if shadowed_by_draft %}
+    {% comment %}Publishing the unpublished changes replaces these settings, so a
+    save here would be undone — the server refuses it; say so and point at the
+    one editing surface (change edit-live-survey).{% endcomment %}
+    <div class="alert alert-warning" data-testid="settings-shadowed">
+      <i class="fas fa-code-branch mr-1"></i>
+      {% trans "This survey has unpublished changes, and publishing them replaces these settings." %}
+      <a href="{% url 'editor_survey_detail' shadowed_by_draft.uuid %}?panel=settings">{% trans "Edit the settings there" %}</a>
+    </div>
+    <script>
+    document.querySelectorAll('#surveySettingsGeneralForm input, #surveySettingsGeneralForm select, #surveySettingsGeneralForm textarea').forEach(function (el) { el.disabled = true; });
+    </script>
+    {% endif %}
+
     {% comment %}Survey settings — grouped into semantic cards (mirrors the
     Publish space's Page settings). All fields stay inside one autosaving form.{% endcomment %}
     <form method="post" id="surveySettingsGeneralForm" data-autosave

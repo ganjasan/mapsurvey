@@ -36,16 +36,16 @@
                     {% else %}disabled{% endif %}>
                 <i class="fas fa-pen"></i>
             </button>
-            <button title="{% if is_read_only %}Create a draft to edit{% else %}Duplicate{% endif %}"
-                    {% if not is_read_only %}
+            <button title="{% if is_read_only %}Create a draft to edit{% else %}{% trans 'Duplicate' %}{% endif %}"
+                    {% if not structure_locked %}
                     hx-post="{% url 'editor_question_duplicate' survey.uuid question.id %}"
                     hx-target="closest .question-item"
                     hx-swap="afterend"
                     hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-                    {% else %}disabled{% endif %}>
+                    {% elif is_read_only %}disabled{% else %}data-gate="duplicate" data-gate-section="{{ question.survey_section.code }}"{% endif %}>
                 <i class="fas fa-copy"></i>
             </button>
-            <button title="{% if is_read_only %}Create a draft to edit{% else %}Copy{% endif %}"
+            <button title="{% if is_read_only %}Create a draft to edit{% else %}{% trans 'Copy' %}{% endif %}"
                     class="copy-question-btn"
                     data-survey-uuid="{{ survey.uuid }}"
                     data-question-id="{{ question.id }}"
@@ -55,14 +55,14 @@
                     {% if is_read_only %}disabled{% endif %}>
                 <i class="fas fa-clipboard"></i>
             </button>
-            <button title="{% if is_read_only %}Create a draft to edit{% else %}Delete{% endif %}" class="text-danger"
-                    {% if not is_read_only %}
+            <button title="{% if is_read_only %}Create a draft to edit{% else %}{% trans 'Delete' %}{% endif %}" class="text-danger"
+                    {% if not structure_locked %}
                     hx-post="{% url 'editor_question_delete' survey.uuid question.id %}"
                     hx-target="closest .question-item"
                     hx-swap="outerHTML"
                     hx-confirm="Delete question '{{ question.name|default:"this question" }}'?"
                     hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-                    {% else %}disabled{% endif %}>
+                    {% elif is_read_only %}disabled{% else %}data-gate="delete" data-gate-section="{{ question.survey_section.code }}"{% endif %}>
                 <i class="fas fa-trash"></i>
             </button>
         </span>
@@ -79,16 +79,16 @@
     {% if question.can_have_subquestions %}
     <div class="add-subquestion-wrap">
         <button class="add-question-btn add-question-btn--sub"
-                title="{% if is_read_only %}Create a draft to edit{% else %}Add Sub-question{% endif %}"
-                {% if not is_read_only %}
+                title="{% if is_read_only %}Create a draft to edit{% else %}{% trans 'Add Sub-question' %}{% endif %}"
+                {% if not structure_locked %}
                 hx-get="{% url 'editor_subquestion_create' survey.uuid question.id %}"
                 hx-target="#questionModalBody"
                 hx-swap="innerHTML"
                 data-toggle="modal" data-target="#questionModal"
-                {% else %}disabled{% endif %}>
+                {% elif is_read_only %}disabled{% else %}data-gate="add_subquestion" data-gate-section="{{ question.survey_section.code }}"{% endif %}>
             <i class="fas fa-plus"></i> {% trans "Add Sub-question" %}
         </button>
-        {% if not is_read_only %}
+        {% if not structure_locked %}
         <button class="paste-as-subquestion-btn"
                 hx-post="{% url 'editor_question_paste' survey.uuid question.survey_section_id %}"
                 hx-vals='js:{"source_survey_uuid": (Clipboard.peek()||{}).source_survey_uuid, "source_question_id": (Clipboard.peek()||{}).source_id, "parent_question_id": {{ question.id }}}'

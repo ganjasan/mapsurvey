@@ -39,8 +39,10 @@ when the published survey is read-only the bar goes amber and carries the
     </div>
     <div style="display:flex;align-items:center;gap:.6rem;flex-shrink:0;">
         <span class="build-ro-msg"><i class="fas fa-lock"></i>
-          {% if show_back_to_draft %}{% trans "Nothing has been collected yet, so this can go back to editing" %}{% else %}{% trans "Published and closed surveys cannot be edited" %}{% endif %}</span>
-        {% if show_back_to_draft %}
+          {% if live_editing and draft_copy %}{% trans "This is the live survey. Your edits are in unpublished changes" %}{% elif show_back_to_draft %}{% trans "Nothing has been collected yet, so this can go back to editing" %}{% else %}{% trans "Published and closed surveys cannot be edited" %}{% endif %}</span>
+        {% if live_editing and draft_copy %}
+        <a class="btn btn-sm btn-primary" href="{% url 'editor_survey_detail' draft_copy.uuid %}">{% trans "Continue editing" %} &rarr;</a>
+        {% elif show_back_to_draft %}
         <button class="btn btn-sm btn-primary" onclick="doTransition('draft')">{% trans "Back to editing" %}</button>
         {% elif draft_copy %}
         <a class="btn btn-sm btn-primary" href="{% url 'editor_survey_detail' draft_copy.uuid %}">{% trans "Go to draft" %} &rarr;</a>
@@ -64,19 +66,25 @@ when the published survey is read-only the bar goes amber and carries the
     <span class="ico"><i class="fas fa-hammer"></i></span>
     <div>
         <div class="t">{% trans "Survey" %}</div>
-        <div class="s">{% if survey.status == 'draft' %}{% trans "Draft — not collecting responses" %}{% elif survey.status == 'testing' %}{% trans "Testing — invite-link access" %}{% elif survey.status == 'published' %}{% trans "Open" %} · {% blocktrans count counter=session_count %}{{ counter }} response{% plural %}{{ counter }} responses{% endblocktrans %}{% elif survey.status == 'closed' %}{% trans "Closed" %} · {% blocktrans count counter=session_count %}{{ counter }} response{% plural %}{{ counter }} responses{% endblocktrans %}{% else %}{% trans "Sections, questions & survey settings" %}{% endif %}</div>
+        <div class="s">{% if survey.is_draft_copy and live_editing %}{% trans "Unpublished changes — respondents keep the live survey until you publish" %}{% elif is_live_survey and live_editing %}{% if survey.status == 'published' %}{% trans "Live" %}{% else %}{% trans "Closed" %}{% endif %} · {% blocktrans count counter=session_count %}{{ counter }} response{% plural %}{{ counter }} responses{% endblocktrans %} · {% trans "text edits save straight to the live survey" %}{% elif survey.status == 'draft' %}{% trans "Draft — not collecting responses" %}{% elif survey.status == 'testing' %}{% trans "Testing — invite-link access" %}{% elif survey.status == 'published' %}{% trans "Open" %} · {% blocktrans count counter=session_count %}{{ counter }} response{% plural %}{{ counter }} responses{% endblocktrans %}{% elif survey.status == 'closed' %}{% trans "Closed" %} · {% blocktrans count counter=session_count %}{{ counter }} response{% plural %}{{ counter }} responses{% endblocktrans %}{% else %}{% trans "Sections, questions & survey settings" %}{% endif %}</div>
     </div>
     <span style="flex:1;"></span>
     <button type="button" class="btn btn-sm btn-outline-primary cm-toolbar-btn{% if thread_counts.new_total %} cm-has-new{% endif %}" data-cm-open="" aria-label="{% trans 'Comments' %}{% if thread_counts.total %}, {{ thread_counts.total }} {% trans 'open' %}{% endif %}{% if thread_counts.new_total %}, {{ thread_counts.new_total }} {% trans 'new' %}{% endif %}" title="{% trans 'Comments on this survey' %}"><i class="fas fa-comments" aria-hidden="true"></i> {% trans "Comments" %} <span class="cm-count" data-thread-total{% if not thread_counts.total %} hidden{% endif %}>{{ thread_counts.total }}</span></button>
         <a class="btn btn-sm btn-outline-secondary ctx-preview-btn" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank" title="{% trans 'Open the survey as a respondent' %}">
         <i class="fas fa-external-link-alt"></i> {% trans "Preview" %}
     </a>
+    {% if survey.is_draft_copy and live_editing %}
+    <a class="btn btn-sm btn-link" href="{% url 'editor_survey_detail' survey.published_version.uuid %}?live=1" title="{% trans 'What respondents see right now' %}">{% trans "View live version" %}</a>
+    {% endif %}
+    {% if survey.is_draft_copy and live_editing and not is_owner %}
+    <span class="text-muted" style="font-size:.8rem;">{% trans "The survey owner publishes these changes" %}</span>
+    {% endif %}
     {% if show_draft_actions %}
     <button class="btn btn-sm btn-success" onclick="checkAndPublishDraft()">
-        <i class="fas fa-upload"></i> {% trans "Publish Version" %}
+        <i class="fas fa-upload"></i> {% if live_editing %}{% trans "Publish changes" %}{% else %}{% trans "Publish Version" %}{% endif %}
     </button>
     <button class="btn btn-sm btn-outline-danger" data-toggle="modal" data-target="#discardDraftModal">
-        <i class="fas fa-trash"></i> {% trans "Discard" %}
+        <i class="fas fa-trash"></i> {% if live_editing %}{% trans "Discard changes" %}{% else %}{% trans "Discard" %}{% endif %}
     </button>
     {% elif is_owner and survey.status == 'draft' and not survey.is_draft_copy %}
     {% include "editor/partials/_survey_primary_action.html" %}
@@ -85,6 +93,11 @@ when the published survey is read-only the bar goes amber and carries the
     </button>
     {% else %}
     {% comment %}testing (and any non-draft editable state) now surfaces its primary action too{% endcomment %}
+    {% if is_live_survey and structure_locked and not is_read_only %}
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-gate="edit" title="{% trans 'Add, remove or reorder questions and sections' %}">
+        <i class="fas fa-sitemap"></i> {% trans "Change structure" %}
+    </button>
+    {% endif %}
     {% include "editor/partials/_survey_primary_action.html" %}
     {% endif %}
 </div>
@@ -105,8 +118,10 @@ flow.{% endcomment %}
     mockup dropped the secondary text line.{% endcomment %}
     {% include "editor/partials/_publishing_widget.html" %}
     <span class="msb-spacer" style="flex:1;min-width:0;"></span>
-    {% if survey.is_draft_copy %}
-    <button class="msb-btn msb-green" onclick="checkAndPublishDraft()">{% trans "🌐 Publish" %}</button>
+    {% if survey.is_draft_copy and not is_owner %}
+    <span class="msb-desktop text-muted" style="font-size:.8rem;">{% trans "The survey owner publishes these changes" %}</span>
+    {% elif survey.is_draft_copy %}
+    <button class="msb-btn msb-green" onclick="checkAndPublishDraft()">{% if live_editing %}{% trans "🌐 Publish changes" %}{% else %}{% trans "🌐 Publish" %}{% endif %}</button>
     {% elif survey.status == 'draft' %}
     <button class="msb-btn msb-green" onclick="doTransition('published')">{% trans "🌐 Publish" %}</button>
     {% elif survey.status == 'testing' %}
@@ -115,7 +130,10 @@ flow.{% endcomment %}
     {% comment %}Explicit Edit = clear intent, act directly. The explanatory
     intercept sheet is reserved for clicks on the disabled editing surface.{% endcomment %}
     {% if draft_copy %}
-    <a class="msb-btn msb-outline" href="{% url 'editor_survey_detail' draft_copy.uuid %}">{% trans "✎ Edit" %}</a>
+    <a class="msb-btn msb-outline" href="{% url 'editor_survey_detail' draft_copy.uuid %}">{% if live_editing %}{% trans "✎ Unpublished changes" %}{% else %}{% trans "✎ Edit" %}{% endif %}</a>
+    {% elif live_editing %}
+    {% comment %}Text is editable in place; structure goes through the gate.{% endcomment %}
+    <button type="button" class="msb-btn msb-outline" data-gate="edit">{% trans "✎ Structure" %}</button>
     {% elif show_back_to_draft %}
     <button class="msb-btn msb-outline" onclick="doTransition('draft')">{% trans "✎ Edit" %}</button>
     {% elif show_edit_published %}
@@ -133,7 +151,8 @@ flow.{% endcomment %}
         <button class="msb-btn msb-outline" data-toggle="dropdown" aria-label="{% trans 'More survey actions' %}">⋯</button>
         <div class="dropdown-menu dropdown-menu-right">
             {% if show_draft_actions %}
-            <a class="dropdown-item text-danger" href="#" data-toggle="modal" data-target="#discardDraftModal"><i class="fas fa-trash" style="margin-right:4px;"></i>{% trans "Discard draft" %}</a>
+            {% if live_editing %}<a class="dropdown-item" href="{% url 'editor_survey_detail' survey.published_version.uuid %}?live=1">{% trans "View live version" %}</a>{% endif %}
+            <a class="dropdown-item text-danger" href="#" data-toggle="modal" data-target="#discardDraftModal"><i class="fas fa-trash" style="margin-right:4px;"></i>{% if live_editing %}{% trans "Discard changes" %}{% else %}{% trans "Discard draft" %}{% endif %}</a>
             {% elif survey.status == 'draft' and not survey.is_draft_copy %}
             <a class="dropdown-item text-danger" href="#" data-toggle="modal" data-target="#discardDraftSurveyModal"><i class="fas fa-trash" style="margin-right:4px;"></i>{% trans "Discard survey" %}</a>
             {% else %}
@@ -182,7 +201,7 @@ flow.{% endcomment %}
       {% trans "Edits are made in a new version. The current version keeps collecting until you publish the update." %}
     </div>
     {% if draft_copy %}
-    <a class="msb-btn msb-indigo msb-full" href="{% url 'editor_survey_detail' draft_copy.uuid %}">{% trans "Continue editing the draft →" %}</a>
+    <a class="msb-btn msb-indigo msb-full" href="{% url 'editor_survey_detail' draft_copy.uuid %}">{% if live_editing %}{% trans "Continue editing →" %}{% else %}{% trans "Continue editing the draft →" %}{% endif %}</a>
     {% elif show_back_to_draft %}
     <button class="msb-btn msb-indigo msb-full" onclick="doTransition('draft')">{% trans "Back to editing" %}</button>
     {% elif show_edit_published %}
@@ -268,16 +287,16 @@ function copyTestLink(btn) {
         {% endfor %}
         <div class="sidebar-footer">
             <button class="add-question-btn"
-                    title="{% if is_read_only %}Create a draft to edit{% endif %}"
-                    {% if not is_read_only %}
+                    title="{% if is_read_only %}Create a draft to edit{% elif structure_locked %}{% trans 'Adding a section starts unpublished changes' %}{% endif %}"
+                    {% if not structure_locked %}
                     hx-post="{% url 'editor_section_create' survey.uuid %}"
                     hx-target="#sections-list"
                     hx-swap="beforeend"
                     hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-                    {% else %}disabled{% endif %}>
+                    {% elif is_read_only %}disabled{% else %}data-gate="add_section"{% endif %}>
                 <i class="fas fa-plus"></i> {% trans "New Section" %}
             </button>
-            {% if not is_read_only %}
+            {% if not structure_locked %}
             <button class="paste-section-btn"
                     hx-post="{% url 'editor_section_paste' survey.uuid %}"
                     hx-vals='js:{"source_survey_uuid": (Clipboard.peek()||{}).source_survey_uuid, "source_section_id": (Clipboard.peek()||{}).source_id}'
@@ -412,12 +431,111 @@ function copyTestLink(btn) {
 </div>
 {% endif %}
 
+{% if structure_locked and not is_read_only %}
+{% comment %}The structure gate (change edit-live-survey). Every structural control on a
+live survey carries data-gate="<action>" instead of a request the server would refuse;
+clicking one opens this. Text edits never reach it — they save to the live survey.{% endcomment %}
+<div class="modal fade editor-modal" id="structureGateModal" tabindex="-1" aria-labelledby="structureGateTitle">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title" id="structureGateTitle">{% trans "Change the structure of a live survey" %}</h5><button type="button" class="close" data-dismiss="modal" aria-label="{% trans 'Close' %}"><span>&times;</span></button></div>
+        <div class="modal-body">
+            <p>{% trans "People are answering this survey. Adding, removing or reordering questions and sections, and changing a question’s type or visibility, is done in unpublished changes: edit as much as you like, respondents keep seeing the current survey until you click Publish changes." %}</p>
+            <p class="text-muted" style="font-size:.85rem;">{% trans "Fixing wording, translations or answer options doesn’t need this — those edits save straight to the live survey." %}</p>
+            {% if show_back_to_draft %}
+            <p class="text-muted" style="font-size:.85rem;">{% trans "Nothing has been collected yet, so you can also take the survey back to draft and edit it freely." %}
+                <a href="#" onclick="doTransition('draft'); return false;">{% trans "Back to draft" %}</a></p>
+            {% endif %}
+        </div>
+        <div class="modal-footer d-flex align-items-center">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
+            <form method="post" action="{% url 'editor_create_draft' survey.uuid %}" class="d-inline mb-0" id="structureGateForm">{% csrf_token %}
+                <input type="hidden" name="then" value="edit">
+                <input type="hidden" name="section_code" value="">
+                <button type="submit" class="btn btn-primary">{% trans "Start unpublished changes" %}</button>
+            </form>
+        </div>
+    </div></div>
+</div>
+{% endif %}
+
+{% if survey.is_draft_copy and live_editing and then_action %}
+<div class="unpub-toast" id="unpubToast" role="status">
+    <i class="fas fa-code-branch"></i>
+    {% trans "You’re editing unpublished changes. Respondents keep the live survey until you click Publish changes." %}
+    <button type="button" aria-label="{% trans 'Dismiss' %}" onclick="this.parentNode.remove()">&times;</button>
+</div>
+{% endif %}
+
 {% include "editor/partials/_lifecycle_scripts.html" %}
 
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
+// Live survey: structural controls open the gate instead of editing (change edit-live-survey).
+var STRUCTURE_LOCKED = {% if structure_locked %}true{% else %}false{% endif %};
+{% if structure_locked and not is_read_only %}
+(function () {
+    function currentSectionCode() {
+        var active = document.querySelector('.section-item.active');
+        return active ? (active.getAttribute('data-section-code') || '') : '';
+    }
+    window.openStructureGate = function (action, sectionCode) {
+        var form = document.getElementById('structureGateForm');
+        if (form) {
+            form.elements['then'].value = action || 'edit';
+            form.elements['section_code'].value = sectionCode || currentSectionCode();
+        }
+        if (window.jQuery) {
+            jQuery('#questionModal').modal('hide');
+            jQuery('#structureGateModal').modal('show');
+        }
+        if (window.posthog && posthog.capture) {
+            posthog.capture('structure_gate_shown', { action: action || 'edit', survey_id: '{{ survey.id }}' });
+        }
+    };
+    document.addEventListener('click', function (e) {
+        var el = e.target.closest && e.target.closest('[data-gate]');
+        if (!el) return;
+        e.preventDefault();
+        e.stopPropagation();
+        openStructureGate(el.getAttribute('data-gate'), el.getAttribute('data-gate-section'));
+    }, true);
+    // A drag handle is a reorder: on a live survey it explains instead of dragging.
+    document.addEventListener('mousedown', function (e) {
+        var handle = e.target.closest && e.target.closest('.drag-handle');
+        if (!handle || !handle.closest('#sections-list, #questions-list')) return;
+        e.preventDefault();
+        openStructureGate('reorder');
+    }, true);
+})();
+{% endif %}
+{% if survey.is_draft_copy and then_action %}
+// Replay the action that started the unpublished changes, once.
+(function () {
+    var then = '{{ then_action|escapejs }}';
+    try {
+        var params = new URLSearchParams(location.search);
+        params.delete('then');
+        var qs = params.toString();
+        history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
+    } catch (e) {}
+    function clickOnce(selector) {
+        var el = document.querySelector(selector);
+        if (el) { el.click(); return true; }
+        return false;
+    }
+    if (then === 'add_section') {
+        document.addEventListener('DOMContentLoaded', function () { clickOnce('.sidebar-footer .add-question-btn'); });
+    } else if (then === 'add_question') {
+        var done = false;
+        document.body && document.body.addEventListener('htmx:afterSettle', function (evt) {
+            if (done || !evt.target || evt.target.id !== 'section-content') return;
+            done = clickOnce('#section-content .add-question-btn:not(.add-question-btn--sub)');
+        });
+    }
+})();
+{% endif %}
 document.addEventListener('DOMContentLoaded', function() {
     // Issue #16: open the section identified by URL hash (e.g. #section-12).
     // Used by the clipboard pill link to deep-jump to a copied source's section.
@@ -432,7 +550,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // SortableJS for sections
     var sectionsList = document.getElementById('sections-list');
-    if (sectionsList) {
+    if (sectionsList && !STRUCTURE_LOCKED) {
         Sortable.create(sectionsList, {
             animation: 150,
             handle: '.drag-handle',
@@ -757,7 +875,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Init SortableJS on question list and sub-question lists
     function initSortableOnList(listEl) {
-        if (!listEl || listEl._sortable) return;
+        if (!listEl || listEl._sortable || STRUCTURE_LOCKED) return;
         listEl._sortable = Sortable.create(listEl, {
             animation: 150,
             handle: '.drag-handle',
@@ -786,7 +904,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // ── Issue #16: keyboard shortcuts ──
-    {% if not is_read_only %}
+    {% if not structure_locked %}
     var _surveyUuid = '{{ survey.uuid }}';
     var _csrfToken = '{{ csrf_token }}';
     function _currentSectionId() {

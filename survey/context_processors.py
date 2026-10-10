@@ -30,6 +30,7 @@ def mobile_adaptive(request):
     return {
         'MOBILE_EDITOR_NAV': getattr(settings, 'MOBILE_EDITOR_NAV', False),
         'EDITOR_AUTOSAVE': getattr(settings, 'EDITOR_AUTOSAVE', False),
+        'LIVE_SURVEY_EDITING': getattr(settings, 'LIVE_SURVEY_EDITING', False),
         'CREATE_STEER_AI': getattr(settings, 'CREATE_STEER_AI', False),
         'CONDITIONAL_VISIBILITY': getattr(settings, 'CONDITIONAL_VISIBILITY', False),
         'FILE_UPLOAD_QUESTIONS': getattr(settings, 'FILE_UPLOAD_QUESTIONS', False),

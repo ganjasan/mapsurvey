@@ -317,6 +317,24 @@ the "N new" pill — so every render site passes `request.user`. Authors edit th
 place (`edited_at`, no re-notification). Response anchors are labelled with the Responses ordinal
 (`comments.session_seq`), never the session id.
 
+**Editing a live survey (`LIVE_SURVEY_EDITING` kill switch, default ON; change `edit-live-survey`)**:
+a published/closed survey takes SAFE edits in place (wording, help text, translations, added options,
+map/display settings) with no draft and no new version; STRUCTURAL edits (add/delete/reorder/paste,
+type, layer binding, visibility rules, section code, removing an ANSWERED option) go to the draft
+copy, which every creator surface calls **"Unpublished changes"** (Publish changes / Discard changes;
+"version" only on Responses and exports). One rule set in `versioning.py` (`is_live`,
+`structural_question_changes`, `structural_section_changes`, `removed_answered_choices`, shared with
+`check_draft_compatibility`). Views: `_edit_locks(survey)` → `(is_read_only, structure_locked)`;
+content endpoints call `_check_content_edit_allowed`, structural ones keep
+`_check_structural_edit_allowed` (403). Templates gate structural controls on `structure_locked`
+with `data-gate="<action>"` (opens the gate modal in `survey_detail.html`, which posts `then` +
+`section_code` to `editor_create_draft`, `editor` role and up — owners alone publish/discard),
+content controls on `is_read_only`. A new editor
+control must pick one of the two — never `survey.status`. While a draft exists, Build redirects to
+it (`?live=1` shows the live survey read-only) and live content edits are refused, because
+publishing the draft replaces the live structure. Switch off ⇒ the old read-only page and "draft"
+vocabulary.
+
 **Session Management**: Survey sessions are created on first section view and tracked via `request.session['survey_session_id']`.
 
 **Empty sessions (change `hide-empty-sessions`, issue #226)**: a session with no top-level `Answer`
@@ -442,9 +460,10 @@ Leaflet.draw tooltips pick tap-phrased strings via `pointer: coarse`
 
 **Content screening (phishing hold, change `phishing-content-review`)**: registration defenses stop
 bots; `survey/content_screening.py` is for the human who publishes an "XFINITY — click here" page on
-our domain. `screen_survey(survey, trigger=…)` runs at the three moments creator text goes live —
+our domain. `screen_survey(survey, trigger=…)` runs at the moments creator text goes live —
 `editor_survey_transition` to `published`, `editor_publish_draft` (on the CANONICAL survey) and the
-live saves of `redirect_url`/`thanks_html` (`_rescreen_if_live`) — and NOWHERE else: drafts and
+live saves of `redirect_url`/`thanks_html` and, since `edit-live-survey`, of question and section
+text on a published survey (all through `_rescreen_if_live`) — and NOWHERE else: drafts and
 `testing` are not screened. `collect_text()` gathers name, section/question text with translations,
 thanks page and `redirect_url`; `score()` is pure (no DB, no network) over the signal table at the top of
 the module (`WEIGHTS`, shorteners, trackers, brand terms, lure phrases, padding, ≤1 question, account

@@ -700,9 +700,16 @@ def editor(request):
 			.values_list('survey_section__survey_header_id',
 						 'survey_section__survey_header__canonical_survey_id')):
 		families_with_files.add(canonical_id or header_id)
+	# "Unpublished changes" badge: which surveys have a draft copy — one query.
+	with_drafts = set(
+		SurveyHeader.objects
+		.filter(published_version_id__in=family_ids)
+		.values_list('published_version_id', flat=True)
+	)
 	surveys_with_kpi = []
 	for survey in survey_list:
 		survey.session_count = family_counts.get(survey.id, 0)
+		survey.has_unpublished_changes = survey.id in with_drafts
 		survey.has_files = survey.id in families_with_files
 		overview = SurveyAnalyticsService(survey).get_overview()
 		survey.completed_count = overview['completed_count']

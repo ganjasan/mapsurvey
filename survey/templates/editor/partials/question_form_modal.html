@@ -157,7 +157,18 @@
             <label>{{ field.label }}</label>
             {# The native select stays as the submitted control; cards drive it. #}
             <div style="display:none;">{{ field }}</div>
+            {% if structure_locked and question and not is_read_only %}
+            {% comment %}Live survey: the type is structure (change edit-live-survey).
+            The picker stays in the DOM for the type-scoped field toggles, hidden.{% endcomment %}
+            <div style="display:none;">{% question_type_picker field %}</div>
+            <div class="live-type-line" style="font-size:.85rem;">
+                <span class="badge badge-secondary">{{ question|input_type_label }}</span>
+                <span class="text-muted">{% trans "The type of a question on a live survey is changed in unpublished changes." %}</span>
+                <a href="#" data-gate="type" data-gate-section="{{ question.survey_section.code }}">{% trans "Change type…" %}</a>
+            </div>
+            {% else %}
             {% question_type_picker field %}
+            {% endif %}
             <div class="qtp-hint-line" id="qtp-hint-line"></div>
             {% for error in field.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
         </div>
@@ -170,6 +181,12 @@
             {% comment %}Subtext is rich text now (rendered |safe). The input above stays
             the value the form posts; this is what the creator actually types into.{% endcomment %}
             <div id="subtext-quill"></div>
+            {% endif %}
+            {% if field.name == 'name' and live_answer_count %}
+            <small class="form-text text-muted live-wording-hint">
+                <i class="fas fa-globe"></i>
+                {% blocktrans count counter=live_answer_count %}This survey is live: changes are saved straight to it. {{ counter }} answer was given to the current wording.{% plural %}This survey is live: changes are saved straight to it. {{ counter }} answers were given to the current wording.{% endblocktrans %}
+            </small>
             {% endif %}
             {% if field.name == 'name' %}
             {% comment %}image and html never render their name to respondents (see the
@@ -425,7 +442,7 @@
                             <button type="button" title="{% trans 'Edit' %}" {% if is_read_only %}disabled{% else %}
                                     hx-get="{% url 'editor_question_edit' survey.uuid subq.id %}?return=modal" hx-target="#questionModalBody" hx-swap="innerHTML"{% endif %}>
                                 <i class="fas fa-pen"></i></button>
-                            <button type="button" title="{% trans 'Delete' %}" class="text-danger" {% if is_read_only %}disabled{% else %}
+                            <button type="button" title="{% trans 'Delete' %}" class="text-danger" {% if is_read_only %}disabled{% elif structure_locked %}data-gate="delete" data-gate-section="{{ question.survey_section.code }}"{% else %}
                                     hx-post="{% url 'editor_question_delete' survey.uuid subq.id %}" hx-target="closest li" hx-swap="outerHTML"
                                     hx-confirm="{% trans 'Delete this sub-question?' %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                                     hx-on::after-request="document.body.dispatchEvent(new CustomEvent('questionUpdated'))"{% endif %}>
@@ -441,7 +458,7 @@
             </div>
             {% endif %}
             {% endwith %}
-            {% if not is_read_only %}
+            {% if not structure_locked %}
             {% comment %}One-tap presets (mockups/journey.md): the common questions about an
             object, created at once and renamed later; "Other…" is the full form. Both
             adders are in the markup; toggleTypeScopedFields shows the one for the type
@@ -457,8 +474,8 @@
                         hx-get="{% url 'editor_subquestion_create' survey.uuid question.id %}?return=modal" hx-target="#questionModalBody" hx-swap="innerHTML"><i class="fas fa-plus"></i> {% trans "Other…" %}</button>
             </div>
             {% endif %}
-            <button type="button" class="add-question-btn add-question-btn--sub" id="modal-add-subquestion" data-lo-subq-add="geo" style="margin-top:6px;{% if question.input_type == 'layer_objects' and not is_read_only %}display:none;{% endif %}"
-                    {% if is_read_only %}disabled title="{% trans 'Create a draft to edit' %}"{% else %}
+            <button type="button" class="add-question-btn add-question-btn--sub" id="modal-add-subquestion" data-lo-subq-add="geo" style="margin-top:6px;{% if question.input_type == 'layer_objects' and not structure_locked %}display:none;{% endif %}"
+                    {% if is_read_only %}disabled title="{% trans 'Create a draft to edit' %}"{% elif structure_locked %}data-gate="add_subquestion" data-gate-section="{{ question.survey_section.code }}"{% else %}
                     hx-get="{% url 'editor_subquestion_create' survey.uuid question.id %}?return=modal" hx-target="#questionModalBody" hx-swap="innerHTML"{% endif %}>
                 <i class="fas fa-plus"></i> {% trans "Add sub-question" %}
             </button>

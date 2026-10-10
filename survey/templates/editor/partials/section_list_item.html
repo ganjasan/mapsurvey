@@ -1,7 +1,8 @@
 {% load i18n %}
 <li class="section-item{% if is_current %} active{% endif %}"
     data-section-id="{{ section.id }}"
-    data-section-name="{{ section.name }}">
+    data-section-name="{{ section.name }}"
+    data-section-code="{{ section.code }}">
     <span class="drag-handle"><i class="fas fa-grip-vertical"></i></span>
     <span class="section-title">{{ section.title|default:section.name }}</span>
     {% include "editor/partials/_comment_badge.html" with kind="section" key=section.code open=section.id %}
@@ -13,11 +14,15 @@
     {% endif %}
     {% endif %}{% endwith %}
     {% if section.question_count is not None %}<span class="section-qcount" title="{% trans 'Questions in this section' %}">{{ section.question_count }}</span>{% endif %}
+    {% comment %}Structural on a live survey: the gate offers unpublished changes
+    instead of a request the server would refuse (change edit-live-survey).{% endcomment %}
     <button class="section-action" title="{% trans 'Duplicate' %}"
+            {% if not structure_locked %}
             hx-post="{% url 'editor_section_duplicate' survey.uuid section.id %}"
             hx-target="closest .section-item"
             hx-swap="afterend"
-            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+            {% elif is_read_only %}disabled{% else %}data-gate="duplicate" data-gate-section="{{ section.code }}"{% endif %}>
         <i class="fas fa-copy"></i>
     </button>
     <button class="section-action copy-section-btn" title="{% trans 'Copy' %}"
@@ -27,11 +32,13 @@
         <i class="fas fa-clipboard"></i>
     </button>
     <button class="section-delete"
+            {% if not structure_locked %}
             hx-post="{% url 'editor_section_delete' survey.uuid section.id %}"
             hx-target="closest .section-item"
             hx-swap="outerHTML"
             hx-confirm="Delete section '{{ section.title|default:section.name }}'?"
-            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+            {% elif is_read_only %}disabled{% else %}data-gate="delete" data-gate-section="{{ section.code }}"{% endif %}>
         <i class="fas fa-times"></i>
     </button>
 </li>
