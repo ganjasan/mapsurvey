@@ -22,4 +22,4 @@
 
 ## 5. Measurement
 - [x] 5.1 `pe` events: live_edit_saved, unpublished_changes_started/published/discarded; browser `structure_gate_shown`
-- [x] 5.2 Existing tests that describe the read-only page run with the switch off (`ReadOnlyLockTest`, `EditorSubquestionTest`, `SurveyStatusLineTest`); full suite: the only failures are the three that fail on main too (`CreateSurveyWizardTest` ×2, `RussianLandingHreflangTest`)
+- [x] 5.2 Existing tests that describe the read-only page run with the switch off (`ReadOnlyLockTest`, `EditorSubquestionTest`, `SurveyStatusLineTest`); full suite green — the three tests that were already failing on `master` (`CreateSurveyWizardTest` ×2 assumed a configured AI provider; `RussianLandingHreflangTest` lacked the Solutions-menu string in the `ru` catalog) are fixed here too

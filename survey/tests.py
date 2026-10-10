@@ -32213,7 +32213,10 @@ class CreateSurveyWizardTest(TestCase):
         Membership.objects.create(user=self.user, organization=self.org, role='owner')
         self.client.force_login(self.user)
 
-    @override_settings(MOBILE_EDITOR_NAV=True)
+    # The empty-path button only renders when an AI provider is configured
+    # (it sits inside `{% if ai_available %}`); without a key the page shows
+    # the plain "Create Survey" button instead.
+    @override_settings(MOBILE_EDITOR_NAV=True, AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
     def test_flag_on_renders_wizard_chrome(self):
         """
         GIVEN the MOBILE_EDITOR_NAV flag on
@@ -32231,7 +32234,7 @@ class CreateSurveyWizardTest(TestCase):
         self.assertIn('Skip and start from scratch', html)
         self.assertNotIn('>Create empty</button>', html)
 
-    @override_settings(MOBILE_EDITOR_NAV=False)
+    @override_settings(MOBILE_EDITOR_NAV=False, AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
     def test_flag_off_serves_legacy_page(self):
         """
         GIVEN the flag explicitly off

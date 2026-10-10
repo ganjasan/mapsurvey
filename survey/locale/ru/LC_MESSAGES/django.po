@@ -7561,3 +7561,7 @@ msgstr "Извлечённые уроки"
 #: survey/templates/partials/_story_card.html
 msgid "Read the story"
 msgstr "Читать историю"
+
+#: survey/templates/base_landing.html
+msgid "Participatory mapping tools: compared"
+msgstr "Инструменты партисипативного картирования: сравнение"
