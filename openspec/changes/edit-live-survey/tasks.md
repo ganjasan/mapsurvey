@@ -13,6 +13,7 @@
 - [x] 3.2 Gate modal on every viewport (`data-gate` controls, drag handles); "Change structure" in the context bar, "✎ Structure" on mobile
 - [x] 3.3 `editor_survey_detail` redirects to the draft unless `?live=1`; "View live version"; live edits refused while a draft exists — questions, sections and the section map through `_check_content_edit_allowed`; survey settings, the thanks page and the survey map start through `_check_not_shadowed_by_draft` (publish_draft copies those onto the canonical)
 - [x] 3.4 Title without "Draft of"; "Unpublished changes" pill and status chip; dashboard badge
+- [x] 3.6 Hotfix after release: on phones the full-screen dialogs used `100vh`, which includes the strip behind the browser's URL bar, so "Publish changes" opened with Cancel/Publish below the visible screen — `100dvh` + sticky `.modal-footer` (`editor-mobile.css`)
 - [x] 3.5 Editors start unpublished changes (`editor_create_draft` → `editor` role); publish/discard stay owner-only, editors see who publishes
 
 ## 4. Vocabulary

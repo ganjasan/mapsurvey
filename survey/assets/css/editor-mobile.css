@@ -368,15 +368,29 @@ body.mobile-nav-enabled .pr-container { height: auto; flex: 1; min-height: 0; }
        padding-right (scrollbar compensation) on open — on overlay-scrollbar
        phones that is a dead 15px stripe, hence the !important zero. */
     body.mobile-nav-enabled .editor-modal.modal { padding: 0 !important; }
+    /* 100dvh, not 100vh: on phones 100vh includes the strip behind the
+       browser's URL bar, which pushed a short dialog's footer — Cancel /
+       Publish changes — below the visible screen (hotfix after #267). The
+       vh line stays as the fallback for browsers without dvh. */
     body.mobile-nav-enabled .editor-modal .modal-dialog {
         margin: 0;
         max-width: 100vw;
         min-height: 100vh;
+        min-height: 100dvh;
         display: flex;
     }
     body.mobile-nav-enabled .editor-modal .modal-content {
         border-radius: 0;
         min-height: 100vh;
+        min-height: 100dvh;
+    }
+    /* And the footer stays in view however long the body is: a dialog
+       whose buttons need a scroll to find reads as having none. */
+    body.mobile-nav-enabled .editor-modal .modal-footer {
+        position: sticky;
+        bottom: 0;
+        background: inherit;
+        z-index: 1;
     }
 
     /* Context bar / read-only banner: stack instead of a squeezed row, so the
