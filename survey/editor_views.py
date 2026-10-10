@@ -163,6 +163,24 @@ def _check_content_edit_allowed(survey):
     return HttpResponse('Edits are not allowed on published or closed surveys', status=403)
 
 
+def _check_not_shadowed_by_draft(survey):
+    """403 when the live survey's settings are about to be replaced anyway.
+
+    publish_draft() copies languages, visibility, redirect, thanks page and
+    the map start from the draft onto the canonical survey, so a live
+    settings edit made while unpublished changes exist is silently undone at
+    publish (spec live-survey-editing, "Live edits wait while unpublished
+    changes exist"). Narrower than _check_content_edit_allowed on purpose:
+    settings and the thanks page stay editable on a plain live survey, as
+    they always were.
+    """
+    if live_editing_enabled() and is_live(survey) and survey.has_draft_copy():
+        return HttpResponse(
+            'This survey has unpublished changes. Edit its settings there, so that '
+            'publishing them does not overwrite this edit.', status=403)
+    return None
+
+
 def _structural_refusal(request, reasons, render_modal=None):
     """The answer to a structural change attempted on a live survey."""
     message = structural_edit_message(reasons)
@@ -673,6 +691,9 @@ def _rescreen_if_live(survey):
 def editor_survey_settings(request, survey_uuid):
     survey = request.survey
     if request.method == 'POST':
+        blocked = _check_not_shadowed_by_draft(survey)
+        if blocked:
+            return blocked
         form = SurveyHeaderForm(request.POST, request.FILES, instance=survey)
         if form.is_valid():
             form.save()
@@ -721,7 +742,10 @@ def editor_survey_settings_panel(request, survey_uuid):
     Position / Collaborators / Password keep their own dedicated controls.
     """
     survey = request.survey
+    shadowed = _check_not_shadowed_by_draft(survey)
     if request.method == 'POST':
+        if shadowed:
+            return shadowed
         form = SurveyHeaderForm(request.POST, request.FILES, instance=survey)
         if form.is_valid():
             form.save()
@@ -737,6 +761,7 @@ def editor_survey_settings_panel(request, survey_uuid):
     return render(request, 'editor/partials/survey_settings_panel.html', {
         'survey': survey,
         'form': form,
+        'shadowed_by_draft': survey.get_draft_copy() if shadowed else None,
         'effective_role': request.effective_survey_role,
         'basemap_choices': BASEMAP_CHOICES,
         'map_layers': _editor_layers(survey),
@@ -757,6 +782,9 @@ def editor_survey_thanks_panel(request, survey_uuid):
     results_page = getattr(survey, 'public_results_page', None)
 
     if request.method == 'POST':
+        blocked = _check_not_shadowed_by_draft(survey)
+        if blocked:
+            return blocked
         thanks = {}
         for lang in langs:
             cleaned = sanitize_thanks_html(request.POST.get('thanks_{}'.format(lang), ''))
@@ -1080,6 +1108,9 @@ def _layer_property_names(layer):
 @require_POST
 def editor_survey_map_position(request, survey_uuid):
     survey = request.survey
+    blocked = _check_not_shadowed_by_draft(survey)
+    if blocked:
+        return blocked
     clear_position = request.POST.get('clear_position', '0') == '1'
 
     if clear_position:
@@ -1217,6 +1248,9 @@ def editor_section_detail(request, survey_uuid, section_id):
             _save_section_translations(request, section, survey)
             if structure_locked:
                 pe.emit(pe.LIVE_EDIT_SAVED, request.user.pk, {'survey_id': str(survey.id), 'kind': 'section'})
+                # Section text now changes on a live page: same screen as the
+                # thanks page and redirect URL, the other live text paths.
+                _rescreen_if_live(survey)
             if request.headers.get('HX-Request'):
                 return HttpResponse(status=204, headers={'HX-Trigger': 'sectionSaved'})
             return redirect('editor_survey_detail', survey_uuid=survey.uuid)
@@ -1741,6 +1775,7 @@ def editor_question_edit(request, survey_uuid, question_id):
             _save_question_translations(request, q, survey)
             if structure_locked:
                 pe.emit(pe.LIVE_EDIT_SAVED, request.user.pk, {'survey_id': str(survey.id), 'kind': 'question'})
+                _rescreen_if_live(survey)
             # A sub-question lives inside its parent's section-list row: answer
             # with the parent's row (the form targets it), never a top-level
             # item for the child.

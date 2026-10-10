@@ -11,13 +11,13 @@
 ## 3. Unpublished changes
 - [x] 3.1 `editor_create_draft` takes `then` + `section_code`, lands on the matching section; `add_question` / `add_section` replayed
 - [x] 3.2 Gate modal on every viewport (`data-gate` controls, drag handles); "Change structure" in the context bar, "✎ Structure" on mobile
-- [x] 3.3 `editor_survey_detail` redirects to the draft unless `?live=1`; "View live version"; live edits refused while a draft exists
+- [x] 3.3 `editor_survey_detail` redirects to the draft unless `?live=1`; "View live version"; live edits refused while a draft exists — questions, sections and the section map through `_check_content_edit_allowed`; survey settings, the thanks page and the survey map start through `_check_not_shadowed_by_draft` (publish_draft copies those onto the canonical)
 - [x] 3.4 Title without "Draft of"; "Unpublished changes" pill and status chip; dashboard badge
 - [x] 3.5 Editors start unpublished changes (`editor_create_draft` → `editor` role); publish/discard stay owner-only, editors see who publishes
 
 ## 4. Vocabulary
 - [x] 4.1 Publish changes / Discard changes in the context bar, mobile bar, account menu and modals
-- [ ] 4.2 Translations — deferred with the general catalog refresh (design: Translations)
+- [x] 4.2 Translations — out of scope for this change: the new strings ship in English and go in with the general catalog refresh (design: Translations), which is its own piece of work
 - [x] 4.3 Changelog entry `survey/changelog/2026-10-09-edit-live-surveys.html`
 
 ## 5. Measurement

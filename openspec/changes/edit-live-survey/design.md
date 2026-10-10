@@ -8,9 +8,17 @@ draft's sections onto the canonical.
 
 ## Decisions
 
-### D1. Safe vs structural is decided per edit, on the server, by one function
+### D1. Safe vs structural is decided per edit, on the server, in one module
 
-`classify_live_edit(survey, model, instance, new_values) -> 'safe' | 'structural'`.
+`survey/versioning.py` holds the rule, next to `check_draft_compatibility` so the two can never
+disagree. A view snapshots the row before the form touches it (`question_snapshot` /
+`section_snapshot`), lets the form validate, then asks `structural_question_changes(before,
+after, removed_choices)` / `structural_section_changes(before, after)` for the list of reasons the
+edit is structural; `removed_answered_choices` supplies the answered options an edit drops. An
+empty list is a safe edit and saves in place; a non-empty one is refused with the reasons in the
+message (so the creator reads "the option “Red” (12 answers)", not "structural"). Adding,
+deleting, reordering and pasting never reach a content form: those endpoints stay refused on a
+live survey outright.
 
 Structural (needs unpublished changes):
 - create/delete/reorder/paste a question or section, change `next_section`;

@@ -49332,6 +49332,17 @@ class LiveSurveyEditingTest(TestCase):
         self.assertFalse(self.survey.has_draft_copy())
         self.assertEqual(self.survey.version_number, 1)
 
+    def test_live_question_edit_is_rescreened(self):
+        """
+        GIVEN a published survey
+        WHEN a question's text is saved in place
+        THEN the content screen runs with the live_edit trigger, as it does for
+             the thanks page and redirect URL — the other live text paths
+        """
+        with mock.patch('survey.editor_views.screen_survey') as screen:
+            self._post_question(name='Verify your PDF document here')
+        screen.assert_called_once_with(self.survey, trigger='live_edit')
+
     def test_adding_and_removing_unanswered_choices_is_safe(self):
         """
         GIVEN an answered choice question
@@ -49470,6 +49481,39 @@ class LiveSurveyEditingTest(TestCase):
         clone_survey_for_draft(self.survey)
         response = self._post_question(name='Sneaky')
         self.assertEqual(response.status_code, 403)
+
+    def test_survey_settings_refused_while_unpublished_changes_exist(self):
+        """
+        GIVEN a live survey with unpublished changes
+        WHEN its settings, thanks page or map start are posted on the live survey
+        THEN each is refused, because publish_draft would copy the draft's values over them
+        AND the settings panel says so and links to the changes
+        """
+        draft = clone_survey_for_draft(self.survey)
+        base = f'/editor/surveys/{self.survey.uuid}'
+        self.assertEqual(self.client.post(f'{base}/settings-panel/', {'name': 'Renamed'}).status_code, 403)
+        self.assertEqual(self.client.post(f'{base}/settings/', {'name': 'Renamed'}).status_code, 403)
+        self.assertEqual(self.client.post(f'{base}/thanks-panel/', {'thanks_en': '<p>Ty</p>'}).status_code, 403)
+        self.assertEqual(self.client.post(f'{base}/settings/map-position/', {'lat': '1', 'lng': '2', 'zoom': '5'}).status_code, 403)
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.name, 'Live survey')
+        self.assertIsNone(self.survey.start_map_postion)
+        panel = self.client.get(f'{base}/settings-panel/')
+        self.assertContains(panel, 'data-testid="settings-shadowed"')
+        self.assertContains(panel, f'/editor/surveys/{draft.uuid}/?panel=settings')
+
+    def test_survey_settings_stay_editable_on_a_plain_live_survey(self):
+        """
+        GIVEN a live survey without unpublished changes
+        WHEN its map start is posted
+        THEN it saves, as settings always did on a published survey
+        """
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/settings/map-position/',
+            {'lat': '52.5', 'lng': '13.4', 'zoom': '11'})
+        self.assertEqual(response.status_code, 204)
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.start_map_zoom, 11)
 
     def test_draft_page_speaks_unpublished_changes(self):
         """

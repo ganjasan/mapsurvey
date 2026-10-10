@@ -460,9 +460,10 @@ Leaflet.draw tooltips pick tap-phrased strings via `pointer: coarse`
 
 **Content screening (phishing hold, change `phishing-content-review`)**: registration defenses stop
 bots; `survey/content_screening.py` is for the human who publishes an "XFINITY — click here" page on
-our domain. `screen_survey(survey, trigger=…)` runs at the three moments creator text goes live —
+our domain. `screen_survey(survey, trigger=…)` runs at the moments creator text goes live —
 `editor_survey_transition` to `published`, `editor_publish_draft` (on the CANONICAL survey) and the
-live saves of `redirect_url`/`thanks_html` (`_rescreen_if_live`) — and NOWHERE else: drafts and
+live saves of `redirect_url`/`thanks_html` and, since `edit-live-survey`, of question and section
+text on a published survey (all through `_rescreen_if_live`) — and NOWHERE else: drafts and
 `testing` are not screened. `collect_text()` gathers name, section/question text with translations,
 thanks page and `redirect_url`; `score()` is pure (no DB, no network) over the signal table at the top of
 the module (`WEIGHTS`, shorteners, trackers, brand terms, lure phrases, padding, ≤1 question, account
