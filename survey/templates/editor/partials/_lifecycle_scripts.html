@@ -47,8 +47,11 @@ Draft-publish modals render only when `show_draft_actions` is set (Build view).
             <p class="text-muted"><i class="fas fa-chart-bar mr-1"></i>{% blocktrans %}Nothing disappears: all existing responses stay visible in Responses and on the public results page under <strong>All versions</strong>.{% endblocktrans %}</p>
         </div>
         <div class="modal-footer">
+            <label class="mr-auto mb-0" style="font-size:.85rem;font-weight:400;display:flex;align-items:center;gap:.4rem;cursor:pointer;">
+                <input type="checkbox" id="publishDraftDontAsk"> {% trans "Don’t ask again" %}
+            </label>
             <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
-            <button type="button" class="btn btn-success" onclick="doPublishDraft(false)">{% trans "Publish" %}</button>
+            <button type="button" class="btn btn-success" onclick="EditorConfirm.remember(document.getElementById('publishDraftDontAsk')); doPublishDraft(false)">{% trans "Publish" %}</button>
         </div>
     </div></div>
 </div>
@@ -155,6 +158,10 @@ function checkAndPublishDraft(){
                 list.appendChild(li);
             });
             $('#publishDraftIssuesModal').modal('show');
+        } else if (window.EditorConfirm && !EditorConfirm.asks()) {
+            // "Don't ask again": a clean publish goes straight through. The
+            // compatibility dialog above is never skipped — it names answers.
+            doPublishDraft(false);
         } else { $('#publishDraftModal').modal('show'); }
       }).catch(publishFetchFailed);
 }

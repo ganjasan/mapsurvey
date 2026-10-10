@@ -332,8 +332,10 @@ with `data-gate="<action>"` (opens the gate modal in `survey_detail.html`, which
 content controls on `is_read_only`. A new editor
 control must pick one of the two — never `survey.status`. While a draft exists, Build redirects to
 it (`?live=1` shows the live survey read-only) and live content edits are refused, because
-publishing the draft replaces the live structure. Switch off ⇒ the old read-only page and "draft"
-vocabulary.
+publishing the draft replaces the live structure. Both confirmations (the gate and "Publish
+changes") carry "Don't ask again": ONE browser-side preference, `localStorage['msEditorConfirmations']`
+(`window.EditorConfirm` in `editor_base.html`), restored from the account menu; the compatibility
+dialog is never skipped. Switch off ⇒ the old read-only page and "draft" vocabulary.
 
 **Session Management**: Survey sessions are created on first section view and tracked via `request.session['survey_session_id']`.
 

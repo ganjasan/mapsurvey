@@ -49418,6 +49418,21 @@ class LiveSurveyEditingTest(TestCase):
         self.assertNotContains(response, 'Draft new version')
         self.assertNotContains(response, 'read-only')
 
+    def test_confirmations_can_be_switched_off(self):
+        """
+        GIVEN a live survey and its unpublished changes
+        WHEN the structure prompt and the publish dialog render
+        THEN each carries a "Don't ask again" box, and the account menu the
+             item that turns the confirmations back on (browser-side preference)
+        """
+        live = self.client.get(f'/editor/surveys/{self.survey.uuid}/')
+        self.assertContains(live, 'id="structureGateDontAsk"')
+        self.assertContains(live, 'class="dropdown-item editor-confirm-toggle"')
+        draft = clone_survey_for_draft(self.survey)
+        changes = self.client.get(f'/editor/surveys/{draft.uuid}/')
+        self.assertContains(changes, 'id="publishDraftDontAsk"')
+        self.assertContains(changes, 'EditorConfirm.asks()')
+
     def test_section_panel_gates_new_question(self):
         """
         GIVEN a live survey
