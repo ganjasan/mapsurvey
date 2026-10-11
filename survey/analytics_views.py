@@ -115,7 +115,7 @@ def analytics_dashboard(request, survey_uuid):
     survey = request.survey
     # Creator returned to the data: the only return that means anything for a
     # project-shaped tool. Creator event, survey id only.
-    pe.emit(pe.RESPONSES_VIEWED, request.user.pk, {'survey_id': str(survey.id)})
+    pe.record_return(pe.RESPONSES_VIEWED, request.user, survey)
     version = request.GET.get('version', 'all')
     show_empty = _show_empty(request)
     service = SurveyAnalyticsService(survey, version=version, include_empty=show_empty)

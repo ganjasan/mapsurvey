@@ -614,6 +614,13 @@ CONTENT_SCREENING = os.environ.get('CONTENT_SCREENING', 'True').lower() in ('tru
 CONTENT_SCREENING_HOLD_THRESHOLD = int(os.environ.get('CONTENT_SCREENING_HOLD_THRESHOLD', '7'))
 # Where the review mail goes. The owner's address by default (CONTACT_EMAIL).
 ABUSE_REVIEW_EMAIL = os.environ.get('ABUSE_REVIEW_EMAIL', '') or CONTACT_EMAIL
+
+# Report-stage outreach signals (change report-stage-outreach-signals): the daily
+# digest's recipient and the two knobs of `survey/report_stage.py`. Defaults
+# live in that module next to the sub-signal table.
+OUTREACH_SIGNAL_EMAIL = os.environ.get('OUTREACH_SIGNAL_EMAIL', '') or CONTACT_EMAIL
+REPORT_STAGE_THRESHOLD = int(os.environ.get('REPORT_STAGE_THRESHOLD', '7'))
+REPORT_STAGE_MIN_RESPONSES = int(os.environ.get('REPORT_STAGE_MIN_RESPONSES', '30'))
 # Extra disposable-mail domains (comma-separated) on top of the built-in list.
 DISPOSABLE_EMAIL_DOMAINS = [
     d.strip().lower() for d in os.environ.get('DISPOSABLE_EMAIL_DOMAINS', '').split(',') if d.strip()

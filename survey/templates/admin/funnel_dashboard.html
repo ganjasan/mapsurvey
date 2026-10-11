@@ -314,6 +314,24 @@
       </table>
     </div>
   </div>
+  <div class="panel" style="margin-top:12px">
+    <h3>Report stage <span class="subtle">— survey stopped collecting, creator is building the report → send the materials kit, offer a story{% if report_stage.since %} · recorded since {{ report_stage.since }}{% endif %}</span></h3>
+    <table class="funnel">
+      <tr><th>Fired</th><th>User</th><th>Worked</th><th>Survey</th><th>Resp.</th><th>Why</th><th>Status</th><th></th></tr>
+      {% for r in report_stage.rows %}
+      <tr>
+        <td class="subtle">{{ r.fired }}{% if r.historical %} <span class="tag warn" title="found by the historical run">hist</span>{% endif %}</td>
+        <td><a href="{% url 'admin:auth_user_change' r.uid %}">{{ r.username }}</a></td>
+        <td class="subtle">{% if r.worked %}✓ {{ r.worked_since }}{% if r.outcome %} · {{ r.outcome }}{% endif %}{% else %}—{% endif %}</td>
+        <td>{{ r.survey }}</td>
+        <td>{{ r.responses }}</td>
+        <td class="subtle">{{ r.signals }}</td>
+        <td><span class="tag {% if r.status == 'new' %}act{% else %}acq{% endif %}">{{ r.status }}</span></td>
+        <td><a class="rowlink" href="{% url 'admin:survey_outreachsignal_change' r.id %}">open →</a></td>
+      </tr>
+      {% empty %}<tr><td colspan="8" class="subtle">None — no survey has entered the reporting stage{% if not report_stage.since %} (nothing recorded yet){% endif %}.</td></tr>{% endfor %}
+    </table>
+  </div>
 
   <p class="subtle" style="margin-top:18px">
     Colour: <span class="tag acq">acquisition</span> <span class="tag act">activity</span>

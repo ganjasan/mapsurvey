@@ -1655,6 +1655,15 @@ NOTE_KIND_CHOICES = (
 )
 
 
+OUTREACH_OUTCOME_CHOICES = (
+    ('', _('Unknown yet')),
+    ('no_reply', _('No reply')),
+    ('declined', _('Declined')),
+    ('story', _('Story')),
+    ('pro', _('Pro')),
+)
+
+
 class CreatorProfile(models.Model):
     """What we know about a registered creator, beyond what the product records.
 
@@ -1680,6 +1689,15 @@ class CreatorProfile(models.Model):
     summary = models.TextField(
         blank=True, help_text=_('Short markdown summary: who this is, in a few lines.'),
     )
+    # The one checkbox per client (change report-stage-outreach-signals): have
+    # we reached out to this person, when, and what came of it. Staff-only like
+    # the rest of the profile. The report-stage signal on a survey is a different
+    # level -- a known client's new survey is a new signal, listed apart.
+    outreach_done = models.BooleanField(default=False, db_index=True)
+    outreach_done_at = models.DateField(null=True, blank=True)
+    outreach_outcome = models.CharField(
+        max_length=10, blank=True, default='', choices=OUTREACH_OUTCOME_CHOICES,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -1688,6 +1706,31 @@ class CreatorProfile(models.Model):
 
     def __str__(self):
         return f"{self.user_id}: {self.organization or '—'}"
+
+    @classmethod
+    def mark_worked(cls, user, on=None, outcome=''):
+        """Tick the client's worked flag; creates the profile row when absent.
+
+        Never moves an existing date later, never clears a flag and never
+        overwrites an outcome already set by hand -- a hand-set fact wins over
+        every automatic caller (signal status, pre-fill from notes).
+        Returns the profile.
+        """
+        on = on or timezone.localdate()
+        profile, _created = cls.objects.get_or_create(user=user)
+        changed = []
+        if not profile.outreach_done:
+            profile.outreach_done = True
+            changed.append('outreach_done')
+        if profile.outreach_done_at is None or on < profile.outreach_done_at:
+            profile.outreach_done_at = on
+            changed.append('outreach_done_at')
+        if outcome and not profile.outreach_outcome:
+            profile.outreach_outcome = outcome
+            changed.append('outreach_outcome')
+        if changed:
+            profile.save(update_fields=changed + ['updated_at'])
+        return profile
 
 
 class CreatorPreferences(models.Model):
@@ -2284,3 +2327,106 @@ class SurveyImportJob(models.Model):
             except Exception:  # noqa: BLE001 — a missing object must not mask the outcome
                 pass
             self.file = None
+
+
+# ─── Report-stage outreach signals (change report-stage-outreach-signals) ────
+#
+# Two creator-side tables. Neither is respondent data: `SurveyEvent` measures
+# our customers' respondents on their behalf and must stay apart from anything
+# that measures creators (CLAUDE.md, "Internal product analytics").
+
+RETURN_KIND_CHOICES = (
+    ('responses_viewed', 'Responses page opened'),
+    ('data_exported', 'Data exported'),
+)
+
+
+class CreatorSurveyActivity(models.Model):
+    """A creator's return to a survey's data, one row per creator, canonical
+    survey, action and UTC day (spec creator-return-activity).
+
+    Written by `product_events.record_return` in the request that served the
+    Responses page or the download, next to the PostHog emission, so detection
+    (`survey/report_stage.py`) never depends on the analytics vendor. `restored`
+    marks rows the one-off PostHog backfill wrote for the period before the
+    table existed. Facts about an identifiable person: cascade with the user,
+    included in `export_creators`.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='survey_returns',
+    )
+    survey = models.ForeignKey(
+        'SurveyHeader', on_delete=models.CASCADE, related_name='creator_returns',
+    )
+    kind = models.CharField(max_length=20, choices=RETURN_KIND_CHOICES)
+    day = models.DateField()
+    count = models.PositiveIntegerField(default=1)
+    last_at = models.DateTimeField(default=timezone.now)
+    restored = models.BooleanField(default=False)
+
+    class Meta:
+        app_label = 'survey'
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'survey', 'kind', 'day'),
+                name='unique_creator_return_per_day',
+            ),
+        ]
+        indexes = [models.Index(fields=('survey', 'kind', 'day'))]
+        verbose_name_plural = 'creator survey activities'
+
+    def __str__(self):
+        return f"{self.user_id} {self.kind} {self.survey_id} {self.day:%Y-%m-%d} ×{self.count}"
+
+
+OUTREACH_SIGNAL_STATUS_CHOICES = (
+    ('new', 'New'),
+    ('contacted', 'Contacted'),
+    ('dismissed', 'Dismissed'),
+    ('won', 'Won'),
+)
+
+
+class OutreachSignal(models.Model):
+    """A survey that entered the reporting stage (spec report-stage-signals).
+
+    One per canonical survey -- the OneToOne IS the "fires once" rule; later
+    runs only merge new sub-signals into `signals`. `status` is the outreach
+    workflow staff run from the admin; moving it to contacted/won also ticks
+    the creator's `CreatorProfile.outreach_done`. `historical` marks records
+    the retrospective run wrote, dated the day they would have fired. Ids and
+    counts only: nothing a respondent wrote is ever stored here.
+    """
+
+    survey = models.OneToOneField(
+        'SurveyHeader', on_delete=models.CASCADE, related_name='outreach_signal',
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='outreach_signals',
+    )
+    score = models.PositiveIntegerField(default=0)
+    responses = models.PositiveIntegerField(default=0)
+    signals = models.JSONField(default=dict, blank=True)
+    status = models.CharField(
+        max_length=10, choices=OUTREACH_SIGNAL_STATUS_CHOICES, default='new', db_index=True,
+    )
+    note = models.TextField(blank=True, default='')
+    fired_at = models.DateTimeField(default=timezone.now, db_index=True)
+    historical = models.BooleanField(default=False)
+    updated_at = models.DateTimeField(auto_now=True)
+    worked_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='+',
+    )
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ('-fired_at',)
+
+    def __str__(self):
+        return f"{self.survey_id}: {self.status} ({self.score})"
+
+    @property
+    def signal_names(self):
+        return ', '.join(sorted(self.signals or {}))

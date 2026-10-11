@@ -1,0 +1,22 @@
+{% autoescape off %}Report stage — {{ as_of|date:"Y-m-d" }}: {{ total }} survey{{ total|pluralize }} entered the reporting stage.
+{% if new %}
+NEW CLIENTS
+{% for r in new %}
+• {{ r.survey_name }} — {{ r.responses }} responses, score {{ r.score }}
+  creator: {{ r.username }}{% if r.organization %} · {{ r.organization }}{% endif %}{% if r.segment %} · {{ r.segment }}{% endif %}
+  why: {% for name, value in r.signals %}{{ name }}={{ value }}{% if not forloop.last %}, {% endif %}{% endfor %}
+  signal:    {{ r.signal_url }}
+  dossier:   {{ r.dossier_url }}
+  responses: {{ r.responses_url }}
+{% endfor %}{% endif %}{% if known %}
+ALREADY IN CONTACT
+{% for r in known %}
+• {{ r.survey_name }} — {{ r.responses }} responses, score {{ r.score }}
+  creator: {{ r.username }}{% if r.organization %} · {{ r.organization }}{% endif %} · worked since {{ r.worked_since|date:"Y-m-d" }}{% if r.outreach_outcome %} ({{ r.outreach_outcome }}){% endif %}
+  why: {% for name, value in r.signals %}{{ name }}={{ value }}{% if not forloop.last %}, {% endif %}{% endfor %}
+  signal:    {{ r.signal_url }}
+  dossier:   {{ r.dossier_url }}
+  responses: {{ r.responses_url }}
+{% endfor %}{% endif %}
+Mark each signal contacted / dismissed / won in the admin; marking it contacted ticks the client's "worked" box.
+{% endautoescape %}

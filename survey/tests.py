@@ -49671,3 +49671,681 @@ class LiveSurveyEditingTest(TestCase):
         self.assertContains(response, 'Draft new version')
         self.assertNotContains(response, 'id="structureGateModal"')
         self.assertEqual(self._post_question(name='x').status_code, 403)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Report-stage outreach signals (change report-stage-outreach-signals)
+# ═══════════════════════════════════════════════════════════════════════════
+
+from datetime import date as _date, datetime as _datetime, timedelta as _td, timezone as _tz
+
+from . import product_events as _pe
+from . import report_stage as _rs
+from .models import (
+    AuditLog, CreatorNote, CreatorProfile, CreatorSurveyActivity, OutreachSignal,
+)
+
+
+def _rs_facts(**kwargs):
+    """Hand-built facts for the pure scorer; `responses_on` is {date: n}."""
+    responses_on = kwargs.pop('responses_on', {})
+    return _rs.SurveyFacts(daily_counts=dict(responses_on), **kwargs)
+
+
+def _rs_spike(start, n_days=14, first_week=8, then=1):
+    """A launch spike: `first_week` responses a day for 7 days, `then` a day after."""
+    out = {}
+    for i in range(n_days):
+        out[start + _td(days=i)] = first_week if i < 7 else then
+    return out
+
+
+class ReportStageScoringTest(SimpleTestCase):
+    """`score()` over hand-built facts: no database (spec report-stage-signals)."""
+
+    def setUp(self):
+        self.today = _date(2026, 10, 11)
+        self.start = self.today - _td(days=30)
+
+    def test_below_floor_never_scores(self):
+        """
+        GIVEN a survey with fewer responses than the floor and every other sub-signal
+        WHEN scored
+        THEN nothing fires and no sub-signal is reported
+        """
+        facts = _rs_facts(responses_on={self.start: 10}, export_days=[self.today],
+                          closed_days=[self.today], segment='municipality')
+        r = _rs.score(facts, self.today)
+        self.assertFalse(r.fires)
+        self.assertEqual(r.signals, {})
+
+    def test_export_with_plateau_fires_and_export_alone_does_not(self):
+        """
+        GIVEN an eligible survey past its launch spike
+        WHEN the owner exported the data (4) on top of the plateau (3)
+        THEN the signal fires; with the export alone (no plateau) it does not
+        """
+        facts = _rs_facts(responses_on=_rs_spike(self.start, n_days=30),
+                          export_days=[self.today - _td(days=2)])
+        r = _rs.score(facts, self.today)
+        self.assertTrue(r.fires)
+        self.assertIn('exported', r.signals)
+        self.assertIn('plateau', r.signals)
+
+        still = _rs_facts(responses_on={self.today - _td(days=i): 8 for i in range(7)},
+                          export_days=[self.today])
+        r2 = _rs.score(still, self.today)
+        self.assertFalse(r2.fires)
+        self.assertEqual(set(r2.signals), {'exported'})
+
+    def test_profile_subsignals_alone_never_fire(self):
+        """
+        GIVEN an institutional creator with a geo-rich survey still collecting
+        WHEN scored
+        THEN no signal fires although the profile weights are present
+        """
+        facts = _rs_facts(responses_on={self.today - _td(days=i): 10 for i in range(7)},
+                          geo_daily={self.today: 200}, segment='municipality',
+                          pro_interest=True, export_days=[self.today])
+        r = _rs.score(facts, self.today)
+        self.assertEqual(set(r.signals), {'geo_rich', 'institutional', 'pro_interest', 'exported'})
+        self.assertGreaterEqual(r.score, _rs.threshold())
+        # exported is behavioural, so this one fires -- drop it and it must not
+        facts.export_days = []
+        self.assertFalse(_rs.score(facts, self.today).fires)
+
+    def test_plateau_after_spike_and_absent_while_collecting(self):
+        """
+        GIVEN 8 a day for a week three weeks ago then 1 a day
+        WHEN scored today
+        THEN plateau is present; a survey whose best week is the current one has none
+        """
+        r = _rs.score(_rs_facts(responses_on=_rs_spike(self.start, n_days=30)), self.today)
+        self.assertIn('plateau', r.signals)
+        r2 = _rs.score(_rs_facts(responses_on={self.today - _td(days=i): 8 for i in range(20)}), self.today)
+        self.assertNotIn('plateau', r2.signals)
+
+    def test_closed_outside_window_is_absent_and_as_of_shifts_windows(self):
+        """
+        GIVEN a close 20 days ago and an export 20 days ago
+        WHEN scored today
+        THEN neither counts; scored as of 15 days ago, both do
+        """
+        then = self.today - _td(days=20)
+        facts = _rs_facts(responses_on={self.start: 40}, closed_days=[then], export_days=[then])
+        self.assertEqual(set(_rs.score(facts, self.today).signals) & {'closed', 'exported'}, set())
+        r = _rs.score(facts, self.today - _td(days=15))
+        self.assertEqual({'closed', 'exported'} <= set(r.signals), True)
+        self.assertTrue(r.fires)
+
+    def test_revisited_needs_two_distinct_days(self):
+        facts = _rs_facts(responses_on={self.start: 40}, view_days=[self.today, self.today])
+        self.assertNotIn('revisited', _rs.score(facts, self.today).signals)
+        facts.view_days = [self.today, self.today - _td(days=1)]
+        self.assertIn('revisited', _rs.score(facts, self.today).signals)
+
+    def test_first_firing_day_is_the_first_day_the_rules_fire(self):
+        """
+        GIVEN a spike then a close 20 days after launch
+        WHEN the history is walked
+        THEN the firing day is the close day (plateau alone was below threshold)
+        """
+        close = self.start + _td(days=20)
+        facts = _rs_facts(responses_on=_rs_spike(self.start, n_days=40), closed_days=[close])
+        self.assertEqual(_rs.first_firing_day(facts, self.today), close)
+        self.assertIsNone(_rs.first_firing_day(_rs_facts(responses_on={self.start: 5}), self.today))
+
+
+class _ReportStageBase(TestCase):
+    """A real owner, a survey with a text and a point question, helpers to
+    place responses on days and record the facts the detector reads."""
+
+    def setUp(self):
+        self.org = _make_org('RsOrg')
+        self.today = timezone.localdate()
+        self.owner = User.objects.create_user(username='rs_owner', password='x',
+                                              email='planner@city-council.example')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+
+    def _survey(self, name='rs_survey', status='published', owner=None):
+        survey = SurveyHeader.objects.create(
+            name=name, organization=self.org, created_by=owner or self.owner, status=status,
+        )
+        section = SurveySection.objects.create(
+            survey_header=survey, name='s', code='S1', title='S', is_head=True,
+        )
+        survey._q_text = Question.objects.create(
+            survey_section=section, code=f'{name}_t', order_number=1, name='Why', input_type='text',
+        )
+        survey._q_point = Question.objects.create(
+            survey_section=section, code=f'{name}_p', order_number=2, name='Where', input_type='point',
+        )
+        return survey
+
+    def _respond(self, survey, day, n=1, geo=False, kind='external', header=None):
+        header = header or survey
+        for i in range(n):
+            start = _datetime.combine(day, _datetime.min.time(), tzinfo=_tz.utc) + _td(hours=10, minutes=i)
+            s = SurveySession.objects.create(survey=header, start_datetime=start, opened_by_kind=kind)
+            Answer.objects.create(survey_session=s, question=survey._q_text, text='because')
+            if geo:
+                Answer.objects.create(survey_session=s, question=survey._q_point,
+                                      point=Point(10.0 + i * 0.001, 50.0))
+
+    def _spike(self, survey, start, n_days=30, first_week=6, then=1, geo=False):
+        for i in range(n_days):
+            self._respond(survey, start + _td(days=i), n=first_week if i < 7 else then, geo=geo)
+
+    def _close(self, survey, day):
+        row = AuditLog.objects.create(action='status_transition', survey_uuid=survey.uuid,
+                                      survey_name=survey.name,
+                                      metadata={'old_status': 'published', 'new_status': 'closed'})
+        AuditLog.objects.filter(pk=row.pk).update(
+            created_at=_datetime.combine(day, _datetime.min.time(), tzinfo=_tz.utc) + _td(hours=9))
+        SurveyHeader.objects.filter(pk=survey.pk).update(status='closed')
+        survey.status = 'closed'
+
+    def _export(self, survey, day, user=None):
+        CreatorSurveyActivity.objects.create(user=user or self.owner, survey=survey,
+                                             kind='data_exported', day=day)
+
+
+class CreatorReturnActivityTest(_ReportStageBase):
+    """Return rows written by the Responses page and the download (spec
+    creator-return-activity + the modified creator-distribution-events)."""
+
+    def setUp(self):
+        super().setUp()
+        self.survey = self._survey()
+        self.client.login(username='rs_owner', password='x')
+
+    def test_responses_page_records_one_row_per_day_and_counts_repeats(self):
+        """
+        GIVEN a creator opening the Responses page twice in a day
+        WHEN the rows are read
+        THEN one `responses_viewed` row exists with count 2
+        """
+        url = reverse('editor_survey_analytics', args=[self.survey.uuid])
+        self.assertEqual(self.client.get(url).status_code, 200)
+        self.assertEqual(self.client.get(url).status_code, 200)
+        rows = CreatorSurveyActivity.objects.filter(user=self.owner, survey=self.survey)
+        self.assertEqual(rows.count(), 1)
+        row = rows.get()
+        self.assertEqual((row.kind, row.day, row.count), ('responses_viewed', self.today, 2))
+
+    def test_download_records_export_and_rejected_format_does_not(self):
+        """
+        GIVEN the download URL
+        WHEN called with ?format=csv and then with an unknown format
+        THEN one `data_exported` row exists (the 400 recorded nothing)
+        """
+        self._respond(self.survey, self.today)
+        url = reverse('download_data', args=[self.survey.uuid])
+        self.assertEqual(self.client.get(url + '?format=csv').status_code, 200)
+        self.assertEqual(self.client.get(url + '?format=nope').status_code, 400)
+        rows = CreatorSurveyActivity.objects.filter(survey=self.survey, kind='data_exported')
+        self.assertEqual([(r.day, r.count) for r in rows], [(self.today, 1)])
+
+    def test_archived_version_rows_name_the_canonical_survey(self):
+        """
+        GIVEN an archived version of the survey
+        WHEN a return is recorded against the version
+        THEN the row names the canonical survey
+        """
+        version = SurveyHeader.objects.create(
+            name=self.survey.name, organization=self.org, status='closed',
+            is_canonical=False, canonical_survey=self.survey, version_number=1,
+        )
+        _pe.record_return(_pe.DATA_EXPORTED, self.owner, version, format='zip')
+        row = CreatorSurveyActivity.objects.get()
+        self.assertEqual(row.survey_id, self.survey.id)
+
+    def test_survey_backup_records_nothing(self):
+        """
+        GIVEN the survey.json backup export
+        WHEN downloaded
+        THEN no return row is recorded
+        """
+        resp = self.client.get(reverse('export_survey', args=[self.survey.uuid]) + '?mode=structure')
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(CreatorSurveyActivity.objects.exists())
+
+    def test_database_error_while_recording_still_serves_the_page(self):
+        """
+        GIVEN the insert fails
+        WHEN the Responses page is opened
+        THEN it is served and the failure is logged
+        """
+        with patch.object(CreatorSurveyActivity.objects, 'get_or_create', side_effect=RuntimeError('db')), \
+                self.assertLogs('survey.product_events', level='WARNING'):
+            resp = self.client.get(reverse('editor_survey_analytics', args=[self.survey.uuid]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(CreatorSurveyActivity.objects.exists())
+
+    def test_rows_go_with_the_survey_and_into_the_creator_export(self):
+        """
+        GIVEN a return row
+        WHEN the survey is deleted / the creator export runs
+        THEN the row is gone / the row is in returns.csv
+        """
+        import os
+        import tempfile
+        from django.core.management import call_command
+        self._export(self.survey, self.today)
+        with tempfile.TemporaryDirectory() as out:
+            call_command('export_creators', '--out', out, '--username', 'rs_owner', stdout=open(os.devnull, 'w'))
+            with open(os.path.join(out, 'returns.csv'), encoding='utf-8') as fh:
+                body = fh.read()
+        self.assertIn('data_exported', body)
+        self.assertIn(str(self.survey.uuid), body)
+        self.survey.delete()
+        self.assertFalse(CreatorSurveyActivity.objects.exists())
+
+
+class ReportStageRunTest(_ReportStageBase):
+    """The daily run (spec report-stage-signals)."""
+
+    def setUp(self):
+        super().setUp()
+        from django.core import mail
+        mail.outbox = []
+        self.mail = mail
+
+    def _ripe_survey(self, name='ripe', geo=False, close=True):
+        """A survey past its spike (plateau) that was closed 3 days ago."""
+        survey = self._survey(name)
+        self._spike(survey, self.today - _td(days=30), geo=geo)
+        if close:
+            self._close(survey, self.today - _td(days=3))
+        return survey
+
+    def test_fires_once_then_enriches(self):
+        """
+        GIVEN a survey that fired on plateau + closed
+        WHEN its owner exports the data a week later and the run repeats
+        THEN the record gains `exported`, keeps its status, no second record, no second mail
+        """
+        survey = self._ripe_survey()
+        with patch.object(_pe, 'emit') as emit:
+            report = _rs.run()
+        self.assertEqual(len(report.fired), 1)
+        sig = OutreachSignal.objects.get(survey=survey)
+        self.assertEqual(set(sig.signals), {'plateau', 'closed', 'institutional'})
+        self.assertEqual(sig.responses, 65)
+        self.assertEqual(sig.status, 'new')
+        self.assertFalse(sig.historical)
+        self.assertEqual(len(self.mail.outbox), 1)
+        self.assertEqual(emit.call_args[0][0], _pe.OUTREACH_SIGNAL_FIRED)
+        note = CreatorNote.objects.get(user=self.owner, kind='signal')
+        self.assertEqual(note.source_path, f'signal:report-stage:{survey.uuid}')
+        self.assertIn(survey.name, note.body)
+
+        sig.status = 'contacted'
+        sig.save()
+        self._export(survey, self.today)
+        report2 = _rs.run()
+        self.assertEqual(len(report2.fired), 0)
+        self.assertEqual(report2.enriched, 1)
+        sig.refresh_from_db()
+        self.assertIn('exported', sig.signals)
+        self.assertEqual(sig.status, 'contacted')
+        self.assertEqual(OutreachSignal.objects.count(), 1)
+        self.assertEqual(CreatorNote.objects.filter(kind='signal').count(), 1)
+        self.assertEqual(len(self.mail.outbox), 1)
+
+    def test_rerun_same_day_creates_and_sends_nothing(self):
+        self._ripe_survey()
+        _rs.run()
+        report = _rs.run()
+        self.assertEqual((len(report.fired), report.enriched), (0, 0))
+        self.assertEqual(len(self.mail.outbox), 1)
+
+    def test_two_firings_one_mail_two_notes_two_events(self):
+        """
+        GIVEN two ripe surveys of two creators
+        WHEN the run executes
+        THEN one digest with both, two dossier notes, two events
+        """
+        other = User.objects.create_user(username='rs_other', password='x', email='x@gmail.com')
+        a = self._ripe_survey('ripe_a')
+        b = self._survey('ripe_b', owner=other)
+        self._spike(b, self.today - _td(days=30))
+        self._close(b, self.today - _td(days=2))
+        with patch.object(_pe, 'emit') as emit:
+            report = _rs.run()
+        self.assertEqual(len(report.fired), 2)
+        self.assertEqual(len(self.mail.outbox), 1)
+        body = self.mail.outbox[0].body
+        self.assertIn(a.name, body)
+        self.assertIn(b.name, body)
+        self.assertIn('/admin/survey/outreachsignal/', body)
+        self.assertIn(f'/editor/surveys/{a.uuid}/analytics/', body)
+        self.assertEqual(CreatorNote.objects.filter(kind='signal').count(), 2)
+        self.assertEqual(emit.call_count, 2)
+
+    def test_nothing_fired_sends_no_mail(self):
+        survey = self._survey('quiet')
+        self._respond(survey, self.today, n=3)
+        report = _rs.run()
+        self.assertEqual(len(report.fired), 0)
+        self.assertEqual(len(self.mail.outbox), 0)
+
+    def test_dismissed_signal_gains_subsignals_and_keeps_status(self):
+        survey = self._ripe_survey()
+        _rs.run()
+        OutreachSignal.objects.filter(survey=survey).update(status='dismissed')
+        self._export(survey, self.today)
+        _rs.run()
+        sig = OutreachSignal.objects.get(survey=survey)
+        self.assertEqual(sig.status, 'dismissed')
+        self.assertIn('exported', sig.signals)
+
+    def test_one_survey_raising_does_not_stop_the_others(self):
+        a = self._ripe_survey('ripe_a')
+        b = self._ripe_survey('ripe_b')
+        real = _rs.collect_facts
+
+        def boom(survey):
+            if survey.id == a.id:
+                raise RuntimeError('boom')
+            return real(survey)
+
+        with patch.object(_rs, 'collect_facts', side_effect=boom), \
+                self.assertLogs('survey.report_stage', level='ERROR'):
+            report = _rs.run()
+        self.assertEqual(report.errors, 1)
+        self.assertEqual([f.survey.id for f in report.fired], [b.id])
+        self.assertEqual(len(self.mail.outbox), 1)
+
+    def test_dry_run_writes_nothing_and_sends_nothing(self):
+        self._ripe_survey()
+        with patch.object(_pe, 'emit') as emit:
+            report = _rs.run(dry_run=True)
+        self.assertEqual(len(report.fired), 1)
+        self.assertFalse(OutreachSignal.objects.exists())
+        self.assertFalse(CreatorNote.objects.exists())
+        self.assertEqual(len(self.mail.outbox), 0)
+        emit.assert_not_called()
+
+    def test_dry_run_as_of_evaluates_the_past(self):
+        """
+        GIVEN a survey closed 20 days ago (outside today's window)
+        WHEN dry-run as of 15 days ago
+        THEN it would have fired then and does not fire today
+        """
+        survey = self._survey('old')
+        self._spike(survey, self.today - _td(days=50))
+        self._close(survey, self.today - _td(days=20))
+        self.assertEqual(len(_rs.run(dry_run=True).fired), 0)   # plateau (3) + institutional (2) < 7
+        self.assertEqual(len(_rs.run(as_of=self.today - _td(days=15), dry_run=True).fired), 1)
+
+    def test_mail_failure_keeps_the_records(self):
+        survey = self._ripe_survey()
+        with patch.object(_rs, 'send_digest', side_effect=RuntimeError('smtp')), \
+                self.assertLogs('survey.report_stage', level='ERROR'):
+            report = _rs.run()
+        self.assertEqual(report.mail_error, 'smtp')
+        self.assertTrue(OutreachSignal.objects.filter(survey=survey).exists())
+        self.assertTrue(CreatorNote.objects.filter(kind='signal').exists())
+
+    def test_staff_owned_draft_and_trashed_surveys_are_skipped(self):
+        staff = User.objects.create_user(username='rs_staff', password='x', is_staff=True)
+        s1 = self._survey('staffs', owner=staff)
+        self._spike(s1, self.today - _td(days=30)); self._close(s1, self.today - _td(days=3))
+        s2 = self._survey('drafty', status='draft')
+        self._spike(s2, self.today - _td(days=30))
+        s3 = self._ripe_survey('trashed')
+        SurveyHeader.objects.filter(pk=s3.pk).update(deleted_at=timezone.now())
+        self.assertEqual(len(_rs.run().fired), 0)
+
+    def test_collaborator_export_counts_and_owner_sessions_do_not(self):
+        """
+        GIVEN a collaborator who exported the data and 40 owner-opened sessions
+        WHEN scored
+        THEN `exported` is present and the owner's own sessions do not reach the floor
+        """
+        survey = self._survey('collab')
+        collaborator = User.objects.create_user(username='rs_collab', password='x')
+        self._spike(survey, self.today - _td(days=30))
+        self._export(survey, self.today, user=collaborator)
+        facts = _rs.collect_facts(survey)
+        self.assertEqual(facts.export_days, [self.today])
+        self.assertTrue(_rs.score(facts, self.today).fires)
+
+        owner_only = self._survey('owner_only')
+        self._respond(owner_only, self.today - _td(days=20), n=40, kind='owner')
+        self.assertEqual(sum(_rs.collect_facts(owner_only).daily_counts.values()), 0)
+
+    def test_worked_creator_lands_in_the_known_section(self):
+        """
+        GIVEN the creator was marked worked last spring
+        WHEN their survey fires
+        THEN the digest lists it under "already in contact" with the date
+        """
+        CreatorProfile.mark_worked(self.owner, on=_date(2026, 3, 4))
+        survey = self._ripe_survey()
+        report = _rs.run()
+        ctx = _rs.digest_context(report)
+        self.assertEqual(len(ctx['new']), 0)
+        self.assertEqual(ctx['known'][0]['survey_name'], survey.name)
+        self.assertEqual(ctx['known'][0]['worked_since'], _date(2026, 3, 4))
+        self.assertIn('ALREADY IN CONTACT', self.mail.outbox[0].body)
+        self.assertIn('2026-03-04', self.mail.outbox[0].body)
+
+    def test_management_command_runs_and_reports(self):
+        from io import StringIO
+        from django.core.management import call_command
+        self._ripe_survey()
+        out = StringIO()
+        call_command('detect_report_stage', '--dry-run', stdout=out)
+        self.assertIn('1 fired', out.getvalue())
+        self.assertFalse(OutreachSignal.objects.exists())
+
+
+class ReportStageHistoricalTest(_ReportStageBase):
+    """The historical run (spec report-stage-signals: history analysed with the same rules)."""
+
+    def test_survey_closed_last_year_gets_a_dated_historical_signal(self):
+        """
+        GIVEN a survey that spiked and closed eleven months ago
+        WHEN the historical run executes
+        THEN a historical signal dated inside the close's window exists, status new, no mail
+        """
+        from django.core import mail
+        mail.outbox = []
+        survey = self._survey('oldie')
+        start = self.today - _td(days=335)
+        self._spike(survey, start)
+        close = start + _td(days=25)
+        self._close(survey, close)
+        report = _rs.run_historical()
+        self.assertEqual(len(report.fired), 1)
+        sig = OutreachSignal.objects.get(survey=survey)
+        self.assertTrue(sig.historical)
+        self.assertEqual(sig.status, 'new')
+        self.assertTrue(close <= sig.fired_at.date() <= close + _td(days=14))
+        self.assertEqual(sig.fired_at.date(), report.fired[0].fired_on)
+        self.assertEqual(len(mail.outbox), 0)
+        note = CreatorNote.objects.get(kind='signal')
+        self.assertEqual(note.happened_on, sig.fired_at.date())
+
+        # the daily run enriches, never re-fires; the historical run twice creates nothing
+        self._export(survey, self.today)
+        daily = _rs.run()
+        self.assertEqual(len(daily.fired), 0)
+        self.assertEqual(OutreachSignal.objects.count(), 1)
+        again = _rs.run_historical()
+        self.assertEqual(len(again.fired), 0)
+        self.assertEqual(CreatorNote.objects.filter(kind='signal').count(), 1)
+
+    def test_archived_and_worked_creators_included_and_updated_at_fallback(self):
+        """
+        GIVEN an archived survey closed without an audit row, owned by a worked creator
+        WHEN the historical run executes
+        THEN it fires with the close dated from updated_at and the summary shows the worked date
+        """
+        CreatorProfile.mark_worked(self.owner, on=_date(2026, 1, 15))
+        survey = self._survey('archived_one', status='closed')
+        start = self.today - _td(days=100)
+        self._spike(survey, start)
+        close_dt = _datetime.combine(start + _td(days=20), _datetime.min.time(), tzinfo=_tz.utc)
+        SurveyHeader.objects.filter(pk=survey.pk).update(status='archived', updated_at=close_dt)
+        facts = _rs.collect_facts(SurveyHeader.objects.get(pk=survey.pk))
+        self.assertEqual(facts.closed_source, 'updated_at')
+        self.assertEqual(facts.closed_days, [close_dt.date()])
+        report = _rs.run_historical(dry_run=True)
+        self.assertEqual(len(report.fired), 1)
+        self.assertEqual(report.fired[0].worked_since, _date(2026, 1, 15))
+        self.assertFalse(OutreachSignal.objects.exists())
+
+
+class CreatorOutreachStatusTest(_ReportStageBase):
+    """The per-client worked flag (spec creator-outreach-status)."""
+
+    def test_mark_worked_creates_profile_keeps_earlier_date_and_hand_set_outcome(self):
+        self.assertFalse(CreatorProfile.objects.filter(user=self.owner).exists())
+        p = CreatorProfile.mark_worked(self.owner, on=_date(2026, 5, 1), outcome='story')
+        self.assertTrue(p.outreach_done)
+        self.assertEqual((p.outreach_done_at, p.outreach_outcome), (_date(2026, 5, 1), 'story'))
+        CreatorProfile.mark_worked(self.owner, on=_date(2026, 9, 1), outcome='pro')
+        p.refresh_from_db()
+        self.assertEqual((p.outreach_done_at, p.outreach_outcome), (_date(2026, 5, 1), 'story'))
+        CreatorProfile.mark_worked(self.owner, on=_date(2026, 2, 1))
+        p.refresh_from_db()
+        self.assertEqual(p.outreach_done_at, _date(2026, 2, 1))
+
+    def test_prefill_from_email_notes_never_overwrites(self):
+        """
+        GIVEN two creators: one with a sent email on 2026-03-04, one marked by hand earlier
+        WHEN the pre-fill runs
+        THEN the first is marked as of the note's date and the second is untouched
+        """
+        other = User.objects.create_user(username='rs_hand', password='x')
+        CreatorNote.objects.create(user=self.owner, kind='email', body='hi', happened_on=_date(2026, 3, 4))
+        CreatorNote.objects.create(user=self.owner, kind='email', body='again', happened_on=_date(2026, 4, 4))
+        CreatorNote.objects.create(user=other, kind='email', body='hi', happened_on=_date(2026, 6, 1))
+        CreatorProfile.mark_worked(other, on=_date(2026, 1, 1), outcome='declined')
+        marked = _rs.prefill_worked()
+        self.assertEqual([uid for uid, _d in marked], [self.owner.id])
+        self.assertEqual(CreatorProfile.objects.get(user=self.owner).outreach_done_at, _date(2026, 3, 4))
+        hand = CreatorProfile.objects.get(user=other)
+        self.assertEqual((hand.outreach_done_at, hand.outreach_outcome), (_date(2026, 1, 1), 'declined'))
+        self.assertEqual(_rs.prefill_worked(), [])
+
+    def test_signal_contacted_marks_the_client_dismissed_does_not(self):
+        from django.contrib import admin as dj_admin
+        from django.test import RequestFactory
+        survey = self._survey('sig')
+        sig = OutreachSignal.objects.create(survey=survey, user=self.owner, score=8, signals={'closed': 'x'})
+        model_admin = dj_admin.site._registry[OutreachSignal]
+        boss = User.objects.create_superuser('rs_boss', 'boss@example.com', 'x')
+        request = RequestFactory().post('/')
+        request.user = boss
+
+        class _Form:
+            changed_data = ['status']
+
+        sig.status = 'dismissed'
+        model_admin.save_model(request, sig, _Form(), change=True)
+        self.assertFalse(CreatorProfile.objects.filter(user=self.owner, outreach_done=True).exists())
+        sig.status = 'contacted'
+        model_admin.save_model(request, sig, _Form(), change=True)
+        p = CreatorProfile.objects.get(user=self.owner)
+        self.assertTrue(p.outreach_done)
+        self.assertEqual(p.outreach_done_at, self.today)
+        sig.refresh_from_db()
+        self.assertEqual(sig.worked_by_id, boss.id)
+        sig.status = 'won'
+        model_admin.save_model(request, sig, _Form(), change=True)
+        p.refresh_from_db()
+        self.assertEqual(p.outreach_outcome, 'pro')
+
+    def test_admin_list_checkbox_toggles_the_flag(self):
+        """
+        GIVEN the staff user list
+        WHEN the Worked checkbox posts worked=1 then worked=0
+        THEN the profile flag follows, and the list shows the checkbox
+        """
+        User.objects.create_superuser('rs_boss', 'boss@example.com', 'x')
+        c = Client()
+        c.login(username='rs_boss', password='x')
+        resp = c.get(reverse('admin:auth_user_changelist'))
+        self.assertContains(resp, 'class="ms-worked"')
+        self.assertContains(resp, 'js/admin_outreach_worked')   # manifest storage hashes the name
+        url = reverse('admin:auth_user_toggle_worked', args=[self.owner.pk])
+        resp = c.post(url, {'worked': '1'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(CreatorProfile.objects.get(user=self.owner).outreach_done)
+        self.assertEqual(resp.json()['since'], self.today.isoformat())
+        c.post(url, {'worked': '0'})
+        self.assertFalse(CreatorProfile.objects.get(user=self.owner).outreach_done)
+        self.assertEqual(c.get(url).status_code, 405)
+
+    def test_funnel_panel_lists_open_signals_only(self):
+        """
+        GIVEN signals in every status
+        WHEN the funnel dashboard context is built and the page rendered
+        THEN new and contacted show with the worked mark; dismissed and won do not
+        """
+        from .funnel import dashboard_context
+        CreatorProfile.mark_worked(self.owner, on=_date(2026, 2, 2), outcome='story')
+        for i, status in enumerate(('new', 'contacted', 'dismissed', 'won')):
+            s = self._survey(f'panel_{status}')
+            OutreachSignal.objects.create(survey=s, user=self.owner, score=7, status=status,
+                                          signals={'closed': 'x'}, historical=(status == 'new'))
+        rows = dashboard_context()['report_stage']['rows']
+        self.assertEqual(sorted(r['status'] for r in rows), ['contacted', 'new'])
+        self.assertTrue(all(r['worked'] and r['worked_since'] == '2026-02-02' for r in rows))
+        User.objects.create_superuser('rs_boss', 'boss@example.com', 'x')
+        c = Client()
+        c.login(username='rs_boss', password='x')
+        resp = c.get(reverse('admin:survey_funnelreport_changelist'))
+        self.assertContains(resp, 'Report stage')
+        self.assertContains(resp, 'panel_new')
+        self.assertContains(resp, 'panel_contacted')
+        self.assertNotContains(resp, 'panel_dismissed')
+        self.assertContains(resp, 'hist')
+
+
+class BackfillCreatorReturnsTest(_ReportStageBase):
+    """Restoring return rows from PostHog (spec creator-return-activity)."""
+
+    def _rows(self, survey, day, n=2):
+        return [[str(self.owner.pk), str(survey.pk), 'data_exported', day.isoformat(), n,
+                 _datetime.combine(day, _datetime.min.time(), tzinfo=_tz.utc).isoformat()],
+                ['999999', str(survey.pk), 'responses_viewed', day.isoformat(), 1,
+                 _datetime.combine(day, _datetime.min.time(), tzinfo=_tz.utc).isoformat()]]
+
+    def test_fills_only_the_past_idempotently_and_counts_unknowns(self):
+        from io import StringIO
+        from django.core.management import call_command
+        survey = self._survey('bf')
+        CreatorSurveyActivity.objects.create(user=self.owner, survey=survey, kind='data_exported',
+                                             day=self.today, count=5)
+        past = self.today - _td(days=10)
+        rows = self._rows(survey, past) + self._rows(survey, self.today, n=9)[:1]
+        with patch('survey.management.commands.backfill_creator_returns.credentials',
+                   return_value=('h', '1', 'k')), \
+                patch('survey.management.commands.backfill_creator_returns.hogql', return_value=rows) as q:
+            out = StringIO()
+            call_command('backfill_creator_returns', stdout=out)
+            self.assertIn(f"toDate('{self.today.isoformat()}')", q.call_args[0][0])
+            call_command('backfill_creator_returns', stdout=StringIO())
+        self.assertIn('skipped', out.getvalue())
+        self.assertIn('1 event(s) skipped', out.getvalue())
+        restored = CreatorSurveyActivity.objects.filter(restored=True)
+        self.assertEqual([(r.day, r.count) for r in restored], [(past, 2)])
+        today_row = CreatorSurveyActivity.objects.get(day=self.today, kind='data_exported')
+        self.assertEqual((today_row.count, today_row.restored), (5, False))
+
+    def test_vendor_failure_writes_nothing(self):
+        from django.core.management import CommandError, call_command
+        from survey.posthog_query import PostHogQueryError
+        survey = self._survey('bf2')
+        with patch('survey.management.commands.backfill_creator_returns.credentials',
+                   return_value=('h', '1', 'k')), \
+                patch('survey.management.commands.backfill_creator_returns.hogql',
+                      side_effect=PostHogQueryError('down')):
+            with self.assertRaises(CommandError):
+                call_command('backfill_creator_returns', '--until', self.today.isoformat())
+        self.assertFalse(CreatorSurveyActivity.objects.exists())

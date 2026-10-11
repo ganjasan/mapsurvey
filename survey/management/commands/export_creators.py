@@ -22,9 +22,11 @@ PROFILE_COLUMNS = (
     'username', 'email', 'date_joined', 'organization', 'role', 'country',
     'linkedin_url', 'website', 'how_found_us', 'segment', 'plan',
     'surveys', 'published_surveys', 'responses', 'summary',
+    'outreach_done', 'outreach_done_at', 'outreach_outcome',
 )
 
 NOTE_COLUMNS = ('username', 'happened_on', 'kind', 'author', 'source_path', 'body')
+RETURN_COLUMNS = ('username', 'survey_uuid', 'survey', 'kind', 'day', 'count', 'restored')
 
 
 class Command(BaseCommand):
@@ -76,6 +78,9 @@ class Command(BaseCommand):
                     assigned.get('segment', ''), assigned.get('plan', ''),
                     user.n_surveys, user.n_published, responses.get(user.id, 0),
                     getattr(p, 'summary', ''),
+                    'yes' if getattr(p, 'outreach_done', False) else '',
+                    p.outreach_done_at.isoformat() if p is not None and p.outreach_done_at else '',
+                    getattr(p, 'outreach_outcome', ''),
                 ])
 
         notes_qs = (CreatorNote.objects
@@ -95,8 +100,28 @@ class Command(BaseCommand):
                 ])
                 count += 1
 
+        # Returns to a survey's data (spec creator-return-activity): facts about
+        # an identifiable person, so a subject access export carries them too.
+        from survey.models import CreatorSurveyActivity
+        returns_qs = (CreatorSurveyActivity.objects
+                      .filter(user__in=users)
+                      .select_related('user', 'survey')
+                      .order_by('user__username', 'day', 'kind'))
+        returns_path = os.path.join(out_dir, 'returns.csv')
+        with open(returns_path, 'w', newline='', encoding='utf-8') as handle:
+            writer = csv.writer(handle)
+            writer.writerow(RETURN_COLUMNS)
+            n_returns = 0
+            for row in returns_qs.iterator():
+                writer.writerow([
+                    row.user.username, str(row.survey.uuid), row.survey.name, row.kind,
+                    row.day.isoformat(), row.count, 'yes' if row.restored else '',
+                ])
+                n_returns += 1
+
         self.stdout.write(f'Profiles: {users.count()} -> {profiles_path}')
         self.stdout.write(f'Notes:    {count} -> {notes_path}')
+        self.stdout.write(f'Returns:  {n_returns} -> {returns_path}')
         if username:
             self.stdout.write(self.style.WARNING(
                 '\nSubject access export: this is everything we hold about this person '

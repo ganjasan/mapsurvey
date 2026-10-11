@@ -1,0 +1,27 @@
+<!doctype html>
+<html><body style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;font-size:14px;color:#1f2937;line-height:1.45">
+<p><strong>Report stage — {{ as_of|date:"Y-m-d" }}</strong>: {{ total }} survey{{ total|pluralize }} entered the reporting stage.</p>
+{% if new %}
+<h3 style="font-size:15px;margin:18px 0 6px">New clients</h3>
+{% for r in new %}
+<div style="border:1px solid #e5e7eb;border-radius:6px;padding:10px 12px;margin:0 0 10px">
+  <div><strong>{{ r.survey_name }}</strong> — {{ r.responses }} responses, score {{ r.score }}</div>
+  <div style="color:#4b5563">{{ r.username }}{% if r.organization %} · {{ r.organization }}{% endif %}{% if r.segment %} · {{ r.segment }}{% endif %}</div>
+  <div style="color:#4b5563">why: {% for name, value in r.signals %}<code>{{ name }}={{ value }}</code>{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+  <div style="margin-top:6px"><a href="{{ r.signal_url }}">signal</a> · <a href="{{ r.dossier_url }}">dossier</a> · <a href="{{ r.responses_url }}">responses</a></div>
+</div>
+{% endfor %}
+{% endif %}
+{% if known %}
+<h3 style="font-size:15px;margin:18px 0 6px">Already in contact</h3>
+{% for r in known %}
+<div style="border:1px solid #e5e7eb;border-radius:6px;padding:10px 12px;margin:0 0 10px;background:#f9fafb">
+  <div><strong>{{ r.survey_name }}</strong> — {{ r.responses }} responses, score {{ r.score }}</div>
+  <div style="color:#4b5563">{{ r.username }}{% if r.organization %} · {{ r.organization }}{% endif %} · worked since {{ r.worked_since|date:"Y-m-d" }}{% if r.outreach_outcome %} ({{ r.outreach_outcome }}){% endif %}</div>
+  <div style="color:#4b5563">why: {% for name, value in r.signals %}<code>{{ name }}={{ value }}</code>{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+  <div style="margin-top:6px"><a href="{{ r.signal_url }}">signal</a> · <a href="{{ r.dossier_url }}">dossier</a> · <a href="{{ r.responses_url }}">responses</a></div>
+</div>
+{% endfor %}
+{% endif %}
+<p style="color:#6b7280;font-size:12px">Mark each signal contacted / dismissed / won in the admin; marking it contacted ticks the client's "worked" box.</p>
+</body></html>

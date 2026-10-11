@@ -373,6 +373,54 @@ services:
   # An unreadable service listing deletes nothing — a partial answer would make
   # live previews look dead. Without RENDER_API_KEY the job is a no-op, so an
   # unconfigured token means objects accumulate, never that they are lost.
+  # Report-stage outreach signals (change report-stage-outreach-signals): once a
+  # day, score every live survey, record the ones entering the reporting stage,
+  # mail the owner one digest. Same image as the web service; the shell script
+  # exists because dockerCommand is not a shell (see reclaim.sh). Needs the mail
+  # block to send the digest and SITE_URL for the links in it. No S3, no Redis:
+  # the run reads and writes the database only.
+  - type: cron
+    name: mapsurvey-report-stage
+    runtime: docker
+    plan: starter
+    previews:
+      generation: off
+    schedule: "0 6 * * *"
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: sh ./report_stage.sh
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mapsurvey-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: SITE_URL
+        value: https://mapsurvey.org
+      - key: DEFAULT_FROM_EMAIL
+        sync: false
+      - key: EMAIL_BACKEND
+        sync: false
+      - key: EMAIL_HOST
+        sync: false
+      - key: EMAIL_PORT
+        sync: false
+      - key: EMAIL_USE_SSL
+        sync: false
+      - key: EMAIL_HOST_USER
+        sync: false
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      - key: OUTREACH_SIGNAL_EMAIL
+        sync: false
+      - key: POSTHOG_PROJECT_KEY
+        sync: false
+      - key: POSTHOG_API_HOST
+        sync: false
+      - key: DEMO_SURVEY_URL
+        sync: false
+
   - type: cron
     name: mapsurvey-preview-media-reclaim
     runtime: docker

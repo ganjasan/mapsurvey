@@ -12,6 +12,7 @@ from .models import (
     Story, StoryImage, FunnelReport, SignupAttribution, AuditLog,
     Cohort, CohortDimension, UserCohort, DomainSegmentRule,
     CreatorNote, CreatorProfile,
+    CreatorSurveyActivity, OutreachSignal,
     PublicResultsPage, PublicResultsBlock,
     AIGenerationEvent,
     ProInterest,
@@ -279,6 +280,7 @@ class CreatorProfileInline(admin.StackedInline):
     fields = (
         ('organization', 'role'), ('country', 'how_found_us'),
         ('linkedin_url', 'website'), 'summary',
+        ('outreach_done', 'outreach_done_at', 'outreach_outcome'),
     )
     verbose_name_plural = 'Creator profile (staff-only, never shown to the user)'
 
@@ -297,8 +299,72 @@ class UserAdmin(DjangoUserAdmin):
     """Django's user admin plus cohorts, the creator dossier and a bulk assign action."""
 
     inlines = [CreatorProfileInline, CohortMembershipInline, CreatorNoteInline]
-    list_display = DjangoUserAdmin.list_display + ('organization', 'cohort_labels')
+    list_display = DjangoUserAdmin.list_display + (
+        'organization', 'cohort_labels', 'outreach_done', 'outreach_done_at', 'outreach_outcome',
+    )
+    # The one checkbox per client (spec creator-outreach-status): a live
+    # checkbox in the list that POSTs to `toggle-worked/` (an admin view below),
+    # because `outreach_done` lives on the profile, not on `auth_user`, and
+    # `list_editable` can only carry model fields of the listed model.
+    list_filter = DjangoUserAdmin.list_filter + (
+        'creator_profile__outreach_done', 'creator_profile__outreach_outcome',
+    )
     actions = ['assign_cohort_action']
+
+    class Media:
+        js = ('js/admin_outreach_worked.js',)
+
+    @admin.display(description='Worked')
+    def outreach_done(self, obj):
+        from django.urls import reverse
+        from django.utils.html import format_html
+        profile = getattr(obj, 'creator_profile', None)
+        return format_html(
+            '<input type="checkbox" class="ms-worked" data-url="{}" {} title="Have we reached out to this client?">',
+            reverse('admin:auth_user_toggle_worked', args=[obj.pk]),
+            'checked' if profile and profile.outreach_done else '',
+        )
+
+    def get_urls(self):
+        from django.urls import path
+        urls = super().get_urls()
+        return [
+            path('<int:user_id>/toggle-worked/', self.admin_site.admin_view(self.toggle_worked),
+                 name='auth_user_toggle_worked'),
+        ] + urls
+
+    def toggle_worked(self, request, user_id):
+        """POST `worked=1|0`: tick or clear the client's flag. JSON for the checkbox."""
+        from django.http import JsonResponse, HttpResponseNotAllowed
+        from django.shortcuts import get_object_or_404
+
+        if request.method != 'POST':
+            return HttpResponseNotAllowed(['POST'])
+        if not self.has_change_permission(request):
+            return JsonResponse({'error': 'forbidden'}, status=403)
+        user = get_object_or_404(get_user_model(), pk=user_id)
+        if request.POST.get('worked') == '1':
+            profile = CreatorProfile.mark_worked(user)
+        else:
+            profile = getattr(user, 'creator_profile', None)
+            if profile is not None and profile.outreach_done:
+                profile.outreach_done = False
+                profile.save(update_fields=['outreach_done', 'updated_at'])
+        done = bool(profile and profile.outreach_done)
+        return JsonResponse({
+            'worked': done,
+            'since': profile.outreach_done_at.isoformat() if done and profile.outreach_done_at else '',
+        })
+
+    @admin.display(description='Worked since')
+    def outreach_done_at(self, obj):
+        profile = getattr(obj, 'creator_profile', None)
+        return profile.outreach_done_at if profile else None
+
+    @admin.display(description='Outcome')
+    def outreach_outcome(self, obj):
+        profile = getattr(obj, 'creator_profile', None)
+        return (profile.get_outreach_outcome_display() if profile and profile.outreach_outcome else '') or '—'
 
     @admin.display(description='Cohorts')
     def cohort_labels(self, obj):
@@ -362,8 +428,9 @@ class CreatorNoteAdmin(admin.ModelAdmin):
 
 @admin.register(CreatorProfile)
 class CreatorProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'organization', 'role', 'country', 'updated_at')
-    list_filter = ('country',)
+    list_display = ('user', 'organization', 'role', 'country', 'outreach_done',
+                    'outreach_done_at', 'outreach_outcome', 'updated_at')
+    list_filter = ('country', 'outreach_done', 'outreach_outcome')
     search_fields = ('user__username', 'user__email', 'organization', 'role', 'summary')
     autocomplete_fields = ('user',)
 
@@ -371,6 +438,76 @@ class CreatorProfileAdmin(admin.ModelAdmin):
 User = get_user_model()
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
+
+
+@admin.register(CreatorSurveyActivity)
+class CreatorSurveyActivityAdmin(admin.ModelAdmin):
+    """Read-only: a creator's returns to a survey's data, one row per day
+    (spec creator-return-activity). Written by the request, never by hand."""
+
+    list_display = ('day', 'user', 'survey', 'kind', 'count', 'last_at', 'restored')
+    list_filter = ('kind', 'restored', 'day')
+    search_fields = ('user__username', 'user__email', 'survey__name')
+    date_hierarchy = 'day'
+    list_select_related = ('user', 'survey')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(OutreachSignal)
+class OutreachSignalAdmin(admin.ModelAdmin):
+    """The outreach queue (spec report-stage-signals): one row per survey that
+    entered the reporting stage. Facts are read-only; staff move `status` and
+    write `note`. contacted/won also ticks the creator's worked box."""
+
+    list_display = ('fired_at', 'survey', 'owner_link', 'worked_since', 'responses', 'score',
+                    'signal_names', 'status', 'historical')
+    list_filter = ('status', 'historical')
+    list_editable = ('status',)
+    search_fields = ('survey__name', 'user__username', 'user__email')
+    date_hierarchy = 'fired_at'
+    list_select_related = ('survey', 'user', 'user__creator_profile')
+    readonly_fields = ('survey', 'user', 'score', 'responses', 'signals', 'fired_at', 'historical',
+                       'updated_at', 'worked_by', 'owner_link', 'responses_link', 'worked_since')
+    fields = ('survey', 'responses_link', 'user', 'owner_link', 'worked_since',
+              'status', 'note', 'responses', 'score', 'signals', 'fired_at', 'historical',
+              'worked_by', 'updated_at')
+
+    @admin.display(description='Owner')
+    def owner_link(self, obj):
+        from django.urls import reverse
+        from django.utils.html import format_html
+        return format_html('<a href="{}">{}</a>',
+                           reverse('admin:auth_user_change', args=[obj.user_id]), obj.user.username)
+
+    @admin.display(description='Responses')
+    def responses_link(self, obj):
+        from django.urls import reverse
+        from django.utils.html import format_html
+        return format_html('<a href="{}">Responses page</a>',
+                           reverse('editor_survey_analytics', args=[obj.survey.uuid]))
+
+    @admin.display(description='Worked since')
+    def worked_since(self, obj):
+        profile = getattr(obj.user, 'creator_profile', None)
+        if profile and profile.outreach_done:
+            return profile.outreach_done_at or 'yes'
+        return '—'
+
+    def _after_status(self, request, obj):
+        if obj.status in ('contacted', 'won'):
+            outcome = 'pro' if obj.status == 'won' else ''
+            CreatorProfile.mark_worked(obj.user, outcome=outcome)
+
+    def save_model(self, request, obj, form, change):
+        if change and 'status' in form.changed_data:
+            obj.worked_by = request.user
+        super().save_model(request, obj, form, change)
+        self._after_status(request, obj)
 
 
 @admin.register(FunnelReport)

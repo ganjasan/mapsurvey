@@ -543,6 +543,40 @@ class CreatorFunnelService:
                  "username": r["survey__created_by__username"],
                  "responses": r["n"]} for r in rows]
 
+    def report_stage_signals(self, limit=15):
+        """Open report-stage signals (status new/contacted), newest first — the
+        third action list (change report-stage-outreach-signals). Reads the
+        `OutreachSignal` table; no scoring in the request."""
+        from .models import OutreachSignal
+
+        qs = (OutreachSignal.objects
+              .filter(status__in=("new", "contacted"))
+              .select_related("survey", "user", "user__creator_profile")
+              .order_by("-fired_at")[:limit])
+        rows = []
+        for sig in qs:
+            profile = getattr(sig.user, "creator_profile", None)
+            worked = bool(profile and profile.outreach_done)
+            rows.append({
+                "id": sig.id,
+                "survey_id": sig.survey_id,
+                "survey": sig.survey.name or "—",
+                "uid": sig.user_id,
+                "username": sig.user.username,
+                "signals": sig.signal_names,
+                "responses": sig.responses,
+                "status": sig.status,
+                "historical": sig.historical,
+                "fired": sig.fired_at.date().isoformat(),
+                "worked": worked,
+                "worked_since": profile.outreach_done_at.isoformat()
+                if worked and profile.outreach_done_at else "",
+                "outcome": profile.get_outreach_outcome_display()
+                if worked and profile.outreach_outcome else "",
+            })
+        first = OutreachSignal.objects.order_by("fired_at").values_list("fired_at", flat=True).first()
+        return {"rows": rows, "since": first.date().isoformat() if first else ""}
+
     def signups_by_source(self, now=None, days=7):
         """Recent registrations grouped by acquisition source (Phase 1).
 
@@ -774,6 +808,7 @@ def dashboard_context(weeks=None):
         "ttv": s.time_to_value(),
         "dormant_valuable": s.dormant_valuable(),
         "collecting_unpublished": s.collecting_unpublished(),
+        "report_stage": s.report_stage_signals(),
         "signups_chart": bar_chart_geometry(weekly, "signups"),
         "activity_chart": bar_chart_geometry(activity, "responses"),
     }

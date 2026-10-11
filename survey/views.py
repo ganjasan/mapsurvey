@@ -1535,7 +1535,7 @@ def download_data(request, survey_slug):
 	if fmt in data_export.OGR_FORMATS and not data_export.OGR_AVAILABLE:
 		return HttpResponseBadRequest("GIS export formats are not available on this server")
 
-	pe.emit(pe.DATA_EXPORTED, request.user.pk, {'survey_id': str(survey.id), 'format': fmt})
+	pe.record_return(pe.DATA_EXPORTED, request.user, survey, format=fmt)
 
 	# Checked once, on the survey the URL names, before the family is expanded:
 	# a SurveyCollaborator holds a row on the canonical survey, not on each

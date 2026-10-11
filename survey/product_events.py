@@ -39,6 +39,12 @@ EMBED_COPIED = 'embed_copied'
 RESPONSES_VIEWED = 'responses_viewed'
 DATA_EXPORTED = 'data_exported'
 
+# Report-stage outreach (change report-stage-outreach-signals): a survey entered
+# the reporting stage and the owner was told. survey_id, score and sub-signal
+# names only; the detector lives in `survey/report_stage.py`.
+OUTREACH_SIGNAL_FIRED = 'outreach_signal_fired'
+RETURN_KINDS = (RESPONSES_VIEWED, DATA_EXPORTED)
+
 # Team collaboration (spec survey-comment-threads). Creator events: who
 # discussed what, never what was said -- no body, mentions or file names.
 COMMENT_THREAD_OPENED = 'comment_thread_opened'
@@ -194,6 +200,43 @@ def emit_llm_generation(event):
         )
     except Exception:
         logger.warning('posthog: failed to emit $ai_generation', exc_info=True)
+
+
+def record_return(kind, user, survey, **properties):
+    """A creator returned to a survey's data: persist the day row, then emit.
+
+    ONE helper for both call sites (the Responses page and the data download)
+    so the application's own record (`CreatorSurveyActivity`, spec
+    creator-return-activity) and the PostHog event can never disagree about
+    what counts as a return. The row names the canonical survey; the upsert is
+    wrapped so a database error is logged and the page or download is served
+    unchanged. The survey.json backup (`export_survey`) does not call this: a
+    backup is not a return to the data.
+    """
+    if kind not in RETURN_KINDS:
+        raise ValueError(f'not a return kind: {kind}')
+    if user is None or not getattr(user, 'pk', None):
+        return
+    try:
+        from django.db.models import F
+        from django.utils import timezone
+
+        from .models import CreatorSurveyActivity
+        from .versioning import canonical_of
+
+        now = timezone.now()
+        canonical = canonical_of(survey)
+        _row, created = CreatorSurveyActivity.objects.get_or_create(
+            user=user, survey=canonical, kind=kind, day=now.date(),
+            defaults={'count': 1, 'last_at': now},
+        )
+        if not created:
+            CreatorSurveyActivity.objects.filter(pk=_row.pk).update(
+                count=F('count') + 1, last_at=now,
+            )
+    except Exception:
+        logger.warning('could not record creator return %s', kind, exc_info=True)
+    emit(kind, user.pk, {'survey_id': str(survey.id), **properties})
 
 
 def emit(event, user_id, properties=None, timestamp=None):

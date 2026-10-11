@@ -291,6 +291,33 @@ account-menu item stay. New accounts start seen (`seed_changelog_watermark` in `
 `ChangelogEntriesTest.test_shipped_entries_load` parses every file, so a malformed entry fails CI,
 not every editor page. The first entry (`2026-10-02-whats-new.html`) announces the cards themselves; #226 (empty sessions hidden by default) writes the next.
 
+**Report-stage outreach signals (change `report-stage-outreach-signals`)**: the owner's best
+outreach is a note to a creator whose survey stopped collecting and who is building the report
+(materials kit + story offer). `survey/report_stage.py` spots that moment: ONE sub-signal table
+(`SUBSIGNALS`: `exported` 4 · `closed` 4 · `plateau` 3 · `revisited` 3 · `geo_rich` 2 ·
+`institutional` 2 · `pro_interest` 1; floor `REPORT_STAGE_MIN_RESPONSES`=30 external non-empty
+clean sessions across the version family, threshold `REPORT_STAGE_THRESHOLD`=7, a profile sub-signal
+never fires alone), `collect_facts()` reads a survey's whole history once and the pure
+`score(facts, as_of)` evaluates every window as of a date — so `--dry-run --as-of` and the
+`--historical` run (walks each survey's timeline, records the signal dated the first day it would
+have fired, `historical=True`, no digest) use the daily code path. A new sign is a row in the table
+plus one fact, never a new code path. Two creator-side tables, never `SurveyEvent`:
+`CreatorSurveyActivity` (one row per creator, canonical survey, `responses_viewed|data_exported`,
+UTC day; written by `product_events.record_return`, the ONE helper behind the Responses page and
+`download_data` — the survey.json backup records nothing; `backfill_creator_returns` restores the
+pre-table past from PostHog, `restored=True`, days before the first recorded one only) and
+`OutreachSignal` (OneToOne per canonical survey = fires once; later runs merge sub-signals, never
+re-fire; `status new|contacted|dismissed|won` worked in the admin). Deliveries per firing:
+`CreatorNote(kind='signal', source_path='signal:report-stage:<uuid>')`, PostHog
+`outreach_signal_fired` (ids only), one digest per run to `OUTREACH_SIGNAL_EMAIL` (default
+`CONTACT_EMAIL`) with survey/creator/counts/sub-signals and links — never a respondent's answer —
+in two sections, new clients and "already in contact". The per-CLIENT checkbox is
+`CreatorProfile.outreach_done/_at/_outcome` (`mark_worked` never clears or overwrites a hand-set
+date/outcome): ticked live in the user changelist (`toggle-worked/` admin view), set when a signal
+goes `contacted`/`won`, pre-filled by `detect_report_stage --prefill-worked` from `email` notes.
+Production order (design.md): backfill → prefill → `--historical --dry-run` checked against the
+known cases → `--historical` → the `mapsurvey-report-stage` Render cron (`report_stage.sh`).
+
 **Comment threads (`CommentThread`/`Comment`/`CommentAttachment`, spec `survey-comment-threads`)**:
 workspace members discuss a survey where it lives — the survey as a whole, a question, a section, a respondent
 session or a public-results block — in ONE slide-in drawer (`editor/partials/_comments_drawer.html`, included

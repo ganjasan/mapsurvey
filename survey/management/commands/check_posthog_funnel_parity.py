@@ -24,9 +24,6 @@ Legitimate reasons a column may differ, which the output labels rather than hide
   persons for exactly that reason.
 """
 
-import json
-import urllib.error
-import urllib.request
 from collections import defaultdict
 
 from django.core.management.base import BaseCommand, CommandError
@@ -55,21 +52,14 @@ class Command(BaseCommand):
                             help='PostHog personal API key. Falls back to POSTHOG_PERSONAL_API_KEY.')
 
     def handle(self, *args, **options):
-        import os
+        from survey.posthog_query import PostHogQueryError, credentials
 
-        from django.conf import settings
+        try:
+            host, project_id, key = credentials(options['personal_api_key'])
+        except PostHogQueryError as exc:
+            raise CommandError(str(exc))
 
-        key = options['personal_api_key'] or os.environ.get('POSTHOG_PERSONAL_API_KEY')
-        if not key:
-            raise CommandError(
-                'A personal API key is required to query PostHog. Pass --personal-api-key '
-                'or set POSTHOG_PERSONAL_API_KEY. (The project key can only write.)'
-            )
-        project_id = getattr(settings, 'POSTHOG_PROJECT_ID', '') or os.environ.get('POSTHOG_PROJECT_ID')
-        if not project_id:
-            raise CommandError('Set POSTHOG_PROJECT_ID to the numeric project id.')
-
-        posthog_rows = self._posthog_counts(settings.POSTHOG_API_HOST, project_id, key)
+        posthog_rows = self._posthog_counts(host, project_id, key)
         dashboard_rows = {r['cohort']: r for r in CreatorFunnelService().cohort_funnel()}
 
         stages = [s for s, _ in STAGE_EVENTS]
@@ -125,19 +115,14 @@ class Command(BaseCommand):
               AND e.timestamp >= now() - INTERVAL 3 YEAR
             GROUP BY cohort, event
         """
-        url = f'{host.replace("://eu.i.", "://eu.").replace("://us.i.", "://us.")}/api/projects/{project_id}/query/'
-        body = json.dumps({'query': {'kind': 'HogQLQuery', 'query': sql}}).encode()
-        req = urllib.request.Request(
-            url, data=body,
-            headers={'Authorization': f'Bearer {key}', 'Content-Type': 'application/json'},
-        )
+        from survey.posthog_query import PostHogQueryError, hogql
+
         try:
-            with urllib.request.urlopen(req, timeout=60) as resp:
-                payload = json.load(resp)
-        except urllib.error.HTTPError as exc:
-            raise CommandError(f'PostHog query failed: {exc.code} {exc.read()[:400]!r}')
+            results = hogql(sql, host, project_id, key)
+        except PostHogQueryError as exc:
+            raise CommandError(str(exc))
 
         out = defaultdict(dict)
-        for cohort, event, n in payload.get('results', []):
+        for cohort, event, n in results:
             out[cohort][event] = n
         return out
