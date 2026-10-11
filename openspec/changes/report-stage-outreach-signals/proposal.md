@@ -23,9 +23,9 @@ dashboard by hand, late or not at all.
   survey whose creator is a real (non-staff) account against a weighted table of
   sub-signals — a data export, a close, a flattened collection curve, repeated Responses
   visits, a geo-rich answer set, an institutional creator, a Pro-interest answer — above a
-  minimum volume of external, non-empty responses. A data export is also a trigger on its
-  own: with the volume prerequisite met, it fires without waiting for the curve. A survey
-  fires at most once; later runs only add sub-signals to the existing record.
+  minimum volume of external, non-empty responses. The export carries the largest weight:
+  a creator who downloads the data is about to build the report. A survey fires at most
+  once; later runs only add sub-signals to the existing record.
 - **Record and deliver the signal.** Each firing is a row with a status workflow
   (`new` → `contacted` / `dismissed` / `won`) edited by staff in the admin, a `signal` note on
   the creator's dossier timeline, a PostHog event (ids only), and a line in one daily digest

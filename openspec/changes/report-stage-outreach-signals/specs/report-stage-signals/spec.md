@@ -33,7 +33,9 @@ The behavioural sub-signals SHALL be: `exported` (a data export by the owner or 
 within the window), `closed` (status changed to closed within the window), `plateau`
 (responses in the last 7 days below a fraction of the best week, after at least 14 days of
 collection) and `revisited` (Responses opened on at least two distinct days within the
-window). Each SHALL be defined by one condition and one window in the sub-signal table.
+window). Each SHALL be defined by one condition, one weight and one window in the sub-signal
+table; `exported` SHALL carry the largest weight, because a creator who downloads the data is
+about to build the report.
 
 #### Scenario: Plateau after a launch spike
 - **WHEN** a survey collected 80 responses in its best week three weeks ago and 5 in the last 7 days
@@ -62,24 +64,19 @@ smallest weights, and SHALL never fire a signal without a behavioural sub-signal
 - **WHEN** a creator has no cohort assignment and a freemail address
 - **THEN** `institutional` is absent
 
-### Requirement: A data export fires on its own
-With the volume floor met, the `exported` sub-signal SHALL fire the signal by itself,
-regardless of the total score, because an export means the creator is building the report
-now. Every other combination SHALL fire only when the summed weights reach the threshold.
-
-#### Scenario: Export on a mid-size survey
-- **WHEN** the owner of an eligible survey with no other sub-signal exports its data
-- **THEN** the next daily run fires the signal with `exported` as its only sub-signal
-
-#### Scenario: Weak sub-signals under the threshold
-- **WHEN** an eligible survey has only `institutional` and `geo_rich`
-- **THEN** no signal fires
-
 ### Requirement: One signal per survey, enriched on later runs
 A survey SHALL fire at most once: the firing creates one signal record holding the canonical
 survey, the creator, the score, the sub-signals with the values that triggered them, and the
 firing time. A later run that finds new sub-signals on a survey that already fired SHALL add
 them to the record and never create a second one or send a second digest line for it.
+
+#### Scenario: Export on top of a plateau
+- **WHEN** an eligible survey has `plateau` (3) and its owner exports the data (4)
+- **THEN** the signal fires with both sub-signals
+
+#### Scenario: Export alone on an otherwise quiet survey
+- **WHEN** an eligible survey has `exported` and no other sub-signal
+- **THEN** no signal fires; the export is recorded and counts on later runs within its window
 
 #### Scenario: Export after a plateau firing
 - **WHEN** a survey fired on `plateau` + `revisited` and its owner exports the data a week later
