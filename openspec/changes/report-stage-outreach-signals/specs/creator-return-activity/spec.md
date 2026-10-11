@@ -57,3 +57,26 @@ dossier notes, since they are facts about an identifiable person.
 #### Scenario: Creator export
 - **WHEN** staff run the creator export for a username
 - **THEN** the output includes that creator's return-activity rows
+
+### Requirement: Rows from before recording began are restored once from the analytics vendor
+The system SHALL provide a one-off, re-runnable restoration of return-activity rows for the
+period before recording began, read from the analytics vendor's `responses_viewed` and
+`data_exported` events (creator id, survey id, day, count). Restored rows SHALL be marked as
+restored, SHALL never overwrite a row the application recorded itself, and the restoration
+SHALL stop at the day recording began.
+
+#### Scenario: Restoration fills the past only
+- **WHEN** the restoration runs after the application has recorded rows for ten days
+- **THEN** rows are created for days before the first recorded day and none of the ten days changes
+
+#### Scenario: Re-run is idempotent
+- **WHEN** the restoration runs twice
+- **THEN** the second run creates no row and changes no count
+
+#### Scenario: Vendor unavailable
+- **WHEN** the vendor query fails
+- **THEN** no row is written and the command exits with an error naming the failure
+
+#### Scenario: Unknown survey or creator in the vendor data
+- **WHEN** an event names a survey or creator that no longer exists
+- **THEN** that event is skipped and counted in the command's report

@@ -8,8 +8,8 @@ institutional-domain registrants who never created a survey (outreach candidates
 collecting responses while still draft/testing (publish-nudge candidates), and surveys that
 entered the reporting stage (report-outreach candidates: open signals from capability
 `report-stage-signals` with status `new` or `contacted`, newest first, each with the creator,
-the sub-signals, the response count, the status and links to the signal's admin page, the
-creator's dossier and the survey).
+the sub-signals, the response count, the status, whether the creator is already marked as
+worked, and links to the signal's admin page, the creator's dossier and the survey).
 
 #### Scenario: Dormant valuable list
 - **WHEN** a registrant has a non-freemail email domain and owns no survey

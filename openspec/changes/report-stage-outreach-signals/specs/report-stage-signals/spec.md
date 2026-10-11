@@ -92,12 +92,18 @@ them to the record and never create a second one or send a second digest line fo
 ### Requirement: Staff work the signal through a status
 Each signal record SHALL carry a status from `new`, `contacted`, `dismissed`, `won`, editable
 by staff in the admin together with a free-text note, and the admin list SHALL filter by
-status and link to the creator's dossier, the survey and the Responses page. The record
-SHALL hold ids and counts only — no respondent data, no answer text.
+status and link to the creator's dossier, the survey and the Responses page. Setting a signal
+to `contacted` or `won` SHALL mark its creator as worked (capability
+`creator-outreach-status`). The record SHALL hold ids and counts only — no respondent data,
+no answer text.
 
 #### Scenario: Marking contacted
 - **WHEN** staff set a signal to `contacted`
 - **THEN** it leaves the "new" filter and keeps its sub-signals and firing time
+
+#### Scenario: Contacting marks the client
+- **WHEN** staff set a signal to `contacted` for a creator not yet marked as worked
+- **THEN** the creator's worked flag is set with that date
 
 #### Scenario: Dismissed survey stays quiet
 - **WHEN** a signal is `dismissed` and later runs find further sub-signals
@@ -130,6 +136,39 @@ links to the signal's admin page, the creator's dossier and the survey's Respons
 #### Scenario: Digest content
 - **WHEN** a signal fired on `exported` and `institutional` for a survey with 120 responses
 - **THEN** the digest names both sub-signals, the count and the three links
+
+### Requirement: The digest separates known clients
+Each digest line SHALL say whether the creator is already marked as worked and since when,
+and signals of already-worked creators SHALL be listed in a separate section after the new
+ones.
+
+#### Scenario: Known client's new survey
+- **WHEN** a signal fires for a creator marked as worked last spring
+- **THEN** the digest lists it under "already in contact" with the worked date, not among the new clients
+
+### Requirement: The history is analysed with the same rules
+The system SHALL provide a historical run that evaluates every eligible survey — including
+closed and archived ones, and surveys of creators already marked as worked — day by day from
+its first external response to the present with the same sub-signals, floor and threshold,
+and records each survey that would have fired as a signal dated the first day it would have
+fired and flagged as historical. A historical run SHALL send no digest and SHALL print a
+summary table instead.
+
+#### Scenario: Survey that closed last year
+- **WHEN** a survey met the floor and closed eleven months ago
+- **THEN** the historical run records a historical signal dated within the close's window, status `new`
+
+#### Scenario: Historical signal is not re-fired by the daily run
+- **WHEN** the daily run later evaluates a survey that holds a historical signal
+- **THEN** it enriches that record and creates nothing
+
+#### Scenario: Already-worked creator in history
+- **WHEN** a historical signal falls on a creator marked as worked
+- **THEN** the signal is recorded and the summary shows the worked date next to it
+
+#### Scenario: Historical run is idempotent
+- **WHEN** the historical run executes twice
+- **THEN** the second run creates no record and no dossier note
 
 ### Requirement: The detector can be dry-run as of a past date
 The run SHALL accept a dry-run mode that writes nothing and sends nothing but prints what

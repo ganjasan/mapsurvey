@@ -36,8 +36,6 @@ See proposal.md for motivation. What shapes the approach:
 **Non-Goals:**
 - Real-time alerts (a push on export). The owner acts once a day; the digest batches.
 - Automating the materials archive or the story offer mail (next change).
-- Backfilling return activity from PostHog (HogQL export is possible but adds a vendor call to a
-  calibration step; the first weeks run without that component).
 - Any scoring of creators who have no survey in the eligible states.
 
 ## Decisions
@@ -162,6 +160,54 @@ forward-only rule. No scoring happens in the request.
 links to the user page and the Responses page. "Won" is set by hand when a story or a Pro
 sale follows — the conversion count of the outreach funnel comes from this column.
 
+### D9 — The history is scored by walking each survey's timeline
+
+`detect_report_stage --historical` evaluates every eligible survey (plus `archived` status
+and already-worked creators, which the daily run also includes) at a sequence of `as_of`
+dates: every 7th day from the first external session to today, then the exact day inside the
+first firing week (a second pass at day grain over that week). The first `as_of` where
+`score()` fires becomes `fired_at`; the record gets `historical=True`, `status='new'`, and
+the dossier note is dated that day. Everything else is the daily code path — same
+`collect_facts`, same `score()`, same `OneToOne` guard — so history and future cannot
+diverge. No digest: the command prints one table (survey, owner, worked-since, fired day,
+sub-signals, responses) and exits. Cost: ~300 surveys × ~20 dates × a handful of aggregate
+queries, minutes, run by hand once.
+
+Facts that history can and cannot supply: close dates exist in `AuditLog` since the audit
+log shipped; before that a `closed` survey with no transition row is treated as closed on
+`updated_at`, flagged in the summary. Return days before the backfill (D11) are empty,
+which only lowers historical scores — never raises them.
+
+### D10 — The "worked" checkbox lives on the dossier, the signal status on the survey
+
+`CreatorProfile.outreach_done` (bool), `outreach_done_at` (date, null),
+`outreach_outcome` (`''|no_reply|declined|story|pro`). The profile is the CRM-shaped row
+(creator-dossiers D1), so a CRM import maps it to "Contact.last_contacted". Two levels on
+purpose: a client is worked once; a signal is per survey and a known client's new survey is
+a new signal, listed under "already in contact" in the digest and the panel.
+
+Writes: (1) the checkbox in `UserAdmin.list_display` + `list_editable` through a profile
+accessor that creates the profile row on first tick; (2) `OutreachSignalAdmin.save_model`
+sets the flag when status becomes `contacted`/`won` and it is unset; (3)
+`detect_report_stage --prefill-worked` marks creators with an `email` note by the earliest
+note's date, never clearing or overwriting. `get_or_none` semantics everywhere: an absent
+profile is "not worked".
+
+Rejected: a boolean on `OutreachSignal` ("we handled this one") — it is what `status` already
+says and it cannot answer "have we ever written to this person".
+
+### D11 — Return activity before this change is restored from PostHog once
+
+`backfill_creator_returns [--until YYYY-MM-DD]`: one HogQL query over `events` for
+`responses_viewed` / `data_exported` with `timestamp_source = 'live'`, grouped by
+`distinct_id` (= user pk), `properties.survey_id`, `toDate(timestamp)`; the request is the
+`check_posthog_funnel_parity` pattern (`POSTHOG_PERSONAL_API_KEY` + `POSTHOG_PROJECT_ID`,
+`/api/projects/<id>/query/`). Rows are inserted with `restored=True`,
+`ignore_conflicts`, only for `day < until` where `until` defaults to the first day the
+application recorded a row. Unknown user or survey → skipped and counted. Vendor failure
+→ `CommandError`, nothing written. A `data_exported` with `format` absent is the survey
+backup (`export_survey`) and is skipped — the forward helper records none either (D2).
+
 ## Risks / Trade-offs
 
 - [False positives in the first weeks: `revisited`/`exported` are empty until the table fills,
@@ -177,6 +223,14 @@ sale follows — the conversion count of the outreach funnel comes from this col
   are written before the send, so nothing is lost.
 - [Rows about identifiable creators] → `export_creators` includes them; cascade on user
   delete; no respondent fact in either table.
+- [Historical run fires on surveys whose moment passed a year ago] → that is the analysis the
+  owner asked for: the list of missed clients. They sit in the panel as `new`, dated, and are
+  worked or dismissed by hand; the digest never carries them.
+- [The checkbox and the signal status disagree (client worked, signal `new`)] → by design:
+  the flag says "we know this person", the status says "this survey's signal is open". The
+  surfaces show both.
+- [PostHog backfill double-counts a day the application also recorded] → `until` stops at the
+  first recorded day and `ignore_conflicts` never touches an existing row.
 - [Dashboard spec's no-new-table rule] → restated in the delta: forward-only creator facts
   with a stated start date, the same carve-out demo opens already have.
 
@@ -184,10 +238,13 @@ sale follows — the conversion count of the outreach funnel comes from this col
 
 1. Migration adds the two tables (no data migration; no backfill).
 2. Deploy web: return rows start accumulating immediately.
-3. Run `detect_report_stage --dry-run --as-of <date>` against production for the dates the
-   known outreach cases were contacted; adjust weights/threshold in one commit if needed.
-4. Add the cron service in `render.yaml` (its first production run writes real signals).
-5. Rollback: suspend the cron. Tables and the recording helper are harmless on their own.
+3. `backfill_creator_returns` once on production (needs the personal API key in the shell,
+   never in `render.yaml`).
+4. `detect_report_stage --prefill-worked`, then `--historical --dry-run`: the known outreach
+   cases must appear with firing dates at or before the dates they were contacted; adjust
+   weights/threshold in one commit if needed; then `--historical` for real.
+5. Add the cron service in `render.yaml` (its first production run writes real signals).
+6. Rollback: suspend the cron. Tables and the recording helper are harmless on their own.
 
 ## Open Questions
 
