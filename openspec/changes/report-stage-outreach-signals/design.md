@@ -28,7 +28,8 @@ See proposal.md for motivation. What shapes the approach:
 
 **Goals:**
 - One daily, deterministic, explainable decision per survey ("fired because: exported, closed").
-- A data export is enough on its own once the survey is big enough.
+- The export is the heaviest sub-signal, not a verdict: it still needs one more sign
+  (a plateau, a close, repeated visits, or an institutional geo-rich survey) to fire.
 - Zero creator- or respondent-visible change; zero new dependency; zero PostHog dependency at
   detection time.
 - Calibration before trust: a dry run as of a past date over production data.
@@ -74,7 +75,7 @@ matching URLs (fragile, and the view already knows the survey).
 
 ```
 SUBSIGNALS = {  # name: (weight, window_days or None)
-    'exported':      (4, 14),   # also a hard trigger
+    'exported':      (4, 14),   # the heaviest: the report is being built now
     'closed':        (4, 14),
     'plateau':       (3, None),
     'revisited':     (3, 14),
@@ -82,7 +83,6 @@ SUBSIGNALS = {  # name: (weight, window_days or None)
     'institutional': (2, None),
     'pro_interest':  (1, None),
 }
-HARD_TRIGGERS = ('exported',)
 MIN_RESPONSES = 30         # settings.REPORT_STAGE_MIN_RESPONSES
 THRESHOLD = 7              # settings.REPORT_STAGE_THRESHOLD
 PLATEAU_FRACTION = 0.2
@@ -93,7 +93,9 @@ GEO_RICH_FEATURES = 50
 `collect_facts(survey, as_of)` runs the queries (one aggregate per fact, canonical + versions
 via `id = X OR canonical_survey_id = X`, the same session gate the Responses page uses) and
 returns `SurveyFacts`; `score(facts)` has no DB and returns `(fires: bool, score: int,
-signals: {name: value})`. Exactly the `content_screening` split, so weights are a table and a
+signals: {name: value})`. With these weights `exported` (4) fires together with `plateau`
+(3), `closed` (4) or `revisited` (3), or with `institutional` + `geo_rich` (2 + 2); alone it
+does not. Exactly the `content_screening` split, so weights are a table and a
 new sub-signal is a row plus one fact.
 
 `plateau` = responses in the last 7 days `< PLATEAU_FRACTION ×` best 7-day window since
@@ -212,7 +214,7 @@ backup (`export_survey`) and is skipped — the forward helper records none eith
 
 - [False positives in the first weeks: `revisited`/`exported` are empty until the table fills,
   so only closes and plateaus fire] → the threshold needs `closed` (4) + `plateau` (3) or a
-  hard trigger; the digest shows the sub-signals, and `dismissed` is one click. Re-check the
+  `exported` + another; the digest shows the sub-signals, and `dismissed` is one click. Re-check the
   weights after 30 days of return rows.
 - [Plateau on a survey that was never meant to collect much (a 35-response class exercise)]
   → the floor and the `institutional` weight; a wrong fire costs one digest line.

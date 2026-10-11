@@ -49,7 +49,7 @@
 
 ## 3. Scoring (`survey/report_stage.py`)
 
-- [ ] `SUBSIGNALS`, `HARD_TRIGGERS`, `MIN_RESPONSES`, `THRESHOLD`, `PLATEAU_FRACTION`,
+- [ ] `SUBSIGNALS`, `MIN_RESPONSES`, `THRESHOLD`, `PLATEAU_FRACTION`,
       `PLATEAU_MIN_DAYS`, `GEO_RICH_FEATURES` at the top; threshold and floor read from
       `settings.REPORT_STAGE_THRESHOLD` / `REPORT_STAGE_MIN_RESPONSES` with those defaults.
 - [ ] `SurveyFacts` dataclass: `responses`, `daily_counts`, `first_session_at`, `closed_at`,
@@ -66,14 +66,15 @@
       `funnel._domain` + `FREEMAIL_DOMAINS`; `pro_interest` by `user` or `email`.
 - [ ] `score(facts, as_of) -> ScoreResult(fires, score, signals)`: pure; `plateau` = last 7 days
       < fraction × best 7-day window since first session, and first session ≥ 14 days before
-      `as_of`; hard trigger rule; threshold rule; profile sub-signals alone never fire.
+      `as_of`; threshold rule; profile sub-signals alone never fire.
 - [ ] `eligible_surveys(as_of, historical=False)`: published/closed (+ archived when
       historical), canonical, not trashed, owner real (non-staff), not the demo survey.
       Already-worked creators are never excluded.
 - [ ] `closed_at` fallback for history: a `closed` survey with no transition row → `updated_at`,
       reported as `closed_at_source='updated_at'` in the facts.
 - [ ] Tests (`ReportStageScoringTest`, pure `score()` over hand-built facts): below floor;
-      export alone fires; `institutional`+`geo_rich` alone does not; plateau present/absent;
+      `exported`+`plateau` fires; `exported` alone does not; `institutional`+`geo_rich` alone
+      does not; plateau present/absent;
       closed outside window; profile-only never fires; `as_of` shifts every window.
 
 ## 4. The run (`detect_report_stage`)

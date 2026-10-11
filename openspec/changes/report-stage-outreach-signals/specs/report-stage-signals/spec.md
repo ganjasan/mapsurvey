@@ -29,13 +29,16 @@ with no owner SHALL be skipped.
 - **THEN** the floor and every sub-signal are evaluated over the union
 
 ### Requirement: Behavioural sub-signals
-The behavioural sub-signals SHALL be: `exported` (a data export by the owner or a collaborator
+The behavioural sub-signals SHALL be `exported` (a data export by the owner or a collaborator
 within the window), `closed` (status changed to closed within the window), `plateau`
 (responses in the last 7 days below a fraction of the best week, after at least 14 days of
-collection) and `revisited` (Responses opened on at least two distinct days within the
-window). Each SHALL be defined by one condition, one weight and one window in the sub-signal
-table; `exported` SHALL carry the largest weight, because a creator who downloads the data is
-about to build the report.
+collection) and `revisited` (Responses opened on at least two distinct days within the window).
+`exported` SHALL carry the largest weight: a creator who downloads the data is about to build
+the report.
+
+#### Scenario: Export is the heaviest sub-signal
+- **WHEN** the owner exports the data of an eligible survey
+- **THEN** `exported` is present and contributes more to the score than any other sub-signal
 
 #### Scenario: Plateau after a launch spike
 - **WHEN** a survey collected 80 responses in its best week three weeks ago and 5 in the last 7 days
