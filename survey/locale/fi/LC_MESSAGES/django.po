@@ -7671,3 +7671,27 @@ msgstr "Sijaintiasi ei saatu — hae paikkaa tai vedä karttaa."
 #: survey/templates/editor/partials/section_map_picker.html
 msgid "Geolocation is not available in this browser."
 msgstr "Paikannus ei ole käytettävissä tässä selaimessa."
+
+#: survey/editor_forms.py
+msgid "After the last page"
+msgstr "Viimeisen sivun jälkeen"
+
+#: survey/editor_forms.py
+msgid "Show the thank-you page"
+msgstr "Näytä kiitossivu"
+
+#: survey/editor_forms.py
+msgid "Open a web address"
+msgstr "Avaa verkko-osoite"
+
+#: survey/editor_forms.py
+msgid "Web address"
+msgstr "Verkko-osoite"
+
+#: survey/editor_forms.py
+msgid "Respondents are sent here after the last page, for example https://www.facebook.com/yourproject"
+msgstr "Vastaajat ohjataan tänne viimeisen sivun jälkeen, esimerkiksi https://www.facebook.com/yourproject"
+
+#: survey/editor_forms.py
+msgid "Enter a full web address, for example https://www.facebook.com/yourproject"
+msgstr "Kirjoita koko verkko-osoite, esimerkiksi https://www.facebook.com/yourproject"

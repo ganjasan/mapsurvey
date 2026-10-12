@@ -49,6 +49,7 @@ import math
 import logging
 
 from .access_control import check_survey_access, mark_indexing
+from .redirects import completion_url
 from .audit import audit
 from .trash import trash_survey, restore_survey, purge_survey, purge_expired_surveys
 from . import other_option
@@ -812,7 +813,7 @@ def survey_language_select(request, survey_slug):
 			start_section = survey.start_section()
 			if start_section:
 				return redirect('section', survey_slug=str(survey.uuid), section_name=start_section.name)
-			return redirect(survey.redirect_url)
+			return redirect(completion_url(survey))
 
 	# Build language list with native names
 	languages = []
@@ -851,7 +852,7 @@ def survey_header(request, survey_slug):
 
 	start_section = survey.start_section()
 	slug = str(survey.uuid)
-	redirect_page = ("../" + slug + "/" + start_section.name) if start_section else survey.redirect_url
+	redirect_page = ("../" + slug + "/" + start_section.name) if start_section else completion_url(survey)
 
 	return HttpResponseRedirect(redirect_page)
 	
@@ -1404,12 +1405,8 @@ def survey_section(request, survey_slug, section_name):
 				next_ctx = _build_section_context(request, survey, session_survey, next_visible, selected_language, next_current, section_total, vmap=vmap_final)
 				return render(request, 'partials/survey_section_partial.html', next_ctx)
 			else:
-				if survey.redirect_url == "#":
-					redirect_target = reverse('survey_thanks', args=[str(survey.uuid)])
-				else:
-					redirect_target = survey.redirect_url
 				response = HttpResponse()
-				response['HX-Redirect'] = redirect_target
+				response['HX-Redirect'] = completion_url(survey)
 				return response
 
 		if nav_direction == 'back' and prev_visible:
@@ -1417,10 +1414,8 @@ def survey_section(request, survey_slug, section_name):
 
 		if next_visible:
 			next_page = "../" + next_visible.name
-		elif survey.redirect_url == "#":
-			next_page = reverse('survey_thanks', args=[str(survey.uuid)])
 		else:
-			next_page = survey.redirect_url
+			next_page = completion_url(survey)
 		return HttpResponseRedirect(next_page)
 
 	else:
