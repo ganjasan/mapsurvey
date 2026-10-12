@@ -1,0 +1,10 @@
+Pro help request — {{ org.name }}
+
+Kind:     {{ req.get_kind_display }}
+From:     {{ req.user.username }} <{{ req.contact_email }}>
+Survey:   {% if req.survey %}{{ req.survey.name }} — {{ survey_url }}{% else %}(not about one survey){% endif %}
+Received: {{ req.created_at|date:"Y-m-d H:i" }} UTC
+
+{{ req.message }}
+
+Admin: {{ admin_url }}

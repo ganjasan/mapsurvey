@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+import json
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -62,6 +63,7 @@ INSTALLED_APPS = [
     'leaflet',
     'django.contrib.gis',
     'survey.apps.SurveyConfig',
+    'billing.apps.BillingConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -571,6 +573,33 @@ MAP_REFERENCE_LAYERS = os.environ.get('MAP_REFERENCE_LAYERS', 'True').lower() in
 # Off: stored rules become inert — every question/section renders for every
 # respondent, no visibility purging, and the editor hides the Visibility block.
 CONDITIONAL_VISIBILITY = os.environ.get('CONDITIONAL_VISIBILITY', 'True').lower() in ('true', '1')
+
+# PayPro Global -- the Pro paywall (billing app, change paywall-payproglobal, #268).
+# Keys live in the PayPro control panel, Store settings → General settings →
+# Integration. `PPG_PRODUCTS` is the feature flag for the Upgrade controls: empty
+# (the default) means nothing is sold and nothing in the UI mentions it.
+# `PPG_API_SECRET_KEY` is optional -- without it the billing page offers links
+# into the PayPro customer account instead of cancel/resubscribe actions.
+PPG_VENDOR_ACCOUNT_ID = os.environ.get('PPG_VENDOR_ACCOUNT_ID', '')
+PPG_SECRET_KEY = os.environ.get('PPG_SECRET_KEY', '')          # MD5 HASH + test-mode links
+PPG_VALIDATION_KEY = os.environ.get('PPG_VALIDATION_KEY', '')  # SHA256 SIGNATURE
+PPG_API_SECRET_KEY = os.environ.get('PPG_API_SECRET_KEY', '')
+# {"pro_monthly": <product id>, "pro_yearly": <product id>}
+PPG_PRODUCTS = json.loads(os.environ.get('PPG_PRODUCTS') or '{}')
+# Previews and staging accept TEST_MODE=1 webhooks and build test-mode checkout
+# links; production never does (a test order must not activate a real plan).
+PPG_ACCEPT_TEST_IPN = os.environ.get('PPG_ACCEPT_TEST_IPN', 'False').lower() in ('true', '1')
+PPG_TEST_MODE = os.environ.get('PPG_TEST_MODE', 'False').lower() in ('true', '1')
+# Host passed as `ipn-domain` so PayPro routes the webhook to the environment
+# the order came from; defaults to RENDER_EXTERNAL_HOSTNAME, then the request host.
+PPG_IPN_DOMAIN = os.environ.get('PPG_IPN_DOMAIN', '')
+# Webhook source addresses published by PayPro. Overridable because they may add one.
+PPG_IPN_ALLOWED_IPS = tuple(
+    ip.strip() for ip in os.environ.get(
+        'PPG_IPN_ALLOWED_IPS',
+        '198.199.123.239,157.230.8.40,2604:a880:400:d0::1843:7001,2604:a880:400:d1::b6c:c001',
+    ).split(',') if ip.strip()
+)
 # Steer creators toward the AI draft on the create page (openspec:
 # steer-to-ai-generation): single-field brief, empty-path intercept, wizard empty
 # path skipping the map step. One switch for the whole bet — False restores the

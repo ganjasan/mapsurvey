@@ -101,6 +101,31 @@ services:
       - key: AI_STREAMING_ENABLED
         value: "false"
         previewValue: "true"
+      # PayPro Global (billing app). The three keys and the product ids are set
+      # in the dashboard and inherited by previews; previews additionally accept
+      # TEST_MODE webhooks and build test-mode checkout links, production never.
+      # PPG_PRODUCTS empty = no Upgrade controls anywhere (the rollback switch).
+      - key: PPG_VENDOR_ACCOUNT_ID
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: PPG_SECRET_KEY
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: PPG_VALIDATION_KEY
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: PPG_API_SECRET_KEY
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: PPG_PRODUCTS
+        sync: false
+        previewEnvRenderServiceName: mapsurvey
+      - key: PPG_ACCEPT_TEST_IPN
+        value: "false"
+        previewValue: "true"
+      - key: PPG_TEST_MODE
+        value: "false"
+        previewValue: "true"
       - key: DEFAULT_FROM_EMAIL
         sync: false
         previewEnvRenderServiceName: mapsurvey
@@ -407,3 +432,21 @@ services:
       # Read-only Render API token, used solely to ask which services exist.
       - key: RENDER_API_KEY
         sync: false
+      # notify_lapsed (billing app) runs here too and mails owners whose Pro
+      # ended; without these the cron would fall back to the console backend.
+      - key: EMAIL_BACKEND
+        sync: false
+      - key: EMAIL_HOST
+        sync: false
+      - key: EMAIL_PORT
+        sync: false
+      - key: EMAIL_USE_SSL
+        sync: false
+      - key: EMAIL_HOST_USER
+        sync: false
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        sync: false
+      - key: SITE_URL
+        value: "https://mapsurvey.org"

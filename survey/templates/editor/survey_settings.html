@@ -110,6 +110,18 @@
                 </script>
             </div>
 
+            <div class="form-group">
+                <div class="form-check">
+                    {{ form.show_branding }}
+                    <label class="form-check-label" for="id_show_branding">{{ form.show_branding.label }}</label>
+                </div>
+                {% if form.unbranded %}
+                <small class="form-text text-muted">{% trans "Off = a clean survey, thanks page and public results with nothing pointing back to Mapsurvey." %}</small>
+                {% else %}
+                <small class="form-text text-muted">{% trans "Removing the badge is part of Pro." %} <a href="{% url 'org_billing' survey.organization.slug %}">{% trans "See plans" %}</a></small>
+                {% endif %}
+            </div>
+
             <button type="submit" class="btn btn-primary btn-sm">{% trans "Save Settings" %}</button>
         </form>
     </div>

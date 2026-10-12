@@ -1,0 +1,7 @@
+<p><strong>Pro help request — {{ org.name }}</strong></p>
+<p>Kind: {{ req.get_kind_display }}<br>
+From: {{ req.user.username }} &lt;{{ req.contact_email }}&gt;<br>
+Survey: {% if req.survey %}<a href="{{ survey_url }}">{{ req.survey.name }}</a>{% else %}(not about one survey){% endif %}<br>
+Received: {{ req.created_at|date:"Y-m-d H:i" }} UTC</p>
+<pre style="white-space:pre-wrap;font-family:inherit">{{ req.message }}</pre>
+<p><a href="{{ admin_url }}">Open in admin</a></p>

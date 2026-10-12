@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% load i18n billing_tags %}
+
+{% block title %}{{ org.name }} — {% trans "Plan & billing" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 720px;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="mb-0">{{ org.name }}</h4>
+            <small class="text-muted">{% trans "Plan & billing" %}</small>
+        </div>
+        <div>
+            {% if is_owner %}<a href="{% url 'org_settings' org.slug %}" class="btn btn-outline-secondary btn-sm mr-1">{% trans "Settings" %}</a>{% endif %}
+            <a href="{% url 'org_members' org.slug %}" class="btn btn-outline-secondary btn-sm mr-1">{% trans "Members" %}</a>
+            <a href="{% url 'editor' %}" class="btn btn-outline-secondary btn-sm">{% trans "Dashboard" %}</a>
+        </div>
+    </div>
+
+    {% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show py-2" role="alert" style="font-size:0.9rem;">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+        </div>
+    {% endfor %}
+    {% endif %}
+
+    {# ---- Current plan ---- #}
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h5 class="mb-1">
+                        {% plan_label entitlements.plan %}
+                        {% if entitlements.state == 'active' %}<span class="badge badge-success ml-1">{% trans "Active" %}</span>
+                        {% elif entitlements.state == 'past_due' %}<span class="badge badge-warning ml-1">{% trans "Payment failed" %}</span>
+                        {% elif entitlements.state == 'cancelling' %}<span class="badge badge-secondary ml-1">{% trans "Cancelling" %}</span>
+                        {% elif entitlements.state == 'lapsed' %}<span class="badge badge-secondary ml-1">{% trans "Ended" %}</span>
+                        {% endif %}
+                        {% if sub and sub.pending_change_active %}<span class="badge badge-info ml-1">{% trans "Change requested…" %}</span>{% endif %}
+                    </h5>
+                    {% if entitlements.is_pro %}
+                        {% if entitlements.state == 'cancelling' %}
+                            <p class="mb-1">{% blocktrans with date=entitlements.until|date:"j F Y" %}Pro stays active until {{ date }}, then the organisation returns to Free.{% endblocktrans %}</p>
+                        {% elif sub.renewal_type == 'manual' %}
+                            <p class="mb-1">{% blocktrans with date=entitlements.until|date:"j F Y" %}Renews by invoice — PayPro Global emails a payment link before {{ date }}.{% endblocktrans %}</p>
+                        {% elif entitlements.state == 'past_due' %}
+                            <p class="mb-1">{% blocktrans with date=entitlements.until|date:"j F Y" count attempts=sub.failed_attempts %}The last payment failed ({{ attempts }} attempt). Pro stays active until {{ date }} while PayPro retries.{% plural %}The last payment failed ({{ attempts }} attempts). Pro stays active until {{ date }} while PayPro retries.{% endblocktrans %}</p>
+                        {% else %}
+                            <p class="mb-1">{% blocktrans with date=entitlements.until|date:"j F Y" %}Renews automatically on {{ date }}.{% endblocktrans %}</p>
+                        {% endif %}
+                        <p class="text-muted mb-0" style="font-size:0.85rem;">
+                            {% if sub.product_key == 'pro_yearly' %}{% trans "Billed yearly" %}{% else %}{% trans "Billed monthly" %}{% endif %}
+                            · PayPro #{{ sub.ppg_subscription_id }}
+                            {% if sub.last_invoice_url %} · <a href="{{ sub.last_invoice_url }}" target="_blank" rel="noopener">{% trans "Last invoice" %}</a>{% endif %}
+                        </p>
+                    {% elif entitlements.state == 'lapsed' %}
+                        <p class="mb-0 text-muted">{% trans "The Pro plan has ended. Everything you built is still here; only the Pro extras are off." %}</p>
+                    {% else %}
+                        <p class="mb-0 text-muted">{% trans "The free plan: every question type, unlimited surveys, responses and team members." %}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if waiting_order %}
+            <div class="alert alert-info mt-3 mb-0 py-2" style="font-size:0.9rem;">
+                {% blocktrans with order=waiting_order.order_id %}Order {{ order }} is awaiting your bank transfer. Pro is activated when PayPro Global receives it.{% endblocktrans %}
+            </div>
+            {% endif %}
+
+            {% if duplicates %}
+            <div class="alert alert-warning mt-3 mb-0 py-2" style="font-size:0.9rem;">
+                {% trans "More than one PayPro subscription is attached to this organisation:" %}
+                #{{ sub.ppg_subscription_id }}{% for d in duplicates %}, #{{ d.ppg_subscription_id }}{% endfor %}.
+                {% trans "Cancel the one you do not want in your PayPro customer account, or write to us." %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# ---- Upgrade (Free / lapsed) ---- #}
+    {% if not entitlements.is_pro and products_configured %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="mb-2">{% trans "Pro" %}</h5>
+            <p class="mb-2">{% trans "Pro is the service plan: direct access to the Mapsurvey team for project consulting, analysis of your responses and reports for councils, clients and funders — plus a clean, unbranded survey." %}</p>
+            <ul class="mb-3" style="font-size:0.9rem;">
+                <li>{% feature_label 'pro_help' %}</li>
+                <li>{% feature_label 'unbranded' %}</li>
+                <li>{% trans "Everything in Free, which stays free" %}</li>
+            </ul>
+            {% if is_owner %}
+            <form method="post" action="{% url 'org_checkout' org.slug %}" class="d-inline">
+                {% csrf_token %}<input type="hidden" name="period" value="monthly">
+                <button type="submit" class="btn btn-primary btn-sm mr-1">{% trans "Upgrade — monthly" %}</button>
+            </form>
+            <form method="post" action="{% url 'org_checkout' org.slug %}" class="d-inline">
+                {% csrf_token %}<input type="hidden" name="period" value="yearly">
+                <button type="submit" class="btn btn-primary btn-sm mr-1">{% trans "Upgrade — yearly" %}</button>
+            </form>
+            <form method="post" action="{% url 'org_checkout' org.slug %}" class="d-inline">
+                {% csrf_token %}<input type="hidden" name="period" value="yearly"><input type="hidden" name="quote" value="1">
+                <button type="submit" class="btn btn-outline-secondary btn-sm">{% trans "Get a quote" %}</button>
+            </form>
+            <p class="text-muted mt-2 mb-0" style="font-size:0.85rem;">{% trans "Card or PayPal. The yearly plan can also be paid by bank transfer or purchase order — the quote is a PDF you can put through procurement." %} <a href="{% url 'index' %}#pricing">{% trans "Prices" %}</a></p>
+            {% else %}
+            <p class="text-muted mb-0" style="font-size:0.9rem;">{% trans "Only the organisation owner can upgrade." %}</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {# ---- Manage (any subscription) ---- #}
+    {% if sub %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <h6 class="mb-3">{% trans "Manage your subscription" %}</h6>
+            {% if renewal_url %}
+            <a href="{{ renewal_url }}" class="btn btn-outline-primary btn-sm mr-1 mb-2" target="_blank" rel="noopener">{% trans "Update payment method" %}</a>
+            {% endif %}
+            <a href="{{ customer_account_url }}" class="btn btn-outline-secondary btn-sm mb-2" target="_blank" rel="noopener">{% trans "Manage in PayPro customer account" %}</a>
+
+            {% if api_configured and is_owner %}
+            <hr>
+            {% if can_resubscribe %}
+            <form method="post" action="{% url 'org_billing_resubscribe' org.slug %}" class="d-inline" onsubmit="return confirm('{{ _("Resubscribe now? If a payment is overdue, PayPro charges it immediately.")|escapejs }}');">
+                {% csrf_token %}<button type="submit" class="btn btn-success btn-sm mr-1 mb-2">{% trans "Resubscribe" %}</button>
+            </form>
+            {% endif %}
+            {% if entitlements.state == 'active' or entitlements.state == 'past_due' %}
+            <form method="post" action="{% url 'org_billing_switch' org.slug %}" class="d-inline" onsubmit="return confirm('{{ _("Switch billing period? The change takes effect at the next charge.")|escapejs }}');">
+                {% csrf_token %}<button type="submit" class="btn btn-outline-secondary btn-sm mr-1 mb-2">{% if other_period == 'pro_yearly' %}{% trans "Switch to yearly" %}{% else %}{% trans "Switch to monthly" %}{% endif %}</button>
+            </form>
+            <button type="button" class="btn btn-outline-danger btn-sm mb-2" data-toggle="collapse" data-target="#cancel-box">{% trans "Cancel plan" %}</button>
+            <div id="cancel-box" class="collapse mt-2">
+                <form method="post" action="{% url 'org_billing_cancel' org.slug %}">
+                    {% csrf_token %}
+                    <p class="mb-1" style="font-size:0.9rem;">{{ cancel_form.reason.label }}</p>
+                    {% for radio in cancel_form.reason %}
+                    <div class="form-check"><label class="form-check-label" style="font-size:0.9rem;">{{ radio.tag }} {{ radio.choice_label }}</label></div>
+                    {% endfor %}
+                    <div class="form-group mt-2 mb-2"><label style="font-size:0.9rem;">{{ cancel_form.note.label }}</label>{{ cancel_form.note }}</div>
+                    <button type="submit" class="btn btn-danger btn-sm">{% trans "Confirm cancellation" %}</button>
+                </form>
+            </div>
+            {% endif %}
+            <form method="post" action="{% url 'org_billing_login_link' org.slug %}" class="d-inline">
+                {% csrf_token %}<button type="submit" class="btn btn-link btn-sm mb-2">{% trans "Email me a PayPro login link" %}</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <p class="text-muted" style="font-size:0.85rem;">
+        <strong>{% trans "Cancelling and refunds." %}</strong>
+        {% trans "You can cancel at any time. Your organisation keeps Pro until the end of the period you have already paid for, then returns to the Free plan — every survey, response and setting stays exactly where it is; only the Pro extras switch off. Payments, invoices and refunds are handled by PayPro Global, our Merchant of Record. If a payment is refunded, the organisation returns to Free immediately." %}
+    </p>
+</div>
+{% endblock %}

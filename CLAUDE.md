@@ -225,6 +225,26 @@ hand-written tables; moving them onto the registry is the follow-up after #253. 
 hosting fact is the United States (Render, Oregon) — the "EU-hosted / Frankfurt" wording that
 survived on the Maptionnaire page until this change must not come back.
 
+**Billing — Pro on PayPro Global (`billing/`, change `paywall-payproglobal`, #268)**: PayPro is the
+Merchant of Record; we own the checkout link out (`billing/checkout.py`, the ONLY place a PayPro URL
+is built, with `x-org_id/x-user_id/x-plan/x-nonce` and `ipn-domain`), the webhook in
+(`POST /billing/ipn/` → `billing/ipn.py`: verify source IP + SHA256 `SIGNATURE` + MD5 `HASH` over the
+RAW strings, store once in `BillingEvent`, apply the state machine to `Subscription`) and the
+entitlement (`billing.entitlements.for_organization(org)` — Pro while `now < current_period_end` in
+active/past_due/suspended/terminated, never after refund/chargeback/finish). **One grant path**: only
+the webhook view writes `Subscription.status`/`current_period_end`; the return page polls, the
+billing-page API actions (`billing/ppg.py`, shown only when `PPG_API_SECRET_KEY` is set) ask PayPro
+and wait for the webhook. Features are the registry in `billing/features.py` (`unbranded`,
+`pro_help`); gate with `require_feature` / `{% has_feature org "key" as x %}`, never a column.
+`survey/ai/quota.py::check_quota` reads the same entitlement. `PPG_PRODUCTS` empty = nothing sold
+(rollback). Test-mode webhooks are applied only where `PPG_ACCEPT_TEST_IPN` is true (previews). The
+badge partial and `public_results.html` honour `show_branding` only under `unbranded`; the settings
+form disables the switch otherwise. Setup checklist, env vars and the PayPro email:
+`billing/README.md`. Reference digest of PayPro's docs lives outside the repo (local skill
+`payproglobal`). Tests: `./run_tests.sh billing` — one module per capability, `billing/tests/test_<capability>.py` ↔
+the spec of the same name (the rule proposed for `survey` in #273); payload and subscription
+builders in `billing/tests/helpers.py`.
+
 **Hierarchical Questions/Answers**: Both Question and Answer models support self-referential parent relationships via `parent_question_id` and `parent_answer_id` for conditional sub-questions.
 
 **Conditional visibility (`CONDITIONAL_VISIBILITY` kill switch, default ON)**: a
