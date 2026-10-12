@@ -125,3 +125,42 @@ class CheckoutTest(TestCase):
         with mock.patch('billing.events.emit') as emit:
             self.client.post(f'/org/{self.org.slug}/billing/checkout/', {'period': 'monthly'})
         self.assertEqual(emit.call_args.args[0], 'plan_checkout_started')
+
+
+@override_settings(**PPG_SETTINGS)
+class ReturnForwardTest(TestCase):
+    """PayPro has one thank-you URL (production); previews get their buyers back by forwarding."""
+
+    def test_forwards_to_originating_preview(self):
+        """
+        GIVEN PayPro's thank-you redirect to production carrying ipn-domain of a PR preview
+        WHEN the return page is hit (POST with the order, original query via GET)
+        THEN the buyer is sent with a 303 to that preview's return page, nonce kept
+        """
+        r = self.client.post('/billing/return/?x-nonce=abc&ipn-domain=mapsurvey-pr-276.onrender.com',
+                             {'ORDER_ID': '1'})
+        self.assertEqual(r.status_code, 303)
+        self.assertEqual(r['Location'], 'https://mapsurvey-pr-276.onrender.com/billing/return/?x-nonce=abc')
+
+    def test_forward_from_posted_query_string_and_pending(self):
+        r = self.client.post('/billing/return/?pending=1',
+                             {'CHECKOUT_QUERY_STRING': 'products[1][id]=1&x-nonce=n1&ipn-domain=mapsurvey-pr-9.onrender.com',
+                              'ORDER_CUSTOM_FIELDS': 'x-nonce=n1'})
+        self.assertEqual(r.status_code, 303)
+        self.assertEqual(r['Location'], 'https://mapsurvey-pr-9.onrender.com/billing/return/?x-nonce=n1&pending=1')
+
+    def test_never_an_open_redirect(self):
+        """
+        GIVEN an ipn-domain that is not a PR preview host
+        WHEN the return page is hit
+        THEN it renders here and does not redirect
+        """
+        for host in ('evil.example', 'mapsurvey-pr-1.onrender.com.evil.example', 'xmapsurvey-pr-1.onrender.com'):
+            r = self.client.get(f'/billing/return/?x-nonce=abc&ipn-domain={host}')
+            self.assertEqual(r.status_code, 200, host)
+
+    @override_settings(ALLOWED_HOSTS=['mapsurvey-pr-276.onrender.com', 'testserver'])
+    def test_no_forward_to_itself(self):
+        r = self.client.get('/billing/return/?ipn-domain=mapsurvey-pr-276.onrender.com',
+                            HTTP_HOST='mapsurvey-pr-276.onrender.com')
+        self.assertEqual(r.status_code, 200)

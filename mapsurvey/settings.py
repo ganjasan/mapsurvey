@@ -598,6 +598,10 @@ PPG_TEST_MODE = os.environ.get('PPG_TEST_MODE', 'False').lower() in ('true', '1'
 # Host passed as `ipn-domain` so PayPro routes the webhook to the environment
 # the order came from; defaults to RENDER_EXTERNAL_HOSTNAME, then the request host.
 PPG_IPN_DOMAIN = os.environ.get('PPG_IPN_DOMAIN', '')
+# PayPro has one thank-you redirect URL per page template, pointing at production.
+# Production forwards a buyer whose checkout started on a host matching this
+# (full-match regex) back to that host's return page -- the PR previews.
+PPG_RETURN_FORWARD_HOSTS = os.environ.get('PPG_RETURN_FORWARD_HOSTS', r'mapsurvey-pr-\d+\.onrender\.com')
 # Webhook source addresses published by PayPro. Overridable because they may add one.
 PPG_IPN_ALLOWED_IPS = tuple(
     ip.strip() for ip in os.environ.get(

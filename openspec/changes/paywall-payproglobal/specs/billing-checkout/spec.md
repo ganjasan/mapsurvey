@@ -88,6 +88,21 @@ create or modify any `Subscription`.
 - **WHEN** the return page is opened with a nonce that matches no intent
 - **THEN** the page shows a neutral "thank you, we are processing your order" message without organisation data
 
+### Requirement: Buyers from a preview are returned to that preview
+The production return page SHALL forward the buyer with HTTP 303 to `https://<host>/billing/return/` (keeping `x-nonce` and
+`pending`) when the checkout's `ipn-domain` names another host that fully matches
+`PPG_RETURN_FORWARD_HOSTS` (default `mapsurvey-pr-<n>.onrender.com`), and SHALL render normally
+for any other value, so it is never an open redirect. (PayPro allows one thank-you redirect URL
+per page template, and it points at production.)
+
+#### Scenario: Order placed on a preview
+- **WHEN** the return page receives `ipn-domain=mapsurvey-pr-276.onrender.com`
+- **THEN** the response is a 303 to `https://mapsurvey-pr-276.onrender.com/billing/return/?x-nonce=<nonce>`
+
+#### Scenario: Foreign host
+- **WHEN** `ipn-domain` is `evil.example`
+- **THEN** the page renders without redirecting
+
 ### Requirement: Checkout start is measured
 Starting checkout SHALL emit the PostHog event `plan_checkout_started` with `org_id`, `plan`
 and `nonce`, keyed on the acting user, and SHALL never fail the request if analytics is down.

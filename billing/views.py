@@ -6,6 +6,8 @@ page polls, the actions ask PayPro and wait for the webhook, the help page
 reads the entitlement. See openspec/changes/paywall-payproglobal/design.md.
 """
 import logging
+import re
+from urllib.parse import parse_qs, urlencode
 
 from django.conf import settings
 from django.contrib import messages
@@ -132,12 +134,38 @@ def _nonce_from(request):
     return nonce.strip()
 
 
+def _origin_host(request):
+    """The environment the checkout started on: `ipn-domain` from the original
+    checkout query string (PayPro sends it back via GET, and in the POSTed
+    CHECKOUT_QUERY_STRING)."""
+    host = request.GET.get('ipn-domain', '')
+    if not host and request.method == 'POST':
+        host = (parse_qs(request.POST.get('CHECKOUT_QUERY_STRING', '')).get('ipn-domain') or [''])[0]
+    return host.strip().lower()
+
+
 @csrf_exempt
 def checkout_return(request):
-    """Thank-you redirect target. Shows and polls; never grants."""
+    """Thank-you redirect target. Shows and polls; never grants.
+
+    PayPro allows one redirect URL per page template, and it points at
+    production. An order placed on a PR preview carries the preview's host in
+    `ipn-domain`; production forwards the buyer there (303, so the POST becomes
+    a GET). Only hosts matching PPG_RETURN_FORWARD_HOSTS qualify -- anything else
+    renders here, so this is never an open redirect."""
     pending = request.GET.get('pending') == '1'
-    intent = None
     nonce = _nonce_from(request)
+    origin = _origin_host(request)
+    here = request.get_host().split(':')[0].lower()
+    if origin and origin != here and re.fullmatch(settings.PPG_RETURN_FORWARD_HOSTS, origin):
+        params = {'x-nonce': nonce} if nonce else {}
+        if pending:
+            params['pending'] = '1'
+        url = f'https://{origin}/billing/return/' + (f'?{urlencode(params)}' if params else '')
+        response = redirect(url)
+        response.status_code = 303
+        return response
+    intent = None
     if nonce:
         try:
             intent = CheckoutIntent.objects.select_related('organization').get(nonce=nonce)
