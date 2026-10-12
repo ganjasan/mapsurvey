@@ -17,17 +17,20 @@ after a cancellation; cut immediately on refund, chargeback or finish). Nothing 
 
 ## Settings
 
-| Env var | Where it comes from | Prod | Preview |
+| Env var | Where it comes from | Prod (service `mapsurvey`) | Preview |
 |---|---|---|---|
-| `PPG_VENDOR_ACCOUNT_ID` | Account settings → Business info | set | inherited |
-| `PPG_SECRET_KEY` | Store settings → General settings → Integration ("secret key") | set | inherited |
-| `PPG_VALIDATION_KEY` | same tab ("validation key") | set | inherited |
+| `PPG_VENDOR_ACCOUNT_ID` | Account settings → Business info | set | env group `mapsurvey-shared` |
+| `PPG_SECRET_KEY` | Store settings → General settings → Integration ("secret key") | set | env group `mapsurvey-shared` |
+| `PPG_VALIDATION_KEY` | same tab ("validation key") | set | env group `mapsurvey-shared` |
 | `PPG_API_SECRET_KEY` | same tab, **issued by the account manager on request** | unset until issued | unset |
-| `PPG_PRODUCTS` | `{"pro_monthly": <id>, "pro_yearly": <id>}` — product ids from Store settings → Product setup | set at launch | same ids |
+| `PPG_PRODUCTS` | `{"pro_monthly": 138966, "pro_yearly": 138969}` — Store settings → Product setup | set at launch | set by hand on the preview service under test; never in the group |
 | `PPG_ACCEPT_TEST_IPN` | apply `TEST_MODE=1` webhooks | `false` | `true` |
 | `PPG_TEST_MODE` | add `use-test-mode=true&secret-key=…` to checkout links | `false` | `true` |
 | `PPG_IPN_DOMAIN` | override the `ipn-domain` host (default `RENDER_EXTERNAL_HOSTNAME`) | unset | unset unless the wildcard does not match |
 | `PPG_IPN_ALLOWED_IPS` | PayPro's published webhook IPs (default in settings.py) | default | default |
+
+Previews get secrets only from the `mapsurvey-shared` env group (PR #201): Render never copies a
+`sync: false` value into a preview.
 
 **`PPG_PRODUCTS` empty = nothing is sold**: no Upgrade buttons, checkout endpoint 404, Pro pages show
 the offer only. That is the rollback switch.

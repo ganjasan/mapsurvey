@@ -101,25 +101,23 @@ services:
       - key: AI_STREAMING_ENABLED
         value: "false"
         previewValue: "true"
-      # PayPro Global (billing app). The three keys and the product ids are set
-      # in the dashboard and inherited by previews; previews additionally accept
-      # TEST_MODE webhooks and build test-mode checkout links, production never.
-      # PPG_PRODUCTS empty = no Upgrade controls anywhere (the rollback switch).
+      # PayPro Global (billing app). The three keys are set on this service AND in
+      # the `mapsurvey-shared` env group, which is how previews get secrets (a
+      # `sync: false` value is never copied into a preview; see PR #201).
+      # PPG_PRODUCTS stays out of the group: unset on production means nothing
+      # is sold (the rollback switch); a preview under test gets it set on the
+      # preview service by hand. Previews accept TEST_MODE webhooks and build
+      # test-mode checkout links via previewValue; production never.
       - key: PPG_VENDOR_ACCOUNT_ID
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: PPG_SECRET_KEY
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: PPG_VALIDATION_KEY
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: PPG_API_SECRET_KEY
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: PPG_PRODUCTS
         sync: false
-        previewEnvRenderServiceName: mapsurvey
       - key: PPG_ACCEPT_TEST_IPN
         value: "false"
         previewValue: "true"
