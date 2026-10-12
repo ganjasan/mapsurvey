@@ -395,7 +395,7 @@ class SurveyHeader(models.Model):
     organization = models.ForeignKey("Organization", on_delete=models.CASCADE)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_surveys')
     name = models.CharField(max_length=45, validators=[validate_url_name])
-    redirect_url = models.CharField(max_length=250, default="#", help_text=_('URL to redirect after survey completion. E.g.: /thanks/ or https://example.com'))
+    redirect_url = models.CharField(max_length=250, default="#", help_text=_('"#" shows the built-in thank-you page; otherwise a full http(s) address respondents are sent to after the last page. Read it through survey.redirects, never raw.'))
     available_languages = models.JSONField(default=list, blank=True, help_text=_('List of ISO 639-1 language codes, e.g. ["en", "ru", "de"]'))
     visibility = models.CharField(max_length=10, choices=VISIBILITY_CHOICES, default="private", help_text=_('Controls whether survey appears on the landing page'))
     is_archived = models.BooleanField(default=False, help_text=_('Marks completed surveys whose results can be shown'))

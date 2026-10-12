@@ -813,7 +813,7 @@ class RoundTripTest(TestCase):
         survey = SurveyHeader.objects.create(
             name="roundtrip_survey",
             organization=self.org,
-            redirect_url="/completed/"
+            redirect_url="https://example.org/completed/"
         )
         section1 = SurveySection.objects.create(
             survey_header=survey,
@@ -881,7 +881,7 @@ class RoundTripTest(TestCase):
         # Verify structure
         self.assertEqual(imported_survey.name, "roundtrip_imported")
         self.assertEqual(imported_survey.organization.name, "TestOrg")
-        self.assertEqual(imported_survey.redirect_url, "/completed/")
+        self.assertEqual(imported_survey.redirect_url, "https://example.org/completed/")
 
         # Verify sections
         imported_sections = list(SurveySection.objects.filter(
@@ -9434,7 +9434,7 @@ class ReadOnlyLockTest(TestCase):
         url = f'/editor/surveys/{self.survey.uuid}/settings/'
         response = self.client.post(url, {
             'name': 'locked_survey',
-            'redirect_url': '/new-done/',
+            'redirect_url': 'https://example.org/new-done/',
             'visibility': 'private',
         })
         # Should succeed (200 for rendered form or 302 for redirect)
@@ -29725,7 +29725,7 @@ class TemplateCommentSyntaxTest(SimpleTestCase):
     #: Bare form strings that are format examples or CSS, not prose. Kept as an
     #: explicit list rather than a heuristic: 'fas fa-map-marker-alt' contains
     #: spaces, so "has a space therefore prose" would misfire on it.
-    UNTRANSLATED_FORM_LITERALS = {'survey_name', '#', 'fas fa-map-marker-alt'}
+    UNTRANSLATED_FORM_LITERALS = {'survey_name', 'https://', 'fas fa-map-marker-alt'}
 
     def test_creator_facing_form_strings_are_translatable(self):
         """
@@ -38168,7 +38168,7 @@ class SettingsPanelValidationContractTest(TestCase):
         """
         response = self.client.post(
             reverse('editor_survey_settings_panel', args=[self.survey.uuid]),
-            {'name': 'renamed_survey', 'redirect_url': '/thanks/', 'visibility': 'private'},
+            {'name': 'renamed_survey', 'redirect_url': 'https://example.org/thanks/', 'visibility': 'private'},
             HTTP_X_REQUESTED_WITH='XMLHttpRequest',
         )
 
@@ -49671,3 +49671,345 @@ class LiveSurveyEditingTest(TestCase):
         self.assertContains(response, 'Draft new version')
         self.assertNotContains(response, 'id="structureGateModal"')
         self.assertEqual(self._post_question(name='x').status_code, 403)
+
+
+# =============================================================================
+# Redirect after the last page (change fix-redirect-url-validation, #271)
+# =============================================================================
+
+class CleanRedirectUrlTest(SimpleTestCase):
+    """`survey.redirects.clean_redirect_url`: "#" or a valid http(s) URL."""
+
+    def test_unusable_values_mean_the_thanks_page(self):
+        """
+        GIVEN values creators actually stored: hashtags, messages, relative paths
+        WHEN they are cleaned
+        THEN each one becomes "#" (the built-in thank-you page)
+        """
+        from .redirects import clean_redirect_url
+        for value in ['#', '', None, '   ', '#projectname', '#thanks', '#/bedankt/',
+                      '/obrigada', '-', 'Test1', 'Wat is je naam', 'project#',
+                      'Lieliska vērība!', 'javascript:alert(1)', 'ftp://example.org/x']:
+            with self.subTest(value=value):
+                self.assertEqual(clean_redirect_url(value), '#')
+
+    def test_a_url_typed_after_the_default_anchor_is_kept(self):
+        """
+        GIVEN a URL typed after the pre-filled "#"
+        WHEN it is cleaned
+        THEN the "#" is dropped and the link the creator meant survives
+        """
+        from .redirects import clean_redirect_url
+        self.assertEqual(clean_redirect_url('#https://www.example.org/about'),
+                         'https://www.example.org/about')
+        self.assertEqual(clean_redirect_url('##http://example.org'), 'http://example.org')
+
+    def test_scheme_case_and_bare_www_are_fixed(self):
+        """
+        GIVEN "Https://…" and "www.…"
+        WHEN they are cleaned
+        THEN the scheme is lowercased and a bare www address gets https://
+        """
+        from .redirects import clean_redirect_url
+        self.assertEqual(clean_redirect_url('Https://example.org/A'), 'https://example.org/A')
+        self.assertEqual(clean_redirect_url('www.example.org/x'), 'https://www.example.org/x')
+
+    def test_a_valid_url_is_unchanged(self):
+        """
+        GIVEN a valid absolute https URL
+        WHEN it is cleaned
+        THEN it comes back unchanged
+        """
+        from .redirects import clean_redirect_url
+        url = 'https://docs.example.org/forms/d/e/abc/viewform?usp=sf_link'
+        self.assertEqual(clean_redirect_url(url), url)
+
+    def test_too_long_after_tidying_means_the_thanks_page(self):
+        """
+        GIVEN a 247-character www address (250 once https:// is added would overflow)
+        WHEN it is cleaned
+        THEN it becomes "#" rather than a value the column cannot hold
+        """
+        from .redirects import clean_redirect_url
+        value = 'www.example.org/' + 'a' * 231
+        self.assertEqual(len(value), 247)
+        self.assertEqual(clean_redirect_url(value), '#')
+
+
+class FinishRedirectTest(TestCase):
+    """Where the last section sends a respondent, whatever redirect_url holds."""
+
+    def _survey(self, name, redirect_url):
+        org = Organization.objects.create(name=f'{name} org')
+        survey = SurveyHeader.objects.create(
+            name=name, organization=org, redirect_url=redirect_url, status='published')
+        section = SurveySection.objects.create(
+            survey_header=survey, name='only_section', title='Only', code='S1', is_head=True,
+            start_map_postion=Point(30.0, 60.0), start_map_zoom=14)
+        question = Question.objects.create(
+            survey_section=section, name='Name', input_type='text_line', order_number=1)
+        return survey, question
+
+    def _finish(self, survey, question, htmx=False):
+        base = f'/surveys/{survey.name}/only_section/'
+        self.client.get(base)
+        extra = {'HTTP_HX_REQUEST': 'true'} if htmx else {}
+        return self.client.post(base, {question.code: 'Alice'}, **extra)
+
+    def test_an_anchor_sends_the_respondent_to_the_thanks_page(self):
+        """
+        GIVEN a survey whose redirect_url is a project hashtag
+        WHEN the respondent submits the last section
+        THEN they are redirected to the thanks page, not to "#projectname"
+        """
+        survey, question = self._survey('anchor_survey', '#projectname')
+        response = self._finish(survey, question)
+        self.assertRedirects(response, f'/surveys/{survey.uuid}/thanks/', fetch_redirect_response=False)
+
+    def test_an_anchor_over_htmx_sends_the_respondent_to_the_thanks_page(self):
+        """
+        GIVEN a survey whose redirect_url is a project hashtag
+        WHEN the respondent submits the last section through HTMX
+        THEN HX-Redirect names the thanks page
+        """
+        survey, question = self._survey('htmx_anchor_survey', '#projectname')
+        response = self._finish(survey, question, htmx=True)
+        self.assertEqual(response['HX-Redirect'], f'/surveys/{survey.uuid}/thanks/')
+
+    def test_a_link_typed_after_the_anchor_is_followed(self):
+        """
+        GIVEN a survey whose redirect_url is "#https://example.com" (typed after the old "#")
+        WHEN the respondent submits the last section through HTMX
+        THEN HX-Redirect is the link the creator meant
+        """
+        survey, question = self._survey('htmx_salvaged_survey', '#https://example.com')
+        response = self._finish(survey, question, htmx=True)
+        self.assertEqual(response['HX-Redirect'], 'https://example.com')
+
+    def test_relative_paths_and_text_send_the_respondent_to_the_thanks_page(self):
+        """
+        GIVEN surveys whose redirect_url is "/obrigada" or "-"
+        WHEN the respondent submits the last section
+        THEN they are redirected to the thanks page instead of a 404
+        """
+        for i, value in enumerate(['/obrigada', '-']):
+            with self.subTest(value=value):
+                survey, question = self._survey(f'relative_survey_{i}', value)
+                response = self._finish(survey, question)
+                self.assertRedirects(response, f'/surveys/{survey.uuid}/thanks/',
+                                     fetch_redirect_response=False)
+
+    def test_a_valid_link_still_wins(self):
+        """
+        GIVEN a survey whose redirect_url is a valid https URL
+        WHEN the respondent submits the last section, plain and over HTMX
+        THEN they are sent to that URL
+        """
+        survey, question = self._survey('link_survey', 'https://example.com/done')
+        self.assertEqual(self._finish(survey, question)['Location'], 'https://example.com/done')
+        self.assertEqual(self._finish(survey, question, htmx=True)['HX-Redirect'],
+                         'https://example.com/done')
+
+
+class SettingsFinishActionTest(TestCase):
+    """Survey settings: "After the last page" choice and the address check."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='finish_owner', password='pass')
+        self.org = _make_org('FinishOrg')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(name='finish_survey', organization=self.org)
+        self.client.login(username='finish_owner', password='pass')
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+        self.url = reverse('editor_survey_settings_panel', args=[self.survey.uuid])
+
+    def _save(self, **fields):
+        data = {'name': 'finish_survey', 'visibility': 'private'}
+        data.update(fields)
+        return self.client.post(self.url, data, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+
+    def test_default_survey_shows_the_thank_you_option(self):
+        """
+        GIVEN a survey with the default redirect_url "#"
+        WHEN the owner opens Survey settings
+        THEN "Show the thank-you page" is checked and the address box is hidden and empty
+        """
+        html = self.client.get(self.url).content.decode()
+        self.assertRegex(html, r'<input[^>]*value="thanks"[^>]*checked')
+        self.assertRegex(html, r'data-finish-link\s+hidden')
+        self.assertNotRegex(html, r'name="redirect_url"[^>]*value="#"')
+
+    def test_a_stored_link_shows_the_address_option(self):
+        """
+        GIVEN a survey whose redirect_url is a valid link
+        WHEN the owner opens Survey settings
+        THEN "Open a web address" is checked and the box holds the link
+        """
+        self.survey.redirect_url = 'https://example.com/x'
+        self.survey.save()
+        html = self.client.get(self.url).content.decode()
+        self.assertRegex(html, r'<input[^>]*value="link"[^>]*checked')
+        self.assertIn('value="https://example.com/x"', html)
+        self.assertNotRegex(html, r'data-finish-link\s+hidden')
+
+    def test_a_stored_broken_value_shows_the_thank_you_option(self):
+        """
+        GIVEN a survey still holding "#projectname"
+        WHEN the owner opens Survey settings
+        THEN it reads as the thank-you page, which is where respondents go
+        """
+        self.survey.redirect_url = '#projectname'
+        self.survey.save()
+        html = self.client.get(self.url).content.decode()
+        self.assertRegex(html, r'<input[^>]*value="thanks"[^>]*checked')
+        self.assertNotIn('#projectname', html)
+
+    def test_a_valid_address_is_saved(self):
+        """
+        GIVEN the owner chose "Open a web address"
+        WHEN they enter a valid URL and the panel autosaves
+        THEN redirect_url holds that URL
+        """
+        response = self._save(finish_action='link', redirect_url='https://www.example.org/project')
+        self.assertEqual(response.status_code, 200)
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.redirect_url, 'https://www.example.org/project')
+
+    def test_typing_slips_are_fixed_on_save(self):
+        """
+        GIVEN "#https://…" and "www.…" typed into the address box
+        WHEN the panel autosaves
+        THEN the stored value is the clean https URL
+        """
+        for typed, stored in [('#https://www.example.org/p', 'https://www.example.org/p'),
+                              ('www.example.org/p', 'https://www.example.org/p')]:
+            with self.subTest(typed=typed):
+                self.assertEqual(self._save(finish_action='link', redirect_url=typed).status_code, 200)
+                self.survey.refresh_from_db()
+                self.assertEqual(self.survey.redirect_url, stored)
+
+    def test_an_invalid_address_is_refused(self):
+        """
+        GIVEN a hashtag, a relative path or a message typed into the address box
+        WHEN the panel autosaves
+        THEN the response is 400 with an error on redirect_url and nothing changes
+        """
+        self.survey.redirect_url = 'https://example.org/keep'
+        self.survey.save()
+        for typed in ['#projectname', '/thanks', 'Thank you!']:
+            with self.subTest(typed=typed):
+                response = self._save(finish_action='link', redirect_url=typed)
+                self.assertEqual(response.status_code, 400)
+                self.assertIn('redirect_url', response.json()['errors'])
+                self.survey.refresh_from_db()
+                self.assertEqual(self.survey.redirect_url, 'https://example.org/keep')
+
+    def test_choosing_the_thank_you_page_clears_the_address(self):
+        """
+        GIVEN a survey with a link
+        WHEN the owner switches to "Show the thank-you page" (the box still holds the link)
+        THEN redirect_url becomes "#"
+        """
+        self.survey.redirect_url = 'https://example.org/keep'
+        self.survey.save()
+        self.assertEqual(self._save(finish_action='thanks', redirect_url='https://example.org/keep').status_code, 200)
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.redirect_url, '#')
+
+    def test_an_empty_address_saves_as_the_thank_you_page(self):
+        """
+        GIVEN the owner just picked "Open a web address" and has typed nothing yet
+        WHEN the panel autosaves on that change
+        THEN the save succeeds with redirect_url "#" and no error
+        """
+        response = self._save(finish_action='link', redirect_url='')
+        self.assertEqual(response.status_code, 200)
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.redirect_url, '#')
+
+    def test_a_post_without_the_choice_still_works(self):
+        """
+        GIVEN an older client that posts redirect_url without finish_action
+        WHEN it saves a valid link, then "#"
+        THEN both saves succeed as before
+        """
+        self.assertEqual(self._save(redirect_url='https://example.org/a').status_code, 200)
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.redirect_url, 'https://example.org/a')
+        self.assertEqual(self._save(redirect_url='#').status_code, 200)
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.redirect_url, '#')
+
+
+class RedirectUrlImportTest(TestCase):
+    """ZIP import (also the AI-generation path) normalises redirect_url."""
+
+    def _import_with(self, redirect_url):
+        org = Organization.objects.create(name='ImportRedirectOrg')
+        survey = SurveyHeader.objects.create(name='import_redirect_src', organization=org)
+        output = BytesIO()
+        export_survey_to_zip(survey, output, mode='structure')
+        output.seek(0)
+        with zipfile.ZipFile(output, 'r') as zf:
+            data = json.loads(zf.read('survey.json'))
+        data['survey']['name'] = 'import_redirect_dst'
+        data['survey']['redirect_url'] = redirect_url
+        buffer = BytesIO()
+        with zipfile.ZipFile(buffer, 'w') as zf:
+            zf.writestr('survey.json', json.dumps(data))
+        buffer.seek(0)
+        imported, _warnings = import_survey_from_zip(buffer)
+        return imported
+
+    def test_a_hashtag_is_imported_as_the_thanks_page(self):
+        """
+        GIVEN an archive with "redirect_url": "#thanks"
+        WHEN it is imported
+        THEN the survey's redirect_url is "#"
+        """
+        self.assertEqual(self._import_with('#thanks').redirect_url, '#')
+
+    def test_an_anchored_link_is_imported_without_the_anchor(self):
+        """
+        GIVEN an archive with "redirect_url": "#https://example.org"
+        WHEN it is imported
+        THEN the survey's redirect_url is "https://example.org"
+        """
+        self.assertEqual(self._import_with('#https://example.org').redirect_url, 'https://example.org')
+
+
+class NormalizeRedirectUrlMigrationTest(TestCase):
+    """Migration 0094 rewrites stored redirect_url values."""
+
+    def test_forward_mapping(self):
+        """
+        GIVEN surveys holding the shapes found in production
+        WHEN the migration's forward function runs
+        THEN links behind "#" are kept, schemes lowercased, the rest becomes "#"
+        """
+        import importlib
+        from django.apps import apps as django_apps
+        migration = importlib.import_module('survey.migrations.0094_normalize_redirect_url')
+        org = Organization.objects.create(name='MigrationRedirectOrg')
+        cases = {
+            '#https://www.example.org/about': 'https://www.example.org/about',
+            'Https://Project-AK.example.org': 'https://Project-AK.example.org',
+            '#tag': '#',
+            '/obrigada': '#',
+            '-': '#',
+            'Wat is je naam': '#',
+            '#': '#',
+            'https://ok.example.org/x': 'https://ok.example.org/x',
+        }
+        surveys = {
+            old: SurveyHeader.objects.create(name=f'mig_{i}', organization=org, redirect_url=old)
+            for i, old in enumerate(cases)
+        }
+        with contextlib.redirect_stdout(StringIO()):
+            migration.forwards(django_apps, None)
+        for old, expected in cases.items():
+            with self.subTest(old=old):
+                surveys[old].refresh_from_db()
+                self.assertEqual(surveys[old].redirect_url, expected)

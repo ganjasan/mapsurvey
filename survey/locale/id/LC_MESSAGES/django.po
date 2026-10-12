@@ -7690,3 +7690,27 @@ msgstr "Lokasi Anda tidak dapat ditemukan — cari tempat atau seret peta."
 #: survey/templates/editor/partials/section_map_picker.html
 msgid "Geolocation is not available in this browser."
 msgstr "Geolokasi tidak tersedia di peramban ini."
+
+#: survey/editor_forms.py
+msgid "After the last page"
+msgstr "Setelah halaman terakhir"
+
+#: survey/editor_forms.py
+msgid "Show the thank-you page"
+msgstr "Tampilkan halaman terima kasih"
+
+#: survey/editor_forms.py
+msgid "Open a web address"
+msgstr "Buka alamat web"
+
+#: survey/editor_forms.py
+msgid "Web address"
+msgstr "Alamat web"
+
+#: survey/editor_forms.py
+msgid "Respondents are sent here after the last page, for example https://www.facebook.com/yourproject"
+msgstr "Responden diarahkan ke sini setelah halaman terakhir, misalnya https://www.facebook.com/yourproject"
+
+#: survey/editor_forms.py
+msgid "Enter a full web address, for example https://www.facebook.com/yourproject"
+msgstr "Masukkan alamat web lengkap, misalnya https://www.facebook.com/yourproject"

@@ -337,6 +337,13 @@ changes") carry "Don't ask again": ONE browser-side preference, `localStorage['m
 (`window.EditorConfirm` in `editor_base.html`), restored from the account menu; the compatibility
 dialog is never skipped. Switch off ⇒ the old read-only page and "draft" vocabulary.
 
+**After the last page (`SurveyHeader.redirect_url`, change `fix-redirect-url-validation`, #271)**: the
+value is `"#"` (built-in thanks page) or an absolute http(s) URL, nothing else. Never read it raw:
+respondent redirects go through `survey/redirects.py::completion_url(survey)`, imports through
+`clean_redirect_url`. It used to be free text, and hashtags, thank-you messages and `#https://…`
+(typed after the pre-filled `#`) kept respondents pressing Finish on the last page. Settings shows it
+as the "After the last page" choice; the form refuses anything that is not a full http(s) address.
+
 **Session Management**: Survey sessions are created on first section view and tracked via `request.session['survey_session_id']`.
 
 **Empty sessions (change `hide-empty-sessions`, issue #226)**: a session with no top-level `Answer`

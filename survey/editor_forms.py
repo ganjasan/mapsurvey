@@ -4,6 +4,7 @@ from django.core.validators import RegexValidator
 from survey import marker_icons
 from .models import SurveyHeader, SurveySection, Question, Organization, BASEMAP_CHOICES
 from .html_sanitize import coerce_creator_html
+from .redirects import NO_REDIRECT, clean_redirect_url, is_valid_redirect, tidy_redirect_input
 from .layers import layers_for
 from .question_types import GEO_TYPES, MAP_ONLY_TYPES, SHARED_MAP_SOURCE_TYPES
 
@@ -110,6 +111,17 @@ class SurveyBriefForm(forms.Form):
 
 
 class SurveyHeaderForm(forms.ModelForm):
+    # "Redirect URL" as a bare text box pre-filled with "#" collected hashtags,
+    # thank-you messages and "#https://..." -- and every one of them left
+    # respondents pressing Finish on the last page (#271). The creator now picks
+    # what happens; the address box is only for the second option.
+    finish_action = forms.ChoiceField(
+        choices=(('thanks', _('Show the thank-you page')),
+                 ('link', _('Open a web address'))),
+        required=False,
+        widget=forms.RadioSelect(),
+        label=_('After the last page'),
+    )
     default_rating_display_style = forms.ChoiceField(
         choices=(('scale_strip', 'Compact scale'), ('list_pips', 'Labeled list'),
                  ('stars', 'Stars')),
@@ -140,7 +152,7 @@ class SurveyHeaderForm(forms.ModelForm):
             # nobody should touch, which is how surveys ended up called things
             # like demo_city_feedback. It is the title respondents see.
             'name': _('Survey name'),
-            'redirect_url': _('Redirect URL'),
+            'redirect_url': _('Web address'),
             'available_languages': _('Available languages'),
             'visibility': _('Visibility'),
             'cover_image': _('Cover image'),
@@ -155,7 +167,7 @@ class SurveyHeaderForm(forms.ModelForm):
                 'class': 'form-control', 'placeholder': _('e.g. Park improvements'),
                 'data-char-counter': '',
             }),
-            'redirect_url': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '#'}),
+            'redirect_url': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'https://'}),
             'available_languages': forms.HiddenInput(attrs={'id': 'id_available_languages'}),
             'visibility': forms.Select(attrs={'class': 'form-control'}),
             'cover_image': forms.ClearableFileInput(attrs={'class': 'form-control-file'}),
@@ -181,6 +193,15 @@ class SurveyHeaderForm(forms.ModelForm):
         # autosave of the whole panel, which is the permanent "Not saved --
         # retry" Replay Vision caught on 2026-09-21 (backlog #187).
         self.fields['redirect_url'].required = False
+        self.fields['redirect_url'].help_text = _(
+            'Respondents are sent here after the last page, for example '
+            'https://www.facebook.com/yourproject')
+        # Never show the stored "#" in the box: creators typed their URL after
+        # it. A stored value that is not a working link reads as "thank-you
+        # page" -- that is where respondents go with it anyway.
+        stored = clean_redirect_url(self.instance.redirect_url if self.instance else '')
+        self.fields['finish_action'].initial = 'thanks' if stored == NO_REDIRECT else 'link'
+        self.initial['redirect_url'] = '' if stored == NO_REDIRECT else stored
         if self.instance and self.instance.pk:
             self.fields['default_rating_display_style'].initial = self.instance.get_default_rating_display_style()
             accent = self.instance.get_accent_color()
@@ -192,7 +213,19 @@ class SurveyHeaderForm(forms.ModelForm):
 
     def clean_redirect_url(self):
         # Empty means "no redirect", which this model stores as "#".
-        return (self.cleaned_data.get('redirect_url') or '').strip() or '#'
+        raw = (self.cleaned_data.get('redirect_url') or '').strip()
+        action = self.data.get(self.add_prefix('finish_action'))
+        if action == 'thanks' or raw in ('', NO_REDIRECT):
+            return NO_REDIRECT
+        # Fix what a person would fix by hand ("#https://...", "www....",
+        # "Https://"), then insist on a real address. Refusing beats silently
+        # storing "#": the creator would believe the link works.
+        value = tidy_redirect_input(raw)
+        if not is_valid_redirect(value):
+            raise forms.ValidationError(_(
+                'Enter a full web address, for example '
+                'https://www.facebook.com/yourproject'))
+        return value
 
     def clean_basemaps(self):
         VALID = {slug for slug, _ in BASEMAP_CHOICES}

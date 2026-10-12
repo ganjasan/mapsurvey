@@ -24,6 +24,7 @@ from .models import (
     QuestionTranslation, default_basemaps, SurveyMapLayer,
 )
 from .html_sanitize import coerce_creator_html
+from .redirects import clean_redirect_url
 from .layers import layers_for, normalize_style, GEOMETRY_TEXT_FIELDS
 
 logger = logging.getLogger(__name__)
@@ -721,7 +722,9 @@ def create_survey_header(
         name=name,
         organization=organization,
         created_by=created_by,
-        redirect_url=_archive_text(survey_data, "redirect_url", "#", 250),
+        # Only "#" or a real http(s) URL; a hashtag or a message here trapped
+        # respondents on the last page (#271).
+        redirect_url=clean_redirect_url(_archive_text(survey_data, "redirect_url", "#")),
         available_languages=survey_data.get("available_languages", []),
         thanks_html=survey_data.get("thanks_html", {}),
         status=survey_data.get("status", "draft"),
