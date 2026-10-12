@@ -32,6 +32,6 @@
 ## 6. Verify and ship
 
 - [x] 6.1 Run `./run_tests.sh survey` once after the changes; summarise the delta against the baseline
-- [ ] 6.2 Open the PR referencing #271 (no `[render preview]` unless asked)
-- [ ] 6.3 After deploy: check the pre-deploy log for the normalised ids and that the published surveys are among them
-- [ ] 6.4 Draft the four creator emails in the ops repo (short "thanks, fixed" style, `#https://` cases: the link now opens; others: respondents now see the thank-you page and how to add a link); send only after the owner's go-ahead
+- [x] 6.2 Open the PR referencing #271 (no `[render preview]` unless asked)
+- [x] 6.3 After deploy: check the pre-deploy log for the normalised ids and that the published surveys are among them
+- [x] 6.4 Draft the four creator emails in the ops repo (short "thanks, fixed" style, `#https://` cases: the link now opens; others: respondents now see the thank-you page and how to add a link); send only after the owner's go-ahead — Jessica sent 2026-10-12; IBMF left to the owner to send by hand in their thread; the two ITS student surveys and the earlier-contacted creator get no extra letter (owner decision)
