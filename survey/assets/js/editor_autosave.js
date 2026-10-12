@@ -76,7 +76,11 @@
             if (resp.status === 422) {
                 return resp.json().then(function (data) {
                     var first = data.errors && Object.keys(data.errors)[0];
-                    var msg = first ? first + ': ' + data.errors[first][0] : 'Check the form';
+                    // A form-wide refusal (a structural change on a live
+                    // survey) is a sentence already — no field label.
+                    var msg = !first ? 'Check the form'
+                        : first === '__all__' ? data.errors[first][0]
+                        : first + ': ' + data.errors[first][0];
                     setState(form, 'error', 'Not saved — ' + msg);
                 });
             }

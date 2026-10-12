@@ -320,6 +320,9 @@
         /* Muted "Read-only" pill in the Build toolbar (no amber banner). */
         .ro-pill { font-size: .62rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: #6b7280; background: #f3f4f6; border: 1px solid var(--border-color); border-radius: 4px; padding: 1px 5px; vertical-align: middle; margin-left: 4px; }
         /* Read-only message — important, so brighter than the muted subtitle. */
+        .unpub-pill { font-size: .62rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: #92400e; background: #fef3c7; border: 1px solid #fcd34d; border-radius: 4px; padding: 1px 5px; vertical-align: middle; margin-left: 6px; white-space: nowrap; }
+        .unpub-toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 1060; max-width: min(560px, calc(100vw - 32px)); background: #1f2937; color: #fff; font-size: .85rem; border-radius: 8px; padding: 10px 36px 10px 14px; box-shadow: 0 6px 24px rgba(0,0,0,.2); }
+        .unpub-toast button { position: absolute; right: 8px; top: 6px; background: none; border: 0; color: #d1d5db; font-size: 1.1rem; cursor: pointer; }
         .build-ro-msg { font-size: .84rem; font-weight: 600; color: #b45309; display: inline-flex; align-items: center; gap: .35rem; }
         /* Thanks-page editor (Quill) */
         #thanks-quill { background: #fff; border-radius: 0 0 var(--radius) var(--radius); }
@@ -1049,7 +1052,7 @@
                     <a class="dropdown-item" href="{% url 'editor_survey_share' survey.uuid %}"><i class="fas fa-share-alt" style="margin-right:4px;"></i>{% trans "Share…" %}</a>
                     <a class="dropdown-item" href="{% url 'survey' survey_slug=survey.uuid %}" target="_blank"><i class="fas fa-external-link-alt" style="margin-right:4px;"></i>{% trans "Open as respondent" %}</a>
                     {% if show_draft_actions %}
-                    <a class="dropdown-item text-danger" href="#" data-toggle="modal" data-target="#discardDraftModal"><i class="fas fa-trash" style="margin-right:4px;"></i>{% trans "Discard draft" %}</a>
+                    <a class="dropdown-item text-danger" href="#" data-toggle="modal" data-target="#discardDraftModal"><i class="fas fa-trash" style="margin-right:4px;"></i>{% if LIVE_SURVEY_EDITING %}{% trans "Discard changes" %}{% else %}{% trans "Discard draft" %}{% endif %}</a>
                     {% elif is_owner and survey.status == 'draft' and not survey.is_draft_copy %}
                     <a class="dropdown-item text-danger" href="#" data-toggle="modal" data-target="#discardDraftSurveyModal"><i class="fas fa-trash" style="margin-right:4px;"></i>{% trans "Discard survey" %}</a>
                     {% endif %}
@@ -1064,6 +1067,10 @@
                     {% include "editor/partials/_language_switcher.html" %}
                     <div class="dropdown-divider"></div>
                     <a class="dropdown-item" href="{% url 'whats_new' %}"><i class="fas fa-gift" style="margin-right:4px;"></i>{% trans "What's new" %}{% if whats_new.unseen_count %} <span class="wn-badge">{{ whats_new.unseen_count }}</span>{% endif %}</a>
+                    {% comment %}Experienced creators switch the two confirmations off ("Don't
+                    ask again" in the dialogs); this is where they come back. Browser-only
+                    (localStorage), like the Responses layer panel state.{% endcomment %}
+                    <a class="dropdown-item editor-confirm-toggle" href="#" onclick="EditorConfirm.toggle(event)"><i class="fas fa-check-square" style="margin-right:4px;" data-confirm-icon></i>{% trans "Ask before publishing or changing structure" %}</a>
                     <a class="dropdown-item" href="#" onclick="openSupportChat(event)"><i class="fas fa-comment-dots" style="margin-right:4px;"></i>{% trans "Help & support" %}</a>
                     <a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt" style="margin-right:4px;"></i>{% trans "Logout" %}</a>
                 </div>
@@ -1095,6 +1102,7 @@
                     {% endif %}
                     <div class="dropdown-divider"></div>
                     <a class="dropdown-item" href="{% url 'whats_new' %}"><i class="fas fa-gift" style="margin-right:4px;"></i>{% trans "What's new" %}{% if whats_new.unseen_count %} <span class="wn-badge">{{ whats_new.unseen_count }}</span>{% endif %}</a>
+                    <a class="dropdown-item editor-confirm-toggle" href="#" onclick="EditorConfirm.toggle(event)"><i class="fas fa-check-square" style="margin-right:4px;" data-confirm-icon></i>{% trans "Ask before publishing or changing structure" %}</a>
                     {% if MOBILE_EDITOR_NAV %}
                     <a class="dropdown-item" href="#" onclick="openSupportChat(event)"><i class="fas fa-comment-dots" style="margin-right:4px;"></i>{% trans "Help & support" %}</a>
                     {% endif %}
@@ -1177,6 +1185,29 @@
     }
     document.addEventListener('DOMContentLoaded', function() { initPasswordToggles(); });
     document.body.addEventListener('htmx:afterSettle', function(e) { initPasswordToggles(e.detail.target); });
+    </script>
+    <script>
+    // One preference for the two confirmation dialogs of a live survey —
+    // "Publish changes" and the structure prompt. `off` skips both; the
+    // dialogs' "Don't ask again" box sets it, the account menu shows and
+    // flips it. Per browser, never the model (hotfix after #267).
+    window.EditorConfirm = (function () {
+        var KEY = 'msEditorConfirmations';
+        function get() { try { return localStorage.getItem(KEY) !== 'off'; } catch (e) { return true; } }
+        function set(on) { try { if (on) localStorage.removeItem(KEY); else localStorage.setItem(KEY, 'off'); } catch (e) {} paint(); }
+        function paint() {
+            document.querySelectorAll('.editor-confirm-toggle [data-confirm-icon]').forEach(function (icon) {
+                icon.className = 'fas ' + (get() ? 'fa-check-square' : 'fa-square');
+            });
+        }
+        document.addEventListener('DOMContentLoaded', paint);
+        return {
+            asks: get,
+            // Called from a dialog's confirm button with its "Don't ask again" box.
+            remember: function (checkbox) { if (checkbox && checkbox.checked) set(false); },
+            toggle: function (e) { if (e) e.preventDefault(); set(!get()); },
+        };
+    })();
     </script>
     {% block extra_scripts %}{% endblock %}
     <!--Start of Tawk.to Script-->

@@ -52,10 +52,15 @@ def get_effective_survey_role(user, survey):
     # Org baseline
     baseline = _org_role_to_survey_baseline(membership.role)
 
-    # Explicit collaborator role
+    # Explicit collaborator role. A draft copy ("unpublished changes") and an
+    # archived version answer with the canonical survey's collaborators: the
+    # rows clone_survey_for_draft copied are a snapshot, publish_draft copies
+    # none onto the archived header, and Build redirects collaborators added
+    # since straight to the draft (change edit-live-survey).
+    collab_survey_id = survey.published_version_id or survey.canonical_survey_id or survey.pk
     collab_role = None
     try:
-        collab = SurveyCollaborator.objects.get(user=user, survey=survey)
+        collab = SurveyCollaborator.objects.get(user=user, survey_id=collab_survey_id)
         collab_role = collab.role
     except SurveyCollaborator.DoesNotExist:
         pass

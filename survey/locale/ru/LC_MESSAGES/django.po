@@ -7561,3 +7561,37 @@ msgstr "Извлечённые уроки"
 #: survey/templates/partials/_story_card.html
 msgid "Read the story"
 msgstr "Читать историю"
+
+#: survey/templates/base_landing.html
+msgid "Participatory mapping tools: compared"
+msgstr "Инструменты партисипативного картирования: сравнение"
+
+#: survey/editor_forms.py
+msgid "After the last page"
+msgstr "После последней страницы"
+
+#: survey/editor_forms.py
+msgid "Show the thank-you page"
+msgstr "Показать страницу благодарности"
+
+#: survey/editor_forms.py
+msgid "Open a web address"
+msgstr "Открыть веб-адрес"
+
+#: survey/editor_forms.py
+msgid "Web address"
+msgstr "Веб-адрес"
+
+#: survey/editor_forms.py
+msgid ""
+"Respondents are sent here after the last page, for example https://www."
+"facebook.com/yourproject"
+msgstr ""
+"Сюда респонденты попадут после последней страницы, например https://www."
+"facebook.com/yourproject"
+
+#: survey/editor_forms.py
+msgid ""
+"Enter a full web address, for example https://www.facebook.com/yourproject"
+msgstr ""
+"Введите полный веб-адрес, например https://www.facebook.com/yourproject"

@@ -7,7 +7,11 @@ When the viewer may rename, the name is a click-to-edit control: editor_survey_r
 swaps in an input on activation. When they may not, the markup holds no input at all, so
 the affordance is absent rather than merely hidden.
 {% endcomment %}
-{% if survey.is_draft_copy %}
+{% if survey.is_draft_copy and LIVE_SURVEY_EDITING %}
+{% comment %}Unpublished changes are the same survey to the creator, not a second one
+(change edit-live-survey): its own name. The status chip says "Unpublished changes".{% endcomment %}
+<span class="survey-name">{{ survey.published_version.name }}</span>
+{% elif survey.is_draft_copy %}
 <span class="survey-name">{% blocktrans with name=survey.published_version.name %}Draft of {{ name }}{% endblocktrans %}</span>
 {% elif can_rename %}
 <span class="survey-name survey-name--editable"

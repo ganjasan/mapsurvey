@@ -7709,3 +7709,27 @@ msgstr "Uw locatie kon niet worden bepaald — zoek een plaats of sleep de kaart
 #: survey/templates/editor/partials/section_map_picker.html
 msgid "Geolocation is not available in this browser."
 msgstr "Geolocatie is niet beschikbaar in deze browser."
+
+#: survey/editor_forms.py
+msgid "After the last page"
+msgstr "Na de laatste pagina"
+
+#: survey/editor_forms.py
+msgid "Show the thank-you page"
+msgstr "Bedankpagina tonen"
+
+#: survey/editor_forms.py
+msgid "Open a web address"
+msgstr "Een webadres openen"
+
+#: survey/editor_forms.py
+msgid "Web address"
+msgstr "Webadres"
+
+#: survey/editor_forms.py
+msgid "Respondents are sent here after the last page, for example https://www.facebook.com/yourproject"
+msgstr "Hier komen respondenten na de laatste pagina terecht, bijvoorbeeld https://www.facebook.com/yourproject"
+
+#: survey/editor_forms.py
+msgid "Enter a full web address, for example https://www.facebook.com/yourproject"
+msgstr "Vul een volledig webadres in, bijvoorbeeld https://www.facebook.com/yourproject"

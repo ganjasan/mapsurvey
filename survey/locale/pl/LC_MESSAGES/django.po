@@ -7773,3 +7773,27 @@ msgstr "Nie udało się ustalić Twojej lokalizacji — wyszukaj miejsce lub prz
 #: survey/templates/editor/partials/section_map_picker.html
 msgid "Geolocation is not available in this browser."
 msgstr "Geolokalizacja nie jest dostępna w tej przeglądarce."
+
+#: survey/editor_forms.py
+msgid "After the last page"
+msgstr "Po ostatniej stronie"
+
+#: survey/editor_forms.py
+msgid "Show the thank-you page"
+msgstr "Pokaż stronę z podziękowaniem"
+
+#: survey/editor_forms.py
+msgid "Open a web address"
+msgstr "Otwórz adres internetowy"
+
+#: survey/editor_forms.py
+msgid "Web address"
+msgstr "Adres internetowy"
+
+#: survey/editor_forms.py
+msgid "Respondents are sent here after the last page, for example https://www.facebook.com/yourproject"
+msgstr "Tutaj trafią respondenci po ostatniej stronie, na przykład https://www.facebook.com/yourproject"
+
+#: survey/editor_forms.py
+msgid "Enter a full web address, for example https://www.facebook.com/yourproject"
+msgstr "Wpisz pełny adres internetowy, na przykład https://www.facebook.com/yourproject"

@@ -11,6 +11,20 @@
 
   <div class="pr-scroll">
 
+    {% if shadowed_by_draft %}
+    {% comment %}Publishing the unpublished changes replaces these settings, so a
+    save here would be undone — the server refuses it; say so and point at the
+    one editing surface (change edit-live-survey).{% endcomment %}
+    <div class="alert alert-warning" data-testid="settings-shadowed">
+      <i class="fas fa-code-branch mr-1"></i>
+      {% trans "This survey has unpublished changes, and publishing them replaces these settings." %}
+      <a href="{% url 'editor_survey_detail' shadowed_by_draft.uuid %}?panel=settings">{% trans "Edit the settings there" %}</a>
+    </div>
+    <script>
+    document.querySelectorAll('#surveySettingsGeneralForm input, #surveySettingsGeneralForm select, #surveySettingsGeneralForm textarea').forEach(function (el) { el.disabled = true; });
+    </script>
+    {% endif %}
+
     {% comment %}Survey settings — grouped into semantic cards (mirrors the
     Publish space's Page settings). All fields stay inside one autosaving form.{% endcomment %}
     <form method="post" id="surveySettingsGeneralForm" data-autosave
@@ -31,7 +45,19 @@
           {% if form.visibility.help_text %}<div class="pr-help">{{ form.visibility.help_text }}</div>{% endif %}
           {% for error in form.visibility.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
         </div>
-        <div class="pr-field">
+        {% comment %}Where respondents go after the last page (#271). A choice, not a bare
+        "Redirect URL" box: that box collected hashtags and thank-you messages,
+        and respondents then kept pressing Finish on the same page.{% endcomment %}
+        <div class="pr-field" data-finish-action>
+          <label>{{ form.finish_action.label }}</label>
+          {% for radio in form.finish_action %}
+          <div class="form-check">
+            {{ radio.tag }}
+            <label class="form-check-label" for="{{ radio.id_for_label }}" style="display:inline;font-weight:400;margin:0;">{{ radio.choice_label }}</label>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="pr-field" data-finish-link{% if form.finish_action.value != 'link' %} hidden{% endif %}>
           <label for="{{ form.redirect_url.id_for_label }}">{{ form.redirect_url.label }}</label>
           {{ form.redirect_url }}
           {% if form.redirect_url.help_text %}<div class="pr-help">{{ form.redirect_url.help_text }}</div>{% endif %}
@@ -47,6 +73,19 @@
           <div class="pr-help">{% trans "Removing the badge is part of Pro." %} <a href="{% url 'org_billing' survey.organization.slug %}">{% trans "See plans" %}</a></div>
           {% endif %}
         </div>
+        <script>
+        (function () {
+          var form = document.getElementById('surveySettingsGeneralForm');
+          var box = form && form.querySelector('[data-finish-link]');
+          if (!box) return;
+          form.querySelectorAll('input[name="finish_action"]').forEach(function (radio) {
+            radio.addEventListener('change', function () {
+              box.hidden = radio.value !== 'link' || !radio.checked;
+              if (!box.hidden) box.querySelector('input').focus();
+            });
+          });
+        })();
+        </script>
       </div>
 
       <div class="pr-card">

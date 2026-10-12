@@ -394,6 +394,7 @@
                             {% if survey.version_number > 1 %}<span style="font-size:0.65rem;color:#9ca3af;font-weight:400;"> v{{ survey.version_number }}</span>{% endif %}
                         </span>
                         <span class="status-pill badge badge-{{ survey.status|status_badge_class }}">{{ survey.get_status_display }}</span>
+                        {% if survey.has_unpublished_changes %}<span class="status-pill badge badge-warning" title="{% trans 'Edited, not yet published — respondents still see the live survey' %}">{% trans "Unpublished changes" %}</span>{% endif %}
                         {% if survey.public_results_page.is_published %}<span class="status-pill badge badge-primary" title="{% trans 'Results page is live' %}">{% trans "Results live" %}</span>{% endif %}
                     </div>
                     <div class="card-kpi">
@@ -443,6 +444,7 @@
                     <span class="row-name">{{ survey.name }}{% if survey.version_number > 1 %}<span style="font-size:0.65rem;color:#9ca3af;font-weight:400;"> v{{ survey.version_number }}</span>{% endif %}</span>
                     <div class="row-meta">
                         <span class="status-pill badge badge-{{ survey.status|status_badge_class }}">{{ survey.get_status_display }}</span>
+                        {% if survey.has_unpublished_changes %}<span class="status-pill badge badge-warning" title="{% trans 'Edited, not yet published — respondents still see the live survey' %}">{% trans "Unpublished changes" %}</span>{% endif %}
                         {% if survey.updated_at %}&middot; {% blocktrans with ago=survey.updated_at|timesince %}{{ ago }} ago{% endblocktrans %}{% endif %}
                     </div>
                 </div>

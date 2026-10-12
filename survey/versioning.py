@@ -8,6 +8,7 @@ Provides draft-copy workflow for published surveys:
 """
 from dataclasses import dataclass, field
 
+from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
 
@@ -347,6 +348,102 @@ def clone_survey_for_draft(canonical, structure_source=None):
     return draft
 
 
+# ─── Live editing (change edit-live-survey) ─────────────────────────────────
+#
+# A published or closed survey takes SAFE edits in place — wording, help text,
+# translations, added options, map and display settings — because none of them
+# can orphan an answer. STRUCTURAL edits go to the draft copy, which the editor
+# calls "unpublished changes". The rule is by kind of edit, not by whether the
+# target happens to have answers today, so it stays explainable in a sentence.
+# Removing a choice is the one data-dependent case, and it follows the same rule
+# check_draft_compatibility applies at publish time (answered codes only).
+
+def live_editing_enabled():
+    return getattr(settings, 'LIVE_SURVEY_EDITING', False)
+
+
+def is_live(survey):
+    """True for a published/closed canonical survey — the one respondents see."""
+    return survey.status in ('published', 'closed') and not survey.is_draft_copy
+
+
+def answered_choice_counts(question):
+    """{choice code: number of answers that selected it} for one question row."""
+    counts = {}
+    for selected in (
+        Answer.objects.filter(question=question, selected_choices__isnull=False)
+        .values_list('selected_choices', flat=True)
+    ):
+        for code in set(selected or ()):
+            counts[code] = counts.get(code, 0) + 1
+    return counts
+
+
+def removed_answered_choices(question, old_choices, new_choices):
+    """Choices dropped by an edit that answers still point at.
+
+    Returns [(code, label, answer_count)] — empty when the edit is safe.
+    """
+    old = {c.get('code'): c for c in (old_choices or []) if isinstance(c, dict)}
+    new_codes = {c.get('code') for c in (new_choices or []) if isinstance(c, dict)}
+    removed = set(old) - new_codes
+    if not removed:
+        return []
+    counts = answered_choice_counts(question)
+    return [
+        (code, old[code].get('name') or str(code), counts[code])
+        for code in sorted(removed, key=str) if counts.get(code)
+    ]
+
+
+def structural_question_changes(before, after, removed_choices=()):
+    """Reasons an edit of `before` into `after` is structural on a live survey.
+
+    `before` is a dict snapshot taken before the form touched the instance
+    (ModelForm validation mutates it); `after` is the unsaved Question.
+    """
+    reasons = []
+    if before['input_type'] != after.input_type:
+        reasons.append('the question type')
+    if before['layer_id'] != after.layer_id:
+        reasons.append('the layer')
+    if (before['visibility_rule'] or None) != (after.visibility_rule or None):
+        reasons.append('the visibility rule')
+    for _code, label, count in removed_choices:
+        reasons.append(f'the option “{label}” ({count} answer{"s" if count != 1 else ""})')
+    return reasons
+
+
+def question_snapshot(question):
+    return {
+        'input_type': question.input_type,
+        'layer_id': question.layer_id,
+        'visibility_rule': question.visibility_rule,
+        'choices': list(question.choices or []),
+    }
+
+
+def structural_section_changes(before, after):
+    reasons = []
+    if before['code'] != after.code:
+        reasons.append('the section code')
+    if (before['visibility_rule'] or None) != (after.visibility_rule or None):
+        reasons.append('the visibility rule')
+    return reasons
+
+
+def section_snapshot(section):
+    return {'code': section.code, 'visibility_rule': section.visibility_rule}
+
+
+def structural_edit_message(reasons):
+    return (
+        'Changing ' + ', '.join(reasons) + ' would change the structure of a live survey. '
+        'Start unpublished changes to make this edit; respondents keep the current '
+        'survey until you publish them.'
+    )
+
+
 def check_draft_compatibility(draft, canonical):
     """
     Check backward compatibility between draft and canonical.
@@ -411,17 +508,10 @@ def check_draft_compatibility(draft, canonical):
             removed_codes = old_codes - new_codes
 
             if removed_codes:
-                # Check if any answers reference the removed codes
-                affected_answers = Answer.objects.filter(
-                    question=canonical_q
-                ).exclude(
-                    selected_choices__isnull=True
+                affected_count = sum(
+                    n for c, n in answered_choice_counts(canonical_q).items()
+                    if c in removed_codes
                 )
-                affected_count = 0
-                for answer in affected_answers:
-                    if answer.selected_choices and set(answer.selected_choices) & removed_codes:
-                        affected_count += 1
-
                 if affected_count > 0:
                     issues.append({
                         'type': 'removed_choice_codes',

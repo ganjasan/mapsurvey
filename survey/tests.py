@@ -813,7 +813,7 @@ class RoundTripTest(TestCase):
         survey = SurveyHeader.objects.create(
             name="roundtrip_survey",
             organization=self.org,
-            redirect_url="/completed/"
+            redirect_url="https://example.org/completed/"
         )
         section1 = SurveySection.objects.create(
             survey_header=survey,
@@ -881,7 +881,7 @@ class RoundTripTest(TestCase):
         # Verify structure
         self.assertEqual(imported_survey.name, "roundtrip_imported")
         self.assertEqual(imported_survey.organization.name, "TestOrg")
-        self.assertEqual(imported_survey.redirect_url, "/completed/")
+        self.assertEqual(imported_survey.redirect_url, "https://example.org/completed/")
 
         # Verify sections
         imported_sections = list(SurveySection.objects.filter(
@@ -6258,9 +6258,10 @@ class EditorSubquestionTest(TestCase):
             f'/editor/surveys/{self.survey.uuid}/questions/{text_question.id}/subquestions/new/',
         )
 
+    @override_settings(LIVE_SURVEY_EDITING=False)
     def test_add_subquestion_button_disabled_in_readonly(self):
         """
-        GIVEN a published survey with a geo question
+        GIVEN a published survey with a geo question, live editing switched off
         WHEN the editor section detail is fetched
         THEN the Add Sub-question button is rendered disabled with the read-only tooltip
         """
@@ -9367,9 +9368,10 @@ class ReadOnlyLockTest(TestCase):
         })
         self.assertEqual(response.status_code, 403)
 
+    @override_settings(LIVE_SURVEY_EDITING=False)
     def test_question_edit_blocked_on_published(self):
         """
-        GIVEN a published survey
+        GIVEN a published survey and live editing switched off
         WHEN a POST to question edit is made
         THEN a 403 response is returned
         """
@@ -9432,7 +9434,7 @@ class ReadOnlyLockTest(TestCase):
         url = f'/editor/surveys/{self.survey.uuid}/settings/'
         response = self.client.post(url, {
             'name': 'locked_survey',
-            'redirect_url': '/new-done/',
+            'redirect_url': 'https://example.org/new-done/',
             'visibility': 'private',
         })
         # Should succeed (200 for rendered form or 302 for redirect)
@@ -9514,15 +9516,28 @@ class EditorVersioningEndpointsTest(TestCase):
         response = self.client.post(url)
         self.assertEqual(response.status_code, 400)
 
-    def test_create_draft_403_for_non_owner(self):
+    def test_create_draft_allowed_for_editor(self):
         """
         GIVEN a published survey and an editor-role user
-        WHEN POST to create-draft
-        THEN a 403 response is returned
+        WHEN POST to create-draft ("Start unpublished changes")
+        THEN the draft is created — editors start changes, owners publish them
+             (change edit-live-survey)
         """
         self.client.login(username='ver_editor', password='pass')
         url = f'/editor/surveys/{self.survey.uuid}/create-draft/'
         response = self.client.post(url)
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(self.survey.has_draft_copy())
+
+    def test_publish_draft_403_for_editor(self):
+        """
+        GIVEN unpublished changes and an editor-role user
+        WHEN POST to publish-draft
+        THEN a 403 response is returned — publishing stays with the owner
+        """
+        draft = clone_survey_for_draft(self.survey)
+        self.client.login(username='ver_editor', password='pass')
+        response = self.client.post(f'/editor/surveys/{draft.uuid}/publish-draft/')
         self.assertEqual(response.status_code, 403)
 
     # ─── publish-draft ───────────────────────────────────────────────────────
@@ -29710,7 +29725,7 @@ class TemplateCommentSyntaxTest(SimpleTestCase):
     #: Bare form strings that are format examples or CSS, not prose. Kept as an
     #: explicit list rather than a heuristic: 'fas fa-map-marker-alt' contains
     #: spaces, so "has a space therefore prose" would misfire on it.
-    UNTRANSLATED_FORM_LITERALS = {'survey_name', '#', 'fas fa-map-marker-alt'}
+    UNTRANSLATED_FORM_LITERALS = {'survey_name', 'https://', 'fas fa-map-marker-alt'}
 
     def test_creator_facing_form_strings_are_translatable(self):
         """
@@ -32198,7 +32213,10 @@ class CreateSurveyWizardTest(TestCase):
         Membership.objects.create(user=self.user, organization=self.org, role='owner')
         self.client.force_login(self.user)
 
-    @override_settings(MOBILE_EDITOR_NAV=True)
+    # The empty-path button only renders when an AI provider is configured
+    # (it sits inside `{% if ai_available %}`); without a key the page shows
+    # the plain "Create Survey" button instead.
+    @override_settings(MOBILE_EDITOR_NAV=True, AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
     def test_flag_on_renders_wizard_chrome(self):
         """
         GIVEN the MOBILE_EDITOR_NAV flag on
@@ -32216,7 +32234,7 @@ class CreateSurveyWizardTest(TestCase):
         self.assertIn('Skip and start from scratch', html)
         self.assertNotIn('>Create empty</button>', html)
 
-    @override_settings(MOBILE_EDITOR_NAV=False)
+    @override_settings(MOBILE_EDITOR_NAV=False, AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
     def test_flag_off_serves_legacy_page(self):
         """
         GIVEN the flag explicitly off
@@ -32331,10 +32349,10 @@ class SurveyStatusLineTest(TestCase):
         self.assertIn('editor_survey_password'.replace('editor_survey_password', f'/editor/surveys/{self.survey.uuid}/password/'), html)
         self.assertIn('Publish — open for everyone', html)
 
-    @override_settings(MOBILE_EDITOR_NAV=True)
+    @override_settings(MOBILE_EDITOR_NAV=True, LIVE_SURVEY_EDITING=False)
     def test_published_status_edit_and_share(self):
         """
-        GIVEN a published survey
+        GIVEN a published survey, live editing switched off
         WHEN the editor renders
         THEN the status line shows the live count with Edit + Share, the edit
              intercept sheet exists, and the ctx-bar Preview duplicate stays out
@@ -38150,7 +38168,7 @@ class SettingsPanelValidationContractTest(TestCase):
         """
         response = self.client.post(
             reverse('editor_survey_settings_panel', args=[self.survey.uuid]),
-            {'name': 'renamed_survey', 'redirect_url': '/thanks/', 'visibility': 'private'},
+            {'name': 'renamed_survey', 'redirect_url': 'https://example.org/thanks/', 'visibility': 'private'},
             HTTP_X_REQUESTED_WITH='XMLHttpRequest',
         )
 
@@ -44550,6 +44568,36 @@ class LayerMemoryDietTest(TestCase):
         self.assertIn('mapsurvey.gunicorn_workers.DrainingThreadWorker', text)
 
 
+class RenderPreviewEnvGroupTest(SimpleTestCase):
+    """PR previews get their secrets from the dashboard-made `mapsurvey-shared`
+    environment group; `sync: false` values are never copied into a preview."""
+
+    def _services(self):
+        import os
+        import re
+        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        with open(os.path.join(root, 'render.yaml')) as fh:
+            text = fh.read()
+        # One chunk per service, keyed by name: "  - type: …\n    name: <name>".
+        chunks = re.split(r'\n  - type: ', text)
+        return text, {re.search(r'\n    name: (\S+)', c).group(1): c for c in chunks[1:]}
+
+    def test_web_and_worker_link_the_shared_group(self):
+        """
+        GIVEN render.yaml
+        WHEN the web service and the Celery worker are read
+        THEN both link mapsurvey-shared, the group is not declared in the Blueprint
+             (a declared group is cloned empty per preview), and the fake
+             previewEnvRenderServiceName key is gone
+        """
+        import re
+        text, services = self._services()
+        for name in ('mapsurvey', 'mapsurvey-celery'):
+            self.assertIn('- fromGroup: mapsurvey-shared', services[name], name)
+        self.assertIsNone(re.search(r'^envVarGroups:', text, re.M), 'group declared in the Blueprint')
+        self.assertIsNone(re.search(r'^\s+previewEnvRenderServiceName:', text, re.M), 'fake Render key is back')
+
+
 class LayerStreamingRebuildTest(TestCase):
     """Change layer-memory-diet, stage 2: the derived GeoJSON is streamed one
     feature at a time and objects are written in batches — with the same result."""
@@ -49224,3 +49272,774 @@ class MarketGuideHubTest(TestCase):
         hub_related = hub_related[:hub_related.index("</section>")]
         self.assertNotIn('href="/participatory-mapping-tools/"', hub_related)
         self.assertIn('href="/community-engagement-platform/"', hub_related)
+
+
+# ─── Editing a live survey (change edit-live-survey) ─────────────────────────
+
+from .versioning import (  # noqa: E402
+    removed_answered_choices, structural_question_changes, question_snapshot,
+)
+
+
+@override_settings(LIVE_SURVEY_EDITING=True, MOBILE_EDITOR_NAV=False)
+class LiveSurveyEditingTest(TestCase):
+    """Safe edits save to a published survey in place; structural ones become
+    unpublished changes (the draft copy) — spec live-survey-editing."""
+
+    def setUp(self):
+        self.org = _make_org('LiveOrg')
+        self.user = User.objects.create_user(username='liveowner', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='liveowner', password='pass')
+        self.survey = SurveyHeader.objects.create(
+            name='Live survey', organization=self.org, created_by=self.user,
+            status='published',
+        )
+        SurveyCollaborator.objects.create(user=self.user, survey=self.survey, role='owner')
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name='sec1', title='Section 1', code='S1', is_head=True,
+        )
+        self.question = Question.objects.create(
+            survey_section=self.section, code='Q1', order_number=1,
+            name='Favourite colour?', input_type='choice',
+            choices=[{'code': 1, 'name': 'Red'}, {'code': 2, 'name': 'Blue'}],
+        )
+        session = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=session, question=self.question, selected_choices=[1])
+
+    def _edit_url(self):
+        return f'/editor/surveys/{self.survey.uuid}/questions/{self.question.id}/edit/'
+
+    def _post_question(self, **overrides):
+        data = {
+            'name': 'Favourite colour?', 'input_type': 'choice', 'color': '#000000',
+            'choices_json': json.dumps([{'code': 1, 'name': 'Red'}, {'code': 2, 'name': 'Blue'}]),
+            'autosave': '1',
+        }
+        data.update(overrides)
+        return self.client.post(self._edit_url(), data)
+
+    # ── classifier ──
+
+    def test_removing_an_answered_choice_is_structural(self):
+        """
+        GIVEN a choice that one answer selected
+        WHEN an edit drops it
+        THEN it is reported with its answer count, and an unanswered one is not
+        """
+        old = self.question.choices
+        self.assertEqual(
+            removed_answered_choices(self.question, old, [{'code': 2, 'name': 'Blue'}]),
+            [(1, 'Red', 1)])
+        self.assertEqual(
+            removed_answered_choices(self.question, old, [{'code': 1, 'name': 'Red'}]), [])
+
+    def test_wording_is_safe_and_type_is_structural(self):
+        """
+        GIVEN a snapshot of a question
+        WHEN only the name changes, and then the type
+        THEN only the type change yields a reason
+        """
+        before = question_snapshot(self.question)
+        self.question.name = 'Colour you like most?'
+        self.assertEqual(structural_question_changes(before, self.question), [])
+        self.question.input_type = 'multichoice'
+        self.assertEqual(structural_question_changes(before, self.question), ['the question type'])
+
+    # ── safe edits in place ──
+
+    def test_rewording_saves_to_the_live_survey(self):
+        """
+        GIVEN a published survey with answers
+        WHEN the question is reworded
+        THEN the live row changes, no draft exists and the version is unchanged
+        """
+        response = self._post_question(name='Which colour do you like most?')
+        self.assertEqual(response.status_code, 200)
+        self.question.refresh_from_db()
+        self.assertEqual(self.question.name, 'Which colour do you like most?')
+        self.survey.refresh_from_db()
+        self.assertFalse(self.survey.has_draft_copy())
+        self.assertEqual(self.survey.version_number, 1)
+
+    def test_live_question_edit_is_rescreened(self):
+        """
+        GIVEN a published survey
+        WHEN a question's text is saved in place
+        THEN the content screen runs with the live_edit trigger, as it does for
+             the thanks page and redirect URL — the other live text paths
+        """
+        with mock.patch('survey.editor_views.screen_survey') as screen:
+            self._post_question(name='Verify your PDF document here')
+        screen.assert_called_once_with(self.survey, trigger='live_edit')
+
+    def test_adding_and_removing_unanswered_choices_is_safe(self):
+        """
+        GIVEN an answered choice question
+        WHEN an option is added and the unanswered one removed
+        THEN the edit saves
+        """
+        response = self._post_question(choices_json=json.dumps(
+            [{'code': 1, 'name': 'Red'}, {'code': 3, 'name': 'Green'}]))
+        self.assertEqual(response.status_code, 200)
+        self.question.refresh_from_db()
+        self.assertEqual({c['code'] for c in self.question.choices}, {1, 3})
+
+    def test_removing_an_answered_choice_is_refused(self):
+        """
+        GIVEN an answered choice question on a live survey
+        WHEN the answered option is removed
+        THEN the edit is refused with a pointer to unpublished changes
+        """
+        response = self._post_question(choices_json=json.dumps([{'code': 2, 'name': 'Blue'}]))
+        self.assertEqual(response.status_code, 422)
+        self.assertTrue(response.json()['needs_unpublished_changes'])
+        self.question.refresh_from_db()
+        self.assertEqual({c['code'] for c in self.question.choices}, {1, 2})
+
+    def test_posted_type_is_ignored_on_a_live_survey(self):
+        """
+        GIVEN a live choice question
+        WHEN a POST carries another input type
+        THEN the stored type stays
+        """
+        self._post_question(input_type='text')
+        self.question.refresh_from_db()
+        self.assertEqual(self.question.input_type, 'choice')
+
+    def test_section_title_saves_live_but_code_does_not(self):
+        """
+        GIVEN a live section
+        WHEN its title and code are posted
+        THEN the title changes and the code does not
+        """
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/',
+            {'title': 'Your colours', 'subheading': '', 'code': 'ZZ', 'layout': 'map'})
+        self.assertIn(response.status_code, (204, 302))
+        self.section.refresh_from_db()
+        self.assertEqual(self.section.title, 'Your colours')
+        self.assertEqual(self.section.code, 'S1')
+
+    def test_structural_endpoints_stay_refused(self):
+        """
+        GIVEN a live survey
+        WHEN a question is created directly
+        THEN the server refuses it
+        """
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/questions/new/',
+            {'name': 'New', 'input_type': 'text'})
+        self.assertEqual(response.status_code, 403)
+
+    # ── the Build page ──
+
+    def test_build_page_is_editable_with_a_structure_gate(self):
+        """
+        GIVEN a live survey without unpublished changes
+        WHEN the owner opens Build
+        THEN structural controls open the gate and the draft vocabulary is gone
+        """
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="structureGateModal"')
+        self.assertContains(response, 'data-gate="add_section"')
+        self.assertContains(response, 'Change structure')
+        self.assertNotContains(response, 'Draft new version')
+        self.assertNotContains(response, 'read-only')
+
+    def test_confirmations_can_be_switched_off(self):
+        """
+        GIVEN a live survey and its unpublished changes
+        WHEN the structure prompt and the publish dialog render
+        THEN each carries a "Don't ask again" box, and the account menu the
+             item that turns the confirmations back on (browser-side preference)
+        """
+        live = self.client.get(f'/editor/surveys/{self.survey.uuid}/')
+        self.assertContains(live, 'id="structureGateDontAsk"')
+        self.assertContains(live, 'class="dropdown-item editor-confirm-toggle"')
+        draft = clone_survey_for_draft(self.survey)
+        changes = self.client.get(f'/editor/surveys/{draft.uuid}/')
+        self.assertContains(changes, 'id="publishDraftDontAsk"')
+        self.assertContains(changes, 'EditorConfirm.asks()')
+
+    def test_section_panel_gates_new_question(self):
+        """
+        GIVEN a live survey
+        WHEN the section panel renders
+        THEN "New Question" opens the gate and the form is not disabled
+        """
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/')
+        self.assertContains(response, 'data-gate="add_question"')
+        self.assertNotContains(response, 'el.disabled = true')
+
+    def test_question_modal_explains_the_live_wording(self):
+        """
+        GIVEN an answered question on a live survey
+        WHEN its edit modal opens
+        THEN it says edits go live and offers the type change through the gate
+        """
+        response = self.client.get(self._edit_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'live-wording-hint')
+        self.assertContains(response, 'data-gate="type"')
+
+    # ── unpublished changes ──
+
+    def test_gate_creates_draft_and_lands_on_the_same_section(self):
+        """
+        GIVEN the gate opened from "New Question" in section S1
+        WHEN the owner starts unpublished changes
+        THEN the draft opens on its S1 with the action to replay
+        """
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/create-draft/',
+            {'then': 'add_question', 'section_code': 'S1'})
+        draft = self.survey.get_draft_copy()
+        self.assertIsNotNone(draft)
+        draft_section = SurveySection.objects.get(survey_header=draft, code='S1')
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(str(draft.uuid), response['Location'])
+        self.assertIn(f'section={draft_section.id}', response['Location'])
+        self.assertIn('then=add_question', response['Location'])
+
+    def test_build_opens_the_unpublished_changes(self):
+        """
+        GIVEN a live survey with unpublished changes
+        WHEN the owner opens its Build page
+        THEN they are sent to the draft, and ?live=1 still shows the live one read-only
+        """
+        draft = clone_survey_for_draft(self.survey)
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/?section={self.section.id}')
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(str(draft.uuid), response['Location'])
+        live = self.client.get(f'/editor/surveys/{self.survey.uuid}/?live=1')
+        self.assertEqual(live.status_code, 200)
+        self.assertContains(live, 'Continue editing')
+
+    def test_live_edits_refused_while_unpublished_changes_exist(self):
+        """
+        GIVEN a live survey with unpublished changes
+        WHEN a safe edit is posted to the live survey
+        THEN it is refused, so publishing cannot silently drop it
+        """
+        clone_survey_for_draft(self.survey)
+        response = self._post_question(name='Sneaky')
+        self.assertEqual(response.status_code, 403)
+
+    def test_survey_settings_refused_while_unpublished_changes_exist(self):
+        """
+        GIVEN a live survey with unpublished changes
+        WHEN its settings, thanks page or map start are posted on the live survey
+        THEN each is refused, because publish_draft would copy the draft's values over them
+        AND the settings panel says so and links to the changes
+        """
+        draft = clone_survey_for_draft(self.survey)
+        base = f'/editor/surveys/{self.survey.uuid}'
+        self.assertEqual(self.client.post(f'{base}/settings-panel/', {'name': 'Renamed'}).status_code, 403)
+        self.assertEqual(self.client.post(f'{base}/settings/', {'name': 'Renamed'}).status_code, 403)
+        self.assertEqual(self.client.post(f'{base}/thanks-panel/', {'thanks_en': '<p>Ty</p>'}).status_code, 403)
+        self.assertEqual(self.client.post(f'{base}/settings/map-position/', {'lat': '1', 'lng': '2', 'zoom': '5'}).status_code, 403)
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.name, 'Live survey')
+        self.assertIsNone(self.survey.start_map_postion)
+        panel = self.client.get(f'{base}/settings-panel/')
+        self.assertContains(panel, 'data-testid="settings-shadowed"')
+        self.assertContains(panel, f'/editor/surveys/{draft.uuid}/?panel=settings')
+
+    def test_survey_settings_stay_editable_on_a_plain_live_survey(self):
+        """
+        GIVEN a live survey without unpublished changes
+        WHEN its map start is posted
+        THEN it saves, as settings always did on a published survey
+        """
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/settings/map-position/',
+            {'lat': '52.5', 'lng': '13.4', 'zoom': '11'})
+        self.assertEqual(response.status_code, 204)
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.start_map_zoom, 11)
+
+    def test_draft_page_speaks_unpublished_changes(self):
+        """
+        GIVEN unpublished changes
+        WHEN the owner opens them
+        THEN they read as the same survey with unpublished changes
+        """
+        draft = clone_survey_for_draft(self.survey)
+        response = self.client.get(f'/editor/surveys/{draft.uuid}/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Unpublished changes')
+        self.assertContains(response, 'Publish changes')
+        self.assertContains(response, 'View live version')
+        self.assertNotContains(response, 'Draft of')
+        self.assertNotContains(response, 'Publish Version')
+
+    def test_dashboard_marks_unpublished_changes(self):
+        """
+        GIVEN a survey with unpublished changes
+        WHEN the dashboard renders
+        THEN its card carries the badge
+        """
+        clone_survey_for_draft(self.survey)
+        response = self.client.get('/editor/?dashboard=1')
+        self.assertContains(response, 'Unpublished changes')
+
+    def test_viewer_still_sees_read_only(self):
+        """
+        GIVEN an org viewer
+        WHEN they open a live survey
+        THEN nothing is editable for them
+        """
+        viewer = User.objects.create_user(username='liveviewer', password='pass')
+        Membership.objects.create(user=viewer, organization=self.org, role='viewer')
+        self.client.login(username='liveviewer', password='pass')
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/')
+        self.assertContains(response, 'read-only')
+        self.assertNotContains(response, 'id="structureGateModal"')
+
+    def _login_editor(self):
+        editor = User.objects.create_user(username='liveeditor', password='pass')
+        Membership.objects.create(user=editor, organization=self.org, role='editor')
+        SurveyCollaborator.objects.create(user=editor, survey=self.survey, role='editor')
+        self.client.login(username='liveeditor', password='pass')
+        return editor
+
+    def test_editor_can_start_unpublished_changes(self):
+        """
+        GIVEN an editor collaborator on a live survey
+        WHEN they open Build and confirm the structure prompt
+        THEN the prompt offers the action and the draft is created
+        """
+        self._login_editor()
+        page = self.client.get(f'/editor/surveys/{self.survey.uuid}/')
+        self.assertContains(page, 'id="structureGateForm"')
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/create-draft/',
+            {'then': 'add_question', 'section_code': 'S1'})
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(self.survey.has_draft_copy())
+
+    def test_editor_on_the_changes_sees_who_publishes(self):
+        """
+        GIVEN unpublished changes opened by an editor
+        WHEN the page renders
+        THEN there is no Publish changes button, and the page says the owner publishes
+        """
+        draft = clone_survey_for_draft(self.survey)
+        self._login_editor()
+        response = self.client.get(f'/editor/surveys/{draft.uuid}/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'The survey owner publishes these changes')
+        self.assertNotContains(response, 'checkAndPublishDraft()"')
+
+    def test_collaborator_added_after_the_changes_can_open_them(self):
+        """
+        GIVEN unpublished changes created before an editor was added to the survey
+        WHEN that editor opens Build
+        THEN they are redirected to the changes and can open them (the draft
+             answers with the live survey's collaborators, not its snapshot)
+        """
+        draft = clone_survey_for_draft(self.survey)
+        outsider = User.objects.create_user(username='lateeditor', password='pass')
+        Membership.objects.create(user=outsider, organization=self.org, role='viewer')
+        SurveyCollaborator.objects.create(user=outsider, survey=self.survey, role='editor')
+        self.client.login(username='lateeditor', password='pass')
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/', follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.redirect_chain[-1][0], f'/editor/surveys/{draft.uuid}/')
+
+    def test_viewer_cannot_start_unpublished_changes(self):
+        """
+        GIVEN an org viewer
+        WHEN they post to create the changes
+        THEN they are refused
+        """
+        viewer = User.objects.create_user(username='liveviewer2', password='pass')
+        Membership.objects.create(user=viewer, organization=self.org, role='viewer')
+        self.client.login(username='liveviewer2', password='pass')
+        response = self.client.post(f'/editor/surveys/{self.survey.uuid}/create-draft/')
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(self.survey.has_draft_copy())
+
+    @override_settings(MOBILE_EDITOR_NAV=True)
+    def test_mobile_status_line_offers_structure_and_share(self):
+        """
+        GIVEN a live survey and the mobile status line
+        WHEN Build renders
+        THEN it offers "Structure" (the gate) and Share, and no read-only intercept
+        """
+        html = self.client.get(f'/editor/surveys/{self.survey.uuid}/').content.decode()
+        self.assertIn('data-gate="edit"', html)
+        self.assertIn(f'/editor/surveys/{self.survey.uuid}/share/', html)
+        self.assertNotIn('id="editIntercept"', html)
+
+    def test_section_title_saves_despite_a_half_filled_visibility_rule(self):
+        """
+        GIVEN an ordinary draft survey (not live)
+        WHEN a section autosave carries a title and an incomplete visibility rule
+        THEN the title is still saved and the rule error is reported
+        """
+        self.survey.status = 'draft'
+        self.survey.save(update_fields=['status'])
+        response = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/',
+            {'title': 'Renamed', 'subheading': '', 'code': 'S1', 'layout': 'map',
+             'visibility_mode': 'conditional'})
+        self.assertEqual(response.status_code, 422)
+        self.section.refresh_from_db()
+        self.assertEqual(self.section.title, 'Renamed')
+
+    @override_settings(LIVE_SURVEY_EDITING=False)
+    def test_kill_switch_restores_read_only(self):
+        """
+        GIVEN live editing switched off
+        WHEN the owner opens Build and posts a rewording
+        THEN the old read-only page renders and the edit is refused
+        """
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/')
+        self.assertContains(response, 'Draft new version')
+        self.assertNotContains(response, 'id="structureGateModal"')
+        self.assertEqual(self._post_question(name='x').status_code, 403)
+
+
+# =============================================================================
+# Redirect after the last page (change fix-redirect-url-validation, #271)
+# =============================================================================
+
+class CleanRedirectUrlTest(SimpleTestCase):
+    """`survey.redirects.clean_redirect_url`: "#" or a valid http(s) URL."""
+
+    def test_unusable_values_mean_the_thanks_page(self):
+        """
+        GIVEN values creators actually stored: hashtags, messages, relative paths
+        WHEN they are cleaned
+        THEN each one becomes "#" (the built-in thank-you page)
+        """
+        from .redirects import clean_redirect_url
+        for value in ['#', '', None, '   ', '#projectname', '#thanks', '#/bedankt/',
+                      '/obrigada', '-', 'Test1', 'Wat is je naam', 'project#',
+                      'Lieliska vērība!', 'javascript:alert(1)', 'ftp://example.org/x']:
+            with self.subTest(value=value):
+                self.assertEqual(clean_redirect_url(value), '#')
+
+    def test_a_url_typed_after_the_default_anchor_is_kept(self):
+        """
+        GIVEN a URL typed after the pre-filled "#"
+        WHEN it is cleaned
+        THEN the "#" is dropped and the link the creator meant survives
+        """
+        from .redirects import clean_redirect_url
+        self.assertEqual(clean_redirect_url('#https://www.example.org/about'),
+                         'https://www.example.org/about')
+        self.assertEqual(clean_redirect_url('##http://example.org'), 'http://example.org')
+
+    def test_scheme_case_and_bare_www_are_fixed(self):
+        """
+        GIVEN "Https://…" and "www.…"
+        WHEN they are cleaned
+        THEN the scheme is lowercased and a bare www address gets https://
+        """
+        from .redirects import clean_redirect_url
+        self.assertEqual(clean_redirect_url('Https://example.org/A'), 'https://example.org/A')
+        self.assertEqual(clean_redirect_url('www.example.org/x'), 'https://www.example.org/x')
+
+    def test_a_valid_url_is_unchanged(self):
+        """
+        GIVEN a valid absolute https URL
+        WHEN it is cleaned
+        THEN it comes back unchanged
+        """
+        from .redirects import clean_redirect_url
+        url = 'https://docs.example.org/forms/d/e/abc/viewform?usp=sf_link'
+        self.assertEqual(clean_redirect_url(url), url)
+
+    def test_too_long_after_tidying_means_the_thanks_page(self):
+        """
+        GIVEN a 247-character www address (250 once https:// is added would overflow)
+        WHEN it is cleaned
+        THEN it becomes "#" rather than a value the column cannot hold
+        """
+        from .redirects import clean_redirect_url
+        value = 'www.example.org/' + 'a' * 231
+        self.assertEqual(len(value), 247)
+        self.assertEqual(clean_redirect_url(value), '#')
+
+
+class FinishRedirectTest(TestCase):
+    """Where the last section sends a respondent, whatever redirect_url holds."""
+
+    def _survey(self, name, redirect_url):
+        org = Organization.objects.create(name=f'{name} org')
+        survey = SurveyHeader.objects.create(
+            name=name, organization=org, redirect_url=redirect_url, status='published')
+        section = SurveySection.objects.create(
+            survey_header=survey, name='only_section', title='Only', code='S1', is_head=True,
+            start_map_postion=Point(30.0, 60.0), start_map_zoom=14)
+        question = Question.objects.create(
+            survey_section=section, name='Name', input_type='text_line', order_number=1)
+        return survey, question
+
+    def _finish(self, survey, question, htmx=False):
+        base = f'/surveys/{survey.name}/only_section/'
+        self.client.get(base)
+        extra = {'HTTP_HX_REQUEST': 'true'} if htmx else {}
+        return self.client.post(base, {question.code: 'Alice'}, **extra)
+
+    def test_an_anchor_sends_the_respondent_to_the_thanks_page(self):
+        """
+        GIVEN a survey whose redirect_url is a project hashtag
+        WHEN the respondent submits the last section
+        THEN they are redirected to the thanks page, not to "#projectname"
+        """
+        survey, question = self._survey('anchor_survey', '#projectname')
+        response = self._finish(survey, question)
+        self.assertRedirects(response, f'/surveys/{survey.uuid}/thanks/', fetch_redirect_response=False)
+
+    def test_an_anchor_over_htmx_sends_the_respondent_to_the_thanks_page(self):
+        """
+        GIVEN a survey whose redirect_url is a project hashtag
+        WHEN the respondent submits the last section through HTMX
+        THEN HX-Redirect names the thanks page
+        """
+        survey, question = self._survey('htmx_anchor_survey', '#projectname')
+        response = self._finish(survey, question, htmx=True)
+        self.assertEqual(response['HX-Redirect'], f'/surveys/{survey.uuid}/thanks/')
+
+    def test_a_link_typed_after_the_anchor_is_followed(self):
+        """
+        GIVEN a survey whose redirect_url is "#https://example.com" (typed after the old "#")
+        WHEN the respondent submits the last section through HTMX
+        THEN HX-Redirect is the link the creator meant
+        """
+        survey, question = self._survey('htmx_salvaged_survey', '#https://example.com')
+        response = self._finish(survey, question, htmx=True)
+        self.assertEqual(response['HX-Redirect'], 'https://example.com')
+
+    def test_relative_paths_and_text_send_the_respondent_to_the_thanks_page(self):
+        """
+        GIVEN surveys whose redirect_url is "/obrigada" or "-"
+        WHEN the respondent submits the last section
+        THEN they are redirected to the thanks page instead of a 404
+        """
+        for i, value in enumerate(['/obrigada', '-']):
+            with self.subTest(value=value):
+                survey, question = self._survey(f'relative_survey_{i}', value)
+                response = self._finish(survey, question)
+                self.assertRedirects(response, f'/surveys/{survey.uuid}/thanks/',
+                                     fetch_redirect_response=False)
+
+    def test_a_valid_link_still_wins(self):
+        """
+        GIVEN a survey whose redirect_url is a valid https URL
+        WHEN the respondent submits the last section, plain and over HTMX
+        THEN they are sent to that URL
+        """
+        survey, question = self._survey('link_survey', 'https://example.com/done')
+        self.assertEqual(self._finish(survey, question)['Location'], 'https://example.com/done')
+        self.assertEqual(self._finish(survey, question, htmx=True)['HX-Redirect'],
+                         'https://example.com/done')
+
+
+class SettingsFinishActionTest(TestCase):
+    """Survey settings: "After the last page" choice and the address check."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='finish_owner', password='pass')
+        self.org = _make_org('FinishOrg')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(name='finish_survey', organization=self.org)
+        self.client.login(username='finish_owner', password='pass')
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+        self.url = reverse('editor_survey_settings_panel', args=[self.survey.uuid])
+
+    def _save(self, **fields):
+        data = {'name': 'finish_survey', 'visibility': 'private'}
+        data.update(fields)
+        return self.client.post(self.url, data, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+
+    def test_default_survey_shows_the_thank_you_option(self):
+        """
+        GIVEN a survey with the default redirect_url "#"
+        WHEN the owner opens Survey settings
+        THEN "Show the thank-you page" is checked and the address box is hidden and empty
+        """
+        html = self.client.get(self.url).content.decode()
+        self.assertRegex(html, r'<input[^>]*value="thanks"[^>]*checked')
+        self.assertRegex(html, r'data-finish-link\s+hidden')
+        self.assertNotRegex(html, r'name="redirect_url"[^>]*value="#"')
+
+    def test_a_stored_link_shows_the_address_option(self):
+        """
+        GIVEN a survey whose redirect_url is a valid link
+        WHEN the owner opens Survey settings
+        THEN "Open a web address" is checked and the box holds the link
+        """
+        self.survey.redirect_url = 'https://example.com/x'
+        self.survey.save()
+        html = self.client.get(self.url).content.decode()
+        self.assertRegex(html, r'<input[^>]*value="link"[^>]*checked')
+        self.assertIn('value="https://example.com/x"', html)
+        self.assertNotRegex(html, r'data-finish-link\s+hidden')
+
+    def test_a_stored_broken_value_shows_the_thank_you_option(self):
+        """
+        GIVEN a survey still holding "#projectname"
+        WHEN the owner opens Survey settings
+        THEN it reads as the thank-you page, which is where respondents go
+        """
+        self.survey.redirect_url = '#projectname'
+        self.survey.save()
+        html = self.client.get(self.url).content.decode()
+        self.assertRegex(html, r'<input[^>]*value="thanks"[^>]*checked')
+        self.assertNotIn('#projectname', html)
+
+    def test_a_valid_address_is_saved(self):
+        """
+        GIVEN the owner chose "Open a web address"
+        WHEN they enter a valid URL and the panel autosaves
+        THEN redirect_url holds that URL
+        """
+        response = self._save(finish_action='link', redirect_url='https://www.example.org/project')
+        self.assertEqual(response.status_code, 200)
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.redirect_url, 'https://www.example.org/project')
+
+    def test_typing_slips_are_fixed_on_save(self):
+        """
+        GIVEN "#https://…" and "www.…" typed into the address box
+        WHEN the panel autosaves
+        THEN the stored value is the clean https URL
+        """
+        for typed, stored in [('#https://www.example.org/p', 'https://www.example.org/p'),
+                              ('www.example.org/p', 'https://www.example.org/p')]:
+            with self.subTest(typed=typed):
+                self.assertEqual(self._save(finish_action='link', redirect_url=typed).status_code, 200)
+                self.survey.refresh_from_db()
+                self.assertEqual(self.survey.redirect_url, stored)
+
+    def test_an_invalid_address_is_refused(self):
+        """
+        GIVEN a hashtag, a relative path or a message typed into the address box
+        WHEN the panel autosaves
+        THEN the response is 400 with an error on redirect_url and nothing changes
+        """
+        self.survey.redirect_url = 'https://example.org/keep'
+        self.survey.save()
+        for typed in ['#projectname', '/thanks', 'Thank you!']:
+            with self.subTest(typed=typed):
+                response = self._save(finish_action='link', redirect_url=typed)
+                self.assertEqual(response.status_code, 400)
+                self.assertIn('redirect_url', response.json()['errors'])
+                self.survey.refresh_from_db()
+                self.assertEqual(self.survey.redirect_url, 'https://example.org/keep')
+
+    def test_choosing_the_thank_you_page_clears_the_address(self):
+        """
+        GIVEN a survey with a link
+        WHEN the owner switches to "Show the thank-you page" (the box still holds the link)
+        THEN redirect_url becomes "#"
+        """
+        self.survey.redirect_url = 'https://example.org/keep'
+        self.survey.save()
+        self.assertEqual(self._save(finish_action='thanks', redirect_url='https://example.org/keep').status_code, 200)
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.redirect_url, '#')
+
+    def test_an_empty_address_saves_as_the_thank_you_page(self):
+        """
+        GIVEN the owner just picked "Open a web address" and has typed nothing yet
+        WHEN the panel autosaves on that change
+        THEN the save succeeds with redirect_url "#" and no error
+        """
+        response = self._save(finish_action='link', redirect_url='')
+        self.assertEqual(response.status_code, 200)
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.redirect_url, '#')
+
+    def test_a_post_without_the_choice_still_works(self):
+        """
+        GIVEN an older client that posts redirect_url without finish_action
+        WHEN it saves a valid link, then "#"
+        THEN both saves succeed as before
+        """
+        self.assertEqual(self._save(redirect_url='https://example.org/a').status_code, 200)
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.redirect_url, 'https://example.org/a')
+        self.assertEqual(self._save(redirect_url='#').status_code, 200)
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.redirect_url, '#')
+
+
+class RedirectUrlImportTest(TestCase):
+    """ZIP import (also the AI-generation path) normalises redirect_url."""
+
+    def _import_with(self, redirect_url):
+        org = Organization.objects.create(name='ImportRedirectOrg')
+        survey = SurveyHeader.objects.create(name='import_redirect_src', organization=org)
+        output = BytesIO()
+        export_survey_to_zip(survey, output, mode='structure')
+        output.seek(0)
+        with zipfile.ZipFile(output, 'r') as zf:
+            data = json.loads(zf.read('survey.json'))
+        data['survey']['name'] = 'import_redirect_dst'
+        data['survey']['redirect_url'] = redirect_url
+        buffer = BytesIO()
+        with zipfile.ZipFile(buffer, 'w') as zf:
+            zf.writestr('survey.json', json.dumps(data))
+        buffer.seek(0)
+        imported, _warnings = import_survey_from_zip(buffer)
+        return imported
+
+    def test_a_hashtag_is_imported_as_the_thanks_page(self):
+        """
+        GIVEN an archive with "redirect_url": "#thanks"
+        WHEN it is imported
+        THEN the survey's redirect_url is "#"
+        """
+        self.assertEqual(self._import_with('#thanks').redirect_url, '#')
+
+    def test_an_anchored_link_is_imported_without_the_anchor(self):
+        """
+        GIVEN an archive with "redirect_url": "#https://example.org"
+        WHEN it is imported
+        THEN the survey's redirect_url is "https://example.org"
+        """
+        self.assertEqual(self._import_with('#https://example.org').redirect_url, 'https://example.org')
+
+
+class NormalizeRedirectUrlMigrationTest(TestCase):
+    """Migration 0094 rewrites stored redirect_url values."""
+
+    def test_forward_mapping(self):
+        """
+        GIVEN surveys holding the shapes found in production
+        WHEN the migration's forward function runs
+        THEN links behind "#" are kept, schemes lowercased, the rest becomes "#"
+        """
+        import importlib
+        from django.apps import apps as django_apps
+        migration = importlib.import_module('survey.migrations.0094_normalize_redirect_url')
+        org = Organization.objects.create(name='MigrationRedirectOrg')
+        cases = {
+            '#https://www.example.org/about': 'https://www.example.org/about',
+            'Https://Project-AK.example.org': 'https://Project-AK.example.org',
+            '#tag': '#',
+            '/obrigada': '#',
+            '-': '#',
+            'Wat is je naam': '#',
+            '#': '#',
+            'https://ok.example.org/x': 'https://ok.example.org/x',
+        }
+        surveys = {
+            old: SurveyHeader.objects.create(name=f'mig_{i}', organization=org, redirect_url=old)
+            for i, old in enumerate(cases)
+        }
+        with contextlib.redirect_stdout(StringIO()):
+            migration.forwards(django_apps, None)
+        for old, expected in cases.items():
+            with self.subTest(old=old):
+                surveys[old].refresh_from_db()
+                self.assertEqual(surveys[old].redirect_url, expected)

@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import re
+from urllib.parse import urlencode
 
 from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
@@ -58,6 +59,9 @@ from .permissions import (
 from .versioning import (
     clone_survey_for_draft, check_draft_compatibility, publish_draft,
     IncompatibleDraftError, family_ids,
+    is_live, live_editing_enabled, question_snapshot, section_snapshot,
+    removed_answered_choices, structural_question_changes,
+    structural_section_changes, structural_edit_message,
 )
 from .audit import audit
 from .public_results import scaffold_page
@@ -115,10 +119,76 @@ def _guard_choice_codes(question, new_choices):
 
 
 def _check_structural_edit_allowed(survey):
-    """Return HttpResponse(403) if survey is read-only, else None."""
+    """Return HttpResponse(403) if survey is read-only, else None.
+
+    Structural edits (add/delete/reorder/paste) never apply to a live survey:
+    with LIVE_SURVEY_EDITING they go to the unpublished changes instead, which
+    the editor offers before the request is ever sent.
+    """
     if survey.status in ('published', 'closed'):
         return HttpResponse('Structural edits are not allowed on published or closed surveys', status=403)
     return None
+
+
+def _edit_locks(survey):
+    """(is_read_only, structure_locked) for an editor page of `survey`.
+
+    `structure_locked`: adding, deleting, reordering, pasting, type/visibility
+    changes are refused — every live survey. `is_read_only`: nothing at all may
+    be edited — a live survey with the switch off (the pre-change behaviour),
+    or one that has unpublished changes, since publishing them replaces the
+    live structure and would silently drop an edit made here.
+    """
+    if not is_live(survey):
+        return False, False
+    if not live_editing_enabled() or survey.has_draft_copy():
+        return True, True
+    return False, True
+
+
+def _lock_context(survey):
+    is_read_only, structure_locked = _edit_locks(survey)
+    return {'is_read_only': is_read_only, 'structure_locked': structure_locked}
+
+
+def _check_content_edit_allowed(survey):
+    """403 unless safe (non-structural) edits may be saved to `survey` now."""
+    is_read_only, _ = _edit_locks(survey)
+    if not is_read_only:
+        return None
+    if live_editing_enabled() and survey.has_draft_copy():
+        return HttpResponse(
+            'This survey has unpublished changes. Edit those instead, so that '
+            'publishing them does not overwrite this edit.', status=403)
+    return HttpResponse('Edits are not allowed on published or closed surveys', status=403)
+
+
+def _check_not_shadowed_by_draft(survey):
+    """403 when the live survey's settings are about to be replaced anyway.
+
+    publish_draft() copies languages, visibility, redirect, thanks page and
+    the map start from the draft onto the canonical survey, so a live
+    settings edit made while unpublished changes exist is silently undone at
+    publish (spec live-survey-editing, "Live edits wait while unpublished
+    changes exist"). Narrower than _check_content_edit_allowed on purpose:
+    settings and the thanks page stay editable on a plain live survey, as
+    they always were.
+    """
+    if live_editing_enabled() and is_live(survey) and survey.has_draft_copy():
+        return HttpResponse(
+            'This survey has unpublished changes. Edit its settings there, so that '
+            'publishing them does not overwrite this edit.', status=403)
+    return None
+
+
+def _structural_refusal(request, reasons, render_modal=None):
+    """The answer to a structural change attempted on a live survey."""
+    message = structural_edit_message(reasons)
+    if request.POST.get('autosave') or render_modal is None:
+        return JsonResponse(
+            {'ok': False, 'needs_unpublished_changes': True, 'errors': {'__all__': [message]}},
+            status=422)
+    return render_modal(message)
 
 
 # Sent by the editor once the author has seen how many answers a delete costs.
@@ -457,9 +527,47 @@ def editor_generation_status(request, event_id):
 
 # ─── Survey editor main page ─────────────────────────────────────────────────
 
+def _draft_url_for(request, survey, draft, then=None, section_code=None):
+    """The draft's Build URL, on the section that matches the one in hand.
+
+    Sections are matched by code (clone_survey_for_draft keeps codes), so the
+    creator lands where they were on the live survey.
+    """
+    params = {}
+    panel = request.GET.get('panel')
+    if panel in ('settings', 'thanks'):
+        params['panel'] = panel
+    code = section_code
+    if code is None:
+        section_id = _int_param(request.GET.get('section'))
+        if section_id:
+            code = (SurveySection.objects.filter(id=section_id, survey_header=survey)
+                    .values_list('code', flat=True).first())
+    if code:
+        target = (SurveySection.objects.filter(survey_header=draft, code=code)
+                  .values_list('id', flat=True).first())
+        if target:
+            params['section'] = target
+    if then:
+        params['then'] = then
+    url = reverse('editor_survey_detail', kwargs={'survey_uuid': draft.uuid})
+    return url + ('?' + urlencode(params) if params else '')
+
+
 @survey_permission_required('viewer')
 def editor_survey_detail(request, survey_uuid):
     survey = request.survey
+
+    # One editing surface per survey (change edit-live-survey): while a live
+    # survey has unpublished changes, Build opens them. `?live=1` still shows
+    # the live survey itself, read-only.
+    if (live_editing_enabled() and is_live(survey)
+            and request.effective_survey_role in ('editor', 'owner')
+            and request.GET.get('live') != '1'):
+        draft = survey.get_draft_copy()
+        if draft is not None:
+            return redirect(_draft_url_for(request, survey, draft))
+
     sections = _get_sections_ordered(survey)
 
     settings_panel_active = (
@@ -491,7 +599,11 @@ def editor_survey_detail(request, survey_uuid):
         )
 
     can_edit = request.effective_survey_role in ('editor', 'owner')
-    is_read_only = survey.status in ('published', 'closed')
+    is_read_only, structure_locked = _edit_locks(survey)
+    is_live_survey = is_live(survey)
+    if is_live_survey and not can_edit:
+        # A viewer edits nothing: the live survey reads as read-only to them.
+        is_read_only = True
     is_owner = request.effective_survey_role == 'owner'
 
     # Versioning context
@@ -504,7 +616,7 @@ def editor_survey_detail(request, survey_uuid):
     # alongside the draft-copy route so the read-only notice always ends in an
     # action the author can take.
     show_back_to_draft = (
-        is_owner and is_read_only and not survey.is_draft_copy and survey.has_never_collected()
+        is_owner and is_live_survey and survey.has_never_collected()
     )
 
     # The one-shot AI-draft feedback prompt, keyed by the generation redirect's
@@ -554,6 +666,10 @@ def editor_survey_detail(request, survey_uuid):
         'effective_role': request.effective_survey_role,
         'can_edit': can_edit and not is_read_only,
         'is_read_only': is_read_only,
+        'structure_locked': structure_locked,
+        'is_live_survey': is_live_survey,
+        'live_editing': live_editing_enabled(),
+        'then_action': request.GET.get('then', '') if survey.is_draft_copy else '',
         'is_owner': is_owner,
         'draft_copy': draft_copy,
         'show_edit_published': show_edit_published,
@@ -575,6 +691,9 @@ def _rescreen_if_live(survey):
 def editor_survey_settings(request, survey_uuid):
     survey = request.survey
     if request.method == 'POST':
+        blocked = _check_not_shadowed_by_draft(survey)
+        if blocked:
+            return blocked
         form = SurveyHeaderForm(request.POST, request.FILES, instance=survey)
         if form.is_valid():
             form.save()
@@ -623,7 +742,10 @@ def editor_survey_settings_panel(request, survey_uuid):
     Position / Collaborators / Password keep their own dedicated controls.
     """
     survey = request.survey
+    shadowed = _check_not_shadowed_by_draft(survey)
     if request.method == 'POST':
+        if shadowed:
+            return shadowed
         form = SurveyHeaderForm(request.POST, request.FILES, instance=survey)
         if form.is_valid():
             form.save()
@@ -639,6 +761,7 @@ def editor_survey_settings_panel(request, survey_uuid):
     return render(request, 'editor/partials/survey_settings_panel.html', {
         'survey': survey,
         'form': form,
+        'shadowed_by_draft': survey.get_draft_copy() if shadowed else None,
         'effective_role': request.effective_survey_role,
         'basemap_choices': BASEMAP_CHOICES,
         'map_layers': _editor_layers(survey),
@@ -659,6 +782,9 @@ def editor_survey_thanks_panel(request, survey_uuid):
     results_page = getattr(survey, 'public_results_page', None)
 
     if request.method == 'POST':
+        blocked = _check_not_shadowed_by_draft(survey)
+        if blocked:
+            return blocked
         thanks = {}
         for lang in langs:
             cleaned = sanitize_thanks_html(request.POST.get('thanks_{}'.format(lang), ''))
@@ -982,6 +1108,9 @@ def _layer_property_names(layer):
 @require_POST
 def editor_survey_map_position(request, survey_uuid):
     survey = request.survey
+    blocked = _check_not_shadowed_by_draft(survey)
+    if blocked:
+        return blocked
     clear_position = request.POST.get('clear_position', '0') == '1'
 
     if clear_position:
@@ -1090,14 +1219,26 @@ def editor_section_detail(request, survey_uuid, section_id):
     survey = request.survey
     section = get_object_or_404(SurveySection, id=section_id, survey_header=survey)
 
+    _, structure_locked = _edit_locks(survey)
     if request.method == 'POST':
-        blocked = _check_structural_edit_allowed(survey)
+        blocked = _check_content_edit_allowed(survey)
         if blocked:
             return blocked
-        form = SurveySectionForm(request.POST, instance=section)
+        before = section_snapshot(section)
+        form = SurveySectionForm(request.POST, instance=section, lock_structure=structure_locked)
         if form.is_valid():
-            form.save()
             vis_present, vis_rule, vis_error = _parse_visibility_rule(request)
+            if structure_locked:
+                # Checked before anything is written: a live section takes the
+                # whole edit or none of it.
+                candidate = section.visibility_rule
+                if vis_present and not vis_error:
+                    section.visibility_rule = vis_rule
+                reasons = structural_section_changes(before, section)
+                section.visibility_rule = candidate
+                if reasons:
+                    return _structural_refusal(request, reasons)
+            form.save()
             if vis_error:
                 return JsonResponse({'ok': False, 'errors': {'visibility': [vis_error]}}, status=422)
             if vis_present:
@@ -1105,11 +1246,16 @@ def editor_section_detail(request, survey_uuid, section_id):
                 section.save(update_fields=['visibility_rule'])
             # Save translations
             _save_section_translations(request, section, survey)
+            if structure_locked:
+                pe.emit(pe.LIVE_EDIT_SAVED, request.user.pk, {'survey_id': str(survey.id), 'kind': 'section'})
+                # Section text now changes on a live page: same screen as the
+                # thanks page and redirect URL, the other live text paths.
+                _rescreen_if_live(survey)
             if request.headers.get('HX-Request'):
                 return HttpResponse(status=204, headers={'HX-Trigger': 'sectionSaved'})
             return redirect('editor_survey_detail', survey_uuid=survey.uuid)
     else:
-        form = SurveySectionForm(instance=section)
+        form = SurveySectionForm(instance=section, lock_structure=structure_locked)
 
     translations = {t.language: t for t in section.translations.all()}
     questions = list(
@@ -1127,7 +1273,7 @@ def editor_section_detail(request, survey_uuid, section_id):
         'form': form,
         'translations': translations,
         'questions': questions,
-        'is_read_only': survey.status in ('published', 'closed'),
+        **_lock_context(survey),
         'layers_enabled': settings.MAP_REFERENCE_LAYERS,
     })
 
@@ -1354,7 +1500,8 @@ def _render_question_modal(request, context):
     if survey is not None:
         # The in-modal sub-question list renders the same disabled state as
         # the section list does on published/closed surveys.
-        context.setdefault('is_read_only', survey.status in ('published', 'closed'))
+        for key, value in _lock_context(survey).items():
+            context.setdefault(key, value)
         context.setdefault('thread_counts', _thread_counts(survey, request.user))
         if 'layer_options' not in context:
             context['layer_options'], context['answer_sources'] = _shared_map_layer_options(survey)
@@ -1373,7 +1520,7 @@ def _section_list_row_oob(request, question, survey, mode):
     data-question-id."""
     item = render(request, 'editor/partials/question_list_item.html', {'thread_counts': _thread_counts(survey, request.user), 
         'question': question, 'survey': survey,
-        'is_read_only': survey.status in ('published', 'closed'),
+        **_lock_context(survey),
     }).content.decode()
     if mode == 'append':
         return '<div hx-swap-oob="beforeend:#questions-list">%s</div>' % item
@@ -1393,7 +1540,8 @@ def _edit_modal_response(request, question, oob_list_item=False, trigger=None):
     without the modal-closing `questionSaved`."""
     survey = request.survey
     is_subquestion = question.parent_question_id_id is not None
-    form = QuestionForm(instance=question, is_subquestion=is_subquestion, section=question.survey_section)
+    form = QuestionForm(instance=question, is_subquestion=is_subquestion, section=question.survey_section,
+                        lock_structure=_edit_locks(survey)[1])
     response = _render_question_modal(request, {
         **({} if is_subquestion else _visibility_block_context(survey, question.survey_section, 'question', host=question)),
         'source_layers': _source_layers_of(survey, question),
@@ -1491,7 +1639,7 @@ def editor_question_create(request, survey_uuid, section_id):
             response = render(request, 'editor/partials/question_list_item.html', {'thread_counts': _thread_counts(survey, request.user), 
                 'question': question,
                 'survey': survey,
-                'is_read_only': survey.status in ('published', 'closed'),
+                **_lock_context(survey),
             })
             response['HX-Trigger'] = 'questionSaved'
             return response
@@ -1515,14 +1663,23 @@ def editor_question_create(request, survey_uuid, section_id):
 @survey_permission_required('editor')
 def editor_question_edit(request, survey_uuid, question_id):
     survey = request.survey
-    blocked = _check_structural_edit_allowed(survey)
+    is_read_only, structure_locked = _edit_locks(survey)
+    if request.method == 'POST':
+        blocked = _check_content_edit_allowed(survey)
+    else:
+        # Reading the form is harmless; it renders disabled when nothing may change.
+        blocked = None if (live_editing_enabled() or not is_read_only) else _check_structural_edit_allowed(survey)
     if blocked:
         return blocked
     question = get_object_or_404(Question, id=question_id, survey_section__survey_header=survey)
     is_subquestion = question.parent_question_id_id is not None
 
     if request.method == 'POST':
-        form = QuestionForm(_resolve_layer_choice(request, survey), request.FILES, instance=question, is_subquestion=is_subquestion, section=question.survey_section)
+        before = question_snapshot(question)
+        # A layer created from "answers:<code>" is structure — never on a live survey.
+        data = request.POST if structure_locked else _resolve_layer_choice(request, survey)
+        form = QuestionForm(data, request.FILES, instance=question, is_subquestion=is_subquestion,
+                            section=question.survey_section, lock_structure=structure_locked)
         if form.is_valid():
             q = form.save(commit=False)
             choices_json = request.POST.get('choices_json', '').strip()
@@ -1599,16 +1756,33 @@ def editor_question_edit(request, survey_uuid, question_id):
                 })
             if vis_present:
                 q.visibility_rule = vis_rule
+            if structure_locked:
+                reasons = structural_question_changes(
+                    before, q, removed_answered_choices(q, before['choices'], q.choices))
+                if reasons:
+                    def render_modal(message):
+                        form.add_error(None, message)
+                        return _render_question_modal(request, {
+                            **_visibility_block_context(survey, question.survey_section, 'question', host=question),
+                            'form': form,
+                            'survey': survey,
+                            'section': question.survey_section,
+                            'question': question,
+                        })
+                    return _structural_refusal(request, reasons, render_modal)
             q.save()
             _apply_shared_map_settings(request, q)
             _save_question_translations(request, q, survey)
+            if structure_locked:
+                pe.emit(pe.LIVE_EDIT_SAVED, request.user.pk, {'survey_id': str(survey.id), 'kind': 'question'})
+                _rescreen_if_live(survey)
             # A sub-question lives inside its parent's section-list row: answer
             # with the parent's row (the form targets it), never a top-level
             # item for the child.
             response = render(request, 'editor/partials/question_list_item.html', {'thread_counts': _thread_counts(survey, request.user), 
                 'question': q.parent_question_id or q,
                 'survey': survey,
-                'is_read_only': survey.status in ('published', 'closed'),
+                **_lock_context(survey),
             })
             response['HX-Trigger'] = 'questionSaved'
             return response
@@ -1625,8 +1799,11 @@ def editor_question_edit(request, survey_uuid, question_id):
             'question': question,
         })
     else:
-        form = QuestionForm(instance=question, is_subquestion=is_subquestion, section=question.survey_section)
+        form = QuestionForm(instance=question, is_subquestion=is_subquestion, section=question.survey_section,
+                            lock_structure=structure_locked)
     return _render_question_modal(request, {
+        'live_answer_count': (
+            Answer.objects.filter(question=question).count() if structure_locked and not is_read_only else 0),
         # Sub-questions live inside a geo popup and never carry rules of their own.
         **({} if is_subquestion else _visibility_block_context(survey, question.survey_section, 'question', host=question)),
         'source_layers': _source_layers_of(survey, question),
@@ -1929,7 +2106,7 @@ def editor_question_share(request, survey_uuid, question_id):
     """The "Others see" switch on a sub-question row: other respondents see
     this sub-question's answers on the object (👍/👎 counts, comments)."""
     survey = request.survey
-    blocked = _check_structural_edit_allowed(survey)
+    blocked = _check_content_edit_allowed(survey)
     if blocked:
         return blocked
     if request.method != 'POST':
@@ -2000,7 +2177,7 @@ def editor_subquestion_create(request, survey_uuid, parent_id):
             response = render(request, 'editor/partials/question_list_item.html', {'thread_counts': _thread_counts(survey, request.user), 
                 'question': parent,
                 'survey': survey,
-                'is_read_only': survey.status in ('published', 'closed'),
+                **_lock_context(survey),
             })
             response['HX-Trigger'] = 'questionSaved'
             return response
@@ -2058,7 +2235,7 @@ def editor_question_duplicate(request, survey_uuid, question_id):
     response = render(request, 'editor/partials/question_list_item.html', {'thread_counts': _thread_counts(survey, request.user), 
         'question': new_question,
         'survey': survey,
-        'is_read_only': survey.status in ('published', 'closed'),
+        **_lock_context(survey),
     })
     response['HX-Trigger'] = 'questionSaved'
     return response
@@ -2184,7 +2361,7 @@ def editor_question_paste(request, survey_uuid, section_id):
     response = render(request, 'editor/partials/question_list_item.html', {'thread_counts': _thread_counts(target_survey, request.user), 
         'question': target_parent if target_parent is not None else new_question,
         'survey': target_survey,
-        'is_read_only': target_survey.status in ('published', 'closed'),
+        **_lock_context(target_survey),
     })
     response['HX-Trigger'] = 'questionSaved'
     return response
@@ -2244,7 +2421,7 @@ def editor_section_map_picker(request, survey_uuid, section_id):
     section = get_object_or_404(SurveySection, id=section_id, survey_header=survey)
 
     if request.method == 'POST':
-        blocked = _check_structural_edit_allowed(survey)
+        blocked = _check_content_edit_allowed(survey)
         if blocked:
             return blocked
         use_geolocation = request.POST.get('use_geolocation', '0') == '1'
@@ -2264,6 +2441,8 @@ def editor_section_map_picker(request, survey_uuid, section_id):
         section.use_geolocation = use_geolocation
         section.override_basemap = override_basemap
         section.save(update_fields=['start_map_postion', 'start_map_zoom', 'use_geolocation', 'override_basemap'])
+        if is_live(survey):
+            pe.emit(pe.LIVE_EDIT_SAVED, request.user.pk, {'survey_id': str(survey.id), 'kind': 'map'})
         return HttpResponse(status=204, headers={'HX-Trigger': 'mapPositionSaved'})
 
     return render(request, 'editor/partials/section_map_picker.html', {
@@ -2577,10 +2756,16 @@ def editor_survey_password(request, survey_uuid):
 
 # ─── Versioning endpoints ──────────────────────────────────────────────────
 
-@survey_permission_required('owner')
+@survey_permission_required('editor')
 @require_POST
 def editor_create_draft(request, survey_uuid):
-    """Create a draft copy of a published survey for editing."""
+    """Create a draft copy of a published survey for editing.
+
+    Editors as well as owners: with live editing, this is what "Start
+    unpublished changes" does, and an editor who may add a question to a draft
+    survey must be able to add one to a live survey's changes. Publishing and
+    discarding them stay with the owner.
+    """
     survey = request.survey
 
     # Closed as well as published: a closed survey is read-only for the same
@@ -2595,7 +2780,25 @@ def editor_create_draft(request, survey_uuid):
         return HttpResponse('A draft already exists for this survey', status=409)
 
     draft = clone_survey_for_draft(survey)
-    return redirect('editor_survey_detail', survey_uuid=draft.uuid)
+    # `then` names the structural action that asked for the unpublished changes
+    # (the gate in survey_detail.html); the draft page replays the simple ones.
+    then = request.POST.get('then', '')
+    if then not in GATE_ACTIONS:
+        then = ''
+    pe.emit(pe.UNPUBLISHED_CHANGES_STARTED, request.user.pk, {
+        'survey_id': str(survey.id), 'then': then or 'edit'})
+    return redirect(_draft_url_for(
+        request, survey, draft, then=then or None,
+        section_code=request.POST.get('section_code') or None))
+
+
+# Structural actions the editor gates behind "unpublished changes". The first
+# two are replayed on the draft page; the rest land the creator on the same
+# section, where the control now works.
+GATE_ACTIONS = (
+    'add_question', 'add_section', 'add_subquestion', 'delete', 'duplicate',
+    'copy', 'paste', 'reorder', 'type', 'visibility', 'edit',
+)
 
 
 @survey_permission_required('owner')
@@ -2655,6 +2858,8 @@ def editor_publish_draft(request, survey_uuid):
         return JsonResponse({'issues': e.issues}, status=409)
 
     audit(request, 'draft_publish', canonical, draft_uuid=str(survey.uuid), version=canonical.version_number)
+    pe.emit(pe.UNPUBLISHED_CHANGES_PUBLISHED, request.user.pk, {
+        'survey_id': str(canonical.id), 'forced': force})
     # The draft's text now lives on the canonical survey — screen that.
     screen_survey(canonical, trigger='draft_publish')
     return redirect('editor_survey_detail', survey_uuid=canonical.uuid)
@@ -2671,6 +2876,7 @@ def editor_discard_draft(request, survey_uuid):
 
     canonical = survey.published_version
     audit(request, 'draft_discard', canonical, draft_uuid=str(survey.uuid))
+    pe.emit(pe.UNPUBLISHED_CHANGES_DISCARDED, request.user.pk, {'survey_id': str(canonical.id)})
     with transaction.atomic():
         # SurveySession.survey is PROTECT, so previewing a draft even once used
         # to make it undiscardable (ProtectedError → 500). publish_draft drops
