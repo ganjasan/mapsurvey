@@ -103,6 +103,25 @@ per page template, and it points at production.)
 - **WHEN** `ipn-domain` is `evil.example`
 - **THEN** the page renders without redirecting
 
+### Requirement: Staff can make a payment link for any workspace
+The Django admin SHALL offer, on every organisation, a page where a staff user makes a monthly,
+yearly or yearly-quote checkout link tied to that organisation through a `CheckoutIntent` without a
+buyer and `x-org_id`, with no buyer email prefilled, and lists the links made so far with whether
+they were paid. The same SHALL be available as `manage.py billing_link <slug> --monthly|--yearly
+[--quote]`. A payment through such a link SHALL activate Pro on that organisation whoever paid.
+
+#### Scenario: Quote link for a council
+- **WHEN** a staff user presses "Yearly — quote" on the organisation's payment-links page
+- **THEN** a link with the yearly product, `display-quote=true`, `use-company-purchase=true` and the intent's nonce is shown, and no `billing-email`
+
+#### Scenario: Clerk pays through the link
+- **WHEN** `OrderCharged` arrives with that nonce and an email that belongs to no member
+- **THEN** the organisation is Pro and the intent records the order
+
+#### Scenario: Not staff
+- **WHEN** a non-staff user opens the page
+- **THEN** they are refused and no intent is created
+
 ### Requirement: Checkout start is measured
 Starting checkout SHALL emit the PostHog event `plan_checkout_started` with `org_id`, `plan`
 and `nonce`, keyed on the acting user, and SHALL never fail the request if analytics is down.

@@ -86,6 +86,14 @@ Render's outbound IPs: Dashboard → service `mapsurvey` → *Outbound IPs*. Unt
 exist, the billing page offers "Update payment method" (`checkout?subscr-id=`) and the PayPro customer
 account instead of in-app cancel/resubscribe; nothing else is affected.
 
+## Selling to a buyer without an account
+
+A council's finance clerk pays; the planner has the account. In `/admin/survey/organization/`
+open the workspace → **Make a payment link** → Monthly / Yearly / Yearly quote. The link carries
+`x-org_id` and a staff-made `CheckoutIntent`; whoever pays through it, Pro activates on that
+workspace. Same from the shell: `python manage.py billing_link <slug> --yearly [--quote]`.
+Send a council both links — card and quote — and let their finance office choose.
+
 ## Operating it
 
 - **Webhook log**: `/admin/billing/billingevent/` — raw payload, which checks passed, `error`

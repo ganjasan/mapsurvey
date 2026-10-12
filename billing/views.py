@@ -11,6 +11,7 @@ from urllib.parse import parse_qs, urlencode
 
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -408,4 +409,37 @@ def org_help(request, slug):
     return render(request, 'billing/org_help.html', {
         'org': org, 'entitlements': e, 'form': form, 'submitted': submitted, 'is_owner': m.role == 'owner',
         'products_configured': co.products_configured(),
+    })
+
+
+# ---------------------------------------------------------------------------
+# Staff: payment links for a workspace (Django admin)
+# ---------------------------------------------------------------------------
+
+@staff_member_required
+def admin_payment_links(request, org_id):
+    """One page per workspace: make a monthly / yearly / quote link for a buyer
+    who has no Mapsurvey account, and see the links made so far."""
+    from django.contrib import admin as dj_admin
+
+    from .features import PLAN_LABELS
+    from .links import make_payment_link
+
+    org = get_object_or_404(Organization, pk=org_id)
+    link = nonce = link_label = ''
+    if request.method == 'POST' and co.products_configured():
+        choice = request.POST.get('product', '')
+        key = co.PRODUCT_YEARLY if choice.startswith('pro_yearly') else co.PRODUCT_MONTHLY
+        quote = choice == 'pro_yearly_quote'
+        intent, link = make_payment_link(org, key, quote=quote, staff_user=request.user, request=request)
+        nonce = str(intent.nonce)
+        link_label = {'pro_monthly': 'Monthly payment link', 'pro_yearly': 'Yearly payment link',
+                      'pro_yearly_quote': 'Yearly quote link'}[choice if choice in ('pro_monthly', 'pro_yearly', 'pro_yearly_quote') else 'pro_monthly']
+    e = ents.for_organization(org)
+    return render(request, 'admin/billing/payment_links.html', {
+        **dj_admin.site.each_context(request),
+        'title': 'Payment links', 'org': org, 'plan_label': PLAN_LABELS.get(e.plan, e.plan), 'until': e.until,
+        'products_configured': co.products_configured(), 'test_mode': bool(settings.PPG_TEST_MODE),
+        'link': link, 'nonce': nonce, 'link_label': link_label,
+        'intents': CheckoutIntent.objects.filter(organization=org).select_related('user').order_by('-created_at')[:20],
     })

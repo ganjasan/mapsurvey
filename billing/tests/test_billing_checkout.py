@@ -164,3 +164,65 @@ class ReturnForwardTest(TestCase):
         r = self.client.get('/billing/return/?ipn-domain=mapsurvey-pr-276.onrender.com',
                             HTTP_HOST='mapsurvey-pr-276.onrender.com')
         self.assertEqual(r.status_code, 200)
+
+
+@override_settings(**PPG_SETTINGS)
+class StaffPaymentLinkTest(TestCase):
+    """Links made by staff for a buyer without an account (admin page + billing_link command)."""
+
+    def setUp(self):
+        self.org, self.owner = make_org()
+        self.staff = User.objects.create_user(username='staff', password='pass', is_staff=True, is_superuser=True)
+
+    def test_admin_page_makes_links_tied_to_the_workspace(self):
+        """
+        GIVEN a staff user on the workspace's payment-links admin page
+        WHEN they press Yearly — quote
+        THEN an intent without a buyer exists and the link carries x-org_id, the yearly product and the quote parameters, no billing-email
+        """
+        self.client.login(username='staff', password='pass')
+        url = f'/billing/admin/links/{self.org.pk}/'
+        self.assertContains(self.client.get(url), 'Monthly — card')
+        r = self.client.post(url, {'product': 'pro_yearly_quote'})
+        self.assertEqual(r.status_code, 200)
+        intent = CheckoutIntent.objects.get()
+        self.assertEqual((intent.organization, intent.user, intent.product_key, intent.quote), (self.org, None, 'pro_yearly', True))
+        html = r.content.decode()
+        for part in ('products[1][id]=1002', f'x-org_id={self.org.pk}', f'x-nonce={intent.nonce}', 'display-quote=true', 'use-company-purchase=true'):
+            self.assertIn(part, html, part)
+        self.assertNotIn('billing-email', html)
+        self.assertNotIn('x-user_id', html)
+
+    def test_non_staff_cannot_open(self):
+        self.client.login(username='bill_owner', password='pass')
+        r = self.client.get(f'/billing/admin/links/{self.org.pk}/')
+        self.assertIn(r.status_code, (302, 403))
+        self.assertFalse(CheckoutIntent.objects.exists())
+
+    def test_webhook_through_a_staff_link_activates_the_workspace(self):
+        """
+        GIVEN a staff-made yearly link and a buyer who is not a member
+        WHEN OrderCharged arrives with that nonce and the buyer's email
+        THEN the workspace is Pro and the intent is consumed
+        """
+        from ..links import make_payment_link
+        intent, _ = make_payment_link(self.org, 'pro_yearly')
+        with override_settings(PPG_ACCEPT_TEST_IPN=True):
+            post_ipn(self.client, payload(1, 'OrderCharged', nonce=str(intent.nonce), org_id=self.org.pk,
+                                          email='clerk@city.example', test_mode=True))
+        self.assertTrue(ents.for_organization(self.org).is_pro)
+        intent.refresh_from_db()
+        self.assertIsNotNone(intent.consumed_at)
+
+    def test_management_command(self):
+        from io import StringIO
+        from django.core.management import call_command
+        out, err = StringIO(), StringIO()
+        call_command('billing_link', self.org.slug, '--yearly', '--quote', stdout=out, stderr=err)
+        self.assertIn('display-quote=true', out.getvalue())
+        self.assertEqual(CheckoutIntent.objects.get().quote, True)
+
+    def test_organization_admin_shows_button(self):
+        self.client.login(username='staff', password='pass')
+        r = self.client.get(f'/admin/survey/organization/{self.org.pk}/change/')
+        self.assertContains(r, 'Make a payment link')

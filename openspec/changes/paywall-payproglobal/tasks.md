@@ -26,6 +26,7 @@
 - [x] 4.1 `billing/checkout.py::build_checkout_url` (products, `billing-*` prefill, `language`, `x-*` with separator guard, `ipn-domain` = `PPG_IPN_DOMAIN` or `RENDER_EXTERNAL_HOSTNAME` or request host, test-mode params, `use-company-purchase` on yearly, `quote=True` variant adding `display-quote=true&quote-mode=editable`); tests for monthly/yearly/quote and prod/preview variants and the separator guard
 - [x] 4.2 View `POST /org/<slug>/billing/checkout/` with `period` and optional `quote` (owner only, 404 when `PPG_PRODUCTS` empty): create `CheckoutIntent` (records `quote`), emit `plan_checkout_started`, redirect
 - [x] 4.3 Return page `/billing/return/` (GET+POST, csrf-exempt for the PayPro POST) + `GET /billing/return/status/?nonce=` JSON; template with 2 s polling for 60 s and fallback copy; `?pending=1` variant for PayPro's "Waiting for payment" redirect (bank-transfer copy, no polling); tests: active / pending / waiting / unknown nonce; assert no writes
+- [x] 4.5 Staff payment links: `billing/links.py`, admin page `/billing/admin/links/<org>/` linked from the Organization admin, `manage.py billing_link`; tests
 - [x] 4.4 Upgrade entry points: `org_settings.html` Billing section (plan + "Upgrade monthly 49" / "Upgrade yearly 490" / "Get a quote" for owners, link to billing page); hidden when products unconfigured
 
 ## 5. Subscription management page

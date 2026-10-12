@@ -17,4 +17,5 @@ urlpatterns = [
     re_path(ORG + r'billing/switch/$', views.org_switch_period, name='org_billing_switch'),
     re_path(ORG + r'billing/login-link/$', views.org_login_link, name='org_billing_login_link'),
     re_path(ORG + r'help/$', views.org_help, name='org_help'),
+    path('billing/admin/links/<int:org_id>/', views.admin_payment_links, name='billing_admin_payment_links'),
 ]
