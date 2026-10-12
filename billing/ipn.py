@@ -141,9 +141,13 @@ def verify(payload: Mapping[str, str], client_ip: Optional[str]):
 # Parsing
 # ---------------------------------------------------------------------------
 
+# Observed on a real webhook (2026-10-12, test mode): SUBSCRIPTION_NEXT_CHARGE_DATE
+# "11/12/2026 11:36 AM" and ORDER_PLACED_TIME_UTC "10/12/2026 11:36:50" -- US
+# month/day order, 12-hour clock without seconds. The rest are the API's formats.
 _DATE_FORMATS = (
+    '%m/%d/%Y %I:%M %p', '%m/%d/%Y %I:%M:%S %p', '%m/%d/%Y %H:%M:%S', '%m/%d/%Y %H:%M', '%m/%d/%Y',
     '%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%d %H:%M:%S',
-    '%m/%d/%Y %I:%M:%S %p', '%m/%d/%Y %H:%M:%S', '%m/%d/%Y', '%d-%b-%Y', '%Y-%m-%d',
+    '%d-%b-%Y', '%Y-%m-%d',
 )
 
 
@@ -289,6 +293,22 @@ def _renewal(event):
     return ''
 
 
+def _fallback_period_end(sub, now, raw):
+    """A paid charge whose next-charge date we could not read must not leave the
+    customer on Free. Grant one period of the product and shout: the raw string is
+    on the row and in the log, and the next rebill's date replaces this guess."""
+    logger.error('billing ipn: unparseable next charge date %r for subscription %s; '
+                 'granting one %s period', raw, sub.ppg_subscription_id, sub.product_key or 'month')
+    return _add_months(now, 12 if sub.product_key == 'pro_yearly' else 1)
+
+
+def _add_months(dt, months):
+    import calendar
+    y, m = divmod(dt.month - 1 + months, 12)
+    year, month = dt.year + y, m + 1
+    return dt.replace(year=year, month=month, day=min(dt.day, calendar.monthrange(year, month)[1]))
+
+
 def _period_end_from(event, key='SUBSCRIPTION_NEXT_CHARGE_DATE'):
     raw = event.raw.get(key, '') or ''
     return parse_ppg_datetime(raw), raw
@@ -341,8 +361,10 @@ def apply(event: IpnEvent, org, intent=None, now=None) -> Applied:
     if t == SUBSCRIPTION_CHARGE_SUCCEED:
         sub.status = STATUS_ACTIVE
         end, raw = _period_end_from(event)
-        if end is not None:
-            sub.current_period_end, sub.current_period_end_raw = end, raw
+        sub.current_period_end_raw = raw or sub.current_period_end_raw
+        if end is None:
+            end = _fallback_period_end(sub, now, raw)
+        sub.current_period_end = end
         sub.failed_attempts = 0
         sub.payment_failed_reported_for = ''
         if event.raw.get('INVOICE_LINK'):
@@ -453,8 +475,10 @@ def _apply_charge(event, org, intent, now):
     sub.status = STATUS_ACTIVE
     sub.failed_attempts = 0
     sub.payment_failed_reported_for = ''
-    if end is not None:
-        sub.current_period_end, sub.current_period_end_raw = end, raw
+    sub.current_period_end_raw = raw or sub.current_period_end_raw
+    if end is None:
+        end = _fallback_period_end(sub, now, raw)
+    sub.current_period_end = end
     if trial:
         sub.trial_until = end
     sub.ppg_last_order_id = event.order_id or sub.ppg_last_order_id

@@ -297,3 +297,59 @@ class IpnEndpointTest(TestCase):
                 post_ipn(self.client, payload(7, 'SubscriptionChargeFailed', order_id='6001',
                                               extra={'SUBSCRIPTION_NUMBER_OF_FAILED_ATTEMPTS': str(n)}))
         self.assertEqual([c.args[0] for c in emit.call_args_list].count('plan_payment_failed'), 1)
+
+
+# ---------------------------------------------------------------------------
+# Real payload (task 3.5)
+# ---------------------------------------------------------------------------
+
+def _real_order_charged(org_id):
+    import json
+    import os
+    path = os.path.join(os.path.dirname(__file__), 'fixtures', 'order_charged_test_mode.json')
+    p = dict(json.load(open(path))['payload'])
+    p['ORDER_CUSTOM_FIELDS'] = p['ORDER_CUSTOM_FIELDS'].replace('x-org_id=1', f'x-org_id={org_id}')
+    return sign(p)
+
+
+@override_settings(**{**PPG_SETTINGS, 'PPG_PRODUCTS': {'pro_monthly': 138966, 'pro_yearly': 138969},
+                      'PPG_ACCEPT_TEST_IPN': True})
+class RealPayloadTest(TestCase):
+    def setUp(self):
+        self.org, self.owner = make_org()
+
+    def test_real_order_charged_sets_period_end(self):
+        """
+        GIVEN the OrderCharged PayPro actually sent on the preview (test mode, 2026-10-12)
+        WHEN it is posted to the webhook
+        THEN the subscription ends its period at 2026-11-12 11:36 UTC, as written in
+             SUBSCRIPTION_NEXT_CHARGE_DATE ("11/12/2026 11:36 AM", month first, 12-hour clock)
+        """
+        from datetime import datetime, timezone as dt_tz
+        r = post_ipn(self.client, _real_order_charged(self.org.pk))
+        self.assertEqual(r.status_code, 200)
+        sub = Subscription.objects.get(organization=self.org)
+        self.assertEqual(sub.current_period_end, datetime(2026, 11, 12, 11, 36, tzinfo=dt_tz.utc))
+        self.assertEqual(sub.current_period_end_raw, '11/12/2026 11:36 AM')
+        self.assertEqual((sub.product_key, sub.ppg_subscription_id, sub.renewal_type), ('pro_monthly', '5411153', 'auto'))
+        at_purchase = datetime(2026, 10, 12, 12, 0, tzinfo=dt_tz.utc)
+        self.assertTrue(ents.for_subscription(sub, at_purchase).is_pro)
+
+    def test_real_custom_fields_and_order_time(self):
+        p = _real_order_charged(self.org.pk)
+        self.assertEqual(ipn_mod.parse_custom_fields(p['ORDER_CUSTOM_FIELDS'])['x-plan'], 'pro_monthly')
+        self.assertEqual(ipn_mod.parse_ppg_datetime(p['ORDER_PLACED_TIME_UTC']).month, 10)
+
+    def test_unparseable_date_still_grants_one_period(self):
+        """
+        GIVEN a paid OrderCharged whose next charge date is in a format we cannot read
+        WHEN it is applied
+        THEN the raw string is stored and the subscription gets one product period, not "Ended"
+        """
+        p = _real_order_charged(self.org.pk)
+        p['SUBSCRIPTION_NEXT_CHARGE_DATE'] = 'next Thursday'
+        post_ipn(self.client, sign(p))
+        sub = Subscription.objects.get(organization=self.org)
+        self.assertEqual(sub.current_period_end_raw, 'next Thursday')
+        self.assertAlmostEqual(sub.current_period_end, timezone.now() + timedelta(days=31), delta=timedelta(days=3))
+        self.assertTrue(ents.for_organization(self.org).is_pro)

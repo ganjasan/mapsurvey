@@ -313,7 +313,25 @@ API) or, without the API, prints the checkout URLs to open by hand.
 
 ## Open Questions
 
-- Exact IPN date format and multi-field `ORDER_CUSTOM_FIELDS` encoding — resolved in task 1
-  with the simulator.
 - Whether admins (not only owners) may start checkout — v1: owner only, mirroring
   `org_settings`.
+
+## Findings from the first real webhook (preview of PR #276, 2026-10-12)
+
+- `SUBSCRIPTION_NEXT_CHARGE_DATE` arrives as `11/12/2026 11:36 AM` (US month/day, 12-hour
+  clock, no seconds); `ORDER_PLACED_TIME_UTC` as `10/12/2026 11:36:50`. The first real order
+  landed on "Ended" because neither the format nor the raw string was kept; fixed, pinned by
+  `billing/tests/fixtures/order_charged_test_mode.json`, and an unreadable date now grants one
+  product period with an error log instead of nothing.
+- `ORDER_CUSTOM_FIELDS` is `x-a=1,x-b=2` as assumed. The IPN wildcard
+  `https://*.onrender.com/billing/ipn/` + `ipn-domain` delivers to `mapsurvey-pr-<n>` hosts.
+- Test mode: `ORDER_TOTAL_AMOUNT` is `0.00` and the signature still verifies over it.
+- **Test-mode checkout links carry `secret-key`** and PayPro echoes it in
+  `CHECKOUT_QUERY_STRING`: anyone who opens a preview checkout sees the secret key. It alone
+  cannot forge a webhook (SIGNATURE needs the validation key, and the source IP is checked),
+  but regenerate the secret key before production sales start.
+- The thank-you redirect lives on the page template; system templates (`Default…`, View only)
+  cannot carry it — the products must use an editable copy.
+- Price shown in the buyer's IP currency (KGS for a Bishkek IP, VAT 0 for KG); the next charge
+  is in EUR (reference currency). Whether B2B buyers should always see USD/EUR (`currency`
+  link parameter) is open.

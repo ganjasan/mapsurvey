@@ -18,7 +18,7 @@
 - [x] 3.2 Organisation resolution chain (`x-org_id` → nonce → `SUBSCRIPTION_ID` → owner email) with `ORDER_CUSTOM_FIELDS` parser; unresolved → stored with `error`, 200
 - [x] 3.3 State machine `apply(event, subscription)` for types 1, 13, 6, 7, 8, 9, 10, 11, 2, 3, 14, 15 and the pass-through default; replacement-purchase supersede logic; `pending_change` cleared on apply
 - [x] 3.4 View `POST /billing/ipn/` (`csrf_exempt`, `require_POST`): verify → test-mode gate → `get_or_create` in a transaction → apply → `on_commit` PostHog/mail → 200; 400 on verification failure, 500 on our exception (transaction rolled back)
-- [ ] 3.5 Fixtures: capture one payload per event type from the PayPro IPN simulator (preview URL), redact, store under `billing/tests/fixtures/`; pin the `SUBSCRIPTION_NEXT_CHARGE_DATE` format and the multi-field `ORDER_CUSTOM_FIELDS` encoding in a test; lenient date parser keeps the raw string
+- [x] 3.5 Fixtures: capture one payload per event type from the PayPro IPN simulator (preview URL), redact, store under `billing/tests/fixtures/`; pin the `SUBSCRIPTION_NEXT_CHARGE_DATE` format and the multi-field `ORDER_CUSTOM_FIELDS` encoding in a test; lenient date parser keeps the raw string
 - [x] 3.6 Integration tests: full lifecycle (charge → rebill → fail×3 → suspended → renewed → charge; charge → refund; charge → chargeback; duplicate resend; test-mode on/off; unresolved)
 
 ## 4. Checkout and return page
