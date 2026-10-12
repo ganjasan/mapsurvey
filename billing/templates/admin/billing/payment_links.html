@@ -1,0 +1,52 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+  &rsaquo; <a href="{% url 'admin:survey_organization_changelist' %}">Organizations</a>
+  &rsaquo; <a href="{% url 'admin:survey_organization_change' org.pk %}">{{ org.name }}</a>
+  &rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>{{ title }}</h1>
+<p>Workspace <b>{{ org.name }}</b> (<code>{{ org.slug }}</code>) — plan now: <b>{{ plan_label }}</b>{% if until %} until {{ until|date:"j F Y" }}{% endif %}.</p>
+
+{% if not products_configured %}
+<p class="errornote">PPG_PRODUCTS is not configured on this environment — no links can be made.</p>
+{% else %}
+<p>Each button creates a fresh link tied to this workspace. Send it to whoever pays — no Mapsurvey
+account needed; PayPro asks for their details. When the payment lands, Pro activates on this workspace.
+{% if test_mode %}<b>This environment is in PayPro test mode:</b> links carry <code>use-test-mode</code>, nothing is charged.{% endif %}</p>
+
+<form method="post" style="margin:12px 0 20px">{% csrf_token %}
+  <button type="submit" name="product" value="pro_monthly" class="button">Monthly — card / PayPal</button>
+  <button type="submit" name="product" value="pro_yearly" class="button" style="margin-left:8px">Yearly — card, PayPal, bank transfer, PO</button>
+  <button type="submit" name="product" value="pro_yearly_quote" class="button" style="margin-left:8px">Yearly — quote (PDF for procurement)</button>
+</form>
+
+{% if link %}
+<fieldset class="module aligned" style="padding:12px">
+  <h2>{{ link_label }}</h2>
+  <p><input type="text" readonly value="{{ link }}" style="width:100%;font-family:monospace" onclick="this.select()"></p>
+  <p style="opacity:.7">Intent <code>{{ nonce }}</code>. The link does not expire; one payment through it activates Pro once.</p>
+</fieldset>
+{% endif %}
+{% endif %}
+
+<h2 style="margin-top:28px">Recent links for this workspace</h2>
+<table>
+  <thead><tr><th>Created</th><th>Product</th><th>Quote</th><th>Made by</th><th>Paid (order)</th></tr></thead>
+  <tbody>
+  {% for i in intents %}
+    <tr><td>{{ i.created_at|date:"Y-m-d H:i" }}</td><td>{{ i.product_key }}</td><td>{{ i.quote|yesno:"yes,—" }}</td>
+        <td>{% if i.user %}{{ i.user.username }}{% else %}staff link{% endif %}</td>
+        <td>{% if i.consumed_at %}{{ i.order_id }} · {{ i.consumed_at|date:"Y-m-d" }}{% else %}—{% endif %}</td></tr>
+  {% empty %}
+    <tr><td colspan="5">None yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -121,12 +121,15 @@
     </div>
     {% endfor %}
 
+    {% load billing_tags %}{% has_feature survey.organization 'unbranded' as unbranded %}
+    {% if not unbranded or survey.show_branding %}
     <div class="footer">
-      {% comment %}Acquisition loop: the link carries the surface in utm_medium and no survey identifier, so a registration can be attributed to the badge without being attributable to this page.{% endcomment %}
+      {% comment %}Acquisition loop: the link carries the surface in utm_medium and no survey identifier, so a registration can be attributed to the badge without being attributable to this page. Pro organisations (the `unbranded` entitlement) may switch it off per survey.{% endcomment %}
       <a class="made" href="{% url 'django_registration_register' %}?utm_source=viral_loop&amp;utm_medium=results" target="_blank" rel="noopener">
         {% trans "Made with" %} <strong>Mapsurvey</strong>
       </a>
     </div>
+    {% endif %}
   </div>
 
   <script id="blocks-data" type="application/json">{{ blocks_json|safe }}</script>

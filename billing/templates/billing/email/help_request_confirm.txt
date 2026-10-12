@@ -1,0 +1,9 @@
+Thank you — we received your request for {{ org.name }} ({{ req.get_kind_display }}).
+
+We read every request ourselves and reply within two working days with a proposal and a time to talk.
+
+What you sent:
+
+{{ req.message }}
+
+— The Mapsurvey team

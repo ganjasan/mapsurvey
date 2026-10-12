@@ -33,6 +33,7 @@ handler404 = survey_not_found
 
 urlpatterns = [
  	path('', include('survey.urls')),
+    path('', include('billing.urls')),
     path('i18n/', include('django.conf.urls.i18n')),
     path('admin/', admin.site.urls),
     path('accounts/register/', AbuseProtectedRegistrationView.as_view(), name='django_registration_register'),

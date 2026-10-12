@@ -390,6 +390,10 @@
                               {% if active_org %}
                               <a class="dropdown-item" href="{% url 'org_settings' active_org.slug %}"><i class="fas fa-cog" style="margin-right:4px;"></i>{% trans "Settings" %}</a>
                               <a class="dropdown-item" href="{% url 'org_members' active_org.slug %}"><i class="fas fa-users" style="margin-right:4px;"></i>{% trans "Members" %}</a>
+                              {% if org_role == 'owner' or org_role == 'admin' %}
+                              <a class="dropdown-item" href="{% url 'org_billing' active_org.slug %}"><i class="fas fa-credit-card" style="margin-right:4px;"></i>{% trans "Plan & billing" %}</a>
+                              {% endif %}
+                              <a class="dropdown-item" href="{% url 'org_help' active_org.slug %}"><i class="fas fa-life-ring" style="margin-right:4px;"></i>{% trans "Pro help" %}</a>
                               {% endif %}
                               <div class="dropdown-divider"></div>
                               <a class="dropdown-item" href="{% url 'whats_new' %}"><i class="fas fa-gift" style="margin-right:4px;"></i>{% trans "What's new" %}{% if whats_new.unseen_count %} <span class="wn-badge">{{ whats_new.unseen_count }}</span>{% endif %}</a>

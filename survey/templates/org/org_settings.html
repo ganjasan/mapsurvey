@@ -39,6 +39,26 @@
         <button type="submit" class="btn-auth">{% trans "Save" %}</button>
     </form>
 
+    {% load billing_tags %}{% entitlements_for org as ent %}{% ppg_products_configured as products_configured %}
+    <div class="mt-4 pt-3" style="border-top:1px solid #e2e6ea;">
+        <p class="mb-1"><strong>{% trans "Plan" %}:</strong> {% plan_label ent.plan %}{% if ent.is_pro and ent.until %} <small class="text-muted">— {% trans "until" %} {{ ent.until|date:"j F Y" }}</small>{% endif %}</p>
+        {% if not ent.is_pro and products_configured %}
+        <form method="post" action="{% url 'org_checkout' org.slug %}" class="d-inline">
+            {% csrf_token %}<input type="hidden" name="period" value="monthly">
+            <button type="submit" class="btn btn-primary btn-sm mr-1">{% trans "Upgrade — monthly" %}</button>
+        </form>
+        <form method="post" action="{% url 'org_checkout' org.slug %}" class="d-inline">
+            {% csrf_token %}<input type="hidden" name="period" value="yearly">
+            <button type="submit" class="btn btn-primary btn-sm mr-1">{% trans "Upgrade — yearly" %}</button>
+        </form>
+        <form method="post" action="{% url 'org_checkout' org.slug %}" class="d-inline">
+            {% csrf_token %}<input type="hidden" name="period" value="yearly"><input type="hidden" name="quote" value="1">
+            <button type="submit" class="btn btn-outline-secondary btn-sm">{% trans "Get a quote" %}</button>
+        </form>
+        {% endif %}
+        <p class="mb-0 mt-2"><a href="{% url 'org_billing' org.slug %}">{% trans "Plan & billing" %}</a></p>
+    </div>
+
     <div class="auth-links">
         <a href="{% url 'org_members' org.slug %}">{% trans "Members" %}</a>
         <span class="auth-divider">&middot;</span>

@@ -1,11 +1,12 @@
 """Quota seam for AI generation.
 
-No-op in the MVP: generation is login-gated only (an explicit product
-decision, 2026-08-14). When plans & entitlements land (#87), the real check
-plugs in HERE and nowhere else — `generate_survey_draft()` already calls
+Permissive for every plan today: generation is login-gated only (an explicit
+product decision, 2026-08-14). The entitlement lookup is real, though — since
+the paywall (change paywall-payproglobal, #268) this is the ONE place a
+per-plan generation limit is enforced: `generate_survey_draft()` calls
 `check_quota()` before any provider call, so a quota block never spends a
 token. The natural implementation is a count over `AIGenerationEvent` rows
-per organization/window compared against the org's plan.
+per organization/window compared against a limit on the plan.
 """
 
 
@@ -14,5 +15,8 @@ class QuotaExceeded(Exception):
 
 
 def check_quota(organization, kind):
-    """Precondition for every AI generation. No-op until #87."""
+    """Precondition for every AI generation. Reads the plan; no plan has a limit yet."""
+    from billing.entitlements import for_organization
+
+    for_organization(organization)
     return None

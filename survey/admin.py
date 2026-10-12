@@ -60,7 +60,29 @@ class QuestionAdmin(admin.ModelAdmin):
     ]
 
 
-gisadmin.site.register(Organization)
+class OrganizationAdmin(admin.ModelAdmin):
+    list_display = ('name', 'slug', 'plan', 'payment_links')
+    search_fields = ('name', 'slug')
+    readonly_fields = ('plan', 'payment_links')
+    fields = ('name', 'slug', 'plan', 'payment_links')
+
+    @admin.display(description='Plan')
+    def plan(self, obj):
+        from billing.entitlements import for_organization
+        e = for_organization(obj)
+        return f'{e.plan}' + (f' until {e.until:%Y-%m-%d}' if e.until else '')
+
+    @admin.display(description='Payment links')
+    def payment_links(self, obj):
+        from django.urls import reverse
+        from django.utils.html import format_html
+        if not obj.pk:
+            return '—'
+        return format_html('<a class="button" href="{}">Make a payment link</a>',
+                           reverse('billing_admin_payment_links', args=[obj.pk]))
+
+
+gisadmin.site.register(Organization, OrganizationAdmin)
 gisadmin.site.register(SurveyHeader, SurveyAdmin)
 gisadmin.site.register(SurveySection, SurveySectionAdmin)
 gisadmin.site.register(Question, QuestionAdmin)

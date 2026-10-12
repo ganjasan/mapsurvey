@@ -144,9 +144,12 @@ class SurveyHeaderForm(forms.ModelForm):
 
     class Meta:
         model = SurveyHeader
-        # thanks_html now has its own WYSIWYG editor panel; show_branding is a
-        # future paid-tier flag on the model, not a creator-facing field.
-        fields = ['name', 'redirect_url', 'available_languages', 'visibility', 'cover_image', 'basemaps', 'default_basemap']
+        # thanks_html now has its own WYSIWYG editor panel. show_branding is the
+        # Pro switch for the "Made with Mapsurvey" badge: editable only when the
+        # organisation holds the `unbranded` entitlement (see __init__), inert
+        # -- disabled in the form, ignored on POST -- for everyone else.
+        fields = ['name', 'redirect_url', 'available_languages', 'visibility', 'cover_image', 'basemaps',
+                  'default_basemap', 'show_branding']
         labels = {
             # "Name" with the placeholder "survey_name" read as an identifier
             # nobody should touch, which is how surveys ended up called things
@@ -173,10 +176,20 @@ class SurveyHeaderForm(forms.ModelForm):
             'cover_image': forms.ClearableFileInput(attrs={'class': 'form-control-file'}),
             'basemaps': forms.HiddenInput(attrs={'id': 'id_basemaps'}),
             'default_basemap': forms.Select(attrs={'class': 'form-control'}),
+            'show_branding': forms.CheckboxInput(attrs={'class': 'form-check-input', 'id': 'id_show_branding'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # A disabled field keeps its initial value whatever the POST says, which
+        # is exactly the "submitted values are ignored" rule for Free organisations.
+        from billing.entitlements import has_feature
+        org = self.instance.organization if self.instance and self.instance.pk else None
+        self.unbranded = org is not None and has_feature(org, 'unbranded')
+        self.fields['show_branding'].required = False
+        self.fields['show_branding'].label = _('Show the "Made with Mapsurvey" badge')
+        if not self.unbranded:
+            self.fields['show_branding'].disabled = True
         # Drop the implicit blank option from the dropdown so the editor
         # never offers "no default" as a choice. A missing or invalid value
         # is still tolerated server-side and auto-fixed in ``clean()``,

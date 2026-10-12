@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load i18n billing_tags %}
+
+{% block title %}{{ org.name }} — {% trans "Pro help" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 720px;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="mb-0">{{ org.name }}</h4>
+            <small class="text-muted">{% trans "Pro help — consulting, analysis, reports" %}</small>
+        </div>
+        <div>
+            <a href="{% url 'org_billing' org.slug %}" class="btn btn-outline-secondary btn-sm mr-1">{% trans "Plan & billing" %}</a>
+            <a href="{% url 'editor' %}" class="btn btn-outline-secondary btn-sm">{% trans "Dashboard" %}</a>
+        </div>
+    </div>
+
+    {% if form %}
+        {% if submitted %}
+        <div class="alert alert-success py-2" role="status" style="font-size:0.9rem;">
+            {% trans "Received. We read every request ourselves and reply within two working days." %}
+        </div>
+        {% endif %}
+        <div class="card mb-4">
+            <div class="card-body">
+                <p class="mb-3">{% trans "Pro includes us. Tell us what the project needs — a plan for the engagement, help making sense of the responses, or a report you can hand to a council, a client or a funder — and we will come back with a proposal and a time to talk." %}</p>
+                <form method="post">
+                    {% csrf_token %}
+                    {% for error in form.non_field_errors %}<div class="alert alert-danger py-1">{{ error }}</div>{% endfor %}
+                    {% for field in form %}
+                    <div class="form-group">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% for error in field.errors %}<small class="text-danger d-block">{{ error }}</small>{% endfor %}
+                    </div>
+                    {% endfor %}
+                    <button type="submit" class="btn btn-primary">{% trans "Send request" %}</button>
+                </form>
+            </div>
+        </div>
+    {% else %}
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="mb-2">{% trans "This is what Pro is for" %}</h5>
+                <p>{% trans "Pro is a service plan. A Pro organisation gets the Mapsurvey team on its project: consulting on how to run the engagement, analysis of what people submitted, and reports written for the people who have to act on them. It also removes the Mapsurvey badge from your surveys." %}</p>
+                <p class="mb-3">{% trans "Everything you use today stays free." %}</p>
+                {% if is_owner and products_configured %}
+                    <a href="{% url 'org_billing' org.slug %}" class="btn btn-primary btn-sm">{% trans "Upgrade to Pro" %}</a>
+                {% elif is_owner %}
+                    <a href="{% url 'services' %}" class="btn btn-outline-primary btn-sm">{% trans "Read about the project service" %}</a>
+                {% else %}
+                    <p class="text-muted mb-0" style="font-size:0.9rem;">{% trans "Ask your organisation owner to upgrade." %}</p>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

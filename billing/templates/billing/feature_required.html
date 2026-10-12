@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load i18n billing_tags %}
+
+{% block title %}{% trans "Pro feature" %} — {{ org.name }}{% endblock %}
+
+{% block content_wrapper_class %}auth-page{% endblock %}
+
+{% block content %}
+<div class="auth-card" style="max-width:520px;">
+    <h2>{% trans "This is a Pro feature" %}</h2>
+    <p class="auth-subtitle">{% feature_label feature_key %}</p>
+    <p>{% blocktrans with name=org.name %}{{ name }} is on the Free plan. Pro adds this and direct help from the Mapsurvey team; everything free today stays free.{% endblocktrans %}</p>
+    <div class="auth-links">
+        <a href="{% url 'org_billing' org.slug %}">{% trans "See plans" %}</a>
+        <span class="auth-divider">&middot;</span>
+        <a href="{% url 'editor' %}">{% trans "Back to Dashboard" %}</a>
+    </div>
+</div>
+{% endblock %}

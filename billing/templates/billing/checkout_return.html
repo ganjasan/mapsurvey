@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Thank you" %} — Mapsurvey{% endblock %}
+
+{% block content_wrapper_class %}auth-page{% endblock %}
+
+{% block content %}
+<div class="auth-card" style="max-width:520px;" id="billing-return"
+     data-nonce="{{ nonce }}" data-status-url="{% url 'billing_return_status' %}"
+     data-poll="{{ poll_seconds }}" data-limit="{{ poll_limit_seconds }}"
+     data-pending-transfer="{% if pending_transfer %}1{% else %}0{% endif %}">
+    <h2>{% trans "Thank you" %}</h2>
+    {% if pending_transfer %}
+        <p class="auth-subtitle">{% trans "Waiting for your bank transfer" %}</p>
+        <p>{% trans "PayPro Global has registered the order. Pro is activated as soon as the transfer arrives — typically within 2–5 business days. You will get an email when it does." %}</p>
+    {% elif nonce %}
+        <p class="auth-subtitle" id="billing-return-state">{% trans "Activating your Pro plan…" %}</p>
+        <p id="billing-return-hint">{% trans "This usually takes a few seconds. Payment confirmation comes from PayPro Global; the page updates on its own." %}</p>
+    {% else %}
+        <p class="auth-subtitle">{% trans "We are processing your order" %}</p>
+        <p>{% trans "Your plan is activated as soon as PayPro Global confirms the payment. If nothing changes within a few minutes, check the billing page of your organisation or write to us." %}</p>
+    {% endif %}
+    <div class="auth-links">
+        {% if org %}
+        <a href="{% url 'org_billing' org.slug %}">{% trans "Plan & billing" %}</a>
+        <span class="auth-divider">&middot;</span>
+        {% endif %}
+        <a href="{% url 'editor' %}">{% trans "Back to Dashboard" %}</a>
+    </div>
+</div>
+{% if nonce and not pending_transfer %}
+<script>
+(function () {
+  var box = document.getElementById('billing-return');
+  var state = document.getElementById('billing-return-state');
+  var hint = document.getElementById('billing-return-hint');
+  var every = parseInt(box.dataset.poll, 10) * 1000;
+  var limit = parseInt(box.dataset.limit, 10) * 1000;
+  var started = Date.now();
+  function poll() {
+    fetch(box.dataset.statusUrl + '?nonce=' + encodeURIComponent(box.dataset.nonce), {credentials: 'same-origin'})
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.state === 'active') {
+          state.textContent = '{{ _("Your Pro plan is active.")|escapejs }}';
+          hint.textContent = '{{ _("Thank you. Everything is ready — the badge switch and the help channel are on your organisation pages.")|escapejs }}';
+          return;
+        }
+        if (Date.now() - started < limit) { setTimeout(poll, every); return; }
+        state.textContent = '{{ _("Still waiting for confirmation")|escapejs }}';
+        hint.textContent = '{{ _("This can take a few minutes. We will email you when the plan is active; the billing page shows the current state.")|escapejs }}';
+      })
+      .catch(function () { if (Date.now() - started < limit) setTimeout(poll, every); });
+  }
+  setTimeout(poll, every);
+})();
+</script>
+{% endif %}
+{% endblock %}

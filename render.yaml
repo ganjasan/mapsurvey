@@ -110,6 +110,29 @@ services:
       - key: AI_STREAMING_ENABLED
         value: "false"
         previewValue: "true"
+      # PayPro Global (billing app). The three keys are set on this service AND in
+      # the `mapsurvey-shared` env group, which is how previews get secrets (a
+      # `sync: false` value is never copied into a preview; see PR #201).
+      # PPG_PRODUCTS stays out of the group: unset on production means nothing
+      # is sold (the rollback switch); a preview under test gets it set on the
+      # preview service by hand. Previews accept TEST_MODE webhooks and build
+      # test-mode checkout links via previewValue; production never.
+      - key: PPG_VENDOR_ACCOUNT_ID
+        sync: false
+      - key: PPG_SECRET_KEY
+        sync: false
+      - key: PPG_VALIDATION_KEY
+        sync: false
+      - key: PPG_API_SECRET_KEY
+        sync: false
+      - key: PPG_PRODUCTS
+        sync: false
+      - key: PPG_ACCEPT_TEST_IPN
+        value: "false"
+        previewValue: "true"
+      - key: PPG_TEST_MODE
+        value: "false"
+        previewValue: "true"
       - key: DEFAULT_FROM_EMAIL
         sync: false
       - key: DEMO_SURVEY_URL
@@ -390,3 +413,21 @@ services:
       # Read-only Render API token, used solely to ask which services exist.
       - key: RENDER_API_KEY
         sync: false
+      # notify_lapsed (billing app) runs here too and mails owners whose Pro
+      # ended; without these the cron would fall back to the console backend.
+      - key: EMAIL_BACKEND
+        sync: false
+      - key: EMAIL_HOST
+        sync: false
+      - key: EMAIL_PORT
+        sync: false
+      - key: EMAIL_USE_SSL
+        sync: false
+      - key: EMAIL_HOST_USER
+        sync: false
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        sync: false
+      - key: SITE_URL
+        value: "https://mapsurvey.org"
