@@ -121,7 +121,7 @@
         </p>
         <div style="display:flex;align-items:center;gap:0.5rem;">
             <input type="text" readonly class="form-control" style="font-family:monospace;font-size:0.85rem;"
-                   id="direct-link" value="{{ request.scheme }}://{{ request.get_host }}/surveys/{{ survey.uuid }}/">
+                   id="direct-link" value="{{ public_base }}/surveys/{{ survey.uuid }}/">
             <button class="btn btn-sm btn-outline-secondary" title="{% trans 'Copy link' %}" onclick="copyLink(this, document.getElementById('direct-link').value)">
                 <i class="fas fa-copy"></i>
             </button>
@@ -141,7 +141,7 @@
         </p>
         <div style="display:flex;align-items:center;gap:0.5rem;">
             <input type="text" readonly class="form-control" style="font-family:monospace;font-size:0.85rem;"
-                   id="results-link" value="{{ request.scheme }}://{{ request.get_host }}/r/{{ results_page.slug }}/">
+                   id="results-link" value="{{ public_base }}/r/{{ results_page.slug }}/">
             <button class="btn btn-sm btn-outline-secondary" title="{% trans 'Copy link' %}" onclick="copyLink(this, document.getElementById('results-link').value)">
                 <i class="fas fa-copy"></i>
             </button>

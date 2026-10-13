@@ -51,7 +51,7 @@ import logging
 
 from .access_control import check_survey_access, mark_indexing, mark_embeddable
 from .redirects import completion_url, continue_url
-from .embedding import framed_request, oembed_url, anonymously_openable, snippet_html, clamp_size, DEFAULT_WIDTH, DEFAULT_HEIGHT, MIN_HEIGHT
+from .embedding import framed_request, oembed_url, anonymously_openable, snippet_html, clamp_size, public_base_url, DEFAULT_WIDTH, DEFAULT_HEIGHT, MIN_HEIGHT
 from .audit import audit
 from .trash import trash_survey, restore_survey, purge_survey, purge_expired_surveys
 from . import other_option
@@ -2360,25 +2360,8 @@ def _pro_initial(request):
 	return {}
 
 
-def _public_base_url(request):
-	"""Scheme + host the public reached us on, for sitemap and robots URLs.
-
-	Behind Cloudflare and Render `request.scheme` is `http`, which put 74
-	`http://` URLs into a sitemap whose canonicals are all `https://` (#248).
-	`SECURE_PROXY_SSL_HEADER` would fix that site-wide but also changes
-	`is_secure()` for CSRF, cookies and redirects -- out of proportion here.
-	"""
-	from urllib.parse import urlparse, urlsplit
-	from django.conf import settings as conf_settings
-
-	host = request.get_host()
-	forwarded = request.META.get('HTTP_X_FORWARDED_PROTO', '').split(',')[0].strip().lower()
-	if forwarded in ('http', 'https'):
-		scheme = forwarded
-	else:
-		site = urlsplit(getattr(conf_settings, 'SITE_URL', '') or '')
-		scheme = site.scheme if site.scheme and site.netloc == host else request.scheme
-	return f"{scheme}://{host}"
+# Moved to survey.embedding (change embed-surveys): the snippet and oEmbed need the same answer.
+_public_base_url = public_base_url
 
 
 def robots_txt(request):
@@ -2604,7 +2587,7 @@ def oembed(request):
 		'type': 'rich',
 		'title': survey.name,
 		'provider_name': 'Mapsurvey',
-		'provider_url': request.build_absolute_uri('/'),
+		'provider_url': public_base_url(request) + '/',
 		'html': snippet_html(request, survey, width=width, height=height),
 		'width': width,
 		'height': height,

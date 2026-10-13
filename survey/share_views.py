@@ -5,7 +5,7 @@ from django.views.decorators.http import require_POST
 
 from django.utils.translation import gettext_lazy as _
 
-from .embedding import normalise_allowed_hosts, snippet_html, InvalidHost
+from .embedding import normalise_allowed_hosts, snippet_html, public_base_url, InvalidHost
 from .models import TrackedLink, PublicResultsPage
 from .permissions import survey_permission_required
 from .versioning import canonical_of
@@ -85,6 +85,7 @@ def _render_share(request, survey, form=None, embed_form=None, status=200):
 
     return render(request, 'editor/survey_share.html', {
         'survey': survey,
+        'public_base': public_base_url(request),
         'form': form or TrackedLinkForm(),
         'links': link_data,
         'effective_role': request.effective_survey_role,

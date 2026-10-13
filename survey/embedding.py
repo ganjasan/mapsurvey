@@ -21,6 +21,9 @@ request-header tests that tell a framed respondent from a top-level one.
 import re
 from urllib.parse import urlencode, urlparse
 
+from urllib.parse import urlsplit
+
+from django.conf import settings
 from django.urls import reverse
 from django.utils.html import escape
 
@@ -142,13 +145,37 @@ def anonymously_openable(survey):
     )
 
 
+def public_base_url(request):
+    """Scheme + host the public reached us on, for URLs that leave the site.
+
+    Behind Cloudflare and Render `request.scheme` is `http` (#248), and a
+    snippet or oEmbed payload saying `http://` is worse than a wrong sitemap:
+    an https host page refuses to frame it as mixed content and a `Secure`
+    cookie never gets set. `SECURE_PROXY_SSL_HEADER` would fix that site-wide
+    but also changes `is_secure()` for CSRF, cookies and redirects -- out of
+    proportion here. So: the proxy's X-Forwarded-Proto, else SITE_URL's scheme
+    when it names this host, else whatever the request says (local dev).
+    """
+    host = request.get_host()
+    forwarded = request.META.get('HTTP_X_FORWARDED_PROTO', '').split(',')[0].strip().lower()
+    if forwarded in ('http', 'https'):
+        scheme = forwarded
+    else:
+        site = urlsplit(getattr(settings, 'SITE_URL', '') or '')
+        scheme = site.scheme if site.scheme and site.netloc == host else request.scheme
+    return f'{scheme}://{host}'
+
+
+def survey_url(request, survey):
+    return public_base_url(request) + reverse('survey', args=[str(survey.uuid)])
+
+
 def embed_js_url(request):
-    return request.build_absolute_uri(reverse('embed_js'))
+    return public_base_url(request) + reverse('embed_js')
 
 
 def oembed_url(request, survey):
-    survey_url = request.build_absolute_uri(reverse('survey', args=[str(survey.uuid)]))
-    return request.build_absolute_uri(reverse('oembed')) + '?' + urlencode({'url': survey_url, 'format': 'json'})
+    return public_base_url(request) + reverse('oembed') + '?' + urlencode({'url': survey_url(request, survey), 'format': 'json'})
 
 
 def clamp_size(value, default, floor):
@@ -169,7 +196,7 @@ def snippet_html(request, survey, width=None, height=None):
     form-layout survey grow with its content; a map-layout survey fills
     whatever height the host gives it.
     """
-    src = request.build_absolute_uri(reverse('survey', args=[str(survey.uuid)])) + '?embed=1'
+    src = survey_url(request, survey) + '?embed=1'
     style_width = f'{int(width)}px' if width else '100%'
     style_height = f'{int(height or DEFAULT_HEIGHT)}px'
     return (

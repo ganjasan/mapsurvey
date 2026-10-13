@@ -50434,6 +50434,20 @@ class SharePageEmbedTest(_EmbedSurveyMixin, TestCase):
         self.assertContains(response, '/embed.js')
         self.assertContains(response, "trackShare('embed_copied')")
 
+    def test_snippet_uses_the_public_scheme_behind_the_proxy(self):
+        """
+        GIVEN a request that reached us over https through a proxy (X-Forwarded-Proto)
+        WHEN the owner opens the Share page
+        THEN the snippet, embed.js and the survey link all say https://, never the proxy's http
+        """
+        survey = self._make_embed_survey()
+        response = self.client.get(f'/editor/surveys/{survey.uuid}/share/', HTTP_X_FORWARDED_PROTO='https')
+        body = response.content.decode()
+        self.assertIn(f'https://testserver/surveys/{survey.uuid}/?embed=1', body)
+        self.assertIn('https://testserver/embed.js', body)
+        self.assertIn(f'value="https://testserver/surveys/{survey.uuid}/"', body)
+        self.assertNotIn('http://testserver', body)
+
     def test_snippet_is_withheld_until_published(self):
         """
         GIVEN a testing survey
@@ -50546,6 +50560,21 @@ class OEmbedTest(_EmbedSurveyMixin, TestCase):
         self.assertIn('/embed.js', payload['html'])
         self.assertEqual((payload['width'], payload['height']), (800, 720))
         self.assertEqual(response['Access-Control-Allow-Origin'], '*')
+
+    def test_payload_uses_the_public_scheme_behind_the_proxy(self):
+        """
+        GIVEN a request forwarded over https
+        WHEN the endpoint describes a survey
+        THEN html and provider_url say https:// and the discovery link on the survey page does too
+        """
+        survey = self._make_embed_survey()
+        payload = self.client.get(
+            '/oembed/', {'url': f'https://testserver/surveys/{survey.uuid}/'}, HTTP_X_FORWARDED_PROTO='https',
+        ).json()
+        self.assertIn(f'https://testserver/surveys/{survey.uuid}/?embed=1', payload['html'])
+        self.assertEqual(payload['provider_url'], 'https://testserver/')
+        page = self.client.get(f'/surveys/{survey.uuid}/sec1/', HTTP_X_FORWARDED_PROTO='https')
+        self.assertContains(page, 'href="https://testserver/oembed/?url=https%3A%2F%2Ftestserver%2Fsurveys%2F')
 
     def test_max_dimensions_are_honoured(self):
         """
