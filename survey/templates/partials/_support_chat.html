@@ -39,7 +39,10 @@ agent as custom attributes before the chat opens — this is the hook for #295,
         });
         storage(function (s) { s.removeItem(KEY); });
     }
-    var ready = false, openWhenReady = false, pendingContext = null;
+    // `?support=1` is how the help centre's "Still stuck?" link hands a signed-in
+    // creator over to the chat (openspec: help-site). The context processor sets the
+    // flag only for authenticated users, so an anonymous visitor's URL is ignored.
+    var ready = false, openWhenReady = !!config.open_on_load, pendingContext = null;
 
     // Read by the SDK before it renders, so a hidden bubble never flashes.
     window.chatwootSettings = {

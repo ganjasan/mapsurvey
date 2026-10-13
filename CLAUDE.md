@@ -278,6 +278,23 @@ help at the point of failure (#295). Chatwoot's own cookies outlive our session,
 rendered for a different visitor clears them before the SDK loads; do not use
 `$chatwoot.reset()` for that (it reloads the frame without a second `chatwoot:ready`).
 
+**Help centre (`help/`, change `help-site`, #298)**: help.mapsurvey.org is a Starlight (Astro) site
+built from `help/` by its own Render static service (`mapsurvey-help`, `buildFilter: help/**`,
+automatic PR previews because static sites are free; previews mark every page `noindex`). Sections
+follow Diátaxis — `start-here/` (tutorial), `how-to/`, `reference/`, `troubleshooting/`, `learn/`
+(citizen engagement as a practice, written from `docs/research/survey-design-rules.md`),
+`use-cases/`, `faq.md` — and `help/CONTRIBUTING.md` holds the page shapes and the FAQ rule (a
+question is added only when someone asked it; source in a comment). A feature's guide ships in the
+feature's PR. **Product → help links go through `survey/help_links.py`** (`HELP_URL.<key>` from the
+`help_site` context processor; `HELP_SITE_URL` empty = no links) and `HelpSiteLinksTest` fails when a
+registry path has no page under `help/src/content/docs/`, so a renamed page needs a `redirects` entry in
+`help/astro.config.mjs` and a registry update in the same commit. The "?" menu's "Help centre" item
+and the "Learn more" links (reference layers, embed, export, Pro) are the only entry points; the
+help site's "Still stuck?" link is `mapsurvey.org/?support=1`, which opens the chat for a signed-in
+creator (`open_on_load` in the support_chat context). `npm run build` in `help/` fails on a broken
+internal link (`starlight-links-validator`); the MCP pages are `draft: true` until mcp.mapsurvey.org
+is live.
+
 **Hierarchical Questions/Answers**: Both Question and Answer models support self-referential parent relationships via `parent_question_id` and `parent_answer_id` for conditional sub-questions.
 
 **Conditional visibility (`CONDITIONAL_VISIBILITY` kill switch, default ON)**: a

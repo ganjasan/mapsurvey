@@ -84,7 +84,7 @@
     <div class="card mb-4">
         <div class="card-body">
             <h5 class="mb-2">{% trans "Pro" %}</h5>
-            <p class="mb-2">{% trans "Pro is the service plan: direct access to the Mapsurvey team for project consulting, analysis of your responses and reports for councils, clients and funders — plus a clean, unbranded survey." %}</p>
+            <p class="mb-2">{% trans "Pro is the service plan: direct access to the Mapsurvey team for project consulting, analysis of your responses and reports for councils, clients and funders — plus a clean, unbranded survey." %}{% if HELP_URL %} <a href="{{ HELP_URL.pro }}" target="_blank" rel="noopener" class="ms-learn-more">{% trans "Learn more" %} <i class="fas fa-external-link-alt" style="font-size:.7em;"></i></a>{% endif %}</p>
             <ul class="mb-3" style="font-size:0.9rem;">
                 <li>{% feature_label 'pro_help' %}</li>
                 <li>{% feature_label 'unbranded' %}</li>

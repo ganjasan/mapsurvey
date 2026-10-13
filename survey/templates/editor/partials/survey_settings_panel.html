@@ -169,6 +169,7 @@
         <h6>{% trans "Reference layers" %}</h6>
         <div class="pr-help" style="margin-top:0;margin-bottom:.75rem;">
           {% trans "Non-editable layers respondents see under the map: counting zones, boundaries, routes. Sections can hide each layer individually." %}
+          {% if HELP_URL %}<a href="{{ HELP_URL.reference_layers }}" target="_blank" rel="noopener" class="ms-learn-more">{% trans "Learn more" %} <i class="fas fa-external-link-alt" style="font-size:.7em;"></i></a>{% endif %}
         </div>
 
         <div id="ref-layers-list">

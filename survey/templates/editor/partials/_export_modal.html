@@ -30,7 +30,7 @@ Requires: ogr_available (whether GeoPackage/Shapefile/KML can be produced).
         <button type="button" class="close" data-dismiss="modal" aria-label="{% trans 'Close' %}"><span aria-hidden="true">&times;</span></button>
       </div>
       <div class="modal-body">
-        <p class="text-muted small mb-2" id="exportSurveyName"></p>
+        <p class="text-muted small mb-2"><span id="exportSurveyName"></span>{% if HELP_URL %} <a href="{{ HELP_URL.export }}" target="_blank" rel="noopener" class="ms-learn-more">{% trans "Learn more" %} <i class="fas fa-external-link-alt" style="font-size:.7em;"></i></a>{% endif %}</p>
         <fieldset>
           <legend>{% trans "Format" %}</legend>
           <label class="export-format">
