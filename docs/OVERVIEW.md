@@ -100,6 +100,7 @@ Management commands: `export_survey`, `import_survey`.
 - Geometry: GeoJSON (RFC 7946), WGS 84 (EPSG:4326). Tabular: CSV (UTF-8).
 - Interfaces in 11 languages (en, de, fr, es, pt, pl, id, nl, it, et, fi); survey content in any language.
 - Privacy and data handling: https://mapsurvey.org/trust/
+- Help centre (tutorial, how-to guides, reference, troubleshooting, FAQ, and essays on participatory mapping): https://help.mapsurvey.org/
 
 ## Project
 

@@ -1,0 +1,199 @@
+/* Mapsurvey help centre theme.
+   Palette and type mirror survey/assets/css/landing.css so the help site reads as
+   part of mapsurvey.org rather than as a generic documentation framework. */
+
+:root {
+  --sl-font: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --sl-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --ms-font-display: 'Instrument Sans', system-ui, -apple-system, sans-serif;
+
+  --sl-content-width: 46rem;
+  --sl-sidebar-width: 17rem;
+  --sl-text-base: 1.0625rem;
+  --sl-line-height: 1.65;
+}
+
+/* Light: warm paper background, navy text, teal accent (landing.css). */
+:root[data-theme='light'],
+[data-theme='light'] ::backdrop {
+  --sl-color-white: #1b2a4a;
+  --sl-color-gray-1: #2a3f6b;
+  --sl-color-gray-2: #4a5a7a;
+  --sl-color-gray-3: #5a6680;
+  --sl-color-gray-4: #8a94a8;
+  --sl-color-gray-5: #d4cfc6;
+  --sl-color-gray-6: #e4e0d8;
+  --sl-color-gray-7: #efece5;
+  --sl-color-black: #f7f5f0;
+
+  --sl-color-accent-low: #d3efe9;
+  --sl-color-accent: #0fa58e;
+  --sl-color-accent-high: #0a6b5c;
+
+  --sl-color-bg: #f7f5f0;
+  --sl-color-bg-nav: #f7f5f0;
+  --sl-color-bg-sidebar: #f7f5f0;
+  --sl-color-bg-inline-code: #efece5;
+  --sl-color-text: #1b2a4a;
+  --sl-color-text-accent: #0a6b5c;
+  --sl-color-hairline-light: #e4e0d8;
+  --sl-color-hairline: #d4cfc6;
+}
+
+/* Dark: the landing's dark scheme. */
+:root,
+::backdrop {
+  --sl-color-white: #f7f5f0;
+  --sl-color-gray-1: #e4e0d8;
+  --sl-color-gray-2: #c8d6f0;
+  --sl-color-gray-3: #8aa0d0;
+  --sl-color-gray-4: #6b82b0;
+  --sl-color-gray-5: #2a3450;
+  --sl-color-gray-6: #1f273c;
+  --sl-color-black: #141c2e;
+
+  --sl-color-accent-low: #10433b;
+  --sl-color-accent: #2dd4b8;
+  --sl-color-accent-high: #a8efe2;
+
+  --sl-color-bg: #141c2e;
+  --sl-color-bg-nav: #1a2338;
+  --sl-color-bg-sidebar: #1a2338;
+}
+
+/* Headings and UI chrome use the display face; body stays serif like the landing. */
+h1, h2, h3, h4, h5, h6,
+.site-title,
+.sidebar-content,
+.right-sidebar,
+.pagination-links,
+.sl-markdown-content .starlight-aside__title,
+.hero .tagline,
+.card .title,
+.ms-feedback,
+button,
+input,
+select {
+  font-family: var(--ms-font-display);
+}
+
+.sl-markdown-content :is(h1, h2, h3) {
+  letter-spacing: -0.01em;
+}
+
+/* Softer sidebar: no boxed current item, teal text instead. */
+.sidebar-content a[aria-current='page'] {
+  background: var(--sl-color-accent-low);
+  color: var(--sl-color-text-accent);
+  font-weight: 600;
+}
+
+/* Numbered steps read better with a little air. */
+.sl-markdown-content ol > li + li {
+  margin-top: 0.5rem;
+}
+
+/* Landing hero: search first (see src/content/docs/index.mdx). */
+.ms-hero-search {
+  margin: 1.5rem auto 0;
+  max-width: 34rem;
+}
+.ms-hero-search .ms-search-button {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.85rem 1.1rem;
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 10px;
+  background: var(--sl-color-bg-nav);
+  color: var(--sl-color-gray-3);
+  font-family: var(--ms-font-display);
+  font-size: 1rem;
+  cursor: text;
+  text-align: left;
+}
+.ms-hero-search .ms-search-button:hover {
+  border-color: var(--sl-color-accent);
+}
+.ms-hero-search kbd {
+  margin-left: auto;
+  font-size: 0.75rem;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 4px;
+}
+
+/* "Open Mapsurvey" header action (src/components/OpenMapsurvey.astro). */
+.ms-open-app {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  background: var(--sl-color-accent);
+  color: #fff;
+  font-family: var(--ms-font-display);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.ms-open-app:hover {
+  background: var(--sl-color-accent-high);
+  color: #fff;
+}
+@media (max-width: 50rem) {
+  .ms-open-app span { display: none; }
+  .ms-open-app { padding: 0.4rem 0.6rem; }
+}
+
+/* Feedback + "Still stuck?" block at the end of every content page (Footer.astro). */
+.ms-feedback {
+  margin-top: 2.5rem;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 12px;
+  background: var(--sl-color-bg-nav);
+  display: grid;
+  gap: 1rem;
+}
+.ms-feedback [hidden] {
+  display: none !important;
+}
+.ms-feedback__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+.ms-feedback__row p { margin: 0; }
+.ms-feedback button {
+  padding: 0.35rem 0.9rem;
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 999px;
+  background: var(--sl-color-bg);
+  color: var(--sl-color-text);
+  cursor: pointer;
+}
+.ms-feedback button:hover { border-color: var(--sl-color-accent); }
+.ms-feedback__note {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+.ms-feedback__note input {
+  flex: 1;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 8px;
+  background: var(--sl-color-bg);
+  color: var(--sl-color-text);
+}
+.ms-feedback__stuck {
+  border-top: 1px solid var(--sl-color-hairline-light);
+  padding-top: 1rem;
+  font-size: 0.95rem;
+  color: var(--sl-color-gray-3);
+}
+.ms-feedback__stuck a { color: var(--sl-color-text-accent); }

@@ -173,6 +173,7 @@
         <p style="font-size:0.8rem;color:#6b7280;margin:0.5rem 0 1rem;">
             {% trans "In Notion, Ghost or a self-hosted WordPress you can also just paste the survey link: they pick up the survey from it." %}
             {% if survey.show_branding %}{% trans "The “Made with Mapsurvey” badge shows inside the embed too; removing it is part of Pro." %}{% endif %}
+            {% if HELP_URL %}<a href="{{ HELP_URL.embedding }}" target="_blank" rel="noopener" class="ms-learn-more">{% trans "Learn more" %} <i class="fas fa-external-link-alt" style="font-size:.7em;"></i></a>{% endif %}
         </p>
         <form method="post" action="{% url 'editor_survey_embed_settings' survey.uuid %}">
             {% csrf_token %}

@@ -157,6 +157,7 @@ TEMPLATES = [
                 'survey.context_processors.icon_sprites',
                 'survey.context_processors.whats_new',
                 'survey.context_processors.support_chat',
+                'survey.context_processors.help_site',
             ],
         },
     },
@@ -586,6 +587,11 @@ DEMO_SURVEY_URL = os.environ.get('DEMO_SURVEY_URL', '')
 CHATWOOT_BASE_URL = os.environ.get('CHATWOOT_BASE_URL', 'https://app.chatwoot.com').rstrip('/')
 CHATWOOT_WEBSITE_TOKEN = os.environ.get('CHATWOOT_WEBSITE_TOKEN', '')
 CHATWOOT_HMAC_TOKEN = os.environ.get('CHATWOOT_HMAC_TOKEN', '')
+
+# Help centre (openspec: help-site, #298). The "?" menu's "Help centre" item and the
+# "Learn more" links in the editor point here; paths come from survey/help_links.py.
+# Empty = no help links at all (a self-hosted instance without its own mirror).
+HELP_SITE_URL = os.environ.get('HELP_SITE_URL', 'https://help.mapsurvey.org').rstrip('/')
 
 # Mobile-adaptive layout kill switches (openspec: mobile-adaptive-refactor).
 # ON by default (owner decision at PR time). Setting the env var to False

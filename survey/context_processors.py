@@ -226,11 +226,25 @@ def support_chat(request):
         if org is not None:
             from billing.entitlements import for_organization
             attributes = {'workspace': org.slug, 'plan': for_organization(org).plan}
+    # `?support=1` (the help centre's "Still stuck?" link, openspec: help-site) opens
+    # the chat on load -- for a signed-in creator only; anonymous visitors are ignored.
+    open_on_load = identity is not None and request.GET.get('support') == '1'
     return {
         'SUPPORT_CHAT': {
             'base_url': settings.CHATWOOT_BASE_URL,
             'website_token': token,
             'identity': identity,
             'attributes': attributes,
+            'open_on_load': open_on_load,
         },
     }
+
+
+def help_site(request):
+    """Absolute help-centre URLs by registry key (openspec: help-site, #298).
+
+    `HELP_URL.reference_layers` in a template; empty dict when HELP_SITE_URL is unset,
+    so `{% if HELP_URL %}` is the switch for every help link at once.
+    """
+    from .help_links import help_urls
+    return {'HELP_URL': help_urls()}
