@@ -45991,6 +45991,49 @@ class ExportOgrFormatsTest(TestCase):
         self.assertTrue({'Sightings', 'Zones'} <= container_names, container_names)
         self.assertEqual(len(list(root.iter('{http://www.opengis.net/kml/2.2}Placemark'))), 4)
 
+    def _add_bow_tie_zone(self):
+        s = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=s, question=self.q_zone,
+                              polygon=Polygon(((2, 2), (3, 3), (3, 2), (2, 3), (2, 2))))
+
+    def test_kml_repairs_a_self_intersecting_polygon(self):
+        """
+        GIVEN the polygon question has a valid square and a self-intersecting "bow tie" answer (#277)
+        WHEN the survey is exported as kml
+        THEN the export succeeds and every Zones placemark carries geometry
+        """
+        import xml.etree.ElementTree as ET
+        self._add_bow_tie_zone()
+        _response, body = self._download('kml')
+        kml = '{http://www.opengis.net/kml/2.2}'
+        root = ET.fromstring(body)
+        zones = next(el for el in root.iter() if el.tag in (kml + 'Document', kml + 'Folder')
+                     and el.findtext(kml + 'name') == 'Zones')
+        placemarks = list(zones.iter(kml + 'Placemark'))
+        self.assertEqual(len(placemarks), 2)
+        for placemark in placemarks:
+            self.assertTrue(any(el.tag in (kml + 'Polygon', kml + 'MultiGeometry') for el in placemark.iter()),
+                            ET.tostring(placemark))
+
+    def test_geopackage_keeps_a_self_intersecting_polygon_as_drawn(self):
+        """
+        GIVEN the same bow-tie answer
+        WHEN the survey is exported as gpkg
+        THEN the Zones layer holds it unchanged, as one invalid Polygon (only KML repairs geometry)
+        """
+        import tempfile, os
+        from django.contrib.gis.gdal import DataSource
+        self._add_bow_tie_zone()
+        _response, body = self._download('gpkg')
+        with tempfile.NamedTemporaryFile(suffix='.gpkg', delete=False) as fh:
+            fh.write(body)
+        try:
+            geoms = [f.geom.geos for f in DataSource(fh.name)['Zones']]
+            self.assertEqual([g.geom_type for g in geoms], ['Polygon', 'Polygon'])
+            self.assertEqual(sorted(g.valid for g in geoms), [False, True])
+        finally:
+            os.unlink(fh.name)
+
     def test_ogr_failure_is_loud(self):
         """
         GIVEN ogr2ogr exits non-zero
