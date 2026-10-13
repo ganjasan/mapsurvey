@@ -1,3 +1,5 @@
+import hashlib
+import hmac
 import json
 from django.conf import settings
 
@@ -191,3 +193,45 @@ def whats_new(request):
         }
 
     return {'whats_new': SimpleLazyObject(build)}
+
+
+def support_chat(request):
+    """Chatwoot widget config and, for a signed-in creator, the identity to hand it.
+
+    The identifier is the primary key, not the email -- same reason as
+    `_posthog_person`: an edited email would split one creator into two contacts.
+    `identifier_hash` is what Chatwoot's identity validation checks; it is computed
+    here so the HMAC token never leaves the server. `attributes` is what the agent
+    sees next to the conversation (workspace, plan); the page and survey are added
+    in the browser, where they are known.
+    """
+    token = getattr(settings, 'CHATWOOT_WEBSITE_TOKEN', '')
+    if not token:
+        return {'SUPPORT_CHAT': None}
+    user = getattr(request, 'user', None)
+    identity = None
+    attributes = {}
+    if user is not None and user.is_authenticated:
+        identifier = str(user.pk)
+        identity = {
+            'identifier': identifier,
+            'email': user.email or '',
+            'name': user.get_full_name() or user.get_username(),
+        }
+        secret = getattr(settings, 'CHATWOOT_HMAC_TOKEN', '')
+        if secret:
+            identity['identifier_hash'] = hmac.new(
+                secret.encode(), identifier.encode(), hashlib.sha256,
+            ).hexdigest()
+        org = getattr(request, 'active_org', None)
+        if org is not None:
+            from billing.entitlements import for_organization
+            attributes = {'workspace': org.slug, 'plan': for_organization(org).plan}
+    return {
+        'SUPPORT_CHAT': {
+            'base_url': settings.CHATWOOT_BASE_URL,
+            'website_token': token,
+            'identity': identity,
+            'attributes': attributes,
+        },
+    }

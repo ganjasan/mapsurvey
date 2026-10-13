@@ -263,6 +263,21 @@ form disables the switch otherwise. Setup checklist, env vars and the PayPro ema
 the spec of the same name (the rule proposed for `survey` in #273); payload and subscription
 builders in `billing/tests/helpers.py`.
 
+**Support chat (Chatwoot, change `chatwoot-support-chat`, #291)**: one partial,
+`partials/_support_chat.html`, included by the three base templates; config and the signed-in
+creator's identity come from `survey.context_processors.support_chat`. The identifier is
+`str(user.pk)`, signed with `identifier_hash = HMAC-SHA256(CHATWOOT_HMAC_TOKEN, pk)` on the
+server — the token never reaches the browser; empty `CHATWOOT_WEBSITE_TOKEN` = no widget, no
+third-party request (tests, local dev, previews without the env group). On working surfaces
+(`hide_bubble`, i.e. `MOBILE_EDITOR_NAV`) the widget never speaks first: no bubble, no unread
+pop-up; the entry point is the "?" menu in the header (`editor/partials/_help_menu.html`) and
+"Help & support" in the ⋯/account menus, and an agent reply lights the `.support-unread` dot on
+them. `openSupportChat(event, context)` opens the chat and sends `context` to the agent as
+contact custom attributes (workspace, plan, page, survey are sent on every page) — the hook for
+help at the point of failure (#295). Chatwoot's own cookies outlive our session, so a page
+rendered for a different visitor clears them before the SDK loads; do not use
+`$chatwoot.reset()` for that (it reloads the frame without a second `chatwoot:ready`).
+
 **Hierarchical Questions/Answers**: Both Question and Answer models support self-referential parent relationships via `parent_question_id` and `parent_answer_id` for conditional sub-questions.
 
 **Conditional visibility (`CONDITIONAL_VISIBILITY` kill switch, default ON)**: a

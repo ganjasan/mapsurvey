@@ -244,6 +244,13 @@ services:
       # never carry a real key, and a recording posture should not be inherited.
       - key: POSTHOG_SESSION_REPLAY
         sync: false
+      # Support chat (Chatwoot Cloud). Both values also go to `mapsurvey-shared` so a
+      # preview can be tested end to end; unset = no widget. The HMAC token is a secret:
+      # it signs creators' identities, and with it anyone could chat as any creator.
+      - key: CHATWOOT_WEBSITE_TOKEN
+        sync: false
+      - key: CHATWOOT_HMAC_TOKEN
+        sync: false
       # Media object storage. Unset USE_S3 = uploads go to the disk below, which
       # is how this ships: the switch is flipped from the dashboard only after
       # the existing files have been copied into the bucket and verified.

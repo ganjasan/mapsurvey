@@ -344,7 +344,7 @@
                 <button class="dropdown-item" type="button" onclick="setView('list')"><i class="fas fa-list" style="margin-right:6px;"></i>{% trans "List view" %}</button>
                 <button class="dropdown-item" type="button" onclick="setView('grid')"><i class="fas fa-th-large" style="margin-right:6px;"></i>{% trans "Card view" %}</button>
                 <div class="dropdown-divider"></div>
-                <a class="dropdown-item" href="#" onclick="openSupportChat(event)"><i class="fas fa-comment-dots" style="margin-right:6px;"></i>Help &amp; support</a>
+                {% if SUPPORT_CHAT %}<a class="dropdown-item" href="#" onclick="openSupportChat(event)"><i class="fas fa-comment-dots" style="margin-right:6px;"></i>{% trans "Help & support" %} <span class="wn-badge support-unread" hidden>{% trans "new" %}</span></a>{% elif CONTACT_EMAIL %}<a class="dropdown-item" href="mailto:{{ CONTACT_EMAIL }}"><i class="fas fa-envelope" style="margin-right:6px;"></i>{% trans "Email support" %}</a>{% endif %}
             </div>
         </div>
         {% endif %}
