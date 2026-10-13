@@ -313,6 +313,14 @@ class RegistrationAbuseForm(RegistrationForm):
         for name in ("password1", "password2"):
             if name in self.fields:
                 self.fields[name].help_text = ""
+        # Age and terms confirmation (change dpga-readiness): self-declared,
+        # nothing stored beyond the account itself. Label is rendered with a
+        # link to /terms/ by the template.
+        self.fields["accept_terms"] = forms.BooleanField(
+            required=True,
+            label=_("I am 16 or older and accept the Terms of use"),
+            error_messages={"required": _("Please confirm you are 16 or older and accept the Terms of use.")},
+        )
 
 
 class ResendActivationForm(forms.Form):

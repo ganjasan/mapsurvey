@@ -7596,6 +7596,55 @@ msgid ""
 msgstr ""
 "Введите полный веб-адрес, например https://www.facebook.com/yourproject"
 
+#: survey/templates/base_landing.html
+msgid "Terms of use"
+msgstr "Условия использования"
+
+#: survey/templates/base_landing.html
+msgid "Privacy & Trust"
+msgstr "Конфиденциальность и доверие"
+
+#: survey/abuse.py
+msgid "I am 16 or older and accept the Terms of use"
+msgstr "Мне есть 16 лет, и я принимаю условия использования"
+
+#: survey/abuse.py
+msgid "Please confirm you are 16 or older and accept the Terms of use."
+msgstr "Подтвердите, что вам есть 16 лет и вы принимаете условия использования."
+
+#: survey/templates/django_registration/registration_form.html
+#, python-format
+msgid "I am 16 or older and accept the <a href=\"%(terms_url)s\" target=\"_blank\" rel=\"noopener\">Terms of use</a>"
+msgstr "Мне есть 16 лет, и я принимаю <a href=\"%(terms_url)s\" target=\"_blank\" rel=\"noopener\">условия использования</a>"
+
+#: survey/content_screening.py
+msgid "Asks for a password, a login or a payment"
+msgstr "Просит пароль, вход в аккаунт или оплату"
+
+#: survey/content_screening.py
+msgid "Looks like a scam or impersonates a company"
+msgstr "Похоже на мошенничество или выдаёт себя за компанию"
+
+#: survey/content_screening.py
+msgid "Illegal content"
+msgstr "Незаконный контент"
+
+#: survey/content_screening.py
+msgid "Sexual abuse or exploitation of children"
+msgstr "Сексуальное насилие или эксплуатация детей"
+
+#: survey/content_screening.py
+msgid "Harassment, threats or hate"
+msgstr "Травля, угрозы или ненависть"
+
+#: survey/content_screening.py
+msgid "Exposes someone's personal data"
+msgstr "Раскрывает чьи-то персональные данные"
+
+#: survey/content_screening.py
+msgid "Something else"
+msgstr "Другое"
+
 #: survey/templates/landing.html
 msgid "Get Mapsurvey free"
 msgstr "Начать бесплатно"
@@ -7655,10 +7704,6 @@ msgstr "Материалы"
 #: survey/templates/base_landing.html
 msgid "Company"
 msgstr "Компания"
-
-#: survey/templates/base_landing.html
-msgid "Trust & security"
-msgstr "Доверие и безопасность"
 
 #: survey/templates/base_landing.html
 msgctxt "footer: Mapsurvey for …"

@@ -1,0 +1,154 @@
+{% extends "base_landing.html" %}
+{% load static i18n %}
+
+{% block title %}Terms of use & acceptable use — Mapsurvey{% endblock %}
+{% block meta_description %}The terms for using Mapsurvey and mapsurvey.org: what may not be done with it, how surveys are screened, reported and moderated, how people are protected from harassment, and the rules for children.{% endblock %}
+{% block meta_keywords %}terms of use, acceptable use, content policy, moderation, report abuse, code of conduct, child safety{% endblock %}
+{% block canonical_url %}https://mapsurvey.org/terms/{% endblock %}
+{% block og_url %}https://mapsurvey.org/terms/{% endblock %}
+{% block og_title %}Terms of use & acceptable use — Mapsurvey{% endblock %}
+
+{% block content %}
+<section class="trust-hero">
+    <div class="landing-inner">
+        <p class="section-eyebrow">Terms</p>
+        <h1 class="trust-hero__headline">Terms of use &amp; acceptable use</h1>
+        <p class="trust-hero__subtitle">
+            What you agree to when you use Mapsurvey, what may not be done with it, and how we
+            find and remove it. Last updated {{ terms_updated|date:"j F Y" }}.
+        </p>
+    </div>
+</section>
+
+<div class="trust-content">
+    <div class="landing-inner">
+
+        {# === General terms === #}
+        <section class="trust-section" id="terms">
+            <h2 class="trust-section__title">Terms of use</h2>
+            <p class="trust-section__lead">
+                Mapsurvey — the open-source software and the hosted service at mapsurvey.org — is
+                owned and operated by Artem Koniukhov, a sole proprietor in the Kyrgyz Republic.
+                These terms apply to the hosted service. The source code is licensed separately under
+                the <a href="https://www.gnu.org/licenses/agpl-3.0.html" rel="noopener">GNU AGPLv3</a>;
+                people who run their own installation set their own terms.
+            </p>
+            <ul class="trust-checklist">
+                <li><strong>Accounts</strong> for building surveys are for people aged 16 and over. You are responsible for what happens under your account and for keeping its password safe.</li>
+                <li><strong>Your surveys and data are yours.</strong> You own the surveys you create and the responses you collect, and you are responsible for having a lawful basis to collect them. We process them on your behalf and claim no rights over them.</li>
+                <li><strong>Acceptable use.</strong> You agree to the Acceptable use &amp; safety policy below. We may take surveys offline and deactivate accounts that break it.</li>
+                <li><strong>The service is provided as is.</strong> We work to keep it available and your data safe, but we do not guarantee uninterrupted service. Export your data regularly if you depend on it.</li>
+                <li><strong>Paid plans</strong> are sold through PayPro Global, our reseller, under the terms shown at checkout. Everything in the free plan stays free.</li>
+                <li><strong>Leaving.</strong> You can export your data at any time and ask us to delete your account. We may end an account that breaks these terms.</li>
+                <li><strong>Changes.</strong> When these terms change, the date at the top of this page changes.</li>
+            </ul>
+            <p class="trust-section__lead">How we handle personal data is described on the <a href="{% url 'trust_page' %}">Privacy &amp; Trust</a> page.</p>
+        </section>
+
+        {# === Acceptable use & safety === #}
+        <section class="trust-section" id="acceptable-use">
+            <h2 class="trust-section__title">Acceptable use &amp; safety</h2>
+            <p class="trust-section__lead">
+                Mapsurvey exists to help people tell the organisations that plan their places —
+                councils, agencies, researchers, community groups — where things are and what should
+                change. This policy says what may not be done with it, how we find and remove it, and
+                how people who answer or build surveys are protected.
+            </p>
+        </section>
+
+        <section class="trust-section" id="prohibited">
+            <h2 class="trust-section__title">1. Prohibited content and use</h2>
+            <p class="trust-section__lead">You may not use Mapsurvey, or a survey created on it, to create, collect, store or distribute:</p>
+            <ol class="trust-checklist">
+                <li><strong>Child sexual abuse material</strong> of any kind. We take it offline immediately, preserve evidence as the law requires, and report it to the competent authorities, including the NCMEC CyberTipline and the national hotline of the country concerned.</li>
+                <li><strong>Phishing and fraud:</strong> surveys that imitate another organisation, ask for passwords, card numbers or bank details, or lure people to another site to do so.</li>
+                <li><strong>Illegal content</strong> in the creator's or the respondents' jurisdiction, including terrorist content and incitement to violence.</li>
+                <li><strong>Harassment and hate:</strong> content that targets a person or group for abuse, threats or discrimination on the basis of a protected characteristic.</li>
+                <li><strong>Exposure of private data (doxxing):</strong> publishing or mapping the home, location or personal data of an identifiable private person without their consent, or designing a survey to collect it for that purpose.</li>
+                <li><strong>Deliberately misleading civic content:</strong> surveys that impersonate a public authority or present a fake public consultation.</li>
+                <li><strong>Spam and abuse of the platform:</strong> mass account creation, using Mapsurvey to send email to people who did not ask for it, malware, or attempts to break the service.</li>
+            </ol>
+            <p class="trust-section__lead">
+                Surveys that collect sensitive data — health, ethnicity, political opinion, data about
+                children — are allowed only when the creator has a lawful basis and tells respondents
+                why the data is collected.
+            </p>
+        </section>
+
+        <section class="trust-section" id="detection">
+            <h2 class="trust-section__title">2. How we detect it</h2>
+            <ul class="trust-checklist">
+                <li><strong>Screening at publication.</strong> When a survey goes live, or a live survey is edited, its creator-written text — titles, questions, thank-you page in every language, redirect link — is scored for phishing signals: link shorteners, click trackers, impersonated brands, lure phrases, padding, one-question surveys, brand-new and disposable-email accounts. Scoring runs on our own servers; no text is sent to a third party.</li>
+                <li><strong>High scores are held before anyone sees them.</strong> A held survey shows respondents the same "not available" page as a survey that does not exist, and the creator sees an "under review" notice.</li>
+                <li><strong>Reports from anyone.</strong> Every survey page and thank-you page carries a fixed notice — never enter passwords or card numbers in a Mapsurvey survey — and a <em>Report this survey</em> link that the creator cannot remove. No account is needed to report.</li>
+                <li><strong>Registration defences.</strong> A honeypot field, per-connection rate limits and Cloudflare Turnstile on sign-up, with an audit log of blocked attempts.</li>
+                <li><strong>Uploaded files</strong> — photo, audio and document answers — are checked by file signature, capped in size, stored privately and never published: only the survey's own team can open them.</li>
+            </ul>
+        </section>
+
+        <section class="trust-section" id="moderation">
+            <h2 class="trust-section__title">3. How we moderate and remove it</h2>
+            <ul class="trust-checklist">
+                <li><strong>A person decides.</strong> Every hold and every report creates a review and notifies a moderator with the evidence. The moderator releases the survey or confirms the violation.</li>
+                <li><strong>Confirmed violations</strong> take the survey and the creator's other surveys offline and deactivate the account. Child sexual abuse material and credible threats are reported to the authorities.</li>
+                <li><strong>Response time.</strong> Held surveys are usually reviewed within one day. Reports receive a first assessment within 2 business days. Reports of child sexual abuse material or of imminent harm are handled the same day.</li>
+                <li><strong>Appeals.</strong> A creator can appeal a decision by replying to our notice or writing to <a href="mailto:konuchovartem@mapsurvey.org">konuchovartem@mapsurvey.org</a>.</li>
+                <li><strong>Self-hosted installations</strong> are moderated by their operators. The same screening, holds, report link and review tools ship in the open-source code.</li>
+            </ul>
+        </section>
+
+        <section class="trust-section" id="harassment">
+            <h2 class="trust-section__title">4. Protection from harassment</h2>
+            <p class="trust-section__lead">
+                Mapsurvey is not a social network. Respondents have no accounts, no profiles, and no
+                way to contact each other or the creator through the platform. Interaction exists in
+                two places, and both are controlled by the people responsible for the survey:
+            </p>
+            <ul class="trust-checklist">
+                <li><strong>Shared maps (respondents).</strong> A creator may let respondents see other people's marks and react to them. Other people's comments are hidden by default. The creator can require approval before any mark appears, and can hide any individual comment at any time. Respondent names are never shown.</li>
+                <li><strong>Comment threads (survey team).</strong> Members of a workspace can discuss a survey in threads. Only people invited to that workspace can see or post, and a workspace owner can remove members.</li>
+            </ul>
+            <p class="trust-section__lead">
+                Anyone who feels harassed through a survey — including by the survey itself — can use
+                the <em>Report this survey</em> link or write to
+                <a href="mailto:konuchovartem@mapsurvey.org">konuchovartem@mapsurvey.org</a>.
+                We do not tell the creator who reported.
+            </p>
+        </section>
+
+        <section class="trust-section" id="children">
+            <h2 class="trust-section__title">5. Children and young people</h2>
+            <ul class="trust-checklist">
+                <li><strong>Accounts</strong> for building surveys are for people aged 16 and over; everyone confirms this when signing up. Schools and youth programmes use Mapsurvey through an adult's account.</li>
+                <li><strong>Respondents</strong> never create accounts and are not asked their age by the platform. A creator who surveys children is responsible for obtaining the consent their law requires — for example from parents or the school — and should not ask children for names, contact details, photos of people, or the location of their home.</li>
+                <li><strong>Reports</strong> that involve a child's safety are handled the same day.</li>
+            </ul>
+        </section>
+
+        <section class="trust-section" id="personal-data">
+            <h2 class="trust-section__title">6. Personal data</h2>
+            <ul class="trust-checklist">
+                <li><strong>Respondents:</strong> no account, no name, no email, no IP address stored with responses, no tracking cookies, no analytics or advertising scripts on survey and public-results pages.</li>
+                <li><strong>Creators:</strong> email and password only; product analytics on creator pages, with typed text masked.</li>
+                <li><strong>Data a creator chooses to collect.</strong> A creator can still design questions that collect personal data — a free-text answer, a photo, the location of someone's home. That data belongs to the creator, is visible only to their workspace, and is exported only by them.</li>
+                <li><strong>Public results pages</strong> never show individual text answers, strip record-level identifiers, and show map features without who drew them. By default they mask any group smaller than 3 respondents as "&lt;3"; the creator can change this threshold.</li>
+                <li><strong>Deletion.</strong> Deleting a survey deletes its responses; account deletion is available on request.</li>
+            </ul>
+            <p class="trust-section__lead">The full list of what is recorded, where it is hosted and who processes it is on the <a href="{% url 'trust_page' %}">Privacy &amp; Trust</a> page.</p>
+        </section>
+
+        <section class="trust-section trust-section--cta" id="contact">
+            <h2 class="trust-section__title">Contact</h2>
+            <p class="trust-section__lead">
+                Reports, appeals and questions about these terms:
+                <a href="mailto:konuchovartem@mapsurvey.org">konuchovartem@mapsurvey.org</a>.
+                Security vulnerabilities: see
+                <a href="https://github.com/ganjasan/mapsurvey/blob/master/SECURITY.md" rel="noopener">SECURITY.md</a>.
+                Contributors to the open-source project follow the
+                <a href="https://github.com/ganjasan/mapsurvey/blob/master/CODE_OF_CONDUCT.md" rel="noopener">Code of Conduct</a>.
+            </p>
+        </section>
+
+    </div>
+</div>
+{% endblock %}

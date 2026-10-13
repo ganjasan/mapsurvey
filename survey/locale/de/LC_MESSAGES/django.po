@@ -7785,3 +7785,52 @@ msgstr "Hierhin werden die Teilnehmenden nach der letzten Seite geleitet, zum Be
 #: survey/editor_forms.py
 msgid "Enter a full web address, for example https://www.facebook.com/yourproject"
 msgstr "Geben Sie eine vollständige Webadresse ein, zum Beispiel https://www.facebook.com/yourproject"
+
+#: survey/templates/base_landing.html
+msgid "Terms of use"
+msgstr "Nutzungsbedingungen"
+
+#: survey/templates/base_landing.html
+msgid "Privacy & Trust"
+msgstr "Datenschutz & Vertrauen"
+
+#: survey/abuse.py
+msgid "I am 16 or older and accept the Terms of use"
+msgstr "Ich bin mindestens 16 Jahre alt und akzeptiere die Nutzungsbedingungen"
+
+#: survey/abuse.py
+msgid "Please confirm you are 16 or older and accept the Terms of use."
+msgstr "Bitte bestätigen Sie, dass Sie mindestens 16 Jahre alt sind und die Nutzungsbedingungen akzeptieren."
+
+#: survey/templates/django_registration/registration_form.html
+#, python-format
+msgid "I am 16 or older and accept the <a href=\"%(terms_url)s\" target=\"_blank\" rel=\"noopener\">Terms of use</a>"
+msgstr "Ich bin mindestens 16 Jahre alt und akzeptiere die <a href=\"%(terms_url)s\" target=\"_blank\" rel=\"noopener\">Nutzungsbedingungen</a>"
+
+#: survey/content_screening.py
+msgid "Asks for a password, a login or a payment"
+msgstr "Fragt nach einem Passwort, einer Anmeldung oder einer Zahlung"
+
+#: survey/content_screening.py
+msgid "Looks like a scam or impersonates a company"
+msgstr "Wirkt betrügerisch oder gibt sich als Unternehmen aus"
+
+#: survey/content_screening.py
+msgid "Illegal content"
+msgstr "Illegale Inhalte"
+
+#: survey/content_screening.py
+msgid "Sexual abuse or exploitation of children"
+msgstr "Sexueller Missbrauch oder Ausbeutung von Kindern"
+
+#: survey/content_screening.py
+msgid "Harassment, threats or hate"
+msgstr "Belästigung, Drohungen oder Hass"
+
+#: survey/content_screening.py
+msgid "Exposes someone's personal data"
+msgstr "Legt personenbezogene Daten offen"
+
+#: survey/content_screening.py
+msgid "Something else"
+msgstr "Etwas anderes"

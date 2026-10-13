@@ -62,11 +62,11 @@ Columns (titles in sentence case, muted, no uppercase; links in body colour, ~15
 
 | Product | Mapsurvey for | Use cases | Resources | Company |
 |---|---|---|---|---|
-| Features | Urban planners | Community engagement | Customer stories | Trust & security |
-| Demo survey | Local government | Public consultation | Tools compared | Email |
-| Pro | Researchers | Civic engagement | vs Maptionnaire | Telegram |
-| Project service | Educators | Participatory budgeting | vs Social Pinpoint | GitHub |
-| Request a demo | Consultants | | vs MetroQuest | |
+| Features | Urban planners | Community engagement | Customer stories | Terms of use |
+| Demo survey | Local government | Public consultation | Tools compared | Privacy & Trust |
+| Pro | Researchers | Civic engagement | vs Maptionnaire | Email |
+| Project service | Educators | Participatory budgeting | vs Social Pinpoint | Telegram |
+| Request a demo | Consultants | | vs MetroQuest | GitHub |
 
 Under *Product* an "Explore all features →" link to `#features`, in the muted style of Notion's "Explore more →".
 

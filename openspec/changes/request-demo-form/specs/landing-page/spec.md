@@ -27,7 +27,7 @@ Every page built on `base_landing.html` SHALL display a light footer laid out af
 - **WHEN** a page built on `base_landing.html` is rendered
 - **THEN** the footer SHALL contain the five column titles in that order
 - **AND** "Product" SHALL link to features, the demo survey section, `/pro/`, `/services/` and "Request a demo" at `/demo/?src=footer`
-- **AND** "Mapsurvey for" SHALL link to the five audience pages, "Use cases" to the four category pages, "Resources" to `/stories/`, the mapping-tools guide and the three alternative pages, and "Company" to the trust page, email, Telegram and GitHub
+- **AND** "Mapsurvey for" SHALL link to the five audience pages, "Use cases" to the four category pages, "Resources" to `/stories/`, the mapping-tools guide and the three alternative pages, and "Company" to the terms of use, the privacy & trust page, email, Telegram and GitHub
 
 #### Scenario: Brand block with a quote
 - **WHEN** the footer is rendered

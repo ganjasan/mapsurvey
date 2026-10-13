@@ -232,7 +232,8 @@ homepage views set it (change ru-landing-hreflang).
                 <div class="landing-footer__col">
                     <div class="landing-footer__col-title">{% trans "Company" %}</div>
                     <ul class="landing-footer__links">
-                        <li><a href="{% url 'trust_page' %}">{% trans "Trust & security" %}</a></li>
+                        <li><a href="{% url 'terms_page' %}">{% trans "Terms of use" %}</a></li>
+                        <li><a href="{% url 'trust_page' %}">{% trans "Privacy & Trust" %}</a></li>
                         {% if CONTACT_EMAIL %}
                         <li><a href="mailto:{{ CONTACT_EMAIL }}">{% trans "Email" %}</a></li>
                         {% endif %}
@@ -253,7 +254,7 @@ homepage views set it (change ru-landing-hreflang).
                     <a href="{% url 'index_ru' %}" hreflang="ru" lang="ru">Русский</a>
                 </div>
                 <div class="landing-footer__license">{% blocktrans %}Mapsurvey is open-source software licensed under <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener">AGPLv3</a>{% endblocktrans %}</div>
-                <div class="landing-footer__copy">&copy; {% now "Y" %} Mapsurvey</div>
+                <div class="landing-footer__copy">&copy; 2021&ndash;{% now "Y" %} Artem Koniukhov</div>
             </div>
         </div>
     </footer>
