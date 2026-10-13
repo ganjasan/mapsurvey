@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "ತೆಗೆದುಹಾಕಿ"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,339 @@ msgstr "ವಿಳಾಸ ಹುಡುಕಿ..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "ಫಲಿತಾಂಶಗಳಿಲ್ಲ"
+
+msgid "A few required questions still need an answer."
+msgstr "ಕೆಲವು ಕಡ್ಡಾಯ ಪ್ರಶ್ನೆಗಳಿಗೆ ಇನ್ನೂ ಉತ್ತರ ನೀಡಬೇಕಿದೆ."
+
+msgid "Add another"
+msgstr "ಇನ್ನೊಂದು ಸೇರಿಸಿ"
+
+msgid "Add audio file"
+msgstr "ಆಡಿಯೋ ಫೈಲ್ ಸೇರಿಸಿ"
+
+msgid "Add photo"
+msgstr "ಫೋಟೋ ಸೇರಿಸಿ"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"ಶ್ರೇಣೀಕರಿಸಬೇಕಾದ ಅಂಶಗಳನ್ನು ಕೆಳಗಿನ <strong>ಆಯ್ಕೆಗಳು</strong> ವಿಭಾಗದಲ್ಲಿ ಸೇರಿಸಿ."
+
+msgid "All"
+msgstr "ಎಲ್ಲಾ"
+
+msgid "All {m} marked — thank you!"
+msgstr "ಎಲ್ಲಾ {m} ಗುರುತಿಸಲಾಗಿದೆ — ಧನ್ಯವಾದಗಳು!"
+
+msgid "Answered"
+msgstr "ಉತ್ತರಿಸಲಾಗಿದೆ"
+
+msgid "Answers"
+msgstr "ಉತ್ತರಗಳು"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "ಪಾಸ್‌ವರ್ಡ್, ಲಾಗಿನ್ ಅಥವಾ ಪಾವತಿಯನ್ನು ಕೇಳುತ್ತದೆ"
+
+msgid "Attach file"
+msgstr "ಫೈಲ್ ಲಗತ್ತಿಸಿ"
+
+msgid "Brush size"
+msgstr "ಬ್ರಷ್ ಗಾತ್ರ"
+
+msgid "Cell size: {m} m"
+msgstr "ಕೋಶದ ಗಾತ್ರ: {m} ಮೀ"
+
+msgid "Clear"
+msgstr "ತೆರವುಗೊಳಿಸಿ"
+
+msgid "Data as of"
+msgstr "ದತ್ತಾಂಶ ದಿನಾಂಕ"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"ಅಂಶಗಳನ್ನು ಎಳೆದು ಕ್ರಮದಲ್ಲಿ ಜೋಡಿಸಿ, ಅಥವಾ Space ಒತ್ತಿ ಒಂದನ್ನು ಎತ್ತಿಕೊಂಡು ಬಾಣದ "
+"ಕೀಲಿಗಳಿಂದ ಸರಿಸಿ."
+
+msgid "Erase"
+msgstr "ಅಳಿಸುವಿಕೆ"
+
+msgid "File is too large."
+msgstr "ಫೈಲ್ ತುಂಬಾ ದೊಡ್ಡದಾಗಿದೆ."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"ಸ್ಪ್ರೇ ಮಾಡಲು ಬೆರಳನ್ನು ಒತ್ತಿ ಹಿಡಿದು ಎಳೆಯಿರಿ. ನಿಮಗೆ ಹೆಚ್ಚು ಖಚಿತವಿರುವ ಕಡೆ ಹೆಚ್ಚು"
+" ಹೊತ್ತು ನಿಲ್ಲಿಸಿ."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"ಸ್ಪ್ರೇ ಮಾಡಲು ಒತ್ತಿ ಹಿಡಿದು ಎಳೆಯಿರಿ. ನಿಮಗೆ ಹೆಚ್ಚು ಖಚಿತವಿರುವ ಕಡೆ ಹೆಚ್ಚು ಹೊತ್ತು "
+"ನಿಲ್ಲಿಸಿ."
+
+msgid "Incorrect password"
+msgstr "ತಪ್ಪಾದ ಪಾಸ್‌ವರ್ಡ್"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"ಇದು ಇನ್ನೂ ಪ್ರಕಟವಾಗದಿರಬಹುದು, ಅಥವಾ ಮುಚ್ಚಲಾಗಿರಬಹುದು ಇಲ್ಲವೇ ತೆಗೆದುಹಾಕಲಾಗಿರಬಹುದು. "
+"ಸಂಘಟಕರಿಂದ ಲಿಂಕ್ ಪಡೆದಿದ್ದರೆ, ಅವರನ್ನು ಸಂಪರ್ಕಿಸಿ."
+
+msgid "Large brush"
+msgstr "ದೊಡ್ಡ ಬ್ರಷ್"
+
+msgid "Layers"
+msgstr "ಪದರಗಳು"
+
+msgid "Link copied!"
+msgstr "ಲಿಂಕ್ ನಕಲಿಸಲಾಗಿದೆ!"
+
+msgid "Locate me"
+msgstr "ನನ್ನ ಸ್ಥಳ ತೋರಿಸಿ"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "ವಂಚನೆಯಂತೆ ಕಾಣುತ್ತದೆ ಅಥವಾ ಕಂಪನಿಯಂತೆ ನಟಿಸುತ್ತದೆ"
+
+msgid "Made with"
+msgstr "ಇದರಿಂದ ರಚಿಸಲಾಗಿದೆ"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"ಇತರ ಪ್ರತಿಕ್ರಿಯಿಸುವವರು ಇರಿಸಿದ ಗುರುತುಗಳು. ನಿಮ್ಮ ಸ್ವಂತ ಗುರುತುಗಳು ಈ "
+"ಪಟ್ಟಿಯಲ್ಲಿಲ್ಲ."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "ಗರಿಷ್ಠ ಮಿತಿ ತಲುಪಿದೆ — ಬದಲಾಯಿಸಲು ಕೆಳಗಿನಿಂದ ಒಂದನ್ನು ತೆಗೆದುಹಾಕಿ."
+
+msgid "Medium brush"
+msgstr "ಮಧ್ಯಮ ಬ್ರಷ್"
+
+msgid "Move map"
+msgstr "ನಕ್ಷೆ ಸರಿಸಿ"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "ಪಿನ್ ಇರಿಸಲು ನಕ್ಷೆಯನ್ನು ಸರಿಸಿ, ನಂತರ ಅನ್ವಯಿಸಿ ಒತ್ತಿ."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr ""
+"Mapsurvey ಸಮೀಕ್ಷೆಯಲ್ಲಿ ಎಂದಿಗೂ ಪಾಸ್‌ವರ್ಡ್ ಅಥವಾ ಕಾರ್ಡ್ ಸಂಖ್ಯೆಗಳನ್ನು ನಮೂದಿಸಬೇಡಿ."
+
+msgid "No"
+msgstr "ಇಲ್ಲ"
+
+msgid "No objects in this layer yet"
+msgstr "ಈ ಪದರದಲ್ಲಿ ಇನ್ನೂ ಯಾವುದೇ ವಸ್ತುಗಳಿಲ್ಲ"
+
+msgid "No results to show yet."
+msgstr "ತೋರಿಸಲು ಇನ್ನೂ ಯಾವುದೇ ಫಲಿತಾಂಶಗಳಿಲ್ಲ."
+
+msgid "Nothing matches"
+msgstr "ಯಾವುದೂ ಹೊಂದಿಕೆಯಾಗುತ್ತಿಲ್ಲ"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "ಗೌಪ್ಯತೆ ರಕ್ಷಿಸಲು ಕಡಿಮೆ ಉತ್ತರಗಳಿರುವ ವಸ್ತುಗಳನ್ನು ಮರೆಮಾಡಲಾಗಿದೆ."
+
+msgid "Please add a file."
+msgstr "ದಯವಿಟ್ಟು ಫೈಲ್ ಸೇರಿಸಿ."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "ಮುಂದುವರಿಯಲು ಕನಿಷ್ಠ %%d ವಸ್ತುವಿನ ಬಗ್ಗೆ ಉತ್ತರಿಸಿ"
+
+msgid "Please specify"
+msgstr "ದಯವಿಟ್ಟು ನಿರ್ದಿಷ್ಟಪಡಿಸಿ"
+
+msgid "Record"
+msgstr "ರೆಕಾರ್ಡ್ ಮಾಡಿ"
+
+msgid "Remove file"
+msgstr "ಫೈಲ್ ತೆಗೆದುಹಾಕಿ"
+
+msgid "Report this survey"
+msgstr "ಈ ಸಮೀಕ್ಷೆಯನ್ನು ವರದಿ ಮಾಡಿ"
+
+msgid "Respondents: {n}"
+msgstr "ಪ್ರತಿಕ್ರಿಯಿಸಿದವರು: {n}"
+
+msgid "Retry"
+msgstr "ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ"
+
+msgid "Search failed — check your connection and try again."
+msgstr "ಹುಡುಕಾಟ ವಿಫಲವಾಗಿದೆ — ನಿಮ್ಮ ಸಂಪರ್ಕವನ್ನು ಪರಿಶೀಲಿಸಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
+
+msgid "Search objects…"
+msgstr "ವಸ್ತುಗಳನ್ನು ಹುಡುಕಿ…"
+
+msgid "See the results"
+msgstr "ಫಲಿತಾಂಶಗಳನ್ನು ನೋಡಿ"
+
+msgid "Send report"
+msgstr "ವರದಿ ಕಳುಹಿಸಿ"
+
+msgid "Share this survey"
+msgstr "ಈ ಸಮೀಕ್ಷೆಯನ್ನು ಹಂಚಿಕೊಳ್ಳಿ"
+
+msgid "Small brush"
+msgstr "ಸಣ್ಣ ಬ್ರಷ್"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "ಗೌಪ್ಯತೆ ರಕ್ಷಿಸಲು ಸಣ್ಣ ಗುಂಪುಗಳನ್ನು ಮರೆಮಾಡಲಾಗಿದೆ."
+
+msgid "Something else"
+msgstr "ಬೇರೆ ಏನಾದರೂ"
+
+msgid "Spray"
+msgstr "ಸ್ಪ್ರೇ"
+
+msgid "Stop"
+msgstr "ನಿಲ್ಲಿಸಿ"
+
+msgid "Survey results"
+msgstr "ಸಮೀಕ್ಷೆಯ ಫಲಿತಾಂಶಗಳು"
+
+msgid "Survey unavailable"
+msgstr "ಸಮೀಕ್ಷೆ ಲಭ್ಯವಿಲ್ಲ"
+
+msgid "Take photo"
+msgstr "ಫೋಟೋ ತೆಗೆಯಿರಿ"
+
+msgid "Take the survey"
+msgstr "ಸಮೀಕ್ಷೆಯಲ್ಲಿ ಭಾಗವಹಿಸಿ"
+
+msgid "Tap the first point to close the shape."
+msgstr "ಆಕಾರವನ್ನು ಮುಚ್ಚಲು ಮೊದಲ ಬಿಂದುವನ್ನು ಟ್ಯಾಪ್ ಮಾಡಿ."
+
+msgid "Tap the last point to finish the line."
+msgstr "ರೇಖೆಯನ್ನು ಮುಗಿಸಲು ಕೊನೆಯ ಬಿಂದುವನ್ನು ಟ್ಯಾಪ್ ಮಾಡಿ."
+
+msgid "Tap to add the next corner."
+msgstr "ಮುಂದಿನ ಮೂಲೆಯನ್ನು ಸೇರಿಸಲು ಟ್ಯಾಪ್ ಮಾಡಿ."
+
+msgid "Tap to add the next point."
+msgstr "ಮುಂದಿನ ಬಿಂದುವನ್ನು ಸೇರಿಸಲು ಟ್ಯಾಪ್ ಮಾಡಿ."
+
+msgid "Tap to add the shape’s corners."
+msgstr "ಆಕಾರದ ಮೂಲೆಗಳನ್ನು ಸೇರಿಸಲು ಟ್ಯಾಪ್ ಮಾಡಿ."
+
+msgid "Tap to start the line."
+msgstr "ರೇಖೆಯನ್ನು ಪ್ರಾರಂಭಿಸಲು ಟ್ಯಾಪ್ ಮಾಡಿ."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"“%(name)s” ನಲ್ಲಿ ಏನು ತಪ್ಪಾಗಿದೆ ಎಂದು ನಮಗೆ ತಿಳಿಸಿ. ಪ್ರತಿಯೊಂದು ವರದಿಯನ್ನು ಒಬ್ಬ "
+"ವ್ಯಕ್ತಿ ಪರಿಶೀಲಿಸುತ್ತಾರೆ."
+
+msgid "Thank you"
+msgstr "ಧನ್ಯವಾದಗಳು"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "ಬ್ರಷ್ ಖಾಲಿಯಾಗಿದೆ — ಮುಂದುವರಿಯಲು ಸ್ವಲ್ಪ ಬಣ್ಣವನ್ನು ಅಳಿಸಿ."
+
+msgid "The file does not match its declared type."
+msgstr "ಫೈಲ್ ಅದರ ಘೋಷಿತ ಪ್ರಕಾರಕ್ಕೆ ಹೊಂದಿಕೆಯಾಗುತ್ತಿಲ್ಲ."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "ಫೈಲ್ ತುಂಬಾ ದೊಡ್ಡದಾಗಿದೆ (ಮಿತಿ %(mb)s MB)."
+
+msgid "The files in this response are too large overall."
+msgstr "ಈ ಪ್ರತಿಕ್ರಿಯೆಯಲ್ಲಿನ ಫೈಲ್‌ಗಳು ಒಟ್ಟಾರೆಯಾಗಿ ತುಂಬಾ ದೊಡ್ಡದಾಗಿವೆ."
+
+msgid "This file type is not accepted here."
+msgstr "ಈ ಫೈಲ್ ಪ್ರಕಾರವನ್ನು ಇಲ್ಲಿ ಸ್ವೀಕರಿಸಲಾಗುವುದಿಲ್ಲ."
+
+msgid "This is the last section — respondents finish here"
+msgstr "ಇದು ಕೊನೆಯ ವಿಭಾಗ — ಪ್ರತಿಕ್ರಿಯಿಸುವವರು ಇಲ್ಲಿ ಮುಗಿಸುತ್ತಾರೆ"
+
+msgid "This question does not accept files."
+msgstr "ಈ ಪ್ರಶ್ನೆ ಫೈಲ್‌ಗಳನ್ನು ಸ್ವೀಕರಿಸುವುದಿಲ್ಲ."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "ಈ ಪ್ರಶ್ನೆಯನ್ನು ಇನ್ನೂ ಉಲ್ಲೇಖ ಪದರಕ್ಕೆ ಸಂಪರ್ಕಿಸಲಾಗಿಲ್ಲ."
+
+msgid "This question is required"
+msgstr "ಈ ಪ್ರಶ್ನೆ ಕಡ್ಡಾಯ"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "ಈ ಸ್ನ್ಯಾಪ್‌ಶಾಟ್ ಅನ್ನು ಸಮೀಕ್ಷೆಯ ಮಾಲೀಕರು ರಿಫ್ರೆಶ್ ಮಾಡಬೇಕಾಗಿದೆ."
+
+msgid "This survey isn’t available"
+msgstr "ಈ ಸಮೀಕ್ಷೆ ಲಭ್ಯವಿಲ್ಲ"
+
+msgid "Too many files in this response."
+msgstr "ಈ ಪ್ರತಿಕ್ರಿಯೆಯಲ್ಲಿ ತುಂಬಾ ಹೆಚ್ಚು ಫೈಲ್‌ಗಳಿವೆ."
+
+msgid "Type to search…"
+msgstr "ಹುಡುಕಲು ಟೈಪ್ ಮಾಡಿ…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr "ಪಟ್ಟಿ ಮಾಡಲಾಗಿಲ್ಲ — ನೇರ ಲಿಂಕ್ ಮೂಲಕ ಮಾತ್ರ ನೋಡಬಹುದು, ಸೂಚ್ಯಂಕಿಸಲಾಗಿಲ್ಲ."
+
+msgid "Upload failed."
+msgstr "ಅಪ್‌ಲೋಡ್ ವಿಫಲವಾಗಿದೆ."
+
+msgid "Uploading"
+msgstr "ಅಪ್‌ಲೋಡ್ ಆಗುತ್ತಿದೆ"
+
+msgid "Yes"
+msgstr "ಹೌದು"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "ನಿಮ್ಮ ವರದಿ ಸ್ವೀಕರಿಸಲಾಗಿದೆ. ಒಬ್ಬ ವ್ಯಕ್ತಿ ಅದನ್ನು ಪರಿಶೀಲಿಸುತ್ತಾರೆ."
+
+msgid "Zoom in"
+msgstr "ಹಿಗ್ಗಿಸಿ"
+
+msgid "Zoom out"
+msgstr "ಕುಗ್ಗಿಸಿ"
+
+msgid "at least {n} required"
+msgstr "ಕನಿಷ್ಠ {n} ಅಗತ್ಯವಿದೆ"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "ಉಪಗ್ರಹ"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "ರಸ್ತೆಗಳು"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "ಭೂಸ್ವರೂಪ"
+
+msgid "create your own free map survey"
+msgstr "ನಿಮ್ಮದೇ ಉಚಿತ ನಕ್ಷೆ ಸಮೀಕ್ಷೆಯನ್ನು ರಚಿಸಿ"
+
+msgid "of"
+msgstr "ರಲ್ಲಿ"
+
+msgid "responses"
+msgstr "ಪ್ರತಿಕ್ರಿಯೆಗಳು"
+
+msgid "up to {n} more"
+msgstr "ಇನ್ನೂ {n} ವರೆಗೆ"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} ಅನ್ನು {position} ನೇ ಸ್ಥಾನದಲ್ಲಿ ಇರಿಸಲಾಗಿದೆ"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} ಅನ್ನು {position} ನೇ ಸ್ಥಾನಕ್ಕೆ ಸರಿಸಲಾಗಿದೆ"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"{item} ಅನ್ನು ಎತ್ತಿಕೊಳ್ಳಲಾಗಿದೆ. ಸರಿಸಲು ಬಾಣದ ಕೀಲಿಗಳನ್ನು, ಇರಿಸಲು Space ಬಳಸಿ."
+
+msgid "{n} marked"
+msgstr "{n} ಗುರುತಿಸಲಾಗಿದೆ"
+
+msgid "{n} of {m} marked"
+msgstr "{m} ರಲ್ಲಿ {n} ಗುರುತಿಸಲಾಗಿದೆ"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… ಮತ್ತು ಇನ್ನೂ %(n)s"

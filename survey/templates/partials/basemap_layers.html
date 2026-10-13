@@ -1,3 +1,11 @@
+{% load i18n %}// Leaflet 1.4 hard-codes the layers toggle title as "Layers" and has no option for it.
+window._titleLayersToggle = function(control) {
+    var toggle = control.getContainer().querySelector('.leaflet-control-layers-toggle');
+    if (!toggle) return;
+    var label = '{% filter escapejs %}{% trans "Layers" %}{% endfilter %}';
+    toggle.title = label;
+    toggle.setAttribute('aria-label', label);
+};
 (function() {
     var _enabled = {{ survey.basemaps|safe }};
     if (!_enabled || !_enabled.length) _enabled = ['streets'];
@@ -10,9 +18,9 @@
     // renders through render(request, ...), so the `mapbox` context processor always ran.
     var _mapboxToken = '{{ MAPBOX_ACCESS_TOKEN }}';
     var _providers = {
-        'streets':   { name: 'Streets',   url: '{{ MAPBOX_URL }}',          opts: { attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a>', maxZoom: 23, accessToken: _mapboxToken }},
-        'satellite': { name: 'Satellite', url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', opts: { attribution: '&copy; Esri', maxZoom: 19 }},
-        'topo':      { name: 'Topo',      url: '{{ MAPBOX_OUTDOORS_URL }}', opts: { attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a>', maxZoom: 22, accessToken: _mapboxToken }}
+        'streets':   { name: '{% filter escapejs %}{% trans "Streets" context "basemap" %}{% endfilter %}',   url: '{{ MAPBOX_URL }}',          opts: { attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a>', maxZoom: 23, accessToken: _mapboxToken }},
+        'satellite': { name: '{% filter escapejs %}{% trans "Satellite" context "basemap" %}{% endfilter %}', url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', opts: { attribution: '&copy; Esri', maxZoom: 19 }},
+        'topo':      { name: '{% filter escapejs %}{% trans "Topo" context "basemap" %}{% endfilter %}',      url: '{{ MAPBOX_OUTDOORS_URL }}', opts: { attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a>', maxZoom: 22, accessToken: _mapboxToken }}
     };
 
     window._basemapLayers = {};
@@ -34,5 +42,6 @@
     window._layersControl = null;
     if (Object.keys(_baseMaps).length > 1) {
         window._layersControl = L.control.layers(_baseMaps, null, { position: 'topright', collapsed: true }).addTo(map);
+        window._titleLayersToggle(window._layersControl);
     }
 })();

@@ -27,6 +27,8 @@ from django.conf import settings
 from django.core import signing
 from django.utils import timezone
 from django.utils.html import strip_tags
+from django.utils import translation
+from django.utils.translation import gettext_lazy as _
 
 logger = logging.getLogger(__name__)
 
@@ -400,10 +402,11 @@ def pending_review_for(survey):
 
 # --- respondent reports -------------------------------------------------------
 
+# Lazy: the respondent sees these on the report form in the survey's language.
 REPORT_REASONS = (
-    ('phishing', 'Asks for a password, a login or a payment'),
-    ('scam', 'Looks like a scam or impersonates a company'),
-    ('other', 'Something else'),
+    ('phishing', _('Asks for a password, a login or a payment')),
+    ('scam', _('Looks like a scam or impersonates a company')),
+    ('other', _('Something else')),
 )
 
 
@@ -549,8 +552,15 @@ def notice_context(review) -> dict:
         'review_url': absolute_url(review_path(review)),
         'signals': review.signals or [],
         'account': account,
-        'reason_label': dict(REPORT_REASONS).get((review.note or '').split(':', 1)[0], ''),
+        'reason_label': _reason_label_en(review),
     }
+
+
+def _reason_label_en(review) -> str:
+    # The notice goes to staff, but a report is mailed from the respondent's
+    # request, where the survey's language is active.
+    with translation.override('en'):
+        return str(dict(REPORT_REASONS).get((review.note or '').split(':', 1)[0], ''))
 
 
 def notice_subject(review) -> str:

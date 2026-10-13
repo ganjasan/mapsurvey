@@ -93,8 +93,8 @@
     var remove = document.createElement('button');
     remove.type = 'button';
     remove.className = 'fu-remove';
-    remove.title = 'Remove';
-    remove.setAttribute('aria-label', 'Remove file ' + name);
+    remove.title = root.dataset.msgRemove || 'Remove';
+    remove.setAttribute('aria-label', (root.dataset.msgRemoveFile || 'Remove file') + ' ' + name);
     remove.textContent = '×';
     remove.style.cssText = 'position:absolute;top:-10px;right:-10px;width:28px;height:28px;line-height:1;border-radius:50%;border:1px solid #dee2e6;background:#fff;padding:0;';
     item.appendChild(remove);
@@ -145,14 +145,14 @@
             Math.round((e.loaded / e.total) * 100) + '%';
         }
       };
-      xhr.onerror = function () { fail('Upload failed.'); };
+      xhr.onerror = function () { fail(root.dataset.msgFailed || 'Upload failed.'); };
       xhr.onload = function () {
         setBusy(root, false);
         show('fu-uploading', false);
         var data = null;
         try { data = JSON.parse(xhr.responseText); } catch (e) { /* fall through */ }
         if (xhr.status !== 200 || !data || !data.token) {
-          fail((data && data.message) || 'Upload failed.');
+          fail((data && data.message) || root.dataset.msgFailed || 'Upload failed.');
           return;
         }
         var localUrl = null;

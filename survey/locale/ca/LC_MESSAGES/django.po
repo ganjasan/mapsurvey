@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "Treu"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,339 @@ msgstr "Cerca adreça..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "No s'han trobat resultats"
+
+msgid "A few required questions still need an answer."
+msgstr "Encara falta respondre algunes preguntes obligatòries."
+
+msgid "Add another"
+msgstr "Afegeix-ne un altre"
+
+msgid "Add audio file"
+msgstr "Afegeix un fitxer d'àudio"
+
+msgid "Add photo"
+msgstr "Afegeix una foto"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"Afegiu els elements que cal ordenar a <strong>Opcions</strong>, a sota."
+
+msgid "All"
+msgstr "Tots"
+
+msgid "All {m} marked — thank you!"
+msgstr "Tots {m} marcats — gràcies!"
+
+msgid "Answered"
+msgstr "Respostos"
+
+msgid "Answers"
+msgstr "Respostes"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Demana una contrasenya, un inici de sessió o un pagament"
+
+msgid "Attach file"
+msgstr "Adjunta un fitxer"
+
+msgid "Brush size"
+msgstr "Mida del pinzell"
+
+msgid "Cell size: {m} m"
+msgstr "Mida de cel·la: {m} m"
+
+msgid "Clear"
+msgstr "Esborra-ho tot"
+
+msgid "Data as of"
+msgstr "Dades a data de"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"Arrossegueu els elements per ordenar-los, o agafeu-ne un amb la tecla Espai i"
+" moveu-lo amb les fletxes."
+
+msgid "Erase"
+msgstr "Esborra"
+
+msgid "File is too large."
+msgstr "El fitxer és massa gran."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"Manteniu premut i arrossegueu el dit per polvoritzar. Atureu-vos més on "
+"n'esteu més segurs."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"Manteniu premut i arrossegueu per polvoritzar. Atureu-vos més on n'esteu més "
+"segurs."
+
+msgid "Incorrect password"
+msgstr "Contrasenya incorrecta"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"Potser encara no s'ha publicat, o s'ha tancat o eliminat. Si teniu un enllaç "
+"d'un organitzador, consulteu-ho amb ell."
+
+msgid "Large brush"
+msgstr "Pinzell gran"
+
+msgid "Layers"
+msgstr "Capes"
+
+msgid "Link copied!"
+msgstr "Enllaç copiat!"
+
+msgid "Locate me"
+msgstr "Localitza'm"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Sembla una estafa o suplanta una empresa"
+
+msgid "Made with"
+msgstr "Fet amb"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"Marques col·locades per altres participants. Les vostres marques no apareixen"
+" en aquesta llista."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Heu arribat al màxim — traieu-ne un de sota per canviar-lo."
+
+msgid "Medium brush"
+msgstr "Pinzell mitjà"
+
+msgid "Move map"
+msgstr "Mou el mapa"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Moveu el mapa per situar el marcador i després premeu Aplica."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr ""
+"No introduïu mai contrasenyes ni números de targeta en una enquesta de "
+"Mapsurvey."
+
+msgid "No"
+msgstr "No"
+
+msgid "No objects in this layer yet"
+msgstr "Encara no hi ha objectes en aquesta capa"
+
+msgid "No results to show yet."
+msgstr "Encara no hi ha resultats per mostrar."
+
+msgid "Nothing matches"
+msgstr "Cap coincidència"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "Els objectes amb poques respostes s'oculten per protegir la privadesa."
+
+msgid "Please add a file."
+msgstr "Afegiu un fitxer."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "Responeu sobre almenys %%d objecte(s) per continuar"
+
+msgid "Please specify"
+msgstr "Especifiqueu-ho"
+
+msgid "Record"
+msgstr "Enregistra"
+
+msgid "Remove file"
+msgstr "Treu el fitxer"
+
+msgid "Report this survey"
+msgstr "Denuncia aquesta enquesta"
+
+msgid "Respondents: {n}"
+msgstr "Participants: {n}"
+
+msgid "Retry"
+msgstr "Torna-ho a provar"
+
+msgid "Search failed — check your connection and try again."
+msgstr "La cerca ha fallat — comproveu la connexió i torneu-ho a provar."
+
+msgid "Search objects…"
+msgstr "Cerca objectes…"
+
+msgid "See the results"
+msgstr "Mostra els resultats"
+
+msgid "Send report"
+msgstr "Envia la denúncia"
+
+msgid "Share this survey"
+msgstr "Comparteix aquesta enquesta"
+
+msgid "Small brush"
+msgstr "Pinzell petit"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "Els grups petits s'oculten per protegir la privadesa."
+
+msgid "Something else"
+msgstr "Una altra cosa"
+
+msgid "Spray"
+msgstr "Polvoritza"
+
+msgid "Stop"
+msgstr "Atura"
+
+msgid "Survey results"
+msgstr "Resultats de l'enquesta"
+
+msgid "Survey unavailable"
+msgstr "Enquesta no disponible"
+
+msgid "Take photo"
+msgstr "Fes una foto"
+
+msgid "Take the survey"
+msgstr "Respon l'enquesta"
+
+msgid "Tap the first point to close the shape."
+msgstr "Toqueu el primer punt per tancar la forma."
+
+msgid "Tap the last point to finish the line."
+msgstr "Toqueu l'últim punt per acabar la línia."
+
+msgid "Tap to add the next corner."
+msgstr "Toqueu per afegir el vèrtex següent."
+
+msgid "Tap to add the next point."
+msgstr "Toqueu per afegir el punt següent."
+
+msgid "Tap to add the shape’s corners."
+msgstr "Toqueu per afegir els vèrtexs de la forma."
+
+msgid "Tap to start the line."
+msgstr "Toqueu per començar la línia."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"Expliqueu-nos què passa amb «%(name)s». Una persona revisa cada denúncia."
+
+msgid "Thank you"
+msgstr "Gràcies"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "El pinzell és buit — esborreu una mica de pintura per continuar."
+
+msgid "The file does not match its declared type."
+msgstr "El fitxer no coincideix amb el tipus declarat."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "El fitxer és massa gran (límit de %(mb)s MB)."
+
+msgid "The files in this response are too large overall."
+msgstr "Els fitxers d'aquesta resposta són massa grans en conjunt."
+
+msgid "This file type is not accepted here."
+msgstr "Aquest tipus de fitxer no s'accepta aquí."
+
+msgid "This is the last section — respondents finish here"
+msgstr "Aquesta és l'última secció — els participants acaben aquí"
+
+msgid "This question does not accept files."
+msgstr "Aquesta pregunta no accepta fitxers."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "Aquesta pregunta encara no està vinculada a cap capa de referència."
+
+msgid "This question is required"
+msgstr "Aquesta pregunta és obligatòria"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "El propietari de l'enquesta ha d'actualitzar aquesta instantània."
+
+msgid "This survey isn’t available"
+msgstr "Aquesta enquesta no està disponible"
+
+msgid "Too many files in this response."
+msgstr "Hi ha massa fitxers en aquesta resposta."
+
+msgid "Type to search…"
+msgstr "Escriviu per cercar…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr "No llistada — visible només amb l'enllaç directe, no indexada."
+
+msgid "Upload failed."
+msgstr "La pujada ha fallat."
+
+msgid "Uploading"
+msgstr "S'està pujant"
+
+msgid "Yes"
+msgstr "Sí"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "Hem rebut la vostra denúncia. Una persona la revisarà."
+
+msgid "Zoom in"
+msgstr "Apropa"
+
+msgid "Zoom out"
+msgstr "Allunya"
+
+msgid "at least {n} required"
+msgstr "se'n requereixen almenys {n}"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "Satèl·lit"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "Carrers"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "Topogràfic"
+
+msgid "create your own free map survey"
+msgstr "creeu la vostra pròpia enquesta de mapa gratuïta"
+
+msgid "of"
+msgstr "de"
+
+msgid "responses"
+msgstr "respostes"
+
+msgid "up to {n} more"
+msgstr "fins a {n} més"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} deixat a la posició {position}"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} mogut a la posició {position}"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"{item} agafat. Feu servir les fletxes per moure'l i Espai per deixar-lo."
+
+msgid "{n} marked"
+msgstr "{n} marcats"
+
+msgid "{n} of {m} marked"
+msgstr "{n} de {m} marcats"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… i %(n)s més"

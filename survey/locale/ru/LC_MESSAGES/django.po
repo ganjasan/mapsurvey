@@ -722,7 +722,7 @@ msgstr ""
 
 #: survey/templates/404.html:65 survey/templates/survey_unavailable.html:20
 msgid "This survey isn’t available"
-msgstr ""
+msgstr "Этот опрос недоступен"
 
 #: survey/templates/404.html:66
 msgid ""
@@ -2328,7 +2328,7 @@ msgstr ""
 #: survey/templates/editor/partials/analytics_overview_pane.html:24
 #: survey/templates/public_results.html:83
 msgid "responses"
-msgstr ""
+msgstr "ответов"
 
 #: survey/templates/editor/partials/analytics_overview_pane.html:27
 msgid "completion"
@@ -2547,7 +2547,7 @@ msgstr ""
 
 #: survey/templates/editor/partials/analytics_question_stats.html:89
 msgid "Answers"
-msgstr ""
+msgstr "Ответы"
 
 #: survey/templates/editor/partials/analytics_question_stats.html:93
 msgid "Average"
@@ -2782,7 +2782,7 @@ msgstr ""
 
 #: survey/templates/editor/partials/analytics_table.html:468
 msgid "Clear"
-msgstr ""
+msgstr "Очистить"
 
 #: survey/templates/editor/partials/analytics_table.html:474
 msgid "Sort A→Z"
@@ -2826,7 +2826,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "Убрать"
 
 #: survey/templates/editor/partials/collaborator_list.html:37
 msgid "No collaborators yet."
@@ -3291,7 +3291,7 @@ msgstr ""
 
 #: survey/templates/editor/partials/thanks_panel.html:50
 msgid "Share this survey"
-msgstr ""
+msgstr "Поделиться опросом"
 
 #: survey/templates/editor/public_results.html:53
 msgid "Page"
@@ -4037,39 +4037,39 @@ msgstr ""
 
 #: survey/templates/file_upload.html:55
 msgid "Remove file"
-msgstr ""
+msgstr "Убрать файл"
 
 #: survey/templates/file_upload.html:70
 msgid "Take photo"
-msgstr ""
+msgstr "Сделать фото"
 
 #: survey/templates/file_upload.html:74
 msgid "Add photo"
-msgstr ""
+msgstr "Добавить фото"
 
 #: survey/templates/file_upload.html:79
 msgid "Add audio file"
-msgstr ""
+msgstr "Добавить аудиофайл"
 
 #: survey/templates/file_upload.html:80
 msgid "Attach file"
-msgstr ""
+msgstr "Прикрепить файл"
 
 #: survey/templates/file_upload.html:86
 msgid "Record"
-msgstr ""
+msgstr "Записать"
 
 #: survey/templates/file_upload.html:96
 msgid "Stop"
-msgstr ""
+msgstr "Стоп"
 
 #: survey/templates/file_upload.html:102
 msgid "Uploading"
-msgstr ""
+msgstr "Загрузка"
 
 #: survey/templates/file_upload.html:108
 msgid "Retry"
-msgstr ""
+msgstr "Повторить"
 
 #: survey/templates/for_consultants.html:4
 msgid ""
@@ -5301,7 +5301,7 @@ msgstr ""
 #: survey/templates/maptionnaire_alternative.html:100
 #: survey/templates/maptionnaire_alternative.html:101
 msgid "Yes"
-msgstr ""
+msgstr "Да"
 
 #: survey/templates/maptionnaire_alternative.html:100
 msgid "Yes — per-question translations"
@@ -5535,7 +5535,7 @@ msgstr ""
 
 #: survey/templates/metroquest_alternative.html:97
 msgid "No"
-msgstr ""
+msgstr "Нет"
 
 #: survey/templates/metroquest_alternative.html:98
 msgid "Survey structure"
@@ -5738,19 +5738,19 @@ msgstr ""
 #: survey/templates/partials/_made_with_mapsurvey.html:16
 #: survey/templates/public_results.html:121
 msgid "Made with"
-msgstr ""
+msgstr "Сделано с помощью"
 
 #: survey/templates/partials/_made_with_mapsurvey.html:17
 msgid "create your own free map survey"
-msgstr ""
+msgstr "создайте свой бесплатный картографический опрос"
 
 #: survey/templates/partials/survey_section_partial.html:36
 msgid "A few required questions still need an answer."
-msgstr ""
+msgstr "Осталось ответить на несколько обязательных вопросов."
 
 #: survey/templates/partials/survey_section_partial.html:39
 msgid "This question is required"
-msgstr ""
+msgstr "Это обязательный вопрос"
 
 #: survey/templates/partials/survey_section_partial.html:97
 #: survey/templates/survey_section_block.html:22
@@ -5759,7 +5759,7 @@ msgstr "Завершить"
 
 #: survey/templates/partials/survey_section_partial.html:109
 msgid "This is the last section — respondents finish here"
-msgstr ""
+msgstr "Это последний раздел — здесь участники завершают опрос"
 
 #: survey/templates/participatory_budgeting.html:4
 msgid "Participatory Budgeting on a Map — Open-Source Tool | Mapsurvey"
@@ -6030,31 +6030,31 @@ msgstr ""
 #: survey/templates/public_results.html:7
 #: survey/templates/public_results.html:77
 msgid "Survey results"
-msgstr ""
+msgstr "Результаты опроса"
 
 #: survey/templates/public_results.html:72
 msgid "Unlisted — viewable by direct link only, not indexed."
-msgstr ""
+msgstr "Не в списке — доступно только по прямой ссылке, не индексируется."
 
 #: survey/templates/public_results.html:86
 msgid "Take the survey"
-msgstr ""
+msgstr "Пройти опрос"
 
 #: survey/templates/public_results.html:90
 msgid "Data as of"
-msgstr ""
+msgstr "Данные на"
 
 #: survey/templates/public_results.html:95
 msgid "This snapshot needs to be refreshed by the survey owner."
-msgstr ""
+msgstr "Владельцу опроса нужно обновить этот снимок данных."
 
 #: survey/templates/public_results.html:97
 msgid "No results to show yet."
-msgstr ""
+msgstr "Результатов пока нет."
 
 #: survey/templates/public_results.html:111
 msgid "Small groups are masked to protect privacy."
-msgstr ""
+msgstr "Небольшие группы скрыты для защиты конфиденциальности."
 
 #: survey/templates/registration/login.html:14
 msgid ""
@@ -6583,17 +6583,17 @@ msgstr "Ваши ответы сохранены."
 
 #: survey/templates/survey_thanks.html:38
 msgid "See the results"
-msgstr ""
+msgstr "Посмотреть результаты"
 
 #: survey/templates/survey_unavailable.html:11
 msgid "Survey unavailable"
-msgstr ""
+msgstr "Опрос недоступен"
 
 #: survey/templates/survey_unavailable.html:21
 msgid ""
 "It may not be published yet, or it may have been closed or removed. If you "
 "have a link from an organizer, check with them."
-msgstr ""
+msgstr "Возможно, он ещё не опубликован, закрыт или удалён. Если вы получили ссылку от организатора, уточните у него."
 
 #: survey/templatetags/i18n_extras.py:17
 msgid "Start drawing"
@@ -6633,31 +6633,31 @@ msgstr "Нажмите на последнюю точку, чтобы закон
 
 #: survey/templatetags/i18n_extras.py:39
 msgid "Move the map to position the pin, then press Apply."
-msgstr ""
+msgstr "Сдвиньте карту, чтобы поставить метку, затем нажмите «Применить»."
 
 #: survey/templatetags/i18n_extras.py:40
 msgid "Tap to add the shape’s corners."
-msgstr ""
+msgstr "Нажимайте, чтобы добавить вершины фигуры."
 
 #: survey/templatetags/i18n_extras.py:41
 msgid "Tap to add the next corner."
-msgstr ""
+msgstr "Нажмите, чтобы добавить следующую вершину."
 
 #: survey/templatetags/i18n_extras.py:42
 msgid "Tap the first point to close the shape."
-msgstr ""
+msgstr "Нажмите на первую точку, чтобы замкнуть фигуру."
 
 #: survey/templatetags/i18n_extras.py:43
 msgid "Tap to start the line."
-msgstr ""
+msgstr "Нажмите, чтобы начать линию."
 
 #: survey/templatetags/i18n_extras.py:44
 msgid "Tap to add the next point."
-msgstr ""
+msgstr "Нажмите, чтобы добавить следующую точку."
 
 #: survey/templatetags/i18n_extras.py:45
 msgid "Tap the last point to finish the line."
-msgstr ""
+msgstr "Нажмите на последнюю точку, чтобы завершить линию."
 
 #: survey/templatetags/i18n_extras.py:49
 msgid "<strong>Error:</strong> Shape edges cannot intersect!"
@@ -6673,65 +6673,65 @@ msgstr "Ничего не найдено"
 
 #: survey/templatetags/i18n_extras.py:54
 msgid "Search failed — check your connection and try again."
-msgstr ""
+msgstr "Поиск не удался — проверьте подключение и попробуйте снова."
 
 #: survey/templatetags/i18n_extras.py:57
 msgid "Add another"
-msgstr ""
+msgstr "Добавить ещё"
 
 #: survey/templatetags/i18n_extras.py:58
 #, python-brace-format
 msgid "up to {n} more"
-msgstr ""
+msgstr "ещё до {n}"
 
 #: survey/templatetags/i18n_extras.py:59
 msgid "Maximum reached — remove one below to change it."
-msgstr ""
+msgstr "Достигнут максимум — удалите одну отметку ниже, чтобы изменить выбор."
 
 #: survey/templatetags/i18n_extras.py:60
 #, python-brace-format
 msgid "{n} marked"
-msgstr ""
+msgstr "Отмечено: {n}"
 
 #: survey/templatetags/i18n_extras.py:61
 #, python-brace-format
 msgid "{n} of {m} marked"
-msgstr ""
+msgstr "Отмечено {n} из {m}"
 
 #: survey/templatetags/i18n_extras.py:62
 #, python-brace-format
 msgid "at least {n} required"
-msgstr ""
+msgstr "нужно не меньше {n}"
 
 #: survey/templatetags/i18n_extras.py:63
 #, python-brace-format
 msgid "All {m} marked — thank you!"
-msgstr ""
+msgstr "Отмечены все {m} — спасибо!"
 
 #: survey/uploads.py:80 survey/views.py:2175
 msgid "This question does not accept files."
-msgstr ""
+msgstr "Этот вопрос не принимает файлы."
 
 #: survey/uploads.py:84
 msgid "This file type is not accepted here."
-msgstr ""
+msgstr "Этот тип файлов здесь не принимается."
 
 #: survey/uploads.py:89
 #, python-format
 msgid "The file is too large (limit %(mb)s MB)."
-msgstr ""
+msgstr "Файл слишком большой (ограничение %(mb)s МБ)."
 
 #: survey/uploads.py:96 survey/uploads.py:98
 msgid "The file does not match its declared type."
-msgstr ""
+msgstr "Файл не соответствует заявленному типу."
 
 #: survey/uploads.py:109
 msgid "Too many files in this response."
-msgstr ""
+msgstr "Слишком много файлов в этом ответе."
 
 #: survey/uploads.py:111
 msgid "The files in this response are too large overall."
-msgstr ""
+msgstr "Общий размер файлов в этом ответе слишком велик."
 
 #: survey/views.py:2166
 msgid "Please reload the survey page and try again."
@@ -7595,3 +7595,174 @@ msgid ""
 "Enter a full web address, for example https://www.facebook.com/yourproject"
 msgstr ""
 "Введите полный веб-адрес, например https://www.facebook.com/yourproject"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"Добавьте элементы для ранжирования в разделе <strong>Варианты</strong> ниже."
+
+msgid "All"
+msgstr "Все"
+
+msgid "Answered"
+msgstr "Отвечено"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Запрашивает пароль, логин или оплату"
+
+msgid "Brush size"
+msgstr "Размер кисти"
+
+msgid "Cell size: {m} m"
+msgstr "Размер ячейки: {m} м"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"Перетащите элементы в нужном порядке или возьмите элемент клавишей «Пробел» и"
+" перемещайте его клавишами со стрелками."
+
+msgid "Erase"
+msgstr "Стереть"
+
+msgid "File is too large."
+msgstr "Файл слишком большой."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"Удерживайте и ведите пальцем, чтобы закрасить. Задерживайтесь дольше там, где"
+" вы более уверены."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"Удерживайте и ведите, чтобы закрасить. Задерживайтесь дольше там, где вы "
+"более уверены."
+
+msgid "Incorrect password"
+msgstr "Неверный пароль"
+
+msgid "Large brush"
+msgstr "Большая кисть"
+
+msgid "Layers"
+msgstr "Слои"
+
+msgid "Link copied!"
+msgstr "Ссылка скопирована!"
+
+msgid "Locate me"
+msgstr "Моё местоположение"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Похоже на мошенничество или выдаёт себя за компанию"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr "Отметки других участников. Ваших отметок в этом списке нет."
+
+msgid "Medium brush"
+msgstr "Средняя кисть"
+
+msgid "Move map"
+msgstr "Двигать карту"
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Никогда не вводите пароли или номера карт в опросе Mapsurvey."
+
+msgid "No objects in this layer yet"
+msgstr "В этом слое пока нет объектов"
+
+msgid "Nothing matches"
+msgstr "Совпадений нет"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "Объекты с малым числом ответов скрыты для защиты конфиденциальности."
+
+msgid "Please add a file."
+msgstr "Пожалуйста, добавьте файл."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "Чтобы продолжить, ответьте хотя бы по %%d объект(ам)"
+
+msgid "Please specify"
+msgstr "Уточните"
+
+msgid "Report this survey"
+msgstr "Пожаловаться на опрос"
+
+msgid "Respondents: {n}"
+msgstr "Участников: {n}"
+
+msgid "Search objects…"
+msgstr "Поиск объектов…"
+
+msgid "Send report"
+msgstr "Отправить жалобу"
+
+msgid "Small brush"
+msgstr "Маленькая кисть"
+
+msgid "Something else"
+msgstr "Другое"
+
+msgid "Spray"
+msgstr "Закрасить"
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr "Расскажите, что не так с «%(name)s». Каждую жалобу проверяет человек."
+
+msgid "Thank you"
+msgstr "Спасибо"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Краска закончилась — сотрите часть закраски, чтобы продолжить."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "Этот вопрос пока не привязан к справочному слою."
+
+msgid "Type to search…"
+msgstr "Введите для поиска…"
+
+msgid "Upload failed."
+msgstr "Не удалось загрузить."
+
+msgid "Your report has been received. A person will look at it."
+msgstr "Ваша жалоба получена. Её рассмотрит человек."
+
+msgid "Zoom in"
+msgstr "Приблизить"
+
+msgid "Zoom out"
+msgstr "Отдалить"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "Спутник"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "Улицы"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "Рельеф"
+
+msgid "of"
+msgstr "из"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} помещён на позицию {position}"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} перемещён на позицию {position}"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"{item} выбран. Перемещайте его клавишами со стрелками, «Пробел» — чтобы "
+"отпустить."
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… и ещё %(n)s"

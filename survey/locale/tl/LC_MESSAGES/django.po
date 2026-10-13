@@ -683,7 +683,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "Alisin"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,344 @@ msgstr "Maghanap ng address..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Walang resulta"
+
+msgid "A few required questions still need an answer."
+msgstr "May ilang kinakailangang tanong pa na wala pang sagot."
+
+msgid "Add another"
+msgstr "Magdagdag pa"
+
+msgid "Add audio file"
+msgstr "Magdagdag ng audio file"
+
+msgid "Add photo"
+msgstr "Magdagdag ng larawan"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"Idagdag ang mga item na iraranggo sa <strong>Mga Pagpipilian</strong> sa "
+"ibaba."
+
+msgid "All"
+msgstr "Lahat"
+
+msgid "All {m} marked — thank you!"
+msgstr "Namarkahan na ang lahat ng {m} — salamat!"
+
+msgid "Answered"
+msgstr "Nasagot na"
+
+msgid "Answers"
+msgstr "Mga sagot"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Humihingi ng password, login, o bayad"
+
+msgid "Attach file"
+msgstr "Mag-attach ng file"
+
+msgid "Brush size"
+msgstr "Laki ng brush"
+
+msgid "Cell size: {m} m"
+msgstr "Laki ng cell: {m} m"
+
+msgid "Clear"
+msgstr "I-clear"
+
+msgid "Data as of"
+msgstr "Datos noong"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"I-drag ang mga item para ayusin, o pumili ng isa gamit ang Space at ilipat "
+"ito gamit ang mga arrow key."
+
+msgid "Erase"
+msgstr "Burahin ang pintura"
+
+msgid "File is too large."
+msgstr "Masyadong malaki ang file."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"Pindutin nang matagal at i-drag ang daliri para mag-spray. Magtagal sa mga "
+"lugar na mas sigurado ka."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"Pindutin nang matagal at i-drag para mag-spray. Magtagal sa mga lugar na mas "
+"sigurado ka."
+
+msgid "Incorrect password"
+msgstr "Maling password"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"Maaaring hindi pa ito nailalathala, o maaaring isinara o tinanggal na. Kung "
+"may link ka mula sa isang organizer, magtanong sa kanila."
+
+msgid "Large brush"
+msgstr "Malaking brush"
+
+msgid "Layers"
+msgstr "Mga layer"
+
+msgid "Link copied!"
+msgstr "Nakopya ang link!"
+
+msgid "Locate me"
+msgstr "Hanapin ako"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Mukhang scam o nagpapanggap na isang kumpanya"
+
+msgid "Made with"
+msgstr "Ginawa gamit ang"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"Mga marka na inilagay ng ibang sumasagot. Wala sa listahang ito ang sarili "
+"mong mga marka."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Naabot na ang maximum — mag-alis ng isa sa ibaba para baguhin ito."
+
+msgid "Medium brush"
+msgstr "Katamtamang brush"
+
+msgid "Move map"
+msgstr "Igalaw ang mapa"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr ""
+"Igalaw ang mapa para ilagay ang pin, pagkatapos ay pindutin ang Ilapat."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr ""
+"Huwag kailanman maglagay ng password o numero ng card sa isang survey ng "
+"Mapsurvey."
+
+msgid "No"
+msgstr "Hindi"
+
+msgid "No objects in this layer yet"
+msgstr "Wala pang bagay sa layer na ito"
+
+msgid "No results to show yet."
+msgstr "Wala pang resultang maipapakita."
+
+msgid "Nothing matches"
+msgstr "Walang tumugma"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr ""
+"Itinatago ang mga bagay na kaunti ang sagot para protektahan ang privacy."
+
+msgid "Please add a file."
+msgstr "Pakidagdag ng file."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "Pakisagot ang tungkol sa hindi bababa sa %%d bagay para magpatuloy"
+
+msgid "Please specify"
+msgstr "Pakitukoy"
+
+msgid "Record"
+msgstr "Mag-record"
+
+msgid "Remove file"
+msgstr "Alisin ang file"
+
+msgid "Report this survey"
+msgstr "I-report ang survey na ito"
+
+msgid "Respondents: {n}"
+msgstr "Mga sumagot: {n}"
+
+msgid "Retry"
+msgstr "Subukang muli"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Nabigo ang paghahanap — tingnan ang iyong koneksyon at subukang muli."
+
+msgid "Search objects…"
+msgstr "Maghanap ng bagay…"
+
+msgid "See the results"
+msgstr "Tingnan ang mga resulta"
+
+msgid "Send report"
+msgstr "Ipadala ang report"
+
+msgid "Share this survey"
+msgstr "Ibahagi ang survey na ito"
+
+msgid "Small brush"
+msgstr "Maliit na brush"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "Itinatago ang maliliit na grupo para protektahan ang privacy."
+
+msgid "Something else"
+msgstr "Iba pa"
+
+msgid "Spray"
+msgstr "Mag-spray"
+
+msgid "Stop"
+msgstr "Ihinto"
+
+msgid "Survey results"
+msgstr "Mga resulta ng survey"
+
+msgid "Survey unavailable"
+msgstr "Hindi available ang survey"
+
+msgid "Take photo"
+msgstr "Kumuha ng larawan"
+
+msgid "Take the survey"
+msgstr "Sagutan ang survey"
+
+msgid "Tap the first point to close the shape."
+msgstr "I-tap ang unang punto para isara ang hugis."
+
+msgid "Tap the last point to finish the line."
+msgstr "I-tap ang huling punto para tapusin ang linya."
+
+msgid "Tap to add the next corner."
+msgstr "I-tap para idagdag ang susunod na sulok."
+
+msgid "Tap to add the next point."
+msgstr "I-tap para idagdag ang susunod na punto."
+
+msgid "Tap to add the shape’s corners."
+msgstr "I-tap para idagdag ang mga sulok ng hugis."
+
+msgid "Tap to start the line."
+msgstr "I-tap para simulan ang linya."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"Sabihin sa amin kung ano ang mali sa “%(name)s”. Isang tao ang sumusuri sa "
+"bawat report."
+
+msgid "Thank you"
+msgstr "Salamat"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Ubos na ang brush — magbura ng kaunting pintura para magpatuloy."
+
+msgid "The file does not match its declared type."
+msgstr "Hindi tugma ang file sa idineklarang uri nito."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "Masyadong malaki ang file (limitasyon %(mb)s MB)."
+
+msgid "The files in this response are too large overall."
+msgstr "Masyadong malaki ang kabuuang laki ng mga file sa sagot na ito."
+
+msgid "This file type is not accepted here."
+msgstr "Hindi tinatanggap dito ang ganitong uri ng file."
+
+msgid "This is the last section — respondents finish here"
+msgstr "Ito ang huling seksyon — dito natatapos ang mga sumasagot"
+
+msgid "This question does not accept files."
+msgstr "Hindi tumatanggap ng file ang tanong na ito."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "Hindi pa nakakabit ang tanong na ito sa isang reference layer."
+
+msgid "This question is required"
+msgstr "Kinakailangan ang tanong na ito"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "Kailangang i-refresh ng may-ari ng survey ang snapshot na ito."
+
+msgid "This survey isn’t available"
+msgstr "Hindi ma-access ang survey na ito"
+
+msgid "Too many files in this response."
+msgstr "Masyadong maraming file sa sagot na ito."
+
+msgid "Type to search…"
+msgstr "Mag-type para maghanap…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr "Hindi nakalista — makikita lamang sa direktang link, hindi naka-index."
+
+msgid "Upload failed."
+msgstr "Nabigo ang pag-upload."
+
+msgid "Uploading"
+msgstr "Nag-a-upload"
+
+msgid "Yes"
+msgstr "Oo"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "Natanggap na ang iyong report. Isang tao ang titingin dito."
+
+msgid "Zoom in"
+msgstr "Mag-zoom in"
+
+msgid "Zoom out"
+msgstr "Mag-zoom out"
+
+msgid "at least {n} required"
+msgstr "kailangan ng hindi bababa sa {n}"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "Satelayt"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "Mga kalye"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "Topograpiya"
+
+msgid "create your own free map survey"
+msgstr "gumawa ng sarili mong libreng map survey"
+
+msgid "of"
+msgstr "sa"
+
+msgid "responses"
+msgstr "mga tugon"
+
+msgid "up to {n} more"
+msgstr "hanggang {n} pa"
+
+msgid "{item} dropped at position {position}"
+msgstr "Ibinaba ang {item} sa posisyon {position}"
+
+msgid "{item} moved to position {position}"
+msgstr "Inilipat ang {item} sa posisyon {position}"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"Napili ang {item}. Gamitin ang mga arrow key para ilipat ito, Space para "
+"ibaba."
+
+msgid "{n} marked"
+msgstr "{n} ang namarkahan"
+
+msgid "{n} of {m} marked"
+msgstr "{n} sa {m} ang namarkahan"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… at %(n)s pa"

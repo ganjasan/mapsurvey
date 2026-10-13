@@ -26,6 +26,21 @@
         if (status) status.textContent = message;
     }
 
+    // Screen-reader announcements come translated from ranking.html as
+    // data-msg-* templates with {item} and {position} placeholders.
+    var FALLBACK = {
+        picked: '{item} picked up. Use the arrow keys to move it, Space to drop it.',
+        moved: '{item} moved to position {position}',
+        dropped: '{item} dropped at position {position}'
+    };
+
+    function message(block, key, row) {
+        var template = block.getAttribute('data-msg-' + key) || FALLBACK[key];
+        return template
+            .replace('{item}', row.querySelector('.ranking__label').textContent.trim())
+            .replace('{position}', row.getAttribute('aria-posinset') || '');
+    }
+
     function move(list, row, delta) {
         var rows = Array.prototype.slice.call(list.querySelectorAll('.ranking__item'));
         var from = rows.indexOf(row);
@@ -88,8 +103,7 @@
                     grabbed = null;
                     row.classList.remove('is-grabbed');
                     row.setAttribute('aria-grabbed', 'false');
-                    announce(block, row.querySelector('.ranking__label').textContent.trim() +
-                        ' dropped at position ' + (row.getAttribute('aria-posinset') || ''));
+                    announce(block, message(block, 'dropped', row));
                 } else {
                     if (grabbed) {
                         grabbed.classList.remove('is-grabbed');
@@ -98,8 +112,7 @@
                     grabbed = row;
                     row.classList.add('is-grabbed');
                     row.setAttribute('aria-grabbed', 'true');
-                    announce(block, row.querySelector('.ranking__label').textContent.trim() +
-                        ' picked up. Use the arrow keys to move it, Space to drop it.');
+                    announce(block, message(block, 'picked', row));
                 }
                 return;
             }
@@ -111,8 +124,7 @@
             if (grabbed === row) {
                 if (move(list, row, delta)) {
                     row.focus();
-                    announce(block, row.querySelector('.ranking__label').textContent.trim() +
-                        ' moved to position ' + (row.getAttribute('aria-posinset') || ''));
+                    announce(block, message(block, 'moved', row));
                 }
             } else {
                 // Not carrying anything: arrows walk the list.

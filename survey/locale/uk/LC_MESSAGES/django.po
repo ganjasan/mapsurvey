@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "Прибрати"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,338 @@ msgstr "Пошук адреси..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Нічого не знайдено"
+
+msgid "A few required questions still need an answer."
+msgstr "Кілька обов’язкових запитань досі без відповіді."
+
+msgid "Add another"
+msgstr "Додати ще"
+
+msgid "Add audio file"
+msgstr "Додати аудіофайл"
+
+msgid "Add photo"
+msgstr "Додати фото"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"Додайте елементи для ранжування в розділі <strong>Варіанти</strong> нижче."
+
+msgid "All"
+msgstr "Усі"
+
+msgid "All {m} marked — thank you!"
+msgstr "Позначено всі {m} — дякуємо!"
+
+msgid "Answered"
+msgstr "З відповіддю"
+
+msgid "Answers"
+msgstr "Відповіді"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Вимагає пароль, вхід або оплату"
+
+msgid "Attach file"
+msgstr "Прикріпити файл"
+
+msgid "Brush size"
+msgstr "Розмір пензля"
+
+msgid "Cell size: {m} m"
+msgstr "Розмір комірки: {m} м"
+
+msgid "Clear"
+msgstr "Очистити"
+
+msgid "Data as of"
+msgstr "Дані станом на"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"Перетягніть елементи в потрібному порядку або візьміть елемент клавішею "
+"Пробіл і переміщуйте його клавішами зі стрілками."
+
+msgid "Erase"
+msgstr "Стерти"
+
+msgid "File is too large."
+msgstr "Файл завеликий."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"Утримуйте й ведіть пальцем, щоб розпилювати. Затримуйтеся довше там, де ви "
+"впевненіші."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"Утримуйте й ведіть, щоб розпилювати. Затримуйтеся довше там, де ви "
+"впевненіші."
+
+msgid "Incorrect password"
+msgstr "Неправильний пароль"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"Можливо, його ще не опубліковано або його закрито чи видалено. Якщо ви "
+"отримали посилання від організатора, уточніть у нього."
+
+msgid "Large brush"
+msgstr "Великий пензель"
+
+msgid "Layers"
+msgstr "Шари"
+
+msgid "Link copied!"
+msgstr "Посилання скопійовано!"
+
+msgid "Locate me"
+msgstr "Знайти мене"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Схоже на шахрайство або видає себе за компанію"
+
+msgid "Made with"
+msgstr "Створено за допомогою"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"Позначки інших респондентів. Ваших власних позначок у цьому списку немає."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Досягнуто максимуму — видаліть одну позначку нижче, щоб змінити."
+
+msgid "Medium brush"
+msgstr "Середній пензель"
+
+msgid "Move map"
+msgstr "Рухати карту"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr ""
+"Перемістіть карту, щоб розташувати мітку, потім натисніть «Застосувати»."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Ніколи не вводьте паролі чи номери карток в опитуваннях Mapsurvey."
+
+msgid "No"
+msgstr "Ні"
+
+msgid "No objects in this layer yet"
+msgstr "У цьому шарі ще немає об’єктів"
+
+msgid "No results to show yet."
+msgstr "Поки немає результатів для показу."
+
+msgid "Nothing matches"
+msgstr "Немає збігів"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr ""
+"Об’єкти з малою кількістю відповідей приховано для захисту конфіденційності."
+
+msgid "Please add a file."
+msgstr "Будь ласка, додайте файл."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "Щоб продовжити, дайте відповідь щонайменше про %%d об’єкт(ів)"
+
+msgid "Please specify"
+msgstr "Будь ласка, уточніть"
+
+msgid "Record"
+msgstr "Записати"
+
+msgid "Remove file"
+msgstr "Видалити файл"
+
+msgid "Report this survey"
+msgstr "Поскаржитися на опитування"
+
+msgid "Respondents: {n}"
+msgstr "Респондентів: {n}"
+
+msgid "Retry"
+msgstr "Повторити"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Пошук не вдався — перевірте з’єднання та спробуйте ще раз."
+
+msgid "Search objects…"
+msgstr "Шукати об’єкти…"
+
+msgid "See the results"
+msgstr "Переглянути результати"
+
+msgid "Send report"
+msgstr "Надіслати скаргу"
+
+msgid "Share this survey"
+msgstr "Поділитися опитуванням"
+
+msgid "Small brush"
+msgstr "Малий пензель"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "Малі групи приховано для захисту конфіденційності."
+
+msgid "Something else"
+msgstr "Інше"
+
+msgid "Spray"
+msgstr "Розпилювати"
+
+msgid "Stop"
+msgstr "Зупинити"
+
+msgid "Survey results"
+msgstr "Результати опитування"
+
+msgid "Survey unavailable"
+msgstr "Опитування недоступне"
+
+msgid "Take photo"
+msgstr "Зробити фото"
+
+msgid "Take the survey"
+msgstr "Пройти опитування"
+
+msgid "Tap the first point to close the shape."
+msgstr "Торкніться першої точки, щоб замкнути фігуру."
+
+msgid "Tap the last point to finish the line."
+msgstr "Торкніться останньої точки, щоб завершити лінію."
+
+msgid "Tap to add the next corner."
+msgstr "Торкніться, щоб додати наступний кут."
+
+msgid "Tap to add the next point."
+msgstr "Торкніться, щоб додати наступну точку."
+
+msgid "Tap to add the shape’s corners."
+msgstr "Торкніться, щоб додати кути фігури."
+
+msgid "Tap to start the line."
+msgstr "Торкніться, щоб почати лінію."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr "Розкажіть, що не так з «%(name)s». Кожну скаргу розглядає людина."
+
+msgid "Thank you"
+msgstr "Дякуємо"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Пензель порожній — зітріть трохи фарби, щоб продовжити."
+
+msgid "The file does not match its declared type."
+msgstr "Файл не відповідає заявленому типу."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "Файл завеликий (ліміт %(mb)s МБ)."
+
+msgid "The files in this response are too large overall."
+msgstr "Загальний розмір файлів у цій відповіді завеликий."
+
+msgid "This file type is not accepted here."
+msgstr "Цей тип файлу тут не приймається."
+
+msgid "This is the last section — respondents finish here"
+msgstr "Це останній розділ — тут респонденти завершують опитування"
+
+msgid "This question does not accept files."
+msgstr "Це запитання не приймає файли."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "Це запитання ще не прив’язане до опорного шару."
+
+msgid "This question is required"
+msgstr "Це обов’язкове запитання"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "Цей знімок має оновити власник опитування."
+
+msgid "This survey isn’t available"
+msgstr "Це опитування недоступне"
+
+msgid "Too many files in this response."
+msgstr "Забагато файлів у цій відповіді."
+
+msgid "Type to search…"
+msgstr "Почніть вводити для пошуку…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr "Не в списку — доступне лише за прямим посиланням, не індексується."
+
+msgid "Upload failed."
+msgstr "Не вдалося завантажити."
+
+msgid "Uploading"
+msgstr "Завантаження"
+
+msgid "Yes"
+msgstr "Так"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "Вашу скаргу отримано. Її перегляне людина."
+
+msgid "Zoom in"
+msgstr "Збільшити"
+
+msgid "Zoom out"
+msgstr "Зменшити"
+
+msgid "at least {n} required"
+msgstr "потрібно щонайменше {n}"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "Супутник"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "Вулиці"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "Рельєф"
+
+msgid "create your own free map survey"
+msgstr "створіть власне безкоштовне картографічне опитування"
+
+msgid "of"
+msgstr "з"
+
+msgid "responses"
+msgstr "відповідей"
+
+msgid "up to {n} more"
+msgstr "ще до {n}"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} поставлено на позицію {position}"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} переміщено на позицію {position}"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"{item} взято. Переміщуйте його клавішами зі стрілками, відпустіть клавішею "
+"Пробіл."
+
+msgid "{n} marked"
+msgstr "Позначено: {n}"
+
+msgid "{n} of {m} marked"
+msgstr "Позначено {n} з {m}"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… і ще %(n)s"

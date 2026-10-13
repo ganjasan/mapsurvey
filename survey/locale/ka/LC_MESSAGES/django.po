@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "მოშორება"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,339 @@ msgstr "მისამართის ძიება..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "შედეგები ვერ მოიძებნა"
+
+msgid "A few required questions still need an answer."
+msgstr "რამდენიმე სავალდებულო კითხვას ჯერ არ აქვს პასუხი."
+
+msgid "Add another"
+msgstr "კიდევ დამატება"
+
+msgid "Add audio file"
+msgstr "აუდიოფაილის დამატება"
+
+msgid "Add photo"
+msgstr "ფოტოს დამატება"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr "დასალაგებელი ელემენტები დაამატეთ ქვემოთ, <strong>ვარიანტებში</strong>."
+
+msgid "All"
+msgstr "ყველა"
+
+msgid "All {m} marked — thank you!"
+msgstr "მონიშნულია ყველა {m} — გმადლობთ!"
+
+msgid "Answered"
+msgstr "პასუხგაცემული"
+
+msgid "Answers"
+msgstr "პასუხები"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "ითხოვს პაროლს, ავტორიზაციას ან გადახდას"
+
+msgid "Attach file"
+msgstr "ფაილის მიმაგრება"
+
+msgid "Brush size"
+msgstr "ფუნჯის ზომა"
+
+msgid "Cell size: {m} m"
+msgstr "უჯრის ზომა: {m} მ"
+
+msgid "Clear"
+msgstr "გასუფთავება"
+
+msgid "Data as of"
+msgstr "მონაცემები მდგომარეობით"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"გადაათრიეთ ელემენტები სასურველი რიგით, ან აიღეთ ერთი Space-ით და გადაადგილეთ "
+"ისრიანი ღილაკებით."
+
+msgid "Erase"
+msgstr "წაშლა საშლელით"
+
+msgid "File is too large."
+msgstr "ფაილი ძალიან დიდია."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"დააჭირეთ და გაასრიალეთ თითი შესასხურებლად. დიდხანს გაჩერდით იქ, სადაც უფრო "
+"დარწმუნებული ხართ."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"დააჭირეთ და გადაათრიეთ შესასხურებლად. დიდხანს გაჩერდით იქ, სადაც უფრო "
+"დარწმუნებული ხართ."
+
+msgid "Incorrect password"
+msgstr "არასწორი პაროლი"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"შესაძლოა, ის ჯერ არ არის გამოქვეყნებული, ან დახურულია ან წაშლილია. თუ ბმული "
+"ორგანიზატორისგან მიიღეთ, დაუკავშირდით მას."
+
+msgid "Large brush"
+msgstr "დიდი ფუნჯი"
+
+msgid "Layers"
+msgstr "ფენები"
+
+msgid "Link copied!"
+msgstr "ბმული დაკოპირდა!"
+
+msgid "Locate me"
+msgstr "ჩემი მდებარეობა"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "ჰგავს თაღლითობას ან კომპანიის სახელით მოქმედებს"
+
+msgid "Made with"
+msgstr "შექმნილია"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"სხვა რესპონდენტების მიერ დასმული ნიშნები. თქვენი ნიშნები ამ სიაში არ არის."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "მიღწეულია მაქსიმუმი — შესაცვლელად წაშალეთ ერთი ქვემოთ."
+
+msgid "Medium brush"
+msgstr "საშუალო ფუნჯი"
+
+msgid "Move map"
+msgstr "რუკის გადაადგილება"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "გადაადგილეთ რუკა ნიშნულის დასაყენებლად, შემდეგ დააჭირეთ „გამოყენებას“."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr ""
+"არასოდეს შეიყვანოთ პაროლები ან ბარათის ნომრები Mapsurvey-ის გამოკითხვაში."
+
+msgid "No"
+msgstr "არა"
+
+msgid "No objects in this layer yet"
+msgstr "ამ ფენაში ჯერ ობიექტები არ არის"
+
+msgid "No results to show yet."
+msgstr "საჩვენებელი შედეგები ჯერ არ არის."
+
+msgid "Nothing matches"
+msgstr "დამთხვევა არ მოიძებნა"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "ცოტა პასუხის მქონე ობიექტები დამალულია კონფიდენციალურობის დასაცავად."
+
+msgid "Please add a file."
+msgstr "გთხოვთ, დაამატოთ ფაილი."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "გასაგრძელებლად უპასუხეთ მინიმუმ %%d ობიექტის შესახებ"
+
+msgid "Please specify"
+msgstr "გთხოვთ, დააზუსტოთ"
+
+msgid "Record"
+msgstr "ჩაწერა"
+
+msgid "Remove file"
+msgstr "ფაილის მოშორება"
+
+msgid "Report this survey"
+msgstr "გამოკითხვაზე საჩივარი"
+
+msgid "Respondents: {n}"
+msgstr "რესპონდენტები: {n}"
+
+msgid "Retry"
+msgstr "ხელახლა ცდა"
+
+msgid "Search failed — check your connection and try again."
+msgstr "ძიება ვერ მოხერხდა — შეამოწმეთ კავშირი და სცადეთ ხელახლა."
+
+msgid "Search objects…"
+msgstr "ობიექტების ძიება…"
+
+msgid "See the results"
+msgstr "შედეგების ნახვა"
+
+msgid "Send report"
+msgstr "საჩივრის გაგზავნა"
+
+msgid "Share this survey"
+msgstr "გამოკითხვის გაზიარება"
+
+msgid "Small brush"
+msgstr "პატარა ფუნჯი"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "მცირე ჯგუფები დამალულია კონფიდენციალურობის დასაცავად."
+
+msgid "Something else"
+msgstr "სხვა მიზეზი"
+
+msgid "Spray"
+msgstr "შესხურება"
+
+msgid "Stop"
+msgstr "შეჩერება"
+
+msgid "Survey results"
+msgstr "გამოკითხვის შედეგები"
+
+msgid "Survey unavailable"
+msgstr "გამოკითხვა მიუწვდომელია"
+
+msgid "Take photo"
+msgstr "ფოტოს გადაღება"
+
+msgid "Take the survey"
+msgstr "გამოკითხვაში მონაწილეობა"
+
+msgid "Tap the first point to close the shape."
+msgstr "შეეხეთ პირველ წერტილს ფიგურის დასახურად."
+
+msgid "Tap the last point to finish the line."
+msgstr "შეეხეთ ბოლო წერტილს ხაზის დასასრულებლად."
+
+msgid "Tap to add the next corner."
+msgstr "შეეხეთ შემდეგი კუთხის დასამატებლად."
+
+msgid "Tap to add the next point."
+msgstr "შეეხეთ შემდეგი წერტილის დასამატებლად."
+
+msgid "Tap to add the shape’s corners."
+msgstr "შეეხეთ ფიგურის კუთხეების დასამატებლად."
+
+msgid "Tap to start the line."
+msgstr "შეეხეთ ხაზის დასაწყებად."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"გვითხარით, რა არის არასწორი „%(name)s“-ში. ყოველ საჩივარს ადამიანი "
+"განიხილავს."
+
+msgid "Thank you"
+msgstr "გმადლობთ"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "ფუნჯი ცარიელია — გასაგრძელებლად წაშალეთ საღებავის ნაწილი."
+
+msgid "The file does not match its declared type."
+msgstr "ფაილი არ შეესაბამება მითითებულ ტიპს."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "ფაილი ძალიან დიდია (ლიმიტი %(mb)s მბ)."
+
+msgid "The files in this response are too large overall."
+msgstr "ამ პასუხის ფაილები ჯამში ძალიან დიდია."
+
+msgid "This file type is not accepted here."
+msgstr "ამ ტიპის ფაილი აქ არ მიიღება."
+
+msgid "This is the last section — respondents finish here"
+msgstr "ეს ბოლო განყოფილებაა — რესპონდენტები აქ ასრულებენ"
+
+msgid "This question does not accept files."
+msgstr "ეს კითხვა ფაილებს არ იღებს."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "ეს კითხვა ჯერ არ არის დაკავშირებული საცნობარო ფენასთან."
+
+msgid "This question is required"
+msgstr "ეს კითხვა სავალდებულოა"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "ეს ასლი გამოკითხვის მფლობელმა უნდა განაახლოს."
+
+msgid "This survey isn’t available"
+msgstr "ეს გამოკითხვა მიუწვდომელია"
+
+msgid "Too many files in this response."
+msgstr "ამ პასუხში ძალიან ბევრი ფაილია."
+
+msgid "Type to search…"
+msgstr "აკრიფეთ საძიებლად…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr ""
+"სიებში არ ჩანს —ხელმისაწვდომია მხოლოდ პირდაპირი ბმულით, არ ინდექსირდება."
+
+msgid "Upload failed."
+msgstr "ატვირთვა ვერ მოხერხდა."
+
+msgid "Uploading"
+msgstr "იტვირთება"
+
+msgid "Yes"
+msgstr "კი"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "თქვენი საჩივარი მიღებულია. მას ადამიანი განიხილავს."
+
+msgid "Zoom in"
+msgstr "გადიდება"
+
+msgid "Zoom out"
+msgstr "დაპატარავება"
+
+msgid "at least {n} required"
+msgstr "საჭიროა მინიმუმ {n}"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "თანამგზავრული"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "ქუჩები"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "ტოპოგრაფიული"
+
+msgid "create your own free map survey"
+msgstr "შექმენით საკუთარი უფასო რუკული გამოკითხვა"
+
+msgid "of"
+msgstr "-დან"
+
+msgid "responses"
+msgstr "პასუხი"
+
+msgid "up to {n} more"
+msgstr "კიდევ მაქსიმუმ {n}"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} განთავსდა პოზიციაზე {position}"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} გადავიდა პოზიციაზე {position}"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"{item} აღებულია. გადასაადგილებლად გამოიყენეთ ისრიანი ღილაკები, დასადებად — "
+"Space."
+
+msgid "{n} marked"
+msgstr "მონიშნულია {n}"
+
+msgid "{n} of {m} marked"
+msgstr "მონიშნულია {n} {m}-დან"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… და კიდევ %(n)s"

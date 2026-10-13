@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "Tynnu"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,345 @@ msgstr "Chwilio cyfeiriad..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Dim canlyniadau"
+
+msgid "A few required questions still need an answer."
+msgstr "Mae angen ateb ychydig o gwestiynau gorfodol o hyd."
+
+msgid "Add another"
+msgstr "Ychwanegu un arall"
+
+msgid "Add audio file"
+msgstr "Ychwanegu ffeil sain"
+
+msgid "Add photo"
+msgstr "Ychwanegu llun"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"Ychwanegwch yr eitemau i'w rhestru yn eu trefn yn <strong>Dewisiadau</strong>"
+" isod."
+
+msgid "All"
+msgstr "Y cyfan"
+
+msgid "All {m} marked — thank you!"
+msgstr "Pob un o'r {m} wedi'u marcio — diolch!"
+
+msgid "Answered"
+msgstr "Wedi'u hateb"
+
+msgid "Answers"
+msgstr "Atebion"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Yn gofyn am gyfrinair, mewngofnodi neu daliad"
+
+msgid "Attach file"
+msgstr "Atodi ffeil"
+
+msgid "Brush size"
+msgstr "Maint y brwsh"
+
+msgid "Cell size: {m} m"
+msgstr "Maint y gell: {m} m"
+
+msgid "Clear"
+msgstr "Clirio"
+
+msgid "Data as of"
+msgstr "Data ar"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"Llusgwch yr eitemau i'w trefn, neu codwch un gyda'r Bylchwr a'i symud gyda'r "
+"bysellau saeth."
+
+msgid "Erase"
+msgstr "Rhwbio"
+
+msgid "File is too large."
+msgstr "Mae'r ffeil yn rhy fawr."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"Daliwch a llusgwch fys i chwistrellu. Arhoswch yn hirach lle rydych yn fwy "
+"sicr."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"Daliwch a llusgwch i chwistrellu. Arhoswch yn hirach lle rydych yn fwy sicr."
+
+msgid "Incorrect password"
+msgstr "Cyfrinair anghywir"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"Efallai nad yw wedi'i gyhoeddi eto, neu ei fod wedi'i gau neu ei ddileu. Os "
+"cawsoch ddolen gan drefnydd, holwch nhw."
+
+msgid "Large brush"
+msgstr "Brwsh mawr"
+
+msgid "Layers"
+msgstr "Haenau"
+
+msgid "Link copied!"
+msgstr "Dolen wedi'i chopïo!"
+
+msgid "Locate me"
+msgstr "Dod o hyd i mi"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Yn edrych fel sgam neu'n esgus bod yn gwmni"
+
+msgid "Made with"
+msgstr "Gwnaed gyda"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"Marciau a osodwyd gan ymatebwyr eraill. Nid yw eich marciau chi yn y rhestr "
+"hon."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Wedi cyrraedd yr uchafswm — tynnwch un isod i'w newid."
+
+msgid "Medium brush"
+msgstr "Brwsh canolig"
+
+msgid "Move map"
+msgstr "Symud y map"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Symudwch y map i osod y pin, yna pwyswch Gweithredu."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr ""
+"Peidiwch byth â rhoi cyfrineiriau na rhifau cardiau mewn arolwg Mapsurvey."
+
+msgid "No"
+msgstr "Na"
+
+msgid "No objects in this layer yet"
+msgstr "Dim gwrthrychau yn yr haen hon eto"
+
+msgid "No results to show yet."
+msgstr "Dim canlyniadau i'w dangos eto."
+
+msgid "Nothing matches"
+msgstr "Dim byd yn cyfateb"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr ""
+"Mae gwrthrychau gydag ychydig o atebion wedi'u cuddio i ddiogelu "
+"preifatrwydd."
+
+msgid "Please add a file."
+msgstr "Ychwanegwch ffeil."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "Atebwch am o leiaf %%d gwrthrych i barhau"
+
+msgid "Please specify"
+msgstr "Nodwch"
+
+msgid "Record"
+msgstr "Recordio"
+
+msgid "Remove file"
+msgstr "Tynnu ffeil"
+
+msgid "Report this survey"
+msgstr "Rhoi gwybod am yr arolwg hwn"
+
+msgid "Respondents: {n}"
+msgstr "Ymatebwyr: {n}"
+
+msgid "Retry"
+msgstr "Ceisio eto"
+
+msgid "Search failed — check your connection and try again."
+msgstr ""
+"Methodd y chwilio — gwiriwch eich cysylltiad a rhowch gynnig arall arni."
+
+msgid "Search objects…"
+msgstr "Chwilio gwrthrychau…"
+
+msgid "See the results"
+msgstr "Gweld y canlyniadau"
+
+msgid "Send report"
+msgstr "Anfon adroddiad"
+
+msgid "Share this survey"
+msgstr "Rhannu'r arolwg hwn"
+
+msgid "Small brush"
+msgstr "Brwsh bach"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "Mae grwpiau bach wedi'u cuddio i ddiogelu preifatrwydd."
+
+msgid "Something else"
+msgstr "Rhywbeth arall"
+
+msgid "Spray"
+msgstr "Chwistrellu"
+
+msgid "Stop"
+msgstr "Stopio"
+
+msgid "Survey results"
+msgstr "Canlyniadau'r arolwg"
+
+msgid "Survey unavailable"
+msgstr "Arolwg ddim ar gael"
+
+msgid "Take photo"
+msgstr "Tynnu llun"
+
+msgid "Take the survey"
+msgstr "Cymryd rhan yn yr arolwg"
+
+msgid "Tap the first point to close the shape."
+msgstr "Tapiwch y pwynt cyntaf i gau'r siâp."
+
+msgid "Tap the last point to finish the line."
+msgstr "Tapiwch y pwynt olaf i orffen y llinell."
+
+msgid "Tap to add the next corner."
+msgstr "Tapiwch i ychwanegu'r gornel nesaf."
+
+msgid "Tap to add the next point."
+msgstr "Tapiwch i ychwanegu'r pwynt nesaf."
+
+msgid "Tap to add the shape’s corners."
+msgstr "Tapiwch i ychwanegu corneli'r siâp."
+
+msgid "Tap to start the line."
+msgstr "Tapiwch i ddechrau'r llinell."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"Dywedwch wrthym beth sydd o'i le ar “%(name)s”. Mae person yn adolygu pob "
+"adroddiad."
+
+msgid "Thank you"
+msgstr "Diolch"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Mae'r brwsh yn wag — rhwbiwch ychydig o'r paent i barhau."
+
+msgid "The file does not match its declared type."
+msgstr "Nid yw'r ffeil yn cyfateb i'r math a nodwyd."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "Mae'r ffeil yn rhy fawr (terfyn %(mb)s MB)."
+
+msgid "The files in this response are too large overall."
+msgstr "Mae'r ffeiliau yn yr ymateb hwn yn rhy fawr gyda'i gilydd."
+
+msgid "This file type is not accepted here."
+msgstr "Nid yw'r math hwn o ffeil yn cael ei dderbyn yma."
+
+msgid "This is the last section — respondents finish here"
+msgstr "Dyma'r adran olaf — mae ymatebwyr yn gorffen yma"
+
+msgid "This question does not accept files."
+msgstr "Nid yw'r cwestiwn hwn yn derbyn ffeiliau."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "Nid yw'r cwestiwn hwn wedi'i gysylltu â haen gyfeirio eto."
+
+msgid "This question is required"
+msgstr "Mae'r cwestiwn hwn yn orfodol"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "Mae angen i berchennog yr arolwg ddiweddaru'r ciplun hwn."
+
+msgid "This survey isn’t available"
+msgstr "Nid yw'r arolwg hwn ar gael"
+
+msgid "Too many files in this response."
+msgstr "Gormod o ffeiliau yn yr ymateb hwn."
+
+msgid "Type to search…"
+msgstr "Teipiwch i chwilio…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr ""
+"Heb ei restru — dim ond drwy ddolen uniongyrchol y gellir ei weld, heb ei "
+"fynegeio."
+
+msgid "Upload failed."
+msgstr "Methodd yr uwchlwytho."
+
+msgid "Uploading"
+msgstr "Wrthi'n uwchlwytho"
+
+msgid "Yes"
+msgstr "Ie"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "Mae eich adroddiad wedi dod i law. Bydd person yn edrych arno."
+
+msgid "Zoom in"
+msgstr "Chwyddo i mewn"
+
+msgid "Zoom out"
+msgstr "Chwyddo allan"
+
+msgid "at least {n} required"
+msgstr "angen o leiaf {n}"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "Lloeren"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "Strydoedd"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "Topograffig"
+
+msgid "create your own free map survey"
+msgstr "crëwch eich arolwg map eich hun am ddim"
+
+msgid "of"
+msgstr "o"
+
+msgid "responses"
+msgstr "ymatebion"
+
+msgid "up to {n} more"
+msgstr "hyd at {n} arall"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} wedi'i ollwng yn safle {position}"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} wedi'i symud i safle {position}"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"{item} wedi'i godi. Defnyddiwch y bysellau saeth i'w symud, a'r Bylchwr i'w "
+"ollwng."
+
+msgid "{n} marked"
+msgstr "{n} wedi'u marcio"
+
+msgid "{n} of {m} marked"
+msgstr "{n} o {m} wedi'u marcio"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… a %(n)s arall"

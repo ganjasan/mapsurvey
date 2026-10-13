@@ -300,16 +300,16 @@ msgstr ""
 #: survey/templates/base_survey_template.html:78
 #: survey/templatetags/i18n_extras.py:20
 msgid "Cancel"
-msgstr ""
+msgstr "ביטול"
 
 #: survey/templates/base_survey_template.html:67
 #: survey/templatetags/i18n_extras.py:18
 msgid "Finish drawing"
-msgstr ""
+msgstr "סיום שרטוט"
 
 #: survey/templates/base_survey_template.html:79
 msgid "Apply"
-msgstr ""
+msgstr "החלה"
 
 #: survey/templates/django_registration/activation_complete.html:4
 #: survey/templates/django_registration/activation_complete.html:11
@@ -683,7 +683,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "הסרה"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -862,120 +862,449 @@ msgstr ""
 
 #: survey/templates/survey_closed.html:4
 msgid "Survey Closed"
-msgstr ""
+msgstr "הסקר נסגר"
 
 #: survey/templates/survey_closed.html:10
 msgid "This survey is no longer accepting responses."
-msgstr ""
+msgstr "הסקר הזה כבר לא מקבל תשובות."
 
 #: survey/templates/survey_closed.html:11
 msgid "Back to Home"
-msgstr ""
+msgstr "חזרה לדף הבית"
 
 #: survey/templates/survey_header.html:21
 msgid "Start"
-msgstr ""
+msgstr "התחלה"
 
 #: survey/templates/survey_header_template.html:19
 #: survey/templates/survey_section.html:44
 #: survey/templates/survey_section_block.html:14
 msgid "Back"
-msgstr ""
+msgstr "חזרה"
 
 #: survey/templates/survey_header_template.html:25
 #: survey/templates/survey_header_template.html:26
 #: survey/templates/survey_section.html:49
 #: survey/templates/survey_section_block.html:20
 msgid "Next"
-msgstr ""
+msgstr "הבא"
 
 #: survey/templates/survey_header_template.html:28
 #: survey/templates/survey_header_template.html:29
 #: survey/templates/survey_section.html:51
 #: survey/templates/survey_section_block.html:22
 msgid "Finish"
-msgstr ""
+msgstr "סיום"
 
 #: survey/templates/survey_language_select.html:7
 msgid "Select Language"
-msgstr ""
+msgstr "בחירת שפה"
 
 #: survey/templates/survey_language_select.html:60
 msgid "Select your language"
-msgstr ""
+msgstr "בחרו את השפה שלכם"
 
 #: survey/templates/survey_password.html:4
 msgid "Password Required"
-msgstr ""
+msgstr "נדרשת סיסמה"
 
 #: survey/templates/survey_password.html:13
 msgid "This survey requires a password to access."
-msgstr ""
+msgstr "הגישה לסקר זה מחייבת סיסמה."
 
 #: survey/templates/survey_password.html:23
 msgid "Enter password"
-msgstr ""
+msgstr "הזנת סיסמה"
 
 #: survey/templates/survey_password.html:25
 msgid "Continue"
-msgstr ""
+msgstr "המשך"
 
 #: survey/templates/survey_thanks.html:21
 msgid "Thank you!"
-msgstr ""
+msgstr "תודה רבה!"
 
 #: survey/templates/survey_thanks.html:22
 msgid "Your responses have been recorded."
-msgstr ""
+msgstr "התשובות שלך נשמרו."
 
 #: survey/templatetags/i18n_extras.py:17
 msgid "Start drawing"
-msgstr ""
+msgstr "התחלת שרטוט"
 
 #: survey/templatetags/i18n_extras.py:19
 msgid "Finish editing"
-msgstr ""
+msgstr "סיום עריכה"
 
 #: survey/templatetags/i18n_extras.py:21
 msgid "Delete"
-msgstr ""
+msgstr "מחיקה"
 
 #: survey/templatetags/i18n_extras.py:24
 msgid "Click on the map to place a marker."
-msgstr ""
+msgstr "יש ללחוץ על המפה כדי להציב סמן."
 
 #: survey/templatetags/i18n_extras.py:27
 msgid "Click to start drawing a shape."
-msgstr ""
+msgstr "יש ללחוץ כדי להתחיל לשרטט צורה."
 
 #: survey/templatetags/i18n_extras.py:28
 msgid "Click to continue drawing the shape."
-msgstr ""
+msgstr "יש ללחוץ כדי להמשיך לשרטט את הצורה."
 
 #: survey/templatetags/i18n_extras.py:29
 msgid "Click the first point to close this shape."
-msgstr ""
+msgstr "יש ללחוץ על הנקודה הראשונה כדי לסגור את הצורה."
 
 #: survey/templatetags/i18n_extras.py:32
 msgid "Click to start drawing a line."
-msgstr ""
+msgstr "יש ללחוץ כדי להתחיל לשרטט קו."
 
 #: survey/templatetags/i18n_extras.py:33
 msgid "Click to continue drawing the line."
-msgstr ""
+msgstr "יש ללחוץ כדי להמשיך לשרטט את הקו."
 
 #: survey/templatetags/i18n_extras.py:34
 msgid "Click the last point to finish the line."
-msgstr ""
+msgstr "יש ללחוץ על הנקודה האחרונה כדי לסיים את הקו."
 
 #: survey/templatetags/i18n_extras.py:37
 msgid "<strong>Error:</strong> Shape edges cannot intersect!"
-msgstr ""
+msgstr "<strong>שגיאה:</strong> צלעות הצורה לא יכולות לחצות זו את זו!"
 
 #: survey/templatetags/i18n_extras.py:40
 msgid "Search address..."
-msgstr ""
+msgstr "חיפוש כתובת..."
 
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
+msgstr "לא נמצאו תוצאות"
+
+msgid "A few required questions still need an answer."
+msgstr "עדיין יש כמה שאלות חובה שלא נענו."
+
+msgid "Add another"
+msgstr "הוספת פריט נוסף"
+
+msgid "Add audio file"
+msgstr "הוספת קובץ שמע"
+
+msgid "Add photo"
+msgstr "הוספת תמונה"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr "יש להוסיף את הפריטים לדירוג בשדה <strong>אפשרויות</strong> שלמטה."
+
+msgid "All"
+msgstr "הכול"
+
+msgid "All {m} marked — thank you!"
+msgstr "כל {m} סומנו — תודה!"
+
+msgid "Answered"
+msgstr "נענו"
+
+msgid "Answers"
+msgstr "תשובות"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "מבקש סיסמה, התחברות או תשלום"
+
+msgid "Attach file"
+msgstr "צירוף קובץ"
+
+msgid "Brush size"
+msgstr "גודל מברשת"
+
+msgid "Cell size: {m} m"
+msgstr "גודל תא: {m} מ׳"
+
+msgid "Clear"
+msgstr "ניקוי"
+
+msgid "Data as of"
+msgstr "נתונים נכון ל־"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
 msgstr ""
+"יש לגרור את הפריטים לסדר הרצוי, או להרים פריט עם מקש הרווח ולהזיז אותו עם "
+"מקשי החיצים."
+
+msgid "Erase"
+msgstr "מחיקת צבע"
+
+msgid "File is too large."
+msgstr "הקובץ גדול מדי."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"יש להחזיק ולגרור אצבע כדי לרסס. כדאי להתעכב יותר במקומות שבהם הביטחון שלך "
+"גבוה יותר."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"יש להחזיק ולגרור כדי לרסס. כדאי להתעכב יותר במקומות שבהם הביטחון שלך גבוה "
+"יותר."
+
+msgid "Incorrect password"
+msgstr "סיסמה שגויה"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"ייתכן שהסקר עדיין לא פורסם, או שנסגר או הוסר. אם קיבלת קישור ממארגן, כדאי "
+"לבדוק איתו."
+
+msgid "Large brush"
+msgstr "מברשת גדולה"
+
+msgid "Layers"
+msgstr "שכבות"
+
+msgid "Link copied!"
+msgstr "הקישור הועתק!"
+
+msgid "Locate me"
+msgstr "איתור המיקום שלי"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "נראה כמו הונאה או מתחזה לחברה"
+
+msgid "Made with"
+msgstr "נוצר באמצעות"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr "סימונים של משיבים אחרים. הסימונים שלך לא מופיעים ברשימה זו."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "הגעת למקסימום — כדי לשנות, יש להסיר פריט למטה."
+
+msgid "Medium brush"
+msgstr "מברשת בינונית"
+
+msgid "Move map"
+msgstr "הזזת המפה"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "יש להזיז את המפה כדי למקם את הסיכה, ואז ללחוץ על החלה."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "לעולם אין להזין סיסמאות או מספרי כרטיס אשראי בסקר של Mapsurvey."
+
+msgid "No"
+msgstr "לא"
+
+msgid "No objects in this layer yet"
+msgstr "אין עדיין אובייקטים בשכבה זו"
+
+msgid "No results to show yet."
+msgstr "אין עדיין תוצאות להצגה."
+
+msgid "Nothing matches"
+msgstr "אין התאמות"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "אובייקטים עם מעט תשובות מוסתרים כדי להגן על הפרטיות."
+
+msgid "Please add a file."
+msgstr "יש להוסיף קובץ."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "כדי להמשיך, יש לענות על %%d אובייקטים לפחות"
+
+msgid "Please specify"
+msgstr "נא לפרט"
+
+msgid "Record"
+msgstr "הקלטה"
+
+msgid "Remove file"
+msgstr "הסרת הקובץ"
+
+msgid "Report this survey"
+msgstr "דיווח על הסקר"
+
+msgid "Respondents: {n}"
+msgstr "משיבים: {n}"
+
+msgid "Retry"
+msgstr "ניסיון חוזר"
+
+msgid "Search failed — check your connection and try again."
+msgstr "החיפוש נכשל — יש לבדוק את החיבור ולנסות שוב."
+
+msgid "Search objects…"
+msgstr "חיפוש אובייקטים…"
+
+msgid "See the results"
+msgstr "צפייה בתוצאות"
+
+msgid "Send report"
+msgstr "שליחת דיווח"
+
+msgid "Share this survey"
+msgstr "שיתוף הסקר"
+
+msgid "Small brush"
+msgstr "מברשת קטנה"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "קבוצות קטנות מוסתרות כדי להגן על הפרטיות."
+
+msgid "Something else"
+msgstr "משהו אחר"
+
+msgid "Spray"
+msgstr "ריסוס"
+
+msgid "Stop"
+msgstr "עצירה"
+
+msgid "Survey results"
+msgstr "תוצאות הסקר"
+
+msgid "Survey unavailable"
+msgstr "הסקר לא זמין"
+
+msgid "Take photo"
+msgstr "צילום תמונה"
+
+msgid "Take the survey"
+msgstr "מילוי הסקר"
+
+msgid "Tap the first point to close the shape."
+msgstr "יש להקיש על הנקודה הראשונה כדי לסגור את הצורה."
+
+msgid "Tap the last point to finish the line."
+msgstr "יש להקיש על הנקודה האחרונה כדי לסיים את הקו."
+
+msgid "Tap to add the next corner."
+msgstr "יש להקיש כדי להוסיף את הפינה הבאה."
+
+msgid "Tap to add the next point."
+msgstr "יש להקיש כדי להוסיף את הנקודה הבאה."
+
+msgid "Tap to add the shape’s corners."
+msgstr "יש להקיש כדי להוסיף את פינות הצורה."
+
+msgid "Tap to start the line."
+msgstr "יש להקיש כדי להתחיל את הקו."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr "ספרו לנו מה הבעיה ב“%(name)s”. כל דיווח נבדק על ידי אדם."
+
+msgid "Thank you"
+msgstr "תודה"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "המברשת ריקה — כדי להמשיך, יש למחוק חלק מהצבע."
+
+msgid "The file does not match its declared type."
+msgstr "הקובץ לא תואם לסוג שהוצהר עבורו."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "הקובץ גדול מדי (מגבלה: %(mb)s MB)."
+
+msgid "The files in this response are too large overall."
+msgstr "הקבצים בתשובה זו גדולים מדי בסך הכול."
+
+msgid "This file type is not accepted here."
+msgstr "סוג קובץ זה לא מתקבל כאן."
+
+msgid "This is the last section — respondents finish here"
+msgstr "זהו החלק האחרון — כאן המשיבים מסיימים"
+
+msgid "This question does not accept files."
+msgstr "שאלה זו לא מקבלת קבצים."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "שאלה זו עדיין לא מקושרת לשכבת ייחוס."
+
+msgid "This question is required"
+msgstr "זוהי שאלת חובה"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "בעל הסקר צריך לרענן את תמונת המצב הזו."
+
+msgid "This survey isn’t available"
+msgstr "הסקר הזה לא זמין"
+
+msgid "Too many files in this response."
+msgstr "יותר מדי קבצים בתשובה זו."
+
+msgid "Type to search…"
+msgstr "יש להקליד כדי לחפש…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr "לא רשום — זמין לצפייה רק דרך קישור ישיר, לא מאונדקס."
+
+msgid "Upload failed."
+msgstr "ההעלאה נכשלה."
+
+msgid "Uploading"
+msgstr "מעלה"
+
+msgid "Yes"
+msgstr "כן"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "הדיווח שלך התקבל. אדם יבדוק אותו."
+
+msgid "Zoom in"
+msgstr "התקרבות"
+
+msgid "Zoom out"
+msgstr "התרחקות"
+
+msgid "at least {n} required"
+msgstr "נדרשים לפחות {n}"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "לוויין"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "רחובות"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "טופוגרפית"
+
+msgid "create your own free map survey"
+msgstr "צרו סקר מפה משלכם בחינם"
+
+msgid "of"
+msgstr "מתוך"
+
+msgid "responses"
+msgstr "תגובות"
+
+msgid "up to {n} more"
+msgstr "עד {n} נוספים"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} שוחרר במקום {position}"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} הועבר למקום {position}"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr "{item} הורם. אפשר להזיז עם מקשי החיצים ולשחרר עם מקש הרווח."
+
+msgid "{n} marked"
+msgstr "{n} סומנו"
+
+msgid "{n} of {m} marked"
+msgstr "{n} מתוך {m} סומנו"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… ועוד %(n)s"

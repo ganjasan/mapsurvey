@@ -683,7 +683,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "ເອົາອອກ"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -979,3 +979,328 @@ msgstr "ຄົ້ນຫາທີ່ຢູ່..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "ບໍ່ພົບຜົນ"
+
+msgid "A few required questions still need an answer."
+msgstr "ຍັງມີຄຳຖາມບັງຄັບບາງຂໍ້ທີ່ຍັງບໍ່ໄດ້ຕອບ."
+
+msgid "Add another"
+msgstr "ເພີ່ມອີກ"
+
+msgid "Add audio file"
+msgstr "ເພີ່ມໄຟລ໌ສຽງ"
+
+msgid "Add photo"
+msgstr "ເພີ່ມຮູບ"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr "ເພີ່ມລາຍການທີ່ຈະຈັດອັນດັບໃນ <strong>ຕົວເລືອກ</strong> ດ້ານລຸ່ມ."
+
+msgid "All"
+msgstr "ທັງໝົດ"
+
+msgid "All {m} marked — thank you!"
+msgstr "ໝາຍຄົບທັງ {m} ແລ້ວ — ຂອບໃຈ!"
+
+msgid "Answered"
+msgstr "ຕອບແລ້ວ"
+
+msgid "Answers"
+msgstr "ຄຳຕອບ"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "ຂໍລະຫັດຜ່ານ, ການເຂົ້າສູ່ລະບົບ ຫຼື ການຊຳລະເງິນ"
+
+msgid "Attach file"
+msgstr "ແນບໄຟລ໌"
+
+msgid "Brush size"
+msgstr "ຂະໜາດແປງ"
+
+msgid "Cell size: {m} m"
+msgstr "ຂະໜາດຕາລາງ: {m} ມ"
+
+msgid "Clear"
+msgstr "ລ້າງ"
+
+msgid "Data as of"
+msgstr "ຂໍ້ມູນ ນັບຮອດ"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"ລາກລາຍການເພື່ອຈັດລຳດັບ, ຫຼື ກົດ Space ເພື່ອຍົກລາຍການຂຶ້ນ "
+"ແລ້ວໃຊ້ປຸ່ມລູກສອນເພື່ອຍ້າຍ."
+
+msgid "Erase"
+msgstr "ລຶບສີ"
+
+msgid "File is too large."
+msgstr "ໄຟລ໌ໃຫຍ່ເກີນໄປ."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "ກົດນິ້ວຄ້າງໄວ້ແລ້ວລາກເພື່ອພົ່ນສີ. ຢູ່ດົນຂຶ້ນໃນບ່ອນທີ່ທ່ານໝັ້ນໃຈກວ່າ."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "ກົດຄ້າງໄວ້ແລ້ວລາກເພື່ອພົ່ນສີ. ຢູ່ດົນຂຶ້ນໃນບ່ອນທີ່ທ່ານໝັ້ນໃຈກວ່າ."
+
+msgid "Incorrect password"
+msgstr "ລະຫັດຜ່ານບໍ່ຖືກຕ້ອງ"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"ມັນອາດຈະຍັງບໍ່ໄດ້ເຜີຍແຜ່, ຫຼື ອາດຖືກປິດ ຫຼື ລຶບອອກແລ້ວ. "
+"ຖ້າທ່ານໄດ້ລິ້ງຈາກຜູ້ຈັດ, ກະລຸນາສອບຖາມເຂົາເຈົ້າ."
+
+msgid "Large brush"
+msgstr "ແປງໃຫຍ່"
+
+msgid "Layers"
+msgstr "ຊັ້ນຂໍ້ມູນ"
+
+msgid "Link copied!"
+msgstr "ສຳເນົາລິ້ງແລ້ວ!"
+
+msgid "Locate me"
+msgstr "ຊອກຫາຕຳແໜ່ງຂອງຂ້ອຍ"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "ເບິ່ງຄືການຫຼອກລວງ ຫຼື ແອບອ້າງເປັນບໍລິສັດ"
+
+msgid "Made with"
+msgstr "ສ້າງດ້ວຍ"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr "ເຄື່ອງໝາຍທີ່ຜູ້ຕອບຄົນອື່ນວາງໄວ້. ເຄື່ອງໝາຍຂອງທ່ານບໍ່ຢູ່ໃນລາຍການນີ້."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "ຮອດຈຳນວນສູງສຸດແລ້ວ — ລຶບອັນໜຶ່ງດ້ານລຸ່ມອອກເພື່ອປ່ຽນ."
+
+msgid "Medium brush"
+msgstr "ແປງກາງ"
+
+msgid "Move map"
+msgstr "ເລື່ອນແຜນທີ່"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "ເລື່ອນແຜນທີ່ເພື່ອວາງໝຸດ, ແລ້ວກົດ ນຳໃຊ້."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "ຢ່າປ້ອນລະຫັດຜ່ານ ຫຼື ເລກບັດໃນແບບສຳຫຼວດ Mapsurvey ເດັດຂາດ."
+
+msgid "No"
+msgstr "ບໍ່"
+
+msgid "No objects in this layer yet"
+msgstr "ຍັງບໍ່ມີວັດຖຸໃນຊັ້ນນີ້"
+
+msgid "No results to show yet."
+msgstr "ຍັງບໍ່ມີຜົນທີ່ຈະສະແດງ."
+
+msgid "Nothing matches"
+msgstr "ບໍ່ມີລາຍການທີ່ກົງກັນ"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "ວັດຖຸທີ່ມີຄຳຕອບໜ້ອຍຖືກປິດບັງໄວ້ເພື່ອປົກປ້ອງຄວາມເປັນສ່ວນຕົວ."
+
+msgid "Please add a file."
+msgstr "ກະລຸນາເພີ່ມໄຟລ໌."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "ກະລຸນາຕອບກ່ຽວກັບວັດຖຸຢ່າງໜ້ອຍ %%d ອັນເພື່ອດຳເນີນການຕໍ່"
+
+msgid "Please specify"
+msgstr "ກະລຸນາລະບຸ"
+
+msgid "Record"
+msgstr "ບັນທຶກສຽງ"
+
+msgid "Remove file"
+msgstr "ເອົາໄຟລ໌ອອກ"
+
+msgid "Report this survey"
+msgstr "ລາຍງານແບບສຳຫຼວດນີ້"
+
+msgid "Respondents: {n}"
+msgstr "ຜູ້ຕອບ: {n}"
+
+msgid "Retry"
+msgstr "ລອງໃໝ່"
+
+msgid "Search failed — check your connection and try again."
+msgstr "ການຄົ້ນຫາລົ້ມເຫຼວ — ກວດສອບການເຊື່ອມຕໍ່ແລ້ວລອງໃໝ່."
+
+msgid "Search objects…"
+msgstr "ຄົ້ນຫາວັດຖຸ…"
+
+msgid "See the results"
+msgstr "ເບິ່ງຜົນ"
+
+msgid "Send report"
+msgstr "ສົ່ງລາຍງານ"
+
+msgid "Share this survey"
+msgstr "ແບ່ງປັນແບບສຳຫຼວດນີ້"
+
+msgid "Small brush"
+msgstr "ແປງນ້ອຍ"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "ກຸ່ມນ້ອຍຖືກປິດບັງໄວ້ເພື່ອປົກປ້ອງຄວາມເປັນສ່ວນຕົວ."
+
+msgid "Something else"
+msgstr "ອື່ນໆ"
+
+msgid "Spray"
+msgstr "ພົ່ນສີ"
+
+msgid "Stop"
+msgstr "ຢຸດ"
+
+msgid "Survey results"
+msgstr "ຜົນການສຳຫຼວດ"
+
+msgid "Survey unavailable"
+msgstr "ແບບສຳຫຼວດບໍ່ພ້ອມໃຊ້ງານ"
+
+msgid "Take photo"
+msgstr "ຖ່າຍຮູບ"
+
+msgid "Take the survey"
+msgstr "ຕອບແບບສຳຫຼວດ"
+
+msgid "Tap the first point to close the shape."
+msgstr "ແຕະຈຸດທຳອິດເພື່ອປິດຮູບຮ່າງ."
+
+msgid "Tap the last point to finish the line."
+msgstr "ແຕະຈຸດສຸດທ້າຍເພື່ອສິ້ນສຸດເສັ້ນ."
+
+msgid "Tap to add the next corner."
+msgstr "ແຕະເພື່ອເພີ່ມມຸມຕໍ່ໄປ."
+
+msgid "Tap to add the next point."
+msgstr "ແຕະເພື່ອເພີ່ມຈຸດຕໍ່ໄປ."
+
+msgid "Tap to add the shape’s corners."
+msgstr "ແຕະເພື່ອເພີ່ມມຸມຂອງຮູບຮ່າງ."
+
+msgid "Tap to start the line."
+msgstr "ແຕະເພື່ອເລີ່ມເສັ້ນ."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr "ບອກພວກເຮົາວ່າ “%(name)s” ມີບັນຫາຫຍັງ. ທຸກລາຍງານຈະຖືກກວດສອບໂດຍຄົນ."
+
+msgid "Thank you"
+msgstr "ຂອບໃຈ"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "ແປງໝົດສີແລ້ວ — ລຶບສີບາງສ່ວນອອກເພື່ອດຳເນີນການຕໍ່."
+
+msgid "The file does not match its declared type."
+msgstr "ໄຟລ໌ບໍ່ກົງກັບປະເພດທີ່ລະບຸໄວ້."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "ໄຟລ໌ໃຫຍ່ເກີນໄປ (ຈຳກັດ %(mb)s MB)."
+
+msgid "The files in this response are too large overall."
+msgstr "ໄຟລ໌ໃນຄຳຕອບນີ້ມີຂະໜາດລວມໃຫຍ່ເກີນໄປ."
+
+msgid "This file type is not accepted here."
+msgstr "ບໍ່ຮັບປະເພດໄຟລ໌ນີ້ຢູ່ບ່ອນນີ້."
+
+msgid "This is the last section — respondents finish here"
+msgstr "ນີ້ແມ່ນພາກສຸດທ້າຍ — ຜູ້ຕອບຈະສິ້ນສຸດຢູ່ນີ້"
+
+msgid "This question does not accept files."
+msgstr "ຄຳຖາມນີ້ບໍ່ຮັບໄຟລ໌."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "ຄຳຖາມນີ້ຍັງບໍ່ໄດ້ເຊື່ອມກັບຊັ້ນອ້າງອີງ."
+
+msgid "This question is required"
+msgstr "ຄຳຖາມນີ້ຈຳເປັນຕ້ອງຕອບ"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "ເຈົ້າຂອງແບບສຳຫຼວດຕ້ອງອັບເດດພາບລວມຂໍ້ມູນນີ້."
+
+msgid "This survey isn’t available"
+msgstr "ແບບສຳຫຼວດນີ້ບໍ່ພ້ອມໃຊ້ງານ"
+
+msgid "Too many files in this response."
+msgstr "ມີໄຟລ໌ຫຼາຍເກີນໄປໃນຄຳຕອບນີ້."
+
+msgid "Type to search…"
+msgstr "ພິມເພື່ອຄົ້ນຫາ…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr "ບໍ່ສະແດງໃນລາຍການ — ເບິ່ງໄດ້ຜ່ານລິ້ງໂດຍກົງເທົ່ານັ້ນ, ບໍ່ຖືກຈັດດັດຊະນີ."
+
+msgid "Upload failed."
+msgstr "ອັບໂຫຼດລົ້ມເຫຼວ."
+
+msgid "Uploading"
+msgstr "ກຳລັງອັບໂຫຼດ"
+
+msgid "Yes"
+msgstr "ແມ່ນ"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "ໄດ້ຮັບລາຍງານຂອງທ່ານແລ້ວ. ຈະມີຄົນກວດສອບມັນ."
+
+msgid "Zoom in"
+msgstr "ຂະຫຍາຍ"
+
+msgid "Zoom out"
+msgstr "ຫຍໍ້"
+
+msgid "at least {n} required"
+msgstr "ຕ້ອງການຢ່າງໜ້ອຍ {n}"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "ດາວທຽມ"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "ຖະໜົນ"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "ພູມສັນຖານ"
+
+msgid "create your own free map survey"
+msgstr "ສ້າງແບບສຳຫຼວດແຜນທີ່ຟຣີຂອງທ່ານເອງ"
+
+msgid "of"
+msgstr "ຈາກ"
+
+msgid "responses"
+msgstr "ຄຳຕອບທັງໝົດ"
+
+msgid "up to {n} more"
+msgstr "ໄດ້ອີກເຖິງ {n}"
+
+msgid "{item} dropped at position {position}"
+msgstr "ວາງ {item} ໄວ້ທີ່ຕຳແໜ່ງ {position}"
+
+msgid "{item} moved to position {position}"
+msgstr "ຍ້າຍ {item} ໄປຕຳແໜ່ງ {position}"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr "ຍົກ {item} ຂຶ້ນແລ້ວ. ໃຊ້ປຸ່ມລູກສອນເພື່ອຍ້າຍ, Space ເພື່ອວາງ."
+
+msgid "{n} marked"
+msgstr "ໝາຍແລ້ວ {n}"
+
+msgid "{n} of {m} marked"
+msgstr "ໝາຍແລ້ວ {n} ຈາກ {m}"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… ແລະ ອີກ %(n)s"

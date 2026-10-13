@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "Çıxar"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,341 @@ msgstr "Ünvan axtar..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Nəticə tapılmadı"
+
+msgid "A few required questions still need an answer."
+msgstr "Bir neçə məcburi sual hələ cavablandırılmayıb."
+
+msgid "Add another"
+msgstr "Daha birini əlavə et"
+
+msgid "Add audio file"
+msgstr "Audio fayl əlavə et"
+
+msgid "Add photo"
+msgstr "Foto əlavə et"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"Sıralanacaq elementləri aşağıda <strong>Seçimlər</strong> bölməsinə əlavə "
+"edin."
+
+msgid "All"
+msgstr "Hamısı"
+
+msgid "All {m} marked — thank you!"
+msgstr "Hamısı ({m}) qeyd edildi — təşəkkür edirik!"
+
+msgid "Answered"
+msgstr "Cavablandırılıb"
+
+msgid "Answers"
+msgstr "Cavablar"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Parol, giriş və ya ödəniş tələb edir"
+
+msgid "Attach file"
+msgstr "Fayl əlavə et"
+
+msgid "Brush size"
+msgstr "Fırça ölçüsü"
+
+msgid "Cell size: {m} m"
+msgstr "Xana ölçüsü: {m} m"
+
+msgid "Clear"
+msgstr "Təmizlə"
+
+msgid "Data as of"
+msgstr "Məlumatların tarixi"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"Elementləri sürüşdürərək sıralayın və ya birini Boşluq ilə götürüb ox "
+"düymələri ilə hərəkət etdirin."
+
+msgid "Erase"
+msgstr "Poz"
+
+msgid "File is too large."
+msgstr "Fayl çox böyükdür."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"Rəngləmək üçün barmağınızı basıb sürüşdürün. Daha əmin olduğunuz yerdə daha "
+"çox dayanın."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"Rəngləmək üçün basıb sürüşdürün. Daha əmin olduğunuz yerdə daha çox dayanın."
+
+msgid "Incorrect password"
+msgstr "Yanlış parol"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"Ola bilər ki, hələ dərc olunmayıb, bağlanıb və ya silinib. Təşkilatçıdan link"
+" almısınızsa, onlarla əlaqə saxlayın."
+
+msgid "Large brush"
+msgstr "Böyük fırça"
+
+msgid "Layers"
+msgstr "Laylar"
+
+msgid "Link copied!"
+msgstr "Link kopyalandı!"
+
+msgid "Locate me"
+msgstr "Yerimi tap"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Fırıldaqçılığa bənzəyir və ya şirkəti təqlid edir"
+
+msgid "Made with"
+msgstr "Yaradılıb:"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"Digər respondentlərin qoyduğu işarələr. Öz işarələriniz bu siyahıda yoxdur."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Maksimuma çatıldı — dəyişmək üçün aşağıdan birini silin."
+
+msgid "Medium brush"
+msgstr "Orta fırça"
+
+msgid "Move map"
+msgstr "Xəritəni sürüşdür"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr ""
+"Sancağı yerləşdirmək üçün xəritəni sürüşdürün, sonra Tətbiq et düyməsini "
+"basın."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Mapsurvey sorğusunda heç vaxt parol və ya kart nömrəsi daxil etməyin."
+
+msgid "No"
+msgstr "Xeyr"
+
+msgid "No objects in this layer yet"
+msgstr "Bu layda hələ obyekt yoxdur"
+
+msgid "No results to show yet."
+msgstr "Hələ göstəriləcək nəticə yoxdur."
+
+msgid "Nothing matches"
+msgstr "Uyğun nəticə yoxdur"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "Məxfiliyi qorumaq üçün az cavabı olan obyektlər gizlədilir."
+
+msgid "Please add a file."
+msgstr "Zəhmət olmasa, fayl əlavə edin."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "Davam etmək üçün ən azı %%d obyekt haqqında cavab verin"
+
+msgid "Please specify"
+msgstr "Zəhmət olmasa, dəqiqləşdirin"
+
+msgid "Record"
+msgstr "Yazmağa başla"
+
+msgid "Remove file"
+msgstr "Faylı çıxar"
+
+msgid "Report this survey"
+msgstr "Bu sorğudan şikayət et"
+
+msgid "Respondents: {n}"
+msgstr "Respondentlər: {n}"
+
+msgid "Retry"
+msgstr "Yenidən cəhd et"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Axtarış alınmadı — bağlantınızı yoxlayıb yenidən cəhd edin."
+
+msgid "Search objects…"
+msgstr "Obyekt axtar…"
+
+msgid "See the results"
+msgstr "Nəticələrə bax"
+
+msgid "Send report"
+msgstr "Şikayəti göndər"
+
+msgid "Share this survey"
+msgstr "Bu sorğunu paylaş"
+
+msgid "Small brush"
+msgstr "Kiçik fırça"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "Məxfiliyi qorumaq üçün kiçik qruplar gizlədilir."
+
+msgid "Something else"
+msgstr "Başqa bir şey"
+
+msgid "Spray"
+msgstr "Rənglə"
+
+msgid "Stop"
+msgstr "Dayandır"
+
+msgid "Survey results"
+msgstr "Sorğu nəticələri"
+
+msgid "Survey unavailable"
+msgstr "Sorğu əlçatan deyil"
+
+msgid "Take photo"
+msgstr "Foto çək"
+
+msgid "Take the survey"
+msgstr "Sorğuda iştirak et"
+
+msgid "Tap the first point to close the shape."
+msgstr "Fiquru bağlamaq üçün birinci nöqtəyə toxunun."
+
+msgid "Tap the last point to finish the line."
+msgstr "Xətti bitirmək üçün sonuncu nöqtəyə toxunun."
+
+msgid "Tap to add the next corner."
+msgstr "Növbəti küncü əlavə etmək üçün toxunun."
+
+msgid "Tap to add the next point."
+msgstr "Növbəti nöqtəni əlavə etmək üçün toxunun."
+
+msgid "Tap to add the shape’s corners."
+msgstr "Fiqurun künclərini əlavə etmək üçün toxunun."
+
+msgid "Tap to start the line."
+msgstr "Xəttə başlamaq üçün toxunun."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"“%(name)s” ilə bağlı nəyin səhv olduğunu bizə bildirin. Hər şikayətə bir "
+"insan baxır."
+
+msgid "Thank you"
+msgstr "Təşəkkür edirik"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Fırça boşdur — davam etmək üçün bir az boyanı pozun."
+
+msgid "The file does not match its declared type."
+msgstr "Fayl göstərilən növə uyğun gəlmir."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "Fayl çox böyükdür (limit %(mb)s MB)."
+
+msgid "The files in this response are too large overall."
+msgstr "Bu cavabdakı faylların ümumi həcmi çox böyükdür."
+
+msgid "This file type is not accepted here."
+msgstr "Bu fayl növü burada qəbul edilmir."
+
+msgid "This is the last section — respondents finish here"
+msgstr "Bu son bölmədir — respondentlər burada bitirir"
+
+msgid "This question does not accept files."
+msgstr "Bu sual fayl qəbul etmir."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "Bu sual hələ istinad layına bağlanmayıb."
+
+msgid "This question is required"
+msgstr "Bu sual məcburidir"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "Bu snapşot sorğunun sahibi tərəfindən yenilənməlidir."
+
+msgid "This survey isn’t available"
+msgstr "Bu sorğu mövcud deyil"
+
+msgid "Too many files in this response."
+msgstr "Bu cavabda çox fayl var."
+
+msgid "Type to search…"
+msgstr "Axtarmaq üçün yazın…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr ""
+"Siyahıda deyil — yalnız birbaşa linklə baxıla bilər, indeksləşdirilmir."
+
+msgid "Upload failed."
+msgstr "Yükləmə alınmadı."
+
+msgid "Uploading"
+msgstr "Yüklənir"
+
+msgid "Yes"
+msgstr "Bəli"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "Şikayətiniz qəbul edildi. Ona bir insan baxacaq."
+
+msgid "Zoom in"
+msgstr "Yaxınlaşdır"
+
+msgid "Zoom out"
+msgstr "Uzaqlaşdır"
+
+msgid "at least {n} required"
+msgstr "ən azı {n} tələb olunur"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "Peyk"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "Küçələr"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "Topoqrafik"
+
+msgid "create your own free map survey"
+msgstr "öz pulsuz xəritə sorğunuzu yaradın"
+
+msgid "of"
+msgstr "/"
+
+msgid "responses"
+msgstr "cavab"
+
+msgid "up to {n} more"
+msgstr "daha {n}-ə qədər"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} {position} mövqeyinə qoyuldu"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} {position} mövqeyinə köçürüldü"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"{item} götürüldü. Hərəkət etdirmək üçün ox düymələrindən, qoymaq üçün "
+"Boşluqdan istifadə edin."
+
+msgid "{n} marked"
+msgstr "{n} qeyd edildi"
+
+msgid "{n} of {m} marked"
+msgstr "{m} elementdən {n} qeyd edildi"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… və daha %(n)s"

@@ -14,6 +14,7 @@ from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question
 from .tasks import run_survey_import
 from .models import FILE_INPUT_TYPES
 from .uploads import attach_upload, detach_unreferenced
+from .respondent_language import activate_survey_language
 from .layers import build_map_layers_metadata, layer_owner, section_layer_ids, GEOMETRY_TEXT_FIELDS
 from .permissions import (
     org_permission_required, survey_permission_required,
@@ -1841,6 +1842,7 @@ def survey_password_gate(request, survey_slug):
 	# it *is* the denial. Flag it directly so the gate for an unpublished survey
 	# is not indexable either.
 	mark_indexing(request, survey)
+	activate_survey_language(request, survey)
 	error = None
 
 	if request.method == 'POST':
@@ -1852,7 +1854,7 @@ def survey_password_gate(request, survey_slug):
 				request.session[f'test_access_{survey.id}'] = True
 			return redirect('survey', survey_slug=str(survey.uuid))
 		else:
-			error = 'Incorrect password'
+			error = True
 
 	return render(request, 'survey_password.html', {
 		'survey': survey,
@@ -2111,7 +2113,8 @@ def survey_thanks(request, survey_slug):
 		except SurveySession.DoesNotExist:
 			pass
 
-	lang = request.session.pop('survey_language', None)
+	lang = activate_survey_language(request, survey)
+	request.session.pop('survey_language', None)
 	request.session.pop('survey_session_id', None)
 
 	thanks_html = resolve_thanks_html(survey.thanks_html, lang)
@@ -2468,6 +2471,7 @@ def survey_upload(request, survey_slug):
 	access_response = check_survey_access(request, survey)
 	if access_response is not None:
 		raise Http404
+	activate_survey_language(request, survey)  # rejection messages are shown to the respondent
 
 	session_id = request.session.get('survey_session_id')
 	survey_session = SurveySession.objects.filter(

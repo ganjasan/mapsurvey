@@ -31,9 +31,9 @@
     {% endif %}
     {% endwith %}
     <button id="share-btn" class="btn btn-outline-primary">
-        <i class="fas fa-share-alt mr-2"></i><span id="share-text"></span>
+        <i class="fas fa-share-alt mr-2"></i><span id="share-text">{% trans "Share this survey" %}</span>
     </button>
-    <span id="share-copied" class="text-success ml-2" style="display:none;"></span>
+    <span id="share-copied" class="text-success ml-2" style="display:none;">{% trans "Link copied!" %}</span>
 </div>
 
 {% include "partials/_made_with_mapsurvey.html" with medium="thanks" %}
@@ -41,17 +41,8 @@
 
 <script>
 (function() {
-    var lang = '{{ lang }}';
-    var i18n = {
-        share: { ru: 'Поделиться опросом', ky: 'Сурамжылоону бөлүшүү', en: 'Share this survey' },
-        copied: { ru: 'Ссылка скопирована!', ky: 'Шилтеме көчүрүлдү!', en: 'Link copied!' }
-    };
-    function t(key) { return i18n[key][lang] || i18n[key]['en']; }
-
     var btn = document.getElementById('share-btn');
     var copied = document.getElementById('share-copied');
-    document.getElementById('share-text').textContent = t('share');
-    copied.textContent = t('copied');
 
     var url = window.location.origin + '{% url "survey" survey.uuid %}';
 

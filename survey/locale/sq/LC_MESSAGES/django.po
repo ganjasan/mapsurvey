@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "Hiq"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,340 @@ msgstr "Kërko adresën..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Nuk u gjetën rezultate"
+
+msgid "A few required questions still need an answer."
+msgstr "Disa pyetje të detyrueshme ende presin përgjigje."
+
+msgid "Add another"
+msgstr "Shto një tjetër"
+
+msgid "Add audio file"
+msgstr "Shto skedar audio"
+
+msgid "Add photo"
+msgstr "Shto foto"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr "Shtoni elementet për renditje te <strong>Zgjedhjet</strong> më poshtë."
+
+msgid "All"
+msgstr "Të gjitha"
+
+msgid "All {m} marked — thank you!"
+msgstr "Të gjitha {m} u shënuan — faleminderit!"
+
+msgid "Answered"
+msgstr "Të përgjigjura"
+
+msgid "Answers"
+msgstr "Përgjigjet"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Kërkon fjalëkalim, hyrje në llogari ose pagesë"
+
+msgid "Attach file"
+msgstr "Bashkëngjit skedar"
+
+msgid "Brush size"
+msgstr "Madhësia e penelit"
+
+msgid "Cell size: {m} m"
+msgstr "Madhësia e qelizës: {m} m"
+
+msgid "Clear"
+msgstr "Pastro"
+
+msgid "Data as of"
+msgstr "Të dhënat deri më"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"Tërhiqni elementet sipas renditjes, ose kapni njërin me tastin Space dhe "
+"lëvizeni me tastet e shigjetave."
+
+msgid "Erase"
+msgstr "Fshi bojën"
+
+msgid "File is too large."
+msgstr "Skedari është shumë i madh."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"Mbani dhe tërhiqni gishtin për të spërkatur. Qëndroni më gjatë aty ku jeni më"
+" të sigurt."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"Mbani dhe tërhiqni për të spërkatur. Qëndroni më gjatë aty ku jeni më të "
+"sigurt."
+
+msgid "Incorrect password"
+msgstr "Fjalëkalim i pasaktë"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"Mund të mos jetë publikuar ende, ose mund të jetë mbyllur apo hequr. Nëse "
+"keni një lidhje nga një organizator, pyesni atë."
+
+msgid "Large brush"
+msgstr "Penel i madh"
+
+msgid "Layers"
+msgstr "Shtresat"
+
+msgid "Link copied!"
+msgstr "Lidhja u kopjua!"
+
+msgid "Locate me"
+msgstr "Gjej vendndodhjen time"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Duket si mashtrim ose shtiret si një kompani"
+
+msgid "Made with"
+msgstr "Krijuar me"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"Shenja të vendosura nga të anketuar të tjerë. Shenjat tuaja nuk janë në këtë "
+"listë."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "U arrit maksimumi — hiqni një më poshtë për ta ndryshuar."
+
+msgid "Medium brush"
+msgstr "Penel mesatar"
+
+msgid "Move map"
+msgstr "Lëviz hartën"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Lëvizni hartën për të vendosur gjilpërën, pastaj shtypni Zbato."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr ""
+"Mos vendosni kurrë fjalëkalime ose numra kartash në një anketë Mapsurvey."
+
+msgid "No"
+msgstr "Jo"
+
+msgid "No objects in this layer yet"
+msgstr "Ende nuk ka objekte në këtë shtresë"
+
+msgid "No results to show yet."
+msgstr "Ende nuk ka rezultate për të shfaqur."
+
+msgid "Nothing matches"
+msgstr "Asgjë nuk përputhet"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "Objektet me pak përgjigje fshihen për të mbrojtur privatësinë."
+
+msgid "Please add a file."
+msgstr "Ju lutemi shtoni një skedar."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "Për të vazhduar, përgjigjuni për të paktën %%d objekt(e)"
+
+msgid "Please specify"
+msgstr "Ju lutemi specifikoni"
+
+msgid "Record"
+msgstr "Regjistro"
+
+msgid "Remove file"
+msgstr "Hiq skedarin"
+
+msgid "Report this survey"
+msgstr "Raporto këtë anketë"
+
+msgid "Respondents: {n}"
+msgstr "Të anketuar: {n}"
+
+msgid "Retry"
+msgstr "Provo përsëri"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Kërkimi dështoi — kontrolloni lidhjen dhe provoni përsëri."
+
+msgid "Search objects…"
+msgstr "Kërko objekte…"
+
+msgid "See the results"
+msgstr "Shiko rezultatet"
+
+msgid "Send report"
+msgstr "Dërgo raportin"
+
+msgid "Share this survey"
+msgstr "Ndaje këtë anketë"
+
+msgid "Small brush"
+msgstr "Penel i vogël"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "Grupet e vogla fshihen për të mbrojtur privatësinë."
+
+msgid "Something else"
+msgstr "Diçka tjetër"
+
+msgid "Spray"
+msgstr "Spërkat"
+
+msgid "Stop"
+msgstr "Ndalo"
+
+msgid "Survey results"
+msgstr "Rezultatet e anketës"
+
+msgid "Survey unavailable"
+msgstr "Anketa nuk ofrohet"
+
+msgid "Take photo"
+msgstr "Bëj foto"
+
+msgid "Take the survey"
+msgstr "Plotëso anketën"
+
+msgid "Tap the first point to close the shape."
+msgstr "Prekni pikën e parë për të mbyllur formën."
+
+msgid "Tap the last point to finish the line."
+msgstr "Prekni pikën e fundit për të përfunduar vijën."
+
+msgid "Tap to add the next corner."
+msgstr "Prekni për të shtuar këndin tjetër."
+
+msgid "Tap to add the next point."
+msgstr "Prekni për të shtuar pikën tjetër."
+
+msgid "Tap to add the shape’s corners."
+msgstr "Prekni për të shtuar këndet e formës."
+
+msgid "Tap to start the line."
+msgstr "Prekni për të filluar vijën."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"Na tregoni çfarë nuk shkon me “%(name)s”. Çdo raport shqyrtohet nga një "
+"person."
+
+msgid "Thank you"
+msgstr "Faleminderit"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Peneli është bosh — fshini pak bojë për të vazhduar."
+
+msgid "The file does not match its declared type."
+msgstr "Skedari nuk përputhet me llojin e deklaruar."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "Skedari është shumë i madh (kufiri %(mb)s MB)."
+
+msgid "The files in this response are too large overall."
+msgstr "Skedarët në këtë përgjigje janë gjithsej shumë të mëdhenj."
+
+msgid "This file type is not accepted here."
+msgstr "Ky lloj skedari nuk pranohet këtu."
+
+msgid "This is the last section — respondents finish here"
+msgstr "Ky është seksioni i fundit — të anketuarit përfundojnë këtu"
+
+msgid "This question does not accept files."
+msgstr "Kjo pyetje nuk pranon skedarë."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "Kjo pyetje ende nuk është lidhur me një shtresë reference."
+
+msgid "This question is required"
+msgstr "Kjo pyetje është e detyrueshme"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "Kjo pamje duhet të rifreskohet nga pronari i anketës."
+
+msgid "This survey isn’t available"
+msgstr "Kjo anketë nuk është e disponueshme"
+
+msgid "Too many files in this response."
+msgstr "Shumë skedarë në këtë përgjigje."
+
+msgid "Type to search…"
+msgstr "Shkruani për të kërkuar…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr ""
+"E palistuar — shihet vetëm me lidhje të drejtpërdrejtë, nuk indeksohet."
+
+msgid "Upload failed."
+msgstr "Ngarkimi dështoi."
+
+msgid "Uploading"
+msgstr "Po ngarkohet"
+
+msgid "Yes"
+msgstr "Po"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "Raporti juaj u mor. Një person do ta shqyrtojë."
+
+msgid "Zoom in"
+msgstr "Zmadho"
+
+msgid "Zoom out"
+msgstr "Zvogëlo"
+
+msgid "at least {n} required"
+msgstr "kërkohen të paktën {n}"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "Satelit"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "Rrugë"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "Topografike"
+
+msgid "create your own free map survey"
+msgstr "krijoni anketën tuaj falas me hartë"
+
+msgid "of"
+msgstr "nga"
+
+msgid "responses"
+msgstr "përgjigje"
+
+msgid "up to {n} more"
+msgstr "edhe deri në {n}"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} u lësh në pozicionin {position}"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} u zhvendos në pozicionin {position}"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"{item} u kap. Përdorni tastet e shigjetave për ta lëvizur dhe Space për ta "
+"lëshuar."
+
+msgid "{n} marked"
+msgstr "{n} të shënuara"
+
+msgid "{n} of {m} marked"
+msgstr "{n} nga {m} të shënuara"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… dhe %(n)s të tjera"

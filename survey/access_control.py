@@ -1,6 +1,7 @@
 from django.http import Http404
 from django.shortcuts import redirect, render
 
+from .respondent_language import activate_survey_language
 from .permissions import get_effective_survey_role, SURVEY_ROLE_RANK
 
 
@@ -56,10 +57,12 @@ def check_survey_access(request, survey):
         from .content_screening import is_held
         if is_held(survey):
             request.survey_noindex = True
+            activate_survey_language(request, survey)
             return render(request, 'survey_unavailable.html', status=404)
         return _check_published_access(request, survey)
 
     if status in ('closed', 'archived'):
+        activate_survey_language(request, survey)
         return render(request, 'survey_closed.html', {'survey': survey})
 
     return None

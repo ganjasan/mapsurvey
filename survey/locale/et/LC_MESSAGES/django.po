@@ -6135,7 +6135,7 @@ msgstr ""
 #: survey/templates/maptionnaire_alternative.html:100
 #: survey/templates/maptionnaire_alternative.html:101
 msgid "Yes"
-msgstr ""
+msgstr "Jah"
 
 #: survey/templates/maptionnaire_alternative.html:100
 msgid "Yes — per-question translations"
@@ -6369,7 +6369,7 @@ msgstr ""
 
 #: survey/templates/metroquest_alternative.html:97
 msgid "No"
-msgstr ""
+msgstr "Ei"
 
 #: survey/templates/metroquest_alternative.html:98
 #| msgid "Survey Closed"
@@ -7674,3 +7674,174 @@ msgstr "Vastajad suunatakse siia pärast viimast lehte, näiteks https://www.fac
 #: survey/editor_forms.py
 msgid "Enter a full web address, for example https://www.facebook.com/yourproject"
 msgstr "Sisesta täielik veebiaadress, näiteks https://www.facebook.com/yourproject"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"Lisage järjestatavad üksused allpool jaotisesse <strong>Valikud</strong>."
+
+msgid "All"
+msgstr "Kõik"
+
+msgid "Answered"
+msgstr "Vastatud"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Küsib parooli, sisselogimist või makset"
+
+msgid "Brush size"
+msgstr "Pintsli suurus"
+
+msgid "Cell size: {m} m"
+msgstr "Lahtri suurus: {m} m"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"Lohistage üksused õigesse järjekorda või võtke üks tühikuklahviga üles ja "
+"liigutage seda nooleklahvidega."
+
+msgid "Erase"
+msgstr "Kustuta värv"
+
+msgid "File is too large."
+msgstr "Fail on liiga suur."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"Pihustamiseks hoidke ja lohistage sõrme. Peatuge kauem seal, kus olete "
+"kindlam."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"Pihustamiseks hoidke all ja lohistage. Peatuge kauem seal, kus olete kindlam."
+
+msgid "Incorrect password"
+msgstr "Vale parool"
+
+msgid "Large brush"
+msgstr "Suur pintsel"
+
+msgid "Layers"
+msgstr "Kihid"
+
+msgid "Link copied!"
+msgstr "Link kopeeritud!"
+
+msgid "Locate me"
+msgstr "Leia minu asukoht"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Tundub pettusena või esineb ettevõttena"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr "Teiste vastajate märgid. Teie enda märke selles loendis ei ole."
+
+msgid "Medium brush"
+msgstr "Keskmine pintsel"
+
+msgid "Move map"
+msgstr "Liiguta kaarti"
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Ärge kunagi sisestage Mapsurvey küsitlusse paroole ega kaardinumbreid."
+
+msgid "No objects in this layer yet"
+msgstr "Selles kihis pole veel objekte"
+
+msgid "Nothing matches"
+msgstr "Vasteid ei leitud"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "Vähese vastuste arvuga objektid on privaatsuse kaitseks peidetud."
+
+msgid "Please add a file."
+msgstr "Palun lisage fail."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "Jätkamiseks vastake vähemalt %%d objekti kohta"
+
+msgid "Please specify"
+msgstr "Palun täpsustage"
+
+msgid "Report this survey"
+msgstr "Teata sellest küsitlusest"
+
+msgid "Respondents: {n}"
+msgstr "Vastajaid: {n}"
+
+msgid "Search objects…"
+msgstr "Otsi objekte…"
+
+msgid "Send report"
+msgstr "Saada teade"
+
+msgid "Small brush"
+msgstr "Väike pintsel"
+
+msgid "Something else"
+msgstr "Midagi muud"
+
+msgid "Spray"
+msgstr "Pihusta"
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"Kirjeldage, mis on valesti küsitlusega „%(name)s“. Iga teate vaatab läbi "
+"inimene."
+
+msgid "Thank you"
+msgstr "Aitäh"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Pintsel on tühi — jätkamiseks kustutage osa värvist."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "See küsimus pole veel viitekihiga seotud."
+
+msgid "Type to search…"
+msgstr "Otsimiseks tippige…"
+
+msgid "Upload failed."
+msgstr "Üleslaadimine ebaõnnestus."
+
+msgid "Your report has been received. A person will look at it."
+msgstr "Teie teade on kätte saadud. Inimene vaatab selle üle."
+
+msgid "Zoom in"
+msgstr "Suurenda"
+
+msgid "Zoom out"
+msgstr "Vähenda"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "Satelliit"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "Tänavad"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "Topograafiline"
+
+msgid "of"
+msgstr "/"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} asetati kohale {position}"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} liigutati kohale {position}"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"{item} võeti üles. Liigutage seda nooleklahvidega ja asetage tühikuklahviga."
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… ja veel %(n)s"

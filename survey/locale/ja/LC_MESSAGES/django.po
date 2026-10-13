@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "削除する"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,324 @@ msgstr "住所を検索..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "結果が見つかりません"
+
+msgid "A few required questions still need an answer."
+msgstr "未回答の必須質問がいくつかあります。"
+
+msgid "Add another"
+msgstr "さらに追加"
+
+msgid "Add audio file"
+msgstr "音声ファイルを追加"
+
+msgid "Add photo"
+msgstr "写真を追加"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr "順位付けする項目を下の<strong>選択肢</strong>に追加してください。"
+
+msgid "All"
+msgstr "すべて"
+
+msgid "All {m} marked — thank you!"
+msgstr "{m} 件すべてマークしました — ありがとうございます！"
+
+msgid "Answered"
+msgstr "回答済み"
+
+msgid "Answers"
+msgstr "回答"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "パスワード、ログイン、または支払いを求めている"
+
+msgid "Attach file"
+msgstr "ファイルを添付"
+
+msgid "Brush size"
+msgstr "ブラシのサイズ"
+
+msgid "Cell size: {m} m"
+msgstr "セルのサイズ: {m} m"
+
+msgid "Clear"
+msgstr "クリア"
+
+msgid "Data as of"
+msgstr "データ時点:"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr "項目をドラッグして並べ替えるか、スペースキーで項目を選び、矢印キーで移動してください。"
+
+msgid "Erase"
+msgstr "消去"
+
+msgid "File is too large."
+msgstr "ファイルが大きすぎます。"
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "指で押したままなぞるとスプレーできます。確信がある場所ほど長くとどめてください。"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "押したままドラッグするとスプレーできます。確信がある場所ほど長くとどめてください。"
+
+msgid "Incorrect password"
+msgstr "パスワードが正しくありません"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr "まだ公開されていないか、終了または削除された可能性があります。主催者からリンクを受け取った場合は、主催者にご確認ください。"
+
+msgid "Large brush"
+msgstr "大きいブラシ"
+
+msgid "Layers"
+msgstr "レイヤー"
+
+msgid "Link copied!"
+msgstr "リンクをコピーしました！"
+
+msgid "Locate me"
+msgstr "現在地を表示"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "詐欺のように見える、または企業になりすましている"
+
+msgid "Made with"
+msgstr "作成ツール:"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr "他の回答者が付けたマークです。あなた自身のマークはこの一覧に含まれません。"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "上限に達しました — 変更するには下から1つ削除してください。"
+
+msgid "Medium brush"
+msgstr "中くらいのブラシ"
+
+msgid "Move map"
+msgstr "地図を移動"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "地図を動かしてピンの位置を合わせ、「適用」を押してください。"
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Mapsurvey のアンケートにパスワードやカード番号を絶対に入力しないでください。"
+
+msgid "No"
+msgstr "いいえ"
+
+msgid "No objects in this layer yet"
+msgstr "このレイヤーにはまだオブジェクトがありません"
+
+msgid "No results to show yet."
+msgstr "表示できる結果はまだありません。"
+
+msgid "Nothing matches"
+msgstr "一致するものがありません"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "回答が少ないオブジェクトは、プライバシー保護のため非表示にしています。"
+
+msgid "Please add a file."
+msgstr "ファイルを追加してください。"
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "続行するには、少なくとも %%d 件のオブジェクトについて回答してください"
+
+msgid "Please specify"
+msgstr "具体的にご記入ください"
+
+msgid "Record"
+msgstr "録音"
+
+msgid "Remove file"
+msgstr "ファイルを削除"
+
+msgid "Report this survey"
+msgstr "このアンケートを報告"
+
+msgid "Respondents: {n}"
+msgstr "回答者数: {n}"
+
+msgid "Retry"
+msgstr "再試行"
+
+msgid "Search failed — check your connection and try again."
+msgstr "検索に失敗しました — 接続を確認して、もう一度お試しください。"
+
+msgid "Search objects…"
+msgstr "オブジェクトを検索…"
+
+msgid "See the results"
+msgstr "結果を見る"
+
+msgid "Send report"
+msgstr "報告を送信"
+
+msgid "Share this survey"
+msgstr "このアンケートを共有"
+
+msgid "Small brush"
+msgstr "小さいブラシ"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "少人数のグループは、プライバシー保護のため非表示にしています。"
+
+msgid "Something else"
+msgstr "その他の理由"
+
+msgid "Spray"
+msgstr "スプレー"
+
+msgid "Stop"
+msgstr "停止"
+
+msgid "Survey results"
+msgstr "アンケート結果"
+
+msgid "Survey unavailable"
+msgstr "アンケートを利用できません"
+
+msgid "Take photo"
+msgstr "写真を撮る"
+
+msgid "Take the survey"
+msgstr "アンケートに回答する"
+
+msgid "Tap the first point to close the shape."
+msgstr "最初の点をタップして図形を閉じてください。"
+
+msgid "Tap the last point to finish the line."
+msgstr "最後の点をタップして線を完成させてください。"
+
+msgid "Tap to add the next corner."
+msgstr "タップして次の角を追加します。"
+
+msgid "Tap to add the next point."
+msgstr "タップして次の点を追加します。"
+
+msgid "Tap to add the shape’s corners."
+msgstr "タップして図形の角を追加します。"
+
+msgid "Tap to start the line."
+msgstr "タップして線を開始します。"
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr "「%(name)s」の問題点をお知らせください。すべての報告は担当者が確認します。"
+
+msgid "Thank you"
+msgstr "ありがとうございます"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "ブラシが空です — 続けるには塗った部分を一部消してください。"
+
+msgid "The file does not match its declared type."
+msgstr "ファイルの内容が指定された形式と一致しません。"
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "ファイルが大きすぎます（上限 %(mb)s MB）。"
+
+msgid "The files in this response are too large overall."
+msgstr "この回答のファイルの合計サイズが大きすぎます。"
+
+msgid "This file type is not accepted here."
+msgstr "このファイル形式はここでは受け付けていません。"
+
+msgid "This is the last section — respondents finish here"
+msgstr "これが最後のセクションです — 回答者はここで終了します"
+
+msgid "This question does not accept files."
+msgstr "この質問ではファイルを受け付けていません。"
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "この質問はまだ参照レイヤーに関連付けられていません。"
+
+msgid "This question is required"
+msgstr "この質問は必須です"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "このスナップショットはアンケートの作成者による更新が必要です。"
+
+msgid "This survey isn’t available"
+msgstr "このアンケートは利用できません"
+
+msgid "Too many files in this response."
+msgstr "この回答のファイル数が多すぎます。"
+
+msgid "Type to search…"
+msgstr "入力して検索…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr "限定公開 — 直接リンクからのみ閲覧可能で、検索エンジンには表示されません。"
+
+msgid "Upload failed."
+msgstr "アップロードに失敗しました。"
+
+msgid "Uploading"
+msgstr "アップロード中"
+
+msgid "Yes"
+msgstr "はい"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "報告を受け付けました。担当者が確認します。"
+
+msgid "Zoom in"
+msgstr "拡大"
+
+msgid "Zoom out"
+msgstr "縮小"
+
+msgid "at least {n} required"
+msgstr "{n} 件以上必要です"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "航空写真"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "道路地図"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "地形図"
+
+msgid "create your own free map survey"
+msgstr "無料で地図アンケートを作成"
+
+msgid "of"
+msgstr "/"
+
+msgid "responses"
+msgstr "件の回答"
+
+msgid "up to {n} more"
+msgstr "あと最大 {n} 件"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} を {position} 番目に配置しました"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} を {position} 番目に移動しました"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr "{item} を選択しました。矢印キーで移動し、スペースキーで配置します。"
+
+msgid "{n} marked"
+msgstr "{n} 件マーク済み"
+
+msgid "{n} of {m} marked"
+msgstr "{m} 件中 {n} 件マーク済み"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… ほか %(n)s 件"

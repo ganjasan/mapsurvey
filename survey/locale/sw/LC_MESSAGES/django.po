@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "Ondoa"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,339 @@ msgstr "Tafuta anwani..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Hakuna matokeo"
+
+msgid "A few required questions still need an answer."
+msgstr "Maswali machache ya lazima bado yanahitaji jibu."
+
+msgid "Add another"
+msgstr "Ongeza nyingine"
+
+msgid "Add audio file"
+msgstr "Ongeza faili la sauti"
+
+msgid "Add photo"
+msgstr "Ongeza picha"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"Ongeza vipengee vya kupangwa kwa daraja katika <strong>Chaguo</strong> hapa "
+"chini."
+
+msgid "All"
+msgstr "Zote"
+
+msgid "All {m} marked — thank you!"
+msgstr "Zote {m} zimewekwa alama — asante!"
+
+msgid "Answered"
+msgstr "Yamejibiwa"
+
+msgid "Answers"
+msgstr "Majibu"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Inaomba nenosiri, kuingia kwenye akaunti au malipo"
+
+msgid "Attach file"
+msgstr "Ambatisha faili"
+
+msgid "Brush size"
+msgstr "Ukubwa wa brashi"
+
+msgid "Cell size: {m} m"
+msgstr "Ukubwa wa seli: {m} m"
+
+msgid "Clear"
+msgstr "Safisha"
+
+msgid "Data as of"
+msgstr "Data hadi"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"Buruta vipengee kwa mpangilio, au chukua kimoja kwa kitufe cha Space na "
+"ukisogeze kwa vitufe vya mishale."
+
+msgid "Erase"
+msgstr "Futa rangi"
+
+msgid "File is too large."
+msgstr "Faili ni kubwa mno."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"Shikilia na uburute kidole ili kunyunyiza. Kaa muda mrefu zaidi mahali "
+"unapokuwa na uhakika zaidi."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"Shikilia na uburute ili kunyunyiza. Kaa muda mrefu zaidi mahali unapokuwa na "
+"uhakika zaidi."
+
+msgid "Incorrect password"
+msgstr "Nenosiri si sahihi"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"Huenda bado haijachapishwa, au imefungwa au imeondolewa. Ikiwa una kiungo "
+"kutoka kwa mratibu, wasiliana naye."
+
+msgid "Large brush"
+msgstr "Brashi kubwa"
+
+msgid "Layers"
+msgstr "Tabaka"
+
+msgid "Link copied!"
+msgstr "Kiungo kimenakiliwa!"
+
+msgid "Locate me"
+msgstr "Nionyeshe nilipo"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Inaonekana kuwa utapeli au inajifanya kuwa kampuni"
+
+msgid "Made with"
+msgstr "Imetengenezwa kwa"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"Alama zilizowekwa na wahojiwa wengine. Alama zako hazimo kwenye orodha hii."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Kiwango cha juu kimefikiwa — ondoa moja hapa chini ili kubadilisha."
+
+msgid "Medium brush"
+msgstr "Brashi ya wastani"
+
+msgid "Move map"
+msgstr "Sogeza ramani"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Sogeza ramani ili kuweka pini, kisha bonyeza Tekeleza."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Usiweke kamwe nenosiri au namba za kadi katika utafiti wa Mapsurvey."
+
+msgid "No"
+msgstr "Hapana"
+
+msgid "No objects in this layer yet"
+msgstr "Bado hakuna vitu katika tabaka hili"
+
+msgid "No results to show yet."
+msgstr "Bado hakuna matokeo ya kuonyesha."
+
+msgid "Nothing matches"
+msgstr "Hakuna kinacholingana"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "Vitu vyenye majibu machache vimefichwa ili kulinda faragha."
+
+msgid "Please add a file."
+msgstr "Tafadhali ongeza faili."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "Tafadhali jibu kuhusu angalau kitu %%d ili kuendelea"
+
+msgid "Please specify"
+msgstr "Tafadhali eleza"
+
+msgid "Record"
+msgstr "Rekodi"
+
+msgid "Remove file"
+msgstr "Ondoa faili"
+
+msgid "Report this survey"
+msgstr "Ripoti utafiti huu"
+
+msgid "Respondents: {n}"
+msgstr "Wahojiwa: {n}"
+
+msgid "Retry"
+msgstr "Jaribu tena"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Utafutaji umeshindikana — angalia muunganisho wako na ujaribu tena."
+
+msgid "Search objects…"
+msgstr "Tafuta vitu…"
+
+msgid "See the results"
+msgstr "Tazama matokeo"
+
+msgid "Send report"
+msgstr "Tuma ripoti"
+
+msgid "Share this survey"
+msgstr "Shiriki utafiti huu"
+
+msgid "Small brush"
+msgstr "Brashi ndogo"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "Vikundi vidogo vimefichwa ili kulinda faragha."
+
+msgid "Something else"
+msgstr "Kitu kingine"
+
+msgid "Spray"
+msgstr "Nyunyiza"
+
+msgid "Stop"
+msgstr "Simamisha"
+
+msgid "Survey results"
+msgstr "Matokeo ya utafiti"
+
+msgid "Survey unavailable"
+msgstr "Utafiti haupatikani"
+
+msgid "Take photo"
+msgstr "Piga picha"
+
+msgid "Take the survey"
+msgstr "Shiriki katika utafiti"
+
+msgid "Tap the first point to close the shape."
+msgstr "Gusa nukta ya kwanza ili kufunga umbo."
+
+msgid "Tap the last point to finish the line."
+msgstr "Gusa nukta ya mwisho ili kumaliza mstari."
+
+msgid "Tap to add the next corner."
+msgstr "Gusa ili kuongeza kona inayofuata."
+
+msgid "Tap to add the next point."
+msgstr "Gusa ili kuongeza nukta inayofuata."
+
+msgid "Tap to add the shape’s corners."
+msgstr "Gusa ili kuongeza kona za umbo."
+
+msgid "Tap to start the line."
+msgstr "Gusa ili kuanza mstari."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr "Tuambie kuna tatizo gani na “%(name)s”. Mtu hukagua kila ripoti."
+
+msgid "Thank you"
+msgstr "Asante"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Brashi haina rangi — futa sehemu ya rangi ili kuendelea."
+
+msgid "The file does not match its declared type."
+msgstr "Faili halilingani na aina yake iliyotajwa."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "Faili ni kubwa mno (kikomo %(mb)s MB)."
+
+msgid "The files in this response are too large overall."
+msgstr "Faili katika jibu hili kwa jumla ni kubwa mno."
+
+msgid "This file type is not accepted here."
+msgstr "Aina hii ya faili haikubaliwi hapa."
+
+msgid "This is the last section — respondents finish here"
+msgstr "Hii ni sehemu ya mwisho — wahojiwa humalizia hapa"
+
+msgid "This question does not accept files."
+msgstr "Swali hili halikubali faili."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "Swali hili bado halijaunganishwa na tabaka la marejeleo."
+
+msgid "This question is required"
+msgstr "Swali hili ni la lazima"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "Picha hii ya data inahitaji kusasishwa na mmiliki wa utafiti."
+
+msgid "This survey isn’t available"
+msgstr "Utafiti huu haupatikani kwa sasa"
+
+msgid "Too many files in this response."
+msgstr "Faili ni nyingi mno katika jibu hili."
+
+msgid "Type to search…"
+msgstr "Andika ili kutafuta…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr ""
+"Haijaorodheshwa — inaonekana kupitia kiungo cha moja kwa moja tu, "
+"haijaorodheshwa kwenye injini za utafutaji."
+
+msgid "Upload failed."
+msgstr "Kupakia kumeshindikana."
+
+msgid "Uploading"
+msgstr "Inapakia"
+
+msgid "Yes"
+msgstr "Ndiyo"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "Ripoti yako imepokelewa. Mtu ataiangalia."
+
+msgid "Zoom in"
+msgstr "Kuza"
+
+msgid "Zoom out"
+msgstr "Punguza"
+
+msgid "at least {n} required"
+msgstr "angalau {n} zinahitajika"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "Setilaiti"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "Mitaa"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "Topografia"
+
+msgid "create your own free map survey"
+msgstr "unda utafiti wako wa ramani bila malipo"
+
+msgid "of"
+msgstr "kati ya"
+
+msgid "responses"
+msgstr "majibu yaliyowasilishwa"
+
+msgid "up to {n} more"
+msgstr "hadi {n} zaidi"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} kimewekwa katika nafasi ya {position}"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} kimehamishiwa nafasi ya {position}"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"{item} kimechukuliwa. Tumia vitufe vya mishale kukisogeza, na Space "
+"kukiachia."
+
+msgid "{n} marked"
+msgstr "{n} zimewekwa alama"
+
+msgid "{n} of {m} marked"
+msgstr "{n} kati ya {m} zimewekwa alama"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… na %(n)s zaidi"

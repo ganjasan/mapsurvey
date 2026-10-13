@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "ដកចេញ"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,333 @@ msgstr "ស្វែងរកអាសយដ្ឋាន..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "រកមិនឃើញលទ្ធផល"
+
+msgid "A few required questions still need an answer."
+msgstr "នៅមានសំណួរចាំបាច់មួយចំនួនដែលមិនទាន់បានឆ្លើយ។"
+
+msgid "Add another"
+msgstr "បន្ថែមមួយទៀត"
+
+msgid "Add audio file"
+msgstr "បន្ថែមឯកសារសំឡេង"
+
+msgid "Add photo"
+msgstr "បន្ថែមរូបថត"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr "បន្ថែមធាតុដែលត្រូវតម្រៀបនៅក្នុង <strong>ជម្រើស</strong> ខាងក្រោម។"
+
+msgid "All"
+msgstr "ទាំងអស់"
+
+msgid "All {m} marked — thank you!"
+msgstr "បានសម្គាល់ទាំង {m} រួចហើយ — សូមអរគុណ!"
+
+msgid "Answered"
+msgstr "បានឆ្លើយ"
+
+msgid "Answers"
+msgstr "ចម្លើយ"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "សុំពាក្យសម្ងាត់ ការចូលគណនី ឬការបង់ប្រាក់"
+
+msgid "Attach file"
+msgstr "ភ្ជាប់ឯកសារ"
+
+msgid "Brush size"
+msgstr "ទំហំជក់"
+
+msgid "Cell size: {m} m"
+msgstr "ទំហំក្រឡា៖ {m} ម"
+
+msgid "Clear"
+msgstr "សម្អាត"
+
+msgid "Data as of"
+msgstr "ទិន្នន័យគិតត្រឹម"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"អូសធាតុដើម្បីតម្រៀប ឬជ្រើសមួយដោយចុច Space ហើយផ្លាស់ទីវាដោយគ្រាប់ចុចព្រួញ។"
+
+msgid "Erase"
+msgstr "លុបពណ៌"
+
+msgid "File is too large."
+msgstr "ឯកសារធំពេក។"
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"សង្កត់ហើយអូសម្រាមដៃដើម្បីបាញ់ពណ៌។ សង្កត់យូរជាងនៅកន្លែងដែលអ្នកប្រាកដជាង។"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "សង្កត់ហើយអូសដើម្បីបាញ់ពណ៌។ សង្កត់យូរជាងនៅកន្លែងដែលអ្នកប្រាកដជាង។"
+
+msgid "Incorrect password"
+msgstr "ពាក្យសម្ងាត់មិនត្រឹមត្រូវ"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"វាប្រហែលជាមិនទាន់បានផ្សព្វផ្សាយ ឬត្រូវបានបិទ ឬដកចេញហើយ។ "
+"ប្រសិនបើអ្នកទទួលបានតំណពីអ្នករៀបចំ សូមសាកសួរពួកគេ។"
+
+msgid "Large brush"
+msgstr "ជក់ធំ"
+
+msgid "Layers"
+msgstr "ស្រទាប់"
+
+msgid "Link copied!"
+msgstr "បានចម្លងតំណ!"
+
+msgid "Locate me"
+msgstr "កំណត់ទីតាំងខ្ញុំ"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "មើលទៅដូចជាការបោកប្រាស់ ឬក្លែងខ្លួនជាក្រុមហ៊ុន"
+
+msgid "Made with"
+msgstr "បង្កើតដោយ"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"សញ្ញាសម្គាល់ដែលដាក់ដោយអ្នកឆ្លើយផ្សេងទៀត។ "
+"សញ្ញាសម្គាល់របស់អ្នកមិននៅក្នុងបញ្ជីនេះទេ។"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "បានដល់ចំនួនអតិបរមា — ដកមួយខាងក្រោមចេញដើម្បីផ្លាស់ប្ដូរ។"
+
+msgid "Medium brush"
+msgstr "ជក់មធ្យម"
+
+msgid "Move map"
+msgstr "រំកិលផែនទី"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "រំកិលផែនទីដើម្បីដាក់ម្ជុលសម្គាល់ រួចចុច អនុវត្ត។"
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "កុំបញ្ចូលពាក្យសម្ងាត់ ឬលេខកាតក្នុងការស្ទង់មតិ Mapsurvey ជាដាច់ខាត។"
+
+msgid "No"
+msgstr "ទេ"
+
+msgid "No objects in this layer yet"
+msgstr "មិនទាន់មានវត្ថុក្នុងស្រទាប់នេះទេ"
+
+msgid "No results to show yet."
+msgstr "មិនទាន់មានលទ្ធផលដើម្បីបង្ហាញទេ។"
+
+msgid "Nothing matches"
+msgstr "គ្មានអ្វីត្រូវគ្នាទេ"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "វត្ថុដែលមានចម្លើយតិចត្រូវបានលាក់ ដើម្បីការពារឯកជនភាព។"
+
+msgid "Please add a file."
+msgstr "សូមបន្ថែមឯកសារ។"
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "សូមឆ្លើយអំពីវត្ថុយ៉ាងហោចណាស់ %%d ដើម្បីបន្ត"
+
+msgid "Please specify"
+msgstr "សូមបញ្ជាក់"
+
+msgid "Record"
+msgstr "ថតសំឡេង"
+
+msgid "Remove file"
+msgstr "ដកឯកសារចេញ"
+
+msgid "Report this survey"
+msgstr "រាយការណ៍ការស្ទង់មតិនេះ"
+
+msgid "Respondents: {n}"
+msgstr "អ្នកឆ្លើយ៖ {n}"
+
+msgid "Retry"
+msgstr "ព្យាយាមម្ដងទៀត"
+
+msgid "Search failed — check your connection and try again."
+msgstr "ការស្វែងរកបរាជ័យ — សូមពិនិត្យការតភ្ជាប់ ហើយព្យាយាមម្ដងទៀត។"
+
+msgid "Search objects…"
+msgstr "ស្វែងរកវត្ថុ…"
+
+msgid "See the results"
+msgstr "មើលលទ្ធផល"
+
+msgid "Send report"
+msgstr "ផ្ញើរបាយការណ៍"
+
+msgid "Share this survey"
+msgstr "ចែករំលែកការស្ទង់មតិនេះ"
+
+msgid "Small brush"
+msgstr "ជក់តូច"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "ក្រុមតូចៗត្រូវបានលាក់ ដើម្បីការពារឯកជនភាព។"
+
+msgid "Something else"
+msgstr "ផ្សេងទៀត"
+
+msgid "Spray"
+msgstr "បាញ់ពណ៌"
+
+msgid "Stop"
+msgstr "បញ្ឈប់"
+
+msgid "Survey results"
+msgstr "លទ្ធផលការស្ទង់មតិ"
+
+msgid "Survey unavailable"
+msgstr "ការស្ទង់មតិមិនអាចប្រើបាន"
+
+msgid "Take photo"
+msgstr "ថតរូប"
+
+msgid "Take the survey"
+msgstr "ចូលរួមការស្ទង់មតិ"
+
+msgid "Tap the first point to close the shape."
+msgstr "ប៉ះចំណុចដំបូងដើម្បីបិទរូបរាង។"
+
+msgid "Tap the last point to finish the line."
+msgstr "ប៉ះចំណុចចុងក្រោយដើម្បីបញ្ចប់បន្ទាត់។"
+
+msgid "Tap to add the next corner."
+msgstr "ប៉ះដើម្បីបន្ថែមជ្រុងបន្ទាប់។"
+
+msgid "Tap to add the next point."
+msgstr "ប៉ះដើម្បីបន្ថែមចំណុចបន្ទាប់។"
+
+msgid "Tap to add the shape’s corners."
+msgstr "ប៉ះដើម្បីបន្ថែមជ្រុងរបស់រូបរាង។"
+
+msgid "Tap to start the line."
+msgstr "ប៉ះដើម្បីចាប់ផ្ដើមបន្ទាត់។"
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"សូមប្រាប់យើងថាមានបញ្ហាអ្វីជាមួយ “%(name)s”។ "
+"មនុស្សពិតនឹងពិនិត្យរបាយការណ៍នីមួយៗ។"
+
+msgid "Thank you"
+msgstr "សូមអរគុណ"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "ជក់អស់ពណ៌ហើយ — សូមលុបពណ៌ខ្លះដើម្បីបន្ត។"
+
+msgid "The file does not match its declared type."
+msgstr "ឯកសារមិនត្រូវនឹងប្រភេទដែលបានបញ្ជាក់ទេ។"
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "ឯកសារធំពេក (កំណត់ %(mb)s MB)។"
+
+msgid "The files in this response are too large overall."
+msgstr "ឯកសារក្នុងចម្លើយនេះធំពេកសរុប។"
+
+msgid "This file type is not accepted here."
+msgstr "ប្រភេទឯកសារនេះមិនត្រូវបានទទួលយកនៅទីនេះទេ។"
+
+msgid "This is the last section — respondents finish here"
+msgstr "នេះជាផ្នែកចុងក្រោយ — អ្នកឆ្លើយបញ្ចប់នៅទីនេះ"
+
+msgid "This question does not accept files."
+msgstr "សំណួរនេះមិនទទួលយកឯកសារទេ។"
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "សំណួរនេះមិនទាន់ភ្ជាប់ទៅស្រទាប់យោងនៅឡើយទេ។"
+
+msgid "This question is required"
+msgstr "សំណួរនេះចាំបាច់"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "រូបភាពចុងក្រោយនេះត្រូវការឲ្យម្ចាស់ការស្ទង់មតិធ្វើបច្ចុប្បន្នភាព។"
+
+msgid "This survey isn’t available"
+msgstr "ការស្ទង់មតិនេះមិនមានទេ"
+
+msgid "Too many files in this response."
+msgstr "ឯកសារច្រើនពេកក្នុងចម្លើយនេះ។"
+
+msgid "Type to search…"
+msgstr "វាយដើម្បីស្វែងរក…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr "មិនបានចុះបញ្ជី — មើលបានតែតាមតំណផ្ទាល់ប៉ុណ្ណោះ មិនត្រូវបានធ្វើលិបិក្រម។"
+
+msgid "Upload failed."
+msgstr "ការផ្ទុកឡើងបរាជ័យ។"
+
+msgid "Uploading"
+msgstr "កំពុងផ្ទុកឡើង"
+
+msgid "Yes"
+msgstr "បាទ/ចាស"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "យើងបានទទួលរបាយការណ៍របស់អ្នកហើយ។ មនុស្សពិតនឹងពិនិត្យវា។"
+
+msgid "Zoom in"
+msgstr "ពង្រីក"
+
+msgid "Zoom out"
+msgstr "បង្រួម"
+
+msgid "at least {n} required"
+msgstr "ត្រូវការយ៉ាងហោចណាស់ {n}"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "ផ្កាយរណប"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "ផ្លូវ"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "សណ្ឋានដី"
+
+msgid "create your own free map survey"
+msgstr "បង្កើតការស្ទង់មតិផែនទីឥតគិតថ្លៃរបស់អ្នកផ្ទាល់"
+
+msgid "of"
+msgstr "ក្នុងចំណោម"
+
+msgid "responses"
+msgstr "ចម្លើយតប"
+
+msgid "up to {n} more"
+msgstr "បន្ថែមបានរហូតដល់ {n} ទៀត"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} ត្រូវបានដាក់នៅទីតាំង {position}"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} ត្រូវបានផ្លាស់ទៅទីតាំង {position}"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"បានជ្រើស {item}។ ប្រើគ្រាប់ចុចព្រួញដើម្បីផ្លាស់ទី និង Space ដើម្បីដាក់។"
+
+msgid "{n} marked"
+msgstr "បានសម្គាល់ {n}"
+
+msgid "{n} of {m} marked"
+msgstr "បានសម្គាល់ {n} ក្នុងចំណោម {m}"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… និង %(n)s ទៀត"

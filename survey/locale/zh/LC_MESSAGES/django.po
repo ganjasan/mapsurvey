@@ -683,7 +683,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "移除"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -979,3 +979,324 @@ msgstr "搜索地址..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "未找到结果"
+
+msgid "A few required questions still need an answer."
+msgstr "还有几个必答题尚未回答。"
+
+msgid "Add another"
+msgstr "再添加一个"
+
+msgid "Add audio file"
+msgstr "添加音频文件"
+
+msgid "Add photo"
+msgstr "添加照片"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr "请在下方<strong>选项</strong>中添加要排序的项目。"
+
+msgid "All"
+msgstr "全部"
+
+msgid "All {m} marked — thank you!"
+msgstr "已标记全部 {m} 个——谢谢！"
+
+msgid "Answered"
+msgstr "已回答"
+
+msgid "Answers"
+msgstr "回答"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "索要密码、登录信息或付款"
+
+msgid "Attach file"
+msgstr "附加文件"
+
+msgid "Brush size"
+msgstr "画笔大小"
+
+msgid "Cell size: {m} m"
+msgstr "网格大小：{m} 米"
+
+msgid "Clear"
+msgstr "清除"
+
+msgid "Data as of"
+msgstr "数据截至"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr "拖动项目进行排序，或按空格键选中一项并用方向键移动。"
+
+msgid "Erase"
+msgstr "擦除"
+
+msgid "File is too large."
+msgstr "文件太大。"
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "按住并用手指拖动进行喷涂。越确定的地方停留越久。"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "按住并拖动进行喷涂。越确定的地方停留越久。"
+
+msgid "Incorrect password"
+msgstr "密码错误"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr "该问卷可能尚未发布，或已关闭或被删除。如果您是从组织者处获得的链接，请向其确认。"
+
+msgid "Large brush"
+msgstr "大画笔"
+
+msgid "Layers"
+msgstr "图层"
+
+msgid "Link copied!"
+msgstr "链接已复制！"
+
+msgid "Locate me"
+msgstr "定位我"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "疑似诈骗或冒充某家公司"
+
+msgid "Made with"
+msgstr "制作工具："
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr "其他受访者放置的标记。您自己的标记不在此列表中。"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "已达上限——请在下方移除一个后再更改。"
+
+msgid "Medium brush"
+msgstr "中画笔"
+
+msgid "Move map"
+msgstr "移动地图"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "移动地图以定位图钉，然后点击“应用”。"
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "切勿在 Mapsurvey 问卷中输入密码或银行卡号。"
+
+msgid "No"
+msgstr "否"
+
+msgid "No objects in this layer yet"
+msgstr "此图层中暂无对象"
+
+msgid "No results to show yet."
+msgstr "暂无可显示的结果。"
+
+msgid "Nothing matches"
+msgstr "没有匹配项"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "为保护隐私，回答较少的对象已被隐藏。"
+
+msgid "Please add a file."
+msgstr "请添加文件。"
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "请至少就 %%d 个对象作答后继续"
+
+msgid "Please specify"
+msgstr "请注明"
+
+msgid "Record"
+msgstr "录制"
+
+msgid "Remove file"
+msgstr "移除文件"
+
+msgid "Report this survey"
+msgstr "举报此问卷"
+
+msgid "Respondents: {n}"
+msgstr "受访者：{n}"
+
+msgid "Retry"
+msgstr "重试"
+
+msgid "Search failed — check your connection and try again."
+msgstr "搜索失败——请检查网络连接后重试。"
+
+msgid "Search objects…"
+msgstr "搜索对象…"
+
+msgid "See the results"
+msgstr "查看结果"
+
+msgid "Send report"
+msgstr "提交举报"
+
+msgid "Share this survey"
+msgstr "分享此问卷"
+
+msgid "Small brush"
+msgstr "小画笔"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "为保护隐私，小规模分组已被隐藏。"
+
+msgid "Something else"
+msgstr "其他原因"
+
+msgid "Spray"
+msgstr "喷涂"
+
+msgid "Stop"
+msgstr "停止"
+
+msgid "Survey results"
+msgstr "问卷结果"
+
+msgid "Survey unavailable"
+msgstr "问卷不可用"
+
+msgid "Take photo"
+msgstr "拍照"
+
+msgid "Take the survey"
+msgstr "参与问卷"
+
+msgid "Tap the first point to close the shape."
+msgstr "点击第一个点以闭合形状。"
+
+msgid "Tap the last point to finish the line."
+msgstr "点击最后一个点以结束线条。"
+
+msgid "Tap to add the next corner."
+msgstr "点击添加下一个角点。"
+
+msgid "Tap to add the next point."
+msgstr "点击添加下一个点。"
+
+msgid "Tap to add the shape’s corners."
+msgstr "点击添加形状的角点。"
+
+msgid "Tap to start the line."
+msgstr "点击开始绘制线条。"
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr "请告诉我们“%(name)s”有什么问题。每份举报都会由人工审核。"
+
+msgid "Thank you"
+msgstr "谢谢"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "画笔已用完——请擦除部分喷涂后继续。"
+
+msgid "The file does not match its declared type."
+msgstr "文件与其声明的类型不符。"
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "文件太大（上限 %(mb)s MB）。"
+
+msgid "The files in this response are too large overall."
+msgstr "此回答中的文件总大小过大。"
+
+msgid "This file type is not accepted here."
+msgstr "此处不接受该文件类型。"
+
+msgid "This is the last section — respondents finish here"
+msgstr "这是最后一节——受访者在此完成问卷"
+
+msgid "This question does not accept files."
+msgstr "此问题不接受文件。"
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "此问题尚未关联参考图层。"
+
+msgid "This question is required"
+msgstr "此题为必答题"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "此快照需要由问卷所有者刷新。"
+
+msgid "This survey isn’t available"
+msgstr "此问卷无法访问"
+
+msgid "Too many files in this response."
+msgstr "此回答中的文件过多。"
+
+msgid "Type to search…"
+msgstr "输入以搜索…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr "未公开——仅可通过直接链接查看，不会被搜索引擎收录。"
+
+msgid "Upload failed."
+msgstr "上传失败。"
+
+msgid "Uploading"
+msgstr "正在上传"
+
+msgid "Yes"
+msgstr "是"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "您的举报已收到，将由人工查看。"
+
+msgid "Zoom in"
+msgstr "放大"
+
+msgid "Zoom out"
+msgstr "缩小"
+
+msgid "at least {n} required"
+msgstr "至少需要 {n} 个"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "卫星"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "街道"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "地形"
+
+msgid "create your own free map survey"
+msgstr "免费创建您自己的地图问卷"
+
+msgid "of"
+msgstr "/"
+
+msgid "responses"
+msgstr "份回答"
+
+msgid "up to {n} more"
+msgstr "最多还可添加 {n} 个"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} 已放到第 {position} 位"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} 已移到第 {position} 位"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr "已选中 {item}。使用方向键移动，按空格键放下。"
+
+msgid "{n} marked"
+msgstr "已标记 {n} 个"
+
+msgid "{n} of {m} marked"
+msgstr "已标记 {n}/{m}"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "…以及另外 %(n)s 个"

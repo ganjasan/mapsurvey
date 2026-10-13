@@ -173,7 +173,7 @@
       var table = document.createElement('table');
       table.className = 'objects-table';
       var thead = document.createElement('thead'), hr = document.createElement('tr');
-      ['', 'Answers'].concat((b.sub_questions || []).map(function(s){ return s.name; })).forEach(function(h){
+      ['', '{% filter escapejs %}{% trans "Answers" %}{% endfilter %}'].concat((b.sub_questions || []).map(function(s){ return s.name; })).forEach(function(h){
         var th = document.createElement('th'); th.textContent = h; hr.appendChild(th);
       });
       thead.appendChild(hr); table.appendChild(thead);
@@ -336,7 +336,10 @@
         var cap = document.createElement('div');
         cap.className = 'pr-grid-caption';
         cap.style.cssText = 'font-size:.8rem;color:#6b7280;margin-top:.35rem;';
-        cap.textContent = (b.respondents_total || 0) + ' respondents · ' + (b.cell_m ? Math.round(b.cell_m) + ' m cells' : '');
+        // "Respondents: N" rather than "N respondents": no plural forms to get wrong.
+        var parts = ['{% filter escapejs %}{% trans "Respondents: {n}" %}{% endfilter %}'.replace('{n}', b.respondents_total || 0)];
+        if (b.cell_m) parts.push('{% filter escapejs %}{% trans "Cell size: {m} m" %}{% endfilter %}'.replace('{m}', Math.round(b.cell_m)));
+        cap.textContent = parts.join(' · ');
         el.parentNode.insertBefore(cap, el.nextSibling);
       }
     }

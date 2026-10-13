@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "Aýyr"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,340 @@ msgstr "Salgy gözle..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Netije tapylmady"
+
+msgid "A few required questions still need an answer."
+msgstr "Birnäçe hökmany soraga entek jogap berilmedi."
+
+msgid "Add another"
+msgstr "Ýene goş"
+
+msgid "Add audio file"
+msgstr "Ses faýlyny goş"
+
+msgid "Add photo"
+msgstr "Surat goş"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"Tertiplenjek elementleri aşakdaky <strong>Saýlawlar</strong> bölümine goşuň."
+
+msgid "All"
+msgstr "Hemmesi"
+
+msgid "All {m} marked — thank you!"
+msgstr "Ähli {m} bellendi — sag boluň!"
+
+msgid "Answered"
+msgstr "Jogap berlen"
+
+msgid "Answers"
+msgstr "Jogaplar"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Açarsöz, giriş ýa-da töleg soraýar"
+
+msgid "Attach file"
+msgstr "Faýl birikdir"
+
+msgid "Brush size"
+msgstr "Çotganyň ölçegi"
+
+msgid "Cell size: {m} m"
+msgstr "Öýjügiň ölçegi: {m} m"
+
+msgid "Clear"
+msgstr "Arassala"
+
+msgid "Data as of"
+msgstr "Maglumatlaryň senesi"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"Elementleri süýräp tertipläň ýa-da birini Boşluk düwmesi bilen alyp, ok "
+"düwmeleri bilen süýşüriň."
+
+msgid "Erase"
+msgstr "Öçür"
+
+msgid "File is too large."
+msgstr "Faýl gaty uly."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"Pürkmek üçin barmagyňyzy basyp saklap süýräň. Has ynamly ýeriňizde has uzak "
+"saklaň."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"Pürkmek üçin basyp saklap süýräň. Has ynamly ýeriňizde has uzak saklaň."
+
+msgid "Incorrect password"
+msgstr "Nädogry açarsöz"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"Ol entek çap edilmedik ýa-da ýapylan ýa-da aýrylan bolmagy mümkin. "
+"Salgylanmany guramaçydan alan bolsaňyz, olardan soraň."
+
+msgid "Large brush"
+msgstr "Uly çotga"
+
+msgid "Layers"
+msgstr "Gatlaklar"
+
+msgid "Link copied!"
+msgstr "Salgylanma göçürildi!"
+
+msgid "Locate me"
+msgstr "Meni tap"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Galplyga meňzeýär ýa-da özüni kompaniýa hökmünde görkezýär"
+
+msgid "Made with"
+msgstr "Döredilen:"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"Beýleki gatnaşyjylaryň goýan bellikleri. Siziň öz bellikleriňiz bu sanawda "
+"ýok."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Iň ýokary san ýetildi — üýtgetmek üçin aşakdan birini aýyryň."
+
+msgid "Medium brush"
+msgstr "Orta çotga"
+
+msgid "Move map"
+msgstr "Kartany süýşür"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr ""
+"Bellikçäni ýerleşdirmek üçin kartany süýşüriň, soňra «Ulan» düwmesine basyň."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr ""
+"Mapsurvey soraglarynda hiç haçan açarsöz ýa-da kart belgisini girizmäň."
+
+msgid "No"
+msgstr "Ýok"
+
+msgid "No objects in this layer yet"
+msgstr "Bu gatlakda entek obýekt ýok"
+
+msgid "No results to show yet."
+msgstr "Görkezer ýaly entek netije ýok."
+
+msgid "Nothing matches"
+msgstr "Gabat gelýän zat ýok"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "Gizlinligi goramak üçin az jogaply obýektler gizlenýär."
+
+msgid "Please add a file."
+msgstr "Faýl goşuň."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "Dowam etmek üçin azyndan %%d obýekt barada jogap beriň"
+
+msgid "Please specify"
+msgstr "Takyklaň"
+
+msgid "Record"
+msgstr "Ýazga al"
+
+msgid "Remove file"
+msgstr "Faýly aýyr"
+
+msgid "Report this survey"
+msgstr "Bu soragnama barada habar ber"
+
+msgid "Respondents: {n}"
+msgstr "Gatnaşyjylar: {n}"
+
+msgid "Retry"
+msgstr "Gaýtadan synanyş"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Gözleg şowsuz boldy — birikmäňizi barlap, gaýtadan synanyşyň."
+
+msgid "Search objects…"
+msgstr "Obýektleri gözle…"
+
+msgid "See the results"
+msgstr "Netijeleri gör"
+
+msgid "Send report"
+msgstr "Habar iber"
+
+msgid "Share this survey"
+msgstr "Bu soragnamany paýlaş"
+
+msgid "Small brush"
+msgstr "Kiçi çotga"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "Gizlinligi goramak üçin kiçi toparlar gizlenýär."
+
+msgid "Something else"
+msgstr "Başga zat"
+
+msgid "Spray"
+msgstr "Pürk"
+
+msgid "Stop"
+msgstr "Togtat"
+
+msgid "Survey results"
+msgstr "Soragnamanyň netijeleri"
+
+msgid "Survey unavailable"
+msgstr "Soragnama elýeterli däl"
+
+msgid "Take photo"
+msgstr "Surata al"
+
+msgid "Take the survey"
+msgstr "Soragnama gatnaş"
+
+msgid "Tap the first point to close the shape."
+msgstr "Şekili ýapmak üçin birinji nokada basyň."
+
+msgid "Tap the last point to finish the line."
+msgstr "Çyzygy gutarmak üçin soňky nokada basyň."
+
+msgid "Tap to add the next corner."
+msgstr "Indiki burçy goşmak üçin basyň."
+
+msgid "Tap to add the next point."
+msgstr "Indiki nokady goşmak üçin basyň."
+
+msgid "Tap to add the shape’s corners."
+msgstr "Şekiliň burçlaryny goşmak üçin basyň."
+
+msgid "Tap to start the line."
+msgstr "Çyzygy başlamak üçin basyň."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"«%(name)s» bilen näme mesele bardygyny bize aýdyň. Her habary adam gözden "
+"geçirýär."
+
+msgid "Thank you"
+msgstr "Sag boluň"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Çotga boş — dowam etmek üçin biraz boýagy öçüriň."
+
+msgid "The file does not match its declared type."
+msgstr "Faýl görkezilen görnüşine laýyk gelmeýär."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "Faýl gaty uly (çäk %(mb)s MB)."
+
+msgid "The files in this response are too large overall."
+msgstr "Bu jogapdaky faýllaryň umumy göwrümi gaty uly."
+
+msgid "This file type is not accepted here."
+msgstr "Bu faýl görnüşi bu ýerde kabul edilmeýär."
+
+msgid "This is the last section — respondents finish here"
+msgstr "Bu soňky bölüm — gatnaşyjylar şu ýerde tamamlaýarlar"
+
+msgid "This question does not accept files."
+msgstr "Bu sorag faýl kabul etmeýär."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "Bu sorag entek salgylanma gatlagyna baglanmady."
+
+msgid "This question is required"
+msgstr "Bu sorag hökmany"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "Bu suraty soragnamanyň eýesi täzelemeli."
+
+msgid "This survey isn’t available"
+msgstr "Bu soragnama açyk däl"
+
+msgid "Too many files in this response."
+msgstr "Bu jogapda faýl gaty köp."
+
+msgid "Type to search…"
+msgstr "Gözlemek üçin ýazyň…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr ""
+"Sanawda ýok — diňe göni salgylanma arkaly görüp bolýar, indekslenmeýär."
+
+msgid "Upload failed."
+msgstr "Ýüklemek şowsuz boldy."
+
+msgid "Uploading"
+msgstr "Ýüklenýär"
+
+msgid "Yes"
+msgstr "Hawa"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "Habaryňyz kabul edildi. Ony adam gözden geçirer."
+
+msgid "Zoom in"
+msgstr "Ulalt"
+
+msgid "Zoom out"
+msgstr "Kiçelt"
+
+msgid "at least {n} required"
+msgstr "azyndan {n} gerek"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "Hemra"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "Köçeler"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "Relýef"
+
+msgid "create your own free map survey"
+msgstr "öz mugt karta soragnamaňyzy dörediň"
+
+msgid "of"
+msgstr "/"
+
+msgid "responses"
+msgstr "jogap"
+
+msgid "up to {n} more"
+msgstr "ýene {n} çenli"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} {position}-nji orna goýuldy"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} {position}-nji orna süýşürildi"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"{item} alyndy. Süýşürmek üçin ok düwmelerini, goýmak üçin Boşlugy ulanyň."
+
+msgid "{n} marked"
+msgstr "{n} bellendi"
+
+msgid "{n} of {m} marked"
+msgstr "{n} / {m} bellendi"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… we ýene %(n)s"

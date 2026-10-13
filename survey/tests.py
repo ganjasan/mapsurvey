@@ -29422,6 +29422,126 @@ class RespondentLanguageIsolationTest(TestCase):
         self.assertEqual(self.client.session.get('survey_language'), 'de')
 
 
+class RespondentPageLanguageTest(TestCase):
+    """Every respondent page renders in the survey's language (#285).
+
+    Only the language picker and the sections used to activate it; the thanks,
+    password, closed and report pages followed the browser, so a respondent with
+    an English browser finished a Polish survey on an English page.
+    `Content-Language` is what LocaleMiddleware reports as the active language.
+    """
+
+    def setUp(self):
+        self.org = _make_org('LangPagesOrg')
+        self.user = User.objects.create_user('lang_pages_owner', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+
+    def _survey(self, languages, **kwargs):
+        survey = SurveyHeader.objects.create(
+            name=f'lang-{"-".join(languages)}', organization=self.org, created_by=self.user,
+            status=kwargs.pop('status', 'published'), visibility='public',
+            available_languages=languages, redirect_url='#', **kwargs)
+        SurveySection.objects.create(survey_header=survey, name='s1', code='S1', is_head=True)
+        return survey
+
+    @staticmethod
+    def _in(lang, msgid):
+        with translation.override(lang):
+            text = translation.gettext(msgid)
+        assert text != msgid, f'{msgid!r} has no {lang} translation'
+        return text
+
+    def test_thanks_page_follows_the_survey_not_the_browser(self):
+        """
+        GIVEN a respondent with an English browser who took a survey in Polish
+        WHEN the thanks page renders
+        THEN it is in Polish
+        """
+        survey = self._survey(['en', 'pl'])
+        session = self.client.session
+        session['survey_language'] = 'pl'
+        session.save()
+
+        response = self.client.get(f'/surveys/{survey.uuid}/thanks/', HTTP_ACCEPT_LANGUAGE='en')
+
+        self.assertEqual(response.headers['Content-Language'], 'pl')
+        self.assertContains(response, self._in('pl', 'Share this survey'))
+
+    def test_password_gate_of_a_single_language_survey(self):
+        """
+        GIVEN a password-protected survey whose only language is German
+        WHEN a respondent with an English browser enters a wrong password
+        THEN the page and the error are in German
+        """
+        survey = self._survey(['de'])
+        survey.set_password('right')
+        survey.save()
+
+        response = self.client.post(
+            f'/surveys/{survey.uuid}/password/', {'password': 'wrong'}, HTTP_ACCEPT_LANGUAGE='en')
+
+        self.assertEqual(response.headers['Content-Language'], 'de')
+        self.assertContains(response, self._in('de', 'Incorrect password'))
+
+    def test_password_gate_before_a_language_is_chosen_uses_the_browser(self):
+        """
+        GIVEN a password-protected survey offering English and French
+        WHEN a respondent with a French browser opens it before picking a language
+        THEN the password page is in French
+        """
+        survey = self._survey(['en', 'fr'])
+        survey.set_password('right')
+        survey.save()
+
+        response = self.client.get(f'/surveys/{survey.uuid}/password/', HTTP_ACCEPT_LANGUAGE='fr')
+
+        self.assertEqual(response.headers['Content-Language'], 'fr')
+
+    def test_closed_survey_page(self):
+        """
+        GIVEN a closed survey whose language is Spanish
+        WHEN a respondent with an English browser opens it
+        THEN the closed page is in Spanish
+        """
+        survey = self._survey(['es'], status='closed')
+
+        response = self.client.get(f'/surveys/{survey.uuid}/', HTTP_ACCEPT_LANGUAGE='en', follow=True)
+
+        self.assertEqual(response.headers['Content-Language'], 'es')
+        self.assertContains(response, self._in('es', 'This survey is no longer accepting responses.'))
+
+    def test_report_page_and_its_reasons(self):
+        """
+        GIVEN a Dutch survey
+        WHEN a respondent with an English browser opens "Report this survey"
+        THEN the form and its reasons are in Dutch
+        """
+        survey = self._survey(['nl'])
+
+        response = self.client.get(f'/surveys/{survey.uuid}/report/', HTTP_ACCEPT_LANGUAGE='en')
+
+        self.assertEqual(response.headers['Content-Language'], 'nl')
+        self.assertContains(response, self._in('nl', 'Looks like a scam or impersonates a company'))
+
+    def test_survey_language_does_not_leak_into_the_editor(self):
+        """
+        GIVEN a creator who has just taken a survey in Polish
+        WHEN they open the editor
+        THEN the editor renders in their own interface language, not Polish
+        """
+        survey = self._survey(['pl'])
+        self.client.force_login(self.user)
+        session = self.client.session
+        session['survey_language'] = 'pl'
+        session.save()
+        self.client.get(f'/surveys/{survey.uuid}/thanks/', HTTP_ACCEPT_LANGUAGE='en')
+
+        response = self.client.get('/editor/', HTTP_ACCEPT_LANGUAGE='en')
+
+        self.assertEqual(response.headers['Content-Language'], 'en')
+        self.assertNotIn(dj_settings.LANGUAGE_COOKIE_NAME, response.cookies)
+
+
 class TranslationCatalogHygieneTest(SimpleTestCase):
     """Catch the corruption class that made `ru` render the wrong strings.
 
@@ -29671,6 +29791,140 @@ class TranslationCatalogHygieneTest(SimpleTestCase):
             offenders, [],
             'Fuzzy entry — review the guess and drop the flag:\n  '
             + '\n  '.join(offenders))
+
+
+class RespondentCatalogCompletenessTest(SimpleTestCase):
+    """Every string a respondent can see is translated in every survey locale.
+
+    Respondent chrome was translated once (2026-08) and then every feature after
+    it -- the "Other" write-in, spray, Objects on the map, the abuse footer --
+    added `{% trans %}` tags and never reached the catalogs, so a Polish survey
+    said "Please specify" in English (#285). Nothing failed, because nothing
+    compared the templates with the catalogs.
+
+    Msgids are extracted from the SOURCES, not from the `#:` comments in the
+    `.po` files: those comments are written by `makemessages`, and "nobody ran
+    makemessages" is the failure this test exists for. The check reads the
+    compiled `.mo`, which is what production serves -- it has no fuzzy entries
+    and it also catches a forgotten `compilemessages`.
+
+    A new respondent-facing template or module goes into RESPONDENT_TEMPLATES /
+    RESPONDENT_MODULES; `test_survey_page_includes_are_listed` catches partials
+    the survey page includes.
+    """
+
+    RESPONDENT_TEMPLATES = (
+        'base_survey_template.html', 'survey_section.html', 'survey_header.html',
+        'survey_language_select.html', 'survey_password.html', 'survey_closed.html',
+        'survey_unavailable.html', 'survey_thanks.html', 'public_results.html',
+        # Question widgets (survey/forms.py template_name / option_template_name)
+        'html_text.html', 'show_image.html', 'choice_dropdown.html', 'file_upload.html',
+        'thumbs.html', 'ranking.html', 'layer_objects.html', 'leaflet_draw_button.html',
+        'point_draw_button.html', 'line_draw_button.html', 'polygon_draw_button.html',
+        'spray_draw_button.html',
+        'partials/survey_section_partial.html', 'partials/choice_option_other.html',
+        'partials/other_writein_input.html', 'partials/rating_list_pips.html',
+        'partials/rating_scale_strip.html', 'partials/rating_stars.html',
+        'partials/layer_objects_block.html', 'partials/basemap_layers.html',
+        'partials/reference_layers.html', 'partials/ref_layer_factory.html',
+        'partials/_abuse_footer.html', 'partials/_made_with_mapsurvey.html',
+        'abuse/report.html', 'abuse/report_done.html',
+    )
+    #: Modules whose every gettext call is respondent-facing.
+    RESPONDENT_MODULES = (
+        'templatetags/i18n_extras.py', 'uploads.py', 'content_screening.py',
+    )
+    #: Templates the survey pages include that carry no respondent text.
+    NOT_RESPONDENT = ('partials/_analytics.html',)
+
+    _CALL = re.compile(
+        r"\b(n?p?gettext)\((u'(?:[^'\\]|\\.)*'(?:\s*,\s*u'(?:[^'\\]|\\.)*')*)")
+    _LITERAL = re.compile(r"u'(?:[^'\\]|\\.)*'")
+    _INCLUDE = re.compile(r"""{%\s*include\s+["']([^"']+)["']""")
+
+    @staticmethod
+    def _root():
+        import pathlib
+        return pathlib.Path(__file__).resolve().parent
+
+    def _template_keys(self, text):
+        import ast
+        from django.utils.translation.template import templatize
+        keys = set()
+        for match in self._CALL.finditer(templatize(text)):
+            args = [ast.literal_eval(s[1:]) for s in self._LITERAL.findall(match.group(2))]
+            func = match.group(1)
+            keys.add(f'{args[0]}\x04{args[1]}' if func.startswith(('pgettext', 'npgettext'))
+                     else args[0])
+        return keys
+
+    @staticmethod
+    def _module_keys(text):
+        import ast
+        keys = set()
+        for node in ast.walk(ast.parse(text)):
+            if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)):
+                continue
+            literal = [a.value for a in node.args
+                       if isinstance(a, ast.Constant) and isinstance(a.value, str)]
+            if node.func.id in ('_', 'gettext', 'gettext_lazy', 'ngettext') and literal:
+                keys.add(literal[0])
+            elif node.func.id in ('pgettext', 'pgettext_lazy') and len(literal) >= 2:
+                keys.add(f'{literal[0]}\x04{literal[1]}')
+        return keys
+
+    def respondent_keys(self):
+        root = self._root()
+        keys = set()
+        for name in self.RESPONDENT_TEMPLATES:
+            keys |= self._template_keys((root / 'templates' / name).read_text(encoding='utf-8'))
+        for name in self.RESPONDENT_MODULES:
+            keys |= self._module_keys((root / name).read_text(encoding='utf-8'))
+        return keys
+
+    def test_every_respondent_string_is_translated_in_every_survey_locale(self):
+        """
+        GIVEN every msgid the respondent pages, widgets and i18n_json carry
+        WHEN each non-English compiled catalog under survey/locale is read
+        THEN every msgid has a translation there, so no survey shows English chrome
+        """
+        import gettext
+        keys = self.respondent_keys()
+        self.assertGreater(len(keys), 60, 'extraction found suspiciously few msgids')
+        missing = {}
+        for locale_dir in sorted((self._root() / 'locale').iterdir()):
+            if locale_dir.name == 'en':
+                continue
+            mo = locale_dir / 'LC_MESSAGES' / 'django.mo'
+            catalog = {}
+            if mo.exists():
+                with mo.open('rb') as fh:
+                    catalog = gettext.GNUTranslations(fh)._catalog
+            singular = {k[0] if isinstance(k, tuple) else k for k, v in catalog.items() if v}
+            for key in keys - singular:
+                missing.setdefault(key.replace('\x04', ' | '), []).append(locale_dir.name)
+
+        self.assertEqual(
+            missing, {},
+            'Respondent strings with no compiled translation (run makemessages, '
+            'translate, compilemessages):\n  '
+            + '\n  '.join(f'{k[:70]!r}: {", ".join(v) if len(v) < 8 else f"{len(v)} locales"}'
+                          for k, v in sorted(missing.items())))
+
+    def test_survey_page_includes_are_listed(self):
+        """
+        GIVEN the respondent templates in RESPONDENT_TEMPLATES
+        WHEN every template they {% include %} is collected
+        THEN each one is listed too, so a new partial cannot escape the check above
+        """
+        root = self._root() / 'templates'
+        listed = set(self.RESPONDENT_TEMPLATES) | set(self.NOT_RESPONDENT)
+        unlisted = set()
+        for name in self.RESPONDENT_TEMPLATES:
+            for included in self._INCLUDE.findall((root / name).read_text(encoding='utf-8')):
+                if included not in listed and not included.startswith('django/'):
+                    unlisted.add(f'{included} (from {name})')
+        self.assertEqual(sorted(unlisted), [], 'Add these to RESPONDENT_TEMPLATES or NOT_RESPONDENT')
 
 
 class TemplateCommentSyntaxTest(SimpleTestCase):

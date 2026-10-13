@@ -58,9 +58,11 @@ class ReportForm(forms.Form):
 @require_http_methods(['GET', 'POST'])
 def survey_report(request, survey_slug):
     """A respondent flags the survey. Never changes what respondents see."""
+    from .respondent_language import activate_survey_language
     from .views import resolve_survey
 
     survey = resolve_survey(survey_slug)
+    activate_survey_language(request, survey)
     # Same visibility rules as the survey itself: a draft stays a 404, a
     # closed survey still shows the closed page — nothing new is revealed.
     if survey.status != 'published':

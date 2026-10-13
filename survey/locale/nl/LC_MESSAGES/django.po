@@ -6189,7 +6189,7 @@ msgstr ""
 #: survey/templates/maptionnaire_alternative.html:100
 #: survey/templates/maptionnaire_alternative.html:101
 msgid "Yes"
-msgstr ""
+msgstr "Ja"
 
 #: survey/templates/maptionnaire_alternative.html:100
 msgid "Yes — per-question translations"
@@ -6423,7 +6423,7 @@ msgstr ""
 
 #: survey/templates/metroquest_alternative.html:97
 msgid "No"
-msgstr ""
+msgstr "Nee"
 
 #: survey/templates/metroquest_alternative.html:98
 #| msgid "Survey Closed"
@@ -7733,3 +7733,180 @@ msgstr "Hier komen respondenten na de laatste pagina terecht, bijvoorbeeld https
 #: survey/editor_forms.py
 msgid "Enter a full web address, for example https://www.facebook.com/yourproject"
 msgstr "Vul een volledig webadres in, bijvoorbeeld https://www.facebook.com/yourproject"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"Voeg hieronder bij <strong>Keuzes</strong> de items toe die gerangschikt "
+"moeten worden."
+
+msgid "All"
+msgstr "Alle"
+
+msgid "Answered"
+msgstr "Beantwoord"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Vraagt om een wachtwoord, inloggegevens of een betaling"
+
+msgid "Brush size"
+msgstr "Penseelgrootte"
+
+msgid "Cell size: {m} m"
+msgstr "Celgrootte: {m} m"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"Sleep de items in de juiste volgorde, of pak er een op met de spatiebalk en "
+"verplaats het met de pijltjestoetsen."
+
+msgid "Erase"
+msgstr "Gummen"
+
+msgid "File is too large."
+msgstr "Bestand is te groot."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"Houd je vinger op het scherm en sleep om te sprayen. Blijf langer op plekken "
+"waar je zekerder bent."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"Houd ingedrukt en sleep om te sprayen. Blijf langer op plekken waar je "
+"zekerder bent."
+
+msgid "Incorrect password"
+msgstr "Onjuist wachtwoord"
+
+msgid "Large brush"
+msgstr "Groot penseel"
+
+msgid "Layers"
+msgstr "Lagen"
+
+msgid "Link copied!"
+msgstr "Link gekopieerd!"
+
+msgid "Locate me"
+msgstr "Toon mijn locatie"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Lijkt op oplichting of doet zich voor als een bedrijf"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"Markeringen van andere deelnemers. Je eigen markeringen staan niet in deze "
+"lijst."
+
+msgid "Medium brush"
+msgstr "Middelgroot penseel"
+
+msgid "Move map"
+msgstr "Kaart verschuiven"
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Voer nooit wachtwoorden of kaartnummers in een Mapsurvey-enquête in."
+
+msgid "No objects in this layer yet"
+msgstr "Nog geen objecten in deze laag"
+
+msgid "Nothing matches"
+msgstr "Geen resultaten"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr ""
+"Objecten met weinig antwoorden worden verborgen om de privacy te beschermen."
+
+msgid "Please add a file."
+msgstr "Voeg een bestand toe."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "Beantwoord vragen over minstens %%d object(en) om door te gaan"
+
+msgid "Please specify"
+msgstr "Graag specificeren"
+
+msgid "Report this survey"
+msgstr "Deze enquête melden"
+
+msgid "Respondents: {n}"
+msgstr "Deelnemers: {n}"
+
+msgid "Search objects…"
+msgstr "Objecten zoeken…"
+
+msgid "Send report"
+msgstr "Melding versturen"
+
+msgid "Small brush"
+msgstr "Klein penseel"
+
+msgid "Something else"
+msgstr "Iets anders"
+
+msgid "Spray"
+msgstr "Sprayen"
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"Vertel ons wat er mis is met “%(name)s”. Elke melding wordt door een mens "
+"beoordeeld."
+
+msgid "Thank you"
+msgstr "Bedankt"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Het penseel is leeg — wis wat verf om verder te gaan."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "Deze vraag is nog niet gekoppeld aan een referentielaag."
+
+msgid "Type to search…"
+msgstr "Typ om te zoeken…"
+
+msgid "Upload failed."
+msgstr "Uploaden mislukt."
+
+msgid "Your report has been received. A person will look at it."
+msgstr "Je melding is ontvangen. Een medewerker zal ernaar kijken."
+
+msgid "Zoom in"
+msgstr "Inzoomen"
+
+msgid "Zoom out"
+msgstr "Uitzoomen"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "Satelliet"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "Straten"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "Topografisch"
+
+msgid "of"
+msgstr "van"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} neergezet op positie {position}"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} verplaatst naar positie {position}"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"{item} opgepakt. Gebruik de pijltjestoetsen om het te verplaatsen en de "
+"spatiebalk om het neer te zetten."
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… en nog %(n)s"

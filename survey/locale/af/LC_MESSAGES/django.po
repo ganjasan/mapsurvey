@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "Haal weg"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,335 @@ msgstr "Soek adres..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Geen resultate gevind nie"
+
+msgid "A few required questions still need an answer."
+msgstr "'n Paar verpligte vrae moet nog beantwoord word."
+
+msgid "Add another"
+msgstr "Voeg nog een by"
+
+msgid "Add audio file"
+msgstr "Voeg klanklêer by"
+
+msgid "Add photo"
+msgstr "Voeg foto by"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"Voeg die items wat gerangskik moet word hieronder by <strong>Keuses</strong> "
+"by."
+
+msgid "All"
+msgstr "Alles"
+
+msgid "All {m} marked — thank you!"
+msgstr "Al {m} gemerk — dankie!"
+
+msgid "Answered"
+msgstr "Beantwoord"
+
+msgid "Answers"
+msgstr "Antwoorde"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Vra vir 'n wagwoord, 'n aanmelding of 'n betaling"
+
+msgid "Attach file"
+msgstr "Heg lêer aan"
+
+msgid "Brush size"
+msgstr "Kwasgrootte"
+
+msgid "Cell size: {m} m"
+msgstr "Selgrootte: {m} m"
+
+msgid "Clear"
+msgstr "Maak skoon"
+
+msgid "Data as of"
+msgstr "Data soos op"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"Sleep die items in volgorde, of tel een op met Spasie en skuif dit met die "
+"pyltjiesleutels."
+
+msgid "Erase"
+msgstr "Vee uit"
+
+msgid "File is too large."
+msgstr "Lêer is te groot."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Hou en sleep 'n vinger om te spuit. Bly langer waar u meer seker is."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Hou en sleep om te spuit. Bly langer waar u meer seker is."
+
+msgid "Incorrect password"
+msgstr "Verkeerde wagwoord"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"Dit is dalk nog nie gepubliseer nie, of dit is gesluit of verwyder. As u 'n "
+"skakel van 'n organiseerder het, vra hulle."
+
+msgid "Large brush"
+msgstr "Groot kwas"
+
+msgid "Layers"
+msgstr "Lae"
+
+msgid "Link copied!"
+msgstr "Skakel gekopieer!"
+
+msgid "Locate me"
+msgstr "Vind my ligging"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Lyk na bedrog of doen hom voor as 'n maatskappy"
+
+msgid "Made with"
+msgstr "Gemaak met"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"Merke wat deur ander respondente geplaas is. U eie merke is nie in hierdie "
+"lys nie."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Maksimum bereik — verwyder een hieronder om dit te verander."
+
+msgid "Medium brush"
+msgstr "Medium kwas"
+
+msgid "Move map"
+msgstr "Skuif kaart"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Skuif die kaart om die speld te plaas en druk dan Pas toe."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Voer nooit wagwoorde of kaartnommers in 'n Mapsurvey-opname in nie."
+
+msgid "No"
+msgstr "Nee"
+
+msgid "No objects in this layer yet"
+msgstr "Nog geen voorwerpe in hierdie laag nie"
+
+msgid "No results to show yet."
+msgstr "Nog geen resultate om te wys nie."
+
+msgid "Nothing matches"
+msgstr "Niks stem ooreen nie"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "Voorwerpe met min antwoorde word versteek om privaatheid te beskerm."
+
+msgid "Please add a file."
+msgstr "Voeg asseblief 'n lêer by."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "Beantwoord asseblief oor minstens %%d voorwerp(e) om voort te gaan"
+
+msgid "Please specify"
+msgstr "Spesifiseer asseblief"
+
+msgid "Record"
+msgstr "Neem op"
+
+msgid "Remove file"
+msgstr "Verwyder lêer"
+
+msgid "Report this survey"
+msgstr "Rapporteer hierdie opname"
+
+msgid "Respondents: {n}"
+msgstr "Respondente: {n}"
+
+msgid "Retry"
+msgstr "Probeer weer"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Soektog het misluk — kontroleer u verbinding en probeer weer."
+
+msgid "Search objects…"
+msgstr "Soek voorwerpe…"
+
+msgid "See the results"
+msgstr "Sien die resultate"
+
+msgid "Send report"
+msgstr "Stuur verslag"
+
+msgid "Share this survey"
+msgstr "Deel hierdie opname"
+
+msgid "Small brush"
+msgstr "Klein kwas"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "Klein groepe word versteek om privaatheid te beskerm."
+
+msgid "Something else"
+msgstr "Iets anders"
+
+msgid "Spray"
+msgstr "Spuit"
+
+msgid "Stop"
+msgstr "Stop"
+
+msgid "Survey results"
+msgstr "Opnameresultate"
+
+msgid "Survey unavailable"
+msgstr "Opname nie beskikbaar nie"
+
+msgid "Take photo"
+msgstr "Neem foto"
+
+msgid "Take the survey"
+msgstr "Neem deel aan die opname"
+
+msgid "Tap the first point to close the shape."
+msgstr "Tik op die eerste punt om die vorm te sluit."
+
+msgid "Tap the last point to finish the line."
+msgstr "Tik op die laaste punt om die lyn te voltooi."
+
+msgid "Tap to add the next corner."
+msgstr "Tik om die volgende hoek by te voeg."
+
+msgid "Tap to add the next point."
+msgstr "Tik om die volgende punt by te voeg."
+
+msgid "Tap to add the shape’s corners."
+msgstr "Tik om die vorm se hoeke by te voeg."
+
+msgid "Tap to start the line."
+msgstr "Tik om die lyn te begin."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr "Vertel ons wat fout is met “%(name)s”. 'n Mens hersien elke verslag."
+
+msgid "Thank you"
+msgstr "Dankie"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Die kwas is leeg — vee 'n bietjie verf uit om voort te gaan."
+
+msgid "The file does not match its declared type."
+msgstr "Die lêer stem nie ooreen met sy aangegewe tipe nie."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "Die lêer is te groot (limiet %(mb)s MB)."
+
+msgid "The files in this response are too large overall."
+msgstr "Die lêers in hierdie antwoord is altesaam te groot."
+
+msgid "This file type is not accepted here."
+msgstr "Hierdie lêertipe word nie hier aanvaar nie."
+
+msgid "This is the last section — respondents finish here"
+msgstr "Dit is die laaste afdeling — respondente voltooi hier"
+
+msgid "This question does not accept files."
+msgstr "Hierdie vraag aanvaar nie lêers nie."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "Hierdie vraag is nog nie aan 'n verwysingslaag gekoppel nie."
+
+msgid "This question is required"
+msgstr "Hierdie vraag is verpligtend"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr ""
+"Hierdie momentopname moet deur die eienaar van die opname verfris word."
+
+msgid "This survey isn’t available"
+msgstr "Hierdie opname is nie beskikbaar nie"
+
+msgid "Too many files in this response."
+msgstr "Te veel lêers in hierdie antwoord."
+
+msgid "Type to search…"
+msgstr "Tik om te soek…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr "Ongelys — slegs sigbaar via 'n direkte skakel, nie geïndekseer nie."
+
+msgid "Upload failed."
+msgstr "Oplaai het misluk."
+
+msgid "Uploading"
+msgstr "Laai op"
+
+msgid "Yes"
+msgstr "Ja"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "U verslag is ontvang. 'n Mens sal daarna kyk."
+
+msgid "Zoom in"
+msgstr "Zoem in"
+
+msgid "Zoom out"
+msgstr "Zoem uit"
+
+msgid "at least {n} required"
+msgstr "minstens {n} vereis"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "Satelliet"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "Strate"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "Topografies"
+
+msgid "create your own free map survey"
+msgstr "skep u eie gratis kaartopname"
+
+msgid "of"
+msgstr "van"
+
+msgid "responses"
+msgstr "antwoorde"
+
+msgid "up to {n} more"
+msgstr "tot {n} meer"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} op posisie {position} neergesit"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} na posisie {position} geskuif"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"{item} opgetel. Gebruik die pyltjiesleutels om dit te skuif en Spasie om dit "
+"neer te sit."
+
+msgid "{n} marked"
+msgstr "{n} gemerk"
+
+msgid "{n} of {m} marked"
+msgstr "{n} van {m} gemerk"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… en nog %(n)s"

@@ -1,7 +1,7 @@
 {% load i18n %}<div class="choice-dropdown" data-choice-dropdown>
     <input type="text" class="form-control cd-search" autocomplete="off"
            role="combobox" aria-expanded="false" aria-haspopup="listbox"
-           placeholder="Type to search…" value="{{ widget.selected_label }}">
+           placeholder="{% trans 'Type to search…' %}" value="{{ widget.selected_label }}">
     <select name="{{ widget.name }}" class="cd-select" hidden
             {% for name, value in widget.attrs.items %}{% if value is not False %} {{ name }}{% if value is not True %}="{{ value|stringformat:'s' }}"{% endif %}{% endif %}{% endfor %}>
         {% comment %}A select with no blank entry is never empty — the browser selects

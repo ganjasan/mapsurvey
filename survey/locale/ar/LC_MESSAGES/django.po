@@ -300,16 +300,16 @@ msgstr ""
 #: survey/templates/base_survey_template.html:78
 #: survey/templatetags/i18n_extras.py:20
 msgid "Cancel"
-msgstr ""
+msgstr "إلغاء"
 
 #: survey/templates/base_survey_template.html:67
 #: survey/templatetags/i18n_extras.py:18
 msgid "Finish drawing"
-msgstr ""
+msgstr "إنهاء الرسم"
 
 #: survey/templates/base_survey_template.html:79
 msgid "Apply"
-msgstr ""
+msgstr "تطبيق"
 
 #: survey/templates/django_registration/activation_complete.html:4
 #: survey/templates/django_registration/activation_complete.html:11
@@ -683,7 +683,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "إزالة"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -862,120 +862,445 @@ msgstr ""
 
 #: survey/templates/survey_closed.html:4
 msgid "Survey Closed"
-msgstr ""
+msgstr "الاستبيان مغلق"
 
 #: survey/templates/survey_closed.html:10
 msgid "This survey is no longer accepting responses."
-msgstr ""
+msgstr "لم يعد هذا الاستبيان يقبل ردودًا."
 
 #: survey/templates/survey_closed.html:11
 msgid "Back to Home"
-msgstr ""
+msgstr "العودة إلى الصفحة الرئيسية"
 
 #: survey/templates/survey_header.html:21
 msgid "Start"
-msgstr ""
+msgstr "ابدأ"
 
 #: survey/templates/survey_header_template.html:19
 #: survey/templates/survey_section.html:44
 #: survey/templates/survey_section_block.html:14
 msgid "Back"
-msgstr ""
+msgstr "رجوع"
 
 #: survey/templates/survey_header_template.html:25
 #: survey/templates/survey_header_template.html:26
 #: survey/templates/survey_section.html:49
 #: survey/templates/survey_section_block.html:20
 msgid "Next"
-msgstr ""
+msgstr "التالي"
 
 #: survey/templates/survey_header_template.html:28
 #: survey/templates/survey_header_template.html:29
 #: survey/templates/survey_section.html:51
 #: survey/templates/survey_section_block.html:22
 msgid "Finish"
-msgstr ""
+msgstr "إنهاء"
 
 #: survey/templates/survey_language_select.html:7
 msgid "Select Language"
-msgstr ""
+msgstr "اختر اللغة"
 
 #: survey/templates/survey_language_select.html:60
 msgid "Select your language"
-msgstr ""
+msgstr "اختر لغتك"
 
 #: survey/templates/survey_password.html:4
 msgid "Password Required"
-msgstr ""
+msgstr "كلمة المرور مطلوبة"
 
 #: survey/templates/survey_password.html:13
 msgid "This survey requires a password to access."
-msgstr ""
+msgstr "يتطلب الوصول إلى هذا الاستبيان كلمة مرور."
 
 #: survey/templates/survey_password.html:23
 msgid "Enter password"
-msgstr ""
+msgstr "أدخل كلمة المرور"
 
 #: survey/templates/survey_password.html:25
 msgid "Continue"
-msgstr ""
+msgstr "متابعة"
 
 #: survey/templates/survey_thanks.html:21
 msgid "Thank you!"
-msgstr ""
+msgstr "شكرًا لك!"
 
 #: survey/templates/survey_thanks.html:22
 msgid "Your responses have been recorded."
-msgstr ""
+msgstr "تم تسجيل إجاباتك."
 
 #: survey/templatetags/i18n_extras.py:17
 msgid "Start drawing"
-msgstr ""
+msgstr "ابدأ الرسم"
 
 #: survey/templatetags/i18n_extras.py:19
 msgid "Finish editing"
-msgstr ""
+msgstr "إنهاء التعديل"
 
 #: survey/templatetags/i18n_extras.py:21
 msgid "Delete"
-msgstr ""
+msgstr "حذف"
 
 #: survey/templatetags/i18n_extras.py:24
 msgid "Click on the map to place a marker."
-msgstr ""
+msgstr "انقر على الخريطة لوضع علامة."
 
 #: survey/templatetags/i18n_extras.py:27
 msgid "Click to start drawing a shape."
-msgstr ""
+msgstr "انقر لبدء رسم شكل."
 
 #: survey/templatetags/i18n_extras.py:28
 msgid "Click to continue drawing the shape."
-msgstr ""
+msgstr "انقر لمتابعة رسم الشكل."
 
 #: survey/templatetags/i18n_extras.py:29
 msgid "Click the first point to close this shape."
-msgstr ""
+msgstr "انقر على النقطة الأولى لإغلاق هذا الشكل."
 
 #: survey/templatetags/i18n_extras.py:32
 msgid "Click to start drawing a line."
-msgstr ""
+msgstr "انقر لبدء رسم خط."
 
 #: survey/templatetags/i18n_extras.py:33
 msgid "Click to continue drawing the line."
-msgstr ""
+msgstr "انقر لمتابعة رسم الخط."
 
 #: survey/templatetags/i18n_extras.py:34
 msgid "Click the last point to finish the line."
-msgstr ""
+msgstr "انقر على النقطة الأخيرة لإنهاء الخط."
 
 #: survey/templatetags/i18n_extras.py:37
 msgid "<strong>Error:</strong> Shape edges cannot intersect!"
-msgstr ""
+msgstr "<strong>خطأ:</strong> لا يمكن أن تتقاطع حواف الشكل!"
 
 #: survey/templatetags/i18n_extras.py:40
 msgid "Search address..."
-msgstr ""
+msgstr "ابحث عن عنوان..."
 
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
+msgstr "لم يتم العثور على نتائج"
+
+msgid "A few required questions still need an answer."
+msgstr "لا تزال بعض الأسئلة الإلزامية بحاجة إلى إجابة."
+
+msgid "Add another"
+msgstr "إضافة آخر"
+
+msgid "Add audio file"
+msgstr "إضافة ملف صوتي"
+
+msgid "Add photo"
+msgstr "إضافة صورة"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr "أضف العناصر المراد ترتيبها في <strong>الخيارات</strong> أدناه."
+
+msgid "All"
+msgstr "الكل"
+
+msgid "All {m} marked — thank you!"
+msgstr "تم تحديد جميع العناصر ({m}) — شكرًا لك!"
+
+msgid "Answered"
+msgstr "تمت الإجابة"
+
+msgid "Answers"
+msgstr "الإجابات"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "يطلب كلمة مرور أو تسجيل دخول أو دفعة مالية"
+
+msgid "Attach file"
+msgstr "إرفاق ملف"
+
+msgid "Brush size"
+msgstr "حجم الفرشاة"
+
+msgid "Cell size: {m} m"
+msgstr "حجم الخلية: {m} م"
+
+msgid "Clear"
+msgstr "مسح الكل"
+
+msgid "Data as of"
+msgstr "البيانات حتى تاريخ"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
 msgstr ""
+"اسحب العناصر لترتيبها، أو التقط عنصرًا بمفتاح المسافة وحرّكه بمفاتيح الأسهم."
+
+msgid "Erase"
+msgstr "ممحاة"
+
+msgid "File is too large."
+msgstr "الملف كبير جدًا."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "اضغط مطولًا واسحب إصبعك للرش. ابقَ مدة أطول حيث تكون أكثر يقينًا."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "اضغط مطولًا واسحب للرش. ابقَ مدة أطول حيث تكون أكثر يقينًا."
+
+msgid "Incorrect password"
+msgstr "كلمة المرور غير صحيحة"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"ربما لم يُنشر بعد، أو ربما أُغلق أو أُزيل. إذا كان لديك رابط من أحد المنظمين،"
+" فتواصل معهم."
+
+msgid "Large brush"
+msgstr "فرشاة كبيرة"
+
+msgid "Layers"
+msgstr "الطبقات"
+
+msgid "Link copied!"
+msgstr "تم نسخ الرابط!"
+
+msgid "Locate me"
+msgstr "حدد موقعي"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "يبدو احتيالًا أو ينتحل صفة شركة"
+
+msgid "Made with"
+msgstr "صُنع باستخدام"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr "علامات وضعها مشاركون آخرون. علاماتك الخاصة غير موجودة في هذه القائمة."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "تم الوصول إلى الحد الأقصى — أزل واحدًا أدناه لتغييره."
+
+msgid "Medium brush"
+msgstr "فرشاة متوسطة"
+
+msgid "Move map"
+msgstr "تحريك الخريطة"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "حرّك الخريطة لتحديد موضع الدبوس، ثم اضغط تطبيق."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "لا تُدخل أبدًا كلمات مرور أو أرقام بطاقات في استبيان Mapsurvey."
+
+msgid "No"
+msgstr "لا"
+
+msgid "No objects in this layer yet"
+msgstr "لا توجد عناصر في هذه الطبقة بعد"
+
+msgid "No results to show yet."
+msgstr "لا توجد نتائج لعرضها بعد."
+
+msgid "Nothing matches"
+msgstr "لا يوجد تطابق"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "العناصر ذات الإجابات القليلة مخفية لحماية الخصوصية."
+
+msgid "Please add a file."
+msgstr "يرجى إضافة ملف."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "يرجى الإجابة عن %%d عنصر (عناصر) على الأقل للمتابعة"
+
+msgid "Please specify"
+msgstr "يرجى التحديد"
+
+msgid "Record"
+msgstr "تسجيل"
+
+msgid "Remove file"
+msgstr "إزالة الملف"
+
+msgid "Report this survey"
+msgstr "الإبلاغ عن هذا الاستبيان"
+
+msgid "Respondents: {n}"
+msgstr "المشاركون: {n}"
+
+msgid "Retry"
+msgstr "إعادة المحاولة"
+
+msgid "Search failed — check your connection and try again."
+msgstr "فشل البحث — تحقق من اتصالك وحاول مرة أخرى."
+
+msgid "Search objects…"
+msgstr "ابحث في العناصر…"
+
+msgid "See the results"
+msgstr "عرض النتائج"
+
+msgid "Send report"
+msgstr "إرسال البلاغ"
+
+msgid "Share this survey"
+msgstr "شارك هذا الاستبيان"
+
+msgid "Small brush"
+msgstr "فرشاة صغيرة"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "المجموعات الصغيرة مخفية لحماية الخصوصية."
+
+msgid "Something else"
+msgstr "شيء آخر"
+
+msgid "Spray"
+msgstr "رش"
+
+msgid "Stop"
+msgstr "إيقاف"
+
+msgid "Survey results"
+msgstr "نتائج الاستبيان"
+
+msgid "Survey unavailable"
+msgstr "الاستبيان غير متاح"
+
+msgid "Take photo"
+msgstr "التقاط صورة"
+
+msgid "Take the survey"
+msgstr "شارك في الاستبيان"
+
+msgid "Tap the first point to close the shape."
+msgstr "المس النقطة الأولى لإغلاق الشكل."
+
+msgid "Tap the last point to finish the line."
+msgstr "المس النقطة الأخيرة لإنهاء الخط."
+
+msgid "Tap to add the next corner."
+msgstr "المس لإضافة الزاوية التالية."
+
+msgid "Tap to add the next point."
+msgstr "المس لإضافة النقطة التالية."
+
+msgid "Tap to add the shape’s corners."
+msgstr "المس لإضافة زوايا الشكل."
+
+msgid "Tap to start the line."
+msgstr "المس لبدء الخط."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr "أخبرنا بما هو خاطئ في “%(name)s”. يراجع شخص حقيقي كل بلاغ."
+
+msgid "Thank you"
+msgstr "شكرًا لك"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "الفرشاة فارغة — امسح بعض الطلاء للمتابعة."
+
+msgid "The file does not match its declared type."
+msgstr "الملف لا يطابق نوعه المُعلن."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "الملف كبير جدًا (الحد %(mb)s ميغابايت)."
+
+msgid "The files in this response are too large overall."
+msgstr "الحجم الإجمالي للملفات في هذا الرد كبير جدًا."
+
+msgid "This file type is not accepted here."
+msgstr "نوع الملف هذا غير مقبول هنا."
+
+msgid "This is the last section — respondents finish here"
+msgstr "هذا هو القسم الأخير — ينهي المشاركون هنا"
+
+msgid "This question does not accept files."
+msgstr "هذا السؤال لا يقبل الملفات."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "هذا السؤال غير مرتبط بطبقة مرجعية بعد."
+
+msgid "This question is required"
+msgstr "هذا السؤال إلزامي"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "يجب على مالك الاستبيان تحديث هذه اللقطة."
+
+msgid "This survey isn’t available"
+msgstr "هذا الاستبيان غير متوفر"
+
+msgid "Too many files in this response."
+msgstr "عدد الملفات في هذا الرد كبير جدًا."
+
+msgid "Type to search…"
+msgstr "اكتب للبحث…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr "غير مُدرج — يمكن عرضه عبر الرابط المباشر فقط، ولا تتم فهرسته."
+
+msgid "Upload failed."
+msgstr "فشل الرفع."
+
+msgid "Uploading"
+msgstr "جارٍ الرفع"
+
+msgid "Yes"
+msgstr "نعم"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "تم استلام بلاغك. سيطّلع عليه شخص حقيقي."
+
+msgid "Zoom in"
+msgstr "تكبير"
+
+msgid "Zoom out"
+msgstr "تصغير"
+
+msgid "at least {n} required"
+msgstr "مطلوب {n} على الأقل"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "قمر صناعي"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "شوارع"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "طبوغرافية"
+
+msgid "create your own free map survey"
+msgstr "أنشئ استبيان خرائط مجانيًا خاصًا بك"
+
+msgid "of"
+msgstr "من"
+
+msgid "responses"
+msgstr "ردود"
+
+msgid "up to {n} more"
+msgstr "حتى {n} إضافية"
+
+msgid "{item} dropped at position {position}"
+msgstr "تم إفلات {item} في الموضع {position}"
+
+msgid "{item} moved to position {position}"
+msgstr "تم نقل {item} إلى الموضع {position}"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"تم التقاط {item}. استخدم مفاتيح الأسهم لتحريكه، ومفتاح المسافة لإفلاته."
+
+msgid "{n} marked"
+msgstr "تم تحديد {n}"
+
+msgid "{n} of {m} marked"
+msgstr "تم تحديد {n} من {m}"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… و%(n)s أخرى"

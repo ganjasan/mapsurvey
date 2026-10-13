@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "Прыбраць"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,335 @@ msgstr "Пошук адрасу..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Нічога не знойдзена"
+
+msgid "A few required questions still need an answer."
+msgstr "Некалькі абавязковых пытанняў яшчэ без адказу."
+
+msgid "Add another"
+msgstr "Дадаць яшчэ"
+
+msgid "Add audio file"
+msgstr "Дадаць аўдыяфайл"
+
+msgid "Add photo"
+msgstr "Дадаць фота"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"Дадайце элементы для ранжыравання ў раздзел <strong>Варыянты</strong> ніжэй."
+
+msgid "All"
+msgstr "Усе"
+
+msgid "All {m} marked — thank you!"
+msgstr "Пазначана ўсе {m} — дзякуй!"
+
+msgid "Answered"
+msgstr "З адказам"
+
+msgid "Answers"
+msgstr "Адказы"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Запытвае пароль, уваход або аплату"
+
+msgid "Attach file"
+msgstr "Далучыць файл"
+
+msgid "Brush size"
+msgstr "Памер пэндзля"
+
+msgid "Cell size: {m} m"
+msgstr "Памер ячэйкі: {m} м"
+
+msgid "Clear"
+msgstr "Ачысціць"
+
+msgid "Data as of"
+msgstr "Даныя на"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"Перацягніце элементы ў патрэбным парадку або вазьміце элемент клавішай Прабел"
+" і перамяшчайце стрэлкамі."
+
+msgid "Erase"
+msgstr "Сцерці"
+
+msgid "File is too large."
+msgstr "Файл занадта вялікі."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"Утрымлівайце і вядзіце пальцам, каб распыляць. Затрымлівайцеся даўжэй там, "
+"дзе вы больш упэўнены."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"Утрымлівайце і вядзіце, каб распыляць. Затрымлівайцеся даўжэй там, дзе вы "
+"больш упэўнены."
+
+msgid "Incorrect password"
+msgstr "Няправільны пароль"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"Магчыма, яго яшчэ не апублікавалі, або яго закрылі ці выдалілі. Калі ў вас "
+"ёсць спасылка ад арганізатара, звярніцеся да яго."
+
+msgid "Large brush"
+msgstr "Вялікі пэндзаль"
+
+msgid "Layers"
+msgstr "Слаі"
+
+msgid "Link copied!"
+msgstr "Спасылка скапіравана!"
+
+msgid "Locate me"
+msgstr "Маё месцазнаходжанне"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Падобна на ашуканства або выдае сябе за кампанію"
+
+msgid "Made with"
+msgstr "Зроблена з дапамогай"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"Адзнакі, пастаўленыя іншымі ўдзельнікамі. Вашых уласных адзнак у гэтым спісе "
+"няма."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Дасягнута максімум — выдаліце адзін ніжэй, каб змяніць."
+
+msgid "Medium brush"
+msgstr "Сярэдні пэндзаль"
+
+msgid "Move map"
+msgstr "Перамясціць карту"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Перамяшчайце карту, каб размясціць пазнаку, затым націсніце «Ужыць»."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Ніколі не ўводзьце паролі або нумары картак у апытанні Mapsurvey."
+
+msgid "No"
+msgstr "Не"
+
+msgid "No objects in this layer yet"
+msgstr "У гэтым слоі пакуль няма аб'ектаў"
+
+msgid "No results to show yet."
+msgstr "Пакуль няма вынікаў для паказу."
+
+msgid "Nothing matches"
+msgstr "Няма супадзенняў"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "Аб'екты з малой колькасцю адказаў схаваны дзеля абароны прыватнасці."
+
+msgid "Please add a file."
+msgstr "Калі ласка, дадайце файл."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "Каб працягнуць, адкажыце пра як мінімум %%d аб'ект(аў)"
+
+msgid "Please specify"
+msgstr "Удакладніце, калі ласка"
+
+msgid "Record"
+msgstr "Запісаць"
+
+msgid "Remove file"
+msgstr "Прыбраць файл"
+
+msgid "Report this survey"
+msgstr "Паскардзіцца на гэта апытанне"
+
+msgid "Respondents: {n}"
+msgstr "Удзельнікаў: {n}"
+
+msgid "Retry"
+msgstr "Паўтарыць"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Пошук не ўдаўся — праверце злучэнне і паспрабуйце зноў."
+
+msgid "Search objects…"
+msgstr "Пошук аб'ектаў…"
+
+msgid "See the results"
+msgstr "Паглядзець вынікі"
+
+msgid "Send report"
+msgstr "Адправіць скаргу"
+
+msgid "Share this survey"
+msgstr "Падзяліцца апытаннем"
+
+msgid "Small brush"
+msgstr "Малы пэндзаль"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "Малыя групы схаваны дзеля абароны прыватнасці."
+
+msgid "Something else"
+msgstr "Іншае"
+
+msgid "Spray"
+msgstr "Распыляць"
+
+msgid "Stop"
+msgstr "Спыніць"
+
+msgid "Survey results"
+msgstr "Вынікі апытання"
+
+msgid "Survey unavailable"
+msgstr "Апытанне недаступнае"
+
+msgid "Take photo"
+msgstr "Зрабіць фота"
+
+msgid "Take the survey"
+msgstr "Прайсці апытанне"
+
+msgid "Tap the first point to close the shape."
+msgstr "Націсніце на першую кропку, каб замкнуць фігуру."
+
+msgid "Tap the last point to finish the line."
+msgstr "Націсніце на апошнюю кропку, каб завяршыць лінію."
+
+msgid "Tap to add the next corner."
+msgstr "Націсніце, каб дадаць наступны вугал."
+
+msgid "Tap to add the next point."
+msgstr "Націсніце, каб дадаць наступную кропку."
+
+msgid "Tap to add the shape’s corners."
+msgstr "Націскайце, каб дадаць вуглы фігуры."
+
+msgid "Tap to start the line."
+msgstr "Націсніце, каб пачаць лінію."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr "Раскажыце, што не так з «%(name)s». Кожную скаргу разглядае чалавек."
+
+msgid "Thank you"
+msgstr "Дзякуй"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Пэндзаль пусты — сатрыце крыху фарбы, каб працягнуць."
+
+msgid "The file does not match its declared type."
+msgstr "Файл не адпавядае заяўленаму тыпу."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "Файл занадта вялікі (ліміт %(mb)s МБ)."
+
+msgid "The files in this response are too large overall."
+msgstr "Агульны памер файлаў у гэтым адказе занадта вялікі."
+
+msgid "This file type is not accepted here."
+msgstr "Гэты тып файла тут не прымаецца."
+
+msgid "This is the last section — respondents finish here"
+msgstr "Гэта апошні раздзел — тут удзельнікі завяршаюць"
+
+msgid "This question does not accept files."
+msgstr "Гэта пытанне не прымае файлы."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "Гэта пытанне пакуль не прывязана да даведачнага слоя."
+
+msgid "This question is required"
+msgstr "Гэта пытанне абавязковае"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "Уладальнік апытання павінен абнавіць гэты здымак даных."
+
+msgid "This survey isn’t available"
+msgstr "Гэта апытанне недаступнае"
+
+msgid "Too many files in this response."
+msgstr "У гэтым адказе занадта шмат файлаў."
+
+msgid "Type to search…"
+msgstr "Пачніце ўводзіць для пошуку…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr "Не ў спісе — даступна толькі па прамой спасылцы, не індэксуецца."
+
+msgid "Upload failed."
+msgstr "Не ўдалося загрузіць."
+
+msgid "Uploading"
+msgstr "Загрузка"
+
+msgid "Yes"
+msgstr "Так"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "Вашу скаргу атрымана. Яе разгледзіць чалавек."
+
+msgid "Zoom in"
+msgstr "Наблізіць"
+
+msgid "Zoom out"
+msgstr "Аддаліць"
+
+msgid "at least {n} required"
+msgstr "патрабуецца не менш за {n}"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "Спадарожнік"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "Вуліцы"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "Рэльеф"
+
+msgid "create your own free map survey"
+msgstr "стварыце ўласнае бясплатнае апытанне на карце"
+
+msgid "of"
+msgstr "з"
+
+msgid "responses"
+msgstr "адказаў"
+
+msgid "up to {n} more"
+msgstr "яшчэ да {n}"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} пастаўлены на пазіцыю {position}"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} перамешчаны на пазіцыю {position}"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr "{item} узяты. Перамяшчайце стрэлкамі, Прабел — каб паставіць."
+
+msgid "{n} marked"
+msgstr "Пазначана: {n}"
+
+msgid "{n} of {m} marked"
+msgstr "Пазначана {n} з {m}"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… і яшчэ %(n)s"

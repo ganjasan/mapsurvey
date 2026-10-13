@@ -6153,7 +6153,7 @@ msgstr ""
 #: survey/templates/maptionnaire_alternative.html:100
 #: survey/templates/maptionnaire_alternative.html:101
 msgid "Yes"
-msgstr ""
+msgstr "Kyllä"
 
 #: survey/templates/maptionnaire_alternative.html:100
 msgid "Yes — per-question translations"
@@ -6387,7 +6387,7 @@ msgstr ""
 
 #: survey/templates/metroquest_alternative.html:97
 msgid "No"
-msgstr ""
+msgstr "Ei"
 
 #: survey/templates/metroquest_alternative.html:98
 #| msgid "Survey Closed"
@@ -7695,3 +7695,178 @@ msgstr "Vastaajat ohjataan tänne viimeisen sivun jälkeen, esimerkiksi https://
 #: survey/editor_forms.py
 msgid "Enter a full web address, for example https://www.facebook.com/yourproject"
 msgstr "Kirjoita koko verkko-osoite, esimerkiksi https://www.facebook.com/yourproject"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"Lisää järjestettävät kohteet alla olevaan kohtaan "
+"<strong>Vaihtoehdot</strong>."
+
+msgid "All"
+msgstr "Kaikki"
+
+msgid "Answered"
+msgstr "Vastatut"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Pyytää salasanaa, kirjautumista tai maksua"
+
+msgid "Brush size"
+msgstr "Siveltimen koko"
+
+msgid "Cell size: {m} m"
+msgstr "Ruudun koko: {m} m"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"Vedä kohteet järjestykseen tai nosta kohde välilyönnillä ja siirrä sitä "
+"nuolinäppäimillä."
+
+msgid "Erase"
+msgstr "Pyyhi"
+
+msgid "File is too large."
+msgstr "Tiedosto on liian suuri."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"Suihkuta pitämällä sormea painettuna ja vetämällä. Viivy pidempään kohdissa, "
+"joista olet varmempi."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"Suihkuta pitämällä painettuna ja vetämällä. Viivy pidempään kohdissa, joista "
+"olet varmempi."
+
+msgid "Incorrect password"
+msgstr "Väärä salasana"
+
+msgid "Large brush"
+msgstr "Suuri sivellin"
+
+msgid "Layers"
+msgstr "Karttatasot"
+
+msgid "Link copied!"
+msgstr "Linkki kopioitu!"
+
+msgid "Locate me"
+msgstr "Paikanna minut"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Vaikuttaa huijaukselta tai esiintyy yrityksenä"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"Muiden vastaajien merkinnät. Omat merkintäsi eivät näy tässä luettelossa."
+
+msgid "Medium brush"
+msgstr "Keskikokoinen sivellin"
+
+msgid "Move map"
+msgstr "Siirrä karttaa"
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Älä koskaan syötä salasanoja tai korttinumeroita Mapsurvey-kyselyyn."
+
+msgid "No objects in this layer yet"
+msgstr "Tällä tasolla ei ole vielä kohteita"
+
+msgid "Nothing matches"
+msgstr "Ei osumia"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr ""
+"Kohteet, joilla on vähän vastauksia, on piilotettu yksityisyyden "
+"suojaamiseksi."
+
+msgid "Please add a file."
+msgstr "Lisää tiedosto."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "Vastaa vähintään %%d kohteesta jatkaaksesi"
+
+msgid "Please specify"
+msgstr "Tarkenna"
+
+msgid "Report this survey"
+msgstr "Ilmoita tästä kyselystä"
+
+msgid "Respondents: {n}"
+msgstr "Vastaajia: {n}"
+
+msgid "Search objects…"
+msgstr "Hae kohteita…"
+
+msgid "Send report"
+msgstr "Lähetä ilmoitus"
+
+msgid "Small brush"
+msgstr "Pieni sivellin"
+
+msgid "Something else"
+msgstr "Jokin muu"
+
+msgid "Spray"
+msgstr "Suihkuta"
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"Kerro, mikä kyselyssä ”%(name)s” on vialla. Ihminen käy läpi jokaisen "
+"ilmoituksen."
+
+msgid "Thank you"
+msgstr "Kiitos"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Sivellin on tyhjä — pyyhi osa maalista jatkaaksesi."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "Tätä kysymystä ei ole vielä liitetty viitetasoon."
+
+msgid "Type to search…"
+msgstr "Kirjoita hakeaksesi…"
+
+msgid "Upload failed."
+msgstr "Lataus epäonnistui."
+
+msgid "Your report has been received. A person will look at it."
+msgstr "Ilmoituksesi on vastaanotettu. Ihminen tarkistaa sen."
+
+msgid "Zoom in"
+msgstr "Lähennä"
+
+msgid "Zoom out"
+msgstr "Loitonna"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "Satelliitti"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "Kadut"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "Maasto"
+
+msgid "of"
+msgstr "/"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} pudotettu sijaan {position}"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} siirretty sijaan {position}"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr "{item} nostettu. Siirrä nuolinäppäimillä, pudota välilyönnillä."
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… ja %(n)s muuta"

@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "తీసివేయండి"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,338 @@ msgstr "చిరునామా వెతకండి..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "ఫలితాలు కనుగొనబడలేదు"
+
+msgid "A few required questions still need an answer."
+msgstr "కొన్ని తప్పనిసరి ప్రశ్నలకు ఇంకా సమాధానం ఇవ్వాలి."
+
+msgid "Add another"
+msgstr "మరొకటి జోడించండి"
+
+msgid "Add audio file"
+msgstr "ఆడియో ఫైల్ జోడించండి"
+
+msgid "Add photo"
+msgstr "ఫోటో జోడించండి"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"ర్యాంక్ చేయాల్సిన అంశాలను కింద ఉన్న <strong>ఎంపికలు</strong>లో జోడించండి."
+
+msgid "All"
+msgstr "అన్నీ"
+
+msgid "All {m} marked — thank you!"
+msgstr "మొత్తం {m} గుర్తించబడ్డాయి — ధన్యవాదాలు!"
+
+msgid "Answered"
+msgstr "సమాధానమిచ్చినవి"
+
+msgid "Answers"
+msgstr "సమాధానాలు"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "పాస్‌వర్డ్, లాగిన్ లేదా చెల్లింపు అడుగుతోంది"
+
+msgid "Attach file"
+msgstr "ఫైల్ జత చేయండి"
+
+msgid "Brush size"
+msgstr "బ్రష్ పరిమాణం"
+
+msgid "Cell size: {m} m"
+msgstr "సెల్ పరిమాణం: {m} మీ"
+
+msgid "Clear"
+msgstr "క్లియర్ చేయండి"
+
+msgid "Data as of"
+msgstr "డేటా ఈ తేదీ నాటికి"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"అంశాలను లాగి క్రమంలో పెట్టండి, లేదా Space తో ఒకదాన్ని ఎంచుకుని బాణం కీలతో "
+"జరపండి."
+
+msgid "Erase"
+msgstr "చెరిపివేయి"
+
+msgid "File is too large."
+msgstr "ఫైల్ చాలా పెద్దది."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"స్ప్రే చేయడానికి వేలిని నొక్కి పట్టుకుని లాగండి. మీకు ఎక్కువ నమ్మకం ఉన్న చోట "
+"ఎక్కువసేపు ఉంచండి."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"స్ప్రే చేయడానికి నొక్కి పట్టుకుని లాగండి. మీకు ఎక్కువ నమ్మకం ఉన్న చోట "
+"ఎక్కువసేపు ఉంచండి."
+
+msgid "Incorrect password"
+msgstr "తప్పు పాస్‌వర్డ్"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"ఇది ఇంకా ప్రచురించబడకపోవచ్చు, లేదా మూసివేయబడి ఉండవచ్చు లేదా తొలగించబడి "
+"ఉండవచ్చు. మీకు నిర్వాహకుడి నుండి లింక్ వచ్చి ఉంటే, వారిని అడగండి."
+
+msgid "Large brush"
+msgstr "పెద్ద బ్రష్"
+
+msgid "Layers"
+msgstr "లేయర్లు"
+
+msgid "Link copied!"
+msgstr "లింక్ కాపీ అయింది!"
+
+msgid "Locate me"
+msgstr "నా స్థానాన్ని చూపించు"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "మోసం లాగా ఉంది లేదా ఒక కంపెనీలా నటిస్తోంది"
+
+msgid "Made with"
+msgstr "దీనితో తయారు చేయబడింది"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr "ఇతర ప్రతివాదులు ఉంచిన గుర్తులు. మీ స్వంత గుర్తులు ఈ జాబితాలో లేవు."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "గరిష్ఠ పరిమితి చేరుకుంది — మార్చడానికి కింద ఒకదాన్ని తీసివేయండి."
+
+msgid "Medium brush"
+msgstr "మధ్యస్థ బ్రష్"
+
+msgid "Move map"
+msgstr "మ్యాప్‌ను జరపండి"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "పిన్‌ను ఉంచడానికి మ్యాప్‌ను జరపండి, ఆపై వర్తింపజేయి నొక్కండి."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr ""
+"Mapsurvey సర్వేలో ఎప్పుడూ పాస్‌వర్డ్‌లు లేదా కార్డ్ నంబర్లు నమోదు చేయవద్దు."
+
+msgid "No"
+msgstr "కాదు"
+
+msgid "No objects in this layer yet"
+msgstr "ఈ లేయర్‌లో ఇంకా వస్తువులు లేవు"
+
+msgid "No results to show yet."
+msgstr "చూపడానికి ఇంకా ఫలితాలు లేవు."
+
+msgid "Nothing matches"
+msgstr "ఏదీ సరిపోలలేదు"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "గోప్యతను కాపాడటానికి తక్కువ సమాధానాలు ఉన్న వస్తువులు దాచబడతాయి."
+
+msgid "Please add a file."
+msgstr "దయచేసి ఒక ఫైల్ జోడించండి."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "కొనసాగడానికి దయచేసి కనీసం %%d వస్తువు(ల) గురించి సమాధానం ఇవ్వండి"
+
+msgid "Please specify"
+msgstr "దయచేసి పేర్కొనండి"
+
+msgid "Record"
+msgstr "రికార్డ్ చేయండి"
+
+msgid "Remove file"
+msgstr "ఫైల్‌ను తీసివేయండి"
+
+msgid "Report this survey"
+msgstr "ఈ సర్వేను నివేదించండి"
+
+msgid "Respondents: {n}"
+msgstr "ప్రతివాదులు: {n}"
+
+msgid "Retry"
+msgstr "మళ్లీ ప్రయత్నించండి"
+
+msgid "Search failed — check your connection and try again."
+msgstr "శోధన విఫలమైంది — మీ కనెక్షన్‌ను తనిఖీ చేసి మళ్లీ ప్రయత్నించండి."
+
+msgid "Search objects…"
+msgstr "వస్తువులను వెతకండి…"
+
+msgid "See the results"
+msgstr "ఫలితాలను చూడండి"
+
+msgid "Send report"
+msgstr "నివేదిక పంపండి"
+
+msgid "Share this survey"
+msgstr "ఈ సర్వేను షేర్ చేయండి"
+
+msgid "Small brush"
+msgstr "చిన్న బ్రష్"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "గోప్యతను కాపాడటానికి చిన్న సమూహాలు దాచబడతాయి."
+
+msgid "Something else"
+msgstr "ఇంకేదైనా"
+
+msgid "Spray"
+msgstr "స్ప్రే"
+
+msgid "Stop"
+msgstr "ఆపు"
+
+msgid "Survey results"
+msgstr "సర్వే ఫలితాలు"
+
+msgid "Survey unavailable"
+msgstr "సర్వే అందుబాటులో లేదు"
+
+msgid "Take photo"
+msgstr "ఫోటో తీయండి"
+
+msgid "Take the survey"
+msgstr "సర్వేలో పాల్గొనండి"
+
+msgid "Tap the first point to close the shape."
+msgstr "ఆకారాన్ని మూసివేయడానికి మొదటి బిందువును నొక్కండి."
+
+msgid "Tap the last point to finish the line."
+msgstr "గీతను ముగించడానికి చివరి బిందువును నొక్కండి."
+
+msgid "Tap to add the next corner."
+msgstr "తదుపరి మూలను జోడించడానికి నొక్కండి."
+
+msgid "Tap to add the next point."
+msgstr "తదుపరి బిందువును జోడించడానికి నొక్కండి."
+
+msgid "Tap to add the shape’s corners."
+msgstr "ఆకారపు మూలలను జోడించడానికి నొక్కండి."
+
+msgid "Tap to start the line."
+msgstr "గీతను ప్రారంభించడానికి నొక్కండి."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"“%(name)s”లో ఏమి తప్పు ఉందో మాకు చెప్పండి. ప్రతి నివేదికను ఒక వ్యక్తి "
+"సమీక్షిస్తారు."
+
+msgid "Thank you"
+msgstr "ధన్యవాదాలు"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "బ్రష్ ఖాళీ అయింది — కొనసాగడానికి కొంత రంగును చెరిపివేయండి."
+
+msgid "The file does not match its declared type."
+msgstr "ఫైల్ దాని ప్రకటించిన రకంతో సరిపోలడం లేదు."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "ఫైల్ చాలా పెద్దది (పరిమితి %(mb)s MB)."
+
+msgid "The files in this response are too large overall."
+msgstr "ఈ సమాధానంలోని ఫైళ్ల మొత్తం పరిమాణం చాలా ఎక్కువ."
+
+msgid "This file type is not accepted here."
+msgstr "ఈ ఫైల్ రకం ఇక్కడ అంగీకరించబడదు."
+
+msgid "This is the last section — respondents finish here"
+msgstr "ఇది చివరి విభాగం — ప్రతివాదులు ఇక్కడ ముగిస్తారు"
+
+msgid "This question does not accept files."
+msgstr "ఈ ప్రశ్న ఫైళ్లను అంగీకరించదు."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "ఈ ప్రశ్న ఇంకా రిఫరెన్స్ లేయర్‌కు అనుసంధానించబడలేదు."
+
+msgid "This question is required"
+msgstr "ఈ ప్రశ్న తప్పనిసరి"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "ఈ స్నాప్‌షాట్‌ను సర్వే యజమాని రిఫ్రెష్ చేయాలి."
+
+msgid "This survey isn’t available"
+msgstr "ఈ సర్వేను యాక్సెస్ చేయలేరు"
+
+msgid "Too many files in this response."
+msgstr "ఈ సమాధానంలో చాలా ఎక్కువ ఫైళ్లు ఉన్నాయి."
+
+msgid "Type to search…"
+msgstr "వెతకడానికి టైప్ చేయండి…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr ""
+"జాబితాలో లేదు — నేరుగా లింక్ ద్వారా మాత్రమే చూడవచ్చు, ఇండెక్స్ చేయబడదు."
+
+msgid "Upload failed."
+msgstr "అప్‌లోడ్ విఫలమైంది."
+
+msgid "Uploading"
+msgstr "అప్‌లోడ్ అవుతోంది"
+
+msgid "Yes"
+msgstr "అవును"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "మీ నివేదిక అందింది. ఒక వ్యక్తి దాన్ని పరిశీలిస్తారు."
+
+msgid "Zoom in"
+msgstr "జూమ్ ఇన్"
+
+msgid "Zoom out"
+msgstr "జూమ్ అవుట్"
+
+msgid "at least {n} required"
+msgstr "కనీసం {n} అవసరం"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "ఉపగ్రహం"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "వీధులు"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "భూస్వరూపం"
+
+msgid "create your own free map survey"
+msgstr "మీ స్వంత ఉచిత మ్యాప్ సర్వేను సృష్టించండి"
+
+msgid "of"
+msgstr "లో"
+
+msgid "responses"
+msgstr "ప్రతిస్పందనలు"
+
+msgid "up to {n} more"
+msgstr "ఇంకా {n} వరకు"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} స్థానం {position}లో ఉంచబడింది"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} స్థానం {position}కి జరపబడింది"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"{item} ఎంచుకోబడింది. జరపడానికి బాణం కీలను, వదలడానికి Space ను ఉపయోగించండి."
+
+msgid "{n} marked"
+msgstr "{n} గుర్తించబడ్డాయి"
+
+msgid "{n} of {m} marked"
+msgstr "{m}లో {n} గుర్తించబడ్డాయి"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… మరియు ఇంకా %(n)s"

@@ -1,4 +1,4 @@
-{% comment %}
+{% load i18n %}{% comment %}
 Drag-to-order list. Each row carries a hidden input under the question's field
 name, so the submitted order IS the DOM order — moving a row moves its input,
 and getlist() reads the ranking back with nothing to parse.
@@ -7,10 +7,13 @@ Without JavaScript the rows do not move and the question stays unanswered,
 which is the same trade-off the map questions make. The alternative — typed
 rank boxes — is the tie problem this question type exists to remove.
 {% endcomment %}
-<div class="ranking" data-ranking>
+<div class="ranking" data-ranking
+     data-msg-picked="{% trans '{item} picked up. Use the arrow keys to move it, Space to drop it.' %}"
+     data-msg-moved="{% trans '{item} moved to position {position}' %}"
+     data-msg-dropped="{% trans '{item} dropped at position {position}' %}">
     {% if widget.items %}
     <p class="ranking__hint">
-        Drag the items into order, or pick one up with Space and move it with the arrow keys.
+        {% trans 'Drag the items into order, or pick one up with Space and move it with the arrow keys.' %}
     </p>
     <ol class="ranking__list" data-ranking-list>
         {% for item in widget.items %}
@@ -31,7 +34,7 @@ rank boxes — is the tie problem this question type exists to remove.
     {% endcomment %}
     <p class="ranking__empty">
         <i class="fas fa-list-ol" aria-hidden="true"></i>
-        Add the items to be ranked in <strong>Choices</strong> below.
+        {% blocktrans trimmed %}Add the items to be ranked in <strong>Choices</strong> below.{% endblocktrans %}
     </p>
     {% endif %}
 </div>

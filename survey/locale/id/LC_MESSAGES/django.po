@@ -6120,7 +6120,7 @@ msgstr ""
 #: survey/templates/maptionnaire_alternative.html:100
 #: survey/templates/maptionnaire_alternative.html:101
 msgid "Yes"
-msgstr ""
+msgstr "Ya"
 
 #: survey/templates/maptionnaire_alternative.html:100
 msgid "Yes — per-question translations"
@@ -6354,7 +6354,7 @@ msgstr ""
 
 #: survey/templates/metroquest_alternative.html:97
 msgid "No"
-msgstr ""
+msgstr "Tidak"
 
 #: survey/templates/metroquest_alternative.html:98
 msgid "Survey structure"
@@ -7714,3 +7714,179 @@ msgstr "Responden diarahkan ke sini setelah halaman terakhir, misalnya https://w
 #: survey/editor_forms.py
 msgid "Enter a full web address, for example https://www.facebook.com/yourproject"
 msgstr "Masukkan alamat web lengkap, misalnya https://www.facebook.com/yourproject"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"Tambahkan item yang akan diurutkan di <strong>Pilihan</strong> di bawah."
+
+msgid "All"
+msgstr "Semua"
+
+msgid "Answered"
+msgstr "Dijawab"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Meminta kata sandi, login, atau pembayaran"
+
+msgid "Brush size"
+msgstr "Ukuran kuas"
+
+msgid "Cell size: {m} m"
+msgstr "Ukuran sel: {m} m"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"Seret item untuk mengurutkannya, atau ambil satu dengan Spasi lalu pindahkan "
+"dengan tombol panah."
+
+msgid "Erase"
+msgstr "Hapus semprotan"
+
+msgid "File is too large."
+msgstr "File terlalu besar."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"Tahan dan geser jari untuk menyemprot. Tahan lebih lama di tempat yang Anda "
+"lebih yakini."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"Tahan dan seret untuk menyemprot. Tahan lebih lama di tempat yang Anda lebih "
+"yakini."
+
+msgid "Incorrect password"
+msgstr "Kata sandi salah"
+
+msgid "Large brush"
+msgstr "Kuas besar"
+
+msgid "Layers"
+msgstr "Lapisan"
+
+msgid "Link copied!"
+msgstr "Tautan disalin!"
+
+msgid "Locate me"
+msgstr "Temukan lokasi saya"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Tampak seperti penipuan atau menyamar sebagai perusahaan"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"Tanda yang dibuat oleh responden lain. Tanda Anda sendiri tidak ada dalam "
+"daftar ini."
+
+msgid "Medium brush"
+msgstr "Kuas sedang"
+
+msgid "Move map"
+msgstr "Geser peta"
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr ""
+"Jangan pernah memasukkan kata sandi atau nomor kartu dalam survei Mapsurvey."
+
+msgid "No objects in this layer yet"
+msgstr "Belum ada objek di lapisan ini"
+
+msgid "Nothing matches"
+msgstr "Tidak ada yang cocok"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "Objek dengan sedikit jawaban disamarkan untuk melindungi privasi."
+
+msgid "Please add a file."
+msgstr "Silakan tambahkan file."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "Jawab tentang setidaknya %%d objek untuk melanjutkan"
+
+msgid "Please specify"
+msgstr "Harap sebutkan"
+
+msgid "Report this survey"
+msgstr "Laporkan survei ini"
+
+msgid "Respondents: {n}"
+msgstr "Responden: {n}"
+
+msgid "Search objects…"
+msgstr "Cari objek…"
+
+msgid "Send report"
+msgstr "Kirim laporan"
+
+msgid "Small brush"
+msgstr "Kuas kecil"
+
+msgid "Something else"
+msgstr "Hal lain"
+
+msgid "Spray"
+msgstr "Semprot"
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"Beri tahu kami apa yang salah dengan “%(name)s”. Setiap laporan ditinjau oleh"
+" manusia."
+
+msgid "Thank you"
+msgstr "Terima kasih"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Kuas sudah habis — hapus sebagian semprotan untuk melanjutkan."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "Pertanyaan ini belum terhubung ke lapisan referensi."
+
+msgid "Type to search…"
+msgstr "Ketik untuk mencari…"
+
+msgid "Upload failed."
+msgstr "Unggahan gagal."
+
+msgid "Your report has been received. A person will look at it."
+msgstr "Laporan Anda telah diterima. Seseorang akan meninjaunya."
+
+msgid "Zoom in"
+msgstr "Perbesar"
+
+msgid "Zoom out"
+msgstr "Perkecil"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "Satelit"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "Jalan"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "Topografi"
+
+msgid "of"
+msgstr "dari"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} diletakkan di posisi {position}"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} dipindahkan ke posisi {position}"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"{item} diambil. Gunakan tombol panah untuk memindahkannya, Spasi untuk "
+"meletakkannya."
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… dan %(n)s lainnya"

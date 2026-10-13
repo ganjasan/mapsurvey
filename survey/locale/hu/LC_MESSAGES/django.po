@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "Eltávolítás"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,341 @@ msgstr "Cím keresése..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Nincs találat"
+
+msgid "A few required questions still need an answer."
+msgstr "Néhány kötelező kérdés még megválaszolatlan."
+
+msgid "Add another"
+msgstr "Újabb hozzáadása"
+
+msgid "Add audio file"
+msgstr "Hangfájl hozzáadása"
+
+msgid "Add photo"
+msgstr "Fénykép hozzáadása"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"Adja hozzá a rangsorolandó elemeket lent a <strong>Lehetőségek</strong> "
+"részben."
+
+msgid "All"
+msgstr "Összes"
+
+msgid "All {m} marked — thank you!"
+msgstr "Mind a(z) {m} megjelölve — köszönjük!"
+
+msgid "Answered"
+msgstr "Megválaszolt"
+
+msgid "Answers"
+msgstr "Válaszok"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Jelszót, bejelentkezést vagy fizetést kér"
+
+msgid "Attach file"
+msgstr "Fájl csatolása"
+
+msgid "Brush size"
+msgstr "Ecsetméret"
+
+msgid "Cell size: {m} m"
+msgstr "Cellaméret: {m} m"
+
+msgid "Clear"
+msgstr "Mind törlése"
+
+msgid "Data as of"
+msgstr "Adatok állapota:"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"Húzza sorrendbe az elemeket, vagy emeljen fel egyet a szóköz billentyűvel, és"
+" mozgassa a nyílbillentyűkkel."
+
+msgid "Erase"
+msgstr "Radír"
+
+msgid "File is too large."
+msgstr "A fájl túl nagy."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"A festéshez tartsa lenyomva és húzza az ujját. Ahol biztosabb, ott időzzön "
+"tovább."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"A festéshez tartsa lenyomva és húzza. Ahol biztosabb, ott időzzön tovább."
+
+msgid "Incorrect password"
+msgstr "Helytelen jelszó"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"Lehet, hogy még nem tették közzé, vagy lezárták, illetve eltávolították. Ha "
+"egy szervezőtől kapta a linket, érdeklődjön nála."
+
+msgid "Large brush"
+msgstr "Nagy ecset"
+
+msgid "Layers"
+msgstr "Rétegek"
+
+msgid "Link copied!"
+msgstr "Link másolva!"
+
+msgid "Locate me"
+msgstr "Saját hely"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Csalásnak tűnik, vagy egy cégnek adja ki magát"
+
+msgid "Made with"
+msgstr "Készült ezzel:"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"Más válaszadók által elhelyezett jelölések. A saját jelölései nem szerepelnek"
+" ebben a listában."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Elérte a maximumot — a módosításhoz távolítson el egyet lent."
+
+msgid "Medium brush"
+msgstr "Közepes ecset"
+
+msgid "Move map"
+msgstr "Térkép mozgatása"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr ""
+"Mozgassa a térképet a jelölő elhelyezéséhez, majd nyomja meg az Alkalmaz "
+"gombot."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Soha ne adjon meg jelszót vagy kártyaszámot egy Mapsurvey-kérdőívben."
+
+msgid "No"
+msgstr "Nem"
+
+msgid "No objects in this layer yet"
+msgstr "Ebben a rétegben még nincsenek objektumok"
+
+msgid "No results to show yet."
+msgstr "Még nincs megjeleníthető eredmény."
+
+msgid "Nothing matches"
+msgstr "Nincs egyezés"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr ""
+"A kevés választ kapott objektumok a magánszféra védelme érdekében rejtve "
+"vannak."
+
+msgid "Please add a file."
+msgstr "Kérjük, adjon hozzá egy fájlt."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "A folytatáshoz válaszoljon legalább %%d objektumról"
+
+msgid "Please specify"
+msgstr "Kérjük, pontosítsa"
+
+msgid "Record"
+msgstr "Felvétel"
+
+msgid "Remove file"
+msgstr "Fájl eltávolítása"
+
+msgid "Report this survey"
+msgstr "Kérdőív bejelentése"
+
+msgid "Respondents: {n}"
+msgstr "Válaszadók: {n}"
+
+msgid "Retry"
+msgstr "Újra"
+
+msgid "Search failed — check your connection and try again."
+msgstr "A keresés sikertelen — ellenőrizze a kapcsolatot, és próbálja újra."
+
+msgid "Search objects…"
+msgstr "Objektumok keresése…"
+
+msgid "See the results"
+msgstr "Eredmények megtekintése"
+
+msgid "Send report"
+msgstr "Bejelentés küldése"
+
+msgid "Share this survey"
+msgstr "Kérdőív megosztása"
+
+msgid "Small brush"
+msgstr "Kis ecset"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "A kis csoportok a magánszféra védelme érdekében rejtve vannak."
+
+msgid "Something else"
+msgstr "Valami más"
+
+msgid "Spray"
+msgstr "Festés"
+
+msgid "Stop"
+msgstr "Leállítás"
+
+msgid "Survey results"
+msgstr "A kérdőív eredményei"
+
+msgid "Survey unavailable"
+msgstr "A kérdőív nem érhető el"
+
+msgid "Take photo"
+msgstr "Fénykép készítése"
+
+msgid "Take the survey"
+msgstr "Kérdőív kitöltése"
+
+msgid "Tap the first point to close the shape."
+msgstr "Koppintson az első pontra az alakzat lezárásához."
+
+msgid "Tap the last point to finish the line."
+msgstr "Koppintson az utolsó pontra a vonal befejezéséhez."
+
+msgid "Tap to add the next corner."
+msgstr "Koppintson a következő sarok hozzáadásához."
+
+msgid "Tap to add the next point."
+msgstr "Koppintson a következő pont hozzáadásához."
+
+msgid "Tap to add the shape’s corners."
+msgstr "Koppintson az alakzat sarkainak hozzáadásához."
+
+msgid "Tap to start the line."
+msgstr "Koppintson a vonal megkezdéséhez."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"Írja meg, mi a probléma ezzel: „%(name)s”. Minden bejelentést egy ember "
+"tekint át."
+
+msgid "Thank you"
+msgstr "Köszönjük"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Az ecset kiürült — a folytatáshoz radírozzon ki némi festéket."
+
+msgid "The file does not match its declared type."
+msgstr "A fájl nem felel meg a megadott típusnak."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "A fájl túl nagy (korlát: %(mb)s MB)."
+
+msgid "The files in this response are too large overall."
+msgstr "A válaszban lévő fájlok együttesen túl nagyok."
+
+msgid "This file type is not accepted here."
+msgstr "Ez a fájltípus itt nem engedélyezett."
+
+msgid "This is the last section — respondents finish here"
+msgstr "Ez az utolsó szakasz — a válaszadók itt fejezik be"
+
+msgid "This question does not accept files."
+msgstr "Ehhez a kérdéshez nem lehet fájlt csatolni."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "Ez a kérdés még nincs referenciaréteghez kötve."
+
+msgid "This question is required"
+msgstr "Ez a kérdés kötelező"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "Ezt a pillanatképet a kérdőív tulajdonosának frissítenie kell."
+
+msgid "This survey isn’t available"
+msgstr "Ez a kérdőív nem érhető el"
+
+msgid "Too many files in this response."
+msgstr "Túl sok fájl van ebben a válaszban."
+
+msgid "Type to search…"
+msgstr "Gépeljen a kereséshez…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr "Nem listázott — csak közvetlen linkkel érhető el, nincs indexelve."
+
+msgid "Upload failed."
+msgstr "A feltöltés sikertelen."
+
+msgid "Uploading"
+msgstr "Feltöltés"
+
+msgid "Yes"
+msgstr "Igen"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "Bejelentését megkaptuk. Egy ember meg fogja vizsgálni."
+
+msgid "Zoom in"
+msgstr "Nagyítás"
+
+msgid "Zoom out"
+msgstr "Kicsinyítés"
+
+msgid "at least {n} required"
+msgstr "legalább {n} szükséges"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "Műhold"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "Utcák"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "Domborzat"
+
+msgid "create your own free map survey"
+msgstr "készítse el saját ingyenes térképes kérdőívét"
+
+msgid "of"
+msgstr "/"
+
+msgid "responses"
+msgstr "válasz"
+
+msgid "up to {n} more"
+msgstr "még legfeljebb {n}"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} elhelyezve a(z) {position}. helyen"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} áthelyezve a(z) {position}. helyre"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr "{item} felemelve. Mozgassa a nyílbillentyűkkel, a szóközzel tegye le."
+
+msgid "{n} marked"
+msgstr "{n} megjelölve"
+
+msgid "{n} of {m} marked"
+msgstr "{n}/{m} megjelölve"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… és még %(n)s"

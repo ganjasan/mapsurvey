@@ -232,7 +232,7 @@ locale.{% endcomment %}
         return true;
     }
 
-    L.control.zoom({position: 'bottomright'}).addTo(map);
+    L.control.zoom({position: 'bottomright', zoomInTitle: i18n.zoomIn, zoomOutTitle: i18n.zoomOut}).addTo(map);
 
     // Basemap layers — also populates window._basemapLayers
     {% include "partials/basemap_layers.html" %}
@@ -279,9 +279,9 @@ locale.{% endcomment %}
             var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
             var link = L.DomUtil.create('a', '', container);
             link.href = '#';
-            link.title = 'Locate me';
+            link.title = i18n.locateMe;
             link.setAttribute('role', 'button');
-            link.setAttribute('aria-label', 'Locate me');
+            link.setAttribute('aria-label', i18n.locateMe);
             link.style.cssText = 'font-size:18px;line-height:30px;width:30px;height:30px;display:block;text-align:center;cursor:pointer;';
             link.textContent = '\uD83D\uDCCD';
             L.DomEvent.on(link, 'click', function(e) {

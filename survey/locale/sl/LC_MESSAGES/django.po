@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "Odstrani"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,338 @@ msgstr "Išči naslov..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Ni rezultatov"
+
+msgid "A few required questions still need an answer."
+msgstr "Na nekaj obveznih vprašanj še niste odgovorili."
+
+msgid "Add another"
+msgstr "Dodaj še enega"
+
+msgid "Add audio file"
+msgstr "Dodaj zvočno datoteko"
+
+msgid "Add photo"
+msgstr "Dodaj fotografijo"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"Elemente za razvrščanje dodajte spodaj v razdelku <strong>Možnosti</strong>."
+
+msgid "All"
+msgstr "Vse"
+
+msgid "All {m} marked — thank you!"
+msgstr "Označenih vseh {m} — hvala!"
+
+msgid "Answered"
+msgstr "Odgovorjeno"
+
+msgid "Answers"
+msgstr "Odgovori"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Zahteva geslo, prijavo ali plačilo"
+
+msgid "Attach file"
+msgstr "Priloži datoteko"
+
+msgid "Brush size"
+msgstr "Velikost čopiča"
+
+msgid "Cell size: {m} m"
+msgstr "Velikost celice: {m} m"
+
+msgid "Clear"
+msgstr "Počisti"
+
+msgid "Data as of"
+msgstr "Podatki na dan"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"Povlecite elemente v želeni vrstni red ali enega dvignite s preslednico in ga"
+" premikajte s puščičnimi tipkami."
+
+msgid "Erase"
+msgstr "Radiraj"
+
+msgid "File is too large."
+msgstr "Datoteka je prevelika."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"Pridržite in vlecite s prstom, da razpršite barvo. Dlje se zadržite tam, kjer"
+" ste bolj prepričani."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"Pridržite in vlecite, da razpršite barvo. Dlje se zadržite tam, kjer ste bolj"
+" prepričani."
+
+msgid "Incorrect password"
+msgstr "Napačno geslo"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"Morda še ni objavljena ali pa je bila zaprta ali odstranjena. Če imate "
+"povezavo od organizatorja, se pozanimajte pri njem."
+
+msgid "Large brush"
+msgstr "Velik čopič"
+
+msgid "Layers"
+msgstr "Sloji"
+
+msgid "Link copied!"
+msgstr "Povezava kopirana!"
+
+msgid "Locate me"
+msgstr "Moja lokacija"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Videti je kot prevara ali se izdaja za podjetje"
+
+msgid "Made with"
+msgstr "Ustvarjeno z"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr "Oznake drugih anketirancev. Vaših oznak ni na tem seznamu."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr ""
+"Doseženo največje število — če želite spremeniti izbiro, spodaj odstranite "
+"eno."
+
+msgid "Medium brush"
+msgstr "Srednji čopič"
+
+msgid "Move map"
+msgstr "Premikaj zemljevid"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Premaknite zemljevid, da postavite žebljiček, nato pritisnite Uporabi."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "V anketo Mapsurvey nikoli ne vnašajte gesel ali številk kartic."
+
+msgid "No"
+msgstr "Ne"
+
+msgid "No objects in this layer yet"
+msgstr "V tem sloju še ni objektov"
+
+msgid "No results to show yet."
+msgstr "Rezultatov še ni."
+
+msgid "Nothing matches"
+msgstr "Ni zadetkov"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "Objekti z malo odgovori so skriti zaradi varstva zasebnosti."
+
+msgid "Please add a file."
+msgstr "Dodajte datoteko."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "Za nadaljevanje odgovorite vsaj o %%d objektu(-ih)"
+
+msgid "Please specify"
+msgstr "Navedite"
+
+msgid "Record"
+msgstr "Snemaj"
+
+msgid "Remove file"
+msgstr "Odstrani datoteko"
+
+msgid "Report this survey"
+msgstr "Prijavi to anketo"
+
+msgid "Respondents: {n}"
+msgstr "Anketirancev: {n}"
+
+msgid "Retry"
+msgstr "Poskusi znova"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Iskanje ni uspelo — preverite povezavo in poskusite znova."
+
+msgid "Search objects…"
+msgstr "Išči objekte…"
+
+msgid "See the results"
+msgstr "Oglejte si rezultate"
+
+msgid "Send report"
+msgstr "Pošlji prijavo"
+
+msgid "Share this survey"
+msgstr "Deli to anketo"
+
+msgid "Small brush"
+msgstr "Majhen čopič"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "Majhne skupine so skrite zaradi varstva zasebnosti."
+
+msgid "Something else"
+msgstr "Nekaj drugega"
+
+msgid "Spray"
+msgstr "Razprši"
+
+msgid "Stop"
+msgstr "Ustavi"
+
+msgid "Survey results"
+msgstr "Rezultati ankete"
+
+msgid "Survey unavailable"
+msgstr "Anketa ni na voljo"
+
+msgid "Take photo"
+msgstr "Fotografiraj"
+
+msgid "Take the survey"
+msgstr "Izpolni anketo"
+
+msgid "Tap the first point to close the shape."
+msgstr "Tapnite prvo točko, da zaprete obliko."
+
+msgid "Tap the last point to finish the line."
+msgstr "Tapnite zadnjo točko, da zaključite črto."
+
+msgid "Tap to add the next corner."
+msgstr "Tapnite, da dodate naslednji kot."
+
+msgid "Tap to add the next point."
+msgstr "Tapnite, da dodate naslednjo točko."
+
+msgid "Tap to add the shape’s corners."
+msgstr "Tapajte, da dodate kote oblike."
+
+msgid "Tap to start the line."
+msgstr "Tapnite, da začnete črto."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"Povejte nam, kaj je narobe z »%(name)s«. Vsako prijavo pregleda človek."
+
+msgid "Thank you"
+msgstr "Hvala"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Čopič je prazen — za nadaljevanje izbrišite nekaj barve."
+
+msgid "The file does not match its declared type."
+msgstr "Datoteka se ne ujema z navedeno vrsto."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "Datoteka je prevelika (omejitev %(mb)s MB)."
+
+msgid "The files in this response are too large overall."
+msgstr "Datoteke v tem odgovoru so skupaj prevelike."
+
+msgid "This file type is not accepted here."
+msgstr "Ta vrsta datoteke tukaj ni dovoljena."
+
+msgid "This is the last section — respondents finish here"
+msgstr "To je zadnji razdelek — tukaj anketiranci zaključijo"
+
+msgid "This question does not accept files."
+msgstr "To vprašanje ne sprejema datotek."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "To vprašanje še ni povezano z referenčnim slojem."
+
+msgid "This question is required"
+msgstr "To vprašanje je obvezno"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "Ta posnetek mora osvežiti lastnik ankete."
+
+msgid "This survey isn’t available"
+msgstr "Ta anketa ni dostopna"
+
+msgid "Too many files in this response."
+msgstr "V tem odgovoru je preveč datotek."
+
+msgid "Type to search…"
+msgstr "Vnesite za iskanje…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr "Ni na seznamu — vidno le prek neposredne povezave, ni indeksirano."
+
+msgid "Upload failed."
+msgstr "Nalaganje ni uspelo."
+
+msgid "Uploading"
+msgstr "Nalaganje"
+
+msgid "Yes"
+msgstr "Da"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "Vašo prijavo smo prejeli. Pregledal jo bo človek."
+
+msgid "Zoom in"
+msgstr "Povečaj"
+
+msgid "Zoom out"
+msgstr "Pomanjšaj"
+
+msgid "at least {n} required"
+msgstr "potrebnih vsaj {n}"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "Satelit"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "Ulice"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "Topografska"
+
+msgid "create your own free map survey"
+msgstr "ustvarite svojo brezplačno anketo z zemljevidom"
+
+msgid "of"
+msgstr "od"
+
+msgid "responses"
+msgstr "odgovorov"
+
+msgid "up to {n} more"
+msgstr "še največ {n}"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} spuščen na mesto {position}"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} premaknjen na mesto {position}"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"{item} dvignjen. Premikajte ga s puščičnimi tipkami, s preslednico ga "
+"spustite."
+
+msgid "{n} marked"
+msgstr "Označeno: {n}"
+
+msgid "{n} of {m} marked"
+msgstr "Označeno {n} od {m}"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… in še %(n)s"

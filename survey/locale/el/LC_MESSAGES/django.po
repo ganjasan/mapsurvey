@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "Αφαίρεση"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -981,3 +981,345 @@ msgstr "Αναζήτηση διεύθυνσης..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Δεν βρέθηκαν αποτελέσματα"
+
+msgid "A few required questions still need an answer."
+msgstr "Ορισμένες υποχρεωτικές ερωτήσεις δεν έχουν ακόμη απαντηθεί."
+
+msgid "Add another"
+msgstr "Προσθήκη άλλου"
+
+msgid "Add audio file"
+msgstr "Προσθήκη αρχείου ήχου"
+
+msgid "Add photo"
+msgstr "Προσθήκη φωτογραφίας"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"Προσθέστε τα στοιχεία προς κατάταξη στις <strong>Επιλογές</strong> παρακάτω."
+
+msgid "All"
+msgstr "Όλα"
+
+msgid "All {m} marked — thank you!"
+msgstr "Σημειώθηκαν και τα {m} — ευχαριστούμε!"
+
+msgid "Answered"
+msgstr "Απαντημένα"
+
+msgid "Answers"
+msgstr "Απαντήσεις"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Ζητά κωδικό πρόσβασης, σύνδεση ή πληρωμή"
+
+msgid "Attach file"
+msgstr "Επισύναψη αρχείου"
+
+msgid "Brush size"
+msgstr "Μέγεθος πινέλου"
+
+msgid "Cell size: {m} m"
+msgstr "Μέγεθος κελιού: {m} m"
+
+msgid "Clear"
+msgstr "Εκκαθάριση"
+
+msgid "Data as of"
+msgstr "Δεδομένα έως"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"Σύρετε τα στοιχεία στη σειρά που θέλετε ή πιάστε ένα με το πλήκτρο "
+"διαστήματος και μετακινήστε το με τα βέλη."
+
+msgid "Erase"
+msgstr "Σβήσιμο"
+
+msgid "File is too large."
+msgstr "Το αρχείο είναι πολύ μεγάλο."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"Κρατήστε και σύρετε το δάχτυλο για ψεκασμό. Μείνετε περισσότερο εκεί όπου "
+"είστε πιο σίγουροι."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"Κρατήστε πατημένο και σύρετε για ψεκασμό. Μείνετε περισσότερο εκεί όπου είστε"
+" πιο σίγουροι."
+
+msgid "Incorrect password"
+msgstr "Λανθασμένος κωδικός πρόσβασης"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"Ίσως δεν έχει δημοσιευτεί ακόμη ή έχει κλείσει ή αφαιρεθεί. Αν έχετε σύνδεσμο"
+" από διοργανωτή, επικοινωνήστε μαζί του."
+
+msgid "Large brush"
+msgstr "Μεγάλο πινέλο"
+
+msgid "Layers"
+msgstr "Επίπεδα"
+
+msgid "Link copied!"
+msgstr "Ο σύνδεσμος αντιγράφηκε!"
+
+msgid "Locate me"
+msgstr "Εντοπισμός θέσης μου"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Μοιάζει με απάτη ή παριστάνει μια εταιρεία"
+
+msgid "Made with"
+msgstr "Δημιουργήθηκε με"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"Σημάνσεις από άλλους συμμετέχοντες. Οι δικές σας σημάνσεις δεν "
+"περιλαμβάνονται σε αυτή τη λίστα."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Συμπληρώθηκε το μέγιστο — αφαιρέστε ένα παρακάτω για να το αλλάξετε."
+
+msgid "Medium brush"
+msgstr "Μεσαίο πινέλο"
+
+msgid "Move map"
+msgstr "Μετακίνηση χάρτη"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr ""
+"Μετακινήστε τον χάρτη για να τοποθετήσετε την πινέζα και πατήστε Εφαρμογή."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr ""
+"Μην εισάγετε ποτέ κωδικούς πρόσβασης ή αριθμούς καρτών σε έρευνα του "
+"Mapsurvey."
+
+msgid "No"
+msgstr "Όχι"
+
+msgid "No objects in this layer yet"
+msgstr "Δεν υπάρχουν ακόμη αντικείμενα σε αυτό το επίπεδο"
+
+msgid "No results to show yet."
+msgstr "Δεν υπάρχουν ακόμη αποτελέσματα."
+
+msgid "Nothing matches"
+msgstr "Δεν βρέθηκε αντιστοιχία"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr ""
+"Τα αντικείμενα με λίγες απαντήσεις αποκρύπτονται για την προστασία της "
+"ιδιωτικότητας."
+
+msgid "Please add a file."
+msgstr "Προσθέστε ένα αρχείο."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "Απαντήστε για τουλάχιστον %%d αντικείμενο(α) για να συνεχίσετε"
+
+msgid "Please specify"
+msgstr "Διευκρινίστε"
+
+msgid "Record"
+msgstr "Εγγραφή"
+
+msgid "Remove file"
+msgstr "Αφαίρεση αρχείου"
+
+msgid "Report this survey"
+msgstr "Αναφορά αυτής της έρευνας"
+
+msgid "Respondents: {n}"
+msgstr "Συμμετέχοντες: {n}"
+
+msgid "Retry"
+msgstr "Επανάληψη"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Η αναζήτηση απέτυχε — ελέγξτε τη σύνδεσή σας και δοκιμάστε ξανά."
+
+msgid "Search objects…"
+msgstr "Αναζήτηση αντικειμένων…"
+
+msgid "See the results"
+msgstr "Δείτε τα αποτελέσματα"
+
+msgid "Send report"
+msgstr "Αποστολή αναφοράς"
+
+msgid "Share this survey"
+msgstr "Κοινοποίηση αυτής της έρευνας"
+
+msgid "Small brush"
+msgstr "Μικρό πινέλο"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "Οι μικρές ομάδες αποκρύπτονται για την προστασία της ιδιωτικότητας."
+
+msgid "Something else"
+msgstr "Κάτι άλλο"
+
+msgid "Spray"
+msgstr "Ψεκασμός"
+
+msgid "Stop"
+msgstr "Διακοπή"
+
+msgid "Survey results"
+msgstr "Αποτελέσματα έρευνας"
+
+msgid "Survey unavailable"
+msgstr "Μη διαθέσιμη έρευνα"
+
+msgid "Take photo"
+msgstr "Λήψη φωτογραφίας"
+
+msgid "Take the survey"
+msgstr "Συμμετοχή στην έρευνα"
+
+msgid "Tap the first point to close the shape."
+msgstr "Πατήστε το πρώτο σημείο για να κλείσετε το σχήμα."
+
+msgid "Tap the last point to finish the line."
+msgstr "Πατήστε το τελευταίο σημείο για να ολοκληρώσετε τη γραμμή."
+
+msgid "Tap to add the next corner."
+msgstr "Πατήστε για να προσθέσετε την επόμενη γωνία."
+
+msgid "Tap to add the next point."
+msgstr "Πατήστε για να προσθέσετε το επόμενο σημείο."
+
+msgid "Tap to add the shape’s corners."
+msgstr "Πατήστε για να προσθέσετε τις γωνίες του σχήματος."
+
+msgid "Tap to start the line."
+msgstr "Πατήστε για να ξεκινήσετε τη γραμμή."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"Πείτε μας τι δεν πάει καλά με το «%(name)s». Κάθε αναφορά ελέγχεται από "
+"άνθρωπο."
+
+msgid "Thank you"
+msgstr "Ευχαριστούμε"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Το πινέλο άδειασε — σβήστε λίγο χρώμα για να συνεχίσετε."
+
+msgid "The file does not match its declared type."
+msgstr "Το αρχείο δεν αντιστοιχεί στον δηλωμένο τύπο του."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "Το αρχείο είναι πολύ μεγάλο (όριο %(mb)s MB)."
+
+msgid "The files in this response are too large overall."
+msgstr "Τα αρχεία αυτής της απάντησης είναι συνολικά πολύ μεγάλα."
+
+msgid "This file type is not accepted here."
+msgstr "Αυτός ο τύπος αρχείου δεν γίνεται δεκτός εδώ."
+
+msgid "This is the last section — respondents finish here"
+msgstr "Αυτή είναι η τελευταία ενότητα — οι συμμετέχοντες ολοκληρώνουν εδώ"
+
+msgid "This question does not accept files."
+msgstr "Αυτή η ερώτηση δεν δέχεται αρχεία."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "Αυτή η ερώτηση δεν έχει συνδεθεί ακόμη με επίπεδο αναφοράς."
+
+msgid "This question is required"
+msgstr "Αυτή η ερώτηση είναι υποχρεωτική"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "Αυτό το στιγμιότυπο πρέπει να ανανεωθεί από τον κάτοχο της έρευνας."
+
+msgid "This survey isn’t available"
+msgstr "Αυτή η έρευνα δεν είναι διαθέσιμη"
+
+msgid "Too many files in this response."
+msgstr "Υπερβολικά πολλά αρχεία σε αυτή την απάντηση."
+
+msgid "Type to search…"
+msgstr "Πληκτρολογήστε για αναζήτηση…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr ""
+"Μη καταχωρισμένη — προβάλλεται μόνο μέσω άμεσου συνδέσμου, χωρίς ευρετηρίαση."
+
+msgid "Upload failed."
+msgstr "Η μεταφόρτωση απέτυχε."
+
+msgid "Uploading"
+msgstr "Μεταφόρτωση"
+
+msgid "Yes"
+msgstr "Ναι"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "Η αναφορά σας παραλήφθηκε. Θα την εξετάσει ένας άνθρωπος."
+
+msgid "Zoom in"
+msgstr "Μεγέθυνση"
+
+msgid "Zoom out"
+msgstr "Σμίκρυνση"
+
+msgid "at least {n} required"
+msgstr "απαιτούνται τουλάχιστον {n}"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "Δορυφόρος"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "Οδοί"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "Τοπογραφικός"
+
+msgid "create your own free map survey"
+msgstr "δημιουργήστε τη δική σας δωρεάν έρευνα με χάρτη"
+
+msgid "of"
+msgstr "από"
+
+msgid "responses"
+msgstr "υποβολές"
+
+msgid "up to {n} more"
+msgstr "έως {n} ακόμη"
+
+msgid "{item} dropped at position {position}"
+msgstr "Το {item} τοποθετήθηκε στη θέση {position}"
+
+msgid "{item} moved to position {position}"
+msgstr "Το {item} μετακινήθηκε στη θέση {position}"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"Το {item} επιλέχθηκε. Μετακινήστε το με τα βέλη και αφήστε το με το πλήκτρο "
+"διαστήματος."
+
+msgid "{n} marked"
+msgstr "{n} σημειωμένα"
+
+msgid "{n} of {m} marked"
+msgstr "{n} από {m} σημειωμένα"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… και %(n)s ακόμη"

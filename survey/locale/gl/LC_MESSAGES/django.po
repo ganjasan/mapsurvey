@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "Quitar"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,338 @@ msgstr "Buscar enderezo..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Non se atoparon resultados"
+
+msgid "A few required questions still need an answer."
+msgstr "Aínda quedan algunhas preguntas obrigatorias por responder."
+
+msgid "Add another"
+msgstr "Engadir outro"
+
+msgid "Add audio file"
+msgstr "Engadir ficheiro de audio"
+
+msgid "Add photo"
+msgstr "Engadir foto"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"Engade os elementos que se van ordenar en <strong>Opcións</strong>, máis "
+"abaixo."
+
+msgid "All"
+msgstr "Todos"
+
+msgid "All {m} marked — thank you!"
+msgstr "Marcados os {m} — grazas!"
+
+msgid "Answered"
+msgstr "Respondidos"
+
+msgid "Answers"
+msgstr "Respostas"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Pide un contrasinal, un inicio de sesión ou un pagamento"
+
+msgid "Attach file"
+msgstr "Anexar ficheiro"
+
+msgid "Brush size"
+msgstr "Tamaño do pincel"
+
+msgid "Cell size: {m} m"
+msgstr "Tamaño da cela: {m} m"
+
+msgid "Clear"
+msgstr "Limpar"
+
+msgid "Data as of"
+msgstr "Datos a data de"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"Arrastra os elementos para ordenalos, ou colle un coa tecla Espazo e móveo "
+"coas frechas."
+
+msgid "Erase"
+msgstr "Borrar"
+
+msgid "File is too large."
+msgstr "O ficheiro é demasiado grande."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"Mantén e arrastra o dedo para pulverizar. Detente máis onde esteas máis "
+"seguro."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"Mantén e arrastra para pulverizar. Detente máis onde esteas máis seguro."
+
+msgid "Incorrect password"
+msgstr "Contrasinal incorrecto"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"Pode que aínda non estea publicada, ou que se pechase ou eliminase. Se tes "
+"unha ligazón dun organizador, consúltao con el."
+
+msgid "Large brush"
+msgstr "Pincel grande"
+
+msgid "Layers"
+msgstr "Capas"
+
+msgid "Link copied!"
+msgstr "Ligazón copiada!"
+
+msgid "Locate me"
+msgstr "Localizarme"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Parece unha estafa ou suplanta unha empresa"
+
+msgid "Made with"
+msgstr "Feito con"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"Marcas colocadas por outras persoas participantes. As túas propias marcas non"
+" están nesta lista."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Alcanzouse o máximo — elimina un abaixo para cambialo."
+
+msgid "Medium brush"
+msgstr "Pincel mediano"
+
+msgid "Move map"
+msgstr "Mover o mapa"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Move o mapa para situar o marcador e despois preme Aplicar."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr ""
+"Nunca introduzas contrasinais nin números de tarxeta nunha enquisa de "
+"Mapsurvey."
+
+msgid "No"
+msgstr "Non"
+
+msgid "No objects in this layer yet"
+msgstr "Aínda non hai obxectos nesta capa"
+
+msgid "No results to show yet."
+msgstr "Aínda non hai resultados que mostrar."
+
+msgid "Nothing matches"
+msgstr "Non hai coincidencias"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr ""
+"Os obxectos con poucas respostas ocúltanse para protexer a privacidade."
+
+msgid "Please add a file."
+msgstr "Engade un ficheiro."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "Responde sobre polo menos %%d obxecto(s) para continuar"
+
+msgid "Please specify"
+msgstr "Especifica"
+
+msgid "Record"
+msgstr "Gravar"
+
+msgid "Remove file"
+msgstr "Quitar ficheiro"
+
+msgid "Report this survey"
+msgstr "Denunciar esta enquisa"
+
+msgid "Respondents: {n}"
+msgstr "Participantes: {n}"
+
+msgid "Retry"
+msgstr "Tentar de novo"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Fallou a busca — comproba a túa conexión e téntao de novo."
+
+msgid "Search objects…"
+msgstr "Buscar obxectos…"
+
+msgid "See the results"
+msgstr "Ver os resultados"
+
+msgid "Send report"
+msgstr "Enviar denuncia"
+
+msgid "Share this survey"
+msgstr "Compartir esta enquisa"
+
+msgid "Small brush"
+msgstr "Pincel pequeno"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "Os grupos pequenos ocúltanse para protexer a privacidade."
+
+msgid "Something else"
+msgstr "Outra cousa"
+
+msgid "Spray"
+msgstr "Pulverizar"
+
+msgid "Stop"
+msgstr "Deter"
+
+msgid "Survey results"
+msgstr "Resultados da enquisa"
+
+msgid "Survey unavailable"
+msgstr "Enquisa non dispoñible"
+
+msgid "Take photo"
+msgstr "Facer foto"
+
+msgid "Take the survey"
+msgstr "Responder a enquisa"
+
+msgid "Tap the first point to close the shape."
+msgstr "Toca o primeiro punto para pechar a forma."
+
+msgid "Tap the last point to finish the line."
+msgstr "Toca o último punto para rematar a liña."
+
+msgid "Tap to add the next corner."
+msgstr "Toca para engadir o seguinte vértice."
+
+msgid "Tap to add the next point."
+msgstr "Toca para engadir o seguinte punto."
+
+msgid "Tap to add the shape’s corners."
+msgstr "Toca para engadir os vértices da forma."
+
+msgid "Tap to start the line."
+msgstr "Toca para comezar a liña."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr "Cóntanos que lle pasa a “%(name)s”. Unha persoa revisa cada denuncia."
+
+msgid "Thank you"
+msgstr "Grazas"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "O pincel está baleiro — borra algo de pintura para continuar."
+
+msgid "The file does not match its declared type."
+msgstr "O ficheiro non coincide co tipo declarado."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "O ficheiro é demasiado grande (límite %(mb)s MB)."
+
+msgid "The files in this response are too large overall."
+msgstr "Os ficheiros desta resposta son demasiado grandes en conxunto."
+
+msgid "This file type is not accepted here."
+msgstr "Este tipo de ficheiro non se acepta aquí."
+
+msgid "This is the last section — respondents finish here"
+msgstr "Esta é a última sección — as persoas participantes rematan aquí"
+
+msgid "This question does not accept files."
+msgstr "Esta pregunta non admite ficheiros."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "Esta pregunta aínda non está vinculada a ningunha capa de referencia."
+
+msgid "This question is required"
+msgstr "Esta pregunta é obrigatoria"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "O propietario da enquisa ten que actualizar esta instantánea."
+
+msgid "This survey isn’t available"
+msgstr "Esta enquisa non está dispoñible"
+
+msgid "Too many files in this response."
+msgstr "Hai demasiados ficheiros nesta resposta."
+
+msgid "Type to search…"
+msgstr "Escribe para buscar…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr "Non listada — só visible mediante ligazón directa, non indexada."
+
+msgid "Upload failed."
+msgstr "Fallou a subida."
+
+msgid "Uploading"
+msgstr "Subindo"
+
+msgid "Yes"
+msgstr "Si"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "Recibimos a túa denuncia. Unha persoa revisaraa."
+
+msgid "Zoom in"
+msgstr "Achegar"
+
+msgid "Zoom out"
+msgstr "Afastar"
+
+msgid "at least {n} required"
+msgstr "requírense polo menos {n}"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "Satélite"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "Rúas"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "Topográfico"
+
+msgid "create your own free map survey"
+msgstr "crea a túa propia enquisa de mapa gratuíta"
+
+msgid "of"
+msgstr "de"
+
+msgid "responses"
+msgstr "respostas enviadas"
+
+msgid "up to {n} more"
+msgstr "ata {n} máis"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} soltado na posición {position}"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} movido á posición {position}"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr "{item} collido. Usa as frechas para movelo e Espazo para soltalo."
+
+msgid "{n} marked"
+msgstr "{n} marcados"
+
+msgid "{n} of {m} marked"
+msgstr "{n} de {m} marcados"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… e %(n)s máis"

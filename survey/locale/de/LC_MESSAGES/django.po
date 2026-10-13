@@ -6178,7 +6178,7 @@ msgstr ""
 #: survey/templates/maptionnaire_alternative.html:100
 #: survey/templates/maptionnaire_alternative.html:101
 msgid "Yes"
-msgstr ""
+msgstr "Ja"
 
 #: survey/templates/maptionnaire_alternative.html:100
 msgid "Yes — per-question translations"
@@ -6412,7 +6412,7 @@ msgstr ""
 
 #: survey/templates/metroquest_alternative.html:97
 msgid "No"
-msgstr ""
+msgstr "Nein"
 
 #: survey/templates/metroquest_alternative.html:98
 msgid "Survey structure"
@@ -7785,3 +7785,184 @@ msgstr "Hierhin werden die Teilnehmenden nach der letzten Seite geleitet, zum Be
 #: survey/editor_forms.py
 msgid "Enter a full web address, for example https://www.facebook.com/yourproject"
 msgstr "Geben Sie eine vollständige Webadresse ein, zum Beispiel https://www.facebook.com/yourproject"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"Fügen Sie die zu ordnenden Elemente unten unter "
+"<strong>Auswahlmöglichkeiten</strong> hinzu."
+
+msgid "All"
+msgstr "Alle"
+
+msgid "Answered"
+msgstr "Beantwortet"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Fragt nach einem Passwort, einer Anmeldung oder einer Zahlung"
+
+msgid "Brush size"
+msgstr "Pinselgröße"
+
+msgid "Cell size: {m} m"
+msgstr "Zellengröße: {m} m"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"Ziehen Sie die Elemente in die gewünschte Reihenfolge oder nehmen Sie eines "
+"mit der Leertaste auf und verschieben Sie es mit den Pfeiltasten."
+
+msgid "Erase"
+msgstr "Radieren"
+
+msgid "File is too large."
+msgstr "Die Datei ist zu groß."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"Halten und ziehen Sie einen Finger, um zu sprühen. Bleiben Sie länger dort, "
+"wo Sie sich sicherer sind."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"Gedrückt halten und ziehen, um zu sprühen. Bleiben Sie länger dort, wo Sie "
+"sich sicherer sind."
+
+msgid "Incorrect password"
+msgstr "Falsches Passwort"
+
+msgid "Large brush"
+msgstr "Großer Pinsel"
+
+msgid "Layers"
+msgstr "Ebenen"
+
+msgid "Link copied!"
+msgstr "Link kopiert!"
+
+msgid "Locate me"
+msgstr "Meinen Standort finden"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Sieht nach Betrug aus oder gibt sich als Unternehmen aus"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"Markierungen anderer Teilnehmender. Ihre eigenen Markierungen sind nicht in "
+"dieser Liste."
+
+msgid "Medium brush"
+msgstr "Mittlerer Pinsel"
+
+msgid "Move map"
+msgstr "Karte verschieben"
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr ""
+"Geben Sie in einer Mapsurvey-Umfrage niemals Passwörter oder Kartennummern "
+"ein."
+
+msgid "No objects in this layer yet"
+msgstr "Noch keine Objekte in dieser Ebene"
+
+msgid "Nothing matches"
+msgstr "Keine Treffer"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr ""
+"Objekte mit wenigen Antworten werden zum Schutz der Privatsphäre "
+"ausgeblendet."
+
+msgid "Please add a file."
+msgstr "Bitte fügen Sie eine Datei hinzu."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr ""
+"Bitte beantworten Sie Fragen zu mindestens %%d Objekt(en), um fortzufahren"
+
+msgid "Please specify"
+msgstr "Bitte angeben"
+
+msgid "Report this survey"
+msgstr "Diese Umfrage melden"
+
+msgid "Respondents: {n}"
+msgstr "Teilnehmende: {n}"
+
+msgid "Search objects…"
+msgstr "Objekte suchen…"
+
+msgid "Send report"
+msgstr "Meldung senden"
+
+msgid "Small brush"
+msgstr "Kleiner Pinsel"
+
+msgid "Something else"
+msgstr "Etwas anderes"
+
+msgid "Spray"
+msgstr "Sprühen"
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"Teilen Sie uns mit, was mit „%(name)s“ nicht stimmt. Jede Meldung wird von "
+"einem Menschen geprüft."
+
+msgid "Thank you"
+msgstr "Vielen Dank"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Der Pinsel ist leer – radieren Sie etwas Farbe weg, um weiterzumachen."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "Diese Frage ist noch nicht mit einer Referenzebene verknüpft."
+
+msgid "Type to search…"
+msgstr "Tippen zum Suchen…"
+
+msgid "Upload failed."
+msgstr "Hochladen fehlgeschlagen."
+
+msgid "Your report has been received. A person will look at it."
+msgstr "Ihre Meldung ist eingegangen. Ein Mensch wird sie prüfen."
+
+msgid "Zoom in"
+msgstr "Vergrößern"
+
+msgid "Zoom out"
+msgstr "Verkleinern"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "Satellit"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "Straßen"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "Topografisch"
+
+msgid "of"
+msgstr "von"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} an Position {position} abgelegt"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} an Position {position} verschoben"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"{item} aufgenommen. Mit den Pfeiltasten verschieben, mit der Leertaste "
+"ablegen."
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… und %(n)s weitere"

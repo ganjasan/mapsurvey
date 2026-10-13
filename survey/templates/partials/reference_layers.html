@@ -26,6 +26,7 @@ which must be included before this partial.
 
     if (!window._layersControl) {
         window._layersControl = L.control.layers(null, null, { position: 'topright', collapsed: true }).addTo(map);
+        window._titleLayersToggle(window._layersControl);
     }
 
     var esc = window.RefLayerFactory.esc;

@@ -29,6 +29,11 @@ DOM as text only — never markup, never |safe.
      data-max-bytes="{{ widget.max_bytes }}"
      data-max-files="{{ widget.max_files }}"
      {% if widget.recorder %}data-recorder="1"{% endif %}
+     data-msg-too-large="{% trans 'File is too large.' %}"
+     data-msg-failed="{% trans 'Upload failed.' %}"
+     data-msg-required="{% trans 'Please add a file.' %}"
+     data-msg-remove="{% trans 'Remove' %}"
+     data-msg-remove-file="{% trans 'Remove file' %}"
      {% if widget.required %}data-required="1"{% endif %}>
 
   <div class="fu-items" style="display:flex;flex-wrap:wrap;gap:8px;">

@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "Kendu"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,344 @@ msgstr "Bilatu helbidea..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Ez da emaitzarik aurkitu"
+
+msgid "A few required questions still need an answer."
+msgstr "Derrigorrezko galdera batzuk erantzun gabe daude oraindik."
+
+msgid "Add another"
+msgstr "Gehitu beste bat"
+
+msgid "Add audio file"
+msgstr "Gehitu audio-fitxategia"
+
+msgid "Add photo"
+msgstr "Gehitu argazkia"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"Gehitu ordenatu beharreko elementuak behean, <strong>Aukerak</strong> "
+"atalean."
+
+msgid "All"
+msgstr "Guztiak"
+
+msgid "All {m} marked — thank you!"
+msgstr "{m} guztiak markatuta — eskerrik asko!"
+
+msgid "Answered"
+msgstr "Erantzunda"
+
+msgid "Answers"
+msgstr "Erantzunak"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Pasahitza, saio-hasiera edo ordainketa eskatzen du"
+
+msgid "Attach file"
+msgstr "Erantsi fitxategia"
+
+msgid "Brush size"
+msgstr "Pintzelaren tamaina"
+
+msgid "Cell size: {m} m"
+msgstr "Gelaxkaren tamaina: {m} m"
+
+msgid "Clear"
+msgstr "Garbitu"
+
+msgid "Data as of"
+msgstr "Datuen data:"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"Arrastatu elementuak ordenan jartzeko, edo hartu bat zuriune-teklarekin eta "
+"mugitu gezi-teklekin."
+
+msgid "Erase"
+msgstr "Borratu"
+
+msgid "File is too large."
+msgstr "Fitxategia handiegia da."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"Eutsi eta arrastatu hatza margotzeko. Egon denbora gehiago ziurrago zauden "
+"lekuan."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"Sakatuta eutsi eta arrastatu margotzeko. Egon denbora gehiago ziurrago zauden"
+" lekuan."
+
+msgid "Incorrect password"
+msgstr "Pasahitz okerra"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"Baliteke oraindik argitaratu gabe egotea, edo itxita edo kenduta egotea. "
+"Antolatzaile batek esteka bat eman badizu, galdetu hari."
+
+msgid "Large brush"
+msgstr "Pintzel handia"
+
+msgid "Layers"
+msgstr "Geruzak"
+
+msgid "Link copied!"
+msgstr "Esteka kopiatu da!"
+
+msgid "Locate me"
+msgstr "Kokatu nire posizioa"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Iruzurra dirudi edo enpresa baten izena ordezten du"
+
+msgid "Made with"
+msgstr "Honekin egina:"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"Beste parte-hartzaileek jarritako markak. Zure markak ez daude zerrenda "
+"honetan."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Gehienezkora iritsi zara — kendu bat behean aldatzeko."
+
+msgid "Medium brush"
+msgstr "Pintzel ertaina"
+
+msgid "Move map"
+msgstr "Mugitu mapa"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Mugitu mapa txintxeta kokatzeko, eta sakatu Aplikatu."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr ""
+"Ez idatzi inoiz pasahitzik edo txartel-zenbakirik Mapsurvey inkesta batean."
+
+msgid "No"
+msgstr "Ez"
+
+msgid "No objects in this layer yet"
+msgstr "Oraindik ez dago objekturik geruza honetan"
+
+msgid "No results to show yet."
+msgstr "Oraindik ez dago emaitzarik erakusteko."
+
+msgid "Nothing matches"
+msgstr "Ez dago bat datorrenik"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr ""
+"Erantzun gutxi dituzten objektuak ezkutatu egiten dira pribatutasuna "
+"babesteko."
+
+msgid "Please add a file."
+msgstr "Gehitu fitxategi bat."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "Jarraitzeko, erantzun gutxienez %%d objekturi buruz"
+
+msgid "Please specify"
+msgstr "Zehaztu"
+
+msgid "Record"
+msgstr "Grabatu"
+
+msgid "Remove file"
+msgstr "Kendu fitxategia"
+
+msgid "Report this survey"
+msgstr "Salatu inkesta hau"
+
+msgid "Respondents: {n}"
+msgstr "Parte-hartzaileak: {n}"
+
+msgid "Retry"
+msgstr "Saiatu berriro"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Bilaketak huts egin du — egiaztatu konexioa eta saiatu berriro."
+
+msgid "Search objects…"
+msgstr "Bilatu objektuak…"
+
+msgid "See the results"
+msgstr "Ikusi emaitzak"
+
+msgid "Send report"
+msgstr "Bidali salaketa"
+
+msgid "Share this survey"
+msgstr "Partekatu inkesta hau"
+
+msgid "Small brush"
+msgstr "Pintzel txikia"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "Talde txikiak ezkutatu egiten dira pribatutasuna babesteko."
+
+msgid "Something else"
+msgstr "Beste zerbait"
+
+msgid "Spray"
+msgstr "Esprai"
+
+msgid "Stop"
+msgstr "Gelditu"
+
+msgid "Survey results"
+msgstr "Inkestaren emaitzak"
+
+msgid "Survey unavailable"
+msgstr "Inkesta ez dago erabilgarri"
+
+msgid "Take photo"
+msgstr "Atera argazkia"
+
+msgid "Take the survey"
+msgstr "Bete inkesta"
+
+msgid "Tap the first point to close the shape."
+msgstr "Ukitu lehen puntua forma ixteko."
+
+msgid "Tap the last point to finish the line."
+msgstr "Ukitu azken puntua lerroa amaitzeko."
+
+msgid "Tap to add the next corner."
+msgstr "Ukitu hurrengo erpina gehitzeko."
+
+msgid "Tap to add the next point."
+msgstr "Ukitu hurrengo puntua gehitzeko."
+
+msgid "Tap to add the shape’s corners."
+msgstr "Ukitu formaren erpinak gehitzeko."
+
+msgid "Tap to start the line."
+msgstr "Ukitu lerroa hasteko."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"Esan iezaguzu zer dagoen gaizki «%(name)s» inkestan. Pertsona batek "
+"berrikusten ditu salaketa guztiak."
+
+msgid "Thank you"
+msgstr "Eskerrik asko"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Pintzela hutsik dago — borratu pintura pixka bat jarraitzeko."
+
+msgid "The file does not match its declared type."
+msgstr "Fitxategia ez dator bat adierazitako motarekin."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "Fitxategia handiegia da (muga: %(mb)s MB)."
+
+msgid "The files in this response are too large overall."
+msgstr "Erantzun honetako fitxategiak handiegiak dira guztira."
+
+msgid "This file type is not accepted here."
+msgstr "Fitxategi mota hau ez da onartzen hemen."
+
+msgid "This is the last section — respondents finish here"
+msgstr "Hau da azken atala — parte-hartzaileek hemen amaitzen dute"
+
+msgid "This question does not accept files."
+msgstr "Galdera honek ez du fitxategirik onartzen."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "Galdera hau ez dago oraindik erreferentzia-geruza bati lotuta."
+
+msgid "This question is required"
+msgstr "Galdera hau derrigorrezkoa da"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "Inkestaren jabeak eguneratu behar du argazki hau."
+
+msgid "This survey isn’t available"
+msgstr "Inkesta hau ez dago erabilgarri"
+
+msgid "Too many files in this response."
+msgstr "Fitxategi gehiegi erantzun honetan."
+
+msgid "Type to search…"
+msgstr "Idatzi bilatzeko…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr ""
+"Zerrendatu gabea — esteka zuzenaren bidez soilik ikus daiteke, ez dago "
+"indexatuta."
+
+msgid "Upload failed."
+msgstr "Ezin izan da igo."
+
+msgid "Uploading"
+msgstr "Igotzen"
+
+msgid "Yes"
+msgstr "Bai"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "Zure salaketa jaso dugu. Pertsona batek aztertuko du."
+
+msgid "Zoom in"
+msgstr "Handiagotu"
+
+msgid "Zoom out"
+msgstr "Txikiagotu"
+
+msgid "at least {n} required"
+msgstr "gutxienez {n} behar dira"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "Satelitea"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "Kaleak"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "Topografikoa"
+
+msgid "create your own free map survey"
+msgstr "sortu zure mapa-inkesta doan"
+
+msgid "of"
+msgstr "/"
+
+msgid "responses"
+msgstr "erantzun"
+
+msgid "up to {n} more"
+msgstr "beste {n} gehienez"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} {position}. posizioan utzi da"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} {position}. posiziora mugitu da"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"{item} hartu da. Erabili gezi-teklak mugitzeko eta zuriune-tekla uzteko."
+
+msgid "{n} marked"
+msgstr "{n} markatuta"
+
+msgid "{n} of {m} marked"
+msgstr "{n}/{m} markatuta"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… eta beste %(n)s"

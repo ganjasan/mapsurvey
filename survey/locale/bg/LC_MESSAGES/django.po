@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "Премахни"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -981,3 +981,341 @@ msgstr "Търси адрес..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Няма намерени резултати"
+
+msgid "A few required questions still need an answer."
+msgstr "Няколко задължителни въпроса все още нямат отговор."
+
+msgid "Add another"
+msgstr "Добави още"
+
+msgid "Add audio file"
+msgstr "Добави аудиофайл"
+
+msgid "Add photo"
+msgstr "Добави снимка"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr "Добавете елементите за класиране в <strong>Опции</strong> по-долу."
+
+msgid "All"
+msgstr "Всички"
+
+msgid "All {m} marked — thank you!"
+msgstr "Всички {m} са отбелязани — благодарим!"
+
+msgid "Answered"
+msgstr "С отговор"
+
+msgid "Answers"
+msgstr "Отговори"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Иска парола, вход или плащане"
+
+msgid "Attach file"
+msgstr "Прикачи файл"
+
+msgid "Brush size"
+msgstr "Размер на четката"
+
+msgid "Cell size: {m} m"
+msgstr "Размер на клетката: {m} м"
+
+msgid "Clear"
+msgstr "Изчисти"
+
+msgid "Data as of"
+msgstr "Данни към"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"Подредете елементите чрез плъзгане или вземете един с Интервал и го местете "
+"със стрелките."
+
+msgid "Erase"
+msgstr "Гума"
+
+msgid "File is too large."
+msgstr "Файлът е твърде голям."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"Задръжте и плъзнете с пръст, за да пръскате. Задържайте се по-дълго там, "
+"където сте по-сигурни."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"Задръжте и плъзнете, за да пръскате. Задържайте се по-дълго там, където сте "
+"по-сигурни."
+
+msgid "Incorrect password"
+msgstr "Грешна парола"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"Възможно е още да не е публикувана или да е затворена или премахната. Ако "
+"имате връзка от организатор, свържете се с него."
+
+msgid "Large brush"
+msgstr "Голяма четка"
+
+msgid "Layers"
+msgstr "Слоеве"
+
+msgid "Link copied!"
+msgstr "Връзката е копирана!"
+
+msgid "Locate me"
+msgstr "Намери ме"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Прилича на измама или се представя за компания"
+
+msgid "Made with"
+msgstr "Създадено с"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"Маркери, поставени от други участници. Вашите собствени маркери не са в този "
+"списък."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Достигнат е максимумът — премахнете един по-долу, за да промените."
+
+msgid "Medium brush"
+msgstr "Средна четка"
+
+msgid "Move map"
+msgstr "Местене на картата"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr ""
+"Преместете картата, за да позиционирате маркера, след което натиснете "
+"„Приложи“."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Никога не въвеждайте пароли или номера на карти в анкета на Mapsurvey."
+
+msgid "No"
+msgstr "Не"
+
+msgid "No objects in this layer yet"
+msgstr "Все още няма обекти в този слой"
+
+msgid "No results to show yet."
+msgstr "Все още няма резултати за показване."
+
+msgid "Nothing matches"
+msgstr "Няма съвпадения"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "Обектите с малко отговори са скрити за защита на поверителността."
+
+msgid "Please add a file."
+msgstr "Моля, добавете файл."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "Моля, отговорете за поне %%d обект(а), за да продължите"
+
+msgid "Please specify"
+msgstr "Моля, уточнете"
+
+msgid "Record"
+msgstr "Запис"
+
+msgid "Remove file"
+msgstr "Премахни файла"
+
+msgid "Report this survey"
+msgstr "Докладвай тази анкета"
+
+msgid "Respondents: {n}"
+msgstr "Участници: {n}"
+
+msgid "Retry"
+msgstr "Опитай отново"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Търсенето не бе успешно — проверете връзката си и опитайте отново."
+
+msgid "Search objects…"
+msgstr "Търсене на обекти…"
+
+msgid "See the results"
+msgstr "Вижте резултатите"
+
+msgid "Send report"
+msgstr "Изпрати сигнал"
+
+msgid "Share this survey"
+msgstr "Споделете анкетата"
+
+msgid "Small brush"
+msgstr "Малка четка"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "Малките групи са скрити за защита на поверителността."
+
+msgid "Something else"
+msgstr "Друго"
+
+msgid "Spray"
+msgstr "Пръскане"
+
+msgid "Stop"
+msgstr "Спри"
+
+msgid "Survey results"
+msgstr "Резултати от анкетата"
+
+msgid "Survey unavailable"
+msgstr "Анкетата не е налична"
+
+msgid "Take photo"
+msgstr "Направи снимка"
+
+msgid "Take the survey"
+msgstr "Попълнете анкетата"
+
+msgid "Tap the first point to close the shape."
+msgstr "Докоснете първата точка, за да затворите фигурата."
+
+msgid "Tap the last point to finish the line."
+msgstr "Докоснете последната точка, за да завършите линията."
+
+msgid "Tap to add the next corner."
+msgstr "Докоснете, за да добавите следващия ъгъл."
+
+msgid "Tap to add the next point."
+msgstr "Докоснете, за да добавите следващата точка."
+
+msgid "Tap to add the shape’s corners."
+msgstr "Докосвайте, за да добавите ъглите на фигурата."
+
+msgid "Tap to start the line."
+msgstr "Докоснете, за да започнете линията."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"Кажете ни какво не е наред с „%(name)s“. Всеки сигнал се преглежда от човек."
+
+msgid "Thank you"
+msgstr "Благодарим ви"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Четката е празна — изтрийте малко боя, за да продължите."
+
+msgid "The file does not match its declared type."
+msgstr "Файлът не съответства на декларирания си тип."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "Файлът е твърде голям (ограничение %(mb)s MB)."
+
+msgid "The files in this response are too large overall."
+msgstr "Файловете в този отговор са твърде големи като общ размер."
+
+msgid "This file type is not accepted here."
+msgstr "Този тип файл не се приема тук."
+
+msgid "This is the last section — respondents finish here"
+msgstr "Това е последният раздел — участниците завършват тук"
+
+msgid "This question does not accept files."
+msgstr "Този въпрос не приема файлове."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "Този въпрос все още не е свързан с референтен слой."
+
+msgid "This question is required"
+msgstr "Този въпрос е задължителен"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr ""
+"Тази моментна снимка трябва да бъде обновена от собственика на анкетата."
+
+msgid "This survey isn’t available"
+msgstr "Тази анкета не е достъпна"
+
+msgid "Too many files in this response."
+msgstr "Твърде много файлове в този отговор."
+
+msgid "Type to search…"
+msgstr "Пишете, за да търсите…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr ""
+"Скрита от списъци — достъпна само чрез директна връзка, не се индексира."
+
+msgid "Upload failed."
+msgstr "Качването не бе успешно."
+
+msgid "Uploading"
+msgstr "Качване"
+
+msgid "Yes"
+msgstr "Да"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "Сигналът ви е получен. Човек ще го прегледа."
+
+msgid "Zoom in"
+msgstr "Увеличи"
+
+msgid "Zoom out"
+msgstr "Намали"
+
+msgid "at least {n} required"
+msgstr "изискват се поне {n}"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "Сателит"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "Улици"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "Топографска"
+
+msgid "create your own free map survey"
+msgstr "създайте своя безплатна анкета с карта"
+
+msgid "of"
+msgstr "от"
+
+msgid "responses"
+msgstr "отговора"
+
+msgid "up to {n} more"
+msgstr "до още {n}"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} е пуснат на позиция {position}"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} е преместен на позиция {position}"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"{item} е взет. Използвайте стрелките, за да го местите, и Интервал, за да го "
+"пуснете."
+
+msgid "{n} marked"
+msgstr "{n} отбелязани"
+
+msgid "{n} of {m} marked"
+msgstr "{n} от {m} отбелязани"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… и още %(n)s"

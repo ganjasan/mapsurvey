@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "Fjern"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,339 @@ msgstr "Søg adresse..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Ingen resultater fundet"
+
+msgid "A few required questions still need an answer."
+msgstr "Nogle obligatoriske spørgsmål mangler stadig et svar."
+
+msgid "Add another"
+msgstr "Tilføj endnu en"
+
+msgid "Add audio file"
+msgstr "Tilføj lydfil"
+
+msgid "Add photo"
+msgstr "Tilføj foto"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"Tilføj de elementer, der skal rangeres, under <strong>Valgmuligheder</strong>"
+" nedenfor."
+
+msgid "All"
+msgstr "Alle"
+
+msgid "All {m} marked — thank you!"
+msgstr "Alle {m} markeret — tak!"
+
+msgid "Answered"
+msgstr "Besvaret"
+
+msgid "Answers"
+msgstr "Svar"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Beder om en adgangskode, et login eller en betaling"
+
+msgid "Attach file"
+msgstr "Vedhæft fil"
+
+msgid "Brush size"
+msgstr "Penselstørrelse"
+
+msgid "Cell size: {m} m"
+msgstr "Cellestørrelse: {m} m"
+
+msgid "Clear"
+msgstr "Ryd"
+
+msgid "Data as of"
+msgstr "Data pr."
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"Træk elementerne i rækkefølge, eller tag et op med mellemrumstasten og flyt "
+"det med piletasterne."
+
+msgid "Erase"
+msgstr "Viskelæder"
+
+msgid "File is too large."
+msgstr "Filen er for stor."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"Hold og træk en finger for at spraye. Bliv længere, hvor du er mere sikker."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Hold nede og træk for at spraye. Bliv længere, hvor du er mere sikker."
+
+msgid "Incorrect password"
+msgstr "Forkert adgangskode"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"Den er måske ikke offentliggjort endnu, eller den er lukket eller fjernet. "
+"Hvis du har fået et link fra en arrangør, så kontakt vedkommende."
+
+msgid "Large brush"
+msgstr "Stor pensel"
+
+msgid "Layers"
+msgstr "Lag"
+
+msgid "Link copied!"
+msgstr "Link kopieret!"
+
+msgid "Locate me"
+msgstr "Find min placering"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Ligner svindel eller udgiver sig for at være en virksomhed"
+
+msgid "Made with"
+msgstr "Lavet med"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"Markeringer fra andre deltagere. Dine egne markeringer er ikke på denne "
+"liste."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Maksimum nået — fjern en nedenfor for at ændre det."
+
+msgid "Medium brush"
+msgstr "Mellem pensel"
+
+msgid "Move map"
+msgstr "Flyt kort"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Flyt kortet for at placere nålen, og tryk derefter på Anvend."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr ""
+"Indtast aldrig adgangskoder eller kortnumre i en Mapsurvey-undersøgelse."
+
+msgid "No"
+msgstr "Nej"
+
+msgid "No objects in this layer yet"
+msgstr "Ingen objekter i dette lag endnu"
+
+msgid "No results to show yet."
+msgstr "Ingen resultater at vise endnu."
+
+msgid "Nothing matches"
+msgstr "Ingen resultater"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "Objekter med få svar er skjult for at beskytte privatlivet."
+
+msgid "Please add a file."
+msgstr "Tilføj venligst en fil."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "Besvar spørgsmål om mindst %%d objekt(er) for at fortsætte"
+
+msgid "Please specify"
+msgstr "Angiv venligst"
+
+msgid "Record"
+msgstr "Optag"
+
+msgid "Remove file"
+msgstr "Fjern fil"
+
+msgid "Report this survey"
+msgstr "Anmeld denne undersøgelse"
+
+msgid "Respondents: {n}"
+msgstr "Deltagere: {n}"
+
+msgid "Retry"
+msgstr "Prøv igen"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Søgningen mislykkedes — tjek din forbindelse, og prøv igen."
+
+msgid "Search objects…"
+msgstr "Søg objekter…"
+
+msgid "See the results"
+msgstr "Se resultaterne"
+
+msgid "Send report"
+msgstr "Send anmeldelse"
+
+msgid "Share this survey"
+msgstr "Del denne undersøgelse"
+
+msgid "Small brush"
+msgstr "Lille pensel"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "Små grupper er skjult for at beskytte privatlivet."
+
+msgid "Something else"
+msgstr "Noget andet"
+
+msgid "Spray"
+msgstr "Sprøjt"
+
+msgid "Stop"
+msgstr "Stop"
+
+msgid "Survey results"
+msgstr "Resultater af undersøgelsen"
+
+msgid "Survey unavailable"
+msgstr "Undersøgelse utilgængelig"
+
+msgid "Take photo"
+msgstr "Tag foto"
+
+msgid "Take the survey"
+msgstr "Deltag i undersøgelsen"
+
+msgid "Tap the first point to close the shape."
+msgstr "Tryk på det første punkt for at lukke figuren."
+
+msgid "Tap the last point to finish the line."
+msgstr "Tryk på det sidste punkt for at afslutte linjen."
+
+msgid "Tap to add the next corner."
+msgstr "Tryk for at tilføje det næste hjørne."
+
+msgid "Tap to add the next point."
+msgstr "Tryk for at tilføje det næste punkt."
+
+msgid "Tap to add the shape’s corners."
+msgstr "Tryk for at tilføje figurens hjørner."
+
+msgid "Tap to start the line."
+msgstr "Tryk for at starte linjen."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"Fortæl os, hvad der er galt med »%(name)s«. Et menneske gennemgår hver "
+"anmeldelse."
+
+msgid "Thank you"
+msgstr "Tak"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Penslen er tom — visk noget maling ud for at fortsætte."
+
+msgid "The file does not match its declared type."
+msgstr "Filen svarer ikke til sin angivne type."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "Filen er for stor (grænse %(mb)s MB)."
+
+msgid "The files in this response are too large overall."
+msgstr "Filerne i dette svar er samlet set for store."
+
+msgid "This file type is not accepted here."
+msgstr "Denne filtype accepteres ikke her."
+
+msgid "This is the last section — respondents finish here"
+msgstr "Dette er den sidste sektion — deltagerne afslutter her"
+
+msgid "This question does not accept files."
+msgstr "Dette spørgsmål accepterer ikke filer."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "Dette spørgsmål er endnu ikke knyttet til et referencelag."
+
+msgid "This question is required"
+msgstr "Dette spørgsmål er obligatorisk"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "Dette øjebliksbillede skal opdateres af undersøgelsens ejer."
+
+msgid "This survey isn’t available"
+msgstr "Denne undersøgelse er ikke tilgængelig"
+
+msgid "Too many files in this response."
+msgstr "For mange filer i dette svar."
+
+msgid "Type to search…"
+msgstr "Skriv for at søge…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr ""
+"Ikke offentligt listet — kan kun ses via direkte link, ikke indekseret."
+
+msgid "Upload failed."
+msgstr "Upload mislykkedes."
+
+msgid "Uploading"
+msgstr "Uploader"
+
+msgid "Yes"
+msgstr "Ja"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "Din anmeldelse er modtaget. Et menneske vil se på den."
+
+msgid "Zoom in"
+msgstr "Zoom ind"
+
+msgid "Zoom out"
+msgstr "Zoom ud"
+
+msgid "at least {n} required"
+msgstr "mindst {n} påkrævet"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "Satellit"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "Gader"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "Topografisk"
+
+msgid "create your own free map survey"
+msgstr "lav din egen gratis kortundersøgelse"
+
+msgid "of"
+msgstr "af"
+
+msgid "responses"
+msgstr "besvarelser"
+
+msgid "up to {n} more"
+msgstr "op til {n} mere"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} sluppet på plads {position}"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} flyttet til plads {position}"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"{item} taget op. Brug piletasterne til at flytte det og mellemrumstasten til "
+"at slippe det."
+
+msgid "{n} marked"
+msgstr "{n} markeret"
+
+msgid "{n} of {m} marked"
+msgstr "{n} af {m} markeret"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… og %(n)s mere"

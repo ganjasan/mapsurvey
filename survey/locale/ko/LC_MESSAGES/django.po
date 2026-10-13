@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "제거"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,324 @@ msgstr "주소 검색..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "결과 없음"
+
+msgid "A few required questions still need an answer."
+msgstr "아직 답하지 않은 필수 질문이 있습니다."
+
+msgid "Add another"
+msgstr "하나 더 추가"
+
+msgid "Add audio file"
+msgstr "오디오 파일 추가"
+
+msgid "Add photo"
+msgstr "사진 추가"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr "순위를 매길 항목을 아래 <strong>선택지</strong>에 추가하세요."
+
+msgid "All"
+msgstr "전체"
+
+msgid "All {m} marked — thank you!"
+msgstr "{m}개 모두 표시했습니다 — 감사합니다!"
+
+msgid "Answered"
+msgstr "응답함"
+
+msgid "Answers"
+msgstr "답변"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "비밀번호, 로그인 또는 결제를 요구함"
+
+msgid "Attach file"
+msgstr "파일 첨부"
+
+msgid "Brush size"
+msgstr "브러시 크기"
+
+msgid "Cell size: {m} m"
+msgstr "셀 크기: {m} m"
+
+msgid "Clear"
+msgstr "지우기"
+
+msgid "Data as of"
+msgstr "데이터 기준 시점"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr "항목을 끌어서 순서를 정하거나, 스페이스 키로 항목을 집은 뒤 화살표 키로 옮기세요."
+
+msgid "Erase"
+msgstr "지우개"
+
+msgid "File is too large."
+msgstr "파일이 너무 큽니다."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "손가락을 누른 채 끌어서 칠하세요. 더 확실한 곳에서는 더 오래 머무르세요."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "누른 채 끌어서 칠하세요. 더 확실한 곳에서는 더 오래 머무르세요."
+
+msgid "Incorrect password"
+msgstr "비밀번호가 올바르지 않습니다"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr "아직 게시되지 않았거나 종료 또는 삭제되었을 수 있습니다. 주최자에게 받은 링크라면 주최자에게 문의하세요."
+
+msgid "Large brush"
+msgstr "큰 브러시"
+
+msgid "Layers"
+msgstr "레이어"
+
+msgid "Link copied!"
+msgstr "링크가 복사되었습니다!"
+
+msgid "Locate me"
+msgstr "내 위치 찾기"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "사기로 보이거나 회사를 사칭함"
+
+msgid "Made with"
+msgstr "제작 도구:"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr "다른 응답자가 남긴 표시입니다. 내 표시는 이 목록에 없습니다."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "최대 개수에 도달했습니다 — 변경하려면 아래에서 하나를 삭제하세요."
+
+msgid "Medium brush"
+msgstr "중간 브러시"
+
+msgid "Move map"
+msgstr "지도 이동"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "지도를 움직여 핀 위치를 맞춘 다음 적용을 누르세요."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Mapsurvey 설문에 비밀번호나 카드 번호를 절대 입력하지 마세요."
+
+msgid "No"
+msgstr "아니요"
+
+msgid "No objects in this layer yet"
+msgstr "이 레이어에 아직 객체가 없습니다"
+
+msgid "No results to show yet."
+msgstr "아직 표시할 결과가 없습니다."
+
+msgid "Nothing matches"
+msgstr "일치하는 항목이 없습니다"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "응답이 적은 객체는 개인정보 보호를 위해 가려집니다."
+
+msgid "Please add a file."
+msgstr "파일을 추가하세요."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "계속하려면 최소 %%d개 객체에 대해 답하세요"
+
+msgid "Please specify"
+msgstr "직접 입력하세요"
+
+msgid "Record"
+msgstr "녹음"
+
+msgid "Remove file"
+msgstr "파일 제거"
+
+msgid "Report this survey"
+msgstr "이 설문 신고하기"
+
+msgid "Respondents: {n}"
+msgstr "응답자: {n}"
+
+msgid "Retry"
+msgstr "다시 시도"
+
+msgid "Search failed — check your connection and try again."
+msgstr "검색에 실패했습니다 — 연결을 확인하고 다시 시도하세요."
+
+msgid "Search objects…"
+msgstr "객체 검색…"
+
+msgid "See the results"
+msgstr "결과 보기"
+
+msgid "Send report"
+msgstr "신고 보내기"
+
+msgid "Share this survey"
+msgstr "이 설문 공유하기"
+
+msgid "Small brush"
+msgstr "작은 브러시"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "소규모 그룹은 개인정보 보호를 위해 가려집니다."
+
+msgid "Something else"
+msgstr "기타"
+
+msgid "Spray"
+msgstr "스프레이"
+
+msgid "Stop"
+msgstr "중지"
+
+msgid "Survey results"
+msgstr "설문 결과"
+
+msgid "Survey unavailable"
+msgstr "설문을 사용할 수 없음"
+
+msgid "Take photo"
+msgstr "사진 찍기"
+
+msgid "Take the survey"
+msgstr "설문 참여하기"
+
+msgid "Tap the first point to close the shape."
+msgstr "첫 번째 점을 탭하여 도형을 닫으세요."
+
+msgid "Tap the last point to finish the line."
+msgstr "마지막 점을 탭하여 선을 완성하세요."
+
+msgid "Tap to add the next corner."
+msgstr "탭하여 다음 꼭짓점을 추가하세요."
+
+msgid "Tap to add the next point."
+msgstr "탭하여 다음 점을 추가하세요."
+
+msgid "Tap to add the shape’s corners."
+msgstr "탭하여 도형의 꼭짓점을 추가하세요."
+
+msgid "Tap to start the line."
+msgstr "탭하여 선을 시작하세요."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr "“%(name)s”에 어떤 문제가 있는지 알려 주세요. 모든 신고는 사람이 직접 검토합니다."
+
+msgid "Thank you"
+msgstr "감사합니다"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "브러시가 비었습니다 — 계속하려면 칠한 부분을 일부 지우세요."
+
+msgid "The file does not match its declared type."
+msgstr "파일이 지정된 형식과 일치하지 않습니다."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "파일이 너무 큽니다(최대 %(mb)s MB)."
+
+msgid "The files in this response are too large overall."
+msgstr "이 응답의 파일 전체 크기가 너무 큽니다."
+
+msgid "This file type is not accepted here."
+msgstr "이 파일 형식은 여기에서 허용되지 않습니다."
+
+msgid "This is the last section — respondents finish here"
+msgstr "마지막 섹션입니다 — 응답자는 여기에서 마칩니다"
+
+msgid "This question does not accept files."
+msgstr "이 질문은 파일을 받지 않습니다."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "이 질문은 아직 참조 레이어에 연결되지 않았습니다."
+
+msgid "This question is required"
+msgstr "필수 질문입니다"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "설문 소유자가 이 스냅샷을 새로 고쳐야 합니다."
+
+msgid "This survey isn’t available"
+msgstr "이 설문은 사용할 수 없습니다"
+
+msgid "Too many files in this response."
+msgstr "이 응답에 파일이 너무 많습니다."
+
+msgid "Type to search…"
+msgstr "입력하여 검색…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr "비공개 목록 — 직접 링크로만 볼 수 있으며 검색에 노출되지 않습니다."
+
+msgid "Upload failed."
+msgstr "업로드에 실패했습니다."
+
+msgid "Uploading"
+msgstr "업로드 중"
+
+msgid "Yes"
+msgstr "예"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "신고가 접수되었습니다. 담당자가 직접 확인합니다."
+
+msgid "Zoom in"
+msgstr "확대"
+
+msgid "Zoom out"
+msgstr "축소"
+
+msgid "at least {n} required"
+msgstr "최소 {n}개 필요"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "위성"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "거리"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "지형"
+
+msgid "create your own free map survey"
+msgstr "나만의 무료 지도 설문 만들기"
+
+msgid "of"
+msgstr "/"
+
+msgid "responses"
+msgstr "응답 수"
+
+msgid "up to {n} more"
+msgstr "최대 {n}개 더"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item}을(를) {position}번 위치에 놓았습니다"
+
+msgid "{item} moved to position {position}"
+msgstr "{item}을(를) {position}번 위치로 옮겼습니다"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr "{item}을(를) 집었습니다. 화살표 키로 옮기고 스페이스 키로 놓으세요."
+
+msgid "{n} marked"
+msgstr "{n}개 표시함"
+
+msgid "{n} of {m} marked"
+msgstr "{n}/{m}개 표시함"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… 외 %(n)s개"

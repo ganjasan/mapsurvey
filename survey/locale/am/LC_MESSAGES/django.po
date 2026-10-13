@@ -683,7 +683,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "አስወግድ"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -979,3 +979,325 @@ msgstr "አድራሻ ፈልግ..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "ምንም ውጤት አልተገኘም"
+
+msgid "A few required questions still need an answer."
+msgstr "ጥቂት አስገዳጅ ጥያቄዎች አሁንም መልስ ይፈልጋሉ።"
+
+msgid "Add another"
+msgstr "ሌላ ጨምር"
+
+msgid "Add audio file"
+msgstr "የድምፅ ፋይል ጨምር"
+
+msgid "Add photo"
+msgstr "ፎቶ ጨምር"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr "ደረጃ የሚሰጣቸውን ንጥሎች ከታች በ<strong>ምርጫዎች</strong> ውስጥ ያክሉ።"
+
+msgid "All"
+msgstr "ሁሉም"
+
+msgid "All {m} marked — thank you!"
+msgstr "ሁሉም {m} ምልክት ተደርገዋል — እናመሰግናለን!"
+
+msgid "Answered"
+msgstr "የተመለሱ"
+
+msgid "Answers"
+msgstr "መልሶች"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "የይለፍ ቃል፣ መግቢያ ወይም ክፍያ ይጠይቃል"
+
+msgid "Attach file"
+msgstr "ፋይል አያይዝ"
+
+msgid "Brush size"
+msgstr "የብሩሽ መጠን"
+
+msgid "Cell size: {m} m"
+msgstr "የሕዋስ መጠን፦ {m} ሜ"
+
+msgid "Clear"
+msgstr "አጽዳ"
+
+msgid "Data as of"
+msgstr "መረጃው እስከ"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr "ንጥሎቹን ጎትተው በቅደም ተከተል ያስቀምጡ፣ ወይም አንዱን በSpace አንስተው በቀስት ቁልፎች ያንቀሳቅሱት።"
+
+msgid "Erase"
+msgstr "ደምስስ"
+
+msgid "File is too large."
+msgstr "ፋይሉ በጣም ትልቅ ነው።"
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "ለመርጨት ጣትዎን ይዘው ይጎትቱ። ይበልጥ እርግጠኛ በሆኑበት ቦታ ረዘም ብለው ይቆዩ።"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "ለመርጨት ይዘው ይጎትቱ። ይበልጥ እርግጠኛ በሆኑበት ቦታ ረዘም ብለው ይቆዩ።"
+
+msgid "Incorrect password"
+msgstr "የተሳሳተ የይለፍ ቃል"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"ገና ያልታተመ ሊሆን ይችላል፣ ወይም ተዘግቶ ወይም ተወግዶ ሊሆን ይችላል። ከአዘጋጅ አገናኝ ካለዎት እነሱን ይጠይቁ።"
+
+msgid "Large brush"
+msgstr "ትልቅ ብሩሽ"
+
+msgid "Layers"
+msgstr "ንብርብሮች"
+
+msgid "Link copied!"
+msgstr "አገናኙ ተቀድቷል!"
+
+msgid "Locate me"
+msgstr "አካባቢዬን አግኝ"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "ማጭበርበር ይመስላል ወይም ኩባንያን ያስመስላል"
+
+msgid "Made with"
+msgstr "የተሰራው በ"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr "በሌሎች ተሳታፊዎች የተቀመጡ ምልክቶች። የእርስዎ ምልክቶች በዚህ ዝርዝር ውስጥ የሉም።"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "ከፍተኛው ገደብ ደርሷል — ለመቀየር ከታች አንዱን ያስወግዱ።"
+
+msgid "Medium brush"
+msgstr "መካከለኛ ብሩሽ"
+
+msgid "Move map"
+msgstr "ካርታ አንቀሳቅስ"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "ፒኑን ለማስቀመጥ ካርታውን ያንቀሳቅሱ፣ ከዚያ ተግብር የሚለውን ይጫኑ።"
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "በMapsurvey ዳሰሳ ውስጥ የይለፍ ቃሎችን ወይም የካርድ ቁጥሮችን በፍጹም አያስገቡ።"
+
+msgid "No"
+msgstr "አይ"
+
+msgid "No objects in this layer yet"
+msgstr "በዚህ ንብርብር ውስጥ እስካሁን ምንም ነገሮች የሉም"
+
+msgid "No results to show yet."
+msgstr "እስካሁን የሚታይ ውጤት የለም።"
+
+msgid "Nothing matches"
+msgstr "ምንም የሚዛመድ የለም"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "ግላዊነትን ለመጠበቅ ጥቂት መልስ ያላቸው ነገሮች ተደብቀዋል።"
+
+msgid "Please add a file."
+msgstr "እባክዎ ፋይል ያክሉ።"
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "ለመቀጠል እባክዎ ቢያንስ ስለ %%d ነገር(ዎች) ይመልሱ"
+
+msgid "Please specify"
+msgstr "እባክዎ ይግለጹ"
+
+msgid "Record"
+msgstr "ቅዳ"
+
+msgid "Remove file"
+msgstr "ፋይል አስወግድ"
+
+msgid "Report this survey"
+msgstr "ይህን ዳሰሳ ሪፖርት አድርግ"
+
+msgid "Respondents: {n}"
+msgstr "ተሳታፊዎች፦ {n}"
+
+msgid "Retry"
+msgstr "እንደገና ሞክር"
+
+msgid "Search failed — check your connection and try again."
+msgstr "ፍለጋው አልተሳካም — ግንኙነትዎን ያረጋግጡና እንደገና ይሞክሩ።"
+
+msgid "Search objects…"
+msgstr "ነገሮችን ፈልግ…"
+
+msgid "See the results"
+msgstr "ውጤቶቹን ይመልከቱ"
+
+msgid "Send report"
+msgstr "ሪፖርት ላክ"
+
+msgid "Share this survey"
+msgstr "ይህን ዳሰሳ አጋራ"
+
+msgid "Small brush"
+msgstr "ትንሽ ብሩሽ"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "ግላዊነትን ለመጠበቅ ትናንሽ ቡድኖች ተደብቀዋል።"
+
+msgid "Something else"
+msgstr "ሌላ ነገር"
+
+msgid "Spray"
+msgstr "ርጭ"
+
+msgid "Stop"
+msgstr "አቁም"
+
+msgid "Survey results"
+msgstr "የዳሰሳ ውጤቶች"
+
+msgid "Survey unavailable"
+msgstr "ዳሰሳው አይገኝም"
+
+msgid "Take photo"
+msgstr "ፎቶ አንሳ"
+
+msgid "Take the survey"
+msgstr "ዳሰሳውን ይሙሉ"
+
+msgid "Tap the first point to close the shape."
+msgstr "ቅርጹን ለመዝጋት የመጀመሪያውን ነጥብ ይንኩ።"
+
+msgid "Tap the last point to finish the line."
+msgstr "መስመሩን ለመጨረስ የመጨረሻውን ነጥብ ይንኩ።"
+
+msgid "Tap to add the next corner."
+msgstr "ቀጣዩን ማዕዘን ለማከል ይንኩ።"
+
+msgid "Tap to add the next point."
+msgstr "ቀጣዩን ነጥብ ለማከል ይንኩ።"
+
+msgid "Tap to add the shape’s corners."
+msgstr "የቅርጹን ማዕዘኖች ለማከል ይንኩ።"
+
+msgid "Tap to start the line."
+msgstr "መስመሩን ለመጀመር ይንኩ።"
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr "“%(name)s” ምን ችግር እንዳለበት ይንገሩን። እያንዳንዱን ሪፖርት ሰው ይገመግመዋል።"
+
+msgid "Thank you"
+msgstr "እናመሰግናለን"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "ብሩሹ ባዶ ነው — ለመቀጠል የተወሰነ ቀለም ይደምስሱ።"
+
+msgid "The file does not match its declared type."
+msgstr "ፋይሉ ከተገለጸው አይነቱ ጋር አይዛመድም።"
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "ፋይሉ በጣም ትልቅ ነው (ገደብ %(mb)s MB)።"
+
+msgid "The files in this response are too large overall."
+msgstr "በዚህ መልስ ውስጥ ያሉት ፋይሎች በአጠቃላይ በጣም ትልቅ ናቸው።"
+
+msgid "This file type is not accepted here."
+msgstr "ይህ የፋይል አይነት እዚህ ተቀባይነት የለውም።"
+
+msgid "This is the last section — respondents finish here"
+msgstr "ይህ የመጨረሻው ክፍል ነው — ተሳታፊዎች እዚህ ይጨርሳሉ"
+
+msgid "This question does not accept files."
+msgstr "ይህ ጥያቄ ፋይሎችን አይቀበልም።"
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "ይህ ጥያቄ እስካሁን ከማጣቀሻ ንብርብር ጋር አልተገናኘም።"
+
+msgid "This question is required"
+msgstr "ይህ ጥያቄ አስገዳጅ ነው"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "ይህ ቅጽበታዊ ምስል በዳሰሳው ባለቤት መታደስ አለበት።"
+
+msgid "This survey isn’t available"
+msgstr "ይህ ዳሰሳ አይገኝም"
+
+msgid "Too many files in this response."
+msgstr "በዚህ መልስ ውስጥ በጣም ብዙ ፋይሎች አሉ።"
+
+msgid "Type to search…"
+msgstr "ለመፈለግ ይጻፉ…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr "ያልተዘረዘረ — በቀጥታ አገናኝ ብቻ የሚታይ፣ አልተመዘገበም።"
+
+msgid "Upload failed."
+msgstr "መስቀል አልተሳካም።"
+
+msgid "Uploading"
+msgstr "በመስቀል ላይ"
+
+msgid "Yes"
+msgstr "አዎ"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "ሪፖርትዎ ደርሶናል። አንድ ሰው ይመለከተዋል።"
+
+msgid "Zoom in"
+msgstr "አቅርብ"
+
+msgid "Zoom out"
+msgstr "አርቅ"
+
+msgid "at least {n} required"
+msgstr "ቢያንስ {n} ያስፈልጋል"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "ሳተላይት"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "መንገዶች"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "የመሬት አቀማመጥ"
+
+msgid "create your own free map survey"
+msgstr "የራስዎን ነፃ የካርታ ዳሰሳ ይፍጠሩ"
+
+msgid "of"
+msgstr "ከ"
+
+msgid "responses"
+msgstr "ምላሾች"
+
+msgid "up to {n} more"
+msgstr "እስከ {n} ተጨማሪ"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} በቦታ {position} ተቀምጧል"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} ወደ ቦታ {position} ተዛውሯል"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr "{item} ተነስቷል። ለማንቀሳቀስ የቀስት ቁልፎችን፣ ለማስቀመጥ Spaceን ይጠቀሙ።"
+
+msgid "{n} marked"
+msgstr "{n} ምልክት ተደርጓል"
+
+msgid "{n} of {m} marked"
+msgstr "ከ{m} {n} ምልክት ተደርጓል"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… እና ሌሎች %(n)s"

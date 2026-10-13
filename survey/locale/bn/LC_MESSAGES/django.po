@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "সরান"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,335 @@ msgstr "ঠিকানা খুঁজুন..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "কোনো ফলাফল পাওয়া যায়নি"
+
+msgid "A few required questions still need an answer."
+msgstr "কয়েকটি আবশ্যক প্রশ্নের উত্তর এখনও বাকি।"
+
+msgid "Add another"
+msgstr "আরেকটি যোগ করুন"
+
+msgid "Add audio file"
+msgstr "অডিও ফাইল যোগ করুন"
+
+msgid "Add photo"
+msgstr "ছবি যোগ করুন"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"যে আইটেমগুলোর ক্রম নির্ধারণ করা হবে, সেগুলো নিচে "
+"<strong>বিকল্পসমূহ</strong>-এ যোগ করুন।"
+
+msgid "All"
+msgstr "সব"
+
+msgid "All {m} marked — thank you!"
+msgstr "সব {m}টি চিহ্নিত — ধন্যবাদ!"
+
+msgid "Answered"
+msgstr "উত্তর দেওয়া হয়েছে"
+
+msgid "Answers"
+msgstr "উত্তরসমূহ"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "পাসওয়ার্ড, লগইন বা পেমেন্ট চায়"
+
+msgid "Attach file"
+msgstr "ফাইল সংযুক্ত করুন"
+
+msgid "Brush size"
+msgstr "ব্রাশের আকার"
+
+msgid "Cell size: {m} m"
+msgstr "সেলের আকার: {m} মি"
+
+msgid "Clear"
+msgstr "সাফ করুন"
+
+msgid "Data as of"
+msgstr "তথ্যের তারিখ"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"আইটেমগুলো টেনে ক্রমানুসারে সাজান, অথবা Space দিয়ে একটি তুলে তীর কী দিয়ে "
+"সরান।"
+
+msgid "Erase"
+msgstr "মুছে ফেলুন"
+
+msgid "File is too large."
+msgstr "ফাইলটি খুব বড়।"
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"স্প্রে করতে আঙুল চেপে ধরে টানুন। যেখানে আপনি বেশি নিশ্চিত, সেখানে বেশিক্ষণ "
+"থাকুন।"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"স্প্রে করতে চেপে ধরে টানুন। যেখানে আপনি বেশি নিশ্চিত, সেখানে বেশিক্ষণ থাকুন।"
+
+msgid "Incorrect password"
+msgstr "ভুল পাসওয়ার্ড"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"এটি হয়তো এখনও প্রকাশিত হয়নি, অথবা বন্ধ বা সরিয়ে ফেলা হয়েছে। আয়োজকের কাছ "
+"থেকে লিংক পেয়ে থাকলে তাঁদের সঙ্গে যোগাযোগ করুন।"
+
+msgid "Large brush"
+msgstr "বড় ব্রাশ"
+
+msgid "Layers"
+msgstr "স্তর"
+
+msgid "Link copied!"
+msgstr "লিংক কপি হয়েছে!"
+
+msgid "Locate me"
+msgstr "আমার অবস্থান দেখান"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "প্রতারণা মনে হচ্ছে বা কোনো কোম্পানির ছদ্মবেশ ধরেছে"
+
+msgid "Made with"
+msgstr "তৈরি হয়েছে"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr "অন্য উত্তরদাতাদের দেওয়া চিহ্ন। আপনার নিজের চিহ্ন এই তালিকায় নেই।"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "সর্বোচ্চ সীমায় পৌঁছেছে — পরিবর্তন করতে নিচ থেকে একটি সরান।"
+
+msgid "Medium brush"
+msgstr "মাঝারি ব্রাশ"
+
+msgid "Move map"
+msgstr "মানচিত্র সরান"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "পিনটি বসাতে মানচিত্র সরান, তারপর প্রয়োগ করুন চাপুন।"
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Mapsurvey জরিপে কখনও পাসওয়ার্ড বা কার্ড নম্বর লিখবেন না।"
+
+msgid "No"
+msgstr "না"
+
+msgid "No objects in this layer yet"
+msgstr "এই স্তরে এখনও কোনো বস্তু নেই"
+
+msgid "No results to show yet."
+msgstr "দেখানোর মতো কোনো ফলাফল এখনও নেই।"
+
+msgid "Nothing matches"
+msgstr "কিছুই মেলেনি"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "গোপনীয়তা রক্ষায় কম উত্তরযুক্ত বস্তুগুলো লুকানো হয়েছে।"
+
+msgid "Please add a file."
+msgstr "অনুগ্রহ করে একটি ফাইল যোগ করুন।"
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "চালিয়ে যেতে অনুগ্রহ করে অন্তত %%dটি বস্তু সম্পর্কে উত্তর দিন"
+
+msgid "Please specify"
+msgstr "অনুগ্রহ করে উল্লেখ করুন"
+
+msgid "Record"
+msgstr "রেকর্ড করুন"
+
+msgid "Remove file"
+msgstr "ফাইল সরান"
+
+msgid "Report this survey"
+msgstr "এই জরিপটি রিপোর্ট করুন"
+
+msgid "Respondents: {n}"
+msgstr "উত্তরদাতা: {n}"
+
+msgid "Retry"
+msgstr "আবার চেষ্টা করুন"
+
+msgid "Search failed — check your connection and try again."
+msgstr "অনুসন্ধান ব্যর্থ হয়েছে — সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।"
+
+msgid "Search objects…"
+msgstr "বস্তু খুঁজুন…"
+
+msgid "See the results"
+msgstr "ফলাফল দেখুন"
+
+msgid "Send report"
+msgstr "রিপোর্ট পাঠান"
+
+msgid "Share this survey"
+msgstr "এই জরিপটি শেয়ার করুন"
+
+msgid "Small brush"
+msgstr "ছোট ব্রাশ"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "গোপনীয়তা রক্ষায় ছোট দলগুলো লুকানো হয়েছে।"
+
+msgid "Something else"
+msgstr "অন্য কিছু"
+
+msgid "Spray"
+msgstr "স্প্রে"
+
+msgid "Stop"
+msgstr "থামান"
+
+msgid "Survey results"
+msgstr "জরিপের ফলাফল"
+
+msgid "Survey unavailable"
+msgstr "জরিপ উপলব্ধ নয়"
+
+msgid "Take photo"
+msgstr "ছবি তুলুন"
+
+msgid "Take the survey"
+msgstr "জরিপে অংশ নিন"
+
+msgid "Tap the first point to close the shape."
+msgstr "আকৃতিটি বন্ধ করতে প্রথম বিন্দুতে ট্যাপ করুন।"
+
+msgid "Tap the last point to finish the line."
+msgstr "রেখাটি শেষ করতে শেষ বিন্দুতে ট্যাপ করুন।"
+
+msgid "Tap to add the next corner."
+msgstr "পরের কোণ যোগ করতে ট্যাপ করুন।"
+
+msgid "Tap to add the next point."
+msgstr "পরের বিন্দু যোগ করতে ট্যাপ করুন।"
+
+msgid "Tap to add the shape’s corners."
+msgstr "আকৃতির কোণগুলো যোগ করতে ট্যাপ করুন।"
+
+msgid "Tap to start the line."
+msgstr "রেখা শুরু করতে ট্যাপ করুন।"
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"“%(name)s”-এ কী সমস্যা তা আমাদের জানান। প্রতিটি রিপোর্ট একজন মানুষ পর্যালোচনা"
+" করেন।"
+
+msgid "Thank you"
+msgstr "ধন্যবাদ"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "ব্রাশ খালি — চালিয়ে যেতে কিছু রং মুছে ফেলুন।"
+
+msgid "The file does not match its declared type."
+msgstr "ফাইলটি তার ঘোষিত ধরনের সঙ্গে মেলে না।"
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "ফাইলটি খুব বড় (সীমা %(mb)s MB)।"
+
+msgid "The files in this response are too large overall."
+msgstr "এই উত্তরের ফাইলগুলো সব মিলিয়ে খুব বড়।"
+
+msgid "This file type is not accepted here."
+msgstr "এই ধরনের ফাইল এখানে গ্রহণযোগ্য নয়।"
+
+msgid "This is the last section — respondents finish here"
+msgstr "এটি শেষ অংশ — উত্তরদাতারা এখানেই শেষ করেন"
+
+msgid "This question does not accept files."
+msgstr "এই প্রশ্নে ফাইল গ্রহণ করা হয় না।"
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "এই প্রশ্নটি এখনও কোনো রেফারেন্স স্তরের সঙ্গে যুক্ত নয়।"
+
+msgid "This question is required"
+msgstr "এই প্রশ্নটি আবশ্যক"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "জরিপের মালিককে এই স্ন্যাপশটটি হালনাগাদ করতে হবে।"
+
+msgid "This survey isn’t available"
+msgstr "এই জরিপটি উপলব্ধ নেই"
+
+msgid "Too many files in this response."
+msgstr "এই উত্তরে অনেক বেশি ফাইল রয়েছে।"
+
+msgid "Type to search…"
+msgstr "খুঁজতে টাইপ করুন…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr "তালিকাভুক্ত নয় — শুধু সরাসরি লিংকে দেখা যায়, ইনডেক্স করা হয় না।"
+
+msgid "Upload failed."
+msgstr "আপলোড ব্যর্থ হয়েছে।"
+
+msgid "Uploading"
+msgstr "আপলোড হচ্ছে"
+
+msgid "Yes"
+msgstr "হ্যাঁ"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "আপনার রিপোর্ট পাওয়া গেছে। একজন মানুষ এটি দেখবেন।"
+
+msgid "Zoom in"
+msgstr "জুম ইন"
+
+msgid "Zoom out"
+msgstr "জুম আউট"
+
+msgid "at least {n} required"
+msgstr "অন্তত {n}টি প্রয়োজন"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "স্যাটেলাইট"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "রাস্তা"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "ভূসংস্থান"
+
+msgid "create your own free map survey"
+msgstr "নিজের বিনামূল্যের মানচিত্র জরিপ তৈরি করুন"
+
+msgid "of"
+msgstr "এর মধ্যে"
+
+msgid "responses"
+msgstr "উত্তর"
+
+msgid "up to {n} more"
+msgstr "আরও সর্বোচ্চ {n}টি"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} {position} নম্বর অবস্থানে রাখা হয়েছে"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} {position} নম্বর অবস্থানে সরানো হয়েছে"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr "{item} তোলা হয়েছে। সরাতে তীর কী, রাখতে Space ব্যবহার করুন।"
+
+msgid "{n} marked"
+msgstr "{n}টি চিহ্নিত"
+
+msgid "{n} of {m} marked"
+msgstr "{m}টির মধ্যে {n}টি চিহ্নিত"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… এবং আরও %(n)sটি"

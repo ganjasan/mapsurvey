@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "Հեռացնել"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,339 @@ msgstr "Օրոնել հասցե..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Արդյունքներ չեն գտնվել"
+
+msgid "A few required questions still need an answer."
+msgstr "Մի քանի պարտադիր հարցեր դեռ պատասխան չունեն։"
+
+msgid "Add another"
+msgstr "Ավելացնել ևս մեկը"
+
+msgid "Add audio file"
+msgstr "Ավելացնել աուդիո ֆայլ"
+
+msgid "Add photo"
+msgstr "Ավելացնել լուսանկար"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"Դասակարգվող տարրերն ավելացրեք ստորև՝ <strong>Տարբերակներ</strong> բաժնում։"
+
+msgid "All"
+msgstr "Բոլորը"
+
+msgid "All {m} marked — thank you!"
+msgstr "Բոլոր {m}-ը նշված են — շնորհակալություն։"
+
+msgid "Answered"
+msgstr "Պատասխանված"
+
+msgid "Answers"
+msgstr "Պատասխաններ"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Պահանջում է գաղտնաբառ, մուտք կամ վճարում"
+
+msgid "Attach file"
+msgstr "Կցել ֆայլ"
+
+msgid "Brush size"
+msgstr "Վրձնի չափը"
+
+msgid "Cell size: {m} m"
+msgstr "Բջջի չափը՝ {m} մ"
+
+msgid "Clear"
+msgstr "Մաքրել"
+
+msgid "Data as of"
+msgstr "Տվյալները՝ առ"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"Քաշեք տարրերը՝ դասավորելու համար, կամ վերցրեք մեկը Space ստեղնով և տեղափոխեք "
+"սլաքներով։"
+
+msgid "Erase"
+msgstr "Ռետինել"
+
+msgid "File is too large."
+msgstr "Ֆայլը չափազանց մեծ է։"
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"Պահեք և սահեցրեք մատը՝ ցողելու համար։ Ավելի երկար մնացեք այնտեղ, որտեղ ավելի "
+"վստահ եք։"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"Պահեք և քաշեք՝ ցողելու համար։ Ավելի երկար մնացեք այնտեղ, որտեղ ավելի վստահ "
+"եք։"
+
+msgid "Incorrect password"
+msgstr "Սխալ գաղտնաբառ"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"Հնարավոր է՝ այն դեռ հրապարակված չէ, կամ փակվել կամ հեռացվել է։ Եթե հղումը "
+"ստացել եք կազմակերպչից, ճշտեք նրա հետ։"
+
+msgid "Large brush"
+msgstr "Մեծ վրձին"
+
+msgid "Layers"
+msgstr "Շերտեր"
+
+msgid "Link copied!"
+msgstr "Հղումը պատճենվեց։"
+
+msgid "Locate me"
+msgstr "Գտնել իմ տեղը"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Նման է խարդախության կամ ներկայանում է որպես ընկերություն"
+
+msgid "Made with"
+msgstr "Ստեղծված է"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr "Այլ մասնակիցների դրած նշումներ։ Ձեր սեփական նշումներն այս ցանկում չեն։"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Առավելագույնը լրացված է — փոխելու համար հեռացրեք մեկը ստորև։"
+
+msgid "Medium brush"
+msgstr "Միջին վրձին"
+
+msgid "Move map"
+msgstr "Տեղաշարժել քարտեզը"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Տեղաշարժեք քարտեզը՝ նշիչը տեղադրելու համար, ապա սեղմեք «Կիրառել»։"
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr ""
+"Երբեք մի մուտքագրեք գաղտնաբառեր կամ քարտի համարներ Mapsurvey հարցումում։"
+
+msgid "No"
+msgstr "Ոչ"
+
+msgid "No objects in this layer yet"
+msgstr "Այս շերտում դեռ օբյեկտներ չկան"
+
+msgid "No results to show yet."
+msgstr "Ցուցադրելու արդյունքներ դեռ չկան։"
+
+msgid "Nothing matches"
+msgstr "Համընկնումներ չկան"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr ""
+"Քիչ պատասխաններով օբյեկտները թաքցված են՝ գաղտնիությունը պաշտպանելու համար։"
+
+msgid "Please add a file."
+msgstr "Խնդրում ենք ավելացնել ֆայլ։"
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "Շարունակելու համար պատասխանեք առնվազն %%d օբյեկտի վերաբերյալ"
+
+msgid "Please specify"
+msgstr "Խնդրում ենք նշել"
+
+msgid "Record"
+msgstr "Ձայնագրել"
+
+msgid "Remove file"
+msgstr "Հեռացնել ֆայլը"
+
+msgid "Report this survey"
+msgstr "Բողոքել այս հարցման մասին"
+
+msgid "Respondents: {n}"
+msgstr "Մասնակիցներ՝ {n}"
+
+msgid "Retry"
+msgstr "Կրկին փորձել"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Որոնումը ձախողվեց — ստուգեք կապը և նորից փորձեք։"
+
+msgid "Search objects…"
+msgstr "Որոնել օբյեկտներ…"
+
+msgid "See the results"
+msgstr "Տեսնել արդյունքները"
+
+msgid "Send report"
+msgstr "Ուղարկել բողոքը"
+
+msgid "Share this survey"
+msgstr "Կիսվել այս հարցումով"
+
+msgid "Small brush"
+msgstr "Փոքր վրձին"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "Փոքր խմբերը թաքցված են՝ գաղտնիությունը պաշտպանելու համար։"
+
+msgid "Something else"
+msgstr "Այլ բան"
+
+msgid "Spray"
+msgstr "Ցողել"
+
+msgid "Stop"
+msgstr "Կանգնեցնել"
+
+msgid "Survey results"
+msgstr "Հարցման արդյունքները"
+
+msgid "Survey unavailable"
+msgstr "Հարցումը հասանելի չէ"
+
+msgid "Take photo"
+msgstr "Լուսանկարել"
+
+msgid "Take the survey"
+msgstr "Մասնակցել հարցմանը"
+
+msgid "Tap the first point to close the shape."
+msgstr "Հպեք առաջին կետին՝ պատկերը փակելու համար։"
+
+msgid "Tap the last point to finish the line."
+msgstr "Հպեք վերջին կետին՝ գիծն ավարտելու համար։"
+
+msgid "Tap to add the next corner."
+msgstr "Հպեք՝ հաջորդ անկյունն ավելացնելու համար։"
+
+msgid "Tap to add the next point."
+msgstr "Հպեք՝ հաջորդ կետն ավելացնելու համար։"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Հպեք՝ պատկերի անկյուններն ավելացնելու համար։"
+
+msgid "Tap to start the line."
+msgstr "Հպեք՝ գիծը սկսելու համար։"
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"Պատմեք մեզ, թե ինչն է սխալ «%(name)s»-ում։ Յուրաքանչյուր բողոք ստուգում է "
+"մարդը։"
+
+msgid "Thank you"
+msgstr "Շնորհակալություն"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Վրձինը դատարկ է — շարունակելու համար ռետինեք ներկի մի մասը։"
+
+msgid "The file does not match its declared type."
+msgstr "Ֆայլը չի համապատասխանում իր նշված տեսակին։"
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "Ֆայլը չափազանց մեծ է (սահմանաչափը՝ %(mb)s ՄԲ)։"
+
+msgid "The files in this response are too large overall."
+msgstr "Այս պատասխանի ֆայլերն ընդհանուր առմամբ չափազանց մեծ են։"
+
+msgid "This file type is not accepted here."
+msgstr "Այս տեսակի ֆայլն այստեղ չի ընդունվում։"
+
+msgid "This is the last section — respondents finish here"
+msgstr "Սա վերջին բաժինն է — մասնակիցներն այստեղ ավարտում են"
+
+msgid "This question does not accept files."
+msgstr "Այս հարցը ֆայլեր չի ընդունում։"
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "Այս հարցը դեռ կապված չէ հղման շերտի հետ։"
+
+msgid "This question is required"
+msgstr "Այս հարցը պարտադիր է"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "Այս պատկերը պետք է թարմացնի հարցման սեփականատերը։"
+
+msgid "This survey isn’t available"
+msgstr "Այս հարցումը հասանելի չէ"
+
+msgid "Too many files in this response."
+msgstr "Այս պատասխանում չափազանց շատ ֆայլեր կան։"
+
+msgid "Type to search…"
+msgstr "Մուտքագրեք որոնելու համար…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr "Չցուցակված — հասանելի է միայն ուղիղ հղումով, չի ինդեքսավորվում։"
+
+msgid "Upload failed."
+msgstr "Վերբեռնումը ձախողվեց։"
+
+msgid "Uploading"
+msgstr "Վերբեռնվում է"
+
+msgid "Yes"
+msgstr "Այո"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "Ձեր բողոքը ստացվել է։ Մարդը կուսումնասիրի այն։"
+
+msgid "Zoom in"
+msgstr "Մեծացնել"
+
+msgid "Zoom out"
+msgstr "Փոքրացնել"
+
+msgid "at least {n} required"
+msgstr "պահանջվում է առնվազն {n}"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "Արբանյակային"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "Փողոցներ"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "Տեղագրական"
+
+msgid "create your own free map survey"
+msgstr "ստեղծեք Ձեր սեփական անվճար քարտեզային հարցումը"
+
+msgid "of"
+msgstr "-ից"
+
+msgid "responses"
+msgstr "պատասխան"
+
+msgid "up to {n} more"
+msgstr "ևս մինչև {n}"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item}-ը դրվեց {position} դիրքում"
+
+msgid "{item} moved to position {position}"
+msgstr "{item}-ը տեղափոխվեց {position} դիրք"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"{item}-ը վերցված է։ Տեղափոխելու համար օգտագործեք սլաքները, դնելու համար՝ "
+"Space։"
+
+msgid "{n} marked"
+msgstr "Նշված է՝ {n}"
+
+msgid "{n} of {m} marked"
+msgstr "Նշված է՝ {n}-ը {m}-ից"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… և ևս %(n)s"

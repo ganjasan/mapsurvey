@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "Olib tashlash"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,344 @@ msgstr "Manzil qidirish..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Natija topilmadi"
+
+msgid "A few required questions still need an answer."
+msgstr "Bir nechta majburiy savollarga hali javob berilmagan."
+
+msgid "Add another"
+msgstr "Yana qo'shish"
+
+msgid "Add audio file"
+msgstr "Audio fayl qo'shish"
+
+msgid "Add photo"
+msgstr "Rasm qo'shish"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"Tartiblanadigan elementlarni quyidagi <strong>Variantlar</strong> bo'limiga "
+"qo'shing."
+
+msgid "All"
+msgstr "Hammasi"
+
+msgid "All {m} marked — thank you!"
+msgstr "Barcha {m} ta belgilandi — rahmat!"
+
+msgid "Answered"
+msgstr "Javob berilgan"
+
+msgid "Answers"
+msgstr "Javoblar"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Parol, kirish yoki to'lov so'raydi"
+
+msgid "Attach file"
+msgstr "Fayl biriktirish"
+
+msgid "Brush size"
+msgstr "Mo'yqalam o'lchami"
+
+msgid "Cell size: {m} m"
+msgstr "Katak o'lchami: {m} m"
+
+msgid "Clear"
+msgstr "Tozalash"
+
+msgid "Data as of"
+msgstr "Ma'lumotlar sanasi"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"Elementlarni sudrab tartiblang yoki birini Probel tugmasi bilan olib, strelka"
+" tugmalari bilan suring."
+
+msgid "Erase"
+msgstr "O'chirg'ich"
+
+msgid "File is too large."
+msgstr "Fayl juda katta."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"Purkash uchun barmog'ingizni bosib turib suring. Ko'proq ishonchingiz komil "
+"joyda uzoqroq turing."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"Purkash uchun bosib turib suring. Ko'proq ishonchingiz komil joyda uzoqroq "
+"turing."
+
+msgid "Incorrect password"
+msgstr "Parol noto'g'ri"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"U hali e'lon qilinmagan yoki yopilgan yoxud o'chirilgan bo'lishi mumkin. Agar"
+" havolani tashkilotchidan olgan bo'lsangiz, ulardan so'rang."
+
+msgid "Large brush"
+msgstr "Katta mo'yqalam"
+
+msgid "Layers"
+msgstr "Qatlamlar"
+
+msgid "Link copied!"
+msgstr "Havola nusxalandi!"
+
+msgid "Locate me"
+msgstr "Meni topish"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Firibgarlikka o'xshaydi yoki kompaniya nomidan o'zini ko'rsatadi"
+
+msgid "Made with"
+msgstr "Yaratilgan:"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"Boshqa respondentlar qo'ygan belgilar. Sizning belgilaringiz bu ro'yxatda "
+"yo'q."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr ""
+"Maksimumga yetildi — o'zgartirish uchun quyidagilardan birini olib tashlang."
+
+msgid "Medium brush"
+msgstr "O'rtacha mo'yqalam"
+
+msgid "Move map"
+msgstr "Xaritani surish"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Pinni joylashtirish uchun xaritani suring, so'ng «Qo'llash»ni bosing."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr ""
+"Mapsurvey so'rovnomalarida hech qachon parol yoki karta raqamini kiritmang."
+
+msgid "No"
+msgstr "Yo'q"
+
+msgid "No objects in this layer yet"
+msgstr "Bu qatlamda hali obyektlar yo'q"
+
+msgid "No results to show yet."
+msgstr "Hozircha ko'rsatish uchun natijalar yo'q."
+
+msgid "Nothing matches"
+msgstr "Hech narsa topilmadi"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "Maxfiylikni himoya qilish uchun javoblari kam obyektlar yashiriladi."
+
+msgid "Please add a file."
+msgstr "Iltimos, fayl qo'shing."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "Davom etish uchun kamida %%d ta obyekt haqida javob bering"
+
+msgid "Please specify"
+msgstr "Iltimos, aniqlashtiring"
+
+msgid "Record"
+msgstr "Yozib olish"
+
+msgid "Remove file"
+msgstr "Faylni olib tashlash"
+
+msgid "Report this survey"
+msgstr "Bu so'rovnoma ustidan shikoyat qilish"
+
+msgid "Respondents: {n}"
+msgstr "Respondentlar: {n}"
+
+msgid "Retry"
+msgstr "Qayta urinish"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Qidiruv amalga oshmadi — ulanishni tekshirib, qayta urinib ko'ring."
+
+msgid "Search objects…"
+msgstr "Obyektlarni qidirish…"
+
+msgid "See the results"
+msgstr "Natijalarni ko'rish"
+
+msgid "Send report"
+msgstr "Shikoyat yuborish"
+
+msgid "Share this survey"
+msgstr "Bu so'rovnomani ulashish"
+
+msgid "Small brush"
+msgstr "Kichik mo'yqalam"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "Maxfiylikni himoya qilish uchun kichik guruhlar yashiriladi."
+
+msgid "Something else"
+msgstr "Boshqa sabab"
+
+msgid "Spray"
+msgstr "Purkash"
+
+msgid "Stop"
+msgstr "To'xtatish"
+
+msgid "Survey results"
+msgstr "So'rovnoma natijalari"
+
+msgid "Survey unavailable"
+msgstr "So'rovnoma mavjud emas"
+
+msgid "Take photo"
+msgstr "Suratga olish"
+
+msgid "Take the survey"
+msgstr "So'rovnomada qatnashish"
+
+msgid "Tap the first point to close the shape."
+msgstr "Shaklni yopish uchun birinchi nuqtaga bosing."
+
+msgid "Tap the last point to finish the line."
+msgstr "Chiziqni tugatish uchun oxirgi nuqtaga bosing."
+
+msgid "Tap to add the next corner."
+msgstr "Keyingi burchakni qo'shish uchun bosing."
+
+msgid "Tap to add the next point."
+msgstr "Keyingi nuqtani qo'shish uchun bosing."
+
+msgid "Tap to add the shape’s corners."
+msgstr "Shakl burchaklarini qo'shish uchun bosing."
+
+msgid "Tap to start the line."
+msgstr "Chiziqni boshlash uchun bosing."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"«%(name)s» bilan nima muammo borligini bizga ayting. Har bir shikoyatni inson"
+" ko'rib chiqadi."
+
+msgid "Thank you"
+msgstr "Rahmat"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Mo'yqalam bo'sh — davom etish uchun bir oz bo'yoqni o'chiring."
+
+msgid "The file does not match its declared type."
+msgstr "Fayl e'lon qilingan turiga mos kelmaydi."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "Fayl juda katta (cheklov %(mb)s MB)."
+
+msgid "The files in this response are too large overall."
+msgstr "Bu javobdagi fayllarning umumiy hajmi juda katta."
+
+msgid "This file type is not accepted here."
+msgstr "Bu yerda bunday fayl turi qabul qilinmaydi."
+
+msgid "This is the last section — respondents finish here"
+msgstr "Bu oxirgi bo'lim — respondentlar shu yerda yakunlaydi"
+
+msgid "This question does not accept files."
+msgstr "Bu savol fayl qabul qilmaydi."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "Bu savol hali tayanch qatlamga bog'lanmagan."
+
+msgid "This question is required"
+msgstr "Bu savol majburiy"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "Bu snapshotni so'rovnoma egasi yangilashi kerak."
+
+msgid "This survey isn’t available"
+msgstr "Bu so'rovnomaga kirib bo'lmaydi"
+
+msgid "Too many files in this response."
+msgstr "Bu javobda fayllar juda ko'p."
+
+msgid "Type to search…"
+msgstr "Qidirish uchun yozing…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr ""
+"Ro'yxatda yo'q — faqat to'g'ridan-to'g'ri havola orqali ko'rish mumkin, "
+"indekslanmaydi."
+
+msgid "Upload failed."
+msgstr "Yuklash amalga oshmadi."
+
+msgid "Uploading"
+msgstr "Yuklanmoqda"
+
+msgid "Yes"
+msgstr "Ha"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "Shikoyatingiz qabul qilindi. Uni inson ko'rib chiqadi."
+
+msgid "Zoom in"
+msgstr "Yaqinlashtirish"
+
+msgid "Zoom out"
+msgstr "Uzoqlashtirish"
+
+msgid "at least {n} required"
+msgstr "kamida {n} ta kerak"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "Sun'iy yo'ldosh"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "Ko'chalar"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "Relyef"
+
+msgid "create your own free map survey"
+msgstr "o'zingizning bepul xarita so'rovnomangizni yarating"
+
+msgid "of"
+msgstr "/"
+
+msgid "responses"
+msgstr "javob"
+
+msgid "up to {n} more"
+msgstr "yana {n} tagacha"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} {position}-o'ringa qo'yildi"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} {position}-o'ringa ko'chirildi"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"{item} olindi. Uni surish uchun strelka tugmalaridan, qo'yish uchun Probeldan"
+" foydalaning."
+
+msgid "{n} marked"
+msgstr "{n} ta belgilandi"
+
+msgid "{n} of {m} marked"
+msgstr "{n} / {m} belgilandi"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… va yana %(n)s ta"

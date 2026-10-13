@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "Elimină"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,342 @@ msgstr "Caută adresă..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Niciun rezultat găsit"
+
+msgid "A few required questions still need an answer."
+msgstr "Câteva întrebări obligatorii încă nu au răspuns."
+
+msgid "Add another"
+msgstr "Adaugă încă unul"
+
+msgid "Add audio file"
+msgstr "Adaugă fișier audio"
+
+msgid "Add photo"
+msgstr "Adaugă fotografie"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"Adaugă mai jos, la <strong>Opțiuni</strong>, elementele care trebuie "
+"ordonate."
+
+msgid "All"
+msgstr "Toate"
+
+msgid "All {m} marked — thank you!"
+msgstr "Toate cele {m} au fost marcate — mulțumim!"
+
+msgid "Answered"
+msgstr "Cu răspuns"
+
+msgid "Answers"
+msgstr "Răspunsuri"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Cere o parolă, date de autentificare sau o plată"
+
+msgid "Attach file"
+msgstr "Atașează fișier"
+
+msgid "Brush size"
+msgstr "Mărimea pensulei"
+
+msgid "Cell size: {m} m"
+msgstr "Dimensiunea celulei: {m} m"
+
+msgid "Clear"
+msgstr "Golește"
+
+msgid "Data as of"
+msgstr "Date la"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"Trage elementele în ordinea dorită sau ridică unul cu tasta Spațiu și mută-l "
+"cu tastele săgeți."
+
+msgid "Erase"
+msgstr "Radieră"
+
+msgid "File is too large."
+msgstr "Fișierul este prea mare."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"Ține apăsat și trage cu degetul pentru a pulveriza. Zăbovește mai mult unde "
+"ești mai sigur."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"Ține apăsat și trage pentru a pulveriza. Zăbovește mai mult unde ești mai "
+"sigur."
+
+msgid "Incorrect password"
+msgstr "Parolă incorectă"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"Este posibil să nu fi fost publicat încă sau să fi fost închis ori eliminat. "
+"Dacă ai primit un link de la un organizator, verifică împreună cu acesta."
+
+msgid "Large brush"
+msgstr "Pensulă mare"
+
+msgid "Layers"
+msgstr "Straturi"
+
+msgid "Link copied!"
+msgstr "Link copiat!"
+
+msgid "Locate me"
+msgstr "Locația mea"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Pare o înșelătorie sau se dă drept o companie"
+
+msgid "Made with"
+msgstr "Realizat cu"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"Marcaje plasate de alți respondenți. Marcajele tale nu sunt în această listă."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Ai atins maximul — elimină unul de mai jos pentru a schimba."
+
+msgid "Medium brush"
+msgstr "Pensulă medie"
+
+msgid "Move map"
+msgstr "Mută harta"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Mută harta pentru a poziționa pinul, apoi apasă Aplică."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr ""
+"Nu introduce niciodată parole sau numere de card într-un sondaj Mapsurvey."
+
+msgid "No"
+msgstr "Nu"
+
+msgid "No objects in this layer yet"
+msgstr "Încă nu există obiecte în acest strat"
+
+msgid "No results to show yet."
+msgstr "Încă nu există rezultate de afișat."
+
+msgid "Nothing matches"
+msgstr "Niciun rezultat"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr ""
+"Obiectele cu puține răspunsuri sunt ascunse pentru a proteja "
+"confidențialitatea."
+
+msgid "Please add a file."
+msgstr "Adaugă un fișier."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "Răspunde despre cel puțin %%d obiect(e) pentru a continua"
+
+msgid "Please specify"
+msgstr "Te rugăm să precizezi"
+
+msgid "Record"
+msgstr "Înregistrează"
+
+msgid "Remove file"
+msgstr "Elimină fișierul"
+
+msgid "Report this survey"
+msgstr "Raportează acest sondaj"
+
+msgid "Respondents: {n}"
+msgstr "Respondenți: {n}"
+
+msgid "Retry"
+msgstr "Reîncearcă"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Căutarea a eșuat — verifică conexiunea și încearcă din nou."
+
+msgid "Search objects…"
+msgstr "Caută obiecte…"
+
+msgid "See the results"
+msgstr "Vezi rezultatele"
+
+msgid "Send report"
+msgstr "Trimite raportul"
+
+msgid "Share this survey"
+msgstr "Distribuie acest sondaj"
+
+msgid "Small brush"
+msgstr "Pensulă mică"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "Grupurile mici sunt ascunse pentru a proteja confidențialitatea."
+
+msgid "Something else"
+msgstr "Altceva"
+
+msgid "Spray"
+msgstr "Pulverizează"
+
+msgid "Stop"
+msgstr "Oprește"
+
+msgid "Survey results"
+msgstr "Rezultatele sondajului"
+
+msgid "Survey unavailable"
+msgstr "Sondaj indisponibil"
+
+msgid "Take photo"
+msgstr "Fă o fotografie"
+
+msgid "Take the survey"
+msgstr "Completează sondajul"
+
+msgid "Tap the first point to close the shape."
+msgstr "Atinge primul punct pentru a închide forma."
+
+msgid "Tap the last point to finish the line."
+msgstr "Atinge ultimul punct pentru a termina linia."
+
+msgid "Tap to add the next corner."
+msgstr "Atinge pentru a adăuga următorul colț."
+
+msgid "Tap to add the next point."
+msgstr "Atinge pentru a adăuga următorul punct."
+
+msgid "Tap to add the shape’s corners."
+msgstr "Atinge pentru a adăuga colțurile formei."
+
+msgid "Tap to start the line."
+msgstr "Atinge pentru a începe linia."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"Spune-ne ce nu este în regulă cu „%(name)s”. Fiecare raport este verificat de"
+" o persoană."
+
+msgid "Thank you"
+msgstr "Mulțumim"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Pensula este goală — șterge puțină vopsea pentru a continua."
+
+msgid "The file does not match its declared type."
+msgstr "Fișierul nu corespunde tipului declarat."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "Fișierul este prea mare (limita este %(mb)s MB)."
+
+msgid "The files in this response are too large overall."
+msgstr "Fișierele din acest răspuns sunt prea mari în total."
+
+msgid "This file type is not accepted here."
+msgstr "Acest tip de fișier nu este acceptat aici."
+
+msgid "This is the last section — respondents finish here"
+msgstr "Aceasta este ultima secțiune — respondenții termină aici"
+
+msgid "This question does not accept files."
+msgstr "Această întrebare nu acceptă fișiere."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "Această întrebare nu este încă legată de un strat de referință."
+
+msgid "This question is required"
+msgstr "Această întrebare este obligatorie"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "Acest instantaneu trebuie actualizat de proprietarul sondajului."
+
+msgid "This survey isn’t available"
+msgstr "Acest sondaj nu este disponibil"
+
+msgid "Too many files in this response."
+msgstr "Prea multe fișiere în acest răspuns."
+
+msgid "Type to search…"
+msgstr "Tastează pentru a căuta…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr "Nelistat — vizibil doar prin link direct, neindexat."
+
+msgid "Upload failed."
+msgstr "Încărcarea a eșuat."
+
+msgid "Uploading"
+msgstr "Se încarcă"
+
+msgid "Yes"
+msgstr "Da"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "Raportul tău a fost primit. O persoană îl va analiza."
+
+msgid "Zoom in"
+msgstr "Mărește"
+
+msgid "Zoom out"
+msgstr "Micșorează"
+
+msgid "at least {n} required"
+msgstr "sunt necesare cel puțin {n}"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "Satelit"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "Străzi"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "Topografic"
+
+msgid "create your own free map survey"
+msgstr "creează-ți gratuit propriul sondaj pe hartă"
+
+msgid "of"
+msgstr "din"
+
+msgid "responses"
+msgstr "răspunsuri"
+
+msgid "up to {n} more"
+msgstr "încă cel mult {n}"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} plasat pe poziția {position}"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} mutat pe poziția {position}"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"{item} a fost ridicat. Folosește tastele săgeți pentru a-l muta și Spațiu "
+"pentru a-l plasa."
+
+msgid "{n} marked"
+msgstr "{n} marcate"
+
+msgid "{n} of {m} marked"
+msgstr "{n} din {m} marcate"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… și încă %(n)s"

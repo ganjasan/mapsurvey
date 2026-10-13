@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "Odebrat"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,336 @@ msgstr "Hledat adresu..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Nebyly nalezeny žádné výsledky"
+
+msgid "A few required questions still need an answer."
+msgstr "Několik povinných otázek ještě čeká na odpověď."
+
+msgid "Add another"
+msgstr "Přidat další"
+
+msgid "Add audio file"
+msgstr "Přidat zvukový soubor"
+
+msgid "Add photo"
+msgstr "Přidat fotku"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr "Položky k seřazení přidejte níže v části <strong>Možnosti</strong>."
+
+msgid "All"
+msgstr "Vše"
+
+msgid "All {m} marked — thank you!"
+msgstr "Označeno všech {m} — děkujeme!"
+
+msgid "Answered"
+msgstr "Zodpovězeno"
+
+msgid "Answers"
+msgstr "Odpovědi"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Žádá heslo, přihlášení nebo platbu"
+
+msgid "Attach file"
+msgstr "Připojit soubor"
+
+msgid "Brush size"
+msgstr "Velikost štětce"
+
+msgid "Cell size: {m} m"
+msgstr "Velikost buňky: {m} m"
+
+msgid "Clear"
+msgstr "Vymazat"
+
+msgid "Data as of"
+msgstr "Data ke dni"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"Přetáhněte položky do požadovaného pořadí, nebo jednu zvedněte mezerníkem a "
+"přesuňte ji šipkami."
+
+msgid "Erase"
+msgstr "Gumovat"
+
+msgid "File is too large."
+msgstr "Soubor je příliš velký."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"Podržte a táhněte prstem pro sprejování. Zdržte se déle tam, kde si jste "
+"jistější."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"Podržte a táhněte pro sprejování. Zdržte se déle tam, kde si jste jistější."
+
+msgid "Incorrect password"
+msgstr "Nesprávné heslo"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"Možná ještě nebyl zveřejněn, nebo byl uzavřen či odstraněn. Pokud máte odkaz "
+"od organizátora, obraťte se na něj."
+
+msgid "Large brush"
+msgstr "Velký štětec"
+
+msgid "Layers"
+msgstr "Vrstvy"
+
+msgid "Link copied!"
+msgstr "Odkaz zkopírován!"
+
+msgid "Locate me"
+msgstr "Najít mou polohu"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Vypadá jako podvod nebo se vydává za firmu"
+
+msgid "Made with"
+msgstr "Vytvořeno pomocí"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"Značky umístěné ostatními respondenty. Vaše vlastní značky v tomto seznamu "
+"nejsou."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Dosaženo maxima — chcete-li něco změnit, jednu položku níže odeberte."
+
+msgid "Medium brush"
+msgstr "Střední štětec"
+
+msgid "Move map"
+msgstr "Posunout mapu"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr ""
+"Posuňte mapu tak, aby špendlík byl na správném místě, a stiskněte Použít."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Do dotazníku Mapsurvey nikdy nezadávejte hesla ani čísla karet."
+
+msgid "No"
+msgstr "Ne"
+
+msgid "No objects in this layer yet"
+msgstr "V této vrstvě zatím nejsou žádné objekty"
+
+msgid "No results to show yet."
+msgstr "Zatím nejsou k dispozici žádné výsledky."
+
+msgid "Nothing matches"
+msgstr "Nic neodpovídá"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "Objekty s malým počtem odpovědí jsou kvůli ochraně soukromí skryty."
+
+msgid "Please add a file."
+msgstr "Přidejte prosím soubor."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "Chcete-li pokračovat, odpovězte alespoň u %%d objektu/objektů"
+
+msgid "Please specify"
+msgstr "Upřesněte prosím"
+
+msgid "Record"
+msgstr "Nahrát"
+
+msgid "Remove file"
+msgstr "Odebrat soubor"
+
+msgid "Report this survey"
+msgstr "Nahlásit tento dotazník"
+
+msgid "Respondents: {n}"
+msgstr "Respondenti: {n}"
+
+msgid "Retry"
+msgstr "Zkusit znovu"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Hledání selhalo — zkontrolujte připojení a zkuste to znovu."
+
+msgid "Search objects…"
+msgstr "Hledat objekty…"
+
+msgid "See the results"
+msgstr "Zobrazit výsledky"
+
+msgid "Send report"
+msgstr "Odeslat hlášení"
+
+msgid "Share this survey"
+msgstr "Sdílet tento dotazník"
+
+msgid "Small brush"
+msgstr "Malý štětec"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "Malé skupiny jsou kvůli ochraně soukromí skryty."
+
+msgid "Something else"
+msgstr "Něco jiného"
+
+msgid "Spray"
+msgstr "Sprejovat"
+
+msgid "Stop"
+msgstr "Zastavit"
+
+msgid "Survey results"
+msgstr "Výsledky dotazníku"
+
+msgid "Survey unavailable"
+msgstr "Dotazník není dostupný"
+
+msgid "Take photo"
+msgstr "Vyfotit"
+
+msgid "Take the survey"
+msgstr "Vyplnit dotazník"
+
+msgid "Tap the first point to close the shape."
+msgstr "Klepnutím na první bod tvar uzavřete."
+
+msgid "Tap the last point to finish the line."
+msgstr "Klepnutím na poslední bod čáru dokončete."
+
+msgid "Tap to add the next corner."
+msgstr "Klepnutím přidejte další roh."
+
+msgid "Tap to add the next point."
+msgstr "Klepnutím přidejte další bod."
+
+msgid "Tap to add the shape’s corners."
+msgstr "Klepnutím přidejte rohy tvaru."
+
+msgid "Tap to start the line."
+msgstr "Klepnutím začněte čáru."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"Napište nám, co je špatně s dotazníkem „%(name)s“. Každé hlášení posoudí "
+"člověk."
+
+msgid "Thank you"
+msgstr "Děkujeme"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Štětec je prázdný — pro pokračování část barvy vygumujte."
+
+msgid "The file does not match its declared type."
+msgstr "Soubor neodpovídá svému uvedenému typu."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "Soubor je příliš velký (limit %(mb)s MB)."
+
+msgid "The files in this response are too large overall."
+msgstr "Soubory v této odpovědi jsou celkově příliš velké."
+
+msgid "This file type is not accepted here."
+msgstr "Tento typ souboru zde není povolen."
+
+msgid "This is the last section — respondents finish here"
+msgstr "Toto je poslední oddíl — zde respondenti končí"
+
+msgid "This question does not accept files."
+msgstr "Tato otázka nepřijímá soubory."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "Tato otázka zatím není propojena s referenční vrstvou."
+
+msgid "This question is required"
+msgstr "Tato otázka je povinná"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "Tento přehled musí aktualizovat vlastník dotazníku."
+
+msgid "This survey isn’t available"
+msgstr "Tento dotazník není dostupný"
+
+msgid "Too many files in this response."
+msgstr "Příliš mnoho souborů v této odpovědi."
+
+msgid "Type to search…"
+msgstr "Pište pro hledání…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr "Neveřejné — dostupné jen přes přímý odkaz, neindexováno."
+
+msgid "Upload failed."
+msgstr "Nahrání se nezdařilo."
+
+msgid "Uploading"
+msgstr "Nahrávání"
+
+msgid "Yes"
+msgstr "Ano"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "Vaše hlášení jsme přijali. Podívá se na něj člověk."
+
+msgid "Zoom in"
+msgstr "Přiblížit"
+
+msgid "Zoom out"
+msgstr "Oddálit"
+
+msgid "at least {n} required"
+msgstr "vyžadováno alespoň {n}"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "Satelitní"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "Ulice"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "Topografická"
+
+msgid "create your own free map survey"
+msgstr "vytvořte si vlastní mapový dotazník zdarma"
+
+msgid "of"
+msgstr "z"
+
+msgid "responses"
+msgstr "odpovědí"
+
+msgid "up to {n} more"
+msgstr "ještě až {n}"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} položeno na pozici {position}"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} přesunuto na pozici {position}"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr "{item} zvednuto. Přesuňte ho šipkami, položte mezerníkem."
+
+msgid "{n} marked"
+msgstr "označeno: {n}"
+
+msgid "{n} of {m} marked"
+msgstr "označeno {n} z {m}"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… a dalších %(n)s"

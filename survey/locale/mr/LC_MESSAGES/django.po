@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "काढा"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,333 @@ msgstr "पत्ता शोधा..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "कोणतेही परिणाम नाहीत"
+
+msgid "A few required questions still need an answer."
+msgstr "काही आवश्यक प्रश्नांची उत्तरे अजून द्यायची आहेत."
+
+msgid "Add another"
+msgstr "आणखी एक जोडा"
+
+msgid "Add audio file"
+msgstr "ऑडिओ फाइल जोडा"
+
+msgid "Add photo"
+msgstr "फोटो जोडा"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr "क्रम लावायचे पर्याय खालील <strong>पर्याय</strong> मध्ये जोडा."
+
+msgid "All"
+msgstr "सर्व"
+
+msgid "All {m} marked — thank you!"
+msgstr "सर्व {m} चिन्हांकित केले — धन्यवाद!"
+
+msgid "Answered"
+msgstr "उत्तर दिलेले"
+
+msgid "Answers"
+msgstr "उत्तरे"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "पासवर्ड, लॉगिन किंवा पेमेंट मागते"
+
+msgid "Attach file"
+msgstr "फाइल संलग्न करा"
+
+msgid "Brush size"
+msgstr "ब्रशचा आकार"
+
+msgid "Cell size: {m} m"
+msgstr "सेलचा आकार: {m} मी"
+
+msgid "Clear"
+msgstr "साफ करा"
+
+msgid "Data as of"
+msgstr "डेटा या तारखेनुसार"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr "आयटम ओढून क्रमाने लावा, किंवा Space ने एक उचला आणि बाण कळांनी हलवा."
+
+msgid "Erase"
+msgstr "पुसा"
+
+msgid "File is too large."
+msgstr "फाइल खूप मोठी आहे."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"स्प्रे करण्यासाठी बोट दाबून धरा आणि ओढा. जिथे तुम्हाला अधिक खात्री आहे तिथे "
+"जास्त वेळ थांबा."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"स्प्रे करण्यासाठी दाबून धरा आणि ओढा. जिथे तुम्हाला अधिक खात्री आहे तिथे जास्त"
+" वेळ थांबा."
+
+msgid "Incorrect password"
+msgstr "चुकीचा पासवर्ड"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"ते अजून प्रकाशित झालेले नसेल, किंवा बंद केले किंवा काढून टाकले गेले असेल. "
+"तुम्हाला आयोजकाकडून लिंक मिळाली असल्यास त्यांच्याकडे चौकशी करा."
+
+msgid "Large brush"
+msgstr "मोठा ब्रश"
+
+msgid "Layers"
+msgstr "स्तर"
+
+msgid "Link copied!"
+msgstr "लिंक कॉपी केली!"
+
+msgid "Locate me"
+msgstr "माझे स्थान शोधा"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "फसवणूक वाटते किंवा एखाद्या कंपनीची तोतयागिरी करते"
+
+msgid "Made with"
+msgstr "यासह बनवले"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"इतर उत्तरदात्यांनी ठेवलेल्या खुणा. तुमच्या स्वतःच्या खुणा या यादीत नाहीत."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "कमाल मर्यादा गाठली — बदलण्यासाठी खालीलपैकी एक काढा."
+
+msgid "Medium brush"
+msgstr "मध्यम ब्रश"
+
+msgid "Move map"
+msgstr "नकाशा हलवा"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "पिन योग्य ठिकाणी आणण्यासाठी नकाशा हलवा, नंतर लागू करा दाबा."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Mapsurvey सर्वेक्षणात कधीही पासवर्ड किंवा कार्ड क्रमांक टाकू नका."
+
+msgid "No"
+msgstr "नाही"
+
+msgid "No objects in this layer yet"
+msgstr "या स्तरात अजून कोणत्याही वस्तू नाहीत"
+
+msgid "No results to show yet."
+msgstr "दाखवण्यासाठी अजून कोणतेही निकाल नाहीत."
+
+msgid "Nothing matches"
+msgstr "काहीही जुळत नाही"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "गोपनीयतेच्या संरक्षणासाठी कमी उत्तरे असलेल्या वस्तू लपवल्या आहेत."
+
+msgid "Please add a file."
+msgstr "कृपया एक फाइल जोडा."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "पुढे जाण्यासाठी कृपया किमान %%d वस्तूंबद्दल उत्तर द्या"
+
+msgid "Please specify"
+msgstr "कृपया नमूद करा"
+
+msgid "Record"
+msgstr "रेकॉर्ड करा"
+
+msgid "Remove file"
+msgstr "फाइल काढा"
+
+msgid "Report this survey"
+msgstr "या सर्वेक्षणाची तक्रार करा"
+
+msgid "Respondents: {n}"
+msgstr "उत्तरदाते: {n}"
+
+msgid "Retry"
+msgstr "पुन्हा प्रयत्न करा"
+
+msgid "Search failed — check your connection and try again."
+msgstr "शोध अयशस्वी झाला — तुमचे कनेक्शन तपासा आणि पुन्हा प्रयत्न करा."
+
+msgid "Search objects…"
+msgstr "वस्तू शोधा…"
+
+msgid "See the results"
+msgstr "निकाल पहा"
+
+msgid "Send report"
+msgstr "तक्रार पाठवा"
+
+msgid "Share this survey"
+msgstr "हे सर्वेक्षण शेअर करा"
+
+msgid "Small brush"
+msgstr "लहान ब्रश"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "गोपनीयतेच्या संरक्षणासाठी लहान गट लपवले आहेत."
+
+msgid "Something else"
+msgstr "दुसरे काहीतरी"
+
+msgid "Spray"
+msgstr "स्प्रे"
+
+msgid "Stop"
+msgstr "थांबवा"
+
+msgid "Survey results"
+msgstr "सर्वेक्षणाचे निकाल"
+
+msgid "Survey unavailable"
+msgstr "सर्वेक्षण उपलब्ध नाही"
+
+msgid "Take photo"
+msgstr "फोटो काढा"
+
+msgid "Take the survey"
+msgstr "सर्वेक्षणात सहभागी व्हा"
+
+msgid "Tap the first point to close the shape."
+msgstr "आकार बंद करण्यासाठी पहिल्या बिंदूवर टॅप करा."
+
+msgid "Tap the last point to finish the line."
+msgstr "रेषा पूर्ण करण्यासाठी शेवटच्या बिंदूवर टॅप करा."
+
+msgid "Tap to add the next corner."
+msgstr "पुढील कोपरा जोडण्यासाठी टॅप करा."
+
+msgid "Tap to add the next point."
+msgstr "पुढील बिंदू जोडण्यासाठी टॅप करा."
+
+msgid "Tap to add the shape’s corners."
+msgstr "आकाराचे कोपरे जोडण्यासाठी टॅप करा."
+
+msgid "Tap to start the line."
+msgstr "रेषा सुरू करण्यासाठी टॅप करा."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"“%(name)s” मध्ये काय चुकीचे आहे ते आम्हाला सांगा. प्रत्येक तक्रार एक व्यक्ती "
+"तपासते."
+
+msgid "Thank you"
+msgstr "धन्यवाद"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "ब्रश रिकामा आहे — पुढे जाण्यासाठी काही रंग पुसा."
+
+msgid "The file does not match its declared type."
+msgstr "फाइल तिच्या नमूद केलेल्या प्रकाराशी जुळत नाही."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "फाइल खूप मोठी आहे (मर्यादा %(mb)s MB)."
+
+msgid "The files in this response are too large overall."
+msgstr "या प्रतिसादातील फाइल्स एकूण खूप मोठ्या आहेत."
+
+msgid "This file type is not accepted here."
+msgstr "हा फाइल प्रकार येथे स्वीकारला जात नाही."
+
+msgid "This is the last section — respondents finish here"
+msgstr "हा शेवटचा विभाग आहे — उत्तरदाते येथे पूर्ण करतात"
+
+msgid "This question does not accept files."
+msgstr "हा प्रश्न फाइल्स स्वीकारत नाही."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "हा प्रश्न अजून संदर्भ स्तराशी जोडलेला नाही."
+
+msgid "This question is required"
+msgstr "हा प्रश्न आवश्यक आहे"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "सर्वेक्षणाच्या मालकाने हा स्नॅपशॉट रीफ्रेश करणे आवश्यक आहे."
+
+msgid "This survey isn’t available"
+msgstr "हे सर्वेक्षण उपलब्ध नाही"
+
+msgid "Too many files in this response."
+msgstr "या प्रतिसादात खूप जास्त फाइल्स आहेत."
+
+msgid "Type to search…"
+msgstr "शोधण्यासाठी टाइप करा…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr "सूचीबद्ध नाही — केवळ थेट लिंकद्वारे पाहता येते, अनुक्रमित केलेले नाही."
+
+msgid "Upload failed."
+msgstr "अपलोड अयशस्वी झाले."
+
+msgid "Uploading"
+msgstr "अपलोड होत आहे"
+
+msgid "Yes"
+msgstr "होय"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "तुमची तक्रार मिळाली आहे. एक व्यक्ती ती तपासेल."
+
+msgid "Zoom in"
+msgstr "झूम इन करा"
+
+msgid "Zoom out"
+msgstr "झूम आउट करा"
+
+msgid "at least {n} required"
+msgstr "किमान {n} आवश्यक"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "उपग्रह"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "रस्ते"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "भूरचना"
+
+msgid "create your own free map survey"
+msgstr "तुमचे स्वतःचे मोफत नकाशा सर्वेक्षण तयार करा"
+
+msgid "of"
+msgstr "पैकी"
+
+msgid "responses"
+msgstr "प्रतिसाद"
+
+msgid "up to {n} more"
+msgstr "आणखी {n} पर्यंत"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} स्थान {position} वर ठेवले"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} स्थान {position} वर हलवले"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr "{item} उचलले. हलवण्यासाठी बाण कळा वापरा, ठेवण्यासाठी Space."
+
+msgid "{n} marked"
+msgstr "{n} चिन्हांकित"
+
+msgid "{n} of {m} marked"
+msgstr "{m} पैकी {n} चिन्हांकित"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… आणि आणखी %(n)s"

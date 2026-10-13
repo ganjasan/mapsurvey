@@ -55,6 +55,11 @@ def i18n_json():
         'brushEmpty': _('The brush is empty — erase some paint to continue.'),
 
 
+        # Map controls (Leaflet's own titles are English-only)
+        'zoomIn': _('Zoom in'),
+        'zoomOut': _('Zoom out'),
+        'locateMe': _('Locate me'),
+
         # Error messages
         'shapeEdgesCannotIntersect': _('<strong>Error:</strong> Shape edges cannot intersect!'),
 

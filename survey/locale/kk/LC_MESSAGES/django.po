@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "Алып тастау"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,340 @@ msgstr "Мекенжай іздеу..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Нәтиже табылмады"
+
+msgid "A few required questions still need an answer."
+msgstr "Бірнеше міндетті сұраққа әлі жауап берілмеген."
+
+msgid "Add another"
+msgstr "Тағы қосу"
+
+msgid "Add audio file"
+msgstr "Аудиофайл қосу"
+
+msgid "Add photo"
+msgstr "Фото қосу"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"Реттелетін элементтерді төмендегі <strong>Нұсқалар</strong> бөліміне қосыңыз."
+
+msgid "All"
+msgstr "Барлығы"
+
+msgid "All {m} marked — thank you!"
+msgstr "Барлық {m} белгіленді — рақмет!"
+
+msgid "Answered"
+msgstr "Жауап берілген"
+
+msgid "Answers"
+msgstr "Жауаптар"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Құпиясөзді, кіруді немесе төлемді сұрайды"
+
+msgid "Attach file"
+msgstr "Файл тіркеу"
+
+msgid "Brush size"
+msgstr "Қылқалам өлшемі"
+
+msgid "Cell size: {m} m"
+msgstr "Ұяшық өлшемі: {m} м"
+
+msgid "Clear"
+msgstr "Тазалау"
+
+msgid "Data as of"
+msgstr "Деректер күні"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"Элементтерді сүйреп реттеңіз немесе біреуін Space пернесімен алып, көрсеткі "
+"пернелерімен жылжытыңыз."
+
+msgid "Erase"
+msgstr "Өшіру"
+
+msgid "File is too large."
+msgstr "Файл тым үлкен."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"Бояу шашу үшін саусағыңызды басып тұрып жүргізіңіз. Сенімдірек жерде ұзағырақ"
+" ұстаңыз."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"Бояу шашу үшін басып тұрып сүйреңіз. Сенімдірек жерде ұзағырақ ұстаңыз."
+
+msgid "Incorrect password"
+msgstr "Құпиясөз қате"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"Ол әлі жарияланбаған болуы мүмкін немесе жабылған не жойылған. Сілтемені "
+"ұйымдастырушыдан алсаңыз, соған хабарласыңыз."
+
+msgid "Large brush"
+msgstr "Үлкен қылқалам"
+
+msgid "Layers"
+msgstr "Қабаттар"
+
+msgid "Link copied!"
+msgstr "Сілтеме көшірілді!"
+
+msgid "Locate me"
+msgstr "Мені табу"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Алаяқтыққа ұқсайды немесе компанияның атын жамылады"
+
+msgid "Made with"
+msgstr "Жасалған құрал:"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"Басқа респонденттер қойған белгілер. Сіздің белгілеріңіз бұл тізімде жоқ."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Ең көп мөлшерге жетті — өзгерту үшін төменнен біреуін алып тастаңыз."
+
+msgid "Medium brush"
+msgstr "Орташа қылқалам"
+
+msgid "Move map"
+msgstr "Картаны жылжыту"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr ""
+"Белгіні орналастыру үшін картаны жылжытып, «Қолдану» батырмасын басыңыз."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr ""
+"Mapsurvey сауалнамасына ешқашан құпиясөз немесе карта нөмірін енгізбеңіз."
+
+msgid "No"
+msgstr "Жоқ"
+
+msgid "No objects in this layer yet"
+msgstr "Бұл қабатта әзірге нысандар жоқ"
+
+msgid "No results to show yet."
+msgstr "Көрсететін нәтижелер әзірге жоқ."
+
+msgid "Nothing matches"
+msgstr "Сәйкес келетін ештеңе жоқ"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "Жауаптары аз нысандар құпиялылықты қорғау үшін жасырылған."
+
+msgid "Please add a file."
+msgstr "Файл қосыңыз."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "Жалғастыру үшін кемінде %%d нысан туралы жауап беріңіз"
+
+msgid "Please specify"
+msgstr "Нақтылаңыз"
+
+msgid "Record"
+msgstr "Жазу"
+
+msgid "Remove file"
+msgstr "Файлды алып тастау"
+
+msgid "Report this survey"
+msgstr "Бұл сауалнама туралы шағымдану"
+
+msgid "Respondents: {n}"
+msgstr "Респонденттер: {n}"
+
+msgid "Retry"
+msgstr "Қайталау"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Іздеу сәтсіз аяқталды — байланысты тексеріп, қайта көріңіз."
+
+msgid "Search objects…"
+msgstr "Нысандарды іздеу…"
+
+msgid "See the results"
+msgstr "Нәтижелерді көру"
+
+msgid "Send report"
+msgstr "Шағым жіберу"
+
+msgid "Share this survey"
+msgstr "Сауалнаманы бөлісу"
+
+msgid "Small brush"
+msgstr "Кішкене қылқалам"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "Шағын топтар құпиялылықты қорғау үшін жасырылған."
+
+msgid "Something else"
+msgstr "Басқа себеп"
+
+msgid "Spray"
+msgstr "Бояу шашу"
+
+msgid "Stop"
+msgstr "Тоқтату"
+
+msgid "Survey results"
+msgstr "Сауалнама нәтижелері"
+
+msgid "Survey unavailable"
+msgstr "Сауалнама қолжетімсіз"
+
+msgid "Take photo"
+msgstr "Суретке түсіру"
+
+msgid "Take the survey"
+msgstr "Сауалнамаға қатысу"
+
+msgid "Tap the first point to close the shape."
+msgstr "Пішінді жабу үшін бірінші нүктені түртіңіз."
+
+msgid "Tap the last point to finish the line."
+msgstr "Сызықты аяқтау үшін соңғы нүктені түртіңіз."
+
+msgid "Tap to add the next corner."
+msgstr "Келесі бұрышты қосу үшін түртіңіз."
+
+msgid "Tap to add the next point."
+msgstr "Келесі нүктені қосу үшін түртіңіз."
+
+msgid "Tap to add the shape’s corners."
+msgstr "Пішіннің бұрыштарын қосу үшін түртіңіз."
+
+msgid "Tap to start the line."
+msgstr "Сызықты бастау үшін түртіңіз."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"«%(name)s» сауалнамасында не дұрыс емес екенін айтыңыз. Әр шағымды адам "
+"қарайды."
+
+msgid "Thank you"
+msgstr "Рақмет"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Қылқалам бос — жалғастыру үшін бояудың бір бөлігін өшіріңіз."
+
+msgid "The file does not match its declared type."
+msgstr "Файл көрсетілген түріне сәйкес келмейді."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "Файл тым үлкен (шегі %(mb)s МБ)."
+
+msgid "The files in this response are too large overall."
+msgstr "Бұл жауаптағы файлдардың жалпы көлемі тым үлкен."
+
+msgid "This file type is not accepted here."
+msgstr "Бұл файл түрі мұнда қабылданбайды."
+
+msgid "This is the last section — respondents finish here"
+msgstr "Бұл соңғы бөлім — респонденттер осы жерде аяқтайды"
+
+msgid "This question does not accept files."
+msgstr "Бұл сұрақ файлдарды қабылдамайды."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "Бұл сұрақ әлі анықтамалық қабатқа байланыстырылмаған."
+
+msgid "This question is required"
+msgstr "Бұл сұрақ міндетті"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "Бұл суретті сауалнама иесі жаңартуы керек."
+
+msgid "This survey isn’t available"
+msgstr "Бұл сауалнама қолжетімді емес"
+
+msgid "Too many files in this response."
+msgstr "Бұл жауапта файлдар тым көп."
+
+msgid "Type to search…"
+msgstr "Іздеу үшін теріңіз…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr ""
+"Тізімде жоқ — тек тікелей сілтеме арқылы көруге болады, индекстелмейді."
+
+msgid "Upload failed."
+msgstr "Жүктеп салу сәтсіз аяқталды."
+
+msgid "Uploading"
+msgstr "Жүктеп салынуда"
+
+msgid "Yes"
+msgstr "Иә"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "Шағымыңыз қабылданды. Оны адам қарап шығады."
+
+msgid "Zoom in"
+msgstr "Үлкейту"
+
+msgid "Zoom out"
+msgstr "Кішірейту"
+
+msgid "at least {n} required"
+msgstr "кемінде {n} қажет"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "Спутник"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "Көшелер"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "Топография"
+
+msgid "create your own free map survey"
+msgstr "өзіңіздің тегін карта сауалнамаңызды жасаңыз"
+
+msgid "of"
+msgstr "/"
+
+msgid "responses"
+msgstr "жауап"
+
+msgid "up to {n} more"
+msgstr "тағы {n} дейін"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} {position}-орынға қойылды"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} {position}-орынға жылжытылды"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"{item} алынды. Жылжыту үшін көрсеткі пернелерін, қою үшін Space пернесін "
+"пайдаланыңыз."
+
+msgid "{n} marked"
+msgstr "{n} белгіленді"
+
+msgid "{n} of {m} marked"
+msgstr "{m} ішінен {n} белгіленді"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… және тағы %(n)s"

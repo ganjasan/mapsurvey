@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "นำออก"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,329 @@ msgstr "ค้นหาที่อยู่..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "ไม่พบผลลัพธ์"
+
+msgid "A few required questions still need an answer."
+msgstr "ยังมีคำถามที่จำเป็นบางข้อที่ต้องตอบ"
+
+msgid "Add another"
+msgstr "เพิ่มอีก"
+
+msgid "Add audio file"
+msgstr "เพิ่มไฟล์เสียง"
+
+msgid "Add photo"
+msgstr "เพิ่มรูปภาพ"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr "เพิ่มรายการที่จะจัดอันดับใน <strong>ตัวเลือก</strong> ด้านล่าง"
+
+msgid "All"
+msgstr "ทั้งหมด"
+
+msgid "All {m} marked — thank you!"
+msgstr "ทำเครื่องหมายครบทั้ง {m} แล้ว — ขอบคุณ!"
+
+msgid "Answered"
+msgstr "ตอบแล้ว"
+
+msgid "Answers"
+msgstr "คำตอบ"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "ขอรหัสผ่าน การเข้าสู่ระบบ หรือการชำระเงิน"
+
+msgid "Attach file"
+msgstr "แนบไฟล์"
+
+msgid "Brush size"
+msgstr "ขนาดแปรง"
+
+msgid "Cell size: {m} m"
+msgstr "ขนาดช่อง: {m} ม."
+
+msgid "Clear"
+msgstr "ล้าง"
+
+msgid "Data as of"
+msgstr "ข้อมูล ณ วันที่"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"ลากรายการเพื่อจัดลำดับ หรือกด Space เพื่อหยิบรายการแล้วใช้ปุ่มลูกศรเพื่อย้าย"
+
+msgid "Erase"
+msgstr "ยางลบ"
+
+msgid "File is too large."
+msgstr "ไฟล์ใหญ่เกินไป"
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "กดค้างแล้วลากนิ้วเพื่อพ่นสี อยู่นานขึ้นในบริเวณที่คุณมั่นใจมากกว่า"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "กดค้างแล้วลากเพื่อพ่นสี อยู่นานขึ้นในบริเวณที่คุณมั่นใจมากกว่า"
+
+msgid "Incorrect password"
+msgstr "รหัสผ่านไม่ถูกต้อง"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"แบบสำรวจอาจยังไม่ได้เผยแพร่ หรืออาจถูกปิดหรือลบไปแล้ว "
+"หากคุณได้รับลิงก์จากผู้จัด โปรดสอบถามผู้จัด"
+
+msgid "Large brush"
+msgstr "แปรงใหญ่"
+
+msgid "Layers"
+msgstr "ชั้นข้อมูล"
+
+msgid "Link copied!"
+msgstr "คัดลอกลิงก์แล้ว!"
+
+msgid "Locate me"
+msgstr "ระบุตำแหน่งของฉัน"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "ดูเหมือนการหลอกลวงหรือแอบอ้างเป็นบริษัท"
+
+msgid "Made with"
+msgstr "สร้างด้วย"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"เครื่องหมายที่ผู้ตอบคนอื่นวางไว้ เครื่องหมายของคุณเองไม่อยู่ในรายการนี้"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "ถึงจำนวนสูงสุดแล้ว — ลบรายการด้านล่างออกหนึ่งรายการเพื่อเปลี่ยน"
+
+msgid "Medium brush"
+msgstr "แปรงกลาง"
+
+msgid "Move map"
+msgstr "เลื่อนแผนที่"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "เลื่อนแผนที่เพื่อวางหมุด แล้วกด ใช้"
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "อย่าป้อนรหัสผ่านหรือหมายเลขบัตรในแบบสำรวจ Mapsurvey เด็ดขาด"
+
+msgid "No"
+msgstr "ไม่ใช่"
+
+msgid "No objects in this layer yet"
+msgstr "ยังไม่มีวัตถุในชั้นข้อมูลนี้"
+
+msgid "No results to show yet."
+msgstr "ยังไม่มีผลลัพธ์ที่จะแสดง"
+
+msgid "Nothing matches"
+msgstr "ไม่พบรายการที่ตรงกัน"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "วัตถุที่มีคำตอบน้อยจะถูกซ่อนเพื่อปกป้องความเป็นส่วนตัว"
+
+msgid "Please add a file."
+msgstr "โปรดเพิ่มไฟล์"
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "โปรดตอบเกี่ยวกับวัตถุอย่างน้อย %%d รายการเพื่อดำเนินการต่อ"
+
+msgid "Please specify"
+msgstr "โปรดระบุ"
+
+msgid "Record"
+msgstr "บันทึกเสียง"
+
+msgid "Remove file"
+msgstr "นำไฟล์ออก"
+
+msgid "Report this survey"
+msgstr "รายงานแบบสำรวจนี้"
+
+msgid "Respondents: {n}"
+msgstr "ผู้ตอบ: {n}"
+
+msgid "Retry"
+msgstr "ลองอีกครั้ง"
+
+msgid "Search failed — check your connection and try again."
+msgstr "ค้นหาไม่สำเร็จ — ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง"
+
+msgid "Search objects…"
+msgstr "ค้นหาวัตถุ…"
+
+msgid "See the results"
+msgstr "ดูผลลัพธ์"
+
+msgid "Send report"
+msgstr "ส่งรายงาน"
+
+msgid "Share this survey"
+msgstr "แชร์แบบสำรวจนี้"
+
+msgid "Small brush"
+msgstr "แปรงเล็ก"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "กลุ่มขนาดเล็กจะถูกซ่อนเพื่อปกป้องความเป็นส่วนตัว"
+
+msgid "Something else"
+msgstr "อื่น ๆ"
+
+msgid "Spray"
+msgstr "พ่นสี"
+
+msgid "Stop"
+msgstr "หยุด"
+
+msgid "Survey results"
+msgstr "ผลแบบสำรวจ"
+
+msgid "Survey unavailable"
+msgstr "แบบสำรวจไม่พร้อมใช้งาน"
+
+msgid "Take photo"
+msgstr "ถ่ายรูป"
+
+msgid "Take the survey"
+msgstr "ทำแบบสำรวจ"
+
+msgid "Tap the first point to close the shape."
+msgstr "แตะจุดแรกเพื่อปิดรูปร่าง"
+
+msgid "Tap the last point to finish the line."
+msgstr "แตะจุดสุดท้ายเพื่อจบเส้น"
+
+msgid "Tap to add the next corner."
+msgstr "แตะเพื่อเพิ่มมุมถัดไป"
+
+msgid "Tap to add the next point."
+msgstr "แตะเพื่อเพิ่มจุดถัดไป"
+
+msgid "Tap to add the shape’s corners."
+msgstr "แตะเพื่อเพิ่มมุมของรูปร่าง"
+
+msgid "Tap to start the line."
+msgstr "แตะเพื่อเริ่มเส้น"
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"บอกเราว่า “%(name)s” มีปัญหาอะไร ทุกรายงานจะได้รับการตรวจสอบโดยเจ้าหน้าที่"
+
+msgid "Thank you"
+msgstr "ขอบคุณ"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "แปรงว่างแล้ว — ลบสีบางส่วนออกเพื่อดำเนินการต่อ"
+
+msgid "The file does not match its declared type."
+msgstr "ไฟล์ไม่ตรงกับประเภทที่ระบุ"
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "ไฟล์ใหญ่เกินไป (จำกัด %(mb)s MB)"
+
+msgid "The files in this response are too large overall."
+msgstr "ไฟล์ในคำตอบนี้มีขนาดรวมใหญ่เกินไป"
+
+msgid "This file type is not accepted here."
+msgstr "ไม่รับไฟล์ประเภทนี้ที่นี่"
+
+msgid "This is the last section — respondents finish here"
+msgstr "นี่คือส่วนสุดท้าย — ผู้ตอบจะจบแบบสำรวจที่นี่"
+
+msgid "This question does not accept files."
+msgstr "คำถามนี้ไม่รับไฟล์"
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "คำถามนี้ยังไม่ได้เชื่อมโยงกับชั้นข้อมูลอ้างอิง"
+
+msgid "This question is required"
+msgstr "คำถามนี้จำเป็นต้องตอบ"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "เจ้าของแบบสำรวจต้องรีเฟรชสแนปช็อตนี้"
+
+msgid "This survey isn’t available"
+msgstr "ไม่สามารถเข้าถึงแบบสำรวจนี้ได้"
+
+msgid "Too many files in this response."
+msgstr "มีไฟล์ในคำตอบนี้มากเกินไป"
+
+msgid "Type to search…"
+msgstr "พิมพ์เพื่อค้นหา…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr "ไม่แสดงในรายการ — ดูได้ผ่านลิงก์โดยตรงเท่านั้น ไม่ถูกจัดทำดัชนี"
+
+msgid "Upload failed."
+msgstr "อัปโหลดไม่สำเร็จ"
+
+msgid "Uploading"
+msgstr "กำลังอัปโหลด"
+
+msgid "Yes"
+msgstr "ใช่"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "เราได้รับรายงานของคุณแล้ว เจ้าหน้าที่จะตรวจสอบ"
+
+msgid "Zoom in"
+msgstr "ซูมเข้า"
+
+msgid "Zoom out"
+msgstr "ซูมออก"
+
+msgid "at least {n} required"
+msgstr "ต้องมีอย่างน้อย {n}"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "ดาวเทียม"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "ถนน"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "ภูมิประเทศ"
+
+msgid "create your own free map survey"
+msgstr "สร้างแบบสำรวจแผนที่ของคุณเองฟรี"
+
+msgid "of"
+msgstr "จาก"
+
+msgid "responses"
+msgstr "การตอบกลับ"
+
+msgid "up to {n} more"
+msgstr "เพิ่มได้อีกไม่เกิน {n}"
+
+msgid "{item} dropped at position {position}"
+msgstr "วาง {item} ที่ตำแหน่ง {position} แล้ว"
+
+msgid "{item} moved to position {position}"
+msgstr "ย้าย {item} ไปที่ตำแหน่ง {position} แล้ว"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr "หยิบ {item} แล้ว ใช้ปุ่มลูกศรเพื่อย้าย กด Space เพื่อวาง"
+
+msgid "{n} marked"
+msgstr "ทำเครื่องหมายแล้ว {n}"
+
+msgid "{n} of {m} marked"
+msgstr "ทำเครื่องหมายแล้ว {n} จาก {m}"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… และอีก %(n)s รายการ"

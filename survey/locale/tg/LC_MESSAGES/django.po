@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "Хориҷ кардан"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,345 @@ msgstr "Ҷустуҷӯи нишонӣ..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Натиҷа ёфт нашуд"
+
+msgid "A few required questions still need an answer."
+msgstr "Чанд саволи ҳатмӣ ҳанӯз ҷавоб надоранд."
+
+msgid "Add another"
+msgstr "Боз илова кардан"
+
+msgid "Add audio file"
+msgstr "Илова кардани файли аудиоӣ"
+
+msgid "Add photo"
+msgstr "Илова кардани акс"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"Унсурҳои барои тартиб додан пешбинишударо дар қисми "
+"<strong>Интихобҳо</strong> дар поён илова кунед."
+
+msgid "All"
+msgstr "Ҳама"
+
+msgid "All {m} marked — thank you!"
+msgstr "Ҳамаи {m} қайд шуданд — ташаккур!"
+
+msgid "Answered"
+msgstr "Ҷавобдодашуда"
+
+msgid "Answers"
+msgstr "Ҷавобҳо"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Парол, воридшавӣ ё пардохт талаб мекунад"
+
+msgid "Attach file"
+msgstr "Замима кардани файл"
+
+msgid "Brush size"
+msgstr "Андозаи мӯқалам"
+
+msgid "Cell size: {m} m"
+msgstr "Андозаи катак: {m} м"
+
+msgid "Clear"
+msgstr "Тоза кардан"
+
+msgid "Data as of"
+msgstr "Маълумот то санаи"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"Унсурҳоро кашола карда тартиб диҳед ё яке аз онҳоро бо тугмаи Space гирифта, "
+"бо тугмаҳои тирчадор ҷойиваз кунед."
+
+msgid "Erase"
+msgstr "Пок кардан"
+
+msgid "File is too large."
+msgstr "Файл хеле калон аст."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"Барои пошидан ангуштро пахш карда кашола кунед. Дар ҷое, ки бештар боварӣ "
+"доред, дарозтар монед."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"Барои пошидан пахш карда кашола кунед. Дар ҷое, ки бештар боварӣ доред, "
+"дарозтар монед."
+
+msgid "Incorrect password"
+msgstr "Пароли нодуруст"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"Шояд он ҳанӯз нашр нашудааст ё баста ё нест карда шудааст. Агар пайвандро аз "
+"ташкилкунанда гирифта бошед, аз ӯ пурсед."
+
+msgid "Large brush"
+msgstr "Мӯқалами калон"
+
+msgid "Layers"
+msgstr "Қабатҳо"
+
+msgid "Link copied!"
+msgstr "Пайванд нусхабардорӣ шуд!"
+
+msgid "Locate me"
+msgstr "Ҷойи маро ёбед"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Ба қаллобӣ монанд аст ё худро ширкат вонамуд мекунад"
+
+msgid "Made with"
+msgstr "Сохта шудааст бо"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"Нишонаҳое, ки дигар посухдиҳандагон гузоштаанд. Нишонаҳои шумо дар ин рӯйхат "
+"нестанд."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Ба ҳадди аксар расид — барои тағйир додан яке аз поёнро хориҷ кунед."
+
+msgid "Medium brush"
+msgstr "Мӯқалами миёна"
+
+msgid "Move map"
+msgstr "Ҳаракати харита"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr ""
+"Харитаро ҳаракат диҳед, то нишонаро ҷойгир кунед, сипас «Татбиқ»-ро пахш "
+"кунед."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Ҳеҷ гоҳ дар пурсиши Mapsurvey парол ё рақами кортро ворид накунед."
+
+msgid "No"
+msgstr "Не"
+
+msgid "No objects in this layer yet"
+msgstr "Дар ин қабат ҳанӯз объект нест"
+
+msgid "No results to show yet."
+msgstr "Ҳанӯз натиҷае барои нишон додан нест."
+
+msgid "Nothing matches"
+msgstr "Ҳеҷ чиз мувофиқат намекунад"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr ""
+"Барои ҳифзи махфият объектҳое, ки ҷавобҳояшон кам аст, пинҳон карда мешаванд."
+
+msgid "Please add a file."
+msgstr "Лутфан файл илова кунед."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "Барои идома лутфан ақаллан дар бораи %%d объект ҷавоб диҳед"
+
+msgid "Please specify"
+msgstr "Лутфан муайян кунед"
+
+msgid "Record"
+msgstr "Сабт кардан"
+
+msgid "Remove file"
+msgstr "Хориҷ кардани файл"
+
+msgid "Report this survey"
+msgstr "Шикоят аз ин пурсиш"
+
+msgid "Respondents: {n}"
+msgstr "Посухдиҳандагон: {n}"
+
+msgid "Retry"
+msgstr "Аз нав кӯшиш кардан"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Ҷустуҷӯ ноком шуд — пайвастро санҷида, аз нав кӯшиш кунед."
+
+msgid "Search objects…"
+msgstr "Ҷустуҷӯи объектҳо…"
+
+msgid "See the results"
+msgstr "Дидани натиҷаҳо"
+
+msgid "Send report"
+msgstr "Фиристодани шикоят"
+
+msgid "Share this survey"
+msgstr "Мубодилаи ин пурсиш"
+
+msgid "Small brush"
+msgstr "Мӯқалами хурд"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "Барои ҳифзи махфият гурӯҳҳои хурд пинҳон карда мешаванд."
+
+msgid "Something else"
+msgstr "Чизи дигар"
+
+msgid "Spray"
+msgstr "Пошидан"
+
+msgid "Stop"
+msgstr "Қатъ кардан"
+
+msgid "Survey results"
+msgstr "Натиҷаҳои пурсиш"
+
+msgid "Survey unavailable"
+msgstr "Пурсиш дастрас нест"
+
+msgid "Take photo"
+msgstr "Акс гирифтан"
+
+msgid "Take the survey"
+msgstr "Иштирок дар пурсиш"
+
+msgid "Tap the first point to close the shape."
+msgstr "Барои пӯшидани шакл ба нуқтаи аввал зарба занед."
+
+msgid "Tap the last point to finish the line."
+msgstr "Барои анҷом додани хат ба нуқтаи охир зарба занед."
+
+msgid "Tap to add the next corner."
+msgstr "Барои илова кардани кунҷи навбатӣ зарба занед."
+
+msgid "Tap to add the next point."
+msgstr "Барои илова кардани нуқтаи навбатӣ зарба занед."
+
+msgid "Tap to add the shape’s corners."
+msgstr "Барои илова кардани кунҷҳои шакл зарба занед."
+
+msgid "Tap to start the line."
+msgstr "Барои оғози хат зарба занед."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"Ба мо гӯед, ки бо «%(name)s» чӣ мушкил аст. Ҳар як шикоятро инсон баррасӣ "
+"мекунад."
+
+msgid "Thank you"
+msgstr "Ташаккур"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Мӯқалам холӣ аст — барои идома каме рангро пок кунед."
+
+msgid "The file does not match its declared type."
+msgstr "Файл ба навъи эълоншудааш мувофиқат намекунад."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "Файл хеле калон аст (маҳдудият %(mb)s МБ)."
+
+msgid "The files in this response are too large overall."
+msgstr "Ҳаҷми умумии файлҳо дар ин ҷавоб хеле калон аст."
+
+msgid "This file type is not accepted here."
+msgstr "Ин навъи файл дар ин ҷо қабул намешавад."
+
+msgid "This is the last section — respondents finish here"
+msgstr "Ин қисми охирин аст — посухдиҳандагон дар ин ҷо анҷом медиҳанд"
+
+msgid "This question does not accept files."
+msgstr "Ин савол файл қабул намекунад."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "Ин савол ҳанӯз ба қабати истинодӣ пайваст нашудааст."
+
+msgid "This question is required"
+msgstr "Ин савол ҳатмист"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr "Ин аксбардориро бояд соҳиби пурсиш навсозӣ кунад."
+
+msgid "This survey isn’t available"
+msgstr "Ин пурсиш дастнорас аст"
+
+msgid "Too many files in this response."
+msgstr "Дар ин ҷавоб файлҳо хеле зиёданд."
+
+msgid "Type to search…"
+msgstr "Барои ҷустуҷӯ нависед…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr ""
+"Рӯйхатнашуда — танҳо тавассути пайванди мустақим дастрас аст, индексатсия "
+"намешавад."
+
+msgid "Upload failed."
+msgstr "Боргузорӣ ноком шуд."
+
+msgid "Uploading"
+msgstr "Боргузорӣ"
+
+msgid "Yes"
+msgstr "Ҳа"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "Шикояти шумо қабул шуд. Инсон онро баррасӣ мекунад."
+
+msgid "Zoom in"
+msgstr "Калон кардан"
+
+msgid "Zoom out"
+msgstr "Хурд кардан"
+
+msgid "at least {n} required"
+msgstr "ақаллан {n} лозим аст"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "Моҳвора"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "Кӯчаҳо"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "Релйеф"
+
+msgid "create your own free map survey"
+msgstr "пурсиши харитавии ройгони худро созед"
+
+msgid "of"
+msgstr "аз"
+
+msgid "responses"
+msgstr "ҷавоб"
+
+msgid "up to {n} more"
+msgstr "боз то {n}"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} дар ҷойи {position} гузошта шуд"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} ба ҷойи {position} гузаронида шуд"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"{item} гирифта шуд. Барои ҳаракат тугмаҳои тирчадор, барои гузоштан Space-ро "
+"истифода баред."
+
+msgid "{n} marked"
+msgstr "{n} қайд шуд"
+
+msgid "{n} of {m} marked"
+msgstr "{n} аз {m} қайд шуд"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… ва боз %(n)s"

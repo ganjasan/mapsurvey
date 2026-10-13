@@ -684,7 +684,7 @@ msgstr ""
 #: survey/templates/org/org_members.html:68
 #: survey/templates/org/org_members.html:70
 msgid "Remove"
-msgstr ""
+msgstr "அகற்று"
 
 #: survey/templates/org/org_members.html:85
 msgid "Invite Member"
@@ -980,3 +980,348 @@ msgstr "முகவரி தேடுங்கள்..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "முடிவுகள் கிடைக்கவில்லை"
+
+msgid "A few required questions still need an answer."
+msgstr "சில கட்டாயக் கேள்விகளுக்கு இன்னும் பதில் அளிக்க வேண்டும்."
+
+msgid "Add another"
+msgstr "இன்னொன்றைச் சேர்"
+
+msgid "Add audio file"
+msgstr "ஒலிக் கோப்பைச் சேர்"
+
+msgid "Add photo"
+msgstr "புகைப்படத்தைச் சேர்"
+
+msgid "Add the items to be ranked in <strong>Choices</strong> below."
+msgstr ""
+"வரிசைப்படுத்த வேண்டிய உருப்படிகளைக் கீழே உள்ள <strong>தேர்வுகள்</strong> "
+"பகுதியில் சேர்க்கவும்."
+
+msgid "All"
+msgstr "அனைத்தும்"
+
+msgid "All {m} marked — thank you!"
+msgstr "அனைத்து {m}-உம் குறிக்கப்பட்டன — நன்றி!"
+
+msgid "Answered"
+msgstr "பதிலளிக்கப்பட்டவை"
+
+msgid "Answers"
+msgstr "பதில்கள்"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "கடவுச்சொல், உள்நுழைவு அல்லது பணம் செலுத்துதலைக் கேட்கிறது"
+
+msgid "Attach file"
+msgstr "கோப்பை இணை"
+
+msgid "Brush size"
+msgstr "தூரிகை அளவு"
+
+msgid "Cell size: {m} m"
+msgstr "கட்ட அளவு: {m} மீ"
+
+msgid "Clear"
+msgstr "அழி"
+
+msgid "Data as of"
+msgstr "தரவு தேதி"
+
+msgid ""
+"Drag the items into order, or pick one up with Space and move it with the "
+"arrow keys."
+msgstr ""
+"உருப்படிகளை வரிசைப்படி இழுக்கவும், அல்லது Space விசையால் ஒன்றை எடுத்து "
+"அம்புக்குறி விசைகளால் நகர்த்தவும்."
+
+msgid "Erase"
+msgstr "வண்ணத்தை அழி"
+
+msgid "File is too large."
+msgstr "கோப்பு மிகப் பெரியது."
+
+msgid ""
+"Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr ""
+"தெளிக்க விரலை அழுத்திப் பிடித்து இழுக்கவும். நீங்கள் அதிக உறுதியாக இருக்கும் "
+"இடத்தில் அதிக நேரம் நிற்கவும்."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr ""
+"தெளிக்க அழுத்திப் பிடித்து இழுக்கவும். நீங்கள் அதிக உறுதியாக இருக்கும் "
+"இடத்தில் அதிக நேரம் நிற்கவும்."
+
+msgid "Incorrect password"
+msgstr "தவறான கடவுச்சொல்"
+
+msgid ""
+"It may not be published yet, or it may have been closed or removed. If you "
+"have a link from an organizer, check with them."
+msgstr ""
+"இது இன்னும் வெளியிடப்படாமல் இருக்கலாம், அல்லது மூடப்பட்டிருக்கலாம் அல்லது "
+"நீக்கப்பட்டிருக்கலாம். ஏற்பாட்டாளரிடமிருந்து இணைப்பு பெற்றிருந்தால், "
+"அவர்களிடம் கேட்கவும்."
+
+msgid "Large brush"
+msgstr "பெரிய தூரிகை"
+
+msgid "Layers"
+msgstr "அடுக்குகள்"
+
+msgid "Link copied!"
+msgstr "இணைப்பு நகலெடுக்கப்பட்டது!"
+
+msgid "Locate me"
+msgstr "என் இருப்பிடம்"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "மோசடி போலத் தெரிகிறது அல்லது ஒரு நிறுவனமாக ஆள்மாறாட்டம் செய்கிறது"
+
+msgid "Made with"
+msgstr "உருவாக்கப்பட்டது"
+
+msgid "Marks placed by other respondents. Your own marks are not in this list."
+msgstr ""
+"பிற பதிலளிப்பவர்கள் இட்ட குறிகள். உங்கள் சொந்தக் குறிகள் இந்தப் பட்டியலில் "
+"இல்லை."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "அதிகபட்ச வரம்பை எட்டியது — மாற்ற, கீழே ஒன்றை அகற்றவும்."
+
+msgid "Medium brush"
+msgstr "நடுத்தரத் தூரிகை"
+
+msgid "Move map"
+msgstr "வரைபடத்தை நகர்த்து"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr ""
+"குறிப்பினை வைக்க வரைபடத்தை நகர்த்தி, பின்னர் பயன்படுத்து என்பதை அழுத்தவும்."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr ""
+"Mapsurvey கருத்துக்கணிப்பில் கடவுச்சொற்களையோ அட்டை எண்களையோ ஒருபோதும் உள்ளிட "
+"வேண்டாம்."
+
+msgid "No"
+msgstr "இல்லை"
+
+msgid "No objects in this layer yet"
+msgstr "இந்த அடுக்கில் இன்னும் பொருள்கள் இல்லை"
+
+msgid "No results to show yet."
+msgstr "காட்ட இன்னும் முடிவுகள் இல்லை."
+
+msgid "Nothing matches"
+msgstr "பொருத்தம் எதுவும் இல்லை"
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr ""
+"தனியுரிமையைப் பாதுகாக்க, குறைவான பதில்கள் உள்ள பொருள்கள் மறைக்கப்பட்டுள்ளன."
+
+msgid "Please add a file."
+msgstr "தயவுசெய்து ஒரு கோப்பைச் சேர்க்கவும்."
+
+#, python-format
+msgid "Please answer about at least %%d object(s) to continue"
+msgstr "தொடர, குறைந்தது %%d பொருள்(கள்) பற்றி பதிலளிக்கவும்"
+
+msgid "Please specify"
+msgstr "தயவுசெய்து குறிப்பிடவும்"
+
+msgid "Record"
+msgstr "பதிவு செய்"
+
+msgid "Remove file"
+msgstr "கோப்பை அகற்று"
+
+msgid "Report this survey"
+msgstr "இந்தக் கருத்துக்கணிப்பைப் புகாரளி"
+
+msgid "Respondents: {n}"
+msgstr "பதிலளித்தவர்கள்: {n}"
+
+msgid "Retry"
+msgstr "மீண்டும் முயல்"
+
+msgid "Search failed — check your connection and try again."
+msgstr "தேடல் தோல்வியடைந்தது — உங்கள் இணைப்பைச் சரிபார்த்து மீண்டும் முயலவும்."
+
+msgid "Search objects…"
+msgstr "பொருள்களைத் தேடு…"
+
+msgid "See the results"
+msgstr "முடிவுகளைப் பார்"
+
+msgid "Send report"
+msgstr "புகாரை அனுப்பு"
+
+msgid "Share this survey"
+msgstr "இந்தக் கருத்துக்கணிப்பைப் பகிர்"
+
+msgid "Small brush"
+msgstr "சிறிய தூரிகை"
+
+msgid "Small groups are masked to protect privacy."
+msgstr "தனியுரிமையைப் பாதுகாக்க சிறு குழுக்கள் மறைக்கப்பட்டுள்ளன."
+
+msgid "Something else"
+msgstr "வேறு ஏதாவது"
+
+msgid "Spray"
+msgstr "தெளி"
+
+msgid "Stop"
+msgstr "நிறுத்து"
+
+msgid "Survey results"
+msgstr "கருத்துக்கணிப்பு முடிவுகள்"
+
+msgid "Survey unavailable"
+msgstr "கருத்துக்கணிப்பு கிடைக்கவில்லை"
+
+msgid "Take photo"
+msgstr "புகைப்படம் எடு"
+
+msgid "Take the survey"
+msgstr "கருத்துக்கணிப்பில் பங்கேற்கவும்"
+
+msgid "Tap the first point to close the shape."
+msgstr "வடிவத்தை மூட முதல் புள்ளியைத் தட்டவும்."
+
+msgid "Tap the last point to finish the line."
+msgstr "கோட்டை முடிக்க கடைசி புள்ளியைத் தட்டவும்."
+
+msgid "Tap to add the next corner."
+msgstr "அடுத்த மூலையைச் சேர்க்கத் தட்டவும்."
+
+msgid "Tap to add the next point."
+msgstr "அடுத்த புள்ளியைச் சேர்க்கத் தட்டவும்."
+
+msgid "Tap to add the shape’s corners."
+msgstr "வடிவத்தின் மூலைகளைச் சேர்க்கத் தட்டவும்."
+
+msgid "Tap to start the line."
+msgstr "கோட்டைத் தொடங்கத் தட்டவும்."
+
+#, python-format
+msgid "Tell us what is wrong with “%(name)s”. A person reviews every report."
+msgstr ""
+"“%(name)s” இல் என்ன தவறு என்று எங்களிடம் கூறுங்கள். ஒவ்வொரு புகாரையும் ஒரு "
+"நபர் பரிசீலிக்கிறார்."
+
+msgid "Thank you"
+msgstr "நன்றி"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "தூரிகை காலியாக உள்ளது — தொடர சிறிது வண்ணத்தை அழிக்கவும்."
+
+msgid "The file does not match its declared type."
+msgstr "கோப்பு அதன் அறிவிக்கப்பட்ட வகையுடன் பொருந்தவில்லை."
+
+#, python-format
+msgid "The file is too large (limit %(mb)s MB)."
+msgstr "கோப்பு மிகப் பெரியது (வரம்பு %(mb)s MB)."
+
+msgid "The files in this response are too large overall."
+msgstr "இந்தப் பதிலில் உள்ள கோப்புகள் மொத்தமாக மிகப் பெரியவை."
+
+msgid "This file type is not accepted here."
+msgstr "இந்தக் கோப்பு வகை இங்கு ஏற்கப்படாது."
+
+msgid "This is the last section — respondents finish here"
+msgstr "இது கடைசிப் பகுதி — பதிலளிப்பவர்கள் இங்கே முடிக்கிறார்கள்"
+
+msgid "This question does not accept files."
+msgstr "இந்தக் கேள்வி கோப்புகளை ஏற்காது."
+
+msgid "This question is not bound to a reference layer yet."
+msgstr "இந்தக் கேள்வி இன்னும் ஒரு குறிப்பு அடுக்குடன் இணைக்கப்படவில்லை."
+
+msgid "This question is required"
+msgstr "இந்தக் கேள்வி கட்டாயமானது"
+
+msgid "This snapshot needs to be refreshed by the survey owner."
+msgstr ""
+"இந்தத் தரவுப் படத்தைக் கருத்துக்கணிப்பின் உரிமையாளர் புதுப்பிக்க வேண்டும்."
+
+msgid "This survey isn’t available"
+msgstr "இந்தக் கருத்துக்கணிப்பு கிடைக்காது"
+
+msgid "Too many files in this response."
+msgstr "இந்தப் பதிலில் மிக அதிகமான கோப்புகள் உள்ளன."
+
+msgid "Type to search…"
+msgstr "தேட தட்டச்சு செய்யவும்…"
+
+msgid "Unlisted — viewable by direct link only, not indexed."
+msgstr ""
+"பட்டியலிடப்படாதது — நேரடி இணைப்பு மூலம் மட்டுமே பார்க்கலாம், "
+"அட்டவணைப்படுத்தப்படாது."
+
+msgid "Upload failed."
+msgstr "பதிவேற்றம் தோல்வியடைந்தது."
+
+msgid "Uploading"
+msgstr "பதிவேற்றுகிறது"
+
+msgid "Yes"
+msgstr "ஆம்"
+
+msgid "Your report has been received. A person will look at it."
+msgstr "உங்கள் புகார் பெறப்பட்டது. ஒரு நபர் அதைப் பார்ப்பார்."
+
+msgid "Zoom in"
+msgstr "பெரிதாக்கு"
+
+msgid "Zoom out"
+msgstr "சிறிதாக்கு"
+
+msgid "at least {n} required"
+msgstr "குறைந்தது {n} தேவை"
+
+msgctxt "basemap"
+msgid "Satellite"
+msgstr "செயற்கைக்கோள்"
+
+msgctxt "basemap"
+msgid "Streets"
+msgstr "தெருக்கள்"
+
+msgctxt "basemap"
+msgid "Topo"
+msgstr "நிலப்பரப்பு"
+
+msgid "create your own free map survey"
+msgstr "உங்கள் சொந்த இலவச வரைபடக் கருத்துக்கணிப்பை உருவாக்குங்கள்"
+
+msgid "of"
+msgstr "/"
+
+msgid "responses"
+msgstr "பதில்கள் பெறப்பட்டன"
+
+msgid "up to {n} more"
+msgstr "இன்னும் {n} வரை"
+
+msgid "{item} dropped at position {position}"
+msgstr "{item} நிலை {position} இல் வைக்கப்பட்டது"
+
+msgid "{item} moved to position {position}"
+msgstr "{item} நிலை {position} க்கு நகர்த்தப்பட்டது"
+
+msgid "{item} picked up. Use the arrow keys to move it, Space to drop it."
+msgstr ""
+"{item} எடுக்கப்பட்டது. நகர்த்த அம்புக்குறி விசைகளையும், வைக்க Space "
+"விசையையும் பயன்படுத்தவும்."
+
+msgid "{n} marked"
+msgstr "{n} குறிக்கப்பட்டன"
+
+msgid "{n} of {m} marked"
+msgstr "{m} இல் {n} குறிக்கப்பட்டன"
+
+#, python-format
+msgid "… and %(n)s more"
+msgstr "… மேலும் %(n)s"
