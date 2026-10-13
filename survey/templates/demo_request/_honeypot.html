@@ -1,0 +1,4 @@
+{% load i18n %}{# Off-screen, not display:none — some bots skip hidden inputs. Humans never see or tab to it. #}
+<div class="demo-hp" aria-hidden="true">
+  <label>{% trans "Leave this field empty" %}<input type="text" name="{{ honeypot_name }}" tabindex="-1" autocomplete="off"></label>
+</div>

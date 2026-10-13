@@ -170,91 +170,94 @@ homepage views set it (change ru-landing-hreflang).
 
     {% block content %}{% endblock %}
 
+    {% comment %}
+    Footer after Notion's (change request-demo-form): brand + quote on the left, five short columns,
+    a bottom row for language, licence and copyright. Every internal marketing link is kept -- the
+    SEO pages rely on this footer for internal linking and several tests assert those hrefs -- they
+    are regrouped, not dropped.
+    {% endcomment %}
     <footer class="landing-footer">
         <div class="landing-footer__inner">
-            <div class="landing-footer__col">
-                <div class="landing-footer__brand">Mapsurvey</div>
-                <p class="landing-footer__tagline">{% trans "Open-source platform for participatory mapping" %}</p>
+            <div class="landing-footer__brand-col">
+                <a href="{{ home_path|default:'/' }}" class="landing-footer__brand">
+                    <img src="{% static 'favicon-512x512.png' %}" alt="" width="28" height="28">
+                    Mapsurvey
+                </a>
+                <figure class="landing-footer__quote">
+                    <blockquote>&ldquo;{% trans "Cities have the capability of providing something for everybody, only because, and only when, they are created by everybody." %}&rdquo;</blockquote>
+                    <figcaption>{% trans "Jane Jacobs" %}</figcaption>
+                </figure>
             </div>
-            <div class="landing-footer__col">
-                <div class="landing-footer__col-title">{% trans "Product" %}</div>
-                <ul class="landing-footer__links">
-                    <li><a href="{{ home_path|default:'/' }}#features">{% trans "Features" %}</a></li>
-                    <li><a href="{{ home_path|default:'/' }}#demo">{% trans "Demo" %}</a></li>
-                    <li><a href="{% url 'pro_early_access' %}">{% trans "Pro — early access" %}</a></li>
-                    <li><a href="{% url 'services' %}">{% trans "Project service" %}</a></li>
-                    <li><a href="{% url 'stories_index' %}">{% trans "Stories" %}</a></li>
-                    <li><a href="{% url 'for_planners' %}">{% trans "For Urban Planners" %}</a></li>
-                    <li><a href="{% url 'for_government' %}">{% trans "For Local Government" %}</a></li>
-                    <li><a href="{% url 'for_researchers' %}">{% trans "For Researchers" %}</a></li>
-                    <li><a href="{% url 'for_educators' %}">{% trans "For Educators" %}</a></li>
-                    <li><a href="{% url 'for_consultants' %}">{% trans "For Consultants" %}</a></li>
-                    <li><a href="{% url 'community_engagement_platform' %}">{% trans "Community Engagement Platform" %}</a></li>
-                    <li><a href="{% url 'public_consultation_software' %}">{% trans "Public Consultation Software" %}</a></li>
-                    <li><a href="{% url 'civic_engagement' %}">{% trans "Civic Engagement" %}</a></li>
-                    <li><a href="{% url 'participatory_budgeting' %}">{% trans "Participatory Budgeting" %}</a></li>
-                    <li><a href="{% url 'participatory_mapping_tools' %}">{% trans "Participatory mapping tools: a buyer's guide" %}</a></li>
-                    <li><a href="{% url 'maptionnaire_alternative' %}">{% trans "Maptionnaire alternative" %}</a></li>
-                    <li><a href="{% url 'social_pinpoint_alternative' %}">{% trans "Social Pinpoint alternative" %}</a></li>
-                    <li><a href="{% url 'metroquest_alternative' %}">{% trans "MetroQuest alternative" %}</a></li>
-                </ul>
-            </div>
-            {% if GITHUB_REPO_URL %}
-            <div class="landing-footer__col">
-                <div class="landing-footer__col-title">{% trans "Open Source" %}</div>
-                <ul class="landing-footer__links">
-                    <li><a href="{{ GITHUB_REPO_URL }}" target="_blank" rel="noopener">GitHub</a></li>
-                </ul>
-            </div>
-            {% endif %}
-            <div class="landing-footer__col">
-                <div class="landing-footer__col-title">{% trans "Legal" %}</div>
-                <ul class="landing-footer__links">
-                    <li><a href="{% url 'terms_page' %}">{% trans "Terms of use" %}</a></li>
-                    <li><a href="{% url 'trust_page' %}">{% trans "Privacy & Trust" %}</a></li>
-                </ul>
-            </div>
-            <div class="landing-footer__col">
-                <div class="landing-footer__col-title">{% trans "Connect" %}</div>
-                <ul class="landing-footer__links">
-                    {% if CONTACT_EMAIL %}
-                    <li><a href="mailto:{{ CONTACT_EMAIL }}">{% trans "Email" %}</a></li>
-                    {% endif %}
-                    {% if CONTACT_TELEGRAM %}
-                    <li><a href="https://t.me/{{ CONTACT_TELEGRAM }}" target="_blank" rel="noopener">Telegram</a></li>
-                    {% endif %}
-                    {% if BOOK_A_CALL_URL %}
-                    <li><a href="{{ BOOK_A_CALL_URL }}" target="_blank" rel="noopener" data-book-call="footer">{% trans "Book a call" %}</a></li>
-                    {% endif %}
-                    {% if GITHUB_REPO_URL %}
-                    <li><a href="{{ GITHUB_REPO_URL }}" target="_blank" rel="noopener">GitHub</a></li>
-                    {% endif %}
-                </ul>
-            </div>
-            <div class="landing-footer__col">
-                {% comment %}Each link is labelled in its own language, untranslated: a Russian reader on an English page must recognise "Русский".{% endcomment %}
-                <div class="landing-footer__col-title">{% trans "Language" %}</div>
-                <ul class="landing-footer__links">
-                    <li><a href="/" hreflang="en" lang="en">English</a></li>
-                    <li><a href="{% url 'index_ru' %}" hreflang="ru" lang="ru">Русский</a></li>
-                </ul>
-            </div>
+            <nav class="landing-footer__cols" aria-label="{% trans 'Footer' %}">
+                <div class="landing-footer__col">
+                    <div class="landing-footer__col-title">{% trans "Product" %}</div>
+                    <ul class="landing-footer__links">
+                        <li><a href="{{ home_path|default:'/' }}#features">{% trans "Features" %}</a></li>
+                        <li><a href="{{ home_path|default:'/' }}#demo">{% trans "Demo survey" %}</a></li>
+                        <li><a href="{% url 'pro_early_access' %}">{% trans "Pro" %}</a></li>
+                        <li><a href="{% url 'services' %}">{% trans "Project service" %}</a></li>
+                        <li><a href="{% url 'demo_request' %}?src=footer">{% trans "Request a demo" %}</a></li>
+                    </ul>
+                    <a href="{{ home_path|default:'/' }}#features" class="landing-footer__more">{% trans "Explore all features" %} &rarr;</a>
+                </div>
+                <div class="landing-footer__col">
+                    <div class="landing-footer__col-title">{% trans "Mapsurvey for" %}</div>
+                    <ul class="landing-footer__links">
+                        <li><a href="{% url 'for_planners' %}">{% trans "Urban planners" context "footer: Mapsurvey for …" %}</a></li>
+                        <li><a href="{% url 'for_government' %}">{% trans "Local government" context "footer: Mapsurvey for …" %}</a></li>
+                        <li><a href="{% url 'for_researchers' %}">{% trans "Researchers" context "footer: Mapsurvey for …" %}</a></li>
+                        <li><a href="{% url 'for_educators' %}">{% trans "Educators" context "footer: Mapsurvey for …" %}</a></li>
+                        <li><a href="{% url 'for_consultants' %}">{% trans "Consultants" context "footer: Mapsurvey for …" %}</a></li>
+                    </ul>
+                </div>
+                <div class="landing-footer__col">
+                    <div class="landing-footer__col-title">{% trans "Use cases" %}</div>
+                    <ul class="landing-footer__links">
+                        <li><a href="{% url 'community_engagement_platform' %}">{% trans "Community engagement" context "footer: use case" %}</a></li>
+                        <li><a href="{% url 'public_consultation_software' %}">{% trans "Public consultation" context "footer: use case" %}</a></li>
+                        <li><a href="{% url 'civic_engagement' %}">{% trans "Civic engagement" %}</a></li>
+                        <li><a href="{% url 'participatory_budgeting' %}">{% trans "Participatory budgeting" %}</a></li>
+                    </ul>
+                </div>
+                <div class="landing-footer__col">
+                    <div class="landing-footer__col-title">{% trans "Resources" %}</div>
+                    <ul class="landing-footer__links">
+                        <li><a href="{% url 'stories_index' %}">{% trans "Customer stories" %}</a></li>
+                        <li><a href="{% url 'participatory_mapping_tools' %}">{% trans "Tools compared" %}</a></li>
+                        <li><a href="{% url 'maptionnaire_alternative' %}">{% trans "vs Maptionnaire" %}</a></li>
+                        <li><a href="{% url 'social_pinpoint_alternative' %}">{% trans "vs Social Pinpoint" %}</a></li>
+                        <li><a href="{% url 'metroquest_alternative' %}">{% trans "vs MetroQuest" %}</a></li>
+                    </ul>
+                </div>
+                <div class="landing-footer__col">
+                    <div class="landing-footer__col-title">{% trans "Company" %}</div>
+                    <ul class="landing-footer__links">
+                        <li><a href="{% url 'terms_page' %}">{% trans "Terms of use" %}</a></li>
+                        <li><a href="{% url 'trust_page' %}">{% trans "Privacy & Trust" %}</a></li>
+                        {% if CONTACT_EMAIL %}
+                        <li><a href="mailto:{{ CONTACT_EMAIL }}">{% trans "Email" %}</a></li>
+                        {% endif %}
+                        {% if CONTACT_TELEGRAM %}
+                        <li><a href="https://t.me/{{ CONTACT_TELEGRAM }}" target="_blank" rel="noopener">Telegram</a></li>
+                        {% endif %}
+                        {% if GITHUB_REPO_URL %}
+                        <li><a href="{{ GITHUB_REPO_URL }}" target="_blank" rel="noopener">GitHub</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </nav>
             <div class="landing-footer__bottom">
+                {% comment %}Each language is labelled in itself, untranslated: a Russian reader on an English page must recognise "Русский".{% endcomment %}
+                <div class="landing-footer__lang">
+                    <a href="/" hreflang="en" lang="en">English</a>
+                    <span aria-hidden="true">·</span>
+                    <a href="{% url 'index_ru' %}" hreflang="ru" lang="ru">Русский</a>
+                </div>
                 <div class="landing-footer__license">{% blocktrans %}Mapsurvey is open-source software licensed under <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener">AGPLv3</a>{% endblocktrans %}</div>
                 <div class="landing-footer__copy">&copy; 2021&ndash;{% now "Y" %} Artem Koniukhov</div>
             </div>
         </div>
     </footer>
-    <script>
-    // Book-a-call clicks: which surface sent the visitor to the calendar. Surface only, nothing
-    // about the visitor; silent when PostHog is not loaded (tests, previews, blockers).
-    document.addEventListener('click', function (e) {
-        var link = e.target.closest && e.target.closest('[data-book-call]');
-        if (link && window.posthog) {
-            window.posthog.capture('book_call_clicked', { surface: link.getAttribute('data-book-call') });
-        }
-    });
-    </script>
     {% block extra_js %}{% endblock %}
     <!--Start of Tawk.to Script-->
     <script type="text/javascript">

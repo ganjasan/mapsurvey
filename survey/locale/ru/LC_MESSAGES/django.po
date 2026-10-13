@@ -4208,15 +4208,15 @@ msgstr ""
 
 #: survey/templates/for_consultants.html:86
 msgid "vs Maptionnaire"
-msgstr ""
+msgstr "vs Maptionnaire"
 
 #: survey/templates/for_consultants.html:87
 msgid "vs Social Pinpoint"
-msgstr ""
+msgstr "vs Social Pinpoint"
 
 #: survey/templates/for_consultants.html:88
 msgid "vs MetroQuest"
-msgstr ""
+msgstr "vs MetroQuest"
 
 #: survey/templates/for_consultants.html:91
 msgid "Set up your first client project — free"
@@ -7644,3 +7644,102 @@ msgstr "Раскрывает чьи-то персональные данные"
 #: survey/content_screening.py
 msgid "Something else"
 msgstr "Другое"
+
+#: survey/templates/landing.html
+msgid "Get Mapsurvey free"
+msgstr "Начать бесплатно"
+
+#: survey/templates/landing.html
+msgid "Request a demo"
+msgstr "Запросить демо"
+
+#: survey/templates/landing.html
+msgid "You'll hear back from a person within one working day"
+msgstr "Живой человек ответит в течение рабочего дня"
+
+#: survey/templates/landing.html
+msgid "Tell us about your project, audience and timeline — by email, or on a call if you prefer."
+msgstr "Расскажите о проекте, аудитории и сроках — письмом или на звонке, как вам удобнее."
+
+#: survey/templates/base_landing.html
+msgid "Cities have the capability of providing something for everybody, only because, and only when, they are created by everybody."
+msgstr "Города способны дать что-то каждому только потому и только тогда, когда их создают все."
+
+#: survey/templates/base_landing.html
+msgid "Jane Jacobs"
+msgstr "Джейн Джекобс"
+
+#: survey/templates/base_landing.html
+msgid "Footer"
+msgstr "Подвал сайта"
+
+#: survey/templates/base_landing.html
+msgid "Demo survey"
+msgstr "Демо-опрос"
+
+#: survey/templates/base_landing.html
+msgid "Explore all features"
+msgstr "Все возможности"
+
+#: survey/templates/base_landing.html
+msgid "Mapsurvey for"
+msgstr "Mapsurvey для"
+
+#: survey/templates/base_landing.html
+msgid "Use cases"
+msgstr "Сценарии"
+
+#: survey/templates/base_landing.html
+msgid "Civic engagement"
+msgstr "Гражданское участие"
+
+#: survey/templates/base_landing.html
+msgid "Participatory budgeting"
+msgstr "Инициативное бюджетирование"
+
+#: survey/templates/base_landing.html
+msgid "Resources"
+msgstr "Материалы"
+
+#: survey/templates/base_landing.html
+msgid "Company"
+msgstr "Компания"
+
+#: survey/templates/base_landing.html
+msgctxt "footer: Mapsurvey for …"
+msgid "Urban planners"
+msgstr "Урбанистов"
+
+#: survey/templates/base_landing.html
+msgctxt "footer: Mapsurvey for …"
+msgid "Local government"
+msgstr "Местных властей"
+
+#: survey/templates/base_landing.html
+msgctxt "footer: Mapsurvey for …"
+msgid "Researchers"
+msgstr "Исследователей"
+
+#: survey/templates/base_landing.html
+msgctxt "footer: Mapsurvey for …"
+msgid "Educators"
+msgstr "Преподавателей"
+
+#: survey/templates/base_landing.html
+msgctxt "footer: Mapsurvey for …"
+msgid "Consultants"
+msgstr "Консультантов"
+
+#: survey/templates/base_landing.html
+msgctxt "footer: use case"
+msgid "Community engagement"
+msgstr "Вовлечение жителей"
+
+#: survey/templates/base_landing.html
+msgctxt "footer: use case"
+msgid "Public consultation"
+msgstr "Общественные обсуждения"
+
+#: survey/templates/base_landing.html
+msgid "Tools compared"
+msgstr "Сравнение сервисов"

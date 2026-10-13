@@ -1,0 +1,16 @@
+{% if stage == 'details' %}Demo request details{% else %}New demo request{% endif %}
+
+Email: {{ row.email }}
+Source: {{ row.source }}
+Received: {{ row.created_at|date:"Y-m-d H:i e" }}{% if row.user %}
+Account: {{ row.user.get_username }}{% endif %}{% if stage == 'details' %}
+
+Name: {{ row.name|default:"—" }}
+Organisation: {{ row.organisation|default:"—" }}
+When: {{ row.get_timeline_display|default:"—" }}
+What they want to map:
+{{ row.project|default:"—" }}{% else %}
+
+Only the email so far. Details may follow in a second message.{% endif %}
+
+Admin: {{ admin_url }}

@@ -73,6 +73,24 @@ def send_abuse_review_notice(self, review_id):
         raise self.retry(exc=exc)
 
 
+@shared_task(bind=True, max_retries=3, default_retry_delay=60)
+def notify_demo_request(self, request_id, stage):
+    """Mail CONTACT_EMAIL about one "Request a demo" step (change request-demo-form).
+    Same retry/report shape as the other notices; `demo_request.notify` sends
+    inline when the broker is down."""
+    from .demo_request import send_notification
+    from .models import DemoRequest
+
+    row = DemoRequest.objects.filter(pk=request_id).first()
+    if row is None:
+        logger.warning('demo request %s: row gone before send', request_id)
+        return
+    try:
+        send_notification(row, stage, fail_silently=False)
+    except Exception as exc:  # noqa: BLE001 — retry, then let task_failure report it
+        raise self.retry(exc=exc)
+
+
 @shared_task(bind=True)
 def run_survey_import(self, job_id):
     """Import the archive of a SurveyImportJob (change layer-memory-diet).
