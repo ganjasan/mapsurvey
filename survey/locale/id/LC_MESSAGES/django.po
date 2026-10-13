@@ -7714,3 +7714,52 @@ msgstr "Responden diarahkan ke sini setelah halaman terakhir, misalnya https://w
 #: survey/editor_forms.py
 msgid "Enter a full web address, for example https://www.facebook.com/yourproject"
 msgstr "Masukkan alamat web lengkap, misalnya https://www.facebook.com/yourproject"
+
+#: survey/templates/base_landing.html
+msgid "Terms of use"
+msgstr "Ketentuan penggunaan"
+
+#: survey/templates/base_landing.html
+msgid "Privacy & Trust"
+msgstr "Privasi & Kepercayaan"
+
+#: survey/abuse.py
+msgid "I am 16 or older and accept the Terms of use"
+msgstr "Saya berusia 16 tahun atau lebih dan menerima ketentuan penggunaan"
+
+#: survey/abuse.py
+msgid "Please confirm you are 16 or older and accept the Terms of use."
+msgstr "Konfirmasikan bahwa Anda berusia 16 tahun atau lebih dan menerima ketentuan penggunaan."
+
+#: survey/templates/django_registration/registration_form.html
+#, python-format
+msgid "I am 16 or older and accept the <a href=\"%(terms_url)s\" target=\"_blank\" rel=\"noopener\">Terms of use</a>"
+msgstr "Saya berusia 16 tahun atau lebih dan menerima <a href=\"%(terms_url)s\" target=\"_blank\" rel=\"noopener\">ketentuan penggunaan</a>"
+
+#: survey/content_screening.py
+msgid "Asks for a password, a login or a payment"
+msgstr "Meminta kata sandi, login, atau pembayaran"
+
+#: survey/content_screening.py
+msgid "Looks like a scam or impersonates a company"
+msgstr "Tampak seperti penipuan atau menyamar sebagai perusahaan"
+
+#: survey/content_screening.py
+msgid "Illegal content"
+msgstr "Konten ilegal"
+
+#: survey/content_screening.py
+msgid "Sexual abuse or exploitation of children"
+msgstr "Pelecehan seksual atau eksploitasi anak"
+
+#: survey/content_screening.py
+msgid "Harassment, threats or hate"
+msgstr "Pelecehan, ancaman, atau kebencian"
+
+#: survey/content_screening.py
+msgid "Exposes someone's personal data"
+msgstr "Mengungkap data pribadi seseorang"
+
+#: survey/content_screening.py
+msgid "Something else"
+msgstr "Hal lain"

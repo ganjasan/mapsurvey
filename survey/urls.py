@@ -157,6 +157,10 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/collaborators/<int:collaborator_id>/remove/', editor_views.editor_collaborator_remove, name='editor_collaborator_remove'),
 
     path('trust/', views.trust_page, name='trust_page'),
+    path('terms/', views.terms_page, name='terms_page'),
+    # One source of truth for privacy: the Trust page. 301 so links and search
+    # engines settle on /trust/ (not listed in sitemap.xml).
+    path('privacy/', RedirectView.as_view(pattern_name='trust_page', permanent=True), name='privacy_redirect'),
     path('surveys/track/event/', analytics_views.analytics_track_event, name='track_event'),
     # The listing that used to live here rendered every SurveyHeader in the
     # database -- every organization's surveys, drafts and private ones included --

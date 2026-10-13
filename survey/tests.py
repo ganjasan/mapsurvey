@@ -17619,6 +17619,7 @@ class RegistrationAbuseDefenseTest(TestCase):
             "password1": "Xx12345!secure",
             "password2": "Xx12345!secure",
             "website": "",  # honeypot empty
+            "accept_terms": "on",
             "cf-turnstile-response": "any-token",
         }
         data.update(overrides)
@@ -17905,6 +17906,7 @@ class RegistrationInvalidAttemptLimitTest(TestCase):
             "password1": "Xx12345!secure",
             "password2": "Xx12345!secure",
             "website": "",
+            "accept_terms": "on",
             "cf-turnstile-response": "any-token",
         }
         data.update(overrides)
@@ -18149,6 +18151,7 @@ class PasswordChecklistTest(TestCase):
                 "password1": "password123",
                 "password2": "password123",
                 "website": "",
+                "accept_terms": "on",
                 "cf-turnstile-response": "any-token",
             })
 
@@ -18172,6 +18175,7 @@ class PasswordChecklistTest(TestCase):
                 "password1": "marcuswildner",
                 "password2": "marcuswildner",
                 "website": "",
+                "accept_terms": "on",
                 "cf-turnstile-response": "any-token",
             })
 
@@ -18194,6 +18198,7 @@ class PasswordChecklistTest(TestCase):
                 "password1": "Xx12345",
                 "password2": "Xx12345",
                 "website": "",
+                "accept_terms": "on",
                 "cf-turnstile-response": "any-token",
             })
 
@@ -50822,3 +50827,195 @@ class OEmbedTest(_EmbedSurveyMixin, TestCase):
         response = self.client.get(f'/surveys/{survey.uuid}/sec1/')
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'application/json+oembed')
+# --- change dpga-readiness ----------------------------------------------------
+
+class TermsAndPrivacyPagesTest(TestCase):
+    """/terms/, /privacy/ redirect, /trust/ ownership block, landing footer, sitemap."""
+
+    def test_terms_page_renders_all_policy_anchors(self):
+        """
+        GIVEN an anonymous visitor
+        WHEN they open /terms/
+        THEN the page answers 200 and carries every anchor the DPGA application links to
+        """
+        response = Client().get('/terms/')
+        self.assertEqual(response.status_code, 200)
+        for anchor in ('terms', 'acceptable-use', 'prohibited', 'moderation', 'harassment', 'children', 'personal-data', 'contact'):
+            self.assertContains(response, f'id="{anchor}"')
+
+    def test_terms_names_csam_first_and_states_commitments(self):
+        """
+        GIVEN the Terms page
+        WHEN its prohibited, moderation and children sections are read
+        THEN child sexual abuse material is the first prohibited item, the 2-business-day and same-day times are stated, and accounts are 16+
+        """
+        html = Client().get('/terms/').content.decode()
+        prohibited = html[html.index('id="prohibited"'):html.index('id="detection"')]
+        first_item = prohibited[prohibited.index('<li>'):prohibited.index('</li>')]
+        self.assertIn('Child sexual abuse material', first_item)
+        moderation = html[html.index('id="moderation"'):html.index('id="harassment"')]
+        self.assertIn('2 business days', moderation)
+        self.assertIn('same day', moderation)
+        children = html[html.index('id="children"'):html.index('id="personal-data"')]
+        self.assertIn('16 and over', children)
+        self.assertIn('konuchovartem@mapsurvey.org', html)
+
+    def test_privacy_redirects_permanently_to_trust(self):
+        """
+        GIVEN any visitor
+        WHEN they request /privacy/
+        THEN the response is a 301 to /trust/
+        """
+        response = Client().get('/privacy/')
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response['Location'], '/trust/')
+
+    def test_sitemap_lists_terms_but_not_privacy(self):
+        """
+        GIVEN the sitemap
+        WHEN /sitemap.xml is requested
+        THEN it lists /terms/ and does not list the /privacy/ redirect
+        """
+        body = Client().get('/sitemap.xml').content.decode()
+        self.assertIn('/terms/</loc>', body)
+        self.assertNotIn('/privacy/</loc>', body)
+
+    def test_trust_page_has_ownership_block_with_owner_name(self):
+        """
+        GIVEN the Trust page
+        WHEN it is rendered
+        THEN it has an ownership block naming Artem Koniukhov, no longer says Konuchov, and links /terms/
+        """
+        response = Client().get('/trust/')
+        self.assertContains(response, 'id="ownership"')
+        self.assertContains(response, 'Artem Koniukhov')
+        self.assertNotContains(response, 'Artem Konuchov')
+        self.assertContains(response, 'href="/terms/"')
+
+    def test_landing_footer_links_legal_pages_and_names_owner(self):
+        """
+        GIVEN a page built on base_landing.html
+        WHEN it is rendered
+        THEN the footer links Terms of use and Privacy & Trust and its copyright line names the owner
+        """
+        response = Client().get('/trust/')
+        footer = response.content.decode().split('<footer', 1)[1]
+        self.assertIn('href="/terms/"', footer)
+        self.assertIn('Privacy & Trust', footer)
+        self.assertIn('2021&ndash;', footer)
+        self.assertIn('Artem Koniukhov', footer)
+
+
+class RegistrationAcceptTermsTest(TestCase):
+    """Sign-up requires the 16+ / Terms confirmation; the honeypot still wins."""
+
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+
+    def _data(self, **overrides):
+        data = {
+            'username': 'termsuser', 'email': 'terms@example.com',
+            'password1': 'Xx12345!secure', 'password2': 'Xx12345!secure',
+            'website': '', 'cf-turnstile-response': 'any-token', 'accept_terms': 'on',
+        }
+        data.update(overrides)
+        return {k: v for k, v in data.items() if v is not None}
+
+    def test_registration_page_shows_checkbox_and_terms_link(self):
+        """
+        GIVEN an anonymous visitor
+        WHEN they open the registration page
+        THEN it renders the accept_terms checkbox and a link to /terms/
+        """
+        response = Client().get('/accounts/register/')
+        self.assertContains(response, 'name="accept_terms"')
+        self.assertContains(response, 'href="/terms/"')
+
+    def test_missing_confirmation_is_rejected(self):
+        """
+        GIVEN valid registration data without accept_terms
+        WHEN it is submitted
+        THEN the form re-renders with an accept_terms error and no user is created
+        """
+        with override_settings(TURNSTILE_SECRET_KEY=''):
+            response = self.client.post('/accounts/register/', self._data(accept_terms=None),
+                                        REMOTE_ADDR='10.%d.%d.%d' % tuple(uuid.uuid4().bytes[:3]))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('accept_terms', response.context['form'].errors)
+        self.assertFalse(User.objects.filter(username='termsuser').exists())
+
+    def test_confirmed_registration_creates_user(self):
+        """
+        GIVEN valid registration data with accept_terms checked
+        WHEN it is submitted
+        THEN the user is created and the response redirects
+        """
+        with override_settings(TURNSTILE_SECRET_KEY=''):
+            response = self.client.post('/accounts/register/', self._data(),
+                                        REMOTE_ADDR='10.%d.%d.%d' % tuple(uuid.uuid4().bytes[:3]))
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(User.objects.filter(username='termsuser').exists())
+
+    def test_honeypot_still_wins_without_confirmation(self):
+        """
+        GIVEN a submission that fills the honeypot and omits accept_terms
+        WHEN it is submitted
+        THEN the bot gets the fake-success redirect and no user is created
+        """
+        with override_settings(TURNSTILE_SECRET_KEY=''):
+            response = self.client.post('/accounts/register/', self._data(website='bot', accept_terms=None),
+                                        REMOTE_ADDR='10.%d.%d.%d' % tuple(uuid.uuid4().bytes[:3]))
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(User.objects.filter(username='termsuser').exists())
+
+
+class ReportReasonsAndEscalationTest(_ContentScreeningBase):
+    """Seven report reasons; child-abuse reports always reach the moderator, urgently."""
+
+    def setUp(self):
+        super().setUp()
+        self._publish()
+        self.report_url = f'/surveys/{self.survey.uuid}/report/'
+
+    def _ip(self):
+        return '10.%d.%d.%d' % tuple(uuid.uuid4().bytes[:3])
+
+    def test_form_offers_seven_reasons_in_order(self):
+        """
+        GIVEN a published survey
+        WHEN the report page is opened
+        THEN it offers phishing, scam, illegal, child_abuse, harassment, personal_data, other in that order
+        """
+        html = self._anon().get(self.report_url).content.decode()
+        positions = [html.index(f'value="{code}"') for code in
+                     ('phishing', 'scam', 'illegal', 'child_abuse', 'harassment', 'personal_data', 'other')]
+        self.assertEqual(positions, sorted(positions))
+
+    def test_first_child_abuse_report_mails_urgently(self):
+        """
+        GIVEN a survey with no open review
+        WHEN a respondent reports child abuse
+        THEN exactly one notice is sent and its subject starts with [URGENT]
+        """
+        with _eager_notice():
+            self._anon().post(self.report_url, {'reason': 'child_abuse'}, REMOTE_ADDR=self._ip())
+        self.assertEqual(len(_cs_mail.outbox), 1)
+        self.assertTrue(_cs_mail.outbox[0].subject.startswith('[URGENT]'))
+
+    def test_child_abuse_after_scam_escalates_once(self):
+        """
+        GIVEN a survey already reported as a scam (one notice sent)
+        WHEN a child-abuse report arrives, then another one
+        THEN the review note now starts with child_abuse:, report_count is 3, and exactly one more notice is sent, marked [URGENT]
+        """
+        with _eager_notice():
+            self._anon().post(self.report_url, {'reason': 'scam'}, REMOTE_ADDR=self._ip())
+            self._anon().post(self.report_url, {'reason': 'child_abuse', 'message': 'photos'}, REMOTE_ADDR=self._ip())
+            self._anon().post(self.report_url, {'reason': 'child_abuse'}, REMOTE_ADDR=self._ip())
+        review = ContentReview.objects.get(survey=self.survey)
+        self.assertTrue(review.note.startswith('child_abuse:'))
+        self.assertIn('scam', review.note)
+        self.assertEqual(review.report_count, 3)
+        self.assertEqual(len(_cs_mail.outbox), 2)
+        self.assertTrue(_cs_mail.outbox[1].subject.startswith('[URGENT]'))

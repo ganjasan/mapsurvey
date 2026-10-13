@@ -24,6 +24,7 @@ from dataclasses import dataclass, field
 from urllib.parse import urlparse
 
 from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 from django.core import signing
 from django.utils import timezone
 from django.utils.html import strip_tags
@@ -401,10 +402,16 @@ def pending_review_for(survey):
 # --- respondent reports -------------------------------------------------------
 
 REPORT_REASONS = (
-    ('phishing', 'Asks for a password, a login or a payment'),
-    ('scam', 'Looks like a scam or impersonates a company'),
-    ('other', 'Something else'),
+    ('phishing', _('Asks for a password, a login or a payment')),
+    ('scam', _('Looks like a scam or impersonates a company')),
+    ('illegal', _('Illegal content')),
+    ('child_abuse', _('Sexual abuse or exploitation of children')),
+    ('harassment', _('Harassment, threats or hate')),
+    ('personal_data', _("Exposes someone's personal data")),
+    ('other', _('Something else')),
 )
+
+URGENT_REASON = 'child_abuse'
 
 
 def report(survey, reason, message, request):
@@ -421,9 +428,18 @@ def report(survey, reason, message, request):
         survey=canonical, status__in=ContentReview.OPEN_STATUSES).order_by('-created_at').first()
     if open_review is not None:
         open_review.report_count += 1
-        open_review.note = (open_review.note + '\n' + note_line).strip()
+        escalate = reason == URGENT_REASON and not is_urgent(open_review)
+        if escalate:
+            # The note's first prefix is the review's reason (subject, label).
+            # A child-abuse report must not ride silently on an earlier
+            # "scam" review: move it to the front and mail once, urgently.
+            open_review.note = (note_line + '\n' + open_review.note).strip()
+        else:
+            open_review.note = (open_review.note + '\n' + note_line).strip()
         open_review.save(update_fields=['report_count', 'note'])
         log_abuse_event('content_screen', request, f'report survey={canonical.id} reason={reason} repeat')
+        if escalate:
+            notify_owner(open_review)
         return open_review, False
 
     try:
@@ -553,7 +569,13 @@ def notice_context(review) -> dict:
     }
 
 
+def is_urgent(review) -> bool:
+    return (review.note or '').startswith(URGENT_REASON + ':') or (review.note or '') == URGENT_REASON
+
+
 def notice_subject(review) -> str:
+    if is_urgent(review):
+        return f'[URGENT] [Mapsurvey] Child-abuse report: {review.survey.name}'
     if review.source == 'report':
         return f'[Mapsurvey] Survey reported by a respondent: {review.survey.name}'
     return f'[Mapsurvey] Survey held for review: {review.survey.name} (score {review.score})'

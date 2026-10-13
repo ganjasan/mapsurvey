@@ -7781,3 +7781,52 @@ msgstr "Les répondants sont envoyés ici après la dernière page, par exemple 
 #: survey/editor_forms.py
 msgid "Enter a full web address, for example https://www.facebook.com/yourproject"
 msgstr "Saisissez une adresse web complète, par exemple https://www.facebook.com/yourproject"
+
+#: survey/templates/base_landing.html
+msgid "Terms of use"
+msgstr "Conditions d'utilisation"
+
+#: survey/templates/base_landing.html
+msgid "Privacy & Trust"
+msgstr "Confidentialité et confiance"
+
+#: survey/abuse.py
+msgid "I am 16 or older and accept the Terms of use"
+msgstr "J'ai 16 ans ou plus et j'accepte les conditions d'utilisation"
+
+#: survey/abuse.py
+msgid "Please confirm you are 16 or older and accept the Terms of use."
+msgstr "Veuillez confirmer que vous avez 16 ans ou plus et que vous acceptez les conditions d'utilisation."
+
+#: survey/templates/django_registration/registration_form.html
+#, python-format
+msgid "I am 16 or older and accept the <a href=\"%(terms_url)s\" target=\"_blank\" rel=\"noopener\">Terms of use</a>"
+msgstr "J'ai 16 ans ou plus et j'accepte les <a href=\"%(terms_url)s\" target=\"_blank\" rel=\"noopener\">conditions d'utilisation</a>"
+
+#: survey/content_screening.py
+msgid "Asks for a password, a login or a payment"
+msgstr "Demande un mot de passe, un identifiant ou un paiement"
+
+#: survey/content_screening.py
+msgid "Looks like a scam or impersonates a company"
+msgstr "Ressemble à une arnaque ou usurpe l'identité d'une entreprise"
+
+#: survey/content_screening.py
+msgid "Illegal content"
+msgstr "Contenu illégal"
+
+#: survey/content_screening.py
+msgid "Sexual abuse or exploitation of children"
+msgstr "Abus sexuels ou exploitation d'enfants"
+
+#: survey/content_screening.py
+msgid "Harassment, threats or hate"
+msgstr "Harcèlement, menaces ou haine"
+
+#: survey/content_screening.py
+msgid "Exposes someone's personal data"
+msgstr "Expose les données personnelles de quelqu'un"
+
+#: survey/content_screening.py
+msgid "Something else"
+msgstr "Autre chose"

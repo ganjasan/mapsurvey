@@ -11,7 +11,7 @@
     <br /><br />
     <a href="https://mapsurvey.org"><strong>Cloud version &rarr;</strong></a>
     &nbsp;&middot;&nbsp;
-    <a href="https://mapsurvey.org/docs">Documentation</a>
+    <a href="docs/OVERVIEW.md">Documentation</a>
     &nbsp;&middot;&nbsp;
     <a href="https://mapsurvey.org">Landing page</a>
   </p>
@@ -181,6 +181,8 @@ See [mapsurvey.org](https://mapsurvey.org) for plans and pricing.
 ## Contributing
 
 Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and guidelines.
+Everyone taking part is expected to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
+For a functional and architectural overview, read [docs/OVERVIEW.md](docs/OVERVIEW.md).
 
 ```bash
 # Fork, clone, and set up dev environment
@@ -194,8 +196,21 @@ cd mapsurvey
 
 To report a vulnerability, see [SECURITY.md](SECURITY.md).
 
-## License
+## License & ownership
 
-Mapsurvey is licensed under the [GNU Affero General Public License v3.0](LICENSE) (AGPLv3).
+Copyright © 2021–2026 Artem Koniukhov (sole proprietor, Kyrgyz Republic).
+
+Mapsurvey is free software, licensed under the
+[GNU Affero General Public License v3.0](LICENSE) (AGPLv3). The project owner holds the
+copyright in the Mapsurvey source code; contributions are accepted under the same licence
+(see [CONTRIBUTING.md](CONTRIBUTING.md)). Third-party libraries keep their own licences.
+
+The name "Mapsurvey" and the Mapsurvey logo identify the project and the hosted service at
+mapsurvey.org, both operated by Artem Koniukhov. You may run, modify and redistribute the
+software under the AGPLv3; please do not present a modified fork as the official Mapsurvey
+service.
+
+Data collected with Mapsurvey belongs to the survey creator, not to the project.
+Contact: konuchovartem@mapsurvey.org
 
 This means you can freely self-host, modify, and contribute. If you run a modified version as a network service, you must share your changes under the same license. For commercial cloud licensing, contact us at [mapsurvey.org](https://mapsurvey.org).
