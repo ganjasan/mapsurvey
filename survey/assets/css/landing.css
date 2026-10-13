@@ -1166,81 +1166,128 @@ a:hover { color: var(--color-accent-hover); }
 .landing-footer__license a:hover { color: var(--color-text); }
 
 /* ============================
-   REQUEST A DEMO (/demo/)
+   REQUEST A DEMO (/demo/) — a focused page after Notion's /contact-sales
+   (changes request-demo-form, demo-focus-page): no navbar, no footer.
    ============================ */
-.demo-hero { min-height: auto; padding-bottom: 5rem; }
-.demo-lead { max-width: 640px; margin: 0 auto; }
-.demo-lead .hero__headline { font-size: clamp(2rem, 4.6vw, 3.25rem); }
-.demo-step {
-    font-family: var(--font-display);
-    font-size: 0.875rem;
-    color: var(--color-accent);
-    font-weight: 600;
-    margin-bottom: 0.75rem;
+.demo-top { padding: 1.25rem 2rem; }
+.demo-top__brand {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-family: var(--font-display); font-size: 1.125rem; font-weight: 700;
+    letter-spacing: -0.02em; color: var(--color-text); text-decoration: none;
 }
-.demo-form { margin-top: 2rem; text-align: left; }
+.demo-page {
+    min-height: calc(100vh - 4.5rem - 7rem);
+    display: flex; align-items: center;
+    padding: 2rem 2rem 4rem;
+}
+.demo-split {
+    width: 100%; max-width: 1080px; margin: 0 auto;
+    display: grid; grid-template-columns: 1.05fr 1fr; gap: 5rem; align-items: center;
+}
+.demo-main { max-width: 480px; }
+.demo-title {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 3.6vw, 2.75rem);
+    font-weight: 700; letter-spacing: -0.03em; line-height: 1.1;
+    color: var(--color-text); margin: 0 0 1.75rem;
+}
+.demo-lede { font-family: var(--font-body); font-size: 1.0625rem; line-height: 1.55; color: var(--color-text-secondary); margin: -0.75rem 0 1.75rem; }
+.demo-step { font-family: var(--font-display); font-size: 0.875rem; font-weight: 600; color: var(--color-accent); margin: 0 0 0.75rem; }
+.demo-form { text-align: left; }
 .demo-form__label {
-    display: block;
-    font-family: var(--font-display);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: var(--color-text-secondary);
-    margin-bottom: 0.4rem;
+    display: block; font-family: var(--font-display); font-size: 0.875rem; font-weight: 500;
+    color: var(--color-text); margin-bottom: 0.4rem;
 }
-.demo-form__row { display: flex; gap: 0.6rem; }
-.demo-form__row input { flex: 1; min-width: 0; }
 .demo-form input[type="email"],
 .demo-form input[type="text"],
 .demo-form textarea,
 .demo-form select {
-    width: 100%;
-    font-family: var(--font-display);
-    font-size: 1rem;
-    color: var(--color-text);
-    background: var(--color-bg-elevated);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    padding: 0.8rem 0.9rem;
+    width: 100%; font-family: var(--font-display); font-size: 1rem; color: var(--color-text);
+    background: var(--color-bg-elevated); border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm); padding: 0.75rem 0.9rem;
 }
 .demo-form textarea { resize: vertical; }
-.demo-form input:focus,
-.demo-form textarea:focus,
-.demo-form select:focus {
-    outline: none;
-    border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px var(--color-accent-light);
+.demo-form input:focus, .demo-form textarea:focus, .demo-form select:focus {
+    outline: none; border-color: var(--color-accent); box-shadow: 0 0 0 3px var(--color-accent-light);
 }
 .demo-form input[aria-invalid="true"] { border-color: #E05A4A; }
-.demo-form__error {
-    margin: 0.5rem 0 0;
-    font-family: var(--font-display);
-    font-size: 0.875rem;
-    color: #C0392B;
-}
-.demo-form__note {
-    margin: 0.9rem 0 0;
-    font-family: var(--font-display);
-    font-size: 0.8125rem;
-    color: var(--color-text-tertiary);
-}
+.demo-form__error { margin: 0.5rem 0 0; font-family: var(--font-display); font-size: 0.875rem; color: #C0392B; }
+.demo-form__submit { width: 100%; justify-content: center; margin-top: 1.25rem; }
+.demo-form__note { margin: 1rem 0 0; font-family: var(--font-display); font-size: 0.8125rem; line-height: 1.5; color: var(--color-text-tertiary); }
 .demo-form__note a { color: var(--color-text-secondary); }
 .demo-form__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
-.demo-field span {
-    display: block;
-    font-family: var(--font-display);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: var(--color-text-secondary);
-    margin-bottom: 0.35rem;
-}
+.demo-field span { display: block; font-family: var(--font-display); font-size: 0.875rem; font-weight: 500; color: var(--color-text); margin-bottom: 0.35rem; }
 .demo-field--wide { grid-column: 1 / -1; }
-.demo-form__actions { display: flex; align-items: center; gap: 1.25rem; margin-top: 1.5rem; flex-wrap: wrap; }
 .demo-form__skip {
-    font-family: var(--font-display);
-    font-size: 0.9375rem;
-    color: var(--color-text-secondary);
+    display: inline-block; margin-top: 1rem;
+    font-family: var(--font-display); font-size: 0.9375rem; color: var(--color-text-secondary);
 }
-.demo-done .hero__cta-group { justify-content: center; }
+.demo-done__actions { display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
+.demo-done__actions .demo-form__skip { margin-top: 0; }
+
+.demo-quotes {
+    border-left: 3px solid var(--color-accent);
+    padding: 0.25rem 0 0.25rem 2rem;
+}
+/* Every card sits in the same grid cell, so the column keeps the height of the longest quote
+   and the form beside it does not jump when the carousel turns. */
+.demo-quotes__track { display: grid; }
+.demo-quote { grid-area: 1 / 1; margin: 0; }
+.demo-quote[hidden] { display: block; visibility: hidden; }
+.demo-quote blockquote {
+    margin: 0; font-family: var(--font-body);
+    font-size: clamp(1.15rem, 1.7vw, 1.4rem); line-height: 1.5; color: var(--color-text);
+}
+.demo-quote__who {
+    display: flex; align-items: center; gap: 0.85rem; margin-top: 1.4rem;
+    font-family: var(--font-display); font-size: 0.9375rem; line-height: 1.4;
+}
+.demo-quote__who strong { display: block; color: var(--color-text); font-weight: 600; }
+.demo-quote__who span span { color: var(--color-text-tertiary); }
+.demo-quote__avatar { width: 48px; height: 48px; flex: none; border-radius: 50%; object-fit: cover; }
+.demo-quote__avatar--initials {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--color-accent-light); color: var(--color-accent);
+    font-weight: 700; font-size: 1rem; letter-spacing: 0.02em;
+}
+.demo-quote__link {
+    display: inline-block; margin-top: 1rem;
+    font-family: var(--font-display); font-size: 0.875rem; color: var(--color-accent); text-decoration: none;
+}
+.demo-quote__link:hover { text-decoration: underline; }
+.demo-quotes__dots { display: flex; gap: 0.5rem; margin-top: 1.5rem; }
+.demo-quotes__dots[hidden] { display: none; }
+.demo-quotes__dot {
+    width: 10px; height: 10px; padding: 0; border: 0; border-radius: 50%;
+    background: var(--color-border); cursor: pointer; transition: background var(--transition-fast), width var(--transition-fast);
+}
+.demo-quotes__dot[aria-selected="true"] { background: var(--color-accent); width: 26px; border-radius: 5px; }
+.demo-quotes__dot:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
+
+.demo-logos { background: var(--color-bg-warm); padding: 2rem; }
+.demo-logos ul {
+    list-style: none; margin: 0 auto; padding: 0; max-width: 1080px;
+    display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 1.5rem 3.5rem;
+}
+.demo-logos img {
+    display: block; height: 48px; width: auto; max-width: 170px; object-fit: contain;
+    /* multiply drops the white boxes some uploaded logos carry, so they sit on the strip. */
+    mix-blend-mode: multiply;
+    filter: grayscale(1); opacity: 0.7; transition: filter var(--transition-fast), opacity var(--transition-fast);
+}
+.demo-logos a:hover img, .demo-logos a:focus-visible img { filter: none; opacity: 1; }
+
+@media (max-width: 900px) {
+    .demo-page { min-height: 0; padding: 1rem 1.25rem 3rem; align-items: flex-start; }
+    .demo-split { grid-template-columns: 1fr; gap: 3rem; }
+    .demo-main { max-width: none; }
+    .demo-top { padding: 1rem 1.25rem; }
+    .demo-quotes { padding-left: 1.25rem; }
+    .demo-form__grid { grid-template-columns: 1fr; }
+    .demo-logos ul { gap: 1.25rem 2rem; }
+    .demo-logos img { height: 36px; }
+}
+
 /* Honeypot: off-screen rather than display:none, which some bots skip. */
 .demo-hp { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }
 
@@ -1525,10 +1572,7 @@ html.js-reveal .reveal.is-visible {
     .landing-footer__cols { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem 1.25rem; }
     .landing-footer__bottom { flex-direction: column; align-items: flex-start; }
 
-    /* Request a demo */
-    .demo-form__row { flex-direction: column; }
-    .demo-form__row .btn-primary-landing { width: 100%; justify-content: center; }
-    .demo-form__grid { grid-template-columns: 1fr; }
+
 
     /* Demo CTA mobile */
     .demo-cta-section .btn--lg {

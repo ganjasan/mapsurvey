@@ -1,13 +1,14 @@
 {% extends "base_landing.html" %}
-{% load i18n %}
+{% load static i18n %}
 
 {% comment %}
-"Request a demo" (change request-demo-form). One template, three states:
+"Request a demo" (changes request-demo-form, demo-focus-page). One template, three states:
   email   — step one, an email and nothing else; submitting it creates the lead
   details — step two on the same row, skippable
   done    — after step two, after "Skip for now", and for a honeypot hit
-No consent box and no CAPTCHA on purpose: the email is the request to be
-contacted, and every extra control on step one costs leads.
+A focused page after Notion's /contact-sales: no navbar and no footer, so the one field we want
+filled does not compete with forty links. The right column is a real customer quote, not art.
+No consent box and no CAPTCHA on purpose: the email is the request to be contacted.
 {% endcomment %}
 
 {% block title %}{% trans "Request a demo | Mapsurvey" %}{% endblock %}
@@ -17,87 +18,187 @@ contacted, and every extra control on step one costs leads.
 {% block og_title %}{% trans "Request a Mapsurvey demo" %}{% endblock %}
 {% block extra_head %}<meta name="robots" content="noindex, follow">{% endblock %}
 
+{% block nav %}
+<header class="demo-top">
+  <a href="/" class="demo-top__brand">
+    <img src="{% static 'favicon-32x32.png' %}" width="24" height="24" alt="" aria-hidden="true">
+    Mapsurvey
+  </a>
+</header>
+{% endblock nav %}
+
 {% block content %}
-<section class="hero demo-hero" id="hero">
-  <div class="hero__content demo-lead">
+<main class="demo-page">
+  <div class="demo-split">
 
-    {% if state == 'email' %}
-      <h1 class="hero__headline">{% trans "See Mapsurvey on your project" %}</h1>
-      <p class="hero__description">
-        {% trans "Leave your email and we'll write back within one working day with a short walkthrough built around what you want to map. No calendar, no call unless you want one." %}
-      </p>
-
-      <form method="post" action="{% url 'demo_request' %}" class="demo-form" novalidate>
-        {% csrf_token %}
-        <input type="hidden" name="src" value="{{ source }}">
-        {% include "demo_request/_honeypot.html" %}
-        <label class="demo-form__label" for="demo-email">{% trans "Work email" %}</label>
-        <div class="demo-form__row">
+    <section class="demo-main" aria-labelledby="demo-heading">
+      {% if state == 'email' %}
+        <h1 id="demo-heading" class="demo-title">{% trans "What's your work email?" %}</h1>
+        <form method="post" action="{% url 'demo_request' %}" class="demo-form" novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="src" value="{{ source }}">
+          {% include "demo_request/_honeypot.html" %}
+          <label class="demo-form__label" for="demo-email">{% trans "Work email" %}</label>
           <input id="demo-email" type="email" name="email" autocomplete="email" required autofocus
                  value="{{ form.email.value|default:'' }}" placeholder="{% trans 'you@organisation.org' %}"
                  {% if form.email.errors %}aria-invalid="true" aria-describedby="demo-email-error"{% endif %}>
-          <button type="submit" class="btn-primary-landing">{% trans "Request a demo" %}</button>
-        </div>
-        {% if form.email.errors %}
-          <p class="demo-form__error" id="demo-email-error" role="alert">{{ form.email.errors.0 }}</p>
-        {% endif %}
-        <p class="demo-form__note">
-          {% trans "We reply once, by email, from a person. No mailing list." %}
-          <a href="{% url 'trust_page' %}#data-privacy">{% trans "How we handle data" %}</a>
-        </p>
-      </form>
-
-    {% elif state == 'details' %}
-      <p class="demo-step">{% blocktrans with email=row.email %}Request received for {{ email }}{% endblocktrans %}</p>
-      <h1 class="hero__headline">{% trans "Thanks — tell us a bit more" %}</h1>
-      <p class="hero__description">{% trans "Everything here is optional. The more we know, the more the walkthrough will look like your project." %}</p>
-
-      <form method="post" action="{% url 'demo_request_details' row.key %}" class="demo-form demo-form--details" novalidate>
-        {% csrf_token %}
-        {% include "demo_request/_honeypot.html" %}
-        <div class="demo-form__grid">
-          <label class="demo-field">
-            <span>{% trans "Your name" %}</span>
-            <input type="text" name="name" autocomplete="name" value="{{ form.name.value|default:'' }}">
-          </label>
-          <label class="demo-field">
-            <span>{% trans "Organisation" %}</span>
-            <input type="text" name="organisation" autocomplete="organization" value="{{ form.organisation.value|default:'' }}">
-          </label>
-          <label class="demo-field demo-field--wide">
-            <span>{% trans "What do you want to map?" %}</span>
-            <textarea name="project" rows="3" placeholder="{% trans 'e.g. where residents feel unsafe walking at night, for a district plan' %}">{{ form.project.value|default:'' }}</textarea>
-          </label>
-          <label class="demo-field demo-field--wide">
-            <span>{% trans "When?" %}</span>
-            <select name="timeline">
-              {% for value, label in form.fields.timeline.choices %}
-                <option value="{{ value }}"{% if form.timeline.value == value %} selected{% endif %}>{{ label }}</option>
-              {% endfor %}
-            </select>
-          </label>
-        </div>
-        <div class="demo-form__actions">
-          <button type="submit" class="btn-primary-landing">{% trans "Send details" %}</button>
-          <a href="{% url 'demo_request_details' row.key %}?skip=1" class="demo-form__skip">{% trans "Skip for now" %}</a>
-        </div>
-      </form>
-
-    {% else %}
-      <div class="demo-done" role="status">
-        <h1 class="hero__headline">{% trans "Thanks, we have your request" %}</h1>
-        <p class="hero__description">{% trans "Artem will reply from mapsurvey.org within one working day. Meanwhile you can try it yourself — it's free." %}</p>
-        <div class="hero__cta-group">
-          {% if user.is_authenticated %}
-          <a href="{% url 'editor' %}" class="btn-primary-landing">{% trans "Go to Dashboard" %}</a>
-          {% else %}
-          <a href="{% url 'django_registration_register' %}?utm_source=demo_request&amp;utm_medium=done" class="btn-primary-landing">{% trans "Get Mapsurvey free" %}</a>
+          {% if form.email.errors %}
+            <p class="demo-form__error" id="demo-email-error" role="alert">{{ form.email.errors.0 }}</p>
           {% endif %}
-          <a href="{% url 'stories_index' %}" class="btn-secondary-landing">{% trans "Read customer stories" %}</a>
+          <button type="submit" class="btn-primary-landing demo-form__submit">{% trans "Next" %}</button>
+          <p class="demo-form__note">
+            {% trans "We'll reply within one working day with a walkthrough built around what you want to map. No calendar, no mailing list." %}
+            <a href="{% url 'trust_page' %}#data-privacy">{% trans "How we handle data" %}</a>
+          </p>
+        </form>
+
+      {% elif state == 'details' %}
+        <p class="demo-step">{% blocktrans with email=row.email %}Request received for {{ email }}{% endblocktrans %}</p>
+        <h1 id="demo-heading" class="demo-title">{% trans "Tell us a bit more" %}</h1>
+        <p class="demo-lede">{% trans "Everything here is optional. The more we know, the more the walkthrough will look like your project." %}</p>
+        <form method="post" action="{% url 'demo_request_details' row.key %}" class="demo-form" novalidate>
+          {% csrf_token %}
+          {% include "demo_request/_honeypot.html" %}
+          <div class="demo-form__grid">
+            <label class="demo-field">
+              <span>{% trans "Your name" %}</span>
+              <input type="text" name="name" autocomplete="name" value="{{ form.name.value|default:'' }}">
+            </label>
+            <label class="demo-field">
+              <span>{% trans "Organisation" %}</span>
+              <input type="text" name="organisation" autocomplete="organization" value="{{ form.organisation.value|default:'' }}">
+            </label>
+            <label class="demo-field demo-field--wide">
+              <span>{% trans "What do you want to map?" %}</span>
+              <textarea name="project" rows="3" placeholder="{% trans 'e.g. where residents feel unsafe walking at night, for a district plan' %}">{{ form.project.value|default:'' }}</textarea>
+            </label>
+            <label class="demo-field demo-field--wide">
+              <span>{% trans "When?" %}</span>
+              <select name="timeline">
+                {% for value, label in form.fields.timeline.choices %}
+                  <option value="{{ value }}"{% if form.timeline.value == value %} selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </label>
+          </div>
+          <button type="submit" class="btn-primary-landing demo-form__submit">{% trans "Send details" %}</button>
+          <a href="{% url 'demo_request_details' row.key %}?skip=1" class="demo-form__skip">{% trans "Skip for now" %}</a>
+        </form>
+
+      {% else %}
+        <div role="status">
+          <h1 id="demo-heading" class="demo-title">{% trans "Thanks — we'll be in touch" %}</h1>
+          <p class="demo-lede">{% trans "Artem will reply from mapsurvey.org within one working day. Meanwhile you can try it yourself — it's free." %}</p>
+          <div class="demo-done__actions">
+            {% if user.is_authenticated %}
+            <a href="{% url 'editor' %}" class="btn-primary-landing">{% trans "Go to Dashboard" %}</a>
+            {% else %}
+            <a href="{% url 'django_registration_register' %}?utm_source=demo_request&amp;utm_medium=done" class="btn-primary-landing">{% trans "Get Mapsurvey free" %}</a>
+            {% endif %}
+            <a href="{% url 'stories_index' %}" class="demo-form__skip">{% trans "Read customer stories" %}</a>
+          </div>
         </div>
+      {% endif %}
+    </section>
+
+    {% if testimonials %}
+    {% comment %}
+      Carousel of customer quotes. Without JavaScript every card but the first stays hidden by the
+      `hidden` attribute and the dots are not rendered, so the page still shows one real quote.
+      Autoplay pauses on hover and focus, and never starts under prefers-reduced-motion.
+    {% endcomment %}
+    <aside class="demo-quotes" aria-roledescription="carousel" aria-label="{% trans 'What customers say' %}" data-demo-carousel>
+      <div class="demo-quotes__track" aria-live="off">
+        {% for t in testimonials %}
+        <figure class="demo-quote" role="group" aria-roledescription="slide"
+                aria-label="{% blocktrans with n=forloop.counter total=testimonials|length %}{{ n }} of {{ total }}{% endblocktrans %}"
+                {% if not forloop.first %}hidden{% endif %}>
+          <blockquote>&ldquo;{{ t.text }}&rdquo;</blockquote>
+          <figcaption class="demo-quote__who">
+            {% if t.photo %}
+            <img class="demo-quote__avatar" src="{% static t.photo %}" alt="" width="48" height="48">
+            {% else %}
+            <span class="demo-quote__avatar demo-quote__avatar--initials" aria-hidden="true">{{ t.initials }}</span>
+            {% endif %}
+            <span>
+              <strong>{{ t.name }}</strong>
+              <span>{{ t.role }}, {{ t.organisation }}</span>
+            </span>
+          </figcaption>
+          <a href="{% url 'story_detail' t.story_slug %}" class="demo-quote__link">{{ t.story_label }} &rarr;</a>
+        </figure>
+        {% endfor %}
       </div>
+      {% if testimonials|length > 1 %}
+      <div class="demo-quotes__dots" role="tablist" aria-label="{% trans 'Choose a quote' %}" hidden>
+        {% for t in testimonials %}
+        <button type="button" role="tab" class="demo-quotes__dot" aria-label="{% blocktrans with name=t.name %}Quote from {{ name }}{% endblocktrans %}"
+                aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"></button>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </aside>
     {% endif %}
 
   </div>
-</section>
-{% endblock %}
+</main>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+(function () {
+  var root = document.querySelector('[data-demo-carousel]');
+  if (!root) return;
+  var slides = root.querySelectorAll('.demo-quote');
+  var dots = root.querySelectorAll('.demo-quotes__dot');
+  if (slides.length < 2) return;
+  var bar = root.querySelector('.demo-quotes__dots');
+  bar.hidden = false;
+  var current = 0, timer = null, DELAY = 8000;
+  var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function show(i) {
+    current = (i + slides.length) % slides.length;
+    for (var k = 0; k < slides.length; k++) {
+      slides[k].hidden = k !== current;
+      dots[k].setAttribute('aria-selected', k === current ? 'true' : 'false');
+      dots[k].tabIndex = k === current ? 0 : -1;
+    }
+  }
+  function stop() { if (timer) { clearInterval(timer); timer = null; } }
+  function start() { if (!still && !timer) timer = setInterval(function () { show(current + 1); }, DELAY); }
+
+  for (var d = 0; d < dots.length; d++) {
+    (function (i) {
+      dots[i].addEventListener('click', function () { show(i); stop(); });
+    })(d);
+  }
+  bar.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      show(current + (e.key === 'ArrowRight' ? 1 : -1));
+      dots[current].focus();
+      stop();
+      e.preventDefault();
+    }
+  });
+  root.addEventListener('mouseenter', stop);
+  root.addEventListener('mouseleave', start);
+  root.addEventListener('focusin', stop);
+  root.addEventListener('focusout', function (e) { if (!root.contains(e.relatedTarget)) start(); });
+  show(0);
+  start();
+})();
+</script>
+{% endblock extra_js %}
+
+{% block footer %}
+{% if logos %}
+<footer class="demo-logos" aria-label="{% trans 'Teams using Mapsurvey' %}">
+  <ul>
+    {% for story in logos %}
+    <li><a href="{% url 'story_detail' story.slug %}"><img src="{{ story.credit_logo.url }}" alt="{{ story.credit|default:story.title }}" loading="lazy"></a></li>
+    {% endfor %}
+  </ul>
+</footer>
+{% endif %}
+{% endblock footer %}

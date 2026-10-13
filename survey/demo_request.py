@@ -31,6 +31,89 @@ DEFAULT_SOURCE = 'direct'
 DETAILS_WINDOW_DAYS = 7
 
 
+# Customer quotes for the /demo/ carousel (change demo-focus-page). Each is copied verbatim from
+# the published story it links -- the story is the evidence, so never paraphrase here. A quote
+# whose story is not published is not shown. `photo` is a static path, set only once the person
+# has agreed to their picture being used; until then the card shows their initials.
+# Deliberately not here: Julian Thomas's "completely free ... €4,500" line from the same story.
+# It is the strongest price line we have, but on the page where people ask for a demo of the
+# paid service it argues the wrong way.
+DEMO_TESTIMONIALS = (
+    {
+        'text': (
+            "Collecting quantitative data through a digital map at such an early stage allowed us "
+            "to thoroughly prepare for qualitative workshop techniques, giving a voice to the people "
+            "who use the bus station and market square every day and providing a solid foundation "
+            "for further microplanning."
+        ),
+        'name': "Anna M. Pyziak",
+        'role': "Secretary General",
+        'organisation': "Towarzystwo Urbanistów Polskich",
+        'story_slug': "pszow-microplanning",
+        'story_label': "Read the Pszów story",
+        'photo': "",
+    },
+    {
+        'text': "I have to say, I am very impressed with the tool. It's intuitive, and has been very well-received.",
+        'name': "Julian Thomas",
+        'role': "Councillor",
+        'organisation': "Whitehouse Community Council",
+        'story_slug': "whitehouse-dog-bins",
+        'story_label': "Read the Whitehouse story",
+        'photo': "",
+    },
+    {
+        'text': (
+            "Thank you for getting this initiative started and the amazing results we now have in "
+            "our possession: basically a survey and a workable outcome in one month, probably "
+            "unheard of in local government."
+        ),
+        'name': "Cliff Schraibman",
+        'role': "Parish Clerk and RFO",
+        'organisation': "Whitehouse Community Council",
+        'story_slug': "whitehouse-dog-bins",
+        'story_label': "Read the Whitehouse story",
+        'photo': "",
+    },
+)
+
+
+def _initials(name):
+    """'Anna M. Pyziak' -> 'AP': first and last word, so a middle initial never wins."""
+    words = [w for w in name.replace('.', ' ').split() if w]
+    return (words[0][0] + (words[-1][0] if len(words) > 1 else '')).upper() if words else ''
+
+
+def live_testimonials():
+    """The carousel's quotes whose story is published, in the order above."""
+    from .models import Story
+
+    live = set(Story.objects.filter(
+        is_published=True, slug__in={t['story_slug'] for t in DEMO_TESTIMONIALS},
+    ).values_list('slug', flat=True))
+    return [dict(t, initials=_initials(t['name'])) for t in DEMO_TESTIMONIALS if t['story_slug'] in live]
+
+
+# How many customer logos the strip under the form shows at most.
+MAX_LOGOS = 8
+
+
+def customer_logos():
+    """Published stories that carry a credit logo, in the order the landing shows them."""
+    from .models import Story
+
+    qs = Story.objects.filter(is_published=True).exclude(credit_logo='').exclude(credit_logo__isnull=True)
+    return list(Story.in_showcase_order(qs)[:MAX_LOGOS])
+
+
+def page_context():
+    """Everything the focused /demo/ layout needs besides the form: quotes and logos."""
+    return {
+        'testimonials': live_testimonials(),
+        'logos': customer_logos(),
+    }
+
+
 def normalise_source(value):
     value = (value or '').strip()
     return value if value in SOURCES else DEFAULT_SOURCE

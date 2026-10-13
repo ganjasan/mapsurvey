@@ -101,6 +101,8 @@ homepage views set it (change ru-landing-hreflang).
     {% block extra_head %}{% endblock %}
 </head>
 <body class="landing-body">
+    {# A focused page (e.g. /demo/) overrides `nav` and `footer` to drop the marketing chrome. #}
+    {% block nav %}
     <nav class="landing-nav" id="main-nav">
         <a href="{{ home_path|default:'/' }}" class="landing-nav__brand">
             <img class="landing-nav__logo" src="{% static 'favicon-32x32.png' %}" width="22" height="22" alt="" aria-hidden="true">
@@ -167,9 +169,11 @@ homepage views set it (change ru-landing-hreflang).
             {% endif %}
         </ul>
     </nav>
+    {% endblock nav %}
 
     {% block content %}{% endblock %}
 
+    {% block footer %}
     {% comment %}
     Footer after Notion's (change request-demo-form): brand + quote on the left, five short columns,
     a bottom row for language, licence and copyright. Every internal marketing link is kept -- the
@@ -258,6 +262,7 @@ homepage views set it (change ru-landing-hreflang).
             </div>
         </div>
     </footer>
+    {% endblock footer %}
     {% block extra_js %}{% endblock %}
     {% include "partials/_support_chat.html" with hide_bubble=False %}
 </body>
