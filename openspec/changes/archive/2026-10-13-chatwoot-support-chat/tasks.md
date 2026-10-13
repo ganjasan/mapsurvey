@@ -28,4 +28,4 @@
 ## 6. Verification
 
 - [x] 5.1 Local dev server with the real website token: signed-in chat shows a verified contact in Chatwoot
-- [ ] 5.2 Reply after the tab is closed arrives by email
+- [ ] 6.2 Reply after the tab is closed arrives by email
