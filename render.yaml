@@ -438,3 +438,38 @@ services:
         sync: false
       - key: SITE_URL
         value: "https://mapsurvey.org"
+
+  # Help centre — help.mapsurvey.org (openspec: help-site, #298). A Starlight site built
+  # from `help/`, nothing else in the repository. No previews, by owner decision
+  # (2026-10-13): content is reviewed with `npm run dev` locally and goes straight to
+  # production on merge, like the rest of the Blueprint. `buildFilter` keeps Django-only
+  # commits from rebuilding it and help-only commits from touching the web service. Should
+  # a preview ever be built, Render's IS_PULL_REQUEST=true makes every page noindex
+  # (help/astro.config.mjs). PostHog is injected only when PUBLIC_POSTHOG_KEY is set.
+  - type: web
+    name: mapsurvey-help
+    runtime: static
+    rootDir: help
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    buildFilter:
+      paths:
+        - help/**
+    previews:
+      generation: off
+    domains:
+      - help.mapsurvey.org
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: PUBLIC_POSTHOG_KEY
+        sync: false
+      - key: PUBLIC_POSTHOG_HOST
+        sync: false
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin

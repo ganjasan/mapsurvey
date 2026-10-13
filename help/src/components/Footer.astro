@@ -1,0 +1,101 @@
+---
+// Every content page ends with "Was this helpful?" and "Still stuck?" (spec: help-site,
+// "Feedback and contact on every content page"). The landing page (route id '') gets
+// only the default footer. Events go to PostHog when the snippet is present
+// (astro.config.mjs injects it only when PUBLIC_POSTHOG_KEY is set); without it the
+// controls still render and simply thank the reader.
+import Default from '@astrojs/starlight/components/Footer.astro';
+
+const MAIN_SITE = __MAIN_SITE__;
+const isHomepage = Astro.locals.starlightRoute.id === '';
+const supportUrl = `${MAIN_SITE}/?support=1`;
+---
+
+{!isHomepage && (
+  <div class="ms-feedback" data-ms-feedback>
+    <div class="ms-feedback__row" data-ms-feedback-ask>
+      <p><strong>Was this page helpful?</strong></p>
+      <button type="button" data-ms-helpful="yes">Yes</button>
+      <button type="button" data-ms-helpful="no">No</button>
+    </div>
+    <form class="ms-feedback__note" data-ms-feedback-note hidden>
+      <input type="text" name="note" maxlength="300" placeholder="What were you looking for? (optional)" aria-label="What were you looking for?" />
+      <button type="submit">Send</button>
+    </form>
+    <p class="ms-feedback__row" data-ms-feedback-thanks hidden>Thanks — this helps us fix the page.</p>
+    <p class="ms-feedback__stuck">
+      Still stuck? <a href={supportUrl} rel="noopener">Contact support</a> — we reply within a day, by email if you have left the page.
+    </p>
+  </div>
+)}
+
+<Default><slot /></Default>
+
+<script>
+  // Feedback: one help_feedback event per page view; a "No" opens an optional note.
+  // Search: Pagefind UI has no hook, so the dialog's input is observed through event
+  // delegation and the settled query (800 ms quiet) is sent once as help_search.
+  type PostHogLike = { capture: (name: string, props?: Record<string, unknown>) => void };
+  const ph = (): PostHogLike | null => {
+    const w = window as unknown as { posthog?: PostHogLike & { __loaded?: boolean } };
+    return w.posthog && typeof w.posthog.capture === 'function' ? w.posthog : null;
+  };
+
+  const root = document.querySelector<HTMLElement>('[data-ms-feedback]');
+  if (root) {
+    const ask = root.querySelector<HTMLElement>('[data-ms-feedback-ask]')!;
+    const note = root.querySelector<HTMLFormElement>('[data-ms-feedback-note]')!;
+    const thanks = root.querySelector<HTMLElement>('[data-ms-feedback-thanks]')!;
+    let helpful: boolean | null = null;
+
+    const send = (text?: string) => {
+      ph()?.capture('help_feedback', {
+        path: location.pathname,
+        helpful,
+        ...(text ? { note: text } : {}),
+      });
+    };
+
+    ask.addEventListener('click', (ev) => {
+      const btn = (ev.target as HTMLElement).closest<HTMLButtonElement>('[data-ms-helpful]');
+      if (!btn) return;
+      helpful = btn.dataset.msHelpful === 'yes';
+      ask.hidden = true;
+      if (helpful) {
+        send();
+        thanks.hidden = false;
+      } else {
+        note.hidden = false;
+        note.querySelector('input')?.focus();
+      }
+    });
+
+    note.addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      const text = (note.elements.namedItem('note') as HTMLInputElement).value.trim();
+      send(text || undefined);
+      note.hidden = true;
+      thanks.hidden = false;
+    });
+  }
+
+  // The landing hero's search button (index.mdx) hands off to Starlight's dialog.
+  document.querySelector('[data-ms-open-search]')?.addEventListener('click', () => {
+    document.querySelector<HTMLButtonElement>('site-search button[data-open-modal]')?.click();
+  });
+
+  let searchTimer: number | undefined;
+  let lastQuery = '';
+  document.addEventListener('input', (ev) => {
+    const input = ev.target as HTMLInputElement | null;
+    if (!input || !input.classList.contains('pagefind-ui__search-input')) return;
+    window.clearTimeout(searchTimer);
+    searchTimer = window.setTimeout(() => {
+      const query = input.value.trim();
+      if (!query || query === lastQuery) return;
+      lastQuery = query;
+      const results = document.querySelectorAll('.pagefind-ui__result').length;
+      ph()?.capture('help_search', { query, results, path: location.pathname });
+    }, 800);
+  });
+</script>
