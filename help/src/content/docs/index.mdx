@@ -1,0 +1,54 @@
+---
+title: Mapsurvey Help
+description: How to build, run and read participatory mapping surveys with Mapsurvey — and how to do citizen engagement well.
+template: splash
+editUrl: false
+hero:
+  title: How can we help?
+  tagline: Guides for building map surveys, reading the answers, and running engagement that people actually join.
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+<div class="ms-hero-search">
+  <button type="button" class="ms-search-button" data-ms-open-search>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    Search the help centre…
+    <kbd>Ctrl K</kbd>
+  </button>
+</div>
+
+<CardGrid>
+  <Card title="Start here" icon="rocket">
+    Build, publish and read your first survey in about twenty minutes.
+    [Open the tutorial](/start-here/)
+  </Card>
+  <Card title="How-to guides" icon="list-format">
+    One task per page: layers, map questions, embedding, exports, Pro.
+    [Browse the guides](/how-to/)
+  </Card>
+  <Card title="Reference" icon="document">
+    Question types, export columns, settings, roles and plans.
+    [Look something up](/reference/)
+  </Card>
+  <Card title="Troubleshooting" icon="warning">
+    Something failed? Find the message you saw and what to do.
+    [Find your symptom](/troubleshooting/)
+  </Card>
+  <Card title="Learn" icon="open-book">
+    Citizen engagement and participatory mapping as a practice, with the evidence.
+    [Read the essays](/learn/)
+  </Card>
+  <Card title="FAQ" icon="information">
+    Short answers to the questions people actually ask us.
+    [Read the FAQ](/faq/)
+  </Card>
+</CardGrid>
+
+## Popular pages
+
+<CardGrid>
+  <LinkCard title="Your first survey" description="The tutorial, from an empty editor to a GeoJSON export." href="/start-here/" />
+  <LinkCard title="Designing a map survey" description="One mapping task, points first, ask what works too." href="/learn/" />
+  <LinkCard title="Still stuck?" description="Open the support chat on mapsurvey.org — we reply within a day." href="https://mapsurvey.org/?support=1" />
+</CardGrid>

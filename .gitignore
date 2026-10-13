@@ -5,6 +5,9 @@ env/
 db.sqlite3
 .claude/mcp.json
 docs/
+# `docs/` above matches every directory of that name, including the help centre's
+# content, which lost its 41 pages on the first merge (#307). Keep this negation.
+!help/src/content/docs/
 staticfiles/
 mediafiles/
 .playwright-mcp/

@@ -51732,6 +51732,28 @@ class HelpSiteLinksTest(TestCase):
             candidates = [stem + '.md', stem + '.mdx', os.path.join(stem, 'index.md'), os.path.join(stem, 'index.mdx')]
             self.assertTrue(any(os.path.isfile(c) for c in candidates), f'{key}: no page for {path!r}')
 
+    def test_help_pages_are_tracked_by_git(self):
+        """
+        GIVEN a git checkout (skipped elsewhere)
+        WHEN the help content directory is listed through git
+        THEN its pages are tracked -- the root .gitignore's `docs/` rule once swallowed all of them (#307)
+        """
+        import os
+        import subprocess
+
+        if not os.path.isdir(os.path.join(settings.BASE_DIR, '.git')) and not os.path.isfile(os.path.join(settings.BASE_DIR, '.git')):
+            self.skipTest('not a git checkout')
+        out = subprocess.run(
+            ['git', 'ls-files', '--', 'help/src/content/docs'],
+            cwd=settings.BASE_DIR, capture_output=True, text=True, check=True,
+        ).stdout.split()
+        self.assertGreater(len(out), 30, 'help/src/content/docs pages are not tracked by git')
+        ignored = subprocess.run(
+            ['git', 'check-ignore', 'help/src/content/docs/faq.md'],
+            cwd=settings.BASE_DIR, capture_output=True, text=True,
+        )
+        self.assertNotEqual(ignored.returncode, 0, 'help/src/content/docs is matched by .gitignore')
+
     def test_help_menu_links_to_the_help_centre(self):
         """
         GIVEN HELP_SITE_URL is set
