@@ -19550,6 +19550,12 @@ class DemoRequestTest(TestCase):
         self.addCleanup(self._delay.stop)
         caches["default"].clear()
 
+    def _fresh_limits(self):
+        # The locmem cache outlives a single test: without this, one test's counters leak into
+        # the next and the limit trips early or late depending on the order tests run in.
+        from django.core.cache import caches
+        caches["default"].clear()
+
     def _submit_email(self, client=None, email="planner@city.example", src="hero", **extra):
         client = client or Client()
         with self.captureOnCommitCallbacks(execute=True):
@@ -19559,7 +19565,7 @@ class DemoRequestTest(TestCase):
         """
         GIVEN an anonymous visitor
         WHEN /demo/ is requested
-        THEN it renders one visible email input, the "Request a demo" button, a trust-page
+        THEN it renders "What's your work email?", one visible email input, a "Next" button, a trust-page
              link and a noindex tag, and no consent box or CAPTCHA
         """
         resp = Client().get("/demo/?src=hero")
@@ -19571,7 +19577,8 @@ class DemoRequestTest(TestCase):
         self.assertNotIn("cf-turnstile", form)
         self.assertNotIn('<textarea', form)
         self.assertIn('name="src" value="hero"', form)
-        self.assertIn(">Request a demo</button>", form)
+        self.assertIn(">Next</button>", form)
+        self.assertContains(resp, "What's your work email?")
         self.assertIn('href="/trust/#data-privacy"', form)
         self.assertContains(resp, '<meta name="robots" content="noindex, follow">')
 
@@ -19662,12 +19669,13 @@ class DemoRequestTest(TestCase):
         page = Client().get("/demo/%s/" % row.key)
         self.assertContains(page, "Request received for planner@city.example")
         self.assertContains(page, "Skip for now")
+        self.assertContains(page, "Tell us a bit more")
         with self.captureOnCommitCallbacks(execute=True):
             resp = Client().post("/demo/%s/" % row.key, {
                 "name": "Ana", "organisation": "City of Olney",
                 "project": "Unsafe crossings near schools", "timeline": "this_quarter",
             })
-        self.assertContains(resp, "Thanks, we have your request")
+        self.assertContains(resp, "Thanks — we'll be in touch")
         row.refresh_from_db()
         self.assertEqual((row.name, row.organisation, row.timeline), ("Ana", "City of Olney", "this_quarter"))
         self.assertIsNotNone(row.details_at)
@@ -19687,7 +19695,7 @@ class DemoRequestTest(TestCase):
         self._submit_email()
         row = DemoRequest.objects.get()
         resp = Client().get("/demo/%s/?skip=1" % row.key)
-        self.assertContains(resp, "Thanks, we have your request")
+        self.assertContains(resp, "Thanks — we'll be in touch")
         row.refresh_from_db()
         self.assertIsNone(row.details_at)
         self.assertEqual(row.name, "")
@@ -19706,7 +19714,7 @@ class DemoRequestTest(TestCase):
         old = DemoRequest.objects.create(email="o@x.example",
                                          created_at=timezone.now() - timedelta(days=8))
         for row in (done, old):
-            self.assertContains(Client().get("/demo/%s/" % row.key), "Thanks, we have your request")
+            self.assertContains(Client().get("/demo/%s/" % row.key), "Thanks — we'll be in touch")
             Client().post("/demo/%s/" % row.key, {"name": "Changed"})
         done.refresh_from_db(); old.refresh_from_db()
         self.assertEqual(done.name, "Kept")
@@ -19797,7 +19805,7 @@ class DemoRequestTest(TestCase):
 
         resp = self._submit_email(**{HONEYPOT_FIELD_NAME: "http://spam.example"})
         self.assertRedirects(resp, "/demo/done/")
-        self.assertContains(Client().get("/demo/done/"), "Thanks, we have your request")
+        self.assertContains(Client().get("/demo/done/"), "Thanks — we'll be in touch")
         self.assertEqual(DemoRequest.objects.count(), 0)
         self.assertEqual(len(mail.outbox), 0)
         self.assertEqual(AbuseEvent.objects.filter(defense="honeypot", detail="demo_request").count(), 1)
@@ -19811,6 +19819,7 @@ class DemoRequestTest(TestCase):
         from .models import AbuseEvent, DemoRequest
 
         with override_settings(DEMO_REQUEST_LIMIT_HOUR=2, DEMO_REQUEST_LIMIT_DAY=10, CACHES=self.LOCMEM):
+            self._fresh_limits()
             self._submit_email(email="1@x.example")
             self._submit_email(email="2@x.example")
             resp = self._submit_email(email="3@x.example")
@@ -19828,11 +19837,123 @@ class DemoRequestTest(TestCase):
         from .models import DemoRequest
 
         with override_settings(DEMO_REQUEST_LIMIT_HOUR=1, DEMO_REQUEST_LIMIT_DAY=10, CACHES=self.LOCMEM):
+            self._fresh_limits()
             self._submit_email(email="bad")
             self._submit_email(email="worse@")
             resp = self._submit_email(email="good@x.example")
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(DemoRequest.objects.count(), 1)
+
+    def _demo_pages(self):
+        from .models import DemoRequest
+        row = DemoRequest.objects.create(email="p@x.example")
+        return {"email": "/demo/", "details": "/demo/%s/" % row.key, "done": "/demo/done/"}
+
+    def test_every_state_is_a_focused_page(self):
+        """
+        GIVEN the three states of the demo page
+        WHEN each is rendered
+        THEN none carries the landing navbar or the landing footer, and each has the wordmark linking home
+        """
+        for state, url in self._demo_pages().items():
+            html = Client().get(url).content.decode()
+            self.assertNotIn('class="landing-nav"', html, state)
+            self.assertNotIn('class="landing-footer"', html, state)
+            self.assertIn('<a href="/" class="demo-top__brand">', html, state)
+
+    def test_carousel_shows_quotes_from_published_stories(self):
+        """
+        GIVEN the Pszów and Whitehouse stories are published
+        WHEN any state of the demo page is rendered
+        THEN the carousel carries the three quotes with names, organisations, initials and story links,
+             only the first is visible without JavaScript, and the dots start hidden
+        """
+        from .models import Story
+
+        Story.objects.create(title="Pszów", slug="pszow-microplanning", is_published=True)
+        Story.objects.create(title="Whitehouse", slug="whitehouse-dog-bins", is_published=True)
+        for state, url in self._demo_pages().items():
+            html = Client().get(url).content.decode()
+            carousel = html[html.index('aria-roledescription="carousel"'):html.index("</aside>")]
+            self.assertEqual(carousel.count('class="demo-quote"'), 3, state)
+            figures = re.findall(r'<figure class="demo-quote"[^>]*>', carousel)
+            self.assertEqual([("hidden" in f) for f in figures], [False, True, True], state)
+            for text in ("giving a voice to the people who use the bus station",
+                         "I am very impressed with the tool",
+                         "probably unheard of in local government"):
+                self.assertIn(text, carousel, state)
+            for who in ("Anna M. Pyziak", "Towarzystwo Urbanistów Polskich", "Julian Thomas",
+                        "Cliff Schraibman", "Whitehouse Community Council"):
+                self.assertIn(who, carousel, state)
+            self.assertIn(">AP<", carousel, state)
+            self.assertIn(">JT<", carousel, state)
+            self.assertIn('href="/stories/pszow-microplanning/" class="demo-quote__link"', carousel, state)
+            self.assertIn('href="/stories/whitehouse-dog-bins/" class="demo-quote__link"', carousel, state)
+            self.assertIn('class="demo-quotes__dots" role="tablist"', carousel, state)
+            self.assertNotIn("4,500", carousel, state)
+
+    def test_quote_of_an_unpublished_story_is_not_shown(self):
+        """
+        GIVEN only the Whitehouse story is published
+        WHEN /demo/ is rendered
+        THEN the Pszów quote is absent and both Whitehouse quotes are shown
+        """
+        from .models import Story
+
+        Story.objects.create(title="Pszów", slug="pszow-microplanning", is_published=False)
+        Story.objects.create(title="Whitehouse", slug="whitehouse-dog-bins", is_published=True)
+        resp = Client().get("/demo/")
+        self.assertNotContains(resp, "Anna M. Pyziak")
+        self.assertContains(resp, "Julian Thomas")
+        self.assertContains(resp, "Cliff Schraibman")
+
+    def test_no_published_story_no_carousel(self):
+        """
+        GIVEN none of the quoted stories is published
+        WHEN /demo/ is rendered
+        THEN the carousel is not rendered at all
+        """
+        self.assertNotContains(Client().get("/demo/"), 'aria-roledescription="carousel"')
+
+    def test_initials_skip_the_middle_initial(self):
+        """
+        GIVEN a name with a middle initial
+        WHEN its avatar initials are built
+        THEN they are the first and last name's letters
+        """
+        from .demo_request import _initials
+
+        self.assertEqual(_initials("Anna M. Pyziak"), "AP")
+        self.assertEqual(_initials("Cliff Schraibman"), "CS")
+        self.assertEqual(_initials("Plato"), "P")
+
+    def test_logo_strip_from_published_stories_with_a_logo(self):
+        """
+        GIVEN a published story with a credit logo, one without a logo, and an unpublished one with a logo
+        WHEN /demo/ is rendered
+        THEN only the first appears in the logo strip, with its credit as alt text and a link to the story
+        """
+        from .models import Story
+
+        Story.objects.create(title="Olney", slug="olney", is_published=True,
+                             credit="City of Olney", credit_logo="stories/olney-logo.png")
+        Story.objects.create(title="No logo", slug="no-logo", is_published=True, credit="Nobody")
+        Story.objects.create(title="Draft", slug="draft", is_published=False,
+                             credit="Draft Org", credit_logo="stories/draft-logo.png")
+        html = Client().get("/demo/").content.decode()
+        strip = html[html.index('class="demo-logos"'):]
+        self.assertIn('href="/stories/olney/"', strip)
+        self.assertIn('alt="City of Olney"', strip)
+        self.assertNotIn("no-logo", strip)
+        self.assertNotIn("draft", strip)
+
+    def test_no_logos_no_strip(self):
+        """
+        GIVEN no published story has a credit logo
+        WHEN /demo/ is rendered
+        THEN the logo strip is not rendered
+        """
+        self.assertNotContains(Client().get("/demo/"), 'class="demo-logos"')
 
     def test_admin_lists_requests_read_only(self):
         """

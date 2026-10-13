@@ -20,6 +20,7 @@ from .models import DemoRequest
 
 def _render(request, state, **ctx):
     ctx.update({'state': state, 'honeypot_name': HONEYPOT_FIELD_NAME})
+    ctx.update(dr.page_context())
     return render(request, 'demo.html', ctx)
 
 
