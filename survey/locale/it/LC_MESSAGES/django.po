@@ -7741,3 +7741,52 @@ msgstr "I partecipanti arrivano qui dopo l'ultima pagina, ad esempio https://www
 #: survey/editor_forms.py
 msgid "Enter a full web address, for example https://www.facebook.com/yourproject"
 msgstr "Inserisci un indirizzo web completo, ad esempio https://www.facebook.com/yourproject"
+
+#: survey/templates/base_landing.html
+msgid "Terms of use"
+msgstr "Condizioni d'uso"
+
+#: survey/templates/base_landing.html
+msgid "Privacy & Trust"
+msgstr "Privacy e fiducia"
+
+#: survey/abuse.py
+msgid "I am 16 or older and accept the Terms of use"
+msgstr "Ho almeno 16 anni e accetto le condizioni d'uso"
+
+#: survey/abuse.py
+msgid "Please confirm you are 16 or older and accept the Terms of use."
+msgstr "Conferma di avere almeno 16 anni e di accettare le condizioni d'uso."
+
+#: survey/templates/django_registration/registration_form.html
+#, python-format
+msgid "I am 16 or older and accept the <a href=\"%(terms_url)s\" target=\"_blank\" rel=\"noopener\">Terms of use</a>"
+msgstr "Ho almeno 16 anni e accetto le <a href=\"%(terms_url)s\" target=\"_blank\" rel=\"noopener\">condizioni d'uso</a>"
+
+#: survey/content_screening.py
+msgid "Asks for a password, a login or a payment"
+msgstr "Chiede una password, un accesso o un pagamento"
+
+#: survey/content_screening.py
+msgid "Looks like a scam or impersonates a company"
+msgstr "Sembra una truffa o si spaccia per un'azienda"
+
+#: survey/content_screening.py
+msgid "Illegal content"
+msgstr "Contenuti illegali"
+
+#: survey/content_screening.py
+msgid "Sexual abuse or exploitation of children"
+msgstr "Abuso sessuale o sfruttamento di minori"
+
+#: survey/content_screening.py
+msgid "Harassment, threats or hate"
+msgstr "Molestie, minacce o odio"
+
+#: survey/content_screening.py
+msgid "Exposes someone's personal data"
+msgstr "Espone i dati personali di qualcuno"
+
+#: survey/content_screening.py
+msgid "Something else"
+msgstr "Altro"

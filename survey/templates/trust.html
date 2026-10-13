@@ -125,6 +125,29 @@
             </ul>
         </section>
 
+        {# === Ownership (change dpga-readiness) === #}
+        <section class="trust-section" id="ownership">
+            <h2 class="trust-section__title">
+                <span class="trust-section__icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                </span>
+                Ownership
+            </h2>
+            <p class="trust-section__lead">
+                <strong>Who owns Mapsurvey.</strong> Mapsurvey — the source code and the hosted service
+                at mapsurvey.org — is owned and operated by Artem Koniukhov, a sole proprietor
+                registered in the Kyrgyz Republic. He holds the copyright in the code, which is
+                published under the GNU AGPLv3{% if GITHUB_REPO_URL %} on <a href="{{ GITHUB_REPO_URL }}" rel="noopener">GitHub</a>{% endif %}.
+                The project is independent: no government, investor or corporation owns or controls it.
+            </p>
+            <p class="trust-section__lead">
+                <strong>Who owns the data.</strong> Surveys and responses belong to the creator who
+                collected them. Mapsurvey processes them on the creator's behalf and claims no rights
+                over them. What may and may not be done with Mapsurvey is set out in the
+                <a href="{% url 'terms_page' %}">Terms of use &amp; acceptable use</a>.
+            </p>
+        </section>
+
         {# === Who is behind Mapsurvey === #}
         <section class="trust-section" id="about">
             <h2 class="trust-section__title">
@@ -134,7 +157,7 @@
                 Who is behind Mapsurvey
             </h2>
             <p class="trust-section__lead">
-                Mapsurvey is an independent open-source project created and maintained by Artem Konuchov.
+                Mapsurvey is an independent open-source project created and maintained by Artem Koniukhov.
                 It is not affiliated with any government, corporation, or commercial entity.
                 The project is driven by the need for accessible, privacy-respecting participatory mapping tools.
             </p>

@@ -7674,3 +7674,52 @@ msgstr "Vastajad suunatakse siia pärast viimast lehte, näiteks https://www.fac
 #: survey/editor_forms.py
 msgid "Enter a full web address, for example https://www.facebook.com/yourproject"
 msgstr "Sisesta täielik veebiaadress, näiteks https://www.facebook.com/yourproject"
+
+#: survey/templates/base_landing.html
+msgid "Terms of use"
+msgstr "Kasutustingimused"
+
+#: survey/templates/base_landing.html
+msgid "Privacy & Trust"
+msgstr "Privaatsus ja usaldus"
+
+#: survey/abuse.py
+msgid "I am 16 or older and accept the Terms of use"
+msgstr "Olen vähemalt 16-aastane ja nõustun kasutustingimustega"
+
+#: survey/abuse.py
+msgid "Please confirm you are 16 or older and accept the Terms of use."
+msgstr "Palun kinnita, et oled vähemalt 16-aastane ja nõustud kasutustingimustega."
+
+#: survey/templates/django_registration/registration_form.html
+#, python-format
+msgid "I am 16 or older and accept the <a href=\"%(terms_url)s\" target=\"_blank\" rel=\"noopener\">Terms of use</a>"
+msgstr "Olen vähemalt 16-aastane ja nõustun <a href=\"%(terms_url)s\" target=\"_blank\" rel=\"noopener\">kasutustingimustega</a>"
+
+#: survey/content_screening.py
+msgid "Asks for a password, a login or a payment"
+msgstr "Küsib parooli, sisselogimist või makset"
+
+#: survey/content_screening.py
+msgid "Looks like a scam or impersonates a company"
+msgstr "Näeb välja nagu pettus või esineb ettevõttena"
+
+#: survey/content_screening.py
+msgid "Illegal content"
+msgstr "Ebaseaduslik sisu"
+
+#: survey/content_screening.py
+msgid "Sexual abuse or exploitation of children"
+msgstr "Laste seksuaalne väärkohtlemine või ärakasutamine"
+
+#: survey/content_screening.py
+msgid "Harassment, threats or hate"
+msgstr "Ahistamine, ähvardused või vihkamine"
+
+#: survey/content_screening.py
+msgid "Exposes someone's personal data"
+msgstr "Avaldab kellegi isikuandmeid"
+
+#: survey/content_screening.py
+msgid "Something else"
+msgstr "Midagi muud"

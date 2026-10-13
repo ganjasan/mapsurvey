@@ -2174,6 +2174,16 @@ def trust_page(request):
 	return render(request, 'trust.html')
 
 
+# Bump only when the text of terms.html changes: the page shows this as its
+# "Last updated" date, and the DPGA application links the page as evidence.
+TERMS_UPDATED = datetime(2026, 10, 13).date()
+
+
+def terms_page(request):
+	"""Terms of use + Acceptable use & safety policy (change dpga-readiness)."""
+	return render(request, 'terms.html', {'terms_updated': TERMS_UPDATED})
+
+
 def for_educators(request):
 	"""Public "Mapsurvey for classrooms" landing page (SEO + coursework acquisition, H1).
 
@@ -2415,6 +2425,7 @@ def sitemap_xml(request):
 			f"<priority>{landing.priority}</priority></url>"
 		)
 	urls.append(f"  <url><loc>{base}/trust/</loc></url>")
+	urls.append(f"  <url><loc>{base}/terms/</loc></url>")
 	# `/surveys/` itself is not listed: it now redirects to `/`, and a sitemap
 	# should not advertise a redirect. Individual `/surveys/<uuid>/` entries below
 	# are still listed.
