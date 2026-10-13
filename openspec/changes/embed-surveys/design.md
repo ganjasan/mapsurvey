@@ -159,7 +159,13 @@ only hands out the snippet.
 
 ## Risks / Trade-offs
 
-- [Safari drops the partitioned cookie inside a frame] → the e2e passes in Chromium against the
+- [Safari drops the partitioned cookie inside a frame] → **confirmed on the PR #286 preview
+  (2026-10-13)**: with the host page on https, Chromium and Firefox keep `sessionid`/`csrftoken`
+  inside the frame (Firefox in its partitioned jar), WebKit stores no cookie at all and the first
+  section submit answers 403 (CSRF). Every iOS browser is WebKit. A cookie-less session carrier
+  for framed pages is proposed as a decision for the owner (it relaxes the CSRF token check for
+  carried requests); until then embedding works on desktop Chrome/Firefox/Edge and Android only.
+  The e2e passes in Chromium against the
   HTTP dev server. WebKit refuses a `Secure` cookie from plain `http://localhost` even at top
   level (verified 2026-10-13), so the WebKit run skips locally; Safari is checked on the HTTPS
   Render preview before merge. If it fails there, the respondent sees the "start again" entry
