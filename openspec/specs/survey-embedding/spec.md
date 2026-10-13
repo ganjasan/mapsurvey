@@ -1,6 +1,13 @@
-## ADDED Requirements
+# survey-embedding Specification
 
+## Purpose
+How a published survey is embedded on another site: the per-survey `frame-ancestors`
+allow-list and X-Frame-Options exemption on respondent pages, the cross-site cookie attributes,
+the cookie-less carried session for Safari/iOS, the Share page's Embed section and snippet,
+`embed.js` auto-height, embedded-session metadata, and completion inside a frame.
+## Requirements
 ### Requirement: Respondent pages may be framed by allowed hosts
+Respondent pages SHALL be framable by the hosts a creator allows, as follows.
 Every response to a respondent-facing survey route (`/surveys/<slug>/` and everything below
 it: the language picker, password gate, sections, uploads, layer GeoJSON and objects, the
 thanks page, and the closed and unavailable pages rendered for a resolved survey) SHALL carry
@@ -33,6 +40,7 @@ responses produced before a survey is resolved (an unknown UUID, a draft's 404),
 - **THEN** the closed page response carries a `frame-ancestors` directive and no `X-Frame-Options`
 
 ### Requirement: Session and CSRF cookies survive inside a cross-site frame
+The session and CSRF cookies SHALL be usable from inside a cross-site frame.
 When the setting `CROSS_SITE_COOKIES` is on (default: on whenever `DEBUG` is off), the
 session cookie and the CSRF cookie SHALL be set with `SameSite=None`, `Secure` and
 `Partitioned`. When it is off they SHALL keep Django's defaults. No other cookie SHALL be
@@ -103,6 +111,7 @@ import. An archive without the key SHALL import as `[]`.
 - **THEN** the imported survey's `embed_allowed_hosts` is `[]`
 
 ### Requirement: Embedded survey reports its height to the host page
+An embedded form-layout survey SHALL report its height to the host page.
 When the respondent page runs inside a frame (`window.parent !== window`) and the current
 section uses the form layout, it SHALL post a message `{mapsurvey: "height", height:
 <integer px>}` to the parent (`"*"` target, since the host origin is unknown) on load, after
@@ -147,6 +156,7 @@ SHALL NOT count as embedded.
 - **THEN** its `session_start` metadata has `embedded: false`
 
 ### Requirement: Finishing inside a frame never navigates the frame to a foreign site
+A framed respondent SHALL finish on the in-frame thanks page, never on a foreign site.
 When the final-section submit comes from a framed document (request header
 `MS-Embedded: 1`, set by the respondent page when `window.parent !== window` and the
 page is not same-origin with its parent) and the survey's `redirect_url` is a valid absolute
@@ -174,6 +184,7 @@ be redirected exactly as before.
 - **THEN** the response carries `HX-Redirect: https://example.com/thanks`
 
 ### Requirement: A framed respondent keeps their session without cookies
+A framed respondent page SHALL keep its session even when the browser stores no cookies.
 Because Safari and every iOS browser store no cookies inside a third-party frame, a respondent
 page that is framed by another site (or was reached through a carried session) SHALL carry its
 own session key: as a `<meta name="ms-embed-session">` the page's HTMX calls, same-origin
@@ -211,3 +222,4 @@ A respondent whose cookies work SHALL be unaffected.
 #### Scenario: Top-level respondents are unchanged
 - **WHEN** a respondent opens a survey outside any frame
 - **THEN** the page carries no session meta and redirects carry no handoff token
+
