@@ -15,6 +15,7 @@ from .models import (
     PublicResultsPage, PublicResultsBlock,
     AIGenerationEvent,
     ProInterest,
+    DemoRequest,
     CommentThread, Comment, CommentAttachment,
     AbuseEvent, ContentReview,
 )
@@ -515,6 +516,30 @@ class ProInterestAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(DemoRequest)
+class DemoRequestAdmin(admin.ModelAdmin):
+    """Read-only list of "Request a demo" leads (change request-demo-form).
+
+    An inbox backstop: every row was also mailed to CONTACT_EMAIL, but the mail
+    can be lost and the row cannot. A row with no `details_at` is a visitor who
+    stopped after the email -- still a lead, answer it.
+    """
+
+    list_display = ('created_at', 'email', 'name', 'organisation', 'source',
+                    'timeline', 'details_at', 'user')
+    list_filter = ('source', 'timeline')
+    search_fields = ('email', 'name', 'organisation', 'project')
+    date_hierarchy = 'created_at'
+    readonly_fields = ('created_at', 'key', 'email', 'source', 'name', 'organisation',
+                       'project', 'timeline', 'details_at', 'user')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_superuser
 
 
 class CommentInline(admin.TabularInline):

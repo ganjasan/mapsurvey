@@ -2232,6 +2232,49 @@ class ProInterest(models.Model):
         return f"{who} ({self.segment or 'unknown'}) at {self.created_at:%Y-%m-%d %H:%M}"
 
 
+class DemoRequest(models.Model):
+    """One "Request a demo" lead from `/demo/` (change request-demo-form, issue #288).
+
+    Created by step one, which asks for nothing but an email: the lead exists --
+    stored, mailed to us, counted -- the moment that address is submitted, even
+    if the visitor never fills step two. Step two fills the remaining fields on
+    the same row and stamps `details_at`.
+
+    `key` is the only handle on step two. It is random and unique so a reload or
+    a lost session never strands the visitor and nobody can walk the table.
+    """
+
+    TIMELINE_CHOICES = (
+        ('asap', _("As soon as possible")),
+        ('this_quarter', _("In the next three months")),
+        ('later', _("Later this year")),
+        ('exploring', _("Just exploring")),
+    )
+
+    created_at = models.DateTimeField(default=timezone.now, db_index=True)
+    key = models.UUIDField(default=uuid_module.uuid4, unique=True, editable=False)
+    email = models.EmailField()
+    # Which marketing surface sent the visitor (`?src=`), allow-listed in
+    # survey.demo_request.SOURCES; anything else is stored as 'direct'.
+    source = models.CharField(max_length=32, default='direct', db_index=True)
+    name = models.CharField(max_length=200, blank=True, default='')
+    organisation = models.CharField(max_length=200, blank=True, default='')
+    project = models.TextField(blank=True, default='')
+    timeline = models.CharField(max_length=32, choices=TIMELINE_CHOICES, blank=True, default='')
+    details_at = models.DateTimeField(null=True, blank=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='demo_requests',
+    )
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ('-created_at',)
+
+    def __str__(self):
+        return f"{self.organisation or self.email} ({self.source}) at {self.created_at:%Y-%m-%d %H:%M}"
+
+
 def import_job_key(instance, filename):
     """import_jobs/<uuid4>.zip on the PRIVATE tier: a random key, never the
     creator's filename, gone as soon as the job finishes."""

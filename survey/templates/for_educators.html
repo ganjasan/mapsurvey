@@ -35,12 +35,7 @@
     </p>
     <div class="hero__cta-group">
       <a href="{% url 'django_registration_register' %}?utm_source=edu&amp;utm_medium=for_educators" class="btn-primary-landing">{% trans "Start free — for your class" %}</a>
-      {% if BOOK_A_CALL_URL %}
-      <a href="{{ BOOK_A_CALL_URL }}" class="btn-secondary-landing" target="_blank" rel="noopener" data-book-call="educators">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-        {% trans "Book a call" %}
-      </a>
-      {% endif %}
+      <a href="{% url 'demo_request' %}?src=educators" class="btn-secondary-landing">{% trans "Request a demo" %}</a>
       {% if DEMO_SURVEY_URL %}
       <a href="{{ DEMO_SURVEY_URL }}" class="btn-secondary-landing" target="_blank" rel="noopener">{% trans "Try a live demo survey" %}</a>
       {% endif %}

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<body style="margin:0;background:#f3f4f6;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1f2937;">
+  <div style="max-width:560px;margin:28px auto;background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
+    <div style="padding:14px 22px;border-bottom:1px solid #e5e7eb;font-size:13px;color:#6b7280;"><b style="color:#0FA58E;">Mapsurvey</b> · {% if stage == 'details' %}Demo request details{% else %}New demo request{% endif %}</div>
+    <div style="padding:22px;font-size:14px;line-height:1.6;">
+      <table style="border-collapse:collapse;width:100%;">
+        <tr><td style="color:#6b7280;padding:3px 12px 3px 0;width:120px;">Email</td><td><a href="mailto:{{ row.email }}">{{ row.email }}</a></td></tr>
+        <tr><td style="color:#6b7280;padding:3px 12px 3px 0;">Source</td><td>{{ row.source }}</td></tr>
+        <tr><td style="color:#6b7280;padding:3px 12px 3px 0;">Received</td><td>{{ row.created_at|date:"Y-m-d H:i e" }}</td></tr>
+        {% if row.user %}<tr><td style="color:#6b7280;padding:3px 12px 3px 0;">Account</td><td>{{ row.user.get_username }}</td></tr>{% endif %}
+        {% if stage == 'details' %}
+        <tr><td style="color:#6b7280;padding:3px 12px 3px 0;">Name</td><td>{{ row.name|default:"—" }}</td></tr>
+        <tr><td style="color:#6b7280;padding:3px 12px 3px 0;">Organisation</td><td>{{ row.organisation|default:"—" }}</td></tr>
+        <tr><td style="color:#6b7280;padding:3px 12px 3px 0;">When</td><td>{{ row.get_timeline_display|default:"—" }}</td></tr>
+        {% endif %}
+      </table>
+      {% if stage == 'details' %}
+      <div style="margin-top:12px;color:#6b7280;">What they want to map</div>
+      <div style="border-left:3px solid #99e2d6;padding:10px 14px;background:#f9fafb;border-radius:0 8px 8px 0;white-space:pre-wrap;">{{ row.project|default:"—" }}</div>
+      {% else %}
+      <div style="margin-top:12px;color:#6b7280;">Only the email so far. Details may follow in a second message.</div>
+      {% endif %}
+      <a href="{{ admin_url }}" style="display:inline-block;margin-top:18px;background:#0FA58E;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:600;">Open in admin</a>
+    </div>
+  </div>
+</body>
+</html>

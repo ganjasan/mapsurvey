@@ -15,12 +15,13 @@ Adding an option is additive: append it, and older rows simply never carry the
 key. Never reuse a retired key for a different capability.
 """
 
-import json
 import logging
 
 from django import forms
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+
+from .analytics_ids import anonymous_distinct_id
 
 logger = logging.getLogger(__name__)
 
@@ -210,37 +211,6 @@ class ProInterestForm(forms.Form):
         )
 
 
-def _anonymous_distinct_id(request, interest):
-    """A distinct id for an anonymous submitter. Never None.
-
-    Preference order matters. The browser snippet keeps its device id in a
-    `ph_<key>_posthog` cookie, so reusing it makes the submission land on the
-    same person as their `$pageview`s -- the difference between "someone
-    submitted" and "the visitor who read the whole page submitted". The session
-    key is second best: it groups one visitor's events without tying them to
-    the pageview stream.
-
-    The row-id fallback exists because the first two are routinely absent: an
-    ad blocker stops the snippet from ever writing a cookie, and Django has no
-    session key until something writes to the session. Returning None there
-    would silently drop the event for exactly the anonymous majority the page
-    is built to hear from -- so every stored answer gets counted, even when it
-    cannot be stitched to a person.
-    """
-    for name, value in request.COOKIES.items():
-        if not (name.startswith('ph_') and name.endswith('_posthog')):
-            continue
-        try:
-            distinct_id = json.loads(value).get('distinct_id')
-        except (ValueError, AttributeError):
-            continue
-        if distinct_id:
-            return str(distinct_id)
-    if request.session.session_key:
-        return f"anon_session_{request.session.session_key}"
-    return f"pro_interest_{interest.pk}"
-
-
 def emit_pro_interest(request, interest):
     """Send one `pro_interest_submitted` event. Never raises.
 
@@ -260,7 +230,7 @@ def emit_pro_interest(request, interest):
             return
         distinct_id = (
             str(interest.user_id) if interest.user_id
-            else _anonymous_distinct_id(request, interest)
+            else anonymous_distinct_id(request, f"pro_interest_{interest.pk}")
         )
         posthog.capture(
             PRO_INTEREST_SUBMITTED,

@@ -1,0 +1,103 @@
+{% extends "base_landing.html" %}
+{% load i18n %}
+
+{% comment %}
+"Request a demo" (change request-demo-form). One template, three states:
+  email   — step one, an email and nothing else; submitting it creates the lead
+  details — step two on the same row, skippable
+  done    — after step two, after "Skip for now", and for a honeypot hit
+No consent box and no CAPTCHA on purpose: the email is the request to be
+contacted, and every extra control on step one costs leads.
+{% endcomment %}
+
+{% block title %}{% trans "Request a demo | Mapsurvey" %}{% endblock %}
+{% block meta_description %}{% trans "Leave your email and we will write back within one working day with a short walkthrough of Mapsurvey built around what you want to map." %}{% endblock %}
+{% block canonical_url %}https://mapsurvey.org/demo/{% endblock %}
+{% block og_url %}https://mapsurvey.org/demo/{% endblock %}
+{% block og_title %}{% trans "Request a Mapsurvey demo" %}{% endblock %}
+{% block extra_head %}<meta name="robots" content="noindex, follow">{% endblock %}
+
+{% block content %}
+<section class="hero demo-hero" id="hero">
+  <div class="hero__content demo-lead">
+
+    {% if state == 'email' %}
+      <h1 class="hero__headline">{% trans "See Mapsurvey on your project" %}</h1>
+      <p class="hero__description">
+        {% trans "Leave your email and we'll write back within one working day with a short walkthrough built around what you want to map. No calendar, no call unless you want one." %}
+      </p>
+
+      <form method="post" action="{% url 'demo_request' %}" class="demo-form" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="src" value="{{ source }}">
+        {% include "demo_request/_honeypot.html" %}
+        <label class="demo-form__label" for="demo-email">{% trans "Work email" %}</label>
+        <div class="demo-form__row">
+          <input id="demo-email" type="email" name="email" autocomplete="email" required autofocus
+                 value="{{ form.email.value|default:'' }}" placeholder="{% trans 'you@organisation.org' %}"
+                 {% if form.email.errors %}aria-invalid="true" aria-describedby="demo-email-error"{% endif %}>
+          <button type="submit" class="btn-primary-landing">{% trans "Request a demo" %}</button>
+        </div>
+        {% if form.email.errors %}
+          <p class="demo-form__error" id="demo-email-error" role="alert">{{ form.email.errors.0 }}</p>
+        {% endif %}
+        <p class="demo-form__note">
+          {% trans "We reply once, by email, from a person. No mailing list." %}
+          <a href="{% url 'trust_page' %}#data-privacy">{% trans "How we handle data" %}</a>
+        </p>
+      </form>
+
+    {% elif state == 'details' %}
+      <p class="demo-step">{% blocktrans with email=row.email %}Request received for {{ email }}{% endblocktrans %}</p>
+      <h1 class="hero__headline">{% trans "Thanks — tell us a bit more" %}</h1>
+      <p class="hero__description">{% trans "Everything here is optional. The more we know, the more the walkthrough will look like your project." %}</p>
+
+      <form method="post" action="{% url 'demo_request_details' row.key %}" class="demo-form demo-form--details" novalidate>
+        {% csrf_token %}
+        {% include "demo_request/_honeypot.html" %}
+        <div class="demo-form__grid">
+          <label class="demo-field">
+            <span>{% trans "Your name" %}</span>
+            <input type="text" name="name" autocomplete="name" value="{{ form.name.value|default:'' }}">
+          </label>
+          <label class="demo-field">
+            <span>{% trans "Organisation" %}</span>
+            <input type="text" name="organisation" autocomplete="organization" value="{{ form.organisation.value|default:'' }}">
+          </label>
+          <label class="demo-field demo-field--wide">
+            <span>{% trans "What do you want to map?" %}</span>
+            <textarea name="project" rows="3" placeholder="{% trans 'e.g. where residents feel unsafe walking at night, for a district plan' %}">{{ form.project.value|default:'' }}</textarea>
+          </label>
+          <label class="demo-field demo-field--wide">
+            <span>{% trans "When?" %}</span>
+            <select name="timeline">
+              {% for value, label in form.fields.timeline.choices %}
+                <option value="{{ value }}"{% if form.timeline.value == value %} selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+        </div>
+        <div class="demo-form__actions">
+          <button type="submit" class="btn-primary-landing">{% trans "Send details" %}</button>
+          <a href="{% url 'demo_request_details' row.key %}?skip=1" class="demo-form__skip">{% trans "Skip for now" %}</a>
+        </div>
+      </form>
+
+    {% else %}
+      <div class="demo-done" role="status">
+        <h1 class="hero__headline">{% trans "Thanks, we have your request" %}</h1>
+        <p class="hero__description">{% trans "Artem will reply from mapsurvey.org within one working day. Meanwhile you can try it yourself — it's free." %}</p>
+        <div class="hero__cta-group">
+          {% if user.is_authenticated %}
+          <a href="{% url 'editor' %}" class="btn-primary-landing">{% trans "Go to Dashboard" %}</a>
+          {% else %}
+          <a href="{% url 'django_registration_register' %}?utm_source=demo_request&amp;utm_medium=done" class="btn-primary-landing">{% trans "Get Mapsurvey free" %}</a>
+          {% endif %}
+          <a href="{% url 'stories_index' %}" class="btn-secondary-landing">{% trans "Read customer stories" %}</a>
+        </div>
+      </div>
+    {% endif %}
+
+  </div>
+</section>
+{% endblock %}

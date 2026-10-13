@@ -10,6 +10,7 @@ from . import share_views
 from . import org_views
 from . import public_results_editor
 from . import abuse_review_views
+from . import demo_request_views
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -183,6 +184,10 @@ urlpatterns = [
     path('for-government/', views.for_government, name='for_government'),
     path('services/', views.services, name='services'),
     path('pro/', views.pro_early_access, name='pro_early_access'),
+    # "Request a demo" (change request-demo-form): step one is an email only, step two the details.
+    path('demo/', demo_request_views.demo_request, name='demo_request'),
+    path('demo/done/', demo_request_views.demo_request_done, name='demo_request_done'),
+    path('demo/<uuid:key>/', demo_request_views.demo_request_details, name='demo_request_details'),
     path('community-engagement-platform/', views.community_engagement_platform, name='community_engagement_platform'),
     path('public-consultation-software/', views.public_consultation_software, name='public_consultation_software'),
     path('civic-engagement/', views.civic_engagement, name='civic_engagement'),
