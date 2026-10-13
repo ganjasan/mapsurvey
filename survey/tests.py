@@ -51597,6 +51597,22 @@ class RegistrationAcceptTermsTest(TestCase):
         self.assertContains(response, 'name="accept_terms"')
         self.assertContains(response, 'href="/terms/"')
 
+    def test_checkbox_sits_inside_its_label_in_the_styled_row(self):
+        """
+        GIVEN the terms checkbox must sit beside its sentence, not centred above it (#300)
+        WHEN the registration page is rendered
+        THEN the checkbox is inside its label within the form-check-terms row, and the page carries
+             the rule that keeps a checkbox there at its natural size
+        """
+        html = Client().get('/accounts/register/').content.decode()
+        row = html[html.index('class="form-group form-check-terms"'):]
+        row = row[:row.index('</label>')]
+        self.assertIn('<label', row)
+        self.assertIn('type="checkbox" name="accept_terms"', row)
+        # Text and link in one span: as separate flex items the link would become its own column.
+        self.assertRegex(row, r'<span>I am 16 or older and accept the <a href="/terms/"[^>]*>Terms of use</a></span>')
+        self.assertIn('.auth-card .form-check-terms input[type="checkbox"]', html)
+
     def test_missing_confirmation_is_rejected(self):
         """
         GIVEN valid registration data without accept_terms
