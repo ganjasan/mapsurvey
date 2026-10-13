@@ -855,7 +855,10 @@ def write_ogr(bundle, fmt, workdir, base_name):
     if fmt == 'kml':
         target = os.path.join(workdir, base_name + '.kml')
         driver = 'LIBKML' if 'LIBKML' in _ogr_formats() else 'KML'
-        args = ['-f', driver, target, vrt]
+        # LIBKML refuses an invalid polygon (a respondent's self-intersecting "bow tie"):
+        # the whole export fails, or on older GDAL the placemark loses its geometry (#277).
+        # Repair for KML only; the other formats keep the shape as drawn.
+        args = ['-f', driver, target, vrt, '-makevalid']
         if driver == 'LIBKML':
             args += ['-dsco', 'NAME=' + base_name]
         _run_ogr2ogr(args)
