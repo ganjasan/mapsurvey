@@ -30885,7 +30885,7 @@ class UnpublishedSurveysAreNotIndexableTest(TestCase):
         THEN the gate carries X-Robots-Tag: noindex
         """
         survey = self._make_survey('testing')
-        survey.set_password('hunter2')
+        survey.set_password('respondent-gate')
         survey.save()
         response = self.client.get(f'/surveys/{survey.uuid}/password/')
         self.assertEqual(response['X-Robots-Tag'], 'noindex')
@@ -50567,7 +50567,7 @@ class OEmbedTest(_EmbedSurveyMixin, TestCase):
         """
         surveys = [self._make_embed_survey(status=s, suffix=s) for s in ('draft', 'testing', 'closed')]
         locked = self._make_embed_survey(suffix='locked')
-        locked.set_password('hunter2')
+        locked.set_password('respondent-gate')
         locked.save()
         surveys.append(locked)
         for survey in surveys:
@@ -50615,7 +50615,7 @@ class OEmbedTest(_EmbedSurveyMixin, TestCase):
         THEN the head carries no oEmbed discovery link
         """
         survey = self._make_embed_survey()
-        survey.set_password('hunter2')
+        survey.set_password('respondent-gate')
         survey.save()
         self.client.login(username='embed_owner', password='pass')
         response = self.client.get(f'/surveys/{survey.uuid}/sec1/')
