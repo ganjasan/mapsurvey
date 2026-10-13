@@ -171,7 +171,7 @@
             </button>
         </div>
         <p style="font-size:0.8rem;color:#6b7280;margin:0.5rem 0 1rem;">
-            {% trans "In Notion, Medium or WordPress you can also just paste the survey link: they pick up the survey from it." %}
+            {% trans "In Notion, Ghost or a self-hosted WordPress you can also just paste the survey link: they pick up the survey from it." %}
             {% if survey.show_branding %}{% trans "The “Made with Mapsurvey” badge shows inside the embed too; removing it is part of Pro." %}{% endif %}
         </p>
         <form method="post" action="{% url 'editor_survey_embed_settings' survey.uuid %}">
@@ -182,7 +182,7 @@
             <div style="color:#ef4444;font-size:0.75rem;margin-top:0.2rem;">{{ error }}</div>
             {% endfor %}
             <div style="font-size:0.75rem;color:#6b7280;margin-top:0.3rem;">
-                {% trans "One site per line. Leave empty to let any site embed the survey. Use *.example.org for all its subdomains." %}
+                {% trans "One site per line. Leave empty to let any site embed the survey. Use *.example.org for all its subdomains. Notion and other platforms that embed from a pasted link check this list from their own servers, so for them it has to stay empty." %}
             </div>
             <button type="submit" class="btn btn-sm btn-outline-primary mt-2">{% trans "Save allowed sites" %}</button>
             {% if embed_hosts_saved %}<span class="text-success ml-2" style="font-size:0.85rem;"><i class="fas fa-check"></i> {% trans "Saved" %}</span>{% endif %}

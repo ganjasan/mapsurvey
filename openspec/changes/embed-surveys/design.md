@@ -175,7 +175,11 @@ on the preview), `width`, `height`, `cache_age: 3600`. CORS `*` on the
 endpoint, because some platforms fetch oEmbed from the browser. The survey entry page emits
 `<link rel="alternate" type="application/json+oembed" href="…/oembed/?url=…&format=json"
 title="…">` so discovery works. Hosts in the allow-list still apply at frame time — oEmbed
-only hands out the snippet.
+only hands out the snippet. And they apply earlier than that for Iframely-based consumers
+(Notion first of all): Iframely fetches the iframe's `src` from its own servers and drops the
+embed when `frame-ancestors` would refuse it, so a survey with a non-empty allow-list never
+embeds from a pasted link. The Share page's help text says so; the allow-list is a control for
+a creator's own site, not for platforms.
 
 ## Risks / Trade-offs
 

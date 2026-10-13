@@ -63,9 +63,11 @@ snippet, a copy control, and an allowed-hosts field. The snippet SHALL reference
 `/embed.js`. The allowed-hosts field SHALL accept one host per line; on save the
 system SHALL lower-case entries, strip any scheme, port and path, drop duplicates and blanks,
 accept `hostname` or `*.hostname`, reject anything else with a field error, and store the
-result on the canonical survey's `embed_allowed_hosts`. The section SHALL be available to
-the `editor` role and above. The copy control SHALL capture `embed_copied` as specified in
-`creator-distribution-events`.
+result on the canonical survey's `embed_allowed_hosts`. The field's help text SHALL say that
+platforms embedding from a pasted link (Notion and other Iframely-based consumers verify
+`frame-ancestors` from their own servers) need the list left empty. The section SHALL be
+available to the `editor` role and above. The copy control SHALL capture `embed_copied` as
+specified in `creator-distribution-events`.
 
 #### Scenario: Snippet is shown for a published survey
 - **WHEN** an editor opens the Share page of a published survey
