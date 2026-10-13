@@ -8,6 +8,7 @@ Finish on the same page. Every reader goes through `completion_url()`, so a valu
 that is not a real URL can never trap anyone, whatever is stored.
 """
 import re
+from urllib.parse import urlencode
 
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
@@ -48,9 +49,29 @@ def clean_redirect_url(value):
     return value if is_valid_redirect(value) else NO_REDIRECT
 
 
-def completion_url(survey):
-    """The URL a respondent is sent to after the survey's last section."""
+def completion_url(survey, framed=False):
+    """The URL a respondent is sent to after the survey's last section.
+
+    `framed` (change embed-surveys): the respondent page sits in another
+    site's iframe. Navigating that frame to the creator's `redirect_url` would
+    show their site inside the frame -- or, more often, a blank box, since most
+    sites refuse to be framed. So a framed respondent lands on the built-in
+    thanks page carrying `?next=`, which offers the redirect as a link that
+    opens in the top window. `survey_thanks` only honours a `next` equal to the
+    survey's own cleaned `redirect_url`.
+    """
     target = clean_redirect_url(survey.redirect_url)
+    thanks = reverse('survey_thanks', args=[str(survey.uuid)])
     if target == NO_REDIRECT:
-        return reverse('survey_thanks', args=[str(survey.uuid)])
+        return thanks
+    if framed:
+        return thanks + '?' + urlencode({'next': target})
+    return target
+
+
+def continue_url(survey, requested):
+    """The `next` a thanks page may show: the survey's own redirect, or None."""
+    target = clean_redirect_url(survey.redirect_url)
+    if target == NO_REDIRECT or not requested or requested != target:
+        return None
     return target

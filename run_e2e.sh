@@ -63,6 +63,10 @@ fi
 export SQL_HOST=localhost
 export SQL_PORT=$HOST_DB_PORT
 export E2E_BASE_URL="${E2E_BASE_URL:-http://localhost:$HOST_WEB_PORT}"
+# tests_e2e/test_embed.py frames the survey from another origin, which only
+# works when the dev server sets cross-site cookies: start it with
+# `CROSS_SITE_COOKIES=1 ./run_dev.sh` (Chromium/Firefox accept Secure cookies
+# from http://localhost). Without it that one test skips.
 export DJANGO_ALLOW_ASYNC_UNSAFE=true
 export DJANGO_SETTINGS_MODULE=mapsurvey.settings
 

@@ -411,6 +411,7 @@ class SurveyHeader(models.Model):
     start_map_zoom = models.IntegerField(null=True, blank=True, help_text=_('Default map zoom for the survey. Sections inherit this if not overridden.'))
     use_geolocation = models.BooleanField(default=False, help_text=_('Auto-center map on respondent location when entering the survey.'))
     show_branding = models.BooleanField(default=True, help_text=_('Show a "Made with Mapsurvey" link on the public survey and thanks pages (a free-tier acquisition loop). Turn off for a clean, unbranded look.'))
+    embed_allowed_hosts = models.JSONField(default=list, blank=True, help_text=_('Hosts allowed to embed this survey in an iframe, e.g. ["city.example.org", "*.consult.example"]. Empty = any site. Read on the canonical survey only.'))
     style_settings = models.JSONField(default=dict, blank=True, help_text=_('Survey-wide style defaults: {rating_display_style}'))
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)

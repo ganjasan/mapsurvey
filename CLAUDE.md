@@ -107,6 +107,24 @@ The **Formatted Text block (`html`)** is the extreme case: it collects nothing a
 the whole body, rendered `|safe` in `html_text.html`. `Question.name` for `html` and `image` is an
 editor-only label that never reaches the respondent (see the `question-subtext` spec).
 
+**Embedding (`survey/embedding.py`, change embed-surveys, #284)**: a published survey can be framed by
+another site. `check_survey_access` calls `mark_embeddable`, `SurveyEmbedMiddleware` turns the mark into
+`Content-Security-Policy: frame-ancestors …` (from `SurveyHeader.embed_allowed_hosts` on the canonical
+row; empty = `*`) and drops `X-Frame-Options` on that response only — the editor, landing and every 404
+keep `SAMEORIGIN`. Respondent cookies must cross into the frame: `CROSS_SITE_COOKIES` (default on when
+`DEBUG` is off) makes the session and CSRF cookies `SameSite=None; Secure`, and
+`PartitionedCookieMiddleware` appends `Partitioned`. The respondent page adds `MS-Embedded: 1` to its HTMX
+calls when framed, which is how the final redirect stays on the in-frame thanks page (`?next=`) instead of
+navigating the frame to `redirect_url`. The Share page hands out the snippet (`snippet_html`), `/oembed/`
+describes it for platforms that do oEmbed discovery, and `/embed.js` (served by a view so the path never
+changes) grows the host's iframe from the height messages the page posts. Safari and every iOS browser keep
+no cookies inside a third-party frame, so `EmbedSessionMiddleware` (the project's SessionMiddleware) lets a
+framed page carry its session key itself — `X-MS-Session` header, `ms_sid` form field with a same-host
+Origin, one-time `ms_h` handoff on redirects — only under `/surveys/`, only without a session cookie, never
+for a signed-in session, with CSRF still checked (the secret rides in the session). A new respondent view
+needs nothing: the mark happens in access control and the carrier in middleware; a new full-page respondent
+FORM needs `{% embed_session_field %}` next to its `{% csrf_token %}`.
+
 **Reference overlay layers (`SurveyMapLayer`, kill switch `MAP_REFERENCE_LAYERS`)**: creator-uploaded
 GeoJSON rendered read-only beneath answer geometry on four surfaces — the respondent map, the editor
 preview, the Responses **Map pane**, its **Overview thumbnail** and the per-response **map modal**

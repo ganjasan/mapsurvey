@@ -45,11 +45,13 @@ from django.contrib.gis.geos.error import GEOSException
 import sys
 from io import BytesIO
 import json
+from urllib.parse import urlparse
 import math
 import logging
 
-from .access_control import check_survey_access, mark_indexing
-from .redirects import completion_url
+from .access_control import check_survey_access, mark_indexing, mark_embeddable
+from .redirects import completion_url, continue_url
+from .embedding import framed_request, oembed_url, anonymously_openable, snippet_html, clamp_size, public_base_url, DEFAULT_WIDTH, DEFAULT_HEIGHT, MIN_HEIGHT
 from .audit import audit
 from .trash import trash_survey, restore_survey, purge_survey, purge_expired_surveys
 from . import other_option
@@ -813,7 +815,7 @@ def survey_language_select(request, survey_slug):
 			start_section = survey.start_section()
 			if start_section:
 				return redirect('section', survey_slug=str(survey.uuid), section_name=start_section.name)
-			return redirect(completion_url(survey))
+			return redirect(completion_url(survey, framed=framed_request(request)))
 
 	# Build language list with native names
 	languages = []
@@ -852,7 +854,7 @@ def survey_header(request, survey_slug):
 
 	start_section = survey.start_section()
 	slug = str(survey.uuid)
-	redirect_page = ("../" + slug + "/" + start_section.name) if start_section else completion_url(survey)
+	redirect_page = ("../" + slug + "/" + start_section.name) if start_section else completion_url(survey, framed=framed_request(request))
 
 	return HttpResponseRedirect(redirect_page)
 	
@@ -1406,7 +1408,7 @@ def survey_section(request, survey_slug, section_name):
 				return render(request, 'partials/survey_section_partial.html', next_ctx)
 			else:
 				response = HttpResponse()
-				response['HX-Redirect'] = completion_url(survey)
+				response['HX-Redirect'] = completion_url(survey, framed=framed_request(request))
 				return response
 
 		if nav_direction == 'back' and prev_visible:
@@ -1415,7 +1417,7 @@ def survey_section(request, survey_slug, section_name):
 		if next_visible:
 			next_page = "../" + next_visible.name
 		else:
-			next_page = completion_url(survey)
+			next_page = completion_url(survey, framed=framed_request(request))
 		return HttpResponseRedirect(next_page)
 
 	else:
@@ -1461,6 +1463,9 @@ def survey_section(request, survey_slug, section_name):
 
 		ctx['initial_use_geolocation'] = survey.use_geolocation
 		ctx['map_layers'] = _build_map_layers_metadata(survey)
+		# oEmbed discovery (change embed-surveys): only for a survey the
+		# endpoint would describe, so a platform never embeds a 404.
+		ctx['oembed_url'] = oembed_url(request, survey) if anonymously_openable(survey) else ''
 
 		return render(request, 'survey_section.html', ctx)
 
@@ -2100,6 +2105,10 @@ def survey_thanks(request, survey_slug):
 		access_response = check_survey_access(request, survey)
 		if access_response:
 			return access_response
+	else:
+		# Skipping access control also skips its framing mark; a respondent
+		# who just finished inside an embed must see the thanks page there.
+		mark_embeddable(request, survey)
 
 	# Emit survey_complete event before clearing session
 	session_id = request.session.get('survey_session_id')
@@ -2120,6 +2129,10 @@ def survey_thanks(request, survey_slug):
 		'survey': survey,
 		'thanks_html': thanks_html,
 		'lang': lang or 'en',
+		# A framed respondent is sent here instead of to redirect_url, with
+		# `next` naming it (change embed-surveys); only the survey's own
+		# redirect is ever offered, so a forged `next` draws nothing.
+		'continue_url': continue_url(survey, request.GET.get('next')),
 	})
 
 
@@ -2347,25 +2360,8 @@ def _pro_initial(request):
 	return {}
 
 
-def _public_base_url(request):
-	"""Scheme + host the public reached us on, for sitemap and robots URLs.
-
-	Behind Cloudflare and Render `request.scheme` is `http`, which put 74
-	`http://` URLs into a sitemap whose canonicals are all `https://` (#248).
-	`SECURE_PROXY_SSL_HEADER` would fix that site-wide but also changes
-	`is_secure()` for CSRF, cookies and redirects -- out of proportion here.
-	"""
-	from urllib.parse import urlsplit
-	from django.conf import settings as conf_settings
-
-	host = request.get_host()
-	forwarded = request.META.get('HTTP_X_FORWARDED_PROTO', '').split(',')[0].strip().lower()
-	if forwarded in ('http', 'https'):
-		scheme = forwarded
-	else:
-		site = urlsplit(getattr(conf_settings, 'SITE_URL', '') or '')
-		scheme = site.scheme if site.scheme and site.netloc == host else request.scheme
-	return f"{scheme}://{host}"
+# Moved to survey.embedding (change embed-surveys): the snippet and oEmbed need the same answer.
+_public_base_url = public_base_url
 
 
 def robots_txt(request):
@@ -2530,3 +2526,73 @@ def survey_upload(request, survey_slug):
 	return JsonResponse({'token': str(upload.token),
 	                     'name': upload.original_name,
 	                     'size': upload.size})
+
+
+# ---------------------------------------------------------------------------
+# Embedding (change embed-surveys, #284)
+# ---------------------------------------------------------------------------
+
+_EMBED_JS_CACHE = {}
+
+
+def embed_js(request):
+	"""Serve `embed.js` at a path that never changes.
+
+	Creators paste the snippet once and never update it, so the script cannot
+	live behind the content-hashed static URL. The source still sits in
+	`survey/assets/js/embed.js` (collected like any asset); this view reads it
+	through the staticfiles finders, caches it per process and serves it with
+	a short public max-age so Cloudflare keeps it close.
+	"""
+	from django.contrib.staticfiles import finders
+	body = _EMBED_JS_CACHE.get('body')
+	if body is None or conf_settings.DEBUG:
+		path = finders.find('js/embed.js')
+		if not path:
+			raise Http404
+		with open(path, 'rb') as handle:
+			body = handle.read()
+		_EMBED_JS_CACHE['body'] = body
+	response = HttpResponse(body, content_type='application/javascript; charset=utf-8')
+	response['Cache-Control'] = 'public, max-age=3600'
+	return response
+
+
+def oembed(request):
+	"""oEmbed provider for survey links (https://oembed.com).
+
+	A pasted survey link becomes the embedded survey on platforms that do
+	oEmbed discovery (the entry page carries the `<link rel="alternate"
+	type="application/json+oembed">`). Only a survey an anonymous visitor could
+	open is described; everything else is a bare 404 that names nothing, so
+	the endpoint reveals no more than the entry page does. XML is 501: nothing
+	we care about asks for it.
+	"""
+	if request.GET.get('format', 'json').lower() != 'json':
+		return HttpResponse('XML is not supported', status=501, content_type='text/plain')
+	target = request.GET.get('url', '')
+	parsed = urlparse(target)
+	if parsed.scheme not in ('http', 'https') or parsed.netloc.lower() != request.get_host().lower():
+		raise Http404
+	match = re.match(r'^/surveys/([0-9a-fA-F-]{36})/?$', parsed.path)
+	if not match:
+		raise Http404
+	survey = resolve_survey(match.group(1))
+	if not anonymously_openable(survey):
+		raise Http404
+	width = clamp_size(request.GET.get('maxwidth'), DEFAULT_WIDTH, 200)
+	height = clamp_size(request.GET.get('maxheight'), DEFAULT_HEIGHT, MIN_HEIGHT)
+	payload = {
+		'version': '1.0',
+		'type': 'rich',
+		'title': survey.name,
+		'provider_name': 'Mapsurvey',
+		'provider_url': public_base_url(request) + '/',
+		'html': snippet_html(request, survey, width=width, height=height, with_script=False),
+		'width': width,
+		'height': height,
+		'cache_age': 3600,
+	}
+	response = JsonResponse(payload)
+	response['Access-Control-Allow-Origin'] = '*'
+	return response

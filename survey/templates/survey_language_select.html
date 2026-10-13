@@ -1,4 +1,4 @@
-{% load static i18n %}
+{% load static i18n embed_tags %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -61,6 +61,7 @@
 
         <form method="post">
             {% csrf_token %}
+            {% embed_session_field %}
             {% for lang in languages %}
                 <button type="submit" name="language" value="{{ lang.code }}" class="language-btn">
                     {{ lang.name }}

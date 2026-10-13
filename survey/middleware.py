@@ -1,5 +1,10 @@
 import logging
+import re
+import secrets
+from urllib.parse import parse_qsl, urlencode, urljoin, urlsplit
+
 from django.conf import settings
+from django.contrib.sessions.middleware import SessionMiddleware
 from django.core.cache import cache
 from django.utils import timezone
 
@@ -32,6 +37,167 @@ class CloudflareIPMiddleware:
         else:
             request.cf_ip = request.META.get('REMOTE_ADDR', '')
         return self.get_response(request)
+
+
+class EmbedSessionMiddleware(SessionMiddleware):
+    """Sessions for respondents whose browser keeps no cookies in a frame (change embed-surveys).
+
+    Safari, and every browser on iOS, blocks all third-party cookies; CHIPS
+    (`Partitioned`) does not change that (verified on the PR #286 preview). A
+    survey embedded on another site would lose its session on every request
+    and fail CSRF on the first "Next". So under `/surveys/` the page may carry
+    its own session key, three ways:
+
+    - `X-MS-Session` request header: HTMX calls, the upload XHR, same-origin
+      fetches. A cross-site page cannot make a browser send a custom header
+      (that needs a CORS preflight we never grant), so it is not ambient.
+    - `ms_sid` field of a urlencoded POST: the language picker and password
+      gate are full-page forms. Honoured only when `Origin` is this host, so
+      a foreign page cannot fixate a visitor into a key it knows.
+    - `ms_h` on a GET: a one-time handoff (cache, two minutes) minted for each
+      redirect this middleware rewrites, so no reusable key ever sits in a
+      URL, a log line or a Referer.
+
+    A carried session is never an authenticated one. CSRF stays fully
+    enforced: the CSRF secret the page was rendered with is kept in the
+    session and handed to CsrfViewMiddleware as if the cookie had arrived, so
+    the token in the form is checked exactly as for everyone else. When a
+    cookie did arrive, it wins and nothing here applies. Everywhere else this
+    is Django's SessionMiddleware, unchanged.
+    """
+
+    HANDOFF_PREFIX = 'ms_h:'
+    HANDOFF_TTL = 120
+    CSRF_SESSION_KEY = '_ms_csrf_secret'
+    _KEY_RE = re.compile(r'^[a-z0-9]{32}$')
+
+    def process_request(self, request):
+        super().process_request(request)
+        request.ms_session_carried = False
+        if not request.path.startswith('/surveys/') or settings.SESSION_COOKIE_NAME in request.COOKIES:
+            return
+        key = self._carried_key(request)
+        if not key:
+            return
+        store = self.SessionStore(key)
+        if not store.exists(key) or store.get('_auth_user_id'):
+            return
+        request.session = store
+        request.ms_session_carried = True
+        secret = store.get(self.CSRF_SESSION_KEY)
+        if secret:
+            request.COOKIES[settings.CSRF_COOKIE_NAME] = secret
+
+    def process_response(self, request, response):
+        if request.path.startswith('/surveys/') and hasattr(request, 'session'):
+            from .embedding import is_framed
+            carried = getattr(request, 'ms_session_carried', False)
+            if carried or is_framed(request):
+                self._remember_csrf_secret(request)
+                key = request.session.session_key
+                if key and not request.session.get('_auth_user_id'):
+                    for header in ('Location', 'HX-Redirect'):
+                        if response.has_header(header):
+                            response[header] = self._with_handoff(request, response[header], key)
+                if carried and not response.has_header('Referrer-Policy'):
+                    response['Referrer-Policy'] = 'same-origin'
+        return super().process_response(request, response)
+
+    def _remember_csrf_secret(self, request):
+        """Keep the CSRF secret this response was rendered with, for the carried POST that follows."""
+        secret = request.META.get('CSRF_COOKIE')
+        if secret and request.session.get(self.CSRF_SESSION_KEY) != secret:
+            request.session[self.CSRF_SESSION_KEY] = secret
+
+    def _carried_key(self, request):
+        if request.method in ('GET', 'HEAD'):
+            token = request.GET.get('ms_h')
+            if token:
+                cache_key = self.HANDOFF_PREFIX + token
+                key = cache.get(cache_key)
+                cache.delete(cache_key)
+                if key:
+                    return key
+            key = request.headers.get('X-MS-Session', '')
+        else:
+            if not self._same_origin(request):
+                return None
+            key = request.headers.get('X-MS-Session', '')
+            if not key and request.content_type == 'application/x-www-form-urlencoded':
+                key = request.POST.get('ms_sid', '')
+        return key if self._KEY_RE.match(key or '') else None
+
+    @staticmethod
+    def _same_origin(request):
+        origin = request.headers.get('Origin', '')
+        return bool(origin) and urlsplit(origin).netloc == request.get_host()
+
+    def _with_handoff(self, request, url, key):
+        resolved = urlsplit(urljoin(request.path, url))
+        if (resolved.netloc and resolved.netloc != request.get_host()) or not resolved.path.startswith('/surveys/'):
+            return url
+        token = secrets.token_urlsafe(16)
+        cache.set(self.HANDOFF_PREFIX + token, key, self.HANDOFF_TTL)
+        base, hashmark, fragment = url.partition('#')
+        path, _, query = base.partition('?')
+        params = [(k, v) for k, v in parse_qsl(query, keep_blank_values=True) if k != 'ms_h']
+        params.append(('ms_h', token))
+        return f'{path}?{urlencode(params)}' + (hashmark + fragment if hashmark else '')
+
+
+class SurveyEmbedMiddleware:
+    """Let allowed sites frame a survey's respondent pages (change embed-surveys).
+
+    `survey.access_control.mark_embeddable` decides; this applies: the
+    `frame-ancestors` directive replaces `X-Frame-Options` on the responses it
+    marked and nothing else changes. Sits above `XFrameOptionsMiddleware` in
+    MIDDLEWARE so it sees the header that middleware added and can drop it.
+    A CSP header is set here only when it is not already present: should a
+    real CSP ever be introduced, that one owns the header and this becomes a
+    merge, not a clobber.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        ancestors = getattr(request, 'survey_frame_ancestors', None)
+        if ancestors and not response.has_header('Content-Security-Policy'):
+            response['Content-Security-Policy'] = f'frame-ancestors {ancestors}'
+            if response.has_header('X-Frame-Options'):
+                del response['X-Frame-Options']
+        return response
+
+
+class PartitionedCookieMiddleware:
+    """Add `Partitioned` to the session and CSRF cookies (change embed-surveys).
+
+    A survey framed by another site only works if its cookies are sent from
+    inside that frame. `SameSite=None; Secure` (set through the normal Django
+    settings, see CROSS_SITE_COOKIES) is the first half; `Partitioned` (CHIPS)
+    is what keeps the cookie once a browser blocks third-party cookies: the
+    jar is keyed by the embedding site, so the survey keeps its session there
+    without ever seeing another site's. Django has no setting for the
+    attribute, and `http.cookies.Morsel` rejects unknown keys, so it rides on
+    the `SameSite` value, which the Morsel writes verbatim. Only the two
+    cookies, only when `Secure` -- a browser drops a `Partitioned` cookie that
+    is not.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        for name in (settings.SESSION_COOKIE_NAME, settings.CSRF_COOKIE_NAME):
+            morsel = response.cookies.get(name)
+            if morsel is None or not morsel['secure']:
+                continue
+            samesite = morsel['samesite'] or ''
+            if 'partitioned' not in samesite.lower():
+                morsel['samesite'] = f'{samesite}; Partitioned' if samesite else 'None; Partitioned'
+        return response
 
 
 class SurveyIndexingMiddleware:

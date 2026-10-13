@@ -1,4 +1,4 @@
-{% load static i18n i18n_extras l10n %}
+{% load static i18n i18n_extras l10n embed_tags %}
 {% comment %}lang reflects the survey content language the respondent chose
 (survey-page-metadata spec); single-language surveys fall back to the UI
 locale.{% endcomment %}
@@ -6,6 +6,8 @@ locale.{% endcomment %}
 <head>
     <title>{% block page_title %}{% if survey %}{{ survey.name }} — {% endif %}Mapsurvey{% endblock %}</title>
     {% include "partials/_analytics.html" %}
+    {% if oembed_url %}<link rel="alternate" type="application/json+oembed" href="{{ oembed_url }}" title="{{ survey.name }}">{% endif %}
+    {% embed_session_meta %}
 
     <link rel="icon" href="{% static 'favicon.ico' %}" sizes="any">
     <link rel="icon" href="{% static 'favicon-32x32.png' %}" type="image/png" sizes="32x32">
@@ -1431,6 +1433,62 @@ locale.{% endcomment %}
             initSection();
         }
     });
+
+    // --- Embedded on another site (change embed-surveys) ---
+    // Inside someone else's iframe this page (1) tells the server so the final
+    // redirect stays in the frame, and (2) reports its height so embed.js on
+    // the host page can grow the frame around a form section. The editor's
+    // Live Preview frames us same-origin and is left alone.
+    (function () {
+        var framed = false;
+        try { framed = window.parent !== window && window.location.origin !== window.parent.location.origin; }
+        catch (e) { framed = window.parent !== window; }  // cross-origin parent throws: that IS an embed
+        if (!framed) return;
+        // Safari/iOS keep no cookies in a third-party frame: the page carries
+        // its own session key (EmbedSessionMiddleware) on HTMX calls and on
+        // same-origin fetches (layer GeoJSON behind a password gate).
+        var carriedMeta = document.querySelector('meta[name="ms-embed-session"]');
+        var carriedKey = carriedMeta ? carriedMeta.content : '';
+        document.body.addEventListener('htmx:configRequest', function (evt) {
+            evt.detail.headers['MS-Embedded'] = '1';
+            if (carriedKey) evt.detail.headers['X-MS-Session'] = carriedKey;
+        });
+        if (carriedKey && window.fetch) {
+            var nativeFetch = window.fetch;
+            window.fetch = function (input, init) {
+                var url = typeof input === 'string' ? input : (input && input.url) || '';
+                if (url.indexOf('/surveys/') === 0 || url.indexOf(window.location.origin + '/surveys/') === 0) {
+                    init = init || {};
+                    var headers = new Headers(init.headers || (input && input.headers) || {});
+                    headers.set('X-MS-Session', carriedKey);
+                    init.headers = headers;
+                }
+                return nativeFetch.call(this, input, init);
+            };
+        }
+        // Only a form-layout section has a content height to report: the card
+        // (#info_page) plus its margins. A map section fills whatever the host
+        // gave it. Never measure the document: its min-height is 100vh, so
+        // its scrollHeight follows the frame and the frame would chase it.
+        var last = 0;
+        function report() {
+            if (!document.body.classList.contains('survey-form-layout')) return;
+            var panel = document.getElementById('info_page');
+            if (!panel) return;
+            var cs = window.getComputedStyle(panel);
+            var h = Math.ceil(panel.getBoundingClientRect().height
+                + (parseFloat(cs.marginTop) || 0) + (parseFloat(cs.marginBottom) || 0));
+            if (!h || h === last) return;
+            last = h;
+            window.parent.postMessage({mapsurvey: 'height', height: h}, '*');
+        }
+        window.addEventListener('load', report);
+        document.body.addEventListener('htmx:afterSettle', function () { setTimeout(report, 50); });
+        if (window.ResizeObserver) {
+            new ResizeObserver(function () { report(); }).observe(document.documentElement);
+        }
+        report();
+    })();
 
 </script>
 

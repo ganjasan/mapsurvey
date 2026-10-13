@@ -149,6 +149,7 @@ urlpatterns = [
     # Share & tracking links
     path('editor/surveys/<uuid:survey_uuid>/share/', share_views.share_page, name='editor_survey_share'),
     path('editor/surveys/<uuid:survey_uuid>/share/<int:link_id>/delete/', share_views.share_link_delete, name='editor_survey_share_delete'),
+    path('editor/surveys/<uuid:survey_uuid>/share/embed/', share_views.embed_settings, name='editor_survey_embed_settings'),
 
     path('editor/surveys/<uuid:survey_uuid>/collaborators/', editor_views.editor_survey_collaborators, name='editor_survey_collaborators'),
     path('editor/surveys/<uuid:survey_uuid>/collaborators/add/', editor_views.editor_collaborator_add, name='editor_collaborator_add'),
@@ -194,6 +195,9 @@ urlpatterns = [
     path('alternatives/social-pinpoint/', views.social_pinpoint_alternative, name='social_pinpoint_alternative'),
     path('alternatives/metroquest/', views.metroquest_alternative, name='metroquest_alternative'),
     path('r/<slug:slug>/', views.public_results, name='public_results'),
+    # Embedding (change embed-surveys): oEmbed provider and the unhashed helper script.
+    path('oembed/', views.oembed, name='oembed'),
+    path('embed.js', views.embed_js, name='embed_js'),
     path('robots.txt', views.robots_txt, name='robots_txt'),
     path('sitemap.xml', views.sitemap_xml, name='sitemap_xml'),
 ]

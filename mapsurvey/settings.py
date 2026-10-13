@@ -78,9 +78,15 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # Outermost of ours: both rewrite response headers other middleware set
+    # (Set-Cookie from sessions/CSRF, X-Frame-Options from clickjacking).
+    'survey.middleware.PartitionedCookieMiddleware',
+    'survey.middleware.SurveyEmbedMiddleware',
     'survey.middleware.CloudflareIPMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    # Django's SessionMiddleware plus a cookie-less carrier for respondents inside
+    # a third-party frame on Safari/iOS (change embed-surveys).
+    'survey.middleware.EmbedSessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -112,6 +118,23 @@ MIDDLEWARE = [
 LAST_ACTIVITY_THROTTLE_SECONDS = int(os.environ.get('LAST_ACTIVITY_THROTTLE_SECONDS', 300))
 
 X_FRAME_OPTIONS = 'SAMEORIGIN'
+
+# Cookies inside a third-party frame (change embed-surveys, #284).
+#
+# A survey embedded on a creator's site runs in a cross-site frame, where the
+# browser only sends cookies marked `SameSite=None; Secure`. `Secure` means
+# HTTPS, which production and Render previews are; a local HTTP dev server
+# would just lose its cookies, hence the DEBUG default. Chromium and Firefox
+# accept Secure cookies from http://localhost, so the e2e embed test runs the
+# dev server with CROSS_SITE_COOKIES=1. `PartitionedCookieMiddleware` adds the
+# third attribute. CSRF stays safe: CsrfViewMiddleware checks Origin/Referer on
+# every unsafe request regardless of what SameSite says.
+CROSS_SITE_COOKIES = os.environ.get('CROSS_SITE_COOKIES', '' if DEBUG else '1').lower() in ('1', 'true')
+if CROSS_SITE_COOKIES:
+    SESSION_COOKIE_SAMESITE = 'None'
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SAMESITE = 'None'
+    CSRF_COOKIE_SECURE = True
 
 ROOT_URLCONF = 'mapsurvey.urls'
 

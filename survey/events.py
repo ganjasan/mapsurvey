@@ -311,11 +311,18 @@ def build_session_start_metadata(request):
     raw_ua = request.META.get('HTTP_USER_AGENT', '')
     device_info = _parse_user_agent(raw_ua)
     utm = _consume_utm_from_session(request)
+    # Framed by another site (change embed-surveys)? The referrer is then the
+    # host page, so referrer_type/host already describe it; these two keys
+    # let Responses tell an embed from a link to the same page.
+    from .embedding import is_framed, embed_host
+    framed = is_framed(request)
     return {
         'user_agent': raw_ua[:512],
         'referrer_raw': raw_referrer[:512],
         'referrer_host': host,
         'referrer_type': bucket,
+        'embedded': framed,
+        'embed_host': embed_host(request) if framed else '',
         **device_info,
         **utm,
     }
