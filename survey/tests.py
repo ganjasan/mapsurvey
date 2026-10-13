@@ -19509,6 +19509,19 @@ class LandingFooterTest(TestCase):
         self.assertIn("they are created by everybody", footer)
         self.assertIn("Jane Jacobs", footer)
 
+    def test_legal_links_and_owner_survive_the_redesign(self):
+        """
+        GIVEN the legal links and owner line added for the DPGA application (#290)
+        WHEN the redesigned footer is rendered
+        THEN Company links Terms of use and Privacy & Trust, and the copyright names the owner
+        """
+        footer = self._footer()
+        company = footer[footer.index('landing-footer__col-title">Company<'):]
+        self.assertIn('href="/terms/">Terms of use<', company)
+        self.assertIn('href="/trust/">Privacy & Trust<', company)
+        self.assertIn("2021&ndash;", footer)
+        self.assertIn("Artem Koniukhov", footer)
+
     def test_no_auth_links(self):
         """
         GIVEN the footer
