@@ -16,13 +16,17 @@ client and SHALL degrade to silence when the key is unset or the client is block
 - **WHEN** a creator clicks the copy-link control in the editor
 - **THEN** one `share_link_copied` event with `survey_id` and `surface` is captured
 
+#### Scenario: Embed snippet copied
+- **WHEN** a creator clicks the copy control of the Embed section on the Share page
+- **THEN** one `embed_copied` event with `survey_id` and `surface: "share_page"` is captured
+
 #### Scenario: Client blocked
 - **WHEN** the PostHog client is absent and the creator copies the link
 - **THEN** the copy works and no capture is attempted
 
 #### Scenario: No respondent-facing URL in the payload
 - **WHEN** any sharing event is captured
-- **THEN** its properties contain no survey slug, public URL or QR payload
+- **THEN** its properties contain no survey slug, public URL, snippet or QR payload
 
 ### Requirement: Creator return-to-data actions are captured server-side
 The system SHALL emit `responses_viewed` when a creator loads a survey's responses page and
@@ -52,3 +56,4 @@ request names none.
 #### Scenario: PostHog unconfigured
 - **WHEN** PostHog is disabled
 - **THEN** the views behave exactly as before and nothing is sent
+
