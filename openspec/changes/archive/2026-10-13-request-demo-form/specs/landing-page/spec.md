@@ -59,6 +59,8 @@ The landing page SHALL display a "How to start" section that offers two paths si
 - **WHEN** the viewport is narrower than 760px
 - **THEN** the two cards SHALL stack vertically with the "Build it yourself" card first
 
+## ADDED Requirements
+
 ### Requirement: Demo request reachable from every marketing surface
 Every control on the public marketing pages that invites the visitor to talk to us SHALL link to `/demo/` with a `src` parameter naming the surface. No public page SHALL link to an external booking calendar or to Discord.
 
