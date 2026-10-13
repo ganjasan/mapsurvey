@@ -1,7 +1,8 @@
 # survey-oembed Specification
 
 ## Purpose
-TBD - created by archiving change embed-surveys. Update Purpose after archive.
+The oEmbed provider endpoint and the discovery link on survey pages, so platforms that embed
+from a pasted link (Notion, Ghost, self-hosted WordPress) can describe and frame a survey.
 ## Requirements
 ### Requirement: oEmbed endpoint describes an embeddable survey
 The system SHALL serve `GET /oembed/` taking `url` (required), `format` (`json` by default),

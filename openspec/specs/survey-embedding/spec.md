@@ -1,7 +1,10 @@
 # survey-embedding Specification
 
 ## Purpose
-TBD - created by archiving change embed-surveys. Update Purpose after archive.
+How a published survey is embedded on another site: the per-survey `frame-ancestors`
+allow-list and X-Frame-Options exemption on respondent pages, the cross-site cookie attributes,
+the cookie-less carried session for Safari/iOS, the Share page's Embed section and snippet,
+`embed.js` auto-height, embedded-session metadata, and completion inside a frame.
 ## Requirements
 ### Requirement: Respondent pages may be framed by allowed hosts
 Respondent pages SHALL be framable by the hosts a creator allows, as follows.
