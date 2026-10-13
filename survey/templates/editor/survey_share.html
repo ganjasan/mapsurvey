@@ -157,6 +157,38 @@
     </div>
     {% endif %}
 
+    <!-- Embed on your site (change embed-surveys) -->
+    <div class="share-section" id="embed">
+        <h6>{% trans "Embed on your site" %}</h6>
+        <p style="font-size:0.85rem;color:#6b7280;margin-bottom:0.75rem;">
+            {% trans "Paste this code where you want the survey to appear — on your own site or anywhere that accepts HTML (Tilda, Webflow, Wix, Squarespace, WordPress). The survey works inside the box, and the responses land here as usual. Forms grow with their content; for a map, set the height you want." %}
+        </p>
+        <div style="display:flex;align-items:flex-start;gap:0.5rem;">
+            <textarea readonly class="form-control" rows="4" id="embed-snippet"
+                      style="font-family:monospace;font-size:0.8rem;white-space:pre;overflow-x:auto;">{{ embed_snippet }}</textarea>
+            <button class="btn btn-sm btn-outline-secondary" title="{% trans 'Copy embed code' %}" onclick="copyEmbed(this)">
+                <i class="fas fa-copy"></i>
+            </button>
+        </div>
+        <p style="font-size:0.8rem;color:#6b7280;margin:0.5rem 0 1rem;">
+            {% trans "In Notion, Medium or WordPress you can also just paste the survey link: they pick up the survey from it." %}
+            {% if survey.show_branding %}{% trans "The “Made with Mapsurvey” badge shows inside the embed too; removing it is part of Pro." %}{% endif %}
+        </p>
+        <form method="post" action="{% url 'editor_survey_embed_settings' survey.uuid %}">
+            {% csrf_token %}
+            <label for="{{ embed_form.allowed_hosts.id_for_label }}" style="font-size:0.8rem;font-weight:500;">{{ embed_form.allowed_hosts.label }}</label>
+            {{ embed_form.allowed_hosts }}
+            {% for error in embed_form.allowed_hosts.errors %}
+            <div style="color:#ef4444;font-size:0.75rem;margin-top:0.2rem;">{{ error }}</div>
+            {% endfor %}
+            <div style="font-size:0.75rem;color:#6b7280;margin-top:0.3rem;">
+                {% trans "One site per line. Leave empty to let any site embed the survey. Use *.example.org for all its subdomains." %}
+            </div>
+            <button type="submit" class="btn btn-sm btn-outline-primary mt-2">{% trans "Save allowed sites" %}</button>
+            {% if embed_hosts_saved %}<span class="text-success ml-2" style="font-size:0.85rem;"><i class="fas fa-check"></i> {% trans "Saved" %}</span>{% endif %}
+        </form>
+    </div>
+
     <!-- Create Tracking Link -->
     <div class="share-section">
         <h6>{% trans "Track where responses come from" %}</h6>
@@ -289,6 +321,19 @@ function trackShare(eventName) {
 function copyLink(btn, url) {
     trackShare('share_link_copied');
     navigator.clipboard.writeText(url).then(function() {
+        var icon = btn.querySelector('i');
+        if (icon) {
+            var origClass = icon.className;
+            icon.className = 'fas fa-check';
+            setTimeout(function() { icon.className = origClass; }, 1500);
+        }
+    });
+}
+
+function copyEmbed(btn) {
+    trackShare('embed_copied');
+    var code = document.getElementById('embed-snippet').value;
+    navigator.clipboard.writeText(code).then(function() {
         var icon = btn.querySelector('i');
         if (icon) {
             var origClass = icon.className;

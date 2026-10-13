@@ -71,6 +71,7 @@ def serialize_survey_to_dict(survey: SurveyHeader) -> Dict[str, Any]:
         "start_map_zoom": survey.start_map_zoom,
         "use_geolocation": survey.use_geolocation,
         "show_branding": survey.show_branding,
+        "embed_allowed_hosts": survey.embed_allowed_hosts or [],
         "style_settings": survey.style_settings or {},
         "layers": serialize_layers(survey),
         "sections": serialize_sections(survey),
@@ -735,9 +736,21 @@ def create_survey_header(
         start_map_zoom=survey_data.get("start_map_zoom"),
         use_geolocation=survey_data.get("use_geolocation", False),
         show_branding=survey_data.get("show_branding", True),
+        embed_allowed_hosts=_clean_embed_hosts(survey_data.get("embed_allowed_hosts")),
         style_settings=_clean_style_settings(survey_data.get("style_settings")),
         is_canonical=True,
     )
+
+
+def _clean_embed_hosts(value):
+    """The archive's allow-list, or [] when absent or unusable (old archives have none)."""
+    from .embedding import normalise_allowed_hosts, InvalidHost
+    if not isinstance(value, list):
+        return []
+    try:
+        return normalise_allowed_hosts([v for v in value if isinstance(v, str)])
+    except InvalidHost:
+        return []
 
 
 def _clean_style_settings(value):

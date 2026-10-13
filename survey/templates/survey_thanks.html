@@ -23,6 +23,12 @@
 {% endif %}
 
 <div class="text-center mt-4">
+    {% if continue_url %}
+    {# Framed respondent (change embed-surveys): the creator's redirect opens in the top window instead of inside the frame. #}
+    <a class="btn btn-primary" href="{{ continue_url }}" target="_top" rel="noopener">
+        <i class="fas fa-arrow-right mr-2"></i>{% trans "Continue" %}
+    </a>
+    {% endif %}
     {% with page=survey.public_results_page %}
     {% if page.is_published and page.show_on_thanks %}
     <a class="btn btn-primary" href="{% url 'public_results' page.slug %}">

@@ -2,6 +2,7 @@ from django.http import Http404
 from django.shortcuts import redirect, render
 
 from .permissions import get_effective_survey_role, SURVEY_ROLE_RANK
+from .embedding import frame_ancestors
 
 
 def mark_indexing(request, survey):
@@ -23,6 +24,20 @@ def mark_indexing(request, survey):
     request.survey_noindex = survey.status != 'published'
 
 
+def mark_embeddable(request, survey):
+    """Flag which sites may frame this survey's pages (change embed-surveys).
+
+    Set here, applied by `SurveyEmbedMiddleware` as a `frame-ancestors`
+    directive, for the same reason `mark_indexing` is split from its
+    middleware. The allow-list lives on the canonical row: that is the survey
+    `resolve_survey` serves, whichever version the link named. Not called for
+    a draft or a held lure, so those keep `X-Frame-Options: SAMEORIGIN`.
+    """
+    from .versioning import canonical_of
+    hosts = canonical_of(survey).embed_allowed_hosts or []
+    request.survey_frame_ancestors = frame_ancestors(hosts)
+
+
 def check_survey_access(request, survey):
     """Check if the current request is allowed to access the survey.
 
@@ -34,6 +49,7 @@ def check_survey_access(request, survey):
     if request.user.is_authenticated:
         role = get_effective_survey_role(request.user, survey)
         if role and SURVEY_ROLE_RANK.get(role, -1) >= SURVEY_ROLE_RANK.get('editor', 99):
+            mark_embeddable(request, survey)
             return None
 
     status = survey.status
@@ -47,6 +63,7 @@ def check_survey_access(request, survey):
         raise Http404
 
     if status == 'testing':
+        mark_embeddable(request, survey)
         return _check_testing_access(request, survey)
 
     if status == 'published':
@@ -57,11 +74,14 @@ def check_survey_access(request, survey):
         if is_held(survey):
             request.survey_noindex = True
             return render(request, 'survey_unavailable.html', status=404)
+        mark_embeddable(request, survey)
         return _check_published_access(request, survey)
 
     if status in ('closed', 'archived'):
+        mark_embeddable(request, survey)
         return render(request, 'survey_closed.html', {'survey': survey})
 
+    mark_embeddable(request, survey)
     return None
 
 

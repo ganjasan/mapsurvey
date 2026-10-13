@@ -34,6 +34,61 @@ class CloudflareIPMiddleware:
         return self.get_response(request)
 
 
+class SurveyEmbedMiddleware:
+    """Let allowed sites frame a survey's respondent pages (change embed-surveys).
+
+    `survey.access_control.mark_embeddable` decides; this applies: the
+    `frame-ancestors` directive replaces `X-Frame-Options` on the responses it
+    marked and nothing else changes. Sits above `XFrameOptionsMiddleware` in
+    MIDDLEWARE so it sees the header that middleware added and can drop it.
+    A CSP header is set here only when it is not already present: should a
+    real CSP ever be introduced, that one owns the header and this becomes a
+    merge, not a clobber.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        ancestors = getattr(request, 'survey_frame_ancestors', None)
+        if ancestors and not response.has_header('Content-Security-Policy'):
+            response['Content-Security-Policy'] = f'frame-ancestors {ancestors}'
+            if response.has_header('X-Frame-Options'):
+                del response['X-Frame-Options']
+        return response
+
+
+class PartitionedCookieMiddleware:
+    """Add `Partitioned` to the session and CSRF cookies (change embed-surveys).
+
+    A survey framed by another site only works if its cookies are sent from
+    inside that frame. `SameSite=None; Secure` (set through the normal Django
+    settings, see CROSS_SITE_COOKIES) is the first half; `Partitioned` (CHIPS)
+    is what keeps the cookie once a browser blocks third-party cookies: the
+    jar is keyed by the embedding site, so the survey keeps its session there
+    without ever seeing another site's. Django has no setting for the
+    attribute, and `http.cookies.Morsel` rejects unknown keys, so it rides on
+    the `SameSite` value, which the Morsel writes verbatim. Only the two
+    cookies, only when `Secure` -- a browser drops a `Partitioned` cookie that
+    is not.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        for name in (settings.SESSION_COOKIE_NAME, settings.CSRF_COOKIE_NAME):
+            morsel = response.cookies.get(name)
+            if morsel is None or not morsel['secure']:
+                continue
+            samesite = morsel['samesite'] or ''
+            if 'partitioned' not in samesite.lower():
+                morsel['samesite'] = f'{samesite}; Partitioned' if samesite else 'None; Partitioned'
+        return response
+
+
 class SurveyIndexingMiddleware:
     """Apply `X-Robots-Tag: noindex` to unpublished surveys' pages.
 
