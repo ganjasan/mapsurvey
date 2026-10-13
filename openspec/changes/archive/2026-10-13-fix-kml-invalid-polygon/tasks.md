@@ -12,4 +12,4 @@
 
 ## 3. Ship
 
-- [ ] 3.1 PR referencing #277; after merge, resolve the PostHog issue.
+- [x] 3.1 PR referencing #277; after merge, resolve the PostHog issue.
