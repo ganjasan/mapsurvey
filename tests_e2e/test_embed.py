@@ -8,13 +8,14 @@ real loopback server rather than `page.route`: Chromium's Local Network Access
 checks block a frame to a loopback address from any origin it cannot classify
 as local, which includes a route-fulfilled page. The allow-list is left empty
 because its entries are https-only (the allow-list itself is covered by unit
-tests). That is the one check the unit tests cannot make: that
-the session and CSRF cookies are actually sent from inside a third-party
-frame. It needs the dev server started with `CROSS_SITE_COOKIES=1` (Secure
-cookies on http://localhost are accepted by Chromium and Firefox); without
-it the test skips rather than fails. WebKit refuses a Secure cookie from plain
-http://localhost altogether, so under `--browser webkit` this test skips too:
-Safari is verified against an HTTPS preview, not locally.
+tests). This is the one check the unit tests cannot make: that the frame
+keeps its state in a real browser. Two paths: Chromium keeps the session
+cookie inside the frame when the dev server runs with `CROSS_SITE_COOKIES=1`
+(Secure cookies on http://localhost are accepted by Chromium and Firefox);
+WebKit refuses a Secure cookie from plain http://localhost altogether, which
+is exactly what Safari does inside any third-party frame, so `--browser
+webkit` exercises the cookie-less carried-session path
+(EmbedSessionMiddleware). Run both.
 """
 import threading
 import uuid
@@ -96,11 +97,16 @@ def test_survey_completes_inside_a_cross_site_frame(browser, base_url, embeddabl
     frame = page.frame_locator("#ms")
     frame.locator('input[name="Q1"]').wait_for(timeout=15000)
 
-    # Playwright strips Set-Cookie from response.headers; the context jar says
-    # what the dev server handed out.
-    session_cookie = next((c for c in context.cookies() if c["name"] == "sessionid"), None)
-    if session_cookie is None or session_cookie.get("sameSite") != "None":
-        pytest.skip("dev server runs without CROSS_SITE_COOKIES=1; cookies cannot cross into the frame")
+    # Two paths through one test: a browser that keeps the cookie inside the
+    # frame (Chromium with CROSS_SITE_COOKIES=1) and one that does not (WebKit,
+    # which also refuses a Secure cookie over plain http) and must carry its
+    # session key itself. Both must finish the survey in one session.
+    has_cookie = any(c["name"] == "sessionid" for c in context.cookies())
+    survey_frame = next(f for f in page.frames if f"/surveys/{embeddable_survey.uuid}/" in f.url)
+    carried = survey_frame.evaluate(
+        """(document.querySelector('meta[name="ms-embed-session"]') || {}).content || ''"""
+    )
+    assert has_cookie or carried, "neither a cookie nor a carried session key: the frame cannot keep state"
 
     frame.locator('input[name="Q1"]').fill("Blue")
     frame.locator("input.next_button[type=submit]").first.click()

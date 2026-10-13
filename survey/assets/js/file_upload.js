@@ -139,6 +139,9 @@
       xhr = new XMLHttpRequest();
       xhr.open('POST', root.dataset.uploadUrl);
       xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+      // Inside a third-party frame on Safari there is no cookie: carry the session (change embed-surveys).
+      var carried = document.querySelector('meta[name="ms-embed-session"]');
+      if (carried) xhr.setRequestHeader('X-MS-Session', carried.content);
       xhr.upload.onprogress = function (e) {
         if (e.lengthComputable) {
           root.querySelector('.fu-progress').style.width =

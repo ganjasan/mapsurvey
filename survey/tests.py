@@ -50093,6 +50093,7 @@ class NormalizeRedirectUrlMigrationTest(TestCase):
 # =============================================================================
 
 from .embedding import normalise_allowed_hosts, frame_ancestors, InvalidHost  # noqa: E402
+from urllib.parse import urlencode  # noqa: E402
 
 
 class _EmbedSurveyMixin:
@@ -50413,6 +50414,174 @@ class FramedCompletionTest(_EmbedSurveyMixin, TestCase):
         response = self.client.get(f'/surveys/{survey.uuid}/thanks/?next=https://evil.example/')
         self.assertNotContains(response, 'evil.example')
         self.assertNotContains(response, 'target="_top"')
+
+
+class CarriedSessionTest(_EmbedSurveyMixin, TestCase):
+    """Safari/iOS keep no cookies in a third-party frame: the page carries its session."""
+
+    FRAMED = {'HTTP_SEC_FETCH_DEST': 'iframe', 'HTTP_SEC_FETCH_SITE': 'cross-site'}
+    ORIGIN = {'HTTP_ORIGIN': 'http://testserver'}
+
+    @staticmethod
+    def _carried(body):
+        key = re.search(r'name="ms-embed-session" content="([a-z0-9]{32})"', body)
+        field = re.search(r'name="ms_sid" value="([a-z0-9]{32})"', body)
+        token = re.search(r'name="csrfmiddlewaretoken" value="([^"]+)"', body)
+        return (key or field).group(1) if (key or field) else None, token.group(1) if token else None
+
+    def _framed_first_section(self, survey):
+        """A framed first-section load by a browser that will drop the cookies."""
+        page = Client(enforce_csrf_checks=True).get(f'/surveys/{survey.uuid}/sec1/', **self.FRAMED)
+        key, token = self._carried(page.content.decode())
+        self.assertTrue(key, 'framed page carries no session key')
+        self.assertTrue(token)
+        return key, token
+
+    def test_section_submitted_from_a_frame_without_cookies(self):
+        """
+        GIVEN a browser that stored nothing from the framed first section
+        WHEN it submits the section via HTMX with the carried key and the page's CSRF token
+        THEN the answer lands in the session the first section created and section two comes back
+        """
+        survey = self._make_embed_survey()
+        key, token = self._framed_first_section(survey)
+        cookieless = Client(enforce_csrf_checks=True)
+        response = cookieless.post(
+            f'/surveys/{survey.uuid}/sec1/', {'Q1': 'Blue', 'csrfmiddlewaretoken': token},
+            HTTP_X_MS_SESSION=key, HTTP_HX_REQUEST='true', **self.ORIGIN,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Two')
+        self.assertTrue(response.wsgi_request.ms_session_carried)
+        self.assertEqual(response['Referrer-Policy'], 'same-origin')
+        from importlib import import_module
+        store = import_module(settings.SESSION_ENGINE).SessionStore(key)
+        answer = Answer.objects.get(survey_session_id=store['survey_session_id'], question__code='Q1')
+        self.assertEqual(answer.text, 'Blue')
+
+    def test_carried_request_without_csrf_token_is_refused(self):
+        """
+        GIVEN the same carried key
+        WHEN the submit arrives without the CSRF token
+        THEN CSRF protection still answers 403
+        """
+        survey = self._make_embed_survey()
+        key, _ = self._framed_first_section(survey)
+        response = Client(enforce_csrf_checks=True).post(
+            f'/surveys/{survey.uuid}/sec1/', {'Q1': 'Blue'},
+            HTTP_X_MS_SESSION=key, HTTP_HX_REQUEST='true', **self.ORIGIN,
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_a_signed_in_session_cannot_be_carried(self):
+        """
+        GIVEN the session key of a signed-in creator
+        WHEN an anonymous request carries it to a draft survey
+        THEN the key is ignored: no editor bypass, the draft is a 404
+        """
+        survey = self._make_embed_survey(status='draft')
+        creator = Client()
+        creator.login(username='embed_owner', password='pass')
+        key = creator.session.session_key
+        response = Client().get(f'/surveys/{survey.uuid}/sec1/', HTTP_X_MS_SESSION=key, **self.FRAMED)
+        self.assertEqual(response.status_code, 404)
+        self.assertFalse(response.wsgi_request.ms_session_carried)
+
+    def test_handoff_on_the_final_redirect(self):
+        """
+        GIVEN a cookie-less respondent on the last section
+        WHEN they submit it
+        THEN HX-Redirect carries a one-time handoff, following it completes that session, and the token is spent
+        """
+        survey = self._make_embed_survey()
+        key, token = self._framed_first_section(survey)
+        cookieless = Client(enforce_csrf_checks=True)
+        cookieless.post(f'/surveys/{survey.uuid}/sec1/', {'Q1': 'Blue', 'csrfmiddlewaretoken': token},
+                        HTTP_X_MS_SESSION=key, HTTP_HX_REQUEST='true', **self.ORIGIN)
+        final = cookieless.post(f'/surveys/{survey.uuid}/sec2/', {'Q2': 'Berlin', 'csrfmiddlewaretoken': token},
+                                HTTP_X_MS_SESSION=key, HTTP_HX_REQUEST='true', **self.ORIGIN)
+        target = final['HX-Redirect']
+        self.assertIn(f'/surveys/{survey.uuid}/thanks/?ms_h=', target)
+        self.assertNotIn(key, target)
+
+        thanks = Client().get(target)
+        self.assertEqual(thanks.status_code, 200)
+        self.assertTrue(thanks.wsgi_request.ms_session_carried)
+        session = SurveySession.objects.get(survey=survey)
+        self.assertTrue(SurveyEvent.objects.filter(session=session, event_type='survey_complete').exists())
+        self.assertEqual(Answer.objects.filter(survey_session=session).count(), 2)
+
+        again = Client().get(target)
+        self.assertEqual(again.status_code, 200)
+        self.assertFalse(again.wsgi_request.ms_session_carried)
+
+    def test_language_picker_without_cookies(self):
+        """
+        GIVEN a framed multilingual survey
+        WHEN the language form is posted with the carried field and a same-host Origin
+        THEN the redirect carries a handoff and the chosen language is in that session
+        """
+        survey = self._make_embed_survey(available_languages=['en', 'ru'])
+        page = Client(enforce_csrf_checks=True).get(f'/surveys/{survey.uuid}/language/', **self.FRAMED)
+        key, token = self._carried(page.content.decode())
+        self.assertTrue(key)
+        response = Client(enforce_csrf_checks=True).post(
+            f'/surveys/{survey.uuid}/language/',
+            urlencode({'language': 'ru', 'csrfmiddlewaretoken': token, 'ms_sid': key}),
+            content_type='application/x-www-form-urlencoded', **self.ORIGIN,
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/sec1/?ms_h=', response['Location'])
+        section = Client().get(response['Location'])
+        self.assertEqual(section.status_code, 200)
+        self.assertTrue(section.wsgi_request.ms_session_carried)
+        self.assertEqual(section.wsgi_request.session.get('survey_language'), 'ru')
+
+    def test_form_field_from_a_foreign_origin_is_ignored(self):
+        """
+        GIVEN a carried key in the form field but an Origin naming another site
+        WHEN the language form is posted
+        THEN the key is not adopted and CSRF refuses the request
+        """
+        survey = self._make_embed_survey(available_languages=['en', 'ru'])
+        page = Client(enforce_csrf_checks=True).get(f'/surveys/{survey.uuid}/language/', **self.FRAMED)
+        key, token = self._carried(page.content.decode())
+        response = Client(enforce_csrf_checks=True).post(
+            f'/surveys/{survey.uuid}/language/',
+            urlencode({'language': 'ru', 'csrfmiddlewaretoken': token, 'ms_sid': key}),
+            content_type='application/x-www-form-urlencoded', HTTP_ORIGIN='https://evil.example',
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(response.wsgi_request.ms_session_carried)
+
+    def test_cookie_wins_over_a_carried_key(self):
+        """
+        GIVEN a respondent whose cookies work
+        WHEN a request also names another session in the header
+        THEN the cookie session is used and nothing is carried
+        """
+        survey = self._make_embed_survey()
+        other_key, _ = self._framed_first_section(survey)
+        with_cookies = Client()
+        with_cookies.get(f'/surveys/{survey.uuid}/sec1/')
+        own_key = with_cookies.session.session_key
+        response = with_cookies.get(f'/surveys/{survey.uuid}/sec1/', HTTP_X_MS_SESSION=other_key, **self.FRAMED)
+        self.assertEqual(response.wsgi_request.session.session_key, own_key)
+        self.assertFalse(response.wsgi_request.ms_session_carried)
+
+    def test_top_level_respondents_are_unchanged(self):
+        """
+        GIVEN a respondent outside any frame
+        WHEN they load a section and finish the survey
+        THEN the page carries no session meta and the final redirect carries no handoff
+        """
+        survey = self._make_embed_survey()
+        self.client.get(f'/surveys/{survey.uuid}/sec1/')
+        page = self.client.get(f'/surveys/{survey.uuid}/sec1/')
+        self.assertNotContains(page, '<meta name="ms-embed-session"')
+        self.client.post(f'/surveys/{survey.uuid}/sec1/', {'Q1': 'Blue'}, HTTP_HX_REQUEST='true')
+        final = self.client.post(f'/surveys/{survey.uuid}/sec2/', {'Q2': 'Berlin'}, HTTP_HX_REQUEST='true')
+        self.assertEqual(final['HX-Redirect'], f'/surveys/{survey.uuid}/thanks/')
 
 
 class SharePageEmbedTest(_EmbedSurveyMixin, TestCase):

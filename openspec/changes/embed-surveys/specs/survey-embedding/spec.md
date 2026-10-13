@@ -170,3 +170,42 @@ be redirected exactly as before.
 #### Scenario: Top-level completion is unchanged
 - **WHEN** the last section is submitted via HTMX without `MS-Embedded`
 - **THEN** the response carries `HX-Redirect: https://example.com/thanks`
+
+### Requirement: A framed respondent keeps their session without cookies
+Because Safari and every iOS browser store no cookies inside a third-party frame, a respondent
+page that is framed by another site (or was reached through a carried session) SHALL carry its
+own session key: as a `<meta name="ms-embed-session">` the page's HTMX calls, same-origin
+fetches and the upload request send in an `X-MS-Session` header, as a hidden `ms_sid` field in
+the language picker and password gate forms, and as a one-time `ms_h` handoff token (valid two
+minutes, single use) appended to every redirect the respondent flow issues under `/surveys/`.
+The server SHALL honour a carried key only under `/surveys/`, only when no session cookie
+arrived, only for a session that exists and is not authenticated, and for a form field only
+when the request's `Origin` is this host. CSRF SHALL remain enforced for carried requests: the
+CSRF secret the page was rendered with is kept in the session and checked against the form's
+token as for any other request. Carried responses SHALL carry `Referrer-Policy: same-origin`.
+A respondent whose cookies work SHALL be unaffected.
+
+#### Scenario: Section submitted from a frame without cookies
+- **GIVEN** a browser that stored no cookie from the framed first section
+- **WHEN** it submits the section via HTMX with `X-MS-Session` set to the key the page carried and the page's CSRF token
+- **THEN** the answer is saved to the session that first section created and the next section is returned
+
+#### Scenario: Carried request without the CSRF token is refused
+- **WHEN** the same submit arrives with `X-MS-Session` but no CSRF token
+- **THEN** the response is 403
+
+#### Scenario: A signed-in session cannot be carried
+- **WHEN** a request carries the session key of a signed-in creator's session
+- **THEN** the key is ignored and the request is served as an anonymous visitor
+
+#### Scenario: Handoff on the final redirect
+- **WHEN** a carried final-section submit returns `HX-Redirect`
+- **THEN** the target carries a one-time `ms_h` token, following it serves the thanks page for that session, and a second use of the token carries nothing
+
+#### Scenario: Language picker without cookies
+- **WHEN** a framed multilingual survey's language form is posted with the carried `ms_sid` field and a same-host `Origin`
+- **THEN** the redirect to the first section carries a handoff and that section renders in the chosen language
+
+#### Scenario: Top-level respondents are unchanged
+- **WHEN** a respondent opens a survey outside any frame
+- **THEN** the page carries no session meta and redirects carry no handoff token

@@ -82,9 +82,27 @@ editor remains blocked by `SAMEORIGIN`. Partitioning means a creator who is logg
 top level is anonymous inside an embedded survey on another site — that is the correct
 outcome (they should see what respondents see).
 
-*Alternative rejected*: a separate respondent cookie / signed token carried by HTMX. Touches
-every respondent view, duplicates Django's session machinery, and the e2e test will tell us
-whether it is needed before we pay for it.
+### D2b. Safari/iOS: the page carries its session (owner decision 2026-10-13)
+
+The preview run settled it: WebKit stores no cookie inside a third-party frame, CHIPS or not,
+so cookies alone leave every iPhone respondent out. `EmbedSessionMiddleware` (a subclass of
+Django's SessionMiddleware, replacing it in `MIDDLEWARE`) lets a framed respondent page carry
+its own session key: `X-MS-Session` header on HTMX/fetch/XHR (a custom header a foreign page
+cannot send without a CORS preflight), `ms_sid` hidden field on the two full-page forms
+(honoured only with a same-host `Origin`), and a one-time cache-backed `ms_h` handoff on
+redirects (so no reusable key is ever in a URL). The key comes from `{% embed_session_meta %}` /
+`{% embed_session_field %}`, which save the session early to mint it. Only under `/surveys/`,
+only when no session cookie arrived (cookie wins), only for an existing anonymous session.
+CSRF is not relaxed: the secret the page was rendered with is stored in the session and handed
+to `CsrfViewMiddleware` as the cookie would have been, so the form token is verified exactly as
+for everyone else; the carried key adds a second secret on top. Carried responses get
+`Referrer-Policy: same-origin`. Browsers whose cookies work (Chrome, Firefox, Edge, Android)
+never enter this path.
+
+*Alternative rejected*: `CSRF_USE_SESSIONS` site-wide — the editor's JS reads the `csrftoken`
+cookie in several places. *Alternative rejected*: skipping the CSRF check for carried requests
+— unnecessary once the secret rides in the session, and a reviewer should never have to reason
+about an exemption.
 
 ### D3. Detecting "inside a frame" from request headers, not a URL flag
 
@@ -162,11 +180,10 @@ only hands out the snippet.
 - [Safari drops the partitioned cookie inside a frame] → **confirmed on the PR #286 preview
   (2026-10-13)**: with the host page on https, Chromium and Firefox keep `sessionid`/`csrftoken`
   inside the frame (Firefox in its partitioned jar), WebKit stores no cookie at all and the first
-  section submit answers 403 (CSRF). Every iOS browser is WebKit. A cookie-less session carrier
-  for framed pages is proposed as a decision for the owner (it relaxes the CSRF token check for
-  carried requests); until then embedding works on desktop Chrome/Firefox/Edge and Android only.
-  The e2e passes in Chromium against the
-  HTTP dev server. WebKit refuses a `Secure` cookie from plain `http://localhost` even at top
+  section submit answers 403 (CSRF). Every iOS browser is WebKit. Hence D2b: the framed page
+  carries its session. The e2e runs the cookie path in Chromium and the carried path in WebKit
+  (which also refuses Secure cookies over plain http, so locally WebKit always takes the carried
+  path). WebKit refuses a `Secure` cookie from plain `http://localhost` even at top
   level (verified 2026-10-13), so the WebKit run skips locally; Safari is checked on the HTTPS
   Render preview before merge. If it fails there, the respondent sees the "start again" entry
   page on the second section rather than a 500 (`respondent-session-routing` already guarantees

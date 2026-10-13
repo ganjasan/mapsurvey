@@ -84,7 +84,9 @@ MIDDLEWARE = [
     'survey.middleware.SurveyEmbedMiddleware',
     'survey.middleware.CloudflareIPMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    # Django's SessionMiddleware plus a cookie-less carrier for respondents inside
+    # a third-party frame on Safari/iOS (change embed-surveys).
+    'survey.middleware.EmbedSessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',

@@ -117,8 +117,13 @@ keep `SAMEORIGIN`. Respondent cookies must cross into the frame: `CROSS_SITE_COO
 calls when framed, which is how the final redirect stays on the in-frame thanks page (`?next=`) instead of
 navigating the frame to `redirect_url`. The Share page hands out the snippet (`snippet_html`), `/oembed/`
 describes it for platforms that do oEmbed discovery, and `/embed.js` (served by a view so the path never
-changes) grows the host's iframe from the height messages the page posts. A new respondent view needs
-nothing: the mark happens in access control.
+changes) grows the host's iframe from the height messages the page posts. Safari and every iOS browser keep
+no cookies inside a third-party frame, so `EmbedSessionMiddleware` (the project's SessionMiddleware) lets a
+framed page carry its session key itself — `X-MS-Session` header, `ms_sid` form field with a same-host
+Origin, one-time `ms_h` handoff on redirects — only under `/surveys/`, only without a session cookie, never
+for a signed-in session, with CSRF still checked (the secret rides in the session). A new respondent view
+needs nothing: the mark happens in access control and the carrier in middleware; a new full-page respondent
+FORM needs `{% embed_session_field %}` next to its `{% csrf_token %}`.
 
 **Reference overlay layers (`SurveyMapLayer`, kill switch `MAP_REFERENCE_LAYERS`)**: creator-uploaded
 GeoJSON rendered read-only beneath answer geometry on four surfaces — the respondent map, the editor

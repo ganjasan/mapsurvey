@@ -39,3 +39,10 @@
 - [x] 6.1 `tests_e2e/test_embed.py`: a throwaway loopback HTTP server hosts a page with the snippet pointing at the dev server (started with `CROSS_SITE_COOKIES=1`); completes a two-section survey inside the frame; asserts one session with both answers, the thanks page with the top-window Continue link in the frame, and the auto-resized frame. Passes in Chromium; WebKit skips locally (no Secure cookies over plain http) — verify Safari on the HTTPS Render preview
 - [x] 6.2 Share page copy reviewed (what the badge means in an embed, map height note); `CLAUDE.md` architecture note on `survey/embedding.py` and the two middlewares
 - [x] 6.3 Run `./run_tests.sh survey` baseline and after; run the e2e; summarise
+
+## 7. Safari/iOS: carried session (owner decision 2026-10-13)
+
+- [x] 7.1 `EmbedSessionMiddleware` replaces `SessionMiddleware`: `X-MS-Session` header, `ms_sid` form field (same-host Origin), one-time `ms_h` handoff on `/surveys/` redirects, CSRF secret kept in the session, authenticated sessions refused, cookie wins
+- [x] 7.2 `embed_tags`: `{% embed_session_meta %}` in the respondent head, `{% embed_session_field %}` in the language picker and password gate; HTMX/fetch/upload send the header
+- [x] 7.3 Unit tests for the six scenarios; e2e runs the carried path in WebKit without skipping
+- [x] 7.4 Design D2b, spec requirement, CLAUDE.md note
