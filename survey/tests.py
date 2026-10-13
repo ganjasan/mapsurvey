@@ -50726,7 +50726,10 @@ class OEmbedTest(_EmbedSurveyMixin, TestCase):
         self.assertEqual(payload['title'], survey.name)
         self.assertEqual(payload['provider_name'], 'Mapsurvey')
         self.assertIn(f'/surveys/{survey.uuid}/?embed=1', payload['html'])
-        self.assertIn('/embed.js', payload['html'])
+        # Iframely drops an oEmbed html that contains a script, so the payload is the bare iframe
+        # with the size as attributes (what embed parsers read); the Share snippet keeps the script.
+        self.assertNotIn('<script', payload['html'])
+        self.assertIn('width="800" height="720"', payload['html'])
         self.assertEqual((payload['width'], payload['height']), (800, 720))
         self.assertEqual(response['Access-Control-Allow-Origin'], '*')
 

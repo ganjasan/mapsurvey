@@ -188,20 +188,31 @@ def clamp_size(value, default, floor):
     return max(min(number, default), floor)
 
 
-def snippet_html(request, survey, width=None, height=None):
-    """The iframe snippet creators paste and oEmbed returns.
+def snippet_html(request, survey, width=None, height=None, with_script=True):
+    """The iframe snippet creators paste, and (without the script) what oEmbed returns.
 
     `allow="geolocation"` matters: without it the respondent map's "my
     location" is silently refused inside a frame. `embed.js` is what makes a
     form-layout survey grow with its content; a map-layout survey fills
     whatever height the host gives it.
+
+    `with_script=False` is for oEmbed: Iframely (which Notion, Ghost and
+    others embed through) drops the whole `html` when it contains a `<script>`
+    — on the PR #286 preview it handed Notion an empty string and Notion
+    showed "This embed couldn't be loaded". Consumers of oEmbed never run
+    scripts anyway, so there the frame keeps its fixed height. The bare
+    `width`/`height` attributes are what those parsers read.
     """
     src = survey_url(request, survey) + '?embed=1'
+    px_height = int(height or DEFAULT_HEIGHT)
     style_width = f'{int(width)}px' if width else '100%'
-    style_height = f'{int(height or DEFAULT_HEIGHT)}px'
-    return (
-        f'<iframe src="{escape(src)}" title="{escape(survey.name)}" '
-        f'style="width:{style_width};max-width:100%;height:{style_height};border:0;" '
-        f'allow="geolocation; fullscreen" loading="lazy"></iframe>\n'
-        f'<script async src="{escape(embed_js_url(request))}"></script>'
+    size_attrs = f'width="{int(width)}" ' if width else ''
+    size_attrs += f'height="{px_height}" '
+    iframe = (
+        f'<iframe src="{escape(src)}" title="{escape(survey.name)}" {size_attrs}'
+        f'style="width:{style_width};max-width:100%;height:{px_height}px;border:0;" '
+        f'allow="geolocation; fullscreen" loading="lazy"></iframe>'
     )
+    if not with_script:
+        return iframe
+    return iframe + f'\n<script async src="{escape(embed_js_url(request))}"></script>'

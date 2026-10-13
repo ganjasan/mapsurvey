@@ -6,8 +6,10 @@ The system SHALL serve `GET /oembed/` taking `url` (required), `format` (`json` 
 (`/surveys/<uuid>/`, any query string ignored) for a survey that an anonymous visitor may open
 (published, not held for review, no password), the response SHALL be
 `application/json` with `version: "1.0"`, `type: "rich"`, `title` (the survey name),
-`provider_name: "Mapsurvey"`, `provider_url`, `html` (the same iframe snippet the Share page
-shows, including the `embed.js` script tag), `width`, `height` and `cache_age: 3600`.
+`provider_name: "Mapsurvey"`, `provider_url`, `html` (the Share page's iframe with `width`
+and `height` attributes and WITHOUT the `embed.js` script tag: Iframely, which Notion and
+others embed through, discards an oEmbed html that contains a script), `width`, `height` and
+`cache_age: 3600`.
 `width` SHALL default to 100 % expressed as the pixel value 800 and `height` to 720, each
 clamped to `maxwidth`/`maxheight` when given. The response SHALL carry
 `Access-Control-Allow-Origin: *`. Any other `url` — another host, a non-survey path, an unknown

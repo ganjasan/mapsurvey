@@ -2588,7 +2588,7 @@ def oembed(request):
 		'title': survey.name,
 		'provider_name': 'Mapsurvey',
 		'provider_url': public_base_url(request) + '/',
-		'html': snippet_html(request, survey, width=width, height=height),
+		'html': snippet_html(request, survey, width=width, height=height, with_script=False),
 		'width': width,
 		'height': height,
 		'cache_age': 3600,

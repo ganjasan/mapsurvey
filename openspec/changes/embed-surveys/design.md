@@ -168,8 +168,10 @@ the same role that already sees the link, QR and tracking links. Exported/import
 `maxheight`. The URL must resolve to a survey entry URL on this host (`/surveys/<uuid>/`,
 query string ignored) for a survey that passes the anonymous access check (published, not
 held, no password); otherwise 404. Response: `type: "rich"`, `version: "1.0"`, `title`,
-`provider_name: "Mapsurvey"`, `provider_url`, `html` (the same snippet, width/height clamped
-to the max params, default 720 px), `width`, `height`, `cache_age: 3600`. CORS `*` on the
+`provider_name: "Mapsurvey"`, `provider_url`, `html` (the snippet's iframe with `width`/`height`
+attributes, clamped to the max params, default 720 px, and no `embed.js` tag: Iframely hands
+consumers an empty `html` when a script is present, which is what broke the first Notion try
+on the preview), `width`, `height`, `cache_age: 3600`. CORS `*` on the
 endpoint, because some platforms fetch oEmbed from the browser. The survey entry page emits
 `<link rel="alternate" type="application/json+oembed" href="…/oembed/?url=…&format=json"
 title="…">` so discovery works. Hosts in the allow-list still apply at frame time — oEmbed
