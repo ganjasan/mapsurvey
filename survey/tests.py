@@ -17619,6 +17619,7 @@ class RegistrationAbuseDefenseTest(TestCase):
             "password1": "Xx12345!secure",
             "password2": "Xx12345!secure",
             "website": "",  # honeypot empty
+            "accept_terms": "on",
             "cf-turnstile-response": "any-token",
         }
         data.update(overrides)
@@ -17905,6 +17906,7 @@ class RegistrationInvalidAttemptLimitTest(TestCase):
             "password1": "Xx12345!secure",
             "password2": "Xx12345!secure",
             "website": "",
+            "accept_terms": "on",
             "cf-turnstile-response": "any-token",
         }
         data.update(overrides)
@@ -18149,6 +18151,7 @@ class PasswordChecklistTest(TestCase):
                 "password1": "password123",
                 "password2": "password123",
                 "website": "",
+                "accept_terms": "on",
                 "cf-turnstile-response": "any-token",
             })
 
@@ -18172,6 +18175,7 @@ class PasswordChecklistTest(TestCase):
                 "password1": "marcuswildner",
                 "password2": "marcuswildner",
                 "website": "",
+                "accept_terms": "on",
                 "cf-turnstile-response": "any-token",
             })
 
@@ -18194,6 +18198,7 @@ class PasswordChecklistTest(TestCase):
                 "password1": "Xx12345",
                 "password2": "Xx12345",
                 "website": "",
+                "accept_terms": "on",
                 "cf-turnstile-response": "any-token",
             })
 
@@ -19352,22 +19357,23 @@ class ForGovernmentLandingTest(TestCase):
         self.assertContains(c.get("/robots.txt"), "/for-government/")
 
 
-@override_settings(BOOK_A_CALL_URL="https://cal.example/mapsurvey-call")
 class LandingTwoPathsTest(TestCase):
-    """The landing page ends in "How to start": build it yourself, or with us (landing-two-paths)."""
+    """The landing page ends in "How to start": build it yourself, or with us (landing-two-paths,
+    request-demo-form)."""
 
-    BOOKING = "https://cal.example/mapsurvey-call"
-
-    def test_hero_offers_register_and_booking(self):
+    def test_hero_offers_get_free_and_request_demo(self):
         """
-        GIVEN an anonymous visitor and a configured booking page
+        GIVEN an anonymous visitor
         WHEN the landing page is rendered
-        THEN the hero carries "Create your Mapsurvey" and "Book a 30-min call",
-             and the booking link opens the calendar in a new tab
+        THEN the hero carries "Get Mapsurvey free" to registration and "Request a demo"
+             to /demo/?src=hero in the same tab
         """
-        resp = Client().get("/")
-        self.assertContains(resp, "Create your Mapsurvey")
-        self.assertContains(resp, 'href="%s" class="btn-secondary-landing" target="_blank" rel="noopener" data-book-call="hero"' % self.BOOKING, html=False)
+        html = Client().get("/").content.decode()
+        hero = html[html.index('id="hero"'):html.index("</section>", html.index('id="hero"'))]
+        self.assertIn('href="/accounts/register/" class="btn-primary-landing">Get Mapsurvey free', hero)
+        self.assertIn('href="/demo/?src=hero" class="btn-secondary-landing">Request a demo', hero)
+        self.assertNotIn('target="_blank"', hero.split('hero__demo-link')[0])
+        self.assertNotIn("Create your Mapsurvey", hero)
 
     @override_settings(DEMO_SURVEY_URL="/surveys/demo/")
     def test_demo_is_a_text_link_not_a_hero_button(self):
@@ -19385,28 +19391,17 @@ class LandingTwoPathsTest(TestCase):
         """
         GIVEN an anonymous visitor
         WHEN the landing page is rendered
-        THEN "How to start" shows the free path with a register button and the
-             with-us path with a booking button and a link to /services/
+        THEN "How to start" shows the free path with "Get Mapsurvey free" and the
+             with-us path with "Request a demo" and a link to /services/
         """
-        resp = Client().get("/")
-        self.assertContains(resp, 'id="how-to-start"')
-        self.assertContains(resp, "Build it yourself")
-        self.assertContains(resp, "Build it with us")
-        self.assertContains(resp, 'data-book-call="how_to_start"')
-        self.assertContains(resp, 'href="/services/" class="path-card__link"')
-
-    @override_settings(BOOK_A_CALL_URL="")
-    def test_with_us_path_falls_back_to_services(self):
-        """
-        GIVEN no booking page is configured
-        WHEN the landing page is rendered
-        THEN the with-us card still renders and its button goes to /services/,
-             and no booking control appears anywhere on the page
-        """
-        resp = Client().get("/")
-        self.assertContains(resp, "Build it with us")
-        self.assertContains(resp, 'href="/services/" class="btn-primary-landing btn-primary-landing--dark"')
-        self.assertNotContains(resp, "data-book-call=")
+        html = Client().get("/").content.decode()
+        start = html.index('id="how-to-start"')
+        section = html[start:html.index("</section>", start)]
+        self.assertIn("Build it yourself", section)
+        self.assertIn("Build it with us", section)
+        self.assertIn("Get Mapsurvey free", section)
+        self.assertIn('href="/demo/?src=how_to_start" class="btn-primary-landing btn-primary-landing--dark">Request a demo', section)
+        self.assertIn('href="/services/" class="path-card__link"', section)
 
     def test_signed_in_user_goes_to_dashboard_from_the_free_path(self):
         """
@@ -19425,39 +19420,437 @@ class LandingTwoPathsTest(TestCase):
             self.assertIn('href="/editor/" class="btn-primary-landing">Go to Dashboard', part)
             self.assertNotIn("/accounts/register/", part)
 
-    def test_no_discord_and_no_unbacked_hosting_claims(self):
+    def test_no_discord_no_calendar_and_no_unbacked_hosting_claims(self):
         """
-        GIVEN the landing, educators and services pages
+        GIVEN the landing (EN and RU), educators, services and Pro pages
         WHEN each is rendered
-        THEN none links to Discord, the footer offers "Book a call", and the
+        THEN none links to Discord or to a booking calendar, none carries the old
+             book_call_clicked listener, the footer offers "Request a demo", and the
              landing page makes no GDPR or "your infrastructure" claim
         """
-        for url in ("/", "/for-educators/", "/services/"):
+        for url in ("/", "/ru/", "/for-educators/", "/services/", "/pro/"):
             resp = Client().get(url)
             self.assertEqual(resp.status_code, 200, url)
             self.assertNotContains(resp, "discord", msg_prefix=url)
-            self.assertContains(resp, 'data-book-call="footer"', msg_prefix=url)
+            self.assertNotContains(resp, "cal.com", msg_prefix=url)
+            self.assertNotContains(resp, "book_call_clicked", msg_prefix=url)
+            self.assertNotContains(resp, "data-book-call", msg_prefix=url)
+            self.assertContains(resp, 'href="/demo/?src=footer"', msg_prefix=url)
         landing = Client().get("/")
         self.assertNotContains(landing, "GDPR-Friendly")
         self.assertNotContains(landing, "stays on your infrastructure")
 
-    def test_educators_hero_offers_booking(self):
+    def test_educators_hero_offers_demo_request(self):
         """
-        GIVEN a configured booking page
+        GIVEN the educators page
         WHEN /for-educators/ is rendered
-        THEN its hero offers "Book a call" to the booking page
+        THEN its hero offers "Request a demo" to /demo/?src=educators
         """
         resp = Client().get("/for-educators/")
-        self.assertContains(resp, 'data-book-call="educators"')
+        self.assertContains(resp, 'href="/demo/?src=educators" class="btn-secondary-landing">Request a demo')
 
-    def test_booking_clicks_are_measured_by_surface_only(self):
+    def test_russian_homepage_translates_the_new_buttons(self):
         """
-        GIVEN a page built on the landing base template
+        GIVEN the Russian homepage
+        WHEN /ru/ is rendered
+        THEN the hero buttons, the footer quote and the footer labels are in Russian
+        """
+        resp = Client().get("/ru/")
+        self.assertContains(resp, "Начать бесплатно")
+        self.assertContains(resp, "Запросить демо")
+        self.assertContains(resp, "Джейн Джекобс")
+        self.assertContains(resp, "Вовлечение жителей")
+        self.assertContains(resp, "Сравнение сервисов")
+        self.assertNotContains(resp, "Get Mapsurvey free")
+
+
+class LandingFooterTest(TestCase):
+    """Footer after Notion's (request-demo-form): brand + quote, five columns, bottom row."""
+
+    def _footer(self, url="/"):
+        html = Client().get(url).content.decode()
+        return html[html.index('<footer class="landing-footer">'):html.index("</footer>")]
+
+    def test_five_columns_in_order(self):
+        """
+        GIVEN any page built on the landing base template
+        WHEN its footer is rendered
+        THEN it shows Product, Mapsurvey for, Use cases, Resources and Company, in that order
+        """
+        footer = self._footer("/for-planners/")
+        titles = ["Product", "Mapsurvey for", "Use cases", "Resources", "Company"]
+        positions = [footer.index('landing-footer__col-title">%s<' % t) for t in titles]
+        self.assertEqual(positions, sorted(positions))
+
+    def test_keeps_every_internal_marketing_link(self):
+        """
+        GIVEN the regrouped footer
         WHEN it is rendered
-        THEN it carries the book_call_clicked listener, which sends only the surface
+        THEN every internal marketing page it linked before is still linked, plus /demo/
         """
-        resp = Client().get("/")
-        self.assertContains(resp, "posthog.capture('book_call_clicked', { surface: link.getAttribute('data-book-call') })")
+        footer = self._footer()
+        for href in ("#features", "#demo", "/pro/", "/services/", "/demo/?src=footer",
+                     "/for-planners/", "/for-government/", "/for-researchers/", "/for-educators/",
+                     "/for-consultants/", "/community-engagement-platform/",
+                     "/public-consultation-software/", "/civic-engagement/",
+                     "/participatory-budgeting/", "/stories/", "/participatory-mapping-tools/",
+                     "/alternatives/maptionnaire/", "/alternatives/social-pinpoint/",
+                     "/alternatives/metroquest/", "/trust/", 'href="/ru/"'):
+            self.assertIn(href, footer, href)
+
+    def test_brand_block_with_quote(self):
+        """
+        GIVEN the footer
+        WHEN it is rendered
+        THEN the brand block carries the wordmark and the Jane Jacobs quote with attribution
+        """
+        footer = self._footer()
+        self.assertIn('class="landing-footer__brand"', footer)
+        self.assertIn("they are created by everybody", footer)
+        self.assertIn("Jane Jacobs", footer)
+
+    def test_legal_links_and_owner_survive_the_redesign(self):
+        """
+        GIVEN the legal links and owner line added for the DPGA application (#290)
+        WHEN the redesigned footer is rendered
+        THEN Company links Terms of use and Privacy & Trust, and the copyright names the owner
+        """
+        footer = self._footer()
+        company = footer[footer.index('landing-footer__col-title">Company<'):]
+        self.assertIn('href="/terms/">Terms of use<', company)
+        self.assertIn('href="/trust/">Privacy & Trust<', company)
+        self.assertIn("2021&ndash;", footer)
+        self.assertIn("Artem Koniukhov", footer)
+
+    def test_no_auth_links(self):
+        """
+        GIVEN the footer
+        WHEN it is rendered
+        THEN it has no login or registration links
+        """
+        footer = self._footer()
+        self.assertNotIn("/accounts/login/", footer)
+        self.assertNotIn("/accounts/register/", footer)
+
+
+@override_settings(CONTACT_EMAIL="leads@mapsurvey.test")
+class DemoRequestTest(TestCase):
+    """Two-step "Request a demo" at /demo/ (change request-demo-form, issue #288)."""
+
+    LOCMEM = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+                          "LOCATION": "demo-request-test"}}
+
+    def setUp(self):
+        from django.core.cache import caches
+        from .tasks import notify_demo_request
+        # Run the Celery task in-process: the test suite has no broker.
+        self._delay = mock.patch('survey.tasks.notify_demo_request.delay',
+                                 side_effect=lambda pk, stage: notify_demo_request(pk, stage))
+        self._delay.start()
+        self.addCleanup(self._delay.stop)
+        caches["default"].clear()
+
+    def _submit_email(self, client=None, email="planner@city.example", src="hero", **extra):
+        client = client or Client()
+        with self.captureOnCommitCallbacks(execute=True):
+            return client.post("/demo/", {"email": email, "src": src, **extra})
+
+    def test_step_one_asks_only_for_an_email(self):
+        """
+        GIVEN an anonymous visitor
+        WHEN /demo/ is requested
+        THEN it renders one visible email input, the "Request a demo" button, a trust-page
+             link and a noindex tag, and no consent box or CAPTCHA
+        """
+        resp = Client().get("/demo/?src=hero")
+        self.assertEqual(resp.status_code, 200)
+        html = resp.content.decode()
+        form = html[html.index('class="demo-form"'):html.index("</form>")]
+        self.assertIn('type="email" name="email"', form)
+        self.assertNotIn('type="checkbox"', form)
+        self.assertNotIn("cf-turnstile", form)
+        self.assertNotIn('<textarea', form)
+        self.assertIn('name="src" value="hero"', form)
+        self.assertIn(">Request a demo</button>", form)
+        self.assertIn('href="/trust/#data-privacy"', form)
+        self.assertContains(resp, '<meta name="robots" content="noindex, follow">')
+
+    def test_email_creates_the_lead_and_redirects_to_step_two(self):
+        """
+        GIVEN a visitor on step one
+        WHEN they submit a valid email
+        THEN one DemoRequest is stored with that email and source, and they are sent to its step-two URL
+        """
+        from .models import DemoRequest
+
+        resp = self._submit_email()
+        self.assertEqual(DemoRequest.objects.count(), 1)
+        row = DemoRequest.objects.get()
+        self.assertEqual(row.email, "planner@city.example")
+        self.assertEqual(row.source, "hero")
+        self.assertIsNone(row.details_at)
+        self.assertRedirects(resp, "/demo/%s/" % row.key)
+
+    def test_unknown_source_is_stored_as_direct(self):
+        """
+        GIVEN a source outside the allow-list, or none at all
+        WHEN the email is submitted
+        THEN the row's source is 'direct'
+        """
+        from .models import DemoRequest
+
+        self._submit_email(email="a@x.example", src="<script>")
+        self._submit_email(email="b@x.example", src="")
+        self.assertEqual(sorted(DemoRequest.objects.values_list("source", flat=True)), ["direct", "direct"])
+
+    def test_invalid_email_redisplays_with_an_error(self):
+        """
+        GIVEN a visitor who mistypes their address
+        WHEN step one is submitted
+        THEN the form comes back with an error and nothing is stored
+        """
+        from .models import DemoRequest
+
+        resp = self._submit_email(email="not-an-email")
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'aria-invalid="true"')
+        self.assertEqual(DemoRequest.objects.count(), 0)
+
+    def test_step_one_mails_contact_email(self):
+        """
+        GIVEN the lead must reach us even if the visitor stops here
+        WHEN step one is submitted
+        THEN one email "Demo request: <email>" goes to CONTACT_EMAIL with the admin link
+        """
+        from django.core import mail
+
+        self._submit_email()
+        self.assertEqual(len(mail.outbox), 1)
+        msg = mail.outbox[0]
+        self.assertEqual(msg.to, ["leads@mapsurvey.test"])
+        self.assertEqual(msg.subject, "Demo request: planner@city.example")
+        self.assertIn("/admin/survey/demorequest/", msg.body)
+        self.assertIn("Source: hero", msg.body)
+
+    def test_mail_failure_does_not_lose_the_lead(self):
+        """
+        GIVEN the broker is down and the inline send fails too
+        WHEN step one is submitted
+        THEN the row is still stored and the visitor still reaches step two
+        """
+        from .models import DemoRequest
+
+        self._delay.stop()
+        with mock.patch('survey.tasks.notify_demo_request.delay', side_effect=OSError('broker down')), \
+                mock.patch('survey.demo_request.send_notification', side_effect=RuntimeError('smtp down')):
+            resp = self._submit_email()
+        self._delay.start()
+        self.assertEqual(DemoRequest.objects.count(), 1)
+        self.assertEqual(resp.status_code, 302)
+
+    def test_step_two_completes_the_same_row(self):
+        """
+        GIVEN a lead created by step one
+        WHEN the visitor submits name, organisation, project and timeline
+        THEN the same row is updated, details_at is set, a details email is sent and the done state shows
+        """
+        from django.core import mail
+        from .models import DemoRequest
+
+        self._submit_email()
+        row = DemoRequest.objects.get()
+        page = Client().get("/demo/%s/" % row.key)
+        self.assertContains(page, "Request received for planner@city.example")
+        self.assertContains(page, "Skip for now")
+        with self.captureOnCommitCallbacks(execute=True):
+            resp = Client().post("/demo/%s/" % row.key, {
+                "name": "Ana", "organisation": "City of Olney",
+                "project": "Unsafe crossings near schools", "timeline": "this_quarter",
+            })
+        self.assertContains(resp, "Thanks, we have your request")
+        row.refresh_from_db()
+        self.assertEqual((row.name, row.organisation, row.timeline), ("Ana", "City of Olney", "this_quarter"))
+        self.assertIsNotNone(row.details_at)
+        self.assertEqual(DemoRequest.objects.count(), 1)
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(mail.outbox[1].subject, "Demo request details: planner@city.example — City of Olney")
+        self.assertIn("Unsafe crossings near schools", mail.outbox[1].body)
+
+    def test_step_two_can_be_skipped(self):
+        """
+        GIVEN a lead created by step one
+        WHEN the visitor follows "Skip for now"
+        THEN the done state shows and the row keeps only the email
+        """
+        from .models import DemoRequest
+
+        self._submit_email()
+        row = DemoRequest.objects.get()
+        resp = Client().get("/demo/%s/?skip=1" % row.key)
+        self.assertContains(resp, "Thanks, we have your request")
+        row.refresh_from_db()
+        self.assertIsNone(row.details_at)
+        self.assertEqual(row.name, "")
+
+    def test_completed_or_expired_key_shows_done_and_accepts_no_edits(self):
+        """
+        GIVEN a row whose details are already in, and a row older than seven days
+        WHEN their step-two URLs are requested or posted to
+        THEN both show the done state and nothing changes
+        """
+        from datetime import timedelta
+        from django.utils import timezone
+        from .models import DemoRequest
+
+        done = DemoRequest.objects.create(email="d@x.example", details_at=timezone.now(), name="Kept")
+        old = DemoRequest.objects.create(email="o@x.example",
+                                         created_at=timezone.now() - timedelta(days=8))
+        for row in (done, old):
+            self.assertContains(Client().get("/demo/%s/" % row.key), "Thanks, we have your request")
+            Client().post("/demo/%s/" % row.key, {"name": "Changed"})
+        done.refresh_from_db(); old.refresh_from_db()
+        self.assertEqual(done.name, "Kept")
+        self.assertEqual(old.name, "")
+
+    def test_unknown_key_is_404(self):
+        """
+        GIVEN a step-two key that matches no row
+        WHEN it is requested
+        THEN the response is 404
+        """
+        import uuid
+        self.assertEqual(Client().get("/demo/%s/" % uuid.uuid4()).status_code, 404)
+
+    def test_signed_in_creator_is_prefilled_and_attributed(self):
+        """
+        GIVEN a signed-in creator
+        WHEN they open /demo/ and submit
+        THEN the email is pre-filled and the row references their account
+        """
+        from .models import DemoRequest
+
+        user = User.objects.create_user("demo-user", email="creator@org.example", password="pw")
+        c = Client()
+        c.force_login(user)
+        self.assertContains(c.get("/demo/"), 'value="creator@org.example"')
+        self._submit_email(client=c, email="creator@org.example")
+        self.assertEqual(DemoRequest.objects.get().user, user)
+
+    def test_each_step_emits_one_event(self):
+        """
+        GIVEN the leads must be countable by step and surface
+        WHEN step one and then step two are submitted
+        THEN two demo_requested events are emitted, stage email then details, with the source
+        """
+        from .models import DemoRequest
+
+        with mock.patch('posthog.disabled', False), mock.patch('posthog.capture') as capture:
+            self._submit_email(src="services")
+            row = DemoRequest.objects.get()
+            with self.captureOnCommitCallbacks(execute=True):
+                Client().post("/demo/%s/" % row.key, {"timeline": "asap"})
+        self.assertEqual(capture.call_count, 2)
+        first, second = capture.call_args_list
+        self.assertEqual(first.args[0], "demo_requested")
+        self.assertEqual(first.kwargs["properties"]["stage"], "email")
+        self.assertEqual(first.kwargs["properties"]["source"], "services")
+        self.assertEqual(second.kwargs["properties"]["stage"], "details")
+        self.assertEqual(second.kwargs["properties"]["timeline"], "asap")
+        # No cookie and no session: the id is derived from the row, so the event is never dropped.
+        self.assertEqual(first.kwargs["distinct_id"], "demo_request_%s" % row.pk)
+
+    def test_analytics_failure_does_not_lose_the_lead(self):
+        """
+        GIVEN emitting the event raises
+        WHEN step one is submitted
+        THEN the row is stored and the visitor still reaches step two
+        """
+        from .models import DemoRequest
+
+        with mock.patch('posthog.disabled', False), \
+                mock.patch('posthog.capture', side_effect=RuntimeError('down')):
+            resp = self._submit_email()
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(DemoRequest.objects.count(), 1)
+
+    def test_no_respondent_analytics_row(self):
+        """
+        GIVEN SurveyEvent measures our customers' respondents, not us
+        WHEN a demo request is stored
+        THEN no SurveyEvent is written
+        """
+        from .models import SurveyEvent
+
+        before = SurveyEvent.objects.count()
+        self._submit_email()
+        self.assertEqual(SurveyEvent.objects.count(), before)
+
+    def test_filled_honeypot_stores_nothing_and_looks_like_success(self):
+        """
+        GIVEN a bot that fills every field
+        WHEN it posts step one with the honeypot filled
+        THEN nothing is stored or mailed, an AbuseEvent is logged, and it is redirected to a done page
+        """
+        from django.core import mail
+        from .abuse import HONEYPOT_FIELD_NAME
+        from .models import AbuseEvent, DemoRequest
+
+        resp = self._submit_email(**{HONEYPOT_FIELD_NAME: "http://spam.example"})
+        self.assertRedirects(resp, "/demo/done/")
+        self.assertContains(Client().get("/demo/done/"), "Thanks, we have your request")
+        self.assertEqual(DemoRequest.objects.count(), 0)
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(AbuseEvent.objects.filter(defense="honeypot", detail="demo_request").count(), 1)
+
+    def test_per_ip_limit_returns_429(self):
+        """
+        GIVEN a per-IP hourly limit of 2 already spent by valid submissions
+        WHEN the same IP submits step one again
+        THEN it gets 429 with Retry-After, no row is created, and a ratelimit AbuseEvent is logged
+        """
+        from .models import AbuseEvent, DemoRequest
+
+        with override_settings(DEMO_REQUEST_LIMIT_HOUR=2, DEMO_REQUEST_LIMIT_DAY=10, CACHES=self.LOCMEM):
+            self._submit_email(email="1@x.example")
+            self._submit_email(email="2@x.example")
+            resp = self._submit_email(email="3@x.example")
+        self.assertEqual(resp.status_code, 429)
+        self.assertIn("Retry-After", resp)
+        self.assertEqual(DemoRequest.objects.count(), 2)
+        self.assertEqual(AbuseEvent.objects.filter(defense="ratelimit", detail="demo_hour").count(), 1)
+
+    def test_invalid_submissions_do_not_spend_the_budget(self):
+        """
+        GIVEN a per-IP hourly limit of 1
+        WHEN a visitor mistypes their email twice, then submits a valid one
+        THEN the valid one is accepted
+        """
+        from .models import DemoRequest
+
+        with override_settings(DEMO_REQUEST_LIMIT_HOUR=1, DEMO_REQUEST_LIMIT_DAY=10, CACHES=self.LOCMEM):
+            self._submit_email(email="bad")
+            self._submit_email(email="worse@")
+            resp = self._submit_email(email="good@x.example")
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(DemoRequest.objects.count(), 1)
+
+    def test_admin_lists_requests_read_only(self):
+        """
+        GIVEN a stored request
+        WHEN a superuser opens the DemoRequest changelist
+        THEN the row is listed and there is no add button
+        """
+        from .models import DemoRequest
+
+        DemoRequest.objects.create(email="lead@x.example", organisation="Olney", source="footer")
+        admin_user = User.objects.create_superuser("demo-admin", "a@x.example", "pw")
+        c = Client()
+        c.force_login(admin_user)
+        resp = c.get("/admin/survey/demorequest/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "lead@x.example")
+        self.assertNotContains(resp, "/admin/survey/demorequest/add/")
+        self.assertEqual(c.get("/admin/survey/demorequest/add/").status_code, 403)
 
 
 class ServicesPageTest(TestCase):
@@ -19468,26 +19861,15 @@ class ServicesPageTest(TestCase):
         GIVEN the services page
         WHEN an anonymous visitor requests it
         THEN it renders with the two help tiers, the "stays free" reassurance,
-             and both call buttons pointing at the booking page
+             and both call-to-action buttons pointing at /demo/?src=services
         """
         resp = Client().get("/services/")
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "Launch help")
         self.assertContains(resp, "Done-with-you engagement")
         self.assertContains(resp, "free and open source")
-        self.assertContains(resp, 'data-book-call="services"', count=2)
+        self.assertContains(resp, 'href="/demo/?src=services" class="btn-primary-landing">Request a demo', count=2)
         self.assertNotContains(resp, "mailto:konuchovartem@mapsurvey.org?subject=")
-
-    @override_settings(BOOK_A_CALL_URL="")
-    def test_call_buttons_fall_back_to_mail_without_booking_page(self):
-        """
-        GIVEN no booking page is configured
-        WHEN the services page is requested
-        THEN both "Book a short call" buttons fall back to a mailto link
-        """
-        resp = Client().get("/services/")
-        self.assertContains(resp, "mailto:konuchovartem@mapsurvey.org?subject=", count=2)
-        self.assertNotContains(resp, "data-book-call=")
 
     def test_in_sitemap_and_robots(self):
         """
@@ -50987,3 +51369,197 @@ class SupportChatTest(TestCase):
                 self.assertNotContains(self.client.get(path), 'tawk.to')
         self.client.login(username='chatuser', password='pass')
         self.assertNotContains(self.client.get('/editor/'), 'tawk.to')
+
+
+# --- change dpga-readiness ----------------------------------------------------
+
+class TermsAndPrivacyPagesTest(TestCase):
+    """/terms/, /privacy/ redirect, /trust/ ownership block, landing footer, sitemap."""
+
+    def test_terms_page_renders_all_policy_anchors(self):
+        """
+        GIVEN an anonymous visitor
+        WHEN they open /terms/
+        THEN the page answers 200 and carries every anchor the DPGA application links to
+        """
+        response = Client().get('/terms/')
+        self.assertEqual(response.status_code, 200)
+        for anchor in ('terms', 'acceptable-use', 'prohibited', 'moderation', 'harassment', 'children', 'personal-data', 'contact'):
+            self.assertContains(response, f'id="{anchor}"')
+
+    def test_terms_names_csam_first_and_states_commitments(self):
+        """
+        GIVEN the Terms page
+        WHEN its prohibited, moderation and children sections are read
+        THEN child sexual abuse material is the first prohibited item, the 2-business-day and same-day times are stated, and accounts are 16+
+        """
+        html = Client().get('/terms/').content.decode()
+        prohibited = html[html.index('id="prohibited"'):html.index('id="detection"')]
+        first_item = prohibited[prohibited.index('<li>'):prohibited.index('</li>')]
+        self.assertIn('Child sexual abuse material', first_item)
+        moderation = html[html.index('id="moderation"'):html.index('id="harassment"')]
+        self.assertIn('2 business days', moderation)
+        self.assertIn('same day', moderation)
+        children = html[html.index('id="children"'):html.index('id="personal-data"')]
+        self.assertIn('16 and over', children)
+        self.assertIn('konuchovartem@mapsurvey.org', html)
+
+    def test_privacy_redirects_permanently_to_trust(self):
+        """
+        GIVEN any visitor
+        WHEN they request /privacy/
+        THEN the response is a 301 to /trust/
+        """
+        response = Client().get('/privacy/')
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response['Location'], '/trust/')
+
+    def test_sitemap_lists_terms_but_not_privacy(self):
+        """
+        GIVEN the sitemap
+        WHEN /sitemap.xml is requested
+        THEN it lists /terms/ and does not list the /privacy/ redirect
+        """
+        body = Client().get('/sitemap.xml').content.decode()
+        self.assertIn('/terms/</loc>', body)
+        self.assertNotIn('/privacy/</loc>', body)
+
+    def test_trust_page_has_ownership_block_with_owner_name(self):
+        """
+        GIVEN the Trust page
+        WHEN it is rendered
+        THEN it has an ownership block naming Artem Koniukhov, no longer says Konuchov, and links /terms/
+        """
+        response = Client().get('/trust/')
+        self.assertContains(response, 'id="ownership"')
+        self.assertContains(response, 'Artem Koniukhov')
+        self.assertNotContains(response, 'Artem Konuchov')
+        self.assertContains(response, 'href="/terms/"')
+
+    def test_landing_footer_links_legal_pages_and_names_owner(self):
+        """
+        GIVEN a page built on base_landing.html
+        WHEN it is rendered
+        THEN the footer links Terms of use and Privacy & Trust and its copyright line names the owner
+        """
+        response = Client().get('/trust/')
+        footer = response.content.decode().split('<footer', 1)[1]
+        self.assertIn('href="/terms/"', footer)
+        self.assertIn('Privacy & Trust', footer)
+        self.assertIn('2021&ndash;', footer)
+        self.assertIn('Artem Koniukhov', footer)
+
+
+class RegistrationAcceptTermsTest(TestCase):
+    """Sign-up requires the 16+ / Terms confirmation; the honeypot still wins."""
+
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+
+    def _data(self, **overrides):
+        data = {
+            'username': 'termsuser', 'email': 'terms@example.com',
+            'password1': 'Xx12345!secure', 'password2': 'Xx12345!secure',
+            'website': '', 'cf-turnstile-response': 'any-token', 'accept_terms': 'on',
+        }
+        data.update(overrides)
+        return {k: v for k, v in data.items() if v is not None}
+
+    def test_registration_page_shows_checkbox_and_terms_link(self):
+        """
+        GIVEN an anonymous visitor
+        WHEN they open the registration page
+        THEN it renders the accept_terms checkbox and a link to /terms/
+        """
+        response = Client().get('/accounts/register/')
+        self.assertContains(response, 'name="accept_terms"')
+        self.assertContains(response, 'href="/terms/"')
+
+    def test_missing_confirmation_is_rejected(self):
+        """
+        GIVEN valid registration data without accept_terms
+        WHEN it is submitted
+        THEN the form re-renders with an accept_terms error and no user is created
+        """
+        with override_settings(TURNSTILE_SECRET_KEY=''):
+            response = self.client.post('/accounts/register/', self._data(accept_terms=None),
+                                        REMOTE_ADDR='10.%d.%d.%d' % tuple(uuid.uuid4().bytes[:3]))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('accept_terms', response.context['form'].errors)
+        self.assertFalse(User.objects.filter(username='termsuser').exists())
+
+    def test_confirmed_registration_creates_user(self):
+        """
+        GIVEN valid registration data with accept_terms checked
+        WHEN it is submitted
+        THEN the user is created and the response redirects
+        """
+        with override_settings(TURNSTILE_SECRET_KEY=''):
+            response = self.client.post('/accounts/register/', self._data(),
+                                        REMOTE_ADDR='10.%d.%d.%d' % tuple(uuid.uuid4().bytes[:3]))
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(User.objects.filter(username='termsuser').exists())
+
+    def test_honeypot_still_wins_without_confirmation(self):
+        """
+        GIVEN a submission that fills the honeypot and omits accept_terms
+        WHEN it is submitted
+        THEN the bot gets the fake-success redirect and no user is created
+        """
+        with override_settings(TURNSTILE_SECRET_KEY=''):
+            response = self.client.post('/accounts/register/', self._data(website='bot', accept_terms=None),
+                                        REMOTE_ADDR='10.%d.%d.%d' % tuple(uuid.uuid4().bytes[:3]))
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(User.objects.filter(username='termsuser').exists())
+
+
+class ReportReasonsAndEscalationTest(_ContentScreeningBase):
+    """Seven report reasons; child-abuse reports always reach the moderator, urgently."""
+
+    def setUp(self):
+        super().setUp()
+        self._publish()
+        self.report_url = f'/surveys/{self.survey.uuid}/report/'
+
+    def _ip(self):
+        return '10.%d.%d.%d' % tuple(uuid.uuid4().bytes[:3])
+
+    def test_form_offers_seven_reasons_in_order(self):
+        """
+        GIVEN a published survey
+        WHEN the report page is opened
+        THEN it offers phishing, scam, illegal, child_abuse, harassment, personal_data, other in that order
+        """
+        html = self._anon().get(self.report_url).content.decode()
+        positions = [html.index(f'value="{code}"') for code in
+                     ('phishing', 'scam', 'illegal', 'child_abuse', 'harassment', 'personal_data', 'other')]
+        self.assertEqual(positions, sorted(positions))
+
+    def test_first_child_abuse_report_mails_urgently(self):
+        """
+        GIVEN a survey with no open review
+        WHEN a respondent reports child abuse
+        THEN exactly one notice is sent and its subject starts with [URGENT]
+        """
+        with _eager_notice():
+            self._anon().post(self.report_url, {'reason': 'child_abuse'}, REMOTE_ADDR=self._ip())
+        self.assertEqual(len(_cs_mail.outbox), 1)
+        self.assertTrue(_cs_mail.outbox[0].subject.startswith('[URGENT]'))
+
+    def test_child_abuse_after_scam_escalates_once(self):
+        """
+        GIVEN a survey already reported as a scam (one notice sent)
+        WHEN a child-abuse report arrives, then another one
+        THEN the review note now starts with child_abuse:, report_count is 3, and exactly one more notice is sent, marked [URGENT]
+        """
+        with _eager_notice():
+            self._anon().post(self.report_url, {'reason': 'scam'}, REMOTE_ADDR=self._ip())
+            self._anon().post(self.report_url, {'reason': 'child_abuse', 'message': 'photos'}, REMOTE_ADDR=self._ip())
+            self._anon().post(self.report_url, {'reason': 'child_abuse'}, REMOTE_ADDR=self._ip())
+        review = ContentReview.objects.get(survey=self.survey)
+        self.assertTrue(review.note.startswith('child_abuse:'))
+        self.assertIn('scam', review.note)
+        self.assertEqual(review.report_count, 3)
+        self.assertEqual(len(_cs_mail.outbox), 2)
+        self.assertTrue(_cs_mail.outbox[1].subject.startswith('[URGENT]'))

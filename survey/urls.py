@@ -10,6 +10,7 @@ from . import share_views
 from . import org_views
 from . import public_results_editor
 from . import abuse_review_views
+from . import demo_request_views
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -157,6 +158,10 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/collaborators/<int:collaborator_id>/remove/', editor_views.editor_collaborator_remove, name='editor_collaborator_remove'),
 
     path('trust/', views.trust_page, name='trust_page'),
+    path('terms/', views.terms_page, name='terms_page'),
+    # One source of truth for privacy: the Trust page. 301 so links and search
+    # engines settle on /trust/ (not listed in sitemap.xml).
+    path('privacy/', RedirectView.as_view(pattern_name='trust_page', permanent=True), name='privacy_redirect'),
     path('surveys/track/event/', analytics_views.analytics_track_event, name='track_event'),
     # The listing that used to live here rendered every SurveyHeader in the
     # database -- every organization's surveys, drafts and private ones included --
@@ -183,6 +188,10 @@ urlpatterns = [
     path('for-government/', views.for_government, name='for_government'),
     path('services/', views.services, name='services'),
     path('pro/', views.pro_early_access, name='pro_early_access'),
+    # "Request a demo" (change request-demo-form): step one is an email only, step two the details.
+    path('demo/', demo_request_views.demo_request, name='demo_request'),
+    path('demo/done/', demo_request_views.demo_request_done, name='demo_request_done'),
+    path('demo/<uuid:key>/', demo_request_views.demo_request_details, name='demo_request_details'),
     path('community-engagement-platform/', views.community_engagement_platform, name='community_engagement_platform'),
     path('public-consultation-software/', views.public_consultation_software, name='public_consultation_software'),
     path('civic-engagement/', views.civic_engagement, name='civic_engagement'),

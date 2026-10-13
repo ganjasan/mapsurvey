@@ -99,8 +99,11 @@ def registration_limits(kind):
     )
 
 
-def check_registration_limit(request, kind):
-    """Return (retry_after, detail) if `kind`'s limit is already exceeded.
+def check_limits(request, limits):
+    """Return (retry_after, detail) if any of `limits` is already exhausted.
+
+    `limits` is a sequence of (group, rate, retry_after, detail) tuples, as
+    returned by `registration_limits()` or `demo_request_limits()`.
 
     Read-only: never advances a counter. Called before form processing so an
     already-limited IP is refused without the cost of validating the form or
@@ -115,9 +118,9 @@ def check_registration_limit(request, kind):
 
     Fail-open: any cache-backend exception (Redis outage) is swallowed and
     treated as "not limited", so a Redis outage cannot stop legitimate
-    signups. Honeypot and Turnstile still apply while the limiter is blind.
+    visitors. Honeypot (and Turnstile, where used) still apply.
     """
-    for group, rate, retry_after, detail in registration_limits(kind):
+    for group, rate, retry_after, detail in limits:
         try:
             usage = get_usage(
                 request=request,
@@ -136,16 +139,16 @@ def check_registration_limit(request, kind):
     return None
 
 
-def increment_registration_limit(request, kind):
-    """Advance `kind`'s counters by one. Called once validity is known.
+def increment_limits(request, limits):
+    """Advance every counter in `limits` by one. Called once validity is known.
 
-    Split from check_registration_limit() deliberately: checking early is
-    correct (it is cheap and short-circuits), but counting early is what
-    turned three password typos into an hour-long lockout. Validity is the
-    signal that separates a confused human from a bot, and it is not
-    available until the form has been validated.
+    Split from check_limits() deliberately: checking early is correct (it is
+    cheap and short-circuits), but counting early is what turned three password
+    typos into an hour-long lockout. Validity is the signal that separates a
+    confused human from a bot, and it is not available until the form has been
+    validated.
     """
-    for group, rate, _retry_after, _detail in registration_limits(kind):
+    for group, rate, _retry_after, _detail in limits:
         try:
             is_ratelimited(
                 request=request,
@@ -158,6 +161,31 @@ def increment_registration_limit(request, kind):
             )
         except Exception:
             pass
+
+
+def check_registration_limit(request, kind):
+    """`check_limits` over the registration counters of `kind` ("valid"/"invalid")."""
+    return check_limits(request, registration_limits(kind))
+
+
+def increment_registration_limit(request, kind):
+    """`increment_limits` over the registration counters of `kind`."""
+    increment_limits(request, registration_limits(kind))
+
+
+def demo_request_limits():
+    """Per-IP budget for step one of `/demo/` (change request-demo-form).
+
+    Looser than registration on purpose: a lost lead costs more than a spam
+    row, and there is no Turnstile behind it. Step two is keyed by an
+    unguessable UUID and only ever updates one row, so it is not limited.
+    """
+    return (
+        ("demo_request_hour",
+         f"{settings.DEMO_REQUEST_LIMIT_HOUR}/h", 3600, "demo_hour"),
+        ("demo_request_day",
+         f"{settings.DEMO_REQUEST_LIMIT_DAY}/d", 86400, "demo_day"),
+    )
 
 
 def verify_turnstile(token, remote_ip=""):
@@ -285,6 +313,14 @@ class RegistrationAbuseForm(RegistrationForm):
         for name in ("password1", "password2"):
             if name in self.fields:
                 self.fields[name].help_text = ""
+        # Age and terms confirmation (change dpga-readiness): self-declared,
+        # nothing stored beyond the account itself. Label is rendered with a
+        # link to /terms/ by the template.
+        self.fields["accept_terms"] = forms.BooleanField(
+            required=True,
+            label=_("I am 16 or older and accept the Terms of use"),
+            error_messages={"required": _("Please confirm you are 16 or older and accept the Terms of use.")},
+        )
 
 
 class ResendActivationForm(forms.Form):

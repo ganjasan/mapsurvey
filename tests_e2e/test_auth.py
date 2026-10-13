@@ -26,6 +26,7 @@ def _fill_register_form(page, *, username, email, password):
     page.fill('input[name="email"]', email)
     page.fill('input[name="password1"]', password)
     page.fill('input[name="password2"]', password)
+    page.check('input[name="accept_terms"]')
     page.click('button[type="submit"], input[type="submit"]')
 
 

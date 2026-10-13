@@ -577,8 +577,6 @@ CONTACT_EMAIL = os.environ.get('CONTACT_EMAIL', 'konuchovartem@mapsurvey.org')
 CONTACT_TELEGRAM = os.environ.get('CONTACT_TELEGRAM', 'Konuchovartem')
 GITHUB_REPO_URL = os.environ.get('GITHUB_REPO_URL', 'https://github.com/ganjasan/mapsurvey')
 DEMO_SURVEY_URL = os.environ.get('DEMO_SURVEY_URL', '')
-# The "Build it with us" path: every Book-a-call button on the marketing pages.
-BOOK_A_CALL_URL = os.environ.get('BOOK_A_CALL_URL', 'https://cal.com/mapsurvey-artem/mapsurvey-call')
 
 # Support chat (openspec: chatwoot-support-chat). Chatwoot Cloud web widget.
 # Empty CHATWOOT_WEBSITE_TOKEN = no widget and no third-party request, which is
@@ -737,6 +735,9 @@ REGISTRATION_RATE_LIMIT_DAY = int(os.environ.get('REGISTRATION_RATE_LIMIT_DAY', 
 # ever reach them.
 REGISTRATION_INVALID_LIMIT_HOUR = int(os.environ.get('REGISTRATION_INVALID_LIMIT_HOUR', 15))
 REGISTRATION_INVALID_LIMIT_DAY = int(os.environ.get('REGISTRATION_INVALID_LIMIT_DAY', 50))
+# "Request a demo" step one (change request-demo-form): valid submissions per IP.
+DEMO_REQUEST_LIMIT_HOUR = int(os.environ.get('DEMO_REQUEST_LIMIT_HOUR', 5))
+DEMO_REQUEST_LIMIT_DAY = int(os.environ.get('DEMO_REQUEST_LIMIT_DAY', 20))
 # Kill switch. False restores the pre-2026-08-17 behaviour where every POST,
 # valid or not, counts against REGISTRATION_RATE_LIMIT_*. Merges reach prod in
 # minutes with no staging gate, so this is the rollback.

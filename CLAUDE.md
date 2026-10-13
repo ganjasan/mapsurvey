@@ -544,6 +544,17 @@ releasing existing ones (that is the owner's click, or the admin). Respondent pa
 `_abuse_footer.html` notice + `/surveys/<uuid>/report/`; a report opens a `reported` review that holds
 nothing. Every hold/release/confirm/report writes an `AbuseEvent(defense='content_screen')` with ids only.
 
+**Terms, privacy and ownership (change `dpga-readiness`)**: `/terms/` (`views.terms_page`,
+`terms.html`) is the Terms of use plus the Acceptable use & safety policy; `/privacy/` is a 301 to
+`/trust/`, which carries the `#ownership` block (owner: Artem Koniukhov). The Digital Public Goods
+Alliance application links these pages as evidence, so the section ids on `/terms/` (`terms`,
+`acceptable-use`, `prohibited`, `moderation`, `harassment`, `children`, `personal-data`, `contact`)
+and `/trust/#ownership` must not be renamed, and every sentence there must stay true in production —
+change the policy text when the behaviour changes. Bump `TERMS_UPDATED` in `views.py` whenever the
+text of `terms.html` changes. Sign-up requires `accept_terms` (16+, self-declared, nothing stored).
+Report reasons live in `content_screening.REPORT_REASONS`; a `child_abuse` report always mails the
+moderator with an `[URGENT]` subject, even on a survey that already has an open review.
+
 **Russian homepage and hreflang (change `ru-landing-hreflang`, issue #248)**: `/ru/` is the
 homepage rendered by `views.index_ru` under `lang_override('ru')` — one route, NOT `i18n_patterns`,
 and `ru` stays out of `LANGUAGES` (the creator catalog is incomplete). `home_path` and `page_lang`

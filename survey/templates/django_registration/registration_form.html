@@ -20,7 +20,16 @@
         </ul>
         {% endif %}
         {% for field in form %}
-            {% if field.name == "website" %}
+            {% if field.name == "accept_terms" %}
+                <div class="form-group form-check-terms">
+                    <label for="{{ field.id_for_label }}">
+                        {{ field }}
+                        {% url 'terms_page' as terms_url %}
+                        {% blocktrans %}I am 16 or older and accept the <a href="{{ terms_url }}" target="_blank" rel="noopener">Terms of use</a>{% endblocktrans %}
+                    </label>
+                    {% if field.errors %}<ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+                </div>
+            {% elif field.name == "website" %}
                 {# Honeypot — hidden from humans, present in DOM for naive bots. #}
                 <div style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden" aria-hidden="true">
                     <label for="{{ field.id_for_label }}">Website</label>

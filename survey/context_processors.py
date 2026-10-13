@@ -24,7 +24,6 @@ def contact(request):
         'CONTACT_TELEGRAM': getattr(settings, 'CONTACT_TELEGRAM', ''),
         'GITHUB_REPO_URL': getattr(settings, 'GITHUB_REPO_URL', ''),
         'DEMO_SURVEY_URL': getattr(settings, 'DEMO_SURVEY_URL', ''),
-        'BOOK_A_CALL_URL': getattr(settings, 'BOOK_A_CALL_URL', ''),
     }
 
 

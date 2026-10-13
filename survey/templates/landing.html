@@ -27,14 +27,9 @@ reciprocal.
             {% if user.is_authenticated %}
             <a href="{% url 'editor' %}" class="btn-primary-landing">{% trans "Go to Dashboard" %}</a>
             {% else %}
-            <a href="{% url 'django_registration_register' %}" class="btn-primary-landing">{% trans "Create your Mapsurvey" %}</a>
+            <a href="{% url 'django_registration_register' %}" class="btn-primary-landing">{% trans "Get Mapsurvey free" %}</a>
             {% endif %}
-            {% if BOOK_A_CALL_URL %}
-            <a href="{{ BOOK_A_CALL_URL }}" class="btn-secondary-landing" target="_blank" rel="noopener" data-book-call="hero">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-                {% trans "Book a 30-min call" %}
-            </a>
-            {% endif %}
+            <a href="{% url 'demo_request' %}?src=hero" class="btn-secondary-landing">{% trans "Request a demo" %}</a>
         </div>
         {% if DEMO_SURVEY_URL %}
         <p class="hero__demo-link">
@@ -326,7 +321,7 @@ page shows the survey a visitor can open themselves. 1920x1200 for the lightbox,
                     {% if user.is_authenticated %}
                     <a href="{% url 'editor' %}" class="btn-primary-landing">{% trans "Go to Dashboard" %}</a>
                     {% else %}
-                    <a href="{% url 'django_registration_register' %}" class="btn-primary-landing">{% trans "Create your Mapsurvey" %}</a>
+                    <a href="{% url 'django_registration_register' %}" class="btn-primary-landing">{% trans "Get Mapsurvey free" %}</a>
                     {% endif %}
                 </div>
                 <p class="path-card__fine">{% trans "Free to start · no card · no coding" %}</p>
@@ -336,22 +331,15 @@ page shows the survey a visitor can open themselves. 1920x1200 for the lightbox,
                 <h3 class="path-card__title">{% trans "Build it with us" %}</h3>
                 <p class="path-card__for">{% trans "For councils, agencies and consultancies whose project depends on the responses." %}</p>
                 <ol class="path-card__steps">
-                    <li>{% trans "A 30-minute call about your project, audience and timeline." %}</li>
+                    <li>{% trans "Tell us about your project, audience and timeline — by email, or on a call if you prefer." %}</li>
                     <li>{% trans "A fixed quote. No retainer, no surprises." %}</li>
                     <li>{% trans "We set up the survey and help you reach a response target. Every response stays yours." %}</li>
                 </ol>
                 <div class="path-card__actions">
-                    {% if BOOK_A_CALL_URL %}
-                    <a href="{{ BOOK_A_CALL_URL }}" class="btn-primary-landing btn-primary-landing--dark" target="_blank" rel="noopener" data-book-call="how_to_start">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-                        {% trans "Book a 30-min call" %}
-                    </a>
+                    <a href="{% url 'demo_request' %}?src=how_to_start" class="btn-primary-landing btn-primary-landing--dark">{% trans "Request a demo" %}</a>
                     <a href="{% url 'services' %}" class="path-card__link">{% trans "What's included" %} &rarr;</a>
-                    {% else %}
-                    <a href="{% url 'services' %}" class="btn-primary-landing btn-primary-landing--dark">{% trans "What's included" %}</a>
-                    {% endif %}
                 </div>
-                <p class="path-card__fine">{% trans "The call is free and commits you to nothing" %}</p>
+                <p class="path-card__fine">{% trans "You'll hear back from a person within one working day" %}</p>
             </div>
         </div>
     </div>
