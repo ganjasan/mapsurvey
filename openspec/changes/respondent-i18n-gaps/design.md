@@ -28,7 +28,7 @@ language, from `request.session['survey_language']`.
 
 - Creator/editor and billing strings, marketing pages.
 - Right-to-left layout for `ar`/`fa`/`he`/`ur`: strings are filled, the page is not mirrored.
-- Professional translation review. Catalogs are filled the same way the existing 31 strings were.
+- Professional translation review (decision 5). Catalogs are filled the same way the existing 31 strings were.
 
 ## Decisions
 
@@ -97,11 +97,21 @@ honest. `compilemessages` then rebuilds the `.mo` files.
 The ru/ky share-button strings from the old `survey_thanks.html` dictionary were carried over
 into the catalogs rather than re-translated.
 
+### 5. No paid review: translation quality is a feedback loop
+
+There is no budget for native-speaker review of 74 languages, and this change does not pretend
+otherwise. The translations are machine-produced and checked mechanically only (placeholders,
+HTML tags, no one translation serving two unrelated source strings). Quality comes from the
+people who read them: customers are asked to report a typo or wrong wording through the in-app
+support chat (Tawk.to, `base.html`), with a small screenshot showing where the text appears. A
+report is fixed as a one-line msgstr edit plus `compilemessages`; the guard test keeps the entry
+from disappearing. The same request goes into the reply to the customer who reported #285.
+
 ## Risks / Trade-offs
 
 - [LLM translations in 74 languages may be awkward or wrong in rare languages] → short UI strings,
-  context given per msgid (where it appears); `ru`, `pl`, `de` spot-read by the owner before merge;
-  a customer report is a one-line catalog fix.
+  context given per msgid (where it appears); no paid review (decision 5) — customers report errors
+  through the support chat with a screenshot, and each report is a one-line catalog fix.
 - [New entries carry no `#:` location comments] → the next `makemessages` run adds them; nothing
   reads them at runtime, and the guard test extracts from sources, not comments.
 - [RTL catalogs filled without RTL layout] → text will render right-to-left within left-to-right

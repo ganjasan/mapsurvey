@@ -25,7 +25,7 @@
 - [x] 4.1 Add missing respondent msgids to all 74 catalogs textually (no `makemessages` — see design §4); replace the two wrong fuzzy `ky` guesses
 - [x] 4.2 Produce translations for every respondent msgid missing in each locale (incl. the 31 base strings for `ar`/`fa`/`he`/`ur`), merge with polib
 - [x] 4.3 `compilemessages`; run `TranslationCatalogHygieneTest` and the new completeness test green
-- [ ] 4.4 Owner spot-reads `pl`, `de`, `ru` respondent strings (owner chose to merge first and correct from feedback)
+- [x] 4.4 No paid review (design §5): ask customers to report translation errors in the support chat with a small screenshot; the request goes into the reply to the #285 reporter
 
 ## 5. Verify
 
