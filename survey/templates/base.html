@@ -370,6 +370,7 @@
                       {% comment %}In-app changelog (change in-app-changelog): dot = an entry this
                       creator has not seen. Phones reach the page from the account menu.{% endcomment %}
                       <a class="wn-nav-icon d-none d-md-inline-flex" href="{% url 'whats_new' %}" title="{% trans "What's new" %}" aria-label="{% trans "What's new" %}"><i class="fas fa-gift"></i>{% if whats_new.unseen_count %}<span class="wn-dot"></span>{% endif %}</a>
+                      {% include "editor/partials/_help_menu.html" with extra_class="d-none d-md-inline-block" %}
                       <div class="dropdown d-none d-md-inline-block">
                           {% include "editor/partials/_language_menu.html" %}
                       </div>
@@ -405,7 +406,7 @@
                               </div>
                               {% if MOBILE_EDITOR_NAV %}
                               <div class="dropdown-divider"></div>
-                              <a class="dropdown-item" href="#" onclick="openSupportChat(event)"><i class="fas fa-comment-dots" style="margin-right:4px;"></i>{% trans "Help & support" %}</a>
+                              {% if SUPPORT_CHAT %}<a class="dropdown-item" href="#" onclick="openSupportChat(event)"><i class="fas fa-comment-dots" style="margin-right:4px;"></i>{% trans "Help & support" %} <span class="wn-badge support-unread" hidden>{% trans "new" %}</span></a>{% elif CONTACT_EMAIL %}<a class="dropdown-item" href="mailto:{{ CONTACT_EMAIL }}"><i class="fas fa-envelope" style="margin-right:4px;"></i>{% trans "Email support" %}</a>{% endif %}
                               {% endif %}
                           </div>
                       </div>
@@ -461,45 +462,7 @@
         });
     });
     </script>
-    <!--Start of Tawk.to Script-->
-    <script type="text/javascript">
-    var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-    Tawk_API.onLoad = function(){ Tawk_API.minimize(); };
-    {% if MOBILE_EDITOR_NAV %}
-    // No floating bubble on working surfaces (owner decision): support opens
-    // via "Help & support" in the account/⋯ menus. autoStart=false keeps the
-    // widget from rendering (and connecting) at all until asked — hiding it
-    // in onLoad instead produced a visible bubble flash a few seconds after
-    // page load, because onLoad fires after the bubble is already painted.
-    Tawk_API.autoStart = false;
-    Tawk_API.onLoad = function(){ if (!window._tawkWanted) Tawk_API.hideWidget(); };
-    Tawk_API.onChatMinimized = function(){ Tawk_API.hideWidget(); };
-    window.openSupportChat = function(e){
-        if (e) e.preventDefault();
-        window._tawkWanted = true;
-        function reveal() {
-            if (window.Tawk_API && Tawk_API.showWidget && Tawk_API.maximize) {
-                Tawk_API.showWidget(); Tawk_API.maximize(); return true;
-            }
-            return false;
-        }
-        if (window.Tawk_API && Tawk_API.start) { try { Tawk_API.start(); } catch (err) {} }
-        if (!reveal()) {
-            var t = setInterval(function(){ if (reveal()) clearInterval(t); }, 300);
-            setTimeout(function(){ clearInterval(t); }, 10000);
-        }
-    };
-    {% endif %}
-    (function(){
-    var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-    s1.async=true;
-    s1.src='https://embed.tawk.to/69ca3a84d3271a1c35b1faa6/1jkuv95h1';
-    s1.charset='UTF-8';
-    s1.setAttribute('crossorigin','*');
-    s0.parentNode.insertBefore(s1,s0);
-    })();
-    </script>
-    <!--End of Tawk.to Script-->
+    {% include "partials/_support_chat.html" with hide_bubble=MOBILE_EDITOR_NAV %}
     {% include "editor/partials/_whats_new_card.html" %}
     </body>
 </html>

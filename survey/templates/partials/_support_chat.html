@@ -1,0 +1,117 @@
+{% load i18n %}{% get_current_language as SUPPORT_CHAT_LANG %}
+{% comment %}
+Support chat (openspec: chatwoot-support-chat, #291). Included by base_landing.html,
+base.html and editor/editor_base.html; pass `hide_bubble=True` on working surfaces,
+where the chat opens only from the "?" help menu / "Help & support" items
+(window.openSupportChat) and the widget never speaks first: no bubble, no unread
+pop-up, no pop-out button. The only signal it gives is the `.support-unread` dot on
+those entry points. Config and identity come from the support_chat context
+processor; with no website token nothing loads and openSupportChat is a no-op, so
+the menu items never throw.
+
+openSupportChat(event, context): `context` (an object of strings) is sent to the
+agent as custom attributes before the chat opens — this is the hook for #295,
+"Contact support" at the point of failure.
+{% endcomment %}
+{% if SUPPORT_CHAT %}{{ SUPPORT_CHAT|json_script:"support-chat-config" }}{% endif %}
+<script>
+(function () {
+    {% if not SUPPORT_CHAT %}
+    window.openSupportChat = function (e) { if (e) e.preventDefault(); };
+    {% else %}
+    var config = JSON.parse(document.getElementById('support-chat-config').textContent);
+    var identity = config.identity;
+    var websiteToken = config.website_token;
+    var baseUrl = config.base_url;
+    var hideBubble = {{ hide_bubble|yesno:"true,false" }};
+
+    // Which creator this browser last identified to Chatwoot. Chatwoot keeps the
+    // conversation in its own first-party cookies, which outlive our session, so a page
+    // rendered for someone else (logout, expiry, another account) drops them BEFORE the
+    // SDK starts. Not $chatwoot.reset(): it reloads the widget frame without a second
+    // `chatwoot:ready`, so a setUser right after it can be lost.
+    var KEY = 'ms_support_chat_identifier';
+    function storage(fn) { try { return fn(window.localStorage); } catch (err) { return null; } }
+    var previous = storage(function (s) { return s.getItem(KEY); });
+    if (previous && (!identity || previous !== identity.identifier)) {
+        ['cw_conversation', 'cw_user_' + websiteToken].forEach(function (name) {
+            document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+        });
+        storage(function (s) { s.removeItem(KEY); });
+    }
+    var ready = false, openWhenReady = false, pendingContext = null;
+
+    // Read by the SDK before it renders, so a hidden bubble never flashes.
+    window.chatwootSettings = {
+        hideMessageBubble: hideBubble,
+        showUnreadMessagesDialog: !hideBubble,
+        showPopoutButton: false,
+        locale: '{{ SUPPORT_CHAT_LANG|escapejs }}',
+        position: 'right',
+        type: 'standard'
+    };
+
+    // What the agent sees next to the conversation. Workspace and plan come from the
+    // server; the page and the survey are read here, where they are known.
+    function contextAttributes(extra) {
+        var attrs = {};
+        Object.keys(config.attributes || {}).forEach(function (k) { attrs[k] = config.attributes[k]; });
+        attrs.page = location.pathname;
+        var survey = location.pathname.match(/\/surveys\/([0-9a-f-]{36})\//);
+        if (survey) attrs.survey = survey[1];
+        Object.keys(extra || {}).forEach(function (k) { attrs[k] = String(extra[k]); });
+        return attrs;
+    }
+    function sendContext(extra) {
+        try { window.$chatwoot.setCustomAttributes(contextAttributes(extra)); } catch (err) {}
+    }
+
+    // Unread dot on the entry points. The SDK draws its own dot on the bubble from the
+    // widget's `handleNotificationDot` message and skips it when the bubble is hidden,
+    // so this listens to the same message. The SDK takes `window.onmessage`; this is
+    // an addEventListener, so the two do not fight.
+    function setUnread(on) {
+        var dots = document.querySelectorAll('.support-unread');
+        for (var i = 0; i < dots.length; i++) dots[i].hidden = !on;
+    }
+    window.addEventListener('message', function (e) {
+        if (typeof e.data !== 'string' || e.data.indexOf('chatwoot-widget:') !== 0) return;
+        var msg;
+        try { msg = JSON.parse(e.data.slice('chatwoot-widget:'.length)); } catch (err) { return; }
+        if (msg.event === 'handleNotificationDot') setUnread(msg.unreadMessageCount > 0);
+    });
+    window.addEventListener('chatwoot:opened', function () { setUnread(false); });
+
+    window.addEventListener('chatwoot:ready', function () {
+        ready = true;
+        if (identity) {
+            var attrs = { email: identity.email, name: identity.name };
+            if (identity.identifier_hash) attrs.identifier_hash = identity.identifier_hash;
+            window.$chatwoot.setUser(identity.identifier, attrs);
+            storage(function (s) { s.setItem(KEY, identity.identifier); });
+        }
+        sendContext(pendingContext);
+        if (openWhenReady) window.$chatwoot.toggle('open');
+    });
+
+    window.openSupportChat = function (e, context) {
+        if (e) e.preventDefault();
+        if (ready) {
+            if (context) sendContext(context);
+            window.$chatwoot.toggle('open');
+        } else {
+            openWhenReady = true;
+            if (context) pendingContext = context;
+        }
+    };
+
+    var script = document.createElement('script');
+    script.src = baseUrl + '/packs/js/sdk.js';
+    script.async = true;
+    script.onload = function () {
+        window.chatwootSDK.run({ websiteToken: websiteToken, baseUrl: baseUrl });
+    };
+    document.body.appendChild(script);
+    {% endif %}
+})();
+</script>

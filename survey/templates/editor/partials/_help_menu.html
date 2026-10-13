@@ -1,0 +1,26 @@
+{% load i18n %}
+{% comment %}Help entry point in the editor header (openspec: chatwoot-support-chat, #291).
+
+One "?" in a predictable place, like Notion/Figma/Linear: it opens a small menu
+rather than the chat itself, so a creator who wants a quick answer is not pushed
+into a conversation. Self-service first, "Help & support" last. The `support-unread`
+dot is lit by `_support_chat.html` when an agent replied while the chat was closed —
+the only signal the hidden chat bubble ever gives on a working surface.
+
+Desktop only, like the gift and language controls next to it: on phones the ⋯ /
+account menus already carry "Help & support" (with the same dot). `extra_class`
+is the per-template visibility class (`nav-desktop`, `d-none d-md-inline-block`).{% endcomment %}
+<div class="dropdown {{ extra_class }}">
+    <a class="wn-nav-icon help-nav-icon" href="#" role="button" data-toggle="dropdown" title="{% trans "Help" %}" aria-label="{% trans "Help" %}" style="text-decoration:none;"><i class="fas fa-question-circle"></i><span class="wn-dot support-unread" hidden></span></a>
+    <div class="dropdown-menu dropdown-menu-right" style="min-width:240px;">
+        <a class="dropdown-item" href="{% url 'whats_new' %}"><i class="fas fa-gift" style="margin-right:4px;"></i>{% trans "What's new" %}{% if whats_new.unseen_count %} <span class="wn-badge">{{ whats_new.unseen_count }}</span>{% endif %}</a>
+        <a class="dropdown-item" href="{% url 'index' %}#faq"><i class="fas fa-book-open" style="margin-right:4px;"></i>{% trans "FAQ" %}</a>
+        <div class="dropdown-divider"></div>
+        {% if SUPPORT_CHAT %}
+        <a class="dropdown-item" href="#" onclick="openSupportChat(event)"><i class="fas fa-comment-dots" style="margin-right:4px;"></i>{% trans "Help & support" %} <span class="wn-badge support-unread" hidden>{% trans "new" %}</span></a>
+        <div style="font-size:.75rem;color:#9ca3af;padding:0 1.5rem .4rem;white-space:normal;">{% trans "We reply within a day — by email if you have left the page." %}</div>
+        {% elif CONTACT_EMAIL %}
+        <a class="dropdown-item" href="mailto:{{ CONTACT_EMAIL }}"><i class="fas fa-envelope" style="margin-right:4px;"></i>{% trans "Email support" %}</a>
+        {% endif %}
+    </div>
+</div>

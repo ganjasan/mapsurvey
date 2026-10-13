@@ -156,6 +156,7 @@ TEMPLATES = [
                 'survey.context_processors.mobile_adaptive',
                 'survey.context_processors.icon_sprites',
                 'survey.context_processors.whats_new',
+                'survey.context_processors.support_chat',
             ],
         },
     },
@@ -576,6 +577,15 @@ CONTACT_EMAIL = os.environ.get('CONTACT_EMAIL', 'konuchovartem@mapsurvey.org')
 CONTACT_TELEGRAM = os.environ.get('CONTACT_TELEGRAM', 'Konuchovartem')
 GITHUB_REPO_URL = os.environ.get('GITHUB_REPO_URL', 'https://github.com/ganjasan/mapsurvey')
 DEMO_SURVEY_URL = os.environ.get('DEMO_SURVEY_URL', '')
+
+# Support chat (openspec: chatwoot-support-chat). Chatwoot Cloud web widget.
+# Empty CHATWOOT_WEBSITE_TOKEN = no widget and no third-party request, which is
+# what tests, local dev and previews without the env group get. The HMAC token
+# signs signed-in creators' identifiers server-side (survey.context_processors.
+# support_chat) and never reaches the browser; empty = identity sent unsigned.
+CHATWOOT_BASE_URL = os.environ.get('CHATWOOT_BASE_URL', 'https://app.chatwoot.com').rstrip('/')
+CHATWOOT_WEBSITE_TOKEN = os.environ.get('CHATWOOT_WEBSITE_TOKEN', '')
+CHATWOOT_HMAC_TOKEN = os.environ.get('CHATWOOT_HMAC_TOKEN', '')
 
 # Mobile-adaptive layout kill switches (openspec: mobile-adaptive-refactor).
 # ON by default (owner decision at PR time). Setting the env var to False
