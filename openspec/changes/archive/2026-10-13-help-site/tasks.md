@@ -13,7 +13,7 @@
 
 - [x] 2.1 `render.yaml`: `mapsurvey-help` static service (`rootDir: help`, build command, `staticPublishPath: dist`, `buildFilter.paths: [help/**]`, `NODE_VERSION`, `PUBLIC_POSTHOG_KEY`/`HOST` `sync: false`, security headers, `domains: [help.mapsurvey.org]`, `previews.generation: off`)
 - [ ] 2.2 Blueprint sync; set PostHog env vars on the service; confirm a Django-only commit does not redeploy the help service
-- [ ] 2.3 DNS CNAME `help` → the service's onrender host; add the custom domain in the dashboard; HTTPS issued
+- [x] 2.3 DNS CNAME `help` → the service's onrender host; add the custom domain in the dashboard; HTTPS issued
 - [x] 2.4 No preview environments for the help site (owner decision 2026-10-13); review locally with `npm run dev`
 
 ## 3. Seed content — Start here, How-to, Reference, Troubleshooting

@@ -59,7 +59,7 @@ The widget SHALL be configured with the page's active language code.
 - **THEN** the widget is configured with locale `ru`
 
 ### Requirement: Help entry point in the editor header
-Pages built on `base.html` and `editor/editor_base.html` SHALL show a "?" help control in the header for signed-in creators (desktop widths; phones keep "Help & support" in the ⋯ and account menus). It SHALL open a menu — "What's new", "FAQ", then "Help & support" with a line setting the reply expectation — rather than the chat itself. When the chat is unconfigured the menu SHALL offer `mailto:CONTACT_EMAIL` instead of "Help & support".
+Pages built on `base.html` and `editor/editor_base.html` SHALL show a "?" help control in the header for signed-in creators (desktop widths; phones keep "Help & support" in the ⋯ and account menus). It SHALL open a menu — "What's new", "Help centre", then "Help & support" with a line setting the reply expectation — rather than the chat itself. "Help centre" SHALL link to the help site home from the help-links registry (`HELP_URL.help_home`) and open in a new tab; when `HELP_SITE_URL` is empty the item SHALL be omitted. When the chat is unconfigured the menu SHALL offer `mailto:CONTACT_EMAIL` instead of "Help & support".
 
 #### Scenario: Configured chat
 - **WHEN** a signed-in creator opens an editor page and `CHATWOOT_WEBSITE_TOKEN` is set
@@ -68,6 +68,14 @@ Pages built on `base.html` and `editor/editor_base.html` SHALL show a "?" help c
 #### Scenario: Unconfigured chat
 - **WHEN** a signed-in creator opens an editor page and `CHATWOOT_WEBSITE_TOKEN` is empty
 - **THEN** the "?" menu offers an email link to `CONTACT_EMAIL` and no chat entry
+
+#### Scenario: Help centre link
+- **WHEN** a signed-in creator opens an editor page and `HELP_SITE_URL` is set
+- **THEN** the "?" menu carries "Help centre" linking to `HELP_SITE_URL` with `target="_blank"` and `rel="noopener"`, and no link to `#faq` is rendered
+
+#### Scenario: Help site disabled
+- **WHEN** `HELP_SITE_URL` is empty
+- **THEN** the "?" menu shows "What's new" and the support entry only
 
 ### Requirement: The hidden widget never speaks first
 With the bubble hidden, the widget SHALL NOT show its unread-messages pop-up or pop-out button. A reply received while the chat is closed SHALL be signalled only by an unread dot on the help entry points, cleared when the chat opens.
