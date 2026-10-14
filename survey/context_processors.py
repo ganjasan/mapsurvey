@@ -27,6 +27,28 @@ def contact(request):
     }
 
 
+def survey_start(request):
+    """The creator's remembered way to start (change first-survey-onboarding).
+
+    `survey_start_default` drives how the dashboard renders "+ New Survey":
+    '' = the start page, 'ai' = the create page, 'blank' = a one-click POST.
+    Lazy like `whats_new`: one small query, and only when a template reads it.
+    """
+    from django.utils.functional import SimpleLazyObject
+
+    def build():
+        from .models import CreatorPreferences
+        user = getattr(request, 'user', None)
+        if user is None or not user.is_authenticated:
+            return ''
+        row = (CreatorPreferences.objects
+               .filter(user=user).values_list('survey_start_default', flat=True)
+               .first())
+        return row or ''
+
+    return {'survey_start_default': SimpleLazyObject(build)}
+
+
 def mobile_adaptive(request):
     return {
         'MOBILE_EDITOR_NAV': getattr(settings, 'MOBILE_EDITOR_NAV', False),

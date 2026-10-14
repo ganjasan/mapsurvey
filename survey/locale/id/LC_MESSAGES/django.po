@@ -7763,3 +7763,197 @@ msgstr "Mengungkap data pribadi seseorang"
 #: survey/content_screening.py
 msgid "Something else"
 msgstr "Hal lain"
+
+#: survey/models.py
+msgid "Ask every time"
+msgstr "Tanya setiap kali"
+
+#: survey/models.py
+msgid "Start from scratch"
+msgstr "Mulai dari awal"
+
+#: survey/models.py
+msgid "Draft with AI"
+msgstr "Buat draf dengan AI"
+
+#: survey/editor_views.py
+msgid "Untitled survey"
+msgstr "Survei tanpa judul"
+
+#: survey/templates/editor/survey_start.html
+msgid "New survey"
+msgstr "Survei baru"
+
+#: survey/templates/editor/survey_start.html
+msgid "How do you want to start?"
+msgstr "Bagaimana Anda ingin memulai?"
+
+#: survey/templates/editor/survey_start.html
+msgid "Every path ends in the same editor. You can change your mind any time."
+msgstr "Setiap jalur berakhir di editor yang sama. Anda bisa berubah pikiran kapan saja."
+
+#: survey/templates/editor/survey_start.html
+msgid "Your default: <strong>%(label)s</strong>"
+msgstr "Pilihan default Anda: <strong>%(label)s</strong>"
+
+#: survey/templates/editor/survey_start.html
+msgid "From scratch"
+msgstr "Dari awal"
+
+#: survey/templates/editor/survey_start.html
+msgid "An empty survey opens in the editor — the map already on your city. Add sections and questions yourself."
+msgstr "Survei kosong terbuka di editor, dengan peta yang sudah mengarah ke kota Anda. Tambahkan bagian dan pertanyaan sendiri."
+
+#: survey/templates/editor/survey_start.html
+msgid "For people who know exactly what they want to ask."
+msgstr "Untuk yang tahu persis apa yang ingin ditanyakan."
+
+#: survey/templates/editor/survey_start.html
+msgid "You get one empty section and the editor. If your browser allows it, the map opens where you are; otherwise where this workspace's last survey was. Name, languages and the map are all one click away in Survey settings."
+msgstr "Anda mendapat satu bagian kosong dan editor. Jika peramban mengizinkan, peta terbuka di lokasi Anda; jika tidak, di lokasi survei terakhir ruang kerja ini. Nama, bahasa, dan peta tinggal satu klik di pengaturan survei."
+
+#: survey/templates/editor/survey_start.html
+msgid "Opening the editor…"
+msgstr "Membuka editor…"
+
+#: survey/templates/editor/survey_start.html
+msgid "Create empty survey"
+msgstr "Buat survei kosong"
+
+#: survey/templates/editor/survey_start.html
+msgid "Always start this way"
+msgstr "Selalu mulai dengan cara ini"
+
+#: survey/templates/editor/survey_start.html
+msgid "You can switch later from the dashboard's ⋯ menu."
+msgstr "Anda bisa mengubahnya nanti dari menu ⋯ di dasbor."
+
+#: survey/templates/editor/survey_start.html
+msgid "With AI"
+msgstr "Dengan AI"
+
+#: survey/templates/editor/survey_start.html
+msgid "Where traffic congestion is worst in Treviglio and why"
+msgstr "Di mana kemacetan terparah di Treviglio dan mengapa"
+
+#: survey/templates/editor/survey_start.html
+msgid "Describe what you want to find out in one sentence. You get a full draft — sections, questions, map — to edit."
+msgstr "Jelaskan dalam satu kalimat apa yang ingin Anda ketahui. Anda mendapat draf lengkap – bagian, pertanyaan, peta – untuk diedit."
+
+#: survey/templates/editor/survey_start.html
+msgid "For a first survey, or a quick start on a new topic."
+msgstr "Untuk survei pertama, atau mulai cepat pada topik baru."
+
+#: survey/templates/editor/survey_start.html
+msgid "Not available on this server."
+msgstr "Tidak tersedia di server ini."
+
+#: survey/templates/editor/survey_start.html
+msgid "Write your goal in whatever language you think in — Deutsch, Español, Polski. The draft comes out in the survey languages you pick, with the map aimed at the place your brief mentions. Your description goes to an AI provider to build the draft; survey answers never do. Nothing is published until you say so."
+msgstr "Tulis tujuan Anda dalam bahasa apa pun yang Anda pikirkan – Deutsch, Español, Polski. Draf dibuat dalam bahasa survei yang Anda pilih, dengan peta mengarah ke tempat yang Anda sebutkan. Deskripsi Anda dikirim ke penyedia AI untuk menyusun draf; jawaban survei tidak pernah. Tidak ada yang dipublikasikan sebelum Anda memutuskan."
+
+#: survey/templates/editor/survey_start.html
+msgid "AI drafting is not configured on this server. Start from scratch instead."
+msgstr "Draf AI tidak dikonfigurasi di server ini. Mulai dari awal saja."
+
+#: survey/templates/editor/survey_start.html
+msgid "Your agent"
+msgstr "Agen Anda"
+
+#: survey/templates/editor/survey_start.html
+msgid "Soon"
+msgstr "Segera"
+
+#: survey/templates/editor/survey_start.html
+msgid "Connect your AI agent"
+msgstr "Hubungkan agen AI Anda"
+
+#: survey/templates/editor/survey_start.html
+msgid "Let Claude, ChatGPT or Cursor build and edit surveys for you through MCP, with a token you control."
+msgstr "Biarkan Claude, ChatGPT, atau Cursor membuat dan mengedit survei untuk Anda melalui MCP, dengan token yang Anda kendalikan."
+
+
+
+#: survey/templates/editor/account_mcp.html
+msgid "AI agents & MCP"
+msgstr "Agen AI & MCP"
+
+#: survey/templates/editor/account_mcp.html
+msgid "Coming soon"
+msgstr "Segera hadir"
+
+#: survey/templates/editor/account_mcp.html
+msgid "Build surveys from your own AI agent"
+msgstr "Buat survei dari agen AI Anda sendiri"
+
+#: survey/templates/editor/account_mcp.html
+msgid "Mapsurvey is getting an MCP server. Connect it to Claude, ChatGPT, Cursor or any MCP client with a token from this page, and ask the agent in plain words:"
+msgstr "Mapsurvey akan memiliki server MCP. Hubungkan ke Claude, ChatGPT, Cursor, atau klien MCP apa pun dengan token dari halaman ini, lalu minta agen dengan kata-kata biasa:"
+
+#: survey/templates/editor/account_mcp.html
+msgid "example"
+msgstr "contoh"
+
+#: survey/templates/editor/account_mcp.html
+msgid "Create a Mapsurvey survey in Italian and English about where traffic congestion is worst in Treviglio and why. Add a point question for the worst spots and a short text question for the reason. Give me the editor link."
+msgstr "Buat survei Mapsurvey dalam bahasa Italia dan Inggris tentang di mana kemacetan terparah di Treviglio dan mengapa. Tambahkan pertanyaan titik untuk lokasi terburuk dan pertanyaan teks singkat untuk alasannya. Berikan saya tautan editornya."
+
+#: survey/templates/editor/account_mcp.html
+msgid "The agent sees and changes only surveys <strong>you</strong> own or collaborate on."
+msgstr "Agen hanya melihat dan mengubah survei yang <strong>Anda</strong> miliki atau ikut kerjakan."
+
+#: survey/templates/editor/account_mcp.html
+msgid "Mapsurvey never sees your chat — only the tool calls the agent makes."
+msgstr "Mapsurvey tidak pernah melihat obrolan Anda, hanya panggilan alat yang dilakukan agen."
+
+#: survey/templates/editor/account_mcp.html
+msgid "Publishing and deleting always ask for an explicit confirmation."
+msgstr "Memublikasikan dan menghapus selalu meminta konfirmasi eksplisit."
+
+#: survey/templates/editor/account_mcp.html
+msgid "We'll email you when it's ready."
+msgstr "Kami akan mengirim email saat sudah siap."
+
+#: survey/templates/editor/account_mcp.html
+msgid "Tell me when it's ready"
+msgstr "Beri tahu saya saat sudah siap"
+
+#: survey/templates/editor/account_mcp.html
+msgid "One email when it launches. Nothing else."
+msgstr "Satu email saat diluncurkan. Tidak ada yang lain."
+
+#: survey/templates/base.html
+msgid "soon"
+msgstr "segera"
+
+#: survey/templates/editor.html
+msgid "Start another way…"
+msgstr "Mulai dengan cara lain…"
+
+#: survey/templates/editor/survey_create.html
+msgid "Start another way"
+msgstr "Mulai dengan cara lain"
+
+#: survey/templates/editor.html
+msgid "Opening…"
+msgstr "Membuka…"
+
+#: survey/templates/editor/survey_create.html
+msgid "Open the map on your city:"
+msgstr "Buka peta di kota Anda:"
+
+#: survey/templates/editor/survey_create.html
+msgid "Use my location"
+msgstr "Gunakan lokasi saya"
+
+#: survey/templates/editor/survey_start.html
+msgid "Selected"
+msgstr "Dipilih"
+
+#: survey/templates/editor/survey_start.html
+msgid "For teams who already work from an agent."
+msgstr "Untuk tim yang sudah bekerja dari agen."
+
+#: survey/templates/editor/survey_start.html
+msgid "How this works"
+msgstr "Cara kerjanya"

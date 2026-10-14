@@ -28716,16 +28716,17 @@ class EditorZeroSurveyRedirectTest(TestCase):
         Membership.objects.create(user=self.user, organization=self.org, role='owner')
         self.client.login(username='zerouser', password='pass')
 
-    def test_empty_org_is_redirected_to_create(self):
+    def test_empty_org_is_redirected_to_the_start_page(self):
         """
         GIVEN an organization with no surveys
         WHEN an owner opens the dashboard
-        THEN they are redirected to the create page with the welcome flag
+        THEN they are redirected to the start page (the three ways to begin,
+             change first-survey-onboarding) with the welcome flag
         """
         response = self.client.get(reverse('editor'))
 
         self.assertRedirects(
-            response, reverse('editor_survey_create') + '?welcome=1',
+            response, reverse('editor_survey_start') + '?welcome=1',
         )
 
     def test_dashboard_flag_defeats_the_redirect(self):
@@ -51817,3 +51818,629 @@ class HelpSiteLinksTest(TestCase):
         self.assertTrue(config(signed_in)['open_on_load'])
         self.assertFalse(config(plain)['open_on_load'])
         self.assertFalse(config(anonymous)['open_on_load'])
+
+
+# ── Ways to start (change first-survey-onboarding) ──────────────────────────
+
+class MapStartTest(TestCase):
+    """`survey/map_start.py`: the ordered chain behind every new survey's map."""
+
+    def setUp(self):
+        from django.test import RequestFactory
+        self.factory = RequestFactory()
+        self.org = _make_org('MapStartOrg')
+
+    def _request(self, **headers):
+        request = self.factory.get('/editor/surveys/start/', **headers)
+        request.active_org = self.org
+        return request
+
+    def test_browser_position_wins(self):
+        """
+        GIVEN posted browser coordinates and a positioned survey in the organization
+        WHEN the chain runs
+        THEN the browser coordinates come back with source 'browser'
+        """
+        from survey import map_start
+        SurveyHeader.objects.create(name='bishkek', organization=self.org,
+                                    start_map_postion=Point(74.59, 42.87), start_map_zoom=11)
+
+        start = map_start.suggest_start_position(self._request(), browser=(10.0, 20.0, 9))
+
+        self.assertEqual((start.lat, start.lng, start.zoom, start.source), (10.0, 20.0, 9, 'browser'))
+
+    def test_newest_organization_survey(self):
+        """
+        GIVEN two positioned surveys in the organization and no browser position
+        WHEN the chain runs
+        THEN the newer survey's position and zoom come back with source 'org_survey'
+        """
+        from survey import map_start
+        SurveyHeader.objects.create(name='older', organization=self.org,
+                                    start_map_postion=Point(13.405, 52.52), start_map_zoom=12)
+        SurveyHeader.objects.create(name='newer', organization=self.org,
+                                    start_map_postion=Point(74.59, 42.87), start_map_zoom=11)
+        # A trashed survey and a draft copy are not the workspace's map.
+        SurveyHeader.objects.create(name='trashed', organization=self.org, deleted_at=timezone.now(),
+                                    start_map_postion=Point(0.0, 0.0), start_map_zoom=3)
+
+        start = map_start.suggest_start_position(self._request())
+
+        self.assertEqual(start.source, 'org_survey')
+        self.assertAlmostEqual(start.lat, 42.87)
+        self.assertAlmostEqual(start.lng, 74.59)
+        self.assertEqual(start.zoom, 11)
+
+    @override_settings(CLOUDFLARE_TRUSTED=True)
+    def test_country_from_the_edge_header(self):
+        """
+        GIVEN no browser position, no positioned survey, and CF-IPCountry = KG behind a trusted edge
+        WHEN the chain runs
+        THEN Kyrgyzstan's centre at zoom 5 comes back with source 'country'
+        """
+        from survey import map_start
+        from survey.country_centroids import CENTROIDS
+
+        start = map_start.suggest_start_position(self._request(HTTP_CF_IPCOUNTRY='KG'))
+
+        self.assertEqual(start.source, 'country')
+        self.assertEqual((start.lat, start.lng), CENTROIDS['KG'])
+        self.assertEqual(start.zoom, 5)
+
+    @override_settings(CLOUDFLARE_TRUSTED=False)
+    def test_edge_header_ignored_when_untrusted(self):
+        """
+        GIVEN CF-IPCountry = KG but no trusted edge, and Accept-Language de-AT
+        WHEN the chain runs
+        THEN Austria's centre comes back, not Kyrgyzstan's
+        """
+        from survey import map_start
+        from survey.country_centroids import CENTROIDS
+
+        start = map_start.suggest_start_position(
+            self._request(HTTP_CF_IPCOUNTRY='KG', HTTP_ACCEPT_LANGUAGE='de-AT,de;q=0.9'),
+        )
+
+        self.assertEqual(start.source, 'country')
+        self.assertEqual((start.lat, start.lng), CENTROIDS['AT'])
+
+    @override_settings(CLOUDFLARE_TRUSTED=True)
+    def test_unknown_country_falls_through_to_the_world(self):
+        """
+        GIVEN Cloudflare's XX (unknown) and an Accept-Language without a region
+        WHEN the chain runs
+        THEN the world view comes back
+        """
+        from survey import map_start
+
+        start = map_start.suggest_start_position(
+            self._request(HTTP_CF_IPCOUNTRY='XX', HTTP_ACCEPT_LANGUAGE='en,fr;q=0.8'),
+        )
+
+        self.assertEqual(start, map_start.WORLD)
+        self.assertEqual((start.lat, start.lng, start.zoom, start.source), (20.0, 0.0, 2, 'world'))
+
+    def test_stock_browser_locale_is_not_a_location(self):
+        """
+        GIVEN a creator in Bishkek whose stock Chrome sends en-US and no trusted edge header
+        WHEN the chain runs
+        THEN the world view comes back, not Kansas: `en-US` is the browser default, not a place
+        """
+        from survey import map_start
+
+        start = map_start.suggest_start_position(self._request(HTTP_ACCEPT_LANGUAGE='en-US,en;q=0.9'))
+
+        self.assertEqual(start.source, 'world')
+        self.assertEqual(map_start._accept_language_region('pt-BR,pt;q=0.9'), 'BR')
+
+    def test_no_request_context_is_the_world(self):
+        """
+        GIVEN a request without an organization or any header
+        WHEN the chain runs
+        THEN the world view comes back and nothing raises
+        """
+        from survey import map_start
+        request = self.factory.get('/')
+        request.active_org = None
+
+        self.assertEqual(map_start.suggest_start_position(request).source, 'world')
+
+    def test_browser_position_parsing(self):
+        """
+        GIVEN posted map fields in several shapes
+        WHEN they are parsed
+        THEN a valid pair becomes a tuple, a missing zoom defaults, and garbage is None
+        """
+        from survey import map_start
+
+        self.assertEqual(map_start.browser_position({'map_lat': '42.87', 'map_lng': '74.59', 'map_zoom': '11'}),
+                         (42.87, 74.59, 11))
+        self.assertEqual(map_start.browser_position({'map_lat': '42.87', 'map_lng': '74.59'}),
+                         (42.87, 74.59, map_start.ZOOM_BROWSER))
+        self.assertIsNone(map_start.browser_position({'map_lat': '', 'map_lng': ''}))
+        self.assertIsNone(map_start.browser_position({'map_lat': '999', 'map_lng': '0'}))
+        self.assertIsNone(map_start.browser_position({'map_lat': 'abc', 'map_lng': '1'}))
+        self.assertIsNone(map_start.browser_position({}))
+
+    def test_every_centroid_is_a_point_on_earth(self):
+        """
+        GIVEN the hand-maintained centroid table
+        WHEN every entry is checked
+        THEN each is an alpha-2 code with coordinates inside the WGS84 box
+        """
+        from survey.country_centroids import CENTROIDS
+
+        self.assertGreater(len(CENTROIDS), 240)
+        for code, (lat, lng) in CENTROIDS.items():
+            self.assertRegex(code, r'^[A-Z]{2}$')
+            self.assertTrue(-90 <= lat <= 90 and -180 <= lng <= 180, code)
+
+
+class SurveyStartTest(TestCase):
+    """The start page, the one-click blank survey and the remembered default."""
+
+    def setUp(self):
+        self.org = _make_org('StartOrg')
+        self.user = User.objects.create_user('startuser', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='startuser', password='pass')
+
+    @staticmethod
+    def _created_props(emit):
+        from survey import product_events as pe
+        calls = [c for c in emit.call_args_list if c.args and c.args[0] == pe.SURVEY_CREATED]
+        return calls[0].args[2] if calls else None
+
+    # ── start page ──
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
+    def test_start_page_shows_three_cards(self):
+        """
+        GIVEN an editor-or-higher creator and a configured provider
+        WHEN the start page is opened
+        THEN the three cards render: a POST form for blank, a form to the AI path, an inert agent card
+        """
+        response = self.client.get(reverse('editor_survey_start'))
+
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('Start from scratch', html)
+        self.assertIn('action="%s"' % reverse('editor_survey_create_blank'), html)
+        self.assertIn('data-survey-start="blank"', html)
+        self.assertIn('Draft with AI', html)
+        self.assertIn('name="action" value="ai"', html)
+        self.assertIn('Connect your AI agent', html)
+        # The third card is inert until #306: a div with aria-disabled, never a link.
+        card = html[html.index('data-path="agent"'):html.index('</div>', html.index('data-path="agent"') + 600)]
+        self.assertIn('aria-disabled="true"', html[:html.index('data-path="agent"') + 60][-200:])
+        self.assertNotIn('href=', card)
+        self.assertNotIn('Skip to dashboard', html)
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='', GEMINI_API_KEY='')
+    def test_ai_card_disabled_without_a_provider(self):
+        """
+        GIVEN no LLM provider
+        WHEN the start page is opened
+        THEN the AI card says it is not available and offers no action, while the other two work
+        """
+        response = self.client.get(reverse('editor_survey_start'))
+
+        html = response.content.decode()
+        self.assertIn('Not available on this server', html)
+        self.assertNotIn('name="action" value="ai"', html)
+        self.assertIn('data-survey-start="blank"', html)
+
+    def test_welcome_escape_link(self):
+        """
+        GIVEN the empty-organization redirect landed here
+        WHEN the page renders with ?welcome=1
+        THEN a "Skip to dashboard" link carrying ?dashboard=1 is shown
+        """
+        response = self.client.get(reverse('editor_survey_start') + '?welcome=1')
+
+        self.assertContains(response, 'href="%s?dashboard=1"' % reverse('editor'))
+        self.assertContains(response, 'Skip to dashboard')
+
+    def test_viewer_cannot_open_the_start_page(self):
+        """
+        GIVEN a viewer-role creator
+        WHEN they open the start page or post to the blank endpoint
+        THEN both are refused and nothing is created
+        """
+        viewer = User.objects.create_user('startviewer', password='pass')
+        Membership.objects.create(user=viewer, organization=self.org, role='viewer')
+        self.client.login(username='startviewer', password='pass')
+
+        self.assertEqual(self.client.get(reverse('editor_survey_start')).status_code, 403)
+        self.assertEqual(self.client.post(reverse('editor_survey_create_blank')).status_code, 403)
+        self.assertEqual(SurveyHeader.objects.count(), 0)
+
+    # ── blank survey in one request ──
+
+    def test_blank_post_creates_a_survey_and_opens_the_editor(self):
+        """
+        GIVEN an editor with no body to send
+        WHEN they post to the blank endpoint
+        THEN an "Untitled survey" with one head section, the owner collaborator and a
+             start position exists, survey_created says start_blank/world, and the editor opens
+        """
+        with patch('survey.product_events.emit') as emit:
+            response = self.client.post(reverse('editor_survey_create_blank'))
+
+        survey = SurveyHeader.objects.get()
+        self.assertRedirects(response, reverse('editor_survey_detail', kwargs={'survey_uuid': survey.uuid}),
+                             fetch_redirect_response=False)
+        self.assertEqual(survey.name, 'Untitled survey')
+        self.assertEqual(survey.available_languages, ['en'])
+        self.assertEqual(survey.organization, self.org)
+        self.assertEqual(survey.created_by, self.user)
+        self.assertIsNotNone(survey.start_map_postion)
+        self.assertEqual(survey.start_map_zoom, 2)
+        section = SurveySection.objects.get(survey_header=survey)
+        self.assertTrue(section.is_head)
+        self.assertEqual(section.code, 'S1')
+        self.assertTrue(SurveyCollaborator.objects.filter(survey=survey, user=self.user, role='owner').exists())
+        props = self._created_props(emit)
+        self.assertEqual(props['creation_method'], 'manual')
+        self.assertEqual(props['surface'], 'start_blank')
+        self.assertEqual(props['map_source'], 'world')
+        self.assertEqual(set(props), {'survey_id', 'creation_method', 'surface', 'map_source'})
+
+    def test_blank_survey_speaks_the_creators_language(self):
+        """
+        GIVEN a creator whose interface language is German
+        WHEN they post to the blank endpoint
+        THEN the survey's language is German and its name is the German "Untitled survey"
+        """
+        # The preference reaches a request through the language cookie the
+        # middleware writes on the previous response; a fresh client carries it.
+        from django.conf import settings as dj_settings
+        CreatorPreferences.objects.create(user=self.user, ui_language='de')
+        self.client.cookies[dj_settings.LANGUAGE_COOKIE_NAME] = 'de'
+        with translation.override('de'):
+            expected_name = translation.gettext('Untitled survey')
+
+        self.client.post(reverse('editor_survey_create_blank'))
+
+        survey = SurveyHeader.objects.get()
+        self.assertEqual(survey.available_languages, ['de'])
+        self.assertEqual(survey.name, expected_name)
+
+    def test_unsupported_interface_language_falls_back_to_english(self):
+        """
+        GIVEN an active language the product cannot run a survey in
+        WHEN the blank survey's language is chosen
+        THEN it is English
+        """
+        from survey.editor_views import _creator_survey_language
+        with translation.override('ja'):
+            self.assertEqual(_creator_survey_language(), 'en')
+        with translation.override('pl'):
+            self.assertEqual(_creator_survey_language(), 'pl')
+
+    def test_untitled_survey_is_a_valid_name_in_every_catalog(self):
+        """
+        GIVEN SurveyHeader.name's validator and 45-character limit
+        WHEN "Untitled survey" is translated into every creator language
+        THEN every translation passes
+        """
+        from survey.models import validate_url_name
+        from django.conf import settings as dj_settings
+        for code, _label in dj_settings.LANGUAGES:
+            with translation.override(code):
+                name = translation.gettext('Untitled survey')
+            self.assertLessEqual(len(name), 45, code)
+            validate_url_name(name)  # raises ValidationError on failure
+
+    def test_browser_position_becomes_the_start(self):
+        """
+        GIVEN the browser handed the start form its coordinates
+        WHEN the blank endpoint receives them
+        THEN the survey opens there and survey_created says map_source='browser'
+        """
+        with patch('survey.product_events.emit') as emit:
+            self.client.post(reverse('editor_survey_create_blank'),
+                             {'map_lat': '42.87', 'map_lng': '74.59', 'map_zoom': '14'})
+
+        survey = SurveyHeader.objects.get()
+        self.assertAlmostEqual(survey.start_map_postion.y, 42.87)
+        self.assertAlmostEqual(survey.start_map_postion.x, 74.59)
+        self.assertEqual(survey.start_map_zoom, 14)
+        self.assertEqual(self._created_props(emit)['map_source'], 'browser')
+
+    def test_blank_get_creates_nothing(self):
+        """
+        GIVEN a link a browser might prefetch
+        WHEN the blank endpoint receives a GET
+        THEN it is refused and no survey exists
+        """
+        response = self.client.get(reverse('editor_survey_create_blank'))
+
+        self.assertEqual(response.status_code, 405)
+        self.assertEqual(SurveyHeader.objects.count(), 0)
+
+    # ── remembered default ──
+
+    def test_remember_on_the_blank_card(self):
+        """
+        GIVEN "Always start this way" ticked on Start from scratch
+        WHEN the blank endpoint runs
+        THEN the default is 'blank' and the survey is still created
+        """
+        self.client.post(reverse('editor_survey_create_blank'), {'remember': '1'})
+
+        self.assertEqual(CreatorPreferences.objects.get(user=self.user).survey_start_default, 'blank')
+        self.assertEqual(SurveyHeader.objects.count(), 1)
+
+    def test_remember_on_the_ai_card(self):
+        """
+        GIVEN "Always start this way" ticked on Draft with AI
+        WHEN the start page receives action=ai
+        THEN the default is 'ai' and the creator lands on the create page from the start page
+        """
+        response = self.client.post(reverse('editor_survey_start'), {'action': 'ai', 'remember': '1'})
+
+        self.assertRedirects(response, reverse('editor_survey_create') + '?from=start',
+                             fetch_redirect_response=False)
+        self.assertEqual(CreatorPreferences.objects.get(user=self.user).survey_start_default, 'ai')
+
+    def test_ai_without_remember_keeps_asking(self):
+        """
+        GIVEN the box left unticked
+        WHEN the start page receives action=ai
+        THEN no default is stored
+        """
+        self.client.post(reverse('editor_survey_start'), {'action': 'ai'})
+
+        self.assertFalse(CreatorPreferences.objects.filter(user=self.user).exclude(survey_start_default='').exists())
+
+    def test_clear_default(self):
+        """
+        GIVEN a stored default
+        WHEN the start page receives action=clear
+        THEN the default is '' and the page says so no more
+        """
+        CreatorPreferences.objects.create(user=self.user, survey_start_default='ai')
+
+        response = self.client.post(reverse('editor_survey_start'), {'action': 'clear'})
+
+        self.assertRedirects(response, reverse('editor_survey_start'), fetch_redirect_response=False)
+        self.assertEqual(CreatorPreferences.objects.get(user=self.user).survey_start_default, '')
+
+    def test_start_page_shows_the_current_default(self):
+        """
+        GIVEN a stored default
+        WHEN the start page renders
+        THEN it names the default and offers Clear
+        """
+        CreatorPreferences.objects.create(user=self.user, survey_start_default='ai')
+
+        response = self.client.get(reverse('editor_survey_start'))
+
+        self.assertContains(response, 'Your default:')
+        self.assertContains(response, 'name="action" value="clear"')
+
+    def test_unknown_action_is_a_bad_request(self):
+        """
+        GIVEN a POST the start page does not know
+        WHEN it arrives
+        THEN 400, nothing stored
+        """
+        self.assertEqual(self.client.post(reverse('editor_survey_start'), {'action': 'x'}).status_code, 400)
+
+    # ── dashboard ──
+
+    def _dashboard(self):
+        SurveyHeader.objects.create(name='existing', organization=self.org, created_by=self.user)
+        return self.client.get(reverse('editor')).content.decode()
+
+    def test_new_survey_button_leads_to_the_start_page_by_default(self):
+        """
+        GIVEN no remembered default
+        WHEN the dashboard renders
+        THEN "+ New Survey" links to the start page and the ⋯ menu offers "Start another way…"
+        """
+        html = self._dashboard()
+
+        self.assertIn('href="%s" class="btn btn-sm btn-primary btn-new-survey"' % reverse('editor_survey_start'), html)
+        self.assertIn('Start another way', html)
+        self.assertNotIn('data-survey-start="blank"', html)
+
+    def test_new_survey_button_honours_the_ai_default(self):
+        """
+        GIVEN survey_start_default = 'ai'
+        WHEN the dashboard renders
+        THEN "+ New Survey" links to the create page
+        """
+        CreatorPreferences.objects.create(user=self.user, survey_start_default='ai')
+
+        html = self._dashboard()
+
+        self.assertIn('href="%s" class="btn btn-sm btn-primary btn-new-survey"' % reverse('editor_survey_create'), html)
+
+    def test_new_survey_button_honours_the_blank_default(self):
+        """
+        GIVEN survey_start_default = 'blank'
+        WHEN the dashboard renders
+        THEN "+ New Survey" is a POST form to the blank endpoint with the geolocation hook
+        """
+        CreatorPreferences.objects.create(user=self.user, survey_start_default='blank')
+
+        html = self._dashboard()
+
+        self.assertIn('action="%s" class="btn-new-survey-form" data-survey-start="blank"'
+                      % reverse('editor_survey_create_blank'), html)
+        self.assertRegex(html, r'js/survey_start\.[0-9a-f]+\.js')
+
+    # ── create page ──
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test', MOBILE_EDITOR_NAV=False)
+    def test_create_page_from_the_start_page_offers_the_way_back(self):
+        """
+        GIVEN the creator chose Draft with AI on the start page
+        WHEN the create page opens with ?from=start
+        THEN "Create empty" is gone and a link back to the start page is there; without the
+             parameter the page is as before
+        """
+        from_start = self.client.get(reverse('editor_survey_create') + '?from=start').content.decode()
+        plain = self.client.get(reverse('editor_survey_create')).content.decode()
+
+        self.assertIn('id="start-another-way"', from_start)
+        self.assertIn('href="%s"' % reverse('editor_survey_start'), from_start)
+        self.assertNotIn('id="empty-btn"', from_start)
+        self.assertIn('id="empty-btn"', plain)
+        self.assertNotIn('id="start-another-way"', plain)
+
+    def test_create_page_opens_on_the_suggested_centre(self):
+        """
+        GIVEN the organization's last survey is positioned on Bishkek
+        WHEN the create page renders
+        THEN the picker's first setView is that position, the hidden map_source says org_survey,
+             the Berlin default is gone and the "Use my location" hint is absent
+        """
+        SurveyHeader.objects.create(name='bishkek', organization=self.org, created_by=self.user,
+                                    start_map_postion=Point(74.59, 42.87), start_map_zoom=11)
+
+        html = self.client.get(reverse('editor_survey_create')).content.decode()
+
+        self.assertIn('[42.87, 74.59], 11', html)
+        self.assertIn('name="map_source" id="create-map-source" value="org_survey"', html)
+        self.assertNotIn('52.52, 13.405', html)
+        self.assertNotIn('id="create-geo-hint"', html)
+
+    def test_create_page_hints_at_geolocation_when_only_the_world_is_known(self):
+        """
+        GIVEN nothing but the world fallback
+        WHEN the create page renders
+        THEN the map starts on the world view, no on-load permission request is in the page,
+             and the "Use my location" hint is shown
+        """
+        html = self.client.get(reverse('editor_survey_create')).content.decode()
+
+        self.assertIn('[20.0, 0.0], 2', html)
+        self.assertIn('value="world"', html)
+        self.assertIn('id="create-geo-hint"', html)
+        self.assertIn("permissions.query({ name: 'geolocation' })", html)
+
+    @override_settings(USE_L10N=True, LANGUAGE_CODE='de')
+    def test_create_page_centre_survives_a_decimal_comma_locale(self):
+        """
+        GIVEN a creator language that writes 42,87
+        WHEN the create page renders the initial centre into JavaScript
+        THEN the numbers keep their dots
+        """
+        from django.conf import settings as dj_settings
+        SurveyHeader.objects.create(name='bishkek', organization=self.org, created_by=self.user,
+                                    start_map_postion=Point(74.59, 42.87), start_map_zoom=11)
+        self.client.cookies[dj_settings.LANGUAGE_COOKIE_NAME] = 'de'
+
+        html = self.client.get(reverse('editor_survey_create')).content.decode()
+
+        self.assertIn('[42.87, 74.59], 11', html)
+        self.assertNotIn('[42,87', html)
+
+    def test_manual_create_records_surface_and_map_source(self):
+        """
+        GIVEN the create page's manual action with a map the creator framed
+        WHEN the survey is created
+        THEN survey_created carries surface='create_page' and map_source='creator'
+        """
+        with patch('survey.product_events.emit') as emit:
+            self.client.post(reverse('editor_survey_create'), {
+                'name': 'framed', 'map_lat': '42.87', 'map_lng': '74.59', 'map_zoom': '12',
+                'map_touched': '1', 'map_source': 'world',
+            })
+
+        props = self._created_props(emit)
+        self.assertEqual(props['surface'], 'create_page')
+        self.assertEqual(props['map_source'], 'creator')
+        survey = SurveyHeader.objects.get(name='framed')
+        self.assertAlmostEqual(survey.start_map_postion.y, 42.87)
+
+    def test_manual_create_without_map_fields_uses_the_chain(self):
+        """
+        GIVEN a legacy POST that sends only a name
+        WHEN the survey is created
+        THEN it still gets a start position, from the chain, and map_source names the rung
+        """
+        with patch('survey.product_events.emit') as emit:
+            self.client.post(reverse('editor_survey_create'), {'name': 'legacy'})
+
+        survey = SurveyHeader.objects.get(name='legacy')
+        self.assertIsNotNone(survey.start_map_postion)
+        self.assertEqual(self._created_props(emit)['map_source'], 'world')
+
+
+class AgentAccessTeaserTest(TestCase):
+    """`/editor/account/mcp/` before the MCP server exists, and its entrances."""
+
+    def setUp(self):
+        self.org = _make_org('AgentOrg')
+        self.user = User.objects.create_user('agentuser', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='agentuser', password='pass')
+
+    def test_page_renders_the_teaser(self):
+        """
+        GIVEN a signed-in creator
+        WHEN they open the agent page
+        THEN it describes the agent path, shows the example prompt and the button
+        """
+        response = self.client.get(reverse('editor_account_mcp'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Coming soon')
+        self.assertContains(response, 'Create a Mapsurvey survey in Italian and English')
+        self.assertContains(response, "Tell me when it's ready")
+        self.assertNotContains(response, "We'll email you")
+
+    def test_interest_recorded_once(self):
+        """
+        GIVEN the button posted twice
+        WHEN the page handles both
+        THEN the first timestamp stays, one event was emitted, and the page shows the confirmation
+        """
+        with patch('survey.product_events.emit') as emit:
+            self.client.post(reverse('editor_account_mcp'))
+            first = CreatorPreferences.objects.get(user=self.user).agent_access_requested_at
+            self.client.post(reverse('editor_account_mcp'))
+
+        self.assertIsNotNone(first)
+        self.assertEqual(CreatorPreferences.objects.get(user=self.user).agent_access_requested_at, first)
+        from survey import product_events as pe
+        self.assertEqual([c.args[0] for c in emit.call_args_list], [pe.AGENT_ACCESS_REQUESTED])
+        response = self.client.get(reverse('editor_account_mcp'))
+        self.assertContains(response, "We'll email you")
+        self.assertNotContains(response, 'class="mcp-cta"')
+
+    def test_anonymous_is_sent_to_login(self):
+        """
+        GIVEN a signed-out visitor
+        WHEN they open the agent page
+        THEN they are redirected to sign in
+        """
+        self.client.logout()
+
+        response = self.client.get(reverse('editor_account_mcp'))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('login', response['Location'])
+
+    def test_entrances_in_both_bases_and_the_help_menu(self):
+        """
+        GIVEN the dashboard (base.html) and an editor page (editor_base.html)
+        WHEN both render
+        THEN the account menu of each carries "AI agents & MCP" and the editor's "?" menu
+             carries "Connect your AI agent", all linking to the agent page
+        """
+        SurveyHeader.objects.create(name='existing', organization=self.org, created_by=self.user)
+        url = reverse('editor_account_mcp')
+
+        dashboard = self.client.get(reverse('editor')).content.decode()
+        editor_page = self.client.get(reverse('editor_survey_create')).content.decode()
+
+        self.assertIn('href="%s"' % url, dashboard)
+        self.assertIn('AI agents', dashboard)
+        self.assertIn('href="%s"' % url, editor_page)
+        self.assertIn('AI agents', editor_page)
+        self.assertIn('Connect your AI agent', editor_page)

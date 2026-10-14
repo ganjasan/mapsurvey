@@ -9,7 +9,7 @@ This tutorial takes you from an empty editor to a published survey and a first e
 
 ## What you will do
 
-1. Create a survey from the wizard and set up its map.
+1. Choose how to start, create an empty survey and set up its map.
 2. Add a map question with sub-questions, so every pin carries an answer.
 3. Publish the survey and share the link.
 4. Read the responses and export them for GIS.

@@ -15,6 +15,7 @@ from django.conf import settings
 HELP_LINKS = {
     'help_home': '',
     'start_here': 'start-here/',
+    'ways_to_start': 'how-to/choose-how-to-start/',
     'reference_layers': 'how-to/add-a-reference-layer/',
     'embedding': 'how-to/embed-a-survey/',
     'export': 'how-to/export-responses/',

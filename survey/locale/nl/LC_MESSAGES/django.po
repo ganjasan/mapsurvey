@@ -7782,3 +7782,197 @@ msgstr "Maakt iemands persoonsgegevens openbaar"
 #: survey/content_screening.py
 msgid "Something else"
 msgstr "Iets anders"
+
+#: survey/models.py
+msgid "Ask every time"
+msgstr "Elke keer vragen"
+
+#: survey/models.py
+msgid "Start from scratch"
+msgstr "Vanaf nul beginnen"
+
+#: survey/models.py
+msgid "Draft with AI"
+msgstr "Opzet met AI"
+
+#: survey/editor_views.py
+msgid "Untitled survey"
+msgstr "Naamloze enquête"
+
+#: survey/templates/editor/survey_start.html
+msgid "New survey"
+msgstr "Nieuwe enquête"
+
+#: survey/templates/editor/survey_start.html
+msgid "How do you want to start?"
+msgstr "Hoe wilt u beginnen?"
+
+#: survey/templates/editor/survey_start.html
+msgid "Every path ends in the same editor. You can change your mind any time."
+msgstr "Elke weg eindigt in dezelfde editor. U kunt op elk moment van gedachten veranderen."
+
+#: survey/templates/editor/survey_start.html
+msgid "Your default: <strong>%(label)s</strong>"
+msgstr "Uw standaard: <strong>%(label)s</strong>"
+
+#: survey/templates/editor/survey_start.html
+msgid "From scratch"
+msgstr "Vanaf nul"
+
+#: survey/templates/editor/survey_start.html
+msgid "An empty survey opens in the editor — the map already on your city. Add sections and questions yourself."
+msgstr "Een lege enquête opent in de editor, met de kaart al op uw stad. Voeg zelf secties en vragen toe."
+
+#: survey/templates/editor/survey_start.html
+msgid "For people who know exactly what they want to ask."
+msgstr "Voor wie precies weet wat hij wil vragen."
+
+#: survey/templates/editor/survey_start.html
+msgid "You get one empty section and the editor. If your browser allows it, the map opens where you are; otherwise where this workspace's last survey was. Name, languages and the map are all one click away in Survey settings."
+msgstr "U krijgt één lege sectie en de editor. Als uw browser het toestaat, opent de kaart waar u bent; anders waar de laatste enquête van deze werkruimte was. Naam, talen en kaart zijn één klik verwijderd in de enquête-instellingen."
+
+#: survey/templates/editor/survey_start.html
+msgid "Opening the editor…"
+msgstr "Editor wordt geopend…"
+
+#: survey/templates/editor/survey_start.html
+msgid "Create empty survey"
+msgstr "Lege enquête maken"
+
+#: survey/templates/editor/survey_start.html
+msgid "Always start this way"
+msgstr "Altijd zo beginnen"
+
+#: survey/templates/editor/survey_start.html
+msgid "You can switch later from the dashboard's ⋯ menu."
+msgstr "U kunt dit later wijzigen via het ⋯-menu van het dashboard."
+
+#: survey/templates/editor/survey_start.html
+msgid "With AI"
+msgstr "Met AI"
+
+#: survey/templates/editor/survey_start.html
+msgid "Where traffic congestion is worst in Treviglio and why"
+msgstr "Waar het verkeer in Treviglio het ergst vastloopt en waarom"
+
+#: survey/templates/editor/survey_start.html
+msgid "Describe what you want to find out in one sentence. You get a full draft — sections, questions, map — to edit."
+msgstr "Beschrijf in één zin wat u wilt weten. U krijgt een volledige opzet – secties, vragen, kaart – om te bewerken."
+
+#: survey/templates/editor/survey_start.html
+msgid "For a first survey, or a quick start on a new topic."
+msgstr "Voor een eerste enquête of een snelle start met een nieuw onderwerp."
+
+#: survey/templates/editor/survey_start.html
+msgid "Not available on this server."
+msgstr "Niet beschikbaar op deze server."
+
+#: survey/templates/editor/survey_start.html
+msgid "Write your goal in whatever language you think in — Deutsch, Español, Polski. The draft comes out in the survey languages you pick, with the map aimed at the place your brief mentions. Your description goes to an AI provider to build the draft; survey answers never do. Nothing is published until you say so."
+msgstr "Schrijf uw doel in de taal waarin u denkt – Deutsch, Español, Polski. De opzet komt in de gekozen enquêtetalen, met de kaart op de plaats die u noemt. Uw beschrijving gaat naar een AI-aanbieder om de opzet te maken; enquêteantwoorden nooit. Er wordt niets gepubliceerd voordat u dat zegt."
+
+#: survey/templates/editor/survey_start.html
+msgid "AI drafting is not configured on this server. Start from scratch instead."
+msgstr "AI-opzetten zijn op deze server niet ingesteld. Begin in plaats daarvan vanaf nul."
+
+#: survey/templates/editor/survey_start.html
+msgid "Your agent"
+msgstr "Uw agent"
+
+#: survey/templates/editor/survey_start.html
+msgid "Soon"
+msgstr "Binnenkort"
+
+#: survey/templates/editor/survey_start.html
+msgid "Connect your AI agent"
+msgstr "Uw AI-agent koppelen"
+
+#: survey/templates/editor/survey_start.html
+msgid "Let Claude, ChatGPT or Cursor build and edit surveys for you through MCP, with a token you control."
+msgstr "Laat Claude, ChatGPT of Cursor enquêtes voor u bouwen en bewerken via MCP, met een token dat u beheert."
+
+
+
+#: survey/templates/editor/account_mcp.html
+msgid "AI agents & MCP"
+msgstr "AI-agenten & MCP"
+
+#: survey/templates/editor/account_mcp.html
+msgid "Coming soon"
+msgstr "Binnenkort"
+
+#: survey/templates/editor/account_mcp.html
+msgid "Build surveys from your own AI agent"
+msgstr "Bouw enquêtes vanuit uw eigen AI-agent"
+
+#: survey/templates/editor/account_mcp.html
+msgid "Mapsurvey is getting an MCP server. Connect it to Claude, ChatGPT, Cursor or any MCP client with a token from this page, and ask the agent in plain words:"
+msgstr "Mapsurvey krijgt een MCP-server. Koppel hem aan Claude, ChatGPT, Cursor of elke MCP-client met een token van deze pagina en vraag de agent in gewone woorden:"
+
+#: survey/templates/editor/account_mcp.html
+msgid "example"
+msgstr "voorbeeld"
+
+#: survey/templates/editor/account_mcp.html
+msgid "Create a Mapsurvey survey in Italian and English about where traffic congestion is worst in Treviglio and why. Add a point question for the worst spots and a short text question for the reason. Give me the editor link."
+msgstr "Maak een Mapsurvey-enquête in het Italiaans en Engels over waar het verkeer in Treviglio het ergst vastloopt en waarom. Voeg een puntvraag toe voor de ergste plekken en een korte tekstvraag voor de reden. Geef me de editorlink."
+
+#: survey/templates/editor/account_mcp.html
+msgid "The agent sees and changes only surveys <strong>you</strong> own or collaborate on."
+msgstr "De agent ziet en wijzigt alleen enquêtes waarvan <strong>u</strong> eigenaar of medewerker bent."
+
+#: survey/templates/editor/account_mcp.html
+msgid "Mapsurvey never sees your chat — only the tool calls the agent makes."
+msgstr "Mapsurvey ziet uw chat nooit, alleen de tool-aanroepen die de agent doet."
+
+#: survey/templates/editor/account_mcp.html
+msgid "Publishing and deleting always ask for an explicit confirmation."
+msgstr "Publiceren en verwijderen vragen altijd om een uitdrukkelijke bevestiging."
+
+#: survey/templates/editor/account_mcp.html
+msgid "We'll email you when it's ready."
+msgstr "We mailen u wanneer het klaar is."
+
+#: survey/templates/editor/account_mcp.html
+msgid "Tell me when it's ready"
+msgstr "Laat me weten wanneer het klaar is"
+
+#: survey/templates/editor/account_mcp.html
+msgid "One email when it launches. Nothing else."
+msgstr "Eén e-mail bij de lancering. Verder niets."
+
+#: survey/templates/base.html
+msgid "soon"
+msgstr "binnenkort"
+
+#: survey/templates/editor.html
+msgid "Start another way…"
+msgstr "Anders beginnen…"
+
+#: survey/templates/editor/survey_create.html
+msgid "Start another way"
+msgstr "Anders beginnen"
+
+#: survey/templates/editor.html
+msgid "Opening…"
+msgstr "Openen…"
+
+#: survey/templates/editor/survey_create.html
+msgid "Open the map on your city:"
+msgstr "Open de kaart op uw stad:"
+
+#: survey/templates/editor/survey_create.html
+msgid "Use my location"
+msgstr "Mijn locatie gebruiken"
+
+#: survey/templates/editor/survey_start.html
+msgid "Selected"
+msgstr "Geselecteerd"
+
+#: survey/templates/editor/survey_start.html
+msgid "For teams who already work from an agent."
+msgstr "Voor teams die al vanuit een agent werken."
+
+#: survey/templates/editor/survey_start.html
+msgid "How this works"
+msgstr "Hoe het werkt"

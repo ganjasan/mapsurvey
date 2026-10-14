@@ -181,7 +181,8 @@ def _progress_recorder(event):
     return record
 
 
-def _finish(event, outcome, error_detail='', survey=None, attempts=None, blob=None):
+def _finish(event, outcome, error_detail='', survey=None, attempts=None, blob=None,
+            map_source=''):
     event.outcome = outcome
     event.error_detail = error_detail[:2000]
     if survey is not None:
@@ -206,11 +207,11 @@ def _finish(event, outcome, error_detail='', survey=None, attempts=None, blob=No
         event.latency_ms = usage.latency_ms
         event.total_latency_ms = attempts.total_latency_ms
     event.save()
-    _emit_terminal_events(event, outcome, survey)
+    _emit_terminal_events(event, outcome, survey, map_source)
     return event
 
 
-def _emit_terminal_events(event, outcome, survey):
+def _emit_terminal_events(event, outcome, survey, map_source=''):
     """Analytics for a finished generation. After the save, never before it.
 
     `survey_created` lives here rather than in `materialize_draft()` because a
@@ -250,6 +251,8 @@ def _emit_terminal_events(event, outcome, survey):
     survey_props = {
         'survey_id': str(survey.id),
         'creation_method': pe.CREATION_AI,
+        'surface': pe.SURFACE_CREATE_PAGE,
+        'map_source': map_source,
     }
     pe.emit(pe.SURVEY_CREATED, event.user_id, survey_props)
 
@@ -263,7 +266,8 @@ def _emit_terminal_events(event, outcome, survey):
         pe.emit(pe.SURVEY_QUESTION_ADDED, event.user_id, survey_props)
 
 
-def generate_survey_draft(event, brief, languages, header_overrides, map_locked=False):
+def generate_survey_draft(event, brief, languages, header_overrides, map_locked=False,
+                          map_source=''):
     """Run one generation attempt-set for `event`, updating it in place.
 
     Never raises for expected failures — every outcome is recorded on the
@@ -332,7 +336,12 @@ def generate_survey_draft(event, brief, languages, header_overrides, map_locked=
     # Outside the transaction below: a slow geocoder must not hold a database
     # transaction open, and its failure is not a materialization failure.
     if not map_locked:
-        header_overrides = _apply_brief_location(blob, header_overrides)
+        located = _apply_brief_location(blob, header_overrides)
+        if located is not header_overrides:
+            # The brief named a place and it resolved: the map is the brief's,
+            # whatever the create page had suggested.
+            map_source = pe.MAP_SOURCE_BRIEF
+        header_overrides = located
 
     try:
         with transaction.atomic():
@@ -352,7 +361,8 @@ def generate_survey_draft(event, brief, languages, header_overrides, map_locked=
 
     if warnings:
         logger.info('AI draft imported with warnings: %s', '; '.join(warnings))
-    return _finish(event, 'success', survey=survey, attempts=attempts, blob=blob)
+    return _finish(event, 'success', survey=survey, attempts=attempts, blob=blob,
+                   map_source=map_source)
 
 
 def _apply_brief_location(blob, header_overrides):

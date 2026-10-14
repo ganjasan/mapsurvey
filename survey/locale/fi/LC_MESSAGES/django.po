@@ -7744,3 +7744,197 @@ msgstr "Paljastaa jonkun henkilötietoja"
 #: survey/content_screening.py
 msgid "Something else"
 msgstr "Jotain muuta"
+
+#: survey/models.py
+msgid "Ask every time"
+msgstr "Kysy joka kerta"
+
+#: survey/models.py
+msgid "Start from scratch"
+msgstr "Aloita tyhjästä"
+
+#: survey/models.py
+msgid "Draft with AI"
+msgstr "Luonnos tekoälyllä"
+
+#: survey/editor_views.py
+msgid "Untitled survey"
+msgstr "Nimetön kysely"
+
+#: survey/templates/editor/survey_start.html
+msgid "New survey"
+msgstr "Uusi kysely"
+
+#: survey/templates/editor/survey_start.html
+msgid "How do you want to start?"
+msgstr "Miten haluat aloittaa?"
+
+#: survey/templates/editor/survey_start.html
+msgid "Every path ends in the same editor. You can change your mind any time."
+msgstr "Jokainen polku päättyy samaan editoriin. Voit muuttaa mieltäsi milloin tahansa."
+
+#: survey/templates/editor/survey_start.html
+msgid "Your default: <strong>%(label)s</strong>"
+msgstr "Oletuksesi: <strong>%(label)s</strong>"
+
+#: survey/templates/editor/survey_start.html
+msgid "From scratch"
+msgstr "Tyhjästä"
+
+#: survey/templates/editor/survey_start.html
+msgid "An empty survey opens in the editor — the map already on your city. Add sections and questions yourself."
+msgstr "Tyhjä kysely avautuu editoriin, kartta valmiiksi kaupungissasi. Lisää osiot ja kysymykset itse."
+
+#: survey/templates/editor/survey_start.html
+msgid "For people who know exactly what they want to ask."
+msgstr "Niille, jotka tietävät tarkalleen, mitä kysyä."
+
+#: survey/templates/editor/survey_start.html
+msgid "You get one empty section and the editor. If your browser allows it, the map opens where you are; otherwise where this workspace's last survey was. Name, languages and the map are all one click away in Survey settings."
+msgstr "Saat yhden tyhjän osion ja editorin. Jos selaimesi sallii, kartta avautuu sijaintiisi; muuten sinne, missä tämän työtilan edellinen kysely oli. Nimi, kielet ja kartta ovat yhden klikkauksen päässä kyselyn asetuksissa."
+
+#: survey/templates/editor/survey_start.html
+msgid "Opening the editor…"
+msgstr "Avataan editoria…"
+
+#: survey/templates/editor/survey_start.html
+msgid "Create empty survey"
+msgstr "Luo tyhjä kysely"
+
+#: survey/templates/editor/survey_start.html
+msgid "Always start this way"
+msgstr "Aloita aina näin"
+
+#: survey/templates/editor/survey_start.html
+msgid "You can switch later from the dashboard's ⋯ menu."
+msgstr "Voit vaihtaa myöhemmin hallintapaneelin ⋯-valikosta."
+
+#: survey/templates/editor/survey_start.html
+msgid "With AI"
+msgstr "Tekoälyllä"
+
+#: survey/templates/editor/survey_start.html
+msgid "Where traffic congestion is worst in Treviglio and why"
+msgstr "Missä Treviglion liikenneruuhkat ovat pahimmat ja miksi"
+
+#: survey/templates/editor/survey_start.html
+msgid "Describe what you want to find out in one sentence. You get a full draft — sections, questions, map — to edit."
+msgstr "Kuvaile yhdellä lauseella, mitä haluat selvittää. Saat täyden luonnoksen – osiot, kysymykset, kartan – muokattavaksi."
+
+#: survey/templates/editor/survey_start.html
+msgid "For a first survey, or a quick start on a new topic."
+msgstr "Ensimmäiseen kyselyyn tai nopeaan alkuun uudessa aiheessa."
+
+#: survey/templates/editor/survey_start.html
+msgid "Not available on this server."
+msgstr "Ei saatavilla tällä palvelimella."
+
+#: survey/templates/editor/survey_start.html
+msgid "Write your goal in whatever language you think in — Deutsch, Español, Polski. The draft comes out in the survey languages you pick, with the map aimed at the place your brief mentions. Your description goes to an AI provider to build the draft; survey answers never do. Nothing is published until you say so."
+msgstr "Kirjoita tavoitteesi kielellä, jolla ajattelet – Deutsch, Español, Polski. Luonnos syntyy valitsemillasi kyselykielillä, kartta kohdistettuna mainitsemaasi paikkaan. Kuvauksesi lähetetään tekoälypalvelulle luonnoksen tekoa varten; kyselyvastauksia ei koskaan. Mitään ei julkaista ennen kuin päätät niin."
+
+#: survey/templates/editor/survey_start.html
+msgid "AI drafting is not configured on this server. Start from scratch instead."
+msgstr "Tekoälyluonnoksia ei ole määritetty tällä palvelimella. Aloita tyhjästä."
+
+#: survey/templates/editor/survey_start.html
+msgid "Your agent"
+msgstr "Oma agenttisi"
+
+#: survey/templates/editor/survey_start.html
+msgid "Soon"
+msgstr "Pian"
+
+#: survey/templates/editor/survey_start.html
+msgid "Connect your AI agent"
+msgstr "Yhdistä oma tekoälyagenttisi"
+
+#: survey/templates/editor/survey_start.html
+msgid "Let Claude, ChatGPT or Cursor build and edit surveys for you through MCP, with a token you control."
+msgstr "Anna Clauden, ChatGPT:n tai Cursorin rakentaa ja muokata kyselyitä puolestasi MCP:n kautta, hallitsemallasi tunnuksella."
+
+
+
+#: survey/templates/editor/account_mcp.html
+msgid "AI agents & MCP"
+msgstr "Tekoälyagentit ja MCP"
+
+#: survey/templates/editor/account_mcp.html
+msgid "Coming soon"
+msgstr "Tulossa pian"
+
+#: survey/templates/editor/account_mcp.html
+msgid "Build surveys from your own AI agent"
+msgstr "Rakenna kyselyitä omalla tekoälyagentillasi"
+
+#: survey/templates/editor/account_mcp.html
+msgid "Mapsurvey is getting an MCP server. Connect it to Claude, ChatGPT, Cursor or any MCP client with a token from this page, and ask the agent in plain words:"
+msgstr "Mapsurvey saa MCP-palvelimen. Yhdistä se Claudeen, ChatGPT:hen, Cursoriin tai mihin tahansa MCP-asiakkaaseen tämän sivun tunnuksella ja pyydä agentilta tavallisin sanoin:"
+
+#: survey/templates/editor/account_mcp.html
+msgid "example"
+msgstr "esimerkki"
+
+#: survey/templates/editor/account_mcp.html
+msgid "Create a Mapsurvey survey in Italian and English about where traffic congestion is worst in Treviglio and why. Add a point question for the worst spots and a short text question for the reason. Give me the editor link."
+msgstr "Luo Mapsurvey-kysely italiaksi ja englanniksi siitä, missä Treviglion liikenneruuhkat ovat pahimmat ja miksi. Lisää pistekysymys pahimmista paikoista ja lyhyt tekstikysymys syystä. Anna minulle editorin linkki."
+
+#: survey/templates/editor/account_mcp.html
+msgid "The agent sees and changes only surveys <strong>you</strong> own or collaborate on."
+msgstr "Agentti näkee ja muokkaa vain kyselyitä, jotka <strong>sinä</strong> omistat tai joissa olet mukana."
+
+#: survey/templates/editor/account_mcp.html
+msgid "Mapsurvey never sees your chat — only the tool calls the agent makes."
+msgstr "Mapsurvey ei koskaan näe keskusteluasi, vain agentin tekemät työkalukutsut."
+
+#: survey/templates/editor/account_mcp.html
+msgid "Publishing and deleting always ask for an explicit confirmation."
+msgstr "Julkaiseminen ja poistaminen vaativat aina nimenomaisen vahvistuksen."
+
+#: survey/templates/editor/account_mcp.html
+msgid "We'll email you when it's ready."
+msgstr "Lähetämme sähköpostia, kun se on valmis."
+
+#: survey/templates/editor/account_mcp.html
+msgid "Tell me when it's ready"
+msgstr "Kerro, kun se on valmis"
+
+#: survey/templates/editor/account_mcp.html
+msgid "One email when it launches. Nothing else."
+msgstr "Yksi sähköposti julkaisun yhteydessä. Ei muuta."
+
+#: survey/templates/base.html
+msgid "soon"
+msgstr "pian"
+
+#: survey/templates/editor.html
+msgid "Start another way…"
+msgstr "Aloita toisin…"
+
+#: survey/templates/editor/survey_create.html
+msgid "Start another way"
+msgstr "Aloita toisin"
+
+#: survey/templates/editor.html
+msgid "Opening…"
+msgstr "Avataan…"
+
+#: survey/templates/editor/survey_create.html
+msgid "Open the map on your city:"
+msgstr "Avaa kartta kaupunkiisi:"
+
+#: survey/templates/editor/survey_create.html
+msgid "Use my location"
+msgstr "Käytä sijaintiani"
+
+#: survey/templates/editor/survey_start.html
+msgid "Selected"
+msgstr "Valittu"
+
+#: survey/templates/editor/survey_start.html
+msgid "For teams who already work from an agent."
+msgstr "Tiimeille, jotka työskentelevät jo agentin kautta."
+
+#: survey/templates/editor/survey_start.html
+msgid "How this works"
+msgstr "Näin se toimii"

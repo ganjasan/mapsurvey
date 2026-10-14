@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — Start page: three ways to begin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<style>
+  :root {
+    --ink: #10241f; --paper: #f2efe6; --accent: #0e8f76; --annot: #8a4b12;
+    --p-primary: #2563eb; --p-primary-soft: #eff4ff;
+    --p-indigo: #4f46e5; --p-indigo-soft: #eef2ff;
+    --p-bg: #f8f9fb; --p-border: #e5e7eb; --p-text: #1f2937; --p-muted: #6b7280; --p-chip: #f3f4f6;
+    --p-amber: #b45309; --p-amber-soft: #fef3c7;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    background-image: radial-gradient(rgba(16,36,31,.06) 1px, transparent 1px);
+    background-size: 22px 22px;
+    color: var(--ink); font-family: "IBM Plex Sans", sans-serif; padding: 48px 32px 80px;
+  }
+  header.pagehead { max-width: 1400px; margin: 0 auto 8px; }
+  .kicker { font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+  h1 { font-family: "Fraunces", serif; font-size: clamp(28px, 4vw, 42px); line-height: 1.08; max-width: 760px; margin-bottom: 14px; }
+  .lede { max-width: 720px; color: #47554f; font-size: 15px; line-height: 1.55; }
+  .lede b { color: var(--ink); }
+  .stage { max-width: 1400px; margin: 40px auto 0; display: flex; gap: 44px; align-items: flex-start; flex-wrap: wrap; }
+  .exhibit { flex: 0 0 auto; }
+  .exhibit-label { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; font-family: "IBM Plex Mono", monospace; }
+  .exhibit-label .num { font-family: "Fraunces", serif; font-size: 30px; color: var(--accent); }
+  .exhibit-label .name { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; }
+  .note { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--annot); max-width: 560px; line-height: 1.5; margin-top: 12px; }
+  .note b { color: var(--ink); }
+
+  /* ── product chrome ── */
+  .browser { background: #fff; border: 1px solid #d9d4c6; border-radius: 12px; overflow: hidden; box-shadow: 0 24px 48px -24px rgba(16,36,31,.4), 0 2px 8px rgba(16,36,31,.08); font-family: "DM Sans", -apple-system, sans-serif; color: var(--p-text); font-size: 14px; }
+  .topbar { background: #fff; border-bottom: 1px solid var(--p-border); padding: 10px 18px; display: flex; align-items: center; gap: 14px; height: 52px; }
+  .topbar .back { color: var(--p-text); font-weight: 500; }
+  .topbar .back i { font-size: 12px; margin-right: 6px; }
+  .topbar .title { font-weight: 700; font-size: 17px; }
+  .topbar .spacer { flex: 1; }
+  .topbar .nav { color: var(--p-muted); font-size: 13px; display: flex; gap: 18px; align-items: center; }
+  .topbar .nav b { color: var(--p-text); font-weight: 500; }
+
+  .page { background: var(--p-bg); padding: 40px 48px 56px; }
+  .page-head { display: flex; align-items: flex-start; justify-content: space-between; max-width: 1120px; margin: 0 auto 28px; }
+  .page-head h2 { font-size: 26px; font-weight: 700; letter-spacing: -.01em; }
+  .page-head p { color: var(--p-muted); margin-top: 6px; font-size: 14px; }
+  .skip { color: var(--p-muted); font-size: 13px; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; padding-top: 8px; }
+
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 1120px; margin: 0 auto; }
+  .card {
+    background: #fff; border: 2px solid var(--p-border); border-radius: 16px; padding: 0; overflow: hidden;
+    display: flex; flex-direction: column; position: relative; cursor: pointer; transition: transform .12s;
+  }
+  .card:hover { transform: translateY(-2px); border-color: #c7cdd6; }
+  .card.selected { border-color: var(--p-indigo); box-shadow: 0 0 0 4px var(--p-indigo-soft), 0 20px 40px -24px rgba(79,70,229,.45); }
+  .card.selected::after { content: ""; position: absolute; left: 50%; bottom: -14px; transform: translateX(-50%) rotate(45deg); width: 22px; height: 22px; background: #fff; border-right: 2px solid var(--p-indigo); border-bottom: 2px solid var(--p-indigo); }
+  .card.soon { cursor: default; }
+  .card.soon:hover { transform: none; border-color: var(--p-border); }
+  .card-label { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--p-muted); padding: 16px 20px 0; display: flex; justify-content: space-between; align-items: center; }
+  .card-label .badge { font-family: "DM Sans", sans-serif; letter-spacing: 0; text-transform: none; font-size: 11px; font-weight: 600; background: var(--p-amber-soft); color: var(--p-amber); border-radius: 999px; padding: 2px 9px; }
+  .art { margin: 14px 20px 0; height: 190px; border-radius: 12px; display: grid; place-items: center; position: relative; overflow: hidden; }
+  .art i { font-size: 56px; color: #fff; opacity: .95; }
+  .art.scratch { background: linear-gradient(145deg, #0f766e, #14b8a6 60%, #5eead4); }
+  .art.ai { background: linear-gradient(145deg, #3730a3, #6366f1 55%, #a5b4fc); }
+  .art.agent { background: linear-gradient(145deg, #334155, #64748b 60%, #cbd5e1); }
+  .art .grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.14) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.14) 1px, transparent 1px); background-size: 28px 28px; }
+  .art .pin { position: absolute; width: 14px; height: 14px; border-radius: 50% 50% 50% 0; background: #fff; transform: rotate(-45deg); box-shadow: 0 2px 6px rgba(0,0,0,.3); }
+  .art .chat { position: absolute; left: 20px; right: 20px; bottom: 16px; background: rgba(255,255,255,.92); color: #1f2937; border-radius: 10px; padding: 8px 10px; font-size: 12px; line-height: 1.35; }
+  .art .chat small { display: block; color: var(--p-muted); font-size: 10px; margin-bottom: 2px; font-family: "IBM Plex Mono", monospace; }
+  .card-body { padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .card-body h3 { font-size: 18px; font-weight: 700; }
+  .card-body .what { font-size: 14px; color: var(--p-text); line-height: 1.4; }
+  .card-body .who { font-size: 13px; color: var(--p-muted); line-height: 1.4; margin-top: auto; padding-top: 8px; }
+  .card.soon .card-body h3, .card.soon .what { color: #4b5563; }
+
+  .lore { max-width: 1120px; margin: 26px auto 0; background: #fff; border: 2px solid var(--p-indigo); border-radius: 16px; padding: 22px 26px; display: grid; grid-template-columns: 1.6fr 1fr; gap: 28px; align-items: center; }
+  .lore p { font-size: 15px; line-height: 1.55; color: var(--p-text); }
+  .lore p b { font-weight: 600; }
+  .lore .actions { display: flex; flex-direction: column; gap: 12px; align-items: stretch; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 10px; padding: 12px 18px; font-weight: 600; font-size: 15px; border: 1px solid transparent; }
+  .btn-indigo { background: var(--p-indigo); color: #fff; }
+  .btn-primary { background: var(--p-primary); color: #fff; }
+  .btn-outline { background: #fff; color: var(--p-text); border-color: #cfd4dc; }
+  .remember { display: flex; align-items: center; gap: 9px; font-size: 13px; color: var(--p-muted); justify-content: center; }
+  .remember .box { width: 16px; height: 16px; border: 1.5px solid #9ca3af; border-radius: 4px; background: #fff; }
+  .fine { font-size: 12px; color: var(--p-muted); text-align: center; }
+
+  /* ── phone ── */
+  .phone { width: 360px; height: 760px; background: #0d1117; border-radius: 34px; padding: 10px; box-shadow: 0 24px 48px -20px rgba(16,36,31,.45), 0 4px 12px rgba(16,36,31,.15); }
+  .screen { background: var(--p-bg); border-radius: 26px; height: 100%; overflow: hidden; display: flex; flex-direction: column; font-family: "DM Sans", sans-serif; font-size: 14px; color: var(--p-text); }
+  .m-top { background: #fff; border-bottom: 1px solid var(--p-border); padding: 12px 14px; display: flex; align-items: center; gap: 10px; flex: 0 0 auto; font-weight: 700; font-size: 16px; }
+  .m-top i { font-size: 13px; color: var(--p-muted); }
+  .m-body { padding: 14px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
+  .m-body h2 { font-size: 20px; font-weight: 700; }
+  .m-body .sub { color: var(--p-muted); font-size: 13px; margin-top: -6px; }
+  .mcard { background: #fff; border: 2px solid var(--p-border); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .mcard .row { display: flex; gap: 12px; align-items: center; }
+  .mcard .ico { width: 46px; height: 46px; border-radius: 10px; display: grid; place-items: center; color: #fff; font-size: 20px; flex: 0 0 auto; }
+  .mcard h3 { font-size: 16px; font-weight: 700; }
+  .mcard .what { font-size: 13px; color: var(--p-muted); line-height: 1.35; }
+  .mcard .btn { min-height: 44px; font-size: 14px; }
+  .mcard .remember { justify-content: flex-start; }
+  .mcard.soon { border-style: dashed; }
+  .mcard.soon .badge { font-size: 11px; font-weight: 600; background: var(--p-amber-soft); color: var(--p-amber); border-radius: 999px; padding: 2px 9px; margin-left: auto; }
+  .mcard.soon a { color: var(--p-primary); font-size: 13px; font-weight: 500; }
+
+  /* ── agent teaser ── */
+  .teaser { max-width: 640px; margin: 0 auto; background: #fff; border: 1px solid var(--p-border); border-radius: 16px; padding: 28px 32px; }
+  .teaser .eyebrow { font-size: 11px; font-weight: 600; background: var(--p-amber-soft); color: var(--p-amber); border-radius: 999px; padding: 3px 10px; display: inline-block; margin-bottom: 12px; }
+  .teaser h2 { font-size: 22px; font-weight: 700; margin-bottom: 12px; }
+  .teaser p { font-size: 14px; line-height: 1.55; color: var(--p-text); margin-bottom: 12px; }
+  .teaser .prompt { background: #0f172a; color: #e2e8f0; border-radius: 10px; padding: 14px 16px; font-family: "IBM Plex Mono", monospace; font-size: 13px; line-height: 1.5; margin: 14px 0 18px; }
+  .teaser .prompt small { display: block; color: #94a3b8; font-size: 11px; margin-bottom: 6px; }
+  .teaser .cta { display: flex; align-items: center; gap: 14px; }
+  .teaser .cta .fine { text-align: left; }
+  .teaser ul { margin: 0 0 14px 18px; font-size: 14px; color: var(--p-text); line-height: 1.55; }
+
+  @media (max-width: 900px) { .cards { grid-template-columns: 1fr; } .lore { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header class="pagehead">
+  <div class="kicker">Mockup · first-survey-onboarding</div>
+  <h1>Three ways to start a survey</h1>
+  <p class="lede">A creator with no surveys lands on <b>/editor/surveys/start/</b> instead of the create page; "+ New Survey" leads here too until a default is remembered. Cards read like a life-path screen: label, picture, one line of what happens, one line of who it is for. Choosing a card reveals its paragraph and the action; the third card is a door to the agent page until the MCP server ships (#306).</p>
+</header>
+
+<div class="stage">
+
+  <!-- ═══════════ Exhibit 1: desktop ═══════════ -->
+  <section class="exhibit" style="width: 1240px; max-width: 100%;">
+    <div class="exhibit-label"><span class="num">1</span><span class="name">Desktop · first visit · "Draft with AI" chosen</span></div>
+    <div class="browser">
+      <div class="topbar">
+        <span class="back"><i class="fas fa-arrow-left"></i>Dashboard</span>
+        <span class="title">New survey</span>
+        <span class="spacer"></span>
+        <span class="nav"><i class="fas fa-gift"></i><i class="fas fa-question-circle"></i><span><i class="fas fa-globe"></i> English ▾</span><span><i class="fas fa-building"></i> <b>Test</b> ▾</span><span>konuchovartem</span><span>Logout</span></span>
+      </div>
+      <div class="page">
+        <div class="page-head">
+          <div>
+            <h2>How do you want to start?</h2>
+            <p>Every path ends in the same editor. You can change your mind any time.</p>
+          </div>
+          <a class="skip" href="#">Skip to dashboard</a>
+        </div>
+
+        <div class="cards">
+          <div class="card">
+            <div class="card-label"><span>From scratch</span></div>
+            <div class="art scratch"><div class="grid"></div><span class="pin" style="left:46%;top:44%"></span><i class="fas fa-pencil-ruler"></i></div>
+            <div class="card-body">
+              <h3>Start from scratch</h3>
+              <div class="what">An empty survey opens in the editor — the map already on your city. Add sections and questions yourself.</div>
+              <div class="who">For people who know exactly what they want to ask.</div>
+            </div>
+          </div>
+
+          <div class="card selected">
+            <div class="card-label"><span>With AI</span></div>
+            <div class="art ai"><div class="grid"></div><i class="fas fa-wand-magic-sparkles"></i>
+              <div class="chat"><small>you</small>Where traffic congestion is worst in Treviglio and why</div>
+            </div>
+            <div class="card-body">
+              <h3>Draft with AI</h3>
+              <div class="what">Describe what you want to find out in one sentence. You get a full draft — sections, questions, map — to edit.</div>
+              <div class="who">For a first survey, or a quick start on a new topic.</div>
+            </div>
+          </div>
+
+          <div class="card soon">
+            <div class="card-label"><span>Your agent</span><span class="badge">Soon</span></div>
+            <div class="art agent"><div class="grid"></div><i class="fas fa-robot"></i>
+              <div class="chat"><small>claude · mapsurvey mcp</small>create_survey(name="Treviglio traffic", …)</div>
+            </div>
+            <div class="card-body">
+              <h3>Connect your AI agent</h3>
+              <div class="what">Let Claude, ChatGPT or Cursor build and edit surveys for you through MCP, with a token you control.</div>
+              <div class="who">For teams who already work from an agent. Tell us you want it →</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="lore">
+          <p><b>Draft with AI.</b> Write your goal in whatever language you think in — Deutsch, Español, Polski. The draft comes out in the survey languages you pick, with a map aimed at the place your brief mentions. Your description goes to an AI provider to build the draft; survey answers never do. Nothing is published until you say so.</p>
+          <div class="actions">
+            <a class="btn btn-indigo" href="#"><i class="fas fa-wand-magic-sparkles"></i> Draft my survey</a>
+            <label class="remember"><span class="box"></span> Always start this way</label>
+            <div class="fine">You can switch later from the dashboard's ⋯ menu.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="note"><b>Selected state</b> is a hover/click on the card: the indigo ring plus the pointer under it, and the paragraph + action below swap to that card. With "From scratch" selected the button is the primary blue "Create empty survey" and the paragraph says the map opens on your location when the browser allows it (permission is asked on the click, not on load). The third card never gets a paragraph: it links to <b>/editor/account/mcp/</b>. "Skip to dashboard" appears only with <b>?welcome=1</b>. With a default already set, a line "Your default: Draft with AI · Clear" sits under the heading.</p>
+  </section>
+
+  <!-- ═══════════ Exhibit 2: phone ═══════════ -->
+  <section class="exhibit">
+    <div class="exhibit-label"><span class="num">2</span><span class="name">Phone · cards stacked, action inside each</span></div>
+    <div class="phone"><div class="screen">
+      <div class="m-top"><i class="fas fa-arrow-left"></i> New survey</div>
+      <div class="m-body">
+        <h2>How do you want to start?</h2>
+        <div class="sub">Every path ends in the same editor.</div>
+
+        <div class="mcard">
+          <div class="row"><div class="ico" style="background:linear-gradient(145deg,#0f766e,#14b8a6)"><i class="fas fa-pencil-ruler"></i></div><div><h3>Start from scratch</h3><div class="what">Empty survey, map on your city, you add the questions.</div></div></div>
+          <a class="btn btn-primary" href="#">Create empty survey</a>
+          <label class="remember"><span class="box"></span> Always start this way</label>
+        </div>
+
+        <div class="mcard">
+          <div class="row"><div class="ico" style="background:linear-gradient(145deg,#3730a3,#6366f1)"><i class="fas fa-wand-magic-sparkles"></i></div><div><h3>Draft with AI</h3><div class="what">One sentence in → full draft to edit. Answers never go to AI.</div></div></div>
+          <a class="btn btn-indigo" href="#">✨ Draft my survey</a>
+          <label class="remember"><span class="box"></span> Always start this way</label>
+        </div>
+
+        <div class="mcard soon">
+          <div class="row"><div class="ico" style="background:linear-gradient(145deg,#334155,#64748b)"><i class="fas fa-robot"></i></div><div><h3>Connect your AI agent</h3><div class="what">Claude, ChatGPT or Cursor build surveys through MCP.</div></div><span class="badge">Soon</span></div>
+          <a href="#">Tell me when it's ready →</a>
+        </div>
+      </div>
+    </div></div>
+    <p class="note">Below 768 px there is no "selected" state: each card carries its own button, so one tap does the thing. The long paragraph is dropped; the one-liner has to earn the tap.</p>
+  </section>
+
+  <!-- ═══════════ Exhibit 3: agent teaser page ═══════════ -->
+  <section class="exhibit" style="width: 720px; max-width: 100%;">
+    <div class="exhibit-label"><span class="num">3</span><span class="name">/editor/account/mcp/ · before #306</span></div>
+    <div class="browser">
+      <div class="topbar">
+        <span class="back"><i class="fas fa-arrow-left"></i>Dashboard</span>
+        <span class="title">AI agents &amp; MCP</span>
+        <span class="spacer"></span>
+      </div>
+      <div class="page" style="padding: 32px 24px 40px;">
+        <div class="teaser">
+          <span class="eyebrow">Coming soon</span>
+          <h2>Build surveys from your own AI agent</h2>
+          <p>Mapsurvey is getting an MCP server. Connect it to Claude, ChatGPT, Cursor or any MCP client with a token from this page, and ask the agent in plain words:</p>
+          <div class="prompt"><small>example</small>Create a Mapsurvey survey in Italian and English about where traffic congestion is worst in Treviglio and why. Add a point question for the worst spots and a short text question for the reason. Give me the editor link.</div>
+          <ul>
+            <li>The agent sees and changes only surveys <b>you</b> own or collaborate on.</li>
+            <li>Mapsurvey never sees your chat — only the tool calls the agent makes.</li>
+            <li>Publishing and deleting always ask for an explicit confirmation.</li>
+          </ul>
+          <div class="cta">
+            <a class="btn btn-primary" href="#"><i class="fas fa-bell"></i> Tell me when it's ready</a>
+            <div class="fine">One email when it launches. Nothing else.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="note">After the click the button is replaced by "We'll email you when it's ready" and <b>agent_access_requested_at</b> is set once. The same URL becomes the token page in #306; the account-menu entry "AI agents &amp; MCP · soon" and the "?"-menu entry "Connect your AI agent" already point here.</p>
+  </section>
+
+</div>
+</body>
+</html>

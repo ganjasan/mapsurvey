@@ -24,7 +24,7 @@ There is no limit on drafts on any plan, so running out of allowance is never th
 2. Click **Generate draft** again; a provider error is usually temporary.
 3. If it fails a second time, shorten the brief: say what you want to learn and from whom, and ask for fewer sections. Keep the list of survey languages short on the first attempt; you can [add translations later](/how-to/translate-a-survey/).
 4. If you left the page while it was generating, open your dashboard. The draft is created even when the tab is closed, and a finished survey is waiting there.
-5. If you need the survey now, click **Create empty** and build it by hand; [Start here](/start-here/) walks through the first survey.
+5. If you need the survey now, build it by hand: click **Start another way** (or **Create empty**, when the page shows it) and choose **Start from scratch**; [Start here](/start-here/) walks through the first survey.
 6. On a self-hosted instance, set the provider credentials described in the project README and restart.
 
 ## If it keeps happening

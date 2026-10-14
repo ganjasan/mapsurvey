@@ -47,6 +47,12 @@ urlpatterns = [
     path('editor/whats-new/seen/', editor_views.whats_new_seen, name='whats_new_seen'),
     path('editor/whats-new/cards/', editor_views.whats_new_cards, name='whats_new_cards'),
 
+    # Ways to start (change first-survey-onboarding): the start page, the
+    # one-click blank survey, and the agent page #306 turns into the token page.
+    path('editor/surveys/start/', editor_views.editor_survey_start, name='editor_survey_start'),
+    path('editor/surveys/new/blank/', editor_views.editor_survey_create_blank, name='editor_survey_create_blank'),
+    path('editor/account/mcp/', editor_views.editor_account_mcp, name='editor_account_mcp'),
+
     # WYSIWYG survey editor
     path('editor/surveys/new/', editor_views.editor_survey_create, name='editor_survey_create'),
     path('editor/generation/<int:event_id>/', editor_views.editor_generation_status, name='editor_generation_status'),

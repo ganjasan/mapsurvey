@@ -18,6 +18,7 @@ is the per-template visibility class (`nav-desktop`, `d-none d-md-inline-block`)
     <div class="dropdown-menu dropdown-menu-right" style="min-width:240px;">
         <a class="dropdown-item" href="{% url 'whats_new' %}"><i class="fas fa-gift" style="margin-right:4px;"></i>{% trans "What's new" %}{% if whats_new.unseen_count %} <span class="wn-badge">{{ whats_new.unseen_count }}</span>{% endif %}</a>
         {% if HELP_URL %}<a class="dropdown-item" href="{{ HELP_URL.help_home }}" target="_blank" rel="noopener"><i class="fas fa-book-open" style="margin-right:4px;"></i>{% trans "Help centre" %}</a>{% endif %}
+        <a class="dropdown-item" href="{% url 'editor_account_mcp' %}"><i class="fas fa-robot" style="margin-right:4px;"></i>{% trans "Connect your AI agent" %}</a>
         <div class="dropdown-divider"></div>
         {% if SUPPORT_CHAT %}
         <a class="dropdown-item" href="#" onclick="openSupportChat(event)"><i class="fas fa-comment-dots" style="margin-right:4px;"></i>{% trans "Help & support" %} <span class="wn-badge support-unread" hidden>{% trans "new" %}</span></a>

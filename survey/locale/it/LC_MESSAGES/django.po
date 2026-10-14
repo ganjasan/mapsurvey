@@ -7790,3 +7790,197 @@ msgstr "Espone i dati personali di qualcuno"
 #: survey/content_screening.py
 msgid "Something else"
 msgstr "Altro"
+
+#: survey/models.py
+msgid "Ask every time"
+msgstr "Chiedi ogni volta"
+
+#: survey/models.py
+msgid "Start from scratch"
+msgstr "Parti da zero"
+
+#: survey/models.py
+msgid "Draft with AI"
+msgstr "Bozza con IA"
+
+#: survey/editor_views.py
+msgid "Untitled survey"
+msgstr "Sondaggio senza titolo"
+
+#: survey/templates/editor/survey_start.html
+msgid "New survey"
+msgstr "Nuovo sondaggio"
+
+#: survey/templates/editor/survey_start.html
+msgid "How do you want to start?"
+msgstr "Come vuoi iniziare?"
+
+#: survey/templates/editor/survey_start.html
+msgid "Every path ends in the same editor. You can change your mind any time."
+msgstr "Ogni percorso porta allo stesso editor. Puoi cambiare idea in qualsiasi momento."
+
+#: survey/templates/editor/survey_start.html
+msgid "Your default: <strong>%(label)s</strong>"
+msgstr "Impostazione predefinita: <strong>%(label)s</strong>"
+
+#: survey/templates/editor/survey_start.html
+msgid "From scratch"
+msgstr "Da zero"
+
+#: survey/templates/editor/survey_start.html
+msgid "An empty survey opens in the editor — the map already on your city. Add sections and questions yourself."
+msgstr "Un sondaggio vuoto si apre nell'editor, con la mappa già sulla tua città. Aggiungi tu sezioni e domande."
+
+#: survey/templates/editor/survey_start.html
+msgid "For people who know exactly what they want to ask."
+msgstr "Per chi sa esattamente cosa chiedere."
+
+#: survey/templates/editor/survey_start.html
+msgid "You get one empty section and the editor. If your browser allows it, the map opens where you are; otherwise where this workspace's last survey was. Name, languages and the map are all one click away in Survey settings."
+msgstr "Ottieni una sezione vuota e l'editor. Se il browser lo consente, la mappa si apre dove sei; altrimenti dov'era l'ultimo sondaggio di questo spazio. Nome, lingue e mappa sono a un clic nelle impostazioni del sondaggio."
+
+#: survey/templates/editor/survey_start.html
+msgid "Opening the editor…"
+msgstr "Apertura dell'editor…"
+
+#: survey/templates/editor/survey_start.html
+msgid "Create empty survey"
+msgstr "Crea sondaggio vuoto"
+
+#: survey/templates/editor/survey_start.html
+msgid "Always start this way"
+msgstr "Inizia sempre così"
+
+#: survey/templates/editor/survey_start.html
+msgid "You can switch later from the dashboard's ⋯ menu."
+msgstr "Puoi cambiare in seguito dal menu ⋯ della dashboard."
+
+#: survey/templates/editor/survey_start.html
+msgid "With AI"
+msgstr "Con IA"
+
+#: survey/templates/editor/survey_start.html
+msgid "Where traffic congestion is worst in Treviglio and why"
+msgstr "Dove il traffico è peggiore a Treviglio e perché"
+
+#: survey/templates/editor/survey_start.html
+msgid "Describe what you want to find out in one sentence. You get a full draft — sections, questions, map — to edit."
+msgstr "Descrivi in una frase cosa vuoi scoprire. Ottieni una bozza completa – sezioni, domande, mappa – da modificare."
+
+#: survey/templates/editor/survey_start.html
+msgid "For a first survey, or a quick start on a new topic."
+msgstr "Per un primo sondaggio o un avvio rapido su un nuovo tema."
+
+#: survey/templates/editor/survey_start.html
+msgid "Not available on this server."
+msgstr "Non disponibile su questo server."
+
+#: survey/templates/editor/survey_start.html
+msgid "Write your goal in whatever language you think in — Deutsch, Español, Polski. The draft comes out in the survey languages you pick, with the map aimed at the place your brief mentions. Your description goes to an AI provider to build the draft; survey answers never do. Nothing is published until you say so."
+msgstr "Scrivi il tuo obiettivo nella lingua in cui pensi – Deutsch, Español, Polski. La bozza esce nelle lingue del sondaggio che scegli, con la mappa puntata sul luogo che citi. La tua descrizione va a un fornitore di IA per costruire la bozza; le risposte al sondaggio mai. Niente viene pubblicato finché non lo decidi tu."
+
+#: survey/templates/editor/survey_start.html
+msgid "AI drafting is not configured on this server. Start from scratch instead."
+msgstr "La bozza con IA non è configurata su questo server. Parti da zero."
+
+#: survey/templates/editor/survey_start.html
+msgid "Your agent"
+msgstr "Il tuo agente"
+
+#: survey/templates/editor/survey_start.html
+msgid "Soon"
+msgstr "Presto"
+
+#: survey/templates/editor/survey_start.html
+msgid "Connect your AI agent"
+msgstr "Collega il tuo agente IA"
+
+#: survey/templates/editor/survey_start.html
+msgid "Let Claude, ChatGPT or Cursor build and edit surveys for you through MCP, with a token you control."
+msgstr "Lascia che Claude, ChatGPT o Cursor creino e modifichino sondaggi per te tramite MCP, con un token che controlli tu."
+
+
+
+#: survey/templates/editor/account_mcp.html
+msgid "AI agents & MCP"
+msgstr "Agenti IA e MCP"
+
+#: survey/templates/editor/account_mcp.html
+msgid "Coming soon"
+msgstr "In arrivo"
+
+#: survey/templates/editor/account_mcp.html
+msgid "Build surveys from your own AI agent"
+msgstr "Crea sondaggi dal tuo agente IA"
+
+#: survey/templates/editor/account_mcp.html
+msgid "Mapsurvey is getting an MCP server. Connect it to Claude, ChatGPT, Cursor or any MCP client with a token from this page, and ask the agent in plain words:"
+msgstr "Mapsurvey avrà un server MCP. Collegalo a Claude, ChatGPT, Cursor o qualsiasi client MCP con un token da questa pagina e chiedi all'agente a parole semplici:"
+
+#: survey/templates/editor/account_mcp.html
+msgid "example"
+msgstr "esempio"
+
+#: survey/templates/editor/account_mcp.html
+msgid "Create a Mapsurvey survey in Italian and English about where traffic congestion is worst in Treviglio and why. Add a point question for the worst spots and a short text question for the reason. Give me the editor link."
+msgstr "Crea un sondaggio Mapsurvey in italiano e inglese su dove il traffico è peggiore a Treviglio e perché. Aggiungi una domanda a punto per i luoghi peggiori e una domanda di testo breve per il motivo. Dammi il link dell'editor."
+
+#: survey/templates/editor/account_mcp.html
+msgid "The agent sees and changes only surveys <strong>you</strong> own or collaborate on."
+msgstr "L'agente vede e modifica solo i sondaggi di cui <strong>tu</strong> sei proprietario o collaboratore."
+
+#: survey/templates/editor/account_mcp.html
+msgid "Mapsurvey never sees your chat — only the tool calls the agent makes."
+msgstr "Mapsurvey non vede mai la tua chat, solo le chiamate agli strumenti fatte dall'agente."
+
+#: survey/templates/editor/account_mcp.html
+msgid "Publishing and deleting always ask for an explicit confirmation."
+msgstr "Pubblicare ed eliminare richiedono sempre una conferma esplicita."
+
+#: survey/templates/editor/account_mcp.html
+msgid "We'll email you when it's ready."
+msgstr "Ti scriveremo quando è pronto."
+
+#: survey/templates/editor/account_mcp.html
+msgid "Tell me when it's ready"
+msgstr "Avvisami quando è pronto"
+
+#: survey/templates/editor/account_mcp.html
+msgid "One email when it launches. Nothing else."
+msgstr "Una sola e-mail al lancio. Nient'altro."
+
+#: survey/templates/base.html
+msgid "soon"
+msgstr "presto"
+
+#: survey/templates/editor.html
+msgid "Start another way…"
+msgstr "Inizia in un altro modo…"
+
+#: survey/templates/editor/survey_create.html
+msgid "Start another way"
+msgstr "Inizia in un altro modo"
+
+#: survey/templates/editor.html
+msgid "Opening…"
+msgstr "Apertura…"
+
+#: survey/templates/editor/survey_create.html
+msgid "Open the map on your city:"
+msgstr "Apri la mappa sulla tua città:"
+
+#: survey/templates/editor/survey_create.html
+msgid "Use my location"
+msgstr "Usa la mia posizione"
+
+#: survey/templates/editor/survey_start.html
+msgid "Selected"
+msgstr "Selezionato"
+
+#: survey/templates/editor/survey_start.html
+msgid "For teams who already work from an agent."
+msgstr "Per i team che già lavorano da un agente."
+
+#: survey/templates/editor/survey_start.html
+msgid "How this works"
+msgstr "Come funziona"

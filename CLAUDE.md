@@ -414,6 +414,29 @@ respondent redirects go through `survey/redirects.py::completion_url(survey)`, i
 (typed after the pre-filled `#`) kept respondents pressing Finish on the last page. Settings shows it
 as the "After the last page" choice; the form refuses anything that is not a full http(s) address.
 
+**Ways to start (change `first-survey-onboarding`)**: a workspace with no surveys and, by default,
+"+ New Survey" lead to the START PAGE `/editor/surveys/start/` (`editor_survey_start`) — three cards,
+*Start from scratch* / *Draft with AI* / *Connect your AI agent* — not to the create page.
+`CreatorPreferences.survey_start_default` (`''` ask / `blank` / `ai`, "Always start this way") is
+what the dashboard renders the button from (context processor `survey_start`): `blank` makes it a
+POST form to `editor_survey_create_blank`, the one-request empty survey ("Untitled survey", the
+creator's UI language, map from the chain below) that shares `_finish_blank_survey` with the create
+page's manual action so the two cannot drift. POST, never GET. The create page keeps every old
+link; `?from=start` only swaps "Skip and start from scratch" for a way back. **Where a new map
+opens is ONE chain**, `survey/map_start.py::suggest_start_position` — `browser` (coordinates the
+creator's browser gave: permission already granted, or asked on the click that submits; NEVER on
+page load) → `org_survey` (newest positioned survey in the workspace) → `country` (`CF-IPCountry`
+from Render's Cloudflare edge, trusted only under `CLOUDFLARE_TRUSTED`; else the `Accept-Language`
+region, never `en-US` — the stock-browser default says nothing; `survey/country_centroids.py`) → `world`. The create page's first `setView` and the AI
+draft (through the same hidden fields) start there — the Berlin default is gone and must not come
+back. `survey_created` carries `surface` (`start_blank` | `create_page`) and `map_source` (the
+rung, `creator` when the map was framed, `brief` when the AI task geocoded the brief): names only,
+never coordinates. `/editor/account/mcp/` (`editor_account_mcp`) is the agent page: a teaser with
+"Tell me when it's ready" (`agent_access_requested_at`, the launch list, one event) until #306
+replaces its body with the token page — the URL name, the account-menu item in BOTH bases and the
+"?"-menu item stay. New creator strings go into all offered catalogs (`TranslationCatalogHygieneTest`
+enforces it); the entries are appended by hand like PR #274, not by `makemessages`.
+
 **Session Management**: Survey sessions are created on first section view and tracked via `request.session['survey_session_id']`.
 
 **Empty sessions (change `hide-empty-sessions`, issue #226)**: a session with no top-level `Answer`
