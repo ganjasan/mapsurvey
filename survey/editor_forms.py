@@ -439,7 +439,15 @@ class QuestionForm(forms.ModelForm):
             # removes the geo group from the type picker (picker_groups_for
             # builds groups from these choices) and rejects a geo input_type
             # server-side as an invalid choice.
+            # The picker still shows them, disabled with the reason
+            # (`unavailable_types`), so a creator who switched the section to
+            # Form learns why there is no map question instead of finding none.
             field = self.fields['input_type']
+            reason = _("This section has no map. Switch its Layout to Map to add a map question.")
+            field.unavailable_types = {
+                value: (label, reason)
+                for value, label in field.choices if value in MAP_ONLY_TYPES
+            }
             field.choices = [
                 (value, label) for value, label in field.choices
                 if value not in MAP_ONLY_TYPES

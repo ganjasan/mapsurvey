@@ -64,7 +64,7 @@ def question_type_picker(bound_field):
     from survey.question_types import picker_groups_for
 
     choices = list(bound_field.field.choices)
-    groups = picker_groups_for(choices)
+    groups = picker_groups_for(choices, getattr(bound_field.field, 'unavailable_types', None))
     current = bound_field.value()
     if not current:
         # The form pre-selects 'text' for new questions; this fallback only

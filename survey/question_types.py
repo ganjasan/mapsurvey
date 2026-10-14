@@ -146,7 +146,7 @@ THUMBS_UP, THUMBS_DOWN = 1, 0
 THUMBS_CHOICES = [{"code": THUMBS_UP, "name": "up"}, {"code": THUMBS_DOWN, "name": "down"}]
 
 
-def picker_groups_for(choices):
+def picker_groups_for(choices, unavailable=None):
     """Group `choices` (an input_type choices iterable, e.g. the form field's —
     already filtered for sub-questions) for the picker template.
 
@@ -155,16 +155,28 @@ def picker_groups_for(choices):
     model's choice order has drifted (text_line sits after image) and this is
     where it gets fixed for display. Unknown values are skipped rather than
     crashing the dialog; the parity test is what guards completeness.
+
+    `unavailable` maps types left out of `choices` to `(model_label, reason)`
+    — why they cannot be picked here; those come back with `disabled` and `reason` so the picker
+    shows them greyed out instead of dropping them (a Form section's map types).
     """
     allowed = {value: model_label for value, model_label in choices}
+    unavailable = unavailable or {}
     by_group = {key: [] for key, _ in PICKER_GROUPS}
     for value, meta in PICKER_TYPES.items():
-        if value not in allowed:
+        if value in allowed:
+            label, reason = meta.get("label", allowed[value]), None
+        elif value in unavailable:
+            model_label, reason = unavailable[value]
+            label = meta.get("label", model_label)
+        else:
             continue
         by_group[meta["group"]].append({
             "value": value,
-            "label": meta.get("label", allowed[value]),
+            "label": label,
             "icon": meta["icon"],
             "hint": meta["hint"],
+            "disabled": reason is not None,
+            "reason": reason,
         })
     return [(label, by_group[key]) for key, label in PICKER_GROUPS if by_group[key]]
