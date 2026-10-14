@@ -8,13 +8,24 @@ select keeps working. Rendered by the question_type_picker tag.
     <div class="qtp-group-caption">{{ group_label }}</div>
     <div class="qtp-grid">
         {% for t in types %}
+        {% if t.disabled %}
+        {% comment %}Not a .qtp-card and no data-qtp-value: every picker listener
+        (click, keyboard, hover example) keys on those, so a disabled type is
+        inert by construction. The reason sits under the grid.{% endcomment %}
+        <div class="qtp-off" data-qtp-unavailable="{{ t.value }}" aria-disabled="true" title="{{ t.reason }}">
+            <div class="qtp-icon"><i class="fas {{ t.icon }}"></i></div>
+            <div class="qtp-name">{{ t.label }}</div>
+        </div>
+        {% else %}
         <div class="qtp-card{% if t.value == current %} selected{% endif %}"
              data-qtp-value="{{ t.value }}" data-qtp-hint="{{ t.hint }}"
              role="button" tabindex="0" title="{{ t.hint }}">
             <div class="qtp-icon"><i class="fas {{ t.icon }}"></i></div>
             <div class="qtp-name">{{ t.label }}</div>
         </div>
+        {% endif %}
         {% endfor %}
     </div>
+    {% if types.0.disabled %}<div class="qtp-off-reason"><i class="fas fa-info-circle"></i> {{ types.0.reason }}</div>{% endif %}
     {% endfor %}
 </div>

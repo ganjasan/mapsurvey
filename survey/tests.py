@@ -34340,6 +34340,26 @@ class MaplessSectionEditorTest(TestCase):
         self.assertIn('choice', values)
 
 
+class PickerUnavailableTypesTest(TestCase):
+    def test_unavailable_types_come_back_disabled(self):
+        """
+        GIVEN choices without the map types and an `unavailable` map for two of them
+        WHEN picker groups are built
+        THEN the Map questions group holds exactly those two, disabled with the reason,
+             and the enabled types carry no reason
+        """
+        from survey.question_types import picker_groups_for
+        groups = dict(picker_groups_for(
+            [('text', 'Text'), ('choice', 'Choices')],
+            {'point': ('Geo Point', 'No map'), 'line': ('Geo Line', 'No map')},
+        ))
+        geo = groups['Map questions']
+        self.assertEqual([t['value'] for t in geo], ['point', 'line'])
+        self.assertTrue(all(t['disabled'] and t['reason'] == 'No map' for t in geo))
+        self.assertEqual(geo[0]['label'], 'Geo Point')
+        self.assertFalse(any(t['disabled'] for t in groups['Questions']))
+
+
 class SurveyThemingFormTest(TestCase):
     """Accent color persisted through SurveyHeaderForm into style_settings."""
 
@@ -41300,6 +41320,25 @@ class LayerObjectsQuestionEditorTest(TestCase):
         self.layer.delete()
         html = self.client.get(self._create_url()).content.decode()
         self.assertNotIn('data-qtp-value="layer_objects"', html)
+
+    def test_form_section_shows_map_types_disabled_with_reason(self):
+        """
+        GIVEN a form-layout section in a survey with a layer
+        WHEN the new-question modal is opened there, then in a map section
+        THEN the form section lists every map type as an inert tile with the reason,
+             none of them pickable; the map section shows them pickable and no reason
+        """
+        html = self.client.get(self._create_url(self.form_section)).content.decode()
+        for value in ('point', 'line', 'polygon', 'spraycan', 'layer_objects'):
+            self.assertIn(f'data-qtp-unavailable="{value}"', html)
+            self.assertNotIn(f'data-qtp-value="{value}"', html)
+        self.assertIn('Switch its Layout to Map', html)
+        self.assertIn('data-qtp-value="choice"', html)
+
+        html = self.client.get(self._create_url()).content.decode()
+        self.assertIn('data-qtp-value="point"', html)
+        self.assertNotIn('data-qtp-unavailable', html)
+        self.assertNotIn('Switch its Layout to Map', html)
 
     def test_create_requires_a_layer_and_ignores_required(self):
         """

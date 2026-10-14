@@ -40,7 +40,7 @@
         map" question (change layers-by-question); the per-section checklist that used
         to sit here was a second door to the same thing.{% endcomment %}
         {% if field.name == 'layout' and layers_enabled %}
-        <small class="form-text text-muted" style="margin-top:-.5rem;margin-bottom:.75rem;">{% trans "To show a reference layer on this section’s map, add an “Objects on the map” question and pick the layer." %}</small>
+        <small class="form-text text-muted" style="margin-top:-.5rem;margin-bottom:.75rem;">{% trans "To show a reference layer on this section’s map, add an “Objects on the map” question and pick the layer." %} {% trans "A Form section has no map, so it cannot hold map questions." %}</small>
         {% endif %}
         {% endfor %}
 
