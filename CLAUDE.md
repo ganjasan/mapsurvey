@@ -405,7 +405,13 @@ content endpoints call `_check_content_edit_allowed`, structural ones keep
 with `data-gate="<action>"` (opens the gate modal in `survey_detail.html`, which posts `then` +
 `section_code` to `editor_create_draft`, `editor` role and up — owners alone publish/discard),
 content controls on `is_read_only`. A new editor
-control must pick one of the two — never `survey.status`. While a draft exists, Build redirects to
+control must pick one of the two — never `survey.status`. The draft copy and the editor's
+duplicate/paste take every plain `SurveySection`/`Question`/translation field from the model's
+field list (`cloning.plain_field_values`, `copy_section`); a field that must NOT travel is an
+explicit exclusion there, never an omission — #329 was a hand-written list in `versioning.py` that
+silently dropped `visibility_rule`, `layout`, `next_label` and `hidden_layers` on every publish.
+`DraftCopyKeepsFieldsTest` compares every concrete field between live and draft, and
+`report_draft_field_loss` (read-only) lists surveys whose publish already lost them. While a draft exists, Build redirects to
 it (`?live=1` shows the live survey read-only) and live content edits are refused, because
 publishing the draft replaces the live structure. Both confirmations (the gate and "Publish
 changes") carry "Don't ask again": ONE browser-side preference, `localStorage['msEditorConfirmations']`
