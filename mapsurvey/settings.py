@@ -156,6 +156,7 @@ TEMPLATES = [
                 'survey.context_processors.mobile_adaptive',
                 'survey.context_processors.icon_sprites',
                 'survey.context_processors.whats_new',
+                'survey.context_processors.survey_start',
                 'survey.context_processors.support_chat',
                 'survey.context_processors.help_site',
             ],

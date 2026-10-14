@@ -61,6 +61,15 @@ UNPUBLISHED_CHANGES_PUBLISHED = 'unpublished_changes_published'
 UNPUBLISHED_CHANGES_DISCARDED = 'unpublished_changes_discarded'
 STRUCTURE_GATE_SHOWN = 'structure_gate_shown'               # browser: the prompt opened
 
+# Ways to start (change first-survey-onboarding). `survey_created` says WHERE
+# the survey was made (`surface`) and where its map came from (`map_source`);
+# the agent event is the demand signal for the MCP server (#306).
+AGENT_ACCESS_REQUESTED = 'agent_access_requested'
+SURFACE_START_BLANK = 'start_blank'     # one-click form on /editor/surveys/start/
+SURFACE_CREATE_PAGE = 'create_page'     # either action of /editor/surveys/new/
+MAP_SOURCE_CREATOR = 'creator'          # the creator framed the create-page map
+MAP_SOURCE_BRIEF = 'brief'              # the AI task geocoded a place in the brief
+
 CREATOR_FUNNEL_EVENTS = (
     CREATOR_REGISTERED,
     CREATOR_ACTIVATED,

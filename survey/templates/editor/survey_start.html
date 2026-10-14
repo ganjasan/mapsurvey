@@ -1,0 +1,273 @@
+{% extends "editor/editor_base.html" %}
+{% load i18n %}
+{% load static %}
+{% comment %}The three ways to begin (openspec: first-survey-onboarding, D1-D3).
+
+The redirect target for a workspace with no surveys and, until a default is
+remembered, where "+ New Survey" leads. Cards read like a life-path screen:
+label, picture, one line of what happens, one line of who it is for. Choosing a
+card on a wide screen moves its detail block (paragraph + action) under the
+row; on a phone every card keeps its action inside and nothing is "selected".
+The third card is INERT until the MCP server ships (#306): no link, no
+selection, no hover -- the agent page is reached from the account and help menus.{% endcomment %}
+
+{% block page_title %}{% trans "New survey" %}{% endblock %}
+
+{% block navbar_content %}
+<span class="survey-name">{% trans "New survey" %}</span>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  .start-wrap { padding: 2rem 1.5rem 3rem; max-width: 1120px; margin: 0 auto; }
+  .start-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
+  .start-head h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -.01em; margin: 0; }
+  .start-head p { color: #5f6368; margin: .35rem 0 0; font-size: .92rem; }
+  .start-skip { font-size: .82rem; color: #5f6368; white-space: nowrap; padding-top: .4rem; }
+  .start-current { font-size: .85rem; color: #5f6368; margin-top: .5rem; }
+  .start-current form { display: inline; }
+  .start-current button { background: none; border: 0; padding: 0; color: var(--accent); font-size: inherit; cursor: pointer; }
+
+  .start-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; align-items: stretch; }
+  .start-card {
+    background: #fff; border: 2px solid var(--border-color); border-radius: 16px;
+    display: flex; flex-direction: column; position: relative; overflow: hidden;
+    cursor: pointer; transition: transform .12s, border-color .12s, box-shadow .12s;
+    color: inherit; text-decoration: none;
+  }
+  .start-card:hover { transform: translateY(-2px); border-color: #c7cdd6; color: inherit; text-decoration: none; }
+  /* The chosen card: ring, lift and a check in the label row -- the border alone
+     reads as nothing on a white card over a light page (owner review). */
+  .start-card.selected { border-color: var(--accent); box-shadow: 0 0 0 4px #c7d2fe, 0 14px 30px -14px rgba(79,70,229,.5); transform: translateY(-3px); }
+  .start-card.selected .start-label { color: var(--accent); }
+  .start-check { display: none; font-family: inherit; letter-spacing: 0; text-transform: none; font-size: .74rem; font-weight: 600; color: var(--accent); }
+  .start-card.selected .start-check { display: inline-flex; align-items: center; gap: .3rem; }
+  .start-card.selected::after {
+    content: ""; position: absolute; left: 50%; bottom: -13px; transform: translateX(-50%) rotate(45deg);
+    width: 22px; height: 22px; background: #fff; border-right: 2px solid var(--accent); border-bottom: 2px solid var(--accent);
+  }
+  /* Not available yet: dimmed, desaturated, and taped over like a building site. */
+  .start-card.soon { cursor: not-allowed; opacity: .72; user-select: none; }
+  .start-card.soon:hover { transform: none; border-color: var(--border-color); }
+  .start-card.soon .start-art { filter: grayscale(.4); }
+  .start-card.soon h2, .start-card.soon .start-what { color: #5f6368; }
+  .start-art.agent::after {
+    content: attr(data-ribbon); position: absolute; left: -12%; right: -12%; top: 64%;
+    transform: rotate(-8deg); background: #fde047; color: #111; font-weight: 700; letter-spacing: .16em;
+    text-transform: uppercase; font-size: .78rem; text-align: center; padding: .4rem 0;
+    border-style: solid; border-width: 5px 0; border-image: repeating-linear-gradient(45deg, #111 0 8px, #fde047 8px 16px) 5;
+    box-shadow: 0 6px 14px rgba(0,0,0,.3);
+  }
+  .start-badge-mobile { display: none; }
+  .start-label {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .68rem; letter-spacing: .14em;
+    text-transform: uppercase; color: #9aa0a6; padding: 1rem 1.25rem 0; min-height: 2.3rem;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .start-badge { font-family: inherit; letter-spacing: 0; text-transform: none; font-size: .7rem; font-weight: 600; background: #fef3c7; color: #b45309; border-radius: 999px; padding: 2px 9px; }
+  .start-art { margin: .85rem 1.25rem 0; height: 170px; border-radius: 12px; display: grid; place-items: center; position: relative; overflow: hidden; }
+  .start-art i { font-size: 52px; color: #fff; opacity: .95; }
+  .start-art::before { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.14) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.14) 1px, transparent 1px); background-size: 28px 28px; }
+  .start-art.blank { background: linear-gradient(145deg, #0f766e, #14b8a6 60%, #5eead4); }
+  .start-art.ai { background: linear-gradient(145deg, #3730a3, #6366f1 55%, #a5b4fc); }
+  .start-art.agent { background: linear-gradient(145deg, #334155, #64748b 60%, #cbd5e1); }
+  .start-art .chat { position: absolute; left: 16px; right: 16px; bottom: 14px; background: rgba(255,255,255,.92); color: #1f2937; border-radius: 10px; padding: 7px 10px; font-size: .74rem; line-height: 1.35; }
+  .start-art .chat small { display: block; color: #9aa0a6; font-size: .62rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; margin-bottom: 2px; }
+  .start-body { padding: 1rem 1.25rem 1.25rem; display: flex; flex-direction: column; gap: .35rem; flex: 1; }
+  .start-body h2 { font-size: 1.1rem; font-weight: 700; margin: 0; }
+  .start-what { font-size: .9rem; line-height: 1.4; }
+  .start-who { font-size: .82rem; color: #5f6368; line-height: 1.4; margin-top: auto; padding-top: .5rem; }
+  .start-card.disabled { opacity: .6; cursor: not-allowed; }
+  .start-card.disabled:hover { transform: none; border-color: var(--border-color); }
+
+  /* Detail block: paragraph + action. Lives inside its card; on wide screens
+     JS moves the selected one into #start-lore under the row. */
+  .start-detail { padding: 0 1.25rem 1.25rem; display: none; }
+  .start-detail .btn { width: 100%; justify-content: center; }
+  .start-detail .btn-ai { background: var(--accent); border-color: var(--accent); color: #fff; }
+  /* Hard-coded: editor_base's :root has no --accent-hover, and a var() that does not
+     resolve throws the whole declaration away -- white text on no background. */
+  .start-detail .btn-ai:hover, .start-detail .btn-ai:focus { background: #4338ca; border-color: #4338ca; color: #fff; }
+  .start-remember { display: flex; align-items: center; gap: .5rem; font-size: .82rem; color: #5f6368; margin: .6rem 0 0; cursor: pointer; }
+  .start-remember input { margin: 0; }
+  .start-fine { font-size: .76rem; color: #9aa0a6; margin-top: .4rem; }
+  #start-lore { display: none; margin-top: 1.5rem; background: #fff; border: 2px solid var(--accent); border-radius: 16px; }
+  #start-lore .start-detail { display: grid; grid-template-columns: 1.6fr 1fr; gap: 1.75rem; align-items: center; padding: 1.35rem 1.6rem; }
+  #start-lore .start-lore-text { font-size: .95rem; line-height: 1.55; margin: 0; }
+  .start-lore-text { display: none; }
+  #start-lore .start-lore-text { display: block; }
+
+  @media (max-width: 767.98px) {
+    .start-wrap { padding: 1rem 1rem 2rem; }
+    .start-head { flex-direction: column; gap: .25rem; }
+    .start-head h1 { font-size: 1.3rem; }
+    .start-cards { grid-template-columns: 1fr; gap: .85rem; }
+    .start-card { cursor: default; flex-direction: row; flex-wrap: wrap; }
+    .start-card:hover { transform: none; }
+    .start-card.selected { border-color: var(--border-color); box-shadow: none; transform: none; }
+    .start-card.selected .start-label { color: #9aa0a6; }
+    .start-card.selected::after { display: none; }
+    .start-label { width: 100%; }
+    .start-art { width: 56px; height: 56px; margin: .75rem 0 0 1rem; flex: 0 0 auto; }
+    .start-art i { font-size: 22px; }
+    .start-art .chat, .start-art::before, .start-art.agent::after { display: none; }
+    .start-badge-mobile { display: inline-block; }
+    .start-card.soon .start-art { filter: none; }
+    .start-check { display: none !important; }
+    .start-body { flex: 1; min-width: 0; padding: .75rem 1rem .5rem; }
+    .start-body h2 { font-size: 1rem; }
+    .start-what { font-size: .85rem; color: #5f6368; }
+    .start-who { display: none; }
+    .start-detail { display: block !important; width: 100%; padding: 0 1rem 1rem; }
+    .start-detail .btn { min-height: 44px; }
+    #start-lore { display: none !important; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="start-wrap">
+  <div class="start-head">
+    <div>
+      <h1>{% trans "How do you want to start?" %}</h1>
+      <p>{% trans "Every path ends in the same editor. You can change your mind any time." %}{% if HELP_URL %} <a href="{{ HELP_URL.ways_to_start }}" target="_blank" rel="noopener">{% trans "How this works" %}</a>{% endif %}</p>
+      {% if current_default %}
+      <div class="start-current">
+        {% blocktrans with label=current_default_label %}Your default: <strong>{{ label }}</strong>{% endblocktrans %}
+        ·
+        <form method="post" action="{% url 'editor_survey_start' %}">{% csrf_token %}<input type="hidden" name="action" value="clear"><button type="submit">{% trans "Clear" %}</button></form>
+      </div>
+      {% endif %}
+    </div>
+    {% if welcome %}
+    <a class="start-skip" href="{% url 'editor' %}?dashboard=1">{% trans "Skip to dashboard →" %}</a>
+    {% endif %}
+  </div>
+
+  <div class="start-cards" id="start-cards">
+
+    {# ── 1 · Start from scratch ───────────────────────────────────────── #}
+    <div class="start-card" data-path="blank" tabindex="0" role="button" aria-pressed="false">
+      <div class="start-label"><span>{% trans "From scratch" %}</span><span class="start-check"><i class="fas fa-check-circle"></i> {% trans "Selected" %}</span></div>
+      <div class="start-art blank"><i class="fas fa-pencil-ruler"></i></div>
+      <div class="start-body">
+        <h2>{% trans "Start from scratch" %}</h2>
+        <div class="start-what">{% trans "An empty survey opens in the editor — the map already on your city. Add sections and questions yourself." %}</div>
+        <div class="start-who">{% trans "For people who know exactly what they want to ask." %}</div>
+      </div>
+      <div class="start-detail" data-for="blank">
+        <p class="start-lore-text">{% trans "You get one empty section and the editor. If your browser allows it, the map opens where you are; otherwise where this workspace's last survey was. Name, languages and the map are all one click away in Survey settings." %}</p>
+        <div>
+          <form method="post" action="{% url 'editor_survey_create_blank' %}" data-survey-start="blank">
+            {% csrf_token %}
+            <input type="hidden" name="map_lat" value="">
+            <input type="hidden" name="map_lng" value="">
+            <input type="hidden" name="map_zoom" value="">
+            <button type="submit" class="btn btn-primary" data-busy-label="{% trans "Opening the editor…" %}"><i class="fas fa-plus mr-1"></i>{% trans "Create empty survey" %}</button>
+            <label class="start-remember"><input type="checkbox" name="remember" value="1"> {% trans "Always start this way" %}</label>
+          </form>
+          <div class="start-fine">{% trans "You can switch later from the dashboard's ⋯ menu." %}</div>
+        </div>
+      </div>
+    </div>
+
+    {# ── 2 · Draft with AI ─────────────────────────────────────────────── #}
+    <div class="start-card{% if not ai_available %} disabled{% endif %}" data-path="ai" tabindex="0" role="button" aria-pressed="false"{% if not ai_available %} aria-disabled="true"{% endif %}>
+      <div class="start-label"><span>{% trans "With AI" %}</span><span class="start-check"><i class="fas fa-check-circle"></i> {% trans "Selected" %}</span></div>
+      <div class="start-art ai"><i class="fas fa-wand-magic-sparkles"></i>
+        <div class="chat"><small>{% trans "you" %}</small>{% trans "Where traffic congestion is worst in Treviglio and why" %}</div>
+      </div>
+      <div class="start-body">
+        <h2>{% trans "Draft with AI" %}</h2>
+        <div class="start-what">{% trans "Describe what you want to find out in one sentence. You get a full draft — sections, questions, map — to edit." %}</div>
+        <div class="start-who">{% if ai_available %}{% trans "For a first survey, or a quick start on a new topic." %}{% else %}{% trans "Not available on this server." %}{% endif %}</div>
+      </div>
+      <div class="start-detail" data-for="ai">
+        <p class="start-lore-text">{% trans "Write your goal in whatever language you think in — Deutsch, Español, Polski. The draft comes out in the survey languages you pick, with the map aimed at the place your brief mentions. Your description goes to an AI provider to build the draft; survey answers never do. Nothing is published until you say so." %}</p>
+        <div>
+          {% if ai_available %}
+          <form method="post" action="{% url 'editor_survey_start' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="ai">
+            <button type="submit" class="btn btn-ai"><i class="fas fa-wand-magic-sparkles mr-1"></i>{% trans "Draft my survey" %}</button>
+            <label class="start-remember"><input type="checkbox" name="remember" value="1"> {% trans "Always start this way" %}</label>
+          </form>
+          <div class="start-fine">{% trans "You can switch later from the dashboard's ⋯ menu." %}</div>
+          {% else %}
+          <div class="start-fine">{% trans "AI drafting is not configured on this server. Start from scratch instead." %}</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {# ── 3 · Connect your AI agent (teaser until #306) ─────────────────── #}
+    <div class="start-card soon" data-path="agent" aria-disabled="true">
+      <div class="start-label"><span>{% trans "Your agent" %}</span><span class="start-badge start-badge-mobile">{% trans "Soon" %}</span></div>
+      <div class="start-art agent" data-ribbon="{% trans "Coming soon" %}"><i class="fas fa-robot"></i></div>
+      <div class="start-body">
+        <h2>{% trans "Connect your AI agent" %}</h2>
+        <div class="start-what">{% trans "Let Claude, ChatGPT or Cursor build and edit surveys for you through MCP, with a token you control." %}</div>
+        <div class="start-who">{% trans "For teams who already work from an agent." %}</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="start-lore"></div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/survey_start.js' %}"></script>
+<script>
+(function () {
+    var cards = document.querySelectorAll('.start-card[data-path]');
+    var lore = document.getElementById('start-lore');
+    var wide = window.matchMedia('(min-width: 768px)');
+    var selected = null;
+
+    // On a wide screen the chosen card's detail block sits under the row, like
+    // the life-path screens this page borrows from; on a phone each card keeps
+    // its own button and nothing is selected.
+    function restore() {
+        if (!selected) return;
+        var detail = lore.querySelector('.start-detail');
+        if (detail) selected.appendChild(detail);
+        selected.classList.remove('selected');
+        selected.setAttribute('aria-pressed', 'false');
+        selected = null;
+        lore.style.display = 'none';
+    }
+    function select(card) {
+        if (!wide.matches || card.classList.contains('disabled') || card.classList.contains('soon')) return;
+        if (selected === card) return;
+        restore();
+        selected = card;
+        card.classList.add('selected');
+        card.setAttribute('aria-pressed', 'true');
+        var detail = card.querySelector('.start-detail');
+        if (detail) { lore.appendChild(detail); lore.style.display = 'block'; }
+    }
+    for (var i = 0; i < cards.length; i++) {
+        (function (card) {
+            card.addEventListener('click', function (e) {
+                if (card.classList.contains('soon')) return;
+                if (e.target.closest && e.target.closest('.start-detail')) return;
+                select(card);
+            });
+            card.addEventListener('keydown', function (e) {
+                if ((e.key === 'Enter' || e.key === ' ') && !card.classList.contains('soon')) { e.preventDefault(); select(card); }
+            });
+        })(cards[i]);
+    }
+    function initial() {
+        if (!wide.matches) { restore(); return; }
+        var first = document.querySelector('.start-card[data-path="ai"]:not(.disabled)')
+                 || document.querySelector('.start-card[data-path="blank"]');
+        if (first) select(first);
+    }
+    if (wide.addEventListener) wide.addEventListener('change', initial); else wide.addListener(initial);
+    initial();
+})();
+</script>
+{% endblock %}

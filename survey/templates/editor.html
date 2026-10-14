@@ -6,6 +6,7 @@
 {% block extra_head %}
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css">
 <script src="{% static 'js/export_dialog.js' %}"></script>
+<script src="{% static 'js/survey_start.js' %}"></script>
 <style>
     :root {
         --accent: #4f46e5;
@@ -179,6 +180,9 @@
     .more-menu { position: relative; }
     .more-menu .dropdown-menu { min-width: 160px; font-size: 0.85rem; }
     .more-menu .dropdown-item { padding: 0.35rem 0.75rem; }
+    /* The one-click "+ New Survey" is a form; `contents` keeps the button in
+       the header's flex flow exactly where the link version sits. */
+    .btn-new-survey-form { display: contents; }
     .more-menu .dropdown-divider { margin: 0.25rem 0; }
 
     .hidden { display: none !important; }
@@ -320,7 +324,21 @@
         {% endif %}
 
         {% if org_role != 'viewer' %}
+        {% comment %}Where "+ New Survey" goes is the creator's remembered choice
+        (openspec: first-survey-onboarding, D3): nothing remembered = the start
+        page with the three cards; "ai" = the create page; "blank" = the same
+        one-click POST the start page's card makes, geolocation included.{% endcomment %}
+        {% if survey_start_default == 'blank' %}
+        <form method="post" action="{% url 'editor_survey_create_blank' %}" class="btn-new-survey-form" data-survey-start="blank">
+            {% csrf_token %}
+            <input type="hidden" name="map_lat" value=""><input type="hidden" name="map_lng" value=""><input type="hidden" name="map_zoom" value="">
+            <button type="submit" class="btn btn-sm btn-primary btn-new-survey" data-busy-label="{% trans "Opening…" %}"><i class="fas fa-plus mr-1"></i>{% trans "New Survey" %}</button>
+        </form>
+        {% elif survey_start_default == 'ai' %}
         <a href="{% url 'editor_survey_create' %}" class="btn btn-sm btn-primary btn-new-survey"><i class="fas fa-plus mr-1"></i>{% trans "New Survey" %}</a>
+        {% else %}
+        <a href="{% url 'editor_survey_start' %}" class="btn btn-sm btn-primary btn-new-survey"><i class="fas fa-plus mr-1"></i>{% trans "New Survey" %}</a>
+        {% endif %}
         {% if not MOBILE_EDITOR_NAV %}
         <button type="button" class="btn btn-sm btn-outline-secondary btn-import" data-toggle="modal" data-target="#importModal">{% trans "Import" %}</button>
         {% endif %}
@@ -339,6 +357,7 @@
                 {% endif %}
                 {% if org_role != 'viewer' %}
                 <button class="dropdown-item" type="button" data-toggle="modal" data-target="#importModal"><i class="fas fa-file-import" style="margin-right:6px;"></i>{% trans "Import…" %}</button>
+                <a class="dropdown-item" href="{% url 'editor_survey_start' %}"><i class="fas fa-th-large" style="margin-right:6px;"></i>{% trans "Start another way…" %}</a>
                 {% endif %}
                 <div class="dropdown-divider"></div>
                 <button class="dropdown-item" type="button" onclick="setView('list')"><i class="fas fa-list" style="margin-right:6px;"></i>{% trans "List view" %}</button>

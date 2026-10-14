@@ -421,6 +421,8 @@
                               {% endif %}
                               <div class="dropdown-divider"></div>
                               <a class="dropdown-item" href="{% url 'whats_new' %}"><i class="fas fa-gift" style="margin-right:4px;"></i>{% trans "What's new" %}{% if whats_new.unseen_count %} <span class="wn-badge">{{ whats_new.unseen_count }}</span>{% endif %}</a>
+                              {% comment %}Agent access (openspec: first-survey-onboarding, D6); the badge goes with #306.{% endcomment %}
+                              <a class="dropdown-item" href="{% url 'editor_account_mcp' %}"><i class="fas fa-robot" style="margin-right:4px;"></i>{% trans "AI agents & MCP" %} <span class="badge badge-light" style="font-weight:500;">{% trans "soon" %}</span></a>
                               {% comment %}Phones only: the header control is hidden
                               below 768px, so the account menu keeps the list.{% endcomment %}
                               <div class="d-md-none">

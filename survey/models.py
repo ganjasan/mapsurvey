@@ -1691,6 +1691,16 @@ class CreatorProfile(models.Model):
         return f"{self.user_id}: {self.organization or '—'}"
 
 
+SURVEY_START_ASK = ''
+SURVEY_START_BLANK = 'blank'
+SURVEY_START_AI = 'ai'
+SURVEY_START_CHOICES = (
+    (SURVEY_START_ASK, _('Ask every time')),
+    (SURVEY_START_BLANK, _('Start from scratch')),
+    (SURVEY_START_AI, _('Draft with AI')),
+)
+
+
 class CreatorPreferences(models.Model):
     """Settings a creator chooses for themselves, starting with UI language.
 
@@ -1724,6 +1734,15 @@ class CreatorPreferences(models.Model):
     # must read as. `changelog_cards` off hides the card only; the page stays.
     changelog_seen = models.CharField(max_length=80, blank=True, default='')
     changelog_cards = models.BooleanField(default=True)
+    # How "+ New Survey" starts (change first-survey-onboarding): '' asks on
+    # the start page, the other two skip it. A route, not cosmetics, so it is
+    # stored here and not in localStorage like the confirmation toggles.
+    survey_start_default = models.CharField(
+        max_length=10, blank=True, default='', choices=SURVEY_START_CHOICES,
+    )
+    # "Tell me when it's ready" on /editor/account/mcp/ before the MCP server
+    # exists (#306): the launch mailing list, first click only.
+    agent_access_requested_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -27,7 +27,9 @@ from .models import (
     Membership, SURVEY_ROLE_CHOICES, BASEMAP_CHOICES,
     INPUT_TYPE_CHOICES, DISPLAY_STYLE_CHOICES, SurveyMapLayer,
     CreatorPreferences,
+    SURVEY_START_ASK, SURVEY_START_BLANK, SURVEY_START_AI, SURVEY_START_CHOICES,
 )
+from . import map_start
 from .layers import (
     normalize_style, legend_for, LAYER_ICONS,
     validate_layer_upload, LayerValidationError, layers_for, layer_owner, layer_lite, GEOMETRY_TEXT_FIELDS,
@@ -309,45 +311,25 @@ def editor_survey_create(request):
         })
         if form.is_valid():
             survey = form.save(commit=False)
-            survey.organization = request.active_org
-            survey.created_by = request.user
-            # Map position from hidden fields
-            map_lat = request.POST.get('map_lat')
-            map_lng = request.POST.get('map_lng')
-            map_zoom = request.POST.get('map_zoom')
-            if map_lat and map_lng:
-                survey.start_map_postion = Point(float(map_lng), float(map_lat))
-            if map_zoom:
-                survey.start_map_zoom = int(map_zoom)
             survey.use_geolocation = request.POST.get('use_geolocation') == '1'
             # Default base map (all basemaps stay enabled via the model default)
             valid_basemaps = {slug for slug, _ in BASEMAP_CHOICES}
             chosen_basemap = request.POST.get('default_basemap')
             if chosen_basemap in valid_basemaps:
                 survey.default_basemap = chosen_basemap
-            survey.save()
-            # `creation_method` is what makes the AI generator measurable: every
-            # historical survey is `manual` by definition, so this is the baseline
-            # its variant gets compared against.
-            pe.emit(pe.SURVEY_CREATED, request.user.pk, {
-                'survey_id': str(survey.id),
-                'creation_method': pe.CREATION_MANUAL,
-            })
-            # Create SurveyCollaborator owner entry
-            SurveyCollaborator.objects.create(
-                user=request.user,
-                survey=survey,
-                role='owner',
+            # The hidden fields hold the picker's centre, which is the server's
+            # suggestion unless the creator framed the map (`map_touched`), the
+            # one case the always-filled lat/lng cannot tell apart on its own.
+            posted = map_start.browser_position(request.POST)
+            if posted:
+                start = map_start.StartPosition(*posted, _posted_map_source(request))
+            else:
+                # A POST without the map fields (old scripts, the legacy test
+                # shape): the chain decides, exactly as the blank endpoint does.
+                start = map_start.suggest_start_position(request)
+            return _finish_blank_survey(
+                request, survey, start=start, surface=pe.SURFACE_CREATE_PAGE,
             )
-            # Create default first section
-            SurveySection.objects.create(
-                survey_header=survey,
-                name='section_1',
-                title='Section 1',
-                code='S1',
-                is_head=True,
-            )
-            return redirect('editor_survey_detail', survey_uuid=survey.uuid)
     else:
         form = SurveyCreateForm()
     if settings.CREATE_STEER_AI and settings.MOBILE_EDITOR_NAV:
@@ -355,10 +337,155 @@ def editor_survey_create(request):
         # focus. Only when the wizard flag hides the name field — with the flat
         # layout the name input keeps first position and focus stays contested.
         brief_form.fields['goal'].widget.attrs['autofocus'] = True
+    # Where the picker opens before anyone touches it: the chain, never a
+    # fixed city. The AI path inherits it through the same hidden fields.
+    start = map_start.suggest_start_position(request)
     return render(request, 'editor/survey_create.html', {
         'form': form,
         'brief_form': brief_form,
         'ai_available': ai_client.provider_configured(),
+        'initial_start': start,
+        'from_start_page': request.GET.get('from') == 'start',
+    })
+
+
+def _posted_map_source(request):
+    """`map_source` for a create-page POST: who put the centre where it is."""
+    if request.POST.get('map_touched') == '1':
+        return pe.MAP_SOURCE_CREATOR
+    source = request.POST.get('map_source', '')
+    return source if source in map_start.SOURCES else map_start.SOURCE_BROWSER
+
+
+def _finish_blank_survey(request, survey, *, start, surface):
+    """Save an unsaved `SurveyHeader` as a new survey and open its editor.
+
+    The one place that turns a header into a survey a creator can work on --
+    the owner collaborator, the head section, `survey_created` -- shared by
+    the create page's manual action and the one-click blank endpoint so the
+    two cannot drift (change first-survey-onboarding, D4).
+    """
+    survey.organization = request.active_org
+    survey.created_by = request.user
+    if start is not None:
+        survey.start_map_postion = Point(start.lng, start.lat)
+        survey.start_map_zoom = start.zoom
+    survey.save()
+    # `creation_method` is what makes the AI generator measurable: every
+    # historical survey is `manual` by definition, so this is the baseline
+    # its variant gets compared against. `surface` and `map_source` say where
+    # the survey was made and where its map came from -- names only, never
+    # coordinates.
+    pe.emit(pe.SURVEY_CREATED, request.user.pk, {
+        'survey_id': str(survey.id),
+        'creation_method': pe.CREATION_MANUAL,
+        'surface': surface,
+        'map_source': start.source if start is not None else '',
+    })
+    # Create SurveyCollaborator owner entry
+    SurveyCollaborator.objects.create(
+        user=request.user,
+        survey=survey,
+        role='owner',
+    )
+    # Create default first section
+    SurveySection.objects.create(
+        survey_header=survey,
+        name='section_1',
+        title='Section 1',
+        code='S1',
+        is_head=True,
+    )
+    return redirect('editor_survey_detail', survey_uuid=survey.uuid)
+
+
+def _creator_survey_language():
+    """The survey language a blank survey starts in: the creator's interface
+    language when the product can run a survey in it, else English."""
+    code = (translation.get_language() or 'en').split('-')[0]
+    return code if code in dict(settings.LANGUAGES) else 'en'
+
+
+def _set_survey_start_default(user, value):
+    CreatorPreferences.objects.update_or_create(
+        user=user, defaults={'survey_start_default': value},
+    )
+
+
+@require_POST
+@org_permission_required('editor')
+def editor_survey_create_blank(request):
+    """"Start from scratch" in one request: no create page, straight to the editor.
+
+    POST, never GET -- a link a browser prefetches or a crawler follows must
+    not create surveys. Name, languages and map are all editable in place in
+    the editor, which is why the create page's form is not on this path.
+    """
+    language = _creator_survey_language()
+    survey = SurveyHeader(
+        name=_('Untitled survey'),
+        available_languages=[language],
+    )
+    start = map_start.suggest_start_position(
+        request, browser=map_start.browser_position(request.POST),
+    )
+    if request.POST.get('remember') == '1':
+        _set_survey_start_default(request.user, SURVEY_START_BLANK)
+    return _finish_blank_survey(
+        request, survey, start=start, surface=pe.SURFACE_START_BLANK,
+    )
+
+
+@org_permission_required('editor')
+def editor_survey_start(request):
+    """The three ways to begin (change first-survey-onboarding, D1-D3).
+
+    GET renders the cards. POST carries the choices that are not a survey
+    yet: `action=ai` (with `remember=1` to make it the default) hands over to
+    the create page; `action=clear` forgets the default. The blank card posts
+    to `editor_survey_create_blank` directly.
+    """
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'ai':
+            if request.POST.get('remember') == '1':
+                _set_survey_start_default(request.user, SURVEY_START_AI)
+            return redirect(reverse('editor_survey_create') + '?from=start')
+        if action == 'clear':
+            _set_survey_start_default(request.user, SURVEY_START_ASK)
+            return redirect('editor_survey_start')
+        return HttpResponse(status=400)
+
+    current = (CreatorPreferences.objects
+               .filter(user=request.user)
+               .values_list('survey_start_default', flat=True)
+               .first()) or ''
+    return render(request, 'editor/survey_start.html', {
+        'ai_available': ai_client.provider_configured(),
+        'welcome': request.GET.get('welcome') == '1',
+        'current_default': current,
+        'current_default_label': dict(SURVEY_START_CHOICES).get(current, ''),
+    })
+
+
+@login_required
+def editor_account_mcp(request):
+    """Agent access before the MCP server exists (change first-survey-onboarding, D6).
+
+    The URL `docs/mcp.md` promises and #306 fills with the token page. Until
+    then: what connecting an agent will do, one example prompt, and "Tell me
+    when it's ready", which is the launch mailing list. First click only;
+    the event fires once with it.
+    """
+    prefs, _created = CreatorPreferences.objects.get_or_create(user=request.user)
+    if request.method == 'POST':
+        if prefs.agent_access_requested_at is None:
+            prefs.agent_access_requested_at = timezone.now()
+            prefs.save(update_fields=['agent_access_requested_at', 'updated_at'])
+            pe.emit(pe.AGENT_ACCESS_REQUESTED, request.user.pk)
+        return redirect('editor_account_mcp')
+    return render(request, 'editor/account_mcp.html', {
+        'requested': prefs.agent_access_requested_at is not None,
     })
 
 
@@ -433,7 +560,7 @@ def _start_survey_generation(request, form):
     map_locked = request.POST.get('map_touched') == '1'
     generate_survey_draft_task.delay(
         event.id, brief.as_dict(), languages, header_overrides,
-        map_locked=map_locked,
+        map_locked=map_locked, map_source=_posted_map_source(request),
     )
     return render(request, 'editor/partials/generation_status.html', {
         'event': event,
