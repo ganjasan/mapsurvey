@@ -46051,8 +46051,9 @@ class ExportFormatsTest(TestCase):
     # -- fixtures -----------------------------------------------------------
 
     def _session(self, **kwargs):
-        kwargs.setdefault('start_datetime', timezone.make_aware(
-            timezone.datetime(2026, 9, 22, 18, 59, 30), timezone.utc))
+        import datetime as _dt
+
+        kwargs.setdefault('start_datetime', _dt.datetime(2026, 9, 22, 18, 59, 30, tzinfo=_dt.timezone.utc))
         return SurveySession.objects.create(survey=self.survey, **kwargs)
 
     def _observe(self, session, question, point, quantity=None, note=None):
