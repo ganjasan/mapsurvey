@@ -52630,6 +52630,9 @@ class SectionFormMarkupTest(TestCase):
                     continue
                 with open(os.path.join(dirpath, name), encoding='utf-8') as fh:
                     text = fh.read()
+                # Prose in template comments may name as_p() (partials/question_fields.html
+                # explains it replaced one); only rendered markup counts.
+                text = re.sub(r'{%\s*comment\s*%}.*?{%\s*endcomment\s*%}|{#.*?#}', '', text, flags=re.S)
                 if re.search(r'{{\s*form\s*}}|\.as_(p|table|div|ul)\b', text):
                     offenders.append(os.path.relpath(os.path.join(dirpath, name), root))
         self.assertEqual(offenders, [])
