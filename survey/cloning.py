@@ -9,8 +9,16 @@ Single source of truth for deep-cloning survey structure used by:
 and the image path reference. `clone_section` copies translations and all top-level
 questions (sub-questions handled recursively by clone_question), and stitches the
 new section into the target survey's linked list.
+
+Plain fields are taken from the model's field list (`plain_field_values`), never from a
+hand-written list: #329 was a draft copy that silently dropped `layout`, `next_label`,
+`hidden_layers` and both visibility rules because the list in versioning.py predated
+them. Only the fields a copy has to DECIDE about (`code`, `name`, `title`, `is_head`,
+`visibility_rule`, the relations) are named explicitly, so a new column is copied on day
+one and a column that must NOT travel is an explicit exclusion, not an omission.
 """
-from typing import Optional
+import copy
+from typing import Iterable, Optional
 
 from .models import (
     Question,
@@ -20,6 +28,59 @@ from .models import (
     SurveySectionTranslation,
     question_code_generator,
 )
+
+# Fields every section copy decides about itself; everything else plain is copied.
+SECTION_DECIDED_FIELDS = ('is_head', 'name', 'title', 'visibility_rule')
+# Same for questions. Relations (section, parent, layer) are never plain.
+QUESTION_DECIDED_FIELDS = ('code', 'name', 'visibility_rule')
+
+
+def plain_field_values(instance, exclude: Iterable[str] = ()) -> dict:
+    """``{attname: value}`` for every concrete, non-relational, non-primary-key field of
+    ``instance`` except ``exclude`` — the kwargs a copy needs beyond what it decides.
+
+    JSON values are deep-copied so the copy never aliases the source row's list/dict
+    in memory. File fields copy the path reference (the file itself is shared)."""
+    excluded = set(exclude)
+    values = {}
+    for field in instance._meta.concrete_fields:
+        if field.primary_key or field.is_relation or field.name in excluded:
+            continue
+        value = getattr(instance, field.attname)
+        if isinstance(value, (list, dict)):
+            value = copy.deepcopy(value)
+        values[field.attname] = value
+    return values
+
+
+def copy_section(
+    section: SurveySection,
+    *,
+    target_survey: SurveyHeader,
+    is_head: bool,
+    name: Optional[str] = None,
+    title: Optional[str] = None,
+    keep_rule: bool,
+) -> SurveySection:
+    """Create a copy of ``section`` (with all its translations) in ``target_survey``.
+
+    The linked list (``next_section``/``prev_section``) is the caller's business.
+    ``keep_rule`` says whether the section's visibility rule travels: it names a
+    controller in an EARLIER section, which exists in the target only when the whole
+    survey is copied (draft / version restore) or the copy stays in-survey."""
+    new_section = SurveySection.objects.create(
+        survey_header=target_survey,
+        is_head=is_head,
+        name=section.name if name is None else name,
+        title=section.title if title is None else title,
+        visibility_rule=copy.deepcopy(section.visibility_rule) if keep_rule else None,
+        **plain_field_values(section, exclude=SECTION_DECIDED_FIELDS),
+    )
+    for trans in SurveySectionTranslation.objects.filter(section=section):
+        SurveySectionTranslation.objects.create(
+            section=new_section, **plain_field_values(trans),
+        )
+    return new_section
 
 
 def clone_question(
@@ -51,44 +112,30 @@ def clone_question(
     if name_suffix:
         new_name = f"{question.name or ''}{name_suffix}"
 
-    # A visibility rule references a controller by code within the same survey.
-    # Cloning within the survey keeps it (the controller still exists there);
-    # pasting into another survey drops it — the controller does not travel.
+    # A visibility rule names its controller by code. It survives when the controller
+    # still resolves in the target: a copy within the same survey, or a copy that keeps
+    # codes (the draft / version-restore path copies the whole survey, #329). A
+    # cross-survey paste regenerates codes and leaves the controller behind, so the
+    # rule is dropped.
     same_survey = target_section.survey_header_id == question.survey_section.survey_header_id
+    keep_rule = same_survey or not regenerate_code
     new_question = Question.objects.create(
         survey_section=target_section,
         parent_question_id=parent,
         code=new_code,
-        order_number=question.order_number,
         name=new_name,
-        subtext=question.subtext,
-        input_type=question.input_type,
-        choices=question.choices,
-        required=question.required,
-        validation_settings=question.validation_settings,
-        color=question.color,
-        icon_class=question.icon_class,
-        spray_brush=question.spray_brush,
-        image=question.image,
-        display_style=question.display_style,
-        visibility_rule=question.visibility_rule if same_survey else None,
+        visibility_rule=copy.deepcopy(question.visibility_rule) if keep_rule else None,
         # A layer belongs to one survey; pasting an Objects-on-the-map question
         # elsewhere drops the binding the way the visibility rule is dropped.
         # Draft copies and versions share the canonical survey's layers, and
         # those clone within the same survey_header lineage — see layer_owner().
         layer=question.layer if same_survey or (question.layer_id and _shares_layers(question, target_section)) else None,
-        min_objects=question.min_objects,
-        objects_search=question.objects_search,
-        panel_mode=question.panel_mode,
-        share_with_respondents=question.share_with_respondents,
+        **plain_field_values(question, exclude=QUESTION_DECIDED_FIELDS),
     )
 
     for trans in QuestionTranslation.objects.filter(question=question):
         QuestionTranslation.objects.create(
-            question=new_question,
-            language=trans.language,
-            name=trans.name,
-            subtext=trans.subtext,
+            question=new_question, **plain_field_values(trans),
         )
 
     if copy_sub_questions:
@@ -161,30 +208,16 @@ def clone_section(
         survey_header=target_survey
     ).exists()
 
-    same_survey = target_survey.id == section.survey_header_id
-    new_section = SurveySection.objects.create(
-        survey_header=target_survey,
+    # A section rule's controller lives in an EARLIER section, which stays behind
+    # on a cross-survey paste — so the rule only survives in-survey.
+    new_section = copy_section(
+        section,
+        target_survey=target_survey,
         is_head=is_head,
         name=new_name,
         title=new_title,
-        subheading=section.subheading,
-        code=section.code,
-        start_map_postion=section.start_map_postion,
-        start_map_zoom=section.start_map_zoom,
-        use_geolocation=section.use_geolocation,
-        override_basemap=section.override_basemap,
-        # A section rule's controller lives in an EARLIER section, which stays
-        # behind on a cross-survey paste — so the rule only survives in-survey.
-        visibility_rule=section.visibility_rule if same_survey else None,
+        keep_rule=target_survey.id == section.survey_header_id,
     )
-
-    for trans in SurveySectionTranslation.objects.filter(section=section):
-        SurveySectionTranslation.objects.create(
-            section=new_section,
-            language=trans.language,
-            title=trans.title,
-            subheading=trans.subheading,
-        )
 
     pairs = []
     code_map = {}

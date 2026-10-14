@@ -12,7 +12,7 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
 
-from .cloning import clone_question
+from .cloning import clone_question, copy_section
 from .models import (
     SurveyHeader, SurveySection, SurveySectionTranslation,
     Question, QuestionTranslation, Answer, SurveySession,
@@ -299,29 +299,12 @@ def clone_survey_for_draft(canonical, structure_source=None):
     old_to_new_section = {}
 
     for section in sections:
-        new_section = SurveySection.objects.create(
-            survey_header=draft,
-            is_head=section.is_head,
-            name=section.name,
-            title=section.title,
-            subheading=section.subheading,
-            code=section.code,
-            start_map_postion=section.start_map_postion,
-            start_map_zoom=section.start_map_zoom,
-            use_geolocation=section.use_geolocation,
-            override_basemap=section.override_basemap,
-            # next/prev resolved after all sections created
+        # Every plain field travels (layout, next_label, hidden_layers, the rule —
+        # #329); the linked list is resolved after all sections exist.
+        new_section = copy_section(
+            section, target_survey=draft, is_head=section.is_head, keep_rule=True,
         )
         old_to_new_section[section.pk] = new_section
-
-        # Clone section translations
-        for trans in SurveySectionTranslation.objects.filter(section=section):
-            SurveySectionTranslation.objects.create(
-                section=new_section,
-                language=trans.language,
-                title=trans.title,
-                subheading=trans.subheading,
-            )
 
         # Clone questions (top-level only, sub-questions handled recursively)
         for question in Question.objects.filter(
@@ -604,3 +587,77 @@ def publish_draft(draft, force=False):
         draft.delete()
 
     return canonical
+
+
+# ─── #329 repair report ──────────────────────────────────────────────────────
+
+# What the pre-fix draft copy dropped, and the value that means "nothing set".
+_LOST_SECTION_FIELDS = (
+    ('layout', 'map'),
+    ('next_label', None),
+    ('hidden_layers', []),
+    ('visibility_rule', None),
+)
+
+
+def _is_blank(value, blank):
+    return value == blank or value in (None, '', [], {})
+
+
+def find_draft_field_loss(surveys=None):
+    """Compare every canonical survey with its newest archived version and list the
+    fields the archived rows carry that the canonical rows of the same code lost.
+
+    Returns ``[{'survey', 'archived_version', 'losses': [str, ...]}, ...]`` for the
+    surveys with at least one loss. Read-only; the management command
+    ``report_draft_field_loss`` prints it."""
+    if surveys is None:
+        surveys = SurveyHeader.objects.filter(
+            is_canonical=True, version_number__gt=1,
+        ).select_related('organization')
+    reports = []
+    for survey in surveys:
+        archived = (
+            SurveyHeader.objects.filter(canonical_survey=survey, is_canonical=False)
+            .order_by('-version_number').first()
+        )
+        if archived is None:
+            continue
+        losses = []
+        live_sections = {s.code: s for s in SurveySection.objects.filter(survey_header=survey)}
+        for old in SurveySection.objects.filter(survey_header=archived):
+            new = live_sections.get(old.code)
+            if new is None:
+                continue  # deleted in the draft on purpose
+            for name, blank in _LOST_SECTION_FIELDS:
+                old_value, new_value = getattr(old, name), getattr(new, name)
+                if not _is_blank(old_value, blank) and _is_blank(new_value, blank):
+                    losses.append(f"section {old.code} ({old.name}): {name} was {old_value!r}")
+            new_labels = {
+                t.language: t.next_label
+                for t in SurveySectionTranslation.objects.filter(section=new)
+            }
+            for t in SurveySectionTranslation.objects.filter(section=old).exclude(next_label=None).exclude(next_label=''):
+                if not new_labels.get(t.language):
+                    losses.append(
+                        f"section {old.code} ({old.name}): next_label[{t.language}] was {t.next_label!r}"
+                    )
+        live_rules = {
+            q.code: q.visibility_rule
+            for q in Question.objects.filter(survey_section__survey_header=survey)
+        }
+        for old_q in Question.objects.filter(
+            survey_section__survey_header=archived, visibility_rule__isnull=False,
+        ).select_related('survey_section'):
+            if old_q.code in live_rules and not live_rules[old_q.code]:
+                losses.append(
+                    f"question {old_q.code} ({(old_q.name or '')[:40]!r}): "
+                    f"visibility_rule was {old_q.visibility_rule!r}"
+                )
+        if losses:
+            reports.append({
+                'survey': survey,
+                'archived_version': archived.version_number,
+                'losses': losses,
+            })
+    return reports

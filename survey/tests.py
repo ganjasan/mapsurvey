@@ -52636,3 +52636,242 @@ class SectionFormMarkupTest(TestCase):
                 if re.search(r'{{\s*form\s*}}|\.as_(p|table|div|ul)\b', text):
                     offenders.append(os.path.relpath(os.path.join(dirpath, name), root))
         self.assertEqual(offenders, [])
+
+
+class DraftCopyKeepsFieldsTest(TestCase):
+    """The draft copy and the publish keep every field of the questionnaire (#329,
+    change draft-copy-keeps-fields): visibility rules, form layout, button labels,
+    hidden layers, translated labels — and any column added later."""
+
+    def setUp(self):
+        from .models import SurveyMapLayer
+        self.org = _make_org('DraftFieldsOrg')
+        self.user = User.objects.create_user(username='draftfields', password='pass')
+        self.survey = SurveyHeader.objects.create(
+            name='fields_live', organization=self.org, created_by=self.user,
+            status='published', available_languages=['en', 'ru'],
+        )
+        SurveyCollaborator.objects.create(user=self.user, survey=self.survey, role='owner')
+        self.layer = SurveyMapLayer.objects.create(
+            survey=self.survey, name='Parks',
+            geojson='{"type": "FeatureCollection", "features": []}',
+        )
+        self.welcome = SurveySection.objects.create(
+            survey_header=self.survey, name='welcome', title='Welcome', code='S1',
+            is_head=True, layout='form', next_label='Start the tour',
+        )
+        SurveySectionTranslation.objects.create(
+            section=self.welcome, language='ru', title='Добро пожаловать',
+            next_label='Начать тур',
+        )
+        self.controller = Question.objects.create(
+            survey_section=self.welcome, code='Q1', order_number=1,
+            name='Do you cycle?', input_type='choice',
+            choices=[{'code': 1, 'name': 'Yes'}, {'code': 2, 'name': 'No'}],
+        )
+        self.dependent = Question.objects.create(
+            survey_section=self.welcome, code='Q2', order_number=2,
+            name='How often?', input_type='text',
+            visibility_rule={'question_code': 'Q1', 'choice_codes': [1]},
+        )
+        self.map_section = SurveySection.objects.create(
+            survey_header=self.survey, name='routes', title='Routes', code='S2',
+            layout='map', hidden_layers=[self.layer.id],
+            visibility_rule={'question_code': 'Q1', 'choice_codes': [1]},
+            prev_section=self.welcome,
+        )
+        self.welcome.next_section = self.map_section
+        self.welcome.save(update_fields=['next_section'])
+        Question.objects.create(
+            survey_section=self.map_section, code='Q3', order_number=1,
+            name='Your route', input_type='line',
+        )
+
+    # -- helpers ---------------------------------------------------------------
+
+    @staticmethod
+    def _plain_values(instance):
+        """Every concrete, non-relational, non-pk field — the fields a copy must carry."""
+        return {
+            f.name: f.value_from_object(instance)
+            for f in instance._meta.concrete_fields
+            if not f.primary_key and not f.is_relation
+        }
+
+    @staticmethod
+    def _poke(instance, skip=()):
+        """Give every plain field a value that differs from the model default, so a
+        field the copy forgets shows up as a difference rather than hiding behind
+        its default. Choice fields take another choice; JSON fields a marker."""
+        from django.db import models as dj
+        from django.contrib.gis.db.models import GeometryField
+        for f in instance._meta.concrete_fields:
+            if f.primary_key or f.is_relation or f.name in skip:
+                continue
+            current = getattr(instance, f.attname)
+            if isinstance(f, GeometryField):
+                value = Point(7.0, 7.0)
+            elif f.choices:
+                value = next(c for c, _ in f.flatchoices if c != current)
+            elif isinstance(f, dj.BooleanField):
+                value = not current
+            elif isinstance(f, dj.JSONField):
+                value = {'poked': f.name} if not isinstance(current, list) else ['poked']
+            elif isinstance(f, (dj.IntegerField, dj.PositiveIntegerField)):
+                value = (current or 0) + 7
+            elif isinstance(f, dj.FileField):
+                value = f'images/{f.name}_poked.png'
+            else:
+                value = f'{f.name} poked'[: (f.max_length or 100)]
+            setattr(instance, f.attname, value)
+        instance.save()
+
+    def _sections_by_code(self, survey):
+        return {s.code: s for s in SurveySection.objects.filter(survey_header=survey)}
+
+    def _questions_by_code(self, survey):
+        return {q.code: q for q in Question.objects.filter(survey_section__survey_header=survey)}
+
+    # -- tests -----------------------------------------------------------------
+
+    def test_every_concrete_field_survives_the_draft_copy(self):
+        """
+        GIVEN a live survey whose every section, translation, question and question
+              translation field holds a non-default value
+        WHEN a draft copy is created
+        THEN every concrete non-relational field of every row equals the live row's
+             (a column added to one of the four models without reaching the copy fails here)
+        """
+        from .versioning import clone_survey_for_draft
+        self.welcome.refresh_from_db()
+        for section in SurveySection.objects.filter(survey_header=self.survey):
+            self._poke(section, skip=('code', 'is_head', 'visibility_rule'))
+            for trans in SurveySectionTranslation.objects.filter(section=section):
+                self._poke(trans, skip=('language',))
+        for question in Question.objects.filter(survey_section__survey_header=self.survey):
+            self._poke(question, skip=('code', 'input_type', 'visibility_rule'))
+            QuestionTranslation.objects.create(question=question, language='ru', name='x')
+            for trans in QuestionTranslation.objects.filter(question=question):
+                self._poke(trans, skip=('language',))
+
+        draft = clone_survey_for_draft(self.survey)
+
+        live_sections, draft_sections = self._sections_by_code(self.survey), self._sections_by_code(draft)
+        self.assertEqual(set(live_sections), set(draft_sections))
+        for code, live in live_sections.items():
+            with self.subTest(section=code):
+                self.assertEqual(self._plain_values(live), self._plain_values(draft_sections[code]))
+                live_t = {t.language: self._plain_values(t) for t in live.translations.all()}
+                draft_t = {t.language: self._plain_values(t) for t in draft_sections[code].translations.all()}
+                self.assertEqual(live_t, draft_t)
+        live_questions, draft_questions = self._questions_by_code(self.survey), self._questions_by_code(draft)
+        self.assertEqual(set(live_questions), set(draft_questions))
+        for code, live in live_questions.items():
+            with self.subTest(question=code):
+                self.assertEqual(self._plain_values(live), self._plain_values(draft_questions[code]))
+                live_t = {t.language: self._plain_values(t) for t in live.translations.all()}
+                draft_t = {t.language: self._plain_values(t) for t in draft_questions[code].translations.all()}
+                self.assertEqual(live_t, draft_t)
+
+    def test_untouched_draft_publishes_identically(self):
+        """
+        GIVEN a live survey with a conditional question, a conditional section, a form
+              section with a custom (and translated) forward label and a hidden layer
+        WHEN the creator starts unpublished changes and publishes them untouched
+        THEN the live survey still has both rules, the form layout, both labels and the hidden layer
+        """
+        from .versioning import clone_survey_for_draft, publish_draft
+        draft = clone_survey_for_draft(self.survey)
+        canonical = publish_draft(draft)
+
+        self.assertEqual(canonical.version_number, 2)
+        sections = self._sections_by_code(canonical)
+        self.assertEqual(sections['S1'].layout, 'form')
+        self.assertEqual(sections['S1'].next_label, 'Start the tour')
+        self.assertEqual(
+            sections['S1'].translations.get(language='ru').next_label, 'Начать тур',
+        )
+        self.assertEqual(sections['S2'].hidden_layers, [self.layer.id])
+        self.assertEqual(
+            sections['S2'].visibility_rule, {'question_code': 'Q1', 'choice_codes': [1]},
+        )
+        questions = self._questions_by_code(canonical)
+        self.assertEqual(
+            questions['Q2'].visibility_rule, {'question_code': 'Q1', 'choice_codes': [1]},
+        )
+        self.assertIsNone(questions['Q1'].visibility_rule)
+
+    def test_restored_version_keeps_rules_and_layout(self):
+        """
+        GIVEN a survey republished once, so v1 is an archived version
+        WHEN v1 is restored as a new draft
+        THEN the draft carries v1's rules, layout and labels
+        """
+        from .versioning import clone_survey_for_draft, publish_draft
+        publish_draft(clone_survey_for_draft(self.survey))
+        archived = SurveyHeader.objects.get(canonical_survey=self.survey, is_canonical=False)
+
+        restored = clone_survey_for_draft(self.survey, structure_source=archived)
+
+        sections = self._sections_by_code(restored)
+        self.assertEqual(sections['S1'].layout, 'form')
+        self.assertEqual(sections['S1'].next_label, 'Start the tour')
+        self.assertEqual(sections['S2'].visibility_rule, {'question_code': 'Q1', 'choice_codes': [1]})
+        self.assertEqual(
+            self._questions_by_code(restored)['Q2'].visibility_rule,
+            {'question_code': 'Q1', 'choice_codes': [1]},
+        )
+
+    def test_cross_survey_paste_still_drops_the_rule(self):
+        """
+        GIVEN a conditioned question in one survey
+        WHEN it is pasted (codes regenerated) into a section of another survey
+        THEN the pasted question has no visibility rule, the in-survey duplicate keeps it
+        """
+        from .cloning import clone_question
+        other = SurveyHeader.objects.create(
+            name='other', organization=self.org, created_by=self.user, status='draft',
+        )
+        other_section = SurveySection.objects.create(
+            survey_header=other, name='s', title='S', code='SX', is_head=True,
+        )
+        pasted = clone_question(self.dependent, target_section=other_section)
+        self.assertIsNone(pasted.visibility_rule)
+        duplicate = clone_question(self.dependent, target_section=self.welcome)
+        self.assertEqual(duplicate.visibility_rule, self.dependent.visibility_rule)
+
+    def test_report_lists_what_a_pre_fix_publish_lost(self):
+        """
+        GIVEN a survey published from a draft the way the pre-fix copy did it
+              (archived v1 has the rules, layout and labels; canonical v2 has none)
+        WHEN find_draft_field_loss runs
+        THEN it names the survey and every lost field, and a healthy survey is not listed
+        """
+        from io import StringIO
+        from django.core.management import call_command
+        from .versioning import clone_survey_for_draft, publish_draft, find_draft_field_loss
+        publish_draft(clone_survey_for_draft(self.survey))
+        # Strip the canonical the way the old draft copy did.
+        SurveySection.objects.filter(survey_header=self.survey).update(
+            layout='map', next_label=None, hidden_layers=[], visibility_rule=None,
+        )
+        SurveySectionTranslation.objects.filter(section__survey_header=self.survey).update(next_label=None)
+        Question.objects.filter(survey_section__survey_header=self.survey).update(visibility_rule=None)
+
+        reports = find_draft_field_loss()
+
+        self.assertEqual([r['survey'] for r in reports], [self.survey])
+        losses = '\n'.join(reports[0]['losses'])
+        for expected in ("layout was 'form'", "next_label was 'Start the tour'",
+                         "next_label[ru] was 'Начать тур'", f"hidden_layers was [{self.layer.id}]",
+                         "section S2 (routes): visibility_rule was", "question Q2 ('How often?'): visibility_rule was"):
+            self.assertIn(expected, losses)
+
+        out = StringIO()
+        call_command('report_draft_field_loss', stdout=out)
+        self.assertIn(str(self.survey.uuid), out.getvalue())
+        self.assertIn('1 survey(s) affected.', out.getvalue())
+
+        # A healthy publish (post-fix) reports nothing.
+        publish_draft(clone_survey_for_draft(self.survey))
+        self.assertEqual(find_draft_field_loss(), [])
