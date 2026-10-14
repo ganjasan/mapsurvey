@@ -742,6 +742,32 @@ ul {
   min-width: 50px;
 }
 
+/* Sub-question cards inside a map popup: the section's cards (same partial),
+   without the frame — the popup is the frame, so cards stack with a rule
+   between them instead of boxes inside a box. */
+/* Leaflet sets 12px on the map; the cards' em sizes would then sit below the
+   hint's rem size, and a Formatted Text block would shrink. Same base as the
+   section panel for every block but the controls, which size off the map. */
+.leaflet-popup-content form > :not(.layer-controls) {
+  font-size: 1rem;
+}
+.leaflet-popup-content .question-card {
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  /* 4px sides: choice rows bleed 4px out (margin: 0 -4px) for their hover
+     fill; the section card's padding absorbs that, here nothing would and the
+     popup scrolled sideways. */
+  padding: 0 4px;
+  margin: 0;
+}
+.leaflet-popup-content .question-card + .question-card {
+  border-top: 1px solid var(--card-border);
+  margin-top: 12px;
+  padding-top: 12px;
+}
+
 /* ============================================
    Navigation buttons
    ============================================ */
@@ -1449,6 +1475,15 @@ body.sidebar-hidden .leaflet-top.leaflet-left {
   line-height: 1.4;
   color: #6b7280;
 }
+
+/* Hints are creator rich text (<p>, lists): the wrapper owns the spacing,
+   so the creator's first and last block must not add their own. */
+.question-card__subtext > :first-child,
+.image-block__caption > :first-child,
+.geo-question-subtitle > :first-child { margin-top: 0; }
+.question-card__subtext > :last-child,
+.image-block__caption > :last-child,
+.geo-question-subtitle > :last-child { margin-bottom: 0; }
 
 /* ── Ranking question ──────────────────────────────────────────────────────
    The order lives in the DOM; these styles only make it draggable-looking and

@@ -754,6 +754,15 @@ locale.{% endcomment %}
     });
 
     // --- Helpers ---
+    // A popup's sub-question cards are inserted with no page load or htmx swap,
+    // so the components that initialise on those never see them (#320). Called
+    // after the stored answers are restored, so the rating chip shows them.
+    window.initPopupFields = initPopupFields;
+    function initPopupFields(root) {
+        if (window.initRanking) window.initRanking(root);
+        if (window.syncRatingChips) window.syncRatingChips();
+    }
+
     function _buildPopupHtml(formId, sqHtml) {
         return '<form action="" onsubmit="return false;" id="' + formId + '">' + sqHtml
             + '<div class="layer-controls">'
@@ -960,6 +969,7 @@ locale.{% endcomment %}
         // Restore above sets values without events; decide the write-in
         // fields' visibility from the restored state (spec other-option-write-in).
         if (window.syncOtherWriteins) window.syncOtherWriteins($popup[0], false);
+        initPopupFields($popup[0]);
 
         tempLayer.editing.disable();
 
@@ -1309,6 +1319,7 @@ locale.{% endcomment %}
     // =====================================================================
     // Rating scale-strip: selected-option label chip
     // =====================================================================
+    window.syncRatingChips = syncRatingChips;
     function syncRatingChips() {
         document.querySelectorAll('[data-rating-strip]').forEach(function(strip) {
             var chip = strip.querySelector('.rating-scale-strip__chip span');
