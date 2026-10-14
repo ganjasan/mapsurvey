@@ -624,11 +624,15 @@ def find_draft_field_loss(surveys=None):
         if archived is None:
             continue
         losses = []
-        live_sections = {s.code: s for s in SurveySection.objects.filter(survey_header=survey)}
+        # Section codes are NOT unique within a survey (duplicating a section keeps
+        # its code); the name is, so a lineage is (code, name).
+        live_sections = {
+            (s.code, s.name): s for s in SurveySection.objects.filter(survey_header=survey)
+        }
         for old in SurveySection.objects.filter(survey_header=archived):
-            new = live_sections.get(old.code)
+            new = live_sections.get((old.code, old.name))
             if new is None:
-                continue  # deleted in the draft on purpose
+                continue  # deleted or renamed in the draft on purpose
             for name, blank in _LOST_SECTION_FIELDS:
                 old_value, new_value = getattr(old, name), getattr(new, name)
                 if not _is_blank(old_value, blank) and _is_blank(new_value, blank):
