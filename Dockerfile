@@ -1,5 +1,5 @@
 # pull official base image
-FROM python:3.9-slim 
+FROM python:3.12-slim
 
 # create directory for the app user
 RUN mkdir -p /home/app
