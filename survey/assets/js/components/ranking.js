@@ -132,6 +132,10 @@
     // Listened for on document, not document.body: this file is loaded from
     // <head>, where body does not exist yet. htmx events bubble up to
     // document either way.
+    // Map popups insert their sub-question forms with neither a load nor a
+    // swap; they call this when one opens.
+    window.initRanking = initAll;
+
     document.addEventListener('DOMContentLoaded', function () { initAll(document); });
     document.addEventListener('htmx:afterSwap', function (e) { initAll(e.target); });
 })();

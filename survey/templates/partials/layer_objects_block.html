@@ -280,6 +280,7 @@ description, which the object endpoint passed through coerce_creator_html.
                     } else if ($el.length) { $el.val(stored[name][0]); }
                 });
                 if (window.syncOtherWriteins) window.syncOtherWriteins($popup[0], false);   // restore fired no events
+                if (window.initPopupFields) window.initPopupFields($popup[0]);
                 $form.find('.thumbs__option input:checked').closest('.thumbs__option').addClass('is-checked');
                 $form.find('.thumbs__option input').on('change', function() {
                     $(this).closest('.thumbs').find('.thumbs__option').removeClass('is-checked');

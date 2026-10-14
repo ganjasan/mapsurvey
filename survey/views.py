@@ -2,6 +2,7 @@ import re
 import uuid as uuid_mod
 
 from django.shortcuts import render, redirect, get_object_or_404
+from django.template.loader import render_to_string
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import models
@@ -1005,9 +1006,12 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 
 	form = SurveySectionAnswerForm(initial=initial, section=section, question=None, survey_session_id=request.session['survey_session_id'], language=selected_language, questions_override=questions)
 
+	# Popup forms render through the section's own card partial, never as_p(): as_p() dropped
+	# the creator's hint and the rating styles (#320).
 	subquestions_forms = {}
 	for question in questions:
-		subquestions_forms[question.code] = SurveySectionAnswerForm(initial={}, section=section, question=question, survey_session_id=request.session['survey_session_id'], language=selected_language).as_p()
+		subquestion_form = SurveySectionAnswerForm(initial={}, section=section, question=question, survey_session_id=request.session['survey_session_id'], language=selected_language)
+		subquestions_forms[question.code] = render_to_string('partials/question_fields.html', {'form': subquestion_form})
 
 	# Answers about layer objects (spec object-answers): {question_code: {object_key:
 	# {sub_code: [values]}}} — the popup prefill and the answered ✓ on revisit.
