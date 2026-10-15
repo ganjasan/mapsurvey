@@ -35,4 +35,4 @@
 
 - [x] 5.1 Run the start-page/onboarding tests and the full `survey` suite once
 - [x] 5.2 Click through on the dev server: desktop and phone width, blank card one click, AI card one click, Preferences save → dashboard button routes
-- [ ] 5.3 Archive `first-survey-onboarding` before archiving this change (its delta holds `survey-start-chooser`)
+- [x] 5.3 Archive `first-survey-onboarding` before archiving this change (its delta holds `survey-start-chooser`)
