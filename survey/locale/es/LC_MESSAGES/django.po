@@ -8031,3 +8031,19 @@ msgstr "Sáltese la página «¿Cómo quiere empezar?» eligiendo su forma habit
 #: survey/templates/editor/survey_start.html
 msgid "Recommended"
 msgstr "Recomendado"
+
+#: survey/templates/editor/survey_start.html
+msgid "Wizard"
+msgstr "Asistente"
+
+#: survey/editor_views.py
+msgid "Survey wizard"
+msgstr "Asistente de encuestas"
+
+#: survey/templates/editor/survey_start.html
+msgid "Best to start"
+msgstr "Mejor para empezar"
+
+#: survey/templates/editor/survey_start.html
+msgid "Describe what you want to find out in one sentence. The wizard builds a full draft — sections, questions, map — for you to edit."
+msgstr "Describa en una frase lo que quiere averiguar. El asistente crea un borrador completo —secciones, preguntas, mapa— para que lo edite."

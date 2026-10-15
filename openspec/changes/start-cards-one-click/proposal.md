@@ -10,9 +10,9 @@ option on the page itself cost more than they give (#335).
 
 ## What Changes
 
-- *Draft with AI* becomes the first, emphasised card labelled "Recommended" (AI drafts reach
-  publication about 2.5x as often as empty surveys); without a provider *Start from scratch*
-  leads.
+- The AI-draft card is renamed *Survey wizard* and becomes the first, emphasised card badged
+  "Best to start" (AI drafts reach publication about 2.5x as often as empty surveys); without a
+  provider *Start from scratch* leads. The provider disclosure stays on the create page.
 - One click on a card performs the card's action. *Start from scratch* posts the blank-creation
   form (same endpoint, same geolocation-on-click, same double-submit guard). *Draft with AI*
   opens the create page with `?from=start`. *Connect your AI agent* stays inert.

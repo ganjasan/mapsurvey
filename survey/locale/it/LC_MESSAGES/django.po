@@ -8012,3 +8012,19 @@ msgstr "Salta la pagina «Come vuoi iniziare?» scegliendo il tuo modo abituale.
 #: survey/templates/editor/survey_start.html
 msgid "Recommended"
 msgstr "Consigliato"
+
+#: survey/templates/editor/survey_start.html
+msgid "Wizard"
+msgstr "Procedura guidata"
+
+#: survey/editor_views.py
+msgid "Survey wizard"
+msgstr "Procedura guidata"
+
+#: survey/templates/editor/survey_start.html
+msgid "Best to start"
+msgstr "Ideale per iniziare"
+
+#: survey/templates/editor/survey_start.html
+msgid "Describe what you want to find out in one sentence. The wizard builds a full draft — sections, questions, map — for you to edit."
+msgstr "Descrivi in una frase cosa vuoi scoprire. La procedura guidata crea una bozza completa — sezioni, domande, mappa — da modificare."

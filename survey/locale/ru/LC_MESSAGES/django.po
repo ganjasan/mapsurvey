@@ -7965,3 +7965,19 @@ msgstr "Пропускайте страницу «С чего начнём?», �
 #: survey/templates/editor/survey_start.html
 msgid "Recommended"
 msgstr "Рекомендуем"
+
+#: survey/templates/editor/survey_start.html
+msgid "Wizard"
+msgstr "Мастер"
+
+#: survey/editor_views.py
+msgid "Survey wizard"
+msgstr "Мастер опросов"
+
+#: survey/templates/editor/survey_start.html
+msgid "Best to start"
+msgstr "Лучший старт"
+
+#: survey/templates/editor/survey_start.html
+msgid "Describe what you want to find out in one sentence. The wizard builds a full draft — sections, questions, map — for you to edit."
+msgstr "Опишите одной фразой, что хотите узнать. Мастер соберёт готовый черновик — разделы, вопросы, карту — для правки."

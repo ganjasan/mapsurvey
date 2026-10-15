@@ -8068,3 +8068,19 @@ msgstr "Pomiń stronę „Jak chcesz zacząć?”, wybierając swój zwykły spo
 #: survey/templates/editor/survey_start.html
 msgid "Recommended"
 msgstr "Polecane"
+
+#: survey/templates/editor/survey_start.html
+msgid "Wizard"
+msgstr "Kreator"
+
+#: survey/editor_views.py
+msgid "Survey wizard"
+msgstr "Kreator ankiety"
+
+#: survey/templates/editor/survey_start.html
+msgid "Best to start"
+msgstr "Najlepiej zacząć tutaj"
+
+#: survey/templates/editor/survey_start.html
+msgid "Describe what you want to find out in one sentence. The wizard builds a full draft — sections, questions, map — for you to edit."
+msgstr "Opisz jednym zdaniem, czego chcesz się dowiedzieć. Kreator przygotuje pełny szkic — sekcje, pytania, mapę — do edycji."

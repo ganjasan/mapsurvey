@@ -7966,3 +7966,19 @@ msgstr "Ohita sivu ”Miten haluat aloittaa?” valitsemalla tavallisen tapasi. 
 #: survey/templates/editor/survey_start.html
 msgid "Recommended"
 msgstr "Suositeltu"
+
+#: survey/templates/editor/survey_start.html
+msgid "Wizard"
+msgstr "Ohjattu"
+
+#: survey/editor_views.py
+msgid "Survey wizard"
+msgstr "Ohjattu kyselyn luonti"
+
+#: survey/templates/editor/survey_start.html
+msgid "Best to start"
+msgstr "Paras aloitus"
+
+#: survey/templates/editor/survey_start.html
+msgid "Describe what you want to find out in one sentence. The wizard builds a full draft — sections, questions, map — for you to edit."
+msgstr "Kuvaa yhdellä lauseella, mitä haluat selvittää. Ohjattu toiminto tekee valmiin luonnoksen – osiot, kysymykset, kartan – muokattavaksesi."

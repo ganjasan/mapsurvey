@@ -7985,3 +7985,19 @@ msgstr "Lewati halaman “Bagaimana Anda ingin memulai?” dengan memilih cara y
 #: survey/templates/editor/survey_start.html
 msgid "Recommended"
 msgstr "Disarankan"
+
+#: survey/templates/editor/survey_start.html
+msgid "Wizard"
+msgstr "Wizard"
+
+#: survey/editor_views.py
+msgid "Survey wizard"
+msgstr "Wizard survei"
+
+#: survey/templates/editor/survey_start.html
+msgid "Best to start"
+msgstr "Terbaik untuk memulai"
+
+#: survey/templates/editor/survey_start.html
+msgid "Describe what you want to find out in one sentence. The wizard builds a full draft — sections, questions, map — for you to edit."
+msgstr "Jelaskan dalam satu kalimat apa yang ingin Anda ketahui. Wizard membuat draf lengkap — bagian, pertanyaan, peta — untuk Anda sunting."

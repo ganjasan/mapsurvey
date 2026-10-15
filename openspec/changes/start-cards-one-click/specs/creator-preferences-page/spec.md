@@ -5,11 +5,11 @@ The system SHALL serve `/editor/account/` to any signed-in creator, independent 
 in the active organization, as the place for settings that belong to the person rather than
 the workspace. Anonymous visitors SHALL be redirected to the login page. The page SHALL offer
 the default way to start a new survey as one choice among *Ask every time* (`''`),
-*Start from scratch* (`blank`) and *Draft with AI* (`ai`), preselected from
+*Start from scratch* (`blank`) and *Survey wizard* (`ai`, the AI draft), preselected from
 `CreatorPreferences.survey_start_default` (no row = *Ask every time*). Submitting the form
 (POST) SHALL store the chosen value, creating the `CreatorPreferences` row when missing, show
 a confirmation and redirect back to the page. A value outside the three SHALL be refused with
-400 and leave the stored value unchanged. When no LLM provider is configured, *Draft with AI*
+400 and leave the stored value unchanged. When no LLM provider is configured, *Survey wizard*
 SHALL be shown disabled with an explanation, and a stored `ai` SHALL still be shown as the
 current value.
 

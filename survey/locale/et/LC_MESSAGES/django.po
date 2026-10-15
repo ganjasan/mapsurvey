@@ -7945,3 +7945,19 @@ msgstr "Jätke leht „Kuidas soovite alustada?“ vahele, valides oma tavapära
 #: survey/templates/editor/survey_start.html
 msgid "Recommended"
 msgstr "Soovitatav"
+
+#: survey/templates/editor/survey_start.html
+msgid "Wizard"
+msgstr "Viisard"
+
+#: survey/editor_views.py
+msgid "Survey wizard"
+msgstr "Küsitluse viisard"
+
+#: survey/templates/editor/survey_start.html
+msgid "Best to start"
+msgstr "Parim algus"
+
+#: survey/templates/editor/survey_start.html
+msgid "Describe what you want to find out in one sentence. The wizard builds a full draft — sections, questions, map — for you to edit."
+msgstr "Kirjeldage ühe lausega, mida soovite teada saada. Viisard koostab täieliku mustandi – jaotised, küsimused, kaardi –, mida saate muuta."
