@@ -10,6 +10,9 @@ option on the page itself cost more than they give (#335).
 
 ## What Changes
 
+- The AI-draft card is renamed *Survey wizard* and becomes the first, emphasised card badged
+  "Best to start" (AI drafts reach publication about 2.5x as often as empty surveys); without a
+  provider *Start from scratch* leads. The provider disclosure stays on the create page.
 - One click on a card performs the card's action. *Start from scratch* posts the blank-creation
   form (same endpoint, same geolocation-on-click, same double-submit guard). *Draft with AI*
   opens the create page with `?from=start`. *Connect your AI agent* stays inert.
@@ -24,11 +27,17 @@ option on the page itself cost more than they give (#335).
 - The dashboard's "+ New Survey" keeps routing by the default, and the ⋯ menu keeps
   "Start another way…" — unchanged.
 
+- Found on the owner's phone in the same session: one survey name without break opportunities
+  (`waermeplanung_quedlinburg_demo`) widened the dashboard's single grid column and pushed every
+  card off the screen. The grid track becomes `minmax(0, 1fr)` and names wrap anywhere.
+
 ## Capabilities
 
 ### New Capabilities
 - `creator-preferences-page`: the personal Preferences page at `/editor/account/` and its
   account-menu entry; first setting is the default way to start a survey.
+
+- `dashboard-layout`: survey cards never exceed the viewport, whatever the survey name.
 
 ### Modified Capabilities
 - `survey-start-chooser`: cards act on one click; "Always start this way" and the start page's

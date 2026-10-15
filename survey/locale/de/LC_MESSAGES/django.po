@@ -8052,3 +8052,39 @@ msgstr "Wenn ich auf „Neue Umfrage“ klicke"
 #: survey/templates/editor/account_preferences.html
 msgid "Skip the “How do you want to start?” page by choosing your usual way. The dashboard’s ⋯ menu still offers “Start another way…”."
 msgstr "Überspringen Sie die Seite „Wie möchten Sie beginnen?“, indem Sie Ihren üblichen Weg wählen. Im ⋯-Menü des Dashboards gibt es weiterhin „Anders beginnen…“."
+
+#: survey/templates/editor/survey_start.html
+msgid "Recommended"
+msgstr "Empfohlen"
+
+#: survey/templates/editor/survey_start.html
+msgid "Wizard"
+msgstr "Assistent"
+
+#: survey/editor_views.py
+msgid "Survey wizard"
+msgstr "Umfrage-Assistent"
+
+#: survey/templates/editor/survey_start.html
+msgid "Best to start"
+msgstr "Bester Einstieg"
+
+#: survey/templates/editor/survey_start.html
+msgid "Describe what you want to find out in one sentence. The wizard builds a full draft — sections, questions, map — for you to edit."
+msgstr "Beschreiben Sie in einem Satz, was Sie herausfinden möchten. Der Assistent erstellt einen vollständigen Entwurf – Abschnitte, Fragen, Karte –, den Sie bearbeiten."
+
+#: survey/templates/editor/survey_create.html
+msgid "Let the Wizard draft it"
+msgstr "Den Assistenten entwerfen lassen"
+
+#: survey/templates/editor/survey_create.html
+msgid "The Wizard is an AI agent: your description is processed by an AI provider to build the draft. Survey answers are never sent to AI providers."
+msgstr "Der Assistent ist ein KI-Agent: Ihre Beschreibung wird von einem KI-Anbieter verarbeitet, um den Entwurf zu erstellen. Umfrageantworten werden nie an KI-Anbieter gesendet."
+
+#: survey/templates/editor/survey_create.html
+msgid "You already described your project — let the Wizard draft it (~10 s)?"
+msgstr "Sie haben Ihr Projekt schon beschrieben – soll der Assistent den Entwurf erstellen (~10 s)?"
+
+#: survey/templates/editor/partials/_ai_feedback_strip.html
+msgid "How is the Wizard's draft?"
+msgstr "Wie ist der Entwurf des Assistenten?"

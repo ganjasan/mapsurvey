@@ -56,13 +56,16 @@
     /* ── Cards view ── */
     .dashboard-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        /* minmax(0, …): a bare 1fr track is minmax(auto, 1fr) and grows to the
+           widest unbreakable word -- one snake_case survey name pushed every card
+           off a phone screen. */
+        grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
         gap: 1rem;
     }
     .survey-card {
         background: #fff; border: 1px solid var(--border-color); border-radius: var(--radius);
         transition: box-shadow 0.15s;
-        display: flex; flex-direction: column;
+        display: flex; flex-direction: column; min-width: 0;
     }
     .survey-card:hover { box-shadow: var(--shadow-md); }
     .card-cover {
@@ -88,6 +91,7 @@
         text-decoration: none; line-height: 1.3;
         overflow: hidden; text-overflow: ellipsis;
         display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+        min-width: 0; overflow-wrap: anywhere;
     }
     .card-name:hover { color: var(--accent); }
     .card-kpi {
@@ -190,7 +194,7 @@
     /* ── Mobile ── */
     @media (max-width: 768px) {
         .dashboard { padding: 1rem 0.75rem; }
-        .dashboard-grid { grid-template-columns: 1fr; }
+        .dashboard-grid { grid-template-columns: minmax(0, 1fr); }
         .survey-row { flex-wrap: wrap; gap: 0.5rem; padding: 0.65rem 0.75rem; }
         .row-kpi { width: 100%; order: 3; }
         .row-actions { width: 100%; order: 4; justify-content: flex-start; }

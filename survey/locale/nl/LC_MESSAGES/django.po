@@ -8000,3 +8000,39 @@ msgstr "Als ik op ‘Nieuwe enquête’ klik"
 #: survey/templates/editor/account_preferences.html
 msgid "Skip the “How do you want to start?” page by choosing your usual way. The dashboard’s ⋯ menu still offers “Start another way…”."
 msgstr "Sla de pagina ‘Hoe wilt u beginnen?’ over door uw gebruikelijke manier te kiezen. Het ⋯-menu van het dashboard biedt nog steeds ‘Anders beginnen…’."
+
+#: survey/templates/editor/survey_start.html
+msgid "Recommended"
+msgstr "Aanbevolen"
+
+#: survey/templates/editor/survey_start.html
+msgid "Wizard"
+msgstr "Wizard"
+
+#: survey/editor_views.py
+msgid "Survey wizard"
+msgstr "Enquêtewizard"
+
+#: survey/templates/editor/survey_start.html
+msgid "Best to start"
+msgstr "Beste start"
+
+#: survey/templates/editor/survey_start.html
+msgid "Describe what you want to find out in one sentence. The wizard builds a full draft — sections, questions, map — for you to edit."
+msgstr "Beschrijf in één zin wat u wilt weten. De wizard maakt een volledige opzet — secties, vragen, kaart — die u kunt bewerken."
+
+#: survey/templates/editor/survey_create.html
+msgid "Let the Wizard draft it"
+msgstr "Laat de wizard het opzetten"
+
+#: survey/templates/editor/survey_create.html
+msgid "The Wizard is an AI agent: your description is processed by an AI provider to build the draft. Survey answers are never sent to AI providers."
+msgstr "De wizard is een AI-agent: uw beschrijving wordt door een AI-aanbieder verwerkt om de opzet te maken. Antwoorden op de enquête worden nooit naar AI-aanbieders gestuurd."
+
+#: survey/templates/editor/survey_create.html
+msgid "You already described your project — let the Wizard draft it (~10 s)?"
+msgstr "U hebt uw project al beschreven — de wizard de opzet laten maken (~10 s)?"
+
+#: survey/templates/editor/partials/_ai_feedback_strip.html
+msgid "How is the Wizard's draft?"
+msgstr "Hoe is de opzet van de wizard?"

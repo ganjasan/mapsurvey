@@ -285,8 +285,8 @@ def _get_sections_ordered(survey):
 # Friendly, non-alarming copy per failure mode. The creator does not care
 # which layer failed — they care whether to retry or to build it by hand.
 GENERATION_ERROR_COPY = {
-    'not_configured': "AI drafting isn't available right now — create an empty survey instead.",
-    'provider_error': "Couldn't reach the AI service. Try again, or create an empty survey.",
+    'not_configured': "The Wizard isn't available right now — create an empty survey instead.",
+    'provider_error': "The Wizard couldn't be reached. Try again, or create an empty survey.",
     'invalid_draft': "The draft came back malformed. Try rephrasing your brief, or create an empty survey.",
     'error': "Something went wrong generating the draft. Try again, or create an empty survey.",
 }
@@ -406,6 +406,15 @@ def _creator_survey_language():
     return code if code in dict(settings.LANGUAGES) else 'en'
 
 
+def _survey_start_labels():
+    """Creator-facing names of the start defaults. The AI path is the "Survey
+    wizard" on every creator surface (start page, Preferences); the model's
+    choice labels stay as they are so the rename needs no migration."""
+    labels = dict(SURVEY_START_CHOICES)
+    labels[SURVEY_START_AI] = _('Survey wizard')
+    return labels
+
+
 def _set_survey_start_default(user, value):
     CreatorPreferences.objects.update_or_create(
         user=user, defaults={'survey_start_default': value},
@@ -451,7 +460,7 @@ def editor_survey_start(request):
         'ai_available': ai_client.provider_configured(),
         'welcome': request.GET.get('welcome') == '1',
         'current_default': current,
-        'current_default_label': dict(SURVEY_START_CHOICES).get(current, ''),
+        'current_default_label': _survey_start_labels().get(current, ''),
     })
 
 
@@ -475,14 +484,15 @@ def editor_account_preferences(request):
                .values_list('survey_start_default', flat=True)
                .first()) or ''
     ai_available = ai_client.provider_configured()
+    labels = _survey_start_labels()
     start_options = [{
         'value': value,
-        'label': label,
+        'label': labels[value],
         'checked': value == current,
         # Shown, but not offered, when this server has no AI; a stored "ai"
         # stays checked and enabled so a save keeps it.
         'unavailable': value == SURVEY_START_AI and not ai_available,
-    } for value, label in SURVEY_START_CHOICES]
+    } for value, _label in SURVEY_START_CHOICES]
     return render(request, 'editor/account_preferences.html', {
         'start_options': start_options,
     })

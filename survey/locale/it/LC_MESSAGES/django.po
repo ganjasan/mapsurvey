@@ -8008,3 +8008,39 @@ msgstr "Quando clicco su «Nuovo sondaggio»"
 #: survey/templates/editor/account_preferences.html
 msgid "Skip the “How do you want to start?” page by choosing your usual way. The dashboard’s ⋯ menu still offers “Start another way…”."
 msgstr "Salta la pagina «Come vuoi iniziare?» scegliendo il tuo modo abituale. Il menu ⋯ della dashboard offre sempre «Inizia in un altro modo…»."
+
+#: survey/templates/editor/survey_start.html
+msgid "Recommended"
+msgstr "Consigliato"
+
+#: survey/templates/editor/survey_start.html
+msgid "Wizard"
+msgstr "Procedura guidata"
+
+#: survey/editor_views.py
+msgid "Survey wizard"
+msgstr "Procedura guidata"
+
+#: survey/templates/editor/survey_start.html
+msgid "Best to start"
+msgstr "Ideale per iniziare"
+
+#: survey/templates/editor/survey_start.html
+msgid "Describe what you want to find out in one sentence. The wizard builds a full draft — sections, questions, map — for you to edit."
+msgstr "Descrivi in una frase cosa vuoi scoprire. La procedura guidata crea una bozza completa — sezioni, domande, mappa — da modificare."
+
+#: survey/templates/editor/survey_create.html
+msgid "Let the Wizard draft it"
+msgstr "Lascia fare la bozza alla procedura guidata"
+
+#: survey/templates/editor/survey_create.html
+msgid "The Wizard is an AI agent: your description is processed by an AI provider to build the draft. Survey answers are never sent to AI providers."
+msgstr "La procedura guidata è un agente di IA: la tua descrizione viene elaborata da un fornitore di IA per creare la bozza. Le risposte al sondaggio non vengono mai inviate a fornitori di IA."
+
+#: survey/templates/editor/survey_create.html
+msgid "You already described your project — let the Wizard draft it (~10 s)?"
+msgstr "Hai già descritto il progetto: lasci che la procedura guidata prepari la bozza (~10 s)?"
+
+#: survey/templates/editor/partials/_ai_feedback_strip.html
+msgid "How is the Wizard's draft?"
+msgstr "Com'è la bozza della procedura guidata?"

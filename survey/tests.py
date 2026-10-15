@@ -28686,7 +28686,7 @@ class AIGenerationStatusViewTest(TestCase):
         self.assertNotContains(response, 'hx-trigger')
         self.assertContains(response, 'hx-swap-oob')
         # The copy contains an apostrophe, which the template escapes.
-        self.assertContains(response, 'reach the AI service')
+        self.assertContains(response, 'The Wizard couldn')
 
     def test_another_users_event_is_not_visible(self):
         """
@@ -52124,7 +52124,7 @@ class SurveyStartTest(TestCase):
         GIVEN an editor-or-higher creator and a configured provider
         WHEN the start page is opened
         THEN the three cards render: the blank card is the submit button of the blank form,
-             the AI card is a link to the brief, the agent card is inert
+             the wizard (AI draft) card is a link to the brief, the agent card is inert
         """
         response = self.client.get(reverse('editor_survey_start'))
 
@@ -52135,8 +52135,9 @@ class SurveyStartTest(TestCase):
         self.assertIn('action="%s"' % reverse('editor_survey_create_blank'), form)
         self.assertIn('<button type="submit" class="start-card" data-path="blank"', form)
         self.assertIn('Start from scratch', form)
-        self.assertIn('Draft with AI', html)
-        self.assertIn('<a class="start-card" data-path="ai" href="%s?from=start">'
+        self.assertIn('Survey wizard', html)
+        self.assertNotIn('Draft with AI', html)
+        self.assertIn('<a class="start-card start-primary" data-path="ai" href="%s?from=start">'
                       % reverse('editor_survey_create'), html)
         self.assertIn('Connect your AI agent', html)
         # The third card is inert until #306: a div with aria-disabled, never a link.
@@ -52158,7 +52159,26 @@ class SurveyStartTest(TestCase):
         self.assertIn('Not available on this server', html)
         self.assertIn('<div class="start-card disabled" data-path="ai" aria-disabled="true">', html)
         self.assertNotIn('?from=start', html)
+        self.assertNotIn('Best to start', html)
+        self.assertNotIn('class="start-card start-primary"', html)
         self.assertIn('data-survey-start="blank"', html)
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
+    def test_wizard_card_is_the_first_card_and_best_to_start(self):
+        """
+        GIVEN a configured provider (AI drafts reach publication about 2.5x as often)
+        WHEN the start page renders
+        THEN the wizard card comes before the blank card in the markup, is the primary card,
+             is badged "Best to start" and does not lead with the word AI
+        """
+        html = self.client.get(reverse('editor_survey_start')).content.decode()
+
+        self.assertLess(html.index('data-path="ai"'), html.index('data-path="blank"'))
+        ai_card = html[html.index('data-path="ai"') - 60:html.index('data-path="blank"')]
+        self.assertIn('start-primary', ai_card)
+        self.assertIn('Best to start', ai_card)
+        self.assertIn('Wizard', ai_card)
+        self.assertNotIn('With AI', ai_card)
 
     @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
     def test_cards_act_on_one_click(self):
@@ -52485,6 +52505,28 @@ class SurveyStartTest(TestCase):
         self.assertEqual(self._created_props(emit)['map_source'], 'world')
 
 
+class DashboardCardLayoutTest(TestCase):
+    """Survey cards fit a phone screen whatever the survey name (change start-cards-one-click)."""
+
+    def test_grid_tracks_cannot_grow_to_an_unbreakable_name(self):
+        """
+        GIVEN the dashboard template (a snake_case survey name pushed every card off a phone)
+        WHEN its card grid CSS is read
+        THEN no track is a bare 1fr -- which is minmax(auto, 1fr) and grows to the widest
+             word -- and survey names may wrap anywhere
+        """
+        from pathlib import Path
+        from django.conf import settings as dj_settings
+        css = Path(dj_settings.BASE_DIR, 'survey', 'templates', 'editor.html').read_text()
+
+        self.assertNotIn('grid-template-columns: 1fr;', css)
+        self.assertIn('.dashboard-grid { grid-template-columns: minmax(0, 1fr); }', css)
+        self.assertIn('minmax(min(300px, 100%), 1fr)', css)
+        start = css.index('\n    .card-name {')
+        name_rule = css[start:css.index('}', start)]
+        self.assertIn('overflow-wrap: anywhere', name_rule)
+
+
 class CreatorPreferencesPageTest(TestCase):
     """The personal Preferences page (change start-cards-one-click): where the default way to
     start a survey is set now that the start page acts on one click."""
@@ -52511,6 +52553,8 @@ class CreatorPreferencesPageTest(TestCase):
 
         self.assertIn('value="blank" checked', html)
         self.assertNotIn('value="" checked', html)
+        self.assertIn('Survey wizard', html)
+        self.assertNotIn('Draft with AI', html)
 
     def test_no_row_means_ask_and_writes_nothing(self):
         """
@@ -52529,7 +52573,7 @@ class CreatorPreferencesPageTest(TestCase):
     def test_saving_a_default_routes_the_dashboard_button(self):
         """
         GIVEN the page
-        WHEN the creator saves Draft with AI
+        WHEN the creator saves the Survey wizard
         THEN the value is stored, the page redirects to itself with a confirmation, and
              "+ New Survey" on the dashboard links to the create page
         """
@@ -52601,7 +52645,7 @@ class CreatorPreferencesPageTest(TestCase):
         """
         GIVEN no LLM provider
         WHEN the page renders, first with no default and then with a stored 'ai'
-        THEN Draft with AI is disabled with an explanation, except that a stored 'ai' stays
+        THEN the Survey wizard option is disabled with an explanation, except that a stored 'ai' stays
              checked and enabled so a save keeps it
         """
         html = self.client.get(self.url).content.decode()

@@ -8064,3 +8064,39 @@ msgstr "Gdy klikam „Nowa ankieta”"
 #: survey/templates/editor/account_preferences.html
 msgid "Skip the “How do you want to start?” page by choosing your usual way. The dashboard’s ⋯ menu still offers “Start another way…”."
 msgstr "Pomiń stronę „Jak chcesz zacząć?”, wybierając swój zwykły sposób. Menu ⋯ na pulpicie nadal oferuje „Zacznij inaczej…”."
+
+#: survey/templates/editor/survey_start.html
+msgid "Recommended"
+msgstr "Polecane"
+
+#: survey/templates/editor/survey_start.html
+msgid "Wizard"
+msgstr "Kreator"
+
+#: survey/editor_views.py
+msgid "Survey wizard"
+msgstr "Kreator ankiety"
+
+#: survey/templates/editor/survey_start.html
+msgid "Best to start"
+msgstr "Najlepiej zacząć tutaj"
+
+#: survey/templates/editor/survey_start.html
+msgid "Describe what you want to find out in one sentence. The wizard builds a full draft — sections, questions, map — for you to edit."
+msgstr "Opisz jednym zdaniem, czego chcesz się dowiedzieć. Kreator przygotuje pełny szkic — sekcje, pytania, mapę — do edycji."
+
+#: survey/templates/editor/survey_create.html
+msgid "Let the Wizard draft it"
+msgstr "Niech kreator przygotuje szkic"
+
+#: survey/templates/editor/survey_create.html
+msgid "The Wizard is an AI agent: your description is processed by an AI provider to build the draft. Survey answers are never sent to AI providers."
+msgstr "Kreator to agent AI: Twój opis przetwarza dostawca AI, aby przygotować szkic. Odpowiedzi z ankiety nigdy nie trafiają do dostawców AI."
+
+#: survey/templates/editor/survey_create.html
+msgid "You already described your project — let the Wizard draft it (~10 s)?"
+msgstr "Projekt jest już opisany — czy kreator ma przygotować szkic (~10 s)?"
+
+#: survey/templates/editor/partials/_ai_feedback_strip.html
+msgid "How is the Wizard's draft?"
+msgstr "Jak oceniasz szkic kreatora?"

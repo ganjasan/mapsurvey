@@ -1,6 +1,6 @@
 ---
 title: Choose how to start a survey
-description: Pick between an empty survey, an AI draft and (soon) your own AI agent, make one of them your default in Preferences, and understand where the map opens.
+description: Pick between the Wizard, an empty survey and (soon) your own AI agent, make one of them your default in Preferences, and understand where the map opens.
 sidebar:
   order: 2
 ---
@@ -16,7 +16,7 @@ You end up knowing what each card on the **How do you want to start?** page does
 1. Click **New Survey** on the dashboard. On a workspace with no surveys yet, Mapsurvey opens this page by itself.
 2. Click a card. One click is enough; there is nothing to confirm:
    - **Start from scratch** creates an empty survey and opens the editor. The survey is called **Untitled survey** (rename it in the editor header) and runs in your interface language.
-   - **Draft with AI** takes you to the brief: describe what you want to find out in one sentence and Mapsurvey generates sections, questions and translations for you to edit. Your description goes to an AI provider to build the draft; survey answers never do. **Start another way** on that page brings you back here.
+   - **Survey wizard** (marked **Best to start**) takes you to the brief: describe what you want to find out in one sentence and the Wizard drafts sections, questions and translations for you to edit. The Wizard is an AI agent: your description goes to an AI provider to build the draft; survey answers never do. **Start another way** on that page brings you back here.
    - **Connect your AI agent** is coming: it will let Claude, ChatGPT, Cursor or any MCP client build and edit surveys for you. The card does nothing yet; **AI agents & MCP** in the account menu explains what is planned and lets you ask to be told when it ships.
 3. To skip this page in future, open the account menu, click **Preferences**, choose your usual way under **When I click New Survey** and click **Save**. **New Survey** then goes straight to that path. Choose **Ask every time** to get this page back.
 4. To see the page once without changing your default, open the ⋯ menu on the dashboard and click **Start another way…**. The page names your current default with a link to **Preferences**.
@@ -41,5 +41,5 @@ Whatever the start, you frame the map yourself afterwards: on the create page be
 ## Related
 
 - [Create a survey](/start-here/create-a-survey/)
-- [Couldn't reach the AI service](/troubleshooting/ai-draft-failed/)
+- [The Wizard couldn't finish your draft](/troubleshooting/ai-draft-failed/)
 - [Translate a survey](/how-to/translate-a-survey/)

@@ -14,12 +14,12 @@ By the end of this page you have an empty survey called "Safe crossings", its ma
 
 ## Create the survey
 
-1. Click **New Survey**. The page offers three ways to begin: **Start from scratch**, **Draft with AI**, and **Connect your AI agent** (not available yet). See [Choose how to start a survey](/how-to/choose-how-to-start/) for the differences.
+1. Click **New Survey**. The page offers three ways to begin: **Survey wizard**, **Start from scratch**, and **Connect your AI agent** (not available yet). See [Choose how to start a survey](/how-to/choose-how-to-start/) for the differences.
 2. Click the **Start from scratch** card. If your browser asks whether Mapsurvey may use your location, allowing it opens the map on your city; declining is fine, you frame the map in the next step either way.
 3. The editor opens with a survey called **Untitled survey** and one empty section. Click the name in the header, type `Safe crossings` and press Enter. The name is shown to respondents, so keep it short and plain.
 <!-- screenshot: the start page with its three cards -->
 
-The survey runs in your interface language; you can add languages later, see [Translate a survey](/how-to/translate-a-survey/). The **Draft with AI** card generates sections and questions from a written brief, which is useful once you know what a good survey looks like.
+The survey runs in your interface language; you can add languages later, see [Translate a survey](/how-to/translate-a-survey/). The **Survey wizard** card drafts sections and questions from a written brief, which is useful once you know what a good survey looks like.
 
 ## Find your way around the editor
 

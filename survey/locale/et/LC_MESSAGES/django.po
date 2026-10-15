@@ -7941,3 +7941,39 @@ msgstr "Kui klõpsan „Uus küsitlus“"
 #: survey/templates/editor/account_preferences.html
 msgid "Skip the “How do you want to start?” page by choosing your usual way. The dashboard’s ⋯ menu still offers “Start another way…”."
 msgstr "Jätke leht „Kuidas soovite alustada?“ vahele, valides oma tavapärase viisi. Töölaua ⋯-menüüs on endiselt „Alusta teisiti…“."
+
+#: survey/templates/editor/survey_start.html
+msgid "Recommended"
+msgstr "Soovitatav"
+
+#: survey/templates/editor/survey_start.html
+msgid "Wizard"
+msgstr "Viisard"
+
+#: survey/editor_views.py
+msgid "Survey wizard"
+msgstr "Küsitluse viisard"
+
+#: survey/templates/editor/survey_start.html
+msgid "Best to start"
+msgstr "Parim algus"
+
+#: survey/templates/editor/survey_start.html
+msgid "Describe what you want to find out in one sentence. The wizard builds a full draft — sections, questions, map — for you to edit."
+msgstr "Kirjeldage ühe lausega, mida soovite teada saada. Viisard koostab täieliku mustandi – jaotised, küsimused, kaardi –, mida saate muuta."
+
+#: survey/templates/editor/survey_create.html
+msgid "Let the Wizard draft it"
+msgstr "Lase viisardil mustand teha"
+
+#: survey/templates/editor/survey_create.html
+msgid "The Wizard is an AI agent: your description is processed by an AI provider to build the draft. Survey answers are never sent to AI providers."
+msgstr "Viisard on tehisaru agent: teie kirjeldust töötleb mustandi loomiseks tehisaru teenusepakkuja. Küsitluse vastuseid ei saadeta kunagi tehisaru teenusepakkujatele."
+
+#: survey/templates/editor/survey_create.html
+msgid "You already described your project — let the Wizard draft it (~10 s)?"
+msgstr "Kirjeldasite oma projekti juba – kas lasta viisardil mustand teha (~10 s)?"
+
+#: survey/templates/editor/partials/_ai_feedback_strip.html
+msgid "How is the Wizard's draft?"
+msgstr "Kuidas viisardi mustand tundub?"

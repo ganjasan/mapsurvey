@@ -51,6 +51,33 @@ available on this server" line — no link.
 *Alternative considered*: keep the selection and auto-scroll to the detail block. Rejected —
 still two clicks for a rare action, and the scroll is itself disorienting.
 
+### D1a. The wizard is the first card, "Best to start"
+Added after the first review, on the owner's funnel check (2026-10-15): creators registered
+2026-08-17…09-30 who drafted with AI in their first three days published within a week 59% of
+the time (audit log), those who started empty 24%; median time to first publish 0.6 h vs
+34.5 h. Before #311 the create page opened on the AI brief, so AI was the default; the
+three-card page made it one equal choice with "from scratch" first, and one-click made the
+empty path shorter still. The AI card therefore comes first in the DOM (Tab order = visual
+order), with the accent border and a "Best to start" badge. It is called the *Survey wizard*
+(label "Wizard") rather than "Draft with AI": the owner reads the word "AI" as putting people
+off. Nothing is hidden by the name — the create page, where the brief is typed, keeps the
+sentence that the description goes to an AI provider and survey answers never do; the card
+dropped its copy of it. The model's choice label stays "Draft with AI" (changing `choices`
+would add a migration); `_survey_start_labels()` gives every creator surface the wizard name.
+Then the owner widened it: "Wizard" everywhere a creator meets the AI draft, with one note on
+what it is. Renamed: the brief panel heading ("Let the Wizard draft it"), the empty-path
+intercept, the feedback strip ("How is the Wizard's draft?"), the `not_configured` and
+`provider_error` messages, the troubleshooting article's title and wording, the 2026-10-14
+changelog entry. The disclosure on the brief now opens with "The Wizard is an AI agent:" — the
+one explanation. Not renamed: the marketing landings (where "AI" is what visitors search for —
+a separate decision), the *Connect your AI agent* card (third-party agents, not the Wizard),
+code identifiers, and the Django-admin choice label. The `fa-wand-magic-sparkles` icon is a
+Font Awesome 6 class and drew nothing on our 5.15 CDN (an empty tile on the phone layout since
+#311); it is `fa-magic` now. Without a provider the AI card is a
+dimmed div and CSS `order` puts it behind "from scratch"; being unfocusable, it does not
+disturb Tab order. A named persona for the assistant (as PostHog does with Max) is a separate decision and not
+part of this change.
+
 ### D2. Remove the detail block, keep one line of help
 The `.start-detail` blocks, `#start-lore`, the selected styles (`.selected`, `.start-check`,
 the arrow `::after`) and the inline selection script go. The long paragraphs were the only

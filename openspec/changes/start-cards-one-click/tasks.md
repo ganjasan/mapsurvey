@@ -4,7 +4,13 @@
 - [x] 1.2 Remove `.start-detail`, `#start-lore`, selected-state CSS, "Always start this way", the fine print and the inline selection script; move the AI-provider sentence to the AI card's *who* line
 - [x] 1.3 Header: "Your default: X · Change in Preferences" link instead of the Clear form
 - [x] 1.4 `survey_start.js`: busy label goes into `[data-busy-target]` when the button has one
+- [x] 1.6 Wizard card (the AI draft, renamed from "Draft with AI") first, badged "Best to start", accent border; without a provider it moves behind "from scratch"; same name in Preferences and "Your default"
+- [x] 1.7 "Wizard" everywhere the creator meets the AI draft (brief panel, intercept, feedback strip, error copy, help, changelog); disclosure explains "The Wizard is an AI agent"; icon `fa-magic`
 - [x] 1.5 `editor_survey_start` GET-only (`require_GET`), drop `ai`/`clear` branches; `editor_survey_create_blank` drops `remember`
+
+## 1b. Dashboard (found in the same session)
+
+- [x] 1b.1 Grid track `minmax(min(300px,100%),1fr)` / mobile `minmax(0,1fr)`, card `min-width:0`, `.card-name` `overflow-wrap:anywhere`; regression test
 
 ## 2. Preferences page
 

@@ -9,7 +9,8 @@ screen: label, picture, one line of what happens, one line of who it is for.
 One click on a card does the card's action -- the blank card IS the submit
 button of its form, the AI card IS a link. No selection step, no detail block:
 the first version had both and creators clicked the card over and over (#335).
-The third card is INERT until the MCP server ships (#306): no link, no hover --
+The wizard (AI draft) card comes first, badged "Best to start": AI drafts reach publication
+about 2.5x as often as empty surveys. The third card is INERT until the MCP server ships (#306): no link, no hover --
 the agent page is reached from the account and help menus.{% endcomment %}
 
 {% block page_title %}{% trans "New survey" %}{% endblock %}
@@ -42,7 +43,7 @@ the agent page is reached from the account and help menus.{% endcomment %}
   .start-card:disabled { cursor: progress; transform: none; }
   .start-card:hover { transform: translateY(-2px); border-color: var(--accent); color: inherit; text-decoration: none; }
   /* Not available yet: dimmed, desaturated, and taped over like a building site. */
-  .start-card.soon { cursor: not-allowed; opacity: .72; user-select: none; }
+  .start-card.soon { cursor: not-allowed; opacity: .72; user-select: none; order: 2; }
   .start-card.soon:hover { transform: none; border-color: var(--border-color); }
   .start-card.soon .start-art { filter: grayscale(.4); }
   .start-card.soon .start-title, .start-card.soon .start-what { color: #5f6368; }
@@ -65,6 +66,7 @@ the agent page is reached from the account and help menus.{% endcomment %}
   .start-art::before { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.14) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.14) 1px, transparent 1px); background-size: 28px 28px; }
   .start-art.blank { background: linear-gradient(145deg, #0f766e, #14b8a6 60%, #5eead4); }
   .start-art.ai { background: linear-gradient(145deg, #3730a3, #6366f1 55%, #a5b4fc); }
+  .start-art.ai i { transform: translateY(-38px); }  /* above the example-brief bubble */
   .start-art.agent { background: linear-gradient(145deg, #334155, #64748b 60%, #cbd5e1); }
   .start-art .chat { position: absolute; left: 16px; right: 16px; bottom: 14px; background: rgba(255,255,255,.92); color: #1f2937; border-radius: 10px; padding: 7px 10px; font-size: .74rem; line-height: 1.35; }
   .start-art .chat small { display: block; color: #9aa0a6; font-size: .62rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; margin-bottom: 2px; }
@@ -72,7 +74,12 @@ the agent page is reached from the account and help menus.{% endcomment %}
   .start-title { font-size: 1.1rem; font-weight: 700; margin: 0; }
   .start-what { font-size: .9rem; line-height: 1.4; }
   .start-who { font-size: .82rem; color: #5f6368; line-height: 1.4; margin-top: auto; padding-top: .5rem; }
-  .start-card.disabled { opacity: .6; cursor: not-allowed; }
+  /* The recommended path: AI drafts get published about 2.5x as often as
+     surveys started empty (owner's funnel check, 2026-10-15). */
+  .start-card.start-primary { border-color: var(--accent); box-shadow: 0 0 0 4px #e0e7ff, 0 14px 30px -18px rgba(79,70,229,.55); }
+  .start-card.start-primary .start-label { color: var(--accent); }
+  .start-badge-rec { background: #e0e7ff; color: #4338ca; }
+  .start-card.disabled { opacity: .6; cursor: not-allowed; order: 1; }
   .start-busy { display: none !important; font-size: .85rem; font-weight: 600; color: var(--accent); padding-top: .5rem; }
   .start-busy:not(:empty) { display: block !important; }
   .start-card.disabled:hover { transform: none; border-color: var(--border-color); }
@@ -88,6 +95,7 @@ the agent page is reached from the account and help menus.{% endcomment %}
     .start-label { width: 100%; }
     .start-art { width: 56px; height: 56px; margin: .75rem 0 0 1rem; flex: 0 0 auto; }
     .start-art i { font-size: 22px; }
+    .start-art.ai i { transform: none; }
     .start-art .chat, .start-art::before, .start-art.agent::after { display: none; }
     .start-badge-mobile { display: inline-block; }
     .start-card.soon .start-art { filter: none; }
@@ -119,7 +127,29 @@ the agent page is reached from the account and help menus.{% endcomment %}
 
   <div class="start-cards" id="start-cards">
 
-    {# ── 1 · Start from scratch: the whole card submits the blank form ── #}
+    {% comment %}── 1 · Survey wizard (the AI draft): the way to start, a plain link to the brief.
+       "Wizard" on every creator surface, never "AI" (owner call); the one place
+       that says what the Wizard is -- an AI agent -- is the provider disclosure
+       on the brief, where the description is typed.
+       First in the DOM so Tab order matches what the eye sees; without a
+       provider it is a dimmed div that CSS moves behind "from scratch".{% endcomment %}
+    {% if ai_available %}
+    <a class="start-card start-primary" data-path="ai" href="{% url 'editor_survey_create' %}?from=start">
+    {% else %}
+    <div class="start-card disabled" data-path="ai" aria-disabled="true">
+    {% endif %}
+      <span class="start-label"><span>{% trans "Wizard" %}</span>{% if ai_available %}<span class="start-badge start-badge-rec">{% trans "Best to start" %}</span>{% endif %}</span>
+      <span class="start-art ai"><i class="fas fa-magic"></i>
+        <span class="chat"><small>{% trans "you" %}</small>{% trans "Where traffic congestion is worst in Treviglio and why" %}</span>
+      </span>
+      <span class="start-body">
+        <span class="start-title">{% trans "Survey wizard" %}</span>
+        <span class="start-what">{% trans "Describe what you want to find out in one sentence. The wizard builds a full draft — sections, questions, map — for you to edit." %}</span>
+        <span class="start-who">{% if ai_available %}{% trans "For a first survey, or a quick start on a new topic." %}{% else %}{% trans "Not available on this server." %}{% endif %}</span>
+      </span>
+    {% if ai_available %}</a>{% else %}</div>{% endif %}
+
+    {# ── 2 · Start from scratch: the whole card submits the blank form ── #}
     <form method="post" action="{% url 'editor_survey_create_blank' %}" class="start-form" data-survey-start="blank">
       {% csrf_token %}
       <input type="hidden" name="map_lat" value="">
@@ -136,23 +166,6 @@ the agent page is reached from the account and help menus.{% endcomment %}
         </span>
       </button>
     </form>
-
-    {# ── 2 · Draft with AI: a plain link to the brief ───────────────────── #}
-    {% if ai_available %}
-    <a class="start-card" data-path="ai" href="{% url 'editor_survey_create' %}?from=start">
-    {% else %}
-    <div class="start-card disabled" data-path="ai" aria-disabled="true">
-    {% endif %}
-      <span class="start-label"><span>{% trans "With AI" %}</span></span>
-      <span class="start-art ai"><i class="fas fa-wand-magic-sparkles"></i>
-        <span class="chat"><small>{% trans "you" %}</small>{% trans "Where traffic congestion is worst in Treviglio and why" %}</span>
-      </span>
-      <span class="start-body">
-        <span class="start-title">{% trans "Draft with AI" %}</span>
-        <span class="start-what">{% trans "Describe what you want to find out in one sentence. You get a full draft — sections, questions, map — to edit." %}</span>
-        <span class="start-who">{% if ai_available %}{% trans "Your description goes to an AI provider to build the draft; survey answers never do." %}{% else %}{% trans "Not available on this server." %}{% endif %}</span>
-      </span>
-    {% if ai_available %}</a>{% else %}</div>{% endif %}
 
     {# ── 3 · Connect your AI agent (teaser until #306) ─────────────────── #}
     <div class="start-card soon" data-path="agent" aria-disabled="true">
