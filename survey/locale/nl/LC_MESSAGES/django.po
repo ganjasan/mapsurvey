@@ -8004,3 +8004,19 @@ msgstr "Sla de pagina ‘Hoe wilt u beginnen?’ over door uw gebruikelijke mani
 #: survey/templates/editor/survey_start.html
 msgid "Recommended"
 msgstr "Aanbevolen"
+
+#: survey/templates/editor/survey_start.html
+msgid "Wizard"
+msgstr "Wizard"
+
+#: survey/editor_views.py
+msgid "Survey wizard"
+msgstr "Enquêtewizard"
+
+#: survey/templates/editor/survey_start.html
+msgid "Best to start"
+msgstr "Beste start"
+
+#: survey/templates/editor/survey_start.html
+msgid "Describe what you want to find out in one sentence. The wizard builds a full draft — sections, questions, map — for you to edit."
+msgstr "Beschrijf in één zin wat u wilt weten. De wizard maakt een volledige opzet — secties, vragen, kaart — die u kunt bewerken."

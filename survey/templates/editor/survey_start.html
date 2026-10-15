@@ -9,7 +9,7 @@ screen: label, picture, one line of what happens, one line of who it is for.
 One click on a card does the card's action -- the blank card IS the submit
 button of its form, the AI card IS a link. No selection step, no detail block:
 the first version had both and creators clicked the card over and over (#335).
-The AI card comes first and is marked Recommended: AI drafts reach publication
+The wizard (AI draft) card comes first, badged "Best to start": AI drafts reach publication
 about 2.5x as often as empty surveys. The third card is INERT until the MCP server ships (#306): no link, no hover --
 the agent page is reached from the account and help menus.{% endcomment %}
 
@@ -125,7 +125,9 @@ the agent page is reached from the account and help menus.{% endcomment %}
 
   <div class="start-cards" id="start-cards">
 
-    {% comment %}── 1 · Draft with AI: the recommended way, a plain link to the brief.
+    {% comment %}── 1 · Survey wizard (the AI draft): the way to start, a plain link to the brief.
+       Called "wizard", not "AI": creators shy away from the word, and the
+       provider disclosure lives on the brief, where the description is typed.
        First in the DOM so Tab order matches what the eye sees; without a
        provider it is a dimmed div that CSS moves behind "from scratch".{% endcomment %}
     {% if ai_available %}
@@ -133,14 +135,14 @@ the agent page is reached from the account and help menus.{% endcomment %}
     {% else %}
     <div class="start-card disabled" data-path="ai" aria-disabled="true">
     {% endif %}
-      <span class="start-label"><span>{% trans "With AI" %}</span>{% if ai_available %}<span class="start-badge start-badge-rec">{% trans "Recommended" %}</span>{% endif %}</span>
+      <span class="start-label"><span>{% trans "Wizard" %}</span>{% if ai_available %}<span class="start-badge start-badge-rec">{% trans "Best to start" %}</span>{% endif %}</span>
       <span class="start-art ai"><i class="fas fa-wand-magic-sparkles"></i>
         <span class="chat"><small>{% trans "you" %}</small>{% trans "Where traffic congestion is worst in Treviglio and why" %}</span>
       </span>
       <span class="start-body">
-        <span class="start-title">{% trans "Draft with AI" %}</span>
-        <span class="start-what">{% trans "Describe what you want to find out in one sentence. You get a full draft — sections, questions, map — to edit." %}</span>
-        <span class="start-who">{% if ai_available %}{% trans "Your description goes to an AI provider to build the draft; survey answers never do." %}{% else %}{% trans "Not available on this server." %}{% endif %}</span>
+        <span class="start-title">{% trans "Survey wizard" %}</span>
+        <span class="start-what">{% trans "Describe what you want to find out in one sentence. The wizard builds a full draft — sections, questions, map — for you to edit." %}</span>
+        <span class="start-who">{% if ai_available %}{% trans "For a first survey, or a quick start on a new topic." %}{% else %}{% trans "Not available on this server." %}{% endif %}</span>
       </span>
     {% if ai_available %}</a>{% else %}</div>{% endif %}
 
