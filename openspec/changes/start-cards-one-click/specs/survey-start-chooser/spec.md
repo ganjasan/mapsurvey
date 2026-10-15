@@ -9,8 +9,11 @@ step and no detail block revealed elsewhere on the page. *Start from scratch* SH
 submit button of a POST form to the blank-creation endpoint, so the whole card submits it.
 *Draft with AI* SHALL be a link to `/editor/surveys/new/?from=start`, and SHALL render
 disabled, without a link, with an explanation when no LLM provider is configured. The AI-draft
-card SHALL be presented to creators as the *Survey wizard* (label "Wizard"), not by the word
-"AI"; the AI-provider disclosure SHALL remain on the create page where the brief is entered.
+path SHALL be called the *Wizard* on every creator surface — the start card (*Survey wizard*,
+label "Wizard"), the create page's brief panel, the empty-path intercept, the draft feedback
+strip, the generation error messages and the help centre — and not "AI". The one place that
+says what the Wizard is SHALL be the provider disclosure on the create page ("The Wizard is an
+AI agent: …"), which stays where the brief is entered.
 When a provider is configured, the wizard card SHALL be the first card in document and visual
 order, visually emphasised and badged "Best to start"; when none is configured, *Start from
 scratch* SHALL be shown first and the disabled wizard card after it.

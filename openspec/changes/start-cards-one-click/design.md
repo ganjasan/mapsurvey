@@ -63,7 +63,17 @@ order), with the accent border and a "Best to start" badge. It is called the *Su
 off. Nothing is hidden by the name — the create page, where the brief is typed, keeps the
 sentence that the description goes to an AI provider and survey answers never do; the card
 dropped its copy of it. The model's choice label stays "Draft with AI" (changing `choices`
-would add a migration); `_survey_start_labels()` gives every creator surface the wizard name. Without a provider the AI card is a
+would add a migration); `_survey_start_labels()` gives every creator surface the wizard name.
+Then the owner widened it: "Wizard" everywhere a creator meets the AI draft, with one note on
+what it is. Renamed: the brief panel heading ("Let the Wizard draft it"), the empty-path
+intercept, the feedback strip ("How is the Wizard's draft?"), the `not_configured` and
+`provider_error` messages, the troubleshooting article's title and wording, the 2026-10-14
+changelog entry. The disclosure on the brief now opens with "The Wizard is an AI agent:" — the
+one explanation. Not renamed: the marketing landings (where "AI" is what visitors search for —
+a separate decision), the *Connect your AI agent* card (third-party agents, not the Wizard),
+code identifiers, and the Django-admin choice label. The `fa-wand-magic-sparkles` icon is a
+Font Awesome 6 class and drew nothing on our 5.15 CDN (an empty tile on the phone layout since
+#311); it is `fa-magic` now. Without a provider the AI card is a
 dimmed div and CSS `order` puts it behind "from scratch"; being unfocusable, it does not
 disturb Tab order. A named persona for the assistant (as PostHog does with Max) is a separate decision and not
 part of this change.

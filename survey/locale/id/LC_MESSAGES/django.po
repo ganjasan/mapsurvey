@@ -8001,3 +8001,19 @@ msgstr "Terbaik untuk memulai"
 #: survey/templates/editor/survey_start.html
 msgid "Describe what you want to find out in one sentence. The wizard builds a full draft — sections, questions, map — for you to edit."
 msgstr "Jelaskan dalam satu kalimat apa yang ingin Anda ketahui. Wizard membuat draf lengkap — bagian, pertanyaan, peta — untuk Anda sunting."
+
+#: survey/templates/editor/survey_create.html
+msgid "Let the Wizard draft it"
+msgstr "Biarkan Wizard membuat draf"
+
+#: survey/templates/editor/survey_create.html
+msgid "The Wizard is an AI agent: your description is processed by an AI provider to build the draft. Survey answers are never sent to AI providers."
+msgstr "Wizard adalah agen AI: deskripsi Anda diproses oleh penyedia AI untuk membuat draf. Jawaban survei tidak pernah dikirim ke penyedia AI."
+
+#: survey/templates/editor/survey_create.html
+msgid "You already described your project — let the Wizard draft it (~10 s)?"
+msgstr "Anda sudah menjelaskan proyek Anda — biarkan Wizard membuat draf (~10 dtk)?"
+
+#: survey/templates/editor/partials/_ai_feedback_strip.html
+msgid "How is the Wizard's draft?"
+msgstr "Bagaimana draf dari Wizard?"

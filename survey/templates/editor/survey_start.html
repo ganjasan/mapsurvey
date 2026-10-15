@@ -66,6 +66,7 @@ the agent page is reached from the account and help menus.{% endcomment %}
   .start-art::before { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.14) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.14) 1px, transparent 1px); background-size: 28px 28px; }
   .start-art.blank { background: linear-gradient(145deg, #0f766e, #14b8a6 60%, #5eead4); }
   .start-art.ai { background: linear-gradient(145deg, #3730a3, #6366f1 55%, #a5b4fc); }
+  .start-art.ai i { transform: translateY(-38px); }  /* above the example-brief bubble */
   .start-art.agent { background: linear-gradient(145deg, #334155, #64748b 60%, #cbd5e1); }
   .start-art .chat { position: absolute; left: 16px; right: 16px; bottom: 14px; background: rgba(255,255,255,.92); color: #1f2937; border-radius: 10px; padding: 7px 10px; font-size: .74rem; line-height: 1.35; }
   .start-art .chat small { display: block; color: #9aa0a6; font-size: .62rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; margin-bottom: 2px; }
@@ -94,6 +95,7 @@ the agent page is reached from the account and help menus.{% endcomment %}
     .start-label { width: 100%; }
     .start-art { width: 56px; height: 56px; margin: .75rem 0 0 1rem; flex: 0 0 auto; }
     .start-art i { font-size: 22px; }
+    .start-art.ai i { transform: none; }
     .start-art .chat, .start-art::before, .start-art.agent::after { display: none; }
     .start-badge-mobile { display: inline-block; }
     .start-card.soon .start-art { filter: none; }
@@ -126,8 +128,9 @@ the agent page is reached from the account and help menus.{% endcomment %}
   <div class="start-cards" id="start-cards">
 
     {% comment %}── 1 · Survey wizard (the AI draft): the way to start, a plain link to the brief.
-       Called "wizard", not "AI": creators shy away from the word, and the
-       provider disclosure lives on the brief, where the description is typed.
+       "Wizard" on every creator surface, never "AI" (owner call); the one place
+       that says what the Wizard is -- an AI agent -- is the provider disclosure
+       on the brief, where the description is typed.
        First in the DOM so Tab order matches what the eye sees; without a
        provider it is a dimmed div that CSS moves behind "from scratch".{% endcomment %}
     {% if ai_available %}
@@ -136,7 +139,7 @@ the agent page is reached from the account and help menus.{% endcomment %}
     <div class="start-card disabled" data-path="ai" aria-disabled="true">
     {% endif %}
       <span class="start-label"><span>{% trans "Wizard" %}</span>{% if ai_available %}<span class="start-badge start-badge-rec">{% trans "Best to start" %}</span>{% endif %}</span>
-      <span class="start-art ai"><i class="fas fa-wand-magic-sparkles"></i>
+      <span class="start-art ai"><i class="fas fa-magic"></i>
         <span class="chat"><small>{% trans "you" %}</small>{% trans "Where traffic congestion is worst in Treviglio and why" %}</span>
       </span>
       <span class="start-body">

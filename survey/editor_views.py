@@ -285,8 +285,8 @@ def _get_sections_ordered(survey):
 # Friendly, non-alarming copy per failure mode. The creator does not care
 # which layer failed — they care whether to retry or to build it by hand.
 GENERATION_ERROR_COPY = {
-    'not_configured': "AI drafting isn't available right now — create an empty survey instead.",
-    'provider_error': "Couldn't reach the AI service. Try again, or create an empty survey.",
+    'not_configured': "The Wizard isn't available right now — create an empty survey instead.",
+    'provider_error': "The Wizard couldn't be reached. Try again, or create an empty survey.",
     'invalid_draft': "The draft came back malformed. Try rephrasing your brief, or create an empty survey.",
     'error': "Something went wrong generating the draft. Try again, or create an empty survey.",
 }

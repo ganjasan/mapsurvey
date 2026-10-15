@@ -431,8 +431,10 @@ as the "After the last page" choice; the form refuses anything that is not a ful
 **One click on a card does its action** (change `start-cards-one-click`, #335): the blank card IS
 the submit `<button>` of its form, the AI card IS a link to `?from=start`, comes FIRST and is
 called the *Survey wizard* with a "Best to start" badge (AI drafts publish ~2.5x as often; the
-owner keeps the word "AI" off the card — the provider disclosure lives on the create page; labels
-via `_survey_start_labels()`, the model's choice label is unchanged); there is no selection
+AI path is the **Wizard** on EVERY creator surface — start card, brief panel, intercept, feedback
+strip, generation errors, help — and the only sentence that says what it is ("The Wizard is an AI
+agent: …") is the provider disclosure on the create page; labels via `_survey_start_labels()`, the
+model's choice label is unchanged; marketing landings still say AI); there is no selection
 step, no detail block and no "Always start this way" on the page — creators clicked the card over
 and over when a click only selected it. Do not bring a "choose, then confirm" step back.
 `CreatorPreferences.survey_start_default` (`''` ask / `blank` / `ai`) is set ONLY on the personal

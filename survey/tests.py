@@ -28686,7 +28686,7 @@ class AIGenerationStatusViewTest(TestCase):
         self.assertNotContains(response, 'hx-trigger')
         self.assertContains(response, 'hx-swap-oob')
         # The copy contains an apostrophe, which the template escapes.
-        self.assertContains(response, 'reach the AI service')
+        self.assertContains(response, 'The Wizard couldn')
 
     def test_another_users_event_is_not_visible(self):
         """
@@ -52503,6 +52503,28 @@ class SurveyStartTest(TestCase):
         survey = SurveyHeader.objects.get(name='legacy')
         self.assertIsNotNone(survey.start_map_postion)
         self.assertEqual(self._created_props(emit)['map_source'], 'world')
+
+
+class DashboardCardLayoutTest(TestCase):
+    """Survey cards fit a phone screen whatever the survey name (change start-cards-one-click)."""
+
+    def test_grid_tracks_cannot_grow_to_an_unbreakable_name(self):
+        """
+        GIVEN the dashboard template (a snake_case survey name pushed every card off a phone)
+        WHEN its card grid CSS is read
+        THEN no track is a bare 1fr -- which is minmax(auto, 1fr) and grows to the widest
+             word -- and survey names may wrap anywhere
+        """
+        from pathlib import Path
+        from django.conf import settings as dj_settings
+        css = Path(dj_settings.BASE_DIR, 'survey', 'templates', 'editor.html').read_text()
+
+        self.assertNotIn('grid-template-columns: 1fr;', css)
+        self.assertIn('.dashboard-grid { grid-template-columns: minmax(0, 1fr); }', css)
+        self.assertIn('minmax(min(300px, 100%), 1fr)', css)
+        start = css.index('\n    .card-name {')
+        name_rule = css[start:css.index('}', start)]
+        self.assertIn('overflow-wrap: anywhere', name_rule)
 
 
 class CreatorPreferencesPageTest(TestCase):

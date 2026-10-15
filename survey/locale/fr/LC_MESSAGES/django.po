@@ -8068,3 +8068,19 @@ msgstr "Idéal pour commencer"
 #: survey/templates/editor/survey_start.html
 msgid "Describe what you want to find out in one sentence. The wizard builds a full draft — sections, questions, map — for you to edit."
 msgstr "Décrivez en une phrase ce que vous voulez savoir. L'assistant crée un brouillon complet — sections, questions, carte — que vous modifiez."
+
+#: survey/templates/editor/survey_create.html
+msgid "Let the Wizard draft it"
+msgstr "Laisser l'assistant rédiger"
+
+#: survey/templates/editor/survey_create.html
+msgid "The Wizard is an AI agent: your description is processed by an AI provider to build the draft. Survey answers are never sent to AI providers."
+msgstr "L'assistant est un agent d'IA : votre description est traitée par un fournisseur d'IA pour créer le brouillon. Les réponses à l'enquête ne sont jamais envoyées à des fournisseurs d'IA."
+
+#: survey/templates/editor/survey_create.html
+msgid "You already described your project — let the Wizard draft it (~10 s)?"
+msgstr "Vous avez déjà décrit votre projet — laisser l'assistant rédiger le brouillon (~10 s) ?"
+
+#: survey/templates/editor/partials/_ai_feedback_strip.html
+msgid "How is the Wizard's draft?"
+msgstr "Que pensez-vous du brouillon de l'assistant ?"
