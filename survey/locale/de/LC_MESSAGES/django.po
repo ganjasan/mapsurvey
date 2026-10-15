@@ -8052,3 +8052,7 @@ msgstr "Wenn ich auf „Neue Umfrage“ klicke"
 #: survey/templates/editor/account_preferences.html
 msgid "Skip the “How do you want to start?” page by choosing your usual way. The dashboard’s ⋯ menu still offers “Start another way…”."
 msgstr "Überspringen Sie die Seite „Wie möchten Sie beginnen?“, indem Sie Ihren üblichen Weg wählen. Im ⋯-Menü des Dashboards gibt es weiterhin „Anders beginnen…“."
+
+#: survey/templates/editor/survey_start.html
+msgid "Recommended"
+msgstr "Empfohlen"

@@ -4,6 +4,7 @@
 - [x] 1.2 Remove `.start-detail`, `#start-lore`, selected-state CSS, "Always start this way", the fine print and the inline selection script; move the AI-provider sentence to the AI card's *who* line
 - [x] 1.3 Header: "Your default: X · Change in Preferences" link instead of the Clear form
 - [x] 1.4 `survey_start.js`: busy label goes into `[data-busy-target]` when the button has one
+- [x] 1.6 AI card first and "Recommended" (accent border); without a provider it moves behind "from scratch"
 - [x] 1.5 `editor_survey_start` GET-only (`require_GET`), drop `ai`/`clear` branches; `editor_survey_create_blank` drops `remember`
 
 ## 2. Preferences page

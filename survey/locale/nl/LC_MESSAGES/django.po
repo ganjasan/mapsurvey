@@ -8000,3 +8000,7 @@ msgstr "Als ik op ‘Nieuwe enquête’ klik"
 #: survey/templates/editor/account_preferences.html
 msgid "Skip the “How do you want to start?” page by choosing your usual way. The dashboard’s ⋯ menu still offers “Start another way…”."
 msgstr "Sla de pagina ‘Hoe wilt u beginnen?’ over door uw gebruikelijke manier te kiezen. Het ⋯-menu van het dashboard biedt nog steeds ‘Anders beginnen…’."
+
+#: survey/templates/editor/survey_start.html
+msgid "Recommended"
+msgstr "Aanbevolen"

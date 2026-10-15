@@ -52136,7 +52136,7 @@ class SurveyStartTest(TestCase):
         self.assertIn('<button type="submit" class="start-card" data-path="blank"', form)
         self.assertIn('Start from scratch', form)
         self.assertIn('Draft with AI', html)
-        self.assertIn('<a class="start-card" data-path="ai" href="%s?from=start">'
+        self.assertIn('<a class="start-card start-primary" data-path="ai" href="%s?from=start">'
                       % reverse('editor_survey_create'), html)
         self.assertIn('Connect your AI agent', html)
         # The third card is inert until #306: a div with aria-disabled, never a link.
@@ -52158,7 +52158,24 @@ class SurveyStartTest(TestCase):
         self.assertIn('Not available on this server', html)
         self.assertIn('<div class="start-card disabled" data-path="ai" aria-disabled="true">', html)
         self.assertNotIn('?from=start', html)
+        self.assertNotIn('Recommended', html)
+        self.assertNotIn('class="start-card start-primary"', html)
         self.assertIn('data-survey-start="blank"', html)
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
+    def test_ai_card_is_the_recommended_first_card(self):
+        """
+        GIVEN a configured provider (AI drafts reach publication about 2.5x as often)
+        WHEN the start page renders
+        THEN the AI card comes before the blank card in the markup, is the primary card and
+             is labelled Recommended
+        """
+        html = self.client.get(reverse('editor_survey_start')).content.decode()
+
+        self.assertLess(html.index('data-path="ai"'), html.index('data-path="blank"'))
+        ai_card = html[html.index('data-path="ai"') - 60:html.index('data-path="blank"')]
+        self.assertIn('start-primary', ai_card)
+        self.assertIn('Recommended', ai_card)
 
     @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
     def test_cards_act_on_one_click(self):

@@ -7962,3 +7962,7 @@ msgstr "Kun napsautan ”Uusi kysely”"
 #: survey/templates/editor/account_preferences.html
 msgid "Skip the “How do you want to start?” page by choosing your usual way. The dashboard’s ⋯ menu still offers “Start another way…”."
 msgstr "Ohita sivu ”Miten haluat aloittaa?” valitsemalla tavallisen tapasi. Hallintapaneelin ⋯-valikossa on edelleen ”Aloita toisin…”."
+
+#: survey/templates/editor/survey_start.html
+msgid "Recommended"
+msgstr "Suositeltu"
