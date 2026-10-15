@@ -5,6 +5,7 @@ import re
 from urllib.parse import urlencode
 
 from django.conf import settings
+from django.template.loader import render_to_string
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.gis.geos import Point
@@ -1341,15 +1342,25 @@ def _parse_visibility_rule(request):
     return True, {'question_code': code, 'choice_codes': codes}, None
 
 
-def _visibility_block_context(survey, host_section, host_kind, host=None):
-    """Context for editor/partials/_visibility_block.html."""
+def _visibility_block_context(survey, host_section, host_kind, host=None, parent=None):
+    """Context for editor/partials/_visibility_block.html.
+
+    ``host_kind='subquestion'``: the host lives in ``parent``'s pop-up and may
+    depend on an earlier choice sibling only (spec conditional-visibility,
+    sub-questions) — one group, "This pop-up", instead of the section groups.
+    """
     if not getattr(settings, 'CONDITIONAL_VISIBILITY', False):
         return {'visibility_enabled': False}
-    from .visibility import controller_options
-    groups = controller_options(
-        survey, host_section, host_kind,
-        host_question=host if host_kind == 'question' else None,
-    )
+    from .visibility import controller_options, popup_controller_options
+    if host_kind == 'subquestion':
+        from types import SimpleNamespace
+        eligible = popup_controller_options(parent, host=host)
+        groups = [(SimpleNamespace(title=_('This pop-up'), name=''), eligible)] if eligible else []
+    else:
+        groups = controller_options(
+            survey, host_section, host_kind,
+            host_question=host if host_kind == 'question' else None,
+        )
     rule = getattr(host, 'visibility_rule', None) if host is not None else None
     rule = rule if isinstance(rule, dict) else None
     return {
@@ -1358,7 +1369,18 @@ def _visibility_block_context(survey, host_section, host_kind, host=None):
         'visibility_rule': rule,
         'visibility_rule_codes': (rule or {}).get('choice_codes', []),
         'visibility_rule_question': (rule or {}).get('question_code'),
+        'visibility_popup': host_kind == 'subquestion',
     }
+
+
+def _question_visibility_context(survey, question):
+    """Visibility block context for an existing question — a top-level one
+    against the section order, a sub-question against its pop-up."""
+    if question.parent_question_id_id is not None:
+        return _visibility_block_context(
+            survey, question.survey_section, 'subquestion',
+            host=question, parent=question.parent_question_id)
+    return _visibility_block_context(survey, question.survey_section, 'question', host=question)
 
 
 @survey_permission_required('editor')
@@ -1690,7 +1712,7 @@ def _edit_modal_response(request, question, oob_list_item=False, trigger=None):
     form = QuestionForm(instance=question, is_subquestion=is_subquestion, section=question.survey_section,
                         lock_structure=_edit_locks(survey)[1])
     response = _render_question_modal(request, {
-        **({} if is_subquestion else _visibility_block_context(survey, question.survey_section, 'question', host=question)),
+        **_question_visibility_context(survey, question),
         'source_layers': _source_layers_of(survey, question),
         'form': form,
         'survey': survey,
@@ -1895,7 +1917,7 @@ def editor_question_edit(request, survey_uuid, question_id):
                     return JsonResponse({'ok': False, 'errors': {'visibility': [vis_error]}}, status=422)
                 form.add_error(None, vis_error)
                 return _render_question_modal(request, {
-                    **_visibility_block_context(survey, question.survey_section, 'question', host=question),
+                    **_question_visibility_context(survey, question),
                     'form': form,
                     'survey': survey,
                     'section': question.survey_section,
@@ -1910,7 +1932,7 @@ def editor_question_edit(request, survey_uuid, question_id):
                     def render_modal(message):
                         form.add_error(None, message)
                         return _render_question_modal(request, {
-                            **_visibility_block_context(survey, question.survey_section, 'question', host=question),
+                            **_question_visibility_context(survey, question),
                             'form': form,
                             'survey': survey,
                             'section': question.survey_section,
@@ -1939,7 +1961,7 @@ def editor_question_edit(request, survey_uuid, question_id):
             # (openspec: mobile-adaptive-refactor, editor-autosave).
             return JsonResponse({'ok': False, 'errors': form.errors}, status=422)
         return _render_question_modal(request, {
-            **_visibility_block_context(survey, question.survey_section, 'question', host=question),
+            **_question_visibility_context(survey, question),
             'form': form,
             'survey': survey,
             'section': question.survey_section,
@@ -1952,7 +1974,7 @@ def editor_question_edit(request, survey_uuid, question_id):
         'live_answer_count': (
             Answer.objects.filter(question=question).count() if structure_locked and not is_read_only else 0),
         # Sub-questions live inside a geo popup and never carry rules of their own.
-        **({} if is_subquestion else _visibility_block_context(survey, question.survey_section, 'question', host=question)),
+        **_question_visibility_context(survey, question),
         'source_layers': _source_layers_of(survey, question),
         'form': form,
         'survey': survey,
@@ -2307,6 +2329,7 @@ def editor_subquestion_create(request, survey_uuid, parent_id):
             if vis_error:
                 form.add_error(None, vis_error)
                 return _render_question_modal(request, {
+                    **_visibility_block_context(survey, parent.survey_section, 'subquestion', parent=parent),
                     'form': form,
                     'survey': survey,
                     'section': parent.survey_section,
@@ -2331,6 +2354,7 @@ def editor_subquestion_create(request, survey_uuid, parent_id):
     else:
         form = QuestionForm(is_subquestion=True)
     return _render_question_modal(request, {
+        **_visibility_block_context(survey, parent.survey_section, 'subquestion', parent=parent),
         'form': form,
         'survey': survey,
         'section': parent.survey_section,
@@ -2623,12 +2647,19 @@ def editor_section_preview(request, survey_uuid, section_name):
         survey_session_id=None, language=selected_language,
     )
 
+    from .visibility import popup_rules_for_client
     subquestions_forms = {}
+    popup_rules = {}
     for question in section.questions():
-        subquestions_forms[question.code] = SurveySectionAnswerForm(
-            initial={}, section=section, question=question,
-            survey_session_id=None, language=selected_language,
-        ).as_p()
+        # The same card partial the respondent pop-up renders (#320): the
+        # pop-up rules toggle `.question-card`s, which as_p() never produced.
+        subquestions_forms[question.code] = render_to_string(
+            'partials/question_fields.html',
+            {'form': SurveySectionAnswerForm(
+                initial={}, section=section, question=question,
+                survey_session_id=None, language=selected_language,
+            )})
+        popup_rules.update(popup_rules_for_client(question))
 
     section_title = section.get_translated_title(selected_language)
     section_subheading = section.get_translated_subheading(selected_language)
@@ -2681,6 +2712,7 @@ def editor_section_preview(request, survey_uuid, section_name):
             and isinstance(q.visibility_rule, dict)
             and q.visibility_rule.get('question_code') in {qq.code for qq in section.questions()}
         }),
+        'popup_visibility_rules_json': json.dumps(popup_rules),
     })
 
     if selected_language:

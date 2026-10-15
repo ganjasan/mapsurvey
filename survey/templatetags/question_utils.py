@@ -142,7 +142,12 @@ def visibility_info(item, survey):
     if not getattr(settings, 'CONDITIONAL_VISIBILITY', False):
         return None
     from survey.visibility import describe_rule
-    kind = 'question' if hasattr(item, 'input_type') else 'section'
+    if not hasattr(item, 'input_type'):
+        kind = 'section'
+    elif getattr(item, 'parent_question_id_id', None) is not None:
+        kind = 'subquestion'   # judged inside its pop-up (#338)
+    else:
+        kind = 'question'
     return describe_rule(kind, item, survey)
 
 

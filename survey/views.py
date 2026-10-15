@@ -883,6 +883,7 @@ def _visible_chain_position(vmap, section):
 
 def _build_section_context(request, survey, session_survey, section, selected_language, section_current, section_total, vmap=None):
 	"""Build template context for a survey section (used by both GET and POST→next)."""
+	from .visibility import popup_rules_for_client
 	if vmap is None:
 		vmap = _session_visibility(session_survey, request.session.get('survey_session_id'))
 
@@ -1009,9 +1010,14 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 	# Popup forms render through the section's own card partial, never as_p(): as_p() dropped
 	# the creator's hint and the rating styles (#320).
 	subquestions_forms = {}
+	popup_rules = {}
 	for question in questions:
 		subquestion_form = SurveySectionAnswerForm(initial={}, section=section, question=question, survey_session_id=request.session['survey_session_id'], language=selected_language)
 		subquestions_forms[question.code] = render_to_string('partials/question_fields.html', {'form': subquestion_form})
+		# Pop-up rules (spec conditional-visibility, sub-questions): every
+		# sub-question stays in the pop-up HTML; the client toggles them per
+		# feature and the POST discards what is hidden anyway.
+		popup_rules.update(popup_rules_for_client(question))
 
 	# Answers about layer objects (spec object-answers): {question_code: {object_key:
 	# {sub_code: [values]}}} — the popup prefill and the answered ✓ on revisit.
@@ -1037,6 +1043,7 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 		# survey once; this list says which ones this section shows.
 		'visible_layers_json': json.dumps(section_layer_ids(section)),
 		'visibility_rules_json': json.dumps(client_rules),
+		'popup_visibility_rules_json': json.dumps(popup_rules),
 	}
 
 
@@ -1236,9 +1243,16 @@ def survey_section(request, survey_slug, section_name):
 
 							#сохранить properties как ответы наследники
 							properties = gj['properties'];
+							# Pop-up rules are decided per feature from ITS choice
+							# sub-answers (spec conditional-visibility, sub-questions):
+							# a value posted for a hidden follow-up is dropped here,
+							# never stored — the client's disabled inputs are not trusted.
+							popup_vis = _popup_visibility_for(question, properties)
 							for key, value in properties.items():
 								if key != 'question_id' and not other_option.is_other_field(key):
 									sub_question = Question.objects.get(Q(survey_section=section) & Q(code=key))
+									if not popup_vis.is_question_visible(sub_question.id):
+										continue
 									sub_answer = Answer(survey_session=survey_session, question=sub_question, parent_answer_id = answer)
 									first = value[0] if value else None
 									if sub_question.input_type in ('text', 'text_line', 'datetime'):
@@ -1873,6 +1887,21 @@ def survey_password_gate(request, survey_slug):
 OBJECT_FIELD_PREFIX = 'obj__'
 
 
+def _popup_visibility_for(parent, values_by_code):
+	"""Pop-up verdict for one feature/object from its posted values
+	({sub code: [raw strings]}). Only choice-type siblings can control a rule,
+	and a value that is not a choice id counts as unanswered (`choice_ids`)."""
+	from .visibility import popup_visibility, CONTROLLER_TYPES
+	answers = {}
+	for sub in parent.subQuestions():
+		if sub.input_type in CONTROLLER_TYPES:
+			raw = values_by_code.get(sub.code) or []
+			posted = choice_ids(raw if isinstance(raw, (list, tuple)) else [raw])
+			if posted:
+				answers[sub.code] = posted
+	return popup_visibility(parent, answers)
+
+
 def _parse_object_fields(post):
 	"""`obj__<key>__<code>` → {key: {code: [non-empty values]}}. Keys and codes
 	are matched against the database afterwards; anything else is dropped."""
@@ -1908,11 +1937,13 @@ def _save_object_answers(post, survey_session, question):
 		obj = objects.get(key)
 		if obj is None:
 			continue
+		# Same per-object verdict the geo path takes per feature.
+		popup_vis = _popup_visibility_for(question, by_code)
 		for code, values in by_code.items():
 			if other_option.is_other_field(code):
 				continue   # read beside its option below
 			sub_q = sub_questions.get(code)
-			if sub_q is None:
+			if sub_q is None or not popup_vis.is_question_visible(sub_q.id):
 				continue
 			answer = Answer(survey_session=survey_session, question=sub_q, layer_object=obj)
 			first = values[0].strip()

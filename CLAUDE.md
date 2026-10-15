@@ -314,6 +314,22 @@ OPEN (shown to everyone) and are badged in the editor. Rules ride ZIP export/imp
 `parent_question_id` for visibility — that relation means "geo popup sub-question". Env var off ⇒
 rules stored but inert, editor hides the Visibility block.
 
+**Pop-up rules (change `subquestion-visibility-rules`, #338)**: a sub-question of a geo /
+`layer_objects` question may carry the same `visibility_rule`, but its controller is an EARLIER
+`choice`/`multichoice` sub-question of the SAME pop-up (`parent_question_id`), never a section
+question. Those rules never enter `compute_visibility` (a pop-up is answered once per feature):
+`visibility.popup_visibility(parent, answers_by_code)` judges them per feature/object, and the
+section POST calls it for every geo feature (from its properties) and every object
+(`_save_object_answers`), storing nothing for a hidden follow-up. The respondent pop-up keeps every
+sub-question in its HTML; `conditional_visibility.js` toggles them per pop-up `<form>` from
+`#section-data[data-popup-visibility-rules]` (bound in `initPopupFields`, i.e. after a feature's
+values are restored), and the geo shell prunes hidden cards' properties on Apply/close. Editor:
+`_visibility_block_context(..., 'subquestion', host, parent)` renders the block with one group
+("This pop-up"); `visibility_info` resolves the kind from `parent_question_id_id`, so the recursive
+`question_list_item.html` badges sub-question rows unchanged. Import resolves a sub-question rule
+among the imported siblings; `clone_question` remaps it to the cloned sibling on every path,
+including cross-survey paste (the controller travels with the parent).
+
 **Shared map (`question`-sourced reference layers)**: a `SurveyMapLayer` with
 `source='question'` holds no creator objects — its `LayerObject`s are MATERIALISED from
 respondents' answers to the geo question named by `source_question_code` (a code, not a FK:

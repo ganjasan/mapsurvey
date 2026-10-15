@@ -139,15 +139,27 @@ def clone_question(
         )
 
     if copy_sub_questions:
+        sub_pairs = []
         for sub_q in Question.objects.filter(parent_question_id=question).order_by('order_number'):
-            clone_question(
+            sub_pairs.append((sub_q, clone_question(
                 sub_q,
                 target_section=target_section,
                 parent=new_question,
                 regenerate_code=regenerate_code,
                 name_suffix=None,
                 copy_sub_questions=True,
-            )
+            )))
+        # A pop-up rule names a SIBLING by code (#338). The siblings travel with
+        # the parent on every path, including a cross-survey paste, so the rule
+        # always survives — pointed at the cloned sibling when codes were
+        # regenerated (the same remap copy_section does for intra-section rules).
+        if regenerate_code:
+            sub_code_map = {src.code: clone.code for src, clone in sub_pairs}
+            for src, clone in sub_pairs:
+                rule = src.visibility_rule
+                if isinstance(rule, dict) and rule.get('question_code') in sub_code_map:
+                    clone.visibility_rule = {**rule, 'question_code': sub_code_map[rule['question_code']]}
+                    clone.save(update_fields=['visibility_rule'])
 
     return new_question
 
