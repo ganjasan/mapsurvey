@@ -8,7 +8,10 @@ card) on an actionable card SHALL perform that card's action, with no intermedia
 step and no detail block revealed elsewhere on the page. *Start from scratch* SHALL be the
 submit button of a POST form to the blank-creation endpoint, so the whole card submits it.
 *Draft with AI* SHALL be a link to `/editor/surveys/new/?from=start`, and SHALL render
-disabled, without a link, with an explanation when no LLM provider is configured.
+disabled, without a link, with an explanation when no LLM provider is configured. When a
+provider is configured, *Draft with AI* SHALL be the first card in document and visual order,
+visually emphasised and labelled "Recommended"; when none is configured, *Start from scratch*
+SHALL be shown first and the disabled AI card after it.
 *Connect your AI agent* SHALL be inert until the MCP server ships: not a link, not focusable
 as a control, marked *Coming soon* and visibly disabled; the agent page is reached from the
 account and help menus instead. The page SHALL render as a full page on every viewport. A
@@ -19,6 +22,10 @@ editor-only page.
 #### Scenario: Editor sees three cards
 - **WHEN** an editor-or-higher creator opens `/editor/surveys/start/`
 - **THEN** the page shows the three cards, with *Start from scratch* as the submit button of a POST form to the blank-creation endpoint, *Draft with AI* as a link to `/editor/surveys/new/?from=start`, and *Connect your AI agent* carrying no link and `aria-disabled`
+
+#### Scenario: AI is the recommended first card
+- **WHEN** the start page renders on a server with a provider
+- **THEN** the *Draft with AI* card precedes *Start from scratch* in the markup, carries the primary style and a "Recommended" label
 
 #### Scenario: One click from scratch
 - **WHEN** a creator clicks anywhere on the *Start from scratch* card
@@ -34,7 +41,7 @@ editor-only page.
 
 #### Scenario: No LLM provider
 - **WHEN** the start page renders on a server where no provider is configured
-- **THEN** the *Draft with AI* card is disabled, is not a link, and says it is not available on this server, and *Start from scratch* still works
+- **THEN** the *Draft with AI* card is disabled, is not a link, carries no "Recommended" label, is shown after *Start from scratch*, and says it is not available on this server, and *Start from scratch* still works
 
 #### Scenario: Welcome escape
 - **WHEN** the page is opened with `?welcome=1`

@@ -51,6 +51,18 @@ available on this server" line — no link.
 *Alternative considered*: keep the selection and auto-scroll to the detail block. Rejected —
 still two clicks for a rare action, and the scroll is itself disorienting.
 
+### D1a. AI is the recommended card
+Added after the first review, on the owner's funnel check (2026-10-15): creators registered
+2026-08-17…09-30 who drafted with AI in their first three days published within a week 59% of
+the time (audit log), those who started empty 24%; median time to first publish 0.6 h vs
+34.5 h. Before #311 the create page opened on the AI brief, so AI was the default; the
+three-card page made it one equal choice with "from scratch" first, and one-click made the
+empty path shorter still. The AI card therefore comes first in the DOM (Tab order = visual
+order), with the accent border and a "Recommended" badge. Without a provider the AI card is a
+dimmed div and CSS `order` puts it behind "from scratch"; being unfocusable, it does not
+disturb Tab order. Naming the assistant (a persona, as PostHog does with Max) is a separate
+decision and not part of this change.
+
 ### D2. Remove the detail block, keep one line of help
 The `.start-detail` blocks, `#start-lore`, the selected styles (`.selected`, `.start-check`,
 the arrow `::after`) and the inline selection script go. The long paragraphs were the only
