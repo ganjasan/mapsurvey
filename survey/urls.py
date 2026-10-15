@@ -51,6 +51,7 @@ urlpatterns = [
     # one-click blank survey, and the agent page #306 turns into the token page.
     path('editor/surveys/start/', editor_views.editor_survey_start, name='editor_survey_start'),
     path('editor/surveys/new/blank/', editor_views.editor_survey_create_blank, name='editor_survey_create_blank'),
+    path('editor/account/', editor_views.editor_account_preferences, name='editor_account_preferences'),
     path('editor/account/mcp/', editor_views.editor_account_mcp, name='editor_account_mcp'),
 
     # WYSIWYG survey editor

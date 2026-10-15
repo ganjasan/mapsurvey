@@ -1,4 +1,4 @@
-/* Ways to start (openspec: first-survey-onboarding).
+/* Ways to start (openspec: first-survey-onboarding, start-cards-one-click).
  *
  * One job: the "Start from scratch" form asks the browser where the creator
  * is, tied to the click that submits it, and never on page load. Permission
@@ -7,8 +7,9 @@
  * (workspace's last survey, country, world) decides. Three seconds is the
  * ceiling either way: a survey is created with or without the point.
  *
- * Used by the start page and by the dashboard's "+ New Survey" once the
- * creator made "from scratch" their default.
+ * Used by the start page, where the whole card is the submit button, and by
+ * the dashboard's "+ New Survey" once the creator made "from scratch" their
+ * default.
  */
 window.SurveyStart = (function () {
     'use strict';
@@ -33,7 +34,10 @@ window.SurveyStart = (function () {
             var button = form.querySelector('[type="submit"]');
             if (button) {
                 button.disabled = true;
-                if (button.dataset.busyLabel) button.textContent = button.dataset.busyLabel;
+                // The start page's card is the button itself: write the label
+                // into its slot instead of wiping the card's picture and text.
+                var slot = button.querySelector('[data-busy-target]') || button;
+                if (button.dataset.busyLabel) slot.textContent = button.dataset.busyLabel;
             }
             var done = false;
             function finish() {

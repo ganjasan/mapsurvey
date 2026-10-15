@@ -1,0 +1,53 @@
+{% extends "editor/editor_base.html" %}
+{% load i18n %}
+{% comment %}Personal Preferences (openspec: start-cards-one-click, D3).
+
+Settings that belong to the person, not the workspace. The first one is where
+"+ New Survey" leads (CreatorPreferences.survey_start_default) -- it used to be
+an "Always start this way" checkbox on the start page itself. Needs a login,
+not an org role. A stored "ai" stays selected even when AI is switched off on
+this server, so the page never silently rewrites what the creator chose.{% endcomment %}
+
+{% block page_title %}{% trans "Preferences" %}{% endblock %}
+
+{% block navbar_content %}
+<span class="survey-name">{% trans "Preferences" %}</span>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  .prefs-wrap { padding: 2rem 1rem 3rem; }
+  .prefs-card { max-width: 640px; margin: 0 auto; background: #fff; border: 1px solid var(--border-color); border-radius: 16px; padding: 1.75rem 2rem; }
+  .prefs-card h1 { font-size: 1.4rem; font-weight: 700; margin: 0 0 1.25rem; }
+  .prefs-card fieldset { border: 0; padding: 0; margin: 0 0 1.25rem; }
+  .prefs-card legend { font-size: 1rem; font-weight: 600; margin-bottom: .25rem; }
+  .prefs-hint { font-size: .85rem; color: #5f6368; margin: 0 0 .75rem; }
+  .prefs-option { display: flex; align-items: flex-start; gap: .6rem; padding: .55rem 0; font-size: .92rem; cursor: pointer; margin: 0; }
+  .prefs-option input { margin-top: .25rem; }
+  .prefs-option.disabled { color: #9aa0a6; cursor: not-allowed; }
+  .prefs-option small { display: block; color: #9aa0a6; font-size: .78rem; }
+  @media (max-width: 767.98px) { .prefs-card { padding: 1.25rem 1rem; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="prefs-wrap">
+  <div class="prefs-card">
+    <h1>{% trans "Preferences" %}</h1>
+    <form method="post">
+      {% csrf_token %}
+      <fieldset>
+        <legend>{% trans "When I click New Survey" %}</legend>
+        <p class="prefs-hint">{% trans "Skip the “How do you want to start?” page by choosing your usual way. The dashboard’s ⋯ menu still offers “Start another way…”." %}</p>
+        {% for opt in start_options %}
+        <label class="prefs-option{% if opt.unavailable %} disabled{% endif %}">
+          <input type="radio" name="survey_start_default" value="{{ opt.value }}"{% if opt.checked %} checked{% endif %}{% if opt.unavailable and not opt.checked %} disabled{% endif %}>
+          <span>{{ opt.label }}{% if opt.unavailable %}<small>{% trans "Not available on this server." %}</small>{% endif %}</span>
+        </label>
+        {% endfor %}
+      </fieldset>
+      <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

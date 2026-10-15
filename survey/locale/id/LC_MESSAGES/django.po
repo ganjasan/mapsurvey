@@ -7957,3 +7957,27 @@ msgstr "Untuk tim yang sudah bekerja dari agen."
 #: survey/templates/editor/survey_start.html
 msgid "How this works"
 msgstr "Cara kerjanya"
+
+#: survey/templates/editor/survey_start.html
+msgid "Change in Preferences"
+msgstr "Ubah di Preferensi"
+
+#: survey/templates/editor/survey_start.html
+msgid "Your description goes to an AI provider to build the draft; survey answers never do."
+msgstr "Deskripsi Anda dikirim ke penyedia AI untuk membuat draf; jawaban survei tidak pernah."
+
+#: survey/templates/editor/account_preferences.html
+msgid "Preferences"
+msgstr "Preferensi"
+
+#: survey/templates/editor/account_preferences.html
+msgid "Preferences saved."
+msgstr "Preferensi disimpan."
+
+#: survey/templates/editor/account_preferences.html
+msgid "When I click New Survey"
+msgstr "Saat saya mengklik Survei baru"
+
+#: survey/templates/editor/account_preferences.html
+msgid "Skip the “How do you want to start?” page by choosing your usual way. The dashboard’s ⋯ menu still offers “Start another way…”."
+msgstr "Lewati halaman “Bagaimana Anda ingin memulai?” dengan memilih cara yang biasa Anda pakai. Menu ⋯ di dasbor tetap menawarkan “Mulai dengan cara lain…”."
