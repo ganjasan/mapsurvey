@@ -7938,3 +7938,27 @@ msgstr "Tiimeille, jotka työskentelevät jo agentin kautta."
 #: survey/templates/editor/survey_start.html
 msgid "How this works"
 msgstr "Näin se toimii"
+
+#: survey/templates/editor/survey_start.html
+msgid "Change in Preferences"
+msgstr "Muuta omissa asetuksissa"
+
+#: survey/templates/editor/survey_start.html
+msgid "Your description goes to an AI provider to build the draft; survey answers never do."
+msgstr "Kuvauksesi lähetetään tekoälypalvelulle luonnoksen laatimista varten; kyselyn vastauksia ei koskaan."
+
+#: survey/templates/editor/account_preferences.html
+msgid "Preferences"
+msgstr "Omat asetukset"
+
+#: survey/templates/editor/account_preferences.html
+msgid "Preferences saved."
+msgstr "Asetukset tallennettu."
+
+#: survey/templates/editor/account_preferences.html
+msgid "When I click New Survey"
+msgstr "Kun napsautan ”Uusi kysely”"
+
+#: survey/templates/editor/account_preferences.html
+msgid "Skip the “How do you want to start?” page by choosing your usual way. The dashboard’s ⋯ menu still offers “Start another way…”."
+msgstr "Ohita sivu ”Miten haluat aloittaa?” valitsemalla tavallisen tapasi. Hallintapaneelin ⋯-valikossa on edelleen ”Aloita toisin…”."

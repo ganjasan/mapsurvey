@@ -52123,17 +52123,21 @@ class SurveyStartTest(TestCase):
         """
         GIVEN an editor-or-higher creator and a configured provider
         WHEN the start page is opened
-        THEN the three cards render: a POST form for blank, a form to the AI path, an inert agent card
+        THEN the three cards render: the blank card is the submit button of the blank form,
+             the AI card is a link to the brief, the agent card is inert
         """
         response = self.client.get(reverse('editor_survey_start'))
 
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
         self.assertIn('Start from scratch', html)
-        self.assertIn('action="%s"' % reverse('editor_survey_create_blank'), html)
-        self.assertIn('data-survey-start="blank"', html)
+        form = html[html.index('data-survey-start="blank"') - 200:html.index('</form>', html.index('data-survey-start="blank"'))]
+        self.assertIn('action="%s"' % reverse('editor_survey_create_blank'), form)
+        self.assertIn('<button type="submit" class="start-card" data-path="blank"', form)
+        self.assertIn('Start from scratch', form)
         self.assertIn('Draft with AI', html)
-        self.assertIn('name="action" value="ai"', html)
+        self.assertIn('<a class="start-card" data-path="ai" href="%s?from=start">'
+                      % reverse('editor_survey_create'), html)
         self.assertIn('Connect your AI agent', html)
         # The third card is inert until #306: a div with aria-disabled, never a link.
         card = html[html.index('data-path="agent"'):html.index('</div>', html.index('data-path="agent"') + 600)]
@@ -52146,14 +52150,41 @@ class SurveyStartTest(TestCase):
         """
         GIVEN no LLM provider
         WHEN the start page is opened
-        THEN the AI card says it is not available and offers no action, while the other two work
+        THEN the AI card says it is not available and is no link, while the blank card works
         """
         response = self.client.get(reverse('editor_survey_start'))
 
         html = response.content.decode()
         self.assertIn('Not available on this server', html)
-        self.assertNotIn('name="action" value="ai"', html)
+        self.assertIn('<div class="start-card disabled" data-path="ai" aria-disabled="true">', html)
+        self.assertNotIn('?from=start', html)
         self.assertIn('data-survey-start="blank"', html)
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
+    def test_cards_act_on_one_click(self):
+        """
+        GIVEN the start page (#335: a click on a card used to only select it)
+        WHEN it renders
+        THEN there is no detail block, no selected state, no "Always start this way" and no
+             selection script -- the cards themselves are the controls
+        """
+        html = self.client.get(reverse('editor_survey_start')).content.decode()
+
+        for gone in ('start-detail', 'start-lore', 'Always start this way', 'name="remember"',
+                     'aria-pressed', 'Create empty survey'):
+            self.assertNotIn(gone, html)
+
+    def test_start_page_refuses_post(self):
+        """
+        GIVEN a stale tab of the old start page
+        WHEN it posts action=clear or action=ai
+        THEN 405 and the stored default is untouched
+        """
+        CreatorPreferences.objects.create(user=self.user, survey_start_default='ai')
+
+        self.assertEqual(self.client.post(reverse('editor_survey_start'), {'action': 'clear'}).status_code, 405)
+        self.assertEqual(self.client.post(reverse('editor_survey_start'), {'action': 'ai', 'remember': '1'}).status_code, 405)
+        self.assertEqual(CreatorPreferences.objects.get(user=self.user).survey_start_default, 'ai')
 
     def test_welcome_escape_link(self):
         """
@@ -52286,72 +52317,30 @@ class SurveyStartTest(TestCase):
 
     # ── remembered default ──
 
-    def test_remember_on_the_blank_card(self):
+    def test_blank_endpoint_ignores_remember(self):
         """
-        GIVEN "Always start this way" ticked on Start from scratch
+        GIVEN a remember=1 from a tab opened before the checkbox moved to Preferences
         WHEN the blank endpoint runs
-        THEN the default is 'blank' and the survey is still created
+        THEN the survey is created and no default is stored
         """
         self.client.post(reverse('editor_survey_create_blank'), {'remember': '1'})
 
-        self.assertEqual(CreatorPreferences.objects.get(user=self.user).survey_start_default, 'blank')
         self.assertEqual(SurveyHeader.objects.count(), 1)
-
-    def test_remember_on_the_ai_card(self):
-        """
-        GIVEN "Always start this way" ticked on Draft with AI
-        WHEN the start page receives action=ai
-        THEN the default is 'ai' and the creator lands on the create page from the start page
-        """
-        response = self.client.post(reverse('editor_survey_start'), {'action': 'ai', 'remember': '1'})
-
-        self.assertRedirects(response, reverse('editor_survey_create') + '?from=start',
-                             fetch_redirect_response=False)
-        self.assertEqual(CreatorPreferences.objects.get(user=self.user).survey_start_default, 'ai')
-
-    def test_ai_without_remember_keeps_asking(self):
-        """
-        GIVEN the box left unticked
-        WHEN the start page receives action=ai
-        THEN no default is stored
-        """
-        self.client.post(reverse('editor_survey_start'), {'action': 'ai'})
-
         self.assertFalse(CreatorPreferences.objects.filter(user=self.user).exclude(survey_start_default='').exists())
-
-    def test_clear_default(self):
-        """
-        GIVEN a stored default
-        WHEN the start page receives action=clear
-        THEN the default is '' and the page says so no more
-        """
-        CreatorPreferences.objects.create(user=self.user, survey_start_default='ai')
-
-        response = self.client.post(reverse('editor_survey_start'), {'action': 'clear'})
-
-        self.assertRedirects(response, reverse('editor_survey_start'), fetch_redirect_response=False)
-        self.assertEqual(CreatorPreferences.objects.get(user=self.user).survey_start_default, '')
 
     def test_start_page_shows_the_current_default(self):
         """
         GIVEN a stored default
         WHEN the start page renders
-        THEN it names the default and offers Clear
+        THEN it names the default and links to Preferences instead of a Clear button
         """
         CreatorPreferences.objects.create(user=self.user, survey_start_default='ai')
 
         response = self.client.get(reverse('editor_survey_start'))
 
         self.assertContains(response, 'Your default:')
-        self.assertContains(response, 'name="action" value="clear"')
-
-    def test_unknown_action_is_a_bad_request(self):
-        """
-        GIVEN a POST the start page does not know
-        WHEN it arrives
-        THEN 400, nothing stored
-        """
-        self.assertEqual(self.client.post(reverse('editor_survey_start'), {'action': 'x'}).status_code, 400)
+        self.assertContains(response, 'href="%s"' % reverse('editor_account_preferences'))
+        self.assertNotContains(response, 'name="action" value="clear"')
 
     # ── dashboard ──
 
@@ -52494,6 +52483,150 @@ class SurveyStartTest(TestCase):
         survey = SurveyHeader.objects.get(name='legacy')
         self.assertIsNotNone(survey.start_map_postion)
         self.assertEqual(self._created_props(emit)['map_source'], 'world')
+
+
+class CreatorPreferencesPageTest(TestCase):
+    """The personal Preferences page (change start-cards-one-click): where the default way to
+    start a survey is set now that the start page acts on one click."""
+
+    def setUp(self):
+        self.org = _make_org('PrefsOrg')
+        self.user = User.objects.create_user('prefsuser', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='prefsuser', password='pass')
+        self.url = reverse('editor_account_preferences')
+
+    def _stored(self):
+        return CreatorPreferences.objects.get(user=self.user).survey_start_default
+
+    def test_page_shows_the_current_default(self):
+        """
+        GIVEN survey_start_default = 'blank'
+        WHEN the Preferences page opens
+        THEN Start from scratch is the checked option
+        """
+        CreatorPreferences.objects.create(user=self.user, survey_start_default='blank')
+
+        html = self.client.get(self.url).content.decode()
+
+        self.assertIn('value="blank" checked', html)
+        self.assertNotIn('value="" checked', html)
+
+    def test_no_row_means_ask_and_writes_nothing(self):
+        """
+        GIVEN a creator without a CreatorPreferences row
+        WHEN the page opens
+        THEN Ask every time is checked and no row is created
+        """
+        CreatorPreferences.objects.filter(user=self.user).delete()
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'value="" checked')
+        self.assertFalse(CreatorPreferences.objects.filter(user=self.user).exists())
+
+    def test_saving_a_default_routes_the_dashboard_button(self):
+        """
+        GIVEN the page
+        WHEN the creator saves Draft with AI
+        THEN the value is stored, the page redirects to itself with a confirmation, and
+             "+ New Survey" on the dashboard links to the create page
+        """
+        response = self.client.post(self.url, {'survey_start_default': 'ai'}, follow=True)
+
+        self.assertRedirects(response, self.url)
+        self.assertContains(response, 'Preferences saved.')
+        self.assertEqual(self._stored(), 'ai')
+        SurveyHeader.objects.create(name='existing', organization=self.org, created_by=self.user)
+        dashboard = self.client.get(reverse('editor')).content.decode()
+        self.assertIn('href="%s" class="btn btn-sm btn-primary btn-new-survey"' % reverse('editor_survey_create'),
+                      dashboard)
+
+    def test_back_to_asking(self):
+        """
+        GIVEN a stored default
+        WHEN the creator saves Ask every time
+        THEN the stored value is ''
+        """
+        CreatorPreferences.objects.create(user=self.user, survey_start_default='blank')
+
+        self.client.post(self.url, {'survey_start_default': ''})
+
+        self.assertEqual(self._stored(), '')
+
+    def test_invalid_value_is_refused(self):
+        """
+        GIVEN a stored default
+        WHEN a value outside the three is posted
+        THEN 400 and the stored value is unchanged
+        """
+        CreatorPreferences.objects.create(user=self.user, survey_start_default='blank')
+
+        response = self.client.post(self.url, {'survey_start_default': 'agent'})
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(self._stored(), 'blank')
+
+    def test_viewer_can_store_a_default(self):
+        """
+        GIVEN a creator whose role in the active workspace is viewer
+        WHEN they open and submit the page
+        THEN it renders and the value is stored -- the setting is personal
+        """
+        viewer = User.objects.create_user('prefsviewer', password='pass')
+        Membership.objects.create(user=viewer, organization=self.org, role='viewer')
+        self.client.login(username='prefsviewer', password='pass')
+
+        self.assertEqual(self.client.get(self.url).status_code, 200)
+        self.client.post(self.url, {'survey_start_default': 'blank'})
+
+        self.assertEqual(CreatorPreferences.objects.get(user=viewer).survey_start_default, 'blank')
+
+    def test_anonymous_visitor_goes_to_login(self):
+        """
+        GIVEN a visitor who is not signed in
+        WHEN they open the page
+        THEN they are redirected to the login page
+        """
+        self.client.logout()
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse('login'), response['Location'])
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='', GEMINI_API_KEY='')
+    def test_ai_option_without_a_provider(self):
+        """
+        GIVEN no LLM provider
+        WHEN the page renders, first with no default and then with a stored 'ai'
+        THEN Draft with AI is disabled with an explanation, except that a stored 'ai' stays
+             checked and enabled so a save keeps it
+        """
+        html = self.client.get(self.url).content.decode()
+        self.assertIn('value="ai" disabled', html)
+        self.assertIn('Not available on this server', html)
+
+        CreatorPreferences.objects.update_or_create(user=self.user, defaults={'survey_start_default': 'ai'})
+        html = self.client.get(self.url).content.decode()
+        self.assertIn('value="ai" checked>', html)
+
+    def test_account_menus_link_to_preferences(self):
+        """
+        GIVEN a signed-in creator
+        WHEN the dashboard (base.html) and a survey editor page (editor_base.html) render
+        THEN each account menu carries a Preferences link
+        """
+        survey = SurveyHeader.objects.create(name='prefs_menu', organization=self.org, created_by=self.user)
+        SurveyCollaborator.objects.create(survey=survey, user=self.user, role='owner')
+        link = 'href="%s"' % self.url
+
+        dashboard = self.client.get(reverse('editor')).content.decode()
+        editor = self.client.get(reverse('editor_survey_detail', kwargs={'survey_uuid': survey.uuid})).content.decode()
+
+        self.assertIn(link, dashboard)
+        self.assertIn(link, editor)
 
 
 class AgentAccessTeaserTest(TestCase):

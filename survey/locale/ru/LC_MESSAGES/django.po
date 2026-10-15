@@ -7937,3 +7937,27 @@ msgstr "Для команд, которые уже работают через �
 #: survey/templates/editor/survey_start.html
 msgid "How this works"
 msgstr "Как это устроено"
+
+#: survey/templates/editor/survey_start.html
+msgid "Change in Preferences"
+msgstr "Изменить в личных настройках"
+
+#: survey/templates/editor/survey_start.html
+msgid "Your description goes to an AI provider to build the draft; survey answers never do."
+msgstr "Ваше описание уходит AI-провайдеру для черновика; ответы респондентов — никогда."
+
+#: survey/templates/editor/account_preferences.html
+msgid "Preferences"
+msgstr "Личные настройки"
+
+#: survey/templates/editor/account_preferences.html
+msgid "Preferences saved."
+msgstr "Настройки сохранены."
+
+#: survey/templates/editor/account_preferences.html
+msgid "When I click New Survey"
+msgstr "Когда я нажимаю «Новый опрос»"
+
+#: survey/templates/editor/account_preferences.html
+msgid "Skip the “How do you want to start?” page by choosing your usual way. The dashboard’s ⋯ menu still offers “Start another way…”."
+msgstr "Пропускайте страницу «С чего начнём?», выбрав привычный способ. В меню ⋯ на дашборде по-прежнему есть «Начать иначе…»."

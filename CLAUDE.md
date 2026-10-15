@@ -428,7 +428,13 @@ as the "After the last page" choice; the form refuses anything that is not a ful
 **Ways to start (change `first-survey-onboarding`)**: a workspace with no surveys and, by default,
 "+ New Survey" lead to the START PAGE `/editor/surveys/start/` (`editor_survey_start`) — three cards,
 *Start from scratch* / *Draft with AI* / *Connect your AI agent* — not to the create page.
-`CreatorPreferences.survey_start_default` (`''` ask / `blank` / `ai`, "Always start this way") is
+**One click on a card does its action** (change `start-cards-one-click`, #335): the blank card IS
+the submit `<button>` of its form, the AI card IS a link to `?from=start`; there is no selection
+step, no detail block and no "Always start this way" on the page — creators clicked the card over
+and over when a click only selected it. Do not bring a "choose, then confirm" step back.
+`CreatorPreferences.survey_start_default` (`''` ask / `blank` / `ai`) is set ONLY on the personal
+**Preferences** page `/editor/account/` (`editor_account_preferences`, login only, no org role;
+"Preferences" in the account menus of BOTH bases) and is
 what the dashboard renders the button from (context processor `survey_start`): `blank` makes it a
 POST form to `editor_survey_create_blank`, the one-request empty survey ("Untitled survey", the
 creator's UI language, map from the chain below) that shares `_finish_blank_survey` with the create

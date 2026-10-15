@@ -17,7 +17,7 @@ from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.utils import timezone, translation
 from django.utils.html import strip_tags
 from django.utils.translation import gettext as _
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 from django.contrib.auth.decorators import login_required
 
 from . import other_option
@@ -27,7 +27,7 @@ from .models import (
     Membership, SURVEY_ROLE_CHOICES, BASEMAP_CHOICES,
     INPUT_TYPE_CHOICES, DISPLAY_STYLE_CHOICES, SurveyMapLayer,
     CreatorPreferences,
-    SURVEY_START_ASK, SURVEY_START_BLANK, SURVEY_START_AI, SURVEY_START_CHOICES,
+    SURVEY_START_AI, SURVEY_START_CHOICES,
 )
 from . import map_start
 from .layers import (
@@ -429,33 +429,20 @@ def editor_survey_create_blank(request):
     start = map_start.suggest_start_position(
         request, browser=map_start.browser_position(request.POST),
     )
-    if request.POST.get('remember') == '1':
-        _set_survey_start_default(request.user, SURVEY_START_BLANK)
     return _finish_blank_survey(
         request, survey, start=start, surface=pe.SURFACE_START_BLANK,
     )
 
 
+@require_GET
 @org_permission_required('editor')
 def editor_survey_start(request):
-    """The three ways to begin (change first-survey-onboarding, D1-D3).
+    """The three ways to begin (changes first-survey-onboarding, start-cards-one-click).
 
-    GET renders the cards. POST carries the choices that are not a survey
-    yet: `action=ai` (with `remember=1` to make it the default) hands over to
-    the create page; `action=clear` forgets the default. The blank card posts
-    to `editor_survey_create_blank` directly.
+    GET only: every card acts on one click by itself -- the blank card posts to
+    `editor_survey_create_blank`, the AI card links to the create page. The
+    remembered default is shown here but set on the Preferences page.
     """
-    if request.method == 'POST':
-        action = request.POST.get('action')
-        if action == 'ai':
-            if request.POST.get('remember') == '1':
-                _set_survey_start_default(request.user, SURVEY_START_AI)
-            return redirect(reverse('editor_survey_create') + '?from=start')
-        if action == 'clear':
-            _set_survey_start_default(request.user, SURVEY_START_ASK)
-            return redirect('editor_survey_start')
-        return HttpResponse(status=400)
-
     current = (CreatorPreferences.objects
                .filter(user=request.user)
                .values_list('survey_start_default', flat=True)
@@ -465,6 +452,39 @@ def editor_survey_start(request):
         'welcome': request.GET.get('welcome') == '1',
         'current_default': current,
         'current_default_label': dict(SURVEY_START_CHOICES).get(current, ''),
+    })
+
+
+@login_required
+def editor_account_preferences(request):
+    """Settings that belong to the person, not the workspace (change start-cards-one-click).
+
+    First and only setting so far: where "+ New Survey" leads
+    (`CreatorPreferences.survey_start_default`). No org role is needed -- the
+    choice is the creator's own, whatever their role in the active workspace.
+    """
+    if request.method == 'POST':
+        value = request.POST.get('survey_start_default', '')
+        if value not in dict(SURVEY_START_CHOICES):
+            return HttpResponse(status=400)
+        _set_survey_start_default(request.user, value)
+        messages.success(request, _('Preferences saved.'))
+        return redirect('editor_account_preferences')
+    current = (CreatorPreferences.objects
+               .filter(user=request.user)
+               .values_list('survey_start_default', flat=True)
+               .first()) or ''
+    ai_available = ai_client.provider_configured()
+    start_options = [{
+        'value': value,
+        'label': label,
+        'checked': value == current,
+        # Shown, but not offered, when this server has no AI; a stored "ai"
+        # stays checked and enabled so a save keeps it.
+        'unavailable': value == SURVEY_START_AI and not ai_available,
+    } for value, label in SURVEY_START_CHOICES]
+    return render(request, 'editor/account_preferences.html', {
+        'start_options': start_options,
     })
 
 

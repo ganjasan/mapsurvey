@@ -7917,3 +7917,27 @@ msgstr "Meeskondadele, kes juba töötavad agendi kaudu."
 #: survey/templates/editor/survey_start.html
 msgid "How this works"
 msgstr "Kuidas see töötab"
+
+#: survey/templates/editor/survey_start.html
+msgid "Change in Preferences"
+msgstr "Muuda eelistustes"
+
+#: survey/templates/editor/survey_start.html
+msgid "Your description goes to an AI provider to build the draft; survey answers never do."
+msgstr "Teie kirjeldus saadetakse mustandi loomiseks tehisaru teenusepakkujale; küsitluse vastuseid mitte kunagi."
+
+#: survey/templates/editor/account_preferences.html
+msgid "Preferences"
+msgstr "Eelistused"
+
+#: survey/templates/editor/account_preferences.html
+msgid "Preferences saved."
+msgstr "Eelistused salvestatud."
+
+#: survey/templates/editor/account_preferences.html
+msgid "When I click New Survey"
+msgstr "Kui klõpsan „Uus küsitlus“"
+
+#: survey/templates/editor/account_preferences.html
+msgid "Skip the “How do you want to start?” page by choosing your usual way. The dashboard’s ⋯ menu still offers “Start another way…”."
+msgstr "Jätke leht „Kuidas soovite alustada?“ vahele, valides oma tavapärase viisi. Töölaua ⋯-menüüs on endiselt „Alusta teisiti…“."

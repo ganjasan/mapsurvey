@@ -7984,3 +7984,27 @@ msgstr "Per i team che già lavorano da un agente."
 #: survey/templates/editor/survey_start.html
 msgid "How this works"
 msgstr "Come funziona"
+
+#: survey/templates/editor/survey_start.html
+msgid "Change in Preferences"
+msgstr "Modifica nelle Preferenze"
+
+#: survey/templates/editor/survey_start.html
+msgid "Your description goes to an AI provider to build the draft; survey answers never do."
+msgstr "La tua descrizione va a un fornitore di IA per creare la bozza; le risposte al sondaggio mai."
+
+#: survey/templates/editor/account_preferences.html
+msgid "Preferences"
+msgstr "Preferenze"
+
+#: survey/templates/editor/account_preferences.html
+msgid "Preferences saved."
+msgstr "Preferenze salvate."
+
+#: survey/templates/editor/account_preferences.html
+msgid "When I click New Survey"
+msgstr "Quando clicco su «Nuovo sondaggio»"
+
+#: survey/templates/editor/account_preferences.html
+msgid "Skip the “How do you want to start?” page by choosing your usual way. The dashboard’s ⋯ menu still offers “Start another way…”."
+msgstr "Salta la pagina «Come vuoi iniziare?» scegliendo il tuo modo abituale. Il menu ⋯ della dashboard offre sempre «Inizia in un altro modo…»."
