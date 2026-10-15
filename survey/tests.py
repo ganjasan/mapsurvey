@@ -53052,3 +53052,514 @@ class DraftCopyKeepsFieldsTest(TestCase):
         # A healthy publish (post-fix) reports nothing.
         publish_draft(clone_survey_for_draft(self.survey))
         self.assertEqual(find_draft_field_loss(), [])
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Pop-up visibility rules — sub-questions ruled by an earlier choice sub-question
+# of the same pop-up (openspec: subquestion-visibility-rules, #338)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _popup_fixture(survey, section, code_prefix="PV", with_rules=True):
+    """A point question whose pop-up asks "Type of place" (Park=1, School=2)
+    and has one follow-up per type plus an unconditional comment."""
+    point = Question.objects.create(
+        survey_section=section, code=f"{code_prefix}_PT", order_number=1, name="Place",
+        input_type="point")
+    kind = Question.objects.create(
+        survey_section=section, code=f"{code_prefix}_KIND", order_number=1, name="Type of place",
+        input_type="choice", parent_question_id=point,
+        choices=[{"code": 1, "name": "Park"}, {"code": 2, "name": "School"}])
+    park = Question.objects.create(
+        survey_section=section, code=f"{code_prefix}_PARK", order_number=2, name="Park follow-up",
+        input_type="text_line", parent_question_id=point,
+        visibility_rule={"question_code": kind.code, "choice_codes": [1]} if with_rules else None)
+    school = Question.objects.create(
+        survey_section=section, code=f"{code_prefix}_SCHOOL", order_number=3, name="School follow-up",
+        input_type="text_line", parent_question_id=point,
+        visibility_rule={"question_code": kind.code, "choice_codes": [2]} if with_rules else None)
+    comment = Question.objects.create(
+        survey_section=section, code=f"{code_prefix}_NOTE", order_number=4, name="Comment",
+        input_type="text", parent_question_id=point)
+    return {'point': point, 'kind': kind, 'park': park, 'school': school, 'comment': comment}
+
+
+class PopupVisibilityEngineTest(TestCase):
+    """survey/visibility.py::popup_visibility — the per-feature pop-up verdict."""
+
+    def setUp(self):
+        from survey.visibility import popup_visibility
+        self.compute = popup_visibility
+        self.org = Organization.objects.create(name="PopVis Org")
+        self.survey = SurveyHeader.objects.create(name="popvis", organization=self.org, redirect_url="#")
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True)
+        self.f = _popup_fixture(self.survey, self.section)
+
+    def test_rule_less_subquestion_always_visible(self):
+        """
+        GIVEN a sub-question without a rule
+        WHEN the pop-up verdict is computed with no answers
+        THEN it is visible
+        """
+        v = self.compute(self.f['point'], {}, enabled=True)
+        self.assertTrue(v.is_question_visible(self.f['comment'].id))
+        self.assertTrue(v.is_question_visible(self.f['kind'].id))
+
+    def test_one_follow_up_per_pick_and_none_before(self):
+        """
+        GIVEN follow-ups ruled on Park and on School
+        WHEN the feature's "Type of place" is School, Park, or unanswered
+        THEN exactly the matching follow-up is visible, and none before the pick
+        """
+        v = self.compute(self.f['point'], {self.f['kind'].code: [2]}, enabled=True)
+        self.assertFalse(v.is_question_visible(self.f['park'].id))
+        self.assertTrue(v.is_question_visible(self.f['school'].id))
+        v = self.compute(self.f['point'], {self.f['kind'].code: [1]}, enabled=True)
+        self.assertTrue(v.is_question_visible(self.f['park'].id))
+        self.assertFalse(v.is_question_visible(self.f['school'].id))
+        v = self.compute(self.f['point'], {}, enabled=True)
+        self.assertFalse(v.is_question_visible(self.f['park'].id))
+        self.assertFalse(v.is_question_visible(self.f['school'].id))
+
+    def test_cascade_through_hidden_sibling(self):
+        """
+        GIVEN a choice follow-up shown for Park, and a third sub-question ruled on it
+        WHEN the feature is a School
+        THEN the third sub-question is hidden even if its own controller value matches
+        """
+        self.f['park'].input_type = 'choice'
+        self.f['park'].choices = [{"code": 1, "name": "Playground"}, {"code": 2, "name": "Lake"}]
+        self.f['park'].save()
+        third = Question.objects.create(
+            survey_section=self.section, code="PV_THIRD", order_number=5, name="Third",
+            input_type="text_line", parent_question_id=self.f['point'],
+            visibility_rule={"question_code": "PV_PARK", "choice_codes": [1]})
+        v = self.compute(self.f['point'], {"PV_KIND": [2], "PV_PARK": [1]}, enabled=True)
+        self.assertFalse(v.is_question_visible(third.id))
+        v = self.compute(self.f['point'], {"PV_KIND": [1], "PV_PARK": [1]}, enabled=True)
+        self.assertTrue(v.is_question_visible(third.id))
+
+    def test_broken_rules_fail_open_and_are_reported(self):
+        """
+        GIVEN rules whose controller is a section question, a later sibling, a non-choice
+              sibling, or whose every option is gone
+        WHEN the pop-up verdict is computed
+        THEN each is visible and listed in `broken` with a reason
+        """
+        Question.objects.create(
+            survey_section=self.section, code="PV_SEC", order_number=2, name="Section choice",
+            input_type="choice", choices=[{"code": 1, "name": "A"}])
+        cases = {
+            'school': {"question_code": "PV_SEC", "choice_codes": [1]},      # not a sibling
+            'kind': {"question_code": "PV_PARK", "choice_codes": [1]},       # comes later
+            'comment': {"question_code": "PV_SCHOOL", "choice_codes": [1]},  # not a choice
+            'park': {"question_code": "PV_KIND", "choice_codes": [99]},      # option gone
+        }
+        for key, rule in cases.items():
+            self.f[key].visibility_rule = rule
+            self.f[key].save()
+        v = self.compute(self.f['point'], {}, enabled=True)
+        for key in cases:
+            self.assertTrue(v.is_question_visible(self.f[key].id), key)
+            self.assertIn(('subquestion', self.f[key].id), v.broken, key)
+
+    def test_kill_switch_shows_everything(self):
+        """
+        GIVEN valid rules
+        WHEN the engine runs with enabled=False
+        THEN every sub-question is visible and nothing is broken
+        """
+        v = self.compute(self.f['point'], {}, enabled=False)
+        self.assertTrue(all(v.question_visible.values()))
+        self.assertEqual(v.broken, {})
+
+    def test_client_rules_skip_broken(self):
+        """
+        GIVEN one valid and one broken pop-up rule
+        WHEN the client rule map is built
+        THEN only the valid one is in it, keyed by sub-question code
+        """
+        from survey.visibility import popup_rules_for_client
+        self.f['school'].visibility_rule = {"question_code": "NOPE", "choice_codes": [1]}
+        self.f['school'].save()
+        rules = popup_rules_for_client(self.f['point'], enabled=True)
+        self.assertEqual(rules, {"PV_PARK": {"question_code": "PV_KIND", "choice_codes": [1]}})
+
+    def test_describe_rule_and_lint_for_subquestions(self):
+        """
+        GIVEN a valid pop-up rule and a broken one
+        WHEN describe_rule and lint_rules run
+        THEN the badge label names the sibling and lint lists the broken one
+        """
+        from survey.visibility import describe_rule, lint_rules
+        info = describe_rule('subquestion', self.f['park'], self.survey)
+        self.assertEqual(info['label'], 'if Type of place = Park')
+        self.f['school'].visibility_rule = {"question_code": "NOPE", "choice_codes": [1]}
+        self.f['school'].save()
+        self.assertTrue(describe_rule('subquestion', self.f['school'], self.survey)['broken'])
+        self.assertIn(('subquestion', self.f['school'].id), lint_rules(self.survey)['broken'])
+
+    def test_controller_options_are_earlier_choice_siblings(self):
+        """
+        GIVEN a pop-up with a choice first and text follow-ups after it
+        WHEN controller options are listed for the School follow-up and for a new sub-question
+        THEN only "Type of place" is offered
+        """
+        from survey.visibility import popup_controller_options
+        self.assertEqual(popup_controller_options(self.f['point'], host=self.f['school']), [self.f['kind']])
+        self.assertEqual(popup_controller_options(self.f['point']), [self.f['kind']])
+        self.assertEqual(popup_controller_options(self.f['point'], host=self.f['kind']), [])
+
+
+class PopupVisibilityRespondentTest(TestCase):
+    """Server-side contract per feature and per object; what the page ships."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="PopVis R")
+        self.survey = SurveyHeader.objects.create(
+            name="popvis_r", organization=self.org, status='published',
+            available_languages=[], redirect_url="#")
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True)
+        self.f = _popup_fixture(self.survey, self.section)
+        self.url = f'/surveys/{self.survey.uuid}/s1/'
+
+    def _feature(self, x, y, props):
+        return json.dumps({"type": "Feature", "geometry": {"type": "Point", "coordinates": [x, y]},
+                           "properties": {"question_id": "PV_PT", **props}})
+
+    def _post(self, features):
+        self.client.get(self.url)
+        return self.client.post(self.url, {'PV_PT': '|'.join(features) + '|'})
+
+    def _child_rows(self):
+        sid = self.client.session['survey_session_id']
+        return Answer.objects.filter(survey_session_id=sid, parent_answer_id__isnull=False)
+
+    def test_page_ships_popup_rules_and_every_subquestion(self):
+        """
+        GIVEN a point question with ruled follow-ups
+        WHEN the respondent opens the section
+        THEN the pop-up form still contains every sub-question and the data attribute
+             carries the two rules keyed by sub-question code
+        """
+        html = self.client.get(self.url).content.decode()
+        m = re.search(r'data-popup-visibility-rules="([^"]*)"', html)
+        self.assertIsNotNone(m)
+        rules = json.loads(m.group(1).replace('&quot;', '"'))
+        self.assertEqual(rules, {
+            "PV_PARK": {"question_code": "PV_KIND", "choice_codes": [1]},
+            "PV_SCHOOL": {"question_code": "PV_KIND", "choice_codes": [2]},
+        })
+        forms = json.loads(re.search(r'id="sq-forms-data"[^>]*>(.*?)</script>', html, re.S).group(1))
+        for code in ("PV_KIND", "PV_PARK", "PV_SCHOOL", "PV_NOTE"):
+            self.assertIn(code, forms["PV_PT"])
+
+    def test_tampered_answer_to_hidden_follow_up_is_discarded(self):
+        """
+        GIVEN a feature whose properties say Park but also carry a School follow-up value
+        WHEN the section is submitted
+        THEN the Park follow-up and the comment are stored, the School one is not
+        """
+        r = self._post([self._feature(13.4, 52.5, {
+            "PV_KIND": ["1"], "PV_PARK": ["swings"], "PV_SCHOOL": ["tampered"], "PV_NOTE": ["ok"]})])
+        self.assertIn(r.status_code, (200, 302))
+        stored = {a.question.code: a.text for a in self._child_rows()}
+        self.assertEqual(stored, {"PV_KIND": None, "PV_PARK": "swings", "PV_NOTE": "ok"})
+
+    def test_two_features_decide_independently(self):
+        """
+        GIVEN one feature picked Park and another School, each with both follow-ups filled
+        WHEN the section is submitted
+        THEN the first stores the Park follow-up only and the second the School one only
+        """
+        self._post([
+            self._feature(13.4, 52.5, {"PV_KIND": ["1"], "PV_PARK": ["p"], "PV_SCHOOL": ["x"]}),
+            self._feature(13.5, 52.6, {"PV_KIND": ["2"], "PV_PARK": ["x"], "PV_SCHOOL": ["s"]}),
+        ])
+        by_parent = {}
+        for a in self._child_rows().select_related('question', 'parent_answer_id'):
+            by_parent.setdefault(a.parent_answer_id.point.x, set()).add((a.question.code, a.text))
+        self.assertEqual(by_parent[13.4], {("PV_KIND", None), ("PV_PARK", "p")})
+        self.assertEqual(by_parent[13.5], {("PV_KIND", None), ("PV_SCHOOL", "s")})
+
+    def test_unanswered_controller_hides_both_follow_ups(self):
+        """
+        GIVEN a feature with no "Type of place" value but both follow-ups filled
+        WHEN the section is submitted
+        THEN neither follow-up is stored (nothing shown before the pick)
+        """
+        self._post([self._feature(13.4, 52.5, {"PV_PARK": ["p"], "PV_SCHOOL": ["s"], "PV_NOTE": ["n"]})])
+        self.assertEqual({a.question.code for a in self._child_rows()}, {"PV_NOTE"})
+
+    @override_settings(CONDITIONAL_VISIBILITY=False)
+    def test_kill_switch_stores_everything_and_ships_no_rules(self):
+        """
+        GIVEN the kill switch off
+        WHEN the page renders and a Park feature with both follow-ups is submitted
+        THEN no rules are shipped and every sub-answer is stored
+        """
+        html = self.client.get(self.url).content.decode()
+        self.assertIn('data-popup-visibility-rules="{}"', html)
+        self._post([self._feature(13.4, 52.5, {"PV_KIND": ["1"], "PV_PARK": ["p"], "PV_SCHOOL": ["s"]})])
+        self.assertEqual({a.question.code for a in self._child_rows()}, {"PV_KIND", "PV_PARK", "PV_SCHOOL"})
+
+    def test_object_answers_follow_the_same_rule(self):
+        """
+        GIVEN an Objects-on-the-map question whose pop-up has a choice controller
+              ("Keep" / "Remove") and a comment shown only for "Keep"
+        WHEN obj__ fields post Keep + comment for object 1 and Remove + comment for object 2
+        THEN object 1 keeps its comment and object 2 does not
+        """
+        layer = _objects_layer(self.survey, name="Sites", key_field='zone_id', label_field='name')
+        q = Question.objects.create(
+            survey_section=self.section, code="LO_Q", name="Objects", input_type="layer_objects",
+            layer=layer, order_number=2)
+        Question.objects.create(
+            survey_section=self.section, code="LO_T", name="Keep it?", input_type="choice",
+            parent_question_id=q, order_number=1,
+            choices=[{"code": 1, "name": "Keep"}, {"code": 0, "name": "Remove"}])
+        Question.objects.create(
+            survey_section=self.section, code="LO_C", name="Why?", input_type="text",
+            parent_question_id=q, order_number=2,
+            visibility_rule={"question_code": "LO_T", "choice_codes": [1]})
+        self.client.get(self.url)
+        self.client.post(self.url, {
+            'obj__1__LO_T': '1', 'obj__1__LO_C': 'yes please',
+            'obj__2__LO_T': '0', 'obj__2__LO_C': 'should be dropped',
+        })
+        sid = self.client.session['survey_session_id']
+        rows = Answer.objects.filter(survey_session_id=sid, layer_object__isnull=False).select_related('question', 'layer_object')
+        got = {(a.layer_object.key, a.question.code): a.text for a in rows}
+        self.assertEqual(got, {('1', 'LO_T'): None, ('1', 'LO_C'): 'yes please', ('2', 'LO_T'): None})
+
+    def test_export_unchanged_for_rule_less_subquestions(self):
+        """
+        GIVEN a submitted Park feature
+        WHEN the data export bundle is collected
+        THEN the observations table has one column per sub-question, hidden or not,
+             and the hidden follow-up's cell is simply empty
+        """
+        from survey import export
+        self._post([self._feature(13.4, 52.5, {"PV_KIND": ["1"], "PV_PARK": ["p"], "PV_NOTE": ["n"]})])
+        bundle = export.collect(self.survey, [(self.survey, '')])
+        layer = [g for g in bundle.parts[0].geo_layers if g.question.code == 'PV_PT'][0]
+        self.assertEqual(layer.sub_columns, ['Type of place', 'Park follow-up', 'School follow-up', 'Comment'])
+        props = layer.collection['features'][0]['properties']
+        self.assertEqual(props['Park follow-up'], 'p')
+        self.assertEqual(props['School follow-up'], '')
+
+
+class PopupVisibilityEditorTest(TestCase):
+    """Visibility block in the sub-question modal, badges, pill, live-survey refusal."""
+
+    def setUp(self):
+        self.org = _make_org("PopVisEd")
+        self.user = User.objects.create_user(username="pv_owner", password="pass")
+        Membership.objects.create(user=self.user, organization=self.org, role="owner")
+        self.survey = SurveyHeader.objects.create(
+            name="pv_editor", organization=self.org, status="draft")
+        self.section = SurveySection.objects.create(
+            name="s1", title="Intro", survey_header=self.survey, is_head=True, code="S1")
+        Question.objects.create(
+            survey_section=self.section, code="SEC_CHOICE", order_number=0, name="Section choice",
+            input_type="choice", choices=[{"code": 1, "name": "A"}])
+        self.f = _popup_fixture(self.survey, self.section, with_rules=False)
+        self.client.login(username="pv_owner", password="pass")
+
+    def _edit(self, question, extra):
+        payload = {'name': question.name, 'input_type': question.input_type,
+                   'subtext': '', 'color': '#000000', 'icon_class': ''}
+        payload.update(extra)
+        return self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/questions/{question.id}/edit/', payload)
+
+    def test_subquestion_modal_offers_siblings_only(self):
+        """
+        GIVEN a pop-up with a choice first and a section-level choice question
+        WHEN the School follow-up's modal and the new-sub-question modal render
+        THEN the Visibility block lists "Type of place" under "This pop-up" and never the
+             section question; the controller's own modal says nothing can control it yet
+        """
+        html = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.f["school"].id}/edit/').content.decode()
+        self.assertIn('name="visibility_mode"', html)
+        self.assertIn('This pop-up', html)
+        self.assertIn('value="PV_KIND"', html)
+        self.assertNotIn('value="SEC_CHOICE"', html)
+        html = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.f["point"].id}/subquestions/new/').content.decode()
+        self.assertIn('value="PV_KIND"', html)
+        self.assertNotIn('value="SEC_CHOICE"', html)
+        html = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.f["kind"].id}/edit/').content.decode()
+        self.assertIn('No earlier choice sub-question in this pop-up', html)
+
+    def test_rule_saved_via_subquestion_edit_and_create(self):
+        """
+        GIVEN the Visibility block posted in conditional mode
+        WHEN a sub-question is edited and another created with it
+        THEN both rules land on the rows and the section-list row shows the badge
+        """
+        r = self._edit(self.f['park'], {
+            'visibility_mode': 'conditional', 'visibility_question': 'PV_KIND',
+            'visibility_choices': ['1']})
+        self.assertEqual(r.status_code, 200)
+        self.f['park'].refresh_from_db()
+        self.assertEqual(self.f['park'].visibility_rule, {'question_code': 'PV_KIND', 'choice_codes': [1]})
+        self.assertIn('if Type of place = Park', r.content.decode())
+        r = self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.f["point"].id}/subquestions/new/', {
+                'name': 'Shop follow-up', 'input_type': 'text_line', 'subtext': '', 'color': '#000000',
+                'icon_class': '', 'visibility_mode': 'conditional', 'visibility_question': 'PV_KIND',
+                'visibility_choices': ['2']})
+        self.assertEqual(r.status_code, 200)
+        created = Question.objects.get(name='Shop follow-up')
+        self.assertEqual(created.parent_question_id_id, self.f['point'].id)
+        self.assertEqual(created.visibility_rule, {'question_code': 'PV_KIND', 'choice_codes': [2]})
+
+    def test_badges_pill_and_dependents_in_modal_and_list(self):
+        """
+        GIVEN two follow-ups ruled on "Type of place" and one broken rule
+        WHEN the section page and the parent's modal render
+        THEN rows show the branch badges, the controller shows "2", the broken one is badged,
+             and the follow-up's modal carries the "Shown when" pill
+        """
+        for key, code in (('park', 1), ('school', 2)):
+            self.f[key].visibility_rule = {'question_code': 'PV_KIND', 'choice_codes': [code]}
+            self.f[key].save()
+        self.f['comment'].visibility_rule = {'question_code': 'SEC_CHOICE', 'choice_codes': [1]}
+        self.f['comment'].save()
+        html = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/').content.decode()
+        self.assertIn('if Type of place = Park', html)
+        self.assertIn('if Type of place = School', html)
+        self.assertIn('broken rule', html)
+        self.assertIn('<i class="fas fa-code-branch"></i> 2</span>', html)
+        modal = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.f["point"].id}/edit/').content.decode()
+        self.assertIn('if Type of place = Park', modal)
+        self.assertIn('broken rule', modal)
+        pill = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.f["park"].id}/edit/').content.decode()
+        self.assertIn('Shown when:', pill)
+
+    def test_rule_change_on_live_survey_is_structural(self):
+        """
+        GIVEN a published survey
+        WHEN a sub-question's rule is changed through the edit form
+        THEN the save is refused with the unpublished-changes affordance and nothing is stored
+        """
+        self.survey.status = 'published'
+        self.survey.save(update_fields=['status'])
+        r = self._edit(self.f['park'], {
+            'visibility_mode': 'conditional', 'visibility_question': 'PV_KIND',
+            'visibility_choices': ['1'], 'autosave': '1'})
+        self.assertEqual(r.status_code, 422)
+        self.assertTrue(r.json().get('needs_unpublished_changes'))
+        self.f['park'].refresh_from_db()
+        self.assertIsNone(self.f['park'].visibility_rule)
+
+    def test_section_preview_ships_popup_rules(self):
+        """
+        GIVEN a ruled follow-up
+        WHEN the editor's section preview renders
+        THEN it carries the pop-up rules and card markup for the pop-up form
+        """
+        self.f['park'].visibility_rule = {'question_code': 'PV_KIND', 'choice_codes': [1]}
+        self.f['park'].save()
+        r = self.client.get(f'/editor/surveys/{self.survey.uuid}/preview/{self.section.name}/')
+        self.assertEqual(r.status_code, 200)
+        html = r.content.decode()
+        self.assertIn('PV_PARK', re.search(r'data-popup-visibility-rules="([^"]*)"', html).group(1))
+        forms = json.loads(re.search(r'id="sq-forms-data"[^>]*>(.*?)</script>', html, re.S).group(1))
+        self.assertIn('data-field-name="PV_PARK"', forms['PV_PT'])
+
+
+class PopupVisibilitySerializationTest(TestCase):
+    """Pop-up rules through ZIP, duplication, cross-survey paste and publish."""
+
+    def setUp(self):
+        self.org = _make_org("PopVisSer")
+        self.user = User.objects.create_user(username="pv_ser", password="pass")
+        Membership.objects.create(user=self.user, organization=self.org, role="owner")
+        self.survey = SurveyHeader.objects.create(
+            name="pv_ser", organization=self.org, redirect_url="#", status="draft")
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="s1", title="S1", code="S1", is_head=True)
+        self.f = _popup_fixture(self.survey, self.section)
+        self.client.login(username="pv_ser", password="pass")
+
+    def _export_import(self):
+        import io
+        buf = io.BytesIO()
+        export_survey_to_zip(self.survey, buf, mode='structure')
+        buf.seek(0)
+        return import_survey_from_zip(buf, mode='structure')
+
+    def test_zip_round_trip_remaps_sibling(self):
+        """
+        GIVEN a survey with ruled follow-ups
+        WHEN it is exported and imported into the same database (codes collide)
+        THEN the imported follow-ups point at the imported "Type of place" code
+        """
+        new_survey, warnings = self._export_import()
+        new_kind = Question.objects.get(survey_section__survey_header=new_survey, name="Type of place")
+        new_park = Question.objects.get(survey_section__survey_header=new_survey, name="Park follow-up")
+        self.assertNotEqual(new_kind.code, "PV_KIND")
+        self.assertEqual(new_park.visibility_rule, {"question_code": new_kind.code, "choice_codes": [1]})
+        self.assertFalse(any('visibility rule' in w for w in warnings), warnings)
+
+    def test_unresolvable_popup_rule_dropped_with_report(self):
+        """
+        GIVEN a follow-up whose rule names a code absent from the pop-up
+        WHEN the archive is imported
+        THEN the follow-up has no rule and a warning names the sub-question
+        """
+        self.f['school'].visibility_rule = {"question_code": "NO_SUCH", "choice_codes": [1]}
+        self.f['school'].save()
+        new_survey, warnings = self._export_import()
+        new_school = Question.objects.get(survey_section__survey_header=new_survey, name="School follow-up")
+        self.assertIsNone(new_school.visibility_rule)
+        self.assertTrue(any("sub-question 'School follow-up'" in w for w in warnings), warnings)
+
+    def test_duplicate_point_question_remaps_popup_rules(self):
+        """
+        GIVEN the point question with ruled follow-ups
+        WHEN it is duplicated in the editor
+        THEN the copy's follow-ups are ruled on the copy's "Type of place"
+        """
+        self.client.post(f'/editor/surveys/{self.survey.uuid}/questions/{self.f["point"].id}/duplicate/')
+        copy = Question.objects.get(name="Place (copy)")
+        new_kind = Question.objects.get(parent_question_id=copy, name="Type of place")
+        new_park = Question.objects.get(parent_question_id=copy, name="Park follow-up")
+        self.assertNotEqual(new_kind.code, "PV_KIND")
+        self.assertEqual(new_park.visibility_rule, {"question_code": new_kind.code, "choice_codes": [1]})
+
+    def test_cross_survey_paste_keeps_popup_rules(self):
+        """
+        GIVEN the point question pasted into another survey
+        WHEN clone_question targets the other survey's section
+        THEN the pasted follow-ups keep their rule, remapped to the pasted sibling
+        """
+        from survey.cloning import clone_question
+        other = SurveyHeader.objects.create(name="pv_other", organization=self.org, status="draft")
+        other_section = SurveySection.objects.create(name="os1", survey_header=other, is_head=True, code="OS1")
+        clone = clone_question(self.f['point'], target_section=other_section)
+        new_kind = Question.objects.get(parent_question_id=clone, name="Type of place")
+        new_school = Question.objects.get(parent_question_id=clone, name="School follow-up")
+        self.assertEqual(new_school.visibility_rule, {"question_code": new_kind.code, "choice_codes": [2]})
+
+    def test_publish_draft_keeps_popup_rules(self):
+        """
+        GIVEN a published survey with ruled follow-ups and a draft copy of it
+        WHEN the draft is published
+        THEN the live follow-ups still carry the rules verbatim
+        """
+        from survey.versioning import clone_survey_for_draft, publish_draft
+        self.survey.status = 'published'
+        self.survey.save(update_fields=['status'])
+        draft = clone_survey_for_draft(self.survey)
+        publish_draft(draft)
+        live_park = Question.objects.get(survey_section__survey_header=self.survey, name="Park follow-up")
+        self.assertEqual(live_park.visibility_rule, {"question_code": "PV_KIND", "choice_codes": [1]})

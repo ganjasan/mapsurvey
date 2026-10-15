@@ -14,6 +14,13 @@ is itself hidden is not satisfied (cascade).
 Broken rules fail OPEN (item visible) — silently hiding content is worse than showing
 it — and the same brokenness verdict feeds the editor's warning badges, so runtime
 leniency never becomes editor silence.
+
+Pop-up rules (change subquestion-visibility-rules, #338): a sub-question of a geo /
+Objects-on-the-map question may carry the same rule, controlled by an EARLIER choice
+sub-question of the SAME pop-up. Those rules never enter ``compute_visibility`` — a
+pop-up is answered once per placed feature or object, so ``popup_visibility`` evaluates
+them per feature against that feature's own sub-answers (the section POST calls it for
+every feature and every object it stores).
 """
 
 from django.conf import settings
@@ -46,7 +53,7 @@ def _ordered_sections(survey):
 
 def _iter_questions(section):
 	"""Top-level questions of a section in order. Sub-questions inherit their
-	parent's visibility and never carry rules of their own."""
+	parent's visibility; their own rules are pop-up rules (``popup_visibility``)."""
 	return section.questions()
 
 
@@ -176,6 +183,93 @@ def answers_by_code_for_session(survey_session):
 	return result
 
 
+def _sibling_index(parent):
+	"""``questions_index`` over one pop-up: every sub-question of ``parent`` at
+	section index 0, ordered by ``order_number`` — so ``_rule_verdict``'s
+	"earlier question in the section" test reads as "earlier sibling"."""
+	return {
+		sub.code: {"question": sub, "section_index": 0, "order": sub.order_number}
+		for sub in parent.subQuestions()
+	}
+
+
+class PopupVisibility:
+	"""The verdict for one pop-up + one feature's answers."""
+
+	def __init__(self):
+		self.question_visible = {}   # sub-question id -> bool
+		self.broken = {}             # ('subquestion', id) -> reason str
+
+	def is_question_visible(self, question_id):
+		return self.question_visible.get(question_id, True)
+
+
+def popup_visibility(parent, answers_by_code, enabled=None):
+	"""Evaluate the pop-up rules of ``parent``'s sub-questions for ONE feature.
+
+	``answers_by_code``: {sub-question code: [selected choice codes as ints]} of
+	that feature (or layer object) — the choice-type properties of a posted geo
+	feature, the ``obj__<key>__<code>`` fields of one object. Same any-of match,
+	same cascade (a hidden controller satisfies nothing), same fail-open as the
+	section engine; a controller outside the pop-up is "not found" and so broken.
+	"""
+	if enabled is None:
+		enabled = getattr(settings, "CONDITIONAL_VISIBILITY", True)
+	verdict = PopupVisibility()
+	index = _sibling_index(parent)
+	for entry in index.values():
+		sub = entry["question"]
+		if not enabled or sub.visibility_rule is None:
+			verdict.question_visible[sub.id] = True
+			continue
+		controller_entry, matchable, broken = _rule_verdict(
+			sub.visibility_rule, "question", 0, sub.order_number, index)
+		if broken:
+			verdict.broken[("subquestion", sub.id)] = broken
+			verdict.question_visible[sub.id] = True
+			continue
+		controller = controller_entry["question"]
+		if not verdict.question_visible.get(controller.id, True):
+			verdict.question_visible[sub.id] = False
+			continue
+		answered = answers_by_code.get(controller.code) or []
+		verdict.question_visible[sub.id] = any(code in answered for code in matchable)
+	return verdict
+
+
+def popup_rules_for_client(parent, enabled=None):
+	"""Valid pop-up rules of ``parent`` keyed by sub-question code — what the
+	respondent page and the editor preview hand to conditional_visibility.js.
+	Broken rules are left out: the client would otherwise hide what the server
+	shows."""
+	if enabled is None:
+		enabled = getattr(settings, "CONDITIONAL_VISIBILITY", True)
+	if not enabled:
+		return {}
+	verdict = popup_visibility(parent, {}, enabled=True)
+	rules = {}
+	for sub in parent.subQuestions():
+		rule = sub.visibility_rule
+		if not isinstance(rule, dict) or ("subquestion", sub.id) in verdict.broken:
+			continue
+		rules[sub.code] = {
+			"question_code": rule.get("question_code"),
+			"choice_codes": [c for c in (rule.get("choice_codes") or [])],
+		}
+	return rules
+
+
+def popup_controller_options(parent, host=None):
+	"""Siblings eligible to control a rule on a sub-question of ``parent``:
+	choice-type sub-questions with a smaller ``order_number`` (all of them for
+	a sub-question not yet created — it always lands last)."""
+	return [
+		sub for sub in parent.subQuestions()
+		if sub.input_type in CONTROLLER_TYPES
+		and (host is None or sub.order_number < host.order_number)
+	]
+
+
 def lint_rules(survey):
 	"""Editor-side diagnostics; same brokenness verdicts the runtime fails open on.
 
@@ -188,9 +282,12 @@ def lint_rules(survey):
 	vmap = compute_visibility(survey, {}, enabled=True)
 	sections = _ordered_sections(survey)
 	questions_by_code = {}
+	broken = dict(vmap.broken)
 	for section in sections:
 		for question in _iter_questions(section):
 			questions_by_code[question.code] = question
+			# Pop-up rules are judged per parent; only their brokenness is lint.
+			broken.update(popup_visibility(question, {}, enabled=True).broken)
 
 	dependents = {}
 	section_codes_covered = {}  # controller_id -> set of covered choice codes
@@ -223,7 +320,7 @@ def lint_rules(survey):
 		if missing:
 			uncovered[controller_id] = missing
 
-	return {"broken": vmap.broken, "dependents": dependents, "uncovered": uncovered}
+	return {"broken": broken, "dependents": dependents, "uncovered": uncovered}
 
 
 def controller_options(survey, host_section, host_kind, host_question=None):
@@ -265,10 +362,15 @@ def describe_rule(host_kind, host, survey):
 	rule = host.visibility_rule
 	if not isinstance(rule, dict):
 		return None
+	host_order = getattr(host, 'order_number', None)
+	if host_kind == 'subquestion':
+		# Judged inside its pop-up: the siblings are the whole world.
+		entry, matchable, broken = _rule_verdict(
+			rule, 'question', 0, host_order, _sibling_index(host.parent_question_id))
+		return _describe_verdict(entry, matchable, broken)
 	sections = _ordered_sections(survey)
 	questions_index = {}
 	host_section_index = None
-	host_order = getattr(host, 'order_number', None)
 	for s_idx, section in enumerate(sections):
 		if host_kind == 'section' and section.id == host.id:
 			host_section_index = s_idx
@@ -282,6 +384,10 @@ def describe_rule(host_kind, host, survey):
 		host_section_index = len(sections)
 
 	entry, matchable, broken = _rule_verdict(rule, host_kind, host_section_index, host_order, questions_index)
+	return _describe_verdict(entry, matchable, broken)
+
+
+def _describe_verdict(entry, matchable, broken):
 	if broken:
 		return {'label': None, 'broken': True, 'reason': broken, 'controller': None}
 	controller = entry['question']

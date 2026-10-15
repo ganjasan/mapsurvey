@@ -553,11 +553,11 @@ def _apply_visibility_rules(
         ):
             controllers[question.code] = question
 
-    def resolve(rule, host_label):
+    def resolve(rule, host_label, pool=None):
         if not isinstance(rule, dict):
             return None
         code = code_remap.get(rule.get("question_code"), rule.get("question_code"))
-        controller = controllers.get(code)
+        controller = (controllers if pool is None else pool).get(code)
         if controller is None:
             warnings.append(
                 f"Dropped visibility rule on {host_label}: controlling question not found"
@@ -583,17 +583,35 @@ def _apply_visibility_rules(
             section.visibility_rule = section_rule
             section.save(update_fields=["visibility_rule"])
         for question_data in section_data.get("questions", []):
-            rule = question_data.get("visibility_rule")
-            if not isinstance(rule, dict):
-                continue
             q_code = code_remap.get(question_data["code"], question_data["code"])
             question = controllers.get(q_code)
             if question is None:
                 continue
-            resolved = resolve(rule, f"question '{question.name or q_code}'")
-            if resolved:
-                question.visibility_rule = resolved
-                question.save(update_fields=["visibility_rule"])
+            rule = question_data.get("visibility_rule")
+            if isinstance(rule, dict):
+                resolved = resolve(rule, f"question '{question.name or q_code}'")
+                if resolved:
+                    question.visibility_rule = resolved
+                    question.save(update_fields=["visibility_rule"])
+            # Pop-up rules (#338): a sub-question's controller is an earlier
+            # sibling of the same pop-up, so it is resolved among the imported
+            # siblings — never against the section's questions.
+            sub_data = question_data.get("sub_questions") or []
+            if any(isinstance(sq.get("visibility_rule"), dict) for sq in sub_data):
+                siblings = {sq.code: sq for sq in question.subQuestions()}
+                for sq_data in sub_data:
+                    rule = sq_data.get("visibility_rule")
+                    if not isinstance(rule, dict):
+                        continue
+                    sq_code = code_remap.get(sq_data["code"], sq_data["code"])
+                    sub_question = siblings.get(sq_code)
+                    if sub_question is None:
+                        continue
+                    resolved = resolve(
+                        rule, f"sub-question '{sub_question.name or sq_code}'", siblings)
+                    if resolved:
+                        sub_question.visibility_rule = resolved
+                        sub_question.save(update_fields=["visibility_rule"])
     return warnings
 
 

@@ -435,6 +435,18 @@
                         <span class="q-name">{{ subq.name|default:"(unnamed)" }}</span>
                         <span class="badge badge-secondary">{{ subq|input_type_label }}</span>
                         {% if subq.required %}<span class="badge badge-danger">{% trans "Required" %}</span>{% endif %}
+                        {% comment %}Pop-up rule badges — the same two the section list shows
+                        (question_list_item.html), so the modal and the list never disagree.{% endcomment %}
+                        {% with vis=subq|visibility_info:survey %}{% if vis %}
+                        {% if vis.broken %}
+                        <span class="badge badge-warning" title="{{ vis.reason }}. Shown on every mark until fixed."><i class="fas fa-exclamation-triangle"></i> {% trans "broken rule" %}</span>
+                        {% else %}
+                        <span class="badge badge-info" title="{{ vis.label }}" style="background:#e7f1ff;color:#0b5ed7;border:1px solid #b6d4fe;"><i class="fas fa-code-branch"></i> {{ vis.label|truncatechars:40 }}</span>
+                        {% endif %}
+                        {% endif %}{% endwith %}
+                        {% with dep_count=subq|visibility_dependents:survey %}{% if dep_count %}
+                        <span class="badge badge-light" title="{{ dep_count }} visibility rule{{ dep_count|pluralize }} depend{{ dep_count|pluralize:'s,' }} on this sub-question's answer" style="border:1px solid #b6d4fe;color:#0b5ed7;"><i class="fas fa-code-branch"></i> {{ dep_count }}</span>
+                        {% endif %}{% endwith %}
                         {% if question.input_type == 'layer_objects' %}
                         {% if subq.input_type == 'thumbs' or subq.input_type == 'text' or subq.input_type == 'text_line' %}
                         <label class="lo-share" title="{% trans 'Other respondents see the answers on the object' %}">

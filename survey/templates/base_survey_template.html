@@ -761,6 +761,22 @@ locale.{% endcomment %}
     function initPopupFields(root) {
         if (window.initRanking) window.initRanking(root);
         if (window.syncRatingChips) window.syncRatingChips();
+        // Pop-up visibility rules (#338): bound after the values are restored,
+        // so the restored controller decides which follow-ups show.
+        if (window.ConditionalVisibility && root) {
+            window.ConditionalVisibility.bindPopup(root.querySelector('form'));
+        }
+    }
+
+    // A feature keeps its properties across pop-up opens, so a follow-up that a
+    // later pick hid would keep its earlier value (serializeArray() skips the
+    // disabled inputs but never deletes). Drop those keys and their write-ins.
+    function _pruneHiddenProperties(properties, formEl) {
+        if (!window.ConditionalVisibility || !formEl) return;
+        window.ConditionalVisibility.hiddenFieldNames(formEl).forEach(function (name) {
+            delete properties[name];
+            delete properties[name + '-other'];
+        });
     }
 
     function _buildPopupHtml(formId, sqHtml) {
@@ -1011,6 +1027,7 @@ locale.{% endcomment %}
             for (var prop in grouped_by_name_result) {
                 tempLayer.feature.properties[prop] = grouped_by_name_result[prop].map(function(arg) { return arg.value});
             }
+            _pruneHiddenProperties(tempLayer.feature.properties, document.getElementById(tempLayer._formId));
             tempLayer.closePopup();
             toggleInfo(true);
             currentQ = null;
@@ -1025,6 +1042,7 @@ locale.{% endcomment %}
         for (var prop in grouped_by_name_result) {
             tempLayer.feature.properties[prop] = grouped_by_name_result[prop].map(function(arg) { return arg.value});
         }
+        _pruneHiddenProperties(tempLayer.feature.properties, document.getElementById(tempLayer._formId));
         toggleInfo(true);
         refreshGeoQuestionUI();
     }
