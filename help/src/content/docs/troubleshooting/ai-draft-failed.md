@@ -1,19 +1,19 @@
 ---
-title: Couldn't reach the AI service
-description: Generating a survey draft from your brief ended with an error instead of opening the editor.
+title: The Wizard couldn't finish your draft
+description: The Wizard (Mapsurvey's AI agent) ended with an error instead of opening the editor.
 sidebar:
   order: 20
 ---
 
-You clicked **Generate draft**, waited on **Building your survey…**, and got one of: **Couldn't reach the AI service. Try again, or create an empty survey.**, **The draft came back malformed. Try rephrasing your brief, or create an empty survey.**, **AI drafting isn't available right now — create an empty survey instead.**, or **Something went wrong generating the draft.**
+You clicked **Generate draft**, waited on **Building your survey…**, and got one of: **The Wizard couldn't be reached. Try again, or create an empty survey.**, **The draft came back malformed. Try rephrasing your brief, or create an empty survey.**, **The Wizard isn't available right now — create an empty survey instead.**, or **Something went wrong generating the draft.**
 
 ## Why it happens
 
-Your brief goes to an AI provider, which writes the sections and questions. Mapsurvey checks the result before saving anything; only a draft that passes becomes a survey. Each message points at a different stage.
+The Wizard is an AI agent: your brief goes to an AI provider, which writes the sections and questions. Mapsurvey checks the result before saving anything; only a draft that passes becomes a survey. Each message points at a different stage.
 
-- **Couldn't reach the AI service.** The provider timed out, refused the request or returned an error. It also appears when the answer was cut off twice in a row because the brief asks for more survey than fits in one answer.
+- **The Wizard couldn't be reached.** The provider timed out, refused the request or returned an error. It also appears when the answer was cut off twice in a row because the brief asks for more survey than fits in one answer.
 - **The draft came back malformed.** The provider answered, but the draft failed Mapsurvey's checks twice. A corrected draft is requested once automatically; a second failure is reported instead of saved.
-- **AI drafting isn't available right now.** No AI provider is configured on this installation. On a self-hosted instance the provider key is not set.
+- **The Wizard isn't available right now.** No AI provider is configured on this installation. On a self-hosted instance the provider key is not set.
 - **Something went wrong.** An unexpected error, already reported to the team.
 
 There is no limit on drafts on any plan, so running out of allowance is never the cause.
