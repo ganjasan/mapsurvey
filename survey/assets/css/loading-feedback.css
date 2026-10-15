@@ -1,0 +1,38 @@
+/* Loading feedback on creator pages (change creator-loading-feedback, issue #337):
+ * the top progress bar and the busy state of submit buttons. Driven by
+ * js/loading_feedback.js; included once per creator base template through
+ * partials/_loading_feedback.html. Respondent pages do not load this. */
+
+/* ── top progress bar ── */
+/* z-index above Bootstrap modals (1050) and the mobile editor overlays (700/800):
+   a form submitted from inside a modal must still show its bar. */
+.ms-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    z-index: 2000;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .2s ease;
+}
+.ms-progress.is-visible { opacity: 1; }
+.ms-progress.is-leaving { opacity: 0; transition: opacity .3s ease .15s; }
+.ms-progress__bar {
+    height: 100%;
+    width: 0;
+    background: #4f46e5;
+    box-shadow: 0 0 8px rgba(79, 70, 229, .6);
+    transition: width .25s ease;
+}
+.ms-progress.is-leaving .ms-progress__bar { transition: width .1s ease; }
+@media (prefers-reduced-motion: reduce) {
+    .ms-progress, .ms-progress__bar { transition: none; }
+}
+
+/* ── busy submit button ── */
+/* The label stays, the leading icon becomes a spinner, so the button keeps its
+   width and its meaning. `disabled` does the greying through Bootstrap. */
+.is-busy { cursor: progress !important; }
+.is-busy .ms-busy-spinner { margin-right: .35em; }

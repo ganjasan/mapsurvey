@@ -44,6 +44,8 @@ window.SurveyStart = (function () {
                 if (done) return;
                 done = true;
                 form.dataset.geoDone = '1';
+                // form.submit() fires no submit event, so hold the loading bar by hand.
+                if (window.LoadingFeedback) window.LoadingFeedback.start();
                 form.submit();
             }
             var timer = setTimeout(finish, CEILING_MS);

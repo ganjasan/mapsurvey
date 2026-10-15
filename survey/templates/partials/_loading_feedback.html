@@ -1,0 +1,10 @@
+{% load static %}
+{% comment %}
+Loading feedback on creator pages (change creator-loading-feedback, issue #337): the top
+progress bar on navigation and long HTMX requests, and the busy state of submit buttons.
+Included from the <head> of base.html and editor/editor_base.html — never from the
+respondent base (base_survey_template.html) or the marketing base (base_landing.html);
+LoadingFeedbackTest pins that. The script creates its own element, so nothing goes in <body>.
+{% endcomment %}
+<link rel="stylesheet" href="{% static 'css/loading-feedback.css' %}{% if debug %}?t={% now 'U' %}{% endif %}">
+<script src="{% static 'js/loading_feedback.js' %}{% if debug %}?t={% now 'U' %}{% endif %}"></script>
