@@ -8,6 +8,8 @@
  *
  * Rules come from #section-data[data-visibility-rules]:
  *   {"<question_code>": {"question_code": "<controller>", "choice_codes": [..]}}
+ * or, for "answered (any option)" rules (#339),
+ *   {"<question_code>": {"question_code": "<controller>", "answered": true}}
  * Initialises idempotently on page load and on every HTMX section swap.
  *
  * Pop-up rules (sub-questions ruled by an earlier choice sub-question of the
@@ -58,9 +60,11 @@
             var controllerCard = cardFor(form, rule.question_code);
             var controllerHidden = controllerCard ? controllerCard.hidden : false;
             var answered = controllerHidden ? [] : controllerValues(form, rule.question_code);
-            var visible = rule.choice_codes.some(function (c) {
-                return answered.indexOf(c) !== -1;
-            });
+            var visible = rule.answered
+                ? answered.length > 0
+                : rule.choice_codes.some(function (c) {
+                    return answered.indexOf(c) !== -1;
+                });
             card.hidden = !visible;
             card.querySelectorAll('input, textarea, select').forEach(function (el) {
                 el.disabled = !visible;

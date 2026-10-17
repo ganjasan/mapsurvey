@@ -36,8 +36,18 @@ this item yet, and the block says so instead of rendering a dead picker.{% endco
                 </select>
                 <small class="form-text text-muted">{% if visibility_popup %}{% trans "Only choice sub-questions of this pop-up that come before this one can be selected. The rule is decided for each placed mark or object separately." %}{% else %}{% trans "Only choice questions that come before this one can be selected." %}{% endif %}</small>
             </div>
-            <div class="form-group" style="margin-bottom:0;">
-                <label style="font-size:.8rem;">{% trans "is any of" %}</label>
+            <div class="form-group" style="margin-bottom:.6rem;">
+                <label style="font-size:.8rem;">{% trans "is" %}</label>
+                {% comment %}Match mode (#339): any_of keeps the option list below; answered
+                hides it — the rule then names no codes, so a new option counts too.{% endcomment %}
+                <select name="visibility_match" class="form-control form-control-sm"
+                        {% if structure_locked %}disabled{% endif %}>
+                    <option value="any_of" {% if visibility_rule_match != 'answered' %}selected{% endif %}>{% trans "any of…" %}</option>
+                    <option value="answered" {% if visibility_rule_match == 'answered' %}selected{% endif %}>{% trans "answered (any option)" %}</option>
+                </select>
+                <small class="form-text text-muted visibility-answered-help" {% if visibility_rule_match != 'answered' %}style="display:none;"{% endif %}>{% trans "Shown once the respondent has picked any option. Options added later count too." %}</small>
+            </div>
+            <div class="form-group visibility-any-of" style="margin-bottom:0;{% if visibility_rule_match == 'answered' %}display:none;{% endif %}">
                 {% for group_section, group_questions in visibility_groups %}{% for gq in group_questions %}
                 <div class="visibility-choices" data-controller="{{ gq.code }}"
                      style="border:1px solid #dee2e6;border-radius:6px;background:#fff;padding:.5rem .65rem;max-height:170px;overflow-y:auto;{% if gq.code != visibility_rule_question %}display:none;{% endif %}">
@@ -73,6 +83,14 @@ this item yet, and the block says so instead of rendering a dead picker.{% endco
         var readOnly = block.dataset.readOnly === '1';
         var controls = block.querySelector('.visibility-controls');
         var select = block.querySelector('select[name="visibility_question"]');
+        var match = block.querySelector('select[name="visibility_match"]');
+        var anyOf = block.querySelector('.visibility-any-of');
+        var answeredHelp = block.querySelector('.visibility-answered-help');
+        function syncMatch() {
+            var answered = !!match && match.value === 'answered';
+            if (anyOf) anyOf.style.display = answered ? 'none' : '';
+            if (answeredHelp) answeredHelp.style.display = answered ? '' : 'none';
+        }
         function syncChoices() {
             if (!select) return;
             block.querySelectorAll('.visibility-choices').forEach(function (box) {
@@ -91,6 +109,7 @@ this item yet, and the block says so instead of rendering a dead picker.{% endco
             });
         });
         if (select) select.addEventListener('change', syncChoices);
+        if (match) match.addEventListener('change', syncMatch);
     });
 })();
 </script>

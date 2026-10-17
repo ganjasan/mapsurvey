@@ -883,7 +883,7 @@ def _visible_chain_position(vmap, section):
 
 def _build_section_context(request, survey, session_survey, section, selected_language, section_current, section_total, vmap=None):
 	"""Build template context for a survey section (used by both GET and POST→next)."""
-	from .visibility import popup_rules_for_client
+	from .visibility import popup_rules_for_client, client_rule
 	if vmap is None:
 		vmap = _session_visibility(session_survey, request.session.get('survey_session_id'))
 
@@ -899,10 +899,7 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 		rule = q.visibility_rule if isinstance(q.visibility_rule, dict) else None
 		same_section_rule = bool(rule) and rule.get('question_code') in same_section_codes
 		if same_section_rule and ('question', q.id) not in vmap.broken:
-			client_rules[q.code] = {
-				'question_code': rule.get('question_code'),
-				'choice_codes': [c for c in (rule.get('choice_codes') or [])],
-			}
+			client_rules[q.code] = client_rule(rule)
 			questions.append(q)
 		elif vmap.is_question_visible(q.id):
 			questions.append(q)

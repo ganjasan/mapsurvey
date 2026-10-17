@@ -14427,6 +14427,24 @@ class PerformanceAnalyticsServiceTest(TestCase):
         self.assertEqual(fb['eligible_pct'], 100)
         self.assertEqual(fb['rule_label'], 'Show B? = Yes')
 
+    def test_funnel_answered_rule_counts_any_selection(self):
+        """
+        GIVEN B shown when the question is answered at all (change
+              visibility-answered-condition), 10 sessions viewing A and 7
+              answering (Yes or No), 7 viewing B
+        WHEN get_funnel is called
+        THEN eligible counts every answered session, whichever option, and the
+             label reads "Show B? answered"
+        """
+        from .analytics import PerformanceAnalyticsService
+        sessions = self._branch_survey(yes=4, rule={"question_code": "q_show_b", "answered": True})
+        # Three of the ten viewed A but never answered: strip their answers.
+        Answer.objects.filter(survey_session__in=sessions[7:]).delete()
+        fb = PerformanceAnalyticsService(self.survey).get_funnel()[1]
+        self.assertTrue(fb['conditional'])
+        self.assertEqual((fb['eligible'], fb['skipped'], fb['dropped']), (7, 3, 0))
+        self.assertEqual(fb['rule_label'], 'Show B? answered')
+
     def test_funnel_loss_inside_a_branch_is_relative_to_eligible(self):
         """
         GIVEN the same survey but only 5 of the 7 eligible sessions viewed B
@@ -53563,3 +53581,429 @@ class PopupVisibilitySerializationTest(TestCase):
         publish_draft(draft)
         live_park = Question.objects.get(survey_section__survey_header=self.survey, name="Park follow-up")
         self.assertEqual(live_park.visibility_rule, {"question_code": "PV_KIND", "choice_codes": [1]})
+
+
+# ─── "answered (any option)" match mode (change visibility-answered-condition, #339) ──
+
+class AnsweredRuleEngineTest(TestCase):
+    """survey/visibility.py — the answered mode through verdict, match, lint, label."""
+
+    def setUp(self):
+        from survey.visibility import compute_visibility
+        self.compute = compute_visibility
+        org = Organization.objects.create(name="Ans Org")
+        self.survey = SurveyHeader.objects.create(name="ans_survey", organization=org, redirect_url="#")
+        self.s1 = SurveySection.objects.create(
+            survey_header=self.survey, name="intro", title="intro", code="S1", is_head=True)
+        self.ctrl = Question.objects.create(
+            survey_section=self.s1, code="CTRL", order_number=1, name="Kind",
+            input_type="choice", choices=[{"code": 1, "name": "A"}, {"code": 2, "name": "B"}])
+
+    def _section(self, name, prev, rule=None):
+        section = SurveySection.objects.create(
+            survey_header=self.survey, name=name, title=name, code=name[:8], visibility_rule=rule)
+        prev.next_section = section
+        prev.save()
+        section.prev_section = prev
+        section.save()
+        return section
+
+    def test_question_hidden_until_any_option_picked(self):
+        """
+        GIVEN a question ruled "CTRL answered"
+        WHEN CTRL is unanswered, answered 1, answered 2, or answered with a code
+             not among its options
+        THEN the question is hidden only in the unanswered case
+        """
+        q = Question.objects.create(
+            survey_section=self.s1, code="DEP", order_number=2, name="Dep", input_type="text_line",
+            visibility_rule={"question_code": "CTRL", "answered": True})
+        self.assertFalse(self.compute(self.survey, {}, enabled=True).is_question_visible(q.id))
+        self.assertFalse(self.compute(self.survey, {"CTRL": []}, enabled=True).is_question_visible(q.id))
+        for picked in ([1], [2], [7]):
+            self.assertTrue(self.compute(self.survey, {"CTRL": picked}, enabled=True).is_question_visible(q.id), picked)
+
+    def test_option_added_later_counts_without_rule_change(self):
+        """
+        GIVEN a section ruled "CTRL answered" written when CTRL had options 1, 2
+        WHEN option 3 is added and a respondent picks it
+        THEN the section is shown and the rule is not broken
+        """
+        s2 = self._section("details", self.s1, rule={"question_code": "CTRL", "answered": True})
+        self.ctrl.choices = self.ctrl.choices + [{"code": 3, "name": "C"}]
+        self.ctrl.save()
+        vmap = self.compute(self.survey, {"CTRL": [3]}, enabled=True)
+        self.assertTrue(vmap.is_section_visible(s2.id))
+        self.assertEqual(vmap.broken, {})
+
+    def test_answered_rule_survives_option_removal_but_not_controller_loss(self):
+        """
+        GIVEN a section ruled "CTRL answered"
+        WHEN every original option of CTRL is replaced
+        THEN the rule is intact; when CTRL becomes a text question or moves
+             after the section, it is broken and fails open
+        """
+        from survey.visibility import lint_rules
+        s2 = self._section("details", self.s1, rule={"question_code": "CTRL", "answered": True})
+        self.ctrl.choices = [{"code": 9, "name": "Z"}]
+        self.ctrl.save()
+        self.assertEqual(lint_rules(self.survey)['broken'], {})
+        self.assertFalse(self.compute(self.survey, {}, enabled=True).is_section_visible(s2.id))
+        self.ctrl.input_type = "text_line"
+        self.ctrl.save()
+        vmap = self.compute(self.survey, {}, enabled=True)
+        self.assertTrue(vmap.is_section_visible(s2.id))
+        self.assertIn(("section", s2.id), vmap.broken)
+
+    def test_hidden_controller_satisfies_nothing(self):
+        """
+        GIVEN B ruled "A answered" and A ruled "CTRL = 1"
+        WHEN CTRL = 2 while an answer to A is still stored
+        THEN B is hidden (cascade)
+        """
+        a = Question.objects.create(
+            survey_section=self.s1, code="A", order_number=2, name="A", input_type="choice",
+            choices=[{"code": 1, "name": "x"}],
+            visibility_rule={"question_code": "CTRL", "choice_codes": [1]})
+        b = Question.objects.create(
+            survey_section=self.s1, code="B", order_number=3, name="B", input_type="text_line",
+            visibility_rule={"question_code": "A", "answered": True})
+        vmap = self.compute(self.survey, {"CTRL": [2], "A": [1]}, enabled=True)
+        self.assertFalse(vmap.is_question_visible(a.id))
+        self.assertFalse(vmap.is_question_visible(b.id))
+        self.assertTrue(self.compute(self.survey, {"CTRL": [1], "A": [1]}, enabled=True).is_question_visible(b.id))
+
+    def test_answered_wins_over_stray_codes(self):
+        """
+        GIVEN a rule carrying both answered: true and choice_codes [99]
+        WHEN CTRL = 1
+        THEN the answered mode applies and the item is shown
+        """
+        from survey.visibility import rule_mode
+        rule = {"question_code": "CTRL", "answered": True, "choice_codes": [99]}
+        self.assertEqual(rule_mode(rule), "answered")
+        q = Question.objects.create(
+            survey_section=self.s1, code="DEP", order_number=2, name="Dep", input_type="text_line",
+            visibility_rule=rule)
+        self.assertTrue(self.compute(self.survey, {"CTRL": [1]}, enabled=True).is_question_visible(q.id))
+
+    def test_lint_answered_section_covers_every_option(self):
+        """
+        GIVEN fan sections for option 1 and one section ruled "CTRL answered"
+        WHEN lint_rules runs
+        THEN no option is uncovered and both count as dependents
+        """
+        from survey.visibility import lint_rules
+        fan = self._section("fan1", self.s1, rule={"question_code": "CTRL", "choice_codes": [1]})
+        self._section("rest", fan, rule={"question_code": "CTRL", "answered": True})
+        report = lint_rules(self.survey)
+        self.assertEqual(report['dependents'].get(self.ctrl.id), 2)
+        self.assertNotIn(self.ctrl.id, report['uncovered'])
+
+    def test_describe_and_client_shape(self):
+        """
+        GIVEN an answered rule on a question and on a pop-up sub-question
+        WHEN describe_rule, client_rule and popup_rules_for_client run
+        THEN the label reads "if Kind answered" and the client gets {"answered": true}
+        """
+        from survey.visibility import describe_rule, client_rule, popup_rules_for_client
+        q = Question.objects.create(
+            survey_section=self.s1, code="DEP", order_number=2, name="Dep", input_type="text_line",
+            visibility_rule={"question_code": "CTRL", "answered": True})
+        info = describe_rule('question', q, self.survey)
+        self.assertEqual((info['label'], info['broken']), ('if Kind answered', False))
+        self.assertEqual(client_rule(q.visibility_rule), {"question_code": "CTRL", "answered": True})
+        f = _popup_fixture(self.survey, self.s1, code_prefix="AN", with_rules=False)
+        f['park'].visibility_rule = {"question_code": f['kind'].code, "answered": True}
+        f['park'].save()
+        self.assertEqual(popup_rules_for_client(f['point'], enabled=True),
+                         {f['park'].code: {"question_code": f['kind'].code, "answered": True}})
+        self.assertEqual(describe_rule('subquestion', f['park'], self.survey)['label'],
+                         'if Type of place answered')
+
+    def test_popup_follow_up_shown_for_any_type(self):
+        """
+        GIVEN a pop-up follow-up ruled "Type of place answered"
+        WHEN the feature's type is Park, School, or unanswered
+        THEN the follow-up is visible for both types and hidden before the pick
+        """
+        from survey.visibility import popup_visibility
+        f = _popup_fixture(self.survey, self.s1, code_prefix="AN", with_rules=False)
+        f['park'].visibility_rule = {"question_code": f['kind'].code, "answered": True}
+        f['park'].save()
+        for picked in ([1], [2]):
+            self.assertTrue(popup_visibility(f['point'], {f['kind'].code: picked}, enabled=True)
+                            .is_question_visible(f['park'].id))
+        self.assertFalse(popup_visibility(f['point'], {}, enabled=True).is_question_visible(f['park'].id))
+
+
+class AnsweredRuleRespondentTest(TestCase):
+    """A section ruled "answered" on the respondent side: navigation, progress,
+    the client rule shape."""
+
+    def setUp(self):
+        self.client = Client()
+        org = Organization.objects.create(name="AnsResp Org")
+        self.survey = SurveyHeader.objects.create(
+            name="ansresp", organization=org, status='published',
+            available_languages=[], redirect_url="#")
+        self.pick = SurveySection.objects.create(
+            survey_header=self.survey, name="pick", title="Pick", code="S1", is_head=True)
+        Question.objects.create(
+            survey_section=self.pick, code="ZONE", order_number=1, name="Zone?",
+            input_type="choice", choices=[{"code": i, "name": f"Area {i}"} for i in (1, 2)])
+        Question.objects.create(
+            survey_section=self.pick, code="FREE", order_number=2, name="Free",
+            input_type="text_line")
+        self.details = SurveySection.objects.create(
+            survey_header=self.survey, name="details", title="Details", code="S2",
+            visibility_rule={"question_code": "ZONE", "answered": True})
+        Question.objects.create(
+            survey_section=self.details, code="DET", order_number=1, name="Details",
+            input_type="text_line")
+        self.final = SurveySection.objects.create(
+            survey_header=self.survey, name="final", title="Final", code="S3")
+        Question.objects.create(
+            survey_section=self.final, code="FIN", order_number=1, name="Fin",
+            input_type="text_line")
+        self.pick.next_section = self.details; self.pick.save()
+        self.details.prev_section = self.pick; self.details.next_section = self.final; self.details.save()
+        self.final.prev_section = self.details; self.final.save()
+
+    def test_section_skipped_until_any_zone_picked(self):
+        """
+        GIVEN "Details" shown when ZONE is answered
+        WHEN the respondent submits the first page without a zone, then with zone 2
+        THEN the first submit skips to the final page and the second lands on Details
+        """
+        self.client.get('/surveys/ansresp/pick/')
+        r = self.client.post('/surveys/ansresp/pick/', {'FREE': 'x'})
+        self.assertEqual(r.status_code, 302)
+        self.assertTrue(r.url.endswith('/final'), r.url)
+        r = self.client.post('/surveys/ansresp/pick/', {'FREE': 'x', 'ZONE': '2'})
+        self.assertEqual(r.status_code, 302)
+        self.assertTrue(r.url.endswith('/details'), r.url)
+
+    def test_progress_counts_the_section_only_when_shown(self):
+        """
+        GIVEN the same survey (3 sections)
+        WHEN the respondent renders the final page without a zone, then with one
+        THEN progress reads 2 / 2, then 3 / 3
+        """
+        self.client.get('/surveys/ansresp/pick/')
+        self.client.post('/surveys/ansresp/pick/', {'FREE': 'x'})
+        r = self.client.get('/surveys/ansresp/final/')
+        self.assertEqual((r.context['section_current'], r.context['section_total']), (2, 2))
+        self.client.post('/surveys/ansresp/pick/', {'FREE': 'x', 'ZONE': '1'})
+        r = self.client.get('/surveys/ansresp/final/')
+        self.assertEqual((r.context['section_current'], r.context['section_total']), (3, 3))
+
+    def test_same_section_rule_reaches_client_in_answered_shape(self):
+        """
+        GIVEN a same-section question ruled "ZONE answered"
+        WHEN the page renders
+        THEN the card stays in the DOM and data-visibility-rules carries {"answered": true}
+        """
+        import re
+        Question.objects.create(
+            survey_section=self.pick, code="WHY", order_number=3, name="Why",
+            input_type="text_line", visibility_rule={"question_code": "ZONE", "answered": True})
+        html = self.client.get('/surveys/ansresp/pick/').content.decode()
+        m = re.search(r'data-visibility-rules="([^"]*)"', html)
+        self.assertIsNotNone(m)
+        import html as html_module
+        rules = json.loads(html_module.unescape(m.group(1)))
+        self.assertEqual(rules['WHY'], {"question_code": "ZONE", "answered": True})
+        self.assertIn('data-field-name="WHY"', html)
+
+
+class AnsweredRuleEditorTest(TestCase):
+    """The match select in the Visibility block and the stored shape."""
+
+    def setUp(self):
+        self.org = _make_org("AnsEd")
+        self.user = User.objects.create_user(username="ans_owner", password="pass")
+        Membership.objects.create(user=self.user, organization=self.org, role="owner")
+        self.survey = SurveyHeader.objects.create(name="ans_editor", organization=self.org, status="draft")
+        self.s1 = SurveySection.objects.create(
+            name="s1", title="Intro", survey_header=self.survey, is_head=True, code="S1")
+        self.s2 = SurveySection.objects.create(
+            name="s2", title="Branch", survey_header=self.survey, code="S2", prev_section=self.s1)
+        self.s1.next_section = self.s2
+        self.s1.save()
+        self.ctrl = Question.objects.create(
+            survey_section=self.s1, code="CTRL", order_number=1, name="Controller",
+            input_type="choice", choices=[{"code": 1, "name": "Yes"}, {"code": 2, "name": "No"}])
+        self.dep = Question.objects.create(
+            survey_section=self.s1, code="DEP", order_number=2, name="Dependent", input_type="text_line")
+        self.client.login(username="ans_owner", password="pass")
+
+    def _edit_question(self, question, extra):
+        payload = {'name': question.name, 'input_type': question.input_type,
+                   'subtext': '', 'color': '#000000', 'icon_class': ''}
+        payload.update(extra)
+        return self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/questions/{question.id}/edit/', payload)
+
+    def test_answered_match_stores_shape_without_codes(self):
+        """
+        GIVEN the block posted with visibility_match=answered and stale ticked codes
+        WHEN the question edit POST is processed
+        THEN the stored rule is {"question_code", "answered": true} and nothing else
+        """
+        r = self._edit_question(self.dep, {
+            'visibility_mode': 'conditional', 'visibility_question': 'CTRL',
+            'visibility_match': 'answered', 'visibility_choices': ['1'],
+        })
+        self.assertEqual(r.status_code, 200)
+        self.dep.refresh_from_db()
+        self.assertEqual(self.dep.visibility_rule, {'question_code': 'CTRL', 'answered': True})
+
+    def test_any_of_and_absent_match_keep_the_old_shape(self):
+        """
+        GIVEN the block posted with visibility_match=any_of, then without the field
+        WHEN each POST is processed
+        THEN both store the choice_codes shape
+        """
+        for extra in ({'visibility_match': 'any_of'}, {}):
+            self._edit_question(self.dep, {
+                'visibility_mode': 'conditional', 'visibility_question': 'CTRL',
+                'visibility_choices': ['2'], **extra})
+            self.dep.refresh_from_db()
+            self.assertEqual(self.dep.visibility_rule, {'question_code': 'CTRL', 'choice_codes': [2]})
+
+    def test_answered_without_controller_is_an_error(self):
+        """
+        GIVEN visibility_match=answered and no controlling question
+        WHEN the edit POST is processed
+        THEN no rule is stored and the form reports the error
+        """
+        self.client.post(f'/editor/surveys/{self.survey.uuid}/questions/{self.dep.id}/edit/', {
+            'name': 'Dependent', 'input_type': 'text_line', 'subtext': '', 'color': '#000000',
+            'icon_class': '', 'visibility_mode': 'conditional', 'visibility_match': 'answered',
+            'visibility_question': ''})
+        self.dep.refresh_from_db()
+        self.assertIsNone(self.dep.visibility_rule)
+
+    def test_section_rule_answered_via_section_detail(self):
+        """
+        GIVEN the block posted on the section form in answered mode
+        WHEN the section POST is processed
+        THEN the section's rule is the answered shape
+        """
+        r = self.client.post(f'/editor/surveys/{self.survey.uuid}/sections/{self.s2.id}/', {
+            'name': self.s2.name, 'title': self.s2.title, 'code': self.s2.code,
+            'subheading': '', 'layout': 'map', 'next_label': '',
+            'visibility_mode': 'conditional', 'visibility_question': 'CTRL',
+            'visibility_match': 'answered'})
+        self.assertIn(r.status_code, (204, 302))
+        self.s2.refresh_from_db()
+        self.assertEqual(self.s2.visibility_rule, {'question_code': 'CTRL', 'answered': True})
+
+    def test_block_renders_saved_mode_and_badge(self):
+        """
+        GIVEN a question with an answered rule
+        WHEN its modal and the section list render
+        THEN the match select has "answered" selected, the option list is hidden,
+             and the badge reads "if Controller answered"
+        """
+        self.dep.visibility_rule = {'question_code': 'CTRL', 'answered': True}
+        self.dep.save()
+        html = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.dep.id}/edit/').content.decode()
+        self.assertIn('name="visibility_match"', html)
+        self.assertRegex(html, r'value="answered"\s+selected')
+        self.assertRegex(html, r'visibility-any-of"[^>]*display:none')
+        self.assertIn('Shown when:', html)          # the modal pill slices off "if "
+        self.assertIn('Controller answered', html)
+        html = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.s1.id}/').content.decode()
+        self.assertIn('if Controller answered', html)
+        self.assertNotIn('broken rule', html)
+
+    def test_block_default_is_any_of(self):
+        """
+        GIVEN a question with an any-of rule
+        WHEN its modal renders
+        THEN "any_of" is selected and the option list is shown
+        """
+        self.dep.visibility_rule = {'question_code': 'CTRL', 'choice_codes': [1]}
+        self.dep.save()
+        html = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/questions/{self.dep.id}/edit/').content.decode()
+        self.assertRegex(html, r'value="any_of"\s+selected')
+        self.assertNotRegex(html, r'visibility-any-of"[^>]*display:none')
+
+
+class AnsweredRuleSerializationTest(TestCase):
+    """Both rule shapes through ZIP export/import and duplication."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Ans Ser")
+        self.survey = SurveyHeader.objects.create(name="ans_ser", organization=self.org, redirect_url="#")
+        self.s1 = SurveySection.objects.create(survey_header=self.survey, name="pick", code="P1", is_head=True)
+        self.ctrl = Question.objects.create(
+            survey_section=self.s1, code="ANS_CTRL", order_number=1, name="Zone", input_type="choice",
+            choices=[{"code": 1, "name": "Area 1"}, {"code": 2, "name": "Area 2"}])
+        self.s2 = SurveySection.objects.create(
+            survey_header=self.survey, name="details", code="D1", prev_section=self.s1,
+            visibility_rule={"question_code": "ANS_CTRL", "answered": True})
+        self.s1.next_section = self.s2
+        self.s1.save()
+        self.dep = Question.objects.create(
+            survey_section=self.s1, code="ANS_DEP", order_number=2, name="Dep", input_type="text_line",
+            visibility_rule={"question_code": "ANS_CTRL", "choice_codes": [2]})
+        self.f = _popup_fixture(self.survey, self.s1, code_prefix="ANS", with_rules=False)
+        self.f['park'].visibility_rule = {"question_code": self.f['kind'].code, "answered": True}
+        self.f['park'].save()
+
+    def _export_import(self):
+        import io
+        buf = io.BytesIO()
+        export_survey_to_zip(self.survey, buf, mode='structure')
+        buf.seek(0)
+        return import_survey_from_zip(buf, mode='structure')
+
+    def test_both_shapes_round_trip(self):
+        """
+        GIVEN an answered section rule, an any-of question rule and an answered pop-up rule
+        WHEN the survey is exported and imported (codes collide and are remapped)
+        THEN each rule keeps its mode and names the remapped controller
+        """
+        new_survey, warnings = self._export_import()
+        new_ctrl = Question.objects.get(survey_section__survey_header=new_survey, name="Zone")
+        new_dep = Question.objects.get(survey_section__survey_header=new_survey, name="Dep")
+        new_s2 = SurveySection.objects.get(survey_header=new_survey, name="details")
+        new_kind = Question.objects.get(survey_section__survey_header=new_survey, name="Type of place")
+        new_park = Question.objects.get(survey_section__survey_header=new_survey, name="Park follow-up")
+        self.assertNotEqual(new_ctrl.code, "ANS_CTRL")
+        self.assertEqual(new_s2.visibility_rule, {"question_code": new_ctrl.code, "answered": True})
+        self.assertEqual(new_dep.visibility_rule, {"question_code": new_ctrl.code, "choice_codes": [2]})
+        self.assertEqual(new_park.visibility_rule, {"question_code": new_kind.code, "answered": True})
+        self.assertFalse(any('visibility rule' in w for w in warnings), warnings)
+
+    def test_answered_rule_imports_even_when_options_changed(self):
+        """
+        GIVEN an archive whose controller lost every option the any-of rule named
+        WHEN it is imported
+        THEN the answered rule is kept (it references no option codes), while the
+             any-of rule on the same controller is dropped with a report
+        """
+        self.ctrl.choices = [{"code": 9, "name": "Area 9"}]
+        self.ctrl.save()
+        new_survey, warnings = self._export_import()
+        new_s2 = SurveySection.objects.get(survey_header=new_survey, name="details")
+        new_dep = Question.objects.get(survey_section__survey_header=new_survey, name="Dep")
+        self.assertEqual(new_s2.visibility_rule["answered"], True)
+        self.assertIsNone(new_dep.visibility_rule)
+        self.assertTrue(any("question 'Dep'" in w for w in warnings), warnings)
+
+    def test_duplicate_section_keeps_answered_rule(self):
+        """
+        GIVEN the answered section rule
+        WHEN the section is cloned within the survey
+        THEN the copy carries the same rule dict
+        """
+        from survey.cloning import clone_section
+        copy = clone_section(self.s2, target_survey=self.survey)
+        self.assertEqual(copy.visibility_rule, {"question_code": "ANS_CTRL", "answered": True})

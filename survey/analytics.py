@@ -2047,6 +2047,8 @@ class PerformanceAnalyticsService:
         treats them as unconditional). Sections without a rule are absent.
         """
         from .visibility import _rule_verdict, describe_rule, _iter_questions
+        # ``codes`` may be visibility.ANY_ANSWER for a section ruled "answered";
+        # _eligible_sessions goes through rule_matches, which is the one reader.
         questions_index = {}
         for s_idx, section in enumerate(sections):
             for question in _iter_questions(section):
@@ -2080,14 +2082,14 @@ class PerformanceAnalyticsService:
             question__code=controller.code,
             parent_answer_id__isnull=True,
         ).exclude(selected_choices__isnull=True).values_list('survey_session_id', 'selected_choices')
-        wanted = {int(c) for c in codes}
+        from .visibility import rule_matches
         eligible = set()
         for session_id, selected in rows:
             try:
                 picked = {int(c) for c in (selected or [])}
             except (TypeError, ValueError):
                 continue
-            if picked & wanted:
+            if rule_matches(codes, picked):
                 eligible.add(session_id)
         return eligible
 

@@ -1331,7 +1331,9 @@ def _parse_visibility_rule(request):
     Returns (present, rule_or_None, error_or_None). ``present`` False = the
     block wasn't posted (kill switch off, stale form) — leave the stored rule
     untouched. Mode 'always' clears the rule; 'conditional' requires a
-    controller and at least one option code.
+    controller and, for match 'any_of', at least one option code; match
+    'answered' (#339) stores ``{"question_code", "answered": true}`` and needs
+    no codes. An absent ``visibility_match`` is 'any_of' (forms from before).
     """
     if not getattr(settings, 'CONDITIONAL_VISIBILITY', False):
         return False, None, None
@@ -1341,6 +1343,10 @@ def _parse_visibility_rule(request):
     if mode != 'conditional':
         return True, None, None
     code = request.POST.get('visibility_question', '').strip()
+    if request.POST.get('visibility_match', 'any_of') == 'answered':
+        if not code:
+            return True, None, 'Pick a controlling question.'
+        return True, {'question_code': code, 'answered': True}, None
     codes = []
     for raw in request.POST.getlist('visibility_choices'):
         try:
@@ -1361,7 +1367,7 @@ def _visibility_block_context(survey, host_section, host_kind, host=None, parent
     """
     if not getattr(settings, 'CONDITIONAL_VISIBILITY', False):
         return {'visibility_enabled': False}
-    from .visibility import controller_options, popup_controller_options
+    from .visibility import controller_options, popup_controller_options, rule_mode
     if host_kind == 'subquestion':
         from types import SimpleNamespace
         eligible = popup_controller_options(parent, host=host)
@@ -1379,6 +1385,7 @@ def _visibility_block_context(survey, host_section, host_kind, host=None, parent
         'visibility_rule': rule,
         'visibility_rule_codes': (rule or {}).get('choice_codes', []),
         'visibility_rule_question': (rule or {}).get('question_code'),
+        'visibility_rule_match': rule_mode(rule) if rule else 'any_of',
         'visibility_popup': host_kind == 'subquestion',
     }
 
@@ -2657,7 +2664,7 @@ def editor_section_preview(request, survey_uuid, section_name):
         survey_session_id=None, language=selected_language,
     )
 
-    from .visibility import popup_rules_for_client
+    from .visibility import popup_rules_for_client, client_rule
     subquestions_forms = {}
     popup_rules = {}
     for question in section.questions():
@@ -2713,10 +2720,7 @@ def editor_section_preview(request, survey_uuid, section_name):
         # Same-section rules so the preview plays both branches live, exactly
         # like the respondent page (conditional_visibility.js reads this).
         'visibility_rules_json': json.dumps({
-            q.code: {
-                'question_code': q.visibility_rule.get('question_code'),
-                'choice_codes': q.visibility_rule.get('choice_codes') or [],
-            }
+            q.code: client_rule(q.visibility_rule)
             for q in section.questions()
             if getattr(settings, 'CONDITIONAL_VISIBILITY', False)
             and isinstance(q.visibility_rule, dict)

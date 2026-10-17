@@ -20,7 +20,9 @@ You end up with a question (or a section) that respondents see only when their a
    - For a section, select it in the left column; **Visibility** sits in the section form.
 3. Switch from **Always shown** to **Shown conditionally**.
 4. Under **When the answer to**, pick the controlling question. The list offers only choice questions positioned earlier, grouped by section; if it is empty, the controlling question is not earlier than this item.
-5. Under **is any of**, tick one or more options. The item is shown when the respondent's answer includes any of them. For the example, tick `Yes` on the map question `Where do you feel unsafe crossing the street?`.
+5. Under **is**, choose how the answer should match:
+   - **any of…** — tick one or more options. The item is shown when the respondent's answer includes any of them. For the example, tick `Yes` on the map question `Where do you feel unsafe crossing the street?`.
+   - **answered (any option)** — the item is shown as soon as the respondent has picked any option of the controlling question, whichever it is. Options you add later count automatically, so the rule never goes stale. This is the usual choice in a pop-up that opens with a required "Type of place" question followed by questions every type should get.
 6. Save with **Save** (question) or let the section form autosave.
 
 <!-- screenshot: the Visibility block with Shown conditionally selected, a controlling question chosen and one option ticked -->
@@ -37,13 +39,13 @@ You end up with a question (or a section) that respondents see only when their a
 
 ## Broken rules show to everyone
 
-A rule breaks when its controlling question is deleted, changes to a non-choice type, is moved after the dependent item, or loses every option the rule referenced. A broken rule fails open: the item is shown to all respondents, and the editor marks it with a **broken rule** badge in the question list or section list. Open the item, fix or remove the rule, and the badge goes away. If only some of the referenced options were deleted, the rule keeps working on the ones that remain.
+A rule breaks when its controlling question is deleted, changes to a non-choice type, is moved after the dependent item, or (for an **any of…** rule) loses every option the rule referenced. An **answered (any option)** rule names no options, so changing the options never breaks it. A broken rule fails open: the item is shown to all respondents, and the editor marks it with a **broken rule** badge in the question list or section list. Open the item, fix or remove the rule, and the badge goes away. If only some of the referenced options were deleted, the rule keeps working on the ones that remain.
 
 The editor also warns when sibling sections each depend on one option of the same question and some option leads to no section at all, so a branch of respondents does not end up with an empty survey.
 
 ## Result
 
-Questions and sections that carry a rule show a branch badge summarising the condition in the editor; the controlling question shows how many rules depend on it. Respondents never see hidden items, and the export leaves those cells empty for them. In **Responses › Performance**, a section behind a rule is compared with the respondents the rule let in, not with everyone.
+Questions and sections that carry a rule show a branch badge summarising the condition in the editor (`if Type of place = Park`, or `if Type of place answered`); the controlling question shows how many rules depend on it. Respondents never see hidden items, and the export leaves those cells empty for them. In **Responses › Performance**, a section behind a rule is compared with the respondents the rule let in, not with everyone.
 
 ## Related
 
