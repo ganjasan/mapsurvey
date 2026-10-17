@@ -824,10 +824,11 @@ class SurveySection(models.Model):
     next_section = models.ForeignKey("SurveySection", null=True, blank=True, on_delete=models.SET_NULL, related_name='survey_next_section')
     prev_section = models.ForeignKey("SurveySection", null=True, blank=True, on_delete=models.SET_NULL, related_name='survey_prev_section')
 
-    # {"question_code": <str>, "choice_codes": [<int>, ...]} or null = always visible.
+    # {"question_code": <str>, "choice_codes": [<int>, ...]} or
+    # {"question_code": <str>, "answered": true} or null = always visible.
     # References are by code, not FK: option identity only exists as a JSON code, and
     # question codes survive ZIP import via code_remap. See survey/visibility.py.
-    visibility_rule = models.JSONField(null=True, blank=True, help_text=_('Show this section only when the referenced choice question\'s answer includes any of the referenced option codes. Null = always shown.'))
+    visibility_rule = models.JSONField(null=True, blank=True, help_text=_('Show this section only when the referenced choice question\'s answer includes any of the referenced option codes, or (with "answered": true) any option at all. Null = always shown.'))
 
     class Meta:
         app_label = 'survey'
@@ -925,7 +926,7 @@ class Question(models.Model):
     display_style = models.CharField(max_length=20, choices=DISPLAY_STYLE_CHOICES, default="default", help_text=_('Rendering style: rating styles ("default" inherits the survey-wide style) or "dropdown" for choice questions'))
     # Same shape and semantics as SurveySection.visibility_rule; a question is visible
     # only when its section is visible AND this rule (if any) is satisfied.
-    visibility_rule = models.JSONField(null=True, blank=True, help_text=_('Show this question only when the referenced choice question\'s answer includes any of the referenced option codes. Null = always shown.'))
+    visibility_rule = models.JSONField(null=True, blank=True, help_text=_('Show this question only when the referenced choice question\'s answer includes any of the referenced option codes, or (with "answered": true) any option at all. Null = always shown.'))
     # `layer_objects` only: the reference layer whose objects this question lists.
     # PROTECT — deleting the layer would orphan every answer hanging on its
     # objects; the settings card refuses and names the question instead.

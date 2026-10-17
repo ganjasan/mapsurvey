@@ -5,11 +5,19 @@ questions and sections a respondent sees. Everything else — form building, the
 discard contract, navigation, progress, the editor lint — derives from this map, so
 the respondent runtime and the editor can never disagree about what a rule means.
 
-A rule is ``{"question_code": <str>, "choice_codes": [<int>, ...]}`` stored on
-``Question.visibility_rule`` / ``SurveySection.visibility_rule``; ``null`` = always
-visible. Matching is any-of over the controller's ``selected_choices``. A question is
-visible only if its section is visible AND its own rule holds; a rule whose controller
-is itself hidden is not satisfied (cascade).
+A rule is stored on ``Question.visibility_rule`` / ``SurveySection.visibility_rule``
+in one of two shapes (``rule_mode``); ``null`` = always visible.
+
+* ``{"question_code": <str>, "choice_codes": [<int>, ...]}`` — any-of over the
+  controller's ``selected_choices``.
+* ``{"question_code": <str>, "answered": true}`` (change visibility-answered-condition,
+  #339) — the controller has at least one selected choice, whichever option; options
+  added later count without touching the rule. ``_rule_verdict`` returns the
+  ``ANY_ANSWER`` sentinel as the matchable set and ``rule_matches`` is the ONE place
+  that knows what it means — nothing else may inspect ``choice_codes``/``answered``.
+
+A question is visible only if its section is visible AND its own rule holds; a rule
+whose controller is itself hidden is not satisfied (cascade).
 
 Broken rules fail OPEN (item visible) — silently hiding content is worse than showing
 it — and the same brokenness verdict feeds the editor's warning badges, so runtime
@@ -28,6 +36,35 @@ from django.conf import settings
 # The only input types that may control a rule. Range/rating/ranking store
 # selected_choices too, but the editor deliberately offers plain choice types only.
 CONTROLLER_TYPES = ("choice", "multichoice")
+
+# ``matchable`` of an "answered" rule: not a code list, so ``rule_matches`` is the only
+# consumer allowed to interpret it (a stray ``for code in matchable`` would TypeError).
+ANY_ANSWER = object()
+
+
+def rule_mode(rule):
+	"""``'answered'`` or ``'any_of'`` for a rule dict. ``answered: true`` wins over a
+	stray ``choice_codes`` (import normalises to one shape; the editor never writes both)."""
+	if isinstance(rule, dict) and rule.get("answered") is True:
+		return "answered"
+	return "any_of"
+
+
+def rule_matches(matchable, answered_codes):
+	"""The ONE match test: does the controller's selection satisfy the verdict?"""
+	if matchable is ANY_ANSWER:
+		return bool(answered_codes)
+	return any(code in answered_codes for code in matchable)
+
+
+def client_rule(rule):
+	"""The shape conditional_visibility.js reads, for either mode."""
+	if rule_mode(rule) == "answered":
+		return {"question_code": rule.get("question_code"), "answered": True}
+	return {
+		"question_code": rule.get("question_code"),
+		"choice_codes": [c for c in (rule.get("choice_codes") or [])],
+	}
 
 
 def _ordered_sections(survey):
@@ -99,6 +136,9 @@ def _rule_verdict(rule, host_kind, host_section_index, host_order, questions_ind
 			entry["section_index"] == host_section_index and entry["order"] >= host_order
 		):
 			return None, [], "controlling question does not come before this question"
+	if rule_mode(rule) == "answered":
+		# No option codes to go stale: such a rule breaks only through its controller.
+		return entry, ANY_ANSWER, None
 	if not isinstance(wanted, list) or not wanted:
 		return None, [], "no option codes referenced"
 	defined = {c.get("code") for c in (controller.choices or []) if isinstance(c, dict)}
@@ -143,7 +183,7 @@ def compute_visibility(survey, answers_by_code, enabled=None):
 		if not vmap.question_visible.get(controller.id, True):
 			return False
 		answered = answers_by_code.get(controller.code) or []
-		return any(code in answered for code in matchable)
+		return rule_matches(matchable, answered)
 
 	for s_idx, section in enumerate(sections):
 		if not enabled:
@@ -233,7 +273,7 @@ def popup_visibility(parent, answers_by_code, enabled=None):
 			verdict.question_visible[sub.id] = False
 			continue
 		answered = answers_by_code.get(controller.code) or []
-		verdict.question_visible[sub.id] = any(code in answered for code in matchable)
+		verdict.question_visible[sub.id] = rule_matches(matchable, answered)
 	return verdict
 
 
@@ -252,10 +292,7 @@ def popup_rules_for_client(parent, enabled=None):
 		rule = sub.visibility_rule
 		if not isinstance(rule, dict) or ("subquestion", sub.id) in verdict.broken:
 			continue
-		rules[sub.code] = {
-			"question_code": rule.get("question_code"),
-			"choice_codes": [c for c in (rule.get("choice_codes") or [])],
-		}
+		rules[sub.code] = client_rule(rule)
 	return rules
 
 
@@ -303,7 +340,12 @@ def lint_rules(survey):
 			dependents[controller.id] = dependents.get(controller.id, 0) + 1
 			if kind == "section":
 				covered = section_codes_covered.setdefault(controller.id, set())
-				covered.update(c for c in (rule.get("choice_codes") or []))
+				if rule_mode(rule) == "answered":
+					# Shown for whichever option: every option leads somewhere.
+					covered.update(
+						c.get("code") for c in (controller.choices or []) if isinstance(c, dict))
+				else:
+					covered.update(c for c in (rule.get("choice_codes") or []))
 
 	# Uncovered options only matter for controllers that fan out into sections:
 	# a controller with no section rules gets no lint (question-level rules are
@@ -356,8 +398,8 @@ def describe_rule(host_kind, host, survey):
 	"""Badge info for a conditioned editor item.
 
 	Returns None for rule-less hosts, else
-	{'label': 'if <controller> = <options>', 'broken': bool, 'reason': str|None,
-	 'controller': Question|None}.
+	{'label': 'if <controller> = <options>' | 'if <controller> answered',
+	 'broken': bool, 'reason': str|None, 'controller': Question|None}.
 	"""
 	rule = host.visibility_rule
 	if not isinstance(rule, dict):
@@ -391,8 +433,10 @@ def _describe_verdict(entry, matchable, broken):
 	if broken:
 		return {'label': None, 'broken': True, 'reason': broken, 'controller': None}
 	controller = entry['question']
-	names = ', '.join(controller.get_choice_name(c) for c in matchable)
-	return {
-		'label': f'if {controller.name or controller.code} = {names}',
-		'broken': False, 'reason': None, 'controller': controller,
-	}
+	title = controller.name or controller.code
+	if matchable is ANY_ANSWER:
+		label = f'if {title} answered'
+	else:
+		names = ', '.join(controller.get_choice_name(c) for c in matchable)
+		label = f'if {title} = {names}'
+	return {'label': label, 'broken': False, 'reason': None, 'controller': controller}

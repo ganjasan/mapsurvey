@@ -563,6 +563,9 @@ def _apply_visibility_rules(
                 f"Dropped visibility rule on {host_label}: controlling question not found"
             )
             return None
+        if rule.get("answered") is True:
+            # "Answered (any option)" names no codes, so nothing here can go stale.
+            return {"question_code": code, "answered": True}
         defined = {c.get("code") for c in (controller.choices or []) if isinstance(c, dict)}
         codes = [c for c in (rule.get("choice_codes") or []) if c in defined]
         if not codes:
