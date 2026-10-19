@@ -2,8 +2,14 @@
  *
  * IconPicker.attach(input, {catalogUrl, lang, strings})
  *
- * Wraps the icon_class <input> with a preview, a "browse" button and a dropdown
- * holding a search box, category chips and a grid. The catalog
+ * Replaces the icon_class <input> with ONE button showing the current icon (a dashed
+ * "+" when there is none) — change icon-picker-one-button: the preview + text field +
+ * grid button took three controls per choices-table row. The input stays in the DOM,
+ * hidden, and is what the form submits. The button opens a panel placed with
+ * position:fixed next to it, so no table cell or modal decides its size: a search box
+ * with "Remove icon", category chips, a "No icon" tile and the grid. A query that is
+ * itself a valid value (`fas fa-x`, `maki:x`) offers "Use <value>", which keeps pasted
+ * Pro classes working without a text field. The catalog
  * (survey/assets/data/icon_catalog.json, built by scripts/build_icon_catalog.py) is
  * fetched the first time any picker on the page opens, and once only.
  *
@@ -77,32 +83,41 @@
         var S = Object.assign({
             search: 'Search icons…', all: 'All', narrow: 'Type to narrow the list',
             loading: 'Loading icons…', none: 'No icons match', failed: 'Could not load the icon catalog',
-            browse: 'Browse icons'
+            browse: 'Browse icons', remove: 'Remove icon', noIcon: 'No icon', use: 'Use'
         }, opts.strings || {});
 
         var wrapper = el('div', 'icon-picker-wrapper');
         input.parentNode.insertBefore(wrapper, input);
-        var row = el('div', 'icon-picker-input-row');
-        var preview = el('div', 'icon-picker-preview');
-        var btn = el('button', 'icon-picker-btn');
+        // The button IS the picker; the input only carries the value.
+        var btn = el('button', 'icon-picker-trigger');
         btn.type = 'button';
-        btn.title = S.browse;
-        btn.setAttribute('aria-label', S.browse);
-        btn.appendChild(el('i', 'fas fa-th'));
-        row.appendChild(preview); row.appendChild(input); row.appendChild(btn);
-        wrapper.appendChild(row);
+        btn.setAttribute('aria-haspopup', 'dialog');
+        wrapper.appendChild(btn);
+        wrapper.appendChild(input);
+        input.hidden = true;
 
+        // Inside the wrapper (inside the Bootstrap modal, whose focus trap would pull
+        // focus back out of a panel appended to <body>), placed with position:fixed.
         var dropdown = el('div', 'icon-picker-dropdown');
+        dropdown.setAttribute('role', 'dialog');
+        dropdown.setAttribute('aria-label', S.browse);
         var searchBox = el('div', 'icon-picker-search');
         var searchInput = el('input');
         searchInput.type = 'search';
         searchInput.placeholder = S.search;
         searchInput.setAttribute('aria-label', S.search);
+        var removeBtn = el('button', 'icon-picker-remove', S.remove);
+        removeBtn.type = 'button';
         searchBox.appendChild(searchInput);
+        searchBox.appendChild(removeBtn);
         var chips = el('div', 'icon-picker-chips');
+        var useRow = el('button', 'icon-picker-use');
+        useRow.type = 'button';
+        useRow.hidden = true;
         var status = el('div', 'icon-picker-status');
         var grid = el('div', 'icon-picker-grid');
         dropdown.appendChild(searchBox); dropdown.appendChild(chips);
+        dropdown.appendChild(useRow);
         dropdown.appendChild(status); dropdown.appendChild(grid);
         wrapper.appendChild(dropdown);
 
@@ -114,14 +129,44 @@
 
         function updatePreview() {
             var val = input.value.trim();
-            clear(preview);
+            clear(btn);
+            btn.classList.toggle('icon-picker-trigger--empty', !val);
             if (val) {
-                preview.appendChild(global.MarkerIcon.element(val, null, ''));
+                btn.appendChild(global.MarkerIcon.element(val, null, ''));
+                btn.title = val;
             } else {
-                var ph = el('i', 'fas fa-icons');
-                ph.style.color = '#d1d5db';
-                preview.appendChild(ph);
+                btn.appendChild(el('i', 'fas fa-plus'));
+                btn.title = S.browse;
             }
+            btn.setAttribute('aria-label', btn.title);
+            removeBtn.hidden = !val;
+        }
+
+        function setValue(value, via) {
+            input.value = value;
+            updatePreview();
+            close();
+            btn.focus();
+            // Programmatic value set fires no input event; autosave and the live
+            // preview listen for one.
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            if (value) {
+                var icon = catalog && catalog.byValue[value];
+                capture('icon_picked', { value: value, set: icon ? icon.set : (global.MarkerIcon.isSvgValue(value) ? value.split(':')[0] : 'fa'), via: via });
+            }
+        }
+
+        // A query that is itself a value (pasted `fas fa-x`, `maki:x`) can be used as is.
+        var VALUE_RE = /^((fas|far|fab|fa) fa-[a-z0-9-]+|(maki|temaki):[a-z0-9][a-z0-9_-]*)$/;
+        function renderUseRow(raw) {
+            var v = raw.trim();
+            var show = VALUE_RE.test(v) && v !== input.value.trim();
+            useRow.hidden = !show;
+            if (!show) return;
+            clear(useRow);
+            useRow.appendChild(global.MarkerIcon.element(v, null, ''));
+            useRow.appendChild(el('span', null, S.use + ' ' + v));
+            useRow.dataset.value = v;
         }
 
         function categoryLabel(c) {
@@ -170,6 +215,17 @@
             var shown = 0, total = 0;
             var selected = input.value.trim();
             var icons = orderedIcons();
+            if (!q) {
+                // "No icon" first while browsing: the other way to clear besides Remove.
+                var none = el('button', 'icon-picker-cell icon-picker-cell--none' + (selected ? '' : ' selected'));
+                none.type = 'button';
+                none.title = S.noIcon;
+                none.setAttribute('aria-label', S.noIcon);
+                none.dataset.value = '';
+                none.appendChild(el('i', 'fas fa-ban'));
+                none.addEventListener('click', onPick);
+                grid.appendChild(none);
+            }
             for (var i = 0; i < icons.length; i++) {
                 var icon = icons[i];
                 if (!matches(icon, tokens)) continue;
@@ -196,6 +252,8 @@
                 status.hidden = true;
                 clearTimeout(missTimer);
             }
+            // The panel is short while the catalog loads; place it again at full height.
+            place();
         }
 
         function scheduleMiss(q) {
@@ -209,29 +267,47 @@
         }
 
         function onPick(e) {
-            var value = e.currentTarget.dataset.value;
-            var via = searchInput.value.trim() ? 'search' : 'browse';
-            input.value = value;
-            updatePreview();
-            close();
-            // Programmatic value set fires no input event; autosave and the live
-            // preview listen for one.
-            input.dispatchEvent(new Event('input', { bubbles: true }));
-            var icon = catalog.byValue[value];
-            capture('icon_picked', { value: value, set: icon ? icon.set : 'fa', via: via });
+            setValue(e.currentTarget.dataset.value, searchInput.value.trim() ? 'search' : 'browse');
         }
 
-        // Left-aligned unless that runs off the viewport (a choices-table cell near
-        // the modal's right edge); the mobile bottom sheet ignores both.
-        function align() {
-            dropdown.classList.remove('icon-picker-dropdown--right');
-            var box = dropdown.getBoundingClientRect();
-            if (box.right > window.innerWidth - 8) dropdown.classList.add('icon-picker-dropdown--right');
+        // Fixed placement next to the button: below it when there is room, else above;
+        // clamped into the viewport. Below 768px the CSS bottom sheet takes over and
+        // the inline position is cleared.
+        var MARGIN = 8;
+        function place() {
+            if (!dropdown.classList.contains('open')) return;
+            if (window.innerWidth <= 768) {
+                dropdown.style.left = dropdown.style.top = dropdown.style.maxHeight = '';
+                return;
+            }
+            var t = btn.getBoundingClientRect();
+            dropdown.style.maxHeight = '';
+            var w = dropdown.offsetWidth, h = dropdown.offsetHeight;
+            var left = Math.min(Math.max(MARGIN, t.left), window.innerWidth - w - MARGIN);
+            var below = window.innerHeight - t.bottom - 4 - MARGIN;
+            var above = t.top - 4 - MARGIN;
+            var top;
+            if (h <= below) {
+                top = t.bottom + 4;
+            } else if (h <= above) {
+                top = t.top - h - 4;
+            } else if (below >= above) {
+                // Fits on neither side: take the roomier one and scroll the grid,
+                // never cover the button that opened it.
+                dropdown.style.maxHeight = below + 'px';
+                top = t.bottom + 4;
+            } else {
+                dropdown.style.maxHeight = above + 'px';
+                top = t.top - 4 - above;
+            }
+            dropdown.style.left = Math.round(left) + 'px';
+            dropdown.style.top = Math.round(top) + 'px';
         }
 
         function open() {
             dropdown.classList.add('open');
-            align();
+            place();
+            renderUseRow('');
             btn.setAttribute('aria-expanded', 'true');
             searchInput.value = '';
             lastQuery = '';
@@ -257,6 +333,7 @@
         }
 
         function close() {
+            if (!dropdown.classList.contains('open')) return;
             dropdown.classList.remove('open');
             btn.setAttribute('aria-expanded', 'false');
             clearTimeout(missTimer);
@@ -270,19 +347,24 @@
             var q = this.value.trim().toLowerCase();
             if (q === lastQuery) return;
             lastQuery = q;
+            renderUseRow(this.value);
             if (catalog) renderGrid();
         });
         searchInput.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') { close(); input.focus(); }
-        });
-        input.addEventListener('input', updatePreview);
-        input.addEventListener('change', function () {
-            // A typed (not picked) value; picks close the dropdown before `change` can fire.
-            var v = input.value.trim();
-            if (v) {
-                capture('icon_picked', { value: v, set: global.MarkerIcon.isSvgValue(v) ? v.split(':')[0] : 'fa', via: 'typed' });
+            if (e.key === 'Escape') { e.stopPropagation(); close(); btn.focus(); }
+            if (e.key === 'Enter') {
+                // Enter must not submit the question form.
+                e.preventDefault();
+                if (!useRow.hidden) setValue(useRow.dataset.value, 'typed');
             }
         });
+        useRow.addEventListener('click', function () { setValue(useRow.dataset.value, 'typed'); });
+        removeBtn.addEventListener('click', function () { setValue('', 'removed'); });
+        // Code that sets the hidden input (row rebuilds, star defaults) still repaints the button.
+        input.addEventListener('input', updatePreview);
+        window.addEventListener('resize', place);
+        // Capture: the modal body scrolls, not the window.
+        window.addEventListener('scroll', place, true);
         document.addEventListener('click', function (e) {
             // A chip or cell click re-renders its row, so by the time this runs the
             // target may already be detached — that is an inside click, not an outside one.
@@ -290,7 +372,7 @@
         });
 
         updatePreview();
-        return { open: open, close: close, refresh: updatePreview };
+        return { open: open, close: close, refresh: updatePreview, set: function (v) { setValue(v || '', 'api'); } };
     }
 
     global.IconPicker = { attach: attach, _loadCatalog: loadCatalog, MAX_CELLS: MAX_CELLS };
