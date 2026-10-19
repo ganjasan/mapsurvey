@@ -108,16 +108,21 @@ class ChoiceIconGridMixin(OtherChoiceWidgetMixin):
 
     One tile per option: the native radio/checkbox wrapped in its label, so the
     posted value, the required check and the write-in behave exactly as in the
-    list. `extras` maps a choice code (as str) to its stored `icon`/`group`;
+    list. `extras` maps a choice code (as str) to its stored `icon`/`group`/`color`;
     consecutive options sharing a group become one run under one heading. The
-    write-in field renders once beneath the grid, as in the dropdown.
+    write-in field renders once beneath the grid, as in the dropdown. Icon colour:
+    the option's own, else the question's (`color`, unless the model default),
+    else none — the CSS grey (change icon-grid-color-picker).
     """
     template_name = 'choice_icon_grid.html'
     collapse = False   # single choice collapses to the chosen row after a pick
 
-    def __init__(self, attrs=None, choices=(), extras=None):
+    def __init__(self, attrs=None, choices=(), extras=None, color=None):
+        from .question_types import HEX_COLOR_RE, UNSET_QUESTION_COLOR
         super().__init__(attrs, choices)
         self.extras = extras or {}
+        color = (color or '').strip().lower()
+        self.color = color if HEX_COLOR_RE.match(color) and color != UNSET_QUESTION_COLOR else ''
 
     def get_context(self, name, value, attrs):
         from . import marker_icons
@@ -128,6 +133,7 @@ class ChoiceIconGridMixin(OtherChoiceWidgetMixin):
                 extra = self.extras.get(str(option['value']), {})
                 icon = extra.get('icon') or ''
                 option['icon'] = icon if marker_icons.is_drawable(icon) else ''
+                option['icon_color'] = extra.get('color') or self.color or None
                 group = (extra.get('group') or '').strip()
                 if not runs or runs[-1]['title'] != group:
                     runs.append({'title': group, 'options': []})
@@ -146,9 +152,9 @@ class ChoiceIconGridCheckbox(ChoiceIconGridMixin, forms.CheckboxSelectMultiple):
 
 
 def _choice_extras(question):
-    """`{str(code): {'icon':…, 'group':…}}` for the icon grid; other keys stay out."""
+    """`{str(code): {'icon':…, 'group':…, 'color':…}}` for the icon grid; other keys stay out."""
     return {
-        str(c.get('code')): {k: c[k] for k in ('icon', 'group') if isinstance(c.get(k), str)}
+        str(c.get('code')): {k: c[k] for k in ('icon', 'group', 'color') if isinstance(c.get(k), str)}
         for c in (question.choices or []) if isinstance(c, dict)
     }
 
@@ -597,7 +603,7 @@ class SurveySectionAnswerForm(forms.Form):
         elif input_type == 'choice':
             choices = [(c["code"], question.get_choice_name(c["code"], language)) for c in (question.choices or [])]
             if display_style == 'icon_grid':
-                widget = ChoiceIconGridRadio(extras=_choice_extras(question))
+                widget = ChoiceIconGridRadio(extras=_choice_extras(question), color=question.color)
             else:
                 widget = ChoiceDropdownWidget if display_style == 'dropdown' else OtherChoiceRadioSelect
             return forms.ChoiceField(widget=widget, choices=choices, label=label, required=required)
@@ -605,7 +611,7 @@ class SurveySectionAnswerForm(forms.Form):
         elif input_type == 'multichoice':
             choices = [(c["code"], question.get_choice_name(c["code"], language)) for c in (question.choices or [])]
             if display_style == 'icon_grid':
-                widget = ChoiceIconGridCheckbox(extras=_choice_extras(question))
+                widget = ChoiceIconGridCheckbox(extras=_choice_extras(question), color=question.color)
             else:
                 widget = OtherChoiceCheckboxSelectMultiple
             return forms.MultipleChoiceField(

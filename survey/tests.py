@@ -45855,10 +45855,10 @@ class OtherOptionWriteInTest(TestCase):
         q = Question.objects.get(survey_section=self.section, name='Which?')
         self.assertEqual([c.get('other') for c in q.choices], [None, True, None])
         html = self.client.get(reverse('editor_question_edit', args=[self.survey.uuid, q.id])).content.decode()
-        self.assertIn('addChoiceRow(choice.code, choice.name, !!choice.other, choice.icon, choice.group)', html)
+        self.assertIn('addChoiceRow(choice.code, choice.name, !!choice.other, choice.icon, choice.group, choice.color)', html)
         self.assertIn('"other": true', html)
         self.assertIn('class="choice-other-cell"', html)
-        self.assertIn('function addChoiceRow(code, name, other, icon, group)', html)
+        self.assertIn('function addChoiceRow(code, name, other, icon, group, color)', html)
         self.assertNotIn('window.addChoiceRow = function', html)
 
     def test_live_preview_clamps_and_renders_the_write_in(self):
@@ -54367,6 +54367,85 @@ class ChoiceIconGridTest(TestCase):
         self.assertIn('<div class="cig-run__title">Nature</div>', html)
         self.assertIn('#maki-park"', html)
         self.assertRegex(html, r'js/choice_icon_grid(\.[0-9a-f]+)?\.js')
+
+    # ── icon colour (change icon-grid-color-picker) ──
+
+    def test_normaliser_keeps_only_hex_colours(self):
+        """
+        GIVEN choices with a padded upper-case hex, a colour name and a blank colour
+        WHEN they are normalised
+        THEN the hex is kept lower-cased and the others are dropped
+        """
+        from survey.question_types import normalise_choice_extras
+        out = normalise_choice_extras([
+            {"code": 1, "name": "A", "color": " #DC2626 "},
+            {"code": 2, "name": "B", "color": "red"},
+            {"code": 3, "name": "C", "color": ""},
+        ])
+        self.assertEqual(out, [
+            {"code": 1, "name": "A", "color": "#dc2626"},
+            {"code": 2, "name": "B"},
+            {"code": 3, "name": "C"},
+        ])
+
+    def _tile_html(self, question):
+        field = SurveySectionAnswerForm.single_question_form(question).fields[question.code]
+        return field.widget.render(question.code, None, attrs={'id': 'id_' + question.code})
+
+    def test_question_colour_paints_every_icon_and_option_colour_wins(self):
+        """
+        GIVEN an icon-grid question coloured #16a34a whose Swings option is coloured #dc2626
+        WHEN the grid renders
+        THEN the sprite icon is filled with the question colour and the Swings glyph carries its own
+        """
+        self.q_kind.color = '#16a34a'
+        self.q_kind.choices = [dict(c) for c in self.KINDS]
+        self.q_kind.choices[2]['color'] = '#dc2626'
+        self.q_kind.save()
+        html = self._tile_html(self.q_kind)
+        self.assertIn('fill:#16a34a;', html)
+        self.assertRegex(html, r'fas fa-child[^>]*color:#dc2626;')
+
+    def test_default_question_colour_emits_no_inline_colour(self):
+        """
+        GIVEN an icon-grid question left on the model default colour #000000 with no option colours
+        WHEN the grid renders
+        THEN no icon carries an inline colour, so the CSS grey applies
+        """
+        self.assertEqual(self.q_kind.color, '#000000')
+        html = self._tile_html(self.q_kind)
+        self.assertIn('fill:currentColor;', html)
+        self.assertNotIn('color:#000000', html)
+
+    def test_editor_save_normalises_option_colour(self):
+        """
+        GIVEN the modal posting a choice with an upper-case colour and one with garbage
+        WHEN a new icon-grid choice question is created
+        THEN the first keeps the lower-cased colour and the second stores none
+        """
+        self._login_editor()
+        self.client.post(
+            f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/questions/new/',
+            {'name': 'Coloured', 'input_type': 'choice', 'color': '#000000', 'display_style': 'icon_grid',
+             'choices_json': json.dumps([{"code": 1, "name": "A", "color": "#ABCDEF"},
+                                         {"code": 2, "name": "B", "color": "javascript:alert(1)"}])},
+        )
+        q = Question.objects.get(survey_section=self.section, name='Coloured')
+        self.assertEqual(q.choices, [{"code": 1, "name": "A", "color": "#abcdef"}, {"code": 2, "name": "B"}])
+
+    def test_modal_has_colour_column_and_wide_picker(self):
+        """
+        GIVEN the question modal for an icon-grid question
+        WHEN it is rendered inside the editor
+        THEN the choices table has the Color column, the Color field is gated on the grid,
+             and the picker dropdown is sized independently of its input
+        """
+        self._login_editor()
+        html = self.client.get(reverse('editor_question_edit', args=[self.survey.uuid, self.q_multi.id])).content.decode()
+        self.assertIn('class="choice-grid-cell choice-color-cell"', html)
+        self.assertIn("show('fg-color', isGeo || isStars || isGrid);", html)
+        page = self.client.get(f'/editor/surveys/{self.survey.uuid}/').content.decode()
+        self.assertIn('width: max(100%, min(440px, calc(100vw - 16px)));', page)
 
     def test_modal_offers_icon_grid_for_multichoice(self):
         """

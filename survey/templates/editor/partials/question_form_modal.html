@@ -513,6 +513,11 @@
             .choices-editor--no-other .choice-other-cell { display: none; }
             .choices-editor:not(.choices-editor--grid) .choice-grid-cell { display: none; }
             .choice-icon-cell .choice-icon { min-width: 120px; }
+            .choice-color-wrap { display: inline-flex; align-items: center; gap: 2px; }
+            .choice-color-wrap .choice-color { width: 32px; height: 28px; padding: 1px; border: 1px solid #d1d5db; border-radius: 4px; background: #fff; cursor: pointer; }
+            .choice-color-wrap .choice-color[data-unset] { opacity: 0.3; }
+            .choice-color-clear { border: 0; background: none; color: #9ca3af; padding: 0 2px; line-height: 1; cursor: pointer; }
+            .choice-color-clear:hover { color: #374151; }
         </style>
         {% comment %}Icon/Group mean something only to the icon grid (spec survey-editor). Hidden
         cells keep their values, so switching the style back restores them.{% endcomment %}
@@ -531,6 +536,7 @@
                         <th>{% trans "Name" %}</th>
                         {% endif %}
                         <th class="choice-grid-cell" style="width:230px;" title="{% trans 'Shown on the option tile in the icon grid' %}">{% trans "Icon" %}</th>
+                        <th class="choice-grid-cell" style="width:76px;" title="{% trans 'Icon colour for this option; cleared = the question colour' %}">{% trans "Color" %}</th>
                         <th class="choice-grid-cell" style="width:120px;" title="{% trans 'Options with the same group sit together under one heading' %}">{% trans "Group" %}</th>
                         <th class="choice-other-cell" style="width:64px;" title="{% trans 'Write-in option: respondents who pick it get a text field to say what they mean' %}">{% trans "Other" %}</th>
                         <th style="width:40px;"></th>
@@ -918,7 +924,10 @@
         // rating style. Shown exactly where they are read.
         var isStars = t === 'rating' && !!document.querySelector(
             '#display-style-fields input[value="stars"]:checked');
-        show('fg-color', isGeo || isStars);
+        // ...and the icon grid's tile icons (change icon-grid-color-picker).
+        var isGrid = (t === 'choice' || t === 'multichoice') && !!document.querySelector(
+            '#display-style-fields input[value="icon_grid"]:checked');
+        show('fg-color', isGeo || isStars || isGrid);
         // A spray cloud has no marker: brush size instead of an icon.
         show('fg-icon_class', (isGeo && t !== 'spraycan') || isStars);
         show('fg-spray_brush', t === 'spraycan');
@@ -1385,7 +1394,7 @@
     // this point and adds five star rows — can call it. The assignment form threw
     // `ReferenceError: addChoiceRow is not defined` there and aborted the whole
     // script for star-rating questions (PostHog, 2026-09-14).
-    function addChoiceRow(code, name, other, icon, group) {
+    function addChoiceRow(code, name, other, icon, group, color) {
         var tbody = document.getElementById('choices-rows');
         var row = document.createElement('tr');
         var codeVal;
@@ -1424,23 +1433,49 @@
             cells += '<td><input type="text" class="form-control form-control-sm choice-name-default" value="' + (flat || '').replace(/"/g, '&quot;') + '"></td>';
         }
 
-        // The write-in flag (spec other-option-write-in): a checkbox, not a radio,
-        // so a flag can be taken off again; exclusivity is enforced on change.
         // Icon grid extras (spec inline-choices), kept in hidden cells under other
         // styles. Values are set through .value below, never spliced into markup.
+        // The colour cell starts "unset" (data-unset): an <input type=color> cannot
+        // be empty, so the flag is what means "follow the question colour".
         cells += '<td class="choice-grid-cell choice-icon-cell"><input type="text" class="form-control form-control-sm choice-icon" placeholder="maki:park"></td>';
+        cells += '<td class="choice-grid-cell choice-color-cell"><span class="choice-color-wrap"><input type="color" class="choice-color" value="#374151" data-unset="1" title="{% trans 'Icon colour' %}"><button type="button" class="choice-color-clear" title="{% trans 'Use the question colour' %}">&times;</button></span></td>';
         cells += '<td class="choice-grid-cell"><input type="text" class="form-control form-control-sm choice-group" maxlength="60"></td>';
+        // The write-in flag (spec other-option-write-in): a checkbox, not a radio,
+        // so a flag can be taken off again; exclusivity is enforced on change.
         cells += '<td class="choice-other-cell text-center"><input type="checkbox" class="choice-other" title="{% trans 'Write-in option' %}"' + (other ? ' checked' : '') + '></td>';
         cells += '<td><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest(\'tr\').remove();window.schedulePreview&&window.schedulePreview()">&times;</button></td>';
         row.innerHTML = cells;
         tbody.appendChild(row);
         row.querySelector('.choice-icon').value = typeof icon === 'string' ? icon : '';
         row.querySelector('.choice-group').value = typeof group === 'string' ? group : '';
+        if (typeof color === 'string' && /^#[0-9a-fA-F]{6}$/.test(color)) {
+            var colorInp = row.querySelector('.choice-color');
+            colorInp.value = color.toLowerCase();
+            colorInp.removeAttribute('data-unset');
+        }
         attachChoiceIconPicker(row.querySelector('.choice-icon'));
         // Row add/remove bypasses form input events; nudge the live preview.
         if (window.schedulePreview) window.schedulePreview();
     }
     window.addChoiceRow = addChoiceRow;
+
+    // Per-option icon colour: picking sets it, × hands the option back to the
+    // question colour. Delegated, so rows added later are covered.
+    (function () {
+        var rows = document.getElementById('choices-rows');
+        if (!rows || rows.dataset.colorBound) return;
+        rows.dataset.colorBound = '1';
+        rows.addEventListener('input', function (e) {
+            if (e.target.classList.contains('choice-color')) e.target.removeAttribute('data-unset');
+        });
+        rows.addEventListener('click', function (e) {
+            var clear = e.target.closest('.choice-color-clear');
+            if (!clear) return;
+            var inp = clear.parentNode.querySelector('.choice-color');
+            inp.setAttribute('data-unset', '1');
+            if (window.schedulePreview) window.schedulePreview();
+        });
+    })();
 
     // At most one write-in option per question: checking one unchecks the rest.
     (function () {
@@ -1512,6 +1547,8 @@
             if (iconInp && iconInp.value.trim()) entry.icon = iconInp.value.trim();
             var groupInp = row.querySelector('.choice-group');
             if (groupInp && groupInp.value.trim()) entry.group = groupInp.value.trim();
+            var colorInp = row.querySelector('.choice-color');
+            if (colorInp && !colorInp.hasAttribute('data-unset')) entry.color = colorInp.value.toLowerCase();
             choices.push(entry);
         });
 
@@ -1607,7 +1644,7 @@
     {% if question and question.choices %}
     var existingChoices = JSON.parse(document.getElementById('existing-choices-data').textContent);
     existingChoices.forEach(function(choice) {
-        addChoiceRow(choice.code, choice.name, !!choice.other, choice.icon, choice.group);
+        addChoiceRow(choice.code, choice.name, !!choice.other, choice.icon, choice.group, choice.color);
     });
     {% endif %}
 

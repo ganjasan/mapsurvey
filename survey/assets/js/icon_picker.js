@@ -221,8 +221,17 @@
             capture('icon_picked', { value: value, set: icon ? icon.set : 'fa', via: via });
         }
 
+        // Left-aligned unless that runs off the viewport (a choices-table cell near
+        // the modal's right edge); the mobile bottom sheet ignores both.
+        function align() {
+            dropdown.classList.remove('icon-picker-dropdown--right');
+            var box = dropdown.getBoundingClientRect();
+            if (box.right > window.innerWidth - 8) dropdown.classList.add('icon-picker-dropdown--right');
+        }
+
         function open() {
             dropdown.classList.add('open');
+            align();
             btn.setAttribute('aria-expanded', 'true');
             searchInput.value = '';
             lastQuery = '';

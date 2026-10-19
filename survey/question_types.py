@@ -10,6 +10,7 @@ Display labels are presentation-only: `html` reads "Formatted Text" because
 survey creators do not know what HTML means, but the stored input_type value is
 untouched.
 """
+import re
 
 # Group order is the order the dialog shows them in.
 PICKER_GROUPS = (
@@ -166,10 +167,14 @@ def allowed_display_styles(input_type):
 # non-string values are dropped so a survey that never uses the grid keeps
 # byte-identical choices.
 CHOICE_EXTRA_LIMITS = {"icon": 64, "group": 60}
+HEX_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
+# Question.color's model default: every existing question carries it, so on the
+# icon grid it means "not set" and the tile keeps its grey glyph.
+UNSET_QUESTION_COLOR = "#000000"
 
 
 def normalise_choice_extras(choices):
-    """Trim/cap/drop the `icon` and `group` keys on each choice. Mutates and returns.
+    """Trim/cap/drop the `icon`, `group` and `color` keys on each choice. Mutates and returns.
 
     Every other key and the order are kept; non-dict entries pass through for the
     callers' own validation to judge.
@@ -186,6 +191,15 @@ def normalise_choice_extras(choices):
                 choice[key] = value
             else:
                 del choice[key]
+        # Icon colour (change icon-grid-color-picker): a #RRGGBB or nothing,
+        # because it is written into an inline style on every respondent tile.
+        if "color" in choice:
+            value = choice["color"]
+            value = value.strip() if isinstance(value, str) else ""
+            if HEX_COLOR_RE.match(value):
+                choice["color"] = value.lower()
+            else:
+                del choice["color"]
     return choices
 
 
