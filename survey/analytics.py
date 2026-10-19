@@ -3,7 +3,7 @@ import statistics
 
 from django.db.models import Count, Avg, Exists, Min, Max, OuterRef, Q
 from survey.question_types import GEO_TYPES, geo_column
-from django.db.models.functions import TruncHour
+from django.db.models.functions import Coalesce, TruncHour
 
 from django.utils import timezone
 
@@ -100,7 +100,11 @@ def _compute_histogram(values, min_val, max_val, max_bins=15):
 
 def _get_ordered_sections(survey):
     """Return sections in linked-list traversal order."""
-    sections = list(SurveySection.objects.filter(survey_header=survey))
+    return _order_sections(list(SurveySection.objects.filter(survey_header=survey)))
+
+
+def _order_sections(sections):
+    """Order one survey's already-loaded sections by their linked list."""
     if not sections:
         return []
     by_id = {s.id: s for s in sections}
@@ -170,6 +174,44 @@ def completed_session_filter(qs, headers):
     if not last_ids:
         return qs.none()
     return qs.filter(answer__question__survey_section_id__in=last_ids).distinct()
+
+
+def family_completion_counts(surveys):
+    """{canonical_id: (total, completed)} for many canonical surveys at once.
+
+    The dashboard's card numbers (#362). Same scope and same rule as
+    ``SurveyAnalyticsService(survey).get_overview()`` with its defaults — the
+    family (canonical + archived versions, never the draft copy), non-deleted
+    sessions, completed = answered a question of its version's last section —
+    but four queries for the whole list instead of a dozen per survey, and
+    no per-session issue flags, which no card shows.
+    """
+    ids = [s.id for s in surveys]
+    if not ids:
+        return {}
+    family_of = dict(
+        SurveyHeader.objects
+        .filter(Q(id__in=ids) | Q(canonical_survey_id__in=ids))
+        .annotate(fam=Coalesce('canonical_survey_id', 'id'))
+        .values_list('id', 'fam')
+    )
+    sections_by_header = {}
+    for section in SurveySection.objects.filter(survey_header_id__in=list(family_of)):
+        sections_by_header.setdefault(section.survey_header_id, []).append(section)
+    last_ids = [_order_sections(secs)[-1].id for secs in sections_by_header.values()]
+
+    sessions = (
+        SurveySession.objects.active()
+        .filter(survey_id__in=list(family_of))
+        .annotate(fam=Coalesce('survey__canonical_survey_id', 'survey_id'))
+        .values('fam')
+    )
+    totals = dict(sessions.annotate(n=Count('id')).values_list('fam', 'n'))
+    completed = dict(
+        sessions.filter(answer__question__survey_section_id__in=last_ids)
+        .annotate(n=Count('id', distinct=True)).values_list('fam', 'n')
+    ) if last_ids else {}
+    return {sid: (totals.get(sid, 0), completed.get(sid, 0)) for sid in ids}
 
 
 class SurveyAnalyticsService:
