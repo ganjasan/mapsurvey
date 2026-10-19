@@ -1634,6 +1634,91 @@ body.sidebar-hidden .leaflet-top.leaflet-left {
 .choice-dropdown .cd-option.cd-active { background: #eef0ff; }
 .choice-dropdown .cd-option[aria-selected="true"] { font-weight: 600; }
 
+/* ---- Icon grid (spec choice-icon-grid; template choice_icon_grid.html) ----
+   Tiles wrap the native inputs; the input is visually hidden but stays focusable.
+   `.cig` is the offsetParent js/choice_icon_grid.js measures rows against. */
+.cig { position: relative; }
+.cig-run + .cig-run { margin-top: 8px; }
+.cig-run__title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin: 0 0 4px;
+}
+.cig-tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+    gap: 6px;
+}
+.cig-tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-height: 64px;
+    padding: 8px 4px;
+    margin: 0;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+    text-align: center;
+    font-size: 0.8rem;
+    line-height: 1.2;
+    user-select: none;
+}
+/* Undo the list's custom radio/checkbox look (".question-card label:has(input…)"):
+   the tile itself is the indicator. Same specificity plus `.cig`, and later in the file. */
+.question-card .cig label.cig-tile:has(input) {
+    display: flex;
+    flex-direction: column;
+    min-height: 64px;
+    padding: 8px 4px;
+    margin: 0;
+    border-radius: 8px;
+    font-weight: 400;
+}
+.question-card .cig label.cig-tile:has(input)::before,
+.question-card .cig label.cig-tile:has(input)::after { content: none; }
+.question-card .cig label.cig-tile:has(input:checked) { font-weight: 600; background: #eef0ff; }
+.cig-tile:hover { border-color: #9ca3af; }
+.cig-tile__input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
+.cig-tile__icon { font-size: 22px; line-height: 1; color: #374151; }
+.cig-tile__icon .marker-icon-svg-glyph { width: 24px; height: 24px; }
+.cig-tile__label {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+}
+.cig-tile--on,
+.cig-tile:has(.cig-tile__input:checked) {
+    border-color: #4f46e5;
+    background: #eef0ff;
+    box-shadow: inset 0 0 0 1px #4f46e5;
+    font-weight: 600;
+}
+.cig-tile:has(.cig-tile__input:focus-visible) { outline: 2px solid #4f46e5; outline-offset: 2px; }
+/* Must outrank the tile reset above, which sets display:flex on the label. */
+.cig.cig-collapsed .cig-off-row,
+.question-card .cig.cig-collapsed label.cig-tile.cig-off-row { display: none; }
+.cig-show-all {
+    margin-top: 6px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #4f46e5;
+    font-size: 0.85rem;
+    text-decoration: underline;
+    cursor: pointer;
+}
+.cig .other-writein { margin-top: 8px; }
+
 /* ---- Form-layout sections (survey-form-layout on <body>) ----
    A section with layout="form" renders as a classic full-width form: the panel
    becomes the page, the map and every piece of map chrome disappears. The hide

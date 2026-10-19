@@ -1,6 +1,7 @@
 from django import forms
 from django.forms import widgets
 from .models import SurveySection, Question, Answer, INPUT_TYPE_CHOICES, SurveySession
+from .question_types import DISPLAY_STYLES_BY_TYPE, allowed_display_styles
 from django.utils import html
 import logging
 from django import forms
@@ -100,6 +101,56 @@ class ChoiceDropdownWidget(OtherChoiceWidgetMixin, widgets.Select):
                     selected_label = option['label']
         context['widget']['selected_label'] = selected_label
         return context
+
+
+class ChoiceIconGridMixin(OtherChoiceWidgetMixin):
+    """Icon grid for choice/multichoice (spec choice-icon-grid).
+
+    One tile per option: the native radio/checkbox wrapped in its label, so the
+    posted value, the required check and the write-in behave exactly as in the
+    list. `extras` maps a choice code (as str) to its stored `icon`/`group`;
+    consecutive options sharing a group become one run under one heading. The
+    write-in field renders once beneath the grid, as in the dropdown.
+    """
+    template_name = 'choice_icon_grid.html'
+    collapse = False   # single choice collapses to the chosen row after a pick
+
+    def __init__(self, attrs=None, choices=(), extras=None):
+        super().__init__(attrs, choices)
+        self.extras = extras or {}
+
+    def get_context(self, name, value, attrs):
+        from . import marker_icons
+        context = super().get_context(name, value, attrs)
+        runs = []
+        for _, group_choices, _ in context['widget']['optgroups']:
+            for option in group_choices:
+                extra = self.extras.get(str(option['value']), {})
+                icon = extra.get('icon') or ''
+                option['icon'] = icon if marker_icons.is_drawable(icon) else ''
+                group = (extra.get('group') or '').strip()
+                if not runs or runs[-1]['title'] != group:
+                    runs.append({'title': group, 'options': []})
+                runs[-1]['options'].append(option)
+        context['widget']['runs'] = runs
+        context['widget']['collapse'] = self.collapse
+        return context
+
+
+class ChoiceIconGridRadio(ChoiceIconGridMixin, forms.RadioSelect):
+    collapse = True
+
+
+class ChoiceIconGridCheckbox(ChoiceIconGridMixin, forms.CheckboxSelectMultiple):
+    pass
+
+
+def _choice_extras(question):
+    """`{str(code): {'icon':…, 'group':…}}` for the icon grid; other keys stay out."""
+    return {
+        str(c.get('code')): {k: c[k] for k in ('icon', 'group') if isinstance(c.get(k), str)}
+        for c in (question.choices or []) if isinstance(c, dict)
+    }
 
 
 class RangeWidget(widgets.Input):
@@ -505,23 +556,15 @@ def _stamp_other_choice(widget, question, language, initial=None):
 
 class SurveySectionAnswerForm(forms.Form):
 
-    # Question types whose rendering the creator can pick. Membership, rather
-    # than a chain of equality tests, so the next type to gain display styles
-    # is one entry here and in the editor's gate. `range` was briefly in this
-    # list and is deliberately out again: a range is the slider — a labelled
-    # discrete scale is what `rating` is for. Stored display_style values on
-    # range questions are ignored, not rewritten.
-    DISPLAY_STYLE_TYPES = ('rating', 'choice')
+    # Question types whose rendering the creator can pick, and the styles each
+    # accepts: ONE table in question_types (spec choice-dropdown-display). `range`
+    # was briefly a member and is deliberately out again: a range is the slider —
+    # a labelled discrete scale is what `rating` is for. Stored display_style
+    # values on range questions are ignored, not rewritten.
+    DISPLAY_STYLE_TYPES = tuple(DISPLAY_STYLES_BY_TYPE)
 
     # Styles that lay out one element per choice, and so need choices to exist.
     CHOICE_BASED_STYLES = ('scale_strip', 'list_pips', 'stars')
-
-    # Styles valid per input type. A value stored on any other type (or an
-    # unknown value) resolves to the type's plain rendering.
-    STYLES_BY_TYPE = {
-        'rating': CHOICE_BASED_STYLES,
-        'choice': ('dropdown',),
-    }
 
     @classmethod
     def resolve_display_style(cls, question, survey_rating_style):
@@ -533,8 +576,8 @@ class SurveySectionAnswerForm(forms.Form):
         if question.input_type not in cls.DISPLAY_STYLE_TYPES:
             return 'default'
 
-        allowed = cls.STYLES_BY_TYPE.get(question.input_type, ())
-        chosen = question.display_style if question.display_style in allowed else None
+        allowed = allowed_display_styles(question.input_type)
+        chosen = question.display_style if question.display_style in allowed and question.display_style != 'default' else None
         if question.input_type == 'rating':
             return chosen or survey_rating_style
         return chosen or 'default'
@@ -553,13 +596,20 @@ class SurveySectionAnswerForm(forms.Form):
 
         elif input_type == 'choice':
             choices = [(c["code"], question.get_choice_name(c["code"], language)) for c in (question.choices or [])]
-            widget = ChoiceDropdownWidget if display_style == 'dropdown' else OtherChoiceRadioSelect
+            if display_style == 'icon_grid':
+                widget = ChoiceIconGridRadio(extras=_choice_extras(question))
+            else:
+                widget = ChoiceDropdownWidget if display_style == 'dropdown' else OtherChoiceRadioSelect
             return forms.ChoiceField(widget=widget, choices=choices, label=label, required=required)
 
         elif input_type == 'multichoice':
             choices = [(c["code"], question.get_choice_name(c["code"], language)) for c in (question.choices or [])]
+            if display_style == 'icon_grid':
+                widget = ChoiceIconGridCheckbox(extras=_choice_extras(question))
+            else:
+                widget = OtherChoiceCheckboxSelectMultiple
             return forms.MultipleChoiceField(
-                widget=OtherChoiceCheckboxSelectMultiple,
+                widget=widget,
                 choices=choices,
                 label=label,
                 required=required,

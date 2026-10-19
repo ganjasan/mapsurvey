@@ -154,6 +154,7 @@ DISPLAY_STYLE_CHOICES = (
     ("list_pips", _("Labeled list")),
     ("stars", _("Stars")),
     ("dropdown", _("Dropdown with search")),
+    ("icon_grid", _("Icon grid")),
 )
 
 # What a star rating looks like when its creator set neither icon nor colour.
@@ -923,7 +924,7 @@ class Question(models.Model):
     # `validation_settings` because that JSON does not ride the survey ZIP.
     spray_brush = models.CharField(max_length=6, choices=SPRAY_BRUSH_CHOICES, default=SPRAY_BRUSH_DEFAULT, help_text=_('`spraycan` only: brush size the respondent paints with.'))
     image = models.ImageField(upload_to ='images/', null=True, blank=True)
-    display_style = models.CharField(max_length=20, choices=DISPLAY_STYLE_CHOICES, default="default", help_text=_('Rendering style: rating styles ("default" inherits the survey-wide style) or "dropdown" for choice questions'))
+    display_style = models.CharField(max_length=20, choices=DISPLAY_STYLE_CHOICES, default="default", help_text=_('Rendering style: rating styles ("default" inherits the survey-wide style), "dropdown" or "icon_grid" for choice, "icon_grid" for multichoice (question_types.DISPLAY_STYLES_BY_TYPE)'))
     # Same shape and semantics as SurveySection.visibility_rule; a question is visible
     # only when its section is visible AND this rule (if any) is satisfied.
     visibility_rule = models.JSONField(null=True, blank=True, help_text=_('Show this question only when the referenced choice question\'s answer includes any of the referenced option codes, or (with "answered": true) any option at all. Null = always shown.'))

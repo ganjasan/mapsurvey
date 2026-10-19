@@ -1,0 +1,25 @@
+{% load i18n question_utils %}{% comment %}
+Icon grid for choice/multichoice (spec choice-icon-grid, widget ChoiceIconGridMixin).
+Each tile is the option's native input wrapped in its label, so value, required check,
+keyboard and write-in are the list's. Runs = consecutive options sharing a `group`; a
+titled run gets a heading. Icons only through {% marker_icon %}; an option without a
+drawable icon shows its label alone. `data-cig-collapse` (single choice) lets
+js/choice_icon_grid.js fold the grid to the chosen row after a pick.
+{% endcomment %}<div class="cig" data-choice-icon-grid{% if widget.collapse %} data-cig-collapse{% endif %}>
+    {% for run in widget.runs %}
+    <div class="cig-run">
+        {% if run.title %}<div class="cig-run__title">{{ run.title }}</div>{% endif %}
+        <div class="cig-tiles">
+            {% for option in run.options %}
+            <label class="cig-tile{% if option.selected %} cig-tile--on{% endif %}"{% if option.attrs.id %} for="{{ option.attrs.id }}"{% endif %} title="{{ option.label }}">
+                <input type="{{ option.type }}" name="{{ option.name }}" value="{{ option.value|stringformat:'s' }}" class="cig-tile__input"{% include "django/forms/widgets/attrs.html" with widget=option %}>
+                {% if option.icon %}<span class="cig-tile__icon">{% marker_icon option.icon %}</span>{% endif %}
+                <span class="cig-tile__label">{{ option.label }}</span>
+            </label>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+    {% if widget.collapse %}<button type="button" class="cig-show-all" hidden>{% trans "Show all options" %}</button>{% endif %}
+    {% if widget.other %}{% include "partials/other_writein_input.html" with other=widget.other controls=widget.name code=widget.other.code %}{% endif %}
+</div>

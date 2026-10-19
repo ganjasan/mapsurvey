@@ -21,6 +21,7 @@ locale.{% endcomment %}
     <script type="text/javascript" src="{% static 'js/util.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/conditional_visibility.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/other_option.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/choice_icon_grid.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/components/map_place_search.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/components/ranking.js' %}"></script>
     {% if FILE_UPLOAD_QUESTIONS %}<script type="text/javascript" src="{% static 'js/file_upload.js' %}"></script>{% endif %}
@@ -107,6 +108,9 @@ locale.{% endcomment %}
   #info_page .btn-outline-primary:hover { background-color: {{ accent }}; color: #fff; }
   .choice-dropdown .cd-option:hover,
   .choice-dropdown .cd-option.cd-active { background: {{ accent }}1a; }
+  .cig-tile--on, .cig-tile:has(.cig-tile__input:checked),
+  .question-card .cig label.cig-tile:has(input:checked) { border-color: {{ accent }}; background: {{ accent }}1a; box-shadow: inset 0 0 0 1px {{ accent }}; }
+  .cig-show-all { color: {{ accent }}; }
   body.survey-form-layout { background: {{ accent }}12; }
 </style>
 {% endif %}{% endwith %}{% endif %}
@@ -761,6 +765,9 @@ locale.{% endcomment %}
     function initPopupFields(root) {
         if (window.initRanking) window.initRanking(root);
         if (window.syncRatingChips) window.syncRatingChips();
+        // Values were restored with .prop() (no change events): repaint the
+        // icon grids' tiles and fold single-choice grids to the chosen row.
+        if (window.syncIconGrids) window.syncIconGrids(root);
         // Pop-up visibility rules (#338): bound after the values are restored,
         // so the restored controller decides which follow-ups show.
         if (window.ConditionalVisibility && root) {
