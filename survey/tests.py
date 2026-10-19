@@ -9826,6 +9826,123 @@ class DashboardVersioningTest(TestCase):
         self.assertEqual(survey_list.first(), canonical)
 
 
+class DashboardCompletionCountsTest(TestCase):
+    """Dashboard card numbers come from family-wide batched counts (#362, change
+    dashboard-batched-kpis): same numbers as the Responses overview, a query count
+    that does not grow with the survey list."""
+
+    def setUp(self):
+        self.org = _make_org('KpiOrg')
+        self.user = User.objects.create_user(username='kpiowner', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='kpiowner', password='pass')
+
+    def _header(self, name, **kwargs):
+        """A survey version with two sections; returns (header, q_first, q_last)."""
+        header = SurveyHeader.objects.create(
+            name=name, organization=self.org, created_by=self.user, **kwargs,
+        )
+        last = SurveySection.objects.create(survey_header=header, name='last', code='S2')
+        first = SurveySection.objects.create(
+            survey_header=header, name='first', code='S1', is_head=True, next_section=last,
+        )
+        q_first = Question.objects.create(
+            survey_section=first, name='Q1', code='q1', input_type='text', order_number=1,
+        )
+        q_last = Question.objects.create(
+            survey_section=last, name='Q2', code='q2', input_type='text', order_number=1,
+        )
+        return header, q_first, q_last
+
+    def _session(self, header, *questions, **kwargs):
+        session = SurveySession.objects.create(survey=header, **kwargs)
+        for q in questions:
+            Answer.objects.create(survey_session=session, question=q, text='x')
+        return session
+
+    def _card(self, response, survey):
+        return next(s for s in response.context['survey_headers'] if s.id == survey.id)
+
+    def test_card_numbers_match_overview_across_versions(self):
+        """
+        GIVEN a survey with an archived version, completed and partial sessions on
+              both, a deleted completed session, an empty session and a completed
+              preview session on its draft copy
+        WHEN the dashboard is loaded
+        THEN the card's completed count and rate equal get_overview() — 3 of 6, 50%
+        """
+        from .analytics import SurveyAnalyticsService
+        canonical, c_first, c_last = self._header('kpi_family', status='published', version_number=2)
+        archived, a_first, a_last = self._header(
+            'kpi_family', status='closed', is_canonical=False,
+            canonical_survey=canonical, version_number=1,
+        )
+        draft, d_first, d_last = self._header('[draft] kpi_family', published_version=canonical)
+        self._session(canonical, c_first, c_last)
+        self._session(canonical, c_first)
+        self._session(canonical)
+        self._session(archived, a_first, a_last)
+        self._session(archived, a_last)
+        self._session(archived, a_first)
+        self._session(canonical, c_first, c_last, is_deleted=True)
+        self._session(draft, d_first, d_last)
+
+        response = self.client.get('/editor/')
+
+        overview = SurveyAnalyticsService(canonical).get_overview()
+        card = self._card(response, canonical)
+        self.assertEqual((overview['completed_count'], overview['completion_rate']), (3, 50))
+        self.assertEqual(card.completed_count, overview['completed_count'])
+        self.assertEqual(card.completion_rate, overview['completion_rate'])
+
+    def test_survey_without_sessions_shows_zero(self):
+        """
+        GIVEN a survey with sections and no sessions, and one with no sections at all
+        WHEN the dashboard is loaded
+        THEN both cards show 0 completed and 0%
+        """
+        survey, _, _ = self._header('kpi_empty', status='published')
+        bare = SurveyHeader.objects.create(name='kpi_bare', organization=self.org, created_by=self.user)
+
+        response = self.client.get('/editor/')
+
+        for s in (survey, bare):
+            card = self._card(response, s)
+            self.assertEqual((card.completed_count, card.completion_rate), (0, 0))
+
+    def _populate(self, n):
+        for i in range(n):
+            canonical, c_first, c_last = self._header(f'kpi_{i}', status='published', version_number=2)
+            archived, a_first, a_last = self._header(
+                f'kpi_{i}', status='closed', is_canonical=False,
+                canonical_survey=canonical, version_number=1,
+            )
+            self._session(canonical, c_first, c_last)
+            self._session(archived, a_first)
+
+    def _dashboard_queries(self):
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+        with CaptureQueriesContext(connection) as ctx:
+            response = self.client.get('/editor/')
+        self.assertEqual(response.status_code, 200)
+        return len(ctx.captured_queries)
+
+    def test_query_count_does_not_grow_with_surveys(self):
+        """
+        GIVEN a workspace with 2 versioned surveys, then the same with 8
+        WHEN the dashboard is loaded each time
+        THEN both loads run the same number of queries
+        """
+        self._populate(2)
+        self.client.get('/editor/')  # warm per-process caches (changelog, sites)
+        with_two = self._dashboard_queries()
+        SurveyHeader.objects.filter(organization=self.org).update(name='kpi_old')
+        self._populate(6)
+        with_eight = self._dashboard_queries()
+        self.assertEqual(with_eight, with_two)
+
+
 class DashboardVersionDownloadUITest(TestCase):
     """The survey card menu opens the export dialog with the version list on the opener
     (spec version-export-ui, modified by responses-export-formats)."""

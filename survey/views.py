@@ -689,9 +689,12 @@ def editor(request):
 		.values_list('fam', 'n')
 	)
 
-	# Compute completion KPIs per survey (family-wide via the service scope)
-	from .analytics import SurveyAnalyticsService
+	# Completion KPIs for every card in a fixed number of queries (#362): the
+	# same family-wide numbers get_overview() reports, without running the
+	# Responses service — and its per-session issue scan — once per survey.
+	from .analytics import family_completion_counts
 	from .comments import unseen_by_survey
+	completion = family_completion_counts(survey_list)
 	comment_counts = unseen_by_survey(request.user, survey_list)
 	# Which families ask for files decides whether the export dialog offers
 	# "Include attached files" for that card — one query, like the counts above.
@@ -716,9 +719,9 @@ def editor(request):
 		survey.session_count = family_counts.get(survey.id, 0)
 		survey.has_unpublished_changes = survey.id in with_drafts
 		survey.has_files = survey.id in families_with_files
-		overview = SurveyAnalyticsService(survey).get_overview()
-		survey.completed_count = overview['completed_count']
-		survey.completion_rate = overview['completion_rate']
+		total, completed = completion[survey.id]
+		survey.completed_count = completed
+		survey.completion_rate = round(completed / total * 100) if total else 0
 		survey.open_comments, survey.unseen_comments = comment_counts.get(survey.id, (0, 0))
 		surveys_with_kpi.append(survey)
 
