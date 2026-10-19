@@ -54438,14 +54438,20 @@ class ChoiceIconGridTest(TestCase):
         GIVEN the question modal for an icon-grid question
         WHEN it is rendered inside the editor
         THEN the choices table has the Color column, the Color field is gated on the grid,
-             and the picker dropdown is sized independently of its input
+             and the picker is one button opening a fixed-position panel sized on its own
+             (change icon-picker-one-button)
         """
         self._login_editor()
         html = self.client.get(reverse('editor_question_edit', args=[self.survey.uuid, self.q_multi.id])).content.decode()
         self.assertIn('class="choice-grid-cell choice-color-cell"', html)
         self.assertIn("show('fg-color', isGeo || isStars || isGrid);", html)
+        # The row's icon input is a bare value carrier now, not a styled text field.
+        self.assertIn('<input type="text" class="choice-icon">', html)
+        self.assertIn("remove: '", html)
         page = self.client.get(f'/editor/surveys/{self.survey.uuid}/').content.decode()
-        self.assertIn('width: max(100%, min(440px, calc(100vw - 16px)));', page)
+        self.assertIn('.icon-picker-trigger {', page)
+        self.assertIn('width: min(560px, calc(100vw - 16px));', page)
+        self.assertIn('position: fixed;', page[page.index('.icon-picker-dropdown {'):][:200])
 
     def test_modal_offers_icon_grid_for_multichoice(self):
         """

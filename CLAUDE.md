@@ -225,7 +225,7 @@ on the `choices` entries next to `other`, trimmed/capped by `question_types.norm
 (`color` only as `#rrggbb`) on every save path and on import, and ignored by every other consumer. Tile icons go through
 `{% marker_icon %}` and only when `marker_icons.is_drawable()` — no default pin on a tile. Icon
 colour = the option's `color`, else `Question.color` unless it is the model default `#000000`
-(= unset, CSS grey). The picker dropdown is sized on its own (≥440px), not by its input.
+(= unset, CSS grey). The icon picker is ONE button (`js/icon_picker.js`, the input stays hidden as the value carrier) opening a fixed-position panel with Remove icon / No icon / "Use <typed value>"; never put a text field or browse button back next to it.
 Single choice folds to the chosen row in `js/choice_icon_grid.js`; pop-ups that restore values with
 `.prop()` must call `window.syncIconGrids(root)` (done in `initPopupFields`).
 

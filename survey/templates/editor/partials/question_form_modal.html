@@ -512,7 +512,6 @@
         <style>
             .choices-editor--no-other .choice-other-cell { display: none; }
             .choices-editor:not(.choices-editor--grid) .choice-grid-cell { display: none; }
-            .choice-icon-cell .choice-icon { min-width: 120px; }
             .choice-color-wrap { display: inline-flex; align-items: center; gap: 2px; }
             .choice-color-wrap .choice-color { width: 32px; height: 28px; padding: 1px; border: 1px solid #d1d5db; border-radius: 4px; background: #fff; cursor: pointer; }
             .choice-color-wrap .choice-color[data-unset] { opacity: 0.3; }
@@ -535,7 +534,7 @@
                         {% else %}
                         <th>{% trans "Name" %}</th>
                         {% endif %}
-                        <th class="choice-grid-cell" style="width:230px;" title="{% trans 'Shown on the option tile in the icon grid' %}">{% trans "Icon" %}</th>
+                        <th class="choice-grid-cell" style="width:56px;" title="{% trans 'Shown on the option tile in the icon grid' %}">{% trans "Icon" %}</th>
                         <th class="choice-grid-cell" style="width:76px;" title="{% trans 'Icon colour for this option; cleared = the question colour' %}">{% trans "Color" %}</th>
                         <th class="choice-grid-cell" style="width:120px;" title="{% trans 'Options with the same group sit together under one heading' %}">{% trans "Group" %}</th>
                         <th class="choice-other-cell" style="width:64px;" title="{% trans 'Write-in option: respondents who pick it get a text field to say what they mean' %}">{% trans "Other" %}</th>
@@ -1437,7 +1436,7 @@
         // styles. Values are set through .value below, never spliced into markup.
         // The colour cell starts "unset" (data-unset): an <input type=color> cannot
         // be empty, so the flag is what means "follow the question colour".
-        cells += '<td class="choice-grid-cell choice-icon-cell"><input type="text" class="form-control form-control-sm choice-icon" placeholder="maki:park"></td>';
+        cells += '<td class="choice-grid-cell choice-icon-cell"><input type="text" class="choice-icon"></td>';
         cells += '<td class="choice-grid-cell choice-color-cell"><span class="choice-color-wrap"><input type="color" class="choice-color" value="#374151" data-unset="1" title="{% trans 'Icon colour' %}"><button type="button" class="choice-color-clear" title="{% trans 'Use the question colour' %}">&times;</button></span></td>';
         cells += '<td class="choice-grid-cell"><input type="text" class="form-control form-control-sm choice-group" maxlength="60"></td>';
         // The write-in flag (spec other-option-write-in): a checkbox, not a radio,
@@ -1509,7 +1508,10 @@
                 loading: '{{ _("Loading icons…")|escapejs }}',
                 none: '{{ _("No icons match")|escapejs }}',
                 failed: '{{ _("Could not load the icon catalog")|escapejs }}',
-                browse: '{{ _("Browse icons")|escapejs }}'
+                browse: '{{ _("Choose an icon")|escapejs }}',
+                remove: '{{ _("Remove icon")|escapejs }}',
+                noIcon: '{{ _("No icon")|escapejs }}',
+                use: '{{ _("Use")|escapejs }}'
             }
         });
     }
