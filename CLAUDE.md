@@ -220,10 +220,12 @@ values a type accepts is ONE table, `question_types.DISPLAY_STYLES_BY_TYPE` /
 both editor previews and ZIP import read it, and the modal's JS `DISPLAY_STYLE_TYPES` mirrors its
 keys; a new style is one row there, never another hard-coded tuple. `icon_grid` (choice and
 multichoice) renders `choice_icon_grid.html`: native radios/checkboxes wrapped in tile labels, so
-value, required check and write-in are the list's. Per-option `icon` and `group` are optional keys
+value, required check and write-in are the list's. Per-option `icon`, `group` and `color` are optional keys
 on the `choices` entries next to `other`, trimmed/capped by `question_types.normalise_choice_extras`
-on every save path and on import, and ignored by every other consumer. Tile icons go through
-`{% marker_icon %}` and only when `marker_icons.is_drawable()` — no default pin on a tile.
+(`color` only as `#rrggbb`) on every save path and on import, and ignored by every other consumer. Tile icons go through
+`{% marker_icon %}` and only when `marker_icons.is_drawable()` — no default pin on a tile. Icon
+colour = the option's `color`, else `Question.color` unless it is the model default `#000000`
+(= unset, CSS grey). The picker dropdown is sized on its own (≥440px), not by its input.
 Single choice folds to the chosen row in `js/choice_icon_grid.js`; pop-ups that restore values with
 `.prop()` must call `window.syncIconGrids(root)` (done in `initPopupFields`).
 

@@ -13,7 +13,7 @@ js/choice_icon_grid.js fold the grid to the chosen row after a pick.
             {% for option in run.options %}
             <label class="cig-tile{% if option.selected %} cig-tile--on{% endif %}"{% if option.attrs.id %} for="{{ option.attrs.id }}"{% endif %} title="{{ option.label }}">
                 <input type="{{ option.type }}" name="{{ option.name }}" value="{{ option.value|stringformat:'s' }}" class="cig-tile__input"{% include "django/forms/widgets/attrs.html" with widget=option %}>
-                {% if option.icon %}<span class="cig-tile__icon">{% marker_icon option.icon %}</span>{% endif %}
+                {% if option.icon %}<span class="cig-tile__icon">{% marker_icon option.icon color=option.icon_color %}</span>{% endif %}
                 <span class="cig-tile__label">{{ option.label }}</span>
             </label>
             {% endfor %}

@@ -733,11 +733,15 @@
             flex-shrink: 0;
         }
         .icon-picker-btn:hover { border-color: var(--accent); color: var(--accent); }
+        /* Sized for browsing, not for its input (change icon-grid-color-picker): a
+           choices-table cell is ~230px, which left four columns of tiny icons.
+           js/icon_picker.js flips it to the right edge when the left one overflows. */
         .icon-picker-dropdown {
             display: none;
             position: absolute;
             top: 100%;
-            left: 0; right: 0;
+            left: 0;
+            width: max(100%, min(440px, calc(100vw - 16px)));
             z-index: 200;
             background: #fff;
             border: 1px solid var(--border-color);
@@ -749,6 +753,7 @@
             flex-direction: column;
         }
         .icon-picker-dropdown.open { display: flex; }
+        .icon-picker-dropdown--right { left: auto; right: 0; }
         .icon-picker-search {
             padding: 0.5rem;
             border-bottom: 1px solid var(--border-color);
@@ -764,7 +769,7 @@
         .icon-picker-search input:focus { border-color: var(--accent); }
         .icon-picker-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
             gap: 2px;
             padding: 0.5rem;
             overflow-y: auto;
@@ -774,17 +779,17 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 40px; height: 40px;
+            width: 44px; height: 44px;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 1rem;
+            font-size: 1.3rem;
             color: #374151;
             transition: background 0.1s;
         }
         .icon-picker-cell:hover { background: var(--accent-light); color: var(--accent); }
         .icon-picker-cell.selected { background: var(--accent); color: #fff; }
         .icon-picker-cell { border: 0; background: transparent; padding: 0; }
-        .icon-picker-cell svg.marker-icon-svg-glyph { width: 18px; height: 18px; }
+        .icon-picker-cell svg.marker-icon-svg-glyph { width: 22px; height: 22px; }
         .icon-picker-preview svg.marker-icon-svg-glyph { width: 20px; height: 20px; }
         .icon-picker-chips {
             display: flex; flex-wrap: wrap; gap: 4px;
@@ -807,9 +812,11 @@
             padding: 0.35rem 0.6rem 0;
         }
         .icon-picker-dropdown { max-height: 420px; }
-        .icon-picker-grid { max-height: 260px; }
+        .icon-picker-grid { max-height: 300px; }
+        .icon-picker-dropdown { max-height: 460px; }
         @media (max-width: 768px) {
-            .icon-picker-dropdown { position: fixed; left: 8px; right: 8px; top: auto; bottom: 8px; max-height: 70vh; }
+            .icon-picker-dropdown,
+            .icon-picker-dropdown--right { position: fixed; left: 8px; right: 8px; width: auto; top: auto; bottom: 8px; max-height: 70vh; }
             .icon-picker-grid { max-height: 40vh; }
         }
 
