@@ -18,6 +18,6 @@
 
 ## 4. Verify
 
-- [ ] 4.1 Targeted tests green; one full `./run_tests.sh survey` run
+- [x] 4.1 Targeted tests green; one full `./run_tests.sh survey` run (Ran 2677, OK)
 - [x] 4.2 Browser: picker from a choices-table cell is wide and on screen; coloured icons in the respondent grid and the preview
 - [x] 4.3 `openspec validate icon-grid-color-picker --strict`

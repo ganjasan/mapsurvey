@@ -13,5 +13,5 @@
 
 - [x] 3.1 Targeted tests (icon grid, write-in, catalog) green
 - [x] 3.2 Browser: one control per row; panel 560×520 placed without covering its button at three scroll positions; remove / no icon / use-typed set the value; bottom sheet at 390px
-- [ ] 3.3 One full `./run_tests.sh survey` run
+- [x] 3.3 One full `./run_tests.sh survey` run (Ran 2677, OK)
 - [x] 3.4 `openspec validate icon-picker-one-button --strict`

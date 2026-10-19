@@ -2,7 +2,6 @@
 
 ## Purpose
 How a question stores its answer options inline as a JSONField rather than through separate OptionGroup/OptionChoice models: the choice object shape, translation lookup, how answers reference codes, form-field generation, validation and admin editing.
-
 ## Requirements
 ### Requirement: Question stores choices inline as JSONField
 The Question model SHALL store answer choices directly in a `choices` JSONField instead of referencing external OptionGroup.
@@ -138,3 +137,34 @@ The Django admin SHALL provide interface for editing Question.choices.
 #### Scenario: Display choices count
 - **WHEN** viewing question list in admin
 - **THEN** admin MAY show number of choices for each question
+
+### Requirement: Optional icon and group on a choice object
+A choice object SHALL accept an optional `icon` and an optional `group`. The `icon` is a marker-icon value: a Font Awesome class or a `set:name` from the map sets. The `group` is plain text.
+
+These save paths SHALL trim both keys: the editor's save, autosave, the live preview and ZIP import. They SHALL drop a key that is blank or not a string. They SHALL cap `group` at 60 characters and `icon` at 64. They SHALL keep every other key and the order of the choices.
+
+Every consumer other than the icon-grid rendering SHALL ignore both keys. Answer storage, analytics, exports, public results and the list and dropdown renderings SHALL behave as if the keys were absent.
+
+#### Scenario: Keys are stored when set
+- **WHEN** the creator saves a choice with icon `maki:park` and group "Nature"
+- **THEN** the stored entry is `{"code": 1, "name": "Park", "icon": "maki:park", "group": "Nature"}`
+
+#### Scenario: Blank keys are not stored
+- **WHEN** the creator saves choices with empty Icon and Group cells
+- **THEN** the stored entries contain no `icon` or `group` key
+
+#### Scenario: Export ignores the keys
+- **WHEN** responses to a question whose choices carry icons are exported to CSV
+- **THEN** the choice columns hold the option names exactly as before this change
+
+### Requirement: Optional colour on a choice object
+A choice object SHALL accept an optional `color`. Every save path that normalises `icon` and `group` SHALL keep a `color` only when it is a string matching `#RRGGBB`, stored in lower case. Any other value SHALL be dropped. Every consumer other than the icon-grid rendering SHALL ignore it.
+
+#### Scenario: Valid colour kept, normalised
+- **WHEN** a choice is saved with `color = " #DC2626 "`
+- **THEN** the stored entry carries `"color": "#dc2626"`
+
+#### Scenario: Invalid colour dropped
+- **WHEN** a choice is saved with `color = "red"` or `color = ""`
+- **THEN** the stored entry has no `color` key
+
