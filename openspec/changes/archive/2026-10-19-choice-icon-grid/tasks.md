@@ -40,6 +40,6 @@
 
 ## 6. Verify
 
-- [ ] 6.1 `./run_tests.sh survey` baseline before and once after; summarise the delta
+- [x] 6.1 `./run_tests.sh survey` once after (the --parallel baseline crashed on an unpicklable traceback): Ran 2672, OK
 - [x] 6.2 Browser check on the dev server: 17 options with icons and three groups in a point pop-up on a phone width and in "Respondent sees"; pick collapses to the row, "Show all" expands, multichoice stays open
 - [x] 6.3 `openspec validate choice-icon-grid --strict`
