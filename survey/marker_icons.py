@@ -74,6 +74,16 @@ def is_valid(value):
     return is_svg_value(value) and value in _known_values()
 
 
+def is_drawable(value):
+    """A non-empty value `render()` draws as itself rather than as the default pin.
+
+    For surfaces where an icon is optional decoration (icon-grid tiles): there the
+    default pin would claim a meaning the creator never gave, so they draw nothing
+    unless this is true.
+    """
+    return bool(value) and bool(value.strip()) and is_valid(value)
+
+
 def resolve(value):
     """`{"kind": "font", "classes": ...}` or `{"kind": "svg", "set": ..., "symbol": ...}`."""
     value = (value or '').strip()

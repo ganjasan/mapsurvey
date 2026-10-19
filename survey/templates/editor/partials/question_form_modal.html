@@ -235,7 +235,7 @@
             semantics survive unchanged.{% endcomment %}
             {% with sdef=survey.get_default_rating_display_style %}
             <div style="display:flex;gap:8px;">
-                <label class="ds-option" data-types="choice" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;padding:10px 8px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;margin:0;font-size:0.85rem;text-align:center;position:relative;overflow:hidden;">
+                <label class="ds-option" data-types="choice multichoice" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;padding:10px 8px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;margin:0;font-size:0.85rem;text-align:center;position:relative;overflow:hidden;">
                     <input type="radio" name="display_style" value="default"{% if not form.display_style.value or form.display_style.value == 'default' %} checked{% endif %}>
                     <span class="ds-default-ribbon">{% trans "Default" %}</span>
                     <span class="ds-thumb" style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;">
@@ -247,7 +247,7 @@
                 </label>
                 {% for radio in form.display_style %}
                 {% if radio.data.value != 'default' %}
-                <label class="ds-option" data-types="{% if radio.data.value == 'dropdown' %}choice{% else %}rating{% endif %}" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;padding:10px 8px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;margin:0;font-size:0.85rem;text-align:center;position:relative;overflow:hidden;">
+                <label class="ds-option" data-types="{% if radio.data.value == 'dropdown' %}choice{% elif radio.data.value == 'icon_grid' %}choice multichoice{% else %}rating{% endif %}" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;padding:10px 8px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;margin:0;font-size:0.85rem;text-align:center;position:relative;overflow:hidden;">
                     {% if radio.data.value == sdef %}
                     {# The survey's own default rating style: submits 'default' (inherit), wears the ribbon. #}
                     <input type="radio" name="display_style" value="default"{% if not form.display_style.value or form.display_style.value == 'default' or form.display_style.value == sdef %} checked{% endif %}>
@@ -262,6 +262,11 @@
                     {% elif radio.data.value == 'stars' %}
                     <span class="ds-thumb" style="display:flex;gap:2px;color:#f5b301;font-size:13px;">
                         <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star" style="color:#d5d8dc;"></i><i class="fas fa-star" style="color:#d5d8dc;"></i>
+                    </span>
+                    {% elif radio.data.value == 'icon_grid' %}
+                    <span class="ds-thumb" style="display:grid;grid-template-columns:repeat(3,20px);gap:3px;color:#6b7280;font-size:9px;">
+                        <i style="display:flex;align-items:center;justify-content:center;height:16px;border:1px solid #d1d5db;border-radius:3px;" class="fas fa-tree"></i><i style="display:flex;align-items:center;justify-content:center;height:16px;border:1px solid #4f46e5;background:#eef2ff;color:#4f46e5;border-radius:3px;" class="fas fa-child"></i><i style="display:flex;align-items:center;justify-content:center;height:16px;border:1px solid #d1d5db;border-radius:3px;" class="fas fa-bus"></i>
+                        <i style="display:flex;align-items:center;justify-content:center;height:16px;border:1px solid #d1d5db;border-radius:3px;" class="fas fa-store"></i><i style="display:flex;align-items:center;justify-content:center;height:16px;border:1px solid #d1d5db;border-radius:3px;" class="fas fa-bicycle"></i><i style="display:flex;align-items:center;justify-content:center;height:16px;border:1px solid #d1d5db;border-radius:3px;" class="fas fa-water"></i>
                     </span>
                     {% elif radio.data.value == 'dropdown' %}
                     <span class="ds-thumb" style="display:flex;align-items:center;justify-content:space-between;width:74px;height:22px;border:1px solid #9aa0a6;border-radius:4px;color:#9aa0a6;padding:0 6px;">
@@ -504,7 +509,13 @@
         {% include "editor/partials/_visibility_block.html" %}
 
         <!-- Choices editor -->
-        <style>.choices-editor--no-other .choice-other-cell { display: none; }</style>
+        <style>
+            .choices-editor--no-other .choice-other-cell { display: none; }
+            .choices-editor:not(.choices-editor--grid) .choice-grid-cell { display: none; }
+            .choice-icon-cell .choice-icon { min-width: 120px; }
+        </style>
+        {% comment %}Icon/Group mean something only to the icon grid (spec survey-editor). Hidden
+        cells keep their values, so switching the style back restores them.{% endcomment %}
         <div class="choices-editor" id="choices-editor" style="display:none;">
             <label style="font-weight:600;">{% trans "Choices" %}</label>
             <table class="table table-sm">
@@ -519,6 +530,8 @@
                         {% else %}
                         <th>{% trans "Name" %}</th>
                         {% endif %}
+                        <th class="choice-grid-cell" style="width:230px;" title="{% trans 'Shown on the option tile in the icon grid' %}">{% trans "Icon" %}</th>
+                        <th class="choice-grid-cell" style="width:120px;" title="{% trans 'Options with the same group sit together under one heading' %}">{% trans "Group" %}</th>
                         <th class="choice-other-cell" style="width:64px;" title="{% trans 'Write-in option: respondents who pick it get a text field to say what they mean' %}">{% trans "Other" %}</th>
                         <th style="width:40px;"></th>
                     </tr>
@@ -784,8 +797,16 @@
     }
 
     // Types whose rendering the creator can pick. Mirrors
-    // SurveySectionAnswerForm.DISPLAY_STYLE_TYPES — keep the two in step.
-    var DISPLAY_STYLE_TYPES = ['rating', 'choice'];
+    // survey.question_types.DISPLAY_STYLES_BY_TYPE — keep the two in step.
+    var DISPLAY_STYLE_TYPES = ['rating', 'choice', 'multichoice'];
+
+    // The Icon/Group columns follow the icon-grid style, and only on the types
+    // that offer it: see .choices-editor--grid.
+    function toggleGridColumns() {
+        var t = inputTypeSelect ? inputTypeSelect.value : '';
+        var grid = !!document.querySelector('#display-style-fields input[value="icon_grid"]:checked');
+        choicesEditor.classList.toggle('choices-editor--grid', grid && (t === 'choice' || t === 'multichoice'));
+    }
 
     // Beyond this many options the scale strip is under ~25px per cell on a
     // 320px screen. Measured, not guessed: nine options give 20.5px.
@@ -869,6 +890,7 @@
         });
         if (!visibleChecked && hiddenChecked && visibleDefault) visibleDefault.checked = true;
         toggleStripWidthHint();
+        toggleGridColumns();
     }
 
     // ── Type-scoped settings (#111): only fields the selected type consumes ──
@@ -1352,6 +1374,7 @@
             toggleStarCountField();
             toggleStripWidthHint();
             toggleTypeScopedFields();
+            toggleGridColumns();
         });
     });
     var starCountInput = document.getElementById('star-count-input');
@@ -1362,7 +1385,7 @@
     // this point and adds five star rows — can call it. The assignment form threw
     // `ReferenceError: addChoiceRow is not defined` there and aborted the whole
     // script for star-rating questions (PostHog, 2026-09-14).
-    function addChoiceRow(code, name, other) {
+    function addChoiceRow(code, name, other, icon, group) {
         var tbody = document.getElementById('choices-rows');
         var row = document.createElement('tr');
         var codeVal;
@@ -1403,10 +1426,17 @@
 
         // The write-in flag (spec other-option-write-in): a checkbox, not a radio,
         // so a flag can be taken off again; exclusivity is enforced on change.
+        // Icon grid extras (spec inline-choices), kept in hidden cells under other
+        // styles. Values are set through .value below, never spliced into markup.
+        cells += '<td class="choice-grid-cell choice-icon-cell"><input type="text" class="form-control form-control-sm choice-icon" placeholder="maki:park"></td>';
+        cells += '<td class="choice-grid-cell"><input type="text" class="form-control form-control-sm choice-group" maxlength="60"></td>';
         cells += '<td class="choice-other-cell text-center"><input type="checkbox" class="choice-other" title="{% trans 'Write-in option' %}"' + (other ? ' checked' : '') + '></td>';
         cells += '<td><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest(\'tr\').remove();window.schedulePreview&&window.schedulePreview()">&times;</button></td>';
         row.innerHTML = cells;
         tbody.appendChild(row);
+        row.querySelector('.choice-icon').value = typeof icon === 'string' ? icon : '';
+        row.querySelector('.choice-group').value = typeof group === 'string' ? group : '';
+        attachChoiceIconPicker(row.querySelector('.choice-icon'));
         // Row add/remove bypasses form input events; nudge the live preview.
         if (window.schedulePreview) window.schedulePreview();
     }
@@ -1427,11 +1457,14 @@
     })();
 
     // ── Icon Picker ── (survey/assets/js/icon_picker.js; catalog + sprites via MarkerIcon)
-    (function() {
-        var iconInput = document.querySelector('#questionModalBody input[name="icon_class"]');
+    // One options object for the question's marker icon and for every choice
+    // row's tile icon (icon grid). A function declaration so addChoiceRow, which
+    // runs from earlier init code, can call it (hoisting — see addChoiceRow).
+    function attachChoiceIconPicker(input) {
         var body = document.getElementById('questionModalBody');
-        if (!iconInput || !window.IconPicker || !body) return;
-        window.IconPicker.attach(iconInput, {
+        if (!input || !window.IconPicker || !body || input.dataset.pickerBound) return;
+        input.dataset.pickerBound = '1';
+        window.IconPicker.attach(input, {
             catalogUrl: body.getAttribute('data-icon-catalog'),
             lang: body.getAttribute('data-icon-lang') || 'en',
             strings: {
@@ -1444,7 +1477,8 @@
                 browse: '{{ _("Browse icons")|escapejs }}'
             }
         });
-    })();
+    }
+    attachChoiceIconPicker(document.querySelector('#questionModalBody input[name="icon_class"]'));
 
     window.serializeChoices = function() {
         var rows = document.querySelectorAll('#choices-rows tr');
@@ -1472,6 +1506,12 @@
             var entry = { code: code, name: name };
             var otherCb = row.querySelector('.choice-other');
             if (otherCb && otherCb.checked) entry.other = true;
+            // Only when set, so a question that never uses the grid keeps
+            // byte-identical choices.
+            var iconInp = row.querySelector('.choice-icon');
+            if (iconInp && iconInp.value.trim()) entry.icon = iconInp.value.trim();
+            var groupInp = row.querySelector('.choice-group');
+            if (groupInp && groupInp.value.trim()) entry.group = groupInp.value.trim();
             choices.push(entry);
         });
 
@@ -1567,7 +1607,7 @@
     {% if question and question.choices %}
     var existingChoices = JSON.parse(document.getElementById('existing-choices-data').textContent);
     existingChoices.forEach(function(choice) {
-        addChoiceRow(choice.code, choice.name, !!choice.other);
+        addChoiceRow(choice.code, choice.name, !!choice.other, choice.icon, choice.group);
     });
     {% endif %}
 

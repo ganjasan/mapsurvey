@@ -6,7 +6,7 @@ from .models import SurveyHeader, SurveySection, Question, Organization, BASEMAP
 from .html_sanitize import coerce_creator_html
 from .redirects import NO_REDIRECT, clean_redirect_url, is_valid_redirect, tidy_redirect_input
 from .layers import layers_for
-from .question_types import GEO_TYPES, MAP_ONLY_TYPES, SHARED_MAP_SOURCE_TYPES
+from .question_types import GEO_TYPES, MAP_ONLY_TYPES, SHARED_MAP_SOURCE_TYPES, allowed_display_styles
 
 # Parent-capable types cannot themselves be sub-questions: a sub-question lives
 # inside an object's popup, and an object cannot contain more objects.
@@ -500,10 +500,9 @@ class QuestionForm(forms.ModelForm):
         cleaned['subtext'] = coerce_creator_html(cleaned.get('subtext'))
         style = cleaned.get('display_style') or 'default'
         input_type = cleaned.get('input_type')
-        if input_type == 'choice':
-            if style not in ('default', 'dropdown'):
-                cleaned['display_style'] = 'default'
-        elif style == 'dropdown':
+        # One table decides (question_types.DISPLAY_STYLES_BY_TYPE): a style the
+        # type does not accept is stored as the plain rendering.
+        if style not in allowed_display_styles(input_type):
             cleaned['display_style'] = 'default'
         if input_type == 'layer_objects':
             layer = cleaned.get('layer')

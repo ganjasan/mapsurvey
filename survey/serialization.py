@@ -28,7 +28,7 @@ from .redirects import clean_redirect_url
 from .layers import layers_for, normalize_style, GEOMETRY_TEXT_FIELDS
 
 logger = logging.getLogger(__name__)
-from .question_types import CHOICE_TYPES
+from .question_types import CHOICE_TYPES, allowed_display_styles, normalise_choice_extras
 
 # Format version for compatibility checking
 FORMAT_VERSION = "1.0"
@@ -926,13 +926,12 @@ def _create_question(
     # the editor and migration 0060 clean up.
     if input_type not in CHOICE_TYPES:
         choices = None
+    elif isinstance(choices, list):
+        # Icon-grid extras: same trim/cap as an editor save (spec inline-choices).
+        normalise_choice_extras(choices)
 
     display_style = question_data.get("display_style")
-    allowed_styles = (
-        ("default", "dropdown") if input_type == "choice"
-        else ("default", "scale_strip", "list_pips", "stars")
-    )
-    if display_style not in allowed_styles:
+    if display_style not in allowed_display_styles(input_type):
         display_style = "default"
 
     question = Question.objects.create(

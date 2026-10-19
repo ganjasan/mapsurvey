@@ -145,6 +145,49 @@ CHOICE_TYPES = ("choice", "multichoice", "range", "rating", "ranking", "thumbs")
 THUMBS_UP, THUMBS_DOWN = 1, 0
 THUMBS_CHOICES = [{"code": THUMBS_UP, "name": "up"}, {"code": THUMBS_DOWN, "name": "down"}]
 
+# The display styles each type accepts (spec choice-dropdown-display). ONE table:
+# respondent rendering, the editor's save and preview, and ZIP import all read it,
+# so the next style is one edit here. A stored value outside its type's tuple is
+# unknown and renders the type's plain form. `default` on rating means "inherit
+# the survey-wide rating style".
+DISPLAY_STYLES_BY_TYPE = {
+    "rating": ("default", "scale_strip", "list_pips", "stars"),
+    "choice": ("default", "dropdown", "icon_grid"),
+    "multichoice": ("default", "icon_grid"),
+}
+
+
+def allowed_display_styles(input_type):
+    """The `display_style` values `input_type` accepts; `("default",)` for the rest."""
+    return DISPLAY_STYLES_BY_TYPE.get(input_type, ("default",))
+
+
+# Optional per-option keys the icon grid reads (spec inline-choices). Blank or
+# non-string values are dropped so a survey that never uses the grid keeps
+# byte-identical choices.
+CHOICE_EXTRA_LIMITS = {"icon": 64, "group": 60}
+
+
+def normalise_choice_extras(choices):
+    """Trim/cap/drop the `icon` and `group` keys on each choice. Mutates and returns.
+
+    Every other key and the order are kept; non-dict entries pass through for the
+    callers' own validation to judge.
+    """
+    for choice in choices or []:
+        if not isinstance(choice, dict):
+            continue
+        for key, cap in CHOICE_EXTRA_LIMITS.items():
+            if key not in choice:
+                continue
+            value = choice[key]
+            value = value.strip()[:cap].strip() if isinstance(value, str) else ""
+            if value:
+                choice[key] = value
+            else:
+                del choice[key]
+    return choices
+
 
 def picker_groups_for(choices, unavailable=None):
     """Group `choices` (an input_type choices iterable, e.g. the form field's —

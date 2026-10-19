@@ -26,7 +26,7 @@ from .models import (
     SurveyHeader, SurveySession, SurveySection, SurveySectionTranslation,
     Question, QuestionTranslation, SurveyCollaborator, Answer,
     Membership, SURVEY_ROLE_CHOICES, BASEMAP_CHOICES,
-    INPUT_TYPE_CHOICES, DISPLAY_STYLE_CHOICES, SurveyMapLayer,
+    INPUT_TYPE_CHOICES, SurveyMapLayer,
     CreatorPreferences,
     SURVEY_START_AI, SURVEY_START_CHOICES,
 )
@@ -38,7 +38,7 @@ from .layers import (
     MAX_LAYER_BYTES, MAX_LAYERS_PER_SURVEY,
 )
 from . import product_events as pe
-from .question_types import CHOICE_TYPES, MULTI_FEATURE_TYPES, SHARED_MAP_SOURCE_TYPES
+from .question_types import CHOICE_TYPES, MULTI_FEATURE_TYPES, SHARED_MAP_SOURCE_TYPES, allowed_display_styles, normalise_choice_extras
 from .cloning import clone_question, clone_section
 from .html_sanitize import coerce_creator_html
 from .translation_gaps import survey_translation_gaps
@@ -81,7 +81,12 @@ def _guard_choice_codes(question, new_choices):
     silently merge. Offending new entries get a fresh code above everything
     ever used in the lineage. Existing codes stay untouched (renaming an
     existing choice is a normal compatible edit).
+
+    Every editor save of `choices_json` passes here, so this is also where the
+    icon grid's optional `icon`/`group` keys are trimmed and capped.
     """
+    if isinstance(new_choices, list):
+        normalise_choice_extras(new_choices)
     if not isinstance(new_choices, list) or not question.code:
         return other_option.clamp_single_other(new_choices)
 
@@ -2016,7 +2021,7 @@ def editor_question_preview(request, survey_uuid, question_id):
     # Applied to the in-memory instance before the field is built, so for
     # `range` the override also decides the field type, not just the widget.
     style_override = request.GET.get('display_style')
-    if style_override in ('default', 'scale_strip', 'list_pips'):
+    if style_override in allowed_display_styles(question.input_type):
         question.display_style = style_override
 
     form = SurveySectionAnswerForm.single_question_form(question, lang)
@@ -2065,11 +2070,7 @@ def editor_question_preview_live(request, survey_uuid, section_id):
         return HttpResponse('unknown input type', status=400)
 
     display_style = request.POST.get('display_style', 'default')
-    allowed_styles = (
-        {'default', 'dropdown'} if input_type == 'choice'
-        else {value for value, _ in DISPLAY_STYLE_CHOICES}
-    )
-    if display_style not in allowed_styles:
+    if display_style not in allowed_display_styles(input_type):
         display_style = 'default'
 
     # A draft's choices arrive as the modal's serialized JSON. Malformed or
@@ -2091,7 +2092,7 @@ def editor_question_preview_live(request, survey_uuid, section_id):
                 and not isinstance(c.get('code'), bool)
                 and 'name' in c
             ]
-            choices = other_option.clamp_single_other(cleaned) or None
+            choices = other_option.clamp_single_other(normalise_choice_extras(cleaned)) or None
 
     # Objects on the map: the draft's layer comes from the modal's picker and
     # must be one of this survey's (canonical owner's) layers.
