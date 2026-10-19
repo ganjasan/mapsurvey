@@ -1,5 +1,5 @@
-{% load i18n %}
-{% load survey_filters %}<li class="question-item" data-question-id="{{ question.id }}" data-input-type="{{ question.input_type }}">
+{% load i18n question_utils %}
+{% load survey_filters %}<li class="question-item" data-question-id="{{ question.id }}" data-input-type="{{ question.input_type }}"{% if not question.parent_question_id_id %} data-top-level{% endif %}>
     <div class="question-item-row">
         <span class="drag-handle"><i class="fas fa-grip-vertical"></i></span>
         <span class="q-name">{{ question.name|default:"(unnamed)" }}</span>
@@ -67,7 +67,17 @@
             </button>
         </span>
     </div>
-    {% with sub_questions=question.subQuestions %}
+    {% if question.can_have_subquestions %}{% editor_runs question.survey_section question as sub_runs %}
+    {% if sub_runs %}
+    <ul class="subquestion-list" data-section-id="{{ question.survey_section_id }}" data-parent-id="{{ question.id }}">
+        {% for group, members in sub_runs %}{% if group %}
+            {% include "editor/partials/group_list_item.html" %}
+        {% else %}{% for subq in members %}
+            {% include "editor/partials/question_list_item.html" with question=subq %}
+        {% endfor %}{% endif %}{% endfor %}
+    </ul>
+    {% endif %}
+    {% else %}{% with sub_questions=question.subQuestions %}
     {% if sub_questions %}
     <ul class="subquestion-list">
         {% for subq in sub_questions %}
@@ -75,7 +85,7 @@
         {% endfor %}
     </ul>
     {% endif %}
-    {% endwith %}
+    {% endwith %}{% endif %}
     {% if question.can_have_subquestions %}
     <div class="add-subquestion-wrap">
         <button class="add-question-btn add-question-btn--sub"
@@ -87,6 +97,18 @@
                 data-toggle="modal" data-target="#questionModal"
                 {% elif is_read_only %}disabled{% else %}data-gate="add_subquestion" data-gate-section="{{ question.survey_section.code }}"{% endif %}>
             <i class="fas fa-plus"></i> {% trans "Add Sub-question" %}
+        </button>
+        <button class="add-question-btn add-question-btn--sub add-group-btn"
+                title="{% if is_read_only %}{% trans 'Create a draft to edit' %}{% else %}{% trans 'Add group' %}{% endif %}"
+                {% if not structure_locked %}
+                hx-post="{% url 'editor_group_create' survey.uuid question.survey_section_id %}"
+                hx-vals='{"parent_id": "{{ question.id }}"}'
+                hx-target="#questionModalBody"
+                hx-swap="innerHTML"
+                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                data-toggle="modal" data-target="#questionModal"
+                {% elif is_read_only %}disabled{% else %}data-gate="add_group" data-gate-section="{{ question.survey_section.code }}"{% endif %}>
+            <i class="fas fa-object-group"></i> {% trans "Add group" %}
         </button>
         {% if not structure_locked %}
         <button class="paste-as-subquestion-btn"

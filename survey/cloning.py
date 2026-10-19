@@ -22,17 +22,22 @@ from typing import Iterable, Optional
 
 from .models import (
     Question,
+    QuestionGroup,
+    QuestionGroupTranslation,
     QuestionTranslation,
     SurveyHeader,
     SurveySection,
     SurveySectionTranslation,
+    group_code_generator,
     question_code_generator,
 )
 
 # Fields every section copy decides about itself; everything else plain is copied.
 SECTION_DECIDED_FIELDS = ('is_head', 'name', 'title', 'visibility_rule')
-# Same for questions. Relations (section, parent, layer) are never plain.
+# Same for questions. Relations (section, parent, layer, group) are never plain.
 QUESTION_DECIDED_FIELDS = ('code', 'name', 'visibility_rule')
+# Same for question groups (change question-groups); section and parent are relations.
+GROUP_DECIDED_FIELDS = ('code', 'visibility_rule')
 
 
 def plain_field_values(instance, exclude: Iterable[str] = ()) -> dict:
@@ -81,6 +86,69 @@ def copy_section(
             section=new_section, **plain_field_values(trans),
         )
     return new_section
+
+
+def clone_groups(source_section, target_section, source_parent, target_parent, *,
+                 regenerate_code, keep_rule):
+    """Copy the groups of one bucket (a section's top level, or one pop-up) with
+    their translations; returns {source group id: new group}. Members are attached
+    by `attach_group_members` once they exist (change question-groups)."""
+    groups = QuestionGroup.objects.filter(survey_section=source_section)
+    groups = groups.filter(parent_question__isnull=True) if source_parent is None \
+        else groups.filter(parent_question=source_parent)
+    mapping = {}
+    for group in groups.order_by('order_number', 'id'):
+        new_group = QuestionGroup.objects.create(
+            survey_section=target_section,
+            parent_question=target_parent,
+            code=group_code_generator() if regenerate_code else group.code,
+            visibility_rule=copy.deepcopy(group.visibility_rule) if keep_rule else None,
+            **plain_field_values(group, exclude=GROUP_DECIDED_FIELDS),
+        )
+        for trans in QuestionGroupTranslation.objects.filter(group=group):
+            QuestionGroupTranslation.objects.create(group=new_group, **plain_field_values(trans))
+        mapping[group.id] = new_group
+    return mapping
+
+
+def attach_group_members(pairs, group_map, code_map=None):
+    """Point every cloned question at the clone of its source's group, and — when
+    codes were regenerated — a group rule naming a cloned controller at the clone
+    (the remap clone_section does for question rules)."""
+    for source, clone in pairs:
+        if source.group_id in group_map:
+            clone.group = group_map[source.group_id]
+            clone.save(update_fields=['group'])
+    if code_map:
+        for source_id, new_group in group_map.items():
+            rule = QuestionGroup.objects.get(pk=source_id).visibility_rule
+            if isinstance(rule, dict) and rule.get('question_code') in code_map:
+                new_group.visibility_rule = {**rule, 'question_code': code_map[rule['question_code']]}
+                new_group.save(update_fields=['visibility_rule'])
+
+
+def clone_top_level_questions(section, new_section, *, regenerate_code, keep_group_rules):
+    """Clone a section's top-level groups and questions (sub-questions and pop-up
+    groups recursively through clone_question). Returns (pairs, code_map)."""
+    group_map = clone_groups(section, new_section, None, None,
+                             regenerate_code=regenerate_code, keep_rule=keep_group_rules)
+    pairs = []
+    code_map = {}
+    for question in Question.objects.filter(
+        survey_section=section, parent_question_id__isnull=True
+    ).order_by('order_number'):
+        clone = clone_question(
+            question,
+            target_section=new_section,
+            parent=None,
+            regenerate_code=regenerate_code,
+            name_suffix=None,
+            copy_sub_questions=True,
+        )
+        pairs.append((question, clone))
+        code_map[question.code] = clone.code
+    attach_group_members(pairs, group_map, code_map if regenerate_code else None)
+    return pairs, code_map
 
 
 def clone_question(
@@ -139,6 +207,10 @@ def clone_question(
         )
 
     if copy_sub_questions:
+        # Pop-up groups travel with their parent on every path, rules included:
+        # their controllers are siblings that travel too (change question-groups).
+        group_map = clone_groups(question.survey_section, target_section, question, new_question,
+                                 regenerate_code=regenerate_code, keep_rule=True)
         sub_pairs = []
         for sub_q in Question.objects.filter(parent_question_id=question).order_by('order_number'):
             sub_pairs.append((sub_q, clone_question(
@@ -153,13 +225,14 @@ def clone_question(
         # the parent on every path, including a cross-survey paste, so the rule
         # always survives — pointed at the cloned sibling when codes were
         # regenerated (the same remap copy_section does for intra-section rules).
+        sub_code_map = {src.code: clone.code for src, clone in sub_pairs}
         if regenerate_code:
-            sub_code_map = {src.code: clone.code for src, clone in sub_pairs}
             for src, clone in sub_pairs:
                 rule = src.visibility_rule
                 if isinstance(rule, dict) and rule.get('question_code') in sub_code_map:
                     clone.visibility_rule = {**rule, 'question_code': sub_code_map[rule['question_code']]}
                     clone.save(update_fields=['visibility_rule'])
+        attach_group_members(sub_pairs, group_map, sub_code_map if regenerate_code else None)
 
     return new_question
 
@@ -231,21 +304,12 @@ def clone_section(
         keep_rule=target_survey.id == section.survey_header_id,
     )
 
-    pairs = []
-    code_map = {}
-    for question in Question.objects.filter(
-        survey_section=section, parent_question_id__isnull=True
-    ).order_by('order_number'):
-        clone = clone_question(
-            question,
-            target_section=new_section,
-            parent=None,
-            regenerate_code=True,
-            name_suffix=None,
-            copy_sub_questions=True,
-        )
-        pairs.append((question, clone))
-        code_map[question.code] = clone.code
+    # Group rules: kept in-survey, then remapped to cloned intra-section
+    # controllers (restored from the source rule even across surveys, like the
+    # question rules below).
+    pairs, code_map = clone_top_level_questions(
+        section, new_section, regenerate_code=True,
+        keep_group_rules=target_survey.id == section.survey_header_id)
 
     # Intra-section rules must follow their cloned controller, not keep pointing
     # at the source section's question. Restored from the SOURCE rule, because

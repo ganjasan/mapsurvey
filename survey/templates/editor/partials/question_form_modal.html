@@ -121,7 +121,7 @@
 </div>
 <form {% if question %}
         hx-post="{% url 'editor_question_edit' survey.uuid question.id %}"
-        hx-target="#questions-list > [data-question-id='{% if question.parent_question_id_id %}{{ question.parent_question_id_id }}{% else %}{{ question.id }}{% endif %}']"
+        hx-target="#questions-list [data-top-level][data-question-id='{% if question.parent_question_id_id %}{{ question.parent_question_id_id }}{% else %}{{ question.id }}{% endif %}']"
         hx-swap="outerHTML"
       {% elif parent %}
         hx-post="{% url 'editor_subquestion_create' survey.uuid parent.id %}"

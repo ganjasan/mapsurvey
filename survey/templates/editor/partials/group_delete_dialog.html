@@ -1,0 +1,53 @@
+{% load i18n %}{% comment %}
+Delete a question group (change question-groups; owner decision 2026-10-19: ask). With
+questions inside there is a choice, "only the group" by default; "with its questions" goes
+through the answer-loss acknowledgement. The choice rides hx-vals, and data-resend-values
+for the editor's 409 handler, which re-sends the request with only the acknowledgement.
+{% endcomment %}
+<div class="modal-header">
+    <h5 class="modal-title">{% blocktrans with title=group.title|default:_("Untitled group") %}Delete group “{{ title }}”?{% endblocktrans %}</h5>
+    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+</div>
+<div class="modal-body" id="group-delete-body">
+    {% if member_count %}
+    <label class="group-delete-choice">
+        <input type="radio" name="group_delete_mode" value="keep" checked>
+        <span><b>{% trans "Delete only the group" %}</b>
+            <small>{% if group.parent_question_id %}{% blocktrans count n=member_count %}Its {{ n }} question stays in the pop-up, where the group was. No answers are lost.{% plural %}Its {{ n }} questions stay in the pop-up, where the group was. No answers are lost.{% endblocktrans %}{% else %}{% blocktrans count n=member_count %}Its {{ n }} question stays in the section, where the group was. No answers are lost.{% plural %}Its {{ n }} questions stay in the section, where the group was. No answers are lost.{% endblocktrans %}{% endif %}</small></span>
+    </label>
+    <label class="group-delete-choice">
+        <input type="radio" name="group_delete_mode" value="all">
+        <span><b>{% blocktrans count n=member_count %}Delete the group and its {{ n }} question{% plural %}Delete the group and its {{ n }} questions{% endblocktrans %}</b>
+            <small>{% trans "The questions and everything answered to them are removed." %}</small></span>
+    </label>
+    {% else %}
+    <p class="mb-0">{% trans "The group is empty. Nothing else is deleted." %}</p>
+    {% endif %}
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
+    <button type="button" class="btn btn-danger group-delete"
+            id="group-delete-btn"
+            data-resend-values="{}"
+            hx-vals='js:{"with_questions": (document.querySelector("[name=group_delete_mode]:checked") || {}).value === "all" ? "1" : ""}'
+            hx-post="{% url 'editor_group_delete' survey.uuid group.id %}"
+            hx-target="#section-content" hx-swap="innerHTML"
+            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>{% trans "Delete group" %}</button>
+</div>
+<script>
+(function () {
+    var btn = document.getElementById('group-delete-btn');
+    var body = document.getElementById('group-delete-body');
+    if (!btn || !body) return;
+    var labels = {
+        keep: "{% trans 'Delete group' %}",
+        all: "{% trans 'Delete group and questions' %}"
+    };
+    body.addEventListener('change', function (e) {
+        if (e.target.name !== 'group_delete_mode') return;
+        var all = e.target.value === 'all';
+        btn.setAttribute('data-resend-values', JSON.stringify(all ? { with_questions: '1' } : {}));
+        btn.textContent = all ? labels.all : labels.keep;
+    });
+})();
+</script>

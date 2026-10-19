@@ -59,6 +59,26 @@ def question_missing_languages(question, survey):
     return missing
 
 
+def group_missing_languages(group, survey):
+    """A question group (change question-groups): the title counts when the base
+    title is set, the description when the base description is."""
+    langs = translation_languages(survey)
+    if not langs:
+        return []
+    rows = {t.language: t for t in group.translations.all()}
+    missing = []
+    for lang in langs:
+        row = rows.get(lang)
+        gap = False
+        if (group.title or '').strip():
+            gap = row is None or not (row.title or '').strip()
+        if not gap and (group.description or '').strip():
+            gap = row is None or not (row.description or '').strip()
+        if gap:
+            missing.append(lang)
+    return missing
+
+
 def survey_translation_gaps(survey):
     """[{'label': ..., 'missing': [lang, ...]}] over all sections and questions.
 
@@ -69,7 +89,7 @@ def survey_translation_gaps(survey):
         return []
     gaps = []
     for section in survey.surveysection_set.all().prefetch_related(
-        'translations', 'question_set__translations',
+        'translations', 'question_set__translations', 'question_groups__translations',
     ):
         missing = section_missing_languages(section, survey)
         if missing:
@@ -82,6 +102,13 @@ def survey_translation_gaps(survey):
             if missing:
                 gaps.append({
                     'label': 'Question: %s' % (question.name or '(unnamed)'),
+                    'missing': missing,
+                })
+        for group in section.question_groups.all():
+            missing = group_missing_languages(group, survey)
+            if missing:
+                gaps.append({
+                    'label': 'Group: %s' % (group.title or '(untitled)'),
                     'missing': missing,
                 })
     return gaps

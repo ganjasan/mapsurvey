@@ -4,34 +4,7 @@ errors, the input. The section form and the sub-question popups (geo features an
 objects, built in views.section) both render through this, so a sub-question looks and reads
 like the same question in the section — the popups used to be Form.as_p(), which dropped the
 hint and the rating styles (#320).
+Groups (change question-groups, #340): fields come in runs; a grouped run is wrapped by
+partials/question_group.html, which includes partials/question_cards.html for its fields.
 {% endcomment %}
-{% for field in form.visible_fields %}
-    {% if field|uses_scale_style %}
-        <div class="question-card question-card--scale"
-             data-field-name="{{ field.html_name }}"
-             {% if field.field.required %}data-required="true"{% endif %}>
-            {% if field.label %}<label for="{{ field.id_for_label }}">{{ field.label }}</label>{% endif %}
-            {% if field|question_subtext %}<div class="question-card__subtext">{{ field|question_subtext|safe }}</div>{% endif %}
-            {{ field.errors }}
-            {% if field|rating_display_style == 'list_pips' %}
-                {% include "partials/rating_list_pips.html" %}
-            {% elif field|rating_display_style == 'stars' %}
-                {% include "partials/rating_stars.html" %}
-            {% else %}
-                {% include "partials/rating_scale_strip.html" %}
-            {% endif %}
-        </div>
-    {% elif field|is_card_question %}
-        <div class="question-card"
-             data-field-name="{{ field.html_name }}"
-             {% if field.field.required %}data-required="true"{% endif %}>
-            {% if field.label %}<label for="{{ field.id_for_label }}">{{ field.label }}</label>{% endif %}
-            {% if field|question_subtext %}<div class="question-card__subtext">{{ field|question_subtext|safe }}</div>{% endif %}
-            {{ field.errors }}
-            {{ field }}
-        </div>
-    {% else %}
-        {{ field.errors }}
-        {{ field }}
-    {% endif %}
-{% endfor %}
+{% form_runs form as runs %}{% for run in runs %}{% if run.group %}{% include "partials/question_group.html" %}{% else %}{% include "partials/question_cards.html" with run_fields=run.fields %}{% endif %}{% endfor %}

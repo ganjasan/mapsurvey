@@ -29,6 +29,13 @@ sub-question of the SAME pop-up. Those rules never enter ``compute_visibility`` 
 pop-up is answered once per placed feature or object, so ``popup_visibility`` evaluates
 them per feature against that feature's own sub-answers (the section POST calls it for
 every feature and every object it stores).
+
+Group rules (change question-groups, #340): a ``QuestionGroup`` carries the same rule
+and is judged exactly like a question at its own ``order_number`` (groups share their
+siblings' order sequence, so the controller must come before the group, hence before
+every member). A member is visible only if its group is; a member's own rule applies on
+top. Section groups go through ``compute_visibility``, pop-up groups through
+``popup_visibility``.
 """
 
 from django.conf import settings
@@ -101,10 +108,18 @@ class VisibilityMap:
 		self.question_visible = {}   # question_id -> bool
 		self.section_visible = {}    # section_id -> bool
 		self.visible_sections = []   # [SurveySection] in chain order
-		self.broken = {}             # ('question'|'section', id) -> reason str
+		self.broken = {}             # ('question'|'section'|'group', id) -> reason str
+		self.group_visible = {}      # group_id -> bool
+		# question_id -> bool: section AND own rule, the group left out — lets the
+		# respondent page keep a member whose only hiding cause is a group rule the
+		# client toggles live.
+		self.question_own = {}
 
 	def is_question_visible(self, question_id):
 		return self.question_visible.get(question_id, True)
+
+	def is_group_visible(self, group_id):
+		return self.group_visible.get(group_id, True)
 
 	def is_section_visible(self, section_id):
 		return self.section_visible.get(section_id, True)
@@ -160,6 +175,7 @@ def compute_visibility(survey, answers_by_code, enabled=None):
 
 	vmap = VisibilityMap()
 	sections = _ordered_sections(survey)
+	groups_by_section = _section_groups(survey)
 
 	questions_index = {}
 	for s_idx, section in enumerate(sections):
@@ -196,14 +212,39 @@ def compute_visibility(survey, answers_by_code, enabled=None):
 		if section_shown:
 			vmap.visible_sections.append(section)
 
-		for question in _iter_questions(section):
-			if not enabled or question.visibility_rule is None:
+		for kind, item in walk(_iter_questions(section), groups_by_section.get(section.id, [])):
+			if not enabled or item.visibility_rule is None:
 				own = True
 			else:
-				own = rule_satisfied(question.visibility_rule, "question", question.id, s_idx, question.order_number)
-			vmap.question_visible[question.id] = section_shown and own
+				own = rule_satisfied(item.visibility_rule, kind, item.id, s_idx, item.order_number)
+			if kind == "group":
+				vmap.group_visible[item.id] = section_shown and own
+				continue
+			group_shown = vmap.group_visible.get(item.group_id, True) if item.group_id else True
+			vmap.question_own[item.id] = section_shown and own
+			vmap.question_visible[item.id] = section_shown and group_shown and own
 
 	return vmap
+
+
+def _section_groups(survey):
+	"""Top-level groups of every section of ``survey``: {section_id: [group]} (one query)."""
+	from .models import QuestionGroup
+	result = {}
+	for group in QuestionGroup.objects.filter(
+		survey_section__survey_header=survey, parent_question__isnull=True,
+	).order_by("order_number", "id"):
+		result.setdefault(group.survey_section_id, []).append(group)
+	return result
+
+
+def walk(questions, groups):
+	"""Questions and groups of one bucket in order, a group before a member of the
+	same number — so a group's verdict exists when its members are judged."""
+	items = [(g.order_number, 0, g.id, "group", g) for g in groups]
+	items += [(q.order_number, 1, q.id, "question", q) for q in questions]
+	items.sort(key=lambda t: t[:3])
+	return [(kind, obj) for *_k, kind, obj in items]
 
 
 def answers_by_code_for_session(survey_session):
@@ -238,10 +279,14 @@ class PopupVisibility:
 
 	def __init__(self):
 		self.question_visible = {}   # sub-question id -> bool
-		self.broken = {}             # ('subquestion', id) -> reason str
+		self.group_visible = {}      # pop-up group id -> bool
+		self.broken = {}             # ('subquestion'|'group', id) -> reason str
 
 	def is_question_visible(self, question_id):
 		return self.question_visible.get(question_id, True)
+
+	def is_group_visible(self, group_id):
+		return self.group_visible.get(group_id, True)
 
 
 def popup_visibility(parent, answers_by_code, enabled=None):
@@ -257,24 +302,35 @@ def popup_visibility(parent, answers_by_code, enabled=None):
 		enabled = getattr(settings, "CONDITIONAL_VISIBILITY", True)
 	verdict = PopupVisibility()
 	index = _sibling_index(parent)
-	for entry in index.values():
-		sub = entry["question"]
-		if not enabled or sub.visibility_rule is None:
-			verdict.question_visible[sub.id] = True
-			continue
-		controller_entry, matchable, broken = _rule_verdict(
-			sub.visibility_rule, "question", 0, sub.order_number, index)
-		if broken:
-			verdict.broken[("subquestion", sub.id)] = broken
-			verdict.question_visible[sub.id] = True
-			continue
-		controller = controller_entry["question"]
-		if not verdict.question_visible.get(controller.id, True):
-			verdict.question_visible[sub.id] = False
-			continue
-		answered = answers_by_code.get(controller.code) or []
-		verdict.question_visible[sub.id] = rule_matches(matchable, answered)
+	subs = [entry["question"] for entry in index.values()]
+	for kind, item in walk(subs, _popup_groups(parent)):
+		if not enabled or item.visibility_rule is None:
+			own = True
+		else:
+			controller_entry, matchable, broken = _rule_verdict(
+				item.visibility_rule, "question", 0, item.order_number, index)
+			if broken:
+				verdict.broken[("subquestion" if kind == "question" else "group", item.id)] = broken
+				own = True
+			else:
+				controller = controller_entry["question"]
+				if not verdict.question_visible.get(controller.id, True):
+					own = False
+				else:
+					own = rule_matches(matchable, answers_by_code.get(controller.code) or [])
+		if kind == "group":
+			verdict.group_visible[item.id] = own
+		else:
+			group_shown = verdict.group_visible.get(item.group_id, True) if item.group_id else True
+			verdict.question_visible[item.id] = group_shown and own
 	return verdict
+
+
+def _popup_groups(parent):
+	"""Groups of one pop-up. An unsaved parent (the editor's live preview) has none."""
+	if parent.pk is None:
+		return []
+	return list(parent.sub_question_groups.order_by("order_number", "id"))
 
 
 def popup_rules_for_client(parent, enabled=None):
@@ -288,12 +344,39 @@ def popup_rules_for_client(parent, enabled=None):
 		return {}
 	verdict = popup_visibility(parent, {}, enabled=True)
 	rules = {}
-	for sub in parent.subQuestions():
-		rule = sub.visibility_rule
-		if not isinstance(rule, dict) or ("subquestion", sub.id) in verdict.broken:
+	# In pop-up order, a group before its members: the client applies them so.
+	for kind, item in walk(list(parent.subQuestions()), _popup_groups(parent)):
+		rule = item.visibility_rule
+		broken_key = ("subquestion" if kind == "question" else "group", item.id)
+		if not isinstance(rule, dict) or broken_key in verdict.broken:
 			continue
-		rules[sub.code] = client_rule(rule)
+		rules[item.code if kind == "question" else group_rule_key(item)] = client_rule(rule)
 	return rules
+
+
+def section_rules_for_client(section, enabled=None):
+	"""Same-section rules of a section's questions and groups, group keys before
+	their members' — the editor preview's copy of what the respondent page ships
+	(it has no session, so nothing is resolved server-side there)."""
+	if enabled is None:
+		enabled = getattr(settings, "CONDITIONAL_VISIBILITY", True)
+	if not enabled:
+		return {}
+	from .groups import groups_for
+	questions = list(section.questions())
+	codes = {q.code for q in questions}
+	rules = {}
+	for kind, item in walk(questions, groups_for(section)):
+		rule = item.visibility_rule
+		if isinstance(rule, dict) and rule.get("question_code") in codes:
+			rules[item.code if kind == "question" else group_rule_key(item)] = client_rule(rule)
+	return rules
+
+
+def group_rule_key(group):
+	"""Key of a group's rule in the client rule maps: ``group:<code>`` — question codes
+	never contain a colon, so the two kinds cannot collide."""
+	return f"group:{group.code}"
 
 
 def popup_controller_options(parent, host=None):
@@ -328,9 +411,11 @@ def lint_rules(survey):
 
 	dependents = {}
 	section_codes_covered = {}  # controller_id -> set of covered choice codes
+	groups_by_section = _section_groups(survey)
 	for section in sections:
 		hosts = [("section", section, section.visibility_rule)]
 		hosts += [("question", q, q.visibility_rule) for q in _iter_questions(section)]
+		hosts += [("group", g, g.visibility_rule) for g in groups_by_section.get(section.id, [])]
 		for kind, host, rule in hosts:
 			if not isinstance(rule, dict):
 				continue
@@ -377,7 +462,7 @@ def controller_options(survey, host_section, host_kind, host_question=None):
 	groups = []
 	for section in _ordered_sections(survey):
 		if section.id == host_section.id:
-			if host_kind == 'question':
+			if host_kind in ('question', 'group'):
 				if host_question is None:
 					eligible = [q for q in _iter_questions(section) if q.input_type in CONTROLLER_TYPES]
 				else:
@@ -410,11 +495,17 @@ def describe_rule(host_kind, host, survey):
 		entry, matchable, broken = _rule_verdict(
 			rule, 'question', 0, host_order, _sibling_index(host.parent_question_id))
 		return _describe_verdict(entry, matchable, broken)
+	if host_kind == 'group' and host.parent_question_id is not None:
+		entry, matchable, broken = _rule_verdict(
+			rule, 'question', 0, host_order, _sibling_index(host.parent_question))
+		return _describe_verdict(entry, matchable, broken)
 	sections = _ordered_sections(survey)
 	questions_index = {}
 	host_section_index = None
 	for s_idx, section in enumerate(sections):
 		if host_kind == 'section' and section.id == host.id:
+			host_section_index = s_idx
+		if host_kind == 'group' and section.id == host.survey_section_id:
 			host_section_index = s_idx
 		for question in _iter_questions(section):
 			if host_kind == 'question' and question.id == host.id:
@@ -425,7 +516,8 @@ def describe_rule(host_kind, host, survey):
 	if host_section_index is None:
 		host_section_index = len(sections)
 
-	entry, matchable, broken = _rule_verdict(rule, host_kind, host_section_index, host_order, questions_index)
+	verdict_kind = 'question' if host_kind == 'group' else host_kind
+	entry, matchable, broken = _rule_verdict(rule, verdict_kind, host_section_index, host_order, questions_index)
 	return _describe_verdict(entry, matchable, broken)
 
 

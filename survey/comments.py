@@ -22,11 +22,11 @@ from django.utils import timezone
 
 from .models import (
     Comment, CommentAttachment, CommentSeen, CommentThread, Membership, PublicResultsBlock,
-    Question, SurveySection, SurveySession,
+    Question, QuestionGroup, SurveySection, SurveySession,
 )
 from .versioning import canonical_of, family_ids_with_draft
 
-ANCHOR_KINDS = ('survey', 'question', 'section', 'session', 'block')
+ANCHOR_KINDS = ('survey', 'question', 'section', 'session', 'block', 'group')
 SURVEY_ANCHOR_KEY = 'all'
 
 MAX_ATTACHMENT_BYTES = 15 * 1024 * 1024
@@ -75,6 +75,12 @@ def _question_row(canonical, code):
             .select_related('survey_section').first())
 
 
+def _group_row(canonical, code):
+    return (QuestionGroup.objects
+            .filter(survey_section__survey_header=canonical, code=code)
+            .select_related('survey_section').first())
+
+
 def _section_row(canonical, code):
     return SurveySection.objects.filter(survey_header=canonical, code=code).first()
 
@@ -102,6 +108,15 @@ def resolve_anchor(thread):
         return Anchor('section', s.code, s.title or s.name, True,
                       reverse('editor_survey_detail', kwargs={'survey_uuid': uuid}) + f'?section={s.id}',
                       s, s.id)
+    if thread.anchor_kind == 'group':
+        # By code, like a question: publish_draft() replaces the rows (change question-groups).
+        g = _group_row(canonical, thread.group_code)
+        if g is None:
+            return Anchor('group', thread.group_code, thread.group_code, False,
+                          reverse('editor_survey_detail', kwargs={'survey_uuid': uuid}))
+        return Anchor('group', g.code, g.title or g.code, True,
+                      reverse('editor_survey_detail', kwargs={'survey_uuid': uuid}) + f'?section={g.survey_section_id}',
+                      g, g.survey_section_id)
     if thread.anchor_kind == 'session':
         sess = thread.session
         key = str(thread.session_id)
@@ -177,6 +192,11 @@ def anchor_fields(survey, kind, key):
         if s is None:
             raise AnchorError('section not in survey')
         return {'anchor_kind': 'section', 'section_code': s.code}
+    if kind == 'group':
+        g = QuestionGroup.objects.filter(pk=pk, survey_section__survey_header_id__in=family).first()
+        if g is None:
+            raise AnchorError('group not in survey')
+        return {'anchor_kind': 'group', 'group_code': g.code}
     if kind == 'session':
         sess = SurveySession.objects.filter(pk=pk, survey_id__in=family).first()
         if sess is None:
@@ -190,7 +210,7 @@ def anchor_fields(survey, kind, key):
     raise AnchorError('unknown anchor kind')
 
 
-ANCHOR_FIELDS = ('question_code', 'section_code', 'session', 'block')
+ANCHOR_FIELDS = ('question_code', 'section_code', 'group_code', 'session', 'block')
 
 
 def _filter_from_fields(fields):
@@ -205,7 +225,8 @@ def anchor_filter_from_thread(thread):
     """Queryset filter for every thread sharing this thread's anchor."""
     return _filter_from_fields({
         'anchor_kind': thread.anchor_kind, 'question_code': thread.question_code,
-        'section_code': thread.section_code, 'session': thread.session_id and thread.session,
+        'section_code': thread.section_code, 'group_code': thread.group_code,
+        'session': thread.session_id and thread.session,
         'block': thread.block_id and thread.block,
     })
 
@@ -282,9 +303,10 @@ def open_counts(survey, user=None):
     """
     canonical = canonical_of(survey)
     rows = (CommentThread.objects.filter(survey=canonical, status='open')
-            .values('anchor_kind', 'question_code', 'section_code', 'session_id', 'block_id')
+            .values('anchor_kind', 'question_code', 'section_code', 'group_code', 'session_id', 'block_id')
             .annotate(n=Count('id')))
-    out = {'survey': Counter(), 'question': Counter(), 'section': Counter(), 'session': Counter(), 'block': Counter(), 'total': 0}
+    out = {'survey': Counter(), 'question': Counter(), 'section': Counter(), 'session': Counter(), 'block': Counter(),
+           'group': Counter(), 'total': 0}
     for r in rows:
         out['total'] += r['n']
         k = r['anchor_kind']
@@ -298,6 +320,8 @@ def open_counts(survey, user=None):
             out['session'][str(r['session_id'])] += r['n']
         elif k == 'block':
             out['block'][str(r['block_id'])] += r['n']
+        elif k == 'group':
+            out['group'][r['group_code']] += r['n']
     if out['question']:
         # Roll question threads up into their section (sub-questions included).
         q_rows = (Question.objects
@@ -312,7 +336,7 @@ def open_counts(survey, user=None):
         if new_ids:
             out['new_total'] = len(new_ids)
             q_to_section = {}
-            for t in CommentThread.objects.filter(pk__in=new_ids).only('anchor_kind', 'question_code', 'section_code', 'session_id', 'block_id'):
+            for t in CommentThread.objects.filter(pk__in=new_ids).only('anchor_kind', 'question_code', 'section_code', 'group_code', 'session_id', 'block_id'):
                 if t.anchor_kind == 'survey':
                     out['new_keys'].add(f'survey:{SURVEY_ANCHOR_KEY}')
                 elif t.anchor_kind == 'question':
@@ -322,6 +346,8 @@ def open_counts(survey, user=None):
                     out['new_keys'].add(f'section:{t.section_code}')
                 elif t.anchor_kind == 'session':
                     out['new_keys'].add(f'session:{t.session_id}')
+                elif t.anchor_kind == 'group':
+                    out['new_keys'].add(f'group:{t.group_code}')
                 else:
                     out['new_keys'].add(f'block:{t.block_id}')
             if q_to_section:

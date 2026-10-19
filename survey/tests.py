@@ -42812,13 +42812,13 @@ class QuestionDraftOnTypePickTest(TestCase):
                              {'name': 'Why here?', 'input_type': 'text', 'subtext': '', 'display_style': 'default',
                               'color': '#000000', 'choices_json': '[]', 'return_to_parent': '1'}, HTTP_HX_REQUEST='true')
         html = r.content.decode()
-        self.assertIn('hx-swap-oob="outerHTML:#questions-list > li[data-question-id=\'%d\']"' % p.pk, html)
+        self.assertIn('hx-swap-oob="outerHTML:#questions-list li[data-top-level][data-question-id=\'%d\']"' % p.pk, html)
         self.assertIn('id="fg-subquestions"', html)
         self.assertIn('Why here?', html.split('hx-swap-oob=', 1)[1])  # the section row carries the child
         sub = Question.objects.get(parent_question_id=p)
         r = self.client.post(reverse('editor_question_delete', kwargs={'survey_uuid': self.survey.uuid, 'question_id': sub.pk}))
         html = r.content.decode()
-        self.assertIn('hx-swap-oob="outerHTML:#questions-list > li[data-question-id=\'%d\']"' % p.pk, html)
+        self.assertIn('hx-swap-oob="outerHTML:#questions-list li[data-top-level][data-question-id=\'%d\']"' % p.pk, html)
         self.assertNotIn('Why here?', html)
         self.assertEqual(r['HX-Trigger'], 'questionUpdated')
 
@@ -42840,9 +42840,9 @@ class QuestionDraftOnTypePickTest(TestCase):
         self.assertTrue(html.lstrip().startswith('<li class="question-item" data-question-id="%d"' % p.pk))
         self.assertIn('data-question-id="%d"' % s.pk, html)
         self.assertIn('Why there?', html)
-        self.assertIn("hx-target=\"#questions-list > [data-question-id='%d']\"" % p.pk, self.client.get(url).content.decode())
+        self.assertIn("hx-target=\"#questions-list [data-top-level][data-question-id='%d']\"" % p.pk, self.client.get(url).content.decode())
         purl = reverse('editor_question_edit', kwargs={'survey_uuid': self.survey.uuid, 'question_id': p.pk})
-        self.assertIn("hx-target=\"#questions-list > [data-question-id='%d']\"" % p.pk, self.client.get(purl).content.decode())
+        self.assertIn("hx-target=\"#questions-list [data-top-level][data-question-id='%d']\"" % p.pk, self.client.get(purl).content.decode())
 
     def test_close_keeps_a_configured_draft_and_drops_an_empty_one(self):
         """

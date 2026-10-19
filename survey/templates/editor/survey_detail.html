@@ -735,9 +735,9 @@ document.addEventListener('DOMContentLoaded', function() {
         return attr ? document.querySelector(attr) : elt;
     }
 
-    function answerLossMessage(data, isSection) {
+    function answerLossMessage(data, isSection, isGroup) {
         var noun = data.answers_at_risk === 1 ? 'answer' : 'answers';
-        var what = isSection ? 'this section' : 'this question';
+        var what = isSection ? 'this section' : (isGroup ? 'this group and its questions' : 'this question');
         var message = data.answers_at_risk + ' ' + noun +
             ' will be permanently deleted along with ' + what + '. This cannot be undone.';
         if (data.explain_versioning) {
@@ -769,16 +769,20 @@ document.addEventListener('DOMContentLoaded', function() {
             swap: elt.getAttribute('hx-swap') || 'outerHTML'
         };
 
-        Dialog.confirm(answerLossMessage(data, elt.classList.contains('section-delete')), {
+        Dialog.confirm(answerLossMessage(data, elt.classList.contains('section-delete'), elt.classList.contains('group-delete')), {
             title: 'This will delete collected answers',
             okLabel: 'Delete anyway',
             danger: true
         }).then(function(ok) {
             if (!ok) return;
+            var values = { confirm_delete_answers: 'true' };
+            // A request whose first send carried a choice (deleting a group with
+            // its questions) names it here, so the re-send means the same thing.
+            try { Object.assign(values, JSON.parse(elt.getAttribute('data-resend-values') || '{}')); } catch (e) {}
             htmx.ajax('POST', request.url, {
                 target: request.target,
                 swap: request.swap,
-                values: { confirm_delete_answers: 'true' },
+                values: values,
                 headers: { 'X-CSRFToken': '{{ csrf_token }}' }
             });
         });
@@ -879,34 +883,103 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#mapPickerModal').modal('hide');
     });
 
-    // Init SortableJS on question list and sub-question lists
+    // Init SortableJS on question list and sub-question lists.
+    // Groups (change question-groups): a list's root is the section's top level
+    // (#questions-list) or one pop-up (.subquestion-list); the root and the
+    // .group-question-list drop zones inside it share one Sortable group, so
+    // questions move in and out of groups but never across roots, and a group
+    // never lands inside a group. A drop posts the root's whole nested state.
+    var SECTION_DETAIL_URL = '{% url "editor_section_detail" survey.uuid 0 %}';
+    function reloadSectionList() {
+        var list = document.getElementById('questions-list');
+        var sid = list && list.dataset.sectionId;
+        if (!sid) return;
+        htmx.ajax('GET', SECTION_DETAIL_URL.replace('/0/', '/' + sid + '/'),
+                  { target: '#section-content', swap: 'innerHTML' });
+    }
+    function rootOf(listEl) {
+        if (listEl.id === 'questions-list' || listEl.classList.contains('subquestion-list')) return listEl;
+        return listEl.parentElement.closest('.subquestion-list, #questions-list');
+    }
+    function nestedState(root) {
+        var items = [];
+        Array.from(root.children).forEach(function (li) {
+            if (li.classList.contains('question-item--group')) {
+                var inner = li.querySelector(':scope > .group-question-list');
+                items.push({
+                    g: li.dataset.groupId,
+                    q: Array.from(inner ? inner.children : []).filter(function (c) {
+                        return c.dataset.questionId;
+                    }).map(function (c) { return c.dataset.questionId; })
+                });
+            } else if (li.dataset.questionId) {
+                items.push({ q: li.dataset.questionId });
+            }
+        });
+        return items;
+    }
     function initSortableOnList(listEl) {
         if (!listEl || listEl._sortable || STRUCTURE_LOCKED) return;
+        var root = rootOf(listEl);
+        if (!root) return;
+        var nested = !!root.dataset.sectionId;
+        var isGroupList = listEl.classList.contains('group-question-list');
         listEl._sortable = Sortable.create(listEl, {
+            group: nested ? {
+                name: root.id === 'questions-list' ? 'q-top' : 'q-pop-' + root.dataset.parentId,
+                // A group row never goes into a group's list.
+                put: isGroupList ? function (to, from, dragEl) {
+                    return !dragEl.classList.contains('question-item--group');
+                } : true
+            } : undefined,
             animation: 150,
             handle: '.drag-handle',
+            filter: '.group-empty',
             delay: 300,
             delayOnTouchOnly: true,
             touchStartThreshold: 4,
-            onEnd: function() {
-                var ids = Array.from(listEl.children).map(function(el) {
-                    return el.dataset.questionId;
-                });
-                fetch('{% url "editor_questions_reorder" survey.uuid %}', {
+            onEnd: function(evt) {
+                if (!nested) {
+                    var ids = Array.from(listEl.children).map(function(el) {
+                        return el.dataset.questionId;
+                    });
+                    fetch('{% url "editor_questions_reorder" survey.uuid %}', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                        body: JSON.stringify({ question_ids: ids })
+                    }).then(function() { refreshPreview(); });
+                    return;
+                }
+                var touchesGroup = evt.from !== evt.to
+                    || evt.item.classList.contains('question-item--group');
+                fetch('{% url "editor_items_reorder" survey.uuid %}', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    },
-                    body: JSON.stringify({ question_ids: ids })
-                }).then(function() { refreshPreview(); });
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                    body: JSON.stringify({
+                        section_id: root.dataset.sectionId,
+                        parent_id: root.dataset.parentId || null,
+                        items: nestedState(root)
+                    })
+                }).then(function(r) {
+                    // Group counts and empty-zone hints change with membership.
+                    if (r.ok && touchesGroup) reloadSectionList(); else refreshPreview();
+                });
             }
         });
     }
 
     document.body.addEventListener('htmx:afterSettle', function(evt) {
         initSortableOnList(document.getElementById('questions-list'));
-        document.querySelectorAll('.subquestion-list').forEach(initSortableOnList);
+        document.querySelectorAll('.subquestion-list, .group-question-list').forEach(initSortableOnList);
+    });
+
+    // A group was created (its modal is open on top): show its row now.
+    document.body.addEventListener('groupsChanged', function() { reloadSectionList(); });
+    // The group modal autosaves; its row (title, style, rule badge) is
+    // re-rendered once, when the modal closes.
+    $('#questionModal').on('hidden.bs.modal', function() {
+        var form = document.querySelector('#questionModalBody form[data-group-form]');
+        if (form && form.dataset.dirty) { form.dataset.dirty = ''; reloadSectionList(); }
     });
 
     // ── Issue #16: keyboard shortcuts ──

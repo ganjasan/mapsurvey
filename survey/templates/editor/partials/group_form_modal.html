@@ -1,0 +1,198 @@
+{% load i18n comment_utils %}{% comment %}
+The question group modal (change question-groups, #340), rendered into #questionModalBody.
+Every field autosaves (debounced POST to editor_group_edit with autosave=1, 422 JSON on an
+error — the typed-in form is never re-rendered); the "Respondent sees" pane re-renders the
+unsaved group through editor_group_preview_live. Membership is changed by dragging rows in
+the section list, never here. On close the section list is re-rendered (groupsChanged).
+{% endcomment %}
+<style>
+    @media (min-width: 1200px) { #questionModal .modal-dialog { max-width: 1100px; } }
+    .grp-cols { display: flex; gap: 1.25rem; align-items: flex-start; }
+    .grp-form { flex: 1 1 auto; min-width: 0; }
+    .grp-preview { flex: 0 0 360px; position: sticky; top: 0; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 12px; }
+    .grp-preview iframe { width: 100%; height: 420px; border: 1px solid #dee2e6; border-radius: 8px; background: #fff; }
+    .grp-styles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .grp-styles label { border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px; cursor: pointer; font-size: .8rem; display: flex; flex-direction: column; gap: 6px; margin: 0; font-weight: 400; }
+    .grp-styles input { position: absolute; opacity: 0; }
+    .grp-styles label:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-light); }
+    .grp-styles label:has(input:focus-visible) { outline: 2px solid var(--accent); }
+    .grp-thumb { height: 46px; border-radius: 5px; background: #fff; border: 1px solid #eef0f3; padding: 5px; display: flex; flex-direction: column; gap: 3px; }
+    .grp-thumb i { display: block; height: 5px; border-radius: 2px; background: #d1d5db; }
+    .grp-thumb i.t { width: 50%; background: #6b7280; }
+    .grp-thumb--card { background: #f7f8fa; border-color: #e5e7eb; }
+    .grp-members { list-style: none; margin: 0; padding: 0; border: 1px solid #e5e7eb; border-radius: 8px; }
+    .grp-members li { display: flex; gap: 8px; align-items: center; padding: 7px 10px; font-size: .85rem; }
+    .grp-members li + li { border-top: 1px solid #e5e7eb; }
+    #group-description-quill { background: #fff; }
+    #group-description-quill .ql-editor { min-height: 70px; }
+    @media (max-width: 991.98px) {
+        .grp-cols { flex-direction: column; align-items: stretch; }
+        .grp-preview { position: static; flex: 1 1 auto; }
+    }
+</style>
+<form id="group-form" data-group-form
+      data-save-url="{% url 'editor_group_edit' survey.uuid group.id %}"
+      data-preview-url="{% url 'editor_group_preview_live' survey.uuid group.id %}{% if primary_language %}?lang={{ primary_language }}{% endif %}">
+    {% csrf_token %}
+    <div class="modal-header">
+        <h5 class="modal-title"><i class="fas fa-object-group" style="color:#6366f1;"></i> {% trans "Question group" %}</h5>
+        {% badge_key 'group' group.code as cm_bk %}{% with cm_n=thread_counts|thread_count:cm_bk %}<button type="button" class="btn btn-sm btn-outline-primary cm-toolbar-btn ml-3" data-cm-open="group:{{ group.id }}" data-thread-badge="{{ cm_bk }}" title="{% trans 'Comments on this group' %}"><i class="fas fa-comments" aria-hidden="true"></i> {% trans "Comments" %} <span class="cm-count" data-cm-n>{% if cm_n %}{{ cm_n }}{% endif %}</span></button>{% endwith %}
+        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+    </div>
+    <div class="modal-body">
+        <div class="grp-cols">
+            <div class="grp-form">
+                <div class="form-group">
+                    <label for="id_title">{% trans "Name" %}</label>
+                    <input type="text" name="title" id="id_title" class="form-control" maxlength="512"
+                           value="{{ form.title.value|default:'' }}" placeholder="{% trans 'e.g. Your visit' %}"
+                           {% if is_read_only %}disabled{% endif %}>
+                    <small class="form-text text-muted">{% trans "Shown to respondents above the questions of the group." %}</small>
+                </div>
+                <div class="form-group">
+                    <label>{% trans "Description" %}</label>
+                    <input type="hidden" name="description" id="id_description" value="{{ form.description.value|default:'' }}">
+                    <div id="group-description-quill"></div>
+                </div>
+                <div class="form-group">
+                    <label>{% trans "Display as" %}</label>
+                    <div class="grp-styles">
+                        {% for value, label in form.fields.display_style.choices %}
+                        <label>
+                            <input type="radio" name="display_style" value="{{ value }}" {% if form.display_style.value == value %}checked{% endif %} {% if is_read_only %}disabled{% endif %}>
+                            <span class="grp-thumb{% if value != 'plain' %} grp-thumb--card{% endif %}"><i class="t"></i>{% if value != 'collapsible' %}<i></i><i></i>{% endif %}</span>
+                            <span><b>{{ label }}</b><br><small class="text-muted">{% if value == 'plain' %}{% trans "heading in the flow" %}{% elif value == 'card' %}{% trans "one framed block" %}{% else %}{% trans "opens on tap" %}{% endif %}</small></span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% include "editor/partials/_visibility_block.html" %}
+                {% if visibility_enabled %}<small class="form-text text-muted" style="margin:-.5rem 0 1rem;">{% trans "Every question inside is hidden with the group. A question can add its own rule on top." %}</small>{% endif %}
+                {% for row in translation_rows %}
+                <div class="form-group" data-group-translation="{{ row.lang }}">
+                    <label>{% blocktrans with lang=row.lang %}Translation ({{ lang }}){% endblocktrans %}</label>
+                    <input type="text" class="form-control form-control-sm mb-1" name="translation_{{ row.lang }}_title"
+                           value="{{ row.t.title|default:'' }}" placeholder="{% trans 'Name' %}" {% if is_read_only %}disabled{% endif %}>
+                    <textarea class="form-control form-control-sm" rows="2" name="translation_{{ row.lang }}_description"
+                              placeholder="{% trans 'Description' %}" {% if is_read_only %}disabled{% endif %}>{{ row.t.description|default:'' }}</textarea>
+                </div>
+                {% endfor %}
+                <div class="form-group">
+                    <label>{% blocktrans with n=members|length %}Questions inside ({{ n }}){% endblocktrans %}</label>
+                    {% if members %}
+                    <ul class="grp-members">
+                        {% for q in members %}<li><i class="fas fa-grip-vertical" style="color:#d1d5db;"></i> {{ q.name|default:q.code }}</li>{% endfor %}
+                    </ul>
+                    {% endif %}
+                    <small class="form-text text-muted">{% trans "To add or remove questions, drag them in the list." %}</small>
+                </div>
+            </div>
+            <div class="grp-preview">
+                <div style="font-weight:600;font-size:.85rem;margin-bottom:8px;">{% trans "Respondent sees" %}</div>
+                <iframe id="group-preview-frame" title="{% trans 'Respondent sees' %}"></iframe>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <span class="autosave-indicator" data-state="saved" role="status" aria-live="polite">
+            <i class="fas fa-circle autosave-dot"></i>
+            <span class="autosave-label">{% trans "All changes saved" %}</span>
+        </span>
+        <span style="flex:1;"></span>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Close" %}</button>
+    </div>
+</form>
+<script>
+(function () {
+    var form = document.getElementById('group-form');
+    if (!form || form.dataset.bound) return;
+    form.dataset.bound = '1';
+    var indicator = form.querySelector('.autosave-indicator');
+    var label = indicator.querySelector('.autosave-label');
+    var frame = document.getElementById('group-preview-frame');
+    var csrf = form.querySelector('[name=csrfmiddlewaretoken]').value;
+    var TEXT = {
+        saved: "{% trans 'All changes saved' %}",
+        saving: "{% trans 'Saving…' %}",
+        error: "{% trans 'Not saved — click to retry' %}"
+    };
+    function setState(state, message) {
+        indicator.dataset.state = state;
+        label.textContent = message || TEXT[state];
+    }
+    function body() {
+        var data = new FormData(form);
+        return data;
+    }
+    var previewTimer = null;
+    function preview() {
+        clearTimeout(previewTimer);
+        previewTimer = setTimeout(function () {
+            fetch(form.dataset.previewUrl, {
+                method: 'POST', body: body(), headers: { 'X-CSRFToken': csrf }
+            }).then(function (r) { return r.text(); })
+              .then(function (html) { frame.srcdoc = html; })
+              .catch(function () {});
+        }, 250);
+    }
+    var saveTimer = null;
+    function save() {
+        clearTimeout(saveTimer);
+        setState('saving');
+        saveTimer = setTimeout(function () {
+            var data = body();
+            data.append('autosave', '1');
+            fetch(form.dataset.saveUrl, {
+                method: 'POST', body: data, headers: { 'X-CSRFToken': csrf }
+            }).then(function (r) {
+                return r.json().catch(function () { return {}; }).then(function (j) { return [r, j]; });
+            }).then(function (pair) {
+                var r = pair[0], j = pair[1];
+                if (r.ok) {
+                    setState('saved');
+                    form.dataset.dirty = '1';
+                    document.body.dispatchEvent(new CustomEvent('questionUpdated'));
+                    return;
+                }
+                var errors = (j && j.errors) || {};
+                var first = Object.keys(errors).map(function (k) { return errors[k][0]; })[0];
+                setState('error', first || TEXT.error);
+            }).catch(function () { setState('error'); });
+        }, 600);
+    }
+    indicator.addEventListener('click', function () {
+        if (indicator.dataset.state === 'error') save();
+    });
+    form.addEventListener('input', function () { save(); preview(); });
+    form.addEventListener('change', function () { save(); preview(); });
+
+    // Description: the same Quill toolbar question help text uses.
+    var input = document.getElementById('id_description');
+    var mount = document.getElementById('group-description-quill');
+    if (typeof Quill !== 'undefined' && mount) {
+        Quill.register(Quill.import('attributors/style/align'), true);
+        var q = new Quill(mount, {
+            theme: 'snow',
+            placeholder: "{% trans 'Optional — a sentence that frames the questions' %}",
+            readOnly: {% if is_read_only %}true{% else %}false{% endif %},
+            modules: { toolbar: [['bold', 'italic'], ['link'], [{ list: 'ordered' }, { list: 'bullet' }], ['clean']] }
+        });
+        q.setContents(q.clipboard.convert({ html: input.value || '' }), 'silent');
+        q.on('text-change', function (delta, old, source) {
+            if (source !== 'user') return;
+            var h = q.root.innerHTML;
+            input.value = (h === '<p><br></p>') ? '' : h;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+    } else if (mount) {
+        // No Quill (blocked CDN): a plain textarea still carries the value.
+        var ta = document.createElement('textarea');
+        ta.className = 'form-control';
+        ta.rows = 3;
+        ta.value = input.value;
+        ta.addEventListener('input', function () { input.value = ta.value; });
+        mount.appendChild(ta);
+    }
+    preview();
+})();
+</script>

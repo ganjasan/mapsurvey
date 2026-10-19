@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Question groups mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<style>
+/* ---------- tokens copied from survey/assets/css/main.css (respondent) ---------- */
+:root{
+  --panel-bg:#fff;--card-bg:#f7f8fa;--card-border:rgba(0,0,0,.06);
+  --text-primary:#1a1d21;--text-secondary:#5f6368;--text-tertiary:#9aa0a6;
+  --accent:#4f46e5;--accent-light:#eef2ff;--input-border:#d1d5db;--input-bg:#fff;--danger:#ef4444;
+  --radius-sm:8px;--radius-md:12px;--transition:.2s cubic-bezier(.4,0,.2,1);
+  /* editor (editor_base.html) */
+  --e-accent-light:#e0e7ff;--e-border:#e5e7eb;--e-muted:#f9fafb;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#eef0f3;font-family:'DM Sans',-apple-system,sans-serif;font-size:15px;color:var(--text-primary)}
+.page{max-width:1240px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:22px;margin:0 0 4px}
+.lede{color:var(--text-secondary);margin:0 0 20px;max-width:820px;line-height:1.5}
+h2{font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-secondary);margin:36px 0 12px}
+.controls{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:16px;align-items:center;background:#fff;border:1px solid var(--e-border);border-radius:10px;padding:10px 14px;margin-bottom:8px}
+.controls fieldset{border:0;margin:0;padding:0;display:flex;gap:6px;align-items:center}
+.controls legend{float:left;font-size:12px;color:var(--text-secondary);margin-right:6px;padding:0}
+.seg{display:inline-flex;border:1px solid var(--e-border);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:#fff;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--accent);color:#fff}
+.row{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.caption{font-size:12px;color:var(--text-secondary);margin:0 0 6px}
+.note{font-size:13px;color:var(--text-secondary);line-height:1.5;max-width:420px}
+.note b{color:var(--text-primary)}
+
+/* ---------- respondent panel ---------- */
+.panel{background:var(--panel-bg);border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.1);width:420px;max-width:100%;overflow:hidden}
+.panel.phone{width:390px}
+.panel-head{padding:20px 24px 8px}
+.panel-head h3{margin:0 0 4px;font-size:1.25em}
+.panel-head p{margin:0;color:var(--text-secondary);font-size:.95em}
+.panel-body{padding:12px 24px 8px}
+.panel-foot{padding:12px 24px 22px}
+.btn-dark{width:100%;border:0;border-radius:8px;background:var(--text-primary);color:#fff;font:inherit;font-weight:500;padding:12px 0;cursor:pointer}
+
+.question-card{background:var(--card-bg);padding:16px;border-radius:var(--radius-md);border:1px solid var(--card-border);margin-bottom:12px}
+.question-card>label.q{display:block;font-weight:500;font-size:.92em;color:var(--text-secondary);margin-bottom:10px}
+.question-card input[type=text],.question-card textarea{width:100%;padding:10px 14px;border:1px solid var(--input-border);border-radius:8px;font:inherit;background:#fff}
+.question-card textarea{min-height:64px;resize:vertical}
+.opt{display:flex;align-items:center;min-height:40px;padding:6px 12px 6px 40px;position:relative;margin:0 -4px;border-radius:8px;cursor:pointer}
+.opt:hover{background:rgba(79,70,229,.04)}
+.opt input{position:absolute;opacity:0}
+.opt::before{content:'';position:absolute;left:8px;top:50%;transform:translateY(-50%);width:20px;height:20px;border:2px solid var(--input-border);border-radius:50%;background:#fff}
+.opt.cb::before{border-radius:5px}
+.opt:has(input:checked)::before{border-color:var(--accent);box-shadow:inset 0 0 0 4px #fff;background:var(--accent)}
+.err{color:var(--danger);font-size:.85em;margin-top:6px}
+
+/* ---------- NEW: question group (partials/question_group.html) ---------- */
+.question-group{margin:0 0 12px}
+.question-group__head{display:block;width:100%;text-align:left;background:none;border:0;padding:0;font:inherit;color:inherit}
+.question-group__title{margin:0;font-size:1.02em;font-weight:600;color:var(--text-primary);letter-spacing:.005em}
+.question-group__desc{margin:4px 0 0;font-size:.9em;line-height:1.45;color:var(--text-secondary)}
+.question-group__desc p{margin:0}
+.question-group__count{font-size:.8em;color:var(--text-tertiary);font-weight:500;margin-left:6px}
+.question-group__body{margin-top:10px}
+
+/* plain: heading in the flow, members keep their own cards */
+.question-group--plain{padding-top:6px}
+.question-group--plain .question-group__head{padding:0 2px}
+
+/* card: one frame; members become rows separated by rules */
+.question-group--card,.question-group--collapsible{background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--radius-md);padding:16px}
+.question-group--card .question-group__head,.question-group--collapsible .question-group__head{padding-bottom:12px;border-bottom:1px solid var(--card-border)}
+.question-group--card .question-card,.question-group--collapsible .question-card{background:none;border:0;border-radius:0;padding:12px 0 0;margin:0}
+.question-group--card .question-card + .question-card,.question-group--collapsible .question-card + .question-card{border-top:1px solid var(--card-border);margin-top:12px}
+.question-group--card .question-group__body,.question-group--collapsible .question-group__body{margin-top:0}
+
+/* collapsible: head is a button with a chevron */
+.question-group--collapsible .question-group__head{display:flex;align-items:flex-start;gap:10px;cursor:pointer;min-height:44px}
+.question-group--collapsible .question-group__head .txt{flex:1}
+.question-group--collapsible .chev{margin-top:3px;color:var(--text-secondary);transition:transform var(--transition)}
+.question-group--collapsible .question-group__head[aria-expanded=true] .chev{transform:rotate(180deg)}
+.question-group--collapsible .question-group__head[aria-expanded=false]{padding-bottom:0;border-bottom:0}
+.question-group--collapsible .question-group__head:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:6px}
+.question-group--collapsible.has-error{border-color:var(--danger)}
+[hidden]{display:none!important}
+
+/* ---------- pop-up (leaflet look) ---------- */
+.map{position:relative;width:420px;max-width:100%;height:640px;border-radius:12px;overflow:hidden;background:
+  linear-gradient(0deg,rgba(255,255,255,.35),rgba(255,255,255,.35)),
+  repeating-linear-gradient(35deg,#dfe7d6 0 38px,#e9eee2 38px 76px);box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.map.phone{width:390px}
+.road{position:absolute;background:#fff;box-shadow:0 0 0 1px #d8dccf}
+.popup{position:absolute;left:50%;top:18px;transform:translateX(-50%);width:330px;max-width:calc(100% - 24px);background:#fff;border-radius:12px;box-shadow:0 3px 14px rgba(0,0,0,.25);padding:14px 14px 12px}
+.popup::after{content:'';position:absolute;left:50%;bottom:-10px;margin-left:-10px;border:10px solid transparent;border-bottom:0;border-top-color:#fff}
+.popup-scroll{max-height:470px;overflow:auto;padding-right:2px}
+.popup .question-card{background:none;border:0;border-radius:0;padding:0 4px;margin:0}
+.popup>.popup-scroll>.question-card + .question-card,
+.popup>.popup-scroll>.question-card + .question-group,
+.popup>.popup-scroll>.question-group + .question-card,
+.popup>.popup-scroll>.question-group + .question-group{margin-top:12px;padding-top:12px;border-top:1px solid var(--card-border)}
+.popup .question-group--card,.popup .question-group--collapsible{border-top:1px solid var(--card-border)!important;padding:12px!important;margin-top:12px}
+.popup .question-group--plain{padding-top:12px}
+.popup .question-group--plain .question-card + .question-card{border-top:1px solid var(--card-border);margin-top:12px;padding-top:12px}
+.popup .question-group .question-card{padding:12px 0 0}
+.layer-controls{display:flex;gap:8px;margin-top:12px}
+.layer-controls button{flex:1;font-size:1.2em;padding:6px;border-radius:8px;border:1px solid var(--input-border);background:#fff}
+.layer-controls .ok{background:#22c55e;border-color:#22c55e;color:#fff}
+.marker{position:absolute;left:50%;top:560px;transform:translate(-50%,-100%);color:var(--accent);font-size:34px}
+.icongrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.icongrid label{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.78em;padding:8px 2px;border:1px solid var(--input-border);border-radius:8px;cursor:pointer;text-align:center}
+.icongrid input{position:absolute;opacity:0}
+.icongrid label:has(input:checked){border-color:var(--accent);background:var(--accent-light);color:var(--accent)}
+.icongrid i{font-size:18px}
+
+/* ---------- editor ---------- */
+.editor{background:#fff;border:1px solid var(--e-border);border-radius:12px;width:600px;max-width:100%;padding:16px;font-size:14px}
+.editor.phone{width:390px}
+.qlist{list-style:none;margin:0;padding:0}
+.qi{background:#fff;border:1px solid var(--e-border);border-radius:8px;margin-bottom:.5rem}
+.qrow{display:flex;align-items:center;gap:.6rem;padding:.65rem .9rem;flex-wrap:wrap}
+.drag{color:#d1d5db}
+.qname{flex:1;min-width:120px;font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.b{font-size:.7rem;font-weight:500;padding:.2em .5em;border-radius:4px;background:#6c757d;color:#fff;white-space:nowrap}
+.b.light{background:#fff;color:#6b7280;border:1px solid #e5e7eb}
+.b.info{background:#e7f1ff;color:#0b5ed7;border:1px solid #b6d4fe}
+.b.red{background:#dc3545}
+.b.grp{background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe}
+.acts{display:flex;gap:2px;color:#9ca3af}
+.acts span{padding:2px 6px;border-radius:4px;font-size:.8rem;cursor:pointer}
+.acts span:hover{background:#f3f4f6;color:#374151}
+.sublist{list-style:none;padding:0 .75rem .5rem 2.5rem;margin:0;border-top:1px dashed var(--e-border)}
+.sublist>.qi{border-left:3px solid var(--e-accent-light);font-size:.85rem;margin-bottom:.35rem}
+.sublist>.qi:first-child{margin-top:.5rem}
+/* NEW: group row */
+.qi--group{background:var(--e-muted);border-color:#c7d2fe}
+.qi--group>.qrow .gicon{color:#6366f1}
+.qi--group>.qrow{flex-wrap:nowrap}.qi--group>.qrow .qname{min-width:90px}
+.qi--group .gdesc{margin:-6px .9rem 8px 2.9rem;font-size:.78rem;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.glist{list-style:none;margin:0;padding:.25rem .6rem .5rem 1.9rem;min-height:38px;border-top:1px dashed #c7d2fe}
+.glist>.qi{margin-bottom:.35rem;font-size:.85rem}
+.glist>.qi:first-child{margin-top:.35rem}
+.glist .empty{font-size:.78rem;color:#9ca3af;padding:.5rem 0;text-align:center;border:1px dashed #d1d5db;border-radius:6px;margin-top:.35rem}
+.sublist>.qi--group{border-left:3px solid #c7d2fe}
+.addwrap{display:flex;gap:.5rem;padding:.5rem 0 0}
+.addwrap.sub{padding:.5rem .75rem .5rem 2.5rem;border-top:1px dashed var(--e-border)}
+.addbtn{flex:1;display:flex;align-items:center;justify-content:center;gap:.4rem;padding:.6rem;border:2px dashed #d1d5db;border-radius:8px;color:#6b7280;background:none;font:inherit;font-size:.85rem;cursor:pointer}
+.addwrap.sub .addbtn{border-width:1px;padding:.45rem;font-size:.8rem}
+.addbtn:hover{border-color:var(--accent);color:var(--accent)}
+.ghost{opacity:.45;background:#eef2ff!important}
+
+/* modal */
+.modal{background:#fff;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.18);width:1100px;max-width:100%;display:grid;grid-template-columns:1fr 400px;overflow:hidden;font-size:14px}
+.modal .m-head{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--e-border)}
+.modal .m-head h4{margin:0;font-size:16px}
+.saved{font-size:12px;color:#16a34a}
+.m-form{padding:16px 20px;display:flex;flex-direction:column;gap:14px}
+.m-form label.l{display:block;font-weight:600;font-size:13px;margin-bottom:4px}
+.m-form input[type=text]{width:100%;padding:8px 10px;border:1px solid #ced4da;border-radius:6px;font:inherit}
+.quill{border:1px solid #ced4da;border-radius:6px}
+.quill .tb{border-bottom:1px solid #ced4da;padding:6px 8px;color:#6b7280;font-size:12px;display:flex;gap:10px}
+.quill .ed{padding:8px 10px;min-height:56px}
+.styles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.styles label{border:1px solid var(--e-border);border-radius:8px;padding:8px;cursor:pointer;font-size:12px;display:flex;flex-direction:column;gap:6px}
+.styles input{position:absolute;opacity:0}
+.styles label:has(input:checked){border-color:var(--accent);box-shadow:0 0 0 2px var(--e-accent-light)}
+.thumb{height:46px;border-radius:5px;background:#fff;border:1px solid #eef0f3;padding:5px;display:flex;flex-direction:column;gap:3px}
+.thumb i{display:block;height:5px;border-radius:2px;background:#d1d5db}
+.thumb i.t{width:50%;background:#6b7280}
+.thumb.card{background:#f7f8fa;border-color:#e5e7eb}
+.vis{border:1px solid var(--e-border);border-radius:8px;padding:10px;background:var(--e-muted)}
+.vis select{font:inherit;padding:5px;border:1px solid #ced4da;border-radius:6px;margin-right:6px}
+.members{list-style:none;margin:0;padding:0;border:1px solid var(--e-border);border-radius:8px}
+.members li{display:flex;gap:8px;align-items:center;padding:7px 10px;font-size:13px}
+.members li+li{border-top:1px solid var(--e-border)}
+.tabs{display:flex;gap:4px;font-size:12px}
+.tabs span{padding:3px 8px;border-radius:5px;border:1px solid var(--e-border)}
+.tabs span.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.m-prev{background:#f3f4f6;border-left:1px solid var(--e-border);padding:16px}
+.pill{display:inline-flex;gap:6px;align-items:center;font-size:12px;background:#e7f1ff;color:#0b5ed7;border:1px solid #b6d4fe;border-radius:999px;padding:2px 10px;margin-bottom:10px}
+#modalPreview{position:static;transform:none;width:auto;max-width:none;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+#modalPreview::after{display:none}
+
+/* delete dialog */
+.dialog{background:#fff;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.18);width:460px;max-width:100%;padding:20px;font-size:14px}
+.dialog h4{margin:0 0 12px;font-size:16px}
+.choice{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--e-border);border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer}
+.choice:has(input:checked){border-color:var(--accent);background:#f8f9ff}
+.choice small{display:block;color:#6b7280;margin-top:2px}
+.dialog .warn{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:8px;padding:8px 10px;font-size:13px;margin:4px 0 10px}
+.dialog .btns{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+.dialog .btns button{font:inherit;padding:7px 14px;border-radius:6px;border:1px solid #ced4da;background:#fff;cursor:pointer}
+.dialog .btns .danger{background:#dc3545;border-color:#dc3545;color:#fff}
+
+@media (max-width:900px){.modal{grid-template-columns:1fr}.m-prev{border-left:0;border-top:1px solid var(--e-border)}}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Question groups — mockup</h1>
+  <p class="lede">Change <code>question-groups</code> (#340). Respondent styles use the real tokens of
+  <code>main.css</code>; the editor uses <code>editor_base.html</code>. The switches change every
+  example at once. Everything here is clickable: options, the collapsible header, the delete choice.</p>
+
+  <div class="controls">
+    <fieldset><legend>Display as</legend>
+      <div class="seg" id="styleSeg">
+        <button data-style="plain" aria-pressed="false">Plain</button>
+        <button data-style="card" aria-pressed="true">Card</button>
+        <button data-style="collapsible" aria-pressed="false">Collapsible</button>
+      </div></fieldset>
+    <fieldset><legend>Width</legend>
+      <div class="seg" id="widthSeg">
+        <button data-w="desk" aria-pressed="true">Desktop</button>
+        <button data-w="phone" aria-pressed="false">390 px</button>
+      </div></fieldset>
+  </div>
+
+  <!-- ===================== 1. SECTION ===================== -->
+  <h2>1 · Respondent section</h2>
+  <div class="row">
+    <div>
+      <p class="caption">Section "About you" — one group of three questions after an ungrouped one</p>
+      <div class="panel js-w">
+        <div class="panel-head"><h3>About you</h3><p>A few questions before the map.</p></div>
+        <div class="panel-body">
+          <div class="question-card"><label class="q">How old are you?</label><input type="text" placeholder="Your answer"></div>
+
+          <section class="question-group js-group" data-group-code="g_school">
+            <div class="question-group__head js-head">
+              <div class="txt">
+                <h3 class="question-group__title">Your school day <span class="question-group__count js-count">3 questions</span></h3>
+                <div class="question-group__desc"><p>Think about a <b>normal</b> week, not holidays.</p></div>
+              </div>
+              <i class="fas fa-chevron-down chev js-chev"></i>
+            </div>
+            <div class="question-group__body js-body">
+              <div class="question-card" data-required="true"><label class="q">How do you get to school? *</label>
+                <label class="opt"><input type="radio" name="s1">Walk</label>
+                <label class="opt"><input type="radio" name="s1">Bus</label>
+                <label class="opt"><input type="radio" name="s1">Car</label>
+                <div class="err js-err" hidden>Please answer this question.</div>
+              </div>
+              <div class="question-card"><label class="q">How long does it take?</label><input type="text" placeholder="Minutes"></div>
+              <div class="question-card"><label class="q">Anything that makes it hard?</label><textarea></textarea></div>
+            </div>
+          </section>
+        </div>
+        <div class="panel-foot"><button class="btn-dark js-submit">Next</button></div>
+      </div>
+    </div>
+    <div class="note">
+      <p><b>Plain</b> — a heading and description in the flow; the questions keep their own cards.</p>
+      <p><b>Card</b> — one frame around the run; the questions inside lose their own frames and are
+      separated by rules, so the group reads as one block.</p>
+      <p><b>Collapsible</b> — the card with its header as a button (44 px tap target, chevron,
+      <code>aria-expanded</code>). Starts closed and shows "3 questions" so the respondent knows what
+      is inside. Press <b>Next</b> while it is closed: the required question is unanswered, so the
+      group opens and the error is shown (spec: "Collapsed group with an unanswered required
+      question").</p>
+      <p>The question count appears only in the collapsible style.</p>
+    </div>
+  </div>
+
+  <!-- ===================== 2. POP-UP ===================== -->
+  <h2>2 · Geo pop-up (epic #343 target picture)</h2>
+  <div class="row">
+    <div>
+      <p class="caption">Point question "My places" — <b>Type of place</b> (icon grid), then the group "Your visit" ruled by "Type of place answered"</p>
+      <div class="map js-w">
+        <div class="road" style="left:0;right:0;top:300px;height:16px"></div>
+        <div class="road" style="top:0;bottom:0;left:250px;width:14px"></div>
+        <div class="popup">
+          <div class="popup-scroll">
+            <div class="question-card"><label class="q">Type of place</label>
+              <div class="icongrid">
+                <label><input type="radio" name="t" class="js-type"><i class="fas fa-tree"></i>Park</label>
+                <label><input type="radio" name="t" class="js-type"><i class="fas fa-store"></i>Shop</label>
+                <label><input type="radio" name="t" class="js-type"><i class="fas fa-futbol"></i>Sport</label>
+                <label><input type="radio" name="t" class="js-type"><i class="fas fa-users"></i>Meeting</label>
+              </div>
+            </div>
+            <section class="question-group js-group js-ruled" data-group-code="g_visit" hidden>
+              <div class="question-group__head js-head">
+                <div class="txt">
+                  <h3 class="question-group__title">Your visit <span class="question-group__count js-count">3 questions</span></h3>
+                  <div class="question-group__desc"><p>About the last time you were here.</p></div>
+                </div>
+                <i class="fas fa-chevron-down chev js-chev"></i>
+              </div>
+              <div class="question-group__body js-body">
+                <div class="question-card"><label class="q">How often do you come here?</label>
+                  <label class="opt"><input type="radio" name="v1">Every day</label>
+                  <label class="opt"><input type="radio" name="v1">Every week</label>
+                  <label class="opt"><input type="radio" name="v1">Rarely</label></div>
+                <div class="question-card"><label class="q">When do you come?</label>
+                  <label class="opt cb"><input type="checkbox">Morning</label>
+                  <label class="opt cb"><input type="checkbox">After school</label>
+                  <label class="opt cb"><input type="checkbox">Weekend</label></div>
+                <div class="question-card"><label class="q">Who with?</label><input type="text"></div>
+              </div>
+            </section>
+            <div class="question-card js-after"><label class="q">Comment</label><textarea></textarea></div>
+          </div>
+          <div class="layer-controls"><button><i class="fas fa-trash"></i></button><button class="ok"><i class="fas fa-check"></i></button></div>
+        </div>
+        <i class="fas fa-map-marker-alt marker"></i>
+      </div>
+    </div>
+    <div class="note">
+      <p>Pick a type: "Your visit" appears (acceptance scenario of #340). Clear it by reloading.</p>
+      <p>In the pop-up the popup itself is the frame, so ungrouped questions stay frameless
+      (as today). A <b>card</b> group is the only framed thing inside, which is what makes the block
+      readable among the other follow-ups; <b>plain</b> is only a heading between rules.</p>
+      <p>Hidden groups keep their DOM; inputs are disabled so nothing posts (same mechanism as
+      sub-question rules, #338).</p>
+    </div>
+  </div>
+
+  <!-- ===================== 3. EDITOR LIST ===================== -->
+  <h2>3 · Editor — section list and sub-question list</h2>
+  <div class="row">
+    <div class="editor js-w">
+      <ul class="qlist">
+        <li class="qi"><div class="qrow"><span class="drag"><i class="fas fa-grip-vertical"></i></span><span class="qname">How old are you?</span><span class="b">Single Line Text</span><span class="acts"><span><i class="fas fa-pen"></i></span><span><i class="fas fa-copy"></i></span><span class="text-danger"><i class="fas fa-trash"></i></span></span></div></li>
+
+        <li class="qi"><div class="qrow"><span class="drag"><i class="fas fa-grip-vertical"></i></span><span class="qname">My places</span><span class="b">Point</span><span class="b red">Required</span><span class="acts"><span><i class="fas fa-pen"></i></span><span><i class="fas fa-copy"></i></span><span><i class="fas fa-trash"></i></span></span></div>
+          <ul class="sublist">
+            <li class="qi"><div class="qrow"><span class="drag"><i class="fas fa-grip-vertical"></i></span><span class="qname">Type of place</span><span class="b">Choice</span><span class="b light" style="border-color:#b6d4fe;color:#0b5ed7"><i class="fas fa-code-branch"></i> 1</span><span class="acts"><span><i class="fas fa-pen"></i></span><span><i class="fas fa-trash"></i></span></span></div></li>
+
+            <li class="qi qi--group"><div class="qrow"><span class="drag"><i class="fas fa-grip-vertical"></i></span><i class="fas fa-object-group gicon"></i><span class="qname"><b>Your visit</b></span><span class="b grp">Group · 3</span><span class="b info"><i class="fas fa-code-branch"></i> if Type of place answered</span><span class="b light"><i class="far fa-comment"></i> 1</span><span class="acts"><span title="Edit group"><i class="fas fa-pen"></i></span><span title="Delete" class="js-del"><i class="fas fa-trash"></i></span></span></div>
+              <div class="gdesc"><span class="js-stylebadge" style="text-transform:capitalize">card</span> · About the last time you were here.</div>
+              <ul class="glist">
+                <li class="qi"><div class="qrow"><span class="drag"><i class="fas fa-grip-vertical"></i></span><span class="qname">How often do you come here?</span><span class="b">Choice</span><span class="acts"><span><i class="fas fa-pen"></i></span><span><i class="fas fa-trash"></i></span></span></div></li>
+                <li class="qi ghost"><div class="qrow"><span class="drag"><i class="fas fa-grip-vertical"></i></span><span class="qname">When do you come?</span><span class="b">Multichoice</span></div></li>
+                <li class="qi"><div class="qrow"><span class="drag"><i class="fas fa-grip-vertical"></i></span><span class="qname">Who with?</span><span class="b">Single Line Text</span><span class="acts"><span><i class="fas fa-pen"></i></span><span><i class="fas fa-trash"></i></span></span></div></li>
+              </ul>
+            </li>
+
+            <li class="qi qi--group"><div class="qrow"><span class="drag"><i class="fas fa-grip-vertical"></i></span><i class="fas fa-object-group gicon"></i><span class="qname"><b>About the park</b></span><span class="b grp">Group · 0</span><span class="b info"><i class="fas fa-code-branch"></i> if Type of place = Park</span><span class="acts"><span><i class="fas fa-pen"></i></span><span><i class="fas fa-trash"></i></span></span></div>
+              <div class="gdesc">Collapsible · no description</div>
+              <ul class="glist"><li class="empty">Drag questions here</li></ul>
+            </li>
+
+            <li class="qi"><div class="qrow"><span class="drag"><i class="fas fa-grip-vertical"></i></span><span class="qname">Comment</span><span class="b">Long Text</span><span class="acts"><span><i class="fas fa-pen"></i></span><span><i class="fas fa-trash"></i></span></span></div></li>
+          </ul>
+          <div class="addwrap sub">
+            <button class="addbtn"><i class="fas fa-plus"></i> Add Sub-question</button>
+            <button class="addbtn"><i class="fas fa-object-group"></i> Add group</button>
+          </div>
+        </li>
+      </ul>
+      <div class="addwrap">
+        <button class="addbtn"><i class="fas fa-plus"></i> New Question</button>
+        <button class="addbtn"><i class="fas fa-object-group"></i> Add group</button>
+      </div>
+    </div>
+    <div class="note">
+      <p>A group row is tinted indigo, with an object-group icon, <b>Group · N</b>, its rule
+      and its comment badge. The second line is the display style and the first line of the description.</p>
+      <p>The member list is a drop zone (the faded row is being dragged in). An empty group shows
+      "Drag questions here", so the zone can be found. Groups move only within the top list or the
+      pop-up list and can never be dropped into another group.</p>
+      <p>"Add group" sits next to "New Question" and next to "Add Sub-question", at the same weight.</p>
+      <p>Click 🗑 on "Your visit" to open the delete dialog (§5).</p>
+    </div>
+  </div>
+
+  <!-- ===================== 4. MODAL ===================== -->
+  <h2>4 · Group modal</h2>
+  <div class="modal">
+    <div class="m-head"><h4><i class="fas fa-object-group" style="color:#6366f1"></i> Group · Your visit</h4><span class="saved"><i class="fas fa-check"></i> Saved</span></div>
+    <div class="m-form">
+      <div class="tabs"><span class="on">English</span><span>Português</span></div>
+      <div><label class="l">Name</label><input type="text" value="Your visit"></div>
+      <div><label class="l">Description</label><div class="quill"><div class="tb"><b>B</b><i>I</i><u>U</u><span>🔗</span><span>• list</span></div><div class="ed">About the last time you were here.</div></div></div>
+      <div><label class="l">Display as</label>
+        <div class="styles" id="modalStyles">
+          <label><input type="radio" name="ds" value="plain"><span class="thumb"><i class="t"></i><i></i><i></i></span>Plain<br><small style="color:#6b7280">heading in the flow</small></label>
+          <label><input type="radio" name="ds" value="card" checked><span class="thumb card"><i class="t"></i><i></i><i></i></span>Card<br><small style="color:#6b7280">one framed block</small></label>
+          <label><input type="radio" name="ds" value="collapsible"><span class="thumb card"><i class="t"></i></span>Collapsible<br><small style="color:#6b7280">opens on tap</small></label>
+        </div></div>
+      <div><label class="l">Visibility</label>
+        <div class="vis">Show this group when
+          <select><optgroup label="This pop-up"><option>Type of place</option></optgroup></select>
+          <select><option>is answered (any option)</option><option>is one of…</option></select>
+          <div style="font-size:12px;color:#6b7280;margin-top:6px">Every question inside is hidden with the group. A question can add its own rule on top.</div></div></div>
+      <div><label class="l">Questions inside (3)</label>
+        <ul class="members">
+          <li><i class="fas fa-grip-vertical" style="color:#d1d5db"></i> How often do you come here? <span class="b" style="margin-left:auto">Choice</span></li>
+          <li><i class="fas fa-grip-vertical" style="color:#d1d5db"></i> When do you come? <span class="b" style="margin-left:auto">Multichoice</span></li>
+          <li><i class="fas fa-grip-vertical" style="color:#d1d5db"></i> Who with? <span class="b" style="margin-left:auto">Single Line Text</span></li>
+        </ul>
+        <div style="font-size:12px;color:#6b7280;margin-top:4px">To add or remove questions, drag them in the list.</div></div>
+    </div>
+    <div class="m-prev">
+      <div style="font-weight:600;font-size:13px;margin-bottom:8px">Respondent sees</div>
+      <span class="pill"><i class="fas fa-code-branch"></i> Shown when Type of place is answered</span>
+      <div class="popup" id="modalPreview"><div class="popup-scroll" id="modalPreviewScroll"></div></div>
+    </div>
+  </div>
+
+  <!-- ===================== 5. DELETE ===================== -->
+  <h2>5 · Delete a group (decided 2026-10-19: ask)</h2>
+  <div class="row">
+    <div class="dialog" id="delDialog">
+      <h4>Delete group “Your visit”?</h4>
+      <label class="choice"><input type="radio" name="del" value="keep" checked><span><b>Delete only the group</b><small>Its 3 questions stay in the pop-up, where the group was. No answers are lost.</small></span></label>
+      <label class="choice"><input type="radio" name="del" value="all"><span><b>Delete the group and its 3 questions</b><small>The questions and everything answered to them are removed.</small></span></label>
+      <div class="warn js-warn" hidden><i class="fas fa-exclamation-triangle"></i> 12 answers will be destroyed. This survey has no earlier version to keep them.</div>
+      <div class="btns"><button>Cancel</button><button class="danger js-delbtn">Delete group</button></div>
+    </div>
+    <div class="note">
+      <p>"Only the group" is the default. Choosing "with its questions" changes the button to
+      <b>Delete group and questions</b>. The answer count is shown after the server's 409 (the
+      existing <code>warn-before-destroying-answers</code> flow, here inlined into the dialog),
+      never pre-rendered. An empty group gets the plain one-line browser confirm.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var style='card';
+  function applyStyle(){
+    document.querySelectorAll('.js-group').forEach(function(g){
+      g.classList.remove('question-group--plain','question-group--card','question-group--collapsible');
+      g.classList.add('question-group','question-group--'+style);
+      var head=g.querySelector('.js-head'), body=g.querySelector('.js-body');
+      var coll=style==='collapsible';
+      g.querySelector('.js-chev').hidden=!coll;
+      g.querySelector('.js-count').hidden=!coll;
+      if(coll){head.setAttribute('role','button');head.tabIndex=0;head.setAttribute('aria-expanded','false');body.hidden=true;}
+      else{head.removeAttribute('role');head.removeAttribute('tabindex');head.removeAttribute('aria-expanded');body.hidden=false;}
+      g.classList.remove('has-error');
+    });
+    document.querySelectorAll('.js-err').forEach(function(e){e.hidden=true});
+    document.querySelectorAll('#styleSeg button').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.style===style)});
+    document.querySelectorAll('.js-stylebadge').forEach(function(b){b.textContent=style});
+    var r=document.querySelector('#modalStyles input[value='+style+']'); if(r) r.checked=true;
+    renderPreview();
+  }
+  function toggle(g,open){var h=g.querySelector('.js-head'),b=g.querySelector('.js-body');if(!h.hasAttribute('aria-expanded'))return;var o=open===undefined?h.getAttribute('aria-expanded')!=='true':open;h.setAttribute('aria-expanded',o);b.hidden=!o;}
+  document.addEventListener('click',function(e){
+    var h=e.target.closest('.js-head'); if(h){toggle(h.closest('.question-group'));}
+    var sb=e.target.closest('#styleSeg button'); if(sb){style=sb.dataset.style;applyStyle();}
+    var wb=e.target.closest('#widthSeg button'); if(wb){
+      document.querySelectorAll('#widthSeg button').forEach(function(b){b.setAttribute('aria-pressed',b===wb)});
+      document.querySelectorAll('.js-w').forEach(function(el){el.classList.toggle('phone',wb.dataset.w==='phone')});}
+    if(e.target.closest('.js-submit')){
+      var g=e.target.closest('.panel').querySelector('.js-group');
+      var card=g.querySelector('[data-required]');
+      var answered=card.querySelector('input:checked');
+      card.querySelector('.js-err').hidden=!!answered;
+      if(!answered){toggle(g,true);g.classList.toggle('has-error',style==='collapsible');card.scrollIntoView({block:'center',behavior:'smooth'});}
+    }
+    if(e.target.closest('.js-del')){document.getElementById('delDialog').scrollIntoView({behavior:'smooth',block:'center'});}
+  });
+  document.addEventListener('keydown',function(e){var h=e.target.closest&&e.target.closest('.js-head');if(h&&(e.key==='Enter'||e.key===' ')){e.preventDefault();toggle(h.closest('.question-group'));}});
+  document.addEventListener('change',function(e){
+    if(e.target.classList.contains('js-type')){document.querySelector('.js-ruled').hidden=false;}
+    if(e.target.name==='ds'){style=e.target.value;applyStyle();}
+    if(e.target.name==='del'){var all=e.target.value==='all';document.querySelector('.js-warn').hidden=!all;document.querySelector('.js-delbtn').textContent=all?'Delete group and questions':'Delete group';}
+  });
+  function renderPreview(){
+    var src=document.querySelector('.js-ruled').cloneNode(true);
+    src.hidden=false; src.classList.remove('js-ruled','js-group');
+    src.querySelectorAll('input').forEach(function(i){i.name='p_'+i.name;});
+    document.getElementById('modalPreviewScroll').replaceChildren(src);
+  }
+  applyStyle();
+})();
+</script>
+</body>
+</html>

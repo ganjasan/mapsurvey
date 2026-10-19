@@ -2,7 +2,7 @@ from django import forms
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
 from survey import marker_icons
-from .models import SurveyHeader, SurveySection, Question, Organization, BASEMAP_CHOICES
+from .models import SurveyHeader, SurveySection, Question, QuestionGroup, Organization, BASEMAP_CHOICES
 from .html_sanitize import coerce_creator_html
 from .redirects import NO_REDIRECT, clean_redirect_url, is_valid_redirect, tidy_redirect_input
 from .layers import layers_for
@@ -570,3 +570,23 @@ class OrganizationSettingsForm(forms.ModelForm):
         # Client-side echo of the server rule, so the common mistake (typing a
         # display name into the slug box) is caught before the round trip.
         self.fields['slug'].widget.attrs.setdefault('pattern', r'[-\w.]+')
+
+
+class QuestionGroupForm(forms.ModelForm):
+    """A question group's content (change question-groups): title, description,
+    display style. The visibility rule and the translations are read by the
+    view, like the question form's."""
+
+    class Meta:
+        model = QuestionGroup
+        fields = ['title', 'description', 'display_style']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 512}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'display_style': forms.RadioSelect,
+        }
+
+    def clean_description(self):
+        # Creator markup on every respondent page: the same allow-list as
+        # question help text (html_sanitize).
+        return coerce_creator_html(self.cleaned_data.get('description') or '').strip()

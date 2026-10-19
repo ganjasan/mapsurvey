@@ -40,6 +40,7 @@ from .layers import (
 from . import product_events as pe
 from .question_types import CHOICE_TYPES, MULTI_FEATURE_TYPES, SHARED_MAP_SOURCE_TYPES, allowed_display_styles, normalise_choice_extras
 from .cloning import clone_question, clone_section
+from .groups import max_order as group_max_order, shift_down as group_shift_down
 from .html_sanitize import coerce_creator_html
 from .translation_gaps import survey_translation_gaps
 from .content_screening import screen_survey, pending_review_for
@@ -1373,14 +1374,14 @@ def _visibility_block_context(survey, host_section, host_kind, host=None, parent
     if not getattr(settings, 'CONDITIONAL_VISIBILITY', False):
         return {'visibility_enabled': False}
     from .visibility import controller_options, popup_controller_options, rule_mode
-    if host_kind == 'subquestion':
+    if host_kind == 'subquestion' or (host_kind == 'group' and parent is not None):
         from types import SimpleNamespace
         eligible = popup_controller_options(parent, host=host)
         groups = [(SimpleNamespace(title=_('This pop-up'), name=''), eligible)] if eligible else []
     else:
         groups = controller_options(
             survey, host_section, host_kind,
-            host_question=host if host_kind == 'question' else None,
+            host_question=host if host_kind in ('question', 'group') else None,
         )
     rule = getattr(host, 'visibility_rule', None) if host is not None else None
     rule = rule if isinstance(rule, dict) else None
@@ -1391,7 +1392,7 @@ def _visibility_block_context(survey, host_section, host_kind, host=None, parent
         'visibility_rule_codes': (rule or {}).get('choice_codes', []),
         'visibility_rule_question': (rule or {}).get('question_code'),
         'visibility_rule_match': rule_mode(rule) if rule else 'any_of',
-        'visibility_popup': host_kind == 'subquestion',
+        'visibility_popup': host_kind == 'subquestion' or (host_kind == 'group' and parent is not None),
     }
 
 
@@ -1447,7 +1448,16 @@ def editor_section_detail(request, survey_uuid, section_id):
             return redirect('editor_survey_detail', survey_uuid=survey.uuid)
     else:
         form = SurveySectionForm(instance=section, lock_structure=structure_locked)
+    return _render_section_detail(request, survey, section, form)
 
+
+def _render_section_detail(request, survey, section, form=None):
+    """The section panel (settings + question list) as editor_section_detail
+    GET renders it. Group endpoints answer with it: a group change can move
+    several rows at once, and re-rendering the list is what keeps the nested
+    Sortable containers right (change question-groups)."""
+    if form is None:
+        form = SurveySectionForm(instance=section, lock_structure=_edit_locks(survey)[1])
     translations = {t.language: t for t in section.translations.all()}
     questions = list(
         Question.objects.filter(
@@ -1706,7 +1716,7 @@ def _render_question_modal(request, context):
 def _section_list_row_oob(request, question, survey, mode):
     """The question's section-list row as an out-of-band swap: `append` adds
     it to the list (a row that does not exist yet), `replace` re-renders the
-    existing top-level row in place — `#questions-list >` keeps the selector
+    existing top-level row in place — `[data-top-level]` keeps the selector
     off the modal's own sub-question rows, which carry the same
     data-question-id."""
     item = render(request, 'editor/partials/question_list_item.html', {'thread_counts': _thread_counts(survey, request.user), 
@@ -1716,8 +1726,9 @@ def _section_list_row_oob(request, question, survey, mode):
     if mode == 'append':
         return '<div hx-swap-oob="beforeend:#questions-list">%s</div>' % item
     # outerHTML replaces the wrapper too, so the row must BE the oob element.
+    # [data-top-level], not `>`: a row inside a group sits one list deeper.
     return item.replace('<li class="question-item"',
-                        '<li hx-swap-oob="outerHTML:#questions-list > li[data-question-id=\'%d\']" class="question-item"' % question.pk, 1)
+                        '<li hx-swap-oob="outerHTML:#questions-list li[data-top-level][data-question-id=\'%d\']" class="question-item"' % question.pk, 1)
 
 
 def _edit_modal_response(request, question, oob_list_item=False, trigger=None):
@@ -1772,10 +1783,8 @@ def editor_question_create(request, survey_uuid, section_id):
         name = request.POST.get('name', '').strip()[:Question._meta.get_field('name').max_length]
         question = Question(survey_section=section, input_type=input_type, name=name,
                             subtext=coerce_creator_html(request.POST.get('subtext', '')))
-        max_order = Question.objects.filter(
-            survey_section=section, parent_question_id__isnull=True
-        ).aggregate(Max('order_number'))['order_number__max']
-        question.order_number = (max_order or 0) + 1
+        # Groups share the sequence (change question-groups): count them too.
+        question.order_number = (group_max_order(section) or 0) + 1
         question.choices = question.thumbs_choices() if question.input_type == 'thumbs' else None
         question.save()
         if not Question.objects.filter(survey_section__survey_header=survey).exclude(pk=question.pk).exists():
@@ -1788,10 +1797,7 @@ def editor_question_create(request, survey_uuid, section_id):
             question = form.save(commit=False)
             question.survey_section = section
             # Auto-assign next order number
-            max_order = Question.objects.filter(
-                survey_section=section, parent_question_id__isnull=True
-            ).aggregate(Max('order_number'))['order_number__max']
-            question.order_number = (max_order or 0) + 1
+            question.order_number = (group_max_order(section) or 0) + 1
             # Handle choices. Non-choice types must never keep a choices
             # list (the widget still posts choices_json across a type switch);
             # stale choices used to reroute answer storage — see CHOICE_TYPES.
@@ -2154,6 +2160,53 @@ def editor_question_preview_live(request, survey_uuid, section_id):
                                  is_type_example=request.POST.get('example') == '1')
 
 
+def _shared_map_source_layers(survey, question):
+    from .layers import question_layers_for
+    return list(question_layers_for(survey, question.code)) \
+        if question.input_type in SHARED_MAP_SOURCE_TYPES else []
+
+
+def _question_delete_blocker(survey, question):
+    """409 when the question may not be deleted at all, else None.
+
+    Shared map (spec shared-map-layer "Source geo questions are protected"):
+    a geo question feeding a `question` layer that some Objects question
+    still shows cannot go — that question would list marks of a code that
+    no longer exists. A layer nobody shows is derived data with no reader:
+    it goes with its source question (change layers-by-question).
+    """
+    # Only readers in THIS header count: a draft's structure is the draft's
+    # to change, and the published version's own Objects question keeps its
+    # own copy of the geo question until the draft is published.
+    readers = [q for layer in _shared_map_source_layers(survey, question)
+               for q in layer.questions.filter(input_type='layer_objects', survey_section__survey_header=survey)
+               .select_related('survey_section')]
+    if readers:
+        names = ', '.join(f'“{q.name or "(unnamed)"}” ({q.survey_section.title or q.survey_section.name})' for q in readers)
+        return JsonResponse({'blocked': f'Respondents’ marks on this question are shown by {names}. Delete that question first.'}, status=409)
+    return None
+
+
+def _delete_question_with_layers(survey, question):
+    """Delete a question and the derived layers that only it kept alive."""
+    source_layers = _shared_map_source_layers(survey, question)
+    # An Objects question was the layer's presence on a map; when it was the
+    # last one showing a `question`-sourced layer, the layer is orphaned
+    # derived data (its reactions were answers to this question's
+    # sub-questions, gone with it) — drop it so Survey settings does not keep
+    # a "Marks" layer nothing reads.
+    orphan_layer = layer_lite(question) if (question.input_type == 'layer_objects' and question.layer_id
+                                            and layer_lite(question).source == 'question') else None
+    question.delete()
+    if orphan_layer is not None and not orphan_layer.questions.exists():
+        orphan_layer.delete()
+    # The layer itself goes only when NO header reads it any more — the
+    # published version may still show it to live respondents.
+    for layer in source_layers:
+        if not layer.questions.exists():
+            layer.delete()
+
+
 @survey_permission_required('editor')
 @require_POST
 def editor_question_delete(request, survey_uuid, question_id):
@@ -2179,44 +2232,16 @@ def editor_question_delete(request, survey_uuid, question_id):
         if configured:
             return HttpResponse(status=204)
 
-    # Shared map (spec shared-map-layer "Source geo questions are protected"):
-    # a geo question feeding a `question` layer that some Objects question
-    # still shows cannot go — that question would list marks of a code that
-    # no longer exists. A layer nobody shows is derived data with no reader:
-    # it goes with its source question (change layers-by-question).
-    from .layers import question_layers_for
-    source_layers = list(question_layers_for(survey, question.code)) \
-        if question.input_type in SHARED_MAP_SOURCE_TYPES else []
-    # Only readers in THIS header count: a draft's structure is the draft's
-    # to change, and the published version's own Objects question keeps its
-    # own copy of the geo question until the draft is published.
-    readers = [q for layer in source_layers
-               for q in layer.questions.filter(input_type='layer_objects', survey_section__survey_header=survey)
-               .select_related('survey_section')]
-    if readers:
-        names = ', '.join(f'“{q.name or "(unnamed)"}” ({q.survey_section.title or q.survey_section.name})' for q in readers)
-        return JsonResponse({'blocked': f'Respondents’ marks on this question are shown by {names}. Delete that question first.'}, status=409)
+    blocked = _question_delete_blocker(survey, question)
+    if blocked:
+        return blocked
 
     refusal = _refuse_if_answers_at_risk(request, survey, question.answer_count())
     if refusal:
         return refusal
 
-    # An Objects question was the layer's presence on a map; when it was the
-    # last one showing a `question`-sourced layer, the layer is orphaned
-    # derived data (its reactions were answers to this question's
-    # sub-questions, gone with it) — drop it so Survey settings does not keep
-    # a "Marks" layer nothing reads.
-    orphan_layer = layer_lite(question) if (question.input_type == 'layer_objects' and question.layer_id
-                                            and layer_lite(question).source == 'question') else None
     parent = question.parent_question_id
-    question.delete()
-    if orphan_layer is not None and not orphan_layer.questions.exists():
-        orphan_layer.delete()
-    # The layer itself goes only when NO header reads it any more — the
-    # published version may still show it to live respondents.
-    for layer in source_layers:
-        if not layer.questions.exists():
-            layer.delete()
+    _delete_question_with_layers(survey, question)
     # Empty body removes the list row; the trigger is what refreshes the
     # preview — the page does not get a swap event for an empty response. A
     # sub-question deleted inside the parent's modal also re-renders the
@@ -2331,10 +2356,7 @@ def editor_subquestion_create(request, survey_uuid, parent_id):
             question = form.save(commit=False)
             question.survey_section = parent.survey_section
             question.parent_question_id = parent
-            max_order = Question.objects.filter(
-                parent_question_id=parent
-            ).aggregate(Max('order_number'))['order_number__max']
-            question.order_number = (max_order or 0) + 1
+            question.order_number = (group_max_order(parent.survey_section, parent) or 0) + 1
             choices_json = data.get('choices_json', '').strip()
             if question.input_type not in CHOICE_TYPES:
                 question.choices = None
@@ -2385,15 +2407,10 @@ def editor_subquestion_create(request, survey_uuid, parent_id):
 
 
 def _shift_order_numbers_down(survey_section, parent, after_order):
-    """Increment order_number by 1 for all questions strictly after ``after_order``
-    in the given (section, parent) bucket — single bulk UPDATE, atomic at SQL level."""
-    from django.db.models import F
-    qs = Question.objects.filter(survey_section=survey_section, order_number__gt=after_order)
-    if parent is None:
-        qs = qs.filter(parent_question_id__isnull=True)
-    else:
-        qs = qs.filter(parent_question_id=parent)
-    qs.update(order_number=F('order_number') + 1)
+    """Increment order_number by 1 for all questions — and groups, which share the
+    sequence (change question-groups) — strictly after ``after_order`` in the given
+    (section, parent) bucket."""
+    group_shift_down(survey_section, parent, after_order)
 
 
 @survey_permission_required('editor')
@@ -2419,7 +2436,9 @@ def editor_question_duplicate(request, survey_uuid, question_id):
             copy_sub_questions=True,
         )
         new_question.order_number = source.order_number + 1
-        new_question.save(update_fields=['order_number'])
+        # A copy of a grouped question stays in the group, right after its source.
+        new_question.group_id = source.group_id
+        new_question.save(update_fields=['order_number', 'group'])
 
     response = render(request, 'editor/partials/question_list_item.html', {'thread_counts': _thread_counts(survey, request.user), 
         'question': new_question,
@@ -2532,10 +2551,8 @@ def editor_question_paste(request, survey_uuid, section_id):
             )
 
     with transaction.atomic():
-        max_order = Question.objects.filter(
-            survey_section=target_section,
-            parent_question_id=target_parent,
-        ).aggregate(Max('order_number'))['order_number__max']
+        # A pasted question lands last and ungrouped (change question-groups).
+        max_order = group_max_order(target_section, target_parent)
         new_question = clone_question(
             source,
             target_section=target_section,
@@ -2665,7 +2682,7 @@ def editor_section_preview(request, survey_uuid, section_name):
         survey_session_id=None, language=selected_language,
     )
 
-    from .visibility import popup_rules_for_client, client_rule
+    from .visibility import popup_rules_for_client, section_rules_for_client
     subquestions_forms = {}
     popup_rules = {}
     for question in section.questions():
@@ -2720,13 +2737,7 @@ def editor_section_preview(request, survey_uuid, section_name):
         'visible_layers_json': json.dumps(section_layer_ids(section)),
         # Same-section rules so the preview plays both branches live, exactly
         # like the respondent page (conditional_visibility.js reads this).
-        'visibility_rules_json': json.dumps({
-            q.code: client_rule(q.visibility_rule)
-            for q in section.questions()
-            if getattr(settings, 'CONDITIONAL_VISIBILITY', False)
-            and isinstance(q.visibility_rule, dict)
-            and q.visibility_rule.get('question_code') in {qq.code for qq in section.questions()}
-        }),
+        'visibility_rules_json': json.dumps(section_rules_for_client(section)),
         'popup_visibility_rules_json': json.dumps(popup_rules),
     })
 
@@ -2990,7 +3001,7 @@ def editor_create_draft(request, survey_uuid):
 # two are replayed on the draft page; the rest land the creator on the same
 # section, where the control now works.
 GATE_ACTIONS = (
-    'add_question', 'add_section', 'add_subquestion', 'delete', 'duplicate',
+    'add_question', 'add_section', 'add_subquestion', 'add_group', 'delete', 'duplicate',
     'copy', 'paste', 'reorder', 'type', 'visibility', 'edit',
 )
 
