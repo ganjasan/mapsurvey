@@ -420,6 +420,12 @@ services:
       # Read-only Render API token, used solely to ask which services exist.
       - key: RENDER_API_KEY
         sync: false
+      # sync_posthog_person_properties runs last in reclaim.sh. Same values as the
+      # web service; without the key that step fails after the others finished.
+      - key: POSTHOG_PROJECT_KEY
+        sync: false
+      - key: POSTHOG_API_HOST
+        sync: false
       # notify_lapsed (billing app) runs here too and mails owners whose Pro
       # ended; without these the cron would fall back to the console backend.
       - key: EMAIL_BACKEND
