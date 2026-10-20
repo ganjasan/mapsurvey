@@ -24,8 +24,9 @@ scope whose shape covers the cell: a polygon covers the cells inside it (holes e
 covers the cells within `corridorMeters` of it (default 20 m, never less than one cell). Each
 respondent SHALL count once per cell whatever the number or size of their shapes. Cells SHALL be
 world-anchored squares sized by the source layer's extent (longer side / 40, never finer than
-20 m) unless the creator sets a cell size, and SHALL be rendered exactly as spray agreement cells
-are: crisp cells in the layer's colour, opacity growing with the share, one canvas. A lone
+20 m) unless the creator sets a cell size, and SHALL be rendered as spray agreement cells are:
+crisp cells in the layer's colour, opacity growing with the count, one canvas (opacity scale and
+its controls: `responses-coverage-contrast`, change coverage-contrast). A lone
 respondent SHALL paint a flat surface at the minimum opacity. The surface SHALL be computed from
 the same `L.SprayAgreementLayer` binning the spray clouds use, so spray rendering is unchanged.
 

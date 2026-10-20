@@ -691,7 +691,10 @@ document.addEventListener('DOMContentLoaded', function() {
         var members = L.SprayAgreementLayer.membersFromFeatures(
             src.features.map(function(entry) { return entry.layer.feature || entry.feature; }));
         var paneName = this._createPane();
-        var surface = L.sprayAgreementLayer(members, { color: src.color, pane: paneName });
+        // Coverage scales to the strongest cell in view (change coverage-contrast,
+        // #370): an absolute share left real surveys pale -- full colour needed
+        // every respondent on one cell.
+        var surface = L.sprayAgreementLayer(members, { color: src.color, pane: paneName, scale: 'max', maxAlpha: 0.9 });
         var slot = {
             id: covId,
             type: 'coverage',
@@ -1314,6 +1317,50 @@ document.addEventListener('DOMContentLoaded', function() {
         return '\u2264 ' + st.max + ' of ' + st.respondents + ' respondent' + (st.respondents === 1 ? '' : 's');
     }
 
+    // The coverage opacity curve as bars, one per respondent count from 1 to
+    // the strongest cell in view, each painted in the layer colour at the
+    // opacity that count gets -- what the map will show, before it redraws.
+    function _drawCoverageCurve(el, slot) {
+        var st = slot.surface.getStats() || {};
+        var max = Math.max(1, st.max || 1), n = st.respondents || 1;
+        var o = slot.surface.options;
+        var W = 200, H = 40, count = Math.min(max, 40);
+        var svgNS = 'http://www.w3.org/2000/svg';
+        var svg = document.createElementNS(svgNS, 'svg');
+        svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+        svg.setAttribute('width', '100%');
+        svg.setAttribute('height', H);
+        svg.setAttribute('preserveAspectRatio', 'none');
+        svg.setAttribute('role', 'img');
+        svg.setAttribute('aria-label', 'Opacity by respondents per cell');
+        var bw = W / count;
+        for (var i = 0; i < count; i++) {
+            var c = count === max ? i + 1 : Math.round(1 + i * (max - 1) / Math.max(1, count - 1));
+            var a = L.SprayAgreementLayer.alphaFor(c, n, max, o);
+            var h = Math.max(1, (a / (o.maxAlpha || 0.75)) * (H - 2));
+            var r = document.createElementNS(svgNS, 'rect');
+            r.setAttribute('x', (i * bw + 0.5).toFixed(2));
+            r.setAttribute('width', Math.max(1, bw - 1).toFixed(2));
+            r.setAttribute('y', a > 0 ? (H - h).toFixed(2) : H - 1);
+            r.setAttribute('height', a > 0 ? h.toFixed(2) : 1);
+            r.setAttribute('fill', a > 0 ? slot.color : '#d1d5db');
+            r.setAttribute('fill-opacity', a > 0 ? a.toFixed(3) : 1);
+            var t = document.createElementNS(svgNS, 'title');
+            t.textContent = c + ' respondent' + (c === 1 ? '' : 's') + (a > 0 ? '' : ' (hidden)');
+            r.appendChild(t);
+            svg.appendChild(r);
+        }
+        el.textContent = '';
+        el.appendChild(svg);
+        var axis = document.createElement('div');
+        axis.className = 'geo-coverage-curve-axis';
+        var left = document.createElement('span'); left.textContent = '1';
+        var mid = document.createElement('span'); mid.textContent = 'respondents per cell';
+        var right = document.createElement('span'); right.textContent = String(max);
+        axis.appendChild(left); axis.appendChild(mid); axis.appendChild(right);
+        el.appendChild(axis);
+    }
+
     // Coverage settings: cell size, the line corridor, opacity, and the count
     // line. The heat popover's skeleton.
     function _openCoverageSettings(covId) {
@@ -1353,13 +1400,24 @@ document.addEventListener('DOMContentLoaded', function() {
         slot.surface.on('stats', function(st) { stats.textContent = _coverageStatsText(st); });
         pop.appendChild(stats);
 
+        // A bay- or region-sized source gets an automatic cell of several km; the
+        // slider must reach it, or the thumb sits at the end showing a lie.
+        var cellVal = Math.round(slot.surface._cellMeters() / 10) * 10;
+        var cellMax = Math.max(1000, Math.ceil(cellVal * 2 / 1000) * 1000);
         var sliders = [
-            { key: 'cellMeters', label: 'Cell (m)', min: 10, max: 1000, step: 10, val: Math.round(slot.surface._cellMeters()) },
+            { key: 'cellMeters', label: 'Cell (m)', min: 10, max: cellMax, step: 10, val: cellVal },
         ];
         if (slot.isLine) {
             sliders.push({ key: 'corridorMeters', label: 'Corridor (m)', min: 5, max: 500, step: 5, val: opts.corridorMeters || 20 });
         }
         sliders.push({ key: 'opacity', label: 'Opacity', min: 5, max: 100, step: 5, val: Math.round(slot.opacity * 100) });
+        // The opacity curve (change coverage-contrast): Contrast bends it,
+        // Minimum respondents cuts its low end. Both feed alphaFor.
+        sliders.push({ key: 'contrast', label: 'Contrast', min: -100, max: 100, step: 10, val: slot.contrast || 0 });
+        var respondents = (slot.surface.getStats() || {}).respondents || 1;
+        sliders.push({ key: 'minCount', label: 'Min. people', min: 1, max: Math.max(1, respondents), step: 1, val: opts.minCount || 1,
+                       title: 'Hide cells covered by fewer respondents' });
+        var minCountInput = null;
         sliders.forEach(function(sl) {
             var row = document.createElement('label');
             var nameSpan = document.createElement('span');
@@ -1373,18 +1431,37 @@ document.addEventListener('DOMContentLoaded', function() {
             valSpan.className = 'val';
             valSpan.textContent = sl.val;
             row.appendChild(valSpan);
+            if (sl.title) row.title = sl.title;
+            if (sl.key === 'minCount') minCountInput = { input: input, val: valSpan };
             input.addEventListener('input', function() {
                 var v = parseFloat(input.value);
                 valSpan.textContent = v;
                 if (sl.key === 'opacity') {
                     window.layerManager.setCoverageOpacity(covId, v / 100);
+                } else if (sl.key === 'contrast') {
+                    slot.contrast = v;
+                    window.layerManager.setCoverageOptions(covId, { gamma: Math.pow(4, v / 100) });
                 } else {
                     var u = {}; u[sl.key] = v;
                     window.layerManager.setCoverageOptions(covId, u);
                 }
+                _drawCoverageCurve(curve, slot);
             });
             pop.appendChild(row);
         });
+
+        var curve = document.createElement('div');
+        curve.className = 'geo-coverage-curve';
+        pop.appendChild(curve);
+        _drawCoverageCurve(curve, slot);
+        var onStats = function(st) {
+            if (!pop.isConnected) { slot.surface.off('stats', onStats); return; }
+            if (minCountInput && st && st.respondents) {
+                minCountInput.input.max = Math.max(1, st.respondents);
+            }
+            _drawCoverageCurve(curve, slot);
+        };
+        slot.surface.on('stats', onStats);
 
         var mapContainer = document.getElementById('analytics-map');
         mapContainer.style.position = 'relative';
