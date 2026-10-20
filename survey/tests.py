@@ -39535,6 +39535,49 @@ class CoverageSurfaceTest(TestCase):
         # One binning seam for both styles.
         self.assertEqual(js.count('var bins = this._bin('), 2)
 
+    def test_respondents_count_once_and_coverage_scales_to_the_strongest_cell(self):
+        """
+        GIVEN the agreement layer used by coverage (change coverage-contrast, #370)
+        WHEN its binning and opacity code is read
+        THEN members are grouped by id before binning, opacity goes through the one
+             alphaFor curve with scale/gamma/minCount, spray keeps the 'share' default
+             and coverage asks for 'max'
+        """
+        import pathlib
+        from django.contrib.staticfiles import finders
+        js = pathlib.Path(finders.find('js/spray_layer.js')).read_text()
+        self.assertIn('var groups = new Map();', js)
+        self.assertIn('groups.forEach(function (members) {', js)
+        self.assertIn('L.SprayAgreementLayer.alphaFor = function (count, n, max, o) {', js)
+        self.assertIn("var a = L.SprayAgreementLayer.alphaFor(count, n, max, opts);", js)
+        self.assertIn("scale: 'share',", js)
+        self.assertIn("if (o.scale === 'max') {", js)
+        self.assertNotIn('var a = lo + (hi - lo) * (count / n);', js)
+        q = Question.objects.create(survey_section=self.section, code='Q_AREA',
+                                    name='Areas', input_type='polygon')
+        self._answer(q, polygon=Polygon(((0, 0), (0, 1), (1, 1), (1, 0), (0, 0)), srid=4326))
+        html = self._page()
+        self.assertIn("pane: paneName, scale: 'max', maxAlpha: 0.9 });", html)
+        # The cell slider reaches the automatic cell, however large the source.
+        self.assertIn("var cellMax = Math.max(1000, Math.ceil(cellVal * 2 / 1000) * 1000);", html)
+
+    def test_coverage_settings_offer_contrast_minimum_and_a_curve_preview(self):
+        """
+        GIVEN a survey with a polygon question that has answers
+        WHEN the Responses page is rendered
+        THEN the coverage settings carry the Contrast and minimum-respondents controls,
+             contrast maps to the curve exponent, and the preview draws through alphaFor
+        """
+        q = Question.objects.create(survey_section=self.section, code='Q_AREA',
+                                    name='Areas', input_type='polygon')
+        self._answer(q, polygon=Polygon(((0, 0), (0, 1), (1, 1), (1, 0), (0, 0)), srid=4326))
+        html = self._page()
+        self.assertIn("key: 'contrast', label: 'Contrast', min: -100, max: 100", html)
+        self.assertIn("key: 'minCount', label: 'Min. people', min: 1", html)
+        self.assertIn('{ gamma: Math.pow(4, v / 100) }', html)
+        self.assertIn('function _drawCoverageCurve(el, slot) {', html)
+        self.assertIn('L.SprayAgreementLayer.alphaFor(c, n, max, o)', html)
+
     def test_point_only_survey_keeps_the_heatmap_entry(self):
         """
         GIVEN a survey whose only geo question is a point question

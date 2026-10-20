@@ -291,7 +291,14 @@
             cellPx: 6,          // 'heat' style: screen px per cell; smoothing hides the grid
             blur: 2,            // 'heat' style: box-blur radius in cells
             minAlpha: 0.15,     // any painted cell stays visible
-            maxAlpha: 0.75,     // every respondent agrees
+            maxAlpha: 0.75,     // every respondent agrees ('share') / the strongest cell in view ('max')
+            // How a cell's count becomes opacity ('grid' style; see alphaFor).
+            // 'share' (spray): count / respondents in scope. 'max' (coverage,
+            // change coverage-contrast #370): stretched between the weakest drawn
+            // count and the strongest cell in view.
+            scale: 'share',
+            gamma: 1,           // curve exponent: > 1 keeps low counts faint, < 1 lifts them
+            minCount: 1,        // cells counted by fewer respondents are not drawn
             gradient: { 0.0: '#3b82f6', 0.35: '#06b6d4', 0.55: '#84cc16', 0.75: '#facc15', 1.0: '#ef4444' },
             pane: 'overlayPane'
         },
@@ -406,43 +413,56 @@
         },
 
         // ── binning (one seam for clouds and shapes) ─────────────────────
-        // Counts members per cell over the cell grid defined by `project`
+        // Counts respondents per cell over the cell grid defined by `project`
         // (latlng -> pixel point) and `cellPx`, restricted to `range`
         // {x0, y0, x1, y1} in cell units (x1/y1 exclusive). Keys are row-major
-        // indices into the range; every member counts once per cell. Also
+        // indices into the range. Members are grouped by id — coverage passes one
+        // member per SHAPE, and a respondent who drew two overlapping areas is
+        // still one respondent (change coverage-contrast, #370) — so every
+        // respondent counts once per cell and `n` is respondents in scope. Also
         // records the stats and fires 'stats'.
         _bin: function (project, cellPx, range, corridorCells) {
             var hits = new Map(), n = 0, max = 0;
             var w = range.x1 - range.x0;
-            var add = function (key) {
+            var groups = new Map();
+            for (var i = 0; i < this._clouds.length; i++) {
+                var m = this._clouds[i];
+                if (this._active && !this._active.has(m.id)) { continue; }
+                var hasContent = m.dots ? m.dots.length > 0
+                    : !!(m.geometry && m.geometry.coordinates && m.geometry.coordinates.length);
+                if (!hasContent) { continue; }
+                var g = groups.get(m.id);
+                if (!g) { g = []; groups.set(m.id, g); }
+                g.push(m);
+            }
+            var seen = new Set();
+            var addOnce = function (key) {
+                if (seen.has(key)) { return; }
+                seen.add(key);
                 var c = (hits.get(key) || 0) + 1;
                 hits.set(key, c);
                 if (c > max) { max = c; }
             };
-            for (var i = 0; i < this._clouds.length; i++) {
-                var m = this._clouds[i];
-                if (this._active && !this._active.has(m.id)) { continue; }
-                if (m.dots) {
-                    if (!m.dots.length) { continue; }
-                    n++;
-                    var seen = new Set();
-                    for (var j = 0; j < m.dots.length; j++) {
-                        var p = project(m.dots[j]);
-                        var cx = Math.floor(p.x / cellPx), cy = Math.floor(p.y / cellPx);
-                        if (cx < range.x0 || cy < range.y0 || cx >= range.x1 || cy >= range.y1) { continue; }
-                        var key = (cy - range.y0) * w + (cx - range.x0);
-                        if (seen.has(key)) { continue; }
-                        seen.add(key);
-                        add(key);
+            var self = this;
+            groups.forEach(function (members) {
+                n++;
+                seen.clear();
+                members.forEach(function (m) {
+                    if (m.dots) {
+                        for (var j = 0; j < m.dots.length; j++) {
+                            var p = project(m.dots[j]);
+                            var cx = Math.floor(p.x / cellPx), cy = Math.floor(p.y / cellPx);
+                            if (cx < range.x0 || cy < range.y0 || cx >= range.x1 || cy >= range.y1) { continue; }
+                            addOnce((cy - range.y0) * w + (cx - range.x0));
+                        }
+                    } else {
+                        self._rasterise(m.geometry, project, cellPx, range, corridorCells, addOnce);
                     }
-                } else if (m.geometry && m.geometry.coordinates && m.geometry.coordinates.length) {
-                    n++;
-                    this._rasterise(m.geometry, project, cellPx, range, corridorCells, add);
-                }
-            }
+                });
+            });
             this._stats = { max: max, respondents: n };
             this.fire('stats', this._stats);
-            return { hits: hits, n: n };
+            return { hits: hits, n: n, max: max };
         },
 
         // A shape's covered cells: draw it onto an offscreen canvas whose pixel
@@ -553,10 +573,10 @@
                           x1: Math.floor(br.x / cellPx) + 2, y1: Math.floor(br.y / cellPx) + 2 };
             var corridorCells = this.options.corridorMeters / cellM;
             var bins = this._bin(function (ll) { return map.project(ll, zoom); }, cellPx, range, corridorCells);
-            var hits = bins.hits, n = bins.n;
+            var hits = bins.hits, n = bins.n, max = bins.max;
             if (!n || !hits.size) { return this; }
             var rgb = this._rgbOf(this.options.color);
-            var lo = this.options.minAlpha, hi = this.options.maxAlpha;
+            var opts = this.options;
             var rw = range.x1 - range.x0;
             ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
             hits.forEach(function (count, key) {
@@ -568,7 +588,8 @@
                 var x0 = Math.round(cp.x), y0 = Math.round(cp.y);
                 var x1 = Math.round(cp.x + cellPx), y1 = Math.round(cp.y + cellPx);
                 if (x0 > size.x || y0 > size.y || x1 < 0 || y1 < 0) { return; }
-                var a = lo + (hi - lo) * (count / n);
+                var a = L.SprayAgreementLayer.alphaFor(count, n, max, opts);
+                if (a <= 0) { return; }
                 ctx.fillStyle = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',' + a.toFixed(3) + ')';
                 ctx.fillRect(x0, y0, Math.max(1, x1 - x0), Math.max(1, y1 - y0));
             });
@@ -630,6 +651,25 @@
 
     // GeoJSON LineString/Polygon/Multi* features (with properties.session_id)
     // -> shape members for a coverage surface (change responses-coverage-surface).
+    // A cell's opacity from its respondent count — the ONE curve for the grid
+    // style, the coverage settings preview and the tests. Returns 0 for a cell
+    // that is not drawn. n = respondents in scope, max = highest count in view.
+    L.SprayAgreementLayer.alphaFor = function (count, n, max, o) {
+        o = o || {};
+        var lo = o.minAlpha != null ? o.minAlpha : 0.15, hi = o.maxAlpha != null ? o.maxAlpha : 0.75;
+        var floor = Math.max(1, o.minCount || 1);
+        if (!(count >= floor) || !(n > 0)) { return 0; }
+        var t;
+        if (o.scale === 'max') {
+            t = max > floor ? (count - floor) / (max - floor) : 0;
+        } else {
+            t = count / n;
+        }
+        t = Math.max(0, Math.min(1, t));
+        var g = o.gamma > 0 ? o.gamma : 1;
+        return lo + (hi - lo) * Math.pow(t, g);
+    };
+
     L.SprayAgreementLayer.membersFromFeatures = function (features) {
         var out = [];
         var kinds = { LineString: 1, MultiLineString: 1, Polygon: 1, MultiPolygon: 1 };
