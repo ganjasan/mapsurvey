@@ -816,10 +816,16 @@ ul {
   padding: 12px 0 0;
   margin: 0;
 }
-.question-group--card .question-card + .question-card,
-.question-group--collapsible .question-card + .question-card {
+/* Between ANY two blocks of the run, not only cards: a geo question's draw
+   button, a Formatted Text block or an Objects list is not a .question-card. */
+.question-group--card > .question-group__body > * + *,
+.question-group--collapsible > .question-group__body > * + * {
   border-top: 1px solid var(--card-border);
   margin-top: 12px;
+}
+.question-group--card > .question-group__body > :not(.question-card),
+.question-group--collapsible > .question-group__body > :not(.question-card) {
+  padding-top: 12px;
 }
 .question-group--card .question-card:focus-within,
 .question-group--collapsible .question-card:focus-within {
@@ -893,6 +899,8 @@ ul {
 .leaflet-popup-content .question-group--plain .question-card + .question-card {
   padding-top: 12px;
 }
+/* A draw button inside a framed group keeps its own look but sits flush. */
+.question-group .geo-block { margin-bottom: 0; }
 
 /* ============================================
    Navigation buttons
