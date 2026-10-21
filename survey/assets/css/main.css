@@ -769,6 +769,147 @@ ul {
 }
 
 /* ============================================
+   Question groups (change question-groups, #340)
+   partials/question_group.html. plain = heading in the flow, members keep
+   their cards; card = one frame, members become rows split by rules;
+   collapsible = card whose title row is a button.
+   ============================================ */
+.question-group {
+  margin-bottom: 12px;
+}
+.question-group__title {
+  display: block;
+  margin: 0;
+  font-size: 1.02em;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.question-group__desc {
+  margin-top: 4px;
+  font-size: 0.9em;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+.question-group .question-group__desc p { margin: 0; }
+.question-group .question-group__desc p + p { margin-top: 0.4em; }
+/* Plain: no frame, but a line along the left edge of the whole run, so the
+   respondent sees where the group ends (owner decision 2026-10-21). */
+.question-group--plain {
+  border-left: 3px solid rgba(79, 70, 229, 0.35);
+  padding-left: 12px;
+}
+.question-group--plain > .question-group__head {
+  padding: 2px 2px 10px;
+}
+.question-group--plain > .question-group__body > .question-card:last-child {
+  margin-bottom: 0;
+}
+.question-group--card,
+.question-group--collapsible {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+.question-group--card > .question-group__head,
+.question-group--collapsible > .question-group__head {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--card-border);
+}
+.question-group--card .question-card,
+.question-group--collapsible .question-card {
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 12px 0 0;
+  margin: 0;
+}
+/* Between ANY two blocks of the run, not only cards: a geo question's draw
+   button, a Formatted Text block or an Objects list is not a .question-card. */
+.question-group--card > .question-group__body > * + *,
+.question-group--collapsible > .question-group__body > * + * {
+  border-top: 1px solid var(--card-border);
+  margin-top: 12px;
+}
+.question-group--card > .question-group__body > :not(.question-card),
+.question-group--collapsible > .question-group__body > :not(.question-card) {
+  padding-top: 12px;
+}
+.question-group--card .question-card:focus-within,
+.question-group--collapsible .question-card:focus-within {
+  box-shadow: none;
+}
+.question-group--card:focus-within,
+.question-group--collapsible:focus-within {
+  border-color: var(--accent);
+}
+.question-group__toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  margin: -8px 0 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.question-group__toggle .question-group__title { flex: 0 1 auto; }
+.question-group__count {
+  flex: 1;
+  font-size: 0.8em;
+  font-weight: 500;
+  color: var(--text-tertiary);
+}
+.question-group__chevron {
+  color: var(--text-secondary);
+  transition: transform var(--transition);
+}
+.question-group__toggle[aria-expanded="true"] .question-group__chevron {
+  transform: rotate(180deg);
+}
+.question-group__toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+.question-group--collapsible:has(.question-group__toggle[aria-expanded="false"]) > .question-group__head {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+.question-group--collapsible.question-group--error {
+  border-color: var(--danger);
+}
+/* In a map pop-up the pop-up is the frame: ungrouped cards are rows (above),
+   a card/collapsible group is the one framed block among them. */
+.leaflet-popup-content .question-card + .question-group,
+.leaflet-popup-content .question-group + .question-card,
+.leaflet-popup-content .question-group + .question-group {
+  margin-top: 12px;
+}
+.leaflet-popup-content .question-group--plain {
+  padding-left: 10px;
+}
+.leaflet-popup-content .question-group--card,
+.leaflet-popup-content .question-group--collapsible {
+  padding: 12px;
+  margin-bottom: 0;
+}
+.leaflet-popup-content .question-group .question-card {
+  padding: 12px 0 0;
+}
+.leaflet-popup-content .question-group--plain .question-card + .question-card {
+  padding-top: 12px;
+}
+/* A draw button inside a framed group keeps its own look but sits flush. */
+.question-group .geo-block { margin-bottom: 0; }
+
+/* ============================================
    Navigation buttons
    ============================================ */
 .next_button {

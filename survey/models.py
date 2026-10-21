@@ -941,6 +941,11 @@ class Question(models.Model):
     # source, so an uploaded layer shares exactly like respondents' marks do
     # (owner decision 2026-09-07, mockups/journey.md).
     share_with_respondents = models.BooleanField(default=False, help_text=_('Sub-questions of an Objects-on-the-map question: other respondents see the answers on the object (👍/👎 counts, comments).'))
+    # The group this question sits in (change question-groups, #340), or None.
+    # SET_NULL is what "delete only the group" means: the members stay where they
+    # are in the order, ungrouped. The group's order_number shares this question's
+    # sequence; members follow it contiguously (survey/groups.py).
+    group = models.ForeignKey("QuestionGroup", null=True, blank=True, on_delete=models.SET_NULL, related_name='questions')
 
     class Meta:
         app_label = 'survey'
@@ -1097,6 +1102,87 @@ class QuestionTranslation(models.Model):
 
     def __str__(self):
         return f"{self.question.code} ({self.language})"
+
+
+GROUP_DISPLAY_STYLE_CHOICES = (
+    ("plain", _("Plain")),
+    ("card", _("Card")),
+    ("collapsible", _("Collapsible")),
+)
+
+
+def group_code_generator():
+    while True:
+        code = "G_" + str(random.random())[2:12]
+        if not QuestionGroup.objects.filter(code=code).exists():
+            return code
+
+
+class QuestionGroup(models.Model):
+    """A run of questions with one title, description, display style and rule.
+
+    A container, not a question: it collects nothing and has no answers. It sits
+    in a section (`parent_question` None) or in the pop-up of a geo /
+    Objects-on-the-map question. Its `order_number` is a slot in the same
+    sequence as its sibling questions and its members follow it contiguously, so
+    every reader that walks `section.questions()` / `subQuestions()` keeps its
+    order (change question-groups, D2). Groups never nest.
+    """
+    survey_section = models.ForeignKey("SurveySection", on_delete=models.CASCADE, related_name='question_groups')
+    parent_question = models.ForeignKey("Question", null=True, blank=True, on_delete=models.CASCADE, related_name='sub_question_groups')
+    code = models.CharField(max_length=50, default=group_code_generator)
+    title = models.CharField(max_length=512, blank=True, default="")
+    # Creator rich text, stored through html_sanitize.coerce_creator_html.
+    description = models.TextField(blank=True, default="")
+    display_style = models.CharField(max_length=12, choices=GROUP_DISPLAY_STYLE_CHOICES, default="card")
+    # Same shape as Question.visibility_rule; hides every member when false.
+    visibility_rule = models.JSONField(null=True, blank=True)
+    order_number = models.IntegerField(default=0)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ('order_number', 'id')
+
+    def __str__(self):
+        return self.title or self.code
+
+    def members(self):
+        return self.questions.order_by('order_number', 'id')
+
+    def get_translated_title(self, lang):
+        if not lang or self.pk is None:
+            return self.title
+        t = self.translations.filter(language=lang).first()
+        return t.title if t and t.title else self.title
+
+    def get_translated_description(self, lang):
+        if not lang or self.pk is None:
+            return self.description
+        t = self.translations.filter(language=lang).first()
+        return t.description if t and t.description else self.description
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        parent = self.parent_question
+        if parent is not None:
+            if parent.parent_question_id_id is not None:
+                raise ValidationError(_('A group can only sit under a top-level question.'))
+            if parent.survey_section_id != self.survey_section_id:
+                raise ValidationError(_('A pop-up group belongs to the section of its question.'))
+
+
+class QuestionGroupTranslation(models.Model):
+    group = models.ForeignKey("QuestionGroup", on_delete=models.CASCADE, related_name='translations')
+    language = models.CharField(max_length=10, help_text=_('ISO 639-1 language code'))
+    title = models.CharField(max_length=512, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+
+    class Meta:
+        app_label = 'survey'
+        unique_together = ('group', 'language')
+
+    def __str__(self):
+        return f"{self.group.code} ({self.language})"
 
 
 def upload_key(instance, filename):
@@ -1962,6 +2048,7 @@ COMMENT_ANCHOR_CHOICES = (
     ('section', _('Section')),
     ('session', _('Response')),
     ('block', _('Public results block')),
+    ('group', _('Question group')),
 )
 
 COMMENT_THREAD_STATUS_CHOICES = (
@@ -1999,6 +2086,10 @@ class CommentThread(models.Model):
     anchor_kind = models.CharField(max_length=10, choices=COMMENT_ANCHOR_CHOICES)
     question_code = models.CharField(max_length=50, blank=True, default='')
     section_code = models.CharField(max_length=8, blank=True, default='')
+    # A QuestionGroup by code, for the same reason as question_code (change
+    # question-groups). db_default: the previous release, still serving during a
+    # deploy, inserts threads without this column.
+    group_code = models.CharField(max_length=50, blank=True, default='', db_default='')
     session = models.ForeignKey('SurveySession', null=True, blank=True, on_delete=models.CASCADE, related_name='comment_threads')
     block = models.ForeignKey('PublicResultsBlock', null=True, blank=True, on_delete=models.CASCADE, related_name='comment_threads')
     status = models.CharField(max_length=8, choices=COMMENT_THREAD_STATUS_CHOICES, default='open')
@@ -2026,11 +2117,12 @@ class CommentThread(models.Model):
             models.CheckConstraint(
                 name='commentthread_one_anchor_only',
                 condition=(
-                    Q(anchor_kind='survey', question_code='', section_code='', session__isnull=True, block__isnull=True)
-                    | Q(anchor_kind='question', section_code='', session__isnull=True, block__isnull=True) & ~Q(question_code='')
-                    | Q(anchor_kind='section', question_code='', session__isnull=True, block__isnull=True) & ~Q(section_code='')
-                    | Q(anchor_kind='session', question_code='', section_code='', session__isnull=False, block__isnull=True)
-                    | Q(anchor_kind='block', question_code='', section_code='', session__isnull=True, block__isnull=False)
+                    Q(anchor_kind='survey', question_code='', section_code='', group_code='', session__isnull=True, block__isnull=True)
+                    | Q(anchor_kind='question', section_code='', group_code='', session__isnull=True, block__isnull=True) & ~Q(question_code='')
+                    | Q(anchor_kind='section', question_code='', group_code='', session__isnull=True, block__isnull=True) & ~Q(section_code='')
+                    | Q(anchor_kind='session', question_code='', section_code='', group_code='', session__isnull=False, block__isnull=True)
+                    | Q(anchor_kind='block', question_code='', section_code='', group_code='', session__isnull=True, block__isnull=False)
+                    | Q(anchor_kind='group', question_code='', section_code='', session__isnull=True, block__isnull=True) & ~Q(group_code='')
                 ),
             ),
         ]

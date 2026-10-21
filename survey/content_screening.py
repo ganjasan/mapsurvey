@@ -135,7 +135,8 @@ def collect_text(survey, now=None) -> ScreenInput:
     and `redirect_url`. Capped at MAX_TEXT_BYTES so a 10-language Formatted
     Text block cannot turn one publish into a regex marathon.
     """
-    from .models import Question, QuestionTranslation, SurveySection, SurveySectionTranslation
+    from .models import (Question, QuestionGroup, QuestionGroupTranslation, QuestionTranslation,
+                         SurveySection, SurveySectionTranslation)
 
     now = now or timezone.now()
     inp = ScreenInput()
@@ -155,6 +156,15 @@ def collect_text(survey, now=None) -> ScreenInput:
     for t in QuestionTranslation.objects.filter(question_id__in=[q.id for q in questions]).only('name', 'subtext'):
         texts.append(('question.name', t.name or ''))
         texts.append(('question.subtext', t.subtext or ''))
+    # Question groups (change question-groups): their title and description
+    # are on the respondent page like a question's.
+    groups = list(QuestionGroup.objects.filter(survey_section_id__in=section_ids).only('id', 'title', 'description'))
+    for g in groups:
+        texts.append(('group.title', g.title or ''))
+        texts.append(('group.description', g.description or ''))
+    for t in QuestionGroupTranslation.objects.filter(group_id__in=[g.id for g in groups]).only('title', 'description'):
+        texts.append(('group.title', t.title or ''))
+        texts.append(('group.description', t.description or ''))
     thanks = survey.thanks_html or {}
     if isinstance(thanks, dict):
         for v in thanks.values():

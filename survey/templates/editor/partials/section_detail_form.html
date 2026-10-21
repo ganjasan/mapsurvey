@@ -104,12 +104,16 @@
         <h6 style="margin:0;font-weight:600;"><i class="fas fa-list"></i> {% trans "Questions" %}</h6>
     </div>
 
-    <ul class="question-list" id="questions-list">
-        {% for question in questions %}
+    {% load question_utils %}{% editor_runs section None questions as runs %}
+    <ul class="question-list" id="questions-list" data-section-id="{{ section.id }}">
+        {% for group, members in runs %}{% if group %}
+            {% include "editor/partials/group_list_item.html" %}
+        {% else %}{% for question in members %}
             {% include "editor/partials/question_list_item.html" %}
-        {% endfor %}
+        {% endfor %}{% endif %}{% endfor %}
     </ul>
 
+    <div class="add-question-row">
     <button class="add-question-btn"
             title="{% if is_read_only %}{% trans "Create a draft to edit" %}{% elif structure_locked %}{% trans "Adding a question starts unpublished changes" %}{% endif %}"
             {% if not structure_locked %}
@@ -120,6 +124,18 @@
             {% elif is_read_only %}disabled{% else %}data-gate="add_question" data-gate-section="{{ section.code }}"{% endif %}>
         <i class="fas fa-plus"></i> {% trans "New Question" %}
     </button>
+    <button class="add-question-btn add-group-btn"
+            title="{% if is_read_only %}{% trans "Create a draft to edit" %}{% elif structure_locked %}{% trans "Adding a group starts unpublished changes" %}{% else %}{% trans "A title, a description and one visibility rule for several questions" %}{% endif %}"
+            {% if not structure_locked %}
+            hx-post="{% url 'editor_group_create' survey.uuid section.id %}"
+            hx-target="#questionModalBody"
+            hx-swap="innerHTML"
+            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+            data-toggle="modal" data-target="#questionModal"
+            {% elif is_read_only %}disabled{% else %}data-gate="add_group" data-gate-section="{{ section.code }}"{% endif %}>
+        <i class="fas fa-object-group"></i> {% trans "Add group" %}
+    </button>
+    </div>
     {% if not structure_locked %}
     <button class="paste-question-btn"
             hx-post="{% url 'editor_question_paste' survey.uuid section.id %}"

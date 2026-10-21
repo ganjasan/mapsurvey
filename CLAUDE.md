@@ -329,6 +329,28 @@ OPEN (shown to everyone) and are badged in the editor. Rules ride ZIP export/imp
 `parent_question_id` for visibility — that relation means "geo popup sub-question". Env var off ⇒
 rules stored but inert, editor hides the Visibility block.
 
+**Question groups (`QuestionGroup`, change `question-groups`, #340)**: a container, not a question
+type — a title, a rich-text description (`coerce_creator_html` on every write), a display style
+(`plain | card | collapsible`) and one `visibility_rule` for a run of questions in a section or in a
+geo / Objects pop-up (`parent_question`). Answers stay rows on the questions; export, Responses and
+public results do not know groups exist. **One continuous order**: a group's `order_number` is a
+slot in the same sequence as its sibling questions and its members (`Question.group`, `SET_NULL`)
+follow it contiguously, so `section.questions()`/`subQuestions()` and the visibility engine's
+"controller is earlier" test are unchanged; anything that computes a new `order_number` must count
+groups (`survey/groups.py`: `max_order`, `next_order`, `shift_down`), and anything that DRAWS
+questions goes through `group_runs` (respondent: `SurveySectionAnswerForm.field_runs` →
+`partials/question_fields.html` → `partials/question_group.html`; editor: the `editor_runs` tag →
+`group_list_item.html`). Visibility treats a group as host kind `'group'` judged at its own
+order; a member is visible only if its group is (`VisibilityMap.group_visible`, `question_own` for
+the respondent page); client rule maps key groups `group:<code>`, always before their members.
+Editor endpoints live in `survey/editor_group_views.py`; the one reorder endpoint for nested lists
+is `editor_items_reorder` (ownership-checked, renumbers 0..N, sets membership); a group change
+re-renders the section panel rather than patching rows. Deleting asks: only the group (members
+stay in place) or with its questions (the usual 409 answer-loss acknowledgement). Groups ride the
+ZIP (`groups`, `sub_question_groups`, `group`), every copy (`cloning.clone_groups`,
+`clone_top_level_questions`), comments (`group:<code>` anchor) and content screening. AI
+generation writes no groups.
+
 **Pop-up rules (change `subquestion-visibility-rules`, #338)**: a sub-question of a geo /
 `layer_objects` question may carry the same `visibility_rule`, but its controller is an EARLIER
 `choice`/`multichoice` sub-question of the SAME pop-up (`parent_question_id`), never a section

@@ -894,17 +894,38 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 	# client shows/hides them live); questions hidden by anything else — an
 	# earlier section's answer, a hidden controller — are excluded server-side
 	# and materialise on the next render if answers change (design D5).
+	#
+	# Groups (change question-groups): a member is kept when each thing hiding it —
+	# its group's rule, its own rule — is either satisfied or a same-section rule
+	# the client toggles. Rule keys are inserted group first, then members, the
+	# order conditional_visibility.js applies them in.
+	from .groups import groups_for
+	from .visibility import group_rule_key, walk
 	all_questions = list(section.questions())
 	same_section_codes = {q.code for q in all_questions}
 	client_rules = {}
 	questions = []
-	for q in all_questions:
-		rule = q.visibility_rule if isinstance(q.visibility_rule, dict) else None
-		same_section_rule = bool(rule) and rule.get('question_code') in same_section_codes
-		if same_section_rule and ('question', q.id) not in vmap.broken:
+	group_ok = {}
+
+	def _client_side(rule, key):
+		return bool(rule) and rule.get('question_code') in same_section_codes and key not in vmap.broken
+
+	for kind, item in walk(all_questions, groups_for(section)):
+		rule = item.visibility_rule if isinstance(item.visibility_rule, dict) else None
+		if kind == 'group':
+			if _client_side(rule, ('group', item.id)):
+				client_rules[group_rule_key(item)] = client_rule(rule)
+				group_ok[item.id] = True
+			else:
+				group_ok[item.id] = vmap.is_group_visible(item.id)
+			continue
+		q = item
+		if q.group_id and not group_ok.get(q.group_id, True):
+			continue
+		if _client_side(rule, ('question', q.id)):
 			client_rules[q.code] = client_rule(rule)
 			questions.append(q)
-		elif vmap.is_question_visible(q.id):
+		elif vmap.question_own.get(q.id, vmap.is_question_visible(q.id)):
 			questions.append(q)
 
 	# Query existing answers for this session and section

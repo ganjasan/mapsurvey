@@ -112,7 +112,8 @@
 </style>
 <div class="modal-header">
     <h5 class="modal-title">
-        {% if parent %}{% blocktrans with name=parent.name %}New Sub-question for “{{ name }}”{% endblocktrans %}{% elif question %}{% trans "Edit Question" %}
+        {% if into_group %}{% blocktrans with name=into_group.title|default:_("Untitled group") %}New question in group “{{ name }}”{% endblocktrans %}
+        {% elif parent %}{% blocktrans with name=parent.name %}New Sub-question for “{{ name }}”{% endblocktrans %}{% elif question %}{% trans "Edit Question" %}
         {% else %}{% trans "New Question" %}
         {% endif %}
     </h5>
@@ -121,14 +122,14 @@
 </div>
 <form {% if question %}
         hx-post="{% url 'editor_question_edit' survey.uuid question.id %}"
-        hx-target="#questions-list > [data-question-id='{% if question.parent_question_id_id %}{{ question.parent_question_id_id }}{% else %}{{ question.id }}{% endif %}']"
+        hx-target="#questions-list [data-top-level][data-question-id='{% if question.parent_question_id_id %}{{ question.parent_question_id_id }}{% else %}{{ question.id }}{% endif %}']"
         hx-swap="outerHTML"
       {% elif parent %}
-        hx-post="{% url 'editor_subquestion_create' survey.uuid parent.id %}"
+        hx-post="{% url 'editor_subquestion_create' survey.uuid parent.id %}{% if into_group %}?group={{ into_group.id }}{% endif %}"
         hx-target="[data-question-id='{{ parent.id }}']"
         hx-swap="outerHTML"
       {% else %}
-        hx-post="{% url 'editor_question_create' survey.uuid section.id %}"
+        hx-post="{% url 'editor_question_create' survey.uuid section.id %}{% if into_group %}?group={{ into_group.id }}{% endif %}"
         hx-target="#questions-list"
         hx-swap="beforeend"
       {% endif %}

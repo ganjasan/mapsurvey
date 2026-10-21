@@ -22,6 +22,7 @@ from .models import (
     SurveySession, Answer,
     INPUT_TYPE_CHOICES, SurveySectionTranslation,
     QuestionTranslation, default_basemaps, SurveyMapLayer,
+    QuestionGroup, QuestionGroupTranslation, GROUP_DISPLAY_STYLE_CHOICES,
 )
 from .html_sanitize import coerce_creator_html
 from .redirects import clean_redirect_url
@@ -187,10 +188,34 @@ def serialize_sections(survey: SurveyHeader) -> List[Dict[str, Any]]:
                  "next_label": t.next_label}
                 for t in section.translations.all()
             ],
+            "groups": _serialize_groups(section, None),
             "questions": serialize_questions(section),
         })
 
     return result
+
+
+def _serialize_groups(section: SurveySection, parent: Optional[Question]) -> List[Dict[str, Any]]:
+    """Question groups of a section's top level or one pop-up (change
+    question-groups). A question names its group by `group` code."""
+    groups = QuestionGroup.objects.filter(survey_section=section)
+    groups = groups.filter(parent_question__isnull=True) if parent is None \
+        else groups.filter(parent_question=parent)
+    return [
+        {
+            "code": g.code,
+            "title": g.title,
+            "description": g.description,
+            "display_style": g.display_style,
+            "visibility_rule": g.visibility_rule,
+            "order_number": g.order_number,
+            "translations": [
+                {"language": t.language, "title": t.title, "description": t.description}
+                for t in g.translations.all()
+            ],
+        }
+        for g in groups.order_by("order_number", "id")
+    ]
 
 
 def _serialize_question(question: Question) -> Dict[str, Any]:
@@ -221,6 +246,9 @@ def _serialize_question(question: Question) -> Dict[str, Any]:
         "objects_search": question.objects_search,
         "panel_mode": question.panel_mode,
         "share_with_respondents": question.share_with_respondents,
+        "group": question.group.code if question.group_id else None,
+        "sub_question_groups": _serialize_groups(question.survey_section, question)
+        if question.parent_question_id_id is None else [],
         "sub_questions": [
             _serialize_question(sub_q)
             for sub_q in question.subQuestions()
@@ -537,8 +565,9 @@ def _apply_visibility_rules(
     sections: Dict[str, SurveySection],
     sections_data: List[Dict[str, Any]],
     code_remap: Dict[str, str],
+    group_index: Optional[Dict] = None,
 ) -> List[str]:
-    """Attach exported visibility rules to imported sections and questions.
+    """Attach exported visibility rules to imported sections, questions and groups.
 
     The controlling question is referenced by its exported code; ``code_remap``
     translates codes that collided on import. A rule whose controller or every
@@ -585,6 +614,7 @@ def _apply_visibility_rules(
         if section_rule:
             section.visibility_rule = section_rule
             section.save(update_fields=["visibility_rule"])
+        _apply_group_rules(section, None, section_data.get("groups"), group_index, resolve, None)
         for question_data in section_data.get("questions", []):
             q_code = code_remap.get(question_data["code"], question_data["code"])
             question = controllers.get(q_code)
@@ -600,6 +630,10 @@ def _apply_visibility_rules(
             # sibling of the same pop-up, so it is resolved among the imported
             # siblings — never against the section's questions.
             sub_data = question_data.get("sub_questions") or []
+            group_data = question_data.get("sub_question_groups") or []
+            if any(isinstance(g.get("visibility_rule"), dict) for g in group_data if isinstance(g, dict)):
+                _apply_group_rules(section, question, group_data, group_index, resolve,
+                                   {sq.code: sq for sq in question.subQuestions()})
             if any(isinstance(sq.get("visibility_rule"), dict) for sq in sub_data):
                 siblings = {sq.code: sq for sq in question.subQuestions()}
                 for sq_data in sub_data:
@@ -616,6 +650,21 @@ def _apply_visibility_rules(
                         sub_question.visibility_rule = resolved
                         sub_question.save(update_fields=["visibility_rule"])
     return warnings
+
+
+def _apply_group_rules(section, parent, groups_data, group_index, resolve, pool):
+    """Group rules: section groups against the section controllers, pop-up groups
+    against the imported siblings (`pool`). Unresolvable → dropped, one line."""
+    for g in groups_data or []:
+        if not isinstance(g, dict) or not isinstance(g.get("visibility_rule"), dict) or group_index is None:
+            continue
+        group = group_index.get((section.id, parent.id if parent else None, str(g.get("code"))))
+        if group is None:
+            continue
+        resolved = resolve(g["visibility_rule"], f"group '{group.title or group.code}'", pool)
+        if resolved:
+            group.visibility_rule = resolved
+            group.save(update_fields=["visibility_rule"])
 
 
 def import_structure_from_archive(
@@ -661,16 +710,18 @@ def import_structure_from_archive(
     sections = create_sections(survey, sections_data, layer_ids)
 
     # Create questions for each section
+    group_index = {}
     for section_data in sections_data:
         section = sections.get(section_data["name"])
         if section:
             questions_data = section_data.get("questions", [])
-            create_questions(section, questions_data, legacy_option_groups, code_remap, layer_ids=layer_ids, warnings=warnings)
+            create_questions(section, questions_data, legacy_option_groups, code_remap, layer_ids=layer_ids,
+                             warnings=warnings, groups_data=section_data.get("groups"), group_index=group_index)
 
     # Apply visibility rules once every question exists (a rule's controller is
     # earlier in survey order, but a post-pass is immune to creation order and
     # lets an unresolvable rule become one report line instead of a half-rule).
-    rule_warnings = _apply_visibility_rules(sections, sections_data, code_remap)
+    rule_warnings = _apply_visibility_rules(sections, sections_data, code_remap, group_index)
     warnings.extend(rule_warnings)
 
     # Shared-map layers name a geo question by code; resolve once questions exist.
@@ -866,6 +917,54 @@ def _import_rich_text(raw: Optional[str]) -> Optional[str]:
     return coerce_creator_html(raw) or None
 
 
+_GROUP_STYLES = {value for value, _label in GROUP_DISPLAY_STYLE_CHOICES}
+
+
+def _create_groups(section, parent, groups_data, group_index):
+    """Create the groups of one bucket before its questions (change
+    question-groups); `group_index[(section id, parent id, exported code)]` is how
+    questions and the rule pass find them. A code already taken in this database
+    gets a fresh one — codes only need to be unique within a survey."""
+    for g in groups_data or []:
+        if not isinstance(g, dict) or not g.get("code"):
+            continue
+        code = str(g["code"])[:50]
+        if QuestionGroup.objects.filter(code=code, survey_section__survey_header=section.survey_header).exists():
+            code = None
+        style = g.get("display_style") if g.get("display_style") in _GROUP_STYLES else "card"
+        try:
+            order = int(g.get("order_number") or 0)
+        except (TypeError, ValueError):
+            order = 0
+        group = QuestionGroup(
+            survey_section=section, parent_question=parent,
+            title=str(g.get("title") or "")[:512],
+            description=_import_rich_text(g.get("description")) or "",
+            display_style=style, order_number=order,
+        )
+        if code:
+            group.code = code
+        group.save()
+        for t in g.get("translations") or []:
+            if isinstance(t, dict) and t.get("language"):
+                QuestionGroupTranslation.objects.get_or_create(
+                    group=group, language=str(t["language"])[:10],
+                    defaults={"title": (t.get("title") or None) and str(t["title"])[:512],
+                              "description": _import_rich_text(t.get("description"))})
+        group_index[(section.id, parent.id if parent else None, str(g["code"]))] = group
+
+
+def _group_for(section, parent, question_data, group_index, warnings):
+    ref = question_data.get("group")
+    if not ref or group_index is None:
+        return None
+    group = group_index.get((section.id, parent.id if parent else None, str(ref)))
+    if group is None and warnings is not None:
+        warnings.append(
+            f"Question '{question_data.get('code')}': group '{ref}' not found, imported ungrouped")
+    return group
+
+
 def _create_question(
     section: SurveySection,
     question_data: Dict[str, Any],
@@ -874,6 +973,7 @@ def _create_question(
     parent: Optional[Question] = None,
     layer_ids: Optional[List[Optional[int]]] = None,
     warnings: Optional[List[str]] = None,
+    group_index: Optional[Dict] = None,
 ) -> Question:
     """Create a single question, handling code collisions.
 
@@ -956,6 +1056,7 @@ def _create_question(
         objects_search=question_data.get("objects_search") if question_data.get("objects_search") in ('auto', 'on', 'off') else 'auto',
         panel_mode=question_data.get("panel_mode") if question_data.get("panel_mode") in ('list', 'legend') else 'list',
         share_with_respondents=bool(question_data.get("share_with_respondents", False)),
+        group=_group_for(section, parent, question_data, group_index, warnings),
         # image is handled separately during extraction
     )
 
@@ -968,9 +1069,13 @@ def _create_question(
             subtext=_import_rich_text(trans_data.get("subtext")),
         )
 
+    # Pop-up groups first, so each sub-question finds its group.
+    if group_index is not None and parent is None:
+        _create_groups(section, question, question_data.get("sub_question_groups"), group_index)
+
     # Create sub-questions recursively
     for sub_q_data in question_data.get("sub_questions", []):
-        _create_question(section, sub_q_data, legacy_option_groups, code_remap, parent=question, layer_ids=layer_ids, warnings=warnings)
+        _create_question(section, sub_q_data, legacy_option_groups, code_remap, parent=question, layer_ids=layer_ids, warnings=warnings, group_index=group_index)
 
     return question
 
@@ -1006,10 +1111,16 @@ def create_questions(
     code_remap: Dict[str, str],
     layer_ids: Optional[List[Optional[int]]] = None,
     warnings: Optional[List[str]] = None,
+    groups_data: Optional[List[Dict[str, Any]]] = None,
+    group_index: Optional[Dict] = None,
 ) -> None:
-    """Create questions with hierarchy, updating code_remap for collisions."""
+    """Create questions with hierarchy, updating code_remap for collisions.
+    Groups of the section's top level are created first (change question-groups)."""
+    if group_index is None:
+        group_index = {}
+    _create_groups(section, None, groups_data, group_index)
     for question_data in questions_data:
-        _create_question(section, question_data, legacy_option_groups, code_remap, layer_ids=layer_ids, warnings=warnings)
+        _create_question(section, question_data, legacy_option_groups, code_remap, layer_ids=layer_ids, warnings=warnings, group_index=group_index)
 
 
 def resolve_section_links(

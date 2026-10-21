@@ -1,0 +1,30 @@
+{% load i18n %}{% comment %}
+One question group (change question-groups, #340) around its run of cards: `run` from
+SurveySectionAnswerForm.field_runs. Styles: plain (heading in the flow), card (one framed
+block), collapsible (card whose header is a button; starts closed, opened by a tap or by the
+submit-time required check). The title is plain text; the description is creator markup that
+was sanitised on every write (html_sanitize.coerce_creator_html), hence |safe.
+conditional_visibility.js toggles the whole element by `data-group-code` when the group has a
+rule; base_survey_template.html binds the collapsible toggle.
+{% endcomment %}{% with group=run.group style=run.group.display_style %}
+<section class="question-group question-group--{{ style }}" data-group-code="{{ group.code }}" data-display-style="{{ style }}">
+    {% if style == 'collapsible' %}
+    <div class="question-group__head">
+        <button type="button" class="question-group__toggle" aria-expanded="false" aria-controls="qg-body-{{ group.code }}">
+            <span class="question-group__title">{{ run.title|default:_("Questions") }}</span>
+            <span class="question-group__count">{% blocktrans count n=run.fields|length %}{{ n }} question{% plural %}{{ n }} questions{% endblocktrans %}</span>
+            <i class="fas fa-chevron-down question-group__chevron" aria-hidden="true"></i>
+        </button>
+        {% if run.description %}<div class="question-group__desc">{{ run.description|safe }}</div>{% endif %}
+    </div>
+    {% elif run.title or run.description %}
+    <div class="question-group__head">
+        {% if run.title %}<h3 class="question-group__title">{{ run.title }}</h3>{% endif %}
+        {% if run.description %}<div class="question-group__desc">{{ run.description|safe }}</div>{% endif %}
+    </div>
+    {% endif %}
+    <div class="question-group__body" id="qg-body-{{ group.code }}"{% if style == 'collapsible' %} hidden{% endif %}>
+        {% include "partials/question_cards.html" with run_fields=run.fields %}
+    </div>
+</section>
+{% endwith %}

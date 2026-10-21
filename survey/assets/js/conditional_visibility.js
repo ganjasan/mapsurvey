@@ -18,6 +18,13 @@
  * <form> through window.ConditionalVisibility.bindPopup(formEl), which the
  * shell's initPopupFields() calls after restoring a feature's values — so a
  * reopened feature starts in the state its stored answers decide.
+ *
+ * Question groups (change question-groups, #340): a group's rule rides the
+ * same maps under the key "group:<code>" and toggles the
+ * .question-group[data-group-code] element, disabling every input inside.
+ * The server orders a group's key before its members' keys, and a member's
+ * own rule never re-enables a card that sits in a hidden group. This module
+ * also owns the collapsible group's toggle (window.QuestionGroups).
  */
 (function () {
     'use strict';
@@ -38,8 +45,21 @@
         return values;
     }
 
+    var GROUP_PREFIX = 'group:';
+
     function cardFor(form, code) {
+        if (code.indexOf(GROUP_PREFIX) === 0) {
+            return form.querySelector('.question-group[data-group-code="' + code.slice(GROUP_PREFIX.length) + '"]');
+        }
         return form.querySelector('.question-card[data-field-name="' + code + '"]');
+    }
+
+    // Hidden itself or inside a hidden group.
+    function isHidden(el) {
+        if (!el) return false;
+        if (el.hidden) return true;
+        var group = el.parentElement && el.parentElement.closest('.question-group');
+        return !!(group && group.hidden);
     }
 
     function readRules(attr) {
@@ -58,7 +78,7 @@
             var card = cardFor(form, code);
             if (!card) return;
             var controllerCard = cardFor(form, rule.question_code);
-            var controllerHidden = controllerCard ? controllerCard.hidden : false;
+            var controllerHidden = isHidden(controllerCard);
             var answered = controllerHidden ? [] : controllerValues(form, rule.question_code);
             var visible = rule.answered
                 ? answered.length > 0
@@ -66,8 +86,10 @@
                     return answered.indexOf(c) !== -1;
                 });
             card.hidden = !visible;
+            // A member of a hidden group stays disabled whatever its own rule says.
+            var enabled = visible && !isHidden(card);
             card.querySelectorAll('input, textarea, select').forEach(function (el) {
-                el.disabled = !visible;
+                el.disabled = !enabled;
             });
         });
     }
@@ -86,6 +108,13 @@
         var rules = readRules('data-popup-visibility-rules');
         if (!form || !rules) return;
         applyRules(form, rules);
+        contentChanged(form);
+    }
+
+    // A pop-up is sized when it opens; a card shown, hidden or opened later
+    // must ask the page to re-measure it (the shell answers with popup.update()).
+    function contentChanged(el) {
+        if (el) el.dispatchEvent(new CustomEvent('ms:popup-content-changed', { bubbles: true }));
     }
 
     function bindPopup(form) {
@@ -103,16 +132,50 @@
     function hiddenFieldNames(form) {
         var names = [];
         if (!form) return names;
-        form.querySelectorAll('.question-card[hidden][data-field-name]').forEach(function (card) {
-            names.push(card.getAttribute('data-field-name'));
+        form.querySelectorAll('.question-card[data-field-name]').forEach(function (card) {
+            if (isHidden(card)) names.push(card.getAttribute('data-field-name'));
         });
         return names;
     }
 
     window.ConditionalVisibility = {
         bindPopup: bindPopup,
-        hiddenFieldNames: hiddenFieldNames
+        hiddenFieldNames: hiddenFieldNames,
+        isHidden: isHidden
     };
+
+    // --- Collapsible groups -------------------------------------------------
+    function setOpen(group, open) {
+        var toggle = group && group.querySelector(':scope > .question-group__head > .question-group__toggle');
+        var body = group && group.querySelector(':scope > .question-group__body');
+        if (!toggle || !body) return;
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        body.hidden = !open;
+        contentChanged(group);
+    }
+
+    window.QuestionGroups = {
+        // Open the collapsed group around `el` (the required check calls this
+        // before scrolling to an unanswered card); flags it while invalid.
+        reveal: function (el, invalid) {
+            var group = el && el.closest && el.closest('.question-group--collapsible');
+            if (!group) return;
+            setOpen(group, true);
+            group.classList.toggle('question-group--error', !!invalid);
+        }
+    };
+
+    // Capture phase: Leaflet stops click propagation inside map pop-ups.
+    document.addEventListener('click', function (e) {
+        var toggle = e.target.closest && e.target.closest('.question-group__toggle');
+        if (!toggle) return;
+        var group = toggle.closest('.question-group');
+        setOpen(group, toggle.getAttribute('aria-expanded') !== 'true');
+    }, true);
+    document.addEventListener('change', function (e) {
+        var group = e.target.closest && e.target.closest('.question-group--error');
+        if (group) group.classList.remove('question-group--error');
+    });
 
     function bind() {
         var data = document.getElementById('section-data');

@@ -3,6 +3,7 @@ from django.views.generic import RedirectView
 
 from . import views
 from . import editor_views
+from . import editor_group_views
 from . import layer_object_views
 from . import comment_views
 from . import analytics_views
@@ -96,6 +97,13 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/questions/<int:question_id>/share/', editor_views.editor_question_share, name='editor_question_share'),
     path('editor/surveys/<uuid:survey_uuid>/questions/reorder/', editor_views.editor_questions_reorder, name='editor_questions_reorder'),
     path('editor/surveys/<uuid:survey_uuid>/questions/<int:parent_id>/subquestions/new/', editor_views.editor_subquestion_create, name='editor_subquestion_create'),
+    # Question groups (change question-groups, #340)
+    path('editor/surveys/<uuid:survey_uuid>/sections/<int:section_id>/groups/new/', editor_group_views.editor_group_create, name='editor_group_create'),
+    path('editor/surveys/<uuid:survey_uuid>/groups/<int:group_id>/edit/', editor_group_views.editor_group_edit, name='editor_group_edit'),
+    path('editor/surveys/<uuid:survey_uuid>/groups/<int:group_id>/delete/', editor_group_views.editor_group_delete, name='editor_group_delete'),
+    path('editor/surveys/<uuid:survey_uuid>/groups/<int:group_id>/preview/', editor_group_views.editor_group_preview_live, name='editor_group_preview_live'),
+    path('editor/surveys/<uuid:survey_uuid>/items/reorder/', editor_group_views.editor_items_reorder, name='editor_items_reorder'),
+    path('editor/surveys/<uuid:survey_uuid>/questions/<int:question_id>/move/', editor_group_views.editor_question_move, name='editor_question_move'),
     # Duplicate / paste (issue #16)
     path('editor/surveys/<uuid:survey_uuid>/questions/<int:question_id>/duplicate/', editor_views.editor_question_duplicate, name='editor_question_duplicate'),
     path('editor/surveys/<uuid:survey_uuid>/sections/<int:section_id>/duplicate/', editor_views.editor_section_duplicate, name='editor_section_duplicate'),

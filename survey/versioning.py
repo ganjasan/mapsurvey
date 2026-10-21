@@ -12,7 +12,7 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
 
-from .cloning import clone_question, copy_section
+from .cloning import clone_question, clone_top_level_questions, copy_section
 from .models import (
     SurveyHeader, SurveySection, SurveySectionTranslation,
     Question, QuestionTranslation, Answer, SurveySession,
@@ -306,18 +306,9 @@ def clone_survey_for_draft(canonical, structure_source=None):
         )
         old_to_new_section[section.pk] = new_section
 
-        # Clone questions (top-level only, sub-questions handled recursively)
-        for question in Question.objects.filter(
-            survey_section=section, parent_question_id__isnull=True
-        ).order_by('order_number'):
-            clone_question(
-                question,
-                target_section=new_section,
-                parent=None,
-                regenerate_code=False,  # versioning preserves codes for compatibility checks
-                name_suffix=None,
-                copy_sub_questions=True,
-            )
+        # Clone groups and questions (top-level; sub-questions and pop-up groups
+        # recursively). Codes are kept: versioning compares by code.
+        clone_top_level_questions(section, new_section, regenerate_code=False, keep_group_rules=True)
 
     # Resolve section linked list
     for old_section in sections:

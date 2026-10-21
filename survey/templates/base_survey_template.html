@@ -210,6 +210,20 @@ locale.{% endcomment %}
     var mapboxAccessToken = '{{ MAPBOX_ACCESS_TOKEN }}';
 
     var map = L.map('map', {zoomControl: false}).setView([_initialMapState.lat, _initialMapState.lng], _initialMapState.zoom);
+    // Pop-up content that changes after opening (visibility rules, a collapsible
+    // question group) re-measures the open pop-up, or its height stays the one
+    // it opened with (change question-groups).
+    var _openPopup = null;
+    map.on('popupopen', function (e) { _openPopup = e.popup; });
+    map.on('popupclose', function (e) { if (_openPopup === e.popup) _openPopup = null; });
+    // Layout only: popup.update() would re-set string content through
+    // innerHTML and wipe the form the respondent is filling in.
+    document.addEventListener('ms:popup-content-changed', function () {
+        var p = _openPopup;
+        if (!p || !p.isOpen() || !p._updateLayout) return;
+        p._updateLayout();
+        p._updatePosition();
+    });
 
     // Leaflet derives every projection from getSize(). On a hidden container
     // that is 0x0, and unprojecting through it yields LatLng(NaN, NaN), which
@@ -1213,6 +1227,8 @@ locale.{% endcomment %}
             // applicable and must never block Next.
             $('#section_question_form .question-card[data-required="true"]:not([hidden])').each(function() {
                 var card = this, filled = false;
+                // Inside a group hidden by its rule: not applicable either.
+                if (window.ConditionalVisibility && ConditionalVisibility.isHidden(card)) { return; }
                 $(card).find('input, textarea, select').each(function() {
                     var t = (this.type || '').toLowerCase();
                     if (t === 'radio' || t === 'checkbox') { if (this.checked) filled = true; }
@@ -1227,6 +1243,8 @@ locale.{% endcomment %}
                     var $msg = $('<div class="required-inline-msg"><i class="fas fa-info-circle"></i> <span></span></div>');
                     $msg.find('span').text(msgText);
                     $(card).append($msg);
+                    // A closed collapsible group opens to show what is missing.
+                    if (window.QuestionGroups) QuestionGroups.reveal(card, true);
                     if (!firstInvalid) firstInvalid = card;
                 }
             });

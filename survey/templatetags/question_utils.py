@@ -141,8 +141,11 @@ def visibility_info(item, survey):
     """
     if not getattr(settings, 'CONDITIONAL_VISIBILITY', False):
         return None
+    from survey.models import QuestionGroup
     from survey.visibility import describe_rule
-    if not hasattr(item, 'input_type'):
+    if isinstance(item, QuestionGroup):
+        kind = 'group'         # change question-groups
+    elif not hasattr(item, 'input_type'):
         kind = 'section'
     elif getattr(item, 'parent_question_id_id', None) is not None:
         kind = 'subquestion'   # judged inside its pop-up (#338)
@@ -158,10 +161,37 @@ def visibility_dependents(question, survey):
         return 0
     if question.input_type not in ('choice', 'multichoice'):
         return 0
-    from survey.models import Question as Q_, SurveySection as S_
+    from survey.models import Question as Q_, QuestionGroup as G_, SurveySection as S_
     return (
         Q_.objects.filter(survey_section__survey_header=survey.id,
                           visibility_rule__question_code=question.code).count()
         + S_.objects.filter(survey_header=survey.id,
                             visibility_rule__question_code=question.code).count()
+        + G_.objects.filter(survey_section__survey_header=survey.id,
+                            visibility_rule__question_code=question.code).count()
     )
+
+
+@register.simple_tag
+def form_runs(form):
+    """`form.field_runs` for a SurveySectionAnswerForm; a plain form (the editor's
+    single-question preview) is one ungrouped run of its visible fields."""
+    runs = getattr(form, 'field_runs', None)
+    if runs is None:
+        return [{'group': None, 'title': '', 'description': '', 'fields': form.visible_fields()}]
+    return runs
+
+
+@register.simple_tag
+def editor_runs(section, parent=None, questions=None):
+    """Editor list rows for a section's top level or one pop-up, merged with
+    their groups: [(group | None, [questions])], empty groups kept (they are
+    drop zones). Change question-groups."""
+    from survey.groups import runs_for
+    return runs_for(section, parent, questions)
+
+
+@register.filter
+def make_list_of_one(value):
+    """`[value]` — lets a template hand one bound field to a partial that loops."""
+    return [value]

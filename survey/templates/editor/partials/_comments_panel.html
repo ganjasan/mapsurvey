@@ -32,11 +32,11 @@ activity the member has not seen are marked and sorted first.{% endcomment %}
     <div class="cm-list">
         {% for g in groups %}
         <div class="cm-anchor" data-anchor-key="{{ g.anchor.badge_key }}">
-            <i class="fas {% if g.anchor.kind == 'survey' %}fa-poll{% elif g.anchor.kind == 'question' %}fa-question-circle{% elif g.anchor.kind == 'section' %}fa-layer-group{% elif g.anchor.kind == 'session' %}fa-user{% else %}fa-th-large{% endif %}" aria-hidden="true"></i>
-            {% if g.anchor.kind == 'survey' %}{% trans "Survey" %}{% elif g.anchor.kind == 'question' %}{% trans "Question" %}{% elif g.anchor.kind == 'section' %}{% trans "Section" %}{% elif g.anchor.kind == 'session' %}{% trans "Response" %}{% else %}{% trans "Block" %}{% endif %}:
+            <i class="fas {% if g.anchor.kind == 'survey' %}fa-poll{% elif g.anchor.kind == 'question' %}fa-question-circle{% elif g.anchor.kind == 'section' %}fa-layer-group{% elif g.anchor.kind == 'session' %}fa-user{% elif g.anchor.kind == 'group' %}fa-object-group{% else %}fa-th-large{% endif %}" aria-hidden="true"></i>
+            {% if g.anchor.kind == 'survey' %}{% trans "Survey" %}{% elif g.anchor.kind == 'question' %}{% trans "Question" %}{% elif g.anchor.kind == 'section' %}{% trans "Section" %}{% elif g.anchor.kind == 'session' %}{% trans "Response" %}{% elif g.anchor.kind == 'group' %}{% trans "Question group" %}{% else %}{% trans "Block" %}{% endif %}:
             <b>{% if g.anchor.kind == 'survey' %}{% trans "general" %}{% else %}{{ g.anchor.label }}{% endif %}</b>
             {% if not g.anchor.exists %}<span class="cm-gone">{% trans "no longer in the survey" %}</span>
-            {% elif not inline and g.anchor.kind != 'survey' %}<a href="{{ g.anchor.path }}">{% if g.anchor.kind == 'question' %}{% trans "Open question" %}{% elif g.anchor.kind == 'section' %}{% trans "Go to section" %}{% elif g.anchor.kind == 'session' %}{% trans "Open response" %}{% else %}{% trans "Open block" %}{% endif %}</a>{% endif %}
+            {% elif not inline and g.anchor.kind != 'survey' %}<a href="{{ g.anchor.path }}">{% if g.anchor.kind == 'question' %}{% trans "Open question" %}{% elif g.anchor.kind == 'section' %}{% trans "Go to section" %}{% elif g.anchor.kind == 'session' %}{% trans "Open response" %}{% elif g.anchor.kind == 'group' %}{% trans "Go to section" %}{% else %}{% trans "Open block" %}{% endif %}</a>{% endif %}
         </div>
         {% for thread in g.threads %}{% include "editor/partials/_comment_thread.html" %}{% endfor %}
         {% empty %}

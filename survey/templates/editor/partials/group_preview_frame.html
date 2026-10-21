@@ -1,0 +1,37 @@
+{% load static i18n question_utils %}{% comment %}
+"Respondent sees" for a question group (editor_group_preview_live). The group renders through
+the respondent partial between two faded neighbour questions, so plain / card / collapsible are
+told apart by what surrounds them; `in_popup` wraps it in the pop-up's own styling
+(.leaflet-popup-content, frameless cards). `is_example`: the group has no questions yet and
+shows two example questions instead.
+{% endcomment %}<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/main.css' %}">
+    <script src="{% static 'js/conditional_visibility.js' %}"></script>
+    <style>
+        body { background: #fff; margin: 0; padding: 12px; }
+        .qg-context { opacity: .45; pointer-events: none; }
+        .qg-context-label { font-size: .7rem; text-transform: uppercase; letter-spacing: .04em; color: #9aa0a6; margin: 0 0 4px 2px; }
+        .qg-example-note { font-size: .78rem; color: #6b7280; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 6px 8px; margin-bottom: 10px; }
+        .qg-popup { border-radius: 12px; box-shadow: 0 3px 14px rgba(0,0,0,.2); padding: 14px 10px 12px; margin: 0; width: auto !important; }
+        .qg-popup > form { font-size: 1rem; }
+        /* The neighbours are wrapped, so main.css's sibling rules between pop-up
+           cards and groups do not reach them: the same rule and gap, set here. */
+        .qg-popup .qg-context:first-child { padding-bottom: 12px; }
+        .qg-popup .qg-context:last-child { margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(0,0,0,.06); }
+        .qg-popup .question-group--plain { margin-top: 12px; }
+    </style>
+</head>
+<body>
+    {% if is_example %}<div class="qg-example-note">{% trans "Example questions — drag real ones into the group in the list." %}</div>{% endif %}
+    {% if in_popup %}<div class="leaflet-popup-content qg-popup"><form onsubmit="return false;">{% else %}<div class="questions">{% endif %}
+        <div class="qg-context">{% include "partials/question_cards.html" with run_fields=before_field|make_list_of_one %}</div>
+        {% for run in form.field_runs %}{% include "partials/question_group.html" %}{% endfor %}
+        <div class="qg-context">{% include "partials/question_cards.html" with run_fields=after_field|make_list_of_one %}</div>
+    {% if in_popup %}</form></div>{% else %}</div>{% endif %}
+</body>
+</html>

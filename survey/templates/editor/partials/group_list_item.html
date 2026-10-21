@@ -1,0 +1,57 @@
+{% load i18n question_utils %}{% comment %}
+A question group in the editor list (change question-groups, #340): `group` and its
+`members` from the editor_runs tag. The nested list is a Sortable drop zone shared with
+the list the group sits in (survey_detail.html); groups never go inside groups.
+{% endcomment %}<li class="question-item question-item--group" data-group-id="{{ group.id }}">
+    <div class="question-item-row">
+        <span class="drag-handle"><i class="fas fa-grip-vertical"></i></span>
+        <i class="fas fa-object-group group-icon" aria-hidden="true"></i>
+        <span class="q-name"><b>{{ group.title|default:_("Untitled group") }}</b></span>
+        <span class="badge badge-group">{% blocktrans with n=members|length %}Group · {{ n }}{% endblocktrans %}</span>
+        {% with vis=group|visibility_info:survey %}{% if vis %}
+        {% if vis.broken %}
+        <span class="badge badge-warning" title="{{ vis.reason }}. Shown to everyone until fixed."><i class="fas fa-exclamation-triangle"></i> {% trans "broken rule" %}</span>
+        {% else %}
+        <span class="badge badge-info" title="{{ vis.label }}" style="background:#e7f1ff;color:#0b5ed7;border:1px solid #b6d4fe;"><i class="fas fa-code-branch"></i> {{ vis.label|truncatechars:40 }}</span>
+        {% endif %}
+        {% endif %}{% endwith %}
+{% include "editor/partials/_comment_badge.html" with kind="group" key=group.code open=group.id %}
+        <span class="q-actions">
+            <button title="{% if is_read_only %}{% trans 'Create a draft to edit' %}{% else %}{% trans 'Edit group' %}{% endif %}"
+                    {% if not is_read_only %}
+                    hx-get="{% url 'editor_group_edit' survey.uuid group.id %}"
+                    hx-target="#questionModalBody" hx-swap="innerHTML"
+                    data-toggle="modal" data-target="#questionModal"
+                    {% else %}disabled{% endif %}>
+                <i class="fas fa-pen"></i>
+            </button>
+            <button title="{% if is_read_only %}{% trans 'Create a draft to edit' %}{% else %}{% trans 'Delete' %}{% endif %}" class="text-danger"
+                    {% if not structure_locked %}
+                    hx-get="{% url 'editor_group_delete' survey.uuid group.id %}"
+                    hx-target="#questionModalBody" hx-swap="innerHTML"
+                    data-toggle="modal" data-target="#questionModal"
+                    {% elif is_read_only %}disabled{% else %}data-gate="delete" data-gate-section="{{ group.survey_section.code }}"{% endif %}>
+                <i class="fas fa-trash"></i>
+            </button>
+        </span>
+    </div>
+    <div class="group-desc">{{ group.get_display_style_display }}{% if group.description %} · {{ group.description|striptags|truncatechars:90 }}{% endif %}</div>
+    <ul class="group-question-list" data-group-id="{{ group.id }}">
+        {% for question in members %}
+            {% include "editor/partials/question_list_item.html" %}
+        {% empty %}
+            <li class="group-empty">{% trans "No questions yet — add one or drag one here" %}</li>
+        {% endfor %}
+    </ul>
+    <div class="add-subquestion-wrap add-in-group-wrap">
+        <button class="add-question-btn add-question-btn--sub add-in-group-btn"
+                title="{% if is_read_only %}{% trans 'Create a draft to edit' %}{% else %}{% trans 'Add a question to this group' %}{% endif %}"
+                {% if not structure_locked %}
+                hx-get="{% if group.parent_question_id %}{% url 'editor_subquestion_create' survey.uuid group.parent_question_id %}{% else %}{% url 'editor_question_create' survey.uuid group.survey_section_id %}{% endif %}?group={{ group.id }}"
+                hx-target="#questionModalBody" hx-swap="innerHTML"
+                data-toggle="modal" data-target="#questionModal"
+                {% elif is_read_only %}disabled{% else %}data-gate="add_question" data-gate-section="{{ group.survey_section.code }}"{% endif %}>
+            <i class="fas fa-plus"></i> {% trans "Add question to group" %}
+        </button>
+    </div>
+</li>

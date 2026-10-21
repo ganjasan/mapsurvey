@@ -769,6 +769,11 @@ class SurveySectionAnswerForm(forms.Form):
             questions = section.questions() if questions_override is None else questions_override
         else:
             questions = question.subQuestions()
+        # Kept for field_runs (change question-groups): the groups this form's
+        # questions may sit in — the section's top level, or one pop-up.
+        self._run_questions = list(questions)
+        self._run_parent = question
+        self._run_section = section
 
         survey_rating_style = section.survey_header.get_default_rating_display_style()
 
@@ -800,6 +805,35 @@ class SurveySectionAnswerForm(forms.Form):
                 self.fields[field_name].widget.star_icon = question.star_icon()
                 self.fields[field_name].widget.star_color = question.star_color()
 
+
+    @property
+    def field_runs(self):
+        """Bound fields in question order, split into group runs for
+        partials/question_fields.html: [{'group', 'title', 'description',
+        'fields'}], `group` None for ungrouped questions. A group none of whose
+        questions has a field here (hidden server-side, kill-switched type) is
+        not rendered at all."""
+        if getattr(self, 'runs_override', None) is not None:
+            # The editor's group preview renders one unsaved group (editor_group_views).
+            return self.runs_override
+        from .groups import group_runs, groups_for
+        parent = self._run_parent
+        if parent is not None and parent.pk is None:
+            groups = []
+        else:
+            groups = groups_for(self._run_section, parent)
+        runs = []
+        for group, members in group_runs(self._run_questions, groups):
+            fields = [self[q.code] for q in members if q.code in self.fields]
+            if not fields:
+                continue
+            runs.append({
+                'group': group,
+                'title': group.get_translated_title(self.language) if group else '',
+                'description': group.get_translated_description(self.language) if group else '',
+                'fields': fields,
+            })
+        return runs
 
     def save(self):
         pass
