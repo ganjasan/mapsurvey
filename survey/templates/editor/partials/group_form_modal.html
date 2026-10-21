@@ -26,6 +26,7 @@ the section list, never here. On close the section list is re-rendered (groupsCh
     .grp-thumb i { display: block; height: 5px; border-radius: 2px; background: #d1d5db; }
     .grp-thumb i.t { width: 50%; background: #6b7280; }
     .grp-thumb--card { background: #f7f8fa; border-color: #e5e7eb; }
+    .grp-thumb--plain { border-left: 3px solid rgba(79, 70, 229, .35); }
     .grp-members { list-style: none; margin: 0; padding: 0; border: 1px solid #e5e7eb; border-radius: 8px; }
     .grp-members li { display: flex; gap: 8px; align-items: center; padding: 7px 10px; font-size: .85rem; }
     .grp-members li + li { border-top: 1px solid #e5e7eb; }
@@ -66,8 +67,8 @@ the section list, never here. On close the section list is re-rendered (groupsCh
                         {% for value, label in form.fields.display_style.choices %}
                         <label>
                             <input type="radio" name="display_style" value="{{ value }}" {% if form.display_style.value == value %}checked{% endif %} {% if is_read_only %}disabled{% endif %}>
-                            <span class="grp-thumb{% if value != 'plain' %} grp-thumb--card{% endif %}"><i class="t"></i>{% if value != 'collapsible' %}<i></i><i></i>{% endif %}</span>
-                            <span><b>{{ label }}</b><br><small class="text-muted">{% if value == 'plain' %}{% trans "heading in the flow" %}{% elif value == 'card' %}{% trans "one framed block" %}{% else %}{% trans "opens on tap" %}{% endif %}</small></span>
+                            <span class="grp-thumb{% if value != 'plain' %} grp-thumb--card{% else %} grp-thumb--plain{% endif %}"><i class="t"></i>{% if value != 'collapsible' %}<i></i><i></i>{% endif %}</span>
+                            <span><b>{{ label }}</b><br><small class="text-muted">{% if value == 'plain' %}{% trans "heading and a side line" %}{% elif value == 'card' %}{% trans "one framed block" %}{% else %}{% trans "opens on tap" %}{% endif %}</small></span>
                         </label>
                         {% endfor %}
                     </div>
@@ -102,7 +103,7 @@ the section list, never here. On close the section list is re-rendered (groupsCh
                 <div class="grp-tips">
                     <div style="font-weight:600;font-size:.85rem;margin-bottom:6px;"><i class="far fa-lightbulb"></i> {% trans "Tips" %}</div>
                     <ul>
-                        <li data-tip-for="plain"><b>{% trans "Plain" %}</b> — {% trans "a heading and a description between questions. The questions keep their own cards. Use it to split a long list into parts without boxing anything in." %}</li>
+                        <li data-tip-for="plain"><b>{% trans "Plain" %}</b> — {% trans "a heading and a line along the left edge of the group; the questions keep their own cards. Use it to split a long list into parts without boxing anything in." %}</li>
                         <li data-tip-for="card"><b>{% trans "Card" %}</b> — {% trans "one framed block around the questions, which lose their own frames. Reads as one unit: best for “About this place” blocks in a map pop-up." %}</li>
                         <li data-tip-for="collapsible"><b>{% trans "Collapsible" %}</b> — {% trans "a card that stays closed until the respondent taps its title, showing only how many questions are inside. For optional or long blocks. If a required question inside is empty, the group opens by itself on submit." %}</li>
                         <li>{% trans "A visibility rule on the group hides every question inside at once — set it here instead of on each question." %}</li>

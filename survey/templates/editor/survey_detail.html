@@ -931,9 +931,12 @@ document.addEventListener('DOMContentLoaded', function() {
         listEl._sortable = Sortable.create(listEl, {
             group: nested ? {
                 name: root.id === 'questions-list' ? 'q-top' : 'q-pop-' + root.dataset.parentId,
-                // A group row never goes into a group's list.
+                // A function here REPLACES Sortable's name match, so it checks
+                // both: same root (a section question never becomes a pop-up
+                // sub-question by a drop) and never a group inside a group.
                 put: isGroupList ? function (to, from, dragEl) {
-                    return !dragEl.classList.contains('question-item--group');
+                    return to.options.group.name === from.options.group.name
+                        && !dragEl.classList.contains('question-item--group');
                 } : true
             } : undefined,
             animation: 150,
