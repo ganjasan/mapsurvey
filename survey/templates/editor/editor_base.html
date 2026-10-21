@@ -448,6 +448,9 @@
         /* Question groups (change question-groups): the row is tinted, its
            questions sit in a nested drop zone. Literal colours on purpose —
            editor_base defines only five CSS variables. */
+        /* The section panel stacks "New Question" and "Add group" full width;
+           the pop-up pair sits in a flex row that already has a gap. */
+        .add-question-btn:not(.add-question-btn--sub) + .add-group-btn { margin-top: 0.5rem; }
         .question-item--group { background: #f9fafb; border-color: #c7d2fe; }
         .subquestion-list .question-item--group { border-left: 3px solid #c7d2fe; }
         .question-item--group > .question-item-row .group-icon { color: #6366f1; }
