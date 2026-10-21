@@ -2160,6 +2160,7 @@ def editor_question_preview_live(request, survey_uuid, section_id):
         color=request.POST.get('color', '').strip() or '#000000',
         icon_class=request.POST.get('icon_class', '').strip(),
         spray_brush=request.POST.get('spray_brush') if request.POST.get('spray_brush') in ('small', 'medium', 'large') else 'medium',
+        tap_to_place=input_type == 'point' and bool(request.POST.get('tap_to_place')),
         display_style=display_style,
         required=False,
         layer=draft_layer,

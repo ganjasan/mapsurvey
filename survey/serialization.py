@@ -233,6 +233,8 @@ def _serialize_question(question: Question) -> Dict[str, Any]:
         "icon_class": question.icon_class,
         # `spraycan` only (spec spraycan-question); harmless on other types.
         "spray_brush": question.spray_brush,
+        # `point` only (spec point-tap-to-place); a missing key imports as off.
+        "tap_to_place": question.tap_to_place,
         "display_style": question.display_style,
         "image": question.image.name if question.image else None,
         "translations": [
@@ -1050,6 +1052,7 @@ def _create_question(
         color=_archive_text(question_data, "color", "#000000", 7),
         icon_class=_archive_text(question_data, "icon_class", "", 80) or None,
         spray_brush=_spray_brush_from_archive(question_data, original_code, warnings),
+        tap_to_place=input_type == 'point' and parent is None and question_data.get("tap_to_place") is True,
         display_style=display_style,
         layer_id=_layer_id_from_archive(question_data, input_type, layer_ids),
         min_objects=max(0, int(question_data.get("min_objects") or 0)) if input_type == 'layer_objects' else 0,
