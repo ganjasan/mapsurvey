@@ -922,22 +922,76 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         return items;
     }
+    // Types that cannot live in a pop-up (editor_forms.SUBQUESTION_DISALLOWED_INPUT_TYPES).
+    var POPUP_REFUSED_TYPES = ['point', 'line', 'polygon', 'spraycan', 'layer_objects'];
+    function isPopupRoot(root) { return root && root.classList.contains('subquestion-list'); }
+    function canDrop(toEl, fromEl, dragEl) {
+        var toRoot = rootOf(toEl), fromRoot = rootOf(fromEl);
+        if (!toRoot || !fromRoot) return false;
+        if (dragEl.classList.contains('question-item--group')) {
+            // A group stays in its own list, never inside another group.
+            return toRoot === fromRoot && !toEl.classList.contains('group-question-list');
+        }
+        if (toRoot === fromRoot) return true;
+        // Across roots (design D7b): a pop-up refuses geo / Objects questions
+        // and questions that own a pop-up themselves; the server checks again.
+        if (isPopupRoot(toRoot)) {
+            if (POPUP_REFUSED_TYPES.indexOf(dragEl.dataset.inputType) !== -1) return false;
+            if (dragEl.querySelector(':scope > .subquestion-list')) return false;
+        }
+        return true;
+    }
+    function moveAcrossRoots(dragEl, toRoot, ack) {
+        var url = '{% url "editor_question_move" survey.uuid 0 %}'.replace('/0/', '/' + dragEl.dataset.questionId + '/');
+        var body = {
+            section_id: toRoot.dataset.sectionId,
+            parent_id: toRoot.dataset.parentId || null,
+            items: nestedState(toRoot)
+        };
+        if (ack) body.confirm_delete_answers = 'true';
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            body: JSON.stringify(body)
+        }).then(function (r) {
+            return r.json().catch(function () { return {}; }).then(function (j) { return [r, j]; });
+        }).then(function (pair) {
+            var r = pair[0], data = pair[1];
+            if (r.status === 409 && typeof data.answers_at_risk === 'number') {
+                var noun = data.answers_at_risk === 1 ? 'answer' : 'answers';
+                Dialog.confirm(data.answers_at_risk + ' ' + noun + ' to this question will be deleted. ' +
+                    'A question in the section is answered once per respondent, in a pop-up once per ' +
+                    'placed mark, so the answers cannot move with it.', {
+                    title: 'Moving deletes collected answers', okLabel: 'Move and delete', danger: true
+                }).then(function (ok) {
+                    if (ok) moveAcrossRoots(dragEl, toRoot, true); else reloadSectionList();
+                });
+                return;
+            }
+            if (!r.ok) {
+                if (data && data.blocked && window.Dialog) Dialog.alert(data.blocked);
+                reloadSectionList();
+                return;
+            }
+            reloadSectionList();
+            if (data.removed_rules && data.removed_rules.length && window.Dialog) {
+                Dialog.alert('These visibility rules no longer worked after the move and were removed: ' +
+                    data.removed_rules.join(', ') + '.', { title: 'Visibility rules removed' });
+            }
+        }).catch(function () { reloadSectionList(); });
+    }
     function initSortableOnList(listEl) {
         if (!listEl || listEl._sortable || STRUCTURE_LOCKED) return;
         var root = rootOf(listEl);
         if (!root) return;
         var nested = !!root.dataset.sectionId;
-        var isGroupList = listEl.classList.contains('group-question-list');
         listEl._sortable = Sortable.create(listEl, {
+            // One group for every list of the section, so a question can move
+            // between the section and a pop-up; canDrop decides what is allowed
+            // (a `put` function replaces Sortable's own name match).
             group: nested ? {
-                name: root.id === 'questions-list' ? 'q-top' : 'q-pop-' + root.dataset.parentId,
-                // A function here REPLACES Sortable's name match, so it checks
-                // both: same root (a section question never becomes a pop-up
-                // sub-question by a drop) and never a group inside a group.
-                put: isGroupList ? function (to, from, dragEl) {
-                    return to.options.group.name === from.options.group.name
-                        && !dragEl.classList.contains('question-item--group');
-                } : true
+                name: 'q-section',
+                put: function (to, from, dragEl) { return canDrop(to.el, from.el, dragEl); }
             } : undefined,
             animation: 150,
             handle: '.drag-handle',
@@ -957,15 +1011,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     }).then(function() { refreshPreview(); });
                     return;
                 }
+                var toRoot = rootOf(evt.to), fromRoot = rootOf(evt.from);
+                if (toRoot !== fromRoot) {
+                    moveAcrossRoots(evt.item, toRoot, false);
+                    return;
+                }
                 var touchesGroup = evt.from !== evt.to
                     || evt.item.classList.contains('question-item--group');
                 fetch('{% url "editor_items_reorder" survey.uuid %}', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
                     body: JSON.stringify({
-                        section_id: root.dataset.sectionId,
-                        parent_id: root.dataset.parentId || null,
-                        items: nestedState(root)
+                        section_id: toRoot.dataset.sectionId,
+                        parent_id: toRoot.dataset.parentId || null,
+                        items: nestedState(toRoot)
                     })
                 }).then(function(r) {
                     // Group counts and empty-zone hints change with membership.

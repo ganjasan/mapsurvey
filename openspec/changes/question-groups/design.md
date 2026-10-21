@@ -187,6 +187,22 @@ continuous sequence by including groups in the max/shift (`groups.next_order(sec
 `groups.shift_down(...)`). A duplicated grouped question stays in its group, right after the
 source; a pasted question lands ungrouped.
 
+### D7b. Moving a question between the section and a pop-up (owner request 2026-10-21)
+
+All question lists of one section share ONE Sortable group, so a row can be dropped from the
+section into a pop-up (its list or a group in it) and back. Same-root drops keep using
+`editor_items_reorder`; a cross-root drop calls `editor_question_move` with the question, the
+target root (`section_id`, `parent_id`) and the target root's nested state. The server:
+refuses `SUBQUESTION_DISALLOWED_INPUT_TYPES` into a pop-up and a question that owns
+sub-questions (400); counts answers beneath the question and goes through
+`_refuse_if_answers_at_risk` (answers are per respondent in a section and per mark in a pop-up,
+so they cannot be carried over — they are deleted); re-parents, clears `group`, resets
+`share_with_respondents` outside an Objects pop-up; removes the moved question's rule and every
+rule naming it whose controller would no longer come earlier in the same scope (reported back as
+`removed_rules` and shown in a dialog); then renumbers the target root from the posted state.
+Groups do not cross roots (a group row is accepted only by its own root). The client refuses
+the disallowed types before posting (`data-input-type`), the server is the check.
+
 ### D8. Serialization, cloning, lifecycle
 
 - ZIP: each section gains `"groups": [{code, title, description, display_style, visibility_rule,

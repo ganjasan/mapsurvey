@@ -13,7 +13,9 @@ the group's rule are structure.
 import json
 from types import SimpleNamespace
 
+from django.conf import settings
 from django.db import transaction
+from django.utils.translation import gettext as _
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.clickjacking import xframe_options_sameorigin
@@ -24,7 +26,8 @@ from .comments import open_counts as _thread_counts
 from .editor_forms import QuestionGroupForm
 from .editor_views import (
     _check_content_edit_allowed, _check_structural_edit_allowed, _delete_question_with_layers,
-    _edit_locks, _lock_context, _parse_visibility_rule, _preview_language,
+    DELETE_ACKNOWLEDGEMENT as DELETE_ACK, _edit_locks, _lock_context, _parse_visibility_rule,
+    _preview_language, _survey_is_unversioned,
     _question_delete_blocker, _refuse_if_answers_at_risk,
     _render_section_detail, _rescreen_if_live, _structural_refusal, _translation_languages,
     _visibility_block_context,
@@ -248,29 +251,21 @@ def editor_group_preview_live(request, survey_uuid, group_id):
     return response
 
 
-@survey_permission_required('editor')
-@require_POST
-def editor_items_reorder(request, survey_uuid):
-    """One list's order after a drag: a section's top level or one pop-up,
-    with group nesting. Body: {"section_id", "parent_id" | null, "items":
-    [{"g": <id>, "q": [<id>, ...]} | {"q": <id>}, ...]}. Renumbers groups and
-    questions 0..N as ONE sequence and sets each question's group from where
-    it was dropped (design D7)."""
-    survey = request.survey
-    blocked = _check_structural_edit_allowed(survey)
-    if blocked:
-        return blocked
-    try:
-        body = json.loads(request.body)
-        section = SurveySection.objects.get(id=int(body['section_id']), survey_header=survey)
-        parent_id = body.get('parent_id')
-        parent_id = int(parent_id) if parent_id not in (None, '') else None
-        items = body['items']
-        if not isinstance(items, list):
-            raise ValueError
-    except (ValueError, KeyError, TypeError, SurveySection.DoesNotExist):
-        return HttpResponse(status=400)
+def _parse_root(body, survey):
+    """(section, parent_id) of the list a drag body names; raises on anything else."""
+    section = SurveySection.objects.get(id=int(body['section_id']), survey_header=survey)
+    parent_id = body.get('parent_id')
+    parent_id = int(parent_id) if parent_id not in (None, '') else None
+    items = body['items']
+    if not isinstance(items, list):
+        raise ValueError
+    return section, parent_id, items
 
+
+def _apply_nested_order(section, parent_id, items):
+    """Renumber one root (a section's top level or one pop-up) 0..N from its
+    nested DOM state and set each question's group from where it sits. Raises
+    ValueError when an id is not of this root, or is listed twice."""
     q_qs = Question.objects.filter(survey_section=section)
     g_qs = QuestionGroup.objects.filter(survey_section=section)
     if parent_id is None:
@@ -292,24 +287,127 @@ def editor_items_reorder(request, survey_uuid):
                 sequence.append(('q', questions[int(item['q'])], None))
     except (KeyError, TypeError, ValueError):
         # An id of another section or pop-up, or of nothing.
-        return HttpResponse(status=400)
+        raise ValueError('foreign id')
     seen = {(kind, obj.id) for kind, obj, _g in sequence}
     if len(seen) != len(sequence):
-        return HttpResponse(status=400)
+        raise ValueError('listed twice')
     # Rows the page did not list (another tab added them) keep their relative
     # order after everything that was listed.
     rest = sorted(
         [('q', q, q.group if q.group_id in groups else None) for q in questions.values() if ('q', q.id) not in seen]
         + [('g', g, None) for g in groups.values() if ('g', g.id) not in seen],
         key=lambda t: (t[1].order_number, t[1].id))
+    for i, (kind, obj, group) in enumerate(sequence + rest):
+        if kind == 'g':
+            QuestionGroup.objects.filter(pk=obj.pk).update(order_number=i)
+        else:
+            Question.objects.filter(pk=obj.pk).update(
+                order_number=i, group_id=group.pk if group else None)
 
-    with transaction.atomic():
-        for i, (kind, obj, group) in enumerate(sequence + rest):
-            if kind == 'g':
-                QuestionGroup.objects.filter(pk=obj.pk).update(order_number=i)
-            else:
-                Question.objects.filter(pk=obj.pk).update(
-                    order_number=i, group_id=group.pk if group else None)
+
+@survey_permission_required('editor')
+@require_POST
+def editor_items_reorder(request, survey_uuid):
+    """One list's order after a drag: a section's top level or one pop-up,
+    with group nesting. Body: {"section_id", "parent_id" | null, "items":
+    [{"g": <id>, "q": [<id>, ...]} | {"q": <id>}, ...]}. Renumbers groups and
+    questions 0..N as ONE sequence and sets each question's group from where
+    it was dropped (design D7)."""
+    survey = request.survey
+    blocked = _check_structural_edit_allowed(survey)
+    if blocked:
+        return blocked
+    try:
+        section, parent_id, items = _parse_root(json.loads(request.body), survey)
+        with transaction.atomic():
+            _apply_nested_order(section, parent_id, items)
+    except (ValueError, KeyError, TypeError, SurveySection.DoesNotExist):
+        return HttpResponse(status=400)
     response = HttpResponse(status=204)
     response['HX-Trigger'] = 'questionUpdated'
     return response
+
+
+@survey_permission_required('editor')
+@require_POST
+def editor_question_move(request, survey_uuid, question_id):
+    """Move a question between a section's top level and a pop-up of the same
+    section (design D7b). Body: the target root as for editor_items_reorder,
+    with the moved question already in `items`. Answers cannot be carried over
+    (one per respondent in a section, one per mark in a pop-up), so they are
+    deleted behind the usual acknowledgement; rules the move breaks are
+    removed and named in `removed_rules`."""
+    from .editor_forms import SUBQUESTION_DISALLOWED_INPUT_TYPES
+    survey = request.survey
+    blocked = _check_structural_edit_allowed(survey)
+    if blocked:
+        return blocked
+    question = get_object_or_404(Question, id=question_id, survey_section__survey_header=survey)
+    try:
+        body = json.loads(request.body or b'{}')
+        section, parent_id, items = _parse_root(body, survey)
+    except (ValueError, KeyError, TypeError, SurveySection.DoesNotExist):
+        return HttpResponse(status=400)
+    if section.id != question.survey_section_id:
+        return HttpResponse('A question moves within its section only.', status=400)
+    if parent_id == question.parent_question_id_id:
+        return HttpResponse('Same list: use the reorder endpoint.', status=400)
+    target_parent = None
+    if parent_id is not None:
+        target_parent = Question.objects.filter(
+            pk=parent_id, survey_section=section, parent_question_id__isnull=True).first()
+        if target_parent is None or not target_parent.can_have_subquestions:
+            return HttpResponse('That question has no pop-up.', status=400)
+        if question.input_type in SUBQUESTION_DISALLOWED_INPUT_TYPES \
+                or Question.objects.filter(parent_question_id=question).exists():
+            return JsonResponse({'blocked': _('This kind of question cannot go into a pop-up.')}, status=409)
+
+    ack = request.GET.get(DELETE_ACK) == 'true' or body.get(DELETE_ACK) in (True, 'true')
+    answer_count = question.answer_count()
+    if answer_count and not ack:
+        return JsonResponse({
+            'answers_at_risk': answer_count,
+            'explain_versioning': _survey_is_unversioned(survey),
+        }, status=409)
+
+    with transaction.atomic():
+        if answer_count:
+            Answer.objects.filter(question_id__in=question.descendant_question_ids()).delete()
+        own_rule = isinstance(question.visibility_rule, dict)
+        question.parent_question_id = target_parent
+        question.group = None
+        question.visibility_rule = None
+        if target_parent is None or target_parent.input_type != 'layer_objects':
+            question.share_with_respondents = False
+        question.save(update_fields=['parent_question_id', 'group', 'visibility_rule',
+                                     'share_with_respondents'])
+        try:
+            _apply_nested_order(section, parent_id, items)
+        except ValueError:
+            transaction.set_rollback(True)
+            return HttpResponse(status=400)
+        removed = _drop_rules_broken_by_move(survey, question.code)
+    if own_rule:
+        removed.insert(0, question.name or question.code)
+    response = JsonResponse({'ok': True, 'removed_rules': removed})
+    response['HX-Trigger'] = 'questionUpdated'
+    return response
+
+
+def _drop_rules_broken_by_move(survey, code):
+    """Rules naming `code` that no longer resolve after it moved: removed,
+    and the labels of their hosts returned for the editor's notice."""
+    from .templatetags.question_utils import visibility_info
+    removed = []
+    hosts = list(SurveySection.objects.filter(survey_header=survey, visibility_rule__question_code=code))
+    hosts += list(Question.objects.filter(survey_section__survey_header=survey,
+                                          visibility_rule__question_code=code))
+    hosts += list(QuestionGroup.objects.filter(survey_section__survey_header=survey,
+                                               visibility_rule__question_code=code))
+    for host in hosts:
+        info = visibility_info(host, survey) if getattr(settings, 'CONDITIONAL_VISIBILITY', False) else None
+        if info and info.get('broken'):
+            host.visibility_rule = None
+            host.save(update_fields=['visibility_rule'])
+            removed.append(getattr(host, 'name', None) or getattr(host, 'title', None) or getattr(host, 'code', ''))
+    return removed

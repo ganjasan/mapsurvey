@@ -124,6 +124,36 @@ and a group SHALL be dragged as a whole, with long-press on touch.
 - **WHEN** the creator switches Display as from card to collapsible without saving
 - **THEN** the "Respondent sees" pane re-renders the group collapsed with a chevron
 
+### Requirement: A question can be moved between the section and a pop-up by drag
+The editor SHALL let a creator drag a section question into the pop-up of a geo or
+Objects-on-the-map question of the same section (into the pop-up list or into one of its
+groups), and a pop-up sub-question out to the section. A question whose type cannot live in a
+pop-up (point, line, polygon, spray area, Objects on the map) SHALL NOT be accepted by a pop-up.
+Because a section question is answered once per respondent and a sub-question once per placed
+mark, existing answers of the moved question SHALL be deleted, behind the same answer-loss
+acknowledgement as a delete. The moved question's own visibility rule and every rule that names
+it as controller SHALL be removed when the move makes them invalid, and the editor SHALL say
+which. On a live survey the move SHALL be a structural edit.
+
+#### Scenario: Section question into a pop-up group
+- **WHEN** a creator drags the unanswered section question "Your age" into the group "Your
+  visit" of a point question
+- **THEN** it becomes a sub-question of that point question inside "Your visit", and the list
+  shows it there
+
+#### Scenario: Answered question
+- **WHEN** the moved question has 5 answers and the move is posted without the acknowledgement
+- **THEN** the response is 409 reporting 5 answers at risk and nothing moves; with the
+  acknowledgement the question moves and its 5 answers are deleted
+
+#### Scenario: Geo question refused by a pop-up
+- **WHEN** a creator drags a polygon question into a pop-up
+- **THEN** the drop is refused and nothing changes
+
+#### Scenario: Rules that the move breaks
+- **WHEN** the moved question controlled a rule of another section question
+- **THEN** that rule is removed and the editor names the item that lost it
+
 ### Requirement: Deleting a group asks what happens to its questions
 Deleting a group that holds questions SHALL ask the creator to choose between deleting only the
 group and deleting the group together with its questions; "only the group" SHALL be the default

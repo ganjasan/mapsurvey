@@ -103,6 +103,7 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/groups/<int:group_id>/delete/', editor_group_views.editor_group_delete, name='editor_group_delete'),
     path('editor/surveys/<uuid:survey_uuid>/groups/<int:group_id>/preview/', editor_group_views.editor_group_preview_live, name='editor_group_preview_live'),
     path('editor/surveys/<uuid:survey_uuid>/items/reorder/', editor_group_views.editor_items_reorder, name='editor_items_reorder'),
+    path('editor/surveys/<uuid:survey_uuid>/questions/<int:question_id>/move/', editor_group_views.editor_question_move, name='editor_question_move'),
     # Duplicate / paste (issue #16)
     path('editor/surveys/<uuid:survey_uuid>/questions/<int:question_id>/duplicate/', editor_views.editor_question_duplicate, name='editor_question_duplicate'),
     path('editor/surveys/<uuid:survey_uuid>/sections/<int:section_id>/duplicate/', editor_views.editor_section_duplicate, name='editor_section_duplicate'),

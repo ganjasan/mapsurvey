@@ -85,6 +85,15 @@
       live survey: retitle in place + rescreen, create/rule change 403, preview renders unsaved
       style.
 
+## 6b. Move between section and pop-up (owner request 2026-10-21)
+
+- [x] 6b.1 `editor_question_move` (type check, answer-loss 409 + delete on ack, re-parent,
+      rule cleanup with a report, renumber target root); URL.
+- [x] 6b.2 `survey_detail.html`: one Sortable group per section; cross-root drop → move
+      endpoint (409 → confirm → resend; refusal → reload); disallowed types refused client-side.
+- [x] 6b.3 Tests: into pop-up list, into pop-up group, out to section, answered 409/ack,
+      geo refused, rule cleanup, live survey 403.
+
 ## 7. Serialization and lifecycle
 
 - [x] 7.1 `serialization.py`: `groups` per section, `sub_question_groups` per parent, `group` per

@@ -796,6 +796,118 @@ class GroupEditorTest(TestCase):
         self.assertEqual((g.title, g.visibility_rule), ("New", None))
 
 
+class QuestionMoveTest(TestCase):
+    """Moving a question between the section and a pop-up (spec question-groups, D7b)."""
+
+    def setUp(self):
+        from survey.models import Membership
+        self.survey, self.section = _survey("qg_move", status="draft")
+        user = User.objects.create_user(username="qg_move", password="pw")
+        Membership.objects.create(user=user, organization=self.survey.organization, role="owner")
+        self.client.force_login(user)
+        self.point = _q(self.section, "PT", 0, "point")
+        self.kind = _q(self.section, "KIND", 0, "choice", parent=self.point,
+                       choices=[{"code": 1, "name": "Park"}])
+        self.group = QuestionGroup.objects.create(
+            survey_section=self.section, parent_question=self.point, order_number=1, title="Visit")
+        self.inside = _q(self.section, "IN", 2, parent=self.point, group=self.group)
+        self.age = _q(self.section, "AGE", 1, name="Your age")
+
+    def _move(self, question, parent, items, **extra):
+        body = {"section_id": self.section.id, "parent_id": parent, "items": items, **extra}
+        return self.client.post(f"/editor/surveys/{self.survey.uuid}/questions/{question.id}/move/",
+                                data=json.dumps(body), content_type="application/json")
+
+    def test_section_question_into_a_popup_group(self):
+        """
+        GIVEN an unanswered section question "Your age"
+        WHEN it is dropped into the pop-up group "Visit" after its question
+        THEN it is a sub-question of the point, in "Visit", after IN
+        """
+        r = self._move(self.age, self.point.id, [
+            {"q": self.kind.id}, {"g": self.group.id, "q": [self.inside.id, self.age.id]}])
+        self.assertEqual(r.status_code, 200)
+        self.age.refresh_from_db()
+        self.assertEqual((self.age.parent_question_id_id, self.age.group_id, self.age.order_number),
+                         (self.point.id, self.group.id, 3))
+
+    def test_subquestion_out_to_the_section(self):
+        """
+        GIVEN a sub-question inside the pop-up group
+        WHEN it is dropped at the top of the section
+        THEN it is a top-level question, ungrouped, first
+        """
+        r = self._move(self.inside, None, [{"q": self.inside.id}, {"q": self.point.id}, {"q": self.age.id}])
+        self.assertEqual(r.status_code, 200)
+        self.inside.refresh_from_db()
+        self.assertEqual((self.inside.parent_question_id_id, self.inside.group_id, self.inside.order_number),
+                         (None, None, 0))
+
+    def test_answered_question_needs_acknowledgement_and_loses_answers(self):
+        """
+        GIVEN "Your age" with 2 answers
+        WHEN it is moved into the pop-up without, then with the acknowledgement
+        THEN the first is 409 reporting 2 and nothing moves; the second moves it and deletes them
+        """
+        from survey.models import SurveySession
+        session = SurveySession.objects.create(survey=self.survey)
+        for t in ("30", "40"):
+            Answer.objects.create(survey_session=session, question=self.age, text=t)
+        items = [{"q": self.kind.id}, {"q": self.age.id}, {"g": self.group.id, "q": [self.inside.id]}]
+        r = self._move(self.age, self.point.id, items)
+        self.assertEqual((r.status_code, r.json()["answers_at_risk"]), (409, 2))
+        self.age.refresh_from_db()
+        self.assertIsNone(self.age.parent_question_id_id)
+        r = self._move(self.age, self.point.id, items, confirm_delete_answers="true")
+        self.assertEqual(r.status_code, 200)
+        self.assertFalse(Answer.objects.filter(question=self.age).exists())
+
+    def test_geo_question_is_refused_by_a_popup(self):
+        """
+        GIVEN a polygon question in the section
+        WHEN it is dropped into the point's pop-up
+        THEN the move is refused and the polygon stays top-level
+        """
+        poly = _q(self.section, "POLY", 2, "polygon")
+        r = self._move(poly, self.point.id, [{"q": poly.id}])
+        self.assertEqual(r.status_code, 409)
+        self.assertIn("blocked", r.json())
+        poly.refresh_from_db()
+        self.assertIsNone(poly.parent_question_id_id)
+
+    def test_rules_broken_by_the_move_are_removed_and_named(self):
+        """
+        GIVEN a section choice question that controls a later section question, and has its own rule
+        WHEN the controller is moved into the pop-up
+        THEN both rules are removed and both hosts are named in removed_rules
+        """
+        ctrl = _q(self.section, "CTRL", 2, "choice", name="Controller",
+                  choices=[{"code": 1, "name": "Yes"}],
+                  visibility_rule={"question_code": "AGE", "answered": True})
+        dep = _q(self.section, "DEP", 3, name="Dependent",
+                 visibility_rule={"question_code": "CTRL", "choice_codes": [1]})
+        with override_settings(CONDITIONAL_VISIBILITY=True):
+            r = self._move(ctrl, self.point.id, [{"q": self.kind.id}, {"g": self.group.id, "q": [self.inside.id]},
+                                                  {"q": ctrl.id}])
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()["removed_rules"], ["Controller", "Dependent"])
+        ctrl.refresh_from_db()
+        dep.refresh_from_db()
+        self.assertIsNone(ctrl.visibility_rule)
+        self.assertIsNone(dep.visibility_rule)
+
+    def test_live_survey_refuses_the_move(self):
+        """
+        GIVEN a published survey
+        WHEN a move is posted
+        THEN it is refused with 403
+        """
+        self.survey.status = "published"
+        self.survey.save()
+        r = self._move(self.age, self.point.id, [{"q": self.age.id}])
+        self.assertEqual(r.status_code, 403)
+
+
 class GroupSerializationTest(TestCase):
     """ZIP export/import and copies (spec question-groups: groups travel)."""
 
