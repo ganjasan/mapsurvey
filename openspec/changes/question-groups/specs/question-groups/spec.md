@@ -109,6 +109,17 @@ and a group SHALL be dragged as a whole, with long-press on touch.
 - **THEN** an empty group row titled "Your visit" with `Group · 0` appears at the end of that
   question's sub-question list
 
+#### Scenario: Add a question straight into a group
+- **WHEN** a creator clicks "Add question to group" under a group and picks a type
+- **THEN** the new question is created inside that group, after its last question, and the
+  list shows it there without a drag
+
+#### Scenario: Preview of an empty group
+- **WHEN** the creator opens the modal of a group with no questions
+- **THEN** "Respondent sees" shows the group in the chosen style with two example questions,
+  marked as examples, between a faded question before and after it, and Tips explain when to
+  use each style
+
 #### Scenario: Preview while editing
 - **WHEN** the creator switches Display as from card to collapsible without saving
 - **THEN** the "Respondent sees" pane re-renders the group collapsed with a chevron

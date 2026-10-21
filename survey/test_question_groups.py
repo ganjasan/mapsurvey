@@ -710,6 +710,67 @@ class GroupEditorTest(TestCase):
         self.assertIn("question-group--collapsible", html)
         self.assertIn("Typed", html)
 
+    def test_add_question_inside_a_section_group(self):
+        """
+        GIVEN [G: Q1] followed by Q2
+        WHEN a question is created from "Add question to group" (type picked)
+        THEN it belongs to G right after Q1, Q2 moves down, and the list is re-rendered
+        """
+        g = QuestionGroup.objects.create(survey_section=self.section, order_number=0, title="G")
+        _q(self.section, "Q1", 1, group=g)
+        q2 = _q(self.section, "Q2", 2)
+        modal = self.client.get(f"{self.base}/sections/{self.section.id}/questions/new/?group={g.id}")
+        self.assertIn(f"?group={g.id}", modal.content.decode())
+        self.assertIn("New question in group", modal.content.decode())
+        r = self.client.post(f"{self.base}/sections/{self.section.id}/questions/new/?group={g.id}",
+                             {"input_type": "text", "name": "Inside", "draft": "1"})
+        self.assertIn("groupsChanged", r["HX-Trigger"])
+        new = Question.objects.get(name="Inside")
+        q2.refresh_from_db()
+        self.assertEqual((new.group_id, new.order_number, q2.order_number), (g.id, 2, 3))
+
+    def test_add_subquestion_inside_a_popup_group(self):
+        """
+        GIVEN a point question whose pop-up holds [G: S1] then S2
+        WHEN a sub-question is created with ?group=G
+        THEN it joins G after S1 and S2 moves down
+        """
+        point = _q(self.section, "PT", 0, "point")
+        g = QuestionGroup.objects.create(survey_section=self.section, parent_question=point, order_number=0)
+        _q(self.section, "S1", 1, parent=point, group=g)
+        s2 = _q(self.section, "S2", 2, parent=point)
+        self.client.post(f"{self.base}/questions/{point.id}/subquestions/new/?group={g.id}",
+                         {"input_type": "choice", "name": "Inside", "color": "#000000",
+                          "choices_json": json.dumps([{"code": 1, "name": "A"}])})
+        new = Question.objects.get(name="Inside")
+        s2.refresh_from_db()
+        self.assertEqual((new.group_id, new.order_number, s2.order_number), (g.id, 2, 3))
+
+    def test_group_of_another_bucket_is_ignored(self):
+        """
+        GIVEN a pop-up group
+        WHEN a top-level question is created naming it
+        THEN the question is created ungrouped at the end of the section
+        """
+        point = _q(self.section, "PT", 0, "point")
+        g = QuestionGroup.objects.create(survey_section=self.section, parent_question=point, order_number=0)
+        self.client.post(f"{self.base}/sections/{self.section.id}/questions/new/?group={g.id}",
+                         {"input_type": "text", "name": "Top", "draft": "1"})
+        self.assertIsNone(Question.objects.get(name="Top").group_id)
+
+    def test_preview_of_an_empty_group_shows_examples_between_neighbours(self):
+        """
+        GIVEN a group with no questions
+        WHEN its preview renders
+        THEN two example questions sit inside it, marked as examples, between faded neighbours
+        """
+        g = QuestionGroup.objects.create(survey_section=self.section, title="Empty", code="G_E")
+        html = self.client.post(f"{self.base}/groups/{g.id}/preview/", {"display_style": "card"}).content.decode()
+        self.assertIn("Example questions", html)
+        self.assertEqual(html.count('class="qg-context"'), 2)
+        self.assertLess(html.index("A question before the group"), html.index('data-group-code="G_E"'))
+        self.assertLess(html.index('data-group-code="G_E"'), html.index("A question after the group"))
+
     def test_live_survey_retitle_in_place_and_structure_refused(self):
         """
         GIVEN a published survey with a group and a choice question before it

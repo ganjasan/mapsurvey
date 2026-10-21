@@ -25,7 +25,7 @@ from .editor_forms import QuestionGroupForm
 from .editor_views import (
     _check_content_edit_allowed, _check_structural_edit_allowed, _delete_question_with_layers,
     _edit_locks, _lock_context, _parse_visibility_rule, _preview_language,
-    _question_delete_blocker, _refuse_if_answers_at_risk, _render_preview_frame,
+    _question_delete_blocker, _refuse_if_answers_at_risk,
     _render_section_detail, _rescreen_if_live, _structural_refusal, _translation_languages,
     _visibility_block_context,
 )
@@ -197,14 +197,33 @@ def editor_group_delete(request, survey_uuid, group_id):
 @xframe_options_sameorigin
 def editor_group_preview_live(request, survey_uuid, group_id):
     """The group modal's "Respondent sees": the group as currently typed
-    (title, description, style — unsaved), around its saved questions."""
+    (title, description, style — unsaved), between two faded neighbour
+    questions, so the difference between plain, card and collapsible shows
+    against what surrounds it. A group with no questions yet is filled with
+    two example questions, marked as such. A pop-up group renders in pop-up
+    styling (frameless cards), the way respondents meet it."""
+    from django.utils import translation as dj_translation
+    from django.utils.translation import gettext as _
     survey = request.survey
     group = _group_or_404(survey, group_id)
     lang = _preview_language(request, survey)
+    in_popup = group.parent_question_id is not None
     members = list(group.members())
+    is_example = not members
+    if is_example:
+        members = [
+            Question(code='__qg_example_1', name=_('Example question'), input_type='text_line'),
+            Question(code='__qg_example_2', name=_('Another example question'), input_type='choice',
+                     choices=[{'code': 1, 'name': _('Option A')}, {'code': 2, 'name': _('Option B')}]),
+        ]
+    where = _('this pop-up') if in_popup else _('this section')
+    before = Question(code='__qg_before', input_type='text_line',
+                      name=_('A question before the group in %(where)s') % {'where': where})
+    after = Question(code='__qg_after', input_type='text_line',
+                     name=_('A question after the group'))
     form = SurveySectionAnswerForm(
         initial={}, section=group.survey_section, question=None, survey_session_id=None,
-        language=lang, questions_override=members)
+        language=lang, questions_override=[before, *members, after])
     style = request.POST.get('display_style')
     if style not in dict(QuestionGroup._meta.get_field('display_style').choices):
         style = group.display_style
@@ -214,20 +233,19 @@ def editor_group_preview_live(request, survey_uuid, group_id):
     form.runs_override = [{
         'group': SimpleNamespace(code=group.code, display_style=style),
         'title': title, 'description': description, 'fields': fields,
-    }] if fields else []
-    response = _render_preview_frame(request, form, None, lang)
-    if not fields:
-        # Nothing to wrap yet: say so instead of a blank pane.
-        response.content = response.content.replace(
-            b'<div class="questions">',
-            b'<div class="questions"><p class="text-muted" style="font-size:.9rem;">'
-            + _empty_preview_text().encode() + b'</p>', 1)
+    }]
+    if lang:
+        dj_translation.activate(lang)
+    response = render(request, 'editor/partials/group_preview_frame.html', {
+        'form': form,
+        'before_field': form['__qg_before'],
+        'after_field': form['__qg_after'],
+        'in_popup': in_popup,
+        'is_example': is_example,
+    })
+    if lang:
+        dj_translation.deactivate()
     return response
-
-
-def _empty_preview_text():
-    from django.utils.translation import gettext as _
-    return _('Drag questions into this group in the list to see it here.')
 
 
 @survey_permission_required('editor')

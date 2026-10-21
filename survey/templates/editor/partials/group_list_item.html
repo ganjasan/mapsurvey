@@ -40,7 +40,18 @@ the list the group sits in (survey_detail.html); groups never go inside groups.
         {% for question in members %}
             {% include "editor/partials/question_list_item.html" %}
         {% empty %}
-            <li class="group-empty">{% trans "Drag questions here" %}</li>
+            <li class="group-empty">{% trans "No questions yet — add one or drag one here" %}</li>
         {% endfor %}
     </ul>
+    <div class="add-subquestion-wrap add-in-group-wrap">
+        <button class="add-question-btn add-question-btn--sub add-in-group-btn"
+                title="{% if is_read_only %}{% trans 'Create a draft to edit' %}{% else %}{% trans 'Add a question to this group' %}{% endif %}"
+                {% if not structure_locked %}
+                hx-get="{% if group.parent_question_id %}{% url 'editor_subquestion_create' survey.uuid group.parent_question_id %}{% else %}{% url 'editor_question_create' survey.uuid group.survey_section_id %}{% endif %}?group={{ group.id }}"
+                hx-target="#questionModalBody" hx-swap="innerHTML"
+                data-toggle="modal" data-target="#questionModal"
+                {% elif is_read_only %}disabled{% else %}data-gate="add_question" data-gate-section="{{ group.survey_section.code }}"{% endif %}>
+            <i class="fas fa-plus"></i> {% trans "Add question to group" %}
+        </button>
+    </div>
 </li>

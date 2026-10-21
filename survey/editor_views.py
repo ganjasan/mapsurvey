@@ -40,7 +40,9 @@ from .layers import (
 from . import product_events as pe
 from .question_types import CHOICE_TYPES, MULTI_FEATURE_TYPES, SHARED_MAP_SOURCE_TYPES, allowed_display_styles, normalise_choice_extras
 from .cloning import clone_question, clone_section
-from .groups import max_order as group_max_order, shift_down as group_shift_down
+from .groups import (
+    group_from_request, max_order as group_max_order, place_in_group, shift_down as group_shift_down,
+)
 from .html_sanitize import coerce_creator_html
 from .translation_gaps import survey_translation_gaps
 from .content_screening import screen_survey, pending_review_for
@@ -1706,6 +1708,10 @@ def _render_question_modal(request, context):
         context.setdefault('thread_counts', _thread_counts(survey, request.user))
         if 'layer_options' not in context:
             context['layer_options'], context['answer_sources'] = _shared_map_layer_options(survey)
+    # A create opened from "+ Add question" inside a group keeps the group on
+    # every post the modal makes (change question-groups).
+    if 'into_group' not in context and not context.get('question') and context.get('section') is not None:
+        context['into_group'] = group_from_request(request, context['section'], context.get('parent'))
     response = render(request, 'editor/partials/question_form_modal.html', context)
     if request.headers.get('HX-Request'):
         response['HX-Retarget'] = '#questionModalBody'
@@ -1783,12 +1789,21 @@ def editor_question_create(request, survey_uuid, section_id):
         name = request.POST.get('name', '').strip()[:Question._meta.get_field('name').max_length]
         question = Question(survey_section=section, input_type=input_type, name=name,
                             subtext=coerce_creator_html(request.POST.get('subtext', '')))
-        # Groups share the sequence (change question-groups): count them too.
-        question.order_number = (group_max_order(section) or 0) + 1
+        into_group = group_from_request(request, section)
+        if into_group is not None:
+            # "+ Add question" inside a group: last in the group, not the section.
+            place_in_group(question, into_group)
+        else:
+            # Groups share the sequence (change question-groups): count them too.
+            question.order_number = (group_max_order(section) or 0) + 1
         question.choices = question.thumbs_choices() if question.input_type == 'thumbs' else None
         question.save()
         if not Question.objects.filter(survey_section__survey_header=survey).exclude(pk=question.pk).exists():
             pe.emit(pe.SURVEY_QUESTION_ADDED, request.user.pk, {'survey_id': str(survey.id)})
+        if into_group is not None:
+            # The row lives inside the group's list: re-render the list instead
+            # of appending the row at the end of the section.
+            return _edit_modal_response(request, question, trigger='questionUpdated, groupsChanged')
         return _edit_modal_response(request, question, oob_list_item=True, trigger='questionUpdated')
 
     if request.method == 'POST':
@@ -1797,7 +1812,11 @@ def editor_question_create(request, survey_uuid, section_id):
             question = form.save(commit=False)
             question.survey_section = section
             # Auto-assign next order number
-            question.order_number = (group_max_order(section) or 0) + 1
+            into_group = group_from_request(request, section)
+            if into_group is not None:
+                place_in_group(question, into_group)
+            else:
+                question.order_number = (group_max_order(section) or 0) + 1
             # Handle choices. Non-choice types must never keep a choices
             # list (the widget still posts choices_json across a type switch);
             # stale choices used to reroute answer storage — see CHOICE_TYPES.
@@ -1833,6 +1852,12 @@ def editor_question_create(request, survey_uuid, section_id):
                 pe.emit(pe.SURVEY_QUESTION_ADDED, request.user.pk,
                         {'survey_id': str(survey.id)})
             _save_question_translations(request, question, survey)
+            if into_group is not None:
+                response = _render_section_detail(request, survey, section)
+                response['HX-Retarget'] = '#section-content'
+                response['HX-Reswap'] = 'innerHTML'
+                response['HX-Trigger'] = 'questionSaved'
+                return response
             response = render(request, 'editor/partials/question_list_item.html', {'thread_counts': _thread_counts(survey, request.user), 
                 'question': question,
                 'survey': survey,
@@ -2356,7 +2381,11 @@ def editor_subquestion_create(request, survey_uuid, parent_id):
             question = form.save(commit=False)
             question.survey_section = parent.survey_section
             question.parent_question_id = parent
-            question.order_number = (group_max_order(parent.survey_section, parent) or 0) + 1
+            into_group = group_from_request(request, parent.survey_section, parent)
+            if into_group is not None:
+                place_in_group(question, into_group)
+            else:
+                question.order_number = (group_max_order(parent.survey_section, parent) or 0) + 1
             choices_json = data.get('choices_json', '').strip()
             if question.input_type not in CHOICE_TYPES:
                 question.choices = None

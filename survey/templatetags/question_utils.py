@@ -189,3 +189,9 @@ def editor_runs(section, parent=None, questions=None):
     drop zones). Change question-groups."""
     from survey.groups import runs_for
     return runs_for(section, parent, questions)
+
+
+@register.filter
+def make_list_of_one(value):
+    """`[value]` — lets a template hand one bound field to a partial that loops."""
+    return [value]

@@ -894,8 +894,12 @@ document.addEventListener('DOMContentLoaded', function() {
         var list = document.getElementById('questions-list');
         var sid = list && list.dataset.sectionId;
         if (!sid) return;
+        // A #section-content swap does not refresh the preview (the afterSwap
+        // handler skips it on purpose), but a group change alters what the
+        // respondent sees: refresh it once the list is back.
         htmx.ajax('GET', SECTION_DETAIL_URL.replace('/0/', '/' + sid + '/'),
-                  { target: '#section-content', swap: 'innerHTML' });
+                  { target: '#section-content', swap: 'innerHTML' })
+            .then(function () { refreshPreview(); });
     }
     function rootOf(listEl) {
         if (listEl.id === 'questions-list' || listEl.classList.contains('subquestion-list')) return listEl;

@@ -9,8 +9,14 @@ the section list, never here. On close the section list is re-rendered (groupsCh
     @media (min-width: 1200px) { #questionModal .modal-dialog { max-width: 1100px; } }
     .grp-cols { display: flex; gap: 1.25rem; align-items: flex-start; }
     .grp-form { flex: 1 1 auto; min-width: 0; }
-    .grp-preview { flex: 0 0 360px; position: sticky; top: 0; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 12px; }
-    .grp-preview iframe { width: 100%; height: 420px; border: 1px solid #dee2e6; border-radius: 8px; background: #fff; }
+    .grp-side { flex: 0 0 360px; position: sticky; top: 0; display: flex; flex-direction: column; gap: 12px; }
+    .grp-preview, .grp-tips { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 12px; }
+    .grp-tips ul { margin: 0; padding-left: 1.1rem; font-size: .8rem; color: #4b5563; }
+    .grp-tips li { margin-bottom: 6px; }
+    .grp-tips li:last-child { margin-bottom: 0; }
+    .grp-tips li[data-tip-for].is-active { color: #111827; }
+    .grp-tips li[data-tip-for].is-active::marker { color: var(--accent); }
+    .grp-preview iframe { width: 100%; height: 380px; border: 1px solid #dee2e6; border-radius: 8px; background: #fff; }
     .grp-styles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .grp-styles label { border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px; cursor: pointer; font-size: .8rem; display: flex; flex-direction: column; gap: 6px; margin: 0; font-weight: 400; }
     .grp-styles input { position: absolute; opacity: 0; }
@@ -27,7 +33,7 @@ the section list, never here. On close the section list is re-rendered (groupsCh
     #group-description-quill .ql-editor { min-height: 70px; }
     @media (max-width: 991.98px) {
         .grp-cols { flex-direction: column; align-items: stretch; }
-        .grp-preview { position: static; flex: 1 1 auto; }
+        .grp-side { position: static; flex: 1 1 auto; }
     }
 </style>
 <form id="group-form" data-group-form
@@ -87,9 +93,21 @@ the section list, never here. On close the section list is re-rendered (groupsCh
                     <small class="form-text text-muted">{% trans "To add or remove questions, drag them in the list." %}</small>
                 </div>
             </div>
-            <div class="grp-preview">
-                <div style="font-weight:600;font-size:.85rem;margin-bottom:8px;">{% trans "Respondent sees" %}</div>
-                <iframe id="group-preview-frame" title="{% trans 'Respondent sees' %}"></iframe>
+            <div class="grp-side">
+                <div class="grp-preview">
+                    <div style="font-weight:600;font-size:.85rem;margin-bottom:8px;">{% trans "Respondent sees" %}</div>
+                    <iframe id="group-preview-frame" title="{% trans 'Respondent sees' %}"></iframe>
+                    <small class="text-muted d-block mt-1">{% trans "Faded: the questions around the group, for comparison." %}</small>
+                </div>
+                <div class="grp-tips">
+                    <div style="font-weight:600;font-size:.85rem;margin-bottom:6px;"><i class="far fa-lightbulb"></i> {% trans "Tips" %}</div>
+                    <ul>
+                        <li data-tip-for="plain"><b>{% trans "Plain" %}</b> — {% trans "a heading and a description between questions. The questions keep their own cards. Use it to split a long list into parts without boxing anything in." %}</li>
+                        <li data-tip-for="card"><b>{% trans "Card" %}</b> — {% trans "one framed block around the questions, which lose their own frames. Reads as one unit: best for “About this place” blocks in a map pop-up." %}</li>
+                        <li data-tip-for="collapsible"><b>{% trans "Collapsible" %}</b> — {% trans "a card that stays closed until the respondent taps its title, showing only how many questions are inside. For optional or long blocks. If a required question inside is empty, the group opens by itself on submit." %}</li>
+                        <li>{% trans "A visibility rule on the group hides every question inside at once — set it here instead of on each question." %}</li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
@@ -163,8 +181,16 @@ the section list, never here. On close the section list is re-rendered (groupsCh
     indicator.addEventListener('click', function () {
         if (indicator.dataset.state === 'error') save();
     });
+    // The tip of the chosen style is the one in full colour.
+    function syncTips() {
+        var checked = form.querySelector('[name=display_style]:checked');
+        form.querySelectorAll('.grp-tips li[data-tip-for]').forEach(function (li) {
+            li.classList.toggle('is-active', !!checked && li.dataset.tipFor === checked.value);
+        });
+    }
     form.addEventListener('input', function () { save(); preview(); });
-    form.addEventListener('change', function () { save(); preview(); });
+    form.addEventListener('change', function () { save(); preview(); syncTips(); });
+    syncTips();
 
     // Description: the same Quill toolbar question help text uses.
     var input = document.getElementById('id_description');

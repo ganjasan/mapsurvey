@@ -149,8 +149,16 @@ are written.
   badge, visibility badges (`visibility_info` resolves the group kind), comment badge, and a nested
   `<ul class="group-question-list">` of member `question_list_item`s. Section list and in-row
   sub-question lists both render the merged runs (the section view passes `items`).
-- "Add group" next to "New Question" and next to "+ Add Sub-question"; a new group lands at the
-  end of the sequence. "Move to group…" is not needed: drag is the way in and out.
+- "Add group" next to "New Question" and next to "+ Add Sub-question" (one row on desktop,
+  stacked on a phone); a new group lands at the end of the sequence. Each group row ends with
+  "Add question to group": the create modal carries `?group=<id>` on every post and
+  `groups.place_in_group` gives the question the slot after the group's last member (owner
+  feedback 2026-10-21: creating outside and dragging in was the only way, and it was not
+  acceptable). Drag remains the way to move existing questions in and out.
+- "Respondent sees" (`group_preview_frame.html`) draws the group between two faded neighbour
+  questions — pop-up styling for a pop-up group — and fills an empty group with two example
+  questions, so plain / card / collapsible can be told apart before anything is in the group;
+  a Tips card under it explains each style, the chosen one highlighted.
 - Delete (decided with the owner 2026-10-19: ask, do not assume): a group with questions opens a
   small dialog with two radio choices — "Delete only the group — its N questions stay in the
   section" (pop-up: "…stay in the pop-up"), the default, and "Delete the group and its N

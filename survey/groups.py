@@ -99,3 +99,24 @@ def last_member_order(group):
     """order_number of a group's last member, or the group's own when empty."""
     m = group.questions.aggregate(m=Max('order_number'))['m']
     return group.order_number if m is None else max(m, group.order_number)
+
+
+def place_in_group(question, group):
+    """Give an unsaved question the next slot inside `group` — right after its
+    last member — shifting what follows by one. The question must share the
+    group's bucket (section, parent)."""
+    last = last_member_order(group)
+    shift_down(group.survey_section, group.parent_question, last)
+    question.group = group
+    question.order_number = last + 1
+
+
+def group_from_request(request, section, parent=None):
+    """The group a create request targets (`group` in the query or the form),
+    or None when absent or not a group of this section's top level / pop-up."""
+    raw = request.GET.get('group') or request.POST.get('group')
+    if not raw or not str(raw).isdigit():
+        return None
+    qs = QuestionGroup.objects.filter(pk=int(raw), survey_section=section)
+    qs = qs.filter(parent_question__isnull=True) if parent is None else qs.filter(parent_question=parent)
+    return qs.first()
