@@ -899,7 +899,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // respondent sees: refresh it once the list is back.
         htmx.ajax('GET', SECTION_DETAIL_URL.replace('/0/', '/' + sid + '/'),
                   { target: '#section-content', swap: 'innerHTML' })
-            .then(function () { refreshPreview(); });
+            .then(function () { refreshPreview(); },
+                  // htmx.ajax rejects with no value on error/abort/timeout; the
+                  // list stays as it was and the next drop reloads it again.
+                  function () {});
     }
     function rootOf(listEl) {
         if (listEl.id === 'questions-list' || listEl.classList.contains('subquestion-list')) return listEl;
