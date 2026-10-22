@@ -1,11 +1,9 @@
 ## Purpose
 
 Keep an append-only, admin-readable record of destructive and lifecycle editor operations so any data loss or state change can be reconstructed after the fact.
-
 ## Requirements
-
 ### Requirement: Destructive and lifecycle operations are audited
-The system SHALL write an append-only `AuditLog` record for every destructive or lifecycle editor operation: survey trash, restore, manual purge, auto-purge, status transition, test-data clearing, draft publish, draft discard, password set/remove, and test-token regeneration.
+The system SHALL write an append-only `AuditLog` record for every destructive or lifecycle editor operation: survey trash, restore, manual purge, auto-purge, status transition, test-data clearing, draft publish, draft discard, password set/remove, test-token regeneration, and — with no target survey — personal API token creation (`api_token_create`) and revocation (`api_token_revoke`).
 
 #### Scenario: Trashing a survey writes an audit record
 - **WHEN** an owner moves a survey to trash
@@ -18,6 +16,10 @@ The system SHALL write an append-only `AuditLog` record for every destructive or
 #### Scenario: Clearing test data writes an audit record
 - **WHEN** an owner publishes with "clear test data" checked
 - **THEN** an `AuditLog` row SHALL be created with action `clear_test_data` and metadata containing the number of deleted sessions
+
+#### Scenario: Minting an API token writes an audit record
+- **WHEN** a creator mints a personal token
+- **THEN** an `AuditLog` row SHALL be created with action `api_token_create`, the actor, the client IP, empty survey fields, and metadata holding the token id, label, scopes, audiences and expiry — never the token value
 
 ### Requirement: Audit records survive deletion of their target
 Audit records SHALL reference the target survey by stored uuid and name (no foreign key), so purging a survey MUST NOT remove or alter its audit history.
@@ -46,3 +48,4 @@ The system SHALL expose `AuditLog` in Django admin as read-only: no add, change,
 #### Scenario: Admin cannot modify audit entries
 - **WHEN** a superuser opens an `AuditLog` entry in Django admin
 - **THEN** the entry SHALL be viewable but not editable or deletable
+
