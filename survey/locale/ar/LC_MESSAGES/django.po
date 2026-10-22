@@ -300,16 +300,16 @@ msgstr ""
 #: survey/templates/base_survey_template.html:78
 #: survey/templatetags/i18n_extras.py:20
 msgid "Cancel"
-msgstr ""
+msgstr "إلغاء"
 
 #: survey/templates/base_survey_template.html:67
 #: survey/templatetags/i18n_extras.py:18
 msgid "Finish drawing"
-msgstr ""
+msgstr "إنهاء الرسم"
 
 #: survey/templates/base_survey_template.html:79
 msgid "Apply"
-msgstr ""
+msgstr "تطبيق"
 
 #: survey/templates/django_registration/activation_complete.html:4
 #: survey/templates/django_registration/activation_complete.html:11
@@ -880,29 +880,29 @@ msgstr ""
 #: survey/templates/survey_section.html:44
 #: survey/templates/survey_section_block.html:14
 msgid "Back"
-msgstr ""
+msgstr "رجوع"
 
 #: survey/templates/survey_header_template.html:25
 #: survey/templates/survey_header_template.html:26
 #: survey/templates/survey_section.html:49
 #: survey/templates/survey_section_block.html:20
 msgid "Next"
-msgstr ""
+msgstr "التالي"
 
 #: survey/templates/survey_header_template.html:28
 #: survey/templates/survey_header_template.html:29
 #: survey/templates/survey_section.html:51
 #: survey/templates/survey_section_block.html:22
 msgid "Finish"
-msgstr ""
+msgstr "إنهاء"
 
 #: survey/templates/survey_language_select.html:7
 msgid "Select Language"
-msgstr ""
+msgstr "اختر اللغة"
 
 #: survey/templates/survey_language_select.html:60
 msgid "Select your language"
-msgstr ""
+msgstr "اختر لغتك"
 
 #: survey/templates/survey_password.html:4
 msgid "Password Required"
@@ -922,60 +922,244 @@ msgstr ""
 
 #: survey/templates/survey_thanks.html:21
 msgid "Thank you!"
-msgstr ""
+msgstr "شكرًا لك!"
 
 #: survey/templates/survey_thanks.html:22
 msgid "Your responses have been recorded."
-msgstr ""
+msgstr "تم تسجيل إجاباتك."
 
 #: survey/templatetags/i18n_extras.py:17
 msgid "Start drawing"
-msgstr ""
+msgstr "بدء الرسم"
 
 #: survey/templatetags/i18n_extras.py:19
 msgid "Finish editing"
-msgstr ""
+msgstr "إنهاء التعديل"
 
 #: survey/templatetags/i18n_extras.py:21
 msgid "Delete"
-msgstr ""
+msgstr "حذف"
 
 #: survey/templatetags/i18n_extras.py:24
 msgid "Click on the map to place a marker."
-msgstr ""
+msgstr "انقر على الخريطة لوضع علامة."
 
 #: survey/templatetags/i18n_extras.py:27
 msgid "Click to start drawing a shape."
-msgstr ""
+msgstr "انقر لبدء رسم شكل."
 
 #: survey/templatetags/i18n_extras.py:28
 msgid "Click to continue drawing the shape."
-msgstr ""
+msgstr "انقر لمتابعة رسم الشكل."
 
 #: survey/templatetags/i18n_extras.py:29
 msgid "Click the first point to close this shape."
-msgstr ""
+msgstr "انقر على النقطة الأولى لإغلاق هذا الشكل."
 
 #: survey/templatetags/i18n_extras.py:32
 msgid "Click to start drawing a line."
-msgstr ""
+msgstr "انقر لبدء رسم خط."
 
 #: survey/templatetags/i18n_extras.py:33
 msgid "Click to continue drawing the line."
-msgstr ""
+msgstr "انقر لمتابعة رسم الخط."
 
 #: survey/templatetags/i18n_extras.py:34
 msgid "Click the last point to finish the line."
-msgstr ""
+msgstr "انقر على النقطة الأخيرة لإنهاء الخط."
 
 #: survey/templatetags/i18n_extras.py:37
 msgid "<strong>Error:</strong> Shape edges cannot intersect!"
-msgstr ""
+msgstr "<strong>خطأ:</strong> لا يمكن أن تتقاطع حواف الشكل!"
 
 #: survey/templatetags/i18n_extras.py:40
 msgid "Search address..."
-msgstr ""
+msgstr "ابحث عن عنوان..."
 
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
-msgstr ""
+msgstr "لم يتم العثور على نتائج"
+
+msgid "Retry"
+msgstr "إعادة المحاولة"
+
+msgid "Search failed — check your connection and try again."
+msgstr "فشل البحث — تحقق من اتصالك وحاول مرة أخرى."
+
+msgid "Questions"
+msgstr "الأسئلة"
+
+msgid "Add another"
+msgstr "إضافة آخر"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "يبدو احتيالًا أو ينتحل صفة شركة"
+
+msgid "Tap to add the next corner."
+msgstr "اضغط لإضافة الزاوية التالية."
+
+msgid ":"
+msgstr ":"
+
+msgid "{n} marked"
+msgstr "تم تحديد {n}"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "حرّك الخريطة لتحديد موضع الدبوس، ثم اضغط على تطبيق."
+
+msgid "Send report"
+msgstr "إرسال البلاغ"
+
+msgid "Made with"
+msgstr "صُنع باستخدام"
+
+msgid "No"
+msgstr "لا"
+
+msgid "Harassment, threats or hate"
+msgstr "تحرش أو تهديد أو كراهية"
+
+msgid "All {m} marked — thank you!"
+msgstr "تم تحديد جميع الـ {m} — شكرًا لك!"
+
+msgid "Report this survey"
+msgstr "الإبلاغ عن هذا الاستبيان"
+
+msgid "Exposes someone's personal data"
+msgstr "يكشف البيانات الشخصية لشخص ما"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "يطلب كلمة مرور أو تسجيل دخول أو دفعًا"
+
+msgid "Brush size"
+msgstr "حجم الفرشاة"
+
+msgid "Medium brush"
+msgstr "فرشاة متوسطة"
+
+msgid "Tap to add the next point."
+msgstr "اضغط لإضافة النقطة التالية."
+
+msgid "A few required questions still need an answer."
+msgstr "لا تزال بعض الأسئلة الإلزامية بحاجة إلى إجابة."
+
+msgid "create your own free map survey"
+msgstr "أنشئ استبيان الخرائط المجاني الخاص بك"
+
+msgid "Sign in"
+msgstr "تسجيل الدخول"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "اضغط مع الاستمرار واسحب إصبعك للرش. ابقَ مدة أطول حيث تكون أكثر يقينًا."
+
+msgid "Stop"
+msgstr "إيقاف"
+
+msgid "Show all options"
+msgstr "عرض جميع الخيارات"
+
+msgid "Add audio file"
+msgstr "إضافة ملف صوتي"
+
+msgid "Illegal content"
+msgstr "محتوى غير قانوني"
+
+msgid "at least {n} required"
+msgstr "مطلوب {n} على الأقل"
+
+msgid "up to {n} more"
+msgstr "حتى {n} إضافية"
+
+msgid "Tap to start the line."
+msgstr "اضغط لبدء الخط."
+
+msgid "Tap the first point to close the shape."
+msgstr "اضغط على النقطة الأولى لإغلاق الشكل."
+
+msgid "Add photo"
+msgstr "إضافة صورة"
+
+msgid "Take photo"
+msgstr "التقاط صورة"
+
+msgid "Yes"
+msgstr "نعم"
+
+msgid "Something else"
+msgstr "شيء آخر"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "الفرشاة فارغة — امسح بعض الطلاء للمتابعة."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "لا تُدخل أبدًا كلمات مرور أو أرقام بطاقات في استبيان Mapsurvey."
+
+msgid "Large brush"
+msgstr "فرشاة كبيرة"
+
+msgid "Attach file"
+msgstr "إرفاق ملف"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "اضغط مع الاستمرار واسحب للرش. ابقَ مدة أطول حيث تكون أكثر يقينًا."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "الاعتداء الجنسي على الأطفال أو استغلالهم"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "تم بلوغ الحد الأقصى — احذف واحدًا أدناه لتغييره."
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s سؤال"
+msgstr[1] "%(n)s سؤال"
+msgstr[2] "%(n)s سؤالان"
+msgstr[3] "%(n)s أسئلة"
+msgstr[4] "%(n)s سؤالًا"
+msgstr[5] "%(n)s سؤال"
+
+msgid "Uploading"
+msgstr "جارٍ الرفع"
+
+msgid "This field is required."
+msgstr "هذا الحقل مطلوب."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "اضغط على الخريطة لتحديد مكان — أو استخدم الزر."
+
+msgid "Tap the last point to finish the line."
+msgstr "اضغط على النقطة الأخيرة لإنهاء الخط."
+
+msgid "Move map"
+msgstr "تحريك الخريطة"
+
+msgid "Anything else we should know? (optional)"
+msgstr "هل هناك أي شيء آخر يجب أن نعرفه؟ (اختياري)"
+
+msgid "This question is required"
+msgstr "هذا السؤال مطلوب"
+
+msgid "Tap to add the shape’s corners."
+msgstr "اضغط لإضافة زوايا الشكل."
+
+msgid "Clear"
+msgstr "مسح"
+
+msgid "Record"
+msgstr "تسجيل"
+
+msgid "{n} of {m} marked"
+msgstr "تم تحديد {n} من {m}"
+
+msgid "Spray"
+msgstr "رش"
+
+msgid "Please specify"
+msgstr "يرجى التحديد"
+
+msgid "Erase"
+msgstr "ممحاة"
+
+msgid "Small brush"
+msgstr "فرشاة صغيرة"

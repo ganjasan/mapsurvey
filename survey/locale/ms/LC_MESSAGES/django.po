@@ -980,3 +980,182 @@ msgstr "Cari alamat..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Tiada keputusan"
+
+msgid "Medium brush"
+msgstr "Berus sederhana"
+
+msgid "Tap to add the next point."
+msgstr "Ketik untuk menambah titik seterusnya."
+
+msgid "A few required questions still need an answer."
+msgstr "Beberapa soalan wajib masih belum dijawab."
+
+msgid "create your own free map survey"
+msgstr "cipta tinjauan peta percuma anda sendiri"
+
+msgid "Sign in"
+msgstr "Log masuk"
+
+msgid "Stop"
+msgstr "Henti"
+
+msgid "Add audio file"
+msgstr "Tambah fail audio"
+
+msgid "Uploading"
+msgstr "Memuat naik"
+
+msgid "This field is required."
+msgstr "Medan ini wajib diisi."
+
+msgid "at least {n} required"
+msgstr "sekurang-kurangnya {n} diperlukan"
+
+msgid "up to {n} more"
+msgstr "sehingga {n} lagi"
+
+msgid "Tap to start the line."
+msgstr "Ketik untuk memulakan garisan."
+
+msgid "Tap the last point to finish the line."
+msgstr "Ketik titik terakhir untuk menamatkan garisan."
+
+msgid "Move map"
+msgstr "Gerakkan peta"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Ada apa-apa lagi yang perlu kami tahu? (pilihan)"
+
+msgid "This question is required"
+msgstr "Soalan ini wajib dijawab"
+
+msgid "Take photo"
+msgstr "Ambil foto"
+
+msgid "Clear"
+msgstr "Kosongkan"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Berus sudah kosong — padam sedikit cat untuk meneruskan."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Jangan sekali-kali masukkan kata laluan atau nombor kad dalam tinjauan Mapsurvey."
+
+msgid "Large brush"
+msgstr "Berus besar"
+
+msgid "Attach file"
+msgstr "Lampirkan fail"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Tekan dan seret untuk menyembur. Tahan lebih lama di tempat yang anda lebih pasti."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Had maksimum dicapai — buang satu di bawah untuk mengubahnya."
+
+msgid "Small brush"
+msgstr "Berus kecil"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s soalan"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Carian gagal — semak sambungan anda dan cuba lagi."
+
+msgid "{n} marked"
+msgstr "{n} ditanda"
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Ketik peta untuk menanda tempat — atau gunakan butang."
+
+msgid "Send report"
+msgstr "Hantar laporan"
+
+msgid "Made with"
+msgstr "Dibuat dengan"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Ketik untuk menambah bucu bentuk."
+
+msgid "Record"
+msgstr "Rakam"
+
+msgid "No"
+msgstr "Tidak"
+
+msgid "{n} of {m} marked"
+msgstr "{n} daripada {m} ditanda"
+
+msgid "Spray"
+msgstr "Sembur"
+
+msgid "Please specify"
+msgstr "Sila nyatakan"
+
+msgid "All {m} marked — thank you!"
+msgstr "Kesemua {m} telah ditanda — terima kasih!"
+
+msgid "Report this survey"
+msgstr "Laporkan tinjauan ini"
+
+msgid "Erase"
+msgstr "Pemadam"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Meminta kata laluan, log masuk atau bayaran"
+
+msgid "Retry"
+msgstr "Cuba lagi"
+
+msgid "Questions"
+msgstr "Soalan"
+
+msgid "Add another"
+msgstr "Tambah lagi"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Tekan dan seret jari untuk menyembur. Tahan lebih lama di tempat yang anda lebih pasti."
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Kelihatan seperti penipuan atau menyamar sebagai syarikat"
+
+msgid "Tap to add the next corner."
+msgstr "Ketik untuk menambah bucu seterusnya."
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "Tunjukkan semua pilihan"
+
+msgid "Illegal content"
+msgstr "Kandungan haram"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Gerakkan peta untuk meletakkan pin, kemudian tekan Gunakan."
+
+msgid "Tap the first point to close the shape."
+msgstr "Ketik titik pertama untuk menutup bentuk."
+
+msgid "Add photo"
+msgstr "Tambah foto"
+
+msgid "Yes"
+msgstr "Ya"
+
+msgid "Something else"
+msgstr "Lain-lain"
+
+msgid "Harassment, threats or hate"
+msgstr "Gangguan, ugutan atau kebencian"
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Penderaan seksual atau eksploitasi kanak-kanak"
+
+msgid "Exposes someone's personal data"
+msgstr "Mendedahkan data peribadi seseorang"
+
+msgid "Brush size"
+msgstr "Saiz berus"

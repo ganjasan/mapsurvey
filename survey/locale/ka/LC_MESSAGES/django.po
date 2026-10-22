@@ -980,3 +980,183 @@ msgstr "მისამართის ძიება..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "შედეგები ვერ მოიძებნა"
+
+msgid "Move map"
+msgstr "რუკის გადაადგილება"
+
+msgid "Anything else we should know? (optional)"
+msgstr "კიდევ რამე უნდა ვიცოდეთ? (არასავალდებულო)"
+
+msgid "This question is required"
+msgstr "ეს კითხვა სავალდებულოა"
+
+msgid "Take photo"
+msgstr "ფოტოს გადაღება"
+
+msgid "Clear"
+msgstr "გასუფთავება"
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "არასოდეს შეიყვანოთ პაროლები ან ბარათის ნომრები Mapsurvey-ის გამოკითხვაში."
+
+msgid "Spray"
+msgstr "შესხურება"
+
+msgid "Large brush"
+msgstr "დიდი ფუნჯი"
+
+msgid "Please specify"
+msgstr "გთხოვთ, დააზუსტოთ"
+
+msgid "Small brush"
+msgstr "პატარა ფუნჯი"
+
+msgid "Retry"
+msgstr "ხელახლა ცდა"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s კითხვა"
+msgstr[1] "%(n)s კითხვა"
+
+msgid "Search failed — check your connection and try again."
+msgstr "ძიება ვერ მოხერხდა — შეამოწმეთ კავშირი და სცადეთ ხელახლა."
+
+msgid "Questions"
+msgstr "კითხვები"
+
+msgid "{n} marked"
+msgstr "მონიშნულია {n}"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "გადააადგილეთ რუკა ქინძისთავის დასაყენებლად, შემდეგ დააჭირეთ „გამოყენებას“."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "შეეხეთ რუკას ადგილის მოსანიშნად — ან გამოიყენეთ ღილაკი."
+
+msgid "Send report"
+msgstr "შეტყობინების გაგზავნა"
+
+msgid "Made with"
+msgstr "პლატფორმა:"
+
+msgid "Tap to add the shape’s corners."
+msgstr "შეეხეთ ფიგურის კუთხეების დასამატებლად."
+
+msgid "Record"
+msgstr "ჩაწერა"
+
+msgid "No"
+msgstr "არა"
+
+msgid "{n} of {m} marked"
+msgstr "მონიშნულია {n} / {m}-დან"
+
+msgid "All {m} marked — thank you!"
+msgstr "ყველა {m} მონიშნულია — გმადლობთ!"
+
+msgid "Report this survey"
+msgstr "ამ გამოკითხვის შესახებ შეტყობინება"
+
+msgid "Erase"
+msgstr "წაშლა"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "ითხოვს პაროლს, შესვლას ან გადახდას"
+
+msgid "Add another"
+msgstr "კიდევ ერთის დამატება"
+
+msgid "Sign in"
+msgstr "შესვლა"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "დააჭირეთ თითი და გაასრიალეთ შესასხურებლად. დიდხანს დარჩით იქ, სადაც მეტად დარწმუნებული ხართ."
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "თაღლითობას ჰგავს ან კომპანიის სახელით მოქმედებს"
+
+msgid "Tap to add the next corner."
+msgstr "შეეხეთ შემდეგი კუთხის დასამატებლად."
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "ყველა ვარიანტის ჩვენება"
+
+msgid "Illegal content"
+msgstr "უკანონო კონტენტი"
+
+msgid "at least {n} required"
+msgstr "საჭიროა მინიმუმ {n}"
+
+msgid "Tap the first point to close the shape."
+msgstr "შეეხეთ პირველ წერტილს ფიგურის დასახურად."
+
+msgid "Add photo"
+msgstr "ფოტოს დამატება"
+
+msgid "Yes"
+msgstr "დიახ"
+
+msgid "Something else"
+msgstr "სხვა რამ"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "ფუნჯი ცარიელია — გასაგრძელებლად წაშალეთ ცოტა საღებავი."
+
+msgid "Harassment, threats or hate"
+msgstr "შევიწროება, მუქარა ან სიძულვილი"
+
+msgid "Attach file"
+msgstr "ფაილის მიმაგრება"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "დააჭირეთ და გადაათრიეთ შესასხურებლად. დიდხანს დარჩით იქ, სადაც მეტად დარწმუნებული ხართ."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "ბავშვების სექსუალური ძალადობა ან ექსპლუატაცია"
+
+msgid "Exposes someone's personal data"
+msgstr "ავლენს ვინმეს პერსონალურ მონაცემებს"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "მიღწეულია მაქსიმუმი — შესაცვლელად ქვემოთ წაშალეთ ერთი."
+
+msgid "Brush size"
+msgstr "ფუნჯის ზომა"
+
+msgid "Medium brush"
+msgstr "საშუალო ფუნჯი"
+
+msgid "Tap to add the next point."
+msgstr "შეეხეთ შემდეგი წერტილის დასამატებლად."
+
+msgid "A few required questions still need an answer."
+msgstr "რამდენიმე სავალდებულო კითხვას ჯერ კიდევ სჭირდება პასუხი."
+
+msgid "create your own free map survey"
+msgstr "შექმენით თქვენი უფასო რუკის გამოკითხვა"
+
+msgid "Stop"
+msgstr "შეჩერება"
+
+msgid "Add audio file"
+msgstr "აუდიოფაილის დამატება"
+
+msgid "Uploading"
+msgstr "იტვირთება"
+
+msgid "This field is required."
+msgstr "ეს ველი სავალდებულოა."
+
+msgid "up to {n} more"
+msgstr "კიდევ {n}-მდე"
+
+msgid "Tap to start the line."
+msgstr "შეეხეთ ხაზის დასაწყებად."
+
+msgid "Tap the last point to finish the line."
+msgstr "შეეხეთ ბოლო წერტილს ხაზის დასასრულებლად."

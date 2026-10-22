@@ -6180,7 +6180,7 @@ msgstr ""
 #: survey/templates/maptionnaire_alternative.html:100
 #: survey/templates/maptionnaire_alternative.html:101
 msgid "Yes"
-msgstr ""
+msgstr "Oui"
 
 #: survey/templates/maptionnaire_alternative.html:100
 msgid "Yes — per-question translations"
@@ -6414,7 +6414,7 @@ msgstr ""
 
 #: survey/templates/metroquest_alternative.html:97
 msgid "No"
-msgstr ""
+msgstr "Non"
 
 #: survey/templates/metroquest_alternative.html:98
 msgid "Survey structure"
@@ -8084,6 +8084,63 @@ msgstr "Vous avez déjà décrit votre projet — laisser l'assistant rédiger l
 #: survey/templates/editor/partials/_ai_feedback_strip.html
 msgid "How is the Wizard's draft?"
 msgstr "Que pensez-vous du brouillon de l'assistant ?"
+
+msgid "Move map"
+msgstr "Déplacer la carte"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Autre chose à nous signaler ? (facultatif)"
+
+msgid "Spray"
+msgstr "Pulvériser"
+
+msgid "Large brush"
+msgstr "Grand pinceau"
+
+msgid "Please specify"
+msgstr "Veuillez préciser"
+
+msgid "Small brush"
+msgstr "Petit pinceau"
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Touchez la carte pour marquer un lieu — ou utilisez le bouton."
+
+msgid "Send report"
+msgstr "Envoyer le signalement"
+
+msgid "Report this survey"
+msgstr "Signaler cette enquête"
+
+msgid "Erase"
+msgstr "Effacer"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Maintenez et faites glisser le doigt pour pulvériser. Restez plus longtemps là où vous êtes plus sûr(e)."
+
+msgid ":"
+msgstr " :"
+
+msgid "Show all options"
+msgstr "Afficher toutes les options"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Le pinceau est vide — effacez un peu de peinture pour continuer."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Ne saisissez jamais de mot de passe ni de numéro de carte dans une enquête Mapsurvey."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Maintenez et faites glisser pour pulvériser. Restez plus longtemps là où vous êtes plus sûr(e)."
+
+msgid "Brush size"
+msgstr "Taille du pinceau"
+
+msgid "Medium brush"
+msgstr "Pinceau moyen"
+
+msgid "This field is required."
+msgstr "Ce champ est obligatoire."
 
 #: api/templates/api/connections.html
 msgid "API & connections"

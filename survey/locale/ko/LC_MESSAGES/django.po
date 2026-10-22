@@ -980,3 +980,182 @@ msgstr "주소 검색..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "결과 없음"
+
+msgid "Uploading"
+msgstr "업로드 중"
+
+msgid "This field is required."
+msgstr "필수 입력 항목입니다."
+
+msgid "at least {n} required"
+msgstr "최소 {n}개 필요"
+
+msgid "up to {n} more"
+msgstr "최대 {n}개 더"
+
+msgid "Tap to start the line."
+msgstr "탭하여 선을 시작하세요."
+
+msgid "Tap the last point to finish the line."
+msgstr "마지막 점을 탭하여 선을 완성하세요."
+
+msgid "Move map"
+msgstr "지도 이동"
+
+msgid "Anything else we should know? (optional)"
+msgstr "더 알려 주실 내용이 있나요? (선택)"
+
+msgid "This question is required"
+msgstr "필수 질문입니다"
+
+msgid "Take photo"
+msgstr "사진 촬영"
+
+msgid "Clear"
+msgstr "지우기"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "브러시가 비었습니다 — 계속하려면 칠한 부분을 일부 지우세요."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Mapsurvey 설문에는 절대로 비밀번호나 카드 번호를 입력하지 마세요."
+
+msgid "Large brush"
+msgstr "큰 브러시"
+
+msgid "Attach file"
+msgstr "파일 첨부"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "누른 채 끌어서 뿌리세요. 더 확실한 곳에서는 더 오래 머무르세요."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "최대 개수에 도달했습니다 — 변경하려면 아래에서 하나를 삭제하세요."
+
+msgid "Small brush"
+msgstr "작은 브러시"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "질문 %(n)s개"
+
+msgid "Search failed — check your connection and try again."
+msgstr "검색에 실패했습니다 — 연결 상태를 확인하고 다시 시도하세요."
+
+msgid "{n} marked"
+msgstr "{n}개 표시됨"
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "지도를 탭하여 장소를 표시하거나 버튼을 사용하세요."
+
+msgid "Send report"
+msgstr "신고 보내기"
+
+msgid "Made with"
+msgstr "제작:"
+
+msgid "Tap to add the shape’s corners."
+msgstr "탭하여 도형의 꼭짓점을 추가하세요."
+
+msgid "Record"
+msgstr "녹음"
+
+msgid "No"
+msgstr "아니요"
+
+msgid "{n} of {m} marked"
+msgstr "{m}개 중 {n}개 표시됨"
+
+msgid "Spray"
+msgstr "뿌리기"
+
+msgid "Please specify"
+msgstr "구체적으로 적어 주세요"
+
+msgid "All {m} marked — thank you!"
+msgstr "{m}개 모두 표시했습니다 — 감사합니다!"
+
+msgid "Report this survey"
+msgstr "이 설문 신고"
+
+msgid "Erase"
+msgstr "지우기"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "비밀번호, 로그인 또는 결제를 요구함"
+
+msgid "Retry"
+msgstr "다시 시도"
+
+msgid "Questions"
+msgstr "질문"
+
+msgid "Add another"
+msgstr "하나 더 추가"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "손가락을 누른 채 끌어서 뿌리세요. 더 확실한 곳에서는 더 오래 머무르세요."
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "사기로 보이거나 회사를 사칭함"
+
+msgid "Tap to add the next corner."
+msgstr "탭하여 다음 꼭짓점을 추가하세요."
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "모든 선택지 보기"
+
+msgid "Illegal content"
+msgstr "불법 콘텐츠"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "지도를 움직여 핀 위치를 맞춘 다음 적용을 누르세요."
+
+msgid "Tap the first point to close the shape."
+msgstr "첫 번째 점을 탭하여 도형을 닫으세요."
+
+msgid "Add photo"
+msgstr "사진 추가"
+
+msgid "Yes"
+msgstr "예"
+
+msgid "Something else"
+msgstr "기타"
+
+msgid "Harassment, threats or hate"
+msgstr "괴롭힘, 협박 또는 혐오"
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "아동 성적 학대 또는 착취"
+
+msgid "Exposes someone's personal data"
+msgstr "다른 사람의 개인정보를 노출함"
+
+msgid "Brush size"
+msgstr "브러시 크기"
+
+msgid "Medium brush"
+msgstr "중간 브러시"
+
+msgid "Tap to add the next point."
+msgstr "탭하여 다음 점을 추가하세요."
+
+msgid "A few required questions still need an answer."
+msgstr "아직 답하지 않은 필수 질문이 있습니다."
+
+msgid "create your own free map survey"
+msgstr "나만의 무료 지도 설문 만들기"
+
+msgid "Sign in"
+msgstr "로그인"
+
+msgid "Stop"
+msgstr "중지"
+
+msgid "Add audio file"
+msgstr "오디오 파일 추가"

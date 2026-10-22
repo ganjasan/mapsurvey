@@ -980,3 +980,185 @@ msgstr "Išči naslov..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Ni rezultatov"
+
+msgid "Stop"
+msgstr "Ustavi"
+
+msgid "Uploading"
+msgstr "Nalaganje"
+
+msgid "This field is required."
+msgstr "To polje je obvezno."
+
+msgid "Tap to start the line."
+msgstr "Tapnite, da začnete črto."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Tapnite zemljevid, da označite kraj — ali uporabite gumb."
+
+msgid "Tap the last point to finish the line."
+msgstr "Tapnite zadnjo točko, da zaključite črto."
+
+msgid "Move map"
+msgstr "Premakni zemljevid"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Bi nam želeli še kaj sporočiti? (neobvezno)"
+
+msgid "This question is required"
+msgstr "To vprašanje je obvezno"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Tapnite, da dodate vogale oblike."
+
+msgid "Clear"
+msgstr "Počisti"
+
+msgid "Record"
+msgstr "Snemaj"
+
+msgid "{n} of {m} marked"
+msgstr "Označeno {n} od {m}"
+
+msgid "Spray"
+msgstr "Pršilo"
+
+msgid "Please specify"
+msgstr "Navedite"
+
+msgid "Erase"
+msgstr "Briši"
+
+msgid "Small brush"
+msgstr "Majhen čopič"
+
+msgid "Retry"
+msgstr "Poskusi znova"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Iskanje ni uspelo — preverite povezavo in poskusite znova."
+
+msgid "Questions"
+msgstr "Vprašanja"
+
+msgid "Add another"
+msgstr "Dodaj še"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Videti je kot prevara ali se lažno predstavlja kot podjetje"
+
+msgid "Tap to add the next corner."
+msgstr "Tapnite, da dodate naslednji vogal."
+
+msgid "{n} marked"
+msgstr "Označeno: {n}"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Premaknite zemljevid, da postavite žebljiček, nato pritisnite Uporabi."
+
+msgid "Send report"
+msgstr "Pošlji prijavo"
+
+msgid "Made with"
+msgstr "Ustvarjeno z"
+
+msgid "No"
+msgstr "Ne"
+
+msgid "Harassment, threats or hate"
+msgstr "Nadlegovanje, grožnje ali sovraštvo"
+
+msgid "All {m} marked — thank you!"
+msgstr "Vseh {m} označenih — hvala!"
+
+msgid "Report this survey"
+msgstr "Prijavi to anketo"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Zahteva geslo, prijavo ali plačilo"
+
+msgid "Brush size"
+msgstr "Velikost čopiča"
+
+msgid "Medium brush"
+msgstr "Srednji čopič"
+
+msgid "Sign in"
+msgstr "Prijava"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Pridržite in povlecite s prstom za pršenje. Kjer ste bolj prepričani, ostanite dlje."
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "Prikaži vse možnosti"
+
+msgid "Add audio file"
+msgstr "Dodaj zvočno datoteko"
+
+msgid "Illegal content"
+msgstr "Nezakonita vsebina"
+
+msgid "at least {n} required"
+msgstr "zahtevano vsaj {n}"
+
+msgid "up to {n} more"
+msgstr "še do {n}"
+
+msgid "Tap the first point to close the shape."
+msgstr "Tapnite prvo točko, da zaprete obliko."
+
+msgid "Add photo"
+msgstr "Dodaj fotografijo"
+
+msgid "Take photo"
+msgstr "Fotografiraj"
+
+msgid "Yes"
+msgstr "Da"
+
+msgid "Something else"
+msgstr "Nekaj drugega"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Čopič je prazen — za nadaljevanje izbrišite nekaj barve."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "V anketo Mapsurvey nikoli ne vnašajte gesel ali številk kartic."
+
+msgid "Large brush"
+msgstr "Velik čopič"
+
+msgid "Attach file"
+msgstr "Priloži datoteko"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Pridržite in povlecite za pršenje. Kjer ste bolj prepričani, ostanite dlje."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Spolna zloraba ali izkoriščanje otrok"
+
+msgid "Exposes someone's personal data"
+msgstr "Razkriva osebne podatke nekoga"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Doseženo največje število — za spremembo spodaj odstranite eno."
+
+msgid "Tap to add the next point."
+msgstr "Tapnite, da dodate naslednjo točko."
+
+msgid "A few required questions still need an answer."
+msgstr "Nekaj obveznih vprašanj še čaka na odgovor."
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s vprašanje"
+msgstr[1] "%(n)s vprašanji"
+msgstr[2] "%(n)s vprašanja"
+msgstr[3] "%(n)s vprašanj"
+
+msgid "create your own free map survey"
+msgstr "ustvarite svojo brezplačno anketo z zemljevidom"

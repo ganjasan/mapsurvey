@@ -16,6 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: survey/models.py:19 survey/models.py:26
 msgid "Owner"
@@ -980,3 +981,183 @@ msgstr "Maghanap ng address..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Walang resulta"
+
+msgid "Uploading"
+msgstr "Ina-upload"
+
+msgid "This field is required."
+msgstr "Kinakailangan ang field na ito."
+
+msgid "up to {n} more"
+msgstr "hanggang {n} pa"
+
+msgid "Tap to start the line."
+msgstr "I-tap para simulan ang linya."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "I-tap ang mapa para markahan ang isang lugar — o gamitin ang button."
+
+msgid "Tap the last point to finish the line."
+msgstr "I-tap ang huling punto para tapusin ang linya."
+
+msgid "Move map"
+msgstr "Ilipat ang mapa"
+
+msgid "Anything else we should know? (optional)"
+msgstr "May iba pa ba kaming dapat malaman? (opsyonal)"
+
+msgid "This question is required"
+msgstr "Kinakailangan ang tanong na ito"
+
+msgid "Take photo"
+msgstr "Kumuha ng larawan"
+
+msgid "Clear"
+msgstr "I-clear"
+
+msgid "Record"
+msgstr "I-record"
+
+msgid "Spray"
+msgstr "Mag-spray"
+
+msgid "Please specify"
+msgstr "Pakitukoy"
+
+msgid "Erase"
+msgstr "Burahin"
+
+msgid "Small brush"
+msgstr "Maliit na brush"
+
+msgid "Retry"
+msgstr "Subukang muli"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Nabigo ang paghahanap — suriin ang iyong koneksyon at subukang muli."
+
+msgid "Questions"
+msgstr "Mga tanong"
+
+msgid "Add another"
+msgstr "Magdagdag ng isa pa"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Mukhang scam o nagpapanggap na isang kumpanya"
+
+msgid "{n} marked"
+msgstr "{n} ang namarkahan"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Ilipat ang mapa para iposisyon ang pin, pagkatapos ay pindutin ang Ilapat."
+
+msgid "Send report"
+msgstr "Ipadala ang report"
+
+msgid "Made with"
+msgstr "Ginawa gamit ang"
+
+msgid "Tap to add the shape’s corners."
+msgstr "I-tap para idagdag ang mga sulok ng hugis."
+
+msgid "No"
+msgstr "Hindi"
+
+msgid "{n} of {m} marked"
+msgstr "{n} sa {m} ang namarkahan"
+
+msgid "All {m} marked — thank you!"
+msgstr "Namarkahan na ang lahat ng {m} — salamat!"
+
+msgid "Report this survey"
+msgstr "I-report ang survey na ito"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Humihingi ng password, login o bayad"
+
+msgid "Medium brush"
+msgstr "Katamtamang brush"
+
+msgid "Sign in"
+msgstr "Mag-sign in"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Pindutin nang matagal at i-drag ang daliri para mag-spray. Magtagal kung saan mas sigurado ka."
+
+msgid "Tap to add the next corner."
+msgstr "I-tap para idagdag ang susunod na sulok."
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "Ipakita ang lahat ng opsyon"
+
+msgid "Add audio file"
+msgstr "Magdagdag ng audio file"
+
+msgid "Illegal content"
+msgstr "Ilegal na nilalaman"
+
+msgid "at least {n} required"
+msgstr "kailangan ng hindi bababa sa {n}"
+
+msgid "Tap the first point to close the shape."
+msgstr "I-tap ang unang punto para isara ang hugis."
+
+msgid "Add photo"
+msgstr "Magdagdag ng larawan"
+
+msgid "Yes"
+msgstr "Oo"
+
+msgid "Something else"
+msgstr "Iba pa"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Ubos na ang brush — magbura ng kaunting pintura para magpatuloy."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Huwag kailanman maglagay ng password o numero ng card sa isang survey ng Mapsurvey."
+
+msgid "Large brush"
+msgstr "Malaking brush"
+
+msgid "Harassment, threats or hate"
+msgstr "Panliligalig, pagbabanta o pagkapoot"
+
+msgid "Attach file"
+msgstr "Mag-attach ng file"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Pindutin nang matagal at i-drag para mag-spray. Magtagal kung saan mas sigurado ka."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Sekswal na pang-aabuso o pagsasamantala sa mga bata"
+
+msgid "Exposes someone's personal data"
+msgstr "Inilalantad ang personal na datos ng isang tao"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Naabot na ang maximum — mag-alis ng isa sa ibaba para baguhin ito."
+
+msgid "Brush size"
+msgstr "Laki ng brush"
+
+msgid "Tap to add the next point."
+msgstr "I-tap para idagdag ang susunod na punto."
+
+msgid "A few required questions still need an answer."
+msgstr "May ilang kinakailangang tanong na wala pang sagot."
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s tanong"
+msgstr[1] "%(n)s tanong"
+
+msgid "create your own free map survey"
+msgstr "gumawa ng sarili mong libreng map survey"
+
+msgid "Stop"
+msgstr "Ihinto"

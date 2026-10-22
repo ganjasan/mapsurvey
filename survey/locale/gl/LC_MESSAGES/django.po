@@ -980,3 +980,183 @@ msgstr "Buscar enderezo..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Non se atoparon resultados"
+
+msgid "Large brush"
+msgstr "Pincel grande"
+
+msgid "Attach file"
+msgstr "Anexar ficheiro"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Manteña premido e arrastre para pulverizar. Quédese máis tempo onde estea máis seguro."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Alcanzouse o máximo — elimine un de abaixo para cambialo."
+
+msgid "Small brush"
+msgstr "Pincel pequeno"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s pregunta"
+msgstr[1] "%(n)s preguntas"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Fallou a busca — comprobe a conexión e ténteo de novo."
+
+msgid "{n} marked"
+msgstr "{n} marcados"
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Toque o mapa para marcar un lugar — ou use o botón."
+
+msgid "Send report"
+msgstr "Enviar denuncia"
+
+msgid "Made with"
+msgstr "Feito con"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Toque para engadir os vértices da forma."
+
+msgid "Record"
+msgstr "Gravar"
+
+msgid "No"
+msgstr "Non"
+
+msgid "{n} of {m} marked"
+msgstr "{n} de {m} marcados"
+
+msgid "Spray"
+msgstr "Pulverizar"
+
+msgid "Please specify"
+msgstr "Especifique"
+
+msgid "Report this survey"
+msgstr "Denunciar esta enquisa"
+
+msgid "Erase"
+msgstr "Borrar"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Pide un contrasinal, un inicio de sesión ou un pagamento"
+
+msgid "Retry"
+msgstr "Reintentar"
+
+msgid "Questions"
+msgstr "Preguntas"
+
+msgid "Add another"
+msgstr "Engadir outro"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Manteña premido e arrastre o dedo para pulverizar. Quédese máis tempo onde estea máis seguro."
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Parece unha estafa ou suplanta unha empresa"
+
+msgid "Tap to add the next corner."
+msgstr "Toque para engadir o seguinte vértice."
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "Amosar todas as opcións"
+
+msgid "Illegal content"
+msgstr "Contido ilegal"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Mova o mapa para situar o marcador e despois prema Aplicar."
+
+msgid "Tap the first point to close the shape."
+msgstr "Toque o primeiro punto para pechar a forma."
+
+msgid "Add photo"
+msgstr "Engadir foto"
+
+msgid "Yes"
+msgstr "Si"
+
+msgid "Something else"
+msgstr "Outra cousa"
+
+msgid "Harassment, threats or hate"
+msgstr "Acoso, ameazas ou odio"
+
+msgid "All {m} marked — thank you!"
+msgstr "Marcados todos os {m} — grazas!"
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Abuso sexual ou explotación de menores"
+
+msgid "Exposes someone's personal data"
+msgstr "Expón datos persoais de alguén"
+
+msgid "Brush size"
+msgstr "Tamaño do pincel"
+
+msgid "Medium brush"
+msgstr "Pincel mediano"
+
+msgid "Tap to add the next point."
+msgstr "Toque para engadir o seguinte punto."
+
+msgid "A few required questions still need an answer."
+msgstr "Aínda faltan respostas a algunhas preguntas obrigatorias."
+
+msgid "create your own free map survey"
+msgstr "cree a súa propia enquisa con mapa gratuíta"
+
+msgid "Sign in"
+msgstr "Iniciar sesión"
+
+msgid "Stop"
+msgstr "Deter"
+
+msgid "Add audio file"
+msgstr "Engadir ficheiro de audio"
+
+msgid "Uploading"
+msgstr "Subindo"
+
+msgid "This field is required."
+msgstr "Este campo é obrigatorio."
+
+msgid "at least {n} required"
+msgstr "requírense polo menos {n}"
+
+msgid "up to {n} more"
+msgstr "ata {n} máis"
+
+msgid "Tap to start the line."
+msgstr "Toque para comezar a liña."
+
+msgid "Tap the last point to finish the line."
+msgstr "Toque o último punto para rematar a liña."
+
+msgid "Move map"
+msgstr "Mover o mapa"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Hai algo máis que debamos saber? (opcional)"
+
+msgid "This question is required"
+msgstr "Esta pregunta é obrigatoria"
+
+msgid "Take photo"
+msgstr "Facer foto"
+
+msgid "Clear"
+msgstr "Limpar"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "O pincel está baleiro — borre algo de pintura para continuar."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Nunca introduza contrasinais nin números de tarxeta nunha enquisa de Mapsurvey."

@@ -30312,6 +30312,225 @@ class TranslationCatalogHygieneTest(SimpleTestCase):
             + '\n  '.join(offenders))
 
 
+class RespondentCatalogTest(TestCase):
+    """Every interface string a respondent sees is translated in all 75 catalogs.
+
+    Spec `ui-internationalization`, change respondent-strings-i18n (#385). The
+    creator-side guard above matches template paths in the offered languages;
+    a respondent reads one of 75, and strings added since the last bulk pass
+    (the icon grid's "Show all options", the tap-to-place hint, the safety
+    footer) shipped in English to a Portuguese school survey. So this test
+    records what gettext is actually asked for while an anonymous visitor
+    walks the respondent pages: Python strings handed to JS count, the signed-in
+    account menu in `base.html` does not.
+
+    It reads the compiled `.mo` files through the stdlib, which is what runs:
+    a fuzzy `.po` entry never reaches them.
+    """
+
+    FEATURE_SURVEY = {
+        "name": "i18n_respondent_fixture",
+        "organization": "i18n fixture",
+        "available_languages": ["pt", "en"],
+        "redirect_url": "#",
+        "sections": [
+            {"name": "s_tap", "title": "Tap", "code": "s_tap", "is_head": True,
+             "layout": "map", "next_section_name": "s_geo", "prev_section_name": None,
+             "questions": [{
+                 "code": "TAP_POINT", "order_number": 0, "name": "Place",
+                 "input_type": "point", "tap_to_place": True,
+                 "sub_question_groups": [
+                     {"code": "TAP_G", "title": "", "display_style": "collapsible",
+                      "order_number": 1, "translations": []},
+                 ],
+                 "sub_questions": [
+                     {"code": "TAP_KIND", "order_number": 0, "name": "Kind",
+                      "input_type": "choice", "display_style": "icon_grid",
+                      "choices": [
+                          {"code": 1, "name": "Park", "icon": "maki:park", "group": "Green"},
+                          {"code": 2, "name": "Shop", "icon": "fas fa-coffee", "group": "Town"},
+                      ]},
+                     {"code": "TAP_KNOW", "order_number": 2, "name": "Know it?",
+                      "input_type": "thumbs", "group": "TAP_G",
+                      "choices": [{"code": 1, "name": "up"}, {"code": 0, "name": "down"}]},
+                     {"code": "TAP_WHEN", "order_number": 3, "name": "When?",
+                      "input_type": "multichoice", "group": "TAP_G",
+                      "choices": [{"code": 1, "name": "Morning"},
+                                  {"code": 2, "name": "Other", "other": True}]},
+                 ],
+             }]},
+            {"name": "s_geo", "title": "Geo", "code": "s_geo", "is_head": False,
+             "layout": "map", "next_section_name": "s_form", "prev_section_name": "s_tap",
+             "questions": [
+                 {"code": "GEO_POINT", "order_number": 0, "name": "Point", "input_type": "point"},
+                 {"code": "GEO_LINE", "order_number": 1, "name": "Line", "input_type": "line"},
+                 {"code": "GEO_POLY", "order_number": 2, "name": "Area", "input_type": "polygon"},
+                 {"code": "GEO_SPRAY", "order_number": 3, "name": "Spray", "input_type": "spraycan",
+                  "spray_brush": "medium"},
+             ]},
+            {"name": "s_form", "title": "Form", "code": "s_form", "is_head": False,
+             "layout": "form", "next_section_name": None, "prev_section_name": "s_geo",
+             "groups": [{"code": "FORM_G", "title": "", "display_style": "collapsible",
+                         "order_number": 0, "translations": []}],
+             "questions": [
+                 {"code": "F_TEXT", "order_number": 1, "name": "Why?", "input_type": "text",
+                  "required": True, "group": "FORM_G"},
+                 {"code": "F_LINE", "order_number": 2, "name": "Name", "input_type": "text_line",
+                  "group": "FORM_G"},
+                 {"code": "F_NUM", "order_number": 3, "name": "Age", "input_type": "number"},
+                 {"code": "F_CHOICE", "order_number": 4, "name": "One", "input_type": "choice",
+                  "choices": [{"code": 1, "name": "A"}, {"code": 2, "name": "Other", "other": True}]},
+                 {"code": "F_DROP", "order_number": 5, "name": "Drop", "input_type": "choice",
+                  "display_style": "dropdown", "choices": [{"code": 1, "name": "A"}]},
+                 {"code": "F_MULTI", "order_number": 6, "name": "Many", "input_type": "multichoice",
+                  "choices": [{"code": 1, "name": "A"}, {"code": 2, "name": "B"}]},
+                 {"code": "F_RATE", "order_number": 7, "name": "Rate", "input_type": "rating",
+                  "choices": [{"code": i, "name": str(i)} for i in range(1, 6)]},
+                 {"code": "F_RANGE", "order_number": 8, "name": "Range", "input_type": "range",
+                  "choices": [{"code": 1, "name": "Low"}, {"code": 2, "name": "High"}]},
+                 {"code": "F_RANK", "order_number": 9, "name": "Rank", "input_type": "ranking",
+                  "choices": [{"code": 1, "name": "A"}, {"code": 2, "name": "B"}]},
+                 {"code": "F_DATE", "order_number": 10, "name": "When", "input_type": "datetime"},
+                 {"code": "F_THUMB", "order_number": 11, "name": "Like?", "input_type": "thumbs",
+                  "choices": [{"code": 1, "name": "up"}, {"code": 0, "name": "down"}]},
+                 {"code": "F_PHOTO", "order_number": 12, "name": "Photo", "input_type": "photo"},
+                 {"code": "F_AUDIO", "order_number": 13, "name": "Audio", "input_type": "audio"},
+                 {"code": "F_DOC", "order_number": 14, "name": "File", "input_type": "document"},
+                 {"code": "F_HTML", "order_number": 15, "name": "Note", "input_type": "html",
+                  "subtext": "<p>Hello</p>"},
+             ]},
+        ],
+    }
+
+    @classmethod
+    def _catalogs(cls):
+        """{language: set of msgids its compiled catalog translates}."""
+        import gettext as stdlib_gettext
+        import pathlib
+
+        locales = pathlib.Path(__file__).resolve().parent / 'locale'
+        catalogs = {}
+        for mo in sorted(locales.glob('*/LC_MESSAGES/django.mo')):
+            with mo.open('rb') as fh:
+                translations = stdlib_gettext.GNUTranslations(fh)
+            # Plural entries are keyed (msgid, index); the header is msgid "".
+            catalogs[mo.parent.parent.name] = {
+                (key[0] if isinstance(key, tuple) else key)
+                for key, value in translations._catalog.items()
+                if key and key != ('', 0) and value}
+        return catalogs
+
+    @staticmethod
+    def _is_ours(msgids):
+        """The msgids that belong to this project rather than Django or a
+        third-party app: named in one of our `.po` files (filled or not), or
+        written literally in our templates or Python. A string nobody ran
+        `makemessages` for is in no catalog at all, which is the case this
+        test exists for, so the catalogs alone cannot define "ours"."""
+        import pathlib
+
+        root = pathlib.Path(__file__).resolve().parent.parent
+        po_ids = set()
+        for po in (root / 'survey' / 'locale').glob('*/LC_MESSAGES/django.po'):
+            po_ids.update(
+                m.encode('latin-1', 'backslashreplace').decode('unicode_escape')
+                if '\\' in m else m
+                for m in re.findall(r'^msgid(?:_plural)? "(.+)"$',
+                                    po.read_text(encoding='utf-8'), re.M))
+        sources = []
+        for app in ('survey', 'billing', 'mapsurvey'):
+            for path in (root / app).rglob('*'):
+                if path.suffix in ('.html', '.py', '.txt') and 'locale' not in path.parts \
+                        and path.name != 'tests.py' and 'tests' not in path.parts:
+                    sources.append(path.read_text(encoding='utf-8', errors='ignore'))
+        source = '\n'.join(sources)
+        return {m for m in msgids if m in po_ids or m in source}
+
+    def _import_fixture(self):
+        from .serialization import import_survey_from_zip
+
+        buf = BytesIO()
+        with zipfile.ZipFile(buf, 'w') as zf:
+            zf.writestr('survey.json', json.dumps(
+                {"version": "1.0", "mode": "structure", "survey": self.FEATURE_SURVEY}))
+        buf.seek(0)
+        survey, warnings = import_survey_from_zip(buf)
+        self.assertEqual(warnings, [])
+        survey.status = 'published'
+        survey.save(update_fields=['status'])
+        return survey
+
+    def _walk_respondent_pages(self, survey):
+        """GET/POST every respondent surface; return the msgids gettext was asked for."""
+        seen = set()
+        real = translation._trans
+
+        def recorder(name, key):
+            original = getattr(real, name)
+
+            def wrapper(*args):
+                seen.add(key(args))
+                return original(*args)
+            return wrapper
+
+        # The `_trans` proxy caches each function on first use, so patch the
+        # attribute itself; every translation.gettext()/{% trans %} goes through it.
+        patches = [
+            patch.object(real, 'gettext', recorder('gettext', lambda a: a[0])),
+            patch.object(real, 'ngettext', recorder('ngettext', lambda a: a[0])),
+            patch.object(real, 'pgettext', recorder('pgettext', lambda a: f'{a[0]}\x04{a[1]}')),
+            patch.object(real, 'npgettext', recorder('npgettext', lambda a: f'{a[0]}\x04{a[1]}')),
+        ]
+        client = Client()
+        base = f'/surveys/{survey.uuid}'
+        with contextlib.ExitStack() as stack:
+            for p in patches:
+                stack.enter_context(p)
+            pages = [
+                client.get(f'{base}/language/'),
+                client.post(f'{base}/language/', {'language': 'pt'}),
+                client.get(f'{base}/s_tap/'),
+                client.get(f'{base}/s_geo/'),
+                client.get(f'{base}/s_form/'),
+                # Required text left empty: the validation summary renders.
+                client.post(f'{base}/s_form/', {}),
+                client.get(f'{base}/thanks/'),
+                client.get(f'{base}/report/'),
+                client.post(f'{base}/report/', {}),
+            ]
+        for response in pages:
+            self.assertIn(response.status_code, (200, 302), response)
+        return seen
+
+    def test_every_respondent_string_is_translated_in_every_catalog(self):
+        """
+        GIVEN a published survey in two languages that uses every question type,
+              a tap-to-place point with an icon-grid choice, collapsible groups
+              and every geo tool
+        WHEN an anonymous visitor walks the language choice, each section, a
+             failed required answer, the thanks page and the report form
+        THEN every msgid of ours that gettext was asked for is translated in all
+             75 catalogs, because a respondent reads whichever one the creator
+             picked and a missing entry renders English in the middle of it
+        """
+        catalogs = self._catalogs()
+        self.assertEqual(len(catalogs), 75)
+        seen = self._walk_respondent_pages(self._import_fixture())
+
+        self.assertIn('Show all options', seen)   # the walk reached the icon grid
+        missing = {}
+        for msgid in sorted(self._is_ours(seen)):
+            langs = sorted(code for code, ids in catalogs.items()
+                           if code != 'en' and msgid not in ids)
+            if langs:
+                missing[msgid] = langs
+        self.assertEqual(
+            missing, {},
+            'Respondent string untranslated:\n  ' + '\n  '.join(
+                f'{m[:70]!r}: {len(l)} languages ({", ".join(l[:8])}…)'
+                for m, l in missing.items()))
+
+
 class TemplateCommentSyntaxTest(SimpleTestCase):
     """Django's {# #} comment is single-line; a multi-line one renders as page text."""
 

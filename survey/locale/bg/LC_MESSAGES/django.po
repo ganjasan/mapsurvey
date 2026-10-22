@@ -981,3 +981,183 @@ msgstr "Търси адрес..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Няма намерени резултати"
+
+msgid "Please specify"
+msgstr "Моля, уточнете"
+
+msgid "All {m} marked — thank you!"
+msgstr "Всички {m} са отбелязани — благодарим!"
+
+msgid "Report this survey"
+msgstr "Сигнализирайте за тази анкета"
+
+msgid "Erase"
+msgstr "Гума"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Иска парола, вход или плащане"
+
+msgid "Questions"
+msgstr "Въпроси"
+
+msgid "Add another"
+msgstr "Добави още"
+
+msgid "Sign in"
+msgstr "Вход"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Задръжте и плъзнете с пръст, за да пръскате. Задържайте се по-дълго там, където сте по-сигурни."
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Прилича на измама или се представя за компания"
+
+msgid "Tap to add the next corner."
+msgstr "Докоснете, за да добавите следващия ъгъл."
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "Покажи всички опции"
+
+msgid "Illegal content"
+msgstr "Незаконно съдържание"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Преместете картата, за да поставите маркера, след това натиснете „Приложи“."
+
+msgid "Tap the first point to close the shape."
+msgstr "Докоснете първата точка, за да затворите фигурата."
+
+msgid "Add photo"
+msgstr "Добави снимка"
+
+msgid "Yes"
+msgstr "Да"
+
+msgid "Something else"
+msgstr "Нещо друго"
+
+msgid "Harassment, threats or hate"
+msgstr "Тормоз, заплахи или омраза"
+
+msgid "Attach file"
+msgstr "Прикачи файл"
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Сексуално насилие или експлоатация на деца"
+
+msgid "Exposes someone's personal data"
+msgstr "Разкрива чужди лични данни"
+
+msgid "Brush size"
+msgstr "Размер на четката"
+
+msgid "Medium brush"
+msgstr "Средна четка"
+
+msgid "Tap to add the next point."
+msgstr "Докоснете, за да добавите следващата точка."
+
+msgid "A few required questions still need an answer."
+msgstr "Няколко задължителни въпроса все още нямат отговор."
+
+msgid "create your own free map survey"
+msgstr "създайте своя безплатна анкета с карта"
+
+msgid "Stop"
+msgstr "Стоп"
+
+msgid "Add audio file"
+msgstr "Добави аудиофайл"
+
+msgid "Uploading"
+msgstr "Качване"
+
+msgid "This field is required."
+msgstr "Това поле е задължително."
+
+msgid "at least {n} required"
+msgstr "изискват се поне {n}"
+
+msgid "up to {n} more"
+msgstr "още до {n}"
+
+msgid "Tap to start the line."
+msgstr "Докоснете, за да започнете линията."
+
+msgid "Tap the last point to finish the line."
+msgstr "Докоснете последната точка, за да завършите линията."
+
+msgid "Move map"
+msgstr "Премести картата"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Има ли още нещо, което трябва да знаем? (по желание)"
+
+msgid "This question is required"
+msgstr "Този въпрос е задължителен"
+
+msgid "Take photo"
+msgstr "Снимай"
+
+msgid "Clear"
+msgstr "Изчисти"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Четката е празна — изтрийте малко боя, за да продължите."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Никога не въвеждайте пароли или номера на карти в анкета на Mapsurvey."
+
+msgid "Large brush"
+msgstr "Голяма четка"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Задръжте и плъзнете, за да пръскате. Задържайте се по-дълго там, където сте по-сигурни."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Достигнат е максимумът — премахнете един по-долу, за да промените."
+
+msgid "Small brush"
+msgstr "Малка четка"
+
+msgid "Retry"
+msgstr "Опитай отново"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s въпрос"
+msgstr[1] "%(n)s въпроса"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Търсенето не успя — проверете връзката си и опитайте отново."
+
+msgid "{n} marked"
+msgstr "{n} отбелязани"
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Докоснете картата, за да отбележите място — или използвайте бутона."
+
+msgid "Send report"
+msgstr "Изпрати сигнал"
+
+msgid "Made with"
+msgstr "Създадено с"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Докоснете, за да добавите ъглите на фигурата."
+
+msgid "Record"
+msgstr "Запис"
+
+msgid "No"
+msgstr "Не"
+
+msgid "{n} of {m} marked"
+msgstr "{n} от {m} отбелязани"
+
+msgid "Spray"
+msgstr "Пръскане"

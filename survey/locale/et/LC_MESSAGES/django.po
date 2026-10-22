@@ -6135,7 +6135,7 @@ msgstr ""
 #: survey/templates/maptionnaire_alternative.html:100
 #: survey/templates/maptionnaire_alternative.html:101
 msgid "Yes"
-msgstr ""
+msgstr "Jah"
 
 #: survey/templates/maptionnaire_alternative.html:100
 msgid "Yes — per-question translations"
@@ -6369,7 +6369,7 @@ msgstr ""
 
 #: survey/templates/metroquest_alternative.html:97
 msgid "No"
-msgstr ""
+msgstr "Ei"
 
 #: survey/templates/metroquest_alternative.html:98
 #| msgid "Survey Closed"
@@ -7977,6 +7977,63 @@ msgstr "Kirjeldasite oma projekti juba – kas lasta viisardil mustand teha (~10
 #: survey/templates/editor/partials/_ai_feedback_strip.html
 msgid "How is the Wizard's draft?"
 msgstr "Kuidas viisardi mustand tundub?"
+
+msgid ":"
+msgstr ":"
+
+msgid "Send report"
+msgstr "Saada teade"
+
+msgid "Report this survey"
+msgstr "Teata sellest küsitlusest"
+
+msgid "Brush size"
+msgstr "Pintsli suurus"
+
+msgid "Medium brush"
+msgstr "Keskmine pintsel"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Pihustamiseks hoidke ja libistage sõrme. Peatuge kauem seal, kus olete kindlam."
+
+msgid "Show all options"
+msgstr "Näita kõiki valikuid"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Pintsel on tühi — jätkamiseks kustutage veidi värvi."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Ärge kunagi sisestage Mapsurvey küsitlusse paroole ega kaardinumbreid."
+
+msgid "Large brush"
+msgstr "Suur pintsel"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Pihustamiseks hoidke ja lohistage. Peatuge kauem seal, kus olete kindlam."
+
+msgid "This field is required."
+msgstr "See väli on kohustuslik."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Koha märkimiseks puudutage kaarti — või kasutage nuppu."
+
+msgid "Move map"
+msgstr "Liiguta kaarti"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Kas on veel midagi, mida peaksime teadma? (valikuline)"
+
+msgid "Spray"
+msgstr "Pihusta"
+
+msgid "Please specify"
+msgstr "Palun täpsustage"
+
+msgid "Erase"
+msgstr "Kustuta"
+
+msgid "Small brush"
+msgstr "Väike pintsel"
 
 #: api/templates/api/connections.html
 msgid "API & connections"

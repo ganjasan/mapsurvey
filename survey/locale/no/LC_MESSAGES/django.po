@@ -16,6 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: survey/models.py:19 survey/models.py:26
 msgid "Owner"
@@ -979,3 +980,183 @@ msgstr "Søk adresse..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Ingen resultater funnet"
+
+msgid "Send report"
+msgstr "Send rapport"
+
+msgid "Made with"
+msgstr "Laget med"
+
+msgid "No"
+msgstr "Nei"
+
+msgid "Harassment, threats or hate"
+msgstr "Trakassering, trusler eller hat"
+
+msgid "All {m} marked — thank you!"
+msgstr "Alle {m} er markert — takk!"
+
+msgid "Report this survey"
+msgstr "Rapporter denne undersøkelsen"
+
+msgid "Exposes someone's personal data"
+msgstr "Avslører noens personopplysninger"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Ber om passord, innlogging eller betaling"
+
+msgid "Brush size"
+msgstr "Penselstørrelse"
+
+msgid "Medium brush"
+msgstr "Middels pensel"
+
+msgid "Tap to add the next point."
+msgstr "Trykk for å legge til neste punkt."
+
+msgid "A few required questions still need an answer."
+msgstr "Noen obligatoriske spørsmål mangler fortsatt svar."
+
+msgid "create your own free map survey"
+msgstr "lag din egen gratis kartundersøkelse"
+
+msgid "Sign in"
+msgstr "Logg inn"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Hold og dra fingeren for å spraye. Bli lenger der du er sikrere."
+
+msgid "Stop"
+msgstr "Stopp"
+
+msgid "Show all options"
+msgstr "Vis alle alternativer"
+
+msgid "Add audio file"
+msgstr "Legg til lydfil"
+
+msgid "Illegal content"
+msgstr "Ulovlig innhold"
+
+msgid "at least {n} required"
+msgstr "minst {n} kreves"
+
+msgid "up to {n} more"
+msgstr "opptil {n} til"
+
+msgid "Tap to start the line."
+msgstr "Trykk for å starte linjen."
+
+msgid "Tap the first point to close the shape."
+msgstr "Trykk på det første punktet for å lukke formen."
+
+msgid "Add photo"
+msgstr "Legg til bilde"
+
+msgid "Take photo"
+msgstr "Ta bilde"
+
+msgid "Yes"
+msgstr "Ja"
+
+msgid "Something else"
+msgstr "Noe annet"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Penselen er tom — visk ut litt maling for å fortsette."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Skriv aldri inn passord eller kortnumre i en Mapsurvey-undersøkelse."
+
+msgid "Large brush"
+msgstr "Stor pensel"
+
+msgid "Attach file"
+msgstr "Legg ved fil"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Hold og dra for å spraye. Bli lenger der du er sikrere."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Seksuelt misbruk eller utnyttelse av barn"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Maksimum nådd — fjern en nedenfor for å endre."
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s spørsmål"
+msgstr[1] "%(n)s spørsmål"
+
+msgid "Uploading"
+msgstr "Laster opp"
+
+msgid "This field is required."
+msgstr "Dette feltet er obligatorisk."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Trykk på kartet for å markere et sted — eller bruk knappen."
+
+msgid "Tap the last point to finish the line."
+msgstr "Trykk på det siste punktet for å fullføre linjen."
+
+msgid "Move map"
+msgstr "Flytt kartet"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Er det noe mer vi bør vite? (valgfritt)"
+
+msgid "This question is required"
+msgstr "Dette spørsmålet er obligatorisk"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Trykk for å legge til formens hjørner."
+
+msgid "Clear"
+msgstr "Tøm"
+
+msgid "Record"
+msgstr "Ta opp"
+
+msgid "{n} of {m} marked"
+msgstr "{n} av {m} markert"
+
+msgid "Spray"
+msgstr "Spray"
+
+msgid "Please specify"
+msgstr "Vennligst spesifiser"
+
+msgid "Erase"
+msgstr "Viskelær"
+
+msgid "Small brush"
+msgstr "Liten pensel"
+
+msgid "Retry"
+msgstr "Prøv igjen"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Søket mislyktes — sjekk tilkoblingen og prøv igjen."
+
+msgid "Questions"
+msgstr "Spørsmål"
+
+msgid "Add another"
+msgstr "Legg til en til"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Ser ut som svindel eller utgir seg for å være et selskap"
+
+msgid "Tap to add the next corner."
+msgstr "Trykk for å legge til neste hjørne."
+
+msgid ":"
+msgstr ":"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Flytt kartet for å plassere nålen, og trykk deretter Bruk."
+
+msgid "{n} marked"
+msgstr "{n} markert"

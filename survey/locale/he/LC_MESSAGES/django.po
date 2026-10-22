@@ -300,16 +300,16 @@ msgstr ""
 #: survey/templates/base_survey_template.html:78
 #: survey/templatetags/i18n_extras.py:20
 msgid "Cancel"
-msgstr ""
+msgstr "ביטול"
 
 #: survey/templates/base_survey_template.html:67
 #: survey/templatetags/i18n_extras.py:18
 msgid "Finish drawing"
-msgstr ""
+msgstr "סיום ציור"
 
 #: survey/templates/base_survey_template.html:79
 msgid "Apply"
-msgstr ""
+msgstr "החלה"
 
 #: survey/templates/django_registration/activation_complete.html:4
 #: survey/templates/django_registration/activation_complete.html:11
@@ -880,29 +880,29 @@ msgstr ""
 #: survey/templates/survey_section.html:44
 #: survey/templates/survey_section_block.html:14
 msgid "Back"
-msgstr ""
+msgstr "חזרה"
 
 #: survey/templates/survey_header_template.html:25
 #: survey/templates/survey_header_template.html:26
 #: survey/templates/survey_section.html:49
 #: survey/templates/survey_section_block.html:20
 msgid "Next"
-msgstr ""
+msgstr "הבא"
 
 #: survey/templates/survey_header_template.html:28
 #: survey/templates/survey_header_template.html:29
 #: survey/templates/survey_section.html:51
 #: survey/templates/survey_section_block.html:22
 msgid "Finish"
-msgstr ""
+msgstr "סיום"
 
 #: survey/templates/survey_language_select.html:7
 msgid "Select Language"
-msgstr ""
+msgstr "בחירת שפה"
 
 #: survey/templates/survey_language_select.html:60
 msgid "Select your language"
-msgstr ""
+msgstr "בחרו את השפה שלכם"
 
 #: survey/templates/survey_password.html:4
 msgid "Password Required"
@@ -922,60 +922,242 @@ msgstr ""
 
 #: survey/templates/survey_thanks.html:21
 msgid "Thank you!"
-msgstr ""
+msgstr "תודה!"
 
 #: survey/templates/survey_thanks.html:22
 msgid "Your responses have been recorded."
-msgstr ""
+msgstr "התשובות שלכם נשמרו."
 
 #: survey/templatetags/i18n_extras.py:17
 msgid "Start drawing"
-msgstr ""
+msgstr "התחלת ציור"
 
 #: survey/templatetags/i18n_extras.py:19
 msgid "Finish editing"
-msgstr ""
+msgstr "סיום עריכה"
 
 #: survey/templatetags/i18n_extras.py:21
 msgid "Delete"
-msgstr ""
+msgstr "מחיקה"
 
 #: survey/templatetags/i18n_extras.py:24
 msgid "Click on the map to place a marker."
-msgstr ""
+msgstr "לחצו על המפה כדי להציב סמן."
 
 #: survey/templatetags/i18n_extras.py:27
 msgid "Click to start drawing a shape."
-msgstr ""
+msgstr "לחצו כדי להתחיל לצייר צורה."
 
 #: survey/templatetags/i18n_extras.py:28
 msgid "Click to continue drawing the shape."
-msgstr ""
+msgstr "לחצו כדי להמשיך לצייר את הצורה."
 
 #: survey/templatetags/i18n_extras.py:29
 msgid "Click the first point to close this shape."
-msgstr ""
+msgstr "לחצו על הנקודה הראשונה כדי לסגור את הצורה."
 
 #: survey/templatetags/i18n_extras.py:32
 msgid "Click to start drawing a line."
-msgstr ""
+msgstr "לחצו כדי להתחיל לצייר קו."
 
 #: survey/templatetags/i18n_extras.py:33
 msgid "Click to continue drawing the line."
-msgstr ""
+msgstr "לחצו כדי להמשיך לצייר את הקו."
 
 #: survey/templatetags/i18n_extras.py:34
 msgid "Click the last point to finish the line."
-msgstr ""
+msgstr "לחצו על הנקודה האחרונה כדי לסיים את הקו."
 
 #: survey/templatetags/i18n_extras.py:37
 msgid "<strong>Error:</strong> Shape edges cannot intersect!"
-msgstr ""
+msgstr "<strong>שגיאה:</strong> קצוות הצורה אינם יכולים להצטלב!"
 
 #: survey/templatetags/i18n_extras.py:40
 msgid "Search address..."
-msgstr ""
+msgstr "חיפוש כתובת..."
 
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
-msgstr ""
+msgstr "לא נמצאו תוצאות"
+
+msgid "Tap the first point to close the shape."
+msgstr "הקישו על הנקודה הראשונה כדי לסגור את הצורה."
+
+msgid "Add photo"
+msgstr "הוספת תמונה"
+
+msgid "Take photo"
+msgstr "צילום תמונה"
+
+msgid "Yes"
+msgstr "כן"
+
+msgid "Something else"
+msgstr "משהו אחר"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "המברשת ריקה — מחקו מעט צבע כדי להמשיך."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "לעולם אל תזינו סיסמאות או מספרי כרטיס בסקר של Mapsurvey."
+
+msgid "Large brush"
+msgstr "מברשת גדולה"
+
+msgid "Attach file"
+msgstr "צירוף קובץ"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "החזיקו וגררו כדי לרסס. השהו יותר במקומות שבהם אתם בטוחים יותר."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "התעללות מינית או ניצול של ילדים"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "הגעתם למקסימום — הסירו אחד מלמטה כדי לשנות."
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s שאלה"
+msgstr[1] "%(n)s שאלות"
+msgstr[2] "%(n)s שאלות"
+msgstr[3] "%(n)s שאלות"
+
+msgid "Uploading"
+msgstr "מעלה"
+
+msgid "This field is required."
+msgstr "שדה זה הוא חובה."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "הקישו על המפה כדי לסמן מקום — או השתמשו בכפתור."
+
+msgid "Tap the last point to finish the line."
+msgstr "הקישו על הנקודה האחרונה כדי לסיים את הקו."
+
+msgid "Move map"
+msgstr "הזזת המפה"
+
+msgid "Anything else we should know? (optional)"
+msgstr "יש עוד משהו שכדאי שנדע? (לא חובה)"
+
+msgid "This question is required"
+msgstr "שאלה זו היא חובה"
+
+msgid "Tap to add the shape’s corners."
+msgstr "הקישו כדי להוסיף את פינות הצורה."
+
+msgid "Clear"
+msgstr "ניקוי"
+
+msgid "Record"
+msgstr "הקלטה"
+
+msgid "{n} of {m} marked"
+msgstr "{n} מתוך {m} סומנו"
+
+msgid "Spray"
+msgstr "ריסוס"
+
+msgid "Please specify"
+msgstr "נא לפרט"
+
+msgid "Erase"
+msgstr "מחק"
+
+msgid "Small brush"
+msgstr "מברשת קטנה"
+
+msgid "Retry"
+msgstr "ניסיון חוזר"
+
+msgid "Search failed — check your connection and try again."
+msgstr "החיפוש נכשל — בדקו את החיבור ונסו שוב."
+
+msgid "Questions"
+msgstr "שאלות"
+
+msgid "Add another"
+msgstr "הוספת עוד"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "נראה כמו הונאה או מתחזה לחברה"
+
+msgid "Tap to add the next corner."
+msgstr "הקישו כדי להוסיף את הפינה הבאה."
+
+msgid ":"
+msgstr ":"
+
+msgid "{n} marked"
+msgstr "{n} סומנו"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "הזיזו את המפה כדי למקם את הסיכה, ואז לחצו על החלה."
+
+msgid "Send report"
+msgstr "שליחת דיווח"
+
+msgid "Made with"
+msgstr "נוצר באמצעות"
+
+msgid "No"
+msgstr "לא"
+
+msgid "Harassment, threats or hate"
+msgstr "הטרדה, איומים או שנאה"
+
+msgid "All {m} marked — thank you!"
+msgstr "כל {m} סומנו — תודה!"
+
+msgid "Report this survey"
+msgstr "דיווח על סקר זה"
+
+msgid "Exposes someone's personal data"
+msgstr "חושף מידע אישי של מישהו"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "מבקש סיסמה, התחברות או תשלום"
+
+msgid "Brush size"
+msgstr "גודל מברשת"
+
+msgid "Medium brush"
+msgstr "מברשת בינונית"
+
+msgid "Tap to add the next point."
+msgstr "הקישו כדי להוסיף את הנקודה הבאה."
+
+msgid "A few required questions still need an answer."
+msgstr "עדיין יש כמה שאלות חובה שלא נענו."
+
+msgid "create your own free map survey"
+msgstr "צרו סקר מפה משלכם בחינם"
+
+msgid "Sign in"
+msgstr "התחברות"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "החזיקו וגררו אצבע כדי לרסס. השהו יותר במקומות שבהם אתם בטוחים יותר."
+
+msgid "Stop"
+msgstr "עצירה"
+
+msgid "Show all options"
+msgstr "הצגת כל האפשרויות"
+
+msgid "Add audio file"
+msgstr "הוספת קובץ שמע"
+
+msgid "Illegal content"
+msgstr "תוכן לא חוקי"
+
+msgid "at least {n} required"
+msgstr "נדרשים לפחות {n}"
+
+msgid "up to {n} more"
+msgstr "עד {n} נוספים"
+
+msgid "Tap to start the line."
+msgstr "הקישו כדי להתחיל את הקו."

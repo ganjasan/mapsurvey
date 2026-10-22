@@ -16,6 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
 #: survey/models.py:19 survey/models.py:26
 msgid "Owner"
@@ -979,3 +980,182 @@ msgstr "搜索地址..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "未找到结果"
+
+msgid "Show all options"
+msgstr "显示所有选项"
+
+msgid "Add audio file"
+msgstr "添加音频文件"
+
+msgid "Illegal content"
+msgstr "违法内容"
+
+msgid "at least {n} required"
+msgstr "至少需要 {n} 个"
+
+msgid "Tap the first point to close the shape."
+msgstr "点击第一个点以闭合图形。"
+
+msgid "Add photo"
+msgstr "添加照片"
+
+msgid "Yes"
+msgstr "是"
+
+msgid "Something else"
+msgstr "其他"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "画笔已空——请擦除部分喷涂以继续。"
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "切勿在 Mapsurvey 调查中输入密码或银行卡号。"
+
+msgid "Large brush"
+msgstr "大画笔"
+
+msgid "Harassment, threats or hate"
+msgstr "骚扰、威胁或仇恨"
+
+msgid "Attach file"
+msgstr "附加文件"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "按住并拖动来喷涂。越确定的地方停留越久。"
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "对儿童的性虐待或剥削"
+
+msgid "Exposes someone's personal data"
+msgstr "泄露他人的个人信息"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "已达上限——如需更改，请先删除下方的一个。"
+
+msgid "Brush size"
+msgstr "画笔大小"
+
+msgid "Tap to add the next point."
+msgstr "点击添加下一个点。"
+
+msgid "A few required questions still need an answer."
+msgstr "还有几道必答题尚未回答。"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s 个问题"
+
+msgid "create your own free map survey"
+msgstr "创建您自己的免费地图调查"
+
+msgid "Stop"
+msgstr "停止"
+
+msgid "Uploading"
+msgstr "正在上传"
+
+msgid "This field is required."
+msgstr "此字段为必填项。"
+
+msgid "up to {n} more"
+msgstr "最多还可添加 {n} 个"
+
+msgid "Tap to start the line."
+msgstr "点击开始画线。"
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "点击地图标记地点——或使用按钮。"
+
+msgid "Tap the last point to finish the line."
+msgstr "点击最后一个点以完成线条。"
+
+msgid "Move map"
+msgstr "移动地图"
+
+msgid "Anything else we should know? (optional)"
+msgstr "还有什么想告诉我们的吗？（选填）"
+
+msgid "This question is required"
+msgstr "此问题为必答题"
+
+msgid "Take photo"
+msgstr "拍照"
+
+msgid "Clear"
+msgstr "清除"
+
+msgid "Record"
+msgstr "录音"
+
+msgid "Spray"
+msgstr "喷涂"
+
+msgid "Please specify"
+msgstr "请注明"
+
+msgid "Erase"
+msgstr "擦除"
+
+msgid "Small brush"
+msgstr "小画笔"
+
+msgid "Retry"
+msgstr "重试"
+
+msgid "Search failed — check your connection and try again."
+msgstr "搜索失败——请检查网络连接后重试。"
+
+msgid "Questions"
+msgstr "问题"
+
+msgid "Add another"
+msgstr "再添加一个"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "看起来像诈骗或冒充公司"
+
+msgid "{n} marked"
+msgstr "已标记 {n} 个"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "移动地图以放置图钉，然后点击“应用”。"
+
+msgid "Send report"
+msgstr "发送举报"
+
+msgid "Made with"
+msgstr "基于"
+
+msgid "Tap to add the shape’s corners."
+msgstr "点击添加图形的各个角点。"
+
+msgid "No"
+msgstr "否"
+
+msgid "{n} of {m} marked"
+msgstr "已标记 {n}/{m} 个"
+
+msgid "All {m} marked — thank you!"
+msgstr "全部 {m} 个已标记——谢谢！"
+
+msgid "Report this survey"
+msgstr "举报此调查"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "索要密码、登录或付款"
+
+msgid "Medium brush"
+msgstr "中画笔"
+
+msgid "Sign in"
+msgstr "登录"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "用手指按住并拖动来喷涂。越确定的地方停留越久。"
+
+msgid "Tap to add the next corner."
+msgstr "点击添加下一个角点。"
+
+msgid ":"
+msgstr "："

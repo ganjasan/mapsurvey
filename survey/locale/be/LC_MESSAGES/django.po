@@ -980,3 +980,185 @@ msgstr "Пошук адрасу..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Нічога не знойдзена"
+
+msgid "Please specify"
+msgstr "Удакладніце, калі ласка"
+
+msgid "Erase"
+msgstr "Сцерці"
+
+msgid "Retry"
+msgstr "Паўтарыць"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Пошук не ўдаўся — праверце злучэнне і паспрабуйце яшчэ раз."
+
+msgid "Questions"
+msgstr "Пытанні"
+
+msgid "Add another"
+msgstr "Дадаць яшчэ"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Падобна на ашуканства або выдае сябе за кампанію"
+
+msgid "Tap to add the next corner."
+msgstr "Націсніце, каб дадаць наступны вугал."
+
+msgid ":"
+msgstr ":"
+
+msgid "{n} marked"
+msgstr "Адзначана: {n}"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Перамясціце карту, каб размясціць маркер, затым націсніце «Прымяніць»."
+
+msgid "Send report"
+msgstr "Адправіць скаргу"
+
+msgid "Made with"
+msgstr "Зроблена з дапамогай"
+
+msgid "No"
+msgstr "Не"
+
+msgid "Something else"
+msgstr "Іншае"
+
+msgid "Harassment, threats or hate"
+msgstr "Цкаванне, пагрозы або нянавісць"
+
+msgid "All {m} marked — thank you!"
+msgstr "Усе {m} адзначаны — дзякуй!"
+
+msgid "Report this survey"
+msgstr "Паскардзіцца на апытанне"
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Сэксуальны гвалт або эксплуатацыя дзяцей"
+
+msgid "Exposes someone's personal data"
+msgstr "Раскрывае чыесьці асабістыя даныя"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Просіць пароль, уваход у акаўнт або аплату"
+
+msgid "Brush size"
+msgstr "Памер пэндзля"
+
+msgid "Medium brush"
+msgstr "Сярэдні пэндзаль"
+
+msgid "Tap to add the next point."
+msgstr "Націсніце, каб дадаць наступную кропку."
+
+msgid "A few required questions still need an answer."
+msgstr "На некалькі абавязковых пытанняў яшчэ няма адказу."
+
+msgid "create your own free map survey"
+msgstr "стварыце ўласнае бясплатнае апытанне з картай"
+
+msgid "Sign in"
+msgstr "Увайсці"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Утрымлівайце і вядзіце пальцам, каб распыляць. Затрымлівайцеся даўжэй там, дзе вы больш упэўненыя."
+
+msgid "Stop"
+msgstr "Спыніць"
+
+msgid "Show all options"
+msgstr "Паказаць усе варыянты"
+
+msgid "Add audio file"
+msgstr "Дадаць аўдыяфайл"
+
+msgid "Illegal content"
+msgstr "Незаконны змест"
+
+msgid "at least {n} required"
+msgstr "патрабуецца не менш за {n}"
+
+msgid "up to {n} more"
+msgstr "яшчэ да {n}"
+
+msgid "Tap to start the line."
+msgstr "Націсніце, каб пачаць лінію."
+
+msgid "Tap the first point to close the shape."
+msgstr "Націсніце на першую кропку, каб замкнуць фігуру."
+
+msgid "Add photo"
+msgstr "Дадаць фота"
+
+msgid "Take photo"
+msgstr "Зрабіць фота"
+
+msgid "Yes"
+msgstr "Так"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Фарба скончылася — сатрыце частку, каб працягнуць."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Ніколі не ўводзьце паролі або нумары картак у апытанні Mapsurvey."
+
+msgid "Large brush"
+msgstr "Вялікі пэндзаль"
+
+msgid "Attach file"
+msgstr "Прымацаваць файл"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Утрымлівайце і цягніце, каб распыляць. Затрымлівайцеся даўжэй там, дзе вы больш упэўненыя."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Дасягнута максімум — выдаліце адзін ніжэй, каб змяніць."
+
+msgid "Small brush"
+msgstr "Малы пэндзаль"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s пытанне"
+msgstr[1] "%(n)s пытанні"
+msgstr[2] "%(n)s пытанняў"
+msgstr[3] "%(n)s пытання"
+
+msgid "Uploading"
+msgstr "Загрузка"
+
+msgid "This field is required."
+msgstr "Гэта поле абавязковае."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Націсніце на карту, каб адзначыць месца, — або скарыстайцеся кнопкай."
+
+msgid "Tap the last point to finish the line."
+msgstr "Націсніце на апошнюю кропку, каб завяршыць лінію."
+
+msgid "Move map"
+msgstr "Рухаць карту"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Ці хочаце паведаміць яшчэ нешта? (неабавязкова)"
+
+msgid "This question is required"
+msgstr "Гэта пытанне абавязковае"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Націсніце, каб дадаць вуглы фігуры."
+
+msgid "Clear"
+msgstr "Ачысціць"
+
+msgid "Record"
+msgstr "Запісаць"
+
+msgid "{n} of {m} marked"
+msgstr "Адзначана {n} з {m}"
+
+msgid "Spray"
+msgstr "Распыліць"

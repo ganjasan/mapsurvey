@@ -980,3 +980,183 @@ msgstr "Ҷустуҷӯи нишонӣ..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Натиҷа ёфт нашуд"
+
+msgid "Report this survey"
+msgstr "Шикоят аз ин пурсиш"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Парол, воридшавӣ ё пардохт талаб мекунад"
+
+msgid "Medium brush"
+msgstr "Мӯқалами миёна"
+
+msgid "Sign in"
+msgstr "Ворид шудан"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Барои пошидан ангуштро нигоҳ дошта кашед. Дар ҷое, ки боварии бештар доред, дарозтар истед."
+
+msgid "Tap to add the next corner."
+msgstr "Барои илова кардани кунҷи навбатӣ ламс кунед."
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "Ҳамаи вариантҳоро нишон диҳед"
+
+msgid "Add audio file"
+msgstr "Иловаи файли аудиоӣ"
+
+msgid "Illegal content"
+msgstr "Мундариҷаи ғайриқонунӣ"
+
+msgid "at least {n} required"
+msgstr "ҳадди ақал {n} лозим аст"
+
+msgid "Tap the first point to close the shape."
+msgstr "Барои пӯшидани шакл ба нуқтаи аввал ламс кунед."
+
+msgid "Add photo"
+msgstr "Иловаи акс"
+
+msgid "Yes"
+msgstr "Ҳа"
+
+msgid "Something else"
+msgstr "Чизи дигар"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Мӯқалам холӣ аст — барои идома каме рангро пок кунед."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Ҳеҷ гоҳ дар пурсиши Mapsurvey парол ё рақами кортро ворид накунед."
+
+msgid "Harassment, threats or hate"
+msgstr "Таъқиб, таҳдид ё нафрат"
+
+msgid "Attach file"
+msgstr "Замима кардани файл"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Барои пошидан пахш карда нигоҳ доред ва кашед. Дар ҷое, ки боварии бештар доред, дарозтар истед."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Зӯроварии ҷинсӣ ё истисмори кӯдакон"
+
+msgid "Exposes someone's personal data"
+msgstr "Маълумоти шахсии касеро фош мекунад"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Ба ҳадди аксар расид — барои тағйир додан яктоашро дар поён хориҷ кунед."
+
+msgid "Brush size"
+msgstr "Андозаи мӯқалам"
+
+msgid "Tap to add the next point."
+msgstr "Барои илова кардани нуқтаи навбатӣ ламс кунед."
+
+msgid "A few required questions still need an answer."
+msgstr "Ба чанд саволи ҳатмӣ ҳанӯз ҷавоб дода нашудааст."
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s савол"
+msgstr[1] "%(n)s савол"
+
+msgid "create your own free map survey"
+msgstr "пурсиши харитавии ройгони худро созед"
+
+msgid "Stop"
+msgstr "Қатъ"
+
+msgid "Uploading"
+msgstr "Бор шуда истодааст"
+
+msgid "This field is required."
+msgstr "Ин майдон ҳатмӣ аст."
+
+msgid "up to {n} more"
+msgstr "боз то {n}"
+
+msgid "Tap to start the line."
+msgstr "Барои оғози хат ламс кунед."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Барои қайд кардани ҷой ба харита ламс кунед — ё тугмаро истифода баред."
+
+msgid "Tap the last point to finish the line."
+msgstr "Барои анҷом додани хат ба нуқтаи охирин ламс кунед."
+
+msgid "Move map"
+msgstr "Ҳаракати харита"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Боз чизе ҳаст, ки мо бояд донем? (ихтиёрӣ)"
+
+msgid "This question is required"
+msgstr "Ин савол ҳатмӣ аст"
+
+msgid "Take photo"
+msgstr "Акс гирифтан"
+
+msgid "Clear"
+msgstr "Тоза кардан"
+
+msgid "Spray"
+msgstr "Пошидан"
+
+msgid "Large brush"
+msgstr "Мӯқалами калон"
+
+msgid "Please specify"
+msgstr "Лутфан, муайян кунед"
+
+msgid "Erase"
+msgstr "Пок кардан"
+
+msgid "Small brush"
+msgstr "Мӯқалами хурд"
+
+msgid "Retry"
+msgstr "Аз нав кӯшиш"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Ҷустуҷӯ иҷро нашуд — пайвастро тафтиш кунед ва аз нав кӯшиш кунед."
+
+msgid "Questions"
+msgstr "Саволҳо"
+
+msgid "Add another"
+msgstr "Боз як илова кардан"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Ба қаллобӣ монанд аст ё худро ширкат вонамуд мекунад"
+
+msgid "{n} marked"
+msgstr "{n} қайд шуд"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Барои гузоштани сӯзанак харитаро ҳаракат диҳед, баъд «Татбиқ кардан»-ро пахш кунед."
+
+msgid "Send report"
+msgstr "Фиристодани шикоят"
+
+msgid "Made with"
+msgstr "Сохта шудааст бо"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Барои илова кардани кунҷҳои шакл ламс кунед."
+
+msgid "Record"
+msgstr "Сабт"
+
+msgid "No"
+msgstr "Не"
+
+msgid "{n} of {m} marked"
+msgstr "{n} аз {m} қайд шуд"
+
+msgid "All {m} marked — thank you!"
+msgstr "Ҳамаи {m} қайд шуд — ташаккур!"

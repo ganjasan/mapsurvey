@@ -980,3 +980,185 @@ msgstr "Пошук адреси..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Нічого не знайдено"
+
+msgid "No"
+msgstr "Ні"
+
+msgid "{n} of {m} marked"
+msgstr "позначено {n} з {m}"
+
+msgid "Harassment, threats or hate"
+msgstr "Цькування, погрози або ненависть"
+
+msgid "All {m} marked — thank you!"
+msgstr "Усі {m} позначено — дякуємо!"
+
+msgid "Report this survey"
+msgstr "Поскаржитися на опитування"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Просить пароль, вхід в обліковий запис або оплату"
+
+msgid "Brush size"
+msgstr "Розмір пензля"
+
+msgid "Medium brush"
+msgstr "Середній пензель"
+
+msgid "Sign in"
+msgstr "Увійти"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Утримуйте та ведіть пальцем, щоб розпилювати. Затримуйтеся довше там, де ви впевненіші."
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "Показати всі варіанти"
+
+msgid "Add audio file"
+msgstr "Додати аудіофайл"
+
+msgid "Illegal content"
+msgstr "Незаконний вміст"
+
+msgid "at least {n} required"
+msgstr "потрібно щонайменше {n}"
+
+msgid "up to {n} more"
+msgstr "ще до {n}"
+
+msgid "Tap the first point to close the shape."
+msgstr "Торкніться першої точки, щоб замкнути фігуру."
+
+msgid "Add photo"
+msgstr "Додати фото"
+
+msgid "Take photo"
+msgstr "Зробити фото"
+
+msgid "Yes"
+msgstr "Так"
+
+msgid "Something else"
+msgstr "Інше"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Пензель порожній — зітріть трохи фарби, щоб продовжити."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Ніколи не вводьте паролі чи номери карток в опитуванні Mapsurvey."
+
+msgid "Large brush"
+msgstr "Великий пензель"
+
+msgid "Attach file"
+msgstr "Прикріпити файл"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Утримуйте та ведіть, щоб розпилювати. Затримуйтеся довше там, де ви впевненіші."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Сексуальне насильство або експлуатація дітей"
+
+msgid "Exposes someone's personal data"
+msgstr "Розкриває чиїсь персональні дані"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Досягнуто максимуму — видаліть один нижче, щоб змінити."
+
+msgid "Tap to add the next point."
+msgstr "Торкніться, щоб додати наступну точку."
+
+msgid "A few required questions still need an answer."
+msgstr "Кілька обов'язкових питань ще не мають відповіді."
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s питання"
+msgstr[1] "%(n)s питання"
+msgstr[2] "%(n)s питань"
+msgstr[3] "%(n)s питання"
+
+msgid "create your own free map survey"
+msgstr "створіть власне безкоштовне опитування на карті"
+
+msgid "Stop"
+msgstr "Стоп"
+
+msgid "Uploading"
+msgstr "Завантаження"
+
+msgid "This field is required."
+msgstr "Це поле обов'язкове."
+
+msgid "Tap to start the line."
+msgstr "Торкніться, щоб почати лінію."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Торкніться карти, щоб позначити місце — або скористайтеся кнопкою."
+
+msgid "Tap the last point to finish the line."
+msgstr "Торкніться останньої точки, щоб завершити лінію."
+
+msgid "Move map"
+msgstr "Рухати карту"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Чи є ще щось, що нам варто знати? (необов'язково)"
+
+msgid "This question is required"
+msgstr "Це питання обов'язкове"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Торкніться, щоб додати кути фігури."
+
+msgid "Clear"
+msgstr "Очистити"
+
+msgid "Record"
+msgstr "Записати"
+
+msgid "Spray"
+msgstr "Розпилення"
+
+msgid "Please specify"
+msgstr "Уточніть, будь ласка"
+
+msgid "Erase"
+msgstr "Стерти"
+
+msgid "Small brush"
+msgstr "Малий пензель"
+
+msgid "Retry"
+msgstr "Повторити"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Пошук не вдався — перевірте з'єднання та спробуйте ще раз."
+
+msgid "Questions"
+msgstr "Питання"
+
+msgid "Add another"
+msgstr "Додати ще"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Схоже на шахрайство або видає себе за компанію"
+
+msgid "Tap to add the next corner."
+msgstr "Торкніться, щоб додати наступний кут."
+
+msgid "{n} marked"
+msgstr "позначено: {n}"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Перемістіть карту, щоб розмістити мітку, потім натисніть «Застосувати»."
+
+msgid "Send report"
+msgstr "Надіслати скаргу"
+
+msgid "Made with"
+msgstr "Створено за допомогою"

@@ -980,3 +980,183 @@ msgstr "చిరునామా వెతకండి..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "ఫలితాలు కనుగొనబడలేదు"
+
+msgid "Stop"
+msgstr "ఆపు"
+
+msgid "Uploading"
+msgstr "అప్‌లోడ్ అవుతోంది"
+
+msgid "This field is required."
+msgstr "ఈ ఫీల్డ్ తప్పనిసరి."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "ఒక స్థలాన్ని గుర్తించడానికి మ్యాప్‌ను తాకండి — లేదా బటన్‌ను ఉపయోగించండి."
+
+msgid "Tap the last point to finish the line."
+msgstr "గీతను పూర్తి చేయడానికి చివరి బిందువును తాకండి."
+
+msgid "Move map"
+msgstr "మ్యాప్ కదిలించు"
+
+msgid "Anything else we should know? (optional)"
+msgstr "మేము తెలుసుకోవాల్సినది ఇంకేమైనా ఉందా? (ఐచ్ఛికం)"
+
+msgid "This question is required"
+msgstr "ఈ ప్రశ్న తప్పనిసరి"
+
+msgid "Tap to add the shape’s corners."
+msgstr "ఆకారపు మూలలను జోడించడానికి తాకండి."
+
+msgid "Clear"
+msgstr "క్లియర్"
+
+msgid "Record"
+msgstr "రికార్డ్"
+
+msgid "{n} of {m} marked"
+msgstr "{m} లో {n} గుర్తించబడ్డాయి"
+
+msgid "Spray"
+msgstr "స్ప్రే"
+
+msgid "Please specify"
+msgstr "దయచేసి పేర్కొనండి"
+
+msgid "Erase"
+msgstr "చెరిపివేయి"
+
+msgid "Small brush"
+msgstr "చిన్న బ్రష్"
+
+msgid "Retry"
+msgstr "మళ్లీ ప్రయత్నించు"
+
+msgid "Search failed — check your connection and try again."
+msgstr "శోధన విఫలమైంది — మీ కనెక్షన్ తనిఖీ చేసి మళ్లీ ప్రయత్నించండి."
+
+msgid "Questions"
+msgstr "ప్రశ్నలు"
+
+msgid "Add another"
+msgstr "మరొకటి జోడించండి"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "మోసంలా కనిపిస్తోంది లేదా ఒక కంపెనీలా నటిస్తోంది"
+
+msgid "Tap to add the next corner."
+msgstr "తదుపరి మూలను జోడించడానికి తాకండి."
+
+msgid ":"
+msgstr ":"
+
+msgid "{n} marked"
+msgstr "{n} గుర్తించబడ్డాయి"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "పిన్‌ను సరైన చోట ఉంచడానికి మ్యాప్‌ను కదిలించి, ఆపై వర్తించు నొక్కండి."
+
+msgid "Send report"
+msgstr "నివేదిక పంపండి"
+
+msgid "Made with"
+msgstr "రూపొందించినది:"
+
+msgid "No"
+msgstr "కాదు"
+
+msgid "Harassment, threats or hate"
+msgstr "వేధింపులు, బెదిరింపులు లేదా ద్వేషం"
+
+msgid "All {m} marked — thank you!"
+msgstr "మొత్తం {m} గుర్తించబడ్డాయి — ధన్యవాదాలు!"
+
+msgid "Report this survey"
+msgstr "ఈ సర్వేను నివేదించండి"
+
+msgid "Exposes someone's personal data"
+msgstr "ఎవరిదైనా వ్యక్తిగత సమాచారాన్ని బయటపెడుతోంది"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "పాస్‌వర్డ్, లాగిన్ లేదా చెల్లింపు అడుగుతోంది"
+
+msgid "Brush size"
+msgstr "బ్రష్ పరిమాణం"
+
+msgid "Medium brush"
+msgstr "మధ్యస్థ బ్రష్"
+
+msgid "A few required questions still need an answer."
+msgstr "కొన్ని తప్పనిసరి ప్రశ్నలకు ఇంకా సమాధానం ఇవ్వాలి."
+
+msgid "create your own free map survey"
+msgstr "మీ సొంత ఉచిత మ్యాప్ సర్వేను సృష్టించండి"
+
+msgid "Sign in"
+msgstr "సైన్ ఇన్"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "స్ప్రే చేయడానికి వేలిని నొక్కి పట్టి లాగండి. మీకు ఎక్కువ నమ్మకం ఉన్న చోట ఎక్కువసేపు ఉంచండి."
+
+msgid "Show all options"
+msgstr "అన్ని ఎంపికలను చూపించు"
+
+msgid "Add audio file"
+msgstr "ఆడియో ఫైల్ జోడించండి"
+
+msgid "Illegal content"
+msgstr "చట్టవిరుద్ధమైన కంటెంట్"
+
+msgid "at least {n} required"
+msgstr "కనీసం {n} అవసరం"
+
+msgid "up to {n} more"
+msgstr "ఇంకా {n} వరకు"
+
+msgid "Tap to start the line."
+msgstr "గీతను ప్రారంభించడానికి తాకండి."
+
+msgid "Tap the first point to close the shape."
+msgstr "ఆకారాన్ని మూసివేయడానికి మొదటి బిందువును తాకండి."
+
+msgid "Add photo"
+msgstr "ఫోటో జోడించండి"
+
+msgid "Take photo"
+msgstr "ఫోటో తీయండి"
+
+msgid "Yes"
+msgstr "అవును"
+
+msgid "Something else"
+msgstr "ఇంకేదైనా"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "బ్రష్ ఖాళీ అయింది — కొనసాగడానికి కొంత రంగును చెరిపివేయండి."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Mapsurvey సర్వేలో ఎప్పుడూ పాస్‌వర్డ్‌లు లేదా కార్డ్ నంబర్లు నమోదు చేయవద్దు."
+
+msgid "Large brush"
+msgstr "పెద్ద బ్రష్"
+
+msgid "Attach file"
+msgstr "ఫైల్ జత చేయండి"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "స్ప్రే చేయడానికి నొక్కి పట్టి లాగండి. మీకు ఎక్కువ నమ్మకం ఉన్న చోట ఎక్కువసేపు ఉంచండి."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "పిల్లలపై లైంగిక వేధింపులు లేదా దోపిడీ"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "గరిష్ఠ పరిమితి చేరుకుంది — మార్చడానికి కింద ఉన్న ఒకదాన్ని తీసివేయండి."
+
+msgid "Tap to add the next point."
+msgstr "తదుపరి బిందువును జోడించడానికి తాకండి."
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s ప్రశ్న"
+msgstr[1] "%(n)s ప్రశ్నలు"

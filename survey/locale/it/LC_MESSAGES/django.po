@@ -6197,7 +6197,7 @@ msgstr ""
 #: survey/templates/maptionnaire_alternative.html:100
 #: survey/templates/maptionnaire_alternative.html:101
 msgid "Yes"
-msgstr ""
+msgstr "Sì"
 
 #: survey/templates/maptionnaire_alternative.html:100
 msgid "Yes — per-question translations"
@@ -6431,7 +6431,7 @@ msgstr ""
 
 #: survey/templates/metroquest_alternative.html:97
 msgid "No"
-msgstr ""
+msgstr "No"
 
 #: survey/templates/metroquest_alternative.html:98
 #| msgid "Survey Closed"
@@ -8044,6 +8044,63 @@ msgstr "Hai già descritto il progetto: lasci che la procedura guidata prepari l
 #: survey/templates/editor/partials/_ai_feedback_strip.html
 msgid "How is the Wizard's draft?"
 msgstr "Com'è la bozza della procedura guidata?"
+
+msgid "Move map"
+msgstr "Sposta mappa"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Il pennello è vuoto: cancella un po’ di colore per continuare."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Non inserire mai password o numeri di carta in un sondaggio Mapsurvey."
+
+msgid "Large brush"
+msgstr "Pennello grande"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Tieni premuto e trascina per spruzzare. Resta più a lungo dove sei più sicuro."
+
+msgid "Small brush"
+msgstr "Pennello piccolo"
+
+msgid "This field is required."
+msgstr "Questo campo è obbligatorio."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Tocca la mappa per segnare un luogo, oppure usa il pulsante."
+
+msgid "Anything else we should know? (optional)"
+msgstr "C’è altro che dovremmo sapere? (facoltativo)"
+
+msgid "Spray"
+msgstr "Spruzza"
+
+msgid "Please specify"
+msgstr "Specifica"
+
+msgid "Erase"
+msgstr "Cancella"
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "Mostra tutte le opzioni"
+
+msgid "Send report"
+msgstr "Invia segnalazione"
+
+msgid "Report this survey"
+msgstr "Segnala questo sondaggio"
+
+msgid "Brush size"
+msgstr "Dimensione del pennello"
+
+msgid "Medium brush"
+msgstr "Pennello medio"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Tieni premuto e trascina il dito per spruzzare. Resta più a lungo dove sei più sicuro."
 
 #: api/templates/api/connections.html
 msgid "API & connections"

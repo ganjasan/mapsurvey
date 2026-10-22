@@ -980,3 +980,183 @@ msgstr "Օրոնել հասցե..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Արդյունքներ չեն գտնվել"
+
+msgid "create your own free map survey"
+msgstr "ստեղծեք ձեր սեփական անվճար քարտեզային հարցումը"
+
+msgid "Sign in"
+msgstr "Մուտք գործել"
+
+msgid "Stop"
+msgstr "Կանգնեցնել"
+
+msgid "Add audio file"
+msgstr "Ավելացնել աուդիոֆայլ"
+
+msgid "This field is required."
+msgstr "Այս դաշտը պարտադիր է։"
+
+msgid "at least {n} required"
+msgstr "պահանջվում է առնվազն {n}"
+
+msgid "up to {n} more"
+msgstr "ևս մինչև {n}"
+
+msgid "Tap to start the line."
+msgstr "Հպեք՝ գիծը սկսելու համար։"
+
+msgid "Tap the last point to finish the line."
+msgstr "Հպեք վերջին կետին՝ գիծն ավարտելու համար։"
+
+msgid "Move map"
+msgstr "Տեղաշարժել քարտեզը"
+
+msgid "Add photo"
+msgstr "Ավելացնել լուսանկար"
+
+msgid "Take photo"
+msgstr "Լուսանկարել"
+
+msgid "Clear"
+msgstr "Մաքրել"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Վրձինը դատարկ է — շարունակելու համար ջնջեք մի քիչ ներկ։"
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Երբեք մի մուտքագրեք գաղտնաբառեր կամ քարտի համարներ Mapsurvey հարցման մեջ։"
+
+msgid "Large brush"
+msgstr "Մեծ վրձին"
+
+msgid "Attach file"
+msgstr "Կցել ֆայլ"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Սեղմած պահեք և քաշեք՝ ցողելու համար։ Ավելի երկար մնացեք այնտեղ, որտեղ ավելի վստահ եք։"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Առավելագույնին հասել եք — փոխելու համար ներքևում հեռացրեք մեկը։"
+
+msgid "Small brush"
+msgstr "Փոքր վրձին"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s հարց"
+msgstr[1] "%(n)s հարց"
+
+msgid "Uploading"
+msgstr "Վերբեռնվում է"
+
+msgid "{n} marked"
+msgstr "{n} նշված"
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Հպեք քարտեզին՝ տեղը նշելու համար, կամ օգտագործեք կոճակը։"
+
+msgid "Send report"
+msgstr "Ուղարկել բողոքը"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Ուրիշ ինչ-որ բան պե՞տք է իմանանք (ըստ ցանկության)"
+
+msgid "This question is required"
+msgstr "Այս հարցը պարտադիր է"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Հպեք՝ պատկերի անկյուններն ավելացնելու համար։"
+
+msgid "Record"
+msgstr "Ձայնագրել"
+
+msgid "{n} of {m} marked"
+msgstr "{n}-ը {m}-ից նշված է"
+
+msgid "Spray"
+msgstr "Ցողել"
+
+msgid "Please specify"
+msgstr "Խնդրում ենք նշել"
+
+msgid "Report this survey"
+msgstr "Բողոքել այս հարցման մասին"
+
+msgid "Erase"
+msgstr "Ջնջել"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Պահանջում է գաղտնաբառ, մուտք կամ վճարում"
+
+msgid "Retry"
+msgstr "Կրկին փորձել"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Որոնումը ձախողվեց — ստուգեք կապը և կրկին փորձեք։"
+
+msgid "Questions"
+msgstr "Հարցեր"
+
+msgid "Add another"
+msgstr "Ավելացնել ևս մեկը"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Սեղմած պահեք և սահեցրեք մատը՝ ցողելու համար։ Ավելի երկար մնացեք այնտեղ, որտեղ ավելի վստահ եք։"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Նման է խարդախության կամ ներկայանում է որպես ընկերություն"
+
+msgid "Tap to add the next corner."
+msgstr "Հպեք՝ հաջորդ անկյունն ավելացնելու համար։"
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "Ցույց տալ բոլոր տարբերակները"
+
+msgid "Illegal content"
+msgstr "Անօրինական բովանդակություն"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Տեղաշարժեք քարտեզը՝ գնդասեղը տեղադրելու համար, ապա սեղմեք «Կիրառել»։"
+
+msgid "Made with"
+msgstr "Ստեղծված է՝"
+
+msgid "Tap the first point to close the shape."
+msgstr "Հպեք առաջին կետին՝ պատկերը փակելու համար։"
+
+msgid "No"
+msgstr "Ոչ"
+
+msgid "Yes"
+msgstr "Այո"
+
+msgid "Something else"
+msgstr "Այլ բան"
+
+msgid "Harassment, threats or hate"
+msgstr "Ոտնձգություն, սպառնալիքներ կամ ատելություն"
+
+msgid "All {m} marked — thank you!"
+msgstr "Բոլոր {m}-ը նշված են — շնորհակալություն։"
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Երեխաների սեռական բռնություն կամ շահագործում"
+
+msgid "Exposes someone's personal data"
+msgstr "Բացահայտում է ինչ-որ մեկի անձնական տվյալները"
+
+msgid "Brush size"
+msgstr "Վրձնի չափը"
+
+msgid "Medium brush"
+msgstr "Միջին վրձին"
+
+msgid "Tap to add the next point."
+msgstr "Հպեք՝ հաջորդ կետն ավելացնելու համար։"
+
+msgid "A few required questions still need an answer."
+msgstr "Որոշ պարտադիր հարցեր դեռ պատասխան չունեն։"

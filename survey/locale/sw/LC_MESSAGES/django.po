@@ -980,3 +980,183 @@ msgstr "Tafuta anwani..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Hakuna matokeo"
+
+msgid "Move map"
+msgstr "Sogeza ramani"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Kuna jambo lingine tunalopaswa kujua? (si lazima)"
+
+msgid "This question is required"
+msgstr "Swali hili linahitajika"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Gusa ili kuongeza kona za umbo."
+
+msgid "Clear"
+msgstr "Futa yote"
+
+msgid "Record"
+msgstr "Rekodi"
+
+msgid "{n} of {m} marked"
+msgstr "{n} kati ya {m} zimewekwa alama"
+
+msgid "Spray"
+msgstr "Nyunyiza"
+
+msgid "Please specify"
+msgstr "Tafadhali bainisha"
+
+msgid "Erase"
+msgstr "Kifutio"
+
+msgid "Retry"
+msgstr "Jaribu tena"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Utafutaji umeshindwa — angalia muunganisho wako na ujaribu tena."
+
+msgid "Questions"
+msgstr "Maswali"
+
+msgid "Add another"
+msgstr "Ongeza nyingine"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Inaonekana kama ulaghai au inajifanya kuwa kampuni"
+
+msgid "Tap to add the next corner."
+msgstr "Gusa ili kuongeza kona inayofuata."
+
+msgid ":"
+msgstr ":"
+
+msgid "{n} marked"
+msgstr "{n} zimewekwa alama"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Sogeza ramani ili kuweka pini, kisha bonyeza Tumia."
+
+msgid "Send report"
+msgstr "Tuma ripoti"
+
+msgid "Made with"
+msgstr "Imetengenezwa kwa"
+
+msgid "No"
+msgstr "Hapana"
+
+msgid "Harassment, threats or hate"
+msgstr "Unyanyasaji, vitisho au chuki"
+
+msgid "All {m} marked — thank you!"
+msgstr "Zote {m} zimewekwa alama — asante!"
+
+msgid "Report this survey"
+msgstr "Ripoti utafiti huu"
+
+msgid "Exposes someone's personal data"
+msgstr "Inafichua data binafsi ya mtu"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Inaomba nenosiri, kuingia au malipo"
+
+msgid "Brush size"
+msgstr "Ukubwa wa brashi"
+
+msgid "Medium brush"
+msgstr "Brashi ya wastani"
+
+msgid "Tap to add the next point."
+msgstr "Gusa ili kuongeza nukta inayofuata."
+
+msgid "A few required questions still need an answer."
+msgstr "Baadhi ya maswali ya lazima bado hayajajibiwa."
+
+msgid "create your own free map survey"
+msgstr "unda utafiti wako wa ramani bila malipo"
+
+msgid "Sign in"
+msgstr "Ingia"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Shikilia na buruta kidole ili kunyunyiza. Kaa muda mrefu zaidi pale unapokuwa na uhakika zaidi."
+
+msgid "Stop"
+msgstr "Simamisha"
+
+msgid "Show all options"
+msgstr "Onyesha chaguo zote"
+
+msgid "Add audio file"
+msgstr "Ongeza faili la sauti"
+
+msgid "Illegal content"
+msgstr "Maudhui haramu"
+
+msgid "at least {n} required"
+msgstr "angalau {n} zinahitajika"
+
+msgid "up to {n} more"
+msgstr "hadi {n} zaidi"
+
+msgid "Tap to start the line."
+msgstr "Gusa ili kuanza mstari."
+
+msgid "Tap the first point to close the shape."
+msgstr "Gusa nukta ya kwanza ili kufunga umbo."
+
+msgid "Add photo"
+msgstr "Ongeza picha"
+
+msgid "Take photo"
+msgstr "Piga picha"
+
+msgid "Yes"
+msgstr "Ndiyo"
+
+msgid "Something else"
+msgstr "Kitu kingine"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Brashi haina rangi tena — futa rangi kidogo ili kuendelea."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Kamwe usiweke nenosiri au namba za kadi kwenye utafiti wa Mapsurvey."
+
+msgid "Large brush"
+msgstr "Brashi kubwa"
+
+msgid "Attach file"
+msgstr "Ambatisha faili"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Shikilia na buruta ili kunyunyiza. Kaa muda mrefu zaidi pale unapokuwa na uhakika zaidi."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Unyanyasaji wa kingono au unyonyaji wa watoto"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Kiwango cha juu kimefikiwa — ondoa kimoja hapa chini ili kubadilisha."
+
+msgid "Small brush"
+msgstr "Brashi ndogo"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "swali %(n)s"
+msgstr[1] "maswali %(n)s"
+
+msgid "Uploading"
+msgstr "Inapakia"
+
+msgid "This field is required."
+msgstr "Sehemu hii inahitajika."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Gusa ramani ili kuweka alama mahali — au tumia kitufe."
+
+msgid "Tap the last point to finish the line."
+msgstr "Gusa nukta ya mwisho ili kumaliza mstari."

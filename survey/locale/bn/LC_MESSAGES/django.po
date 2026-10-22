@@ -980,3 +980,183 @@ msgstr "ঠিকানা খুঁজুন..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "কোনো ফলাফল পাওয়া যায়নি"
+
+msgid "Tap the last point to finish the line."
+msgstr "রেখাটি শেষ করতে শেষ বিন্দুতে ট্যাপ করুন।"
+
+msgid "Move map"
+msgstr "মানচিত্র সরান"
+
+msgid "Anything else we should know? (optional)"
+msgstr "আমাদের আর কিছু জানানো দরকার? (ঐচ্ছিক)"
+
+msgid "This question is required"
+msgstr "এই প্রশ্নটি আবশ্যিক"
+
+msgid "Take photo"
+msgstr "ছবি তুলুন"
+
+msgid "Clear"
+msgstr "মুছে ফেলুন"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "ব্রাশ খালি — চালিয়ে যেতে কিছু রং মুছুন।"
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Mapsurvey সমীক্ষায় কখনও পাসওয়ার্ড বা কার্ড নম্বর লিখবেন না।"
+
+msgid "Large brush"
+msgstr "বড় ব্রাশ"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "স্প্রে করতে চেপে ধরে টানুন। যেখানে আপনি বেশি নিশ্চিত, সেখানে বেশিক্ষণ থাকুন।"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "সর্বোচ্চ সংখ্যায় পৌঁছেছে — পরিবর্তন করতে নিচে থেকে একটি সরান।"
+
+msgid "Small brush"
+msgstr "ছোট ব্রাশ"
+
+msgid "Retry"
+msgstr "আবার চেষ্টা করুন"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)sটি প্রশ্ন"
+msgstr[1] "%(n)sটি প্রশ্ন"
+
+msgid "Search failed — check your connection and try again."
+msgstr "অনুসন্ধান ব্যর্থ হয়েছে — সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।"
+
+msgid "{n} marked"
+msgstr "{n}টি চিহ্নিত"
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "কোনো স্থান চিহ্নিত করতে মানচিত্রে ট্যাপ করুন — অথবা বোতামটি ব্যবহার করুন।"
+
+msgid "Send report"
+msgstr "রিপোর্ট পাঠান"
+
+msgid "Made with"
+msgstr "তৈরি হয়েছে"
+
+msgid "Tap to add the shape’s corners."
+msgstr "আকৃতির কোণগুলো যোগ করতে ট্যাপ করুন।"
+
+msgid "Record"
+msgstr "রেকর্ড"
+
+msgid "No"
+msgstr "না"
+
+msgid "{n} of {m} marked"
+msgstr "{m}টির মধ্যে {n}টি চিহ্নিত"
+
+msgid "Spray"
+msgstr "স্প্রে"
+
+msgid "Please specify"
+msgstr "অনুগ্রহ করে উল্লেখ করুন"
+
+msgid "All {m} marked — thank you!"
+msgstr "সবগুলো {m}টি চিহ্নিত — ধন্যবাদ!"
+
+msgid "Report this survey"
+msgstr "এই সমীক্ষাটি রিপোর্ট করুন"
+
+msgid "Erase"
+msgstr "মুছুন"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "পাসওয়ার্ড, লগইন বা অর্থপ্রদান চায়"
+
+msgid "Questions"
+msgstr "প্রশ্ন"
+
+msgid "Add another"
+msgstr "আরেকটি যোগ করুন"
+
+msgid "Sign in"
+msgstr "সাইন ইন"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "স্প্রে করতে আঙুল চেপে ধরে টানুন। যেখানে আপনি বেশি নিশ্চিত, সেখানে বেশিক্ষণ থাকুন।"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "প্রতারণা মনে হয় বা কোনো প্রতিষ্ঠানের ছদ্মবেশ ধরে"
+
+msgid "Tap to add the next corner."
+msgstr "পরবর্তী কোণ যোগ করতে ট্যাপ করুন।"
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "সব বিকল্প দেখান"
+
+msgid "Illegal content"
+msgstr "অবৈধ বিষয়বস্তু"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "পিনটি বসাতে মানচিত্র সরান, তারপর \"প্রয়োগ\" চাপুন।"
+
+msgid "Tap the first point to close the shape."
+msgstr "আকৃতিটি বন্ধ করতে প্রথম বিন্দুতে ট্যাপ করুন।"
+
+msgid "Add photo"
+msgstr "ছবি যোগ করুন"
+
+msgid "Yes"
+msgstr "হ্যাঁ"
+
+msgid "Something else"
+msgstr "অন্য কিছু"
+
+msgid "Harassment, threats or hate"
+msgstr "হয়রানি, হুমকি বা ঘৃণা"
+
+msgid "Attach file"
+msgstr "ফাইল সংযুক্ত করুন"
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "শিশুদের যৌন নির্যাতন বা শোষণ"
+
+msgid "Exposes someone's personal data"
+msgstr "কারও ব্যক্তিগত তথ্য প্রকাশ করে"
+
+msgid "Brush size"
+msgstr "ব্রাশের আকার"
+
+msgid "Medium brush"
+msgstr "মাঝারি ব্রাশ"
+
+msgid "Tap to add the next point."
+msgstr "পরবর্তী বিন্দু যোগ করতে ট্যাপ করুন।"
+
+msgid "A few required questions still need an answer."
+msgstr "কয়েকটি আবশ্যিক প্রশ্নের এখনও উত্তর দেওয়া বাকি।"
+
+msgid "create your own free map survey"
+msgstr "নিজের বিনামূল্যের মানচিত্র সমীক্ষা তৈরি করুন"
+
+msgid "Stop"
+msgstr "থামুন"
+
+msgid "Add audio file"
+msgstr "অডিও ফাইল যোগ করুন"
+
+msgid "Uploading"
+msgstr "আপলোড হচ্ছে"
+
+msgid "This field is required."
+msgstr "এই ঘরটি পূরণ করা আবশ্যিক।"
+
+msgid "at least {n} required"
+msgstr "অন্তত {n}টি আবশ্যক"
+
+msgid "up to {n} more"
+msgstr "আরও {n}টি পর্যন্ত"
+
+msgid "Tap to start the line."
+msgstr "রেখা শুরু করতে ট্যাপ করুন।"

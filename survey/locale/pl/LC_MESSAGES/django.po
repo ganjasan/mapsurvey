@@ -6200,7 +6200,7 @@ msgstr ""
 #: survey/templates/maptionnaire_alternative.html:100
 #: survey/templates/maptionnaire_alternative.html:101
 msgid "Yes"
-msgstr ""
+msgstr "Tak"
 
 #: survey/templates/maptionnaire_alternative.html:100
 msgid "Yes — per-question translations"
@@ -6434,7 +6434,7 @@ msgstr ""
 
 #: survey/templates/metroquest_alternative.html:97
 msgid "No"
-msgstr ""
+msgstr "Nie"
 
 #: survey/templates/metroquest_alternative.html:98
 msgid "Survey structure"
@@ -8100,6 +8100,63 @@ msgstr "Projekt jest już opisany — czy kreator ma przygotować szkic (~10 s)?
 #: survey/templates/editor/partials/_ai_feedback_strip.html
 msgid "How is the Wizard's draft?"
 msgstr "Jak oceniasz szkic kreatora?"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Przytrzymaj i przeciągnij, aby natryskiwać. Zatrzymaj się dłużej tam, gdzie masz większą pewność."
+
+msgid "This field is required."
+msgstr "To pole jest wymagane."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Dotknij mapy, aby zaznaczyć miejsce — albo użyj przycisku."
+
+msgid "Move map"
+msgstr "Przesuń mapę"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Czy jest coś jeszcze, o czym powinniśmy wiedzieć? (opcjonalnie)"
+
+msgid "Spray"
+msgstr "Natryskuj"
+
+msgid "Please specify"
+msgstr "Doprecyzuj"
+
+msgid "Erase"
+msgstr "Wymaż"
+
+msgid "Small brush"
+msgstr "Mały pędzel"
+
+msgid ":"
+msgstr ":"
+
+msgid "Send report"
+msgstr "Wyślij zgłoszenie"
+
+msgid "Report this survey"
+msgstr "Zgłoś tę ankietę"
+
+msgid "Brush size"
+msgstr "Rozmiar pędzla"
+
+msgid "Medium brush"
+msgstr "Średni pędzel"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Przytrzymaj i przeciągnij palcem, aby natryskiwać. Zatrzymaj się dłużej tam, gdzie masz większą pewność."
+
+msgid "Show all options"
+msgstr "Pokaż wszystkie opcje"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Pędzel jest pusty — wymaż trochę farby, aby kontynuować."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Nigdy nie wpisuj haseł ani numerów kart w ankiecie Mapsurvey."
+
+msgid "Large brush"
+msgstr "Duży pędzel"
 
 #: api/templates/api/connections.html
 msgid "API & connections"

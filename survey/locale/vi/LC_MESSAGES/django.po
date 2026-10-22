@@ -980,3 +980,182 @@ msgstr "Tìm địa chỉ..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Không tìm thấy kết quả"
+
+msgid "Stop"
+msgstr "Dừng"
+
+msgid "Add audio file"
+msgstr "Thêm tệp âm thanh"
+
+msgid "Uploading"
+msgstr "Đang tải lên"
+
+msgid "This field is required."
+msgstr "Trường này là bắt buộc."
+
+msgid "up to {n} more"
+msgstr "thêm tối đa {n}"
+
+msgid "Tap to start the line."
+msgstr "Chạm để bắt đầu đường."
+
+msgid "Tap the last point to finish the line."
+msgstr "Chạm vào điểm cuối cùng để hoàn tất đường."
+
+msgid "Move map"
+msgstr "Di chuyển bản đồ"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Bạn còn điều gì muốn chúng tôi biết không? (không bắt buộc)"
+
+msgid "This question is required"
+msgstr "Câu hỏi này là bắt buộc"
+
+msgid "Take photo"
+msgstr "Chụp ảnh"
+
+msgid "Clear"
+msgstr "Xóa"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Cọ đã hết sơn — hãy tẩy bớt một ít để tiếp tục."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Đừng bao giờ nhập mật khẩu hay số thẻ vào khảo sát Mapsurvey."
+
+msgid "Large brush"
+msgstr "Cọ lớn"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Đã đạt tối đa — hãy xóa một mục bên dưới để thay đổi."
+
+msgid "Small brush"
+msgstr "Cọ nhỏ"
+
+msgid "Retry"
+msgstr "Thử lại"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s câu hỏi"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Tìm kiếm thất bại — hãy kiểm tra kết nối và thử lại."
+
+msgid "{n} marked"
+msgstr "Đã đánh dấu {n}"
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Chạm vào bản đồ để đánh dấu một địa điểm — hoặc dùng nút."
+
+msgid "Send report"
+msgstr "Gửi báo cáo"
+
+msgid "Made with"
+msgstr "Tạo bằng"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Chạm để thêm các góc của hình."
+
+msgid "Record"
+msgstr "Ghi âm"
+
+msgid "No"
+msgstr "Không"
+
+msgid "{n} of {m} marked"
+msgstr "Đã đánh dấu {n}/{m}"
+
+msgid "Spray"
+msgstr "Phun"
+
+msgid "Please specify"
+msgstr "Vui lòng ghi rõ"
+
+msgid "All {m} marked — thank you!"
+msgstr "Đã đánh dấu đủ {m} — cảm ơn bạn!"
+
+msgid "Report this survey"
+msgstr "Báo cáo khảo sát này"
+
+msgid "Erase"
+msgstr "Tẩy"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Yêu cầu mật khẩu, đăng nhập hoặc thanh toán"
+
+msgid "Questions"
+msgstr "Câu hỏi"
+
+msgid "Add another"
+msgstr "Thêm nữa"
+
+msgid "Sign in"
+msgstr "Đăng nhập"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Giữ và kéo ngón tay để phun. Giữ lâu hơn ở nơi bạn chắc chắn hơn."
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Có vẻ lừa đảo hoặc mạo danh một công ty"
+
+msgid "Tap to add the next corner."
+msgstr "Chạm để thêm góc tiếp theo."
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "Hiện tất cả lựa chọn"
+
+msgid "Illegal content"
+msgstr "Nội dung bất hợp pháp"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Di chuyển bản đồ để đặt ghim, rồi nhấn Áp dụng."
+
+msgid "at least {n} required"
+msgstr "cần ít nhất {n}"
+
+msgid "Tap the first point to close the shape."
+msgstr "Chạm vào điểm đầu tiên để khép hình."
+
+msgid "Add photo"
+msgstr "Thêm ảnh"
+
+msgid "Yes"
+msgstr "Có"
+
+msgid "Something else"
+msgstr "Điều khác"
+
+msgid "Harassment, threats or hate"
+msgstr "Quấy rối, đe dọa hoặc thù ghét"
+
+msgid "Attach file"
+msgstr "Đính kèm tệp"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Giữ và kéo để phun. Giữ lâu hơn ở nơi bạn chắc chắn hơn."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Lạm dụng hoặc bóc lột tình dục trẻ em"
+
+msgid "Exposes someone's personal data"
+msgstr "Làm lộ dữ liệu cá nhân của ai đó"
+
+msgid "Brush size"
+msgstr "Cỡ cọ"
+
+msgid "Medium brush"
+msgstr "Cọ vừa"
+
+msgid "Tap to add the next point."
+msgstr "Chạm để thêm điểm tiếp theo."
+
+msgid "A few required questions still need an answer."
+msgstr "Vẫn còn vài câu hỏi bắt buộc chưa được trả lời."
+
+msgid "create your own free map survey"
+msgstr "tạo khảo sát bản đồ miễn phí của riêng bạn"

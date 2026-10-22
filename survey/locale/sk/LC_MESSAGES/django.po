@@ -980,3 +980,185 @@ msgstr "Hľadať adresu..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Nenašli sa žiadne výsledky"
+
+msgid ":"
+msgstr ":"
+
+msgid "{n} marked"
+msgstr "Označené: {n}"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Posuňte mapu, aby ste umiestnili špendlík, potom stlačte Použiť."
+
+msgid "Send report"
+msgstr "Odoslať hlásenie"
+
+msgid "Made with"
+msgstr "Vytvorené pomocou"
+
+msgid "No"
+msgstr "Nie"
+
+msgid "Harassment, threats or hate"
+msgstr "Obťažovanie, vyhrážky alebo nenávisť"
+
+msgid "All {m} marked — thank you!"
+msgstr "Všetkých {m} označených — ďakujeme!"
+
+msgid "Report this survey"
+msgstr "Nahlásiť tento prieskum"
+
+msgid "Exposes someone's personal data"
+msgstr "Zverejňuje niečie osobné údaje"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Žiada heslo, prihlásenie alebo platbu"
+
+msgid "Brush size"
+msgstr "Veľkosť štetca"
+
+msgid "Medium brush"
+msgstr "Stredný štetec"
+
+msgid "Tap to add the next point."
+msgstr "Ťuknite a pridajte ďalší bod."
+
+msgid "A few required questions still need an answer."
+msgstr "Na niekoľko povinných otázok ešte treba odpovedať."
+
+msgid "create your own free map survey"
+msgstr "vytvorte si vlastný bezplatný mapový prieskum"
+
+msgid "Sign in"
+msgstr "Prihlásiť sa"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Podržte prst a ťahajte, aby ste striekali. Zdržte sa dlhšie tam, kde si ste istejší."
+
+msgid "Stop"
+msgstr "Zastaviť"
+
+msgid "Show all options"
+msgstr "Zobraziť všetky možnosti"
+
+msgid "Add audio file"
+msgstr "Pridať zvukový súbor"
+
+msgid "Illegal content"
+msgstr "Nezákonný obsah"
+
+msgid "at least {n} required"
+msgstr "vyžaduje sa aspoň {n}"
+
+msgid "up to {n} more"
+msgstr "ešte najviac {n}"
+
+msgid "Tap to start the line."
+msgstr "Ťuknite a začnite čiaru."
+
+msgid "Tap the first point to close the shape."
+msgstr "Ťuknite na prvý bod, aby ste uzavreli tvar."
+
+msgid "Add photo"
+msgstr "Pridať fotografiu"
+
+msgid "Take photo"
+msgstr "Odfotiť"
+
+msgid "Yes"
+msgstr "Áno"
+
+msgid "Something else"
+msgstr "Niečo iné"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Štetec je prázdny — zmažte trochu farby, aby ste mohli pokračovať."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Nikdy nezadávajte heslá ani čísla kariet do prieskumu Mapsurvey."
+
+msgid "Large brush"
+msgstr "Veľký štetec"
+
+msgid "Attach file"
+msgstr "Priložiť súbor"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Podržte a ťahajte, aby ste striekali. Zdržte sa dlhšie tam, kde si ste istejší."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Sexuálne zneužívanie alebo vykorisťovanie detí"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Dosiahnuté maximum — ak chcete niečo zmeniť, odstráňte jeden nižšie."
+
+msgid "Small brush"
+msgstr "Malý štetec"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s otázka"
+msgstr[1] "%(n)s otázky"
+msgstr[2] "%(n)s otázky"
+msgstr[3] "%(n)s otázok"
+
+msgid "Uploading"
+msgstr "Nahráva sa"
+
+msgid "This field is required."
+msgstr "Toto pole je povinné."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Ťuknite na mapu a označte miesto — alebo použite tlačidlo."
+
+msgid "Tap the last point to finish the line."
+msgstr "Ťuknite na posledný bod, aby ste dokončili čiaru."
+
+msgid "Move map"
+msgstr "Posúvať mapu"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Chcete nám ešte niečo povedať? (nepovinné)"
+
+msgid "This question is required"
+msgstr "Táto otázka je povinná"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Ťuknite a pridajte rohy tvaru."
+
+msgid "Clear"
+msgstr "Vymazať"
+
+msgid "Record"
+msgstr "Nahrávať"
+
+msgid "{n} of {m} marked"
+msgstr "Označené: {n} z {m}"
+
+msgid "Spray"
+msgstr "Striekať"
+
+msgid "Please specify"
+msgstr "Upresnite, prosím"
+
+msgid "Erase"
+msgstr "Gumovať"
+
+msgid "Retry"
+msgstr "Skúsiť znova"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Vyhľadávanie zlyhalo — skontrolujte pripojenie a skúste to znova."
+
+msgid "Questions"
+msgstr "Otázky"
+
+msgid "Add another"
+msgstr "Pridať ďalší"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Vyzerá ako podvod alebo sa vydáva za firmu"
+
+msgid "Tap to add the next corner."
+msgstr "Ťuknite a pridajte ďalší roh."

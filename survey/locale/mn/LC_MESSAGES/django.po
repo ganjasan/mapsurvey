@@ -980,3 +980,183 @@ msgstr "Хаяг хайх..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Үр дүн олдсонгүй"
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Газар тэмдэглэхийн тулд газрын зураг дээр товшино уу — эсвэл товчийг ашиглана уу."
+
+msgid "Tap the last point to finish the line."
+msgstr "Шугамыг дуусгахын тулд сүүлийн цэг дээр товшино уу."
+
+msgid "Move map"
+msgstr "Газрын зураг зөөх"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Бидний мэдэх ёстой өөр зүйл байна уу? (заавал биш)"
+
+msgid "This question is required"
+msgstr "Энэ асуулт заавал хариулах ёстой"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Дүрсийн өнцгүүдийг нэмэхийн тулд товшино уу."
+
+msgid "Clear"
+msgstr "Цэвэрлэх"
+
+msgid "Record"
+msgstr "Бичих"
+
+msgid "{n} of {m} marked"
+msgstr "{m}-ээс {n} тэмдэглэсэн"
+
+msgid "Spray"
+msgstr "Шүрших"
+
+msgid "Please specify"
+msgstr "Тодруулна уу"
+
+msgid "Erase"
+msgstr "Арилгах"
+
+msgid "Small brush"
+msgstr "Жижиг бийр"
+
+msgid "Retry"
+msgstr "Дахин оролдох"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Хайлт амжилтгүй боллоо — холболтоо шалгаад дахин оролдоно уу."
+
+msgid "Questions"
+msgstr "Асуултууд"
+
+msgid "Add another"
+msgstr "Дахин нэгийг нэмэх"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Залилан мэт харагддаг эсвэл компанийн нэрийг ашигладаг"
+
+msgid "Tap to add the next corner."
+msgstr "Дараагийн өнцгийг нэмэхийн тулд товшино уу."
+
+msgid ":"
+msgstr ":"
+
+msgid "{n} marked"
+msgstr "{n} тэмдэглэсэн"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Тэмдэглэгээг байрлуулахын тулд газрын зургийг зөөгөөд Хэрэглэх товчийг дарна уу."
+
+msgid "Send report"
+msgstr "Мэдэгдэл илгээх"
+
+msgid "Made with"
+msgstr "Бүтээсэн:"
+
+msgid "No"
+msgstr "Үгүй"
+
+msgid "Harassment, threats or hate"
+msgstr "Дарамт, заналхийлэл эсвэл үзэн ядалт"
+
+msgid "All {m} marked — thank you!"
+msgstr "Бүх {m} тэмдэглэгдлээ — баярлалаа!"
+
+msgid "Report this survey"
+msgstr "Энэ судалгааг мэдээлэх"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Нууц үг, нэвтрэх мэдээлэл эсвэл төлбөр шаарддаг"
+
+msgid "Brush size"
+msgstr "Бийрийн хэмжээ"
+
+msgid "Medium brush"
+msgstr "Дунд бийр"
+
+msgid "A few required questions still need an answer."
+msgstr "Зарим заавал хариулах асуултад хариулаагүй байна."
+
+msgid "create your own free map survey"
+msgstr "өөрийн үнэгүй газрын зургийн судалгааг үүсгээрэй"
+
+msgid "Sign in"
+msgstr "Нэвтрэх"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Шүршихийн тулд хуруугаа дарж чирнэ үү. Илүү итгэлтэй газартаа удаан байлгаарай."
+
+msgid "Show all options"
+msgstr "Бүх сонголтыг харуулах"
+
+msgid "Add audio file"
+msgstr "Аудио файл нэмэх"
+
+msgid "Illegal content"
+msgstr "Хууль бус агуулга"
+
+msgid "at least {n} required"
+msgstr "дор хаяж {n} шаардлагатай"
+
+msgid "up to {n} more"
+msgstr "дахиад {n} хүртэл"
+
+msgid "Tap to start the line."
+msgstr "Шугам эхлүүлэхийн тулд товшино уу."
+
+msgid "Tap the first point to close the shape."
+msgstr "Дүрсийг хаахын тулд эхний цэг дээр товшино уу."
+
+msgid "Add photo"
+msgstr "Зураг нэмэх"
+
+msgid "Take photo"
+msgstr "Зураг авах"
+
+msgid "Yes"
+msgstr "Тийм"
+
+msgid "Something else"
+msgstr "Өөр зүйл"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Бийр хоосон байна — үргэлжлүүлэхийн тулд будгаас жаахан арилгана уу."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Mapsurvey судалгаанд хэзээ ч нууц үг эсвэл картын дугаар бүү оруулаарай."
+
+msgid "Large brush"
+msgstr "Том бийр"
+
+msgid "Attach file"
+msgstr "Файл хавсаргах"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Шүршихийн тулд дарж чирнэ үү. Илүү итгэлтэй газартаа удаан байлгаарай."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Хүүхдийн бэлгийн хүчирхийлэл эсвэл мөлжлөг"
+
+msgid "Exposes someone's personal data"
+msgstr "Хэн нэгний хувийн мэдээллийг задруулдаг"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Дээд хязгаарт хүрлээ — өөрчлөхийн тулд доорхоос нэгийг устгана уу."
+
+msgid "Tap to add the next point."
+msgstr "Дараагийн цэгийг нэмэхийн тулд товшино уу."
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s асуулт"
+msgstr[1] "%(n)s асуулт"
+
+msgid "Stop"
+msgstr "Зогсоох"
+
+msgid "Uploading"
+msgstr "Байршуулж байна"
+
+msgid "This field is required."
+msgstr "Энэ талбарыг заавал бөглөнө."

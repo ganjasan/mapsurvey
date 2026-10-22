@@ -980,3 +980,183 @@ msgstr "Sök adress..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Inga resultat hittades"
+
+msgid "Uploading"
+msgstr "Laddar upp"
+
+msgid "This field is required."
+msgstr "Detta fält är obligatoriskt."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Tryck på kartan för att markera en plats — eller använd knappen."
+
+msgid "Send report"
+msgstr "Skicka anmälan"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Något mer vi borde veta? (valfritt)"
+
+msgid "This question is required"
+msgstr "Denna fråga är obligatorisk"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Tryck för att lägga till formens hörn."
+
+msgid "Record"
+msgstr "Spela in"
+
+msgid "{n} of {m} marked"
+msgstr "{n} av {m} markerade"
+
+msgid "Spray"
+msgstr "Spraya"
+
+msgid "Please specify"
+msgstr "Ange"
+
+msgid "Erase"
+msgstr "Sudda"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Ber om ett lösenord, en inloggning eller en betalning"
+
+msgid "Retry"
+msgstr "Försök igen"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Sökningen misslyckades — kontrollera anslutningen och försök igen."
+
+msgid "Questions"
+msgstr "Frågor"
+
+msgid "Add another"
+msgstr "Lägg till en till"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Ser ut som bedrägeri eller utger sig för att vara ett företag"
+
+msgid "Tap to add the next corner."
+msgstr "Tryck för att lägga till nästa hörn."
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "Visa alla alternativ"
+
+msgid "Illegal content"
+msgstr "Olagligt innehåll"
+
+msgid "{n} marked"
+msgstr "{n} markerade"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Flytta kartan för att placera nålen och tryck sedan på Tillämpa."
+
+msgid "Made with"
+msgstr "Skapad med"
+
+msgid "No"
+msgstr "Nej"
+
+msgid "Something else"
+msgstr "Något annat"
+
+msgid "Harassment, threats or hate"
+msgstr "Trakasserier, hot eller hat"
+
+msgid "All {m} marked — thank you!"
+msgstr "Alla {m} markerade — tack!"
+
+msgid "Report this survey"
+msgstr "Anmäl denna undersökning"
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Sexuella övergrepp mot eller exploatering av barn"
+
+msgid "Exposes someone's personal data"
+msgstr "Avslöjar någons personuppgifter"
+
+msgid "Brush size"
+msgstr "Penselstorlek"
+
+msgid "Medium brush"
+msgstr "Mellanstor pensel"
+
+msgid "Tap to add the next point."
+msgstr "Tryck för att lägga till nästa punkt."
+
+msgid "A few required questions still need an answer."
+msgstr "Några obligatoriska frågor saknar fortfarande svar."
+
+msgid "create your own free map survey"
+msgstr "skapa din egen gratis kartenkät"
+
+msgid "Sign in"
+msgstr "Logga in"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Håll ned och dra med fingret för att spraya. Stanna längre där du är säkrare."
+
+msgid "Stop"
+msgstr "Stoppa"
+
+msgid "Add audio file"
+msgstr "Lägg till ljudfil"
+
+msgid "at least {n} required"
+msgstr "minst {n} krävs"
+
+msgid "up to {n} more"
+msgstr "upp till {n} till"
+
+msgid "Tap to start the line."
+msgstr "Tryck för att börja linjen."
+
+msgid "Tap the first point to close the shape."
+msgstr "Tryck på den första punkten för att sluta formen."
+
+msgid "Tap the last point to finish the line."
+msgstr "Tryck på den sista punkten för att avsluta linjen."
+
+msgid "Move map"
+msgstr "Flytta kartan"
+
+msgid "Add photo"
+msgstr "Lägg till foto"
+
+msgid "Take photo"
+msgstr "Ta foto"
+
+msgid "Clear"
+msgstr "Rensa"
+
+msgid "Yes"
+msgstr "Ja"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Penseln är tom — sudda bort lite färg för att fortsätta."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Ange aldrig lösenord eller kortnummer i en Mapsurvey-undersökning."
+
+msgid "Large brush"
+msgstr "Stor pensel"
+
+msgid "Attach file"
+msgstr "Bifoga fil"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Håll ned och dra för att spraya. Stanna längre där du är säkrare."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Maxgränsen nådd — ta bort en nedan för att ändra."
+
+msgid "Small brush"
+msgstr "Liten pensel"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s fråga"
+msgstr[1] "%(n)s frågor"

@@ -6120,7 +6120,7 @@ msgstr ""
 #: survey/templates/maptionnaire_alternative.html:100
 #: survey/templates/maptionnaire_alternative.html:101
 msgid "Yes"
-msgstr ""
+msgstr "Ya"
 
 #: survey/templates/maptionnaire_alternative.html:100
 msgid "Yes — per-question translations"
@@ -6354,7 +6354,7 @@ msgstr ""
 
 #: survey/templates/metroquest_alternative.html:97
 msgid "No"
-msgstr ""
+msgstr "Tidak"
 
 #: survey/templates/metroquest_alternative.html:98
 msgid "Survey structure"
@@ -8017,6 +8017,63 @@ msgstr "Anda sudah menjelaskan proyek Anda — biarkan Wizard membuat draf (~10 
 #: survey/templates/editor/partials/_ai_feedback_strip.html
 msgid "How is the Wizard's draft?"
 msgstr "Bagaimana draf dari Wizard?"
+
+msgid "Erase"
+msgstr "Penghapus"
+
+msgid "Small brush"
+msgstr "Kuas kecil"
+
+msgid "Send report"
+msgstr "Kirim laporan"
+
+msgid "Report this survey"
+msgstr "Laporkan survei ini"
+
+msgid "Medium brush"
+msgstr "Kuas sedang"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Tahan dan geser jari untuk menyemprot. Tahan lebih lama di tempat yang Anda lebih yakini."
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "Tampilkan semua opsi"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Kuas sudah habis — hapus sebagian cat untuk melanjutkan."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Jangan pernah memasukkan kata sandi atau nomor kartu dalam survei Mapsurvey."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Tahan dan geser untuk menyemprot. Tahan lebih lama di tempat yang Anda lebih yakini."
+
+msgid "Brush size"
+msgstr "Ukuran kuas"
+
+msgid "This field is required."
+msgstr "Kolom ini wajib diisi."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Ketuk peta untuk menandai tempat — atau gunakan tombolnya."
+
+msgid "Move map"
+msgstr "Geser peta"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Ada hal lain yang perlu kami ketahui? (opsional)"
+
+msgid "Spray"
+msgstr "Semprot"
+
+msgid "Large brush"
+msgstr "Kuas besar"
+
+msgid "Please specify"
+msgstr "Sebutkan"
 
 #: api/templates/api/connections.html
 msgid "API & connections"
