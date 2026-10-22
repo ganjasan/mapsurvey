@@ -8074,3 +8074,151 @@ msgstr "Kuas besar"
 
 msgid "Please specify"
 msgstr "Sebutkan"
+
+#: api/templates/api/connections.html
+msgid "API & connections"
+msgstr "API & koneksi"
+
+#: api/templates/api/connections.html
+msgid "Personal access tokens"
+msgstr "Token akses pribadi"
+
+#: api/templates/api/connections.html
+msgid "A token lets a script, a GIS tool or an AI agent act as you — within the permissions you pick, on the workspaces you allow, and only while the workspace that owns the survey is on Pro."
+msgstr "Token memungkinkan skrip, alat GIS, atau agen AI bertindak atas nama Anda — dalam izin yang Anda pilih, di ruang kerja yang Anda izinkan, dan hanya selama ruang kerja pemilik survei berada di Pro."
+
+#: api/templates/api/connections.html
+msgid "Your workspaces are on the Free plan. You can create tokens now; API calls on a survey will answer <code>pro_required</code> until that survey's workspace upgrades to Pro."
+msgstr "Ruang kerja Anda berada di paket Free. Anda sudah bisa membuat token; panggilan API pada survei akan menjawab <code>pro_required</code> sampai ruang kerja survei itu naik ke Pro."
+
+#: api/templates/api/connections.html
+msgid "Token “%(label)s” created."
+msgstr "Token “%(label)s” dibuat."
+
+#: api/templates/api/connections.html
+msgid "Copy it now: this is the only time it is shown. Lost it? Revoke this one and create another."
+msgstr "Salin sekarang: ini satu-satunya kali token ditampilkan. Hilang? Cabut yang ini dan buat yang baru."
+
+#: api/forms.py
+msgid "Permissions"
+msgstr "Izin"
+
+#: api/forms.py
+msgid "Workspace"
+msgstr "Ruang kerja"
+
+#: api/forms.py
+msgid "Expires"
+msgstr "Berakhir"
+
+#: api/templates/api/connections.html
+msgid "Last used"
+msgstr "Terakhir dipakai"
+
+#: api/templates/api/connections.html
+msgid "Expired"
+msgstr "Kedaluwarsa"
+
+#: api/forms.py
+msgid "REST API"
+msgstr "REST API"
+
+#: api/forms.py
+msgid "MCP server"
+msgstr "Server MCP"
+
+#: api/forms.py
+msgid "All my workspaces"
+msgstr "Semua ruang kerja saya"
+
+#: api/forms.py
+msgid "Never"
+msgstr "Tidak pernah"
+
+#: api/templates/api/connections.html
+msgid "created"
+msgstr "dibuat pada"
+
+#: api/templates/api/connections.html
+msgid "ago"
+msgstr "yang lalu"
+
+#: api/templates/api/connections.html
+msgid "never"
+msgstr "tidak pernah"
+
+#: api/templates/api/connections.html
+msgid "Revoke this token? Anything using it stops working at once."
+msgstr "Cabut token ini? Semua yang memakainya langsung berhenti bekerja."
+
+#: api/templates/api/connections.html
+msgid "Revoke"
+msgstr "Cabut"
+
+#: api/templates/api/connections.html
+msgid "No tokens yet."
+msgstr "Belum ada token."
+
+#: api/templates/api/connections.html
+msgid "New token"
+msgstr "Token baru"
+
+#: api/templates/api/connections.html
+msgid "Publishing and deleting are off unless you switch them on: those calls cannot be undone."
+msgstr "Menerbitkan dan menghapus nonaktif kecuali Anda mengaktifkannya: panggilan itu tidak bisa dibatalkan."
+
+#: api/templates/api/connections.html
+msgid "Create token"
+msgstr "Buat token"
+
+#: api/templates/api/connections.html
+msgid "Connected apps"
+msgstr "Aplikasi terhubung"
+
+#: api/templates/api/connections.html
+msgid "Apps you sign in to with your Mapsurvey account — ChatGPT, Claude and others — will be listed here once that is available. Today, give them a personal token."
+msgstr "Aplikasi yang Anda masuki dengan akun Mapsurvey — ChatGPT, Claude, dan lainnya — akan tercantum di sini setelah tersedia. Untuk saat ini, berikan mereka token pribadi."
+
+#: api/forms.py
+msgid "What this token is for, e.g. \"QGIS plug-in\" or \"Claude Code\"."
+msgstr "Untuk apa token ini, mis. \"plug-in QGIS\" atau \"Claude Code\"."
+
+#: api/forms.py
+msgid "Use with"
+msgstr "Gunakan dengan"
+
+#: api/forms.py
+msgid "90 days"
+msgstr "90 hari"
+
+#: api/forms.py
+msgid "1 year"
+msgstr "1 tahun"
+
+#: api/forms.py
+msgid "Choose one of your workspaces."
+msgstr "Pilih salah satu ruang kerja Anda."
+
+#: api/scopes.py
+msgid "Read surveys, sections and questions"
+msgstr "Membaca survei, bagian, dan pertanyaan"
+
+#: api/scopes.py
+msgid "Create and edit surveys, sections and questions"
+msgstr "Membuat dan mengedit survei, bagian, dan pertanyaan"
+
+#: api/scopes.py
+msgid "Publish, close and reopen surveys"
+msgstr "Menerbitkan, menutup, dan membuka kembali survei"
+
+#: api/scopes.py
+msgid "Delete surveys"
+msgstr "Menghapus survei"
+
+#: api/scopes.py
+msgid "Read and export responses"
+msgstr "Membaca dan mengekspor jawaban"
+
+#: billing/features.py
+msgid "REST API, MCP server and personal access tokens"
+msgstr "REST API, server MCP, dan token akses pribadi"

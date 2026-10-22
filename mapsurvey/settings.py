@@ -64,6 +64,10 @@ INSTALLED_APPS = [
     'django.contrib.gis',
     'survey.apps.SurveyConfig',
     'billing.apps.BillingConfig',
+    # Token store + (from #313) the OAuth 2.1 server, and the authorization layer
+    # over it (change auth-core, #379). Settings block: OAUTH2_PROVIDER below.
+    'oauth2_provider',
+    'api.apps.ApiConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -559,6 +563,19 @@ def _posthog_scrub_tags(tags):
             if '$current_url' in tags:
                 tags['$current_url'] = prefix
             break
+    # Token-authenticated paths (change auth-core): a bearer value must never
+    # become a tag. The SDK does not emit headers today; this is the guard for
+    # the day it does, or for a tag we have not met. Keep what names the
+    # request, drop anything header-shaped everywhere, and on API paths keep
+    # nothing but path and method.
+    for tag_name in list(tags):
+        lowered = tag_name.lower()
+        if 'authorization' in lowered or 'header' in lowered or 'cookie' in lowered:
+            tags.pop(tag_name, None)
+    if path.startswith(API_PATH_PREFIXES):
+        kept = {k: tags[k] for k in ('$request_path', '$request_method') if k in tags}
+        tags.clear()
+        tags.update(kept)
     return tags
 
 
@@ -721,6 +738,59 @@ CACHES = {
 # than locking everyone out. Honeypot + Turnstile remain in effect.
 DJANGO_REDIS_IGNORE_EXCEPTIONS = True
 RATELIMIT_FAIL_OPEN = True
+
+# --- API platform: token store and OAuth 2.1 (change auth-core, #379; epic #378) ---
+# django-oauth-toolkit holds every token we issue (personal tokens now, OAuth
+# grants from #313) and nothing else: `api.auth.authenticate` is the only reader.
+# The block pins RFC 9700 (OAuth 2.0 Security BCP) on purpose and in full --
+# the toolkit's own system check (`oauth2_provider.*`, deploy tag) turns any
+# drift back to an insecure default into an error, and `api.tests.test_settings`
+# runs that check so it fails the suite rather than a `check --deploy` nobody runs.
+from api import scopes as _api_scopes  # noqa: E402 -- no models, safe at settings time
+
+# The toolkit's models are swappable; a foreign key to one (api.TokenProfile)
+# makes the migration autodetector read these names, so they are spelled out.
+OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
+OAUTH2_PROVIDER_ACCESS_TOKEN_MODEL = 'oauth2_provider.AccessToken'
+OAUTH2_PROVIDER_ID_TOKEN_MODEL = 'oauth2_provider.IDToken'
+OAUTH2_PROVIDER_GRANT_MODEL = 'oauth2_provider.Grant'
+OAUTH2_PROVIDER_REFRESH_TOKEN_MODEL = 'oauth2_provider.RefreshToken'
+
+OAUTH2_PROVIDER = {
+    'SCOPES': dict(_api_scopes.SCOPES),
+    'DEFAULT_SCOPES': [_api_scopes.SURVEYS_READ],
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 3600,
+    'REFRESH_TOKEN_EXPIRE_SECONDS': 60 * 60 * 24 * 90,
+    # Hashed at rest: a database read discloses no usable token. Incompatible
+    # with a refresh grace period, hence 0.
+    'COMPLIANT_BCP_RFC9700_TOKEN_STORAGE': True,
+    'REFRESH_TOKEN_GRACE_PERIOD_SECONDS': 0,
+    'REFRESH_TOKEN_REUSE_PROTECTION': True,
+    'ROTATE_REFRESH_TOKEN': True,
+    # PKCE S256 for every client; `plain` refused.
+    'PKCE_REQUIRED': True,
+    'COMPLIANT_BCP_RFC9700_PKCE_METHOD': True,
+    'COMPLIANT_BCP_RFC9700_PKCE_REQUIRED': True,
+    'COMPLIANT_BCP_RFC9700_IMPLICIT_GRANT': True,
+    'COMPLIANT_BCP_RFC9700_PASSWORD_GRANT': True,
+    'COMPLIANT_BCP_RFC9700_ACCESS_TOKEN_TRANSPORT': True,
+    'COMPLIANT_BCP_RFC9700_AUTHZ_RESPONSE_ISS': True,
+    'COMPLIANT_BCP_RFC9700_REFRESH_TOKEN': True,
+    'COMPLIANT_BCP_RFC9700_REDIRECT_URI_SCHEME': True,
+    'COMPLIANT_BCP_RFC9700_REDIRECT_URI_MATCHING': True,
+    # https only; #313 adds the loopback exception for Claude Code with a
+    # validator of its own, not by widening this list.
+    'ALLOWED_REDIRECT_URI_SCHEMES': ['https'],
+    'ALLOW_URI_WILDCARDS': False,
+}
+
+# Paths whose error capture keeps only the path and the method: a bearer
+# header must never ride along as a tag (see _posthog_scrub_tags).
+API_PATH_PREFIXES = ('/api/', '/mcp/', '/oauth/')
+# Per-environment override of api.limits.DEFAULT_LIMITS / DAILY_CAPS, by group
+# name: {'api.write': (10, 60), 'cap.survey_create': (3, 86400)}. Previews and
+# tests only; production runs the defaults.
+API_RATE_LIMITS = {}
 
 # Abuse prevention — Cloudflare Turnstile + per-IP rate limit + honeypot
 # on /accounts/register/. See openspec/changes/add-registration-abuse-defenses/.

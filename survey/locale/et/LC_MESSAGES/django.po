@@ -8034,3 +8034,151 @@ msgstr "Kustuta"
 
 msgid "Small brush"
 msgstr "Väike pintsel"
+
+#: api/templates/api/connections.html
+msgid "API & connections"
+msgstr "API ja ühendused"
+
+#: api/templates/api/connections.html
+msgid "Personal access tokens"
+msgstr "Isiklikud juurdepääsutõendid"
+
+#: api/templates/api/connections.html
+msgid "A token lets a script, a GIS tool or an AI agent act as you — within the permissions you pick, on the workspaces you allow, and only while the workspace that owns the survey is on Pro."
+msgstr "Tõend lubab skriptil, GIS-tööriistal või tehisaruagendil tegutseda sinu nimel — valitud õiguste piires, lubatud tööruumides ja ainult seni, kuni küsitluse omaniku tööruum on Pro-plaanil."
+
+#: api/templates/api/connections.html
+msgid "Your workspaces are on the Free plan. You can create tokens now; API calls on a survey will answer <code>pro_required</code> until that survey's workspace upgrades to Pro."
+msgstr "Sinu tööruumid on Free-plaanil. Tõendeid saad luua juba praegu; küsitlust puudutavad API-päringud vastavad <code>pro_required</code>, kuni selle küsitluse tööruum läheb üle Pro-plaanile."
+
+#: api/templates/api/connections.html
+msgid "Token “%(label)s” created."
+msgstr "Tõend „%(label)s“ loodud."
+
+#: api/templates/api/connections.html
+msgid "Copy it now: this is the only time it is shown. Lost it? Revoke this one and create another."
+msgstr "Kopeeri see kohe: seda näidatakse ainult üks kord. Kadunud? Tühista see ja loo uus."
+
+#: api/forms.py
+msgid "Permissions"
+msgstr "Õigused"
+
+#: api/forms.py
+msgid "Workspace"
+msgstr "Tööruum"
+
+#: api/forms.py
+msgid "Expires"
+msgstr "Aegub"
+
+#: api/templates/api/connections.html
+msgid "Last used"
+msgstr "Viimati kasutatud"
+
+#: api/templates/api/connections.html
+msgid "Expired"
+msgstr "Aegunud"
+
+#: api/forms.py
+msgid "REST API"
+msgstr "REST API"
+
+#: api/forms.py
+msgid "MCP server"
+msgstr "MCP-server"
+
+#: api/forms.py
+msgid "All my workspaces"
+msgstr "Kõik minu tööruumid"
+
+#: api/forms.py
+msgid "Never"
+msgstr "Mitte kunagi"
+
+#: api/templates/api/connections.html
+msgid "created"
+msgstr "loodud"
+
+#: api/templates/api/connections.html
+msgid "ago"
+msgstr "tagasi"
+
+#: api/templates/api/connections.html
+msgid "never"
+msgstr "mitte kunagi"
+
+#: api/templates/api/connections.html
+msgid "Revoke this token? Anything using it stops working at once."
+msgstr "Kas tühistada see tõend? Kõik, mis seda kasutab, lakkab kohe töötamast."
+
+#: api/templates/api/connections.html
+msgid "Revoke"
+msgstr "Tühista"
+
+#: api/templates/api/connections.html
+msgid "No tokens yet."
+msgstr "Tõendeid veel pole."
+
+#: api/templates/api/connections.html
+msgid "New token"
+msgstr "Uus tõend"
+
+#: api/templates/api/connections.html
+msgid "Publishing and deleting are off unless you switch them on: those calls cannot be undone."
+msgstr "Avaldamine ja kustutamine on väljas, kuni sa need sisse lülitad: neid päringuid ei saa tagasi võtta."
+
+#: api/templates/api/connections.html
+msgid "Create token"
+msgstr "Loo tõend"
+
+#: api/templates/api/connections.html
+msgid "Connected apps"
+msgstr "Ühendatud rakendused"
+
+#: api/templates/api/connections.html
+msgid "Apps you sign in to with your Mapsurvey account — ChatGPT, Claude and others — will be listed here once that is available. Today, give them a personal token."
+msgstr "Rakendused, kuhu sa Mapsurvey kontoga sisse logid — ChatGPT, Claude ja teised — ilmuvad siia, kui see võimalus on olemas. Praegu anna neile isiklik tõend."
+
+#: api/forms.py
+msgid "What this token is for, e.g. \"QGIS plug-in\" or \"Claude Code\"."
+msgstr "Milleks see tõend on, nt „QGIS-i pistikprogramm“ või „Claude Code“."
+
+#: api/forms.py
+msgid "Use with"
+msgstr "Kasuta koos"
+
+#: api/forms.py
+msgid "90 days"
+msgstr "90 päeva"
+
+#: api/forms.py
+msgid "1 year"
+msgstr "1 aasta"
+
+#: api/forms.py
+msgid "Choose one of your workspaces."
+msgstr "Vali üks oma tööruumidest."
+
+#: api/scopes.py
+msgid "Read surveys, sections and questions"
+msgstr "Küsitluste, jaotiste ja küsimuste lugemine"
+
+#: api/scopes.py
+msgid "Create and edit surveys, sections and questions"
+msgstr "Küsitluste, jaotiste ja küsimuste loomine ja muutmine"
+
+#: api/scopes.py
+msgid "Publish, close and reopen surveys"
+msgstr "Küsitluste avaldamine, sulgemine ja taasavamine"
+
+#: api/scopes.py
+msgid "Delete surveys"
+msgstr "Küsitluste kustutamine"
+
+#: api/scopes.py
+msgid "Read and export responses"
+msgstr "Vastuste lugemine ja eksport"
+
+#: billing/features.py
+msgid "REST API, MCP server and personal access tokens"
+msgstr "REST API, MCP-server ja isiklikud juurdepääsutõendid"

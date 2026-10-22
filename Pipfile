@@ -32,6 +32,10 @@ boto3 = "*"
 pillow = "~=11.3"
 celery = {extras = ["redis"], version = "*"}
 django-ratelimit = "*"
+# Token store and, from #313, the OAuth 2.1 authorization server (change auth-core, #379).
+# ~=3.4: the RFC 9700 gates and hashed token storage arrived in 3.x; 4.0 flips their
+# defaults, which our explicit settings block already pins.
+django-oauth-toolkit = "~=3.4"
 django-redis = "*"
 requests = "*"
 google-api-python-client = "*"

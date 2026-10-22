@@ -1530,6 +1530,11 @@ class AuditLog(models.Model):
         ('password_remove', 'Survey password removed'),
         ('token_regenerate', 'Test token regenerated'),
         ('content_screen_close', 'Survey closed after a confirmed phishing review'),
+        # Personal API tokens (change auth-core, #379): no target survey;
+        # metadata carries the token id, label, scopes, audiences and expiry --
+        # never the value.
+        ('api_token_create', 'Personal API token created'),
+        ('api_token_revoke', 'Personal API token revoked'),
     )
 
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)

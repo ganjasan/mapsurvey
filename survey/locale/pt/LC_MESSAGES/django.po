@@ -8120,3 +8120,151 @@ msgstr "Tamanho do pincel"
 
 msgid "Medium brush"
 msgstr "Pincel médio"
+
+#: api/templates/api/connections.html
+msgid "API & connections"
+msgstr "API e conexões"
+
+#: api/templates/api/connections.html
+msgid "Personal access tokens"
+msgstr "Tokens de acesso pessoais"
+
+#: api/templates/api/connections.html
+msgid "A token lets a script, a GIS tool or an AI agent act as you — within the permissions you pick, on the workspaces you allow, and only while the workspace that owns the survey is on Pro."
+msgstr "Um token permite que um script, uma ferramenta SIG ou um agente de IA aja em seu nome — dentro das permissões escolhidas, nos espaços de trabalho autorizados e apenas enquanto o espaço de trabalho dono do questionário estiver no Pro."
+
+#: api/templates/api/connections.html
+msgid "Your workspaces are on the Free plan. You can create tokens now; API calls on a survey will answer <code>pro_required</code> until that survey's workspace upgrades to Pro."
+msgstr "Os seus espaços de trabalho estão no plano Free. Pode criar tokens já; as chamadas à API sobre um questionário responderão <code>pro_required</code> até que o seu espaço de trabalho passe ao Pro."
+
+#: api/templates/api/connections.html
+msgid "Token “%(label)s” created."
+msgstr "Token «%(label)s» criado."
+
+#: api/templates/api/connections.html
+msgid "Copy it now: this is the only time it is shown. Lost it? Revoke this one and create another."
+msgstr "Copie-o agora: só é mostrado desta vez. Perdeu-o? Revogue este e crie outro."
+
+#: api/forms.py
+msgid "Permissions"
+msgstr "Permissões"
+
+#: api/forms.py
+msgid "Workspace"
+msgstr "Espaço de trabalho"
+
+#: api/forms.py
+msgid "Expires"
+msgstr "Expira"
+
+#: api/templates/api/connections.html
+msgid "Last used"
+msgstr "Última utilização"
+
+#: api/templates/api/connections.html
+msgid "Expired"
+msgstr "Expirado"
+
+#: api/forms.py
+msgid "REST API"
+msgstr "API REST"
+
+#: api/forms.py
+msgid "MCP server"
+msgstr "Servidor MCP"
+
+#: api/forms.py
+msgid "All my workspaces"
+msgstr "Todos os meus espaços de trabalho"
+
+#: api/forms.py
+msgid "Never"
+msgstr "Nunca"
+
+#: api/templates/api/connections.html
+msgid "created"
+msgstr "criado"
+
+#: api/templates/api/connections.html
+msgid "ago"
+msgstr "atrás"
+
+#: api/templates/api/connections.html
+msgid "never"
+msgstr "nunca"
+
+#: api/templates/api/connections.html
+msgid "Revoke this token? Anything using it stops working at once."
+msgstr "Revogar este token? Tudo o que o utiliza deixa de funcionar de imediato."
+
+#: api/templates/api/connections.html
+msgid "Revoke"
+msgstr "Revogar"
+
+#: api/templates/api/connections.html
+msgid "No tokens yet."
+msgstr "Ainda não há tokens."
+
+#: api/templates/api/connections.html
+msgid "New token"
+msgstr "Novo token"
+
+#: api/templates/api/connections.html
+msgid "Publishing and deleting are off unless you switch them on: those calls cannot be undone."
+msgstr "Publicar e eliminar estão desligados a menos que os ative: essas chamadas não podem ser anuladas."
+
+#: api/templates/api/connections.html
+msgid "Create token"
+msgstr "Criar token"
+
+#: api/templates/api/connections.html
+msgid "Connected apps"
+msgstr "Aplicações ligadas"
+
+#: api/templates/api/connections.html
+msgid "Apps you sign in to with your Mapsurvey account — ChatGPT, Claude and others — will be listed here once that is available. Today, give them a personal token."
+msgstr "As aplicações em que inicia sessão com a sua conta Mapsurvey — ChatGPT, Claude e outras — aparecerão aqui quando isso estiver disponível. Por agora, dê-lhes um token pessoal."
+
+#: api/forms.py
+msgid "What this token is for, e.g. \"QGIS plug-in\" or \"Claude Code\"."
+msgstr "Para que serve este token, p. ex. «plug-in QGIS» ou «Claude Code»."
+
+#: api/forms.py
+msgid "Use with"
+msgstr "Usar com"
+
+#: api/forms.py
+msgid "90 days"
+msgstr "90 dias"
+
+#: api/forms.py
+msgid "1 year"
+msgstr "1 ano"
+
+#: api/forms.py
+msgid "Choose one of your workspaces."
+msgstr "Escolha um dos seus espaços de trabalho."
+
+#: api/scopes.py
+msgid "Read surveys, sections and questions"
+msgstr "Ler questionários, secções e perguntas"
+
+#: api/scopes.py
+msgid "Create and edit surveys, sections and questions"
+msgstr "Criar e editar questionários, secções e perguntas"
+
+#: api/scopes.py
+msgid "Publish, close and reopen surveys"
+msgstr "Publicar, fechar e reabrir questionários"
+
+#: api/scopes.py
+msgid "Delete surveys"
+msgstr "Eliminar questionários"
+
+#: api/scopes.py
+msgid "Read and export responses"
+msgstr "Ler e exportar respostas"
+
+#: billing/features.py
+msgid "REST API, MCP server and personal access tokens"
+msgstr "API REST, servidor MCP e tokens de acesso pessoais"

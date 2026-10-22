@@ -15,6 +15,7 @@ Plans are per organisation (your workspace). The organisation owner sees them un
 | Question types, map questions, reference layers, exports, public results, embedding, translations | All | All |
 | **Remove "Made with Mapsurvey" from your surveys** | — | Yes: the **Show the "Made with Mapsurvey" badge** switch in survey settings becomes editable |
 | **Consulting, analysis and reports from the Mapsurvey team** | — | Yes: the **Pro help** request form in the account menu |
+| **REST API, MCP server and personal access tokens** | Tokens can be created; calls answer `pro_required` | Yes: calls on the workspace's surveys work — see [Create a personal access token](/how-to/personal-tokens/) |
 
 Everything that is free today stays free. Pro is a service plan: direct access to the Mapsurvey team for project consulting, analysis of your responses and reports for councils, clients and funders, plus a clean, unbranded survey.
 
@@ -71,5 +72,6 @@ You can cancel at any time. The organisation keeps Pro until the end of the peri
 ## Related
 
 - [Upgrade to Pro](/how-to/upgrade-to-pro/)
+- [Create a personal access token](/how-to/personal-tokens/) — the API is a Pro feature
 - [Survey settings](/reference/survey-settings/) — the badge switch
 - [Sharing and access](/reference/sharing-and-access/) — organisation roles

@@ -8093,3 +8093,151 @@ msgstr "Houd ingedrukt en sleep om te sprayen. Blijf langer waar u zekerder bent
 
 msgid "This field is required."
 msgstr "Dit veld is verplicht."
+
+#: api/templates/api/connections.html
+msgid "API & connections"
+msgstr "API & verbindingen"
+
+#: api/templates/api/connections.html
+msgid "Personal access tokens"
+msgstr "Persoonlijke toegangstokens"
+
+#: api/templates/api/connections.html
+msgid "A token lets a script, a GIS tool or an AI agent act as you — within the permissions you pick, on the workspaces you allow, and only while the workspace that owns the survey is on Pro."
+msgstr "Met een token kan een script, een GIS-tool of een AI-agent namens u handelen — binnen de gekozen rechten, in de toegestane werkruimten en alleen zolang de werkruimte die de enquête bezit op Pro zit."
+
+#: api/templates/api/connections.html
+msgid "Your workspaces are on the Free plan. You can create tokens now; API calls on a survey will answer <code>pro_required</code> until that survey's workspace upgrades to Pro."
+msgstr "Uw werkruimten zitten op het Free-plan. U kunt nu tokens aanmaken; API-aanroepen op een enquête antwoorden <code>pro_required</code> totdat de werkruimte van die enquête naar Pro overgaat."
+
+#: api/templates/api/connections.html
+msgid "Token “%(label)s” created."
+msgstr "Token ‘%(label)s’ aangemaakt."
+
+#: api/templates/api/connections.html
+msgid "Copy it now: this is the only time it is shown. Lost it? Revoke this one and create another."
+msgstr "Kopieer het nu: dit is de enige keer dat het wordt getoond. Kwijt? Trek dit token in en maak een nieuw aan."
+
+#: api/forms.py
+msgid "Permissions"
+msgstr "Rechten"
+
+#: api/forms.py
+msgid "Workspace"
+msgstr "Werkruimte"
+
+#: api/forms.py
+msgid "Expires"
+msgstr "Verloopt"
+
+#: api/templates/api/connections.html
+msgid "Last used"
+msgstr "Laatst gebruikt"
+
+#: api/templates/api/connections.html
+msgid "Expired"
+msgstr "Verlopen"
+
+#: api/forms.py
+msgid "REST API"
+msgstr "REST-API"
+
+#: api/forms.py
+msgid "MCP server"
+msgstr "MCP-server"
+
+#: api/forms.py
+msgid "All my workspaces"
+msgstr "Al mijn werkruimten"
+
+#: api/forms.py
+msgid "Never"
+msgstr "Nooit"
+
+#: api/templates/api/connections.html
+msgid "created"
+msgstr "aangemaakt"
+
+#: api/templates/api/connections.html
+msgid "ago"
+msgstr "geleden"
+
+#: api/templates/api/connections.html
+msgid "never"
+msgstr "nooit"
+
+#: api/templates/api/connections.html
+msgid "Revoke this token? Anything using it stops working at once."
+msgstr "Dit token intrekken? Alles wat het gebruikt stopt meteen met werken."
+
+#: api/templates/api/connections.html
+msgid "Revoke"
+msgstr "Intrekken"
+
+#: api/templates/api/connections.html
+msgid "No tokens yet."
+msgstr "Nog geen tokens."
+
+#: api/templates/api/connections.html
+msgid "New token"
+msgstr "Nieuw token"
+
+#: api/templates/api/connections.html
+msgid "Publishing and deleting are off unless you switch them on: those calls cannot be undone."
+msgstr "Publiceren en verwijderen staan uit tenzij u ze inschakelt: die aanroepen zijn niet terug te draaien."
+
+#: api/templates/api/connections.html
+msgid "Create token"
+msgstr "Token aanmaken"
+
+#: api/templates/api/connections.html
+msgid "Connected apps"
+msgstr "Gekoppelde apps"
+
+#: api/templates/api/connections.html
+msgid "Apps you sign in to with your Mapsurvey account — ChatGPT, Claude and others — will be listed here once that is available. Today, give them a personal token."
+msgstr "Apps waarbij u zich aanmeldt met uw Mapsurvey-account — ChatGPT, Claude en andere — verschijnen hier zodra dat beschikbaar is. Geef ze vandaag een persoonlijk token."
+
+#: api/forms.py
+msgid "What this token is for, e.g. \"QGIS plug-in\" or \"Claude Code\"."
+msgstr "Waar dit token voor is, bv. ‘QGIS-plug-in’ of ‘Claude Code’."
+
+#: api/forms.py
+msgid "Use with"
+msgstr "Gebruiken met"
+
+#: api/forms.py
+msgid "90 days"
+msgstr "90 dagen"
+
+#: api/forms.py
+msgid "1 year"
+msgstr "1 jaar"
+
+#: api/forms.py
+msgid "Choose one of your workspaces."
+msgstr "Kies een van uw werkruimten."
+
+#: api/scopes.py
+msgid "Read surveys, sections and questions"
+msgstr "Enquêtes, secties en vragen lezen"
+
+#: api/scopes.py
+msgid "Create and edit surveys, sections and questions"
+msgstr "Enquêtes, secties en vragen aanmaken en bewerken"
+
+#: api/scopes.py
+msgid "Publish, close and reopen surveys"
+msgstr "Enquêtes publiceren, sluiten en heropenen"
+
+#: api/scopes.py
+msgid "Delete surveys"
+msgstr "Enquêtes verwijderen"
+
+#: api/scopes.py
+msgid "Read and export responses"
+msgstr "Antwoorden lezen en exporteren"
+
+#: billing/features.py
+msgid "REST API, MCP server and personal access tokens"
+msgstr "REST-API, MCP-server en persoonlijke toegangstokens"

@@ -65,6 +65,12 @@ STRUCTURE_GATE_SHOWN = 'structure_gate_shown'               # browser: the promp
 # the survey was made (`surface`) and where its map came from (`map_source`);
 # the agent event is the demand signal for the MCP server (#306).
 AGENT_ACCESS_REQUESTED = 'agent_access_requested'
+
+# Personal API tokens (change auth-core, #379). Properties are scopes, audiences
+# and the expiry choice -- never the label (free text) and never the value.
+API_TOKEN_CREATED = 'api_token_created'
+API_TOKEN_REVOKED = 'api_token_revoked'
+API_TOKEN_FIRST_USE = 'api_token_first_use'   # once per token, when last_used_at leaves null
 SURFACE_START_BLANK = 'start_blank'     # one-click form on /editor/surveys/start/
 SURFACE_CREATE_PAGE = 'create_page'     # either action of /editor/surveys/new/
 MAP_SOURCE_CREATOR = 'creator'          # the creator framed the create-page map
