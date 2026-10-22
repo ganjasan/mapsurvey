@@ -56,4 +56,4 @@
 
 - [x] 8.1 `./run_tests.sh api -v2` and `./run_tests.sh billing survey` green; `LayerMemoryDietTest` and `RepoHygieneTest` untouched
 - [x] 8.2 `/verify`: mint a token on the dev server, `curl -H "Authorization: Bearer msk_…" /api/v1/me` on a Free and a Pro workspace, revoke, confirm 401; cookie-only request to `/api/v1/me` is 401
-- [ ] 8.3 Update #379 with the checklist ticked and open the PR against `master` (no `[render preview]` unless asked)
+- [x] 8.3 Update #379 with the checklist ticked and open the PR against `master` (no `[render preview]` unless asked)
