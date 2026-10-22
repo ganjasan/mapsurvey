@@ -434,8 +434,11 @@
     // also fired a settings POST it was not part of — so a validation error
     // from an unrelated field landed under the switch the creator had just
     // touched and read as "the geolocation setting failed to save".
+    // The language picker's search box is a filter, not a field: its blur used
+    // to save the OLD languages just before the click that picked one (#391).
+    // The picker posts through the hidden input's change event instead.
     var autosave = PanelAutosave.attach(form, {
-        exclude: '#ref-layers-card input, #ref-layers-card select, #ref-layers-card textarea, #survey-use-geolocation',
+        exclude: '#ref-layers-card input, #ref-layers-card select, #ref-layers-card textarea, #survey-use-geolocation, #lang-search',
         labels: {
             saving: '{{ lbl_saving|escapejs }}',
             saved: '{{ lbl_saved|escapejs }}',

@@ -52,6 +52,15 @@
         hiddenInput.value = JSON.stringify(selected);
     }
 
+    // A script write to a hidden input fires no event, and the Survey settings
+    // panel saves only on events: without this a picked language was never
+    // posted (#391). Only the creator's add/remove calls it -- the initial
+    // sync() below must not save the panel on every open.
+    function changed() {
+        sync();
+        hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
     function renderTags() {
         box.querySelectorAll('.lang-tag').forEach(function(t) { t.remove(); });
         selected.forEach(function(code) {
@@ -61,7 +70,7 @@
             tag.innerHTML = '<span>' + code.toUpperCase() + (lang ? ' \u2014 ' + lang.name : '') + '</span><button type="button">&times;</button>';
             tag.querySelector('button').addEventListener('click', function() {
                 selected = selected.filter(function(c) { return c !== code; });
-                sync(); renderTags(); renderDropdown();
+                changed(); renderTags(); renderDropdown();
             });
             box.insertBefore(tag, searchInput);
         });
@@ -82,7 +91,7 @@
                 } else {
                     selected.push(lang.code);
                 }
-                sync(); renderTags();
+                changed(); renderTags();
                 searchInput.value = '';
                 renderDropdown();
                 searchInput.focus();

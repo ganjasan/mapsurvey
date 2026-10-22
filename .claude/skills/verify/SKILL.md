@@ -8,7 +8,7 @@ description: Run this repo's app locally to observe a change at its surface (mar
 ## Fresh worktree bootstrap (all four, or the run hangs silently)
 
 ```bash
-ln -s /home/artem/Documents/Projects/Mapsurvey/env env    # venv is gitignored; Python 3.9 / Django 4.2
+ln -s /home/artem/Documents/Projects/Mapsurvey/env env    # venv is gitignored; Python 3.12 / Django 5.2 (a 3.9 branch: ../Mapsurvey/env39)
 cp ../Mapsurvey/.env .env                                   # docker-compose needs it; without it pg_isready loops forever with NO output
 cp .env.ports.example .env.ports                            # then set a PORT_OFFSET nobody has bound:
 used=$(docker ps --format "{{.Ports}}" | grep -oE "0.0.0.0:5[0-9]{3}" | grep -oE "[0-9]{4}$" | sort -u)
