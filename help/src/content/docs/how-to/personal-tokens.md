@@ -63,7 +63,7 @@ answering API calls until it returns — the token itself stays valid.
 
 Each token may make 600 reads and 60 writes a minute and 5 000 calls a day, with separate daily
 caps on creating (50) and deleting (20) surveys. Over the limit you get `429 rate_limited` with a
-`Retry-After` header. If a tool needs more, [tell us](/faq/#contact).
+`Retry-After` header. If a tool needs more, [tell us](/faq/#what-are-the-uptime-and-support-arrangements).
 
 ## Security notes
 
