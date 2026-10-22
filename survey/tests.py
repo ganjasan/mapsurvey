@@ -54812,6 +54812,20 @@ class TapToPlaceTest(TestCase):
         self.assertIn("map.on('dblclick'", html)
         self.assertIn('button.drawpoint[data-tap-to-place]', html)
 
+    def test_point_marks_stay_clickable_without_an_icon_class(self):
+        """
+        GIVEN a point question with no icon_class (the button carries data-icon="")
+        WHEN the respondent page script is inspected
+        THEN every new mark falls back to the default pin — L.Icon.FontAwesome
+             given no class draws an empty clickable icon, leaving only the
+             non-interactive shadow visible, so the mark could not be opened —
+             and a tap on any pin graphic never drops a second mark
+        """
+        html = self._respondent_html()
+        self.assertIn('data-icon=""', html)
+        self.assertIn("iconClasses: iconClass || 'fas fa-map-marker-alt'", html)
+        self.assertIn('.leaflet-fa-markers, .leaflet-popup', html)
+
     # ── editor ──
 
     def test_edit_saves_the_switch_in_place_on_a_live_survey(self):

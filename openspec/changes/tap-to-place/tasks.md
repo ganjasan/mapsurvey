@@ -26,3 +26,4 @@
 - [x] 5.1 Tests (GIVEN/WHEN/THEN): default off; non-point forced off; rule with 1 vs 2 geo questions and sub-questions; respondent HTML attribute + hint present/absent; ZIP round trip and old archive; live-survey toggle is in place
 - [x] 5.2 Browser check on the dev server: tap places + pop-up, double-click zoom no mark, cap, second geo question disables, button still works
 - [x] 5.3 Changelog entry `survey/changelog/<date>-tap-to-place.html`
+- [x] 5.4 Owner review: marks placed with the button could not be opened. A question without `icon_class` passes `data-icon=""`, and `L.Icon.FontAwesome` given no class draws an empty clickable icon while the pin shows only in the non-interactive shadow pane. The bug predates this change; with tap-to-place on, a click on such a pin even dropped a second mark. Fixed in two places: `_newPointMarker` defaults the icon and colour (as restore and Edit already did), and the tap handler ignores clicks on `.leaflet-fa-markers`.

@@ -485,11 +485,15 @@ locale.{% endcomment %}
 
     // One marker builder for both ways of placing a point: crosshair Apply
     // and a tap on the map (spec point-tap-to-place).
+    // The defaults matter: a question without an icon has data-icon="", and
+    // L.Icon.FontAwesome given no class draws an EMPTY clickable icon while
+    // its shadow still shows the pin — a mark nobody can click to edit.
+    // Restored marks already default the same way (_getDrawButtonAttrs).
     function _newPointMarker(latlng, color, iconClass) {
         return L.marker(latlng, {
             icon: L.icon.fontAwesome({
-                iconClasses: iconClass,
-                markerColor: color,
+                iconClasses: iconClass || 'fas fa-map-marker-alt',
+                markerColor: color || '#000000',
                 iconColor: '#FFF',
             })
         });
@@ -1376,10 +1380,12 @@ locale.{% endcomment %}
         if (popupWasOpen || _mapIsBusy() || !_tapToPlaceButton()) return;
         // Interactive layers with click handlers already swallow the map click
         // (Leaflet 1.4 _findEventTargets); this is the backstop for controls,
-        // pop-ups and marker icons.
+        // pop-ups and marker icons. .leaflet-fa-markers is the pin graphic,
+        // including the copy L.Icon.FontAwesome leaves in the non-interactive
+        // shadow pane: a click on any pin must never drop a second mark.
         var target = e.originalEvent && e.originalEvent.target;
         if (target && target.closest &&
-            target.closest('.leaflet-marker-icon, .leaflet-popup, .leaflet-control')) return;
+            target.closest('.leaflet-marker-icon, .leaflet-fa-markers, .leaflet-popup, .leaflet-control')) return;
         var latlng = e.latlng;
         if (_tapTimer) clearTimeout(_tapTimer);
         _tapTimer = setTimeout(function() {
