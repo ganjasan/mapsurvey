@@ -195,3 +195,14 @@ def editor_runs(section, parent=None, questions=None):
 def make_list_of_one(value):
     """`[value]` — lets a template hand one bound field to a partial that loops."""
     return [value]
+
+
+@register.filter
+def tap_to_place_active(question):
+    """Whether a map click places this question's mark — the editor badge's
+    side of the one rule the respondent page also uses (spec
+    point-tap-to-place). Queries only for questions with the setting on."""
+    if not getattr(question, 'tap_to_place', False) or question.input_type != 'point':
+        return False
+    from survey.question_types import section_geo_count, tap_to_place_active as active
+    return active(question, section_geo_count(question.survey_section))

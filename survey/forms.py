@@ -1,7 +1,7 @@
 from django import forms
 from django.forms import widgets
 from .models import SurveySection, Question, Answer, INPUT_TYPE_CHOICES, SurveySession
-from .question_types import DISPLAY_STYLES_BY_TYPE, allowed_display_styles
+from .question_types import DISPLAY_STYLES_BY_TYPE, allowed_display_styles, section_geo_count, tap_to_place_active
 from django.utils import html
 import logging
 from django import forms
@@ -230,6 +230,7 @@ class LeafletDrawButtonWidget(widgets.Widget):
         context['widget']['brush_px'] = context['widget']['attrs'].get('brush_px', '')
         context['widget']['max_dots'] = context['widget']['attrs'].get('max_dots', '')
         context['widget']['brush_sizes'] = context['widget']['attrs'].get('brush_sizes', '')
+        context['widget']['tap_to_place'] = context['widget']['attrs'].get('tap_to_place', False)
         return context
 
 class PointDrawButtonWidget(LeafletDrawButtonWidget):
@@ -549,6 +550,13 @@ class ShowImageField(forms.Field):
 
         return attrs
 
+def _stamp_tap_to_place(widget, question, geo_count):
+    """Mark the point button whose question a map click places (spec
+    point-tap-to-place). The browser obeys the mark and never re-counts."""
+    if tap_to_place_active(question, geo_count):
+        widget.attrs['tap_to_place'] = True
+
+
 def _stamp_other_choice(widget, question, language, initial=None):
     """Hand the widget its write-in option, if the question has one
     (spec other-option-write-in). `initial` carries the stored text on revisit."""
@@ -753,6 +761,9 @@ class SurveySectionAnswerForm(forms.Form):
             # paths (whole section, single question) cannot disagree.
             field.widget.star_icon = question.star_icon()
             field.widget.star_color = question.star_color()
+        if question.input_type == 'point':
+            _stamp_tap_to_place(field.widget, question,
+                                section_geo_count(question.survey_section, with_question=question))
         form.fields[question.code] = field
         return form
 
@@ -776,6 +787,10 @@ class SurveySectionAnswerForm(forms.Form):
         self._run_section = section
 
         survey_rating_style = section.survey_header.get_default_rating_display_style()
+        # Counted over the whole section, not the visibility-filtered subset:
+        # the tap-to-place rule is static (spec point-tap-to-place). Pop-up
+        # forms hold no geo questions, so they skip the query.
+        geo_count = section_geo_count(section) if self._run_parent is None else 0
 
         for question in questions:
 
@@ -804,6 +819,8 @@ class SurveySectionAnswerForm(forms.Form):
             if resolved_style == 'stars':
                 self.fields[field_name].widget.star_icon = question.star_icon()
                 self.fields[field_name].widget.star_color = question.star_color()
+            if question.input_type == 'point':
+                _stamp_tap_to_place(self.fields[field_name].widget, question, geo_count)
 
 
     @property

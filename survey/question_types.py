@@ -124,6 +124,32 @@ SPRAY_HARD_CEILING = 100000
 # mechanism, two entry points — see spec survey-editor "Sub-question management".
 PARENT_TYPES = GEO_TYPES + ("layer_objects",)
 
+
+def section_geo_count(section, with_question=None):
+    """Top-level geo questions in a section — the count the tap-to-place rule
+    reads. Sub-questions and every non-geo type do not count.
+
+    `with_question` counts that question as present whether or not it is
+    saved yet: the editor's live preview renders an unsaved draft."""
+    qs = section.question_set.filter(parent_question_id=None, input_type__in=GEO_TYPES)
+    if with_question is None:
+        return qs.count()
+    if with_question.pk:
+        qs = qs.exclude(pk=with_question.pk)
+    return qs.count() + (1 if with_question.input_type in GEO_TYPES else 0)
+
+
+def tap_to_place_active(question, geo_count):
+    """True when a map click places this question's mark (spec
+    point-tap-to-place): a top-level `point` question with the setting on,
+    and the only geo question on its section. Static on purpose — a second
+    geo question hidden by a visibility rule still counts, so the editor
+    badge and the respondent page always agree."""
+    return (question.input_type == "point"
+            and bool(getattr(question, "tap_to_place", False))
+            and question.parent_question_id_id is None
+            and geo_count == 1)
+
 # Types that need a map-layout section to mean anything.
 MAP_ONLY_TYPES = PARENT_TYPES
 

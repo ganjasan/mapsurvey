@@ -356,7 +356,7 @@ class SurveySectionForm(forms.ModelForm):
 class QuestionForm(forms.ModelForm):
     class Meta:
         model = Question
-        fields = ['name', 'subtext', 'input_type', 'required', 'color', 'icon_class', 'spray_brush', 'image', 'display_style',
+        fields = ['name', 'subtext', 'input_type', 'required', 'color', 'icon_class', 'spray_brush', 'tap_to_place', 'image', 'display_style',
                   'layer', 'min_objects', 'objects_search', 'panel_mode', 'share_with_respondents']
         labels = {
             'name': _('Name'),
@@ -366,6 +366,7 @@ class QuestionForm(forms.ModelForm):
             'color': _('Color'),
             'icon_class': _('Icon class'),
             'spray_brush': _('Brush size'),
+            'tap_to_place': _('A tap on the map places a mark'),
             'image': _('Image'),
             'display_style': _('Display style'),
             'layer': _('Layer'),
@@ -382,6 +383,7 @@ class QuestionForm(forms.ModelForm):
             'color': forms.TextInput(attrs={'class': 'form-control', 'type': 'color'}),
             'icon_class': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'fas fa-map-marker-alt'}),
             'spray_brush': forms.Select(attrs={'class': 'form-control'}),
+            'tap_to_place': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'display_style': forms.RadioSelect(),
             'layer': forms.Select(attrs={'class': 'form-control'}),
             'min_objects': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
@@ -389,6 +391,7 @@ class QuestionForm(forms.ModelForm):
             'panel_mode': forms.RadioSelect,
         }
         help_texts = {
+            'tap_to_place': _('Works only while this is the only map question on its page.'),
             'icon_class': _('Pick from the catalog, or type a <a href="https://fontawesome.com/v5/search" target="_blank" rel="noopener">Font Awesome</a> class or a map icon name such as <code>maki:bus</code>.'),
         }
 
@@ -471,6 +474,17 @@ class QuestionForm(forms.ModelForm):
                 if value not in FILE_INPUT_TYPES
             ]
 
+        # The modal warns next to the switch when another geo question shares
+        # the section, i.e. when the setting would be stored but not honoured.
+        self.tap_to_place_blocked = False
+        if self.section is not None and self.section.pk:
+            from .question_types import GEO_TYPES
+            others = self.section.question_set.filter(
+                parent_question_id=None, input_type__in=GEO_TYPES)
+            if self.instance.pk:
+                others = others.exclude(pk=self.instance.pk)
+            self.tap_to_place_blocked = others.exists()
+
         if lock_structure and self.instance.pk:
             self.fields['input_type'].disabled = True
             self.fields['layer'].disabled = True
@@ -498,6 +512,11 @@ class QuestionForm(forms.ModelForm):
         # respondents. This is the one place all three question-saving views
         # pass through, so the allow-list belongs here.
         cleaned['subtext'] = coerce_creator_html(cleaned.get('subtext'))
+        # Tap-to-place belongs to a top-level point question only; any other
+        # type stores it off whatever is posted (spec point-tap-to-place).
+        is_sub = self.is_subquestion or bool(self.instance.parent_question_id_id)
+        if cleaned.get('input_type') != 'point' or is_sub:
+            cleaned['tap_to_place'] = False
         style = cleaned.get('display_style') or 'default'
         input_type = cleaned.get('input_type')
         # One table decides (question_types.DISPLAY_STYLES_BY_TYPE): a style the

@@ -311,13 +311,16 @@
 
         {# Settings follow the style choice: pick how the question renders first, then tune it. #}
         {% for field in form %}
-        {% if field.name == 'required' or field.name == 'color' or field.name == 'icon_class' or field.name == 'spray_brush' or field.name == 'image' %}
-        <div class="form-group" id="fg-{{ field.name }}">
-            {% if field.name == 'required' %}
+        {% if field.name == 'required' or field.name == 'color' or field.name == 'icon_class' or field.name == 'spray_brush' or field.name == 'tap_to_place' or field.name == 'image' %}
+        <div class="form-group" id="fg-{{ field.name }}"{% if field.name == 'tap_to_place' %} style="display:none;"{% endif %}>
+            {% if field.name == 'required' or field.name == 'tap_to_place' %}
                 <div class="form-check">
                     {{ field }}
                     <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
                 </div>
+                {% if field.name == 'tap_to_place' and form.tap_to_place_blocked %}
+                <small class="form-text" style="color:#b45309;"><i class="fas fa-exclamation-triangle"></i> {% trans "Another map question is on this page, so taps on the map do nothing. Respondents use the button." %}</small>
+                {% endif %}
             {% else %}
                 <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                 {{ field }}
@@ -931,6 +934,9 @@
         // A spray cloud has no marker: brush size instead of an icon.
         show('fg-icon_class', (isGeo && t !== 'spraycan') || isStars);
         show('fg-spray_brush', t === 'spraycan');
+        // Lines, polygons and spray need a drawing mode; only a point can be
+        // placed by a single tap (spec point-tap-to-place).
+        show('fg-tap_to_place', t === 'point');
         // The stock placeholder is a map pin, which is the wrong suggestion
         // when the field is dressing a star rating.
         var iconInput = document.querySelector('#questionModalBody input[name="icon_class"]');
