@@ -7354,6 +7354,42 @@ class EditorPermissionTest(TestCase):
         self.survey.refresh_from_db()
         self.assertEqual(self.survey.visibility, 'public')
 
+    def test_settings_panel_autosave_saves_added_language(self):
+        """
+        GIVEN an English survey and the settings panel autosave
+        WHEN it posts available_languages ["en", "es"]
+        THEN the survey keeps both languages (#391)
+        """
+        self.client.login(username='ep_owner', password='pass')
+        url = f'/editor/surveys/{self.survey.uuid}/settings-panel/'
+        response = self.client.post(url, {
+            'name': self.survey.name,
+            'redirect_url': '#',
+            'available_languages': '["en", "es"]',
+            'visibility': 'private',
+            'basemaps': '["streets"]',
+        }, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(response.status_code, 200)
+        self.survey.refresh_from_db()
+        self.assertEqual(self.survey.available_languages, ['en', 'es'])
+
+    def test_settings_panel_language_picker_triggers_autosave(self):
+        """
+        GIVEN the settings panel, whose autosave listens for field events only
+        WHEN it renders
+        THEN the language picker fires change on the hidden input after a
+             creator's add/remove, and its search box is excluded from autosave
+             (its blur used to save the old languages, #391)
+        """
+        self.client.login(username='ep_owner', password='pass')
+        content = self.client.get(
+            f'/editor/surveys/{self.survey.uuid}/settings-panel/').content.decode()
+        self.assertIn("hiddenInput.dispatchEvent(new Event('change'", content)
+        self.assertRegex(content, r"exclude: '[^']*#lang-search")
+        # The initial render syncs without the event, so opening the panel
+        # does not save it.
+        self.assertIn('renderTags();\n    sync();', content)
+
     def test_settings_panel_plain_post_redirects(self):
         """
         GIVEN the settings panel form is submitted as a plain (non-XHR) POST
