@@ -125,15 +125,17 @@ X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 # Cookies inside a third-party frame (change embed-surveys, #284).
 #
-# A survey embedded on a creator's site runs in a cross-site frame, where the
-# browser only sends cookies marked `SameSite=None; Secure`. `Secure` means
-# HTTPS, which production and Render previews are; a local HTTP dev server
-# would just lose its cookies, hence the DEBUG default. Chromium and Firefox
-# accept Secure cookies from http://localhost, so the e2e embed test runs the
-# dev server with CROSS_SITE_COOKIES=1. `PartitionedCookieMiddleware` adds the
-# third attribute. CSRF stays safe: CsrfViewMiddleware checks Origin/Referer on
-# every unsafe request regardless of what SameSite says.
-CROSS_SITE_COOKIES = os.environ.get('CROSS_SITE_COOKIES', '' if DEBUG else '1').lower() in ('1', 'true')
+# Cross-site cookie attributes (`SameSite=None; Secure` here, `Partitioned` from
+# `PartitionedCookieMiddleware`) are OPT-IN and off in production. They were on
+# from 2026-10-13 to 2026-10-22 and cost nine days of answers: the Facebook and
+# Instagram in-app browsers on iOS keep no `Partitioned` cookie, so their section
+# POSTs failed CSRF, and Chromium creators ended up with two `csrftoken` cookies
+# (#388). A survey framed by another site keeps its session without them, through
+# `EmbedSessionMiddleware`'s cookie-less carrier -- the path Safari and iOS took
+# all along. The e2e embed run may still set CROSS_SITE_COOKIES=1 to exercise the
+# cookie path; CSRF stays safe either way, CsrfViewMiddleware checks
+# Origin/Referer on every unsafe request regardless of what SameSite says.
+CROSS_SITE_COOKIES = os.environ.get('CROSS_SITE_COOKIES', '').lower() in ('1', 'true')
 if CROSS_SITE_COOKIES:
     SESSION_COOKIE_SAMESITE = 'None'
     SESSION_COOKIE_SECURE = True

@@ -116,9 +116,14 @@ editor-only label that never reaches the respondent (see the `question-subtext` 
 another site. `check_survey_access` calls `mark_embeddable`, `SurveyEmbedMiddleware` turns the mark into
 `Content-Security-Policy: frame-ancestors …` (from `SurveyHeader.embed_allowed_hosts` on the canonical
 row; empty = `*`) and drops `X-Frame-Options` on that response only — the editor, landing and every 404
-keep `SAMEORIGIN`. Respondent cookies must cross into the frame: `CROSS_SITE_COOKIES` (default on when
-`DEBUG` is off) makes the session and CSRF cookies `SameSite=None; Secure`, and
-`PartitionedCookieMiddleware` appends `Partitioned`. The respondent page adds `MS-Embedded: 1` to its HTMX
+keep `SAMEORIGIN`. Cross-site cookie attributes are OPT-IN and off in production: `CROSS_SITE_COOKIES=1`
+makes the session and CSRF cookies `SameSite=None; Secure` and `PartitionedCookieMiddleware` appends
+`Partitioned`. They were on from 2026-10-13 to 2026-10-22 and cost nine days of answers (#388): the
+Facebook/Instagram in-app browsers on iOS keep no `Partitioned` cookie, so every section POST failed CSRF,
+and Chromium creators ended up with two `csrftoken` cookies (Django reads the last, `document.cookie`
+readers the first). With the switch off the same middleware sweeps the stale partitioned pair from
+browsers that still send it. A framed survey keeps its session through the cookie-less carrier below
+instead — never turn the switch back on for embeds. The respondent page adds `MS-Embedded: 1` to its HTMX
 calls when framed, which is how the final redirect stays on the in-frame thanks page (`?next=`) instead of
 navigating the frame to `redirect_url`. The Share page hands out the snippet (`snippet_html`), `/oembed/`
 describes it for platforms that do oEmbed discovery, and `/embed.js` (served by a view so the path never

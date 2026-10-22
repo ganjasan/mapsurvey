@@ -171,33 +171,76 @@ class SurveyEmbedMiddleware:
 
 
 class PartitionedCookieMiddleware:
-    """Add `Partitioned` to the session and CSRF cookies (change embed-surveys).
+    """`Partitioned` on the session and CSRF cookies when CROSS_SITE_COOKIES is on;
+    the clean-up after it when the switch is off (changes embed-surveys,
+    cross-site-cookies-off).
 
-    A survey framed by another site only works if its cookies are sent from
-    inside that frame. `SameSite=None; Secure` (set through the normal Django
-    settings, see CROSS_SITE_COOKIES) is the first half; `Partitioned` (CHIPS)
-    is what keeps the cookie once a browser blocks third-party cookies: the
-    jar is keyed by the embedding site, so the survey keeps its session there
-    without ever seeing another site's. Django has no setting for the
+    On: `SameSite=None; Secure` (the Django settings) plus `Partitioned` (CHIPS)
+    keeps a framed survey's cookies once a browser blocks third-party cookies --
+    the jar is keyed by the embedding site. Django has no setting for the
     attribute, and `http.cookies.Morsel` rejects unknown keys, so it rides on
     the `SameSite` value, which the Morsel writes verbatim. Only the two
     cookies, only when `Secure` -- a browser drops a `Partitioned` cookie that
     is not.
+
+    Off (the default since 2026-10-22, #388): a browser that took the
+    partitioned cookies while the switch was on keeps them NEXT TO the plain
+    ones -- CHIPS keys a cookie by its partition, so same name, two cookies --
+    and sends both. Django reads the last value, the page's JavaScript reads
+    the first, and every JSON POST fails CSRF. The duplicate is visible only in
+    the raw Cookie header; on seeing it, the response deletes the partitioned
+    variant (a deletion matches a cookie by its attributes, so it carries
+    `Secure; SameSite=None; Partitioned`). One `Set-Cookie` per name fits in a
+    response, so the deletion waits for a response that is not itself setting
+    that cookie; Django re-sets the plain `csrftoken` on every HTML page with
+    the value it read, so the two agree by the time a JSON response carries the
+    deletion. Nothing here ever rejects a request.
     """
+
+    SWEPT = (settings.SESSION_COOKIE_NAME, settings.CSRF_COOKIE_NAME)
 
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
         response = self.get_response(request)
-        for name in (settings.SESSION_COOKIE_NAME, settings.CSRF_COOKIE_NAME):
+        if settings.CROSS_SITE_COOKIES:
+            self._partition(response)
+        else:
+            self._sweep(request, response)
+        return response
+
+    def _partition(self, response):
+        for name in self.SWEPT:
             morsel = response.cookies.get(name)
             if morsel is None or not morsel['secure']:
                 continue
             samesite = morsel['samesite'] or ''
             if 'partitioned' not in samesite.lower():
                 morsel['samesite'] = f'{samesite}; Partitioned' if samesite else 'None; Partitioned'
-        return response
+
+    def _sweep(self, request, response):
+        raw = request.META.get('HTTP_COOKIE', '')
+        if not raw:
+            return
+        for name in self.SWEPT:
+            if name in response.cookies:
+                continue
+            if self._occurrences(raw, name) < 2:
+                continue
+            response.cookies[name] = ''
+            morsel = response.cookies[name]
+            morsel['max-age'] = 0
+            morsel['expires'] = 'Thu, 01 Jan 1970 00:00:00 GMT'
+            morsel['path'] = '/'
+            morsel['secure'] = True
+            morsel['samesite'] = 'None; Partitioned'
+
+    @staticmethod
+    def _occurrences(raw, name):
+        return sum(
+            1 for chunk in raw.split(';')
+            if chunk.strip().partition('=')[0].strip() == name)
 
 
 class SurveyIndexingMiddleware:

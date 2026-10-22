@@ -51373,7 +51373,18 @@ class EmbedFramingHeadersTest(_EmbedSurveyMixin, TestCase):
 
 class CrossSiteCookiesTest(_EmbedSurveyMixin, TestCase):
 
-    @override_settings(SESSION_COOKIE_SAMESITE='None', SESSION_COOKIE_SECURE=True,
+    def test_switch_is_off_by_default(self):
+        """
+        GIVEN no CROSS_SITE_COOKIES in the environment
+        WHEN settings load
+        THEN the switch is off, because on it cost nine days of answers from the
+             Facebook and Instagram in-app browsers on iOS (#388)
+        """
+        from django.conf import settings as dj_conf
+        self.assertFalse(dj_conf.CROSS_SITE_COOKIES)
+
+    @override_settings(CROSS_SITE_COOKIES=True,
+                       SESSION_COOKIE_SAMESITE='None', SESSION_COOKIE_SECURE=True,
                        CSRF_COOKIE_SAMESITE='None', CSRF_COOKIE_SECURE=True)
     def test_cookies_carry_cross_site_attributes(self):
         """
@@ -51421,6 +51432,102 @@ class CrossSiteCookiesTest(_EmbedSurveyMixin, TestCase):
             secure=True, HTTP_ORIGIN='https://evil.example',
         )
         self.assertEqual(response.status_code, 403)
+
+
+@override_settings(CROSS_SITE_COOKIES=False)
+class StalePartitionedCookieTest(_EmbedSurveyMixin, TestCase):
+    """The clean-up after nine days of `Partitioned` cookies (change cross-site-cookies-off).
+
+    A browser that took the partitioned `csrftoken`/`sessionid` between 13 and
+    22 October 2026 keeps them next to the plain ones and sends both; Django
+    reads the last, the editor's JavaScript reads the first, and every JSON
+    POST fails CSRF. Only the raw Cookie header shows the duplicate.
+    """
+
+    @staticmethod
+    def _run(cookie_header, set_on_response=None):
+        """The middleware around a bare response: what a JSON endpoint sends back."""
+        from django.http import HttpResponse
+        from django.test import RequestFactory
+        from survey.middleware import PartitionedCookieMiddleware
+
+        def view(request):
+            response = HttpResponse('{}', content_type='application/json')
+            for name, value in (set_on_response or {}).items():
+                response.set_cookie(name, value)
+            return response
+
+        request = RequestFactory().get('/editor/whats-new/cards/', HTTP_COOKIE=cookie_header)
+        return PartitionedCookieMiddleware(view)(request)
+
+    @staticmethod
+    def _deletion(response, name):
+        header = response.cookies[name].output(header='')
+        return ('Max-Age=0' in header and 'Partitioned' in header
+                and 'SameSite=None' in header and 'Secure' in header)
+
+    def test_duplicate_csrftoken_is_swept(self):
+        """
+        GIVEN a request whose Cookie header carries csrftoken twice
+        WHEN the response sets no csrftoken itself
+        THEN it deletes the partitioned variant: Max-Age=0 with the attributes that match it
+        """
+        response = self._run('csrftoken=aaa; csrftoken=aaa')
+        self.assertTrue(self._deletion(response, 'csrftoken'))
+        self.assertNotIn('sessionid', response.cookies)
+
+    def test_duplicate_sessionid_is_swept(self):
+        """
+        GIVEN a request whose Cookie header carries sessionid twice
+        WHEN the response sets no sessionid itself
+        THEN it deletes the partitioned sessionid the same way
+        """
+        response = self._run('sessionid=k1; sessionid=k2')
+        self.assertTrue(self._deletion(response, 'sessionid'))
+
+    def test_single_cookies_cost_nothing(self):
+        """
+        GIVEN a request with one csrftoken and one sessionid
+        WHEN the response sets neither
+        THEN no deletion is sent, so every ordinary visitor is untouched
+        """
+        response = self._run('csrftoken=aaa; sessionid=k1')
+        self.assertEqual(list(response.cookies), [])
+
+    def test_response_already_setting_the_cookie_wins(self):
+        """
+        GIVEN a duplicate csrftoken
+        WHEN the view's response already sets csrftoken
+        THEN the middleware leaves that Set-Cookie as it is: one per name, the
+             deletion waits for a later response
+        """
+        response = self._run('csrftoken=aaa; csrftoken=aaa', {'csrftoken': 'fresh'})
+        self.assertEqual(response.cookies['csrftoken'].value, 'fresh')
+        self.assertFalse(self._deletion(response, 'csrftoken'))
+
+    def test_response_setting_the_cookie_is_left_alone(self):
+        """
+        GIVEN the same duplicate on a survey section page
+        WHEN Django sets csrftoken on that response with the value it read
+        THEN the response keeps that cookie and carries no deletion, so one
+             Set-Cookie per name is never fought over
+        """
+        survey = self._make_embed_survey()
+        response = self.client.get(f'/surveys/{survey.uuid}/sec1/', HTTP_COOKIE='csrftoken=aaa; csrftoken=aaa')
+        self.assertEqual(response.status_code, 200)
+        header = response.cookies['csrftoken'].output(header='')
+        self.assertNotIn('Max-Age=0', header)
+        self.assertNotIn('Partitioned', header)
+
+    def test_sweep_is_off_while_the_switch_is_on(self):
+        """
+        GIVEN CROSS_SITE_COOKIES on
+        WHEN a duplicate arrives
+        THEN nothing is deleted — the partitioned cookie is the one in use then
+        """
+        with override_settings(CROSS_SITE_COOKIES=True):
+            response = self._run('csrftoken=aaa; csrftoken=aaa')
+        self.assertEqual(list(response.cookies), [])
 
 
 class EmbeddedSessionMetadataTest(_EmbedSurveyMixin, TestCase):
