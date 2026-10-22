@@ -11,6 +11,10 @@ set -e
 python manage.py reclaim_preview_media --delete
 python manage.py reclaim_orphan_uploads --delete
 
+# Personal API tokens expired or revoked more than 30 days ago (change auth-core).
+# They stop working the moment they end; the rows stay a month for the audit trail.
+python manage.py purge_api_tokens
+
 # Pro subscriptions whose paid period ended since the last run: one
 # plan_lapsed event and one email per owner (billing app).
 python manage.py notify_lapsed

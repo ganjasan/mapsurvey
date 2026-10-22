@@ -8084,3 +8084,151 @@ msgstr "Vous avez déjà décrit votre projet — laisser l'assistant rédiger l
 #: survey/templates/editor/partials/_ai_feedback_strip.html
 msgid "How is the Wizard's draft?"
 msgstr "Que pensez-vous du brouillon de l'assistant ?"
+
+#: api/templates/api/connections.html
+msgid "API & connections"
+msgstr "API et connexions"
+
+#: api/templates/api/connections.html
+msgid "Personal access tokens"
+msgstr "Jetons d'accès personnels"
+
+#: api/templates/api/connections.html
+msgid "A token lets a script, a GIS tool or an AI agent act as you — within the permissions you pick, on the workspaces you allow, and only while the workspace that owns the survey is on Pro."
+msgstr "Un jeton permet à un script, un outil SIG ou un agent IA d'agir en votre nom — dans les limites des autorisations choisies, sur les espaces de travail autorisés, et seulement tant que l'espace de travail propriétaire de l'enquête est sur Pro."
+
+#: api/templates/api/connections.html
+msgid "Your workspaces are on the Free plan. You can create tokens now; API calls on a survey will answer <code>pro_required</code> until that survey's workspace upgrades to Pro."
+msgstr "Vos espaces de travail sont sur le plan Free. Vous pouvez créer des jetons dès maintenant ; les appels API sur une enquête répondront <code>pro_required</code> tant que son espace de travail ne passe pas sur Pro."
+
+#: api/templates/api/connections.html
+msgid "Token “%(label)s” created."
+msgstr "Jeton « %(label)s » créé."
+
+#: api/templates/api/connections.html
+msgid "Copy it now: this is the only time it is shown. Lost it? Revoke this one and create another."
+msgstr "Copiez-le maintenant : il n'est affiché qu'une seule fois. Perdu ? Révoquez celui-ci et créez-en un autre."
+
+#: api/forms.py
+msgid "Permissions"
+msgstr "Autorisations"
+
+#: api/forms.py
+msgid "Workspace"
+msgstr "Espace de travail"
+
+#: api/forms.py
+msgid "Expires"
+msgstr "Expire"
+
+#: api/templates/api/connections.html
+msgid "Last used"
+msgstr "Dernière utilisation"
+
+#: api/templates/api/connections.html
+msgid "Expired"
+msgstr "Expiré"
+
+#: api/forms.py
+msgid "REST API"
+msgstr "API REST"
+
+#: api/forms.py
+msgid "MCP server"
+msgstr "Serveur MCP"
+
+#: api/forms.py
+msgid "All my workspaces"
+msgstr "Tous mes espaces de travail"
+
+#: api/forms.py
+msgid "Never"
+msgstr "Jamais"
+
+#: api/templates/api/connections.html
+msgid "created"
+msgstr "créé"
+
+#: api/templates/api/connections.html
+msgid "ago"
+msgstr "plus tôt"
+
+#: api/templates/api/connections.html
+msgid "never"
+msgstr "jamais"
+
+#: api/templates/api/connections.html
+msgid "Revoke this token? Anything using it stops working at once."
+msgstr "Révoquer ce jeton ? Tout ce qui l'utilise cessera de fonctionner immédiatement."
+
+#: api/templates/api/connections.html
+msgid "Revoke"
+msgstr "Révoquer"
+
+#: api/templates/api/connections.html
+msgid "No tokens yet."
+msgstr "Aucun jeton pour l'instant."
+
+#: api/templates/api/connections.html
+msgid "New token"
+msgstr "Nouveau jeton"
+
+#: api/templates/api/connections.html
+msgid "Publishing and deleting are off unless you switch them on: those calls cannot be undone."
+msgstr "Publier et supprimer sont désactivés tant que vous ne les activez pas : ces appels sont irréversibles."
+
+#: api/templates/api/connections.html
+msgid "Create token"
+msgstr "Créer le jeton"
+
+#: api/templates/api/connections.html
+msgid "Connected apps"
+msgstr "Applications connectées"
+
+#: api/templates/api/connections.html
+msgid "Apps you sign in to with your Mapsurvey account — ChatGPT, Claude and others — will be listed here once that is available. Today, give them a personal token."
+msgstr "Les applications auxquelles vous vous connectez avec votre compte Mapsurvey — ChatGPT, Claude et autres — apparaîtront ici dès que ce sera disponible. Pour l'instant, donnez-leur un jeton personnel."
+
+#: api/forms.py
+msgid "What this token is for, e.g. \"QGIS plug-in\" or \"Claude Code\"."
+msgstr "À quoi sert ce jeton, par ex. « extension QGIS » ou « Claude Code »."
+
+#: api/forms.py
+msgid "Use with"
+msgstr "Utiliser avec"
+
+#: api/forms.py
+msgid "90 days"
+msgstr "90 jours"
+
+#: api/forms.py
+msgid "1 year"
+msgstr "1 an"
+
+#: api/forms.py
+msgid "Choose one of your workspaces."
+msgstr "Choisissez l'un de vos espaces de travail."
+
+#: api/scopes.py
+msgid "Read surveys, sections and questions"
+msgstr "Lire les enquêtes, sections et questions"
+
+#: api/scopes.py
+msgid "Create and edit surveys, sections and questions"
+msgstr "Créer et modifier des enquêtes, sections et questions"
+
+#: api/scopes.py
+msgid "Publish, close and reopen surveys"
+msgstr "Publier, clore et rouvrir des enquêtes"
+
+#: api/scopes.py
+msgid "Delete surveys"
+msgstr "Supprimer des enquêtes"
+
+#: api/scopes.py
+msgid "Read and export responses"
+msgstr "Lire et exporter les réponses"
+
+#: billing/features.py
+msgid "REST API, MCP server and personal access tokens"
+msgstr "API REST, serveur MCP et jetons d'accès personnels"

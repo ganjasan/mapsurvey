@@ -52950,7 +52950,9 @@ class CreatorPreferencesPageTest(TestCase):
 
 
 class AgentAccessTeaserTest(TestCase):
-    """`/editor/account/mcp/` before the MCP server exists, and its entrances."""
+    """`/editor/account/mcp/` is a redirect since change auth-core (#379); the
+    page body, the interest button and the menu entrances are tested in
+    `api/tests/test_connections.py` (TeaserDeltaTest)."""
 
     def setUp(self):
         self.org = _make_org('AgentOrg')
@@ -52958,43 +52960,21 @@ class AgentAccessTeaserTest(TestCase):
         Membership.objects.create(user=self.user, organization=self.org, role='owner')
         self.client.login(username='agentuser', password='pass')
 
-    def test_page_renders_the_teaser(self):
+    def test_old_url_redirects_to_connections(self):
         """
         GIVEN a signed-in creator
-        WHEN they open the agent page
-        THEN it describes the agent path, shows the example prompt and the button
+        WHEN they open the old agent page URL
+        THEN they are redirected to the connections page, URL name intact
         """
         response = self.client.get(reverse('editor_account_mcp'))
 
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Coming soon')
-        self.assertContains(response, 'Create a Mapsurvey survey in Italian and English')
-        self.assertContains(response, "Tell me when it's ready")
-        self.assertNotContains(response, "We'll email you")
-
-    def test_interest_recorded_once(self):
-        """
-        GIVEN the button posted twice
-        WHEN the page handles both
-        THEN the first timestamp stays, one event was emitted, and the page shows the confirmation
-        """
-        with patch('survey.product_events.emit') as emit:
-            self.client.post(reverse('editor_account_mcp'))
-            first = CreatorPreferences.objects.get(user=self.user).agent_access_requested_at
-            self.client.post(reverse('editor_account_mcp'))
-
-        self.assertIsNotNone(first)
-        self.assertEqual(CreatorPreferences.objects.get(user=self.user).agent_access_requested_at, first)
-        from survey import product_events as pe
-        self.assertEqual([c.args[0] for c in emit.call_args_list], [pe.AGENT_ACCESS_REQUESTED])
-        response = self.client.get(reverse('editor_account_mcp'))
-        self.assertContains(response, "We'll email you")
-        self.assertNotContains(response, 'class="mcp-cta"')
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('editor_account_connections'))
 
     def test_anonymous_is_sent_to_login(self):
         """
         GIVEN a signed-out visitor
-        WHEN they open the agent page
+        WHEN they open the old URL
         THEN they are redirected to sign in
         """
         self.client.logout()
@@ -53003,25 +52983,6 @@ class AgentAccessTeaserTest(TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertIn('login', response['Location'])
-
-    def test_entrances_in_both_bases_and_the_help_menu(self):
-        """
-        GIVEN the dashboard (base.html) and an editor page (editor_base.html)
-        WHEN both render
-        THEN the account menu of each carries "AI agents & MCP" and the editor's "?" menu
-             carries "Connect your AI agent", all linking to the agent page
-        """
-        SurveyHeader.objects.create(name='existing', organization=self.org, created_by=self.user)
-        url = reverse('editor_account_mcp')
-
-        dashboard = self.client.get(reverse('editor')).content.decode()
-        editor_page = self.client.get(reverse('editor_survey_create')).content.decode()
-
-        self.assertIn('href="%s"' % url, dashboard)
-        self.assertIn('AI agents', dashboard)
-        self.assertIn('href="%s"' % url, editor_page)
-        self.assertIn('AI agents', editor_page)
-        self.assertIn('Connect your AI agent', editor_page)
 
 
 class SectionFormMarkupTest(TestCase):

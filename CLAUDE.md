@@ -263,6 +263,29 @@ hand-written tables; moving them onto the registry is the follow-up after #253. 
 hosting fact is the United States (Render, Oregon) — the "EU-hosted / Frankfurt" wording that
 survived on the Maptionnaire page until this change must not come back.
 
+**API platform — the authorization layer (`api/`, change `auth-core`, #379; epic #378)**: every
+programmatic client (personal token today, OAuth grant from #313, the REST API #380 and the MCP
+server #306 on top) goes through ONE `api.auth.authenticate(request, audience)`. Bearer header only
+— a session cookie never authenticates an API path, which is why those views are CSRF-exempt and
+why `request.user` is never read there; use `request.principal`. Tokens are `oauth2_provider`
+`AccessToken` rows (hashed at rest, looked up by checksum) with our `TokenProfile` beside them
+(`kind`, `label`, `audiences` `api`/`mcp`, optional workspace binding, `revoked_at`); personal tokens
+are `msk_…`, minted only by `api.tokens.mint_personal_token()` on `/editor/account/connections/`
+(`/editor/account/mcp/` redirects there). Rights = scope ∩ organisation role ∩ survey role through
+`api.rights` (`survey_for` answers 404, never 403; `section_for`/`question_for` always filter by the
+survey — integer ids are IDORs otherwise). **Pro (`api` feature) is checked at the resource, per
+request, on the organisation that owns the object** (`api.gates.require_pro_api(principal,
+survey.organization)`), never at minting: a lapsed subscription stops access without revoking
+anything. Limits are per token (`api.limits`: read/write minute windows, a daily cap, named caps via
+`limits.hit(principal, "survey_create")`) plus a per-IP budget of failed bearers checked before the
+lookup; `429` + `Retry-After`, fail-open on a cache outage. Errors are the envelope in
+`api/errors.py` (`invalid_token`, `scope_missing`, `pro_required`, `not_found`, `rate_limited`,
+`server_error`). A new endpoint is `@api_endpoint(audience, scopes=…)` + `rights` + `gates` and
+calls the service layer — never a model directly (that is how an agent would skip
+`coerce_creator_html`). Token values never reach logs: `_posthog_scrub_tags` keeps only path and
+method under `API_PATH_PREFIXES`; audit and events carry ids. `OAUTH2_PROVIDER` pins RFC 9700 and
+`api.tests.test_settings` runs the toolkit's deploy check. Contract for resource servers: `api/README.md`.
+
 **Billing — Pro on PayPro Global (`billing/`, change `paywall-payproglobal`, #268)**: PayPro is the
 Merchant of Record; we own the checkout link out (`billing/checkout.py`, the ONLY place a PayPro URL
 is built, with `x-org_id/x-user_id/x-plan/x-nonce` and `ipn-domain`), the webhook in
@@ -506,10 +529,11 @@ region, never `en-US` — the stock-browser default says nothing; `survey/countr
 draft (through the same hidden fields) start there — the Berlin default is gone and must not come
 back. `survey_created` carries `surface` (`start_blank` | `create_page`) and `map_source` (the
 rung, `creator` when the map was framed, `brief` when the AI task geocoded the brief): names only,
-never coordinates. `/editor/account/mcp/` (`editor_account_mcp`) is the agent page: a teaser with
-"Tell me when it's ready" (`agent_access_requested_at`, the launch list, one event) until #306
-replaces its body with the token page — the URL name, the account-menu item in BOTH bases and the
-"?"-menu item stay. New creator strings go into all offered catalogs (`TranslationCatalogHygieneTest`
+never coordinates. `/editor/account/mcp/` (`editor_account_mcp`) is a redirect to
+`/editor/account/connections/` (change `auth-core`), where the MCP block with "Tell me when it's
+ready" (`agent_access_requested_at`, the launch list, one event) sits under the tokens until #306
+ships — the URL name, the account-menu item "API & connections" in BOTH bases and the "?"-menu
+item stay. New creator strings go into all offered catalogs (`TranslationCatalogHygieneTest`
 enforces it); the entries are appended by hand like PR #274, not by `makemessages`.
 
 **Session Management**: Survey sessions are created on first section view and tracked via `request.session['survey_session_id']`.

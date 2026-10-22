@@ -1105,7 +1105,7 @@
                     <div class="dropdown-divider"></div>
                     <a class="dropdown-item" href="{% url 'editor_account_preferences' %}"><i class="fas fa-sliders-h" style="margin-right:4px;"></i>{% trans "Preferences" %}</a>
                     <a class="dropdown-item" href="{% url 'whats_new' %}"><i class="fas fa-gift" style="margin-right:4px;"></i>{% trans "What's new" %}{% if whats_new.unseen_count %} <span class="wn-badge">{{ whats_new.unseen_count }}</span>{% endif %}</a>
-                    <a class="dropdown-item" href="{% url 'editor_account_mcp' %}"><i class="fas fa-robot" style="margin-right:4px;"></i>{% trans "AI agents & MCP" %} <span class="badge badge-light" style="font-weight:500;">{% trans "soon" %}</span></a>
+                    <a class="dropdown-item" href="{% url 'editor_account_connections' %}"><i class="fas fa-plug" style="margin-right:4px;"></i>{% trans "API & connections" %}</a>
                     {% comment %}Experienced creators switch the two confirmations off ("Don't
                     ask again" in the dialogs); this is where they come back. Browser-only
                     (localStorage), like the Responses layer panel state.{% endcomment %}
@@ -1143,8 +1143,8 @@
                     <div class="dropdown-divider"></div>
                     <a class="dropdown-item" href="{% url 'editor_account_preferences' %}"><i class="fas fa-sliders-h" style="margin-right:4px;"></i>{% trans "Preferences" %}</a>
                     <a class="dropdown-item" href="{% url 'whats_new' %}"><i class="fas fa-gift" style="margin-right:4px;"></i>{% trans "What's new" %}{% if whats_new.unseen_count %} <span class="wn-badge">{{ whats_new.unseen_count }}</span>{% endif %}</a>
-                    {% comment %}Agent access (openspec: first-survey-onboarding, D6); the badge goes with #306.{% endcomment %}
-                    <a class="dropdown-item" href="{% url 'editor_account_mcp' %}"><i class="fas fa-robot" style="margin-right:4px;"></i>{% trans "AI agents & MCP" %} <span class="badge badge-light" style="font-weight:500;">{% trans "soon" %}</span></a>
+                    {% comment %}Tokens, connected apps, the MCP teaser (openspec: auth-core, D9).{% endcomment %}
+                    <a class="dropdown-item" href="{% url 'editor_account_connections' %}"><i class="fas fa-plug" style="margin-right:4px;"></i>{% trans "API & connections" %}</a>
                     <a class="dropdown-item editor-confirm-toggle" href="#" onclick="EditorConfirm.toggle(event)"><i class="fas fa-check-square" style="margin-right:4px;" data-confirm-icon></i>{% trans "Ask before publishing or changing structure" %}</a>
                     {% if MOBILE_EDITOR_NAV %}
                     {% if SUPPORT_CHAT %}<a class="dropdown-item" href="#" onclick="openSupportChat(event)"><i class="fas fa-comment-dots" style="margin-right:4px;"></i>{% trans "Help & support" %} <span class="wn-badge support-unread" hidden>{% trans "new" %}</span></a>{% elif CONTACT_EMAIL %}<a class="dropdown-item" href="mailto:{{ CONTACT_EMAIL }}"><i class="fas fa-envelope" style="margin-right:4px;"></i>{% trans "Email support" %}</a>{% endif %}
