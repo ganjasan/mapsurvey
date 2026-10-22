@@ -483,6 +483,22 @@ locale.{% endcomment %}
         return map.containerPointToLatLng(pinTipPoint);
     }
 
+    // One marker builder for both ways of placing a point: crosshair Apply
+    // and a tap on the map (spec point-tap-to-place).
+    // The defaults matter: a question without an icon has data-icon="", and
+    // L.Icon.FontAwesome given no class draws an EMPTY clickable icon while
+    // its shadow still shows the pin — a mark nobody can click to edit.
+    // Restored marks already default the same way (_getDrawButtonAttrs).
+    function _newPointMarker(latlng, color, iconClass) {
+        return L.marker(latlng, {
+            icon: L.icon.fontAwesome({
+                iconClasses: iconClass || 'fas fa-map-marker-alt',
+                markerColor: color || '#000000',
+                iconColor: '#FFF',
+            })
+        });
+    }
+
     $('.crosshair-apply').click(function() {
         var pinLatLng = getCrosshairLatLng();
         if (crosshairEditLayer) {
@@ -493,13 +509,7 @@ locale.{% endcomment %}
             hideCrosshair();
             toggleInfo(true);
         } else {
-            var layer = L.marker(pinLatLng, {
-                icon: L.icon.fontAwesome({
-                    iconClasses: crosshairIcon,
-                    markerColor: crosshairColor,
-                    iconColor: '#FFF',
-                })
-            });
+            var layer = _newPointMarker(pinLatLng, crosshairColor, crosshairIcon);
             hideCrosshair();
             map.fire('draw:created', {layerType: 'marker', layer: layer});
         }
@@ -1331,6 +1341,65 @@ locale.{% endcomment %}
         showButton.style.visibility = "hidden";
         showCrosshair(color, icon);
         refreshGeoQuestionUI();
+    });
+
+    // --- Tap to place (spec point-tap-to-place) ---
+    // The server marks the point button whose question a map click places
+    // (data-tap-to-place: top-level point question, setting on, the only geo
+    // question on the section); this code only obeys the mark. The mark goes
+    // through draw:created exactly like crosshair Apply, so marker, pop-up and
+    // caps are the button's. Placement waits out the double-tap window, so a
+    // double-click/double-tap zoom never drops a mark.
+    var _openPopups = 0, _popupAtPreclick = false, _tapTimer = null;
+    map.on('popupopen', function() { _openPopups++; });
+    map.on('popupclose', function() { _openPopups = Math.max(0, _openPopups - 1); });
+    // Leaflet closes an open pop-up on preclick, before 'click' fires; a click
+    // that closes a pop-up must not also place a mark.
+    map.on('preclick', function() { _popupAtPreclick = _openPopups > 0; });
+    map.on('dblclick', function() {
+        if (_tapTimer) { clearTimeout(_tapTimer); _tapTimer = null; }
+    });
+
+    function _tapToPlaceButton() {
+        var $btn = $('#info_page button.drawpoint[data-tap-to-place]').first();
+        if (!$btn.length || $btn.prop('disabled')) return null;       // none, or at max
+        if ($btn.siblings('.geo-inp').prop('disabled')) return null;  // hidden by a rule
+        return $btn;
+    }
+
+    // Not currentQ: a pop-up closed by clicking away leaves it set, and the
+    // open-pop-up count already covers a mark whose pop-up is showing.
+    function _mapIsBusy() {
+        return spray.active || !!currentDrawFeature || !!currentEditLayer ||
+            document.getElementById('crosshair-overlay').style.display === 'flex';
+    }
+
+    map.on('click', function(e) {
+        var popupWasOpen = _popupAtPreclick;
+        _popupAtPreclick = false;
+        if (popupWasOpen || _mapIsBusy() || !_tapToPlaceButton()) return;
+        // Interactive layers with click handlers already swallow the map click
+        // (Leaflet 1.4 _findEventTargets); this is the backstop for controls,
+        // pop-ups and marker icons. .leaflet-fa-markers is the pin graphic,
+        // including the copy L.Icon.FontAwesome leaves in the non-interactive
+        // shadow pane: a click on any pin must never drop a second mark.
+        var target = e.originalEvent && e.originalEvent.target;
+        if (target && target.closest &&
+            target.closest('.leaflet-marker-icon, .leaflet-fa-markers, .leaflet-popup, .leaflet-control')) return;
+        var latlng = e.latlng;
+        if (_tapTimer) clearTimeout(_tapTimer);
+        _tapTimer = setTimeout(function() {
+            _tapTimer = null;
+            // Re-checked: the state may have changed during the wait.
+            var $btn = _tapToPlaceButton();
+            if (!$btn || _mapIsBusy() || _openPopups > 0) return;
+            currentQ = $btn.attr('name');
+            toggleInfo(false);
+            var layer = _newPointMarker(latlng,
+                $btn.attr('data-color') || '#000000',
+                $btn.attr('data-icon') || 'fas fa-map-marker-alt');
+            map.fire('draw:created', {layerType: 'marker', layer: layer});
+        }, 300);
     });
 
     // --- Draw action bar buttons ---

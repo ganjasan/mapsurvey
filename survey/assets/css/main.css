@@ -695,6 +695,20 @@ ul {
   display: inline-flex;
 }
 
+/* Tap-to-place hint (spec point-tap-to-place): only rendered when a map
+   click places this question's mark; gone once the cap disables the button. */
+.geo-tap-hint {
+  margin: 6px 2px 0;
+  font-size: 0.8em;
+  color: var(--text-secondary);
+}
+.geo-tap-hint .fa-hand-pointer {
+  margin-right: 4px;
+}
+.drawbutton:disabled + .geo-tap-hint {
+  display: none;
+}
+
 /* Progress sits INSIDE the button (so it is obvious which question it belongs
    to) and renders only when the creator set min/max features */
 .geo-progress {

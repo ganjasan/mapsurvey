@@ -923,6 +923,10 @@ class Question(models.Model):
     # (question_types.SPRAY_BRUSH_PX). A model field rather than a key of
     # `validation_settings` because that JSON does not ride the survey ZIP.
     spray_brush = models.CharField(max_length=6, choices=SPRAY_BRUSH_CHOICES, default=SPRAY_BRUSH_DEFAULT, help_text=_('`spraycan` only: brush size the respondent paints with.'))
+    # `point` only: a click on the map places the mark, without the draw
+    # button first. Honoured only while the question is the only top-level
+    # geo question in its section (question_types.tap_to_place_active).
+    tap_to_place = models.BooleanField(default=False, help_text=_('`point` only: a tap on the map places a mark. Works only while this is the only map question on its page.'))
     image = models.ImageField(upload_to ='images/', null=True, blank=True)
     display_style = models.CharField(max_length=20, choices=DISPLAY_STYLE_CHOICES, default="default", help_text=_('Rendering style: rating styles ("default" inherits the survey-wide style), "dropdown" or "icon_grid" for choice, "icon_grid" for multichoice (question_types.DISPLAY_STYLES_BY_TYPE)'))
     # Same shape and semantics as SurveySection.visibility_rule; a question is visible

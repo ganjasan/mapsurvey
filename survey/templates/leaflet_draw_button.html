@@ -1,4 +1,4 @@
-{% load question_utils %}
+{% load i18n question_utils %}
 <div class="geo-block" data-question="{{ widget.name }}">
 	<button name = "{{ widget.name }}" type="button" class="drawbutton {{ widget.draw_type }}" draw-type="{{widget.draw_type}}" data-color="{{widget.color}}" data-icon="{{widget.icon_class}}"
 		data-orig-subtitle="{{ widget.subtitle }}"
@@ -6,7 +6,8 @@
 		{% if widget.max_features %}data-max-features="{{ widget.max_features }}"{% endif %}
 		{% if widget.brush_px %}data-brush-px="{{ widget.brush_px }}"{% endif %}
 		{% if widget.max_dots %}data-max-dots="{{ widget.max_dots }}"{% endif %}
-		{% if widget.brush_sizes %}data-brush-sizes="{{ widget.brush_sizes }}"{% endif %} >
+		{% if widget.brush_sizes %}data-brush-sizes="{{ widget.brush_sizes }}"{% endif %}
+		{% if widget.tap_to_place %}data-tap-to-place="1"{% endif %} >
 		<div class="geo-question">
 			<div class="geo-question-icon" style="background: {{ widget.color }}15;">
 				{% marker_icon widget.draw_icon_class color=widget.color style="font-size:22px;width:22px;height:22px;" %}
@@ -24,5 +25,6 @@
 			<span class="geo-count" style="background: {{ widget.color }};"></span>
 		</div>
 	</button>
+	{% if widget.tap_to_place %}<p class="geo-tap-hint"><i class="fas fa-hand-pointer" aria-hidden="true"></i> {% trans "Tap the map to mark a place — or use the button." %}</p>{% endif %}
 	<input type="text" name="{{ widget.name }}" hidden class="geo-inp" {% if widget.required %}data-required="true"{% endif %}>
 </div>
