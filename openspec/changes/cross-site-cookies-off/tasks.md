@@ -13,4 +13,4 @@
 ## 3. Docs
 
 - [x] 3.1 CLAUDE.md embedding paragraph; changelog entry (`kind: fixed`)
-- [ ] 3.2 PR text: the manual Render step (group `SECRET_KEY`), what stays on `CROSS_SITE_COOKIES=0`
+- [x] 3.2 PR text: the manual Render step (group `SECRET_KEY`), what stays on `CROSS_SITE_COOKIES=0`
