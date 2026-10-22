@@ -509,23 +509,14 @@ def editor_account_preferences(request):
 
 @login_required
 def editor_account_mcp(request):
-    """Agent access before the MCP server exists (change first-survey-onboarding, D6).
+    """The agent-access teaser, now a redirect (change auth-core, #379).
 
-    The URL `docs/mcp.md` promises and #306 fills with the token page. Until
-    then: what connecting an agent will do, one example prompt, and "Tell me
-    when it's ready", which is the launch mailing list. First click only;
-    the event fires once with it.
+    The page body -- tokens, connected apps, the MCP interest block with its
+    "Tell me when it's ready" button -- lives on `editor_account_connections`
+    (`api/views.py`). The URL and its name stay: `docs/mcp.md`, the help
+    pages and old bookmarks point here.
     """
-    prefs, _created = CreatorPreferences.objects.get_or_create(user=request.user)
-    if request.method == 'POST':
-        if prefs.agent_access_requested_at is None:
-            prefs.agent_access_requested_at = timezone.now()
-            prefs.save(update_fields=['agent_access_requested_at', 'updated_at'])
-            pe.emit(pe.AGENT_ACCESS_REQUESTED, request.user.pk)
-        return redirect('editor_account_mcp')
-    return render(request, 'editor/account_mcp.html', {
-        'requested': prefs.agent_access_requested_at is not None,
-    })
+    return redirect('editor_account_connections')
 
 
 def _start_survey_generation(request, form):

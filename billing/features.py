@@ -35,6 +35,13 @@ FEATURES = {
     # asks for consulting, analysis or a report.
     'pro_help': Feature('pro_help', frozenset({PLAN_PRO}),
                         _('Consulting, analysis and reports from the Mapsurvey team')),
+    # Programmatic access (change auth-core, #379): the REST API, the MCP server
+    # and what personal tokens or OAuth grants can reach. Checked at the
+    # resource per request on the organisation that owns the object -- never
+    # at token issue -- so a lapsed subscription stops access without
+    # revoking anything and renewal brings the same token back.
+    'api': Feature('api', frozenset({PLAN_PRO}),
+                   _('REST API, MCP server and personal access tokens')),
 }
 
 

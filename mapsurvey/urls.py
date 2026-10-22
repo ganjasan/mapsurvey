@@ -34,6 +34,9 @@ handler404 = survey_not_found
 urlpatterns = [
  	path('', include('survey.urls')),
     path('', include('billing.urls')),
+    # Token-authenticated endpoints and the account's connections page
+    # (change auth-core, #379). Bearer only -- no session on these paths.
+    path('', include('api.urls')),
     path('i18n/', include('django.conf.urls.i18n')),
     path('admin/', admin.site.urls),
     path('accounts/register/', AbuseProtectedRegistrationView.as_view(), name='django_registration_register'),

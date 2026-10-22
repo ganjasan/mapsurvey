@@ -1,0 +1,169 @@
+{% extends "editor/editor_base.html" %}
+{% load i18n %}
+{% comment %}API & connections (openspec: auth-core, D9; #379).
+
+Personal tokens: list, create (value shown once, from the session), revoke.
+"Connected apps" fills with #313. The MCP block at the bottom is the former
+teaser page (agent-access-teaser), button and event intact, until #306 ships.
+Session-authenticated like every editor page -- the API paths are the ones
+that refuse cookies, not this one.{% endcomment %}
+
+{% block page_title %}{% trans "API & connections" %}{% endblock %}
+
+{% block navbar_content %}
+<span class="survey-name">{% trans "API & connections" %}</span>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  .cx-wrap { padding: 2rem 1rem 3rem; }
+  .cx-card { max-width: 760px; margin: 0 auto 1.25rem; background: #fff; border: 1px solid var(--border-color); border-radius: 16px; padding: 1.75rem 2rem; }
+  .cx-card h1 { font-size: 1.4rem; font-weight: 700; margin: 0 0 .5rem; }
+  .cx-card h2 { font-size: 1.05rem; font-weight: 700; margin: 0 0 .5rem; }
+  .cx-card p, .cx-card li, .cx-card td, .cx-card th, .cx-card label { font-size: .92rem; line-height: 1.5; }
+  .cx-hint { color: #5f6368; font-size: .85rem; margin: 0 0 1rem; }
+  .cx-note { background: #fef3c7; color: #92400e; border-radius: 10px; padding: .6rem .9rem; font-size: .85rem; margin: 0 0 1rem; }
+  .cx-once { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px; padding: 1rem 1.1rem; margin: 0 0 1.25rem; }
+  .cx-once code { display: block; font-size: .95rem; word-break: break-all; background: #0f172a; color: #e2e8f0; padding: .7rem .9rem; border-radius: 10px; margin: .5rem 0; user-select: all; }
+  .cx-once small { color: #047857; }
+  .cx-table { width: 100%; border-collapse: collapse; margin: 0 0 1.25rem; }
+  .cx-table th { text-align: left; font-size: .75rem; text-transform: uppercase; letter-spacing: .03em; color: #6b7280; padding: .4rem .5rem; border-bottom: 1px solid var(--border-color); }
+  .cx-table td { padding: .55rem .5rem; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+  .cx-table code { font-size: .85rem; }
+  .cx-chip { display: inline-block; font-size: .72rem; background: #f1f5f9; color: #334155; border-radius: 999px; padding: 1px 8px; margin: 0 4px 3px 0; white-space: nowrap; }
+  .cx-chip.danger { background: #fee2e2; color: #991b1b; }
+  .cx-expired { color: #b91c1c; font-weight: 600; font-size: .78rem; }
+  .cx-form fieldset { border: 0; padding: 0; margin: 0 0 1rem; }
+  .cx-form legend { font-size: .9rem; font-weight: 600; margin-bottom: .25rem; }
+  .cx-form ul { list-style: none; padding: 0; margin: 0; }
+  .cx-form li { padding: .15rem 0; }
+  .cx-form input[type=text], .cx-form select { max-width: 360px; }
+  .cx-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1.5rem; }
+  .cx-revoke { background: none; border: 0; color: #b91c1c; font-size: .85rem; padding: 0; cursor: pointer; }
+  .cx-empty { color: #9aa0a6; font-size: .9rem; margin: 0 0 1.25rem; }
+  .mcp-eyebrow { font-size: .7rem; font-weight: 600; background: #fef3c7; color: #b45309; border-radius: 999px; padding: 3px 10px; display: inline-block; margin-bottom: .75rem; }
+  .mcp-prompt { background: #0f172a; color: #e2e8f0; border-radius: 12px; padding: .85rem 1rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .82rem; line-height: 1.5; margin: .9rem 0 1.1rem; }
+  .mcp-prompt small { display: block; color: #94a3b8; font-size: .68rem; margin-bottom: .3rem; }
+  .mcp-cta { display: flex; align-items: center; gap: .9rem; flex-wrap: wrap; }
+  .mcp-fine { font-size: .78rem; color: #9aa0a6; }
+  .mcp-done { display: flex; align-items: center; gap: .6rem; font-size: .92rem; color: #16a34a; font-weight: 500; }
+  @media (max-width: 767.98px) {
+    .cx-card { padding: 1.25rem 1rem; }
+    .cx-grid { grid-template-columns: 1fr; }
+    .cx-table thead { display: none; }
+    .cx-table tr { display: block; border-bottom: 1px solid var(--border-color); padding: .5rem 0; }
+    .cx-table td { display: block; border: 0; padding: .15rem 0; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cx-wrap">
+
+  <div class="cx-card">
+    <h1>{% trans "Personal access tokens" %}</h1>
+    <p class="cx-hint">{% trans "A token lets a script, a GIS tool or an AI agent act as you — within the permissions you pick, on the workspaces you allow, and only while the workspace that owns the survey is on Pro." %}</p>
+    {% if not any_pro %}
+    <div class="cx-note">{% blocktrans %}Your workspaces are on the Free plan. You can create tokens now; API calls on a survey will answer <code>pro_required</code> until that survey's workspace upgrades to Pro.{% endblocktrans %}</div>
+    {% endif %}
+
+    {% if once %}
+    <div class="cx-once">
+      <strong>{% blocktrans with label=once.label %}Token “{{ label }}” created.{% endblocktrans %}</strong>
+      <code id="cx-token-value">{{ once.value }}</code>
+      <small>{% trans "Copy it now: this is the only time it is shown. Lost it? Revoke this one and create another." %}</small>
+      <div style="margin-top:.5rem;"><button type="button" class="btn btn-sm btn-outline-secondary" onclick="navigator.clipboard && navigator.clipboard.writeText(document.getElementById('cx-token-value').textContent)">{% trans "Copy" %}</button></div>
+      <div style="margin-top:.75rem;font-size:.82rem;color:#374151;"><code style="display:inline;background:#f1f5f9;color:#0f172a;padding:2px 6px;border-radius:6px;user-select:all;">curl -H "Authorization: Bearer …" {{ request.scheme }}://{{ request.get_host }}{% url 'api_me' %}</code></div>
+    </div>
+    {% endif %}
+
+    {% if rows %}
+    <table class="cx-table">
+      <thead><tr>
+        <th>{% trans "Name" %}</th><th>{% trans "Permissions" %}</th><th>{% trans "Workspace" %}</th><th>{% trans "Expires" %}</th><th>{% trans "Last used" %}</th><th></th>
+      </tr></thead>
+      <tbody>
+      {% for r in rows %}
+      <tr>
+        <td><strong>{{ r.profile.label }}</strong><br><code>{{ r.display }}</code>{% if r.expired %}<br><span class="cx-expired">{% trans "Expired" %}</span>{% endif %}</td>
+        <td>{% for s in r.scopes %}<span class="cx-chip{% if s == 'surveys:publish' or s == 'surveys:delete' %} danger{% endif %}">{{ s }}</span>{% endfor %}<br>{% for a in r.profile.audiences %}<span class="cx-chip">{% if a == 'api' %}{% trans "REST API" %}{% else %}{% trans "MCP server" %}{% endif %}</span>{% endfor %}</td>
+        <td>{% if r.profile.organization %}{{ r.profile.organization.name }}{% else %}{% trans "All my workspaces" %}{% endif %}</td>
+        <td>{% if r.never_expires %}{% trans "Never" %}{% else %}{{ r.expires|date:"Y-m-d" }}{% endif %}<br><small style="color:#9aa0a6;">{% trans "created" %} {{ r.profile.created_at|date:"Y-m-d" }}</small></td>
+        <td>{% if r.profile.last_used_at %}{{ r.profile.last_used_at|timesince }} {% trans "ago" %}{% else %}<span style="color:#9aa0a6;">{% trans "never" %}</span>{% endif %}</td>
+        <td><form method="post" onsubmit="return confirm('{% trans "Revoke this token? Anything using it stops working at once." %}')">{% csrf_token %}<input type="hidden" name="action" value="revoke"><input type="hidden" name="token_id" value="{{ r.profile.token_id }}"><button type="submit" class="cx-revoke">{% trans "Revoke" %}</button></form></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="cx-empty">{% trans "No tokens yet." %}</p>
+    {% endif %}
+
+    <h2>{% trans "New token" %}</h2>
+    <form method="post" class="cx-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="create">
+      {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+      <fieldset>
+        <legend>{{ form.label.label }}</legend>
+        {{ form.label }}
+        <div class="cx-hint" style="margin-top:.25rem;">{{ form.label.help_text }}</div>
+        {% if form.label.errors %}<div class="text-danger" style="font-size:.85rem;">{{ form.label.errors|striptags }}</div>{% endif %}
+      </fieldset>
+      <div class="cx-grid">
+        <fieldset>
+          <legend>{{ form.scopes.label }}</legend>
+          {{ form.scopes }}
+          <div class="cx-hint" style="margin-top:.25rem;">{% trans "Publishing and deleting are off unless you switch them on: those calls cannot be undone." %}</div>
+          {% if form.scopes.errors %}<div class="text-danger" style="font-size:.85rem;">{{ form.scopes.errors|striptags }}</div>{% endif %}
+        </fieldset>
+        <div>
+          <fieldset>
+            <legend>{{ form.audiences.label }}</legend>
+            {{ form.audiences }}
+            {% if form.audiences.errors %}<div class="text-danger" style="font-size:.85rem;">{{ form.audiences.errors|striptags }}</div>{% endif %}
+          </fieldset>
+          <fieldset>
+            <legend>{{ form.organization.label }}</legend>
+            {{ form.organization }}
+            {% if form.organization.errors %}<div class="text-danger" style="font-size:.85rem;">{{ form.organization.errors|striptags }}</div>{% endif %}
+          </fieldset>
+          <fieldset>
+            <legend>{{ form.expiry.label }}</legend>
+            {{ form.expiry }}
+          </fieldset>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary">{% trans "Create token" %}</button>
+    </form>
+  </div>
+
+  <div class="cx-card">
+    <h2>{% trans "Connected apps" %}</h2>
+    <p class="cx-hint" style="margin:0;">{% trans "Apps you sign in to with your Mapsurvey account — ChatGPT, Claude and others — will be listed here once that is available. Today, give them a personal token." %}</p>
+  </div>
+
+  <div class="cx-card">
+    <span class="mcp-eyebrow">{% trans "Coming soon" %}</span>
+    <h2>{% trans "Build surveys from your own AI agent" %}</h2>
+    <p>{% trans "Mapsurvey is getting an MCP server. Connect it to Claude, ChatGPT, Cursor or any MCP client with a token from this page, and ask the agent in plain words:" %}</p>
+    <div class="mcp-prompt"><small>{% trans "example" %}</small>{% trans "Create a Mapsurvey survey in Italian and English about where traffic congestion is worst in Treviglio and why. Add a point question for the worst spots and a short text question for the reason. Give me the editor link." %}</div>
+    <ul>
+      <li>{% blocktrans %}The agent sees and changes only surveys <strong>you</strong> own or collaborate on.{% endblocktrans %}</li>
+      <li>{% trans "Mapsurvey never sees your chat — only the tool calls the agent makes." %}</li>
+      <li>{% trans "Publishing and deleting always ask for an explicit confirmation." %}</li>
+    </ul>
+    {% if requested %}
+    <div class="mcp-done"><i class="fas fa-check-circle"></i> {% trans "We'll email you when it's ready." %}</div>
+    {% else %}
+    <form method="post" class="mcp-cta">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="notify">
+      <button type="submit" class="btn btn-primary"><i class="fas fa-bell mr-1"></i>{% trans "Tell me when it's ready" %}</button>
+      <span class="mcp-fine">{% trans "One email when it launches. Nothing else." %}</span>
+    </form>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
