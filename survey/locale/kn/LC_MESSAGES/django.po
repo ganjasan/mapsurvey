@@ -980,3 +980,183 @@ msgstr "ವಿಳಾಸ ಹುಡುಕಿ..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "ಫಲಿತಾಂಶಗಳಿಲ್ಲ"
+
+msgid "Show all options"
+msgstr "ಎಲ್ಲಾ ಆಯ್ಕೆಗಳನ್ನು ತೋರಿಸಿ"
+
+msgid "Add audio file"
+msgstr "ಆಡಿಯೋ ಫೈಲ್ ಸೇರಿಸಿ"
+
+msgid "Illegal content"
+msgstr "ಕಾನೂನುಬಾಹಿರ ವಿಷಯ"
+
+msgid "at least {n} required"
+msgstr "ಕನಿಷ್ಠ {n} ಅಗತ್ಯವಿದೆ"
+
+msgid "Tap the first point to close the shape."
+msgstr "ಆಕಾರವನ್ನು ಮುಚ್ಚಲು ಮೊದಲ ಬಿಂದುವನ್ನು ಟ್ಯಾಪ್ ಮಾಡಿ."
+
+msgid "Add photo"
+msgstr "ಫೋಟೋ ಸೇರಿಸಿ"
+
+msgid "Yes"
+msgstr "ಹೌದು"
+
+msgid "Something else"
+msgstr "ಬೇರೆ ಏನಾದರೂ"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "ಬ್ರಶ್ ಖಾಲಿಯಾಗಿದೆ — ಮುಂದುವರಿಯಲು ಸ್ವಲ್ಪ ಬಣ್ಣವನ್ನು ಅಳಿಸಿ."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Mapsurvey ಸಮೀಕ್ಷೆಯಲ್ಲಿ ಎಂದಿಗೂ ಪಾಸ್‌ವರ್ಡ್ ಅಥವಾ ಕಾರ್ಡ್ ಸಂಖ್ಯೆಗಳನ್ನು ನಮೂದಿಸಬೇಡಿ."
+
+msgid "Large brush"
+msgstr "ದೊಡ್ಡ ಬ್ರಶ್"
+
+msgid "Harassment, threats or hate"
+msgstr "ಕಿರುಕುಳ, ಬೆದರಿಕೆ ಅಥವಾ ದ್ವೇಷ"
+
+msgid "Attach file"
+msgstr "ಫೈಲ್ ಲಗತ್ತಿಸಿ"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "ಸಿಂಪಡಿಸಲು ಒತ್ತಿ ಹಿಡಿದು ಎಳೆಯಿರಿ. ನಿಮಗೆ ಹೆಚ್ಚು ಖಚಿತವಿರುವಲ್ಲಿ ಹೆಚ್ಚು ಹೊತ್ತು ಇರಿ."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "ಮಕ್ಕಳ ಲೈಂಗಿಕ ದೌರ್ಜನ್ಯ ಅಥವಾ ಶೋಷಣೆ"
+
+msgid "Exposes someone's personal data"
+msgstr "ಯಾರೋ ಒಬ್ಬರ ವೈಯಕ್ತಿಕ ಡೇಟಾವನ್ನು ಬಹಿರಂಗಪಡಿಸುತ್ತದೆ"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "ಗರಿಷ್ಠ ಮಿತಿ ತಲುಪಿದೆ — ಬದಲಾಯಿಸಲು ಕೆಳಗಿನ ಒಂದನ್ನು ತೆಗೆದುಹಾಕಿ."
+
+msgid "Brush size"
+msgstr "ಬ್ರಶ್ ಗಾತ್ರ"
+
+msgid "Tap to add the next point."
+msgstr "ಮುಂದಿನ ಬಿಂದುವನ್ನು ಸೇರಿಸಲು ಟ್ಯಾಪ್ ಮಾಡಿ."
+
+msgid "A few required questions still need an answer."
+msgstr "ಕೆಲವು ಕಡ್ಡಾಯ ಪ್ರಶ್ನೆಗಳಿಗೆ ಇನ್ನೂ ಉತ್ತರ ಬೇಕಾಗಿದೆ."
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s ಪ್ರಶ್ನೆ"
+msgstr[1] "%(n)s ಪ್ರಶ್ನೆಗಳು"
+
+msgid "create your own free map survey"
+msgstr "ನಿಮ್ಮದೇ ಉಚಿತ ನಕ್ಷೆ ಸಮೀಕ್ಷೆಯನ್ನು ರಚಿಸಿ"
+
+msgid "Stop"
+msgstr "ನಿಲ್ಲಿಸಿ"
+
+msgid "Uploading"
+msgstr "ಅಪ್‌ಲೋಡ್ ಆಗುತ್ತಿದೆ"
+
+msgid "This field is required."
+msgstr "ಈ ಕ್ಷೇತ್ರ ಕಡ್ಡಾಯವಾಗಿದೆ."
+
+msgid "up to {n} more"
+msgstr "ಇನ್ನೂ {n} ವರೆಗೆ"
+
+msgid "Tap to start the line."
+msgstr "ರೇಖೆಯನ್ನು ಪ್ರಾರಂಭಿಸಲು ಟ್ಯಾಪ್ ಮಾಡಿ."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "ಸ್ಥಳವನ್ನು ಗುರುತಿಸಲು ನಕ್ಷೆಯನ್ನು ಟ್ಯಾಪ್ ಮಾಡಿ — ಅಥವಾ ಬಟನ್ ಬಳಸಿ."
+
+msgid "Tap the last point to finish the line."
+msgstr "ರೇಖೆಯನ್ನು ಮುಗಿಸಲು ಕೊನೆಯ ಬಿಂದುವನ್ನು ಟ್ಯಾಪ್ ಮಾಡಿ."
+
+msgid "Move map"
+msgstr "ನಕ್ಷೆ ಸರಿಸಿ"
+
+msgid "Anything else we should know? (optional)"
+msgstr "ನಾವು ತಿಳಿಯಬೇಕಾದ ಬೇರೆ ಏನಾದರೂ ಇದೆಯೇ? (ಐಚ್ಛಿಕ)"
+
+msgid "This question is required"
+msgstr "ಈ ಪ್ರಶ್ನೆ ಕಡ್ಡಾಯವಾಗಿದೆ"
+
+msgid "Take photo"
+msgstr "ಫೋಟೋ ತೆಗೆಯಿರಿ"
+
+msgid "Clear"
+msgstr "ತೆರವುಗೊಳಿಸಿ"
+
+msgid "Record"
+msgstr "ರೆಕಾರ್ಡ್"
+
+msgid "Spray"
+msgstr "ಸಿಂಪಡಿಸಿ"
+
+msgid "Please specify"
+msgstr "ದಯವಿಟ್ಟು ನಿರ್ದಿಷ್ಟಪಡಿಸಿ"
+
+msgid "Erase"
+msgstr "ಅಳಿಸಿ"
+
+msgid "Small brush"
+msgstr "ಸಣ್ಣ ಬ್ರಶ್"
+
+msgid "Retry"
+msgstr "ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ"
+
+msgid "Search failed — check your connection and try again."
+msgstr "ಹುಡುಕಾಟ ವಿಫಲವಾಗಿದೆ — ನಿಮ್ಮ ಸಂಪರ್ಕವನ್ನು ಪರಿಶೀಲಿಸಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
+
+msgid "Questions"
+msgstr "ಪ್ರಶ್ನೆಗಳು"
+
+msgid "Add another"
+msgstr "ಇನ್ನೊಂದನ್ನು ಸೇರಿಸಿ"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "ವಂಚನೆಯಂತೆ ಕಾಣುತ್ತದೆ ಅಥವಾ ಕಂಪನಿಯಂತೆ ನಟಿಸುತ್ತದೆ"
+
+msgid "{n} marked"
+msgstr "{n} ಗುರುತಿಸಲಾಗಿದೆ"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "ಪಿನ್ ಇರಿಸಲು ನಕ್ಷೆಯನ್ನು ಸರಿಸಿ, ನಂತರ ಅನ್ವಯಿಸಿ ಒತ್ತಿ."
+
+msgid "Send report"
+msgstr "ವರದಿ ಕಳುಹಿಸಿ"
+
+msgid "Made with"
+msgstr "ರಚಿಸಿದ್ದು:"
+
+msgid "Tap to add the shape’s corners."
+msgstr "ಆಕಾರದ ಮೂಲೆಗಳನ್ನು ಸೇರಿಸಲು ಟ್ಯಾಪ್ ಮಾಡಿ."
+
+msgid "No"
+msgstr "ಇಲ್ಲ"
+
+msgid "{n} of {m} marked"
+msgstr "{m} ರಲ್ಲಿ {n} ಗುರುತಿಸಲಾಗಿದೆ"
+
+msgid "All {m} marked — thank you!"
+msgstr "ಎಲ್ಲಾ {m} ಗುರುತಿಸಲಾಗಿದೆ — ಧನ್ಯವಾದಗಳು!"
+
+msgid "Report this survey"
+msgstr "ಈ ಸಮೀಕ್ಷೆಯನ್ನು ವರದಿ ಮಾಡಿ"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "ಪಾಸ್‌ವರ್ಡ್, ಲಾಗಿನ್ ಅಥವಾ ಪಾವತಿಯನ್ನು ಕೇಳುತ್ತದೆ"
+
+msgid "Medium brush"
+msgstr "ಮಧ್ಯಮ ಬ್ರಶ್"
+
+msgid "Sign in"
+msgstr "ಸೈನ್ ಇನ್"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "ಸಿಂಪಡಿಸಲು ಬೆರಳನ್ನು ಒತ್ತಿ ಹಿಡಿದು ಎಳೆಯಿರಿ. ನಿಮಗೆ ಹೆಚ್ಚು ಖಚಿತವಿರುವಲ್ಲಿ ಹೆಚ್ಚು ಹೊತ್ತು ಇರಿ."
+
+msgid "Tap to add the next corner."
+msgstr "ಮುಂದಿನ ಮೂಲೆಯನ್ನು ಸೇರಿಸಲು ಟ್ಯಾಪ್ ಮಾಡಿ."
+
+msgid ":"
+msgstr ":"

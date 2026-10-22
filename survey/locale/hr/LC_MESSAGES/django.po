@@ -980,3 +980,184 @@ msgstr "Pretraži adresu..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Nema rezultata"
+
+msgid "Add photo"
+msgstr "Dodaj fotografiju"
+
+msgid "Yes"
+msgstr "Da"
+
+msgid "Something else"
+msgstr "Nešto drugo"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Kist je prazan — izbrišite dio boje za nastavak."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Nikada ne unosite lozinke ni brojeve kartica u anketu Mapsurvey."
+
+msgid "Harassment, threats or hate"
+msgstr "Uznemiravanje, prijetnje ili mržnja"
+
+msgid "Attach file"
+msgstr "Priloži datoteku"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Držite i povlačite za prskanje. Zadržite se dulje gdje ste sigurniji."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Seksualno zlostavljanje ili iskorištavanje djece"
+
+msgid "Exposes someone's personal data"
+msgstr "Otkriva nečije osobne podatke"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Dosegnut maksimum — uklonite jedan ispod da biste promijenili."
+
+msgid "Brush size"
+msgstr "Veličina kista"
+
+msgid "Tap to add the next point."
+msgstr "Dodirnite za dodavanje sljedeće točke."
+
+msgid "A few required questions still need an answer."
+msgstr "Još nekoliko obaveznih pitanja čeka odgovor."
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s pitanje"
+msgstr[1] "%(n)s pitanja"
+msgstr[2] "%(n)s pitanja"
+
+msgid "create your own free map survey"
+msgstr "izradite vlastitu besplatnu anketu s kartom"
+
+msgid "Stop"
+msgstr "Zaustavi"
+
+msgid "Uploading"
+msgstr "Prijenos"
+
+msgid "This field is required."
+msgstr "Ovo polje je obavezno."
+
+msgid "up to {n} more"
+msgstr "još do {n}"
+
+msgid "Tap to start the line."
+msgstr "Dodirnite za početak linije."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Dodirnite kartu da označite mjesto — ili upotrijebite gumb."
+
+msgid "Tap the last point to finish the line."
+msgstr "Dodirnite zadnju točku za završetak linije."
+
+msgid "Move map"
+msgstr "Pomakni kartu"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Želite li nam još nešto reći? (neobavezno)"
+
+msgid "This question is required"
+msgstr "Ovo pitanje je obavezno"
+
+msgid "Take photo"
+msgstr "Snimi fotografiju"
+
+msgid "Clear"
+msgstr "Očisti"
+
+msgid "Spray"
+msgstr "Sprej"
+
+msgid "Large brush"
+msgstr "Veliki kist"
+
+msgid "Please specify"
+msgstr "Navedite"
+
+msgid "Erase"
+msgstr "Briši"
+
+msgid "Small brush"
+msgstr "Mali kist"
+
+msgid "Retry"
+msgstr "Pokušaj ponovno"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Pretraživanje nije uspjelo — provjerite vezu i pokušajte ponovno."
+
+msgid "Questions"
+msgstr "Pitanja"
+
+msgid "Add another"
+msgstr "Dodaj još"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Izgleda kao prijevara ili se lažno predstavlja kao tvrtka"
+
+msgid "{n} marked"
+msgstr "Označeno: {n}"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Pomaknite kartu da postavite pribadaču, zatim pritisnite Primijeni."
+
+msgid "Send report"
+msgstr "Pošalji prijavu"
+
+msgid "Made with"
+msgstr "Izrađeno s"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Dodirujte za dodavanje kutova oblika."
+
+msgid "Record"
+msgstr "Snimi"
+
+msgid "No"
+msgstr "Ne"
+
+msgid "{n} of {m} marked"
+msgstr "Označeno {n} od {m}"
+
+msgid "All {m} marked — thank you!"
+msgstr "Svih {m} označeno — hvala!"
+
+msgid "Report this survey"
+msgstr "Prijavi ovu anketu"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Traži lozinku, prijavu ili plaćanje"
+
+msgid "Medium brush"
+msgstr "Srednji kist"
+
+msgid "Sign in"
+msgstr "Prijava"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Držite i povlačite prstom za prskanje. Zadržite se dulje gdje ste sigurniji."
+
+msgid "Tap to add the next corner."
+msgstr "Dodirnite za dodavanje sljedećeg kuta."
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "Prikaži sve opcije"
+
+msgid "Add audio file"
+msgstr "Dodaj audio datoteku"
+
+msgid "Illegal content"
+msgstr "Nezakonit sadržaj"
+
+msgid "at least {n} required"
+msgstr "potrebno najmanje {n}"
+
+msgid "Tap the first point to close the shape."
+msgstr "Dodirnite prvu točku za zatvaranje oblika."

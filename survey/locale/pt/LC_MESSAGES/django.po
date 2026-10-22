@@ -6162,7 +6162,7 @@ msgstr ""
 #: survey/templates/maptionnaire_alternative.html:100
 #: survey/templates/maptionnaire_alternative.html:101
 msgid "Yes"
-msgstr ""
+msgstr "Sim"
 
 #: survey/templates/maptionnaire_alternative.html:100
 msgid "Yes — per-question translations"
@@ -6396,7 +6396,7 @@ msgstr ""
 
 #: survey/templates/metroquest_alternative.html:97
 msgid "No"
-msgstr ""
+msgstr "Não"
 
 #: survey/templates/metroquest_alternative.html:98
 msgid "Survey structure"
@@ -8063,3 +8063,60 @@ msgstr "Já descreveu o seu projeto — deixar o assistente criar o rascunho (~1
 #: survey/templates/editor/partials/_ai_feedback_strip.html
 msgid "How is the Wizard's draft?"
 msgstr "Que tal o rascunho do assistente?"
+
+msgid "This field is required."
+msgstr "Este campo é obrigatório."
+
+msgid "Move map"
+msgstr "Mover mapa"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Há mais alguma coisa que devamos saber? (opcional)"
+
+msgid "Spray"
+msgstr "Pulverizar"
+
+msgid "Large brush"
+msgstr "Pincel grande"
+
+msgid "Please specify"
+msgstr "Especifique, por favor"
+
+msgid "Small brush"
+msgstr "Pincel pequeno"
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Toque no mapa para marcar um local — ou utilize o botão."
+
+msgid "Send report"
+msgstr "Enviar denúncia"
+
+msgid "Report this survey"
+msgstr "Denunciar este inquérito"
+
+msgid "Erase"
+msgstr "Apagar"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Mantenha o dedo premido e arraste para pulverizar. Demore-se mais onde tiver mais certeza."
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "Mostrar todas as opções"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "O pincel está vazio — apague alguma tinta para continuar."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Nunca introduza palavras-passe ou números de cartão num inquérito Mapsurvey."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Mantenha premido e arraste para pulverizar. Demore-se mais onde tiver mais certeza."
+
+msgid "Brush size"
+msgstr "Tamanho do pincel"
+
+msgid "Medium brush"
+msgstr "Pincel médio"

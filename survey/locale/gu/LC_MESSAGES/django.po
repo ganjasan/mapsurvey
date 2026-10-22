@@ -16,6 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: survey/models.py:19 survey/models.py:26
 msgid "Owner"
@@ -979,3 +980,183 @@ msgstr "સરનામું શોધો..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "કોઈ પરિણામ મળ્યા નહીં"
+
+msgid "Tap the first point to close the shape."
+msgstr "આકાર બંધ કરવા પ્રથમ બિંદુ પર ટૅપ કરો."
+
+msgid "Add photo"
+msgstr "ફોટો ઉમેરો"
+
+msgid "Yes"
+msgstr "હા"
+
+msgid "Something else"
+msgstr "બીજું કંઈક"
+
+msgid "Harassment, threats or hate"
+msgstr "હેરાનગતિ, ધમકીઓ અથવા નફરત"
+
+msgid "Attach file"
+msgstr "ફાઇલ જોડો"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "સ્પ્રે કરવા દબાવી રાખીને ખેંચો. જ્યાં તમને વધુ ખાતરી હોય ત્યાં વધુ સમય રહો."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "બાળકોનું જાતીય શોષણ અથવા દુરુપયોગ"
+
+msgid "Exposes someone's personal data"
+msgstr "કોઈની અંગત માહિતી જાહેર કરે છે"
+
+msgid "Brush size"
+msgstr "બ્રશનું કદ"
+
+msgid "Medium brush"
+msgstr "મધ્યમ બ્રશ"
+
+msgid "Tap to add the next point."
+msgstr "આગલું બિંદુ ઉમેરવા ટૅપ કરો."
+
+msgid "A few required questions still need an answer."
+msgstr "કેટલાક ફરજિયાત પ્રશ્નોના જવાબ હજુ બાકી છે."
+
+msgid "create your own free map survey"
+msgstr "તમારો પોતાનો મફત નકશા સર્વે બનાવો"
+
+msgid "Stop"
+msgstr "રોકો"
+
+msgid "Add audio file"
+msgstr "ઑડિયો ફાઇલ ઉમેરો"
+
+msgid "Uploading"
+msgstr "અપલોડ થઈ રહ્યું છે"
+
+msgid "This field is required."
+msgstr "આ ફીલ્ડ ફરજિયાત છે."
+
+msgid "up to {n} more"
+msgstr "હજુ {n} સુધી"
+
+msgid "Tap to start the line."
+msgstr "રેખા શરૂ કરવા ટૅપ કરો."
+
+msgid "Tap the last point to finish the line."
+msgstr "રેખા પૂર્ણ કરવા છેલ્લા બિંદુ પર ટૅપ કરો."
+
+msgid "Move map"
+msgstr "નકશો ખસેડો"
+
+msgid "Anything else we should know? (optional)"
+msgstr "બીજું કંઈ જે અમારે જાણવું જોઈએ? (વૈકલ્પિક)"
+
+msgid "This question is required"
+msgstr "આ પ્રશ્ન ફરજિયાત છે"
+
+msgid "Take photo"
+msgstr "ફોટો લો"
+
+msgid "Clear"
+msgstr "સાફ કરો"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "બ્રશ ખાલી છે — ચાલુ રાખવા થોડો રંગ ભૂંસો."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Mapsurvey સર્વેમાં ક્યારેય પાસવર્ડ કે કાર્ડ નંબર દાખલ કરશો નહીં."
+
+msgid "Spray"
+msgstr "સ્પ્રે"
+
+msgid "Large brush"
+msgstr "મોટું બ્રશ"
+
+msgid "Please specify"
+msgstr "કૃપા કરીને સ્પષ્ટ કરો"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "મહત્તમ મર્યાદા પહોંચી — બદલવા માટે નીચેથી એક દૂર કરો."
+
+msgid "Small brush"
+msgstr "નાનું બ્રશ"
+
+msgid "Retry"
+msgstr "ફરી પ્રયાસ કરો"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s પ્રશ્ન"
+msgstr[1] "%(n)s પ્રશ્નો"
+
+msgid "Search failed — check your connection and try again."
+msgstr "શોધ નિષ્ફળ — તમારું કનેક્શન તપાસો અને ફરી પ્રયાસ કરો."
+
+msgid "{n} marked"
+msgstr "{n} ચિહ્નિત"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "પિન ગોઠવવા નકશો ખસેડો, પછી \"લાગુ કરો\" દબાવો."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "સ્થળ ચિહ્નિત કરવા નકશા પર ટૅપ કરો — અથવા બટનનો ઉપયોગ કરો."
+
+msgid "Send report"
+msgstr "રિપોર્ટ મોકલો"
+
+msgid "Made with"
+msgstr "આનાથી બનાવેલ"
+
+msgid "Tap to add the shape’s corners."
+msgstr "આકારના ખૂણા ઉમેરવા ટૅપ કરો."
+
+msgid "Record"
+msgstr "રેકોર્ડ"
+
+msgid "No"
+msgstr "ના"
+
+msgid "{n} of {m} marked"
+msgstr "{m}માંથી {n} ચિહ્નિત"
+
+msgid "All {m} marked — thank you!"
+msgstr "બધા {m} ચિહ્નિત — આભાર!"
+
+msgid "Report this survey"
+msgstr "આ સર્વેની જાણ કરો"
+
+msgid "Erase"
+msgstr "ભૂંસો"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "પાસવર્ડ, લૉગિન અથવા ચુકવણી માગે છે"
+
+msgid "Questions"
+msgstr "પ્રશ્નો"
+
+msgid "Add another"
+msgstr "બીજું ઉમેરો"
+
+msgid "Sign in"
+msgstr "સાઇન ઇન"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "સ્પ્રે કરવા આંગળી દબાવી રાખીને ખેંચો. જ્યાં તમને વધુ ખાતરી હોય ત્યાં વધુ સમય રહો."
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "છેતરપિંડી જેવું લાગે છે અથવા કોઈ કંપનીનો ઢોંગ કરે છે"
+
+msgid "Tap to add the next corner."
+msgstr "આગલો ખૂણો ઉમેરવા ટૅપ કરો."
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "બધા વિકલ્પો બતાવો"
+
+msgid "Illegal content"
+msgstr "ગેરકાયદેસર સામગ્રી"
+
+msgid "at least {n} required"
+msgstr "ઓછામાં ઓછા {n} જરૂરી"

@@ -981,3 +981,183 @@ msgstr "Αναζήτηση διεύθυνσης..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Δεν βρέθηκαν αποτελέσματα"
+
+msgid "Brush size"
+msgstr "Μέγεθος πινέλου"
+
+msgid "Medium brush"
+msgstr "Μεσαίο πινέλο"
+
+msgid "Tap to add the next point."
+msgstr "Πατήστε για να προσθέσετε το επόμενο σημείο."
+
+msgid "A few required questions still need an answer."
+msgstr "Ορισμένες υποχρεωτικές ερωτήσεις δεν έχουν ακόμη απαντηθεί."
+
+msgid "create your own free map survey"
+msgstr "δημιουργήστε τη δική σας δωρεάν έρευνα με χάρτη"
+
+msgid "Sign in"
+msgstr "Σύνδεση"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Κρατήστε πατημένο και σύρετε το δάχτυλο για ψεκασμό. Μείνετε περισσότερο εκεί όπου είστε πιο σίγουροι."
+
+msgid "Stop"
+msgstr "Διακοπή"
+
+msgid "Add audio file"
+msgstr "Προσθήκη αρχείου ήχου"
+
+msgid "Illegal content"
+msgstr "Παράνομο περιεχόμενο"
+
+msgid "at least {n} required"
+msgstr "απαιτούνται τουλάχιστον {n}"
+
+msgid "up to {n} more"
+msgstr "έως {n} ακόμη"
+
+msgid "Tap to start the line."
+msgstr "Πατήστε για να ξεκινήσετε τη γραμμή."
+
+msgid "Tap the first point to close the shape."
+msgstr "Πατήστε το πρώτο σημείο για να κλείσετε το σχήμα."
+
+msgid "Tap the last point to finish the line."
+msgstr "Πατήστε το τελευταίο σημείο για να ολοκληρώσετε τη γραμμή."
+
+msgid "Add photo"
+msgstr "Προσθήκη φωτογραφίας"
+
+msgid "Take photo"
+msgstr "Λήψη φωτογραφίας"
+
+msgid "Yes"
+msgstr "Ναι"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Το πινέλο άδειασε — σβήστε λίγη μπογιά για να συνεχίσετε."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Μην εισάγετε ποτέ κωδικούς πρόσβασης ή αριθμούς καρτών σε έρευνα του Mapsurvey."
+
+msgid "Large brush"
+msgstr "Μεγάλο πινέλο"
+
+msgid "Attach file"
+msgstr "Επισύναψη αρχείου"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Κρατήστε πατημένο και σύρετε για ψεκασμό. Μείνετε περισσότερο εκεί όπου είστε πιο σίγουροι."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Συμπληρώθηκε το μέγιστο — αφαιρέστε ένα παρακάτω για να το αλλάξετε."
+
+msgid "Small brush"
+msgstr "Μικρό πινέλο"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s ερώτηση"
+msgstr[1] "%(n)s ερωτήσεις"
+
+msgid "Uploading"
+msgstr "Μεταφόρτωση"
+
+msgid "This field is required."
+msgstr "Αυτό το πεδίο είναι υποχρεωτικό."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Πατήστε στον χάρτη για να σημειώσετε ένα μέρος — ή χρησιμοποιήστε το κουμπί."
+
+msgid "Move map"
+msgstr "Μετακίνηση χάρτη"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Υπάρχει κάτι άλλο που πρέπει να γνωρίζουμε; (προαιρετικό)"
+
+msgid "This question is required"
+msgstr "Αυτή η ερώτηση είναι υποχρεωτική"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Πατήστε για να προσθέσετε τις γωνίες του σχήματος."
+
+msgid "Clear"
+msgstr "Εκκαθάριση"
+
+msgid "Record"
+msgstr "Εγγραφή"
+
+msgid "{n} of {m} marked"
+msgstr "{n} από {m} σημειώθηκαν"
+
+msgid "Spray"
+msgstr "Ψεκασμός"
+
+msgid "Please specify"
+msgstr "Διευκρινίστε"
+
+msgid "Erase"
+msgstr "Σβήσιμο"
+
+msgid "Retry"
+msgstr "Επανάληψη"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Η αναζήτηση απέτυχε — ελέγξτε τη σύνδεσή σας και δοκιμάστε ξανά."
+
+msgid "Questions"
+msgstr "Ερωτήσεις"
+
+msgid "Add another"
+msgstr "Προσθήκη άλλου"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Μοιάζει με απάτη ή παριστάνει μια εταιρεία"
+
+msgid "Tap to add the next corner."
+msgstr "Πατήστε για να προσθέσετε την επόμενη γωνία."
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "Εμφάνιση όλων των επιλογών"
+
+msgid "{n} marked"
+msgstr "{n} σημειώθηκαν"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Μετακινήστε τον χάρτη για να τοποθετήσετε την πινέζα και πατήστε «Εφαρμογή»."
+
+msgid "Send report"
+msgstr "Αποστολή αναφοράς"
+
+msgid "Made with"
+msgstr "Δημιουργήθηκε με"
+
+msgid "No"
+msgstr "Όχι"
+
+msgid "Something else"
+msgstr "Κάτι άλλο"
+
+msgid "Harassment, threats or hate"
+msgstr "Παρενόχληση, απειλές ή μίσος"
+
+msgid "All {m} marked — thank you!"
+msgstr "Σημειώθηκαν και τα {m} — ευχαριστούμε!"
+
+msgid "Report this survey"
+msgstr "Αναφορά αυτής της έρευνας"
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Σεξουαλική κακοποίηση ή εκμετάλλευση παιδιών"
+
+msgid "Exposes someone's personal data"
+msgstr "Αποκαλύπτει προσωπικά δεδομένα κάποιου"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Ζητά κωδικό πρόσβασης, σύνδεση ή πληρωμή"

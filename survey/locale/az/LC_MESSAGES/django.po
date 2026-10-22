@@ -980,3 +980,183 @@ msgstr "Ünvan axtar..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Nəticə tapılmadı"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s sual"
+msgstr[1] "%(n)s sual"
+
+msgid "Uploading"
+msgstr "Yüklənir"
+
+msgid "This field is required."
+msgstr "Bu sahə məcburidir."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Yeri qeyd etmək üçün xəritəyə toxunun — və ya düymədən istifadə edin."
+
+msgid "Tap the last point to finish the line."
+msgstr "Xətti bitirmək üçün son nöqtəyə toxunun."
+
+msgid "Move map"
+msgstr "Xəritəni sürüşdür"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Bilməli olduğumuz başqa bir şey varmı? (istəyə görə)"
+
+msgid "This question is required"
+msgstr "Bu sual məcburidir"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Formanın künclərini əlavə etmək üçün toxunun."
+
+msgid "Clear"
+msgstr "Təmizlə"
+
+msgid "Record"
+msgstr "Yaz"
+
+msgid "{n} of {m} marked"
+msgstr "{m}-dən {n} qeyd olunub"
+
+msgid "Spray"
+msgstr "Püskürt"
+
+msgid "Please specify"
+msgstr "Dəqiqləşdirin"
+
+msgid "Erase"
+msgstr "Sil"
+
+msgid "Retry"
+msgstr "Yenidən cəhd et"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Axtarış alınmadı — bağlantınızı yoxlayıb yenidən cəhd edin."
+
+msgid "Questions"
+msgstr "Suallar"
+
+msgid "Add another"
+msgstr "Daha birini əlavə et"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Fırıldaq kimi görünür və ya özünü şirkət kimi təqdim edir"
+
+msgid "Tap to add the next corner."
+msgstr "Növbəti küncü əlavə etmək üçün toxunun."
+
+msgid ":"
+msgstr ":"
+
+msgid "{n} marked"
+msgstr "{n} qeyd olunub"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Sancağı yerləşdirmək üçün xəritəni sürüşdürün, sonra Tətbiq et düyməsini basın."
+
+msgid "Send report"
+msgstr "Şikayəti göndər"
+
+msgid "Made with"
+msgstr "Hazırlanıb:"
+
+msgid "No"
+msgstr "Xeyr"
+
+msgid "Something else"
+msgstr "Başqa bir şey"
+
+msgid "Harassment, threats or hate"
+msgstr "Təqib, təhdid və ya nifrət"
+
+msgid "All {m} marked — thank you!"
+msgstr "{m} yerin hamısı qeyd olundu — təşəkkürlər!"
+
+msgid "Report this survey"
+msgstr "Bu sorğu barədə şikayət et"
+
+msgid "Exposes someone's personal data"
+msgstr "Kiminsə şəxsi məlumatlarını ifşa edir"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Parol, giriş və ya ödəniş istəyir"
+
+msgid "Brush size"
+msgstr "Fırçanın ölçüsü"
+
+msgid "Medium brush"
+msgstr "Orta fırça"
+
+msgid "Tap to add the next point."
+msgstr "Növbəti nöqtəni əlavə etmək üçün toxunun."
+
+msgid "A few required questions still need an answer."
+msgstr "Bəzi məcburi suallar hələ cavabsızdır."
+
+msgid "create your own free map survey"
+msgstr "öz pulsuz xəritə sorğunuzu yaradın"
+
+msgid "Sign in"
+msgstr "Daxil ol"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Püskürtmək üçün barmağınızı basıb sürüşdürün. Daha əmin olduğunuz yerdə daha uzun qalın."
+
+msgid "Stop"
+msgstr "Dayandır"
+
+msgid "Show all options"
+msgstr "Bütün variantları göstər"
+
+msgid "Add audio file"
+msgstr "Audio fayl əlavə et"
+
+msgid "Illegal content"
+msgstr "Qanunsuz məzmun"
+
+msgid "at least {n} required"
+msgstr "ən azı {n} tələb olunur"
+
+msgid "up to {n} more"
+msgstr "daha {n}-ə qədər"
+
+msgid "Tap to start the line."
+msgstr "Xəttə başlamaq üçün toxunun."
+
+msgid "Tap the first point to close the shape."
+msgstr "Formanı bağlamaq üçün ilk nöqtəyə toxunun."
+
+msgid "Add photo"
+msgstr "Foto əlavə et"
+
+msgid "Take photo"
+msgstr "Foto çək"
+
+msgid "Yes"
+msgstr "Bəli"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Fırça boşdur — davam etmək üçün bir az boyanı silin."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Mapsurvey sorğusunda heç vaxt parol və ya kart nömrəsi daxil etməyin."
+
+msgid "Large brush"
+msgstr "Böyük fırça"
+
+msgid "Attach file"
+msgstr "Fayl əlavə et"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Püskürtmək üçün basıb sürüşdürün. Daha əmin olduğunuz yerdə daha uzun qalın."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Uşaqların cinsi istismarı və ya zorakılığa məruz qalması"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Maksimuma çatdınız — dəyişmək üçün aşağıdan birini silin."
+
+msgid "Small brush"
+msgstr "Kiçik fırça"

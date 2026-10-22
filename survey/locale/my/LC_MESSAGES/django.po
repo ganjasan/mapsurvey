@@ -980,3 +980,182 @@ msgstr "လိပ်စာရှာပါ..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "ရလဒ်မတွေ့ပါ"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "လိမ်လည်မှုနှင့် တူသည် သို့မဟုတ် ကုမ္ပဏီအယောင်ဆောင်သည်"
+
+msgid "Tap to add the next corner."
+msgstr "နောက်ထောင့်တစ်ခု ထည့်ရန် တို့ပါ။"
+
+msgid ":"
+msgstr ":"
+
+msgid "{n} marked"
+msgstr "{n} ခု မှတ်ပြီး"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "ပင်နေရာချရန် မြေပုံကို ရွှေ့ပြီး \"အသုံးပြု\" ကို နှိပ်ပါ။"
+
+msgid "Send report"
+msgstr "တိုင်ကြားချက် ပို့ရန်"
+
+msgid "Made with"
+msgstr "ဖြင့် ပြုလုပ်ထားသည်"
+
+msgid "No"
+msgstr "မဟုတ်ပါ"
+
+msgid "Harassment, threats or hate"
+msgstr "နှောင့်ယှက်ခြင်း၊ ခြိမ်းခြောက်ခြင်း သို့မဟုတ် အမုန်းစကား"
+
+msgid "All {m} marked — thank you!"
+msgstr "{m} ခုလုံး မှတ်ပြီးပါပြီ — ကျေးဇူးတင်ပါသည်!"
+
+msgid "Report this survey"
+msgstr "ဤစစ်တမ်းကို တိုင်ကြားရန်"
+
+msgid "Exposes someone's personal data"
+msgstr "တစ်စုံတစ်ဦး၏ ကိုယ်ရေးအချက်အလက်ကို ထုတ်ဖော်သည်"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "စကားဝှက်၊ အကောင့်ဝင်ခြင်း သို့မဟုတ် ငွေပေးချေမှု တောင်းသည်"
+
+msgid "Brush size"
+msgstr "စုတ်တံအရွယ်"
+
+msgid "Medium brush"
+msgstr "စုတ်တံအလတ်"
+
+msgid "Tap to add the next point."
+msgstr "နောက်အမှတ်တစ်ခု ထည့်ရန် တို့ပါ။"
+
+msgid "A few required questions still need an answer."
+msgstr "မဖြစ်မနေဖြေရမည့် မေးခွန်းအချို့ကို မဖြေရသေးပါ။"
+
+msgid "create your own free map survey"
+msgstr "သင့်ကိုယ်ပိုင် အခမဲ့ မြေပုံစစ်တမ်း ဖန်တီးပါ"
+
+msgid "Sign in"
+msgstr "အကောင့်ဝင်ရန်"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "ဖျန်းရန် လက်ချောင်းကို ဖိထားပြီး ဆွဲပါ။ ပိုသေချာသည့်နေရာတွင် ပိုကြာကြာ ထားပါ။"
+
+msgid "Stop"
+msgstr "ရပ်ရန်"
+
+msgid "Show all options"
+msgstr "ရွေးချယ်စရာအားလုံး ပြရန်"
+
+msgid "Add audio file"
+msgstr "အသံဖိုင် ထည့်ပါ"
+
+msgid "Illegal content"
+msgstr "တရားမဝင်သော အကြောင်းအရာ"
+
+msgid "at least {n} required"
+msgstr "အနည်းဆုံး {n} ခု လိုအပ်သည်"
+
+msgid "up to {n} more"
+msgstr "နောက်ထပ် {n} ခုအထိ"
+
+msgid "Tap to start the line."
+msgstr "မျဉ်းစတင်ရန် တို့ပါ။"
+
+msgid "Tap the first point to close the shape."
+msgstr "ပုံသဏ္ဌာန်ကို ပိတ်ရန် ပထမအမှတ်ကို တို့ပါ။"
+
+msgid "Add photo"
+msgstr "ဓာတ်ပုံ ထည့်ပါ"
+
+msgid "Take photo"
+msgstr "ဓာတ်ပုံရိုက်ရန်"
+
+msgid "Yes"
+msgstr "ဟုတ်ကဲ့"
+
+msgid "Something else"
+msgstr "အခြားတစ်ခုခု"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "စုတ်တံ ဆေးကုန်သွားပါပြီ — ဆက်လုပ်ရန် ဆေးအချို့ကို ဖျက်ပါ။"
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Mapsurvey စစ်တမ်းတွင် စကားဝှက် သို့မဟုတ် ကတ်နံပါတ်ကို ဘယ်တော့မှ မထည့်ပါနှင့်။"
+
+msgid "Large brush"
+msgstr "စုတ်တံကြီး"
+
+msgid "Attach file"
+msgstr "ဖိုင် ပူးတွဲပါ"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "ဖျန်းရန် ဖိထားပြီး ဆွဲပါ။ ပိုသေချာသည့်နေရာတွင် ပိုကြာကြာ ထားပါ။"
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "ကလေးများအပေါ် လိင်ပိုင်းဆိုင်ရာ အလွဲသုံးစားမှု သို့မဟုတ် ခေါင်းပုံဖြတ်မှု"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "အများဆုံးအရေအတွက် ပြည့်ပါပြီ — ပြောင်းရန် အောက်ပါတစ်ခုကို ဖယ်ပါ။"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "မေးခွန်း %(n)s ခု"
+
+msgid "Uploading"
+msgstr "တင်နေသည်"
+
+msgid "This field is required."
+msgstr "ဤအကွက်ကို ဖြည့်ရန် လိုအပ်သည်။"
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "နေရာတစ်ခု မှတ်ရန် မြေပုံကို တို့ပါ — သို့မဟုတ် ခလုတ်ကို သုံးပါ။"
+
+msgid "Tap the last point to finish the line."
+msgstr "မျဉ်းကို အဆုံးသတ်ရန် နောက်ဆုံးအမှတ်ကို တို့ပါ။"
+
+msgid "Move map"
+msgstr "မြေပုံရွှေ့ရန်"
+
+msgid "Anything else we should know? (optional)"
+msgstr "ကျွန်ုပ်တို့ သိသင့်သည့် အခြားအရာ ရှိပါသလား။ (မဖြစ်မနေမဟုတ်)"
+
+msgid "This question is required"
+msgstr "ဤမေးခွန်းကို မဖြစ်မနေ ဖြေရမည်"
+
+msgid "Tap to add the shape’s corners."
+msgstr "ပုံသဏ္ဌာန်၏ ထောင့်များ ထည့်ရန် တို့ပါ။"
+
+msgid "Clear"
+msgstr "ရှင်းလင်း"
+
+msgid "Record"
+msgstr "အသံဖမ်း"
+
+msgid "{n} of {m} marked"
+msgstr "{m} ခုအနက် {n} ခု မှတ်ပြီး"
+
+msgid "Spray"
+msgstr "ဖျန်းရန်"
+
+msgid "Please specify"
+msgstr "ကျေးဇူးပြု၍ ဖော်ပြပါ"
+
+msgid "Erase"
+msgstr "ဖျက်ရန်"
+
+msgid "Small brush"
+msgstr "စုတ်တံငယ်"
+
+msgid "Retry"
+msgstr "ထပ်ကြိုးစားရန်"
+
+msgid "Search failed — check your connection and try again."
+msgstr "ရှာဖွေမှု မအောင်မြင်ပါ — ချိတ်ဆက်မှုကို စစ်ပြီး ထပ်ကြိုးစားပါ။"
+
+msgid "Questions"
+msgstr "မေးခွန်းများ"
+
+msgid "Add another"
+msgstr "နောက်တစ်ခု ထည့်ပါ"

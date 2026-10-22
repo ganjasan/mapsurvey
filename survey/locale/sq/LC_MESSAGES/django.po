@@ -980,3 +980,183 @@ msgstr "Kërko adresën..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Nuk u gjetën rezultate"
+
+msgid "Exposes someone's personal data"
+msgstr "Zbulon të dhënat personale të dikujt"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "U arrit maksimumi — hiqni një më poshtë për ta ndryshuar."
+
+msgid "Brush size"
+msgstr "Madhësia e penelit"
+
+msgid "Tap to add the next point."
+msgstr "Prekni për të shtuar pikën tjetër."
+
+msgid "A few required questions still need an answer."
+msgstr "Disa pyetje të detyrueshme ende kanë nevojë për përgjigje."
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s pyetje"
+msgstr[1] "%(n)s pyetje"
+
+msgid "create your own free map survey"
+msgstr "krijoni anketën tuaj falas me hartë"
+
+msgid "Stop"
+msgstr "Ndalo"
+
+msgid "Uploading"
+msgstr "Po ngarkohet"
+
+msgid "This field is required."
+msgstr "Kjo fushë është e detyrueshme."
+
+msgid "up to {n} more"
+msgstr "deri në {n} të tjera"
+
+msgid "Tap to start the line."
+msgstr "Prekni për të filluar vijën."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Prekni hartën për të shënuar një vend — ose përdorni butonin."
+
+msgid "Tap the last point to finish the line."
+msgstr "Prekni pikën e fundit për të përfunduar vijën."
+
+msgid "Move map"
+msgstr "Lëviz hartën"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Diçka tjetër që duhet të dimë? (opsionale)"
+
+msgid "This question is required"
+msgstr "Kjo pyetje është e detyrueshme"
+
+msgid "Take photo"
+msgstr "Bëj foto"
+
+msgid "Clear"
+msgstr "Pastro"
+
+msgid "Record"
+msgstr "Regjistro"
+
+msgid "Spray"
+msgstr "Spërkat"
+
+msgid "Please specify"
+msgstr "Ju lutemi specifikoni"
+
+msgid "Erase"
+msgstr "Fshi bojën"
+
+msgid "Small brush"
+msgstr "Penel i vogël"
+
+msgid "Retry"
+msgstr "Provo përsëri"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Kërkimi dështoi — kontrolloni lidhjen dhe provoni përsëri."
+
+msgid "Questions"
+msgstr "Pyetjet"
+
+msgid "Add another"
+msgstr "Shto një tjetër"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Duket si mashtrim ose imiton një kompani"
+
+msgid "{n} marked"
+msgstr "{n} të shënuara"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Lëvizni hartën për të pozicionuar gjilpërën, pastaj shtypni Apliko."
+
+msgid "Send report"
+msgstr "Dërgo raportin"
+
+msgid "Made with"
+msgstr "Krijuar me"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Prekni për të shtuar këndet e formës."
+
+msgid "No"
+msgstr "Jo"
+
+msgid "{n} of {m} marked"
+msgstr "{n} nga {m} të shënuara"
+
+msgid "All {m} marked — thank you!"
+msgstr "Të gjitha {m} u shënuan — faleminderit!"
+
+msgid "Report this survey"
+msgstr "Raporto këtë anketë"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Kërkon fjalëkalim, hyrje në llogari ose pagesë"
+
+msgid "Medium brush"
+msgstr "Penel mesatar"
+
+msgid "Sign in"
+msgstr "Hyr"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Mbani të shtypur dhe tërhiqni gishtin për të spërkatur. Qëndroni më gjatë aty ku jeni më të sigurt."
+
+msgid "Tap to add the next corner."
+msgstr "Prekni për të shtuar këndin tjetër."
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "Shfaq të gjitha opsionet"
+
+msgid "Add audio file"
+msgstr "Shto skedar audio"
+
+msgid "Illegal content"
+msgstr "Përmbajtje e paligjshme"
+
+msgid "at least {n} required"
+msgstr "kërkohen të paktën {n}"
+
+msgid "Tap the first point to close the shape."
+msgstr "Prekni pikën e parë për të mbyllur formën."
+
+msgid "Add photo"
+msgstr "Shto foto"
+
+msgid "Yes"
+msgstr "Po"
+
+msgid "Something else"
+msgstr "Diçka tjetër"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Peneli është bosh — fshini pak bojë për të vazhduar."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Mos vendosni kurrë fjalëkalime ose numra kartash në një anketë Mapsurvey."
+
+msgid "Large brush"
+msgstr "Penel i madh"
+
+msgid "Harassment, threats or hate"
+msgstr "Ngacmim, kërcënime ose urrejtje"
+
+msgid "Attach file"
+msgstr "Bashkëngjit skedar"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Mbani të shtypur dhe tërhiqni për të spërkatur. Qëndroni më gjatë aty ku jeni më të sigurt."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Abuzim seksual ose shfrytëzim i fëmijëve"

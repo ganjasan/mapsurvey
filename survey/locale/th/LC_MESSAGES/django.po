@@ -980,3 +980,182 @@ msgstr "ค้นหาที่อยู่..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "ไม่พบผลลัพธ์"
+
+msgid "Move map"
+msgstr "เลื่อนแผนที่"
+
+msgid "Anything else we should know? (optional)"
+msgstr "มีอะไรอื่นที่เราควรรู้ไหม? (ไม่บังคับ)"
+
+msgid "This question is required"
+msgstr "คำถามนี้จำเป็นต้องตอบ"
+
+msgid "Tap to add the shape’s corners."
+msgstr "แตะเพื่อเพิ่มมุมของรูปทรง"
+
+msgid "Clear"
+msgstr "ล้าง"
+
+msgid "Record"
+msgstr "บันทึกเสียง"
+
+msgid "{n} of {m} marked"
+msgstr "ทำเครื่องหมายแล้ว {n} จาก {m}"
+
+msgid "Spray"
+msgstr "พ่นสี"
+
+msgid "Please specify"
+msgstr "โปรดระบุ"
+
+msgid "Erase"
+msgstr "ลบ"
+
+msgid "Small brush"
+msgstr "แปรงเล็ก"
+
+msgid "Retry"
+msgstr "ลองอีกครั้ง"
+
+msgid "Search failed — check your connection and try again."
+msgstr "การค้นหาล้มเหลว — ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง"
+
+msgid "Questions"
+msgstr "คำถาม"
+
+msgid "Add another"
+msgstr "เพิ่มอีก"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "ดูเหมือนการหลอกลวงหรือแอบอ้างเป็นบริษัท"
+
+msgid "Tap to add the next corner."
+msgstr "แตะเพื่อเพิ่มมุมถัดไป"
+
+msgid ":"
+msgstr ":"
+
+msgid "{n} marked"
+msgstr "ทำเครื่องหมายแล้ว {n}"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "เลื่อนแผนที่เพื่อวางหมุด แล้วกด นำไปใช้"
+
+msgid "Send report"
+msgstr "ส่งรายงาน"
+
+msgid "Made with"
+msgstr "สร้างด้วย"
+
+msgid "No"
+msgstr "ไม่ใช่"
+
+msgid "Harassment, threats or hate"
+msgstr "การคุกคาม การข่มขู่ หรือความเกลียดชัง"
+
+msgid "All {m} marked — thank you!"
+msgstr "ทำเครื่องหมายครบทั้ง {m} แล้ว — ขอบคุณ!"
+
+msgid "Report this survey"
+msgstr "รายงานแบบสำรวจนี้"
+
+msgid "Exposes someone's personal data"
+msgstr "เปิดเผยข้อมูลส่วนบุคคลของผู้อื่น"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "ขอรหัสผ่าน การเข้าสู่ระบบ หรือการชำระเงิน"
+
+msgid "Brush size"
+msgstr "ขนาดแปรง"
+
+msgid "Medium brush"
+msgstr "แปรงกลาง"
+
+msgid "Tap to add the next point."
+msgstr "แตะเพื่อเพิ่มจุดถัดไป"
+
+msgid "A few required questions still need an answer."
+msgstr "ยังมีคำถามที่ต้องตอบอีกไม่กี่ข้อ"
+
+msgid "create your own free map survey"
+msgstr "สร้างแบบสำรวจแผนที่ฟรีของคุณเอง"
+
+msgid "Sign in"
+msgstr "เข้าสู่ระบบ"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "กดนิ้วค้างแล้วลากเพื่อพ่น อยู่นานขึ้นในจุดที่คุณมั่นใจมากกว่า"
+
+msgid "Stop"
+msgstr "หยุด"
+
+msgid "Show all options"
+msgstr "แสดงตัวเลือกทั้งหมด"
+
+msgid "Add audio file"
+msgstr "เพิ่มไฟล์เสียง"
+
+msgid "Illegal content"
+msgstr "เนื้อหาผิดกฎหมาย"
+
+msgid "at least {n} required"
+msgstr "ต้องมีอย่างน้อย {n}"
+
+msgid "up to {n} more"
+msgstr "เพิ่มได้อีกสูงสุด {n}"
+
+msgid "Tap to start the line."
+msgstr "แตะเพื่อเริ่มเส้น"
+
+msgid "Tap the first point to close the shape."
+msgstr "แตะจุดแรกเพื่อปิดรูปทรง"
+
+msgid "Add photo"
+msgstr "เพิ่มรูปภาพ"
+
+msgid "Take photo"
+msgstr "ถ่ายรูป"
+
+msgid "Yes"
+msgstr "ใช่"
+
+msgid "Something else"
+msgstr "อย่างอื่น"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "แปรงหมดสีแล้ว — ลบสีออกบางส่วนเพื่อทำต่อ"
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "อย่ากรอกรหัสผ่านหรือหมายเลขบัตรในแบบสำรวจ Mapsurvey"
+
+msgid "Large brush"
+msgstr "แปรงใหญ่"
+
+msgid "Attach file"
+msgstr "แนบไฟล์"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "กดค้างแล้วลากเพื่อพ่น อยู่นานขึ้นในจุดที่คุณมั่นใจมากกว่า"
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "การล่วงละเมิดทางเพศหรือการแสวงประโยชน์จากเด็ก"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "ถึงจำนวนสูงสุดแล้ว — ลบรายการด้านล่างออกหนึ่งรายการเพื่อเปลี่ยน"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s คำถาม"
+
+msgid "Uploading"
+msgstr "กำลังอัปโหลด"
+
+msgid "This field is required."
+msgstr "ช่องนี้จำเป็นต้องกรอก"
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "แตะแผนที่เพื่อทำเครื่องหมายสถานที่ — หรือใช้ปุ่ม"
+
+msgid "Tap the last point to finish the line."
+msgstr "แตะจุดสุดท้ายเพื่อจบเส้น"

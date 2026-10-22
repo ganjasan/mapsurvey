@@ -980,3 +980,183 @@ msgstr "Cím keresése..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Nincs találat"
+
+msgid ":"
+msgstr ":"
+
+msgid "{n} marked"
+msgstr "{n} megjelölve"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Mozgassa a térképet a tű elhelyezéséhez, majd nyomja meg az Alkalmaz gombot."
+
+msgid "Send report"
+msgstr "Bejelentés küldése"
+
+msgid "Made with"
+msgstr "Készült ezzel:"
+
+msgid "No"
+msgstr "Nem"
+
+msgid "Something else"
+msgstr "Egyéb"
+
+msgid "Harassment, threats or hate"
+msgstr "Zaklatás, fenyegetés vagy gyűlölet"
+
+msgid "All {m} marked — thank you!"
+msgstr "Mind megjelölve ({m}) — köszönjük!"
+
+msgid "Report this survey"
+msgstr "Kérdőív jelentése"
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Gyermekek szexuális bántalmazása vagy kizsákmányolása"
+
+msgid "Exposes someone's personal data"
+msgstr "Valaki személyes adatait teszi közzé"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Jelszót, bejelentkezést vagy fizetést kér"
+
+msgid "Brush size"
+msgstr "Ecsetméret"
+
+msgid "Medium brush"
+msgstr "Közepes ecset"
+
+msgid "Tap to add the next point."
+msgstr "Koppintson a következő pont hozzáadásához."
+
+msgid "A few required questions still need an answer."
+msgstr "Néhány kötelező kérdés még megválaszolatlan."
+
+msgid "create your own free map survey"
+msgstr "készítse el saját ingyenes térképes kérdőívét"
+
+msgid "Sign in"
+msgstr "Bejelentkezés"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Tartsa lenyomva az ujját, és húzza a festéshez. Ott maradjon tovább, ahol biztosabb benne."
+
+msgid "Stop"
+msgstr "Leállítás"
+
+msgid "Show all options"
+msgstr "Összes lehetőség megjelenítése"
+
+msgid "Add audio file"
+msgstr "Hangfájl hozzáadása"
+
+msgid "Illegal content"
+msgstr "Illegális tartalom"
+
+msgid "at least {n} required"
+msgstr "legalább {n} szükséges"
+
+msgid "up to {n} more"
+msgstr "még legfeljebb {n}"
+
+msgid "Tap to start the line."
+msgstr "Koppintson a vonal elkezdéséhez."
+
+msgid "Tap the first point to close the shape."
+msgstr "Koppintson az első pontra az alakzat lezárásához."
+
+msgid "Add photo"
+msgstr "Fénykép hozzáadása"
+
+msgid "Take photo"
+msgstr "Fénykép készítése"
+
+msgid "Yes"
+msgstr "Igen"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Az ecset kiürült — töröljön egy kis festéket a folytatáshoz."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Soha ne adjon meg jelszót vagy kártyaszámot egy Mapsurvey-kérdőívben."
+
+msgid "Large brush"
+msgstr "Nagy ecset"
+
+msgid "Attach file"
+msgstr "Fájl csatolása"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Tartsa lenyomva, és húzza a festéshez. Ott maradjon tovább, ahol biztosabb benne."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Elérte a maximumot — a módosításhoz távolítson el egyet lent."
+
+msgid "Small brush"
+msgstr "Kis ecset"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s kérdés"
+msgstr[1] "%(n)s kérdés"
+
+msgid "Uploading"
+msgstr "Feltöltés"
+
+msgid "This field is required."
+msgstr "Ez a mező kötelező."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Koppintson a térképre egy hely megjelöléséhez — vagy használja a gombot."
+
+msgid "Tap the last point to finish the line."
+msgstr "Koppintson az utolsó pontra a vonal befejezéséhez."
+
+msgid "Move map"
+msgstr "Térkép mozgatása"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Van még valami, amit tudnunk kellene? (nem kötelező)"
+
+msgid "This question is required"
+msgstr "Ez a kérdés kötelező"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Koppintson az alakzat sarkainak hozzáadásához."
+
+msgid "Clear"
+msgstr "Visszaállítás"
+
+msgid "Record"
+msgstr "Felvétel"
+
+msgid "{n} of {m} marked"
+msgstr "{n} / {m} megjelölve"
+
+msgid "Spray"
+msgstr "Festékszóró"
+
+msgid "Please specify"
+msgstr "Kérjük, pontosítsa"
+
+msgid "Erase"
+msgstr "Radír"
+
+msgid "Retry"
+msgstr "Újra"
+
+msgid "Search failed — check your connection and try again."
+msgstr "A keresés sikertelen — ellenőrizze a kapcsolatot, és próbálja újra."
+
+msgid "Questions"
+msgstr "Kérdések"
+
+msgid "Add another"
+msgstr "Újabb hozzáadása"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Csalásnak tűnik, vagy egy cégnek adja ki magát"
+
+msgid "Tap to add the next corner."
+msgstr "Koppintson a következő sarok hozzáadásához."

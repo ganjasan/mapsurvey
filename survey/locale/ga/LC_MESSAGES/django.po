@@ -980,3 +980,186 @@ msgstr "Cuardaigh seoladh..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Ní bhfuarthas aon torthai"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Tapáil chun cúinní an chrutha a chur leis."
+
+msgid "Clear"
+msgstr "Glan"
+
+msgid "Record"
+msgstr "Taifead"
+
+msgid "{n} of {m} marked"
+msgstr "{n} as {m} marcáilte"
+
+msgid "Spray"
+msgstr "Spraeáil"
+
+msgid "Please specify"
+msgstr "Sonraigh, le do thoil"
+
+msgid "Erase"
+msgstr "Scrios"
+
+msgid "Retry"
+msgstr "Bain triail eile as"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Theip ar an gcuardach — seiceáil do nasc agus bain triail eile as."
+
+msgid "Questions"
+msgstr "Ceisteanna"
+
+msgid "Add another"
+msgstr "Cuir ceann eile leis"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Is cosúil le camscéim é nó ligeann sé air gur comhlacht é"
+
+msgid "Tap to add the next corner."
+msgstr "Tapáil chun an chéad chúinne eile a chur leis."
+
+msgid ":"
+msgstr ":"
+
+msgid "{n} marked"
+msgstr "{n} marcáilte"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Bog an léarscáil chun an biorán a shuíomh, ansin brúigh Cuir i bhfeidhm."
+
+msgid "Send report"
+msgstr "Seol tuairisc"
+
+msgid "Made with"
+msgstr "Déanta le"
+
+msgid "No"
+msgstr "Níl"
+
+msgid "Harassment, threats or hate"
+msgstr "Ciapadh, bagairtí nó fuath"
+
+msgid "All {m} marked — thank you!"
+msgstr "Gach ceann de na {m} marcáilte — go raibh maith agat!"
+
+msgid "Report this survey"
+msgstr "Tuairiscigh an suirbhé seo"
+
+msgid "Exposes someone's personal data"
+msgstr "Nochtann sé sonraí pearsanta duine"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Iarrann sé focal faire, logáil isteach nó íocaíocht"
+
+msgid "Brush size"
+msgstr "Méid an scuaib"
+
+msgid "Medium brush"
+msgstr "Scuab mheánach"
+
+msgid "Tap to add the next point."
+msgstr "Tapáil chun an chéad phointe eile a chur leis."
+
+msgid "A few required questions still need an answer."
+msgstr "Tá roinnt ceisteanna riachtanacha fós gan freagra."
+
+msgid "create your own free map survey"
+msgstr "cruthaigh do shuirbhé léarscáile féin saor in aisce"
+
+msgid "Sign in"
+msgstr "Sínigh isteach"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Coinnigh do mhéar síos agus tarraing chun spraeáil. Fan níos faide san áit a bhfuil tú níos cinnte."
+
+msgid "Stop"
+msgstr "Stop"
+
+msgid "Show all options"
+msgstr "Taispeáin gach rogha"
+
+msgid "Add audio file"
+msgstr "Cuir comhad fuaime leis"
+
+msgid "Illegal content"
+msgstr "Ábhar mídhleathach"
+
+msgid "at least {n} required"
+msgstr "{n} ar a laghad riachtanach"
+
+msgid "up to {n} more"
+msgstr "suas le {n} eile"
+
+msgid "Tap to start the line."
+msgstr "Tapáil chun an líne a thosú."
+
+msgid "Tap the first point to close the shape."
+msgstr "Tapáil an chéad phointe chun an cruth a dhúnadh."
+
+msgid "Add photo"
+msgstr "Cuir grianghraf leis"
+
+msgid "Take photo"
+msgstr "Tóg grianghraf"
+
+msgid "Yes"
+msgstr "Tá"
+
+msgid "Something else"
+msgstr "Rud éigin eile"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Tá an scuab folamh — scrios cuid den phéint chun leanúint ar aghaidh."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Ná cuir isteach focail faire ná uimhreacha cártaí i suirbhé Mapsurvey choíche."
+
+msgid "Large brush"
+msgstr "Scuab mhór"
+
+msgid "Attach file"
+msgstr "Ceangail comhad"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Coinnigh síos agus tarraing chun spraeáil. Fan níos faide san áit a bhfuil tú níos cinnte."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Mí-úsáid ghnéasach nó dúshaothrú leanaí"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Uasmhéid bainte amach — bain ceann thíos chun é a athrú."
+
+msgid "Small brush"
+msgstr "Scuab bheag"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s cheist"
+msgstr[1] "%(n)s cheist"
+msgstr[2] "%(n)s cheist"
+msgstr[3] "%(n)s gceist"
+msgstr[4] "%(n)s ceist"
+
+msgid "Uploading"
+msgstr "Á uaslódáil"
+
+msgid "This field is required."
+msgstr "Tá an réimse seo riachtanach."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Tapáil an léarscáil chun áit a mharcáil — nó úsáid an cnaipe."
+
+msgid "Tap the last point to finish the line."
+msgstr "Tapáil an pointe deireanach chun an líne a chríochnú."
+
+msgid "Move map"
+msgstr "Bog an léarscáil"
+
+msgid "Anything else we should know? (optional)"
+msgstr "An bhfuil aon rud eile ar cheart dúinn a bheith ar an eolas faoi? (roghnach)"
+
+msgid "This question is required"
+msgstr "Tá an cheist seo riachtanach"

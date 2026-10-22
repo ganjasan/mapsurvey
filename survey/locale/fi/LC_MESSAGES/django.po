@@ -6153,7 +6153,7 @@ msgstr ""
 #: survey/templates/maptionnaire_alternative.html:100
 #: survey/templates/maptionnaire_alternative.html:101
 msgid "Yes"
-msgstr ""
+msgstr "Kyllä"
 
 #: survey/templates/maptionnaire_alternative.html:100
 msgid "Yes — per-question translations"
@@ -6387,7 +6387,7 @@ msgstr ""
 
 #: survey/templates/metroquest_alternative.html:97
 msgid "No"
-msgstr ""
+msgstr "Ei"
 
 #: survey/templates/metroquest_alternative.html:98
 #| msgid "Survey Closed"
@@ -7998,3 +7998,60 @@ msgstr "Kuvasit jo projektisi – annetaanko ohjatun toiminnon tehdä luonnos (~
 #: survey/templates/editor/partials/_ai_feedback_strip.html
 msgid "How is the Wizard's draft?"
 msgstr "Millainen ohjatun toiminnon luonnos on?"
+
+msgid "Erase"
+msgstr "Pyyhi"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Pidä sormea painettuna ja vedä suihkuttaaksesi. Viivy pidempään siellä, missä olet varmempi."
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "Näytä kaikki vaihtoehdot"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Pidä painettuna ja vedä suihkuttaaksesi. Viivy pidempään siellä, missä olet varmempi."
+
+msgid "Brush size"
+msgstr "Siveltimen koko"
+
+msgid "Medium brush"
+msgstr "Keskikokoinen sivellin"
+
+msgid "This field is required."
+msgstr "Tämä kenttä on pakollinen."
+
+msgid "Move map"
+msgstr "Siirrä karttaa"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Haluatko kertoa vielä jotain? (valinnainen)"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Sivellin on tyhjä — pyyhi maalia jatkaaksesi."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Älä koskaan syötä salasanoja tai korttinumeroita Mapsurvey-kyselyyn."
+
+msgid "Large brush"
+msgstr "Suuri sivellin"
+
+msgid "Small brush"
+msgstr "Pieni sivellin"
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Napauta karttaa merkitäksesi paikan — tai käytä painiketta."
+
+msgid "Send report"
+msgstr "Lähetä ilmoitus"
+
+msgid "Spray"
+msgstr "Suihkuta"
+
+msgid "Please specify"
+msgstr "Tarkenna"
+
+msgid "Report this survey"
+msgstr "Ilmoita tästä kyselystä"

@@ -980,3 +980,182 @@ msgstr "ស្វែងរកអាសយដ្ឋាន..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "រកមិនឃើញលទ្ធផល"
+
+msgid "Please specify"
+msgstr "សូមបញ្ជាក់"
+
+msgid "Erase"
+msgstr "លុបពណ៌"
+
+msgid "Small brush"
+msgstr "ជក់តូច"
+
+msgid "Retry"
+msgstr "ព្យាយាមម្តងទៀត"
+
+msgid "Search failed — check your connection and try again."
+msgstr "ការស្វែងរកបរាជ័យ — សូមពិនិត្យការតភ្ជាប់របស់អ្នក ហើយព្យាយាមម្តងទៀត។"
+
+msgid "Questions"
+msgstr "សំណួរ"
+
+msgid "Add another"
+msgstr "បន្ថែមមួយទៀត"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "មើលទៅដូចជាការបោកប្រាស់ ឬក្លែងខ្លួនជាក្រុមហ៊ុន"
+
+msgid "{n} marked"
+msgstr "បានសម្គាល់ {n}"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "ផ្លាស់ទីផែនទីដើម្បីដាក់ម្ជុលឱ្យត្រូវកន្លែង រួចចុច អនុវត្ត។"
+
+msgid "Send report"
+msgstr "ផ្ញើរបាយការណ៍"
+
+msgid "Made with"
+msgstr "បង្កើតដោយ"
+
+msgid "Tap to add the shape’s corners."
+msgstr "ប៉ះដើម្បីបន្ថែមជ្រុងនៃរូបរាង។"
+
+msgid "No"
+msgstr "ទេ"
+
+msgid "{n} of {m} marked"
+msgstr "បានសម្គាល់ {n} ក្នុងចំណោម {m}"
+
+msgid "All {m} marked — thank you!"
+msgstr "បានសម្គាល់ទាំង {m} ហើយ — អរគុណ!"
+
+msgid "Report this survey"
+msgstr "រាយការណ៍ការស្ទង់មតិនេះ"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "ស្នើសុំពាក្យសម្ងាត់ ការចូលគណនី ឬការបង់ប្រាក់"
+
+msgid "Medium brush"
+msgstr "ជក់មធ្យម"
+
+msgid "Sign in"
+msgstr "ចូល"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "សង្កត់ ហើយអូសម្រាមដៃដើម្បីបាញ់ពណ៌។ សង្កត់យូរជាងនៅកន្លែងដែលអ្នកប្រាកដជាង។"
+
+msgid "Tap to add the next corner."
+msgstr "ប៉ះដើម្បីបន្ថែមជ្រុងបន្ទាប់។"
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "បង្ហាញជម្រើសទាំងអស់"
+
+msgid "Add audio file"
+msgstr "បន្ថែមឯកសារសំឡេង"
+
+msgid "Illegal content"
+msgstr "មាតិកាខុសច្បាប់"
+
+msgid "at least {n} required"
+msgstr "ត្រូវការយ៉ាងហោចណាស់ {n}"
+
+msgid "Tap the first point to close the shape."
+msgstr "ប៉ះចំណុចដំបូងដើម្បីបិទរូបរាង។"
+
+msgid "Add photo"
+msgstr "បន្ថែមរូបថត"
+
+msgid "Yes"
+msgstr "បាទ/ចាស"
+
+msgid "Something else"
+msgstr "ផ្សេងទៀត"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "ជក់អស់ពណ៌ហើយ — លុបពណ៌ខ្លះដើម្បីបន្ត។"
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "កុំបញ្ចូលពាក្យសម្ងាត់ ឬលេខកាតក្នុងការស្ទង់មតិ Mapsurvey ឡើយ។"
+
+msgid "Large brush"
+msgstr "ជក់ធំ"
+
+msgid "Harassment, threats or hate"
+msgstr "ការយាយី ការគំរាមកំហែង ឬការស្អប់"
+
+msgid "Attach file"
+msgstr "ភ្ជាប់ឯកសារ"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "សង្កត់ ហើយអូសដើម្បីបាញ់ពណ៌។ សង្កត់យូរជាងនៅកន្លែងដែលអ្នកប្រាកដជាង។"
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "ការរំលោភបំពានផ្លូវភេទ ឬការកេងប្រវ័ញ្ចលើកុមារ"
+
+msgid "Exposes someone's personal data"
+msgstr "បង្ហាញទិន្នន័យផ្ទាល់ខ្លួនរបស់នរណាម្នាក់"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "បានដល់ចំនួនអតិបរមា — ដកមួយខាងក្រោមចេញដើម្បីផ្លាស់ប្តូរ។"
+
+msgid "Brush size"
+msgstr "ទំហំជក់"
+
+msgid "Tap to add the next point."
+msgstr "ប៉ះដើម្បីបន្ថែមចំណុចបន្ទាប់។"
+
+msgid "A few required questions still need an answer."
+msgstr "នៅមានសំណួរចាំបាច់មួយចំនួនដែលត្រូវឆ្លើយ។"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s សំណួរ"
+
+msgid "create your own free map survey"
+msgstr "បង្កើតការស្ទង់មតិផែនទីឥតគិតថ្លៃផ្ទាល់ខ្លួនរបស់អ្នក"
+
+msgid "Stop"
+msgstr "ឈប់"
+
+msgid "Uploading"
+msgstr "កំពុងផ្ទុកឡើង"
+
+msgid "This field is required."
+msgstr "វាលនេះត្រូវតែបំពេញ។"
+
+msgid "up to {n} more"
+msgstr "អាចបន្ថែមបាន {n} ទៀត"
+
+msgid "Tap to start the line."
+msgstr "ប៉ះដើម្បីចាប់ផ្តើមបន្ទាត់។"
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "ប៉ះលើផែនទីដើម្បីសម្គាល់ទីកន្លែង — ឬប្រើប៊ូតុង។"
+
+msgid "Tap the last point to finish the line."
+msgstr "ប៉ះចំណុចចុងក្រោយដើម្បីបញ្ចប់បន្ទាត់។"
+
+msgid "Move map"
+msgstr "ផ្លាស់ទីផែនទី"
+
+msgid "Anything else we should know? (optional)"
+msgstr "តើមានអ្វីផ្សេងទៀតដែលយើងគួរដឹងទេ? (ស្រេចចិត្ត)"
+
+msgid "This question is required"
+msgstr "សំណួរនេះចាំបាច់ត្រូវឆ្លើយ"
+
+msgid "Take photo"
+msgstr "ថតរូប"
+
+msgid "Clear"
+msgstr "សម្អាត"
+
+msgid "Record"
+msgstr "ថតសំឡេង"
+
+msgid "Spray"
+msgstr "បាញ់ពណ៌"

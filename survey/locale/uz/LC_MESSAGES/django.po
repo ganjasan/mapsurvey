@@ -980,3 +980,182 @@ msgstr "Manzil qidirish..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Natija topilmadi"
+
+msgid "Stop"
+msgstr "To'xtatish"
+
+msgid "Show all options"
+msgstr "Barcha variantlarni ko'rsatish"
+
+msgid "Add audio file"
+msgstr "Audio fayl qo'shish"
+
+msgid "Illegal content"
+msgstr "Noqonuniy kontent"
+
+msgid "at least {n} required"
+msgstr "kamida {n} ta kerak"
+
+msgid "up to {n} more"
+msgstr "yana {n} tagacha"
+
+msgid "Tap to start the line."
+msgstr "Chiziqni boshlash uchun teging."
+
+msgid "Tap the first point to close the shape."
+msgstr "Shaklni yopish uchun birinchi nuqtaga teging."
+
+msgid "Add photo"
+msgstr "Rasm qo'shish"
+
+msgid "Take photo"
+msgstr "Suratga olish"
+
+msgid "Yes"
+msgstr "Ha"
+
+msgid "Something else"
+msgstr "Boshqa narsa"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Cho'tka bo'sh — davom etish uchun biroz bo'yoqni o'chiring."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Mapsurvey so'rovnomasiga hech qachon parol yoki karta raqamini kiritmang."
+
+msgid "Large brush"
+msgstr "Katta cho'tka"
+
+msgid "Attach file"
+msgstr "Fayl biriktirish"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Purkash uchun bosib turib suring. Ko'proq ishonchingiz komil bo'lgan joyda uzoqroq turing."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Bolalarga nisbatan jinsiy zo'ravonlik yoki ekspluatatsiya"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Maksimal songa yetildi — o'zgartirish uchun quyidagilardan birini olib tashlang."
+
+msgid "Small brush"
+msgstr "Kichik cho'tka"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s ta savol"
+
+msgid "Uploading"
+msgstr "Yuklanmoqda"
+
+msgid "This field is required."
+msgstr "Bu maydon to'ldirilishi shart."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Joyni belgilash uchun xaritaga teging — yoki tugmadan foydalaning."
+
+msgid "Tap the last point to finish the line."
+msgstr "Chiziqni tugatish uchun oxirgi nuqtaga teging."
+
+msgid "Move map"
+msgstr "Xaritani surish"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Biz bilishimiz kerak bo'lgan yana biror narsa bormi? (ixtiyoriy)"
+
+msgid "This question is required"
+msgstr "Bu savolga javob berish shart"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Shakl burchaklarini qo'shish uchun teging."
+
+msgid "Clear"
+msgstr "Tozalash"
+
+msgid "Record"
+msgstr "Yozib olish"
+
+msgid "{n} of {m} marked"
+msgstr "{m} tadan {n} tasi belgilandi"
+
+msgid "Spray"
+msgstr "Purkash"
+
+msgid "Please specify"
+msgstr "Iltimos, aniqlashtiring"
+
+msgid "Erase"
+msgstr "O'chirg'ich"
+
+msgid "Retry"
+msgstr "Qayta urinish"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Qidiruv amalga oshmadi — internet aloqasini tekshirib, qayta urinib ko'ring."
+
+msgid "Questions"
+msgstr "Savollar"
+
+msgid "Add another"
+msgstr "Yana qo'shish"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Firibgarlikka o'xshaydi yoki kompaniya nomidan ish ko'radi"
+
+msgid "Tap to add the next corner."
+msgstr "Keyingi burchakni qo'shish uchun teging."
+
+msgid ":"
+msgstr ":"
+
+msgid "{n} marked"
+msgstr "{n} ta belgilandi"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Belgini joylashtirish uchun xaritani suring, so'ng Qo'llash tugmasini bosing."
+
+msgid "Send report"
+msgstr "Xabar yuborish"
+
+msgid "Made with"
+msgstr "Yaratilgan:"
+
+msgid "No"
+msgstr "Yo'q"
+
+msgid "Harassment, threats or hate"
+msgstr "Ta'qib, tahdid yoki nafrat"
+
+msgid "All {m} marked — thank you!"
+msgstr "Barcha {m} tasi belgilandi — rahmat!"
+
+msgid "Report this survey"
+msgstr "Bu so'rovnoma haqida xabar berish"
+
+msgid "Exposes someone's personal data"
+msgstr "Kimningdir shaxsiy ma'lumotlarini oshkor qiladi"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Parol, tizimga kirish yoki to'lov so'raydi"
+
+msgid "Brush size"
+msgstr "Cho'tka o'lchami"
+
+msgid "Medium brush"
+msgstr "O'rtacha cho'tka"
+
+msgid "Tap to add the next point."
+msgstr "Keyingi nuqtani qo'shish uchun teging."
+
+msgid "A few required questions still need an answer."
+msgstr "Bir nechta majburiy savolga hali javob berilmagan."
+
+msgid "create your own free map survey"
+msgstr "o'z bepul xarita so'rovnomangizni yarating"
+
+msgid "Sign in"
+msgstr "Kirish"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Purkash uchun barmog'ingizni bosib turib suring. Ko'proq ishonchingiz komil bo'lgan joyda uzoqroq turing."

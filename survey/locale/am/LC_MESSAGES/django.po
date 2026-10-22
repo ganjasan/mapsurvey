@@ -16,6 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #: survey/models.py:19 survey/models.py:26
 msgid "Owner"
@@ -979,3 +980,183 @@ msgstr "አድራሻ ፈልግ..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "ምንም ውጤት አልተገኘም"
+
+msgid "{n} marked"
+msgstr "{n} ምልክት ተደርጓል"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "ፒኑን ለማስቀመጥ ካርታውን ያንቀሳቅሱ፣ ከዚያ ተግብር የሚለውን ይጫኑ።"
+
+msgid "Send report"
+msgstr "ሪፖርት ላክ"
+
+msgid "Made with"
+msgstr "የተሰራው በ"
+
+msgid "No"
+msgstr "አይ"
+
+msgid "Harassment, threats or hate"
+msgstr "ትንኮሳ፣ ዛቻ ወይም ጥላቻ"
+
+msgid "All {m} marked — thank you!"
+msgstr "ሁሉም {m} ምልክት ተደርገዋል — እናመሰግናለን!"
+
+msgid "Report this survey"
+msgstr "ይህን ዳሰሳ ሪፖርት አድርግ"
+
+msgid "Exposes someone's personal data"
+msgstr "የአንድን ሰው የግል መረጃ ያጋልጣል"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "የይለፍ ቃል፣ መግቢያ ወይም ክፍያ ይጠይቃል"
+
+msgid "Brush size"
+msgstr "የብሩሽ መጠን"
+
+msgid "Medium brush"
+msgstr "መካከለኛ ብሩሽ"
+
+msgid "Tap to add the next point."
+msgstr "ቀጣዩን ነጥብ ለመጨመር ይንኩ።"
+
+msgid "A few required questions still need an answer."
+msgstr "ጥቂት የግዴታ ጥያቄዎች አሁንም መልስ ይፈልጋሉ።"
+
+msgid "create your own free map survey"
+msgstr "የራስዎን ነፃ የካርታ ዳሰሳ ይፍጠሩ"
+
+msgid "Sign in"
+msgstr "ግባ"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "ለመርጨት በጣትዎ ይያዙና ይጎትቱ። እርግጠኛ በሆኑበት ቦታ ረዘም ብለው ይቆዩ።"
+
+msgid "Stop"
+msgstr "አቁም"
+
+msgid "Show all options"
+msgstr "ሁሉንም አማራጮች አሳይ"
+
+msgid "Add audio file"
+msgstr "የድምፅ ፋይል ጨምር"
+
+msgid "Illegal content"
+msgstr "ሕገ-ወጥ ይዘት"
+
+msgid "at least {n} required"
+msgstr "ቢያንስ {n} ያስፈልጋል"
+
+msgid "up to {n} more"
+msgstr "እስከ {n} ተጨማሪ"
+
+msgid "Tap to start the line."
+msgstr "መስመሩን ለመጀመር ይንኩ።"
+
+msgid "Tap the first point to close the shape."
+msgstr "ቅርጹን ለመዝጋት የመጀመሪያውን ነጥብ ይንኩ።"
+
+msgid "Add photo"
+msgstr "ፎቶ ጨምር"
+
+msgid "Take photo"
+msgstr "ፎቶ አንሳ"
+
+msgid "Yes"
+msgstr "አዎ"
+
+msgid "Something else"
+msgstr "ሌላ ነገር"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "ብሩሹ ባዶ ነው — ለመቀጠል የተወሰነ ቀለም ያጥፉ።"
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "በMapsurvey ዳሰሳ ውስጥ የይለፍ ቃል ወይም የካርድ ቁጥር በፍጹም አያስገቡ።"
+
+msgid "Large brush"
+msgstr "ትልቅ ብሩሽ"
+
+msgid "Attach file"
+msgstr "ፋይል አያይዝ"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "ለመርጨት ይያዙና ይጎትቱ። እርግጠኛ በሆኑበት ቦታ ረዘም ብለው ይቆዩ።"
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "በልጆች ላይ የሚደርስ ወሲባዊ ጥቃት ወይም ብዝበዛ"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "ከፍተኛው ደርሷል — ለመቀየር ከታች አንዱን ያስወግዱ።"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s ጥያቄ"
+msgstr[1] "%(n)s ጥያቄዎች"
+
+msgid "Uploading"
+msgstr "በመጫን ላይ"
+
+msgid "This field is required."
+msgstr "ይህ መስክ ግዴታ ነው።"
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "ቦታ ለማመልከት ካርታውን ይንኩ — ወይም አዝራሩን ይጠቀሙ።"
+
+msgid "Tap the last point to finish the line."
+msgstr "መስመሩን ለመጨረስ የመጨረሻውን ነጥብ ይንኩ።"
+
+msgid "Move map"
+msgstr "ካርታውን አንቀሳቅስ"
+
+msgid "Anything else we should know? (optional)"
+msgstr "ሌላ ማወቅ ያለብን ነገር አለ? (አማራጭ)"
+
+msgid "This question is required"
+msgstr "ይህ ጥያቄ ግዴታ ነው"
+
+msgid "Tap to add the shape’s corners."
+msgstr "የቅርጹን ማዕዘኖች ለመጨመር ይንኩ።"
+
+msgid "Clear"
+msgstr "አጽዳ"
+
+msgid "Record"
+msgstr "ቅዳ"
+
+msgid "{n} of {m} marked"
+msgstr "ከ{m} ውስጥ {n} ምልክት ተደርጓል"
+
+msgid "Spray"
+msgstr "ርጭት"
+
+msgid "Please specify"
+msgstr "እባክዎ ይግለጹ"
+
+msgid "Erase"
+msgstr "አጥፋ"
+
+msgid "Small brush"
+msgstr "ትንሽ ብሩሽ"
+
+msgid "Retry"
+msgstr "እንደገና ሞክር"
+
+msgid "Search failed — check your connection and try again."
+msgstr "ፍለጋው አልተሳካም — ግንኙነትዎን ያረጋግጡና እንደገና ይሞክሩ።"
+
+msgid "Questions"
+msgstr "ጥያቄዎች"
+
+msgid "Add another"
+msgstr "ሌላ ጨምር"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "ማጭበርበር ይመስላል ወይም ኩባንያን ያስመስላል"
+
+msgid "Tap to add the next corner."
+msgstr "ቀጣዩን ማዕዘን ለመጨመር ይንኩ።"
+
+msgid ":"
+msgstr ":"

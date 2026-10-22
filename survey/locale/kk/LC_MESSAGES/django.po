@@ -980,3 +980,183 @@ msgstr "Мекенжай іздеу..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Нәтиже табылмады"
+
+msgid "at least {n} required"
+msgstr "кемінде {n} қажет"
+
+msgid "Tap the first point to close the shape."
+msgstr "Пішінді жабу үшін бірінші нүктені түртіңіз."
+
+msgid "Add photo"
+msgstr "Фото қосу"
+
+msgid "Yes"
+msgstr "Иә"
+
+msgid "Something else"
+msgstr "Басқа нәрсе"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Қылқалам бос — жалғастыру үшін бояудың біразын өшіріңіз."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Mapsurvey сауалнамасына ешқашан құпиясөз немесе карта нөмірін енгізбеңіз."
+
+msgid "Large brush"
+msgstr "Үлкен қылқалам"
+
+msgid "Harassment, threats or hate"
+msgstr "Қудалау, қорқыту немесе өшпенділік"
+
+msgid "Attach file"
+msgstr "Файл тіркеу"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Бүрку үшін басып тұрып сүйреңіз. Сенімдірек жерде ұзағырақ тұрыңыз."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Балаларға жыныстық зорлық немесе оларды қанау"
+
+msgid "Exposes someone's personal data"
+msgstr "Біреудің жеке деректерін жариялайды"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Шегіне жетті — өзгерту үшін төменнен біреуін алып тастаңыз."
+
+msgid "Brush size"
+msgstr "Қылқалам өлшемі"
+
+msgid "Tap to add the next point."
+msgstr "Келесі нүктені қосу үшін түртіңіз."
+
+msgid "A few required questions still need an answer."
+msgstr "Бірнеше міндетті сұраққа әлі жауап берілмеген."
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s сұрақ"
+msgstr[1] "%(n)s сұрақ"
+
+msgid "create your own free map survey"
+msgstr "өзіңіздің тегін карта-сауалнамаңызды жасаңыз"
+
+msgid "Stop"
+msgstr "Тоқтату"
+
+msgid "Uploading"
+msgstr "Жүктелуде"
+
+msgid "This field is required."
+msgstr "Бұл өріс міндетті."
+
+msgid "up to {n} more"
+msgstr "тағы {n} дейін"
+
+msgid "Tap to start the line."
+msgstr "Сызықты бастау үшін түртіңіз."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Орынды белгілеу үшін картаны түртіңіз — немесе түймені пайдаланыңыз."
+
+msgid "Tap the last point to finish the line."
+msgstr "Сызықты аяқтау үшін соңғы нүктені түртіңіз."
+
+msgid "Move map"
+msgstr "Картаны жылжыту"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Бізге тағы айтқыңыз келетін нәрсе бар ма? (міндетті емес)"
+
+msgid "This question is required"
+msgstr "Бұл сұрақ міндетті"
+
+msgid "Take photo"
+msgstr "Суретке түсіру"
+
+msgid "Clear"
+msgstr "Тазалау"
+
+msgid "Record"
+msgstr "Жазу"
+
+msgid "Spray"
+msgstr "Бүрку"
+
+msgid "Please specify"
+msgstr "Нақтылаңыз"
+
+msgid "Erase"
+msgstr "Өшіру"
+
+msgid "Small brush"
+msgstr "Кіші қылқалам"
+
+msgid "Retry"
+msgstr "Қайталау"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Іздеу сәтсіз аяқталды — байланысты тексеріп, қайталап көріңіз."
+
+msgid "Questions"
+msgstr "Сұрақтар"
+
+msgid "Add another"
+msgstr "Тағы қосу"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Алаяқтыққа ұқсайды немесе компанияның атын жамылады"
+
+msgid "{n} marked"
+msgstr "Белгіленді: {n}"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Түйреуішті орналастыру үшін картаны жылжытыңыз, содан кейін Қолдану түймесін басыңыз."
+
+msgid "Send report"
+msgstr "Хабарлама жіберу"
+
+msgid "Made with"
+msgstr "Жасалған құрал:"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Пішіннің бұрыштарын қосу үшін түртіңіз."
+
+msgid "No"
+msgstr "Жоқ"
+
+msgid "{n} of {m} marked"
+msgstr "{m} ішінен {n} белгіленді"
+
+msgid "All {m} marked — thank you!"
+msgstr "Барлық {m} белгіленді — рақмет!"
+
+msgid "Report this survey"
+msgstr "Бұл сауалнама туралы хабарлау"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Құпиясөзді, кіруді немесе төлемді сұрайды"
+
+msgid "Medium brush"
+msgstr "Орташа қылқалам"
+
+msgid "Sign in"
+msgstr "Кіру"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Бүрку үшін саусақпен басып тұрып сүйреңіз. Сенімдірек жерде ұзағырақ тұрыңыз."
+
+msgid "Tap to add the next corner."
+msgstr "Келесі бұрышты қосу үшін түртіңіз."
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "Барлық нұсқаларды көрсету"
+
+msgid "Add audio file"
+msgstr "Аудиофайл қосу"
+
+msgid "Illegal content"
+msgstr "Заңсыз мазмұн"

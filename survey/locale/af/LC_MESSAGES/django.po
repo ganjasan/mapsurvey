@@ -980,3 +980,183 @@ msgstr "Soek adres..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Geen resultate gevind nie"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Die kwas is leeg — vee 'n bietjie verf uit om voort te gaan."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Moet nooit wagwoorde of kaartnommers in 'n Mapsurvey-opname invoer nie."
+
+msgid "Spray"
+msgstr "Spuit"
+
+msgid "Large brush"
+msgstr "Groot kwas"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Maksimum bereik — verwyder een hieronder om dit te verander."
+
+msgid "Small brush"
+msgstr "Klein kwas"
+
+msgid "Retry"
+msgstr "Probeer weer"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s vraag"
+msgstr[1] "%(n)s vrae"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Soektog het misluk — kontroleer jou verbinding en probeer weer."
+
+msgid "{n} marked"
+msgstr "{n} gemerk"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Skuif die kaart om die speld te plaas en druk dan Toepas."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Tik op die kaart om 'n plek te merk — of gebruik die knoppie."
+
+msgid "Send report"
+msgstr "Stuur verslag"
+
+msgid "Made with"
+msgstr "Gemaak met"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Tik om die vorm se hoeke by te voeg."
+
+msgid "Record"
+msgstr "Neem op"
+
+msgid "No"
+msgstr "Nee"
+
+msgid "{n} of {m} marked"
+msgstr "{n} van {m} gemerk"
+
+msgid "Please specify"
+msgstr "Spesifiseer asseblief"
+
+msgid "All {m} marked — thank you!"
+msgstr "Al {m} gemerk — baie dankie!"
+
+msgid "Report this survey"
+msgstr "Rapporteer hierdie opname"
+
+msgid "Erase"
+msgstr "Vee uit"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Vra vir 'n wagwoord, 'n aanmelding of 'n betaling"
+
+msgid "Questions"
+msgstr "Vrae"
+
+msgid "Add another"
+msgstr "Voeg nog een by"
+
+msgid "Sign in"
+msgstr "Meld aan"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Hou jou vinger op die skerm en sleep om te spuit. Bly langer waar jy meer seker is."
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Lyk soos bedrog of gee voor om 'n maatskappy te wees"
+
+msgid "Tap to add the next corner."
+msgstr "Tik om die volgende hoek by te voeg."
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "Wys alle opsies"
+
+msgid "Illegal content"
+msgstr "Onwettige inhoud"
+
+msgid "at least {n} required"
+msgstr "minstens {n} vereis"
+
+msgid "Tap the first point to close the shape."
+msgstr "Tik op die eerste punt om die vorm toe te maak."
+
+msgid "Add photo"
+msgstr "Voeg foto by"
+
+msgid "Yes"
+msgstr "Ja"
+
+msgid "Something else"
+msgstr "Iets anders"
+
+msgid "Harassment, threats or hate"
+msgstr "Teistering, dreigemente of haat"
+
+msgid "Attach file"
+msgstr "Heg lêer aan"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Hou in en sleep om te spuit. Bly langer waar jy meer seker is."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Seksuele misbruik of uitbuiting van kinders"
+
+msgid "Exposes someone's personal data"
+msgstr "Stel iemand se persoonlike data bloot"
+
+msgid "Brush size"
+msgstr "Kwasgrootte"
+
+msgid "Medium brush"
+msgstr "Medium kwas"
+
+msgid "Tap to add the next point."
+msgstr "Tik om die volgende punt by te voeg."
+
+msgid "A few required questions still need an answer."
+msgstr "'n Paar verpligte vrae moet nog beantwoord word."
+
+msgid "create your own free map survey"
+msgstr "skep jou eie gratis kaartopname"
+
+msgid "Stop"
+msgstr "Stop"
+
+msgid "Add audio file"
+msgstr "Voeg klanklêer by"
+
+msgid "Uploading"
+msgstr "Laai op"
+
+msgid "This field is required."
+msgstr "Hierdie veld is verpligtend."
+
+msgid "up to {n} more"
+msgstr "tot {n} meer"
+
+msgid "Tap to start the line."
+msgstr "Tik om die lyn te begin."
+
+msgid "Tap the last point to finish the line."
+msgstr "Tik op die laaste punt om die lyn klaar te maak."
+
+msgid "Move map"
+msgstr "Skuif kaart"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Enigiets anders wat ons moet weet? (opsioneel)"
+
+msgid "This question is required"
+msgstr "Hierdie vraag is verpligtend"
+
+msgid "Take photo"
+msgstr "Neem foto"
+
+msgid "Clear"
+msgstr "Maak skoon"

@@ -980,3 +980,183 @@ msgstr "முகவரி தேடுங்கள்..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "முடிவுகள் கிடைக்கவில்லை"
+
+msgid "Attach file"
+msgstr "கோப்பை இணை"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "தெளிக்க அழுத்திப் பிடித்து இழுக்கவும். நீங்கள் உறுதியாக உள்ள இடத்தில் அதிக நேரம் நிற்கவும்."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "குழந்தைகள் மீதான பாலியல் துன்புறுத்தல் அல்லது சுரண்டல்"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "அதிகபட்சம் எட்டப்பட்டது — மாற்ற கீழே உள்ள ஒன்றை நீக்கவும்."
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s கேள்வி"
+msgstr[1] "%(n)s கேள்விகள்"
+
+msgid "Stop"
+msgstr "நிறுத்து"
+
+msgid "Uploading"
+msgstr "பதிவேற்றுகிறது"
+
+msgid "This field is required."
+msgstr "இந்தப் புலம் கட்டாயமானது."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "ஓர் இடத்தைக் குறிக்க வரைபடத்தைத் தட்டவும் — அல்லது பொத்தானைப் பயன்படுத்தவும்."
+
+msgid "Tap the last point to finish the line."
+msgstr "கோட்டை முடிக்க கடைசிப் புள்ளியைத் தட்டவும்."
+
+msgid "Move map"
+msgstr "வரைபடத்தை நகர்த்து"
+
+msgid "Anything else we should know? (optional)"
+msgstr "நாங்கள் அறிய வேண்டிய வேறு ஏதேனும் உள்ளதா? (விருப்பத்தேர்வு)"
+
+msgid "This question is required"
+msgstr "இந்தக் கேள்வி கட்டாயமானது"
+
+msgid "Tap to add the shape’s corners."
+msgstr "வடிவத்தின் மூலைகளைச் சேர்க்கத் தட்டவும்."
+
+msgid "Clear"
+msgstr "அழி"
+
+msgid "Record"
+msgstr "பதிவு"
+
+msgid "{n} of {m} marked"
+msgstr "{m}-இல் {n} குறிக்கப்பட்டன"
+
+msgid "Spray"
+msgstr "தெளி"
+
+msgid "Please specify"
+msgstr "தயவுசெய்து குறிப்பிடவும்"
+
+msgid "Erase"
+msgstr "அழிப்பான்"
+
+msgid "Small brush"
+msgstr "சிறிய தூரிகை"
+
+msgid "Retry"
+msgstr "மீண்டும் முயல்"
+
+msgid "Search failed — check your connection and try again."
+msgstr "தேடல் தோல்வியடைந்தது — இணைப்பைச் சரிபார்த்து மீண்டும் முயலவும்."
+
+msgid "Questions"
+msgstr "கேள்விகள்"
+
+msgid "Add another"
+msgstr "மேலும் ஒன்று சேர்"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "மோசடி போலத் தெரிகிறது அல்லது ஒரு நிறுவனமாக ஆள்மாறாட்டம் செய்கிறது"
+
+msgid "Tap to add the next corner."
+msgstr "அடுத்த மூலையைச் சேர்க்கத் தட்டவும்."
+
+msgid ":"
+msgstr ":"
+
+msgid "{n} marked"
+msgstr "{n} குறிக்கப்பட்டன"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "பின்னை நிலைநிறுத்த வரைபடத்தை நகர்த்தி, பின்னர் \"பொருத்து\" என்பதை அழுத்தவும்."
+
+msgid "Send report"
+msgstr "புகாரை அனுப்பு"
+
+msgid "Made with"
+msgstr "உருவாக்கப்பட்டது"
+
+msgid "No"
+msgstr "இல்லை"
+
+msgid "Harassment, threats or hate"
+msgstr "துன்புறுத்தல், மிரட்டல் அல்லது வெறுப்பு"
+
+msgid "All {m} marked — thank you!"
+msgstr "அனைத்து {m}-ம் குறிக்கப்பட்டன — நன்றி!"
+
+msgid "Report this survey"
+msgstr "இந்தக் கணக்கெடுப்பைப் புகாரளி"
+
+msgid "Exposes someone's personal data"
+msgstr "ஒருவரின் தனிப்பட்ட தரவை வெளிப்படுத்துகிறது"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "கடவுச்சொல், உள்நுழைவு அல்லது பணம் செலுத்தக் கேட்கிறது"
+
+msgid "Brush size"
+msgstr "தூரிகை அளவு"
+
+msgid "Medium brush"
+msgstr "நடுத்தர தூரிகை"
+
+msgid "Tap to add the next point."
+msgstr "அடுத்த புள்ளியைச் சேர்க்கத் தட்டவும்."
+
+msgid "A few required questions still need an answer."
+msgstr "சில கட்டாயக் கேள்விகளுக்கு இன்னும் பதில் தேவை."
+
+msgid "create your own free map survey"
+msgstr "உங்கள் சொந்த இலவச வரைபடக் கணக்கெடுப்பை உருவாக்குங்கள்"
+
+msgid "Sign in"
+msgstr "உள்நுழை"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "தெளிக்க விரலை அழுத்திப் பிடித்து இழுக்கவும். நீங்கள் உறுதியாக உள்ள இடத்தில் அதிக நேரம் நிற்கவும்."
+
+msgid "Show all options"
+msgstr "அனைத்து விருப்பங்களையும் காட்டு"
+
+msgid "Add audio file"
+msgstr "ஒலிக் கோப்பைச் சேர்"
+
+msgid "Illegal content"
+msgstr "சட்டவிரோத உள்ளடக்கம்"
+
+msgid "at least {n} required"
+msgstr "குறைந்தது {n} தேவை"
+
+msgid "up to {n} more"
+msgstr "மேலும் {n} வரை"
+
+msgid "Tap to start the line."
+msgstr "கோட்டைத் தொடங்கத் தட்டவும்."
+
+msgid "Tap the first point to close the shape."
+msgstr "வடிவத்தை மூட முதல் புள்ளியைத் தட்டவும்."
+
+msgid "Add photo"
+msgstr "புகைப்படம் சேர்"
+
+msgid "Take photo"
+msgstr "புகைப்படம் எடு"
+
+msgid "Yes"
+msgstr "ஆம்"
+
+msgid "Something else"
+msgstr "வேறு ஏதோ"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "தூரிகை காலியாக உள்ளது — தொடர சிறிது வண்ணத்தை அழிக்கவும்."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Mapsurvey கணக்கெடுப்பில் கடவுச்சொற்களையோ அட்டை எண்களையோ ஒருபோதும் உள்ளிட வேண்டாம்."
+
+msgid "Large brush"
+msgstr "பெரிய தூரிகை"

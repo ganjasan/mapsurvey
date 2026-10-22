@@ -980,3 +980,183 @@ msgstr "വിലാസം തിരയുക..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "ഫലങ്ങളൊന്നും കണ്ടെത്തിയില്ല"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "തട്ടിപ്പ് പോലെ തോന്നുന്നു അല്ലെങ്കിൽ ഒരു കമ്പനിയായി ആൾമാറാട്ടം നടത്തുന്നു"
+
+msgid "Tap to add the next corner."
+msgstr "അടുത്ത മൂല ചേർക്കാൻ ടാപ്പ് ചെയ്യുക."
+
+msgid ":"
+msgstr ":"
+
+msgid "{n} marked"
+msgstr "{n} അടയാളപ്പെടുത്തി"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "പിൻ സ്ഥാപിക്കാൻ ഭൂപടം നീക്കുക, തുടർന്ന് പ്രയോഗിക്കുക അമർത്തുക."
+
+msgid "Send report"
+msgstr "റിപ്പോർട്ട് അയയ്ക്കുക"
+
+msgid "Made with"
+msgstr "നിർമ്മിച്ചത്"
+
+msgid "Add another"
+msgstr "ഒന്നുകൂടി ചേർക്കുക"
+
+msgid "No"
+msgstr "ഇല്ല"
+
+msgid "Harassment, threats or hate"
+msgstr "ഉപദ്രവം, ഭീഷണി അല്ലെങ്കിൽ വിദ്വേഷം"
+
+msgid "All {m} marked — thank you!"
+msgstr "എല്ലാ {m} എണ്ണവും അടയാളപ്പെടുത്തി — നന്ദി!"
+
+msgid "Report this survey"
+msgstr "ഈ സർവേ റിപ്പോർട്ട് ചെയ്യുക"
+
+msgid "Exposes someone's personal data"
+msgstr "ഒരാളുടെ സ്വകാര്യ വിവരങ്ങൾ വെളിപ്പെടുത്തുന്നു"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "പാസ്‌വേഡ്, ലോഗിൻ അല്ലെങ്കിൽ പണമടയ്ക്കൽ ആവശ്യപ്പെടുന്നു"
+
+msgid "Brush size"
+msgstr "ബ്രഷ് വലുപ്പം"
+
+msgid "Medium brush"
+msgstr "ഇടത്തരം ബ്രഷ്"
+
+msgid "Tap to add the next point."
+msgstr "അടുത്ത പോയിന്റ് ചേർക്കാൻ ടാപ്പ് ചെയ്യുക."
+
+msgid "A few required questions still need an answer."
+msgstr "ചില നിർബന്ധിത ചോദ്യങ്ങൾക്ക് ഇനിയും ഉത്തരം നൽകാനുണ്ട്."
+
+msgid "create your own free map survey"
+msgstr "നിങ്ങളുടെ സ്വന്തം സൗജന്യ മാപ്പ് സർവേ സൃഷ്ടിക്കുക"
+
+msgid "Sign in"
+msgstr "സൈൻ ഇൻ"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "സ്പ്രേ ചെയ്യാൻ വിരൽ അമർത്തിപ്പിടിച്ച് വലിക്കുക. കൂടുതൽ ഉറപ്പുള്ളിടത്ത് കൂടുതൽ നേരം നിൽക്കുക."
+
+msgid "Stop"
+msgstr "നിർത്തുക"
+
+msgid "Show all options"
+msgstr "എല്ലാ ഓപ്ഷനുകളും കാണിക്കുക"
+
+msgid "Add audio file"
+msgstr "ഓഡിയോ ഫയൽ ചേർക്കുക"
+
+msgid "Illegal content"
+msgstr "നിയമവിരുദ്ധമായ ഉള്ളടക്കം"
+
+msgid "at least {n} required"
+msgstr "കുറഞ്ഞത് {n} എണ്ണം ആവശ്യമാണ്"
+
+msgid "up to {n} more"
+msgstr "{n} എണ്ണം കൂടി വരെ"
+
+msgid "Tap to start the line."
+msgstr "വര തുടങ്ങാൻ ടാപ്പ് ചെയ്യുക."
+
+msgid "Tap the first point to close the shape."
+msgstr "ആകൃതി അടയ്ക്കാൻ ആദ്യ പോയിന്റിൽ ടാപ്പ് ചെയ്യുക."
+
+msgid "Add photo"
+msgstr "ഫോട്ടോ ചേർക്കുക"
+
+msgid "Take photo"
+msgstr "ഫോട്ടോ എടുക്കുക"
+
+msgid "Yes"
+msgstr "അതെ"
+
+msgid "Something else"
+msgstr "മറ്റെന്തെങ്കിലും"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "ബ്രഷ് ശൂന്യമാണ് — തുടരാൻ കുറച്ച് പെയിന്റ് മായ്ക്കുക."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Mapsurvey സർവേയിൽ ഒരിക്കലും പാസ്‌വേഡുകളോ കാർഡ് നമ്പറുകളോ നൽകരുത്."
+
+msgid "Large brush"
+msgstr "വലിയ ബ്രഷ്"
+
+msgid "Attach file"
+msgstr "ഫയൽ അറ്റാച്ച് ചെയ്യുക"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "സ്പ്രേ ചെയ്യാൻ അമർത്തിപ്പിടിച്ച് വലിക്കുക. കൂടുതൽ ഉറപ്പുള്ളിടത്ത് കൂടുതൽ നേരം നിൽക്കുക."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "കുട്ടികളെ ലൈംഗികമായി ഉപദ്രവിക്കുകയോ ചൂഷണം ചെയ്യുകയോ ചെയ്യുന്നു"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "പരമാവധി എത്തി — മാറ്റാൻ താഴെ നിന്ന് ഒന്ന് നീക്കം ചെയ്യുക."
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s ചോദ്യം"
+msgstr[1] "%(n)s ചോദ്യങ്ങൾ"
+
+msgid "Uploading"
+msgstr "അപ്‌ലോഡ് ചെയ്യുന്നു"
+
+msgid "This field is required."
+msgstr "ഈ ഫീൽഡ് നിർബന്ധമാണ്."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "ഒരു സ്ഥലം അടയാളപ്പെടുത്താൻ ഭൂപടത്തിൽ ടാപ്പ് ചെയ്യുക — അല്ലെങ്കിൽ ബട്ടൺ ഉപയോഗിക്കുക."
+
+msgid "Tap the last point to finish the line."
+msgstr "വര പൂർത്തിയാക്കാൻ അവസാന പോയിന്റിൽ ടാപ്പ് ചെയ്യുക."
+
+msgid "Move map"
+msgstr "ഭൂപടം നീക്കുക"
+
+msgid "Anything else we should know? (optional)"
+msgstr "ഞങ്ങൾ അറിയേണ്ട മറ്റെന്തെങ്കിലും ഉണ്ടോ? (ഐച്ഛികം)"
+
+msgid "This question is required"
+msgstr "ഈ ചോദ്യം നിർബന്ധമാണ്"
+
+msgid "Tap to add the shape’s corners."
+msgstr "ആകൃതിയുടെ മൂലകൾ ചേർക്കാൻ ടാപ്പ് ചെയ്യുക."
+
+msgid "Clear"
+msgstr "മായ്ക്കുക"
+
+msgid "Record"
+msgstr "റെക്കോർഡ്"
+
+msgid "{n} of {m} marked"
+msgstr "{m} ൽ {n} അടയാളപ്പെടുത്തി"
+
+msgid "Spray"
+msgstr "സ്പ്രേ"
+
+msgid "Please specify"
+msgstr "ദയവായി വ്യക്തമാക്കുക"
+
+msgid "Erase"
+msgstr "ഇറേസർ"
+
+msgid "Small brush"
+msgstr "ചെറിയ ബ്രഷ്"
+
+msgid "Retry"
+msgstr "വീണ്ടും ശ്രമിക്കുക"
+
+msgid "Search failed — check your connection and try again."
+msgstr "തിരയൽ പരാജയപ്പെട്ടു — നിങ്ങളുടെ കണക്ഷൻ പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക."
+
+msgid "Questions"
+msgstr "ചോദ്യങ്ങൾ"

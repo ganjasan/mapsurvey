@@ -980,3 +980,185 @@ msgstr "Hledat adresu..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Nebyly nalezeny žádné výsledky"
+
+msgid "Small brush"
+msgstr "Malý štětec"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Klepáním přidejte rohy tvaru."
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s otázka"
+msgstr[1] "%(n)s otázky"
+msgstr[2] "%(n)s otázky"
+msgstr[3] "%(n)s otázek"
+
+msgid "Uploading"
+msgstr "Nahrávání"
+
+msgid "This field is required."
+msgstr "Toto pole je povinné."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Klepněte na mapu a označte místo — nebo použijte tlačítko."
+
+msgid "Tap the last point to finish the line."
+msgstr "Klepněte na poslední bod pro dokončení čáry."
+
+msgid "Move map"
+msgstr "Posunout mapu"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Chcete nám ještě něco sdělit? (nepovinné)"
+
+msgid "This question is required"
+msgstr "Tato otázka je povinná"
+
+msgid "Clear"
+msgstr "Vymazat"
+
+msgid "Record"
+msgstr "Nahrát"
+
+msgid "{n} of {m} marked"
+msgstr "Označeno {n} z {m}"
+
+msgid "Spray"
+msgstr "Sprej"
+
+msgid "Please specify"
+msgstr "Upřesněte prosím"
+
+msgid "Erase"
+msgstr "Gumovat"
+
+msgid "Retry"
+msgstr "Zkusit znovu"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Hledání selhalo — zkontrolujte připojení a zkuste to znovu."
+
+msgid "Questions"
+msgstr "Otázky"
+
+msgid "Add another"
+msgstr "Přidat další"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Vypadá jako podvod nebo se vydává za firmu"
+
+msgid "Tap to add the next corner."
+msgstr "Klepněte pro přidání dalšího rohu."
+
+msgid ":"
+msgstr ":"
+
+msgid "{n} marked"
+msgstr "Označeno: {n}"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Posuňte mapu tak, aby špendlík ukazoval na místo, a stiskněte Použít."
+
+msgid "Send report"
+msgstr "Odeslat hlášení"
+
+msgid "Made with"
+msgstr "Vytvořeno v"
+
+msgid "No"
+msgstr "Ne"
+
+msgid "Something else"
+msgstr "Něco jiného"
+
+msgid "Harassment, threats or hate"
+msgstr "Obtěžování, výhrůžky nebo nenávist"
+
+msgid "All {m} marked — thank you!"
+msgstr "Všech {m} označeno — děkujeme!"
+
+msgid "Report this survey"
+msgstr "Nahlásit tento průzkum"
+
+msgid "Exposes someone's personal data"
+msgstr "Zveřejňuje něčí osobní údaje"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Žádá heslo, přihlášení nebo platbu"
+
+msgid "Brush size"
+msgstr "Velikost štětce"
+
+msgid "Medium brush"
+msgstr "Střední štětec"
+
+msgid "Tap to add the next point."
+msgstr "Klepněte pro přidání dalšího bodu."
+
+msgid "A few required questions still need an answer."
+msgstr "Několik povinných otázek ještě čeká na odpověď."
+
+msgid "create your own free map survey"
+msgstr "vytvořte si vlastní mapový průzkum zdarma"
+
+msgid "Sign in"
+msgstr "Přihlásit se"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Podržte a táhněte prstem pro sprejování. Kde si jste jistější, zůstaňte déle."
+
+msgid "Stop"
+msgstr "Stop"
+
+msgid "Show all options"
+msgstr "Zobrazit všechny možnosti"
+
+msgid "Add audio file"
+msgstr "Přidat zvukový soubor"
+
+msgid "Illegal content"
+msgstr "Nezákonný obsah"
+
+msgid "at least {n} required"
+msgstr "povinné alespoň {n}"
+
+msgid "up to {n} more"
+msgstr "ještě až {n}"
+
+msgid "Tap to start the line."
+msgstr "Klepněte pro začátek čáry."
+
+msgid "Tap the first point to close the shape."
+msgstr "Klepněte na první bod pro uzavření tvaru."
+
+msgid "Add photo"
+msgstr "Přidat fotku"
+
+msgid "Take photo"
+msgstr "Vyfotit"
+
+msgid "Yes"
+msgstr "Ano"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Štětec je prázdný — pro pokračování část barvy vygumujte."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "V průzkumu Mapsurvey nikdy nezadávejte hesla ani čísla karet."
+
+msgid "Large brush"
+msgstr "Velký štětec"
+
+msgid "Attach file"
+msgstr "Připojit soubor"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Podržte a táhněte pro sprejování. Kde si jste jistější, zůstaňte déle."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Sexuální zneužívání nebo vykořisťování dětí"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Dosaženo maxima — pro změnu jedno níže odeberte."

@@ -6189,7 +6189,7 @@ msgstr ""
 #: survey/templates/maptionnaire_alternative.html:100
 #: survey/templates/maptionnaire_alternative.html:101
 msgid "Yes"
-msgstr ""
+msgstr "Ja"
 
 #: survey/templates/maptionnaire_alternative.html:100
 msgid "Yes — per-question translations"
@@ -6423,7 +6423,7 @@ msgstr ""
 
 #: survey/templates/metroquest_alternative.html:97
 msgid "No"
-msgstr ""
+msgstr "Nee"
 
 #: survey/templates/metroquest_alternative.html:98
 #| msgid "Survey Closed"
@@ -8036,3 +8036,60 @@ msgstr "U hebt uw project al beschreven — de wizard de opzet laten maken (~10 
 #: survey/templates/editor/partials/_ai_feedback_strip.html
 msgid "How is the Wizard's draft?"
 msgstr "Hoe is de opzet van de wizard?"
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Tik op de kaart om een plek te markeren — of gebruik de knop."
+
+msgid "Move map"
+msgstr "Kaart verplaatsen"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Is er nog iets dat we moeten weten? (optioneel)"
+
+msgid "Spray"
+msgstr "Sprayen"
+
+msgid "Please specify"
+msgstr "Graag specificeren"
+
+msgid "Erase"
+msgstr "Gum"
+
+msgid "Small brush"
+msgstr "Klein penseel"
+
+msgid ":"
+msgstr ":"
+
+msgid "Send report"
+msgstr "Melding versturen"
+
+msgid "Report this survey"
+msgstr "Deze enquête melden"
+
+msgid "Brush size"
+msgstr "Penseelgrootte"
+
+msgid "Medium brush"
+msgstr "Middelgroot penseel"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Houd uw vinger op het scherm en sleep om te sprayen. Blijf langer waar u zekerder bent."
+
+msgid "Show all options"
+msgstr "Alle opties tonen"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Het penseel is leeg — gum wat verf weg om verder te gaan."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Voer nooit wachtwoorden of kaartnummers in een Mapsurvey-enquête in."
+
+msgid "Large brush"
+msgstr "Groot penseel"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Houd ingedrukt en sleep om te sprayen. Blijf langer waar u zekerder bent."
+
+msgid "This field is required."
+msgstr "Dit veld is verplicht."

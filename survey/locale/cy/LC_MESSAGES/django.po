@@ -980,3 +980,185 @@ msgstr "Chwilio cyfeiriad..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Dim canlyniadau"
+
+msgid "No"
+msgstr "Na"
+
+msgid "Something else"
+msgstr "Rhywbeth arall"
+
+msgid "Harassment, threats or hate"
+msgstr "Aflonyddu, bygythiadau neu gasineb"
+
+msgid "All {m} marked — thank you!"
+msgstr "Pob un o'r {m} wedi'u marcio — diolch!"
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Cam-drin neu ecsbloetio plant yn rhywiol"
+
+msgid "Exposes someone's personal data"
+msgstr "Yn datgelu data personol rhywun"
+
+msgid "Brush size"
+msgstr "Maint y brwsh"
+
+msgid "Medium brush"
+msgstr "Brwsh canolig"
+
+msgid "Tap to add the next point."
+msgstr "Tapiwch i ychwanegu'r pwynt nesaf."
+
+msgid "A few required questions still need an answer."
+msgstr "Mae angen ateb ychydig o gwestiynau gorfodol o hyd."
+
+msgid "create your own free map survey"
+msgstr "crëwch eich arolwg map rhad ac am ddim eich hun"
+
+msgid "Sign in"
+msgstr "Mewngofnodi"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Daliwch a llusgwch eich bys i chwistrellu. Arhoswch yn hirach lle rydych yn fwy sicr."
+
+msgid "Stop"
+msgstr "Stopio"
+
+msgid "Add audio file"
+msgstr "Ychwanegu ffeil sain"
+
+msgid "at least {n} required"
+msgstr "angen o leiaf {n}"
+
+msgid "up to {n} more"
+msgstr "hyd at {n} arall"
+
+msgid "Tap to start the line."
+msgstr "Tapiwch i ddechrau'r llinell."
+
+msgid "Tap the last point to finish the line."
+msgstr "Tapiwch y pwynt olaf i orffen y llinell."
+
+msgid "Move map"
+msgstr "Symud y map"
+
+msgid "Add photo"
+msgstr "Ychwanegu llun"
+
+msgid "Take photo"
+msgstr "Tynnu llun"
+
+msgid "Clear"
+msgstr "Clirio"
+
+msgid "Yes"
+msgstr "Ie"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Mae'r brwsh yn wag — rhwbiwch ychydig o baent i barhau."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Peidiwch byth â rhoi cyfrineiriau na rhifau cardiau mewn arolwg Mapsurvey."
+
+msgid "Large brush"
+msgstr "Brwsh mawr"
+
+msgid "Attach file"
+msgstr "Atodi ffeil"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Daliwch a llusgwch i chwistrellu. Arhoswch yn hirach lle rydych yn fwy sicr."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Wedi cyrraedd yr uchafswm — tynnwch un isod i'w newid."
+
+msgid "Small brush"
+msgstr "Brwsh bach"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s cwestiwn"
+msgstr[1] "%(n)s cwestiwn"
+msgstr[2] "%(n)s cwestiwn"
+msgstr[3] "%(n)s cwestiwn"
+
+msgid "Uploading"
+msgstr "Wrthi'n llwytho i fyny"
+
+msgid "This field is required."
+msgstr "Mae angen llenwi'r maes hwn."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Tapiwch y map i farcio lle — neu defnyddiwch y botwm."
+
+msgid "Send report"
+msgstr "Anfon adroddiad"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Unrhyw beth arall y dylem ei wybod? (dewisol)"
+
+msgid "This question is required"
+msgstr "Mae angen ateb y cwestiwn hwn"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Tapiwch i ychwanegu corneli'r siâp."
+
+msgid "Record"
+msgstr "Recordio"
+
+msgid "{n} of {m} marked"
+msgstr "{n} o {m} wedi'u marcio"
+
+msgid "Spray"
+msgstr "Chwistrellu"
+
+msgid "Please specify"
+msgstr "Nodwch, os gwelwch yn dda"
+
+msgid "Report this survey"
+msgstr "Rhoi gwybod am yr arolwg hwn"
+
+msgid "Erase"
+msgstr "Rhwbio"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Yn gofyn am gyfrinair, mewngofnodi neu daliad"
+
+msgid "Retry"
+msgstr "Ceisio eto"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Methodd y chwilio — gwiriwch eich cysylltiad a cheisiwch eto."
+
+msgid "Questions"
+msgstr "Cwestiynau"
+
+msgid "Add another"
+msgstr "Ychwanegu un arall"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Yn edrych fel sgam neu'n dynwared cwmni"
+
+msgid "Tap to add the next corner."
+msgstr "Tapiwch i ychwanegu'r gornel nesaf."
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "Dangos pob opsiwn"
+
+msgid "Illegal content"
+msgstr "Cynnwys anghyfreithlon"
+
+msgid "{n} marked"
+msgstr "{n} wedi'u marcio"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Symudwch y map i osod y pin, yna pwyswch Cymhwyso."
+
+msgid "Made with"
+msgstr "Wedi'i wneud gyda"
+
+msgid "Tap the first point to close the shape."
+msgstr "Tapiwch y pwynt cyntaf i gau'r siâp."

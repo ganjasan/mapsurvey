@@ -980,3 +980,184 @@ msgstr "Meklēt adresi..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Nav rezultātu"
+
+msgid "Clear"
+msgstr "Notīrīt"
+
+msgid "Spray"
+msgstr "Smidzināt"
+
+msgid "Large brush"
+msgstr "Liela ota"
+
+msgid "Please specify"
+msgstr "Lūdzu, norādiet"
+
+msgid "Erase"
+msgstr "Dzēst"
+
+msgid "Small brush"
+msgstr "Maza ota"
+
+msgid "Retry"
+msgstr "Mēģināt vēlreiz"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Meklēšana neizdevās — pārbaudiet savienojumu un mēģiniet vēlreiz."
+
+msgid "Questions"
+msgstr "Jautājumi"
+
+msgid "Add another"
+msgstr "Pievienot vēl"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Izskatās pēc krāpšanas vai uzdodas par uzņēmumu"
+
+msgid "{n} marked"
+msgstr "{n} atzīmēti"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Pārvietojiet karti, lai novietotu adatu, tad nospiediet Lietot."
+
+msgid "Send report"
+msgstr "Nosūtīt ziņojumu"
+
+msgid "Made with"
+msgstr "Izveidots ar"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Pieskarieties, lai pievienotu figūras stūrus."
+
+msgid "Record"
+msgstr "Ierakstīt"
+
+msgid "No"
+msgstr "Nē"
+
+msgid "{n} of {m} marked"
+msgstr "{n} no {m} atzīmēti"
+
+msgid "All {m} marked — thank you!"
+msgstr "Visi {m} atzīmēti — paldies!"
+
+msgid "Report this survey"
+msgstr "Ziņot par šo aptauju"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Prasa paroli, pieteikšanos vai maksājumu"
+
+msgid "Medium brush"
+msgstr "Vidēja ota"
+
+msgid "Sign in"
+msgstr "Pieteikties"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Turiet pirkstu un velciet, lai smidzinātu. Uzkavējieties ilgāk tur, kur esat pārliecinātāks."
+
+msgid "Tap to add the next corner."
+msgstr "Pieskarieties, lai pievienotu nākamo stūri."
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "Rādīt visas iespējas"
+
+msgid "Add audio file"
+msgstr "Pievienot audio failu"
+
+msgid "Illegal content"
+msgstr "Nelikumīgs saturs"
+
+msgid "at least {n} required"
+msgstr "nepieciešami vismaz {n}"
+
+msgid "Tap the first point to close the shape."
+msgstr "Pieskarieties pirmajam punktam, lai noslēgtu figūru."
+
+msgid "Add photo"
+msgstr "Pievienot fotoattēlu"
+
+msgid "Yes"
+msgstr "Jā"
+
+msgid "Something else"
+msgstr "Kaut kas cits"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Ota ir tukša — izdzēsiet daļu krāsas, lai turpinātu."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Nekad neievadiet paroles vai kartes numurus Mapsurvey aptaujā."
+
+msgid "Harassment, threats or hate"
+msgstr "Uzmākšanās, draudi vai naids"
+
+msgid "Attach file"
+msgstr "Pievienot failu"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Turiet nospiestu un velciet, lai smidzinātu. Uzkavējieties ilgāk tur, kur esat pārliecinātāks."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Bērnu seksuāla izmantošana vai ekspluatācija"
+
+msgid "Exposes someone's personal data"
+msgstr "Atklāj kādas personas datus"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Sasniegts maksimums — lai mainītu, noņemiet vienu zemāk."
+
+msgid "Brush size"
+msgstr "Otas izmērs"
+
+msgid "Tap to add the next point."
+msgstr "Pieskarieties, lai pievienotu nākamo punktu."
+
+msgid "A few required questions still need an answer."
+msgstr "Dažiem obligātajiem jautājumiem vēl nepieciešama atbilde."
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s jautājums"
+msgstr[1] "%(n)s jautājumi"
+msgstr[2] "%(n)s jautājumu"
+
+msgid "create your own free map survey"
+msgstr "izveidojiet savu bezmaksas kartes aptauju"
+
+msgid "Stop"
+msgstr "Apturēt"
+
+msgid "Uploading"
+msgstr "Augšupielādē"
+
+msgid "This field is required."
+msgstr "Šis lauks ir obligāts."
+
+msgid "up to {n} more"
+msgstr "vēl līdz {n}"
+
+msgid "Tap to start the line."
+msgstr "Pieskarieties, lai sāktu līniju."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Pieskarieties kartei, lai atzīmētu vietu — vai izmantojiet pogu."
+
+msgid "Tap the last point to finish the line."
+msgstr "Pieskarieties pēdējam punktam, lai pabeigtu līniju."
+
+msgid "Move map"
+msgstr "Pārvietot karti"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Vai ir vēl kas, kas mums būtu jāzina? (nav obligāti)"
+
+msgid "This question is required"
+msgstr "Šis jautājums ir obligāts"
+
+msgid "Take photo"
+msgstr "Uzņemt foto"

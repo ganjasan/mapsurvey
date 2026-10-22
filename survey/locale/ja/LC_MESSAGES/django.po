@@ -980,3 +980,182 @@ msgstr "住所を検索..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "結果が見つかりません"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "押したままドラッグしてスプレーします。確信が強い場所ほど長くとどめてください。"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "上限に達しました — 変更するには下から 1 つ削除してください。"
+
+msgid "Small brush"
+msgstr "小さいブラシ"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s 問"
+
+msgid "Uploading"
+msgstr "アップロード中"
+
+msgid "{n} marked"
+msgstr "{n} 件マーク済み"
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "地図をタップして場所をマークします — またはボタンを使ってください。"
+
+msgid "Send report"
+msgstr "報告を送信"
+
+msgid "Anything else we should know? (optional)"
+msgstr "ほかに伝えたいことはありますか？（任意）"
+
+msgid "This question is required"
+msgstr "この質問は必須です"
+
+msgid "Tap to add the shape’s corners."
+msgstr "タップして図形の角を追加します。"
+
+msgid "Record"
+msgstr "録音"
+
+msgid "{n} of {m} marked"
+msgstr "{m} 件中 {n} 件マーク済み"
+
+msgid "Spray"
+msgstr "スプレー"
+
+msgid "Please specify"
+msgstr "具体的に入力してください"
+
+msgid "Report this survey"
+msgstr "このアンケートを報告"
+
+msgid "Erase"
+msgstr "消す"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "パスワード、ログイン、または支払いを求めている"
+
+msgid "Retry"
+msgstr "再試行"
+
+msgid "Search failed — check your connection and try again."
+msgstr "検索に失敗しました — 接続を確認してもう一度お試しください。"
+
+msgid "Questions"
+msgstr "質問"
+
+msgid "Add another"
+msgstr "さらに追加"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "指を押したまま動かしてスプレーします。確信が強い場所ほど長くとどめてください。"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "詐欺のように見える、または企業になりすましている"
+
+msgid "Tap to add the next corner."
+msgstr "タップして次の角を追加します。"
+
+msgid ":"
+msgstr "："
+
+msgid "Show all options"
+msgstr "すべての選択肢を表示"
+
+msgid "Illegal content"
+msgstr "違法なコンテンツ"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "地図を動かしてピンの位置を合わせ、「適用」を押してください。"
+
+msgid "Made with"
+msgstr "作成ツール："
+
+msgid "Tap the first point to close the shape."
+msgstr "最初の点をタップして図形を閉じます。"
+
+msgid "No"
+msgstr "いいえ"
+
+msgid "Something else"
+msgstr "その他"
+
+msgid "Harassment, threats or hate"
+msgstr "嫌がらせ、脅迫、またはヘイト"
+
+msgid "All {m} marked — thank you!"
+msgstr "{m} 件すべてマークしました — ありがとうございます！"
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "子どもへの性的虐待または搾取"
+
+msgid "Exposes someone's personal data"
+msgstr "他人の個人情報をさらしている"
+
+msgid "Brush size"
+msgstr "ブラシのサイズ"
+
+msgid "Medium brush"
+msgstr "中くらいのブラシ"
+
+msgid "Tap to add the next point."
+msgstr "タップして次の点を追加します。"
+
+msgid "A few required questions still need an answer."
+msgstr "未回答の必須質問がいくつかあります。"
+
+msgid "create your own free map survey"
+msgstr "無料で自分の地図アンケートを作成"
+
+msgid "Sign in"
+msgstr "ログイン"
+
+msgid "Stop"
+msgstr "停止"
+
+msgid "Add audio file"
+msgstr "音声ファイルを追加"
+
+msgid "This field is required."
+msgstr "この項目は必須です。"
+
+msgid "at least {n} required"
+msgstr "{n} 件以上必要"
+
+msgid "up to {n} more"
+msgstr "あと {n} 件まで"
+
+msgid "Tap to start the line."
+msgstr "タップして線を開始します。"
+
+msgid "Tap the last point to finish the line."
+msgstr "最後の点をタップして線を完成させます。"
+
+msgid "Move map"
+msgstr "地図を移動"
+
+msgid "Add photo"
+msgstr "写真を追加"
+
+msgid "Take photo"
+msgstr "写真を撮る"
+
+msgid "Clear"
+msgstr "クリア"
+
+msgid "Yes"
+msgstr "はい"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "ブラシが空です — 続けるには塗った部分を少し消してください。"
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Mapsurvey のアンケートにパスワードやカード番号を入力しないでください。"
+
+msgid "Large brush"
+msgstr "大きいブラシ"
+
+msgid "Attach file"
+msgstr "ファイルを添付"

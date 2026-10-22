@@ -980,3 +980,183 @@ msgstr "Salgy gözle..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Netije tapylmady"
+
+msgid "Add photo"
+msgstr "Surat goş"
+
+msgid "Take photo"
+msgstr "Surata al"
+
+msgid "Yes"
+msgstr "Hawa"
+
+msgid "Something else"
+msgstr "Başga zat"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Çotga boş — dowam etmek üçin biraz reňki öçüriň."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Mapsurvey soragnamasyna hiç haçan parol ýa-da kart belgisini girizmäň."
+
+msgid "Large brush"
+msgstr "Uly çotga"
+
+msgid "Attach file"
+msgstr "Faýl goş"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Sepmek üçin basyp saklaň we süýşüriň. Has ynamly ýeriňizde has uzak saklaň."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Çagalara jynsy zorluk ýa-da olary ekspluatasiýa etmek"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Iň köp mukdara ýetildi — üýtgetmek üçin aşakdan birini aýryň."
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s sorag"
+msgstr[1] "%(n)s sorag"
+
+msgid "Uploading"
+msgstr "Ýüklenýär"
+
+msgid "This field is required."
+msgstr "Bu meýdança hökmany."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Ýeri bellemek üçin karta basyň — ýa-da düwmäni ulanyň."
+
+msgid "Tap the last point to finish the line."
+msgstr "Çyzygy tamamlamak üçin soňky nokada basyň."
+
+msgid "Move map"
+msgstr "Kartany süýşür"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Bilmeli başga zadymyz barmy? (hökmany däl)"
+
+msgid "This question is required"
+msgstr "Bu sorag hökmany"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Şekiliň burçlaryny goşmak üçin basyň."
+
+msgid "Clear"
+msgstr "Arassala"
+
+msgid "Record"
+msgstr "Ýazga al"
+
+msgid "{n} of {m} marked"
+msgstr "{m}-den {n} bellendi"
+
+msgid "Spray"
+msgstr "Sep"
+
+msgid "Please specify"
+msgstr "Takyklaň"
+
+msgid "Erase"
+msgstr "Öçür"
+
+msgid "Small brush"
+msgstr "Kiçi çotga"
+
+msgid "Retry"
+msgstr "Gaýtadan synanyş"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Gözleg şowsuz boldy — birikmäňizi barlaň we gaýtadan synanyşyň."
+
+msgid "Questions"
+msgstr "Soraglar"
+
+msgid "Add another"
+msgstr "Ýene birini goş"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Galplyga meňzeýär ýa-da özüni bir kompaniýa hökmünde görkezýär"
+
+msgid "Tap to add the next corner."
+msgstr "Indiki burçy goşmak üçin basyň."
+
+msgid ":"
+msgstr ":"
+
+msgid "{n} marked"
+msgstr "{n} bellendi"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Nokady ýerleşdirmek üçin kartany süýşüriň, soňra Ulan düwmesine basyň."
+
+msgid "Send report"
+msgstr "Habar iber"
+
+msgid "Made with"
+msgstr "Döredilen platforma:"
+
+msgid "No"
+msgstr "Ýok"
+
+msgid "Harassment, threats or hate"
+msgstr "Kemsitme, haýbat ýa-da ýigrenç"
+
+msgid "All {m} marked — thank you!"
+msgstr "Ähli {m} bellendi — sag boluň!"
+
+msgid "Report this survey"
+msgstr "Bu soragnama barada habar ber"
+
+msgid "Exposes someone's personal data"
+msgstr "Kimdir biriniň şahsy maglumatlaryny paş edýär"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Parol, hasaba girmegi ýa-da töleg soraýar"
+
+msgid "Brush size"
+msgstr "Çotganyň ölçegi"
+
+msgid "Medium brush"
+msgstr "Orta çotga"
+
+msgid "Tap to add the next point."
+msgstr "Indiki nokady goşmak üçin basyň."
+
+msgid "A few required questions still need an answer."
+msgstr "Birnäçe hökmany soraga entek jogap berilmedi."
+
+msgid "create your own free map survey"
+msgstr "öz mugt karta soragnamaňyzy dörediň"
+
+msgid "Sign in"
+msgstr "Içeri gir"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Sepmek üçin barmagyňyzy basyp saklaň we süýşüriň. Has ynamly ýeriňizde has uzak saklaň."
+
+msgid "Stop"
+msgstr "Duruz"
+
+msgid "Show all options"
+msgstr "Ähli wariantlary görkez"
+
+msgid "Add audio file"
+msgstr "Ses faýlyny goş"
+
+msgid "Illegal content"
+msgstr "Bikanun mazmun"
+
+msgid "at least {n} required"
+msgstr "azyndan {n} gerek"
+
+msgid "up to {n} more"
+msgstr "ýene {n} sanysyna çenli"
+
+msgid "Tap to start the line."
+msgstr "Çyzygy başlamak üçin basyň."
+
+msgid "Tap the first point to close the shape."
+msgstr "Şekili ýapmak üçin birinji nokada basyň."

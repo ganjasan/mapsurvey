@@ -980,3 +980,183 @@ msgstr "Пребарај адреса..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Нема резултати"
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Никогаш не внесувајте лозинки или броеви на картички во анкета на Mapsurvey."
+
+msgid "Large brush"
+msgstr "Голема четка"
+
+msgid "Attach file"
+msgstr "Прикачи датотека"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Држете и влечете за прскање. Задржете се подолго каде што сте посигурни."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Достигнат е максимумот — отстранете еден подолу за да промените."
+
+msgid "Small brush"
+msgstr "Мала четка"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s прашање"
+msgstr[1] "%(n)s прашања"
+
+msgid "Uploading"
+msgstr "Се прикачува"
+
+msgid "This field is required."
+msgstr "Ова поле е задолжително."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Допрете ја мапата за да означите место — или користете го копчето."
+
+msgid "Anything else we should know? (optional)"
+msgstr "Сакате ли да ни кажете уште нешто? (незадолжително)"
+
+msgid "This question is required"
+msgstr "Ова прашање е задолжително"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Допирајте за да ги додадете аглите на обликот."
+
+msgid "Clear"
+msgstr "Исчисти"
+
+msgid "Record"
+msgstr "Снимај"
+
+msgid "{n} of {m} marked"
+msgstr "Означени {n} од {m}"
+
+msgid "Spray"
+msgstr "Спреј"
+
+msgid "Please specify"
+msgstr "Ве молиме наведете"
+
+msgid "Erase"
+msgstr "Бриши"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Бара лозинка, најава или плаќање"
+
+msgid "Retry"
+msgstr "Обиди се повторно"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Пребарувањето не успеа — проверете ја врската и обидете се повторно."
+
+msgid "Questions"
+msgstr "Прашања"
+
+msgid "Add another"
+msgstr "Додај уште"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Изгледа како измама или се претставува како компанија"
+
+msgid "Tap to add the next corner."
+msgstr "Допрете за да го додадете следниот агол."
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "Прикажи ги сите опции"
+
+msgid "{n} marked"
+msgstr "Означени: {n}"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Поместете ја мапата за да ја поставите иглата, потоа притиснете Примени."
+
+msgid "Send report"
+msgstr "Испрати пријава"
+
+msgid "Made with"
+msgstr "Направено со"
+
+msgid "No"
+msgstr "Не"
+
+msgid "Something else"
+msgstr "Нешто друго"
+
+msgid "Harassment, threats or hate"
+msgstr "Вознемирување, закани или омраза"
+
+msgid "All {m} marked — thank you!"
+msgstr "Сите {m} се означени — благодариме!"
+
+msgid "Report this survey"
+msgstr "Пријави ја оваа анкета"
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Сексуална злоупотреба или експлоатација на деца"
+
+msgid "Exposes someone's personal data"
+msgstr "Открива нечии лични податоци"
+
+msgid "Brush size"
+msgstr "Големина на четката"
+
+msgid "Medium brush"
+msgstr "Средна четка"
+
+msgid "Tap to add the next point."
+msgstr "Допрете за да ја додадете следната точка."
+
+msgid "A few required questions still need an answer."
+msgstr "Уште неколку задолжителни прашања чекаат одговор."
+
+msgid "create your own free map survey"
+msgstr "направете своја бесплатна анкета со мапа"
+
+msgid "Sign in"
+msgstr "Најави се"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Држете и влечете со прст за прскање. Задржете се подолго каде што сте посигурни."
+
+msgid "Stop"
+msgstr "Стоп"
+
+msgid "Add audio file"
+msgstr "Додај аудио датотека"
+
+msgid "Illegal content"
+msgstr "Незаконска содржина"
+
+msgid "at least {n} required"
+msgstr "потребни се најмалку {n}"
+
+msgid "up to {n} more"
+msgstr "уште до {n}"
+
+msgid "Tap to start the line."
+msgstr "Допрете за да ја започнете линијата."
+
+msgid "Tap the first point to close the shape."
+msgstr "Допрете ја првата точка за да го затворите обликот."
+
+msgid "Tap the last point to finish the line."
+msgstr "Допрете ја последната точка за да ја завршите линијата."
+
+msgid "Move map"
+msgstr "Помести мапа"
+
+msgid "Add photo"
+msgstr "Додај фотографија"
+
+msgid "Take photo"
+msgstr "Фотографирај"
+
+msgid "Yes"
+msgstr "Да"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Четката е празна — избришете малку боја за да продолжите."

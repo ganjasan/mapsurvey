@@ -6178,7 +6178,7 @@ msgstr ""
 #: survey/templates/maptionnaire_alternative.html:100
 #: survey/templates/maptionnaire_alternative.html:101
 msgid "Yes"
-msgstr ""
+msgstr "Ja"
 
 #: survey/templates/maptionnaire_alternative.html:100
 msgid "Yes — per-question translations"
@@ -6412,7 +6412,7 @@ msgstr ""
 
 #: survey/templates/metroquest_alternative.html:97
 msgid "No"
-msgstr ""
+msgstr "Nein"
 
 #: survey/templates/metroquest_alternative.html:98
 msgid "Survey structure"
@@ -8088,3 +8088,60 @@ msgstr "Sie haben Ihr Projekt schon beschrieben – soll der Assistent den Entwu
 #: survey/templates/editor/partials/_ai_feedback_strip.html
 msgid "How is the Wizard's draft?"
 msgstr "Wie ist der Entwurf des Assistenten?"
+
+msgid "Report this survey"
+msgstr "Diese Umfrage melden"
+
+msgid "Erase"
+msgstr "Radieren"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Halten und mit dem Finger ziehen, um zu sprühen. Bleiben Sie länger dort, wo Sie sich sicherer sind."
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "Alle Optionen anzeigen"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Der Pinsel ist leer — radieren Sie etwas Farbe weg, um fortzufahren."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Geben Sie in einer Mapsurvey-Umfrage niemals Passwörter oder Kartennummern ein."
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Halten und ziehen, um zu sprühen. Bleiben Sie länger dort, wo Sie sich sicherer sind."
+
+msgid "Brush size"
+msgstr "Pinselgröße"
+
+msgid "Medium brush"
+msgstr "Mittlerer Pinsel"
+
+msgid "This field is required."
+msgstr "Dieses Feld ist erforderlich."
+
+msgid "Move map"
+msgstr "Karte verschieben"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Möchten Sie uns noch etwas mitteilen? (optional)"
+
+msgid "Spray"
+msgstr "Sprühen"
+
+msgid "Large brush"
+msgstr "Großer Pinsel"
+
+msgid "Please specify"
+msgstr "Bitte angeben"
+
+msgid "Small brush"
+msgstr "Kleiner Pinsel"
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Tippen Sie auf die Karte, um einen Ort zu markieren — oder nutzen Sie die Schaltfläche."
+
+msgid "Send report"
+msgstr "Meldung senden"

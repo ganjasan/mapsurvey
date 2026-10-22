@@ -840,7 +840,7 @@ msgstr "Выйти"
 #: survey/templates/base.html:398
 #: survey/templates/registration/rate_limited.html:32
 msgid "Sign in"
-msgstr ""
+msgstr "Войти"
 
 #: survey/templates/base_landing.html:7
 msgid ""
@@ -2782,7 +2782,7 @@ msgstr ""
 
 #: survey/templates/editor/partials/analytics_table.html:468
 msgid "Clear"
-msgstr ""
+msgstr "Очистить"
 
 #: survey/templates/editor/partials/analytics_table.html:474
 msgid "Sort A→Z"
@@ -3092,7 +3092,7 @@ msgstr ""
 
 #: survey/templates/editor/partials/section_detail_form.html:122
 msgid "Questions"
-msgstr ""
+msgstr "Вопросы"
 
 #: survey/templates/editor/partials/section_detail_form.html:139
 msgid "New Question"
@@ -4041,35 +4041,35 @@ msgstr ""
 
 #: survey/templates/file_upload.html:70
 msgid "Take photo"
-msgstr ""
+msgstr "Сделать фото"
 
 #: survey/templates/file_upload.html:74
 msgid "Add photo"
-msgstr ""
+msgstr "Добавить фото"
 
 #: survey/templates/file_upload.html:79
 msgid "Add audio file"
-msgstr ""
+msgstr "Добавить аудиофайл"
 
 #: survey/templates/file_upload.html:80
 msgid "Attach file"
-msgstr ""
+msgstr "Прикрепить файл"
 
 #: survey/templates/file_upload.html:86
 msgid "Record"
-msgstr ""
+msgstr "Запись"
 
 #: survey/templates/file_upload.html:96
 msgid "Stop"
-msgstr ""
+msgstr "Стоп"
 
 #: survey/templates/file_upload.html:102
 msgid "Uploading"
-msgstr ""
+msgstr "Загрузка"
 
 #: survey/templates/file_upload.html:108
 msgid "Retry"
-msgstr ""
+msgstr "Повторить"
 
 #: survey/templates/for_consultants.html:4
 msgid ""
@@ -5301,7 +5301,7 @@ msgstr ""
 #: survey/templates/maptionnaire_alternative.html:100
 #: survey/templates/maptionnaire_alternative.html:101
 msgid "Yes"
-msgstr ""
+msgstr "Да"
 
 #: survey/templates/maptionnaire_alternative.html:100
 msgid "Yes — per-question translations"
@@ -5535,7 +5535,7 @@ msgstr ""
 
 #: survey/templates/metroquest_alternative.html:97
 msgid "No"
-msgstr ""
+msgstr "Нет"
 
 #: survey/templates/metroquest_alternative.html:98
 msgid "Survey structure"
@@ -5738,19 +5738,19 @@ msgstr ""
 #: survey/templates/partials/_made_with_mapsurvey.html:16
 #: survey/templates/public_results.html:121
 msgid "Made with"
-msgstr ""
+msgstr "Сделано в"
 
 #: survey/templates/partials/_made_with_mapsurvey.html:17
 msgid "create your own free map survey"
-msgstr ""
+msgstr "создайте свой бесплатный картографический опрос"
 
 #: survey/templates/partials/survey_section_partial.html:36
 msgid "A few required questions still need an answer."
-msgstr ""
+msgstr "На некоторые обязательные вопросы ещё нет ответа."
 
 #: survey/templates/partials/survey_section_partial.html:39
 msgid "This question is required"
-msgstr ""
+msgstr "Это обязательный вопрос"
 
 #: survey/templates/partials/survey_section_partial.html:97
 #: survey/templates/survey_section_block.html:22
@@ -6633,31 +6633,31 @@ msgstr "Нажмите на последнюю точку, чтобы закон
 
 #: survey/templatetags/i18n_extras.py:39
 msgid "Move the map to position the pin, then press Apply."
-msgstr ""
+msgstr "Сдвиньте карту, чтобы поставить метку, затем нажмите «Применить»."
 
 #: survey/templatetags/i18n_extras.py:40
 msgid "Tap to add the shape’s corners."
-msgstr ""
+msgstr "Касайтесь карты, чтобы добавить вершины фигуры."
 
 #: survey/templatetags/i18n_extras.py:41
 msgid "Tap to add the next corner."
-msgstr ""
+msgstr "Коснитесь, чтобы добавить следующую вершину."
 
 #: survey/templatetags/i18n_extras.py:42
 msgid "Tap the first point to close the shape."
-msgstr ""
+msgstr "Коснитесь первой точки, чтобы замкнуть фигуру."
 
 #: survey/templatetags/i18n_extras.py:43
 msgid "Tap to start the line."
-msgstr ""
+msgstr "Коснитесь, чтобы начать линию."
 
 #: survey/templatetags/i18n_extras.py:44
 msgid "Tap to add the next point."
-msgstr ""
+msgstr "Коснитесь, чтобы добавить следующую точку."
 
 #: survey/templatetags/i18n_extras.py:45
 msgid "Tap the last point to finish the line."
-msgstr ""
+msgstr "Коснитесь последней точки, чтобы закончить линию."
 
 #: survey/templatetags/i18n_extras.py:49
 msgid "<strong>Error:</strong> Shape edges cannot intersect!"
@@ -6673,40 +6673,40 @@ msgstr "Ничего не найдено"
 
 #: survey/templatetags/i18n_extras.py:54
 msgid "Search failed — check your connection and try again."
-msgstr ""
+msgstr "Поиск не удался — проверьте подключение и попробуйте ещё раз."
 
 #: survey/templatetags/i18n_extras.py:57
 msgid "Add another"
-msgstr ""
+msgstr "Добавить ещё"
 
 #: survey/templatetags/i18n_extras.py:58
 #, python-brace-format
 msgid "up to {n} more"
-msgstr ""
+msgstr "ещё до {n}"
 
 #: survey/templatetags/i18n_extras.py:59
 msgid "Maximum reached — remove one below to change it."
-msgstr ""
+msgstr "Достигнут максимум — чтобы изменить, удалите один из отмеченных ниже."
 
 #: survey/templatetags/i18n_extras.py:60
 #, python-brace-format
 msgid "{n} marked"
-msgstr ""
+msgstr "отмечено: {n}"
 
 #: survey/templatetags/i18n_extras.py:61
 #, python-brace-format
 msgid "{n} of {m} marked"
-msgstr ""
+msgstr "отмечено {n} из {m}"
 
 #: survey/templatetags/i18n_extras.py:62
 #, python-brace-format
 msgid "at least {n} required"
-msgstr ""
+msgstr "нужно не меньше {n}"
 
 #: survey/templatetags/i18n_extras.py:63
 #, python-brace-format
 msgid "All {m} marked — thank you!"
-msgstr ""
+msgstr "Отмечены все {m} — спасибо!"
 
 #: survey/uploads.py:80 survey/views.py:2175
 msgid "This question does not accept files."
@@ -7997,3 +7997,68 @@ msgstr "Вы уже описали проект — пусть мастер со
 #: survey/templates/editor/partials/_ai_feedback_strip.html
 msgid "How is the Wizard's draft?"
 msgstr "Как вам черновик мастера?"
+
+msgid "Please specify"
+msgstr "Уточните"
+
+msgid "Erase"
+msgstr "Стереть"
+
+msgid ":"
+msgstr ":"
+
+msgid "Send report"
+msgstr "Отправить жалобу"
+
+msgid "Report this survey"
+msgstr "Пожаловаться на опрос"
+
+msgid "Brush size"
+msgstr "Размер кисти"
+
+msgid "Medium brush"
+msgstr "Средняя кисть"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Удерживайте палец и ведите им, чтобы распылять. Задерживайтесь дольше там, где вы увереннее."
+
+msgid "Show all options"
+msgstr "Показать все варианты"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Кисть пуста — сотрите часть краски, чтобы продолжить."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Никогда не вводите пароли и номера карт в опросе Mapsurvey."
+
+msgid "Large brush"
+msgstr "Большая кисть"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Удерживайте и ведите, чтобы распылять. Задерживайтесь дольше там, где вы увереннее."
+
+msgid "Small brush"
+msgstr "Малая кисть"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s вопрос"
+msgstr[1] "%(n)s вопроса"
+msgstr[2] "%(n)s вопросов"
+msgstr[3] "%(n)s вопроса"
+
+msgid "This field is required."
+msgstr "Это поле обязательно."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Коснитесь карты, чтобы отметить место, — или воспользуйтесь кнопкой."
+
+msgid "Move map"
+msgstr "Двигать карту"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Что-то ещё, что нам стоит знать? (необязательно)"
+
+msgid "Spray"
+msgstr "Распылить"

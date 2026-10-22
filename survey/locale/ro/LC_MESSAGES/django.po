@@ -980,3 +980,184 @@ msgstr "Caută adresă..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Niciun rezultat găsit"
+
+msgid "{n} marked"
+msgstr "{n} marcate"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Mutați harta pentru a poziționa pinul, apoi apăsați Aplică."
+
+msgid "Send report"
+msgstr "Trimite raportul"
+
+msgid "Made with"
+msgstr "Realizat cu"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Atingeți pentru a adăuga colțurile formei."
+
+msgid "No"
+msgstr "Nu"
+
+msgid "{n} of {m} marked"
+msgstr "{n} din {m} marcate"
+
+msgid "All {m} marked — thank you!"
+msgstr "Toate cele {m} marcate — vă mulțumim!"
+
+msgid "Report this survey"
+msgstr "Raportați acest chestionar"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Cere o parolă, o autentificare sau o plată"
+
+msgid "Medium brush"
+msgstr "Pensulă medie"
+
+msgid "Sign in"
+msgstr "Autentificare"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Țineți apăsat și trageți cu degetul pentru a pulveriza. Zăboviți mai mult acolo unde sunteți mai sigur."
+
+msgid "Tap to add the next corner."
+msgstr "Atingeți pentru a adăuga următorul colț."
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "Afișează toate opțiunile"
+
+msgid "Add audio file"
+msgstr "Adăugați fișier audio"
+
+msgid "Illegal content"
+msgstr "Conținut ilegal"
+
+msgid "at least {n} required"
+msgstr "cel puțin {n} obligatorii"
+
+msgid "Tap the first point to close the shape."
+msgstr "Atingeți primul punct pentru a închide forma."
+
+msgid "Add photo"
+msgstr "Adăugați fotografie"
+
+msgid "Yes"
+msgstr "Da"
+
+msgid "Something else"
+msgstr "Altceva"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Pensula e goală — ștergeți puțină vopsea pentru a continua."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Nu introduceți niciodată parole sau numere de card într-un chestionar Mapsurvey."
+
+msgid "Large brush"
+msgstr "Pensulă mare"
+
+msgid "Harassment, threats or hate"
+msgstr "Hărțuire, amenințări sau ură"
+
+msgid "Attach file"
+msgstr "Atașați fișier"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Țineți apăsat și trageți pentru a pulveriza. Zăboviți mai mult acolo unde sunteți mai sigur."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Abuz sexual sau exploatare a copiilor"
+
+msgid "Exposes someone's personal data"
+msgstr "Expune datele personale ale cuiva"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Maximul a fost atins — eliminați unul de mai jos pentru a schimba."
+
+msgid "Brush size"
+msgstr "Dimensiunea pensulei"
+
+msgid "Tap to add the next point."
+msgstr "Atingeți pentru a adăuga următorul punct."
+
+msgid "A few required questions still need an answer."
+msgstr "Câteva întrebări obligatorii nu au încă un răspuns."
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s întrebare"
+msgstr[1] "%(n)s întrebări"
+msgstr[2] "%(n)s de întrebări"
+
+msgid "create your own free map survey"
+msgstr "creați-vă propriul chestionar gratuit pe hartă"
+
+msgid "Stop"
+msgstr "Oprește"
+
+msgid "Uploading"
+msgstr "Se încarcă"
+
+msgid "This field is required."
+msgstr "Acest câmp este obligatoriu."
+
+msgid "up to {n} more"
+msgstr "încă cel mult {n}"
+
+msgid "Tap to start the line."
+msgstr "Atingeți pentru a începe linia."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Atingeți harta pentru a marca un loc — sau folosiți butonul."
+
+msgid "Tap the last point to finish the line."
+msgstr "Atingeți ultimul punct pentru a termina linia."
+
+msgid "Move map"
+msgstr "Mută harta"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Mai e ceva ce ar trebui să știm? (opțional)"
+
+msgid "This question is required"
+msgstr "Această întrebare este obligatorie"
+
+msgid "Take photo"
+msgstr "Fă o fotografie"
+
+msgid "Clear"
+msgstr "Golește"
+
+msgid "Record"
+msgstr "Înregistrează"
+
+msgid "Spray"
+msgstr "Pulverizare"
+
+msgid "Please specify"
+msgstr "Vă rugăm să precizați"
+
+msgid "Erase"
+msgstr "Radieră"
+
+msgid "Small brush"
+msgstr "Pensulă mică"
+
+msgid "Retry"
+msgstr "Reîncearcă"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Căutarea a eșuat — verificați conexiunea și încercați din nou."
+
+msgid "Questions"
+msgstr "Întrebări"
+
+msgid "Add another"
+msgstr "Adăugați încă unul"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Pare o înșelătorie sau se dă drept o companie"

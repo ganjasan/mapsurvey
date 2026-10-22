@@ -980,3 +980,183 @@ msgstr "Bilatu helbidea..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "Ez da emaitzarik aurkitu"
+
+msgid "Tap the first point to close the shape."
+msgstr "Sakatu lehen puntua forma ixteko."
+
+msgid "Add photo"
+msgstr "Gehitu argazkia"
+
+msgid "Yes"
+msgstr "Bai"
+
+msgid "Something else"
+msgstr "Beste zerbait"
+
+msgid "Harassment, threats or hate"
+msgstr "Jazarpena, mehatxuak edo gorrotoa"
+
+msgid "Attach file"
+msgstr "Erantsi fitxategia"
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Haurren sexu-abusua edo esplotazioa"
+
+msgid "Exposes someone's personal data"
+msgstr "Norbaiten datu pertsonalak agerian uzten ditu"
+
+msgid "Brush size"
+msgstr "Brotxaren tamaina"
+
+msgid "Medium brush"
+msgstr "Brotxa ertaina"
+
+msgid "Tap to add the next point."
+msgstr "Sakatu hurrengo puntua gehitzeko."
+
+msgid "A few required questions still need an answer."
+msgstr "Derrigorrezko galdera batzuei erantzun behar zaie oraindik."
+
+msgid "create your own free map survey"
+msgstr "sortu zure doako mapa-inkesta"
+
+msgid "Stop"
+msgstr "Gelditu"
+
+msgid "Add audio file"
+msgstr "Gehitu audio-fitxategia"
+
+msgid "Uploading"
+msgstr "Igotzen"
+
+msgid "This field is required."
+msgstr "Eremu hau derrigorrezkoa da."
+
+msgid "at least {n} required"
+msgstr "gutxienez {n} behar dira"
+
+msgid "up to {n} more"
+msgstr "beste {n} gehienez"
+
+msgid "Tap to start the line."
+msgstr "Sakatu lerroa hasteko."
+
+msgid "Tap the last point to finish the line."
+msgstr "Sakatu azken puntua lerroa amaitzeko."
+
+msgid "Move map"
+msgstr "Mugitu mapa"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Beste ezer jakin beharko genuke? (aukerakoa)"
+
+msgid "This question is required"
+msgstr "Galdera hau derrigorrezkoa da"
+
+msgid "Take photo"
+msgstr "Atera argazkia"
+
+msgid "Clear"
+msgstr "Garbitu"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "Brotxa hutsik dago — ezabatu pintura pixka bat jarraitzeko."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Ez idatzi inoiz pasahitzik edo txartel-zenbakirik Mapsurvey inkesta batean."
+
+msgid "Large brush"
+msgstr "Brotxa handia"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Eutsi sakatuta eta arrastatu spray egiteko. Egon denbora gehiago ziurrago zauden lekuan."
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "Gehienezkora iritsi zara — kendu bat behean aldatzeko."
+
+msgid "Small brush"
+msgstr "Brotxa txikia"
+
+msgid "Retry"
+msgstr "Saiatu berriro"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s galdera"
+msgstr[1] "%(n)s galdera"
+
+msgid "Search failed — check your connection and try again."
+msgstr "Bilaketak huts egin du — egiaztatu konexioa eta saiatu berriro."
+
+msgid "{n} marked"
+msgstr "{n} markatuta"
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Sakatu mapa leku bat markatzeko — edo erabili botoia."
+
+msgid "Send report"
+msgstr "Bidali salaketa"
+
+msgid "Made with"
+msgstr "Honekin egina:"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Sakatu formaren erpinak gehitzeko."
+
+msgid "Record"
+msgstr "Grabatu"
+
+msgid "No"
+msgstr "Ez"
+
+msgid "{n} of {m} marked"
+msgstr "{n}/{m} markatuta"
+
+msgid "Spray"
+msgstr "Spray"
+
+msgid "Please specify"
+msgstr "Zehaztu, mesedez"
+
+msgid "All {m} marked — thank you!"
+msgstr "{m} guztiak markatuta — eskerrik asko!"
+
+msgid "Report this survey"
+msgstr "Salatu inkesta hau"
+
+msgid "Erase"
+msgstr "Ezabatu"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Pasahitza, saio-hasiera edo ordainketa bat eskatzen du"
+
+msgid "Questions"
+msgstr "Galderak"
+
+msgid "Add another"
+msgstr "Gehitu beste bat"
+
+msgid "Sign in"
+msgstr "Hasi saioa"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Eutsi hatza eta arrastatu spray egiteko. Egon denbora gehiago ziurrago zauden lekuan."
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Iruzurra dirudi edo enpresa baten itxura egiten du"
+
+msgid "Tap to add the next corner."
+msgstr "Sakatu hurrengo erpina gehitzeko."
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "Erakutsi aukera guztiak"
+
+msgid "Illegal content"
+msgstr "Legez kanpoko edukia"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Mugitu mapa orratza kokatzeko, eta sakatu Aplikatu."

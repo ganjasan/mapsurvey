@@ -980,3 +980,183 @@ msgstr "Cerca adreça..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "No s'han trobat resultats"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "Manteniu premut i arrossegueu per polvoritzar. Quedeu-vos més estona on estigueu més segurs."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "Abús sexual o explotació d'infants"
+
+msgid "Exposes someone's personal data"
+msgstr "Exposa dades personals d'algú"
+
+msgid "Brush size"
+msgstr "Mida del pinzell"
+
+msgid "Medium brush"
+msgstr "Pinzell mitjà"
+
+msgid "Tap to add the next point."
+msgstr "Toqueu per afegir el punt següent."
+
+msgid "A few required questions still need an answer."
+msgstr "Encara falta respondre algunes preguntes obligatòries."
+
+msgid "create your own free map survey"
+msgstr "creeu la vostra pròpia enquesta de mapa gratuïta"
+
+msgid "Stop"
+msgstr "Atura"
+
+msgid "Add audio file"
+msgstr "Afegeix un fitxer d'àudio"
+
+msgid "Uploading"
+msgstr "S'està pujant"
+
+msgid "This field is required."
+msgstr "Aquest camp és obligatori."
+
+msgid "up to {n} more"
+msgstr "fins a {n} més"
+
+msgid "Tap to start the line."
+msgstr "Toqueu per començar la línia."
+
+msgid "Tap the last point to finish the line."
+msgstr "Toqueu l'últim punt per acabar la línia."
+
+msgid "Move map"
+msgstr "Mou el mapa"
+
+msgid "Anything else we should know? (optional)"
+msgstr "Hi ha alguna altra cosa que hàgim de saber? (opcional)"
+
+msgid "This question is required"
+msgstr "Aquesta pregunta és obligatòria"
+
+msgid "Take photo"
+msgstr "Fes una foto"
+
+msgid "Clear"
+msgstr "Esborra"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "El pinzell és buit — esborreu una mica de pintura per continuar."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "No introduïu mai contrasenyes ni números de targeta en una enquesta de Mapsurvey."
+
+msgid "Spray"
+msgstr "Polvoritza"
+
+msgid "Large brush"
+msgstr "Pinzell gran"
+
+msgid "Please specify"
+msgstr "Especifiqueu-ho"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "S'ha arribat al màxim — elimineu-ne un a sota per canviar-lo."
+
+msgid "Small brush"
+msgstr "Pinzell petit"
+
+msgid "Retry"
+msgstr "Torna-ho a provar"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s pregunta"
+msgstr[1] "%(n)s preguntes"
+
+msgid "Search failed — check your connection and try again."
+msgstr "La cerca ha fallat — comproveu la connexió i torneu-ho a provar."
+
+msgid "Questions"
+msgstr "Preguntes"
+
+msgid "{n} marked"
+msgstr "{n} marcats"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "Moveu el mapa per situar l'agulla i després premeu Aplica."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "Toqueu el mapa per marcar un lloc — o feu servir el botó."
+
+msgid "Send report"
+msgstr "Envia la denúncia"
+
+msgid "Made with"
+msgstr "Fet amb"
+
+msgid "Tap to add the shape’s corners."
+msgstr "Toqueu per afegir els vèrtexs de la forma."
+
+msgid "Record"
+msgstr "Grava"
+
+msgid "No"
+msgstr "No"
+
+msgid "{n} of {m} marked"
+msgstr "{n} de {m} marcats"
+
+msgid "All {m} marked — thank you!"
+msgstr "Tots {m} marcats — moltes gràcies!"
+
+msgid "Report this survey"
+msgstr "Denuncia aquesta enquesta"
+
+msgid "Erase"
+msgstr "Goma"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "Demana una contrasenya, un inici de sessió o un pagament"
+
+msgid "Add another"
+msgstr "Afegeix-ne un altre"
+
+msgid "Sign in"
+msgstr "Inicia la sessió"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "Manteniu el dit premut i arrossegueu per polvoritzar. Quedeu-vos més estona on estigueu més segurs."
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "Sembla una estafa o suplanta una empresa"
+
+msgid "Tap to add the next corner."
+msgstr "Toqueu per afegir el vèrtex següent."
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "Mostra totes les opcions"
+
+msgid "Illegal content"
+msgstr "Contingut il·legal"
+
+msgid "at least {n} required"
+msgstr "cal com a mínim {n}"
+
+msgid "Tap the first point to close the shape."
+msgstr "Toqueu el primer punt per tancar la forma."
+
+msgid "Add photo"
+msgstr "Afegeix una foto"
+
+msgid "Yes"
+msgstr "Sí"
+
+msgid "Something else"
+msgstr "Una altra cosa"
+
+msgid "Harassment, threats or hate"
+msgstr "Assetjament, amenaces o odi"
+
+msgid "Attach file"
+msgstr "Adjunta un fitxer"

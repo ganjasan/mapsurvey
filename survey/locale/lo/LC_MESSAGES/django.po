@@ -16,6 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
 #: survey/models.py:19 survey/models.py:26
 msgid "Owner"
@@ -979,3 +980,182 @@ msgstr "ຄົ້ນຫາທີ່ຢູ່..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "ບໍ່ພົບຜົນ"
+
+msgid "Stop"
+msgstr "ຢຸດ"
+
+msgid "Uploading"
+msgstr "ກຳລັງອັບໂຫຼດ"
+
+msgid "This field is required."
+msgstr "ຊ່ອງນີ້ຈຳເປັນຕ້ອງໃສ່."
+
+msgid "up to {n} more"
+msgstr "ອີກໄດ້ເຖິງ {n}"
+
+msgid "Tap to start the line."
+msgstr "ແຕະເພື່ອເລີ່ມເສັ້ນ."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "ແຕະແຜນທີ່ເພື່ອໝາຍສະຖານທີ່ — ຫຼື ໃຊ້ປຸ່ມ."
+
+msgid "Tap the last point to finish the line."
+msgstr "ແຕະຈຸດສຸດທ້າຍເພື່ອສຳເລັດເສັ້ນ."
+
+msgid "Move map"
+msgstr "ເລື່ອນແຜນທີ່"
+
+msgid "Anything else we should know? (optional)"
+msgstr "ມີຫຍັງອີກທີ່ພວກເຮົາຄວນຮູ້ບໍ? (ບໍ່ບັງຄັບ)"
+
+msgid "This question is required"
+msgstr "ຄຳຖາມນີ້ຈຳເປັນຕ້ອງຕອບ"
+
+msgid "Take photo"
+msgstr "ຖ່າຍຮູບ"
+
+msgid "Clear"
+msgstr "ລ້າງ"
+
+msgid "Record"
+msgstr "ບັນທຶກສຽງ"
+
+msgid "Spray"
+msgstr "ພົ່ນ"
+
+msgid "Please specify"
+msgstr "ກະລຸນາລະບຸ"
+
+msgid "Erase"
+msgstr "ລຶບ"
+
+msgid "Small brush"
+msgstr "ແປງນ້ອຍ"
+
+msgid "Retry"
+msgstr "ລອງໃໝ່"
+
+msgid "Search failed — check your connection and try again."
+msgstr "ການຄົ້ນຫາລົ້ມເຫຼວ — ກວດການເຊື່ອມຕໍ່ແລ້ວລອງໃໝ່."
+
+msgid "Questions"
+msgstr "ຄຳຖາມ"
+
+msgid "Add another"
+msgstr "ເພີ່ມອີກ"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "ເບິ່ງຄືການຫຼອກລວງ ຫຼື ປອມເປັນບໍລິສັດ"
+
+msgid "{n} marked"
+msgstr "ໝາຍແລ້ວ {n}"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "ເລື່ອນແຜນທີ່ເພື່ອວາງໝຸດ, ແລ້ວກົດ \"ນຳໃຊ້\"."
+
+msgid "Send report"
+msgstr "ສົ່ງລາຍງານ"
+
+msgid "Made with"
+msgstr "ສ້າງດ້ວຍ"
+
+msgid "Tap to add the shape’s corners."
+msgstr "ແຕະເພື່ອເພີ່ມມຸມຂອງຮູບຮ່າງ."
+
+msgid "No"
+msgstr "ບໍ່"
+
+msgid "{n} of {m} marked"
+msgstr "ໝາຍແລ້ວ {n} ຈາກ {m}"
+
+msgid "All {m} marked — thank you!"
+msgstr "ໝາຍຄົບທັງ {m} ແລ້ວ — ຂອບໃຈ!"
+
+msgid "Report this survey"
+msgstr "ລາຍງານແບບສຳຫຼວດນີ້"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "ຂໍລະຫັດຜ່ານ, ການເຂົ້າສູ່ລະບົບ ຫຼື ການຈ່າຍເງິນ"
+
+msgid "Medium brush"
+msgstr "ແປງກາງ"
+
+msgid "Sign in"
+msgstr "ເຂົ້າສູ່ລະບົບ"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "ກົດຄ້າງແລ້ວລາກນິ້ວເພື່ອພົ່ນ. ຢູ່ດົນຂຶ້ນບ່ອນທີ່ທ່ານໝັ້ນໃຈກວ່າ."
+
+msgid "Tap to add the next corner."
+msgstr "ແຕະເພື່ອເພີ່ມມຸມຕໍ່ໄປ."
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "ສະແດງຕົວເລືອກທັງໝົດ"
+
+msgid "Add audio file"
+msgstr "ເພີ່ມໄຟລ໌ສຽງ"
+
+msgid "Illegal content"
+msgstr "ເນື້ອຫາທີ່ຜິດກົດໝາຍ"
+
+msgid "at least {n} required"
+msgstr "ຕ້ອງມີຢ່າງໜ້ອຍ {n}"
+
+msgid "Tap the first point to close the shape."
+msgstr "ແຕະຈຸດທຳອິດເພື່ອປິດຮູບຮ່າງ."
+
+msgid "Add photo"
+msgstr "ເພີ່ມຮູບ"
+
+msgid "Yes"
+msgstr "ແມ່ນ"
+
+msgid "Something else"
+msgstr "ອື່ນໆ"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "ແປງໝົດສີແລ້ວ — ລຶບສີອອກບາງສ່ວນເພື່ອສືບຕໍ່."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "ຢ່າປ້ອນລະຫັດຜ່ານ ຫຼື ເລກບັດ ໃນແບບສຳຫຼວດ Mapsurvey ເດັດຂາດ."
+
+msgid "Large brush"
+msgstr "ແປງໃຫຍ່"
+
+msgid "Harassment, threats or hate"
+msgstr "ການຂົ່ມເຫັງ, ການຂົ່ມຂູ່ ຫຼື ຄວາມກຽດຊັງ"
+
+msgid "Attach file"
+msgstr "ແນບໄຟລ໌"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "ກົດຄ້າງແລ້ວລາກເພື່ອພົ່ນ. ຢູ່ດົນຂຶ້ນບ່ອນທີ່ທ່ານໝັ້ນໃຈກວ່າ."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "ການລ່ວງລະເມີດທາງເພດ ຫຼື ການຂູດຮີດເດັກ"
+
+msgid "Exposes someone's personal data"
+msgstr "ເປີດເຜີຍຂໍ້ມູນສ່ວນຕົວຂອງຜູ້ອື່ນ"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "ຮອດຈຳນວນສູງສຸດແລ້ວ — ລຶບອັນໜຶ່ງຢູ່ລຸ່ມນີ້ເພື່ອປ່ຽນ."
+
+msgid "Brush size"
+msgstr "ຂະໜາດແປງ"
+
+msgid "Tap to add the next point."
+msgstr "ແຕະເພື່ອເພີ່ມຈຸດຕໍ່ໄປ."
+
+msgid "A few required questions still need an answer."
+msgstr "ຍັງມີຄຳຖາມບັງຄັບບາງຂໍ້ທີ່ຕ້ອງຕອບ."
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s ຄຳຖາມ"
+
+msgid "create your own free map survey"
+msgstr "ສ້າງແບບສຳຫຼວດແຜນທີ່ຟຣີຂອງທ່ານເອງ"

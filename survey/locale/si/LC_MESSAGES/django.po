@@ -16,6 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #: survey/models.py:19 survey/models.py:26
 msgid "Owner"
@@ -979,3 +980,183 @@ msgstr "ලිපිනය සොයන්න..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "ප්‍රතිඵල නැත"
+
+msgid "Retry"
+msgstr "නැවත උත්සාහ කරන්න"
+
+msgid "Search failed — check your connection and try again."
+msgstr "සෙවීම අසාර්ථක විය — ඔබගේ සම්බන්ධතාවය පරීක්ෂා කර නැවත උත්සාහ කරන්න."
+
+msgid "Questions"
+msgstr "ප්‍රශ්න"
+
+msgid "Add another"
+msgstr "තවත් එකක් එක් කරන්න"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "වංචාවක් ලෙස පෙනේ හෝ සමාගමක් ලෙස පෙනී සිටී"
+
+msgid "Tap to add the next corner."
+msgstr "ඊළඟ කොන එක් කිරීමට තට්ටු කරන්න."
+
+msgid ":"
+msgstr ":"
+
+msgid "{n} marked"
+msgstr "{n} ක් සලකුණු කළා"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "අල්පෙනෙත්ත ස්ථානගත කිරීමට සිතියම ගෙනයන්න, ඉන්පසු යොදන්න ඔබන්න."
+
+msgid "Send report"
+msgstr "වාර්තාව යවන්න"
+
+msgid "Made with"
+msgstr "නිර්මාණය කළේ:"
+
+msgid "No"
+msgstr "නැත"
+
+msgid "Harassment, threats or hate"
+msgstr "හිරිහැර, තර්ජන හෝ වෛරය"
+
+msgid "All {m} marked — thank you!"
+msgstr "{m} ම සලකුණු කළා — ස්තුතියි!"
+
+msgid "Report this survey"
+msgstr "මෙම සමීක්ෂණය වාර්තා කරන්න"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "මුරපදයක්, පිවිසුමක් හෝ ගෙවීමක් ඉල්ලයි"
+
+msgid "Brush size"
+msgstr "බුරුසුවේ ප්‍රමාණය"
+
+msgid "Medium brush"
+msgstr "මධ්‍යම බුරුසුව"
+
+msgid "A few required questions still need an answer."
+msgstr "අනිවාර්ය ප්‍රශ්න කිහිපයකට තවමත් පිළිතුරු දිය යුතුය."
+
+msgid "create your own free map survey"
+msgstr "ඔබේම නොමිලේ සිතියම් සමීක්ෂණයක් සාදන්න"
+
+msgid "Sign in"
+msgstr "පුරනය වන්න"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "ස්ප්‍රේ කිරීමට ඇඟිල්ල තබාගෙන අදින්න. ඔබට වඩා විශ්වාස ඇති තැන්වල වැඩි වේලාවක් රැඳී සිටින්න."
+
+msgid "Show all options"
+msgstr "සියලු විකල්ප පෙන්වන්න"
+
+msgid "Add audio file"
+msgstr "ශ්‍රව්‍ය ගොනුවක් එක් කරන්න"
+
+msgid "Illegal content"
+msgstr "නීති විරෝධී අන්තර්ගතය"
+
+msgid "at least {n} required"
+msgstr "අවම වශයෙන් {n} ක් අවශ්‍යයි"
+
+msgid "up to {n} more"
+msgstr "තවත් {n} ක් දක්වා"
+
+msgid "Tap the first point to close the shape."
+msgstr "හැඩය වසා දැමීමට පළමු ලක්ෂ්‍යය තට්ටු කරන්න."
+
+msgid "Add photo"
+msgstr "ඡායාරූපයක් එක් කරන්න"
+
+msgid "Take photo"
+msgstr "ඡායාරූපයක් ගන්න"
+
+msgid "Yes"
+msgstr "ඔව්"
+
+msgid "Something else"
+msgstr "වෙනත් දෙයක්"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "බුරුසුව හිස් ය — ඉදිරියට යාමට තීන්ත ටිකක් මකන්න."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Mapsurvey සමීක්ෂණයක කිසිවිටෙක මුරපද හෝ කාඩ්පත් අංක ඇතුළත් නොකරන්න."
+
+msgid "Large brush"
+msgstr "විශාල බුරුසුව"
+
+msgid "Attach file"
+msgstr "ගොනුවක් අමුණන්න"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "ස්ප්‍රේ කිරීමට තබාගෙන අදින්න. ඔබට වඩා විශ්වාස ඇති තැන්වල වැඩි වේලාවක් රැඳී සිටින්න."
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "ළමුන්ට ලිංගික අපයෝජනය හෝ සූරාකෑම"
+
+msgid "Exposes someone's personal data"
+msgstr "කෙනෙකුගේ පුද්ගලික දත්ත හෙළි කරයි"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "උපරිමයට ළඟා විය — වෙනස් කිරීමට පහතින් එකක් ඉවත් කරන්න."
+
+msgid "Tap to add the next point."
+msgstr "ඊළඟ ලක්ෂ්‍යය එක් කිරීමට තට්ටු කරන්න."
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "ප්‍රශ්න %(n)s"
+msgstr[1] "ප්‍රශ්න %(n)s"
+
+msgid "Stop"
+msgstr "නවත්වන්න"
+
+msgid "Uploading"
+msgstr "උඩුගත වෙමින්"
+
+msgid "This field is required."
+msgstr "මෙම ක්ෂේත්‍රය අනිවාර්ය වේ."
+
+msgid "Tap to start the line."
+msgstr "රේඛාව ආරම්භ කිරීමට තට්ටු කරන්න."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "ස්ථානයක් සලකුණු කිරීමට සිතියම තට්ටු කරන්න — නැතහොත් බොත්තම භාවිත කරන්න."
+
+msgid "Tap the last point to finish the line."
+msgstr "රේඛාව අවසන් කිරීමට අවසාන ලක්ෂ්‍යය තට්ටු කරන්න."
+
+msgid "Move map"
+msgstr "සිතියම ගෙනයන්න"
+
+msgid "Anything else we should know? (optional)"
+msgstr "අප දැනගත යුතු වෙනත් යමක් තිබේද? (අත්‍යවශ්‍ය නොවේ)"
+
+msgid "This question is required"
+msgstr "මෙම ප්‍රශ්නය අනිවාර්ය වේ"
+
+msgid "Tap to add the shape’s corners."
+msgstr "හැඩයේ කොන් එක් කිරීමට තට්ටු කරන්න."
+
+msgid "Clear"
+msgstr "හිස් කරන්න"
+
+msgid "Record"
+msgstr "පටිගත කරන්න"
+
+msgid "{n} of {m} marked"
+msgstr "{m} න් {n} ක් සලකුණු කළා"
+
+msgid "Spray"
+msgstr "ස්ප්‍රේ"
+
+msgid "Please specify"
+msgstr "කරුණාකර සඳහන් කරන්න"
+
+msgid "Erase"
+msgstr "මකන්න"
+
+msgid "Small brush"
+msgstr "කුඩා බුරුසුව"

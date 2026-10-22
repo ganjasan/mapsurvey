@@ -980,3 +980,183 @@ msgstr "पत्ता शोधा..."
 #: survey/templatetags/i18n_extras.py:41
 msgid "No results found"
 msgstr "कोणतेही परिणाम नाहीत"
+
+msgid "Maximum reached — remove one below to change it."
+msgstr "कमाल मर्यादा गाठली — बदलण्यासाठी खालीलपैकी एक काढा."
+
+msgid "Small brush"
+msgstr "लहान ब्रश"
+
+#, python-format
+msgid "%(n)s question"
+msgid_plural "%(n)s questions"
+msgstr[0] "%(n)s प्रश्न"
+msgstr[1] "%(n)s प्रश्न"
+
+msgid "Uploading"
+msgstr "अपलोड होत आहे"
+
+msgid "This field is required."
+msgstr "हे फील्ड आवश्यक आहे."
+
+msgid "Tap the map to mark a place — or use the button."
+msgstr "ठिकाण चिन्हांकित करण्यासाठी नकाशावर टॅप करा — किंवा बटण वापरा."
+
+msgid "Move map"
+msgstr "नकाशा हलवा"
+
+msgid "Anything else we should know? (optional)"
+msgstr "आम्हाला आणखी काही कळवायचे आहे का? (ऐच्छिक)"
+
+msgid "This question is required"
+msgstr "हा प्रश्न आवश्यक आहे"
+
+msgid "Tap to add the shape’s corners."
+msgstr "आकाराचे कोपरे जोडण्यासाठी टॅप करा."
+
+msgid "Clear"
+msgstr "साफ करा"
+
+msgid "Record"
+msgstr "रेकॉर्ड करा"
+
+msgid "{n} of {m} marked"
+msgstr "{m} पैकी {n} चिन्हांकित"
+
+msgid "Spray"
+msgstr "फवारा"
+
+msgid "Please specify"
+msgstr "कृपया नमूद करा"
+
+msgid "Erase"
+msgstr "खोडा"
+
+msgid "Asks for a password, a login or a payment"
+msgstr "पासवर्ड, लॉगिन किंवा पेमेंट मागते"
+
+msgid "Retry"
+msgstr "पुन्हा प्रयत्न करा"
+
+msgid "Search failed — check your connection and try again."
+msgstr "शोध अयशस्वी — तुमचे कनेक्शन तपासा आणि पुन्हा प्रयत्न करा."
+
+msgid "Questions"
+msgstr "प्रश्न"
+
+msgid "Add another"
+msgstr "आणखी एक जोडा"
+
+msgid "Looks like a scam or impersonates a company"
+msgstr "फसवणूक वाटते किंवा एखाद्या कंपनीची तोतयागिरी करते"
+
+msgid "Tap to add the next corner."
+msgstr "पुढचा कोपरा जोडण्यासाठी टॅप करा."
+
+msgid ":"
+msgstr ":"
+
+msgid "Show all options"
+msgstr "सर्व पर्याय दाखवा"
+
+msgid "{n} marked"
+msgstr "{n} चिन्हांकित"
+
+msgid "Move the map to position the pin, then press Apply."
+msgstr "पिन ठेवण्यासाठी नकाशा हलवा, नंतर लागू करा दाबा."
+
+msgid "Send report"
+msgstr "तक्रार पाठवा"
+
+msgid "Made with"
+msgstr "यासह बनवले"
+
+msgid "No"
+msgstr "नाही"
+
+msgid "Something else"
+msgstr "इतर काहीतरी"
+
+msgid "Harassment, threats or hate"
+msgstr "छळ, धमक्या किंवा द्वेष"
+
+msgid "All {m} marked — thank you!"
+msgstr "सर्व {m} चिन्हांकित — धन्यवाद!"
+
+msgid "Report this survey"
+msgstr "या सर्वेक्षणाची तक्रार करा"
+
+msgid "Sexual abuse or exploitation of children"
+msgstr "मुलांचे लैंगिक शोषण किंवा अत्याचार"
+
+msgid "Exposes someone's personal data"
+msgstr "कोणाचीतरी वैयक्तिक माहिती उघड करते"
+
+msgid "Brush size"
+msgstr "ब्रशचा आकार"
+
+msgid "Medium brush"
+msgstr "मध्यम ब्रश"
+
+msgid "Tap to add the next point."
+msgstr "पुढचा बिंदू जोडण्यासाठी टॅप करा."
+
+msgid "A few required questions still need an answer."
+msgstr "काही आवश्यक प्रश्नांची उत्तरे अजून बाकी आहेत."
+
+msgid "create your own free map survey"
+msgstr "तुमचे स्वतःचे मोफत नकाशा सर्वेक्षण तयार करा"
+
+msgid "Sign in"
+msgstr "साइन इन करा"
+
+msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
+msgstr "फवारण्यासाठी बोट दाबून धरा आणि ओढा. जिथे तुम्हाला जास्त खात्री आहे तिथे जास्त वेळ थांबा."
+
+msgid "Stop"
+msgstr "थांबवा"
+
+msgid "Add audio file"
+msgstr "ऑडिओ फाइल जोडा"
+
+msgid "Illegal content"
+msgstr "बेकायदेशीर मजकूर"
+
+msgid "at least {n} required"
+msgstr "किमान {n} आवश्यक"
+
+msgid "up to {n} more"
+msgstr "आणखी {n} पर्यंत"
+
+msgid "Tap to start the line."
+msgstr "रेषा सुरू करण्यासाठी टॅप करा."
+
+msgid "Tap the first point to close the shape."
+msgstr "आकार बंद करण्यासाठी पहिल्या बिंदूवर टॅप करा."
+
+msgid "Tap the last point to finish the line."
+msgstr "रेषा पूर्ण करण्यासाठी शेवटच्या बिंदूवर टॅप करा."
+
+msgid "Add photo"
+msgstr "फोटो जोडा"
+
+msgid "Take photo"
+msgstr "फोटो काढा"
+
+msgid "Yes"
+msgstr "होय"
+
+msgid "The brush is empty — erase some paint to continue."
+msgstr "ब्रश रिकामा झाला आहे — पुढे जाण्यासाठी थोडा रंग खोडा."
+
+msgid "Never enter passwords or card numbers in a Mapsurvey survey."
+msgstr "Mapsurvey सर्वेक्षणात कधीही पासवर्ड किंवा कार्ड क्रमांक टाकू नका."
+
+msgid "Large brush"
+msgstr "मोठा ब्रश"
+
+msgid "Attach file"
+msgstr "फाइल जोडा"
+
+msgid "Hold and drag to spray. Stay longer where you are more certain."
+msgstr "फवारण्यासाठी दाबून धरा आणि ओढा. जिथे तुम्हाला जास्त खात्री आहे तिथे जास्त वेळ थांबा."
