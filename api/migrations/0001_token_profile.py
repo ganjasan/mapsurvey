@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('survey', '0100_auditlog_api_token_actions'),
+        ('survey', '0101_auditlog_api_token_actions'),
         migrations.swappable_dependency(settings.OAUTH2_PROVIDER_ACCESS_TOKEN_MODEL),
     ]
 
