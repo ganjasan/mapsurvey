@@ -97,4 +97,4 @@
 - [x] 11.2 Help centre: `help/src/content/docs/reference/api.md` (generated from `openapi.json` by a script in `help/scripts/`) + `how-to/getting-started-with-the-api.md` (curl, Python, QGIS note); `help_links` key; `npm run build` green
 - [x] 11.3 `survey/changelog/<date>-rest-api.html` entry
 - [x] 11.4 `CLAUDE.md`: API platform paragraph extended with `/api/v1/` rules
-- [ ] 11.5 PR 2 opened; after merge: Cloudflare skip rule for `/api/*`, production curl smoke (me, list, create/delete in a test workspace)
+- [x] 11.5 PR 2 opened (#397, merged 2026-10-23); production smoke: openapi.json 200, 401 envelope with resource_metadata and no cf-mitigated for a bot UA, RFC 9728 document, CORS preflight. (The "Cloudflare skip rule" step was void: the edge is Render's, not ours.)
