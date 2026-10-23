@@ -269,8 +269,8 @@ hosting fact is the United States (Render, Oregon) — the "EU-hosted / Frankfur
 survived on the Maptionnaire page until this change must not come back.
 
 **API platform — the authorization layer (`api/`, change `auth-core`, #379; epic #378)**: every
-programmatic client (personal token today, OAuth grant from #313, the REST API #380 and the MCP
-server #306 on top) goes through ONE `api.auth.authenticate(request, audience)`. Bearer header only
+programmatic client (personal token, OAuth grant, the REST API #380 and the MCP server #306 on
+top) goes through ONE `api.auth.authenticate(request, audience)`. Bearer header only
 — a session cookie never authenticates an API path, which is why those views are CSRF-exempt and
 why `request.user` is never read there; use `request.principal`. Tokens are `oauth2_provider`
 `AccessToken` rows (hashed at rest, looked up by checksum) with our `TokenProfile` beside them
@@ -290,6 +290,27 @@ calls the service layer — never a model directly (that is how an agent would s
 `coerce_creator_html`). Token values never reach logs: `_posthog_scrub_tags` keeps only path and
 method under `API_PATH_PREFIXES`; audit and events carry ids. `OAUTH2_PROVIDER` pins RFC 9700 and
 `api.tests.test_settings` runs the toolkit's deploy check. Contract for resource servers: `api/README.md`.
+
+**The authorization server (change `oauth-server`, #313; epic item 2)**: django-oauth-toolkit's
+views mounted by hand in `api/urls.py` — RFC 8414 document at the root, `/oauth/authorize|token|
+revoke|register/`, nothing else (no introspection, device flow, OIDC, or protected-resource
+document; that one is each resource server's). Issuer = `settings.OAUTH_ISSUER` (the preview's own
+host under `IS_PULL_REQUEST`, else `SITE_URL` — `SITE_URL` is production on previews too). Clients
+register themselves (open DCR behind a per-IP budget, CIMD through the toolkit's SSRF-hardened
+fetcher) or are first-party rows in the admin. **Redirect URIs are ONE rule**, `api/oauth/redirects.py`:
+exact match, `https` only, except loopback `http://127.0.0.1|[::1]|localhost` with any port (Claude
+Code); the toolkit cannot express that, so `ALLOWED_REDIRECT_URI_SCHEMES` lists `http`,
+`oauth2_provider.E003` is silenced, and the helper runs at DCR, CIMD, `Application` `pre_save`,
+authorize and token time — never widen or bypass it. Every OAuth access token (`msa_…`; refresh
+`msr_…`) gets a `TokenProfile(kind="oauth")` in `api/oauth/validator.py` with audiences from
+`resource` (`api/oauth/audiences.py`, `API_RESOURCE_URLS`; none = both, unknown = `invalid_target`),
+so rights, the Pro gate and limits apply unchanged; `code_checksum` is how a code redeemed twice
+revokes its whole family. Consent (`api/authorize.html`) shows the redirect host ABOVE the
+attacker-chosen name, publish/delete as switches off by default, issued scope ⊆ requested (signed
+hidden field), and is remembered while an unrevoked refresh token covers the request. `/oauth/*`
+responses get DENY / `frame-ancestors 'none'` / no-store from `api.middleware`. Connected apps and
+*Disconnect* live on `/editor/account/connections/` (`api/oauth/grants.py`). Ops after a deploy:
+the Cloudflare rule for `/.well-known/*` and `/oauth/*` and `scripts/oauth_reachability_check.py`.
 
 **Billing — Pro on PayPro Global (`billing/`, change `paywall-payproglobal`, #268)**: PayPro is the
 Merchant of Record; we own the checkout link out (`billing/checkout.py`, the ONLY place a PayPro URL

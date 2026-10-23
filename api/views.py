@@ -14,6 +14,7 @@ from survey.models import CreatorPreferences, Membership
 
 from . import tokens
 from .decorators import api_endpoint
+from .oauth import grants
 from .forms import PersonalTokenForm
 from .models import AUDIENCE_API, KIND_PERSONAL, TokenProfile
 
@@ -68,6 +69,8 @@ def connections(request):
             return redirect('editor_account_connections')
         if action == 'revoke':
             return _revoke(request)
+        if action == 'disconnect':
+            return _disconnect(request)
         form = PersonalTokenForm(request.user, request.POST)
         if form.is_valid():
             return _create(request, form)
@@ -93,6 +96,7 @@ def connections(request):
     return render(request, 'api/connections.html', {
         'form': form,
         'rows': rows,
+        'apps': grants.connected_apps(request.user),
         'once': once,
         'requested': prefs.agent_access_requested_at is not None,
         'any_pro': any(for_organization(m.organization).has('api')
@@ -131,4 +135,21 @@ def _revoke(request):
     audit(request, 'api_token_revoke', token_id=profile.token_id)
     pe.emit(pe.API_TOKEN_REVOKED, request.user.pk, {'scopes': profile.token.scope.split(),
                                                      'audiences': profile.audiences})
+    return redirect('editor_account_connections')
+
+
+def _disconnect(request):
+    """Connected apps (change oauth-server, D9): 404 unless the user holds a
+    grant on that application -- another user's grant on the same app included."""
+    from oauth2_provider.models import Application
+    try:
+        application_id = int(request.POST.get('application_id', ''))
+    except ValueError:
+        application_id = None
+    if application_id is None or application_id not in grants.connected_applications(request.user):
+        raise Http404()
+    application = Application.objects.get(pk=application_id)
+    scopes = grants.disconnect(request.user, application)
+    audit(request, 'oauth_disconnect', client_id=application.client_id, application_id=application.pk)
+    pe.emit(pe.OAUTH_APP_DISCONNECTED, request.user.pk, {'application_id': application.pk, 'scopes': scopes})
     return redirect('editor_account_connections')

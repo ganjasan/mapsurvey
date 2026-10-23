@@ -1535,6 +1535,10 @@ class AuditLog(models.Model):
         # never the value.
         ('api_token_create', 'Personal API token created'),
         ('api_token_revoke', 'Personal API token revoked'),
+        # OAuth grants (change oauth-server, #313): client id, application id,
+        # scopes and audiences -- never a code, a token or the client name.
+        ('oauth_consent', 'OAuth app allowed'),
+        ('oauth_disconnect', 'OAuth app disconnected'),
     )
 
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)

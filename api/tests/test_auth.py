@@ -132,11 +132,23 @@ class UniformRefusalTest(TestCase):
         WHEN presented
         THEN 401 and no database query for a token row
         """
-        for bad in ('x' * 10000, 'abc', 'msk_short', 'msk_' + 'y' * 300):
+        for bad in ('x' * 10000, 'abc', 'msk_short', 'msk_' + 'y' * 300, 'msr_' + 'r' * 43, 'msa_short'):
             with self.assertNumQueries(0):
                 response = self.client.get(ME, **bearer(bad))
             self.assertEqual(response.status_code, 401, bad)
             self.assertEqual(response.json()['error'], 'invalid_token')
+
+    def test_oauth_prefix_is_looked_up(self):
+        """
+        GIVEN a well-formed msa_ value with no row behind it
+        WHEN presented
+        THEN it reaches the lookup (one query) and is still 401 -- the shape is ours, the row is not
+        """
+        from .. import tokens
+        self.assertTrue(tokens.looks_like_token('msa_' + 'a' * 43))
+        self.assertFalse(tokens.looks_like_token('msr_' + 'a' * 43))
+        response = self.client.get(ME, **bearer('msa_' + 'a' * 43))
+        self.assertEqual(response.status_code, 401)
 
     def test_oauth_row_without_profile_is_refused(self):
         """

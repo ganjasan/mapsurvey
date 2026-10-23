@@ -46,11 +46,67 @@ trace for anything else (still captured by PostHog).
 
 - **Personal** (`msk_…`, minted on `/editor/account/connections/`): `application = NULL`, a
   long or chosen expiry, audiences `api` and/or `mcp`, optional workspace binding.
-- **OAuth** (#313): issued by the authorization server; `TokenProfile.kind = "oauth"`, audience
-  from the `resource` parameter.
+- **OAuth** (`msa_…`, issued by the authorization server below): `TokenProfile.kind = "oauth"`,
+  `label` = the client name, audiences from the `resource` parameter, never a workspace binding.
+  Refresh tokens are `msr_…` and never reach `authenticate()`.
 
 `authenticate(request, 'api')` refuses a token whose profile lacks `api` in `audiences`; the MCP
 host asks for `'mcp'`. A REST token is not an MCP token.
+
+## The authorization server (change oauth-server, #313)
+
+django-oauth-toolkit's views, mounted by hand in `api/urls.py` (namespace `oauth2_provider`):
+
+| Path | What |
+|---|---|
+| `/.well-known/oauth-authorization-server` | RFC 8414 document. `issuer` = `settings.OAUTH_ISSUER` (the preview's own host under `IS_PULL_REQUEST`, else `SITE_URL`). |
+| `/oauth/authorize/` | Login + consent (`api/oauth/views.py`, template `api/authorize.html`). |
+| `/oauth/token/` | `authorization_code` + `refresh_token` only (`api/oauth/server.py` drops the rest). PKCE S256 mandatory. |
+| `/oauth/revoke/` | RFC 7009. |
+| `/oauth/register/`, `/oauth/register/<client_id>/` | RFC 7591 DCR + RFC 7592, behind a per-IP budget (10/h, 50/d) and body normalisation. |
+
+Not mounted on purpose: introspection, device flow, the toolkit's application pages, OIDC, and the
+protected-resource document — that one belongs to each resource server (#380, #306).
+
+**Clients**, three ways: open DCR (ChatGPT, claude.ai, Claude Code register themselves), CIMD (an
+`https` URL as `client_id`, fetched by the toolkit's SSRF-hardened fetcher, our rules applied in
+`api/oauth/cimd.py`), first-party rows in the admin (`skip_authorization` for our own tools).
+`purge_oauth_clients` (nightly, `reclaim.sh`) deletes DCR/CIMD rows older than 30 days that were never
+authorised.
+
+**Redirect URIs** — `api/oauth/redirects.py` is the ONE rule: exact string match, `https` only,
+except loopback `http://127.0.0.1`, `http://[::1]`, `http://localhost` with any port (RFC 8252,
+Claude Code). It runs at DCR, on a CIMD document, on every `Application` save (`pre_save`) and in
+the validator at authorize and token time. That is why `ALLOWED_REDIRECT_URI_SCHEMES` lists `http`
+and `oauth2_provider.E003` is silenced — the toolkit cannot tell loopback from the rest.
+
+**`resource` → audience** (`api/oauth/audiences.py`): `settings.API_RESOURCE_URLS = {'api': …,
+'mcp': …}`; no indicator = both audiences; an indicator matching neither prefix = `invalid_target`.
+The audience lands in `TokenProfile.audiences`, which `authenticate()` already checks.
+
+**Consent** (`api/oauth/views.py`, `forms.py`): the redirect host is shown above the client name
+(the name is attacker-chosen), `surveys:publish` / `surveys:delete` are switches off by default and
+the issued scope is ⊆ the requested one (the requested set rides a signed hidden field), workspaces
+and plans are listed with a Pro note when none holds `api`. A grant is remembered while an unrevoked
+refresh token with covering scopes exists; more scopes re-prompt; `Cancel` → `access_denied` + `state`;
+an unknown client or unregistered redirect → an error page, never a redirect; `state` > 512 bytes →
+error page. A code redeemed twice revokes everything it produced (`TokenProfile.code_checksum`).
+Audit `oauth_consent` / `oauth_disconnect`; events `oauth_app_connected` / `oauth_app_disconnected`.
+
+**Headers**: `api.middleware.OAuthResponseHeadersMiddleware` puts `Cache-Control: no-store`,
+`Pragma: no-cache`, `X-Frame-Options: DENY`, `frame-ancestors 'none'` on every `/oauth/*` response.
+
+**Connected apps**: `api/oauth/grants.py` — one row per application on the connections page,
+*Disconnect* revokes the refresh tokens (the toolkit revokes their access tokens) and flags the rest.
+
+**Operations**: Cloudflare must skip Bot Fight Mode and challenges for `/.well-known/*` and
+`/oauth/*` — Anthropic's egress is `160.79.104.0/21`, OpenAI publishes its ranges at
+`https://openai.com/chatgpt-actions.json` / `https://openai.com/chatgpt-user.json`; a challenge page
+on the token endpoint shows up in the connector as "could not connect" with no detail. After a deploy
+or a Cloudflare change run `python scripts/oauth_reachability_check.py https://mapsurvey.org`
+(discovery, register, token: JSON within 10 s or it fails). Manual check after the first deploy:
+claude.ai custom connector, ChatGPT connector (Developer mode), `claude mcp add --transport http`;
+write ChatGPT's write-tool behaviour down in #306.
 
 ## Pro
 
@@ -95,16 +151,22 @@ scopes and audiences — never the label (free text) or the value.
 ## Settings
 
 `OAUTH2_PROVIDER` pins the RFC 9700 block (hashed storage, PKCE S256 only, refresh rotation with
-reuse detection, https-only redirects, no implicit/password grants). `api.tests.test_settings`
-runs the toolkit's deploy-time system check so a drift fails the suite.
+reuse detection, exact redirect matching, no implicit/password grants) plus the authorization
+server's own block (validator and server classes, token generators, 10-minute codes, DCR and CIMD
+on, `OIDC_ISS_ENDPOINT = OAUTH_ISSUER`). `api.tests.test_settings` runs the toolkit's deploy-time
+system check so a drift fails the suite; the one silenced id, `oauth2_provider.E003`, is the
+loopback exception explained above and has its own test.
 
 ## Tests
 
 `./run_tests.sh api` — one module per capability: `test_auth`, `test_tokens`, `test_rights`,
-`test_pro_gate`, `test_limits`, `test_me`, `test_connections`, `test_settings`. Builders in
-`tests/helpers.py` (`LOCMEM` swaps the cache for a local one so counters are deterministic).
+`test_pro_gate`, `test_limits`, `test_me`, `test_connections`, `test_settings`, `test_oauth_server`,
+`test_oauth_clients`, `test_connected_apps`. Builders in `tests/helpers.py` (`LOCMEM` swaps the
+cache for a local one so counters are deterministic; `oauth_settings()`, `make_app`, `pkce`,
+`consent`, `grant` drive the real endpoints).
 
 ## Operations
 
-`purge_api_tokens` (in `reclaim.sh`, nightly) deletes tokens expired or revoked more than 30 days
-ago. The admin shows `TokenProfile` read-only.
+`purge_api_tokens` and `purge_oauth_clients` (in `reclaim.sh`, nightly) delete tokens expired or
+revoked more than 30 days ago and never-authorised client registrations older than 30 days. The
+admin shows `TokenProfile` read-only and `Application` with registration source and token counts.
