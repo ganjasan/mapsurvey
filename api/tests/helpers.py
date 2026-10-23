@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.test import override_settings
 
 from billing.tests.helpers import make_org, make_sub  # noqa: F401 -- re-exported
-from survey.models import Membership, Organization, Question, SurveyHeader, SurveySection
+from survey.models import Membership, Organization, Question, SurveyHeader, SurveySection  # noqa: F401
 
 from .. import scopes, tokens
 from ..models import AUDIENCE_API, AUDIENCE_MCP
@@ -163,3 +163,53 @@ def grant(client, app, scope='surveys:read', state='xyz', switches=(), resource=
     response = exchange(client, app, code, verifier, **extra)
     assert response.status_code == 200, response.content
     return response.json()
+
+
+# --- REST API v1 (change rest-api-v1) -------------------------------------------------
+import json as _json  # noqa: E402
+
+V1 = '/api/v1'
+
+
+def make_v1_survey(org, owner, name='v1_survey', status='draft', languages=('en',)):
+    """A survey shaped as the editor makes one: owner collaborator, head section S1."""
+    from survey.models import SurveyCollaborator
+    survey = SurveyHeader.objects.create(organization=org, name=name, created_by=owner, status=status,
+                                         available_languages=list(languages), redirect_url='#')
+    SurveyCollaborator.objects.create(user=owner, survey=survey, role='owner')
+    section = SurveySection.objects.create(survey_header=survey, name='section_1', title='Section 1',
+                                           code='S1', is_head=True)
+    return survey, section
+
+
+class V1Client:
+    """JSON calls with a bearer, for the v1 test modules."""
+
+    def __init__(self, client, token):
+        self.client, self.token = client, token
+
+    def call(self, method, path, body=None, token=None, **extra):
+        headers = bearer(token or self.token) if (token or self.token) else {}
+        headers.update(extra)
+        url = path if path.startswith((V1, '/.well-known')) else V1 + path
+        fn = getattr(self.client, method.lower())
+        if body is None:
+            return fn(url, **headers)
+        if method.upper() == 'GET':
+            return fn(url, body, **headers)
+        return fn(url, _json.dumps(body), content_type='application/json', **headers)
+
+    def get(self, path, params=None, **kw):
+        return self.call('GET', path, params, **kw)
+
+    def post(self, path, body=None, **kw):
+        return self.call('POST', path, body if body is not None else {}, **kw)
+
+    def patch(self, path, body, **kw):
+        return self.call('PATCH', path, body, **kw)
+
+    def put(self, path, body, **kw):
+        return self.call('PUT', path, body, **kw)
+
+    def delete(self, path, **kw):
+        return self.call('DELETE', path, **kw)

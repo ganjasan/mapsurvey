@@ -1,5 +1,5 @@
-"""The connections page (session-authenticated, an editor page) and `/api/v1/me`
-(the first bearer-authenticated endpoint)."""
+"""The connections page (session-authenticated, an editor page), the body of
+`/api/v1/me`, and the API's protected-resource metadata (RFC 9728)."""
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.shortcuts import redirect, render
@@ -13,17 +13,15 @@ from survey.audit import audit
 from survey.models import CreatorPreferences, Membership
 
 from . import tokens
-from .decorators import api_endpoint
 from .oauth import grants
 from .forms import PersonalTokenForm
-from .models import AUDIENCE_API, KIND_PERSONAL, TokenProfile
+from .models import KIND_PERSONAL, TokenProfile
 
 SESSION_ONCE_KEY = 'api_token_once'
 
 
-@api_endpoint(AUDIENCE_API)
-def me(request):
-    p = request.principal
+def me_payload(p):
+    """What `GET /api/v1/me` answers (served by the v1 router, api/v1/me.py)."""
     memberships = Membership.objects.filter(user=p.user).select_related('organization').order_by('organization__name')
     if p.organization is not None:
         memberships = memberships.filter(organization=p.organization)
@@ -153,3 +151,23 @@ def _disconnect(request):
     audit(request, 'oauth_disconnect', client_id=application.client_id, application_id=application.pk)
     pe.emit(pe.OAUTH_APP_DISCONNECTED, request.user.pk, {'application_id': application.pk, 'scopes': scopes})
     return redirect('editor_account_connections')
+
+
+def protected_resource_metadata(request):
+    """RFC 9728: which authorization server issues tokens for the REST API and
+    what they can carry. Public; the API's 401 points here."""
+    from django.conf import settings
+    from django.http import JsonResponse
+    from . import scopes
+    response = JsonResponse({
+        'resource': settings.API_RESOURCE_URLS['api'],
+        'authorization_servers': [settings.OAUTH_ISSUER],
+        'scopes_supported': list(scopes.SCOPES),
+        'bearer_methods_supported': ['header'],
+        'resource_name': 'Mapsurvey REST API',
+        'resource_documentation': getattr(settings, 'HELP_SITE_URL', '').rstrip('/') + '/reference/api/'
+        if getattr(settings, 'HELP_SITE_URL', '') else settings.OAUTH_ISSUER + '/api/v1/openapi.json',
+    })
+    response['Access-Control-Allow-Origin'] = '*'
+    response['Cache-Control'] = 'public, max-age=3600'
+    return response

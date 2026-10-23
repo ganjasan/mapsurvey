@@ -50,6 +50,9 @@ anthropic = "~=0.122"
 posthog = "~=6.9"
 # Excel export (survey/export.py), write-only mode.
 openpyxl = "*"
+# The REST API v1 (change rest-api-v1, #380): pydantic schemas are the validation AND the
+# OpenAPI document, so there is no serializer layer to keep in sync.
+django-ninja = "~=1.7"
 
 [requires]
 python_version = "3.12"

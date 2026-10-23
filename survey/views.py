@@ -1512,20 +1512,8 @@ def survey_section(request, survey_slug, section_name):
 		return render(request, 'survey_section.html', ctx)
 
 def _get_version_surveys(survey, version_param):
-	"""Resolve which survey(s) to export based on version parameter.
-
-	Returns list of (survey, prefix) tuples. The prefix is empty when the scope
-	is a single version, so a single-version survey keeps unprefixed filenames
-	whatever the parameter says.
-
-	The parameter itself is parsed by versioning.resolve_version_scope — the
-	same call the analytics dashboard makes, so both surfaces answer the same
-	question for the same URL.
-	"""
-	scope = resolve_version_scope(survey, version_param)
-	if scope.is_family:
-		return [(header, f'v{header.version_number}_') for header in scope.headers]
-	return [(header, '') for header in scope.headers]
+	"""Resolve which survey(s) to export (export.version_parts)."""
+	return data_export.version_parts(survey, version_param)
 
 
 def session_kind_for(request, survey):
@@ -1572,44 +1560,23 @@ def download_data(request, survey_slug):
 	# The format catalogue (spec responses-export-formats). No `format` is the
 	# legacy GeoJSON+CSV archive, unchanged for every old link and script.
 	fmt = request.GET.get('format') or 'zip'
-	if fmt not in data_export.FORMATS:
-		return HttpResponseBadRequest("Unknown export format")
-	if fmt in data_export.OGR_FORMATS and not data_export.OGR_AVAILABLE:
-		return HttpResponseBadRequest("GIS export formats are not available on this server")
+	refusal = data_export.check_format(fmt)
+	if refusal:
+		return HttpResponseBadRequest(refusal)
 
 	pe.emit(pe.DATA_EXPORTED, request.user.pk, {'survey_id': str(survey.id), 'format': fmt})
 
 	# Checked once, on the survey the URL names, before the family is expanded:
 	# a SurveyCollaborator holds a row on the canonical survey, not on each
 	# archived version header, so re-checking per version would deny them their
-	# own history.
-	version_param = request.GET.get('version')
-	version_surveys = _get_version_surveys(survey, version_param)
-
-	include_all = request.GET.get('include_all') == '1'
-	completed_only = request.GET.get('completed_only') == '1'
-	include_files = request.GET.get('files') == '1'
-
-	excluded_session_ids = data_export.excluded_sessions(version_surveys, include_all, completed_only)
-	bundle = data_export.collect(survey, version_surveys, excluded_session_ids)
-
-	if fmt == 'zip':
-		response = HttpResponse(content_type="application/zip")
-		response["Content-Disposition"] = "attachment; filename={filename}.zip".format(filename=_sanitize_filename(survey.name))
-		response.write(data_export.build_legacy_zip(bundle).read())
-		return response
-
-	# Every other format is assembled on disk and streamed; the directory goes
-	# when the response closes, so the worker never holds the file.
-	workdir = tempfile.TemporaryDirectory(prefix='mapsurvey-export-')
-	try:
-		path, filename, content_type = data_export.build_export(bundle, fmt, include_files, workdir.name)
-	except Exception:
-		workdir.cleanup()
-		raise
-	response = FileResponse(open(path, 'rb'), as_attachment=True, filename=filename, content_type=content_type)
-	response._resource_closers.append(workdir.cleanup)
-	return response
+	# own history. The work is export.export_response, shared with the API.
+	return data_export.export_response(
+		survey, fmt,
+		version=request.GET.get('version'),
+		include_all=request.GET.get('include_all') == '1',
+		completed_only=request.GET.get('completed_only') == '1',
+		include_files=request.GET.get('files') == '1',
+	)
 
 
 # The export machinery lives in survey/export.py; these names stay importable
@@ -2137,6 +2104,13 @@ def survey_layer_geojson(request, survey_slug, layer_id):
 		response = HttpResponse(body, content_type='application/geo+json')
 		response['Cache-Control'] = 'private, no-store'
 		return response
+	return cached_geojson_response(request, layer)
+
+
+def cached_geojson_response(request, layer):
+	"""A layer's stored collection, as the gated endpoint and the REST API
+	(change rest-api-v1) serve it: an ETag on the last rebuild and the stored
+	gzip bytes passed through to a client that accepts them."""
 	etag = '"layer-%s-%s"' % (layer.pk, layer.updated_at.strftime('%Y%m%d%H%M%S%f'))
 	if request.headers.get('If-None-Match') == etag:
 		response = HttpResponse(status=304)

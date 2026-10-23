@@ -1,7 +1,9 @@
-from django.urls import include, path
+from django.urls import include, path, re_path
 from oauth2_provider import views as dot_views
 
 from . import views
+from .errors import not_found
+from .v1 import api as api_v1
 from .oauth import views as oauth_views
 
 # The authorization server (change oauth-server, #313). The namespace MUST be
@@ -22,15 +24,32 @@ oauth_patterns = ([
     path('register/<str:client_id>/', oauth_views.ManagementView.as_view(), name='dcr-register-management'),
 ], 'oauth2_provider')
 
+def v1_not_found(request):
+    return not_found().as_response()
+
+
+# `reverse('api_me')` predates the router; keep the name (tests, the
+# connections page's curl example).
+def _api_me_name():
+    return path('api/v1/me', lambda request: v1_not_found(request), name='api_me')
+
+
 urlpatterns = [
     # RFC 8414: at the origin root, nowhere else.
     path('.well-known/oauth-authorization-server', dot_views.OAuthServerMetadataView.as_view(),
          name='oauth_server_metadata'),
     path('oauth/', include(oauth_patterns)),
-    # The one resource endpoint of change auth-core: what the token is and
-    # which workspaces, on which plan, it reaches. #380 re-homes it.
-    path('api/v1/me', views.me, name='api_me'),
+    # REST API v1 (change rest-api-v1, #380): django-ninja. Unknown paths
+    # under it answer the envelope 404, never the site's HTML page.
+    path('api/v1/', api_v1.urls),
+    re_path(r'^api/v1/.*$', v1_not_found),
+    # RFC 9728: the API's protected-resource metadata, path-inserted for the
+    # resource `<issuer>/api/` (the API's 401 names it in WWW-Authenticate).
+    path('.well-known/oauth-protected-resource/api/', views.protected_resource_metadata,
+         name='api_protected_resource'),
     # The creator's tokens and connected apps. Session-authenticated like
     # every editor page; it is not an API path.
     path('editor/account/connections/', views.connections, name='editor_account_connections'),
+    # Never reached (the router above answers first); it only names the path.
+    _api_me_name(),
 ]

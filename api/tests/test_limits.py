@@ -11,6 +11,15 @@ from ..models import AUDIENCE_API
 from .helpers import LOCMEM, bearer, make_org, mint
 
 ME = reverse('api_me')
+# A write that gets past authentication, scopes and the windows and then finds
+# nothing: /me has no write method since the v1 router took it over (#380), so
+# a PATCH of an unknown survey is the cheapest counted write. 404 = admitted.
+WRITE = '/api/v1/surveys/00000000-0000-0000-0000-000000000000'
+ADMITTED = 404
+
+
+def write(client, value):
+    return client.patch(WRITE, '{}', content_type='application/json', **bearer(value))
 
 
 def principal_for(user):
@@ -30,12 +39,12 @@ class PerTokenWindowsTest(TestCase):
     def test_write_window(self):
         """
         GIVEN a write limit of 3 per minute
-        WHEN a token makes 4 POSTs
+        WHEN a token makes 4 writes
         THEN the 4th is 429 rate_limited with limit api.write and Retry-After ≤ 60
         """
         for _ in range(3):
-            self.assertEqual(self.client.post(ME, **bearer(self.value)).status_code, 200)
-        response = self.client.post(ME, **bearer(self.value))
+            self.assertEqual(write(self.client, self.value).status_code, ADMITTED)
+        response = write(self.client, self.value)
         self.assertEqual(response.status_code, 429)
         body = response.json()
         self.assertEqual(body['error'], 'rate_limited')
@@ -52,13 +61,13 @@ class PerTokenWindowsTest(TestCase):
         """
         other, _ = mint(self.owner)
         for _ in range(3):
-            self.assertEqual(self.client.post(ME, **bearer(self.value)).status_code, 200)
-            self.assertEqual(self.client.post(ME, **bearer(other)).status_code, 200)
+            self.assertEqual(write(self.client, self.value).status_code, ADMITTED)
+            self.assertEqual(write(self.client, other).status_code, ADMITTED)
 
     @override_settings(API_RATE_LIMITS={'api.write': (2, 60), 'api.read': (50, 60)})
     def test_reads_do_not_consume_writes(self):
         """
-        GIVEN 40 GETs and 2 POSTs
+        GIVEN 40 GETs and 2 writes
         WHEN made within a minute
         THEN none is 429
         """
@@ -66,8 +75,8 @@ class PerTokenWindowsTest(TestCase):
             response = self.client.get(ME, **bearer(self.value))
             self.assertEqual(response.status_code, 200, response.content)
         for _ in range(2):
-            response = self.client.post(ME, **bearer(self.value))
-            self.assertEqual(response.status_code, 200, response.content)
+            response = write(self.client, self.value)
+            self.assertEqual(response.status_code, ADMITTED, response.content)
 
     @override_settings(API_RATE_LIMITS={'api.day': (4, 86400)})
     def test_daily_cap(self):

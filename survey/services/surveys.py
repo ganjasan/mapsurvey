@@ -1,12 +1,14 @@
 """Surveys: create, settings, name, thanks page, map start, trash."""
+import json
+
 from django.contrib.gis.geos import Point
 from django.db import transaction
 
 from .. import audit
 from .. import product_events as pe
-from ..editor_forms import SurveyHeaderForm, SurveyRenameForm
+from ..editor_forms import SurveyCreateForm, SurveyHeaderForm, SurveyRenameForm
 from ..html_sanitize import sanitize_creator_html
-from ..models import SurveyCollaborator, SurveyHeader, SurveySection
+from ..models import SurveyCollaborator, SurveySection
 from ..trash import trash_survey
 from . import locks
 from .common import bind, validate
@@ -47,14 +49,9 @@ def create(actor, survey, organization, *, start=None, surface):
 def create_blank(actor, organization, *, name, language, start=None, surface):
     """A new empty survey named `name` in `language` -- what a programmatic
     client gets from `POST /surveys`."""
-    name = (name or '').strip()
-    max_length = SurveyHeader._meta.get_field('name').max_length
-    if not name:
-        raise ValidationFailed.single('name', 'This field is required.')
-    if len(name) > max_length:
-        raise ValidationFailed.single('name', f'Ensure this value has at most {max_length} characters.')
-    return create(actor, SurveyHeader(name=name, available_languages=[language]), organization,
-                  start=start, surface=surface)
+    form = validate(SurveyCreateForm(
+        {'name': (name or '').strip(), 'available_languages': json.dumps([language])}))
+    return create(actor, form.save(commit=False), organization, start=start, surface=surface)
 
 
 @transaction.atomic

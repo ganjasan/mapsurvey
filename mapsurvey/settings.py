@@ -85,6 +85,7 @@ MIDDLEWARE = [
     # /oauth/*: no-store, DENY, frame-ancestors 'none' -- whatever any view or
     # the embed middleware below does (change oauth-server, D7).
     'api.middleware.OAuthResponseHeadersMiddleware',
+    'api.middleware.ApiResponseHeadersMiddleware',
     # Outermost of ours: both rewrite response headers other middleware set
     # (Set-Cookie from sessions/CSRF, X-Frame-Options from clickjacking).
     'survey.middleware.PartitionedCookieMiddleware',
