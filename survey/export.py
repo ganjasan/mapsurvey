@@ -957,3 +957,57 @@ def excluded_sessions(version_surveys, include_all, completed_only):
         completed = set(completed_session_filter(qs, headers).values_list('id', flat=True))
         excluded |= set(qs.values_list('id', flat=True)) - completed
     return excluded
+
+
+# ---------------------------------------------------------------------------
+# The response every surface serves (change rest-api-v1)
+# ---------------------------------------------------------------------------
+
+def check_format(fmt):
+    """The refusal for a format this server cannot write, or None."""
+    if fmt not in FORMATS:
+        return 'Unknown export format'
+    if fmt in OGR_FORMATS and not OGR_AVAILABLE:
+        return 'GIS export formats are not available on this server'
+    return None
+
+
+def version_parts(survey, version_param):
+    """(survey, prefix) per header in the requested version scope. The prefix is
+    empty for a single version, so a single-version survey keeps unprefixed
+    filenames; the parameter is parsed by versioning.resolve_version_scope, the
+    same call the Responses page makes."""
+    from .versioning import resolve_version_scope
+    scope = resolve_version_scope(survey, version_param)
+    if scope.is_family:
+        return [(header, f'v{header.version_number}_') for header in scope.headers]
+    return [(header, '') for header in scope.headers]
+
+
+def export_response(survey, fmt, *, version=None, include_all=False, completed_only=False,
+                    include_files=False):
+    """What `download_data` and the API's export stream for the same
+    parameters -- one function, so the two can never disagree. `fmt` must have
+    passed `check_format`. The legacy `zip` is built in memory as it always was;
+    every other format is assembled on disk and streamed, and the directory goes
+    when the response closes, so the worker never holds the file."""
+    import tempfile
+    from django.http import FileResponse, HttpResponse
+
+    version_surveys = version_parts(survey, version)
+    excluded = excluded_sessions(version_surveys, include_all, completed_only)
+    bundle = collect(survey, version_surveys, excluded)
+    if fmt == 'zip':
+        response = HttpResponse(content_type='application/zip')
+        response['Content-Disposition'] = 'attachment; filename={}.zip'.format(_sanitize_filename(survey.name))
+        response.write(build_legacy_zip(bundle).read())
+        return response
+    workdir = tempfile.TemporaryDirectory(prefix='mapsurvey-export-')
+    try:
+        path, filename, content_type = build_export(bundle, fmt, include_files, workdir.name)
+    except Exception:
+        workdir.cleanup()
+        raise
+    response = FileResponse(open(path, 'rb'), as_attachment=True, filename=filename, content_type=content_type)
+    response._resource_closers.append(workdir.cleanup)
+    return response

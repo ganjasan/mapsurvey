@@ -73,7 +73,7 @@ that refuse cookies, not this one.{% endcomment %}
       <code id="cx-token-value">{{ once.value }}</code>
       <small>{% trans "Copy it now: this is the only time it is shown. Lost it? Revoke this one and create another." %}</small>
       <div style="margin-top:.5rem;"><button type="button" class="btn btn-sm btn-outline-secondary" onclick="navigator.clipboard && navigator.clipboard.writeText(document.getElementById('cx-token-value').textContent)">{% trans "Copy" %}</button></div>
-      <div style="margin-top:.75rem;font-size:.82rem;color:#374151;"><code style="display:inline;background:#f1f5f9;color:#0f172a;padding:2px 6px;border-radius:6px;user-select:all;">curl -H "Authorization: Bearer …" {{ request.scheme }}://{{ request.get_host }}{% url 'api_me' %}</code></div>
+      <div style="margin-top:.75rem;font-size:.82rem;color:#374151;"><code style="display:inline;background:#f1f5f9;color:#0f172a;padding:2px 6px;border-radius:6px;user-select:all;">curl -H "Authorization: Bearer …" {{ request.scheme }}://{{ request.get_host }}{% url 'api_me' %}</code>{% if HELP_URL %} <a href="{{ HELP_URL.rest_api }}" target="_blank" rel="noopener" class="ms-learn-more">{% trans "Learn more" %} <i class="fas fa-external-link-alt" style="font-size:.7em;"></i></a>{% endif %}</div>
     </div>
     {% endif %}
 

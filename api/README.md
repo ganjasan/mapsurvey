@@ -19,9 +19,43 @@ Installed: `django-oauth-toolkit` 3.4.1 (spiked 2026-10-21).
 | `limits.py` | `check_request`, `hit(principal, action)`, per-IP failed-attempt budget. |
 | `errors.py` | `ApiError` and the envelope. |
 | `decorators.py` | `@api_endpoint(audience, scopes=())`. |
-| `views.py` | `/api/v1/me` and the connections page. |
+| `views.py` | the connections page, `me_payload` (the body of `/api/v1/me`), the RFC 9728 document. |
 
-## Writing a resource endpoint
+## REST API v1 (`api/v1/`, change rest-api-v1, #380)
+
+django-ninja, mounted at `/api/v1/`; `/api/v1/openapi.json` is public (it is the contract) and the
+help centre's reference page is generated from it (`python scripts/build_api_reference.py`;
+`ApiReferenceFreshnessTest` fails when it is stale). No interactive docs page is mounted.
+
+| Module | Holds |
+|---|---|
+| `__init__.py` | the `NinjaAPI` (default auth `Bearer()`), routers, exception handlers |
+| `auth.py` | `Bearer(*scopes)`: `authenticate(request, 'api')`, the route's scopes, `limits.check_request` — run BEFORE the body is parsed |
+| `deps.py` | `survey(request, uuid, role)` = `rights.survey_for` + `require_pro_api` + `403 forbidden_role` for a visible survey under the role; `section`/`question`/`layer` always through the survey; `actor(request)` for the services |
+| `errors.py` | handlers: `ApiError`, `survey.services` errors (one mapping table), pydantic validation → `422 validation` with `fields` (unknown field → named), `500 server_error` + PostHog; the 401 names the RFC 9728 document |
+| `schemas.py` | pydantic In/Out; every In is `extra='forbid'` |
+| `forms_bridge.py` | JSON body → the editor forms' data dialect (`choices_json`, `vs_*`, JSON strings for hidden inputs) — renames only, decides nothing |
+| `out.py` | rows → response bodies |
+| `pagination.py` | signed cursor bound to its list (`bad_cursor`), limit clamped to 1..200 |
+| `docs.py` | per-operation error responses + `x-error-codes` |
+| `me.py`, `surveys.py`, `sections.py`, `questions.py`, `data.py` | the routes |
+
+Rules a new route follows: declare `auth=Bearer(<scope>)`; get the survey with `deps.survey(...,
+role=…)`; write ONLY through `survey/services/` with `strict=True` (rules checked against the
+structure, locked fields refused instead of ignored); let service errors propagate (the handler
+maps them). Roles mirror the editor: reads `viewer`; section/question/thanks/draft creation
+`editor`; survey settings, publish, close, draft publish/discard, delete `owner`. Ninja matches a
+`{param}` segment as a string, so a literal path (`/surveys/import`, `/sections/order`) must be
+registered BEFORE the parameterised one.
+
+`api.middleware.ApiResponseHeadersMiddleware` puts `Cache-Control: no-store` and
+`Access-Control-Allow-Origin: *` (never `Allow-Credentials`) on every `/api/` response and answers
+CORS preflights before authentication. `/.well-known/oauth-protected-resource/api/` is the API's
+RFC 9728 document.
+
+Tests: `api/tests/test_v1_*.py` — rights, schemas, live surveys, lists, data, structure, HTTP.
+
+## Writing a resource endpoint (plain Django view)
 
 ```python
 from api.decorators import api_endpoint

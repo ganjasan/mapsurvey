@@ -52,6 +52,8 @@ Delivered in two PRs under this one change.
 
 ### Modified Capabilities
 - `creator-distribution-events`: `data_exported` also fires for API exports, with `surface="api"`.
+- `api-authentication`: the v1 `401` challenge names the RFC 9728 metadata; a wrong method without a
+  valid bearer is still `401` first (`405 method_not_allowed` with one).
 
 ## Impact
 

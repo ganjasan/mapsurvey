@@ -40,6 +40,9 @@ curl -H "Authorization: Bearer msk_…" https://mapsurvey.org/api/v1/me
 the API is available there, and the token's own permissions. Call it first from any new
 integration: it tells you about `pro_required` before a real call fails.
 
+From there, [Use the REST API](/how-to/use-the-rest-api/) walks through building and publishing a
+survey, and the [REST API reference](/reference/api/) lists every endpoint.
+
 ## Permissions
 
 | Permission | Allows |

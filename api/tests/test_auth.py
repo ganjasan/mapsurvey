@@ -35,7 +35,8 @@ class BearerOnlyTest(TestCase):
         response = self.client.get(ME)
         self.assertEqual(response.status_code, 401)
         self.assertEqual(response.json()['error'], 'invalid_token')
-        self.assertEqual(response['WWW-Authenticate'], 'Bearer realm="mapsurvey"')
+        # The REST API adds its RFC 9728 metadata URL to the challenge (#380).
+        self.assertTrue(response['WWW-Authenticate'].startswith('Bearer realm="mapsurvey"'))
         self.assertEqual(response['Cache-Control'], 'no-store')
 
     def test_query_string_token_is_401(self):
