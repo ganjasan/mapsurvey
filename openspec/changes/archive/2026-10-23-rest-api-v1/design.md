@@ -238,8 +238,7 @@ it emits `api_token_first_use` (`token_id`, `kind`, `surface`) exactly then.
 ## Migration Plan
 
 PR 1 (services) merges and deploys alone; rollback = revert, no data change. PR 2 adds a
-dependency and routes only; rollback = revert. No migrations in either. After PR 2 deploys: add
-`/api/*` to the Cloudflare skip rule, run a curl smoke against production with a personal token
+dependency and routes only; rollback = revert. No migrations in either. After PR 2 deploys: run a curl smoke against production with a personal token
 on a Pro workspace (`/me`, list, create in a test workspace, delete), publish the help pages.
 
 ## Open Questions

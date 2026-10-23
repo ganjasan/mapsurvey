@@ -324,7 +324,8 @@ attacker-chosen name, publish/delete as switches off by default, issued scope âŠ
 hidden field), and is remembered while an unrevoked refresh token covers the request. `/oauth/*`
 responses get DENY / `frame-ancestors 'none'` / no-store from `api.middleware`. Connected apps and
 *Disconnect* live on `/editor/account/connections/` (`api/oauth/grants.py`). Ops after a deploy:
-the Cloudflare rule for `/.well-known/*` and `/oauth/*` and `scripts/oauth_reachability_check.py`.
+`scripts/oauth_reachability_check.py` and a bot-shaped curl of `/api/v1/me` â€” the Cloudflare in
+front of production is Render's edge, not a zone we manage, so there is no rule of ours to set.
 
 **Service layer (`survey/services/`, change `rest-api-v1`, #380)**: the ONE write path for surveys,
 sections, questions (choices, validation settings, visibility rules, translations, order) and the

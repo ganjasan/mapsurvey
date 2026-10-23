@@ -31,10 +31,11 @@ client and SHALL degrade to silence when the key is unset or the client is block
 ### Requirement: Creator return-to-data actions are captured server-side
 The system SHALL emit `responses_viewed` when a creator loads a survey's responses page and
 `data_exported` (with `format`) when a creator downloads survey data or exports a survey
-definition. Both SHALL go through `product_events.emit`, be attributed to the acting creator,
-carry `survey_id`, and never block or alter the response. For a data download `format` SHALL be
-the format the creator chose — `zip`, `xlsx`, `csv`, `gpkg`, `shp` or `kml` — and `zip` when the
-request names none.
+definition, in the browser or through the REST API. Both SHALL go through `product_events.emit`,
+be attributed to the acting creator, carry `survey_id`, and never block or alter the response. For
+a data download `format` SHALL be the format the creator chose — `zip`, `xlsx`, `csv`, `gpkg`,
+`shp` or `kml` — and `zip` when the request names none. An export through the REST API SHALL carry
+`surface="api"`; the browser paths carry no `surface` property, as before.
 
 #### Scenario: Responses page opened
 - **WHEN** a creator opens the responses view of a survey
@@ -48,6 +49,11 @@ request names none.
 #### Scenario: Excel downloaded
 - **WHEN** a creator downloads `?format=xlsx`
 - **THEN** one `data_exported` event with `survey_id` and `format='xlsx'` is emitted
+
+#### Scenario: Exported through the API
+- **WHEN** a token with `responses:read` requests `/api/v1/surveys/{uuid}/export?format=gpkg`
+- **THEN** one `data_exported` event with `survey_id`, `format='gpkg'` and `surface='api'` is
+  emitted, attributed to the token's user
 
 #### Scenario: Rejected format emits nothing
 - **WHEN** a request names an unknown `format` and is answered 400

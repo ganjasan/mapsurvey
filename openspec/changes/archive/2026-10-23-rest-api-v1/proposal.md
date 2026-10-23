@@ -65,6 +65,5 @@ Delivered in two PRs under this one change.
   `api/tests/test_v1_*` covering the issue's security checklist; `LayerMemoryDietTest` extended to
   the API list path.
 - **Docs:** `api/README.md`, `help/` reference + guide, `survey/changelog/` entry, `CLAUDE.md`.
-- **Ops:** no new env var, no migration. The Cloudflare skip rule from #313 covers
-  `/.well-known/*` and `/oauth/*`; `/api/*` must be added to it so scripted clients and agents are
-  not challenged.
+- **Ops:** no new env var, no migration. The Cloudflare in front of production is Render's edge,
+  not a zone we manage: nothing to configure, only a bot-shaped curl smoke after deploy.

@@ -133,12 +133,14 @@ Audit `oauth_consent` / `oauth_disconnect`; events `oauth_app_connected` / `oaut
 **Connected apps**: `api/oauth/grants.py` — one row per application on the connections page,
 *Disconnect* revokes the refresh tokens (the toolkit revokes their access tokens) and flags the rest.
 
-**Operations**: Cloudflare must skip Bot Fight Mode and challenges for `/.well-known/*` and
-`/oauth/*` — Anthropic's egress is `160.79.104.0/21`, OpenAI publishes its ranges at
-`https://openai.com/chatgpt-actions.json` / `https://openai.com/chatgpt-user.json`; a challenge page
-on the token endpoint shows up in the connector as "could not connect" with no detail. After a deploy
-or a Cloudflare change run `python scripts/oauth_reachability_check.py https://mapsurvey.org`
-(discovery, register, token: JSON within 10 s or it fails). Manual check after the first deploy:
+**Operations**: the Cloudflare in front of `mapsurvey.org` is Render's own edge, not a zone we
+manage — there is no WAF or Bot Fight Mode rule of ours to configure (a 2026-10-23 misreading). What
+can still go wrong is a challenge page on the token endpoint, which shows up in a connector as "could
+not connect" with no detail, so after a deploy run `python scripts/oauth_reachability_check.py
+https://mapsurvey.org` (discovery, register, token: JSON within 10 s or it fails) and a bot-shaped
+`curl -A python-requests/2.32 https://mapsurvey.org/api/v1/me` expecting the `401` envelope with an
+empty `cf-mitigated` header. Anthropic's egress is `160.79.104.0/21`, OpenAI publishes its ranges at
+`https://openai.com/chatgpt-actions.json` / `https://openai.com/chatgpt-user.json`. Manual check after the first deploy:
 claude.ai custom connector, ChatGPT connector (Developer mode), `claude mcp add --transport http`;
 write ChatGPT's write-tool behaviour down in #306.
 
