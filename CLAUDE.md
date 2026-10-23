@@ -312,6 +312,25 @@ responses get DENY / `frame-ancestors 'none'` / no-store from `api.middleware`. 
 *Disconnect* live on `/editor/account/connections/` (`api/oauth/grants.py`). Ops after a deploy:
 the Cloudflare rule for `/.well-known/*` and `/oauth/*` and `scripts/oauth_reachability_check.py`.
 
+**Service layer (`survey/services/`, change `rest-api-v1`, #380)**: the ONE write path for surveys,
+sections, questions (choices, validation settings, visibility rules, translations, order) and the
+lifecycle (transition, unpublished changes create/publish/discard, restore version). The editor views
+and the REST API both call it; neither writes those models directly. A service takes an
+`Actor(user, ip, surface)` and plain values, never a `request` (`audit.record(actor, …)` is the
+request-free audit writer; `audit(request, …)` delegates to it). Input is validated by binding the
+SAME editor form (`SurveyHeaderForm`, `SurveySectionForm`, `QuestionForm`) to a dict — that is what
+keeps `coerce_creator_html`, `clean_redirect_url` and every `clean()` rule identical across surfaces
+— and `partial=True` gives PATCH semantics on top of forms written for full posts. Everything is
+validated before anything is written, inside one transaction (a layer created from
+`layer=answers:<code>` goes with a refused save). Refusals are `services.errors` types
+(`ValidationFailed` with `fields` and, for questions, a `stage`; `StructureLocked` with `reasons` and
+the draft; `ContentLocked`, `AnswersAtRisk`, `TranslationGaps`, …) that each surface maps to its own
+response — the editor to exactly what it always returned. Questions speak the editor's dialect
+(`QuestionForm` fields + `choices_json`, `vs_*`, `sm_*`). Strict visibility checking
+(`visibility.validate_rule`) is opt-in (`strict=True`, the API); the editor keeps fail-open.
+Groups, duplicate, paste and move still live in their views. A test that patches a function the
+editor used to call directly patches it where the service imports it (`survey.services.locks.screen_survey`).
+
 **Billing — Pro on PayPro Global (`billing/`, change `paywall-payproglobal`, #268)**: PayPro is the
 Merchant of Record; we own the checkout link out (`billing/checkout.py`, the ONLY place a PayPro URL
 is built, with `x-org_id/x-user_id/x-plan/x-nonce` and `ipn-domain`), the webhook in

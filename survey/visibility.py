@@ -532,3 +532,45 @@ def _describe_verdict(entry, matchable, broken):
 		names = ', '.join(controller.get_choice_name(c) for c in matchable)
 		label = f'if {title} = {names}'
 	return {'label': label, 'broken': False, 'reason': None, 'controller': controller}
+
+
+def validate_rule(rule, host_kind, *, survey=None, section=None, order=None, parent=None):
+	"""Strict write-time check of a rule (change rest-api-v1). Returns the reason
+	it is refused, or None.
+
+	The runtime and the editor fail OPEN on a broken rule and badge it, so a
+	creator never loses an in-progress rule; a programmatic client instead gets
+	the reason at once and learns the contract from it. Same verdict as
+	``_rule_verdict`` -- controller exists, is a choice type, comes earlier (an
+	earlier sibling of the same pop-up for ``host_kind='subquestion'``) -- plus
+	one thing the runtime tolerates: every referenced option code must exist.
+
+	``order`` is the host's ``order_number``; None for an item not created yet,
+	which always lands last.
+	"""
+	if rule is None:
+		return None
+	if not isinstance(rule, dict) or not isinstance(rule.get("question_code"), str):
+		return "malformed rule"
+	if host_kind == "subquestion":
+		index = _sibling_index(parent)
+		s_idx, kind = 0, "question"
+	else:
+		sections = _ordered_sections(survey)
+		index = {}
+		for i, s in enumerate(sections):
+			for question in _iter_questions(s):
+				index[question.code] = {"question": question, "section_index": i, "order": question.order_number}
+		s_idx = next((i for i, s in enumerate(sections) if s.id == section.id), len(sections))
+		kind = "section" if host_kind == "section" else "question"
+	host_order = order if order is not None else float("inf")
+	entry, _matchable, broken = _rule_verdict(rule, kind, s_idx, host_order, index)
+	if broken:
+		return broken
+	if rule_mode(rule) == "answered":
+		return None
+	defined = {c.get("code") for c in (entry["question"].choices or []) if isinstance(c, dict)}
+	unknown = [c for c in rule.get("choice_codes") if c not in defined]
+	if unknown:
+		return "unknown option code(s): " + ", ".join(str(c) for c in unknown)
+	return None

@@ -37,6 +37,9 @@ from .groups import next_order
 from .html_sanitize import coerce_creator_html
 from .models import Answer, Question, QuestionGroup, QuestionGroupTranslation, SurveySection
 from .permissions import survey_permission_required
+from .services import questions as svc_questions
+from .services.context import Actor
+from .services.errors import ValidationFailed
 
 
 def _group_or_404(survey, group_id):
@@ -263,46 +266,12 @@ def _parse_root(body, survey):
 
 
 def _apply_nested_order(section, parent_id, items):
-    """Renumber one root (a section's top level or one pop-up) 0..N from its
-    nested DOM state and set each question's group from where it sits. Raises
-    ValueError when an id is not of this root, or is listed twice."""
-    q_qs = Question.objects.filter(survey_section=section)
-    g_qs = QuestionGroup.objects.filter(survey_section=section)
-    if parent_id is None:
-        q_qs, g_qs = q_qs.filter(parent_question_id__isnull=True), g_qs.filter(parent_question__isnull=True)
-    else:
-        q_qs, g_qs = q_qs.filter(parent_question_id=parent_id), g_qs.filter(parent_question_id=parent_id)
-    questions = {q.id: q for q in q_qs}
-    groups = {g.id: g for g in g_qs}
-
-    sequence = []          # [(kind, obj, group_or_None)]
+    """services.questions.apply_nested_order, raising ValueError for a foreign
+    or repeated id as the move endpoint expects."""
     try:
-        for item in items:
-            if 'g' in item:
-                group = groups[int(item['g'])]
-                sequence.append(('g', group, None))
-                for qid in item.get('q') or []:
-                    sequence.append(('q', questions[int(qid)], group))
-            else:
-                sequence.append(('q', questions[int(item['q'])], None))
-    except (KeyError, TypeError, ValueError):
-        # An id of another section or pop-up, or of nothing.
-        raise ValueError('foreign id')
-    seen = {(kind, obj.id) for kind, obj, _g in sequence}
-    if len(seen) != len(sequence):
-        raise ValueError('listed twice')
-    # Rows the page did not list (another tab added them) keep their relative
-    # order after everything that was listed.
-    rest = sorted(
-        [('q', q, q.group if q.group_id in groups else None) for q in questions.values() if ('q', q.id) not in seen]
-        + [('g', g, None) for g in groups.values() if ('g', g.id) not in seen],
-        key=lambda t: (t[1].order_number, t[1].id))
-    for i, (kind, obj, group) in enumerate(sequence + rest):
-        if kind == 'g':
-            QuestionGroup.objects.filter(pk=obj.pk).update(order_number=i)
-        else:
-            Question.objects.filter(pk=obj.pk).update(
-                order_number=i, group_id=group.pk if group else None)
+        svc_questions.apply_nested_order(section, parent_id, items)
+    except ValidationFailed as err:
+        raise ValueError(err.message)
 
 
 @survey_permission_required('editor')
@@ -319,9 +288,8 @@ def editor_items_reorder(request, survey_uuid):
         return blocked
     try:
         section, parent_id, items = _parse_root(json.loads(request.body), survey)
-        with transaction.atomic():
-            _apply_nested_order(section, parent_id, items)
-    except (ValueError, KeyError, TypeError, SurveySection.DoesNotExist):
+        svc_questions.reorder(Actor.from_request(request), section, parent_id, items)
+    except (ValueError, KeyError, TypeError, SurveySection.DoesNotExist, ValidationFailed):
         return HttpResponse(status=400)
     response = HttpResponse(status=204)
     response['HX-Trigger'] = 'questionUpdated'

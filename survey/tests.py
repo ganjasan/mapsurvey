@@ -32670,7 +32670,7 @@ class PublicResultsScaffoldTest(TestCase):
         WHEN the owner publishes the survey
         THEN the transition still succeeds
         """
-        with patch('survey.editor_views.scaffold_page', side_effect=RuntimeError('boom')):
+        with patch('survey.services.publishing.scaffold_page', side_effect=RuntimeError('boom')):
             self._publish()
         self.survey.refresh_from_db()
         self.assertEqual(self.survey.status, 'published')
@@ -50572,7 +50572,7 @@ class LiveSurveyEditingTest(TestCase):
         THEN the content screen runs with the live_edit trigger, as it does for
              the thanks page and redirect URL — the other live text paths
         """
-        with mock.patch('survey.editor_views.screen_survey') as screen:
+        with mock.patch('survey.services.locks.screen_survey') as screen:
             self._post_question(name='Verify your PDF document here')
         screen.assert_called_once_with(self.survey, trigger='live_edit')
 

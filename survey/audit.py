@@ -20,16 +20,31 @@ def audit(request, action, survey=None, **metadata):
         survey: optional SurveyHeader whose uuid/name identify the target
         **metadata: extra context stored in the metadata JSONField
     """
+    try:
+        actor = request.user if request.user.is_authenticated else None
+        ip = client_ip(request) or None
+    except Exception:
+        logger.exception("audit: failed to read the request for %s", action)
+        return
+    record(actor, action, survey, ip=ip, **metadata)
+
+
+def record(actor, action, survey=None, ip=None, **metadata):
+    """The writer behind `audit()`, for code that has no request -- the
+    service layer (`survey/services/`) passes `Actor.user` and `Actor.ip`.
+    `actor` may also be an `Actor`; same swallow-everything contract."""
     from .models import AuditLog  # local import avoids circular at module load
 
     try:
-        actor = request.user if request.user.is_authenticated else None
+        if hasattr(actor, 'surface') and hasattr(actor, 'user'):
+            ip = ip if ip is not None else actor.ip
+            actor = actor.user
         AuditLog.objects.create(
             actor=actor,
             action=action,
             survey_uuid=survey.uuid if survey else None,
             survey_name=survey.name if survey else '',
-            ip=client_ip(request) or None,
+            ip=ip,
             metadata=metadata,
         )
     except Exception:
