@@ -31,3 +31,6 @@ scripts/.outreach-sent.log
 # Python bytecode
 __pycache__/
 *.pyc
+
+# Marketing context lives in the private ops repo (symlink)
+.agents/
