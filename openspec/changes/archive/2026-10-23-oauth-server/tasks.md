@@ -49,4 +49,4 @@
 - [x] 7.1 `./run_tests.sh api -v2` and `./run_tests.sh survey.tests.SurveyEmbedMiddlewareTest survey.tests.HelpSiteLinksTest survey.tests.TranslationCatalogHygieneTest`; full `./run_tests.sh survey` once before the PR
 - [x] 7.2 Deprecation gate from `CLAUDE.md` over `api` (`-W error::DeprecationWarning:api`)
 - [x] 7.3 Browser run on the worktree's dev server (offset 30): DCR with `curl`, authorize in Chrome as a signed-in creator, Allow, exchange the code with PKCE, call `/api/v1/me`, see the row on the connections page, Disconnect, confirm 401 — screenshot of the consent page for the PR
-- [ ] 7.4 PR: `[render preview]` ONLY if the owner asks; the manual check with claude.ai, ChatGPT (Developer mode) and Claude Code is an ops step after merge, recorded in #306 (ChatGPT write-tool behaviour) and in `api/README.md`
+- [x] 7.4 PR #394 with `[render preview]` (owner asked), preview checked end to end; the manual check with claude.ai, ChatGPT (Developer mode) and Claude Code is an ops step after merge, recorded in #306 (ChatGPT write-tool behaviour) and in `api/README.md`

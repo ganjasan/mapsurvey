@@ -16,7 +16,9 @@ The list SHALL always include `'self'`. When the survey's `embed_allowed_hosts` 
 list SHALL be `*`; otherwise it SHALL contain `https://<host>` for each entry, with
 `*.example.org` rendered as `https://*.example.org`. Responses to any other route, and
 responses produced before a survey is resolved (an unknown UUID, a draft's 404), SHALL keep
-`X-Frame-Options: SAMEORIGIN`.
+`X-Frame-Options: SAMEORIGIN`. Responses under `/oauth/` SHALL carry `X-Frame-Options: DENY`
+and `frame-ancestors 'none'` (set by `api.middleware.OAuthResponseHeadersMiddleware`), and the
+embed middleware SHALL never find such a request marked embeddable.
 
 #### Scenario: Published survey with no allow-list is framable anywhere
 - **WHEN** an anonymous visitor requests `/surveys/<uuid>/` and the first section of a published survey whose `embed_allowed_hosts` is `[]`
@@ -30,6 +32,10 @@ responses produced before a survey is resolved (an unknown UUID, a draft's 404),
 #### Scenario: Editor and landing stay unframeable
 - **WHEN** `/` and `/editor/surveys/<uuid>/` are requested
 - **THEN** each response carries `X-Frame-Options: SAMEORIGIN` and no `frame-ancestors` directive
+
+#### Scenario: OAuth consent page is never framed
+- **WHEN** a signed-in user requests a valid `/oauth/authorize/` URL with the full middleware stack
+- **THEN** the response carries `X-Frame-Options: DENY` and `Content-Security-Policy: frame-ancestors 'none'`, and `request.survey_frame_ancestors` was never set
 
 #### Scenario: A draft stays unframeable
 - **WHEN** an anonymous visitor requests `/surveys/<uuid>/` for a draft survey
