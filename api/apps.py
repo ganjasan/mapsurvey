@@ -12,3 +12,18 @@ class ApiConfig(AppConfig):
     """
     name = 'api'
     default_auto_field = 'django.db.models.BigAutoField'
+
+    def ready(self):
+        from django.db.models.signals import pre_save
+        from oauth2_provider.models import Application
+
+        from .oauth import redirects
+
+        def _check_redirect_uris(sender, instance, **kwargs):
+            # The backstop behind DCR, CIMD and the admin: `http` is for
+            # loopback hosts only, whichever way a client row is written
+            # (change oauth-server, D3).
+            redirects.check_registrable((instance.redirect_uris or '').split())
+
+        pre_save.connect(_check_redirect_uris, sender=Application, weak=False,
+                         dispatch_uid='api.oauth.redirect_uris')

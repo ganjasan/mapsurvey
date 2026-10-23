@@ -71,6 +71,10 @@ AGENT_ACCESS_REQUESTED = 'agent_access_requested'
 API_TOKEN_CREATED = 'api_token_created'
 API_TOKEN_REVOKED = 'api_token_revoked'
 API_TOKEN_FIRST_USE = 'api_token_first_use'   # once per token, when last_used_at leaves null
+# OAuth grants (change oauth-server, #313): application id, scopes, audiences,
+# whether the consent page was skipped by memory -- never the client name.
+OAUTH_APP_CONNECTED = 'oauth_app_connected'
+OAUTH_APP_DISCONNECTED = 'oauth_app_disconnected'
 SURFACE_START_BLANK = 'start_blank'     # one-click form on /editor/surveys/start/
 SURFACE_CREATE_PAGE = 'create_page'     # either action of /editor/surveys/new/
 MAP_SOURCE_CREATOR = 'creator'          # the creator framed the create-page map

@@ -82,6 +82,9 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # /oauth/*: no-store, DENY, frame-ancestors 'none' -- whatever any view or
+    # the embed middleware below does (change oauth-server, D7).
+    'api.middleware.OAuthResponseHeadersMiddleware',
     # Outermost of ours: both rewrite response headers other middleware set
     # (Set-Cookie from sessions/CSRF, X-Frame-Options from clickjacking).
     'survey.middleware.PartitionedCookieMiddleware',
@@ -750,6 +753,15 @@ RATELIMIT_FAIL_OPEN = True
 # runs that check so it fails the suite rather than a `check --deploy` nobody runs.
 from api import scopes as _api_scopes  # noqa: E402 -- no models, safe at settings time
 
+# The OAuth issuer is the deployment's OWN origin. SITE_URL is production on
+# previews too (mail links must point there), so a preview deriving its issuer
+# from SITE_URL would send ChatGPT to production's token endpoint with a code
+# production never issued (change oauth-server, D2).
+_is_preview = os.environ.get('IS_PULL_REQUEST', '').lower() == 'true'
+OAUTH_ISSUER = (
+    f'https://{RENDER_EXTERNAL_HOSTNAME}' if _is_preview and RENDER_EXTERNAL_HOSTNAME else SITE_URL
+).rstrip('/')
+
 # The toolkit's models are swappable; a foreign key to one (api.TokenProfile)
 # makes the migration autodetector read these names, so they are spelled out.
 OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
@@ -780,10 +792,61 @@ OAUTH2_PROVIDER = {
     'COMPLIANT_BCP_RFC9700_REFRESH_TOKEN': True,
     'COMPLIANT_BCP_RFC9700_REDIRECT_URI_SCHEME': True,
     'COMPLIANT_BCP_RFC9700_REDIRECT_URI_MATCHING': True,
-    # https only; #313 adds the loopback exception for Claude Code with a
-    # validator of its own, not by widening this list.
-    'ALLOWED_REDIRECT_URI_SCHEMES': ['https'],
+    # `http` is here for ONE reason: RFC 8252 loopback redirects
+    # (http://127.0.0.1:<any port>/…, what Claude Code registers through DCR).
+    # The toolkit checks schemes inside Application.clean() and the model
+    # cannot be swapped once its tables exist, so the host rule lives in
+    # api/oauth/redirects.py and runs at DCR, CIMD, admin save (pre_save),
+    # authorize and token time: a non-loopback `http` URI is refused on every
+    # one of them (change oauth-server, D3). oauth2_provider.E003 -- the check
+    # that `http` is in this list -- is silenced below for the same reason, and
+    # api.tests.test_settings proves the rule instead.
+    'ALLOWED_REDIRECT_URI_SCHEMES': ['https', 'http'],
     'ALLOW_URI_WILDCARDS': False,
+
+    # --- The authorization server (change oauth-server, #313) ---
+    'OAUTH2_VALIDATOR_CLASS': 'api.oauth.validator.MapsurveyOAuth2Validator',
+    # oauthlib's Server without password / client_credentials / device grants
+    # and without the implicit response type -- the document and the endpoint
+    # must agree (api/oauth/server.py).
+    'OAUTH2_SERVER_CLASS': 'api.oauth.server.Server',
+    # Issuer: RFC 8414 `issuer`, every endpoint URL in the document and the
+    # RFC 9207 `iss` parameter (the toolkit's setting name predates RFC 8414).
+    'OIDC_ISS_ENDPOINT': OAUTH_ISSUER,
+    # `msa_` / `msr_`: authenticate()'s cheap pre-check and the log scrubber
+    # recognise our tokens by prefix.
+    'ACCESS_TOKEN_GENERATOR': 'api.oauth.tokens.generate_access_token',
+    'REFRESH_TOKEN_GENERATOR': 'api.oauth.tokens.generate_refresh_token',
+    'AUTHORIZATION_CODE_EXPIRE_SECONDS': 600,
+    'REQUEST_APPROVAL_PROMPT': 'force',  # memory is ours: api.oauth.views (D6)
+    # What the metadata document advertises = what the server accepts.
+    'OAUTH2_RESPONSE_TYPES_SUPPORTED': ['code'],
+    'OAUTH2_GRANT_TYPES_SUPPORTED': ['authorization_code', 'refresh_token'],
+    'OAUTH2_TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED': ['none', 'client_secret_post', 'client_secret_basic'],
+    # RFC 7591 registration is open -- neither ChatGPT nor claude.ai can
+    # authenticate to register; the per-IP limiter and the body normalisation
+    # sit in api.oauth.views.RegistrationView, in front of the toolkit's view.
+    'DCR_ENABLED': True,
+    'DCR_REGISTRATION_PERMISSION_CLASSES': ('oauth2_provider.dcr.AllowAllDCRPermission',),
+    # Client ID metadata documents: the toolkit's SSRF-hardened fetcher, with
+    # our name/redirect rules applied to what it fetched.
+    'CIMD_ENABLED': True,
+    'CIMD_METADATA_FETCHER': 'api.oauth.cimd.MetadataFetcher',
+}
+
+# `http` redirect URIs are accepted for loopback hosts only -- see the comment
+# on ALLOWED_REDIRECT_URI_SCHEMES above. The toolkit's check cannot tell the
+# two apart; api.tests.test_settings and test_oauth_clients can.
+SILENCED_SYSTEM_CHECKS = ['oauth2_provider.E003']
+
+# RFC 8707 resource indicators -> token audiences (api.oauth.audiences). A
+# client naming no resource gets both, like a personal token with both boxes
+# ticked; an indicator matching neither prefix is `invalid_target`. #306
+# changes MCP_RESOURCE_URL when the MCP host is decided.
+MCP_RESOURCE_URL = os.environ.get('MCP_RESOURCE_URL', OAUTH_ISSUER + '/mcp/')
+API_RESOURCE_URLS = {
+    'api': OAUTH_ISSUER + '/api/',
+    'mcp': MCP_RESOURCE_URL,
 }
 
 # Paths whose error capture keeps only the path and the method: a bearer

@@ -30,8 +30,9 @@ ENTRIES_DIR = os.path.join(os.path.dirname(__file__), 'changelog')
 ID_PATTERN = re.compile(r'^\d{4}-\d{2}-\d{2}-[a-z0-9-]+$')
 KINDS = ('new', 'fixed')
 # URL prefixes of respondent surfaces: no card, icon or badge there, even for a
-# signed-in creator looking at their own survey.
-RESPONDENT_PREFIXES = ('/surveys/', '/r/')
+# signed-in creator looking at their own survey. `/oauth/` is the consent page
+# (change oauth-server): a creator mid-sign-in for ChatGPT is not reading news.
+RESPONDENT_PREFIXES = ('/surveys/', '/r/', '/oauth/')
 FENCE = '---'
 
 

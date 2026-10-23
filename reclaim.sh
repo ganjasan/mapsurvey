@@ -15,6 +15,10 @@ python manage.py reclaim_orphan_uploads --delete
 # They stop working the moment they end; the rows stay a month for the audit trail.
 python manage.py purge_api_tokens
 
+# OAuth client registrations (DCR/CIMD) older than 30 days that nobody ever
+# authorised (change oauth-server). First-party clients are never touched.
+python manage.py purge_oauth_clients
+
 # Pro subscriptions whose paid period ended since the last run: one
 # plan_lapsed event and one email per owner (billing app).
 python manage.py notify_lapsed

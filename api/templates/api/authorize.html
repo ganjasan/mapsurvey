@@ -1,0 +1,92 @@
+{% extends "editor/editor_base.html" %}
+{% load i18n %}
+{% comment %}OAuth consent page (openspec: oauth-server, D6; #313).
+
+The redirect host comes first and biggest: the client name is attacker-chosen,
+the host is where the code will be sent. Publish/delete are switches, off by
+default. No logo is ever rendered. The error branch is what the toolkit renders
+for an unknown client or an unregistered redirect -- a page, never a redirect.
+Headers (DENY, no-store) come from OAuthResponseHeadersMiddleware.{% endcomment %}
+
+{% block page_title %}{% trans "Allow access?" %}{% endblock %}
+
+{% block navbar_content %}
+<span class="survey-name">{% trans "Connect an app" %}</span>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  .oa-wrap { padding: 2rem 1rem 3rem; }
+  .oa-card { max-width: 560px; margin: 0 auto 1.25rem; background: #fff; border: 1px solid var(--border-color); border-radius: 16px; padding: 1.75rem 2rem; }
+  .oa-card h1 { font-size: 1.35rem; font-weight: 700; margin: 0 0 .25rem; }
+  .oa-host { font-size: 1.15rem; font-weight: 700; color: #0f172a; word-break: break-all; }
+  .oa-name { color: #5f6368; font-size: .92rem; margin: .15rem 0 1.25rem; word-break: break-word; }
+  .oa-card h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: #6b7280; font-weight: 600; margin: 1.1rem 0 .4rem; }
+  .oa-list { list-style: none; padding: 0; margin: 0; }
+  .oa-list li { padding: .3rem 0; font-size: .92rem; display: flex; gap: .6rem; align-items: flex-start; }
+  .oa-list li i { color: #16a34a; margin-top: .2rem; }
+  .oa-switch { display: flex; gap: .6rem; align-items: flex-start; padding: .4rem .6rem; border: 1px solid #fecaca; background: #fef2f2; border-radius: 10px; margin: .3rem 0; font-size: .92rem; }
+  .oa-switch input { margin-top: .3rem; }
+  .oa-switch small { display: block; color: #991b1b; font-size: .78rem; }
+  .oa-ws { font-size: .9rem; color: #374151; }
+  .oa-ws span { display: inline-block; font-size: .72rem; background: #f1f5f9; color: #334155; border-radius: 999px; padding: 1px 8px; margin-left: .35rem; }
+  .oa-note { background: #fef3c7; color: #92400e; border-radius: 10px; padding: .6rem .9rem; font-size: .85rem; margin: .9rem 0 0; }
+  .oa-actions { display: flex; gap: .75rem; justify-content: flex-end; margin-top: 1.5rem; }
+  .oa-error h1 { color: #b91c1c; }
+  .oa-fine { font-size: .78rem; color: #9aa0a6; margin-top: 1rem; }
+  @media (max-width: 767.98px) { .oa-card { padding: 1.25rem 1rem; } .oa-actions { flex-direction: column-reverse; } .oa-actions .btn { width: 100%; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="oa-wrap">
+  {% if not error %}
+  <div class="oa-card">
+    <h1>{% trans "Allow access to your Mapsurvey account?" %}</h1>
+    <div class="oa-host">{{ client_host|default:redirect_host }}</div>
+    <p class="oa-name">{% blocktrans with name=client_name %}calls itself “{{ name }}”{% endblocktrans %}{% if client_host and redirect_host and client_host != redirect_host %} · {% blocktrans with host=redirect_host %}sends you back to {{ host }}{% endblocktrans %}{% endif %}</p>
+
+    <form id="authorizationForm" method="post">
+      {% csrf_token %}
+      {% for field in form %}{% if field.is_hidden %}{{ field }}{% endif %}{% endfor %}
+
+      <h2>{% trans "This app will be able to" %}</h2>
+      <ul class="oa-list">
+        {% for code, label in granted %}<li><i class="fas fa-check"></i><span>{{ label }}</span></li>{% endfor %}
+      </ul>
+      {% if switches %}
+      <h2>{% trans "Only if you switch it on" %}</h2>
+      {% for code, label, field in switches %}
+      <label class="oa-switch">
+        {{ field }}
+        <span>{{ label }}<small>{% trans "This cannot be undone. Off unless you want this app to do it." %}</small></span>
+      </label>
+      {% endfor %}
+      {% endif %}
+
+      <h2>{% trans "In these workspaces" %}</h2>
+      <div class="oa-ws">
+        {% for w in workspaces %}{{ w.name }}<span>{{ w.plan|capfirst }}</span>{% if not forloop.last %}, {% endif %}{% empty %}{% trans "You are not a member of any workspace yet." %}{% endfor %}
+      </div>
+      {% if not any_pro %}
+      <div class="oa-note">{% blocktrans %}Your workspaces are on the Free plan. The app will connect, but calls on a survey will answer <code>pro_required</code> until its workspace upgrades to Pro.{% endblocktrans %}</div>
+      {% endif %}
+
+      {{ form.non_field_errors }}
+      <div class="oa-actions">
+        <button type="submit" class="btn btn-outline-secondary">{% trans "Cancel" %}</button>
+        <button type="submit" class="btn btn-primary" name="allow" value="1">{% trans "Allow" %}</button>
+      </div>
+      <p class="oa-fine">{% trans "You can disconnect this app any time from API & connections in your account menu." %}</p>
+    </form>
+  </div>
+  {% else %}
+  <div class="oa-card oa-error">
+    <h1>{% trans "This app cannot connect" %}</h1>
+    <p>{% blocktrans with code=error.error %}Error: <code>{{ code }}</code>{% endblocktrans %}</p>
+    {% if error.description %}<p class="oa-name">{{ error.description }}</p>{% endif %}
+    <p class="oa-fine">{% trans "Nothing was granted. If you were sent here by an app, tell its maker the error code." %}</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

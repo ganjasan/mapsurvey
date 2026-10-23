@@ -140,7 +140,27 @@ that refuse cookies, not this one.{% endcomment %}
 
   <div class="cx-card">
     <h2>{% trans "Connected apps" %}</h2>
-    <p class="cx-hint" style="margin:0;">{% trans "Apps you sign in to with your Mapsurvey account — ChatGPT, Claude and others — will be listed here once that is available. Today, give them a personal token." %}</p>
+    <p class="cx-hint">{% trans "Apps you signed in to with your Mapsurvey account — ChatGPT, Claude, Claude Code and others. Each one acts as you, within the permissions you allowed, in every workspace you belong to." %}{% if HELP_URL.connected_apps %} <a href="{{ HELP_URL.connected_apps }}" target="_blank" rel="noopener">{% trans "How to connect an app" %}</a>{% endif %}</p>
+    {% if apps %}
+    <table class="cx-table">
+      <thead><tr>
+        <th>{% trans "App" %}</th><th>{% trans "Permissions" %}</th><th>{% trans "Connected" %}</th><th>{% trans "Last used" %}</th><th></th>
+      </tr></thead>
+      <tbody>
+      {% for a in apps %}
+      <tr>
+        <td><strong>{{ a.host }}</strong><br><small style="color:#5f6368;">{{ a.name }}</small></td>
+        <td>{% for s in a.scopes %}<span class="cx-chip{% if s == 'surveys:publish' or s == 'surveys:delete' %} danger{% endif %}">{{ s }}</span>{% endfor %}<br>{% for au in a.audiences %}<span class="cx-chip">{% if au == 'api' %}{% trans "REST API" %}{% else %}{% trans "MCP server" %}{% endif %}</span>{% endfor %}</td>
+        <td>{{ a.created|date:"Y-m-d" }}</td>
+        <td>{% if a.last_used %}{{ a.last_used|timesince }} {% trans "ago" %}{% else %}<span style="color:#9aa0a6;">{% trans "never" %}</span>{% endif %}</td>
+        <td><form method="post" onsubmit="return confirm('{% trans "Disconnect this app? It will have to ask for access again." %}')">{% csrf_token %}<input type="hidden" name="action" value="disconnect"><input type="hidden" name="application_id" value="{{ a.application.pk }}"><button type="submit" class="cx-revoke">{% trans "Disconnect" %}</button></form></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="cx-empty" style="margin:0;">{% trans "No connected apps yet." %}</p>
+    {% endif %}
   </div>
 
   <div class="cx-card">

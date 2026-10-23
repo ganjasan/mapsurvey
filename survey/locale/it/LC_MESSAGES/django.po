@@ -8249,3 +8249,95 @@ msgstr "Leggere ed esportare le risposte"
 #: billing/features.py
 msgid "REST API, MCP server and personal access tokens"
 msgstr "API REST, server MCP e token di accesso personali"
+
+#: api/templates/api/authorize.html
+msgid "Allow access?"
+msgstr "Consentire l’accesso?"
+
+#: api/templates/api/authorize.html
+msgid "Connect an app"
+msgstr "Collega un’app"
+
+#: api/templates/api/authorize.html
+msgid "Allow access to your Mapsurvey account?"
+msgstr "Consentire l’accesso al tuo account Mapsurvey?"
+
+#: api/templates/api/authorize.html
+msgid "This app will be able to"
+msgstr "Questa app potrà"
+
+#: api/templates/api/authorize.html
+msgid "Only if you switch it on"
+msgstr "Solo se lo attivi"
+
+#: api/templates/api/authorize.html
+msgid "This cannot be undone. Off unless you want this app to do it."
+msgstr "Non si può annullare. Disattivato, a meno che tu non voglia che questa app lo faccia."
+
+#: api/templates/api/authorize.html
+msgid "In these workspaces"
+msgstr "In questi spazi di lavoro"
+
+#: api/templates/api/authorize.html
+msgid "You are not a member of any workspace yet."
+msgstr "Non sei ancora membro di alcuno spazio di lavoro."
+
+#: api/templates/api/authorize.html
+msgid "Allow"
+msgstr "Consenti"
+
+#: api/templates/api/authorize.html
+msgid "You can disconnect this app any time from API & connections in your account menu."
+msgstr "Puoi scollegare questa app in qualsiasi momento da «API e connessioni» nel menu del tuo account."
+
+#: api/templates/api/authorize.html
+msgid "This app cannot connect"
+msgstr "Questa app non può collegarsi"
+
+#: api/templates/api/authorize.html
+msgid "Nothing was granted. If you were sent here by an app, tell its maker the error code."
+msgstr "Non è stato concesso nulla. Se un’app ti ha mandato qui, comunica il codice di errore a chi l’ha creata."
+
+#: api/templates/api/authorize.html
+msgid "calls itself “%(name)s”"
+msgstr "si presenta come «%(name)s»"
+
+#: api/templates/api/authorize.html
+msgid "sends you back to %(host)s"
+msgstr "ti rimanda a %(host)s"
+
+#: api/templates/api/authorize.html
+msgid "Your workspaces are on the Free plan. The app will connect, but calls on a survey will answer <code>pro_required</code> until its workspace upgrades to Pro."
+msgstr "I tuoi spazi di lavoro sono sul piano Free. L’app si collegherà, ma le chiamate su un sondaggio risponderanno <code>pro_required</code> finché il suo spazio di lavoro non passa a Pro."
+
+#: api/templates/api/authorize.html
+msgid "Error: <code>%(code)s</code>"
+msgstr "Errore: <code>%(code)s</code>"
+
+#: api/templates/api/connections.html
+msgid "Apps you signed in to with your Mapsurvey account — ChatGPT, Claude, Claude Code and others. Each one acts as you, within the permissions you allowed, in every workspace you belong to."
+msgstr "App a cui hai effettuato l’accesso con il tuo account Mapsurvey: ChatGPT, Claude, Claude Code e altre. Ognuna agisce a tuo nome, entro i permessi concessi, in ogni spazio di lavoro di cui fai parte."
+
+#: api/templates/api/connections.html
+msgid "How to connect an app"
+msgstr "Come collegare un’app"
+
+#: api/templates/api/connections.html
+msgid "App"
+msgstr "App"
+
+#: api/templates/api/connections.html
+msgid "Connected"
+msgstr "Collegata"
+
+#: api/templates/api/connections.html
+msgid "Disconnect this app? It will have to ask for access again."
+msgstr "Scollegare questa app? Dovrà chiedere di nuovo l’accesso."
+
+#: api/templates/api/connections.html
+msgid "Disconnect"
+msgstr "Scollega"
+
+#: api/templates/api/connections.html
+msgid "No connected apps yet."
+msgstr "Nessuna app collegata per ora."

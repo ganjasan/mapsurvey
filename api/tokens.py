@@ -21,6 +21,10 @@ from . import scopes as scope_registry
 from .models import AUDIENCES, KIND_PERSONAL, TokenProfile
 
 PREFIX = 'msk_'
+# Bearer values authenticate() will look up: personal tokens and the
+# authorization server's access tokens (api.oauth.tokens). Refresh tokens
+# (`msr_`) are deliberately absent -- presented as a bearer they fail here.
+BEARER_PREFIXES = (PREFIX, 'msa_')
 # token_urlsafe(32) is 43 characters; the regex in the spec asks for 40+.
 RANDOM_BYTES = 32
 MIN_LENGTH = len(PREFIX) + 40
@@ -45,7 +49,7 @@ def checksum(value):
 def looks_like_token(value):
     return (
         isinstance(value, str)
-        and value.startswith(PREFIX)
+        and value.startswith(BEARER_PREFIXES)
         and MIN_LENGTH <= len(value) <= MAX_LENGTH
         and all(c.isalnum() or c in '-_' for c in value[len(PREFIX):])
     )

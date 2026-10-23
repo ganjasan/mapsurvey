@@ -44,6 +44,11 @@ class TokenProfile(models.Model):
     last_used_at = models.DateTimeField(null=True, blank=True)
     created_by_ip = models.GenericIPAddressField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    # OAuth tokens only: sha256 of the authorization code the family came
+    # from (change oauth-server, D4). The toolkit deletes a code on use, so
+    # this is how a second redemption still finds -- and revokes -- the tokens
+    # the first one produced. Copied along the family on every refresh.
+    code_checksum = models.CharField(max_length=64, null=True, blank=True, db_index=True)
 
     class Meta:
         indexes = [models.Index(fields=['revoked_at', 'kind'])]
