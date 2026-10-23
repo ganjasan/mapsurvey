@@ -55,6 +55,8 @@ from .redirects import completion_url, continue_url
 from .embedding import framed_request, oembed_url, anonymously_openable, snippet_html, clamp_size, public_base_url, DEFAULT_WIDTH, DEFAULT_HEIGHT, MIN_HEIGHT
 from .audit import audit
 from .trash import trash_survey, restore_survey, purge_survey, purge_expired_surveys
+from .services import surveys as svc_surveys
+from .services.context import Actor
 from . import other_option
 from .versioning import resolve_version_scope
 from . import export as data_export
@@ -1812,8 +1814,7 @@ def delete_survey(request, survey_uuid):
 		return redirect('editor')
 
 	survey = request.survey
-	trash_survey(survey)
-	audit(request, 'survey_trash', survey)
+	svc_surveys.trash(Actor.from_request(request), survey)
 	messages.success(request, f"Survey '{survey.name}' moved to Trash. You can restore it within {SurveyHeader.TRASH_RETENTION_DAYS} days.")
 
 	return redirect('editor')
