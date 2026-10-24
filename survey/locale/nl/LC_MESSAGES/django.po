@@ -8802,3 +8802,12 @@ msgstr "Voor wie al in Claude of ChatGPT werkt."
 msgctxt "agent step"
 msgid "Connect"
 msgstr "Verbinden"
+
+#: api/templates/api/authorize.html
+msgid "Plan"
+msgstr "Abonnement"
+
+#: api/templates/api/authorize.html
+#, python-format
+msgid "Workspaces: %(total)s · on Pro: %(pro)s"
+msgstr "Werkruimtes: %(total)s · met Pro: %(pro)s"

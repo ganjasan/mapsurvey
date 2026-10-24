@@ -8829,3 +8829,12 @@ msgstr "Para quienes ya trabajan en Claude o ChatGPT."
 msgctxt "agent step"
 msgid "Connect"
 msgstr "Conectar"
+
+#: api/templates/api/authorize.html
+msgid "Plan"
+msgstr "Plan"
+
+#: api/templates/api/authorize.html
+#, python-format
+msgid "Workspaces: %(total)s · on Pro: %(pro)s"
+msgstr "Espacios de trabajo: %(total)s · con Pro: %(pro)s"

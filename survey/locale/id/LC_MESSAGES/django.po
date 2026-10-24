@@ -8783,3 +8783,12 @@ msgstr "Untuk Anda yang sudah bekerja di Claude atau ChatGPT."
 msgctxt "agent step"
 msgid "Connect"
 msgstr "Hubungkan"
+
+#: api/templates/api/authorize.html
+msgid "Plan"
+msgstr "Paket"
+
+#: api/templates/api/authorize.html
+#, python-format
+msgid "Workspaces: %(total)s · on Pro: %(pro)s"
+msgstr "Ruang kerja: %(total)s · dengan Pro: %(pro)s"

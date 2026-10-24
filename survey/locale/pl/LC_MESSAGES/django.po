@@ -8866,3 +8866,12 @@ msgstr "Dla osób, które już pracują w Claude lub ChatGPT."
 msgctxt "agent step"
 msgid "Connect"
 msgstr "Połącz"
+
+#: api/templates/api/authorize.html
+msgid "Plan"
+msgstr "Plan"
+
+#: api/templates/api/authorize.html
+#, python-format
+msgid "Workspaces: %(total)s · on Pro: %(pro)s"
+msgstr "Przestrzenie robocze: %(total)s · z Pro: %(pro)s"

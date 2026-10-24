@@ -29,7 +29,13 @@ Headers (DENY, no-store) come from OAuthResponseHeadersMiddleware.{% endcomment 
   .oa-switch input { margin-top: .3rem; }
   .oa-switch small { display: block; color: #991b1b; font-size: .78rem; }
   .oa-ws { font-size: .9rem; color: #374151; }
-  .oa-ws span { display: inline-block; font-size: .72rem; background: #f1f5f9; color: #334155; border-radius: 999px; padding: 1px 8px; margin-left: .35rem; }
+  .oa-plan { display: inline-block; font-size: .72rem; background: #f1f5f9; color: #334155; border-radius: 999px; padding: 1px 8px; margin-left: .35rem; }
+  .oa-plan.pro { background: #e0e7ff; color: #3730a3; }
+  details.oa-ws summary { cursor: pointer; padding: .35rem 0; }
+  details.oa-ws table { width: 100%; border-collapse: collapse; margin-top: .35rem; }
+  details.oa-ws th { text-align: left; font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: #6b7280; font-weight: 600; padding: .3rem .4rem; border-bottom: 1px solid var(--border-color); }
+  details.oa-ws td { padding: .35rem .4rem; border-bottom: 1px solid #f1f5f9; word-break: break-word; }
+  details.oa-ws td .oa-plan { margin-left: 0; }
   .oa-note { background: #fef3c7; color: #92400e; border-radius: 10px; padding: .6rem .9rem; font-size: .85rem; margin: .9rem 0 0; }
   .oa-actions { display: flex; gap: .75rem; justify-content: flex-end; margin-top: 1.5rem; }
   .oa-error h1 { color: #b91c1c; }
@@ -65,9 +71,19 @@ Headers (DENY, no-store) come from OAuthResponseHeadersMiddleware.{% endcomment 
       {% endif %}
 
       <h2>{% trans "In these workspaces" %}</h2>
-      <div class="oa-ws">
-        {% for w in workspaces %}{{ w.name }}<span>{{ w.plan|capfirst }}</span>{% if not forloop.last %}, {% endif %}{% empty %}{% trans "You are not a member of any workspace yet." %}{% endfor %}
-      </div>
+      {% if workspaces %}
+      <details class="oa-ws">
+        <summary>{% with total=workspaces|length %}{% if total == 1 %}{{ workspaces.0.name }}<span class="oa-plan">{{ workspaces.0.plan|capfirst }}</span>{% else %}{% blocktrans with pro=pro_count %}Workspaces: {{ total }} · on Pro: {{ pro }}{% endblocktrans %}{% endif %}{% endwith %}</summary>
+        <table>
+          <thead><tr><th>{% trans "Workspace" %}</th><th>{% trans "Plan" %}</th></tr></thead>
+          <tbody>
+          {% for w in workspaces %}<tr><td>{{ w.name }}</td><td><span class="oa-plan{% if w.api %} pro{% endif %}">{{ w.plan|capfirst }}</span></td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </details>
+      {% else %}
+      <div class="oa-ws">{% trans "You are not a member of any workspace yet." %}</div>
+      {% endif %}
       {% if not any_pro %}
       <div class="oa-note">{% blocktrans %}Your workspaces are on the Free plan. The app will connect, but calls on a survey will answer <code>pro_required</code> until its workspace upgrades to Pro.{% endblocktrans %}</div>
       {% endif %}
