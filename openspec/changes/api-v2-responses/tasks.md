@@ -18,7 +18,7 @@
 
 ## 3. MCP tools (PR 2)
 
-- [ ] 3.1 `mcp/tools/responses.py`: the six tools over the PR-1 helpers; `{note, data}`; scopes
-- [ ] 3.2 Tests per scenario in `mcp/tests/`; `scripts/build_mcp_reference.py`
-- [ ] 3.3 `help/.../use-the-mcp-server.md`: what the agent can do with responses (replace "does not read responses"); changelog entry
-- [ ] 3.4 `./run_tests.sh api mcp survey`; `npm run build` in `help/`
+- [x] 3.1 `mcp/tools/responses.py`: the six tools over the PR-1 helpers; `{note, data}`; scopes
+- [x] 3.2 Tests per scenario in `mcp/tests/`; `scripts/build_mcp_reference.py`
+- [x] 3.3 `help/.../use-the-mcp-server.md`: what the agent can do with responses (replace "does not read responses"); no new changelog entry -- the 2026-10-24 MCP entry mentions reports (owner, 2026-10-25)
+- [x] 3.4 `./run_tests.sh api mcp survey`; `npm run build` in `help/`

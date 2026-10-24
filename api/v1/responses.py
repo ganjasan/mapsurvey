@@ -154,14 +154,14 @@ def text_answers(survey, question, scope, cursor=None, limit=50):
             'next_cursor': next_cursor}
 
 
-def question_geojson(question, scope):
+def question_geojson(question, scope, limit=GEOJSON_LIMIT):
     if question.input_type not in GEO_TYPES:
         raise ApiError(400, VALIDATION, 'Only map questions have GeoJSON.',
                        fields={'question_id': ['not a map question']})
     excluded = set(SurveySession.objects.filter(survey__in=scope.headers)
                    .exclude(id__in=scope.sessions).values_list('id', flat=True))
     collection, truncated = data_export.collect_question(question, scope.headers, excluded,
-                                                         limit=GEOJSON_LIMIT)
+                                                         limit=min(limit, GEOJSON_LIMIT))
     collection['truncated'] = truncated
     return collection
 
@@ -176,14 +176,15 @@ def make_export_link(request, survey, params):
     return {'url': url, 'expires_at': timezone.now() + timedelta(seconds=LINK_MAX_AGE)}
 
 
-def set_status(request, survey, session_id, status):
+def set_status(request, survey, session_id, status, actor=None):
     # The editor's rule: the survey's own version family, never a trashed session.
     session = SurveySession.objects.filter(pk=session_id, survey__in=_family(survey), is_deleted=False).first()
     if session is None:
         raise not_found()
     old = session.validation_status or ''
     SessionValidationService().set_status(session, status)
-    audit_record(deps.actor(request), 'response_status', survey, session_id=session.pk, old=old, new=status)
+    audit_record(actor or deps.actor(request), 'response_status', survey, session_id=session.pk, old=old,
+                 new=status)
     return session
 
 

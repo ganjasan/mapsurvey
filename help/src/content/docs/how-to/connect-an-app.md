@@ -19,8 +19,9 @@ gets its own keys — limited to the permissions you allowed, revocable from you
   one thing an app cannot fake. The name under it is whatever the app calls itself — read the host.
 - **What it may do.** Reading surveys, creating and editing them, reading responses are granted
   with Allow. **Publishing and deleting** are switches, off unless you turn them on: those calls
-  cannot be undone.
-- **Where.** Every workspace you belong to, with its plan.
+  cannot be undone. **Approving, holding or rejecting responses** is a switch too: it can be
+  changed back, but rejected responses leave exports and public results.
+- **Where.** Every workspace you belong to, in a folded table with the Pro workspaces first.
 
 Press **Cancel** to send the app away with nothing. Once you allowed an app, it will not ask
 again unless it wants more than you granted.
