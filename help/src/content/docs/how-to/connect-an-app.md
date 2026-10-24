@@ -25,29 +25,19 @@ gets its own keys — limited to the permissions you allowed, revocable from you
 Press **Cancel** to send the app away with nothing. Once you allowed an app, it will not ask
 again unless it wants more than you granted.
 
-## claude.ai (custom connector)
+## Set up your assistant
 
-1. In claude.ai open **Settings → Connectors → Add custom connector**.
-2. Enter the MCP server URL, `https://mapsurvey.org/mcp` (also shown on **API & connections**),
-   and save. Leave the OAuth fields empty — claude.ai discovers them.
-3. Press **Connect**. A Mapsurvey tab opens: sign in if needed, read the Allow page, press
-   **Allow**. You are sent back and the connector shows as connected.
+Each assistant has its own way to add Mapsurvey; [Use the MCP server](/how-to/use-the-mcp-server/)
+has the steps for each one — [Claude](/how-to/use-the-mcp-server/#claude),
+[ChatGPT](/how-to/use-the-mcp-server/#chatgpt), [Gemini](/how-to/use-the-mcp-server/#gemini),
+[Le Chat](/how-to/use-the-mcp-server/#le-chat), [Perplexity](/how-to/use-the-mcp-server/#perplexity),
+[Cursor](/how-to/use-the-mcp-server/#cursor), [VS Code](/how-to/use-the-mcp-server/#vs-code),
+[Claude Code](/how-to/use-the-mcp-server/#claude-code), [Codex](/how-to/use-the-mcp-server/#codex)
+and more. In the product, **New Survey → Use your AI assistant** gives the same steps with one
+button where the assistant allows it.
 
-## ChatGPT (Developer mode)
-
-1. Turn on **Developer mode** under **Settings → Connectors → Advanced**.
-2. **Create** a connector, enter `https://mapsurvey.org/mcp` as the server URL, choose **OAuth** as
-   the authentication and save.
-3. Press **Connect** and allow access on the Mapsurvey page that opens.
-
-## Claude Code
-
-```sh
-claude mcp add --transport http mapsurvey https://mapsurvey.org/mcp
-```
-
-The first tool call opens your browser on the Allow page; Claude Code listens on a local port for
-the answer (that is why the host on the Allow page reads `localhost (this computer)`).
+Desktop tools (Claude Code, Codex, Cursor, VS Code) listen on a local port for the answer, which is
+why the host on the Allow page reads `localhost (this computer)` for them.
 
 ## Any other OAuth app
 

@@ -8445,3 +8445,424 @@ msgstr "Instrukcja konfiguracji"
 #: api/templates/api/connections.html
 msgid "Every tool the agent gets"
 msgstr "Wszystkie narzędzia agenta"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Chat assistants"
+msgstr "Asystenci czatu"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Coding tools"
+msgstr "Narzędzia programistyczne"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "1 click"
+msgstr "1 kliknięcie"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "limited"
+msgstr "ograniczone"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "not yet"
+msgstr "jeszcze nie"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "web, desktop, phone"
+msgstr "web, komputer, telefon"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "In Claude press [[Add]]. The name and address are already filled in."
+msgstr "W Claude naciśnij [[Add]]. Nazwa i adres są już wpisane."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Press [[Connect]] next to Mapsurvey."
+msgstr "Naciśnij [[Connect]] obok Mapsurvey."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Back on Mapsurvey, check what Claude may do and press [[Allow]]."
+msgstr "Po powrocie do Mapsurvey sprawdź, co Claude może robić, i naciśnij [[Allow]]."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "One connector works in Claude on the web, on the desktop and on your phone."
+msgstr "Jeden konektor działa w Claude w przeglądarce, na komputerze i na telefonie."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Claude's free plan allows one custom connector. On a Team or Enterprise plan, your Claude admin adds it once for everyone."
+msgstr "Darmowy plan Claude pozwala na jeden własny konektor. W planie Team lub Enterprise administrator Claude dodaje go raz dla wszystkich."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "on a computer"
+msgstr "na komputerze"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Open ChatGPT"
+msgstr "Otwórz ChatGPT"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Open ChatGPT on a computer, go to [[Plugins]], press [[+]] and choose [[Add custom MCP server]]."
+msgstr "Otwórz ChatGPT na komputerze, przejdź do [[Plugins]], naciśnij [[+]] i wybierz [[Add custom MCP server]]."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Name it Mapsurvey, paste this address and choose [[OAuth]]: {url}"
+msgstr "Nazwij go Mapsurvey, wklej ten adres i wybierz [[OAuth]]: {url}"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "ChatGPT warns about custom servers; that is expected. Press [[Create]], then [[Connect]]."
+msgstr "ChatGPT ostrzega przed własnymi serwerami; tak ma być. Naciśnij [[Create]], a potem [[Connect]]."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "On the Mapsurvey page that opens, press [[Allow]]."
+msgstr "Na stronie Mapsurvey, która się otworzy, naciśnij [[Allow]]."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Adding your own server needs a paid ChatGPT plan, and some plans only allow it for workspace admins. If you don't see the option, your plan doesn't include it yet."
+msgstr "Dodanie własnego serwera wymaga płatnego planu ChatGPT, a w niektórych planach mogą to zrobić tylko administratorzy przestrzeni roboczej. Jeśli nie widzisz tej opcji, Twój plan jeszcze jej nie obejmuje."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "US only for now"
+msgstr "na razie tylko USA"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Open Gemini"
+msgstr "Otwórz Gemini"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "On gemini.google.com open [[Settings]] → [[Connected apps]] → [[Add a custom app]]."
+msgstr "Na gemini.google.com otwórz [[Settings]] → [[Connected apps]] → [[Add a custom app]]."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Paste this address and press [[Next]]: {url}"
+msgstr "Wklej ten adres i naciśnij [[Next]]: {url}"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Gemini connects to outside tools only in the US, with a personal Google account, in English, and inside Spark tasks. Elsewhere, use the Survey wizard or another assistant."
+msgstr "Gemini łączy się z zewnętrznymi narzędziami tylko w USA, z prywatnym kontem Google, po angielsku i w zadaniach Spark. W innych przypadkach użyj Kreatora ankiety lub innego asystenta."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Mistral"
+msgstr "Mistral"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Open Le Chat"
+msgstr "Otwórz Le Chat"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "In Le Chat open [[Connectors]] → [[+ Add Connector]] → [[Custom MCP Connector]]."
+msgstr "W Le Chat otwórz [[Connectors]] → [[+ Add Connector]] → [[Custom MCP Connector]]."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Name it Mapsurvey and paste this address: {url}"
+msgstr "Nazwij go Mapsurvey i wklej ten adres: {url}"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Press [[Connect]], then [[Allow]] on the Mapsurvey page."
+msgstr "Naciśnij [[Connect]], a potem [[Allow]] na stronie Mapsurvey."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Pro and up"
+msgstr "Pro i wyżej"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Open Perplexity"
+msgstr "Otwórz Perplexity"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "In Perplexity open [[Customize]] → [[Connectors]] → [[+ Custom connector]] → [[Remote]]."
+msgstr "W Perplexity otwórz [[Customize]] → [[Connectors]] → [[+ Custom connector]] → [[Remote]]."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Name it Mapsurvey, paste this address, choose [[Streamable HTTP]] and [[OAuth]]: {url}"
+msgstr "Nazwij go Mapsurvey, wklej ten adres, wybierz [[Streamable HTTP]] i [[OAuth]]: {url}"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Custom connectors need a Perplexity Pro, Max or Enterprise plan."
+msgstr "Własne konektory wymagają planu Perplexity Pro, Max lub Enterprise."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Copilot Studio"
+msgstr "Copilot Studio"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Open Copilot Studio"
+msgstr "Otwórz Copilot Studio"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "In your agent open [[Tools]] → [[Add a tool]] → [[New tool]] → [[Model Context Protocol]]."
+msgstr "W swoim agencie otwórz [[Tools]] → [[Add a tool]] → [[New tool]] → [[Model Context Protocol]]."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Choose [[OAuth 2.0]] → [[Dynamic discovery]], create the connection and press [[Allow]] on the Mapsurvey page."
+msgstr "Wybierz [[OAuth 2.0]] → [[Dynamic discovery]], utwórz połączenie i naciśnij [[Allow]] na stronie Mapsurvey."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "This is for agents built in Copilot Studio. The Copilot app itself cannot add outside tools yet."
+msgstr "Dotyczy to agentów zbudowanych w Copilot Studio. Sama aplikacja Copilot nie może jeszcze dodawać zewnętrznych narzędzi."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "DeepSeek, Grok…"
+msgstr "DeepSeek, Grok…"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "no connectors yet"
+msgstr "jeszcze bez konektorów"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "any MCP client"
+msgstr "dowolny klient MCP"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Add a remote MCP server with this address: {url}"
+msgstr "Dodaj zdalny serwer MCP z tym adresem: {url}"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Choose [[Streamable HTTP]] as the transport if asked."
+msgstr "Jeśli zostaniesz zapytany, wybierz [[Streamable HTTP]] jako transport."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Sign in with [[OAuth]]; the client opens the Mapsurvey Allow page. If it only takes a header, create a personal token under API & connections and send it as Authorization: Bearer <token>."
+msgstr "Zaloguj się przez [[OAuth]]; klient otworzy stronę Zezwól w Mapsurvey. Jeśli przyjmuje tylko nagłówek, utwórz token osobisty w API i połączenia i wyślij go jako Authorization: Bearer <token>."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Cursor opens with Mapsurvey filled in. Press [[Install]]."
+msgstr "Cursor otworzy się z wpisanym Mapsurvey. Naciśnij [[Install]]."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "When Cursor asks you to sign in, your browser opens the Mapsurvey page: press [[Allow]]."
+msgstr "Gdy Cursor poprosi o zalogowanie, przeglądarka otworzy stronę Mapsurvey: naciśnij [[Allow]]."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Copilot"
+msgstr "Copilot"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "VS Code opens with Mapsurvey filled in. Press [[Install]]."
+msgstr "VS Code otworzy się z wpisanym Mapsurvey. Naciśnij [[Install]]."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "When VS Code asks you to sign in, your browser opens the Mapsurvey page: press [[Allow]]."
+msgstr "Gdy VS Code poprosi o zalogowanie, przeglądarka otworzy stronę Mapsurvey: naciśnij [[Allow]]."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "The first time Claude uses Mapsurvey, your browser opens the Allow page. Connectors you added on claude.ai also appear here."
+msgstr "Gdy Claude po raz pierwszy użyje Mapsurvey, przeglądarka otworzy stronę Zezwól. Konektory dodane na claude.ai też się tu pojawią."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "The second command opens the Mapsurvey Allow page in your browser."
+msgstr "Drugie polecenie otwiera stronę Zezwól w Mapsurvey w przeglądarce."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "In the Cascade panel open [[⋯]] → [[Open MCP config]]."
+msgstr "W panelu Cascade otwórz [[⋯]] → [[Open MCP config]]."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Add Mapsurvey under mcpServers, save, and sign in when Windsurf asks."
+msgstr "Dodaj Mapsurvey w mcpServers, zapisz i zaloguj się, gdy Windsurf o to poprosi."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "or Antigravity"
+msgstr "lub Antigravity"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Then run /mcp auth mapsurvey inside Gemini CLI. Antigravity CLI reads the same address from \"serverUrl\" in mcp_config.json."
+msgstr "Następnie uruchom /mcp auth mapsurvey w Gemini CLI. Antigravity CLI odczytuje ten sam adres z \"serverUrl\" w mcp_config.json."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Using the Mapsurvey tools, create a draft map survey to find out: \"{goal}\". Ask me about the place and the survey languages if they are unclear, then give me the link to the survey in the Mapsurvey editor."
+msgstr "Korzystając z narzędzi Mapsurvey, utwórz szkic ankiety mapowej, aby dowiedzieć się: \"{goal}\". Zapytaj mnie o miejsce i języki ankiety, jeśli nie są jasne, a potem podaj mi link do ankiety w edytorze Mapsurvey."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Using the Mapsurvey tools, help me draft a map survey. First ask me what I want to find out, where, and in which languages, then create the draft and give me the link to the survey in the Mapsurvey editor."
+msgstr "Korzystając z narzędzi Mapsurvey, pomóż mi przygotować szkic ankiety mapowej. Najpierw zapytaj mnie, czego chcę się dowiedzieć, gdzie i w jakich językach, potem utwórz szkic i podaj mi link do ankiety w edytorze Mapsurvey."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "{client} is connected to Mapsurvey."
+msgstr "{client} jest połączony z Mapsurvey."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Your assistant is connected to Mapsurvey."
+msgstr "Twój asystent jest połączony z Mapsurvey."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Manage connections"
+msgstr "Zarządzaj połączeniami"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Copied"
+msgstr "Skopiowano"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Still waiting? Reload this page after you press Allow, or use \"I've connected\"."
+msgstr "Nadal czekasz? Odśwież tę stronę po naciśnięciu Zezwól albo użyj „Mam już połączenie”."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Use your AI assistant"
+msgstr "Użyj swojego asystenta AI"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Ways to start"
+msgstr "Sposoby rozpoczęcia"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Steps"
+msgstr "Kroki"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Ask for a survey"
+msgstr "Poproś o ankietę"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Edit & publish"
+msgstr "Edytuj i opublikuj"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Which assistant do you use?"
+msgstr "Którego asystenta używasz?"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "You connect once. After that, any chat can build and edit your surveys."
+msgstr "Łączysz się raz. Potem każdy czat może tworzyć i edytować Twoje ankiety."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+#, python-format
+msgid "Your workspace <b>%(name)s</b> is on Free. You can connect now; building surveys through an assistant needs Pro."
+msgstr "Twoja przestrzeń robocza <b>%(name)s</b> jest na planie Free. Możesz połączyć się już teraz; tworzenie ankiet przez asystenta wymaga Pro."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "See plans"
+msgstr "Zobacz plany"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Use the Survey wizard"
+msgstr "Użyj Kreatora ankiety"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Our built-in assistant. Describe your survey in one sentence; no other app needed."
+msgstr "Nasz wbudowany asystent. Opisz ankietę jednym zdaniem; żadna inna aplikacja nie jest potrzebna."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Open the wizard"
+msgstr "Otwórz kreator"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "It can add one connector for free, in one click."
+msgstr "Może bezpłatnie dodać jeden konektor, jednym kliknięciem."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Show me"
+msgstr "Pokaż"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "e.g. DeepSeek"
+msgstr "np. DeepSeek"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Assistant name"
+msgstr "Nazwa asystenta"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Tell us"
+msgstr "Daj nam znać"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Thank you — noted."
+msgstr "Dziękujemy — zapisane."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+#, python-format
+msgid "Connect Mapsurvey to %(name)s"
+msgstr "Połącz Mapsurvey z %(name)s"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+#, python-format
+msgid "Add Mapsurvey to %(name)s"
+msgstr "Dodaj Mapsurvey do %(name)s"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Run this in your terminal:"
+msgstr "Uruchom to w terminalu:"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Step-by-step help"
+msgstr "Pomoc krok po kroku"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Waiting for your assistant to connect… this page updates by itself."
+msgstr "Czekamy, aż Twój asystent się połączy… ta strona odświeży się sama."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "One sentence is enough. Your assistant builds a draft survey; nothing is published without you."
+msgstr "Wystarczy jedno zdanie. Twój asystent tworzy szkic ankiety; nic nie zostanie opublikowane bez Ciebie."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Where people in our neighbourhood want new benches, and why"
+msgstr "Gdzie mieszkańcy naszej okolicy chcą nowych ławek i dlaczego"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Your assistant will receive"
+msgstr "Twój asystent otrzyma"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Open in Claude"
+msgstr "Otwórz w Claude"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Open in ChatGPT"
+msgstr "Otwórz w ChatGPT"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Copy prompt"
+msgstr "Kopiuj prompt"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+#, python-format
+msgid "The survey appears on your <a href=\"%(url)s\">dashboard</a> as soon as your assistant creates it. Open it there to check, edit and publish."
+msgstr "Ankieta pojawi się na Twoim <a href=\"%(url)s\">pulpicie</a>, gdy tylko asystent ją utworzy. Otwórz ją tam, aby sprawdzić, edytować i opublikować."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "DeepSeek, Grok and most other chats can't connect to outside tools yet"
+msgstr "DeepSeek, Grok i większość innych czatów nie potrafią jeszcze łączyć się z zewnętrznymi narzędziami"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "They have no way to add a connector. That is the app's limit, not your account's. Two ways to keep going:"
+msgstr "Nie da się w nich dodać konektora. To ograniczenie aplikacji, nie Twojego konta. Dwa sposoby, by iść dalej:"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Try Claude's free plan"
+msgstr "Wypróbuj darmowy plan Claude"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Using one of these anyway? Tell us which, and we'll add it when it can connect."
+msgstr "Mimo to używasz któregoś z nich? Napisz nam, którego, a dodamy go, gdy będzie mógł się połączyć."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "I've connected"
+msgstr "Mam już połączenie"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Your assistant"
+msgstr "Twój asystent"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "New"
+msgstr "Nowe"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "you, in Claude"
+msgstr "Ty, w Claude"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Make a survey about where people want new benches in our park"
+msgstr "Zrób ankietę o tym, gdzie ludzie chcą nowych ławek w naszym parku"
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "Connect Mapsurvey to Claude or ChatGPT in a minute, then ask it to build and edit surveys right from the chat."
+msgstr "Połącz Mapsurvey z Claude lub ChatGPT w minutę, a potem poproś go o tworzenie i edycję ankiet prosto z czatu."
+
+#: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
+msgid "For people who already work in Claude or ChatGPT."
+msgstr "Dla osób, które już pracują w Claude lub ChatGPT."
+
+#: survey/templates/editor/survey_start_agent.html
+msgctxt "agent step"
+msgid "Connect"
+msgstr "Połącz"

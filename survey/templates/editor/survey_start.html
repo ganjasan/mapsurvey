@@ -10,8 +10,8 @@ One click on a card does the card's action -- the blank card IS the submit
 button of its form, the AI card IS a link. No selection step, no detail block:
 the first version had both and creators clicked the card over and over (#335).
 The wizard (AI draft) card comes first, badged "Best to start": AI drafts reach publication
-about 2.5x as often as empty surveys. The third card is INERT until the MCP server ships (#306): no link, no hover --
-the agent page is reached from the account and help menus.{% endcomment %}
+about 2.5x as often as empty surveys. The third card leads to the agent page, /editor/surveys/start/agent/ (change
+agent-onboarding, #312): one tile per assistant and its simplest way to connect.{% endcomment %}
 
 {% block page_title %}{% trans "New survey" %}{% endblock %}
 
@@ -42,19 +42,6 @@ the agent page is reached from the account and help menus.{% endcomment %}
   .start-card:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px #c7d2fe; }
   .start-card:disabled { cursor: progress; transform: none; }
   .start-card:hover { transform: translateY(-2px); border-color: var(--accent); color: inherit; text-decoration: none; }
-  /* Not available yet: dimmed, desaturated, and taped over like a building site. */
-  .start-card.soon { cursor: not-allowed; opacity: .72; user-select: none; order: 2; }
-  .start-card.soon:hover { transform: none; border-color: var(--border-color); }
-  .start-card.soon .start-art { filter: grayscale(.4); }
-  .start-card.soon .start-title, .start-card.soon .start-what { color: #5f6368; }
-  .start-art.agent::after {
-    content: attr(data-ribbon); position: absolute; left: -12%; right: -12%; top: 64%;
-    transform: rotate(-8deg); background: #fde047; color: #111; font-weight: 700; letter-spacing: .16em;
-    text-transform: uppercase; font-size: .78rem; text-align: center; padding: .4rem 0;
-    border-style: solid; border-width: 5px 0; border-image: repeating-linear-gradient(45deg, #111 0 8px, #fde047 8px 16px) 5;
-    box-shadow: 0 6px 14px rgba(0,0,0,.3);
-  }
-  .start-badge-mobile { display: none; }
   .start-label {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .68rem; letter-spacing: .14em;
     text-transform: uppercase; color: #9aa0a6; padding: 1rem 1.25rem 0; min-height: 2.3rem;
@@ -67,7 +54,11 @@ the agent page is reached from the account and help menus.{% endcomment %}
   .start-art.blank { background: linear-gradient(145deg, #0f766e, #14b8a6 60%, #5eead4); }
   .start-art.ai { background: linear-gradient(145deg, #3730a3, #6366f1 55%, #a5b4fc); }
   .start-art.ai i { transform: translateY(-38px); }  /* above the example-brief bubble */
-  .start-art.agent { background: linear-gradient(145deg, #334155, #64748b 60%, #cbd5e1); }
+  .start-art.agent { background: linear-gradient(145deg, #7c2d12, #d97757 55%, #fbcfb4); }
+  .start-art.agent i { transform: translateY(-30px); }
+  .start-art .logos { position: absolute; top: 12px; left: 16px; display: flex; gap: 6px; z-index: 1; }
+  .start-art .logos span { background: rgba(255,255,255,.92); color: #1f2937; border-radius: 999px; font-size: .68rem; font-weight: 600; padding: 2px 8px; }
+  .start-badge-new { background: #ecfdf5; color: #047857; }
   .start-art .chat { position: absolute; left: 16px; right: 16px; bottom: 14px; background: rgba(255,255,255,.92); color: #1f2937; border-radius: 10px; padding: 7px 10px; font-size: .74rem; line-height: 1.35; }
   .start-art .chat small { display: block; color: #9aa0a6; font-size: .62rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; margin-bottom: 2px; }
   .start-body { padding: 1rem 1.25rem 1.25rem; display: flex; flex-direction: column; gap: .35rem; flex: 1; }
@@ -96,9 +87,8 @@ the agent page is reached from the account and help menus.{% endcomment %}
     .start-art { width: 56px; height: 56px; margin: .75rem 0 0 1rem; flex: 0 0 auto; }
     .start-art i { font-size: 22px; }
     .start-art.ai i { transform: none; }
-    .start-art .chat, .start-art::before, .start-art.agent::after { display: none; }
-    .start-badge-mobile { display: inline-block; }
-    .start-card.soon .start-art { filter: none; }
+    .start-art .chat, .start-art::before, .start-art .logos { display: none; }
+    .start-art.agent i { transform: none; }
     .start-body { flex: 1; min-width: 0; padding: .75rem 1rem .5rem; }
     .start-title { font-size: 1rem; }
     .start-what { font-size: .85rem; color: #5f6368; }
@@ -167,16 +157,18 @@ the agent page is reached from the account and help menus.{% endcomment %}
       </button>
     </form>
 
-    {# ── 3 · Connect your AI agent (teaser until #306) ─────────────────── #}
-    <div class="start-card soon" data-path="agent" aria-disabled="true">
-      <span class="start-label"><span>{% trans "Your agent" %}</span><span class="start-badge start-badge-mobile">{% trans "Soon" %}</span></span>
-      <span class="start-art agent" data-ribbon="{% trans "Coming soon" %}"><i class="fas fa-robot"></i></span>
-      <span class="start-body">
-        <span class="start-title">{% trans "Connect your AI agent" %}</span>
-        <span class="start-what">{% trans "Let Claude, ChatGPT or Cursor build and edit surveys for you through MCP, with a token you control." %}</span>
-        <span class="start-who">{% trans "For teams who already work from an agent." %}</span>
+    {# ── 3 · Use your AI assistant: the agent page (change agent-onboarding) ── #}
+    <a class="start-card" data-path="agent" href="{% url 'editor_survey_start_agent' %}">
+      <span class="start-label"><span>{% trans "Your assistant" %}</span><span class="start-badge start-badge-new">{% trans "New" %}</span></span>
+      <span class="start-art agent"><span class="logos"><span>Claude</span><span>ChatGPT</span></span><i class="fas fa-comments"></i>
+        <span class="chat"><small>{% trans "you, in Claude" %}</small>{% trans "Make a survey about where people want new benches in our park" %}</span>
       </span>
-    </div>
+      <span class="start-body">
+        <span class="start-title">{% trans "Use your AI assistant" %}</span>
+        <span class="start-what">{% trans "Connect Mapsurvey to Claude or ChatGPT in a minute, then ask it to build and edit surveys right from the chat." %}</span>
+        <span class="start-who">{% trans "For people who already work in Claude or ChatGPT." %}</span>
+      </span>
+    </a>
 
   </div>
 </div>

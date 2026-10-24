@@ -1,13 +1,17 @@
 ---
 title: Use the MCP server
-description: Connect Claude, ChatGPT, Claude Code, Claude Desktop or Cursor to your Mapsurvey account and build, edit and publish surveys from a conversation.
+description: Connect Claude, ChatGPT, Gemini, Le Chat, Perplexity, Cursor, VS Code, Claude Code, Codex and other assistants to your Mapsurvey account and build, edit and publish surveys from a conversation.
 sidebar:
   order: 16
 ---
 
-You end up with an AI agent that can list, build and edit your surveys when you ask it to — "add a
-point question to the first section asking where a new bench should go, with a sub-question rating
-how urgent it is" — while responses and everything else stay in Mapsurvey.
+You end up with an AI assistant that can list, build and edit your surveys when you ask it to —
+"add a point question to the first section asking where a new bench should go, with a sub-question
+rating how urgent it is" — while responses and everything else stay in Mapsurvey.
+
+The quickest way in is the product itself: **New Survey → Use your AI assistant** shows a tile for
+every assistant below, with one button or one command where the assistant allows it, and notices
+by itself when you are connected. This page is the same set of instructions, for reference.
 
 The server speaks the **Model Context Protocol (MCP)**, which is what Claude, ChatGPT, Cursor and
 most agent tools use to reach outside services. Its address is one URL:
@@ -22,29 +26,107 @@ https://mapsurvey.org/mcp
 
 ## Two ways to connect
 
-- **Sign in through the app** — claude.ai, ChatGPT and Claude Code open a Mapsurvey page where you
-  check what the app asks for and press **Allow**. No token to copy; disconnect from your account
-  at any time. See [Connect ChatGPT, Claude and other apps](/how-to/connect-an-app/) for what the
-  Allow page shows.
-- **A personal token** — Claude Desktop, Cursor and scripts take a token in a header. Create one
-  under **API & connections** for the **MCP server** (see
-  [Create a personal access token](/how-to/personal-tokens/)) and keep **publish** and **delete** off
-  unless the agent must do those.
+- **Sign in through the assistant** — every assistant below opens a Mapsurvey page where you check
+  what it asks for and press **Allow**. No token to copy; disconnect from your account at any time.
+  See [Connect ChatGPT, Claude and other apps](/how-to/connect-an-app/) for what the Allow page
+  shows.
+- **A personal token** — for scripts and for a client that only takes a header. Create one under
+  **API & connections** for the **MCP server** (see
+  [Create a personal access token](/how-to/personal-tokens/)), send it as
+  `Authorization: Bearer msk_…`, and keep **publish** and **delete** off unless the agent must do
+  those.
 
-## Steps
+## Chat assistants
 
-### claude.ai
+### Claude
 
-1. Open **Settings → Connectors → Add custom connector**.
-2. Enter `https://mapsurvey.org/mcp` as the server URL and save; leave the OAuth fields empty.
-3. Press **Connect**, sign in to Mapsurvey if needed, read the Allow page, press **Allow**.
+One connector serves Claude on the web, the desktop app and your phone.
+
+1. Open
+   [this link](https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Mapsurvey&connectorUrl=https%3A%2F%2Fmapsurvey.org%2Fmcp)
+   (or **Customize → Connectors → Add custom connector** and enter `https://mapsurvey.org/mcp`). The
+   name and address are filled in: press **Add**.
+2. Press **Connect** next to Mapsurvey.
+3. Sign in to Mapsurvey if needed, read the Allow page, press **Allow**.
+
+Claude's free plan allows one custom connector. On a Team or Enterprise plan an owner adds it once
+under **Organization settings → Connectors** and members press **Connect**. Claude Desktop does not
+read remote servers from its configuration file; use the connector.
 
 ### ChatGPT
 
-1. Turn on **Developer mode** under **Settings → Connectors → Advanced**.
-2. **Create** a connector with the URL `https://mapsurvey.org/mcp` and **OAuth** as the
-   authentication.
-3. Press **Connect** and allow access on the Mapsurvey page that opens.
+On a computer, with a paid plan. Some plans let only workspace admins add a server; if you do not
+see the option, your plan does not include it.
+
+1. Open ChatGPT, go to **Plugins**, press **+** and choose **Add custom MCP server**.
+2. Name it Mapsurvey, enter `https://mapsurvey.org/mcp` and choose **OAuth**.
+3. ChatGPT warns about custom servers; that is expected. Press **Create**, then **Connect**.
+4. On the Mapsurvey page that opens, press **Allow**.
+
+In a chat, mention **@Mapsurvey** so ChatGPT uses it.
+
+### Gemini
+
+Only in the US, with a personal Google account, in English, and inside Spark tasks.
+
+1. On gemini.google.com open **Settings → Connected apps → Add a custom app**.
+2. Enter `https://mapsurvey.org/mcp` and press **Next**.
+3. On the Mapsurvey page that opens, press **Allow**.
+
+### Le Chat
+
+1. In Le Chat open **Connectors → + Add Connector → Custom MCP Connector**.
+2. Name it Mapsurvey and enter `https://mapsurvey.org/mcp`.
+3. Press **Connect**, then **Allow** on the Mapsurvey page.
+
+### Perplexity
+
+Needs a Pro, Max or Enterprise plan.
+
+1. Open **Customize → Connectors → + Custom connector → Remote**.
+2. Name it Mapsurvey, enter `https://mapsurvey.org/mcp`, choose **Streamable HTTP** and **OAuth**.
+3. On the Mapsurvey page that opens, press **Allow**.
+
+### Copilot Studio
+
+For agents built in Microsoft Copilot Studio; the Copilot app itself cannot add outside tools yet.
+
+1. In your agent open **Tools → Add a tool → New tool → Model Context Protocol**.
+2. Name it Mapsurvey and enter `https://mapsurvey.org/mcp`.
+3. Choose **OAuth 2.0 → Dynamic discovery**, create the connection and press **Allow** on the
+   Mapsurvey page.
+
+### Something else
+
+Any MCP client that can add a remote server: address `https://mapsurvey.org/mcp`, transport
+**Streamable HTTP**, sign-in with **OAuth** (the client opens the Allow page). A client that only
+takes a header gets a personal token as `Authorization: Bearer msk_…`.
+
+DeepSeek, Grok and most other chats cannot add connectors yet. Use the Survey wizard
+([Choose how to start a survey](/how-to/choose-how-to-start/)), which needs no other app, or
+Claude's free plan.
+
+## Coding tools
+
+### Cursor
+
+The **Add Mapsurvey to Cursor** button in the product opens
+`cursor://anysphere.cursor-deeplink/mcp/install?name=mapsurvey&config=eyJ1cmwiOiAiaHR0cHM6Ly9tYXBzdXJ2ZXkub3JnL21jcCJ9`:
+press **Install**, then **Allow** when Cursor sends you to sign in. By hand, add to
+`~/.cursor/mcp.json`:
+
+```json
+{ "mcpServers": { "mapsurvey": { "url": "https://mapsurvey.org/mcp" } } }
+```
+
+### VS Code
+
+The **Add Mapsurvey to VS Code** button in the product opens VS Code with the server filled in:
+press **Install**, then **Allow** when it sends you to sign in. From a terminal:
+
+```sh
+code --add-mcp '{"name":"mapsurvey","type":"http","url":"https://mapsurvey.org/mcp"}'
+```
 
 ### Claude Code
 
@@ -52,35 +134,40 @@ https://mapsurvey.org/mcp
 claude mcp add --transport http mapsurvey https://mapsurvey.org/mcp
 ```
 
-The first tool call opens the Allow page in your browser. To skip the sign-in on a machine without
-a browser, pass a token instead:
+The first tool call opens the Allow page in your browser. Connectors added on claude.ai appear here
+too. To skip the sign-in on a machine without a browser, pass a token instead:
 
 ```sh
 claude mcp add --transport http mapsurvey https://mapsurvey.org/mcp \
     --header "Authorization: Bearer msk_…"
 ```
 
-### Claude Desktop
+### Codex
 
-Open `claude_desktop_config.json` (on macOS under `~/Library/Application Support/Claude/`) and add:
-
-```json
-{
-  "mcpServers": {
-    "mapsurvey": {
-      "url": "https://mapsurvey.org/mcp",
-      "headers": { "Authorization": "Bearer msk_…" }
-    }
-  }
-}
+```sh
+codex mcp add mapsurvey --url https://mapsurvey.org/mcp
+codex mcp login mapsurvey
 ```
 
-Restart Claude Desktop; the Mapsurvey tools appear in the connector list.
+The second command opens the Allow page.
 
-### Cursor
+### Windsurf
 
-In the MCP settings, add a remote HTTP server at `https://mapsurvey.org/mcp` with the same
-`Authorization` header.
+In the Cascade panel open **⋯ → Open MCP config**, add Mapsurvey under `mcpServers`, save, and sign
+in when Windsurf asks:
+
+```json
+"mapsurvey": { "serverUrl": "https://mapsurvey.org/mcp" }
+```
+
+### Gemini CLI
+
+```sh
+gemini mcp add --transport http mapsurvey https://mapsurvey.org/mcp
+```
+
+Then run `/mcp auth mapsurvey` inside Gemini CLI. Antigravity CLI reads the same address from
+`"serverUrl"` in `mcp_config.json`.
 
 ## First conversation
 

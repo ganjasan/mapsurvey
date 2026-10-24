@@ -70,6 +70,16 @@ AGENT_ACCESS_REQUESTED = 'agent_access_requested'
 # tool name, the outcome (`ok` or the error code), the token id and kind --
 # never the arguments and never a survey id.
 MCP_TOOL_CALLED = 'mcp_tool_called'
+# The agent page (change agent-onboarding): which assistant creators pick, whether
+# they get connected and go on to the first prompt. Client slugs and outcomes only
+# -- never the goal or the prompt they typed. All but the last are sent from the
+# browser (`survey_start_agent.js`); `requested` is the free-text name of an
+# assistant that cannot connect yet, truncated to 40 characters.
+AGENT_CLIENT_CHOSEN = 'agent_client_chosen'
+AGENT_INSTALL_CLICKED = 'agent_install_clicked'
+AGENT_CONNECTED = 'agent_connected'
+AGENT_PROMPT_OPENED = 'agent_prompt_opened'
+AGENT_CLIENT_REQUESTED = 'agent_client_requested'
 
 # Personal API tokens (change auth-core, #379). Properties are scopes, audiences
 # and the expiry choice -- never the label (free text) and never the value.
