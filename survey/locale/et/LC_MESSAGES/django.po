@@ -8743,3 +8743,12 @@ msgstr "Neile, kes juba töötavad Claude'is või ChatGPT-s."
 msgctxt "agent step"
 msgid "Connect"
 msgstr "Ühenda"
+
+#: api/templates/api/authorize.html
+msgid "Plan"
+msgstr "Pakett"
+
+#: api/templates/api/authorize.html
+#, python-format
+msgid "Workspaces: %(total)s · on Pro: %(pro)s"
+msgstr "Tööruumid: %(total)s · Pro-ga: %(pro)s"

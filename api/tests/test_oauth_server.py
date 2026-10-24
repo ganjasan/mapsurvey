@@ -4,6 +4,7 @@ Every method name here is a line of the issue's security checklist. The flows
 drive the real endpoints with the test client -- login, authorize, consent,
 token -- and never mock oauthlib.
 """
+import re
 from unittest import mock
 
 from django.contrib.auth.models import User
@@ -308,6 +309,51 @@ class ConsentTest(_Flow):
         self.assertIn('Pro Org', html)
         self.assertIn('Second Org', html)
         self.assertNotIn('pro_required', html)
+
+    def test_workspaces_are_a_folded_table_pro_first(self):
+        """
+        GIVEN a Pro workspace "Pro Org" and two Free ones, "Alpha" and "Beta"
+        WHEN the consent page renders
+        THEN a closed <details> sums them up as "Workspaces: 3 · on Pro: 1", and its table
+             lists Pro Org first, then Alpha and Beta by name (change consent-workspaces-table)
+        """
+        for name, owner in (('Beta', 'beta_owner'), ('Alpha', 'alpha_owner')):
+            org, _ = make_free_org(name, owner)
+            Membership.objects.create(user=self.user, organization=org, role='editor')
+        _, challenge = pkce()
+        html = self.client.get(AUTHORIZE, authorize_params(self.app, challenge)).content.decode()
+        block = html[html.index('<details class="oa-ws">'):html.index('</details>')]
+        self.assertNotIn(' open', block[:40])
+        self.assertIn('Workspaces: 3 · on Pro: 1', block)
+        rows = re.findall(r'<tr><td>([^<]+)</td>', block)
+        self.assertEqual(rows, ['Pro Org', 'Alpha', 'Beta'])
+
+    def test_one_workspace_is_named_in_the_summary(self):
+        """
+        GIVEN a user with one Free workspace
+        WHEN the consent page renders
+        THEN the summary names it with its plan
+        """
+        org, user = make_free_org('Solo Org', 'solo_owner')
+        self.client.force_login(user)
+        _, challenge = pkce()
+        html = self.client.get(AUTHORIZE, authorize_params(self.app, challenge)).content.decode()
+        summary = html[html.index('<summary>'):html.index('</summary>')]
+        self.assertIn('Solo Org', summary)
+        self.assertIn('Free', summary)
+
+    def test_no_workspace_keeps_the_sentence(self):
+        """
+        GIVEN a user with no membership
+        WHEN the consent page renders
+        THEN the sentence says so and there is no table
+        """
+        user = make_user('nomember')
+        self.client.force_login(user)
+        _, challenge = pkce()
+        html = self.client.get(AUTHORIZE, authorize_params(self.app, challenge)).content.decode()
+        self.assertIn('You are not a member of any workspace yet.', html)
+        self.assertNotIn('<details class="oa-ws">', html)
 
     def test_cancel(self):
         """

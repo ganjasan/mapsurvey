@@ -124,8 +124,11 @@ class AuthorizationView(DotAuthorizationView):
         for m in memberships:
             ent = for_organization(m.organization)
             workspaces.append({'name': m.organization.name, 'plan': ent.plan, 'api': ent.has(FEATURE)})
+        # The ones the app can actually work in first (change consent-workspaces-table).
+        workspaces.sort(key=lambda w: (not w['api'], w['name'].casefold()))
         ctx['workspaces'] = workspaces
-        ctx['any_pro'] = any(w['api'] for w in workspaces)
+        ctx['pro_count'] = sum(1 for w in workspaces if w['api'])
+        ctx['any_pro'] = ctx['pro_count'] > 0
         return ctx
 
     # -- POST: allow / cancel ------------------------------------------------------------
