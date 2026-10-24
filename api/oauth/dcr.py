@@ -27,6 +27,12 @@ from . import redirects
 NAME_MAX = 80
 # Metadata members we never store or render. `logo_uri` is the one that matters.
 DROPPED_MEMBERS = ('logo_uri', 'client_uri', 'policy_uri', 'tos_uri', 'jwks_uri', 'jwks')
+# The grants this server issues. The toolkit stores ONE non-refresh grant per
+# application and refuses metadata listing more, but real clients advertise
+# extension grants they use elsewhere -- claude.ai's CIMD document lists
+# `urn:ietf:params:oauth:grant-type:jwt-bearer` (#404). RFC 7591 lets us ignore
+# what we do not support (change fix-cimd-extra-grant-types).
+SUPPORTED_GRANT_TYPES = ('authorization_code', 'refresh_token')
 
 LIMITS = (('oauth.dcr.hour', '10/h'), ('oauth.dcr.day', '50/d'))
 
@@ -41,14 +47,22 @@ def clean_name(value):
 
 
 def normalise_metadata(data):
-    """Bound the name, drop what we never render, run the redirect rule.
-    Returns a new dict; raises ValidationError (code invalid_redirect_uri)."""
+    """Bound the name, drop what we never render, run the redirect rule, keep
+    only the grant types we issue. Returns a new dict; raises ValidationError
+    (code invalid_redirect_uri)."""
     out = {k: v for k, v in data.items() if k not in DROPPED_MEMBERS}
     if 'client_name' in out:
         out['client_name'] = clean_name(out['client_name'])
     uris = out.get('redirect_uris')
     if isinstance(uris, list) and all(isinstance(u, str) for u in uris):
         redirects.check_registrable(uris)
+    grants = out.get('grant_types')
+    if isinstance(grants, list):
+        kept = [g for g in grants if g in SUPPORTED_GRANT_TYPES]
+        # Nothing we issue: pass it on unchanged so the toolkit refuses it,
+        # rather than letting an empty list default to authorization_code.
+        if kept:
+            out['grant_types'] = kept
     return out
 
 
