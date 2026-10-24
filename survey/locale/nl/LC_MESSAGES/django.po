@@ -8333,3 +8333,51 @@ msgstr "Ontkoppelen"
 #: api/templates/api/connections.html
 msgid "No connected apps yet."
 msgstr "Nog geen gekoppelde apps."
+
+#: api/templates/api/connections.html
+msgid "Build surveys from your own AI agent. Connect Claude, ChatGPT, Claude Code, Cursor or any MCP client to this address and ask the agent in plain words:"
+msgstr "Bouw enquêtes met je eigen AI-agent. Verbind Claude, ChatGPT, Claude Code, Cursor of een andere MCP-client met dit adres en vraag het de agent in gewone woorden:"
+
+#: api/templates/api/connections.html
+msgid "Server URL"
+msgstr "Server-URL"
+
+#: api/templates/api/connections.html
+msgid "claude.ai, ChatGPT"
+msgstr "claude.ai, ChatGPT"
+
+#: api/templates/api/connections.html
+msgid "Add a custom connector with that URL and press Connect — you sign in on a Mapsurvey page and choose what to allow. No token needed."
+msgstr "Voeg een aangepaste connector toe met die URL en druk op Verbinden — je logt in op een Mapsurvey-pagina en kiest wat je toestaat. Geen token nodig."
+
+#: api/templates/api/connections.html
+msgid "Claude Code"
+msgstr "Claude Code"
+
+#: api/templates/api/connections.html
+msgid "The first call opens the Allow page in your browser. To skip the sign-in, add a token made for the MCP server:"
+msgstr "De eerste aanroep opent de Toestaan-pagina in je browser. Om het inloggen over te slaan, voeg je een token toe dat voor de MCP-server is gemaakt:"
+
+#: api/templates/api/connections.html
+msgid "Claude Desktop, Cursor"
+msgstr "Claude Desktop, Cursor"
+
+#: api/templates/api/connections.html
+msgid "Add a remote MCP server with that URL and an Authorization header carrying a token from the list above (made for the MCP server)."
+msgstr "Voeg een externe MCP-server toe met die URL en een Authorization-header met een token uit de lijst hierboven (gemaakt voor de MCP-server)."
+
+#: api/templates/api/connections.html
+msgid "The agent sees and changes only surveys <strong>you</strong> own or collaborate on, within the permissions you allowed."
+msgstr "De agent ziet en wijzigt alleen enquêtes waarvan <strong>jij</strong> eigenaar of medewerker bent, binnen de rechten die je hebt gegeven."
+
+#: api/templates/api/connections.html
+msgid "Survey content the agent reads is data, not instructions — but an agent can still be steered by it. Review what it built before you publish."
+msgstr "Enquête-inhoud die de agent leest is informatie, geen instructie — toch kan een agent zich erdoor laten sturen. Controleer wat hij bouwde voordat je publiceert."
+
+#: api/templates/api/connections.html
+msgid "Set-up guide"
+msgstr "Installatiehandleiding"
+
+#: api/templates/api/connections.html
+msgid "Every tool the agent gets"
+msgstr "Alle tools van de agent"

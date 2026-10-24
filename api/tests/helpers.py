@@ -64,7 +64,8 @@ from django.conf import settings  # noqa: E402
 from oauth2_provider.models import Application  # noqa: E402
 
 ISSUER = 'https://testserver'
-RESOURCES = {'api': ISSUER + '/api/', 'mcp': ISSUER + '/mcp/'}
+# The MCP identifier has no trailing slash (change mcp-server, D1).
+RESOURCES = {'api': ISSUER + '/api/', 'mcp': ISSUER + '/mcp'}
 AUTHORIZE = '/oauth/authorize/'
 TOKEN = '/oauth/token/'
 REVOKE = '/oauth/revoke/'

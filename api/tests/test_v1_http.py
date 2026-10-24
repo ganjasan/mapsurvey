@@ -67,7 +67,7 @@ class V1HttpTest(TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json()['error'], 'not_found')
 
-    @override_settings(OAUTH_ISSUER=ISSUER, API_RESOURCE_URLS={'api': ISSUER + '/api/', 'mcp': ISSUER + '/mcp/'})
+    @override_settings(OAUTH_ISSUER=ISSUER, API_RESOURCE_URLS={'api': ISSUER + '/api/', 'mcp': ISSUER + '/mcp'})
     def test_protected_resource_metadata(self):
         """
         GIVEN the RFC 9728 document of the API

@@ -8062,3 +8062,51 @@ msgstr "Что-то ещё, что нам стоит знать? (необяза
 
 msgid "Spray"
 msgstr "Распылить"
+
+#: api/templates/api/connections.html
+msgid "Build surveys from your own AI agent. Connect Claude, ChatGPT, Claude Code, Cursor or any MCP client to this address and ask the agent in plain words:"
+msgstr "Создавайте опросы со своим ИИ-агентом. Подключите Claude, ChatGPT, Claude Code, Cursor или любой MCP-клиент к этому адресу и попросите агента простыми словами:"
+
+#: api/templates/api/connections.html
+msgid "Server URL"
+msgstr "URL сервера"
+
+#: api/templates/api/connections.html
+msgid "claude.ai, ChatGPT"
+msgstr "claude.ai, ChatGPT"
+
+#: api/templates/api/connections.html
+msgid "Add a custom connector with that URL and press Connect — you sign in on a Mapsurvey page and choose what to allow. No token needed."
+msgstr "Добавьте пользовательский коннектор с этим URL и нажмите «Подключить» — вы войдёте на странице Mapsurvey и выберете, что разрешить. Токен не нужен."
+
+#: api/templates/api/connections.html
+msgid "Claude Code"
+msgstr "Claude Code"
+
+#: api/templates/api/connections.html
+msgid "The first call opens the Allow page in your browser. To skip the sign-in, add a token made for the MCP server:"
+msgstr "Первый вызов откроет страницу разрешения в браузере. Чтобы обойтись без входа, добавьте токен, созданный для MCP-сервера:"
+
+#: api/templates/api/connections.html
+msgid "Claude Desktop, Cursor"
+msgstr "Claude Desktop, Cursor"
+
+#: api/templates/api/connections.html
+msgid "Add a remote MCP server with that URL and an Authorization header carrying a token from the list above (made for the MCP server)."
+msgstr "Добавьте удалённый MCP-сервер с этим URL и заголовок Authorization с токеном из списка выше (созданным для MCP-сервера)."
+
+#: api/templates/api/connections.html
+msgid "The agent sees and changes only surveys <strong>you</strong> own or collaborate on, within the permissions you allowed."
+msgstr "Агент видит и меняет только опросы, которыми владеете <strong>вы</strong> или в которых участвуете, — в пределах выданных вами прав."
+
+#: api/templates/api/connections.html
+msgid "Survey content the agent reads is data, not instructions — but an agent can still be steered by it. Review what it built before you publish."
+msgstr "Содержимое опроса, которое читает агент, — это данные, а не инструкции, но агент всё же может поддаться им. Проверьте, что он построил, прежде чем публиковать."
+
+#: api/templates/api/connections.html
+msgid "Set-up guide"
+msgstr "Инструкция по настройке"
+
+#: api/templates/api/connections.html
+msgid "Every tool the agent gets"
+msgstr "Все инструменты агента"

@@ -203,27 +203,27 @@ class TeaserDeltaTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], PAGE)
 
-    def test_mcp_block_and_interest_recorded_once(self):
+    def test_mcp_block_connects_and_the_notify_button_is_gone(self):
         """
-        GIVEN the connections page
-        WHEN the creator reads it and posts "Tell me when it's ready" twice
-        THEN the block shows the prompt, the first timestamp stays, one event fires, the confirmation shows
+        GIVEN the connections page after the MCP server shipped (change mcp-server)
+        WHEN the creator reads it and an old form posts "notify"
+        THEN the block shows the endpoint URL and the Claude Code command, no "Tell me when it's ready";
+             the post just redirects and records nothing
         """
+        from django.conf import settings
         html = self.client.get(PAGE).content.decode()
         self.assertIn('Create a Mapsurvey survey in Italian and English', html)
-        self.assertIn("Tell me when it's ready", html)
         self.assertIn('Personal access tokens', html)
+        self.assertIn(settings.MCP_RESOURCE_URL, html)
+        self.assertIn('claude mcp add --transport http mapsurvey', html)
+        self.assertNotIn("Tell me when it's ready", html)
+        self.assertNotIn('Coming soon', html)
 
         with mock.patch('survey.product_events.emit') as emit:
-            self.client.post(PAGE, {'action': 'notify'})
-            first = CreatorPreferences.objects.get(user=self.owner).agent_access_requested_at
-            self.client.post(PAGE, {'action': 'notify'})
-        self.assertIsNotNone(first)
-        self.assertEqual(CreatorPreferences.objects.get(user=self.owner).agent_access_requested_at, first)
-        self.assertEqual([c.args[0] for c in emit.call_args_list], [pe.AGENT_ACCESS_REQUESTED])
-        html = self.client.get(PAGE).content.decode()
-        self.assertIn("We'll email you", html)
-        self.assertNotIn('class="mcp-cta"', html)
+            response = self.client.post(PAGE, {'action': 'notify'})
+        self.assertEqual(response.status_code, 302)
+        self.assertIsNone(CreatorPreferences.objects.filter(user=self.owner).first())
+        self.assertEqual(emit.call_args_list, [])
 
     def test_entrances_in_both_bases_and_the_help_menu(self):
         """

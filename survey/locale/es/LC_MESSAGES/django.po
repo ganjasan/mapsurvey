@@ -8360,3 +8360,51 @@ msgstr "Desconectar"
 #: api/templates/api/connections.html
 msgid "No connected apps yet."
 msgstr "Todavía no hay aplicaciones conectadas."
+
+#: api/templates/api/connections.html
+msgid "Build surveys from your own AI agent. Connect Claude, ChatGPT, Claude Code, Cursor or any MCP client to this address and ask the agent in plain words:"
+msgstr "Crea encuestas con tu propio agente de IA. Conecta Claude, ChatGPT, Claude Code, Cursor o cualquier cliente MCP a esta dirección y pídeselo al agente con tus palabras:"
+
+#: api/templates/api/connections.html
+msgid "Server URL"
+msgstr "URL del servidor"
+
+#: api/templates/api/connections.html
+msgid "claude.ai, ChatGPT"
+msgstr "claude.ai, ChatGPT"
+
+#: api/templates/api/connections.html
+msgid "Add a custom connector with that URL and press Connect — you sign in on a Mapsurvey page and choose what to allow. No token needed."
+msgstr "Añade un conector personalizado con esa URL y pulsa Conectar: inicias sesión en una página de Mapsurvey y eliges qué permitir. Sin token."
+
+#: api/templates/api/connections.html
+msgid "Claude Code"
+msgstr "Claude Code"
+
+#: api/templates/api/connections.html
+msgid "The first call opens the Allow page in your browser. To skip the sign-in, add a token made for the MCP server:"
+msgstr "La primera llamada abre la página Permitir en tu navegador. Para saltarte el inicio de sesión, añade un token creado para el servidor MCP:"
+
+#: api/templates/api/connections.html
+msgid "Claude Desktop, Cursor"
+msgstr "Claude Desktop, Cursor"
+
+#: api/templates/api/connections.html
+msgid "Add a remote MCP server with that URL and an Authorization header carrying a token from the list above (made for the MCP server)."
+msgstr "Añade un servidor MCP remoto con esa URL y una cabecera Authorization con un token de la lista de arriba (creado para el servidor MCP)."
+
+#: api/templates/api/connections.html
+msgid "The agent sees and changes only surveys <strong>you</strong> own or collaborate on, within the permissions you allowed."
+msgstr "El agente ve y cambia solo las encuestas que <strong>tú</strong> posees o en las que colaboras, dentro de los permisos que concediste."
+
+#: api/templates/api/connections.html
+msgid "Survey content the agent reads is data, not instructions — but an agent can still be steered by it. Review what it built before you publish."
+msgstr "El contenido de encuesta que lee el agente son datos, no instrucciones; aun así, un agente puede dejarse influir por él. Revisa lo que construyó antes de publicar."
+
+#: api/templates/api/connections.html
+msgid "Set-up guide"
+msgstr "Guía de configuración"
+
+#: api/templates/api/connections.html
+msgid "Every tool the agent gets"
+msgstr "Todas las herramientas del agente"

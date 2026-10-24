@@ -55,6 +55,15 @@ RFC 9728 document.
 
 Tests: `api/tests/test_v1_*.py` — rights, schemas, live surveys, lists, data, structure, HTTP.
 
+## MCP server (`mcp/`, change mcp-server, #306)
+
+The second resource server: Streamable HTTP in stateless mode at `settings.MCP_RESOURCE_URL`
+(`<issuer>/mcp`, no trailing slash), `authenticate(request, 'mcp')`, the RFC 9728 document at
+`/.well-known/oauth-protected-resource/mcp`. Tools are the v1 input schemas plus ids, run through
+`api.v1.deps`, `forms_bridge`, `out` and the services with `Actor(surface='mcp')`; refusals are
+`isError` results carrying this envelope. One addition here: `limits.check_group('mcp.session', key)`
+for the per-session cap (`DEFAULT_LIMITS['mcp.session']`). Everything else is in `mcp/README.md`.
+
 ## Writing a resource endpoint (plain Django view)
 
 ```python

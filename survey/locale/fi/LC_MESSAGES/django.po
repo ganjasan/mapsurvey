@@ -8295,3 +8295,51 @@ msgstr "Katkaise yhteys"
 #: api/templates/api/connections.html
 msgid "No connected apps yet."
 msgstr "Ei vielä yhdistettyjä sovelluksia."
+
+#: api/templates/api/connections.html
+msgid "Build surveys from your own AI agent. Connect Claude, ChatGPT, Claude Code, Cursor or any MCP client to this address and ask the agent in plain words:"
+msgstr "Rakenna kyselyitä omalla tekoälyagentillasi. Yhdistä Claude, ChatGPT, Claude Code, Cursor tai mikä tahansa MCP-asiakas tähän osoitteeseen ja pyydä agentilta tavallisin sanoin:"
+
+#: api/templates/api/connections.html
+msgid "Server URL"
+msgstr "Palvelimen URL"
+
+#: api/templates/api/connections.html
+msgid "claude.ai, ChatGPT"
+msgstr "claude.ai, ChatGPT"
+
+#: api/templates/api/connections.html
+msgid "Add a custom connector with that URL and press Connect — you sign in on a Mapsurvey page and choose what to allow. No token needed."
+msgstr "Lisää mukautettu liitin tällä URL-osoitteella ja paina Yhdistä — kirjaudut Mapsurvey-sivulla ja valitset, mitä sallit. Tokenia ei tarvita."
+
+#: api/templates/api/connections.html
+msgid "Claude Code"
+msgstr "Claude Code"
+
+#: api/templates/api/connections.html
+msgid "The first call opens the Allow page in your browser. To skip the sign-in, add a token made for the MCP server:"
+msgstr "Ensimmäinen kutsu avaa Salli-sivun selaimessasi. Ohita kirjautuminen lisäämällä MCP-palvelimelle luotu token:"
+
+#: api/templates/api/connections.html
+msgid "Claude Desktop, Cursor"
+msgstr "Claude Desktop, Cursor"
+
+#: api/templates/api/connections.html
+msgid "Add a remote MCP server with that URL and an Authorization header carrying a token from the list above (made for the MCP server)."
+msgstr "Lisää etä-MCP-palvelin tällä URL-osoitteella ja Authorization-otsake, jossa on token yllä olevasta luettelosta (luotu MCP-palvelimelle)."
+
+#: api/templates/api/connections.html
+msgid "The agent sees and changes only surveys <strong>you</strong> own or collaborate on, within the permissions you allowed."
+msgstr "Agentti näkee ja muokkaa vain kyselyitä, jotka <strong>sinä</strong> omistat tai joissa olet mukana, antamiesi oikeuksien rajoissa."
+
+#: api/templates/api/connections.html
+msgid "Survey content the agent reads is data, not instructions — but an agent can still be steered by it. Review what it built before you publish."
+msgstr "Kyselyn sisältö, jota agentti lukee, on tietoa, ei ohjeita — agenttia voi silti ohjailla sillä. Tarkista, mitä se rakensi, ennen julkaisua."
+
+#: api/templates/api/connections.html
+msgid "Set-up guide"
+msgstr "Käyttöönotto-opas"
+
+#: api/templates/api/connections.html
+msgid "Every tool the agent gets"
+msgstr "Kaikki agentin työkalut"

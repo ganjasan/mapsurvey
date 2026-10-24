@@ -63,8 +63,13 @@ STRUCTURE_GATE_SHOWN = 'structure_gate_shown'               # browser: the promp
 
 # Ways to start (change first-survey-onboarding). `survey_created` says WHERE
 # the survey was made (`surface`) and where its map came from (`map_source`);
-# the agent event is the demand signal for the MCP server (#306).
+# the agent event WAS the demand signal for the MCP server (#306); the button
+# went with change mcp-server, the name stays for the historical rows.
 AGENT_ACCESS_REQUESTED = 'agent_access_requested'
+# The MCP server (change mcp-server, #306): one event per tools/call with the
+# tool name, the outcome (`ok` or the error code), the token id and kind --
+# never the arguments and never a survey id.
+MCP_TOOL_CALLED = 'mcp_tool_called'
 
 # Personal API tokens (change auth-core, #379). Properties are scopes, audiences
 # and the expiry choice -- never the label (free text) and never the value.

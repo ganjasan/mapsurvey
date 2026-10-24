@@ -21,8 +21,11 @@ HELP_LINKS = {
     'export': 'how-to/export-responses/',
     'pro': 'reference/plans-and-billing/',
     'rest_api': 'how-to/use-the-rest-api/',
-    # 'connected_apps': 'how-to/connect-an-app/' -- the page is a draft until the
-    # MCP server (#306) gives creators something to connect; add the key with it.
+    # The MCP server (change mcp-server, #306): the set-up guide, the generated
+    # tool reference, and the OAuth connectors page that waited for it.
+    'mcp': 'how-to/use-the-mcp-server/',
+    'mcp_tools': 'reference/mcp-tools/',
+    'connected_apps': 'how-to/connect-an-app/',
     'faq': 'faq/',
 }
 
