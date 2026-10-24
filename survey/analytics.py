@@ -227,8 +227,12 @@ class SurveyAnalyticsService:
     reported only under the explicit 'draft' scope.
     """
 
-    def __init__(self, survey, include_deleted=False, version='all', include_empty=True):
+    def __init__(self, survey, include_deleted=False, version='all', include_empty=True, sessions=None):
         self.survey = survey
+        # The API's response scope (change api-v2-responses, D2): when given, the
+        # per-question statistics count only these sessions -- the export's set --
+        # instead of every non-deleted one. None keeps the editor's behaviour.
+        self.sessions = sessions
         self.version = version
         self.scope = resolve_scope(survey, version)
         self.scope_ids = self.scope.ids
@@ -242,6 +246,12 @@ class SurveyAnalyticsService:
         self.include_empty = include_empty
         if not include_empty:
             self.base_qs = nonempty_sessions(self.base_qs)
+
+    def _session_filter(self):
+        """The answer filter every per-question statistic shares."""
+        if self.sessions is not None:
+            return {'survey_session__in': self.sessions}
+        return {'survey_session__is_deleted': False}
 
     def _active_scope_qs(self):
         return SurveySession.objects.active().filter(survey_id__in=self.scope_ids)
@@ -650,7 +660,7 @@ class SurveyAnalyticsService:
         """
         answers = Answer.objects.filter(
             question_id__in=self._lineage_ids(question),
-            survey_session__is_deleted=False,
+            **self._session_filter(),
         ).exclude(selected_choices__isnull=True)
 
         counts = {}
@@ -690,7 +700,7 @@ class SurveyAnalyticsService:
         """Compute stats for number/range questions (lineage-wide)."""
         qs = Answer.objects.filter(
             question_id__in=self._lineage_ids(question),
-            numeric__isnull=False, survey_session__is_deleted=False,
+            numeric__isnull=False, **self._session_filter(),
         )
         agg = qs.aggregate(
             avg=Avg('numeric'),
@@ -722,7 +732,7 @@ class SurveyAnalyticsService:
             'total_answers': (
                 Answer.objects
                 .filter(question_id__in=self._lineage_ids(question),
-                        text__isnull=False, survey_session__is_deleted=False)
+                        text__isnull=False, **self._session_filter())
                 .exclude(text='')
                 .count()
             ),
@@ -736,7 +746,7 @@ class SurveyAnalyticsService:
             'total_answers': (
                 Answer.objects
                 .filter(question_id__in=self._lineage_ids(question),
-                        survey_session__is_deleted=False)
+                        **self._session_filter())
                 .exclude(**{f'{geo_field}__isnull': True})
                 .count()
             ),
@@ -748,7 +758,7 @@ class SurveyAnalyticsService:
             'type': 'other',
             'total_answers': Answer.objects.filter(
                 question_id__in=self._lineage_ids(question),
-                survey_session__is_deleted=False,
+                **self._session_filter(),
             ).count(),
         }
 

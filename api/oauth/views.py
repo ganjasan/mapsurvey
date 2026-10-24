@@ -114,10 +114,11 @@ class AuthorizationView(DotAuthorizationView):
             ctx['client_host'] = client_host(application)
         ctx['redirect_host'] = _host_of(ctx.get('redirect_uri') or '')
         ctx['granted'] = [(s, scope_registry.LABELS.get(s, s)) for s in scopes
-                          if s not in scope_registry.DANGEROUS_SCOPES]
+                          if s not in scope_registry.SWITCH_SCOPES]
         form = ctx.get('form')
-        ctx['switches'] = [(s, scope_registry.LABELS.get(s, s), form[switch_name(s)] if form else None)
-                           for s in scopes if s in scope_registry.DANGEROUS_SCOPES]
+        ctx['switches'] = [(s, scope_registry.LABELS.get(s, s), form[switch_name(s)] if form else None,
+                            scope_registry.SWITCH_NOTES.get(s, ''))
+                           for s in scopes if s in scope_registry.SWITCH_SCOPES]
         memberships = (Membership.objects.filter(user=self.request.user)
                        .select_related('organization').order_by('organization__name'))
         workspaces = []

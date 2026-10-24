@@ -10,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from . import product_events as pe
+from .audit import audit
 from .models import Question, Answer, SurveySession, VALIDATION_STATUS_CHOICES, FILE_INPUT_TYPES
 from .export import OGR_AVAILABLE
 from .comments import open_counts as _thread_counts
@@ -474,10 +475,13 @@ def analytics_session_set_status(request, survey_uuid, session_id):
     session = get_object_or_404(SurveySession, id=session_id, survey_id__in=family_ids_with_draft(request.survey), is_deleted=False)
     status = request.POST.get('validation_status', '')
     svc = SessionValidationService()
+    old = session.validation_status or ''
     try:
         svc.set_status(session, status)
     except ValueError:
         return HttpResponse(status=400)
+    # The same row the API's moderation writes (change api-v2-responses, D6).
+    audit(request, 'response_status', request.survey, session_id=session.pk, old=old, new=status)
     return HttpResponse(status=204)
 
 
@@ -535,12 +539,16 @@ def analytics_bulk_set_status(request, survey_uuid):
     except (json.JSONDecodeError, AttributeError):
         return HttpResponse(status=400)
     svc = SessionValidationService()
+    changed = []
     try:
         with transaction.atomic():
             for s in sessions:
+                changed.append({'session_id': s.pk, 'old': s.validation_status or ''})
                 svc.set_status(s, status)
     except ValueError:
         return HttpResponse(status=400)
+    if changed:
+        audit(request, 'response_status', request.survey, sessions=changed, new=status)
     return HttpResponse(status=204, headers={'HX-Trigger': 'bulkActionDone'})
 
 

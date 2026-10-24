@@ -25,7 +25,7 @@ class ConsentForm(AllowForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for scope in scope_registry.DANGEROUS_SCOPES:
+        for scope in scope_registry.SWITCH_SCOPES:
             self.fields[switch_name(scope)] = forms.BooleanField(required=False)
 
     @staticmethod
@@ -41,8 +41,8 @@ class ConsentForm(AllowForm):
     def clean(self):
         cleaned = super().clean()
         requested = self.requested_scopes()
-        granted = [s for s in requested if s not in scope_registry.DANGEROUS_SCOPES]
+        granted = [s for s in requested if s not in scope_registry.SWITCH_SCOPES]
         granted += [s for s in requested
-                    if s in scope_registry.DANGEROUS_SCOPES and cleaned.get(switch_name(s))]
+                    if s in scope_registry.SWITCH_SCOPES and cleaned.get(switch_name(s))]
         cleaned['scope'] = scope_registry.to_string(granted)
         return cleaned

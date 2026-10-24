@@ -16,6 +16,7 @@ SURVEYS_WRITE = 'surveys:write'
 SURVEYS_PUBLISH = 'surveys:publish'
 SURVEYS_DELETE = 'surveys:delete'
 RESPONSES_READ = 'responses:read'
+RESPONSES_MODERATE = 'responses:moderate'
 
 # Ordered: this is the order forms and the consent page list them in. Plain
 # strings here because settings.py reads this dict before the app registry is
@@ -26,6 +27,7 @@ SCOPES = {
     SURVEYS_PUBLISH: 'Publish, close and reopen surveys',
     SURVEYS_DELETE: 'Delete surveys',
     RESPONSES_READ: 'Read and export responses',
+    RESPONSES_MODERATE: 'Approve, hold or reject responses',
 }
 LABELS = {
     SURVEYS_READ: _('Read surveys, sections and questions'),
@@ -33,6 +35,7 @@ LABELS = {
     SURVEYS_PUBLISH: _('Publish, close and reopen surveys'),
     SURVEYS_DELETE: _('Delete surveys'),
     RESPONSES_READ: _('Read and export responses'),
+    RESPONSES_MODERATE: _('Approve, hold or reject responses'),
 }
 
 WRITE_SCOPES = frozenset({SURVEYS_WRITE, SURVEYS_PUBLISH, SURVEYS_DELETE})
@@ -43,6 +46,16 @@ DEFAULT_SCOPES = (SURVEYS_READ, SURVEYS_WRITE, RESPONSES_READ)
 
 # Off unless the creator switches them on: these are the calls that cannot be undone.
 DANGEROUS_SCOPES = frozenset({SURVEYS_PUBLISH, SURVEYS_DELETE})
+
+# Every scope the consent page shows as a switch, off by default: the
+# irreversible ones, plus moderation (change api-v2-responses, D6) -- it can be
+# changed back, but it decides what leaves exports and public results.
+SWITCH_SCOPES = DANGEROUS_SCOPES | {RESPONSES_MODERATE}
+SWITCH_NOTES = {
+    SURVEYS_PUBLISH: _('This cannot be undone. Off unless you want this app to do it.'),
+    SURVEYS_DELETE: _('This cannot be undone. Off unless you want this app to do it.'),
+    RESPONSES_MODERATE: _('Rejected responses leave exports and public results; you can change it back.'),
+}
 
 
 def is_valid(scope):

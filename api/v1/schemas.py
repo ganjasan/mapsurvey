@@ -320,3 +320,22 @@ class ResponseOut(Schema):
 
 class ResponseList(Page):
     items: List[ResponseOut]
+
+
+# ─── Responses for agents (change api-v2-responses) ──────────────────────────
+
+class ExportLinkIn(In):
+    format: Literal['zip', 'xlsx', 'csv', 'gpkg', 'shp', 'kml'] = 'xlsx'
+    version: Optional[str] = Field(None, description='A version number, or omit for every version.')
+    include_all: bool = Field(False, description='Also deleted and rejected responses.')
+    completed_only: bool = Field(False, description='Only responses that reached the last section.')
+    files: bool = Field(False, description='Add uploaded files (turns a single-file format into a ZIP).')
+
+
+class ExportLinkOut(Schema):
+    url: str = Field(description='Open within 15 minutes; it checks your access again.')
+    expires_at: datetime
+
+
+class ModerateIn(In):
+    validation_status: Literal['approved', 'not_approved', 'on_hold', '']

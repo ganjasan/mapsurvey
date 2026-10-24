@@ -584,6 +584,10 @@ def _posthog_scrub_tags(tags):
         kept = {k: tags[k] for k in ('$request_path', '$request_method') if k in tags}
         tags.clear()
         tags.update(kept)
+        # An export link carries its credential in the path (change
+        # api-v2-responses, D5): keep the route, never the token.
+        if path.startswith(API_EXPORT_LINK_PREFIX):
+            tags['$request_path'] = API_EXPORT_LINK_PREFIX
     return tags
 
 
@@ -866,6 +870,7 @@ MCP_IMPORT_MAX_BYTES = int(os.environ.get('MCP_IMPORT_MAX_BYTES', 10 * 1024 * 10
 # Paths whose error capture keeps only the path and the method: a bearer
 # header must never ride along as a tag (see _posthog_scrub_tags).
 API_PATH_PREFIXES = ('/api/', '/mcp/', '/oauth/')
+API_EXPORT_LINK_PREFIX = '/api/v1/export-links/'
 # Per-environment override of api.limits.DEFAULT_LIMITS / DAILY_CAPS, by group
 # name: {'api.write': (10, 60), 'cap.survey_create': (3, 86400)}. Previews and
 # tests only; production runs the defaults.

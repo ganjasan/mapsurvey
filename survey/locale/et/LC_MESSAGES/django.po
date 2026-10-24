@@ -8752,3 +8752,11 @@ msgstr "Pakett"
 #, python-format
 msgid "Workspaces: %(total)s · on Pro: %(pro)s"
 msgstr "Tööruumid: %(total)s · Pro-ga: %(pro)s"
+
+#: api/scopes.py
+msgid "Approve, hold or reject responses"
+msgstr "Vastuste kinnitamine, ootele panek või tagasilükkamine"
+
+#: api/scopes.py
+msgid "Rejected responses leave exports and public results; you can change it back."
+msgstr "Tagasi lükatud vastused ei lähe ekspordi ega avalike tulemuste hulka; saad seda hiljem muuta."
