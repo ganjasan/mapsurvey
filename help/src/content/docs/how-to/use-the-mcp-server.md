@@ -5,9 +5,10 @@ sidebar:
   order: 16
 ---
 
-You end up with an AI assistant that can list, build and edit your surveys when you ask it to —
-"add a point question to the first section asking where a new bench should go, with a sub-question
-rating how urgent it is" — while responses and everything else stay in Mapsurvey.
+You end up with an AI assistant that can build and edit your surveys and report on what came back
+when you ask it to — "add a point question to the first section asking where a new bench should go,
+with a sub-question rating how urgent it is", "summarise the answers and map where people want
+benches" — while the data stays in Mapsurvey.
 
 The quickest way in is the product itself: **New Survey → Use your AI assistant** shows a tile for
 every assistant below, with one button or one command where the assistant allows it, and notices
@@ -182,6 +183,21 @@ workspaces, which of them include the API, and which tools it may use. Then try:
 - "Set the survey to open https://example.org/thanks after the last page."
 - "Publish it." — the agent asks you to confirm before it does.
 
+Once responses come in:
+
+- "Summarise the responses to Park improvements." — counts and distributions per question
+  (`get_response_summary`).
+- "What did people write about the playground?" — the comments themselves (`list_text_answers`).
+- "Show me where people drew the areas that need lighting." — the map answers as GeoJSON
+  (`get_answer_geojson`).
+- "Give me the answers as an Excel file." — a download link that works for 15 minutes
+  (`get_export_link`).
+- "Reject response #12, it is spam." — only if you switched on **Approve, hold or reject
+  responses** when connecting (`moderate_response`).
+
+The numbers match the export: empty, deleted and rejected responses are left out unless you ask
+for them.
+
 Open the survey in the editor to check the result. [MCP tools](/reference/mcp-tools/) lists every
 tool with its arguments.
 
@@ -194,7 +210,11 @@ tool with its arguments.
   editor. The agent gets a `draft_required` answer and knows to start them.
 - **Publishing and deleting always ask for confirmation.** The agent cannot delete a survey that
   respondents have answered; that is done in the editor, where the answers are shown first.
-- It does not read responses in this version.
+- It reads responses only with **Read and export responses**, and changes a response's status only
+  with **Approve, hold or reject responses** — a switch that is off unless you turn it on. It never
+  edits or deletes answers.
+- Respondents' text reaches the agent as data, under a note that it is not instructions — the same
+  mitigation as for survey content (see below).
 - Mapsurvey never sees your conversation — only the tool calls the agent makes, logged by name and
   outcome.
 

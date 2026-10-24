@@ -130,7 +130,11 @@ def list_responses(request, uuid: UUID, include_empty: bool = False, cursor: Opt
     """Responses of every version of the survey, newest first. Sessions that
     answered nothing are left out unless `include_empty=true`. Answers carry
     no respondent IP or browser."""
-    survey = deps.survey(request, uuid)
+    return response_page(deps.survey(request, uuid), include_empty, cursor, limit)
+
+
+def response_page(survey, include_empty=False, cursor=None, limit=50):
+    """One page of responses -- the route's body, shared with the MCP tool."""
     service = SurveyAnalyticsService(survey, include_empty=include_empty)
     qs = service.base_qs.select_related('survey').prefetch_related(
         Prefetch('answer_set', queryset=Answer.objects.select_related('question', 'layer_object')

@@ -343,6 +343,90 @@ Permission `surveys:read` · read-only
 |---|---|---|---|
 | `job_id` | integer | **required** | The job id import_survey returned. |
 
+### `get_response_summary`
+
+How many responses a survey has and what they say, question by question in section order: option counts with the most frequent "other" write-ins, number statistics, rating means, text and map answer counts. Sub-questions of map questions are nested under their map question; "Objects on the map" questions list each object with its answers. Counts the responses an export contains: no empty, deleted or rejected ones unless include_all. Start a report here, then use list_text_answers and get_answer_geojson for detail.
+
+Permission `responses:read` · role **viewer** · read-only
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+| `version` | string |  | One version number; omit for every version. |
+| `include_all` | boolean |  | Also count deleted and rejected responses. Default `False`. |
+| `completed_only` | boolean |  | Only responses that reached the last section. Default `False`. |
+
+### `list_responses`
+
+Individual responses, newest first, each with its "#N" number, language, validation status and every answer (map answers as GeoJSON geometry with their sub-answers). Prefer get_response_summary for numbers; use this to read particular responses.
+
+Permission `responses:read` · role **viewer** · read-only
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+| `include_empty` | boolean |  | Also responses that answered nothing. Default `False`. |
+| `cursor` | string |  | `next_cursor` of the previous page. |
+| `limit` | integer |  | Default `20`. |
+
+### `list_text_answers`
+
+The non-blank answers to one text question or text sub-question, newest first, each with the response number. Page through with `next_cursor` to read every comment.
+
+Permission `responses:read` · role **viewer** · read-only
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+| `question_id` | integer | **required** | A question id from get_survey. |
+| `version` | string |  | One version number; omit for every version. |
+| `include_all` | boolean |  | Also count deleted and rejected responses. Default `False`. |
+| `completed_only` | boolean |  | Only responses that reached the last section. Default `False`. |
+| `cursor` | string |  | `next_cursor` of the previous page. |
+| `limit` | integer |  | Default `50`. |
+
+### `get_answer_geojson`
+
+The points, lines, areas or spray clouds respondents drew for one map question, as a GeoJSON FeatureCollection (WGS 84). Each feature carries the answers to the sub-questions as properties and the response it came from. Stops at `limit` features and then says `truncated: true`; for everything, hand the person a link from get_export_link.
+
+Permission `responses:read` · role **viewer** · read-only
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+| `question_id` | integer | **required** | A question id from get_survey. |
+| `version` | string |  | One version number; omit for every version. |
+| `include_all` | boolean |  | Also count deleted and rejected responses. Default `False`. |
+| `completed_only` | boolean |  | Only responses that reached the last section. Default `False`. |
+| `limit` | integer |  | Most features to return. Default `200`. |
+
+### `get_export_link`
+
+A link for the person to download the responses as a file -- xlsx (Excel), csv, zip (GeoJSON + CSV), gpkg (GeoPackage), shp (Shapefile) or kml. It works for 15 minutes and checks access again when opened. Give the person the link; do not try to open it yourself.
+
+Permission `responses:read` · role **viewer** · read-only
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+| `format` | `xlsx` \| `csv` \| `zip` \| `gpkg` \| `shp` \| `kml` |  | Default `xlsx`. |
+| `version` | string |  | One version number; omit for every version. |
+| `include_all` | boolean |  | Also count deleted and rejected responses. Default `False`. |
+| `completed_only` | boolean |  | Only responses that reached the last section. Default `False`. |
+| `files` | boolean |  | Add files respondents uploaded. Default `False`. |
+
+### `moderate_response`
+
+Set a response's status: approved, on_hold, not_approved (rejected responses leave exports, summaries and public results), or "" to clear it. It can be changed back. Needs the editor role.
+
+Permission `responses:moderate` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+| `response_id` | integer | **required** | The response id from list_responses. |
+| `validation_status` | `approved` \| `not_approved` \| `on_hold` \| `` | **required** |  |
+
 ## Errors
 
 A refused call comes back as a tool error carrying the same envelope as the REST API:
