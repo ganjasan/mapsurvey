@@ -8875,3 +8875,11 @@ msgstr "Plan"
 #, python-format
 msgid "Workspaces: %(total)s · on Pro: %(pro)s"
 msgstr "Przestrzenie robocze: %(total)s · z Pro: %(pro)s"
+
+#: api/scopes.py
+msgid "Approve, hold or reject responses"
+msgstr "Zatwierdzanie, wstrzymywanie i odrzucanie odpowiedzi"
+
+#: api/scopes.py
+msgid "Rejected responses leave exports and public results; you can change it back."
+msgstr "Odrzucone odpowiedzi znikają z eksportów i wyników publicznych; można to cofnąć."

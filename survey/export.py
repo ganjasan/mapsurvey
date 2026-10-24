@@ -203,6 +203,7 @@ class GeoLayer:
     sessions: list = field(default_factory=list)     # SurveySession per feature
     sub_columns: list = field(default_factory=list)  # property keys from sub-questions, in order
     has_verdicts: bool = False
+    truncated: bool = False        # the API's per-question read stopped at its limit
 
 
 @dataclass
@@ -256,88 +257,129 @@ def collect(survey, version_surveys, excluded_session_ids=None):
     return bundle
 
 
-def _collect_part(survey, prefix, excluded_session_ids):
+def collect_question(question, headers, excluded_session_ids, limit=5000):
+    """One geo question's answers across the version headers in scope, as one
+    FeatureCollection (change api-v2-responses, D4). Versions hold their own
+    question rows, so the question is found in each header by its lineage --
+    code and type -- exactly as the Responses page aggregates it. Returns
+    (collection, truncated)."""
+    features = []
+    truncated = False
+    collection = None
+    for header in headers:
+        twin = (Question.objects
+                .filter(survey_section__survey_header=header, code=question.code,
+                        input_type=question.input_type)
+                .select_related('survey_section__survey_header')
+                .first())
+        if twin is None:
+            continue
+        layer = _geo_layer(header, twin, excluded_session_ids, limit=limit - len(features))
+        if collection is None:
+            collection = layer.collection
+        features.extend(layer.collection['features'])
+        if layer.truncated:   # set only when an answer was left out, never at an exact fit
+            truncated = True
+            break
+    if collection is None:
+        collection = {"type": "FeatureCollection", "name": question.name, "crs": CRS84,
+                      "properties": {}, "features": []}
+    collection = dict(collection, features=features)
+    return collection, truncated
+
+
+def _geo_layer(survey, question, excluded_session_ids, limit=None):
+    """One geo question of one version as a GeoLayer: the FeatureCollection with
+    sub-question values as properties. The export calls it for every geo
+    question; the API for one (change api-v2-responses, D4), with `limit`."""
     from .object_stats import shared_map_verdicts
 
+    layer_properties = {
+        "survey": question.survey_section.survey_header.name,
+        "survey_section": question.survey_section.name,
+        "required": question.required,
+    }
+    layer = GeoLayer(question=question, name=_sanitize_filename(question.name), collection=None)
+    features = []
+    verdicts = shared_map_verdicts(survey, question)
+    layer.has_verdicts = bool(verdicts)
+    geo_type = question.input_type
+    for geo_answer in question.answers():
+        if geo_answer.survey_session_id in excluded_session_ids:
+            continue
+        if limit is not None and len(features) >= limit:
+            layer.truncated = True
+            break
+
+        geom = geo_answer.geometry
+        if geom is None:
+            continue
+        if geo_type == "polygon":
+            coordinates = [[[i[0], i[1]] for i in geom.coords[0]]]
+        elif geo_type == "line":
+            coordinates = [[i[0], i[1]] for i in geom.coords]
+        elif geo_type == "spraycan":
+            coordinates = [[i[0], i[1]] for i in geom.coords]
+        else:
+            coordinates = [geom.coords[0], geom.coords[1]]
+
+        properties = {}
+        for subquestion, rows in geo_answer.subAnswers().items():
+            cell = _answer_cell(subquestion, rows)
+            # Unlike the CSV, every sub-question keeps a property even when
+            # it holds nothing: a feature collection whose attribute set
+            # varies per feature is awkward to read in QGIS.
+            if cell is EXPORT_NO_COLUMN:
+                properties[subquestion.name] = ""
+            elif isinstance(cell, dict):
+                # Several columns for one answer: ranking, a write-in option.
+                properties.update(cell)
+            else:
+                properties[subquestion.name] = cell
+        for key in properties:
+            if key not in layer.sub_columns:
+                layer.sub_columns.append(key)
+
+        if geo_type == "spraycan":
+            from survey import spray
+            properties["dot_count"] = len(geom)
+            properties["area_m2"] = int(round(spray.cloud_area_m2(geom)))
+
+        session = geo_answer.survey_session
+        properties["session"] = str(session)
+        properties["session_id"] = geo_answer.survey_session_id
+        properties["language"] = session.language or ''
+        properties["validation_status"] = session.validation_status or ''
+        # Shared map (spec shared-map-layer): the verdict other respondents
+        # gave this mark rides on the author's own feature — ten residents
+        # asking for the same corner are one feature with votes_up=9.
+        if verdicts:
+            properties.update(verdicts.get(geo_answer.pk) or {
+                "mark_key": "", "votes_up": 0, "votes_down": 0, "comments": 0})
+
+        features.append({
+            "type": "Feature",
+            "properties": properties,
+            "geometry": {"type": GEOMETRY_TYPE_NAMES[geo_type], "coordinates": coordinates},
+        })
+        layer.geometries.append(geom)
+        layer.sessions.append(session)
+
+    layer.collection = {
+        "type": "FeatureCollection",
+        "name": question.name,
+        "crs": CRS84,
+        "properties": layer_properties,
+        "features": features,
+    }
+    return layer
+
+
+def _collect_part(survey, prefix, excluded_session_ids):
     part = VersionPart(survey=survey, prefix=prefix)
 
     for question in survey.geo_questions():
-        layer_properties = {
-            "survey": question.survey_section.survey_header.name,
-            "survey_section": question.survey_section.name,
-            "required": question.required,
-        }
-        layer = GeoLayer(question=question, name=_sanitize_filename(question.name), collection=None)
-        features = []
-        verdicts = shared_map_verdicts(survey, question)
-        layer.has_verdicts = bool(verdicts)
-        geo_type = question.input_type
-        for geo_answer in question.answers():
-            if geo_answer.survey_session_id in excluded_session_ids:
-                continue
-
-            geom = geo_answer.geometry
-            if geom is None:
-                continue
-            if geo_type == "polygon":
-                coordinates = [[[i[0], i[1]] for i in geom.coords[0]]]
-            elif geo_type == "line":
-                coordinates = [[i[0], i[1]] for i in geom.coords]
-            elif geo_type == "spraycan":
-                coordinates = [[i[0], i[1]] for i in geom.coords]
-            else:
-                coordinates = [geom.coords[0], geom.coords[1]]
-
-            properties = {}
-            for subquestion, rows in geo_answer.subAnswers().items():
-                cell = _answer_cell(subquestion, rows)
-                # Unlike the CSV, every sub-question keeps a property even when
-                # it holds nothing: a feature collection whose attribute set
-                # varies per feature is awkward to read in QGIS.
-                if cell is EXPORT_NO_COLUMN:
-                    properties[subquestion.name] = ""
-                elif isinstance(cell, dict):
-                    # Several columns for one answer: ranking, a write-in option.
-                    properties.update(cell)
-                else:
-                    properties[subquestion.name] = cell
-            for key in properties:
-                if key not in layer.sub_columns:
-                    layer.sub_columns.append(key)
-
-            if geo_type == "spraycan":
-                from survey import spray
-                properties["dot_count"] = len(geom)
-                properties["area_m2"] = int(round(spray.cloud_area_m2(geom)))
-
-            session = geo_answer.survey_session
-            properties["session"] = str(session)
-            properties["session_id"] = geo_answer.survey_session_id
-            properties["language"] = session.language or ''
-            properties["validation_status"] = session.validation_status or ''
-            # Shared map (spec shared-map-layer): the verdict other respondents
-            # gave this mark rides on the author's own feature — ten residents
-            # asking for the same corner are one feature with votes_up=9.
-            if verdicts:
-                properties.update(verdicts.get(geo_answer.pk) or {
-                    "mark_key": "", "votes_up": 0, "votes_down": 0, "comments": 0})
-
-            features.append({
-                "type": "Feature",
-                "properties": properties,
-                "geometry": {"type": GEOMETRY_TYPE_NAMES[geo_type], "coordinates": coordinates},
-            })
-            layer.geometries.append(geom)
-            layer.sessions.append(session)
-
-        layer.collection = {
-            "type": "FeatureCollection",
-            "name": question.name,
-            "crs": CRS84,
-            "properties": layer_properties,
-            "features": features,
-        }
-        part.geo_layers.append(layer)
+        part.geo_layers.append(_geo_layer(survey, question, excluded_session_ids))
 
     _collect_object_answers(part, survey, excluded_session_ids)
 

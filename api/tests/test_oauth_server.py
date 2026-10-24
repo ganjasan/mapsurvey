@@ -254,6 +254,27 @@ class ConsentTest(_Flow):
         token = exchange(self.client, self.app, query(response['Location'])['code'], verifier).json()
         self.assertEqual(token['scope'], 'surveys:read surveys:write')
 
+    def test_moderation_is_a_switch_with_its_own_note(self):
+        """
+        GIVEN a client requesting responses:read and responses:moderate (change api-v2-responses)
+        WHEN the page renders and the user allows without ticking
+        THEN moderation is an unchecked switch whose note does not say "cannot be undone",
+             and the issued scope is responses:read
+        """
+        verifier, challenge = pkce()
+        page = self.client.get(AUTHORIZE, authorize_params(self.app, challenge,
+                                                           scope='responses:read responses:moderate'))
+        html = page.content.decode()
+        self.assertIn('name="switch_responses_moderate"', html)
+        self.assertNotIn('name="switch_responses_moderate" checked', html)
+        switch = html[html.index('name="switch_responses_moderate"'):]
+        switch = switch[:switch.index('</label>')]
+        self.assertIn('you can change it back', switch)
+        self.assertNotIn('cannot be undone', switch)
+        response = consent(self.client, html)
+        token = exchange(self.client, self.app, query(response['Location'])['code'], verifier).json()
+        self.assertEqual(token['scope'], 'responses:read')
+
     def test_switch_ticked_grants_the_scope(self):
         """
         GIVEN publish requested

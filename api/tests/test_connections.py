@@ -108,12 +108,14 @@ class ConnectionsPageTest(TestCase):
         """
         GIVEN the page
         WHEN the form renders
-        THEN read, write and responses:read are checked; publish and delete are not; both audiences are
+        THEN read, write and responses:read are checked; publish, delete and responses:moderate
+             are offered but not checked; both audiences are
         """
         html = self.client.get(PAGE).content.decode()
         for scope in ('surveys:read', 'surveys:write', 'responses:read'):
             self.assertRegex(html, rf'value="{scope}"[^>]*checked', scope)
-        for scope in ('surveys:publish', 'surveys:delete'):
+        self.assertIn('value="responses:moderate"', html)
+        for scope in ('surveys:publish', 'surveys:delete', 'responses:moderate'):
             self.assertNotRegex(html, rf'value="{scope}"[^>]*checked', scope)
         for audience in ('api', 'mcp'):
             self.assertRegex(html, rf'name="audiences"[^>]*value="{audience}"[^>]*checked')

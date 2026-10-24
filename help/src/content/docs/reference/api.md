@@ -579,7 +579,113 @@ The Responses page's "Export data" as a file: `zip` (GeoJSON + CSV),
 
 Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
 
+## Responses
+
+### `GET /surveys/{uuid}/responses/summary`
+
+Counts and per-question statistics over the sessions the export of the
+same parameters contains: no empty, deleted or rejected responses unless
+`include_all`. Sub-questions of map questions are nested under them.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `version` | query | string or null |  |
+| `include_all` | query | boolean |  |
+| `completed_only` | query | boolean |  |
+
+**200** no body
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `GET /surveys/{uuid}/questions/{question_id}/answers`
+
+Non-blank answers to one text question (or text sub-question), newest first.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `question_id` | path | integer | yes |
+| `version` | query | string or null |  |
+| `include_all` | query | boolean |  |
+| `completed_only` | query | boolean |  |
+| `cursor` | query | string or null |  |
+| `limit` | query | integer |  |
+
+**200** no body
+
+Errors: `bad_cursor`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `GET /surveys/{uuid}/questions/{question_id}/geojson`
+
+One map question's answers as a CRS84 FeatureCollection, sub-question
+values as properties -- the export's GeoJSON layer. Stops at 5 000 features
+(`truncated: true`); the full set is the export.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `question_id` | path | integer | yes |
+| `version` | query | string or null |  |
+| `include_all` | query | boolean |  |
+| `completed_only` | query | boolean |  |
+
+**200** no body
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `POST /surveys/{uuid}/export-link`
+
+A link to the export file, valid 15 minutes, for a person to open. Opening
+it checks again that you may read the survey and that its workspace is on Pro.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `format` | `zip` | `xlsx` | `csv` | `gpkg` | `shp` | `kml` |  |  |
+| `version` | string or null |  | A version number, or omit for every version. |
+| `include_all` | boolean |  | Also deleted and rejected responses. |
+| `completed_only` | boolean |  | Only responses that reached the last section. |
+| `files` | boolean |  | Add uploaded files (turns a single-file format into a ZIP). |
+
+**200** ExportLinkOut
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `PATCH /surveys/{uuid}/responses/{response_id}`
+
+Approve, hold or reject a response (`""` clears the status). Rejected
+responses leave exports, summaries and public results; shared-map layers
+are rebuilt. Needs the editor role.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `response_id` | path | integer | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `validation_status` | `approved` | `not_approved` | `on_hold` | `` | yes |  |
+
+**200** no body
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
 ## Objects
+
+### ExportLinkOut
+
+| Field | Type | Always | Notes |
+|---|---|---|---|
+| `url` | string | yes | Open within 15 minutes; it checks your access again. |
+| `expires_at` | date-time | yes |  |
 
 ### ImportJobOut
 

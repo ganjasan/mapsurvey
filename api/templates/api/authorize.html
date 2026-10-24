@@ -62,10 +62,10 @@ Headers (DENY, no-store) come from OAuthResponseHeadersMiddleware.{% endcomment 
       </ul>
       {% if switches %}
       <h2>{% trans "Only if you switch it on" %}</h2>
-      {% for code, label, field in switches %}
+      {% for code, label, field, note in switches %}
       <label class="oa-switch">
         {{ field }}
-        <span>{{ label }}<small>{% trans "This cannot be undone. Off unless you want this app to do it." %}</small></span>
+        <span>{{ label }}<small>{{ note }}</small></span>
       </label>
       {% endfor %}
       {% endif %}
