@@ -3,9 +3,7 @@
 ## Purpose
 
 The public help centre at help.mapsurvey.org (Starlight in `help/`): information architecture (Start here, How-to, Reference, Troubleshooting, Learn, Use cases, FAQ), page conventions, search, locale layout, feedback and analytics, deployment as a Render static site, and how the product links into it.
-
 ## Requirements
-
 ### Requirement: The help site is a Starlight project in `help/`
 The repository SHALL contain an Astro + Starlight project in `help/` with its own `package.json`, content in `help/src/content/docs/`, and an authoring guide `help/CONTRIBUTING.md`. `npm ci && npm run build` in `help/` SHALL produce a static site in `help/dist/` with no runtime server and no third-party search service.
 
@@ -113,7 +111,7 @@ The site SHALL use Mapsurvey's palette and type from the landing pages through `
 - **THEN** the page shows a search box above six section cards and a "popular pages" list
 
 ### Requirement: Product links resolve to existing pages
-The Django project SHALL define `HELP_SITE_URL` (default `https://help.mapsurvey.org`, empty disables help links) and a registry `survey/help_links.py` mapping keys to help-site paths; templates SHALL build help links only from the registry through the `HELP_URL` context variable. A test SHALL assert that every registry path corresponds to a page file under `help/src/content/docs/`.
+The Django project SHALL define `HELP_SITE_URL` (default `https://help.mapsurvey.org`, empty disables help links) and a registry `survey/help_links.py` mapping keys to help-site paths; templates SHALL build help links only from the registry through the `HELP_URL` context variable. A test SHALL assert that every registry path corresponds to a page file under `help/src/content/docs/`. With the MCP server live, the registry SHALL carry `mcp` (`how-to/use-the-mcp-server/`), `mcp_tools` (`reference/mcp-tools/`) and `connected_apps` (`how-to/connect-an-app/`), and those three pages SHALL NOT be `draft: true`; `reference/mcp-tools.md` SHALL be generated from the tool registry by `scripts/build_mcp_reference.py`.
 
 #### Scenario: Registry path exists
 - **WHEN** the test suite runs
@@ -126,6 +124,10 @@ The Django project SHALL define `HELP_SITE_URL` (default `https://help.mapsurvey
 #### Scenario: Learn more link
 - **WHEN** a signed-in creator opens the reference-layers panel in the editor
 - **THEN** a "Learn more" link points to `HELP_SITE_URL` + the registry path for reference layers and opens in a new tab
+
+#### Scenario: MCP pages are published
+- **WHEN** the help site is built
+- **THEN** `/how-to/use-the-mcp-server/`, `/reference/mcp-tools/` and `/how-to/connect-an-app/` are in the build (no `draft: true`) and the connections page links to the first two through `HELP_URL`
 
 ### Requirement: Support hand-off from the help site
 The main site SHALL open the support chat when a page is requested with `?support=1` by a signed-in creator and the chat is configured; otherwise the parameter SHALL be ignored.
@@ -144,3 +146,4 @@ The help menu change SHALL NOT be merged before the help site is live on `help.m
 #### Scenario: Gate checked at review
 - **WHEN** the Django PR that changes the help menu is reviewed
 - **THEN** its description lists the live URLs of the pages above
+
