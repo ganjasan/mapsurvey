@@ -1,0 +1,203 @@
+{% extends "editor/editor_base.html" %}
+{% load i18n %}
+{% load static %}
+{% load agent_tags %}
+{% comment %}Use your AI assistant (openspec: agent-onboarding, #312).
+
+Every tile and panel comes from survey/agent_clients.py; this template only draws
+them. All panels are rendered and the script shows one: the selected client comes
+from ?client=, else the browser's last choice, else Claude. Step 2 opens when the
+status poll sees a new MCP connection, or on "I've connected". "MCP", "token" and
+"OAuth" appear only inside the panels of clients that ask for them.{% endcomment %}
+
+{% block page_title %}{% trans "Use your AI assistant" %}{% endblock %}
+
+{% block navbar_content %}
+<span class="survey-name">{% trans "Use your AI assistant" %}</span>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  .ag-wrap { padding: 2rem 1.5rem 3rem; max-width: 900px; margin: 0 auto; }
+  .ag-back { display: inline-block; color: #6b7280; font-size: .85rem; margin: 0 0 1rem; }
+  .ag-steps { display: flex; margin: 0 0 1.25rem; list-style: none; padding: 0; }
+  .ag-steps li { flex: 1; display: flex; align-items: center; gap: .55rem; font-size: .85rem; color: #6b7280; }
+  .ag-steps li:last-child { flex: 0 0 auto; }
+  .ag-steps .dot { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: .75rem; background: #e5e7eb; color: #6b7280; flex: 0 0 auto; }
+  .ag-steps .bar { flex: 1; height: 2px; background: #e5e7eb; margin: 0 .5rem; }
+  .ag-steps li.on { color: #1f2937; font-weight: 600; }
+  .ag-steps li.on .dot { background: var(--accent); color: #fff; }
+  .ag-steps li.done .dot { background: #047857; color: #fff; }
+  .ag-steps li.done .bar { background: #047857; }
+  .ag-card { background: #fff; border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem 1.75rem; margin-bottom: 1rem; }
+  .ag-card h2 { font-size: 1.2rem; font-weight: 700; margin: 0 0 .35rem; }
+  .ag-hint { color: #6b7280; font-size: .9rem; line-height: 1.5; margin: 0; }
+  .ag-group { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; color: #6b7280; margin: 1.1rem 0 .5rem; }
+  .ag-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: .6rem; }
+  .ag-tile { border: 2px solid var(--border-color); border-radius: 12px; padding: .6rem .7rem; display: flex; gap: .6rem; align-items: center; background: #fff; text-align: left; font: inherit; color: inherit; min-height: 58px; cursor: pointer; position: relative; }
+  .ag-tile:hover { border-color: #c7cdd6; }
+  .ag-tile:focus-visible { outline: none; box-shadow: 0 0 0 4px #c7d2fe; }
+  .ag-tile[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-light); }
+  .ag-tile.dashed { border-style: dashed; }
+  .ag-logo { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: .95rem; flex: 0 0 auto; }
+  .ag-tile b { display: block; font-size: .88rem; line-height: 1.2; }
+  .ag-tile small { display: block; color: #6b7280; font-size: .72rem; line-height: 1.25; }
+  .ag-tag { position: absolute; top: -9px; right: 10px; font-size: .62rem; font-weight: 700; border-radius: 999px; padding: 1px 7px; border: 1px solid #fff; }
+  .ag-tag.one_click { background: #ecfdf5; color: #047857; }
+  .ag-tag.limited { background: #fef3c7; color: #b45309; }
+  .ag-tag.not_yet { background: #f3f4f6; color: #6b7280; }
+  .ag-pro { background: #fef3c7; color: #92400e; border-radius: 10px; padding: .6rem .9rem; font-size: .85rem; margin: 1rem 0 0; }
+  .ag-pro a { color: #92400e; font-weight: 600; text-decoration: underline; }
+  .ag-panel h3 { font-size: 1.05rem; font-weight: 700; margin: 0 0 .75rem; }
+  .ag-panel[hidden] { display: none; }
+  .ag-list { margin: 0 0 1rem; padding-left: 1.3rem; }
+  .ag-list li { padding: .35rem 0; font-size: .92rem; line-height: 1.5; }
+  .ag-key { display: inline-block; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 6px; padding: 0 6px; font-size: .85em; font-weight: 600; white-space: nowrap; }
+  .ag-copy { display: inline-flex; align-items: center; gap: .4rem; background: #f1f5f9; border-radius: 8px; padding: 3px 4px 3px 9px; margin-top: .25rem; max-width: 100%; }
+  .ag-copy code { color: #0f172a; font-size: .85rem; word-break: break-all; }
+  .ag-cmd { display: flex; gap: .5rem; align-items: flex-start; background: #0f172a; border-radius: 10px; padding: .6rem .7rem; margin: 0 0 .6rem; }
+  .ag-cmd code { flex: 1; color: #e2e8f0; font-size: .82rem; word-break: break-all; white-space: pre-wrap; }
+  .ag-cmd .btn { flex: 0 0 auto; }
+  .ag-install { display: inline-flex; align-items: center; gap: .5rem; border-radius: 12px; padding: .75rem 1.3rem; font-weight: 600; font-size: 1rem; color: #fff; text-decoration: none; }
+  .ag-install:hover { color: #fff; text-decoration: none; filter: brightness(1.05); }
+  .ag-notes { margin: .75rem 0 0; padding: 0; list-style: none; }
+  .ag-notes li { font-size: .82rem; color: #6b7280; line-height: 1.45; padding: .15rem 0; }
+  .ag-status { display: flex; align-items: center; gap: .6rem; font-size: .88rem; color: #6b7280; margin-top: 1.1rem; padding: .65rem .85rem; border-radius: 10px; background: var(--bg-muted); border: 1px dashed #cbd5e1; flex-wrap: wrap; }
+  .ag-status .spin { width: 14px; height: 14px; border: 2px solid #cbd5e1; border-top-color: var(--accent); border-radius: 50%; animation: ag-spin 1s linear infinite; }
+  .ag-status a { margin-left: auto; font-size: .85rem; }
+  .ag-status.ok { background: #ecfdf5; border: 1px solid #a7f3d0; color: #047857; font-weight: 600; }
+  @keyframes ag-spin { to { transform: rotate(360deg); } }
+  .ag-option { border: 1px solid var(--border-color); border-radius: 12px; padding: .8rem 1rem; display: flex; gap: .8rem; align-items: center; margin-bottom: .6rem; }
+  .ag-option div { flex: 1; font-size: .88rem; color: #6b7280; }
+  .ag-option b { display: block; color: #1f2937; font-size: .95rem; }
+  .ag-request { display: flex; gap: .5rem; margin-top: .4rem; max-width: 420px; }
+  .ag-goal { width: 100%; border: 1.5px solid #cfd4dc; border-radius: 12px; padding: .8rem 1rem; font-size: 1rem; margin: .9rem 0 .5rem; }
+  .ag-prompt { background: #0f172a; color: #e2e8f0; border-radius: 12px; padding: .7rem .9rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .78rem; line-height: 1.5; margin: .4rem 0 1rem; white-space: pre-wrap; }
+  .ag-prompt small { display: block; color: #94a3b8; font-size: .68rem; margin-bottom: .25rem; }
+  .ag-actions { display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; }
+  @media (max-width: 767.98px) {
+    .ag-wrap { padding: 1rem 1rem 2rem; }
+    .ag-card { padding: 1.1rem 1rem; }
+    .ag-tiles { grid-template-columns: repeat(2, 1fr); }
+    .ag-steps li span.label { display: none; }
+    .ag-steps li.on span.label { display: inline; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ag-wrap" id="agent-page"
+     data-status-url="{% url 'editor_survey_start_agent_status' %}"
+     data-request-url="{% url 'editor_survey_start_agent_request' %}"
+     data-since="{{ since }}"
+     data-requested="{{ requested_client }}"
+     data-default="{{ default_client }}">
+  {% csrf_token %}
+  <a href="{% url 'editor_survey_start' %}" class="ag-back"><i class="fas fa-arrow-left"></i> {% trans "Ways to start" %}</a>
+
+  <ol class="ag-steps" aria-label="{% trans "Steps" %}">
+    <li class="on" data-step="1"><span class="dot">1</span><span class="label">{% trans "Connect" context "agent step" %}</span><span class="bar"></span></li>
+    <li data-step="2"><span class="dot">2</span><span class="label">{% trans "Ask for a survey" %}</span><span class="bar"></span></li>
+    <li data-step="3"><span class="dot">3</span><span class="label">{% trans "Edit & publish" %}</span></li>
+  </ol>
+
+  <section class="ag-card">
+    <h2>{% trans "Which assistant do you use?" %}</h2>
+    <p class="ag-hint">{% trans "You connect once. After that, any chat can build and edit your surveys." %}</p>
+    {% for key, label, pairs in groups %}
+    <div class="ag-group">{{ label }}</div>
+    <div class="ag-tiles" data-group="{{ key }}">
+      {% for c, panel in pairs %}
+      <button type="button" class="ag-tile{% if c.slug == 'something-else' %} dashed{% endif %}" data-client="{{ c.slug }}" aria-pressed="false" aria-controls="ag-panel-{{ c.slug }}">
+        <span class="ag-logo" style="background:{{ c.color }}">{% if c.icon %}<i class="{{ c.icon }}"></i>{% else %}{{ c.letter }}{% endif %}</span>
+        <span><b>{{ c.name }}</b>{% if c.subtitle %}<small>{{ c.subtitle }}</small>{% endif %}</span>
+        {% if c.tag %}<span class="ag-tag {{ c.tag }}">{% for k, v in tag_labels.items %}{% if k == c.tag %}{{ v }}{% endif %}{% endfor %}</span>{% endif %}
+      </button>
+      {% endfor %}
+    </div>
+    {% endfor %}
+    {% if needs_pro %}
+    <div class="ag-pro"><i class="fas fa-star"></i>
+      {% blocktrans with name=org.name %}Your workspace <b>{{ name }}</b> is on Free. You can connect now; building surveys through an assistant needs Pro.{% endblocktrans %}
+      <a href="{% url 'org_billing' org.slug %}">{% trans "See plans" %}</a>
+    </div>
+    {% endif %}
+  </section>
+
+  {% for c, panel in clients %}
+  <section class="ag-card ag-panel" id="ag-panel-{{ c.slug }}" data-panel="{{ c.slug }}" data-method="{{ c.method }}"
+           {% if requested_client and c.slug != requested_client %}hidden{% elif not requested_client and c.slug != default_client %}hidden{% endif %}>
+    {% if c.method == 'unsupported' %}
+      <h3>{% trans "DeepSeek, Grok and most other chats can't connect to outside tools yet" %}</h3>
+      <p class="ag-hint" style="margin-bottom:1rem">{% trans "They have no way to add a connector. That is the app's limit, not your account's. Two ways to keep going:" %}</p>
+      {% if ai_available %}
+      <div class="ag-option">
+        <span class="ag-logo" style="background:linear-gradient(145deg,#3730a3,#6366f1)"><i class="fas fa-magic"></i></span>
+        <div><b>{% trans "Use the Survey wizard" %}</b>{% trans "Our built-in assistant. Describe your survey in one sentence; no other app needed." %}</div>
+        <a class="btn btn-sm btn-primary" href="{% url 'editor_survey_create' %}?from=start">{% trans "Open the wizard" %}</a>
+      </div>
+      {% endif %}
+      <div class="ag-option">
+        <span class="ag-logo" style="background:#d97757">✳</span>
+        <div><b>{% trans "Try Claude's free plan" %}</b>{% trans "It can add one connector for free, in one click." %}</div>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-select="claude">{% trans "Show me" %}</button>
+      </div>
+      <form class="ag-request-form" data-request>
+        <p class="ag-hint" style="margin-top:.6rem">{% trans "Using one of these anyway? Tell us which, and we'll add it when it can connect." %}</p>
+        <div class="ag-request">
+          <input type="text" name="name" maxlength="40" class="form-control form-control-sm" placeholder="{% trans "e.g. DeepSeek" %}" aria-label="{% trans "Assistant name" %}">
+          <button type="submit" class="btn btn-sm btn-outline-secondary">{% trans "Tell us" %}</button>
+        </div>
+        <p class="ag-hint" data-request-thanks hidden>{% trans "Thank you — noted." %}</p>
+      </form>
+    {% else %}
+      <h3>{% blocktrans with name=c.name %}Connect Mapsurvey to {{ name }}{% endblocktrans %}</h3>
+      {% if c.method == 'link' %}
+        <ol class="ag-list">{% for s in c.steps %}<li>{% agent_step s server_url %}</li>{% endfor %}</ol>
+        <a class="ag-install" style="background:{{ c.color }}" href="{{ panel.install_url }}" data-install
+           {% if panel.install_url|slice:":8" == "https://" %}target="_blank" rel="noopener"{% endif %}>
+          <i class="fas fa-plus"></i> {% blocktrans with name=c.name %}Add Mapsurvey to {{ name }}{% endblocktrans %}
+        </a>
+      {% elif c.method == 'command' %}
+        <p class="ag-hint" style="margin-bottom:.6rem">{% trans "Run this in your terminal:" %}</p>
+        {% for cmd in panel.commands %}
+        <div class="ag-cmd"><code>{{ cmd }}</code><button type="button" class="btn btn-sm btn-light" data-copy="{{ cmd }}" data-install><i class="far fa-copy"></i> {% trans "Copy" %}</button></div>
+        {% endfor %}
+      {% else %}
+        {% if c.vendor_url %}<p><a class="btn btn-sm btn-dark" href="{{ c.vendor_url }}" target="_blank" rel="noopener" data-install>{{ c.vendor_label }} <i class="fas fa-external-link-alt" style="font-size:.7em"></i></a></p>{% endif %}
+        <ol class="ag-list">{% for s in c.steps %}<li>{% agent_step s server_url %}</li>{% endfor %}</ol>
+        {% if panel.config %}<div class="ag-cmd"><code>{{ panel.config }}</code><button type="button" class="btn btn-sm btn-light" data-copy="{{ panel.config }}" data-install><i class="far fa-copy"></i> {% trans "Copy" %}</button></div>{% endif %}
+      {% endif %}
+      {% if c.notes %}<ul class="ag-notes">{% for n in c.notes %}<li>{{ n }}</li>{% endfor %}</ul>{% endif %}
+      {% if HELP_URL and c.help_anchor %}<p class="ag-hint" style="margin-top:.5rem;font-size:.82rem"><a href="{{ HELP_URL.mcp }}#{{ c.help_anchor }}" target="_blank" rel="noopener">{% trans "Step-by-step help" %}</a></p>{% endif %}
+    {% endif %}
+  </section>
+  {% endfor %}
+
+  <div class="ag-status" data-status aria-live="polite">
+    <span class="spin"></span><span data-status-text>{% trans "Waiting for your assistant to connect… this page updates by itself." %}</span>
+    <a href="#ag-ask" data-manual>{% trans "I've connected" %}</a>
+  </div>
+
+  <section class="ag-card" id="ag-ask" data-ask hidden style="margin-top:1rem">
+    <h2>{% trans "What do you want to find out?" %}</h2>
+    <p class="ag-hint">{% trans "One sentence is enough. Your assistant builds a draft survey; nothing is published without you." %}</p>
+    <input type="text" class="ag-goal" data-goal maxlength="300" placeholder="{% trans "Where people in our neighbourhood want new benches, and why" %}" aria-label="{% trans "What do you want to find out?" %}">
+    <div class="ag-prompt"><small>{% trans "Your assistant will receive" %}</small><span data-prompt></span></div>
+    <div class="ag-actions">
+      <a class="btn btn-primary" data-open="claude" href="https://claude.ai/new" target="_blank" rel="noopener">{% trans "Open in Claude" %} <i class="fas fa-external-link-alt" style="font-size:.7em"></i></a>
+      <a class="btn btn-outline-dark" data-open="chatgpt" href="https://chatgpt.com/" target="_blank" rel="noopener">{% trans "Open in ChatGPT" %} <i class="fas fa-external-link-alt" style="font-size:.7em"></i></a>
+      <button type="button" class="btn btn-outline-secondary" data-copy-prompt><i class="far fa-copy"></i> {% trans "Copy prompt" %}</button>
+    </div>
+    <p class="ag-hint" style="margin-top:1rem">{% blocktrans with url=dashboard_url %}The survey appears on your <a href="{{ url }}">dashboard</a> as soon as your assistant creates it. Open it there to check, edit and publish.{% endblocktrans %}</p>
+  </section>
+
+  {{ prompts|json_script:"agent-prompts" }}
+  {{ prompt_targets|json_script:"agent-prompt-targets" }}
+  {{ status_strings|json_script:"agent-strings" }}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/survey_start_agent.js' %}"></script>
+{% endblock %}

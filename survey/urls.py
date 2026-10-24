@@ -3,6 +3,7 @@ from django.views.generic import RedirectView
 
 from . import views
 from . import editor_views
+from . import agent_views
 from . import editor_group_views
 from . import layer_object_views
 from . import comment_views
@@ -49,8 +50,15 @@ urlpatterns = [
     path('editor/whats-new/cards/', editor_views.whats_new_cards, name='whats_new_cards'),
 
     # Ways to start (change first-survey-onboarding): the start page, the
-    # one-click blank survey, and the agent page #306 turns into the token page.
+    # one-click blank survey, and the old agent URL (now API & connections).
     path('editor/surveys/start/', editor_views.editor_survey_start, name='editor_survey_start'),
+    # Use your AI assistant (change agent-onboarding, #312): the page, the poll
+    # that notices a new MCP connection, and "Tell us which".
+    path('editor/surveys/start/agent/', agent_views.editor_survey_start_agent, name='editor_survey_start_agent'),
+    path('editor/surveys/start/agent/status/', agent_views.editor_survey_start_agent_status,
+         name='editor_survey_start_agent_status'),
+    path('editor/surveys/start/agent/request/', agent_views.editor_survey_start_agent_request,
+         name='editor_survey_start_agent_request'),
     path('editor/surveys/new/blank/', editor_views.editor_survey_create_blank, name='editor_survey_create_blank'),
     path('editor/account/', editor_views.editor_account_preferences, name='editor_account_preferences'),
     path('editor/account/mcp/', editor_views.editor_account_mcp, name='editor_account_mcp'),
