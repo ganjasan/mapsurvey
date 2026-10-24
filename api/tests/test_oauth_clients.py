@@ -159,6 +159,17 @@ class DcrTest(TestCase):
         self.assertEqual(app.registration_source, Application.RegistrationSource.DCR)
         self.assertEqual(app.name, 'My agent')
 
+    def test_extension_grant_is_ignored(self):
+        """
+        GIVEN a registration that also lists the jwt-bearer extension grant (#404)
+        WHEN posted
+        THEN 201, and the registered grant types are only the two this server issues
+        """
+        response = register(self.client, grant_types=[
+            'authorization_code', 'refresh_token', 'urn:ietf:params:oauth:grant-type:jwt-bearer'])
+        self.assertEqual(response.status_code, 201, response.content)
+        self.assertEqual(sorted(response.json()['grant_types']), ['authorization_code', 'refresh_token'])
+
     def test_eleventh_registration_in_an_hour_is_429(self):
         """
         GIVEN ten registrations from one IP
@@ -386,6 +397,42 @@ class CimdTest(TestCase):
         app = Application.objects.get(client_id=self.URL)
         self.assertEqual(app.registration_source, Application.RegistrationSource.CIMD)
         self.assertEqual(app.name, 'Claude')
+
+    def test_claude_ai_document_with_jwt_bearer(self):
+        """
+        GIVEN claude.ai's real metadata document (2026-10-24), which also lists the
+              jwt-bearer extension grant the toolkit cannot store (#404)
+        WHEN authorize is requested with that client_id
+        THEN the extra grant is ignored, a public authorization-code application exists
+             and the consent page renders with claude.ai as the host
+        """
+        url = 'https://claude.ai/oauth/mcp-oauth-client-metadata'
+        doc = {'client_id': url, 'client_name': 'Claude', 'client_uri': 'https://claude.ai',
+               'redirect_uris': [CLAUDE_CB],
+               'grant_types': ['authorization_code', 'refresh_token',
+                               'urn:ietf:params:oauth:grant-type:jwt-bearer'],
+               'response_types': ['code'], 'token_endpoint_auth_method': 'none'}
+        with mock.patch.object(SafeMetadataFetcher, 'fetch', return_value=(doc, 300)):
+            page = self._authorize(url)
+        html = page.content.decode()
+        self.assertEqual(page.status_code, 200, html[html.find('oa-error'):][:600])
+        self.assertIn('class="oa-host">claude.ai<', html)
+        app = Application.objects.get(client_id=url)
+        self.assertEqual(app.authorization_grant_type, Application.GRANT_AUTHORIZATION_CODE)
+        self.assertEqual(app.client_type, Application.CLIENT_PUBLIC)
+
+    def test_document_with_no_supported_grant_is_refused(self):
+        """
+        GIVEN a document that declares only client_credentials
+        WHEN authorize is requested
+        THEN it is still the unknown-client page and no application is created
+        """
+        doc = {'client_id': self.URL, 'client_name': 'x', 'redirect_uris': [CLAUDE_CB],
+               'grant_types': ['client_credentials'], 'token_endpoint_auth_method': 'none'}
+        with mock.patch.object(SafeMetadataFetcher, 'fetch', return_value=(doc, 300)):
+            response = self._authorize(self.URL)
+        self._assert_invalid_client(response)
+        self.assertFalse(Application.objects.filter(client_id=self.URL).exists())
 
 
 @OAUTH
