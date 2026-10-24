@@ -86,14 +86,16 @@ class ConnectedAppsTest(TestCase):
         self.assertEqual(self.client.post(PAGE, {'action': 'disconnect', 'application_id': 'x'}).status_code, 404)
         self.assertEqual(self.client.post(PAGE, {'action': 'disconnect', 'application_id': 999}).status_code, 404)
 
-    def test_help_link_waits_for_the_mcp_server(self):
+    def test_help_links_point_at_the_published_pages(self):
         """
-        GIVEN the help site configured
+        GIVEN the help site configured, with the MCP server live (change mcp-server)
         WHEN the page renders
-        THEN no "How to connect an app" link is shown: the page is a draft until #306 (no `connected_apps` key)
+        THEN "How to connect an app" and the MCP set-up guide link to the help site through the registry
         """
         from django.test import override_settings
         with override_settings(HELP_SITE_URL='https://help.example'):
             html = self.client.get(PAGE).content.decode()
-        self.assertNotIn('connect-an-app', html)
-        self.assertNotIn('How to connect an app', html)
+        self.assertIn('https://help.example/how-to/connect-an-app/', html)
+        self.assertIn('How to connect an app', html)
+        self.assertIn('https://help.example/how-to/use-the-mcp-server/', html)
+        self.assertIn('https://help.example/reference/mcp-tools/', html)

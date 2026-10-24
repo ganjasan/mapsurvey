@@ -8314,3 +8314,51 @@ msgstr "Putuskan"
 #: api/templates/api/connections.html
 msgid "No connected apps yet."
 msgstr "Belum ada aplikasi yang terhubung."
+
+#: api/templates/api/connections.html
+msgid "Build surveys from your own AI agent. Connect Claude, ChatGPT, Claude Code, Cursor or any MCP client to this address and ask the agent in plain words:"
+msgstr "Bangun survei dengan agen AI Anda sendiri. Hubungkan Claude, ChatGPT, Claude Code, Cursor, atau klien MCP apa pun ke alamat ini dan minta agen dengan kata-kata biasa:"
+
+#: api/templates/api/connections.html
+msgid "Server URL"
+msgstr "URL server"
+
+#: api/templates/api/connections.html
+msgid "claude.ai, ChatGPT"
+msgstr "claude.ai, ChatGPT"
+
+#: api/templates/api/connections.html
+msgid "Add a custom connector with that URL and press Connect — you sign in on a Mapsurvey page and choose what to allow. No token needed."
+msgstr "Tambahkan konektor kustom dengan URL tersebut dan tekan Connect — Anda masuk di halaman Mapsurvey dan memilih apa yang diizinkan. Tanpa token."
+
+#: api/templates/api/connections.html
+msgid "Claude Code"
+msgstr "Claude Code"
+
+#: api/templates/api/connections.html
+msgid "The first call opens the Allow page in your browser. To skip the sign-in, add a token made for the MCP server:"
+msgstr "Panggilan pertama membuka halaman Izinkan di browser Anda. Untuk melewati proses masuk, tambahkan token yang dibuat untuk server MCP:"
+
+#: api/templates/api/connections.html
+msgid "Claude Desktop, Cursor"
+msgstr "Claude Desktop, Cursor"
+
+#: api/templates/api/connections.html
+msgid "Add a remote MCP server with that URL and an Authorization header carrying a token from the list above (made for the MCP server)."
+msgstr "Tambahkan server MCP jarak jauh dengan URL tersebut dan header Authorization berisi token dari daftar di atas (dibuat untuk server MCP)."
+
+#: api/templates/api/connections.html
+msgid "The agent sees and changes only surveys <strong>you</strong> own or collaborate on, within the permissions you allowed."
+msgstr "Agen hanya melihat dan mengubah survei yang <strong>Anda</strong> miliki atau ikuti, dalam batas izin yang Anda berikan."
+
+#: api/templates/api/connections.html
+msgid "Survey content the agent reads is data, not instructions — but an agent can still be steered by it. Review what it built before you publish."
+msgstr "Konten survei yang dibaca agen adalah data, bukan instruksi — tetapi agen tetap bisa terpengaruh olehnya. Periksa apa yang dibangunnya sebelum Anda memublikasikan."
+
+#: api/templates/api/connections.html
+msgid "Set-up guide"
+msgstr "Panduan penyiapan"
+
+#: api/templates/api/connections.html
+msgid "Every tool the agent gets"
+msgstr "Semua alat yang didapat agen"

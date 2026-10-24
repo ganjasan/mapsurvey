@@ -41,12 +41,12 @@ that refuse cookies, not this one.{% endcomment %}
   .cx-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1.5rem; }
   .cx-revoke { background: none; border: 0; color: #b91c1c; font-size: .85rem; padding: 0; cursor: pointer; }
   .cx-empty { color: #9aa0a6; font-size: .9rem; margin: 0 0 1.25rem; }
-  .mcp-eyebrow { font-size: .7rem; font-weight: 600; background: #fef3c7; color: #b45309; border-radius: 999px; padding: 3px 10px; display: inline-block; margin-bottom: .75rem; }
   .mcp-prompt { background: #0f172a; color: #e2e8f0; border-radius: 12px; padding: .85rem 1rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .82rem; line-height: 1.5; margin: .9rem 0 1.1rem; }
   .mcp-prompt small { display: block; color: #94a3b8; font-size: .68rem; margin-bottom: .3rem; }
-  .mcp-cta { display: flex; align-items: center; gap: .9rem; flex-wrap: wrap; }
+  .mcp-code { display: inline; background: #f1f5f9; color: #0f172a; padding: 2px 6px; border-radius: 6px; font-size: .82rem; user-select: all; word-break: break-all; }
   .mcp-fine { font-size: .78rem; color: #9aa0a6; }
-  .mcp-done { display: flex; align-items: center; gap: .6rem; font-size: .92rem; color: #16a34a; font-weight: 500; }
+  #mcp .cx-table th { text-transform: none; letter-spacing: 0; font-size: .85rem; color: #374151; width: 11rem; vertical-align: top; padding-top: .55rem; }
+  #mcp .cx-table td { padding: .45rem .5rem; border-bottom: 1px solid var(--border-color); }
   @media (max-width: 767.98px) {
     .cx-card { padding: 1.25rem 1rem; }
     .cx-grid { grid-template-columns: 1fr; }
@@ -163,26 +163,25 @@ that refuse cookies, not this one.{% endcomment %}
     {% endif %}
   </div>
 
-  <div class="cx-card">
-    <span class="mcp-eyebrow">{% trans "Coming soon" %}</span>
-    <h2>{% trans "Build surveys from your own AI agent" %}</h2>
-    <p>{% trans "Mapsurvey is getting an MCP server. Connect it to Claude, ChatGPT, Cursor or any MCP client with a token from this page, and ask the agent in plain words:" %}</p>
+  {# The MCP server (change mcp-server, #306): what to paste where. One URL, no token for
+     the browser clients (they sign in through the Allow page), a token for the desktop ones. #}
+  <div class="cx-card" id="mcp">
+    <h2>{% trans "MCP server" %}</h2>
+    <p>{% trans "Build surveys from your own AI agent. Connect Claude, ChatGPT, Claude Code, Cursor or any MCP client to this address and ask the agent in plain words:" %}</p>
     <div class="mcp-prompt"><small>{% trans "example" %}</small>{% trans "Create a Mapsurvey survey in Italian and English about where traffic congestion is worst in Treviglio and why. Add a point question for the worst spots and a short text question for the reason. Give me the editor link." %}</div>
+    <table class="cx-table">
+      <tr><th>{% trans "Server URL" %}</th><td><code class="mcp-code">{{ mcp_url }}</code></td></tr>
+      <tr><th>{% trans "claude.ai, ChatGPT" %}</th><td>{% trans "Add a custom connector with that URL and press Connect — you sign in on a Mapsurvey page and choose what to allow. No token needed." %}</td></tr>
+      <tr><th>{% trans "Claude Code" %}</th><td><code class="mcp-code">claude mcp add --transport http mapsurvey {{ mcp_url }}</code><br><span class="mcp-fine">{% trans "The first call opens the Allow page in your browser. To skip the sign-in, add a token made for the MCP server:" %} <code class="mcp-code">--header "Authorization: Bearer msk_…"</code></span></td></tr>
+      <tr><th>{% trans "Claude Desktop, Cursor" %}</th><td>{% trans "Add a remote MCP server with that URL and an Authorization header carrying a token from the list above (made for the MCP server)." %}</td></tr>
+    </table>
     <ul>
-      <li>{% blocktrans %}The agent sees and changes only surveys <strong>you</strong> own or collaborate on.{% endblocktrans %}</li>
+      <li>{% blocktrans %}The agent sees and changes only surveys <strong>you</strong> own or collaborate on, within the permissions you allowed.{% endblocktrans %}</li>
       <li>{% trans "Mapsurvey never sees your chat — only the tool calls the agent makes." %}</li>
       <li>{% trans "Publishing and deleting always ask for an explicit confirmation." %}</li>
+      <li>{% trans "Survey content the agent reads is data, not instructions — but an agent can still be steered by it. Review what it built before you publish." %}</li>
     </ul>
-    {% if requested %}
-    <div class="mcp-done"><i class="fas fa-check-circle"></i> {% trans "We'll email you when it's ready." %}</div>
-    {% else %}
-    <form method="post" class="mcp-cta">
-      {% csrf_token %}
-      <input type="hidden" name="action" value="notify">
-      <button type="submit" class="btn btn-primary"><i class="fas fa-bell mr-1"></i>{% trans "Tell me when it's ready" %}</button>
-      <span class="mcp-fine">{% trans "One email when it launches. Nothing else." %}</span>
-    </form>
-    {% endif %}
+    {% if HELP_URL %}<p class="mcp-fine" style="margin:0;"><a href="{{ HELP_URL.mcp }}" target="_blank" rel="noopener">{% trans "Set-up guide" %}</a> · <a href="{{ HELP_URL.mcp_tools }}" target="_blank" rel="noopener">{% trans "Every tool the agent gets" %}</a></p>{% endif %}
   </div>
 
 </div>

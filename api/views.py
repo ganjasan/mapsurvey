@@ -1,5 +1,6 @@
 """The connections page (session-authenticated, an editor page), the body of
 `/api/v1/me`, and the API's protected-resource metadata (RFC 9728)."""
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.shortcuts import redirect, render
@@ -10,7 +11,7 @@ from billing.entitlements import for_organization
 from survey import product_events as pe
 from survey.abuse import client_ip
 from survey.audit import audit
-from survey.models import CreatorPreferences, Membership
+from survey.models import Membership
 
 from . import tokens
 from .oauth import grants
@@ -54,16 +55,12 @@ def me_payload(p):
 @login_required
 @require_http_methods(['GET', 'POST'])
 def connections(request):
-    """Personal tokens now; connected apps after #313. The MCP interest block
-    moved here from the teaser (`agent-access-teaser`), button and event intact."""
-    prefs, _created = CreatorPreferences.objects.get_or_create(user=request.user)
+    """Personal tokens, connected apps (#313) and the MCP connection block
+    (change mcp-server, #306 -- the former teaser's "Tell me when it's ready"
+    button is gone; an old form still posting `notify` just reloads the page)."""
     if request.method == 'POST':
         action = request.POST.get('action', '')
         if action == 'notify':
-            if prefs.agent_access_requested_at is None:
-                prefs.agent_access_requested_at = timezone.now()
-                prefs.save(update_fields=['agent_access_requested_at', 'updated_at'])
-                pe.emit(pe.AGENT_ACCESS_REQUESTED, request.user.pk)
             return redirect('editor_account_connections')
         if action == 'revoke':
             return _revoke(request)
@@ -96,7 +93,7 @@ def connections(request):
         'rows': rows,
         'apps': grants.connected_apps(request.user),
         'once': once,
-        'requested': prefs.agent_access_requested_at is not None,
+        'mcp_url': settings.MCP_RESOURCE_URL,
         'any_pro': any(for_organization(m.organization).has('api')
                        for m in Membership.objects.filter(user=request.user).select_related('organization')),
     })

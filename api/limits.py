@@ -34,6 +34,9 @@ DEFAULT_LIMITS = {
     'api.write': (60, MINUTE),
     'api.day': (5000, DAY),
     'api.auth_fail': (30, MINUTE),
+    # One MCP session's tool calls (change mcp-server): an agent in a loop is
+    # the realistic failure, and it burns one session, not the token's day.
+    'mcp.session': (300, 10 * MINUTE),
 }
 
 # action -> per-token daily cap. A new expensive action is a row here; `hit()`
@@ -132,6 +135,15 @@ def hit(principal, action):
     exceeded, time_left = _exceeded(f'tok:{principal.token_id}', f'cap.{action}')
     if exceeded:
         raise _limited(action, time_left)
+
+
+def check_group(group, key):
+    """Count one hit of `key` against a named group (`DEFAULT_LIMITS` or an
+    override) and raise ApiError(429) with Retry-After when it is exceeded.
+    The MCP server's per-session cap; REST uses the per-token windows above."""
+    exceeded, time_left = _exceeded(key, group)
+    if exceeded:
+        raise _limited(group, time_left)
 
 
 def auth_failures_exceeded(ip):

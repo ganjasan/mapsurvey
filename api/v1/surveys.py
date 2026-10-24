@@ -199,3 +199,11 @@ def discard_draft(request, uuid: UUID):
     svc_publishing.discard_draft(deps.actor(request), draft)
     return Status(204, None)
 
+
+# Public names for the MCP server (change mcp-server, #306), which runs the
+# same glue over the same services with its own actor surface.
+visible_surveys = _visible_surveys
+workspace_for = _workspace
+MapStart = _Start
+draft_of = _draft_of
+

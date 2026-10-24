@@ -68,6 +68,8 @@ INSTALLED_APPS = [
     # over it (change auth-core, #379). Settings block: OAUTH2_PROVIDER below.
     'oauth2_provider',
     'api.apps.ApiConfig',
+    # The MCP server, the second resource server on the layer above (change mcp-server, #306).
+    'mcp.apps.McpConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -842,13 +844,24 @@ SILENCED_SYSTEM_CHECKS = ['oauth2_provider.E003']
 
 # RFC 8707 resource indicators -> token audiences (api.oauth.audiences). A
 # client naming no resource gets both, like a personal token with both boxes
-# ticked; an indicator matching neither prefix is `invalid_target`. #306
-# changes MCP_RESOURCE_URL when the MCP host is decided.
-MCP_RESOURCE_URL = os.environ.get('MCP_RESOURCE_URL', OAUTH_ISSUER + '/mcp/')
+# ticked; an indicator matching neither prefix is `invalid_target`.
+#
+# The MCP server (change mcp-server, #306) is served by this process at
+# `<issuer>/mcp` -- no trailing slash, the form the MCP authorization spec
+# recommends for the `resource` indicator; the RFC 9728 document repeats it
+# byte for byte and `mcp.tests` pin the two together. An override is for a
+# dedicated host later; it must then also be what clients type.
+MCP_RESOURCE_URL = os.environ.get('MCP_RESOURCE_URL', OAUTH_ISSUER + '/mcp')
 API_RESOURCE_URLS = {
     'api': OAUTH_ISSUER + '/api/',
     'mcp': MCP_RESOURCE_URL,
 }
+# Origins allowed on the MCP endpoint besides the issuer's own (browser-based
+# MCP clients send one; Claude Code, ChatGPT and claude.ai send none). A
+# present Origin not listed here is 403 (DNS-rebinding rule of the transport).
+MCP_ALLOWED_ORIGINS = [o for o in os.environ.get('MCP_ALLOWED_ORIGINS', '').split() if o]
+# `import_survey` takes the survey.json document inline; larger than this is refused.
+MCP_IMPORT_MAX_BYTES = int(os.environ.get('MCP_IMPORT_MAX_BYTES', 10 * 1024 * 1024))
 
 # Paths whose error capture keeps only the path and the method: a bearer
 # header must never ride along as a tag (see _posthog_scrub_tags).

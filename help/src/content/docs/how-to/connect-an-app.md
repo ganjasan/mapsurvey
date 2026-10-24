@@ -1,8 +1,4 @@
 ---
-# Nothing to connect TO yet: the authorization server shipped with change oauth-server
-# (#313), the MCP server (#306) and the REST API (#380) are next. Remove `draft: true`,
-# the `connected_apps` help link and the changelog entry together, in the PR of #306.
-draft: true
 title: Connect ChatGPT, Claude and other apps
 description: Sign in once and let ChatGPT, claude.ai, Claude Code or any OAuth app work with your surveys — no token to copy, one click to disconnect.
 sidebar:
@@ -32,22 +28,22 @@ again unless it wants more than you granted.
 ## claude.ai (custom connector)
 
 1. In claude.ai open **Settings → Connectors → Add custom connector**.
-2. Enter the server URL Mapsurvey gives you for the MCP server (shown on **API & connections**
-   once the MCP server is live) and save. Leave the OAuth fields empty — claude.ai discovers them.
+2. Enter the MCP server URL, `https://mapsurvey.org/mcp` (also shown on **API & connections**),
+   and save. Leave the OAuth fields empty — claude.ai discovers them.
 3. Press **Connect**. A Mapsurvey tab opens: sign in if needed, read the Allow page, press
    **Allow**. You are sent back and the connector shows as connected.
 
 ## ChatGPT (Developer mode)
 
 1. Turn on **Developer mode** under **Settings → Connectors → Advanced**.
-2. **Create** a connector, enter the MCP server URL, choose **OAuth** as the authentication and
-   save.
+2. **Create** a connector, enter `https://mapsurvey.org/mcp` as the server URL, choose **OAuth** as
+   the authentication and save.
 3. Press **Connect** and allow access on the Mapsurvey page that opens.
 
 ## Claude Code
 
 ```sh
-claude mcp add --transport http mapsurvey <MCP server URL>
+claude mcp add --transport http mapsurvey https://mapsurvey.org/mcp
 ```
 
 The first tool call opens your browser on the Allow page; Claude Code listens on a local port for

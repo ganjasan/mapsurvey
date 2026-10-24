@@ -37,6 +37,8 @@ urlpatterns = [
     # Token-authenticated endpoints and the account's connections page
     # (change auth-core, #379). Bearer only -- no session on these paths.
     path('', include('api.urls')),
+    # The MCP server and its RFC 9728 document (change mcp-server, #306).
+    path('', include('mcp.urls')),
     path('i18n/', include('django.conf.urls.i18n')),
     path('admin/', admin.site.urls),
     path('accounts/register/', AbuseProtectedRegistrationView.as_view(), name='django_registration_register'),

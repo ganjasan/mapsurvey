@@ -8274,3 +8274,51 @@ msgstr "Ühenda lahti"
 #: api/templates/api/connections.html
 msgid "No connected apps yet."
 msgstr "Ühendatud rakendusi veel pole."
+
+#: api/templates/api/connections.html
+msgid "Build surveys from your own AI agent. Connect Claude, ChatGPT, Claude Code, Cursor or any MCP client to this address and ask the agent in plain words:"
+msgstr "Loo küsitlusi oma tehisaruagendiga. Ühenda Claude, ChatGPT, Claude Code, Cursor või mis tahes MCP-klient selle aadressiga ja palu agendilt lihtsate sõnadega:"
+
+#: api/templates/api/connections.html
+msgid "Server URL"
+msgstr "Serveri URL"
+
+#: api/templates/api/connections.html
+msgid "claude.ai, ChatGPT"
+msgstr "claude.ai, ChatGPT"
+
+#: api/templates/api/connections.html
+msgid "Add a custom connector with that URL and press Connect — you sign in on a Mapsurvey page and choose what to allow. No token needed."
+msgstr "Lisa kohandatud konnektor selle URL-iga ja vajuta Ühenda — logid sisse Mapsurvey lehel ja valid, mida lubada. Tokenit pole vaja."
+
+#: api/templates/api/connections.html
+msgid "Claude Code"
+msgstr "Claude Code"
+
+#: api/templates/api/connections.html
+msgid "The first call opens the Allow page in your browser. To skip the sign-in, add a token made for the MCP server:"
+msgstr "Esimene kutse avab brauseris Luba-lehe. Sisselogimise vahelejätmiseks lisa MCP-serveri jaoks loodud token:"
+
+#: api/templates/api/connections.html
+msgid "Claude Desktop, Cursor"
+msgstr "Claude Desktop, Cursor"
+
+#: api/templates/api/connections.html
+msgid "Add a remote MCP server with that URL and an Authorization header carrying a token from the list above (made for the MCP server)."
+msgstr "Lisa kaug-MCP-server selle URL-iga ja Authorization-päis ülaltoodud loendi tokeniga (loodud MCP-serveri jaoks)."
+
+#: api/templates/api/connections.html
+msgid "The agent sees and changes only surveys <strong>you</strong> own or collaborate on, within the permissions you allowed."
+msgstr "Agent näeb ja muudab ainult küsitlusi, mille omanik või kaastöötaja oled <strong>sina</strong>, sinu antud õiguste piires."
+
+#: api/templates/api/connections.html
+msgid "Survey content the agent reads is data, not instructions — but an agent can still be steered by it. Review what it built before you publish."
+msgstr "Küsitluse sisu, mida agent loeb, on andmed, mitte juhised — kuid agenti saab sellega siiski mõjutada. Vaata enne avaldamist üle, mida ta ehitas."
+
+#: api/templates/api/connections.html
+msgid "Set-up guide"
+msgstr "Seadistusjuhend"
+
+#: api/templates/api/connections.html
+msgid "Every tool the agent gets"
+msgstr "Kõik agendi tööriistad"
