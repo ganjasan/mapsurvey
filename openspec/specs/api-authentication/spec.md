@@ -4,7 +4,7 @@
 How a bearer token becomes a user: `api.auth.authenticate(request, audience)` is the only entry for every programmatic client (personal tokens, OAuth grants); bearer header only, uniform 401, account state on every call, the error envelope, and the rule that token values never reach logs.
 ## Requirements
 ### Requirement: Bearer token is the only API credential
-`api.auth.authenticate(request, audience)` SHALL resolve a principal only from an `Authorization: Bearer <token>` request header. A request without that header SHALL be anonymous on every API path regardless of any session cookie, and API views SHALL never read `request.user`. API views SHALL be exempt from CSRF checks because they accept no cookie credential. On `/api/v1/` the `401` challenge SHALL also name the API's RFC 9728 protected-resource metadata (`resource_metadata="<issuer>/.well-known/oauth-protected-resource/api/"`), and a request with an HTTP method the path does not offer SHALL still be answered `401 invalid_token` first when it carries no valid bearer.
+`api.auth.authenticate(request, audience)` SHALL resolve a principal only from an `Authorization: Bearer <token>` request header. A request without that header SHALL be anonymous on every API path regardless of any session cookie, and API views SHALL never read `request.user`. API views SHALL be exempt from CSRF checks because they accept no cookie credential. On `/api/v1/` the `401` challenge SHALL also name the API's RFC 9728 protected-resource metadata (`resource_metadata="<issuer>/.well-known/oauth-protected-resource/api/"`), and a request with an HTTP method the path does not offer SHALL still be answered `401 invalid_token` first when it carries no valid bearer. On the MCP endpoint (`settings.MCP_RESOURCE_URL`, audience `mcp`) the `401` challenge SHALL name the MCP document (`resource_metadata="<issuer>/.well-known/oauth-protected-resource/mcp"`), and a token whose audiences lack `mcp` SHALL be refused there with the same `401 invalid_token`.
 
 #### Scenario: Signed-in browser without a bearer
 - **WHEN** a client with a valid creator session cookie and no `Authorization` header requests `/api/v1/me`
@@ -21,6 +21,14 @@ How a bearer token becomes a user: `api.auth.authenticate(request, audience)` is
 #### Scenario: Wrong method with a valid bearer
 - **WHEN** a valid token sends `POST /api/v1/me`
 - **THEN** the response is `405 method_not_allowed` in the envelope with an `Allow` header
+
+#### Scenario: MCP challenge
+- **WHEN** a signed-in browser POSTs to the MCP endpoint without a bearer
+- **THEN** the response is `401 invalid_token` with `resource_metadata="<issuer>/.well-known/oauth-protected-resource/mcp"` in `WWW-Authenticate`
+
+#### Scenario: REST token on the MCP endpoint
+- **WHEN** a token with audiences `["api"]` POSTs to the MCP endpoint
+- **THEN** the response is `401 invalid_token`
 
 ### Requirement: Token validation order and uniform refusal
 `authenticate()` SHALL refuse, with one identical `401 invalid_token` response, a token that: lacks
