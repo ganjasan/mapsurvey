@@ -66,8 +66,12 @@ class TrackedLinkForm(forms.ModelForm):
 
 def _render_share(request, survey, form=None, embed_form=None, status=200):
     """The Share page, for both its forms (tracked links, embed hosts)."""
-    links = TrackedLink.objects.filter(survey=survey)
-    link_data = [{'obj': link, 'url': link.build_url(request)} for link in links]
+    # Tracked links live on the canonical survey, like the embed hosts and the
+    # results page; their URLs on the public base, never request.scheme, which
+    # is http behind the proxy (change api-v2-distribution).
+    base = public_base_url(request)
+    links = TrackedLink.objects.filter(survey=canonical_of(survey))
+    link_data = [{'obj': link, 'url': link.build_url(base)} for link in links]
 
     # A shared link only reaches the public when the survey is published; every other
     # status 404s (or is test-token only), so gate the copyable links behind that and
@@ -108,7 +112,7 @@ def share_page(request, survey_uuid):
         form = TrackedLinkForm(request.POST)
         if form.is_valid():
             link = form.save(commit=False)
-            link.survey = survey
+            link.survey = canonical_of(survey)
             link.save()
             return redirect('editor_survey_share', survey_uuid=survey_uuid)
     else:
@@ -137,7 +141,7 @@ def embed_settings(request, survey_uuid):
 def share_link_delete(request, survey_uuid, link_id):
     """Delete a tracked link."""
     survey = request.survey
-    link = get_object_or_404(TrackedLink, id=link_id, survey=survey)
+    link = get_object_or_404(TrackedLink, id=link_id, survey=canonical_of(survey))
     link.delete()
     if request.headers.get('HX-Request'):
         return HttpResponse('')

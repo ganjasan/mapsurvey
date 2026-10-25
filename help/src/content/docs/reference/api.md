@@ -678,6 +678,102 @@ are rebuilt. Needs the editor role.
 
 Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
 
+## Share
+
+### `GET /surveys/{uuid}/share`
+
+How to send the survey out: its link, the public results link, the embed
+snippet and allowed hosts -- once it is published (`shareable`). In testing,
+editors also get the test link with its token.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+
+**200** no body
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `GET /surveys/{uuid}/share/qr.{fmt}`
+
+A QR code of the survey link (or of tracked link `link`) for posters and
+flyers. `size` is pixels per module, 1-40.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `fmt` | path | `svg` | `png` | yes |
+| `size` | query | integer |  |
+| `link` | query | integer or null |  |
+
+**200** no body
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `not_shareable`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `GET /surveys/{uuid}/tracked-links`
+
+Campaign links -- the survey link with UTM parameters -- with how many
+responses started and completed through each.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+
+**200** no body
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `POST /surveys/{uuid}/tracked-links`
+
+Add a campaign link (editor role). At most 200 per survey.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `utm_source` | string | yes | Where the link is posted, e.g. "newsletter". |
+| `utm_medium` | string |  | e.g. "email", "poster", "social". |
+| `utm_campaign` | string |  | e.g. "spring-2027". |
+
+**200** no body
+
+Errors: `forbidden_role`, `invalid_token`, `limit_reached`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `DELETE /surveys/{uuid}/tracked-links/{link_id}`
+
+Remove a campaign link (editor role). Responses that came through it keep their source.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `link_id` | path | integer | yes |
+
+**200** no body
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `PUT /surveys/{uuid}/share/embed-hosts`
+
+Which sites may embed the survey (editor role); an empty list lets any site.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `hosts` | list of string | yes | Sites allowed to embed the survey, e.g. ["example.org", "*.city.gov"]; empty = any site. |
+
+**200** no body
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
 ## Objects
 
 ### ExportLinkOut
