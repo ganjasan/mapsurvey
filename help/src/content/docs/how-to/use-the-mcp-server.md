@@ -183,6 +183,17 @@ workspaces, which of them include the API, and which tools it may use. Then try:
 - "Set the survey to open https://example.org/thanks after the last page."
 - "Publish it." — the agent asks you to confirm before it does.
 
+To put context on the map:
+
+- "Add the city's bus stops from this GeoJSON as a layer, blue, labelled by stop name." — the agent
+  passes the GeoJSON to `create_layer` (WGS 84 longitude/latitude, at most 5 000 features) and
+  styles it with `update_layer`.
+- "Ask people to rate each of these stops." — an "Objects on the map" question bound to that layer.
+- "Turn the benches people marked into a shared map others can vote on, and hide the mark #3 that
+  is spam." — `layer_from_answers` on the question, then `moderate_layer_object`.
+
+Layers and their objects are changed only with the survey owner's role; deleting asks you first.
+
 To send it out:
 
 - "Give me the link and a QR code for a poster." — the link, and the QR as an image in the chat

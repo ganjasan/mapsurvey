@@ -15,6 +15,6 @@
 
 ## 3. MCP (PR 2)
 
-- [ ] 3.1 `mcp/tools/layers.py`: ten tools; confirm on deletes
-- [ ] 3.2 Tests; `scripts/build_mcp_reference.py`; help (what to ask about map layers); MCP changelog entry one sentence at most
-- [ ] 3.3 `./run_tests.sh api mcp survey`; `npm run build` in `help/`
+- [x] 3.1 `mcp/tools/layers.py`: ten tools; confirm on deletes
+- [x] 3.2 Tests; `scripts/build_mcp_reference.py`; help (what to ask about map layers); MCP changelog entry one sentence at most
+- [x] 3.3 `./run_tests.sh api mcp survey`; `npm run build` in `help/`
