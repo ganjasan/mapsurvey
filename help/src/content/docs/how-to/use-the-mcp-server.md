@@ -183,6 +183,15 @@ workspaces, which of them include the API, and which tools it may use. Then try:
 - "Set the survey to open https://example.org/thanks after the last page."
 - "Publish it." — the agent asks you to confirm before it does.
 
+To send it out:
+
+- "Give me the link and a QR code for a poster." — the link, and the QR as an image in the chat
+  (`get_share_links`, `get_qr_code`).
+- "Make separate links for the newsletter and the flyers." — tracked links, so the responses from
+  each are counted apart (`create_tracked_link`, `list_tracked_links`).
+- "Give me the code to embed it on our website, and allow only city.gov." — the embed snippet and
+  the allowed sites (`set_embed_hosts`).
+
 Once responses come in:
 
 - "Summarise the responses to Park improvements." — counts and distributions per question

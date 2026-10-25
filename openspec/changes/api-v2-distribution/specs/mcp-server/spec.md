@@ -5,7 +5,7 @@ The MCP server SHALL offer `get_share_links`, `get_qr_code`, `list_tracked_links
 `surveys:read`, and `create_tracked_link`, `delete_tracked_link`, `set_embed_hosts` under
 `surveys:write`, each over the REST functions of the same name. `get_qr_code` SHALL return the QR
 as a PNG image content block next to the `{note, data}` text block, `data` carrying the encoded URL
-and the REST URL of the SVG.
+(the REST SVG route needs a bearer, so it is no use to the person and is not handed over).
 
 #### Scenario: QR in the chat
 - **WHEN** an agent calls `get_qr_code` for a published survey
