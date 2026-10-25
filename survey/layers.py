@@ -137,6 +137,27 @@ class LayerValidationError(Exception):
     """Human-readable rejection reason, safe to show in the editor."""
 
 
+# An object's link ends up in an `href` on the respondent's card: only web links,
+# never `javascript:` / `data:` (change api-v2-layers -- it was never checked).
+LINK_MAX = 500
+_WEB_LINK = re.compile(r'^https?://[^\s<>"\']+$', re.IGNORECASE)
+
+
+def safe_link(value):
+    """The link if it is an http(s) URL within the length, else ''. For imports
+    and for rendering: a bad value is dropped, never shown."""
+    value = str(value or '').strip()
+    return value if value and len(value) <= LINK_MAX and _WEB_LINK.match(value) else ''
+
+
+def clean_object_link(value):
+    """'' or a valid web link; anything else is refused. For the editor and the API."""
+    value = str(value or '').strip()
+    if value and not safe_link(value):
+        raise LayerValidationError('A link must be a web address starting with http:// or https://.')
+    return value
+
+
 def _iter_coords(coords):
     """Yield (lng, lat) pairs from arbitrarily nested GeoJSON coordinates."""
     if not isinstance(coords, (list, tuple)) or not coords:
@@ -353,6 +374,16 @@ def derive_title(props, label_field, key):
     return key
 
 
+def _import_link(value, report):
+    """An imported link: kept when it is a web link, else dropped and counted."""
+    if value in (None, ''):
+        return ''
+    link = safe_link(value)
+    if not link:
+        report['invalid_links'] = report.get('invalid_links', 0) + 1
+    return link
+
+
 def explode_geometry(geometry):
     """A LayerObject holds one Point/LineString/Polygon. Multi* and
     GeometryCollection split into parts; the caller suffixes their keys.
@@ -447,7 +478,7 @@ def objects_from_features(layer, features, mapping=None, sanitize=None):
                 title=derive_title(props, label_field, part_key),
                 category=str(props.get(m['category']) or '')[:100] if m['category'] else '',
                 description=description,
-                link=str(props.get(m['link']) or '')[:500] if m['link'] else '',
+                link=_import_link(props.get(m['link']), report) if m['link'] else '',
                 geometry=GEOSGeometry(json.dumps(part), srid=4326),
                 position=start_pos + report['created'] + len(rows),
                 # Reserved names are re-derived on output; storing them would

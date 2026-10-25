@@ -674,18 +674,18 @@ def analytics_object_status(request, survey_uuid, layer_id, key):
     """Approve / hide / show one respondent's mark on a `question` layer."""
     from django.conf import settings as django_settings
     from django.http import Http404, JsonResponse
-    from .layers import layer_owner, rebuild_layer
-    from .models import LayerObject, SurveyMapLayer, LAYER_OBJECT_STATUS_CHOICES
+    from .layers import layer_owner
+    from .models import LayerObject, SurveyMapLayer
     if not django_settings.MAP_REFERENCE_LAYERS:
         raise Http404
     layer = get_object_or_404(SurveyMapLayer.objects.defer(*GEOMETRY_TEXT_FIELDS), pk=layer_id, survey=layer_owner(request.survey), source='question')
     obj = get_object_or_404(LayerObject, layer=layer, key=key)
-    status = request.POST.get('status', '')
-    if status not in {c[0] for c in LAYER_OBJECT_STATUS_CHOICES}:
+    from .services import layers as svc_layers
+    from .services.context import Actor
+    try:
+        svc_layers.set_object_status(Actor.from_request(request), layer, obj, request.POST.get('status', ''))
+    except svc_layers.LayerError:
         return HttpResponse(status=400)
-    obj.status = status
-    obj.save(update_fields=['status', 'updated_at'])
-    rebuild_layer(layer)
     return JsonResponse({'key': obj.key, 'status': obj.status})
 
 

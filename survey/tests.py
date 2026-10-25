@@ -35372,7 +35372,7 @@ class LayerEditorTest(TestCase):
         """
         from .models import SurveyMapLayer
         before = SurveyMapLayer.objects.filter(survey=self.survey).count()
-        with mock.patch('survey.editor_views.objects_from_features',
+        with mock.patch('survey.services.layers.objects_from_features',
                         side_effect=RuntimeError('boom')):
             with self.assertRaises(RuntimeError):
                 self._upload()

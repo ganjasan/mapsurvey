@@ -370,6 +370,7 @@ Add a question at the end of the section.
 | `display_style` | string or null |  |  |
 | `visibility_rule` | VisibilityRule or null |  |  |
 | `layer_id` | integer or null |  |  |
+| `layer_from_answers` | string or null |  | For an "Objects on the map" question: the code of a map question whose answers become a shared map (created on first use). Use instead of `layer_id`. |
 | `min_objects` | integer or null |  |  |
 | `share_with_respondents` | boolean or null |  |  |
 | `translations` | object or null |  |  |
@@ -439,6 +440,7 @@ visibility rule and removing an answered option are structure
 | `display_style` | string or null |  |  |
 | `visibility_rule` | VisibilityRule or null |  |  |
 | `layer_id` | integer or null |  |  |
+| `layer_from_answers` | string or null |  | For an "Objects on the map" question: the code of a map question whose answers become a shared map (created on first use). Use instead of `layer_id`. |
 | `min_objects` | integer or null |  |  |
 | `share_with_respondents` | boolean or null |  |  |
 | `translations` | object or null |  |  |
@@ -508,6 +510,7 @@ object of an Objects question: the sub-question appears in its pop-up.
 | `display_style` | string or null |  |  |
 | `visibility_rule` | VisibilityRule or null |  |  |
 | `layer_id` | integer or null |  |  |
+| `layer_from_answers` | string or null |  | For an "Objects on the map" question: the code of a map question whose answers become a shared map (created on first use). Use instead of `layer_id`. |
 | `min_objects` | integer or null |  |  |
 | `share_with_respondents` | boolean or null |  |  |
 | `translations` | object or null |  |  |
@@ -516,7 +519,7 @@ object of an Objects question: the sub-question appears in its pop-up.
 
 Errors: `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
 
-## Data
+## Layers
 
 ### `GET /surveys/{uuid}/layers`
 
@@ -529,6 +532,215 @@ The survey's reference layers, metadata only; fetch geometry from `geojson_url`.
 **200** list of LayerOut
 
 Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `POST /surveys/{uuid}/layers`
+
+A layer from GeoJSON in the body (or an empty one). Owner role; at most 10 layers per survey.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `name` | string or null |  |  |
+| `geojson` | object or null |  | A FeatureCollection, a Feature or a bare geometry in WGS 84 (lng, lat). At most 10 MB and 5 000 features; multi-part geometries become one object per part. Omit for an empty layer. |
+
+**201** object
+
+Errors: `forbidden_role`, `invalid_token`, `limit_reached`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `POST /surveys/{uuid}/layers/upload`
+
+A layer from a GeoJSON file (multipart). Owner role.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `file` | binary | yes |  |
+| `name` | string or null |  |  |
+
+**201** object
+
+Errors: `forbidden_role`, `invalid_token`, `limit_reached`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `PUT /surveys/{uuid}/layers/order`
+
+Set the layers' order (map stacking and the Layers panel). Owner role.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `layer_ids` | list of integer | yes | Every layer id of the survey, in the new order. |
+
+**200** no body
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `PATCH /surveys/{uuid}/layers/{layer_id}`
+
+Name, color, label/key field, popups and style -- never geometry. Owner role.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `layer_id` | path | integer | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `name` | string or null |  |  |
+| `color` | string or null |  | #rrggbb |
+| `label_field` | string or null |  | A property shown as the object title on the map. |
+| `key_field` | string or null |  |  |
+| `show_popups` | boolean or null |  |  |
+| `style` | object or null |  | opacity, weight, fill_opacity, radius, icon, legend, and `by` — one rule on one property (categories or graduated classes). Normalised on save. |
+
+**200** no body
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `DELETE /surveys/{uuid}/layers/{layer_id}`
+
+Delete a layer and its objects -- refused while a question uses it. Owner role.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `layer_id` | path | integer | yes |
+
+**200** no body
+
+Errors: `conflict`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `GET /surveys/{uuid}/layers/{layer_id}/objects`
+
+The layer's objects with geometry and properties, paged.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `layer_id` | path | integer | yes |
+| `cursor` | query | string or null |  |
+| `limit` | query | integer |  |
+
+**200** no body
+
+Errors: `bad_cursor`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `POST /surveys/{uuid}/layers/{layer_id}/objects`
+
+Add an object. Owner role; not on a shared-map layer.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `layer_id` | path | integer | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `key` | string or null |  | Unique in the layer; generated when omitted. |
+| `title` | string or null |  |  |
+| `category` | string or null |  |  |
+| `description` | string or null |  | Rich text; sanitised like every creator text. |
+| `link` | string or null |  | An http:// or https:// address. |
+| `geometry` | object | yes |  |
+| `properties` | object or null |  |  |
+
+**201** object
+
+Errors: `conflict`, `forbidden_role`, `invalid_token`, `limit_reached`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `GET /surveys/{uuid}/layers/{layer_id}/objects/{key}`
+
+Get Object
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `layer_id` | path | integer | yes |
+| `key` | path | string | yes |
+
+**200** no body
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `PATCH /surveys/{uuid}/layers/{layer_id}/objects/{key}`
+
+Change an object's text, link, geometry or properties. The key cannot change. Owner role.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `layer_id` | path | integer | yes |
+| `key` | path | string | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `key` | string or null |  | Unique in the layer; generated when omitted. |
+| `title` | string or null |  |  |
+| `category` | string or null |  |  |
+| `description` | string or null |  | Rich text; sanitised like every creator text. |
+| `link` | string or null |  | An http:// or https:// address. |
+| `geometry` | object or null |  | One Point, LineString or Polygon (WGS 84). |
+| `properties` | object or null |  |  |
+
+**200** no body
+
+Errors: `conflict`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `DELETE /surveys/{uuid}/layers/{layer_id}/objects/{key}`
+
+Delete Object
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `layer_id` | path | integer | yes |
+| `key` | path | string | yes |
+
+**200** no body
+
+Errors: `conflict`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `PATCH /surveys/{uuid}/layers/{layer_id}/objects/{key}/status`
+
+Moderate a mark on a shared map: visible, pending or hidden. Editor role.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `layer_id` | path | integer | yes |
+| `key` | path | string | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `status` | string | yes | visible, pending or hidden. |
+
+**200** no body
+
+Errors: `conflict`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+## Data
 
 ### `GET /surveys/{uuid}/layers/{layer_id}/geojson`
 

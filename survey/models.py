@@ -1540,6 +1540,20 @@ class AuditLog(models.Model):
         # scopes and audiences -- never a code, a token or the client name.
         ('oauth_consent', 'OAuth app allowed'),
         ('oauth_disconnect', 'OAuth app disconnected'),
+        # API & MCP v2 (epic #408): what the editor and the API/MCP now record.
+        # Ids and names only -- never respondent text.
+        ('response_status', 'Response status changed'),
+        ('tracked_link_create', 'Tracked link created'),
+        ('tracked_link_delete', 'Tracked link deleted'),
+        ('embed_hosts_set', 'Embed hosts set'),
+        ('layer_create', 'Map layer created'),
+        ('layer_update', 'Map layer updated'),
+        ('layer_delete', 'Map layer deleted'),
+        ('layer_reorder', 'Map layers reordered'),
+        ('layer_object_create', 'Layer object created'),
+        ('layer_object_update', 'Layer object updated'),
+        ('layer_object_delete', 'Layer object deleted'),
+        ('layer_object_status', 'Shared-map mark moderated'),
     )
 
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)

@@ -253,6 +253,7 @@ Permission `surveys:write` · role **editor**
 | `display_style` | string |  |  |
 | `visibility_rule` | object (`question_code`, `choice_codes`, `answered`) |  |  |
 | `layer_id` | integer |  |  |
+| `layer_from_answers` | string |  | For an "Objects on the map" question: the code of a map question whose answers become a shared map (created on first use). Use instead of `layer_id`. |
 | `min_objects` | integer |  |  |
 | `share_with_respondents` | boolean |  |  |
 | `translations` | map |  |  |
@@ -279,6 +280,7 @@ Permission `surveys:write` · role **editor**
 | `display_style` | string |  |  |
 | `visibility_rule` | object (`question_code`, `choice_codes`, `answered`) |  |  |
 | `layer_id` | integer |  |  |
+| `layer_from_answers` | string |  | For an "Objects on the map" question: the code of a map question whose answers become a shared map (created on first use). Use instead of `layer_id`. |
 | `min_objects` | integer |  |  |
 | `share_with_respondents` | boolean |  |  |
 | `translations` | map |  |  |

@@ -10,10 +10,9 @@ import csv
 import io
 import json
 import os
-from contextlib import contextmanager
 
 from django.conf import settings
-from django.contrib.gis.geos import GEOSGeometry, GEOSException
+from django.contrib.gis.geos import GEOSGeometry
 from django.db import transaction
 from django.db.models import Max, Sum
 from django.http import Http404, JsonResponse, HttpResponse
@@ -27,10 +26,11 @@ from .layer_assets import (
 )
 from .layers import (
     layer_owner, layers_for, objects_from_features, rebuild_layer, check_object_caps, GEOMETRY_TEXT_FIELDS,
-    validate_layer_upload, LayerValidationError, explode_geometry, _clean_key,
-    MAX_LAYER_BYTES, MAX_LAYERS_PER_SURVEY,
+    validate_layer_upload, LayerValidationError, _clean_key, MAX_LAYER_BYTES, safe_link,
 )
 from .models import SurveyMapLayer, LayerObject, LayerObjectAsset, Answer
+from .services import layers as svc_layers
+from .services.context import Actor
 from .permissions import survey_permission_required
 
 
@@ -63,26 +63,8 @@ def _object(request, layer_id, key, writable=False):
     return layer, get_object_or_404(LayerObject, layer=layer, key=key)
 
 
-@contextmanager
-def _layer_write(layer):
-    """Serialise writers of one layer, for the whole read-modify-rebuild.
-
-    Key generation counts and reads the layer's keys, `check_object_caps` counts
-    its objects, and `rebuild_layer` recomputes the derived GeoJSON from all of
-    them — each a read the writer then acts on. Without a lock two concurrent
-    creates pick the same `o-N` (one of them then dies on
-    `layerobject_unique_key_per_layer`), and two rebuilds each write a cache
-    holding only their own insert, so the last to commit drops the other's
-    object from the map until some later write rebuilds it.
-
-    `.only('pk')` because the lock wants the row, not its contents: selecting
-    the layer unfiltered would pull `geojson_gz` — up to 10 MB, and a gunicorn
-    worker keeps the resident memory of its largest request for life (see
-    CLAUDE.md, layer memory rules).
-    """
-    with transaction.atomic():
-        SurveyMapLayer.objects.select_for_update().only('pk').get(pk=layer.pk)
-        yield
+# The per-layer lock lives in the layer service (change api-v2-layers).
+_layer_write = svc_layers.layer_write
 
 
 def _writes_objects(view):
@@ -119,26 +101,6 @@ def _next_key(layer, prefix='o'):
         n += 1
         key = f'{prefix}-{n}'
     return key
-
-
-def _geometry_from(payload):
-    """A GeoJSON geometry dict (or string) → single-part GEOSGeometry, or None."""
-    geometry = payload.get('geometry') if isinstance(payload, dict) else None
-    if isinstance(geometry, str):
-        try:
-            geometry = json.loads(geometry)
-        except ValueError:
-            return None
-    parts = explode_geometry(geometry)
-    if len(parts) != 1:
-        return None
-    try:
-        geom = GEOSGeometry(json.dumps(parts[0]), srid=4326)
-    except (GEOSException, ValueError, TypeError):
-        return None
-    if not geom.valid and geom.geom_type != 'Point':
-        return None
-    return geom
 
 
 def object_row(obj, cover_url=''):
@@ -213,13 +175,10 @@ def layer_editor(request, survey_uuid, layer_id):
 def layer_create_empty(request, survey_uuid):
     """"New layer" on the settings card: an empty layer that opens in the editor."""
     _enabled_or_404()
-    owner = layer_owner(request.survey)
-    if owner.map_layers.count() >= MAX_LAYERS_PER_SURVEY:
-        return _error(f'A survey can hold {MAX_LAYERS_PER_SURVEY} reference layers.')
-    name = (request.POST.get('name') or 'New layer').strip()[:100]
-    position = (owner.map_layers.aggregate(m=Max('position'))['m'] or 0) + 1
-    layer = SurveyMapLayer.objects.create(survey=owner, name=name, geojson='', position=position)
-    rebuild_layer(layer)
+    try:
+        layer = svc_layers.create_empty(Actor.from_request(request), request.survey, request.POST.get('name'))
+    except svc_layers.LayerError as exc:
+        return _error(exc.message)
     return JsonResponse({'id': layer.pk, 'name': layer.name}, status=201)
 
 
@@ -235,28 +194,13 @@ def objects_collection(request, survey_uuid, layer_id):
         return JsonResponse({'objects': rows, 'summary': _layer_summary(layer)})
 
     payload = _body(request)
-    geom = _geometry_from(payload)
-    if geom is None:
-        return _error('A single Point, LineString or Polygon geometry is required.')
-    # Caps, key allocation, insert and rebuild all under the layer lock: each of
-    # them reads what the next one writes, and outside the lock two creators
-    # racing land on the same generated key.
-    with _layer_write(layer):
-        try:
-            check_object_caps(layer, adding=1)
-        except LayerValidationError as exc:
-            return _error(exc)
-        key = _clean_key(payload.get('key') or '') or _next_key(layer)
-        if layer.items.filter(key=key).exists():
-            return _error(f'An object with key "{key}" already exists in this layer.')
-        obj = LayerObject.objects.create(
-            layer=layer, key=key,
-            title=str(payload.get('title') or '')[:255],
-            category=str(payload.get('category') or '')[:100],
-            geometry=geom,
-            position=(layer.items.aggregate(m=Max('position'))['m'] or 0) + 1,
-        )
-        rebuild_layer(layer)
+    # Caps, key allocation, insert and rebuild run under the layer lock inside
+    # the service (two creators racing used to land on the same generated key).
+    fields = {k: payload.get(k) for k in ('geometry', 'key', 'title', 'category') if k in payload}
+    try:
+        obj = svc_layers.create_object(Actor.from_request(request), layer, fields)
+    except svc_layers.LayerError as exc:
+        return _error(exc.message)
     return JsonResponse({'object': _object_detail(obj), 'row': object_row(obj),
                          'summary': _layer_summary(layer)}, status=201)
 
@@ -270,22 +214,16 @@ def object_detail(request, survey_uuid, layer_id, key):
         return JsonResponse({'object': _object_detail(obj), 'row': object_row(obj)})
 
     if request.method == 'DELETE':
-        with _layer_write(layer):
-            obj.delete()
-            rebuild_layer(layer)
+        svc_layers.delete_object(Actor.from_request(request), layer, obj)
         return JsonResponse({'summary': _layer_summary(layer)})
 
     payload = _body(request)
-    for field, limit in (('title', 255), ('category', 100), ('link', 500)):
-        if field in payload:
-            setattr(obj, field, str(payload.get(field) or '')[:limit])
-    if 'description' in payload:
-        obj.description = coerce_creator_html(str(payload.get('description') or ''))
-    if 'properties' in payload and isinstance(payload['properties'], dict):
-        obj.properties = {k: v for k, v in payload['properties'].items() if isinstance(k, str)}
-    with _layer_write(layer):
-        obj.save()
-        rebuild_layer(layer)
+    fields = {k: payload.get(k) for k in ('title', 'category', 'description', 'link', 'properties')
+              if k in payload}
+    try:
+        svc_layers.update_object(Actor.from_request(request), layer, obj, fields)
+    except svc_layers.LayerError as exc:
+        return _error(exc.message)
     return JsonResponse({'object': _object_detail(obj), 'row': object_row(obj),
                          'summary': _layer_summary(layer)})
 
@@ -295,13 +233,11 @@ def object_detail(request, survey_uuid, layer_id, key):
 @_writes_objects
 def object_geometry(request, survey_uuid, layer_id, key):
     layer, obj = _object(request, layer_id, key, writable=True)
-    geom = _geometry_from(_body(request))
-    if geom is None:
-        return _error('A single Point, LineString or Polygon geometry is required.')
-    with _layer_write(layer):
-        obj.geometry = geom
-        obj.save(update_fields=['geometry', 'updated_at'])
-        rebuild_layer(layer)
+    try:
+        svc_layers.update_object(Actor.from_request(request), layer, obj,
+                                 {'geometry': _body(request).get('geometry')})
+    except svc_layers.LayerError as exc:
+        return _error(exc.message)
     return JsonResponse({'row': object_row(obj)})
 
 
@@ -412,6 +348,14 @@ def assets_reorder(request, survey_uuid, layer_id, key):
 
 
 # ─── imports ────────────────────────────────────────────────────────────────
+
+def _csv_link(value, report):
+    """A CSV link: kept when it is a web link, else dropped and counted."""
+    link = safe_link(value)
+    if value and not link:
+        report['invalid_links'] = report.get('invalid_links', 0) + 1
+    return link
+
 
 def _mapping_from(request):
     src = _body(request)
@@ -525,7 +469,7 @@ def import_csv(request, survey_uuid, layer_id):
                     title=_pick(row, 'title', 'name')[:255] or key,
                     category=_pick(row, 'category', 'type')[:100],
                     description=coerce_creator_html(_pick(row, 'description', 'about', 'text')),
-                    link=_pick(row, 'link', 'url')[:500],
+                    link=_csv_link(_pick(row, 'link', 'url'), report),
                     geometry=GEOSGeometry(f'POINT({lng} {lat})', srid=4326),
                     position=position,
                 )
@@ -541,10 +485,15 @@ def import_csv(request, survey_uuid, layer_id):
                     report['unmatched'].append(_pick(row, 'title', 'name', 'key', 'id') or f'row {i}')
                     continue
                 changed = False
-                for field, names, limit in (('category', ('category', 'type'), 100), ('link', ('link', 'url'), 500)):
-                    value = _pick(row, *names)
-                    if value:
-                        setattr(obj, field, value[:limit])
+                category = _pick(row, 'category', 'type')
+                if category:
+                    obj.category = category[:100]
+                    changed = True
+                raw_link = _pick(row, 'link', 'url')
+                if raw_link:
+                    link = _csv_link(raw_link, report)
+                    if link:
+                        obj.link = link
                         changed = True
                 desc = _pick(row, 'description', 'about', 'text')
                 if desc:

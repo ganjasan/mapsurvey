@@ -67,6 +67,10 @@ def question(body, *, create=False):
             data[key] = _bool(body[key])
     if 'layer_id' in body:
         data['layer'] = '' if body['layer_id'] is None else str(body['layer_id'])
+    if body.get('layer_from_answers'):
+        # The editor's "a shared map of that question's answers" choice: the
+        # question service creates or reuses the layer (change api-v2-layers).
+        data['layer'] = f"answers:{body['layer_from_answers']}"
     if 'min_objects' in body:
         data['min_objects'] = '' if body['min_objects'] is None else str(body['min_objects'])
     if 'choices' in body:

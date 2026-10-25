@@ -1229,7 +1229,8 @@ def _apply_layer_objects_manifest(zip_file: zipfile.ZipFile, layer, index: int) 
         if isinstance(entry.get('description'), str):
             obj.description = coerce_creator_html(entry['description'])
         if isinstance(entry.get('link'), str):
-            obj.link = entry['link'][:500]
+            from .layers import safe_link
+            obj.link = safe_link(entry['link'])
         if isinstance(entry.get('properties'), dict):
             obj.properties = {k: v for k, v in entry['properties'].items() if isinstance(k, str)}
         obj.save()

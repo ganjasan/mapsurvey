@@ -1,7 +1,5 @@
 import json
 import logging
-import os
-import re
 from urllib.parse import urlencode
 
 from django.conf import settings
@@ -9,7 +7,6 @@ from django.template.loader import render_to_string
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db import transaction
-from django.db import models
 from django.db.models import Count
 from django.http import HttpResponse, Http404, JsonResponse
 from django.urls import reverse, NoReverseMatch
@@ -29,9 +26,7 @@ from .models import (
 )
 from . import map_start
 from .layers import (
-    normalize_style, legend_for, LAYER_ICONS,
-    validate_layer_upload, LayerValidationError, layers_for, layer_owner, GEOMETRY_TEXT_FIELDS,
-    objects_from_features, rebuild_layer, MAX_LAYER_BYTES, MAX_LAYERS_PER_SURVEY,
+    normalize_style, legend_for, LAYER_ICONS, layers_for, layer_owner, GEOMETRY_TEXT_FIELDS, MAX_LAYER_BYTES,
 )
 from . import product_events as pe
 from .question_types import SHARED_MAP_SOURCE_TYPES, allowed_display_styles, normalise_choice_extras
@@ -979,41 +974,20 @@ def _layers_enabled_or_404():
 @survey_permission_required('owner')
 @require_POST
 def editor_survey_layer_create(request, survey_uuid):
-    """Upload a GeoJSON reference layer.
-
-    Validation lives in survey.layers so an interactive upload, a ZIP import and
-    an AI-written draft cannot diverge on what a stored layer may contain.
-    """
+    """Upload a GeoJSON reference layer -- through the layer service, which the
+    API and ZIP import share (change api-v2-layers)."""
+    from .services import layers as svc_layers
     _layers_enabled_or_404()
-    survey = request.survey
     f = request.FILES.get('layer')
     if not f:
         return JsonResponse({'error': 'No file'}, status=400)
-    if layer_owner(survey).map_layers.count() >= MAX_LAYERS_PER_SURVEY:
-        return JsonResponse({'error': f'A survey can hold {MAX_LAYERS_PER_SURVEY} reference layers.'}, status=400)
-    if f.size > MAX_LAYER_BYTES:
+    if f.size > MAX_LAYER_BYTES:   # before reading: never pull an oversized file into memory
         return JsonResponse({'error': f'File is larger than {MAX_LAYER_BYTES // (1024 * 1024)} MB.'}, status=400)
     try:
-        features, _properties, _dropped_z = validate_layer_upload(f.read())
-    except LayerValidationError as exc:
-        return JsonResponse({'error': str(exc)}, status=400)
-
-    name = (os.path.splitext(f.name)[0] or 'Layer')[:100]
-    owner = layer_owner(survey)
-    position = (owner.map_layers.aggregate(m=models.Max('position'))['m'] or 0) + 1
-    # The row is created before its objects exist, so anything that raises while
-    # building them used to leave an empty layer behind, counting against
-    # MAX_LAYERS_PER_SURVEY until the creator spotted it in the settings card and
-    # deleted it by hand. One such orphan reached production before this was atomic.
-    with transaction.atomic():
-        # The layer is created on the OWNER (canonical) survey: a draft copy borrows
-        # its layers rather than holding copies (see survey.layers.layer_owner).
-        layer = SurveyMapLayer.objects.create(
-            survey=owner, name=name, geojson='', position=position,
-        )
-        # The file becomes objects; the layer's geojson is derived from them.
-        objects_from_features(layer, features, sanitize=coerce_creator_html)
-        rebuild_layer(layer)
+        layer, _report = svc_layers.create_from_geojson(Actor.from_request(request), request.survey, f.read(),
+                                                        filename=f.name)
+    except svc_layers.LayerError as exc:
+        return JsonResponse({'error': exc.message}, status=400)
     return JsonResponse(_layer_payload(layer, layer.property_names), status=201)
 
 
@@ -1021,60 +995,28 @@ def editor_survey_layer_create(request, survey_uuid):
 @require_POST
 def editor_survey_layer_update(request, survey_uuid, layer_id):
     """Update a layer's presentation config (never its geometry)."""
+    from .services import layers as svc_layers
     _layers_enabled_or_404()
     layer = get_object_or_404(SurveyMapLayer.objects.defer(*GEOMETRY_TEXT_FIELDS), pk=layer_id, survey=layer_owner(request.survey))
-    style_error = _apply_style(request, layer)
-    if style_error:
-        return style_error
-    if layer.source == 'question':
-        return _update_question_layer(request, layer)
-
-    name = (request.POST.get('name') or '').strip()
-    if name:
-        layer.name = name[:100]
-    color = (request.POST.get('color') or '').strip()
-    if color:
-        if not re.match(r'^#[0-9a-fA-F]{6}$', color):
-            return JsonResponse({'error': 'Color must be #RRGGBB.'}, status=400)
-        layer.color = color
-
-    # Field names are only meaningful if they exist in the file; an unknown one
-    # would silently render no labels, so refuse it instead.
-    known = _layer_property_names(layer)
-    for field in ('label_field', 'key_field'):
-        if field in request.POST:
-            value = (request.POST.get(field) or '').strip()[:100]
-            if value and value not in known:
-                return JsonResponse({'error': f'"{value}" is not a property of this layer.'}, status=400)
-            setattr(layer, field, value)
-
+    fields = {}
+    if 'style' in request.POST:
+        try:
+            fields['style'] = json.loads(request.POST.get('style') or '{}')
+        except ValueError:
+            return JsonResponse({'error': 'Style must be JSON.'}, status=400)
+        if not isinstance(fields['style'], dict):
+            return JsonResponse({'error': 'Style must be JSON.'}, status=400)
+    for name in ('name', 'color', 'label_field', 'key_field'):
+        if name in request.POST:
+            fields[name] = request.POST.get(name) or ''
     if 'show_popups' in request.POST:
-        layer.show_popups = request.POST.get('show_popups') in ('1', 'true', 'on')
-
-    layer.save()
+        fields['show_popups'] = request.POST.get('show_popups') in ('1', 'true', 'on')
+    try:
+        svc_layers.update(Actor.from_request(request), layer, fields)
+    except svc_layers.LayerError as exc:
+        return JsonResponse({'error': exc.message}, status=400)
+    known = [] if layer.source == 'question' else _layer_property_names(layer)
     return JsonResponse(_layer_payload(layer, known))
-
-
-def _apply_style(request, layer):
-    """`style` (JSON) on the layer update endpoint — normalised, never stored
-    raw (spec layer-style). A `question` layer keeps the base only: its
-    objects carry no properties to rule on. Returns an error response or None."""
-    if 'style' not in request.POST:
-        return None
-    from .layers import normalize_style as _normalize
-    try:
-        raw = json.loads(request.POST.get('style') or '{}')
-    except ValueError:
-        return JsonResponse({'error': 'Style must be JSON.'}, status=400)
-    try:
-        color = (request.POST.get('color') or '').strip() or layer.color
-        style = _normalize(raw, color if re.match(r'^#[0-9a-fA-F]{6}$', color) else layer.color)
-    except LayerValidationError as exc:
-        return JsonResponse({'error': str(exc)}, status=400)
-    if layer.source == 'question':
-        style['by'] = None
-    layer.style = style
-    return None
 
 
 @survey_permission_required('owner')
@@ -1092,35 +1034,17 @@ def editor_survey_layer_style_summary(request, survey_uuid, layer_id):
     return JsonResponse(style_summary(layer, field))
 
 
-def _update_question_layer(request, layer):
-    """The `question`-layer edit state on the settings card: name and color.
-    Key field / popups have no meaning here."""
-    name = (request.POST.get('name') or '').strip()
-    if name:
-        layer.name = name[:100]
-    color = (request.POST.get('color') or '').strip()
-    if color:
-        if not re.match(r'^#[0-9a-fA-F]{6}$', color):
-            return JsonResponse({'error': 'Color must be #RRGGBB.'}, status=400)
-        layer.color = color
-    # Label and the visibility switches are edited on the Objects-on-the-map
-    # question bound to this layer — one door (owner decision 2026-09-05).
-    layer.save()
-    return JsonResponse(_layer_payload(layer, []))
-
-
 @survey_permission_required('owner')
 @require_POST
 def editor_survey_layer_delete(request, survey_uuid, layer_id):
     _layers_enabled_or_404()
+    from .services import layers as svc_layers
     layer = get_object_or_404(SurveyMapLayer.objects.defer(*GEOMETRY_TEXT_FIELDS), pk=layer_id, survey=layer_owner(request.survey))
-    # Question.layer is PROTECT: answers about the layer's objects would be
-    # orphaned. Say which question holds the binding instead of a 500.
-    bound = list(layer.questions.values_list('name', flat=True))
-    if bound:
-        names = ', '.join(f'“{n}”' for n in bound if n) or 'a question'
-        return JsonResponse({'error': f'This layer is used by {names}. Change that question\'s layer or delete it first.'}, status=400)
-    layer.delete()
+    # Question.layer is PROTECT: the service names the binding question instead of a 500.
+    try:
+        svc_layers.delete(Actor.from_request(request), layer)
+    except svc_layers.LayerError as exc:
+        return JsonResponse({'error': exc.message}, status=400)
     return HttpResponse(status=204)
 
 

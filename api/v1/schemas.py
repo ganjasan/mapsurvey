@@ -256,6 +256,10 @@ class QuestionIn(In):
     display_style: Optional[str] = None
     visibility_rule: Optional[VisibilityRule] = None
     layer_id: Optional[int] = None
+    layer_from_answers: Optional[str] = Field(
+        None, max_length=50,
+        description='For an "Objects on the map" question: the code of a map question whose answers become a '
+                    'shared map (created on first use). Use instead of `layer_id`.')
     min_objects: Optional[int] = Field(None, ge=0)
     share_with_respondents: Optional[bool] = None
     translations: Optional[Dict[str, QuestionTranslation]] = None
