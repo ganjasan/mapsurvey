@@ -241,6 +241,12 @@ def _resolve_layer_choice(survey, data):
     owner = layer_owner(survey)
     layer = owner.map_layers.defer(*GEOMETRY_TEXT_FIELDS).filter(source='question', source_question_code=code).first()
     if layer is None:
+        from ..layers import MAX_LAYERS_PER_SURVEY
+        if owner.map_layers.count() >= MAX_LAYERS_PER_SURVEY:
+            # The upload path always refused an 11th layer; this one did not
+            # (change api-v2-layers).
+            raise ValidationFailed.single(
+                'layer', f'A survey can hold {MAX_LAYERS_PER_SURVEY} reference layers.')
         position = (owner.map_layers.aggregate(m=models.Max('position'))['m'] or 0) + 1
         label = (data.get('sm_label_field') or '').strip()[:100]
         if label and label not in {o['code'] for o in label_options(question)}:

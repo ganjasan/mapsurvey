@@ -207,7 +207,7 @@ description, which the object endpoint passed through coerce_creator_html.
             });
             h += '</div>';
         }
-        if (card.link) h += '<a class="lo-card__link" href="' + esc(card.link) + '" target="_blank" rel="noopener">' + esc(card.link.replace(/^https?:\/\//, '').split('/')[0]) + ' <i class="fas fa-external-link-alt"></i></a>';
+        if (card.link && /^https?:\/\//i.test(card.link)) h += '<a class="lo-card__link" href="' + esc(card.link) + '" target="_blank" rel="noopener">' + esc(card.link.replace(/^https?:\/\//, '').split('/')[0]) + ' <i class="fas fa-external-link-alt"></i></a>';
         return h + '</div>';
     }
 

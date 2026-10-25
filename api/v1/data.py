@@ -1,6 +1,6 @@
 """Layers (read-only), ZIP import as a job, responses and export."""
 import json
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID
 
 from django.db.models import Prefetch
@@ -20,7 +20,7 @@ from . import deps, out
 from .auth import Bearer
 from .docs import errors, list_errors
 from .pagination import page
-from .schemas import ImportJobOut, LayerOut, ResponseList
+from .schemas import ImportJobOut, ResponseList
 from .surveys import _workspace
 
 router = Router(tags=['Data'])
@@ -35,12 +35,8 @@ RESPONSES = Bearer(scopes.RESPONSES_READ)
 
 # ─── Layers ──────────────────────────────────────────────────────────────────
 
-@router.get('/surveys/{uuid}/layers', response=List[LayerOut], auth=READ, openapi_extra=errors())
-def list_layers(request, uuid: UUID):
-    """The survey's reference layers, metadata only; fetch geometry from `geojson_url`."""
-    survey = deps.survey(request, uuid)
-    return [out.layer(layer, survey) for layer in deps.layers_list(survey)]
-
+# GET /surveys/{uuid}/layers lives in layers.py beside its POST: two routers on
+# one path give django two patterns, and the second method answers 405.
 
 @router.get('/surveys/{uuid}/layers/{layer_id}/geojson', auth=READ, url_name='layer_geojson',
             openapi_extra=errors())

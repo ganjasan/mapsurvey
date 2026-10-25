@@ -11,7 +11,7 @@ envelope (`errors.register`).
 """
 from ninja import NinjaAPI
 
-from . import data, errors, me, questions, responses, sections, share, surveys
+from . import data, errors, layers, me, questions, responses, sections, share, surveys
 from .auth import Bearer
 
 api = NinjaAPI(
@@ -34,6 +34,9 @@ api.add_router('', data.imports_router)
 api.add_router('', surveys.router)
 api.add_router('', sections.router)
 api.add_router('', questions.router)
+# Before data.router: literal segments (/layers/order, /layers/upload) must
+# match before data's /layers/{layer_id} routes.
+api.add_router('', layers.router)
 api.add_router('', data.router)
 api.add_router('', responses.router)
 api.add_router('', share.router)

@@ -13,6 +13,11 @@ from django.utils.translation import gettext_lazy as _
 from .uploads import ALLOWED_TYPES as _RESPONDENT_TYPES, _MAGIC, PLATFORM_MAX_BYTES
 from .html_sanitize import coerce_creator_html
 
+
+def _safe_link(value):
+    from .layers import safe_link   # layers imports this module
+    return safe_link(value)
+
 MAX_ASSET_BYTES = PLATFORM_MAX_BYTES          # 25 MB, same constant as respondent uploads
 MAX_ASSETS_PER_OBJECT = 10
 MAX_ASSET_BYTES_PER_LAYER = 200 * 1024 * 1024
@@ -128,7 +133,9 @@ def object_card_payload(obj):
         'title': obj.title,
         'category': obj.category,
         'description': coerce_creator_html(obj.description or ''),
-        'link': obj.link,
+        # Only a web link reaches the respondent's card, whatever was stored
+        # before the rule (change api-v2-layers).
+        'link': _safe_link(obj.link),
         'cover': cover,
         'assets': assets,
     }
