@@ -427,6 +427,73 @@ Permission `responses:moderate` · role **editor**
 | `response_id` | integer | **required** | The response id from list_responses. |
 | `validation_status` | `approved` \| `not_approved` \| `on_hold` \| `` | **required** |  |
 
+### `get_share_links`
+
+How to send the survey out: its public link, the public results link (if that page is published), the HTML snippet to embed it in a website and the sites allowed to embed it. Only a published survey can be shared (`shareable`); otherwise `reason` says why. In testing, editors also get the test link.
+
+Permission `surveys:read` · role **viewer** · read-only
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+
+### `get_qr_code`
+
+A QR code of the survey link -- or of one tracked link -- as an image the person can save for a poster or flyer. Only for a published survey.
+
+Permission `surveys:read` · role **viewer** · read-only
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+| `link_id` | integer |  | A tracked link id from list_tracked_links. |
+| `size` | integer |  | Pixels per module; 8 gives about 300 px. Default `8`. |
+
+### `list_tracked_links`
+
+Campaign links -- the survey link with UTM parameters, one per place it is posted -- with how many responses started and completed through each.
+
+Permission `surveys:read` · role **viewer** · read-only
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+
+### `create_tracked_link`
+
+A campaign link for one place the survey is posted, e.g. utm_source "newsletter", utm_medium "email", utm_campaign "spring-2027". Responses through it are counted separately. Needs the editor role; at most 200 per survey.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+| `utm_source` | string | **required** |  |
+| `utm_medium` | string |  |  |
+| `utm_campaign` | string |  |  |
+
+### `delete_tracked_link`
+
+Remove a campaign link. Responses that came through it keep their source. Needs the editor role.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+| `link_id` | integer | **required** | A tracked link id from list_tracked_links. |
+
+### `set_embed_hosts`
+
+Which websites may show the survey in a frame, e.g. ["example.org", "*.city.gov"]. An empty list lets any site embed it. Replaces the current list. Needs the editor role.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+| `hosts` | list of string | **required** |  |
+
 ## Errors
 
 A refused call comes back as a tool error carrying the same envelope as the REST API:

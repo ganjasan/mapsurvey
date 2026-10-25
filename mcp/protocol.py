@@ -14,6 +14,7 @@ A refusal is an `isError` tool result carrying the REST envelope; an unknown
 tool or arguments the schema refuses are JSON-RPC `-32602`, as the
 specification splits protocol errors from tool errors (design D5).
 """
+import base64
 import json
 import logging
 
@@ -117,12 +118,18 @@ def _text(value):
 
 
 def ok_result(payload):
+    images = ()
+    if isinstance(payload, tools.registry.WithImages):
+        payload, images = payload.payload, payload.images
     wrapped = {'note': UNTRUSTED_NOTE, 'data': payload}
     # Round-trip through the encoder so structuredContent holds plain JSON
     # types (uuids and datetimes as strings), the same bytes as the text block.
     wrapped = json.loads(_text(wrapped))
-    return {'content': [{'type': 'text', 'text': _text(wrapped)}], 'structuredContent': wrapped,
-            'isError': False}
+    content = [{'type': 'text', 'text': _text(wrapped)}]
+    # Images follow the text (a QR for the chat): structuredContent stays JSON.
+    content += [{'type': 'image', 'data': base64.b64encode(data).decode('ascii'), 'mimeType': mime}
+                for data, mime in images]
+    return {'content': content, 'structuredContent': wrapped, 'isError': False}
 
 
 def error_result(err):

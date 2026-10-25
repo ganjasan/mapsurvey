@@ -21,6 +21,16 @@ from pydantic import BaseModel, ConfigDict, create_model
 _TOOLS = {}
 
 
+@dataclass(frozen=True)
+class WithImages:
+    """A handler's result that also carries images (change api-v2-distribution,
+    D6): `payload` becomes `{note, data}` as always, and each `(bytes, mime)` in
+    `images` is appended to `content` as an image block -- a QR the client shows
+    in the chat."""
+    payload: object
+    images: tuple = ()
+
+
 class Args(BaseModel):
     """Base of every argument model: unknown fields are refused by name."""
     model_config = ConfigDict(extra='forbid')

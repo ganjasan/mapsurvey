@@ -13,6 +13,6 @@
 
 ## 3. MCP (PR 2)
 
-- [ ] 3.1 `mcp/protocol.py` image content; `mcp/tools/share.py` six tools
-- [ ] 3.2 Tests; `scripts/build_mcp_reference.py`; help page (what to ask to share a survey); no new changelog entry
-- [ ] 3.3 `./run_tests.sh api mcp survey`; `npm run build` in `help/`
+- [x] 3.1 `mcp/protocol.py` image content; `mcp/tools/share.py` six tools
+- [x] 3.2 Tests; `scripts/build_mcp_reference.py`; help page (what to ask to share a survey); no new changelog entry -- the MCP entry gains one sentence
+- [x] 3.3 `./run_tests.sh api mcp survey`; `npm run build` in `help/`
