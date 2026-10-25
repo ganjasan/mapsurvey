@@ -8462,8 +8462,8 @@ msgid "Open ChatGPT"
 msgstr "Abrir ChatGPT"
 
 #: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
-msgid "Open ChatGPT on a computer, go to [[Plugins]], press [[+]] and choose [[Add custom MCP server]]."
-msgstr "Abra ChatGPT en un ordenador, vaya a [[Plugins]], pulse [[+]] y elija [[Add custom MCP server]]."
+msgid "Open ChatGPT on a computer, go to [[Plugins]], press [[Add]] and choose [[Add custom MCP server]]."
+msgstr "Abra ChatGPT en un ordenador, vaya a [[Plugins]], pulse [[Add]] y elija [[Add custom MCP server]]."
 
 #: survey/agent_clients.py survey/agent_views.py survey/templates/editor/survey_start_agent.html
 msgid "Name it Mapsurvey, paste this address and choose [[OAuth]]: {url}"

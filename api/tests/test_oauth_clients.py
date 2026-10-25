@@ -421,6 +421,54 @@ class CimdTest(TestCase):
         self.assertEqual(app.authorization_grant_type, Application.GRANT_AUTHORIZATION_CODE)
         self.assertEqual(app.client_type, Application.CLIENT_PUBLIC)
 
+    def test_chatgpt_document_with_private_key_jwt(self):
+        """
+        GIVEN ChatGPT's real metadata document (2026-10-25), which names private_key_jwt as
+              its token endpoint method but lists "none" among the methods it supports
+        WHEN authorize is requested with that client_id, the user allows and ChatGPT
+             exchanges the code with PKCE and no client authentication
+        THEN a public application exists, the consent page shows chatgpt.com and the
+             exchange returns a token
+        """
+        url = 'https://chatgpt.com/oauth/client.json'
+        doc = {'client_id': url, 'client_uri': 'https://chatgpt.com/',
+               'redirect_uris': [CHATGPT_LEGACY_CB],
+               'token_endpoint_auth_method': 'private_key_jwt',
+               'token_endpoint_auth_methods_supported': ['none', 'private_key_jwt'],
+               'grant_types': ['authorization_code', 'refresh_token'], 'response_types': ['code'],
+               'client_name': 'ChatGPT', 'logo_uri': 'https://persistent.oaistatic.com/openai-logo.png',
+               'token_endpoint_auth_signing_alg': 'RS256', 'jwks_uri': 'https://chatgpt.com/oauth/jwks.json'}
+        verifier, challenge = pkce()
+        params = {'response_type': 'code', 'client_id': url, 'redirect_uri': CHATGPT_LEGACY_CB,
+                  'scope': 'surveys:read', 'state': 's', 'code_challenge': challenge,
+                  'code_challenge_method': 'S256'}
+        with mock.patch.object(SafeMetadataFetcher, 'fetch', return_value=(doc, 300)):
+            page = self.client.get(AUTHORIZE, params)
+            html = page.content.decode()
+            self.assertEqual(page.status_code, 200, html[html.find('oa-error'):][:600])
+            self.assertIn('class="oa-host">chatgpt.com<', html)
+            response = consent(self.client, html)
+        self.assertEqual(response.status_code, 302)
+        app = Application.objects.get(client_id=url)
+        self.assertEqual(app.client_type, Application.CLIENT_PUBLIC)
+        token = exchange(self.client, app, query(response['Location'])['code'], verifier)
+        self.assertEqual(token.status_code, 200, token.content[:400])
+        self.assertIn('access_token', token.json())
+
+    def test_key_only_document_is_refused(self):
+        """
+        GIVEN a document whose client can only authenticate with private_key_jwt
+        WHEN authorize is requested
+        THEN it is still the unknown-client page and no application is created
+        """
+        doc = {'client_id': self.URL, 'client_name': 'x', 'redirect_uris': [CLAUDE_CB],
+               'token_endpoint_auth_method': 'private_key_jwt',
+               'token_endpoint_auth_methods_supported': ['private_key_jwt']}
+        with mock.patch.object(SafeMetadataFetcher, 'fetch', return_value=(doc, 300)):
+            response = self._authorize(self.URL)
+        self._assert_invalid_client(response)
+        self.assertFalse(Application.objects.filter(client_id=self.URL).exists())
+
     def test_document_with_no_supported_grant_is_refused(self):
         """
         GIVEN a document that declares only client_credentials

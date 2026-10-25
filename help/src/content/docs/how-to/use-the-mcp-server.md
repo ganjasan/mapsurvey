@@ -59,7 +59,7 @@ read remote servers from its configuration file; use the connector.
 On a computer, with a paid plan. Some plans let only workspace admins add a server; if you do not
 see the option, your plan does not include it.
 
-1. Open ChatGPT, go to **Plugins**, press **+** and choose **Add custom MCP server**.
+1. Open ChatGPT, go to **Plugins**, press **Add** and choose **Add custom MCP server**.
 2. Name it Mapsurvey, enter `https://mapsurvey.org/mcp` and choose **OAuth**.
 3. ChatGPT warns about custom servers; that is expected. Press **Create**, then **Connect**.
 4. On the Mapsurvey page that opens, press **Allow**.

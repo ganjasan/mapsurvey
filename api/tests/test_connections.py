@@ -31,6 +31,16 @@ class ConnectionsPageTest(TestCase):
         data.update(overrides)
         return self.client.post(PAGE, data, follow=True)
 
+    def test_no_template_comment_reaches_the_page(self):
+        """
+        GIVEN the connections page
+        WHEN it renders
+        THEN no template comment leaks into the HTML ({# #} spans one line only)
+        """
+        html = self.client.get(PAGE).content.decode()
+        self.assertNotIn('{#', html)
+        self.assertNotIn('#}', html)
+
     def test_create_shows_the_value_once(self):
         """
         GIVEN a valid create form
