@@ -126,7 +126,7 @@ CLIENTS = (
         help_anchor='chatgpt', vendor_url='https://chatgpt.com/', vendor_label=_('Open ChatGPT'),
         verified=READ_2026_10_24,
         steps=(
-            _('Open ChatGPT on a computer, go to [[Plugins]], press [[+]] and choose [[Add custom MCP server]].'),
+            _('Open ChatGPT on a computer, go to [[Plugins]], press [[Add]] and choose [[Add custom MCP server]].'),
             _('Name it Mapsurvey, paste this address and choose [[OAuth]]: {url}'),
             _('ChatGPT warns about custom servers; that is expected. Press [[Create]], then [[Connect]].'),
             _('On the Mapsurvey page that opens, press [[Allow]].'),

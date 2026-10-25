@@ -163,8 +163,8 @@ that refuse cookies, not this one.{% endcomment %}
     {% endif %}
   </div>
 
-  {# The MCP server (change mcp-server, #306): what to paste where. One URL, no token for
-     the browser clients (they sign in through the Allow page), a token for the desktop ones. #}
+  {% comment %}The MCP server (change mcp-server, #306): what to paste where. One URL, no token for
+     the browser clients (they sign in through the Allow page), a token for the desktop ones.{% endcomment %}
   <div class="cx-card" id="mcp">
     <h2>{% trans "MCP server" %}</h2>
     <p>{% trans "Build surveys from your own AI agent. Connect Claude, ChatGPT, Claude Code, Cursor or any MCP client to this address and ask the agent in plain words:" %}</p>
