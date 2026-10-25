@@ -294,8 +294,11 @@ class TrackedLink(models.Model):
             parts.append(self.utm_campaign)
         return ' / '.join(parts)
 
-    def build_url(self, request=None):
-        """Return full survey URL with UTM params."""
+    def build_url(self, base=None):
+        """The survey URL with this link's UTM parameters, absolute on `base`
+        (scheme + host) or a path without one. Callers pass the public base --
+        `public_base_url(request)` in the editor, `SITE_URL` in the API -- never
+        `request.scheme`, which is http behind the proxy (change api-v2-distribution)."""
         from urllib.parse import urlencode
         params = {'utm_source': self.utm_source}
         if self.utm_medium:
@@ -303,9 +306,7 @@ class TrackedLink(models.Model):
         if self.utm_campaign:
             params['utm_campaign'] = self.utm_campaign
         path = f'/surveys/{self.survey.uuid}/?{urlencode(params)}'
-        if request is not None:
-            return request.build_absolute_uri(path)
-        return path
+        return base.rstrip('/') + path if base else path
 
 
 # `org/(?P<slug>[-.\w]+)/...` in urls.py. A slug outside this set reverses to
@@ -458,10 +459,10 @@ class SurveyHeader(models.Model):
     def regenerate_test_token(self):
         self.test_token = uuid_module.uuid4()
 
-    def get_test_url(self, request):
+    def get_test_url(self, base):
+        """The testing-status link with its token, absolute on `base`."""
         from django.urls import reverse
-        base_url = reverse('survey_header', kwargs={'survey_slug': str(self.uuid)})
-        return request.build_absolute_uri(f'{base_url}?token={self.test_token}')
+        return base.rstrip('/') + reverse('survey', args=[str(self.uuid)]) + f'?token={self.test_token}'
 
     def get_accent_color(self):
         """The survey's custom accent color, or None.

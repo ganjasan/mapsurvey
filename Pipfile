@@ -53,6 +53,9 @@ openpyxl = "*"
 # The REST API v1 (change rest-api-v1, #380): pydantic schemas are the validation AND the
 # OpenAPI document, so there is no serializer layer to keep in sync.
 django-ninja = "~=1.7"
+# QR codes for the share API and MCP (change api-v2-distribution, #410): pure Python,
+# writes SVG and PNG itself -- no Pillow, no system library.
+segno = "~=1.6"
 
 [requires]
 python_version = "3.12"

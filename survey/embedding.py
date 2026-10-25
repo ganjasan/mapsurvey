@@ -166,8 +166,15 @@ def public_base_url(request):
     return f'{scheme}://{host}'
 
 
+def survey_url_on(base, survey):
+    """The respondent URL on an explicit base (scheme + host). The API and MCP
+    pass `SITE_URL` -- they have no request host worth trusting (change
+    api-v2-distribution, D1); the editor passes `public_base_url(request)`."""
+    return base.rstrip('/') + reverse('survey', args=[str(survey.uuid)])
+
+
 def survey_url(request, survey):
-    return public_base_url(request) + reverse('survey', args=[str(survey.uuid)])
+    return survey_url_on(public_base_url(request), survey)
 
 
 def embed_js_url(request):
@@ -188,7 +195,7 @@ def clamp_size(value, default, floor):
     return max(min(number, default), floor)
 
 
-def snippet_html(request, survey, width=None, height=None, with_script=True):
+def snippet_html(request, survey, width=None, height=None, with_script=True, base=None):
     """The iframe snippet creators paste, and (without the script) what oEmbed returns.
 
     `allow="geolocation"` matters: without it the respondent map's "my
@@ -202,8 +209,12 @@ def snippet_html(request, survey, width=None, height=None, with_script=True):
     showed "This embed couldn't be loaded". Consumers of oEmbed never run
     scripts anyway, so there the frame keeps its fixed height. The bare
     `width`/`height` attributes are what those parsers read.
+
+    `base` replaces the request's public base -- the API passes `SITE_URL`
+    and then needs no request at all.
     """
-    src = survey_url(request, survey) + '?embed=1'
+    base = (base or public_base_url(request)).rstrip('/')
+    src = survey_url_on(base, survey) + '?embed=1'
     px_height = int(height or DEFAULT_HEIGHT)
     style_width = f'{int(width)}px' if width else '100%'
     size_attrs = f'width="{int(width)}" ' if width else ''
@@ -215,4 +226,4 @@ def snippet_html(request, survey, width=None, height=None, with_script=True):
     )
     if not with_script:
         return iframe
-    return iframe + f'\n<script async src="{escape(embed_js_url(request))}"></script>'
+    return iframe + f'\n<script async src="{escape(base + reverse("embed_js"))}"></script>'
