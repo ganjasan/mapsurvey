@@ -12,7 +12,7 @@
 
 - [x] 3.1 GIVEN/WHEN/THEN tests that parse the rendered JSON-LD on `/`, `/ru/` and `/for-planners/`: linked Organization/SoftwareApplication, WebSite only on the homepage pair, BusinessApplication category
 - [x] 3.2 Registry test: every profile is absolute `https://`, not on mapsurvey.org, no duplicates; a registry entry reaches `sameAs`
-- [ ] 3.3 Run the landing/SEO test classes, then the full `survey` suite once
+- [x] 3.3 Run the landing/SEO test classes, then the full `survey` suite once
 
 ## 4. Off-repo kit (ops repo, owner submits)
 
