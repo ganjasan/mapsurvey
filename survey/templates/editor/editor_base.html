@@ -85,6 +85,9 @@
         }
         .editor-navbar a { color: #6b7280; text-decoration: none; }
         .editor-navbar a:hover { color: var(--accent); }
+        .editor-navbar .logout-btn { background: none; border: 0; padding: 0; font: inherit; font-size: 0.85rem; color: #6b7280; cursor: pointer; }
+        .editor-navbar .logout-btn:hover { color: var(--accent); }
+        .editor-navbar .logout-btn.dropdown-item { padding: .25rem 1.5rem; font-size: inherit; }
         .editor-navbar .survey-name { font-weight: 700; color: #111827; font-size: 1.1rem; }
         /* Inline rename (editor_survey_rename.js). The wrapper is the position
            anchor for the counter and the error, so neither can reflow the
@@ -1111,7 +1114,7 @@
                     (localStorage), like the Responses layer panel state.{% endcomment %}
                     <a class="dropdown-item editor-confirm-toggle" href="#" onclick="EditorConfirm.toggle(event)"><i class="fas fa-check-square" style="margin-right:4px;" data-confirm-icon></i>{% trans "Ask before publishing or changing structure" %}</a>
                     {% if SUPPORT_CHAT %}<a class="dropdown-item" href="#" onclick="openSupportChat(event)"><i class="fas fa-comment-dots" style="margin-right:4px;"></i>{% trans "Help & support" %} <span class="wn-badge support-unread" hidden>{% trans "new" %}</span></a>{% elif CONTACT_EMAIL %}<a class="dropdown-item" href="mailto:{{ CONTACT_EMAIL }}"><i class="fas fa-envelope" style="margin-right:4px;"></i>{% trans "Email support" %}</a>{% endif %}
-                    <a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt" style="margin-right:4px;"></i>{% trans "Logout" %}</a>
+                    {% include "partials/_logout_form.html" with btn_class="dropdown-item" icon=True %}
                 </div>
             </div>
             {% endif %}
@@ -1152,7 +1155,7 @@
                 </div>
             </div>
             <span class="nav-desktop" style="color:#9ca3af;font-size:0.85rem;">{{ user.get_username }}</span>
-            <a class="nav-desktop" href="{% url 'logout' %}" style="font-size:0.85rem;">{% trans "Logout" %}</a>
+            {% include "partials/_logout_form.html" with form_class="d-inline nav-desktop" %}
         {% endif %}
     </div>
     {% endblock %}
