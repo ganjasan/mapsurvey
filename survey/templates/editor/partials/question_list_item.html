@@ -46,6 +46,14 @@
                     {% elif is_read_only %}disabled{% else %}data-gate="duplicate" data-gate-section="{{ question.survey_section.code }}"{% endif %}>
                 <i class="fas fa-copy"></i>
             </button>
+            {% if not question.parent_question_id_id %}
+            <button title="{% if is_read_only %}Create a draft to edit{% else %}{% trans 'Move to section…' %}{% endif %}"
+                    class="move-section-btn" data-question-id="{{ question.id }}"
+                    data-section-id="{{ question.survey_section_id }}"
+                    {% if is_read_only %}disabled{% elif structure_locked %}data-gate="move" data-gate-section="{{ question.survey_section.code }}"{% endif %}>
+                <i class="fas fa-share-square"></i>
+            </button>
+            {% endif %}
             <button title="{% if is_read_only %}Create a draft to edit{% else %}{% trans 'Copy' %}{% endif %}"
                     class="copy-question-btn"
                     data-survey-uuid="{{ survey.uuid }}"

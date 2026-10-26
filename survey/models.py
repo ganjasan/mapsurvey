@@ -1554,6 +1554,16 @@ class AuditLog(models.Model):
         ('layer_object_update', 'Layer object updated'),
         ('layer_object_delete', 'Layer object deleted'),
         ('layer_object_status', 'Shared-map mark moderated'),
+        ('group_create', 'Question group created'),
+        ('group_update', 'Question group updated'),
+        ('group_delete', 'Question group deleted'),
+        ('question_duplicate', 'Question duplicated'),
+        ('section_duplicate', 'Section duplicated'),
+        ('question_paste', 'Question pasted'),
+        ('section_paste', 'Section pasted'),
+        ('question_move', 'Question moved'),
+        ('survey_duplicate', 'Survey duplicated'),
+        ('version_restore', 'Version restored'),
     )
 
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)

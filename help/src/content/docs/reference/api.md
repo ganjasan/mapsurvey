@@ -229,6 +229,245 @@ Publish the unpublished changes as a new version of the live survey.
 
 Errors: `conflict`, `draft_required`, `forbidden_role`, `incompatible_draft`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `translation_gaps`, `validation`
 
+## Structure
+
+### `GET /surveys/{uuid}/sections/{section_id}/groups`
+
+The section's question groups -- top level first, then each pop-up's -- in order.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `section_id` | path | integer | yes |
+
+**200** list of GroupOut
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `POST /surveys/{uuid}/sections/{section_id}/groups`
+
+A group at the end of the section (or of a pop-up with `parent_id`); `question_ids` fills it.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `section_id` | path | integer | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `title` | string or null |  |  |
+| `description` | string or null |  |  |
+| `display_style` | `plain` | `card` | `collapsible` or null |  |  |
+| `visibility_rule` | VisibilityRule or null |  |  |
+| `translations` | object or null |  |  |
+| `question_ids` | list of integer or null |  | The questions the group holds, in order; they move together to where the first of them was. Questions of the same list only (the section, or the same pop-up). |
+| `parent_id` | integer or null |  | Create the group in this question's pop-up. |
+
+**201** GroupOut
+
+Errors: `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `GET /surveys/{uuid}/groups/{group_id}`
+
+Get Group
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `group_id` | path | integer | yes |
+
+**200** GroupOut
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `PATCH /surveys/{uuid}/groups/{group_id}`
+
+Wording and style apply to a live survey in place; the rule and `question_ids` are structure.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `group_id` | path | integer | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `title` | string or null |  |  |
+| `description` | string or null |  |  |
+| `display_style` | `plain` | `card` | `collapsible` or null |  |  |
+| `visibility_rule` | VisibilityRule or null |  |  |
+| `translations` | object or null |  |  |
+| `question_ids` | list of integer or null |  | The questions the group holds, in order; they move together to where the first of them was. Questions of the same list only (the section, or the same pop-up). |
+
+**200** GroupOut
+
+Errors: `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `DELETE /surveys/{uuid}/groups/{group_id}`
+
+Delete the group; its questions stay in place, ungrouped, unless `with_questions`.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `group_id` | path | integer | yes |
+| `with_questions` | query | boolean |  |
+| `acknowledge_answer_loss` | query | boolean |  |
+
+**204** no body
+
+Errors: `answers_at_risk`, `delete_blocked`, `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `POST /surveys/{uuid}/questions/{question_id}/duplicate`
+
+A copy right after the question, in its group, with " (copy)" on the name and its sub-questions.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `question_id` | path | integer | yes |
+
+**201** QuestionOut
+
+Errors: `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `POST /surveys/{uuid}/sections/{section_id}/duplicate`
+
+A copy of the section with all its questions, right after it, " (copy)" on the title.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `section_id` | path | integer | yes |
+
+**201** SectionOut
+
+Errors: `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `POST /surveys/{uuid}/sections/{section_id}/questions/copy`
+
+Append a copy of a question from any survey you can read (new codes, its own files).
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `section_id` | path | integer | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `source_question_id` | integer | yes | A question of any survey you can read. |
+| `parent_id` | integer or null |  | Paste into this question's pop-up (without the source's own sub-questions). |
+
+**201** QuestionOut
+
+Errors: `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `POST /surveys/{uuid}/sections/copy`
+
+Append a copy of a section from any survey you can read.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `source_section_id` | integer | yes | A section of any survey you can read. |
+
+**201** SectionOut
+
+Errors: `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `POST /surveys/{uuid}/questions/{question_id}/move`
+
+Move a question to another section, into a pop-up or out of one, to `position`.
+
+Between sections it keeps its answers and leaves its group. Into or out of a
+pop-up its answers cannot follow (one per respondent against one per mark):
+`409 answers_at_risk` until `acknowledge_answer_loss`. Rules the move breaks
+are cleared and named in `removed_rules`.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `question_id` | path | integer | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `section_id` | integer or null |  | Target section of the same survey; default: its own. |
+| `parent_id` | integer or null |  | Move into this question's pop-up; null moves it to the section's top level. |
+| `position` | integer or null |  | Place among the target list's items (a group counts as one); default: the end. |
+| `acknowledge_answer_loss` | boolean |  |  |
+
+**200** MoveOut
+
+Errors: `answers_at_risk`, `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `POST /surveys/{uuid}/duplicate`
+
+A new draft survey in the same workspace with this one's sections, questions, groups, rules,
+translations, settings and map layers -- no responses, versions, links or public results page.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+
+**201** DuplicateSurveyOut
+
+Errors: `draft_required`, `forbidden_role`, `invalid_token`, `limit_reached`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `GET /surveys/{uuid}/versions`
+
+The current survey, then its archived versions newest first; each publish makes a version.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+
+**200** list of VersionOut
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `POST /surveys/{uuid}/versions/{version}/restore`
+
+Unpublished changes holding version `version`'s questionnaire. The live survey is unchanged until
+you publish them, which makes a NEW version; history is never rewritten.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `version` | path | integer | yes |
+
+**201** RestoreOut
+
+Errors: `conflict`, `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `transition_refused`, `validation`
+
+### `GET /icons`
+
+Marker icons by meaning, best first: every word must match the icon's name, label or search
+terms in `lang` (default: your interface language) or English. `set` narrows to maki, temaki or fa.
+Every value is accepted as `icon_class`.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `q` | query | string |  |
+| `lang` | query | string or null |  |
+| `set` | query | string or null |  |
+| `limit` | query | integer |  |
+
+**200** list of IconOut
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
 ## Sections
 
 ### `GET /surveys/{uuid}/sections`
@@ -988,12 +1227,60 @@ Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `p
 
 ## Objects
 
+### DuplicateSurveyOut
+
+| Field | Type | Always | Notes |
+|---|---|---|---|
+| `uuid` | uuid | yes |  |
+| `name` | string | yes |  |
+| `status` | string | yes |  |
+| `workspace` | string or null | yes |  |
+| `languages` | list of string | yes |  |
+| `redirect_url` | string | yes |  |
+| `visibility` | string | yes |  |
+| `version` | integer | yes |  |
+| `is_unpublished_changes` | boolean | yes |  |
+| `live_survey` | uuid or null |  | For unpublished changes: the live survey they replace. |
+| `unpublished_changes` | uuid or null |  | The uuid of this survey's unpublished changes, if any. |
+| `review` | `pending` or null |  | "pending" while content screening holds the survey. |
+| `url` | string | yes |  |
+| `created_at` | date-time | yes |  |
+| `updated_at` | date-time | yes |  |
+| `sections` | integer | yes |  |
+| `questions` | integer | yes |  |
+| `layers` | integer | yes |  |
+
 ### ExportLinkOut
 
 | Field | Type | Always | Notes |
 |---|---|---|---|
 | `url` | string | yes | Open within 15 minutes; it checks your access again. |
 | `expires_at` | date-time | yes |  |
+
+### GroupOut
+
+| Field | Type | Always | Notes |
+|---|---|---|---|
+| `id` | integer | yes |  |
+| `code` | string | yes |  |
+| `section_id` | integer | yes |  |
+| `parent_id` | integer or null |  | The question whose pop-up holds the group; null at top level. |
+| `order` | integer | yes |  |
+| `title` | string | yes |  |
+| `description` | string | yes |  |
+| `display_style` | `plain` | `card` | `collapsible` | yes |  |
+| `visibility_rule` | object or null | yes |  |
+| `question_ids` | list of integer | yes |  |
+| `translations` | object | yes |  |
+
+### IconOut
+
+| Field | Type | Always | Notes |
+|---|---|---|---|
+| `value` | string | yes | The value to put in a question's icon_class or a choice's icon. |
+| `label` | string | yes |  |
+| `set` | `maki` | `temaki` | `fa` | yes |  |
+| `categories` | list of string | yes |  |
 
 ### ImportJobOut
 
@@ -1028,6 +1315,13 @@ Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `p
 | `user` | MeUser | yes |  |
 | `workspaces` | list of MeWorkspace | yes |  |
 | `token` | MeToken | yes |  |
+
+### MoveOut
+
+| Field | Type | Always | Notes |
+|---|---|---|---|
+| `question` | QuestionOut | yes |  |
+| `removed_rules` | list of string | yes | Visibility rules the move broke and cleared, by their host's label. |
 
 ### QuestionOut
 
@@ -1074,6 +1368,13 @@ Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `p
 | `validation_status` | string | yes |  |
 | `answers` | list of object | yes |  |
 
+### RestoreOut
+
+| Field | Type | Always | Notes |
+|---|---|---|---|
+| `unpublished_changes` | uuid | yes |  |
+| `version` | integer | yes |  |
+
 ### SectionOut
 
 | Field | Type | Always | Notes |
@@ -1091,6 +1392,7 @@ Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `p
 | `use_geolocation` | boolean | yes |  |
 | `translations` | object | yes |  |
 | `questions` | list of integer | yes |  |
+| `groups` | list of integer | yes | Question groups of the section, top level and pop-ups (GET …/groups). |
 
 ### SurveyDetailOut
 
@@ -1146,3 +1448,15 @@ Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `p
 | `url` | string | yes |  |
 | `created_at` | date-time | yes |  |
 | `updated_at` | date-time | yes |  |
+
+### VersionOut
+
+| Field | Type | Always | Notes |
+|---|---|---|---|
+| `version` | integer | yes |  |
+| `current` | boolean | yes |  |
+| `status` | string | yes |  |
+| `published_at` | date-time or null | yes |  |
+| `sections` | integer | yes |  |
+| `questions` | integer | yes |  |
+| `responses` | integer | yes |  |

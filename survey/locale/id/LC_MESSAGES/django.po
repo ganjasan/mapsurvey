@@ -8800,3 +8800,11 @@ msgstr "Menyetujui, menahan, atau menolak jawaban"
 #: api/scopes.py
 msgid "Rejected responses leave exports and public results; you can change it back."
 msgstr "Jawaban yang ditolak keluar dari ekspor dan hasil publik; Anda bisa mengubahnya kembali."
+
+#: survey/templates/editor/partials/question_list_item.html
+msgid "Move to section…"
+msgstr "Pindahkan ke bagian…"
+
+#: survey/templates/editor/_survey_more_menu.html
+msgid "A new draft with the same questions, settings and map layers, without responses"
+msgstr "Draf baru dengan pertanyaan, pengaturan, dan lapisan peta yang sama, tanpa jawaban"

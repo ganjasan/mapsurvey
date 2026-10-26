@@ -8827,3 +8827,11 @@ msgstr "Approvare, sospendere o rifiutare le risposte"
 #: api/scopes.py
 msgid "Rejected responses leave exports and public results; you can change it back."
 msgstr "Le risposte rifiutate escono dalle esportazioni e dai risultati pubblici; puoi annullare la scelta."
+
+#: survey/templates/editor/partials/question_list_item.html
+msgid "Move to section…"
+msgstr "Sposta nella sezione…"
+
+#: survey/templates/editor/_survey_more_menu.html
+msgid "A new draft with the same questions, settings and map layers, without responses"
+msgstr "Una nuova bozza con le stesse domande, impostazioni e livelli della mappa, senza risposte"

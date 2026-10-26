@@ -92,3 +92,9 @@ class IncompatibleDraft(ServiceError):
 
 class Conflict(ServiceError):
     code = 'conflict'
+
+
+class LimitReached(ServiceError):
+    """A size or count cap the operation would exceed (a survey copy holding
+    too many attachment bytes)."""
+    code = 'limit_reached'

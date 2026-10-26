@@ -18,6 +18,13 @@ the version list rides on the opener so one modal serves every card.
            data-versions='{% if survey.prefetched_archived_versions %}[{"value":"all","label":"{{ t_all_versions|escapejs }}"},{"value":"latest","label":"{{ t_current|escapejs }} (v{{ survey.version_number }})"}{% for archived in survey.prefetched_archived_versions %},{"value":"v{{ archived.version_number }}","label":"v{{ archived.version_number }}"}{% endfor %}]{% else %}[]{% endif %}'>
             <i class="fas fa-file-export fa-fw mr-1"></i>{% trans "Export data" %}
         </a>
+        {% if org_role == 'owner' or org_role == 'admin' or org_role == 'editor' %}
+        <form method="post" action="{% url 'editor_survey_duplicate' survey.uuid %}" class="mb-0">{% csrf_token %}
+            <button type="submit" class="dropdown-item" title="{% trans 'A new draft with the same questions, settings and map layers, without responses' %}">
+                <i class="fas fa-copy fa-fw mr-1"></i>{% trans "Duplicate" %}
+            </button>
+        </form>
+        {% endif %}
         <div class="dropdown-divider"></div>
         <span class="dropdown-item" style="font-weight:600;font-size:0.85rem;pointer-events:none;">{% trans "Backup (survey file)" %}</span>
         <small class="text-muted d-block" style="padding:0 1.5rem 0.25rem;font-size:0.72rem;line-height:1.3;">{% trans "For import into Mapsurvey, not for analysis" %}</small>

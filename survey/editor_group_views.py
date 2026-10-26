@@ -13,33 +13,32 @@ the group's rule are structure.
 import json
 from types import SimpleNamespace
 
-from django.conf import settings
-from django.db import transaction
 from django.utils.translation import gettext as _
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.http import require_POST
 
-from . import product_events as pe
 from .comments import open_counts as _thread_counts
 from .editor_forms import QuestionGroupForm
 from .editor_views import (
-    _check_content_edit_allowed, _check_structural_edit_allowed, _delete_question_with_layers,
-    DELETE_ACKNOWLEDGEMENT as DELETE_ACK, _edit_locks, _lock_context, _parse_visibility_rule,
-    _preview_language, _survey_is_unversioned,
-    _question_delete_blocker, _refuse_if_answers_at_risk,
-    _render_section_detail, _rescreen_if_live, _structural_refusal, _translation_languages,
-    _visibility_block_context,
+    _answers_at_risk_response, _check_content_edit_allowed, _check_structural_edit_allowed,
+    DELETE_ACKNOWLEDGEMENT as DELETE_ACK, _edit_locks, _lock_context, _locked_response,
+    _parse_visibility_rule, _preview_language, _render_section_detail, _structural_refusal,
+    _translation_languages, _visibility_block_context,
 )
 from .forms import SurveySectionAnswerForm
-from .groups import next_order
 from .html_sanitize import coerce_creator_html
-from .models import Answer, Question, QuestionGroup, QuestionGroupTranslation, SurveySection
+from .models import Question, QuestionGroup, SurveySection
 from .permissions import survey_permission_required
+from .services import groups as svc_groups
 from .services import questions as svc_questions
+from .services import structure as svc_structure
+from .services.common import UNSET
 from .services.context import Actor
-from .services.errors import ValidationFailed
+from .services.errors import (
+    AnswersAtRisk, DeleteBlocked, ServiceError, StructureLocked, ValidationFailed,
+)
 
 
 def _group_or_404(survey, group_id):
@@ -97,11 +96,12 @@ def editor_group_create(request, survey_uuid, section_id):
     if parent_id:
         parent = get_object_or_404(
             Question, id=parent_id, survey_section=section, parent_question_id__isnull=True)
-        if not parent.can_have_subquestions:
-            return HttpResponse('This question has no pop-up.', status=400)
-    group = QuestionGroup.objects.create(
-        survey_section=section, parent_question=parent,
-        order_number=next_order(section, parent), display_style='card')
+    try:
+        group = svc_groups.create(Actor.from_request(request), section, parent=parent)
+    except ValidationFailed as err:
+        return HttpResponse(err.message, status=400)
+    except ServiceError as err:
+        return _locked_response(err)
     # groupsChanged re-renders the section list behind the open modal.
     return _modal_response(request, survey, group, trigger='groupsChanged')
 
@@ -118,45 +118,38 @@ def editor_group_edit(request, survey_uuid, group_id):
     blocked = _check_content_edit_allowed(survey)
     if blocked:
         return blocked
-    _, structure_locked = _edit_locks(survey)
     form = QuestionGroupForm(request.POST, instance=group)
     if not form.is_valid():
         return JsonResponse({'ok': False, 'errors': form.errors}, status=422)
     vis_present, vis_rule, vis_error = _parse_visibility_rule(request)
     if vis_error:
         return JsonResponse({'ok': False, 'errors': {'visibility': [vis_error]}}, status=422)
-    before_rule = group.visibility_rule
-    if structure_locked and vis_present and vis_rule != before_rule:
-        return _structural_refusal(request, ['visibility rule'])
-    group = form.save(commit=False)
-    if vis_present:
-        group.visibility_rule = vis_rule
-    group.save()
-    _save_group_translations(request, group, survey)
-    if structure_locked:
-        pe.emit(pe.LIVE_EDIT_SAVED, request.user.pk, {'survey_id': str(survey.id), 'kind': 'group'})
-        _rescreen_if_live(survey)
+    try:
+        svc_groups.update(
+            Actor.from_request(request), group,
+            {name: request.POST.get(name, '') for name in QuestionGroupForm._meta.fields},
+            visibility_rule=vis_rule if vis_present else UNSET,
+            translations=_posted_group_translations(request, survey))
+    except StructureLocked as err:
+        return _structural_refusal(request, err.reasons)
+    except ValidationFailed as err:
+        return JsonResponse({'ok': False, 'errors': err.fields}, status=422)
+    except ServiceError as err:
+        return _locked_response(err)
     response = JsonResponse({'ok': True})
     response['HX-Trigger'] = 'questionUpdated'
     return response
 
 
-def _save_group_translations(request, group, survey):
-    """Translated title/description for every non-primary language; the
-    description passes the same creator-HTML coercion as the base one."""
+def _posted_group_translations(request, survey):
+    """`{lang: {title, description}}` for the languages the modal posted; the
+    service caps the title and coerces the description like the base ones."""
+    out = {}
     for lang in _translation_languages(survey):
-        if f'translation_{lang}_title' not in request.POST and \
-                f'translation_{lang}_description' not in request.POST:
-            continue
-        title = request.POST.get(f'translation_{lang}_title', '').strip()[:512]
-        description = coerce_creator_html(
-            request.POST.get(f'translation_{lang}_description', '')).strip()
-        if title or description:
-            QuestionGroupTranslation.objects.update_or_create(
-                group=group, language=lang,
-                defaults={'title': title or None, 'description': description or None})
-        else:
-            QuestionGroupTranslation.objects.filter(group=group, language=lang).delete()
+        keys = (f'translation_{lang}_title', f'translation_{lang}_description')
+        if any(key in request.POST for key in keys):
+            out[lang] = {'title': request.POST.get(keys[0], ''), 'description': request.POST.get(keys[1], '')}
+    return out
 
 
 @survey_permission_required('editor')
@@ -176,25 +169,16 @@ def editor_group_delete(request, survey_uuid, group_id):
         return blocked
     section = group.survey_section
     with_questions = (request.POST.get('with_questions') or request.GET.get('with_questions')) == '1'
-    if with_questions and members:
-        for member in members:
-            refusal = _question_delete_blocker(survey, member)
-            if refusal:
-                return refusal
-        ids = []
-        for member in members:
-            ids.extend(member.descendant_question_ids())
-        refusal = _refuse_if_answers_at_risk(
-            request, survey, Answer.objects.filter(question_id__in=ids).count())
-        if refusal:
-            return refusal
-        with transaction.atomic():
-            for member in members:
-                _delete_question_with_layers(survey, member)
-            group.delete()
-    else:
-        # SET_NULL on Question.group: the members stay in place, ungrouped.
-        group.delete()
+    try:
+        # Without questions, SET_NULL on Question.group keeps the members in place, ungrouped.
+        svc_groups.delete(Actor.from_request(request), group, with_questions=with_questions,
+                          acknowledge_answer_loss=request.POST.get(DELETE_ACK) == 'true')
+    except DeleteBlocked as err:
+        return JsonResponse(err.body, status=409)
+    except AnswersAtRisk as err:
+        return _answers_at_risk_response(err)
+    except ServiceError as err:
+        return _locked_response(err)
     return _section_response(request, survey, section)
 
 
@@ -265,15 +249,6 @@ def _parse_root(body, survey):
     return section, parent_id, items
 
 
-def _apply_nested_order(section, parent_id, items):
-    """services.questions.apply_nested_order, raising ValueError for a foreign
-    or repeated id as the move endpoint expects."""
-    try:
-        svc_questions.apply_nested_order(section, parent_id, items)
-    except ValidationFailed as err:
-        raise ValueError(err.message)
-
-
 @survey_permission_required('editor')
 @require_POST
 def editor_items_reorder(request, survey_uuid):
@@ -299,13 +274,15 @@ def editor_items_reorder(request, survey_uuid):
 @survey_permission_required('editor')
 @require_POST
 def editor_question_move(request, survey_uuid, question_id):
-    """Move a question between a section's top level and a pop-up of the same
-    section (design D7b). Body: the target root as for editor_items_reorder,
-    with the moved question already in `items`. Answers cannot be carried over
-    (one per respondent in a section, one per mark in a pop-up), so they are
-    deleted behind the usual acknowledgement; rules the move breaks are
-    removed and named in `removed_rules`."""
-    from .editor_forms import SUBQUESTION_DISALLOWED_INPUT_TYPES
+    """Move a question (services.structure.move_question).
+
+    Drag between a section's top level and one of its pop-ups (design D7b of
+    question-groups): the body is the target root as for editor_items_reorder,
+    with the moved question already in `items`. "Move to section…" (change
+    api-v2-structure): `{"section_id"}` of another section and no `items`;
+    the question goes to the end of its top level. Answers that cannot follow
+    a change of level are deleted behind the usual acknowledgement; rules the
+    move breaks are removed and named in `removed_rules`."""
     survey = request.survey
     blocked = _check_structural_edit_allowed(survey)
     if blocked:
@@ -313,69 +290,38 @@ def editor_question_move(request, survey_uuid, question_id):
     question = get_object_or_404(Question, id=question_id, survey_section__survey_header=survey)
     try:
         body = json.loads(request.body or b'{}')
-        section, parent_id, items = _parse_root(body, survey)
+        section = SurveySection.objects.get(id=int(body['section_id']), survey_header=survey)
+        parent_id = body.get('parent_id')
+        parent_id = int(parent_id) if parent_id not in (None, '') else None
+        items = body.get('items')
+        if items is not None and not isinstance(items, list):
+            raise ValueError
     except (ValueError, KeyError, TypeError, SurveySection.DoesNotExist):
         return HttpResponse(status=400)
-    if section.id != question.survey_section_id:
-        return HttpResponse('A question moves within its section only.', status=400)
-    if parent_id == question.parent_question_id_id:
+    if items is not None and section.id == question.survey_section_id \
+            and parent_id == question.parent_question_id_id:
         return HttpResponse('Same list: use the reorder endpoint.', status=400)
-    target_parent = None
+    parent = None
     if parent_id is not None:
-        target_parent = Question.objects.filter(
+        parent = Question.objects.filter(
             pk=parent_id, survey_section=section, parent_question_id__isnull=True).first()
-        if target_parent is None or not target_parent.can_have_subquestions:
+        if parent is None:
             return HttpResponse('That question has no pop-up.', status=400)
-        if question.input_type in SUBQUESTION_DISALLOWED_INPUT_TYPES \
-                or Question.objects.filter(parent_question_id=question).exists():
-            return JsonResponse({'blocked': _('This kind of question cannot go into a pop-up.')}, status=409)
-
     ack = request.GET.get(DELETE_ACK) == 'true' or body.get(DELETE_ACK) in (True, 'true')
-    answer_count = question.answer_count()
-    if answer_count and not ack:
-        return JsonResponse({
-            'answers_at_risk': answer_count,
-            'explain_versioning': _survey_is_unversioned(survey),
-        }, status=409)
-
-    with transaction.atomic():
-        if answer_count:
-            Answer.objects.filter(question_id__in=question.descendant_question_ids()).delete()
-        own_rule = isinstance(question.visibility_rule, dict)
-        question.parent_question_id = target_parent
-        question.group = None
-        question.visibility_rule = None
-        if target_parent is None or target_parent.input_type != 'layer_objects':
-            question.share_with_respondents = False
-        question.save(update_fields=['parent_question_id', 'group', 'visibility_rule',
-                                     'share_with_respondents'])
-        try:
-            _apply_nested_order(section, parent_id, items)
-        except ValueError:
-            transaction.set_rollback(True)
-            return HttpResponse(status=400)
-        removed = _drop_rules_broken_by_move(survey, question.code)
-    if own_rule:
-        removed.insert(0, question.name or question.code)
-    response = JsonResponse({'ok': True, 'removed_rules': removed})
+    try:
+        moved = svc_structure.move_question(
+            Actor.from_request(request), question, section=section, parent=parent, items=items,
+            acknowledge_answer_loss=ack)
+    except AnswersAtRisk as err:
+        return _answers_at_risk_response(err)
+    except ValidationFailed as err:
+        if err.message == svc_structure.POPUP_REFUSED:
+            return JsonResponse({'blocked': _('This kind of question cannot go into a pop-up.')}, status=409)
+        if 'parent_id' in err.fields:
+            return HttpResponse(err.message, status=400)
+        return HttpResponse(status=400)
+    except ServiceError as err:
+        return _locked_response(err)
+    response = JsonResponse({'ok': True, 'removed_rules': moved.removed_rules})
     response['HX-Trigger'] = 'questionUpdated'
     return response
-
-
-def _drop_rules_broken_by_move(survey, code):
-    """Rules naming `code` that no longer resolve after it moved: removed,
-    and the labels of their hosts returned for the editor's notice."""
-    from .templatetags.question_utils import visibility_info
-    removed = []
-    hosts = list(SurveySection.objects.filter(survey_header=survey, visibility_rule__question_code=code))
-    hosts += list(Question.objects.filter(survey_section__survey_header=survey,
-                                          visibility_rule__question_code=code))
-    hosts += list(QuestionGroup.objects.filter(survey_section__survey_header=survey,
-                                               visibility_rule__question_code=code))
-    for host in hosts:
-        info = visibility_info(host, survey) if getattr(settings, 'CONDITIONAL_VISIBILITY', False) else None
-        if info and info.get('broken'):
-            host.visibility_rule = None
-            host.save(update_fields=['visibility_rule'])
-            removed.append(getattr(host, 'name', None) or getattr(host, 'title', None) or getattr(host, 'code', ''))
-    return removed
