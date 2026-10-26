@@ -48384,6 +48384,21 @@ class ChangelogHeroTest(_ChangelogDirMixin, TestCase):
         self.assertNotIn('id="whatsNewCard"', html)
         self.assertNotIn('Export as Excel', html)
 
+    def test_chips_never_name_a_draft_copy(self):
+        """
+        GIVEN a closed survey whose newer "Unpublished changes" draft copy is
+              the most recently created survey in the workspace
+        WHEN the dashboard renders the hero
+        THEN the chip names the survey itself, never the draft copy
+        """
+        self.park.status = 'closed'
+        self.park.save(update_fields=['status'])
+        SurveyHeader.objects.create(name='[draft] Park', organization=self.org, created_by=self.user,
+                                    status='draft', published_version=self.park)
+        html = self._dashboard()
+        self.assertIn('Summarise Park &lt;b&gt;x&lt;/b&gt;', html)
+        self.assertNotIn('[draft] Park', html)
+
     def test_editor_page_shows_nothing_while_the_hero_is_pending(self):
         """
         GIVEN the same creator

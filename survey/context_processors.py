@@ -243,7 +243,8 @@ def whats_new(request):
             names = ()
             if org is not None and any(changelog.CHIP_PLACEHOLDER in c for c in hero.chips):
                 names = (SurveyHeader.objects
-                         .filter(organization=org, is_canonical=True, deleted_at__isnull=True)
+                         .filter(organization=org, is_canonical=True, published_version__isnull=True,
+                                 deleted_at__isnull=True)
                          .annotate(live=Case(When(status='published', then=0), default=1,
                                              output_field=IntegerField()))
                          .order_by('live', '-created_at')
