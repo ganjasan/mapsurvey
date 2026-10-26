@@ -64,7 +64,7 @@ Permission `surveys:read` · role **viewer** · read-only
 
 ### `get_survey`
 
-The whole survey in one call: settings, then every section in respondent order with all of its questions (sub-questions carry `parent_id`). Ids from here are what the editing tools take.
+The whole survey in one call: settings, then every section in respondent order with all of its questions (sub-questions carry `parent_id`) and question groups (a question's `group_id` names its group). Ids from here are what the editing tools take.
 
 Permission `surveys:read` · role **viewer** · read-only
 
@@ -632,6 +632,171 @@ Permission `surveys:write` · role **editor**
 | `layer_id` | integer | **required** | A layer id from list_layers. |
 | `key` | string | **required** | An object key from list_layer_objects. |
 | `status` | string | **required** | visible, pending or hidden. |
+
+### `list_groups`
+
+The question groups of a section -- top level first, then those inside a map question's pop-up (`parent_id`) -- with title, display style, visibility rule and their question ids in order.
+
+Permission `surveys:read` · role **viewer** · read-only
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid. |
+| `section_id` | integer | **required** | The section id (from get_survey). |
+
+### `create_group`
+
+A question group: a titled run of questions shown together as `plain`, `card` (default) or `collapsible`, with an optional description and one visibility rule for all of them. `question_ids` (questions of the same list -- the section's top level, or one pop-up with `parent_id`) move together to where the first of them was. On a published survey this needs unpublished changes (draft_required).
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `title` | string |  |  |
+| `description` | string |  |  |
+| `display_style` | `plain` \| `card` \| `collapsible` |  |  |
+| `visibility_rule` | object (`question_code`, `choice_codes`, `answered`) |  |  |
+| `translations` | map |  |  |
+| `question_ids` | list of integer |  | The questions the group holds, in order; they move together to where the first of them was. Questions of the same list only (the section, or the same pop-up). |
+| `parent_id` | integer |  | Create the group in this question's pop-up. |
+| `survey` | uuid | **required** | The survey uuid. |
+| `section_id` | integer | **required** | The section id (from get_survey). |
+
+### `update_group`
+
+Change a group's title, description, display style or translations -- these apply to a live survey at once -- or its visibility rule and `question_ids`, which are structural (draft_required on a published survey). `question_ids` is the whole membership: questions left out stay in place, ungrouped.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `title` | string |  |  |
+| `description` | string |  |  |
+| `display_style` | `plain` \| `card` \| `collapsible` |  |  |
+| `visibility_rule` | object (`question_code`, `choice_codes`, `answered`) |  |  |
+| `translations` | map |  |  |
+| `question_ids` | list of integer |  | The questions the group holds, in order; they move together to where the first of them was. Questions of the same list only (the section, or the same pop-up). |
+| `survey` | uuid | **required** | The survey uuid. |
+| `group_id` | integer | **required** | The group id (from get_survey or list_groups). |
+
+### `delete_group`
+
+Remove a group. Its questions stay where they are, ungrouped -- unless `with_questions: true`, which deletes them too and needs `confirm: true` after the user agreed; when they have answers the first call answers answers_at_risk with the count, repeat with `acknowledge_answer_loss: true`.
+
+Permission `surveys:write` · role **editor** · needs `confirm: true`
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid. |
+| `group_id` | integer | **required** | The group id (from get_survey or list_groups). |
+| `with_questions` | boolean |  | Default `False`. |
+| `acknowledge_answer_loss` | boolean |  | Default `False`. |
+| `confirm` | boolean |  | Set to true only after the user confirmed this action in the conversation. Default `False`. |
+
+### `duplicate_question`
+
+A copy right after the question, in its group, with " (copy)" on the name, new codes and its sub-questions.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid. |
+| `question_id` | integer | **required** | The question id (from get_survey). |
+
+### `duplicate_section`
+
+A copy of the section with all its questions and groups, right after it, " (copy)" on the title.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid. |
+| `section_id` | integer | **required** | The section id (from get_survey). |
+
+### `copy_question`
+
+Append a copy of a question from any survey you can read (`source_question_id`) to a section of this one, with new codes and its own copy of any image. With `parent_id` it goes into that map question's pop-up, without the source's own sub-questions.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `source_question_id` | integer | **required** | A question of any survey you can read. |
+| `parent_id` | integer |  | Paste into this question's pop-up (without the source's own sub-questions). |
+| `survey` | uuid | **required** | The survey uuid. |
+| `section_id` | integer | **required** | The section id (from get_survey). |
+
+### `copy_section`
+
+Append a copy of a section from any survey you can read (`source_section_id`), with its questions and groups.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `source_section_id` | integer | **required** | A section of any survey you can read. |
+| `survey` | uuid | **required** | The survey uuid. |
+
+### `duplicate_survey`
+
+A new unpublished survey "<name> (copy)" in the same workspace with this one's sections, questions, groups, visibility rules, translations, settings and map layers -- for running it again next year or in another district. Responses, versions, campaign links, collaborators and the public results page stay behind. Needs the editor role in the workspace.
+
+Permission `surveys:write` · role **workspace editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid. |
+
+### `move_question`
+
+Move a question to another section (`section_id`), into a map question's pop-up (`parent_id`) or out of one (`parent_id` null), at `position` among the target list's items (a group counts as one; default: the end). Between sections it keeps its answers and leaves its group. Into or out of a pop-up its answers cannot follow: the first call answers answers_at_risk with the count; repeat with `acknowledge_answer_loss: true` only after the user agreed. Visibility rules the move breaks are cleared and listed in `removed_rules` -- tell the user.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `section_id` | integer |  | Target section of the same survey; default: its own. |
+| `parent_id` | integer |  | Move into this question's pop-up; null moves it to the section's top level. |
+| `position` | integer |  | Place among the target list's items (a group counts as one); default: the end. |
+| `acknowledge_answer_loss` | boolean |  | Default `False`. |
+| `survey` | uuid | **required** | The survey uuid. |
+| `question_id` | integer | **required** | The question id (from get_survey). |
+
+### `list_versions`
+
+The survey's versions: the current one first, then the archived ones newest first, each with its publish date and counts of sections, questions and responses. Every publish of unpublished changes makes a new version; responses stay with the version they were given to.
+
+Permission `surveys:read` · role **viewer** · read-only
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid. |
+
+### `restore_version`
+
+Roll the questionnaire back: unpublished changes holding version `version`'s sections and questions. Nothing respondents see changes until publish_unpublished_changes, which makes a NEW version -- history is never rewritten. Only on a published survey without unpublished changes; needs the survey owner.
+
+Permission `surveys:write` · role **owner**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid. |
+| `version` | integer | **required** | A version number from list_versions. |
+
+### `search_icons`
+
+Marker icons by meaning, best first -- use before setting a question's `icon_class` or a choice's `icon` instead of guessing a name. Every word of `q` must match the icon's name, label or search terms in `lang` (default: the user's interface language) or English. `set` narrows to maki or temaki (map symbols) or fa (Font Awesome).
+
+Permission `surveys:read` · read-only
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `q` | string |  | What the icon should show, e.g. "bench", "bus stop", "скамейка". |
+| `lang` | string |  | ISO 639-1 code of the words in `q`. |
+| `set` | `maki` \| `temaki` \| `fa` |  |  |
+| `limit` | integer |  | Default `20`. |
 
 ## Errors
 

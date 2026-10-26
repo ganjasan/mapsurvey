@@ -194,6 +194,23 @@ To put context on the map:
 
 Layers and their objects are changed only with the survey owner's role; deleting asks you first.
 
+To shape the questionnaire:
+
+- "Put the three questions about the respondent into a card called About you." — a question group
+  (`create_group`); "make it collapsible" changes its display style (`update_group`).
+- "Use a bench icon for the point question." — the agent looks the icon up by meaning
+  (`search_icons`, in your language too) instead of guessing a name.
+- "Move the lighting question to the Safety section." — `move_question`. Between sections the
+  answers stay; if a visibility rule stops making sense after the move, it is removed and the agent
+  tells you which.
+- "Copy the demographics section from last year's survey." — `copy_section`; one question works the
+  same way (`copy_question`).
+- "Make a copy of this survey for the north district." — a new unpublished survey with the same
+  questions, settings and map layers and no responses (`duplicate_survey`).
+- "The last publish broke something — go back to version 2." — `list_versions`, then
+  `restore_version`, which prepares the old questionnaire as unpublished changes; nothing changes for
+  respondents until you publish them.
+
 To send it out:
 
 - "Give me the link and a QR code for a poster." — the link, and the QR as an image in the chat

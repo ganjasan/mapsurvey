@@ -21,6 +21,6 @@
 
 ## 4. MCP (PR 2)
 
-- [ ] 4.1 `mcp/tools/structure.py`: 13 tools; confirm on `delete_group` with questions
-- [ ] 4.2 Tests; `scripts/build_mcp_reference.py`; help (grouping, copying, rolling back, icons); no changelog entry
-- [ ] 4.3 `./run_tests.sh api mcp survey --noinput`; `npm run build` in `help/`
+- [x] 4.1 `mcp/tools/structure.py`: 13 tools; confirm on `delete_group` with questions
+- [x] 4.2 Tests; `scripts/build_mcp_reference.py`; help (grouping, copying, rolling back, icons); no changelog entry
+- [x] 4.3 `./run_tests.sh api mcp survey --noinput`; `npm run build` in `help/`

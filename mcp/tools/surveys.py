@@ -10,6 +10,7 @@ from pydantic import Field
 
 from survey.analytics import nonempty_sessions
 from survey.models import Question, SurveyHeader, SurveySession
+from survey.services import groups as svc_groups
 from survey.services import publishing as svc_publishing
 from survey.services import sections as svc_sections
 from survey.services import surveys as svc_surveys
@@ -58,7 +59,8 @@ def list_surveys(request, args):
     title='Get a survey',
     description=(
         'The whole survey in one call: settings, then every section in respondent order with all of its '
-        'questions (sub-questions carry `parent_id`). Ids from here are what the editing tools take.'
+        'questions (sub-questions carry `parent_id`) and question groups (a question\'s `group_id` names '
+        'its group). Ids from here are what the editing tools take.'
     ),
     scope=scopes.SURVEYS_READ, role='viewer', read_only=True, idempotent=True, args=SurveyRef,
 )
@@ -69,7 +71,8 @@ def get_survey(request, args):
         # Top level first (NULL parent), then the pop-ups' sub-questions.
         questions = (Question.objects.filter(survey_section=section)
                      .order_by(F('parent_question_id_id').asc(nulls_first=True), 'order_number', 'id'))
-        sections.append({**out.section(section, position), 'questions': [out.question(q) for q in questions]})
+        sections.append({**out.section(section, position), 'questions': [out.question(q) for q in questions],
+                         'groups': [out.group(g) for g in svc_groups.groups_of(section)]})
     return {**out.survey_detail(obj), 'sections': sections}
 
 

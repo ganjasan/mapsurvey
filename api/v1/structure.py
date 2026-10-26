@@ -38,7 +38,7 @@ WRITE = Bearer(scopes.SURVEYS_WRITE)
 
 # ─── Groups ──────────────────────────────────────────────────────────────────
 
-def _group(survey, group_id):
+def find_group(survey, group_id):
     obj = QuestionGroup.objects.select_related('survey_section', 'parent_question').filter(
         pk=group_id, survey_section__survey_header=survey).first()
     if obj is None:
@@ -46,7 +46,7 @@ def _group(survey, group_id):
     return obj
 
 
-def _group_args(body):
+def group_args(body):
     data = {k: ('' if body[k] is None else body[k]) for k in ('title', 'description', 'display_style') if k in body}
     translations = forms_bridge.translations(body) if 'translations' in body else UNSET
     return data, forms_bridge.visibility(body), translations
@@ -71,7 +71,7 @@ def create_group(request, uuid: UUID, section_id: int, payload: GroupCreateIn):
     parent = None
     if body.get('parent_id') is not None:
         parent = deps.question(request, survey, body['parent_id'])
-    data, rule, translations = _group_args(body)
+    data, rule, translations = group_args(body)
     group = svc_groups.create(
         deps.actor(request), section, data, parent=parent,
         visibility_rule=None if rule is UNSET else rule,
@@ -82,16 +82,16 @@ def create_group(request, uuid: UUID, section_id: int, payload: GroupCreateIn):
 
 @router.get('/surveys/{uuid}/groups/{group_id}', response=GroupOut, auth=READ, openapi_extra=errors())
 def get_group(request, uuid: UUID, group_id: int):
-    return out.group(_group(deps.survey(request, uuid), group_id))
+    return out.group(find_group(deps.survey(request, uuid), group_id))
 
 
 @router.patch('/surveys/{uuid}/groups/{group_id}', response=GroupOut, auth=WRITE, openapi_extra=errors(409))
 def update_group(request, uuid: UUID, group_id: int, payload: GroupIn):
     """Wording and style apply to a live survey in place; the rule and `question_ids` are structure."""
     survey = deps.survey(request, uuid, role='editor')
-    group = _group(survey, group_id)
+    group = find_group(survey, group_id)
     body = payload.dict(exclude_unset=True)
-    data, rule, translations = _group_args(body)
+    data, rule, translations = group_args(body)
     group = svc_groups.update(deps.actor(request), group, data, visibility_rule=rule, translations=translations,
                               question_ids=body.get('question_ids'), strict=True)
     return out.group(group)
@@ -103,7 +103,7 @@ def delete_group(request, uuid: UUID, group_id: int, with_questions: bool = Fals
                  acknowledge_answer_loss: bool = False):
     """Delete the group; its questions stay in place, ungrouped, unless `with_questions`."""
     survey = deps.survey(request, uuid, role='editor')
-    svc_groups.delete(deps.actor(request), _group(survey, group_id), with_questions=with_questions,
+    svc_groups.delete(deps.actor(request), find_group(survey, group_id), with_questions=with_questions,
                       acknowledge_answer_loss=acknowledge_answer_loss)
     return Status(204, None)
 
@@ -128,9 +128,22 @@ def duplicate_section(request, uuid: UUID, section_id: int):
     return Status(201, out.section(svc_structure.duplicate_section(deps.actor(request), source)))
 
 
-def _readable(request, header):
-    """The source of a copy must be a survey the caller can read over the API."""
-    return deps.survey(request, header.uuid)
+def source_question(request, question_id):
+    """The question a copy is made from: any survey the caller can read over
+    the API (404 for one they cannot see, pro_required on a Free workspace)."""
+    source = Question.objects.select_related('survey_section__survey_header').filter(pk=question_id).first()
+    if source is None:
+        raise not_found()
+    deps.survey(request, source.survey_section.survey_header.uuid)
+    return source
+
+
+def source_section(request, section_id):
+    source = SurveySection.objects.select_related('survey_header').filter(pk=section_id).first()
+    if source is None:
+        raise not_found()
+    deps.survey(request, source.survey_header.uuid)
+    return source
 
 
 @router.post('/surveys/{uuid}/sections/{section_id}/questions/copy', response={201: QuestionOut}, auth=WRITE,
@@ -139,11 +152,7 @@ def copy_question(request, uuid: UUID, section_id: int, payload: CopyQuestionIn)
     """Append a copy of a question from any survey you can read (new codes, its own files)."""
     survey = deps.survey(request, uuid, role='editor')
     section = deps.section(request, survey, section_id)
-    source = Question.objects.select_related('survey_section__survey_header').filter(
-        pk=payload.source_question_id).first()
-    if source is None:
-        raise not_found()
-    _readable(request, source.survey_section.survey_header)
+    source = source_question(request, payload.source_question_id)
     parent = deps.question(request, survey, payload.parent_id) if payload.parent_id is not None else None
     copy = svc_structure.paste_question(deps.actor(request), section, source, parent=parent)
     return Status(201, out.question(copy))
@@ -153,10 +162,7 @@ def copy_question(request, uuid: UUID, section_id: int, payload: CopyQuestionIn)
 def copy_section(request, uuid: UUID, payload: CopySectionIn):
     """Append a copy of a section from any survey you can read."""
     survey = deps.survey(request, uuid, role='editor')
-    source = SurveySection.objects.select_related('survey_header').filter(pk=payload.source_section_id).first()
-    if source is None:
-        raise not_found()
-    _readable(request, source.survey_header)
+    source = source_section(request, payload.source_section_id)
     return Status(201, out.section(svc_structure.paste_section(deps.actor(request), survey, source)))
 
 
@@ -188,21 +194,25 @@ def move_question(request, uuid: UUID, question_id: int, payload: MoveIn):
 def duplicate_survey(request, uuid: UUID):
     """A new draft survey in the same workspace with this one's sections, questions, groups, rules,
     translations, settings and map layers -- no responses, versions, links or public results page."""
+    return Status(201, duplicate(request, deps.survey(request, uuid), deps.actor(request)))
+
+
+def duplicate(request, source, actor):
+    """The copy and its counts, after the checks every surface makes: the
+    workspace role that creates surveys and the `survey_create` limit."""
     p = request.principal
-    source = deps.survey(request, uuid)
     membership = Membership.objects.filter(user=p.user, organization=source.organization).first()
     if membership is None or ORG_ROLE_RANK.get(membership.role, -1) < ORG_ROLE_RANK['editor']:
         raise ApiError(403, FORBIDDEN_ROLE, 'Creating surveys needs the editor role in the workspace.',
                        role='editor')
     limits.hit(p, 'survey_create')
-    copy = svc_structure.duplicate_survey(deps.actor(request), source)
-    sections = list(ordered(copy))
-    return Status(201, {
+    copy = svc_structure.duplicate_survey(actor, source)
+    return {
         **out.survey(copy),
-        'sections': len(sections),
+        'sections': len(list(ordered(copy))),
         'questions': Question.objects.filter(survey_section__survey_header=copy).count(),
         'layers': copy.map_layers.count(),
-    })
+    }
 
 
 # ─── Versions ────────────────────────────────────────────────────────────────
@@ -238,7 +248,10 @@ def _version(header, current, published):
 @router.get('/surveys/{uuid}/versions', response=List[VersionOut], auth=READ, openapi_extra=errors())
 def list_versions(request, uuid: UUID):
     """The current survey, then its archived versions newest first; each publish makes a version."""
-    survey = deps.survey(request, uuid)
+    return versions_of(deps.survey(request, uuid))
+
+
+def versions_of(survey):
     canonical = survey.published_version or survey
     published = _published_at(canonical)
     archived = SurveyHeader.objects.filter(canonical_survey=canonical, is_canonical=False).order_by(
@@ -265,11 +278,15 @@ def search_icons(request, q: str = '', lang: Optional[str] = None, set: Optional
     """Marker icons by meaning, best first: every word must match the icon's name, label or search
     terms in `lang` (default: your interface language) or English. `set` narrows to maki, temaki or fa.
     Every value is accepted as `icon_class`."""
-    if set is not None and set not in icon_search.SETS:
+    return icons(request, q, lang=lang, icon_set=set, limit=limit, surface='api')
+
+
+def icons(request, q, *, lang=None, icon_set=None, limit=20, surface):
+    if icon_set is not None and icon_set not in icon_search.SETS:
         raise ApiError(422, 'validation', 'Unknown icon set.', fields={'set': ['One of maki, temaki, fa.']})
     lang = lang or icon_search.ui_language(request.principal.user)
-    hits = icon_search.search(q, lang=lang, sets=[set] if set else None, limit=limit)
-    if q.strip() and not hits:
-        icon_search.report_miss(request.principal.user, q, lang, surface='api')
+    hits = icon_search.search(q, lang=lang, sets=[icon_set] if icon_set else None, limit=limit)
+    if (q or '').strip() and not hits:
+        icon_search.report_miss(request.principal.user, q, lang, surface=surface)
     return hits
 
