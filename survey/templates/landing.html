@@ -1,5 +1,5 @@
 {% extends "base_landing.html" %}
-{% load static i18n %}
+{% load static i18n brand_tags %}
 
 {% comment %}
 One template, two URLs: `/` (English) and `/ru/` (Russian), told apart by home_path
@@ -13,6 +13,8 @@ reciprocal.
     <link rel="alternate" hreflang="ru" href="https://mapsurvey.org/ru/">
     <link rel="alternate" hreflang="x-default" href="https://mapsurvey.org/">
 {% endblock %}
+{% comment %}The site name Google shows for us; the homepage pair only (change brand-entity).{% endcomment %}
+{% block structured_data %}{% website_jsonld %}{% endblock %}
 
 {% block content %}
 
