@@ -471,7 +471,7 @@ services:
       - help.mapsurvey.org
     envVars:
       - key: NODE_VERSION
-        value: "22"
+        value: "22.23.4"
       - key: PUBLIC_POSTHOG_KEY
         sync: false
       - key: PUBLIC_POSTHOG_HOST
