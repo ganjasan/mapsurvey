@@ -1,0 +1,4 @@
+{% load i18n %}{% comment %}Logout is a POST (change fix-logout-post, #432): Django 5 answers GET on
+the logout URL with 405. Every Logout control includes this partial; never link to the URL.
+form_class sits on the form (d-inline, nav-desktop), btn_class on the button (dropdown-item).
+The look comes from the includer's ".logout-btn" rule next to its link rule.{% endcomment %}<form method="post" action="{% url 'logout' %}" class="logout-form{% if form_class %} {{ form_class }}{% endif %}" style="margin:0;">{% csrf_token %}<button type="submit" class="logout-btn{% if btn_class %} {{ btn_class }}{% endif %}">{% if icon %}<i class="fas fa-sign-out-alt" style="margin-right:4px;"></i>{% endif %}{% trans "Logout" %}</button></form>

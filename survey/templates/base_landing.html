@@ -162,7 +162,7 @@ homepage views set it (change ru-landing-hreflang).
             <li><span class="nav-sep"></span></li>
             {% if user.is_authenticated %}
                 <li><a href="{% url 'editor' %}" class="btn-nav-action">{% trans "Dashboard" %}</a></li>
-                <li><a href="{% url 'logout' %}">{% trans "Logout" %}</a></li>
+                <li>{% include "partials/_logout_form.html" %}</li>
             {% else %}
                 <li><a href="{% url 'login' %}">{% trans "Sign In" %}</a></li>
                 <li><a href="{% url 'django_registration_register' %}" class="btn-nav-action">{% trans "Sign Up Free" %}</a></li>

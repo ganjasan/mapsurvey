@@ -53,6 +53,8 @@
             .site-navbar .navbar-brand:hover { color: #111827; }
             .site-navbar a { color: #6b7280; text-decoration: none; font-size: 0.85rem; }
             .site-navbar a:hover { color: #4f46e5; }
+            .site-navbar .logout-btn { background: none; border: 0; padding: 0; font: inherit; font-size: 0.85rem; color: #6b7280; cursor: pointer; }
+            .site-navbar .logout-btn:hover { color: #4f46e5; }
             .site-navbar .nav-username { color: #9ca3af; font-size: 0.85rem; }
             .auth-page {
                 min-height: calc(100vh - 49px);
@@ -438,7 +440,7 @@
                           </div>
                       </div>
                       <span class="nav-username">{{ user.get_username }}</span>
-                      <a href="{% url 'logout' %}" style="font-size:0.85rem;">{% trans "Logout" %}</a>
+                      {% include "partials/_logout_form.html" with form_class="d-inline" %}
                   {% else %}
                       <a href="{% url 'login' %}?next={{ request.path }}" style="font-size:0.85rem;">{% trans "Sign in" %}</a>
                   {% endif %}
