@@ -32,6 +32,12 @@ def plan_label(plan_code):
 
 
 @register.simple_tag
+def plan_feature_labels(plan_code):
+    """Labels of every feature a plan unlocks, in registry order -- the plan cards' bullets."""
+    return [f.label for f in FEATURES.values() if plan_code in f.plans]
+
+
+@register.simple_tag
 def feature_label(feature_key):
     f = FEATURES.get(feature_key)
     return f.label if f else feature_key

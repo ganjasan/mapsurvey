@@ -132,7 +132,7 @@ homepage views set it (change ru-landing-hreflang).
                     <li class="landing-nav__dd-sep"><a href="{% url 'participatory_mapping_tools' %}">{% trans "Participatory mapping tools: compared" %}</a></li>
                 </ul>
             </li>
-            <li><a href="{% url 'pro_early_access' %}">{% trans "Pro" %}</a></li>
+            <li><a href="{% url 'pricing' %}">{% trans "Pricing" %}</a></li>
             <li><a href="{% url 'services' %}">{% trans "Services" %}</a></li>
             <li><a href="{% url 'trust_page' %}">{% trans "Trust" %}</a></li>
             {% if GITHUB_REPO_URL %}
@@ -198,7 +198,7 @@ homepage views set it (change ru-landing-hreflang).
                     <ul class="landing-footer__links">
                         <li><a href="{{ home_path|default:'/' }}#features">{% trans "Features" %}</a></li>
                         <li><a href="{{ home_path|default:'/' }}#demo">{% trans "Demo survey" %}</a></li>
-                        <li><a href="{% url 'pro_early_access' %}">{% trans "Pro" %}</a></li>
+                        <li><a href="{% url 'pricing' %}">{% trans "Pricing" %}</a></li>
                         <li><a href="{% url 'services' %}">{% trans "Project service" %}</a></li>
                         <li><a href="{% url 'demo_request' %}?src=footer">{% trans "Request a demo" %}</a></li>
                     </ul>

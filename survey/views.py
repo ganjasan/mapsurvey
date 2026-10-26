@@ -2353,6 +2353,13 @@ def services(request):
 	return render(request, 'services.html')
 
 
+def pricing(request):
+	"""`/pricing/` -- Free, Pro and Done for you, from `partials/_plan_cards.html` (change
+	pricing-page, #433). `/pro/` stays the questionnaire and is linked from here."""
+	capture_signup_source(request)
+	return render(request, 'pricing.html')
+
+
 def pro_early_access(request):
 	"""`/pro/` — asks which paid capabilities matter, and never quotes a price.
 
@@ -2412,6 +2419,7 @@ def robots_txt(request):
 		"Allow: /surveys/",
 		"Allow: /stories/",
 		"Allow: /services/",
+		"Allow: /pricing/",
 		"Allow: /pro/",
 		"Allow: /r/",
 		"Allow: /ru/",
@@ -2447,6 +2455,7 @@ def sitemap_xml(request):
 		f"  <url><loc>{base}/ru/</loc>{home_alternates}</url>",
 	]
 	urls.append(f"  <url><loc>{base}/services/</loc></url>")
+	urls.append(f"  <url><loc>{base}/pricing/</loc></url>")
 	urls.append(f"  <url><loc>{base}/pro/</loc></url>")
 	# SEO landing pages with crawl hints — from the single-source registry.
 	for landing in SEO_LANDINGS:

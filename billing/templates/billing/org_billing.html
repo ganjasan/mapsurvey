@@ -4,7 +4,7 @@
 {% block title %}{{ org.name }} — {% trans "Plan & billing" %}{% endblock %}
 
 {% block content %}
-<div class="container mt-4" style="max-width: 720px;">
+<div class="container mt-4" style="max-width: 1040px;">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
             <h4 class="mb-0">{{ org.name }}</h4>
@@ -26,8 +26,9 @@
     {% endfor %}
     {% endif %}
 
-    {# ---- Current plan ---- #}
-    <div class="card mb-4">
+    {# ---- Current plan: the state of a subscription. A plain Free organisation reads it off the cards. ---- #}
+    {% if entitlements.is_pro or entitlements.state == 'lapsed' or waiting_order or duplicates %}
+    <div class="card mb-4" style="max-width: 720px;">
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
@@ -57,8 +58,6 @@
                         </p>
                     {% elif entitlements.state == 'lapsed' %}
                         <p class="mb-0 text-muted">{% trans "The Pro plan has ended. Everything you built is still here; only the Pro extras are off." %}</p>
-                    {% else %}
-                        <p class="mb-0 text-muted">{% trans "The free plan: every question type, unlimited surveys, responses and team members." %}</p>
                     {% endif %}
                 </div>
             </div>
@@ -78,42 +77,17 @@
             {% endif %}
         </div>
     </div>
-
-    {# ---- Upgrade (Free / lapsed) ---- #}
-    {% if not entitlements.is_pro and products_configured %}
-    <div class="card mb-4">
-        <div class="card-body">
-            <h5 class="mb-2">{% trans "Pro" %}</h5>
-            <p class="mb-2">{% trans "Pro is the service plan: direct access to the Mapsurvey team for project consulting, analysis of your responses and reports for councils, clients and funders — plus a clean, unbranded survey." %}{% if HELP_URL %} <a href="{{ HELP_URL.pro }}" target="_blank" rel="noopener" class="ms-learn-more">{% trans "Learn more" %} <i class="fas fa-external-link-alt" style="font-size:.7em;"></i></a>{% endif %}</p>
-            <ul class="mb-3" style="font-size:0.9rem;">
-                <li>{% feature_label 'pro_help' %}</li>
-                <li>{% feature_label 'unbranded' %}</li>
-                <li>{% trans "Everything in Free, which stays free" %}</li>
-            </ul>
-            {% if is_owner %}
-            <form method="post" action="{% url 'org_checkout' org.slug %}" class="d-inline">
-                {% csrf_token %}<input type="hidden" name="period" value="monthly">
-                <button type="submit" class="btn btn-primary btn-sm mr-1">{% trans "Upgrade — monthly" %}</button>
-            </form>
-            <form method="post" action="{% url 'org_checkout' org.slug %}" class="d-inline">
-                {% csrf_token %}<input type="hidden" name="period" value="yearly">
-                <button type="submit" class="btn btn-primary btn-sm mr-1">{% trans "Upgrade — yearly" %}</button>
-            </form>
-            <form method="post" action="{% url 'org_checkout' org.slug %}" class="d-inline">
-                {% csrf_token %}<input type="hidden" name="period" value="yearly"><input type="hidden" name="quote" value="1">
-                <button type="submit" class="btn btn-outline-secondary btn-sm">{% trans "Get a quote" %}</button>
-            </form>
-            <p class="text-muted mt-2 mb-0" style="font-size:0.85rem;">{% trans "Card or PayPal. The yearly plan can also be paid by bank transfer or purchase order — the quote is a PDF you can put through procurement." %} <a href="{% url 'index' %}#pricing">{% trans "Prices" %}</a></p>
-            {% else %}
-            <p class="text-muted mb-0" style="font-size:0.9rem;">{% trans "Only the organisation owner can upgrade." %}</p>
-            {% endif %}
-        </div>
-    </div>
     {% endif %}
+
+    {# ---- Plans (change pricing-page, #433): the cards of /pricing/, with the checkout on Pro ---- #}
+    <div class="mb-4">
+        {% include "partials/_plan_cards.html" with surface="billing" prefix="billing-plans" %}
+        <p class="text-muted mt-3 mb-0" style="font-size:0.85rem;"><a href="{% url 'pricing' %}">{% trans "Prices and payment questions" %}</a>{% if HELP_URL %} · <a href="{{ HELP_URL.pro }}" target="_blank" rel="noopener" class="ms-learn-more">{% trans "Learn more" %} <i class="fas fa-external-link-alt" style="font-size:.7em;"></i></a>{% endif %}</p>
+    </div>
 
     {# ---- Manage (any subscription) ---- #}
     {% if sub %}
-    <div class="card mb-4">
+    <div class="card mb-4" style="max-width: 720px;">
         <div class="card-body">
             <h6 class="mb-3">{% trans "Manage your subscription" %}</h6>
             {% if renewal_url %}
@@ -153,7 +127,7 @@
     </div>
     {% endif %}
 
-    <p class="text-muted" style="font-size:0.85rem;">
+    <p class="text-muted" style="font-size:0.85rem; max-width: 720px;">
         <strong>{% trans "Cancelling and refunds." %}</strong>
         {% trans "You can cancel at any time. Your organisation keeps Pro until the end of the period you have already paid for, then returns to the Free plan — every survey, response and setting stays exactly where it is; only the Pro extras switch off. Payments, invoices and refunds are handled by PayPro Global, our Merchant of Record. If a payment is refunded, the organisation returns to Free immediately." %}
     </p>

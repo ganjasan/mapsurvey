@@ -211,6 +211,7 @@ urlpatterns = [
     path('for-researchers/', views.for_researchers, name='for_researchers'),
     path('for-government/', views.for_government, name='for_government'),
     path('services/', views.services, name='services'),
+    path('pricing/', views.pricing, name='pricing'),
     path('pro/', views.pro_early_access, name='pro_early_access'),
     # "Request a demo" (change request-demo-form): step one is an email only, step two the details.
     path('demo/', demo_request_views.demo_request, name='demo_request'),
