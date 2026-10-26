@@ -496,6 +496,143 @@ Permission `surveys:write` · role **editor**
 | `survey` | uuid | **required** | The survey uuid (from list_surveys). |
 | `hosts` | list of string | **required** |  |
 
+### `list_layers`
+
+The survey's reference layers -- context drawn under the answers (bus stops, parks, planned sites) and shared maps of respondents' marks -- with their style and object count.
+
+Permission `surveys:read` · role **viewer** · read-only
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+
+### `create_layer`
+
+A reference layer from GeoJSON you pass as `geojson` -- a FeatureCollection, a Feature or a geometry in WGS 84 longitude/latitude (not projected metres). At most 5 000 features and 10 MB; multi-part geometries become one object per part; a "name" or "title" property becomes the object title. Omit `geojson` for an empty layer to fill with create_layer_object. To ask respondents about these objects, add an "Objects on the map" question with this layer_id. Needs the survey owner; at most 10 layers.
+
+Permission `surveys:write` · role **owner**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `name` | string |  |  |
+| `geojson` | map |  | A FeatureCollection, a Feature or a bare geometry in WGS 84 (lng, lat). At most 10 MB and 5 000 features; multi-part geometries become one object per part. Omit for an empty layer. |
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+
+### `update_layer`
+
+Rename a layer, change its colour (#rrggbb), the property used as label or key, popups, or its style: opacity, weight, fill_opacity, radius, icon, legend, and `by` -- one rule colouring objects by one property (mode "categories" with classes [{value, color}] or "graduated"). Never changes geometry. Needs the survey owner.
+
+Permission `surveys:write` · role **owner**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `name` | string |  |  |
+| `color` | string |  | #rrggbb |
+| `label_field` | string |  | A property shown as the object title on the map. |
+| `key_field` | string |  |  |
+| `show_popups` | boolean |  |  |
+| `style` | map |  | opacity, weight, fill_opacity, radius, icon, legend, and `by` — one rule on one property (categories or graduated classes). Normalised on save. |
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+| `layer_id` | integer | **required** | A layer id from list_layers. |
+
+### `reorder_layers`
+
+Set the stacking order of the layers: every layer id of the survey, bottom first. Needs the survey owner.
+
+Permission `surveys:write` · role **owner**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+| `layer_ids` | list of integer | **required** |  |
+
+### `delete_layer`
+
+Delete a layer and all its objects. Refused while a question uses it. Needs `confirm: true` after the user agreed, and the survey owner.
+
+Permission `surveys:write` · role **owner** · needs `confirm: true`
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+| `layer_id` | integer | **required** | A layer id from list_layers. |
+| `confirm` | boolean |  | Set to true only after the user confirmed this action in the conversation. Default `False`. |
+
+### `list_layer_objects`
+
+The objects of one layer -- key, title, category, description, link, geometry, properties -- paged.
+
+Permission `surveys:read` · role **viewer** · read-only
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+| `layer_id` | integer | **required** | A layer id from list_layers. |
+| `cursor` | string |  | `next_cursor` of the previous page. |
+| `limit` | integer |  | Default `50`. |
+
+### `create_layer_object`
+
+One object: a Point, LineString or Polygon `geometry` in WGS 84, with title, category, description (shown on its card), an http(s) link and properties. Not on a shared map. Needs the survey owner.
+
+Permission `surveys:write` · role **owner**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+| `layer_id` | integer | **required** | A layer id from list_layers. |
+| `geometry` | map | **required** |  |
+| `key` | string |  | Unique in the layer; generated when omitted. |
+| `title` | string |  |  |
+| `category` | string |  |  |
+| `description` | string |  | Rich text shown on the object card. |
+| `link` | string |  | An http:// or https:// address. |
+| `properties` | map |  |  |
+
+### `update_layer_object`
+
+Change an object's text, link, geometry or properties; the key stays. Needs the survey owner.
+
+Permission `surveys:write` · role **owner**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+| `layer_id` | integer | **required** | A layer id from list_layers. |
+| `key` | string | **required** | An object key from list_layer_objects. |
+| `geometry` | map |  |  |
+| `title` | string |  |  |
+| `category` | string |  |  |
+| `description` | string |  | Rich text shown on the object card. |
+| `link` | string |  | An http:// or https:// address. |
+| `properties` | map |  |  |
+
+### `delete_layer_object`
+
+Remove one object (answers about it stay in the responses). Needs `confirm: true` and the survey owner.
+
+Permission `surveys:write` · role **owner** · needs `confirm: true`
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+| `layer_id` | integer | **required** | A layer id from list_layers. |
+| `key` | string | **required** | An object key from list_layer_objects. |
+| `confirm` | boolean |  | Set to true only after the user confirmed this action in the conversation. Default `False`. |
+
+### `moderate_layer_object`
+
+On a shared map (a layer of respondents' marks): show a mark to other respondents ("visible"), hold it ("pending") or hide it ("hidden"). Needs the editor role.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+| `layer_id` | integer | **required** | A layer id from list_layers. |
+| `key` | string | **required** | An object key from list_layer_objects. |
+| `status` | string | **required** | visible, pending or hidden. |
+
 ## Errors
 
 A refused call comes back as a tool error carrying the same envelope as the REST API:
