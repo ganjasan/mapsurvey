@@ -25,6 +25,7 @@ DESCRIPTION = (
 )
 
 PROFILES = [
+    "https://www.wikidata.org/wiki/Q141878840",
     "https://participedia.net/method/mapsurvey-1",
 ]
 
