@@ -8846,3 +8846,11 @@ msgstr "Aprovar, reter ou rejeitar respostas"
 #: api/scopes.py
 msgid "Rejected responses leave exports and public results; you can change it back."
 msgstr "As respostas rejeitadas saem das exportações e dos resultados públicos; pode reverter."
+
+#: survey/templates/editor/partials/question_list_item.html
+msgid "Move to section…"
+msgstr "Mover para a secção…"
+
+#: survey/templates/editor/_survey_more_menu.html
+msgid "A new draft with the same questions, settings and map layers, without responses"
+msgstr "Um novo rascunho com as mesmas perguntas, definições e camadas do mapa, sem respostas"

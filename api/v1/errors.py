@@ -64,6 +64,8 @@ def from_service_error(err):
                         'to publish anyway.', issues=err.issues)
     if isinstance(err, svc.TransitionRefused):
         return ApiError(409, codes.TRANSITION_REFUSED, err.message)
+    if isinstance(err, svc.LimitReached):
+        return ApiError(409, codes.LIMIT_REACHED, err.message)
     return ApiError(409, codes.CONFLICT, err.message or 'Conflict.')
 
 

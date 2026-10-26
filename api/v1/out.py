@@ -4,6 +4,7 @@ from django.urls import reverse
 
 from survey.content_screening import pending_review_for
 from survey.models import Question
+from survey.services.groups import groups_of
 from survey.services.sections import ordered
 
 
@@ -78,6 +79,24 @@ def section(obj, position=None):
         'questions': list(
             Question.objects.filter(survey_section=obj, parent_question_id__isnull=True)
             .order_by('order_number', 'id').values_list('pk', flat=True)),
+        'groups': list(groups_of(obj).values_list('pk', flat=True)),
+    }
+
+
+def group(obj):
+    return {
+        'id': obj.pk,
+        'code': obj.code,
+        'section_id': obj.survey_section_id,
+        'parent_id': obj.parent_question_id,
+        'order': obj.order_number,
+        'title': obj.title or '',
+        'description': obj.description or '',
+        'display_style': obj.display_style,
+        'visibility_rule': obj.visibility_rule,
+        'question_ids': [q.pk for q in obj.members()],
+        'translations': {t.language: {'title': t.title, 'description': t.description}
+                         for t in obj.translations.all()},
     }
 
 

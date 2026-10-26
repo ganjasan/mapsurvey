@@ -123,7 +123,9 @@ def restore_version(actor, survey, version):
         canonical_survey=survey, is_canonical=False, version_number=version_num).first()
     if archived is None:
         return None
-    return clone_survey_for_draft(survey, structure_source=archived)
+    draft = clone_survey_for_draft(survey, structure_source=archived)
+    audit.record(actor, 'version_restore', survey, version=version_num, draft_uuid=str(draft.uuid))
+    return draft
 
 
 def publish_draft(actor, draft, *, force=False, acknowledge_translation_gaps=False):

@@ -21,6 +21,10 @@ You end up knowing what each card on the **How do you want to start?** page does
 3. To skip this page in future, open the account menu, click **Preferences**, choose your usual way under **When I click New Survey** and click **Save**. **New Survey** then goes straight to that path. Choose **Ask every time** to get this page back.
 4. To see the page once without changing your default, open the ⋯ menu on the dashboard and click **Start another way…**. The page names your current default with a link to **Preferences**.
 
+## Start from a copy of another survey
+
+To run a survey again — next year's round, another district — open the ⋯ menu on its card on the dashboard and click **Duplicate**. The editor opens a new unpublished survey called "<name> (copy)" in the same workspace, with the same sections, questions, groups, visibility rules, translations, settings and map layers (with their objects and pictures). Responses, versions, campaign links, collaborators, comments and the public results page stay with the original, which does not change. **Duplicate** needs the editor role in the workspace.
+
 ## Where the map opens
 
 A new survey's map starts as close to you as Mapsurvey can tell without asking anything you have not agreed to, in this order:

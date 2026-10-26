@@ -173,6 +173,7 @@ class SectionOut(Schema):
     use_geolocation: bool
     translations: Dict[str, SectionTranslation]
     questions: List[int]
+    groups: List[int] = Field(description='Question groups of the section, top level and pop-ups (GET …/groups).')
 
 
 class SectionIn(In):
@@ -286,6 +287,97 @@ class ChoicesIn(In):
 
 class DeleteIn(In):
     acknowledge_answer_loss: bool = False
+
+
+# ─── Groups, copies, moves, versions, icons (change api-v2-structure) ─────────
+
+GroupDisplayStyle = Literal['plain', 'card', 'collapsible']
+
+
+class GroupTranslation(In):
+    title: Optional[str] = None
+    description: Optional[str] = None
+
+
+class GroupOut(Schema):
+    id: int
+    code: str
+    section_id: int
+    parent_id: Optional[int] = Field(None, description='The question whose pop-up holds the group; null at top level.')
+    order: int
+    title: str
+    description: str
+    display_style: GroupDisplayStyle
+    visibility_rule: Optional[dict]
+    question_ids: List[int]
+    translations: Dict[str, GroupTranslation]
+
+
+class GroupIn(In):
+    title: Optional[str] = Field(None, max_length=512)
+    description: Optional[str] = None
+    display_style: Optional[GroupDisplayStyle] = None
+    visibility_rule: Optional[VisibilityRule] = None
+    translations: Optional[Dict[str, GroupTranslation]] = None
+    question_ids: Optional[List[int]] = Field(
+        None, description='The questions the group holds, in order; they move together to where the first of '
+                          'them was. Questions of the same list only (the section, or the same pop-up).')
+
+
+class GroupCreateIn(GroupIn):
+    parent_id: Optional[int] = Field(None, description='Create the group in this question\'s pop-up.')
+
+
+class CopyQuestionIn(In):
+    source_question_id: int = Field(description='A question of any survey you can read.')
+    parent_id: Optional[int] = Field(
+        None, description='Paste into this question\'s pop-up (without the source\'s own sub-questions).')
+
+
+class CopySectionIn(In):
+    source_section_id: int = Field(description='A section of any survey you can read.')
+
+
+class MoveIn(In):
+    section_id: Optional[int] = Field(None, description='Target section of the same survey; default: its own.')
+    parent_id: Optional[int] = Field(
+        None, description='Move into this question\'s pop-up; null moves it to the section\'s top level.')
+    position: Optional[int] = Field(
+        None, ge=0, description='Place among the target list\'s items (a group counts as one); default: the end.')
+    acknowledge_answer_loss: bool = False
+
+
+class MoveOut(Schema):
+    question: QuestionOut
+    removed_rules: List[str] = Field(description='Visibility rules the move broke and cleared, by their host\'s label.')
+
+
+class DuplicateSurveyOut(SurveyOut):
+    sections: int
+    questions: int
+    layers: int
+
+
+class VersionOut(Schema):
+    version: int
+    current: bool
+    status: str
+    published_at: Optional[datetime]
+    sections: int
+    questions: int
+    responses: int
+
+
+class RestoreOut(Schema):
+    unpublished_changes: UUID
+    version: int
+
+
+class IconOut(Schema):
+    value: str = Field(description='The value to put in a question\'s icon_class or a choice\'s icon.')
+    label: str
+    set: Literal['maki', 'temaki', 'fa']
+    categories: List[str]
 
 
 # ─── Layers, import, responses ───────────────────────────────────────────────

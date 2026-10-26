@@ -277,7 +277,12 @@ function copyTestLink(btn) {
         </div>
         <ul class="section-list" id="sections-list">
             {% for section in sections %}
+                {% comment %}The section the page opened on (?section= deep links, the return from "Move to section…"), else the first.{% endcomment %}
+                {% if current_section %}
+                {% if section.pk == current_section.pk %}{% include "editor/partials/section_list_item.html" with is_current=True %}{% else %}{% include "editor/partials/section_list_item.html" with is_current=False %}{% endif %}
+                {% else %}
                 {% include "editor/partials/section_list_item.html" with is_current=forloop.first %}
+                {% endif %}
             {% endfor %}
         </ul>
         {% for hint in visibility_lint_hints %}
@@ -983,6 +988,85 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }).catch(function () { reloadSectionList(); });
     }
+    // "Move to section…" (change api-v2-structure): the other sections of the
+    // survey, read from the section list; the question goes to the end of the
+    // chosen one with its answers, and leaves its group.
+    var moveMenu = null;
+    function closeMoveMenu() { if (moveMenu) { moveMenu.remove(); moveMenu = null; } }
+    // The menu is fixed to the viewport: a scroll would leave it behind its button.
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMoveMenu(); });
+    window.addEventListener('scroll', function (e) {
+        if (moveMenu && !(e.target instanceof Node && moveMenu.contains(e.target))) closeMoveMenu();
+    }, true);
+    function moveToSection(questionId, sectionId, fromSectionId) {
+        var url = '{% url "editor_question_move" survey.uuid 0 %}'.replace('/0/', '/' + questionId + '/');
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            body: JSON.stringify({ section_id: sectionId })
+        }).then(function (r) {
+            return r.json().catch(function () { return {}; }).then(function (j) { return [r, j]; });
+        }).then(function (pair) {
+            var r = pair[0], data = pair[1];
+            if (!r.ok) {
+                if (window.Dialog) Dialog.alert((data && data.blocked) || 'The question could not be moved.');
+                return;
+            }
+            // Back to the section the creator was working on, not the first one.
+            var done = function () {
+                var url = new URL(location.href);
+                url.searchParams.set('section', fromSectionId);
+                location.assign(url.toString());
+            };
+            if (data.removed_rules && data.removed_rules.length && window.Dialog) {
+                Dialog.alert('These visibility rules no longer worked after the move and were removed: ' +
+                    data.removed_rules.join(', ') + '.', { title: 'Visibility rules removed' }).then(done);
+            } else {
+                done();
+            }
+        }).catch(function () { location.reload(); });
+    }
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest && e.target.closest('.move-section-btn');
+        if (!btn) {
+            if (moveMenu && !(e.target.closest && e.target.closest('.move-section-menu'))) closeMoveMenu();
+            return;
+        }
+        e.preventDefault();
+        e.stopPropagation();
+        closeMoveMenu();
+        var current = btn.dataset.sectionId;
+        var sections = Array.from(document.querySelectorAll('#sections-list .section-item'))
+            .filter(function (li) { return li.dataset.sectionId !== current; });
+        moveMenu = document.createElement('div');
+        moveMenu.className = 'move-section-menu dropdown-menu show';
+        if (!sections.length) {
+            var none = document.createElement('span');
+            none.className = 'dropdown-item-text text-muted';
+            none.textContent = 'This survey has one section.';
+            moveMenu.appendChild(none);
+        }
+        sections.forEach(function (li) {
+            var item = document.createElement('button');
+            item.type = 'button';
+            item.className = 'dropdown-item';
+            var title = li.querySelector('.section-title');
+            item.textContent = title ? title.textContent.trim() : li.dataset.sectionName;
+            item.addEventListener('click', function () {
+                closeMoveMenu();
+                moveToSection(btn.dataset.questionId, li.dataset.sectionId, current);
+            });
+            moveMenu.appendChild(item);
+        });
+        var rect = btn.getBoundingClientRect();
+        moveMenu.style.position = 'fixed';
+        moveMenu.style.top = (rect.bottom + 4) + 'px';
+        moveMenu.style.left = Math.max(8, rect.right - 220) + 'px';
+        moveMenu.style.minWidth = '200px';
+        moveMenu.style.maxHeight = Math.max(160, window.innerHeight - rect.bottom - 16) + 'px';
+        moveMenu.style.overflowY = 'auto';
+        document.body.appendChild(moveMenu);
+    });
     function initSortableOnList(listEl) {
         if (!listEl || listEl._sortable || STRUCTURE_LOCKED) return;
         var root = rootOf(listEl);

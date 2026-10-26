@@ -21,7 +21,7 @@ While people are answering, these edits save straight to the live survey, and th
 - answer options of a choice question (keep the codes stable, because codes are what the results are keyed on);
 - survey settings such as the thank-you page, base maps, map position and reference-layer styling.
 
-Everything that changes *what is asked* goes through unpublished changes: adding, deleting or reordering questions and sections, changing a question's type, adding sub-questions, and changing visibility rules. In the editor these controls are disabled on a live survey and show the hint **Create a draft to edit**.
+Everything that changes *what is asked* goes through unpublished changes: adding, deleting or reordering questions and sections, moving a question to another section (**Move to section…** in the question row), changing a question's type, adding sub-questions, and changing visibility rules. In the editor these controls are disabled on a live survey and show the hint **Create a draft to edit**.
 
 ## Steps
 

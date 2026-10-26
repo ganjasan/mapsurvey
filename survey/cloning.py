@@ -6,7 +6,8 @@ Single source of truth for deep-cloning survey structure used by:
 - editor_views duplicate / paste endpoints (regenerates codes; optional name suffix)
 
 `clone_question` copies translations, sub-questions, choices, validation_settings,
-and the image path reference. `clone_section` copies translations and all top-level
+and the image: as a path reference within one survey family, as a new stored file
+across surveys (`copy_file`), because purging a survey deletes its files. `clone_section` copies translations and all top-level
 questions (sub-questions handled recursively by clone_question), and stitches the
 new section into the target survey's linked list.
 
@@ -18,7 +19,12 @@ them. Only the fields a copy has to DECIDE about (`code`, `name`, `title`, `is_h
 one and a column that must NOT travel is an explicit exclusion, not an omission.
 """
 import copy
+import logging
+import os
 from typing import Iterable, Optional
+
+from django.core.files.base import File
+from django.db.models import FileField
 
 from .models import (
     Question,
@@ -31,6 +37,8 @@ from .models import (
     group_code_generator,
     question_code_generator,
 )
+
+logger = logging.getLogger(__name__)
 
 # Fields every section copy decides about itself; everything else plain is copied.
 SECTION_DECIDED_FIELDS = ('is_head', 'name', 'title', 'visibility_rule')
@@ -54,8 +62,37 @@ def plain_field_values(instance, exclude: Iterable[str] = ()) -> dict:
         value = getattr(instance, field.attname)
         if isinstance(value, (list, dict)):
             value = copy.deepcopy(value)
+        elif isinstance(field, FileField):
+            # The name, not the source's FieldFile: Django rebinds a FieldFile
+            # object to whichever instance it is assigned to, so sharing it
+            # would let a copy's new file name change the source in memory.
+            value = value.name if value else ''
         values[field.attname] = value
     return values
+
+
+def copy_file(field_file, instance, created=None):
+    """A new stored copy of `field_file` under a fresh key from the field's own
+    `upload_to` for `instance`; returns the new name, or '' when the source is
+    empty or missing from storage (logged, the copy goes on without it).
+
+    Cross-survey copies own their files (change api-v2-structure): `trash.purge`
+    deletes a purged survey's cover, question images and layer assets, so a
+    shared name would vanish from the other survey too. `created` collects the
+    new names so a failed copy can delete them."""
+    if not field_file:
+        return ''
+    storage = field_file.storage
+    try:
+        with storage.open(field_file.name, 'rb') as source:
+            target = field_file.field.generate_filename(instance, os.path.basename(field_file.name))
+            name = storage.save(target, File(source))
+    except Exception:  # noqa: BLE001 — a lost object must not stop the copy
+        logger.warning('copy_file: could not copy %s', field_file.name, exc_info=True)
+        return ''
+    if created is not None:
+        created.append((storage, name))
+    return name
 
 
 def copy_section(
@@ -127,7 +164,8 @@ def attach_group_members(pairs, group_map, code_map=None):
                 new_group.save(update_fields=['visibility_rule'])
 
 
-def clone_top_level_questions(section, new_section, *, regenerate_code, keep_group_rules):
+def clone_top_level_questions(section, new_section, *, regenerate_code, keep_group_rules,
+                              created_files=None):
     """Clone a section's top-level groups and questions (sub-questions and pop-up
     groups recursively through clone_question). Returns (pairs, code_map)."""
     group_map = clone_groups(section, new_section, None, None,
@@ -144,6 +182,7 @@ def clone_top_level_questions(section, new_section, *, regenerate_code, keep_gro
             regenerate_code=regenerate_code,
             name_suffix=None,
             copy_sub_questions=True,
+            created_files=created_files,
         )
         pairs.append((question, clone))
         code_map[question.code] = clone.code
@@ -159,6 +198,7 @@ def clone_question(
     regenerate_code: bool = True,
     name_suffix: Optional[str] = None,
     copy_sub_questions: bool = True,
+    created_files: Optional[list] = None,
 ) -> Question:
     """Deep-clone a question into ``target_section``.
 
@@ -171,7 +211,8 @@ def clone_question(
     - Translations are copied verbatim into ``QuestionTranslation`` rows for the
       new question (including all languages, regardless of the target survey's
       ``available_languages``).
-    - ``image`` is copied as a path reference — the underlying file is shared.
+    - ``image`` is shared within one survey family and copied to a new file across
+      surveys (``copy_file``).
     - ``validation_settings`` is copied (closes a bug in the legacy
       ``versioning._clone_question`` that silently dropped it).
     """
@@ -187,6 +228,7 @@ def clone_question(
     # rule is dropped.
     same_survey = target_section.survey_header_id == question.survey_section.survey_header_id
     keep_rule = same_survey or not regenerate_code
+    same_family = same_survey or _shares_layers(question, target_section)
     new_question = Question.objects.create(
         survey_section=target_section,
         parent_question_id=parent,
@@ -197,9 +239,12 @@ def clone_question(
         # elsewhere drops the binding the way the visibility rule is dropped.
         # Draft copies and versions share the canonical survey's layers, and
         # those clone within the same survey_header lineage — see layer_owner().
-        layer=question.layer if same_survey or (question.layer_id and _shares_layers(question, target_section)) else None,
+        layer=question.layer if question.layer_id and same_family else None,
         **plain_field_values(question, exclude=QUESTION_DECIDED_FIELDS),
     )
+    if question.image and not same_family:
+        new_question.image.name = copy_file(question.image, new_question, created_files)
+        new_question.save(update_fields=['image'])
 
     for trans in QuestionTranslation.objects.filter(question=question):
         QuestionTranslation.objects.create(
@@ -220,6 +265,7 @@ def clone_question(
                 regenerate_code=regenerate_code,
                 name_suffix=None,
                 copy_sub_questions=True,
+                created_files=created_files,
             )))
         # A pop-up rule names a SIBLING by code (#338). The siblings travel with
         # the parent on every path, including a cross-survey paste, so the rule
@@ -263,6 +309,7 @@ def clone_section(
     target_survey: SurveyHeader,
     insert_after: Optional[SurveySection] = None,
     name_suffix: Optional[str] = None,
+    created_files: Optional[list] = None,
 ) -> SurveySection:
     """Deep-clone a section into ``target_survey``.
 
@@ -309,7 +356,8 @@ def clone_section(
     # question rules below).
     pairs, code_map = clone_top_level_questions(
         section, new_section, regenerate_code=True,
-        keep_group_rules=target_survey.id == section.survey_header_id)
+        keep_group_rules=target_survey.id == section.survey_header_id,
+        created_files=created_files)
 
     # Intra-section rules must follow their cloned controller, not keep pointing
     # at the source section's question. Restored from the SOURCE rule, because
@@ -360,3 +408,111 @@ def _splice_into_linked_list(
     tail.save(update_fields=['next_section'])
     new_section.prev_section = tail
     new_section.save(update_fields=['prev_section'])
+
+
+# ─── Whole-survey copy (change api-v2-structure) ────────────────────────────
+
+# Header fields a copy decides itself or must not carry: identity, lifecycle,
+# version family, trash state and the cover (copied as a new file). Everything
+# else -- settings, languages, thanks page, map start, branding, embed hosts,
+# password -- travels, so a copy behaves like its source. A new column is
+# copied on day one; one that must not travel is added here
+# (DuplicateSurveyKeepsFieldsTest fails otherwise).
+SURVEY_COPY_EXCLUDED_FIELDS = (
+    'uuid', 'test_token', 'name', 'status', 'cover_image', 'is_archived',
+    'created_at', 'updated_at', 'deleted_at', 'version_number', 'is_canonical',
+)
+# Layer columns rebuilt from the copied objects (`rebuild_layer`).
+LAYER_DERIVED_FIELDS = ('geojson_gz', 'geojson_legacy', 'feature_count', 'size_bytes',
+                        'property_names', 'updated_at')
+OBJECT_COPY_EXCLUDED_FIELDS = ('created_at', 'updated_at')
+ASSET_COPY_EXCLUDED_FIELDS = ('file', 'created_at')
+COPY_SUFFIX = ' (copy)'
+
+
+def copy_name(name, limit=45):
+    """`<name> (copy)` within the column's length."""
+    return f"{(name or '')[:limit - len(COPY_SUFFIX)].rstrip()}{COPY_SUFFIX}"
+
+
+def asset_bytes(survey):
+    """Stored bytes of the layer attachments a copy of `survey` would duplicate."""
+    from django.db.models import Sum
+    from .layers import layer_owner
+    from .models import LayerObjectAsset
+    return LayerObjectAsset.objects.filter(
+        object__layer__survey=layer_owner(survey), object__layer__source='upload',
+    ).exclude(file='').aggregate(total=Sum('size_bytes'))['total'] or 0
+
+
+def clone_layers(source_owner, target, created_files=None):
+    """Copy the layers of `source_owner` onto `target`: creator layers with
+    their objects and attachments, shared-map layers with their settings only
+    (their objects are other respondents' answers). Returns {old id: new layer}."""
+    from .layers import GEOMETRY_TEXT_FIELDS, rebuild_layer
+    from .models import LayerObject, LayerObjectAsset, SurveyMapLayer
+    mapping = {}
+    for layer in SurveyMapLayer.objects.filter(survey=source_owner).defer(
+            *GEOMETRY_TEXT_FIELDS).order_by('position', 'id'):
+        new_layer = SurveyMapLayer.objects.create(
+            survey=target, **plain_field_values(layer, exclude=LAYER_DERIVED_FIELDS))
+        if layer.source != 'question':
+            for obj in LayerObject.objects.filter(layer=layer).order_by('position', 'id'):
+                new_obj = LayerObject.objects.create(
+                    layer=new_layer, **plain_field_values(obj, exclude=OBJECT_COPY_EXCLUDED_FIELDS))
+                for asset in LayerObjectAsset.objects.filter(object=obj).order_by('position', 'id'):
+                    new_asset = LayerObjectAsset(
+                        object=new_obj, **plain_field_values(asset, exclude=ASSET_COPY_EXCLUDED_FIELDS))
+                    if asset.file:
+                        new_asset.file.name = copy_file(asset.file, new_asset, created_files)
+                    new_asset.save()
+        rebuild_layer(new_layer)
+        mapping[layer.pk] = new_layer
+    return mapping
+
+
+def clone_survey(source, *, created_by, created_files=None):
+    """A new, independent draft survey with `source`'s structure and copies of
+    its layers.
+
+    `source` is the canonical survey or its unpublished changes: the structure
+    comes from that row, the header settings and the name from the canonical
+    survey (a draft copy's header mirrors it; its name is "[draft] ..."), the
+    layers from the canonical owner. Codes are kept, so every visibility rule
+    keeps resolving with nothing to remap; layer bindings are pointed at the
+    copied layers. Nothing about respondents, versions, links, collaborators,
+    comments or the public results page is copied -- the caller adds the owner.
+    """
+    from .layers import layer_owner
+    canonical = source.published_version or source
+    survey = SurveyHeader.objects.create(
+        organization=canonical.organization,
+        created_by=created_by,
+        name=copy_name(canonical.name),
+        status='draft',
+        **plain_field_values(canonical, exclude=SURVEY_COPY_EXCLUDED_FIELDS),
+    )
+    if canonical.cover_image:
+        survey.cover_image.name = copy_file(canonical.cover_image, survey, created_files)
+        survey.save(update_fields=['cover_image'])
+
+    sections = list(SurveySection.objects.filter(survey_header=source))
+    new_by_old = {}
+    for section in sections:
+        new_section = copy_section(section, target_survey=survey, is_head=section.is_head, keep_rule=True)
+        new_by_old[section.pk] = new_section
+        clone_top_level_questions(section, new_section, regenerate_code=False, keep_group_rules=True,
+                                  created_files=created_files)
+    for section in sections:
+        new_section = new_by_old[section.pk]
+        new_section.next_section = new_by_old.get(section.next_section_id)
+        new_section.prev_section = new_by_old.get(section.prev_section_id)
+        new_section.save(update_fields=['next_section', 'prev_section'])
+
+    layer_map = clone_layers(layer_owner(source), survey, created_files)
+    for code, layer_id in Question.objects.filter(
+            survey_section__survey_header=source, layer_id__isnull=False).values_list('code', 'layer_id'):
+        if layer_id in layer_map:
+            Question.objects.filter(survey_section__survey_header=survey, code=code).update(
+                layer=layer_map[layer_id])
+    return survey

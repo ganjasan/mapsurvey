@@ -6,7 +6,6 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.db import transaction
 from django.db.models import Count
 from django.http import HttpResponse, Http404, JsonResponse
 from django.urls import reverse, NoReverseMatch
@@ -30,10 +29,7 @@ from .layers import (
 )
 from . import product_events as pe
 from .question_types import SHARED_MAP_SOURCE_TYPES, allowed_display_styles, normalise_choice_extras
-from .cloning import clone_question, clone_section
-from .groups import (
-    group_from_request, max_order as group_max_order, shift_down as group_shift_down,
-)
+from .groups import group_from_request
 from .html_sanitize import coerce_creator_html
 from .content_screening import pending_review_for
 from .editor_forms import (
@@ -48,7 +44,7 @@ from .models import AIGenerationEvent
 from .forms import SurveySectionAnswerForm
 from .comments import open_counts as _thread_counts
 from .permissions import (
-    org_permission_required, survey_permission_required,
+    _check_org_role, org_permission_required, survey_permission_required,
     get_effective_survey_role,
 )
 from .versioning import (
@@ -60,6 +56,7 @@ from .services import locks as svc_locks
 from .services import publishing as svc_publishing
 from .services import questions as svc_questions
 from .services import sections as svc_sections
+from .services import structure as svc_structure
 from .services import surveys as svc_surveys
 from .services.context import Actor
 from .services.errors import (
@@ -1892,13 +1889,6 @@ def editor_subquestion_create(request, survey_uuid, parent_id):
 # ─── Duplicate / Copy-Paste (Issue #16) ──────────────────────────────────────
 
 
-def _shift_order_numbers_down(survey_section, parent, after_order):
-    """Increment order_number by 1 for all questions — and groups, which share the
-    sequence (change question-groups) — strictly after ``after_order`` in the given
-    (section, parent) bucket."""
-    group_shift_down(survey_section, parent, after_order)
-
-
 @survey_permission_required('editor')
 @require_POST
 def editor_question_duplicate(request, survey_uuid, question_id):
@@ -1909,22 +1899,8 @@ def editor_question_duplicate(request, survey_uuid, question_id):
     if blocked:
         return blocked
     source = get_object_or_404(Question, id=question_id, survey_section__survey_header=survey)
-    parent = source.parent_question_id  # FK; None for top-level
-
-    with transaction.atomic():
-        _shift_order_numbers_down(source.survey_section, parent, source.order_number)
-        new_question = clone_question(
-            source,
-            target_section=source.survey_section,
-            parent=parent,
-            regenerate_code=True,
-            name_suffix=' (copy)',
-            copy_sub_questions=True,
-        )
-        new_question.order_number = source.order_number + 1
-        # A copy of a grouped question stays in the group, right after its source.
-        new_question.group_id = source.group_id
-        new_question.save(update_fields=['order_number', 'group'])
+    # A copy of a grouped question stays in the group, right after its source.
+    new_question = svc_structure.duplicate_question(Actor.from_request(request), source)
 
     response = render(request, 'editor/partials/question_list_item.html', {'thread_counts': _thread_counts(survey, request.user), 
         'question': new_question,
@@ -1945,14 +1921,7 @@ def editor_section_duplicate(request, survey_uuid, section_id):
     if blocked:
         return blocked
     source = get_object_or_404(SurveySection, id=section_id, survey_header=survey)
-
-    with transaction.atomic():
-        new_section = clone_section(
-            source,
-            target_survey=survey,
-            insert_after=source,
-            name_suffix=' (copy)',
-        )
+    new_section = svc_structure.duplicate_section(Actor.from_request(request), source)
 
     response = render(request, 'editor/partials/section_list_item.html', {'thread_counts': _thread_counts(survey, request.user), 
         'section': new_section,
@@ -2036,19 +2005,13 @@ def editor_question_paste(request, survey_uuid, section_id):
                 status=400,
             )
 
-    with transaction.atomic():
-        # A pasted question lands last and ungrouped (change question-groups).
-        max_order = group_max_order(target_section, target_parent)
-        new_question = clone_question(
-            source,
-            target_section=target_section,
-            parent=target_parent,
-            regenerate_code=True,
-            name_suffix=None,
-            copy_sub_questions=(target_parent is None),
-        )
-        new_question.order_number = (max_order or 0) + 1
-        new_question.save(update_fields=['order_number'])
+    # A pasted question lands last and ungrouped (change question-groups), with
+    # its own copy of the image (change api-v2-structure).
+    try:
+        new_question = svc_structure.paste_question(
+            Actor.from_request(request), target_section, source, parent=target_parent)
+    except ValidationFailed as err:
+        return JsonResponse({'error': err.message}, status=400)
 
     response = render(request, 'editor/partials/question_list_item.html', {'thread_counts': _thread_counts(target_survey, request.user), 
         'question': target_parent if target_parent is not None else new_question,
@@ -2087,14 +2050,7 @@ def editor_section_paste(request, survey_uuid):
     source = get_object_or_404(
         SurveySection, id=source_section_id, survey_header=source_survey
     )
-
-    with transaction.atomic():
-        new_section = clone_section(
-            source,
-            target_survey=target_survey,
-            insert_after=None,
-            name_suffix=None,
-        )
+    new_section = svc_structure.paste_section(Actor.from_request(request), target_survey, source)
 
     response = render(request, 'editor/partials/section_list_item.html', {'thread_counts': _thread_counts(target_survey, request.user), 
         'section': new_section,
@@ -2441,7 +2397,7 @@ def editor_create_draft(request, survey_uuid):
 # section, where the control now works.
 GATE_ACTIONS = (
     'add_question', 'add_section', 'add_subquestion', 'add_group', 'delete', 'duplicate',
-    'copy', 'paste', 'reorder', 'type', 'visibility', 'edit',
+    'copy', 'paste', 'reorder', 'type', 'visibility', 'edit', 'move',
 )
 
 
@@ -2465,6 +2421,24 @@ def editor_restore_version(request, survey_uuid):
     if draft is None:
         raise Http404
     return redirect('editor_survey_detail', survey_uuid=draft.uuid)
+
+
+@survey_permission_required('viewer')
+@require_POST
+def editor_survey_duplicate(request, survey_uuid):
+    """The dashboard's "Duplicate": a new draft survey in the same workspace
+    with this one's structure, settings and layers, and no responses
+    (services.structure.duplicate_survey). Creating needs the workspace's
+    editor role, as every other way to start a survey does."""
+    survey = request.survey
+    if not _check_org_role(request.user, survey.organization, 'editor'):
+        return HttpResponse(status=403)
+    try:
+        copy = svc_structure.duplicate_survey(Actor.from_request(request), survey)
+    except svc_structure.LimitReached as err:
+        messages.error(request, err.message)
+        return redirect('editor')
+    return redirect('editor_survey_detail', survey_uuid=copy.uuid)
 
 
 @survey_permission_required('owner')
