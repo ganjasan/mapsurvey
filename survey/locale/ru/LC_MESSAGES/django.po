@@ -6292,7 +6292,7 @@ msgstr ""
 
 #: survey/templates/services.html:69
 msgid "How it works"
-msgstr ""
+msgstr "Как это устроено"
 
 #: survey/templates/services.html:70
 msgid "Simple, fixed-scope, no lock-in"
@@ -8110,3 +8110,7 @@ msgstr "Инструкция по настройке"
 #: api/templates/api/connections.html
 msgid "Every tool the agent gets"
 msgstr "Все инструменты агента"
+
+#: api/templates/api/connections.html
+msgid "Use your AI assistant — connect Claude, ChatGPT or another assistant"
+msgstr "Используйте своего ИИ-ассистента — подключите Claude, ChatGPT или другого ассистента"

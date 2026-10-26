@@ -30,6 +30,9 @@ from .ai import client as ai_client
 from .permissions import org_permission_required
 
 REQUEST_NAME_MAX = 40
+# Where the creator came from (`?from=`, change changelog-hero): the back link
+# and a property on the page's events. Anything else is dropped, never echoed.
+ORIGINS = ('dashboard', 'help', 'connections')
 
 
 def prompt_templates():
@@ -54,7 +57,11 @@ def editor_survey_start_agent(request):
         for key, label, clients in agent_clients.grouped()
     ]
     org = request.active_org
+    origin = request.GET.get('from', '')
+    if origin not in ORIGINS:
+        origin = ''
     return render(request, 'editor/survey_start_agent.html', {
+        'origin': origin,
         'groups': groups,
         'clients': [pair for _key, _label, pairs in groups for pair in pairs],
         'tag_labels': agent_clients.TAG_LABELS,

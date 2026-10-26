@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — agent banner on My Surveys</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<style>
+  :root { --accent: #4f46e5; --border-color: #e5e7eb; --text: #111827; --muted: #5f6368; --shadow-sm: 0 1px 2px rgba(0,0,0,.06); --shadow-md: 0 6px 18px -8px rgba(0,0,0,.18); }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #f6f7fb; font-family: 'DM Sans', system-ui, -apple-system, sans-serif; color: var(--text); }
+  .topbar { height: 52px; background: #fff; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; padding: 0 1.25rem; gap: 1rem; font-size: .9rem; }
+  .topbar .brand { font-weight: 700; letter-spacing: -.01em; }
+  .topbar .right { margin-left: auto; display: flex; gap: 1rem; color: var(--muted); }
+  .dashboard { max-width: 1120px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+  .dashboard-header { display: flex; align-items: center; gap: .75rem; margin-bottom: 1rem; }
+  .dashboard-title { font-size: 1.5rem; font-weight: 700; margin: 0; letter-spacing: -.01em; }
+  .dashboard-search { position: relative; margin-left: .5rem; }
+  .dashboard-search i { position: absolute; left: 10px; top: 10px; color: #9aa0a6; font-size: .8rem; }
+  .dashboard-search input { border: 1px solid var(--border-color); border-radius: 8px; padding: .45rem .75rem .45rem 2rem; font: inherit; font-size: .85rem; width: 240px; background: #fff; }
+  .spacer { flex: 1; }
+  .btn { border-radius: 8px; padding: .4rem .8rem; font: inherit; font-size: .82rem; font-weight: 600; border: 1px solid var(--border-color); background: #fff; color: var(--text); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: .4rem; }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn-ghost { border-color: transparent; background: transparent; color: var(--muted); }
+  .view-toggle { display: inline-flex; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; }
+  .view-toggle button { border: 0; background: #fff; padding: .4rem .6rem; color: #9aa0a6; cursor: pointer; }
+  .view-toggle button.on { background: #eef2ff; color: var(--accent); }
+
+  /* ── The banner ───────────────────────────────────────────────────────── */
+  .agent-nudge {
+    position: relative; display: grid; grid-template-columns: 148px 1fr auto; gap: 1.25rem; align-items: center;
+    background: #fff; border: 1px solid var(--border-color); border-radius: 16px; padding: 1rem 1.25rem 1rem 1rem;
+    margin: 0 0 1.25rem; box-shadow: var(--shadow-sm);
+  }
+  .agent-nudge .art {
+    height: 96px; border-radius: 12px; position: relative; overflow: hidden;
+    background: linear-gradient(145deg, #7c2d12, #d97757 55%, #fbcfb4); display: grid; place-items: center;
+  }
+  .agent-nudge .art::before { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.14) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.14) 1px, transparent 1px); background-size: 24px 24px; }
+  .agent-nudge .art i { font-size: 36px; color: #fff; opacity: .95; transform: translateY(-10px); }
+  .agent-nudge .art .logos { position: absolute; left: 10px; right: 10px; bottom: 10px; display: flex; gap: 5px; z-index: 1; flex-wrap: wrap; }
+  .agent-nudge .art .logos span { background: rgba(255,255,255,.92); color: #1f2937; border-radius: 999px; font-size: .62rem; font-weight: 600; padding: 1px 7px; }
+  .agent-nudge .eyebrow { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .66rem; letter-spacing: .14em; text-transform: uppercase; color: #9aa0a6; display: flex; align-items: center; gap: .5rem; margin-bottom: .3rem; }
+  .agent-nudge .badge-new { font-family: 'DM Sans', sans-serif; letter-spacing: 0; text-transform: none; font-size: .68rem; font-weight: 600; background: #ecfdf5; color: #047857; border-radius: 999px; padding: 1px 8px; }
+  .agent-nudge h3 { margin: 0 0 .3rem; font-size: 1.08rem; font-weight: 700; letter-spacing: -.01em; }
+  .agent-nudge p { margin: 0; font-size: .9rem; line-height: 1.45; color: #374151; }
+  .agent-nudge .examples { margin: .55rem 0 0; display: flex; flex-wrap: wrap; gap: .4rem; }
+  .agent-nudge .examples span { font-size: .78rem; color: #4b5563; background: #f3f4f6; border-radius: 8px; padding: .25rem .6rem; }
+  .agent-nudge .examples span::before { content: "“"; color: #9aa0a6; }
+  .agent-nudge .examples span::after { content: "”"; color: #9aa0a6; }
+  .agent-nudge .actions { display: flex; flex-direction: column; align-items: stretch; gap: .5rem; min-width: 200px; }
+  .agent-nudge .actions .btn { justify-content: center; }
+  .agent-nudge .actions .btn-primary { background: #d97757; border-color: #d97757; }
+  .agent-nudge .actions .pro { font-size: .74rem; color: var(--muted); text-align: center; }
+  .agent-nudge .close { position: absolute; top: .55rem; right: .65rem; border: 0; background: transparent; color: #9aa0a6; cursor: pointer; font-size: .9rem; padding: .25rem; }
+
+  /* ── Survey list (context only) ───────────────────────────────────────── */
+  .survey-row { display: flex; align-items: center; gap: 1rem; background: #fff; border: 1px solid var(--border-color); border-radius: 12px; padding: .8rem 1rem; margin-bottom: .6rem; }
+  .survey-row .name { font-weight: 600; font-size: .95rem; }
+  .survey-row .meta { color: var(--muted); font-size: .8rem; margin-top: .15rem; }
+  .survey-row .status { font-size: .72rem; font-weight: 600; border-radius: 999px; padding: 2px 9px; }
+  .status.pub { background: #ecfdf5; color: #047857; } .status.draft { background: #f3f4f6; color: #6b7280; } .status.closed { background: #fef3c7; color: #b45309; }
+  .survey-row .kpi { margin-left: auto; text-align: right; font-size: .82rem; color: var(--muted); }
+  .survey-row .kpi b { display: block; color: var(--text); font-size: 1rem; }
+
+  .note { max-width: 1120px; margin: 2rem auto 0; padding: 0 1.25rem; font-size: .82rem; color: var(--muted); }
+  .note b { color: var(--text); }
+  .note ul { margin: .4rem 0 0; padding-left: 1.2rem; }
+
+  @media (max-width: 760px) {
+    .agent-nudge { grid-template-columns: 1fr; padding: 1rem; }
+    .agent-nudge .art { height: 72px; }
+    .agent-nudge .actions { min-width: 0; }
+    .dashboard-search { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">Mapsurvey</span>
+  <span class="right"><span>ThINK demo</span><span><i class="far fa-question-circle"></i></span><span><i class="far fa-user-circle"></i></span></span>
+</div>
+
+<div class="dashboard">
+  <div class="dashboard-header">
+    <h1 class="dashboard-title">My Surveys</h1>
+    <div class="dashboard-search"><i class="fas fa-search"></i><input type="search" placeholder="Search surveys…"></div>
+    <span class="spacer"></span>
+    <a class="btn">Show Archived</a>
+    <span class="view-toggle"><button><i class="fas fa-th-large"></i></button><button class="on"><i class="fas fa-list"></i></button></span>
+    <a class="btn btn-primary"><i class="fas fa-plus"></i> New Survey</a>
+    <a class="btn btn-ghost"><i class="fas fa-ellipsis-h"></i></a>
+  </div>
+
+  <!-- ░░ Option 3: one-time nudge, shown to workspaces with ≥1 survey and no connected agent ░░ -->
+  <div class="agent-nudge" role="region" aria-label="Use your AI assistant">
+    <button class="close" aria-label="Dismiss"><i class="fas fa-times"></i></button>
+    <div class="art">
+      <i class="fas fa-robot"></i>
+      <div class="logos"><span>Claude</span><span>ChatGPT</span><span>Gemini</span><span>Cursor</span><span>+8</span></div>
+    </div>
+    <div>
+      <div class="eyebrow">Your surveys, from your assistant <span class="badge-new">New</span></div>
+      <h3>Edit these surveys and read their responses from Claude or ChatGPT</h3>
+      <p>Connect once. After that, any chat can change a question, summarise what respondents said, or hand you the share link and QR code.</p>
+      <div class="examples">
+        <span>Summarise the responses to Kronenberg Park</span>
+        <span>Add a question about parking after Q4</span>
+        <span>Give me the QR code for the Jena survey</span>
+      </div>
+    </div>
+    <div class="actions">
+      <a class="btn btn-primary"><i class="fas fa-plug"></i> Connect your assistant</a>
+      <a class="btn btn-ghost">How it works</a>
+      <div class="pro"><i class="fas fa-star" style="color:#b45309"></i> Part of Pro · connecting is free</div>
+    </div>
+  </div>
+
+  <div class="survey-row">
+    <div><div class="name">Kronenberg Park — what should change?</div><div class="meta">Published · 3 sections · updated 2 days ago</div></div>
+    <span class="status pub">Published</span>
+    <div class="kpi"><b>128</b> responses</div>
+  </div>
+  <div class="survey-row">
+    <div><div class="name">Jena cycling network 2027</div><div class="meta">Published · 5 sections · updated yesterday</div></div>
+    <span class="status pub">Published</span>
+    <div class="kpi"><b>41</b> responses</div>
+  </div>
+  <div class="survey-row">
+    <div><div class="name">Winter market locations (draft)</div><div class="meta">Draft · 2 sections · updated 3 weeks ago</div></div>
+    <span class="status draft">Draft</span>
+    <div class="kpi"><b>0</b> responses</div>
+  </div>
+  <div class="survey-row">
+    <div><div class="name">Schoolyard safety — Nordschule</div><div class="meta">Closed · 4 sections · closed 2026-09-30</div></div>
+    <span class="status closed">Closed</span>
+    <div class="kpi"><b>212</b> responses</div>
+  </div>
+</div>
+
+<div class="note">
+  <b>Behaviour notes (not part of the UI)</b>
+  <ul>
+    <li>Shows on <code>/editor/</code> only when the workspace has ≥1 survey AND no connected app / personal token with first use. Never on respondent pages.</li>
+    <li>The example chips are built from the creator's own survey names (first two published surveys), so the text is about <em>their</em> work, not a demo.</li>
+    <li>× hides it for good (<code>CreatorPreferences.agent_nudge_dismissed_at</code>); connecting hides it by itself. One nudge per creator, not per workspace.</li>
+    <li>"Connect your assistant" → <code>/editor/surveys/start/agent/?from=dashboard</code>; "How it works" → help centre MCP guide. Events: <code>agent_nudge_shown</code>, <code>agent_nudge_clicked</code>, <code>agent_nudge_dismissed</code>.</li>
+    <li>Free workspace: the same banner, the line under the buttons says "Part of Pro · connecting is free" — connecting works, building needs Pro (the yellow strip on the agent page handles the upsell).</li>
+  </ul>
+</div>
+
+</body>
+</html>

@@ -30128,6 +30128,9 @@ class TranslationCatalogHygieneTest(SimpleTestCase):
         # A marketing table heading and the Responses export button: the same
         # noun phrase in either order, one translation in most languages.
         frozenset({'Data export', 'Export data'}),
+        # A landing heading and the hero banner's secondary link (change
+        # changelog-hero): the same question, with or without "this".
+        frozenset({'How it works', 'How this works'}),
     }
 
     @staticmethod
@@ -47692,6 +47695,31 @@ kind: fixed
 ---
 <p>It saves again.</p>
 """
+_HERO = """---
+title: Edit these surveys from your assistant
+kind: new
+tier: hero
+art: agent
+eyebrow: Your surveys, from your assistant
+link: editor_survey_start_agent
+link_query: from=dashboard
+cta_label: Connect your assistant
+help: mcp
+chips: Summarise {survey}|Add a question to {survey}|Plain chip
+show_if: has_surveys,no_mcp_connection
+note_if: free_plan
+note: Part of Pro
+---
+<p>Connect once.</p>
+"""
+
+
+def _dated(days_ago):
+    """An entry id date `days_ago` days before today, for heroes whose lifetime
+    is measured against the clock."""
+    import datetime
+    from django.utils import timezone
+    return (timezone.localdate() - datetime.timedelta(days=days_ago)).isoformat()
 
 
 class _ChangelogDirMixin:
@@ -47794,6 +47822,126 @@ class ChangelogEntriesTest(_ChangelogDirMixin, SimpleTestCase):
         for entry in changelog.entries():
             self.assertTrue(entry.title)
             self.assertIn(entry.kind, changelog.KINDS)
+
+    # ── the hero tier (change changelog-hero, #423) ──
+
+    def test_hero_entry_loads(self):
+        """
+        GIVEN an entry declaring tier: hero with the hero keys
+        WHEN the loader reads it
+        THEN the entry carries tier, art, the call to action, chips, predicates
+             and the note, and `day` is the date of the id
+        """
+        import datetime
+        from survey import changelog
+        self.use_entries({'2026-11-01-hero.html': _HERO})
+        [entry] = changelog.entries()
+        self.assertTrue(entry.is_hero)
+        self.assertEqual(entry.art, 'agent')
+        self.assertEqual(entry.link, 'editor_survey_start_agent')
+        self.assertEqual(entry.link_query, 'from=dashboard')
+        self.assertEqual(entry.cta_label, 'Connect your assistant')
+        self.assertEqual(entry.help, 'mcp')
+        self.assertEqual(entry.chips, ('Summarise {survey}', 'Add a question to {survey}', 'Plain chip'))
+        self.assertEqual(entry.show_if, ('has_surveys', 'no_mcp_connection'))
+        self.assertEqual((entry.note_if, entry.note), ('free_plan', 'Part of Pro'))
+        self.assertEqual(entry.day, datetime.date(2026, 11, 1))
+        self.assertEqual(changelog.heroes(), (entry,))
+
+    def test_malformed_heroes_are_rejected(self):
+        """
+        GIVEN a hero without a cta_label, without a link, with an unknown
+              predicate, an unknown art, kind: fixed, a note_if without a note,
+              and a card entry carrying hero keys
+        WHEN the loader reads each
+        THEN each raises ChangelogError naming the file
+        """
+        from survey import changelog
+        base = _HERO.replace('cta_label: Connect your assistant\n', '')
+        bad = {
+            '2026-11-01-no-cta.html': base,
+            '2026-11-01-no-link.html': _HERO.replace('link: editor_survey_start_agent\n', ''),
+            '2026-11-01-unicorns.html': _HERO.replace('no_mcp_connection', 'unicorns'),
+            '2026-11-01-bad-art.html': _HERO.replace('art: agent', 'art: fireworks'),
+            '2026-11-01-fixed-hero.html': _HERO.replace('kind: new', 'kind: fixed'),
+            '2026-11-01-note-if-only.html': _HERO.replace('note: Part of Pro\n', ''),
+            '2026-11-01-no-plate.html': _HERO.replace('art: agent\n', ''),
+            '2026-11-01-card-with-chips.html': _ENTRY_A.replace('kind: new\n', 'kind: new\nchips: a|b\n'),
+        }
+        for name, text in bad.items():
+            with self.subTest(name=name):
+                self.use_entries({name: text})
+                with self.assertRaises(changelog.ChangelogError) as ctx:
+                    changelog.entries()
+                self.assertIn(name, str(ctx.exception))
+        self.use_entries({'2026-11-01-unicorns.html': _HERO.replace('no_mcp_connection', 'unicorns')})
+        with self.assertRaises(changelog.ChangelogError) as ctx:
+            changelog.entries()
+        self.assertIn("'unicorns'", str(ctx.exception))
+
+    def test_hero_budget(self):
+        """
+        GIVEN two heroes four days apart, and the real directory
+        WHEN the spacing rule is checked
+        THEN the pair is named, and the shipped directory keeps the 14-day rule
+             with every hero's link resolving
+        """
+        from django.urls import reverse
+        from survey import changelog
+        self.use_entries({'2026-11-01-first.html': _HERO, '2026-11-05-second.html': _HERO,
+                          '2026-11-20-third.html': _HERO})
+        self.assertEqual(changelog.hero_spacing_violations(),
+                         [('2026-11-01-first', '2026-11-05-second')])
+        changelog.clear_cache()
+        with mock.patch.object(changelog, 'ENTRIES_DIR',
+                               os.path.join(os.path.dirname(changelog.__file__), 'changelog')):
+            self.assertEqual(changelog.hero_spacing_violations(), [])
+            for hero in changelog.heroes():
+                reverse(hero.link)
+                self.assertTrue(hero.cta_label, hero.id)
+        changelog.clear_cache()
+
+    def test_hero_for_window_and_audience(self):
+        """
+        GIVEN a hero 10 days old and one 40 days old
+        WHEN the pending hero is asked for with an audience that holds, one that
+             fails, and a watermark past both
+        THEN the young one is pending for the holding audience only, the old one
+             never, and the latest card skips heroes
+        """
+        import datetime
+        from survey import changelog
+        today = datetime.date(2026, 11, 20)
+        self.use_entries({'2026-11-10-young.html': _HERO, '2026-10-11-old.html': _HERO,
+                          '2026-11-12-card.html': _ENTRY_A})
+
+        class Yes:
+            def all(self, names): return True
+
+        class No:
+            def all(self, names): return False
+        self.assertEqual(changelog.hero_for('', Yes(), today).id, '2026-11-10-young')
+        self.assertIsNone(changelog.hero_for('', No(), today))
+        self.assertIsNone(changelog.hero_for('2026-11-10-young', Yes(), today))
+        self.assertEqual([e.id for e in changelog.hero_candidates('', today)], ['2026-11-10-young'])
+        self.assertEqual(changelog.latest_card('').id, '2026-11-12-card')
+        self.assertIsNone(changelog.latest_card('2026-11-12-card'))
+
+    def test_render_chips(self):
+        """
+        GIVEN three chips, two with {survey}, and the names Park and Bikes / none
+        WHEN the chips are rendered
+        THEN names cycle one per chip, a plain chip stays, and without names the
+             placeholder chips are dropped
+        """
+        from survey import changelog
+        self.use_entries({'2026-11-01-hero.html': _HERO.replace(
+            'chips: Summarise {survey}|Add a question to {survey}|Plain chip',
+            'chips: Summarise {survey}|Add to {survey}|Plain chip|QR for {survey}')})
+        [entry] = changelog.entries()
+        self.assertEqual(changelog.render_chips(entry, ['Park', 'Bikes']),
+                         ['Summarise Park', 'Add to Bikes', 'Plain chip', 'QR for Park'])
+        self.assertEqual(changelog.render_chips(entry, []), ['Plain chip'])
 
 
 class ChangelogContextTest(_ChangelogDirMixin, TestCase):
@@ -47959,7 +48107,8 @@ class WhatsNewViewsTest(_ChangelogDirMixin, TestCase):
         self.assertEqual(response.status_code, 204)
         self.assertEqual(self._seen(), '2026-10-06-empty-sessions')
         emit.assert_called_once_with('changelog_card_dismissed', self.user.pk,
-                                     {'entry_id': '2026-10-06-empty-sessions', 'how': 'got_it'})
+                                     {'entry_id': '2026-10-06-empty-sessions', 'how': 'got_it',
+                                      'tier': 'card'})
         page = self.client.get(reverse('editor') + '?dashboard=1')
         self.assertNotIn('id="whatsNewCard"', page.content.decode())
 
@@ -47990,7 +48139,8 @@ class WhatsNewViewsTest(_ChangelogDirMixin, TestCase):
         self.assertFalse(prefs.changelog_cards)
         self.assertEqual(prefs.changelog_seen, '2026-10-06-empty-sessions')
         emit.assert_called_once_with('changelog_card_dismissed', self.user.pk,
-                                     {'entry_id': '2026-10-06-empty-sessions', 'how': 'muted'})
+                                     {'entry_id': '2026-10-06-empty-sessions', 'how': 'muted',
+                                      'tier': 'card'})
 
     def test_re_enable_does_not_resurface_seen_entries(self):
         """
@@ -48065,6 +48215,190 @@ class WhatsNewViewsTest(_ChangelogDirMixin, TestCase):
         newcomer = User.objects.create_user('wn_newcomer2', password='pw')
         user_registered.send(sender=self.__class__, user=newcomer, request=None)
         self.assertEqual(CreatorPreferences.objects.get(user=newcomer).changelog_seen, '')
+
+
+class ChangelogHeroTest(_ChangelogDirMixin, TestCase):
+    """The hero tier on the dashboard (change changelog-hero, #423): one banner,
+    no queue, closing covers everything."""
+
+    def setUp(self):
+        self.org = _make_org('HeroOrg')
+        self.user = User.objects.create_user('hero_creator', password='pw')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.force_login(self.user)
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+        self.park = SurveyHeader.objects.create(name='Park <b>x</b>', organization=self.org,
+                                                created_by=self.user, status='published')
+        self.hero_id = '%s-assistant' % _dated(3)
+        self.old_card_id = '%s-export' % _dated(5)
+        self.use_entries({self.hero_id + '.html': _HERO, self.old_card_id + '.html': _ENTRY_A})
+
+    def _dashboard(self):
+        return self.client.get(reverse('editor')).content.decode()
+
+    def _mcp_token(self, revoked=False):
+        import datetime as dt
+        from oauth2_provider.models import AccessToken, Application
+        from api.models import KIND_OAUTH, TokenProfile
+        app = Application.objects.create(
+            name='Claude', client_type=Application.CLIENT_PUBLIC,
+            authorization_grant_type=Application.GRANT_AUTHORIZATION_CODE,
+            redirect_uris='https://claude.ai/api/mcp/auth_callback')
+        token = AccessToken.objects.create(user=self.user, application=app, scope='surveys:read',
+                                           token='msa_hero_%s' % uuid.uuid4().hex,
+                                           expires=timezone.now() + dt.timedelta(hours=1))
+        return TokenProfile.objects.create(token=token, kind=KIND_OAUTH, audiences=['mcp'],
+                                           revoked_at=timezone.now() if revoked else None)
+
+    def test_dashboard_renders_the_hero_and_no_card(self):
+        """
+        GIVEN a creator with a published survey, no MCP connection, a pending
+              hero and an older unseen card entry
+        WHEN the dashboard renders
+        THEN the hero is there with the title, the call to action to the agent
+             page with ?from=dashboard, a chip naming the creator's survey
+             (escaped), the Free note -- and no small card at all
+        """
+        html = self._dashboard()
+        self.assertIn('id="whatsNewHero"', html)
+        self.assertIn('data-entry-id="%s"' % self.hero_id, html)
+        self.assertIn('Edit these surveys from your assistant', html)
+        self.assertIn('href="%s?from=dashboard"' % reverse('editor_survey_start_agent'), html)
+        self.assertIn('Summarise Park &lt;b&gt;x&lt;/b&gt;', html)
+        self.assertNotIn('Summarise Park <b>x</b>', html)
+        self.assertIn('Plain chip', html)
+        self.assertIn('Part of Pro', html)
+        self.assertNotIn('id="whatsNewCard"', html)
+        self.assertNotIn('Export as Excel', html)
+
+    def test_editor_page_shows_nothing_while_the_hero_is_pending(self):
+        """
+        GIVEN the same creator
+        WHEN a survey editor page renders
+        THEN neither the hero nor the small card is in it
+        """
+        html = self.client.get(reverse('editor_survey_create')).content.decode()
+        self.assertNotIn('id="whatsNewHero"', html)
+        self.assertNotIn('id="whatsNewCard"', html)
+
+    def test_connected_creator_gets_the_card_not_the_hero(self):
+        """
+        GIVEN the creator holds a live MCP grant (audience fails), then only a
+              revoked one (audience holds again)
+        WHEN the dashboard renders each time
+        THEN first the small card for the newer... older card entry shows and
+             no hero; after revocation the hero is back
+        """
+        profile = self._mcp_token()
+        html = self._dashboard()
+        self.assertNotIn('id="whatsNewHero"', html)
+        self.assertIn('id="whatsNewCard"', html)
+        self.assertIn('data-entry-id="%s"' % self.old_card_id, html)
+        profile.revoked_at = timezone.now()
+        profile.save(update_fields=['revoked_at'])
+        self.assertIn('id="whatsNewHero"', self._dashboard())
+
+    def test_expired_hero_shows_nothing_of_itself(self):
+        """
+        GIVEN the hero is 31 days old and the only unseen entry
+        WHEN the dashboard and the context resolve
+        THEN no hero, no small card, and no audience query ran (one query: the
+             preferences row)
+        """
+        from django.test import RequestFactory
+        from survey.context_processors import whats_new
+        expired = '%s-assistant' % _dated(31)
+        self.use_entries({expired + '.html': _HERO})
+        html = self._dashboard()
+        self.assertNotIn('id="whatsNewHero"', html)
+        self.assertNotIn('id="whatsNewCard"', html)
+        request = RequestFactory().get('/editor/')
+        request.user = self.user
+        request.active_org = self.org
+        with self.assertNumQueries(1):
+            value = dict(whats_new(request)['whats_new'])
+        self.assertIsNone(value['hero'])
+        self.assertFalse(value['show_card'])
+        self.assertEqual(value['unseen_count'], 1)
+
+    def test_empty_workspace_has_no_hero(self):
+        """
+        GIVEN the creator's workspace has its only survey in the trash
+        WHEN the dashboard (?dashboard=1) renders
+        THEN has_surveys fails and no hero shows; the older card shows instead
+        """
+        self.park.deleted_at = timezone.now()
+        self.park.save(update_fields=['deleted_at'])
+        html = self.client.get(reverse('editor') + '?dashboard=1').content.decode()
+        self.assertNotIn('id="whatsNewHero"', html)
+        self.assertIn('id="whatsNewCard"', html)
+
+    def test_pro_workspace_sees_no_note(self):
+        """
+        GIVEN the workspace is on Pro
+        WHEN the dashboard renders
+        THEN the hero shows without the "Part of Pro" line
+        """
+        from billing.entitlements import Entitlements
+        from billing.features import PLAN_PRO, features_for_plan
+        pro = Entitlements(PLAN_PRO, 'active', None, features_for_plan(PLAN_PRO))
+        with patch('billing.entitlements.for_organization', return_value=pro):
+            html = self._dashboard()
+        self.assertIn('id="whatsNewHero"', html)
+        self.assertNotIn('Part of Pro', html)
+
+    def test_cta_closes_everything_and_emits_both_events(self):
+        """
+        GIVEN the pending hero
+        WHEN the creator posts how=cta with the hero's entry_id
+        THEN the watermark is the newest id, clicked and dismissed carry
+             tier=hero, and the next dashboard has neither hero nor card
+        """
+        with patch('survey.editor_views.pe.emit') as emit:
+            response = self.client.post(reverse('whats_new_seen'),
+                                        {'how': 'cta', 'entry_id': self.hero_id})
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(CreatorPreferences.objects.get(user=self.user).changelog_seen, self.hero_id)
+        self.assertEqual(emit.call_args_list, [
+            mock.call('changelog_card_clicked', self.user.pk,
+                      {'entry_id': self.hero_id, 'tier': 'hero', 'target': 'cta'}),
+            mock.call('changelog_card_dismissed', self.user.pk,
+                      {'entry_id': self.hero_id, 'how': 'cta', 'tier': 'hero'}),
+        ])
+        html = self._dashboard()
+        self.assertNotIn('id="whatsNewHero"', html)
+        self.assertNotIn('id="whatsNewCard"', html)
+
+    def test_small_card_dismissal_carries_its_tier(self):
+        """
+        GIVEN a creator who is connected (so the small card shows)
+        WHEN they post how=close with the card's entry_id
+        THEN the dismissed event says tier=card for that entry
+        """
+        self._mcp_token()
+        with patch('survey.editor_views.pe.emit') as emit:
+            self.client.post(reverse('whats_new_seen'), {'how': 'close', 'entry_id': self.old_card_id})
+        emit.assert_called_once_with('changelog_card_dismissed', self.user.pk,
+                                     {'entry_id': self.old_card_id, 'how': 'close', 'tier': 'card'})
+
+    def test_partials_remember_the_closed_entry(self):
+        """
+        GIVEN both partials
+        WHEN their scripts are read
+        THEN each remembers the closed id under one localStorage key and hides a
+             matching card on render -- the close that failed to persist stays closed
+        """
+        import os
+        from django.conf import settings as dj
+        base = os.path.join(dj.BASE_DIR, 'survey', 'templates', 'editor', 'partials')
+        for name in ('_whats_new_card.html', '_whats_new_hero.html'):
+            with open(os.path.join(base, name)) as fh:
+                src = fh.read()
+            self.assertIn("'msWhatsNewClosed'", src, name)
+            self.assertIn("remembered() === entryId", src, name)
+            self.assertIn("classList.add('wn-hidden')", src, name)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -55418,6 +55752,26 @@ class AgentPageTest(TestCase):
         self.assertIn('https://claude.ai/customize/connectors?modal=add-custom-connector', claude_panel)
         self.assertNotIn('msk_', claude_panel)
         self.assertIn('href="%s"' % reverse('editor_survey_start'), html)
+
+    def test_from_parameter_sets_the_back_link_and_the_event_origin(self):
+        """
+        GIVEN links from the dashboard hero, the "?" menu and an unknown origin
+        WHEN the page renders with ?from=dashboard, ?from=help, ?from=<script>
+        THEN the dashboard one leads back to the dashboard and exposes
+             data-from; help keeps "Ways to start" with data-from; the unknown
+             value is dropped and never echoed (change changelog-hero)
+        """
+        url = reverse('editor_survey_start_agent')
+        html = self.client.get(url + '?from=dashboard').content.decode()
+        self.assertIn('data-from="dashboard"', html)
+        self.assertIn('href="%s?dashboard=1"' % reverse('editor'), html)
+        self.assertNotIn('Ways to start', html)
+        html = self.client.get(url + '?from=help').content.decode()
+        self.assertIn('data-from="help"', html)
+        self.assertIn('Ways to start', html)
+        html = self.client.get(url + '?from=%3Cscript%3E').content.decode()
+        self.assertNotIn('data-from', html)
+        self.assertNotIn('script&gt;', html)
 
     def test_client_parameter_selects_a_panel(self):
         """

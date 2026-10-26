@@ -91,9 +91,14 @@ status poll sees a new MCP connection, or on "I've connected". "MCP", "token" an
      data-request-url="{% url 'editor_survey_start_agent_request' %}"
      data-since="{{ since }}"
      data-requested="{{ requested_client }}"
-     data-default="{{ default_client }}">
+     data-default="{{ default_client }}"{% if origin %}
+     data-from="{{ origin }}"{% endif %}>
   {% csrf_token %}
+  {% if origin == 'dashboard' %}
+  <a href="{% url 'editor' %}?dashboard=1" class="ag-back"><i class="fas fa-arrow-left"></i> {% trans "Dashboard" %}</a>
+  {% else %}
   <a href="{% url 'editor_survey_start' %}" class="ag-back"><i class="fas fa-arrow-left"></i> {% trans "Ways to start" %}</a>
+  {% endif %}
 
   <ol class="ag-steps" aria-label="{% trans "Steps" %}">
     <li class="on" data-step="1"><span class="dot">1</span><span class="label">{% trans "Connect" context "agent step" %}</span><span class="bar"></span></li>

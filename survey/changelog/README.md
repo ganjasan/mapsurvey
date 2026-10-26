@@ -31,3 +31,45 @@ creators were deleting them one by one.</p>
 - Body — HTML, two or three short paragraphs: what changed, then why. English only.
 
 A malformed file fails `ChangelogEntriesTest`, which loads every file in this directory.
+
+## Hero entries
+
+The biggest changes get a second shape (change `changelog-hero`): a full-width banner on the
+dashboard above the survey list, instead of the corner card. It is the same file with more
+header keys — never a template of its own:
+
+```
+---
+title: Edit these surveys and read their responses from Claude or ChatGPT
+kind: new
+tier: hero
+art: agent
+eyebrow: Your surveys, from your assistant
+link: editor_survey_start_agent
+link_query: from=dashboard
+cta_label: Connect your assistant
+help: mcp
+chips: Summarise the responses to {survey}|Give me the QR code for {survey}
+show_if: has_surveys,no_mcp_connection
+note_if: free_plan
+note: Part of Pro · connecting is free
+---
+<p>One short paragraph. The title carries the benefit; the button carries the action.</p>
+```
+
+- `tier: hero` — required for all of the below; `kind` must be `new` (a fix is not news to sell).
+- `art` — a plate style the partial draws (`agent`), or use `image` for a screenshot. One of the two.
+- `link` + `link_query` — the ONE call to action; `cta_label` its text. Required.
+- `help` — a key of `survey/help_links.py` for the secondary "How it works" link. Optional.
+- `chips` — example prompts separated by `|`; `{survey}` becomes one of the creator's own survey
+  names (published first, newest first), so the banner is about their work. Optional.
+- `show_if` — predicate names from `survey/changelog_audience.py`, all must hold (`has_surveys`,
+  `no_mcp_connection`, `free_plan`). `note_if` + `note` — a line under the buttons when the
+  predicate holds. An unknown name fails the loader.
+
+Rules the code enforces, so you do not have to remember them: a hero is *pending* for a
+creator while it is unseen, at most **30 days** old and in audience; while one is pending no
+corner card shows anywhere, and the hero shows only on the dashboard; closing it (×, the
+button, "Don't show these") marks every entry seen, so no card follows; a hero never falls
+back to a corner card. **Budget: two heroes are at least 14 days apart** — the test fails
+otherwise. Hero is for what ships from now on; do not promote an old entry.

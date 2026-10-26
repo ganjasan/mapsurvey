@@ -524,6 +524,17 @@ entry, once; "Got it" / × / the page / "Don't show these" all move the watermar
 account-menu item stay. New accounts start seen (`seed_changelog_watermark` in `signals.py`).
 `ChangelogEntriesTest.test_shipped_entries_load` parses every file, so a malformed entry fails CI,
 not every editor page. The first entry (`2026-10-02-whats-new.html`) announces the cards themselves; #226 (empty sessions hidden by default) writes the next.
+**Hero tier (change `changelog-hero`, #423)**: an entry with `tier: hero` (+ `art`/`image`,
+`link`+`link_query`, `cta_label`, optional `help`, `chips` with `{survey}`, `show_if`/`note_if`
+from the predicate registry `survey/changelog_audience.py`) renders as a full-width banner on the
+dashboard (`editor/partials/_whats_new_hero.html`, included from `editor.html` ONLY) instead of
+the corner card. A hero is *pending* while unseen, ≤30 days old and in audience; while pending no
+corner card renders anywhere (`whats_new.card` is None), a hero never becomes a corner card, and
+closing it marks everything seen. Both partials remember the closed id in
+`localStorage['msWhatsNewClosed']`, so a close whose POST failed stays closed — the second
+"close, close, close" click was the owner's reason for the rule. Budget: two heroes ≥14 days
+apart (`test_hero_budget`). Events carry `tier`; `changelog_card_clicked` (`target=cta|help`)
+is the interest signal per feature.
 
 **Comment threads (`CommentThread`/`Comment`/`CommentAttachment`, spec `survey-comment-threads`)**:
 workspace members discuss a survey where it lives — the survey as a whole, a question, a section, a respondent

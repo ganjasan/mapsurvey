@@ -241,16 +241,22 @@ class TeaserDeltaTest(TestCase):
         """
         GIVEN the dashboard and an editor page
         WHEN both render
-        THEN the account menus carry "API & connections" without a soon badge, and the "?" menu
-             "Connect your AI agent", all linking to the connections page
+        THEN the account menus carry "API & connections" without a soon badge linking to the
+             connections page, the "?" menu "Connect your AI agent" linking to the agent page
+             (change changelog-hero), and the connections page itself links to the agent page
         """
         SurveyHeader.objects.create(name='existing', organization=self.org, created_by=self.owner)
         dashboard = self.client.get(reverse('editor')).content.decode()
         editor_page = self.client.get(reverse('editor_survey_create')).content.decode()
+        agent = reverse('editor_survey_start_agent')
         for html in (dashboard, editor_page):
             self.assertIn('href="%s"' % PAGE, html)
             self.assertRegex(html, r'API &(amp;)? connections')
             self.assertNotIn('AI agents', html)
             self.assertNotIn('>soon<', html)
         self.assertIn('Connect your AI agent', editor_page)
+        self.assertIn('href="%s?from=help"' % agent, editor_page)
         self.assertNotIn('href="%s"' % reverse('editor_account_mcp'), dashboard + editor_page)
+        connections = self.client.get(PAGE).content.decode()
+        self.assertLess(connections.index('%s?from=connections' % agent),
+                        connections.index('Personal access tokens'))
