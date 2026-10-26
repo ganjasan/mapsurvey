@@ -35,8 +35,14 @@
     var current = null;
     var connected = false;
 
+    // Where the creator came from (dashboard hero, "?" menu, connections page):
+    // one property on every event, so the entry points can be compared.
+    var origin = root.dataset.from || '';
+
     function track(name, props) {
-        if (window.posthog && posthog.capture) posthog.capture(name, props || {});
+        props = props || {};
+        if (origin) props.from = origin;
+        if (window.posthog && posthog.capture) posthog.capture(name, props);
     }
 
     function store(value) {

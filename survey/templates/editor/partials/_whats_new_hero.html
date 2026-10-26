@@ -1,0 +1,95 @@
+{% load i18n %}
+{% load static %}
+{% load question_utils %}
+{% comment %}
+The hero tier of "What's new" (change changelog-hero, #423): one promotional banner
+on the dashboard for the biggest change, drawn from the entry's header keys -- never a
+template per feature. Included from editor.html ONLY, above the survey list; every
+other page shows nothing while a hero is pending (the context processor keeps the
+small card away). ×, the call to action and "Don't show these" all move the watermark
+to the newest entry, so no small card follows; the closed id is remembered in
+localStorage so a close that failed to persist does not come back on the next page.
+{% endcomment %}
+{% if whats_new.hero %}
+{% with entry=whats_new.hero %}
+<section class="wn-hero wn-hero-{{ entry.art|default:'image' }}" id="whatsNewHero" aria-label="{% trans "What's new" %}"
+     data-entry-id="{{ entry.id }}" data-seen-url="{% url 'whats_new_seen' %}" data-cards-url="{% url 'whats_new_cards' %}">
+  <button type="button" class="wn-close" data-wn="close" aria-label="{% trans 'Dismiss' %}"><i class="fas fa-times"></i></button>
+  <div class="wn-hero-art{% if entry.art %} {{ entry.art }}{% endif %}">
+    {% if entry.image %}
+      <img src="{% static entry.image %}" alt="">
+    {% elif entry.art == 'agent' %}
+      <i class="fas fa-robot"></i>
+      <div class="logos"><span>Claude</span><span>ChatGPT</span><span>+10</span></div>
+    {% endif %}
+  </div>
+  <div class="wn-hero-text">
+    <div class="wn-hero-eyebrow">{% if entry.eyebrow %}{{ entry.eyebrow }}{% else %}{% trans "What's new" %}{% endif %} <span class="wn-hero-new">{% trans "New" %}</span></div>
+    <h3>{{ entry.title }}</h3>
+    <div class="wn-body">{{ entry.body|safe }}</div>
+    {% if whats_new.hero_chips %}
+    <div class="wn-hero-chips">{% for chip in whats_new.hero_chips %}<span>{{ chip }}</span>{% endfor %}</div>
+    {% endif %}
+  </div>
+  <div class="wn-hero-actions">
+    {% if whats_new.hero_link %}
+    <a class="wn-btn wn-hero-cta" href="{{ whats_new.hero_link }}" data-wn="cta"><i class="fas fa-plug"></i> {{ entry.cta_label }}</a>
+    {% endif %}
+    {% if entry.help and HELP_URL %}{% with help_url=HELP_URL|get_item:entry.help %}{% if help_url %}
+    <a class="wn-hero-help" href="{{ help_url }}" target="_blank" rel="noopener" data-wn-help>{% trans "How it works" %}</a>
+    {% endif %}{% endwith %}{% endif %}
+    {% if whats_new.hero_note %}<div class="wn-hero-note"><i class="fas fa-star"></i> {{ whats_new.hero_note }}</div>{% endif %}
+    <button type="button" class="wn-mute" data-wn="muted">{% trans "Don't show these" %}</button>
+  </div>
+</section>
+<script>
+(function () {
+    var hero = document.getElementById('whatsNewHero');
+    if (!hero) return;
+    var closedKey = 'msWhatsNewClosed';
+    var csrf = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+    var entryId = hero.getAttribute('data-entry-id');
+    function remembered() { try { return window.localStorage.getItem(closedKey); } catch (e) { return null; } }
+    function remember() { try { window.localStorage.setItem(closedKey, entryId); } catch (e) { /* no storage: today's behaviour */ } }
+    function track(name, props) {
+        if (window.posthog && typeof window.posthog.capture === 'function') window.posthog.capture(name, props);
+    }
+    function post(url, body, keepalive) {
+        var data = new URLSearchParams(body);
+        return fetch(url, {
+            method: 'POST', credentials: 'same-origin', keepalive: !!keepalive,
+            headers: { 'X-CSRFToken': csrf, 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: data.toString()
+        });
+    }
+    function close(how, keepalive) {
+        hero.classList.add('wn-hidden');
+        remember();
+        var req = how === 'muted'
+            ? post(hero.getAttribute('data-cards-url'), { enabled: '0', entry_id: entryId }, keepalive)
+            : post(hero.getAttribute('data-seen-url'), { how: how, entry_id: entryId }, keepalive);
+        req.then(function () {
+            document.querySelectorAll('.wn-dot, .wn-badge').forEach(function (el) { el.remove(); });
+        }).catch(function () { /* the remembered id keeps it hidden on the next page */ });
+    }
+    if (remembered() === entryId) {
+        // Closed before, but the watermark POST did not land: hide at once and retry.
+        hero.classList.add('wn-hidden');
+        post(hero.getAttribute('data-seen-url'), { how: 'close', entry_id: entryId }).catch(function () {});
+        return;
+    }
+    track('changelog_card_shown', { entry_id: entryId, tier: 'hero' });
+    hero.querySelectorAll('[data-wn]').forEach(function (el) {
+        el.addEventListener('click', function () {
+            // The call to action is a link: the POST rides along, the navigation proceeds.
+            close(el.getAttribute('data-wn'), el.tagName === 'A');
+        });
+    });
+    var help = hero.querySelector('[data-wn-help]');
+    if (help) help.addEventListener('click', function () {
+        track('changelog_card_clicked', { entry_id: entryId, tier: 'hero', target: 'help' });
+    });
+})();
+</script>
+{% endwith %}
+{% endif %}

@@ -2585,17 +2585,26 @@ def whats_new_page(request):
 @require_POST
 @login_required
 def whats_new_seen(request):
-    """The card's "Got it" / ×: everything seen, one event saying how."""
+    """The card's "Got it" / × and the hero's × / call to action: everything
+    seen, one event saying how. `entry_id` names what the creator closed (the
+    hero is not always the newest entry); the tier comes from that entry, so
+    the events tell a hero from a card. `how=cta` adds the click event -- the
+    one call to action is both a click and a close."""
     from . import changelog
     how = request.POST.get('how', '')
-    if how not in ('got_it', 'close'):
+    if how not in ('got_it', 'close', 'cta'):
         return HttpResponse(status=400)
     prefs = _changelog_prefs(request.user)
     newest = changelog.latest()
+    closed = next((e for e in changelog.entries()
+                   if e.id == request.POST.get('entry_id', '')), None) or newest
     _mark_changelog_seen(prefs)
-    if newest is not None:
+    if closed is not None:
+        if how == 'cta':
+            pe.emit(pe.CHANGELOG_CARD_CLICKED, request.user.pk,
+                    {'entry_id': closed.id, 'tier': closed.tier, 'target': 'cta'})
         pe.emit(pe.CHANGELOG_CARD_DISMISSED, request.user.pk,
-                {'entry_id': newest.id, 'how': how})
+                {'entry_id': closed.id, 'how': how, 'tier': closed.tier})
     return HttpResponse(status=204)
 
 
@@ -2613,8 +2622,10 @@ def whats_new_cards(request):
     prefs.save(update_fields=['changelog_cards', 'updated_at'])
     if enabled == '0':
         newest = changelog.latest()
+        closed = next((e for e in changelog.entries()
+                       if e.id == request.POST.get('entry_id', '')), None) or newest
         _mark_changelog_seen(prefs)
-        if newest is not None:
+        if closed is not None:
             pe.emit(pe.CHANGELOG_CARD_DISMISSED, request.user.pk,
-                    {'entry_id': newest.id, 'how': 'muted'})
+                    {'entry_id': closed.id, 'how': 'muted', 'tier': closed.tier})
     return HttpResponse(status=204)

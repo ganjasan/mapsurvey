@@ -17,6 +17,7 @@ that refuse cookies, not this one.{% endcomment %}
 {% block extra_head %}
 <style>
   .cx-wrap { padding: 2rem 1rem 3rem; }
+  .cx-assistant { font-size: .9rem; margin: 0 0 1rem; color: #374151; }
   .cx-card { max-width: 760px; margin: 0 auto 1.25rem; background: #fff; border: 1px solid var(--border-color); border-radius: 16px; padding: 1.75rem 2rem; }
   .cx-card h1 { font-size: 1.4rem; font-weight: 700; margin: 0 0 .5rem; }
   .cx-card h2 { font-size: 1.05rem; font-weight: 700; margin: 0 0 .5rem; }
@@ -59,6 +60,9 @@ that refuse cookies, not this one.{% endcomment %}
 
 {% block content %}
 <div class="cx-wrap">
+
+  {# The creator's way in (change changelog-hero): the guided page, not a token. #}
+  <p class="cx-assistant"><i class="fas fa-robot" style="margin-right:4px;"></i><a href="{% url 'editor_survey_start_agent' %}?from=connections">{% trans "Use your AI assistant — connect Claude, ChatGPT or another assistant" %}</a></p>
 
   <div class="cx-card">
     <h1>{% trans "Personal access tokens" %}</h1>

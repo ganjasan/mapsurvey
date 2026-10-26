@@ -7212,7 +7212,7 @@ msgstr ""
 
 #: survey/templates/services.html:69
 msgid "How it works"
-msgstr ""
+msgstr "Jak to działa"
 
 #: survey/templates/services.html:70
 msgid "Simple, fixed-scope, no lock-in"
@@ -8891,3 +8891,7 @@ msgstr "Przenieś do sekcji…"
 #: survey/templates/editor/_survey_more_menu.html
 msgid "A new draft with the same questions, settings and map layers, without responses"
 msgstr "Nowa wersja robocza z tymi samymi pytaniami, ustawieniami i warstwami mapy, bez odpowiedzi"
+
+#: api/templates/api/connections.html
+msgid "Use your AI assistant — connect Claude, ChatGPT or another assistant"
+msgstr "Użyj swojego asystenta AI — połącz Claude, ChatGPT lub innego asystenta"

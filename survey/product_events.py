@@ -48,8 +48,12 @@ COMMENT_THREAD_RESOLVED = 'comment_thread_resolved'
 # In-app changelog (change in-app-changelog): is anyone reading the entries.
 # `shown` is sent from the browser on card render; the other two from the
 # views that move the seen watermark. Every one carries `entry_id`.
-CHANGELOG_CARD_SHOWN = 'changelog_card_shown'
-CHANGELOG_CARD_DISMISSED = 'changelog_card_dismissed'   # how: got_it | close | muted
+CHANGELOG_CARD_SHOWN = 'changelog_card_shown'           # + tier: card | hero
+CHANGELOG_CARD_DISMISSED = 'changelog_card_dismissed'   # how: got_it | close | cta | muted; + tier
+# The hero's buttons (change changelog-hero): `target` is `cta` (the one call to
+# action, sent by the view that also dismisses) or `help` ("How it works", browser).
+# shown → clicked → dismissed-without-click per entry_id is the interest in a feature.
+CHANGELOG_CARD_CLICKED = 'changelog_card_clicked'
 CHANGELOG_PAGE_VIEWED = 'changelog_page_viewed'
 
 # Editing a live survey (change edit-live-survey). Whether creators who open a

@@ -2,6 +2,7 @@ import hashlib
 import hmac
 import json
 from django.conf import settings
+from django.db.models import Case, IntegerField, When
 
 from .models import Membership
 
@@ -173,6 +174,18 @@ def icon_sprites(request):
     }
 
 
+def _hero_link(hero):
+    """The hero's call-to-action URL: `link` resolved, `link_query` appended."""
+    from django.urls import NoReverseMatch, reverse
+    try:
+        url = reverse(hero.link)
+    except NoReverseMatch:
+        # A renamed URL name since the entry shipped: the banner still renders,
+        # without its button. The shipped-directory test keeps this off deploys.
+        return ''
+    return f'{url}?{hero.link_query}' if hero.link_query else url
+
+
 def whats_new(request):
     """In-app changelog state for the editor chrome (change in-app-changelog).
 
@@ -184,10 +197,13 @@ def whats_new(request):
     from django.utils.functional import SimpleLazyObject
 
     def build():
+        from django.utils import timezone
         from . import changelog
-        from .models import CreatorPreferences
+        from .changelog_audience import Audience
+        from .models import CreatorPreferences, SurveyHeader
         empty = {'latest': None, 'unseen': (), 'unseen_count': 0,
-                 'show_card': False, 'cards': True}
+                 'show_card': False, 'card': None, 'cards': True,
+                 'hero': None, 'hero_chips': (), 'hero_note': '', 'hero_link': ''}
         user = getattr(request, 'user', None)
         if user is None or not user.is_authenticated:
             return empty
@@ -204,14 +220,40 @@ def whats_new(request):
                  .filter(user=user)
                  .values('changelog_seen', 'changelog_cards')
                  .first()) or {'changelog_seen': '', 'changelog_cards': True}
-        unseen = changelog.unseen(prefs['changelog_seen'])
-        return {
-            'latest': newest,
-            'unseen': unseen,
-            'unseen_count': len(unseen),
-            'show_card': bool(unseen) and prefs['changelog_cards'],
-            'cards': prefs['changelog_cards'],
-        }
+        seen = prefs['changelog_seen']
+        unseen = changelog.unseen(seen)
+        value = dict(empty, latest=newest, unseen=unseen, unseen_count=len(unseen),
+                     cards=prefs['changelog_cards'])
+        if not unseen or not prefs['changelog_cards']:
+            return value
+        # The hero tier (change changelog-hero): a pending hero is the only
+        # thing shown, and only the dashboard draws it; the small card waits.
+        # Audience predicates run only while an unseen hero is inside its
+        # lifetime -- for everyone else this costs nothing new.
+        org = getattr(request, 'active_org', None)
+        hero = None
+        if changelog.hero_candidates(seen, timezone.localdate()):
+            audience = Audience(user, org)
+            hero = changelog.hero_for(seen, audience)
+        if hero is not None:
+            value['hero'] = hero
+            value['hero_link'] = _hero_link(hero)
+            value['hero_note'] = hero.note if (
+                hero.note and (not hero.note_if or audience.holds(hero.note_if))) else ''
+            names = ()
+            if org is not None and any(changelog.CHIP_PLACEHOLDER in c for c in hero.chips):
+                names = (SurveyHeader.objects
+                         .filter(organization=org, is_canonical=True, deleted_at__isnull=True)
+                         .annotate(live=Case(When(status='published', then=0), default=1,
+                                             output_field=IntegerField()))
+                         .order_by('live', '-created_at')
+                         .values_list('name', flat=True)[:len(hero.chips)])
+            value['hero_chips'] = changelog.render_chips(hero, names)
+            return value
+        card = changelog.latest_card(seen)
+        value['card'] = card
+        value['show_card'] = card is not None
+        return value
 
     return {'whats_new': SimpleLazyObject(build)}
 

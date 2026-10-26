@@ -391,6 +391,10 @@
     </div>
     {% endif %}
 
+    {% comment %}The hero tier of What's new (change changelog-hero): the dashboard is
+    the one page that draws it; the small card in base.html stays away while it is pending.{% endcomment %}
+    {% include "editor/partials/_whats_new_hero.html" %}
+
     {% if import_jobs %}
     {% comment %}base.html loads no htmx; the import cards poll and dismiss with it.{% endcomment %}
     <script src="https://unpkg.com/htmx.org@1.9.10" crossorigin="anonymous"></script>
