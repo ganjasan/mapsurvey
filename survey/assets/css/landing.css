@@ -2315,20 +2315,16 @@ table.cmp tr:last-child td { border-bottom: 0; }
 .cmp-maker h3 { margin: 0 0 8px; font-size: 18px; }
 .cmp-maker p { margin: 0 auto 16px; max-width: 560px; color: #556; font-size: 14.5px; line-height: 1.55; }
 
-/* Pricing on a category page: two cards on the homepage pricing-card styles. */
-.cat-pricing .pricing__grid { grid-template-columns: repeat(2, 1fr); max-width: 760px; margin-top: 26px; }
-.cat-pricing .pricing-card { text-align: left; }
-.cat-pricing .pricing-card__header { text-align: left; }
-.cat-pricing .pricing-card__tag { display: inline-block; font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 8px; border-radius: 8px; background: #E3F5F1; color: #0B7D6C; margin-left: 8px; vertical-align: middle; }
-.cat-pricing .pricing-card__note { font-size: 0.85rem; color: var(--color-text-tertiary); line-height: 1.5; margin: 0 0 1rem; }
-.cat-pricing__foot { max-width: 760px; margin: 18px auto 0; font-size: 0.9rem; color: var(--color-text-secondary); line-height: 1.6; text-align: left; }
+/* Pricing on a category page: the shared plan cards (partials/_plan_cards.html, change pricing-page). */
+.cat-pricing__cards { max-width: 1040px; margin: 26px auto 0; }
+.cat-pricing__foot { max-width: 1040px; margin: 22px auto 0; font-size: 0.9rem; color: var(--color-text-secondary); line-height: 1.6; text-align: left; }
+.cat-pricing__foot a { color: var(--color-accent); }
 
 /* Sibling links between the category pages. */
 .cat-siblings { max-width: 860px; margin: 0 auto; }
 .cat-siblings .aud-seg { margin-top: 18px; }
 
 @media (max-width: 760px) {
-    .cat-pricing .pricing__grid { grid-template-columns: 1fr; }
     .cat-shots { grid-template-columns: 1fr; }
 }
 

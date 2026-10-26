@@ -1,0 +1,71 @@
+{% extends "base_landing.html" %}
+{% load static i18n %}
+{% comment %}
+/pricing/ (change pricing-page, #433). The cards and every figure come from
+partials/_plan_cards.html; this page adds the payment questions buyers ask before procurement.
+/pro/ stays the questionnaire about what Pro should do next and is linked below.
+{% endcomment %}
+
+{% block title %}{% trans "Pricing: Free, Pro and Done for you | Mapsurvey" %}{% endblock %}
+{% block meta_description %}{% trans "Mapsurvey is free for a real project, with no limit on surveys or responses. Pro adds an unbranded survey, the team's consulting and reports, and the API, per workspace. Or we run the survey for you." %}{% endblock %}
+{% block canonical_url %}https://mapsurvey.org/pricing/{% endblock %}
+{% block og_url %}https://mapsurvey.org/pricing/{% endblock %}
+{% block og_title %}{% trans "Mapsurvey pricing" %}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .prc-hero { padding: 7.5rem 2rem 1rem; text-align: center; }
+  .prc-hero h1 { font-family: var(--font-display); font-size: clamp(2rem, 4.5vw, 3rem); line-height: 1.1; margin: 0 auto 1rem; max-width: 760px; color: var(--color-text); }
+  .prc-hero p { font-family: var(--font-display); font-size: 1.05rem; line-height: 1.6; color: var(--color-text-secondary); max-width: 640px; margin: 0 auto; }
+  .prc-cards { max-width: 1080px; margin: 0 auto; padding: 2.5rem 1rem 3.5rem; }
+  .prc-faq { max-width: 760px; margin: 0 auto; padding: 0 1rem 5rem; font-family: var(--font-display); }
+  .prc-faq h2 { font-size: 1.5rem; margin: 0 0 1.25rem; color: var(--color-text); }
+  .prc-faq details { border-top: 1px solid var(--color-border-light); padding: 1rem 0; }
+  .prc-faq details:last-of-type { border-bottom: 1px solid var(--color-border-light); }
+  .prc-faq summary { cursor: pointer; font-weight: 600; color: var(--color-text); }
+  .prc-faq details p { margin: 0.75rem 0 0; color: var(--color-text-secondary); line-height: 1.6; font-size: 0.95rem; }
+  .prc-faq a { color: var(--color-accent); }
+  .prc-next { margin-top: 2rem; color: var(--color-text-secondary); font-size: 0.95rem; line-height: 1.6; }
+  @media (max-width: 600px) { .prc-hero { padding: 6rem 1rem 0.5rem; } .prc-cards { padding: 2rem 0 3rem; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="prc-hero">
+  <h1>{% trans "Free to run a real project. One flat price when you need more." %}</h1>
+  <p>{% trans "Every question type, map and export is free, with no limit on surveys, responses or members. Pro is per workspace. If you would rather not run the survey yourself, we run it for you." %}</p>
+</section>
+
+<section class="prc-cards" id="plans">
+  {% include "partials/_plan_cards.html" with surface="public" prefix="pricing-plans" %}
+</section>
+
+<section class="prc-faq" id="faq">
+  <h2>{% trans "Paying and cancelling" %}</h2>
+  <details>
+    <summary>{% trans "Who bills me?" %}</summary>
+    <p>{% trans "PayPro Global, our merchant of record. They take the payment, charge the right sales tax or VAT, and send the invoices and receipts." %}</p>
+  </details>
+  <details>
+    <summary>{% trans "Can we pay by invoice or purchase order?" %}</summary>
+    <p>{% trans "Yes, on the yearly plan. Get a quote on the Plan & billing page: it is a PDF you can put through procurement, payable by bank transfer or purchase order. Monthly is card or PayPal." %}</p>
+  </details>
+  <details>
+    <summary>{% trans "What does per workspace mean?" %}</summary>
+    <p>{% trans "A workspace is your organisation in Mapsurvey. One Pro subscription covers all its members, surveys and responses; there are no seat or response fees." %}</p>
+  </details>
+  <details>
+    <summary>{% trans "What happens if we cancel?" %}</summary>
+    <p>{% trans "Pro stays on until the end of the period you paid for, then the workspace returns to Free. Every survey, response and setting stays where it is; only the Pro extras switch off." %}</p>
+  </details>
+  <details>
+    <summary>{% trans "How is Done for you priced?" %}</summary>
+    <p>{% blocktrans with url="/services/" %}By the project. On a short call we go through the brief, the audience and the timeline, then send a quote for the work. The survey runs in your own workspace, so the data stays yours. <a href="{{ url }}">How the service works</a>.{% endblocktrans %}</p>
+  </details>
+  <details>
+    <summary>{% trans "Is the free plan a trial?" %}</summary>
+    <p>{% trans "No. Free has no time limit and no cap on surveys, responses or members, and the code is open source (AGPLv3) if you want to host it yourself." %}</p>
+  </details>
+  <p class="prc-next">{% blocktrans with url="/pro/" %}Pro is growing with its first customers. <a href="{{ url }}">Tell us what it should do next</a>.{% endblocktrans %}</p>
+</section>
+{% endblock %}

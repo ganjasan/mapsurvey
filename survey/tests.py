@@ -19660,7 +19660,7 @@ class LandingFooterTest(TestCase):
         THEN every internal marketing page it linked before is still linked, plus /demo/
         """
         footer = self._footer()
-        for href in ("#features", "#demo", "/pro/", "/services/", "/demo/?src=footer",
+        for href in ("#features", "#demo", "/pricing/", "/services/", "/demo/?src=footer",
                      "/for-planners/", "/for-government/", "/for-researchers/", "/for-educators/",
                      "/for-consultants/", "/community-engagement-platform/",
                      "/public-consultation-software/", "/civic-engagement/",
@@ -20376,15 +20376,20 @@ class ProEarlyAccessPageTest(TestCase):
         """
         GIVEN /services/ was live for weeks with no internal link to it
         WHEN a landing page, robots.txt and sitemap.xml are fetched
-        THEN nav and footer link both offers, and both are crawlable
+        THEN nav and footer link pricing and services, and /pricing/, /pro/ and /services/
+             are crawlable (change pricing-page: /pro/ is linked from /pricing/)
         """
         c = Client()
         landing = c.get("/")
-        self.assertContains(landing, 'href="/pro/"')
+        self.assertContains(landing, 'href="/pricing/"')
         self.assertContains(landing, 'href="/services/"')
-        self.assertContains(c.get("/robots.txt"), "Allow: /pro/")
+        self.assertContains(c.get("/pricing/"), 'href="/pro/"')
+        robots = c.get("/robots.txt")
+        self.assertContains(robots, "Allow: /pro/")
+        self.assertContains(robots, "Allow: /pricing/")
         sitemap = c.get("/sitemap.xml")
         self.assertContains(sitemap, "/pro/")
+        self.assertContains(sitemap, "/pricing/")
         self.assertContains(sitemap, "/services/")
 
 
@@ -20745,18 +20750,23 @@ class SeoCategoryLandingContractTest(TestCase):
 
     def test_price_lives_in_the_partial_only(self):
         """
-        GIVEN the Pro price must be editable in one place
-        WHEN the four category templates are read from disk
-        THEN none of them contains the figure; only the pricing partial does
+        GIVEN the Pro price must be editable in one place (change pricing-page moved it to the
+              shared plan cards)
+        WHEN every template of the survey and billing apps is read from disk
+        THEN only partials/_plan_cards.html contains the figure
         """
         import os
         from django.conf import settings
-        base = os.path.join(settings.BASE_DIR, "survey", "templates")
-        for name in ("community_engagement_platform", "public_consultation_software",
-                     "civic_engagement", "participatory_budgeting", "citizen_engagement_platform"):
-            with open(os.path.join(base, f"{name}.html")) as fh:
-                self.assertFalse("$49" in fh.read(), f"{name}: the Pro figure belongs in _landing_pricing.html only")
-        with open(os.path.join(base, "partials", "_landing_pricing.html")) as fh:
+        holder = os.path.join(settings.BASE_DIR, "survey", "templates", "partials", "_plan_cards.html")
+        for app in ("survey", "billing"):
+            for root, _dirs, files in os.walk(os.path.join(settings.BASE_DIR, app, "templates")):
+                for name in files:
+                    path = os.path.join(root, name)
+                    if path == holder or not name.endswith((".html", ".txt")):
+                        continue
+                    with open(path) as fh:
+                        self.assertFalse("$49" in fh.read(), f"{path}: the Pro figure belongs in _plan_cards.html only")
+        with open(holder) as fh:
             self.assertIn("$49", fh.read())
 
     def test_no_eu_hosting_claims_on_category_pages(self):

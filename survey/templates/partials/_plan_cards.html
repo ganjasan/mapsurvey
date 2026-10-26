@@ -1,0 +1,117 @@
+{% load static i18n billing_tags %}
+{% comment %}
+Plan cards (change pricing-page, #433): Free, Pro, Done for you. The ONLY template that names the
+Pro figure ($49 a month / $490 a year per workspace, the prices on file with PayPro Global) --
+/pricing/, the category landings (via _landing_pricing.html) and Plan & billing all render this
+file, so taking the price off the site or changing it is one edit here.
+
+Params: surface = "public" (default) | "billing"; prefix = id prefix, unique per page.
+On "billing" the parent context carries org, is_owner, entitlements and products_configured
+(billing.views.org_billing), and the period radios belong to the checkout form through `form=`.
+Pro bullets are the labels of the Pro features in billing/features.py.
+{% endcomment %}
+{% with p=prefix|default:"plans" %}
+<link rel="stylesheet" href="{% static 'css/plan_cards.css' %}">
+<div class="plan-cards" data-surface="{{ surface|default:'public' }}">
+  <input type="radio" class="plan-period__input plan-period__input--monthly" id="{{ p }}-monthly" value="monthly" checked
+         {% if surface == 'billing' %}name="period" form="{{ p }}-checkout"{% else %}name="{{ p }}-period"{% endif %}>
+  <input type="radio" class="plan-period__input plan-period__input--yearly" id="{{ p }}-yearly" value="yearly"
+         {% if surface == 'billing' %}name="period" form="{{ p }}-checkout"{% else %}name="{{ p }}-period"{% endif %}>
+
+  <div class="plan-grid">
+    {# ---------- Free ---------- #}
+    <section class="plan-card{% if surface == 'billing' and not entitlements.is_pro %} plan-card--current{% endif %}" aria-labelledby="{{ p }}-free">
+      {% if surface == 'billing' and not entitlements.is_pro %}<span class="plan-card__badge plan-card__badge--current">{% trans "Current plan" %}</span>{% endif %}
+      <h3 class="plan-card__name" id="{{ p }}-free">{% trans "Free" %}</h3>
+      <p class="plan-card__lead">{% trans "The whole product for a real project, hosted by us or on your own servers." %}</p>
+      <div class="plan-price"><span class="plan-price__figure">$0</span><span class="plan-price__unit">{% trans "forever" %}</span></div>
+      <p class="plan-card__terms">{% trans "Not a trial: no limit on surveys, responses or members." %}</p>
+      <ul class="plan-card__features">
+        <li>{% trans "Every question type, including point, line and polygon on the map" %}</li>
+        <li>{% trans "Follow-up questions attached to each place a respondent marks" %}</li>
+        <li>{% trans "Unlimited surveys, responses and team members" %}</li>
+        <li>{% trans "Survey text in 75 languages" %}</li>
+        <li>{% trans "Responses map, filters, heat maps, charts and public results pages" %}</li>
+        <li>{% trans "Export as GeoJSON, CSV, Excel, GeoPackage, Shapefile or KML" %}</li>
+        <li>{% trans "Self-host the open-source code (AGPLv3)" %}</li>
+      </ul>
+      <div class="plan-card__actions">
+        {% if surface == 'billing' %}
+          {% if entitlements.is_pro %}<p class="plan-card__state">{% trans "Everything stays if you return to Free." %}</p>
+          {% else %}<p class="plan-card__state">{% trans "You are on Free." %}</p>{% endif %}
+        {% elif user.is_authenticated %}
+          <a href="{% url 'editor' %}" class="plan-btn plan-btn--ghost">{% trans "Go to your dashboard" %}</a>
+        {% else %}
+          <a href="{% url 'django_registration_register' %}?utm_source=pricing&amp;utm_medium=free_card" class="plan-btn plan-btn--ghost">{% trans "Create a free account" %}</a>
+        {% endif %}
+      </div>
+    </section>
+
+    {# ---------- Pro ---------- #}
+    <section class="plan-card plan-card--featured{% if surface == 'billing' and entitlements.is_pro %} plan-card--current{% endif %}" aria-labelledby="{{ p }}-pro">
+      {% if surface == 'billing' and entitlements.is_pro %}<span class="plan-card__badge plan-card__badge--current">{% trans "Current plan" %}</span>{% endif %}
+      <h3 class="plan-card__name" id="{{ p }}-pro">{% trans "Pro" %}</h3>
+      <p class="plan-card__lead">{% trans "For teams that report to a council, a client or a funder." %}</p>
+      <div class="plan-period" role="group" aria-label="{% trans 'Billing period' %}">
+        <label class="plan-period__opt plan-period__opt--monthly" for="{{ p }}-monthly">{% trans "Monthly" %}</label>
+        <label class="plan-period__opt plan-period__opt--yearly" for="{{ p }}-yearly">{% trans "Yearly" %}<span class="plan-period__save">{% trans "2 months free" %}</span></label>
+      </div>
+      <div class="plan-price plan-price--monthly"><span class="plan-price__figure">$49</span><span class="plan-price__unit">{% trans "per month" %}</span></div>
+      <div class="plan-price plan-price--yearly"><span class="plan-price__figure">$490</span><span class="plan-price__unit">{% trans "per year" %}</span></div>
+      <p class="plan-card__terms">{% trans "Per workspace, any number of members. No per-seat or per-response fees." %}</p>
+      <ul class="plan-card__features">
+        <li class="plan-card__features-base">{% trans "Everything in Free" %}</li>
+        {% plan_feature_labels 'pro' as pro_features %}
+        {% for label in pro_features %}<li>{{ label }}</li>{% endfor %}
+      </ul>
+      <div class="plan-card__actions">
+        {% if surface == 'billing' %}
+          {% if entitlements.is_pro %}
+            <p class="plan-card__state">{% trans "Manage or cancel the subscription below." %}</p>
+          {% elif not products_configured %}
+            <p class="plan-card__state">{% trans "Pro is not on sale right now. Write to us and we will set it up." %}</p>
+          {% elif is_owner %}
+            <form method="post" action="{% url 'org_checkout' org.slug %}" id="{{ p }}-checkout">
+              {% csrf_token %}
+              <button type="submit" class="plan-btn">{% trans "Upgrade to Pro" %}</button>
+            </form>
+            <form method="post" action="{% url 'org_checkout' org.slug %}">
+              {% csrf_token %}<input type="hidden" name="period" value="yearly"><input type="hidden" name="quote" value="1">
+              <button type="submit" class="plan-btn plan-btn--link">{% trans "Get a quote for the yearly plan" %}</button>
+            </form>
+            <p class="plan-card__fine">{% trans "Card or PayPal. The yearly plan can also be paid by bank transfer or purchase order: the quote is a PDF you can put through procurement." %}</p>
+          {% else %}
+            <p class="plan-card__state">{% trans "Only the organisation owner can upgrade." %}</p>
+          {% endif %}
+        {% elif active_org and org_role == 'owner' or active_org and org_role == 'admin' %}
+          <a href="{% url 'org_billing' active_org.slug %}" class="plan-btn">{% trans "Upgrade in Plan & billing" %}</a>
+        {% elif user.is_authenticated %}
+          <a href="{% url 'editor' %}" class="plan-btn">{% trans "Upgrade from your workspace" %}</a>
+          <p class="plan-card__fine">{% trans "The workspace owner upgrades under Plan & billing in the account menu." %}</p>
+        {% else %}
+          <a href="{% url 'django_registration_register' %}?utm_source=pricing&amp;utm_medium=pro_card" class="plan-btn">{% trans "Start free, upgrade any time" %}</a>
+        {% endif %}
+      </div>
+    </section>
+
+    {# ---------- Done for you ---------- #}
+    <section class="plan-card" aria-labelledby="{{ p }}-service">
+      <h3 class="plan-card__name" id="{{ p }}-service">{% trans "Done for you" %}</h3>
+      <p class="plan-card__lead">{% trans "We run the survey as a service, from the brief to the report." %}</p>
+      <div class="plan-price"><span class="plan-price__figure plan-price__figure--word">{% trans "Custom" %}</span></div>
+      <p class="plan-card__terms">{% trans "Quoted per project after a call." %}</p>
+      <ul class="plan-card__features">
+        <li>{% trans "We build the survey from your brief, in your languages" %}</li>
+        <li>{% trans "Launch: links, QR posters and an embed for your site" %}</li>
+        <li>{% trans "We watch the responses and fix what stops people" %}</li>
+        <li>{% trans "Analysis, maps and a report for your council, client or funder" %}</li>
+        <li>{% trans "Runs in your own workspace, so the data stays yours" %}</li>
+      </ul>
+      <div class="plan-card__actions">
+        <a href="{% url 'demo_request' %}?src={% if surface == 'billing' %}billing{% else %}pricing{% endif %}" class="plan-btn plan-btn--ghost">{% trans "Book a call" %}</a>
+        <a href="{% url 'services' %}" class="plan-btn plan-btn--link">{% trans "How the service works" %}</a>
+      </div>
+    </section>
+  </div>
+</div>
+{% endwith %}
