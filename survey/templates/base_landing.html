@@ -1,4 +1,4 @@
-{% load static i18n %}
+{% load static i18n brand_tags %}
 <!DOCTYPE html>
 {% comment %}
 page_lang, not LANGUAGE_CODE: no i18n context processor is installed, so LANGUAGE_CODE was always
@@ -41,45 +41,11 @@ homepage views set it (change ru-landing-hreflang).
     <meta name="twitter:title" content="{% trans "Mapsurvey — Open-Source Participatory Mapping" %}">
     <meta name="twitter:description" content="{% trans "Create map-based surveys where people mark places, draw routes, and outline areas. Free & open source." %}">
 
-    {# Schema.org #}
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "Mapsurvey",
-        "applicationCategory": "DeveloperApplication",
-        "operatingSystem": "Linux, Docker",
-        "offers": {
-            "@type": "Offer",
-            "price": "0",
-            "priceCurrency": "USD",
-            "description": "Free self-hosted version"
-        },
-        "description": "Open-source geospatial survey platform for participatory mapping",
-        "license": "https://www.gnu.org/licenses/agpl-3.0.html",
-        "codeRepository": "{{ GITHUB_REPO_URL }}"
-    }
-    </script>
     {% comment %}
-       Organization entity — brand disambiguation (there are unrelated firms named
-       "MapSurvey"); sameAs ties mapsurvey.org to our canonical profiles so search
-       engines resolve us as a distinct entity.
+    Brand entity (change brand-entity, #443): Organization + SoftwareApplication linked by @id, built
+    in survey/brand.py. Add a profile to brand.PROFILES, never here.
     {% endcomment %}
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "Organization",
-        "name": "Mapsurvey",
-        "alternateName": "Mapsurvey.org",
-        "url": "https://mapsurvey.org/",
-        "logo": "https://mapsurvey.org{% static 'favicon-512x512.png' %}",
-        "description": "Open-source participatory-mapping platform: map-based surveys where participants mark places, draw routes, and outline areas.",
-        "sameAs": [
-            "{{ GITHUB_REPO_URL }}",
-            "https://participedia.net/method/mapsurvey-1"
-        ]
-    }
-    </script>
+    {% brand_jsonld %}
 
     {# Per-page structured data (FAQPage, BreadcrumbList) — opt-in via landing templates #}
     {% block structured_data %}{% endblock %}
