@@ -24076,6 +24076,19 @@ class PublicResultsEditorTest(TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertTrue(PublicResultsPage.objects.filter(survey=self.survey).exists())
 
+    def test_k_anonymity_help_escapes_less_than(self):
+        """
+        GIVEN the page settings card with the k-anonymity help text "Mask buckets smaller than K as “<K”"
+        WHEN the editor opens the config tab
+        THEN "<K" reaches the browser escaped, so it cannot open a tag that swallows the closing
+             </div> and pull the Data mode card and the live preview into the settings card
+        """
+        self._login()
+        r = self.client.get(self.base)
+        html = r.content.decode()
+        self.assertIn("“&lt;K”", html)
+        self.assertNotIn("“<K”", html)
+
     def test_non_editor_blocked(self):
         """
         GIVEN a user without rights on the survey

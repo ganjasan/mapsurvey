@@ -289,7 +289,7 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
               <input type="checkbox" name="feature_in_listing" {% if page.feature_in_listing %}checked{% endif %}></label>
             <div class="pr-field" style="margin-top:.6rem;"><label>{% trans "k-anonymity threshold" %}</label>
               <input class="form-control" style="max-width:120px;" type="number" min="1" name="k_anonymity_threshold" value="{{ page.k_anonymity_threshold }}">
-              <div class="pr-help">{% trans "Mask buckets smaller than K as “<K”. Set to 1 to disable." %}</div></div>
+              {% trans "Mask buckets smaller than K as “<K”. Set to 1 to disable." as k_help %}<div class="pr-help">{{ k_help|force_escape }}</div></div>
           </div>
 
           <div class="autosave-status" data-autosave-status><i class="fas fa-check"></i> <span>{% trans "Changes save automatically" %}</span></div>
