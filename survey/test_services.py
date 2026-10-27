@@ -4,6 +4,7 @@ One module for the capability: the services are tested here directly, with an
 `Actor` and plain values; the editor's behaviour over them is still covered by
 the view tests in `survey/tests.py`, which did not change in the extraction.
 """
+import json
 from unittest import mock
 
 from django.contrib.auth.models import User
@@ -267,6 +268,41 @@ class QuestionServiceTest(TestCase):
         """
         q = questions.create(self.actor, self.section, _question_data())
         questions.update(self.actor, q, {'name': 'Renamed'}, partial=True)
+        q.refresh_from_db()
+        self.assertEqual([c['code'] for c in q.choices], [1, 2])
+
+    def test_repeated_choice_codes_refused_on_save(self):
+        """
+        GIVEN a star rating with five options 1-5
+        WHEN an editor save posts the list the old modal produced: five default
+             stars followed by the saved five, codes 1-5 twice (#452)
+        THEN ValidationFailed at the choices stage naming the codes, and the
+             stored options are unchanged
+        """
+        five = [{'code': i, 'name': n} for i, n in enumerate(
+            ['Unsafe', 'Slightly Safe', 'Somewhat Safe', 'Rather Safe', 'Very Safe'], start=1)]
+        q = questions.create(self.actor, self.section, _question_data(
+            input_type='rating', display_style='stars', choices_json=json.dumps(five)))
+        doubled = [{'code': i, 'name': str(i)} for i in range(1, 6)] + five
+        with self.assertRaises(ValidationFailed) as ctx:
+            questions.update(self.actor, q, _question_data(
+                input_type='rating', display_style='stars', choices_json=json.dumps(doubled)))
+        self.assertEqual(ctx.exception.stage, questions.Stage.CHOICES)
+        self.assertIn('1, 2, 3, 4, 5', str(ctx.exception.fields['choices']))
+        q.refresh_from_db()
+        self.assertEqual(q.choices, five)
+
+    def test_set_choices_refuses_a_repeated_code(self):
+        """
+        GIVEN a choice question with two options
+        WHEN set_choices (REST/MCP) is given two options that share code 1
+        THEN ValidationFailed at the choices stage, and the options are unchanged
+        """
+        q = questions.create(self.actor, self.section, _question_data())
+        with self.assertRaises(ValidationFailed) as ctx:
+            questions.set_choices(self.actor, q, [{'code': 1, 'name': 'Red'}, {'code': 1, 'name': 'Green'}])
+        self.assertEqual(ctx.exception.stage, questions.Stage.CHOICES)
+        self.assertIn('code 1', str(ctx.exception.fields['choices']))
         q.refresh_from_db()
         self.assertEqual([c['code'] for c in q.choices], [1, 2])
 

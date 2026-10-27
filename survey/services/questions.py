@@ -115,7 +115,30 @@ def _parse_choices_json(raw, form=None):
         raise _failed(Stage.CHOICES, {'choices': ['Choices must be valid JSON.']}, form)
     if not isinstance(value, list):
         raise _failed(Stage.CHOICES, {'choices': ['Choices must be a list.']}, form)
+    _refuse_repeated_codes(value, form)
     return value
+
+
+def _refuse_repeated_codes(choices, form=None):
+    """Answers are stored by choice code, so two options sharing one code are
+    never meaningful — and the respondent page draws both. The editor modal
+    once doubled a star rating's list on every open (#452); refuse the list
+    rather than guess which of the twins the creator meant."""
+    seen, repeated = set(), []
+    for choice in choices:
+        code = choice.get('code') if isinstance(choice, dict) else None
+        if code is None or isinstance(code, bool):
+            continue
+        if code in seen and code not in repeated:
+            repeated.append(code)
+        seen.add(code)
+    if repeated:
+        listed = ', '.join(str(c) for c in repeated)
+        raise _failed(Stage.CHOICES, {'choices': [
+            f'Two options share the code {listed}. Give each option its own code or remove the repeat.'
+            if len(repeated) == 1 else
+            f'Several options share codes ({listed}). Give each option its own code or remove the repeats.'
+        ]}, form)
 
 
 def _apply_choices(question, original, data, form=None):
@@ -485,6 +508,7 @@ def set_choices(actor, question, choices, *, strict=True):
         raise _failed(Stage.CHOICES, {'choices': ['This question type has no editable options.']})
     if not isinstance(choices, list):
         raise _failed(Stage.CHOICES, {'choices': ['Choices must be a list.']})
+    _refuse_repeated_codes(choices)
     original = list(question.choices or [])
     new = guard_choice_codes(question, [dict(c) if isinstance(c, dict) else c for c in choices])
     if locks.locks(survey)[1]:

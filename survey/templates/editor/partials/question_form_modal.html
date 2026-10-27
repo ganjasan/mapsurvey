@@ -821,6 +821,9 @@
     // 320px screen. Measured, not guessed: nine options give 20.5px.
     var STRIP_CRAMPED_ABOVE = 7;
 
+    // False until the saved choices are in the table (end of this script).
+    var savedChoicesLoaded = false;
+
     function toggleStarCountField() {
         var el = document.getElementById('star-count-field');
         if (!el) return;
@@ -835,9 +838,13 @@
         if (count) {
             // An existing question keeps whatever it already has, names and all.
             if (input) input.value = count;
-        } else {
+        } else if (savedChoicesLoaded || !document.getElementById('existing-choices-data')) {
             // Picking stars means five stars, immediately — not an empty
-            // question waiting for a choice list nobody wants to write.
+            // question waiting for a choice list nobody wants to write. Never
+            // before a question's saved choices are loaded: on open this runs from
+            // the init block BEFORE the saved rows are loaded at the end of the
+            // script, and seeding here appended the saved five to five
+            // defaults — ten stars after the next autosave (#452).
             for (var i = 1; i <= 5; i++) addChoiceRow(i, String(i));
             if (input) input.value = 5;
         }
@@ -1655,6 +1662,9 @@
     existingChoices.forEach(function(choice) {
         addChoiceRow(choice.code, choice.name, !!choice.other, choice.icon, choice.group, choice.color);
     });
+    // The init block saw an empty table; now the star count can read the rows.
+    savedChoicesLoaded = true;
+    toggleStarCountField();
     {% endif %}
 
     // After the rows exist, so the count is right on first open.

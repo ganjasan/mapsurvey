@@ -31754,6 +31754,31 @@ class StarColorEditorParityTest(SimpleTestCase):
         self.assertIn(f"colorInput.value = '{DEFAULT_STAR_COLOR}';", modal)
 
 
+class StarRatingOpenKeepsChoicesTest(SimpleTestCase):
+    """Opening a stars question must not seed five more stars (#452)."""
+
+    def test_default_stars_wait_for_the_saved_choices(self):
+        """
+        GIVEN the question dialog, whose init block runs the stars toggle before
+              the saved choices are loaded at the end of the script
+        WHEN its source is read
+        THEN the default five are seeded only when no saved choices exist or
+             after they are loaded, and loading them re-runs the toggle
+
+        The dialog's script is not executed by the suite; this pins the order
+        that doubled a star rating's options on every open.
+        """
+        from pathlib import Path
+
+        modal = Path('survey/templates/editor/partials/question_form_modal.html').read_text()
+
+        self.assertIn("} else if (savedChoicesLoaded || !document.getElementById('existing-choices-data')) {", modal)
+        load = modal.index('existingChoices.forEach(function(choice) {')
+        tail = modal[load:]
+        self.assertLess(tail.index('savedChoicesLoaded = true;'), tail.index('{% endif %}'))
+        self.assertLess(tail.index('toggleStarCountField();'), tail.index('{% endif %}'))
+
+
 class AIGeneratorKnowsEveryTypeTest(SimpleTestCase):
     """The generator's prompt must describe every type its schema permits.
 
