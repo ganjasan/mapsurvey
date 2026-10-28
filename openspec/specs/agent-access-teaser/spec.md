@@ -1,19 +1,20 @@
 # agent-access-teaser Specification
 
 ## Purpose
-The MCP teaser after change auth-core: `/editor/account/mcp/` redirects to the connections page, where a block explains what connecting an AI agent through MCP will do and offers the one-click "Tell me when it's ready" request until the server ships.
+The former MCP teaser, after changes auth-core and mcp-server: `/editor/account/mcp/` redirects to the connections page, where the "MCP server" block gives creators the endpoint URL and the client set-up (the "Tell me when it's ready" request went with the server's launch), and the account and help menus lead there.
 ## Requirements
 ### Requirement: Agent access page before the server exists
 The system SHALL serve `GET /editor/account/mcp/` (URL name `editor_account_mcp`) to any
 signed-in creator as a permanent redirect to `/editor/account/connections/` (URL name
-`editor_account_connections`, change `auth-core`). The connections page SHALL keep, below the
-personal-tokens section, an "MCP server" block explaining in plain words what connecting an AI
-agent through MCP will do, what the agent cannot see, and that the server is not available yet,
-with one example prompt. The block SHALL offer a POST action "Tell me when it's ready" that
-records `CreatorPreferences.agent_access_requested_at` (first request only; later requests keep
-the first timestamp) and emits the `agent_access_requested` creator event; after it, the block
-SHALL show that the creator will be emailed instead of the button. The page SHALL extend the
-editor base and work on every viewport. Signed-out visitors SHALL be sent to sign in.
+`editor_account_connections`, change `auth-core`). With the MCP server live (change `mcp-server`),
+the connections page SHALL keep, below the personal-tokens and connected-apps sections, an
+"MCP server" block that shows the endpoint URL (`settings.MCP_RESOURCE_URL`), a Claude Code
+command using a personal token, says that claude.ai and ChatGPT connect by signing in (no token),
+states that the agent sees only the creator's surveys and that publishing and deleting ask for
+confirmation, and links to the two help pages through `HELP_URL`. The "Tell me when it's ready"
+action and the `agent_access_requested` event SHALL no longer exist; `agent_access_requested_at`
+keeps its historical values. The page SHALL extend the editor base and work on every viewport.
+Signed-out visitors SHALL be sent to sign in.
 
 #### Scenario: Old URL redirects
 - **WHEN** a signed-in creator opens `/editor/account/mcp/`
@@ -21,11 +22,11 @@ editor base and work on every viewport. Signed-out visitors SHALL be sent to sig
 
 #### Scenario: Creator reads the MCP block
 - **WHEN** a signed-in creator opens `/editor/account/connections/`
-- **THEN** the page shows the tokens section and, below it, the MCP block with an example prompt and the "Tell me when it's ready" button
+- **THEN** the page shows the tokens section and, below it, the MCP block with the endpoint URL and a `claude mcp add --transport http` command, and no "Tell me when it's ready" button
 
-#### Scenario: Interest recorded once
-- **WHEN** the creator posts the button twice
-- **THEN** `agent_access_requested_at` holds the first timestamp, one `agent_access_requested` event was emitted, and the block shows the confirmation
+#### Scenario: Notify action retired
+- **WHEN** a creator POSTs `action=notify` to the connections page
+- **THEN** the page redirects to itself and no `agent_access_requested` event is emitted
 
 #### Scenario: Signed out
 - **WHEN** an anonymous visitor opens either URL
@@ -35,8 +36,8 @@ editor base and work on every viewport. Signed-out visitors SHALL be sent to sig
 The account menu in both creator bases (`base.html` and `editor/editor_base.html`) SHALL
 list "API & connections" without a badge linking to `/editor/account/connections/`, and the
 editor's "?" help menu SHALL list "Connect your AI agent" linking there. The start page's
-third card SHALL NOT link anywhere until the MCP server ships (owner decision 2026-10-14). The
-URL name `editor_account_mcp` SHALL survive as the redirect.
+third card is wired by change #312, not this one. The URL name `editor_account_mcp` SHALL survive
+as the redirect.
 
 #### Scenario: Dashboard account menu
 - **WHEN** the dashboard renders for a signed-in creator
