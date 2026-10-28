@@ -3,10 +3,10 @@
 WYSIWYG survey editor at `/editor/surveys/<uuid>/` — the in-app authoring surface for creating, configuring, and managing surveys (sections, questions, sub-questions, choices, translations, map positions, lifecycle transitions). Replaces the Django admin as the primary survey-construction tool for end users.
 ## Requirements
 ### Requirement: Survey creation
-The system SHALL provide a form at `/editor/surveys/new/` that allows authenticated users to create a new survey. The form SHALL include fields for survey name, organization, available languages, visibility, redirect URL, and thanks HTML, and — when an LLM provider is configured — an optional AI brief panel (goal, audience, map target, use-case) with a "Generate draft" action alongside the manual "Create empty" action. A manual submission (the "Create empty" action, or any POST without an explicit action) SHALL create a SurveyHeader (with auto-generated UUID) and one default section (marked `is_head=True`), then redirect to the survey editor using the UUID — byte-identical to the pre-AI behavior. A "Generate draft" submission SHALL follow the asynchronous generation flow defined in the `ai-survey-generation` capability and, on success, redirect to the populated survey's editor. On the mobile create wizard (`MOBILE_EDITOR_NAV`, viewport <1024px) with `CREATE_STEER_AI` on, choosing the empty action on the goal step SHALL — after the empty-path intercept defined in `ai-survey-generation`, when it applies — submit the empty creation immediately using the current hidden map framing values and redirect to the editor, without presenting the map step; the draft path SHALL continue to present the map step unchanged. With `CREATE_STEER_AI` off, the wizard's empty path SHALL continue to the map step as before. The map picker's initial view SHALL be the position returned by the `map-start-position` chain for the request (never a fixed city), and the page SHALL post that chain's `source` in a hidden `map_source` field. Opened with `?from=start`, the page SHALL replace "Skip and start from scratch" with a link back to `/editor/surveys/start/`; without the parameter it SHALL render as before.
+The system SHALL provide a form at `/editor/surveys/new/` that allows authenticated users to create a new survey. The form SHALL include fields for survey name, organization, available languages, visibility, redirect URL, and thanks HTML. On successful creation, the system SHALL create a SurveyHeader (with auto-generated UUID) and one default section (marked `is_head=True`), then redirect to the survey editor using the UUID.
 
 #### Scenario: Create a new survey
-- **WHEN** an authenticated user submits the survey creation form with name "my_test_survey" using the manual action
+- **WHEN** an authenticated user submits the survey creation form with name "my_test_survey"
 - **THEN** a SurveyHeader with that name and auto-generated UUID is created, a default section with `is_head=True` is created, and the user is redirected to `/editor/surveys/<uuid>/`
 
 #### Scenario: Duplicate survey name allowed
@@ -17,33 +17,9 @@ The system SHALL provide a form at `/editor/surveys/new/` that allows authentica
 - **WHEN** an unauthenticated user accesses `/editor/surveys/new/`
 - **THEN** the system redirects to the login page
 
-#### Scenario: Legacy POST without action falls back to manual creation
-- **WHEN** a POST reaches the view without an `action` parameter
-- **THEN** the manual creation path runs exactly as before the AI panel existed
-
-#### Scenario: Generate draft action
-- **WHEN** an authenticated editor submits the form with the "Generate draft" action, a filled brief, and a configured provider
-- **THEN** generation is enqueued and the page enters the polling state defined in `ai-survey-generation`, ending on success at the populated survey's editor
-
-#### Scenario: Wizard empty path skips the map step
-- **WHEN** a creator on the mobile wizard with a blank goal taps "Skip and start from scratch" on the goal step
-- **THEN** the empty survey is created with the default map framing from the hidden position fields and the creator lands in the editor without seeing the "Where?" step
-
-#### Scenario: Wizard draft path keeps the map step
-- **WHEN** a creator on the mobile wizard fills the goal and taps "✨ Draft my survey"
-- **THEN** the map step is presented and the create action dispatches to the draft path, unchanged by this change
-
-#### Scenario: Wizard empty path with flag off
-- **WHEN** `CREATE_STEER_AI` is off and a creator on the mobile wizard taps "Skip and start from scratch"
-- **THEN** the wizard continues to the map step, as before this change
-
-#### Scenario: Map opens on the suggested centre
-- **WHEN** a creator whose organization has a survey positioned in Bishkek opens the create page
-- **THEN** the picker's initial view is that position and the hidden `map_source` field is `org_survey`
-
-#### Scenario: Opened from the start page
-- **WHEN** the create page is opened with `?from=start`
-- **THEN** "Skip and start from scratch" is absent and a link to `/editor/surveys/start/` is shown
+#### Scenario: Requested destination survives the login redirect
+- **WHEN** an unauthenticated user requests any survey-scoped editor URL and is redirected to the login page
+- **THEN** the redirect SHALL carry the requested path as the `next` parameter, so that signing in returns the user to that URL rather than to the dashboard
 
 ### Requirement: Survey editor layout
 The system SHALL render the survey editor at `/editor/surveys/<uuid>/` as a 3-column layout: a left sidebar with a pinned "Survey settings" entry above a list of sections, a center panel showing either the selected section's details and questions or the settings panel, and a right panel showing a live preview iframe. The editor page SHALL load HTMX and SortableJS from CDN.
@@ -704,4 +680,86 @@ The analytics surface SHALL be presented as the **Results** space (one of the th
 #### Scenario: Download from Results
 - **WHEN** the editor is in the Results space
 - **THEN** a "Download data" action is available without leaving the space
+
+### Requirement: Editor layout adapts below 768px
+On viewports narrower than 768px the survey editor SHALL NOT rely on the three-pane
+side-by-side layout: exactly one pane is presented at a time (see
+`editor-mobile-navigation`), the page SHALL have no horizontal overflow, and all
+interactive controls SHALL meet a 44px minimum touch target. The desktop three-pane layout
+SHALL remain unchanged at 768px and above.
+
+#### Scenario: No horizontal overflow on mobile
+- **WHEN** the editor is opened at 390px width with the mobile navigation flag enabled
+- **THEN** the document's scroll width does not exceed the viewport width
+
+#### Scenario: Read-only banner fits mobile
+- **WHEN** a published (read-only) survey version is opened at 390px width
+- **THEN** the read-only banner renders without overlapping its own text and its action button is fully visible
+
+### Requirement: The survey nav's dropdowns work on every page that renders it
+Any editor page that includes the survey nav tabs SHALL also load the script defining the nav's
+dropdown handler. A page that renders the nav without it presents Share and Preview buttons that
+throw `ReferenceError` and open nothing. This SHALL hold under both states of the
+`MOBILE_EDITOR_NAV` kill switch, since its off state is the rollback path and is exactly the state
+in which those dropdowns render on every tab.
+
+#### Scenario: Share page dropdowns open
+- **WHEN** the Share page is rendered with `MOBILE_EDITOR_NAV` off
+- **THEN** the nav's dropdown handler is defined on the page, not only referenced
+
+#### Scenario: Settings page dropdowns open
+- **WHEN** the survey Settings page is rendered with `MOBILE_EDITOR_NAV` off
+- **THEN** the nav's dropdown handler is defined on the page, not only referenced
+
+### Requirement: Numbers emitted into JavaScript are locale-independent
+Any number the editor interpolates into inline JavaScript, a `data-*` attribute read by script, or any other machine-parsed context SHALL be rendered without locale formatting. `USE_L10N` is on and every non-English language in `LANGUAGES` writes decimals with a comma, so an unguarded float turns `52.52` into `52,52` and makes the surrounding script fail to parse.
+
+Numbers shown to a person as text SHALL remain localized.
+
+#### Scenario: Map picker initialises under a comma-decimal UI
+- **WHEN** the section map picker is rendered for a creator whose UI language writes decimals with a comma
+- **THEN** the coordinates in its script are written with a decimal point and the script parses
+
+#### Scenario: Survey settings map initialises under a comma-decimal UI
+- **WHEN** the survey settings map block is rendered under such a locale
+- **THEN** its coordinates are written with a decimal point
+
+#### Scenario: Numeric question statistics parse under a comma-decimal UI
+- **WHEN** the Responses page renders the histogram script for a numeric question under such a locale
+- **THEN** the minimum and maximum are written with a decimal point
+
+#### Scenario: Coordinate readouts stay localized for the reader
+- **WHEN** the panel shows a coordinate as text for the creator to read
+- **THEN** it is formatted for their locale
+
+### Requirement: Question modal validation errors are shown in the modal
+
+When a question create, edit or sub-question create POST fails validation (form errors or a Visibility-block error) and the modal is re-rendered, the response SHALL be swapped into the modal body (`#questionModalBody`) and not into the form's success target (the question list or a list item). The server SHALL express this with the HTMX `HX-Retarget`/`HX-Reswap` response headers so no client script is required.
+
+#### Scenario: Conditional mode without answers on create
+
+- **WHEN** a creator submits the New question form with "Shown conditionally" selected
+  and no answer of the controlling question ticked
+- **THEN** the modal re-renders in place with the error "Pick a controlling question and
+  at least one of its answers.", the question list is unchanged, and no question is
+  created
+
+#### Scenario: Invalid edit form
+
+- **WHEN** an edit POST (non-autosave) fails validation
+- **THEN** the modal re-renders in place and the question's list item is not replaced
+  by the modal markup
+
+### Requirement: Visibility block works in the question modal while the section panel is open
+
+The Visibility block SHALL bind its picker behaviour per rendered instance, so that the
+question modal's block works regardless of whether the section panel (which renders its
+own block) is open on the same page. The block SHALL NOT rely on a page-unique element id.
+
+#### Scenario: Picker unfolds in the modal next to an open section panel
+
+- **WHEN** the section panel is open and the creator opens a question modal and selects
+  "Shown conditionally"
+- **THEN** the "When the answer to" select and the answer checkboxes of the modal's block
+  become visible
 

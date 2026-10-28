@@ -2,12 +2,7 @@
 
 ### Requirement: Bot requests are not captured server-side
 
-Requests whose `User-Agent` header identifies an automated client (crawler, scraper,
-HTTP library), or that carry no `User-Agent` header at all, SHALL NOT be tracked by the
-server-side PostHog middleware: no context is opened for them and no exception raised
-while serving them is captured. The classification MUST happen at the request-filter
-stage, before tag scrubbing, because on respondent surfaces the user-agent tag is
-removed prior to capture and cannot be classified downstream.
+Requests whose `User-Agent` header identifies an automated client (crawler, scraper, HTTP library), or that carry no `User-Agent` header at all, SHALL NOT be tracked by the server-side PostHog middleware: no context is opened for them and no exception raised while serving them is captured. The classification MUST happen at the request-filter stage, before tag scrubbing, because on respondent surfaces the user-agent tag is removed prior to capture and cannot be classified downstream.
 
 Human-looking browser user-agents SHALL continue to be tracked exactly as before.
 

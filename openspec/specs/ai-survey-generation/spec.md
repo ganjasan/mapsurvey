@@ -11,43 +11,34 @@ The Create New Survey page SHALL render an AI brief panel — a goal textarea, a
 answer?" input, a "What should they mark on the map?" input, a use-case chip selector
 (urban planning / citizen science / school routes / event mapping / other), a privacy
 notice, and a "Generate draft" submit — only when an LLM provider is configured
-(`AI_PROVIDER` resolvable and its credentials set). The goal textarea SHALL carry a visible
-hint that the brief may be written in any language and that the draft is generated in the
-survey languages chosen on the form. When the `CREATE_STEER_AI` flag is
-on, the goal textarea SHALL be the only brief field visible by default and SHALL receive
-autofocus (except when the survey-name field is visible, in which case autofocus is not
-emitted); the audience, map-target, and use-case fields SHALL sit inside a native
-disclosure ("Add details (optional)") that is rendered expanded whenever any of those
-fields is bound with a value or carries a validation error. The "Create empty" path
-SHALL remain available in all cases; with `CREATE_STEER_AI` on and a non-empty goal, the
-first empty-action click per page load SHALL surface a dismissible inline offer to
-generate a draft instead (see the empty-path intercept requirement), after which the
-empty path proceeds unchanged. With a blank goal, or with `CREATE_STEER_AI` off, the
-empty path SHALL be behaviorally identical to the pre-intercept behavior.
+(`AI_PROVIDER` resolvable and its credentials set). The existing "Create empty" path
+SHALL remain available and behaviorally unchanged in all cases.
+
+The brief SHALL be optional at the browser level: no brief field may carry the HTML5
+`required` attribute, because the panel shares one `<form>` with the "Create empty" submit
+and browser-level validation applies to the whole form. `goal` remains required on the
+server for the generate path only. A creator who never intends to use AI SHALL be able to
+reach the manual path without typing anything into the brief.
 
 #### Scenario: Provider configured
 - **WHEN** an authenticated editor opens `/editor/surveys/new/` and the key for the selected `AI_PROVIDER` is set
 - **THEN** the AI brief panel with the "Generate draft" button is rendered alongside the existing name/languages/map fields, including a privacy notice stating the brief is processed by the AI provider and that survey answers are never sent to AI providers
 
-#### Scenario: Any-language hint is shown with the goal field
-- **WHEN** the AI brief panel renders
-- **THEN** a hint adjacent to the goal textarea states that the brief can be written in any language and that the draft is generated in the survey languages picked on the form
-
 #### Scenario: Provider not configured
 - **WHEN** the key for the selected `AI_PROVIDER` is empty
 - **THEN** the AI panel is not rendered, the page shows only the manual creation form, and no AI code path can be reached
 
-#### Scenario: Brief collapsed to one field by default
-- **WHEN** the create page renders with `CREATE_STEER_AI` on and an unbound brief form
-- **THEN** only the goal textarea is visible, and the audience, map-target, and use-case controls are inside a collapsed "Add details (optional)" disclosure
+#### Scenario: Create empty with an untouched brief
+- **WHEN** an authenticated editor submits the create form with `action=empty`, a survey name, and every brief field left blank
+- **THEN** the survey is created with its default first section and the editor is redirected to it, exactly as when the AI panel is absent
 
-#### Scenario: Disclosure reopens for dirty fields
-- **WHEN** the page re-renders after a submission in which the audience field carried a value
-- **THEN** the disclosure is rendered expanded so the value is visible
+#### Scenario: Brief fields do not block the browser
+- **WHEN** the create page is rendered with the AI panel present
+- **THEN** no brief field carries the HTML5 `required` attribute, so a click on "Create empty" reaches the server rather than being refused by browser validation
 
-#### Scenario: Flag off restores the flat panel
-- **WHEN** `CREATE_STEER_AI` is off
-- **THEN** all brief fields render flat (no disclosure, no autofocus attribute), matching the pre-change markup
+#### Scenario: Generate draft still requires a goal
+- **WHEN** an authenticated editor submits `action=generate` with a blank `goal`
+- **THEN** no `AIGenerationEvent` is created and the status slot receives the invalid-brief fragment naming the goal field
 
 ### Requirement: Asynchronous generation with status polling
 A "Generate draft" submission SHALL create an `AIGenerationEvent` row with
@@ -62,6 +53,19 @@ written — counted from the model's own output, never from elapsed time or an a
 steps. It SHALL respond with a progress fragment only when the counts exceed what the polling client
 reports already having, and SHALL otherwise leave the page untouched, so the waiting card and its
 animations are never re-rendered by a poll that carries no news.
+
+The waiting card SHALL present the wait as a progress bar rather than flavour text: an
+indeterminate animated bar while nothing has been drafted, and from the first drafted
+question a determinate fill computed from questions drafted against a calibrated expected
+count, capped below full so the bar can never sit at complete while the draft is still
+arriving. The drafted-count caption SHALL accompany the bar. The fill SHALL be computed
+server-side and carried by the progress fragment.
+
+The success redirect SHALL carry the generation event's identifier, and the editor SHALL
+use it to offer the creator a one-shot feedback prompt on the draft — rendered only when
+the identified event belongs to the requesting user and produced the survey being opened,
+and only when the analytics snippet is configured. A submitted or dismissed prompt SHALL
+not reappear for that draft.
 
 #### Scenario: Successful generation redirects to populated editor
 - **WHEN** the generation task completes successfully
@@ -81,15 +85,35 @@ animations are never re-rendered by a poll that carries no news.
 
 #### Scenario: Progress has advanced since the last poll
 - **WHEN** the stored draft counts exceed those the polling client reports having
-- **THEN** the endpoint returns a fragment carrying the current counts
+- **THEN** the endpoint returns a fragment carrying the current counts and the computed bar fill
 
 #### Scenario: Progress has not advanced
 - **WHEN** the stored draft counts do not exceed what the client reports having
 - **THEN** the endpoint leaves the page untouched rather than re-rendering the waiting card
 
 #### Scenario: Nothing has been drafted yet
-- **WHEN** the model is still reasoning and no section has been completed
-- **THEN** no count is shown, rather than a zero that would read as a stalled generation
+- **WHEN** the model is still reasoning and no question has been completed
+- **THEN** the bar is indeterminate and no count or fill is shown, rather than a zero that would read as a stalled generation
+
+#### Scenario: Bar fills as questions close
+- **WHEN** drafted questions advance from 2 to 4 of an expected 8
+- **THEN** the fragment's fill advances proportionally, and the caption states the drafted counts
+
+#### Scenario: Bar never claims completion prematurely
+- **WHEN** drafted questions meet or exceed the calibrated expectation while the event is still pending
+- **THEN** the fill stays at its cap below full until the success redirect fires
+
+#### Scenario: Feedback prompt on arrival
+- **WHEN** the creator lands in the editor via the generation redirect
+- **THEN** a dismissible feedback prompt for that draft is shown, once
+
+#### Scenario: Forged draft parameter conjures nothing
+- **WHEN** the editor is opened with a draft identifier that is not the requesting user's or did not produce this survey
+- **THEN** no feedback prompt is rendered
+
+#### Scenario: Manual surveys never ask
+- **WHEN** a survey created manually is opened in the editor
+- **THEN** no feedback prompt appears
 
 ### Requirement: Provider-agnostic LLM client
 LLM access SHALL go through a provider interface (`complete_structured(system, user,
@@ -261,9 +285,18 @@ as measured. Input, output and reasoning token counts SHALL be summed across the
 that is what the generation cost, with reasoning remaining absent until at least one call reports
 it; `provider` and `model` SHALL be those of the terminal call.
 
-The row SHALL also carry the running draft counts, so progress survives a worker restart and remains
-readable afterwards. These SHALL be written only when a count advances, and with an update that
-cannot overwrite a terminal outcome written concurrently by the poller.
+These fields SHALL ride the existing `ai_draft_finished` analytics event, each omitted when absent,
+so the split is a breakdown rather than a join back to the database.
+
+Every finished attempt-set SHALL additionally emit one analytics event in the LLM-analytics
+schema (`$ai_generation`), carrying a stable trace identifier derived from the row, model,
+provider, token counts and latency in seconds — and NEVER content: no brief text, no draft
+text, and no provider error message (which can quote model output). Reasoning tokens SHALL
+be folded into the reported output tokens, because the provider bills them at the output
+rate and the computed cost must equal the invoice; the reasoning share SHALL also be
+reported separately. Failures SHALL emit with an error flag and the outcome slug only. A
+creator's feedback on a draft SHALL be captured against the same trace identifier
+(`$ai_feedback`), so the verdict attaches to the exact generation it judges.
 
 #### Scenario: Success is measurable
 - **WHEN** a generation succeeds
@@ -289,13 +322,17 @@ cannot overwrite a terminal outcome written concurrently by the poller.
 - **WHEN** `ai_draft_finished` is emitted for a generation that has reasoning usage and an attempt count
 - **THEN** those properties are present on the event, and properties without a value are omitted rather than sent as zero
 
-#### Scenario: Draft counts are recorded as they advance
-- **WHEN** a section completes during a streamed generation
-- **THEN** the row's counts are updated, and a poll that arrives afterwards can read them
+#### Scenario: LLM analytics event on success
+- **WHEN** a generation succeeds having spent input, output and reasoning tokens
+- **THEN** one `$ai_generation` event is captured whose output-token count is the sum of output and reasoning tokens, whose latency is in seconds, and which carries no brief, draft or error text
 
-#### Scenario: A progress write cannot resurrect a finished generation
-- **WHEN** a progress update races a terminal outcome being written
-- **THEN** the terminal outcome stands
+#### Scenario: LLM analytics event on failure
+- **WHEN** a generation ends in `provider_error`
+- **THEN** one `$ai_generation` event is captured flagged as an error with the outcome slug, and the provider's error message is not among its properties
+
+#### Scenario: Feedback lands on the trace
+- **WHEN** the creator votes on a generated draft
+- **THEN** an `$ai_feedback` event carries the same trace identifier as the generation's `$ai_generation` event
 
 ### Requirement: Empty-path intercept when a goal is written
 The create page SHALL intercept the empty-creation action when `CREATE_STEER_AI` is on,

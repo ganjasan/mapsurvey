@@ -5,9 +5,7 @@
 How a submitted section's values become Answer rows: the storage path is chosen by the
 question's `input_type` (never by the shape of its `choices`), datetime values persist to
 `text`, and no write path can leave a `choices` list on a type that does not use one.
-
 ## Requirements
-
 ### Requirement: Answer storage is selected by input_type alone
 
 The respondent POST handler SHALL choose how to store each answer — geometry, ranking,
@@ -72,3 +70,19 @@ alongside it.
 - **WHEN** the data migration runs
 - **THEN** every question of a non-choice type has `choices = None`
 - **AND** choice-bearing types keep their lists untouched
+
+### Requirement: A mistyped posted value never costs a submission
+When computing conditional visibility for a submitted section, the system SHALL ignore any posted
+value for a controller question that is not a choice identifier, rather than raising. A question
+whose stored `input_type` disagrees with the widget the respondent was served — the usual cause
+being a creator changing the type while respondents hold the page open — SHALL degrade to "this
+controller contributes nothing to visibility", never to a failed request.
+
+#### Scenario: Geometry posted under a controller question
+- **WHEN** a section is submitted with pipe-joined GeoJSON under the code of a question stored as `choice` or `multichoice`
+- **THEN** the submission is processed, the remaining answers are stored, and no 500 is returned
+
+#### Scenario: Ordinary choice submissions are unaffected
+- **WHEN** a section is submitted with integer choice identifiers under a controller question
+- **THEN** conditional visibility is computed from those identifiers exactly as before
+
