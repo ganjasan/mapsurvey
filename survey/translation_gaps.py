@@ -13,7 +13,18 @@ Rules (spec: translation-completeness):
   corresponding base field is non-empty.
 - For choice questions, a choice name that is not a dict or lacks the
   language's key counts as missing.
+- A section's Next-button label counts when the base label is set; the
+  thank-you page counts when the primary-language page is non-empty (change
+  translation-table).
+- A translation written against an earlier source text is OUTDATED and
+  reported as "<lang> (outdated)" — `translation_table` keeps the hash.
 """
+OUTDATED = ' (outdated)'
+
+
+def _with_outdated(missing, stale):
+    """Missing languages first, then the outdated ones not already missing."""
+    return list(missing) + [lang + OUTDATED for lang in stale if lang not in missing]
 
 
 def translation_languages(survey):
@@ -32,9 +43,23 @@ def section_missing_languages(section, survey):
         gap = row is None or not (row.title or '').strip()
         if not gap and (section.subheading or '').strip():
             gap = not (row.subheading or '').strip()
+        if not gap and (section.next_label or '').strip():
+            gap = not (row.next_label or '').strip()
         if gap:
             missing.append(lang)
     return missing
+
+
+def thanks_missing_languages(survey):
+    """The thank-you page counts once the primary-language page has text."""
+    langs = translation_languages(survey)
+    thanks = survey.thanks_html or {}
+    if not langs or not isinstance(thanks, dict):
+        return []
+    primary = (survey.available_languages or ['en'])[0]
+    if not (thanks.get(primary) or '').strip():
+        return []
+    return [lang for lang in langs if not (thanks.get(lang) or '').strip()]
 
 
 def question_missing_languages(question, survey):
@@ -87,28 +112,33 @@ def survey_translation_gaps(survey):
     """
     if not translation_languages(survey):
         return []
+    from .translation_table import outdated_by_entity
+    stale = outdated_by_entity(survey)
     gaps = []
     for section in survey.surveysection_set.all().prefetch_related(
         'translations', 'question_set__translations', 'question_groups__translations',
     ):
-        missing = section_missing_languages(section, survey)
+        missing = _with_outdated(section_missing_languages(section, survey), stale.get(('section', section.id), ()))
         if missing:
             gaps.append({
                 'label': 'Section: %s' % (section.title or section.name),
                 'missing': missing,
             })
         for question in section.question_set.all():
-            missing = question_missing_languages(question, survey)
+            missing = _with_outdated(question_missing_languages(question, survey), stale.get(('question', question.id), ()))
             if missing:
                 gaps.append({
                     'label': 'Question: %s' % (question.name or '(unnamed)'),
                     'missing': missing,
                 })
         for group in section.question_groups.all():
-            missing = group_missing_languages(group, survey)
+            missing = _with_outdated(group_missing_languages(group, survey), stale.get(('group', group.id), ()))
             if missing:
                 gaps.append({
                     'label': 'Group: %s' % (group.title or '(untitled)'),
                     'missing': missing,
                 })
+    missing = _with_outdated(thanks_missing_languages(survey), stale.get(('survey', survey.id), ()))
+    if missing:
+        gaps.append({'label': 'Thank-you page', 'missing': missing})
     return gaps

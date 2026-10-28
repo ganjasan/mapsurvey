@@ -8831,3 +8831,271 @@ msgstr "Een nieuw concept met dezelfde vragen, instellingen en kaartlagen, zonde
 #: api/templates/api/connections.html
 msgid "Use your AI assistant — connect Claude, ChatGPT or another assistant"
 msgstr "Gebruik je AI-assistent — verbind Claude, ChatGPT of een andere assistent"
+
+#: survey/templates/editor/partials/_survey_nav_tabs.html
+msgid "Translate the survey — every text once, in one table"
+msgstr "Vertaal de enquête — elke tekst één keer, in één tabel"
+
+#: survey/templates/editor/survey_translations.html
+msgid "This survey is in %(lang)s only"
+msgstr "Deze enquête is alleen in het %(lang)s"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Add a second language and every title, question, option and the thank-you page will appear here, ready to translate — in this table or through a CSV for an outside translator."
+msgstr "Voeg een tweede taal toe en elke titel, vraag, optie en de bedankpagina verschijnen hier, klaar om te vertalen — in deze tabel of via een CSV voor een externe vertaler."
+
+#: survey/templates/editor/survey_translations.html
+msgid "The same list as Survey settings. Only the languages setting changes."
+msgstr "Dezelfde lijst als in de enquête-instellingen. Alleen de taalinstelling verandert."
+
+#: survey/templates/editor/survey_translations.html
+msgid "The workspace owner adds languages in Survey settings."
+msgstr "De eigenaar van de werkruimte voegt talen toe in de enquête-instellingen."
+
+#: survey/templates/editor/survey_translations.html
+msgid "Every text of the survey once, in the order respondents see it. One translation fills every place the same text is used."
+msgstr "Elke tekst van de enquête één keer, in de volgorde waarin respondenten hem zien. Eén vertaling vult elke plek waar dezelfde tekst wordt gebruikt."
+
+#: survey/templates/editor/survey_translations.html
+msgid "Learn more"
+msgstr "Meer informatie"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Source column"
+msgstr "Bronkolom"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Target column"
+msgstr "Doelkolom"
+
+#: survey/templates/editor/survey_translations.html
+msgid "primary"
+msgstr "primair"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Add language…"
+msgstr "Taal toevoegen…"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Export CSV"
+msgstr "CSV exporteren"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Import CSV"
+msgstr "CSV importeren"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Add a language"
+msgstr "Een taal toevoegen"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Adds the language to Survey settings. Removing one stays there."
+msgstr "Voegt de taal toe aan de enquête-instellingen. Verwijderen gebeurt nog steeds daar."
+
+#: survey/templates/editor/survey_translations.html
+msgid "This survey has unpublished changes. Translations are edited there, so that publishing them does not overwrite the edit."
+msgstr "Deze enquête heeft niet-gepubliceerde wijzigingen. Vertalingen worden daar bewerkt, zodat publiceren de bewerking niet overschrijft."
+
+#: survey/templates/editor/survey_translations.html
+msgid "This survey is live: a saved translation reaches respondents at once."
+msgstr "Deze enquête is live: een opgeslagen vertaling bereikt respondenten meteen."
+
+#: survey/templates/editor/survey_translations.html
+msgid "%(name)s imported."
+msgstr "%(name)s geïmporteerd."
+
+#: survey/templates/editor/survey_translations.html
+msgid "%(filled)s filled · %(overwritten)s overwritten · %(skipped)s skipped (already translated) · %(unmatched)s unmatched"
+msgstr "%(filled)s ingevuld · %(overwritten)s overschreven · %(skipped)s overgeslagen (al vertaald) · %(unmatched)s niet gevonden"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Not found in the survey:"
+msgstr "Niet gevonden in de enquête:"
+
+#: survey/templates/editor/survey_translations.html
+msgid "All"
+msgstr "Alles"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Missing"
+msgstr "Ontbreekt"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Outdated"
+msgstr "Verouderd"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Translated"
+msgstr "Vertaald"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Where"
+msgstr "Waar"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Open in editor"
+msgstr "Openen in de editor"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Import %(lang)s translations"
+msgstr "Vertalingen in het %(lang)s importeren"
+
+#: survey/templates/editor/survey_translations.html
+msgid "A CSV in the layout of the export: a key column, or at least source and translation columns. Rows are matched by key, then by the source text. Only the translation column is read — the original stays as it is in the survey."
+msgstr "Een CSV in de indeling van de export: een kolom key, of minstens de kolommen source en translation. Rijen worden gekoppeld op sleutel, daarna op de brontekst. Alleen de vertaalkolom wordt gelezen — het origineel blijft zoals het in de enquête staat."
+
+#: survey/templates/editor/survey_translations.html
+msgid "Overwrite translations that already exist"
+msgstr "Bestaande vertalingen overschrijven"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Bold and other formatting inside a paragraph does not travel through CSV — fix those rows here afterwards."
+msgstr "Vet en andere opmaak binnen een alinea gaat niet mee via CSV — corrigeer die rijen hier achteraf."
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Open in the editor"
+msgstr "Tonen in de editor"
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Used in several places — click to list them"
+msgstr "Op meerdere plekken gebruikt — klik om ze te tonen"
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Shown in the primary language — no translation in the source language yet."
+msgstr "Getoond in de primaire taal — nog geen vertaling in de brontaal."
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Translated separately — the text is the same, the context is not."
+msgstr "Apart vertaald — de tekst is dezelfde, de context niet."
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Use one translation"
+msgstr "Eén vertaling gebruiken"
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "The original text changed after this was translated. Check the translation and save it to clear this."
+msgstr "De oorspronkelijke tekst is gewijzigd nadat deze was vertaald. Controleer de vertaling en sla op om dit te wissen."
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "The original text changed after this was translated."
+msgstr "De oorspronkelijke tekst is gewijzigd nadat deze was vertaald."
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Translate separately"
+msgstr "Apart vertalen"
+
+#: survey/templates/editor/partials/_translation_mirror.html
+msgid "Edited on the Translations tab"
+msgstr "Bewerkt op het tabblad Vertalingen"
+
+#: survey/templates/editor/partials/_translation_mirror.html
+msgid "missing — translate"
+msgstr "ontbreekt — vertalen"
+
+#: survey/templates/editor/partials/_translation_mirror.html
+msgid "Translations are edited on the"
+msgstr "Vertalingen worden bewerkt op het"
+
+#: survey/templates/editor/partials/_translation_mirror.html
+msgid "Translations tab"
+msgstr "tabblad Vertalingen"
+
+#: survey/templates/editor/partials/_translation_mirror.html
+msgid "Click a field to open its row."
+msgstr "Klik op een veld om de rij ervan te openen."
+
+#: survey/templates/editor/partials/thanks_panel.html
+msgid "Other languages are edited on the Translations tab."
+msgstr "Andere talen worden bewerkt op het tabblad Vertalingen."
+
+#: survey/translation_table.py
+msgid "Page %(n)s: %(title)s"
+msgstr "Pagina %(n)s: %(title)s"
+
+#: survey/translation_table.py
+msgid "Page %(n)s"
+msgstr "Pagina %(n)s"
+
+#: survey/translation_table.py
+msgid "Page title"
+msgstr "Paginatitel"
+
+#: survey/translation_table.py
+msgid "Page intro"
+msgstr "Pagina-intro"
+
+#: survey/translation_table.py
+msgid "Next button"
+msgstr "Volgende-knop"
+
+#: survey/translation_table.py
+msgid "Group: %(title)s"
+msgstr "Groep: %(title)s"
+
+#: survey/translation_table.py
+msgid "(untitled)"
+msgstr "(zonder titel)"
+
+#: survey/translation_table.py
+msgid "Group title"
+msgstr "Groepstitel"
+
+#: survey/translation_table.py
+msgid "Group description"
+msgstr "Groepsbeschrijving"
+
+#: survey/translation_table.py
+msgid "description"
+msgstr "beschrijving"
+
+#: survey/translation_table.py
+msgid "Formatted text"
+msgstr "Opgemaakte tekst"
+
+#: survey/translation_table.py
+msgid "%(q)s help text"
+msgstr "%(q)s helptekst"
+
+#: survey/translation_table.py
+msgid "Question %(n)s"
+msgstr "Vraag %(n)s"
+
+#: survey/translation_table.py
+msgid "Sub-question %(n)s"
+msgstr "Subvraag %(n)s"
+
+#: survey/translation_table.py
+msgid "%(q)s option"
+msgstr "%(q)s optie"
+
+#: survey/translation_table.py
+msgid "Thank-you page"
+msgstr "Bedankpagina"
+
+#: survey/translation_views.py
+msgid "Could not save."
+msgstr "Kon niet opslaan."
+
+#: survey/translation_views.py
+msgid "This text is no longer in the survey. Reload the page."
+msgstr "Deze tekst staat niet meer in de enquête. Laad de pagina opnieuw."
+
+#: survey/translation_views.py
+msgid "Saved, but the row could not be re-rendered. Reload the page."
+msgstr "Opgeslagen, maar de rij kon niet opnieuw worden getoond. Laad de pagina opnieuw."
+
+#: survey/translation_views.py
+msgid "Choose a CSV file first."
+msgstr "Kies eerst een CSV-bestand."
+
+#: survey/translation_views.py
+msgid "Pick a language from the list."
+msgstr "Kies een taal uit de lijst."
+
+#: survey/translation_views.py
+msgid "Could not add the language."
+msgstr "Kon de taal niet toevoegen."
+
+#: survey/templatetags/survey_filters.py
+msgid "Description"
+msgstr "Beschrijving"

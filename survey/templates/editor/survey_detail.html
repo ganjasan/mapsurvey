@@ -559,6 +559,43 @@ document.addEventListener('DOMContentLoaded', function() {
     _openSectionFromHash();
     window.addEventListener('hashchange', _openSectionFromHash);
 
+    // Translations tab deep link (change translation-table): `?question=<id>`
+    // (or `?group=<id>`) opens that modal once the section's list has rendered,
+    // and `&lang=<code>` scrolls it to the Translations block of that language.
+    (function () {
+        var params = new URLSearchParams(window.location.search);
+        var questionId = params.get('question'), groupId = params.get('group'), lang = params.get('lang');
+        if (!questionId && !groupId) return;
+        var done = false;
+        function openTarget() {
+            if (done) return;
+            var btn = questionId
+                ? document.querySelector('.question-item[data-question-id="' + questionId + '"] .q-actions button[hx-get]')
+                : document.querySelector('.question-item--group[data-group-id="' + groupId + '"] button[hx-get]');
+            if (!btn) return;
+            done = true;
+            btn.click();
+            if (lang) {
+                document.body.addEventListener('htmx:afterSettle', function scrollToLang(evt) {
+                    var block = document.getElementById('translations-' + lang);
+                    if (!block) return;
+                    document.body.removeEventListener('htmx:afterSettle', scrollToLang);
+                    var toggle = block.closest('.translations-section');
+                    if (toggle) {
+                        var btn = toggle.querySelector('.translations-toggle');
+                        var body = toggle.querySelector('.translations-body');
+                        if (btn && body && !body.classList.contains('open')) { btn.classList.add('open'); body.classList.add('open'); }
+                    }
+                    block.scrollIntoView({ block: 'center' });
+                });
+            }
+        }
+        openTarget();
+        document.body.addEventListener('htmx:afterSettle', function (evt) {
+            if (!done && evt.target && evt.target.id === 'section-content') openTarget();
+        });
+    })();
+
     // SortableJS for sections
     var sectionsList = document.getElementById('sections-list');
     if (sectionsList && !STRUCTURE_LOCKED) {

@@ -19214,20 +19214,30 @@ class ThanksPageEditorTest(TestCase):
     def test_save_stores_per_language_and_sanitizes(self):
         """
         GIVEN an owner editing a two-language survey
-        WHEN they save thanks content with disallowed markup
+        WHEN they save thanks content with disallowed markup — the primary
+             language through the panel, the other through the Translations tab
+             (the panel's other-language tabs are links there since change
+             translation-table; a posted thanks_de is ignored)
         THEN each language's HTML is stored sanitized (scripts/handlers stripped)
         """
+        from survey import translation_table as tt
+        from survey.services.context import Actor
+
         r = self.client.post(
             f"/editor/surveys/{self.survey.uuid}/thanks-panel/",
             {"thanks_en": "<h2>Thanks</h2><script>bad()</script>",
-             "thanks_de": '<p>Danke <a href="/x" onclick="y()">Link</a></p>'},
+             "thanks_de": '<p>Posted, not written</p>'},
             HTTP_X_REQUESTED_WITH="XMLHttpRequest",
         )
         self.assertEqual(r.status_code, 200)
         self.assertJSONEqual(r.content, {"ok": True})
         self.survey.refresh_from_db()
+        self.assertEqual(self.survey.thanks_html["en"], "<h2>Thanks</h2>")
+        self.assertNotIn("de", self.survey.thanks_html)
+        tt.apply(Actor(user=self.user), self.survey, "de",
+                 {tt.THANKS_KEY: '<p>Danke <a href="/x" onclick="y()">Link</a></p>'})
+        self.survey.refresh_from_db()
         th = self.survey.thanks_html
-        self.assertEqual(th["en"], "<h2>Thanks</h2>")
         self.assertNotIn("onclick", th["de"])
         self.assertIn('rel="noopener noreferrer"', th["de"])
 
@@ -30249,6 +30259,10 @@ class TranslationCatalogHygieneTest(SimpleTestCase):
         # The real fix is one string in the templates; until then a shared
         # translation is correct rather than a symptom.
         frozenset({'Try Demo Survey', 'Try the Demo Survey'}),
+        # The Build sidebar entry and the Translations tab's row label for the
+        # same page (change translation-table); most languages have one name
+        # for it.
+        frozenset({'Thanks page', 'Thank-you page'}),
         # A marketing table heading and the Responses export button: the same
         # noun phrase in either order, one translation in most languages.
         frozenset({'Data export', 'Export data'}),
@@ -32351,7 +32365,9 @@ class PrimaryLanguageBaseFieldsTest(TestCase):
         """
         GIVEN a ["pt", "es"] survey
         WHEN the section form posts translation values for both pt and es
-        THEN only the es row is created; the pt key is ignored
+        THEN no row is created: the pt key names the primary language and the es
+             one is ignored too, because the modal stopped writing translations
+             (change translation-table — the Translations tab writes them)
         """
         survey, section = self._survey(['pt', 'es'])
         response = self.client.post(
@@ -32361,17 +32377,14 @@ class PrimaryLanguageBaseFieldsTest(TestCase):
              'translation_es_title': 'Título es'},
         )
         self.assertIn(response.status_code, (200, 204, 302))
-        languages = set(
-            SurveySectionTranslation.objects.filter(section=section)
-            .values_list('language', flat=True)
-        )
-        self.assertEqual(languages, {'es'})
+        self.assertFalse(SurveySectionTranslation.objects.filter(section=section).exists())
 
     def test_question_save_skips_primary_language_row(self):
         """
         GIVEN a ["pt", "es"] survey
         WHEN a question is created with pt and es translation values posted
-        THEN only the es QuestionTranslation row exists
+        THEN no QuestionTranslation row exists — the modal is a read-only mirror
+             of the Translations tab (change translation-table)
         """
         survey, section = self._survey(['pt', 'es'])
         response = self.client.post(
@@ -32381,17 +32394,13 @@ class PrimaryLanguageBaseFieldsTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         question = Question.objects.get(survey_section=section, name='Pergunta base')
-        languages = set(
-            QuestionTranslation.objects.filter(question=question)
-            .values_list('language', flat=True)
-        )
-        self.assertEqual(languages, {'es'})
+        self.assertFalse(QuestionTranslation.objects.filter(question=question).exists())
 
     def test_editor_templates_render_translation_inputs_for_non_primary_only(self):
         """
         GIVEN a ["pt", "es"] survey
         WHEN the section detail partial is rendered
-        THEN es translation inputs are present, pt ones are not, and the base
+        THEN the es translation mirror is present, a pt one is not, and the base
              label names the primary language
         """
         survey, section = self._survey(['pt', 'es'])
@@ -32400,8 +32409,10 @@ class PrimaryLanguageBaseFieldsTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
-        self.assertIn('translation_es_title', html)
-        self.assertNotIn('translation_pt_title', html)
+        self.assertIn('id="translations-es"', html)
+        self.assertIn('?to=es#row-section:S1:title', html)
+        self.assertNotIn('translations-pt', html)
+        self.assertNotIn('translation_es_title', html)
         self.assertIn('(Portuguese)', html)
 
     def test_single_language_survey_renders_no_translation_inputs(self):
@@ -34241,13 +34252,16 @@ class FormattedTextBlockEditorTest(TestCase):
     def test_translated_body_is_sanitized_too(self):
         """
         GIVEN a German translation of a Formatted Text body carrying a script
-        WHEN the block is saved
+        WHEN it is written through the Translations tab (the modal's block is a
+             read-only mirror since change translation-table)
         THEN the stored translation is sanitized like the base language
         """
-        block = self._create_block(
-            '<p>Hello</p>',
-            translation_de_subtext='<p>Hallo</p><script>alert(1)</script>',
-        )
+        from survey import translation_table as tt
+        from survey.services.context import Actor
+
+        block = self._create_block('<p>Hello</p>')
+        tt.apply(Actor(user=self.user), self.survey, 'de',
+                 {f'question:{block.code}:subtext': '<p>Hallo</p><script>alert(1)</script>'})
 
         translation = block.translations.get(language='de')
         self.assertNotIn('<script>', translation.subtext)
@@ -34276,7 +34290,8 @@ class FormattedTextBlockEditorTest(TestCase):
         """
         GIVEN the question dialog
         WHEN it is opened
-        THEN it carries the Quill mount and the per-language mounts
+        THEN it carries the Quill mount and, per language, the read-only mirror
+             that links to the Translations tab (change translation-table)
 
         A server-side test suite would otherwise pass with a dead editor: every
         assertion above works fine against the plain one-line input.
@@ -34286,7 +34301,8 @@ class FormattedTextBlockEditorTest(TestCase):
         content = response.content.decode()
 
         self.assertIn('id="html-body-quill"', content)
-        self.assertIn('data-translation-quill="de"', content)
+        self.assertIn('id="translations-de"', content)
+        self.assertNotIn('data-translation-quill="de"', content)
         self.assertIn('new Quill(', content)
 
 

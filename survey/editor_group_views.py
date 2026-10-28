@@ -142,14 +142,9 @@ def editor_group_edit(request, survey_uuid, group_id):
 
 
 def _posted_group_translations(request, survey):
-    """`{lang: {title, description}}` for the languages the modal posted; the
-    service caps the title and coerces the description like the base ones."""
-    out = {}
-    for lang in _translation_languages(survey):
-        keys = (f'translation_{lang}_title', f'translation_{lang}_description')
-        if any(key in request.POST for key in keys):
-            out[lang] = {'title': request.POST.get(keys[0], ''), 'description': request.POST.get(keys[1], '')}
-    return out
+    """The modal no longer edits translations (change translation-table): its
+    rows mirror the Translations tab, so nothing posted here is written."""
+    return UNSET
 
 
 @survey_permission_required('editor')

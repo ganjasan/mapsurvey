@@ -1,6 +1,6 @@
 ---
 title: Translate a survey
-description: "Offer the survey in several languages: add languages, translate every text, and let respondents pick theirs on the first screen."
+description: "Offer the survey in several languages: add languages, translate every text in one table or through a CSV, and let respondents pick theirs on the first screen."
 sidebar:
   order: 14
 ---
@@ -10,37 +10,44 @@ You end up with one survey that respondents take in the language they choose, wi
 ## Before you start
 
 - Decide on the primary language. It is the language you write the original texts in, and the fallback respondents see wherever a translation is missing.
-- Have the translations ready, or plan time for them. There is no machine translation inside the editor.
+- Have the translations ready, or know who will write them. A bilingual colleague can work in the **Translations** tab; an outside translator can work in a spreadsheet through the CSV export and import. There is no machine translation inside the editor yet.
 
 ## Steps
 
 ### Add the languages
 
-1. Open **Survey settings**.
-2. Under **Languages**, select every language respondents should be able to choose. The first one listed is the primary language. (When creating a survey, the same field is called **Available languages**.)
-3. Save. The editor now shows a field per language wherever text is shown to respondents.
+1. Open the **Translations** tab of the survey (between **Survey** and **Responses**).
+2. With one language only, the tab offers a language search; pick the second language. On a survey that already has several, choose **Add language…** at the end of the target-language list. Adding a language is the workspace owner's action; removing one stays in **Survey settings → Languages**, where the first language listed is the primary.
 
-### Translate sections
+### Translate in the table
 
-1. Select a section in the left column.
-2. The base **Title** and **Subheading** fields are now labelled with the primary language. Below them, the **Translations** block has a title and subheading field for each other language. Fill them in; the section autosaves.
-3. If the section has a custom **Button label** (for example "Start" on a welcome section), the **Translations** block carries a field for it in each language too. Leave it empty to keep the default Next/Finish wording, which is translated for you.
+The tab shows every text of the survey once, in the order respondents see it: page titles and intros, the Next button, questions, help texts, Formatted text blocks, answer options, group titles and the thank-you page. The original is on the left, read-only; the translation is on the right and saves as you leave the field.
 
+1. Pick the pair of languages at the top: the source column (the primary language, or another language of the survey when the translator reads that one better) and the target.
+2. Type the translations. A text used in several places — "Other", "(Select all that apply)" — is one row with a count (×6); one translation fills every place. Click the count to see where it is used.
+3. When the same words need different wording in context ("Walk" as an activity and as a way of getting there), click **Translate separately** under that row and fill each place on its own. **Use one translation** merges them again.
+4. Use the chips above the table to show only **Missing** or **Outdated** rows. A row is outdated when the original was edited after it was translated: check the translation and save it to clear the mark.
+5. Every row links back to its place in the editor — the page, the question dialog, the thank-you panel — for the full context.
 
-### Translate questions and their options
+<!-- screenshot: the Translations tab with a group row ×6 unfolded and an outdated row -->
 
-1. Open each question with its pencil icon and scroll to **Translations**.
-2. Fill in **Name (language)** and **Subtext (language)** for every language.
-3. For **Choices**, **Multiple Choices**, **Rating** and **Range** questions, the **Choices** table has one **Name** column per language; the **Code** stays the same across languages, which is what keeps the results in one column.
-4. Do the same for every sub-question of a map question; their popups are translated the same way.
-5. Click **Save**.
+Rich texts (page intros, help texts, Formatted text, the thank-you page) are edited with the same formatting toolbar as the original.
 
-<!-- screenshot: the Translations block of a question dialog with Name and Subtext fields for two languages -->
+The translation fields in the question, section and group dialogs show the stored text and open its row on the tab; translations are written on the tab only.
+
+### Work with an outside translator
+
+1. Choose the target language and click **Export CSV**. The file has one row per text: a `key`, the page, the element, the `source` text, the `translation` (empty where missing) and the status. Rich texts are exported as plain paragraphs.
+2. The translator fills the `translation` column in a spreadsheet and sends the file back. A spreadsheet built by hand in the same shape works too: rows without a key are matched by their source text.
+3. Click **Import CSV**, choose the file, and tick **Overwrite translations that already exist** only if the file should replace what is already translated; otherwise existing translations are kept and reported as skipped.
+4. Read the report above the table: how many rows were filled, overwritten or skipped, and which source texts were not found in the survey. Nothing is dropped silently.
+
+Bold and other formatting inside a paragraph does not travel through CSV; fix those rows in the table afterwards. Outdated is tracked from the moment a translation is saved in the table, through the import or an API client — translations written before that read as translated until they are saved again.
 
 ### Check and publish
 
 1. In the **Live preview**, use the **Language** switcher to view the section in each language. Anything still in the primary language is an untranslated field.
-2. Click **Publish — open for responses** (or **Publish changes** on a live survey). If any text has no translation, Mapsurvey lists the gaps and warns that those respondents will see the primary language instead. You can go back and fill them, or publish anyway and translate later: fixing wording and translations on a published survey saves straight to the live survey, with no new version.
+2. Click **Publish — open for responses** (or **Publish changes** on a live survey). If any text has no translation or is outdated, Mapsurvey lists the gaps and warns that those respondents will see the primary language instead. You can go back and fill them, or publish anyway and translate later: a translation saved on a published survey goes straight to the live survey, with no new version.
 
 ## Result
 

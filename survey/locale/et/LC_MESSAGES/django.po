@@ -8772,3 +8772,271 @@ msgstr "Uus mustand samade küsimuste, seadete ja kaardikihtidega, ilma vastuste
 #: api/templates/api/connections.html
 msgid "Use your AI assistant — connect Claude, ChatGPT or another assistant"
 msgstr "Kasuta oma tehisaru abilist — ühenda Claude, ChatGPT või mõni muu abiline"
+
+#: survey/templates/editor/partials/_survey_nav_tabs.html
+msgid "Translate the survey — every text once, in one table"
+msgstr "Tõlgi küsitlus — iga tekst üks kord, ühes tabelis"
+
+#: survey/templates/editor/survey_translations.html
+msgid "This survey is in %(lang)s only"
+msgstr "See küsitlus on ainult keeles %(lang)s"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Add a second language and every title, question, option and the thank-you page will appear here, ready to translate — in this table or through a CSV for an outside translator."
+msgstr "Lisa teine keel ja iga pealkiri, küsimus, valik ja tänuleht ilmuvad siia, tõlkimiseks valmis — selles tabelis või CSV kaudu välisele tõlkijale."
+
+#: survey/templates/editor/survey_translations.html
+msgid "The same list as Survey settings. Only the languages setting changes."
+msgstr "Sama loend mis küsitluse seadetes. Muutub ainult keelte seadistus."
+
+#: survey/templates/editor/survey_translations.html
+msgid "The workspace owner adds languages in Survey settings."
+msgstr "Tööruumi omanik lisab keeli küsitluse seadetes."
+
+#: survey/templates/editor/survey_translations.html
+msgid "Every text of the survey once, in the order respondents see it. One translation fills every place the same text is used."
+msgstr "Iga küsitluse tekst üks kord, vastajate nägemise järjekorras. Üks tõlge täidab kõik kohad, kus sama tekst on kasutusel."
+
+#: survey/templates/editor/survey_translations.html
+msgid "Learn more"
+msgstr "Loe lähemalt"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Source column"
+msgstr "Lähteveerg"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Target column"
+msgstr "Sihtveerg"
+
+#: survey/templates/editor/survey_translations.html
+msgid "primary"
+msgstr "põhikeel"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Add language…"
+msgstr "Lisa keel…"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Export CSV"
+msgstr "Ekspordi CSV"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Import CSV"
+msgstr "Impordi CSV"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Add a language"
+msgstr "Lisa keel"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Adds the language to Survey settings. Removing one stays there."
+msgstr "Lisab keele küsitluse seadetesse. Eemaldamine jääb sinna."
+
+#: survey/templates/editor/survey_translations.html
+msgid "This survey has unpublished changes. Translations are edited there, so that publishing them does not overwrite the edit."
+msgstr "Sellel küsitlusel on avaldamata muudatusi. Tõlkeid muudetakse seal, et avaldamine muudatust üle ei kirjutaks."
+
+#: survey/templates/editor/survey_translations.html
+msgid "This survey is live: a saved translation reaches respondents at once."
+msgstr "See küsitlus on avalik: salvestatud tõlge jõuab vastajateni kohe."
+
+#: survey/templates/editor/survey_translations.html
+msgid "%(name)s imported."
+msgstr "%(name)s imporditud."
+
+#: survey/templates/editor/survey_translations.html
+msgid "%(filled)s filled · %(overwritten)s overwritten · %(skipped)s skipped (already translated) · %(unmatched)s unmatched"
+msgstr "%(filled)s täidetud · %(overwritten)s üle kirjutatud · %(skipped)s vahele jäetud (juba tõlgitud) · %(unmatched)s vasteta"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Not found in the survey:"
+msgstr "Küsitlusest ei leitud:"
+
+#: survey/templates/editor/survey_translations.html
+msgid "All"
+msgstr "Kõik"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Missing"
+msgstr "Puudub"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Outdated"
+msgstr "Aegunud"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Translated"
+msgstr "Tõlgitud"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Where"
+msgstr "Kus"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Open in editor"
+msgstr "Ava redaktoris"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Import %(lang)s translations"
+msgstr "Impordi tõlked keelde %(lang)s"
+
+#: survey/templates/editor/survey_translations.html
+msgid "A CSV in the layout of the export: a key column, or at least source and translation columns. Rows are matched by key, then by the source text. Only the translation column is read — the original stays as it is in the survey."
+msgstr "CSV ekspordi kujul: veerg key või vähemalt veerud source ja translation. Read sobitatakse võtme, seejärel lähteteksti järgi. Loetakse ainult tõlkeveergu — originaal jääb küsitluses selliseks, nagu on."
+
+#: survey/templates/editor/survey_translations.html
+msgid "Overwrite translations that already exist"
+msgstr "Kirjuta olemasolevad tõlked üle"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Bold and other formatting inside a paragraph does not travel through CSV — fix those rows here afterwards."
+msgstr "Rasvane kiri ja muu lõigusisene vormindus CSV-ga kaasa ei tule — paranda need read hiljem siin."
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Open in the editor"
+msgstr "Näita redaktoris"
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Used in several places — click to list them"
+msgstr "Kasutusel mitmes kohas — klõpsa, et need loetleda"
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Shown in the primary language — no translation in the source language yet."
+msgstr "Kuvatud põhikeeles — lähtekeeles tõlget veel pole."
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Translated separately — the text is the same, the context is not."
+msgstr "Tõlgitud eraldi — tekst on sama, kontekst mitte."
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Use one translation"
+msgstr "Kasuta ühte tõlget"
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "The original text changed after this was translated. Check the translation and save it to clear this."
+msgstr "Algtekst muutus pärast tõlkimist. Kontrolli tõlget ja salvesta see, et märge eemaldada."
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "The original text changed after this was translated."
+msgstr "Algtekst muutus pärast tõlkimist."
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Translate separately"
+msgstr "Tõlgi eraldi"
+
+#: survey/templates/editor/partials/_translation_mirror.html
+msgid "Edited on the Translations tab"
+msgstr "Muudetakse vahekaardil Tõlked"
+
+#: survey/templates/editor/partials/_translation_mirror.html
+msgid "missing — translate"
+msgstr "puudub — tõlgi"
+
+#: survey/templates/editor/partials/_translation_mirror.html
+msgid "Translations are edited on the"
+msgstr "Tõlkeid muudetakse"
+
+#: survey/templates/editor/partials/_translation_mirror.html
+msgid "Translations tab"
+msgstr "vahekaardil Tõlked"
+
+#: survey/templates/editor/partials/_translation_mirror.html
+msgid "Click a field to open its row."
+msgstr "Klõpsa väljal, et avada selle rida."
+
+#: survey/templates/editor/partials/thanks_panel.html
+msgid "Other languages are edited on the Translations tab."
+msgstr "Teisi keeli muudetakse vahekaardil Tõlked."
+
+#: survey/translation_table.py
+msgid "Page %(n)s: %(title)s"
+msgstr "Leht %(n)s: %(title)s"
+
+#: survey/translation_table.py
+msgid "Page %(n)s"
+msgstr "Leht %(n)s"
+
+#: survey/translation_table.py
+msgid "Page title"
+msgstr "Lehe pealkiri"
+
+#: survey/translation_table.py
+msgid "Page intro"
+msgstr "Lehe sissejuhatus"
+
+#: survey/translation_table.py
+msgid "Next button"
+msgstr "Nupp Edasi"
+
+#: survey/translation_table.py
+msgid "Group: %(title)s"
+msgstr "Rühm: %(title)s"
+
+#: survey/translation_table.py
+msgid "(untitled)"
+msgstr "(pealkirjata)"
+
+#: survey/translation_table.py
+msgid "Group title"
+msgstr "Rühma pealkiri"
+
+#: survey/translation_table.py
+msgid "Group description"
+msgstr "Rühma kirjeldus"
+
+#: survey/translation_table.py
+msgid "description"
+msgstr "kirjeldus"
+
+#: survey/translation_table.py
+msgid "Formatted text"
+msgstr "Vormindatud tekst"
+
+#: survey/translation_table.py
+msgid "%(q)s help text"
+msgstr "%(q)s abitekst"
+
+#: survey/translation_table.py
+msgid "Question %(n)s"
+msgstr "Küsimus %(n)s"
+
+#: survey/translation_table.py
+msgid "Sub-question %(n)s"
+msgstr "Alamküsimus %(n)s"
+
+#: survey/translation_table.py
+msgid "%(q)s option"
+msgstr "%(q)s valik"
+
+#: survey/translation_table.py
+msgid "Thank-you page"
+msgstr "Tänuleht"
+
+#: survey/translation_views.py
+msgid "Could not save."
+msgstr "Salvestamine ebaõnnestus."
+
+#: survey/translation_views.py
+msgid "This text is no longer in the survey. Reload the page."
+msgstr "Seda teksti pole enam küsitluses. Laadi leht uuesti."
+
+#: survey/translation_views.py
+msgid "Saved, but the row could not be re-rendered. Reload the page."
+msgstr "Salvestatud, kuid rida ei õnnestunud uuesti kuvada. Laadi leht uuesti."
+
+#: survey/translation_views.py
+msgid "Choose a CSV file first."
+msgstr "Vali kõigepealt CSV-fail."
+
+#: survey/translation_views.py
+msgid "Pick a language from the list."
+msgstr "Vali keel loendist."
+
+#: survey/translation_views.py
+msgid "Could not add the language."
+msgstr "Keele lisamine ebaõnnestus."
+
+#: survey/templatetags/survey_filters.py
+msgid "Description"
+msgstr "Kirjeldus"

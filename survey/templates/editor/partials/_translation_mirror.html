@@ -1,0 +1,14 @@
+{% load i18n %}{% comment %}
+Read-only translation fields of one entity for one language (change
+translation-table), rendered by the `translation_mirror` tag. Each field links
+to its row on the Translations tab, where the text is edited.
+{% endcomment %}
+{% for field in fields %}
+<div class="form-group tt-mirror-field">
+    <label style="font-size:0.8rem;">{{ field.label }}</label>
+    <a class="tt-mirror{% if not field.value %} tt-mirror-empty{% endif %}" href="{{ field.href }}" title="{% trans 'Edited on the Translations tab' %}">
+        {% if field.value %}{% if field.rich %}{{ field.value|striptags|truncatechars:160 }}{% else %}{{ field.value|truncatechars:160 }}{% endif %}{% else %}{% trans "missing — translate" %}{% endif %}
+        <i class="fas fa-external-link-alt"></i>
+    </a>
+</div>
+{% endfor %}

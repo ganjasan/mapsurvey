@@ -836,10 +836,12 @@ def editor_survey_thanks_panel(request, survey_uuid):
         show = None
         if request.POST.get('has_results_toggle') == '1':
             show = request.POST.get('show_on_thanks') == 'on'
+        # The panel edits the primary-language page only; the other languages
+        # are written on the Translations tab (change translation-table).
         svc_surveys.set_thanks(
             Actor.from_request(request), survey,
-            {lang: request.POST.get('thanks_{}'.format(lang), '') for lang in langs},
-            show_on_thanks=show)
+            {langs[0]: request.POST.get('thanks_{}'.format(langs[0]), '')},
+            show_on_thanks=show, languages=[langs[0]])
         if _is_ajax(request):
             return JsonResponse({'ok': True})
         from django.urls import reverse
@@ -1165,10 +1167,11 @@ def editor_section_detail(request, survey_uuid, section_id):
         try:
             # A half-filled Visibility block never costs the creator the rest of
             # an autosave: the fields are saved, the rule is reported (422).
+            # Translations are edited on the Translations tab (change
+            # translation-table); the form's block is a read-only mirror.
             svc_sections.update(
                 Actor.from_request(request), section, request.POST,
-                translations=svc_common.UNSET if vis_error else svc_common.translations_from_post(
-                    request.POST, survey, svc_sections.TRANSLATION_FIELDS),
+                translations=svc_common.UNSET,
                 visibility_rule=vis_rule if (vis_present and not vis_error) else svc_common.UNSET,
             )
         except ValidationFailed as err:
@@ -1395,7 +1398,10 @@ def _visibility_input(request):
 
 
 def _question_translations(request, survey):
-    return svc_common.translations_from_post(request.POST, survey, svc_questions.TRANSLATION_FIELDS)
+    """The modal no longer edits translations (change translation-table): its
+    Translations block is a read-only mirror of the Translations tab, so any
+    `translation_<lang>_*` key a stale form still posts is ignored."""
+    return svc_common.UNSET
 
 
 @survey_permission_required('editor')
@@ -1757,8 +1763,8 @@ def editor_question_delete(request, survey_uuid, question_id):
 
 
 def _save_question_translations(request, question, survey):
-    """Save question translations from POST data (non-primary languages only)."""
-    svc_questions.save_translations_for(question, survey, _question_translations(request, survey))
+    """Kept for callers; translations are written on the Translations tab only."""
+    return None
 
 
 # ─── Question reordering ─────────────────────────────────────────────────────

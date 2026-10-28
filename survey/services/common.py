@@ -144,7 +144,8 @@ def translation_languages(survey):
     return (survey.available_languages or [])[1:]
 
 
-def save_translations(model, owner_field, owner, survey, translations, fields, rich=(), caps=None):
+def save_translations(model, owner_field, owner, survey, translations, fields, rich=(), caps=None,
+                      record_all=()):
     """Write one translation row per non-primary language from
     `translations = {lang: {field: value}}`.
 
@@ -152,8 +153,14 @@ def save_translations(model, owner_field, owner, survey, translations, fields, r
     from `translations` is left alone, so a partial update (the API) touches
     only what it names; the editor passes every language, as its form posts
     every language. Rich-text fields pass `coerce_creator_html`.
+
+    The source hash (change translation-table) is recorded for every field
+    whose value changed, and for the fields in `record_all` whatever their
+    value — a save from the Translations tab is a review of the text as it is.
     """
+    from .. import translation_table
     caps = caps or {}
+    prefix = None
     for lang in translation_languages(survey):
         if lang not in translations:
             continue
@@ -165,6 +172,7 @@ def save_translations(model, owner_field, owner, survey, translations, fields, r
             if field in caps:
                 value = value[:caps[field]]
             cleaned[field] = value
+        existing = model.objects.filter(**{owner_field: owner, 'language': lang}).first()
         if any(cleaned.values()):
             model.objects.update_or_create(
                 **{owner_field: owner, 'language': lang},
@@ -172,6 +180,18 @@ def save_translations(model, owner_field, owner, survey, translations, fields, r
             )
         else:
             model.objects.filter(**{owner_field: owner, 'language': lang}).delete()
+        changed = [
+            f for f in fields
+            if f in record_all or cleaned[f] != ((getattr(existing, f, None) or '') if existing else '')
+        ]
+        if changed:
+            if prefix is None:
+                prefix = translation_table.prefix_for(owner_field, owner)
+            translation_table.record_hashes(survey, lang, [
+                (f'{prefix}:{f}', getattr(owner, f, None) or '',
+                 translation_table.RICH if f in rich else translation_table.PLAIN, cleaned[f])
+                for f in changed
+            ])
 
 
 def translations_from_post(post, survey, fields):

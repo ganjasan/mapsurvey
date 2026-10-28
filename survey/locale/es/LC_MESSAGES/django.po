@@ -8858,3 +8858,271 @@ msgstr "Un nuevo borrador con las mismas preguntas, ajustes y capas del mapa, si
 #: api/templates/api/connections.html
 msgid "Use your AI assistant — connect Claude, ChatGPT or another assistant"
 msgstr "Usa tu asistente de IA — conecta Claude, ChatGPT u otro asistente"
+
+#: survey/templates/editor/partials/_survey_nav_tabs.html
+msgid "Translate the survey — every text once, in one table"
+msgstr "Traducir la encuesta — cada texto una vez, en una sola tabla"
+
+#: survey/templates/editor/survey_translations.html
+msgid "This survey is in %(lang)s only"
+msgstr "Esta encuesta está solo en %(lang)s"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Add a second language and every title, question, option and the thank-you page will appear here, ready to translate — in this table or through a CSV for an outside translator."
+msgstr "Añada un segundo idioma y cada título, pregunta, opción y la página de agradecimiento aparecerán aquí, listos para traducir — en esta tabla o mediante un CSV para un traductor externo."
+
+#: survey/templates/editor/survey_translations.html
+msgid "The same list as Survey settings. Only the languages setting changes."
+msgstr "La misma lista que en la configuración de la encuesta. Solo cambia el ajuste de idiomas."
+
+#: survey/templates/editor/survey_translations.html
+msgid "The workspace owner adds languages in Survey settings."
+msgstr "El propietario del espacio de trabajo añade idiomas en la configuración de la encuesta."
+
+#: survey/templates/editor/survey_translations.html
+msgid "Every text of the survey once, in the order respondents see it. One translation fills every place the same text is used."
+msgstr "Cada texto de la encuesta una sola vez, en el orden en que lo ven los encuestados. Una traducción rellena cada lugar donde se usa el mismo texto."
+
+#: survey/templates/editor/survey_translations.html
+msgid "Learn more"
+msgstr "Más información"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Source column"
+msgstr "Columna de origen"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Target column"
+msgstr "Columna de destino"
+
+#: survey/templates/editor/survey_translations.html
+msgid "primary"
+msgstr "principal"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Add language…"
+msgstr "Añadir idioma…"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Export CSV"
+msgstr "Exportar CSV"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Import CSV"
+msgstr "Importar CSV"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Add a language"
+msgstr "Añadir un idioma"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Adds the language to Survey settings. Removing one stays there."
+msgstr "Añade el idioma a la configuración de la encuesta. Quitar uno sigue haciéndose allí."
+
+#: survey/templates/editor/survey_translations.html
+msgid "This survey has unpublished changes. Translations are edited there, so that publishing them does not overwrite the edit."
+msgstr "Esta encuesta tiene cambios sin publicar. Las traducciones se editan allí, para que al publicarlos no se sobrescriba la edición."
+
+#: survey/templates/editor/survey_translations.html
+msgid "This survey is live: a saved translation reaches respondents at once."
+msgstr "Esta encuesta está activa: una traducción guardada llega a los encuestados al instante."
+
+#: survey/templates/editor/survey_translations.html
+msgid "%(name)s imported."
+msgstr "%(name)s importado."
+
+#: survey/templates/editor/survey_translations.html
+msgid "%(filled)s filled · %(overwritten)s overwritten · %(skipped)s skipped (already translated) · %(unmatched)s unmatched"
+msgstr "%(filled)s rellenados · %(overwritten)s sobrescritos · %(skipped)s omitidos (ya traducidos) · %(unmatched)s sin coincidencia"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Not found in the survey:"
+msgstr "No se encontró en la encuesta:"
+
+#: survey/templates/editor/survey_translations.html
+msgid "All"
+msgstr "Todo"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Missing"
+msgstr "Falta"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Outdated"
+msgstr "Desactualizado"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Translated"
+msgstr "Traducido"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Where"
+msgstr "Dónde"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Open in editor"
+msgstr "Abrir en el editor"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Import %(lang)s translations"
+msgstr "Importar traducciones al %(lang)s"
+
+#: survey/templates/editor/survey_translations.html
+msgid "A CSV in the layout of the export: a key column, or at least source and translation columns. Rows are matched by key, then by the source text. Only the translation column is read — the original stays as it is in the survey."
+msgstr "Un CSV con el formato de la exportación: una columna key, o al menos las columnas source y translation. Las filas se emparejan por clave y, si no, por el texto original. Solo se lee la columna de traducción — el original queda como está en la encuesta."
+
+#: survey/templates/editor/survey_translations.html
+msgid "Overwrite translations that already exist"
+msgstr "Sobrescribir las traducciones que ya existen"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Bold and other formatting inside a paragraph does not travel through CSV — fix those rows here afterwards."
+msgstr "La negrita y otros formatos dentro de un párrafo no viajan por CSV — corrija esas filas aquí después."
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Open in the editor"
+msgstr "Ver en el editor"
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Used in several places — click to list them"
+msgstr "Se usa en varios lugares — haga clic para verlos"
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Shown in the primary language — no translation in the source language yet."
+msgstr "Se muestra en el idioma principal — aún no hay traducción en el idioma de origen."
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Translated separately — the text is the same, the context is not."
+msgstr "Traducido por separado — el texto es el mismo, el contexto no."
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Use one translation"
+msgstr "Usar una sola traducción"
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "The original text changed after this was translated. Check the translation and save it to clear this."
+msgstr "El texto original cambió después de traducirse. Revise la traducción y guárdela para quitar este aviso."
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "The original text changed after this was translated."
+msgstr "El texto original cambió después de traducirse."
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Translate separately"
+msgstr "Traducir por separado"
+
+#: survey/templates/editor/partials/_translation_mirror.html
+msgid "Edited on the Translations tab"
+msgstr "Se edita en la pestaña Traducciones"
+
+#: survey/templates/editor/partials/_translation_mirror.html
+msgid "missing — translate"
+msgstr "falta — traducir"
+
+#: survey/templates/editor/partials/_translation_mirror.html
+msgid "Translations are edited on the"
+msgstr "Las traducciones se editan en la"
+
+#: survey/templates/editor/partials/_translation_mirror.html
+msgid "Translations tab"
+msgstr "pestaña Traducciones"
+
+#: survey/templates/editor/partials/_translation_mirror.html
+msgid "Click a field to open its row."
+msgstr "Haga clic en un campo para abrir su fila."
+
+#: survey/templates/editor/partials/thanks_panel.html
+msgid "Other languages are edited on the Translations tab."
+msgstr "Los demás idiomas se editan en la pestaña Traducciones."
+
+#: survey/translation_table.py
+msgid "Page %(n)s: %(title)s"
+msgstr "Página %(n)s: %(title)s"
+
+#: survey/translation_table.py
+msgid "Page %(n)s"
+msgstr "Página %(n)s"
+
+#: survey/translation_table.py
+msgid "Page title"
+msgstr "Título de la página"
+
+#: survey/translation_table.py
+msgid "Page intro"
+msgstr "Introducción de la página"
+
+#: survey/translation_table.py
+msgid "Next button"
+msgstr "Botón Siguiente"
+
+#: survey/translation_table.py
+msgid "Group: %(title)s"
+msgstr "Grupo: %(title)s"
+
+#: survey/translation_table.py
+msgid "(untitled)"
+msgstr "(sin título)"
+
+#: survey/translation_table.py
+msgid "Group title"
+msgstr "Título del grupo"
+
+#: survey/translation_table.py
+msgid "Group description"
+msgstr "Descripción del grupo"
+
+#: survey/translation_table.py
+msgid "description"
+msgstr "descripción"
+
+#: survey/translation_table.py
+msgid "Formatted text"
+msgstr "Texto con formato"
+
+#: survey/translation_table.py
+msgid "%(q)s help text"
+msgstr "%(q)s texto de ayuda"
+
+#: survey/translation_table.py
+msgid "Question %(n)s"
+msgstr "Pregunta %(n)s"
+
+#: survey/translation_table.py
+msgid "Sub-question %(n)s"
+msgstr "Subpregunta %(n)s"
+
+#: survey/translation_table.py
+msgid "%(q)s option"
+msgstr "%(q)s opción"
+
+#: survey/translation_table.py
+msgid "Thank-you page"
+msgstr "Página de agradecimiento"
+
+#: survey/translation_views.py
+msgid "Could not save."
+msgstr "No se pudo guardar."
+
+#: survey/translation_views.py
+msgid "This text is no longer in the survey. Reload the page."
+msgstr "Este texto ya no está en la encuesta. Recargue la página."
+
+#: survey/translation_views.py
+msgid "Saved, but the row could not be re-rendered. Reload the page."
+msgstr "Guardado, pero la fila no se pudo volver a mostrar. Recargue la página."
+
+#: survey/translation_views.py
+msgid "Choose a CSV file first."
+msgstr "Elija primero un archivo CSV."
+
+#: survey/translation_views.py
+msgid "Pick a language from the list."
+msgstr "Elija un idioma de la lista."
+
+#: survey/translation_views.py
+msgid "Could not add the language."
+msgstr "No se pudo añadir el idioma."
+
+#: survey/templatetags/survey_filters.py
+msgid "Description"
+msgstr "Descripción"

@@ -26,6 +26,8 @@ HELP_LINKS = {
     'mcp': 'how-to/use-the-mcp-server/',
     'mcp_tools': 'reference/mcp-tools/',
     'connected_apps': 'how-to/connect-an-app/',
+    # The Translations tab (change translation-table).
+    'translate': 'how-to/translate-a-survey/',
     'faq': 'faq/',
 }
 

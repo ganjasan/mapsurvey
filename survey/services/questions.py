@@ -13,6 +13,7 @@ from django.utils.html import strip_tags
 
 from .. import other_option
 from .. import product_events as pe
+from .. import translation_table
 from ..editor_forms import QuestionForm
 from ..groups import max_order as group_max_order, place_in_group
 from ..html_sanitize import coerce_creator_html
@@ -152,7 +153,13 @@ def _apply_choices(question, original, data, form=None):
         # Fixed 👍/👎 list; the choices editor never shows for this type.
         question.choices = question.thumbs_choices()
     elif choices_json:
+        # `original` is usually the same instance: keep the old list before
+        # the assignment, so changed per-language names can be told apart.
+        old_choices = list(original.choices or [])
         question.choices = guard_choice_codes(original, _parse_choices_json(choices_json, form))
+        survey = question.survey_section.survey_header if question.survey_section_id else None
+        if survey is not None and question.code:
+            translation_table.record_choice_hashes(survey, question, old_choices, question.choices)
 
 
 # ─── Validation settings ─────────────────────────────────────────────────────
@@ -329,11 +336,39 @@ def _visibility(visibility_rule, visibility_input, form):
         raise _failed(Stage.VISIBILITY, err.fields, form, message=err.message)
 
 
-def save_translations_for(question, survey, translations):
+def save_translations_for(question, survey, translations, record_all=()):
     # Same allow-list the base language goes through in QuestionForm; a
     # translated subtext is rendered |safe just the same.
     save_translations(QuestionTranslation, 'question', question, survey, translations,
-                      TRANSLATION_FIELDS, rich=('subtext',))
+                      TRANSLATION_FIELDS, rich=('subtext',), record_all=record_all)
+
+
+def set_choice_names(question, language, names):
+    """The Translations tab's write of option names (change translation-table):
+    only `name[language]` of the listed codes changes, nothing else in the
+    choices list, and the source hash is recorded for each. `names` maps the
+    choice code (as a string) to the translated text; an empty text removes
+    the language's entry."""
+    survey = question.survey_section.survey_header
+    choices = [dict(c) if isinstance(c, dict) else c for c in (question.choices or [])]
+    primary = (survey.available_languages or ['en'])[0]
+    touched = []
+    for choice in choices:
+        if not isinstance(choice, dict) or str(choice.get('code')) not in names:
+            continue
+        name = choice.get('name')
+        name = dict(name) if isinstance(name, dict) else {primary: name or ''}
+        text = (names[str(choice.get('code'))] or '').strip()
+        if text:
+            name[language] = text
+        else:
+            name.pop(language, None)
+        choice['name'] = name
+        touched.append((choice.get('code'), language))
+    question.choices = choices
+    question.save(update_fields=['choices'])
+    translation_table.record_choice_hashes(survey, question, question.choices, choices, force=touched)
+    return question
 
 
 def _emit_first_question(actor, survey, question):
@@ -520,6 +555,7 @@ def set_choices(actor, question, choices, *, strict=True):
                                   draft=locks._draft(survey))
     question.choices = new
     question.save(update_fields=['choices'])
+    translation_table.record_choice_hashes(survey, question, original, new)
     if locks.locks(survey)[1]:
         pe.emit(pe.LIVE_EDIT_SAVED, actor.user_id,
                 {'survey_id': str(survey.id), 'kind': 'question', **surface_props(actor)})
