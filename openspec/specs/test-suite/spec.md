@@ -46,7 +46,7 @@ and SHALL produce the same pass/fail result as a serial run.
 - **THEN** tests run across as many workers as the machine has CPUs
 
 #### Scenario: Serial run for debugging
-- **WHEN** `TEST_PARALLEL=1 ./run_tests.sh survey.tests.SmokeTest` is started
+- **WHEN** `TEST_PARALLEL=1 ./run_tests.sh survey.tests.test_smoke` is started
 - **THEN** tests run in a single process
 
 ### Requirement: Parallel workers do not share cache state
