@@ -2,7 +2,6 @@
 
 ## Purpose
 How surveys are presented as cards on the landing page — the `visibility` and archived fields that decide which appear, the card content and response count, and the ordering.
-
 ## Requirements
 ### Requirement: Survey visibility field
 `SurveyHeader` SHALL have a `visibility` CharField with choices: `"private"` (default), `"demo"`, `"public"`.
@@ -68,3 +67,14 @@ Survey cards SHALL be ordered: demo surveys first, then active public surveys, t
 #### Scenario: Card ordering
 - **WHEN** the landing page has demo, active, and archived surveys
 - **THEN** demo surveys SHALL appear first, followed by active public surveys, followed by archived surveys
+
+### Requirement: Card response counts span all versions
+Dashboard survey cards (grid and list views) SHALL display started/completed counts and
+the completion rate aggregated across the canonical survey and all of its version
+copies. The counts MUST be computed without per-card N+1 queries.
+
+#### Scenario: Card counts unchanged by publishing
+- **GIVEN** a survey card showing "340 started · 104 completed"
+- **WHEN** the creator publishes a new version
+- **THEN** the card still shows "340 started · 104 completed" (plus any new sessions)
+
