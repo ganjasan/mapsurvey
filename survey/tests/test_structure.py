@@ -18,15 +18,15 @@ from django.core.files.storage import default_storage
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from .cloning import SURVEY_COPY_EXCLUDED_FIELDS
-from .models import (
+from survey.cloning import SURVEY_COPY_EXCLUDED_FIELDS
+from survey.models import (
     Answer, AuditLog, LayerObject, LayerObjectAsset, Membership, Organization, Question, QuestionGroup,
     SurveyCollaborator, SurveyHeader, SurveyMapLayer, SurveySection, SurveySession,
 )
-from .services import groups as svc_groups
-from .services import structure as svc_structure
-from .services.context import Actor
-from .services.errors import AnswersAtRisk, LimitReached, StructureLocked
+from survey.services import groups as svc_groups
+from survey.services import structure as svc_structure
+from survey.services.context import Actor
+from survey.services.errors import AnswersAtRisk, LimitReached, StructureLocked
 
 PNG = (b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f'
        b'\x15\xc4\x89\x00\x00\x00\rIDATx\x9cc\xf8\x0f\x00\x00\x01\x01\x00\x05\x18\xd8N\x00\x00\x00\x00IEND'
@@ -114,7 +114,7 @@ class GroupServiceTest(_Base):
         THEN validation fails on question_ids and no group is left behind
         """
         other = _q(self.s2, 'QX', 1)
-        from .services.errors import ValidationFailed
+        from survey.services.errors import ValidationFailed
         with self.assertRaises(ValidationFailed) as ctx:
             svc_groups.create(self.actor, self.s1, {'title': 'G'}, question_ids=[other.pk])
         self.assertIn('question_ids', ctx.exception.fields)
@@ -158,7 +158,7 @@ class CopiesOwnTheirFilesTest(_Base):
         WHEN A is purged from the trash
         THEN B's question has its own file name and the file still exists
         """
-        from .trash import purge_survey
+        from survey.trash import purge_survey
         question = _q(self.s1, 'IMG', 1, input_type='image')
         question.image.save('photo.png', ContentFile(PNG))
         other, b1, _b2 = _survey(self.org, self.user, name='other')

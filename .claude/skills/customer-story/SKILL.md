@@ -124,7 +124,7 @@ lists every file's source and permission state.
 
 Seed locally (`seed_story <slug>` with the dev stand's env), open `/stories/<slug>/` and the
 landing, screenshot full page, look at it. Run
-`./run_tests.sh survey.tests.StoryDataDirectoriesTest survey.tests.SeedStoryTest`.
+`./run_tests.sh survey.tests.test_public_stories`.
 
 ## 4. Approval package
 

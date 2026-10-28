@@ -25,7 +25,8 @@ python manage.py collectstatic         # Collect static files
 # Testing (requires running PostGIS on port 5434)
 ./run_tests.sh survey                  # Run all survey app tests
 ./run_tests.sh survey -v2              # Verbose output
-./run_tests.sh survey.tests.SmokeTest  # Run specific test class
+./run_tests.sh survey.tests.test_public_stories   # One capability's tests
+./run_tests.sh survey.tests.test_smoke.SmokeTest  # One test class
 ```
 
 ## Parallel worktrees (port isolation)
@@ -48,7 +49,8 @@ whichever project owns that port and write into its database. `CACHES` sets `IGN
 that goes wrong silently rather than failing loudly.
 
 **Full suite**: `./run_tests.sh survey billing api mcp newsletter`. One area: a label
-(`survey.tests.ExportTest`, `api.tests.test_v1_data`, `billing`).
+(`survey.tests.test_public_stories`, `survey.tests.test_public_stories.SeedStoryTest`,
+`api.tests.test_v1_data`, `billing`).
 
 **Run defaults (change `test-suite-speed`, #272)**: `run_tests.sh` always passes `--noinput`
 and runs `--parallel auto` (one worker per core) unless you pass `--parallel` yourself;
@@ -64,8 +66,15 @@ failure inside a worker aborts the whole run with a `TypeError` and a cascade of
 the language to `LANGUAGE_CODE` before every test (wrapping `SimpleTestCase._pre_setup`). A test that only passes serially is relying on
 another test's state; fix the test, never pin the suite to one process.
 
-**Test location**: `survey/tests.py` plus `survey/test_*.py`, `api/tests/`, `billing/tests/`,
-`mcp/tests/`.
+**Test location — one module per capability (change `split-survey-tests`, #273)**: the survey
+app's tests are the package `survey/tests/`, with `test_<capability>.py` for each folder under
+`openspec/specs/` (`-` → `_`) and shared fixtures in `survey/tests/helpers.py`. A change adds its
+tests to the module of the capability its spec delta touches; a NEW capability adds its own
+module, so parallel branches touch different files. `SpecTestLineageTest`
+(`test_test_suite.py`) fails when a module names no spec and is not in `UNMAPPED_MODULES` (with
+a reason), or a spec has no module and is not in `SPECS_WITHOUT_SURVEY_TESTS` — both lists may
+only shrink, and the stale-entry test enforces it. `api/tests/`, `billing/tests/` and
+`mcp/tests/` follow the same one-module-per-capability rule.
 
 **Writing tests**: Use `django.test.TestCase` and GIVEN/WHEN/THEN pattern for docstrings.
 
