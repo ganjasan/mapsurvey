@@ -27,6 +27,18 @@ until docker compose exec -T redis redis-cli ping >/dev/null 2>&1; do
     sleep 1
 done
 
+# Defaults (change test-suite-speed, #272). --noinput always: a leftover
+# test_mapsurvey otherwise stops the run on an invisible "Type 'yes'" prompt.
+# --parallel unless the caller chose one: TEST_PARALLEL=1 for pdb/debugging.
+# --keepdb only on request: Django does not re-migrate kept parallel clones, so
+# after a new migration the workers would test against the old schema.
+EXTRA_ARGS=(--noinput)
+case " $* " in
+    *" --parallel"*) ;;
+    *) EXTRA_ARGS+=(--parallel "${TEST_PARALLEL:-auto}") ;;
+esac
+[ "${KEEPDB:-0}" = "1" ] && EXTRA_ARGS+=(--keepdb)
+
 # Run tests with proper environment
 source env/bin/activate
 SQL_ENGINE=django.contrib.gis.db.backends.postgis \
@@ -36,4 +48,4 @@ SQL_PASSWORD=mapsurvey \
 SQL_HOST=localhost \
 SQL_PORT=$HOST_DB_PORT \
 REDIS_URL=redis://localhost:$HOST_REDIS_PORT/1 \
-python manage.py test "$@"
+python manage.py test "${EXTRA_ARGS[@]}" "$@"

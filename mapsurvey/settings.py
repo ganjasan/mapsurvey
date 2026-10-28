@@ -178,6 +178,10 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'mapsurvey.wsgi.application'
 
+# Read only by `manage.py test`: fast hasher, temp MEDIA_ROOT, a Redis DB per
+# parallel worker (change test-suite-speed, #272).
+TEST_RUNNER = 'mapsurvey.test_runner.MapsurveyTestRunner'
+
 
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases

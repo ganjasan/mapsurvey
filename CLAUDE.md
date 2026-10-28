@@ -47,13 +47,27 @@ for both. Redis is not optional: `settings.py` falls back to `redis://localhost:
 whichever project owns that port and write into its database. `CACHES` sets `IGNORE_EXCEPTIONS`, so
 that goes wrong silently rather than failing loudly.
 
-**Test location**: `survey/tests.py`
+**Full suite**: `./run_tests.sh survey billing api mcp newsletter`. One area: a label
+(`survey.tests.ExportTest`, `api.tests.test_v1_data`, `billing`).
+
+**Run defaults (change `test-suite-speed`, #272)**: `run_tests.sh` always passes `--noinput`
+and runs `--parallel auto` (one worker per core) unless you pass `--parallel` yourself;
+`TEST_PARALLEL=1` for `pdb` or a readable traceback order. `KEEPDB=1` adds `--keepdb` — opt-in,
+because Django does not re-migrate kept parallel clones, so after a new migration the workers
+would test the old schema. `TEST_RUNNER` (`mapsurvey/test_runner.py`) applies to every
+`manage.py test`: MD5 password hasher, a temporary `MEDIA_ROOT` (tests never write into
+`mediafiles/`), and a Redis database per parallel worker (`1 + worker id`, capped at 14
+workers) — django-redis `cache.clear()` is `FLUSHDB`, so a shared database would let one
+worker wipe another's rate-limit counters. `tblib` (dev package) is required: without it a
+failure inside a worker aborts the whole run with a `TypeError` and a cascade of unrelated
+`IntegrityError`s. Views leave `translation.activate()` behind, so a test that reads
+gettext output without a request sets its language itself. A test that only passes serially is relying on
+another test's state; fix the test, never pin the suite to one process.
+
+**Test location**: `survey/tests.py` plus `survey/test_*.py`, `api/tests/`, `billing/tests/`,
+`mcp/tests/`.
 
 **Writing tests**: Use `django.test.TestCase` and GIVEN/WHEN/THEN pattern for docstrings.
-
-**Redis**: a few tests (`LastActivityMiddlewareTest`) exercise cache-gated code and need
-Redis on `localhost:6379`. `run_tests.sh` does not start it; without it those tests fail
-with `UserActivity.DoesNotExist`.
 
 ## Load testing
 

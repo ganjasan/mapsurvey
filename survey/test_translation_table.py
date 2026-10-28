@@ -10,6 +10,7 @@ from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import translation
 
 from survey import translation_table as tt
 from survey.models import (
@@ -418,6 +419,9 @@ class WriterTest(TestCase):
 class CsvTest(TestCase):
 
     def setUp(self):
+        # Row labels follow the active UI language; a view an earlier test
+        # called may have left another one active in this process.
+        self.enterContext(translation.override('en'))
         self.survey, self.user = _druid()
         self.actor = Actor(user=self.user)
 

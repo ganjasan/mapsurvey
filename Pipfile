@@ -10,6 +10,7 @@ pytest-django = "*"
 # gets its variables from Render). The old 3.9 venv had it installed by hand and
 # nobody noticed; without it every test that reads an AI key from .env fails.
 python-dotenv = "*"
+tblib = "*"
 
 [packages]
 # ~=5.2: the LTS (April 2028). `*` is how 4.2 stayed pinned for a year — the resolver
