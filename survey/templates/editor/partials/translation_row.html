@@ -1,0 +1,70 @@
+{% load i18n %}
+{% load survey_filters %}
+{% comment %}
+One table row of the Translations tab (change translation-table): a `<tbody>` per
+group of identical source text — the group line, then one sub-line per
+occurrence (shown when the group is split). The save endpoint answers with this
+partial, so everything a row needs is read from `row` alone.
+Requires: survey, row, source, target, primary, can_edit.
+{% endcomment %}
+<tbody class="tt-group tt-{{ row.status }}{% if row.split %} split{% endif %}" id="row-{{ row.key }}"
+       data-key="{{ row.key }}" data-status="{{ row.status }}"
+       data-occ-keys="{% for o in row.occurrences %}{{ o.key }} {% endfor %}">
+    {% with first=row.first %}
+    <tr class="tt-row tt-main">
+        <td class="tt-status"><span class="tt-dot" title="{% if row.status == 'missing' %}{% trans 'Missing' %}{% elif row.status == 'stale' %}{% trans 'Outdated' %}{% else %}{% trans 'Translated' %}{% endif %}"></span></td>
+        <td class="tt-where">
+            <a class="tt-el" href="{% include 'editor/partials/_translation_link.html' with occ=first %}" title="{% trans 'Open in the editor' %}">{{ first.element }}</a>
+            {% if row.count > 1 %}
+            <button type="button" class="tt-uses" title="{% trans 'Used in several places — click to list them' %}">×{{ row.count }}</button>
+            <ul class="tt-locs">
+                {% for o in row.occurrences %}<li><a href="{% include 'editor/partials/_translation_link.html' with occ=o %}">{{ o.where }}</a></li>{% endfor %}
+            </ul>
+            {% endif %}
+        </td>
+        <td class="tt-src">
+            {% if row.kind == 'rich' %}<div class="tt-src-rich">{{ row.shown_source|safe }}</div>{% else %}{{ row.shown_source }}{% endif %}
+            {% if not row.shown_is_primary %}{% elif source != primary %}<div class="tt-note">{% trans "Shown in the primary language — no translation in the source language yet." %}</div>{% endif %}
+        </td>
+        <td class="tt-tr">
+            {% if row.split %}
+            <div class="tt-split-head">{% trans "Translated separately — the text is the same, the context is not." %}
+                {% if can_edit %}<button type="button" class="tt-link tt-merge">{% trans "Use one translation" %}</button>{% endif %}</div>
+            {% else %}
+            {% if row.kind == 'rich' %}
+            <div class="tt-rich" data-key="{{ row.key }}"{% if not can_edit %} data-readonly="1"{% endif %}>
+                <div class="tt-rich-shell" data-placeholder="{{ target|language_name }}…">{{ row.translation|safe }}</div>
+            </div>
+            {% else %}
+            <textarea class="tt-field" rows="1" data-key="{{ row.key }}"{% if row.cap %} maxlength="{{ row.cap }}"{% endif %}
+                      placeholder="{{ target|language_name }}…"{% if not can_edit %} readonly{% endif %}>{{ row.translation }}</textarea>
+            {% endif %}
+            {% if row.status == 'stale' %}
+            <div class="tt-stale-note"><i class="fas fa-history"></i> {% trans "The original text changed after this was translated. Check the translation and save it to clear this." %}</div>
+            {% endif %}
+            {% if can_edit and row.count > 1 %}
+            <div class="tt-row-tools"><button type="button" class="tt-link tt-split-btn"><i class="fas fa-code-branch"></i> {% trans "Translate separately" %}</button></div>
+            {% endif %}
+            {% endif %}
+            <div class="tt-saved" aria-live="polite"></div>
+        </td>
+    </tr>
+    {% for o in row.occurrences %}
+    <tr class="tt-row tt-sub tt-{{ o.status }}" id="row-{{ o.key }}" data-occ="{{ o.key }}">
+        <td class="tt-status"><span class="tt-dot"></span></td>
+        <td class="tt-where tt-sub-where"><a class="tt-el" href="{% include 'editor/partials/_translation_link.html' with occ=o %}">{{ o.where }}</a></td>
+        <td class="tt-src">{% if o.kind == 'rich' %}<div class="tt-src-rich">{{ o.shown_source|safe }}</div>{% else %}{{ o.shown_source }}{% endif %}</td>
+        <td class="tt-tr">
+            {% if o.kind == 'rich' %}
+            <div class="tt-rich" data-key="{{ o.key }}"{% if not can_edit %} data-readonly="1"{% endif %}><div class="tt-rich-shell" data-placeholder="{{ target|language_name }}…">{{ o.translation|safe }}</div></div>
+            {% else %}
+            <textarea class="tt-field" rows="1" data-key="{{ o.key }}"{% if o.cap %} maxlength="{{ o.cap }}"{% endif %}
+                      placeholder="{{ target|language_name }}…"{% if not can_edit %} readonly{% endif %}>{{ o.translation }}</textarea>
+            {% endif %}
+            {% if o.status == 'stale' %}<div class="tt-stale-note"><i class="fas fa-history"></i> {% trans "The original text changed after this was translated." %}</div>{% endif %}
+            <div class="tt-saved" aria-live="polite"></div>
+        </td>
+    </tr>
+    {% endfor %}
+    {% endwith %}
+</tbody>

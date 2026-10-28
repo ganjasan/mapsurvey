@@ -50,9 +50,10 @@ def _check_group_rule(rule, group, strict):
                    section=group.survey_section, order=group.order_number)
 
 
-def save_translations_for(group, survey, translations):
+def save_translations_for(group, survey, translations, record_all=()):
     save_translations(QuestionGroupTranslation, 'group', group, survey, translations,
-                      TRANSLATION_FIELDS, rich=('description',), caps=TRANSLATION_CAPS)
+                      TRANSLATION_FIELDS, rich=('description',), caps=TRANSLATION_CAPS,
+                      record_all=record_all)
 
 
 def bucket_items(section, parent_id, *, exclude=()):

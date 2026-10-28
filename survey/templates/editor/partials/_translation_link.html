@@ -1,0 +1,3 @@
+{% comment %}The Build-tab URL of one occurrence (change translation-table): the
+section, the question's modal, or the thank-you panel. Rendered inline inside an
+href, so no whitespace.{% endcomment %}{% spaceless %}{% url 'editor_survey_detail' survey.uuid %}{% if occ.link.panel %}?panel={{ occ.link.panel }}{% elif occ.link.question_id %}?section={{ occ.link.section_id }}&amp;question={{ occ.link.question_id }}&amp;lang={{ target }}{% elif occ.link.group_id %}?section={{ occ.link.section_id }}&amp;group={{ occ.link.group_id }}&amp;lang={{ target }}{% else %}?section={{ occ.link.section_id }}{% endif %}{% endspaceless %}

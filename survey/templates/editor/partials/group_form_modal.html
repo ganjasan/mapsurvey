@@ -1,4 +1,4 @@
-{% load i18n comment_utils %}{% comment %}
+{% load i18n comment_utils survey_filters %}{% comment %}
 The question group modal (change question-groups, #340), rendered into #questionModalBody.
 Every field autosaves (debounced POST to editor_group_edit with autosave=1, 422 JSON on an
 error — the typed-in form is never re-rendered); the "Respondent sees" pane re-renders the
@@ -75,13 +75,15 @@ the section list, never here. On close the section list is re-rendered (groupsCh
                 </div>
                 {% include "editor/partials/_visibility_block.html" %}
                 {% if visibility_enabled %}<small class="form-text text-muted" style="margin:-.5rem 0 1rem;">{% trans "Every question inside is hidden with the group. A question can add its own rule on top." %}</small>{% endif %}
+                {% if translation_rows %}
+                {% comment %}A read-only mirror (change translation-table): translations are
+                edited on the Translations tab; each field links to its row there.{% endcomment %}
+                <div class="tt-mirror-hint">{% trans "Translations are edited on the" %} <a href="{% url 'editor_survey_translations' survey.uuid %}">{% trans "Translations tab" %}</a>. {% trans "Click a field to open its row." %}</div>
+                {% endif %}
                 {% for row in translation_rows %}
-                <div class="form-group" data-group-translation="{{ row.lang }}">
+                <div class="form-group" data-group-translation="{{ row.lang }}" id="translations-{{ row.lang }}">
                     <label>{% blocktrans with lang=row.lang %}Translation ({{ lang }}){% endblocktrans %}</label>
-                    <input type="text" class="form-control form-control-sm mb-1" name="translation_{{ row.lang }}_title"
-                           value="{{ row.t.title|default:'' }}" placeholder="{% trans 'Name' %}" {% if is_read_only %}disabled{% endif %}>
-                    <textarea class="form-control form-control-sm" rows="2" name="translation_{{ row.lang }}_description"
-                              placeholder="{% trans 'Description' %}" {% if is_read_only %}disabled{% endif %}>{{ row.t.description|default:'' }}</textarea>
+                    {% translation_mirror group survey row.lang %}
                 </div>
                 {% endfor %}
                 <div class="form-group">

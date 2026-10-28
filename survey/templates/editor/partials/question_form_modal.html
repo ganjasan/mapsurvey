@@ -533,7 +533,7 @@
                         {% if survey.available_languages|length > 1 %}
                             {# One column per language; the first is the primary and doubles as the base text. No separate "default" column — it silently lost edits. #}
                             {% for lang in survey.available_languages %}
-                            <th {% if forloop.first %}title="{% trans 'Primary language' %}"{% endif %}>{{ lang|upper }}{% if forloop.first %} ({{ lang|language_name }}){% endif %}</th>
+                            <th {% if forloop.first %}title="{% trans 'Primary language' %}"{% else %}title="{% trans 'Edited on the Translations tab' %}"{% endif %}>{{ lang|upper }}{% if forloop.first %} ({{ lang|language_name }}){% else %} <i class="fas fa-external-link-alt" style="font-size:.65rem;color:#9ca3af;"></i>{% endif %}</th>
                             {% endfor %}
                         {% else %}
                         <th>{% trans "Name" %}</th>
@@ -647,22 +647,14 @@
                 <i class="fas fa-chevron-right"></i> {% trans "Translations" %}
             </button>
             <div class="translations-body">
+                {% comment %}A read-only mirror (change translation-table): translations are
+                edited on the Translations tab, each field links to its row there. A new
+                question has no code yet, so its links open the tab's top.{% endcomment %}
+                <div class="tt-mirror-hint">{% trans "Translations are edited on the" %} <a href="{% url 'editor_survey_translations' survey.uuid %}">{% trans "Translations tab" %}</a>. {% trans "Click a field to open its row." %}</div>
                 {% for lang in survey.available_languages|slice:"1:" %}
-                <fieldset style="margin-bottom:0.5rem;">
+                <fieldset style="margin-bottom:0.5rem;" id="translations-{{ lang }}">
                     <legend>{{ lang|upper }}</legend>
-                    <div class="form-group">
-                        <label style="font-size:0.8rem;">{% trans "Name" %} ({{ lang }})</label>
-                        <input type="text" name="translation_{{ lang }}_name" class="form-control form-control-sm"
-                               value="{% if question %}{% for t in question.translations.all %}{% if t.language == lang %}{{ t.name|default:'' }}{% endif %}{% endfor %}{% endif %}">
-                    </div>
-                    <div class="form-group">
-                        <label style="font-size:0.8rem;" data-translation-subtext-label="{{ lang }}">{% trans "Subtext" %} ({{ lang }})</label>
-                        <input type="text" name="translation_{{ lang }}_subtext" class="form-control form-control-sm"
-                               value="{% if question %}{% for t in question.translations.all %}{% if t.language == lang %}{{ t.subtext|default:'' }}{% endif %}{% endfor %}{% endif %}">
-                        {% comment %}Formatted Text bodies are edited here too — same editor as the
-                        base language, writing into the input above.{% endcomment %}
-                        <div class="translation-quill-wrap" data-translation-quill="{{ lang }}" style="display:none;"></div>
-                    </div>
+                    {% translation_mirror question survey lang %}
                 </fieldset>
                 {% endfor %}
             </div>
@@ -762,6 +754,20 @@
 <script>
 (function() {
     var languages = {{ survey.available_languages|safe|default:"[]" }};
+    // Where a read-only translation cell of the choices table leads (change
+    // translation-table); a new question has no code yet and opens the tab's top.
+    var TT_URL = '{% url "editor_survey_translations" survey.uuid %}?to=';
+    var TT_QUESTION_PREFIX = {% if question and question.code %}'question:{{ question.code|escapejs }}'{% else %}''{% endif %};
+    document.addEventListener('click', function(evt) {
+        var cell = evt.target && evt.target.closest ? evt.target.closest('.choice-name-mirror') : null;
+        if (!cell) return;
+        evt.preventDefault();
+        var lang = cell.getAttribute('data-tt-lang');
+        var row = cell.closest('tr');
+        var codeInput = row ? row.querySelector('.choice-code') : null;
+        var code = codeInput ? codeInput.value : cell.getAttribute('data-tt-code');
+        window.location.href = TT_URL + lang + (TT_QUESTION_PREFIX ? '#row-' + TT_QUESTION_PREFIX + ':choice:' + code : '');
+    });
     // The first language is the primary; with fewer than two languages the
     // choices table has a single name column saved as a flat string.
     var multilingual = languages.length > 1;
@@ -1436,9 +1442,19 @@
             // One input per language, primary included — no separate "default"
             // column: it used to be silently discarded whenever any language
             // column was filled.
-            languages.forEach(function(lang) {
+            languages.forEach(function(lang, i) {
                 var v = langVals[lang] || '';
-                cells += '<td><input type="text" class="form-control form-control-sm choice-name-' + lang + '" value="' + v.replace(/"/g, '&quot;') + '"></td>';
+                if (i === 0) {
+                    cells += '<td><input type="text" class="form-control form-control-sm choice-name-' + lang + '" value="' + v.replace(/"/g, '&quot;') + '"></td>';
+                } else {
+                    // Translations are edited on the Translations tab (change
+                    // translation-table): the cell shows the stored name and a
+                    // click opens its row. The input is still read by
+                    // serializeChoices, so the stored value round-trips.
+                    cells += '<td><input type="text" class="form-control form-control-sm choice-name-' + lang + ' choice-name-mirror" readonly tabindex="-1"' +
+                             ' data-tt-lang="' + lang + '" data-tt-code="' + codeVal + '" title="Edited on the Translations tab"' +
+                             ' placeholder="missing — translate" value="' + v.replace(/"/g, '&quot;') + '"></td>';
+                }
             });
         } else {
             var flat = langVals[languages[0]] || langVals['default'] ||

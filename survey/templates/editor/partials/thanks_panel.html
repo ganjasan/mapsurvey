@@ -16,16 +16,21 @@
         <h6>{% trans "Message" %}</h6>
         <div class="pr-help" style="margin-top:0;margin-bottom:.6rem;">{% trans "Written just how respondents will see it — no HTML needed." %}</div>
         {% if langs|length > 1 %}
-        <div class="thanks-lang-tabs" style="display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.6rem;">
+        {# The other languages are edited on the Translations tab (change translation-table); each tab is a link to that row. #}
+        <div class="thanks-lang-tabs" style="display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.6rem;align-items:center;">
           {% for lang in langs %}
-          <button type="button" class="thanks-lang-tab{% if forloop.first %} active{% endif %}" data-lang="{{ lang }}">{{ lang|upper }}</button>
+          {% if forloop.first %}
+          <button type="button" class="thanks-lang-tab active" data-lang="{{ lang }}">{{ lang|upper }}</button>
+          {% else %}
+          <a class="thanks-lang-tab" href="{% url 'editor_survey_translations' survey.uuid %}?to={{ lang }}#row-survey:thanks"
+             title="{% trans 'Edited on the Translations tab' %}">{{ lang|upper }} <i class="fas fa-external-link-alt" style="font-size:.65rem;"></i></a>
+          {% endif %}
           {% endfor %}
+          <small class="pr-help" style="margin-left:.4rem;">{% trans "Other languages are edited on the Translations tab." %}</small>
         </div>
         {% endif %}
         <div id="thanks-quill"></div>
-        {% for lang in langs %}
-        <input type="hidden" name="thanks_{{ lang }}" id="thanks-input-{{ lang }}">
-        {% endfor %}
+        <input type="hidden" name="thanks_{{ langs.0 }}" id="thanks-input-{{ langs.0 }}">
         <div class="autosave-status" data-autosave-status style="margin-top:.6rem;"><i class="fas fa-check"></i> <span>{% trans "Changes save automatically" %}</span></div>
         <noscript><button type="submit" class="btn btn-primary btn-sm mt-2">{% trans "Save" %}</button></noscript>
       </div>

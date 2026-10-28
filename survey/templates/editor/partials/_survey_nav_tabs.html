@@ -3,7 +3,7 @@
 Workspace navigation for survey-management pages (Variant A "lifecycle").
 Three spaces (Survey / Responses / Public results) + action dropdowns
 (Share / Preview) + a gear that opens the in-Survey settings panel.
-The active_tab codes ("build"|"results"|"publish") are internal and unchanged;
+The active_tab codes ("build"|"translations"|"results"|"publish") are internal and unchanged;
 only the visible labels were renamed — "Responses" and "Public results" no
 longer both read as "results", and "Survey" no longer collides with the
 survey's own "Publish — open for responses" lifecycle action.
@@ -25,6 +25,11 @@ Public results tab. The tabs carry colored status dots instead.{% endcomment %}
     <a href="{% url 'editor_survey_detail' survey.uuid %}"
        class="survey-nav-tab{% if active_tab == 'build' %} active{% endif %}" title="{% trans 'Build the survey — sections, questions & settings' %}">
         <i class="fas fa-hammer"></i> {% trans "Survey" %}{% if MOBILE_EDITOR_NAV %} <i class="tabdot td-{{ survey.status }}"></i>{% endif %}
+    </a>
+    {# Translations tab (change translation-table): always shown; the page itself explains a single-language survey. #}
+    <a href="{% url 'editor_survey_translations' survey.uuid %}"
+       class="survey-nav-tab{% if active_tab == 'translations' %} active{% endif %}" title="{% trans 'Translate the survey — every text once, in one table' %}">
+        <i class="fas fa-language"></i> {% trans "Translations" %}
     </a>
     <a href="{% url 'editor_survey_analytics' survey.uuid %}"
        class="survey-nav-tab{% if active_tab == 'results' %} active{% endif %}" title="{% trans 'Responses & analysis' %}">

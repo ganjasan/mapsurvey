@@ -1,0 +1,150 @@
+{% extends "editor/editor_base.html" %}
+{% load i18n %}
+{% load static %}
+{% load survey_filters %}
+{% block page_title %}{% trans "Translations" %} – {{ survey.name }}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/translation_table.css' %}{% if debug %}?t={% now 'U' %}{% endif %}">
+{% endblock %}
+
+{% block navbar_content %}
+{% survey_title survey %}
+{% include "editor/partials/_survey_nav_tabs.html" with active_tab="translations" %}
+{% endblock %}
+
+{% block content %}
+<div class="tt-page" id="translations"
+     data-survey="{{ survey.uuid }}"
+     data-save-url="{% url 'editor_survey_translation_save' survey.uuid %}"
+     data-add-url="{% url 'editor_survey_translation_add_language' survey.uuid %}"
+     data-page-url="{% url 'editor_survey_translations' survey.uuid %}"
+     data-from="{{ source|default:'' }}" data-to="{{ target|default:'' }}"
+     data-can-edit="{% if can_edit %}1{% else %}0{% endif %}">
+
+{% if rows is None %}
+    {# ── One language only ─────────────────────────────────────────── #}
+    <div class="tt-empty">
+        <i class="fas fa-language"></i>
+        <h3>{% blocktrans with lang=primary|language_name %}This survey is in {{ lang }} only{% endblocktrans %}</h3>
+        <p>{% trans "Add a second language and every title, question, option and the thank-you page will appear here, ready to translate — in this table or through a CSV for an outside translator." %}</p>
+        {% if is_owner %}
+        <div class="tt-add-inline">
+            <input type="hidden" id="id_available_languages" value='{{ languages_json }}'>
+            {% include "editor/partials/language_picker.html" %}
+            <div class="tt-note">{% trans "The same list as Survey settings. Only the languages setting changes." %}</div>
+        </div>
+        {% else %}
+        <p class="tt-note">{% trans "The workspace owner adds languages in Survey settings." %}</p>
+        {% endif %}
+    </div>
+{% else %}
+    <div class="tt-head">
+        <div>
+            <h1>{% trans "Translations" %}</h1>
+            <p class="tt-lead">{% trans "Every text of the survey once, in the order respondents see it. One translation fills every place the same text is used." %}
+                {% if HELP_URL.translate %}<a href="{{ HELP_URL.translate }}" target="_blank" rel="noopener">{% trans "Learn more" %}</a>{% endif %}</p>
+        </div>
+        <div class="tt-actions">
+            <form method="get" class="tt-langs" id="tt-langs">
+                <i class="fas fa-language"></i>
+                <select name="from" title="{% trans 'Source column' %}">
+                    {% for code in languages %}<option value="{{ code }}"{% if code == source %} selected{% endif %}>{{ code|language_name }}{% if code == primary %} · {% trans "primary" %}{% endif %}</option>{% endfor %}
+                </select>
+                <span class="tt-arrow">→</span>
+                <select name="to" title="{% trans 'Target column' %}" id="tt-to">
+                    {% for code in targets %}<option value="{{ code }}"{% if code == target %} selected{% endif %}>{{ code|language_name }} ({{ code }})</option>{% endfor %}
+                    {% if is_owner %}<option disabled>──────</option><option value="__add__">+ {% trans "Add language…" %}</option>{% endif %}
+                </select>
+            </form>
+            <a class="tt-btn" href="{{ export_url }}"><i class="fas fa-download"></i> {% trans "Export CSV" %}</a>
+            {% if can_edit %}<button type="button" class="tt-btn" id="tt-import-btn"><i class="fas fa-upload"></i> {% trans "Import CSV" %}</button>{% endif %}
+        </div>
+    </div>
+
+    {% if is_owner %}
+    <div class="tt-add" id="tt-add" hidden>
+        <div class="tt-add-title">{% trans "Add a language" %} <button type="button" class="tt-link" id="tt-add-close"><i class="fas fa-times"></i></button></div>
+        <input type="hidden" id="id_available_languages" value='{{ languages_json }}'>
+        {% include "editor/partials/language_picker.html" %}
+        <div class="tt-note">{% trans "Adds the language to Survey settings. Removing one stays there." %}</div>
+    </div>
+    {% elif effective_role == 'editor' %}
+    <div class="tt-note tt-note-top">{% trans "The workspace owner adds languages in Survey settings." %}</div>
+    {% endif %}
+
+    {% if content_locked %}
+    <div class="tt-report tt-report-warn"><i class="fas fa-lock"></i>
+        <div>{% trans "This survey has unpublished changes. Translations are edited there, so that publishing them does not overwrite the edit." %}</div></div>
+    {% elif is_live and can_edit %}
+    <div class="tt-live"><i class="fas fa-broadcast-tower"></i> {% trans "This survey is live: a saved translation reaches respondents at once." %}</div>
+    {% endif %}
+
+    {% if import_report %}
+    <div class="tt-report{% if import_report.error %} tt-report-warn{% endif %}">
+        <i class="fas fa-file-csv"></i>
+        <div>
+            {% if import_report.error %}{{ import_report.error }}{% else %}
+            <b>{% blocktrans with name=import_report.file %}{{ name }} imported.{% endblocktrans %}</b>
+            {% blocktrans with filled=import_report.filled overwritten=import_report.overwritten skipped=import_report.skipped unmatched=import_report.unmatched_total %}{{ filled }} filled · {{ overwritten }} overwritten · {{ skipped }} skipped (already translated) · {{ unmatched }} unmatched{% endblocktrans %}
+            {% if import_report.unmatched %}
+            <ul>{% for text in import_report.unmatched %}<li>{% trans "Not found in the survey:" %} “{{ text|truncatechars:120 }}”</li>{% endfor %}
+                {% if import_report.unmatched_total > import_report.unmatched|length %}<li>…</li>{% endif %}</ul>
+            {% endif %}
+            {% endif %}
+        </div>
+        <button type="button" class="tt-link tt-close" onclick="this.parentNode.remove()"><i class="fas fa-times"></i></button>
+    </div>
+    {% endif %}
+
+    <div class="tt-status-bar">
+        <button type="button" class="tt-chip on" data-filter="all"><b>{% trans "All" %}</b> <span data-count="all">{{ rows|length }}</span></button>
+        <button type="button" class="tt-chip" data-filter="missing"><span class="tt-dot tt-dot-missing"></span> {% trans "Missing" %} <b data-count="missing">{{ counts.missing }}</b></button>
+        <button type="button" class="tt-chip" data-filter="stale"><span class="tt-dot tt-dot-stale"></span> {% trans "Outdated" %} <b data-count="stale">{{ counts.stale }}</b></button>
+        <button type="button" class="tt-chip" data-filter="translated"><span class="tt-dot tt-dot-ok"></span> {% trans "Translated" %} <b data-count="translated">{{ counts.translated }}</b></button>
+        <span class="tt-state autosave-indicator" id="tt-state" data-state="idle"></span>
+    </div>
+
+    <table class="tt-table">
+        <thead><tr>
+            <th class="tt-status"></th>
+            <th class="tt-where">{% trans "Where" %}</th>
+            <th class="tt-src">{{ source|language_name }}{% if source == primary %} <span class="tt-th-note">· {% trans "primary" %}</span>{% endif %}</th>
+            <th class="tt-tr">{{ target|language_name }}</th>
+        </tr></thead>
+        {% regroup rows by first.page as pages %}
+        {% for page in pages %}
+        <tbody class="tt-page-row"><tr><td colspan="4">
+            <i class="fas {% if page.list.0.first.entity_kind == 'survey' %}fa-flag-checkered{% else %}fa-file-alt{% endif %}"></i>
+            {{ page.list.0.first.page_title }}
+            {% if page.list.0.first.entity_kind != 'survey' %}<a class="tt-goto" href="{% url 'editor_survey_detail' survey.uuid %}?section={{ page.list.0.first.link.section_id }}"><i class="fas fa-external-link-alt"></i> {% trans "Open in editor" %}</a>
+            {% else %}<a class="tt-goto" href="{% url 'editor_survey_detail' survey.uuid %}?panel=thanks"><i class="fas fa-external-link-alt"></i> {% trans "Open in editor" %}</a>{% endif %}
+        </td></tr></tbody>
+        {% for row in page.list %}{% include "editor/partials/translation_row.html" %}{% endfor %}
+        {% endfor %}
+    </table>
+
+    {% if can_edit %}
+    <div class="tt-modal-backdrop" id="tt-import" hidden>
+        <form class="tt-modal" method="post" enctype="multipart/form-data" action="{% url 'editor_survey_translations_import' survey.uuid %}">
+            {% csrf_token %}
+            <input type="hidden" name="from" value="{{ source }}"><input type="hidden" name="to" value="{{ target }}">
+            <h3>{% blocktrans with lang=target|language_name %}Import {{ lang }} translations{% endblocktrans %}</h3>
+            <p>{% trans "A CSV in the layout of the export: a key column, or at least source and translation columns. Rows are matched by key, then by the source text. Only the translation column is read — the original stays as it is in the survey." %}</p>
+            <input type="file" name="file" accept=".csv,text/csv" required>
+            <label><input type="checkbox" name="overwrite" value="1"> {% trans "Overwrite translations that already exist" %}</label>
+            <p class="tt-note"><i class="fas fa-info-circle"></i> {% trans "Bold and other formatting inside a paragraph does not travel through CSV — fix those rows here afterwards." %}</p>
+            <div class="tt-modal-foot">
+                <button type="button" class="tt-btn" id="tt-import-cancel">{% trans "Cancel" %}</button>
+                <button type="submit" class="tt-btn tt-btn-primary"><i class="fas fa-upload"></i> {% trans "Import" %}</button>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+{% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/translation_table.js' %}{% if debug %}?t={% now 'U' %}{% endif %}"></script>
+{% endblock %}

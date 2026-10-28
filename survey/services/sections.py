@@ -31,10 +31,10 @@ def ordered(survey):
     return chain
 
 
-def save_translations_for(section, survey, translations):
+def save_translations_for(section, survey, translations, record_all=()):
     save_translations(
         SurveySectionTranslation, 'section', section, survey, translations,
-        TRANSLATION_FIELDS, rich=('subheading',), caps={'next_label': 30})
+        TRANSLATION_FIELDS, rich=('subheading',), caps={'next_label': 30}, record_all=record_all)
 
 
 @transaction.atomic

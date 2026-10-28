@@ -362,6 +362,19 @@
         #questionModal .ql-picker-options { z-index: 3; }
         .thanks-lang-tab { border: 1px solid var(--border-color); background: #fff; color: #6b7280; border-radius: 6px; padding: .2rem .6rem; font-size: .8rem; cursor: pointer; }
         .thanks-lang-tab.active { border-color: var(--accent); background: var(--accent-light); color: var(--accent); font-weight: 500; }
+        a.thanks-lang-tab { text-decoration: none; }
+        a.thanks-lang-tab:hover { color: var(--accent); border-color: #c7d2fe; }
+
+        /* Read-only translation mirrors in the modals (change translation-table):
+           the stored text, linking to its row on the Translations tab. */
+        .tt-mirror-hint { font-size: .76rem; color: #6b7280; margin-bottom: .5rem; }
+        .tt-mirror { display: block; width: 100%; border: 1px solid var(--border-color); border-radius: 6px; padding: .3rem .55rem; font-size: .86rem; background: #f3f4f6; color: #374151; text-decoration: none; cursor: pointer; line-height: 1.4; }
+        .tt-mirror:hover { border-color: var(--accent); color: var(--accent); background: #fff; text-decoration: none; }
+        .tt-mirror i { font-size: .65rem; color: #9ca3af; margin-left: .3rem; }
+        .tt-mirror-empty { color: #dc2626; font-style: italic; background: #fef2f2; border-color: #fecaca; }
+        .choice-name-mirror { background: #f3f4f6 !important; cursor: pointer; }
+        .choice-name-mirror:hover { border-color: var(--accent) !important; }
+        .choice-name-mirror::placeholder { color: #dc2626; font-style: italic; }
         .pr-scroll { padding: 1.25rem 1.5rem; }
         .pr-card { background: #fff; border: 1px solid var(--border-color); border-radius: var(--radius); padding: 1.1rem 1.25rem; margin-bottom: 1.1rem; }
         .pr-card h6 { font-weight: 600; font-size: .95rem; margin: 0 0 .9rem; }

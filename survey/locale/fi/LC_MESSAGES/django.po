@@ -8793,3 +8793,271 @@ msgstr "Uusi luonnos samoilla kysymyksillä, asetuksilla ja karttatasoilla, ilma
 #: api/templates/api/connections.html
 msgid "Use your AI assistant — connect Claude, ChatGPT or another assistant"
 msgstr "Käytä omaa tekoälyavustajaasi — yhdistä Claude, ChatGPT tai muu avustaja"
+
+#: survey/templates/editor/partials/_survey_nav_tabs.html
+msgid "Translate the survey — every text once, in one table"
+msgstr "Käännä kysely — jokainen teksti kerran, yhdessä taulukossa"
+
+#: survey/templates/editor/survey_translations.html
+msgid "This survey is in %(lang)s only"
+msgstr "Tämä kysely on vain kielellä %(lang)s"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Add a second language and every title, question, option and the thank-you page will appear here, ready to translate — in this table or through a CSV for an outside translator."
+msgstr "Lisää toinen kieli, niin jokainen otsikko, kysymys, vaihtoehto ja kiitossivu ilmestyvät tähän käännettäviksi — tässä taulukossa tai CSV-tiedostona ulkopuoliselle kääntäjälle."
+
+#: survey/templates/editor/survey_translations.html
+msgid "The same list as Survey settings. Only the languages setting changes."
+msgstr "Sama luettelo kuin kyselyn asetuksissa. Vain kieliasetus muuttuu."
+
+#: survey/templates/editor/survey_translations.html
+msgid "The workspace owner adds languages in Survey settings."
+msgstr "Työtilan omistaja lisää kielet kyselyn asetuksissa."
+
+#: survey/templates/editor/survey_translations.html
+msgid "Every text of the survey once, in the order respondents see it. One translation fills every place the same text is used."
+msgstr "Jokainen kyselyn teksti kerran, siinä järjestyksessä kuin vastaajat sen näkevät. Yksi käännös täyttää jokaisen kohdan, jossa samaa tekstiä käytetään."
+
+#: survey/templates/editor/survey_translations.html
+msgid "Learn more"
+msgstr "Lue lisää"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Source column"
+msgstr "Lähdesarake"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Target column"
+msgstr "Kohdesarake"
+
+#: survey/templates/editor/survey_translations.html
+msgid "primary"
+msgstr "ensisijainen"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Add language…"
+msgstr "Lisää kieli…"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Export CSV"
+msgstr "Vie CSV"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Import CSV"
+msgstr "Tuo CSV"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Add a language"
+msgstr "Lisää kieli"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Adds the language to Survey settings. Removing one stays there."
+msgstr "Lisää kielen kyselyn asetuksiin. Poistaminen tapahtuu edelleen siellä."
+
+#: survey/templates/editor/survey_translations.html
+msgid "This survey has unpublished changes. Translations are edited there, so that publishing them does not overwrite the edit."
+msgstr "Tässä kyselyssä on julkaisemattomia muutoksia. Käännöksiä muokataan siellä, jotta julkaisu ei ylikirjoita muokkausta."
+
+#: survey/templates/editor/survey_translations.html
+msgid "This survey is live: a saved translation reaches respondents at once."
+msgstr "Tämä kysely on käynnissä: tallennettu käännös näkyy vastaajille heti."
+
+#: survey/templates/editor/survey_translations.html
+msgid "%(name)s imported."
+msgstr "%(name)s tuotu."
+
+#: survey/templates/editor/survey_translations.html
+msgid "%(filled)s filled · %(overwritten)s overwritten · %(skipped)s skipped (already translated) · %(unmatched)s unmatched"
+msgstr "%(filled)s täytetty · %(overwritten)s korvattu · %(skipped)s ohitettu (jo käännetty) · %(unmatched)s ilman vastinetta"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Not found in the survey:"
+msgstr "Ei löytynyt kyselystä:"
+
+#: survey/templates/editor/survey_translations.html
+msgid "All"
+msgstr "Kaikki"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Missing"
+msgstr "Puuttuu"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Outdated"
+msgstr "Vanhentunut"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Translated"
+msgstr "Käännetty"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Where"
+msgstr "Missä"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Open in editor"
+msgstr "Avaa editorissa"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Import %(lang)s translations"
+msgstr "Tuo käännökset kielelle %(lang)s"
+
+#: survey/templates/editor/survey_translations.html
+msgid "A CSV in the layout of the export: a key column, or at least source and translation columns. Rows are matched by key, then by the source text. Only the translation column is read — the original stays as it is in the survey."
+msgstr "CSV viennin muodossa: key-sarake tai vähintään source- ja translation-sarakkeet. Rivit yhdistetään avaimen, sitten lähdetekstin perusteella. Vain käännössarake luetaan — alkuperäinen pysyy kyselyssä ennallaan."
+
+#: survey/templates/editor/survey_translations.html
+msgid "Overwrite translations that already exist"
+msgstr "Korvaa jo olemassa olevat käännökset"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Bold and other formatting inside a paragraph does not travel through CSV — fix those rows here afterwards."
+msgstr "Lihavointi ja muu kappaleen sisäinen muotoilu ei siirry CSV:n kautta — korjaa ne rivit täällä jälkikäteen."
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Open in the editor"
+msgstr "Näytä editorissa"
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Used in several places — click to list them"
+msgstr "Käytössä useassa paikassa — napsauta nähdäksesi ne"
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Shown in the primary language — no translation in the source language yet."
+msgstr "Näytetään ensisijaisella kielellä — lähdekielellä ei ole vielä käännöstä."
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Translated separately — the text is the same, the context is not."
+msgstr "Käännetty erikseen — teksti on sama, asiayhteys ei."
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Use one translation"
+msgstr "Käytä yhtä käännöstä"
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "The original text changed after this was translated. Check the translation and save it to clear this."
+msgstr "Alkuperäinen teksti muuttui käännöksen jälkeen. Tarkista käännös ja tallenna se poistaaksesi merkinnän."
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "The original text changed after this was translated."
+msgstr "Alkuperäinen teksti muuttui käännöksen jälkeen."
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Translate separately"
+msgstr "Käännä erikseen"
+
+#: survey/templates/editor/partials/_translation_mirror.html
+msgid "Edited on the Translations tab"
+msgstr "Muokataan Käännökset-välilehdellä"
+
+#: survey/templates/editor/partials/_translation_mirror.html
+msgid "missing — translate"
+msgstr "puuttuu — käännä"
+
+#: survey/templates/editor/partials/_translation_mirror.html
+msgid "Translations are edited on the"
+msgstr "Käännöksiä muokataan"
+
+#: survey/templates/editor/partials/_translation_mirror.html
+msgid "Translations tab"
+msgstr "Käännökset-välilehdellä"
+
+#: survey/templates/editor/partials/_translation_mirror.html
+msgid "Click a field to open its row."
+msgstr "Napsauta kenttää avataksesi sen rivin."
+
+#: survey/templates/editor/partials/thanks_panel.html
+msgid "Other languages are edited on the Translations tab."
+msgstr "Muut kielet muokataan Käännökset-välilehdellä."
+
+#: survey/translation_table.py
+msgid "Page %(n)s: %(title)s"
+msgstr "Sivu %(n)s: %(title)s"
+
+#: survey/translation_table.py
+msgid "Page %(n)s"
+msgstr "Sivu %(n)s"
+
+#: survey/translation_table.py
+msgid "Page title"
+msgstr "Sivun otsikko"
+
+#: survey/translation_table.py
+msgid "Page intro"
+msgstr "Sivun johdanto"
+
+#: survey/translation_table.py
+msgid "Next button"
+msgstr "Seuraava-painike"
+
+#: survey/translation_table.py
+msgid "Group: %(title)s"
+msgstr "Ryhmä: %(title)s"
+
+#: survey/translation_table.py
+msgid "(untitled)"
+msgstr "(ei otsikkoa)"
+
+#: survey/translation_table.py
+msgid "Group title"
+msgstr "Ryhmän otsikko"
+
+#: survey/translation_table.py
+msgid "Group description"
+msgstr "Ryhmän kuvaus"
+
+#: survey/translation_table.py
+msgid "description"
+msgstr "kuvaus"
+
+#: survey/translation_table.py
+msgid "Formatted text"
+msgstr "Muotoiltu teksti"
+
+#: survey/translation_table.py
+msgid "%(q)s help text"
+msgstr "%(q)s ohjeteksti"
+
+#: survey/translation_table.py
+msgid "Question %(n)s"
+msgstr "Kysymys %(n)s"
+
+#: survey/translation_table.py
+msgid "Sub-question %(n)s"
+msgstr "Alakysymys %(n)s"
+
+#: survey/translation_table.py
+msgid "%(q)s option"
+msgstr "%(q)s vaihtoehto"
+
+#: survey/translation_table.py
+msgid "Thank-you page"
+msgstr "Kiitossivu"
+
+#: survey/translation_views.py
+msgid "Could not save."
+msgstr "Tallennus epäonnistui."
+
+#: survey/translation_views.py
+msgid "This text is no longer in the survey. Reload the page."
+msgstr "Tätä tekstiä ei enää ole kyselyssä. Lataa sivu uudelleen."
+
+#: survey/translation_views.py
+msgid "Saved, but the row could not be re-rendered. Reload the page."
+msgstr "Tallennettu, mutta riviä ei voitu näyttää uudelleen. Lataa sivu uudelleen."
+
+#: survey/translation_views.py
+msgid "Choose a CSV file first."
+msgstr "Valitse ensin CSV-tiedosto."
+
+#: survey/translation_views.py
+msgid "Pick a language from the list."
+msgstr "Valitse kieli luettelosta."
+
+#: survey/translation_views.py
+msgid "Could not add the language."
+msgstr "Kielen lisääminen epäonnistui."
+
+#: survey/templatetags/survey_filters.py
+msgid "Description"
+msgstr "Kuvaus"

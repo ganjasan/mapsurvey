@@ -561,15 +561,26 @@ class GroupEditorTest(TestCase):
     def test_translation_saved_and_coerced(self):
         """
         GIVEN a bilingual survey
-        WHEN the modal posts a Portuguese title and a description with a script
-        THEN the translation row holds the title and a script-free description
+        WHEN the modal posts a Portuguese title (ignored: the modal is a read-only
+             mirror since change translation-table) and the Translations tab
+             writes a title and a description with a script
+        THEN the modal post creates no row, and the tab's row holds the title and
+             a script-free description
         """
+        from survey import translation_table as tt
+        from survey.services.context import Actor
+
         self.survey.available_languages = ["en", "pt"]
         self.survey.save()
-        g = QuestionGroup.objects.create(survey_section=self.section, title="Visit")
+        g = QuestionGroup.objects.create(survey_section=self.section, title="Visit", code="G_VISIT",
+                                         description="<p>Tell us</p>")
         self.client.post(f"{self.base}/groups/{g.id}/edit/", {
-            "autosave": "1", "title": "Visit", "display_style": "card",
+            "autosave": "1", "title": "Visit", "description": "<p>Tell us</p>", "display_style": "card",
             "translation_pt_title": "Visita", "translation_pt_description": "<script>x</script>ok"})
+        self.assertFalse(QuestionGroupTranslation.objects.filter(group=g, language="pt").exists())
+        report = tt.apply(Actor(user=self.user), self.survey, "pt", {
+            "group:G_VISIT:title": "Visita", "group:G_VISIT:description": "<script>x</script>ok"})
+        self.assertEqual((report.filled, report.unmatched), (2, []))
         t = QuestionGroupTranslation.objects.get(group=g, language="pt")
         self.assertEqual(t.title, "Visita")
         self.assertNotIn("<script", t.description)

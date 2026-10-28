@@ -8812,3 +8812,271 @@ msgstr "Draf baru dengan pertanyaan, pengaturan, dan lapisan peta yang sama, tan
 #: api/templates/api/connections.html
 msgid "Use your AI assistant — connect Claude, ChatGPT or another assistant"
 msgstr "Gunakan asisten AI Anda — hubungkan Claude, ChatGPT, atau asisten lain"
+
+#: survey/templates/editor/partials/_survey_nav_tabs.html
+msgid "Translate the survey — every text once, in one table"
+msgstr "Terjemahkan survei — setiap teks sekali, dalam satu tabel"
+
+#: survey/templates/editor/survey_translations.html
+msgid "This survey is in %(lang)s only"
+msgstr "Survei ini hanya dalam bahasa %(lang)s"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Add a second language and every title, question, option and the thank-you page will appear here, ready to translate — in this table or through a CSV for an outside translator."
+msgstr "Tambahkan bahasa kedua dan setiap judul, pertanyaan, pilihan, serta halaman terima kasih akan muncul di sini, siap diterjemahkan — di tabel ini atau melalui CSV untuk penerjemah luar."
+
+#: survey/templates/editor/survey_translations.html
+msgid "The same list as Survey settings. Only the languages setting changes."
+msgstr "Daftar yang sama seperti di pengaturan survei. Hanya pengaturan bahasa yang berubah."
+
+#: survey/templates/editor/survey_translations.html
+msgid "The workspace owner adds languages in Survey settings."
+msgstr "Pemilik ruang kerja menambahkan bahasa di pengaturan survei."
+
+#: survey/templates/editor/survey_translations.html
+msgid "Every text of the survey once, in the order respondents see it. One translation fills every place the same text is used."
+msgstr "Setiap teks survei sekali, dalam urutan yang dilihat responden. Satu terjemahan mengisi setiap tempat teks yang sama digunakan."
+
+#: survey/templates/editor/survey_translations.html
+msgid "Learn more"
+msgstr "Pelajari lebih lanjut"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Source column"
+msgstr "Kolom sumber"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Target column"
+msgstr "Kolom tujuan"
+
+#: survey/templates/editor/survey_translations.html
+msgid "primary"
+msgstr "utama"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Add language…"
+msgstr "Tambah bahasa…"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Export CSV"
+msgstr "Ekspor CSV"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Import CSV"
+msgstr "Impor CSV"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Add a language"
+msgstr "Tambahkan bahasa"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Adds the language to Survey settings. Removing one stays there."
+msgstr "Menambahkan bahasa ke pengaturan survei. Menghapusnya tetap dilakukan di sana."
+
+#: survey/templates/editor/survey_translations.html
+msgid "This survey has unpublished changes. Translations are edited there, so that publishing them does not overwrite the edit."
+msgstr "Survei ini memiliki perubahan yang belum diterbitkan. Terjemahan diedit di sana, agar penerbitannya tidak menimpa suntingan."
+
+#: survey/templates/editor/survey_translations.html
+msgid "This survey is live: a saved translation reaches respondents at once."
+msgstr "Survei ini sedang berjalan: terjemahan yang disimpan langsung sampai ke responden."
+
+#: survey/templates/editor/survey_translations.html
+msgid "%(name)s imported."
+msgstr "%(name)s diimpor."
+
+#: survey/templates/editor/survey_translations.html
+msgid "%(filled)s filled · %(overwritten)s overwritten · %(skipped)s skipped (already translated) · %(unmatched)s unmatched"
+msgstr "%(filled)s terisi · %(overwritten)s ditimpa · %(skipped)s dilewati (sudah diterjemahkan) · %(unmatched)s tidak cocok"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Not found in the survey:"
+msgstr "Tidak ditemukan dalam survei:"
+
+#: survey/templates/editor/survey_translations.html
+msgid "All"
+msgstr "Semua"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Missing"
+msgstr "Belum ada"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Outdated"
+msgstr "Sudah usang"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Translated"
+msgstr "Sudah diterjemahkan"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Where"
+msgstr "Di mana"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Open in editor"
+msgstr "Buka di editor"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Import %(lang)s translations"
+msgstr "Impor terjemahan %(lang)s"
+
+#: survey/templates/editor/survey_translations.html
+msgid "A CSV in the layout of the export: a key column, or at least source and translation columns. Rows are matched by key, then by the source text. Only the translation column is read — the original stays as it is in the survey."
+msgstr "CSV dalam tata letak ekspor: kolom key, atau setidaknya kolom source dan translation. Baris dicocokkan berdasarkan kunci, lalu berdasarkan teks sumber. Hanya kolom terjemahan yang dibaca — teks asli tetap seperti di survei."
+
+#: survey/templates/editor/survey_translations.html
+msgid "Overwrite translations that already exist"
+msgstr "Timpa terjemahan yang sudah ada"
+
+#: survey/templates/editor/survey_translations.html
+msgid "Bold and other formatting inside a paragraph does not travel through CSV — fix those rows here afterwards."
+msgstr "Huruf tebal dan format lain di dalam paragraf tidak terbawa lewat CSV — perbaiki baris tersebut di sini setelahnya."
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Open in the editor"
+msgstr "Lihat di editor"
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Used in several places — click to list them"
+msgstr "Dipakai di beberapa tempat — klik untuk melihat daftarnya"
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Shown in the primary language — no translation in the source language yet."
+msgstr "Ditampilkan dalam bahasa utama — belum ada terjemahan dalam bahasa sumber."
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Translated separately — the text is the same, the context is not."
+msgstr "Diterjemahkan terpisah — teksnya sama, konteksnya tidak."
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Use one translation"
+msgstr "Gunakan satu terjemahan"
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "The original text changed after this was translated. Check the translation and save it to clear this."
+msgstr "Teks asli berubah setelah diterjemahkan. Periksa terjemahan dan simpan untuk menghapus tanda ini."
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "The original text changed after this was translated."
+msgstr "Teks asli berubah setelah diterjemahkan."
+
+#: survey/templates/editor/partials/translation_row.html
+msgid "Translate separately"
+msgstr "Terjemahkan terpisah"
+
+#: survey/templates/editor/partials/_translation_mirror.html
+msgid "Edited on the Translations tab"
+msgstr "Diedit di tab Terjemahan"
+
+#: survey/templates/editor/partials/_translation_mirror.html
+msgid "missing — translate"
+msgstr "belum ada — terjemahkan"
+
+#: survey/templates/editor/partials/_translation_mirror.html
+msgid "Translations are edited on the"
+msgstr "Terjemahan diedit di"
+
+#: survey/templates/editor/partials/_translation_mirror.html
+msgid "Translations tab"
+msgstr "tab Terjemahan"
+
+#: survey/templates/editor/partials/_translation_mirror.html
+msgid "Click a field to open its row."
+msgstr "Klik sebuah kolom untuk membuka barisnya."
+
+#: survey/templates/editor/partials/thanks_panel.html
+msgid "Other languages are edited on the Translations tab."
+msgstr "Bahasa lain diedit di tab Terjemahan."
+
+#: survey/translation_table.py
+msgid "Page %(n)s: %(title)s"
+msgstr "Halaman %(n)s: %(title)s"
+
+#: survey/translation_table.py
+msgid "Page %(n)s"
+msgstr "Halaman %(n)s"
+
+#: survey/translation_table.py
+msgid "Page title"
+msgstr "Judul halaman"
+
+#: survey/translation_table.py
+msgid "Page intro"
+msgstr "Pengantar halaman"
+
+#: survey/translation_table.py
+msgid "Next button"
+msgstr "Tombol Lanjut"
+
+#: survey/translation_table.py
+msgid "Group: %(title)s"
+msgstr "Grup: %(title)s"
+
+#: survey/translation_table.py
+msgid "(untitled)"
+msgstr "(tanpa judul)"
+
+#: survey/translation_table.py
+msgid "Group title"
+msgstr "Judul grup"
+
+#: survey/translation_table.py
+msgid "Group description"
+msgstr "Deskripsi grup"
+
+#: survey/translation_table.py
+msgid "description"
+msgstr "deskripsi"
+
+#: survey/translation_table.py
+msgid "Formatted text"
+msgstr "Teks berformat"
+
+#: survey/translation_table.py
+msgid "%(q)s help text"
+msgstr "%(q)s teks bantuan"
+
+#: survey/translation_table.py
+msgid "Question %(n)s"
+msgstr "Pertanyaan %(n)s"
+
+#: survey/translation_table.py
+msgid "Sub-question %(n)s"
+msgstr "Subpertanyaan %(n)s"
+
+#: survey/translation_table.py
+msgid "%(q)s option"
+msgstr "%(q)s pilihan"
+
+#: survey/translation_table.py
+msgid "Thank-you page"
+msgstr "Halaman terima kasih"
+
+#: survey/translation_views.py
+msgid "Could not save."
+msgstr "Tidak dapat menyimpan."
+
+#: survey/translation_views.py
+msgid "This text is no longer in the survey. Reload the page."
+msgstr "Teks ini sudah tidak ada di survei. Muat ulang halaman."
+
+#: survey/translation_views.py
+msgid "Saved, but the row could not be re-rendered. Reload the page."
+msgstr "Tersimpan, tetapi baris tidak dapat ditampilkan ulang. Muat ulang halaman."
+
+#: survey/translation_views.py
+msgid "Choose a CSV file first."
+msgstr "Pilih berkas CSV terlebih dahulu."
+
+#: survey/translation_views.py
+msgid "Pick a language from the list."
+msgstr "Pilih bahasa dari daftar."
+
+#: survey/translation_views.py
+msgid "Could not add the language."
+msgstr "Tidak dapat menambahkan bahasa."
+
+#: survey/templatetags/survey_filters.py
+msgid "Description"
+msgstr "Deskripsi"

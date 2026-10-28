@@ -88,7 +88,8 @@ def set_thanks(actor, survey, html_by_lang, *, show_on_thanks=None, languages=No
     if isinstance(existing, str):
         existing = {langs[0]: existing}
     thanks = {} if languages is None else {k: v for k, v in existing.items() if k in langs}
-    for lang in langs if languages is None else [lang for lang in languages if lang in langs]:
+    written = langs if languages is None else [lang for lang in languages if lang in langs]
+    for lang in written:
         cleaned = sanitize_creator_html(html_by_lang.get(lang, '') or '')
         if cleaned:
             thanks[lang] = cleaned
@@ -96,6 +97,13 @@ def set_thanks(actor, survey, html_by_lang, *, show_on_thanks=None, languages=No
             thanks.pop(lang, None)
     survey.thanks_html = thanks
     survey.save(update_fields=['thanks_html'])
+    # Source hashes (change translation-table) for the translated pages whose
+    # text changed; the primary page is the source.
+    from .. import translation_table
+    for lang in written:
+        if lang != langs[0] and thanks.get(lang, '') != existing.get(lang, ''):
+            translation_table.record_hashes(survey, lang, [
+                (translation_table.THANKS_KEY, thanks.get(langs[0], ''), translation_table.RICH, thanks.get(lang, ''))])
     locks.rescreen_if_live(survey)
     results_page = getattr(survey, 'public_results_page', None)
     if results_page is not None and show_on_thanks is not None:

@@ -1,5 +1,6 @@
 from django import template
 from django.conf import settings
+from django.utils.translation import gettext as _
 
 register = template.Library()
 
@@ -29,6 +30,43 @@ def section_missing_langs(section, survey):
     """Non-primary languages this section lacks translations for."""
     from ..translation_gaps import section_missing_languages
     return section_missing_languages(section, survey)
+
+
+@register.inclusion_tag('editor/partials/_translation_mirror.html')
+def translation_mirror(entity, survey, lang):
+    """The read-only translation fields of a section, question or group for
+    one language (change translation-table): the stored texts, each linking to
+    its row on the Translations tab. An unsaved entity links to the tab's top."""
+    from django.urls import reverse
+    from ..models import Question, QuestionGroup, SurveySection
+    from .. import translation_table as tt
+    base = reverse('editor_survey_translations', kwargs={'survey_uuid': survey.uuid}) + '?to=' + lang
+    if isinstance(entity, SurveySection):
+        spec = (('title', _('Title'), False), ('subheading', _('Subheading'), True), ('next_label', _('Button label'), False))
+        prefix = tt.section_prefix(entity) if entity.pk else ''
+    elif isinstance(entity, Question):
+        # A Formatted Text / Image block's name is an editor-only label and has
+        # no row on the tab (spec question-subtext).
+        spec = (('name', _('Name'), False), ('subtext', _('Subtext'), True))
+        if entity.input_type in tt.LABEL_ONLY_TYPES:
+            spec = spec[1:]
+        prefix = tt.question_prefix(entity) if entity.pk and entity.code else ''
+    elif isinstance(entity, QuestionGroup):
+        spec = (('title', _('Name'), False), ('description', _('Description'), True))
+        prefix = tt.group_prefix(entity) if entity.pk and entity.code else ''
+    else:
+        spec, prefix = (), ''
+    # A new question/group renders the modal without an instance (an empty
+    # string in the template context), so nothing to read yet.
+    row = entity.translations.filter(language=lang).first() if getattr(entity, 'pk', None) else None
+    anchor = prefix.replace('#', '%23')
+    fields = [{
+        'label': '%s (%s)' % (label, lang),
+        'value': (getattr(row, field, None) or '') if row is not None else '',
+        'rich': rich,
+        'href': '%s#row-%s:%s' % (base, anchor, field) if anchor else base,
+    } for field, label, rich in spec]
+    return {'fields': fields, 'page_href': base}
 
 
 @register.filter

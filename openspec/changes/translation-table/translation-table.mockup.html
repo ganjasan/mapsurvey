@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mockup — Translations tab</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<style>
+  :root { --accent:#4f46e5; --accent-light:#e0e7ff; --border:#e5e7eb; --muted:#6b7280; --faint:#9ca3af;
+          --missing:#dc2626; --missing-bg:#fef2f2; --stale:#d97706; --stale-bg:#fffbeb; --ok:#059669; --ok-bg:#ecfdf5; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#f3f4f6; font-family:'DM Sans',system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; color:#111827; font-size:14px; }
+  .wrap { max-width:1180px; margin:0 auto; padding:1.5rem 1.25rem 4rem; }
+  .mock-title { font-size:1.2rem; margin:0 0 .25rem; }
+  .mock-lead { color:var(--muted); font-size:.9rem; margin:0 0 1.5rem; }
+  .variant { margin-bottom:3rem; }
+  .variant > h2 { font-size:.78rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:0 0 .6rem; display:flex; gap:.5rem; align-items:center; }
+  .tag { font-size:.7rem; text-transform:none; letter-spacing:0; padding:.1rem .5rem; border-radius:999px; font-weight:600; background:#d1fae5; color:#047857; }
+
+  /* === production chrome (editor_base.html) === */
+  .navbar { background:#fff; border-bottom:1px solid var(--border); padding:.55rem 1.25rem; display:flex; align-items:center; gap:.75rem; border-radius:8px 8px 0 0; }
+  .brand { font-weight:700; color:var(--accent); font-size:.95rem; }
+  .survey-title { font-weight:600; font-size:.9rem; max-width:260px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .survey-nav-tabs { display:inline-flex; align-items:center; gap:2px; margin-left:.75rem; background:#f3f4f6; border-radius:6px; padding:2px; }
+  .survey-nav-tab { display:inline-flex; align-items:center; gap:.3rem; padding:.25rem .65rem; font-size:.8rem; font-weight:500; color:var(--muted); text-decoration:none; border-radius:4px; white-space:nowrap; line-height:1.4; }
+  .survey-nav-tab.active { color:var(--accent); background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.08); }
+  .survey-nav-tab i { font-size:.75rem; }
+  .badge-beta { font-size:.6rem; background:var(--accent-light); color:var(--accent); padding:0 .35rem; border-radius:999px; font-weight:600; }
+  .nav-right { margin-left:auto; display:flex; gap:.5rem; align-items:center; color:var(--muted); font-size:.8rem; }
+  .nav-right .btn-ghost { border:1px solid var(--border); background:#fff; border-radius:6px; padding:.25rem .6rem; }
+  .highlight-new { outline:2px dashed var(--accent); outline-offset:2px; }
+
+  .page { background:#fff; border:1px solid var(--border); border-top:none; border-radius:0 0 8px 8px; padding:1.25rem 1.5rem; }
+
+  /* === page header === */
+  .tt-head { display:flex; align-items:flex-start; gap:1rem; flex-wrap:wrap; margin-bottom:1rem; }
+  .tt-head h1 { font-size:1.05rem; margin:0 0 .2rem; }
+  .tt-head .sub { color:var(--muted); font-size:.85rem; margin:0; }
+  .tt-head .sub a { color:var(--accent); text-decoration:none; }
+  .tt-actions { margin-left:auto; display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; }
+  .btn { border:1px solid var(--border); background:#fff; color:#111827; border-radius:6px; padding:.4rem .75rem; font-size:.82rem; font-weight:500; cursor:pointer; display:inline-flex; gap:.4rem; align-items:center; text-decoration:none; }
+  .btn-primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .lang { display:inline-flex; align-items:center; gap:.4rem; border:1px solid var(--border); border-radius:6px; padding:.35rem .6rem; font-size:.85rem; background:#fff; }
+  .lang select { border:none; font:inherit; background:transparent; font-weight:600; color:#111827; }
+  .lang small { color:var(--faint); }
+
+  /* === status strip === */
+  .tt-status { display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; margin-bottom:.9rem; }
+  .chip { border:1px solid var(--border); border-radius:999px; padding:.2rem .7rem; font-size:.78rem; cursor:pointer; background:#fff; color:var(--muted); display:inline-flex; gap:.35rem; align-items:center; }
+  .chip b { color:#111827; }
+  .chip.on { border-color:var(--accent); color:var(--accent); background:var(--accent-light); }
+  .chip.on b { color:var(--accent); }
+  .chip .dot { width:.5rem; height:.5rem; border-radius:999px; display:inline-block; }
+  .dot-missing { background:var(--missing); } .dot-stale { background:var(--stale); } .dot-ok { background:var(--ok); }
+  .tt-status .right { margin-left:auto; font-size:.78rem; color:var(--faint); }
+
+  /* === import report === */
+  .report { border:1px solid #bfdbfe; background:#eff6ff; border-radius:8px; padding:.7rem 1rem; font-size:.83rem; margin-bottom:1rem; display:flex; gap:1rem; align-items:flex-start; }
+  .report i { color:#2563eb; margin-top:.15rem; }
+  .report b { font-weight:600; }
+  .report .close { margin-left:auto; color:var(--faint); cursor:pointer; }
+  .report ul { margin:.3rem 0 0 1rem; padding:0; color:#374151; }
+
+  /* === table === */
+  table.tt { width:100%; border-collapse:collapse; font-size:.86rem; }
+  .tt th { text-align:left; font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; color:var(--faint); font-weight:600; padding:.4rem .6rem; border-bottom:1px solid var(--border); }
+  .tt td { padding:.55rem .6rem; border-bottom:1px solid #f1f2f4; vertical-align:top; }
+  .tt tr.page-row td { background:#f9fafb; font-weight:600; font-size:.78rem; color:var(--muted); padding:.35rem .6rem; border-bottom:1px solid var(--border); }
+  .tt tr.page-row td i { margin-right:.35rem; color:var(--faint); }
+  .col-status { width:1.6rem; }
+  .col-where { width:19%; }
+  .col-src { width:34%; }
+  .col-tr { width:auto; }
+  .st { width:.6rem; height:.6rem; border-radius:999px; display:inline-block; margin-top:.35rem; }
+  .st-missing { background:var(--missing); } .st-stale { background:var(--stale); } .st-ok { background:var(--ok); }
+  .where { color:var(--muted); font-size:.78rem; line-height:1.35; }
+  .where .el { color:#111827; font-weight:500; text-decoration:none; border-bottom:1px dotted #c7d2fe; }
+  .where a.el:hover { color:var(--accent); border-bottom-style:solid; }
+  .locs a { color:var(--faint); text-decoration:none; } .locs a:hover { color:var(--accent); }
+  .goto { margin-left:.6rem; font-weight:500; font-size:.74rem; color:var(--accent); text-decoration:none; opacity:0; transition:opacity .15s; }
+  tr.page-row:hover .goto { opacity:1; }
+  .build-q { border:1px solid var(--border); border-radius:6px; padding:.5rem .7rem; margin-bottom:.4rem; font-size:.85rem; }
+  .build-q.hit { border-color:var(--accent); background:var(--accent-light); }
+  .uses { display:inline-block; margin-left:.3rem; background:#eef2ff; color:var(--accent); font-size:.7rem; padding:0 .4rem; border-radius:999px; font-weight:600; cursor:pointer; }
+  .locs { display:none; margin:.3rem 0 0; padding:0; list-style:none; color:var(--faint); font-size:.74rem; }
+  tr.open .locs { display:block; }
+  .src { color:#374151; line-height:1.45; }
+  .src p { margin:0 0 .4rem; } .src p:last-child { margin:0; }
+  .src .tagline { font-size:.7rem; color:var(--faint); margin-top:.25rem; }
+  .field { width:100%; border:1px solid var(--border); border-radius:6px; padding:.4rem .55rem; font:inherit; font-size:.86rem; line-height:1.45; resize:vertical; min-height:2.1rem; background:#fff; }
+  .field:focus { outline:2px solid var(--accent-light); border-color:var(--accent); }
+  tr.missing .field { border-color:#fecaca; background:var(--missing-bg); }
+  tr.stale .field { border-color:#fde68a; background:var(--stale-bg); }
+  .stale-note { font-size:.74rem; color:var(--stale); margin-top:.3rem; }
+  .stale-note i { margin-right:.25rem; }
+  .saved { font-size:.72rem; color:var(--ok); margin-top:.25rem; display:none; }
+  .rich { border:1px solid var(--border); border-radius:6px; }
+  .rich .ql-toolbar { border-bottom:1px solid var(--border); padding:.3rem .5rem; color:var(--faint); font-size:.8rem; display:flex; gap:.6rem; }
+  .rich .ql-editor { padding:.5rem .6rem; line-height:1.45; min-height:3rem; }
+  .rich .ql-editor p { margin:0 0 .5rem; } .rich .ql-editor p:last-child { margin:0; }
+  .row-tools { margin-top:.3rem; font-size:.74rem; }
+  .row-tools a { color:var(--muted); text-decoration:none; }
+  .row-tools a:hover { color:var(--accent); }
+  tr.sub td { background:#fcfcfd; }
+  tr.sub .where { padding-left:1rem; position:relative; }
+  tr.sub .where:before { content:"└"; position:absolute; left:0; color:var(--faint); }
+  .split-head { font-size:.74rem; color:var(--muted); font-style:italic; }
+  .split-head a { color:var(--accent); text-decoration:none; }
+
+  /* === empty state === */
+  .empty { text-align:center; padding:3rem 1rem; color:var(--muted); }
+  .empty i { font-size:2.2rem; color:#c7d2fe; margin-bottom:.8rem; display:block; }
+  .empty h3 { font-size:1rem; margin:0 0 .4rem; color:#111827; }
+  .empty p { margin:0 0 1rem; max-width:34rem; margin-inline:auto; font-size:.88rem; }
+
+  /* === import dialog === */
+  .modal { max-width:460px; background:#fff; border:1px solid var(--border); border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,.12); padding:1.1rem 1.25rem; }
+  .modal h3 { font-size:.95rem; margin:0 0 .6rem; }
+  .modal p { font-size:.82rem; color:var(--muted); margin:0 0 .8rem; line-height:1.45; }
+  .drop { border:1.5px dashed #c7d2fe; border-radius:8px; padding:1rem; text-align:center; font-size:.82rem; color:var(--muted); margin-bottom:.8rem; }
+  .drop b { color:var(--accent); }
+  .modal label { font-size:.82rem; display:flex; gap:.45rem; align-items:center; margin-bottom:.9rem; }
+  .modal .foot { display:flex; justify-content:flex-end; gap:.5rem; }
+
+  /* === mobile strip === */
+  .phone { width:390px; border:1px solid var(--border); border-radius:12px; background:#fff; overflow:hidden; }
+  .phone .navbar { padding:.5rem .75rem; border-radius:0; }
+  .phone .strip { display:flex; gap:2px; overflow-x:auto; padding:.35rem .5rem; background:#f3f4f6; border-bottom:1px solid var(--border); }
+  .phone .strip .survey-nav-tab { min-height:38px; flex:0 0 auto; }
+  .phone .body { padding:.75rem; }
+  .phone .card { border:1px solid var(--border); border-radius:8px; padding:.6rem .7rem; margin-bottom:.55rem; }
+  .phone .card .where { margin-bottom:.3rem; }
+  .phone .card .src { font-size:.84rem; margin-bottom:.35rem; }
+
+  .two { display:flex; gap:1.5rem; flex-wrap:wrap; align-items:flex-start; }
+  .note { font-size:.8rem; color:var(--muted); max-width:36rem; line-height:1.5; }
+  .note code { background:#f3f4f6; padding:0 .3rem; border-radius:3px; font-size:.78rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 class="mock-title">Translations tab — mockup</h1>
+  <p class="mock-lead">Change <code>translation-table</code>, issue #454. Data from the Druid Hill survey (869) with the state it was in on 2026-10-27, before the CSV was written back. Dashed outline = new.</p>
+
+  <!-- ============ Variant 1: the table ============ -->
+  <div class="variant">
+    <h2>1. The table <span class="tag">new</span></h2>
+
+    <div class="navbar">
+      <span class="brand">Mapsurvey</span>
+      <span class="survey-title">More Paths to Druid Hill Community Survey</span>
+      <div class="survey-nav-tabs">
+        <a class="survey-nav-tab"><i class="fas fa-hammer"></i> Survey</a>
+        <a class="survey-nav-tab active highlight-new"><i class="fas fa-language"></i> Translations</a>
+        <a class="survey-nav-tab"><i class="fas fa-chart-bar"></i> Responses</a>
+        <a class="survey-nav-tab"><i class="fas fa-globe"></i> Public results <span class="badge-beta">beta</span></a>
+      </div>
+      <div class="nav-right"><span class="btn-ghost"><i class="fas fa-share-alt"></i> Share ▾</span><span class="btn-ghost"><i class="fas fa-eye"></i> Preview ▾</span><span><i class="fas fa-cog"></i></span></div>
+    </div>
+
+    <div class="page">
+      <div class="tt-head">
+        <div>
+          <h1>Translations</h1>
+          <p class="sub">Every text of the survey once, in the order respondents see it. One translation fills every place the same text is used. <a href="#">Learn more</a></p>
+        </div>
+        <div class="tt-actions">
+          <span class="lang"><i class="fas fa-language" style="color:var(--faint)"></i>
+            <select title="Source column"><option>English (primary)</option><option>Spanish</option></select>
+            <span style="color:var(--faint)">→</span>
+            <select title="Target column" onchange="if(this.value==='add'){document.getElementById('addlang').style.display='block';this.selectedIndex=0}"><option>Spanish (es)</option><option disabled>──────────</option><option value="add">+ Add language…</option></select>
+          </span>
+          <a class="btn" href="#"><i class="fas fa-download"></i> Export CSV</a>
+          <a class="btn" href="#"><i class="fas fa-upload"></i> Import CSV</a>
+        </div>
+      </div>
+
+      <div id="addlang" style="display:none;margin:-.3rem 0 1rem auto;max-width:380px;border:1px solid var(--border);border-radius:8px;padding:.7rem .9rem;background:#fff;box-shadow:0 6px 20px rgba(0,0,0,.08)">
+        <div style="font-size:.8rem;font-weight:600;margin-bottom:.4rem">Add a language <span style="float:right;color:var(--faint);cursor:pointer" onclick="this.closest('#addlang').style.display='none'"><i class="fas fa-times"></i></span></div>
+        <input class="field" placeholder="Search languages…" value="fr" style="margin-bottom:.4rem">
+        <div style="font-size:.84rem"><div style="padding:.3rem .4rem;background:var(--accent-light);border-radius:4px;color:var(--accent)">French · Français</div><div style="padding:.3rem .4rem;color:var(--muted)">Frisian · Frysk</div></div>
+        <div style="font-size:.72rem;color:var(--faint);margin-top:.5rem">Adds the language to Survey settings. Removing one stays there.</div>
+      </div>
+
+      <div class="report">
+        <i class="fas fa-file-csv"></i>
+        <div>
+          <b>Druid-Hill-survey-Spanish-translation.csv imported.</b> 97 filled · 0 overwritten · 24 skipped (already translated) · 2 unmatched
+          <ul>
+            <li>Row 85: “Druid Lake Park Drive” — not found in the survey (did you mean “Druid Park Lake Drive”?)</li>
+            <li>Row 112: “Prefer not to say” — not found in the survey</li>
+          </ul>
+        </div>
+        <span class="close"><i class="fas fa-times"></i></span>
+      </div>
+
+      <div class="tt-status">
+        <span class="chip on"><b>All</b> 124</span>
+        <span class="chip"><span class="dot dot-missing"></span> Missing <b>31</b></span>
+        <span class="chip"><span class="dot dot-stale"></span> Outdated <b>2</b></span>
+        <span class="chip"><span class="dot dot-ok"></span> Translated <b>91</b></span>
+        <span class="right"><i class="fas fa-check" style="color:var(--ok)"></i> Saved · changes are live for respondents</span>
+      </div>
+
+      <table class="tt">
+        <thead><tr><th class="col-status"></th><th class="col-where">Where</th><th class="col-src">English <span style="font-weight:400;text-transform:none;letter-spacing:0">· primary</span></th><th class="col-tr">Spanish</th></tr></thead>
+        <tbody>
+
+        <tr class="page-row"><td colspan="4"><i class="fas fa-file-alt"></i> Page 1 · Help Shape the Future of Druid Park Lake Drive <a class="goto" href="#build" title="Open this page in the editor"><i class="fas fa-external-link-alt"></i> Open in editor</a></td></tr>
+
+        <tr class="ok">
+          <td><span class="st st-ok"></span></td>
+          <td><div class="where"><a class="el" href="#build">Page title</a></div></td>
+          <td><div class="src">Help Shape the Future of Druid Park Lake Drive</div></td>
+          <td><textarea class="field" rows="1">Ayude a dar forma al futuro de Druid Park Lake Drive</textarea></td>
+        </tr>
+
+        <tr class="ok">
+          <td><span class="st st-ok"></span></td>
+          <td><div class="where"><a class="el" href="#build">Next button</a></div></td>
+          <td><div class="src">Start the Survey</div></td>
+          <td><textarea class="field" rows="1">Comenzar la encuesta</textarea></td>
+        </tr>
+
+        <tr class="stale">
+          <td><span class="st st-stale"></span></td>
+          <td><div class="where"><a class="el" href="#build">Formatted text</a></div></td>
+          <td><div class="src">
+            <p>Druid Park Lake Drive is an important connection to and through Druid Hill Park. The project team is exploring ways to make it safer, more comfortable, accessible, and connected for everyone who uses the park and surrounding area.</p>
+            <p>We want to hear from people who live, work, visit, travel through, or are otherwise connected to Druid Hill Park.</p>
+            <p><strong>This survey takes approximately 5–7 minutes to complete.</strong> Your responses will help the project team understand how people experience the area today, identify challenges and opportunities, and shape future improvements.</p>
+          </div></td>
+          <td>
+            <div class="rich">
+              <div class="ql-toolbar"><b>B</b><i>I</i><u>U</u><span>• list</span><span>¶</span></div>
+              <div class="ql-editor" contenteditable="true">
+                <p>Druid Park Lake Drive es una conexión importante hacia y a través de Druid Hill Park. El equipo del proyecto está explorando maneras de hacer que esta vía sea más segura, cómoda, accesible y conectada para todas las personas que utilizan el parque y sus alrededores.</p>
+                <p>Queremos conocer la opinión de las personas que viven, trabajan, visitan, transitan o tienen algún otro vínculo con Druid Hill Park.</p>
+                <p><strong>Esta encuesta toma aproximadamente de 5 a 7 minutos en completarse.</strong> Sus respuestas ayudarán al equipo del proyecto a comprender cómo las personas usan y experimentan el área actualmente, identificar desafíos y oportunidades, y orientar futuras mejoras.</p>
+              </div>
+            </div>
+            <div class="stale-note"><i class="fas fa-history"></i> The original text changed after this was translated (Oct 24). Check the translation and save it to clear this.</div>
+          </td>
+        </tr>
+
+        <tr class="page-row"><td colspan="4"><i class="fas fa-file-alt"></i> Page 2 · Your Connection to Druid Hill Park <a class="goto" href="#build" title="Open this page in the editor"><i class="fas fa-external-link-alt"></i> Open in editor</a></td></tr>
+
+        <tr class="ok">
+          <td><span class="st st-ok"></span></td>
+          <td><div class="where"><a class="el" href="#build">Question 1</a></div></td>
+          <td><div class="src">How are you connected to Druid Hill Park and the surrounding area?</div></td>
+          <td><textarea class="field" rows="2">¿Cuál es su conexión con Druid Hill Park y el área circundante?</textarea></td>
+        </tr>
+
+        <tr class="ok open" id="grp-select-all">
+          <td><span class="st st-ok"></span></td>
+          <td><div class="where"><a class="el" href="#build">Help text</a> <span class="uses" onclick="this.closest('tr').classList.toggle('open')">×7</span>
+            <ul class="locs"><li><a href="#build">Page 2 · Question 1</a></li><li><a href="#build">Page 2 · Question 4</a></li><li><a href="#build">Page 3 · Question 1</a></li><li><a href="#build">Page 5 · Question 2</a></li><li><a href="#build">Page 6 · Question 1</a></li><li><a href="#build">Page 6 · Question 2</a></li><li>+1 more</li></ul>
+          </div></td>
+          <td><div class="src">(Select all that apply)</div></td>
+          <td>
+            <textarea class="field" rows="1">(Seleccione todas las opciones que correspondan)</textarea>
+            <div class="row-tools"><a href="#"><i class="fas fa-code-branch"></i> Translate separately</a></div>
+          </td>
+        </tr>
+
+        <tr class="ok">
+          <td><span class="st st-ok"></span></td>
+          <td><div class="where"><span class="el">Option</span> <span class="uses" onclick="this.closest('tr').classList.toggle('open')">×6</span>
+            <ul class="locs"><li><a href="#build">Page 2 · Question 1</a></li><li><a href="#build">Page 2 · Question 4</a></li><li><a href="#build">Page 3 · Question 1</a></li><li><a href="#build">Page 3 · Question 3</a></li><li><a href="#build">Page 3 · Question 4</a></li><li><a href="#build">Page 6 · Question 1</a></li></ul>
+          </div></td>
+          <td><div class="src">Other</div></td>
+          <td>
+            <textarea class="field" rows="1">Otro</textarea>
+            <div class="row-tools"><a href="#"><i class="fas fa-code-branch"></i> Translate separately</a></div>
+          </td>
+        </tr>
+
+        <tr class="ok">
+          <td><span class="st st-ok"></span></td>
+          <td><div class="where"><a class="el" href="#build">Option</a> <span class="uses">×1</span></div></td>
+          <td><div class="src">I travel through the area to reach another destination</div></td>
+          <td><textarea class="field" rows="1">Transito por la zona</textarea></td>
+        </tr>
+
+        <tr class="missing">
+          <td><span class="st st-missing"></span></td>
+          <td><div class="where"><a class="el" href="#build">Question 2</a></div></td>
+          <td><div class="src">What community or neighborhood do you live in or are you connected to?</div></td>
+          <td><textarea class="field" rows="2" placeholder="Spanish…"></textarea></td>
+        </tr>
+
+        <!-- an auto-expanded group: the same English, two translations -->
+        <tr class="ok">
+          <td><span class="st st-ok"></span></td>
+          <td><div class="where"><span class="el">Option</span> <span class="uses">×2</span></div></td>
+          <td><div class="src">Walk<div class="tagline">Translated separately — <a href="#" style="color:var(--accent);text-decoration:none">use one translation</a></div></div></td>
+          <td class="split-head">two translations — the English is the same, the context is not</td>
+        </tr>
+        <tr class="ok sub">
+          <td></td>
+          <td><div class="where"><a class="el" href="#build">Page 2 · Question 4</a><br>What do you usually do when you visit…</div></td>
+          <td><div class="src">Walk</div></td>
+          <td><textarea class="field" rows="1">Caminar</textarea></td>
+        </tr>
+        <tr class="ok sub">
+          <td></td>
+          <td><div class="where"><a class="el" href="#build">Page 3 · Question 1</a><br>How do you usually get to or through…</div></td>
+          <td><div class="src">Walk</div></td>
+          <td><textarea class="field" rows="1">Caminando</textarea></td>
+        </tr>
+
+        <tr class="page-row"><td colspan="4"><i class="fas fa-file-alt"></i> Page 4 · Project Priorities <a class="goto" href="#build" title="Open this page in the editor"><i class="fas fa-external-link-alt"></i> Open in editor</a></td></tr>
+
+        <tr class="stale">
+          <td><span class="st st-stale"></span></td>
+          <td><div class="where"><a class="el" href="#build">Page title</a></div></td>
+          <td><div class="src">Project Priorities</div></td>
+          <td>
+            <textarea class="field" rows="1">Lugar y prioridades</textarea>
+            <div class="stale-note"><i class="fas fa-history"></i> The original was “Place and Priorities” when this was translated.</div>
+          </td>
+        </tr>
+
+        <tr class="missing">
+          <td><span class="st st-missing"></span></td>
+          <td><div class="where"><a class="el" href="#build">Question 1</a></div></td>
+          <td><div class="src">What priorities do you have for further investment in Druid Park Lake Drive?</div></td>
+          <td><textarea class="field" rows="2" placeholder="Spanish…"></textarea></td>
+        </tr>
+
+        <tr class="missing">
+          <td><span class="st st-missing"></span></td>
+          <td><div class="where"><a class="el" href="#build">Option</a> <span class="uses">×1</span></div></td>
+          <td><div class="src">Improving the character of Druid Lake Park Drive</div></td>
+          <td><textarea class="field" rows="1" placeholder="Spanish…"></textarea></td>
+        </tr>
+
+        <tr class="page-row"><td colspan="4"><i class="fas fa-flag-checkered"></i> Thank-you page <a class="goto" href="#build" title="Open the thank-you page panel"><i class="fas fa-external-link-alt"></i> Open in editor</a></td></tr>
+
+        <tr class="missing">
+          <td><span class="st st-missing"></span></td>
+          <td><div class="where"><a class="el" href="#build">Thank-you page</a></div></td>
+          <td><div class="src"><p><strong>Thank you for sharing your experience and ideas. Your input will help inform the next steps in planning improvements to Druid Park Lake Drive and connections to Druid Hill Park.</strong></p><p>Your responses have been recorded.</p></div></td>
+          <td>
+            <div class="rich">
+              <div class="ql-toolbar"><b>B</b><i>I</i><u>U</u><span>• list</span><span>¶</span></div>
+              <div class="ql-editor" contenteditable="true" style="color:var(--faint)">Spanish…</div>
+            </div>
+          </td>
+        </tr>
+
+        </tbody>
+      </table>
+    </div>
+
+    <p class="note" style="margin-top:.8rem">Languages: the source column is any language of the survey (default the primary — the one whose text lives in the base fields; “English” here is just this survey), the target any other; both are in the URL and remembered per survey in the browser. “+ Add language…” in the target picker (owner only) opens the Survey-settings picker in place. Rows: status dot · where (the element and, for a repeated text, the usage count that unfolds the list of places) · the source, read-only · the translation. Plain fields are a textarea that autosaves on change; rich fields (Formatted text, section intro, group description, thank-you page) get the same editor the modals use. A group row with one field writes every occurrence; <em>Translate separately</em> splits it. Outdated rows keep the old translation visible and say what the English was. The import report lists unmatched rows by their text — nothing is dropped silently.</p>
+  </div>
+
+  <!-- ============ Variant 2: import dialog ============ -->
+  <div class="variant">
+    <h2>2. Import CSV</h2>
+    <div class="two">
+      <div class="modal">
+        <h3>Import Spanish translations</h3>
+        <p>A CSV in the layout of the export: a <code>key</code> column, or at least <code>source</code> and <code>translation</code>. Rows are matched by key, then by the English text. Only the Spanish column is read — the English stays as it is in the survey.</p>
+        <div class="drop"><i class="fas fa-file-csv"></i> Drop the file here or <b>choose a file</b></div>
+        <label><input type="checkbox"> Overwrite translations that already exist</label>
+        <p style="margin-bottom:.8rem"><i class="fas fa-info-circle"></i> Bold and other formatting inside a paragraph does not travel through CSV — fix those rows here afterwards.</p>
+        <div class="foot"><span class="btn">Cancel</span><span class="btn btn-primary"><i class="fas fa-upload"></i> Import</span></div>
+      </div>
+      <div class="note">
+        <p><b>Export CSV</b> for the same page gives:</p>
+        <pre style="background:#f9fafb;border:1px solid var(--border);border-radius:6px;padding:.6rem .8rem;font-size:.74rem;overflow:auto">key,page,element,source,translation,status
+t:3f9a1c0b2e7d,Page 1: Help Shape the Future…,Page title,Help Shape the Future of Druid Park Lake Drive,Ayude a dar forma al futuro de Druid Park Lake Drive,translated
+t:8b2e77d0a41c,Page 1: Help Shape the Future…,Next button,Start the Survey,Comenzar la encuesta,translated
+t:c41d9e2f0b63,Page 1: Help Shape the Future…,Formatted text,"Druid Park Lake Drive is an important…
+
+We want to hear from…",“Druid Park Lake Drive es una…”,outdated
+t:9d0c4a7e1f52,Page 2: Your Connection…,Help text (×7),(Select all that apply),(Seleccione todas las opciones que correspondan),translated
+t:5e1b8f3a6c90,Page 2: Your Connection…,Option (×6),Other,Otro,translated
+question:Q_5954727610:choice:1,Page 2: Your Connection…,Option,Walk,Caminar,translated
+question:Q_4986755135:choice:1,Page 3: Getting to the park,Option,Walk,Caminando,translated
+t:a7c2d91e4b08,Page 2: Your Connection…,Question 2,What community or neighborhood…,,missing</pre>
+        <p>Same four columns a translator already works with (Page / Element / English / Spanish), plus <code>key</code> and <code>status</code>. Group rows carry a <code>t:</code> key; separately translated occurrences carry the entity key.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ Variant 3: empty state ============ -->
+  <div class="variant">
+    <h2>3. One language only</h2>
+    <div class="navbar">
+      <span class="brand">Mapsurvey</span>
+      <span class="survey-title">Untitled survey</span>
+      <div class="survey-nav-tabs">
+        <a class="survey-nav-tab"><i class="fas fa-hammer"></i> Survey</a>
+        <a class="survey-nav-tab active"><i class="fas fa-language"></i> Translations</a>
+        <a class="survey-nav-tab"><i class="fas fa-chart-bar"></i> Responses</a>
+        <a class="survey-nav-tab"><i class="fas fa-globe"></i> Public results <span class="badge-beta">beta</span></a>
+      </div>
+    </div>
+    <div class="page">
+      <div class="empty">
+        <i class="fas fa-language"></i>
+        <h3>This survey is in English only</h3>
+        <p>Add a second language and every title, question, option and the thank-you page will appear here, ready to translate — in the editor or through a CSV for an outside translator.</p>
+        <div style="max-width:360px;margin:0 auto;text-align:left">
+          <input class="field" placeholder="Search languages…" value="es">
+          <div style="font-size:.84rem;border:1px solid var(--border);border-top:none;border-radius:0 0 6px 6px;background:#fff"><div style="padding:.35rem .6rem;background:var(--accent-light);color:var(--accent)">Spanish · Español</div><div style="padding:.35rem .6rem;color:var(--muted)">Estonian · Eesti</div></div>
+          <div style="font-size:.72rem;color:var(--faint);margin-top:.5rem;text-align:center">Same list as Survey settings. The survey stays as it is; only the languages setting changes.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ Variant 4: mobile ============ -->
+  <div class="variant">
+    <h2>4. Mobile (below 768px)</h2>
+    <div class="two">
+      <div class="phone">
+        <div class="navbar"><span class="brand">Mapsurvey</span><span class="survey-title">More Paths to Druid Hill…</span></div>
+        <div class="strip">
+          <a class="survey-nav-tab"><i class="fas fa-hammer"></i> Survey</a>
+          <a class="survey-nav-tab active"><i class="fas fa-language"></i> Translations</a>
+          <a class="survey-nav-tab"><i class="fas fa-chart-bar"></i> Responses</a>
+          <a class="survey-nav-tab"><i class="fas fa-globe"></i> Public results</a>
+        </div>
+        <div class="body">
+          <div class="tt-status" style="margin-bottom:.6rem"><span class="lang" style="font-size:.8rem"><select><option>EN</option></select> → <select><option>ES</option><option>+ Add…</option></select></span><span class="chip"><span class="dot dot-missing"></span> <b>31</b></span><span class="chip"><span class="dot dot-stale"></span> <b>2</b></span></div>
+          <div class="card missing"><div class="where"><span class="el">Page 2 · Question 2</span></div><div class="src">What community or neighborhood do you live in or are you connected to?</div><textarea class="field" rows="2" placeholder="Spanish…"></textarea></div>
+          <div class="card ok"><div class="where"><span class="el">Option</span> <span class="uses">×6</span></div><div class="src">Other</div><textarea class="field" rows="1">Otro</textarea></div>
+          <div class="card stale"><div class="where"><span class="el">Page 4 · Page title</span></div><div class="src">Project Priorities</div><textarea class="field" rows="1">Lugar y prioridades</textarea><div class="stale-note"><i class="fas fa-history"></i> English changed since</div></div>
+        </div>
+      </div>
+      <div class="note">On a phone the same strip of page tabs scrolls (the existing mobile top strip), the table collapses to cards — where / English / Spanish stacked — and there is no bottom pane bar: the page has one pane. Export and import live behind a ⋯ menu.</div>
+    </div>
+  </div>
+</div>
+<!-- ============ Variant 5: where a link lands ============ -->
+  <div class="variant" id="build">
+    <h2>5. Where a link lands <span class="tag">new deep link</span></h2>
+    <div class="two">
+      <div class="note">
+        <p>Every element label, every place in a usage list and every page row is a link into the <b>Survey</b> tab:</p>
+        <ul style="padding-left:1.1rem">
+          <li>a page → <code>/editor/surveys/&lt;uuid&gt;/?section=&lt;id&gt;</code> — exists today, opens that section;</li>
+          <li>a question or an option → <code>?section=&lt;id&gt;&amp;question=&lt;id&gt;</code> — <b>new</b>: opens the section and the question's modal, scrolled to its Translations block for that language;</li>
+          <li>the thank-you page → <code>?panel=thanks</code> — exists today.</li>
+        </ul>
+        <p>The modal is where the full context lives (choices table, help text, preview). The table row is the short way, the modal the long one — a click apart. Browser Back returns to the table at the same row (<code>#row-&lt;key&gt;</code>). In the mockup every link just scrolls here.</p>
+      </div>
+      <div style="flex:1;min-width:360px">
+        <div class="navbar"><span class="brand">Mapsurvey</span><span class="survey-title">More Paths to Druid Hill…</span>
+          <div class="survey-nav-tabs"><a class="survey-nav-tab active"><i class="fas fa-hammer"></i> Survey</a><a class="survey-nav-tab"><i class="fas fa-language"></i> Translations</a><a class="survey-nav-tab"><i class="fas fa-chart-bar"></i> Responses</a></div></div>
+        <div class="page" style="position:relative;min-height:220px">
+          <div style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">Page 2 · Your Connection to Druid Hill Park</div>
+          <div class="build-q">1. How are you connected to Druid Hill Park…</div>
+          <div class="build-q hit">2. What community or neighborhood do you live in… <span style="float:right;color:var(--accent);font-size:.75rem"><i class="fas fa-pen"></i> modal opens at Translations · Spanish</span></div>
+          <div class="build-q">3. How often do you visit Druid Hill Park?</div>
+          <div style="position:absolute;right:1rem;bottom:1rem;font-size:.74rem;color:var(--faint)"><i class="fas fa-arrow-left"></i> Back → Translations, same row</div>
+        </div>
+      </div>
+    </div>
+  </div>
+<!-- ============ Variant 6: the modal block, read-only ============ -->
+  <div class="variant">
+    <h2>6. The old block in the question modal — kept, read-only <span class="tag">changed</span></h2>
+    <div class="two">
+      <div class="modal" style="max-width:520px">
+        <h3><i class="fas fa-pen" style="color:var(--faint)"></i> Edit question</h3>
+        <div style="font-size:.78rem;color:var(--muted);margin-bottom:.2rem">Name (English)</div>
+        <input class="field" value="How often do you visit Druid Hill Park?" style="margin-bottom:.8rem">
+        <div style="font-size:.78rem;color:var(--muted);margin-bottom:.3rem">Choices</div>
+        <table style="width:100%;border-collapse:collapse;font-size:.82rem;margin-bottom:.9rem">
+          <tr style="color:var(--faint);font-size:.72rem"><td style="width:2.2rem">Code</td><td>English</td><td>Spanish <i class="fas fa-external-link-alt" style="font-size:.65rem"></i></td></tr>
+          <tr><td>1</td><td><input class="field" value="Daily"></td><td><a href="#build" class="ro" title="Edited on the Translations tab">Todos los días</a></td></tr>
+          <tr><td>2</td><td><input class="field" value="Several times per week"></td><td><a href="#build" class="ro" title="Edited on the Translations tab">Varias veces por semana</a></td></tr>
+          <tr><td>3</td><td><input class="field" value="Rarely"></td><td><a href="#build" class="ro ro-empty" title="Edited on the Translations tab">missing — translate</a></td></tr>
+        </table>
+        <div style="border:1px solid var(--border);border-radius:6px;padding:.5rem .7rem;background:#fafafa">
+          <div style="font-size:.82rem;font-weight:600;margin-bottom:.15rem"><i class="fas fa-chevron-down" style="font-size:.7rem;color:var(--faint)"></i> Translations</div>
+          <div style="font-size:.74rem;color:var(--muted);margin-bottom:.5rem">Translations are edited on the <a href="#build" style="color:var(--accent);text-decoration:none">Translations tab</a>. Click a field to open its row.</div>
+          <div style="font-size:.72rem;font-weight:600;color:var(--accent);margin-bottom:.2rem">ES</div>
+          <div style="font-size:.74rem;color:var(--muted)">Name (es)</div>
+          <a href="#build" class="ro" title="Edited on the Translations tab">¿Con qué frecuencia visita Druid Hill Park?</a>
+          <div style="font-size:.74rem;color:var(--muted);margin-top:.4rem">Subtext (es)</div>
+          <a href="#build" class="ro ro-empty" title="Edited on the Translations tab">missing — translate</a>
+        </div>
+      </div>
+      <div class="note">
+        <p>Nothing is removed from the modals: the Translations block and the per-language choice columns still show what is stored, so a creator sees at a glance that a Spanish text exists. Every field is <b>disabled</b> and is a link to the row on the Translations tab (<code>?to=es#row-question:Q_1728368991:choice:3</code>) — the hover says where it is edited, a missing one reads “missing — translate”. The API and MCP keep writing translations through the services; only the modal stopped.</p>
+        <p>The same treatment for the section form, the group modal and the non-primary tabs of the thank-you panel.</p>
+      </div>
+    </div>
+  </div>
+  <style>
+    .ro { display:block; width:100%; border:1px solid var(--border); border-radius:6px; padding:.4rem .55rem; font-size:.86rem; background:#f3f4f6; color:#374151; text-decoration:none; cursor:pointer; }
+    .ro:hover { border-color:var(--accent); color:var(--accent); background:#fff; }
+    .ro-empty { color:var(--missing); font-style:italic; background:var(--missing-bg); border-color:#fecaca; }
+  </style>
+<script>
+  document.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => {
+    document.querySelectorAll('.chip').forEach(x => x.classList.remove('on')); c.classList.add('on');
+    const want = c.textContent.trim().split(' ')[0].toLowerCase();
+    document.querySelectorAll('table.tt tbody tr:not(.page-row)').forEach(r => {
+      const cls = want === 'missing' ? 'missing' : want === 'outdated' ? 'stale' : want === 'translated' ? 'ok' : null;
+      r.style.display = (!cls || r.classList.contains(cls)) ? '' : 'none';
+    });
+  }));
+  document.querySelectorAll('.field, .ql-editor').forEach(f => f.addEventListener('input', () => {
+    const tr = f.closest('tr'); if (!tr) return;
+    tr.classList.remove('missing','stale'); tr.classList.add('ok');
+    const dot = tr.querySelector('.st'); if (dot) dot.className = 'st st-ok';
+    const n = tr.querySelector('.stale-note'); if (n) n.remove();
+  }));
+</script>
+</body>
+</html>

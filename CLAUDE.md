@@ -421,6 +421,33 @@ creator (`open_on_load` in the support_chat context). `npm run build` in `help/`
 internal link (`starlight-links-validator`); the MCP pages are `draft: true` until mcp.mapsurvey.org
 is live.
 
+**Translation table (change `translation-table`, #454; epic #393)**: the **Translations** tab
+(`survey/translation_views.py`, `editor/survey_translations.html`, `js/translation_table.js`) is
+where translations are written from the UI; the Translations blocks of the section, question and
+group modals, the per-language columns of the choices table and the non-primary tabs of the thanks
+panel are READ-ONLY mirrors that link to the row (`?to=<lang>#row-<key>`), and the editor views
+pass `translations=UNSET` to the services (the API and MCP still write through them). One module,
+`survey/translation_table.py`: an **occurrence** is one translatable field addressed by CODES, never
+ids — `section:<code>[#n]:title|subheading|next_label`, `question:<code>:name|subtext`,
+`question:<code>:choice:<code>`, `group:<code>:title|description`, `survey:thanks` — so nothing has
+to be copied on the draft copy, publish or restore; `occurrences()` walks the survey in respondent
+order, `rows_for()` groups identical normalised source text (`t:<hash12>` keys; a group whose
+occurrences carry different translations renders split), and **`apply()` is the one writer** (the
+page, the CSV import and the future AI job) — it routes every value to the entity's service path
+(`save_translations`, `set_choice_names`, `set_thanks`), so caps, `coerce_creator_html`, the content
+lock and the re-screen are the modals'. **Outdated** = `TranslationSource` (keyed by the canonical
+survey + occurrence key + language) holds the hash of the primary text a translation was written
+against; every translation write records it for the fields whose value changed (`record_all` from
+the table), a base-text save never touches it, and a translation with no row reads as translated.
+`translation_gaps.survey_translation_gaps` stays the one gap engine — it now counts the Next label,
+the thank-you page and stale rows (`"<lang> (outdated)"`) — so badges, the publish warning, the API
+409 and the table cannot disagree. CSV: `export_csv`/`parse_csv`/`values_from_csv` — the customer's
+Page/Element/source/translation layout plus `key` and `status`, matched by key then by source text,
+formula cells apostrophe-guarded, rich text as plain paragraphs. Languages are added from the tab
+through `services.surveys.update_settings` (owner only); the pair is `?from=&to=` and remembered in
+`localStorage['msTranslations:<uuid>']`. Build takes `?question=<id>&lang=` / `?group=<id>` to open
+that modal at its Translations block.
+
 **Hierarchical Questions/Answers**: Both Question and Answer models support self-referential parent relationships via `parent_question_id` and `parent_answer_id` for conditional sub-questions.
 
 **Conditional visibility (`CONDITIONAL_VISIBILITY` kill switch, default ON)**: a

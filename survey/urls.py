@@ -9,6 +9,7 @@ from . import layer_object_views
 from . import comment_views
 from . import analytics_views
 from . import share_views
+from . import translation_views
 from . import org_views
 from . import public_results_editor
 from . import abuse_review_views
@@ -128,6 +129,12 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/publish-draft/', editor_views.editor_publish_draft, name='editor_publish_draft'),
     path('editor/surveys/<uuid:survey_uuid>/discard-draft/', editor_views.editor_discard_draft, name='editor_discard_draft'),
     path('editor/surveys/<uuid:survey_uuid>/check-compatibility/', editor_views.editor_check_compatibility, name='editor_check_compatibility'),
+    # Translations tab (change translation-table)
+    path('editor/surveys/<uuid:survey_uuid>/translations/', translation_views.translations_page, name='editor_survey_translations'),
+    path('editor/surveys/<uuid:survey_uuid>/translations/save/', translation_views.translation_save, name='editor_survey_translation_save'),
+    path('editor/surveys/<uuid:survey_uuid>/translations/export/', translation_views.translations_export, name='editor_survey_translations_export'),
+    path('editor/surveys/<uuid:survey_uuid>/translations/import/', translation_views.translations_import, name='editor_survey_translations_import'),
+    path('editor/surveys/<uuid:survey_uuid>/translations/add-language/', translation_views.translation_add_language, name='editor_survey_translation_add_language'),
     # Analytics
     path('editor/surveys/<uuid:survey_uuid>/analytics/', analytics_views.analytics_dashboard, name='editor_survey_analytics'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/questions/<int:question_id>/text/', analytics_views.analytics_text_answers, name='analytics_text_answers'),

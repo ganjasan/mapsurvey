@@ -1190,6 +1190,32 @@ class QuestionGroupTranslation(models.Model):
         return f"{self.group.code} ({self.language})"
 
 
+class TranslationSource(models.Model):
+    """What the original text looked like when a translation was written
+    (change translation-table).
+
+    One row per (canonical survey, occurrence key, language): `source_hash`
+    is the hash of the primary-language text at the moment the translation
+    of that occurrence was saved. The Translations tab compares it with the
+    current text to show a translation as *outdated*. Keys are built from
+    entity CODES (`survey/translation_table.py`), so the rows survive the
+    draft copy, publishing and restored versions without being copied; a
+    missing row means "unknown", which the table reads as translated.
+    """
+    survey = models.ForeignKey("SurveyHeader", on_delete=models.CASCADE, related_name='translation_sources')
+    key = models.CharField(max_length=160)
+    language = models.CharField(max_length=10)
+    source_hash = models.CharField(max_length=40)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'survey'
+        unique_together = ('survey', 'key', 'language')
+
+    def __str__(self):
+        return f"{self.key} ({self.language})"
+
+
 def upload_key(instance, filename):
     """uploads/<survey_uuid>/<token>/<name> (the private prefix is the storage's
     location). The token directory guarantees uniqueness without renaming, so the
