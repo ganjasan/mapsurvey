@@ -399,7 +399,7 @@ archives without the key (or with an unrecognized value) by falling back to
 - **THEN** every imported section gets `layout = "map"`
 
 ### Requirement: Reference layers serialization
-Survey export SHALL include a `layers` array on the survey object (name, color,
+Survey export SHALL include a `layers` array on the survey object (name, color, style,
 label_field, key_field, show_popups, source, source_question_code, show_tallies,
 show_comments, approve_first, position — ordered by position), and for `upload` layers one
 `layers/<position>.geojson` archive entry holding the derived GeoJSON (features keyed by
@@ -417,8 +417,8 @@ layer with a report line, treat a missing or invalid `layers/` entry or asset fi
 warning that skips that item (never a hard error), and accept archives without any
 `layers` key or without `objects.json` (legacy archives: objects are created from the
 GeoJSON as the migration would). Layer and object config coming from an archive SHALL pass
-a whitelist cleaner (unknown keys dropped, color validated, description sanitized, embed
-hosts validated, `source` restricted to the two values, defaults applied).
+a whitelist cleaner (unknown keys dropped, color validated, `style` normalised, description
+sanitized, embed hosts validated, `source` restricted to the two values, defaults applied).
 
 #### Scenario: Layers round-trip
 - **WHEN** a survey with two configured layers and a section hiding the second is exported and re-imported
@@ -451,6 +451,10 @@ hosts validated, `source` restricted to the two values, defaults applied).
 #### Scenario: Dangling source code downgrades
 - **WHEN** an archive's `question` layer names a code that matches no geo question in the archive
 - **THEN** it imports as an empty `upload` layer and the report says so
+
+#### Scenario: Style round-trips and is normalised
+- **WHEN** a layer with a four-class rule is exported, its archive edited to `weight: 99` on one class, and re-imported
+- **THEN** the imported layer has the rule with that class's weight clamped to 12 and everything else identical
 
 ### Requirement: Visibility rules survive export and import
 
@@ -548,4 +552,25 @@ treat an explicit `null` as an absent key and fall back to its default.
 #### Scenario: A well-formed archive still imports
 - **WHEN** a valid structure archive is imported
 - **THEN** the survey is created exactly as before
+
+### Requirement: Spraycan questions round-trip with their brush size
+
+The survey ZIP SHALL export a `spraycan` question with `input_type: spraycan` and its brush size
+(`spray_brush`: `small`, `medium` or `large`), and import SHALL restore both. An archive whose
+spraycan question has no `spray_brush` or an unknown value SHALL import with `medium` and a
+report line naming the question. Responses serialization (`responses.json`) SHALL carry the cloud
+as a `MULTIPOINT` WKT string and import it into `Answer.multipoint`.
+
+#### Scenario: Brush size survives export and import
+- **WHEN** a survey with a spraycan question of brush size `large` is exported and imported
+- **THEN** the imported question is `spraycan` with `spray_brush = large`
+
+#### Scenario: Missing brush size defaults with a report line
+- **WHEN** an archive's spraycan question carries `spray_brush: huge`
+- **THEN** the question imports with `medium` and the import report says so
+
+#### Scenario: Responses carry the cloud as WKT
+- **WHEN** responses are exported in full mode for a survey with spray clouds
+- **THEN** each spraycan answer holds a `MULTIPOINT (...)` string, and re-importing restores the
+  same number of dots
 

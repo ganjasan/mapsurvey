@@ -45,20 +45,27 @@ SHALL be rejected with a human-readable reason.
 
 ### Requirement: Respondent map renders reference layers beneath answers
 On map-layout sections, the respondent map SHALL render the survey's reference layers
-in a dedicated pane below answer geometry. Feature styling SHALL honor simplestyle
-properties (`stroke`, `fill`, `stroke-width`, `marker-color`, `stroke-opacity`,
-`fill-opacity`) with the layer color as fallback; point features SHALL render as small
-circle markers, not default markers. When a label field is set, features SHALL show a
-permanent centered label with the property value HTML-escaped. Layers SHALL persist
-across HTMX section navigation without refetching.
+in a dedicated pane below answer geometry. Feature styling SHALL follow the layer's
+`style`: a rule class by attribute when the layer has a rule, else simplestyle
+properties in the feature (`stroke`, `fill`, `stroke-width`, `marker-color`,
+`stroke-opacity`, `fill-opacity`), else the base style with the layer colour; point
+features SHALL render as circle markers, or as glyph markers when an icon is set, never
+default markers. When a label field is set, features SHALL show a permanent centered label
+with the property value HTML-escaped. Layers with a rule and the legend flag SHALL show a
+legend under their name in the layers control. Layers SHALL persist across HTMX section
+navigation without refetching.
 
 #### Scenario: Zones visible under observation markers
 - **WHEN** a volunteer places observation points on a section whose survey has a zones layer
 - **THEN** the zone polygons render beneath the markers, styled with the layer color and labeled from the label field
 
 #### Scenario: Self-styled plan wins over layer color
-- **WHEN** a layer's features carry simplestyle properties (e.g. green lawn, orange playground)
+- **WHEN** a layer's features carry simplestyle properties (e.g. green lawn, orange playground) and the layer has no rule
 - **THEN** each feature renders in its own colors and the layer color is unused
+
+#### Scenario: Rule wins over file colours
+- **WHEN** the same layer gets a categories rule on `use`
+- **THEN** each feature renders in its class colour and the file's simplestyle is unused
 
 #### Scenario: Label values are escaped
 - **WHEN** a feature's label property contains `<img onerror=...>`
@@ -67,6 +74,10 @@ across HTMX section navigation without refetching.
 #### Scenario: Layers survive section navigation
 - **WHEN** the respondent moves to the next section via HTMX
 - **THEN** visible layers remain on the map without a new fetch of layer geometry
+
+#### Scenario: Legend in the layers control
+- **WHEN** a layer with a four-class rule is visible on the section
+- **THEN** the layers control shows its name and four legend rows
 
 ### Requirement: Reference layers never intercept answering
 Reference-layer features SHALL NOT be selectable, editable, or draggable by respondents.
@@ -234,4 +245,62 @@ layers.
 #### Scenario: Drawer thumbnail stays bare
 - **WHEN** the session detail drawer renders its mini-map
 - **THEN** no reference layer is drawn on the thumbnail
+
+### Requirement: Imported geometry is reduced to two dimensions
+
+Layer import SHALL discard the third and any further ordinate while preserving longitude
+and latitude, so a 3D file imports rather than failing. The reduction SHALL happen during
+upload validation, so every ingestion path — interactive upload, single-object create, and
+ZIP import — inherits it.
+
+QGIS and ArcGIS export GeoJSON with a Z ordinate by default, and `LayerObject.geometry`
+is a two-dimensional column, so such a file used to pass validation and die at the
+database.
+
+Elevation SHALL NOT be stored; nothing in the product reads it. When a file carried Z,
+the import report SHALL say so, so a creator who expected elevation to survive learns
+that it did not.
+
+#### Scenario: A 3D GeoJSON imports
+
+- **WHEN** an owner uploads a FeatureCollection whose coordinates are `[6.96, 50.94, 58.2]`
+- **THEN** the layer is created, its objects carry `POINT(6.96 50.94)`, and the response reports success
+
+#### Scenario: The creator is told Z was dropped
+
+- **WHEN** the uploaded file carried a Z ordinate
+- **THEN** the import report names that elevation was discarded
+
+#### Scenario: Two-dimensional files are unaffected
+
+- **WHEN** an owner uploads a FeatureCollection whose coordinates are `[6.96, 50.94]`
+- **THEN** the stored geometry is identical to what the previous behaviour produced
+
+### Requirement: A failed layer upload leaves nothing behind
+
+Layer creation and object creation SHALL be one atomic unit: if object creation fails for
+any reason, no layer row SHALL survive.
+
+The endpoint creates the `SurveyMapLayer` row before building its objects, so a failure
+during object creation used to leave an empty layer that counted against the per-survey
+cap until the creator noticed it in the Reference layers card and deleted it by hand.
+
+A failure SHALL reach the browser as the endpoint's JSON error contract with a
+human-readable reason, never as an HTML error page — the JavaScript parses the response
+as JSON, so an HTML 500 surfaces to the creator as `Unexpected token '<'`.
+
+#### Scenario: Object creation fails
+
+- **WHEN** an upload passes validation but object creation raises
+- **THEN** no `SurveyMapLayer` row exists for that attempt and the per-survey layer count is unchanged
+
+#### Scenario: The creator reads a sentence, not a parse error
+
+- **WHEN** an upload is refused for any reason
+- **THEN** the response is JSON carrying a human-readable reason, and the editor shows that reason
+
+#### Scenario: The cap is not consumed by failures
+
+- **WHEN** a creator makes six failed upload attempts against a survey holding four layers
+- **THEN** the survey still holds four layers and a valid upload still succeeds
 

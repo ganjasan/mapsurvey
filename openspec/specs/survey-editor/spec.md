@@ -481,17 +481,22 @@ existing display-style validation.
 ### Requirement: Reference layers card in Survey settings
 Survey settings SHALL include a "Reference layers" card (after "Respondent map")
 showing each layer as a card with color swatch, name, object count and attachment summary,
-an "Open editor" action leading to the layer's object editor, an edit state exposing
-color, label field, key field (both pickable from the objects' property names) and the
-info-popups toggle, plus a delete action and a "New layer" action. A `question` layer's
-card SHALL show a "source: answers" badge naming the geo question and the "Objects on the
-map" question(s) using it, SHALL expose only name and colour in its edit state, SHALL offer
-no upload/draw actions, and its "Open editor" SHALL open the object editor read-only. The
-card SHALL NOT create `question` layers — they are created from the Objects-on-the-map
-question form. Layer operations SHALL save via dedicated endpoints and reflect results
-without a page reload. Deleting a layer bound to a `layer_objects` question SHALL be refused
-with a message naming the question. The card SHALL be visible to owners only and absent
-when the kill switch is off.
+an "Open editor" action leading to the layer's object editor, an edit state exposing a
+*Style* block (base: colour, opacity, line width, point size, point icon; a "Style by
+attribute" switch with property picker, categories / graduated mode, an editable class
+table with colour, width, icon and legend label per class, an "other" class, an
+"Auto-fill from data" action and a "Show legend to respondents" switch, with a live
+preview of the layer), label field, key field (both pickable from the objects' property
+names) and the info-popups toggle, plus a delete action and a "New layer" action. A
+`question` layer's card SHALL show a "source: answers" badge naming the geo question and
+the "Objects on the map" question(s) using it, SHALL expose only name and the base style
+in its edit state, SHALL offer no upload/draw actions, and its "Open editor" SHALL open the
+object editor read-only. The card SHALL NOT create `question` layers — they are created
+from the Objects-on-the-map question form. Layer operations SHALL save via dedicated
+endpoints and reflect results without a page reload; a style that fails normalisation
+SHALL be reported on the card with the reason. Deleting a layer bound to a `layer_objects`
+question SHALL be refused with a message naming the question. The card SHALL be visible to
+owners only and absent when the kill switch is off.
 
 #### Scenario: Open the editor from the card
 - **WHEN** the owner clicks "Open editor" on a layer card
@@ -507,7 +512,15 @@ when the kill switch is off.
 
 #### Scenario: Question layer card points at the question
 - **WHEN** the owner opens the card of a layer sourced from `Q1`, used by "Marks by other residents"
-- **THEN** the card shows the badge, names both, offers name and colour, and no label/key/popup fields or upload zone
+- **THEN** the card shows the badge, names both, offers name and base style, and no label/key/popup fields, rule editor or upload zone
+
+#### Scenario: Auto-fill a categories rule
+- **WHEN** the owner switches on "Style by attribute", picks `priority_class` and clicks Auto-fill
+- **THEN** the table lists the four values with counts, distinct colours and widths, and saving stores the rule
+
+#### Scenario: Style saves without a reload
+- **WHEN** the owner changes the base opacity
+- **THEN** the card preview updates and the status reads Saved
 
 ### Requirement: Per-section layer visibility checklist
 The section form SHALL include a "Reference layers" checklist between "Layout" and
@@ -984,4 +997,36 @@ On a published or closed survey, clicking any disabled structural-edit control (
 #### Scenario: New Question in the section panel
 - **WHEN** the creator clicks the disabled New Question button below the question list of a published survey
 - **THEN** the live-survey sheet opens with "Open a new version"
+
+### Requirement: Map position autosave survives its panel being replaced
+
+A pending save SHALL be cancelled when its picker's container is removed, so nothing
+fires against a detached DOM. If a save is nevertheless attempted and the fields it needs
+cannot be read, it SHALL be abandoned rather than sent with a substituted value: posting a
+default for a control the creator never touched would persist a choice they did not make.
+Neither path SHALL raise.
+
+The pickers save after a debounce pause, and the editor's settings panel is an HTMX
+fragment that can be swapped away before that pause elapses; when it is, the elements the
+pending save reads are gone.
+
+#### Scenario: The panel is swapped away mid-pause
+
+- **WHEN** a creator moves the map and navigates to another editor page before the debounce elapses
+- **THEN** the pending save is cancelled, no request is sent, and no exception is raised
+
+#### Scenario: A save whose fields have gone is abandoned, not guessed
+
+- **WHEN** a save runs while the control backing one of its fields is absent from the DOM
+- **THEN** no request is sent, and no value is written for that field
+
+#### Scenario: A settled move still saves
+
+- **WHEN** a creator moves the map and leaves the panel open past the debounce
+- **THEN** the position is saved and the indicator reports success, unchanged from the current behaviour
+
+#### Scenario: Teardown and guard are independently verified
+
+- **WHEN** the teardown hook is absent but the fields are unreadable
+- **THEN** the save is still abandoned without raising, so a missed teardown degrades to a skipped save rather than an exception
 

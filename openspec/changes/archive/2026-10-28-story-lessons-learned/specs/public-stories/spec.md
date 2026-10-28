@@ -2,11 +2,7 @@
 
 ### Requirement: Lessons learned callout
 
-A story body MAY contain one "Lessons learned" callout (`<aside class="sd-lessons">`). The callout
-SHALL look the same in every story: the lessons-learned mark, the heading "Lessons learned", and
-numbered lessons. Each lesson MAY end with an "In Mapsurvey" line naming what the product offers
-for it, tagged Available, Built for <customer>, or Not yet; a Not yet line SHALL use the dashed
-mark so a gap is never presented as a feature.
+A story body MAY contain one "Lessons learned" callout (`<aside class="sd-lessons">`). The callout SHALL look the same in every story: the lessons-learned mark, the heading "Lessons learned", and numbered lessons. Each lesson MAY end with an "In Mapsurvey" line naming what the product offers for it, tagged Available, Built for <customer>, or Not yet; a Not yet line SHALL use the dashed mark so a gap is never presented as a feature.
 
 #### Scenario: Story with lessons
 - **WHEN** a story body contains the callout

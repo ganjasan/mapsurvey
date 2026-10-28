@@ -2,7 +2,6 @@
 
 ## Purpose
 A survey section can opt out of the map and render as a classic full-width form (Google Forms style). Covers respondent rendering of both layout modes, mode switching across HTMX navigation, the creator-named forward button, and the mutual exclusion of geo questions and form layout.
-
 ## Requirements
 ### Requirement: A form-layout section renders as a full-width classic form
 When a section has `layout = "form"`, the respondent page SHALL render that section as a
@@ -64,15 +63,20 @@ section's position or layout.
 - **THEN** the translated label renders
 
 ### Requirement: Geo questions and form layout exclude each other
-A `form` section SHALL NOT contain geo questions (`point`, `line`, `polygon`). The system
-SHALL enforce this at question creation/save time and at layout-switch time; there is no
-rendering fallback for a geo question inside a form section because the state is
-unreachable through the product.
+A `form` section SHALL NOT contain geo questions (`point`, `line`, `polygon`, `spraycan`). The
+system SHALL enforce this at question creation/save time and at layout-switch time; there is no
+rendering fallback for a geo question inside a form section because the state is unreachable
+through the product.
 
 #### Scenario: Geo question rejected in a form section
 - **WHEN** a request tries to save a `point` question into a section with `layout = "form"`
 - **THEN** the save is refused with an error
 
+#### Scenario: Spraycan question rejected in a form section
+- **WHEN** a request tries to save a `spraycan` question into a section with `layout = "form"`
+- **THEN** the save is refused with the same error
+
 #### Scenario: Layout switch refused while geo questions exist
 - **WHEN** a creator tries to set `layout = "form"` on a section containing a `polygon` question
 - **THEN** the change is refused with a message naming the blocking questions
+
