@@ -1939,6 +1939,33 @@ body.survey-image-layout #closeButton {
   body.panel-right {
     overflow-x: hidden;
   }
+
+  /* Content alignment inside the panel (change panel-content-align, #476).
+     Column: box-level centring, the text stays left-aligned and the close
+     button (absolute against #info_page) keeps its corner; on the 420 px
+     panel the column is wider than the panel, so nothing moves. */
+  body.content-column #section-data > .header,
+  body.content-column #section-data > .survey-progress,
+  body.content-column #section-data > #content,
+  body.content-column #section-data > #navig_buttons {
+    width: 100%;
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  /* Middle: auto margins centre while there is free space and collapse to 0
+     when the content is taller, so a long section scrolls from its title
+     instead of being clipped above it (justify-content: center would clip).
+     The footer follows #section-panel, i.e. stays at the panel's bottom. */
+  body.content-middle #section-panel {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+  }
+  body.content-middle #section-data {
+    margin-top: auto;
+    margin-bottom: auto;
+  }
   body.panel-right #showButton {
     left: auto;
     right: 12px;

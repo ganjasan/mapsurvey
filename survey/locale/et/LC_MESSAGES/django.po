@@ -9104,3 +9104,35 @@ msgstr "Kui suure osa arvutiekraanist küsimused võtavad."
 #: survey/editor_forms.py:317
 msgid "Shown beside the questions. Empty = the survey cover image."
 msgstr "Näidatakse küsimuste kõrval. Tühi = küsitluse kaanepilt."
+
+#: survey/models.py:822
+msgid "Full panel width"
+msgstr "Kogu paneeli laius"
+
+#: survey/models.py:823
+msgid "Centred column"
+msgstr "Keskel veerg"
+
+#: survey/models.py:826
+msgid "Top"
+msgstr "Üleval"
+
+#: survey/models.py:827
+msgid "Middle"
+msgstr "Keskel"
+
+#: survey/editor_forms.py:337
+msgid "Content width"
+msgstr "Sisu laius"
+
+#: survey/editor_forms.py:338
+msgid "Content vertical position"
+msgstr "Sisu asend vertikaalselt"
+
+#: survey/editor_forms.py:346
+msgid "Centred column: the text and questions keep a comfortable reading width in the middle of a wide panel."
+msgstr "Keskel veerg: tekst ja küsimused jäävad laia paneeli keskele mugavas lugemislaiuses."
+
+#: survey/editor_forms.py:347
+msgid "Middle: a short page sits in the middle of the panel instead of at its top."
+msgstr "Keskel: lühike leht on paneeli keskel, mitte üleval."

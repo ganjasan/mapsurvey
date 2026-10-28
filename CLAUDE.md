@@ -496,7 +496,10 @@ that modal at its Translations block.
 **Section layout controls (change `section-layout-controls`, #473)**: three independent per-section
 settings — the stage `SurveySection.layout` (`map | image | form`; `image` shows `stage_image`, else
 the survey's `cover_image`, else a tinted area), `panel_side` (`left | right`) and `panel_width`
-(`default` = 420 px, `third`, `half`). Map-less stages are ONE constant, `models.MAPLESS_LAYOUTS`
+(`default` = 420 px, `third`, `half`), plus where the content sits inside the panel (change
+`panel-content-align`, #476): `content_width` (`full` | `column` ≤ 640 px, box-centred) and
+`content_valign` (`top` | `middle` — auto margins, so a long section scrolls from its title, never
+`justify-content: center`), both opt-in and ignored by `form`. Map-less stages are ONE constant, `models.MAPLESS_LAYOUTS`
 (`section.has_map`): the section form, the question form's type filter and `layers.py` read it, so
 `image` excludes geo questions exactly as `form` does — never test `layout == 'form'` again. Rendering
 is body classes (`SurveySection.layout_classes()` on a direct load, `initSection()` step 0 on an HTMX

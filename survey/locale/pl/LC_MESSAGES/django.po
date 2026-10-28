@@ -9227,3 +9227,35 @@ msgstr "Jaką część ekranu komputera zajmują pytania."
 #: survey/editor_forms.py:317
 msgid "Shown beside the questions. Empty = the survey cover image."
 msgstr "Wyświetlany obok pytań. Puste = obraz okładki ankiety."
+
+#: survey/models.py:822
+msgid "Full panel width"
+msgstr "Cała szerokość panelu"
+
+#: survey/models.py:823
+msgid "Centred column"
+msgstr "Wyśrodkowana kolumna"
+
+#: survey/models.py:826
+msgid "Top"
+msgstr "Na górze"
+
+#: survey/models.py:827
+msgid "Middle"
+msgstr "Na środku"
+
+#: survey/editor_forms.py:337
+msgid "Content width"
+msgstr "Szerokość treści"
+
+#: survey/editor_forms.py:338
+msgid "Content vertical position"
+msgstr "Położenie treści w pionie"
+
+#: survey/editor_forms.py:346
+msgid "Centred column: the text and questions keep a comfortable reading width in the middle of a wide panel."
+msgstr "Wyśrodkowana kolumna: tekst i pytania mają wygodną szerokość do czytania pośrodku szerokiego panelu."
+
+#: survey/editor_forms.py:347
+msgid "Middle: a short page sits in the middle of the panel instead of at its top."
+msgstr "Na środku: krótka strona stoi pośrodku panelu zamiast na górze."

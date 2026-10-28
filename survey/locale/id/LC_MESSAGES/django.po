@@ -9144,3 +9144,35 @@ msgstr "Seberapa besar bagian layar komputer yang dipakai pertanyaan."
 #: survey/editor_forms.py:317
 msgid "Shown beside the questions. Empty = the survey cover image."
 msgstr "Ditampilkan di samping pertanyaan. Kosong = gambar sampul survei."
+
+#: survey/models.py:822
+msgid "Full panel width"
+msgstr "Selebar panel"
+
+#: survey/models.py:823
+msgid "Centred column"
+msgstr "Kolom di tengah"
+
+#: survey/models.py:826
+msgid "Top"
+msgstr "Atas"
+
+#: survey/models.py:827
+msgid "Middle"
+msgstr "Tengah"
+
+#: survey/editor_forms.py:337
+msgid "Content width"
+msgstr "Lebar konten"
+
+#: survey/editor_forms.py:338
+msgid "Content vertical position"
+msgstr "Posisi vertikal konten"
+
+#: survey/editor_forms.py:346
+msgid "Centred column: the text and questions keep a comfortable reading width in the middle of a wide panel."
+msgstr "Kolom di tengah: teks dan pertanyaan tetap selebar yang nyaman dibaca di tengah panel yang lebar."
+
+#: survey/editor_forms.py:347
+msgid "Middle: a short page sits in the middle of the panel instead of at its top."
+msgstr "Tengah: halaman pendek diletakkan di tengah panel, bukan di atas."

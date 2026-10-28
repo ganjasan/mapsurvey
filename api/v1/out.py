@@ -80,6 +80,8 @@ def section(obj, position=None):
         'layout': obj.layout,
         'panel_side': obj.panel_side,
         'panel_width': obj.panel_width,
+        'content_width': obj.content_width,
+        'content_valign': obj.content_valign,
         'stage_image': _absolute_media_url(obj.stage_image),
         'next_label': obj.next_label,
         'position': position,

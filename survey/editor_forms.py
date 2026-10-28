@@ -305,7 +305,8 @@ class SurveySectionForm(forms.ModelForm):
         model = SurveySection
         # The layout controls follow `layout` so the modal renders them as one
         # block (change section-layout-controls).
-        fields = ['title', 'subheading', 'code', 'layout', 'panel_side', 'panel_width', 'stage_image',
+        fields = ['title', 'subheading', 'code', 'layout', 'panel_side', 'panel_width', 'content_width',
+                  'content_valign', 'stage_image',
                   'next_label']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
@@ -314,6 +315,8 @@ class SurveySectionForm(forms.ModelForm):
             'layout': forms.Select(attrs={'class': 'form-control', 'id': 'id_section_layout'}),
             'panel_side': forms.Select(attrs={'class': 'form-control'}),
             'panel_width': forms.Select(attrs={'class': 'form-control'}),
+            'content_width': forms.Select(attrs={'class': 'form-control'}),
+            'content_valign': forms.Select(attrs={'class': 'form-control'}),
             'stage_image': forms.ClearableFileInput(attrs={'class': 'form-control-file', 'accept': 'image/*'}),
             'next_label': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 30, 'placeholder': _('Next')}),
         }
@@ -331,6 +334,8 @@ class SurveySectionForm(forms.ModelForm):
             'layout': _('Layout'),
             'panel_side': _('Panel side'),
             'panel_width': _('Panel width'),
+            'content_width': _('Content width'),
+            'content_valign': _('Content vertical position'),
             'stage_image': _('Picture'),
             'next_label': _('Button label'),
         }
@@ -338,6 +343,8 @@ class SurveySectionForm(forms.ModelForm):
             'layout': _('Map: questions beside the map. Picture: questions beside a picture, e.g. a welcome page. Form: a classic full-width form. Picture and Form have no map, so geo questions are unavailable.'),
             'panel_side': _('Where the questions sit on a computer screen. On a phone they always cover the map.'),
             'panel_width': _('How much of a computer screen the questions take.'),
+            'content_width': _('Centred column: the text and questions keep a comfortable reading width in the middle of a wide panel.'),
+            'content_valign': _('Middle: a short page sits in the middle of the panel instead of at its top.'),
             'stage_image': _('Shown beside the questions. Empty = the survey cover image.'),
             'next_label': _('Label of this section\'s forward button, e.g. "Start" on a welcome section. Empty = Next / Finish.'),
         }
@@ -349,7 +356,7 @@ class SurveySectionForm(forms.ModelForm):
         self.fields['layout'].required = False
         # Same for the layout controls: a POST without them (autosave of an
         # older open modal, the API's partial bind) keeps what is stored.
-        for name in ('panel_side', 'panel_width'):
+        for name in ('panel_side', 'panel_width', 'content_width', 'content_valign'):
             self.fields[name].required = False
         # On a live survey the code is structure (rules and comments point at
         # it): rendered disabled, and a posted value is ignored.
@@ -366,6 +373,12 @@ class SurveySectionForm(forms.ModelForm):
 
     def clean_panel_width(self):
         return self.cleaned_data.get('panel_width') or self.instance.panel_width or 'default'
+
+    def clean_content_width(self):
+        return self.cleaned_data.get('content_width') or self.instance.content_width or 'full'
+
+    def clean_content_valign(self):
+        return self.cleaned_data.get('content_valign') or self.instance.content_valign or 'top'
 
     def clean_layout(self):
         layout = self.cleaned_data.get('layout')

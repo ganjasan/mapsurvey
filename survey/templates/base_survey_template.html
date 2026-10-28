@@ -1479,6 +1479,8 @@ navigation from #section-data[data-stage-image].{% endcomment %}
         bodyCls.toggle('panel-right', !isFormLayout && dataEl.dataset.panelSide === 'right');
         bodyCls.toggle('panel-w-third', !isFormLayout && panelWidth === 'third');
         bodyCls.toggle('panel-w-half', !isFormLayout && panelWidth === 'half');
+        bodyCls.toggle('content-column', !isFormLayout && dataEl.dataset.contentWidth === 'column');
+        bodyCls.toggle('content-middle', !isFormLayout && dataEl.dataset.contentValign === 'middle');
         var stageEl = document.getElementById('stage-image');
         if (stageEl) {
             var stageUrl = isImageLayout ? (dataEl.dataset.stageImage || '') : '';

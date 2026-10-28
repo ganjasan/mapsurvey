@@ -31,10 +31,12 @@ class StructureToolsTest(TestCase):
         """
         result = data_of(self.mcp.call('update_section', {**self.ref, 'section_id': self.section.pk,
                                                           'layout': 'image', 'panel_side': 'right',
-                                                          'panel_width': 'half'}))
+                                                          'panel_width': 'half', 'content_width': 'column',
+                                                          'content_valign': 'middle'}))
         self.assertEqual((result['layout'], result['panel_side'], result['panel_width']), ('image', 'right', 'half'))
+        self.assertEqual((result['content_width'], result['content_valign']), ('column', 'middle'))
         self.section.refresh_from_db()
-        self.assertEqual(self.section.panel_width, 'half')
+        self.assertEqual((self.section.panel_width, self.section.content_valign), ('half', 'middle'))
 
     def test_group_questions_from_a_chat(self):
         """
