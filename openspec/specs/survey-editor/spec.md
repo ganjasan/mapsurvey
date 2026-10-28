@@ -130,30 +130,15 @@ The system SHALL allow reordering questions within a section by dragging. On dro
 - **THEN** order_numbers are updated to Q3(0), Q1(1), Q2(2)
 
 ### Requirement: Choices editor for choice-based questions
-The system SHALL display a dynamic choices editor when the question's input_type is choice,
-multichoice, range, or rating. The editor SHALL allow adding and removing choice rows. Each
-row SHALL have a code (integer) and, for multilingual surveys, one name field per available
-language — the primary language's field editable, every other language's field read-only and
-linking to the Translations tab at that option's row — or a single name field for single-language
-surveys; the multilingual layout SHALL include a column for the primary language and SHALL NOT
-render a separate "default" name column. On save, choices SHALL be serialized to the
-`Question.choices` JSONField format: a flat string name for single-language surveys, or a
-per-language dict for multilingual surveys that keeps every stored non-primary name unchanged and
-contains the submitted primary name. No entered name value SHALL be silently discarded by
-serialization.
+The system SHALL display a dynamic choices editor when the question's input_type is choice, multichoice, range, or rating. The editor SHALL allow adding and removing choice rows. Each row SHALL have a code (integer) and name fields (one per available language for multilingual surveys, or a single field for single-language surveys). On save, choices SHALL be serialized to the `Question.choices` JSONField format: `[{"code": N, "name": {"en": "...", "ru": "..."}}]`. For choice and multichoice questions each row SHALL also offer an "Other" checkbox that marks the row as the write-in option; checking one row SHALL uncheck any other, the checked row SHALL serialize with `"other": true`, the column SHALL not be offered for range and rating questions, and the server SHALL keep at most one flag per question. The choices editor script SHALL initialise for a star-rating question with no stored choices without error.
 
 #### Scenario: Add choices to a new choice question
-- **WHEN** the user creates a question with input_type "choice" on a single-language survey,
-  adds two choices with codes 1 ("Yes") and 2 ("No"), and saves
+- **WHEN** the user creates a question with input_type "choice", adds two choices with codes 1 ("Yes") and 2 ("No"), and saves
 - **THEN** the Question.choices field is set to `[{"code": 1, "name": "Yes"}, {"code": 2, "name": "No"}]`
 
 #### Scenario: Multilingual choices
-- **WHEN** the survey has available_languages ["en", "ru"], a choice with code 1 has the names `{"en": "Yes", "ru": "Да"}`, and the user edits the en name to "Yes, please" and saves
-- **THEN** the choice is stored as `{"code": 1, "name": {"en": "Yes, please", "ru": "Да"}}`
-
-#### Scenario: Non-primary column opens the table
-- **WHEN** the survey has available_languages ["es", "en"] and the user clicks the en field of an existing choice
-- **THEN** the Translations tab opens on English scrolled to that option's row
+- **WHEN** the survey has available_languages ["en", "ru"] and the user adds a choice with code 1, en name "Yes", ru name "Да"
+- **THEN** the choice is stored as `{"code": 1, "name": {"en": "Yes", "ru": "Да"}}`
 
 #### Scenario: Remove a choice
 - **WHEN** the user removes the second choice from a question with 3 choices
@@ -163,22 +148,59 @@ serialization.
 - **WHEN** the user selects input_type "text" or "point"
 - **THEN** the choices editor is not displayed
 
+#### Scenario: Mark the write-in option
+- **WHEN** the user checks "Other" on the row with code 4 and saves
+- **THEN** that choice is stored as `{"code": 4, "name": "Other (specify)", "other": true}` and the other rows carry no flag
+
+#### Scenario: Only one row can be the write-in option
+- **WHEN** the user checks "Other" on code 2 while code 4 is checked
+- **THEN** code 4 is unchecked, and a save carrying both flags anyway stores the flag on the first one only
+
+#### Scenario: Reopening keeps the flag
+- **WHEN** the user reopens the modal of a question whose code 4 carries `other: true`
+- **THEN** the "Other" checkbox on that row is checked
+
+#### Scenario: Star-rating modal initialises
+- **WHEN** the modal opens for a rating question with display style "stars" and no stored choices
+- **THEN** five star rows are added and the script completes without a ReferenceError
+
 ### Requirement: Sub-question management for geo questions
-The system SHALL allow adding, editing, and deleting sub-questions for geo-type questions (point, line, polygon). Sub-questions SHALL have `parent_question_id` set to the geo question. The sub-question form SHALL support the same fields as regular questions.
+The system SHALL allow adding, editing, and deleting sub-questions for questions that put
+objects on the map: geo-type questions (point, line, polygon) and `layer_objects`
+questions. Sub-questions SHALL have `parent_question_id` set to the parent question. The
+sub-question form SHALL support the same fields as regular questions.
 
-The entry point for adding a sub-question SHALL be a prominent, full-width button labelled "+ Add Sub-question" with a `fa-plus` icon, rendered **inside** every geo-type question card directly **below** the sub-question list. The button SHALL always be visible on geo-type cards — including when the sub-question list is empty. The button SHALL match the visual style of the section-level "+ New Question" button (dashed-border, subdued, accent-on-hover), sized for the nested context.
+The single entry point into the "New Sub-question" modal SHALL be the section list: a
+prominent, full-width button labelled "+ Add Sub-question" with a `fa-plus` icon, rendered
+**inside** every parent-capable question card directly **below** the sub-question list,
+always visible including when the list is empty, styled like the section-level "+ New
+Question" button, sized for the nested context. The question modal itself SHALL NOT carry a
+Sub-questions section: a question being created has no id to hang sub-questions on, so a
+modal section could only ever work for edits, and a control that appears on the second
+open but not the first reads as broken.
 
-When the survey is in a read-only state (status `published` or `closed`), the button SHALL be rendered as `disabled` and SHALL show the tooltip "Create a draft to edit", consistent with all other editor structural-edit affordances. There SHALL NOT be a separate icon-button affordance for adding sub-questions.
+When the survey is in a read-only state (status `published` or `closed`), the entry point
+SHALL be rendered `disabled` with the tooltip "Create a draft to edit". There SHALL NOT be
+a separate icon-button affordance for adding sub-questions.
 
-A sub-question SHALL NOT be a geo-type question itself. The sub-question form (used for both creation and for editing an existing sub-question) SHALL exclude `point`, `line`, and `polygon` from the `input_type` field's available choices. A POST that attempts to create or update a sub-question with `input_type` in `{point, line, polygon}` SHALL be rejected by form validation and SHALL NOT mutate the database. The same `input_type` field SHALL continue to offer all geo and non-geo options when the form is used to create or edit a top-level question.
+A sub-question SHALL NOT be a geo-type question or a `layer_objects` question. The
+sub-question form (creation and edit) SHALL exclude `point`, `line`, `polygon` and
+`layer_objects` from `input_type`. A POST that attempts to create or update a sub-question
+with one of those types SHALL be rejected by form validation and SHALL NOT mutate the
+database. The same `input_type` field SHALL continue to offer all types when the form is
+used for a top-level question.
 
 #### Scenario: Add sub-question to a point question
 - **WHEN** the user clicks "+ Add Sub-question" on a point-type question card and creates a choice sub-question
 - **THEN** a Question is created with `parent_question_id` set to the point question, and it appears nested under the parent in the question list
 
-#### Scenario: Sub-question button only on geo questions
-- **WHEN** the question list shows a `text` question and a `point` question
-- **THEN** only the `point` question card renders an "+ Add Sub-question" button; the `text` question card renders no such button
+#### Scenario: No sub-questions does not block
+- **WHEN** the user creates a polygon question and saves it without any sub-question
+- **THEN** the question is saved; the modal carries no Sub-questions section on create or on edit
+
+#### Scenario: Sub-question button only on parent-capable questions
+- **WHEN** the question list shows a `text` question, a `point` question and a `layer_objects` question
+- **THEN** the `point` and `layer_objects` cards render an "+ Add Sub-question" button; the `text` card renders none
 
 #### Scenario: Button visible when no sub-questions exist
 - **WHEN** a `polygon` question has zero sub-questions
@@ -189,47 +211,65 @@ A sub-question SHALL NOT be a geo-type question itself. The sub-question form (u
 - **THEN** the "+ Add Sub-question" button is rendered below the sub-question list, in addition to the listed sub-questions
 
 #### Scenario: Button disabled in read-only state
-- **WHEN** the survey status is `published` and the editor renders a geo question card
+- **WHEN** the survey status is `published` and the editor renders a parent-capable question card
 - **THEN** the "+ Add Sub-question" button is rendered with the `disabled` attribute and the tooltip "Create a draft to edit"
 
 #### Scenario: Legacy icon-button entry point removed
-- **WHEN** the editor renders any geo question card
+- **WHEN** the editor renders any parent-capable question card
 - **THEN** the q-actions row contains only the edit and delete icon buttons; no `fa-sitemap` icon button is present
 
-#### Scenario: Sub-question creation form excludes geo input types
-- **WHEN** the user opens the "New Sub-question" modal for a geo question
-- **THEN** the `input_type` select offers no `point`, `line`, or `polygon` options (and continues to offer non-geo options such as `text`, `choice`, `number`, `image`)
+#### Scenario: Sub-question creation form excludes parent types
+- **WHEN** the user opens the "New Sub-question" modal for a geo or `layer_objects` question
+- **THEN** the `input_type` select offers no `point`, `line`, `polygon` or `layer_objects` options (and continues to offer non-parent options such as `text`, `choice`, `rating`, `thumbs`, `number`, `image`)
 
-#### Scenario: Sub-question creation rejects geo input types server-side
-- **WHEN** a POST is sent to `editor_subquestion_create` with `input_type=point` (e.g. by a stale or crafted request)
+#### Scenario: Sub-question creation rejects parent types server-side
+- **WHEN** a POST is sent to `editor_subquestion_create` with `input_type=point` or `input_type=layer_objects`
 - **THEN** no Question is created and the response re-renders the form with a validation error on `input_type`
 
-#### Scenario: Sub-question edit form excludes geo input types
-- **WHEN** the user opens the edit modal for an existing sub-question (a Question with `parent_question_id` set)
-- **THEN** the `input_type` select offers no `point`, `line`, or `polygon` options
+#### Scenario: Sub-question edit form excludes parent types
+- **WHEN** the user opens the edit modal for an existing sub-question
+- **THEN** the `input_type` select offers no `point`, `line`, `polygon` or `layer_objects` options
 
-#### Scenario: Top-level question form keeps geo input types
+#### Scenario: Top-level question form keeps parent types
 - **WHEN** the user opens the create modal for a section, or the edit modal for a top-level question
-- **THEN** the `input_type` select still offers `point`, `line`, and `polygon` alongside the non-geo options
+- **THEN** the `input_type` select still offers `point`, `line`, `polygon` and `layer_objects` alongside the other options
 
 ### Requirement: Section map position picker
-The system SHALL provide a Leaflet map picker for setting a section's start_map_position and start_map_zoom. The picker SHALL open in a wide modal, display a map centered at the section's current position, and allow the user to click to set a new position and adjust zoom. The picker SHALL include the shared place search above the map; choosing a search result SHALL move the map to the place, set the picked position to the result point and the zoom to the result's zoom, uncheck "Inherit position" if it was checked, and update the coordinates label. On viewports of 1024px and wider the map SHALL be at least 480px tall; narrower viewports keep the previous height.
+The system SHALL provide a Leaflet map picker for setting a section's start_map_position and start_map_zoom. The picker SHALL open in a wide modal and display the map centred on the section's own position, or on the survey's default position when the section has none. The position SHALL be the centre of the map and the zoom its zoom level: a fixed pin SHALL mark the centre, and dragging, zooming, choosing a place-search result and "My location" SHALL each move the map and thereby set the position. The picker SHALL NOT take a position from a click. Every settled move SHALL be saved automatically (debounced) through the section map-position endpoint, and a status indicator SHALL show saving, saved, or a failure with a retry; the modal SHALL have no Save button. The picker SHALL include the shared place search above the map. On viewports of 1024px and wider the map SHALL be at least 480px tall; narrower viewports keep the previous height.
 
-#### Scenario: Set map position by clicking
-- **WHEN** the user opens the map picker for a section and clicks on the map at coordinates (30.5, 60.0) with zoom level 14
-- **THEN** the section's start_map_postion is updated to POINT(30.5 60.0) and start_map_zoom is updated to 14
+An "Inherit position" checkbox SHALL be ticked when the section has no position of its own. Ticking it SHALL fly the map to the survey's default position, dim the pin, show that the section inherits, and save the cleared position at once. While it is ticked, movement of the map SHALL NOT be saved. Any creator gesture on the map — drag, scroll-wheel or pinch zoom, the zoom control, a place-search result, "My location" — SHALL untick it, after which the resulting centre is saved; programmatic moves SHALL NOT untick it. The section's geolocation flag and basemap override SHALL save on change through the same call.
+
+#### Scenario: Set map position by dragging
+- **WHEN** the user opens the picker for a section, unticks "Inherit position", drags the map so its centre is (60.0, 30.5) at zoom 14 and stops
+- **THEN** the label shows those coordinates, the indicator shows "Saved", and the section's start_map_postion is POINT(30.5 60.0) with start_map_zoom 14 — without any click on the map or on a button
+
+#### Scenario: Reopening shows the saved position
+- **WHEN** the user closes the picker after the previous scenario and opens it again
+- **THEN** the map opens centred on (60.0, 30.5) at zoom 14 with the pin on the centre and "Inherit position" unticked
+
+#### Scenario: Dragging while inherit is ticked sets an own position
+- **WHEN** the user opens the picker for a section with no position ("Inherit position" ticked) and drags the map
+- **THEN** "Inherit position" is unticked by the drag, and the centre where the drag settles is saved as the section's own position
+
+#### Scenario: Ticking inherit flies to the default and clears
+- **WHEN** the user ticks "Inherit position" on a section that has its own position
+- **THEN** the map flies to the survey's default position and zoom, the pin is dimmed, the label says the section inherits, the section's start_map_postion and start_map_zoom are cleared, and the fly itself saves nothing else
 
 #### Scenario: Default position for new sections
 - **WHEN** a new section is created and the map picker is opened
-- **THEN** the map is centered at the default position POINT(30.317 59.945) with zoom 12
+- **THEN** the map is centred on the survey's default position with "Inherit position" ticked
 
 #### Scenario: Set map position by search
-- **WHEN** the user opens the map picker for a section with "Inherit position" checked, types "Tallinn" and chooses the result, then saves
-- **THEN** "Inherit position" is unchecked, the marker sits on the result point, and the section's start_map_postion and start_map_zoom equal the result's point and zoom
+- **WHEN** the user opens the map picker for a section with "Inherit position" ticked, types "Tallinn" and chooses the result
+- **THEN** "Inherit position" is unticked, the map centres on the result at the result's zoom, and the section's start_map_postion and start_map_zoom equal that centre and zoom
+
+#### Scenario: Save fails
+- **WHEN** a save request fails (network error, or the survey became read-only)
+- **THEN** the indicator shows a failure and a tap on it retries; nothing is silently dropped
 
 #### Scenario: Picker without a geocoder token
 - **WHEN** `MAPBOX_ACCESS_TOKEN` is empty
-- **THEN** the picker renders and works by click exactly as before, with no search box
+- **THEN** the picker renders and saves by dragging exactly as above, with no search box
 
 ### Requirement: Translation management
 The system SHALL show, in the section, question and group modals, a read-only Translations block
@@ -358,26 +398,23 @@ The survey settings page SHALL include a "Style" section with the survey-wide de
 ### Requirement: New-user redirect to survey creation
 The `/editor/` dashboard SHALL redirect users whose active organization has zero
 canonical, non-deleted surveys — and whose role permits creating surveys — to
-`/editor/surveys/start/?welcome=1`. The redirect SHALL be suppressed by the query parameter
-`dashboard=1`; the start page SHALL expose a "Skip to dashboard" escape link carrying
-that parameter so no redirect loop is possible. The create page SHALL keep honouring
-`?welcome=1` for old links.
+`/editor/surveys/new/?welcome=1`. The redirect SHALL be suppressed by the query parameter
+`dashboard=1`; the create page SHALL expose a "Skip to dashboard" escape link carrying
+that parameter, its Cancel link SHALL carry it as well, and the editor navbar's
+"Dashboard" link SHALL carry it too, so no link reachable from the create page can
+redirect back to it.
 
-#### Scenario: Empty org lands on the start page
+#### Scenario: Empty org lands on create page
 - **WHEN** an editor-or-higher user with no surveys in the active org opens `/editor/`
-- **THEN** they are redirected to `/editor/surveys/start/?welcome=1` and the page shows a "Skip to dashboard" link
+- **THEN** they are redirected to `/editor/surveys/new/?welcome=1` and the page shows a "Skip to dashboard" link
 
 #### Scenario: Explicit dashboard access
 - **WHEN** the same user opens `/editor/?dashboard=1`
 - **THEN** the dashboard renders (empty state) without redirecting
 
-#### Scenario: Org with surveys unaffected
-- **WHEN** a user whose active org has at least one canonical non-deleted survey opens `/editor/`
-- **THEN** the dashboard renders as today with no redirect
-
-#### Scenario: Viewer role not redirected
-- **WHEN** a viewer-role user in a zero-survey org opens `/editor/`
-- **THEN** the dashboard renders normally (the viewer cannot create surveys, so the start page would be a dead end)
+#### Scenario: Navbar Dashboard link does not loop
+- **WHEN** the same user clicks "Dashboard" in the editor navbar on the create page
+- **THEN** the dashboard renders (HTTP 200) instead of redirecting back to the create page
 
 ### Requirement: Section layout setting
 The section settings form SHALL offer the layout choice — "Map" (default) and "Form" —
@@ -443,19 +480,34 @@ existing display-style validation.
 
 ### Requirement: Reference layers card in Survey settings
 Survey settings SHALL include a "Reference layers" card (after "Respondent map")
-showing each layer as a card with color swatch, name, feature count and size, an edit
-state exposing color, label field, key field (both pickable from the file's property
-names) and the info-popups toggle, plus a delete action and a GeoJSON upload drop-zone.
-Layer operations SHALL save via dedicated endpoints and reflect results without a page
-reload. The card SHALL be visible to owners only and absent when the kill switch is off.
+showing each layer as a card with color swatch, name, object count and attachment summary,
+an "Open editor" action leading to the layer's object editor, an edit state exposing
+color, label field, key field (both pickable from the objects' property names) and the
+info-popups toggle, plus a delete action and a "New layer" action. A `question` layer's
+card SHALL show a "source: answers" badge naming the geo question and the "Objects on the
+map" question(s) using it, SHALL expose only name and colour in its edit state, SHALL offer
+no upload/draw actions, and its "Open editor" SHALL open the object editor read-only. The
+card SHALL NOT create `question` layers — they are created from the Objects-on-the-map
+question form. Layer operations SHALL save via dedicated endpoints and reflect results
+without a page reload. Deleting a layer bound to a `layer_objects` question SHALL be refused
+with a message naming the question. The card SHALL be visible to owners only and absent
+when the kill switch is off.
 
-#### Scenario: Upload from the settings card
-- **WHEN** the owner drops `zones.geojson` on the card's upload zone
-- **THEN** a layer card appears with feature count and size, and label/key dropdowns list the file's property names
+#### Scenario: Open the editor from the card
+- **WHEN** the owner clicks "Open editor" on a layer card
+- **THEN** the object editor for that layer opens
 
-#### Scenario: Invalid upload surfaces the reason
-- **WHEN** the owner uploads a non-GeoJSON file
-- **THEN** the card shows the server's human-readable error and no layer is created
+#### Scenario: New layer goes straight to the editor
+- **WHEN** the owner clicks "New layer"
+- **THEN** an empty layer is created and its object editor opens in the empty state
+
+#### Scenario: Bound layer cannot be deleted
+- **WHEN** the owner clicks delete on a layer bound to a `layer_objects` question
+- **THEN** the card shows a message naming the question and the layer remains
+
+#### Scenario: Question layer card points at the question
+- **WHEN** the owner opens the card of a layer sourced from `Q1`, used by "Marks by other residents"
+- **THEN** the card shows the badge, names both, offers name and colour, and no label/key/popup fields or upload zone
 
 ### Requirement: Per-section layer visibility checklist
 The section form SHALL include a "Reference layers" checklist between "Layout" and
@@ -473,11 +525,15 @@ The server SHALL drop unknown layer IDs from the submitted list.
 - **THEN** no layer checklist is rendered
 
 ### Requirement: Survey default map position picker
-The survey settings page and the in-editor settings panel SHALL provide a Leaflet map picker for the survey's start_map_position, start_map_zoom and use_geolocation, with the shared place search above the map. Choosing a search result SHALL move the map, set the picked position to the result point and the zoom to the result's zoom, and update the coordinates label; a subsequent click SHALL still refine the position. On viewports of 1024px and wider the settings-page map SHALL be at least 460px tall and its section SHALL be allowed to exceed the 800px settings column; the in-editor panel map SHALL be at least 380px tall. Narrower viewports keep the previous heights.
+The survey settings page and the in-editor settings panel SHALL provide a Leaflet map picker for the survey's start_map_position, start_map_zoom and use_geolocation, with the shared place search above the map. The position SHALL be the centre of the map and the zoom its zoom level: a fixed pin SHALL mark the centre, and dragging, zooming, choosing a search result and "My location" SHALL each move the map and thereby set the position; the picker SHALL NOT take a position from a click. Every settled move SHALL be saved automatically (debounced) through the survey map-position endpoint, the geolocation flag SHALL save on change, and a status indicator SHALL show saving, saved, or a failure with a retry; there SHALL be no Save button. On viewports of 1024px and wider the settings-page map SHALL be at least 460px tall and its section SHALL be allowed to exceed the 800px settings column; the in-editor panel map SHALL be at least 380px tall. Narrower viewports keep the previous heights.
 
 #### Scenario: Move a survey to another city by search
-- **WHEN** a creator opens survey settings for a survey positioned in Berlin, searches "Ülemiste, Tallinn", chooses the result and clicks "Save Map Position"
-- **THEN** the survey's start_map_postion is the result point, start_map_zoom is the result's zoom, and the coordinates label showed the new values before saving
+- **WHEN** a creator opens survey settings for a survey positioned in Berlin, searches "Ülemiste, Tallinn" and chooses the result
+- **THEN** the map centres on the result, the label shows the new coordinates, the indicator shows "Saved", and the survey's start_map_postion and start_map_zoom are the result's centre and zoom
+
+#### Scenario: Move a survey by dragging
+- **WHEN** a creator drags the settings-panel map so its centre is (59.437, 24.7536) at zoom 12 and stops
+- **THEN** the survey's start_map_postion is POINT(24.7536 59.437) and start_map_zoom 12, with no button pressed
 
 #### Scenario: Search box present on both settings surfaces
 - **WHEN** the standalone settings page and the in-editor settings panel render with a Mapbox token configured
@@ -762,4 +818,170 @@ own block) is open on the same page. The block SHALL NOT rely on a page-unique e
   "Shown conditionally"
 - **THEN** the "When the answer to" select and the answer checkboxes of the modal's block
   become visible
+
+### Requirement: Objects on the map question form
+The question modal for `layer_objects` SHALL offer a layer picker limited to the survey's
+layers, a "respondent must answer on at least N objects" field (default 0) replacing the
+`required` checkbox, and the search/chips mode (`auto`/`on`/`off`). Saving without a layer
+SHALL fail validation. The modal preview SHALL show the list block as respondents see it.
+
+#### Scenario: Layer required
+- **WHEN** the creator saves an "Objects on the map" question without picking a layer
+- **THEN** the form re-renders with a validation error on the layer field
+
+#### Scenario: Minimum replaces required
+- **WHEN** the creator opens the form for a `layer_objects` question
+- **THEN** no `required` checkbox is rendered and the minimum-objects field is
+
+### Requirement: Objects on the map source picker
+The "Objects on the map" question form's layer picker SHALL offer two groups: the survey's
+layers, and "Respondents' marks on…" listing the top-level point, line and polygon
+questions that have no `question` layer yet. Saving with a geo question picked SHALL create
+that question's `question` layer (one per geo question; a later pick reuses it) and bind
+the question to it. When the bound layer is question-sourced the form SHALL show and save
+the layer's label sub-question (choice types first, with the note that without a label marks
+are listed by number) and the *show tallies*, *show other people's comments*, *approve marks
+before they appear* settings; these SHALL be edited nowhere else. The type SHALL be offered
+when the survey has at least one layer or one geo question.
+
+#### Scenario: Pick a geo question as the source
+- **WHEN** the owner creates an Objects question, picks "Where do we need a bin?" under Respondents' marks, sets the label to "Why here?" and saves
+- **THEN** a `question` layer for that question exists with that label and default settings, the new question is bound to it, and the geo question no longer appears under Respondents' marks
+
+#### Scenario: Settings travel with the question form
+- **WHEN** the owner edits the bound Objects question, ticks "approve marks before they appear" and saves
+- **THEN** the layer's `approve_first` is true and the layer card shows no such field
+
+#### Scenario: Type offered without any uploaded layer
+- **WHEN** a survey has a point question and no reference layer
+- **THEN** the type picker still offers "Objects on the map"
+
+### Requirement: Question rows are created on type pick
+"New question" SHALL open the question modal with the same shell as the edit modal — Name,
+Subtext, the Input type picker and the "Respondent sees" column — with no type selected and
+everything below the picker (type-scoped settings, Create button) hidden. Picking a type
+SHALL create the question, carrying the Name and Subtext typed so far, and SHALL re-render
+the modal as that question's edit modal — autosave, type-specific fields, and for
+parent-capable types the Sub-questions block — adding the question to the section list
+without a reload. The Sub-questions block SHALL list the children with edit and delete, and
+an "Add sub-question" that opens the sub-question form inside the same modal; creating or
+leaving a sub-question SHALL return to the parent's modal. Closing the modal SHALL delete the
+draft and remove its list item only when the question is EMPTY — no name, no subtext text, no
+layer selected and no sub-questions; markup that carries no text SHALL NOT count as subtext.
+Closing the modal BEFORE a type is picked SHALL NOT discard what was typed: when Name or
+Subtext carries anything, the close SHALL create the question with input type `text`, carrying
+both values; with both empty it SHALL create nothing. The picker SHALL still open with no type
+selected. A published or closed survey SHALL refuse the draft like any structural edit.
+
+#### Scenario: Pick a type
+- **WHEN** the creator clicks "New question" and picks Point
+- **THEN** a nameless point question exists, the modal shows its edit form with the Sub-questions block, and the section list has a new card
+
+#### Scenario: Name typed before the type
+- **WHEN** the creator types "Where do you live?" into Name, then picks Point
+- **THEN** the created point question is named "Where do you live?", the modal carries no draft marker, and closing it keeps the question
+
+#### Scenario: No layout jump on type pick
+- **WHEN** the New question modal opens
+- **THEN** Name, Subtext and the preview column are already on screen, so picking a type changes only the area below the picker
+
+#### Scenario: Add a sub-question without leaving the modal
+- **WHEN** the creator clicks "Add sub-question", fills a text sub-question and creates it
+- **THEN** the modal shows the parent again with the child listed, and the section list card lists it too
+
+#### Scenario: Close an empty draft
+- **WHEN** the creator closes the modal having typed nothing at all
+- **THEN** the draft question is deleted and its card disappears
+
+#### Scenario: Close a named question
+- **WHEN** the creator names the question (autosave) and closes the modal
+- **THEN** the question stays
+
+#### Scenario: Close a Formatted Text block that has a body but no name
+- **WHEN** the creator picks Formatted Text, writes the body into Content, leaves Name empty and closes the modal
+- **THEN** the question stays with its body intact, because subtext is the block's whole content
+
+#### Scenario: Close before picking a type, having typed a name
+- **WHEN** the creator types "Where do you park?" into Name and closes the modal without picking a type
+- **THEN** a text question named "Where do you park?" is in the section, and the creator can change its type there
+
+#### Scenario: Close an untouched New question modal
+- **WHEN** the creator opens "New question" and closes it having typed nothing
+- **THEN** no question is created
+
+#### Scenario: Close a draft whose subtext holds only empty markup
+- **WHEN** the creator opens and clears the rich-text editor so the subtext value carries markup but no text, and closes the modal
+- **THEN** the draft question is deleted, because markup without text is not content
+
+### Requirement: Source geo questions are protected
+The system SHALL refuse to delete a point, line or polygon question whose code is the
+`source_question_code` of a `question` layer, with a message naming the layer. Question
+codes are not editable in the editor; where an import remaps codes, the layer's
+`source_question_code` SHALL follow the remap. The question form SHALL show a note naming
+the layer(s) that read its answers.
+
+#### Scenario: Source question cannot be deleted
+- **WHEN** the creator deletes `Q1` while a `question` layer names `Q1`
+- **THEN** the deletion is refused with a message naming the layer
+
+#### Scenario: Remapped code follows on import
+- **WHEN** an archive whose `Q1` collides with an existing code is imported and `Q1` is remapped
+- **THEN** the imported layer's `source_question_code` is the remapped code
+
+### Requirement: Editor panel autosave error reporting
+The system SHALL autosave every editor panel that has no explicit Save button — Survey settings, the Thanks page and Public results — through one shared implementation, and SHALL distinguish a failure the creator can act on from one they can only retry.
+
+When a save is refused with HTTP 400 carrying an `errors` object, the panel SHALL name the
+first failing field by the label the creator sees and quote its message, SHALL mark that
+field as invalid, and SHALL NOT offer a retry, because re-posting the same value cannot
+succeed. When a save fails for any other reason — a network error, a 403, a 5xx — the panel
+SHALL say the save did not reach the server and SHALL make its status indicator a retry
+control. A subsequent successful save SHALL clear every message and field mark the panel set.
+
+An autosaver SHALL claim only the forms it was written for: the question-form autosaver SHALL
+skip a form that carries no `hx-post`, so an editor panel is never saved twice, never posted to
+a null URL, and never has another module's failure written into its status indicator.
+
+Controls that live inside an autosaving form but save through their own endpoint — the
+reference-layer card, the survey's auto-center switch, the Public results slug — SHALL NOT
+trigger that form's autosave.
+
+#### Scenario: A rejected field is named
+- **WHEN** a creator types a malformed address into "Redirect URL" in the Survey settings panel and the server answers 400 with `{"errors": {"redirect_url": ["Enter a valid URL."]}}`
+- **THEN** the status reads "Not saved — Redirect URL: Enter a valid URL.", the redirect_url input is marked invalid, and the status offers no retry
+
+#### Scenario: A transport failure offers a retry
+- **WHEN** a save fails because the request never reaches the server
+- **THEN** the status says the change was not saved and names a retry, and clicking the status re-sends the save
+
+#### Scenario: Retrying an invalid value is not offered
+- **WHEN** the status is showing a validation failure and the creator clicks it
+- **THEN** no request is sent
+
+#### Scenario: A later success clears the report
+- **WHEN** a validation failure has named a field and the creator corrects it, and the next save succeeds
+- **THEN** the status returns to the saved state and the field is no longer marked invalid
+
+#### Scenario: One implementation, not three copies
+- **WHEN** the Survey settings, Thanks page and Public results panels render
+- **THEN** each loads the shared panel autosave module and none of them defines an autosave status handler of its own
+
+#### Scenario: One autosaver per form
+- **WHEN** the Survey settings panel renders and a creator changes any field
+- **THEN** only the panel autosaver posts, to the form's own action — the question autosaver does not claim the form, posts nothing, and writes nothing into the map position indicator that shares the form
+
+#### Scenario: No redirect is a valid choice
+- **WHEN** a creator clears "Redirect URL" in the Survey settings panel and the panel autosaves
+- **THEN** the save succeeds and the survey stores the "#" sentinel that means "no redirect", rather than the panel refusing every later save with "This field is required"
+
+#### Scenario: The auto-center switch does not fire the settings autosave
+- **WHEN** a creator toggles "Auto-center on respondent's location" in the Survey settings panel
+- **THEN** the map position endpoint receives the change and the settings form posts nothing, so a settings validation error cannot appear under the switch
+
+### Requirement: Every disabled edit control on a live survey opens the new-version sheet
+On a published or closed survey, clicking any disabled structural-edit control (New Question in the section panel or sidebar, Add sub-question, Paste question, question rows, section fields) SHALL open the "This survey is live and collecting responses" sheet offering "Open a new version" — regardless of which wrapper element receives the click.
+
+#### Scenario: New Question in the section panel
+- **WHEN** the creator clicks the disabled New Question button below the question list of a published survey
+- **THEN** the live-survey sheet opens with "Open a new version"
 

@@ -243,3 +243,40 @@ The `mapsurvey-help` service SHALL set `previews.generation: off`; help-site cha
 - **WHEN** модуль survey/abuse.py пишет в логгер `abuse.*`
 - **THEN** записи форматируются и маршрутизируются как до изменения
 
+### Requirement: Web workers are recycled
+Gunicorn SHALL restart each worker after a bounded number of requests
+(`--max-requests` with `--max-requests-jitter`), with both numbers tunable through
+environment variables declared in `render.yaml`, so that allocator fragmentation left by
+large requests cannot accumulate for the life of the process.
+
+#### Scenario: Worker recycles without dropping requests
+- **WHEN** a worker reaches its request budget
+- **THEN** it finishes its in-flight requests, exits, and the master has already started its replacement
+
+#### Scenario: Budget tunable without rebuild
+- **WHEN** an operator sets `GUNICORN_MAX_REQUESTS` or `GUNICORN_MAX_REQUESTS_JITTER` in the Render dashboard and restarts the service
+- **THEN** gunicorn applies the new budget without an image rebuild
+
+#### Scenario: Recycling and shutdown answer every accepted connection
+- **WHEN** a worker leaves — its request budget is spent, or the master received a deploy's SIGTERM — while connections it has accepted are still unread or in flight
+- **THEN** it stops accepting new connections first and answers every connection it already holds before exiting, so no request is reset (`scripts/gunicorn_recycle_check.py` shows zero failures over keep-alive, fresh-connection and SIGTERM runs)
+
+### Requirement: Web service plan
+The production web service SHALL run on a Render plan with at least 2 GB of memory
+(`standard`), and that plan SHALL be declared in `render.yaml` rather than set in the
+dashboard, because a Blueprint sync overwrites a dashboard-only plan. PR preview web
+services SHALL stay on `starter` through `previewPlan`.
+
+#### Scenario: Production web service has 2 GB
+- **WHEN** the Blueprint is applied
+- **THEN** the `mapsurvey` web service runs on the `standard` plan with a 2 GB memory limit
+
+#### Scenario: Dashboard changes do not drift from the Blueprint
+- **WHEN** an operator changes the web service plan in the Render dashboard only
+- **THEN** the next Blueprint sync restores the plan declared in `render.yaml`
+- **AND** therefore every plan change is made in `render.yaml`
+
+#### Scenario: Previews stay on the small plan
+- **WHEN** Render creates a PR preview from the Blueprint
+- **THEN** the preview web service runs on `starter`
+

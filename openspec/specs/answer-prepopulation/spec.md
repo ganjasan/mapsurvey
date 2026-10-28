@@ -2,7 +2,6 @@
 
 ## Purpose
 How a respondent's existing answers are loaded back into a section's form when they navigate to it again, across every field type including geo features and their sub-questions, so that going back never silently discards work.
-
 ## Requirements
 ### Requirement: Load existing answers on section visit
 When a user navigates to a survey section via GET request and a survey session exists, the system SHALL query all Answer records for the current session and section, and pass them as initial values to the form.
@@ -31,7 +30,7 @@ The system SHALL set the initial value of text, text_line, and number form field
 - **THEN** the number input SHALL display the saved numeric value
 
 ### Requirement: Prepopulate choice and multichoice fields
-The system SHALL pre-select the saved choice codes from `Answer.selected_choices` for choice and multichoice questions.
+The system SHALL pre-select the saved choice codes from `Answer.selected_choices` for choice and multichoice questions. When the saved selection includes the question's write-in option, the write-in input SHALL be prefilled with `Answer.text` and rendered visible.
 
 #### Scenario: Single choice field with saved answer
 - **WHEN** a section is loaded and a choice question has a saved Answer with `selected_choices` containing one code
@@ -40,6 +39,10 @@ The system SHALL pre-select the saved choice codes from `Answer.selected_choices
 #### Scenario: Multichoice field with saved answer
 - **WHEN** a section is loaded and a multichoice question has a saved Answer with `selected_choices` containing multiple codes
 - **THEN** all corresponding checkboxes SHALL be checked
+
+#### Scenario: Write-in text restored
+- **WHEN** a section is loaded and a choice question's saved Answer selected the write-in option with `text="wet towel"`
+- **THEN** the write-in input under that option SHALL be visible, enabled and hold "wet towel"
 
 ### Requirement: Prepopulate range and rating fields
 The system SHALL set the initial value of range and rating fields from the saved Answer's `numeric` field.
@@ -79,7 +82,7 @@ The system SHALL restore previously saved geo answers (point, line, polygon) as 
 - **THEN** all saved features SHALL be restored on the map
 
 ### Requirement: Restore sub-question values for geo features
-When geo features are restored on the map, the system SHALL also restore sub-question answer values as properties of each GeoJSON feature, so that popups display previously entered sub-question data.
+When geo features are restored on the map, the system SHALL also restore sub-question answer values as properties of each GeoJSON feature, so that popups display previously entered sub-question data. The restored value SHALL be chosen by the sub-question's input type, not by which Answer columns happen to be set; a choice sub-answer that selected the write-in option SHALL additionally restore its text under the `<code>-other` property.
 
 #### Scenario: Geo feature with sub-question answers
 - **WHEN** a geo Answer has child Answer records (via `parent_answer_id`) for sub-questions
@@ -88,6 +91,10 @@ When geo features are restored on the map, the system SHALL also restore sub-que
 #### Scenario: Geo feature without sub-questions
 - **WHEN** a geo Answer has no child Answer records
 - **THEN** the feature SHALL be restored with only the `question_id` property
+
+#### Scenario: Choice sub-answer with write-in text
+- **WHEN** a child Answer of a choice sub-question S1 has `selected_choices=[4]` and `text="graffiti"`
+- **THEN** the feature's properties SHALL carry `S1: ["4"]` and `S1-other: ["graffiti"]`, never `S1: ["graffiti"]`
 
 ### Requirement: Update existing answers on re-submission
 When a user re-submits a section that already has saved answers, the system SHALL delete the existing Answer records for that session and section before saving new ones, to prevent duplicate answers.
@@ -110,3 +117,4 @@ The system SHALL pass existing sub-question answer data as initial values to sub
 #### Scenario: Sub-question form with saved choice answer
 - **WHEN** a geo feature popup is opened and a choice sub-question has a saved child Answer
 - **THEN** the sub-question choice field SHALL have the saved option pre-selected
+
