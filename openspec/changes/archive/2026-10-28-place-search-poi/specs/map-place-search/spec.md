@@ -36,6 +36,8 @@ a place by the name they would use for it in conversation, without knowing its s
 - **WHEN** a survey published before this capability shipped is opened by a respondent
 - **THEN** the place search is available, with no change made to that survey
 
+## ADDED Requirements
+
 ### Requirement: Results are offered as a list, not assumed
 
 Every place search on the platform — respondent-facing and creator-facing — SHALL be served by the

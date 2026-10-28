@@ -42,6 +42,11 @@ The analytics surface SHALL be presented as the **Results** space (one of the th
 - **WHEN** the editor is in the Results space
 - **THEN** a "Download data" action is available without leaving the space
 
+## RENAMED Requirements
+
+- FROM: `### Requirement: Standalone settings page remains reachable but is no longer the primary link`
+- TO: `### Requirement: Standalone settings page remains reachable but is not linked`
+
 ## MODIFIED Requirements
 
 ### Requirement: Survey settings accessible from the editor sidebar
