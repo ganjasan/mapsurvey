@@ -11,6 +11,7 @@ from django.core.cache import cache
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.test import SimpleTestCase, TestCase, override_settings
+from django.utils import translation
 
 from mapsurvey import test_runner
 
@@ -79,6 +80,28 @@ class WorkerCacheSettingsTest(SimpleTestCase):
         with override_settings(CACHES=self.CACHES):
             runner = test_runner.MapsurveyTestRunner(parallel=20)
         self.assertEqual(runner.parallel, 14)
+
+
+class DefaultLanguagePerTestTest(SimpleTestCase):
+    """unittest runs a class's methods in name order, so test_1 always precedes test_2."""
+
+    def test_1_leaves_another_language_active(self):
+        """
+        GIVEN a test that activates Portuguese
+        WHEN it ends without resetting it
+        THEN Portuguese is active at its end (the leak the next test must not see)
+        """
+        translation.activate('pt')
+        self.assertEqual(translation.get_language(), 'pt')
+
+    def test_2_starts_in_the_default_language(self):
+        """
+        GIVEN the previous test in this process left Portuguese active
+        WHEN this test starts
+        THEN the default language is active and gettext output is in it
+        """
+        self.assertEqual(translation.get_language(), settings.LANGUAGE_CODE)
+        self.assertEqual(translation.gettext('Page title'), 'Page title')
 
 
 class WorkerCacheIsolationTest(SimpleTestCase):

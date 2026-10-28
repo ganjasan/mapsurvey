@@ -68,6 +68,7 @@ def _write_ins(service, question):
             .filter(question_id__in=service._lineage_ids(question), selected_choices__contains=[code],
                     **service._session_filter())
             .exclude(text__isnull=True).exclude(text='')
+            .order_by('pk')   # "first written" needs an order; heap order varies
             .values_list('text', flat=True))
     for text in rows:
         text = ' '.join(text.split())

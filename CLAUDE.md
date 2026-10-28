@@ -60,8 +60,8 @@ would test the old schema. `TEST_RUNNER` (`mapsurvey/test_runner.py`) applies to
 workers) — django-redis `cache.clear()` is `FLUSHDB`, so a shared database would let one
 worker wipe another's rate-limit counters. `tblib` (dev package) is required: without it a
 failure inside a worker aborts the whole run with a `TypeError` and a cascade of unrelated
-`IntegrityError`s. Views leave `translation.activate()` behind, so a test that reads
-gettext output without a request sets its language itself. A test that only passes serially is relying on
+`IntegrityError`s. Views leave `translation.activate()` behind, so the runner resets
+the language to `LANGUAGE_CODE` before every test (wrapping `SimpleTestCase._pre_setup`). A test that only passes serially is relying on
 another test's state; fix the test, never pin the suite to one process.
 
 **Test location**: `survey/tests.py` plus `survey/test_*.py`, `api/tests/`, `billing/tests/`,
