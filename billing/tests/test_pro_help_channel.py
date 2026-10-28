@@ -36,12 +36,41 @@ class ProHelpTest(TestCase):
         self.url = f'/org/{self.org.slug}/help/'
 
     def test_free_sees_offer_and_cannot_post(self):
+        """
+        GIVEN the owner of a Free organisation that never claimed a Pro trial
+        WHEN they open the help page and then POST to it
+        THEN the page offers "Try Pro" posting back to the help page and no form, and the POST is 403
+        """
         self.client.login(username='bill_owner', password='pass')
         r = self.client.get(self.url)
-        self.assertContains(r, 'Upgrade to Pro')
+        self.assertContains(r, 'Try Pro')
+        self.assertContains(r, f'/org/{self.org.slug}/billing/trial/')
+        self.assertContains(r, f'name="next" value="{self.url}"')
         self.assertNotContains(r, 'Send request')
         self.assertEqual(self.client.post(self.url, {'kind': 'report', 'message': 'x', 'contact_email': 'a@b.c'}).status_code, 403)
         self.assertFalse(ProHelpRequest.objects.exists())
+
+    def test_trial_member_submits_and_the_form_closes(self):
+        """
+        GIVEN a Free organisation whose live Pro trial has one pro_help request left
+        WHEN an editor submits a valid request
+        THEN the request is stored, the allowance reads 0 left, and the page shows the receipt and the
+             "trial used" sentence instead of the form
+        """
+        from ..trial import claim
+        claim(self.org, self.owner)
+        self.client.login(username='bill_editor', password='pass')
+        self.assertContains(self.client.get(self.url), 'Send request')
+        r = self.client.post(self.url, {'kind': 'report', 'message': 'Need a report', 'contact_email': 'ed@example.test'})
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(ProHelpRequest.objects.count(), 1)
+        self.assertEqual(self.org.grants.get().allowances.get(feature='pro_help').used, 1)
+        self.assertContains(r, 'Received.')
+        self.assertContains(r, 'data-trial-state="feature_used"')
+        self.assertNotContains(r, 'Send request')
+        self.assertEqual(self.client.post(self.url, {'kind': 'report', 'message': 'again',
+                                                     'contact_email': 'ed@example.test'}).status_code, 403)
+        self.assertEqual(ProHelpRequest.objects.count(), 1)
 
     def test_pro_member_submits_and_mails(self):
         """

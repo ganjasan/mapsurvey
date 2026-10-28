@@ -8,10 +8,14 @@ PLAN_PAYMENT_FAILED = 'plan_payment_failed'
 PLAN_CANCELLED = 'plan_cancelled'
 PLAN_LAPSED = 'plan_lapsed'
 PRO_HELP_REQUESTED = 'pro_help_requested'
+# The Pro trial (change pro-trial-allowances): the owner's click, and the use
+# that spent the last of one feature's allowance (once per feature).
+TRIAL_CLAIMED = 'trial_claimed'
+TRIAL_EXHAUSTED = 'trial_exhausted'
 
 BILLING_EVENTS = (
     PLAN_CHECKOUT_STARTED, PLAN_ACTIVATED, PLAN_PAYMENT_FAILED,
-    PLAN_CANCELLED, PLAN_LAPSED, PRO_HELP_REQUESTED,
+    PLAN_CANCELLED, PLAN_LAPSED, PRO_HELP_REQUESTED, TRIAL_CLAIMED, TRIAL_EXHAUSTED,
 )
 
 

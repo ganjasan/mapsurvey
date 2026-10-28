@@ -64,7 +64,9 @@ note: Part of Pro · connecting is free
 - `chips` — example prompts separated by `|`; `{survey}` becomes one of the creator's own survey
   names (published first, newest first), so the banner is about their work. Optional.
 - `show_if` — predicate names from `survey/changelog_audience.py`, all must hold (`has_surveys`,
-  `no_mcp_connection`, `free_plan`). `note_if` + `note` — a line under the buttons when the
+  `no_mcp_connection`, `free_plan`, `trial_available` — the viewer owns the active workspace
+  and can start the Pro trial there).
+- `art` plates the partial draws: `agent` (the assistant) and `trial` (the Pro trial). `note_if` + `note` — a line under the buttons when the
   predicate holds. An unknown name fails the loader.
 
 Rules the code enforces, so you do not have to remember them: a hero is *pending* for a
@@ -72,4 +74,6 @@ creator while it is unseen, at most **30 days** old and in audience; while one i
 corner card shows anywhere, and the hero shows only on the dashboard; closing it (×, the
 button, "Don't show these") marks every entry seen, so no card follows; a hero never falls
 back to a corner card. **Budget: two heroes are at least 14 days apart** — the test fails
-otherwise. Hero is for what ships from now on; do not promote an old entry.
+otherwise. An owner-approved exception is a dated row in `HERO_SPACING_EXCEPTIONS`
+(`survey/changelog.py`) with the reason — the first one lets the Pro trial hero displace the
+assistant hero two days after it. Hero is for what ships from now on; do not promote an old entry.

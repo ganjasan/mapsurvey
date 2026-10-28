@@ -42,6 +42,10 @@ body.mobile-nav-enabled .wn-card { bottom: calc(1.25rem + 56px); }
 .wn-hero-art.agent::before { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.14) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.14) 1px, transparent 1px); background-size: 24px 24px; }
 .wn-hero-art.agent { place-items: start center; }
 .wn-hero-art.agent i { font-size: 30px; color: #fff; opacity: .95; margin-top: 14px; position: relative; }
+/* Pro trial plate (change pro-trial-allowances): the Pro accent of the plan cards. */
+.wn-hero-art.trial { background: linear-gradient(145deg, #0b5f52, #0fa58e 55%, #b7eadf); place-items: start center; }
+.wn-hero-art.trial::before { content: ""; position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,.18) 1px, transparent 1px); background-size: 14px 14px; }
+.wn-hero-art.trial .trial-mark { position: relative; margin-top: 12px; padding: 2px 12px; border: 2px solid rgba(255,255,255,.9); border-radius: 999px; color: #fff; font-weight: 800; font-size: 1.05rem; letter-spacing: .04em; }
 .wn-hero-art .logos { position: absolute; left: 8px; right: 8px; bottom: 8px; display: flex; gap: 4px; z-index: 1; flex-wrap: nowrap; justify-content: center; }
 .wn-hero-art .logos span { background: rgba(255,255,255,.92); color: #1f2937; border-radius: 999px; font-size: .62rem; font-weight: 600; padding: 1px 7px; }
 .wn-hero-eyebrow { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .66rem; letter-spacing: .14em; text-transform: uppercase; color: #9aa0a6; display: flex; align-items: center; gap: .5rem; margin-bottom: .3rem; }
@@ -54,6 +58,9 @@ body.mobile-nav-enabled .wn-card { bottom: calc(1.25rem + 56px); }
 .wn-hero-chips span { font-size: .78rem; color: #4b5563; background: #f3f4f6; border-radius: 8px; padding: .25rem .6rem; }
 .wn-hero-chips span::before { content: "“"; color: #9aa0a6; }
 .wn-hero-chips span::after { content: "”"; color: #9aa0a6; }
+/* Trial chips are what the trial holds, not prompts: no quotes, the Pro accent. */
+.wn-hero-trial .wn-hero-chips span { color: #0b5f52; background: rgba(15, 165, 142, .12); font-weight: 600; }
+.wn-hero-trial .wn-hero-chips span::before, .wn-hero-trial .wn-hero-chips span::after { content: none; }
 .wn-hero-actions { display: flex; flex-direction: column; align-items: stretch; gap: .5rem; min-width: 200px; }
 .wn-hero-actions .wn-btn { justify-content: center; }
 .wn-hero-actions .wn-hero-cta { background: #d97757; border-color: #d97757; }

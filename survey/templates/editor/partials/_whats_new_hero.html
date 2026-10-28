@@ -21,6 +21,9 @@ localStorage so a close that failed to persist does not come back on the next pa
     {% elif entry.art == 'agent' %}
       <i class="fas fa-robot"></i>
       <div class="logos"><span>Claude</span><span>ChatGPT</span><span>+10</span></div>
+    {% elif entry.art == 'trial' %}
+      <span class="trial-mark">Pro</span>
+      <div class="logos"><span>{% trans "90 days" %}</span><span>{% trans "No card" %}</span></div>
     {% endif %}
   </div>
   <div class="wn-hero-text">
@@ -33,7 +36,7 @@ localStorage so a close that failed to persist does not come back on the next pa
   </div>
   <div class="wn-hero-actions">
     {% if whats_new.hero_link %}
-    <a class="wn-btn wn-hero-cta" href="{{ whats_new.hero_link }}" data-wn="cta"><i class="fas fa-plug"></i> {{ entry.cta_label }}</a>
+    <a class="wn-btn wn-hero-cta" href="{{ whats_new.hero_link }}" data-wn="cta"><i class="fas {% if entry.art == 'trial' %}fa-gift{% else %}fa-plug{% endif %}"></i> {{ entry.cta_label }}</a>
     {% endif %}
     {% if entry.help and HELP_URL %}{% with help_url=HELP_URL|get_item:entry.help %}{% if help_url %}
     <a class="wn-hero-help" href="{{ help_url }}" target="_blank" rel="noopener" data-wn-help>{% trans "How it works" %}</a>

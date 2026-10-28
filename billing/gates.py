@@ -11,20 +11,35 @@ from django.shortcuts import render
 from .entitlements import for_organization
 
 
+def feature_required(request, org, feature_key, status=403):
+    """The refusal page: what the feature is, and where the viewer's Pro trial stands."""
+    from survey.permissions import get_org_membership
+
+    from .trial import state_for
+    m = get_org_membership(request.user, org) if request.user.is_authenticated else None
+    trial = state_for(org, request.user)
+    return render(request, 'billing/feature_required.html', {
+        'org': org, 'feature_key': feature_key, 'entitlements': for_organization(org),
+        'trial': trial, 'feature_used_up': trial.feature_exhausted(feature_key),
+        'is_owner': m is not None and m.role == 'owner',
+        'next_path': request.get_full_path() if request.method == 'GET' else '',
+    }, status=status)
+
+
 def require_feature(feature_key, org_getter):
-    """Refuse (403, with an upgrade hint) unless the organisation holds the feature.
+    """Refuse (403, with an upgrade hint) unless the organisation may use the feature
+    (its plan includes it, or a live Pro trial has a remainder for it).
 
     `org_getter(request, *args, **kwargs)` returns the organisation the view is
     about; existence and membership checks stay in the view/decorators that
-    already do them -- this only decides Pro vs not."""
+    already do them -- this only decides Pro vs not. Counting a trial use is
+    the view's job, at the point the feature is actually used."""
     def deco(view):
         @wraps(view)
         def wrapper(request, *args, **kwargs):
             org = org_getter(request, *args, **kwargs)
-            ent = for_organization(org)
-            if not ent.has(feature_key):
-                return render(request, 'billing/feature_required.html',
-                              {'org': org, 'feature_key': feature_key, 'entitlements': ent}, status=403)
+            if not for_organization(org).may(feature_key):
+                return feature_required(request, org, feature_key)
             return view(request, *args, **kwargs)
         return wrapper
     return deco

@@ -9151,3 +9151,19 @@ msgstr "Die Sprache konnte nicht hinzugefügt werden."
 #: survey/templatetags/survey_filters.py
 msgid "Description"
 msgstr "Beschreibung"
+
+#: survey/templates/editor/survey_settings.html survey/templates/editor/partials/survey_settings_panel.html
+msgid "Your Pro trial covers this: switching the badge off uses one of its unbranded surveys."
+msgstr "Ihre Pro-Testphase deckt das ab: Wenn Sie das Badge ausschalten, wird eine ihrer Umfragen ohne Badge verbraucht."
+
+#: survey/templates/editor/survey_settings.html survey/templates/editor/partials/survey_settings_panel.html
+msgid "Pro trial"
+msgstr "Pro-Testphase"
+
+#: survey/services/surveys.py
+msgid "Your Pro trial has used its switch-off of the badge."
+msgstr "Ihre Pro-Testphase hat das Ausschalten des Badges bereits verbraucht."
+
+#: survey/templates/editor/partials/_whats_new_hero.html
+msgid "No card"
+msgstr "Keine Karte"

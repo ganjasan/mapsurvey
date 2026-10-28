@@ -142,6 +142,9 @@ def error_result(err):
 
 def call_tool(request, params, session_key):
     principal = request.principal
+    # A batch shares one principal; each tool call is its own Pro-trial use
+    # (api.gates.require_pro_api memoises per principal), so start fresh.
+    principal.__dict__.pop('_trial_counted', None)
     name = params.get('name')
     tool = tools.get(name) if isinstance(name, str) else None
     if tool is None:

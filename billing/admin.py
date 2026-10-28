@@ -4,7 +4,31 @@ from django.contrib import admin
 from django.utils import timezone
 from django.utils.html import format_html
 
-from .models import BillingEvent, CheckoutIntent, ProHelpRequest, Subscription
+from .models import BillingEvent, CheckoutIntent, EntitlementGrant, GrantAllowance, ProHelpRequest, Subscription
+
+
+class GrantAllowanceInline(admin.TabularInline):
+    model = GrantAllowance
+    extra = 0
+    # Counters move only through billing.trial.consume (one atomic UPDATE);
+    # staff end a grant with `revoked_at`, never by editing what was used.
+    readonly_fields = ('feature', 'limit', 'used')
+    can_delete = False
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(EntitlementGrant)
+class EntitlementGrantAdmin(admin.ModelAdmin):
+    list_display = ('organization', 'kind', 'claimed_by', 'starts_at', 'expires_at', 'revoked_at', 'created_at')
+    list_filter = ('kind',)
+    search_fields = ('organization__name', 'organization__slug', 'claimed_by__email')
+    readonly_fields = ('organization', 'kind', 'claimed_by', 'granted_by', 'starts_at', 'created_at')
+    inlines = (GrantAllowanceInline,)
+
+    def has_add_permission(self, request):
+        return False
 
 
 @admin.register(Subscription)

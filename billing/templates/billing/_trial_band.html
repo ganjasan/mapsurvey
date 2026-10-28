@@ -1,0 +1,64 @@
+{% load i18n static %}
+{% comment %}
+The Pro trial on Plan & billing (change pro-trial-allowances): a full-width band above the plan
+cards, in their look (css/pro_trial.css reads the same tokens). Context: `trial`
+(billing.trial.TrialState), `org`, `is_owner`. The caller renders it only when the workspace is
+not Pro and the state is not "none". The refusal and help pages use the compact
+billing/_trial_offer.html instead.
+{% endcomment %}
+<link rel="stylesheet" href="{% static 'css/pro_trial.css' %}">
+<section class="trial-band trial-band--{{ trial.state }}" id="pro-trial" data-trial-state="{{ trial.state }}" aria-labelledby="pro-trial-title">
+  <div class="trial-band__head">
+    <span class="trial-band__eyebrow">{% trans "Pro trial" %}</span>
+    {% if trial.state == 'available' %}
+      <h2 class="trial-band__title" id="pro-trial-title">{% blocktrans count days=trial.days %}Try Pro free for {{ days }} day{% plural %}Try Pro free for {{ days }} days{% endblocktrans %}</h2>
+      <p class="trial-band__sub">{% trans "Not a number of days of Pro, but a number of uses of each Pro extra. Use them when your project needs them." %}</p>
+    {% elif trial.state == 'live' %}
+      <h2 class="trial-band__title" id="pro-trial-title">{% blocktrans count days=trial.days_left %}{{ days }} day left{% plural %}{{ days }} days left{% endblocktrans %}</h2>
+      <p class="trial-band__sub">{% blocktrans with date=trial.grant.expires_at|date:"j F Y" %}The trial ends on {{ date }}.{% endblocktrans %} {% trans "Surveys you made unbranded during the trial show the Mapsurvey badge again when it ends. Nothing else changes." %}</p>
+    {% elif trial.state == 'exhausted' %}
+      <h2 class="trial-band__title" id="pro-trial-title">{% trans "Your Pro trial is used up" %}</h2>
+      <p class="trial-band__sub">{% trans "This workspace's Pro trial has used everything it included." %} {% trans "Upgrade below to keep the Pro extras." %}</p>
+    {% elif trial.state == 'expired' %}
+      <h2 class="trial-band__title" id="pro-trial-title">{% trans "Your Pro trial has ended" %}</h2>
+      <p class="trial-band__sub">{% blocktrans with date=trial.grant.expires_at|date:"j F Y" %}This workspace's Pro trial ended on {{ date }}.{% endblocktrans %} {% trans "Upgrade below to keep the Pro extras." %}</p>
+    {% elif trial.state == 'used_elsewhere' %}
+      <h2 class="trial-band__title" id="pro-trial-title">{% trans "Your Pro trial is in another workspace" %}</h2>
+      <p class="trial-band__sub">{% blocktrans with name=trial.other_organization.name %}You already used your Pro trial in {{ name }}.{% endblocktrans %} {% trans "Each person gets one trial." %}</p>
+    {% endif %}
+  </div>
+
+  {% if trial.state == 'available' %}
+    <ul class="trial-band__tiles">
+      {% for label, limit, detail in trial.offer %}
+      <li class="trial-tile"><span class="trial-tile__figure">{{ limit }}</span><span class="trial-tile__label">{{ label }}</span>{% if detail %}<span class="trial-tile__detail">{{ detail }}</span>{% endif %}</li>
+      {% endfor %}
+    </ul>
+  {% elif trial.meters %}
+    <ul class="trial-band__tiles">
+      {% for m in trial.meters %}
+      <li class="trial-tile{% if m.remaining == 0 %} trial-tile--spent{% endif %}">
+        <span class="trial-tile__figure">{{ m.used }}<span class="trial-tile__of"> / {{ m.limit }}</span></span>
+        <span class="trial-tile__label">{{ m.label }}</span>
+        {% if m.remaining == 0 %}<span class="trial-tile__detail">{% trans "All used." %}</span>{% elif m.detail %}<span class="trial-tile__detail">{{ m.detail }}</span>{% endif %}
+        <span class="trial-tile__meter" role="progressbar" aria-valuemin="0" aria-valuemax="{{ m.limit }}" aria-valuenow="{{ m.used }}" aria-label="{{ m.label }}"><span style="width:{{ m.pct }}%"></span></span>
+        <span class="trial-tile__note">{% blocktrans with label=m.label used=m.used limit=m.limit %}{{ label }}: {{ used }} of {{ limit }} used{% endblocktrans %}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if trial.state == 'available' %}
+  <div class="trial-band__action">
+    {% if is_owner %}
+      <form method="post" action="{% url 'org_billing_trial' org.slug %}">
+        {% csrf_token %}
+        <button type="submit" class="trial-band__btn">{% trans "Try Pro" %}</button>
+      </form>
+      <p class="trial-band__fine">{% trans "No card needed. One trial per person. Your workspace stays on Free when it ends." %}</p>
+    {% else %}
+      <p class="trial-band__fine">{% trans "The workspace owner can start it from Plan & billing." %}</p>
+    {% endif %}
+  </div>
+  {% endif %}
+</section>

@@ -183,12 +183,22 @@ class SurveyHeaderForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # A disabled field keeps its initial value whatever the POST says, which
         # is exactly the "submitted values are ignored" rule for Free organisations.
-        from billing.entitlements import has_feature
+        # "May": the plan includes `unbranded` or a live Pro trial has a switch-off
+        # left (change pro-trial-allowances); `consumes_unbranded()` tells the
+        # service when a save spends one.
+        from billing.entitlements import for_organization
         org = self.instance.organization if self.instance and self.instance.pk else None
-        self.unbranded = org is not None and has_feature(org, 'unbranded')
+        ent = for_organization(org) if org is not None else None
+        self.unbranded = ent is not None and ent.may('unbranded')
+        self.unbranded_by_plan = ent is not None and ent.has('unbranded')
+        self._branding_before = bool(self.instance.show_branding) if self.instance and self.instance.pk else True
         self.fields['show_branding'].required = False
         self.fields['show_branding'].label = _('Show the "Made with Mapsurvey" badge')
-        if not self.unbranded:
+        # Disabled = the POST is ignored. Left enabled on a survey whose badge is
+        # already off (switched off under a trial or a lapsed plan), so the
+        # creator can always turn the badge back on; `clean_show_branding`
+        # refuses a new switch-off there.
+        if not self.unbranded and self._branding_before:
             self.fields['show_branding'].disabled = True
         # Drop the implicit blank option from the dropdown so the editor
         # never offers "no default" as a choice. A missing or invalid value
@@ -223,6 +233,20 @@ class SurveyHeaderForm(forms.ModelForm):
         else:
             self.fields['default_rating_display_style'].initial = 'scale_strip'
             self.fields['accent_color'].initial = '#2f5cff'
+
+    def clean_show_branding(self):
+        value = self.cleaned_data.get('show_branding')
+        # The field is enabled without the entitlement only to let the badge be
+        # turned back ON; a switch-off there keeps the stored value.
+        if not self.unbranded and self._branding_before and not value:
+            return True
+        return value
+
+    def consumes_unbranded(self):
+        """This save switches the badge off on a workspace whose PLAN lacks
+        `unbranded`: it spends one Pro-trial switch-off. Call after is_valid()."""
+        return (not self.unbranded_by_plan and self._branding_before
+                and self.cleaned_data.get('show_branding') is False)
 
     def clean_redirect_url(self):
         # Empty means "no redirect", which this model stores as "#".

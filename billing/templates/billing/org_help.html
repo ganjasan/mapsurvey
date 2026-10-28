@@ -40,12 +40,19 @@
             </div>
         </div>
     {% else %}
+        {% if submitted %}
+        <div class="alert alert-success py-2" role="status" style="font-size:0.9rem;">
+            {% trans "Received. We read every request ourselves and reply within two working days." %}
+        </div>
+        {% endif %}
         <div class="card mb-4">
             <div class="card-body">
                 <h5 class="mb-2">{% trans "This is what Pro is for" %}</h5>
                 <p>{% trans "Pro is a service plan. A Pro organisation gets the Mapsurvey team on its project: consulting on how to run the engagement, analysis of what people submitted, and reports written for the people who have to act on them. It also removes the Mapsurvey badge from your surveys." %}</p>
                 <p class="mb-3">{% trans "Everything you use today stays free." %}</p>
-                {% if is_owner and products_configured %}
+                {% include "billing/_trial_offer.html" %}
+                {% if trial.state == 'available' %}
+                {% elif is_owner and products_configured %}
                     <a href="{% url 'org_billing' org.slug %}" class="btn btn-primary btn-sm">{% trans "Upgrade to Pro" %}</a>
                 {% elif is_owner %}
                     <a href="{% url 'services' %}" class="btn btn-outline-primary btn-sm">{% trans "Read about the project service" %}</a>

@@ -1,0 +1,146 @@
+/* Pro trial band on Plan & billing (change pro-trial-allowances, #471): full width above the
+   plan cards, in their look -- same tokens as css/plan_cards.css, same fallbacks under base.html. */
+.trial-band {
+    --tb-text: var(--color-text, #1B2A4A);
+    --tb-text-2: var(--color-text-secondary, #5A6680);
+    --tb-text-3: var(--color-text-tertiary, #8A94A8);
+    --tb-bg: var(--color-bg-elevated, #FFFFFF);
+    --tb-border: var(--color-border-light, #E4E0D8);
+    --tb-accent: var(--color-accent, #0FA58E);
+    --tb-accent-hover: var(--color-accent-hover, #0D8F7A);
+    --tb-accent-soft: var(--color-accent-light, rgba(15, 165, 142, 0.12));
+    --tb-font: var(--font-display, 'Instrument Sans', 'DM Sans', system-ui, -apple-system, sans-serif);
+
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "head action" "tiles tiles";
+    gap: 1.25rem 2rem;
+    align-items: center;
+    margin: 0 0 2rem;
+    padding: 1.5rem 1.75rem;
+    font-family: var(--tb-font);
+    color: var(--tb-text);
+    background: linear-gradient(100deg, var(--tb-accent-soft), var(--tb-bg) 70%);
+    border: 1px solid var(--tb-accent);
+    border-radius: 12px;
+    box-sizing: border-box;
+}
+.trial-band *, .trial-band *::before, .trial-band *::after { box-sizing: border-box; }
+
+/* Past states read as information, not as an offer. */
+.trial-band--exhausted, .trial-band--expired, .trial-band--used_elsewhere {
+    background: var(--tb-bg);
+    border-color: var(--tb-border);
+}
+.trial-band__head { grid-area: head; max-width: 46rem; }
+.trial-band__tiles { grid-area: tiles; }
+.trial-band__action { grid-area: action; }
+/* No button outside "available": the head takes the whole first row. */
+.trial-band:not(.trial-band--available) { grid-template-areas: "head head" "tiles tiles"; }
+
+.trial-band__eyebrow {
+    display: inline-block;
+    margin-bottom: 0.5rem;
+    padding: 0.15rem 0.6rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--tb-accent-hover);
+    background: var(--tb-accent-soft);
+    border-radius: 999px;
+}
+.trial-band__title {
+    margin: 0 0 0.35rem;
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--tb-text);
+}
+.trial-band__sub {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--tb-text-2);
+}
+
+.trial-band__tiles {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.trial-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+    padding: 0.9rem 1rem;
+    background: var(--tb-bg);
+    border: 1px solid var(--tb-border);
+    border-radius: 10px;
+}
+.trial-tile__figure {
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    color: var(--tb-text);
+}
+.trial-tile__of { font-size: 0.95rem; font-weight: 500; color: var(--tb-text-3); }
+.trial-tile__label { font-size: 0.875rem; font-weight: 600; line-height: 1.35; color: var(--tb-text); }
+.trial-tile__detail { font-size: 0.75rem; line-height: 1.4; color: var(--tb-text-2); }
+.trial-tile__meter {
+    display: block;
+    height: 4px;
+    margin-top: 0.35rem;
+    background: var(--tb-accent-soft);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.trial-tile__meter > span { display: block; height: 100%; background: var(--tb-accent); border-radius: 2px; }
+.trial-tile--spent .trial-tile__figure { color: var(--tb-text-3); }
+.trial-tile--spent .trial-tile__meter > span { background: var(--tb-text-3); }
+/* The figure says it visually; this sentence is for screen readers and text search. */
+.trial-tile__note {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.trial-band__action { text-align: center; width: 220px; }
+.trial-band__action form { margin: 0; }
+.trial-band__btn {
+    display: inline-block;
+    width: 100%;
+    padding: 0.7rem 1.75rem;
+    font: inherit;
+    font-weight: 700;
+    color: #fff;
+    background: var(--tb-accent);
+    border: 0;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+.trial-band__btn:hover, .trial-band__btn:focus-visible { background: var(--tb-accent-hover); }
+.trial-band__btn:focus-visible { outline: 2px solid var(--tb-accent); outline-offset: 2px; }
+.trial-band__fine { margin: 0.5rem 0 0; font-size: 0.75rem; line-height: 1.4; color: var(--tb-text-3); }
+
+@media (max-width: 767px) {
+    .trial-band, .trial-band:not(.trial-band--available) {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas: "head" "tiles" "action";
+    }
+    .trial-band__action { width: auto; text-align: left; }
+    .trial-band__btn { width: auto; }
+}
+@media (max-width: 575px) {
+    .trial-band { padding: 1.25rem 1rem; }
+    .trial-band__tiles { grid-template-columns: minmax(0, 1fr); }
+}

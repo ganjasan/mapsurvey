@@ -9147,3 +9147,19 @@ msgstr "Impossible d'ajouter la langue."
 #: survey/templatetags/survey_filters.py
 msgid "Description"
 msgstr "Description"
+
+#: survey/templates/editor/survey_settings.html survey/templates/editor/partials/survey_settings_panel.html
+msgid "Your Pro trial covers this: switching the badge off uses one of its unbranded surveys."
+msgstr "Votre essai Pro couvre cela : désactiver le badge utilise l'une de ses enquêtes sans badge."
+
+#: survey/templates/editor/survey_settings.html survey/templates/editor/partials/survey_settings_panel.html
+msgid "Pro trial"
+msgstr "Essai Pro"
+
+#: survey/services/surveys.py
+msgid "Your Pro trial has used its switch-off of the badge."
+msgstr "Votre essai Pro a déjà utilisé sa désactivation du badge."
+
+#: survey/templates/editor/partials/_whats_new_hero.html
+msgid "No card"
+msgstr "Sans carte"

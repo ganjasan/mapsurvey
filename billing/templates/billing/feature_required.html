@@ -10,6 +10,7 @@
     <h2>{% trans "This is a Pro feature" %}</h2>
     <p class="auth-subtitle">{% feature_label feature_key %}</p>
     <p>{% blocktrans with name=org.name %}{{ name }} is on the Free plan. Pro adds this and direct help from the Mapsurvey team; everything free today stays free.{% endblocktrans %}</p>
+    {% include "billing/_trial_offer.html" %}
     <div class="auth-links">
         <a href="{% url 'org_billing' org.slug %}">{% trans "See plans" %}</a>
         <span class="auth-divider">&middot;</span>

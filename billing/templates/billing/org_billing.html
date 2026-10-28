@@ -79,6 +79,11 @@
     </div>
     {% endif %}
 
+    {# ---- Pro trial (change pro-trial-allowances): offer, remainder, or how it ended. Not on Pro. ---- #}
+    {% if not entitlements.is_pro and trial.state != 'none' %}
+    {% include "billing/_trial_band.html" %}
+    {% endif %}
+
     {# ---- Plans (change pricing-page, #433): the cards of /pricing/, with the checkout on Pro ---- #}
     <div class="mb-4">
         {% include "partials/_plan_cards.html" with surface="billing" prefix="billing-plans" %}
