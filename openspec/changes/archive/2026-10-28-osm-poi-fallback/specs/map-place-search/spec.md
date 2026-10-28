@@ -67,6 +67,8 @@ Where the primary geocoder does answer the query, the secondary source SHALL NOT
 - **WHEN** a survey published before this capability shipped is opened by a respondent
 - **THEN** the place search is available, with no change made to that survey
 
+## ADDED Requirements
+
 ### Requirement: The search degrades rather than breaks
 
 Failure of the secondary source SHALL be invisible to the respondent. If it errors, does not answer
