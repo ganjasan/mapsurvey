@@ -467,3 +467,51 @@ When an import remaps question codes, a `question`-sourced layer's `label_field`
 - **WHEN** an archive with a shared-map layer whose `label_field` names a sub-question code is imported where that code already exists
 - **THEN** the imported layer's `label_field` SHALL be the remapped code of the imported sub-question, and marks materialised from it SHALL carry that sub-answer as their title
 
+### Requirement: Structure export reads images through the storage backend
+Structure export SHALL obtain question images through Django's storage API rather than through a
+filesystem path. Remote storage backends raise `NotImplementedError` for `.path`, so a path-based
+read makes the export fail for every survey that has a question image once media lives off local
+disk.
+
+#### Scenario: Export succeeds under remote storage
+- **WHEN** a survey with question images is exported in `structure` or `full` mode while media is served from a remote backend
+- **THEN** the archive contains each image under `images/structure/` and the request succeeds
+
+#### Scenario: An unreadable image does not abort the export
+- **WHEN** a question references an image the storage backend cannot open
+- **THEN** that image is omitted, an export warning names it, and the rest of the archive is written
+
+### Requirement: A malformed archive is reported, never a server error
+Import SHALL reject an archive it cannot read with an `ImportError` whose message names the problem,
+so the editor renders it as a message. An archive is content from outside this installation — it can
+be hand-edited, truncated, produced by an older export or by another tool — and no shape of it may
+produce a 500.
+
+The fields the import cannot invent a value for (`survey.name`, each `section.name`, each
+`question.code`) SHALL be validated with a message naming the element. Every other text field SHALL
+treat an explicit `null` as an absent key and fall back to its default.
+
+#### Scenario: An explicit null where text belongs is treated as absent
+- **WHEN** a `survey.json` carries `"redirect_url": null`
+- **THEN** the import succeeds and the field takes its default
+
+#### Scenario: Nulls across the section and question tree do not fail the import
+- **WHEN** optional section and question text fields are explicitly null
+- **THEN** each is read as absent and the import succeeds
+
+#### Scenario: A missing required field names itself
+- **WHEN** a section in the archive has no name
+- **THEN** the import is rejected with a message naming the missing field
+
+#### Scenario: A wrongly typed field is reported, not raised through
+- **WHEN** a field carries a type the import does not expect
+- **THEN** the archive is rejected with a readable message rather than a server error
+
+#### Scenario: The creator sees the message
+- **WHEN** a creator uploads such an archive through the editor
+- **THEN** they are returned to the editor with an error message describing the problem
+
+#### Scenario: A well-formed archive still imports
+- **WHEN** a valid structure archive is imported
+- **THEN** the survey is created exactly as before
+

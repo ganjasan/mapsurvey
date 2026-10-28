@@ -3,10 +3,7 @@
 ## ADDED Requirements
 
 ### Requirement: Numbers emitted into JavaScript are locale-independent
-Any number the editor interpolates into inline JavaScript, a `data-*` attribute read by script, or
-any other machine-parsed context SHALL be rendered without locale formatting. `USE_L10N` is on and
-every non-English language in `LANGUAGES` writes decimals with a comma, so an unguarded float turns
-`52.52` into `52,52` and makes the surrounding script fail to parse.
+Any number the editor interpolates into inline JavaScript, a `data-*` attribute read by script, or any other machine-parsed context SHALL be rendered without locale formatting. `USE_L10N` is on and every non-English language in `LANGUAGES` writes decimals with a comma, so an unguarded float turns `52.52` into `52,52` and makes the surrounding script fail to parse.
 
 Numbers shown to a person as text SHALL remain localized.
 

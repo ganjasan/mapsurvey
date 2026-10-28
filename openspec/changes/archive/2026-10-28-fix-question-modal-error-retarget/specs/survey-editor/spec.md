@@ -4,11 +4,7 @@
 
 ### Requirement: Question modal validation errors are shown in the modal
 
-When a question create, edit or sub-question create POST fails validation (form errors or
-a Visibility-block error) and the modal is re-rendered, the response SHALL be swapped into
-the modal body (`#questionModalBody`) and not into the form's success target (the
-question list or a list item). The server SHALL express this with the HTMX
-`HX-Retarget`/`HX-Reswap` response headers so no client script is required.
+When a question create, edit or sub-question create POST fails validation (form errors or a Visibility-block error) and the modal is re-rendered, the response SHALL be swapped into the modal body (`#questionModalBody`) and not into the form's success target (the question list or a list item). The server SHALL express this with the HTMX `HX-Retarget`/`HX-Reswap` response headers so no client script is required.
 
 #### Scenario: Conditional mode without answers on create
 
