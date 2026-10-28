@@ -9,6 +9,7 @@
      data-panel-width="{{ section.panel_width }}"
      data-content-width="{{ section.content_width }}"
      data-content-valign="{{ section.content_valign }}"
+     data-keep-panel-open="{{ section.keep_panel_open|yesno:'true,false' }}"
      data-stage-image="{% if section.layout == 'image' %}{{ section.stage_image_url }}{% endif %}"
      data-use-geolocation="{{ section.use_geolocation|yesno:'true,false' }}"
      data-map-basemap="{{ section.override_basemap|default:'' }}"

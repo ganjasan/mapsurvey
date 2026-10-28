@@ -9195,3 +9195,11 @@ msgstr "Gecentreerde kolom: tekst en vragen houden een prettige leesbreedte in h
 #: survey/editor_forms.py:347
 msgid "Middle: a short page sits in the middle of the panel instead of at its top."
 msgstr "Midden: een korte pagina staat in het midden van het paneel in plaats van bovenaan."
+
+#: survey/editor_forms.py:340
+msgid "Keep the questions open while placing on the map"
+msgstr "Vragen open houden tijdens het plaatsen op de kaart"
+
+#: survey/editor_forms.py:350
+msgid "On a computer screen the questions stay visible while respondents place a point or draw, and the map aims at the space beside them. On a phone they always slide away."
+msgstr "Op een computerscherm blijven de vragen zichtbaar terwijl respondenten een punt plaatsen of tekenen, en de kaart richt zich op de ruimte ernaast. Op een telefoon schuiven ze altijd weg."

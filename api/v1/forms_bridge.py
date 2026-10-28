@@ -40,7 +40,8 @@ def survey_settings(body):
 
 
 SECTION_FIELDS = ('title', 'subheading', 'code', 'layout', 'panel_side', 'panel_width',
-                  'content_width', 'content_valign', 'next_label')
+                  'content_width', 'content_valign', 'keep_panel_open',
+                  'next_label')
 
 
 def section(body):

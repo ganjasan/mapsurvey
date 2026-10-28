@@ -9157,3 +9157,11 @@ msgstr "Keskitetty palsta: teksti ja kysymykset pysyvät leveän paneelin keskel
 #: survey/editor_forms.py:347
 msgid "Middle: a short page sits in the middle of the panel instead of at its top."
 msgstr "Keskellä: lyhyt sivu sijoittuu paneelin keskelle eikä ylös."
+
+#: survey/editor_forms.py:340
+msgid "Keep the questions open while placing on the map"
+msgstr "Pidä kysymykset auki karttaan merkittäessä"
+
+#: survey/editor_forms.py:350
+msgid "On a computer screen the questions stay visible while respondents place a point or draw, and the map aims at the space beside them. On a phone they always slide away."
+msgstr "Tietokoneen näytöllä kysymykset pysyvät näkyvissä, kun vastaaja merkitsee pisteen tai piirtää, ja kartta tähtää niiden viereiseen tilaan. Puhelimessa ne liukuvat aina pois."

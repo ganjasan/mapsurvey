@@ -837,6 +837,7 @@ class SurveySection(models.Model):
     panel_width = models.CharField(max_length=8, choices=PANEL_WIDTH_CHOICES, default="default", help_text=_('Width preset of the question panel (desktop; map and image sections).'))
     content_width = models.CharField(max_length=6, choices=CONTENT_WIDTH_CHOICES, default="full", help_text=_('"column" sets the panel content as a centred column of reading width (desktop; map and image sections).'))
     content_valign = models.CharField(max_length=6, choices=CONTENT_VALIGN_CHOICES, default="top", help_text=_('"middle" centres panel content shorter than the panel vertically (desktop; map and image sections).'))
+    keep_panel_open = models.BooleanField(default=False, help_text=_('Keep the question panel open while respondents place points or draw on a computer screen; placement aids centre on the visible map (map sections).'))
     stage_image = models.ImageField(upload_to='sections/', null=True, blank=True, help_text=_('Picture shown beside the panel on an image section; empty = the survey cover.'))
     next_label = models.CharField(max_length=30, null=True, blank=True, help_text=_('Custom label for the forward button, e.g. "Start" on a welcome section. Empty = the default Next/Finish.'))
     survey_header = models.ForeignKey("SurveyHeader", on_delete=models.CASCADE)
@@ -887,6 +888,8 @@ class SurveySection(models.Model):
             classes.append('content-column')
         if self.content_valign == 'middle':
             classes.append('content-middle')
+        if self.keep_panel_open and self.layout not in MAPLESS_LAYOUTS:
+            classes.append('panel-keep')
         return ' '.join(classes)
 
     def stage_image_url(self):

@@ -31,6 +31,8 @@
           enctype="multipart/form-data" hx-encoding="multipart/form-data"
           hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
         {% csrf_token %}
+        {# An unticked checkbox posts nothing; this says the modal had it (SurveySectionForm.clean_keep_panel_open). #}
+        <input type="hidden" name="keep_panel_open_present" value="1">
         {% for field in form %}
         {% if field.name == 'layout' %}<fieldset class="section-layout-block"><legend>{% trans "Layout" %}</legend>{% endif %}
         <div class="form-group" data-layout-control="{{ field.name }}">
@@ -102,6 +104,8 @@
             var el = control(name);
             if (el) el.hidden = isForm;
         });
+        var keep = control('keep_panel_open');
+        if (keep) keep.hidden = !hasMap;
         var image = control('stage_image');
         if (image) image.hidden = sel.value !== 'image';
         var thumb = document.querySelector('#section-form .section-stage-thumb');

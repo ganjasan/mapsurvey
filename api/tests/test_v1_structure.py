@@ -55,6 +55,21 @@ class V1StructureTest(TestCase):
         self.assertEqual(response.status_code, 422, response.content)
         self.assertIn('content_valign', response.content.decode())
 
+    def test_section_keep_panel_open(self):
+        """
+        GIVEN a section
+        WHEN keep_panel_open is patched on, and then a title alone is patched
+        THEN it is stored and returned, and the title-only PATCH leaves it on
+        """
+        response = self.api.patch(f'{self.base}/sections/{self.section.pk}', {'keep_panel_open': True})
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertIs(response.json()['keep_panel_open'], True)
+
+        response = self.api.patch(f'{self.base}/sections/{self.section.pk}', {'title': 'Renamed'})
+        self.assertEqual(response.status_code, 200, response.content)
+        self.section.refresh_from_db()
+        self.assertTrue(self.section.keep_panel_open)
+
     def test_section_order(self):
         """
         GIVEN two sections

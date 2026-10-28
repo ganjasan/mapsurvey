@@ -306,7 +306,7 @@ class SurveySectionForm(forms.ModelForm):
         # The layout controls follow `layout` so the modal renders them as one
         # block (change section-layout-controls).
         fields = ['title', 'subheading', 'code', 'layout', 'panel_side', 'panel_width', 'content_width',
-                  'content_valign', 'stage_image',
+                  'content_valign', 'keep_panel_open', 'stage_image',
                   'next_label']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
@@ -317,6 +317,7 @@ class SurveySectionForm(forms.ModelForm):
             'panel_width': forms.Select(attrs={'class': 'form-control'}),
             'content_width': forms.Select(attrs={'class': 'form-control'}),
             'content_valign': forms.Select(attrs={'class': 'form-control'}),
+            'keep_panel_open': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'stage_image': forms.ClearableFileInput(attrs={'class': 'form-control-file', 'accept': 'image/*'}),
             'next_label': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 30, 'placeholder': _('Next')}),
         }
@@ -336,6 +337,7 @@ class SurveySectionForm(forms.ModelForm):
             'panel_width': _('Panel width'),
             'content_width': _('Content width'),
             'content_valign': _('Content vertical position'),
+            'keep_panel_open': _('Keep the questions open while placing on the map'),
             'stage_image': _('Picture'),
             'next_label': _('Button label'),
         }
@@ -345,6 +347,7 @@ class SurveySectionForm(forms.ModelForm):
             'panel_width': _('How much of a computer screen the questions take.'),
             'content_width': _('Centred column: the text and questions keep a comfortable reading width in the middle of a wide panel.'),
             'content_valign': _('Middle: a short page sits in the middle of the panel instead of at its top.'),
+            'keep_panel_open': _('On a computer screen the questions stay visible while respondents place a point or draw, and the map aims at the space beside them. On a phone they always slide away.'),
             'stage_image': _('Shown beside the questions. Empty = the survey cover image.'),
             'next_label': _('Label of this section\'s forward button, e.g. "Start" on a welcome section. Empty = Next / Finish.'),
         }
@@ -379,6 +382,15 @@ class SurveySectionForm(forms.ModelForm):
 
     def clean_content_valign(self):
         return self.cleaned_data.get('content_valign') or self.instance.content_valign or 'top'
+
+    def clean_keep_panel_open(self):
+        # An unticked checkbox and a POST that never had the field look the
+        # same to a BooleanField. Older modals and partial binds post without
+        # it, so absence keeps the stored value; the current modal always
+        # posts the field through a hidden twin (`keep_panel_open_present`).
+        if self.data.get('keep_panel_open_present') or 'keep_panel_open' in self.data:
+            return self.cleaned_data.get('keep_panel_open', False)
+        return self.instance.keep_panel_open
 
     def clean_layout(self):
         layout = self.cleaned_data.get('layout')

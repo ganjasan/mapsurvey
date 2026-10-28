@@ -822,3 +822,119 @@ class PanelContentAlignTest(TestCase):
             section["content_valign"] = "bottom"
         imported = roundtrip("align_legacy", legacy)
         self.assertEqual((imported.content_width, imported.content_valign), ('full', 'top'))
+
+
+# ─── Keep the panel open while placing (change keep-panel-while-drawing, #477) ───
+
+class KeepPanelWhileDrawingTest(TestCase):
+    """Rendering, editor and travel of keep_panel_open."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Keep Org")
+        self.user = User.objects.create_user(username='keep_editor', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name="keep_survey", organization=self.org, redirect_url="#", status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="mapping", title="Mapping", code="K1", is_head=True,
+            keep_panel_open=True,
+        )
+        self.url = f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/'
+
+    def _get(self):
+        return self.client.get('/surveys/keep_survey/mapping/')
+
+    def test_map_section_carries_the_class_and_attribute(self):
+        """
+        GIVEN a map section with keep_panel_open on
+        WHEN a respondent loads it directly
+        THEN the body carries panel-keep and #section-data declares it
+        """
+        response = self._get()
+
+        self.assertContains(response, '<body class="panel-keep"')
+        self.assertContains(response, 'data-keep-panel-open="true"')
+
+    def test_off_and_mapless_sections_add_nothing(self):
+        """
+        GIVEN the setting off on a map section, then on but on an image and a form section
+        WHEN each is rendered
+        THEN none carries panel-keep
+        """
+        SurveySection.objects.filter(pk=self.section.pk).update(keep_panel_open=False)
+        self.assertContains(self._get(), '<body data-icon-sprites=')
+
+        SurveySection.objects.filter(pk=self.section.pk).update(keep_panel_open=True, layout='image')
+        self.assertContains(self._get(), '<body class="survey-image-layout"')
+
+        SurveySection.objects.filter(pk=self.section.pk).update(layout='form')
+        self.assertContains(self._get(), '<body class="survey-form-layout"')
+
+    def test_placement_paths_go_through_one_helper(self):
+        """
+        GIVEN the respondent page template
+        WHEN its script is read
+        THEN no placement path hides the panel directly: the only toggleInfo(false) is the helper's
+        """
+        import pathlib
+        source = (pathlib.Path(__file__).resolve().parent.parent
+                  / 'templates' / 'base_survey_template.html').read_text(encoding='utf-8')
+
+        self.assertEqual(source.count('toggleInfo(false)'), 1)
+        self.assertEqual(source.count('hidePanelForPlacement();'), 7)
+
+    def test_modal_untick_saves_off_and_old_post_keeps_value(self):
+        """
+        GIVEN a section with keep_panel_open on
+        WHEN the current modal posts with the box unticked, and later an older modal posts without the field
+        THEN the first turns it off in place (no draft); the second leaves the stored value alone
+        """
+        self.client.login(username='keep_editor', password='pass')
+        base = {'title': 'Mapping', 'subheading': '', 'code': 'K1', 'layout': 'map', 'next_label': ''}
+
+        response = self.client.post(self.url, {**base, 'keep_panel_open_present': '1'}, HTTP_HX_REQUEST='true')
+        self.assertEqual(response.status_code, 204, response.content[:300])
+        self.section.refresh_from_db()
+        self.assertFalse(self.section.keep_panel_open)
+        self.assertFalse(SurveyHeader.objects.filter(canonical_survey=self.survey, is_canonical=False).exists())
+
+        SurveySection.objects.filter(pk=self.section.pk).update(keep_panel_open=True)
+        self.client.post(self.url, base, HTTP_HX_REQUEST='true')
+        self.section.refresh_from_db()
+        self.assertTrue(self.section.keep_panel_open)
+
+        self.client.post(self.url, {**base, 'keep_panel_open_present': '1', 'keep_panel_open': 'on'},
+                         HTTP_HX_REQUEST='true')
+        self.section.refresh_from_db()
+        self.assertTrue(self.section.keep_panel_open)
+
+    def test_draft_copy_and_zip_carry_it(self):
+        """
+        GIVEN a map section with keep_panel_open on
+        WHEN unpublished changes are started, and the survey is exported and imported
+        THEN both copies keep it; a legacy archive or a non-boolean value imports it off
+        """
+        from survey.versioning import clone_survey_for_draft
+        draft = clone_survey_for_draft(self.survey)
+        self.assertTrue(SurveySection.objects.get(survey_header=draft).keep_panel_open)
+
+        def roundtrip(name, mutate=None):
+            output = BytesIO()
+            export_survey_to_zip(self.survey, output, mode="structure")
+            output.seek(0)
+            with zipfile.ZipFile(output) as zf:
+                data = json.loads(zf.read("survey.json"))
+            data["survey"]["name"] = name
+            if mutate:
+                mutate(data["survey"]["sections"][0])
+            buf = BytesIO()
+            with zipfile.ZipFile(buf, 'w') as zf:
+                zf.writestr("survey.json", json.dumps(data))
+            buf.seek(0)
+            imported, _ = import_survey_from_zip(buf)
+            return SurveySection.objects.get(survey_header=imported)
+
+        self.assertTrue(roundtrip("keep_imported").keep_panel_open)
+        self.assertFalse(roundtrip("keep_legacy", lambda s: s.pop("keep_panel_open")).keep_panel_open)
+        self.assertFalse(roundtrip("keep_foreign", lambda s: s.update(keep_panel_open="yes")).keep_panel_open)

@@ -9247,3 +9247,11 @@ msgstr "Zentrierte Spalte: Text und Fragen behalten in einem breiten Bereich ein
 #: survey/editor_forms.py:347
 msgid "Middle: a short page sits in the middle of the panel instead of at its top."
 msgstr "Mitte: Eine kurze Seite steht in der Mitte des Bereichs statt oben."
+
+#: survey/editor_forms.py:340
+msgid "Keep the questions open while placing on the map"
+msgstr "Fragen beim Platzieren auf der Karte geöffnet lassen"
+
+#: survey/editor_forms.py:350
+msgid "On a computer screen the questions stay visible while respondents place a point or draw, and the map aims at the space beside them. On a phone they always slide away."
+msgstr "Auf einem Computerbildschirm bleiben die Fragen sichtbar, während Befragte einen Punkt setzen oder zeichnen, und die Karte zielt auf den Platz daneben. Auf dem Handy werden sie immer ausgeblendet."
