@@ -6,7 +6,7 @@ The page where a creator chooses how to begin a survey — the Wizard (AI draft)
 ### Requirement: Start page with three ways to begin
 The system SHALL serve `GET /editor/surveys/start/` to signed-in creators whose role in the
 active organization is `editor` or above, rendering three cards: *Start from scratch*,
-*Draft with AI* and *Connect your AI agent*. A single click (or Enter/Space on the focused
+*Draft with AI* and *Use your AI assistant*. A single click (or Enter/Space on the focused
 card) on an actionable card SHALL perform that card's action, with no intermediate selection
 step and no detail block revealed elsewhere on the page. *Start from scratch* SHALL be the
 submit button of a POST form to the blank-creation endpoint, so the whole card submits it.
@@ -20,16 +20,21 @@ AI agent: …"), which stays where the brief is entered.
 When a provider is configured, the wizard card SHALL be the first card in document and visual
 order, visually emphasised and badged "Best to start"; when none is configured, *Start from
 scratch* SHALL be shown first and the disabled wizard card after it.
-*Connect your AI agent* SHALL be inert until the MCP server ships: not a link, not focusable
-as a control, marked *Coming soon* and visibly disabled; the agent page is reached from the
-account and help menus instead. The page SHALL render as a full page on every viewport. A
+*Use your AI assistant* SHALL be the last card and a link to `/editor/surveys/start/agent/`
+(change `agent-onboarding`), labelled "Your assistant", badged "New", naming Claude and ChatGPT
+in its text, and SHALL NOT say "MCP" or "token"; it carries no *Coming soon* ribbon, no
+disabled styling and no `aria-disabled`. The page SHALL render as a full page on every viewport. A
 `welcome=1` query parameter SHALL show a "Skip to dashboard" link carrying `?dashboard=1`.
 The endpoint SHALL accept only GET. Viewers SHALL receive the same response as for any
 editor-only page.
 
 #### Scenario: Editor sees three cards
 - **WHEN** an editor-or-higher creator opens `/editor/surveys/start/`
-- **THEN** the page shows the three cards, with *Start from scratch* as the submit button of a POST form to the blank-creation endpoint, *Draft with AI* as a link to `/editor/surveys/new/?from=start`, and *Connect your AI agent* carrying no link and `aria-disabled`
+- **THEN** the page shows the three cards, with *Start from scratch* as the submit button of a POST form to the blank-creation endpoint, *Draft with AI* as a link to `/editor/surveys/new/?from=start`, and *Use your AI assistant* as a link to `/editor/surveys/start/agent/`
+
+#### Scenario: The agent card is live
+- **WHEN** the start page renders
+- **THEN** the agent card has no `aria-disabled`, no "Coming soon" text, carries a "New" badge, mentions Claude and ChatGPT, and does not contain the words "MCP" or "token"
 
 #### Scenario: The wizard is the first card and best to start
 - **WHEN** the start page renders on a server with a provider
@@ -42,6 +47,10 @@ editor-only page.
 #### Scenario: One click to the AI brief
 - **WHEN** a creator clicks anywhere on the *Draft with AI* card on a server with a provider
 - **THEN** the browser navigates to `/editor/surveys/new/?from=start`
+
+#### Scenario: One click to the agent page
+- **WHEN** a creator clicks anywhere on the *Use your AI assistant* card
+- **THEN** the browser navigates to `/editor/surveys/start/agent/`
 
 #### Scenario: No detail block, no remember option
 - **WHEN** the start page renders

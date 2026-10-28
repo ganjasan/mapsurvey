@@ -211,3 +211,86 @@ from the registry; a test SHALL fail when the page differs from a fresh render.
 - **WHEN** a tool's description changes without regenerating the page
 - **THEN** `mcp.tests.test_reference` fails naming the script to run
 
+### Requirement: Distribution tools
+The MCP server SHALL offer `get_share_links`, `get_qr_code`, `list_tracked_links` under
+`surveys:read`, and `create_tracked_link`, `delete_tracked_link`, `set_embed_hosts` under
+`surveys:write`, each over the REST functions of the same name. `get_qr_code` SHALL return the QR
+as a PNG image content block next to the `{note, data}` text block, `data` carrying the encoded URL
+(the REST SVG route needs a bearer, so it is no use to the person and is not handed over).
+
+#### Scenario: QR in the chat
+- **WHEN** an agent calls `get_qr_code` for a published survey
+- **THEN** the result's `content` holds a text block and an `image/png` block, and `structuredContent.data.url` is the respondent URL
+
+#### Scenario: Tracked link from a chat
+- **WHEN** an agent with `surveys:write` calls `create_tracked_link` with `utm_source: "newsletter"`
+- **THEN** the result carries the new link's URL with `utm_source=newsletter`
+
+### Requirement: Response tools
+The MCP server SHALL offer `get_response_summary`, `list_responses`, `list_text_answers`,
+`get_answer_geojson` and `get_export_link` under scope `responses:read`, and `moderate_response`
+under `responses:moderate`, each calling the same functions as the REST routes of the same name and
+taking the same parameters plus ids. Every result SHALL be wrapped in `{note, data}` with respondent
+text inside `data`. `tools/list` SHALL omit tools the token's scopes lack. `moderate_response` SHALL
+NOT require `confirm` (it can be changed back). The help page SHALL no longer say that the server
+does not read responses, and the tool reference SHALL be regenerated.
+
+#### Scenario: Report from a chat
+- **WHEN** an agent with `responses:read` calls `get_response_summary` on a survey with answers
+- **THEN** the result's `data` holds the per-question statistics the REST summary returns for the same parameters
+
+#### Scenario: Export link in a chat
+- **WHEN** the agent calls `get_export_link` with `format: "xlsx"`
+- **THEN** it receives a URL that downloads the workbook for 15 minutes
+
+#### Scenario: Moderation needs its scope
+- **WHEN** a token without `responses:moderate` lists tools
+- **THEN** `moderate_response` is not listed
+
+### Requirement: Layer tools
+The MCP server SHALL offer `list_layers` and `list_layer_objects` under `surveys:read`, and
+`create_layer` (GeoJSON as an object argument), `update_layer`, `reorder_layers`, `delete_layer`,
+`create_layer_object`, `update_layer_object`, `delete_layer_object` and `moderate_layer_object` under
+`surveys:write`, each over the layer service the REST routes call, with the same roles and limits.
+`delete_layer` and `delete_layer_object` SHALL require `confirm: true`.
+
+#### Scenario: Map context from a chat
+- **WHEN** an agent calls `create_layer` with a FeatureCollection of bus stops
+- **THEN** the survey has a new layer with those stops as objects, and the result names its id for `layer_id` on a question
+
+#### Scenario: Delete needs confirmation
+- **WHEN** an agent calls `delete_layer` without `confirm`
+- **THEN** the result is `confirmation_required` and the layer still exists
+
+### Requirement: Structure tools
+The MCP server SHALL offer these read tools under `surveys:read`:
+
+- `list_groups`
+- `list_versions`
+- `search_icons`
+
+It SHALL offer these write tools under `surveys:write`:
+
+- `create_group`, `update_group`, `delete_group`
+- `duplicate_survey`, `duplicate_section`, `duplicate_question`
+- `copy_question`, `copy_section`
+- `move_question`
+- `restore_version`
+
+Each tool SHALL run over the service the REST routes call, with the same roles, locks and limits.
+Argument models SHALL be the REST input schemas plus ids. `delete_group` with `with_questions: true`
+SHALL require `confirm: true`. `restore_version` SHALL NOT require it, because it creates only
+unpublished changes.
+
+#### Scenario: Group questions from a chat
+- **WHEN** an agent calls `create_group` with a title and three question ids
+- **THEN** the result is the group with those `question_ids` and `get_survey` shows it in the section
+
+#### Scenario: Find an icon before setting it
+- **WHEN** an agent calls `search_icons` with `q: "bus stop"`
+- **THEN** the result lists values such as `maki:bus` that `update_question` accepts as `icon_class`
+
+#### Scenario: Deleting a group with its questions needs confirmation
+- **WHEN** an agent calls `delete_group` with `with_questions: true` and no `confirm`
+- **THEN** the result is `confirmation_required` and the group and its questions still exist
+

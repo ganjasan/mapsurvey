@@ -4,11 +4,15 @@
 The scopes registry and how a token's effective rights are scope ∩ organisation role ∩ survey role through the editor's own role helpers; lookups answer 404 (never 403) and always go through the survey; `/api/v1/me` explains the token.
 ## Requirements
 ### Requirement: Scopes registry
-`api/scopes.py` SHALL define the ordered registry `surveys:read`, `surveys:write`, `surveys:publish`, `surveys:delete`, `responses:read`, each with a human label, and SHALL be the one source for the token form, `OAUTH2_PROVIDER["SCOPES"]`, and every scope check. An unknown scope string SHALL be refused at the form and at `OAUTH2_PROVIDER` validation.
+`api/scopes.py` SHALL define the ordered registry `surveys:read`, `surveys:write`, `surveys:publish`, `surveys:delete`, `responses:read`, `responses:moderate`, each with a human label, and SHALL be the one source for the token form, `OAUTH2_PROVIDER["SCOPES"]`, and every scope check. An unknown scope string SHALL be refused at the form and at `OAUTH2_PROVIDER` validation. `responses:moderate` SHALL NOT be among the scopes checked by default on the token form.
 
 #### Scenario: Unknown scope on the form
 - **WHEN** the create form posts scope `admin:all`
 - **THEN** the form is invalid
+
+#### Scenario: Moderation is opt-in on the token form
+- **WHEN** the token form renders
+- **THEN** `responses:moderate` is offered and unchecked
 
 ### Requirement: Scope is an upper bound checked before any object is loaded
 `require_scope(principal, scope)` SHALL raise `403 scope_missing` naming the missing scope when the principal lacks it. `@api_endpoint(audience, scopes=(...))` SHALL call it for each listed scope before the view body runs.

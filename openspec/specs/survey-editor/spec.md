@@ -1030,3 +1030,57 @@ pending save reads are gone.
 - **WHEN** the teardown hook is absent but the fields are unreadable
 - **THEN** the save is still abandoned without raising, so a missed teardown degrades to a skipped save rather than an exception
 
+### Requirement: Settings panel saves the language picker
+The Survey settings panel autosave SHALL save `available_languages` whenever the creator adds or
+removes a language in the language picker, with no other gesture. Typing in the picker's search box
+SHALL NOT trigger a save. Opening the panel SHALL NOT trigger a save.
+
+#### Scenario: A language added in the panel survives a reload
+- **WHEN** the owner of an English survey picks "Spanish" in the settings panel's language picker and reopens the panel
+- **THEN** SurveyHeader.available_languages is `["en", "es"]` and the picker shows both languages
+
+#### Scenario: Filtering then picking saves the picked language
+- **WHEN** the owner types "spa" in the picker's search box and clicks "Spanish"
+- **THEN** the last settings POST carries `available_languages` containing `"es"`, and no POST is sent by the search box itself
+
+#### Scenario: A removed language is saved
+- **WHEN** the owner removes a language tag in the picker
+- **THEN** SurveyHeader.available_languages no longer contains that language
+
+### Requirement: Creators duplicate a whole survey
+The dashboard's ⋯ menu SHALL offer "Duplicate" on every survey to workspace members who may create
+surveys. It SHALL create the copy described for `POST /surveys/{uuid}/duplicate` through the same
+service and open the copy's Build page. The source survey SHALL be unchanged whatever its status.
+
+#### Scenario: Duplicate from the dashboard
+- **WHEN** a workspace editor chooses Duplicate on a closed survey named "Benches 2026"
+- **THEN** the editor opens a new draft survey "Benches 2026 (copy)" with the same sections, questions and layers and no responses
+
+#### Scenario: Viewer sees no Duplicate
+- **WHEN** a workspace viewer opens the ⋯ menu
+- **THEN** there is no Duplicate item
+
+### Requirement: Creators move a question to another section
+Each top-level question row SHALL offer "Move to section…", listing the survey's other sections.
+Choosing one SHALL move the question to the end of that section, with its sub-questions and answers,
+through the move service. The question SHALL leave its group. A toast SHALL name every visibility
+rule the move cleared. On a live survey the control SHALL open the structure gate instead.
+
+#### Scenario: Move a question to the next section
+- **WHEN** a creator chooses "Move to section… → Section 2" on a question of Section 1 in a draft survey
+- **THEN** the question is the last question of Section 2 and no longer listed under Section 1
+
+#### Scenario: Live survey
+- **WHEN** the survey is published and has no unpublished changes
+- **THEN** the control opens the "Change the structure of a live survey" gate
+
+### Requirement: Copies into another survey own their files
+Pasting a question or section into another survey, and duplicating a survey, SHALL store a new copy
+of every cover image, question image and layer attachment under a new key. Purging either survey
+from the trash SHALL never delete a file the other uses. Copies within one survey and its versions
+MAY share files, because they are purged together.
+
+#### Scenario: Purge the source after a paste
+- **WHEN** a question with an image is pasted from survey A into survey B and A is purged from the trash
+- **THEN** B's question image still loads
+

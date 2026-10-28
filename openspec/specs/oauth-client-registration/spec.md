@@ -129,3 +129,37 @@ delete a `manual` application or one with a live grant, and SHALL report the cou
 - **WHEN** a DCR application is 31 days old and a user holds an unrevoked refresh token for it
 - **THEN** the command leaves it in place
 
+### Requirement: Unsupported grant types are ignored
+The system SHALL remove from `grant_types` every value other than `authorization_code` and
+`refresh_token`, provided at least one of those two remains, before the toolkit sees client
+metadata (a fetched Client ID Metadata Document or a DCR / RFC 7592 body). When none remains, `grant_types`
+SHALL be passed on unchanged so the toolkit refuses the client as before. The response and the
+stored application SHALL reflect only the supported grant types.
+
+#### Scenario: claude.ai's document
+- **WHEN** the fetched document for `https://claude.ai/oauth/mcp-oauth-client-metadata` declares `grant_types: ["authorization_code", "refresh_token", "urn:ietf:params:oauth:grant-type:jwt-bearer"]`
+- **THEN** a public authorization-code application is created for that `client_id` and the consent page renders with `claude.ai` as the client host
+
+#### Scenario: DCR with an extension grant
+- **WHEN** an anonymous client registers with `grant_types: ["authorization_code", "refresh_token", "urn:ietf:params:oauth:grant-type:jwt-bearer"]`
+- **THEN** the response is 201 and the registered `grant_types` are `["authorization_code", "refresh_token"]`
+
+#### Scenario: Nothing supported
+- **WHEN** a document declares only `["client_credentials"]`
+- **THEN** no application is created and the authorize response is the unknown-client error page
+
+### Requirement: A CIMD client that can be public is registered as public
+The system SHALL register a fetched Client ID Metadata Document as a public client
+(`token_endpoint_auth_method` `none`) when the document's `token_endpoint_auth_methods_supported`
+includes `none`, whatever its `token_endpoint_auth_method` names, and SHALL drop
+`token_endpoint_auth_methods_supported` and `token_endpoint_auth_signing_alg` from it. A document
+whose client cannot authenticate with `none` SHALL still be refused.
+
+#### Scenario: ChatGPT's document
+- **WHEN** the fetched document for `https://chatgpt.com/oauth/client.json` declares `token_endpoint_auth_method: "private_key_jwt"` and `token_endpoint_auth_methods_supported: ["none", "private_key_jwt"]`
+- **THEN** a public authorization-code application is created for that `client_id`, the consent page renders with `chatgpt.com` as the client host, and the code exchanges for a token with PKCE and no client authentication
+
+#### Scenario: Key-only client
+- **WHEN** a document declares `token_endpoint_auth_method: "private_key_jwt"` and `token_endpoint_auth_methods_supported: ["private_key_jwt"]`
+- **THEN** no application is created and the authorize response is the unknown-client error page
+

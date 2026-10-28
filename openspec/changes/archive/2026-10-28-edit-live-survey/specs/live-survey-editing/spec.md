@@ -27,11 +27,7 @@ structural (see next requirement).
 
 ### Requirement: Structural edits on a live survey become unpublished changes
 
-Structural edits — creating, deleting, reordering or pasting questions or sections, changing a
-question's type, code, parent or layer binding, removing a choice that has answers, changing a
-visibility rule or section order — SHALL NOT be applied to a live survey. The first such edit SHALL
-offer, inline, to start unpublished changes; accepting creates the draft copy and applies the edit
-there.
+Structural edits — creating, deleting, reordering or pasting questions or sections, changing a question's type, code, parent or layer binding, removing a choice that has answers, changing a visibility rule or section order — SHALL NOT be applied to a live survey. The first such edit SHALL offer, inline, to start unpublished changes; accepting creates the draft copy and applies the edit there.
 
 #### Scenario: Adding a question to a published survey
 - **WHEN** an editor clicks "Add question" on a published survey with no unpublished changes
@@ -108,3 +104,7 @@ Creator-facing Build surfaces SHALL use "Edit", "Unpublished changes", "Publish 
 ### Requirement: Kill switch
 
 With `LIVE_SURVEY_EDITING` off, live surveys SHALL be read-only exactly as before this change.
+
+#### Scenario: Switch off
+- **WHEN** `LIVE_SURVEY_EDITING` is false and a creator opens a published survey in the editor
+- **THEN** the survey is read-only and every edit goes through a draft, with the pre-change "draft" vocabulary

@@ -2,11 +2,7 @@
 
 ### Requirement: Line and polygon answer layers can be turned into a coverage surface
 
-On the Responses Map pane, the layer menu of a `features` layer whose geometry is LineString,
-Polygon, MultiLineString or MultiPolygon SHALL offer *Create Coverage*; Point layers SHALL keep
-*Create Heatmap* only. Creating coverage SHALL add a `coverage` slot to the `LayerManager`,
-listed in the Layers panel directly under its source layer, drawn in its own pane, and the menu
-SHALL show *Coverage exists* while the slot exists.
+On the Responses Map pane, the layer menu of a `features` layer whose geometry is LineString, Polygon, MultiLineString or MultiPolygon SHALL offer *Create Coverage*; Point layers SHALL keep *Create Heatmap* only. Creating coverage SHALL add a `coverage` slot to the `LayerManager`, listed in the Layers panel directly under its source layer, drawn in its own pane, and the menu SHALL show *Coverage exists* while the slot exists.
 
 #### Scenario: Polygon layer offers coverage
 - **WHEN** a creator opens the layer menu of a polygon question layer
