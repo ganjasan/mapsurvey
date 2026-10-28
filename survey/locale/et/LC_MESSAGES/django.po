@@ -9040,3 +9040,19 @@ msgstr "Keele lisamine ebaõnnestus."
 #: survey/templatetags/survey_filters.py
 msgid "Description"
 msgstr "Kirjeldus"
+
+#: survey/templates/editor/survey_settings.html survey/templates/editor/partials/survey_settings_panel.html
+msgid "Your Pro trial covers this: switching the badge off uses one of its unbranded surveys."
+msgstr "Sinu Pro prooviperiood katab selle: märgi väljalülitamine kasutab ühe selle märgita küsitlustest."
+
+#: survey/templates/editor/survey_settings.html survey/templates/editor/partials/survey_settings_panel.html
+msgid "Pro trial"
+msgstr "Pro prooviperiood"
+
+#: survey/services/surveys.py
+msgid "Your Pro trial has used its switch-off of the badge."
+msgstr "Sinu Pro prooviperiood on märgi väljalülitamise juba ära kasutanud."
+
+#: survey/templates/editor/partials/_whats_new_hero.html
+msgid "No card"
+msgstr "Kaarti pole vaja"

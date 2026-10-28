@@ -110,8 +110,15 @@ Send a council both links — card and quote — and let their finance office ch
   `plan_cancelled`, `plan_lapsed`, `pro_help_requested` (`billing/events.py`), all keyed on the
   acting user.
 - **Pro help requests**: `/admin/billing/prohelprequest/`; the team mail goes to `CONTACT_EMAIL`.
+- **Pro trials** (change `pro-trial-allowances`): `/admin/billing/entitlementgrant/` — one row per
+  claimed trial with its allowances (`used` of `limit`, read-only). To end a trial early, set
+  `revoked_at`. Events `trial_claimed` and `trial_exhausted` (with `feature`). The trial's contents
+  and length are `TRIAL_ALLOWANCES` / `TRIAL_DAYS` in `billing/features.py`, not env.
 
 ## Rollback
 
 Unset `PPG_PRODUCTS` → Upgrade controls disappear and checkout 404s. Existing Pro organisations keep
 their entitlement from stored rows; the webhook endpoint keeps acknowledging and recording.
+
+Empty `TRIAL_ALLOWANCES` → no "Try Pro" anywhere and the claim endpoint 404s. Trials already claimed
+keep working until they expire (or set `revoked_at` on them).

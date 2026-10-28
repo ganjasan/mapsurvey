@@ -17,8 +17,11 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.http import Http404, HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone, translation
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
@@ -32,6 +35,7 @@ from . import ipn as ipn_mod
 from . import ppg
 from .forms import CancelForm, ProHelpRequestForm
 from .models import STATUS_ACTIVE, STATUS_SUSPENDED, BillingEvent, CheckoutIntent, Subscription
+from .trial import TrialRefused, claim, consume, offered, state_for
 
 logger = logging.getLogger(__name__)
 
@@ -249,7 +253,50 @@ def org_billing(request, slug):
         'cancel_form': CancelForm(),
         'other_period': (co.PRODUCT_YEARLY if sub and sub.product_key == co.PRODUCT_MONTHLY else co.PRODUCT_MONTHLY),
         'can_resubscribe': bool(sub and sub.status == STATUS_SUSPENDED),
+        'trial': state_for(org, request.user),
     })
+
+
+@login_required
+def try_pro(request):
+    """The dashboard hero's call to action (no URL arguments, as hero links need):
+    the trial block of the active workspace's Plan & billing."""
+    org = getattr(request, 'active_org', None)
+    if org is None:
+        return redirect('editor')
+    return redirect(reverse('org_billing', args=[org.slug]) + '#pro-trial')
+
+
+_TRIAL_REFUSALS = {
+    'pro': gettext_lazy('This workspace is on Pro already.'),
+    'org_used': gettext_lazy('This workspace has had its Pro trial.'),
+}
+
+
+@login_required
+@require_POST
+def org_trial_claim(request, slug):
+    """The owner's "Try Pro" (change pro-trial-allowances). Owner only; the
+    rules of the trial live in billing.trial.claim."""
+    if not offered():
+        raise Http404
+    org, m = _org_for(request, slug, ('owner',))
+    if m is None:
+        return HttpResponseForbidden()
+    try:
+        claim(org, request.user)
+    except TrialRefused as refused:
+        if refused.other is not None:
+            messages.info(request, _('You already used your Pro trial in %(name)s.') % {'name': refused.other.name})
+        else:
+            messages.info(request, _TRIAL_REFUSALS.get(refused.reason, _('The Pro trial is not available.')))
+        return redirect('org_billing', slug=org.slug)
+    messages.success(request, _('Your Pro trial has started.'))
+    nxt = request.POST.get('next', '')
+    if nxt and url_has_allowed_host_and_scheme(nxt, allowed_hosts={request.get_host()},
+                                               require_https=request.is_secure()):
+        return redirect(nxt)
+    return redirect('org_billing', slug=org.slug)
 
 
 @login_required
@@ -382,18 +429,28 @@ def org_help(request, slug):
     if m is None:
         return HttpResponseForbidden()
     e = ents.for_organization(org)
-    if not e.has('pro_help'):
+
+    def free_view(submitted=False):
+        trial = state_for(org, request.user)
+        return render(request, 'billing/org_help.html', {
+            'org': org, 'entitlements': e, 'form': None, 'submitted': submitted, 'is_owner': m.role == 'owner',
+            'products_configured': co.products_configured(), 'trial': trial,
+            'feature_used_up': trial.feature_exhausted('pro_help'), 'next_path': request.path,
+        })
+
+    if not e.may('pro_help'):
         if request.method == 'POST':
             return HttpResponseForbidden()
-        return render(request, 'billing/org_help.html', {
-            'org': org, 'entitlements': e, 'form': None, 'is_owner': m.role == 'owner',
-            'products_configured': co.products_configured(),
-        })
+        return free_view()
 
     submitted = False
     if request.method == 'POST':
         form = ProHelpRequestForm(request.POST, organization=org)
         if form.is_valid():
+            # Without the plan, a request spends the Pro trial's allowance
+            # (change pro-trial-allowances); a stale tab past it gets the offer.
+            if not e.has('pro_help') and not consume(org, 'pro_help', actor=request.user):
+                return free_view()
             req = form.save(commit=False)
             req.organization = org
             req.user = request.user
@@ -403,6 +460,9 @@ def org_help(request, slug):
             ev.emit(ev.PRO_HELP_REQUESTED, request.user.pk,
                     {'org_id': org.pk, 'kind': req.kind, 'has_survey': req.survey_id is not None})
             submitted = True
+            e = ents.for_organization(org)
+            if not e.may('pro_help'):
+                return free_view(submitted=True)
             form = ProHelpRequestForm(organization=org, initial={'contact_email': request.user.email})
     else:
         form = ProHelpRequestForm(organization=org, initial={'contact_email': request.user.email})

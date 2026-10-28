@@ -205,3 +205,65 @@ class ProHelpRequest(models.Model):
 
     def __str__(self):
         return f'{self.organization} {self.kind} {self.created_at:%Y-%m-%d}'
+
+
+GRANT_KIND_TRIAL = 'trial'
+GRANT_KIND_CHOICES = ((GRANT_KIND_TRIAL, _('Pro trial')),)
+
+
+class EntitlementGrant(models.Model):
+    """The second entitlement source, next to `Subscription` (change
+    pro-trial-allowances, #471; the academic programme #322 adds a kind).
+
+    The paywall's "one grant path" rule is about `Subscription`: only the
+    webhook writes it, and that stays true. A grant is a different row with a
+    different writer -- the owner's "Try Pro" click for a trial -- and gives
+    counted uses of features (`GrantAllowance`), never a plan. Access is a
+    comparison on every read (`starts_at <= now < expires_at`, not revoked);
+    nothing flips state on a schedule.
+    """
+    organization = models.ForeignKey('survey.Organization', on_delete=models.CASCADE, related_name='grants')
+    kind = models.CharField(max_length=16, choices=GRANT_KIND_CHOICES)
+    # The person a trial belongs to: one trial per user whichever workspace they
+    # claim it for, because a user can create any number of workspaces.
+    claimed_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+                                   related_name='claimed_grants')
+    granted_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+                                   related_name='issued_grants')
+    starts_at = models.DateTimeField()
+    expires_at = models.DateTimeField()
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('-created_at',)
+        constraints = [
+            models.UniqueConstraint(fields=('organization', 'kind'), name='grant_one_kind_per_org'),
+            models.UniqueConstraint(fields=('claimed_by',), condition=models.Q(kind=GRANT_KIND_TRIAL),
+                                    name='grant_one_trial_per_user'),
+        ]
+
+    def __str__(self):
+        return f'{self.organization} {self.kind} until {self.expires_at:%Y-%m-%d}'
+
+    def is_live(self, now=None):
+        now = now or timezone.now()
+        return self.revoked_at is None and self.starts_at <= now < self.expires_at
+
+
+class GrantAllowance(models.Model):
+    """How many uses of one feature a grant gives and how many are spent.
+    `used` is only ever changed by `billing.trial.consume`, one atomic UPDATE."""
+    grant = models.ForeignKey(EntitlementGrant, on_delete=models.CASCADE, related_name='allowances')
+    feature = models.CharField(max_length=32)
+    limit = models.PositiveIntegerField()
+    used = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ('feature',)
+        constraints = [
+            models.UniqueConstraint(fields=('grant', 'feature'), name='allowance_one_per_feature'),
+        ]
+
+    def __str__(self):
+        return f'{self.feature} {self.used}/{self.limit}'

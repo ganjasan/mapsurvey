@@ -3,6 +3,7 @@ import json
 
 from django.contrib.gis.geos import Point
 from django.db import transaction
+from django.utils.translation import gettext as _
 
 from .. import audit
 from .. import product_events as pe
@@ -61,6 +62,14 @@ def update_settings(actor, survey, data, files=None, *, partial=False):
     form's `clean_redirect_url`. Re-screened when live."""
     locks.assert_settings_editable(survey)
     form = validate(bind(SurveyHeaderForm, data, files, instance=survey, partial=partial))
+    # Switching the badge off without the plan spends one Pro-trial switch-off
+    # (change pro-trial-allowances). Inside this transaction, so a refused save
+    # gives the use back.
+    if form.consumes_unbranded():
+        from billing import trial
+        if not trial.consume(survey.organization, 'unbranded', actor=actor.user):
+            form.add_error('show_branding', _('Your Pro trial has used its switch-off of the badge.'))
+            raise ValidationFailed(form.errors, form=form)
     form.save()
     locks.rescreen_if_live(survey)
     return survey

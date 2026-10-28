@@ -9163,3 +9163,19 @@ msgstr "Nie udało się dodać języka."
 #: survey/templatetags/survey_filters.py
 msgid "Description"
 msgstr "Opis"
+
+#: survey/templates/editor/survey_settings.html survey/templates/editor/partials/survey_settings_panel.html
+msgid "Your Pro trial covers this: switching the badge off uses one of its unbranded surveys."
+msgstr "Twój okres próbny Pro to obejmuje: wyłączenie plakietki zużywa jedną z jego ankiet bez plakietki."
+
+#: survey/templates/editor/survey_settings.html survey/templates/editor/partials/survey_settings_panel.html
+msgid "Pro trial"
+msgstr "Okres próbny Pro"
+
+#: survey/services/surveys.py
+msgid "Your Pro trial has used its switch-off of the badge."
+msgstr "Twój okres próbny Pro wykorzystał już wyłączenie plakietki."
+
+#: survey/templates/editor/partials/_whats_new_hero.html
+msgid "No card"
+msgstr "Bez karty"

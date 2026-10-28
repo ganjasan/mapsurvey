@@ -1,0 +1,35 @@
+{% load i18n %}
+{% comment %}
+The Pro trial (change pro-trial-allowances) where a Pro feature was refused or
+offered: the owner's "Try Pro" button, or one sentence on why there is none.
+Context: `trial` (billing.trial.TrialState), `org`, `is_owner`, optional
+`feature_used_up` (the refused feature's allowance is spent) and `next_path`
+(where the claim returns).
+Renders nothing for a live trial with the feature still available -- the
+caller would not have refused.
+{% endcomment %}
+{% if trial.state == 'available' %}
+  <div class="trial-offer" data-trial-state="available">
+    <p class="mb-1"><strong>{% blocktrans count days=trial.days %}Try Pro free for {{ days }} day{% plural %}Try Pro free for {{ days }} days{% endblocktrans %}</strong></p>
+    <ul class="mb-2" style="font-size:0.9rem;">
+      {% for label, limit, detail in trial.offer %}<li>{{ label }}: {{ limit }}{% if detail %}<br><small class="text-muted">{{ detail }}</small>{% endif %}</li>{% endfor %}
+    </ul>
+    {% if is_owner %}
+      <form method="post" action="{% url 'org_billing_trial' org.slug %}" class="d-inline">
+        {% csrf_token %}{% if next_path %}<input type="hidden" name="next" value="{{ next_path }}">{% endif %}
+        <button type="submit" class="btn btn-primary btn-sm">{% trans "Try Pro" %}</button>
+      </form>
+      <small class="text-muted d-block mt-1">{% trans "No card needed. One trial per person. Your workspace stays on Free when it ends." %}</small>
+    {% else %}
+      <p class="text-muted mb-0" style="font-size:0.9rem;">{% trans "The workspace owner can start it from Plan & billing." %}</p>
+    {% endif %}
+  </div>
+{% elif trial.state == 'used_elsewhere' %}
+  <p class="text-muted" style="font-size:0.9rem;" data-trial-state="used_elsewhere">{% blocktrans with name=trial.other_organization.name %}You already used your Pro trial in {{ name }}.{% endblocktrans %}</p>
+{% elif trial.state == 'expired' %}
+  <p class="text-muted" style="font-size:0.9rem;" data-trial-state="expired">{% blocktrans with date=trial.grant.expires_at|date:"j F Y" %}This workspace's Pro trial ended on {{ date }}.{% endblocktrans %}</p>
+{% elif trial.state == 'exhausted' %}
+  <p class="text-muted" style="font-size:0.9rem;" data-trial-state="exhausted">{% trans "This workspace's Pro trial has used everything it included." %}</p>
+{% elif trial.state == 'live' and feature_used_up %}
+  <p class="text-muted" style="font-size:0.9rem;" data-trial-state="feature_used">{% trans "Your Pro trial has used its allowance for this." %}</p>
+{% endif %}

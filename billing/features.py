@@ -45,5 +45,20 @@ FEATURES = {
 }
 
 
+# The Pro trial (change pro-trial-allowances, #471): not a period of Pro but a
+# number of uses of each feature, valid for TRIAL_DAYS from the owner's click.
+# A feature missing here is not part of the trial. An EMPTY dict means the trial
+# is not offered at all (no button, the claim endpoint 404s) while grants that
+# were already claimed keep serving until they expire -- the rollback. A new
+# number applies to new claims only; a claimed grant keeps its own limits.
+# AI generation is deliberately absent: it is free on every plan.
+TRIAL_ALLOWANCES = {
+    'api': 500,        # REST requests and MCP tool calls that pass the Pro gate
+    'unbranded': 1,    # badge switch-offs (True -> False on a survey)
+    'pro_help': 1,     # stored help requests
+}
+TRIAL_DAYS = 90
+
+
 def features_for_plan(plan_code):
     return frozenset(key for key, f in FEATURES.items() if plan_code in f.plans)

@@ -145,6 +145,27 @@ class ToolsTest(TestCase):
         self.assertEqual(workspaces[free.slug]['plan'], 'free')
         self.assertFalse(workspaces[free.slug]['api'])
 
+    def test_trial_counts_each_tool_call(self):
+        """
+        GIVEN a Free workspace with a live Pro trial, and its survey
+        WHEN get_survey is called once, then twice in one JSON-RPC batch
+        THEN the calls succeed and the API allowance drops by one, then by two more
+        """
+        from billing import trial
+        from .helpers import rpc
+        free, _ = make_free_org()
+        Membership.objects.create(user=self.owner, organization=free, role='owner')
+        survey, _ = make_v1_survey(free, self.owner, 'trial_survey')
+        allowance = trial.claim(free, self.owner).allowances.get(feature='api')
+        data_of(self.mcp.call('get_survey', {'survey': str(survey.uuid)}))
+        allowance.refresh_from_db()
+        self.assertEqual(allowance.used, 1)
+        args = {'name': 'get_survey', 'arguments': {'survey': str(survey.uuid)}}
+        response = self.mcp.post([rpc('tools/call', args, id=2), rpc('tools/call', args, id=3)])
+        self.assertEqual(len(response.json()), 2)
+        allowance.refresh_from_db()
+        self.assertEqual(allowance.used, 3)
+
     def test_subtext_is_sanitised_like_the_editor(self):
         """
         GIVEN a subtext with a script tag and a bold tag

@@ -12,6 +12,28 @@ You end up with your organisation on Pro: the "Made with Mapsurvey" badge can be
 - You are the **owner** of the organisation. Admins see the billing page but cannot start a checkout; other members are told to ask the owner.
 - Have a card or PayPal account ready. For the yearly plan, a bank transfer or purchase order also works — see step 2.
 
+## Try Pro first
+
+The owner of a Free organisation can start a free **Pro trial** before paying. It is a number of uses of each Pro extra, not a number of days of Pro:
+
+| Pro extra | Included in the trial |
+|---|---|
+| Calls to the REST API and the MCP server | 500 |
+| Surveys without the "Made with Mapsurvey" badge | 1 |
+| Requests to the Mapsurvey team through **Pro help**: a check-up of your survey before launch, advice on getting it to respondents, or a report when the survey closes | 1 |
+
+What is left can be used for 90 days from the day you start the trial. No card is needed.
+
+1. Open the account menu and choose **Plan & billing**, or press **Try Pro** on any page that says "This is a Pro feature".
+2. Press **Try Pro**. The **Pro trial** block on Plan & billing then shows how much of each extra is used and the day the trial ends.
+
+Things to know:
+
+- Each person gets one trial, in one organisation. A second organisation you own can buy Pro, but it cannot start another trial.
+- A use the trial counted is not given back. Switching the badge on again does not return the survey without a badge.
+- When the trial ends, or an extra is used up, the organisation is on Free for that extra again. The badge comes back on a survey you switched it off for, and API calls answer `pro_required`. Nothing you built is deleted.
+- If you buy Pro during the trial, nothing is counted while Pro lasts.
+
 ## Steps
 
 1. Open the account menu and choose **Plan & billing**. The page shows the current plan (**Free**) and the Pro offer: **Consulting, analysis and reports from the Mapsurvey team**, **Remove "Made with Mapsurvey" from your surveys**, and everything in Free, which stays free.

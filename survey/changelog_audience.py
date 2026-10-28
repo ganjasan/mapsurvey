@@ -40,10 +40,26 @@ def free_plan(user, org):
     return not for_organization(org).has('api')
 
 
+def trial_available(user, org):
+    """The creator can start the Pro trial right here (change pro-trial-allowances):
+    they OWN the active workspace, it is not on Pro, it never had a trial, and they
+    never claimed one anywhere. Only the owner can click "Try Pro", so a banner for
+    anyone else would point at a button they do not have."""
+    from billing import trial
+    from .permissions import get_org_membership
+    if org is None or user is None or not user.is_authenticated:
+        return False
+    membership = get_org_membership(user, org)
+    if membership is None or membership.role != 'owner':
+        return False
+    return trial.state_for(org, user).state == trial.STATE_AVAILABLE
+
+
 PREDICATES = {
     'has_surveys': has_surveys,
     'no_mcp_connection': no_mcp_connection,
     'free_plan': free_plan,
+    'trial_available': trial_available,
 }
 
 

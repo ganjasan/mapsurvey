@@ -44,9 +44,16 @@ ID_PATTERN = re.compile(r'^\d{4}-\d{2}-\d{2}-[a-z0-9-]+$')
 KINDS = ('new', 'fixed')
 TIERS = ('card', 'hero')
 # Plate styles the hero partial knows how to draw (`_whats_new_hero.html`).
-ARTS = ('agent',)
+ARTS = ('agent', 'trial')
 HERO_LIFETIME_DAYS = 30
 HERO_MIN_SPACING_DAYS = 14
+# Pairs of heroes the owner let stand closer than the budget, each with its reason.
+# Every entry is a hole in the rule: keep it short and dated.
+HERO_SPACING_EXCEPTIONS = {
+    # 2026-10-28, owner: the assistant hero has been seen by its audience already; the
+    # Pro trial goes out now and displaces it rather than waiting until 2026-11-09.
+    ('2026-10-26-assistant-for-your-surveys', '2026-10-28-try-pro'),
+}
 CARD_KEYS = {'title', 'kind', 'link', 'image', 'tier'}
 HERO_KEYS = CARD_KEYS | {'art', 'eyebrow', 'link_query', 'cta_label', 'help', 'chips',
                          'show_if', 'note_if', 'note'}
@@ -266,6 +273,8 @@ def hero_spacing_violations(found=None):
                    key=lambda e: e.id)
     bad = []
     for earlier, later in zip(found, found[1:]):
+        if (earlier.id, later.id) in HERO_SPACING_EXCEPTIONS:
+            continue
         if (later.day - earlier.day).days < HERO_MIN_SPACING_DAYS:
             bad.append((earlier.id, later.id))
     return bad

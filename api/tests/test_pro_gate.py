@@ -123,6 +123,92 @@ class GateTest(TestCase):
         err = self._refused(principal_for(self.pro_owner), None)
         self.assertIsNone(err.extra['upgrade_url'])
 
+    def test_free_without_trial_names_none(self):
+        """
+        GIVEN a Free workspace that never claimed a Pro trial
+        WHEN the gate runs on its survey
+        THEN pro_required carries trial "none"
+        """
+        err = self._refused(principal_for(self.free_owner), self.free)
+        self.assertEqual(err.extra['trial'], 'none')
+
+
+@LOCMEM
+class TrialGateTest(TestCase):
+    """The API under a Pro trial (change pro-trial-allowances): one use per request, counted at the gate."""
+
+    def setUp(self):
+        from billing import trial
+        self.free, self.owner = make_free_org()
+        self.grant = trial.claim(self.free, self.owner)
+        self.allowance = self.grant.allowances.get(feature='api')
+
+    def _left(self):
+        self.allowance.refresh_from_db()
+        return self.allowance.limit - self.allowance.used
+
+    def _gate(self, principal):
+        org = type(self.free).objects.get(pk=self.free.pk)   # a fresh instance per request, as in a view
+        gates.require_pro_api(principal, org)
+
+    def test_counts_down_to_exhausted(self):
+        """
+        GIVEN a Free workspace whose live trial has 2 API calls left
+        WHEN three requests pass the gate
+        THEN the first two succeed leaving 1 then 0, the third is pro_required with trial "exhausted"
+        """
+        self.allowance.used = self.allowance.limit - 2
+        self.allowance.save()
+        self._gate(principal_for(self.owner))
+        self.assertEqual(self._left(), 1)
+        self._gate(principal_for(self.owner))
+        self.assertEqual(self._left(), 0)
+        with self.assertRaises(ApiError) as cm:
+            self._gate(principal_for(self.owner))
+        self.assertEqual(cm.exception.code, 'pro_required')
+        self.assertEqual(cm.exception.extra['trial'], 'exhausted')
+
+    def test_one_request_is_one_use(self):
+        """
+        GIVEN one request (one principal) that passes the gate twice for the same workspace
+        WHEN both checks run
+        THEN one call is counted
+        """
+        principal = principal_for(self.owner)
+        self._gate(principal)
+        self._gate(principal)
+        self.assertEqual(self._left(), self.allowance.limit - 1)
+
+    def test_expired_names_expired(self):
+        """
+        GIVEN the trial's expires_at has passed
+        WHEN the gate runs
+        THEN pro_required with trial "expired"
+        """
+        type(self.grant).objects.filter(pk=self.grant.pk).update(expires_at=timezone.now() - timedelta(seconds=1))
+        with self.assertRaises(ApiError) as cm:
+            self._gate(principal_for(self.owner))
+        self.assertEqual(cm.exception.extra['trial'], 'expired')
+
+    def test_pro_never_consumes(self):
+        """
+        GIVEN the workspace is Pro and also holds a live trial
+        WHEN a request passes the gate
+        THEN the allowance is unchanged
+        """
+        make_sub(self.free)
+        self._gate(principal_for(self.owner))
+        self.assertEqual(self._left(), self.allowance.limit)
+
+    def test_trial_workspace_is_listed(self):
+        """
+        GIVEN a member of a Free workspace with a live trial
+        WHEN pro_organizations runs
+        THEN the workspace is allowed, not hidden
+        """
+        allowed, hidden = gates.pro_organizations(principal_for(self.owner))
+        self.assertEqual(([o.pk for o in allowed], hidden), ([self.free.pk], 0))
+
 
 @LOCMEM
 class ProOrganizationsTest(TestCase):

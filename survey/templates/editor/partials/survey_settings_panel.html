@@ -67,10 +67,13 @@
           <label style="font-weight:400;display:flex;gap:.4rem;align-items:center;margin:0;cursor:pointer;">
             {{ form.show_branding }} {{ form.show_branding.label }}
           </label>
-          {% if form.unbranded %}
+          {% for error in form.show_branding.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
+          {% if form.unbranded and not form.unbranded_by_plan %}
+          <div class="pr-help">{% trans "Your Pro trial covers this: switching the badge off uses one of its unbranded surveys." %} <a href="{% url 'org_billing' survey.organization.slug %}#pro-trial">{% trans "Pro trial" %}</a></div>
+          {% elif form.unbranded %}
           <div class="pr-help">{% trans "Off = a clean survey, thanks page and public results with nothing pointing back to Mapsurvey." %}</div>
           {% else %}
-          <div class="pr-help">{% trans "Removing the badge is part of Pro." %} <a href="{% url 'org_billing' survey.organization.slug %}">{% trans "See plans" %}</a></div>
+          <div class="pr-help">{% trans "Removing the badge is part of Pro." %} <a href="{% url 'org_billing' survey.organization.slug %}#pro-trial">{% trans "See plans" %}</a></div>
           {% endif %}
         </div>
         <script>

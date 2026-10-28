@@ -9099,3 +9099,19 @@ msgstr "Kon de taal niet toevoegen."
 #: survey/templatetags/survey_filters.py
 msgid "Description"
 msgstr "Beschrijving"
+
+#: survey/templates/editor/survey_settings.html survey/templates/editor/partials/survey_settings_panel.html
+msgid "Your Pro trial covers this: switching the badge off uses one of its unbranded surveys."
+msgstr "Je Pro-proefperiode dekt dit: de badge uitzetten gebruikt een van de enquêtes zonder badge."
+
+#: survey/templates/editor/survey_settings.html survey/templates/editor/partials/survey_settings_panel.html
+msgid "Pro trial"
+msgstr "Pro-proefperiode"
+
+#: survey/services/surveys.py
+msgid "Your Pro trial has used its switch-off of the badge."
+msgstr "Je Pro-proefperiode heeft het uitzetten van de badge al gebruikt."
+
+#: survey/templates/editor/partials/_whats_new_hero.html
+msgid "No card"
+msgstr "Geen kaart"

@@ -412,6 +412,28 @@ form disables the switch otherwise. Setup checklist, env vars and the PayPro ema
 the spec of the same name (the rule proposed for `survey` in #273); payload and subscription
 builders in `billing/tests/helpers.py`.
 
+**Pro trial (change `pro-trial-allowances`, #471)**: the SECOND entitlement source, next to
+`Subscription` — `EntitlementGrant` (`kind='trial'`; #322's academic grant is the next kind) with one
+`GrantAllowance(feature, limit, used)` per feature. Not days of Pro but counted uses for
+`TRIAL_DAYS` (90) after the OWNER's click (`POST /org/<slug>/billing/trial/`, `billing/trial.py::claim`):
+`api` 500, `unbranded` 1, `pro_help` 1 (`TRIAL_ALLOWANCES` in `billing/features.py`; empty = not
+offered, the rollback). One trial per person (partial unique on `claimed_by`) and per workspace; never
+automatic, never on Pro; AI generation is not in it (free on every plan). The webhook still owns
+`Subscription`; a grant is a different row with a different writer. **Three questions on
+`Entitlements`**: `has(key)` = the PLAN includes it (plan cards, `is_pro`, lapse task); `may(key)` = a
+NEW use is allowed (plan, or a live trial's remainder) — every gate that decides an action
+(`require_feature`, `require_pro_api`, `pro_organizations`, `SurveyHeaderForm.unbranded`);
+`covers(key)` = in force (plan, or a live trial includes it, spent or not) — what `{% has_feature %}`
+answers, because a survey unbranded under the trial stays unbranded after its one switch-off is
+spent. A use the plan does not cover is counted ONLY by `trial.consume()` — one `UPDATE … WHERE used
+< "limit" RETURNING`, race-safe — at the point of use: `require_pro_api` (once per request per
+workspace; `mcp.protocol.call_tool` resets the memo per tool call), `services.surveys.update_settings`
+(a badge switch-off, inside the service transaction), `org_help` (a stored request). Expiry is a
+comparison, no cron, no mail. The viewer's state (`available | live | exhausted | expired |
+used_elsewhere`) is `trial.state_for(org, user)`, rendered by `billing/_trial_offer.html`;
+`pro_required` carries `trial: none|exhausted|expired`. Staff end a grant by setting `revoked_at` in
+the admin; the counters are read-only there.
+
 **Support chat (Chatwoot, change `chatwoot-support-chat`, #291)**: one partial,
 `partials/_support_chat.html`, included by the three base templates; config and the signed-in
 creator's identity come from `survey.context_processors.support_chat`. The identifier is

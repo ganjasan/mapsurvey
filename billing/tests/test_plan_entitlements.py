@@ -133,6 +133,53 @@ class EntitlementsTest(TestCase):
         self.assertEqual(t.render(Context({'org': self.org})), 'True')
         self.assertEqual(t.render(Context({'org': free_org})), 'False')
 
+    def test_no_grant_means_nothing_from_the_trial(self):
+        """
+        GIVEN an organisation with no subscription and no grant
+        WHEN its entitlements are read
+        THEN trial is None and may/covers are false for every Pro feature
+        """
+        e = ents.for_organization(self.org)
+        self.assertIsNone(e.trial)
+        self.assertFalse(any(e.may(k) or e.covers(k) for k in ('api', 'unbranded', 'pro_help')))
+
+    def test_trial_may_covers_and_has(self):
+        """
+        GIVEN a Free organisation with a live trial whose unbranded allowance is spent
+        WHEN has / may / covers are read, and has_feature in a template
+        THEN has is false, may is false (no new switch-off), covers and the tag are true (the badge stays off)
+        """
+        from ..models import GrantAllowance
+        from ..trial import claim
+        grant = claim(self.org, self.owner)
+        GrantAllowance.objects.filter(grant=grant, feature='unbranded').update(used=1)
+        ents.forget(self.org)
+        e = ents.for_organization(self.org)
+        self.assertFalse(e.has('unbranded'))
+        self.assertFalse(e.may('unbranded'))
+        self.assertTrue(e.covers('unbranded'))
+        self.assertTrue(e.may('api'))
+        t = Template('{% load billing_tags %}{% has_feature org "unbranded" as u %}{{ u }}')
+        self.assertEqual(t.render(Context({'org': self.org})), 'True')
+
+    def test_decorator_admits_a_live_trial(self):
+        """
+        GIVEN a view decorated with require_feature("pro_help")
+        WHEN a member of a Free organisation calls it before and after the owner claims a trial
+        THEN the first call is 403 and the second runs the view
+        """
+        from django.http import HttpResponse
+        from django.test import RequestFactory
+        from ..gates import require_feature
+        from ..trial import claim
+        view = require_feature('pro_help', lambda request: self.org)(lambda request: HttpResponse('ran'))
+        request = RequestFactory().get('/x/')
+        request.user = self.owner
+        self.assertEqual(view(request).status_code, 403)
+        claim(self.org, self.owner)
+        ents.forget(self.org)
+        self.assertEqual(view(request).content, b'ran')
+
 
 class NotifyLapsedTest(TestCase):
     def setUp(self):
