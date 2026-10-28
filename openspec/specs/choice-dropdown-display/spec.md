@@ -13,7 +13,7 @@ the input SHALL filter options by case-insensitive substring match on the option
 the respondent's selected language. Choosing an option SHALL display its label in the
 input and submit the option's `code` — the same value a radio rendering would submit.
 Radio rendering SHALL remain the behavior for `display_style = "default"` and for any
-unrecognized stored value.
+unrecognized stored value. When the question has a write-in option, the write-in input SHALL render beneath the dropdown and follow the same reveal rule as the radio rendering: picking the write-in option in the list SHALL reveal and focus it, picking another option SHALL hide and disable it.
 
 #### Scenario: Searching narrows the list
 - **WHEN** a respondent opens a dropdown-styled choice question with options "Area 1".."Area 35" and types "13"
@@ -30,6 +30,10 @@ unrecognized stored value.
 #### Scenario: Required validation still applies
 - **WHEN** a required dropdown-styled choice question is submitted with no selection
 - **THEN** the form re-renders with the standard required-field error
+
+#### Scenario: Write-in beneath the dropdown
+- **WHEN** the respondent picks the write-in option from the dropdown list
+- **THEN** the write-in input beneath the control becomes visible, enabled and focused, and it submits as `<code>-other`
 
 ### Requirement: Dropdown style is scoped to choice questions
 Each display style SHALL take effect only on the question types it is defined for:

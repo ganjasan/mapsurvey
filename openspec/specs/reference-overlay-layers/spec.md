@@ -11,13 +11,25 @@ delivery endpoint.
 An owner SHALL be able to upload a GeoJSON file (≤10 MB, WGS84, ≤5000 features,
 ≤10 layers per survey) that becomes a `SurveyMapLayer` with configurable name, color
 (`#RRGGBB`), label field, key field, and info-popups flag. The stored GeoJSON SHALL be
-the re-serialized parse of the upload, never the raw bytes. Upload SHALL return the
-union of feature property names so label/key fields are picked from a dropdown, not
-typed. Invalid files SHALL be rejected with a human-readable reason.
+derived from the layer's objects (never the raw upload bytes). The upload SHALL be parsed
+into a feature tree exactly once, objects SHALL be written in batches, and the derived
+GeoJSON SHALL be assembled one feature at a time rather than from a whole-collection tree.
+The union of feature property names SHALL be stored on the layer when it is rebuilt and
+returned by the upload so label/key fields are picked from a dropdown, not typed; no
+editor surface SHALL parse the stored GeoJSON to list property names. Invalid files
+SHALL be rejected with a human-readable reason.
 
 #### Scenario: Successful upload
 - **WHEN** the owner uploads a valid 148 KB FeatureCollection of 35 zone polygons
 - **THEN** a layer is created, the response lists its property names, and the editor card shows name, feature count and size
+
+#### Scenario: Property names come from the layer, not a parse
+- **WHEN** the editor renders the settings card for a survey with a 10 MB layer
+- **THEN** the card lists the layer's property names without selecting or parsing the stored GeoJSON
+
+#### Scenario: Derived GeoJSON is unchanged by the streaming assembly
+- **WHEN** a layer with categories, cover images and reserved properties is rebuilt
+- **THEN** the stored FeatureCollection is byte-identical to the previous whole-tree serialisation
 
 #### Scenario: Projected-CRS file rejected
 - **WHEN** an uploaded file contains coordinates outside lng [-180,180] / lat [-90,90]
@@ -30,10 +42,6 @@ typed. Invalid files SHALL be rejected with a human-readable reason.
 #### Scenario: Non-owner cannot manage layers
 - **WHEN** a user without the owner role POSTs to any layer endpoint
 - **THEN** the request is refused
-
-#### Scenario: Eleventh layer refused
-- **WHEN** a survey already holds 10 reference layers and the owner uploads another
-- **THEN** the upload is refused with a message naming the 10-layer limit and no layer is created
 
 ### Requirement: Respondent map renders reference layers beneath answers
 On map-layout sections, the respondent map SHALL render the survey's reference layers
@@ -61,19 +69,25 @@ across HTMX section navigation without refetching.
 - **THEN** visible layers remain on the map without a new fetch of layer geometry
 
 ### Requirement: Reference layers never intercept answering
-Reference-layer features SHALL NOT be selectable, editable, or draggable by
-respondents. With info popups disabled the layer SHALL be fully non-interactive. With
-info popups enabled, clicking a feature SHALL show an escaped read-only popup of its
-name/description properties, and placing answer geometry by tapping the map SHALL
-continue to work over layer features.
+Reference-layer features SHALL NOT be selectable, editable, or draggable by respondents.
+With info popups disabled and the layer not bound to a `layer_objects` question, the layer
+SHALL be fully non-interactive. With info popups enabled on an unbound layer, clicking a
+feature SHALL show an escaped read-only popup of its title and description properties. On a
+layer bound to a `layer_objects` question, clicking a feature SHALL open the object popup
+defined by `layer-objects-question`. In every case, placing answer geometry by tapping the
+map SHALL continue to work over layer features while a draw mode is active.
 
 #### Scenario: Tap over a zone places the answer
 - **WHEN** a respondent in point-placement mode taps inside a zone polygon (popups disabled)
 - **THEN** an answer point is placed exactly as on bare map
 
 #### Scenario: Popup shows plan details
-- **WHEN** popups are enabled and a respondent clicks the "playground" polygon outside placement mode
-- **THEN** a popup shows the feature's escaped name/description and the geometry cannot be modified
+- **WHEN** popups are enabled on an unbound layer and a respondent clicks the "playground" polygon outside placement mode
+- **THEN** a popup shows the object's escaped title and description and the geometry cannot be modified
+
+#### Scenario: Bound layer opens the object popup
+- **WHEN** a layer is bound to a `layer_objects` question and a respondent clicks one of its features outside placement mode
+- **THEN** the object popup with the card and sub-questions opens
 
 ### Requirement: Layer visibility is controllable per section and by the respondent
 Each section SHALL be able to hide any subset of the survey's layers
@@ -93,11 +107,11 @@ and therefore no layers.
 ### Requirement: Layer geometry is served by a gated cacheable endpoint
 Layer GeoJSON SHALL be served at `GET /surveys/<uuid>/layers/<id>.geojson` under the
 same access rules as the survey's section pages, with an `ETag` derived from the
-layer's `updated_at` and private caching. An authenticated user whose effective role on the
-survey is `viewer` or higher SHALL be served the layer in every survey status (draft, testing,
-published, closed, archived); this bypass SHALL apply to the layer endpoint only and SHALL NOT
-change access to the survey's section pages. Layer GeoJSON SHALL NOT be inlined into the
-respondent HTML and SHALL NOT be exposed at a public storage URL.
+layer's `updated_at` and private caching. The derived GeoJSON SHALL be stored
+gzip-compressed and served as-is with `Content-Encoding: gzip`; the application SHALL
+decompress it only on paths that read its content (export, tallies). Layer GeoJSON SHALL
+NOT be inlined into the respondent HTML and SHALL NOT be exposed at a public storage URL.
+Surfaces that read a layer's configuration SHALL NOT load its geometry column.
 
 #### Scenario: Draft survey layer hidden from outsiders
 - **WHEN** an anonymous request fetches a layer of an unpublished survey without a test link
@@ -107,17 +121,9 @@ respondent HTML and SHALL NOT be exposed at a public storage URL.
 - **WHEN** a client re-requests with a matching `If-None-Match`
 - **THEN** the endpoint returns 304 with no body
 
-#### Scenario: Viewer fetches a draft survey's layer
-- **WHEN** a user holding the `viewer` role on a draft survey fetches its layer
-- **THEN** the GeoJSON is returned with private caching
-
-#### Scenario: Owner fetches a closed survey's layer
-- **WHEN** the owner fetches a layer of a closed survey
-- **THEN** the GeoJSON is returned
-
-#### Scenario: Outsider still refused on a closed survey
-- **WHEN** an anonymous request, or an authenticated user with no role on the survey, fetches a layer of a closed survey
-- **THEN** the endpoint returns 404
+#### Scenario: Compressed delivery
+- **WHEN** a client fetches a layer
+- **THEN** the body is the stored gzip bytes with `Content-Encoding: gzip` and `Content-Type: application/geo+json`, and a browser `fetch()` receives the FeatureCollection unchanged
 
 ### Requirement: Feature kill switch
 With `MAP_REFERENCE_LAYERS` off, the editor SHALL NOT render layer management UI, the
