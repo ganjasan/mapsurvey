@@ -696,3 +696,129 @@ class SectionLayoutControlsTravelTest(TestCase):
 
         self.assertFalse(imported.stage_image)
         self.assertTrue(any('Picture for section' in w for w in warnings), warnings)
+
+
+# ─── Content alignment inside the panel (change panel-content-align, #476) ───
+
+class PanelContentAlignTest(TestCase):
+    """Rendering, editor and travel of content_width / content_valign."""
+
+    def setUp(self):
+        self.org = Organization.objects.create(name="Align Org")
+        self.user = User.objects.create_user(username='align_editor', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name="align_survey", organization=self.org, redirect_url="#", status='published',
+        )
+        self.section = SurveySection.objects.create(
+            survey_header=self.survey, name="mapping", title="Mapping", code="A1", is_head=True,
+            panel_side='right', panel_width='half', content_width='column', content_valign='middle',
+        )
+
+    def _get(self):
+        return self.client.get('/surveys/align_survey/mapping/')
+
+    def test_both_settings_add_their_classes(self):
+        """
+        GIVEN a map section, panel right / half, content column / middle
+        WHEN a respondent loads it directly
+        THEN the body carries all four classes and #section-data declares the content settings
+        """
+        response = self._get()
+
+        self.assertContains(response, '<body class="panel-right panel-w-half content-column content-middle"')
+        self.assertContains(response, 'data-content-width="column"')
+        self.assertContains(response, 'data-content-valign="middle"')
+
+    def test_column_alone(self):
+        """
+        GIVEN a section with a centred column at the top
+        WHEN it is rendered
+        THEN only the column class is added
+        """
+        SurveySection.objects.filter(pk=self.section.pk).update(panel_side='left', panel_width='default',
+                                                                 content_valign='top')
+
+        self.assertContains(self._get(), '<body class="content-column"')
+
+    def test_defaults_add_nothing(self):
+        """
+        GIVEN a map section with every layout setting at its default
+        WHEN it is rendered
+        THEN the body has no class, as before these settings existed
+        """
+        SurveySection.objects.filter(pk=self.section.pk).update(
+            panel_side='left', panel_width='default', content_width='full', content_valign='top')
+
+        self.assertContains(self._get(), '<body data-icon-sprites=')
+
+    def test_form_section_and_unknown_values_ignore_them(self):
+        """
+        GIVEN a form section with column / middle, and a map section with unknown stored values
+        WHEN each is rendered
+        THEN neither carries a content class
+        """
+        SurveySection.objects.filter(pk=self.section.pk).update(layout='form')
+        self.assertContains(self._get(), '<body class="survey-form-layout"')
+
+        SurveySection.objects.filter(pk=self.section.pk).update(
+            layout='map', panel_side='left', panel_width='default', content_width='wide', content_valign='bottom')
+        self.assertContains(self._get(), '<body data-icon-sprites=')
+
+    def test_editor_saves_and_keeps_them(self):
+        """
+        GIVEN a section with column / middle
+        WHEN the modal posts full / top, and then an older modal posts without the two fields
+        THEN the first post stores them, the second keeps what is stored
+        """
+        self.client.login(username='align_editor', password='pass')
+        url = f'/editor/surveys/{self.survey.uuid}/sections/{self.section.id}/'
+        base = {'title': 'Mapping', 'subheading': '', 'code': 'A1', 'layout': 'map', 'next_label': ''}
+
+        response = self.client.post(url, {**base, 'content_width': 'full', 'content_valign': 'top'},
+                                    HTTP_HX_REQUEST='true')
+        self.assertEqual(response.status_code, 204, response.content[:300])
+        self.section.refresh_from_db()
+        self.assertEqual((self.section.content_width, self.section.content_valign), ('full', 'top'))
+
+        SurveySection.objects.filter(pk=self.section.pk).update(content_width='column', content_valign='middle')
+        self.client.post(url, base, HTTP_HX_REQUEST='true')
+        self.section.refresh_from_db()
+        self.assertEqual((self.section.content_width, self.section.content_valign), ('column', 'middle'))
+        self.assertFalse(SurveyHeader.objects.filter(canonical_survey=self.survey, is_canonical=False).exists())
+
+    def test_draft_copy_and_zip_carry_them(self):
+        """
+        GIVEN the column / middle section
+        WHEN unpublished changes are started, and the survey is exported and imported
+        THEN both copies carry the two values; a legacy or foreign archive gets the defaults
+        """
+        from survey.versioning import clone_survey_for_draft
+        draft = clone_survey_for_draft(self.survey)
+        copy = SurveySection.objects.get(survey_header=draft)
+        self.assertEqual((copy.content_width, copy.content_valign), ('column', 'middle'))
+
+        def roundtrip(name, mutate=None):
+            output = BytesIO()
+            export_survey_to_zip(self.survey, output, mode="structure")
+            output.seek(0)
+            with zipfile.ZipFile(output) as zf:
+                data = json.loads(zf.read("survey.json"))
+            data["survey"]["name"] = name
+            if mutate:
+                mutate(data["survey"]["sections"][0])
+            buf = BytesIO()
+            with zipfile.ZipFile(buf, 'w') as zf:
+                zf.writestr("survey.json", json.dumps(data))
+            buf.seek(0)
+            imported, _ = import_survey_from_zip(buf)
+            return SurveySection.objects.get(survey_header=imported)
+
+        imported = roundtrip("align_imported")
+        self.assertEqual((imported.content_width, imported.content_valign), ('column', 'middle'))
+
+        def legacy(section):
+            section.pop("content_width")
+            section["content_valign"] = "bottom"
+        imported = roundtrip("align_legacy", legacy)
+        self.assertEqual((imported.content_width, imported.content_valign), ('full', 'top'))

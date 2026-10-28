@@ -24,6 +24,7 @@ from .models import (
     QuestionTranslation, default_basemaps, SurveyMapLayer,
     QuestionGroup, QuestionGroupTranslation, GROUP_DISPLAY_STYLE_CHOICES,
     SECTION_LAYOUT_CHOICES, PANEL_SIDE_CHOICES, PANEL_WIDTH_CHOICES,
+    CONTENT_WIDTH_CHOICES, CONTENT_VALIGN_CHOICES,
 )
 from .html_sanitize import coerce_creator_html
 from .redirects import clean_redirect_url
@@ -178,6 +179,8 @@ def serialize_sections(survey: SurveyHeader) -> List[Dict[str, Any]]:
             "layout": section.layout,
             "panel_side": section.panel_side,
             "panel_width": section.panel_width,
+            "content_width": section.content_width,
+            "content_valign": section.content_valign,
             "stage_image": _section_image_path(section),
             "next_label": section.next_label,
             "start_map_position": section.start_map_postion.wkt if section.start_map_postion else None,
@@ -911,6 +914,8 @@ def create_sections(
             layout=_choice(section_data, "layout", SECTION_LAYOUT_CHOICES, "map"),
             panel_side=_choice(section_data, "panel_side", PANEL_SIDE_CHOICES, "left"),
             panel_width=_choice(section_data, "panel_width", PANEL_WIDTH_CHOICES, "default"),
+            content_width=_choice(section_data, "content_width", CONTENT_WIDTH_CHOICES, "full"),
+            content_valign=_choice(section_data, "content_valign", CONTENT_VALIGN_CHOICES, "top"),
             next_label=(section_data.get("next_label") or None) and str(section_data.get("next_label"))[:30],
             start_map_postion=start_map_position,
             start_map_zoom=section_data.get("start_map_zoom"),

@@ -168,6 +168,8 @@ class SectionOut(Schema):
     layout: str
     panel_side: str
     panel_width: str
+    content_width: str
+    content_valign: str
     stage_image: Optional[str] = Field(description='URL of the picture an image section shows; null = the survey cover. Upload it in the editor.')
     next_label: Optional[str]
     position: int
@@ -186,6 +188,8 @@ class SectionIn(In):
     layout: Optional[Literal['map', 'image', 'form']] = None
     panel_side: Optional[Literal['left', 'right']] = None
     panel_width: Optional[Literal['default', 'third', 'half']] = None
+    content_width: Optional[Literal['full', 'column']] = None
+    content_valign: Optional[Literal['top', 'middle']] = None
     next_label: Optional[str] = Field(None, max_length=30)
     visibility_rule: Optional[VisibilityRule] = None
     translations: Optional[Dict[str, SectionTranslation]] = None

@@ -9125,3 +9125,35 @@ msgstr "Kuinka suuren osan tietokoneen näytöstä kysymykset vievät."
 #: survey/editor_forms.py:317
 msgid "Shown beside the questions. Empty = the survey cover image."
 msgstr "Näytetään kysymysten vieressä. Tyhjä = kyselyn kansikuva."
+
+#: survey/models.py:822
+msgid "Full panel width"
+msgstr "Paneelin koko leveys"
+
+#: survey/models.py:823
+msgid "Centred column"
+msgstr "Keskitetty palsta"
+
+#: survey/models.py:826
+msgid "Top"
+msgstr "Ylhäällä"
+
+#: survey/models.py:827
+msgid "Middle"
+msgstr "Keskellä"
+
+#: survey/editor_forms.py:337
+msgid "Content width"
+msgstr "Sisällön leveys"
+
+#: survey/editor_forms.py:338
+msgid "Content vertical position"
+msgstr "Sisällön pystysijainti"
+
+#: survey/editor_forms.py:346
+msgid "Centred column: the text and questions keep a comfortable reading width in the middle of a wide panel."
+msgstr "Keskitetty palsta: teksti ja kysymykset pysyvät leveän paneelin keskellä mukavan lukuleveyksisinä."
+
+#: survey/editor_forms.py:347
+msgid "Middle: a short page sits in the middle of the panel instead of at its top."
+msgstr "Keskellä: lyhyt sivu sijoittuu paneelin keskelle eikä ylös."

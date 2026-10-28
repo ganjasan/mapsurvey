@@ -816,6 +816,16 @@ PANEL_WIDTH_CHOICES = (
     ("third", _("A third of the screen")),
     ("half", _("Half the screen")),
 )
+# Where the panel's content sits inside the panel (change panel-content-align,
+# #476): opt-in, desktop only, ignored by form sections.
+CONTENT_WIDTH_CHOICES = (
+    ("full", _("Full panel width")),
+    ("column", _("Centred column")),
+)
+CONTENT_VALIGN_CHOICES = (
+    ("top", _("Top")),
+    ("middle", _("Middle")),
+)
 
 
 #survey sections
@@ -825,6 +835,8 @@ class SurveySection(models.Model):
     layout = models.CharField(max_length=8, choices=SECTION_LAYOUT_CHOICES, default="map", help_text=_('What fills the screen beside the panel: "map", "image" (the section picture, else the survey cover) or "form" (a classic full-width form with no map)'))
     panel_side = models.CharField(max_length=5, choices=PANEL_SIDE_CHOICES, default="left", help_text=_('Side of the screen the question panel sits on (desktop; map and image sections).'))
     panel_width = models.CharField(max_length=8, choices=PANEL_WIDTH_CHOICES, default="default", help_text=_('Width preset of the question panel (desktop; map and image sections).'))
+    content_width = models.CharField(max_length=6, choices=CONTENT_WIDTH_CHOICES, default="full", help_text=_('"column" sets the panel content as a centred column of reading width (desktop; map and image sections).'))
+    content_valign = models.CharField(max_length=6, choices=CONTENT_VALIGN_CHOICES, default="top", help_text=_('"middle" centres panel content shorter than the panel vertically (desktop; map and image sections).'))
     stage_image = models.ImageField(upload_to='sections/', null=True, blank=True, help_text=_('Picture shown beside the panel on an image section; empty = the survey cover.'))
     next_label = models.CharField(max_length=30, null=True, blank=True, help_text=_('Custom label for the forward button, e.g. "Start" on a welcome section. Empty = the default Next/Finish.'))
     survey_header = models.ForeignKey("SurveyHeader", on_delete=models.CASCADE)
@@ -871,6 +883,10 @@ class SurveySection(models.Model):
             classes.append('panel-right')
         if self.panel_width in ('third', 'half'):
             classes.append('panel-w-' + self.panel_width)
+        if self.content_width == 'column':
+            classes.append('content-column')
+        if self.content_valign == 'middle':
+            classes.append('content-middle')
         return ' '.join(classes)
 
     def stage_image_url(self):

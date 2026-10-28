@@ -39,6 +39,22 @@ class V1StructureTest(TestCase):
         self.assertEqual(response.status_code, 422, response.content)
         self.assertIn('panel_width', response.content.decode())
 
+    def test_section_content_alignment(self):
+        """
+        GIVEN a section
+        WHEN it is patched to a centred column in the middle, and then with content_valign "bottom"
+        THEN the first is stored and returned; the second is 422 naming content_valign
+        """
+        response = self.api.patch(f'{self.base}/sections/{self.section.pk}',
+                                  {'content_width': 'column', 'content_valign': 'middle'})
+        self.assertEqual(response.status_code, 200, response.content)
+        body = response.json()
+        self.assertEqual((body['content_width'], body['content_valign']), ('column', 'middle'))
+
+        response = self.api.patch(f'{self.base}/sections/{self.section.pk}', {'content_valign': 'bottom'})
+        self.assertEqual(response.status_code, 422, response.content)
+        self.assertIn('content_valign', response.content.decode())
+
     def test_section_order(self):
         """
         GIVEN two sections

@@ -22,7 +22,10 @@ You end up with a page laid out the way you want: the questions on the left or t
 3. For **Picture**, upload a picture under **Picture**. Leave it empty to show the survey's cover image (Settings → Cover image); with neither, the space is a plain tinted area.
 4. Under **Panel side**, choose **Left** or **Right**.
 5. Under **Panel width**, choose **Narrow** (the usual width), **A third of the screen** or **Half the screen**.
-6. The section form saves itself. Check the result in the **Live preview**.
+6. Optionally, place the content inside a wide panel:
+   - **Content width** — **Full panel width** (the usual) or **Centred column**: the title, text, questions and buttons keep a comfortable reading width in the middle of the panel.
+   - **Content vertical position** — **Top** (the usual) or **Middle**: a short page sits in the middle of the panel instead of at its top. A long page still starts at the top and scrolls.
+7. The section form saves itself. Check the result in the **Live preview**.
 
 <!-- screenshot: the Layout block with Picture, Right and Half the screen selected and a photo uploaded -->
 
@@ -32,8 +35,8 @@ You end up with a page laid out the way you want: the questions on the left or t
 2. Set **Layout** to **Picture**, upload a photo of the place, set **Panel side** to **Right** and **Panel width** to **Half the screen**.
 3. Write the introduction in the section's **Subheading** and set **Button label** to `Start`.
 
-The respondent sees the photo on the left half of the screen and the introduction with a **Start** button on the right.
+The respondent sees the photo on the left half of the screen and the introduction with a **Start** button on the right. For a calmer page, also set **Content width** to **Centred column** and **Content vertical position** to **Middle**: the introduction then sits as a column in the middle of the right half.
 
 ## On a phone
 
-Side and width apply on computer screens. On a phone the questions always cover the map from the left, as before, and a **Picture** section shows the picture as a band across the top with the questions underneath it.
+Side, width and the content position apply on computer screens. On a phone the questions always cover the map from the left, as before, and a **Picture** section shows the picture as a band across the top with the questions underneath it.

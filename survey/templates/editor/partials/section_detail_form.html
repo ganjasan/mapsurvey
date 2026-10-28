@@ -98,7 +98,7 @@
         if (btn) btn.style.display = hasMap ? '' : 'none';
         // Same reasoning as the map-position button: no map, no layers to choose.
         if (refLayers) refLayers.hidden = !hasMap;
-        ['panel_side', 'panel_width'].forEach(function (name) {
+        ['panel_side', 'panel_width', 'content_width', 'content_valign'].forEach(function (name) {
             var el = control(name);
             if (el) el.hidden = isForm;
         });
