@@ -9,7 +9,11 @@ Applies the settings a test run needs and production must never get, for every
   ``mediafiles/`` and parallel workers never delete each other's files;
 - under ``--parallel``, one Redis database per worker. django-redis
   ``cache.clear()`` is ``FLUSHDB``: in a shared database one worker's clear
-  wipes the rate-limit and activity keys another worker's test is counting on.
+  wipes the rate-limit and activity keys another worker's test is counting on;
+- the default language at the start of every test (change test-language-reset).
+  Views call ``translation.activate()`` and the test client never resets it, so
+  under ``--parallel`` a test calling code directly read labels in whichever
+  language the previous test in its worker left behind.
 
 ``override_settings`` rather than assignment, because its ``setting_changed``
 signal is what resets the hasher cache, the storages and the cache handlers.
@@ -18,8 +22,9 @@ import shutil
 import tempfile
 
 from django.conf import settings
-from django.test import override_settings
+from django.test import SimpleTestCase, override_settings
 from django.test import runner as django_runner
+from django.utils import translation
 
 # Redis ships with 16 logical databases (0..15).
 REDIS_DATABASES = 16
@@ -60,6 +65,20 @@ class MapsurveyParallelTestSuite(django_runner.ParallelTestSuite):
     init_worker = _init_worker
 
 
+def _reset_language_before_each_test():
+    """Wrap ``SimpleTestCase._pre_setup`` (run before every Django test, in forked
+    workers too); return the original so teardown can put it back."""
+    original = SimpleTestCase.__dict__['_pre_setup']
+
+    @classmethod
+    def _pre_setup(cls):
+        original.__func__(cls)
+        translation.deactivate()
+
+    SimpleTestCase._pre_setup = _pre_setup
+    return original
+
+
 class MapsurveyTestRunner(django_runner.DiscoverRunner):
     parallel_test_suite = MapsurveyParallelTestSuite
 
@@ -75,8 +94,10 @@ class MapsurveyTestRunner(django_runner.DiscoverRunner):
             MEDIA_ROOT=self._media_root,
         )
         self._test_settings.enable()
+        self._original_pre_setup = _reset_language_before_each_test()
 
     def teardown_test_environment(self, **kwargs):
+        SimpleTestCase._pre_setup = self._original_pre_setup
         self._test_settings.disable()
         shutil.rmtree(self._media_root, ignore_errors=True)
         super().teardown_test_environment(**kwargs)
