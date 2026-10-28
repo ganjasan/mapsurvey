@@ -1,5 +1,10 @@
 {% load i18n %}
 {% load static survey_filters %}
+<style>
+  .section-layout-block { border: 1px solid var(--border-color, #e2e6ee); border-radius: 8px; padding: .5rem .75rem .25rem; margin-bottom: 1rem; }
+  .section-layout-block > legend { width: auto; font-size: .8rem; font-weight: 600; padding: 0 .35rem; margin-bottom: 0; }
+  .section-stage-thumb img { max-width: 200px; max-height: 120px; border-radius: 6px; border: 1px solid var(--border-color, #e2e6ee); margin: -.25rem 0 .75rem; }
+</style>
 <div class="section-form-card">
     <div style="display:flex;align-items:center;justify-content:space-between;">
         <h6><i class="fas fa-layer-group"></i> {% trans "Section" %}: {{ section.title|default:section.name }}
@@ -23,12 +28,14 @@
           method="post" action="{% url 'editor_section_detail' survey.uuid section.id %}"
           hx-post="{% url 'editor_section_detail' survey.uuid section.id %}"
           hx-swap="none"
+          enctype="multipart/form-data" hx-encoding="multipart/form-data"
           hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
         {% csrf_token %}
         {% for field in form %}
-        <div class="form-group">
+        {% if field.name == 'layout' %}<fieldset class="section-layout-block"><legend>{% trans "Layout" %}</legend>{% endif %}
+        <div class="form-group" data-layout-control="{{ field.name }}">
             {# Base fields hold the primary language; name it when translations exist so "Title" doesn't read as a language-neutral default. #}
-            <label for="{{ field.id_for_label }}">{{ field.label }}{% if survey.available_languages|length > 1 and field.name != 'code' %} ({{ survey.available_languages.0|language_name }}){% endif %}</label>
+            <label for="{{ field.id_for_label }}">{{ field.label }}{% if survey.available_languages|length > 1 and field.name == 'title' or survey.available_languages|length > 1 and field.name == 'subheading' or survey.available_languages|length > 1 and field.name == 'next_label' %} ({{ survey.available_languages.0|language_name }}){% endif %}</label>
             {{ field }}
             {% comment %}The subheading has always been rendered |safe on the section page;
             this is where the creator finally gets to write it as formatted text instead of
@@ -41,6 +48,10 @@
         to sit here was a second door to the same thing.{% endcomment %}
         {% if field.name == 'layout' and layers_enabled %}
         <small class="form-text text-muted" style="margin-top:-.5rem;margin-bottom:.75rem;">{% trans "To show a reference layer on this section’s map, add an “Objects on the map” question and pick the layer." %} {% trans "A Form section has no map, so it cannot hold map questions." %}</small>
+        {% endif %}
+        {% if field.name == 'stage_image' %}
+        {% with url=section.stage_image_url %}<div class="section-stage-thumb"{% if not url %} hidden{% endif %}><img src="{{ url }}" alt=""></div>{% endwith %}
+        </fieldset>
         {% endif %}
         {% endfor %}
 
@@ -72,16 +83,38 @@
 (function () {
     // A form-layout section has no map, so its map-position picker is noise;
     // the stored position survives for a switch back to the map layout.
+    // Side and width apply to Map and Picture, the picture upload to Picture
+    // only (change section-layout-controls); hiding a control keeps its value.
     var sel = document.getElementById('id_section_layout');
     var btn = document.getElementById('section-map-position-btn');
     var refLayers = document.querySelector('.section-ref-layers');
+    function control(name) {
+        return document.querySelector('#section-form [data-layout-control="' + name + '"]');
+    }
     function syncLayoutControls() {
         if (!sel) return;
+        var hasMap = sel.value === 'map';
         var isForm = sel.value === 'form';
-        if (btn) btn.style.display = isForm ? 'none' : '';
+        if (btn) btn.style.display = hasMap ? '' : 'none';
         // Same reasoning as the map-position button: no map, no layers to choose.
-        if (refLayers) refLayers.hidden = isForm;
+        if (refLayers) refLayers.hidden = !hasMap;
+        ['panel_side', 'panel_width'].forEach(function (name) {
+            var el = control(name);
+            if (el) el.hidden = isForm;
+        });
+        var image = control('stage_image');
+        if (image) image.hidden = sel.value !== 'image';
+        var thumb = document.querySelector('#section-form .section-stage-thumb');
+        if (thumb && sel.value !== 'image') thumb.hidden = true;
     }
+    // Show the chosen picture at once; autosave uploads it.
+    var fileInput = document.querySelector('#section-form input[type="file"][name="stage_image"]');
+    if (fileInput) fileInput.addEventListener('change', function () {
+        var thumb = document.querySelector('#section-form .section-stage-thumb');
+        if (!thumb || !fileInput.files || !fileInput.files[0]) return;
+        thumb.querySelector('img').src = URL.createObjectURL(fileInput.files[0]);
+        thumb.hidden = false;
+    });
     if (sel) { sel.addEventListener('change', syncLayoutControls); syncLayoutControls(); }
 })();
 </script>
@@ -161,7 +194,7 @@
     form.querySelectorAll('input[type="text"], textarea').forEach(function(el) {
         el.addEventListener('input', autoSave);
     });
-    form.querySelectorAll('select, input[type="checkbox"]').forEach(function(el) {
+    form.querySelectorAll('select, input[type="checkbox"], input[type="file"]').forEach(function(el) {
         el.addEventListener('change', function() {
             clearTimeout(timer);
             htmx.trigger(form, 'submit');

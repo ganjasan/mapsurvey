@@ -36,7 +36,7 @@ Changes save as you type; the editor shows **All changes saved** when it is done
 ## Set up the first section
 
 1. In the centre panel, give the section a **Title**, for example `Crossings on Main Street`, and a short **Subheading** that tells respondents what to do.
-2. Leave **Layout** on **Map**. The **Form** layout is a classic full-width page with no map, used for welcome text or demographics; map questions cannot live there.
+2. Leave **Layout** on **Map**. The **Form** layout is a classic full-width page with no map, used for welcome text or demographics; **Picture** puts the questions beside a picture instead of the map. Map questions cannot live in either; see [Lay out a section](/how-to/lay-out-a-section/).
 3. Click **Map Position**. In the picker, drag and zoom until the view shows the street at a scale where individual crossings are visible, or search for the place. This framing is exactly what respondents see when they open the survey, and it is also where you set the survey-wide map: untick **Inherit position (don't override)** only when this section needs a view of its own. Close the picker; the preview updates.
 <!-- screenshot: the Map Position picker with the pin on a street and the base map picker open -->
 4. If this section needs a different base map from the rest of the survey, pick one under **Override basemap** in the same picker.

@@ -9096,3 +9096,51 @@ msgstr "Uji coba Pro Anda sudah memakai jatah mematikan lencana."
 #: survey/templates/editor/partials/_whats_new_hero.html
 msgid "No card"
 msgstr "Tanpa kartu"
+
+#: survey/models.py:803 survey/editor_forms.py:310
+msgid "Picture"
+msgstr "Gambar"
+
+#: survey/models.py:811
+msgid "Left"
+msgstr "Kiri"
+
+#: survey/models.py:812
+msgid "Right"
+msgstr "Kanan"
+
+#: survey/models.py:815
+msgid "Narrow"
+msgstr "Sempit"
+
+#: survey/models.py:816
+msgid "A third of the screen"
+msgstr "Sepertiga layar"
+
+#: survey/models.py:817
+msgid "Half the screen"
+msgstr "Setengah layar"
+
+#: survey/editor_forms.py:308
+msgid "Panel side"
+msgstr "Sisi panel"
+
+#: survey/editor_forms.py:309
+msgid "Panel width"
+msgstr "Lebar panel"
+
+#: survey/editor_forms.py:314
+msgid "Map: questions beside the map. Picture: questions beside a picture, e.g. a welcome page. Form: a classic full-width form. Picture and Form have no map, so geo questions are unavailable."
+msgstr "Peta: pertanyaan di samping peta. Gambar: pertanyaan di samping gambar, misalnya halaman sambutan. Formulir: formulir klasik selebar layar. Gambar dan Formulir tidak memiliki peta, jadi pertanyaan peta tidak tersedia."
+
+#: survey/editor_forms.py:315
+msgid "Where the questions sit on a computer screen. On a phone they always cover the map."
+msgstr "Letak pertanyaan di layar komputer. Di ponsel pertanyaan selalu menutupi peta."
+
+#: survey/editor_forms.py:316
+msgid "How much of a computer screen the questions take."
+msgstr "Seberapa besar bagian layar komputer yang dipakai pertanyaan."
+
+#: survey/editor_forms.py:317
+msgid "Shown beside the questions. Empty = the survey cover image."
+msgstr "Ditampilkan di samping pertanyaan. Kosong = gambar sampul survei."

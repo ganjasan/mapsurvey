@@ -2,7 +2,7 @@ from django import forms
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
 from survey import marker_icons
-from .models import SurveyHeader, SurveySection, Question, QuestionGroup, Organization, BASEMAP_CHOICES
+from .models import SurveyHeader, SurveySection, Question, QuestionGroup, Organization, BASEMAP_CHOICES, MAPLESS_LAYOUTS
 from .html_sanitize import coerce_creator_html
 from .redirects import NO_REDIRECT, clean_redirect_url, is_valid_redirect, tidy_redirect_input
 from .layers import layers_for
@@ -303,12 +303,18 @@ class SurveyHeaderForm(forms.ModelForm):
 class SurveySectionForm(forms.ModelForm):
     class Meta:
         model = SurveySection
-        fields = ['title', 'subheading', 'code', 'layout', 'next_label']
+        # The layout controls follow `layout` so the modal renders them as one
+        # block (change section-layout-controls).
+        fields = ['title', 'subheading', 'code', 'layout', 'panel_side', 'panel_width', 'stage_image',
+                  'next_label']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'subheading': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
             'code': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 8}),
             'layout': forms.Select(attrs={'class': 'form-control', 'id': 'id_section_layout'}),
+            'panel_side': forms.Select(attrs={'class': 'form-control'}),
+            'panel_width': forms.Select(attrs={'class': 'form-control'}),
+            'stage_image': forms.ClearableFileInput(attrs={'class': 'form-control-file', 'accept': 'image/*'}),
             'next_label': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 30, 'placeholder': _('Next')}),
         }
         # ONE labels dict. There were two assignments here; the second silently
@@ -323,10 +329,16 @@ class SurveySectionForm(forms.ModelForm):
             'subheading': _('Subheading'),
             'code': _('Code'),
             'layout': _('Layout'),
+            'panel_side': _('Panel side'),
+            'panel_width': _('Panel width'),
+            'stage_image': _('Picture'),
             'next_label': _('Button label'),
         }
         help_texts = {
-            'layout': _('Map: questions beside the map. Form: a classic full-width form — no map, so geo questions are unavailable.'),
+            'layout': _('Map: questions beside the map. Picture: questions beside a picture, e.g. a welcome page. Form: a classic full-width form. Picture and Form have no map, so geo questions are unavailable.'),
+            'panel_side': _('Where the questions sit on a computer screen. On a phone they always cover the map.'),
+            'panel_width': _('How much of a computer screen the questions take.'),
+            'stage_image': _('Shown beside the questions. Empty = the survey cover image.'),
             'next_label': _('Label of this section\'s forward button, e.g. "Start" on a welcome section. Empty = Next / Finish.'),
         }
 
@@ -335,6 +347,10 @@ class SurveySectionForm(forms.ModelForm):
         # A POST without the field (older open forms, tests) keeps the stored
         # layout instead of failing validation or silently flipping to map.
         self.fields['layout'].required = False
+        # Same for the layout controls: a POST without them (autosave of an
+        # older open modal, the API's partial bind) keeps what is stored.
+        for name in ('panel_side', 'panel_width'):
+            self.fields[name].required = False
         # On a live survey the code is structure (rules and comments point at
         # it): rendered disabled, and a posted value is ignored.
         if lock_structure:
@@ -345,11 +361,17 @@ class SurveySectionForm(forms.ModelForm):
         # editor, which is the hole this closes.
         return coerce_creator_html(self.cleaned_data.get('subheading'))
 
+    def clean_panel_side(self):
+        return self.cleaned_data.get('panel_side') or self.instance.panel_side or 'left'
+
+    def clean_panel_width(self):
+        return self.cleaned_data.get('panel_width') or self.instance.panel_width or 'default'
+
     def clean_layout(self):
         layout = self.cleaned_data.get('layout')
         if not layout:
             layout = self.instance.layout if self.instance.pk else 'map'
-        if layout == 'form' and self.instance.pk:
+        if layout in MAPLESS_LAYOUTS and self.instance.pk:
             geo_questions = Question.objects.filter(
                 survey_section=self.instance, input_type__in=GEO_TYPES,
             ).order_by('order_number')
@@ -358,7 +380,7 @@ class SurveySectionForm(forms.ModelForm):
                     (q.name or q.code) for q in geo_questions
                 )
                 raise forms.ValidationError(
-                    f'A form section cannot hold map questions. '
+                    f'A section without a map (Form or Picture) cannot hold map questions. '
                     f'Move or delete first: {names}.'
                 )
         return layout
@@ -461,7 +483,7 @@ class QuestionForm(forms.ModelForm):
         if (layer_qs is None or not layer_qs.exists()) and not geo_exists:
             field = self.fields['input_type']
             field.choices = [(value, label) for value, label in field.choices if value != 'layer_objects']
-        if section is not None and section.layout == 'form':
+        if section is not None and not section.has_map:
             # A form section has no map — filtering the field's choices both
             # removes the geo group from the type picker (picker_groups_for
             # builds groups from these choices) and rejects a geo input_type

@@ -60,6 +60,10 @@ class TranslationCatalogHygieneTest(SimpleTestCase):
         # A landing heading and the hero banner's secondary link (change
         # changelog-hero): the same question, with or without "this".
         frozenset({'How it works', 'How this works'}),
+        # The Image question type and the Picture section layout (change
+        # section-layout-controls): two editor labels for the same noun, one
+        # word in most languages.
+        frozenset({'Image', 'Picture'}),
     }
 
     @staticmethod

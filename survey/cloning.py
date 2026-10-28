@@ -103,6 +103,7 @@ def copy_section(
     name: Optional[str] = None,
     title: Optional[str] = None,
     keep_rule: bool,
+    created_files=None,
 ) -> SurveySection:
     """Create a copy of ``section`` (with all its translations) in ``target_survey``.
 
@@ -118,6 +119,13 @@ def copy_section(
         visibility_rule=copy.deepcopy(section.visibility_rule) if keep_rule else None,
         **plain_field_values(section, exclude=SECTION_DECIDED_FIELDS),
     )
+    # The stage picture is shared within one survey family, a new file across
+    # surveys -- the same rule as Question.image (change section-layout-controls).
+    if section.stage_image:
+        from .layers import layer_owner
+        if layer_owner(section.survey_header) != layer_owner(target_survey):
+            new_section.stage_image.name = copy_file(section.stage_image, new_section, created_files)
+            new_section.save(update_fields=['stage_image'])
     for trans in SurveySectionTranslation.objects.filter(section=section):
         SurveySectionTranslation.objects.create(
             section=new_section, **plain_field_values(trans),
@@ -499,7 +507,8 @@ def clone_survey(source, *, created_by, created_files=None):
     sections = list(SurveySection.objects.filter(survey_header=source))
     new_by_old = {}
     for section in sections:
-        new_section = copy_section(section, target_survey=survey, is_head=section.is_head, keep_rule=True)
+        new_section = copy_section(section, target_survey=survey, is_head=section.is_head, keep_rule=True,
+                                   created_files=created_files)
         new_by_old[section.pk] = new_section
         clone_top_level_questions(section, new_section, regenerate_code=False, keep_group_rules=True,
                                   created_files=created_files)

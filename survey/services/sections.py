@@ -65,7 +65,7 @@ def create(actor, survey, sections=None):
 
 
 @transaction.atomic
-def update(actor, section, data, *, translations=UNSET, visibility_rule=UNSET,
+def update(actor, section, data, files=None, *, translations=UNSET, visibility_rule=UNSET,
            partial=False, strict=False):
     """Edit a section's fields (`SurveySectionForm` names), its translations
     (`{lang: {title, subheading, next_label}}`) and its visibility rule.
@@ -80,7 +80,7 @@ def update(actor, section, data, *, translations=UNSET, visibility_rule=UNSET,
     locks.assert_content_editable(survey)
     _, structure_locked = locks.locks(survey)
     before = section_snapshot(section)
-    form = validate(bind(SurveySectionForm, data, instance=section, partial=partial,
+    form = validate(bind(SurveySectionForm, data, files, instance=section, partial=partial,
                          lock_structure=structure_locked))
     if visibility_rule is not UNSET:
         check_rule(visibility_rule, 'section', strict, survey=survey, section=section)

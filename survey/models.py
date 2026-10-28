@@ -800,7 +800,21 @@ class LayerObjectAsset(models.Model):
 
 SECTION_LAYOUT_CHOICES = (
     ("map", _("Map")),
+    ("image", _("Picture")),
     ("form", _("Form")),
+)
+# Stages without a map (change section-layout-controls, #473): no map chrome,
+# no geolocation prompt, no geo / map-only questions. ONE definition, read by
+# the section form, the question form, layers and the ZIP import.
+MAPLESS_LAYOUTS = ("form", "image")
+PANEL_SIDE_CHOICES = (
+    ("left", _("Left")),
+    ("right", _("Right")),
+)
+PANEL_WIDTH_CHOICES = (
+    ("default", _("Narrow")),
+    ("third", _("A third of the screen")),
+    ("half", _("Half the screen")),
 )
 
 
@@ -808,7 +822,10 @@ SECTION_LAYOUT_CHOICES = (
 class SurveySection(models.Model):
     is_head = models.BooleanField(default=False)
 
-    layout = models.CharField(max_length=8, choices=SECTION_LAYOUT_CHOICES, default="map", help_text=_('"map" renders the panel beside the map; "form" renders a classic full-width form with no map'))
+    layout = models.CharField(max_length=8, choices=SECTION_LAYOUT_CHOICES, default="map", help_text=_('What fills the screen beside the panel: "map", "image" (the section picture, else the survey cover) or "form" (a classic full-width form with no map)'))
+    panel_side = models.CharField(max_length=5, choices=PANEL_SIDE_CHOICES, default="left", help_text=_('Side of the screen the question panel sits on (desktop; map and image sections).'))
+    panel_width = models.CharField(max_length=8, choices=PANEL_WIDTH_CHOICES, default="default", help_text=_('Width preset of the question panel (desktop; map and image sections).'))
+    stage_image = models.ImageField(upload_to='sections/', null=True, blank=True, help_text=_('Picture shown beside the panel on an image section; empty = the survey cover.'))
     next_label = models.CharField(max_length=30, null=True, blank=True, help_text=_('Custom label for the forward button, e.g. "Start" on a welcome section. Empty = the default Next/Finish.'))
     survey_header = models.ForeignKey("SurveyHeader", on_delete=models.CASCADE)
     name = models.CharField(max_length=45, default="survey_description", validators=[validate_url_name]) #section_a
@@ -837,6 +854,35 @@ class SurveySection(models.Model):
 
     def __str__(self):
         return self.name
+
+    @property
+    def has_map(self):
+        return self.layout not in MAPLESS_LAYOUTS
+
+    def layout_classes(self):
+        """The `<body>` classes that put this section's stage, panel side and
+        panel width on the respondent page (the HTMX swap derives the same set
+        from `#section-data` in base_survey_template.html). Side and width
+        mean nothing on a form section; unknown values render as defaults."""
+        if self.layout == 'form':
+            return 'survey-form-layout'
+        classes = ['survey-image-layout'] if self.layout == 'image' else []
+        if self.panel_side == 'right':
+            classes.append('panel-right')
+        if self.panel_width in ('third', 'half'):
+            classes.append('panel-w-' + self.panel_width)
+        return ' '.join(classes)
+
+    def stage_image_url(self):
+        """Picture of an image stage: the section's own, else the survey cover,
+        else '' (the stage stays a tinted area)."""
+        for image in (self.stage_image, self.survey_header.cover_image):
+            if image:
+                try:
+                    return image.url
+                except ValueError:
+                    continue
+        return ''
 
     def questions(self):
         if not hasattr(self, "__qcache"):

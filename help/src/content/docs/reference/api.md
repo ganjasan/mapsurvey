@@ -543,7 +543,9 @@ place; the code and the visibility rule are structure (`409 draft_required`).
 | `title` | string or null |  |  |
 | `subheading` | string or null |  |  |
 | `code` | string or null |  |  |
-| `layout` | `map` | `form` or null |  |  |
+| `layout` | `map` | `image` | `form` or null |  |  |
+| `panel_side` | `left` | `right` or null |  |  |
+| `panel_width` | `default` | `third` | `half` or null |  |  |
 | `next_label` | string or null |  |  |
 | `visibility_rule` | VisibilityRule or null |  |  |
 | `translations` | object or null |  |  |
@@ -1385,6 +1387,9 @@ Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `p
 | `title` | string or null | yes |  |
 | `subheading` | string or null | yes |  |
 | `layout` | string | yes |  |
+| `panel_side` | string | yes |  |
+| `panel_width` | string | yes |  |
+| `stage_image` | string or null | yes | URL of the picture an image section shows; null = the survey cover. Upload it in the editor. |
 | `next_label` | string or null | yes |  |
 | `position` | integer | yes |  |
 | `visibility_rule` | object or null | yes |  |

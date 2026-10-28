@@ -493,6 +493,20 @@ through `services.surveys.update_settings` (owner only); the pair is `?from=&to=
 `localStorage['msTranslations:<uuid>']`. Build takes `?question=<id>&lang=` / `?group=<id>` to open
 that modal at its Translations block.
 
+**Section layout controls (change `section-layout-controls`, #473)**: three independent per-section
+settings — the stage `SurveySection.layout` (`map | image | form`; `image` shows `stage_image`, else
+the survey's `cover_image`, else a tinted area), `panel_side` (`left | right`) and `panel_width`
+(`default` = 420 px, `third`, `half`). Map-less stages are ONE constant, `models.MAPLESS_LAYOUTS`
+(`section.has_map`): the section form, the question form's type filter and `layers.py` read it, so
+`image` excludes geo questions exactly as `form` does — never test `layout == 'form'` again. Rendering
+is body classes (`SurveySection.layout_classes()` on a direct load, `initSection()` step 0 on an HTMX
+swap from `#section-data[data-panel-side|data-panel-width|data-stage-image]`) plus one CSS variable
+`--panel-w`; the defaults set no class, so an untouched survey renders as before. Side and width rules
+live ONLY inside `@media (min-width: 769px)` in `main.css` — on a phone the panel stays the 88 % overlay
+and an `image` section is a picture band over one scrolling column. The picture is shared within a
+survey family and copied across surveys (`copy_section`, like `Question.image`), rides the ZIP as
+`images/sections/<section pk>_<name>`, is read-only in the API (`stage_image` URL) and deleted on purge.
+
 **Hierarchical Questions/Answers**: Both Question and Answer models support self-referential parent relationships via `parent_question_id` and `parent_answer_id` for conditional sub-questions.
 
 **Conditional visibility (`CONDITIONAL_VISIBILITY` kill switch, default ON)**: a

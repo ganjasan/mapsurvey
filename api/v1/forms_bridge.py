@@ -39,7 +39,7 @@ def survey_settings(body):
     return data
 
 
-SECTION_FIELDS = ('title', 'subheading', 'code', 'layout', 'next_label')
+SECTION_FIELDS = ('title', 'subheading', 'code', 'layout', 'panel_side', 'panel_width', 'next_label')
 
 
 def section(body):

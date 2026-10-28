@@ -174,7 +174,7 @@ Permission `surveys:write` · role **owner** · cannot be undone
 
 ### `create_section`
 
-Append a section (a page) to the survey; the other fields set it at once. `layout` is "map" (the page shows the map, for geo questions) or "form". On a live survey this is a structural change: start_unpublished_changes first.
+Append a section (a page) to the survey; the other fields set it at once. `layout` is "map" (the page shows the map, for geo questions), "image" (a picture beside the questions, e.g. a welcome page; the picture is uploaded in the editor, else the survey cover is shown) or "form". `panel_side` (left|right) and `panel_width` (default|third|half) place the questions on a computer screen. On a live survey this is a structural change: start_unpublished_changes first.
 
 Permission `surveys:write` · role **editor**
 
@@ -183,7 +183,9 @@ Permission `surveys:write` · role **editor**
 | `title` | string |  |  |
 | `subheading` | string |  |  |
 | `code` | string |  |  |
-| `layout` | `map` \| `form` |  |  |
+| `layout` | `map` \| `image` \| `form` |  |  |
+| `panel_side` | `left` \| `right` |  |  |
+| `panel_width` | `default` \| `third` \| `half` |  |  |
 | `next_label` | string |  |  |
 | `visibility_rule` | object (`question_code`, `choice_codes`, `answered`) |  |  |
 | `translations` | map |  |  |
@@ -193,7 +195,7 @@ Permission `surveys:write` · role **editor**
 
 ### `update_section`
 
-Change the fields you name. On a live survey wording (title, subheading, next_label, translations) is applied in place; the code and the visibility rule are structure (draft_required).
+Change the fields you name. On a live survey wording (title, subheading, next_label, translations) and the layout (layout, panel_side, panel_width) are applied in place; the code and the visibility rule are structure (draft_required).
 
 Permission `surveys:write` · role **editor**
 
@@ -202,7 +204,9 @@ Permission `surveys:write` · role **editor**
 | `title` | string |  |  |
 | `subheading` | string |  |  |
 | `code` | string |  |  |
-| `layout` | `map` \| `form` |  |  |
+| `layout` | `map` \| `image` \| `form` |  |  |
+| `panel_side` | `left` \| `right` |  |  |
+| `panel_width` | `default` \| `third` \| `half` |  |  |
 | `next_label` | string |  |  |
 | `visibility_rule` | object (`question_code`, `choice_codes`, `answered`) |  |  |
 | `translations` | map |  |  |

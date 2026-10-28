@@ -13,7 +13,7 @@ from datetime import timedelta
 from django.utils import timezone
 
 from .models import (
-    SurveyHeader, SurveySession, Question, SurveyMapLayer, LayerObjectAsset,
+    SurveyHeader, SurveySection, SurveySession, Question, SurveyMapLayer, LayerObjectAsset,
 )
 
 logger = logging.getLogger(__name__)
@@ -55,6 +55,10 @@ def purge_survey(survey):
     for question in questions:
         if question.image:
             question.image.delete(save=False)
+    sections = SurveySection.objects.filter(survey_header__in=headers).exclude(stage_image='')
+    for section in sections:
+        if section.stage_image:
+            section.stage_image.delete(save=False)
     assets = LayerObjectAsset.objects.filter(
         object__layer__survey__in=headers,
     ).exclude(file='')

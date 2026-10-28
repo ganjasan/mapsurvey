@@ -12,6 +12,17 @@ def _abs(path):
     return settings.SITE_URL.rstrip('/') + path
 
 
+def _absolute_media_url(field_file):
+    """A stored file's URL, absolute: S3 already gives one, local media a path."""
+    if not field_file:
+        return None
+    try:
+        url = field_file.url
+    except ValueError:
+        return None
+    return url if url.startswith(('http://', 'https://')) else _abs(url)
+
+
 def _map_start(obj):
     point = obj.start_map_postion
     if point is None:
@@ -67,6 +78,9 @@ def section(obj, position=None):
         'title': obj.title,
         'subheading': obj.subheading,
         'layout': obj.layout,
+        'panel_side': obj.panel_side,
+        'panel_width': obj.panel_width,
+        'stage_image': _absolute_media_url(obj.stage_image),
         'next_label': obj.next_label,
         'position': position,
         'visibility_rule': obj.visibility_rule,
