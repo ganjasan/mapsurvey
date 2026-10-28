@@ -9176,3 +9176,11 @@ msgstr "Kolom di tengah: teks dan pertanyaan tetap selebar yang nyaman dibaca di
 #: survey/editor_forms.py:347
 msgid "Middle: a short page sits in the middle of the panel instead of at its top."
 msgstr "Tengah: halaman pendek diletakkan di tengah panel, bukan di atas."
+
+#: survey/editor_forms.py:340
+msgid "Keep the questions open while placing on the map"
+msgstr "Biarkan pertanyaan terbuka saat menandai di peta"
+
+#: survey/editor_forms.py:350
+msgid "On a computer screen the questions stay visible while respondents place a point or draw, and the map aims at the space beside them. On a phone they always slide away."
+msgstr "Di layar komputer pertanyaan tetap terlihat saat responden menempatkan titik atau menggambar, dan peta membidik ruang di sampingnya. Di ponsel pertanyaan selalu disembunyikan."

@@ -32,7 +32,8 @@ class StructureToolsTest(TestCase):
         result = data_of(self.mcp.call('update_section', {**self.ref, 'section_id': self.section.pk,
                                                           'layout': 'image', 'panel_side': 'right',
                                                           'panel_width': 'half', 'content_width': 'column',
-                                                          'content_valign': 'middle'}))
+                                                          'content_valign': 'middle', 'keep_panel_open': True}))
+        self.assertIs(result['keep_panel_open'], True)
         self.assertEqual((result['layout'], result['panel_side'], result['panel_width']), ('image', 'right', 'half'))
         self.assertEqual((result['content_width'], result['content_valign']), ('column', 'middle'))
         self.section.refresh_from_db()

@@ -207,6 +207,36 @@ navigation from #section-data[data-stage-image].{% endcomment %}
         document.body.classList.toggle('sidebar-hidden', !show);
     }
 
+    // Keep the panel while placing (change keep-panel-while-drawing, #477): a
+    // per-section option, desktop map sections only. Every placement path asks
+    // here instead of hiding the panel itself.
+    function keepPanelWhilePlacing() {
+        return document.body.classList.contains('panel-keep') && !isMobile();
+    }
+
+    function hidePanelForPlacement() {
+        if (!keepPanelWhilePlacing()) { toggleInfo(false); }
+    }
+
+    // The part of the viewport the map is visible in: the whole viewport, or,
+    // with the panel kept and open, the viewport minus the panel on its side.
+    // #map fills the viewport, so these are map container x coordinates too.
+    function visibleMapArea() {
+        var full = {left: 0, width: window.innerWidth};
+        if (!keepPanelWhilePlacing() || info_page.classList.contains('hidden')) { return full; }
+        var r = info_page.getBoundingClientRect();
+        if (document.body.classList.contains('panel-right')) {
+            return {left: 0, width: Math.max(0, Math.round(r.left))};
+        }
+        var left = Math.round(r.right);
+        return {left: left, width: Math.max(0, window.innerWidth - left)};
+    }
+
+    function visibleMapCentreX() {
+        var a = visibleMapArea();
+        return a.left + a.width / 2;
+    }
+
     function toggleDrawbar(show){
         if (show){drawbar.style.display="flex";}
         else{drawbar.style.display="none";}
@@ -429,11 +459,15 @@ navigation from #section-data[data-stage-image].{% endcomment %}
             $finish.prop('disabled', true).html('<i class="fas fa-check"></i> ' + i18n.finishSpraying);
         }
         $('#spray-tools').toggle(mode === 'spray');
+        // Centred on the visible map; only written when that differs from the
+        // viewport, so the default page keeps its stylesheet centring.
+        drawbar.style.left = keepPanelWhilePlacing() ? visibleMapCentreX() + 'px' : '';
         toggleDrawbar(true);
     }
 
     function hideDrawbar() {
         toggleDrawbar(false);
+        drawbar.style.left = '';
         $('#spray-tools').hide();
         $('#spray-hint').hide();
         drawMinVertices = 0;
@@ -445,7 +479,7 @@ navigation from #section-data[data-stage-image].{% endcomment %}
             startPaintMode(layer.feature.properties.question_id, layer);
             return;
         }
-        toggleInfo(false);
+        hidePanelForPlacement();
         if (currentEditLayer) { currentEditLayer.editing.disable(); }
         layer.editing.enable();
         currentEditLayer = layer;
@@ -474,18 +508,28 @@ navigation from #section-data[data-stage-image].{% endcomment %}
         var oldIcon = overlay.querySelector('.crosshair-pin-icon');
         oldIcon.parentNode.replaceChild(
             MarkerIcon.element(iconClass, '#fff', 'crosshair-pin-icon'), oldIcon);
+        if (keepPanelWhilePlacing()) {
+            var area = visibleMapArea();
+            overlay.style.left = area.left + 'px';
+            overlay.style.width = area.width + 'px';
+            overlay.querySelector('.crosshair-actions').style.left = (area.left + area.width / 2) + 'px';
+        }
         overlay.style.display = 'flex';
     }
 
     function hideCrosshair() {
-        document.getElementById('crosshair-overlay').style.display = 'none';
+        var overlay = document.getElementById('crosshair-overlay');
+        overlay.style.left = '';
+        overlay.style.width = '';
+        overlay.querySelector('.crosshair-actions').style.left = '';
+        overlay.style.display = 'none';
         crosshairColor = null;
         crosshairIcon = null;
     }
 
     function getCrosshairLatLng() {
         var size = map.getSize();
-        var pinTipPoint = L.point(size.x / 2, size.y / 2 + 32);
+        var pinTipPoint = L.point(visibleMapCentreX(), size.y / 2 + 32);
         return map.containerPointToLatLng(pinTipPoint);
     }
 
@@ -573,7 +617,7 @@ navigation from #section-data[data-stage-image].{% endcomment %}
         }
         map._sprayPaintActive = true;
         currentQ = qid;
-        toggleInfo(false);
+        hidePanelForPlacement();
         showDrawbar('spray');
         _sprayShowHint(isCoarsePointer() ? i18n.tapSprayHint : i18n.sprayHint);
         _sprayRingCreate();
@@ -837,9 +881,15 @@ navigation from #section-data[data-stage-image].{% endcomment %}
         // The address search box sits at the map's top edge the same way; clear it too.
         var panel = document.getElementById('info_page');
         var search = document.querySelector('#map .map-search');
-        var left = 12, top = 12;
+        var left = 12, top = 12, right = 12;
         if (panel && !isMobile() && !panel.classList.contains('hidden')) {
-            left = Math.round(panel.getBoundingClientRect().right) + 12;
+            // The panel may sit on either side (change section-layout-controls).
+            var r = panel.getBoundingClientRect();
+            if (document.body.classList.contains('panel-right')) {
+                right = Math.round(window.innerWidth - r.left) + 12;
+            } else {
+                left = Math.round(r.right) + 12;
+            }
         }
         if (search) {
             top = Math.round(search.getBoundingClientRect().bottom) + 8;
@@ -849,7 +899,7 @@ navigation from #section-data[data-stage-image].{% endcomment %}
             minWidth: Math.min(300, Math.round($(window).width() * 0.9)),
             maxHeight: Math.round($(window).height() * 0.7),
             autoPanPaddingTopLeft: L.point(left, top),
-            autoPanPaddingBottomRight: L.point(12, 12)
+            autoPanPaddingBottomRight: L.point(right, 12)
         };
     }
 
@@ -1043,9 +1093,12 @@ navigation from #section-data[data-stage-image].{% endcomment %}
                 var icon = btn.attr('data-icon') || 'fas fa-map-marker-alt';
                 tempLayer.closePopup();
                 tempLayer.setOpacity(0);
-                toggleInfo(false);
+                hidePanelForPlacement();
                 var markerPoint = map.latLngToContainerPoint(tempLayer.getLatLng());
-                var targetCenter = map.containerPointToLatLng(L.point(markerPoint.x, markerPoint.y - 32));
+                // The marker must end under the crosshair, which sits at the
+                // visible map centre (the map centre unless the panel is kept).
+                var shiftX = map.getSize().x / 2 - visibleMapCentreX();
+                var targetCenter = map.containerPointToLatLng(L.point(markerPoint.x + shiftX, markerPoint.y - 32));
                 map.panTo(targetCenter);
                 showCrosshair(color, icon, tempLayer);
             } else {
@@ -1318,7 +1371,7 @@ navigation from #section-data[data-stage-image].{% endcomment %}
         currentDrawFeature = new L.Draw.Polygon(map);
         currentDrawFeature.setOptions({ shapeOptions: { color: $(this).attr('data-color') } });
         currentDrawFeature.enable();
-        toggleInfo(false);
+        hidePanelForPlacement();
         currentQ = $(this).attr('name');
         drawMinVertices = 3;
         showDrawbar('draw');
@@ -1331,7 +1384,7 @@ navigation from #section-data[data-stage-image].{% endcomment %}
         currentDrawFeature = new L.Draw.Polyline(map);
         currentDrawFeature.setOptions({ shapeOptions: { color: $(this).attr('data-color') } });
         currentDrawFeature.enable();
-        toggleInfo(false);
+        hidePanelForPlacement();
         currentQ = $(this).attr('name');
         drawMinVertices = 2;
         showDrawbar('draw');
@@ -1342,7 +1395,7 @@ navigation from #section-data[data-stage-image].{% endcomment %}
         if (spray.active) { endPaintMode(false); }
         var color = $(this).attr('data-color');
         var icon = $(this).attr('data-icon');
-        toggleInfo(false);
+        hidePanelForPlacement();
         currentQ = $(this).attr('name');
         showButton.style.visibility = "hidden";
         showCrosshair(color, icon);
@@ -1400,7 +1453,7 @@ navigation from #section-data[data-stage-image].{% endcomment %}
             var $btn = _tapToPlaceButton();
             if (!$btn || _mapIsBusy() || _openPopups > 0) return;
             currentQ = $btn.attr('name');
-            toggleInfo(false);
+            hidePanelForPlacement();
             var layer = _newPointMarker(latlng,
                 $btn.attr('data-color') || '#000000',
                 $btn.attr('data-icon') || 'fas fa-map-marker-alt');
@@ -1481,6 +1534,7 @@ navigation from #section-data[data-stage-image].{% endcomment %}
         bodyCls.toggle('panel-w-half', !isFormLayout && panelWidth === 'half');
         bodyCls.toggle('content-column', !isFormLayout && dataEl.dataset.contentWidth === 'column');
         bodyCls.toggle('content-middle', !isFormLayout && dataEl.dataset.contentValign === 'middle');
+        bodyCls.toggle('panel-keep', hasMap && dataEl.dataset.keepPanelOpen === 'true');
         var stageEl = document.getElementById('stage-image');
         if (stageEl) {
             var stageUrl = isImageLayout ? (dataEl.dataset.stageImage || '') : '';

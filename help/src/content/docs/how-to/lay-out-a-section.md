@@ -25,7 +25,8 @@ You end up with a page laid out the way you want: the questions on the left or t
 6. Optionally, place the content inside a wide panel:
    - **Content width** — **Full panel width** (the usual) or **Centred column**: the title, text, questions and buttons keep a comfortable reading width in the middle of the panel.
    - **Content vertical position** — **Top** (the usual) or **Middle**: a short page sits in the middle of the panel instead of at its top. A long page still starts at the top and scrolls.
-7. The section form saves itself. Check the result in the **Live preview**.
+7. On a **Map** section, tick **Keep the questions open while placing on the map** if respondents should still see the questions while they place a point or draw. Without it the questions slide away as usual; with it, on a computer screen, they stay open and the crosshair, the point and the drawing buttons aim at the middle of the map beside them.
+8. The section form saves itself. Check the result in the **Live preview**.
 
 <!-- screenshot: the Layout block with Picture, Right and Half the screen selected and a photo uploaded -->
 
@@ -39,4 +40,4 @@ The respondent sees the photo on the left half of the screen and the introductio
 
 ## On a phone
 
-Side, width and the content position apply on computer screens. On a phone the questions always cover the map from the left, as before, and a **Picture** section shows the picture as a band across the top with the questions underneath it.
+Side, width, the content position and keeping the questions open apply on computer screens. On a phone the questions always cover the map from the left, as before, and a **Picture** section shows the picture as a band across the top with the questions underneath it.

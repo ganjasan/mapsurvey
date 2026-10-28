@@ -9243,3 +9243,11 @@ msgstr "Colonne centrée : le texte et les questions gardent une largeur de lect
 #: survey/editor_forms.py:347
 msgid "Middle: a short page sits in the middle of the panel instead of at its top."
 msgstr "Au milieu : une page courte se place au milieu du panneau plutôt qu'en haut."
+
+#: survey/editor_forms.py:340
+msgid "Keep the questions open while placing on the map"
+msgstr "Garder les questions ouvertes pendant le placement sur la carte"
+
+#: survey/editor_forms.py:350
+msgid "On a computer screen the questions stay visible while respondents place a point or draw, and the map aims at the space beside them. On a phone they always slide away."
+msgstr "Sur un écran d'ordinateur, les questions restent visibles pendant que les répondants placent un point ou dessinent, et la carte vise l'espace à côté. Sur un téléphone, elles se replient toujours."

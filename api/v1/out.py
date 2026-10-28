@@ -82,6 +82,7 @@ def section(obj, position=None):
         'panel_width': obj.panel_width,
         'content_width': obj.content_width,
         'content_valign': obj.content_valign,
+        'keep_panel_open': obj.keep_panel_open,
         'stage_image': _absolute_media_url(obj.stage_image),
         'next_label': obj.next_label,
         'position': position,

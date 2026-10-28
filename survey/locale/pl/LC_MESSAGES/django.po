@@ -9259,3 +9259,11 @@ msgstr "Wyśrodkowana kolumna: tekst i pytania mają wygodną szerokość do czy
 #: survey/editor_forms.py:347
 msgid "Middle: a short page sits in the middle of the panel instead of at its top."
 msgstr "Na środku: krótka strona stoi pośrodku panelu zamiast na górze."
+
+#: survey/editor_forms.py:340
+msgid "Keep the questions open while placing on the map"
+msgstr "Nie zamykaj pytań podczas zaznaczania na mapie"
+
+#: survey/editor_forms.py:350
+msgid "On a computer screen the questions stay visible while respondents place a point or draw, and the map aims at the space beside them. On a phone they always slide away."
+msgstr "Na ekranie komputera pytania pozostają widoczne, gdy respondent stawia punkt lub rysuje, a mapa celuje w miejsce obok nich. Na telefonie zawsze się chowają."

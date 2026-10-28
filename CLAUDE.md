@@ -499,7 +499,11 @@ the survey's `cover_image`, else a tinted area), `panel_side` (`left | right`) a
 (`default` = 420 px, `third`, `half`), plus where the content sits inside the panel (change
 `panel-content-align`, #476): `content_width` (`full` | `column` ≤ 640 px, box-centred) and
 `content_valign` (`top` | `middle` — auto margins, so a long section scrolls from its title, never
-`justify-content: center`), both opt-in and ignored by `form`. Map-less stages are ONE constant, `models.MAPLESS_LAYOUTS`
+`justify-content: center`), both opt-in and ignored by `form`; and `keep_panel_open` (change
+`keep-panel-while-drawing`, #477, map sections, desktop): placement paths never call
+`toggleInfo(false)` themselves but `hidePanelForPlacement()`, and the crosshair, its pin position,
+the draw bar and a moved point centre on `visibleMapArea()` — a new placement path must use both
+(`test_placement_paths_go_through_one_helper` counts them). Map-less stages are ONE constant, `models.MAPLESS_LAYOUTS`
 (`section.has_map`): the section form, the question form's type filter and `layers.py` read it, so
 `image` excludes geo questions exactly as `form` does — never test `layout == 'form'` again. Rendering
 is body classes (`SurveySection.layout_classes()` on a direct load, `initSection()` step 0 on an HTMX
