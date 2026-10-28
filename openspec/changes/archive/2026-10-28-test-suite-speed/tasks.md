@@ -25,4 +25,4 @@
 ## 5. Docs
 
 - [x] 5.1 CLAUDE.md "Testing": defaults, `TEST_PARALLEL`, `KEEPDB`, one-area runs; drop the stale "run_tests.sh does not start Redis" paragraph
-- [ ] 5.2 Comment on #272 with the before/after numbers
+- [x] 5.2 Comment on #272 with the before/after numbers
