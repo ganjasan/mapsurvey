@@ -79,7 +79,7 @@ def section_layer_ids(section):
     visibility is controllable per section": visibility IS binding — there is
     no second list). Form-layout sections have no map and no layers."""
     from survey.models import Question
-    if section.layout == 'form':
+    if not section.has_map:
         return []
     seen = []
     rows = (Question.objects
@@ -113,7 +113,7 @@ def ensure_layer_questions(section, hidden_ids=()):
     layer visibility rides as questions"). Returns the questions created."""
     from django.db.models import Max
     from survey.models import Question
-    if section.layout == 'form':
+    if not section.has_map:
         return []
     hidden = {i for i in hidden_ids if isinstance(i, int)}
     bound = set(section_layer_ids(section))

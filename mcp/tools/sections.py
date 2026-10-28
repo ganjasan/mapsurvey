@@ -46,8 +46,10 @@ def _all(obj):
     title='Add a section',
     description=(
         'Append a section (a page) to the survey; the other fields set it at once. `layout` is "map" (the '
-        'page shows the map, for geo questions) or "form". On a live survey this is a structural change: '
-        'start_unpublished_changes first.'
+        'page shows the map, for geo questions), "image" (a picture beside the questions, e.g. a welcome '
+        'page; the picture is uploaded in the editor, else the survey cover is shown) or "form". '
+        '`panel_side` (left|right) and `panel_width` (default|third|half) place the questions on a '
+        'computer screen. On a live survey this is a structural change: start_unpublished_changes first.'
     ),
     scope=scopes.SURVEYS_WRITE, role='editor', args=args_model('CreateSectionArgs', SectionIn, survey=SURVEY),
 )
@@ -68,7 +70,8 @@ def create_section(request, args):
     title='Update a section',
     description=(
         'Change the fields you name. On a live survey wording (title, subheading, next_label, translations) '
-        'is applied in place; the code and the visibility rule are structure (draft_required).'
+        'and the layout (layout, panel_side, panel_width) are applied in place; the code and the '
+        'visibility rule are structure (draft_required).'
     ),
     scope=scopes.SURVEYS_WRITE, role='editor', idempotent=True,
     args=args_model('UpdateSectionArgs', SectionIn, survey=SURVEY, section_id=SECTION),

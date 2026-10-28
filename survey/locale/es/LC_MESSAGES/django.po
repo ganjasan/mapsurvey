@@ -9142,3 +9142,51 @@ msgstr "Tu prueba de Pro ya usó su desactivación de la insignia."
 #: survey/templates/editor/partials/_whats_new_hero.html
 msgid "No card"
 msgstr "Sin tarjeta"
+
+#: survey/models.py:803 survey/editor_forms.py:310
+msgid "Picture"
+msgstr "Imagen"
+
+#: survey/models.py:811
+msgid "Left"
+msgstr "Izquierda"
+
+#: survey/models.py:812
+msgid "Right"
+msgstr "Derecha"
+
+#: survey/models.py:815
+msgid "Narrow"
+msgstr "Estrecho"
+
+#: survey/models.py:816
+msgid "A third of the screen"
+msgstr "Un tercio de la pantalla"
+
+#: survey/models.py:817
+msgid "Half the screen"
+msgstr "Media pantalla"
+
+#: survey/editor_forms.py:308
+msgid "Panel side"
+msgstr "Lado del panel"
+
+#: survey/editor_forms.py:309
+msgid "Panel width"
+msgstr "Ancho del panel"
+
+#: survey/editor_forms.py:314
+msgid "Map: questions beside the map. Picture: questions beside a picture, e.g. a welcome page. Form: a classic full-width form. Picture and Form have no map, so geo questions are unavailable."
+msgstr "Mapa: preguntas junto al mapa. Imagen: preguntas junto a una imagen, por ejemplo en una página de bienvenida. Formulario: un formulario clásico a todo lo ancho. Imagen y Formulario no tienen mapa, así que las preguntas de mapa no están disponibles."
+
+#: survey/editor_forms.py:315
+msgid "Where the questions sit on a computer screen. On a phone they always cover the map."
+msgstr "Dónde aparecen las preguntas en la pantalla de un ordenador. En un teléfono siempre cubren el mapa."
+
+#: survey/editor_forms.py:316
+msgid "How much of a computer screen the questions take."
+msgstr "Cuánto de la pantalla de un ordenador ocupan las preguntas."
+
+#: survey/editor_forms.py:317
+msgid "Shown beside the questions. Empty = the survey cover image."
+msgstr "Se muestra junto a las preguntas. Vacío = la imagen de portada de la encuesta."

@@ -23,6 +23,19 @@ class StructureToolsTest(TestCase):
         self.mcp.initialize()
         self.ref = {'survey': str(self.survey.uuid)}
 
+    def test_update_section_layout(self):
+        """
+        GIVEN a section
+        WHEN update_section sets layout image with the panel on the right at half width
+        THEN the section stores them and the result shows them
+        """
+        result = data_of(self.mcp.call('update_section', {**self.ref, 'section_id': self.section.pk,
+                                                          'layout': 'image', 'panel_side': 'right',
+                                                          'panel_width': 'half'}))
+        self.assertEqual((result['layout'], result['panel_side'], result['panel_width']), ('image', 'right', 'half'))
+        self.section.refresh_from_db()
+        self.assertEqual(self.section.panel_width, 'half')
+
     def test_group_questions_from_a_chat(self):
         """
         GIVEN three questions

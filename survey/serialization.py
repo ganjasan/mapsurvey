@@ -23,6 +23,7 @@ from .models import (
     INPUT_TYPE_CHOICES, SurveySectionTranslation,
     QuestionTranslation, default_basemaps, SurveyMapLayer,
     QuestionGroup, QuestionGroupTranslation, GROUP_DISPLAY_STYLE_CHOICES,
+    SECTION_LAYOUT_CHOICES, PANEL_SIDE_CHOICES, PANEL_WIDTH_CHOICES,
 )
 from .html_sanitize import coerce_creator_html
 from .redirects import clean_redirect_url
@@ -175,6 +176,9 @@ def serialize_sections(survey: SurveyHeader) -> List[Dict[str, Any]]:
             "code": section.code,
             "is_head": section.is_head,
             "layout": section.layout,
+            "panel_side": section.panel_side,
+            "panel_width": section.panel_width,
+            "stage_image": _section_image_path(section),
             "next_label": section.next_label,
             "start_map_position": section.start_map_postion.wkt if section.start_map_postion else None,
             "start_map_zoom": section.start_map_zoom,
@@ -276,6 +280,15 @@ def serialize_questions(section: SurveySection) -> List[Dict[str, Any]]:
     ]
 
 
+def _section_image_path(section: SurveySection) -> Optional[str]:
+    """Archive path of a section's stage picture (change section-layout-controls).
+    Keyed by pk: section codes repeat within a survey, and the pk is the same
+    in serialize_sections and collect_structure_images."""
+    if not (section.stage_image and section.stage_image.name):
+        return None
+    return f"images/sections/{section.pk}_{os.path.basename(section.stage_image.name)}"
+
+
 def collect_structure_images(survey: SurveyHeader) -> Tuple[List[Tuple[str, bytes]], List[str]]:
     """Gather all question images for export.
 
@@ -305,6 +318,19 @@ def collect_structure_images(survey: SurveyHeader) -> Tuple[List[Tuple[str, byte
                     f"Image for question '{question.code}' could not be read "
                     f"({question.image.name}); it is not in the archive."
                 )
+
+    for section in SurveySection.objects.filter(survey_header=survey):
+        archive_path = _section_image_path(section)
+        if not archive_path:
+            continue
+        try:
+            with section.stage_image.open('rb') as fh:
+                images.append((archive_path, fh.read()))
+        except Exception:
+            warnings.append(
+                f"Picture for section '{section.name}' could not be read "
+                f"({section.stage_image.name}); it is not in the archive."
+            )
 
     return images, warnings
 
@@ -457,6 +483,13 @@ def export_survey_to_zip(
 # =============================================================================
 # IMPORT - Validation
 # =============================================================================
+
+def _choice(data: Dict[str, Any], key: str, choices, default: str) -> str:
+    """An enumerated field out of an archive: a known value, else the default
+    (a legacy archive lacks the key; a foreign one may carry anything)."""
+    value = data.get(key)
+    return value if value in {c[0] for c in choices} else default
+
 
 def _archive_text(data: Dict[str, Any], key: str, default: str = "", limit: Optional[int] = None) -> str:
     """A text field out of an archive, treating an explicit null like a missing key.
@@ -747,6 +780,7 @@ def import_structure_from_archive(
     # Extract images
     image_warnings = extract_structure_images(zip_file, survey, code_remap)
     warnings.extend(image_warnings)
+    warnings.extend(extract_section_images(zip_file, sections, sections_data))
 
     return survey, code_remap, warnings
 
@@ -874,7 +908,9 @@ def create_sections(
             subheading=_import_rich_text(section_data.get("subheading")),
             code=_archive_text(section_data, "code", "", 8),
             is_head=section_data.get("is_head", False),
-            layout=section_data.get("layout") if section_data.get("layout") in ("map", "form") else "map",
+            layout=_choice(section_data, "layout", SECTION_LAYOUT_CHOICES, "map"),
+            panel_side=_choice(section_data, "panel_side", PANEL_SIDE_CHOICES, "left"),
+            panel_width=_choice(section_data, "panel_width", PANEL_WIDTH_CHOICES, "default"),
             next_label=(section_data.get("next_label") or None) and str(section_data.get("next_label"))[:30],
             start_map_postion=start_map_position,
             start_map_zoom=section_data.get("start_map_zoom"),
@@ -1395,6 +1431,26 @@ def resolve_question_layers(survey: SurveyHeader, code_remap: Dict[str, str]) ->
             layer.source = 'upload'
             layer.source_question_code = ''
         layer.save(update_fields=['source', 'source_question_code', 'label_field', 'updated_at'])
+    return warnings
+
+
+def extract_section_images(zip_file, sections, sections_data) -> List[str]:
+    """Stage pictures named by each section's `stage_image` archive path."""
+    warnings = []
+    names = set(zip_file.namelist())
+    for section_data in sections_data:
+        path = section_data.get("stage_image")
+        section = sections.get(section_data.get("name"))
+        if not path or section is None:
+            continue
+        if not isinstance(path, str) or not path.startswith("images/sections/") or path not in names:
+            warnings.append(f"Picture for section '{section.name}' is not in the archive.")
+            continue
+        try:
+            original_name = os.path.basename(path).split("_", 1)[-1]
+            section.stage_image.save(original_name, ContentFile(zip_file.read(path)), save=True)
+        except Exception as e:
+            warnings.append(f"Failed to extract the picture for section '{section.name}': {e}")
     return warnings
 
 

@@ -9077,3 +9077,51 @@ msgstr "Pro-kokeilusi on jo käyttänyt merkin poistamisen."
 #: survey/templates/editor/partials/_whats_new_hero.html
 msgid "No card"
 msgstr "Ei korttia"
+
+#: survey/models.py:803 survey/editor_forms.py:310
+msgid "Picture"
+msgstr "Kuva"
+
+#: survey/models.py:811
+msgid "Left"
+msgstr "Vasen"
+
+#: survey/models.py:812
+msgid "Right"
+msgstr "Oikea"
+
+#: survey/models.py:815
+msgid "Narrow"
+msgstr "Kapea"
+
+#: survey/models.py:816
+msgid "A third of the screen"
+msgstr "Kolmannes näytöstä"
+
+#: survey/models.py:817
+msgid "Half the screen"
+msgstr "Puolet näytöstä"
+
+#: survey/editor_forms.py:308
+msgid "Panel side"
+msgstr "Paneelin puoli"
+
+#: survey/editor_forms.py:309
+msgid "Panel width"
+msgstr "Paneelin leveys"
+
+#: survey/editor_forms.py:314
+msgid "Map: questions beside the map. Picture: questions beside a picture, e.g. a welcome page. Form: a classic full-width form. Picture and Form have no map, so geo questions are unavailable."
+msgstr "Kartta: kysymykset kartan vieressä. Kuva: kysymykset kuvan vieressä, esim. tervetulosivulla. Lomake: perinteinen koko leveyden lomake. Kuvassa ja lomakkeessa ei ole karttaa, joten karttakysymykset eivät ole käytettävissä."
+
+#: survey/editor_forms.py:315
+msgid "Where the questions sit on a computer screen. On a phone they always cover the map."
+msgstr "Missä kysymykset ovat tietokoneen näytöllä. Puhelimessa ne peittävät aina kartan."
+
+#: survey/editor_forms.py:316
+msgid "How much of a computer screen the questions take."
+msgstr "Kuinka suuren osan tietokoneen näytöstä kysymykset vievät."
+
+#: survey/editor_forms.py:317
+msgid "Shown beside the questions. Empty = the survey cover image."
+msgstr "Näytetään kysymysten vieressä. Tyhjä = kyselyn kansikuva."

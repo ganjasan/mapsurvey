@@ -20,6 +20,25 @@ class V1StructureTest(TestCase):
         self.assertEqual(response.status_code, 201, response.content)
         return response.json()
 
+    def test_section_layout_controls(self):
+        """
+        GIVEN a section
+        WHEN it is patched to image / right / third, and then with panel_width "wide"
+        THEN the first is stored and returned; the second is 422 naming panel_width
+        """
+        response = self.api.patch(f'{self.base}/sections/{self.section.pk}',
+                                  {'layout': 'image', 'panel_side': 'right', 'panel_width': 'third'})
+        self.assertEqual(response.status_code, 200, response.content)
+        body = response.json()
+        self.assertEqual((body['layout'], body['panel_side'], body['panel_width']), ('image', 'right', 'third'))
+        self.assertIsNone(body['stage_image'])
+        self.section.refresh_from_db()
+        self.assertEqual(self.section.panel_side, 'right')
+
+        response = self.api.patch(f'{self.base}/sections/{self.section.pk}', {'panel_width': 'wide'})
+        self.assertEqual(response.status_code, 422, response.content)
+        self.assertIn('panel_width', response.content.decode())
+
     def test_section_order(self):
         """
         GIVEN two sections

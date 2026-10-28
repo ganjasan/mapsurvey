@@ -1170,7 +1170,7 @@ def editor_section_detail(request, survey_uuid, section_id):
             # Translations are edited on the Translations tab (change
             # translation-table); the form's block is a read-only mirror.
             svc_sections.update(
-                Actor.from_request(request), section, request.POST,
+                Actor.from_request(request), section, request.POST, request.FILES,
                 translations=svc_common.UNSET,
                 visibility_rule=vis_rule if (vis_present and not vis_error) else svc_common.UNSET,
             )

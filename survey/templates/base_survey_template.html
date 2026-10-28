@@ -112,12 +112,13 @@ locale.{% endcomment %}
   .question-card .cig label.cig-tile:has(input:checked) { border-color: {{ accent }}; background: {{ accent }}1a; box-shadow: inset 0 0 0 1px {{ accent }}; }
   .cig-show-all { color: {{ accent }}; }
   body.survey-form-layout { background: {{ accent }}12; }
+  #stage-image { background-color: {{ accent }}26; }
 </style>
 {% endif %}{% endwith %}{% endif %}
 </head>
 
 {# Server-rendered so a direct form-section load never flashes the map; initSection() keeps it in step across HTMX swaps. #}
-<body{% if section.layout == 'form' %} class="survey-form-layout"{% endif %} data-icon-sprites='{{ ICON_SPRITES_JSON }}'>
+<body{% if section %}{% with cls=section.layout_classes %}{% if cls %} class="{{ cls }}"{% endif %}{% endwith %}{% endif %} data-icon-sprites='{{ ICON_SPRITES_JSON }}'>
 
 <button id="showButton" onclick="toggleInfo(true)" style="visibility: hidden;">
         <i class="fas fa-angle-double-right" style="font-size:28px; width:28px; height:28px;"></i>
@@ -162,6 +163,11 @@ locale.{% endcomment %}
 </div>
 
 <div id="map"></div>
+{% comment %}The stage of a picture section (change section-layout-controls): a background,
+not an <img>, so it covers whatever viewport the page or the embedding frame has, and an empty
+source is a tinted area instead of a broken image. initSection() swaps the picture on HTMX
+navigation from #section-data[data-stage-image].{% endcomment %}
+<div id="stage-image" aria-hidden="true"{% if section.layout == 'image' %}{% with url=section.stage_image_url %}{% if url %} style="background-image:url('{{ url }}')"{% endif %}{% endwith %}{% endif %}></div>
 
 {# Reference layer config (geometry stays behind the gated endpoint) #}
 {{ map_layers|json_script:"ref-layers-data" }}
@@ -1459,9 +1465,26 @@ locale.{% endcomment %}
         // the body class). The map instance stays alive; when a map section
         // returns, invalidateSize repairs the dimensions Leaflet measured while
         // the container was display:none.
-        var isFormLayout = dataEl.dataset.layout === 'form';
-        document.body.classList.toggle('survey-form-layout', isFormLayout);
-        if (!isFormLayout && typeof map !== 'undefined') {
+        // Stage, panel side and width (change section-layout-controls) are
+        // body classes too; Section.layout_classes() writes the same set on a
+        // direct load. A form section ignores side and width.
+        var layout = dataEl.dataset.layout;
+        var isFormLayout = layout === 'form';
+        var isImageLayout = layout === 'image';
+        var hasMap = !isFormLayout && !isImageLayout;
+        var panelWidth = dataEl.dataset.panelWidth;
+        var bodyCls = document.body.classList;
+        bodyCls.toggle('survey-form-layout', isFormLayout);
+        bodyCls.toggle('survey-image-layout', isImageLayout);
+        bodyCls.toggle('panel-right', !isFormLayout && dataEl.dataset.panelSide === 'right');
+        bodyCls.toggle('panel-w-third', !isFormLayout && panelWidth === 'third');
+        bodyCls.toggle('panel-w-half', !isFormLayout && panelWidth === 'half');
+        var stageEl = document.getElementById('stage-image');
+        if (stageEl) {
+            var stageUrl = isImageLayout ? (dataEl.dataset.stageImage || '') : '';
+            stageEl.style.backgroundImage = stageUrl ? 'url("' + stageUrl.replace(/"/g, '%22') + '")' : '';
+        }
+        if (hasMap && typeof map !== 'undefined') {
             setTimeout(function () {
                 map.invalidateSize();
                 // The container has its size back; this is the moment a move
@@ -1510,9 +1533,9 @@ locale.{% endcomment %}
         window.applyRefLayerVisibility(visibleLayers);
 
         // 4. Geolocation: survey-level on first load, per-section on subsequent.
-        // Never on a form section — a welcome page must not open with a
-        // permission prompt for a map the respondent cannot see.
-        if (isFormLayout) {
+        // Never on a section without a map (form or picture) — a welcome page
+        // must not open with a permission prompt for a map nobody can see.
+        if (!hasMap) {
             // skip
         } else if (isFirstLoad && _initialMapState.useGeolocation) {
             locateUser();

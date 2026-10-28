@@ -78,7 +78,7 @@ ul {
   position: absolute;
   box-sizing: border-box;
   max-width: 460px;
-  width: 420px;
+  width: var(--panel-w, 420px);
   background: var(--panel-bg);
   padding: 0;
   overflow-y: auto;
@@ -1340,7 +1340,7 @@ svg.marker-icon-svg-glyph {
 /* The survey map's section panel sits over Leaflet's top-left corner, so the
    control moves out from behind it — and back when the panel slides away. */
 .leaflet-top.leaflet-left {
-  left: 436px;
+  left: calc(var(--panel-w, 420px) + 16px);
   transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -1873,6 +1873,121 @@ body.sidebar-hidden .leaflet-top.leaflet-left {
     cursor: pointer;
 }
 .cig .other-writein { margin-top: 8px; }
+
+/* ---- Section layout controls (change section-layout-controls, #473) ----
+   Stage, panel side and panel width are body classes written by
+   SurveySection.layout_classes() and kept in step by initSection(). The
+   defaults (map stage, left, 420 px) set no class, so they render as before.
+   Side and width are DESKTOP-ONLY: every rule for them sits in the min-width
+   query below, so the phone overlay in the Mobile block never sees them. */
+#stage-image {
+  display: none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 0;
+  background-color: var(--panel-border, #e9edf3);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+body.survey-image-layout #stage-image {
+  display: block;
+}
+/* A picture section has no map, so it has no map chrome either — and nothing
+   to reveal by hiding the panel. */
+body.survey-image-layout #map,
+body.survey-image-layout #drawbar,
+body.survey-image-layout #crosshair-overlay,
+body.survey-image-layout #showButton,
+body.survey-image-layout #closeButton {
+  display: none !important;
+}
+
+@media only screen and (min-width: 769px) {
+  body.panel-w-third { --panel-w: max(320px, 33.333vw); }
+  body.panel-w-half { --panel-w: max(320px, 50vw); }
+  body.panel-w-third #info_page,
+  body.panel-w-half #info_page {
+    max-width: none;
+  }
+
+  /* The picture fills what the panel leaves, so its centre stays visible. */
+  body.survey-image-layout #stage-image {
+    left: var(--panel-w, 420px);
+  }
+  body.survey-image-layout.panel-right #stage-image {
+    left: 0;
+    right: var(--panel-w, 420px);
+  }
+
+  /* Panel on the right: the panel, its slide-away direction, the reopen
+     arrow and every Leaflet corner the panel used to clear mirror over. */
+  body.panel-right #info_page {
+    left: auto;
+    right: 0;
+    border-right: none;
+    border-left: 1px solid var(--panel-border);
+  }
+  body.panel-right #info_page.hidden {
+    transform: translateX(100%);
+  }
+  /* A panel slid off the RIGHT edge widens the page (one off the left does
+     not), which would add a horizontal scrollbar under the map. */
+  body.panel-right {
+    overflow-x: hidden;
+  }
+  body.panel-right #showButton {
+    left: auto;
+    right: 12px;
+  }
+  body.panel-right #showButton i,
+  body.panel-right #closeButton {
+    transform: scaleX(-1);
+  }
+  body.panel-right .leaflet-top.leaflet-left,
+  body.panel-right.sidebar-hidden .leaflet-top.leaflet-left {
+    left: 0;
+  }
+  body.panel-right .leaflet-top.leaflet-right,
+  body.panel-right .leaflet-bottom.leaflet-right {
+    right: var(--panel-w, 420px);
+    transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  body.panel-right .leaflet-top.leaflet-right {
+    right: calc(var(--panel-w, 420px) + 16px);
+  }
+  body.panel-right.sidebar-hidden .leaflet-top.leaflet-right {
+    right: 64px;
+  }
+  body.panel-right.sidebar-hidden .leaflet-bottom.leaflet-right {
+    right: 0;
+  }
+}
+
+@media only screen and (max-width: 768px) {
+  /* A picture section on a phone is one scrolling column: the picture as a
+     band on top, the panel's content beneath it. */
+  body.survey-image-layout #stage-image {
+    position: absolute;
+    height: 38vh;
+    bottom: auto;
+  }
+  body.survey-image-layout #info_page {
+    position: relative;
+    width: 100%;
+    max-width: none;
+    height: auto;
+    min-height: 62vh;
+    margin-top: 38vh;
+    transform: none;
+    border-right: none;
+    box-shadow: none;
+    overflow: visible;
+  }
+}
 
 /* ---- Form-layout sections (survey-form-layout on <body>) ----
    A section with layout="form" renders as a classic full-width form: the panel
