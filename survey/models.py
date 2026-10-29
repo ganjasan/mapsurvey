@@ -1745,6 +1745,33 @@ class SignupAttribution(models.Model):
         return f"{self.user_id}: {self.utm_source or self.source_bucket or 'direct'}"
 
 
+class EmailVerification(models.Model):
+    """Whether a creator has confirmed their email address (change login-grace-period, #487).
+
+    Kept apart from `User.is_active`, which means only "not banned"
+    (`content_screening.confirm_phishing`). An unconfirmed account may sign in
+    for SIGN_IN_GRACE_HOURS after registering; the rule lives in
+    `survey/email_verification.py`, never here. No row = confirmed: accounts
+    made by `createsuperuser`, the admin or fixtures need no setup, and
+    registration always writes one.
+    """
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+        related_name='email_verification',
+    )
+    verified_at = models.DateTimeField(null=True, blank=True)
+    # Last activation mail we sent, whatever triggered it.
+    last_sent_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        app_label = 'survey'
+
+    def __str__(self):
+        return f"{self.user_id}: {'confirmed' if self.verified_at else 'unconfirmed'}"
+
+
 class UserActivity(models.Model):
     """Last time a user made an authenticated request.
 

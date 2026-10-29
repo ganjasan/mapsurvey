@@ -20,22 +20,32 @@
         {% endif %}
     </p>
 
-    {% if form.errors %}
+    {% if unconfirmed %}
+    <div class="alert alert-warning" role="alert">
+        <strong>{% blocktrans with hours=unconfirmed.hours %}You did not confirm your email address within {{ hours }} hours of signing up.{% endblocktrans %}</strong>
+        {% if unconfirmed.sent %}
+        {% blocktrans with address=unconfirmed.masked %}We have sent a new confirmation link to {{ address }}. Open it to confirm the address — it signs you in.{% endblocktrans %}
+        {% else %}
+        {% blocktrans with address=unconfirmed.masked %}We have already sent a confirmation link to {{ address }} today. Open the newest one to confirm the address — it signs you in.{% endblocktrans %}
+        {% endif %}
+    </div>
+    <p class="auth-hint">
+        {% trans "Nothing in your inbox? Check the spam folder; a workplace mail filter may also hold it." %}
+    </p>
+    {% elif form.errors %}
     <div class="alert alert-danger">
         {% trans "Invalid username/email or password. Please try again." %}
     </div>
-    <p class="auth-hint">
-        {% url 'django_registration_resend_activation' as resend_url %}
-        {% blocktrans %}Haven't activated your account yet? <a href="{{ resend_url }}">Resend the activation email</a>.{% endblocktrans %}
-    </p>
     {% endif %}
 
     {% comment %}
     The username input carries an explicit value so a wrong password does not
     also wipe the username — retyping both after every typo is what the sign-in
     page used to demand. The password is deliberately not repopulated.
-    The message above stays generic on purpose: naming the real reason would
-    reveal whether an account exists for the submitted address.
+    The generic message stays generic on purpose: naming the real reason would
+    reveal whether an account exists for the submitted address. The one
+    exception (`unconfirmed`, survey/auth_forms.py) is shown only to someone who
+    typed the account's correct password (change login-grace-period).
     {% endcomment %}
     <form method="post" action="{% url 'login' %}">
         {% csrf_token %}

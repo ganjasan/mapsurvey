@@ -313,6 +313,62 @@ class LastActivityMiddleware:
             pass
 
 
+class GracePeriodMiddleware:
+    """End a session opened during the sign-in grace period once it is over.
+
+    An unconfirmed account may sign in for SIGN_IN_GRACE_HOURS after registering
+    (change login-grace-period, #487). A tab left open past that deadline must
+    not keep working: on the first request after it the creator is signed out,
+    a fresh link goes out (same per-address cap as everywhere), and the sign-in
+    page says why. HTMX calls get a 401 with HX-Redirect so the page navigates.
+
+    Once the address is confirmed the session carries a flag and this costs
+    nothing more. Respondent pages and the account pages themselves (sign-in,
+    the activation link) are never interrupted.
+    """
+
+    SKIP_PREFIXES = ('/surveys/', '/r/', '/accounts/', '/static/', '/staticfiles/', '/api/', '/mcp')
+    CONFIRMED_FLAG = 'ms_email_ok'
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        user = getattr(request, 'user', None)
+        if (
+            user is not None and user.is_authenticated
+            and not request.session.get(self.CONFIRMED_FLAG)
+            and not request.path.startswith(self.SKIP_PREFIXES)
+        ):
+            response = self._check(request, user)
+            if response is not None:
+                return response
+        return self.get_response(request)
+
+    def _check(self, request, user):
+        from django.contrib.auth import logout
+        from django.http import HttpResponse
+        from django.shortcuts import redirect
+
+        from .auth_forms import SESSION_NOTICE_KEY, unconfirmed_notice
+        from .email_verification import awaits_confirmation, is_verified, send_link
+
+        if is_verified(user):
+            request.session[self.CONFIRMED_FLAG] = True
+            return None
+        if not awaits_confirmation(user):
+            return None  # still inside the grace period
+        notice = unconfirmed_notice(user, send_link(user, request, source='session_end'))
+        logout(request)
+        request.session[SESSION_NOTICE_KEY] = notice
+        login_url = settings.LOGIN_URL
+        if request.headers.get('HX-Request'):
+            response = HttpResponse(status=401)
+            response['HX-Redirect'] = login_url
+            return response
+        return redirect(login_url)
+
+
 class ActiveOrgMiddleware:
     """
     Populate request.active_org from session['active_org_id'].

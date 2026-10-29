@@ -9,7 +9,7 @@ By the end of this page you have an empty survey called "Safe crossings", its ma
 
 ## Sign in and open the dashboard
 
-1. Go to [mapsurvey.org](https://mapsurvey.org/) and sign in. If you have no account yet, sign up with your email address; the free tier has no limit on surveys or responses.
+1. Go to [mapsurvey.org](https://mapsurvey.org/) and sign in. If you have no account yet, sign up with your email address; the free tier has no limit on surveys or responses. Signing up signs you straight in. Confirm the address from the email we send within 24 hours: until then you can build but not publish, and after 24 hours the sign-in page asks you to open the link first.
 2. After signing in you land on the **Dashboard**, which lists your surveys. On a brand-new account Mapsurvey skips the empty dashboard and opens the **How do you want to start?** page for you; the **Skip to dashboard →** link takes you back if you want to look around first.
 
 ## Create the survey

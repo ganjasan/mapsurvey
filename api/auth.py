@@ -10,14 +10,17 @@ answers differently for "unknown" and "revoked":
 3. The value looks like one of ours (prefix, length) -- else a failure, no query.
 4. One lookup by checksum with the user and profile joined.
 5. Expiry, revocation, audience.
-6. `user.is_active`: django-registration keeps it False until activation and
-   `confirm_phishing` sets it False; both must end API access on the next call.
+6. `email_verification.can_sign_in(user)`: a ban (`confirm_phishing` sets
+   `is_active` False) or an address still unconfirmed after the sign-in grace
+   period (change login-grace-period) ends API access on the next call.
 7. `last_used_at`, at most once a minute.
 
 Every refusal in 3-6 is the same `401 invalid_token` and counts as one failed
 attempt for the IP.
 """
 from dataclasses import dataclass
+
+from survey.email_verification import can_sign_in
 from datetime import timedelta
 
 from django.utils import timezone
@@ -92,7 +95,7 @@ def authenticate(request, audience):
         _refuse(request)
     if audience not in (profile.audiences or []):
         _refuse(request)
-    if not token.user.is_active:
+    if not can_sign_in(token.user):
         _refuse(request)
 
     _touch(profile, token.user_id, now)

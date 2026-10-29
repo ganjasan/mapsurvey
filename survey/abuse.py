@@ -1,9 +1,13 @@
 """Abuse-prevention helpers for the registration endpoint.
 
-Three defenses are wired into AbuseProtectedRegistrationView (in survey/views.py):
-  1. Cloudflare Turnstile (verify_turnstile)
-  2. Per-IP rate limit (django-ratelimit invoked from view dispatch)
-  3. Honeypot field (the `website` field added by RegistrationAbuseForm)
+Two defenses are wired into AbuseProtectedRegistrationView (in survey/views.py):
+  1. Per-IP rate limit (django-ratelimit invoked from view dispatch)
+  2. Honeypot field (the `website` field added by RegistrationAbuseForm)
+
+Cloudflare Turnstile was the third until change login-grace-period (#490): it
+had been switched off in production on purpose and was removed. What an
+unconfirmed account can do is bounded instead — publishing and invitations
+wait for a confirmed address (survey/email_verification.py).
 
 Every triggered defense writes one AbuseEvent row via log_abuse_event() and
 emits one log line on the abuse logger. The audit table is queried by the
@@ -18,11 +22,7 @@ coupled to the rest of this module's logic.
 See openspec/changes/add-registration-abuse-defenses/ for the full design.
 """
 
-import json
 import logging
-from urllib import request as urllib_request
-from urllib.parse import urlencode
-from urllib.error import URLError
 
 from django import forms
 from django.conf import settings
@@ -32,8 +32,6 @@ from django_registration.forms import RegistrationForm
 from django_ratelimit.core import get_usage, is_ratelimited
 
 
-TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
-TURNSTILE_TIMEOUT_SECONDS = 5
 HONEYPOT_FIELD_NAME = "website"
 
 
@@ -42,8 +40,7 @@ def client_ip(request):
 
     Reads request.cf_ip (set by CloudflareIPMiddleware). Falls back to
     REMOTE_ADDR if for some reason the middleware did not run (e.g. a
-    test that bypasses middleware). Used as the remoteip parameter on
-    Turnstile siteverify.
+    test that bypasses middleware).
     """
     return (
         getattr(request, "cf_ip", None)
@@ -118,7 +115,7 @@ def check_limits(request, limits):
 
     Fail-open: any cache-backend exception (Redis outage) is swallowed and
     treated as "not limited", so a Redis outage cannot stop legitimate
-    visitors. Honeypot (and Turnstile, where used) still apply.
+    visitors. The honeypot still applies.
     """
     for group, rate, retry_after, detail in limits:
         try:
@@ -177,7 +174,7 @@ def demo_request_limits():
     """Per-IP budget for step one of `/demo/` (change request-demo-form).
 
     Looser than registration on purpose: a lost lead costs more than a spam
-    row, and there is no Turnstile behind it. Step two is keyed by an
+    row. Step two is keyed by an
     unguessable UUID and only ever updates one row, so it is not limited.
     """
     return (
@@ -186,39 +183,6 @@ def demo_request_limits():
         ("demo_request_day",
          f"{settings.DEMO_REQUEST_LIMIT_DAY}/d", 86400, "demo_day"),
     )
-
-
-def verify_turnstile(token, remote_ip=""):
-    """Return True if `token` is accepted by Cloudflare's siteverify endpoint.
-
-    Returns True without making any HTTP call when settings.TURNSTILE_SECRET_KEY
-    is empty — this keeps `manage.py runserver` workable for developers who
-    have not configured Turnstile keys.
-
-    Returns False on missing token, siteverify rejection, network error, or
-    timeout. Fail-closed: a Cloudflare outage blocks new registrations rather
-    than letting bots through.
-    """
-    secret = getattr(settings, "TURNSTILE_SECRET_KEY", "")
-    if not secret:
-        return True
-    if not token:
-        return False
-    payload = urlencode({
-        "secret": secret,
-        "response": token,
-        "remoteip": remote_ip,
-    }).encode("utf-8")
-    try:
-        with urllib_request.urlopen(
-            TURNSTILE_VERIFY_URL,
-            data=payload,
-            timeout=TURNSTILE_TIMEOUT_SECONDS,
-        ) as resp:
-            result = json.loads(resp.read().decode("utf-8"))
-    except (URLError, TimeoutError, OSError, ValueError):
-        return False
-    return bool(result.get("success", False))
 
 
 def log_abuse_event_noreq(defense, detail="", ip=None, user_agent=""):
@@ -282,9 +246,6 @@ class RegistrationAbuseForm(RegistrationForm):
     honeypot AND invalid form data (e.g. password mismatch) still gets the
     fake-success redirect rather than a form-error 200 that would
     fingerprint the defense.
-
-    Turnstile validation is also handled in the view — it needs `request`
-    to read `cf-turnstile-response` (with dash, not Python-friendly).
     """
 
     def __init__(self, *args, **kwargs):

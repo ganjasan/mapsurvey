@@ -11,7 +11,7 @@ from .models import (
     SurveySectionTranslation, QuestionTranslation,
     Story, StoryImage, FunnelReport, SignupAttribution, AuditLog,
     Cohort, CohortDimension, UserCohort, DomainSegmentRule,
-    CreatorNote, CreatorProfile,
+    CreatorNote, CreatorProfile, EmailVerification,
     PublicResultsPage, PublicResultsBlock,
     AIGenerationEvent,
     ProInterest,
@@ -316,10 +316,22 @@ class CreatorNoteInline(admin.TabularInline):
     verbose_name_plural = 'Notes (append-only: add new ones, do not rewrite history)'
 
 
+class EmailVerificationInline(admin.StackedInline):
+    """Confirmation is the creator's click; staff may set `verified_at` by hand
+    when someone asks by mail. `is_active` is the ban switch, not this."""
+
+    model = EmailVerification
+    extra = 0
+    can_delete = False
+    fields = ('verified_at', 'last_sent_at', 'created_at')
+    readonly_fields = ('last_sent_at', 'created_at')
+    verbose_name_plural = 'Email confirmation (no row = confirmed)'
+
+
 class UserAdmin(DjangoUserAdmin):
     """Django's user admin plus cohorts, the creator dossier and a bulk assign action."""
 
-    inlines = [CreatorProfileInline, CohortMembershipInline, CreatorNoteInline]
+    inlines = [EmailVerificationInline, CreatorProfileInline, CohortMembershipInline, CreatorNoteInline]
     list_display = DjangoUserAdmin.list_display + ('organization', 'cohort_labels')
     actions = ['assign_cohort_action']
 

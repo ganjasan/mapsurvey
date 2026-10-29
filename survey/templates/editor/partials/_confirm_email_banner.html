@@ -1,0 +1,83 @@
+{% load i18n %}
+{% comment %}
+Confirm-your-email banner + the dialog a refused publish opens (change
+login-grace-period, #487). Included from editor_base.html AND base.html (the
+dashboard extends base.html), never from respondent bases. Renders nothing once
+the address is confirmed; `email_confirmation` is the lazy context processor in
+survey/context_processors.py. The publish scripts call MsConfirmEmail.prompt()
+on a 403 {email_unconfirmed} (editor/partials/_lifecycle_scripts.html).
+{% endcomment %}
+{% if email_confirmation %}
+<style>
+.ms-confirm-email { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem 1rem;
+    margin:.5rem 1rem; padding:.6rem .9rem; border-radius:8px;
+    background:#fffbeb; border:1px solid #fcd34d; color:#78350f; font-size:.9rem; }
+.ms-confirm-email strong { font-weight:600; }
+.ms-confirm-email__text { flex:1 1 18rem; min-width:0; overflow-wrap:anywhere; }
+.ms-confirm-email__btn { border:1px solid #d97706; background:#fff; color:#92400e; border-radius:6px;
+    padding:.25rem .7rem; font-size:.85rem; cursor:pointer; white-space:nowrap; }
+.ms-confirm-email__btn:hover { background:#fef3c7; }
+.ms-confirm-email__btn[disabled] { opacity:.6; cursor:default; }
+.ms-confirm-email__status { font-size:.85rem; }
+</style>
+<div class="ms-confirm-email" role="status" id="msConfirmEmailBanner">
+    <span class="ms-confirm-email__text">
+        <strong>{% trans "Confirm your email address." %}</strong>
+        {% blocktrans with email=email_confirmation.email %}We sent a link to {{ email }}.{% endblocktrans %}
+        {% blocktrans with left=email_confirmation.deadline|timeuntil %}Without it you can sign in for {{ left }} more, and publishing waits for it.{% endblocktrans %}
+    </span>
+    <button type="button" class="ms-confirm-email__btn" data-ms-resend>{% trans "Send the link again" %}</button>
+    <span class="ms-confirm-email__status" data-ms-resend-status aria-live="polite"></span>
+</div>
+
+<div class="modal fade" id="msConfirmEmailModal" tabindex="-1" aria-labelledby="msConfirmEmailTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="msConfirmEmailTitle">{% trans "Confirm your email to publish" %}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="{% trans 'Close' %}"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <p>{% blocktrans with email=email_confirmation.email %}A survey goes live only from a confirmed address. Open the link we sent to {{ email }} — it keeps you signed in — then press Publish again.{% endblocktrans %}</p>
+                <p class="mb-0" style="color:#6b7280;font-size:.9rem;">{% trans "Nothing in your inbox? Check the spam folder; a workplace mail filter may also hold it." %}</p>
+            </div>
+            <div class="modal-footer">
+                <span class="ms-confirm-email__status mr-auto" data-ms-resend-status aria-live="polite"></span>
+                <button type="button" class="btn btn-outline-secondary" data-ms-resend>{% trans "Send the link again" %}</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal">{% trans "OK" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% trans "Sent. Check your inbox." as ms_sent_msg %}
+{% trans "Already sent today. Open the newest link, and check the spam folder." as ms_limited_msg %}
+{% trans "Could not send. Try again in a minute." as ms_failed_msg %}
+{% trans "Confirm your email address to publish." as ms_publish_msg %}
+<script>
+(function(){
+    var url = "{% url 'resend_own_confirmation' %}";
+    function csrf(){ return (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || ''; }
+    function resend(btn){
+        var scope = btn.closest('.ms-confirm-email, .modal-content') || document;
+        var status = scope.querySelector('[data-ms-resend-status]');
+        btn.disabled = true;
+        fetch(url, {method:'POST', credentials:'same-origin',
+                    headers:{'X-CSRFToken': csrf(), 'X-Requested-With':'XMLHttpRequest'}})
+          .then(function(r){ return r.ok ? r.json() : Promise.reject(r); })
+          .then(function(d){ if (status) status.textContent = d.sent ? "{{ ms_sent_msg|escapejs }}" : "{{ ms_limited_msg|escapejs }}"; })
+          .catch(function(){ btn.disabled = false; if (status) status.textContent = "{{ ms_failed_msg|escapejs }}"; });
+    }
+    document.addEventListener('click', function(e){
+        var btn = e.target.closest('[data-ms-resend]');
+        if (btn) { e.preventDefault(); resend(btn); }
+    });
+    window.MsConfirmEmail = {
+        prompt: function(){
+            if (window.jQuery && jQuery.fn.modal) { jQuery('#msConfirmEmailModal').modal('show'); }
+            else { alert("{{ ms_publish_msg|escapejs }}"); }
+        }
+    };
+})();
+</script>
+{% endif %}

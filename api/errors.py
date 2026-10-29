@@ -30,12 +30,16 @@ METHOD_NOT_ALLOWED = 'method_not_allowed'
 # open yet, and the cap on tracked links per survey.
 NOT_SHAREABLE = 'not_shareable'
 LIMIT_REACHED = 'limit_reached'
+# Publishing from an account whose email address is not confirmed yet (change
+# login-grace-period, #487).
+EMAIL_UNCONFIRMED = 'email_unconfirmed'
 
 # Every code a client may switch on, in the order the reference lists them.
 ALL_CODES = (
     INVALID_TOKEN, SCOPE_MISSING, PRO_REQUIRED, FORBIDDEN_ROLE, NOT_FOUND, VALIDATION,
     DRAFT_REQUIRED, ANSWERS_AT_RISK, DELETE_BLOCKED, TRANSLATION_GAPS, INCOMPATIBLE_DRAFT,
-    TRANSITION_REFUSED, CONFLICT, NOT_SHAREABLE, LIMIT_REACHED, BAD_CURSOR, METHOD_NOT_ALLOWED,
+    TRANSITION_REFUSED, EMAIL_UNCONFIRMED, CONFLICT, NOT_SHAREABLE, LIMIT_REACHED, BAD_CURSOR,
+    METHOD_NOT_ALLOWED,
     RATE_LIMITED, SERVER_ERROR,
 )
 

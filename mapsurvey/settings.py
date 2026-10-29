@@ -105,6 +105,10 @@ MIDDLEWARE = [
     # Captures view exceptions to PostHog error tracking (process_exception);
     # inert when POSTHOG_PROJECT_KEY is unset -- see survey.apps.SurveyConfig.
     'posthog.integrations.django.PosthogContextMiddleware',
+    # After auth: ends a session opened during the sign-in grace period once
+    # the period is over and the address is still unconfirmed (change
+    # login-grace-period). Before everything that would act for that user.
+    'survey.middleware.GracePeriodMiddleware',
     'survey.middleware.LastActivityMiddleware',
     # After auth (it needs request.user) and deliberately not before Locale:
     # it writes the language COOKIE, which LocaleMiddleware reads on the NEXT
@@ -171,6 +175,7 @@ TEMPLATES = [
                 'survey.context_processors.survey_start',
                 'survey.context_processors.support_chat',
                 'survey.context_processors.help_site',
+                'survey.context_processors.email_verification',
             ],
         },
     },
@@ -405,6 +410,10 @@ LOGIN_REDIRECT_URL = '/editor/'
 LOGOUT_REDIRECT_URL = '/'
 
 ACCOUNT_ACTIVATION_DAYS = int(os.environ.get('ACCOUNT_ACTIVATION_DAYS', 7))
+# How long a new account may sign in before confirming its email address
+# (change login-grace-period, #487). The activation LINK stays valid for
+# ACCOUNT_ACTIVATION_DAYS; past this window the link is the only way in.
+SIGN_IN_GRACE_HOURS = int(os.environ.get('SIGN_IN_GRACE_HOURS', 24))
 
 # Mapbox
 # Both style URLs are settings rather than template literals: Mapbox retires style
@@ -754,7 +763,7 @@ CACHES = {
     },
 }
 # When the cache backend is unreachable, allow registrations through rather
-# than locking everyone out. Honeypot + Turnstile remain in effect.
+# than locking everyone out. The honeypot remains in effect.
 DJANGO_REDIS_IGNORE_EXCEPTIONS = True
 RATELIMIT_FAIL_OPEN = True
 
@@ -883,10 +892,8 @@ API_EXPORT_LINK_PREFIX = '/api/v1/export-links/'
 # tests only; production runs the defaults.
 API_RATE_LIMITS = {}
 
-# Abuse prevention — Cloudflare Turnstile + per-IP rate limit + honeypot
-# on /accounts/register/. See openspec/changes/add-registration-abuse-defenses/.
-TURNSTILE_SITE_KEY = os.environ.get('TURNSTILE_SITE_KEY', '')
-TURNSTILE_SECRET_KEY = os.environ.get('TURNSTILE_SECRET_KEY', '')
+# Abuse prevention — per-IP rate limit + honeypot on /accounts/register/.
+# Cloudflare Turnstile was removed in change login-grace-period (#490).
 # When True, trust HTTP_CF_CONNECTING_IP for client IP (production behind
 # Cloudflare). Default False for local dev where the header is spoofable.
 CLOUDFLARE_TRUSTED = os.environ.get('CLOUDFLARE_TRUSTED', 'False').lower() in ('true', '1')
@@ -918,7 +925,7 @@ RESEND_ACTIVATION_RATE_LIMIT_DAY = int(os.environ.get('RESEND_ACTIVATION_RATE_LI
 
 # AI survey draft generation (survey/ai/). Optional: an unset provider credential
 # means the AI panel on the create page simply does not render — never a crash,
-# same convention as Turnstile above. Calls run in the Celery
+# like every optional integration here. Calls run in the Celery
 # worker, so the request path never blocks on a model. Provider access goes
 # through survey/ai/client.py's LLMProvider interface; 'anthropic' is the only
 # implementation today (EU-hosted/local providers plug in as one class later).

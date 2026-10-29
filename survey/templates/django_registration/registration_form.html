@@ -76,24 +76,9 @@
             {% endif %}
         {% endfor %}
 
-        {% if TURNSTILE_SITE_KEY %}
-        <div class="form-group">
-            <div class="cf-turnstile" data-sitekey="{{ TURNSTILE_SITE_KEY }}"></div>
-        </div>
-        {% endif %}
-
         <button type="submit" class="btn-auth" id="register-btn">{% trans "Register" %}</button>
 
-        {% if TURNSTILE_SITE_KEY %}
-        <p class="auth-privacy-notice" style="font-size:.8rem;color:#888;margin-top:1rem">
-            {% trans "This form is protected by Cloudflare Turnstile." %}
-            <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">{% trans "Privacy" %}</a>.
-        </p>
-        {% endif %}
     </form>
-    {% if TURNSTILE_SITE_KEY %}
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer crossorigin="anonymous"></script>
-    {% endif %}
     <script>
     document.getElementById('register-btn').closest('form').addEventListener('submit', function() {
         var btn = document.getElementById('register-btn');

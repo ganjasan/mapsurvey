@@ -35,6 +35,7 @@ and an unknown field in a request body is refused by name rather than ignored.
 | `translation_gaps` | 409 | Some languages are missing text; repeat with `acknowledge_translation_gaps: true`. |
 | `incompatible_draft` | 409 | Unpublished changes conflict with collected answers; repeat with `force: true`. |
 | `transition_refused` | 409 | The survey cannot move to that status from where it is. |
+| `email_unconfirmed` | 403 | The account has not confirmed its email address yet; publishing waits for it. |
 | `conflict` | 409 | The request conflicts with the current state (e.g. unpublished changes already exist). |
 | `bad_cursor` | 400 | The pagination cursor is not valid for this list. |
 | `method_not_allowed` | 405 | That HTTP method is not offered on this path (`Allow` lists the ones that are). |
@@ -178,7 +179,7 @@ survey: respondents see an unavailable page until it is reviewed.
 
 **200** SurveyOut
 
-Errors: `conflict`, `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `transition_refused`, `translation_gaps`, `validation`
+Errors: `conflict`, `draft_required`, `email_unconfirmed`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `transition_refused`, `translation_gaps`, `validation`
 
 ### `POST /surveys/{uuid}/close`
 
@@ -227,7 +228,7 @@ Publish the unpublished changes as a new version of the live survey.
 
 **200** SurveyOut
 
-Errors: `conflict`, `draft_required`, `forbidden_role`, `incompatible_draft`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `translation_gaps`, `validation`
+Errors: `conflict`, `draft_required`, `email_unconfirmed`, `forbidden_role`, `incompatible_draft`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `translation_gaps`, `validation`
 
 ## Structure
 

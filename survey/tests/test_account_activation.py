@@ -1,14 +1,23 @@
 """Tests for the `account-activation` capability (openspec/specs/account-activation/spec.md).
 
-Moved from survey/tests.py by #273; classes are unchanged.
+Moved from survey/tests.py by #273. Since change login-grace-period (#487) an
+account is created ACTIVE and "not yet activated" is an unconfirmed
+`EmailVerification`; `is_active=False` is a ban.
 """
 from django.test import TestCase, override_settings
 from django.contrib.auth.models import User
 from unittest import mock
 from django.conf import settings
 from django.core import mail
-from survey.models import AbuseEvent
+from survey.email_verification import is_verified
+from survey.models import AbuseEvent, EmailVerification
 from survey.tests.helpers import _InlineThread, _LOCMEM_CACHE, _activation_key
+
+
+def _unconfirmed(user):
+    """The state registration leaves an account in."""
+    EmailVerification.objects.update_or_create(user=user, defaults={"verified_at": None})
+    return user
 
 
 class ActivationAutoLoginTest(TestCase):
@@ -18,11 +27,9 @@ class ActivationAutoLoginTest(TestCase):
         from django.core.cache import cache
         User.objects.all().delete()
         cache.clear()
-        self.user = User.objects.create_user(
+        self.user = _unconfirmed(User.objects.create_user(
             username="newbie", email="newbie@example.com", password="x"
-        )
-        self.user.is_active = False
-        self.user.save(update_fields=["is_active"])
+        ))
 
     def _get(self, key):
         return self.client.get("/accounts/activate/", {"activation_key": key})
@@ -48,7 +55,7 @@ class ActivationAutoLoginTest(TestCase):
         self.assertContains(resp, "Confirm my email")
         self.assertContains(resp, 'name="activation_key"')
         self.user.refresh_from_db()
-        self.assertFalse(self.user.is_active)
+        self.assertFalse(is_verified(self.user))
         self.assertNotIn("_auth_user_id", self.client.session)
 
     def test_scanner_get_and_head_do_not_activate(self):
@@ -63,7 +70,7 @@ class ActivationAutoLoginTest(TestCase):
         self.client.head(f"/accounts/activate/?activation_key={key}")
 
         self.user.refresh_from_db()
-        self.assertFalse(self.user.is_active)
+        self.assertFalse(is_verified(self.user))
 
     def test_valid_key_activates_and_signs_user_in(self):
         """
@@ -75,7 +82,7 @@ class ActivationAutoLoginTest(TestCase):
         resp = self._activate(_activation_key("newbie"))
 
         self.user.refresh_from_db()
-        self.assertTrue(self.user.is_active)
+        self.assertTrue(is_verified(self.user))
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(resp["Location"], settings.LOGIN_REDIRECT_URL)
         self.assertEqual(int(self.client.session["_auth_user_id"]), self.user.pk)
@@ -100,7 +107,7 @@ class ActivationAutoLoginTest(TestCase):
         self.assertEqual(len(calls), 1)
         self.assertEqual(calls[0].args[1], self.user.pk)
         self.user.refresh_from_db()
-        self.assertTrue(self.user.is_active)
+        self.assertTrue(is_verified(self.user))
 
     def test_activation_records_last_login(self):
         """
@@ -128,7 +135,7 @@ class ActivationAutoLoginTest(TestCase):
 
         self.assertEqual(resp.status_code, 200)
         self.user.refresh_from_db()
-        self.assertFalse(self.user.is_active)
+        self.assertFalse(is_verified(self.user))
         self.assertContains(resp, "/accounts/activate/resend/")
         self.assertNotContains(resp, "Confirm my email")
         self.assertNotContains(resp, "Try registering again")
@@ -145,7 +152,7 @@ class ActivationAutoLoginTest(TestCase):
 
         self.assertEqual(resp.status_code, 200)
         self.user.refresh_from_db()
-        self.assertFalse(self.user.is_active)
+        self.assertFalse(is_verified(self.user))
 
     def test_missing_key_shows_failure_page(self):
         """
@@ -204,6 +211,37 @@ class ActivationAutoLoginTest(TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(resp["Location"], settings.LOGIN_REDIRECT_URL)
 
+    def test_banned_account_cannot_confirm_or_sign_in(self):
+        """
+        GIVEN an unconfirmed account that was banned before confirming
+        WHEN its activation link is opened and confirmed
+        THEN the failure page renders and nobody is signed in
+        """
+        self.user.is_active = False
+        self.user.save(update_fields=["is_active"])
+        key = _activation_key("newbie")
+
+        get_resp = self._get(key)
+        post_resp = self._confirm(key)
+
+        self.assertContains(get_resp, "Activation Failed")
+        self.assertEqual(post_resp.status_code, 200)
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_confirming_while_signed_in_keeps_the_session(self):
+        """
+        GIVEN an unconfirmed creator signed in during the grace period
+        WHEN they confirm through the emailed link
+        THEN the address is confirmed and they stay signed in as themselves
+        """
+        self.client.force_login(self.user)
+
+        resp = self._activate(_activation_key("newbie"))
+
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(is_verified(User.objects.get(pk=self.user.pk)))
+        self.assertEqual(int(self.client.session["_auth_user_id"]), self.user.pk)
+
     def test_key_for_unknown_username_shows_failure_page(self):
         """
         GIVEN a correctly signed key naming an account that does not exist
@@ -236,11 +274,9 @@ class ResendActivationTest(TestCase):
         AbuseEvent.objects.all().delete()
         cache.clear()
         mail.outbox = []
-        self.inactive = User.objects.create_user(
+        self.inactive = _unconfirmed(User.objects.create_user(
             username="dormant", email="dormant@example.com", password="x"
-        )
-        self.inactive.is_active = False
-        self.inactive.save(update_fields=["is_active"])
+        ))
         User.objects.create_user(
             username="live", email="live@example.com", password="x"
         )
@@ -279,7 +315,7 @@ class ResendActivationTest(TestCase):
         key = _activation_key("dormant")
         self.client.post("/accounts/activate/", {"activation_key": key})
         self.inactive.refresh_from_db()
-        self.assertTrue(self.inactive.is_active)
+        self.assertTrue(is_verified(self.inactive))
 
     def test_email_match_is_case_insensitive(self):
         """
@@ -309,6 +345,20 @@ class ResendActivationTest(TestCase):
              redirect, so the flow cannot be used to probe account state
         """
         resp = self._post("live@example.com")
+
+        self._assert_neutral(resp)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_banned_account_sends_nothing_but_looks_identical(self):
+        """
+        GIVEN an unconfirmed account that was banned (is_active=False)
+        WHEN its email is submitted to the resend form
+        THEN no mail is sent and the response is the same neutral redirect
+        """
+        self.inactive.is_active = False
+        self.inactive.save(update_fields=["is_active"])
+
+        resp = self._post("dormant@example.com")
 
         self._assert_neutral(resp)
         self.assertEqual(len(mail.outbox), 0)
@@ -385,7 +435,7 @@ class ResendActivationTest(TestCase):
 
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(
-            AbuseEvent.objects.filter(defense="ratelimit", detail="resend_day").count(), 1
+            AbuseEvent.objects.filter(defense="ratelimit", detail="resend_day:resend_form").count(), 1
         )
 
     def test_rate_limit_fails_open_when_cache_is_down(self):

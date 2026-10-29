@@ -71,7 +71,7 @@ services:
       # without a Mapbox token (PR #200, 2026-09-26).
       # On production the service's own values win: Render guarantees a variable
       # set on the service takes precedence over a linked group. Never put
-      # POSTHOG_* or TURNSTILE_* in the group — see the comments on those keys.
+      # POSTHOG_* in the group — see the comments on those keys.
       - fromGroup: mapsurvey-shared
       - key: DATABASE_URL
         fromDatabase:
@@ -170,13 +170,6 @@ services:
           type: redis
           name: mapsurvey-redis
           property: connectionString
-      # Not in mapsurvey-shared: the production site key is bound to our domains, so on a
-      # *.onrender.com preview the widget would fail and registration with it. Unset
-      # TURNSTILE_SECRET_KEY is the dev bypass (survey/abuse.py), which previews rely on.
-      - key: TURNSTILE_SITE_KEY
-        sync: false
-      - key: TURNSTILE_SECRET_KEY
-        sync: false
       - key: CLOUDFLARE_TRUSTED
         value: "True"
       # Attempts that pass form validation.

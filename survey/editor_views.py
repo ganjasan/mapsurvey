@@ -61,7 +61,7 @@ from .services import surveys as svc_surveys
 from .services.context import Actor
 from .services.errors import (
     AnswersAtRisk, Conflict, DeleteBlocked, IncompatibleDraft, ServiceError, StructureLocked,
-    TransitionRefused, TranslationGaps, ValidationFailed,
+    EmailUnconfirmed, TransitionRefused, TranslationGaps, ValidationFailed,
 )
 
 logger = logging.getLogger(__name__)
@@ -2287,6 +2287,14 @@ def _render_collaborator_list(request, survey):
 
 # ─── Lifecycle transitions ──────────────────────────────────────────────────
 
+def _email_unconfirmed_response(err):
+    """Publishing from an unconfirmed address (change login-grace-period). The
+    page's scripts open the confirm-your-email dialog on this body
+    (`MsConfirmEmail.prompt`, editor/partials/_confirm_email_banner.html)."""
+    return JsonResponse({'email_unconfirmed': True, 'detail': str(_('Confirm your email address to publish.'))},
+                        status=403)
+
+
 @survey_permission_required('owner')
 @require_POST
 def editor_survey_transition(request, survey_uuid):
@@ -2298,6 +2306,8 @@ def editor_survey_transition(request, survey_uuid):
             Actor.from_request(request), survey, new_status,
             acknowledge_translation_gaps=request.POST.get('ack_translation_gaps') == 'true',
             clear_test_data=request.POST.get('clear_test_data') == 'true')
+    except EmailUnconfirmed as err:
+        return _email_unconfirmed_response(err)
     except TransitionRefused as err:
         return HttpResponse(err.message, status=400)
     except TranslationGaps as err:
@@ -2460,6 +2470,8 @@ def editor_publish_draft(request, survey_uuid):
             Actor.from_request(request), survey,
             force=request.POST.get('force') == 'true',
             acknowledge_translation_gaps=request.POST.get('ack_translation_gaps') == 'true')
+    except EmailUnconfirmed as err:
+        return _email_unconfirmed_response(err)
     except TranslationGaps as err:
         return JsonResponse({'translation_gaps': err.gaps}, status=409)
     except IncompatibleDraft as err:

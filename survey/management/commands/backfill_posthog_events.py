@@ -32,6 +32,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db.models import Min
 
 from survey import product_events as pe
+from survey.email_verification import confirmed_q
 from survey.funnel import PUBLISHED_STATUSES
 from survey.models import AIGenerationEvent, Question, SurveyHeader, SurveySession
 # Re-exported: the id scheme and the migration client are shared with
@@ -112,7 +113,7 @@ class Command(BaseCommand):
         )
         active_ids = set(
             User.objects
-            .filter(is_staff=False, is_superuser=False, is_active=True)
+            .filter(confirmed_q(), is_staff=False, is_superuser=False)
             .values_list('id', flat=True)
         )
 

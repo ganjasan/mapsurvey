@@ -9316,3 +9316,92 @@ msgstr "v%(n)s — diarsipkan"
 #: billing/features.py
 msgid "Enter responses for others: paper forms, interviews, field work"
 msgstr "Masukkan jawaban untuk orang lain: formulir kertas, wawancara, kerja lapangan"
+
+#: survey/templates/registration/login.html
+#, python-format
+msgid "You did not confirm your email address within %(hours)s hours of signing up."
+msgstr "Anda belum mengonfirmasi alamat email dalam %(hours)s jam setelah mendaftar."
+
+#: survey/templates/registration/login.html
+#, python-format
+msgid "We have sent a new confirmation link to %(address)s. Open it to confirm the address — it signs you in."
+msgstr "Kami telah mengirim tautan konfirmasi baru ke %(address)s. Buka untuk mengonfirmasi alamat — tautan itu sekaligus memasukkan Anda."
+
+#: survey/templates/registration/login.html
+#, python-format
+msgid "We have already sent a confirmation link to %(address)s today. Open the newest one to confirm the address — it signs you in."
+msgstr "Hari ini kami sudah mengirim tautan konfirmasi ke %(address)s. Buka yang terbaru untuk mengonfirmasi alamat — tautan itu sekaligus memasukkan Anda."
+
+#: survey/templates/registration/login.html
+msgid "Nothing in your inbox? Check the spam folder; a workplace mail filter may also hold it."
+msgstr "Tidak ada di kotak masuk? Periksa folder spam; filter email kantor juga bisa menahannya."
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+msgid "Confirm your email address."
+msgstr "Konfirmasi alamat email Anda."
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+#, python-format
+msgid "We sent a link to %(email)s."
+msgstr "Kami mengirim tautan ke %(email)s."
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+#, python-format
+msgid "Without it you can sign in for %(left)s more, and publishing waits for it."
+msgstr "Tanpa konfirmasi Anda masih bisa masuk selama %(left)s lagi, dan penerbitan menunggu konfirmasi."
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+msgid "Send the link again"
+msgstr "Kirim ulang tautan"
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+msgid "Confirm your email to publish"
+msgstr "Konfirmasi email Anda untuk menerbitkan"
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+#, python-format
+msgid "A survey goes live only from a confirmed address. Open the link we sent to %(email)s — it keeps you signed in — then press Publish again."
+msgstr "Survei hanya bisa diterbitkan dari alamat yang terkonfirmasi. Buka tautan yang kami kirim ke %(email)s — Anda tetap masuk — lalu tekan Terbitkan lagi."
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+msgid "OK"
+msgstr "OK"
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+msgid "Sent. Check your inbox."
+msgstr "Terkirim. Periksa kotak masuk Anda."
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+msgid "Already sent today. Open the newest link, and check the spam folder."
+msgstr "Sudah dikirim hari ini. Buka tautan terbaru, dan periksa folder spam."
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+msgid "Could not send. Try again in a minute."
+msgstr "Gagal mengirim. Coba lagi sebentar lagi."
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+#: survey/editor_views.py
+msgid "Confirm your email address to publish."
+msgstr "Konfirmasi alamat email Anda untuk menerbitkan."
+
+#: survey/templates/django_registration/resend_activation_done.html
+#, python-format
+msgid "If that address belongs to an account that hasn't confirmed it yet, a confirmation link is on its way. It's valid for %(days)s days."
+msgstr "Jika alamat itu milik akun yang belum mengonfirmasinya, tautan konfirmasi sedang dikirim. Tautan berlaku selama %(days)s hari."
+
+#: survey/org_views.py
+msgid "Confirm your email address before inviting people. We sent you a link when you signed up; the banner above sends a new one."
+msgstr "Konfirmasi alamat email Anda sebelum mengundang orang. Kami mengirim tautan saat Anda mendaftar; spanduk di atas mengirim yang baru."
+
+#: survey/views.py
+#, python-format
+msgid "We sent a new confirmation link to %(email)s."
+msgstr "Kami mengirim tautan konfirmasi baru ke %(email)s."
+
+#: survey/views.py
+msgid "We have already sent you a link today. Open the newest one, and check the spam folder."
+msgstr "Kami sudah mengirim tautan hari ini. Buka yang terbaru, dan periksa folder spam."
+
+#: survey/auth_forms.py
+msgid "Your email address was not confirmed in time."
+msgstr "Alamat email Anda tidak dikonfirmasi tepat waktu."

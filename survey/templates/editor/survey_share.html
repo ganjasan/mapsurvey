@@ -304,6 +304,7 @@ function publishFromShare(btn) {
     }).then(function(r) {
         if (r.ok) { location.reload(); return; }
         if (btn) { btn.disabled = false; btn.textContent = 'Publish — try again'; }
+        if (typeof publishRefusedForEmail === 'function') { publishRefusedForEmail(r); }
     }).catch(function() {
         if (btn) { btn.disabled = false; btn.textContent = 'Publish — try again'; }
     });

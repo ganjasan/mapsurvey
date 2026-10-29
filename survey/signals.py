@@ -33,23 +33,6 @@ def create_personal_org_on_registration(sender, user, request, **kwargs):
     if request and hasattr(request, 'session'):
         request.session['active_org_id'] = org.id
 
-    # Auto-accept any pending invitations for this email
-    from .models import Invitation
-    from django.utils import timezone
-    pending = Invitation.objects.filter(
-        email=user.email,
-        accepted_at__isnull=True,
-    )
-    for invite in pending:
-        if (timezone.now() - invite.created_at).days <= 7:
-            Membership.objects.get_or_create(
-                user=user,
-                organization=invite.organization,
-                defaults={'role': invite.role},
-            )
-            invite.accepted_at = timezone.now()
-            invite.save(update_fields=['accepted_at'])
-
 
 @receiver(user_registered)
 def seed_changelog_watermark(sender, user, request, **kwargs):
@@ -95,6 +78,35 @@ def emit_registration_event(sender, user, request, **kwargs):
     except Exception:  # analytics never breaks registration
         props = None
     pe.emit(pe.CREATOR_REGISTERED, user.pk, props)
+
+
+def accept_invitations_for_email(user):
+    """Join the workspaces that invited this address in the last 7 days.
+
+    Matched by address alone, so it runs only once the address is CONFIRMED
+    (change login-grace-period, #487): since an account may sign in before
+    confirming, accepting at registration would let anyone who registers with
+    an invited address walk into that workspace. An invitation LINK is
+    different — its token was mailed, so `accept_invitation` keeps taking it.
+    """
+    from django.utils import timezone
+
+    from .models import Invitation
+    pending = Invitation.objects.filter(email=user.email, accepted_at__isnull=True)
+    for invite in pending:
+        if (timezone.now() - invite.created_at).days <= 7:
+            Membership.objects.get_or_create(
+                user=user,
+                organization=invite.organization,
+                defaults={'role': invite.role},
+            )
+            invite.accepted_at = timezone.now()
+            invite.save(update_fields=['accepted_at'])
+
+
+@receiver(user_activated)
+def accept_invitations_on_confirmation(sender, user, request, **kwargs):
+    accept_invitations_for_email(user)
 
 
 @receiver(user_activated)

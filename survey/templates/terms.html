@@ -81,7 +81,7 @@
                 <li><strong>Screening at publication.</strong> When a survey goes live, or a live survey is edited, its creator-written text — titles, questions, thank-you page in every language, redirect link — is scored for phishing signals: link shorteners, click trackers, impersonated brands, lure phrases, padding, one-question surveys, brand-new and disposable-email accounts. Scoring runs on our own servers; no text is sent to a third party.</li>
                 <li><strong>High scores are held before anyone sees them.</strong> A held survey shows respondents the same "not available" page as a survey that does not exist, and the creator sees an "under review" notice.</li>
                 <li><strong>Reports from anyone.</strong> Every survey page and thank-you page carries a fixed notice — never enter passwords or card numbers in a Mapsurvey survey — and a <em>Report this survey</em> link that the creator cannot remove. No account is needed to report.</li>
-                <li><strong>Registration defences.</strong> A honeypot field, per-connection rate limits and Cloudflare Turnstile on sign-up, with an audit log of blocked attempts.</li>
+                <li><strong>Registration defences.</strong> A honeypot field and per-connection rate limits on sign-up, with an audit log of blocked attempts. A new account cannot publish a survey or invite anyone to its workspace until it confirms its email address, and it cannot sign in at all after 24 hours without confirming.</li>
                 <li><strong>Uploaded files</strong> — photo, audio and document answers — are checked by file signature, capped in size, stored privately and never published: only the survey's own team can open them.</li>
             </ul>
         </section>

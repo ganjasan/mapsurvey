@@ -564,7 +564,7 @@ class PostHogSnippetTest(TestCase):
         GIVEN Cloudflare fronts every request to the hosted service, and browser
               analytics is deliberately routed through a first-party proxy
         WHEN the trust page is read
-        THEN Cloudflare is named as CDN and reverse proxy, not only as Turnstile
+        THEN Cloudflare is named as CDN and reverse proxy
         AND storage in the EU is distinguished from transit that is not
             contractually EU-only
 

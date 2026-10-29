@@ -15,7 +15,7 @@ from survey.models import AbuseEvent
 
 
 # -----------------------------------------------------------------------------
-# Registration abuse prevention (Cloudflare Turnstile + rate limit + honeypot)
+# Registration abuse prevention (rate limit + honeypot; Turnstile removed in #490)
 # -----------------------------------------------------------------------------
 
 
@@ -60,97 +60,6 @@ class CloudflareIPMiddlewareTest(TestCase):
             self.assertEqual(request.cf_ip, "127.0.0.1")
 
 
-class VerifyTurnstileTest(TestCase):
-    """Unit tests for verify_turnstile() — pure function, no view needed."""
-
-    def test_empty_secret_returns_true_without_http_call(self):
-        """
-        GIVEN TURNSTILE_SECRET_KEY is empty (local dev)
-        WHEN verify_turnstile is called with any token
-        THEN it returns True without making any HTTP call
-        """
-        from django.test import override_settings
-        from survey.abuse import verify_turnstile
-
-        with override_settings(TURNSTILE_SECRET_KEY=""):
-            with mock.patch("survey.abuse.urllib_request.urlopen") as patched:
-                self.assertTrue(verify_turnstile("any-token", "1.2.3.4"))
-                patched.assert_not_called()
-
-    def test_missing_token_returns_false_when_secret_set(self):
-        """
-        GIVEN secret key is configured
-        WHEN verify_turnstile is called with empty token
-        THEN it returns False without making any HTTP call
-        """
-        from django.test import override_settings
-        from survey.abuse import verify_turnstile
-
-        with override_settings(TURNSTILE_SECRET_KEY="real-secret"):
-            with mock.patch("survey.abuse.urllib_request.urlopen") as patched:
-                self.assertFalse(verify_turnstile("", "1.2.3.4"))
-                patched.assert_not_called()
-
-    def test_siteverify_success_returns_true(self):
-        """
-        GIVEN secret key is configured and Cloudflare returns success=true
-        WHEN verify_turnstile is called with a token
-        THEN it returns True
-        """
-        from django.test import override_settings
-        from survey.abuse import verify_turnstile
-
-        fake_response = mock.MagicMock()
-        fake_response.read.return_value = b'{"success": true}'
-        fake_response.__enter__.return_value = fake_response
-        fake_response.__exit__.return_value = False
-
-        with override_settings(TURNSTILE_SECRET_KEY="real-secret"):
-            with mock.patch(
-                "survey.abuse.urllib_request.urlopen",
-                return_value=fake_response,
-            ):
-                self.assertTrue(verify_turnstile("good-token", "1.2.3.4"))
-
-    def test_siteverify_rejection_returns_false(self):
-        """
-        GIVEN Cloudflare returns success=false
-        WHEN verify_turnstile is called
-        THEN it returns False
-        """
-        from django.test import override_settings
-        from survey.abuse import verify_turnstile
-
-        fake_response = mock.MagicMock()
-        fake_response.read.return_value = b'{"success": false, "error-codes": ["invalid-input-response"]}'
-        fake_response.__enter__.return_value = fake_response
-        fake_response.__exit__.return_value = False
-
-        with override_settings(TURNSTILE_SECRET_KEY="real-secret"):
-            with mock.patch(
-                "survey.abuse.urllib_request.urlopen",
-                return_value=fake_response,
-            ):
-                self.assertFalse(verify_turnstile("bad-token", "1.2.3.4"))
-
-    def test_network_error_fails_closed(self):
-        """
-        GIVEN urllib raises URLError (Cloudflare unreachable)
-        WHEN verify_turnstile is called
-        THEN it returns False — fail closed (bots without tokens still rejected)
-        """
-        from urllib.error import URLError
-        from django.test import override_settings
-        from survey.abuse import verify_turnstile
-
-        with override_settings(TURNSTILE_SECRET_KEY="real-secret"):
-            with mock.patch(
-                "survey.abuse.urllib_request.urlopen",
-                side_effect=URLError("network down"),
-            ):
-                self.assertFalse(verify_turnstile("any-token", "1.2.3.4"))
-
-
 class RegistrationAbuseDefenseTest(TestCase):
     """Integration tests against POST /accounts/register/."""
 
@@ -172,22 +81,20 @@ class RegistrationAbuseDefenseTest(TestCase):
             "password2": "Xx12345!secure",
             "website": "",  # honeypot empty
             "accept_terms": "on",
-            "cf-turnstile-response": "any-token",
         }
         data.update(overrides)
         return data
 
-    def test_clean_signup_creates_user_when_turnstile_disabled(self):
+    def test_clean_signup_creates_user(self):
         """
-        GIVEN empty honeypot, fresh IP, TURNSTILE_SECRET_KEY="" (dev bypass)
+        GIVEN empty honeypot and a fresh IP
         WHEN POST /accounts/register/ with valid form data
         THEN response is 302 to django_registration_complete AND a User row exists
         """
         from django.contrib.auth.models import User as _U
         from django.test import override_settings
 
-        with override_settings(TURNSTILE_SECRET_KEY=""):
-            response = self.client.post("/accounts/register/", self._post_data())
+        response = self.client.post("/accounts/register/", self._post_data())
         self.assertEqual(response.status_code, 302)
         self.assertEqual(_U.objects.filter(username="testuser").count(), 1)
 
@@ -203,33 +110,13 @@ class RegistrationAbuseDefenseTest(TestCase):
         from django.test import override_settings
         from survey.models import AbuseEvent
 
-        with override_settings(TURNSTILE_SECRET_KEY=""):
-            response = self.client.post(
-                "/accounts/register/", self._post_data(website="bot-trap")
-            )
+        response = self.client.post(
+            "/accounts/register/", self._post_data(website="bot-trap")
+        )
         self.assertEqual(response.status_code, 302)
         self.assertEqual(_U.objects.filter(username="testuser").count(), 0)
         self.assertEqual(len(mail.outbox), 0)
         self.assertEqual(AbuseEvent.objects.filter(defense="honeypot").count(), 1)
-
-    def test_invalid_turnstile_blocks_with_form_error_and_logs_event(self):
-        """
-        GIVEN TURNSTILE_SECRET_KEY set and verify_turnstile returns False
-        WHEN registration POST is submitted with empty honeypot
-        THEN response is form re-render (200), no User, AbuseEvent defense=captcha
-        """
-        from django.contrib.auth.models import User as _U
-        from django.test import override_settings
-        from survey.models import AbuseEvent
-
-        with override_settings(TURNSTILE_SECRET_KEY="real-secret"):
-            with mock.patch("survey.views.verify_turnstile", return_value=False):
-                response = self.client.post(
-                    "/accounts/register/", self._post_data(),
-                )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(_U.objects.filter(username="testuser").count(), 0)
-        self.assertEqual(AbuseEvent.objects.filter(defense="captcha").count(), 1)
 
     def test_rate_limit_blocks_after_threshold(self):
         """
@@ -241,7 +128,6 @@ class RegistrationAbuseDefenseTest(TestCase):
         from survey.models import AbuseEvent
 
         with override_settings(
-            TURNSTILE_SECRET_KEY="",
             REGISTRATION_RATE_LIMIT_HOUR=1,
             REGISTRATION_RATE_LIMIT_DAY=10,
             CACHES={
@@ -264,26 +150,6 @@ class RegistrationAbuseDefenseTest(TestCase):
             AbuseEvent.objects.filter(defense="ratelimit").count(), 1,
         )
 
-    def test_honeypot_short_circuits_turnstile(self):
-        """
-        GIVEN both a filled honeypot AND a configured Turnstile secret
-        WHEN POST /accounts/register/
-        THEN honeypot fires first (302 fake success); verify_turnstile NOT called
-        """
-        from django.test import override_settings
-        from survey.models import AbuseEvent
-
-        with override_settings(TURNSTILE_SECRET_KEY="real-secret"):
-            with mock.patch("survey.views.verify_turnstile") as patched:
-                response = self.client.post(
-                    "/accounts/register/",
-                    self._post_data(website="trap"),
-                )
-                patched.assert_not_called()
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(AbuseEvent.objects.filter(defense="honeypot").count(), 1)
-        self.assertEqual(AbuseEvent.objects.filter(defense="captcha").count(), 0)
-
     def test_filled_honeypot_with_invalid_form_data_still_returns_fake_success(self):
         """
         GIVEN POST with filled honeypot AND mismatched passwords (form invalid)
@@ -297,15 +163,14 @@ class RegistrationAbuseDefenseTest(TestCase):
         from django.test import override_settings
         from survey.models import AbuseEvent
 
-        with override_settings(TURNSTILE_SECRET_KEY=""):
-            response = self.client.post(
-                "/accounts/register/",
-                self._post_data(
-                    website="trap",
-                    password1="Abc1!secure",
-                    password2="DifferentXY!8",  # mismatch — form would be invalid
-                ),
-            )
+        response = self.client.post(
+            "/accounts/register/",
+            self._post_data(
+                website="trap",
+                password1="Abc1!secure",
+                password2="DifferentXY!8",  # mismatch — form would be invalid
+            ),
+        )
         self.assertEqual(response.status_code, 302)
         self.assertEqual(_U.objects.filter(username="testuser").count(), 0)
         self.assertEqual(AbuseEvent.objects.filter(defense="honeypot").count(), 1)
@@ -339,7 +204,6 @@ class RegistrationAbuseDefenseTest(TestCase):
         from survey.models import AbuseEvent
 
         with override_settings(
-            TURNSTILE_SECRET_KEY="",
             REGISTRATION_RATE_LIMIT_HOUR=999,  # never hit hourly first
             REGISTRATION_RATE_LIMIT_DAY=2,
             CACHES={
@@ -378,60 +242,23 @@ class RegistrationAbuseDefenseTest(TestCase):
 
         # django-ratelimit's get_usage will catch backend errors only when the
         # cache backend itself raises. Simulate by patching cache.add to raise.
-        with override_settings(TURNSTILE_SECRET_KEY=""):
+        with mock.patch(
+            "django.core.cache.cache.get_or_set",
+            side_effect=Exception("Redis unreachable"),
+        ):
             with mock.patch(
-                "django.core.cache.cache.get_or_set",
+                "django.core.cache.cache.add",
                 side_effect=Exception("Redis unreachable"),
             ):
-                with mock.patch(
-                    "django.core.cache.cache.add",
-                    side_effect=Exception("Redis unreachable"),
-                ):
-                    response = self.client.post(
-                        "/accounts/register/",
-                        self._post_data(username="failopen", email="failopen@example.com"),
-                    )
+                response = self.client.post(
+                    "/accounts/register/",
+                    self._post_data(username="failopen", email="failopen@example.com"),
+                )
         # With RATELIMIT_FAIL_OPEN=True, the rate-limit decorator should
         # let the request through despite the cache error.
         self.assertIn(response.status_code, (302, 200))
         # If 302, the user was created; if 200 (form re-render), at least
         # we did NOT 500.
-
-    def test_ratelimit_fires_before_turnstile_check(self):
-        """
-        GIVEN an IP that has exceeded the hourly rate limit
-        AND a configured Turnstile secret
-        WHEN registration POST arrives
-        THEN response is 429 (rate-limit fires) AND verify_turnstile NOT called
-              — short-circuit ordering is honeypot → ratelimit → captcha
-        """
-        from django.test import override_settings
-
-        with override_settings(
-            TURNSTILE_SECRET_KEY="real-secret",
-            REGISTRATION_RATE_LIMIT_HOUR=1,
-            REGISTRATION_RATE_LIMIT_DAY=10,
-            CACHES={
-                "default": {
-                    "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-                    "LOCATION": "rl-shortcircuit-test",
-                }
-            },
-        ):
-            with mock.patch("survey.views.verify_turnstile") as patched:
-                r1 = self.client.post("/accounts/register/", self._post_data(
-                    username="rl1", email="rl1@example.com",
-                ))
-                self.assertIn(r1.status_code, (200, 302))  # first one passes ratelimit
-                r2 = self.client.post("/accounts/register/", self._post_data(
-                    username="rl2", email="rl2@example.com",
-                ))
-                self.assertEqual(r2.status_code, 429)
-                # On the rate-limited POST, Turnstile siteverify must NOT
-                # have been called — ratelimit short-circuits.
-                # (verify_turnstile may have been called for r1 only.)
-                self.assertLessEqual(patched.call_count, 1)
-
 
 class RegistrationInvalidAttemptLimitTest(TestCase):
     """The rate limit must not spend a human's budget on their own typos.
@@ -459,7 +286,6 @@ class RegistrationInvalidAttemptLimitTest(TestCase):
             "password2": "Xx12345!secure",
             "website": "",
             "accept_terms": "on",
-            "cf-turnstile-response": "any-token",
         }
         data.update(overrides)
         return data
@@ -483,7 +309,6 @@ class RegistrationInvalidAttemptLimitTest(TestCase):
         from django.test import override_settings
 
         settings = dict(
-            TURNSTILE_SECRET_KEY="",
             REGISTRATION_RATE_LIMIT_HOUR=3,
             REGISTRATION_RATE_LIMIT_DAY=10,
             REGISTRATION_INVALID_LIMIT_HOUR=15,
@@ -567,28 +392,6 @@ class RegistrationInvalidAttemptLimitTest(TestCase):
             ))
             self.assertEqual(blocked.status_code, 429)
 
-    def test_turnstile_failure_counts_against_the_strict_budget(self):
-        """
-        GIVEN a well-formed submission whose Turnstile token is rejected
-        WHEN it is posted
-        THEN it consumes the valid-submission budget, not the invalid one
-        """
-        with self._isolated_cache(TURNSTILE_SECRET_KEY="real-secret"):
-            with mock.patch("survey.views.verify_turnstile", return_value=False):
-                for i in range(3):
-                    r = self.client.post("/accounts/register/", self._valid_data(
-                        username="cf%d" % i, email="cf%d@example.com" % i,
-                    ))
-                    self.assertEqual(r.status_code, 200)
-
-            # The strict budget is now spent, so even a clean submission with a
-            # working token is refused.
-            with mock.patch("survey.views.verify_turnstile", return_value=True):
-                blocked = self.client.post("/accounts/register/", self._valid_data(
-                    username="cf9", email="cf9@example.com",
-                ))
-                self.assertEqual(blocked.status_code, 429)
-
     def test_kill_switch_restores_previous_counting(self):
         """
         GIVEN REGISTRATION_SPLIT_RATE_LIMIT=False
@@ -664,7 +467,7 @@ class RegistrationAcceptTermsTest(TestCase):
         data = {
             'username': 'termsuser', 'email': 'terms@example.com',
             'password1': 'Xx12345!secure', 'password2': 'Xx12345!secure',
-            'website': '', 'cf-turnstile-response': 'any-token', 'accept_terms': 'on',
+            'website': '', 'accept_terms': 'on',
         }
         data.update(overrides)
         return {k: v for k, v in data.items() if v is not None}
@@ -701,9 +504,8 @@ class RegistrationAcceptTermsTest(TestCase):
         WHEN it is submitted
         THEN the form re-renders with an accept_terms error and no user is created
         """
-        with override_settings(TURNSTILE_SECRET_KEY=''):
-            response = self.client.post('/accounts/register/', self._data(accept_terms=None),
-                                        REMOTE_ADDR='10.%d.%d.%d' % tuple(uuid.uuid4().bytes[:3]))
+        response = self.client.post('/accounts/register/', self._data(accept_terms=None),
+                                    REMOTE_ADDR='10.%d.%d.%d' % tuple(uuid.uuid4().bytes[:3]))
         self.assertEqual(response.status_code, 200)
         self.assertIn('accept_terms', response.context['form'].errors)
         self.assertFalse(User.objects.filter(username='termsuser').exists())
@@ -714,9 +516,8 @@ class RegistrationAcceptTermsTest(TestCase):
         WHEN it is submitted
         THEN the user is created and the response redirects
         """
-        with override_settings(TURNSTILE_SECRET_KEY=''):
-            response = self.client.post('/accounts/register/', self._data(),
-                                        REMOTE_ADDR='10.%d.%d.%d' % tuple(uuid.uuid4().bytes[:3]))
+        response = self.client.post('/accounts/register/', self._data(),
+                                    REMOTE_ADDR='10.%d.%d.%d' % tuple(uuid.uuid4().bytes[:3]))
         self.assertEqual(response.status_code, 302)
         self.assertTrue(User.objects.filter(username='termsuser').exists())
 
@@ -726,8 +527,33 @@ class RegistrationAcceptTermsTest(TestCase):
         WHEN it is submitted
         THEN the bot gets the fake-success redirect and no user is created
         """
-        with override_settings(TURNSTILE_SECRET_KEY=''):
-            response = self.client.post('/accounts/register/', self._data(website='bot', accept_terms=None),
-                                        REMOTE_ADDR='10.%d.%d.%d' % tuple(uuid.uuid4().bytes[:3]))
+        response = self.client.post('/accounts/register/', self._data(website='bot', accept_terms=None),
+                                    REMOTE_ADDR='10.%d.%d.%d' % tuple(uuid.uuid4().bytes[:3]))
         self.assertEqual(response.status_code, 302)
         self.assertFalse(User.objects.filter(username='termsuser').exists())
+
+
+class TurnstileRemovedTest(TestCase):
+    """Cloudflare Turnstile was off in production and is gone (#490); nothing may still claim it."""
+
+    def test_registration_page_loads_no_challenge_script(self):
+        """
+        GIVEN the registration page
+        WHEN it is rendered
+        THEN it loads no Cloudflare challenge script and renders no CAPTCHA widget
+        """
+        response = self.client.get("/accounts/register/")
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "challenges.cloudflare.com")
+        self.assertNotContains(response, "cf-turnstile")
+
+    def test_public_policy_pages_do_not_claim_turnstile(self):
+        """
+        GIVEN /terms/ and /trust/, which must stay true in production
+        WHEN they are rendered
+        THEN neither names Turnstile, and both say publishing waits for a confirmed address
+        """
+        for path in ("/terms/", "/trust/"):
+            response = self.client.get(path)
+            self.assertNotContains(response, "Turnstile")
+            self.assertContains(response, "until it confirms its email address")

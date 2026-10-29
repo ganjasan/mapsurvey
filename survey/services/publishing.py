@@ -22,7 +22,7 @@ from ..public_results import scaffold_page
 from ..translation_gaps import survey_translation_gaps
 from ..versioning import IncompatibleDraftError, clone_survey_for_draft, publish_draft as _publish_draft
 from .common import surface_props
-from .errors import Conflict, IncompatibleDraft, TransitionRefused, TranslationGaps
+from .errors import Conflict, EmailUnconfirmed, IncompatibleDraft, TransitionRefused, TranslationGaps
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +49,15 @@ def _check_translation_gaps(survey, acknowledged):
             raise TranslationGaps(gaps)
 
 
+def _require_confirmed_email(actor):
+    """Nothing goes live from an unconfirmed address (change login-grace-period):
+    an account may build during its grace period but not publish. Checked
+    before every other publish rule, so the refusal names the real blocker."""
+    from ..email_verification import is_verified
+    if actor.user is not None and not is_verified(actor.user):
+        raise EmailUnconfirmed()
+
+
 def transition(actor, survey, status, *, acknowledge_translation_gaps=False, clear_test_data=False,
                refuse_draft_copy=False):
     """Move `survey` to `status` along `VALID_TRANSITIONS`.
@@ -58,6 +67,8 @@ def transition(actor, survey, status, *, acknowledge_translation_gaps=False, cle
     """
     if refuse_draft_copy and survey.is_draft_copy:
         raise Conflict('These are unpublished changes; publish them with draft/publish.')
+    if status == 'published':
+        _require_confirmed_email(actor)
     can, error = survey.can_transition_to(status)
     if not can:
         raise TransitionRefused(error)
@@ -132,6 +143,7 @@ def publish_draft(actor, draft, *, force=False, acknowledge_translation_gaps=Fal
     """Publish unpublished changes as a new version of the live survey."""
     if not draft.is_draft_copy:
         raise Conflict('This survey is not a draft copy')
+    _require_confirmed_email(actor)
     # Same translation-gap warning as the draft→published transition: this
     # path replaces the live version's content.
     _check_translation_gaps(draft, acknowledge_translation_gaps)

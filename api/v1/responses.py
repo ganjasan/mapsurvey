@@ -249,6 +249,8 @@ def export_link_download(request, token: str):
     """The file behind an export link. No bearer: the signed link is the
     credential -- so every check the API makes is made again here."""
     from oauth2_provider.models import AccessToken
+    from survey.email_verification import can_sign_in
+
     from ..auth import Principal
     try:
         data = signing.loads(token, salt=LINK_SALT, max_age=LINK_MAX_AGE)
@@ -257,7 +259,7 @@ def export_link_download(request, token: str):
     access = (AccessToken.objects.select_related('user', 'profile', 'profile__organization')
               .filter(pk=data.get('t'), user_id=data.get('u')).first())
     profile = getattr(access, 'profile', None) if access else None
-    if access is None or profile is None or profile.revoked_at is not None or not access.user.is_active:
+    if access is None or profile is None or profile.revoked_at is not None or not can_sign_in(access.user):
         raise not_found()
     principal = Principal(user=access.user, scopes=frozenset(access.scope.split()),
                           organization=profile.organization, token_id=access.pk, kind=profile.kind,
