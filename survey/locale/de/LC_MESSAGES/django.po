@@ -9255,3 +9255,135 @@ msgstr "Fragen beim Platzieren auf der Karte geöffnet lassen"
 #: survey/editor_forms.py:350
 msgid "On a computer screen the questions stay visible while respondents place a point or draw, and the map aims at the space beside them. On a phone they always slide away."
 msgstr "Auf einem Computerbildschirm bleiben die Fragen sichtbar, während Befragte einen Punkt setzen oder zeichnen, und die Karte zielt auf den Platz daneben. Auf dem Handy werden sie immer ausgeblendet."
+
+#: survey/models.py
+msgid "Online"
+msgstr "Online"
+
+#: survey/models.py
+msgid "Paper form"
+msgstr "Papierformular"
+
+#: survey/models.py
+msgid "Assisted interview"
+msgstr "Begleitetes Interview"
+
+#: survey/models.py
+msgid "Field observation"
+msgstr "Beobachtung vor Ort"
+
+#: survey/editor_forms.py
+msgid "Everyone"
+msgstr "Jede Person"
+
+#: survey/editor_forms.py
+#: survey/templates/editor/partials/_audience_badge.html
+msgid "Respondents only"
+msgstr "Nur Teilnehmende"
+
+#: survey/editor_forms.py
+msgid "Operators only — the \"Enter a response\" form"
+msgstr "Nur Erfassende – das Formular „Antwort erfassen“"
+
+#: survey/editor_forms.py
+#: survey/templates/editor/partials/_audience_field.html
+msgid "Who sees this"
+msgstr "Wer das sieht"
+
+#: survey/templates/editor/partials/_audience_badge.html
+msgid "Operators only"
+msgstr "Nur Erfassende"
+
+#: survey/templates/editor/partials/_audience_badge.html
+msgid "Shown only on the operator entry form"
+msgstr "Nur im Erfassungsformular sichtbar"
+
+#: survey/templates/editor/partials/_audience_badge.html
+msgid "Not shown on the operator entry form"
+msgstr "Im Erfassungsformular nicht sichtbar"
+
+#: survey/templates/editor/partials/_audience_badge.html
+msgid "The question this rule depends on is shown to operators only, so respondents never see this."
+msgstr "Die Frage, von der diese Regel abhängt, sehen nur Erfassende – Teilnehmende sehen dies also nie."
+
+#: survey/templates/editor/partials/_audience_field.html
+msgid "“Operators only” shows it just on the Enter a response form — for a sheet number, the event, or a note about the paper form. Respondents never see it."
+msgstr "„Nur Erfassende“ zeigt es nur im Formular „Antwort erfassen“ – für eine Bogennummer, die Veranstaltung oder eine Notiz zum Papierbogen. Teilnehmende sehen es nie."
+
+#: survey/templates/editor/operator_entry/header.html
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "Enter a response"
+msgstr "Antwort erfassen"
+
+#: survey/templates/editor/operator_entry/header.html
+msgid "Type in answers collected on paper, in an interview or in the field. They are stored with their source, count as responses, and stay out of the visit statistics."
+msgstr "Erfassen Sie Antworten, die auf Papier, im Interview oder vor Ort gesammelt wurden. Sie werden mit ihrer Quelle gespeichert, zählen als Antworten und bleiben aus der Besuchsstatistik heraus."
+
+#: survey/templates/editor/operator_entry/header.html
+msgid "Pick the version the paper form was printed from. Answers stay with that version's questions."
+msgstr "Wählen Sie die Version, aus der der Papierbogen gedruckt wurde. Die Antworten bleiben bei den Fragen dieser Version."
+
+#: survey/templates/editor/operator_entry/header.html
+msgid "Start entering"
+msgstr "Erfassung starten"
+
+#: survey/templates/editor/operator_entry/_entry_bar.html
+#, python-format
+msgid "Entering a response · %(source)s"
+msgstr "Antwort wird erfasst · %(source)s"
+
+#: survey/templates/editor/operator_entry/saved.html
+msgid "Response saved"
+msgstr "Antwort gespeichert"
+
+#: survey/templates/editor/operator_entry/saved.html
+#, python-format
+msgid "Stored as “%(source)s”. It appears in Responses with its source and your name."
+msgstr "Gespeichert als „%(source)s“. Sie erscheint unter Antworten mit ihrer Quelle und Ihrem Namen."
+
+#: survey/templates/editor/operator_entry/saved.html
+msgid "Back to Responses"
+msgstr "Zurück zu den Antworten"
+
+#: survey/templates/editor/operator_entry/saved.html
+msgid "Enter the next one"
+msgstr "Nächste erfassen"
+
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "Type in answers collected on paper, in an interview or in the field"
+msgstr "Antworten erfassen, die auf Papier, im Interview oder vor Ort gesammelt wurden"
+
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "Entering responses for others is part of Pro"
+msgstr "Antworten für andere zu erfassen ist Teil von Pro"
+
+#: survey/templates/editor/partials/analytics_session_detail.html
+#, python-format
+msgid "Entered by %(name)s"
+msgstr "Erfasst von %(name)s"
+
+#: survey/operator_entry_views.py
+msgid "Where do these answers come from?"
+msgstr "Woher stammen diese Antworten?"
+
+#: survey/operator_entry_views.py
+msgid "Survey version"
+msgstr "Umfrageversion"
+
+#: survey/operator_entry_views.py
+msgid "Language of the answers"
+msgstr "Sprache der Antworten"
+
+#: survey/operator_entry_views.py
+#, python-format
+msgid "v%(n)s — current"
+msgstr "v%(n)s – aktuell"
+
+#: survey/operator_entry_views.py
+#, python-format
+msgid "v%(n)s — archived"
+msgstr "v%(n)s – archiviert"
+
+#: billing/features.py
+msgid "Enter responses for others: paper forms, interviews, field work"
+msgstr "Antworten für andere erfassen: Papierbögen, Interviews, Arbeit vor Ort"

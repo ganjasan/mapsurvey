@@ -87,6 +87,7 @@ def section(obj, position=None):
         'next_label': obj.next_label,
         'position': position,
         'visibility_rule': obj.visibility_rule,
+        'audience': obj.audience,
         'map_start': _map_start(obj),
         'use_geolocation': obj.use_geolocation,
         'translations': {
@@ -111,6 +112,7 @@ def group(obj):
         'description': obj.description or '',
         'display_style': obj.display_style,
         'visibility_rule': obj.visibility_rule,
+        'audience': obj.audience,
         'question_ids': [q.pk for q in obj.members()],
         'translations': {t.language: {'title': t.title, 'description': t.description}
                          for t in obj.translations.all()},
@@ -135,6 +137,7 @@ def question(obj):
         'icon_class': obj.icon_class,
         'display_style': obj.display_style,
         'visibility_rule': obj.visibility_rule,
+        'audience': obj.audience,
         'layer_id': obj.layer_id,
         'min_objects': obj.min_objects,
         'share_with_respondents': obj.share_with_respondents,

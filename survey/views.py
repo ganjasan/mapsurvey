@@ -41,7 +41,7 @@ from django.urls import reverse
 from django.core.serializers import serialize
 import geojson
 from django.contrib.gis.geos import GEOSGeometry
-from survey.question_types import GEO_TYPES, geo_column, SPRAY_HARD_CEILING
+from survey.question_types import GEO_TYPES, geo_column, SPRAY_HARD_CEILING, SURFACE_RESPONDENT
 from django.contrib.gis.geos.error import GEOSException
 import sys
 from io import BytesIO
@@ -870,12 +870,12 @@ def survey_header(request, survey_slug):
 	#return render(request, 'survey_header.html', context)
 
 
-def _session_visibility(session_survey, survey_session_id):
+def _session_visibility(session_survey, survey_session_id, surface=SURFACE_RESPONDENT):
 	"""Visibility map for a session's current stored answers."""
 	from .visibility import compute_visibility, answers_by_code_for_session
 	session = SurveySession.objects.filter(pk=survey_session_id).first()
 	answers = answers_by_code_for_session(session) if session else {}
-	return compute_visibility(session_survey, answers)
+	return compute_visibility(session_survey, answers, surface=surface)
 
 
 def _visible_chain_position(vmap, section):
@@ -886,11 +886,18 @@ def _visible_chain_position(vmap, section):
 	return chain_ids.index(section.id) + 1, len(chain_ids)
 
 
-def _build_section_context(request, survey, session_survey, section, selected_language, section_current, section_total, vmap=None):
-	"""Build template context for a survey section (used by both GET and POST→next)."""
+def _build_section_context(request, survey, session_survey, section, selected_language, section_current, section_total, vmap=None, session_id=None, entry=False):
+	"""Build template context for a survey section (used by both GET and POST→next).
+
+	``session_id`` defaults to the respondent cookie's; the operator entry form
+	passes its own (it never touches the cookie) together with ``entry=True`` and
+	a map computed for the operator surface (change operator-entry)."""
 	from .visibility import popup_rules_for_client, client_rule
+	if session_id is None:
+		session_id = request.session['survey_session_id']
 	if vmap is None:
-		vmap = _session_visibility(session_survey, request.session.get('survey_session_id'))
+		vmap = _session_visibility(session_survey, session_id)
+	surface = vmap.surface
 
 	# Questions conditioned on a controller in THIS section stay in the DOM (the
 	# client shows/hides them live); questions hidden by anything else — an
@@ -914,6 +921,12 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 
 	for kind, item in walk(all_questions, groups_for(section)):
 		rule = item.visibility_rule if isinstance(item.visibility_rule, dict) else None
+		if (kind, item.id) in vmap.audience_hidden:
+			# Not for this surface (spec question-audience): never in the DOM,
+			# not even for a client rule to reveal.
+			if kind == 'group':
+				group_ok[item.id] = False
+			continue
 		if kind == 'group':
 			if _client_side(rule, ('group', item.id)):
 				client_rules[group_rule_key(item)] = client_rule(rule)
@@ -932,7 +945,7 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 
 	# Query existing answers for this session and section
 	existing_answers = Answer.objects.filter(
-		survey_session_id=request.session['survey_session_id'],
+		survey_session_id=session_id,
 		question__in=questions,
 		parent_answer_id__isnull=True,
 	).select_related('question')
@@ -1028,14 +1041,14 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 					else:
 						initial[question.code] = int(answer.numeric)
 
-	form = SurveySectionAnswerForm(initial=initial, section=section, question=None, survey_session_id=request.session['survey_session_id'], language=selected_language, questions_override=questions)
+	form = SurveySectionAnswerForm(initial=initial, section=section, question=None, survey_session_id=session_id, language=selected_language, questions_override=questions, surface=surface)
 
 	# Popup forms render through the section's own card partial, never as_p(): as_p() dropped
 	# the creator's hint and the rating styles (#320).
 	subquestions_forms = {}
 	popup_rules = {}
 	for question in questions:
-		subquestion_form = SurveySectionAnswerForm(initial={}, section=section, question=question, survey_session_id=request.session['survey_session_id'], language=selected_language)
+		subquestion_form = SurveySectionAnswerForm(initial={}, section=section, question=question, survey_session_id=session_id, language=selected_language, surface=surface)
 		subquestions_forms[question.code] = render_to_string('partials/question_fields.html', {'form': subquestion_form})
 		# Pop-up rules (spec conditional-visibility, sub-questions): every
 		# sub-question stays in the pop-up HTML; the client toggles them per
@@ -1044,7 +1057,7 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 
 	# Answers about layer objects (spec object-answers): {question_code: {object_key:
 	# {sub_code: [values]}}} — the popup prefill and the answered ✓ on revisit.
-	existing_object_answers = _existing_object_answers(questions, request.session['survey_session_id'])
+	existing_object_answers = _existing_object_answers(questions, session_id)
 
 	section_title = section.get_translated_title(selected_language)
 	section_subheading = section.get_translated_subheading(selected_language)
@@ -1067,6 +1080,7 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 		'visible_layers_json': json.dumps(section_layer_ids(section)),
 		'visibility_rules_json': json.dumps(client_rules),
 		'popup_visibility_rules_json': json.dumps(popup_rules),
+		'entry': entry,
 	}
 
 
@@ -1097,6 +1111,268 @@ def _spray_cloud(geometry, max_dots=None):
 	if not dots:
 		return None
 	return spray.cloud_from_dots(dots)
+
+
+def _add_shell_context(ctx, survey, section):
+	"""Initial map state and layers of the full respondent page (the respondent
+	section view and the operator entry form share it)."""
+	# Full page render — add initial map state for the shell
+	head_section = section
+	# Walk back to head for initial map state
+	while head_section.prev_section:
+		head_section = head_section.prev_section
+
+	# Survey-level defaults take priority, then head section, then Berlin fallback
+	if survey.start_map_postion:
+		ctx['initial_map_lat'] = survey.start_map_postion.y
+		ctx['initial_map_lng'] = survey.start_map_postion.x
+	elif head_section.start_map_postion:
+		ctx['initial_map_lat'] = head_section.start_map_postion.y
+		ctx['initial_map_lng'] = head_section.start_map_postion.x
+	else:
+		ctx['initial_map_lat'] = 52.52
+		ctx['initial_map_lng'] = 13.405
+
+	if survey.start_map_zoom is not None:
+		ctx['initial_map_zoom'] = survey.start_map_zoom
+	elif head_section.start_map_zoom is not None:
+		ctx['initial_map_zoom'] = head_section.start_map_zoom
+	else:
+		ctx['initial_map_zoom'] = 12
+
+	ctx['initial_use_geolocation'] = survey.use_geolocation
+	ctx['map_layers'] = _build_map_layers_metadata(survey)
+	return ctx
+
+
+def save_section_answers(post, survey_session, session_survey, section, surface=SURFACE_RESPONDENT):
+	"""Store one section POST on ``survey_session`` and return the final visibility map.
+
+	The ONE answer writer for a section, shared by the respondent page and the
+	operator entry form (change operator-entry, D2): visibility under the submitted
+	state, replace the section's answers by type, purge abandoned branches, replace
+	object answers. Events, the shared-map sync and navigation are the caller's —
+	an operator session gets none of the first two.
+	"""
+	section_questions = section.questions()
+
+	# Visibility under the SUBMITTED state: stored answers overlaid with the
+	# controller values in this POST. A value posted for a question hidden
+	# under this state (stale DOM, back-navigation, tampering) is discarded
+	# below — the server never trusts the client's idea of what was visible.
+	from .visibility import compute_visibility, answers_by_code_for_session, CONTROLLER_TYPES
+	submitted_answers = answers_by_code_for_session(survey_session)
+	for q in section_questions:
+		if q.input_type in CONTROLLER_TYPES:
+			# `choice_ids`, not a bare `int()`: a controller whose posted value
+			# cannot be read as a choice contributes nothing to visibility
+			# rather than 500ing the submission. See its docstring.
+			posted = choice_ids(post.getlist(q.code))
+			if posted:
+				submitted_answers[q.code] = posted
+			else:
+				submitted_answers.pop(q.code, None)
+	vmap_post = compute_visibility(session_survey, submitted_answers, surface=surface)
+
+	# Delete existing answers for this session and section before saving new ones
+	section_question_ids = [q.id for q in section_questions]
+	Answer.objects.filter(
+		survey_session=survey_session,
+		question_id__in=section_question_ids,
+		parent_answer_id__isnull=True,
+	).delete()
+
+	for question in section_questions:
+		if not vmap_post.is_question_visible(question.id):
+			continue
+		result = post.getlist(question.code)
+		# An unanswered control still posts its name with an empty value —
+		# the dropdown's placeholder option is the case that surfaced this.
+		# Without the filter a blank ride-along becomes a stored answer.
+		# Whitespace-only counts as blank too: "   " used to become a
+		# top-level answer and made an abandoned session look answered
+		# (spec responses-empty-sessions).
+		result = [v for v in result if v.strip() != '']
+
+		if (result != []):
+			# Storage dispatches on input_type ONLY. It used to branch on
+			# whether `choices` was non-empty first, so a stale choices list
+			# left over from a type switch routed a point question's GeoJSON
+			# into int() — an unhandled 500 on every submit of the section.
+			if question.input_type in GEO_TYPES:
+				geostr_list = [g for g in result[0].split('|') if g != '']
+				is_spray = question.input_type == 'spraycan'
+				# The UI enforces max_features; this clamp only keeps a
+				# tampered or scripted POST within bounds. The section
+				# POST has no error-render path (required is client-side
+				# too), so excess features are discarded, not rejected.
+				max_features = (question.validation_settings or {}).get('max_features')
+				if is_spray:
+					# One cloud per respondent (spec spraycan-question).
+					geostr_list = geostr_list[:1]
+				elif isinstance(max_features, int) and max_features > 0:
+					geostr_list = geostr_list[:max_features]
+				for geostr in geostr_list:
+					if geostr != '':
+						answer = Answer(survey_session=survey_session, question=question)
+
+						# A chunk that is not a GeoJSON Feature skips itself, never
+						# the section: the POST has no error-render path, so a raise
+						# here cost one respondent 42 consecutive 500s (2026-09-07).
+						# Narrow catch — a database error in save() must still surface.
+						try:
+							gj = geojson.loads(geostr)
+							geometry = geojson.dumps(gj['geometry'])
+							resultToSave = GEOSGeometry(geometry)
+						except (ValueError, KeyError, TypeError, GEOSException):
+							logger.warning(
+								"Skipping unreadable geometry chunk for %s: %r",
+								question.code, geostr[:40])
+							continue
+
+						if is_spray:
+							resultToSave = _spray_cloud(
+								resultToSave, (question.validation_settings or {}).get('max_dots'))
+							if resultToSave is None:
+								logger.warning(
+									"Skipping unusable spray cloud for %s", question.code)
+								continue
+						setattr(answer, geo_column(question.input_type), resultToSave)
+
+						answer.save()
+
+						#сохранить properties как ответы наследники
+						properties = gj['properties'];
+						# Pop-up rules are decided per feature from ITS choice
+						# sub-answers (spec conditional-visibility, sub-questions):
+						# a value posted for a hidden follow-up is dropped here,
+						# never stored — the client's disabled inputs are not trusted.
+						popup_vis = _popup_visibility_for(question, properties, surface=surface)
+						for key, value in properties.items():
+							if key != 'question_id' and not other_option.is_other_field(key):
+								sub_question = Question.objects.get(Q(survey_section=section) & Q(code=key))
+								if not popup_vis.is_question_visible(sub_question.id):
+									continue
+								sub_answer = Answer(survey_session=survey_session, question=sub_question, parent_answer_id = answer)
+								first = value[0] if value else None
+								if sub_question.input_type in ('text', 'text_line', 'datetime'):
+									if first:
+										sub_answer.text = first
+								elif sub_question.input_type in ('number', 'range'):
+									if first:
+										sub_answer.numeric = float(first)
+								elif sub_question.input_type in ('choice', 'multichoice', 'rating', 'thumbs'):
+									sub_answer.selected_choices = [int(v) for v in value if v]
+									_raw = properties.get(other_option.field_name(key)) or []
+									_text = other_option.other_text(sub_question, sub_answer.selected_choices, _raw[0] if _raw else '')
+									if _text is not None:
+										sub_answer.text = _text
+								elif sub_question.input_type in FILE_INPUT_TYPES:
+									# The popup carries async-upload tokens as ordinary
+									# property values — one per file. Each becomes its
+									# own child Answer; foreign or stale tokens skip
+									# their answer, never the feature.
+									from .uploads import max_files_for as _mff
+									for token in [v for v in value if v][:_mff(sub_question)]:
+										upload = attach_upload(survey_session, sub_question, token)
+										if upload is None:
+											continue
+										extra = Answer(survey_session=survey_session,
+										               question=sub_question,
+										               parent_answer_id=answer,
+										               upload=upload)
+										extra.save()
+									continue
+								sub_answer.save()
+
+			elif question.input_type in ('text', 'text_line', 'datetime'):
+				# datetime keeps its raw datetime-local string; that is the
+				# form prepopulation and analytics read back from `text`.
+				answer = Answer(survey_session=survey_session, question=question)
+				answer.text = result[0].strip()
+				answer.save()
+
+			elif question.input_type in ('number', 'range'):
+				answer = Answer(survey_session=survey_session, question=question)
+				answer.numeric = float(result[0].strip())
+				answer.save()
+
+			elif question.input_type == 'ranking':
+				# The submitted order is the DOM order of the widget's hidden
+				# inputs. Store it only when it is a permutation of the
+				# question's items: every item exactly once, nothing else.
+				# An invalid ranking cannot be produced by the widget, so it
+				# is tampering or a bug — stored as nothing, the way an
+				# unanswered question is, rather than as a half-order.
+				submitted = [r for r in result if r != '']
+				defined = [str(c["code"]) for c in (question.choices or [])]
+				if sorted(submitted) == sorted(defined) and defined:
+					answer = Answer(survey_session=survey_session, question=question)
+					answer.selected_choices = [int(r) for r in submitted]
+					answer.save()
+
+			elif question.input_type in ('choice', 'multichoice', 'rating', 'thumbs'):
+				# Same tolerance as the visibility pre-pass above: a value the
+				# stored type cannot read is dropped, not raised on.
+				selected = choice_ids(result)
+				if selected:
+					answer = Answer(survey_session=survey_session, question=question)
+					answer.selected_choices = selected
+					_text = other_option.other_text(question, selected, post.get(other_option.field_name(question.code)))
+					if _text is not None:
+						answer.text = _text
+					answer.save()
+
+			elif question.input_type in FILE_INPUT_TYPES:
+				# The form posts async-upload tokens, never bytes — one
+				# hidden input per file, several files per question. Tokens
+				# that are not this session's for this question are skipped;
+				# the creator's per-question cap clamps the rest, like
+				# max_features does for geo.
+				from .uploads import max_files_for
+				for token in result[:max_files_for(question)]:
+					upload = attach_upload(survey_session, question, token)
+					if upload is not None:
+						answer = Answer(survey_session=survey_session, question=question)
+						answer.upload = upload
+						answer.save()
+
+			# html/image collect nothing; any other type stores nothing.
+
+	# A replaced or dropped file: its upload no longer has an Answer after the
+	# rewrite above, so it goes back to attached=False for orphan reclamation.
+	detach_unreferenced(survey_session, section_question_ids)
+
+	# Abandoned-branch cleanup: with the new answers stored, purge answers to
+	# questions now hidden anywhere in the survey (changing "Area 7" to
+	# "Area 4" removes what was collected inside the Area 7 section). Geo
+	# parents cascade to their sub-answers.
+	vmap_final = compute_visibility(session_survey, answers_by_code_for_session(survey_session), surface=surface)
+	hidden_question_ids = [qid for qid, visible in vmap_final.question_visible.items() if not visible]
+	if hidden_question_ids:
+		Answer.objects.filter(
+			survey_session=survey_session,
+			question_id__in=hidden_question_ids,
+			parent_answer_id__isnull=True,
+		).delete()
+
+
+	# Answers about layer objects (spec object-answers). They live on the
+	# sub-questions of an Objects-on-the-map question, keyed by the object,
+	# so the top-level delete above never touched them: replace them here,
+	# per visible block, from the `obj__<key>__<code>` fields.
+	for question in section_questions:
+		if question.input_type != 'layer_objects':
+			continue
+		Answer.objects.filter(
+			survey_session=survey_session,
+			question__parent_question_id=question,
+			layer_object__isnull=False,
+		).delete()
+		if not vmap_post.is_question_visible(question.id) or not question.layer_id:
+			continue
+		_save_object_answers(post, survey_session, question, surface=surface)
+	return vmap_final
 
 
 def survey_section(request, survey_slug, section_name):
@@ -1175,230 +1451,14 @@ def survey_section(request, survey_slug, section_name):
 	if request.method == 'POST':
 		form = SurveySectionAnswerForm(initial=request.POST, section=section, question=None, survey_session_id=request.session['survey_session_id'], language=selected_language)
 
-		#save data to answers
-		section_questions = section.questions()
 		survey_session = SurveySession.objects.get(pk=request.session['survey_session_id'])
-
-		# Visibility under the SUBMITTED state: stored answers overlaid with the
-		# controller values in this POST. A value posted for a question hidden
-		# under this state (stale DOM, back-navigation, tampering) is discarded
-		# below — the server never trusts the client's idea of what was visible.
-		from .visibility import compute_visibility, answers_by_code_for_session, CONTROLLER_TYPES
-		submitted_answers = answers_by_code_for_session(survey_session)
-		for q in section_questions:
-			if q.input_type in CONTROLLER_TYPES:
-				# `choice_ids`, not a bare `int()`: a controller whose posted value
-				# cannot be read as a choice contributes nothing to visibility
-				# rather than 500ing the submission. See its docstring.
-				posted = choice_ids(request.POST.getlist(q.code))
-				if posted:
-					submitted_answers[q.code] = posted
-				else:
-					submitted_answers.pop(q.code, None)
-		vmap_post = compute_visibility(session_survey, submitted_answers)
-
-		# Delete existing answers for this session and section before saving new ones
-		section_question_ids = [q.id for q in section_questions]
-		Answer.objects.filter(
-			survey_session=survey_session,
-			question_id__in=section_question_ids,
-			parent_answer_id__isnull=True,
-		).delete()
-
-		for question in section_questions:
-			if not vmap_post.is_question_visible(question.id):
-				continue
-			result = request.POST.getlist(question.code)
-			# An unanswered control still posts its name with an empty value —
-			# the dropdown's placeholder option is the case that surfaced this.
-			# Without the filter a blank ride-along becomes a stored answer.
-			# Whitespace-only counts as blank too: "   " used to become a
-			# top-level answer and made an abandoned session look answered
-			# (spec responses-empty-sessions).
-			result = [v for v in result if v.strip() != '']
-
-			if (result != []):
-				# Storage dispatches on input_type ONLY. It used to branch on
-				# whether `choices` was non-empty first, so a stale choices list
-				# left over from a type switch routed a point question's GeoJSON
-				# into int() — an unhandled 500 on every submit of the section.
-				if question.input_type in GEO_TYPES:
-					geostr_list = [g for g in result[0].split('|') if g != '']
-					is_spray = question.input_type == 'spraycan'
-					# The UI enforces max_features; this clamp only keeps a
-					# tampered or scripted POST within bounds. The section
-					# POST has no error-render path (required is client-side
-					# too), so excess features are discarded, not rejected.
-					max_features = (question.validation_settings or {}).get('max_features')
-					if is_spray:
-						# One cloud per respondent (spec spraycan-question).
-						geostr_list = geostr_list[:1]
-					elif isinstance(max_features, int) and max_features > 0:
-						geostr_list = geostr_list[:max_features]
-					for geostr in geostr_list:
-						if geostr != '':
-							answer = Answer(survey_session=survey_session, question=question)
-
-							# A chunk that is not a GeoJSON Feature skips itself, never
-							# the section: the POST has no error-render path, so a raise
-							# here cost one respondent 42 consecutive 500s (2026-09-07).
-							# Narrow catch — a database error in save() must still surface.
-							try:
-								gj = geojson.loads(geostr)
-								geometry = geojson.dumps(gj['geometry'])
-								resultToSave = GEOSGeometry(geometry)
-							except (ValueError, KeyError, TypeError, GEOSException):
-								logger.warning(
-									"Skipping unreadable geometry chunk for %s: %r",
-									question.code, geostr[:40])
-								continue
-
-							if is_spray:
-								resultToSave = _spray_cloud(
-									resultToSave, (question.validation_settings or {}).get('max_dots'))
-								if resultToSave is None:
-									logger.warning(
-										"Skipping unusable spray cloud for %s", question.code)
-									continue
-							setattr(answer, geo_column(question.input_type), resultToSave)
-
-							answer.save()
-
-							#сохранить properties как ответы наследники
-							properties = gj['properties'];
-							# Pop-up rules are decided per feature from ITS choice
-							# sub-answers (spec conditional-visibility, sub-questions):
-							# a value posted for a hidden follow-up is dropped here,
-							# never stored — the client's disabled inputs are not trusted.
-							popup_vis = _popup_visibility_for(question, properties)
-							for key, value in properties.items():
-								if key != 'question_id' and not other_option.is_other_field(key):
-									sub_question = Question.objects.get(Q(survey_section=section) & Q(code=key))
-									if not popup_vis.is_question_visible(sub_question.id):
-										continue
-									sub_answer = Answer(survey_session=survey_session, question=sub_question, parent_answer_id = answer)
-									first = value[0] if value else None
-									if sub_question.input_type in ('text', 'text_line', 'datetime'):
-										if first:
-											sub_answer.text = first
-									elif sub_question.input_type in ('number', 'range'):
-										if first:
-											sub_answer.numeric = float(first)
-									elif sub_question.input_type in ('choice', 'multichoice', 'rating', 'thumbs'):
-										sub_answer.selected_choices = [int(v) for v in value if v]
-										_raw = properties.get(other_option.field_name(key)) or []
-										_text = other_option.other_text(sub_question, sub_answer.selected_choices, _raw[0] if _raw else '')
-										if _text is not None:
-											sub_answer.text = _text
-									elif sub_question.input_type in FILE_INPUT_TYPES:
-										# The popup carries async-upload tokens as ordinary
-										# property values — one per file. Each becomes its
-										# own child Answer; foreign or stale tokens skip
-										# their answer, never the feature.
-										from .uploads import max_files_for as _mff
-										for token in [v for v in value if v][:_mff(sub_question)]:
-											upload = attach_upload(survey_session, sub_question, token)
-											if upload is None:
-												continue
-											extra = Answer(survey_session=survey_session,
-											               question=sub_question,
-											               parent_answer_id=answer,
-											               upload=upload)
-											extra.save()
-										continue
-									sub_answer.save()
-
-				elif question.input_type in ('text', 'text_line', 'datetime'):
-					# datetime keeps its raw datetime-local string; that is the
-					# form prepopulation and analytics read back from `text`.
-					answer = Answer(survey_session=survey_session, question=question)
-					answer.text = result[0].strip()
-					answer.save()
-
-				elif question.input_type in ('number', 'range'):
-					answer = Answer(survey_session=survey_session, question=question)
-					answer.numeric = float(result[0].strip())
-					answer.save()
-
-				elif question.input_type == 'ranking':
-					# The submitted order is the DOM order of the widget's hidden
-					# inputs. Store it only when it is a permutation of the
-					# question's items: every item exactly once, nothing else.
-					# An invalid ranking cannot be produced by the widget, so it
-					# is tampering or a bug — stored as nothing, the way an
-					# unanswered question is, rather than as a half-order.
-					submitted = [r for r in result if r != '']
-					defined = [str(c["code"]) for c in (question.choices or [])]
-					if sorted(submitted) == sorted(defined) and defined:
-						answer = Answer(survey_session=survey_session, question=question)
-						answer.selected_choices = [int(r) for r in submitted]
-						answer.save()
-
-				elif question.input_type in ('choice', 'multichoice', 'rating', 'thumbs'):
-					# Same tolerance as the visibility pre-pass above: a value the
-					# stored type cannot read is dropped, not raised on.
-					selected = choice_ids(result)
-					if selected:
-						answer = Answer(survey_session=survey_session, question=question)
-						answer.selected_choices = selected
-						_text = other_option.other_text(question, selected, request.POST.get(other_option.field_name(question.code)))
-						if _text is not None:
-							answer.text = _text
-						answer.save()
-
-				elif question.input_type in FILE_INPUT_TYPES:
-					# The form posts async-upload tokens, never bytes — one
-					# hidden input per file, several files per question. Tokens
-					# that are not this session's for this question are skipped;
-					# the creator's per-question cap clamps the rest, like
-					# max_features does for geo.
-					from .uploads import max_files_for
-					for token in result[:max_files_for(question)]:
-						upload = attach_upload(survey_session, question, token)
-						if upload is not None:
-							answer = Answer(survey_session=survey_session, question=question)
-							answer.upload = upload
-							answer.save()
-
-				# html/image collect nothing; any other type stores nothing.
-
-		# A replaced or dropped file: its upload no longer has an Answer after the
-		# rewrite above, so it goes back to attached=False for orphan reclamation.
-		detach_unreferenced(survey_session, section_question_ids)
-
-		# Abandoned-branch cleanup: with the new answers stored, purge answers to
-		# questions now hidden anywhere in the survey (changing "Area 7" to
-		# "Area 4" removes what was collected inside the Area 7 section). Geo
-		# parents cascade to their sub-answers.
-		vmap_final = compute_visibility(session_survey, answers_by_code_for_session(survey_session))
-		hidden_question_ids = [qid for qid, visible in vmap_final.question_visible.items() if not visible]
-		if hidden_question_ids:
-			Answer.objects.filter(
-				survey_session=survey_session,
-				question_id__in=hidden_question_ids,
-				parent_answer_id__isnull=True,
-			).delete()
+		section_questions = section.questions()
+		vmap_final = save_section_answers(request.POST, survey_session, session_survey, section)
 
 		emit_event(survey_session, 'section_submit', {
 			'section_name': section.name, 'section_index': section_current,
 		})
 		survey_session.touch()
-
-		# Answers about layer objects (spec object-answers). They live on the
-		# sub-questions of an Objects-on-the-map question, keyed by the object,
-		# so the top-level delete above never touched them: replace them here,
-		# per visible block, from the `obj__<key>__<code>` fields.
-		for question in section_questions:
-			if question.input_type != 'layer_objects':
-				continue
-			Answer.objects.filter(
-				survey_session=survey_session,
-				question__parent_question_id=question,
-				layer_object__isnull=False,
-			).delete()
-			if not vmap_post.is_question_visible(question.id) or not question.layer_id:
-				continue
-			_save_object_answers(request.POST, survey_session, question)
 
 		# Shared map (spec shared-map-layer): this session's marks become
 		# objects of every layer sourced from a geo question of this section.
@@ -1479,32 +1539,7 @@ def survey_section(request, survey_slug, section_name):
 		if is_htmx:
 			return render(request, 'partials/survey_section_partial.html', ctx)
 
-		# Full page render — add initial map state for the shell
-		head_section = section
-		# Walk back to head for initial map state
-		while head_section.prev_section:
-			head_section = head_section.prev_section
-
-		# Survey-level defaults take priority, then head section, then Berlin fallback
-		if survey.start_map_postion:
-			ctx['initial_map_lat'] = survey.start_map_postion.y
-			ctx['initial_map_lng'] = survey.start_map_postion.x
-		elif head_section.start_map_postion:
-			ctx['initial_map_lat'] = head_section.start_map_postion.y
-			ctx['initial_map_lng'] = head_section.start_map_postion.x
-		else:
-			ctx['initial_map_lat'] = 52.52
-			ctx['initial_map_lng'] = 13.405
-
-		if survey.start_map_zoom is not None:
-			ctx['initial_map_zoom'] = survey.start_map_zoom
-		elif head_section.start_map_zoom is not None:
-			ctx['initial_map_zoom'] = head_section.start_map_zoom
-		else:
-			ctx['initial_map_zoom'] = 12
-
-		ctx['initial_use_geolocation'] = survey.use_geolocation
-		ctx['map_layers'] = _build_map_layers_metadata(survey)
+		_add_shell_context(ctx, survey, section)
 		# oEmbed discovery (change embed-surveys): only for a survey the
 		# endpoint would describe, so a platform never embeds a 404.
 		ctx['oembed_url'] = oembed_url(request, survey) if anonymously_openable(survey) else ''
@@ -1876,7 +1911,7 @@ def survey_password_gate(request, survey_slug):
 OBJECT_FIELD_PREFIX = 'obj__'
 
 
-def _popup_visibility_for(parent, values_by_code):
+def _popup_visibility_for(parent, values_by_code, surface=SURFACE_RESPONDENT):
 	"""Pop-up verdict for one feature/object from its posted values
 	({sub code: [raw strings]}). Only choice-type siblings can control a rule,
 	and a value that is not a choice id counts as unanswered (`choice_ids`)."""
@@ -1888,7 +1923,7 @@ def _popup_visibility_for(parent, values_by_code):
 			posted = choice_ids(raw if isinstance(raw, (list, tuple)) else [raw])
 			if posted:
 				answers[sub.code] = posted
-	return popup_visibility(parent, answers)
+	return popup_visibility(parent, answers, surface=surface)
 
 
 def _parse_object_fields(post):
@@ -1909,7 +1944,7 @@ def _parse_object_fields(post):
 	return parsed
 
 
-def _save_object_answers(post, survey_session, question):
+def _save_object_answers(post, survey_session, question, surface=SURFACE_RESPONDENT):
 	"""Store the posted sub-answers of one Objects-on-the-map question.
 
 	Unknown object keys and unknown sub-question codes are ignored, never
@@ -1927,7 +1962,7 @@ def _save_object_answers(post, survey_session, question):
 		if obj is None:
 			continue
 		# Same per-object verdict the geo path takes per feature.
-		popup_vis = _popup_visibility_for(question, by_code)
+		popup_vis = _popup_visibility_for(question, by_code, surface=surface)
 		for code, values in by_code.items():
 			if other_option.is_other_field(code):
 				continue   # read beside its option below
@@ -2490,6 +2525,31 @@ def sitemap_xml(request):
 	)
 	return HttpResponse(xml, content_type="application/xml")
 
+def _upload_entry_session(request, survey):
+	"""The operator-entered session an upload names in `entry_session`, or None.
+
+	Only for a signed-in user with the editor role on the survey and the Pro
+	feature, and only for a session of the survey's family that an operator
+	entered (change operator-entry) — the same gate as the entry form itself."""
+	raw = request.POST.get('entry_session')
+	if not raw or not request.user.is_authenticated or survey is None:
+		return None
+	from billing.entitlements import has_feature
+	from .versioning import family_ids
+	role = get_effective_survey_role(request.user, survey)
+	if SURVEY_ROLE_RANK.get(role, -1) < SURVEY_ROLE_RANK['editor']:
+		return None
+	if not has_feature(survey.organization, 'operator_entry'):
+		return None
+	try:
+		pk = int(raw)
+	except (TypeError, ValueError):
+		return None
+	return (SurveySession.objects.select_related('survey')
+	        .filter(pk=pk, survey_id__in=family_ids(survey), is_deleted=False)
+	        .exclude(source=SurveySession.SOURCE_ONLINE).first())
+
+
 @require_POST
 def survey_upload(request, survey_slug):
 	"""Async respondent file upload — the only route that accepts file bytes.
@@ -2513,14 +2573,15 @@ def survey_upload(request, survey_slug):
 		raise Http404
 
 	survey = resolve_survey(survey_slug)
-	access_response = check_survey_access(request, survey)
+	entry_session = _upload_entry_session(request, survey)
+	access_response = None if entry_session else check_survey_access(request, survey)
 	if access_response is not None:
 		raise Http404
 
 	session_id = request.session.get('survey_session_id')
-	survey_session = SurveySession.objects.filter(
+	survey_session = entry_session or (SurveySession.objects.filter(
 		id=session_id, survey=survey, is_deleted=False,
-	).first() if session_id else None
+	).first() if session_id else None)
 	if survey_session is None and request.user.is_authenticated:
 		# The editor's Live Preview frames the respondent page without a
 		# respondent session — and on mobile the preview IS how creators test.
@@ -2542,7 +2603,8 @@ def survey_upload(request, survey_slug):
 		                     'message': _('Please reload the survey page and try again.')}, status=403)
 
 	question = Question.objects.filter(
-		survey_section__survey_header=survey,
+		# An entered sheet may sit on an archived version (change operator-entry).
+		survey_section__survey_header=entry_session.survey if entry_session else survey,
 		code=request.POST.get('question', ''),
 		input_type__in=FILE_INPUT_TYPES,
 	).first()

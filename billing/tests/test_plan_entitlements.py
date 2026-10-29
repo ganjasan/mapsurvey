@@ -45,13 +45,13 @@ class EntitlementsTest(TestCase):
         """
         GIVEN an active subscription with a future period end
         WHEN entitlements are computed
-        THEN the plan is pro, state active, with unbranded, pro_help and api
+        THEN the plan is pro, state active, with unbranded, pro_help, api and operator_entry
         """
         _sub(self.org)
         e = ents.for_organization(self.org)
         self.assertTrue(e.is_pro)
         self.assertEqual(e.state, 'active')
-        self.assertEqual(e.features, frozenset({'unbranded', 'pro_help', 'api'}))
+        self.assertEqual(e.features, frozenset({'unbranded', 'pro_help', 'api', 'operator_entry'}))
 
     def test_terminated_but_paid_is_cancelling(self):
         """

@@ -547,3 +547,29 @@ class ExportValueCorrectnessTest(TestCase):
             self.assertEqual(geometry['type'], expected)
             parsed = GEOSGeometry(json.dumps(geometry))
             self.assertTrue(parsed.valid, f'{name} exported an invalid geometry')
+
+
+class SessionSourceInExportTest(TestCase):
+    """Delta of change operator-entry: session tables carry `source` and `entered_by`."""
+
+    def test_sessions_table_carries_the_source(self):
+        """
+        GIVEN one online session and one session entered from paper by operator `clerk`
+        WHEN the sessions rows of the export are built
+        THEN they read `online` / blank and `paper` / `clerk`
+        """
+        from survey import export
+        org = _make_org('ExportSourceOrg')
+        clerk = User.objects.create_user('clerk', password='x')
+        survey = SurveyHeader.objects.create(name='export_source', organization=org, redirect_url='#')
+        section = SurveySection.objects.create(survey_header=survey, name='s1', code='S1', is_head=True)
+        q = Question.objects.create(survey_section=section, code='T', name='T', input_type='text')
+        online = SurveySession.objects.create(survey=survey)
+        paper = SurveySession.objects.create(survey=survey, source='paper', entered_by=clerk)
+        for s in (online, paper):
+            Answer.objects.create(survey_session=s, question=q, text='x')
+        self.assertIn('source', export.SESSION_COLUMNS)
+        self.assertIn('entered_by', export.SESSION_COLUMNS)
+        rows = {r['session_id']: r for r in export.sessions_rows(export.collect(survey, [(survey, '')]))}
+        self.assertEqual((rows[online.pk]['source'], rows[online.pk]['entered_by']), ('online', ''))
+        self.assertEqual((rows[paper.pk]['source'], rows[paper.pk]['entered_by']), ('paper', 'clerk'))

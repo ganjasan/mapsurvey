@@ -9144,3 +9144,135 @@ msgstr "Hoia küsimused kaardile märkimise ajal avatuna"
 #: survey/editor_forms.py:350
 msgid "On a computer screen the questions stay visible while respondents place a point or draw, and the map aims at the space beside them. On a phone they always slide away."
 msgstr "Arvutiekraanil jäävad küsimused nähtavaks, kui vastaja märgib punkti või joonistab, ja kaart sihib nende kõrval olevat ala. Telefonis libisevad need alati eest ära."
+
+#: survey/models.py
+msgid "Online"
+msgstr "Veebis"
+
+#: survey/models.py
+msgid "Paper form"
+msgstr "Paberankeet"
+
+#: survey/models.py
+msgid "Assisted interview"
+msgstr "Juhendatud intervjuu"
+
+#: survey/models.py
+msgid "Field observation"
+msgstr "Välivaatlus"
+
+#: survey/editor_forms.py
+msgid "Everyone"
+msgstr "Kõik"
+
+#: survey/editor_forms.py
+#: survey/templates/editor/partials/_audience_badge.html
+msgid "Respondents only"
+msgstr "Ainult vastajad"
+
+#: survey/editor_forms.py
+msgid "Operators only — the \"Enter a response\" form"
+msgstr "Ainult sisestajad — vorm „Sisesta vastus”"
+
+#: survey/editor_forms.py
+#: survey/templates/editor/partials/_audience_field.html
+msgid "Who sees this"
+msgstr "Kes seda näeb"
+
+#: survey/templates/editor/partials/_audience_badge.html
+msgid "Operators only"
+msgstr "Ainult sisestajad"
+
+#: survey/templates/editor/partials/_audience_badge.html
+msgid "Shown only on the operator entry form"
+msgstr "Näha ainult sisestusvormil"
+
+#: survey/templates/editor/partials/_audience_badge.html
+msgid "Not shown on the operator entry form"
+msgstr "Sisestusvormil ei ole näha"
+
+#: survey/templates/editor/partials/_audience_badge.html
+msgid "The question this rule depends on is shown to operators only, so respondents never see this."
+msgstr "Küsimust, millest see reegel sõltub, näevad ainult sisestajad, seega vastajad ei näe seda kunagi."
+
+#: survey/templates/editor/partials/_audience_field.html
+msgid "“Operators only” shows it just on the Enter a response form — for a sheet number, the event, or a note about the paper form. Respondents never see it."
+msgstr "„Ainult sisestajad” näitab seda ainult vormil „Sisesta vastus” — lehe numbri, ürituse või paberankeedi märkuse jaoks. Vastajad ei näe seda kunagi."
+
+#: survey/templates/editor/operator_entry/header.html
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "Enter a response"
+msgstr "Sisesta vastus"
+
+#: survey/templates/editor/operator_entry/header.html
+msgid "Type in answers collected on paper, in an interview or in the field. They are stored with their source, count as responses, and stay out of the visit statistics."
+msgstr "Sisesta paberil, intervjuus või välitöödel kogutud vastused. Need salvestatakse koos allikaga, loetakse vastusteks ega lähe külastuste statistikasse."
+
+#: survey/templates/editor/operator_entry/header.html
+msgid "Pick the version the paper form was printed from. Answers stay with that version's questions."
+msgstr "Vali versioon, millest paberankeet trükiti. Vastused jäävad selle versiooni küsimuste juurde."
+
+#: survey/templates/editor/operator_entry/header.html
+msgid "Start entering"
+msgstr "Alusta sisestamist"
+
+#: survey/templates/editor/operator_entry/_entry_bar.html
+#, python-format
+msgid "Entering a response · %(source)s"
+msgstr "Vastuse sisestamine · %(source)s"
+
+#: survey/templates/editor/operator_entry/saved.html
+msgid "Response saved"
+msgstr "Vastus salvestatud"
+
+#: survey/templates/editor/operator_entry/saved.html
+#, python-format
+msgid "Stored as “%(source)s”. It appears in Responses with its source and your name."
+msgstr "Salvestatud kui „%(source)s”. See ilmub vastuste alla koos allika ja sinu nimega."
+
+#: survey/templates/editor/operator_entry/saved.html
+msgid "Back to Responses"
+msgstr "Tagasi vastuste juurde"
+
+#: survey/templates/editor/operator_entry/saved.html
+msgid "Enter the next one"
+msgstr "Sisesta järgmine"
+
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "Type in answers collected on paper, in an interview or in the field"
+msgstr "Sisesta paberil, intervjuus või välitöödel kogutud vastused"
+
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "Entering responses for others is part of Pro"
+msgstr "Teiste eest vastuste sisestamine kuulub Pro paketti"
+
+#: survey/templates/editor/partials/analytics_session_detail.html
+#, python-format
+msgid "Entered by %(name)s"
+msgstr "Sisestas %(name)s"
+
+#: survey/operator_entry_views.py
+msgid "Where do these answers come from?"
+msgstr "Kust need vastused pärinevad?"
+
+#: survey/operator_entry_views.py
+msgid "Survey version"
+msgstr "Küsitluse versioon"
+
+#: survey/operator_entry_views.py
+msgid "Language of the answers"
+msgstr "Vastuste keel"
+
+#: survey/operator_entry_views.py
+#, python-format
+msgid "v%(n)s — current"
+msgstr "v%(n)s — praegune"
+
+#: survey/operator_entry_views.py
+#, python-format
+msgid "v%(n)s — archived"
+msgstr "v%(n)s — arhiveeritud"
+
+#: billing/features.py
+msgid "Enter responses for others: paper forms, interviews, field work"
+msgstr "Teiste eest vastuste sisestamine: paberankeedid, intervjuud, välitööd"

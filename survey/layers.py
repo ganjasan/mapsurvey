@@ -763,6 +763,9 @@ def backfill_question_layer(layer):
     family = [owner] + list(SurveyHeader.objects.filter(canonical_survey=owner))
     sessions = (SurveySession.objects
                 .filter(survey__in=family,
+                        # Operator-entered sessions stay off shared maps (change
+                        # operator-entry): keyed-in marks are epic #350's call.
+                        source=SurveySession.SOURCE_ONLINE,
                         answer__question__code=layer.source_question_code,
                         answer__question__input_type__in=GEO_INPUT_TYPES,
                         answer__parent_answer_id__isnull=True)
@@ -777,7 +780,10 @@ def backfill_question_layer(layer):
 def sync_question_layers_for_session(session, questions):
     """After a section POST: feed every `question` layer read by a geo question
     of that section. Never raises — a failed materialisation is logged and the
-    next submit re-syncs; the answers themselves are already stored."""
+    next submit re-syncs; the answers themselves are already stored.
+    An operator-entered session (source other than `online`) feeds nothing."""
+    if getattr(session, 'source', 'online') != 'online':
+        return
     for question in questions:
         if question.input_type not in GEO_INPUT_TYPES:
             continue

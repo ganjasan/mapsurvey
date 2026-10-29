@@ -81,6 +81,19 @@
                     title="{% trans 'Export responses as Excel, GeoPackage, Shapefile, GeoJSON, KML or CSV' %}">
                 <i class="fas fa-file-export"></i> {% trans "Export data" %}
             </button>
+            {% if can_enter_responses %}{% comment %}Operator entry form (change operator-entry): Pro.{% endcomment %}
+            {% if operator_entry_available %}
+            <a class="btn btn-sm btn-outline-secondary rv2-enter-response" href="{% url 'operator_entry_header' survey.uuid %}"
+               title="{% trans 'Type in answers collected on paper, in an interview or in the field' %}">
+                <i class="fas fa-user-edit"></i> {% trans "Enter a response" %}
+            </a>
+            {% else %}
+            <a class="btn btn-sm btn-outline-secondary rv2-enter-response rv2-enter-response--locked" href="{% url 'org_billing' survey.organization.slug %}"
+               title="{% trans 'Entering responses for others is part of Pro' %}">
+                <i class="fas fa-lock"></i> {% trans "Enter a response" %} <span class="badge badge-light">Pro</span>
+            </a>
+            {% endif %}
+            {% endif %}
         </div>
     </div>
 

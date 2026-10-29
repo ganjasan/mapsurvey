@@ -12,7 +12,7 @@
     {% else %}
     <span class="badge" title="{{ vis.label }}" style="background:#e7f1ff;color:#0b5ed7;border:1px solid #b6d4fe;"><i class="fas fa-code-branch"></i></span>
     {% endif %}
-    {% endif %}{% endwith %}
+    {% endif %}{% include "editor/partials/_audience_badge.html" with item=section vis=vis %}{% endwith %}
     {% if section.question_count is not None %}<span class="section-qcount" title="{% trans 'Questions in this section' %}">{{ section.question_count }}</span>{% endif %}
     {% comment %}Structural on a live survey: the gate offers unpublished changes
     instead of a request the server would refuse (change edit-live-survey).{% endcomment %}

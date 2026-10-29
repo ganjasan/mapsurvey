@@ -33,7 +33,7 @@
         {% csrf_token %}
         {# An unticked checkbox posts nothing; this says the modal had it (SurveySectionForm.clean_keep_panel_open). #}
         <input type="hidden" name="keep_panel_open_present" value="1">
-        {% for field in form %}
+        {% for field in form %}{% if field.name != 'audience' %}
         {% if field.name == 'layout' %}<fieldset class="section-layout-block"><legend>{% trans "Layout" %}</legend>{% endif %}
         <div class="form-group" data-layout-control="{{ field.name }}">
             {# Base fields hold the primary language; name it when translations exist so "Title" doesn't read as a language-neutral default. #}
@@ -49,14 +49,15 @@
         map" question (change layers-by-question); the per-section checklist that used
         to sit here was a second door to the same thing.{% endcomment %}
         {% if field.name == 'layout' and layers_enabled %}
-        <small class="form-text text-muted" style="margin-top:-.5rem;margin-bottom:.75rem;">{% trans "To show a reference layer on this section’s map, add an “Objects on the map” question and pick the layer." %} {% trans "A Form section has no map, so it cannot hold map questions." %}</small>
+        <small class="form-text text-muted section-ref-layers" style="margin-top:-.5rem;margin-bottom:.75rem;">{% trans "To show a reference layer on this section’s map, add an “Objects on the map” question and pick the layer." %} {% trans "A Form section has no map, so it cannot hold map questions." %}</small>
         {% endif %}
         {% if field.name == 'stage_image' %}
         {% with url=section.stage_image_url %}<div class="section-stage-thumb"{% if not url %} hidden{% endif %}><img src="{{ url }}" alt=""></div>{% endwith %}
-        </fieldset>
         {% endif %}
-        {% endfor %}
+        {% if field.name == 'keep_panel_open' %}</fieldset>{% endif %}
+        {% endif %}{% endfor %}
 
+        {% include "editor/partials/_audience_field.html" %}
         {% include "editor/partials/_visibility_block.html" %}
 
         {% if survey.available_languages|length > 1 %}

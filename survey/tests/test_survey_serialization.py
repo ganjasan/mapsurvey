@@ -3258,3 +3258,36 @@ class SurveyImportJobTest(TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertFalse(SurveyImportJob.objects.filter(pk=job.pk).exists())
         self.assertNotContains(r, 'data-import-job=')
+
+
+class SessionSourceSerializationTest(TestCase):
+    """Delta of change operator-entry: the responses file carries the session source."""
+
+    def setUp(self):
+        org = Organization.objects.create(name='Source Ser Org')
+        self.clerk = User.objects.create_user('ser_clerk', password='x')
+        self.survey = SurveyHeader.objects.create(name='source_ser', organization=org, redirect_url='#')
+
+    def test_session_with_source_round_trips(self):
+        """
+        GIVEN a paper session entered by ser_clerk
+        WHEN sessions are serialized and a session is created back from the data
+        THEN the data reads paper and the operator's username, and the copy is paper
+        """
+        from survey.serialization import create_session
+        SurveySession.objects.create(survey=self.survey, source='paper', entered_by=self.clerk)
+        data = serialize_sessions(self.survey)[0]
+        self.assertEqual((data['source'], data['entered_by']), ('paper', 'ser_clerk'))
+        copy = create_session(self.survey, data)
+        self.assertEqual(copy.source, 'paper')
+        self.assertIsNone(copy.entered_by)
+
+    def test_old_responses_file_reads_online(self):
+        """
+        GIVEN session data without `source` (an archive from before the field) or with an unknown one
+        WHEN a session is created from it
+        THEN it reads `online`
+        """
+        from survey.serialization import create_session
+        self.assertEqual(create_session(self.survey, {}).source, 'online')
+        self.assertEqual(create_session(self.survey, {'source': 'fax'}).source, 'online')

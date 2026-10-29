@@ -136,3 +136,51 @@ class V1PublishReviewTest(TestCase):
         self.assertEqual(first.json()['error'], 'translation_gaps')
         second = self.api.post(f'/surveys/{self.survey.uuid}/publish', {'acknowledge_translation_gaps': True})
         self.assertEqual(second.status_code, 200, second.content)
+
+
+@LOCMEM
+class V1AudienceTest(TestCase):
+    """Delta of change operator-entry: `audience` on the structure schemas."""
+
+    def setUp(self):
+        self.org, self.owner = make_pro_org()
+        self.survey, self.section = make_v1_survey(self.org, self.owner)
+        self.question = Question.objects.create(survey_section=self.section, name='Sheet', input_type='text',
+                                                order_number=1)
+        self.token, _ = mint(self.owner)
+        self.api = V1Client(self.client, self.token)
+        self.base = f'/surveys/{self.survey.uuid}'
+
+    def test_set_over_the_api(self):
+        """
+        GIVEN a draft survey
+        WHEN a question is patched with audience `operators` and then read
+        THEN both responses carry `operators`
+        """
+        patched = self.api.patch(f'{self.base}/questions/{self.question.pk}', {'audience': 'operators'})
+        self.assertEqual(patched.status_code, 200, patched.content)
+        self.assertEqual(patched.json()['audience'], 'operators')
+        read = self.api.get(f'{self.base}/questions/{self.question.pk}')
+        self.assertEqual(read.json()['audience'], 'operators')
+
+    def test_unknown_value_is_a_validation_error(self):
+        """
+        GIVEN a question
+        WHEN it is patched with audience `staff`
+        THEN 422 validation names the field
+        """
+        response = self.api.patch(f'{self.base}/questions/{self.question.pk}', {'audience': 'staff'})
+        self.assertEqual(response.status_code, 422)
+        self.assertIn('audience', response.content.decode())
+
+    def test_live_survey_answers_draft_required(self):
+        """
+        GIVEN a published survey without unpublished changes
+        WHEN a section's audience is patched
+        THEN 409 draft_required naming the audience
+        """
+        self.survey.status = 'published'
+        self.survey.save()
+        response = self.api.patch(f'{self.base}/sections/{self.section.pk}', {'audience': 'operators'})
+        self.assertEqual(response.status_code, 409, response.content)
+        self.assertIn('the audience', response.json()['reasons'])

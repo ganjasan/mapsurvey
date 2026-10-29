@@ -16,7 +16,7 @@ from django.utils.text import slugify
 from django.contrib.auth.hashers import make_password, check_password as django_check_password
 import random
 import re as re_module
-from survey.question_types import SPRAY_BRUSH_CHOICES, SPRAY_BRUSH_DEFAULT
+from survey.question_types import SPRAY_BRUSH_CHOICES, SPRAY_BRUSH_DEFAULT, AUDIENCE_CHOICES, AUDIENCE_EVERYONE
 
 
 ORG_ROLE_CHOICES = (
@@ -217,11 +217,34 @@ class SurveySession(models.Model):
         (OPENED_BY_COLLABORATOR, 'collaborator'), (OPENED_BY_PREVIEW, 'preview'),
     )
     opened_by_kind = models.CharField(max_length=12, choices=OPENED_BY_KINDS, default=OPENED_BY_EXTERNAL)
+    # Where the answers came from (change operator-entry). `opened_by_kind` says
+    # who opened the session and is derived; `source` is set by the surface that
+    # creates the session: the respondent link writes `online`, the operator entry
+    # form one of the others together with `entered_by`. Only `online` sessions
+    # are respondents for funnels, Perf, first-response and shared maps.
+    SOURCE_ONLINE = 'online'
+    SOURCE_PAPER = 'paper'
+    SOURCE_ASSISTED = 'assisted'
+    SOURCE_FIELD = 'field'
+    SOURCE_OTHER = 'other'
+    SOURCE_CHOICES = (
+        (SOURCE_ONLINE, _('Online')), (SOURCE_PAPER, _('Paper form')),
+        (SOURCE_ASSISTED, _('Assisted interview')), (SOURCE_FIELD, _('Field observation')),
+        (SOURCE_OTHER, _('Other')),
+    )
+    OPERATOR_SOURCES = (SOURCE_PAPER, SOURCE_ASSISTED, SOURCE_FIELD, SOURCE_OTHER)
+    source = models.CharField(max_length=12, choices=SOURCE_CHOICES, default=SOURCE_ONLINE, db_index=True)
+    entered_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,
+                                   on_delete=models.SET_NULL, related_name='entered_sessions')
 
     objects = SurveySessionQuerySet.as_manager()
 
     class Meta:
         app_label = 'survey'
+
+    @property
+    def is_operator_entry(self):
+        return self.source != self.SOURCE_ONLINE
 
     def touch(self):
         """The respondent did something: a section submit, a page leave."""
@@ -861,6 +884,9 @@ class SurveySection(models.Model):
     # References are by code, not FK: option identity only exists as a JSON code, and
     # question codes survive ZIP import via code_remap. See survey/visibility.py.
     visibility_rule = models.JSONField(null=True, blank=True, help_text=_('Show this section only when the referenced choice question\'s answer includes any of the referenced option codes, or (with "answered": true) any option at all. Null = always shown.'))
+    # Who this section is for (spec question-audience): its members inherit the
+    # narrowing. Judged by survey/visibility.py per surface, never by a template.
+    audience = models.CharField(max_length=12, choices=AUDIENCE_CHOICES, default=AUDIENCE_EVERYONE)
 
     class Meta:
         app_label = 'survey'
@@ -998,6 +1024,7 @@ class Question(models.Model):
     # Same shape and semantics as SurveySection.visibility_rule; a question is visible
     # only when its section is visible AND this rule (if any) is satisfied.
     visibility_rule = models.JSONField(null=True, blank=True, help_text=_('Show this question only when the referenced choice question\'s answer includes any of the referenced option codes, or (with "answered": true) any option at all. Null = always shown.'))
+    audience = models.CharField(max_length=12, choices=AUDIENCE_CHOICES, default=AUDIENCE_EVERYONE, help_text=_('Who sees this question: everyone, respondents only, or operators only (the operator entry form).'))
     # `layer_objects` only: the reference layer whose objects this question lists.
     # PROTECT — deleting the layer would orphan every answer hanging on its
     # objects; the settings card refuses and names the question instead.
@@ -1207,6 +1234,7 @@ class QuestionGroup(models.Model):
     display_style = models.CharField(max_length=12, choices=GROUP_DISPLAY_STYLE_CHOICES, default="card")
     # Same shape as Question.visibility_rule; hides every member when false.
     visibility_rule = models.JSONField(null=True, blank=True)
+    audience = models.CharField(max_length=12, choices=AUDIENCE_CHOICES, default=AUDIENCE_EVERYONE)
     order_number = models.IntegerField(default=0)
 
     class Meta:

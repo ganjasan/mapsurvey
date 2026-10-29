@@ -1,0 +1,66 @@
+{% extends "editor/editor_base.html" %}
+{% load i18n survey_filters %}
+{% comment %}Operator entry form, step 1 (change operator-entry, spec operator-entry): what a
+respondent never chooses — where the answers came from, the survey version the sheet was printed
+from, and its language. Submitting it creates the session and opens the first section.{% endcomment %}
+{% block page_title %}{% trans "Enter a response" %} – {{ survey.name }}{% endblock %}
+
+{% block navbar_content %}
+{% survey_title survey %}
+{% include "editor/partials/_survey_nav_tabs.html" with active_tab="results" %}
+{% endblock %}
+
+{% block content %}
+<div class="operator-entry-header container py-4" style="max-width: 640px;">
+    <h2 class="h4 mb-1">{% trans "Enter a response" %}</h2>
+    <p class="text-muted mb-4">
+        {% trans "Type in answers collected on paper, in an interview or in the field. They are stored with their source, count as responses, and stay out of the visit statistics." %}
+        {% if HELP_URL.operator_entry %}<a href="{{ HELP_URL.operator_entry }}" target="_blank" rel="noopener">{% trans "Learn more" %}</a>{% endif %}
+    </p>
+    <form method="post" novalidate>
+        {% csrf_token %}
+        <fieldset class="mb-4">
+            <legend class="h6">{{ form.source.label }}</legend>
+            {% for radio in form.source %}
+            <div class="form-check">
+                {{ radio.tag }}
+                <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+            </div>
+            {% endfor %}
+            {% for error in form.source.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+        </fieldset>
+
+        {% if form.show_version %}
+        <div class="form-group">
+            <label for="{{ form.version.id_for_label }}" class="h6">{{ form.version.label }}</label>
+            <select name="{{ form.version.html_name }}" id="{{ form.version.id_for_label }}" class="form-control">
+                {% for value, label in form.version.field.choices %}
+                <option value="{{ value }}"{% if form.version.value|stringformat:"s" == value|stringformat:"s" %} selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <small class="form-text text-muted">{% trans "Pick the version the paper form was printed from. Answers stay with that version's questions." %}</small>
+        </div>
+        {% else %}
+        <input type="hidden" name="{{ form.version.html_name }}" value="{{ form.version.value }}">
+        {% endif %}
+
+        {% if form.show_language %}
+        <div class="form-group">
+            <label for="{{ form.language.id_for_label }}" class="h6">{{ form.language.label }}</label>
+            <select name="{{ form.language.html_name }}" id="{{ form.language.id_for_label }}" class="form-control">
+                {% for value, label in form.language.field.choices %}
+                <option value="{{ value }}"{% if form.language.value == value %} selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% else %}
+        <input type="hidden" name="{{ form.language.html_name }}" value="{{ form.language.value|default:'' }}">
+        {% endif %}
+
+        <div class="d-flex justify-content-between mt-4">
+            <a class="btn btn-outline-secondary" href="{% url 'editor_survey_analytics' survey.uuid %}">{% trans "Cancel" %}</a>
+            <button type="submit" class="btn btn-primary">{% trans "Start entering" %}</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

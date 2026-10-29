@@ -28,6 +28,8 @@ HELP_LINKS = {
     'connected_apps': 'how-to/connect-an-app/',
     # The Translations tab (change translation-table).
     'translate': 'how-to/translate-a-survey/',
+    # The operator entry form (change operator-entry, #355).
+    'operator_entry': 'how-to/enter-responses-for-others/',
     'faq': 'faq/',
 }
 

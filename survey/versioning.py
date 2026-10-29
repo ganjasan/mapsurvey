@@ -383,6 +383,8 @@ def structural_question_changes(before, after, removed_choices=()):
         reasons.append('the layer')
     if (before['visibility_rule'] or None) != (after.visibility_rule or None):
         reasons.append('the visibility rule')
+    if before.get('audience', 'everyone') != after.audience:
+        reasons.append('the audience')  # who sees it is structure (change operator-entry)
     for _code, label, count in removed_choices:
         reasons.append(f'the option “{label}” ({count} answer{"s" if count != 1 else ""})')
     return reasons
@@ -393,6 +395,7 @@ def question_snapshot(question):
         'input_type': question.input_type,
         'layer_id': question.layer_id,
         'visibility_rule': question.visibility_rule,
+        'audience': question.audience,
         'choices': list(question.choices or []),
     }
 
@@ -403,11 +406,13 @@ def structural_section_changes(before, after):
         reasons.append('the section code')
     if (before['visibility_rule'] or None) != (after.visibility_rule or None):
         reasons.append('the visibility rule')
+    if before.get('audience', 'everyone') != after.audience:
+        reasons.append('the audience')
     return reasons
 
 
 def section_snapshot(section):
-    return {'code': section.code, 'visibility_rule': section.visibility_rule}
+    return {'code': section.code, 'visibility_rule': section.visibility_rule, 'audience': section.audience}
 
 
 def structural_edit_message(reasons):

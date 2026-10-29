@@ -9251,3 +9251,135 @@ msgstr "Garder les questions ouvertes pendant le placement sur la carte"
 #: survey/editor_forms.py:350
 msgid "On a computer screen the questions stay visible while respondents place a point or draw, and the map aims at the space beside them. On a phone they always slide away."
 msgstr "Sur un écran d'ordinateur, les questions restent visibles pendant que les répondants placent un point ou dessinent, et la carte vise l'espace à côté. Sur un téléphone, elles se replient toujours."
+
+#: survey/models.py
+msgid "Online"
+msgstr "En ligne"
+
+#: survey/models.py
+msgid "Paper form"
+msgstr "Formulaire papier"
+
+#: survey/models.py
+msgid "Assisted interview"
+msgstr "Entretien accompagné"
+
+#: survey/models.py
+msgid "Field observation"
+msgstr "Observation sur le terrain"
+
+#: survey/editor_forms.py
+msgid "Everyone"
+msgstr "Tout le monde"
+
+#: survey/editor_forms.py
+#: survey/templates/editor/partials/_audience_badge.html
+msgid "Respondents only"
+msgstr "Répondants uniquement"
+
+#: survey/editor_forms.py
+msgid "Operators only — the \"Enter a response\" form"
+msgstr "Opérateurs uniquement — le formulaire « Saisir une réponse »"
+
+#: survey/editor_forms.py
+#: survey/templates/editor/partials/_audience_field.html
+msgid "Who sees this"
+msgstr "Qui le voit"
+
+#: survey/templates/editor/partials/_audience_badge.html
+msgid "Operators only"
+msgstr "Opérateurs uniquement"
+
+#: survey/templates/editor/partials/_audience_badge.html
+msgid "Shown only on the operator entry form"
+msgstr "Affiché uniquement dans le formulaire de saisie"
+
+#: survey/templates/editor/partials/_audience_badge.html
+msgid "Not shown on the operator entry form"
+msgstr "Non affiché dans le formulaire de saisie"
+
+#: survey/templates/editor/partials/_audience_badge.html
+msgid "The question this rule depends on is shown to operators only, so respondents never see this."
+msgstr "La question dont dépend cette règle n’est visible que des opérateurs : les répondants ne verront donc jamais ceci."
+
+#: survey/templates/editor/partials/_audience_field.html
+msgid "“Operators only” shows it just on the Enter a response form — for a sheet number, the event, or a note about the paper form. Respondents never see it."
+msgstr "« Opérateurs uniquement » ne l’affiche que dans le formulaire « Saisir une réponse » — pour un numéro de feuille, l’événement ou une note sur le formulaire papier. Les répondants ne le voient jamais."
+
+#: survey/templates/editor/operator_entry/header.html
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "Enter a response"
+msgstr "Saisir une réponse"
+
+#: survey/templates/editor/operator_entry/header.html
+msgid "Type in answers collected on paper, in an interview or in the field. They are stored with their source, count as responses, and stay out of the visit statistics."
+msgstr "Saisissez des réponses recueillies sur papier, en entretien ou sur le terrain. Elles sont enregistrées avec leur source, comptent comme des réponses et restent hors des statistiques de visites."
+
+#: survey/templates/editor/operator_entry/header.html
+msgid "Pick the version the paper form was printed from. Answers stay with that version's questions."
+msgstr "Choisissez la version à partir de laquelle le formulaire papier a été imprimé. Les réponses restent liées aux questions de cette version."
+
+#: survey/templates/editor/operator_entry/header.html
+msgid "Start entering"
+msgstr "Commencer la saisie"
+
+#: survey/templates/editor/operator_entry/_entry_bar.html
+#, python-format
+msgid "Entering a response · %(source)s"
+msgstr "Saisie d’une réponse · %(source)s"
+
+#: survey/templates/editor/operator_entry/saved.html
+msgid "Response saved"
+msgstr "Réponse enregistrée"
+
+#: survey/templates/editor/operator_entry/saved.html
+#, python-format
+msgid "Stored as “%(source)s”. It appears in Responses with its source and your name."
+msgstr "Enregistrée comme « %(source)s ». Elle apparaît dans Réponses avec sa source et votre nom."
+
+#: survey/templates/editor/operator_entry/saved.html
+msgid "Back to Responses"
+msgstr "Retour aux réponses"
+
+#: survey/templates/editor/operator_entry/saved.html
+msgid "Enter the next one"
+msgstr "Saisir la suivante"
+
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "Type in answers collected on paper, in an interview or in the field"
+msgstr "Saisir des réponses recueillies sur papier, en entretien ou sur le terrain"
+
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "Entering responses for others is part of Pro"
+msgstr "La saisie de réponses pour d’autres fait partie de Pro"
+
+#: survey/templates/editor/partials/analytics_session_detail.html
+#, python-format
+msgid "Entered by %(name)s"
+msgstr "Saisie par %(name)s"
+
+#: survey/operator_entry_views.py
+msgid "Where do these answers come from?"
+msgstr "D’où viennent ces réponses ?"
+
+#: survey/operator_entry_views.py
+msgid "Survey version"
+msgstr "Version du questionnaire"
+
+#: survey/operator_entry_views.py
+msgid "Language of the answers"
+msgstr "Langue des réponses"
+
+#: survey/operator_entry_views.py
+#, python-format
+msgid "v%(n)s — current"
+msgstr "v%(n)s — actuelle"
+
+#: survey/operator_entry_views.py
+#, python-format
+msgid "v%(n)s — archived"
+msgstr "v%(n)s — archivée"
+
+#: billing/features.py
+msgid "Enter responses for others: paper forms, interviews, field work"
+msgstr "Saisir des réponses pour d’autres : formulaires papier, entretiens, terrain"

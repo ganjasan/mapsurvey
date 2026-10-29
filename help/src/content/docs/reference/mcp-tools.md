@@ -191,6 +191,7 @@ Permission `surveys:write` · role **editor**
 | `keep_panel_open` | boolean |  |  |
 | `next_label` | string |  |  |
 | `visibility_rule` | object (`question_code`, `choice_codes`, `answered`) |  |  |
+| `audience` | `everyone` \| `respondents` \| `operators` |  | Who sees it: everyone, respondents only, or operators only (the "Enter a response" form workspace members fill in for someone else). Changing it on a live survey needs unpublished changes. |
 | `translations` | map |  |  |
 | `map_start` | object (`lat`, `lng`, `zoom`) |  |  |
 | `use_geolocation` | boolean |  |  |
@@ -215,6 +216,7 @@ Permission `surveys:write` · role **editor**
 | `keep_panel_open` | boolean |  |  |
 | `next_label` | string |  |  |
 | `visibility_rule` | object (`question_code`, `choice_codes`, `answered`) |  |  |
+| `audience` | `everyone` \| `respondents` \| `operators` |  | Who sees it: everyone, respondents only, or operators only (the "Enter a response" form workspace members fill in for someone else). Changing it on a live survey needs unpublished changes. |
 | `translations` | map |  |  |
 | `map_start` | object (`lat`, `lng`, `zoom`) |  |  |
 | `use_geolocation` | boolean |  |  |
@@ -262,6 +264,7 @@ Permission `surveys:write` · role **editor**
 | `icon_class` | string |  |  |
 | `display_style` | string |  |  |
 | `visibility_rule` | object (`question_code`, `choice_codes`, `answered`) |  |  |
+| `audience` | `everyone` \| `respondents` \| `operators` |  | Who sees it: everyone, respondents only, or operators only (the "Enter a response" form workspace members fill in for someone else). Changing it on a live survey needs unpublished changes. |
 | `layer_id` | integer |  |  |
 | `layer_from_answers` | string |  | For an "Objects on the map" question: the code of a map question whose answers become a shared map (created on first use). Use instead of `layer_id`. |
 | `min_objects` | integer |  |  |
@@ -289,6 +292,7 @@ Permission `surveys:write` · role **editor**
 | `icon_class` | string |  |  |
 | `display_style` | string |  |  |
 | `visibility_rule` | object (`question_code`, `choice_codes`, `answered`) |  |  |
+| `audience` | `everyone` \| `respondents` \| `operators` |  | Who sees it: everyone, respondents only, or operators only (the "Enter a response" form workspace members fill in for someone else). Changing it on a live survey needs unpublished changes. |
 | `layer_id` | integer |  |  |
 | `layer_from_answers` | string |  | For an "Objects on the map" question: the code of a map question whose answers become a shared map (created on first use). Use instead of `layer_id`. |
 | `min_objects` | integer |  |  |
@@ -666,6 +670,7 @@ Permission `surveys:write` · role **editor**
 | `description` | string |  |  |
 | `display_style` | `plain` \| `card` \| `collapsible` |  |  |
 | `visibility_rule` | object (`question_code`, `choice_codes`, `answered`) |  |  |
+| `audience` | `everyone` \| `respondents` \| `operators` |  | Who sees it: everyone, respondents only, or operators only (the "Enter a response" form workspace members fill in for someone else). Changing it on a live survey needs unpublished changes. |
 | `translations` | map |  |  |
 | `question_ids` | list of integer |  | The questions the group holds, in order; they move together to where the first of them was. Questions of the same list only (the section, or the same pop-up). |
 | `parent_id` | integer |  | Create the group in this question's pop-up. |
@@ -684,6 +689,7 @@ Permission `surveys:write` · role **editor**
 | `description` | string |  |  |
 | `display_style` | `plain` \| `card` \| `collapsible` |  |  |
 | `visibility_rule` | object (`question_code`, `choice_codes`, `answered`) |  |  |
+| `audience` | `everyone` \| `respondents` \| `operators` |  | Who sees it: everyone, respondents only, or operators only (the "Enter a response" form workspace members fill in for someone else). Changing it on a live survey needs unpublished changes. |
 | `translations` | map |  |  |
 | `question_ids` | list of integer |  | The questions the group holds, in order; they move together to where the first of them was. Questions of the same list only (the section, or the same pop-up). |
 | `survey` | uuid | **required** | The survey uuid. |

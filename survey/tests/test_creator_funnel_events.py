@@ -692,3 +692,48 @@ class BackfillBoundsTest(TestCase):
         self.assertEqual(self._count(out, 'creator_registered'), 0)
         with self.assertRaises(CommandError):
             self._run('--events', 'not_an_event')
+
+
+class OperatorSessionsAreNotRespondentsTest(TestCase):
+    """Delta of change operator-entry: `source` beside `opened_by_kind`."""
+
+    def setUp(self):
+        self.org = _make_org('OpEvents')
+        self.user = User.objects.create_user('op_owner', password='x')
+        self.survey = SurveyHeader.objects.create(
+            name='op_events', organization=self.org, redirect_url='#',
+            status='published', created_by=self.user,
+        )
+
+    def test_existing_and_new_sessions_read_online(self):
+        """
+        GIVEN a session created the way the respondent link creates it
+        WHEN it is read back
+        THEN its source is `online` and it has no operator
+        """
+        session = SurveySession.objects.create(survey=self.survey)
+        session.refresh_from_db()
+        self.assertEqual(session.source, 'online')
+        self.assertIsNone(session.entered_by)
+        self.assertFalse(session.is_operator_entry)
+
+    def test_entered_sheets_neither_emit_nor_suppress_first_response(self):
+        """
+        GIVEN ten paper sessions on a survey with no online session (even ones that
+              would read `external`)
+        WHEN an anonymous respondent then opens the survey
+        THEN exactly one survey_first_response is emitted, at the respondent's session
+        """
+        import posthog
+
+        from survey import product_events as pe
+        with mock.patch.object(posthog, 'disabled', False), \
+                mock.patch('posthog.capture') as capture:
+            for _ in range(10):
+                SurveySession.objects.create(survey=self.survey, source='paper', entered_by=self.user)
+            online = SurveySession.objects.create(survey=self.survey)
+
+        first = [c for c in capture.call_args_list
+                 if c.args and c.args[0] == pe.SURVEY_FIRST_RESPONSE]
+        self.assertEqual(len(first), 1)
+        self.assertEqual(SurveySession.objects.filter(source='online').get(), online)

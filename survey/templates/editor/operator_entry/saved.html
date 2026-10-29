@@ -1,0 +1,24 @@
+{% extends "editor/editor_base.html" %}
+{% load i18n survey_filters %}
+{% comment %}Operator entry form, the end (change operator-entry): the sheet is stored; the next one
+starts with the same source, version and language.{% endcomment %}
+{% block page_title %}{% trans "Response saved" %} – {{ survey.name }}{% endblock %}
+
+{% block navbar_content %}
+{% survey_title survey %}
+{% include "editor/partials/_survey_nav_tabs.html" with active_tab="results" %}
+{% endblock %}
+
+{% block content %}
+<div class="operator-entry-saved container py-5 text-center" style="max-width: 560px;">
+    <i class="fas fa-check-circle fa-3x text-success mb-3" aria-hidden="true"></i>
+    <h2 class="h4">{% trans "Response saved" %}</h2>
+    <p class="text-muted">
+        {% blocktrans with source=session.get_source_display %}Stored as “{{ source }}”. It appears in Responses with its source and your name.{% endblocktrans %}
+    </p>
+    <div class="d-flex justify-content-center mt-4" style="gap: .75rem;">
+        <a class="btn btn-outline-secondary" href="{{ responses_url }}">{% trans "Back to Responses" %}</a>
+        <a class="btn btn-primary" href="{{ next_url }}" autofocus>{% trans "Enter the next one" %}</a>
+    </div>
+</div>
+{% endblock %}

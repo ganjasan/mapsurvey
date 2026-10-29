@@ -132,12 +132,17 @@ def emit_first_response_event(sender, instance, created, **kwargs):
         return
     if instance.opened_by_kind != SurveySession.OPENED_BY_EXTERNAL:
         return
+    # Operator-entered sheets are answers but not respondents (change
+    # operator-entry): they neither emit nor count as "already answered".
+    if instance.source != SurveySession.SOURCE_ONLINE:
+        return
     owner_id = getattr(instance.survey, 'created_by_id', None)
     if owner_id is None:
         return
     already = (SurveySession.objects
                .filter(survey_id=instance.survey_id, is_deleted=False,
-                       opened_by_kind=SurveySession.OPENED_BY_EXTERNAL)
+                       opened_by_kind=SurveySession.OPENED_BY_EXTERNAL,
+                       source=SurveySession.SOURCE_ONLINE)
                .exclude(pk=instance.pk)
                .exists())
     if already:

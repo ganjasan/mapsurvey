@@ -31,7 +31,7 @@ from .redirects import clean_redirect_url
 from .layers import layers_for, normalize_style, GEOMETRY_TEXT_FIELDS
 
 logger = logging.getLogger(__name__)
-from .question_types import CHOICE_TYPES, allowed_display_styles, normalise_choice_extras
+from .question_types import CHOICE_TYPES, allowed_display_styles, normalise_choice_extras, normalise_audience
 
 # Format version for compatibility checking
 FORMAT_VERSION = "1.0"
@@ -191,6 +191,7 @@ def serialize_sections(survey: SurveyHeader) -> List[Dict[str, Any]]:
             "next_section_name": section.next_section.name if section.next_section else None,
             "prev_section_name": section.prev_section.name if section.prev_section else None,
             "visibility_rule": section.visibility_rule,
+            "audience": section.audience,
             "translations": [
                 {"language": t.language, "title": t.title, "subheading": t.subheading,
                  "next_label": t.next_label}
@@ -216,6 +217,7 @@ def _serialize_groups(section: SurveySection, parent: Optional[Question]) -> Lis
             "description": g.description,
             "display_style": g.display_style,
             "visibility_rule": g.visibility_rule,
+            "audience": g.audience,
             "order_number": g.order_number,
             "translations": [
                 {"language": t.language, "title": t.title, "description": t.description}
@@ -237,6 +239,7 @@ def _serialize_question(question: Question) -> Dict[str, Any]:
         "choices": question.choices,
         "required": question.required,
         "visibility_rule": question.visibility_rule,
+        "audience": question.audience,
         "color": question.color,
         "icon_class": question.icon_class,
         # `spraycan` only (spec spraycan-question); harmless on other types.
@@ -357,6 +360,10 @@ def serialize_sessions(survey: SurveyHeader) -> List[Dict[str, Any]]:
             "is_deleted": session.is_deleted,
             "tags": session.tags or [],
             "notes": session.notes or '',
+            # Where the answers came from (change operator-entry). The operator
+            # travels as a username for humans; import never links an account.
+            "source": session.source,
+            "entered_by": session.entered_by.username if session.entered_by_id else None,
             "answers": serialize_answers(session),
         })
 
@@ -923,6 +930,7 @@ def create_sections(
             start_map_zoom=section_data.get("start_map_zoom"),
             use_geolocation=section_data.get("use_geolocation", False),
             override_basemap=section_data.get("override_basemap"),
+            audience=normalise_audience(section_data.get("audience")),
             # next_section and prev_section are resolved later
         )
 
@@ -986,6 +994,7 @@ def _create_groups(section, parent, groups_data, group_index):
             title=str(g.get("title") or "")[:512],
             description=_import_rich_text(g.get("description")) or "",
             display_style=style, order_number=order,
+            audience=normalise_audience(g.get("audience")),
         )
         if code:
             group.code = code
@@ -1103,6 +1112,7 @@ def _create_question(
         panel_mode=question_data.get("panel_mode") if question_data.get("panel_mode") in ('list', 'legend') else 'list',
         share_with_respondents=bool(question_data.get("share_with_respondents", False)),
         group=_group_for(section, parent, question_data, group_index, warnings),
+        audience=_audience_from_archive(question_data, original_code, warnings),
         # image is handled separately during extraction
     )
 
@@ -1148,6 +1158,16 @@ def _layer_id_from_archive(question_data, input_type, layer_ids):
     if isinstance(index, int) and 0 <= index < len(ids):
         return ids[index]
     return None
+
+
+def _audience_from_archive(question_data, code, warnings):
+    """`audience` of an imported question (change operator-entry): a missing key
+    is `everyone` silently, an unknown value is `everyone` with a report line."""
+    raw = question_data.get("audience")
+    value = normalise_audience(raw)
+    if raw not in (None, value) and warnings is not None:
+        warnings.append(f"Question '{code}': unknown audience '{raw}' imported as everyone")
+    return value
 
 
 def create_questions(
@@ -1582,7 +1602,14 @@ def create_session(
         end_datetime=end_dt,
         last_activity_at=seen_dt or end_dt,
         language=session_data.get("language"),
+        source=_import_source(session_data.get("source")),
     )
+
+
+def _import_source(value):
+    """A session's `source` from an archive: missing or unknown reads `online`."""
+    valid = {code for code, _label in SurveySession.SOURCE_CHOICES}
+    return value if value in valid else SurveySession.SOURCE_ONLINE
 
 
 def create_answer(

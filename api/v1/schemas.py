@@ -18,6 +18,12 @@ from survey.models import INPUT_TYPE_CHOICES
 from survey.redirects import NO_REDIRECT, is_valid_redirect
 
 InputType = Literal[tuple(value for value, _label in INPUT_TYPE_CHOICES)]
+# Who sees a section, group or question (change operator-entry): `operators` = only on the
+# "Enter a response" form a workspace member fills in for someone else.
+Audience = Literal['everyone', 'respondents', 'operators']
+AUDIENCE_DESCRIPTION = ('Who sees it: everyone, respondents only, or operators only (the "Enter a response" '
+                        'form workspace members fill in for someone else). Changing it on a live survey '
+                        'needs unpublished changes.')
 
 
 class In(Schema):
@@ -175,6 +181,7 @@ class SectionOut(Schema):
     next_label: Optional[str]
     position: int
     visibility_rule: Optional[dict]
+    audience: Audience
     map_start: Optional[MapStart]
     use_geolocation: bool
     translations: Dict[str, SectionTranslation]
@@ -194,6 +201,7 @@ class SectionIn(In):
     keep_panel_open: Optional[bool] = None
     next_label: Optional[str] = Field(None, max_length=30)
     visibility_rule: Optional[VisibilityRule] = None
+    audience: Optional[Audience] = Field(None, description=AUDIENCE_DESCRIPTION)
     translations: Optional[Dict[str, SectionTranslation]] = None
     map_start: Optional[MapStart] = None
     use_geolocation: Optional[bool] = None
@@ -249,6 +257,7 @@ class QuestionOut(Schema):
     icon_class: Optional[str]
     display_style: Optional[str]
     visibility_rule: Optional[dict]
+    audience: Audience
     layer_id: Optional[int]
     min_objects: Optional[int]
     share_with_respondents: bool
@@ -267,6 +276,7 @@ class QuestionIn(In):
     icon_class: Optional[str] = None
     display_style: Optional[str] = None
     visibility_rule: Optional[VisibilityRule] = None
+    audience: Optional[Audience] = Field(None, description=AUDIENCE_DESCRIPTION)
     layer_id: Optional[int] = None
     layer_from_answers: Optional[str] = Field(
         None, max_length=50,
@@ -320,6 +330,7 @@ class GroupOut(Schema):
     description: str
     display_style: GroupDisplayStyle
     visibility_rule: Optional[dict]
+    audience: Audience
     question_ids: List[int]
     translations: Dict[str, GroupTranslation]
 
@@ -329,6 +340,7 @@ class GroupIn(In):
     description: Optional[str] = None
     display_style: Optional[GroupDisplayStyle] = None
     visibility_rule: Optional[VisibilityRule] = None
+    audience: Optional[Audience] = Field(None, description=AUDIENCE_DESCRIPTION)
     translations: Optional[Dict[str, GroupTranslation]] = None
     question_ids: Optional[List[int]] = Field(
         None, description='The questions the group holds, in order; they move together to where the first of '

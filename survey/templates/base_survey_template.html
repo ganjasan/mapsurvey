@@ -127,8 +127,10 @@ locale.{% endcomment %}
     <div id="section-panel" hx-target="this" hx-swap="innerHTML">
         {% block section_panel_content %}{% endblock %}
     </div>
+    {% if not entry %}{# the operator entry form is not a public page (change operator-entry) #}
     {% include "partials/_made_with_mapsurvey.html" with medium="survey" %}
     {% include "partials/_abuse_footer.html" %}
+    {% endif %}
 </div>
 
 <div id="drawbar" style="display: none;">
@@ -1250,6 +1252,9 @@ navigation from #section-data[data-stage-image].{% endcomment %}
         if (!form || form.id !== 'section_question_form') return;
 
         var isBack = evt.detail.parameters['nav_direction'] === 'back';
+        // Operator entry form (change operator-entry): minimums meant for
+        // respondents never block an operator — a blank on paper is a blank.
+        var softEntry = !!document.querySelector('#section-data[data-entry-session]');
 
         // Collect geo data from map layers into HTMX parameters
         // (modifying DOM alone is too late — HTMX already collected form values)
@@ -1269,7 +1274,7 @@ navigation from #section-data[data-stage-image].{% endcomment %}
 
         // Answers about layer objects ride along as obj__<key>__<code> fields;
         // a block below its minimum blocks Next like a required question.
-        var objectInvalid = window.collectObjectAnswers ? window.collectObjectAnswers(evt.detail.parameters, isBack) : null;
+        var objectInvalid = window.collectObjectAnswers ? window.collectObjectAnswers(evt.detail.parameters, isBack || softEntry) : null;
         if (objectInvalid) {
             evt.preventDefault();
             evt.detail.cancel = true;
@@ -1329,7 +1334,7 @@ navigation from #section-data[data-stage-image].{% endcomment %}
             });
 
             // 3) geo questions below their min_features (forward-only, like required)
-            $('#info_page button.drawbutton[data-min-features]').each(function() {
+            if (!softEntry) $('#info_page button.drawbutton[data-min-features]').each(function() {
                 var $btn = $(this);
                 var min = parseInt($btn.attr('data-min-features'), 10) || 0;
                 if (min > 0 && _geoLayersFor($btn.attr('name')).length < min) {

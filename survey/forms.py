@@ -767,8 +767,14 @@ class SurveySectionAnswerForm(forms.Form):
         form.fields[question.code] = field
         return form
 
-    def __init__(self, initial, section, question, survey_session_id, language=None, questions_override=None, *args, **kwargs):
+    def __init__(self, initial, section, question, survey_session_id, language=None, questions_override=None, *args, surface=None, **kwargs):
         super().__init__(*args, initial=initial, **kwargs)
+        from .question_types import SURFACE_RESPONDENT, SURFACE_OPERATOR, audience_allows
+        from .visibility import operator_only
+        # Which page this form is for (spec question-audience): pop-up items whose
+        # audience excludes it are left out; on the operator page (spec
+        # operator-entry) only operator-only questions keep `required`.
+        self.surface = surface or SURFACE_RESPONDENT
 
         section = section
         survey_session_id = survey_session_id
@@ -779,7 +785,11 @@ class SurveySectionAnswerForm(forms.Form):
             # section's full list (single-question/sub-question paths, editor).
             questions = section.questions() if questions_override is None else questions_override
         else:
-            questions = question.subQuestions()
+            questions = [
+                sub for sub in question.subQuestions()
+                if audience_allows(sub.audience, self.surface)
+                and (not sub.group_id or audience_allows(sub.group.audience, self.surface))
+            ]
         # Kept for field_runs (change question-groups): the groups this form's
         # questions may sit in — the section's top level, or one pop-up.
         self._run_questions = list(questions)
@@ -806,7 +816,10 @@ class SurveySectionAnswerForm(forms.Form):
             # decides which kind of field to build.
             resolved_style = self.resolve_display_style(question, survey_rating_style)
 
-            built_field = self._get_form_from_input_type(question.input_type, question.required, question, field_label, field_sublabel, field_color, field_icon_class, image_source, language, display_style=resolved_style)
+            required = question.required
+            if self.surface == SURFACE_OPERATOR and required and not operator_only(question):
+                required = False  # a blank on paper stays a blank
+            built_field = self._get_form_from_input_type(question.input_type, required, question, field_label, field_sublabel, field_color, field_icon_class, image_source, language, display_style=resolved_style)
             if built_field is None:
                 # A kill-switched type renders nothing; the section must keep
                 # working without it (fail open).

@@ -173,10 +173,14 @@ def update(actor, group, data=None, *, visibility_rule=UNSET, translations=UNSET
     locks.assert_content_editable(survey)
     _, structure_locked = locks.locks(survey)
     changes_rule = visibility_rule is not UNSET and visibility_rule != group.visibility_rule
-    reasons = (['visibility rule'] if changes_rule else []) + (['members'] if question_ids is not None else [])
-    if structure_locked and reasons:
-        raise StructureLocked(locks.STRUCTURE_LOCKED_MESSAGE, reasons=reasons, draft=locks._draft(survey))
+    audience_before = group.audience
     form = validate(bind(QuestionGroupForm, data or {}, instance=group, partial=True))
+    changes_audience = form.cleaned_data.get('audience', audience_before) != audience_before
+    reasons = ((['visibility rule'] if changes_rule else []) + (['the audience'] if changes_audience else [])
+               + (['members'] if question_ids is not None else []))
+    if structure_locked and reasons:
+        group.audience = audience_before  # the bound form already wrote it onto the instance
+        raise StructureLocked(locks.STRUCTURE_LOCKED_MESSAGE, reasons=reasons, draft=locks._draft(survey))
     group = form.save(commit=False)
     if changes_rule:
         _check_group_rule(visibility_rule, group, strict)

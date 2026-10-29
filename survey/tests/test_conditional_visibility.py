@@ -1758,3 +1758,59 @@ class AnsweredRuleSerializationTest(TestCase):
         from survey.cloning import clone_section
         copy = clone_section(self.s2, target_survey=self.survey)
         self.assertEqual(copy.visibility_rule, {"question_code": "ANS_CTRL", "answered": True})
+
+
+class AudienceHiddenIsNotApplicableTest(TestCase):
+    """Delta of change operator-entry: an item whose audience excludes the
+    respondent surface is "hidden" for every server-side rule."""
+
+    def setUp(self):
+        self.client = Client()
+        org = Organization.objects.create(name="Audience Org")
+        self.survey = SurveyHeader.objects.create(
+            name="audvis", organization=org, status='published',
+            available_languages=[], redirect_url="#",
+        )
+        self.s1 = SurveySection.objects.create(
+            survey_header=self.survey, name="pick", title="Pick", code="S1", is_head=True,
+        )
+        self.alb = Question.objects.create(
+            survey_section=self.s1, code="ALB", order_number=1, name="Albino?",
+            input_type="choice", choices=[{"code": 1, "name": "Yes"}, {"code": 0, "name": "No"}],
+        )
+        self.how = Question.objects.create(
+            survey_section=self.s1, code="HOW", order_number=2, name="How many?",
+            input_type="text_line",
+            visibility_rule={"question_code": "ALB", "choice_codes": [1]},
+        )
+        self.sheet = Question.objects.create(
+            survey_section=self.s1, code="SHEET", order_number=3, name="Sheet number",
+            input_type="text_line", audience="operators", required=True,
+        )
+
+    def _answers(self, question):
+        session = SurveySession.objects.get(pk=self.client.session['survey_session_id'])
+        return Answer.objects.filter(survey_session=session, question=question)
+
+    def test_operator_only_question_posted_by_a_respondent_is_discarded(self):
+        """
+        GIVEN a question with audience `operators`
+        WHEN a respondent opens the section and posts a value for its code
+        THEN the page never rendered it and no Answer row is stored for it
+        """
+        page = self.client.get('/surveys/audvis/pick/')
+        self.assertNotContains(page, 'name="SHEET"')
+        self.client.post('/surveys/audvis/pick/', {'ALB': '0', 'SHEET': '17'})
+        self.assertEqual(self._answers(self.sheet).count(), 0)
+        self.assertEqual(self._answers(self.alb).count(), 1)
+
+    @override_settings(CONDITIONAL_VISIBILITY=False)
+    def test_kill_switch_leaves_audience_on(self):
+        """
+        GIVEN CONDITIONAL_VISIBILITY is off
+        WHEN the respondent opens the section
+        THEN rule-conditioned HOW renders but the operator-only question does not
+        """
+        page = self.client.get('/surveys/audvis/pick/')
+        self.assertContains(page, 'name="HOW"')
+        self.assertNotContains(page, 'name="SHEET"')

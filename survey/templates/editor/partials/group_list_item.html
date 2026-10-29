@@ -14,7 +14,7 @@ the list the group sits in (survey_detail.html); groups never go inside groups.
         {% else %}
         <span class="badge badge-info" title="{{ vis.label }}" style="background:#e7f1ff;color:#0b5ed7;border:1px solid #b6d4fe;"><i class="fas fa-code-branch"></i> {{ vis.label|truncatechars:40 }}</span>
         {% endif %}
-        {% endif %}{% endwith %}
+        {% endif %}{% include "editor/partials/_audience_badge.html" with item=group vis=vis %}{% endwith %}
 {% include "editor/partials/_comment_badge.html" with kind="group" key=group.code open=group.id %}
         <span class="q-actions">
             <button title="{% if is_read_only %}{% trans 'Create a draft to edit' %}{% else %}{% trans 'Edit group' %}{% endif %}"

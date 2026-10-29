@@ -566,7 +566,7 @@ OBSERVATION_FIXED_COLUMNS = (
 )
 SESSION_COLUMNS = (
     'session_id', 'session_start_utc', 'session_end_utc', 'language', 'validation_status',
-    'opened_by_kind', 'version', 'tags', 'notes',
+    'opened_by_kind', 'source', 'entered_by', 'version', 'tags', 'notes',
 )
 
 
@@ -665,6 +665,9 @@ def sessions_rows(bundle):
                 'language': session.language or '',
                 'validation_status': session.validation_status or '',
                 'opened_by_kind': session.opened_by_kind,
+                # change operator-entry: where the answers came from, and who typed them.
+                'source': session.source,
+                'entered_by': session.entered_by.username if session.entered_by_id else '',
                 'version': part.survey.version_number,
                 'tags': '; '.join(session.tags or []),
                 'notes': session.notes or '',

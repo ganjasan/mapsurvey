@@ -41,7 +41,7 @@ def survey_settings(body):
 
 SECTION_FIELDS = ('title', 'subheading', 'code', 'layout', 'panel_side', 'panel_width',
                   'content_width', 'content_valign', 'keep_panel_open',
-                  'next_label')
+                  'next_label', 'audience')
 
 
 def section(body):
@@ -61,7 +61,7 @@ VS_KEYS = ('min_value', 'max_value', 'outlier_sigma', 'min_length', 'area_outlie
 def question(body, *, create=False):
     """`QuestionForm` data + the modal's auxiliary keys for the fields `body` names."""
     data = {}
-    for key in ('name', 'subtext', 'input_type', 'color', 'icon_class', 'display_style'):
+    for key in ('name', 'subtext', 'input_type', 'color', 'icon_class', 'display_style', 'audience'):
         if key in body:
             data[key] = '' if body[key] is None else body[key]
     for key in ('required', 'share_with_respondents'):
