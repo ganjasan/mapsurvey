@@ -36,9 +36,18 @@ siblings' order sequence, so the controller must come before the group, hence be
 every member). A member is visible only if its group is; a member's own rule applies on
 top. Section groups go through ``compute_visibility``, pop-up groups through
 ``popup_visibility``.
+
+Audience (change operator-entry, spec question-audience): sections, groups and
+questions carry ``audience``. Both engines take a ``surface`` (``respondent`` — the
+public link — or ``operator`` — the entry form) and treat an item whose audience
+excludes it as hidden, as one more AND term beside the rule. Unlike rules, audience is
+NOT switched off by ``CONDITIONAL_VISIBILITY``: it says what exists on a surface, not
+what a respondent's answers reveal.
 """
 
 from django.conf import settings
+
+from .question_types import SURFACE_RESPONDENT, audience_allows
 
 # The only input types that may control a rule. Range/rating/ranking store
 # selected_choices too, but the editor deliberately offers plain choice types only.
@@ -114,6 +123,10 @@ class VisibilityMap:
 		# respondent page keep a member whose only hiding cause is a group rule the
 		# client toggles live.
 		self.question_own = {}
+		# ('question'|'group'|'section', id) hidden by audience on this surface —
+		# never rendered, not even for a client-side rule to toggle.
+		self.audience_hidden = set()
+		self.surface = SURFACE_RESPONDENT
 
 	def is_question_visible(self, question_id):
 		return self.question_visible.get(question_id, True)
@@ -163,17 +176,19 @@ def _rule_verdict(rule, host_kind, host_section_index, host_order, questions_ind
 	return entry, matchable, None
 
 
-def compute_visibility(survey, answers_by_code, enabled=None):
+def compute_visibility(survey, answers_by_code, enabled=None, surface=SURFACE_RESPONDENT):
 	"""Evaluate every rule of ``survey`` against ``answers_by_code``.
 
 	``answers_by_code``: {question_code: [selected choice codes as ints]} — only
 	choice-type answers matter; absent/empty means unanswered.
 	``enabled``: override for tests; defaults to settings.CONDITIONAL_VISIBILITY.
+	``surface``: whose page is being judged — audience applies whatever ``enabled`` is.
 	"""
 	if enabled is None:
 		enabled = getattr(settings, "CONDITIONAL_VISIBILITY", True)
 
 	vmap = VisibilityMap()
+	vmap.surface = surface
 	sections = _ordered_sections(survey)
 	groups_by_section = _section_groups(survey)
 
@@ -208,6 +223,9 @@ def compute_visibility(survey, answers_by_code, enabled=None):
 			section_shown = True
 		else:
 			section_shown = rule_satisfied(section.visibility_rule, "section", section.id, s_idx, None)
+		if not audience_allows(section.audience, surface):
+			section_shown = False
+			vmap.audience_hidden.add(("section", section.id))
 		vmap.section_visible[section.id] = section_shown
 		if section_shown:
 			vmap.visible_sections.append(section)
@@ -217,10 +235,15 @@ def compute_visibility(survey, answers_by_code, enabled=None):
 				own = True
 			else:
 				own = rule_satisfied(item.visibility_rule, kind, item.id, s_idx, item.order_number)
+			if not audience_allows(item.audience, surface):
+				own = False
+				vmap.audience_hidden.add((kind, item.id))
 			if kind == "group":
 				vmap.group_visible[item.id] = section_shown and own
 				continue
 			group_shown = vmap.group_visible.get(item.group_id, True) if item.group_id else True
+			if item.group_id and ("group", item.group_id) in vmap.audience_hidden:
+				vmap.audience_hidden.add(("question", item.id))
 			vmap.question_own[item.id] = section_shown and own
 			vmap.question_visible[item.id] = section_shown and group_shown and own
 
@@ -289,7 +312,7 @@ class PopupVisibility:
 		return self.group_visible.get(group_id, True)
 
 
-def popup_visibility(parent, answers_by_code, enabled=None):
+def popup_visibility(parent, answers_by_code, enabled=None, surface=SURFACE_RESPONDENT):
 	"""Evaluate the pop-up rules of ``parent``'s sub-questions for ONE feature.
 
 	``answers_by_code``: {sub-question code: [selected choice codes as ints]} of
@@ -318,6 +341,9 @@ def popup_visibility(parent, answers_by_code, enabled=None):
 					own = False
 				else:
 					own = rule_matches(matchable, answers_by_code.get(controller.code) or [])
+		# The parent's own audience is judged by compute_visibility (a hidden
+		# parent posts no features); here only the pop-up's items.
+		own = own and audience_allows(item.audience, surface)
 		if kind == "group":
 			verdict.group_visible[item.id] = own
 		else:
@@ -494,11 +520,11 @@ def describe_rule(host_kind, host, survey):
 		# Judged inside its pop-up: the siblings are the whole world.
 		entry, matchable, broken = _rule_verdict(
 			rule, 'question', 0, host_order, _sibling_index(host.parent_question_id))
-		return _describe_verdict(entry, matchable, broken)
+		return _with_audience_warning(_describe_verdict(entry, matchable, broken), host_kind, host)
 	if host_kind == 'group' and host.parent_question_id is not None:
 		entry, matchable, broken = _rule_verdict(
 			rule, 'question', 0, host_order, _sibling_index(host.parent_question))
-		return _describe_verdict(entry, matchable, broken)
+		return _with_audience_warning(_describe_verdict(entry, matchable, broken), host_kind, host)
 	sections = _ordered_sections(survey)
 	questions_index = {}
 	host_section_index = None
@@ -518,7 +544,28 @@ def describe_rule(host_kind, host, survey):
 
 	verdict_kind = 'question' if host_kind == 'group' else host_kind
 	entry, matchable, broken = _rule_verdict(rule, verdict_kind, host_section_index, host_order, questions_index)
-	return _describe_verdict(entry, matchable, broken)
+	return _with_audience_warning(_describe_verdict(entry, matchable, broken), host_kind, host)
+
+
+def _host_shown_to_respondents(host_kind, host):
+	if host_kind == 'section':
+		return audience_allows(host.audience, SURFACE_RESPONDENT)
+	if host_kind == 'group':
+		owner = host.parent_question if host.parent_question_id else None
+		if owner is not None and not shown_on(owner, SURFACE_RESPONDENT):
+			return False
+		return (audience_allows(host.audience, SURFACE_RESPONDENT)
+		        and audience_allows(host.survey_section.audience, SURFACE_RESPONDENT))
+	return shown_on(host, SURFACE_RESPONDENT)
+
+
+def _with_audience_warning(info, host_kind, host):
+	"""Lint (spec question-audience): a rule whose controller only operators see
+	can never show the host to a respondent — say so on the badge."""
+	if info and not info['broken'] and info['controller'] is not None:
+		if operator_only(info['controller']) and _host_shown_to_respondents(host_kind, host):
+			info['warning'] = 'controller is shown to operators only, so respondents never see this'
+	return info
 
 
 def _describe_verdict(entry, matchable, broken):
@@ -574,3 +621,28 @@ def validate_rule(rule, host_kind, *, survey=None, section=None, order=None, par
 	if unknown:
 		return "unknown option code(s): " + ", ".join(str(c) for c in unknown)
 	return None
+
+
+def _chain_audiences(question):
+	"""Audiences that narrow ``question``: its own, its group's, its section's,
+	and for a sub-question the same chain of its parent."""
+	out = [question.audience]
+	if question.group_id:
+		out.append(question.group.audience)
+	if question.parent_question_id_id:
+		out.extend(_chain_audiences(question.parent_question_id))
+	elif question.survey_section_id:
+		out.append(question.survey_section.audience)
+	return out
+
+
+def shown_on(question, surface):
+	"""True when every audience along ``question``'s containment admits ``surface``."""
+	return all(audience_allows(a, surface) for a in _chain_audiences(question))
+
+
+def operator_only(question):
+	"""The question exists only on the operator form — its `required` is the
+	operator's own; everything respondents also see is soft there (spec operator-entry)."""
+	return not shown_on(question, SURFACE_RESPONDENT)
+

@@ -886,3 +886,47 @@ class SectionViewHtmxTrackingTest(TestCase):
         self.assertIn("s1", viewed)
         self.assertIn("s2", viewed)          # the fix: next section now records a view
         self.assertIn("s1", submitted)
+
+
+class OperatorSessionsAbsentFromPerfTest(TestCase):
+    """Delta of change operator-entry: entered sheets never move the Perf pane."""
+
+    def test_entered_sheets_do_not_move_the_funnel(self):
+        """
+        GIVEN a survey with two online sessions that started and one that submitted
+        WHEN an operator enters three sheets through the entry form
+        THEN the event summary and the funnel read exactly as before
+        """
+        from billing.tests.helpers import make_sub
+        org = _make_org('PerfOpOrg')
+        owner = User.objects.create_user('perf_op_owner', password='x')
+        Membership.objects.create(user=owner, organization=org, role='owner')
+        make_sub(org)
+        survey = SurveyHeader.objects.create(name='perf_op', organization=org, created_by=owner,
+                                             status='published', redirect_url='#')
+        s1 = SurveySection.objects.create(survey_header=survey, name='s1', title='S1', code='S1', is_head=True)
+        Question.objects.create(survey_section=s1, code='T', name='T', input_type='text', order_number=1)
+        for submitted in (True, False):
+            sess = SurveySession.objects.create(survey=survey)
+            emit_event(sess, 'session_start', {})
+            emit_event(sess, 'section_view', {'section_name': 's1', 'section_index': 1})
+            if submitted:
+                emit_event(sess, 'section_submit', {'section_name': 's1', 'section_index': 1})
+        before = (PerformanceAnalyticsService(survey).get_event_summary(),
+                  PerformanceAnalyticsService(survey).get_funnel())
+
+        client = Client()
+        client.force_login(owner)
+        s = client.session
+        s['active_org_id'] = org.id
+        s.save()
+        for _ in range(3):
+            client.post(f'/editor/surveys/{survey.uuid}/responses/enter/',
+                        {'source': 'paper', 'version': survey.pk, 'language': ''})
+            entered = SurveySession.objects.order_by('-pk').first()
+            client.post(f'/editor/surveys/{survey.uuid}/responses/enter/{entered.pk}/s1/', {'T': 'x'})
+
+        self.assertEqual(SurveySession.objects.filter(survey=survey, source='paper').count(), 3)
+        after = (PerformanceAnalyticsService(survey).get_event_summary(),
+                 PerformanceAnalyticsService(survey).get_funnel())
+        self.assertEqual(before, after)

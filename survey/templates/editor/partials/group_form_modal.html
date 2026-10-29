@@ -73,6 +73,7 @@ the section list, never here. On close the section list is re-rendered (groupsCh
                         {% endfor %}
                     </div>
                 </div>
+                {% include "editor/partials/_audience_field.html" %}
                 {% include "editor/partials/_visibility_block.html" %}
                 {% if visibility_enabled %}<small class="form-text text-muted" style="margin:-.5rem 0 1rem;">{% trans "Every question inside is hidden with the group. A question can add its own rule on top." %}</small>{% endif %}
                 {% if translation_rows %}

@@ -47,7 +47,7 @@ def find_group(survey, group_id):
 
 
 def group_args(body):
-    data = {k: ('' if body[k] is None else body[k]) for k in ('title', 'description', 'display_style') if k in body}
+    data = {k: ('' if body[k] is None else body[k]) for k in ('title', 'description', 'display_style', 'audience') if k in body}
     translations = forms_bridge.translations(body) if 'translations' in body else UNSET
     return data, forms_bridge.visibility(body), translations
 

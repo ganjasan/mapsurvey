@@ -1571,6 +1571,8 @@ class SurveyAnalyticsService:
                 {'key': 'start_datetime', 'label': 'Started', 'input_type': None},
                 {'key': 'duration', 'label': 'Duration', 'input_type': None},
                 {'key': 'validation_status', 'label': 'Status', 'input_type': None},
+                # Where the answers came from (change operator-entry).
+                {'key': 'source', 'label': 'Source', 'input_type': None},
                 {'key': 'issues', 'label': 'Issues', 'input_type': None},
             ]
             tail_cols = [
@@ -1585,6 +1587,7 @@ class SurveyAnalyticsService:
             system_cols = [
                 {'key': 'id', 'label': '#', 'input_type': None},
                 {'key': 'validation_status', 'label': 'Status', 'input_type': None},
+                {'key': 'source', 'label': 'Source', 'input_type': None},
                 {'key': 'issues', 'label': 'Issues', 'input_type': None},
                 {'key': 'tags', 'label': 'Tags', 'input_type': None},
                 {'key': 'start_datetime', 'label': 'Start time', 'input_type': None},
@@ -1618,7 +1621,7 @@ class SurveyAnalyticsService:
             qs = qs.filter(pk__in=session_ids)
 
         # Fetch all matching sessions + their answers in bulk
-        all_sessions = list(qs.order_by('-start_datetime'))
+        all_sessions = list(qs.select_related('entered_by').order_by('-start_datetime'))
 
         # Bulk fetch answers for all sessions
         session_pks = [s.id for s in all_sessions]
@@ -1699,6 +1702,9 @@ class SurveyAnalyticsService:
                 'session_id': s.id,
                 'id': s.id,
                 'validation_status': s.validation_status,
+                'source': s.source,
+                'source_label': s.get_source_display(),
+                'entered_by': s.entered_by.username if s.entered_by_id else '',
                 'is_deleted': s.is_deleted,
                 'issues': session_issues.get(s.id, []),
                 'lints': lints,
@@ -1860,7 +1866,7 @@ class SurveyAnalyticsService:
             def matches_search(row):
                 for col_key, search_str in col_search.items():
                     search_lower = search_str.lower()
-                    if col_key in ('id', 'validation_status', 'issues', 'tags', 'start_datetime', 'language', 'version'):
+                    if col_key in ('id', 'validation_status', 'source', 'issues', 'tags', 'start_datetime', 'language', 'version'):
                         val = str(row.get(col_key, ''))
                     else:
                         val = row['cells'].get(col_key, '—')
@@ -1877,7 +1883,7 @@ class SurveyAnalyticsService:
 
         # Compute unique values per column BEFORE col_filters (for dropdowns)
         unique_values = {}
-        _VALUE_SYSTEM_COLS = {'validation_status', 'language', 'issues', 'tags', 'version'}
+        _VALUE_SYSTEM_COLS = {'validation_status', 'source', 'language', 'issues', 'tags', 'version'}
         for col in system_cols:
             if col['key'] not in _VALUE_SYSTEM_COLS:
                 continue
@@ -1902,7 +1908,7 @@ class SurveyAnalyticsService:
         col_filters = col_filters or {}
         if col_filters:
             def _get_cell_val(row, col_key):
-                if col_key in ('id', 'validation_status', 'issues', 'tags', 'start_datetime', 'language', 'version'):
+                if col_key in ('id', 'validation_status', 'source', 'issues', 'tags', 'start_datetime', 'language', 'version'):
                     return row.get(col_key, '')
                 return row['cells'].get(col_key, '—')
 
@@ -1971,7 +1977,7 @@ class SurveyAnalyticsService:
                                r.get('duration_seconds') or 0),
                 reverse=reverse,
             )
-        elif sort_col in ('id', 'validation_status', 'start_datetime', 'language', 'version'):
+        elif sort_col in ('id', 'validation_status', 'source', 'start_datetime', 'language', 'version'):
             rows.sort(key=lambda r: (r.get(sort_col) is None, r.get(sort_col, '')), reverse=reverse)
         else:
             # Sort by question column value

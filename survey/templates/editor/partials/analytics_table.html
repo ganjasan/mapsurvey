@@ -374,6 +374,7 @@ filter and the sort order move into the bottom sheet.
                 {% endfor %}
             {% elif col.key == 'start_datetime' %}{{ row.start_datetime|date:"M j, Y H:i" }}
             {% elif col.key == 'language' %}{{ row.language }}
+            {% elif col.key == 'source' %}{% if row.source == 'online' %}<span class="text-muted">{{ row.source_label }}</span>{% else %}<span class="badge audience-badge--operators" title="{% if row.entered_by %}{{ row.entered_by }}{% endif %}"><i class="fas fa-user-edit"></i> {{ row.source_label }}</span>{% endif %}
             {% elif col.key == 'version' %}<span class="badge badge-light" style="border:1px solid #e5e7eb;color:#6b7280;">{{ row.version|default:"—" }}</span>
             {% else %}
                 {% with cell_lints=row.lints|hash:col.key %}

@@ -42,6 +42,12 @@ FEATURES = {
     # revoking anything and renewal brings the same token back.
     'api': Feature('api', frozenset({PLAN_PRO}),
                    _('REST API, MCP server and personal access tokens')),
+    # The operator entry form (change operator-entry, #355): a workspace member
+    # enters answers on someone's behalf -- paper sheets, assisted interviews,
+    # field work. Checked on every entry request on the survey's organisation;
+    # sessions entered while Pro stay when the subscription lapses.
+    'operator_entry': Feature('operator_entry', frozenset({PLAN_PRO}),
+                              _('Enter responses for others: paper forms, interviews, field work')),
 }
 
 

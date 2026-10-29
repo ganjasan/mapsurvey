@@ -1,0 +1,15 @@
+{% load i18n %}{% comment %}Top of every section in the operator entry form (change operator-entry):
+says this is not a respondent's page, what is being entered, and offers a way out.{% endcomment %}
+<div class="operator-entry-bar" role="status">
+    <span class="operator-entry-bar__label"><i class="fas fa-user-edit" aria-hidden="true"></i>
+        {% blocktrans with source=entry_session.get_source_display %}Entering a response · {{ source }}{% endblocktrans %}
+        {% if entry_session.survey.canonical_survey_id %} · v{{ entry_session.survey.version_number }}{% endif %}
+    </span>
+    <a class="operator-entry-bar__exit" href="{{ entry_cancel_url }}">{% trans "Stop" %}</a>
+</div>
+<style>
+.operator-entry-bar { display: flex; justify-content: space-between; align-items: center; gap: .5rem;
+    margin: 0 0 .75rem; padding: .45rem .75rem; border-radius: 6px; font-size: .85rem;
+    background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+.operator-entry-bar__exit { color: #92400e; text-decoration: underline; white-space: nowrap; }
+</style>

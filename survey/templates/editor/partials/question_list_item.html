@@ -18,7 +18,7 @@
         {% else %}
         <span class="badge badge-info" title="{{ vis.label }}" style="background:#e7f1ff;color:#0b5ed7;border:1px solid #b6d4fe;"><i class="fas fa-code-branch"></i> {{ vis.label|truncatechars:40 }}</span>
         {% endif %}
-        {% endif %}{% endwith %}
+        {% endif %}{% include "editor/partials/_audience_badge.html" with item=question vis=vis %}{% endwith %}
         {% with dep_count=question|visibility_dependents:survey %}{% if dep_count %}
         <span class="badge badge-light" title="{{ dep_count }} visibility rule{{ dep_count|pluralize }} depend{{ dep_count|pluralize:'s,' }} on this question's answer" style="border:1px solid #b6d4fe;color:#0b5ed7;"><i class="fas fa-code-branch"></i> {{ dep_count }}</span>
         {% endif %}{% endwith %}

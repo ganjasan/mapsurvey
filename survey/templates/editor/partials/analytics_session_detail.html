@@ -13,6 +13,10 @@
         {% elif session.validation_status == 'on_hold' %}<span class="badge badge-warning text-dark">{% trans "On hold" %}</span>
         {% endif %}
         {% if session.is_deleted %}<span class="badge badge-dark">{% trans "Trashed" %}</span>{% endif %}
+        {% if session.is_operator_entry %}{# change operator-entry #}
+        <span class="badge audience-badge--operators"><i class="fas fa-user-edit"></i> {{ session.get_source_display }}</span>
+        {% if session.entered_by %}<small class="text-muted">{% blocktrans with name=session.entered_by.username %}Entered by {{ name }}{% endblocktrans %}</small>{% endif %}
+        {% endif %}
         <div class="ml-auto d-flex" style="gap:0.4rem;">
             {% if session.is_deleted %}
             <button class="btn btn-sm btn-outline-success" onclick="restoreSession({{ session.id }}); $('#sessionDetailModal').modal('hide');">

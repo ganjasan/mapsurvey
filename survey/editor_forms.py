@@ -6,7 +6,7 @@ from .models import SurveyHeader, SurveySection, Question, QuestionGroup, Organi
 from .html_sanitize import coerce_creator_html
 from .redirects import NO_REDIRECT, clean_redirect_url, is_valid_redirect, tidy_redirect_input
 from .layers import layers_for
-from .question_types import GEO_TYPES, MAP_ONLY_TYPES, SHARED_MAP_SOURCE_TYPES, allowed_display_styles
+from .question_types import GEO_TYPES, MAP_ONLY_TYPES, SHARED_MAP_SOURCE_TYPES, allowed_display_styles, AUDIENCES, AUDIENCE_EVERYONE
 
 # Parent-capable types cannot themselves be sub-questions: a sub-question lives
 # inside an object's popup, and an object cannot contain more objects.
@@ -300,14 +300,39 @@ class SurveyHeaderForm(forms.ModelForm):
         return obj
 
 
-class SurveySectionForm(forms.ModelForm):
+AUDIENCE_FORM_CHOICES = (
+    ('everyone', _('Everyone')),
+    ('respondents', _('Respondents only')),
+    ('operators', _('Operators only — the "Enter a response" form')),
+)
+
+
+class AudienceFieldMixin(forms.Form):
+    """`audience` on the section, group and question forms (change operator-entry,
+    spec question-audience). Optional on purpose: the editor modals, the REST API
+    and MCP post partial dicts, and a post that does not name the audience keeps
+    the current one instead of failing on a field it never showed."""
+    audience = forms.ChoiceField(
+        choices=AUDIENCE_FORM_CHOICES, required=False, label=_('Who sees this'),
+        widget=forms.Select(attrs={'class': 'form-control form-control-sm'}))
+
+    def clean_audience(self):
+        value = self.cleaned_data.get('audience')
+        if value in AUDIENCES:
+            return value
+        current = getattr(self.instance, 'audience', None)
+        return current if current in AUDIENCES else AUDIENCE_EVERYONE
+
+
+class SurveySectionForm(AudienceFieldMixin, forms.ModelForm):
     class Meta:
         model = SurveySection
         # The layout controls follow `layout` so the modal renders them as one
         # block (change section-layout-controls).
-        fields = ['title', 'subheading', 'code', 'layout', 'panel_side', 'panel_width', 'content_width',
-                  'content_valign', 'keep_panel_open', 'stage_image',
-                  'next_label']
+        # The picture comes right under `layout`: choosing "Picture" asks for it first.
+        fields = ['title', 'subheading', 'code', 'layout', 'stage_image', 'panel_side', 'panel_width',
+                  'content_width', 'content_valign', 'keep_panel_open',
+                  'next_label', 'audience']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'subheading': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
@@ -424,11 +449,11 @@ class SurveySectionForm(forms.ModelForm):
         return section
 
 
-class QuestionForm(forms.ModelForm):
+class QuestionForm(AudienceFieldMixin, forms.ModelForm):
     class Meta:
         model = Question
         fields = ['name', 'subtext', 'input_type', 'required', 'color', 'icon_class', 'spray_brush', 'tap_to_place', 'image', 'display_style',
-                  'layer', 'min_objects', 'objects_search', 'panel_mode', 'share_with_respondents']
+                  'layer', 'min_objects', 'objects_search', 'panel_mode', 'share_with_respondents', 'audience']
         labels = {
             'name': _('Name'),
             'subtext': _('Subtext'),
@@ -662,14 +687,14 @@ class OrganizationSettingsForm(forms.ModelForm):
         self.fields['slug'].widget.attrs.setdefault('pattern', r'[-\w.]+')
 
 
-class QuestionGroupForm(forms.ModelForm):
+class QuestionGroupForm(AudienceFieldMixin, forms.ModelForm):
     """A question group's content (change question-groups): title, description,
     display style. The visibility rule and the translations are read by the
     view, like the question form's."""
 
     class Meta:
         model = QuestionGroup
-        fields = ['title', 'description', 'display_style']
+        fields = ['title', 'description', 'display_style', 'audience']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 512}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),

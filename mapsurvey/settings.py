@@ -497,7 +497,10 @@ POSTHOG_EXCLUDED_PREFIXES = ('/surveys/', '/r/')
 # segment: `/editor/surveys/<uuid>/public-results/preview/` is a different surface that renders a
 # standalone template and was never affected. Renaming a view here without updating this tuple
 # restores the bug silently -- the tests reverse both URLs by name so that fails the suite.
-POSTHOG_EXCLUDED_VIEW_NAMES = ('editor_section_preview', 'editor_survey_thanks_preview')
+# The operator entry form (change operator-entry) is a respondent page in shape
+# under /editor/: tracked, it would record one session replay per entered sheet.
+POSTHOG_EXCLUDED_VIEW_NAMES = ('editor_section_preview', 'editor_survey_thanks_preview',
+                               'operator_entry_section')
 
 # --- Server-side error capture (PosthogContextMiddleware) ---
 # The middleware's process_exception reports view exceptions to PostHog error tracking.

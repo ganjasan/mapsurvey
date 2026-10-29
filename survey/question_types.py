@@ -69,6 +69,39 @@ PICKER_TYPES = {
                     "hint": "Your own formatted text — headings, bold, links; collects nothing"},
 }
 
+# Who a section, group or question is for (change operator-entry, spec
+# question-audience). The administrator decides; the visibility engine enforces
+# it per surface: the respondent link evaluates `respondent`, the operator entry
+# form `operator`. A container's audience narrows its members' (intersection).
+AUDIENCE_EVERYONE = "everyone"
+AUDIENCE_RESPONDENTS = "respondents"
+AUDIENCE_OPERATORS = "operators"
+AUDIENCES = (AUDIENCE_EVERYONE, AUDIENCE_RESPONDENTS, AUDIENCE_OPERATORS)
+AUDIENCE_CHOICES = (
+    (AUDIENCE_EVERYONE, "Everyone"),
+    (AUDIENCE_RESPONDENTS, "Respondents only"),
+    (AUDIENCE_OPERATORS, "Operators only"),
+)
+SURFACE_RESPONDENT = "respondent"
+SURFACE_OPERATOR = "operator"
+_AUDIENCE_SURFACES = {
+    AUDIENCE_EVERYONE: {SURFACE_RESPONDENT, SURFACE_OPERATOR},
+    AUDIENCE_RESPONDENTS: {SURFACE_RESPONDENT},
+    AUDIENCE_OPERATORS: {SURFACE_OPERATOR},
+}
+
+
+def audience_allows(audience, surface):
+    """True when an item of ``audience`` is shown on ``surface``. Unknown or
+    empty audiences read as `everyone` (fail open, like broken rules)."""
+    return surface in _AUDIENCE_SURFACES.get(audience or AUDIENCE_EVERYONE, _AUDIENCE_SURFACES[AUDIENCE_EVERYONE])
+
+
+def normalise_audience(value):
+    """A stored/imported value, or `everyone` when it is not one of AUDIENCES."""
+    return value if value in AUDIENCES else AUDIENCE_EVERYONE
+
+
 # Types whose Color / Icon class settings reach the respondent (map markers).
 # `spraycan` (change spraycan-question-type) is the fourth: the respondent
 # paints a cloud of dots instead of drawing a shape.

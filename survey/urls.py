@@ -8,6 +8,7 @@ from . import editor_group_views
 from . import layer_object_views
 from . import comment_views
 from . import analytics_views
+from . import operator_entry_views
 from . import share_views
 from . import translation_views
 from . import org_views
@@ -137,6 +138,10 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/translations/add-language/', translation_views.translation_add_language, name='editor_survey_translation_add_language'),
     # Analytics
     path('editor/surveys/<uuid:survey_uuid>/analytics/', analytics_views.analytics_dashboard, name='editor_survey_analytics'),
+    # Operator entry form (change operator-entry, #355): Pro, editor role and up.
+    path('editor/surveys/<uuid:survey_uuid>/responses/enter/', operator_entry_views.entry_header, name='operator_entry_header'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/enter/<int:session_id>/saved/', operator_entry_views.entry_saved, name='operator_entry_saved'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/enter/<int:session_id>/<str:section_name>/', operator_entry_views.entry_section, name='operator_entry_section'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/questions/<int:question_id>/text/', analytics_views.analytics_text_answers, name='analytics_text_answers'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/sessions/<int:session_id>/', analytics_views.analytics_session_detail, name='analytics_session_detail'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/table/', analytics_views.analytics_table, name='analytics_table'),

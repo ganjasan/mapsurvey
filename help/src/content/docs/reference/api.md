@@ -261,6 +261,7 @@ A group at the end of the section (or of a pop-up with `parent_id`); `question_i
 | `description` | string or null |  |  |
 | `display_style` | `plain` | `card` | `collapsible` or null |  |  |
 | `visibility_rule` | VisibilityRule or null |  |  |
+| `audience` | `everyone` | `respondents` | `operators` or null |  | Who sees it: everyone, respondents only, or operators only (the "Enter a response" form workspace members fill in for someone else). Changing it on a live survey needs unpublished changes. |
 | `translations` | object or null |  |  |
 | `question_ids` | list of integer or null |  | The questions the group holds, in order; they move together to where the first of them was. Questions of the same list only (the section, or the same pop-up). |
 | `parent_id` | integer or null |  | Create the group in this question's pop-up. |
@@ -299,6 +300,7 @@ Wording and style apply to a live survey in place; the rule and `question_ids` a
 | `description` | string or null |  |  |
 | `display_style` | `plain` | `card` | `collapsible` or null |  |  |
 | `visibility_rule` | VisibilityRule or null |  |  |
+| `audience` | `everyone` | `respondents` | `operators` or null |  | Who sees it: everyone, respondents only, or operators only (the "Enter a response" form workspace members fill in for someone else). Changing it on a live survey needs unpublished changes. |
 | `translations` | object or null |  |  |
 | `question_ids` | list of integer or null |  | The questions the group holds, in order; they move together to where the first of them was. Questions of the same list only (the section, or the same pop-up). |
 
@@ -551,6 +553,7 @@ place; the code and the visibility rule are structure (`409 draft_required`).
 | `keep_panel_open` | boolean or null |  |  |
 | `next_label` | string or null |  |  |
 | `visibility_rule` | VisibilityRule or null |  |  |
+| `audience` | `everyone` | `respondents` | `operators` or null |  | Who sees it: everyone, respondents only, or operators only (the "Enter a response" form workspace members fill in for someone else). Changing it on a live survey needs unpublished changes. |
 | `translations` | object or null |  |  |
 | `map_start` | MapStart or null |  |  |
 | `use_geolocation` | boolean or null |  |  |
@@ -613,6 +616,7 @@ Add a question at the end of the section.
 | `icon_class` | string or null |  |  |
 | `display_style` | string or null |  |  |
 | `visibility_rule` | VisibilityRule or null |  |  |
+| `audience` | `everyone` | `respondents` | `operators` or null |  | Who sees it: everyone, respondents only, or operators only (the "Enter a response" form workspace members fill in for someone else). Changing it on a live survey needs unpublished changes. |
 | `layer_id` | integer or null |  |  |
 | `layer_from_answers` | string or null |  | For an "Objects on the map" question: the code of a map question whose answers become a shared map (created on first use). Use instead of `layer_id`. |
 | `min_objects` | integer or null |  |  |
@@ -683,6 +687,7 @@ visibility rule and removing an answered option are structure
 | `icon_class` | string or null |  |  |
 | `display_style` | string or null |  |  |
 | `visibility_rule` | VisibilityRule or null |  |  |
+| `audience` | `everyone` | `respondents` | `operators` or null |  | Who sees it: everyone, respondents only, or operators only (the "Enter a response" form workspace members fill in for someone else). Changing it on a live survey needs unpublished changes. |
 | `layer_id` | integer or null |  |  |
 | `layer_from_answers` | string or null |  | For an "Objects on the map" question: the code of a map question whose answers become a shared map (created on first use). Use instead of `layer_id`. |
 | `min_objects` | integer or null |  |  |
@@ -753,6 +758,7 @@ object of an Objects question: the sub-question appears in its pop-up.
 | `icon_class` | string or null |  |  |
 | `display_style` | string or null |  |  |
 | `visibility_rule` | VisibilityRule or null |  |  |
+| `audience` | `everyone` | `respondents` | `operators` or null |  | Who sees it: everyone, respondents only, or operators only (the "Enter a response" form workspace members fill in for someone else). Changing it on a live survey needs unpublished changes. |
 | `layer_id` | integer or null |  |  |
 | `layer_from_answers` | string or null |  | For an "Objects on the map" question: the code of a map question whose answers become a shared map (created on first use). Use instead of `layer_id`. |
 | `min_objects` | integer or null |  |  |
@@ -1275,6 +1281,7 @@ Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `p
 | `description` | string | yes |  |
 | `display_style` | `plain` | `card` | `collapsible` | yes |  |
 | `visibility_rule` | object or null | yes |  |
+| `audience` | `everyone` | `respondents` | `operators` | yes |  |
 | `question_ids` | list of integer | yes |  |
 | `translations` | object | yes |  |
 
@@ -1348,6 +1355,7 @@ Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `p
 | `icon_class` | string or null | yes |  |
 | `display_style` | string or null | yes |  |
 | `visibility_rule` | object or null | yes |  |
+| `audience` | `everyone` | `respondents` | `operators` | yes |  |
 | `layer_id` | integer or null | yes |  |
 | `min_objects` | integer or null | yes |  |
 | `share_with_respondents` | boolean | yes |  |
@@ -1399,6 +1407,7 @@ Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `p
 | `next_label` | string or null | yes |  |
 | `position` | integer | yes |  |
 | `visibility_rule` | object or null | yes |  |
+| `audience` | `everyone` | `respondents` | `operators` | yes |  |
 | `map_start` | MapStart or null | yes |  |
 | `use_geolocation` | boolean | yes |  |
 | `translations` | object | yes |  |

@@ -1,0 +1,13 @@
+{% load i18n %}{% comment %}Who sees a section, group or question (change operator-entry, spec
+question-audience). Beside the Visibility block, but not inside it: audience works whatever the
+CONDITIONAL_VISIBILITY switch says. Structure on a live survey, so it is read-only there and a
+change goes through unpublished changes. Open to every plan; entering is the Pro part.{% endcomment %}
+<div class="form-group fg-audience">
+    <label for="id_audience">{% trans "Who sees this" %}</label>
+    <select name="audience" id="id_audience" class="form-control form-control-sm"{% if structure_locked or is_read_only %} disabled{% endif %}>
+        {% for value, label in form.fields.audience.choices %}
+        <option value="{{ value }}"{% if form.audience.value == value or not form.audience.value and value == 'everyone' %} selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+    <small class="form-text text-muted">{% trans "“Operators only” shows it just on the Enter a response form — for a sheet number, the event, or a note about the paper form. Respondents never see it." %}</small>
+</div>

@@ -702,3 +702,36 @@ class SharedMapExportTest(TestCase):
         layer2 = SurveyMapLayer.objects.get(survey=imported2)
         self.assertEqual((layer2.source, layer2.source_question_code), ('upload', ''))
         self.assertTrue([w for w in warnings2 if 'imported as an empty layer' in w])
+
+
+class OperatorSessionsStayOffSharedMapsTest(TestCase):
+    """Delta of change operator-entry (spec shared-map-layer)."""
+
+    def setUp(self):
+        self.f = _shared_map_survey("op_shared_map")
+        self.online_a = SurveySession.objects.create(survey=self.f['survey'])
+        self.online_b = SurveySession.objects.create(survey=self.f['survey'])
+        self.paper = SurveySession.objects.create(survey=self.f['survey'], source='paper')
+        for s, x in ((self.online_a, 13.4), (self.online_b, 13.5), (self.paper, 13.6)):
+            _mark(s, self.f['q1'], x, 52.5)
+
+    def test_entered_point_stays_off_the_layer(self):
+        """
+        GIVEN a paper session with a point for the layer's source question
+        WHEN the per-session sync runs for it, as a section POST would
+        THEN the layer has no object keyed to that session
+        """
+        from survey.layers import sync_question_layers_for_session
+        sync_question_layers_for_session(self.paper, [self.f['q1']])
+        self.assertFalse(self.f['layer'].items.filter(source_session=self.paper).exists())
+
+    def test_backfill_skips_entered_sessions(self):
+        """
+        GIVEN two online sessions and one paper session with points
+        WHEN the question layer is backfilled
+        THEN only the two online sessions have objects
+        """
+        from survey.layers import backfill_question_layer
+        backfill_question_layer(self.f['layer'])
+        sessions = set(self.f['layer'].items.values_list('source_session_id', flat=True))
+        self.assertEqual(sessions, {self.online_a.pk, self.online_b.pk})

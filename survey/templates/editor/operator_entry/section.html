@@ -1,0 +1,8 @@
+{% extends 'base_survey_template.html' %}
+{% comment %}Operator entry form, one section (change operator-entry): the respondent page's shell
+and partials in entry mode — `entry` hides the public-page furniture, `form_post_url` posts back
+here, and the session rides the URL instead of the respondent cookie.{% endcomment %}
+{% block page_title %}{% load i18n %}{% trans "Enter a response" %} — {{ survey.name }}{% endblock %}
+{% block section_panel_content %}
+    {% include 'partials/survey_section_partial.html' %}
+{% endblock %}

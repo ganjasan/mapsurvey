@@ -135,6 +135,10 @@
       var form = new FormData();
       form.append('question', root.dataset.question);
       form.append('file', file, name || file.name);
+      // Operator entry form (change operator-entry): the file belongs to the
+      // entered sheet, not to whatever respondent session the cookie names.
+      var entryEl = document.querySelector('#section-data[data-entry-session]');
+      if (entryEl) form.append('entry_session', entryEl.dataset.entrySession);
 
       xhr = new XMLHttpRequest();
       xhr.open('POST', root.dataset.uploadUrl);
