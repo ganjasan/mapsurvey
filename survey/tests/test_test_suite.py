@@ -141,8 +141,6 @@ UNMAPPED_MODULES = {
     'respondent-touch-copy': 'tap-phrased respondent copy; its change (respondent bottom sheet) was removed',
     'creator-language-preference': 'spec lives in the unarchived change creator-ui-localization',
     'repo-hygiene': 'spec lives in the unarchived change ops-repo-separation',
-    'question-audience': 'spec lives in the unarchived change operator-entry',
-    'operator-entry': 'spec lives in the unarchived change operator-entry',
 }
 
 # Capabilities with no module here: tested in another app, or not by any
