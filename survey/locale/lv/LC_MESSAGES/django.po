@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "Datums un laiks"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1161,3 +1161,84 @@ msgstr "Šis jautājums ir obligāts"
 
 msgid "Take photo"
 msgstr "Uzņemt foto"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Izvēlieties vienu"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Izvēlieties visus atbilstošos"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Atbildiet tikai tad, ja %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Tikai tiešsaistē"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Atzīmējiet kartē"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Uzzīmējiet punktu un blakus uzrakstiet burtu %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Uzzīmējiet līniju un tās sākumā uzrakstiet burtu %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Apvelciet teritoriju un tajā uzrakstiet burtu %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Iesvītrojiet teritoriju un blakus uzrakstiet burtu %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "līdz %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "vismaz %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Atzīme"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Objekts"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "un vēl %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Pie pirmās izvēles rakstiet 1, pie otrās 2 un tā tālāk."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "%(n)s. lappuse no %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Vēlaties atbildēt tiešsaistē? Skenējiet šo kodu."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* obligāti"

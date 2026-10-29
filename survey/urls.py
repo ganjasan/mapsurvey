@@ -10,6 +10,7 @@ from . import comment_views
 from . import analytics_views
 from . import operator_entry_views
 from . import share_views
+from survey.print import views as print_views
 from . import translation_views
 from . import org_views
 from . import public_results_editor
@@ -187,6 +188,8 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/share/', share_views.share_page, name='editor_survey_share'),
     path('editor/surveys/<uuid:survey_uuid>/share/<int:link_id>/delete/', share_views.share_link_delete, name='editor_survey_share_delete'),
     path('editor/surveys/<uuid:survey_uuid>/share/embed/', share_views.embed_settings, name='editor_survey_embed_settings'),
+    # Printable paper form (change printable-form, #489).
+    path('editor/surveys/<uuid:survey_uuid>/print/form/', print_views.print_form, name='editor_survey_print_form'),
 
     path('editor/surveys/<uuid:survey_uuid>/collaborators/', editor_views.editor_survey_collaborators, name='editor_survey_collaborators'),
     path('editor/surveys/<uuid:survey_uuid>/collaborators/add/', editor_views.editor_collaborator_add, name='editor_collaborator_add'),

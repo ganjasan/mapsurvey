@@ -98,7 +98,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "תאריך ושעה"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1161,3 +1161,84 @@ msgstr "עד {n} נוספים"
 
 msgid "Tap to start the line."
 msgstr "הקישו כדי להתחיל את הקו."
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "בחרו אחת"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "בחרו את כל התשובות המתאימות"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "ענו רק אם %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "באינטרנט בלבד"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "סמנו על המפה"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "ציירו נקודה וכתבו לידה את האות %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "ציירו את הקו וכתבו את האות %(letter)s בתחילתו"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "הקיפו את האזור וכתבו בתוכו את האות %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "הצללו את האזור וכתבו לידו את האות %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "עד %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "לפחות %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "סימון"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "אובייקט"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "ועוד %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "כתבו 1 ליד הבחירה הראשונה, 2 ליד השנייה, וכן הלאה."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "עמוד %(n)s מתוך %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "מעדיפים לענות באינטרנט? סרקו את הקוד הזה."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* חובה"

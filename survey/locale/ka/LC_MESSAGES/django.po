@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "თარიღი და დრო"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1160,3 +1160,84 @@ msgstr "შეეხეთ ხაზის დასაწყებად."
 
 msgid "Tap the last point to finish the line."
 msgstr "შეეხეთ ბოლო წერტილს ხაზის დასასრულებლად."
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "აირჩიეთ ერთი"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "აირჩიეთ ყველა შესაბამისი"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "უპასუხეთ მხოლოდ თუ %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "მხოლოდ ონლაინ"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "მონიშნეთ რუკაზე"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "დასვით წერტილი და გვერდით დაწერეთ ასო %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "გაავლეთ ხაზი და მის დასაწყისში დაწერეთ ასო %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "შემოხაზეთ ტერიტორია და შიგნით დაწერეთ ასო %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "დაშტრიხეთ ტერიტორია და გვერდით დაწერეთ ასო %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "არაუმეტეს %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "არანაკლებ %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "ნიშანი"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "ობიექტი"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "და კიდევ %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "დაწერეთ 1 პირველი არჩევანისთვის, 2 მეორესთვის და ა.შ."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "გვერდი %(n)s / %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "გირჩევნიათ ონლაინ პასუხი? დაასკანერეთ ეს კოდი."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* სავალდებულო"

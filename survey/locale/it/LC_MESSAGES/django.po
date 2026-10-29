@@ -9432,3 +9432,108 @@ msgstr "Oggi ti abbiamo già inviato un link. Apri il più recente e controlla l
 #: survey/auth_forms.py
 msgid "Your email address was not confirmed in time."
 msgstr "Il tuo indirizzo email non è stato confermato in tempo."
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Scegli una"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Scegli tutte le risposte pertinenti"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Rispondi solo se %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Solo online"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Segna sulla mappa"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Disegna un punto e scrivi la lettera %(letter)s accanto"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Traccia la linea e scrivi la lettera %(letter)s al suo inizio"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Delimita l'area e scrivi la lettera %(letter)s al suo interno"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Ombreggia l'area e scrivi la lettera %(letter)s accanto"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "fino a %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "almeno %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Segno"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Oggetto"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "e altri %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Scrivi 1 per la tua prima scelta, 2 per la seconda, e così via."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "Pagina %(n)s di %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Preferisci rispondere online? Scansiona questo codice."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* obbligatorio"
+
+#: survey/templates/editor/survey_share.html
+msgid "Print a paper form"
+msgstr "Stampa un modulo cartaceo"
+
+#: survey/templates/editor/survey_share.html
+msgid "Paper"
+msgstr "Carta"
+
+#: survey/templates/editor/survey_share.html
+msgid "Download PDF"
+msgstr "Scarica il PDF"
+
+#: survey/templates/editor/survey_share.html
+msgid "A PDF of the whole survey as a paper form: every question with boxes and lines, the map of each page with your reference layers and a letter per map question, and a code on every page so the sheets can be matched back. Type the filled sheets in with “Enter a response” on Responses."
+msgstr "Un PDF dell'intero sondaggio come modulo cartaceo: ogni domanda con caselle e righe, la mappa di ogni pagina con i tuoi livelli di riferimento e una lettera per ogni domanda sulla mappa, e un codice su ogni pagina per abbinare i fogli. Inserisci i fogli compilati con «Inserisci una risposta» in Risposte."
+
+#: survey/templates/editor/survey_share.html
+msgid "Until the survey is published the form prints with a DRAFT watermark — good for proofing, not for handing out."
+msgstr "Finché il sondaggio non è pubblicato il modulo si stampa con la filigrana BOZZA: va bene per controllare, non per distribuire."
+
+#: survey/templates/editor/survey_share.html
+msgid "Chinese, Japanese and Korean text is not yet supported on the printed form."
+msgstr "Il testo in cinese, giapponese e coreano non è ancora supportato sul modulo stampato."

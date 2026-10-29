@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "Tarikh dan masa"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1159,3 +1159,84 @@ msgstr "Mendedahkan data peribadi seseorang"
 
 msgid "Brush size"
 msgstr "Saiz berus"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Pilih satu"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Pilih semua yang berkenaan"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Jawab hanya jika %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Dalam talian sahaja"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Tandakan pada peta"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Lukis titik dan tulis huruf %(letter)s di sebelahnya"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Lukis garisan dan tulis huruf %(letter)s pada permulaannya"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Lakarkan kawasan dan tulis huruf %(letter)s di dalamnya"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Lorekkan kawasan dan tulis huruf %(letter)s di sebelahnya"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "sehingga %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "sekurang-kurangnya %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Tanda"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Objek"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "dan %(n)s lagi"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Tulis 1 untuk pilihan pertama, 2 untuk kedua, dan seterusnya."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "Halaman %(n)s daripada %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Lebih suka menjawab dalam talian? Imbas kod ini."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* wajib"

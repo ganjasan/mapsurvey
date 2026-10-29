@@ -8471,3 +8471,84 @@ msgstr "Сегодня мы уже отправляли вам ссылку. О�
 #: survey/auth_forms.py
 msgid "Your email address was not confirmed in time."
 msgstr "Адрес электронной почты не был подтверждён вовремя."
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Выберите один вариант"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Выберите все подходящие варианты"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Отвечайте, только если %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Только онлайн"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Отметьте на карте"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Поставьте точку и напишите рядом букву %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Проведите линию и напишите в её начале букву %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Обведите область и напишите внутри букву %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Заштрихуйте область и напишите рядом букву %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "не более %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "не менее %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Отметка"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Объект"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "и ещё %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Напишите 1 у первого выбора, 2 у второго и так далее."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "Страница %(n)s из %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Удобнее ответить онлайн? Отсканируйте этот код."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* обязательно"

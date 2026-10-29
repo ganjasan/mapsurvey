@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "កាលបរិច្ឆេទ និងម៉ោង"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1159,3 +1159,84 @@ msgstr "ថតសំឡេង"
 
 msgid "Spray"
 msgstr "បាញ់ពណ៌"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "ជ្រើសរើសមួយ"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "ជ្រើសរើសទាំងអស់ដែលត្រូវ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "ឆ្លើយតែពេល %(condition)s ប៉ុណ្ណោះ"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "តែលើអនឡាញប៉ុណ្ណោះ"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "សម្គាល់លើផែនទី"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "គូសចំណុច ហើយសរសេរអក្សរ %(letter)s នៅក្បែរ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "គូសបន្ទាត់ ហើយសរសេរអក្សរ %(letter)s នៅដើមបន្ទាត់"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "គូសព្រំដែនតំបន់ ហើយសរសេរអក្សរ %(letter)s នៅខាងក្នុង"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "ចោលស្រមោលតំបន់ ហើយសរសេរអក្សរ %(letter)s នៅក្បែរ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "រហូតដល់ %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "យ៉ាងហោចណាស់ %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "សញ្ញា"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "វត្ថុ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "និង %(n)s ទៀត"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "សរសេរ 1 សម្រាប់ជម្រើសទីមួយ 2 សម្រាប់ទីពីរ និងបន្តបន្ទាប់។"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "ទំព័រ %(n)s នៃ %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "ចង់ឆ្លើយតាមអនឡាញ? ស្កេនកូដនេះ។"
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* ត្រូវតែបំពេញ"

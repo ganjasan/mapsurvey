@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "Data și ora"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1161,3 +1161,84 @@ msgstr "Adăugați încă unul"
 
 msgid "Looks like a scam or impersonates a company"
 msgstr "Pare o înșelătorie sau se dă drept o companie"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Alegeți una"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Alegeți toate variantele potrivite"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Răspundeți doar dacă %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Doar online"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Marcați pe hartă"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Puneți un punct și scrieți litera %(letter)s lângă el"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Trasați linia și scrieți litera %(letter)s la începutul ei"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Conturați zona și scrieți litera %(letter)s în interior"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Hașurați zona și scrieți litera %(letter)s lângă ea"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "cel mult %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "cel puțin %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Marcaj"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Obiect"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "și încă %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Scrieți 1 pentru prima alegere, 2 pentru a doua și așa mai departe."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "Pagina %(n)s din %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Preferați să răspundeți online? Scanați acest cod."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* obligatoriu"

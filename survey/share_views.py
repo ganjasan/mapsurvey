@@ -9,6 +9,7 @@ from .embedding import normalise_allowed_hosts, snippet_html, public_base_url, I
 from .models import TrackedLink, PublicResultsPage
 from .permissions import survey_permission_required
 from .versioning import canonical_of
+from survey.print.views import default_paper
 
 
 class EmbedHostsForm(forms.Form):
@@ -100,6 +101,10 @@ def _render_share(request, survey, form=None, embed_form=None, status=200):
         'embed_snippet': snippet_html(request, canonical) if is_shareable else '',
         'embed_form': embed_form,
         'embed_hosts_saved': status == 200 and request.GET.get('embed') == 'saved',
+        # Printable paper form (change printable-form): every status, every plan.
+        'print_languages': list(survey.available_languages or ['en']),
+        'print_default_paper': default_paper(request),
+        'print_cjk': any(code in ('zh', 'ja', 'ko') for code in (survey.available_languages or [])),
     }, status=status)
 
 

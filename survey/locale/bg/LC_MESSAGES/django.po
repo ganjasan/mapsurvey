@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "Дата и час"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1161,3 +1161,84 @@ msgstr "{n} от {m} отбелязани"
 
 msgid "Spray"
 msgstr "Пръскане"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Изберете едно"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Изберете всички подходящи"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Отговорете само ако %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Само онлайн"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Отбележете на картата"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Поставете точка и напишете буквата %(letter)s до нея"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Начертайте линията и напишете буквата %(letter)s в началото ѝ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Очертайте зоната и напишете буквата %(letter)s вътре"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Защриховайте зоната и напишете буквата %(letter)s до нея"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "до %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "поне %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Отметка"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Обект"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "и още %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Напишете 1 за първия си избор, 2 за втория и т.н."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "Страница %(n)s от %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Предпочитате да отговорите онлайн? Сканирайте този код."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* задължително"

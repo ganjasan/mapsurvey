@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "日付と時刻"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1159,3 +1159,84 @@ msgstr "大きいブラシ"
 
 msgid "Attach file"
 msgstr "ファイルを添付"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "一つ選んでください"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "当てはまるものをすべて選んでください"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "%(condition)s の場合のみ回答してください"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "オンラインのみ"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "地図に印をつけてください"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "点を打ち、その横に文字 %(letter)s を書いてください"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "線を描き、その始点に文字 %(letter)s を書いてください"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "範囲を囲み、その中に文字 %(letter)s を書いてください"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "範囲を塗り、その横に文字 %(letter)s を書いてください"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "最大 %(n)s 個"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "最低 %(n)s 個"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "印"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "対象"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "他 %(n)s 件"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "第一希望に1、第二希望に2というように番号を書いてください。"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "%(n)s / %(total)s ページ"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "オンラインで回答しますか？このコードを読み取ってください。"
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* 必須"

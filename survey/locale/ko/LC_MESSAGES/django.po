@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "날짜와 시간"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1159,3 +1159,84 @@ msgstr "중지"
 
 msgid "Add audio file"
 msgstr "오디오 파일 추가"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "하나를 선택하세요"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "해당하는 것을 모두 선택하세요"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "%(condition)s 인 경우에만 답하세요"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "온라인 전용"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "지도에 표시하세요"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "점을 찍고 옆에 글자 %(letter)s를 쓰세요"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "선을 그리고 시작점에 글자 %(letter)s를 쓰세요"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "구역을 둘러 그리고 안에 글자 %(letter)s를 쓰세요"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "구역을 칠하고 옆에 글자 %(letter)s를 쓰세요"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "최대 %(n)s개"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "최소 %(n)s개"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "표시"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "대상"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "외 %(n)s개"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "첫 번째 선택에 1, 두 번째에 2 등으로 적으세요."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "%(n)s / %(total)s 페이지"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "온라인으로 답하시겠어요? 이 코드를 스캔하세요."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* 필수"

@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "Дата і час"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1162,3 +1162,84 @@ msgstr "Надіслати скаргу"
 
 msgid "Made with"
 msgstr "Створено за допомогою"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Виберіть один варіант"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Виберіть усі відповідні варіанти"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Відповідайте, лише якщо %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Лише онлайн"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Позначте на карті"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Поставте крапку і напишіть поруч літеру %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Проведіть лінію і напишіть на її початку літеру %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Обведіть ділянку і напишіть усередині літеру %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Заштрихуйте ділянку і напишіть поруч літеру %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "не більше %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "не менше %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Позначка"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Об'єкт"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "і ще %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Напишіть 1 біля першого вибору, 2 біля другого і так далі."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "Сторінка %(n)s з %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Зручніше відповісти онлайн? Відскануйте цей код."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* обов'язково"

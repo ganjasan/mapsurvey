@@ -44,6 +44,7 @@ Respondents never see it, and on the entry form it behaves like any other questi
 
 ## Related
 
+- [Print a paper form](/how-to/print-a-paper-form/)
 - [Export responses](/how-to/export-responses/)
 - [Edit a published survey](/how-to/edit-a-published-survey/)
 - [Upgrade to Pro](/how-to/upgrade-to-pro/)

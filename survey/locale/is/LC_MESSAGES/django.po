@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "Dagsetning og tími"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1160,3 +1160,84 @@ msgstr "Hengja við skrá"
 
 msgid "Hold and drag to spray. Stay longer where you are more certain."
 msgstr "Haltu inni og dragðu til að úða. Staldraðu lengur við þar sem þú ert vissari."
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Veldu eitt"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Veldu allt sem á við"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Svaraðu aðeins ef %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Aðeins á netinu"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Merktu á kortið"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Teiknaðu punkt og skrifaðu stafinn %(letter)s við hliðina"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Teiknaðu línuna og skrifaðu stafinn %(letter)s við upphaf hennar"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Afmarkaðu svæðið og skrifaðu stafinn %(letter)s inni í því"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Skyggðu svæðið og skrifaðu stafinn %(letter)s við hliðina"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "allt að %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "að minnsta kosti %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Merki"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Hlutur"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "og %(n)s til viðbótar"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Skrifaðu 1 við fyrsta valið, 2 við annað, og svo framvegis."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "Síða %(n)s af %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Viltu frekar svara á netinu? Skannaðu þennan kóða."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* skylda"

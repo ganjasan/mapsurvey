@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "തീയതിയും സമയവും"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1160,3 +1160,84 @@ msgstr "തിരയൽ പരാജയപ്പെട്ടു — നിങ്
 
 msgid "Questions"
 msgstr "ചോദ്യങ്ങൾ"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "ഒന്ന് തിരഞ്ഞെടുക്കുക"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "ബാധകമായവയെല്ലാം തിരഞ്ഞെടുക്കുക"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "%(condition)s എങ്കിൽ മാത്രം ഉത്തരം നൽകുക"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "ഓൺലൈനിൽ മാത്രം"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "മാപ്പിൽ അടയാളപ്പെടുത്തുക"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "ഒരു കുത്ത് ഇട്ട് അരികിൽ %(letter)s എന്ന അക്ഷരം എഴുതുക"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "വര വരച്ച് അതിന്റെ തുടക്കത്തിൽ %(letter)s എന്ന അക്ഷരം എഴുതുക"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "പ്രദേശം വരച്ച് അതിനുള്ളിൽ %(letter)s എന്ന അക്ഷരം എഴുതുക"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "പ്രദേശം ഷേഡ് ചെയ്ത് അരികിൽ %(letter)s എന്ന അക്ഷരം എഴുതുക"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "പരമാവധി %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "കുറഞ്ഞത് %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "അടയാളം"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "വസ്തു"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "കൂടാതെ %(n)s കൂടി"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "ആദ്യ തിരഞ്ഞെടുപ്പിന് 1, രണ്ടാമത്തേതിന് 2 എന്നിങ്ങനെ എഴുതുക."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "പേജ് %(n)s / %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "ഓൺലൈനായി ഉത്തരം നൽകണോ? ഈ കോഡ് സ്കാൻ ചെയ്യുക."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* നിർബന്ധം"

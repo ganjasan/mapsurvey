@@ -95,7 +95,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "Күнү жана убактысы"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1160,3 +1160,84 @@ msgstr[1] "%(n)s суроо"
 
 msgid "Search failed — check your connection and try again."
 msgstr "Издөө ишке ашкан жок — байланышыңызды текшерип, кайра аракет кылыңыз."
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Бирөөнү тандаңыз"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Туура келгендердин баарын тандаңыз"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Бир гана %(condition)s болсо жооп бериңиз"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Онлайн гана"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Картада белгилеңиз"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Чекит коюп, жанына %(letter)s тамгасын жазыңыз"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Сызык тартып, башына %(letter)s тамгасын жазыңыз"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Аймакты курчап, ичине %(letter)s тамгасын жазыңыз"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Аймакты штрихтеп, жанына %(letter)s тамгасын жазыңыз"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "эң көп %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "кеминде %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Белги"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Объект"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "жана дагы %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Биринчи тандооңузга 1, экинчисине 2 жана андан ары жазыңыз."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "%(n)s-бет, баары %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Онлайн жооп бергиңиз келеби? Бул кодду сканерлеңиз."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* милдеттүү"

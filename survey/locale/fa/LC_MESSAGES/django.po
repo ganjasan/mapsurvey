@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "تاریخ و زمان"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1158,3 +1158,84 @@ msgstr "گرفتن عکس"
 
 msgid "Yes"
 msgstr "بله"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "یکی را انتخاب کنید"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "همه موارد مربوط را انتخاب کنید"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "فقط اگر %(condition)s پاسخ دهید"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "فقط آنلاین"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "روی نقشه علامت بزنید"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "یک نقطه بگذارید و حرف %(letter)s را کنار آن بنویسید"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "خط را بکشید و حرف %(letter)s را در ابتدای آن بنویسید"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "محدوده را دور بگیرید و حرف %(letter)s را داخل آن بنویسید"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "محدوده را هاشور بزنید و حرف %(letter)s را کنار آن بنویسید"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "حداکثر %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "حداقل %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "علامت"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "شیء"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "و %(n)s مورد دیگر"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "برای گزینه اول ۱، برای دوم ۲ و به همین ترتیب بنویسید."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "صفحه %(n)s از %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "ترجیح می‌دهید آنلاین پاسخ دهید؟ این کد را اسکن کنید."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* الزامی"

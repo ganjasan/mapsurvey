@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "Datum en tyd"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1160,3 +1160,84 @@ msgstr "Neem foto"
 
 msgid "Clear"
 msgstr "Maak skoon"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Kies een"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Kies alles wat van toepassing is"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Antwoord slegs as %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Slegs aanlyn"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Merk op die kaart"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Teken 'n kolletjie en skryf die letter %(letter)s langsaan"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Teken die lyn en skryf die letter %(letter)s by sy begin"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Omlyn die gebied en skryf die letter %(letter)s daarin"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Skakeer die gebied en skryf die letter %(letter)s langsaan"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "tot %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "minstens %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Merk"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Objek"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "en nog %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Skryf 1 vir jou eerste keuse, 2 vir jou tweede, ensovoorts."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "Bladsy %(n)s van %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Verkies jy om aanlyn te antwoord? Skandeer hierdie kode."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* verpligtend"

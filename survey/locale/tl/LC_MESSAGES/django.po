@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "Petsa at oras"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1161,3 +1161,84 @@ msgstr "gumawa ng sarili mong libreng map survey"
 
 msgid "Stop"
 msgstr "Ihinto"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Pumili ng isa"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Piliin lahat ng naaangkop"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Sagutin lamang kung %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Online lamang"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Markahan sa mapa"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Gumuhit ng tuldok at isulat ang titik %(letter)s sa tabi nito"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Iguhit ang linya at isulat ang titik %(letter)s sa simula nito"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Balangkasin ang lugar at isulat ang titik %(letter)s sa loob"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Kulayan ang lugar at isulat ang titik %(letter)s sa tabi nito"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "hanggang %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "hindi bababa sa %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Marka"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Bagay"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "at %(n)s pa"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Isulat ang 1 para sa iyong unang pili, 2 para sa pangalawa, at iba pa."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "Pahina %(n)s ng %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Mas gusto mong sumagot online? I-scan ang code na ito."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* kinakailangan"

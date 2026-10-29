@@ -30,6 +30,8 @@ HELP_LINKS = {
     'translate': 'how-to/translate-a-survey/',
     # The operator entry form (change operator-entry, #355).
     'operator_entry': 'how-to/enter-responses-for-others/',
+    # The printable paper form (change printable-form, #489).
+    'print_form': 'how-to/print-a-paper-form/',
     'faq': 'faq/',
 }
 

@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "Data e hora"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1160,3 +1160,84 @@ msgstr "O pincel está baleiro — borre algo de pintura para continuar."
 
 msgid "Never enter passwords or card numbers in a Mapsurvey survey."
 msgstr "Nunca introduza contrasinais nin números de tarxeta nunha enquisa de Mapsurvey."
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Escolle unha"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Escolle todas as que correspondan"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Responde só se %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Só en liña"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Marca no mapa"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Debuxa un punto e escribe ao lado a letra %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Debuxa a liña e escribe a letra %(letter)s no seu inicio"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Delimita a zona e escribe dentro a letra %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Sombrea a zona e escribe ao lado a letra %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "ata %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "polo menos %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Marca"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Obxecto"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "e %(n)s máis"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Escribe 1 na túa primeira opción, 2 na segunda, e así sucesivamente."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "Páxina %(n)s de %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Prefires responder en liña? Escanea este código."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* obrigatorio"

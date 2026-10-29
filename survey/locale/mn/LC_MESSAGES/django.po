@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "Огноо ба цаг"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1160,3 +1160,84 @@ msgstr "Байршуулж байна"
 
 msgid "This field is required."
 msgstr "Энэ талбарыг заавал бөглөнө."
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Нэгийг сонгоно уу"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Тохирох бүгдийг сонгоно уу"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Зөвхөн %(condition)s бол хариулна уу"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Зөвхөн онлайн"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Газрын зураг дээр тэмдэглэнэ үү"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Цэг тавиад хажууд нь %(letter)s үсгийг бичнэ үү"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Шугам зураад эхэнд нь %(letter)s үсгийг бичнэ үү"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Талбайг тойруулан зураад дотор нь %(letter)s үсгийг бичнэ үү"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Талбайг будаад хажууд нь %(letter)s үсгийг бичнэ үү"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "дээд тал нь %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "дор хаяж %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Тэмдэг"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Объект"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "болон өөр %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Эхний сонголтод 1, хоёр дахьд 2 гэх мэт бичнэ үү."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "Хуудас %(n)s / %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Онлайнаар хариулах уу? Энэ кодыг уншуулна уу."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* заавал"

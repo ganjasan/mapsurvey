@@ -415,6 +415,56 @@ class Invitation(models.Model):
     def __str__(self):
         return f"{self.email} → {self.organization.name} ({self.role})"
 
+class PrintedForm(models.Model):
+    """A printed paper form of a survey (change printable-form, #489).
+
+    The identity a page carries in its form code (`survey/print/form_code.py`):
+    which survey version, language and paper the sheet came from and, per page
+    with a map, where the frame sits on the page and which geography it shows —
+    what item 4 of epic #350 needs to turn a photographed mark into
+    coordinates. One row per distinct (survey, version, language, paper,
+    structure_hash): a reprint of an unchanged survey reuses the row and its
+    code; a wording edit changes the hash and makes a new one, because it moves
+    frames by millimetres and a deterministic re-render is not an identity.
+    """
+    PAPER_A4 = 'a4'
+    PAPER_LETTER = 'letter'
+    PAPER_CHOICES = ((PAPER_A4, 'A4'), (PAPER_LETTER, 'US Letter'))
+
+    survey = models.ForeignKey('SurveyHeader', on_delete=models.CASCADE, related_name='printed_forms',
+                               help_text=_('The canonical survey; the version is in version_number.'))
+    version_number = models.PositiveIntegerField()
+    language = models.CharField(max_length=10)
+    paper = models.CharField(max_length=8, choices=PAPER_CHOICES, default=PAPER_A4)
+    # sha256 over the rendered items (codes, types, option codes, wording, language).
+    structure_hash = models.CharField(max_length=64)
+    pages = models.PositiveIntegerField(default=0)
+    # {"<page>": {"map": {"x_mm", "y_mm", "w_mm", "h_mm", "bbox": [w, s, e, n],
+    #                     "zoom", "basemap" | null, "section_code"}}}
+    layout = models.JSONField(default=dict, blank=True)
+    tracked_link = models.ForeignKey('TrackedLink', null=True, blank=True, on_delete=models.SET_NULL,
+                                     related_name='printed_forms')
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+                                   related_name='printed_forms')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        app_label = 'survey'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['survey', 'version_number', 'language', 'paper', 'structure_hash'],
+                name='printedform_one_per_structure'),
+        ]
+
+    @property
+    def code(self):
+        from survey.print.form_code import encode
+        return encode(self.pk)
+
+    def __str__(self):
+        return f'form {self.code} of {self.survey_id} v{self.version_number} {self.language} {self.paper}'
+
+
 class SurveyHeader(models.Model):
     uuid = models.UUIDField(default=uuid_module.uuid4, unique=True, editable=False)
     organization = models.ForeignKey("Organization", on_delete=models.CASCADE)

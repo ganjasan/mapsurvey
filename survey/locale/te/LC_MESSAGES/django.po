@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "తేదీ మరియు సమయం"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1160,3 +1160,84 @@ msgid "%(n)s question"
 msgid_plural "%(n)s questions"
 msgstr[0] "%(n)s ప్రశ్న"
 msgstr[1] "%(n)s ప్రశ్నలు"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "ఒకటి ఎంచుకోండి"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "వర్తించే అన్నింటినీ ఎంచుకోండి"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "%(condition)s అయితే మాత్రమే సమాధానం ఇవ్వండి"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "ఆన్‌లైన్‌లో మాత్రమే"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "మ్యాప్‌లో గుర్తించండి"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "ఒక చుక్క పెట్టి పక్కన %(letter)s అక్షరం రాయండి"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "గీత గీసి దాని ప్రారంభంలో %(letter)s అక్షరం రాయండి"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "ప్రాంతాన్ని గీసి లోపల %(letter)s అక్షరం రాయండి"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "ప్రాంతాన్ని షేడ్ చేసి పక్కన %(letter)s అక్షరం రాయండి"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "గరిష్ఠంగా %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "కనీసం %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "గుర్తు"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "వస్తువు"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "మరియు మరో %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "మొదటి ఎంపికకు 1, రెండవదానికి 2 ఇలా రాయండి."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "పేజీ %(n)s / %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "ఆన్‌లైన్‌లో సమాధానం ఇవ్వాలనుకుంటున్నారా? ఈ కోడ్‌ను స్కాన్ చేయండి."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* తప్పనిసరి"

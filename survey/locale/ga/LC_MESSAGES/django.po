@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "Dáta agus am"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1163,3 +1163,84 @@ msgstr "An bhfuil aon rud eile ar cheart dúinn a bheith ar an eolas faoi? (rogh
 
 msgid "This question is required"
 msgstr "Tá an cheist seo riachtanach"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Roghnaigh ceann amháin"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Roghnaigh gach ceann a bhaineann"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Freagair amháin má %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Ar líne amháin"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Marcáil ar an léarscáil"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Tarraing ponc agus scríobh an litir %(letter)s in aice leis"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Tarraing an líne agus scríobh an litir %(letter)s ag a tús"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Imlínigh an limistéar agus scríobh an litir %(letter)s istigh ann"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Scáthaigh an limistéar agus scríobh an litir %(letter)s in aice leis"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "suas le %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "ar a laghad %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Marc"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Réad"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "agus %(n)s eile"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Scríobh 1 don chéad rogha, 2 don dara ceann, agus mar sin de."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "Leathanach %(n)s de %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Ar mhaith leat freagairt ar líne? Scan an cód seo."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* riachtanach"

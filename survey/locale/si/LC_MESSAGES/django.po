@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "දිනය සහ වේලාව"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1160,3 +1160,84 @@ msgstr "මකන්න"
 
 msgid "Small brush"
 msgstr "කුඩා බුරුසුව"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "එකක් තෝරන්න"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "අදාළ සියල්ල තෝරන්න"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "%(condition)s නම් පමණක් පිළිතුරු දෙන්න"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "අන්තර්ජාලයෙන් පමණි"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "සිතියමේ ලකුණු කරන්න"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "තිතක් යොදා ඒ අසල %(letter)s අකුර ලියන්න"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "රේඛාව අඳින්න, ආරම්භයේ %(letter)s අකුර ලියන්න"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "ප්‍රදේශය වට කර ඇතුළත %(letter)s අකුර ලියන්න"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "ප්‍රදේශය සෙවණ කර ඒ අසල %(letter)s අකුර ලියන්න"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "උපරිම %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "අවම %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "ලකුණ"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "වස්තුව"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "සහ තවත් %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "පළමු තේරීමට 1, දෙවැන්නට 2 ලෙස ලියන්න."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "පිටුව %(n)s / %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "අන්තර්ජාලයෙන් පිළිතුරු දීමට කැමතිද? මෙම කේතය ස්කෑන් කරන්න."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* අනිවාර්යයි"

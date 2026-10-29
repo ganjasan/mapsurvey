@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "Tarehe na saa"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1160,3 +1160,84 @@ msgstr "Gusa ramani ili kuweka alama mahali — au tumia kitufe."
 
 msgid "Tap the last point to finish the line."
 msgstr "Gusa nukta ya mwisho ili kumaliza mstari."
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Chagua moja"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Chagua yote yanayohusika"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Jibu tu ikiwa %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Mtandaoni pekee"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Weka alama kwenye ramani"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Weka nukta na uandike herufi %(letter)s kando yake"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Chora mstari na uandike herufi %(letter)s mwanzoni mwake"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Zungushia eneo na uandike herufi %(letter)s ndani yake"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Tia kivuli eneo na uandike herufi %(letter)s kando yake"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "hadi %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "angalau %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Alama"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Kitu"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "na %(n)s zaidi"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Andika 1 kwa chaguo lako la kwanza, 2 kwa la pili, na kadhalika."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "Ukurasa %(n)s kati ya %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Unapendelea kujibu mtandaoni? Changanua msimbo huu."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* lazima"

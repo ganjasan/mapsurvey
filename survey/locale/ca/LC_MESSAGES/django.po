@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "Data i hora"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1160,3 +1160,84 @@ msgstr "Assetjament, amenaces o odi"
 
 msgid "Attach file"
 msgstr "Adjunta un fitxer"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Trieu-ne una"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Trieu totes les que corresponguin"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Responeu només si %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Només en línia"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Marqueu al mapa"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Dibuixeu un punt i escriviu-hi al costat la lletra %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Dibuixeu la línia i escriviu la lletra %(letter)s al seu inici"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Delimiteu l'àrea i escriviu-hi a dins la lletra %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Ombregeu l'àrea i escriviu-hi al costat la lletra %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "fins a %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "almenys %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Marca"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Objecte"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "i %(n)s més"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Escriviu 1 per a la primera opció, 2 per a la segona, etc."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "Pàgina %(n)s de %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Preferiu respondre en línia? Escanegeu aquest codi."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* obligatori"

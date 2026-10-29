@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "Dátum és idő"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1160,3 +1160,84 @@ msgstr "Csalásnak tűnik, vagy egy cégnek adja ki magát"
 
 msgid "Tap to add the next corner."
 msgstr "Koppintson a következő sarok hozzáadásához."
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Válasszon egyet"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Jelölje meg az összes megfelelőt"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Csak akkor válaszoljon, ha %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Csak online"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Jelölje a térképen"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Rajzoljon egy pontot, és írja mellé a(z) %(letter)s betűt"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Rajzolja meg a vonalat, és írja a kezdetéhez a(z) %(letter)s betűt"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Kerítse körbe a területet, és írja bele a(z) %(letter)s betűt"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Satírozza be a területet, és írja mellé a(z) %(letter)s betűt"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "legfeljebb %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "legalább %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Jelölés"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Objektum"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "és még %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Írjon 1-et az első, 2-t a második választása mellé, és így tovább."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "%(n)s. oldal, összesen %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Inkább online válaszolna? Olvassa be ezt a kódot."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* kötelező"

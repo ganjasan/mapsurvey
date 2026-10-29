@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "Ημερομηνία και ώρα"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1161,3 +1161,84 @@ msgstr "Αποκαλύπτει προσωπικά δεδομένα κάποιο�
 
 msgid "Asks for a password, a login or a payment"
 msgstr "Ζητά κωδικό πρόσβασης, σύνδεση ή πληρωμή"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Επιλέξτε ένα"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Επιλέξτε όλα όσα ισχύουν"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Απαντήστε μόνο αν %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Μόνο διαδικτυακά"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Σημειώστε στον χάρτη"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Σχεδιάστε μια κουκκίδα και γράψτε δίπλα το γράμμα %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Σχεδιάστε τη γραμμή και γράψτε το γράμμα %(letter)s στην αρχή της"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Περιγράψτε την περιοχή και γράψτε μέσα το γράμμα %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Σκιάστε την περιοχή και γράψτε δίπλα το γράμμα %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "έως %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "τουλάχιστον %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Σημείο"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Αντικείμενο"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "και %(n)s ακόμη"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Γράψτε 1 για την πρώτη σας επιλογή, 2 για τη δεύτερη κ.ο.κ."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "Σελίδα %(n)s από %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Προτιμάτε να απαντήσετε διαδικτυακά; Σαρώστε αυτόν τον κωδικό."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* υποχρεωτικό"

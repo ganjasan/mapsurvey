@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "Ամսաթիվ և ժամ"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1160,3 +1160,84 @@ msgstr "Հպեք՝ հաջորդ կետն ավելացնելու համար։"
 
 msgid "A few required questions still need an answer."
 msgstr "Որոշ պարտադիր հարցեր դեռ պատասխան չունեն։"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Ընտրեք մեկը"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Ընտրեք բոլոր համապատասխանները"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Պատասխանեք միայն, եթե %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Միայն առցանց"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Նշեք քարտեզի վրա"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Նշեք կետ և կողքը գրեք %(letter)s տառը"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Գծեք գիծը և սկզբում գրեք %(letter)s տառը"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Շրջանցեք տարածքը և ներսում գրեք %(letter)s տառը"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Ստվերեք տարածքը և կողքը գրեք %(letter)s տառը"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "մինչև %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "առնվազն %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Նշում"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Օբյեկտ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "և ևս %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Գրեք 1 առաջին ընտրության, 2 երկրորդի համար և այլն։"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "Էջ %(n)s / %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Նախընտրու՞մ եք պատասխանել առցանց։ Սկանավորեք այս կոդը։"
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* պարտադիր"

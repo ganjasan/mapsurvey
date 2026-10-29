@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "ວັນທີ ແລະ ເວລາ"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1159,3 +1159,84 @@ msgstr[0] "%(n)s ຄຳຖາມ"
 
 msgid "create your own free map survey"
 msgstr "ສ້າງແບບສຳຫຼວດແຜນທີ່ຟຣີຂອງທ່ານເອງ"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "ເລືອກໜຶ່ງ"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "ເລືອກທັງໝົດທີ່ກ່ຽວຂ້ອງ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "ຕອບພຽງເມື່ອ %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "ອອນລາຍເທົ່ານັ້ນ"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "ໝາຍໃສ່ແຜນທີ່"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "ແຕ້ມຈຸດ ແລະ ຂຽນຕົວອັກສອນ %(letter)s ໄວ້ຂ້າງ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "ແຕ້ມເສັ້ນ ແລະ ຂຽນຕົວອັກສອນ %(letter)s ຢູ່ຈຸດເລີ່ມຕົ້ນ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "ວົງອ້ອມພື້ນທີ່ ແລະ ຂຽນຕົວອັກສອນ %(letter)s ໄວ້ພາຍໃນ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "ແຕ້ມແຮເງົາພື້ນທີ່ ແລະ ຂຽນຕົວອັກສອນ %(letter)s ໄວ້ຂ້າງ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "ສູງສຸດ %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "ຢ່າງໜ້ອຍ %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "ເຄື່ອງໝາຍ"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "ວັດຖຸ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "ແລະ ອີກ %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "ຂຽນ 1 ສຳລັບຕົວເລືອກທຳອິດ, 2 ສຳລັບຕົວທີສອງ ແລະ ຕໍ່ໄປ."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "ໜ້າ %(n)s ຈາກ %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "ຢາກຕອບແບບອອນລາຍບໍ? ສະແກນລະຫັດນີ້."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* ຈຳເປັນ"
