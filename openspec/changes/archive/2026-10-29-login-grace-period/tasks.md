@@ -46,7 +46,7 @@
 
 - [x] 7.1 Run touched test modules, then `./run_tests.sh survey billing api mcp newsletter`
 - [x] 7.2 Manual check on the dev server: register → editor, publish held, banner resend, clock past 24 h → sign-in message
-- [ ] 7.3 Note in the PR: run `sync_email_verification` once after deploy
+- [x] 7.3 Note in the PR: run `sync_email_verification` once after deploy (PR #491; ran on production 2026-10-29 as Render job, 0 rows to fix)
 
 ## 8. Remove Cloudflare Turnstile (#490)
 

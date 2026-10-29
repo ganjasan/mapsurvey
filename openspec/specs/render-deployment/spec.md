@@ -102,17 +102,10 @@ The Render web service SHALL provide the following environment variables consume
 
 | Variable | Source | Notes |
 |---|---|---|
-| `TURNSTILE_SITE_KEY` | `sync: false` (set per-environment in Render dashboard) | Public Cloudflare Turnstile site key — rendered into the registration template |
-| `TURNSTILE_SECRET_KEY` | `sync: false` | Cloudflare Turnstile secret — used by `verify_turnstile()` server-side. Empty value disables verification (dev mode only) |
 | `CLOUDFLARE_TRUSTED` | `value: "True"` (production behind Cloudflare) | Gates `CloudflareIPMiddleware` reading `HTTP_CF_CONNECTING_IP`. MUST be False on any deployment not behind Cloudflare or the header is spoofable |
 | `REGISTRATION_RATE_LIMIT_HOUR` | `value: "3"` | Per-IP hourly limit on POST `/accounts/register/` |
 | `REGISTRATION_RATE_LIMIT_DAY` | `value: "10"` | Per-IP daily limit |
 | `REDIS_URL` | `fromService: type=redis name=mapsurvey-redis property=connectionString` | Reuses the existing Redis service. Used by `CACHES["default"]` for rate-limit counters |
-
-#### Scenario: Turnstile keys provided as secrets
-
-- **WHEN** the Render web service starts
-- **THEN** `os.environ["TURNSTILE_SITE_KEY"]` and `os.environ["TURNSTILE_SECRET_KEY"]` SHALL be set to the values configured in the Render dashboard (not committed to render.yaml)
 
 #### Scenario: REDIS_URL wired from existing service
 
