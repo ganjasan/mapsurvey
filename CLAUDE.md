@@ -844,7 +844,23 @@ SortableJS `delay:300 + delayOnTouchOnly` (long-press) — do not add ▲▼ reo
 Leaflet.draw tooltips pick tap-phrased strings via `pointer: coarse`
 (`survey/templatetags/i18n_extras.py`).
 
-**Registration abuse prevention**: `/accounts/register/` is served by `AbuseProtectedRegistrationView` (subclass of `AsyncEmailRegistrationView`). Three layered defenses run in order: honeypot field `website` (silent fake-success redirect), per-IP rate limit (`django-ratelimit`, fail-open on Redis outage), Cloudflare Turnstile siteverify (fail-closed on network error, dev-bypass when `TURNSTILE_SECRET_KEY=""`). Helpers in `survey/abuse.py`. Audit log in `AbuseEvent` model. Real client IP via `survey.middleware.CloudflareIPMiddleware` reading `CF-Connecting-IP` only when `CLOUDFLARE_TRUSTED=True`.
+**Registration abuse prevention**: `/accounts/register/` is served by `AbuseProtectedRegistrationView` (subclass of `AsyncEmailRegistrationView`). Two defenses run in order: honeypot field `website` (silent fake-success redirect), per-IP rate limit (`django-ratelimit`, fail-open on Redis outage). Cloudflare Turnstile was removed (#490) after it had been off in production; do not bring a CAPTCHA back without the owner — what an unconfirmed account can do is bounded by the grace period below. Helpers in `survey/abuse.py`. Audit log in `AbuseEvent` model. Real client IP via `survey.middleware.CloudflareIPMiddleware` reading `CF-Connecting-IP` only when `CLOUDFLARE_TRUSTED=True`.
+
+**Sign-in grace period (change `login-grace-period`, #487)**: registration creates the account
+ACTIVE and signs it in; `EmailVerification` (one row per account, no row = confirmed) records the
+email confirmation, and `User.is_active=False` means ONLY a ban (`confirm_phishing`). The one rule
+is `survey/email_verification.py` (`is_verified`, `grace_deadline` = `date_joined` +
+`SIGN_IN_GRACE_HOURS` (24), `can_sign_in`, `awaits_confirmation`, `confirmed_q`, `send_link`):
+never read `is_active` as "activated" and never compute the deadline elsewhere. Unconfirmed
+accounts build freely for 24 h, but `services/publishing` refuses to publish (`EmailUnconfirmed`
+→ editor 403 + dialog, REST/MCP `403 email_unconfirmed`) and `org_send_invitation` refuses to
+invite; email-matched invitations are accepted on CONFIRMATION (`user_activated`), not at
+registration. Past the deadline the backend refuses the password, `SignInForm` names the reason
+to whoever typed the CORRECT password and sends a link (per-address daily cap shared by every
+send), and `GracePeriodMiddleware` ends a grace session at its next request. The confirm-email
+banner is `editor/partials/_confirm_email_banner.html` (both bases). Newsletter and funnel
+"activated" use `confirmed_q()`. After a deploy that touches accounts, run
+`manage.py sync_email_verification` (idempotent) for rows the old instance created.
 
 **Content screening (phishing hold, change `phishing-content-review`)**: registration defenses stop
 bots; `survey/content_screening.py` is for the human who publishes an "XFINITY — click here" page on

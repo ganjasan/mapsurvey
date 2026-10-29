@@ -165,17 +165,19 @@ class CreatorFunnelService:
 
         cohorts = {}
         dates = {}
-        for uid, joined, is_active, last_login in self._real_users().values_list(
-            "id", "date_joined", "is_active", "last_login"
+        for uid, joined, ev_id, verified_at, last_login in self._real_users().values_list(
+            "id", "date_joined", "email_verification__id", "email_verification__verified_at", "last_login"
         ):
             key = joined.strftime("%Y-%m")
             row = cohorts.setdefault(key, self._blank_row(key))
             dates.setdefault(key, []).append(joined)
             row["regs"] += 1
-            # Two pre-product stages straight off auth_user. Both are
-            # point-in-time (an account activated today counts in its signup
-            # cohort immediately), like every other stage in this table.
-            if is_active:
+            # Two pre-product stages. Both are point-in-time (an address
+            # confirmed today counts in its signup cohort immediately), like
+            # every other stage in this table. "Activated" = the address is
+            # confirmed (change login-grace-period): an account signs in before
+            # that now, so logged-in may exceed activated. No row = confirmed.
+            if ev_id is None or verified_at is not None:
                 row["activated"] += 1
             if last_login is not None:
                 row["logged_in"] += 1

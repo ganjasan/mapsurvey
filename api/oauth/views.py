@@ -22,6 +22,7 @@ from oauthlib.oauth2.rfc6749 import errors as oauthlib_errors
 from billing.entitlements import for_organization
 from survey import product_events as pe
 from survey.audit import audit
+from survey.email_verification import can_sign_in
 from survey.models import Membership
 
 from .. import scopes as scope_registry
@@ -53,7 +54,7 @@ class AuthorizationView(DotAuthorizationView):
         state = request.GET.get('state', '')
         if len(state.encode('utf-8')) > STATE_MAX_BYTES:
             return self.error_response(_page_error('invalid_request', 'state is longer than 512 bytes'), None)
-        if not request.user.is_active:
+        if not can_sign_in(request.user):
             return self.error_response(_page_error('access_denied', 'this account is not active'), None)
 
         try:

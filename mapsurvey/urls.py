@@ -19,10 +19,13 @@ from django.conf import settings
 
 from django.views.generic import TemplateView
 
+from survey.auth_forms import SignInView
+
 from survey.views import (
     AbuseProtectedRegistrationView,
     DirectActivationView,
     ResendActivationView,
+    resend_own_confirmation,
     survey_not_found,
 )
 
@@ -52,12 +55,17 @@ urlpatterns = [
     path(
         'accounts/activate/resend/done/',
         TemplateView.as_view(
-            template_name='django_registration/resend_activation_done.html'
+            template_name='django_registration/resend_activation_done.html',
+            extra_context={'activation_days': settings.ACCOUNT_ACTIVATION_DAYS},
         ),
         name='django_registration_resend_activation_done',
     ),
+    path('accounts/activate/send-again/', resend_own_confirmation, name='resend_own_confirmation'),
     path('accounts/activate/', DirectActivationView.as_view(), name='django_registration_activate'),
     path('accounts/', include('django_registration.backends.activation.urls')),
+    # Our sign-in form ahead of the stock one: it names the one failure the
+    # visitor has earned an explanation for (change login-grace-period, #487).
+    path('accounts/login/', SignInView.as_view(), name='login'),
     path('accounts/', include('django.contrib.auth.urls')),
     path('nl/', include('newsletter.urls', namespace='newsletter')),
 ]

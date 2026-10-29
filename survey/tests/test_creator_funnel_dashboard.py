@@ -480,10 +480,12 @@ class FunnelActivationStagesTest(TestCase):
                                  minute=0, second=0, microsecond=0)
         self.key = self.month.strftime("%Y-%m")
 
-        # Never activated.
+        # Never confirmed the address (change login-grace-period: accounts are
+        # active from registration; "activated" = a confirmed address).
+        from survey.models import EmailVerification
         u = _user_at("never_activated", self.month)
-        u.is_active = False
-        u.save(update_fields=["is_active"])
+        EmailVerification.objects.create(user=u, verified_at=None)
+        self.unconfirmed = u
 
         # Activated but never logged in — the leak this change targets.
         _user_at("activated_only", self.month)
@@ -498,14 +500,27 @@ class FunnelActivationStagesTest(TestCase):
         rows = CreatorFunnelService().cohort_funnel()
         return next(r for r in rows if r["cohort"] == self.key)
 
-    def test_activated_counts_only_active_accounts(self):
+    def test_activated_counts_only_confirmed_addresses(self):
         """
-        GIVEN one inactive and two active registrations in a cohort
+        GIVEN one unconfirmed and two confirmed registrations in a cohort
         WHEN the cohort funnel is computed
-        THEN the activated stage counts the two active accounts
+        THEN the activated stage counts the two confirmed accounts
         """
         row = self._row()
         self.assertEqual(row["regs"], 3)
+        self.assertEqual(row["activated"], 2)
+
+    def test_grace_sign_in_counts_as_logged_in_not_activated(self):
+        """
+        GIVEN the unconfirmed account signed in during its grace period
+        WHEN the cohort funnel is computed
+        THEN it counts in the logged-in stage and still not in activated
+        """
+        self.unconfirmed.last_login = self.month
+        self.unconfirmed.save(update_fields=["last_login"])
+
+        row = self._row()
+        self.assertEqual(row["logged_in"], 2)
         self.assertEqual(row["activated"], 2)
 
     def test_logged_in_counts_only_users_who_signed_in(self):

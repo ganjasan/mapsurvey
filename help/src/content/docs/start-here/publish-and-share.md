@@ -32,6 +32,8 @@ Responses you collect through the test link are test responses. You decide what 
 
 ## Publish
 
+Publishing needs a confirmed email address. Right after you sign up you can build and test for 24 hours without confirming, but **Publish** opens a **Confirm your email to publish** dialog until you open the link we mailed you. The yellow banner at the top of the editor sends a new link if the first one is lost.
+
 1. Click **Publish — open for responses**.
 2. In the **Publish Survey** dialog, leave **Delete all test responses (recommended)** ticked so your own trial pins do not end up in the results.
 3. If the survey has more than one language and some text is still untranslated, Mapsurvey warns you that those respondents will see the primary language. You can publish anyway or go back and fill the gaps.

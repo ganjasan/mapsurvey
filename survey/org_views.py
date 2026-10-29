@@ -7,7 +7,9 @@ from django.utils import timezone
 from django.core.mail import send_mail
 from django.conf import settings
 from django.template.loader import render_to_string
+from django.utils.translation import gettext as _
 
+from .email_verification import is_verified
 from .models import Organization, Membership, Invitation
 from .editor_forms import OrganizationSettingsForm
 from .permissions import get_org_membership, ORG_ROLE_RANK
@@ -194,6 +196,13 @@ def org_send_invitation(request, slug):
     my_membership = get_org_membership(request.user, org)
     if not my_membership or my_membership.role not in ('owner', 'admin'):
         return HttpResponseForbidden()
+
+    # Nothing reaches another person's inbox from an unconfirmed address
+    # (change login-grace-period, #487).
+    if not is_verified(request.user):
+        messages.error(request, _('Confirm your email address before inviting people. '
+                                  'We sent you a link when you signed up; the banner above sends a new one.'))
+        return redirect('org_members', slug=slug)
 
     email = request.POST.get('email', '').strip()
     role = request.POST.get('role', 'viewer')

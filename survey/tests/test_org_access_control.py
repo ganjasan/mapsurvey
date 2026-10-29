@@ -1240,10 +1240,12 @@ class PersonalOrgCreationTest(TestCase):
     def test_signal_auto_accepts_pending_invitations(self):
         """
         GIVEN a pending invitation for a new user's email
-        WHEN the user registers
-        THEN the invitation is auto-accepted and user joins the org
+        WHEN the user registers, and then confirms the address
+        THEN registration joins nothing (anyone can type an invited address and
+             sign in during the grace period, change login-grace-period); the
+             confirmation accepts the invitation and the user joins the org
         """
-        from django_registration.signals import user_registered
+        from django_registration.signals import user_activated, user_registered
         from django.test import RequestFactory
         from django.contrib.sessions.backends.db import SessionStore
 
@@ -1260,6 +1262,9 @@ class PersonalOrgCreationTest(TestCase):
         request.session = SessionStore()
 
         user_registered.send(sender=self.__class__, user=user, request=request)
+        self.assertFalse(Membership.objects.filter(user=user, organization=invite_org).exists())
+
+        user_activated.send(sender=self.__class__, user=user, request=request)
 
         # User should have membership in invite_org
         self.assertTrue(Membership.objects.filter(user=user, organization=invite_org, role='editor').exists())

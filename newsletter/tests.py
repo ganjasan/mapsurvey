@@ -74,6 +74,21 @@ class CampaignModelTest(TestCase):
 
         self.assertEqual(recipients, [user1])
 
+    def test_get_recipient_queryset_excludes_unconfirmed_addresses(self):
+        """GIVEN a confirmed user and one signed up but not yet confirmed (change login-grace-period)
+        WHEN get_recipient_queryset() is called
+        THEN only the confirmed address receives the newsletter
+        """
+        from survey.models import EmailVerification
+        user1 = _create_user('alice', 'alice@example.com')
+        unconfirmed = _create_user('fresh', 'fresh@example.com')
+        EmailVerification.objects.create(user=unconfirmed, verified_at=None)
+
+        campaign = Campaign.objects.create(subject='Test')
+        recipients = list(campaign.get_recipient_queryset())
+
+        self.assertEqual(recipients, [user1])
+
 
 @override_settings(
     CELERY_TASK_ALWAYS_EAGER=True,

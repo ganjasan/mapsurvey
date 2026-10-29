@@ -9,6 +9,12 @@ from django.urls import reverse
 class PasswordChecklistTest(TestCase):
     """The checklist must describe the validators the server actually runs."""
 
+    def setUp(self):
+        # Two tests here register from 127.0.0.1: start with empty registration
+        # rate-limit counters, whatever ran earlier in this worker's Redis db.
+        from django.core.cache import cache
+        cache.clear()
+
     def test_every_configured_validator_has_a_checklist_rule(self):
         """
         GIVEN the project's AUTH_PASSWORD_VALIDATORS
@@ -49,16 +55,14 @@ class PasswordChecklistTest(TestCase):
         from django.contrib.auth.models import User as _U
         from django.test import override_settings
 
-        with override_settings(TURNSTILE_SECRET_KEY=""):
-            response = self.client.post("/accounts/register/", {
-                "username": "commonpw",
-                "email": "commonpw@example.com",
-                "password1": "password123",
-                "password2": "password123",
-                "website": "",
-                "accept_terms": "on",
-                "cf-turnstile-response": "any-token",
-            })
+        response = self.client.post("/accounts/register/", {
+            "username": "commonpw",
+            "email": "commonpw@example.com",
+            "password1": "password123",
+            "password2": "password123",
+            "website": "",
+            "accept_terms": "on",
+        })
 
         self.assertEqual(response.status_code, 302)
         self.assertTrue(_U.objects.filter(username="commonpw").exists())
@@ -73,16 +77,14 @@ class PasswordChecklistTest(TestCase):
         from django.contrib.auth.models import User as _U
         from django.test import override_settings
 
-        with override_settings(TURNSTILE_SECRET_KEY=""):
-            response = self.client.post("/accounts/register/", {
-                "username": "marcuswildner",
-                "email": "marcuswildner@example.com",
-                "password1": "marcuswildner",
-                "password2": "marcuswildner",
-                "website": "",
-                "accept_terms": "on",
-                "cf-turnstile-response": "any-token",
-            })
+        response = self.client.post("/accounts/register/", {
+            "username": "marcuswildner",
+            "email": "marcuswildner@example.com",
+            "password1": "marcuswildner",
+            "password2": "marcuswildner",
+            "website": "",
+            "accept_terms": "on",
+        })
 
         self.assertEqual(response.status_code, 302)
         self.assertTrue(_U.objects.filter(username="marcuswildner").exists())
@@ -96,16 +98,14 @@ class PasswordChecklistTest(TestCase):
         from django.contrib.auth.models import User as _U
         from django.test import override_settings
 
-        with override_settings(TURNSTILE_SECRET_KEY=""):
-            response = self.client.post("/accounts/register/", {
-                "username": "shortpw",
-                "email": "shortpw@example.com",
-                "password1": "Xx12345",
-                "password2": "Xx12345",
-                "website": "",
-                "accept_terms": "on",
-                "cf-turnstile-response": "any-token",
-            })
+        response = self.client.post("/accounts/register/", {
+            "username": "shortpw",
+            "email": "shortpw@example.com",
+            "password1": "Xx12345",
+            "password2": "Xx12345",
+            "website": "",
+            "accept_terms": "on",
+        })
 
         self.assertEqual(response.status_code, 200)
         self.assertFalse(_U.objects.filter(username="shortpw").exists())

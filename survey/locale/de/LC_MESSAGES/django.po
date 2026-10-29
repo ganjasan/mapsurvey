@@ -9387,3 +9387,92 @@ msgstr "v%(n)s – archiviert"
 #: billing/features.py
 msgid "Enter responses for others: paper forms, interviews, field work"
 msgstr "Antworten für andere erfassen: Papierbögen, Interviews, Arbeit vor Ort"
+
+#: survey/templates/registration/login.html
+#, python-format
+msgid "You did not confirm your email address within %(hours)s hours of signing up."
+msgstr "Sie haben Ihre E-Mail-Adresse nicht innerhalb von %(hours)s Stunden nach der Registrierung bestätigt."
+
+#: survey/templates/registration/login.html
+#, python-format
+msgid "We have sent a new confirmation link to %(address)s. Open it to confirm the address — it signs you in."
+msgstr "Wir haben einen neuen Bestätigungslink an %(address)s gesendet. Öffnen Sie ihn, um die Adresse zu bestätigen – er meldet Sie an."
+
+#: survey/templates/registration/login.html
+#, python-format
+msgid "We have already sent a confirmation link to %(address)s today. Open the newest one to confirm the address — it signs you in."
+msgstr "Wir haben heute bereits einen Bestätigungslink an %(address)s gesendet. Öffnen Sie den neuesten, um die Adresse zu bestätigen – er meldet Sie an."
+
+#: survey/templates/registration/login.html
+msgid "Nothing in your inbox? Check the spam folder; a workplace mail filter may also hold it."
+msgstr "Nichts im Posteingang? Sehen Sie im Spam-Ordner nach; auch ein Mailfilter am Arbeitsplatz kann die Nachricht zurückhalten."
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+msgid "Confirm your email address."
+msgstr "Bestätigen Sie Ihre E-Mail-Adresse."
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+#, python-format
+msgid "We sent a link to %(email)s."
+msgstr "Wir haben einen Link an %(email)s gesendet."
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+#, python-format
+msgid "Without it you can sign in for %(left)s more, and publishing waits for it."
+msgstr "Ohne Bestätigung können Sie sich noch %(left)s lang anmelden, und die Veröffentlichung wartet darauf."
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+msgid "Send the link again"
+msgstr "Link erneut senden"
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+msgid "Confirm your email to publish"
+msgstr "Bestätigen Sie Ihre E-Mail, um zu veröffentlichen"
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+#, python-format
+msgid "A survey goes live only from a confirmed address. Open the link we sent to %(email)s — it keeps you signed in — then press Publish again."
+msgstr "Eine Umfrage geht nur von einer bestätigten Adresse aus online. Öffnen Sie den Link, den wir an %(email)s gesendet haben – Sie bleiben angemeldet – und klicken Sie dann erneut auf Veröffentlichen."
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+msgid "OK"
+msgstr "OK"
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+msgid "Sent. Check your inbox."
+msgstr "Gesendet. Sehen Sie in Ihrem Posteingang nach."
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+msgid "Already sent today. Open the newest link, and check the spam folder."
+msgstr "Heute bereits gesendet. Öffnen Sie den neuesten Link und sehen Sie im Spam-Ordner nach."
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+msgid "Could not send. Try again in a minute."
+msgstr "Senden fehlgeschlagen. Versuchen Sie es in einer Minute erneut."
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+#: survey/editor_views.py
+msgid "Confirm your email address to publish."
+msgstr "Bestätigen Sie Ihre E-Mail-Adresse, um zu veröffentlichen."
+
+#: survey/templates/django_registration/resend_activation_done.html
+#, python-format
+msgid "If that address belongs to an account that hasn't confirmed it yet, a confirmation link is on its way. It's valid for %(days)s days."
+msgstr "Wenn diese Adresse zu einem Konto gehört, das sie noch nicht bestätigt hat, ist ein Bestätigungslink unterwegs. Er ist %(days)s Tage gültig."
+
+#: survey/org_views.py
+msgid "Confirm your email address before inviting people. We sent you a link when you signed up; the banner above sends a new one."
+msgstr "Bestätigen Sie Ihre E-Mail-Adresse, bevor Sie Personen einladen. Den Link haben wir bei der Registrierung gesendet; das Banner oben sendet einen neuen."
+
+#: survey/views.py
+#, python-format
+msgid "We sent a new confirmation link to %(email)s."
+msgstr "Wir haben einen neuen Bestätigungslink an %(email)s gesendet."
+
+#: survey/views.py
+msgid "We have already sent you a link today. Open the newest one, and check the spam folder."
+msgstr "Wir haben Ihnen heute bereits einen Link gesendet. Öffnen Sie den neuesten und sehen Sie im Spam-Ordner nach."
+
+#: survey/auth_forms.py
+msgid "Your email address was not confirmed in time."
+msgstr "Ihre E-Mail-Adresse wurde nicht rechtzeitig bestätigt."

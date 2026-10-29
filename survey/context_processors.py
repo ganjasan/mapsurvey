@@ -313,3 +313,32 @@ def help_site(request):
     """
     from .help_links import help_urls
     return {'HELP_URL': help_urls()}
+
+
+def email_verification(request):
+    """The confirm-your-email banner state (change login-grace-period, #487).
+
+    Lazy, like `whats_new`: only the banner partial reads it, so no query runs
+    on a page that does not render it; a session already known to be confirmed
+    (`GracePeriodMiddleware.CONFIRMED_FLAG`) costs nothing either. Empty when
+    there is nothing to say.
+    """
+    from django.utils.functional import SimpleLazyObject
+
+    def build():
+        from .email_verification import grace_deadline, is_verified
+        from .middleware import GracePeriodMiddleware
+        user = getattr(request, 'user', None)
+        if user is None or not user.is_authenticated:
+            return {}
+        session = getattr(request, 'session', None)
+        if session is not None and session.get(GracePeriodMiddleware.CONFIRMED_FLAG):
+            return {}
+        path = getattr(request, 'path', '') or ''
+        if path.startswith(GracePeriodMiddleware.SKIP_PREFIXES):
+            return {}
+        if is_verified(user):
+            return {}
+        return {'email': user.email, 'deadline': grace_deadline(user)}
+
+    return {'email_confirmation': SimpleLazyObject(build)}

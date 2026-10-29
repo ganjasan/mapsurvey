@@ -101,6 +101,18 @@ document.body.addEventListener('statusChanged', function(){ window.location.relo
 {% trans "Could not reach the server. Check your connection and any ad blocker, then try again." as publish_fetch_failed_msg %}
 function publishFetchFailed(){ alert("{{ publish_fetch_failed_msg|escapejs }}"); }
 
+// A 403 {email_unconfirmed} is the account, not the survey: nothing goes live
+// from an unconfirmed address (change login-grace-period). The dialog lives in
+// editor/partials/_confirm_email_banner.html. Returns true when it handled r.
+function publishRefusedForEmail(r){
+    if (r.status !== 403) return false;
+    r.clone().json().then(function(d){
+        if (d && d.email_unconfirmed && window.MsConfirmEmail) { MsConfirmEmail.prompt(); }
+        else { r.text().then(function(m){ alert(m); }); }
+    }).catch(function(){ r.text().then(function(m){ alert(m); }); });
+    return true;
+}
+
 // A 409 with translation_gaps is the non-blocking pre-publish warning:
 // show what is untranslated, and on confirm retry with the ack flag.
 function postTransition(form){
@@ -108,6 +120,7 @@ function postTransition(form){
         method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}, body:form
     }).then(function(r){
         if (r.ok) { window.location.reload(); return; }
+        if (publishRefusedForEmail(r)) return;
         if (r.status === 409) {
             r.json().then(function(data){
                 var gaps = data.translation_gaps || [];
@@ -171,6 +184,7 @@ function doPublishDraft(force){
       .then(function(r){
           if (r.redirected) { window.location.href = r.url; return; }
           if (r.ok) { window.location.reload(); return; }
+          if (publishRefusedForEmail(r)) return;
           if (r.status === 409) {
               r.json().then(function(data){
                   if (data.translation_gaps) {

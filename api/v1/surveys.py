@@ -140,7 +140,7 @@ def delete_survey(request, uuid: UUID):
 
 
 @router.post('/surveys/{uuid}/publish', response=SurveyOut, auth=PUBLISH,
-             openapi_extra=errors(409, codes=('translation_gaps', 'transition_refused', 'conflict')))
+             openapi_extra=errors(409, codes=('translation_gaps', 'transition_refused', 'email_unconfirmed', 'conflict')))
 def publish_survey(request, uuid: UUID, payload: PublishIn = None):
     """Publish. `review: "pending"` means content screening is holding the
     survey: respondents see an unavailable page until it is reviewed."""
@@ -181,7 +181,7 @@ def _draft_of(request, uuid, role):
 
 
 @router.post('/surveys/{uuid}/draft/publish', response=SurveyOut, auth=PUBLISH,
-             openapi_extra=errors(409, codes=('translation_gaps', 'incompatible_draft', 'conflict')))
+             openapi_extra=errors(409, codes=('translation_gaps', 'incompatible_draft', 'email_unconfirmed', 'conflict')))
 def publish_draft(request, uuid: UUID, payload: DraftPublishIn = None):
     """Publish the unpublished changes as a new version of the live survey."""
     payload = payload or DraftPublishIn()

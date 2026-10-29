@@ -55,8 +55,11 @@ class Campaign(models.Model):
     def get_recipient_queryset(self):
         from django.contrib.auth import get_user_model
         User = get_user_model()
+        from survey.email_verification import confirmed_q
+        # Confirmed addresses only: an unconfirmed one may be a typo or someone
+        # else's (change login-grace-period); `is_active` alone is just "not banned".
         return (
-            User.objects.filter(is_active=True)
+            User.objects.filter(confirmed_q(), is_active=True)
             .exclude(newsletter_preference__is_unsubscribed=True)
             .order_by('pk')
         )

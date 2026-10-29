@@ -20,6 +20,8 @@ import hashlib
 from oauth2_provider.models import RefreshToken
 from oauth2_provider.oauth2_validators import OAuth2Validator
 
+from survey.email_verification import can_sign_in
+
 from .. import tokens as token_store
 from ..models import KIND_OAUTH, TokenProfile
 from . import audiences, redirects
@@ -69,7 +71,7 @@ class MapsurveyOAuth2Validator(OAuth2Validator):
         ok = super().validate_refresh_token(refresh_token, client, request, *args, **kwargs)
         if not ok:
             return False
-        if request.user is not None and not request.user.is_active:
+        if request.user is not None and not can_sign_in(request.user):
             return False
         # The source access token (and its profile) is revoked -- deleted --
         # before the new pair is minted; keep the lineage while it is readable.

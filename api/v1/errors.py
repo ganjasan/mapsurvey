@@ -64,6 +64,10 @@ def from_service_error(err):
                         'to publish anyway.', issues=err.issues)
     if isinstance(err, svc.TransitionRefused):
         return ApiError(409, codes.TRANSITION_REFUSED, err.message)
+    if isinstance(err, svc.EmailUnconfirmed):
+        return ApiError(403, codes.EMAIL_UNCONFIRMED,
+                        'This account has not confirmed its email address yet; publishing waits for it. '
+                        'Open the confirmation link we mailed, or request a new one at /accounts/activate/resend/.')
     if isinstance(err, svc.LimitReached):
         return ApiError(409, codes.LIMIT_REACHED, err.message)
     return ApiError(409, codes.CONFLICT, err.message or 'Conflict.')

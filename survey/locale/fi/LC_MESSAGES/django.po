@@ -9297,3 +9297,92 @@ msgstr "v%(n)s — arkistoitu"
 #: billing/features.py
 msgid "Enter responses for others: paper forms, interviews, field work"
 msgstr "Vastausten syöttäminen muiden puolesta: paperilomakkeet, haastattelut, maastotyö"
+
+#: survey/templates/registration/login.html
+#, python-format
+msgid "You did not confirm your email address within %(hours)s hours of signing up."
+msgstr "Et vahvistanut sähköpostiosoitettasi %(hours)s tunnin kuluessa rekisteröitymisestä."
+
+#: survey/templates/registration/login.html
+#, python-format
+msgid "We have sent a new confirmation link to %(address)s. Open it to confirm the address — it signs you in."
+msgstr "Lähetimme uuden vahvistuslinkin osoitteeseen %(address)s. Avaa se vahvistaaksesi osoitteen — se myös kirjaa sinut sisään."
+
+#: survey/templates/registration/login.html
+#, python-format
+msgid "We have already sent a confirmation link to %(address)s today. Open the newest one to confirm the address — it signs you in."
+msgstr "Lähetimme jo tänään vahvistuslinkin osoitteeseen %(address)s. Avaa uusin vahvistaaksesi osoitteen — se myös kirjaa sinut sisään."
+
+#: survey/templates/registration/login.html
+msgid "Nothing in your inbox? Check the spam folder; a workplace mail filter may also hold it."
+msgstr "Eikö mitään saapunut? Tarkista roskapostikansio; myös työpaikan sähköpostisuodatin voi pidättää viestin."
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+msgid "Confirm your email address."
+msgstr "Vahvista sähköpostiosoitteesi."
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+#, python-format
+msgid "We sent a link to %(email)s."
+msgstr "Lähetimme linkin osoitteeseen %(email)s."
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+#, python-format
+msgid "Without it you can sign in for %(left)s more, and publishing waits for it."
+msgstr "Ilman vahvistusta voit kirjautua vielä %(left)s, ja julkaiseminen odottaa sitä."
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+msgid "Send the link again"
+msgstr "Lähetä linkki uudelleen"
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+msgid "Confirm your email to publish"
+msgstr "Vahvista sähköpostisi julkaistaksesi"
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+#, python-format
+msgid "A survey goes live only from a confirmed address. Open the link we sent to %(email)s — it keeps you signed in — then press Publish again."
+msgstr "Kysely julkaistaan vain vahvistetusta osoitteesta. Avaa linkki, jonka lähetimme osoitteeseen %(email)s — pysyt kirjautuneena — ja paina sitten uudelleen Julkaise."
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+msgid "OK"
+msgstr "Selvä"
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+msgid "Sent. Check your inbox."
+msgstr "Lähetetty. Tarkista saapuneet viestit."
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+msgid "Already sent today. Open the newest link, and check the spam folder."
+msgstr "Lähetetty jo tänään. Avaa uusin linkki ja tarkista roskapostikansio."
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+msgid "Could not send. Try again in a minute."
+msgstr "Lähetys epäonnistui. Yritä uudelleen hetken päästä."
+
+#: survey/templates/editor/partials/_confirm_email_banner.html
+#: survey/editor_views.py
+msgid "Confirm your email address to publish."
+msgstr "Vahvista sähköpostiosoitteesi julkaistaksesi."
+
+#: survey/templates/django_registration/resend_activation_done.html
+#, python-format
+msgid "If that address belongs to an account that hasn't confirmed it yet, a confirmation link is on its way. It's valid for %(days)s days."
+msgstr "Jos osoite kuuluu tilille, joka ei ole vielä vahvistanut sitä, vahvistuslinkki on matkalla. Se on voimassa %(days)s päivää."
+
+#: survey/org_views.py
+msgid "Confirm your email address before inviting people. We sent you a link when you signed up; the banner above sends a new one."
+msgstr "Vahvista sähköpostiosoitteesi ennen kuin kutsut ihmisiä. Lähetimme linkin rekisteröityessäsi; yllä oleva palkki lähettää uuden."
+
+#: survey/views.py
+#, python-format
+msgid "We sent a new confirmation link to %(email)s."
+msgstr "Lähetimme uuden vahvistuslinkin osoitteeseen %(email)s."
+
+#: survey/views.py
+msgid "We have already sent you a link today. Open the newest one, and check the spam folder."
+msgstr "Lähetimme sinulle jo tänään linkin. Avaa uusin ja tarkista roskapostikansio."
+
+#: survey/auth_forms.py
+msgid "Your email address was not confirmed in time."
+msgstr "Sähköpostiosoitettasi ei vahvistettu ajoissa."

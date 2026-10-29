@@ -79,11 +79,10 @@ from .abuse import (
     RegistrationAbuseForm,
     ResendActivationForm,
     check_registration_limit,
-    client_ip,
     increment_registration_limit,
     log_abuse_event,
-    verify_turnstile,
 )
+from .email_verification import is_verified, mark_verified, send_link
 from .password_rules import password_checklist_rules
 from django_ratelimit.core import is_ratelimited
 from django.conf import settings as conf_settings
@@ -149,7 +148,7 @@ class AsyncEmailRegistrationView(
 
 
 class AbuseProtectedRegistrationView(AsyncEmailRegistrationView):
-    """Registration view with three layered abuse defenses.
+    """Registration view with two layered abuse defenses.
 
     Defenses fire in this order on POST:
       1. Honeypot — `website` field must be empty. Filled → silent
@@ -157,7 +156,10 @@ class AbuseProtectedRegistrationView(AsyncEmailRegistrationView):
       2. Rate limit — per-IP via django-ratelimit. The *check* runs in
          dispatch(), before form processing; the *counter* is advanced in
          post(), once form validity is known.
-      3. Turnstile — siteverify token check before form save.
+
+    Cloudflare Turnstile was a third step until change login-grace-period
+    (#490); it had been off in production and was removed. A new account is
+    held back instead: nothing goes live until its address is confirmed.
 
     The check/increment split is the correction of a shipped defect: the
     counter used to advance on every POST, so three password typos exhausted
@@ -175,7 +177,6 @@ class AbuseProtectedRegistrationView(AsyncEmailRegistrationView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["TURNSTILE_SITE_KEY"] = conf_settings.TURNSTILE_SITE_KEY
         ctx["password_rules"] = password_checklist_rules()
         return ctx
 
@@ -194,7 +195,7 @@ class AbuseProtectedRegistrationView(AsyncEmailRegistrationView):
         # django-ratelimit's default exception.
         #
         # Fail-open on a cache-backend outage lives in the helpers: a blind
-        # limiter must not block signups. Honeypot + Turnstile still apply.
+        # limiter must not block signups. The honeypot still applies.
         if request.method == "POST":
             for kind in ("valid", "invalid"):
                 hit = check_registration_limit(request, kind)
@@ -250,25 +251,36 @@ class AbuseProtectedRegistrationView(AsyncEmailRegistrationView):
 
         if not form.is_valid():
             return self.form_invalid(form)
-
-        # 3. Turnstile — Cloudflare's JS widget posts as `cf-turnstile-response`.
-        # A well-formed submission with a bad token is bot-shaped, and it has
-        # already been counted against the strict budget above.
-        token = request.POST.get("cf-turnstile-response", "")
-        if not verify_turnstile(token, client_ip(request)):
-            detail = "missing_token" if not token else "siteverify_rejected"
-            log_abuse_event("captcha", request, detail)
-            form.add_error(None, "CAPTCHA verification failed. Please try again.")
-            return self.form_invalid(form)
-
         return self.form_valid(form)
 
+    def create_inactive_user(self, form):
+        """Upstream's hook name; the account it makes is ACTIVE (change login-grace-period).
+
+        It signs in at once and has SIGN_IN_GRACE_HOURS to confirm the address
+        (`survey/email_verification.py`); `is_active=False` is kept for bans.
+        """
+        from .email_verification import start_unverified
+
+        new_user = form.save(commit=False)
+        new_user.is_active = True
+        new_user.save()
+        start_unverified(new_user)
+        self.send_activation_email(new_user)
+        return new_user
+
     def register(self, form):
-        # django-registration creates the (inactive) user here; attach the
-        # captured acquisition source. Fail-open — never blocks the signup.
+        # Attach the captured acquisition source (fail-open, never blocks the
+        # signup), then sign the new account in: the mail is a banner in the
+        # editor now, not a wall in front of it.
+        from django.contrib.auth import login as auth_login
+
         user = super().register(form)
         persist_signup_attribution(user, self.request)
+        auth_login(self.request, user, backend=DirectActivationView.AUTH_BACKEND)
         return user
+
+    def get_success_url(self, user=None):
+        return conf_settings.LOGIN_REDIRECT_URL
 
 
 class DirectActivationView(
@@ -318,7 +330,10 @@ class DirectActivationView(
                 )
             except User.DoesNotExist:
                 return render(request, "django_registration/activation_failed.html", {})
-            if user.is_active:
+            if not user.is_active:
+                # Banned: the link is no way back in.
+                return render(request, "django_registration/activation_failed.html", {})
+            if is_verified(user):
                 return self._already_active_redirect(request)
             return render(
                 request,
@@ -361,6 +376,29 @@ class DirectActivationView(
             return self._signed_in_redirect(request, activated_user)
         except Exception:
             return render(request, "django_registration/activation_failed.html", {})
+
+    def get_user(self, username):
+        """Upstream's lookup, judged on the CONFIRMED address, not `is_active`.
+
+        Every account is active from registration on (change login-grace-period);
+        a repeat is an already-confirmed address, and a banned account is no
+        account as far as this link is concerned.
+        """
+        from django.contrib.auth import get_user_model
+        from django_registration.exceptions import ActivationError
+
+        User = get_user_model()
+        user = User.objects.filter(**{User.USERNAME_FIELD: username}).first()
+        if user is None or not user.is_active:
+            raise ActivationError(self.BAD_USERNAME_MESSAGE, code="bad_username")
+        if is_verified(user):
+            raise ActivationError(self.ALREADY_ACTIVATED_MESSAGE, code="already_activated")
+        return user
+
+    def activate(self, form):
+        user = self.get_user(form.cleaned_data["activation_key"])
+        mark_verified(user)
+        return user
 
     def _already_active_redirect(self, request):
         """Route a benign repeat (scanner-style pre-visit, re-opened link) onward."""
@@ -410,7 +448,7 @@ class DirectActivationView(
 
 
 class ResendActivationView(AsyncEmailRegistrationView):
-    """Re-send an activation email for an account that never activated.
+    """Re-send an activation email for an account that has not confirmed its address.
 
     Subclasses the registration view purely to reuse its activation-key
     generation and threaded HTML mail sending — it never registers anyone.
@@ -418,8 +456,9 @@ class ResendActivationView(AsyncEmailRegistrationView):
     Every POST ends at the same neutral confirmation page, whatever happened:
     email sent, address unknown, account already active, honeypot filled, or
     rate limit hit. That uniformity is the anti-enumeration property, so keep
-    it if you touch this. Mail goes out only for an existing INACTIVE account,
-    at most RESEND_ACTIVATION_RATE_LIMIT_DAY times per address per day.
+    it if you touch this. Mail goes out only for an active, UNCONFIRMED account
+    (change login-grace-period), at most RESEND_ACTIVATION_RATE_LIMIT_DAY times
+    per address per day across every way a link is sent (`send_link`).
 
     See openspec/changes/activation-funnel-autologin/design.md (D3).
     """
@@ -439,31 +478,25 @@ class ResendActivationView(AsyncEmailRegistrationView):
             log_abuse_event("honeypot", request, "resend_filled")
             return self._neutral_response(request)
 
-        # 2. Rate limits. Per-IP hourly caps a single attacker; per-email daily
-        # caps how much mail any one inbox can be made to receive even from
-        # rotating IPs. Fail-open on cache errors, as with registration.
-        limits = (
-            ("resend_activation_hour",
-             f"{conf_settings.RESEND_ACTIVATION_RATE_LIMIT_HOUR}/h",
-             "survey.abuse.ratelimit_key", "resend_hour"),
-            ("resend_activation_day",
-             f"{conf_settings.RESEND_ACTIVATION_RATE_LIMIT_DAY}/d",
-             "survey.abuse.ratelimit_email_key", "resend_day"),
-        )
-        for group, rate, key, detail in limits:
-            try:
-                limited = is_ratelimited(
-                    request=request, group=group, fn=None,
-                    key=key, rate=rate, method="POST", increment=True,
-                )
-            except Exception:
-                limited = False
-            if limited:
-                log_abuse_event("ratelimit", request, detail)
-                # Neutral, not 429: a 429 here would confirm to an attacker
-                # that they found a real throttle worth routing around, and
-                # would differ from the response an ordinary user gets.
-                return self._neutral_response(request)
+        # 2. Per-IP hourly cap on a single attacker. The per-address daily cap
+        # (how much mail one inbox can be made to receive even from rotating
+        # IPs) lives in `send_link`, shared with every other way a link goes
+        # out. Fail-open on cache errors, as with registration.
+        try:
+            limited = is_ratelimited(
+                request=request, group="resend_activation_hour", fn=None,
+                key="survey.abuse.ratelimit_key",
+                rate=f"{conf_settings.RESEND_ACTIVATION_RATE_LIMIT_HOUR}/h",
+                method="POST", increment=True,
+            )
+        except Exception:
+            limited = False
+        if limited:
+            log_abuse_event("ratelimit", request, "resend_hour")
+            # Neutral, not 429: a 429 here would confirm to an attacker
+            # that they found a real throttle worth routing around, and
+            # would differ from the response an ordinary user gets.
+            return self._neutral_response(request)
 
         form = ResendActivationForm(data=request.POST)
         if not form.is_valid():
@@ -471,16 +504,41 @@ class ResendActivationView(AsyncEmailRegistrationView):
 
         email = form.cleaned_data["email"]
         User = get_user_model()
-        user = User.objects.filter(email__iexact=email, is_active=False).first()
-        if user is not None:
-            # Keys are stateless signed values, so "re-issuing" is just signing
-            # the username again — no DB write, and any older key for the same
-            # account stays valid until its own expiry.
-            self.send_activation_email(user)
+        # Active and unconfirmed only: a banned account gets no link, and a
+        # confirmed one needs none. Keys are stateless signed values, so
+        # "re-issuing" is signing the username again.
+        for user in User.objects.filter(email__iexact=email, is_active=True):
+            if not is_verified(user):
+                send_link(user, request, source="resend_form")
+                break
         return self._neutral_response(request)
 
     def _neutral_response(self, request):
         return redirect("django_registration_resend_activation_done")
+
+
+@login_required
+@require_POST
+def resend_own_confirmation(request):
+    """The banner's / publish dialog's "Send the link again" (change login-grace-period).
+
+    For the signed-in creator's own address, so nothing here can enumerate
+    anyone. Shares the per-address daily cap with every other send. Answers
+    JSON `{sent}` to a script, else returns to where the click came from.
+    """
+    sent = send_link(request.user, request, source="banner")
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return JsonResponse({"sent": sent})
+    if sent:
+        messages.success(request, _("We sent a new confirmation link to %(email)s.") % {"email": request.user.email})
+    else:
+        messages.info(request, _("We have already sent you a link today. Open the newest one, and check the spam folder."))
+    from django.utils.http import url_has_allowed_host_and_scheme
+    back = request.META.get("HTTP_REFERER") or ""
+    if not url_has_allowed_host_and_scheme(back, allowed_hosts={request.get_host()},
+                                           require_https=request.is_secure()):
+        back = conf_settings.LOGIN_REDIRECT_URL
+    return redirect(back)
 
 
 def resolve_survey(survey_slug):
@@ -2243,7 +2301,7 @@ def trust_page(request):
 
 # Bump only when the text of terms.html changes: the page shows this as its
 # "Last updated" date, and the DPGA application links the page as evidence.
-TERMS_UPDATED = datetime(2026, 10, 13).date()
+TERMS_UPDATED = datetime(2026, 10, 29).date()
 
 
 def terms_page(request):

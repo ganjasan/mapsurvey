@@ -74,6 +74,16 @@ class TransitionRefused(ServiceError):
     code = 'transition_refused'
 
 
+class EmailUnconfirmed(ServiceError):
+    """The acting account has not confirmed its email address, and nothing goes
+    live from an unconfirmed address: publishing waits for it (change
+    login-grace-period, #487)."""
+    code = 'email_unconfirmed'
+
+    def __init__(self, message='Confirm your email address to publish.'):
+        super().__init__(message)
+
+
 class TranslationGaps(ServiceError):
     code = 'translation_gaps'
 

@@ -78,7 +78,6 @@ Object storage (local disk or any S3-compatible store) for uploads
   |---|---|---|
   | Mapbox (or any XYZ tiles) | Basemaps | `MAPBOX_URL`, `MAPBOX_OUTDOORS_URL`, `MAPBOX_ACCESS_TOKEN` |
   | PostHog | Product analytics on creator pages only | `POSTHOG_PROJECT_KEY`, `POSTHOG_API_HOST` |
-  | Cloudflare Turnstile | Bot check on sign-up | `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` |
   | AI provider (Anthropic or Google Gemini) | Optional AI drafting of a survey | `AI_PROVIDER`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY` |
   | S3-compatible storage | Uploads | `USE_S3`, `AWS_*` (local disk when unset) |
   | SMTP | Account email | `EMAIL_BACKEND` and Django email settings (console by default) |
