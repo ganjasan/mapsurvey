@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "วันที่และเวลา"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1159,3 +1159,84 @@ msgstr "แตะแผนที่เพื่อทำเครื่องห
 
 msgid "Tap the last point to finish the line."
 msgstr "แตะจุดสุดท้ายเพื่อจบเส้น"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "เลือกหนึ่งข้อ"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "เลือกได้มากกว่าหนึ่งข้อ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "ตอบเฉพาะเมื่อ %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "ออนไลน์เท่านั้น"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "ทำเครื่องหมายบนแผนที่"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "ทำเครื่องหมายจุดและเขียนตัวอักษร %(letter)s ไว้ข้างๆ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "ลากเส้นและเขียนตัวอักษร %(letter)s ที่จุดเริ่มต้น"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "วาดเส้นรอบพื้นที่และเขียนตัวอักษร %(letter)s ไว้ด้านใน"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "แรเงาพื้นที่และเขียนตัวอักษร %(letter)s ไว้ข้างๆ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "ไม่เกิน %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "อย่างน้อย %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "เครื่องหมาย"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "วัตถุ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "และอีก %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "เขียน 1 สำหรับตัวเลือกแรก 2 สำหรับตัวเลือกถัดไป และต่อไปเรื่อยๆ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "หน้า %(n)s จาก %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "ต้องการตอบออนไลน์? สแกนรหัสนี้"
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* จำเป็น"

@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "তারিখ ও সময়"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1160,3 +1160,84 @@ msgstr "আরও {n}টি পর্যন্ত"
 
 msgid "Tap to start the line."
 msgstr "রেখা শুরু করতে ট্যাপ করুন।"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "একটি বেছে নিন"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "প্রযোজ্য সবগুলো বেছে নিন"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "শুধু তখনই উত্তর দিন যদি %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "শুধু অনলাইনে"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "মানচিত্রে চিহ্নিত করুন"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "একটি বিন্দু আঁকুন এবং পাশে %(letter)s অক্ষরটি লিখুন"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "রেখাটি আঁকুন এবং শুরুতে %(letter)s অক্ষরটি লিখুন"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "এলাকাটি ঘিরে দিন এবং ভিতরে %(letter)s অক্ষরটি লিখুন"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "এলাকাটি ছায়াবৃত করুন এবং পাশে %(letter)s অক্ষরটি লিখুন"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "সর্বোচ্চ %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "অন্তত %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "চিহ্ন"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "বস্তু"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "এবং আরও %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "প্রথম পছন্দের জন্য ১, দ্বিতীয়ের জন্য ২ ইত্যাদি লিখুন।"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "পৃষ্ঠা %(n)s / %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "অনলাইনে উত্তর দিতে চান? এই কোডটি স্ক্যান করুন।"
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* আবশ্যক"

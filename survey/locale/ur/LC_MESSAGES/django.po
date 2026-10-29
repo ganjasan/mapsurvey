@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "تاریخ اور وقت"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1158,3 +1158,84 @@ msgstr[1] "%(n)s سوالات"
 
 msgid "Search failed — check your connection and try again."
 msgstr "تلاش ناکام رہی — اپنا کنکشن چیک کریں اور دوبارہ کوشش کریں۔"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "ایک منتخب کریں"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "لاگو ہونے والے سب منتخب کریں"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "صرف اس صورت میں جواب دیں جب %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "صرف آن لائن"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "نقشے پر نشان لگائیں"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "ایک نقطہ لگائیں اور اس کے ساتھ حرف %(letter)s لکھیں"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "لکیر کھینچیں اور اس کے آغاز پر حرف %(letter)s لکھیں"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "علاقے کا خاکہ بنائیں اور اندر حرف %(letter)s لکھیں"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "علاقے کو سایہ دار کریں اور ساتھ حرف %(letter)s لکھیں"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "زیادہ سے زیادہ %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "کم از کم %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "نشان"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "شے"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "اور %(n)s مزید"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "اپنی پہلی پسند کے لیے 1، دوسری کے لیے 2 اور اسی طرح لکھیں۔"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "صفحہ %(n)s از %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "آن لائن جواب دینا چاہتے ہیں؟ یہ کوڈ اسکین کریں۔"
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* لازمی"

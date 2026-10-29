@@ -9365,3 +9365,108 @@ msgstr "Saatsime teile täna juba lingi. Avage uusim ja vaadake rämpsposti kaus
 #: survey/auth_forms.py
 msgid "Your email address was not confirmed in time."
 msgstr "Teie e-posti aadressi ei kinnitatud õigeaegselt."
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Vali üks"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Vali kõik sobivad"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Vasta ainult siis, kui %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Ainult veebis"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Märgi kaardile"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Joonista punkt ja kirjuta selle kõrvale täht %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Joonista joon ja kirjuta selle algusesse täht %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Piirjoonesta ala ja kirjuta selle sisse täht %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Viiruta ala ja kirjuta selle kõrvale täht %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "kuni %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "vähemalt %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Märk"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Objekt"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "ja veel %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Kirjuta 1 oma esimese valiku, 2 teise valiku juurde jne."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "Lehekülg %(n)s / %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Eelistad vastata veebis? Skaneeri see kood."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* kohustuslik"
+
+#: survey/templates/editor/survey_share.html
+msgid "Print a paper form"
+msgstr "Prindi paberankeet"
+
+#: survey/templates/editor/survey_share.html
+msgid "Paper"
+msgstr "Paber"
+
+#: survey/templates/editor/survey_share.html
+msgid "Download PDF"
+msgstr "Laadi PDF alla"
+
+#: survey/templates/editor/survey_share.html
+msgid "A PDF of the whole survey as a paper form: every question with boxes and lines, the map of each page with your reference layers and a letter per map question, and a code on every page so the sheets can be matched back. Type the filled sheets in with “Enter a response” on Responses."
+msgstr "Kogu küsitluse PDF paberankeedina: iga küsimus kastide ja joontega, iga lehe kaart sinu viitekihtide ja tähega iga kaardiküsimuse kohta ning kood igal lehel, et lehed saaks kokku viia. Täidetud lehed sisesta vastuste all nupuga „Sisesta vastus“."
+
+#: survey/templates/editor/survey_share.html
+msgid "Until the survey is published the form prints with a DRAFT watermark — good for proofing, not for handing out."
+msgstr "Kuni küsitlus pole avaldatud, trükitakse ankeet MUSTAND-vesimärgiga — sobib kontrolliks, mitte jagamiseks."
+
+#: survey/templates/editor/survey_share.html
+msgid "Chinese, Japanese and Korean text is not yet supported on the printed form."
+msgstr "Hiina, jaapani ja korea tekst pole trükitud ankeedil veel toetatud."

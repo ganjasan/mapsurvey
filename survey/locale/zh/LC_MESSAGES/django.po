@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "日期和时间"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1159,3 +1159,84 @@ msgstr "点击添加下一个角点。"
 
 msgid ":"
 msgstr "："
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "选择一项"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "选择所有适用项"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "仅当 %(condition)s 时作答"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "仅限在线"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "在地图上标记"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "画一个点，并在旁边写上字母 %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "画出线条，并在起点写上字母 %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "圈出区域，并在里面写上字母 %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "涂抹区域，并在旁边写上字母 %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "最多 %(n)s 个"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "至少 %(n)s 个"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "标记"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "对象"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "还有 %(n)s 个"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "第一选择写1，第二选择写2，依此类推。"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "第 %(n)s 页，共 %(total)s 页"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "想在线作答？请扫描此码。"
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* 必填"

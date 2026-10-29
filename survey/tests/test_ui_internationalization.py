@@ -2,7 +2,7 @@
 
 Moved from survey/tests.py by #273; classes are unchanged.
 """
-from django.test import TestCase, SimpleTestCase, Client
+from django.test import TestCase, SimpleTestCase, Client, override_settings
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point
 from django.utils import translation
@@ -473,6 +473,37 @@ class RespondentCatalogTest(TestCase):
         for response in pages:
             self.assertIn(response.status_code, (200, 302), response)
         return seen
+
+    def test_every_printed_form_string_is_translated_in_every_catalog(self):
+        """
+        GIVEN the same fixture survey
+        WHEN its paper form is built in Portuguese (change printable-form)
+        THEN every fixed string of the form that gettext was asked for is in all 75
+             catalogs, because the form is handed to people in the survey's language
+        """
+        from survey.print.pdf import build_form
+        catalogs = self._catalogs()
+        survey = self._import_fixture()
+        seen = set()
+        real = translation._trans
+        original = real.gettext
+
+        def recorder(*args):
+            seen.add(args[0])
+            return original(*args)
+
+        with patch.object(real, 'gettext', recorder), override_settings(MAPBOX_ACCESS_TOKEN=''):
+            build_form(survey, 'pt', 'a4', base_url='https://example.test')
+        self.assertIn('Mark on the map', seen)   # the walk reached the map legend
+        missing = {}
+        for msgid in sorted(self._is_ours(seen)):
+            langs = sorted(code for code, ids in catalogs.items() if code != 'en' and msgid not in ids)
+            if langs:
+                missing[msgid] = langs
+        self.assertEqual(
+            missing, {},
+            'Printed-form string untranslated:\n  ' + '\n  '.join(
+                f'{m[:70]!r}: {len(l)} languages ({", ".join(l[:8])}…)' for m, l in missing.items()))
 
     def test_every_respondent_string_is_translated_in_every_catalog(self):
         """

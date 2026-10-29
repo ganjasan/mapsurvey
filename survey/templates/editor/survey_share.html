@@ -280,6 +280,44 @@
         {% endif %}
     </div>
     {% endif %}
+
+    <!-- Printable paper form (change printable-form, #489): every status, every plan -->
+    <div class="share-section" id="print-form">
+        <h6>{% trans "Print a paper form" %}</h6>
+        <p style="font-size:0.85rem;color:#6b7280;margin-bottom:0.75rem;">
+            {% trans "A PDF of the whole survey as a paper form: every question with boxes and lines, the map of each page with your reference layers and a letter per map question, and a code on every page so the sheets can be matched back. Type the filled sheets in with “Enter a response” on Responses." %}
+            {% if HELP_URL.print_form %}<a href="{{ HELP_URL.print_form }}" target="_blank" rel="noopener">{% trans "Learn more" %}</a>{% endif %}
+        </p>
+        {# No target="_blank": the response is an attachment, so the page stays and nothing is left blank. #}
+        <form method="get" action="{% url 'editor_survey_print_form' survey.uuid %}"
+              style="display:flex;align-items:flex-end;gap:0.75rem;flex-wrap:wrap;">
+            {% if print_languages|length > 1 %}
+            <div>
+                <label for="print-lang" style="font-size:0.8rem;font-weight:500;">{% trans "Language" %}</label>
+                <select name="lang" id="print-lang" class="form-control form-control-sm">
+                    {% for code in print_languages %}<option value="{{ code }}">{{ code|language_name }}</option>{% endfor %}
+                </select>
+            </div>
+            {% else %}
+            <input type="hidden" name="lang" value="{{ print_languages.0 }}">
+            {% endif %}
+            <div>
+                <label for="print-paper" style="font-size:0.8rem;font-weight:500;">{% trans "Paper" %}</label>
+                <select name="paper" id="print-paper" class="form-control form-control-sm">
+                    <option value="a4"{% if print_default_paper == 'a4' %} selected{% endif %}>A4</option>
+                    <option value="letter"{% if print_default_paper == 'letter' %} selected{% endif %}>US Letter</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-print"></i> {% trans "Download PDF" %}</button>
+        </form>
+        {% if survey.status == 'draft' or survey.status == 'testing' %}
+        <p style="font-size:0.8rem;color:#6b7280;margin:0.5rem 0 0;"><i class="fas fa-info-circle"></i> {% trans "Until the survey is published the form prints with a DRAFT watermark — good for proofing, not for handing out." %}</p>
+        {% endif %}
+        {% if print_cjk %}
+        <p style="font-size:0.8rem;color:#92400e;margin:0.5rem 0 0;"><i class="fas fa-exclamation-triangle"></i> {% trans "Chinese, Japanese and Korean text is not yet supported on the printed form." %}</p>
+        {% endif %}
+    </div>
+
 </div>
 
 <!-- QR Modal -->

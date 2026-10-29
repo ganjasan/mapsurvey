@@ -11,6 +11,8 @@ pytest-django = "*"
 # nobody noticed; without it every test that reads an AI key from .env fails.
 python-dotenv = "*"
 tblib = "*"
+# Reads the printable-form PDFs back in tests (text and page count).
+pypdf = "*"
 
 [packages]
 # ~=5.2: the LTS (April 2028). `*` is how 4.2 stayed pinned for a year — the resolver
@@ -57,6 +59,9 @@ django-ninja = "~=1.7"
 # QR codes for the share API and MCP (change api-v2-distribution, #410): pure Python,
 # writes SVG and PNG itself -- no Pillow, no system library.
 segno = "~=1.6"
+# Printable paper forms (change printable-form, #489): pure Python over Pillow, no system
+# library in the image. survey/print/ registers the bundled DejaVu fonts with it.
+reportlab = "~=4.4"
 
 [requires]
 python_version = "3.12"

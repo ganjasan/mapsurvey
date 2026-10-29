@@ -36,6 +36,9 @@ SURVEY_FIRST_RESPONSE = 'survey_first_response'
 SHARE_LINK_COPIED = 'share_link_copied'
 QR_SHOWN = 'qr_shown'
 EMBED_COPIED = 'embed_copied'
+# A paper form downloaded from the Share page (change printable-form, #489):
+# server-side, the download is a navigation a browser capture would race.
+FORM_PRINTED = 'form_printed'
 RESPONSES_VIEWED = 'responses_viewed'
 DATA_EXPORTED = 'data_exported'
 

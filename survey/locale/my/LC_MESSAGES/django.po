@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "ရက်စွဲနှင့် အချိန်"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1159,3 +1159,84 @@ msgstr "မေးခွန်းများ"
 
 msgid "Add another"
 msgstr "နောက်တစ်ခု ထည့်ပါ"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "တစ်ခုရွေးပါ"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "သက်ဆိုင်သမျှ အားလုံးရွေးပါ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "%(condition)s ဖြစ်မှသာ ဖြေပါ"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "အွန်လိုင်းတွင်သာ"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "မြေပုံပေါ်တွင် မှတ်သားပါ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "အစက်တစ်စက်ချပြီး ဘေးတွင် %(letter)s စာလုံးရေးပါ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "မျဉ်းဆွဲပြီး အစတွင် %(letter)s စာလုံးရေးပါ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "ဧရိယာကို ဝိုင်းပြီး အတွင်းတွင် %(letter)s စာလုံးရေးပါ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "ဧရိယာကို အရောင်ခြယ်ပြီး ဘေးတွင် %(letter)s စာလုံးရေးပါ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "အများဆုံး %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "အနည်းဆုံး %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "အမှတ်အသား"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "အရာဝတ္ထု"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "နှင့် နောက်ထပ် %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "ပထမရွေးချယ်မှုအတွက် 1၊ ဒုတိယအတွက် 2 စသည်ဖြင့် ရေးပါ။"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "စာမျက်နှာ %(n)s / %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "အွန်လိုင်းဖြင့် ဖြေလိုပါသလား။ ဤကုဒ်ကို စကင်ဖတ်ပါ။"
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* မဖြစ်မနေ"

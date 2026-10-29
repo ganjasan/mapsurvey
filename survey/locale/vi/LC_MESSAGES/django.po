@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "Ngày và giờ"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1159,3 +1159,84 @@ msgstr "Vẫn còn vài câu hỏi bắt buộc chưa được trả lời."
 
 msgid "create your own free map survey"
 msgstr "tạo khảo sát bản đồ miễn phí của riêng bạn"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Chọn một"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Chọn tất cả các mục phù hợp"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Chỉ trả lời nếu %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Chỉ trực tuyến"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Đánh dấu trên bản đồ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Chấm một điểm và viết chữ %(letter)s bên cạnh"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Vẽ đường và viết chữ %(letter)s ở điểm đầu"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Khoanh vùng và viết chữ %(letter)s bên trong"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Tô vùng và viết chữ %(letter)s bên cạnh"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "tối đa %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "ít nhất %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Dấu"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Đối tượng"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "và %(n)s nữa"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Ghi 1 cho lựa chọn đầu tiên, 2 cho lựa chọn thứ hai, và tiếp tục như vậy."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "Trang %(n)s / %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Muốn trả lời trực tuyến? Quét mã này."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* bắt buộc"

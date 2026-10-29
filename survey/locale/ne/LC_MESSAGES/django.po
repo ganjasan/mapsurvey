@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "मिति र समय"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1160,3 +1160,84 @@ msgstr "केही अनिवार्य प्रश्नहरूको 
 
 msgid "create your own free map survey"
 msgstr "आफ्नै निःशुल्क नक्सा सर्वेक्षण बनाउनुहोस्"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "एउटा छान्नुहोस्"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "लागू हुने सबै छान्नुहोस्"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "%(condition)s भएमा मात्र उत्तर दिनुहोस्"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "अनलाइनमा मात्र"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "नक्सामा चिन्ह लगाउनुहोस्"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "एउटा थोप्लो बनाउनुहोस् र छेउमा %(letter)s अक्षर लेख्नुहोस्"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "रेखा कोर्नुहोस् र सुरुमा %(letter)s अक्षर लेख्नुहोस्"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "क्षेत्रलाई घेर्नुहोस् र भित्र %(letter)s अक्षर लेख्नुहोस्"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "क्षेत्रलाई छायाँ लगाउनुहोस् र छेउमा %(letter)s अक्षर लेख्नुहोस्"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "बढीमा %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "कम्तीमा %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "चिन्ह"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "वस्तु"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "र थप %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "पहिलो रोजाइका लागि १, दोस्रोका लागि २ र यसरी नै लेख्नुहोस्।"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "पृष्ठ %(n)s / %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "अनलाइन उत्तर दिन चाहनुहुन्छ? यो कोड स्क्यान गर्नुहोस्।"
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* अनिवार्य"

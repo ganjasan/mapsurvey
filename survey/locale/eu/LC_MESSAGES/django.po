@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "Data eta ordua"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1160,3 +1160,84 @@ msgstr "Legez kanpoko edukia"
 
 msgid "Move the map to position the pin, then press Apply."
 msgstr "Mugitu mapa orratza kokatzeko, eta sakatu Aplikatu."
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Aukeratu bat"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Aukeratu dagozkion guztiak"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Erantzun soilik %(condition)s bada"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Linean soilik"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Markatu mapan"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Marraztu puntu bat eta idatzi ondoan %(letter)s letra"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Marraztu lerroa eta idatzi hasieran %(letter)s letra"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Inguratu eremua eta idatzi barruan %(letter)s letra"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Itzaleztatu eremua eta idatzi ondoan %(letter)s letra"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "gehienez %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "gutxienez %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Marka"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Objektua"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "eta beste %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Idatzi 1 lehen aukeran, 2 bigarrenean, eta horrela."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "%(n)s/%(total)s orria"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Nahiago duzu linean erantzun? Eskaneatu kode hau."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* beharrezkoa"

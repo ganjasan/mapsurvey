@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "Data dhe ora"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1160,3 +1160,84 @@ msgstr "Mbani të shtypur dhe tërhiqni për të spërkatur. Qëndroni më gjat�
 
 msgid "Sexual abuse or exploitation of children"
 msgstr "Abuzim seksual ose shfrytëzim i fëmijëve"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Zgjidhni një"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Zgjidhni të gjitha që vlejnë"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Përgjigjuni vetëm nëse %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Vetëm online"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Shënoni në hartë"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Vizatoni një pikë dhe shkruani shkronjën %(letter)s pranë saj"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Vizatoni vijën dhe shkruani shkronjën %(letter)s në fillim të saj"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Rrethoni zonën dhe shkruani brenda shkronjën %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Hijezoni zonën dhe shkruani shkronjën %(letter)s pranë saj"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "deri në %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "të paktën %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Shenja"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Objekt"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "dhe %(n)s të tjera"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Shkruani 1 për zgjedhjen e parë, 2 për të dytën e kështu me radhë."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "Faqja %(n)s nga %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Preferoni të përgjigjeni online? Skanoni këtë kod."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* e detyrueshme"

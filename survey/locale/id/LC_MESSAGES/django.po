@@ -9405,3 +9405,108 @@ msgstr "Kami sudah mengirim tautan hari ini. Buka yang terbaru, dan periksa fold
 #: survey/auth_forms.py
 msgid "Your email address was not confirmed in time."
 msgstr "Alamat email Anda tidak dikonfirmasi tepat waktu."
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Pilih satu"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Pilih semua yang sesuai"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Jawab hanya jika %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Hanya daring"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Tandai di peta"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Buat titik dan tulis huruf %(letter)s di sebelahnya"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Gambar garisnya dan tulis huruf %(letter)s di awalnya"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Lingkari areanya dan tulis huruf %(letter)s di dalamnya"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Arsir areanya dan tulis huruf %(letter)s di sebelahnya"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "paling banyak %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "paling sedikit %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Tanda"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Objek"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "dan %(n)s lagi"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Tulis 1 untuk pilihan pertama, 2 untuk kedua, dan seterusnya."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "Halaman %(n)s dari %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Lebih suka menjawab daring? Pindai kode ini."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* wajib"
+
+#: survey/templates/editor/survey_share.html
+msgid "Print a paper form"
+msgstr "Cetak formulir kertas"
+
+#: survey/templates/editor/survey_share.html
+msgid "Paper"
+msgstr "Kertas"
+
+#: survey/templates/editor/survey_share.html
+msgid "Download PDF"
+msgstr "Unduh PDF"
+
+#: survey/templates/editor/survey_share.html
+msgid "A PDF of the whole survey as a paper form: every question with boxes and lines, the map of each page with your reference layers and a letter per map question, and a code on every page so the sheets can be matched back. Type the filled sheets in with “Enter a response” on Responses."
+msgstr "PDF seluruh survei sebagai formulir kertas: setiap pertanyaan dengan kotak dan garis, peta setiap halaman dengan lapisan referensi Anda dan satu huruf per pertanyaan peta, serta kode di setiap halaman agar lembar bisa dicocokkan kembali. Masukkan lembar yang terisi lewat \"Masukkan jawaban\" di Respons."
+
+#: survey/templates/editor/survey_share.html
+msgid "Until the survey is published the form prints with a DRAFT watermark — good for proofing, not for handing out."
+msgstr "Sebelum survei diterbitkan, formulir dicetak dengan tanda air DRAF — cocok untuk diperiksa, bukan untuk dibagikan."
+
+#: survey/templates/editor/survey_share.html
+msgid "Chinese, Japanese and Korean text is not yet supported on the printed form."
+msgstr "Teks Mandarin, Jepang, dan Korea belum didukung pada formulir cetak."

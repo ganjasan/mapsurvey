@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "Datum in ura"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1162,3 +1162,84 @@ msgstr[3] "%(n)s vprašanj"
 
 msgid "create your own free map survey"
 msgstr "ustvarite svojo brezplačno anketo z zemljevidom"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Izberite eno"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Izberite vse ustrezne"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Odgovorite samo, če %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Samo na spletu"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Označite na zemljevidu"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Narišite piko in zraven napišite črko %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Narišite črto in na njen začetek napišite črko %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Obrišite območje in vanj napišite črko %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Osenčite območje in zraven napišite črko %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "največ %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "najmanj %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Oznaka"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Objekt"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "in še %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Napišite 1 ob prvi izbiri, 2 ob drugi in tako naprej."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "Stran %(n)s od %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Raje odgovorite na spletu? Skenirajte to kodo."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* obvezno"

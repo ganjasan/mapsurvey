@@ -62,7 +62,8 @@ would test the old schema. `TEST_RUNNER` (`mapsurvey/test_runner.py`) applies to
 workers) — django-redis `cache.clear()` is `FLUSHDB`, so a shared database would let one
 worker wipe another's rate-limit counters. `tblib` (dev package) is required: without it a
 failure inside a worker aborts the whole run with a `TypeError` and a cascade of unrelated
-`IntegrityError`s. Views leave `translation.activate()` behind, so the runner resets
+`IntegrityError`s. `pypdf` (dev package) reads the printable-form PDFs back; `reportlab` writes
+them (both since change printable-form — a venv from before needs `uv pip install reportlab pypdf`). Views leave `translation.activate()` behind, so the runner resets
 the language to `LANGUAGE_CODE` before every test (wrapping `SimpleTestCase._pre_setup`). A test that only passes serially is relying on
 another test's state; fix the test, never pin the suite to one process.
 
@@ -157,6 +158,24 @@ Origin, one-time `ms_h` handoff on redirects — only under `/surveys/`, only wi
 for a signed-in session, with CSRF still checked (the secret rides in the session). A new respondent view
 needs nothing: the mark happens in access control and the carrier in middleware; a new full-page respondent
 FORM needs `{% embed_session_field %}` next to its `{% csrf_token %}`.
+
+**Printable paper form (`survey/print/`, change `printable-form`, #489; epic #350 item 2)**: the
+Share page's *Print a paper form* (every status, every plan, `editor` role) downloads
+`/editor/surveys/<uuid>/print/form/?lang=&paper=` — `pdf.build_form` walks the RESPONDENT structure
+(`compute_visibility(surface='respondent')`, `group_runs`; operator-only items left out, rules as an
+"Answer only if …" line) and renders one `QUESTION_SHAPES[input_type]` flowable per question in
+reportlab (pure Python; the bundled DejaVu fonts in `survey/print/fonts/` cover everything but CJK).
+A map section prints a frame from `static_map.render_frame`: the Mapbox **Static Images** API for the
+basemap (same token, a separate metered SKU, cached a day per frame, fail-soft to a gridded empty
+frame) with the survey's reference layers drawn on it by Pillow, then a letter legend (A ●, B ━,
+C ▭, D ░ — never icons: they do not survive a photocopy) and a sub-question table per mark. Every
+page carries four 6 mm alignment squares and a **form code** (`MS-<form>-<page>`, QR
+`ms:form:<form>:<page>:<pages>`) that names a `PrintedForm` row — version, language, paper,
+`structure_hash`, and per page the map frame's rectangle in mm plus its geographic bounds — which is
+what item 4 (photo marks → coordinates) will read; a reprint of an unchanged survey reuses the row.
+Fixed form strings come from the RESPONDENT catalogs (75; `test_every_printed_form_string_is_translated_in_every_catalog`),
+the dialog's from the creator ones. Event `form_printed` is server-side. The flyer generator #220
+is the next consumer of the same page template and static map.
 
 **Reference overlay layers (`SurveyMapLayer`, kill switch `MAP_REFERENCE_LAYERS`)**: creator-uploaded
 GeoJSON rendered read-only beneath answer geometry on four surfaces — the respondent map, the editor

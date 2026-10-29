@@ -98,7 +98,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "التاريخ والوقت"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1163,3 +1163,84 @@ msgstr "ممحاة"
 
 msgid "Small brush"
 msgstr "فرشاة صغيرة"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "اختر واحدًا"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "اختر كل ما ينطبق"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "أجب فقط إذا %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "عبر الإنترنت فقط"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "ضع علامة على الخريطة"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "ارسم نقطة واكتب الحرف %(letter)s بجانبها"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "ارسم الخط واكتب الحرف %(letter)s عند بدايته"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "حدّد المنطقة واكتب الحرف %(letter)s داخلها"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "ظلّل المنطقة واكتب الحرف %(letter)s بجانبها"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "حتى %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "على الأقل %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "العلامة"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "العنصر"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "و%(n)s أخرى"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "اكتب 1 لخيارك الأول، و2 للثاني، وهكذا."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "صفحة %(n)s من %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "تفضّل الإجابة عبر الإنترنت؟ امسح هذا الرمز."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* إلزامي"

@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "Күні мен уақыты"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1160,3 +1160,84 @@ msgstr "Аудиофайл қосу"
 
 msgid "Illegal content"
 msgstr "Заңсыз мазмұн"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Біреуін таңдаңыз"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Сәйкес келетіндердің барлығын таңдаңыз"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Тек %(condition)s болса ғана жауап беріңіз"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Тек онлайн"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Картада белгілеңіз"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Нүкте қойып, қасына %(letter)s әрпін жазыңыз"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Сызық жүргізіп, басына %(letter)s әрпін жазыңыз"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Аумақты қоршап, ішіне %(letter)s әрпін жазыңыз"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Аумақты штрихтап, қасына %(letter)s әрпін жазыңыз"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "ең көбі %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "кемінде %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Белгі"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Нысан"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "және тағы %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Бірінші таңдауыңызға 1, екіншісіне 2 және т.с.с. жазыңыз."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "%(n)s-бет, барлығы %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Онлайн жауап бергіңіз келе ме? Осы кодты сканерлеңіз."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* міндетті"

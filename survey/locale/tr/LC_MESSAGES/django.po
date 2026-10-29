@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "Tarih ve saat"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1160,3 +1160,84 @@ msgstr "en fazla {n} daha"
 
 msgid "Tap the first point to close the shape."
 msgstr "Şekli kapatmak için ilk noktaya dokunun."
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Birini seçin"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Uygun olanların tümünü seçin"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Yalnızca %(condition)s ise yanıtlayın"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Yalnızca çevrim içi"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Haritada işaretleyin"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Bir nokta koyun ve yanına %(letter)s harfini yazın"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Çizgiyi çizin ve başlangıcına %(letter)s harfini yazın"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Alanı çevreleyin ve içine %(letter)s harfini yazın"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Alanı tarayın ve yanına %(letter)s harfini yazın"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "en fazla %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "en az %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "İşaret"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Nesne"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "ve %(n)s tane daha"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "İlk tercihinize 1, ikinciye 2 yazın ve böyle devam edin."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "Sayfa %(n)s / %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Çevrim içi yanıtlamayı mı tercih edersiniz? Bu kodu tarayın."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* zorunlu"

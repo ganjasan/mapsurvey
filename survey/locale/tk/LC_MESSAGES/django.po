@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "Sene we wagt"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1160,3 +1160,84 @@ msgstr "Çyzygy başlamak üçin basyň."
 
 msgid "Tap the first point to close the shape."
 msgstr "Şekili ýapmak üçin birinji nokada basyň."
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Birini saýlaň"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Degişli bolanlaryň hemmesini saýlaň"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Diňe %(condition)s bolsa jogap beriň"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Diňe onlaýn"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Kartada belläň"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Nokat goýuň we ýanyna %(letter)s harpyny ýazyň"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Çyzyk çyzyň we başynda %(letter)s harpyny ýazyň"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Meýdançany çyzyň we içine %(letter)s harpyny ýazyň"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Meýdançany kölegeläň we ýanyna %(letter)s harpyny ýazyň"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "iň köp %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "iň az %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Belgi"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Obýekt"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "we ýene %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Birinji saýlawyňyza 1, ikinjisine 2 we ş.m. ýazyň."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "Sahypa %(n)s / %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Onlaýn jogap bermek isleýärsiňizmi? Şu kody skanirläň."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* hökmany"

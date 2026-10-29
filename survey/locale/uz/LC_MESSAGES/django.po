@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "Sana va vaqt"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1159,3 +1159,84 @@ msgstr "Kirish"
 
 msgid "Hold and drag a finger to spray. Stay longer where you are more certain."
 msgstr "Purkash uchun barmog'ingizni bosib turib suring. Ko'proq ishonchingiz komil bo'lgan joyda uzoqroq turing."
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Bittasini tanlang"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Mos keladiganlarning barchasini tanlang"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Faqat %(condition)s bo'lsa javob bering"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Faqat onlayn"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Xaritada belgilang"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Nuqta qo'ying va yoniga %(letter)s harfini yozing"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Chiziq torting va boshiga %(letter)s harfini yozing"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Hududni chizib, ichiga %(letter)s harfini yozing"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Hududni shtrixlab, yoniga %(letter)s harfini yozing"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "ko'pi bilan %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "kamida %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Belgi"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Obyekt"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "va yana %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Birinchi tanlovingizga 1, ikkinchisiga 2 va hokazo yozing."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "%(n)s-sahifa, jami %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Onlayn javob bermoqchimisiz? Ushbu kodni skanerlang."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* majburiy"

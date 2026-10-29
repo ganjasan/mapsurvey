@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "ದಿನಾಂಕ ಮತ್ತು ಸಮಯ"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1160,3 +1160,84 @@ msgstr "ಮುಂದಿನ ಮೂಲೆಯನ್ನು ಸೇರಿಸಲು ಟ
 
 msgid ":"
 msgstr ":"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "ಒಂದನ್ನು ಆರಿಸಿ"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "ಅನ್ವಯಿಸುವ ಎಲ್ಲವನ್ನೂ ಆರಿಸಿ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "%(condition)s ಆಗಿದ್ದರೆ ಮಾತ್ರ ಉತ್ತರಿಸಿ"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "ಆನ್‌ಲೈನ್‌ನಲ್ಲಿ ಮಾತ್ರ"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "ನಕ್ಷೆಯಲ್ಲಿ ಗುರುತಿಸಿ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "ಒಂದು ಚುಕ್ಕಿ ಹಾಕಿ ಪಕ್ಕದಲ್ಲಿ %(letter)s ಅಕ್ಷರ ಬರೆಯಿರಿ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "ಗೆರೆ ಎಳೆದು ಅದರ ಆರಂಭದಲ್ಲಿ %(letter)s ಅಕ್ಷರ ಬರೆಯಿರಿ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "ಪ್ರದೇಶವನ್ನು ಗುರುತಿಸಿ ಒಳಗೆ %(letter)s ಅಕ್ಷರ ಬರೆಯಿರಿ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "ಪ್ರದೇಶಕ್ಕೆ ಛಾಯೆ ಹಾಕಿ ಪಕ್ಕದಲ್ಲಿ %(letter)s ಅಕ್ಷರ ಬರೆಯಿರಿ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "ಗರಿಷ್ಠ %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "ಕನಿಷ್ಠ %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "ಗುರುತು"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "ವಸ್ತು"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "ಮತ್ತು ಇನ್ನೂ %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "ನಿಮ್ಮ ಮೊದಲ ಆಯ್ಕೆಗೆ 1, ಎರಡನೆಯದಕ್ಕೆ 2 ಹೀಗೆ ಬರೆಯಿರಿ."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "ಪುಟ %(n)s / %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "ಆನ್‌ಲೈನ್‌ನಲ್ಲಿ ಉತ್ತರಿಸಲು ಬಯಸುವಿರಾ? ಈ ಕೋಡ್ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* ಕಡ್ಡಾಯ"

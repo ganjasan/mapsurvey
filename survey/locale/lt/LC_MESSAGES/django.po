@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "Data ir laikas"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1162,3 +1162,84 @@ msgstr "Siųsti pranešimą"
 
 msgid "Made with"
 msgstr "Sukurta su"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Pasirinkite vieną"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Pasirinkite visus tinkamus"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Atsakykite tik jei %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Tik internetu"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Pažymėkite žemėlapyje"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Pažymėkite tašką ir šalia parašykite raidę %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Nubrėžkite liniją ir jos pradžioje parašykite raidę %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Apibrėžkite plotą ir viduje parašykite raidę %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Užbrūkšniuokite plotą ir šalia parašykite raidę %(letter)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "iki %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "bent %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Žyma"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Objektas"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "ir dar %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Prie pirmo pasirinkimo rašykite 1, prie antro 2 ir t. t."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "%(n)s puslapis iš %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Norite atsakyti internetu? Nuskenuokite šį kodą."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* privaloma"

@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "Dyddiad ac amser"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1162,3 +1162,84 @@ msgstr "Wedi'i wneud gyda"
 
 msgid "Tap the first point to close the shape."
 msgstr "Tapiwch y pwynt cyntaf i gau'r siâp."
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Dewiswch un"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Dewiswch bob un sy'n berthnasol"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Atebwch dim ond os %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Ar-lein yn unig"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Marciwch ar y map"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Tynnwch ddot ac ysgrifennwch y llythyren %(letter)s wrth ei ymyl"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Tynnwch y llinell ac ysgrifennwch y llythyren %(letter)s ar ei dechrau"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Amlinellwch yr ardal ac ysgrifennwch y llythyren %(letter)s y tu mewn"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Cysgodwch yr ardal ac ysgrifennwch y llythyren %(letter)s wrth ei hymyl"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "hyd at %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "o leiaf %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Marc"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Gwrthrych"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "a %(n)s arall"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Ysgrifennwch 1 ar gyfer eich dewis cyntaf, 2 ar gyfer yr ail, ac yn y blaen."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "Tudalen %(n)s o %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Well gennych ateb ar-lein? Sganiwch y cod hwn."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* gofynnol"

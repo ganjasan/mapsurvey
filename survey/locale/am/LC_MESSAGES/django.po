@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "ቀን እና ሰዓት"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1160,3 +1160,84 @@ msgstr "ቀጣዩን ማዕዘን ለመጨመር ይንኩ።"
 
 msgid ":"
 msgstr ":"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "አንድ ይምረጡ"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "የሚመለከተውን ሁሉ ይምረጡ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "%(condition)s ከሆነ ብቻ ይመልሱ"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "በመስመር ላይ ብቻ"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "በካርታው ላይ ምልክት ያድርጉ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "ነጥብ ይሳሉ እና ፊደል %(letter)s ከጎኑ ይጻፉ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "መስመሩን ይሳሉ እና ፊደል %(letter)s በመጀመሪያው ላይ ይጻፉ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "ቦታውን ይከቡ እና ፊደል %(letter)s ውስጡ ይጻፉ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "ቦታውን ያጥሉ እና ፊደል %(letter)s ከጎኑ ይጻፉ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "እስከ %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "ቢያንስ %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "ምልክት"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "ነገር"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "እና %(n)s ተጨማሪ"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "ለመጀመሪያ ምርጫዎ 1፣ ለሁለተኛው 2 እና ወዘተ ይጻፉ።"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "ገጽ %(n)s ከ %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "በመስመር ላይ መመለስ ይመርጣሉ? ይህን ኮድ ይቃኙ።"
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* ግዴታ"

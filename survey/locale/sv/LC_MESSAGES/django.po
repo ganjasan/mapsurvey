@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "Datum och tid"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1160,3 +1160,84 @@ msgid "%(n)s question"
 msgid_plural "%(n)s questions"
 msgstr[0] "%(n)s fråga"
 msgstr[1] "%(n)s frågor"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Välj ett"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Välj alla som gäller"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Svara endast om %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Endast online"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Markera på kartan"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Rita en prick och skriv bokstaven %(letter)s bredvid"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Rita linjen och skriv bokstaven %(letter)s vid dess början"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Rita runt området och skriv bokstaven %(letter)s inuti"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Skugga området och skriv bokstaven %(letter)s bredvid"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "upp till %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "minst %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Markering"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Objekt"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "och %(n)s till"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Skriv 1 vid ditt förstahandsval, 2 vid ditt andra, och så vidare."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "Sida %(n)s av %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Vill du hellre svara online? Skanna den här koden."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* obligatoriskt"

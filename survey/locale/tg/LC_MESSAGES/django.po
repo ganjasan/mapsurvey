@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "Сана ва вақт"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1160,3 +1160,84 @@ msgstr "{n} аз {m} қайд шуд"
 
 msgid "All {m} marked — thank you!"
 msgstr "Ҳамаи {m} қайд шуд — ташаккур!"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "Якеро интихоб кунед"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "Ҳамаи мувофиқро интихоб кунед"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "Танҳо агар %(condition)s ҷавоб диҳед"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "Танҳо онлайн"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "Дар харита қайд кунед"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "Нуқта гузоред ва дар паҳлӯяш ҳарфи %(letter)s-ро нависед"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "Хат кашед ва дар аввали он ҳарфи %(letter)s-ро нависед"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "Минтақаро давр занед ва дар дохилаш ҳарфи %(letter)s-ро нависед"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "Минтақаро соя кунед ва дар паҳлӯяш ҳарфи %(letter)s-ро нависед"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "то %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "ҳадди ақал %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "Нишона"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "Объект"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "ва боз %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "Барои интихоби якум 1, дуюм 2 ва ғайра нависед."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "Саҳифаи %(n)s аз %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "Мехоҳед онлайн ҷавоб диҳед? Ин рамзро скан кунед."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* ҳатмӣ"

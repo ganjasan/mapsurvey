@@ -97,7 +97,7 @@ msgstr ""
 
 #: survey/models.py:94
 msgid "Date/Time"
-msgstr ""
+msgstr "તારીખ અને સમય"
 
 #: survey/models.py:95
 msgid "Geo Point"
@@ -1160,3 +1160,84 @@ msgstr "ગેરકાયદેસર સામગ્રી"
 
 msgid "at least {n} required"
 msgstr "ઓછામાં ઓછા {n} જરૂરી"
+
+#: survey/print/pdf.py
+msgid "Choose one"
+msgstr "એક પસંદ કરો"
+
+#: survey/print/pdf.py
+msgid "Choose all that apply"
+msgstr "લાગુ પડતા બધા પસંદ કરો"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Answer only if %(condition)s"
+msgstr "માત્ર ત્યારે જ જવાબ આપો જો %(condition)s"
+
+#: survey/print/pdf.py
+msgid "Online only"
+msgstr "માત્ર ઓનલાઇન"
+
+#: survey/print/pdf.py
+msgid "Mark on the map"
+msgstr "નકશા પર નિશાન કરો"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw a dot and write the letter %(letter)s next to it"
+msgstr "એક બિંદુ દોરો અને બાજુમાં %(letter)s અક્ષર લખો"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Draw the line and write the letter %(letter)s at its start"
+msgstr "રેખા દોરો અને તેની શરૂઆતમાં %(letter)s અક્ષર લખો"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Outline the area and write the letter %(letter)s inside it"
+msgstr "વિસ્તારને ઘેરો અને અંદર %(letter)s અક્ષર લખો"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Shade the area and write the letter %(letter)s next to it"
+msgstr "વિસ્તારને છાંયો અને બાજુમાં %(letter)s અક્ષર લખો"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "up to %(n)s"
+msgstr "વધુમાં વધુ %(n)s"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "at least %(n)s"
+msgstr "ઓછામાં ઓછા %(n)s"
+
+#: survey/print/pdf.py
+msgid "Mark"
+msgstr "નિશાન"
+
+#: survey/print/pdf.py
+msgid "Object"
+msgstr "વસ્તુ"
+
+#: survey/print/pdf.py
+#, python-format
+msgid "and %(n)s more"
+msgstr "અને વધુ %(n)s"
+
+#: survey/print/pdf.py
+msgid "Write 1 for your first choice, 2 for your second, and so on."
+msgstr "તમારી પહેલી પસંદ માટે 1, બીજી માટે 2 અને એ રીતે લખો."
+
+#: survey/print/pdf.py
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "પાનું %(n)s / %(total)s"
+
+#: survey/print/pdf.py
+msgid "Prefer to answer online? Scan this code."
+msgstr "ઓનલાઇન જવાબ આપવો છે? આ કોડ સ્કેન કરો."
+
+#: survey/print/pdf.py
+msgid "* required"
+msgstr "* ફરજિયાત"
