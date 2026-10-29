@@ -3,49 +3,13 @@
 ## Purpose
 TBD - created by archiving change add-registration-abuse-defenses. Update Purpose after archive.
 ## Requirements
-### Requirement: Cloudflare Turnstile token validation on registration POST
-
-The system SHALL render a Cloudflare Turnstile widget on the registration form and SHALL reject any POST to the registration endpoint whose Turnstile token cannot be verified against Cloudflare's `siteverify` endpoint, except in environments where `TURNSTILE_SECRET_KEY` is empty (in which case the check SHALL be skipped to keep local development workable).
-
-#### Scenario: Valid token passes verification
-
-- **WHEN** the registration form is submitted with a valid `cf-turnstile-response` token and `TURNSTILE_SECRET_KEY` is set
-- **THEN** the server-side `siteverify` call SHALL return `success: true` and the request SHALL proceed to the next defense
-
-#### Scenario: Missing token blocks the request
-
-- **WHEN** the registration form is submitted with no `cf-turnstile-response` field and `TURNSTILE_SECRET_KEY` is set
-- **THEN** the form SHALL fail validation with a "CAPTCHA verification required" error
-- **AND** no `User` row SHALL be created
-- **AND** no activation email SHALL be sent
-
-#### Scenario: Invalid token blocks the request
-
-- **WHEN** the registration form is submitted with a token that `siteverify` rejects
-- **THEN** the form SHALL fail validation with a "CAPTCHA verification failed" error
-- **AND** an `AbuseEvent` row SHALL be written with `defense='captcha'`
-- **AND** the failure SHALL be logged to the `abuse.captcha` logger at WARNING level
-
-#### Scenario: Local development bypass
-
-- **WHEN** the registration form is submitted and `TURNSTILE_SECRET_KEY` is empty
-- **THEN** the Turnstile check SHALL be skipped
-- **AND** the request SHALL proceed to the next defense regardless of whether a token is present
-
-#### Scenario: Cloudflare API timeout fails closed
-
-- **WHEN** `siteverify` does not respond within 5 seconds
-- **THEN** the request SHALL be rejected with the same error as an invalid token
-- **AND** the failure SHALL be logged
-
 ### Requirement: Per-IP rate limiting on registration POST
 
 The system SHALL enforce per-client-IP rate limits on the registration endpoint using two independent
 counters. Submissions that pass form validation SHALL be counted against `REGISTRATION_RATE_LIMIT_HOUR`
 (default 3) per hour and `REGISTRATION_RATE_LIMIT_DAY` (default 10) per day. Submissions rejected by
 form validation SHALL be counted against `REGISTRATION_INVALID_LIMIT_HOUR` (default 15) per hour and
-`REGISTRATION_INVALID_LIMIT_DAY` (default 50) per day. A submission that passes form validation but
-fails Turnstile SHALL count against the valid-submission counters.
+`REGISTRATION_INVALID_LIMIT_DAY` (default 50) per day.
 
 Both counters SHALL be checked before form processing and incremented only after validity is known.
 Limits SHALL be measured against `request.cf_ip` (set by `CloudflareIPMiddleware` from
@@ -86,12 +50,6 @@ against the valid-submission counters, which is the behaviour prior to this chan
 - **THEN** the response SHALL be HTTP 429 with a `Retry-After` header
 - **AND** an `AbuseEvent` row SHALL be written with `defense='ratelimit'` and `detail='invalid_hour'`
 
-#### Scenario: Turnstile failure counts as a valid-submission attempt
-
-- **WHEN** an IP submits a registration POST with well-formed data and a Turnstile token that siteverify rejects
-- **THEN** the valid-submission counter SHALL be incremented
-- **AND** the invalid-attempt counter SHALL NOT be incremented
-
 #### Scenario: Cache backend unreachable fails open
 
 - **WHEN** the Redis cache backend is unreachable during a registration POST
@@ -130,30 +88,27 @@ The registration form SHALL include a hidden honeypot field named `website`. Whe
 ### Requirement: Defense composition order
 
 The defenses SHALL be evaluated in a defined order: honeypot first (cheapest, silent), then the
-rate-limit check (cheap, no external network call), then form validation, then Turnstile (network call
-to Cloudflare). The system SHALL stop at the first defense that triggers and SHALL NOT evaluate
+rate-limit check (cheap, no external network call), then form validation. No CAPTCHA or other
+third-party check SHALL run on registration (Cloudflare Turnstile was removed in #490). The system SHALL stop at the first defense that triggers and SHALL NOT evaluate
 remaining defenses. The rate-limit *check* SHALL run before form validation so an already-limited IP is
 refused without the cost of validating; the rate-limit *counter* SHALL be incremented only after form
 validity is known.
 
 #### Scenario: Honeypot triggered short-circuits the chain
 
-- **WHEN** the registration form is submitted with both a filled honeypot and an invalid Turnstile token
+- **WHEN** the registration form is submitted with both a filled honeypot and invalid form data
 - **THEN** only the honeypot defense SHALL fire (fake-success redirect)
-- **AND** Turnstile siteverify SHALL NOT be called
 - **AND** neither rate-limit counter SHALL be incremented
 
-#### Scenario: Rate limit triggered short-circuits form validation and Turnstile
+#### Scenario: Rate limit triggered short-circuits form validation
 
-- **WHEN** an IP already over its limit submits a registration POST that also has an invalid Turnstile token
+- **WHEN** an IP already over its limit submits a registration POST
 - **THEN** only the rate-limit defense SHALL fire (HTTP 429)
-- **AND** Turnstile siteverify SHALL NOT be called
 
-#### Scenario: Invalid form short-circuits Turnstile
+#### Scenario: No third-party script on the registration page
 
-- **WHEN** a registration POST with an empty honeypot, an IP under its limits, and form-invalid data is submitted
-- **THEN** the form SHALL be re-rendered with errors
-- **AND** Turnstile siteverify SHALL NOT be called
+- **WHEN** the registration page is rendered
+- **THEN** it SHALL load no Cloudflare challenge script and render no CAPTCHA widget
 
 ### Requirement: Cloudflare client IP detection
 
@@ -176,12 +131,12 @@ A legitimate registration SHALL require the `accept_terms` confirmation (see "Ag
 
 #### Scenario: Legitimate registration still creates personal organization
 
-- **WHEN** a registration with empty honeypot, valid Turnstile token, and below rate limits is submitted with valid form data and `accept_terms` checked
-- **THEN** a `User` SHALL be created with `is_active=False`
+- **WHEN** a registration with empty honeypot and below rate limits is submitted with valid form data and `accept_terms` checked
+- **THEN** a `User` SHALL be created with `is_active=True` and an unconfirmed `EmailVerification` (see `sign-in-grace-period`)
 - **AND** an `Organization` SHALL be created via the existing `user_registered` signal
 - **AND** a `Membership` SHALL link the user to the organization with role `owner`
 - **AND** the activation email SHALL be sent in a background thread
-- **AND** the response SHALL redirect to `django_registration_complete`
+- **AND** the session SHALL be signed in as the new user and the response SHALL redirect to `LOGIN_REDIRECT_URL`
 
 ### Requirement: Configuration via Django settings and environment variables
 
@@ -202,11 +157,6 @@ All abuse-defense thresholds, keys, and feature flags SHALL be readable from env
 - **WHEN** `REGISTRATION_SPLIT_RATE_LIMIT` is not set in the environment
 - **THEN** `settings.REGISTRATION_SPLIT_RATE_LIMIT` SHALL be `True`
 
-#### Scenario: Empty Turnstile secret enables dev bypass
-
-- **WHEN** `TURNSTILE_SECRET_KEY` is unset or empty
-- **THEN** Turnstile verification SHALL be skipped for all requests
-
 #### Scenario: CLOUDFLARE_TRUSTED defaults to false
 
 - **WHEN** `CLOUDFLARE_TRUSTED` is not set in the environment
@@ -218,7 +168,7 @@ The registration form SHALL include a required checkbox field `accept_terms` lab
 
 #### Scenario: Missing confirmation is rejected
 
-- **WHEN** a registration with valid data, empty honeypot and valid Turnstile token is submitted without `accept_terms`
+- **WHEN** a registration with valid data and an empty honeypot is submitted without `accept_terms`
 - **THEN** the response SHALL be HTTP 200 with an error on `accept_terms`
 - **AND** no `User` SHALL be created
 

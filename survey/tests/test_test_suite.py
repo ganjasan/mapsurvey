@@ -141,7 +141,6 @@ UNMAPPED_MODULES = {
     'respondent-touch-copy': 'tap-phrased respondent copy; its change (respondent bottom sheet) was removed',
     'creator-language-preference': 'spec lives in the unarchived change creator-ui-localization',
     'repo-hygiene': 'spec lives in the unarchived change ops-repo-separation',
-    'sign-in-grace-period': 'spec lives in the unarchived change login-grace-period (#487); drop at archive',
 }
 
 # Capabilities with no module here: tested in another app, or not by any
