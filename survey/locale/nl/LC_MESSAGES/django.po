@@ -9529,3 +9529,308 @@ msgstr "Zolang de enquête niet is gepubliceerd, wordt het formulier met een CON
 #: survey/templates/editor/survey_share.html
 msgid "Chinese, Japanese and Korean text is not yet supported on the printed form."
 msgstr "Chinese, Japanse en Koreaanse tekst wordt op het gedrukte formulier nog niet ondersteund."
+
+#: survey/paper_views.py
+msgid "This batch is closed."
+msgstr "Deze batch is gesloten."
+
+#: survey/paper_views.py
+msgid "This batch is full. Start a new one."
+msgstr "Deze batch is vol. Begin een nieuwe."
+
+#: survey/paper_views.py
+msgid "No file."
+msgstr "Geen bestand."
+
+#: survey/paper_views.py
+#, python-format
+msgid "This file is larger than %(mb)s MB."
+msgstr "Dit bestand is groter dan %(mb)s MB."
+
+#: survey/paper_views.py
+msgid "Pick a printed form and a page number."
+msgstr "Kies een afgedrukt formulier en een paginanummer."
+
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "More ways to enter"
+msgstr "Meer manieren om in te voeren"
+
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "Type in a response"
+msgstr "Een antwoord intypen"
+
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "From photos"
+msgstr "Vanuit foto’s"
+
+#: survey/templates/editor/operator_entry/_entry_bar.html
+#, python-format
+msgid "sheet %(n)s"
+msgstr "blad %(n)s"
+
+#: survey/templates/editor/operator_entry/_entry_bar.html
+msgid "{count} fields to check"
+msgstr "{count} velden te controleren"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+#, python-format
+msgid "Sheet %(n)s"
+msgstr "Blad %(n)s"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Pages"
+msgstr "Pagina’s"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Zoom out"
+msgstr "Uitzoomen"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Zoom in"
+msgstr "Inzoomen"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Rotate"
+msgstr "Draaien"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Show the map"
+msgstr "Kaart tonen"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Photographed page"
+msgstr "Gefotografeerde pagina"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "The photos of this sheet are gone."
+msgstr "De foto’s van dit blad zijn verwijderd."
+
+#: survey/templates/editor/operator_entry/header.html
+msgid "Have photos or scans of filled paper forms? Read them from photos instead."
+msgstr "Heb je foto’s of scans van ingevulde papieren formulieren? Laat ze vanuit de foto’s inlezen."
+
+#: survey/templates/editor/operator_entry/saved.html
+#, python-format
+msgid "Sheet %(n)s is entered; its photos have been deleted."
+msgstr "Blad %(n)s is ingevoerd; de foto’s zijn verwijderd."
+
+#: survey/templates/editor/operator_entry/saved.html
+msgid "Back to the batch"
+msgstr "Terug naar de batch"
+
+#: survey/templates/editor/operator_entry/saved.html
+msgid "Next sheet"
+msgstr "Volgend blad"
+
+#: survey/templates/editor/operator_entry/saved.html
+msgid "No more sheets to review"
+msgstr "Geen bladen meer te controleren"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "to review"
+msgstr "te controleren"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "entered"
+msgstr "ingevoerd"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "skipped"
+msgstr "overgeslagen"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "not recognised"
+msgstr "niet herkend"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "failed"
+msgstr "mislukt"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "reading…"
+msgstr "bezig met lezen…"
+
+#: survey/templates/editor/paper/_sheet_list.html
+#, python-format
+msgid "Review sheet %(n)s"
+msgstr "Blad %(n)s controleren"
+
+#: survey/templates/editor/paper/_sheet_list.html
+#, python-format
+msgid "“%(name)s” failed"
+msgstr "‘%(name)s’ mislukt"
+
+#: survey/templates/editor/paper/_sheet_list.html
+#, python-format
+msgid "Splitting “%(name)s” into pages…"
+msgstr "‘%(name)s’ wordt in pagina’s gesplitst…"
+
+#: survey/templates/editor/paper/_sheet_list.html
+#, python-format
+msgid "page %(pages)s not uploaded"
+msgstr "pagina %(pages)s niet geüpload"
+
+#: survey/templates/editor/paper/_sheet_list.html
+#, python-format
+msgid "page %(pages)s twice — duplicate?"
+msgstr "pagina %(pages)s twee keer — dubbel?"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "incomplete"
+msgstr "onvolledig"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Review"
+msgstr "Controleren"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Skip this sheet? Its photos will be deleted."
+msgstr "Dit blad overslaan? De foto’s worden verwijderd."
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Skip"
+msgstr "Overslaan"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Remove this page"
+msgstr "Deze pagina verwijderen"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Remove this page from the batch?"
+msgstr "Deze pagina uit de batch verwijderen?"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Drag a page here to start a new sheet"
+msgstr "Sleep een pagina hierheen om een nieuw blad te beginnen"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Not recognised"
+msgstr "Niet herkend"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "No form code could be read on these pages, or the code belongs to another survey. Tell us which printed form and page each one is, or remove it."
+msgstr "Op deze pagina’s kon geen formuliercode worden gelezen, of de code hoort bij een andere enquête. Geef aan welk afgedrukt formulier en welke pagina het is, of verwijder de pagina."
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "pages"
+msgstr "pagina’s"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Page number"
+msgstr "Paginanummer"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Assign"
+msgstr "Toewijzen"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Nothing here yet — drop the first photos above."
+msgstr "Nog niets hier — sleep hierboven de eerste foto’s."
+
+#: survey/templates/editor/paper/batch.html
+#, python-format
+msgid "Batch #%(n)s"
+msgstr "Batch #%(n)s"
+
+#: survey/templates/editor/paper/batch.html
+msgid "Too large"
+msgstr "Te groot"
+
+#: survey/templates/editor/paper/batch.html
+msgid "Upload failed"
+msgstr "Uploaden mislukt"
+
+#: survey/templates/editor/paper/batch.html
+msgid "Uploaded"
+msgstr "Geüpload"
+
+#: survey/templates/editor/paper/batch.html
+msgid "Paper forms from photos"
+msgstr "Papieren formulieren vanuit foto’s"
+
+#: survey/templates/editor/paper/batch.html
+msgid "closed"
+msgstr "gesloten"
+
+#: survey/templates/editor/paper/batch.html
+msgid "Close this batch? Photos of sheets not yet entered will be deleted."
+msgstr "Deze batch sluiten? Foto’s van nog niet ingevoerde bladen worden verwijderd."
+
+#: survey/templates/editor/paper/batch.html
+msgid "Close batch"
+msgstr "Batch sluiten"
+
+#: survey/templates/editor/paper/batch.html
+msgid "Drop photos, scans or a PDF here"
+msgstr "Sleep hier foto’s, scans of een pdf naartoe"
+
+#: survey/templates/editor/paper/batch.html
+msgid "or"
+msgstr "of"
+
+#: survey/templates/editor/paper/batch.html
+msgid "choose files"
+msgstr "bestanden kiezen"
+
+#: survey/templates/editor/paper/batch.html
+msgid "Photograph the whole page, flat, with all four corner marks in the picture. Add more files at any time; sheets are read in the order they arrive."
+msgstr "Fotografeer de hele pagina, plat, met alle vier de hoekmarkeringen in beeld. Voeg op elk moment bestanden toe; bladen worden gelezen in de volgorde van aankomst."
+
+#: survey/templates/editor/paper/batches.html
+msgid "Photograph or scan the filled sheets, drop the files here, and review what was read beside the picture. Each sheet is stored as a paper response."
+msgstr "Fotografeer of scan de ingevulde bladen, sleep de bestanden hierheen en controleer wat er is gelezen naast de afbeelding. Elk blad wordt opgeslagen als papieren antwoord."
+
+#: survey/templates/editor/paper/batches.html
+msgid "New batch"
+msgstr "Nieuwe batch"
+
+#: survey/templates/editor/paper/batches.html
+msgid "Type in a response instead"
+msgstr "Liever een antwoord intypen"
+
+#: survey/templates/editor/paper/batches.html
+msgid "Batch"
+msgstr "Batch"
+
+#: survey/templates/editor/paper/batches.html
+msgid "By"
+msgstr "Door"
+
+#: survey/templates/editor/paper/batches.html
+msgid "To review"
+msgstr "Te controleren"
+
+#: survey/templates/editor/paper/batches.html
+msgid "Entered"
+msgstr "Ingevoerd"
+
+#: survey/templates/editor/paper/batches.html
+msgid "No batches yet. Start one and drop the photos in."
+msgstr "Nog geen batches. Begin er een en sleep de foto’s erin."
+
+#: survey/templates/editor/paper/batches.html
+msgid "Photos are kept until the sheet is entered or skipped, and at most 30 days. The page image is sent to the AI provider for the duration of the reading."
+msgstr "Foto’s worden bewaard tot het blad is ingevoerd of overgeslagen, en hoogstens 30 dagen. De pagina-afbeelding wordt voor de duur van het lezen naar de AI-aanbieder gestuurd."
+
+#: survey/templates/editor/partials/analytics_session_detail.html
+#, python-format
+msgid "Sheet %(n)s of batch %(m)s"
+msgstr "Blad %(n)s van batch %(m)s"
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "Check this against the photo"
+msgstr "Controleer dit met de foto"
+
+#: survey/templates/editor/paper/_sheet_list.html
+#, python-format
+msgid "Reading %(n)s page…"
+msgid_plural "Reading %(n)s pages…"
+msgstr[0] "%(n)s pagina wordt gelezen…"
+msgstr[1] "%(n)s pagina’s worden gelezen…"
+
+#: survey/templates/editor/paper/_sheet_list.html
+#, python-format
+msgid "%(n)s field to check"
+msgid_plural "%(n)s fields to check"
+msgstr[0] "%(n)s veld te controleren"
+msgstr[1] "%(n)s velden te controleren"

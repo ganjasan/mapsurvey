@@ -9510,3 +9510,306 @@ msgstr "Sebelum survei diterbitkan, formulir dicetak dengan tanda air DRAF — c
 #: survey/templates/editor/survey_share.html
 msgid "Chinese, Japanese and Korean text is not yet supported on the printed form."
 msgstr "Teks Mandarin, Jepang, dan Korea belum didukung pada formulir cetak."
+
+#: survey/paper_views.py
+msgid "This batch is closed."
+msgstr "Batch ini sudah ditutup."
+
+#: survey/paper_views.py
+msgid "This batch is full. Start a new one."
+msgstr "Batch ini sudah penuh. Mulai yang baru."
+
+#: survey/paper_views.py
+msgid "No file."
+msgstr "Tidak ada berkas."
+
+#: survey/paper_views.py
+#, python-format
+msgid "This file is larger than %(mb)s MB."
+msgstr "Berkas ini lebih besar dari %(mb)s MB."
+
+#: survey/paper_views.py
+msgid "Pick a printed form and a page number."
+msgstr "Pilih formulir cetak dan nomor halaman."
+
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "More ways to enter"
+msgstr "Cara lain memasukkan"
+
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "Type in a response"
+msgstr "Ketik tanggapan"
+
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "From photos"
+msgstr "Dari foto"
+
+#: survey/templates/editor/operator_entry/_entry_bar.html
+#, python-format
+msgid "sheet %(n)s"
+msgstr "lembar %(n)s"
+
+#: survey/templates/editor/operator_entry/_entry_bar.html
+msgid "{count} fields to check"
+msgstr "{count} kolom untuk diperiksa"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+#, python-format
+msgid "Sheet %(n)s"
+msgstr "Lembar %(n)s"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Pages"
+msgstr "Halaman"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Zoom out"
+msgstr "Perkecil"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Zoom in"
+msgstr "Perbesar"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Rotate"
+msgstr "Putar"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Show the map"
+msgstr "Tampilkan peta"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Photographed page"
+msgstr "Halaman yang difoto"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "The photos of this sheet are gone."
+msgstr "Foto lembar ini sudah dihapus."
+
+#: survey/templates/editor/operator_entry/header.html
+msgid "Have photos or scans of filled paper forms? Read them from photos instead."
+msgstr "Punya foto atau hasil pindai formulir kertas yang sudah diisi? Baca dari foto saja."
+
+#: survey/templates/editor/operator_entry/saved.html
+#, python-format
+msgid "Sheet %(n)s is entered; its photos have been deleted."
+msgstr "Lembar %(n)s sudah dimasukkan; fotonya telah dihapus."
+
+#: survey/templates/editor/operator_entry/saved.html
+msgid "Back to the batch"
+msgstr "Kembali ke batch"
+
+#: survey/templates/editor/operator_entry/saved.html
+msgid "Next sheet"
+msgstr "Lembar berikutnya"
+
+#: survey/templates/editor/operator_entry/saved.html
+msgid "No more sheets to review"
+msgstr "Tidak ada lembar lagi untuk diperiksa"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "to review"
+msgstr "untuk diperiksa"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "entered"
+msgstr "dimasukkan"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "skipped"
+msgstr "dilewati"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "not recognised"
+msgstr "tidak dikenali"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "failed"
+msgstr "gagal"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "reading…"
+msgstr "membaca…"
+
+#: survey/templates/editor/paper/_sheet_list.html
+#, python-format
+msgid "Review sheet %(n)s"
+msgstr "Periksa lembar %(n)s"
+
+#: survey/templates/editor/paper/_sheet_list.html
+#, python-format
+msgid "“%(name)s” failed"
+msgstr "“%(name)s” gagal"
+
+#: survey/templates/editor/paper/_sheet_list.html
+#, python-format
+msgid "Splitting “%(name)s” into pages…"
+msgstr "Memisahkan “%(name)s” menjadi halaman…"
+
+#: survey/templates/editor/paper/_sheet_list.html
+#, python-format
+msgid "page %(pages)s not uploaded"
+msgstr "halaman %(pages)s belum diunggah"
+
+#: survey/templates/editor/paper/_sheet_list.html
+#, python-format
+msgid "page %(pages)s twice — duplicate?"
+msgstr "halaman %(pages)s dua kali — duplikat?"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "incomplete"
+msgstr "tidak lengkap"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Review"
+msgstr "Periksa"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Skip this sheet? Its photos will be deleted."
+msgstr "Lewati lembar ini? Fotonya akan dihapus."
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Skip"
+msgstr "Lewati"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Remove this page"
+msgstr "Hapus halaman ini"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Remove this page from the batch?"
+msgstr "Hapus halaman ini dari batch?"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Drag a page here to start a new sheet"
+msgstr "Seret halaman ke sini untuk memulai lembar baru"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Not recognised"
+msgstr "Tidak dikenali"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "No form code could be read on these pages, or the code belongs to another survey. Tell us which printed form and page each one is, or remove it."
+msgstr "Tidak ada kode formulir yang terbaca di halaman ini, atau kodenya milik survei lain. Beri tahu formulir cetak dan halaman mana untuk masing-masing, atau hapus."
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "pages"
+msgstr "halaman"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Page number"
+msgstr "Nomor halaman"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Assign"
+msgstr "Tetapkan"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Nothing here yet — drop the first photos above."
+msgstr "Belum ada apa-apa — letakkan foto pertama di atas."
+
+#: survey/templates/editor/paper/batch.html
+#, python-format
+msgid "Batch #%(n)s"
+msgstr "Batch #%(n)s"
+
+#: survey/templates/editor/paper/batch.html
+msgid "Too large"
+msgstr "Terlalu besar"
+
+#: survey/templates/editor/paper/batch.html
+msgid "Upload failed"
+msgstr "Unggahan gagal"
+
+#: survey/templates/editor/paper/batch.html
+msgid "Uploaded"
+msgstr "Terunggah"
+
+#: survey/templates/editor/paper/batch.html
+msgid "Paper forms from photos"
+msgstr "Formulir kertas dari foto"
+
+#: survey/templates/editor/paper/batch.html
+msgid "closed"
+msgstr "ditutup"
+
+#: survey/templates/editor/paper/batch.html
+msgid "Close this batch? Photos of sheets not yet entered will be deleted."
+msgstr "Tutup batch ini? Foto lembar yang belum dimasukkan akan dihapus."
+
+#: survey/templates/editor/paper/batch.html
+msgid "Close batch"
+msgstr "Tutup batch"
+
+#: survey/templates/editor/paper/batch.html
+msgid "Drop photos, scans or a PDF here"
+msgstr "Letakkan foto, hasil pindai, atau PDF di sini"
+
+#: survey/templates/editor/paper/batch.html
+msgid "or"
+msgstr "atau"
+
+#: survey/templates/editor/paper/batch.html
+msgid "choose files"
+msgstr "pilih berkas"
+
+#: survey/templates/editor/paper/batch.html
+msgid "Photograph the whole page, flat, with all four corner marks in the picture. Add more files at any time; sheets are read in the order they arrive."
+msgstr "Foto seluruh halaman, rata, dengan keempat tanda sudut terlihat. Tambahkan berkas kapan saja; lembar dibaca sesuai urutan tiba."
+
+#: survey/templates/editor/paper/batches.html
+msgid "Photograph or scan the filled sheets, drop the files here, and review what was read beside the picture. Each sheet is stored as a paper response."
+msgstr "Foto atau pindai lembar yang sudah diisi, letakkan berkas di sini, dan periksa hasil bacaan di samping gambar. Setiap lembar disimpan sebagai tanggapan kertas."
+
+#: survey/templates/editor/paper/batches.html
+msgid "New batch"
+msgstr "Batch baru"
+
+#: survey/templates/editor/paper/batches.html
+msgid "Type in a response instead"
+msgstr "Ketik tanggapan saja"
+
+#: survey/templates/editor/paper/batches.html
+msgid "Batch"
+msgstr "Batch"
+
+#: survey/templates/editor/paper/batches.html
+msgid "By"
+msgstr "Oleh"
+
+#: survey/templates/editor/paper/batches.html
+msgid "To review"
+msgstr "Untuk diperiksa"
+
+#: survey/templates/editor/paper/batches.html
+msgid "Entered"
+msgstr "Dimasukkan"
+
+#: survey/templates/editor/paper/batches.html
+msgid "No batches yet. Start one and drop the photos in."
+msgstr "Belum ada batch. Mulai satu dan letakkan fotonya."
+
+#: survey/templates/editor/paper/batches.html
+msgid "Photos are kept until the sheet is entered or skipped, and at most 30 days. The page image is sent to the AI provider for the duration of the reading."
+msgstr "Foto disimpan sampai lembar dimasukkan atau dilewati, paling lama 30 hari. Gambar halaman dikirim ke penyedia AI selama pembacaan."
+
+#: survey/templates/editor/partials/analytics_session_detail.html
+#, python-format
+msgid "Sheet %(n)s of batch %(m)s"
+msgstr "Lembar %(n)s dari batch %(m)s"
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "Check this against the photo"
+msgstr "Periksa dengan foto"
+
+#: survey/templates/editor/paper/_sheet_list.html
+#, python-format
+msgid "Reading %(n)s page…"
+msgid_plural "Reading %(n)s pages…"
+msgstr[0] "Membaca %(n)s halaman…"
+
+#: survey/templates/editor/paper/_sheet_list.html
+#, python-format
+msgid "%(n)s field to check"
+msgid_plural "%(n)s fields to check"
+msgstr[0] "%(n)s kolom untuk diperiksa"

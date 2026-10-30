@@ -382,13 +382,14 @@ class FormContentTest(_FormFixture):
         """
         GIVEN the map section switched to the form layout
         WHEN the form is built
-        THEN no frame is recorded and the legend still names the question
+        THEN no frame is recorded (the page still lists its items) and the legend still names the question
         """
         self.s1.layout = 'form'
         self.s1.save()
         result = self.build()
         self.assertEqual(result.map_pages, 0)
-        self.assertEqual(result.form.layout, {})
+        self.assertFalse(any('map' in rec for rec in result.form.layout.values()))
+        self.assertIn('question:ALB', result.form.layout['1']['items'])
         _reader, text = _pdf_text(result.pdf)
         self.assertIn('Mark on the map', text)
 

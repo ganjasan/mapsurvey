@@ -16,6 +16,9 @@
         {% if session.is_operator_entry %}{# change operator-entry #}
         <span class="badge audience-badge--operators"><i class="fas fa-user-edit"></i> {{ session.get_source_display }}</span>
         {% if session.entered_by %}<small class="text-muted">{% blocktrans with name=session.entered_by.username %}Entered by {{ name }}{% endblocktrans %}</small>{% endif %}
+        {% if session.paper_sheet %}{# change paper-photo-entry #}
+        <small class="text-muted"><a href="{% url 'paper_batch' survey.uuid session.paper_sheet.batch_id %}">{% blocktrans with n=session.paper_sheet.seq m=session.paper_sheet.batch_id %}Sheet {{ n }} of batch {{ m }}{% endblocktrans %}</a></small>
+        {% endif %}
         {% endif %}
         <div class="ml-auto d-flex" style="gap:0.4rem;">
             {% if session.is_deleted %}

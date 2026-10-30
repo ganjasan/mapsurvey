@@ -1,0 +1,35 @@
+/* The batch page (change paper-photo-entry, #495). */
+.paper-drop {
+  border: 2px dashed #94a3b8; border-radius: 8px; padding: 1.5rem; text-align: center;
+  background: #f8fafc; color: #334155; cursor: pointer; margin-bottom: .75rem;
+}
+.paper-drop.is-over { border-color: #2563eb; background: #eff6ff; }
+.paper-queue { margin-bottom: 1rem; }
+.paper-queue li { display: flex; align-items: center; gap: .5rem; font-size: .85rem; padding: .15rem 0; }
+.paper-queue .progress { flex: 1; height: 6px; }
+.paper-queue .paper-queue__err { color: #b91c1c; }
+
+.paper-sheet { border: 1px solid #e2e8f0; border-radius: 8px; padding: .5rem .75rem; margin-bottom: .6rem; background: #fff; }
+.paper-sheet--entered { opacity: .7; }
+.paper-sheet--skipped { opacity: .5; }
+.paper-sheet--new { border-style: dashed; text-align: center; min-height: 48px; display: flex; align-items: center; justify-content: center; }
+.paper-sheet__head { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+.paper-sheet__state { margin-left: .25rem; }
+.paper-sheet__actions { margin-left: auto; display: inline-flex; gap: .35rem; }
+.paper-sheet__pages { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .5rem; min-height: 24px; }
+
+.paper-thumb { position: relative; width: 72px; height: 96px; border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; background: #f1f5f9; cursor: grab; }
+.paper-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.paper-thumb__n { position: absolute; left: 2px; bottom: 2px; font-size: .7rem; background: rgba(255,255,255,.85); padding: 0 .25rem; border-radius: 3px; }
+.paper-thumb__x { position: absolute; right: 0; top: 0; border: 0; background: rgba(255,255,255,.85); line-height: 1; padding: 0 .3rem; cursor: pointer; }
+.paper-thumb__btn { position: absolute; left: 2px; top: 2px; font-size: .65rem; border: 0; background: #fee2e2; color: #991b1b; border-radius: 3px; padding: 0 .25rem; }
+.paper-thumb--failed { border-color: #ef4444; }
+.paper-thumb__gone { display: flex; align-items: center; justify-content: center; height: 100%; color: #94a3b8; }
+.paper-thumb.sortable-ghost { opacity: .4; }
+.paper-dropzone.is-over { outline: 2px dashed #2563eb; }
+
+.paper-loose { display: flex; gap: .75rem; flex-wrap: wrap; }
+.paper-thumb--loose { width: 200px; height: auto; cursor: default; padding-bottom: .4rem; }
+.paper-thumb--loose img { height: 140px; }
+.paper-assign { display: flex; flex-direction: column; gap: .25rem; padding: .3rem; }
+.paper-assign input[type=number] { width: 100%; }

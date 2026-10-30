@@ -119,6 +119,49 @@ def _saved_url(survey, session):
     return reverse('operator_entry_saved', args=[survey.uuid, session.pk])
 
 
+def first_section_url(survey, session, unanswered_first=False):
+    """Where an entry starts: the first visible section — or, for a sheet opened
+    again (change paper-photo-entry), the first one without a stored answer."""
+    from .models import Answer
+    vmap = _vmap(session)
+    chain = vmap.visible_sections
+    if not chain:
+        return _saved_url(survey, session)
+    if unanswered_first:
+        answered = set(Answer.objects.filter(
+            survey_session=session, parent_answer_id__isnull=True,
+        ).values_list('question__survey_section_id', flat=True))
+        for section in chain:
+            if section.id not in answered:
+                return _section_url(survey, session, section)
+    return _section_url(survey, session, chain[0])
+
+
+def _sheet_context(survey, session, section, questions):
+    """Prefill, doubtful/blank codes and the page pane for a sheet session
+    (change paper-photo-entry); empty for a typed-in session."""
+    sheet = session.paper_sheet
+    if sheet is None:
+        return {}, {}
+    from .paper.review import page_for_section, sheet_prefill
+    initial, doubtful, blank = sheet_prefill(sheet, questions)
+    page, pages = page_for_section(sheet, section)
+    batch_url = reverse('paper_batch', args=[survey.uuid, sheet.batch_id])
+    pane = {
+        'paper_sheet': sheet,
+        'paper_page': page,
+        'paper_pages': [{
+            'id': p.pk, 'number': p.page_number,
+            'url': reverse('paper_page_image', args=[survey.uuid, sheet.batch_id, p.pk]),
+        } for p in pages],
+        'paper_doubtful': doubtful,
+        'paper_blank': blank,
+        'paper_review': True,
+        'entry_cancel_url': batch_url,
+    }
+    return initial, pane
+
+
 @entry_gate
 def entry_header(request, survey_uuid):
     """Step 1: source, version, language. POST creates the session."""
@@ -185,14 +228,17 @@ def entry_section(request, survey_uuid, session_id, section_name):
             return redirect(_saved_url(survey, session))
         return redirect(_section_url(survey, session, vmap.visible_sections[0]))
     current, total = chain_ids.index(section.id) + 1, len(chain_ids)
+    prefill, pane = _sheet_context(survey, session, section, list(section.questions()))
     ctx = _build_section_context(request, survey, session_survey, section, session.language,
-                                 current, total, vmap=vmap, session_id=session.pk, entry=True)
+                                 current, total, vmap=vmap, session_id=session.pk, entry=True,
+                                 prefill=prefill or None)
     ctx.update({
         'form_post_url': _section_url(survey, session, section),
         'entry_session': session,
         'entry_cancel_url': reverse('editor_survey_analytics', args=[survey.uuid]),
         'is_last_section': current == total,
     })
+    ctx.update(pane)
     _add_shell_context(ctx, session_survey, section)
     return render(request, 'editor/operator_entry/section.html', ctx)
 
@@ -203,14 +249,49 @@ def entry_saved(request, survey_uuid, session_id):
     survey = request.survey
     session = _entry_session(request, session_id)
     session.mark_completed()
-    next_query = urlencode({
-        'source': session.source,
-        'version': session.survey_id,
-        'language': session.language or '',
-    })
-    return render(request, 'editor/operator_entry/saved.html', {
+    ctx = {
         'survey': survey,
         'session': session,
-        'next_url': reverse('operator_entry_header', args=[survey.uuid]) + '?' + next_query,
         'responses_url': reverse('editor_survey_analytics', args=[survey.uuid]),
+    }
+    sheet = session.paper_sheet
+    if sheet is not None:
+        # A sheet reviewed from photos (change paper-photo-entry): mark it entered, drop
+        # its images, and offer the batch's next sheet instead of the header.
+        _finish_sheet(request, sheet, session)
+        from .paper.sheets import next_reviewable
+        following = next_reviewable(sheet.batch, after=sheet) or next_reviewable(sheet.batch)
+        ctx.update({
+            'paper_sheet': sheet,
+            'batch_url': reverse('paper_batch', args=[survey.uuid, sheet.batch_id]),
+            'next_sheet_url': (reverse('paper_sheet_enter', args=[survey.uuid, sheet.batch_id, following.pk])
+                               if following else ''),
+        })
+    else:
+        next_query = urlencode({
+            'source': session.source,
+            'version': session.survey_id,
+            'language': session.language or '',
+        })
+        ctx['next_url'] = reverse('operator_entry_header', args=[survey.uuid]) + '?' + next_query
+    return render(request, 'editor/operator_entry/saved.html', ctx)
+
+
+def _finish_sheet(request, sheet, session):
+    """Idempotent: a reload of the Saved page must not count the sheet twice."""
+    from django.utils import timezone
+    from . import product_events as pe
+    from .paper.review import changed_fields
+    from .tasks import delete_sheet_images
+    if sheet.status == 'entered':
+        return
+    sheet.status = 'entered'
+    sheet.entered_at = timezone.now()
+    sheet.save(update_fields=['status', 'entered_at'])
+    total, doubtful, changed = changed_fields(sheet, session)
+    pe.emit(pe.PAPER_SHEET_ENTERED, request.user.pk, {
+        'survey_id': request.survey.pk,
+        'fields_total': total, 'fields_doubtful': doubtful, 'fields_changed': changed,
     })
+    delete_sheet_images.delay(sheet.pk)
+    sheet.batch.touch()

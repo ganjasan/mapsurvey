@@ -703,6 +703,16 @@ CREATE_STEER_AI = os.environ.get('CREATE_STEER_AI', 'True').lower() in ('true', 
 # Stored files stay readable to creators either way.
 FILE_UPLOAD_QUESTIONS = os.environ.get('FILE_UPLOAD_QUESTIONS', 'True').lower() in ('true', '1')
 
+# Photos of filled paper forms (change paper-photo-entry, #495). Sanity bounds, not quota:
+# one file per upload request (a phone photo is 3-8 MB, a 50-page scanner PDF ~30 MB);
+# pages per batch (the worker renders them one at a time, the list has to stay readable);
+# days an untouched batch keeps its page images before `sweep_paper_batches` deletes them;
+# the model confidence below which a field is marked for the operator to check.
+PAPER_UPLOAD_MAX_BYTES = int(os.environ.get('PAPER_UPLOAD_MAX_BYTES', str(40 * 1024 * 1024)))
+PAPER_BATCH_MAX_PAGES = int(os.environ.get('PAPER_BATCH_MAX_PAGES', '500'))
+PAPER_BATCH_TTL_DAYS = int(os.environ.get('PAPER_BATCH_TTL_DAYS', '30'))
+PAPER_DOUBTFUL_CONFIDENCE = float(os.environ.get('PAPER_DOUBTFUL_CONFIDENCE', '0.75'))
+
 # Responses v2 (openspec: responses-v2-refactor): flat pane set with an Overview
 # default, detail drawer, global filter pills. ON by default (owner decision,
 # 2026-08-28, after six review rounds on the dev stand). Setting the env var to

@@ -313,6 +313,9 @@ class ExportFormatsTest(TestCase):
         self.assertEqual(rows[0]['tags'], 'field; verified')
         self.assertEqual(rows[0]['notes'], 'called back')
         self.assertEqual(rows[0]['opened_by_kind'], 'external')
+        # change paper-photo-entry: blank for a session not read from a photographed sheet.
+        self.assertIsNone(rows[0]['paper_batch'])
+        self.assertIsNone(rows[0]['paper_sheet'])
 
     def test_temp_directory_removed_when_response_closes(self):
         """

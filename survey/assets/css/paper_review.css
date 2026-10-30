@@ -1,0 +1,56 @@
+/* The photographed page beside the entry form (change paper-photo-entry, #495).
+   The pane is rendered inside the panel (so an HTMX swap replaces it with the
+   next section's page) and moved by paper_review.js into #paper-stage, an
+   element it creates next to #map. On a form-layout section the stage is the
+   empty side of the layout; on a map section it covers the map until the
+   operator presses "Map" — geo answers still need the map, and item 4 of the
+   epic will read marks from this very pane. */
+#paper-stage {
+  position: absolute;
+  top: 0; bottom: 0; right: 0;
+  left: var(--panel-w, 420px);
+  z-index: 2;
+  background: #2b2f36;
+  display: none;
+}
+body.paper-review #paper-stage { display: block; }
+body.paper-review.paper-show-map #paper-stage { display: none; }
+body.panel-right #paper-stage { left: 0; right: var(--panel-w, 420px); }
+/* A form section has no map: it hides #map and lets the card fill the page, so
+   the stage has to carve out the right half itself. */
+body.survey-form-layout.paper-review #info_page { max-width: none; width: 50%; margin: 0; }
+body.survey-form-layout.paper-review #paper-stage { left: 50%; }
+
+.paper-pane { display: flex; flex-direction: column; height: 100%; color: #e8eaed; }
+.paper-pane__bar {
+  display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+  padding: .4rem .6rem; background: #1f2227; font-size: .85rem;
+}
+.paper-pane__title { font-weight: 600; margin-right: .25rem; }
+.paper-pane__pages { display: inline-flex; gap: .25rem; }
+.paper-pane__tools { margin-left: auto; display: inline-flex; gap: .25rem; }
+.paper-pane__btn {
+  border: 1px solid #4a4f57; background: #2b2f36; color: #e8eaed; border-radius: 4px;
+  padding: .15rem .5rem; font-size: .8rem; cursor: pointer;
+}
+.paper-pane__btn.is-active { background: #e8eaed; color: #1f2227; }
+.paper-pane__viewport { flex: 1; overflow: auto; position: relative; }
+.paper-pane__img {
+  display: block; width: 100%; height: auto; transform-origin: top left;
+  user-select: none; cursor: grab;
+}
+.paper-pane__empty { padding: 2rem; text-align: center; color: #aaa; }
+
+/* The fields the model was unsure of, and the ones it saw blank. */
+.question-card.paper-doubtful { border-left: 4px solid #f59e0b; padding-left: .6rem; background: #fffbeb; }
+.question-card.paper-blank { border-left: 4px solid #cbd5e1; padding-left: .6rem; }
+.question-card.paper-doubtful::before {
+  content: attr(data-paper-note); display: block; font-size: .75rem; color: #92400e; margin-bottom: .25rem;
+}
+.operator-entry-bar__check { margin-left: .4rem; font-weight: 600; }
+
+@media only screen and (max-width: 768px) {
+  /* On a phone the panel is the whole screen; the picture sits above the form. */
+  #paper-stage { position: static; height: 45vh; left: 0; }
+  body.survey-form-layout.paper-review #info_page { width: auto; }
+}

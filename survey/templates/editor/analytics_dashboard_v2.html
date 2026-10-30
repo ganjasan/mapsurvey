@@ -83,10 +83,20 @@
             </button>
             {% if can_enter_responses %}{% comment %}Operator entry form (change operator-entry): Pro.{% endcomment %}
             {% if operator_entry_available %}
-            <a class="btn btn-sm btn-outline-secondary rv2-enter-response" href="{% url 'operator_entry_header' survey.uuid %}"
-               title="{% trans 'Type in answers collected on paper, in an interview or in the field' %}">
-                <i class="fas fa-user-edit"></i> {% trans "Enter a response" %}
-            </a>
+            <div class="btn-group rv2-enter-response-group">
+                <a class="btn btn-sm btn-outline-secondary rv2-enter-response" href="{% url 'operator_entry_header' survey.uuid %}"
+                   title="{% trans 'Type in answers collected on paper, in an interview or in the field' %}">
+                    <i class="fas fa-user-edit"></i> {% trans "Enter a response" %}
+                </a>
+                <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <span class="sr-only">{% trans "More ways to enter" %}</span>
+                </button>
+                <div class="dropdown-menu dropdown-menu-right">
+                    <a class="dropdown-item" href="{% url 'operator_entry_header' survey.uuid %}"><i class="fas fa-keyboard mr-1"></i> {% trans "Type in a response" %}</a>
+                    {# Paper forms from photos (change paper-photo-entry, #495). #}
+                    <a class="dropdown-item" href="{% url 'paper_batches' survey.uuid %}"><i class="fas fa-camera mr-1"></i> {% trans "From photos" %}</a>
+                </div>
+            </div>
             {% else %}
             <a class="btn btn-sm btn-outline-secondary rv2-enter-response rv2-enter-response--locked" href="{% url 'org_billing' survey.organization.slug %}"
                title="{% trans 'Entering responses for others is part of Pro' %}">

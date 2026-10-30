@@ -136,3 +136,159 @@ def run_survey_import(self, job_id):
     job.finished_at = timezone.now()
     job.discard_file()
     job.save()
+
+
+# --- Paper forms from photos (change paper-photo-entry, #495) ---------------------
+#
+# Three tasks, every one idempotent on its row's status so a redelivered message
+# does nothing twice. Decoding and the model call live here and nowhere else.
+
+@shared_task(bind=True)
+def ingest_paper_upload(self, upload_id):
+    """Split one upload into pages (survey/paper/ingest.py) and queue each page."""
+    from .models import PaperUpload
+    from .paper.ingest import ingest_upload
+
+    try:
+        upload = PaperUpload.objects.select_related('batch').get(pk=upload_id)
+    except PaperUpload.DoesNotExist:
+        logger.warning('paper upload %s: row gone before the worker got to it', upload_id)
+        return
+    if upload.status != 'queued':
+        return
+    ingest_upload(upload)
+    for page_id in upload.pages.values_list('pk', flat=True):
+        recognise_paper_page.delay(page_id)
+
+
+# Transient provider errors (overload, connection loss, malformed output) are
+# worth two more tries with a pause; a 4xx verdict is not.
+PAPER_PAGE_RETRIES = 2
+PAPER_PAGE_RETRY_DELAY = 20
+
+
+@shared_task(bind=True, max_retries=PAPER_PAGE_RETRIES, default_retry_delay=PAPER_PAGE_RETRY_DELAY)
+def recognise_paper_page(self, page_id, force=False):
+    """Read the page's form code, place it on a sheet, extract its answers.
+
+    `force` re-runs a `failed` page (the list's Retry). Costs are accounted the
+    moment each call ends: an `AIGenerationEvent` row and its `$ai_generation`
+    (survey/paper/accounting.py)."""
+    from django.utils import timezone
+    from .ai import client
+    from .ai.client import NotConfigured, ProviderError
+    from .models import PaperPage
+    from .paper import accounting, codes, extract, sheets
+
+    try:
+        page = PaperPage.objects.select_related('batch', 'batch__survey', 'printed_form').get(pk=page_id)
+    except PaperPage.DoesNotExist:
+        logger.warning('paper page %s: row gone before the worker got to it', page_id)
+        return
+    if page.status != 'queued' and not (force and page.status == 'failed'):
+        return
+    if not page.image:
+        _page_outcome(page, 'failed', error='The page image is gone.')
+        return
+    batch = page.batch
+
+    try:
+        provider = client.get_provider()
+    except NotConfigured as exc:
+        _page_outcome(page, 'failed', error='Reading is not configured on this server.')
+        logger.warning('paper page %s: %s', page_id, exc)
+        return
+
+    # 1. The form code: QR locally, footer text by the model as a fallback.
+    if not page.has_code:
+        with page.image.open('rb') as fh:
+            jpeg = fh.read()
+        parsed = codes.decode_qr(jpeg)
+        source = 'qr'
+        if parsed is None:
+            event = accounting.start(page, 'paper_code')
+            try:
+                parsed, usage = codes.read_code_with_model(provider, jpeg)
+            except ProviderError as exc:
+                accounting.finish(event, page, 'provider_error', usage=getattr(exc, 'usage', None), error=str(exc))
+                del jpeg
+                if exc.transient and self.request.retries < PAPER_PAGE_RETRIES:
+                    raise self.retry(exc=exc)
+                _page_outcome(page, 'failed', error='The page could not be read. Try again.')
+                return
+            accounting.finish(event, page, 'success', usage=usage)
+            source = 'text'
+        del jpeg
+        if parsed is None or not _assign_code(page, parsed, source):
+            _page_outcome(page, 'unrecognised', code_source='')
+            sheets.place_pages(batch)
+            return
+
+    # 2. The answers.
+    event = accounting.start(page, 'paper_page')
+    try:
+        extraction, usage, _items = extract.extract_page(page, provider)
+    except ProviderError as exc:
+        accounting.finish(event, page, 'provider_error', usage=getattr(exc, 'usage', None), error=str(exc))
+        if exc.transient and self.request.retries < PAPER_PAGE_RETRIES:
+            raise self.retry(exc=exc)
+        _page_outcome(page, 'failed', error='The page could not be read. Try again.')
+        sheets.place_pages(batch)
+        return
+    except Exception:
+        accounting.finish(event, page, 'error', error='unexpected')
+        _page_outcome(page, 'failed', error='The page could not be read. The error has been reported.')
+        sheets.place_pages(batch)
+        raise
+    accounting.finish(event, page, 'success', usage=usage)
+    page.extraction = extraction
+    page.status = 'recognised'
+    page.error = ''
+    page.recognised_at = timezone.now()
+    page.save(update_fields=['extraction', 'status', 'error', 'recognised_at'])
+    sheets.place_pages(batch)
+    if page.sheet_id:
+        sheets.refresh_sheet(page.sheet)
+    accounting.page_event(page, 'recognised')
+    batch.touch()
+
+
+def _assign_code(page, parsed, source):
+    """Record the parsed (form_id, page, pages) on the page when the form is this
+    batch's survey's; False otherwise (someone else's form)."""
+    from .models import PrintedForm
+    form_id, number, pages_total = parsed
+    form = PrintedForm.objects.filter(pk=form_id, survey=page.batch.survey_id).first()
+    if form is None or number < 1:
+        return False
+    page.printed_form = form
+    page.page_number = number
+    page.pages_total = pages_total or form.pages or None
+    page.code_source = source
+    page.save(update_fields=['printed_form', 'page_number', 'pages_total', 'code_source'])
+    return True
+
+
+def _page_outcome(page, status, error='', code_source=None):
+    from django.utils import timezone
+    from .paper import accounting
+    page.status = status
+    page.error = error
+    if code_source is not None:
+        page.code_source = code_source
+    page.recognised_at = timezone.now()
+    page.save(update_fields=['status', 'error', 'code_source', 'recognised_at'])
+    accounting.page_event(page, status)
+
+
+@shared_task(bind=True)
+def delete_sheet_images(self, sheet_id):
+    """A sheet is entered or skipped: its page images go, the rows stay."""
+    from .models import PaperSheet
+    try:
+        sheet = PaperSheet.objects.get(pk=sheet_id)
+    except PaperSheet.DoesNotExist:
+        return
+    for page in sheet.pages.all():
+        page.discard_image()
+        page.save(update_fields=['image'])

@@ -944,12 +944,16 @@ def _visible_chain_position(vmap, section):
 	return chain_ids.index(section.id) + 1, len(chain_ids)
 
 
-def _build_section_context(request, survey, session_survey, section, selected_language, section_current, section_total, vmap=None, session_id=None, entry=False):
+def _build_section_context(request, survey, session_survey, section, selected_language, section_current, section_total, vmap=None, session_id=None, entry=False, prefill=None):
 	"""Build template context for a survey section (used by both GET and POST→next).
 
 	``session_id`` defaults to the respondent cookie's; the operator entry form
 	passes its own (it never touches the cookie) together with ``entry=True`` and
-	a map computed for the operator surface (change operator-entry)."""
+	a map computed for the operator surface (change operator-entry).
+
+	``prefill`` (change paper-photo-entry) is a dict in the shape of ``initial``
+	below — what a photographed sheet was read as — used for every question that
+	has no Answer row yet; a saved section's rows always win."""
 	from .visibility import popup_rules_for_client, client_rule
 	if session_id is None:
 		session_id = request.session['survey_session_id']
@@ -1098,6 +1102,13 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 						initial[question.code] = str(int(answer.numeric))
 					else:
 						initial[question.code] = int(answer.numeric)
+
+	if prefill:
+		# Only questions without a stored answer; the write-in companion follows its question.
+		for key, value in prefill.items():
+			code = other_option.base_code(key)
+			if code not in answers_by_question:
+				initial.setdefault(key, value)
 
 	form = SurveySectionAnswerForm(initial=initial, section=section, question=None, survey_session_id=session_id, language=selected_language, questions_override=questions, surface=surface)
 

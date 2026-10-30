@@ -32,6 +32,8 @@ HELP_LINKS = {
     'operator_entry': 'how-to/enter-responses-for-others/',
     # The printable paper form (change printable-form, #489).
     'print_form': 'how-to/print-a-paper-form/',
+    # Filled forms back in from photos (change paper-photo-entry, #495).
+    'paper_photos': 'how-to/enter-paper-forms-from-photos/',
     'faq': 'faq/',
 }
 

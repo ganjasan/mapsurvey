@@ -62,6 +62,12 @@ segno = "~=1.6"
 # Printable paper forms (change printable-form, #489): pure Python over Pillow, no system
 # library in the image. survey/print/ registers the bundled DejaVu fonts with it.
 reportlab = "~=4.4"
+# Photos of filled paper forms (change paper-photo-entry, #495). All three ship their
+# native library inside the wheel (pdfium, libheif, the zxing decoder), so the image
+# needs no apt line; the worker, never the web process, imports them.
+pypdfium2 = "~=4.30"
+pillow-heif = "*"
+zxing-cpp = "*"
 
 [requires]
 python_version = "3.12"

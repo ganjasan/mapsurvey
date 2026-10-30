@@ -827,6 +827,37 @@ class AIThinkingLevelRequestTest(TestCase):
         )
 
     @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='')
+    def test_image_parts_ride_before_the_text(self):
+        """
+        GIVEN one JPEG in `images` (change paper-photo-entry)
+        WHEN a Gemini call is made
+        THEN the body carries one inline_data part with the mime type and base64 bytes BEFORE
+             the text part, and a call without images produces the plain text-only body
+        """
+        import base64
+        from survey.ai.client import GeminiProvider
+
+        response = mock.MagicMock()
+        response.status_code = 200
+        response.json.return_value = {
+            'candidates': [{'content': {'parts': [{'text': '{}'}]}, 'finishReason': 'STOP'}],
+            'usageMetadata': {'promptTokenCount': 1, 'candidatesTokenCount': 1},
+        }
+        with patch('requests.post', return_value=response) as post:
+            GeminiProvider().complete_structured(
+                system='sys', user='usr', schema={'type': 'object'}, images=[('image/jpeg', b'\xff\xd8abc')],
+            )
+            with_image = post.call_args.kwargs['json']
+            GeminiProvider().complete_structured(system='sys', user='usr', schema={'type': 'object'})
+            without = post.call_args.kwargs['json']
+
+        parts = with_image['contents'][0]['parts']
+        self.assertEqual(parts[0], {'inline_data': {'mime_type': 'image/jpeg',
+                                                    'data': base64.b64encode(b'\xff\xd8abc').decode('ascii')}})
+        self.assertEqual(parts[1], {'text': 'usr'})
+        self.assertEqual(without['contents'][0]['parts'], [{'text': 'usr'}])
+
+    @override_settings(GEMINI_API_KEY='k', AI_THINKING_LEVEL='')
     def test_empty_level_omits_the_key_entirely(self):
         """
         GIVEN AI_THINKING_LEVEL set to an empty string

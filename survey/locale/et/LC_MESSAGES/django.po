@@ -9470,3 +9470,308 @@ msgstr "Kuni küsitlus pole avaldatud, trükitakse ankeet MUSTAND-vesimärgiga �
 #: survey/templates/editor/survey_share.html
 msgid "Chinese, Japanese and Korean text is not yet supported on the printed form."
 msgstr "Hiina, jaapani ja korea tekst pole trükitud ankeedil veel toetatud."
+
+#: survey/paper_views.py
+msgid "This batch is closed."
+msgstr "See partii on suletud."
+
+#: survey/paper_views.py
+msgid "This batch is full. Start a new one."
+msgstr "See partii on täis. Alusta uut."
+
+#: survey/paper_views.py
+msgid "No file."
+msgstr "Faili pole."
+
+#: survey/paper_views.py
+#, python-format
+msgid "This file is larger than %(mb)s MB."
+msgstr "See fail on suurem kui %(mb)s MB."
+
+#: survey/paper_views.py
+msgid "Pick a printed form and a page number."
+msgstr "Vali trükitud vorm ja lehekülje number."
+
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "More ways to enter"
+msgstr "Muud sisestusviisid"
+
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "Type in a response"
+msgstr "Sisesta vastus"
+
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "From photos"
+msgstr "Fotodelt"
+
+#: survey/templates/editor/operator_entry/_entry_bar.html
+#, python-format
+msgid "sheet %(n)s"
+msgstr "leht %(n)s"
+
+#: survey/templates/editor/operator_entry/_entry_bar.html
+msgid "{count} fields to check"
+msgstr "{count} välja kontrollida"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+#, python-format
+msgid "Sheet %(n)s"
+msgstr "Leht %(n)s"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Pages"
+msgstr "Leheküljed"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Zoom out"
+msgstr "Vähenda"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Zoom in"
+msgstr "Suurenda"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Rotate"
+msgstr "Pööra"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Show the map"
+msgstr "Näita kaarti"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Photographed page"
+msgstr "Pildistatud lehekülg"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "The photos of this sheet are gone."
+msgstr "Selle lehe fotod on kustutatud."
+
+#: survey/templates/editor/operator_entry/header.html
+msgid "Have photos or scans of filled paper forms? Read them from photos instead."
+msgstr "Kas sul on fotod või skaneeringud täidetud paberivormidest? Loe need fotodelt."
+
+#: survey/templates/editor/operator_entry/saved.html
+#, python-format
+msgid "Sheet %(n)s is entered; its photos have been deleted."
+msgstr "Leht %(n)s on sisestatud; selle fotod on kustutatud."
+
+#: survey/templates/editor/operator_entry/saved.html
+msgid "Back to the batch"
+msgstr "Tagasi partii juurde"
+
+#: survey/templates/editor/operator_entry/saved.html
+msgid "Next sheet"
+msgstr "Järgmine leht"
+
+#: survey/templates/editor/operator_entry/saved.html
+msgid "No more sheets to review"
+msgstr "Rohkem lehti pole üle vaadata"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "to review"
+msgstr "üle vaadata"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "entered"
+msgstr "sisestatud"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "skipped"
+msgstr "vahele jäetud"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "not recognised"
+msgstr "tuvastamata"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "failed"
+msgstr "ebaõnnestus"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "reading…"
+msgstr "loeb…"
+
+#: survey/templates/editor/paper/_sheet_list.html
+#, python-format
+msgid "Review sheet %(n)s"
+msgstr "Vaata üle leht %(n)s"
+
+#: survey/templates/editor/paper/_sheet_list.html
+#, python-format
+msgid "“%(name)s” failed"
+msgstr "„%(name)s“ ebaõnnestus"
+
+#: survey/templates/editor/paper/_sheet_list.html
+#, python-format
+msgid "Splitting “%(name)s” into pages…"
+msgstr "„%(name)s“ jagatakse lehekülgedeks…"
+
+#: survey/templates/editor/paper/_sheet_list.html
+#, python-format
+msgid "page %(pages)s not uploaded"
+msgstr "lehekülg %(pages)s üles laadimata"
+
+#: survey/templates/editor/paper/_sheet_list.html
+#, python-format
+msgid "page %(pages)s twice — duplicate?"
+msgstr "lehekülg %(pages)s kaks korda — duplikaat?"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "incomplete"
+msgstr "puudulik"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Review"
+msgstr "Vaata üle"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Skip this sheet? Its photos will be deleted."
+msgstr "Jätta see leht vahele? Selle fotod kustutatakse."
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Skip"
+msgstr "Jäta vahele"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Remove this page"
+msgstr "Eemalda see lehekülg"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Remove this page from the batch?"
+msgstr "Eemaldada see lehekülg partiist?"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Drag a page here to start a new sheet"
+msgstr "Lohista lehekülg siia, et alustada uut lehte"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Not recognised"
+msgstr "Tuvastamata"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "No form code could be read on these pages, or the code belongs to another survey. Tell us which printed form and page each one is, or remove it."
+msgstr "Neil lehekülgedel ei õnnestunud vormi koodi lugeda või kuulub kood teisele küsitlusele. Ütle, millise trükitud vormi ja lehekülje iga neist on, või eemalda see."
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "pages"
+msgstr "lehekülge"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Page number"
+msgstr "Lehekülje number"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Assign"
+msgstr "Määra"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Nothing here yet — drop the first photos above."
+msgstr "Siin pole veel midagi — lohista esimesed fotod ülespoole."
+
+#: survey/templates/editor/paper/batch.html
+#, python-format
+msgid "Batch #%(n)s"
+msgstr "Partii nr %(n)s"
+
+#: survey/templates/editor/paper/batch.html
+msgid "Too large"
+msgstr "Liiga suur"
+
+#: survey/templates/editor/paper/batch.html
+msgid "Upload failed"
+msgstr "Üleslaadimine ebaõnnestus"
+
+#: survey/templates/editor/paper/batch.html
+msgid "Uploaded"
+msgstr "Üles laaditud"
+
+#: survey/templates/editor/paper/batch.html
+msgid "Paper forms from photos"
+msgstr "Paberivormid fotodelt"
+
+#: survey/templates/editor/paper/batch.html
+msgid "closed"
+msgstr "suletud"
+
+#: survey/templates/editor/paper/batch.html
+msgid "Close this batch? Photos of sheets not yet entered will be deleted."
+msgstr "Sulgeda see partii? Veel sisestamata lehtede fotod kustutatakse."
+
+#: survey/templates/editor/paper/batch.html
+msgid "Close batch"
+msgstr "Sulge partii"
+
+#: survey/templates/editor/paper/batch.html
+msgid "Drop photos, scans or a PDF here"
+msgstr "Lohista siia fotod, skaneeringud või PDF"
+
+#: survey/templates/editor/paper/batch.html
+msgid "or"
+msgstr "või"
+
+#: survey/templates/editor/paper/batch.html
+msgid "choose files"
+msgstr "vali failid"
+
+#: survey/templates/editor/paper/batch.html
+msgid "Photograph the whole page, flat, with all four corner marks in the picture. Add more files at any time; sheets are read in the order they arrive."
+msgstr "Pildista kogu lehekülg, lamedalt, nii et kõik neli nurgamärki on pildil. Lisa faile igal ajal; lehed loetakse saabumise järjekorras."
+
+#: survey/templates/editor/paper/batches.html
+msgid "Photograph or scan the filled sheets, drop the files here, and review what was read beside the picture. Each sheet is stored as a paper response."
+msgstr "Pildista või skaneeri täidetud lehed, lohista failid siia ja vaata loetu pildi kõrval üle. Iga leht salvestatakse paberivastusena."
+
+#: survey/templates/editor/paper/batches.html
+msgid "New batch"
+msgstr "Uus partii"
+
+#: survey/templates/editor/paper/batches.html
+msgid "Type in a response instead"
+msgstr "Sisesta vastus hoopis käsitsi"
+
+#: survey/templates/editor/paper/batches.html
+msgid "Batch"
+msgstr "Partii"
+
+#: survey/templates/editor/paper/batches.html
+msgid "By"
+msgstr "Kes"
+
+#: survey/templates/editor/paper/batches.html
+msgid "To review"
+msgstr "Üle vaadata"
+
+#: survey/templates/editor/paper/batches.html
+msgid "Entered"
+msgstr "Sisestatud"
+
+#: survey/templates/editor/paper/batches.html
+msgid "No batches yet. Start one and drop the photos in."
+msgstr "Partiisid veel pole. Alusta üht ja lohista fotod sisse."
+
+#: survey/templates/editor/paper/batches.html
+msgid "Photos are kept until the sheet is entered or skipped, and at most 30 days. The page image is sent to the AI provider for the duration of the reading."
+msgstr "Fotosid hoitakse, kuni leht on sisestatud või vahele jäetud, kõige rohkem 30 päeva. Lehekülje pilt saadetakse lugemise ajaks AI-teenusepakkujale."
+
+#: survey/templates/editor/partials/analytics_session_detail.html
+#, python-format
+msgid "Sheet %(n)s of batch %(m)s"
+msgstr "Leht %(n)s partiist %(m)s"
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "Check this against the photo"
+msgstr "Kontrolli foto järgi"
+
+#: survey/templates/editor/paper/_sheet_list.html
+#, python-format
+msgid "Reading %(n)s page…"
+msgid_plural "Reading %(n)s pages…"
+msgstr[0] "Loeb %(n)s lehekülge…"
+msgstr[1] "Loeb %(n)s lehekülge…"
+
+#: survey/templates/editor/paper/_sheet_list.html
+#, python-format
+msgid "%(n)s field to check"
+msgid_plural "%(n)s fields to check"
+msgstr[0] "%(n)s väli kontrollida"
+msgstr[1] "%(n)s välja kontrollida"

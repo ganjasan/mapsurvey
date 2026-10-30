@@ -7,6 +7,12 @@ per-plan generation limit is enforced: `generate_survey_draft()` calls
 `check_quota()` before any provider call, so a quota block never spends a
 token. The natural implementation is a count over `AIGenerationEvent` rows
 per organization/window compared against a limit on the plan.
+
+`kind` names what is being spent: `survey_draft` (one call set per draft) and,
+since change paper-photo-entry (#495), `paper_page` — one vision call per
+photographed page of a paper form, called from the worker before each call.
+A per-plan allowance for pages is the pricing decision this seam waits for;
+the hard bounds on a batch (`PAPER_BATCH_MAX_PAGES`) are sanity, not quota.
 """
 
 
