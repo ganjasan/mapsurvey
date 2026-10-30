@@ -193,12 +193,15 @@ class SurveyHeaderForm(forms.ModelForm):
         # A disabled field keeps its initial value whatever the POST says, which
         # is exactly the "submitted values are ignored" rule for Free organisations.
         # "May": the plan includes `unbranded` or a live Pro trial has a switch-off
-        # left (change pro-trial-allowances); `consumes_unbranded()` tells the
-        # service when a save spends one.
+        # left (change pro-trial-allowances), or the switch-off would start the
+        # workspace's trial (change pro-trial-auto); `consumes_unbranded()` tells
+        # the service when a save spends one.
+        from billing import trial
         from billing.entitlements import for_organization
         org = self.instance.organization if self.instance and self.instance.pk else None
         ent = for_organization(org) if org is not None else None
-        self.unbranded = ent is not None and ent.may('unbranded')
+        self.unbranded = org is not None and trial.may(org, 'unbranded')
+        self.unbranded_starts_trial = self.unbranded and not ent.may('unbranded')
         self.unbranded_by_plan = ent is not None and ent.has('unbranded')
         self._branding_before = bool(self.instance.show_branding) if self.instance and self.instance.pk else True
         self.fields['show_branding'].required = False

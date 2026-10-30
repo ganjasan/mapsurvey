@@ -24,7 +24,7 @@ from ..models import (
     STATUS_SUSPENDED, STATUS_TERMINATED, BillingEvent, CheckoutIntent, ProHelpRequest, Subscription,
 )
 from ..tasks import notify_lapsed
-from .helpers import PPG_IP, PPG_SETTINGS, make_org, make_sub as _sub, payload, post_ipn, sign
+from .helpers import PPG_IP, PPG_SETTINGS, make_org, make_sub as _sub, payload, post_ipn, sign, trial_used_elsewhere
 
 
 @override_settings(**PPG_SETTINGS)
@@ -37,18 +37,38 @@ class ProHelpTest(TestCase):
 
     def test_free_sees_offer_and_cannot_post(self):
         """
-        GIVEN the owner of a Free organisation that never claimed a Pro trial
+        GIVEN the owner of a Free organisation who already used their Pro trial in another workspace
         WHEN they open the help page and then POST to it
-        THEN the page offers "Try Pro" posting back to the help page and no form, and the POST is 403
+        THEN the page describes the service with no form, and the POST is 403
         """
+        trial_used_elsewhere(self.org)
         self.client.login(username='bill_owner', password='pass')
         r = self.client.get(self.url)
-        self.assertContains(r, 'Try Pro')
-        self.assertContains(r, f'/org/{self.org.slug}/billing/trial/')
-        self.assertContains(r, f'name="next" value="{self.url}"')
         self.assertNotContains(r, 'Send request')
+        self.assertNotContains(r, f'/org/{self.org.slug}/billing/trial/')
         self.assertEqual(self.client.post(self.url, {'kind': 'report', 'message': 'x', 'contact_email': 'a@b.c'}).status_code, 403)
         self.assertFalse(ProHelpRequest.objects.exists())
+
+    def test_startable_member_sees_the_form_and_the_first_request_starts_the_trial(self):
+        """
+        GIVEN a Free organisation that never had a trial, and an editor of it
+        WHEN the editor opens the help page and then sends a valid request
+        THEN the form renders with "starts your workspace's free Pro trial" and no grant exists yet; after the POST
+             the request is stored and the owner's trial exists, started by the editor with pro_help used 1
+        """
+        from ..models import EntitlementGrant
+        editor = User.objects.create_user(username='help_editor', password='pass')
+        Membership.objects.create(user=editor, organization=self.org, role='editor')
+        self.client.login(username='help_editor', password='pass')
+        r = self.client.get(self.url)
+        self.assertContains(r, 'Send request')
+        self.assertContains(r, 'starts your workspace')
+        self.assertFalse(EntitlementGrant.objects.exists())
+        self.client.post(self.url, {'kind': 'report', 'message': 'x', 'contact_email': 'ed@example.test'})
+        self.assertTrue(ProHelpRequest.objects.exists())
+        grant = EntitlementGrant.objects.get(organization=self.org)
+        self.assertEqual((grant.claimed_by, grant.started_by, grant.trigger), (self.owner, editor, 'pro_help'))
+        self.assertEqual(grant.allowances.get(feature='pro_help').used, 1)
 
     def test_trial_member_submits_and_the_form_closes(self):
         """

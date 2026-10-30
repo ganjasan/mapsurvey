@@ -12,10 +12,15 @@ PRO_HELP_REQUESTED = 'pro_help_requested'
 # that spent the last of one feature's allowance (once per feature).
 TRIAL_CLAIMED = 'trial_claimed'
 TRIAL_EXHAUSTED = 'trial_exhausted'
+# Change pro-trial-auto: `trial_claimed` also fires for a trial started by a
+# first Pro use, with `trigger` (click | feature key) and `auto`; the "ends in a
+# week" mail is its own event.
+TRIAL_ENDING_NOTIFIED = 'trial_ending_notified'
 
 BILLING_EVENTS = (
     PLAN_CHECKOUT_STARTED, PLAN_ACTIVATED, PLAN_PAYMENT_FAILED,
     PLAN_CANCELLED, PLAN_LAPSED, PRO_HELP_REQUESTED, TRIAL_CLAIMED, TRIAL_EXHAUSTED,
+    TRIAL_ENDING_NOTIFIED,
 )
 
 

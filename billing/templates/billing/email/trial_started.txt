@@ -1,0 +1,11 @@
+{% autoescape off %}Your workspace {{ org.name }} has started its free Pro trial{% if started_by_other %}: {{ started_by.get_full_name|default:started_by.username }} started it {{ how }}{% elif how %}, {{ how }}{% endif %}.
+
+Until {{ grant.expires_at|date:"j F Y" }} the workspace can use:
+{% for a in allowances %}- {{ a.label }}: {% if a.limit is None %}no limit{% else %}{{ a.limit }}{% endif %}
+{% endfor %}
+No card, nothing to cancel: when the trial ends the workspace stays on Free and keeps everything it made.
+
+See what is used and what is left: {{ billing_url }}
+
+— The Mapsurvey team
+{% endautoescape %}

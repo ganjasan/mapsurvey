@@ -1,0 +1,7 @@
+{% load i18n billing_tags %}{% comment %}
+The two "ask us" entries of every menu (change pro-trial-auto, #508 / #438): a FREE way to
+suggest an idea or report a bug, then the Pro advice service under its own name and the Pro
+mark. The free entry comes first and carries no mark, so asking for a feature never looks like
+a Pro thing. Context: `active_org`, `SUPPORT_CHAT`, `CONTACT_EMAIL` (context processors).
+{% endcomment %}{% if SUPPORT_CHAT %}<a class="dropdown-item" href="#" onclick="openSupportChat(event, {topic: 'feature_request'})" data-help-entry="idea"><i class="fas fa-lightbulb" style="margin-right:4px;"></i>{% trans "Suggest an idea or report a bug" %}</a>{% elif CONTACT_EMAIL %}<a class="dropdown-item" href="mailto:{{ CONTACT_EMAIL }}?subject={{ _('Idea or bug report')|urlencode }}" data-help-entry="idea"><i class="fas fa-lightbulb" style="margin-right:4px;"></i>{% trans "Suggest an idea or report a bug" %}</a>{% endif %}
+{% if active_org %}<a class="dropdown-item" href="{% url 'org_help' active_org.slug %}" data-help-entry="advice"><i class="fas fa-user-tie" style="margin-right:4px;"></i>{% trans "Advice on your survey and results" %} {% pro_badge active_org "pro_help" link=False %}</a>{% endif %}

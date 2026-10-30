@@ -2,6 +2,7 @@
 
 {% load i18n %}
 {% load survey_filters %}
+{% load billing_tags %}
 {% block page_title %}{% trans "Results" %} – {{ survey.name }}{% endblock %}
 
 {% load static %}
@@ -85,12 +86,12 @@
             {% if operator_entry_available %}
             <a class="btn btn-sm btn-outline-secondary rv2-enter-response" href="{% url 'operator_entry_header' survey.uuid %}"
                title="{% trans 'Type in answers collected on paper, in an interview or in the field' %}">
-                <i class="fas fa-user-edit"></i> {% trans "Enter a response" %}
+                <i class="fas fa-user-edit"></i> {% trans "Enter a response" %} {% pro_badge survey.organization "operator_entry" %}
             </a>
             {% else %}
             <a class="btn btn-sm btn-outline-secondary rv2-enter-response rv2-enter-response--locked" href="{% url 'org_billing' survey.organization.slug %}"
                title="{% trans 'Entering responses for others is part of Pro' %}">
-                <i class="fas fa-lock"></i> {% trans "Enter a response" %} <span class="badge badge-light">Pro</span>
+                {% trans "Enter a response" %} {% pro_badge survey.organization "operator_entry" link=False %}
             </a>
             {% endif %}
             {% endif %}

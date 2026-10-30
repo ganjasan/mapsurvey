@@ -9589,3 +9589,92 @@ msgstr "Survei ini belum dibuka."
 #, python-format
 msgid "It opens on %(when)s (%(zone)s)."
 msgstr "Dibuka pada %(when)s (%(zone)s)."
+
+#: survey/templates/editor/survey_settings.html
+msgid "Switching the badge off starts your workspace's free Pro trial — no card needed."
+msgstr "Mematikan lencana akan memulai uji coba Pro gratis ruang kerja Anda — tanpa kartu."
+
+#: survey/templates/editor/survey_settings.html
+msgid "What the trial includes"
+msgstr "Apa saja isi uji coba"
+
+#: billing/templates/billing/_help_entries.html
+msgid "Suggest an idea or report a bug"
+msgstr "Usulkan ide atau laporkan bug"
+
+#: billing/templates/billing/_help_entries.html
+msgid "Idea or bug report"
+msgstr "Ide atau laporan bug"
+
+#: billing/templates/billing/_help_entries.html
+#: billing/features.py
+msgid "Advice on your survey and results"
+msgstr "Saran untuk survei dan hasilnya Anda"
+
+#: billing/templates/billing/_pro_badge.html
+msgid "Included in your Pro plan."
+msgstr "Termasuk dalam paket Pro Anda."
+
+#: billing/templates/billing/_pro_badge.html
+#, python-format
+msgid "Part of your free Pro trial, until %(date)s."
+msgstr "Bagian dari uji coba Pro gratis Anda, hingga %(date)s."
+
+#: billing/templates/billing/_pro_badge.html
+#, python-format
+msgid "until %(date)s"
+msgstr "hingga %(date)s"
+
+#: billing/templates/billing/_pro_badge.html
+#, python-format
+msgid "%(n)s left"
+msgstr "sisa %(n)s"
+
+#: billing/templates/billing/_pro_badge.html
+msgid "A Pro feature. The first use starts the free Pro trial of this workspace — no card needed."
+msgstr "Fitur Pro. Penggunaan pertama memulai uji coba Pro gratis ruang kerja ini — tanpa kartu."
+
+#: billing/templates/billing/_pro_badge.html
+msgid "free to try"
+msgstr "coba gratis"
+
+#: billing/templates/billing/_pro_badge.html
+msgid "A Pro feature. See Plan & billing."
+msgstr "Fitur Pro. Lihat Paket & tagihan."
+
+#: billing/trial.py
+#, python-format
+msgid "You started the free Pro trial of %(org)s. Until %(date)s it includes %(what)s."
+msgstr "Anda memulai uji coba Pro gratis untuk %(org)s. Hingga %(date)s mencakup: %(what)s."
+
+#: billing/trial.py
+msgid "We sent you an e-mail with the details."
+msgstr "Kami telah mengirimi Anda email berisi detailnya."
+
+#: billing/trial.py
+msgid "The workspace owner got an e-mail about it."
+msgstr "Pemilik ruang kerja telah menerima email tentang hal ini."
+
+#: billing/trial.py
+msgid "no limit"
+msgstr "tanpa batas"
+
+#: billing/trial.py
+msgid "Paper responses entered"
+msgstr "Jawaban kertas yang dimasukkan"
+
+#: billing/trial.py
+msgid "API and MCP calls"
+msgstr "Panggilan API dan MCP"
+
+#: billing/trial.py
+msgid "Surveys without the Mapsurvey badge"
+msgstr "Survei tanpa lencana Mapsurvey"
+
+#: billing/trial.py
+msgid "Requests to the Mapsurvey team"
+msgstr "Permintaan ke tim Mapsurvey"
+
+#: api/templates/api/connections.html
+msgid "Your workspaces are on the Free plan. The first API or MCP call on a survey of a workspace that has never had a Pro trial starts it — no card needed."
+msgstr "Ruang kerja Anda menggunakan paket Free. Panggilan API atau MCP pertama pada survei dari ruang kerja yang belum pernah mendapat uji coba Pro akan memulainya — tanpa kartu."

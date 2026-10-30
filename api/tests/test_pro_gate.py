@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from billing.features import PLAN_FREE, PLAN_PRO, features_for_plan
 from billing.models import STATUS_REFUNDED
+from billing.tests.helpers import trial_used_elsewhere
 from survey.models import Membership, SurveyCollaborator
 
 from .. import auth, gates
@@ -37,6 +38,9 @@ class GateTest(TestCase):
         self.free, self.free_owner = make_free_org()
         self.pro_survey, _, _ = make_survey(self.pro, 'pro_survey')
         self.free_survey, _, _ = make_survey(self.free, 'free_survey')
+        # Refusals are about workspaces that cannot start a trial any more
+        # (change pro-trial-auto): both owners used theirs elsewhere.
+        trial_used_elsewhere(self.free, self.pro)
 
     def _refused(self, principal, org):
         with self.assertRaises(ApiError) as cm:
@@ -132,6 +136,20 @@ class GateTest(TestCase):
         err = self._refused(principal_for(self.free_owner), self.free)
         self.assertEqual(err.extra['trial'], 'none')
 
+    def test_first_call_starts_the_trial(self):
+        """
+        GIVEN a Free workspace that never had a trial, whose owner has not used theirs, and an editor's token
+        WHEN the gate runs on its survey
+        THEN the call passes, the owner's trial exists with trigger "api" started by the editor, and api reads 1 used
+        """
+        from billing.models import EntitlementGrant
+        org, owner = make_free_org('Fresh', 'fresh_owner')
+        editor = make_member(org, 'fresh_editor', role='editor')
+        gates.require_pro_api(principal_for(editor), org)
+        grant = EntitlementGrant.objects.get(organization=org)
+        self.assertEqual((grant.claimed_by, grant.started_by, grant.trigger), (owner, editor, 'api'))
+        self.assertEqual(grant.allowances.get(feature='api').used, 1)
+
 
 @LOCMEM
 class TrialGateTest(TestCase):
@@ -223,6 +241,7 @@ class ProOrganizationsTest(TestCase):
         free2, _ = make_free_org('Free 2', 'f2')
         Membership.objects.create(user=owner, organization=free1, role='viewer')
         Membership.objects.create(user=owner, organization=free2, role='editor')
+        trial_used_elsewhere(free1, free2)
         allowed, hidden = gates.pro_organizations(principal_for(owner))
         self.assertEqual(allowed, [pro])
         self.assertEqual(hidden, 2)
@@ -236,5 +255,6 @@ class ProOrganizationsTest(TestCase):
         pro, owner = make_pro_org()
         free, _ = make_free_org()
         Membership.objects.create(user=owner, organization=free, role='owner')
+        trial_used_elsewhere(free)
         allowed, hidden = gates.pro_organizations(principal_for(owner, organization=free))
         self.assertEqual((allowed, hidden), ([], 1))

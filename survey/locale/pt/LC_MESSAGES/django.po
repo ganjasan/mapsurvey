@@ -9635,3 +9635,92 @@ msgstr "Este inquérito ainda não está aberto."
 #, python-format
 msgid "It opens on %(when)s (%(zone)s)."
 msgstr "Abre a %(when)s (%(zone)s)."
+
+#: survey/templates/editor/survey_settings.html
+msgid "Switching the badge off starts your workspace's free Pro trial — no card needed."
+msgstr "Desativar o selo inicia o teste Pro gratuito do seu espaço de trabalho — sem cartão."
+
+#: survey/templates/editor/survey_settings.html
+msgid "What the trial includes"
+msgstr "O que o teste inclui"
+
+#: billing/templates/billing/_help_entries.html
+msgid "Suggest an idea or report a bug"
+msgstr "Sugerir uma ideia ou relatar um erro"
+
+#: billing/templates/billing/_help_entries.html
+msgid "Idea or bug report"
+msgstr "Ideia ou relato de erro"
+
+#: billing/templates/billing/_help_entries.html
+#: billing/features.py
+msgid "Advice on your survey and results"
+msgstr "Orientação sobre sua pesquisa e os resultados"
+
+#: billing/templates/billing/_pro_badge.html
+msgid "Included in your Pro plan."
+msgstr "Incluído no seu plano Pro."
+
+#: billing/templates/billing/_pro_badge.html
+#, python-format
+msgid "Part of your free Pro trial, until %(date)s."
+msgstr "Parte do seu teste Pro gratuito, até %(date)s."
+
+#: billing/templates/billing/_pro_badge.html
+#, python-format
+msgid "until %(date)s"
+msgstr "até %(date)s"
+
+#: billing/templates/billing/_pro_badge.html
+#, python-format
+msgid "%(n)s left"
+msgstr "restam %(n)s"
+
+#: billing/templates/billing/_pro_badge.html
+msgid "A Pro feature. The first use starts the free Pro trial of this workspace — no card needed."
+msgstr "Um recurso Pro. O primeiro uso inicia o teste Pro gratuito deste espaço de trabalho — sem cartão."
+
+#: billing/templates/billing/_pro_badge.html
+msgid "free to try"
+msgstr "teste grátis"
+
+#: billing/templates/billing/_pro_badge.html
+msgid "A Pro feature. See Plan & billing."
+msgstr "Um recurso Pro. Veja Plano e cobrança."
+
+#: billing/trial.py
+#, python-format
+msgid "You started the free Pro trial of %(org)s. Until %(date)s it includes %(what)s."
+msgstr "Você iniciou o teste Pro gratuito de %(org)s. Até %(date)s ele inclui: %(what)s."
+
+#: billing/trial.py
+msgid "We sent you an e-mail with the details."
+msgstr "Enviamos um e-mail com os detalhes."
+
+#: billing/trial.py
+msgid "The workspace owner got an e-mail about it."
+msgstr "O proprietário do espaço de trabalho recebeu um e-mail sobre isso."
+
+#: billing/trial.py
+msgid "no limit"
+msgstr "sem limite"
+
+#: billing/trial.py
+msgid "Paper responses entered"
+msgstr "Respostas em papel inseridas"
+
+#: billing/trial.py
+msgid "API and MCP calls"
+msgstr "Chamadas de API e MCP"
+
+#: billing/trial.py
+msgid "Surveys without the Mapsurvey badge"
+msgstr "Pesquisas sem o selo do Mapsurvey"
+
+#: billing/trial.py
+msgid "Requests to the Mapsurvey team"
+msgstr "Solicitações à equipe do Mapsurvey"
+
+#: api/templates/api/connections.html
+msgid "Your workspaces are on the Free plan. The first API or MCP call on a survey of a workspace that has never had a Pro trial starts it — no card needed."
+msgstr "Seus espaços de trabalho estão no plano Free. A primeira chamada de API ou MCP em uma pesquisa de um espaço de trabalho que nunca teve um teste Pro o inicia — sem cartão."

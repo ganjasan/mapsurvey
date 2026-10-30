@@ -71,3 +71,90 @@ def notify_lapsed():
                                     {'org': sub.organization, 'sub': sub}, fail_silently=True)
         count += 1
     return count
+
+
+# The Pro trial's two mails (change pro-trial-auto, #508). The owner the trial
+# belongs to hears when it starts -- possibly through an editor's first Pro use
+# or an API call they never saw -- and once more seven days before it ends.
+
+TRIAL_FEATURE_PHRASES = {
+    'unbranded': 'by removing the "Made with Mapsurvey" badge from a survey',
+    'pro_help': 'by sending a request to the Mapsurvey team',
+    'api': 'with a call to the API or the MCP server',
+    'operator_entry': 'by entering a paper response',
+}
+TRIAL_ENDING_DAYS = 7
+
+
+def _trial_context(grant):
+    from django.urls import reverse
+
+    from survey.mail import absolute_url
+
+    from .trial import unit_label
+
+    rows = list(grant.allowances.all())
+    return {
+        'grant': grant, 'org': grant.organization, 'owner': grant.claimed_by,
+        'started_by': grant.started_by,
+        'started_by_other': grant.started_by_id is not None and grant.started_by_id != grant.claimed_by_id,
+        'how': TRIAL_FEATURE_PHRASES.get(grant.trigger, ''),
+        'allowances': [{'label': unit_label(a.feature), 'limit': a.limit, 'used': a.used} for a in rows],
+        'features': {a.feature for a in rows},
+        'billing_url': absolute_url(reverse('org_billing', args=[grant.organization.slug])) + '#pro-trial',
+    }
+
+
+@shared_task(bind=True, max_retries=3, default_retry_delay=60)
+def send_trial_started(self, grant_id):
+    from survey.mail import send_templated_mail
+
+    from .models import EntitlementGrant
+
+    grant = (EntitlementGrant.objects.select_related('organization', 'claimed_by', 'started_by')
+             .filter(pk=grant_id).first())
+    if grant is None or grant.claimed_by is None or not grant.claimed_by.email:
+        return
+    try:
+        send_templated_mail('billing/email/trial_started', grant.claimed_by.email,
+                            f'Your free Pro trial has started — {grant.organization.name}',
+                            _trial_context(grant), fail_silently=False)
+    except Exception as exc:  # noqa: BLE001 -- retried, then reported by task_failure
+        raise self.retry(exc=exc)
+
+
+@shared_task
+def notify_trials_ending():
+    """Once per live trial that ends within TRIAL_ENDING_DAYS: one mail to the
+    owner it belongs to and `trial_ending_notified`. Skips revoked grants and
+    workspaces that are Pro now. Idempotent through `ending_notified_at`; a
+    missed day is caught up by the next run (a window, not an exact date)."""
+    from datetime import timedelta
+
+    from survey.mail import send_templated_mail
+
+    from . import events as ev
+    from .entitlements import for_organization
+    from .models import GRANT_KIND_TRIAL, EntitlementGrant
+
+    now = timezone.now()
+    grants = (EntitlementGrant.objects.select_related('organization', 'claimed_by', 'started_by')
+              .filter(kind=GRANT_KIND_TRIAL, revoked_at__isnull=True, ending_notified_at__isnull=True,
+                      starts_at__lte=now, expires_at__gt=now,
+                      expires_at__lte=now + timedelta(days=TRIAL_ENDING_DAYS)))
+    count = 0
+    for grant in grants:
+        if for_organization(grant.organization).is_pro:
+            continue
+        grant.ending_notified_at = now
+        grant.save(update_fields=['ending_notified_at'])
+        owner = grant.claimed_by
+        if owner is not None:
+            ev.emit(ev.TRIAL_ENDING_NOTIFIED, owner.pk, {'org_id': grant.organization_id})
+            if owner.email:
+                send_templated_mail('billing/email/trial_ending', owner.email,
+                                    f'Your free Pro trial ends on {grant.expires_at:%-d %B} — '
+                                    f'{grant.organization.name}',
+                                    _trial_context(grant), fail_silently=True)
+        count += 1
+    return count

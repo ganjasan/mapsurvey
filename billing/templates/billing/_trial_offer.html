@@ -19,9 +19,9 @@ caller would not have refused.
         {% csrf_token %}{% if next_path %}<input type="hidden" name="next" value="{{ next_path }}">{% endif %}
         <button type="submit" class="btn btn-primary btn-sm">{% trans "Try Pro" %}</button>
       </form>
-      <small class="text-muted d-block mt-1">{% trans "No card needed. One trial per person. Your workspace stays on Free when it ends." %}</small>
+      <small class="text-muted d-block mt-1">{% trans "No card needed. One trial per workspace owner. Your workspace stays on Free when it ends." %}</small>
     {% else %}
-      <p class="text-muted mb-0" style="font-size:0.9rem;">{% trans "The workspace owner can start it from Plan & billing." %}</p>
+      <p class="text-muted mb-0" style="font-size:0.9rem;">{% trans "No card needed. It starts with the first Pro use; the workspace owner gets an e-mail." %}</p>
     {% endif %}
   </div>
 {% elif trial.state == 'used_elsewhere' %}

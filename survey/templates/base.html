@@ -17,6 +17,7 @@
         <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
         <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="{% static 'css/whats-new.css' %}{% if debug %}?t={% now 'U' %}{% endif %}">
+    <link rel="stylesheet" href="{% static 'css/pro_badge.css' %}">
         {% include "partials/_loading_feedback.html" %}
         <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
@@ -420,8 +421,9 @@
                               {% if org_role == 'owner' or org_role == 'admin' %}
                               <a class="dropdown-item" href="{% url 'org_billing' active_org.slug %}"><i class="fas fa-credit-card" style="margin-right:4px;"></i>{% trans "Plan & billing" %}</a>
                               {% endif %}
-                              <a class="dropdown-item" href="{% url 'org_help' active_org.slug %}"><i class="fas fa-life-ring" style="margin-right:4px;"></i>{% trans "Pro help" %}</a>
                               {% endif %}
+                              <div class="dropdown-divider"></div>
+                              {% include "billing/_help_entries.html" %}
                               <div class="dropdown-divider"></div>
                               <a class="dropdown-item" href="{% url 'editor_account_preferences' %}"><i class="fas fa-sliders-h" style="margin-right:4px;"></i>{% trans "Preferences" %}</a>
                               <a class="dropdown-item" href="{% url 'whats_new' %}"><i class="fas fa-gift" style="margin-right:4px;"></i>{% trans "What's new" %}{% if whats_new.unseen_count %} <span class="wn-badge">{{ whats_new.unseen_count }}</span>{% endif %}</a>

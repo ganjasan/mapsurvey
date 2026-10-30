@@ -230,9 +230,17 @@ class EntitlementGrant(models.Model):
                                    related_name='claimed_grants')
     granted_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
                                    related_name='issued_grants')
+    # Who made the click or the first Pro use that created a trial, and with
+    # what (change pro-trial-auto): 'click' for "Try Pro", else the feature key.
+    # Any member allowed to make the use may start the owner's trial.
+    started_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+                                   related_name='started_grants')
+    trigger = models.CharField(max_length=32, default='click')
     starts_at = models.DateTimeField()
     expires_at = models.DateTimeField()
     revoked_at = models.DateTimeField(null=True, blank=True)
+    # The "ends in 7 days" mail went out (billing.tasks.notify_trials_ending).
+    ending_notified_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -253,10 +261,12 @@ class EntitlementGrant(models.Model):
 
 class GrantAllowance(models.Model):
     """How many uses of one feature a grant gives and how many are spent.
-    `used` is only ever changed by `billing.trial.consume`, one atomic UPDATE."""
+    `used` is only ever changed by `billing.trial.consume`, one atomic UPDATE.
+    A null `limit` is a feature in the trial without a cap (change
+    pro-trial-auto): counted, never refused while the grant is live."""
     grant = models.ForeignKey(EntitlementGrant, on_delete=models.CASCADE, related_name='allowances')
     feature = models.CharField(max_length=32)
-    limit = models.PositiveIntegerField()
+    limit = models.PositiveIntegerField(null=True, blank=True)
     used = models.PositiveIntegerField(default=0)
 
     class Meta:

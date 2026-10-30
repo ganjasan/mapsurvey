@@ -35,7 +35,8 @@ from . import ipn as ipn_mod
 from . import ppg
 from .forms import CancelForm, ProHelpRequestForm
 from .models import STATUS_ACTIVE, STATUS_SUSPENDED, BillingEvent, CheckoutIntent, Subscription
-from .trial import TrialRefused, claim, consume, offered, state_for
+from .trial import TrialRefused, claim, flash_started, offered, state_for, use
+from .trial import may as trial_may
 
 logger = logging.getLogger(__name__)
 
@@ -438,19 +439,25 @@ def org_help(request, slug):
             'feature_used_up': trial.feature_exhausted('pro_help'), 'next_path': request.path,
         })
 
-    if not e.may('pro_help'):
+    if not trial_may(org, 'pro_help'):
         if request.method == 'POST':
             return HttpResponseForbidden()
         return free_view()
 
     submitted = False
+    # The first request of a workspace that has never had a trial starts it
+    # (change pro-trial-auto); the page says so above the form.
+    starts_trial = not e.may('pro_help')
     if request.method == 'POST':
         form = ProHelpRequestForm(request.POST, organization=org)
         if form.is_valid():
             # Without the plan, a request spends the Pro trial's allowance
-            # (change pro-trial-allowances); a stale tab past it gets the offer.
-            if not e.has('pro_help') and not consume(org, 'pro_help', actor=request.user):
+            # (change pro-trial-allowances) or starts the trial with it; a stale
+            # tab past it gets the offer.
+            if not e.has('pro_help') and not use(org, 'pro_help', actor=request.user):
                 return free_view()
+            flash_started(request, org)
+            starts_trial = False
             req = form.save(commit=False)
             req.organization = org
             req.user = request.user
@@ -468,7 +475,7 @@ def org_help(request, slug):
         form = ProHelpRequestForm(organization=org, initial={'contact_email': request.user.email})
     return render(request, 'billing/org_help.html', {
         'org': org, 'entitlements': e, 'form': form, 'submitted': submitted, 'is_owner': m.role == 'owner',
-        'products_configured': co.products_configured(),
+        'products_configured': co.products_configured(), 'starts_trial': starts_trial,
     })
 
 

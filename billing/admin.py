@@ -21,10 +21,12 @@ class GrantAllowanceInline(admin.TabularInline):
 
 @admin.register(EntitlementGrant)
 class EntitlementGrantAdmin(admin.ModelAdmin):
-    list_display = ('organization', 'kind', 'claimed_by', 'starts_at', 'expires_at', 'revoked_at', 'created_at')
-    list_filter = ('kind',)
+    list_display = ('organization', 'kind', 'claimed_by', 'trigger', 'starts_at', 'expires_at', 'revoked_at',
+                    'created_at')
+    list_filter = ('kind', 'trigger')
     search_fields = ('organization__name', 'organization__slug', 'claimed_by__email')
-    readonly_fields = ('organization', 'kind', 'claimed_by', 'granted_by', 'starts_at', 'created_at')
+    readonly_fields = ('organization', 'kind', 'claimed_by', 'granted_by', 'started_by', 'trigger', 'starts_at',
+                       'ending_notified_at', 'created_at')
     inlines = (GrantAllowanceInline,)
 
     def has_add_permission(self, request):

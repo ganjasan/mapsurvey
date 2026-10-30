@@ -88,14 +88,18 @@ def connections(request):
         'never_expires': p.token.expires > now.replace(year=now.year + 50),
         'expired': p.token.expires <= now,
     } for p in profiles]
+    from billing.trial import may as trial_may
+    orgs = [m.organization for m in Membership.objects.filter(user=request.user).select_related('organization')]
     return render(request, 'api/connections.html', {
+        # Free workspaces that still take API calls: a live trial, or the first
+        # call would start one (change pro-trial-auto).
+        'any_trial_api': any(trial_may(o, 'api') and not for_organization(o).has('api') for o in orgs),
         'form': form,
         'rows': rows,
         'apps': grants.connected_apps(request.user),
         'once': once,
         'mcp_url': settings.MCP_RESOURCE_URL,
-        'any_pro': any(for_organization(m.organization).has('api')
-                       for m in Membership.objects.filter(user=request.user).select_related('organization')),
+        'any_pro': any(for_organization(o).has('api') for o in orgs),
     })
 
 

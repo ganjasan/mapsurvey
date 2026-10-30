@@ -24,7 +24,7 @@ from ..models import (
     STATUS_SUSPENDED, STATUS_TERMINATED, BillingEvent, CheckoutIntent, ProHelpRequest, Subscription,
 )
 from ..tasks import notify_lapsed
-from .helpers import PPG_IP, PPG_SETTINGS, make_org, make_sub as _sub, payload, post_ipn, sign
+from .helpers import PPG_IP, PPG_SETTINGS, make_org, make_sub as _sub, payload, post_ipn, sign, trial_used_elsewhere
 
 
 @override_settings(**PPG_SETTINGS)
@@ -60,11 +60,12 @@ class BrandingGateTest(TestCase):
 
     def test_settings_form_ignores_value_without_entitlement(self):
         """
-        GIVEN a Free organisation's survey with show_branding=True
+        GIVEN a Free organisation's survey with show_branding=True, whose owner already used their Pro trial
         WHEN the settings form is submitted with show_branding unchecked
         THEN the stored value stays True; a Pro organisation's form stores False
         """
-        data = {'name': 'badge_survey', 'redirect_url': '#', 'visibility': 'private', 'basemaps': '["streets"]',
+        trial_used_elsewhere(self.org)
+        data ={'name': 'badge_survey', 'redirect_url': '#', 'visibility': 'private', 'basemaps': '["streets"]',
                 'default_basemap': 'streets'}
         form = SurveyHeaderForm(data, instance=self.survey)
         self.assertTrue(form.fields['show_branding'].disabled)

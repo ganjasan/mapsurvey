@@ -15,6 +15,8 @@ from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_POST
 from django.contrib.auth.decorators import login_required
 
+from billing import trial as billing_trial
+
 from . import other_option
 from .models import (
     SurveyHeader, SurveySection, Question, SurveyCollaborator, Answer,
@@ -742,6 +744,7 @@ def editor_survey_settings(request, survey_uuid):
         except ValidationFailed as err:
             form = err.form
         else:
+            billing_trial.flash_started(request, survey.organization)
             return redirect('editor_survey_settings', survey_uuid=survey.uuid)
     else:
         form = SurveyHeaderForm(instance=survey)
@@ -797,6 +800,7 @@ def editor_survey_settings_panel(request, survey_uuid):
             if _is_ajax(request):
                 return JsonResponse({'ok': False, 'errors': form.errors}, status=400)
         else:
+            billing_trial.flash_started(request, survey.organization)
             if _is_ajax(request):
                 return JsonResponse({'ok': True})
             from django.urls import reverse

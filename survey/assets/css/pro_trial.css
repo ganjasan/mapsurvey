@@ -6,9 +6,10 @@
     --tb-text-3: var(--color-text-tertiary, #8A94A8);
     --tb-bg: var(--color-bg-elevated, #FFFFFF);
     --tb-border: var(--color-border-light, #E4E0D8);
-    --tb-accent: var(--color-accent, #0FA58E);
-    --tb-accent-hover: var(--color-accent-hover, #0D8F7A);
-    --tb-accent-soft: var(--color-accent-light, rgba(15, 165, 142, 0.12));
+    /* Pro's own violet (change pro-trial-auto, css/pro_badge.css); teal is for actions. */
+    --tb-accent: var(--pro, #6D4AE0);
+    --tb-accent-hover: var(--pro-ink, #5A3BC4);
+    --tb-accent-soft: var(--pro-soft, rgba(109, 74, 224, 0.11));
     --tb-font: var(--font-display, 'Instrument Sans', 'DM Sans', system-ui, -apple-system, sans-serif);
 
     display: grid;

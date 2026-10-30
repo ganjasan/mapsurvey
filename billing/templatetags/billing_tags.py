@@ -29,6 +29,45 @@ def trial_state_for(context, organization):
     return state_for(organization, getattr(request, 'user', None))
 
 
+PRO_BADGE_STATES = ('plan', 'trial', 'startable', 'locked')
+
+
+def pro_badge_state(organization, feature_key):
+    """(state, allowance) of the Pro mark for one feature of one workspace."""
+    from ..trial import startable
+    ent = for_organization(organization)
+    if ent.has(feature_key):
+        return 'plan', None
+    allowance = ent.allowances.get(feature_key)
+    if allowance is not None and (allowance.remaining is None or allowance.remaining > 0):
+        return 'trial', allowance
+    if startable(organization, feature_key):
+        return 'startable', None
+    return 'locked', None
+
+
+@register.inclusion_tag('billing/_pro_badge.html')
+def pro_badge(organization, feature_key, link=True):
+    """`{% pro_badge org "unbranded" %}` -- THE Pro mark next to a gated control
+    (change pro-trial-auto). Describes; the control itself is decided by
+    `billing.trial.may`. An unknown key is a programming error: it raises under
+    DEBUG and renders nothing in production."""
+    if feature_key not in FEATURES:
+        from django.conf import settings
+        if settings.DEBUG:
+            raise template.TemplateSyntaxError(f'pro_badge: unknown feature {feature_key!r}')
+        return {'state': None}
+    if organization is None:
+        return {'state': None}
+    state, allowance = pro_badge_state(organization, feature_key)
+    ent = for_organization(organization)
+    return {
+        'state': state, 'org': organization, 'link': link,
+        'remaining': allowance.remaining if allowance is not None else None,
+        'until': ent.trial.expires_at if ent.trial is not None else None,
+    }
+
+
 @register.simple_tag
 def entitlements_for(organization):
     return for_organization(organization)

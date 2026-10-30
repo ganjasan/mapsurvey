@@ -28,17 +28,21 @@ def feature_required(request, org, feature_key, status=403):
 
 def require_feature(feature_key, org_getter):
     """Refuse (403, with an upgrade hint) unless the organisation may use the feature
-    (its plan includes it, or a live Pro trial has a remainder for it).
+    (its plan includes it, a live Pro trial has a remainder for it, or the use
+    would start the trial -- `billing.trial.may`).
 
     `org_getter(request, *args, **kwargs)` returns the organisation the view is
     about; existence and membership checks stay in the view/decorators that
-    already do them -- this only decides Pro vs not. Counting a trial use is
-    the view's job, at the point the feature is actually used."""
+    already do them -- this only decides Pro vs not. It starts and counts
+    nothing: that is the view's `billing.trial.use`, at the point the feature
+    is actually used."""
+    from . import trial
+
     def deco(view):
         @wraps(view)
         def wrapper(request, *args, **kwargs):
             org = org_getter(request, *args, **kwargs)
-            if not for_organization(org).may(feature_key):
+            if not trial.may(org, feature_key):
                 return feature_required(request, org, feature_key)
             return view(request, *args, **kwargs)
         return wrapper

@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 {% load i18n billing_tags %}
 
-{% block title %}{{ org.name }} — {% trans "Pro help" %}{% endblock %}
+{% block title %}{{ org.name }} — {% trans "Advice on your survey and results" %}{% endblock %}
 
 {% block content %}
 <div class="container mt-4" style="max-width: 720px;">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
             <h4 class="mb-0">{{ org.name }}</h4>
-            <small class="text-muted">{% trans "Pro help — consulting, analysis, reports" %}</small>
+            <small class="text-muted">{% trans "Advice on your survey and results" %} {% pro_badge org "pro_help" %}</small>
         </div>
         <div>
             <a href="{% url 'org_billing' org.slug %}" class="btn btn-outline-secondary btn-sm mr-1">{% trans "Plan & billing" %}</a>
@@ -24,7 +24,11 @@
         {% endif %}
         <div class="card mb-4">
             <div class="card-body">
-                <p class="mb-3">{% trans "Pro includes us. Tell us what the project needs — a plan for the engagement, help making sense of the responses, or a report you can hand to a council, a client or a funder — and we will come back with a proposal and a time to talk." %}</p>
+                <p class="mb-2">{% trans "Ask the team for advice on your survey and its results: a check of the survey before launch, how to reach your respondents, how to read what came in. Tell us what the project needs and we will come back with advice and, if useful, a time to talk." %}</p>
+                <p class="mb-3 text-muted" style="font-size:0.9rem;">{% trans "Hands-on work — building a survey for you, an analysis kit, a written report — is quoted separately." %}</p>
+                {% if starts_trial %}
+                <p class="mb-3" style="font-size:0.9rem;" data-trial-starts="1">{% trans "Sending this request starts your workspace's free Pro trial." %}</p>
+                {% endif %}
                 <form method="post">
                     {% csrf_token %}
                     {% for error in form.non_field_errors %}<div class="alert alert-danger py-1">{{ error }}</div>{% endfor %}
@@ -48,7 +52,7 @@
         <div class="card mb-4">
             <div class="card-body">
                 <h5 class="mb-2">{% trans "This is what Pro is for" %}</h5>
-                <p>{% trans "Pro is a service plan. A Pro organisation gets the Mapsurvey team on its project: consulting on how to run the engagement, analysis of what people submitted, and reports written for the people who have to act on them. It also removes the Mapsurvey badge from your surveys." %}</p>
+                <p>{% trans "A Pro workspace can ask the Mapsurvey team for advice on its survey and results: a check of the survey before launch, how to reach respondents, how to read what came in. Hands-on work — building a survey for you, an analysis kit, a written report — is quoted separately." %}</p>
                 <p class="mb-3">{% trans "Everything you use today stays free." %}</p>
                 {% include "billing/_trial_offer.html" %}
                 {% if trial.state == 'available' %}
