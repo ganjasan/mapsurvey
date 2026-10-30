@@ -881,3 +881,90 @@ class SpraycanReadSurfacesTest(TestCase):
         new_q = Question.objects.get(survey_section__survey_header=imported, input_type='spraycan')
         self.assertEqual(new_q.spray_brush, 'medium')
         self.assertTrue(any('spray_brush' in w for w in warnings), warnings)
+
+
+class ExportSeveralVersionsTest(TestCase):
+    """`version=vA,vB` exports those versions only, in every format (issue #496)."""
+
+    def setUp(self):
+        self.org = _make_org('SeveralVersionsOrg')
+        self.user = User.objects.create_user('sevowner', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='final_questionnaire', organization=self.org, created_by=self.user,
+            status='published', version_number=3,
+        )
+        headers = [self.survey] + [
+            SurveyHeader.objects.create(
+                name='final_questionnaire', organization=self.org, status='closed',
+                is_canonical=False, canonical_survey=self.survey, version_number=num,
+            )
+            for num in (2, 1)
+        ]
+        for header in headers:
+            section = SurveySection.objects.create(survey_header=header, name='S', code='S1', is_head=True)
+            spot = Question.objects.create(survey_section=section, name='Spot', code='SP',
+                                           input_type='point', order_number=1)
+            session = SurveySession.objects.create(survey=header)
+            Answer.objects.create(survey_session=session, question=spot, point=Point(13.4, 52.5))
+        self.client.login(username='sevowner', password='pass')
+
+    def _get(self, **params):
+        return self.client.get(f'/surveys/{self.survey.uuid}/download?' + urlencode(params, safe=','))
+
+    def _versions(self, sheet, **params):
+        import openpyxl
+        response = self._get(format='xlsx', **params)
+        self.assertEqual(response.status_code, 200)
+        wb = openpyxl.load_workbook(BytesIO(b''.join(response.streaming_content)))
+        rows = list(wb[sheet].iter_rows(values_only=True))
+        column = list(rows[0]).index('version')
+        return sorted(r[column] for r in rows[1:])
+
+    def test_excel_holds_only_the_listed_versions(self):
+        """
+        GIVEN a survey with versions v1–v3, one placed point per version
+        WHEN Excel is exported with `version=v2,v3`
+        THEN the sessions and observations sheets carry versions 2 and 3 only
+        """
+        for sheet in ('sessions', 'observations'):
+            with self.subTest(sheet=sheet):
+                self.assertEqual(self._versions(sheet, version='v2,v3'), [2, 3])
+
+    def test_legacy_archive_prefixes_each_listed_version(self):
+        """
+        GIVEN the same survey
+        WHEN the legacy archive is exported with `version=v1,v3`
+        THEN it holds `v3_` and `v1_` files and nothing of v2
+        """
+        response = self._get(version='v1,v3')
+        names = zipfile.ZipFile(BytesIO(response.content)).namelist()
+        self.assertEqual(sorted({n.split('_', 1)[0] for n in names}), ['v1', 'v3'])
+
+    def test_old_values_export_what_they_did(self):
+        """
+        GIVEN the same survey
+        WHEN Excel is exported with `version=all`, `version=v2` and no version
+        THEN the first and last carry all three versions and `v2` carries one
+        """
+        self.assertEqual(self._versions('sessions', version='all'), [1, 2, 3])
+        self.assertEqual(self._versions('sessions'), [1, 2, 3])
+        self.assertEqual(self._versions('sessions', version='v2'), [2])
+
+    def test_dialog_offers_version_checkboxes(self):
+        """
+        GIVEN a survey with three versions
+        WHEN the Responses page is opened
+        THEN the export dialog has a one-line version field opening a searchable panel with an
+             "All versions" check-box and a version list, not a select, and the opener carries
+             the page's scope
+        """
+        response = self.client.get(f'/editor/surveys/{self.survey.uuid}/analytics/?version=v2,v3')
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn('id="exportVersionTrigger"', content)
+        self.assertIn('id="exportVersionSearch"', content)
+        self.assertIn('id="exportVersionAll"', content)
+        self.assertIn('id="exportVersionList"', content)
+        self.assertNotIn('<select id="exportVersion"', content)
+        self.assertIn('data-version="v3,v2"', content)

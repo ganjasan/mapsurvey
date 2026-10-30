@@ -1111,7 +1111,7 @@ it checks again that you may read the survey and that its workspace is on Pro.
 | Field | Type | Required | Notes |
 |---|---|---|---|
 | `format` | `zip` | `xlsx` | `csv` | `gpkg` | `shp` | `kml` |  |  |
-| `version` | string or null |  | A version number, or omit for every version. |
+| `version` | string or null |  | One version (`v3`), several separated by commas (`v10,v11`), or omit for every version. |
 | `include_all` | boolean |  | Also deleted and rejected responses. |
 | `completed_only` | boolean |  | Only responses that reached the last section. |
 | `files` | boolean |  | Add uploaded files (turns a single-file format into a ZIP). |

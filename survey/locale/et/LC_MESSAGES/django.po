@@ -9470,3 +9470,23 @@ msgstr "Kuni küsitlus pole avaldatud, trükitakse ankeet MUSTAND-vesimärgiga �
 #: survey/templates/editor/survey_share.html
 msgid "Chinese, Japanese and Korean text is not yet supported on the printed form."
 msgstr "Hiina, jaapani ja korea tekst pole trükitud ankeedil veel toetatud."
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "Versions"
+msgstr "Versioonid"
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "All versions"
+msgstr "Kõik versioonid"
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "Tick at least one version."
+msgstr "Märkige vähemalt üks versioon."
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "Search versions…"
+msgstr "Otsi versioone…"
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "No matching versions."
+msgstr "Sobivaid versioone pole."

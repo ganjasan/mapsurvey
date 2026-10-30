@@ -9581,3 +9581,23 @@ msgstr "Bis die Umfrage veröffentlicht ist, trägt das Formular ein ENTWURF-Was
 #: survey/templates/editor/survey_share.html
 msgid "Chinese, Japanese and Korean text is not yet supported on the printed form."
 msgstr "Chinesischer, japanischer und koreanischer Text wird auf dem gedruckten Formular noch nicht unterstützt."
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "Versions"
+msgstr "Versionen"
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "All versions"
+msgstr "Alle Versionen"
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "Tick at least one version."
+msgstr "Wählen Sie mindestens eine Version aus."
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "Search versions…"
+msgstr "Versionen suchen…"
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "No matching versions."
+msgstr "Keine passenden Versionen."

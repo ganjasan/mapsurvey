@@ -9593,3 +9593,23 @@ msgstr "Dopóki ankieta nie jest opublikowana, formularz drukuje się ze znakiem
 #: survey/templates/editor/survey_share.html
 msgid "Chinese, Japanese and Korean text is not yet supported on the printed form."
 msgstr "Tekst chiński, japoński i koreański nie jest jeszcze obsługiwany na drukowanym formularzu."
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "Versions"
+msgstr "Wersje"
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "All versions"
+msgstr "Wszystkie wersje"
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "Tick at least one version."
+msgstr "Zaznacz co najmniej jedną wersję."
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "Search versions…"
+msgstr "Szukaj wersji…"
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "No matching versions."
+msgstr "Brak pasujących wersji."

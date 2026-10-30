@@ -9529,3 +9529,23 @@ msgstr "Zolang de enquête niet is gepubliceerd, wordt het formulier met een CON
 #: survey/templates/editor/survey_share.html
 msgid "Chinese, Japanese and Korean text is not yet supported on the printed form."
 msgstr "Chinese, Japanse en Koreaanse tekst wordt op het gedrukte formulier nog niet ondersteund."
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "Versions"
+msgstr "Versies"
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "All versions"
+msgstr "Alle versies"
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "Tick at least one version."
+msgstr "Vink ten minste één versie aan."
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "Search versions…"
+msgstr "Versies zoeken…"
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "No matching versions."
+msgstr "Geen overeenkomende versies."

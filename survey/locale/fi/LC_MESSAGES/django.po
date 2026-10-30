@@ -9491,3 +9491,23 @@ msgstr "Ennen kyselyn julkaisua lomake tulostuu LUONNOS-vesileimalla — hyvä t
 #: survey/templates/editor/survey_share.html
 msgid "Chinese, Japanese and Korean text is not yet supported on the printed form."
 msgstr "Kiinan-, japanin- ja koreankielistä tekstiä ei vielä tueta tulostetulla lomakkeella."
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "Versions"
+msgstr "Versiot"
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "All versions"
+msgstr "Kaikki versiot"
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "Tick at least one version."
+msgstr "Valitse vähintään yksi versio."
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "Search versions…"
+msgstr "Hae versioita…"
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "No matching versions."
+msgstr "Ei vastaavia versioita."
