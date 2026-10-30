@@ -1,7 +1,8 @@
 {% extends "editor/editor_base.html" %}
 {% load i18n survey_filters %}
 {% comment %}Operator entry form, the end (change operator-entry): the sheet is stored; the next one
-starts with the same source, version and language.{% endcomment %}
+starts with the same source, version and language. A sheet reviewed from photos (change
+paper-photo-entry) offers the batch's next sheet instead.{% endcomment %}
 {% block page_title %}{% trans "Response saved" %} – {{ survey.name }}{% endblock %}
 
 {% block navbar_content %}
@@ -16,9 +17,23 @@ starts with the same source, version and language.{% endcomment %}
     <p class="text-muted">
         {% blocktrans with source=session.get_source_display %}Stored as “{{ source }}”. It appears in Responses with its source and your name.{% endblocktrans %}
     </p>
+    {% if paper_sheet %}
+    <p class="text-muted small">{% blocktrans with n=paper_sheet.seq %}Sheet {{ n }} is entered; its photos have been deleted.{% endblocktrans %}</p>
+    <div class="d-flex justify-content-center mt-4" style="gap: .75rem;">
+        <a class="btn btn-outline-secondary" href="{{ batch_url }}">{% trans "Back to the batch" %}</a>
+        {% if next_sheet_url %}
+        <form method="post" action="{{ next_sheet_url }}">{% csrf_token %}
+            <button type="submit" class="btn btn-primary" autofocus>{% trans "Next sheet" %}</button>
+        </form>
+        {% else %}
+        <a class="btn btn-primary" href="{{ batch_url }}" autofocus>{% trans "No more sheets to review" %}</a>
+        {% endif %}
+    </div>
+    {% else %}
     <div class="d-flex justify-content-center mt-4" style="gap: .75rem;">
         <a class="btn btn-outline-secondary" href="{{ responses_url }}">{% trans "Back to Responses" %}</a>
         <a class="btn btn-primary" href="{{ next_url }}" autofocus>{% trans "Enter the next one" %}</a>
     </div>
+    {% endif %}
 </div>
 {% endblock %}

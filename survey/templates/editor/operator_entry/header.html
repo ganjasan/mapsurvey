@@ -17,6 +17,9 @@ from, and its language. Submitting it creates the session and opens the first se
         {% trans "Type in answers collected on paper, in an interview or in the field. They are stored with their source, count as responses, and stay out of the visit statistics." %}
         {% if HELP_URL.operator_entry %}<a href="{{ HELP_URL.operator_entry }}" target="_blank" rel="noopener">{% trans "Learn more" %}</a>{% endif %}
     </p>
+    <p class="mb-4">{# Paper forms from photos (change paper-photo-entry, #495). #}
+        <a href="{% url 'paper_batches' survey.uuid %}"><i class="fas fa-camera mr-1"></i>{% trans "Have photos or scans of filled paper forms? Read them from photos instead." %}</a>
+    </p>
     <form method="post" novalidate>
         {% csrf_token %}
         <fieldset class="mb-4">

@@ -1,0 +1,49 @@
+{% extends "editor/editor_base.html" %}
+{% load i18n survey_filters %}
+{% comment %}Paper forms from photos, the batches of a survey (change paper-photo-entry, #495):
+one row per batch with where it got to, and a button for a new one.{% endcomment %}
+{% block page_title %}{% trans "Paper forms from photos" %} – {{ survey.name }}{% endblock %}
+
+{% block navbar_content %}
+{% survey_title survey %}
+{% include "editor/partials/_survey_nav_tabs.html" with active_tab="results" %}
+{% endblock %}
+
+{% block content %}
+<div class="paper-batches container py-4" style="max-width: 760px;">
+    <h2 class="h4 mb-1">{% trans "Paper forms from photos" %}</h2>
+    <p class="text-muted mb-4">
+        {% trans "Photograph or scan the filled sheets, drop the files here, and review what was read beside the picture. Each sheet is stored as a paper response." %}
+        {% if HELP_URL.paper_photos %}<a href="{{ HELP_URL.paper_photos }}" target="_blank" rel="noopener">{% trans "Learn more" %}</a>{% endif %}
+    </p>
+    <form method="post" action="{% url 'paper_batch_new' survey.uuid %}" class="mb-4">{% csrf_token %}
+        <button type="submit" class="btn btn-primary"><i class="fas fa-camera mr-1"></i> {% trans "New batch" %}</button>
+        <a class="btn btn-link" href="{% url 'operator_entry_header' survey.uuid %}">{% trans "Type in a response instead" %}</a>
+    </form>
+    {% if batches %}
+    <table class="table table-sm">
+        <thead><tr>
+            <th>{% trans "Batch" %}</th><th>{% trans "Started" %}</th><th>{% trans "By" %}</th>
+            <th>{% trans "To review" %}</th><th>{% trans "Entered" %}</th><th>{% trans "Not recognised" %}</th><th></th>
+        </tr></thead>
+        <tbody>
+        {% for batch, counts in batches %}
+        <tr>
+            <td><a href="{% url 'paper_batch' survey.uuid batch.pk %}">#{{ batch.pk }}</a>
+                {% if not batch.is_open %}<span class="badge badge-secondary ml-1">{% trans "closed" %}</span>{% endif %}</td>
+            <td>{{ batch.created_at|date:"Y-m-d H:i" }}</td>
+            <td>{{ batch.created_by.username|default:"—" }}</td>
+            <td>{{ counts.review|default:0|add:counts.incomplete|default:0 }}</td>
+            <td>{{ counts.entered|default:0 }}</td>
+            <td>{{ counts.unrecognised|default:0 }}</td>
+            <td class="text-right"><a class="btn btn-sm btn-outline-secondary" href="{% url 'paper_batch' survey.uuid batch.pk %}">{% trans "Open" %}</a></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted">{% trans "No batches yet. Start one and drop the photos in." %}</p>
+    {% endif %}
+    <p class="text-muted small mt-4">{% trans "Photos are kept until the sheet is entered or skipped, and at most 30 days. The page image is sent to the AI provider for the duration of the reading." %}</p>
+</div>
+{% endblock %}

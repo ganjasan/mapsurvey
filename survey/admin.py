@@ -4,6 +4,7 @@ from django.contrib import admin, messages
 from django.contrib.admin import helpers as admin_helpers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
+from django.db.models import Count
 from django.shortcuts import render
 from .models import (
     Organization, SurveyHeader, SurveySection, Question, Answer,
@@ -18,6 +19,7 @@ from .models import (
     DemoRequest,
     CommentThread, Comment, CommentAttachment,
     AbuseEvent, ContentReview,
+    PaperBatch, PaperPage,
 )
 from .funnel import dashboard_context
 from leaflet.admin import LeafletGeoAdmin
@@ -494,6 +496,57 @@ class AIGenerationEventAdmin(admin.ModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(PaperBatch)
+class PaperBatchAdmin(admin.ModelAdmin):
+    """Read-only viewer for paper-photo batches (change paper-photo-entry, #495):
+    which workspace is feeding sheets, how far each batch got, what failed."""
+
+    list_display = ('id', 'created_at', 'last_activity_at', 'status', 'survey', 'organization',
+                    'created_by', 'uploads_count', 'pages_count', 'sheets_count')
+    list_filter = ('status',)
+    search_fields = ('survey__name', 'organization__name', 'created_by__username')
+    date_hierarchy = 'created_at'
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).annotate(
+            _uploads=Count('uploads', distinct=True),
+            _pages=Count('pages', distinct=True),
+            _sheets=Count('sheets', distinct=True),
+        )
+
+    @admin.display(description='uploads', ordering='_uploads')
+    def uploads_count(self, obj):
+        return obj._uploads
+
+    @admin.display(description='pages', ordering='_pages')
+    def pages_count(self, obj):
+        return obj._pages
+
+    @admin.display(description='sheets', ordering='_sheets')
+    def sheets_count(self, obj):
+        return obj._sheets
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(PaperPage)
+class PaperPageAdmin(admin.ModelAdmin):
+    list_display = ('id', 'batch', 'seq', 'status', 'code_source', 'printed_form', 'page_number',
+                    'pages_total', 'sheet', 'error', 'created_at')
+    list_filter = ('status', 'code_source')
+    search_fields = ('batch__survey__name', 'error')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
         return False
 
 

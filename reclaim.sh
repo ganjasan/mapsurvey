@@ -19,6 +19,10 @@ python manage.py purge_api_tokens
 # authorised (change oauth-server). First-party clients are never touched.
 python manage.py purge_oauth_clients
 
+# Paper-photo batches nobody touched for 30 days: closed, page images deleted,
+# rows kept (change paper-photo-entry, #495).
+python manage.py sweep_paper_batches --delete
+
 # Pro subscriptions whose paid period ended since the last run: one
 # plan_lapsed event and one email per owner (billing app).
 python manage.py notify_lapsed

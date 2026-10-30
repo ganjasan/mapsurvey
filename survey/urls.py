@@ -9,6 +9,7 @@ from . import layer_object_views
 from . import comment_views
 from . import analytics_views
 from . import operator_entry_views
+from . import paper_views
 from . import share_views
 from survey.print import views as print_views
 from . import translation_views
@@ -143,6 +144,21 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/responses/enter/', operator_entry_views.entry_header, name='operator_entry_header'),
     path('editor/surveys/<uuid:survey_uuid>/responses/enter/<int:session_id>/saved/', operator_entry_views.entry_saved, name='operator_entry_saved'),
     path('editor/surveys/<uuid:survey_uuid>/responses/enter/<int:session_id>/<str:section_name>/', operator_entry_views.entry_section, name='operator_entry_section'),
+    # Paper forms from photos (change paper-photo-entry, #495): batches, uploads, sheets.
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/', paper_views.batches, name='paper_batches'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/new/', paper_views.batch_new, name='paper_batch_new'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/<int:batch_id>/', paper_views.batch, name='paper_batch'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/<int:batch_id>/list/', paper_views.batch_list_partial, name='paper_batch_list'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/<int:batch_id>/status/', paper_views.batch_status, name='paper_batch_status'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/<int:batch_id>/upload/', paper_views.upload, name='paper_upload'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/<int:batch_id>/close/', paper_views.batch_close, name='paper_batch_close'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/<int:batch_id>/pages/<int:page_id>/image/', paper_views.page_image, name='paper_page_image'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/<int:batch_id>/pages/<int:page_id>/move/', paper_views.page_move, name='paper_page_move'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/<int:batch_id>/pages/<int:page_id>/remove/', paper_views.page_remove, name='paper_page_remove'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/<int:batch_id>/pages/<int:page_id>/assign/', paper_views.page_assign, name='paper_page_assign'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/<int:batch_id>/pages/<int:page_id>/retry/', paper_views.page_retry, name='paper_page_retry'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/<int:batch_id>/sheets/<int:sheet_id>/enter/', paper_views.sheet_enter, name='paper_sheet_enter'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/<int:batch_id>/sheets/<int:sheet_id>/skip/', paper_views.sheet_skip, name='paper_sheet_skip'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/questions/<int:question_id>/text/', analytics_views.analytics_text_answers, name='analytics_text_answers'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/sessions/<int:session_id>/', analytics_views.analytics_session_detail, name='analytics_session_detail'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/table/', analytics_views.analytics_table, name='analytics_table'),

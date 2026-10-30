@@ -1,0 +1,109 @@
+{% load i18n %}{% comment %}The sheet list of a batch (change paper-photo-entry, #495), swapped whole by
+HTMX every 3 s while anything is in flight (`data-in-flight` on the wrapper is what the page's
+hx-trigger reads). Uploads still being split, sheets in seq order, loose pages that could not be
+placed, each with its actions. Pages are dragged between sheets with SortableJS (long-press on
+touch), which posts the move.{% endcomment %}
+<div class="paper-list-inner" data-in-flight="{{ in_flight|yesno:'1,0' }}" data-batch-url="{{ batch_url }}">
+    <div class="paper-counts text-muted small mb-3">
+        <span><strong>{{ counts.review }}</strong> {% trans "to review" %}</span> ·
+        <span><strong>{{ counts.entered }}</strong> {% trans "entered" %}</span> ·
+        <span><strong>{{ counts.skipped }}</strong> {% trans "skipped" %}</span> ·
+        <span><strong>{{ counts.unrecognised }}</strong> {% trans "not recognised" %}</span>
+        {% if counts.failed %} · <span class="text-danger"><strong>{{ counts.failed }}</strong> {% trans "failed" %}</span>{% endif %}
+        {% if in_flight %} · <span class="spinner-border spinner-border-sm" aria-hidden="true"></span> {% trans "reading…" %}{% endif %}
+        {% if next_sheet %}
+        <form method="post" action="{% url 'paper_sheet_enter' survey.uuid batch.pk next_sheet.pk %}" class="d-inline float-right">{% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-primary">{% blocktrans with n=next_sheet.seq %}Review sheet {{ n }}{% endblocktrans %}</button>
+        </form>
+        {% endif %}
+    </div>
+
+    {% for upload in uploads %}
+    <div class="paper-upload alert py-2 {% if upload.status == 'failed' %}alert-danger{% else %}alert-info{% endif %}" role="status">
+        {% if upload.status == 'failed' %}
+            {% blocktrans with name=upload.original_name %}“{{ name }}” failed{% endblocktrans %}: {{ upload.error }}
+        {% else %}
+            <span class="spinner-border spinner-border-sm mr-1" aria-hidden="true"></span>
+            {% blocktrans with name=upload.original_name %}Splitting “{{ name }}” into pages…{% endblocktrans %}
+        {% endif %}
+    </div>
+    {% endfor %}
+    {% if queued_loose %}
+    <div class="paper-upload alert alert-info py-2" role="status">
+        <span class="spinner-border spinner-border-sm mr-1" aria-hidden="true"></span>
+        {% blocktrans count n=queued_loose %}Reading {{ n }} page…{% plural %}Reading {{ n }} pages…{% endblocktrans %}
+    </div>
+    {% endif %}
+
+    {% for sheet in sheets %}
+    <div class="paper-sheet paper-sheet--{{ sheet.status }}" data-sheet="{{ sheet.pk }}">
+        <div class="paper-sheet__head">
+            <strong>{% blocktrans with n=sheet.seq %}Sheet {{ n }}{% endblocktrans %}</strong>
+            {% if sheet.printed_form %}<span class="text-muted small">{{ sheet.printed_form.code }} · v{{ sheet.printed_form.version_number }} · {{ sheet.printed_form.language }}</span>{% endif %}
+            <span class="paper-sheet__state">
+                {% if sheet.status == 'recognising' %}<span class="spinner-border spinner-border-sm" aria-hidden="true"></span> {% trans "reading…" %}
+                {% elif sheet.status == 'review' %}<span class="badge badge-warning text-dark">{% blocktrans count n=sheet.doubtful_count %}{{ n }} field to check{% plural %}{{ n }} fields to check{% endblocktrans %}</span>
+                {% elif sheet.status == 'incomplete' %}<span class="badge badge-danger">{% if sheet.missing %}{% blocktrans with pages=sheet.missing|join:", " %}page {{ pages }} not uploaded{% endblocktrans %}{% elif sheet.duplicates %}{% blocktrans with pages=sheet.duplicates|join:", " %}page {{ pages }} twice — duplicate?{% endblocktrans %}{% else %}{% trans "incomplete" %}{% endif %}</span>
+                {% elif sheet.status == 'entered' %}<span class="badge badge-success">{% trans "entered" %}</span>
+                {% elif sheet.status == 'skipped' %}<span class="badge badge-secondary">{% trans "skipped" %}</span>{% endif %}
+            </span>
+            <span class="paper-sheet__actions">
+                {% if sheet.is_reviewable %}
+                <form method="post" action="{% url 'paper_sheet_enter' survey.uuid batch.pk sheet.pk %}" class="d-inline">{% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-primary">{% if sheet.has_session %}{% trans "Continue" %}{% else %}{% trans "Review" %}{% endif %}</button>
+                </form>
+                <button type="button" class="btn btn-sm btn-outline-secondary" hx-post="{% url 'paper_sheet_skip' survey.uuid batch.pk sheet.pk %}" hx-target="#paper-list" hx-swap="innerHTML" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' hx-confirm="{% trans 'Skip this sheet? Its photos will be deleted.' %}">{% trans "Skip" %}</button>
+                {% endif %}
+            </span>
+        </div>
+        <div class="paper-sheet__pages paper-dropzone" data-sheet="{{ sheet.pk }}">
+            {% for page in sheet.page_rows %}
+            <div class="paper-thumb{% if page.status == 'failed' %} paper-thumb--failed{% endif %}" data-page="{{ page.pk }}" title="{% trans 'Page' %} {{ page.page_number|default:'?' }}">
+                {% if page.image %}<img src="{% url 'paper_page_image' survey.uuid batch.pk page.pk %}" alt="" loading="lazy">{% else %}<span class="paper-thumb__gone"><i class="fas fa-image"></i></span>{% endif %}
+                <span class="paper-thumb__n">{{ page.page_number|default:"?" }}{% if page.pages_total %}/{{ page.pages_total }}{% endif %}</span>
+                {% if page.status == 'failed' %}
+                <button type="button" class="paper-thumb__btn" title="{{ page.error }}" hx-post="{% url 'paper_page_retry' survey.uuid batch.pk page.pk %}" hx-target="#paper-list" hx-swap="innerHTML" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>{% trans "Retry" %}</button>
+                {% endif %}
+                {% if sheet.is_open %}
+                <button type="button" class="paper-thumb__x" title="{% trans 'Remove this page' %}" hx-post="{% url 'paper_page_remove' survey.uuid batch.pk page.pk %}" hx-target="#paper-list" hx-swap="innerHTML" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' hx-confirm="{% trans 'Remove this page from the batch?' %}">&times;</button>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+    {% if batch.is_open %}
+    <div class="paper-sheet paper-sheet--new paper-dropzone" data-sheet="new">
+        <span class="text-muted small">{% trans "Drag a page here to start a new sheet" %}</span>
+    </div>
+    {% endif %}
+
+    {% if loose_pages %}
+    <h3 class="h6 mt-4">{% trans "Not recognised" %}</h3>
+    <p class="text-muted small">{% trans "No form code could be read on these pages, or the code belongs to another survey. Tell us which printed form and page each one is, or remove it." %}</p>
+    <div class="paper-loose">
+        {% for page in loose_pages %}
+        <div class="paper-thumb paper-thumb--loose{% if page.status == 'failed' %} paper-thumb--failed{% endif %}" data-page="{{ page.pk }}">
+            {% if page.image %}<img src="{% url 'paper_page_image' survey.uuid batch.pk page.pk %}" alt="" loading="lazy">{% endif %}
+            {% if page.status == 'failed' %}
+            <div class="small text-danger">{{ page.error }}</div>
+            <button type="button" class="btn btn-sm btn-outline-secondary" hx-post="{% url 'paper_page_retry' survey.uuid batch.pk page.pk %}" hx-target="#paper-list" hx-swap="innerHTML" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>{% trans "Retry" %}</button>
+            {% else %}
+            <form method="post" action="{% url 'paper_page_assign' survey.uuid batch.pk page.pk %}" class="paper-assign" hx-post="{% url 'paper_page_assign' survey.uuid batch.pk page.pk %}" hx-target="#paper-list" hx-swap="innerHTML">{% csrf_token %}
+                <select name="form" class="form-control form-control-sm">
+                    {% for f in printed_forms %}<option value="{{ f.pk }}">{{ f.code }} · v{{ f.version_number }} · {{ f.language }} · {{ f.pages }} {% trans "pages" %}</option>{% endfor %}
+                </select>
+                <input type="number" name="page_number" min="1" value="1" class="form-control form-control-sm" aria-label="{% trans 'Page number' %}">
+                <button type="submit" class="btn btn-sm btn-outline-primary">{% trans "Assign" %}</button>
+            </form>
+            {% endif %}
+            <button type="button" class="paper-thumb__x" title="{% trans 'Remove this page' %}" hx-post="{% url 'paper_page_remove' survey.uuid batch.pk page.pk %}" hx-target="#paper-list" hx-swap="innerHTML" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' hx-confirm="{% trans 'Remove this page from the batch?' %}">&times;</button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if not sheets and not loose_pages and not uploads and not queued_loose %}
+    <p class="text-muted">{% trans "Nothing here yet — drop the first photos above." %}</p>
+    {% endif %}
+</div>

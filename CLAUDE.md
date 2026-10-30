@@ -175,7 +175,36 @@ page carries four 6 mm alignment squares and a **form code** (`MS-<form>-<page>`
 what item 4 (photo marks → coordinates) will read; a reprint of an unchanged survey reuses the row.
 Fixed form strings come from the RESPONDENT catalogs (75; `test_every_printed_form_string_is_translated_in_every_catalog`),
 the dialog's from the creator ones. Event `form_printed` is server-side. The flyer generator #220
-is the next consumer of the same page template and static map.
+is the next consumer of the same page template and static map. `PrintedForm.layout[page]["items"]`
+(since change `paper-photo-entry`) lists what starts on each page — `ItemMarker` flowables record it at
+draw time — so a photographed page is read against exactly those questions; the walk both share is
+`survey/print/structure.py::plan_items`.
+
+**Paper forms from photos (`survey/paper/`, `survey/paper_views.py`; change `paper-photo-entry`, #495;
+epic #350 item 3)**: *Responses → Enter a response ▾ → From photos* opens a `PaperBatch`
+(`/editor/surveys/<uuid>/responses/paper/<id>/`, the operator-entry gate). Four rows: `PaperUpload`
+(one file as received), `PaperPage` (one normalised JPEG ≤ 2200 px on the PRIVATE tier,
+`paper_pages/<uuid>.jpg`, with the form code read off it), `PaperSheet` (the pages of one respondent,
+grouped by upload order + page number — page 1 starts a sheet, a moved page is `pinned`), and
+`SurveySession.paper_sheet`. **The web process never decodes a byte**: the upload view hands the
+file to storage and enqueues `ingest_paper_upload`; `survey/paper/ingest.py` (pypdfium2 for PDFs,
+pillow-heif for HEIC, one page at a time, original deleted after the split) and
+`recognise_paper_page` (QR via zxing-cpp, footer text by the model as a fallback, then ONE vision
+call per page bounded by the page's `items`, `survey/paper/extract.py` + `prompts.py`) run in
+Celery. `LLMProvider.complete_structured(images=[(mime, bytes)])` is the only way an image reaches a
+provider. Every call is an `AIGenerationEvent` (`paper_page` / `paper_code`) and an immediate
+`$ai_generation` (trace `paper-batch-<id>`, `survey/paper/accounting.py`) — PostHog prices it; nothing
+stores dollars. Review IS the operator entry flow: `sheet_enter` creates the session from the printed
+form (version, language, `source='paper'`), `_build_section_context(prefill=…)` fills `initial` for
+questions without an `Answer` row (stored rows always win), `_paper_pane.html` + `js/paper_review.js`
+put the page image on the stage (form layout) or over the map (map layout, *Map* toggle) and mark
+doubtful (`confidence < PAPER_DOUBTFUL_CONFIDENCE` or `unreadable`) and blank fields. Geo questions
+are not read (item 4). Images are deleted when a sheet is entered/skipped (`delete_sheet_images`) and
+by `sweep_paper_batches --delete` (in `reclaim.sh`) after `PAPER_BATCH_TTL_DAYS`; rows stay. Bounds,
+not quota: `PAPER_UPLOAD_MAX_BYTES`, `PAPER_BATCH_MAX_PAGES`; `check_quota(org, 'paper_page')` is
+the seam for an allowance. Events: `paper_batch_created`, `paper_page_recognised`,
+`paper_sheet_entered` (`fields_changed` vs the prefill = the reader's quality signal) — ids and
+counts, never content.
 
 **Reference overlay layers (`SurveyMapLayer`, kill switch `MAP_REFERENCE_LAYERS`)**: creator-uploaded
 GeoJSON rendered read-only beneath answer geometry on four surfaces — the respondent map, the editor

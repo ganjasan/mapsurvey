@@ -4,6 +4,8 @@ says this is not a respondent's page, what is being entered, and offers a way ou
     <span class="operator-entry-bar__label"><i class="fas fa-user-edit" aria-hidden="true"></i>
         {% blocktrans with source=entry_session.get_source_display %}Entering a response · {{ source }}{% endblocktrans %}
         {% if entry_session.survey.canonical_survey_id %} · v{{ entry_session.survey.version_number }}{% endif %}
+        {% if paper_review %} · {% blocktrans with n=paper_sheet.seq %}sheet {{ n }}{% endblocktrans %}
+        <span class="operator-entry-bar__check" data-paper-check-count data-paper-check-label="{% trans '{count} fields to check' %}" hidden></span>{% endif %}
     </span>
     <a class="operator-entry-bar__exit" href="{{ entry_cancel_url }}">{% trans "Stop" %}</a>
 </div>

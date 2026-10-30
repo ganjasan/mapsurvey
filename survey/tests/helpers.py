@@ -176,11 +176,15 @@ class _FakeProvider:
         # set from a single call -- the exact thing the accounting must prove.
         self._usages = list(usages) if usages else None
         self.calls = []
+        # (system, user, schema, images) per call, for tests that read the prompt
+        # or count the images a call carried (paper-photo-entry).
+        self.requests = []
 
-    def complete_structured(self, *, system, user, schema, max_tokens=64000, on_progress=None):
+    def complete_structured(self, *, system, user, schema, max_tokens=64000, on_progress=None, images=None):
         from survey.ai.client import LLMUsage
 
         self.calls.append(user)
+        self.requests.append({'system': system, 'user': user, 'schema': schema, 'images': list(images or ())})
         if self._error is not None:
             raise self._error
         blob = self._blobs.pop(0)
@@ -207,13 +211,13 @@ class _ProgressingProvider(_FakeProvider):
         self._progress_on_first_only = progress_on_first_only
         self._call = 0
 
-    def complete_structured(self, *, system, user, schema, max_tokens=64000, on_progress=None):
+    def complete_structured(self, *, system, user, schema, max_tokens=64000, on_progress=None, images=None):
         self._call += 1
         if on_progress is not None and not (self._progress_on_first_only and self._call > 1):
             for sections, questions in self._steps:
                 on_progress(sections, questions)
         return super().complete_structured(
-            system=system, user=user, schema=schema, max_tokens=max_tokens,
+            system=system, user=user, schema=schema, max_tokens=max_tokens, images=images,
         )
 
 
@@ -227,12 +231,12 @@ class _FlakyProvider(_FakeProvider):
         self._failures = failures
         self.attempts_made = 0
 
-    def complete_structured(self, *, system, user, schema, max_tokens=64000, on_progress=None):
+    def complete_structured(self, *, system, user, schema, max_tokens=64000, on_progress=None, images=None):
         self.attempts_made += 1
         if self.attempts_made <= self._failures:
             raise self._flaky_error
         return super().complete_structured(
-            system=system, user=user, schema=schema, max_tokens=max_tokens,
+            system=system, user=user, schema=schema, max_tokens=max_tokens, images=images,
         )
 
 

@@ -38,15 +38,14 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-from survey.groups import group_runs, groups_for
 from survey.layers import layer_lite
 from survey.models import PrintedForm, TrackedLink
 from survey.print import FONT_BOLD, FONT_REGULAR, register_fonts
 from survey.print import form_code, static_map
-from survey.question_types import GEO_TYPES, SURFACE_RESPONDENT, THUMBS_CHOICES
-from survey.services.sections import ordered
+from survey.print.structure import plan_items
+from survey.question_types import GEO_TYPES, THUMBS_CHOICES
 from survey.versioning import canonical_of
-from survey.visibility import compute_visibility, describe_rule
+from survey.visibility import describe_rule
 
 PAPERS = {PrintedForm.PAPER_A4: A4, PrintedForm.PAPER_LETTER: letter}
 MARGIN = 15 * mm
@@ -163,7 +162,8 @@ class MapFrame(Flowable):
         c.rect(0, 0, self._w, self._h)
         x, y = c.absolutePosition(0, 0)
         spec = self.frame.spec
-        self.records[str(c.getPageNumber())] = {'map': {
+        # setdefault: the page's entry may already hold `items` (ItemMarker).
+        self.records.setdefault(str(c.getPageNumber()), {})['map'] = {
             'x_mm': round(x / mm, 2),
             'y_mm': round((self.page_height - y - self._h) / mm, 2),
             'w_mm': round(self._w / mm, 2),
@@ -172,7 +172,29 @@ class MapFrame(Flowable):
             'zoom': spec.zoom,
             'basemap': spec.basemap if self.frame.basemap_ok else None,
             'section_code': spec.section_code,
-        }}
+        }
+
+
+class ItemMarker(Flowable):
+    """Zero-height flowable that records, at draw time, which page an item
+    starts on: `records[page]["items"]` gets `section:<code>`, `group:<code>` or
+    `question:<code>` in drawing order (change paper-photo-entry, #495). It
+    travels inside the item's KeepTogether so it can never land on the page
+    before the heading it marks. Draw time, not layout time, because platypus
+    may wrap a flowable on one page and move it to the next."""
+
+    def __init__(self, key, records):
+        super().__init__()
+        self.key = key
+        self.records = records
+
+    def wrap(self, availWidth, availHeight):
+        return 0, 0
+
+    def draw(self):
+        items = self.records.setdefault(str(self.canv.getPageNumber()), {}).setdefault('items', [])
+        if self.key not in items:
+            items.append(self.key)
 
 
 # ── page decoration ────────────────────────────────────────────────────────
@@ -403,8 +425,9 @@ def _rule_note(kind, host, survey, ctx):
     return [para(_('Answer only if %(condition)s') % {'condition': condition}, ctx.styles['note'])]
 
 
-def question_block(q, ctx, survey):
-    parts = _question_header(q, ctx) if q.input_type not in ('html',) else []
+def question_block(q, ctx, survey, records=None):
+    parts = [ItemMarker(f'question:{q.code}', records)] if records is not None else []
+    parts += _question_header(q, ctx) if q.input_type not in ('html',) else []
     parts += _rule_note('question', q, survey, ctx)
     parts += QUESTION_SHAPES.get(q.input_type, shape_unknown)(q, ctx)
     return KeepTogether(parts) if parts else Spacer(1, 0)
@@ -519,22 +542,12 @@ class BuildResult:
 
 
 def _structure(survey, language, paper):
-    """(sections → printable runs, hash). Audience-hidden items are left out here
-    so the hash, the PDF and item 3's expectations agree."""
-    vmap = compute_visibility(survey, {}, surface=SURFACE_RESPONDENT)
-    hidden = vmap.audience_hidden
-    plan, digest = [], []
-    for section in ordered(survey):
-        if ('section', section.id) in hidden:
-            continue
-        runs = []
-        for group, members in group_runs(section.questions(), groups_for(section)):
-            if group is not None and ('group', group.id) in hidden:
-                continue
-            members = [q for q in members if ('question', q.id) not in hidden]
-            if group is None and not members:
-                continue
-            runs.append((group, members))
+    """(sections → printable runs, hash). The walk is `structure.plan_items`, shared
+    with the photo reader (change paper-photo-entry), so the hash, the PDF and what
+    a page is read against agree."""
+    plan, digest = plan_items(survey, language), []
+    for section, runs in plan:
+        for group, members in runs:
             digest.append({
                 'g': group.code if group else None,
                 'gt': plain(group.get_translated_title(language)) if group else None,
@@ -545,7 +558,6 @@ def _structure(survey, language, paper):
                        'sub': [[s.code, s.input_type, plain(s.get_translated_name(language))] for s in q.subQuestions()]}
                       for q in members],
             })
-        plan.append((section, runs))
         digest.append({'sec': section.code, 'title': plain(section.get_translated_title(language)),
                        'sub': plain(section.get_translated_subheading(language)), 'layout': section.layout,
                        'rule': section.visibility_rule})
@@ -609,7 +621,9 @@ def build_form(survey, language, paper, *, user=None, base_url=''):
             obj_q = [q for q in all_q if q.input_type == 'layer_objects']
             for i, q in enumerate(geo_q):
                 ctx.letters[q.id] = string.ascii_uppercase[i % 26] * (1 + i // 26)
-            story.append(para(plain(section.get_translated_title(language)) or section.name, styles['section']))
+            story.append(KeepTogether([
+                ItemMarker(f'section:{section.code}', records),
+                para(plain(section.get_translated_title(language)) or section.name, styles['section'])]))
             sub = plain(section.get_translated_subheading(language))
             if sub:
                 story.append(para(sub, styles['help']))
@@ -621,13 +635,15 @@ def build_form(survey, language, paper, *, user=None, base_url=''):
                 story += block
             for group, members in runs:
                 if group is not None:
-                    story.append(para(plain(group.get_translated_title(language)) or 'Group', styles['group']))
+                    story.append(KeepTogether([
+                        ItemMarker(f'group:{group.code}', records),
+                        para(plain(group.get_translated_title(language)) or 'Group', styles['group'])]))
                     desc = plain(group.get_translated_description(language))
                     if desc:
                         story.append(para(desc, styles['help']))
                     story += _rule_note('group', group, survey, ctx)
                 for q in members:
-                    story.append(question_block(q, ctx, survey))
+                    story.append(question_block(q, ctx, survey, records))
             story.append(Spacer(1, 2 * mm))
 
         chrome = PageChrome(
@@ -648,4 +664,5 @@ def build_form(survey, language, paper, *, user=None, base_url=''):
         pages = doc.page
         PrintedForm.objects.filter(pk=form.pk).update(pages=pages, layout=records)
         form.pages, form.layout = pages, records
-    return BuildResult(pdf=pdf, form=form, pages=pages, map_pages=len(records))
+    return BuildResult(pdf=pdf, form=form, pages=pages,
+                       map_pages=sum(1 for rec in records.values() if 'map' in rec))

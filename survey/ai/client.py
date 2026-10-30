@@ -16,6 +16,7 @@ Failure taxonomy mirrors `survey/acquisition.py`:
                    orchestrator's single retry (with a "be more concise"
                    hint) is worth attempting where a network error is not.
 """
+import base64
 import json
 import logging
 import time
@@ -105,6 +106,11 @@ class LLMUsage:
     thinking_tokens: Optional[int] = None
 
 
+def _anthropic_image_block(mime, data):
+    return {"type": "image", "source": {"type": "base64", "media_type": mime,
+                                        "data": base64.b64encode(data).decode('ascii')}}
+
+
 class AnthropicProvider:
     """Anthropic Messages API via the official SDK.
 
@@ -133,15 +139,21 @@ class AnthropicProvider:
         )
         self._model = settings.AI_SURVEY_DRAFT_MODEL
 
-    def complete_structured(self, *, system, user, schema, max_tokens=64000, on_progress=None):
+    def complete_structured(self, *, system, user, schema, max_tokens=64000, on_progress=None, images=None):
         # type: (...) -> Tuple[Dict, LLMUsage]
         started = time.monotonic()
+        # Images (change paper-photo-entry) ride as content blocks before the
+        # text; without them the message is the plain string it always was.
+        content = user
+        if images:
+            content = [_anthropic_image_block(mime, data) for mime, data in images]
+            content.append({"type": "text", "text": user})
         try:
             with self._client.messages.stream(
                 model=self._model,
                 max_tokens=max_tokens,
                 system=system,
-                messages=[{"role": "user", "content": user}],
+                messages=[{"role": "user", "content": content}],
                 output_config={"format": {"type": "json_schema", "schema": schema}},
             ) as stream:
                 if on_progress is not None:
@@ -218,9 +230,9 @@ class GeminiProvider:
         self._api_key = settings.GEMINI_API_KEY
         self._model = settings.GEMINI_MODEL
 
-    def complete_structured(self, *, system, user, schema, max_tokens=64000, on_progress=None):
+    def complete_structured(self, *, system, user, schema, max_tokens=64000, on_progress=None, images=None):
         # type: (...) -> Tuple[Dict, LLMUsage]
-        payload = self._payload(system, user, schema, max_tokens)
+        payload = self._payload(system, user, schema, max_tokens, images=images)
         started = time.monotonic()
         if on_progress is None:
             text, meta, finish_reason, block_reason = self._collect(payload)
@@ -254,7 +266,7 @@ class GeminiProvider:
         except ValueError as exc:
             raise ProviderError('unparseable model output: %s' % exc, transient=True) from exc
 
-    def _payload(self, system, user, schema, max_tokens):
+    def _payload(self, system, user, schema, max_tokens, images=None):
         generation_config = {
             "responseMimeType": "application/json",
             "responseSchema": _to_gemini_schema(schema),
@@ -269,9 +281,16 @@ class GeminiProvider:
             generation_config["thinkingConfig"] = {
                 "thinkingLevel": settings.AI_THINKING_LEVEL,
             }
+        # Images (change paper-photo-entry): inline_data parts BEFORE the text,
+        # the order Google's own examples use for "look at this, then answer".
+        # Without images the body is byte-for-byte what it was before the
+        # parameter existed; the draft's request-shape tests hold it there.
+        parts = [{"inline_data": {"mime_type": mime, "data": base64.b64encode(data).decode('ascii')}}
+                 for mime, data in (images or ())]
+        parts.append({"text": user})
         return {
             "system_instruction": {"parts": [{"text": system}]},
-            "contents": [{"role": "user", "parts": [{"text": user}]}],
+            "contents": [{"role": "user", "parts": parts}],
             "generationConfig": generation_config,
         }
 

@@ -566,7 +566,7 @@ OBSERVATION_FIXED_COLUMNS = (
 )
 SESSION_COLUMNS = (
     'session_id', 'session_start_utc', 'session_end_utc', 'language', 'validation_status',
-    'opened_by_kind', 'source', 'entered_by', 'version', 'tags', 'notes',
+    'opened_by_kind', 'source', 'entered_by', 'paper_batch', 'paper_sheet', 'version', 'tags', 'notes',
 )
 
 
@@ -668,6 +668,9 @@ def sessions_rows(bundle):
                 # change operator-entry: where the answers came from, and who typed them.
                 'source': session.source,
                 'entered_by': session.entered_by.username if session.entered_by_id else '',
+                # change paper-photo-entry: which photographed sheet of which batch.
+                'paper_batch': session.paper_sheet.batch_id if session.paper_sheet_id else '',
+                'paper_sheet': session.paper_sheet.seq if session.paper_sheet_id else '',
                 'version': part.survey.version_number,
                 'tags': '; '.join(session.tags or []),
                 'notes': session.notes or '',

@@ -1,0 +1,54 @@
+{% extends "editor/editor_base.html" %}
+{% load i18n static survey_filters %}
+{% comment %}One batch (change paper-photo-entry, #495): the drop zone, the upload queue, and the
+sheet list that polls itself while the worker is busy. The list is `_sheet_list.html`, swapped
+whole by HTMX; the upload queue is js/paper_batch.js, one request per file.{% endcomment %}
+{% block page_title %}{% blocktrans with n=batch.pk %}Batch #{{ n }}{% endblocktrans %} – {{ survey.name }}{% endblock %}
+
+{% block navbar_content %}
+{% survey_title survey %}
+{% include "editor/partials/_survey_nav_tabs.html" with active_tab="results" %}
+{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/paper_batch.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="paper-batch container py-4" style="max-width: 960px;"
+     id="paper-batch" data-upload-url="{{ upload_url }}" data-status-url="{{ status_url }}"
+     data-list-url="{{ list_url }}" data-max-bytes="{{ max_bytes }}" data-csrf="{{ csrf_token }}"
+     data-open="{{ batch.is_open|yesno:'1,0' }}"
+     data-msg-too-large="{% trans 'Too large' %}" data-msg-failed="{% trans 'Upload failed' %}" data-msg-uploaded="{% trans 'Uploaded' %}">
+    <div class="d-flex align-items-baseline mb-3" style="gap:.75rem;flex-wrap:wrap;">
+        <h2 class="h4 mb-0"><a href="{% url 'paper_batches' survey.uuid %}" class="text-muted">{% trans "Paper forms from photos" %}</a> › {% blocktrans with n=batch.pk %}Batch #{{ n }}{% endblocktrans %}</h2>
+        {% if not batch.is_open %}<span class="badge badge-secondary">{% trans "closed" %}</span>{% endif %}
+        <span class="ml-auto">
+            {% if batch.is_open %}
+            <form method="post" action="{% url 'paper_batch_close' survey.uuid batch.pk %}" class="d-inline"
+                  onsubmit="return confirm('{% trans 'Close this batch? Photos of sheets not yet entered will be deleted.' %}');">{% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-secondary">{% trans "Close batch" %}</button>
+            </form>
+            {% endif %}
+        </span>
+    </div>
+
+    {% if batch.is_open %}
+    <div class="paper-drop" id="paper-drop" tabindex="0">
+        <input type="file" id="paper-files" multiple accept="image/*,.heic,.heif,.pdf" hidden>
+        <i class="fas fa-camera fa-2x mb-2" aria-hidden="true"></i>
+        <p class="mb-1"><strong>{% trans "Drop photos, scans or a PDF here" %}</strong> — {% trans "or" %} <button type="button" class="btn btn-link p-0 align-baseline" id="paper-pick">{% trans "choose files" %}</button></p>
+        <p class="text-muted small mb-0">{% trans "Photograph the whole page, flat, with all four corner marks in the picture. Add more files at any time; sheets are read in the order they arrive." %}</p>
+    </div>
+    <ul class="paper-queue list-unstyled" id="paper-queue"></ul>
+    {% endif %}
+
+    <div id="paper-list" hx-get="{{ list_url }}" hx-trigger="every 3s [document.getElementById('paper-list').dataset.inFlight === '1']" hx-swap="innerHTML">
+        {% include "editor/paper/_sheet_list.html" %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/paper_batch.js' %}"></script>
+{% endblock %}
