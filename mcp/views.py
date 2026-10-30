@@ -1,5 +1,8 @@
 """The MCP endpoint and its RFC 9728 document (design D1-D3).
 
+A browser opening the address (GET, no bearer, `text/html`) is redirected to
+the "Connect your AI agent" page before anything else (#498).
+
 Order of checks on `POST /mcp`, cheapest refusal first and no step before
 authentication reads the body: `Origin` (403) → bearer (401 with the MCP
 `resource_metadata`, 429 from the per-IP failed-bearer budget) → method (405,
@@ -13,6 +16,8 @@ from urllib.parse import urlsplit
 
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
+from django.shortcuts import redirect
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 
 from api.auth import authenticate
@@ -54,8 +59,21 @@ def _error(err, request_id=None, headers=None):
     return _rpc_response(err.http_status, err.body(request_id), headers)
 
 
+def opened_in_browser(request):
+    """A person who clicked the address: GET, no bearer, and a navigation's
+    `Accept`. MCP clients POST, and their GET probe asks for `text/event-stream`."""
+    return (request.method == 'GET'
+            and 'HTTP_AUTHORIZATION' not in request.META
+            and 'text/html' in request.META.get('HTTP_ACCEPT', ''))
+
+
 @csrf_exempt
 def endpoint(request):
+    if opened_in_browser(request):
+        # The address is in letters and in the product; a click lands on the
+        # page that explains where it goes (#498). 302: this is also an API URL.
+        return redirect(reverse('editor_survey_start_agent') + '?from=connections')
+
     origin = request.META.get('HTTP_ORIGIN')
     if origin is not None and not origin_allowed(origin):
         return _error(RpcError(ORIGIN_REFUSED, 'Origin not allowed.', http_status=403))
