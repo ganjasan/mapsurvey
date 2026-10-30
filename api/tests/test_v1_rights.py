@@ -96,12 +96,14 @@ class V1RightsTest(TestCase):
 
     def test_free_workspace_is_pro_required(self):
         """
-        GIVEN a survey in a Free workspace the caller owns
+        GIVEN a survey in a Free workspace the caller owns, whose owners used their Pro trial
         WHEN the caller reads it
         THEN 403 pro_required with the workspace's upgrade link
         """
+        from billing.tests.helpers import trial_used_elsewhere
         free, _ = make_free_org('Free', 'free_owner2')
         Membership.objects.create(user=self.owner, organization=free, role='owner')
+        trial_used_elsewhere(free)
         survey, _ = make_v1_survey(free, self.owner, 'free')
         response = self.api.get(f'/surveys/{survey.uuid}')
         self.assertEqual(response.status_code, 403)

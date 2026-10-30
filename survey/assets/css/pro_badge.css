@@ -1,0 +1,40 @@
+/* The Pro mark (change pro-trial-auto, #508): one look for every Pro control,
+   rendered only by {% pro_badge org "feature" %} (billing/_pro_badge.html).
+   Violet is Pro's own hue -- teal stays the colour of actions, so a filled
+   "free to try" never reads as a second primary button. White on --pro is
+   5.67:1. Loaded by base.html and editor/editor_base.html. */
+:root {
+    --pro: #6D4AE0;
+    --pro-ink: #5A3BC4;
+    --pro-soft: rgba(109, 74, 224, 0.11);
+    --pro-line: rgba(109, 74, 224, 0.35);
+    --pro-lock: #8A94A8;
+    --pro-lock-soft: #F0EEE9;
+    --pro-lock-line: #E4E0D8;
+}
+
+.pro-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.12rem 0.5rem;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    line-height: 1.4;
+    text-transform: uppercase;
+    white-space: nowrap;
+    vertical-align: middle;
+    text-decoration: none;
+}
+.pro-badge:hover { text-decoration: none; }
+.pro-badge svg { width: 11px; height: 11px; flex: none; }
+.pro-badge__extra { font-weight: 600; letter-spacing: 0; text-transform: none; }
+
+.pro-badge--plan { color: var(--pro-ink); border-color: var(--pro-line); }
+.pro-badge--trial { color: var(--pro-ink); background: var(--pro-soft); }
+.pro-badge--startable { color: #fff; background: var(--pro); }
+.pro-badge--locked { color: var(--pro-lock); background: var(--pro-lock-soft); border-color: var(--pro-lock-line); }
+a.pro-badge--locked:hover { color: #5A6680; }

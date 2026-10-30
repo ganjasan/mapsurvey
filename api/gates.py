@@ -12,6 +12,7 @@ from django.conf import settings
 from django.urls import reverse
 
 from billing.entitlements import for_organization
+from billing.trial import may as trial_may
 from survey.models import Membership
 
 from .errors import PRO_REQUIRED, ApiError
@@ -32,8 +33,10 @@ _TRIAL_DETAIL = {
 
 def require_pro_api(principal, organization):
     """Pass when `organization`'s plan includes `api`; otherwise count the call
-    against its live Pro trial (change pro-trial-allowances) and pass when one
-    was left; else raise 403 pro_required naming the trial's state."""
+    against its live Pro trial (change pro-trial-allowances) -- or start the
+    trial with it when the workspace never had one (change pro-trial-auto) --
+    and pass when one was left; else raise 403 pro_required naming the trial's
+    state."""
     from billing import trial
 
     if organization is not None:
@@ -45,7 +48,7 @@ def require_pro_api(principal, organization):
         counted = principal.__dict__.setdefault('_trial_counted', set()) if principal is not None else set()
         if organization.pk in counted:
             return
-        if trial.consume(organization, FEATURE, actor=getattr(principal, 'user', None)):
+        if trial.use(organization, FEATURE, actor=getattr(principal, 'user', None)):
             counted.add(organization.pk)
             return
     state = trial.refusal(organization) if organization is not None else 'none'
@@ -65,7 +68,7 @@ def pro_organizations(principal):
         memberships = memberships.filter(organization=principal.organization)
     allowed, hidden = [], 0
     for m in memberships:
-        if for_organization(m.organization).may(FEATURE):
+        if trial_may(m.organization, FEATURE):
             allowed.append(m.organization)
         else:
             hidden += 1

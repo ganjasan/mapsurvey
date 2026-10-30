@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pro mark colours</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --text: #1B2A4A; --text-2: #5A6680; --text-3: #8A94A8;
+  --bg: #F7F5F0; --card: #FFFFFF; --border: #E4E0D8;
+  --accent: #0FA58E; --accent-hover: #0D8F7A;
+  --lock: #8A94A8; --lock-soft: #F0EEE9;
+}
+/* The only thing that differs between the variants: the Pro hue. */
+.v-teal   { --pro: #0FA58E; --pro-ink: #0D8F7A; --pro-soft: rgba(15,165,142,.12); --pro-line: rgba(15,165,142,.35); }
+.v-violet { --pro: #6D4AE0; --pro-ink: #5A3BC4; --pro-soft: rgba(109,74,224,.11); --pro-line: rgba(109,74,224,.35); }
+.v-gold   { --pro: #C98A12; --pro-ink: #8F5F00; --pro-soft: rgba(201,138,18,.14); --pro-line: rgba(201,138,18,.45); }
+
+* { box-sizing: border-box; }
+body { margin: 0; padding: 32px 16px 64px; font-family: 'Instrument Sans', system-ui, sans-serif; color: var(--text); background: var(--bg); }
+main { max-width: 1180px; margin: 0 auto; }
+h1 { font-size: 1.6rem; margin: 0 0 .25rem; }
+p.lead { color: var(--text-2); margin: 0 0 1.5rem; max-width: 62rem; line-height: 1.5; }
+.cols { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; }
+@media (max-width: 900px) { .cols { grid-template-columns: 1fr; } }
+.col { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px 22px; }
+.col > h2 { margin: 0 0 .2rem; font-size: 1.05rem; display: flex; align-items: center; gap: .5rem; }
+.col > h2 i { width: 14px; height: 14px; border-radius: 50%; background: var(--pro); display: inline-block; }
+.col > .verdict { font-size: .82rem; color: var(--text-2); line-height: 1.45; margin: 0 0 1rem; min-height: 3.6em; }
+.sec { border-top: 1px solid var(--border); padding-top: .85rem; margin-top: .85rem; }
+.sec h3 { margin: 0 0 .6rem; font-size: .72rem; color: var(--text-3); text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
+.states { display: grid; grid-template-columns: auto 1fr; gap: .55rem .75rem; align-items: center; font-size: .8rem; color: var(--text-2); }
+
+.pro-badge {
+  display: inline-flex; align-items: center; gap: .3rem; justify-self: start;
+  padding: .12rem .5rem; border-radius: 999px;
+  font-size: .68rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+  line-height: 1.4; white-space: nowrap; vertical-align: middle; text-decoration: none;
+  border: 1px solid transparent;
+}
+.pro-badge svg { width: 11px; height: 11px; flex: none; }
+.pro-badge .pb-extra { text-transform: none; letter-spacing: 0; font-weight: 600; }
+.pro-badge--plan { color: var(--pro-ink); border-color: var(--pro-line); }
+.pro-badge--trial { color: var(--pro-ink); background: var(--pro-soft); }
+.pro-badge--startable { color: #fff; background: var(--pro); }
+.pro-badge--locked { color: var(--lock); background: var(--lock-soft); border-color: var(--border); }
+
+.row { display: flex; gap: .7rem; align-items: flex-start; }
+.row label { font-weight: 600; font-size: .88rem; display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
+.row .help { font-size: .78rem; color: var(--text-2); margin-top: .2rem; }
+.switch { width: 36px; height: 20px; border-radius: 999px; background: var(--accent); position: relative; flex: none; margin-top: 2px; }
+.switch::after { content: ""; position: absolute; right: 2px; top: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; }
+.toolbar { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.btn { display: inline-flex; align-items: center; gap: .45rem; padding: .45rem .8rem; border-radius: 8px; font: inherit; font-size: .84rem; font-weight: 600; border: 1px solid var(--border); background: #fff; color: var(--text); }
+.btn--primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.menu { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 6px; }
+.menu a { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .45rem .55rem; border-radius: 6px; color: var(--text); text-decoration: none; font-size: .85rem; }
+.toast { display: flex; gap: .6rem; align-items: flex-start; padding: .75rem .85rem; border-radius: 10px; background: #fff; border: 1px solid var(--pro); font-size: .8rem; color: var(--text-2); line-height: 1.45; }
+.toast b { display: block; color: var(--text); margin-bottom: .15rem; font-size: .85rem; }
+</style>
+</head>
+<body>
+<main>
+<h1>Цвет пометки Pro: три варианта</h1>
+<p class="lead">Всё одинаково, кроме цвета Pro. Рядом с пометкой специально стоит основная бирюзовая кнопка «Опубликовать»: так видно, не сливается ли «free to try» с главным действием страницы. Состояние «Закрыто» везде серое, на него цвет не влияет.</p>
+
+<div class="cols">
+<!-- one column per variant; markup identical -->
+<section class="col v-teal">
+  <h2><i></i>Бирюзовый (фирменный)</h2>
+  <p class="verdict">Совпадает с полосой триала и кнопками. Но «free to try» выглядит как ещё одна основная кнопка, и Pro не узнаётся как отдельная вещь.</p>
+  <div class="sec"><h3>Состояния</h3>
+    <div class="states">
+      <span class="pro-badge pro-badge--plan">Pro</span><span>план</span>
+      <span class="pro-badge pro-badge--trial">Pro trial <span class="pb-extra">· 27 left</span></span><span>идёт триал</span>
+      <span class="pro-badge pro-badge--startable"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l1.8 5.2L15 7l-5.2 1.8L8 14l-1.8-5.2L1 7l5.2-1.8z"/></svg>Pro <span class="pb-extra">· free to try</span></span><span>можно попробовать</span>
+      <span class="pro-badge pro-badge--locked"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 7V5a4 4 0 118 0v2h1v8H3V7h1zm2 0h4V5a2 2 0 10-4 0v2z"/></svg>Pro</span><span>закрыто</span>
+    </div></div>
+  <div class="sec"><h3>Настройки → брендинг</h3>
+    <div class="row"><div class="switch"></div><div><label>Бейдж «Made with Mapsurvey» <span class="pro-badge pro-badge--startable"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l1.8 5.2L15 7l-5.2 1.8L8 14l-1.8-5.2L1 7l5.2-1.8z"/></svg>Pro <span class="pb-extra">· free to try</span></span></label><div class="help">Выключите, чтобы опрос выглядел без нашей ссылки.</div></div></div></div>
+  <div class="sec"><h3>Ответы → панель</h3>
+    <div class="toolbar"><button class="btn btn--primary">Опубликовать</button><button class="btn">Ввести ответ <span class="pro-badge pro-badge--startable"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l1.8 5.2L15 7l-5.2 1.8L8 14l-1.8-5.2L1 7l5.2-1.8z"/></svg>Pro</span></button><button class="btn">Ввести ответ <span class="pro-badge pro-badge--trial">Pro trial <span class="pb-extra">· 27</span></span></button></div></div>
+  <div class="sec"><h3>Меню «?»</h3>
+    <div class="menu"><a href="#">Центр помощи</a><a href="#">Попросить команду <span class="pro-badge pro-badge--plan">Pro</span></a></div></div>
+  <div class="sec"><h3>Уведомление о старте</h3>
+    <div class="toast"><span class="pro-badge pro-badge--trial">Pro trial</span><div><b>Вы запустили Pro-триал воркспейса</b>До 28 января: 500 вызовов API, 1 запрос к команде.</div></div></div>
+</section>
+
+<section class="col v-violet">
+  <h2><i></i>Фиолетовый</h2>
+  <p class="verdict">Pro сразу отличается от действий интерфейса: «премиум» без крикливости. Хорошо смотрится рядом с бирюзовым и в тёмной теме.</p>
+  <div class="sec"><h3>Состояния</h3>
+    <div class="states">
+      <span class="pro-badge pro-badge--plan">Pro</span><span>план</span>
+      <span class="pro-badge pro-badge--trial">Pro trial <span class="pb-extra">· 27 left</span></span><span>идёт триал</span>
+      <span class="pro-badge pro-badge--startable"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l1.8 5.2L15 7l-5.2 1.8L8 14l-1.8-5.2L1 7l5.2-1.8z"/></svg>Pro <span class="pb-extra">· free to try</span></span><span>можно попробовать</span>
+      <span class="pro-badge pro-badge--locked"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 7V5a4 4 0 118 0v2h1v8H3V7h1zm2 0h4V5a2 2 0 10-4 0v2z"/></svg>Pro</span><span>закрыто</span>
+    </div></div>
+  <div class="sec"><h3>Настройки → брендинг</h3>
+    <div class="row"><div class="switch"></div><div><label>Бейдж «Made with Mapsurvey» <span class="pro-badge pro-badge--startable"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l1.8 5.2L15 7l-5.2 1.8L8 14l-1.8-5.2L1 7l5.2-1.8z"/></svg>Pro <span class="pb-extra">· free to try</span></span></label><div class="help">Выключите, чтобы опрос выглядел без нашей ссылки.</div></div></div></div>
+  <div class="sec"><h3>Ответы → панель</h3>
+    <div class="toolbar"><button class="btn btn--primary">Опубликовать</button><button class="btn">Ввести ответ <span class="pro-badge pro-badge--startable"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l1.8 5.2L15 7l-5.2 1.8L8 14l-1.8-5.2L1 7l5.2-1.8z"/></svg>Pro</span></button><button class="btn">Ввести ответ <span class="pro-badge pro-badge--trial">Pro trial <span class="pb-extra">· 27</span></span></button></div></div>
+  <div class="sec"><h3>Меню «?»</h3>
+    <div class="menu"><a href="#">Центр помощи</a><a href="#">Попросить команду <span class="pro-badge pro-badge--plan">Pro</span></a></div></div>
+  <div class="sec"><h3>Уведомление о старте</h3>
+    <div class="toast"><span class="pro-badge pro-badge--trial">Pro trial</span><div><b>Вы запустили Pro-триал воркспейса</b>До 28 января: 500 вызовов API, 1 запрос к команде.</div></div></div>
+</section>
+
+<section class="col v-gold">
+  <h2><i></i>Золотой</h2>
+  <p class="verdict">Классический «премиум» и самый заметный. Но легко читается как предупреждение, а белый текст на золоте менее контрастный (на «free to try» нужен шрифт пожирнее).</p>
+  <div class="sec"><h3>Состояния</h3>
+    <div class="states">
+      <span class="pro-badge pro-badge--plan">Pro</span><span>план</span>
+      <span class="pro-badge pro-badge--trial">Pro trial <span class="pb-extra">· 27 left</span></span><span>идёт триал</span>
+      <span class="pro-badge pro-badge--startable"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l1.8 5.2L15 7l-5.2 1.8L8 14l-1.8-5.2L1 7l5.2-1.8z"/></svg>Pro <span class="pb-extra">· free to try</span></span><span>можно попробовать</span>
+      <span class="pro-badge pro-badge--locked"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 7V5a4 4 0 118 0v2h1v8H3V7h1zm2 0h4V5a2 2 0 10-4 0v2z"/></svg>Pro</span><span>закрыто</span>
+    </div></div>
+  <div class="sec"><h3>Настройки → брендинг</h3>
+    <div class="row"><div class="switch"></div><div><label>Бейдж «Made with Mapsurvey» <span class="pro-badge pro-badge--startable"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l1.8 5.2L15 7l-5.2 1.8L8 14l-1.8-5.2L1 7l5.2-1.8z"/></svg>Pro <span class="pb-extra">· free to try</span></span></label><div class="help">Выключите, чтобы опрос выглядел без нашей ссылки.</div></div></div></div>
+  <div class="sec"><h3>Ответы → панель</h3>
+    <div class="toolbar"><button class="btn btn--primary">Опубликовать</button><button class="btn">Ввести ответ <span class="pro-badge pro-badge--startable"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l1.8 5.2L15 7l-5.2 1.8L8 14l-1.8-5.2L1 7l5.2-1.8z"/></svg>Pro</span></button><button class="btn">Ввести ответ <span class="pro-badge pro-badge--trial">Pro trial <span class="pb-extra">· 27</span></span></button></div></div>
+  <div class="sec"><h3>Меню «?»</h3>
+    <div class="menu"><a href="#">Центр помощи</a><a href="#">Попросить команду <span class="pro-badge pro-badge--plan">Pro</span></a></div></div>
+  <div class="sec"><h3>Уведомление о старте</h3>
+    <div class="toast"><span class="pro-badge pro-badge--trial">Pro trial</span><div><b>Вы запустили Pro-триал воркспейса</b>До 28 января: 500 вызовов API, 1 запрос к команде.</div></div></div>
+</section>
+</div>
+</main>
+</body>
+</html>

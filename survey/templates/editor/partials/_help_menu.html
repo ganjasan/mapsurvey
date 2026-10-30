@@ -26,5 +26,6 @@ is the per-template visibility class (`nav-desktop`, `d-none d-md-inline-block`)
         {% elif CONTACT_EMAIL %}
         <a class="dropdown-item" href="mailto:{{ CONTACT_EMAIL }}"><i class="fas fa-envelope" style="margin-right:4px;"></i>{% trans "Email support" %}</a>
         {% endif %}
+        {% include "billing/_help_entries.html" %}
     </div>
 </div>

@@ -64,11 +64,12 @@ def update_settings(actor, survey, data, files=None, *, partial=False):
     locks.assert_settings_editable(survey)
     form = validate(bind(SurveyHeaderForm, data, files, instance=survey, partial=partial))
     # Switching the badge off without the plan spends one Pro-trial switch-off
-    # (change pro-trial-allowances). Inside this transaction, so a refused save
-    # gives the use back.
+    # (change pro-trial-allowances) -- or starts the workspace's trial with it
+    # (change pro-trial-auto). Inside this transaction, so a refused save gives
+    # the use back and leaves no trial behind.
     if form.consumes_unbranded():
         from billing import trial
-        if not trial.consume(survey.organization, 'unbranded', actor=actor.user):
+        if not trial.use(survey.organization, 'unbranded', actor=actor.user):
             form.add_error('show_branding', _('Your Pro trial has used its switch-off of the badge.'))
             raise ValidationFailed(form.errors, form=form)
     form.save()

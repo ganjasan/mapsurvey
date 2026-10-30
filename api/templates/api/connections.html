@@ -1,5 +1,5 @@
 {% extends "editor/editor_base.html" %}
-{% load i18n %}
+{% load i18n billing_tags %}
 {% comment %}API & connections (openspec: auth-core, D9; #379).
 
 Personal tokens: list, create (value shown once, from the session), revoke.
@@ -65,9 +65,11 @@ that refuse cookies, not this one.{% endcomment %}
   <p class="cx-assistant"><i class="fas fa-robot" style="margin-right:4px;"></i><a href="{% url 'editor_survey_start_agent' %}?from=connections">{% trans "Use your AI assistant — connect Claude, ChatGPT or another assistant" %}</a></p>
 
   <div class="cx-card">
-    <h1>{% trans "Personal access tokens" %}</h1>
+    <h1>{% trans "Personal access tokens" %} {% if active_org %}{% pro_badge active_org "api" %}{% endif %}</h1>
     <p class="cx-hint">{% trans "A token lets a script, a GIS tool or an AI agent act as you — within the permissions you pick, on the workspaces you allow, and only while the workspace that owns the survey is on Pro." %}</p>
-    {% if not any_pro %}
+    {% if not any_pro and any_trial_api %}
+    <div class="cx-note">{% blocktrans %}Your workspaces are on the Free plan. The first API or MCP call on a survey of a workspace that has never had a Pro trial starts it — no card needed.{% endblocktrans %}</div>
+    {% elif not any_pro %}
     <div class="cx-note">{% blocktrans %}Your workspaces are on the Free plan. You can create tokens now; API calls on a survey will answer <code>pro_required</code> until that survey's workspace upgrades to Pro.{% endblocktrans %}</div>
     {% endif %}
 

@@ -12,10 +12,10 @@ billing/_trial_offer.html instead.
     <span class="trial-band__eyebrow">{% trans "Pro trial" %}</span>
     {% if trial.state == 'available' %}
       <h2 class="trial-band__title" id="pro-trial-title">{% blocktrans count days=trial.days %}Try Pro free for {{ days }} day{% plural %}Try Pro free for {{ days }} days{% endblocktrans %}</h2>
-      <p class="trial-band__sub">{% trans "Not a number of days of Pro, but a number of uses of each Pro extra. Use them when your project needs them." %}</p>
+      <p class="trial-band__sub">{% trans "Not a number of days of Pro, but a number of uses of each Pro extra. Use them when your project needs them." %} {% trans "It starts by itself the first time anyone in this workspace uses one of them." %}</p>
     {% elif trial.state == 'live' %}
       <h2 class="trial-band__title" id="pro-trial-title">{% blocktrans count days=trial.days_left %}{{ days }} day left{% plural %}{{ days }} days left{% endblocktrans %}</h2>
-      <p class="trial-band__sub">{% blocktrans with date=trial.grant.expires_at|date:"j F Y" %}The trial ends on {{ date }}.{% endblocktrans %} {% trans "Surveys you made unbranded during the trial show the Mapsurvey badge again when it ends. Nothing else changes." %}</p>
+      <p class="trial-band__sub">{% blocktrans with date=trial.grant.expires_at|date:"j F Y" %}The trial ends on {{ date }}.{% endblocktrans %}{% if trial.started_how %} {{ trial.started_how }}{% endif %} {% trans "Surveys you made unbranded during the trial show the Mapsurvey badge again when it ends. Nothing else changes." %}</p>
     {% elif trial.state == 'exhausted' %}
       <h2 class="trial-band__title" id="pro-trial-title">{% trans "Your Pro trial is used up" %}</h2>
       <p class="trial-band__sub">{% trans "This workspace's Pro trial has used everything it included." %} {% trans "Upgrade below to keep the Pro extras." %}</p>
@@ -38,11 +38,17 @@ billing/_trial_offer.html instead.
     <ul class="trial-band__tiles">
       {% for m in trial.meters %}
       <li class="trial-tile{% if m.remaining == 0 %} trial-tile--spent{% endif %}">
+        {% if m.capped %}
         <span class="trial-tile__figure">{{ m.used }}<span class="trial-tile__of"> / {{ m.limit }}</span></span>
         <span class="trial-tile__label">{{ m.label }}</span>
         {% if m.remaining == 0 %}<span class="trial-tile__detail">{% trans "All used." %}</span>{% elif m.detail %}<span class="trial-tile__detail">{{ m.detail }}</span>{% endif %}
         <span class="trial-tile__meter" role="progressbar" aria-valuemin="0" aria-valuemax="{{ m.limit }}" aria-valuenow="{{ m.used }}" aria-label="{{ m.label }}"><span style="width:{{ m.pct }}%"></span></span>
         <span class="trial-tile__note">{% blocktrans with label=m.label used=m.used limit=m.limit %}{{ label }}: {{ used }} of {{ limit }} used{% endblocktrans %}</span>
+        {% else %}
+        <span class="trial-tile__figure">{{ m.used }}<span class="trial-tile__of"> · {% trans "no limit" %}</span></span>
+        <span class="trial-tile__label">{{ m.label }}</span>
+        {% if m.detail %}<span class="trial-tile__detail">{{ m.detail }}</span>{% endif %}
+        {% endif %}
       </li>
       {% endfor %}
     </ul>
@@ -55,9 +61,9 @@ billing/_trial_offer.html instead.
         {% csrf_token %}
         <button type="submit" class="trial-band__btn">{% trans "Try Pro" %}</button>
       </form>
-      <p class="trial-band__fine">{% trans "No card needed. One trial per person. Your workspace stays on Free when it ends." %}</p>
+      <p class="trial-band__fine">{% trans "No card needed. One trial per workspace owner. Your workspace stays on Free when it ends." %}</p>
     {% else %}
-      <p class="trial-band__fine">{% trans "The workspace owner can start it from Plan & billing." %}</p>
+      <p class="trial-band__fine">{% trans "No card needed. It starts with the first Pro use; the workspace owner gets an e-mail." %}</p>
     {% endif %}
   </div>
   {% endif %}

@@ -9570,3 +9570,92 @@ msgstr "Tämä kysely ei ole vielä auki."
 #, python-format
 msgid "It opens on %(when)s (%(zone)s)."
 msgstr "Se avautuu %(when)s (%(zone)s)."
+
+#: survey/templates/editor/survey_settings.html
+msgid "Switching the badge off starts your workspace's free Pro trial — no card needed."
+msgstr "Merkin poistaminen käynnistää työtilasi ilmaisen Pro-kokeilun – korttia ei tarvita."
+
+#: survey/templates/editor/survey_settings.html
+msgid "What the trial includes"
+msgstr "Mitä kokeilu sisältää"
+
+#: billing/templates/billing/_help_entries.html
+msgid "Suggest an idea or report a bug"
+msgstr "Ehdota ideaa tai ilmoita virheestä"
+
+#: billing/templates/billing/_help_entries.html
+msgid "Idea or bug report"
+msgstr "Idea tai virheilmoitus"
+
+#: billing/templates/billing/_help_entries.html
+#: billing/features.py
+msgid "Advice on your survey and results"
+msgstr "Neuvoja kyselyysi ja sen tuloksiin"
+
+#: billing/templates/billing/_pro_badge.html
+msgid "Included in your Pro plan."
+msgstr "Sisältyy Pro-tilaukseesi."
+
+#: billing/templates/billing/_pro_badge.html
+#, python-format
+msgid "Part of your free Pro trial, until %(date)s."
+msgstr "Osa ilmaista Pro-kokeiluasi, %(date)s asti."
+
+#: billing/templates/billing/_pro_badge.html
+#, python-format
+msgid "until %(date)s"
+msgstr "%(date)s asti"
+
+#: billing/templates/billing/_pro_badge.html
+#, python-format
+msgid "%(n)s left"
+msgstr "jäljellä %(n)s"
+
+#: billing/templates/billing/_pro_badge.html
+msgid "A Pro feature. The first use starts the free Pro trial of this workspace — no card needed."
+msgstr "Pro-ominaisuus. Ensimmäinen käyttö käynnistää tämän työtilan ilmaisen Pro-kokeilun – korttia ei tarvita."
+
+#: billing/templates/billing/_pro_badge.html
+msgid "free to try"
+msgstr "kokeile ilmaiseksi"
+
+#: billing/templates/billing/_pro_badge.html
+msgid "A Pro feature. See Plan & billing."
+msgstr "Pro-ominaisuus. Katso Tilaus ja laskutus."
+
+#: billing/trial.py
+#, python-format
+msgid "You started the free Pro trial of %(org)s. Until %(date)s it includes %(what)s."
+msgstr "Käynnistit työtilan %(org)s ilmaisen Pro-kokeilun. %(date)s asti se sisältää: %(what)s."
+
+#: billing/trial.py
+msgid "We sent you an e-mail with the details."
+msgstr "Lähetimme sinulle sähköpostin, jossa on lisätiedot."
+
+#: billing/trial.py
+msgid "The workspace owner got an e-mail about it."
+msgstr "Työtilan omistaja sai tästä sähköpostin."
+
+#: billing/trial.py
+msgid "no limit"
+msgstr "ei rajaa"
+
+#: billing/trial.py
+msgid "Paper responses entered"
+msgstr "Syötetyt paperivastaukset"
+
+#: billing/trial.py
+msgid "API and MCP calls"
+msgstr "API- ja MCP-kutsut"
+
+#: billing/trial.py
+msgid "Surveys without the Mapsurvey badge"
+msgstr "Kyselyt ilman Mapsurvey-merkkiä"
+
+#: billing/trial.py
+msgid "Requests to the Mapsurvey team"
+msgstr "Pyynnöt Mapsurvey-tiimille"
+
+#: api/templates/api/connections.html
+msgid "Your workspaces are on the Free plan. The first API or MCP call on a survey of a workspace that has never had a Pro trial starts it — no card needed."
+msgstr "Työtilasi ovat Free-tilauksessa. Ensimmäinen API- tai MCP-kutsu sellaisen työtilan kyselyyn, jolla ei ole koskaan ollut Pro-kokeilua, käynnistää sen – korttia ei tarvita."

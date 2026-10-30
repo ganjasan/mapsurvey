@@ -130,12 +130,14 @@ class ToolsTest(TestCase):
 
     def test_free_workspace_is_pro_required_and_get_me_says_so(self):
         """
-        GIVEN a survey in a Free workspace the caller owns
+        GIVEN a survey in a Free workspace the caller owns, whose owners used their Pro trial
         WHEN get_survey is called, and get_me
         THEN pro_required with that workspace's upgrade_url; get_me lists it with plan free and api false
         """
+        from billing.tests.helpers import trial_used_elsewhere
         free, free_owner = make_free_org()
         Membership.objects.create(user=self.owner, organization=free, role='owner')
+        trial_used_elsewhere(free)
         survey, _ = make_v1_survey(free, self.owner, 'free_survey')
         envelope = error_of(self.mcp.call('get_survey', {'survey': str(survey.uuid)}))
         self.assertEqual(envelope['error'], 'pro_required')

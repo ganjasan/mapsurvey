@@ -31,10 +31,11 @@ FEATURES = {
     # -- only for organisations that hold this.
     'unbranded': Feature('unbranded', frozenset({PLAN_PRO}),
                          _('Remove "Made with Mapsurvey" from your surveys')),
-    # Pro is a service tier: the request form through which a Pro organisation
-    # asks for consulting, analysis or a report.
+    # The request form through which a Pro organisation asks the team for advice
+    # on its survey and results. Named by what the creator gets (change
+    # pro-trial-auto, #438): hands-on work is quoted, never "reports included".
     'pro_help': Feature('pro_help', frozenset({PLAN_PRO}),
-                        _('Consulting, analysis and reports from the Mapsurvey team')),
+                        _('Advice on your survey and results')),
     # Programmatic access (change auth-core, #379): the REST API, the MCP server
     # and what personal tokens or OAuth grants can reach. Checked at the
     # resource per request on the organisation that owns the object -- never
@@ -52,7 +53,9 @@ FEATURES = {
 
 
 # The Pro trial (change pro-trial-allowances, #471): not a period of Pro but a
-# number of uses of each feature, valid for TRIAL_DAYS from the owner's click.
+# number of uses of each feature, valid for TRIAL_DAYS from its start -- the
+# owner's click or, since change pro-trial-auto (#508), the first Pro use any
+# member makes. `None` puts a feature in the trial without a cap.
 # A feature missing here is not part of the trial. An EMPTY dict means the trial
 # is not offered at all (no button, the claim endpoint 404s) while grants that
 # were already claimed keep serving until they expire -- the rollback. A new
@@ -62,6 +65,9 @@ TRIAL_ALLOWANCES = {
     'api': 500,        # REST requests and MCP tool calls that pass the Pro gate
     'unbranded': 1,    # badge switch-offs (True -> False on a survey)
     'pro_help': 1,     # stored help requests
+    # Operator sessions entered (change pro-trial-auto): starts the trial and is
+    # counted, but has no cap until paper parsing (#495) brings the paper limit.
+    'operator_entry': None,
 }
 TRIAL_DAYS = 90
 

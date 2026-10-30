@@ -29,6 +29,25 @@ def make_org(name='Billing Org', owner_username='bill_owner'):
     return org, owner
 
 
+def trial_used_elsewhere(*orgs):
+    """Make each workspace NOT startable (change pro-trial-auto): every owner has
+    already used their trial in a throwaway workspace, expired. Tests of what a
+    Free workspace without a trial is refused call this; otherwise the first
+    Pro use would start the owner's trial."""
+    from django.utils import timezone
+
+    from ..models import GRANT_KIND_TRIAL, EntitlementGrant
+
+    past = timezone.now() - timedelta(days=200)
+    for org in orgs:
+        for m in Membership.objects.filter(organization=org, role='owner').select_related('user'):
+            if EntitlementGrant.objects.filter(kind=GRANT_KIND_TRIAL, claimed_by=m.user).exists():
+                continue
+            spare = Organization.objects.create(name=f'Spent {m.user.username}', slug=f'spent-{m.user.pk}')
+            EntitlementGrant.objects.create(organization=spare, kind=GRANT_KIND_TRIAL, claimed_by=m.user,
+                                            starts_at=past, expires_at=past + timedelta(days=90))
+
+
 def iso(dt):
     return dt.strftime('%Y-%m-%dT%H:%M:%S.000')
 

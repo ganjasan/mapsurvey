@@ -165,20 +165,24 @@ class EntitlementsTest(TestCase):
     def test_decorator_admits_a_live_trial(self):
         """
         GIVEN a view decorated with require_feature("pro_help")
-        WHEN a member of a Free organisation calls it before and after the owner claims a trial
-        THEN the first call is 403 and the second runs the view
+        WHEN a member of a Free organisation calls it while its trial can start, while it is live, and after it ended
+        THEN the first call runs the view without starting anything, the second runs it, the third is 403
         """
         from django.http import HttpResponse
         from django.test import RequestFactory
         from ..gates import require_feature
+        from ..models import EntitlementGrant
         from ..trial import claim
         view = require_feature('pro_help', lambda request: self.org)(lambda request: HttpResponse('ran'))
         request = RequestFactory().get('/x/')
         request.user = self.owner
-        self.assertEqual(view(request).status_code, 403)
-        claim(self.org, self.owner)
-        ents.forget(self.org)
         self.assertEqual(view(request).content, b'ran')
+        self.assertFalse(EntitlementGrant.objects.exists())
+        grant = claim(self.org, self.owner)
+        self.assertEqual(view(request).content, b'ran')
+        EntitlementGrant.objects.filter(pk=grant.pk).update(expires_at=grant.starts_at)
+        ents.forget(self.org)
+        self.assertEqual(view(request).status_code, 403)
 
 
 class NotifyLapsedTest(TestCase):
@@ -199,3 +203,141 @@ class NotifyLapsedTest(TestCase):
         self.assertEqual([c.args[0] for c in emit.call_args_list], ['plan_lapsed'])
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn('has ended', mail.outbox[0].subject)
+
+
+class ProBadgeTest(TestCase):
+    """The one Pro mark (change pro-trial-auto)."""
+
+    def setUp(self):
+        self.org, self.owner = make_org()
+
+    def _render(self, key, **ctx):
+        t = Template('{% load billing_tags %}{% pro_badge org key %}')
+        ents.forget(self.org)
+        if hasattr(self.org, '_trial_startable'):
+            del self.org._trial_startable
+        return t.render(Context({'org': self.org, 'key': key, **ctx}))
+
+    def test_four_states(self):
+        """
+        GIVEN the api feature on a startable Free workspace, then with a live trial at 20 of 500, then after
+              the trial expired, then on Pro
+        WHEN the tag renders
+        THEN it reads "free to try", "Pro trial · 480 left", a locked Pro linking to Plan & billing, and "Pro"
+        """
+        from ..models import EntitlementGrant, GrantAllowance
+        from ..trial import claim
+        html = self._render('api')
+        self.assertIn('data-pro-state="startable"', html)
+        self.assertIn('free to try', html)
+        grant = claim(self.org, self.owner)
+        GrantAllowance.objects.filter(grant=grant, feature='api').update(used=20)
+        html = self._render('api')
+        self.assertIn('data-pro-state="trial"', html)
+        self.assertIn('480 left', html)
+        EntitlementGrant.objects.filter(pk=grant.pk).update(expires_at=timezone.now() - timedelta(seconds=1))
+        html = self._render('api')
+        self.assertIn('data-pro-state="locked"', html)
+        self.assertIn(f'/org/{self.org.slug}/billing/', html)
+        _sub(self.org)
+        html = self._render('api')
+        self.assertIn('data-pro-state="plan"', html)
+
+    def test_uncapped_feature_shows_the_end_date(self):
+        """
+        GIVEN a live trial ending on a known day
+        WHEN the tag renders for operator_entry (uncapped)
+        THEN it reads "Pro trial · until <day>" with no count
+        """
+        from ..models import EntitlementGrant
+        from ..trial import claim
+        grant = claim(self.org, self.owner)
+        end = timezone.now() + timedelta(days=10)
+        EntitlementGrant.objects.filter(pk=grant.pk).update(expires_at=end)
+        html = self._render('operator_entry')
+        self.assertIn('data-pro-state="trial"', html)
+        self.assertIn('until', html)
+        self.assertNotIn('left', html)
+
+    def test_locked_inside_a_link_is_a_span(self):
+        """
+        GIVEN a workspace whose owner used their trial elsewhere
+        WHEN the tag renders with link=False
+        THEN the locked mark is a span, not a nested link
+        """
+        from .helpers import trial_used_elsewhere
+        trial_used_elsewhere(self.org)
+        t = Template('{% load billing_tags %}{% pro_badge org "api" link=False %}')
+        html = t.render(Context({'org': self.org}))
+        self.assertIn('<span class="pro-badge pro-badge--locked"', html)
+        self.assertNotIn('<a ', html)
+
+    @override_settings(DEBUG=True)
+    def test_unknown_feature_raises_under_debug(self):
+        """
+        GIVEN DEBUG
+        WHEN the tag is used with a key that is not in the registry
+        THEN it raises
+        """
+        from django.template import TemplateSyntaxError
+        with self.assertRaises(TemplateSyntaxError):
+            self._render('no_such_feature')
+
+    def test_no_hand_written_pro_labels(self):
+        """
+        GIVEN the product templates
+        WHEN they are searched for a hand-written Pro label (the old `badge badge-light">Pro<` / "Pro help")
+        THEN none is found outside the tag's own template
+        """
+        import pathlib
+        root = pathlib.Path(__file__).resolve().parents[2]
+        hits = []
+        for path in list(root.glob('survey/templates/**/*.html')) + list(root.glob('billing/templates/**/*.html')) \
+                + list(root.glob('api/templates/**/*.html')):
+            text = path.read_text(encoding='utf-8')
+            if 'badge badge-light">Pro<' in text or '{% trans "Pro help" %}' in text:
+                hits.append(str(path.relative_to(root)))
+        self.assertEqual(hits, [])
+
+
+class HelpEntriesTest(TestCase):
+    """The menus' "ask us" entries (change pro-trial-auto, #438)."""
+
+    def setUp(self):
+        self.org, self.owner = make_org()
+
+    def _render(self, **ctx):
+        t = Template('{% include "billing/_help_entries.html" %}')
+        return t.render(Context({'active_org': self.org, **ctx}))
+
+    def test_idea_is_free_and_comes_first(self):
+        """
+        GIVEN a startable Free workspace with the support chat configured
+        WHEN the entries render
+        THEN "Suggest an idea or report a bug" comes first with no Pro mark and opens the chat with the topic,
+             then "Advice on your survey and results" with the "free to try" mark
+        """
+        html = self._render(SUPPORT_CHAT=True)
+        idea, advice = html.index('Suggest an idea or report a bug'), html.index('Advice on your survey and results')
+        self.assertLess(idea, advice)
+        self.assertNotIn('data-pro-state', html[:advice])
+        self.assertIn("topic: 'feature_request'", html)
+        self.assertIn('data-pro-state="startable"', html[advice:])
+
+    def test_mail_fallback_without_chat(self):
+        """
+        GIVEN no support chat but a contact address
+        WHEN the entries render
+        THEN the idea entry is a mailto link
+        """
+        html = self._render(SUPPORT_CHAT=False, CONTACT_EMAIL='team@example.test')
+        self.assertIn('mailto:team@example.test', html)
+
+    def test_registry_label(self):
+        """
+        GIVEN the feature registry
+        WHEN the pro_help label is read
+        THEN it is "Advice on your survey and results" -- no "reports" promised
+        """
+        from ..features import FEATURES
+        self.assertEqual(str(FEATURES['pro_help'].label), 'Advice on your survey and results')

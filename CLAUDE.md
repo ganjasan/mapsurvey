@@ -435,20 +435,35 @@ builders in `billing/tests/helpers.py`.
 `Subscription` — `EntitlementGrant` (`kind='trial'`; #322's academic grant is the next kind) with one
 `GrantAllowance(feature, limit, used)` per feature. Not days of Pro but counted uses for
 `TRIAL_DAYS` (90) after the OWNER's click (`POST /org/<slug>/billing/trial/`, `billing/trial.py::claim`):
-`api` 500, `unbranded` 1, `pro_help` 1 (`TRIAL_ALLOWANCES` in `billing/features.py`; empty = not
-offered, the rollback). One trial per person (partial unique on `claimed_by`) and per workspace; never
-automatic, never on Pro; AI generation is not in it (free on every plan). The webhook still owns
+`api` 500, `unbranded` 1, `pro_help` 1, `operator_entry` `None` = uncapped (counted, never refused;
+the paper cap arrives with #495) (`TRIAL_ALLOWANCES` in `billing/features.py`; empty = not offered,
+the rollback). One trial per OWNER (partial unique on `claimed_by`) and per workspace; never on Pro;
+AI generation is not in it (free on every plan). **It starts itself (change `pro-trial-auto`, #508)**:
+the first Pro use anyone allowed to make it makes in a workspace that never had a trial creates the
+grant for the earliest-joined owner without a trial (`started_by` = the actor, `trigger` = the
+feature key; a click is `trigger='click'`) and counts that use — never at registration or workspace
+creation. Every control that OFFERS a use asks `billing.trial.may(org, key)` (= `Entitlements.may`
+or `startable`), every point of use calls `billing.trial.use(org, key, actor)` (start + count),
+never `consume` directly; the view then calls `trial.flash_started(request, org)` for the one-time
+notice. The owner gets a start mail (on commit) and one "ends in 7 days" mail
+(`notify_trials_ending`, daily from `reclaim.sh`, `ending_notified_at`). **Every Pro control carries
+`{% pro_badge org "key" %}`** (`billing/_pro_badge.html`, `css/pro_badge.css`, violet `--pro`
+tokens — teal is for actions): plan / trial / startable ("free to try") / locked; never hand-write a
+Pro label. Tests that need a Free workspace REFUSED call `billing.tests.helpers.trial_used_elsewhere(org)`.
+`pro_help` is "Advice on your survey and results" (#438), listed in every menu below a free "Suggest
+an idea or report a bug" (`billing/_help_entries.html`). The webhook still owns
 `Subscription`; a grant is a different row with a different writer. **Three questions on
 `Entitlements`**: `has(key)` = the PLAN includes it (plan cards, `is_pro`, lapse task); `may(key)` = a
-NEW use is allowed (plan, or a live trial's remainder) — every gate that decides an action
-(`require_feature`, `require_pro_api`, `pro_organizations`, `SurveyHeaderForm.unbranded`);
+NEW use is allowed (plan, or a live trial's remainder) — wrapped by `trial.may`, which every gate
+uses (`require_feature`, `require_pro_api`, `pro_organizations`, `SurveyHeaderForm.unbranded`);
 `covers(key)` = in force (plan, or a live trial includes it, spent or not) — what `{% has_feature %}`
 answers, because a survey unbranded under the trial stays unbranded after its one switch-off is
-spent. A use the plan does not cover is counted ONLY by `trial.consume()` — one `UPDATE … WHERE used
-< "limit" RETURNING`, race-safe — at the point of use: `require_pro_api` (once per request per
-workspace; `mcp.protocol.call_tool` resets the memo per tool call), `services.surveys.update_settings`
-(a badge switch-off, inside the service transaction), `org_help` (a stored request). Expiry is a
-comparison, no cron, no mail. The viewer's state (`available | live | exhausted | expired |
+spent. A use the plan does not cover is counted ONLY by `trial.consume()` (through `trial.use`) — one
+`UPDATE … WHERE ("limit" IS NULL OR used < "limit") RETURNING`, race-safe — at the point of use:
+`require_pro_api` (once per request per workspace; `mcp.protocol.call_tool` resets the memo per tool
+call), `services.surveys.update_settings` (a badge switch-off, inside the service transaction),
+`org_help` (a stored request), `operator_entry_views.entry_header` (one sheet; the sheet's own pages
+admit on `covers`). Expiry is a comparison, no cron. The viewer's state (`available | live | exhausted | expired |
 used_elsewhere`) is `trial.state_for(org, user)`, rendered by `billing/_trial_offer.html`;
 `pro_required` carries `trial: none|exhausted|expired`. Staff end a grant by setting `revoked_at` in
 the admin; the counters are read-only there.

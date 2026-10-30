@@ -18,6 +18,7 @@ Differences from the respondent page, and why each one exists:
 * Respondent-facing `required` is soft (a blank on paper is a blank); an
   operator-only question keeps its own.
 """
+from functools import wraps
 from urllib.parse import urlencode
 
 from django import forms
@@ -27,7 +28,9 @@ from django.urls import reverse
 from django.utils import translation
 from django.utils.translation import gettext_lazy as _
 
-from billing.gates import require_feature
+from billing import trial as billing_trial
+from billing.entitlements import for_organization
+from billing.gates import feature_required, require_feature
 
 from .models import SurveyHeader, SurveySection, SurveySession
 from .permissions import survey_permission_required
@@ -46,9 +49,24 @@ def _survey_org(request, *args, **kwargs):
 
 def entry_gate(view):
     """Editor role on the survey, then the Pro feature on its organisation —
-    checked on every request, so a lapsed subscription stops new entries."""
+    checked on every request, so a lapsed subscription stops new entries. A
+    workspace whose first sheet would start its Pro trial is admitted too
+    (change pro-trial-auto); the header POST starts and counts it."""
     return survey_permission_required('editor')(
         require_feature('operator_entry', _survey_org)(view))
+
+
+def sheet_gate(view):
+    """For the pages of a sheet already created: editor role, and the feature
+    still in force (`covers`) — a trial allowance spent by this very sheet must
+    not strand it half-entered. Nothing is counted here."""
+    @wraps(view)
+    def wrapper(request, *args, **kwargs):
+        org = request.survey.organization
+        if not for_organization(org).covers('operator_entry'):
+            return feature_required(request, org, 'operator_entry')
+        return view(request, *args, **kwargs)
+    return survey_permission_required('editor')(wrapper)
 
 
 def _version_label(header, canonical):
@@ -128,6 +146,12 @@ def entry_header(request, survey_uuid):
         form = EntryHeaderForm(request.POST, survey=survey)
         if form.is_valid():
             header = form.chosen_header()
+            # One sheet is one use of `operator_entry`; the first one of a
+            # workspace that never had a trial starts it (change pro-trial-auto).
+            org = survey.organization
+            if not billing_trial.use(org, 'operator_entry', actor=request.user):
+                return feature_required(request, org, 'operator_entry')
+            billing_trial.flash_started(request, org)
             session = SurveySession.objects.create(
                 survey=header,
                 language=form.cleaned_data.get('language') or None,
@@ -148,7 +172,7 @@ def entry_header(request, survey_uuid):
     })
 
 
-@entry_gate
+@sheet_gate
 def entry_section(request, survey_uuid, session_id, section_name):
     """Step 2..n: one section of the survey in entry mode, posted to itself."""
     from .views import _add_shell_context, _build_section_context, save_section_answers
@@ -197,7 +221,7 @@ def entry_section(request, survey_uuid, session_id, section_name):
     return render(request, 'editor/operator_entry/section.html', ctx)
 
 
-@entry_gate
+@sheet_gate
 def entry_saved(request, survey_uuid, session_id):
     """The sheet is stored: mark it completed and offer the next one."""
     survey = request.survey

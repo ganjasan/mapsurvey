@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pro mark mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --text: #1B2A4A; --text-2: #5A6680; --text-3: #8A94A8;
+  --bg: #F7F5F0; --card: #FFFFFF; --border: #E4E0D8;
+  --accent: #0FA58E; --accent-hover: #0D8F7A; --accent-soft: rgba(15,165,142,.12);
+  --lock: #8A94A8; --lock-soft: #F0EEE9;
+}
+* { box-sizing: border-box; }
+body { margin: 0; padding: 32px 16px 64px; font-family: 'Instrument Sans', system-ui, sans-serif; color: var(--text); background: var(--bg); }
+main { max-width: 980px; margin: 0 auto; }
+h1 { font-size: 1.6rem; margin: 0 0 .25rem; }
+h2 { font-size: 1.05rem; margin: 2.5rem 0 .75rem; }
+p.lead { color: var(--text-2); margin: 0 0 1.5rem; max-width: 60rem; line-height: 1.5; }
+.note { font-size: .8rem; color: var(--text-3); margin: .5rem 0 0; line-height: 1.45; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
+@media (max-width: 760px) { .grid4 { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+.state h3 { margin: 0 0 .6rem; font-size: .8rem; color: var(--text-3); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+.state p { margin: .6rem 0 0; font-size: .82rem; color: var(--text-2); line-height: 1.45; }
+
+/* ===== the mark itself: billing/_pro_badge.html ===== */
+.pro-badge {
+  display: inline-flex; align-items: center; gap: .3rem;
+  padding: .12rem .5rem; border-radius: 999px;
+  font-size: .68rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+  line-height: 1.4; white-space: nowrap; vertical-align: middle; text-decoration: none;
+  border: 1px solid transparent; cursor: default; position: relative;
+}
+.pro-badge svg { width: 11px; height: 11px; flex: none; }
+.pro-badge .pb-extra { text-transform: none; letter-spacing: 0; font-weight: 600; }
+.pro-badge--plan { color: var(--accent-hover); border-color: rgba(15,165,142,.35); background: transparent; }
+.pro-badge--trial { color: var(--accent-hover); background: var(--accent-soft); }
+.pro-badge--startable { color: #fff; background: var(--accent); }
+.pro-badge--locked { color: var(--lock); background: var(--lock-soft); border-color: var(--border); cursor: pointer; }
+.pro-badge--locked:hover { color: var(--text-2); }
+.pro-badge[data-tip]:hover::after {
+  content: attr(data-tip); position: absolute; left: 0; top: calc(100% + 6px); z-index: 5;
+  width: 240px; padding: .5rem .65rem; border-radius: 8px;
+  background: var(--text); color: #fff; font-size: .75rem; font-weight: 500;
+  text-transform: none; letter-spacing: 0; line-height: 1.4; white-space: normal;
+}
+
+/* ===== editor bits for context ===== */
+.row { display: flex; align-items: flex-start; gap: .75rem; padding: .9rem 0; border-top: 1px solid var(--border); }
+.row:first-child { border-top: 0; }
+.row label { font-weight: 600; font-size: .92rem; display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.row .help { font-size: .8rem; color: var(--text-2); margin-top: .25rem; }
+.switch { width: 36px; height: 20px; border-radius: 999px; background: var(--accent); position: relative; flex: none; margin-top: 2px; }
+.switch::after { content: ""; position: absolute; right: 2px; top: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; }
+.switch.off { background: #C9CED8; } .switch.off::after { right: auto; left: 2px; }
+.switch.disabled { opacity: .45; }
+.btn { display: inline-flex; align-items: center; gap: .5rem; padding: .5rem .9rem; border-radius: 8px; font: inherit; font-size: .88rem; font-weight: 600; border: 1px solid var(--border); background: #fff; color: var(--text); }
+.btn[disabled] { color: var(--text-3); background: #FAF9F6; }
+.toolbar { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.menu { width: 260px; background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 6px; box-shadow: 0 8px 24px rgba(27,42,74,.08); }
+.menu a { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .5rem .6rem; border-radius: 6px; color: var(--text); text-decoration: none; font-size: .88rem; }
+.menu a:hover { background: var(--bg); }
+.menu hr { border: 0; border-top: 1px solid var(--border); margin: 4px 0; }
+.toast { display: flex; gap: .75rem; align-items: flex-start; padding: .85rem 1rem; border-radius: 10px; background: #fff; border: 1px solid var(--accent); box-shadow: 0 8px 24px rgba(27,42,74,.08); max-width: 560px; }
+.toast b { display: block; margin-bottom: .2rem; }
+.toast span { font-size: .85rem; color: var(--text-2); line-height: 1.45; }
+.toast .x { margin-left: auto; color: var(--text-3); }
+.pagehead { display: flex; align-items: center; gap: .6rem; margin: 0 0 .25rem; font-size: 1.2rem; font-weight: 700; }
+.ctx { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
+@media (max-width: 760px) { .ctx { grid-template-columns: 1fr; } }
+.ctx .card h3 { margin: 0 0 .8rem; font-size: .8rem; color: var(--text-3); text-transform: uppercase; letter-spacing: .05em; }
+</style>
+</head>
+<body>
+<main>
+<h1>Пометка Pro: <code>{% pro_badge org "feature" %}</code></h1>
+<p class="lead">Одна пометка у каждого Pro-контрола, четыре состояния, состояние вычисляется из плана и триала воркспейса. Наведите курсор на пометку, чтобы увидеть подсказку. Сам контрол включает или выключает <code>trial.may</code>, а пометка только описывает состояние.</p>
+
+<h2>1. Четыре состояния</h2>
+<div class="grid4">
+  <div class="card state">
+    <h3>Pro-план</h3>
+    <span class="pro-badge pro-badge--plan" data-tip="Входит в Pro-план вашего воркспейса.">Pro</span>
+    <p>Спокойная обводка. Просто напоминает, что это Pro, и не отвлекает.</p>
+  </div>
+  <div class="card state">
+    <h3>Идёт триал</h3>
+    <span class="pro-badge pro-badge--trial" data-tip="Pro-триал: осталось 480 из 500 вызовов API, до 28 января.">Pro trial <span class="pb-extra">· 27 left</span></span>
+    <p>Мягкая заливка и остаток лимита. Видно, сколько ещё можно.</p>
+  </div>
+  <div class="card state">
+    <h3>Можно попробовать</h3>
+    <span class="pro-badge pro-badge--startable" data-tip="Pro-функция. Первое использование запустит бесплатный Pro-триал воркспейса: 90 дней, без карты.">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l1.8 5.2L15 7l-5.2 1.8L8 14l-1.8-5.2L1 7l5.2-1.8z"/></svg>Pro <span class="pb-extra">· free to try</span></span>
+    <p>Самая заметная пометка. Контрол доступен, первое действие запускает триал.</p>
+  </div>
+  <div class="card state">
+    <h3>Закрыто</h3>
+    <a class="pro-badge pro-badge--locked" href="#" data-tip="Pro-функция. Триал этого воркспейса закончился 12 января. Нажмите, чтобы открыть «План и оплата».">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 7V5a4 4 0 118 0v2h1v8H3V7h1zm2 0h4V5a2 2 0 10-4 0v2z"/></svg>Pro</a>
+    <p>Серая пометка с замком, ведёт на «План и оплата». Контрол рядом неактивен.</p>
+  </div>
+</div>
+
+<h2>2. Где стоит пометка</h2>
+<div class="ctx">
+
+  <div class="card">
+    <h3>Настройки опроса → Брендинг</h3>
+    <div class="row">
+      <div class="switch"></div>
+      <div>
+        <label>Показывать бейдж «Made with Mapsurvey»
+          <span class="pro-badge pro-badge--startable" data-tip="Выключение бейджа запустит бесплатный Pro-триал воркспейса.">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l1.8 5.2L15 7l-5.2 1.8L8 14l-1.8-5.2L1 7l5.2-1.8z"/></svg>Pro <span class="pb-extra">· free to try</span></span></label>
+        <div class="help">Выключите, чтобы опрос выглядел без нашей ссылки.</div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="switch disabled"></div>
+      <div>
+        <label>Показывать бейдж «Made with Mapsurvey»
+          <a class="pro-badge pro-badge--locked" href="#" data-tip="Триал израсходовал своё выключение бейджа.">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 7V5a4 4 0 118 0v2h1v8H3V7h1zm2 0h4V5a2 2 0 10-4 0v2z"/></svg>Pro</a></label>
+        <div class="help">Тот же контрол, когда лимит выключений бейджа исчерпан.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Ответы → панель инструментов</h3>
+    <div class="toolbar">
+      <button class="btn">Экспорт данных</button>
+      <button class="btn">Ввести ответ
+        <span class="pro-badge pro-badge--trial" data-tip="Pro-триал: введено 3 анкеты, без ограничения, до 28 января.">Pro trial <span class="pb-extra">· until 28 Jan</span></span></button>
+    </div>
+    <div class="toolbar" style="margin-top:.75rem">
+      <button class="btn">Экспорт данных</button>
+      <button class="btn" disabled>Ввести ответ
+        <a class="pro-badge pro-badge--locked" href="#"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 7V5a4 4 0 118 0v2h1v8H3V7h1zm2 0h4V5a2 2 0 10-4 0v2z"/></svg>Pro</a></button>
+    </div>
+    <p class="note">Ручной ввод запускает триал и в триале не ограничен: сверху идёт триал, снизу триал закончился. Введённые анкеты остаются в данных.</p>
+  </div>
+
+  <div class="card">
+    <h3>Аккаунт → API и подключения</h3>
+    <div class="pagehead">API и подключения <span class="pro-badge pro-badge--plan" data-tip="Входит в Pro-план вашего воркспейса.">Pro</span></div>
+    <p class="note" style="margin:0">Токены выпускаются на любом плане; Pro проверяется при каждом вызове. На Free без триала тут было бы «Pro · free to try»: первый вызов API запустит триал.</p>
+  </div>
+
+  <div class="card">
+    <h3>Меню «?» и меню аккаунта</h3>
+    <div class="menu">
+      <a href="#">Центр помощи</a>
+      <a href="#">Чат поддержки</a>
+      <hr>
+      <a href="#">Попросить команду Mapsurvey
+        <span class="pro-badge pro-badge--startable"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l1.8 5.2L15 7l-5.2 1.8L8 14l-1.8-5.2L1 7l5.2-1.8z"/></svg>Pro <span class="pb-extra">· free to try</span></span></a>
+    </div>
+  </div>
+</div>
+
+<h2>3. Разовое уведомление, когда триал запустился сам</h2>
+<div class="toast">
+  <span class="pro-badge pro-badge--trial">Pro trial</span>
+  <div>
+    <b>Вы запустили бесплатный Pro-триал воркспейса</b>
+    <span>Бейдж выключен на «Велодорожки Бишкека». До 28 января у воркспейса есть: 500 вызовов API и MCP, 1 запрос к команде. Владельцу ушло письмо. <a href="#">Что входит</a></span>
+  </div>
+  <span class="x">✕</span>
+</div>
+<p class="note">Показывается один раз, на следующей странице после действия, которое запустило триал. Использует блок сообщений, который уже есть в редакторе.</p>
+</main>
+</body>
+</html>

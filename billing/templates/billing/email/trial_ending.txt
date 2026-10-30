@@ -1,0 +1,14 @@
+{% autoescape off %}The free Pro trial of {{ org.name }} ends on {{ grant.expires_at|date:"j F Y" }}.
+
+When it ends:
+{% if 'unbranded' in features %}- the "Made with Mapsurvey" badge comes back on surveys made unbranded during the trial;
+{% endif %}{% if 'operator_entry' in features %}- entering paper responses closes;
+{% endif %}{% if 'api' in features %}- API and MCP calls answer "Pro required";
+{% endif %}{% if 'pro_help' in features %}- the request form to the Mapsurvey team closes.
+{% endif %}
+Nothing is deleted: surveys, responses (including the ones entered from paper), layers and tokens all stay.
+
+To keep the Pro extras, upgrade on Plan & billing: {{ billing_url }}
+
+— The Mapsurvey team
+{% endautoescape %}

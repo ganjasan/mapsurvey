@@ -15,7 +15,7 @@ from .models import Question, Answer, SurveySession, VALIDATION_STATUS_CHOICES, 
 from .export import OGR_AVAILABLE
 from .comments import open_counts as _thread_counts
 from .permissions import survey_permission_required
-from billing.entitlements import has_feature
+from billing.trial import may as trial_may
 from .analytics import (
     SurveyAnalyticsService, PerformanceAnalyticsService, SessionValidationService,
     EDITABLE_ANSWER_TYPES, version_choices,
@@ -158,9 +158,11 @@ def analytics_dashboard(request, survey_uuid):
         'survey': survey,
         'effective_role': request.effective_survey_role,
         # Operator entry (change operator-entry): editors see the button; it is
-        # live only while the owning workspace holds the Pro feature.
+        # live while the owning workspace holds the Pro feature, has it in a
+        # live trial, or would start its trial with the first sheet
+        # (change pro-trial-auto).
         'can_enter_responses': request.effective_survey_role in ('editor', 'owner'),
-        'operator_entry_available': has_feature(survey.organization, 'operator_entry'),
+        'operator_entry_available': trial_may(survey.organization, 'operator_entry'),
         'version_choices': version_choices(survey),
         # The export dialog reads the same choices from its opener button.
         'version_choices_json': json.dumps(version_choices(survey)),

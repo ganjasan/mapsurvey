@@ -10,9 +10,10 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from billing.models import STATUS_REFUNDED
-from billing.tests.helpers import make_sub
+from billing.tests.helpers import make_sub, trial_used_elsewhere
 from survey.models import (
-    Answer, Membership, Organization, Question, SurveyEvent, SurveyHeader, SurveySection, SurveySession,
+    Answer, Membership, Organization, Question, SurveyCollaborator, SurveyEvent, SurveyHeader, SurveySection,
+    SurveySession,
 )
 
 
@@ -98,14 +99,42 @@ class EntryGateTest(_EntryFixture):
 
     def test_free_workspace_sees_the_lock(self):
         """
-        GIVEN a workspace without Pro
+        GIVEN a workspace without Pro whose owner already used their Pro trial
         WHEN an owner opens Responses and then the entry header
-        THEN Responses shows the locked button and the header answers the feature refusal
+        THEN Responses shows the locked button with the locked Pro mark and the header answers the feature refusal
         """
         self.sub.delete()
+        trial_used_elsewhere(self.org)
         page = self.client.get(reverse('editor_survey_analytics', args=[self.survey.uuid]))
         self.assertContains(page, 'rv2-enter-response--locked')
+        self.assertContains(page, 'data-pro-state="locked"')
         self.assertEqual(self.client.get(self.header_url).status_code, 403)
+
+    def test_first_sheet_of_a_startable_workspace_starts_the_trial(self):
+        """
+        GIVEN a Free workspace that never had a trial, and an editor of it
+        WHEN the editor opens Responses, then submits the entry header and walks the sheet
+        THEN the button is live with "free to try"; the owner's trial exists started by the editor with
+             operator_entry, the allowance reads 1 used with no limit, and the sections open
+        """
+        from billing.models import EntitlementGrant
+        self.sub.delete()
+        editor = User.objects.create_user('entry_editor2', password='pass')
+        Membership.objects.create(user=editor, organization=self.org, role='editor')
+        SurveyCollaborator.objects.create(user=editor, survey=self.survey, role='editor')
+        self.login(editor)
+        page = self.client.get(reverse('editor_survey_analytics', args=[self.survey.uuid]))
+        self.assertNotContains(page, 'rv2-enter-response--locked')
+        self.assertContains(page, 'data-pro-state="startable"')
+        response, session = self.start()
+        grant = EntitlementGrant.objects.get(organization=self.org)
+        self.assertEqual((grant.claimed_by, grant.started_by, grant.trigger), (self.owner, editor, 'operator_entry'))
+        allowance = grant.allowances.get(feature='operator_entry')
+        self.assertEqual((allowance.used, allowance.limit), (1, None))
+        self.assertEqual(self.client.get(self.section_url(session, self.s1)).status_code, 200)
+        self.start()
+        allowance.refresh_from_db()
+        self.assertEqual(allowance.used, 2)
 
     def test_pro_workspace_sees_the_button(self):
         """
@@ -126,6 +155,7 @@ class EntryGateTest(_EntryFixture):
         _, session = self.start()
         self.sub.status = STATUS_REFUNDED
         self.sub.save()
+        trial_used_elsewhere(self.org)
         self.assertTrue(SurveySession.objects.filter(pk=session.pk).exists())
         self.assertEqual(self.client.get(self.header_url).status_code, 403)
         self.assertEqual(self.client.get(self.section_url(session, self.s1)).status_code, 403)

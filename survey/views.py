@@ -2592,12 +2592,14 @@ def _upload_entry_session(request, survey):
 	raw = request.POST.get('entry_session')
 	if not raw or not request.user.is_authenticated or survey is None:
 		return None
-	from billing.entitlements import has_feature
+	from billing.entitlements import for_organization
 	from .versioning import family_ids
 	role = get_effective_survey_role(request.user, survey)
 	if SURVEY_ROLE_RANK.get(role, -1) < SURVEY_ROLE_RANK['editor']:
 		return None
-	if not has_feature(survey.organization, 'operator_entry'):
+	# In force by plan or by a live trial (change pro-trial-auto): uploads of a
+	# sheet already counted at its header are never counted again.
+	if not for_organization(survey.organization).covers('operator_entry'):
 		return None
 	try:
 		pk = int(raw)

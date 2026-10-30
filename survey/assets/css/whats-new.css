@@ -43,7 +43,7 @@ body.mobile-nav-enabled .wn-card { bottom: calc(1.25rem + 56px); }
 .wn-hero-art.agent { place-items: start center; }
 .wn-hero-art.agent i { font-size: 30px; color: #fff; opacity: .95; margin-top: 14px; position: relative; }
 /* Pro trial plate (change pro-trial-allowances): the Pro accent of the plan cards. */
-.wn-hero-art.trial { background: linear-gradient(145deg, #0b5f52, #0fa58e 55%, #b7eadf); place-items: start center; }
+.wn-hero-art.trial { background: linear-gradient(145deg, #3d2595, #6d4ae0 55%, #d6ccf7); place-items: start center; } /* Pro violet (pro-trial-auto) */
 .wn-hero-art.trial::before { content: ""; position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,.18) 1px, transparent 1px); background-size: 14px 14px; }
 .wn-hero-art.trial .trial-mark { position: relative; margin-top: 12px; padding: 2px 12px; border: 2px solid rgba(255,255,255,.9); border-radius: 999px; color: #fff; font-weight: 800; font-size: 1.05rem; letter-spacing: .04em; }
 .wn-hero-art .logos { position: absolute; left: 8px; right: 8px; bottom: 8px; display: flex; gap: 4px; z-index: 1; flex-wrap: nowrap; justify-content: center; }

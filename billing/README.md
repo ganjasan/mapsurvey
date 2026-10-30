@@ -114,11 +114,16 @@ Send a council both links — card and quote — and let their finance office ch
   claimed trial with its allowances (`used` of `limit`, read-only). To end a trial early, set
   `revoked_at`. Events `trial_claimed` and `trial_exhausted` (with `feature`). The trial's contents
   and length are `TRIAL_ALLOWANCES` / `TRIAL_DAYS` in `billing/features.py`, not env.
+  Since change `pro-trial-auto` (#508) a trial also starts by itself on the first Pro use any member
+  makes: the row shows `trigger` (`click` or the feature key) and `started_by`; `trial_claimed`
+  carries `trigger` and `auto`. The owner gets a start mail and, from `reclaim.sh`
+  (`notify_trials_ending`), one mail seven days before the end (`ending_notified_at`, event
+  `trial_ending_notified`).
 
 ## Rollback
 
 Unset `PPG_PRODUCTS` → Upgrade controls disappear and checkout 404s. Existing Pro organisations keep
 their entitlement from stored rows; the webhook endpoint keeps acknowledging and recording.
 
-Empty `TRIAL_ALLOWANCES` → no "Try Pro" anywhere and the claim endpoint 404s. Trials already claimed
-keep working until they expire (or set `revoked_at` on them).
+Empty `TRIAL_ALLOWANCES` → no "Try Pro" anywhere, the claim endpoint 404s and no Pro use starts a
+trial. Trials already claimed keep working until they expire (or set `revoked_at` on them).

@@ -23,6 +23,10 @@ python manage.py purge_oauth_clients
 # plan_lapsed event and one email per owner (billing app).
 python manage.py notify_lapsed
 
+# Pro trials that end within a week: one mail per trial to the owner it belongs
+# to (change pro-trial-auto). Idempotent through ending_notified_at.
+python manage.py notify_trials_ending
+
 # Creator labels (segment, plan, domain, language) to PostHog person properties.
 # Last on purpose: set -e stops the script at the first failure, and a PostHog
 # outage or a missing key must never block reclamation or lapse mail. Labels are

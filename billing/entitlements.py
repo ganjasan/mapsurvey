@@ -45,12 +45,19 @@ STATE_LAPSED = 'lapsed'        # had Pro, period over or ended by refund/chargeb
 @dataclass(frozen=True)
 class Allowance:
     feature: str
-    limit: int
+    limit: Optional[int]   # None: in the trial without a cap (change pro-trial-auto)
     used: int
     pk: Optional[int] = None
 
     @property
+    def capped(self):
+        return self.limit is not None
+
+    @property
     def remaining(self):
+        """Uses left; None for an uncapped allowance."""
+        if self.limit is None:
+            return None
         return max(self.limit - self.used, 0)
 
 
@@ -86,7 +93,7 @@ class Entitlements:
         if feature_key in self.features:
             return True
         allowance = self.allowances.get(feature_key)
-        return allowance is not None and allowance.remaining > 0
+        return allowance is not None and (allowance.remaining is None or allowance.remaining > 0)
 
 
 FREE = Entitlements(PLAN_FREE, STATE_NONE, None, features_for_plan(PLAN_FREE))

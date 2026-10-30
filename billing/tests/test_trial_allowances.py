@@ -19,7 +19,8 @@ from .. import trial
 from ..models import STATUS_REFUNDED, EntitlementGrant, GrantAllowance
 from .helpers import PPG_SETTINGS, make_org, make_sub
 
-OFFER = {'api': 500, 'unbranded': 1, 'pro_help': 1}
+OFFER = {'api': 500, 'unbranded': 1, 'pro_help': 1, 'operator_entry': None}
+CAPPED = {k: v for k, v in OFFER.items() if v is not None}
 
 
 def _expire(grant):
@@ -38,13 +39,15 @@ class ClaimTest(TestCase):
 
     def test_claim_creates_grant_and_allowances(self):
         """
-        GIVEN a Free workspace and the registry offer api 500 / unbranded 1 / pro_help 1 for 90 days
+        GIVEN a Free workspace and the registry offer api 500 / unbranded 1 / pro_help 1 / operator_entry uncapped
         WHEN the owner claims the trial
-        THEN one trial grant expires 90 days after it starts, with three allowances at used 0 and the registry limits
+        THEN one trial grant expires 90 days after it starts, triggered by "click", with four allowances at used 0
+             and the registry limits (operator_entry with none)
         """
         grant = trial.claim(self.org, self.owner)
         self.assertEqual(grant.kind, 'trial')
         self.assertEqual(grant.claimed_by, self.owner)
+        self.assertEqual((grant.trigger, grant.started_by), ('click', self.owner))
         self.assertEqual(grant.expires_at - grant.starts_at, timedelta(days=90))
         self.assertEqual({a.feature: (a.limit, a.used) for a in grant.allowances.all()},
                          {k: (v, 0) for k, v in OFFER.items()})
@@ -60,7 +63,8 @@ class ClaimTest(TestCase):
             r = self.client.post(self.url, {'next': '/editor/'})
         self.assertRedirects(r, '/editor/', fetch_redirect_response=False)
         self.assertTrue(EntitlementGrant.objects.filter(organization=self.org).exists())
-        emit.assert_called_once_with(ev.TRIAL_CLAIMED, self.owner.pk, {'org_id': self.org.pk})
+        emit.assert_called_once_with(ev.TRIAL_CLAIMED, self.owner.pk, {
+            'org_id': self.org.pk, 'trigger': 'click', 'auto': False, 'started_by_owner': True})
 
     def test_external_next_is_ignored(self):
         """
@@ -341,13 +345,13 @@ class BillingPageTest(TestCase):
         """
         GIVEN an admin of a Free workspace without a grant
         WHEN they open Plan & billing
-        THEN the block says the owner can start it and renders no claim form
+        THEN the block says it starts with the first Pro use and renders no claim form
         """
         admin = User.objects.create_user(username='bill_admin', password='pass')
         Membership.objects.create(user=admin, organization=self.org, role='admin')
         self.client.login(username='bill_admin', password='pass')
         r = self.client.get(self.url)
-        self.assertContains(r, 'The workspace owner can start it')
+        self.assertContains(r, 'It starts with the first Pro use')
         self.assertNotContains(r, '/billing/trial/')
 
     def test_live_shows_used_of_limit_and_end_date(self):
@@ -376,14 +380,29 @@ class BillingPageTest(TestCase):
 
     def test_exhausted(self):
         """
-        GIVEN a live trial with every allowance spent
+        GIVEN a live trial whose every allowance is capped (claimed before paper entry joined) and spent
         WHEN the owner opens Plan & billing
         THEN the block says the trial used everything
         """
         grant = trial.claim(self.org, self.owner)
+        GrantAllowance.objects.filter(grant=grant, limit__isnull=True).delete()
         GrantAllowance.objects.filter(grant=grant).update(used=500)
         GrantAllowance.objects.filter(grant=grant).exclude(feature='api').update(used=1)
         self.assertContains(self.client.get(self.url), 'data-trial-state="exhausted"')
+
+    def test_uncapped_allowance_keeps_the_trial_live(self):
+        """
+        GIVEN a live trial with every capped allowance spent and paper entry uncapped
+        WHEN the owner opens Plan & billing
+        THEN the trial reads live, and paper entry shows its count with no limit
+        """
+        grant = trial.claim(self.org, self.owner)
+        for k, v in CAPPED.items():
+            _spend(grant, k, v)
+        _spend(grant, 'operator_entry', 42)
+        r = self.client.get(self.url)
+        self.assertContains(r, 'data-trial-state="live"')
+        self.assertContains(r, 'no limit')
 
     def test_used_elsewhere(self):
         """
@@ -520,3 +539,237 @@ class TrialHeroTest(TestCase):
         session.save()
         r = self.client.get('/billing/try-pro/?from=hero')
         self.assertRedirects(r, f'/org/{self.org.slug}/billing/#pro-trial', fetch_redirect_response=False)
+
+
+# --- change pro-trial-auto (#508): the trial starts itself on the first Pro use ---
+
+def _editor_of(org, username='auto_editor'):
+    user = User.objects.create_user(username=username, password='pass', email=f'{username}@example.test')
+    Membership.objects.create(user=user, organization=org, role='editor')
+    return user
+
+
+class AutoStartTest(TestCase):
+    def setUp(self):
+        self.org, self.owner = make_org()
+        self.editor = _editor_of(self.org)
+
+    def test_may_without_starting(self):
+        """
+        GIVEN a Free workspace that never had a trial, whose owner has not used theirs
+        WHEN may() is asked for every trial feature
+        THEN it is true for each, Entitlements.may stays false, and no grant exists
+        """
+        for key in OFFER:
+            self.assertTrue(trial.may(self.org, key), key)
+            self.assertFalse(ents.for_organization(self.org).may(key), key)
+        self.assertFalse(EntitlementGrant.objects.exists())
+
+    def test_editor_use_starts_the_owners_trial(self):
+        """
+        GIVEN that workspace and its editor
+        WHEN the editor makes the first api use
+        THEN the owner's trial exists with started_by = editor and trigger "api", api reads 1 used, and the
+             start is announced as auto
+        """
+        with mock.patch.object(ev, 'emit') as emit:
+            self.assertTrue(trial.use(self.org, 'api', actor=self.editor))
+        grant = EntitlementGrant.objects.get(organization=self.org)
+        self.assertEqual((grant.claimed_by, grant.started_by, grant.trigger), (self.owner, self.editor, 'api'))
+        self.assertEqual(grant.allowances.get(feature='api').used, 1)
+        self.assertEqual(trial.started_here(self.org), grant)
+        emit.assert_called_once_with(ev.TRIAL_CLAIMED, self.editor.pk, {
+            'org_id': self.org.pk, 'trigger': 'api', 'auto': True, 'started_by_owner': False})
+
+    def test_second_use_counts_against_the_same_grant(self):
+        """
+        GIVEN a trial started by a first use
+        WHEN a second use of the same feature is made from a fresh instance of the workspace
+        THEN no second grant exists and api reads 2 used
+        """
+        from survey.models import Organization
+        trial.use(self.org, 'api', actor=self.editor)
+        trial.use(Organization.objects.get(pk=self.org.pk), 'api', actor=self.editor)
+        self.assertEqual(EntitlementGrant.objects.count(), 1)
+        self.assertEqual(GrantAllowance.objects.get(feature='api').used, 2)
+
+    def test_owner_who_used_their_trial_elsewhere(self):
+        """
+        GIVEN the workspace's only owner claimed a trial in another workspace
+        WHEN an editor makes a Pro use here
+        THEN may() is false, use() returns false and no grant is created here
+        """
+        from .helpers import trial_used_elsewhere
+        trial_used_elsewhere(self.org)
+        self.assertFalse(trial.may(self.org, 'unbranded'))
+        self.assertFalse(trial.use(self.org, 'unbranded', actor=self.editor))
+        self.assertFalse(EntitlementGrant.objects.filter(organization=self.org).exists())
+
+    def test_two_owners_the_one_without_a_trial_gets_it(self):
+        """
+        GIVEN owner A (joined first, trial used elsewhere) and owner B (joined later, no trial)
+        WHEN the first Pro use happens
+        THEN the grant belongs to B
+        """
+        from .helpers import trial_used_elsewhere
+        trial_used_elsewhere(self.org)
+        b = User.objects.create_user(username='owner_b', password='pass')
+        Membership.objects.create(user=b, organization=self.org, role='owner')
+        trial.use(self.org, 'pro_help', actor=self.editor)
+        self.assertEqual(EntitlementGrant.objects.get(organization=self.org).claimed_by, b)
+
+    def test_pro_workspace_never_starts(self):
+        """
+        GIVEN a workspace with an active subscription
+        WHEN the API is used
+        THEN use() is true and no grant is created
+        """
+        make_sub(self.org)
+        ents.forget(self.org)
+        self.assertTrue(trial.use(self.org, 'api', actor=self.editor))
+        self.assertFalse(EntitlementGrant.objects.exists())
+
+    def test_trial_not_offered_never_starts(self):
+        """
+        GIVEN TRIAL_ALLOWANCES is empty
+        WHEN an editor makes a Pro use
+        THEN may() and use() are false and no grant exists
+        """
+        with mock.patch.object(trial, 'TRIAL_ALLOWANCES', {}):
+            self.assertFalse(trial.may(self.org, 'unbranded'))
+            self.assertFalse(trial.use(self.org, 'unbranded', actor=self.editor))
+        self.assertFalse(EntitlementGrant.objects.exists())
+
+    def test_lost_race_counts_against_the_winner(self):
+        """
+        GIVEN another request created the workspace's grant after this one decided it could start it
+        WHEN this request's use() runs
+        THEN it counts against the existing grant and creates no second one
+        """
+        from survey.models import Organization
+        stale = Organization.objects.get(pk=self.org.pk)
+        self.assertTrue(trial.startable(stale, 'api'))          # cached: "can start"
+        trial.use(self.org, 'api', actor=self.editor)           # the other request wins
+        self.assertTrue(trial.use(stale, 'api', actor=self.editor))
+        self.assertEqual(EntitlementGrant.objects.count(), 1)
+        self.assertEqual(GrantAllowance.objects.get(feature='api').used, 2)
+
+    def test_refused_save_leaves_no_grant(self):
+        """
+        GIVEN a startable workspace and a use made inside a transaction that is rolled back afterwards
+        WHEN the transaction fails
+        THEN no grant remains
+        """
+        class Boom(Exception):
+            pass
+        with self.assertRaises(Boom):
+            with transaction.atomic():
+                trial.use(self.org, 'unbranded', actor=self.editor)
+                raise Boom
+        self.assertFalse(EntitlementGrant.objects.exists())
+
+    def test_uncapped_allowance_is_counted_never_refused(self):
+        """
+        GIVEN a live trial whose operator_entry allowance has no limit and 10 000 uses
+        WHEN another sheet is entered
+        THEN use() is true and the count reads 10 001
+        """
+        grant = trial.claim(self.org, self.owner)
+        _spend(grant, 'operator_entry', 10000)
+        ents.forget(self.org)
+        self.assertTrue(trial.use(self.org, 'operator_entry', actor=self.editor))
+        self.assertEqual(grant.allowances.get(feature='operator_entry').used, 10001)
+
+    def test_settings_switch_off_starts_the_trial(self):
+        """
+        GIVEN a startable workspace's survey with the badge on
+        WHEN its settings are saved through the service with the badge off
+        THEN the survey is unbranded and the trial exists with trigger "unbranded", unbranded 1 used
+        """
+        from survey.models import SurveyHeader
+        from survey.services import surveys as svc
+        from survey.services.context import Actor
+        survey = SurveyHeader.objects.create(organization=self.org, name='auto_badge', redirect_url='#')
+        svc.update_settings(Actor(user=self.owner), survey, {
+            'name': 'auto_badge', 'redirect_url': '#', 'visibility': 'private', 'basemaps': '["streets"]',
+            'default_basemap': 'streets'})
+        survey.refresh_from_db()
+        self.assertFalse(survey.show_branding)
+        grant = EntitlementGrant.objects.get(organization=self.org)
+        self.assertEqual((grant.trigger, grant.allowances.get(feature='unbranded').used), ('unbranded', 1))
+
+
+class TrialMailTest(TestCase):
+    def setUp(self):
+        self.org, self.owner = make_org()
+        self.editor = _editor_of(self.org)
+
+    def test_start_mail_names_the_editor(self):
+        """
+        GIVEN a startable workspace
+        WHEN its editor starts the trial by entering a paper response and the transaction commits
+        THEN the owner receives one mail naming the editor, the way it started, the allowances and the end date
+        """
+        from django.core import mail
+
+        from .. import tasks
+        # The suite has no broker: run the task where .delay would enqueue it.
+        with mock.patch.object(tasks.send_trial_started, 'delay', side_effect=tasks.send_trial_started), \
+                self.captureOnCommitCallbacks(execute=True):
+            trial.use(self.org, 'operator_entry', actor=self.editor)
+        self.assertEqual(len(mail.outbox), 1)
+        msg = mail.outbox[0]
+        self.assertEqual(msg.to, [self.owner.email])
+        self.assertIn('auto_editor', msg.body)
+        self.assertIn('by entering a paper response', msg.body)
+        self.assertIn('no limit', msg.body)
+
+    def test_reminder_once(self):
+        """
+        GIVEN a live trial ending in 6 days
+        WHEN notify_trials_ending runs twice
+        THEN the owner gets one mail listing what stops, and ending_notified_at is set
+        """
+        from django.core import mail
+
+        from ..tasks import notify_trials_ending
+        grant = trial.claim(self.org, self.owner)
+        EntitlementGrant.objects.filter(pk=grant.pk).update(expires_at=timezone.now() + timedelta(days=6))
+        mail.outbox.clear()
+        self.assertEqual(notify_trials_ending(), 1)
+        self.assertEqual(notify_trials_ending(), 0)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('entering paper responses closes', mail.outbox[0].body)
+        self.assertIn('Nothing is deleted', mail.outbox[0].body)
+        grant.refresh_from_db()
+        self.assertIsNotNone(grant.ending_notified_at)
+
+    def test_no_reminder_for_pro_or_far_off_trials(self):
+        """
+        GIVEN one trial ending in 6 days on a workspace that bought Pro, and one ending in 30 days
+        WHEN notify_trials_ending runs
+        THEN no mail is sent
+        """
+        from django.core import mail
+
+        from ..tasks import notify_trials_ending
+        grant = trial.claim(self.org, self.owner)
+        EntitlementGrant.objects.filter(pk=grant.pk).update(expires_at=timezone.now() + timedelta(days=6))
+        make_sub(self.org)
+        other, other_owner = make_org('Other Org', 'other_owner')
+        trial.claim(other, other_owner)
+        mail.outbox.clear()
+        self.assertEqual(notify_trials_ending(), 0)
+        self.assertEqual(mail.outbox, [])
+
+    def test_no_mail_when_an_allowance_runs_out(self):
+        """
+        GIVEN a live trial with one pro_help request
+        WHEN it is spent
+        THEN no mail is sent
+        """
+        from django.core import mail
+        trial.claim(self.org, self.owner)
+        mail.outbox.clear()
+        trial.use(self.org, 'pro_help', actor=self.editor)
+        self.assertEqual(mail.outbox, [])

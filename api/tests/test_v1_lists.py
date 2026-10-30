@@ -77,14 +77,16 @@ class V1ListsTest(TestCase):
 
     def test_survey_list_counts_free_workspaces(self):
         """
-        GIVEN the caller owns a Pro and a Free workspace, each with a survey
+        GIVEN the caller owns a Pro and a Free workspace (whose owners used their Pro trial), each with a survey
         WHEN surveys are listed
         THEN only the Pro survey is listed and hidden_by_plan is 1
         """
+        from billing.tests.helpers import trial_used_elsewhere
         from survey.models import Membership
         from .helpers import make_free_org
         free, _ = make_free_org('Free', 'free_owner3')
         Membership.objects.create(user=self.owner, organization=free, role='owner')
+        trial_used_elsewhere(free)
         make_v1_survey(free, self.owner, 'free_one')
         body = self.api.get('/surveys').json()
         self.assertEqual([s['name'] for s in body['items']], ['v1_survey'])

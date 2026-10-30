@@ -1,6 +1,7 @@
 {% extends "editor/editor_base.html" %}
 {% load i18n %}
 {% load survey_filters %}
+{% load billing_tags %}
 {% load l10n %}
 
 {% block page_title %}{% trans "Settings" %} – {{ survey.name }}{% endblock %}
@@ -144,10 +145,12 @@
             <div class="form-group">
                 <div class="form-check">
                     {{ form.show_branding }}
-                    <label class="form-check-label" for="id_show_branding">{{ form.show_branding.label }}</label>
+                    <label class="form-check-label" for="id_show_branding">{{ form.show_branding.label }}</label> {% pro_badge survey.organization "unbranded" %}
                 </div>
                 {% for error in form.show_branding.errors %}<small class="text-danger d-block">{{ error }}</small>{% endfor %}
-                {% if form.unbranded and not form.unbranded_by_plan %}
+                {% if form.unbranded_starts_trial %}
+                <small class="form-text text-muted">{% trans "Switching the badge off starts your workspace's free Pro trial — no card needed." %} <a href="{% url 'org_billing' survey.organization.slug %}#pro-trial">{% trans "What the trial includes" %}</a></small>
+                {% elif form.unbranded and not form.unbranded_by_plan %}
                 <small class="form-text text-muted">{% trans "Your Pro trial covers this: switching the badge off uses one of its unbranded surveys." %} <a href="{% url 'org_billing' survey.organization.slug %}#pro-trial">{% trans "Pro trial" %}</a></small>
                 {% elif form.unbranded %}
                 <small class="form-text text-muted">{% trans "Off = a clean survey, thanks page and public results with nothing pointing back to Mapsurvey." %}</small>

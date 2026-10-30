@@ -175,10 +175,16 @@ class ConnectionsPageTest(TestCase):
 
     def test_free_note(self):
         """
-        GIVEN only Free workspaces
+        GIVEN only Free workspaces, first one that can still start its Pro trial, then one that cannot
         WHEN the page renders
-        THEN the note about pro_required shows; on a Pro workspace it does not
+        THEN the first says the first call starts the trial, the second shows the pro_required note;
+             on a Pro workspace neither shows
         """
+        from billing.tests.helpers import trial_used_elsewhere
+        page = self.client.get(PAGE).content.decode()
+        self.assertIn('starts it', page)
+        self.assertNotIn('pro_required', page)
+        trial_used_elsewhere(self.org)
         self.assertIn('pro_required', self.client.get(PAGE).content.decode())
         pro, pro_owner = make_pro_org()
         self.client.login(username=pro_owner.username, password='pass')
