@@ -69,3 +69,34 @@ class ViralLoopBrandingTest(TestCase):
         self.survey.show_branding = False
         self.survey.save(update_fields=["show_branding"])
         self.assertEqual(serialize_survey_to_dict(self.survey)["show_branding"], False)
+
+
+class BrandingSwitchInSettingsPanelTest(TestCase):
+    """The badge switch stays on its own row in the Build "Survey settings" panel."""
+
+    def test_switch_is_not_pulled_out_of_its_row(self):
+        """
+        GIVEN the survey owner opens the Build "Survey settings" panel
+        WHEN the badge checkbox renders inside its .pr-field label with Bootstrap's
+             position:absolute .form-check-input class
+        THEN editor_base resets that class to position:static, so the checkbox does not
+             stay behind while the panel scrolls and float over the Survey period card
+        """
+        from pathlib import Path
+        from django.conf import settings
+        from django.contrib.auth.models import User
+        from survey.models import Membership
+
+        owner = User.objects.create_user('brand_owner', password='pass')
+        org = _make_org("BrandPanelOrg")
+        Membership.objects.create(user=owner, organization=org, role='owner')
+        survey = SurveyHeader.objects.create(name="brand_panel", organization=org, created_by=owner)
+        SurveySection.objects.create(name="s1", survey_header=survey, is_head=True)
+
+        client = Client()
+        client.login(username='brand_owner', password='pass')
+        panel = client.get(f'/editor/surveys/{survey.uuid}/settings-panel/').content.decode()
+        self.assertRegex(panel, r'<label[^>]*>\s*<input[^>]*class="form-check-input"[^>]*id="id_show_branding"')
+
+        base = (Path(settings.BASE_DIR) / 'survey/templates/editor/editor_base.html').read_text()
+        self.assertIn('.pr-field label > .form-check-input { position: static; margin: 0; }', base)
