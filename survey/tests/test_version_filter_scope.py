@@ -390,3 +390,149 @@ class VersionFilterParityTest(TestCase):
             response.content.decode(),
             rf'data-survey-uuid="{self.survey.uuid}"[^>]*data-version="v1"',
         )
+
+
+class VersionListScopeTest(TestCase):
+    """A comma-separated `version` value names several versions (issue #496)."""
+
+    def setUp(self):
+        self.org = _make_org('ListScopeOrg')
+        self.user = User.objects.create_user(username='listscope', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.survey = SurveyHeader.objects.create(
+            name='list_survey', organization=self.org, created_by=self.user,
+            status='published', version_number=4,
+        )
+        self.headers = {4: self.survey}
+        for num in (3, 2, 1):
+            self.headers[num] = SurveyHeader.objects.create(
+                name='list_survey', organization=self.org, status='closed',
+                is_canonical=False, canonical_survey=self.survey, version_number=num,
+            )
+        self.draft = SurveyHeader.objects.create(
+            name='list_survey', organization=self.org, status='draft',
+            is_canonical=False, published_version=self.survey, version_number=5,
+        )
+        for num, header in self.headers.items():
+            section = SurveySection.objects.create(
+                survey_header=header, name='sec', code='S1', is_head=True,
+            )
+            question = Question.objects.create(
+                survey_section=section, code='Q1', order_number=1, name='Q?', input_type='text',
+            )
+            session = SurveySession.objects.create(survey=header)
+            Answer.objects.create(survey_session=session, question=question, text=f'answer of v{num}')
+
+    def _scope(self, value):
+        from survey.versioning import resolve_version_scope
+        return resolve_version_scope(self.survey, value)
+
+    def test_list_resolves_to_named_versions_in_family_order(self):
+        """
+        GIVEN a survey with versions v1–v4 (v4 canonical)
+        WHEN `v2,v4` is resolved
+        THEN the scope is v4 then v2 — canonical first, whatever the list order
+        """
+        scope = self._scope('v2,v4')
+        self.assertEqual([h.version_number for h in scope.headers], [4, 2])
+        self.assertEqual(scope.value, 'v4,v2')
+        self.assertTrue(scope.is_family)
+
+    def test_order_duplicates_and_spelling_do_not_matter(self):
+        """
+        GIVEN the same survey
+        WHEN `v2,v3,3`, `3,v2` and ` V3 , latest ,v2` are resolved
+        THEN the first two name the same versions and `latest` adds the canonical one
+        """
+        self.assertEqual(self._scope('v2,v3,3').ids, self._scope('3,v2').ids)
+        self.assertEqual(
+            self._scope(' V3 , latest ,v2').ids,
+            {self.headers[4].id, self.headers[3].id, self.headers[2].id},
+        )
+
+    def test_unknown_entries_are_dropped(self):
+        """
+        GIVEN the same survey
+        WHEN `v2,v99,bogus` is resolved
+        THEN the scope is v2 alone, a single version, not a family
+        """
+        scope = self._scope('v2,v99,bogus')
+        self.assertEqual(scope.ids, {self.headers[2].id})
+        self.assertEqual(scope.value, 'v2')
+        self.assertFalse(scope.is_family)
+
+    def test_nothing_resolvable_falls_back_to_the_family(self):
+        """
+        GIVEN the same survey
+        WHEN `v98,v99` or a bare comma is resolved
+        THEN the scope is the whole family, as for one unrecognised value
+        """
+        family = {h.id for h in self.headers.values()}
+        for value in ('v98,v99', ','):
+            with self.subTest(value=value):
+                scope = self._scope(value)
+                self.assertEqual(scope.ids, family)
+                self.assertEqual(scope.value, 'all')
+
+    def test_all_inside_a_list_widens_to_the_family(self):
+        """
+        GIVEN the same survey
+        WHEN `v2,all` is resolved, or a list naming every version
+        THEN the scope is the whole family under the value `all`
+        """
+        family = {h.id for h in self.headers.values()}
+        for value in ('v2,all', 'v1,v2,v3,v4'):
+            with self.subTest(value=value):
+                scope = self._scope(value)
+                self.assertEqual(scope.ids, family)
+                self.assertEqual(scope.value, 'all')
+
+    def test_draft_never_joins_a_list(self):
+        """
+        GIVEN a survey with a draft copy
+        WHEN `draft,v2,v3` is resolved
+        THEN the scope is v2 and v3, without the draft copy
+        """
+        scope = self._scope('draft,v2,v3')
+        self.assertEqual(scope.ids, {self.headers[3].id, self.headers[2].id})
+        self.assertNotIn(self.draft.id, scope.ids)
+
+    def test_single_values_are_unchanged(self):
+        """
+        GIVEN the same survey
+        WHEN `all`, `v2`, `draft` and no value are resolved
+        THEN they resolve as before lists existed
+        """
+        family = {h.id for h in self.headers.values()}
+        self.assertEqual(self._scope(None).ids, family)
+        self.assertEqual(self._scope('all').ids, family)
+        self.assertEqual(self._scope('v2').ids, {self.headers[2].id})
+        self.assertEqual(self._scope('draft').ids, {self.draft.id})
+
+    def test_analytics_reports_the_list(self):
+        """
+        GIVEN the same survey with one session per version
+        WHEN the Responses analytics service is built for `v2,v3`
+        THEN it counts exactly the sessions of v2 and v3
+        """
+        service = SurveyAnalyticsService(self.survey, version='v2,v3')
+        self.assertEqual(service.base_qs.count(), 2)
+
+    def test_download_of_two_versions_holds_only_their_answers_with_prefixes(self):
+        """
+        GIVEN the same survey with one answer per version
+        WHEN the legacy archive is downloaded with `version=v2,v3`
+        THEN it holds the v2 and v3 answers only, in `v3_` and `v2_` files
+        """
+        self.client.login(username='listscope', password='pass')
+        response = self.client.get(f'/surveys/{self.survey.uuid}/download?version=v2,v3')
+        self.assertEqual(response.status_code, 200)
+        names = zipfile.ZipFile(BytesIO(response.content)).namelist()
+        self.assertTrue(any(n.startswith('v3_') for n in names), names)
+        self.assertTrue(any(n.startswith('v2_') for n in names), names)
+        self.assertFalse(any(n.startswith(('v1_', 'v4_')) for n in names), names)
+        body = _zip_text(response)
+        self.assertIn('answer of v2', body)
+        self.assertIn('answer of v3', body)
+        self.assertNotIn('answer of v1', body)
+        self.assertNotIn('answer of v4', body)

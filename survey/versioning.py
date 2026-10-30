@@ -162,9 +162,12 @@ def resolve_version_scope(survey, version=None):
 
     Missing, 'all', or unresolvable values → the whole family. 'latest', 'vN'
     and 'N' → that single version, when the family has one with that number.
-    'draft' → the family's draft copy, when it has one.
+    'draft' → the family's draft copy, when it has one. A comma-separated list
+    → the versions it names (see _resolve_version_list).
     """
     canonical = canonical_of(survey)
+    if ',' in str(version or ''):
+        return _resolve_version_list(canonical, str(version).split(','))
     if str(version or '').strip().lower() == DRAFT_SCOPE:
         draft = draft_copy_of(canonical)
         if draft is not None:
@@ -176,6 +179,34 @@ def resolve_version_scope(survey, version=None):
             if header.version_number == num:
                 return VersionScope(value=f'v{num}', headers=[header])
     return VersionScope(value='all', headers=headers)
+
+
+def _resolve_version_list(canonical, entries):
+    """The scope of a list such as 'v10,v11' (issue #496): the family members
+    the entries name, each once, in family order whatever order the list gives.
+
+    Entries that name no member are dropped and 'all' widens to the family, as
+    for a single value; a list with nothing left is the family. 'draft' is
+    ignored: preview traffic is reported only when asked for on its own.
+    """
+    headers = family_headers(canonical)
+    wanted = set()
+    for entry in entries:
+        value = entry.strip().lower()
+        if value == 'all':
+            return VersionScope(value='all', headers=headers)
+        if not value or value == DRAFT_SCOPE:
+            continue
+        num = _requested_version_number(value, canonical)
+        if num is not None:
+            wanted.add(num)
+    picked = [header for header in headers if header.version_number in wanted]
+    if not picked or len(picked) == len(headers):
+        return VersionScope(value='all', headers=headers)
+    return VersionScope(
+        value=','.join(f'v{header.version_number}' for header in picked),
+        headers=picked,
+    )
 
 
 def lineage_map(survey, include_draft=False):

@@ -227,6 +227,29 @@ class ResponsesApiTest(TestCase):
     def _path(self, url):
         return '/' + url.split('://', 1)[1].split('/', 1)[1]
 
+    def test_a_version_list_scopes_the_summary_and_the_export_link(self):
+        """
+        GIVEN the canonical survey as v3 with four answered sessions and archived v2 and v1 with one each
+        WHEN the summary is asked for `v3,v2` and an export link is made for `v2,v3`
+        THEN the summary counts 5, the link carries the list, and the whole family still counts 6
+        """
+        from survey.models import SurveyHeader, SurveySection
+        self.survey.version_number = 3
+        self.survey.save(update_fields=['version_number'])
+        for num in (2, 1):
+            old = SurveyHeader.objects.create(name=self.survey.name, organization=self.org, status='closed',
+                                              is_canonical=False, canonical_survey=self.survey, version_number=num)
+            section = SurveySection.objects.create(survey_header=old, name='S', code='S1', is_head=True)
+            why = Question.objects.create(survey_section=section, name='Why', input_type='text',
+                                          order_number=1, code='WHY')
+            Answer.objects.create(survey_session=SurveySession.objects.create(survey=old), question=why,
+                                  text=f'answer of v{num}')
+        self.assertEqual(self._summary(version='v3,v2')['responses'], 5)
+        self.assertEqual(self._summary()['responses'], 6)
+        token = self._link(format='csv', version='v2,v3').rsplit('/export-links/', 1)[1].strip('/')
+        from api.v1.responses import LINK_SALT
+        self.assertEqual(signing.loads(token, salt=LINK_SALT)['v'], 'v2,v3')
+
     def test_link_after_revocation_is_404(self):
         """
         GIVEN a link created with a token that is then revoked

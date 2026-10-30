@@ -445,7 +445,7 @@ class ResponseList(Page):
 
 class ExportLinkIn(In):
     format: Literal['zip', 'xlsx', 'csv', 'gpkg', 'shp', 'kml'] = 'xlsx'
-    version: Optional[str] = Field(None, description='A version number, or omit for every version.')
+    version: Optional[str] = Field(None, description='One version (`v3`), several separated by commas (`v10,v11`), or omit for every version.')
     include_all: bool = Field(False, description='Also deleted and rejected responses.')
     completed_only: bool = Field(False, description='Only responses that reached the last section.')
     files: bool = Field(False, description='Add uploaded files (turns a single-file format into a ZIP).')

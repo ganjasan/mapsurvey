@@ -9556,3 +9556,23 @@ msgstr "Hasta que la encuesta se publique, el formulario se imprime con una marc
 #: survey/templates/editor/survey_share.html
 msgid "Chinese, Japanese and Korean text is not yet supported on the printed form."
 msgstr "El texto en chino, japonés y coreano aún no se admite en el formulario impreso."
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "Versions"
+msgstr "Versiones"
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "All versions"
+msgstr "Todas las versiones"
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "Tick at least one version."
+msgstr "Marque al menos una versión."
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "Search versions…"
+msgstr "Buscar versiones…"
+
+#: survey/templates/editor/partials/_export_modal.html
+msgid "No matching versions."
+msgstr "No hay versiones que coincidan."
