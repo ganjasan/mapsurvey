@@ -124,3 +124,91 @@ class V1SchemasTest(TestCase):
         self.assertIsNone(published.json()['review'])
         self.assertIn(f'/surveys/{created["uuid"]}/', published.json()['url'])
         self.assertTrue(SurveyHeader.objects.get(uuid=created['uuid']).collaborators.filter(user=self.owner).exists())
+
+
+class V1SurveyPeriodTest(TestCase):
+    """rest-api-v1: Survey period over the API (change survey-schedule)."""
+
+    def setUp(self):
+        self.org, self.owner = make_pro_org()
+        self.survey, self.section = make_v1_survey(self.org, self.owner, status='published')
+        self.token, _ = mint(self.owner)
+        self.api = V1Client(self.client, self.token)
+        self.base = f'/surveys/{self.survey.uuid}'
+
+    @staticmethod
+    def _instant(days, hours=0):
+        from datetime import timedelta
+        from django.utils import timezone
+        return (timezone.now() + timedelta(days=days, hours=hours)).replace(second=0, microsecond=0)
+
+    @staticmethod
+    def _parse(value):
+        from datetime import datetime
+        return datetime.fromisoformat(value.replace('Z', '+00:00')) if value else None
+
+    def test_read_and_set(self):
+        """
+        GIVEN an owner token
+        WHEN it PATCHes opens_at and closes_at with a +06:00 offset and the Bishkek zone
+        THEN the response and the list carry the same instants in UTC and the zone
+        """
+        from zoneinfo import ZoneInfo
+        opens, closes = self._instant(3), self._instant(30)
+        tz = ZoneInfo('Asia/Bishkek')
+        response = self.api.patch(self.base, {
+            'opens_at': opens.astimezone(tz).isoformat(),
+            'closes_at': closes.astimezone(tz).isoformat(),
+            'schedule_timezone': 'Asia/Bishkek'})
+        self.assertEqual(response.status_code, 200, response.content)
+        body = response.json()
+        self.assertEqual((self._parse(body['opens_at']), self._parse(body['closes_at'])), (opens, closes))
+        self.assertTrue(body['opens_at'].endswith('Z') or body['opens_at'].endswith('+00:00'))
+        self.assertEqual(body['schedule_timezone'], 'Asia/Bishkek')
+        listed = self.api.get('/surveys').json()['items'][0]
+        self.assertEqual(self._parse(listed['closes_at']), closes)
+
+    def test_clear_the_end(self):
+        """
+        GIVEN a survey with both ends
+        WHEN closes_at is PATCHed to null
+        THEN closes_at is null and opens_at unchanged
+        """
+        opens, closes = self._instant(-1), self._instant(5)
+        SurveyHeader.objects.filter(pk=self.survey.pk).update(opens_at=opens, closes_at=closes)
+        response = self.api.patch(self.base, {'closes_at': None})
+        self.assertEqual(response.status_code, 200, response.content)
+        body = response.json()
+        self.assertIsNone(body['closes_at'])
+        self.assertEqual(self._parse(body['opens_at']), opens)
+
+    def test_invalid_order(self):
+        """
+        GIVEN a stored opens_at ten days ahead
+        WHEN a PATCH sets closes_at five days ahead
+        THEN the response is 422 validation naming closes_at and nothing is stored
+        """
+        SurveyHeader.objects.filter(pk=self.survey.pk).update(opens_at=self._instant(10))
+        response = self.api.patch(self.base, {'closes_at': self._instant(5).isoformat()})
+        self.assertEqual(response.status_code, 422, response.content)
+        self.assertIn('closes_at', response.json()['fields'])
+        self.survey.refresh_from_db()
+        self.assertIsNone(self.survey.closes_at)
+
+    def test_unpublished_changes_write_to_the_live_survey(self):
+        """
+        GIVEN a published survey with unpublished changes
+        WHEN a PATCH on the draft's uuid sets closes_at
+        THEN the canonical survey holds it and the draft row holds nothing
+        """
+        from survey.services import publishing as svc_publishing
+        from survey.services.context import Actor
+        draft = svc_publishing.create_draft(Actor(user=self.owner), self.survey)
+        closes = self._instant(8)
+        response = self.api.patch(f'/surveys/{draft.uuid}', {'closes_at': closes.isoformat()})
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(self._parse(response.json()['closes_at']), closes)
+        self.survey.refresh_from_db()
+        draft.refresh_from_db()
+        self.assertEqual(self.survey.closes_at, closes)
+        self.assertIsNone(draft.closes_at)

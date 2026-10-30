@@ -30,6 +30,14 @@ def _map_start(obj):
     return {'lat': point.y, 'lng': point.x, 'zoom': obj.start_map_zoom or 12}
 
 
+def _period(obj):
+    """The survey period lives on the canonical survey (change survey-schedule)."""
+    from survey.versioning import canonical_of
+    owner = canonical_of(obj)
+    return {'opens_at': owner.opens_at, 'closes_at': owner.closes_at,
+            'schedule_timezone': owner.schedule_timezone or ''}
+
+
 def survey(obj):
     draft = None if obj.is_draft_copy else obj.get_draft_copy()
     return {
@@ -40,6 +48,7 @@ def survey(obj):
         'languages': list(obj.available_languages or []),
         'redirect_url': obj.redirect_url,
         'visibility': obj.visibility,
+        **_period(obj),
         'version': obj.version_number,
         'is_unpublished_changes': obj.is_draft_copy,
         'live_survey': obj.published_version.uuid if obj.is_draft_copy else None,

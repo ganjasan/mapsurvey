@@ -28,6 +28,7 @@ HELP_LINKS = {
     'connected_apps': 'how-to/connect-an-app/',
     # The Translations tab (change translation-table).
     'translate': 'how-to/translate-a-survey/',
+    'survey_period': 'how-to/set-a-survey-period/',
     # The operator entry form (change operator-entry, #355).
     'operator_entry': 'how-to/enter-responses-for-others/',
     # The printable paper form (change printable-form, #489).

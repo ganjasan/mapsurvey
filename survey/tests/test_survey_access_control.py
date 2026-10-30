@@ -395,3 +395,77 @@ class PrivatePublishedSurveyStaysLinkAccessibleTest(TestCase):
         )
         response = self.client.get(f'/surveys/{survey.uuid}/')
         self.assertEqual(response.status_code, 404)
+
+
+class SurveyPeriodAccessTest(TestCase):
+    """Requirement: A published survey outside its period is not answerable
+    (delta of change survey-schedule; the capability's own tests are in test_survey_schedule.py)."""
+
+    def setUp(self):
+        from django.utils import timezone
+        self.now = timezone.now()
+        self.org = _make_org('PeriodAccessOrg')
+        self.owner = User.objects.create_user(username='pa_owner', password='pass')
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+
+    def _survey(self, name, **fields):
+        survey = SurveyHeader.objects.create(
+            name=name, organization=self.org, status='published', created_by=self.owner, **fields)
+        SurveySection.objects.create(survey_header=survey, name='sec_a', title='A', code='SA', is_head=True)
+        return survey
+
+    def test_not_yet_open(self):
+        """
+        GIVEN a published survey whose opens_at is in the future
+        WHEN an anonymous visitor requests it
+        THEN the status is 200, the body names the survey and its opening time, X-Robots-Tag
+             says noindex, and no session is created
+        """
+        from datetime import timedelta
+        from survey.models import SurveySession
+        survey = self._survey('pa_before', opens_at=self.now + timedelta(days=2))
+        response = self.client.get(f'/surveys/{survey.uuid}/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'pa_before')
+        self.assertContains(response, 'It opens on')
+        self.assertEqual(response['X-Robots-Tag'], 'noindex')
+        self.assertFalse(SurveySession.objects.filter(survey=survey).exists())
+
+    def test_already_closed_by_the_clock(self):
+        """
+        GIVEN a published survey whose closes_at is in the past and whose status is still published
+        WHEN an anonymous visitor requests it
+        THEN the response is the closed page
+        """
+        from datetime import timedelta
+        survey = self._survey('pa_after', closes_at=self.now - timedelta(minutes=3))
+        response = self.client.get(f'/surveys/{survey.uuid}/')
+        self.assertTemplateUsed(response, 'survey_closed.html')
+
+    def test_held_wins_over_the_period(self):
+        """
+        GIVEN a published survey held by content review with opens_at in the future
+        WHEN an anonymous visitor requests it
+        THEN the response is the 404 unavailable page
+        """
+        from datetime import timedelta
+        from survey.models import ContentReview
+        survey = self._survey('pa_held', opens_at=self.now + timedelta(days=2))
+        ContentReview.objects.create(survey=survey, status='pending')
+        response = self.client.get(f'/surveys/{survey.uuid}/')
+        self.assertEqual(response.status_code, 404)
+        self.assertTemplateUsed(response, 'survey_unavailable.html')
+
+    def test_password_gate_after_the_period(self):
+        """
+        GIVEN a published, password-protected survey inside its period
+        WHEN an anonymous visitor requests it
+        THEN they are redirected to the password page as before
+        """
+        from datetime import timedelta
+        survey = self._survey('pa_pw', opens_at=self.now - timedelta(days=1), closes_at=self.now + timedelta(days=1))
+        survey.set_password('secret')
+        survey.save()
+        response = self.client.get(f'/surveys/{survey.uuid}/')
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/password/', response['Location'])

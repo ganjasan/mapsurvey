@@ -9597,3 +9597,62 @@ msgstr "Rechercher une version…"
 #: survey/templates/editor/partials/_export_modal.html
 msgid "No matching versions."
 msgstr "Aucune version correspondante."
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Survey period"
+msgstr "Période de l'enquête"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Leave a box empty for no limit. Times are in this time zone:"
+msgstr "Laissez une case vide pour ne pas fixer de limite. Les heures sont dans ce fuseau horaire :"
+
+#: survey/editor_forms.py
+msgid "Opens on"
+msgstr "Ouvre le"
+
+#: survey/editor_forms.py
+msgid "Closes on"
+msgstr "Ferme le"
+
+#: survey/editor_forms.py
+msgid "Before this, respondents see a page saying when the survey opens. The survey still has to be published."
+msgstr "Avant cette date, les répondants voient une page indiquant quand l'enquête ouvre. L'enquête doit tout de même être publiée."
+
+#: survey/editor_forms.py
+msgid "The survey closes by itself at this time. Reopening it by hand clears the date."
+msgstr "L'enquête se ferme d'elle-même à cette heure. La rouvrir à la main efface la date."
+
+#: survey/editor_forms.py
+msgid "Unknown time zone."
+msgstr "Fuseau horaire inconnu."
+
+#: survey/editor_forms.py
+msgid "The survey must close after it opens."
+msgstr "L'enquête doit se fermer après son ouverture."
+
+#: survey/editor_forms.py
+msgid "Choose a closing time in the future."
+msgstr "Choisissez une heure de fermeture à venir."
+
+#: survey/templates/editor/partials/_schedule_next_event.html
+#, python-format
+msgid "Opens %(when)s"
+msgstr "Ouvre le %(when)s"
+
+#: survey/templates/editor/partials/_schedule_next_event.html
+#, python-format
+msgid "Closes %(when)s"
+msgstr "Ferme le %(when)s"
+
+#: survey/templates/survey_not_yet_open.html
+msgid "Survey opens soon"
+msgstr "L'enquête ouvre bientôt"
+
+#: survey/templates/survey_not_yet_open.html
+msgid "This survey is not open yet."
+msgstr "Cette enquête n'est pas encore ouverte."
+
+#: survey/templates/survey_not_yet_open.html
+#, python-format
+msgid "It opens on %(when)s (%(zone)s)."
+msgstr "Elle ouvre le %(when)s (%(zone)s)."

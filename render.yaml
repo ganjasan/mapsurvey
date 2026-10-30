@@ -284,7 +284,12 @@ services:
     # nothing on a preview reads its numbers.
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    dockerCommand: celery -A mapsurvey worker -l info --concurrency 2
+    # `-B` embeds Celery beat (change survey-schedule, #497): the schedule that closes
+    # surveys at their closing time. Safe ONLY while this service runs one instance --
+    # two workers with `-B` fire every beat twice. Scaling the worker means moving beat
+    # into a service of its own (`celery -A mapsurvey beat`). The schedule file lives in
+    # /tmp: the container is ephemeral and beat recomputes it from settings on start.
+    dockerCommand: celery -A mapsurvey worker -B -s /tmp/celerybeat-schedule -l info --concurrency 2
     envVars:
       # Same group as the web service: the worker reads the files the web stores.
       # SECRET_KEY comes from the group too, on purpose (#388): a generated value

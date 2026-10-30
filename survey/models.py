@@ -488,6 +488,11 @@ class SurveyHeader(models.Model):
     show_branding = models.BooleanField(default=True, help_text=_('Show a "Made with Mapsurvey" link on the public survey and thanks pages (a free-tier acquisition loop). Turn off for a clean, unbranded look.'))
     embed_allowed_hosts = models.JSONField(default=list, blank=True, help_text=_('Hosts allowed to embed this survey in an iframe, e.g. ["city.example.org", "*.consult.example"]. Empty = any site. Read on the canonical survey only.'))
     style_settings = models.JSONField(default=dict, blank=True, help_text=_('Survey-wide style defaults: {rating_display_style}'))
+    # Survey period (change survey-schedule, #497). Read on the CANONICAL survey only and
+    # only through survey/schedule.py -- never compare these raw.
+    opens_at = models.DateTimeField(null=True, blank=True, help_text=_('Before this instant (UTC) respondents see the "opens on" page; the survey still has to be published by hand. Canonical survey only.'))
+    closes_at = models.DateTimeField(null=True, blank=True, db_index=True, help_text=_('Respondents see the closed page from this instant (UTC); the periodic task then closes the survey for real. Canonical survey only.'))
+    schedule_timezone = models.CharField(max_length=64, blank=True, default='', help_text=_('IANA zone the period was entered in, for display. Empty = UTC.'))
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True, blank=True, db_index=True, help_text=_('Set when the survey is moved to trash; purged permanently after the retention window.'))
@@ -652,6 +657,12 @@ class SurveyHeader(models.Model):
         return not SurveyHeader.objects.filter(
             canonical_survey=self, is_canonical=False,
         ).exists()
+
+    @property
+    def schedule_next_event(self):
+        """What the publishing widget shows under the status chip (survey/schedule.py)."""
+        from .schedule import next_event
+        return next_event(self)
 
     def has_draft_copy(self):
         return self.draft_copies.exists()
@@ -1693,6 +1704,7 @@ class AuditLog(models.Model):
         ('survey_purge', 'Survey permanently deleted'),
         ('survey_auto_purge', 'Survey auto-purged after retention'),
         ('status_transition', 'Lifecycle status transition'),
+        ('schedule_cleared', 'Survey period cleared on reopen'),
         ('clear_test_data', 'Test sessions cleared'),
         ('draft_publish', 'Draft published as new version'),
         ('draft_discard', 'Draft discarded'),

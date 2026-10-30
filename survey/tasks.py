@@ -136,3 +136,16 @@ def run_survey_import(self, job_id):
     job.finished_at = timezone.now()
     job.discard_file()
     job.save()
+
+
+@shared_task(bind=True)
+def apply_survey_schedule(self):
+    """Close published surveys whose closing time has passed (change survey-schedule).
+
+    Celery beat (embedded in the worker) runs this every five minutes; the management
+    command of the same name runs the same function by hand. Idempotent: a survey is
+    picked only while `published`, locked with `skip_locked`, and closed through the
+    lifecycle service, so an overlapping run or a redelivery finds nothing to do.
+    """
+    from .schedule import close_due
+    return close_due()

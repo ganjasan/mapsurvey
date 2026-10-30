@@ -737,6 +737,16 @@ DISPOSABLE_EMAIL_DOMAINS = [
 CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
 CELERY_TASK_ALWAYS_EAGER = os.environ.get('CELERY_TASK_ALWAYS_EAGER', 'False').lower() == 'true'
+CELERY_TIMEZONE = 'UTC'
+# Celery beat runs inside the worker (`celery worker -B`, see render.yaml). One entry: close
+# published surveys whose closing time has passed (change survey-schedule, #497). The
+# respondent gate already enforces the time to the minute; this materialises the status.
+CELERY_BEAT_SCHEDULE = {
+    'apply-survey-schedule': {
+        'task': 'survey.tasks.apply_survey_schedule',
+        'schedule': 300.0,
+    },
+}
 
 # Absolute-URL base for links built outside a request (Celery mail). Falls back
 # to the older newsletter setting so existing deployments change nothing.

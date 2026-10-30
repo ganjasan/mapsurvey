@@ -1,0 +1,10 @@
+{% load i18n %}
+{% comment %}The next event of the survey period under the status chip (change survey-schedule):
+"Opens <when>" before the start, "Closes <when>" before the end, nothing otherwise. Times are
+in the survey's zone (survey.schedule_next_event -> survey/schedule.py).{% endcomment %}
+{% with ev=survey.schedule_next_event %}{% if ev %}
+  <span class="pub-next" title="{{ ev.text }} ({{ survey.schedule_timezone|default:'UTC' }})">
+    <i class="far fa-clock"></i>
+    {% if ev.kind == 'opens' %}{% blocktrans with when=ev.text %}Opens {{ when }}{% endblocktrans %}{% else %}{% blocktrans with when=ev.text %}Closes {{ when }}{% endblocktrans %}{% endif %}
+  </span>
+{% endif %}{% endwith %}

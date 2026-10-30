@@ -87,7 +87,7 @@ Permission `surveys:write` · role **workspace editor**
 
 ### `update_survey`
 
-Change the fields you name: name, languages, redirect_url ("#" for the built-in thanks page), visibility, basemaps, branding, the thanks page per language, the map start. Settings need the owner role; the thanks page the editor role.
+Change the fields you name: name, languages, redirect_url ("#" for the built-in thanks page), visibility, basemaps, branding, the thanks page per language, the map start, and the survey period (opens_at, closes_at, schedule_timezone: before opens_at respondents see an "opens on" page, at closes_at the survey closes by itself). Settings need the owner role; the thanks page the editor role.
 
 Permission `surveys:write` · role **owner**
 
@@ -103,6 +103,9 @@ Permission `surveys:write` · role **owner**
 | `thanks_html` | map |  | Thanks page per language; creator HTML, sanitised on save. |
 | `map_start` | object (`lat`, `lng`, `zoom`) |  |  |
 | `use_geolocation` | boolean |  |  |
+| `opens_at` | date-time |  | Start of the survey period: ISO 8601 with an offset, or a naive value read in schedule_timezone. Null clears it. |
+| `closes_at` | date-time |  | End of the survey period, after the start and in the future. Null clears it. Reopening a survey by hand clears a past end. |
+| `schedule_timezone` | string |  | IANA zone (e.g. "Europe/Berlin") naive period values are read in and times are shown in; "" = UTC. |
 | `survey` | uuid | **required** | The survey uuid (from list_surveys or create_survey). |
 
 ### `delete_survey`

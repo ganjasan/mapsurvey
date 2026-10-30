@@ -21,6 +21,7 @@ from ..models import SurveyHeader, SurveySession
 from ..public_results import scaffold_page
 from ..translation_gaps import survey_translation_gaps
 from ..versioning import IncompatibleDraftError, clone_survey_for_draft, publish_draft as _publish_draft
+from .. import schedule
 from .common import surface_props
 from .errors import Conflict, EmailUnconfirmed, IncompatibleDraft, TransitionRefused, TranslationGaps
 
@@ -59,11 +60,16 @@ def _require_confirmed_email(actor):
 
 
 def transition(actor, survey, status, *, acknowledge_translation_gaps=False, clear_test_data=False,
-               refuse_draft_copy=False):
+               refuse_draft_copy=False, audit_metadata=None):
     """Move `survey` to `status` along `VALID_TRANSITIONS`.
 
     `refuse_draft_copy` (the API): unpublished changes are published with
-    `publish_draft`, never by changing their own status.
+    `publish_draft`, never by changing their own status. `audit_metadata` rides
+    on the `status_transition` row (the schedule task marks its closes).
+
+    Reopening (`closed` -> `published`) clears a closing time that has already
+    passed (change survey-schedule): the periodic task closed the survey, the
+    creator reopened it, and it must not close again until a new time is set.
     """
     if refuse_draft_copy and survey.is_draft_copy:
         raise Conflict('These are unpublished changes; publish them with draft/publish.')
@@ -80,11 +86,17 @@ def transition(actor, survey, status, *, acknowledge_translation_gaps=False, cle
             deleted_count, _ignored = SurveySession.objects.filter(survey=survey).delete()
             audit.record(actor, 'clear_test_data', survey, deleted_sessions=deleted_count)
 
-        audit.record(actor, 'status_transition', survey, old_status=survey.status, new_status=status)
+        audit.record(actor, 'status_transition', survey, old_status=survey.status, new_status=status,
+                     **(audit_metadata or {}))
+        reopening = survey.status == 'closed' and status == 'published'
         survey.status = status
         if status == 'archived':
             survey.is_archived = True
         survey.save(update_fields=['status', 'is_archived'])
+        if reopening:
+            cleared = schedule.clear_past(survey)
+            if cleared:
+                audit.record(actor, 'schedule_cleared', survey, **cleared)
 
     if status != 'published':
         return Published(survey)

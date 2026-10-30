@@ -91,6 +91,45 @@
         </script>
       </div>
 
+      {% comment %}Survey period (change survey-schedule, #497). Times are typed and shown in
+      the zone stored on the survey; a survey with no period yet takes the browser's zone.
+      The period is read on the live survey even while unpublished changes exist.{% endcomment %}
+      <div class="pr-card" id="survey-period-card">
+        <h6>{% trans "Survey period" %}</h6>
+        <div class="pr-help" style="margin-top:0;margin-bottom:.75rem;">
+          {% trans "Leave a box empty for no limit. Times are in this time zone:" %}
+          <strong data-schedule-zone>{{ form.schedule_zone_label }}</strong>.
+          {% if HELP_URL %}<a href="{{ HELP_URL.survey_period }}" target="_blank" rel="noopener" class="ms-learn-more">{% trans "Learn more" %} <i class="fas fa-external-link-alt" style="font-size:.7em;"></i></a>{% endif %}
+        </div>
+        <div class="pr-field">
+          <label for="{{ form.opens_at.id_for_label }}">{{ form.opens_at.label }}</label>
+          {{ form.opens_at }}
+          {% if form.opens_at.help_text %}<div class="pr-help">{{ form.opens_at.help_text }}</div>{% endif %}
+          {% for error in form.opens_at.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="pr-field">
+          <label for="{{ form.closes_at.id_for_label }}">{{ form.closes_at.label }}</label>
+          {{ form.closes_at }}
+          {% if form.closes_at.help_text %}<div class="pr-help">{{ form.closes_at.help_text }}</div>{% endif %}
+          {% for error in form.closes_at.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
+        </div>
+        {{ form.schedule_timezone }}
+        {% for error in form.schedule_timezone.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
+        <script>
+        (function () {
+          // A survey without a zone yet takes the browser's; a stored zone wins, so a
+          // colleague elsewhere does not shift the times by re-saving the panel.
+          var tz = document.getElementById('id_schedule_timezone');
+          var label = document.querySelector('#survey-period-card [data-schedule-zone]');
+          if (!tz || tz.value) return;
+          try {
+            var browser = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            if (browser) { tz.value = browser; if (label) label.textContent = browser; }
+          } catch (e) { /* UTC stays */ }
+        })();
+        </script>
+      </div>
+
       <div class="pr-card">
         <h6>{% trans "Languages" %}</h6>
         <div class="pr-field">
