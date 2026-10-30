@@ -126,3 +126,90 @@ class AuthTest(TestCase):
         """
         self.mcp.session = None
         self.assertEqual(self.mcp.call('get_survey', {'survey': str(self.survey.uuid)}).status_code, 200)
+
+
+BROWSER_ACCEPT = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+AGENT_PAGE = '/editor/surveys/start/agent/?from=connections'
+
+
+@LOCMEM
+@MCP_SETTINGS
+class OpenedInBrowserTest(TestCase):
+    """#498: the address is clicked in letters; a browser gets a page, clients the 401."""
+
+    def setUp(self):
+        self.org, self.owner = make_pro_org()
+        self.token, _ = mint(self.owner)
+
+    def test_browser_get_redirects_to_the_agent_page(self):
+        """
+        GIVEN a browser navigation (GET, Accept text/html, no Authorization)
+        WHEN /mcp or /mcp/ is opened
+        THEN 302 to the Connect-your-AI-agent page, from=connections
+        """
+        for path in ('/mcp', '/mcp/'):
+            response = self.client.get(path, HTTP_ACCEPT=BROWSER_ACCEPT)
+            self.assertEqual(response.status_code, 302, path)
+            self.assertEqual(response['Location'], AGENT_PAGE)
+
+    def test_signed_out_visitor_goes_through_login(self):
+        """
+        GIVEN a signed-out browser
+        WHEN it follows the redirect from /mcp
+        THEN it reaches the login page with next pointing at the agent page
+        """
+        response = self.client.get('/mcp', HTTP_ACCEPT=BROWSER_ACCEPT, follow=True)
+        final, _status = response.redirect_chain[-1]
+        self.assertIn('login', final)
+        self.assertIn('next=', final)
+        self.assertIn('start/agent', final)
+
+    def test_signed_in_creator_sees_the_agent_page(self):
+        """
+        GIVEN a signed-in creator
+        WHEN they open /mcp in the browser
+        THEN the agent page renders with the server address on it
+        """
+        self.client.force_login(self.owner)
+        response = self.client.get('/mcp', HTTP_ACCEPT=BROWSER_ACCEPT, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.redirect_chain, [(AGENT_PAGE, 302)])
+        self.assertContains(response, ISSUER + '/mcp')
+
+    def test_client_shaped_get_keeps_the_401(self):
+        """
+        GIVEN an MCP client's GET probe (Accept application/json, text/event-stream, no bearer)
+        WHEN /mcp is fetched
+        THEN 401 invalid_token naming the MCP metadata, as before
+        """
+        response = self.client.get('/mcp', HTTP_ACCEPT='application/json, text/event-stream')
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.json()['error'], 'invalid_token')
+        self.assertIn(f'resource_metadata="{ISSUER}{METADATA}"', response['WWW-Authenticate'])
+
+    def test_get_without_accept_keeps_the_401(self):
+        """
+        GIVEN a GET with no Accept header and no bearer (curl)
+        WHEN /mcp is fetched
+        THEN 401, not a redirect
+        """
+        self.assertEqual(self.client.get('/mcp').status_code, 401)
+
+    def test_html_get_with_a_bearer_is_a_client(self):
+        """
+        GIVEN a GET asking for text/html but carrying a bearer
+        WHEN /mcp is fetched
+        THEN 405 with Allow: POST, as any authenticated GET
+        """
+        response = self.client.get('/mcp', HTTP_ACCEPT=BROWSER_ACCEPT, HTTP_AUTHORIZATION=f'Bearer {self.token}')
+        self.assertEqual(response.status_code, 405)
+        self.assertEqual(response['Allow'], 'POST')
+
+    def test_post_from_a_browser_is_not_redirected(self):
+        """
+        GIVEN a POST with Accept text/html and no bearer
+        WHEN /mcp is hit
+        THEN 401 invalid_token: only a GET navigation is redirected
+        """
+        response = self.client.post('/mcp', '{}', content_type='application/json', HTTP_ACCEPT=BROWSER_ACCEPT)
+        self.assertEqual(response.status_code, 401)
