@@ -380,6 +380,10 @@
         .pr-card h6 { font-weight: 600; font-size: .95rem; margin: 0 0 .9rem; }
         .pr-field { margin-bottom: .85rem; }
         .pr-field label { display: block; font-size: .82rem; font-weight: 500; color: #374151; margin-bottom: .35rem; }
+        /* Bootstrap's .form-check-input is position:absolute and expects a .form-check
+           parent. Inside a .pr-field label (the "Made with Mapsurvey" switch) it has
+           none, so it stayed put while .pr-scroll scrolled and floated over other cards. */
+        .pr-field label > .form-check-input { position: static; margin: 0; }
         .pr-help { font-size: .76rem; color: #9ca3af; margin-top: .3rem; }
         .ms-learn-more { color: var(--accent, #0FA58E); white-space: nowrap; margin-left: .25rem; }
         .ms-learn-more:hover { text-decoration: underline; color: var(--accent, #0FA58E); }
