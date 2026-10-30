@@ -97,6 +97,9 @@ class SurveyOut(Schema):
     live_survey: Optional[UUID] = Field(None, description='For unpublished changes: the live survey they replace.')
     unpublished_changes: Optional[UUID] = Field(None, description='The uuid of this survey\'s unpublished changes, if any.')
     review: Optional[Literal['pending']] = Field(None, description='"pending" while content screening holds the survey.')
+    opens_at: Optional[datetime] = Field(None, description='Start of the survey period (UTC): before it respondents see an "opens on" page. Null = no start.')
+    closes_at: Optional[datetime] = Field(None, description='End of the survey period (UTC): the survey closes by itself then. Null = no end.')
+    schedule_timezone: str = Field('', description='IANA zone the period was entered in; "" = UTC.')
     url: str
     created_at: datetime
     updated_at: datetime
@@ -143,6 +146,9 @@ class SurveyPatchIn(In):
     thanks_html: Optional[Dict[str, str]] = Field(None, description='Thanks page per language; creator HTML, sanitised on save.')
     map_start: Optional[MapStart] = None
     use_geolocation: Optional[bool] = None
+    opens_at: Optional[datetime] = Field(None, description='Start of the survey period: ISO 8601 with an offset, or a naive value read in schedule_timezone. Null clears it.')
+    closes_at: Optional[datetime] = Field(None, description='End of the survey period, after the start and in the future. Null clears it. Reopening a survey by hand clears a past end.')
+    schedule_timezone: Optional[str] = Field(None, max_length=64, description='IANA zone (e.g. "Europe/Berlin") naive period values are read in and times are shown in; "" = UTC.')
 
     _redirect = field_validator('redirect_url')(_strict_redirect)
 

@@ -1,9 +1,11 @@
 from django import forms
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
 from survey import marker_icons
 from .models import SurveyHeader, SurveySection, Question, QuestionGroup, Organization, BASEMAP_CHOICES, MAPLESS_LAYOUTS
 from .html_sanitize import coerce_creator_html
+from . import schedule
 from .redirects import NO_REDIRECT, clean_redirect_url, is_valid_redirect, tidy_redirect_input
 from .layers import layers_for
 from .question_types import GEO_TYPES, MAP_ONLY_TYPES, SHARED_MAP_SOURCE_TYPES, allowed_display_styles, AUDIENCES, AUDIENCE_EVERYONE
@@ -149,7 +151,7 @@ class SurveyHeaderForm(forms.ModelForm):
         # organisation holds the `unbranded` entitlement (see __init__), inert
         # -- disabled in the form, ignored on POST -- for everyone else.
         fields = ['name', 'redirect_url', 'available_languages', 'visibility', 'cover_image', 'basemaps',
-                  'default_basemap', 'show_branding']
+                  'default_basemap', 'show_branding', 'opens_at', 'closes_at', 'schedule_timezone']
         labels = {
             # "Name" with the placeholder "survey_name" read as an identifier
             # nobody should touch, which is how surveys ended up called things
@@ -161,6 +163,8 @@ class SurveyHeaderForm(forms.ModelForm):
             'cover_image': _('Cover image'),
             'basemaps': _('Base maps'),
             'default_basemap': _('Default base map'),
+            'opens_at': _('Opens on'),
+            'closes_at': _('Closes on'),
         }
         widgets = {
             # Django renders maxlength from the model field; data-char-counter
@@ -177,6 +181,11 @@ class SurveyHeaderForm(forms.ModelForm):
             'basemaps': forms.HiddenInput(attrs={'id': 'id_basemaps'}),
             'default_basemap': forms.Select(attrs={'class': 'form-control'}),
             'show_branding': forms.CheckboxInput(attrs={'class': 'form-check-input', 'id': 'id_show_branding'}),
+            # The survey period (change survey-schedule): a browser date-time picker; the
+            # value is read in `schedule_timezone`, see clean().
+            'opens_at': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local', 'id': 'id_opens_at'}, format=schedule.INPUT_FORMAT),
+            'closes_at': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local', 'id': 'id_closes_at'}, format=schedule.INPUT_FORMAT),
+            'schedule_timezone': forms.HiddenInput(attrs={'id': 'id_schedule_timezone'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -225,6 +234,27 @@ class SurveyHeaderForm(forms.ModelForm):
         stored = clean_redirect_url(self.instance.redirect_url if self.instance else '')
         self.fields['finish_action'].initial = 'thanks' if stored == NO_REDIRECT else 'link'
         self.initial['redirect_url'] = '' if stored == NO_REDIRECT else stored
+        # The period is the LIVE survey's, whichever row the form is bound to (the
+        # draft copy while unpublished changes exist), rendered in the zone it was
+        # typed in -- not in settings.TIME_ZONE, which is what a datetime initial
+        # would be converted to (change survey-schedule).
+        self.fields['opens_at'].help_text = _(
+            'Before this, respondents see a page saying when the survey opens. '
+            'The survey still has to be published.')
+        self.fields['closes_at'].help_text = _(
+            'The survey closes by itself at this time. Reopening it by hand clears the date.')
+        for name in ('opens_at', 'closes_at'):
+            self.fields[name].required = False
+            self.fields[name].input_formats = [schedule.INPUT_FORMAT, '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M', '%Y-%m-%d %H:%M:%S']
+        self.fields['schedule_timezone'].required = False
+        self._period_owner = None
+        if self.instance and self.instance.pk:
+            from .versioning import canonical_of
+            self._period_owner = canonical_of(self.instance)
+            self.initial['opens_at'] = schedule.input_value(self._period_owner.opens_at, self._period_owner)
+            self.initial['closes_at'] = schedule.input_value(self._period_owner.closes_at, self._period_owner)
+            self.initial['schedule_timezone'] = self._period_owner.schedule_timezone
+        self.schedule_zone_label = schedule.zone_name(self._period_owner) if self._period_owner else 'UTC'
         if self.instance and self.instance.pk:
             self.fields['default_rating_display_style'].initial = self.instance.get_default_rating_display_style()
             accent = self.instance.get_accent_color()
@@ -273,8 +303,49 @@ class SurveyHeaderForm(forms.ModelForm):
         # ``basemaps`` itself can never be empty either — fall back to streets.
         return cleaned or ['streets']
 
+    def clean_schedule_timezone(self):
+        value = (self.cleaned_data.get('schedule_timezone') or '').strip()
+        if not schedule.is_valid_zone(value):
+            raise forms.ValidationError(_('Unknown time zone.'))
+        return value
+
+    def _in_schedule_zone(self, name, zone):
+        """A naive posted value (the datetime-local input) was made aware in
+        settings.TIME_ZONE by the field; re-read it in the survey's zone. An aware
+        value (the API, ISO 8601 with an offset) is kept as given."""
+        value = self.cleaned_data.get(name)
+        posted = schedule.parse_posted(self.data.get(self.add_prefix(name)))
+        if value is None or posted is None or posted.tzinfo is not None:
+            return value
+        wall = timezone.make_naive(value, timezone.get_current_timezone())
+        return timezone.make_aware(wall, zone)
+
     def clean(self):
         cleaned = super().clean()
+        # The survey period (change survey-schedule): times in the survey's zone,
+        # the end after the start, a NEW end in the future (an unchanged past end
+        # -- the time of a close that already happened -- must keep passing, or
+        # every later Settings save would fail).
+        if 'schedule_timezone' not in self.errors:
+            from zoneinfo import ZoneInfo
+            tz = ZoneInfo(cleaned.get('schedule_timezone') or 'UTC')
+            for name in ('opens_at', 'closes_at'):
+                if name not in self.errors:
+                    cleaned[name] = self._in_schedule_zone(name, tz)
+            # The input carries minutes, the row may carry seconds (the API):
+            # a value that re-posts the stored instant to the minute is the
+            # stored instant, not a change.
+            for name in ('opens_at', 'closes_at'):
+                stored = getattr(self._period_owner, name, None) if self._period_owner else None
+                posted = cleaned.get(name)
+                if stored and posted and posted == stored.replace(second=0, microsecond=0):
+                    cleaned[name] = stored
+            opens, closes = cleaned.get('opens_at'), cleaned.get('closes_at')
+            before = self._period_owner.closes_at if self._period_owner else None
+            if opens and closes and closes <= opens:
+                self.add_error('closes_at', _('The survey must close after it opens.'))
+            elif closes and closes != before and closes <= timezone.now():
+                self.add_error('closes_at', _('Choose a closing time in the future.'))
         basemaps = cleaned.get('basemaps') or ['streets']
         default = cleaned.get('default_basemap')
         if not default or default not in basemaps:

@@ -9511,3 +9511,62 @@ msgstr "Hae versioita…"
 #: survey/templates/editor/partials/_export_modal.html
 msgid "No matching versions."
 msgstr "Ei vastaavia versioita."
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Survey period"
+msgstr "Kyselyn ajanjakso"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Leave a box empty for no limit. Times are in this time zone:"
+msgstr "Jätä kenttä tyhjäksi, jos rajaa ei ole. Ajat ovat tällä aikavyöhykkeellä:"
+
+#: survey/editor_forms.py
+msgid "Opens on"
+msgstr "Avautuu"
+
+#: survey/editor_forms.py
+msgid "Closes on"
+msgstr "Sulkeutuu"
+
+#: survey/editor_forms.py
+msgid "Before this, respondents see a page saying when the survey opens. The survey still has to be published."
+msgstr "Sitä ennen vastaajat näkevät sivun, joka kertoo, milloin kysely avautuu. Kysely on silti julkaistava."
+
+#: survey/editor_forms.py
+msgid "The survey closes by itself at this time. Reopening it by hand clears the date."
+msgstr "Kysely sulkeutuu itsestään tähän aikaan. Käsin uudelleen avaaminen poistaa päivämäärän."
+
+#: survey/editor_forms.py
+msgid "Unknown time zone."
+msgstr "Tuntematon aikavyöhyke."
+
+#: survey/editor_forms.py
+msgid "The survey must close after it opens."
+msgstr "Kyselyn on sulkeuduttava avautumisen jälkeen."
+
+#: survey/editor_forms.py
+msgid "Choose a closing time in the future."
+msgstr "Valitse sulkeutumisaika tulevaisuudesta."
+
+#: survey/templates/editor/partials/_schedule_next_event.html
+#, python-format
+msgid "Opens %(when)s"
+msgstr "Avautuu %(when)s"
+
+#: survey/templates/editor/partials/_schedule_next_event.html
+#, python-format
+msgid "Closes %(when)s"
+msgstr "Sulkeutuu %(when)s"
+
+#: survey/templates/survey_not_yet_open.html
+msgid "Survey opens soon"
+msgstr "Kysely avautuu pian"
+
+#: survey/templates/survey_not_yet_open.html
+msgid "This survey is not open yet."
+msgstr "Tämä kysely ei ole vielä auki."
+
+#: survey/templates/survey_not_yet_open.html
+#, python-format
+msgid "It opens on %(when)s (%(zone)s)."
+msgstr "Se avautuu %(when)s (%(zone)s)."

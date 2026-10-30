@@ -45,7 +45,7 @@ services:
 
   celery:
     build: .
-    command: celery -A mapsurvey worker -l info
+    command: celery -A mapsurvey worker -B -s /tmp/celerybeat-schedule -l info
     env_file:
       - ./.env
     depends_on:

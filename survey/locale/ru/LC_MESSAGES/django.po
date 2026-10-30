@@ -8568,3 +8568,62 @@ msgstr "Поиск версий…"
 #: survey/templates/editor/partials/_export_modal.html
 msgid "No matching versions."
 msgstr "Нет подходящих версий."
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Survey period"
+msgstr "Период проведения опроса"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Leave a box empty for no limit. Times are in this time zone:"
+msgstr "Оставьте поле пустым, если ограничения нет. Время указано в этом часовом поясе:"
+
+#: survey/editor_forms.py
+msgid "Opens on"
+msgstr "Открывается"
+
+#: survey/editor_forms.py
+msgid "Closes on"
+msgstr "Закрывается"
+
+#: survey/editor_forms.py
+msgid "Before this, respondents see a page saying when the survey opens. The survey still has to be published."
+msgstr "До этого момента респонденты видят страницу с датой открытия опроса. Опрос всё равно нужно опубликовать."
+
+#: survey/editor_forms.py
+msgid "The survey closes by itself at this time. Reopening it by hand clears the date."
+msgstr "В это время опрос закроется сам. Если открыть его вручную, дата будет сброшена."
+
+#: survey/editor_forms.py
+msgid "Unknown time zone."
+msgstr "Неизвестный часовой пояс."
+
+#: survey/editor_forms.py
+msgid "The survey must close after it opens."
+msgstr "Опрос должен закрываться после открытия."
+
+#: survey/editor_forms.py
+msgid "Choose a closing time in the future."
+msgstr "Выберите время закрытия в будущем."
+
+#: survey/templates/editor/partials/_schedule_next_event.html
+#, python-format
+msgid "Opens %(when)s"
+msgstr "Откроется %(when)s"
+
+#: survey/templates/editor/partials/_schedule_next_event.html
+#, python-format
+msgid "Closes %(when)s"
+msgstr "Закроется %(when)s"
+
+#: survey/templates/survey_not_yet_open.html
+msgid "Survey opens soon"
+msgstr "Опрос скоро откроется"
+
+#: survey/templates/survey_not_yet_open.html
+msgid "This survey is not open yet."
+msgstr "Этот опрос ещё не открыт."
+
+#: survey/templates/survey_not_yet_open.html
+#, python-format
+msgid "It opens on %(when)s (%(zone)s)."
+msgstr "Он откроется %(when)s (%(zone)s)."

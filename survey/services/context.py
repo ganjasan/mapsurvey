@@ -5,6 +5,8 @@ from typing import Optional
 SURFACE_EDITOR = 'editor'
 SURFACE_API = 'api'
 SURFACE_MCP = 'mcp'
+#: The periodic task that closes surveys at their closing time (change survey-schedule).
+SURFACE_SCHEDULE = 'schedule'
 
 
 @dataclass(frozen=True)

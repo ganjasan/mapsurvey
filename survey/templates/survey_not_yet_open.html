@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% comment %}A published survey before its opening time (change survey-schedule). Served with
+200 and noindex by check_survey_access; no session is created. Mirrors survey_closed.html.{% endcomment %}
+
+{% block title %}{{ survey.name }} - {% trans "Survey opens soon" %}{% endblock %}
+
+{% block content %}
+<div class="container text-center" style="max-width: 500px; margin-top: 100px;">
+    <i class="fas fa-calendar-alt fa-3x text-muted mb-4" style="display:block;"></i>
+    <h3>{{ survey.name }}</h3>
+    <p class="text-muted mt-3">{% trans "This survey is not open yet." %}</p>
+    <p class="mt-2">{% blocktrans with when=opens_text zone=zone_name %}It opens on {{ when }} ({{ zone }}).{% endblocktrans %}</p>
+    <a href="{% url 'index' %}" class="btn btn-outline-primary mt-4">{% trans "Back to Home" %}</a>
+</div>
+{% endblock %}

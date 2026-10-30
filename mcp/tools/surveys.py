@@ -103,8 +103,10 @@ def create_survey(request, args):
     title='Update survey settings',
     description=(
         'Change the fields you name: name, languages, redirect_url ("#" for the built-in thanks page), '
-        'visibility, basemaps, branding, the thanks page per language, the map start. Settings need the '
-        'owner role; the thanks page the editor role.'
+        'visibility, basemaps, branding, the thanks page per language, the map start, and the survey '
+        'period (opens_at, closes_at, schedule_timezone: before opens_at respondents see an "opens on" '
+        'page, at closes_at the survey closes by itself). Settings need the owner role; the thanks page '
+        'the editor role.'
     ),
     scope=scopes.SURVEYS_WRITE, role='owner', idempotent=True,
     args=args_model('UpdateSurveyArgs', SurveyPatchIn, survey=SURVEY),

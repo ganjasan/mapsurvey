@@ -28,7 +28,7 @@
         <form method="post" action="{% url 'editor_survey_settings' survey.uuid %}" enctype="multipart/form-data">
             {% csrf_token %}
             {% for field in form %}
-            {% if field.name != 'default_rating_display_style' and field.name != 'use_accent_color' and field.name != 'accent_color' %}
+            {% if field.name != 'default_rating_display_style' and field.name != 'use_accent_color' and field.name != 'accent_color' and field.name != 'opens_at' and field.name != 'closes_at' and field.name != 'schedule_timezone' %}
             <div class="form-group">
                 <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                 {% if field.name == 'available_languages' %}
@@ -74,6 +74,37 @@
             </div>
             {% endif %}
             {% endfor %}
+
+            <hr>
+            {% comment %}Survey period (change survey-schedule): the panel twin has the same block.{% endcomment %}
+            <h6 id="survey-period-card"><i class="far fa-clock mr-1"></i> {% trans "Survey period" %}</h6>
+            <small class="form-text text-muted" style="margin-bottom:.6rem;">{% trans "Leave a box empty for no limit. Times are in this time zone:" %} <strong data-schedule-zone>{{ form.schedule_zone_label }}</strong>.
+              {% if HELP_URL %}<a href="{{ HELP_URL.survey_period }}" target="_blank" rel="noopener">{% trans "Learn more" %}</a>{% endif %}</small>
+            <div class="form-group">
+                <label for="{{ form.opens_at.id_for_label }}">{{ form.opens_at.label }}</label>
+                {{ form.opens_at }}
+                <small class="form-text text-muted">{{ form.opens_at.help_text }}</small>
+                {% for error in form.opens_at.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.closes_at.id_for_label }}">{{ form.closes_at.label }}</label>
+                {{ form.closes_at }}
+                <small class="form-text text-muted">{{ form.closes_at.help_text }}</small>
+                {% for error in form.closes_at.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
+            </div>
+            {{ form.schedule_timezone }}
+            {% for error in form.schedule_timezone.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
+            <script>
+            (function () {
+              var tz = document.getElementById('id_schedule_timezone');
+              var label = document.querySelector('[data-schedule-zone]');
+              if (!tz || tz.value) return;
+              try {
+                var browser = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                if (browser) { tz.value = browser; if (label) label.textContent = browser; }
+              } catch (e) { /* UTC stays */ }
+            })();
+            </script>
 
             <hr>
             <h6><i class="fas fa-paint-brush mr-1"></i> {% trans "Style" %}</h6>

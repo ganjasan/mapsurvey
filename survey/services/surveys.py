@@ -10,6 +10,7 @@ from .. import product_events as pe
 from ..editor_forms import SurveyCreateForm, SurveyHeaderForm, SurveyRenameForm
 from ..html_sanitize import sanitize_creator_html
 from ..models import SurveyCollaborator, SurveySection
+from .. import schedule
 from ..trash import trash_survey
 from . import locks
 from .common import bind, validate
@@ -71,6 +72,9 @@ def update_settings(actor, survey, data, files=None, *, partial=False):
             form.add_error('show_branding', _('Your Pro trial has used its switch-off of the badge.'))
             raise ValidationFailed(form.errors, form=form)
     form.save()
+    # The period belongs to the live survey even when the form was bound to the
+    # draft copy (change survey-schedule).
+    schedule.move_to_canonical(survey)
     locks.rescreen_if_live(survey)
     return survey
 

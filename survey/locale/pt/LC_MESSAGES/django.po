@@ -9576,3 +9576,62 @@ msgstr "Pesquisar versões…"
 #: survey/templates/editor/partials/_export_modal.html
 msgid "No matching versions."
 msgstr "Nenhuma versão corresponde."
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Survey period"
+msgstr "Período do inquérito"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Leave a box empty for no limit. Times are in this time zone:"
+msgstr "Deixe uma caixa vazia para não haver limite. As horas estão neste fuso horário:"
+
+#: survey/editor_forms.py
+msgid "Opens on"
+msgstr "Abre em"
+
+#: survey/editor_forms.py
+msgid "Closes on"
+msgstr "Fecha em"
+
+#: survey/editor_forms.py
+msgid "Before this, respondents see a page saying when the survey opens. The survey still has to be published."
+msgstr "Antes disso, os inquiridos veem uma página a indicar quando o inquérito abre. O inquérito tem de ser publicado na mesma."
+
+#: survey/editor_forms.py
+msgid "The survey closes by itself at this time. Reopening it by hand clears the date."
+msgstr "O inquérito fecha sozinho a esta hora. Reabri-lo à mão apaga a data."
+
+#: survey/editor_forms.py
+msgid "Unknown time zone."
+msgstr "Fuso horário desconhecido."
+
+#: survey/editor_forms.py
+msgid "The survey must close after it opens."
+msgstr "O inquérito tem de fechar depois de abrir."
+
+#: survey/editor_forms.py
+msgid "Choose a closing time in the future."
+msgstr "Escolha uma hora de fecho no futuro."
+
+#: survey/templates/editor/partials/_schedule_next_event.html
+#, python-format
+msgid "Opens %(when)s"
+msgstr "Abre a %(when)s"
+
+#: survey/templates/editor/partials/_schedule_next_event.html
+#, python-format
+msgid "Closes %(when)s"
+msgstr "Fecha a %(when)s"
+
+#: survey/templates/survey_not_yet_open.html
+msgid "Survey opens soon"
+msgstr "O inquérito abre em breve"
+
+#: survey/templates/survey_not_yet_open.html
+msgid "This survey is not open yet."
+msgstr "Este inquérito ainda não está aberto."
+
+#: survey/templates/survey_not_yet_open.html
+#, python-format
+msgid "It opens on %(when)s (%(zone)s)."
+msgstr "Abre a %(when)s (%(zone)s)."

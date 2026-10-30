@@ -9613,3 +9613,62 @@ msgstr "Szukaj wersji…"
 #: survey/templates/editor/partials/_export_modal.html
 msgid "No matching versions."
 msgstr "Brak pasujących wersji."
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Survey period"
+msgstr "Okres trwania ankiety"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Leave a box empty for no limit. Times are in this time zone:"
+msgstr "Pozostaw pole puste, jeśli nie ma być ograniczenia. Godziny podano w tej strefie czasowej:"
+
+#: survey/editor_forms.py
+msgid "Opens on"
+msgstr "Otwiera się"
+
+#: survey/editor_forms.py
+msgid "Closes on"
+msgstr "Zamyka się"
+
+#: survey/editor_forms.py
+msgid "Before this, respondents see a page saying when the survey opens. The survey still has to be published."
+msgstr "Przed tym terminem respondenci widzą stronę z informacją, kiedy ankieta się otworzy. Ankietę nadal trzeba opublikować."
+
+#: survey/editor_forms.py
+msgid "The survey closes by itself at this time. Reopening it by hand clears the date."
+msgstr "O tej godzinie ankieta zamknie się sama. Ręczne ponowne otwarcie usuwa tę datę."
+
+#: survey/editor_forms.py
+msgid "Unknown time zone."
+msgstr "Nieznana strefa czasowa."
+
+#: survey/editor_forms.py
+msgid "The survey must close after it opens."
+msgstr "Ankieta musi się zamknąć po otwarciu."
+
+#: survey/editor_forms.py
+msgid "Choose a closing time in the future."
+msgstr "Wybierz godzinę zamknięcia w przyszłości."
+
+#: survey/templates/editor/partials/_schedule_next_event.html
+#, python-format
+msgid "Opens %(when)s"
+msgstr "Otwiera się %(when)s"
+
+#: survey/templates/editor/partials/_schedule_next_event.html
+#, python-format
+msgid "Closes %(when)s"
+msgstr "Zamyka się %(when)s"
+
+#: survey/templates/survey_not_yet_open.html
+msgid "Survey opens soon"
+msgstr "Ankieta wkrótce się otworzy"
+
+#: survey/templates/survey_not_yet_open.html
+msgid "This survey is not open yet."
+msgstr "Ta ankieta nie jest jeszcze otwarta."
+
+#: survey/templates/survey_not_yet_open.html
+#, python-format
+msgid "It opens on %(when)s (%(zone)s)."
+msgstr "Otworzy się %(when)s (%(zone)s)."

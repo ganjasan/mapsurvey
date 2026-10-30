@@ -27,6 +27,7 @@ show_draft_actions, draft_copy, show_edit_published.
     {% if survey.status == 'published' %}{% trans "Open" %}{% elif survey.status == 'closed' %}{% trans "Closed" %}{% elif survey.status == 'testing' %}{% trans "Testing" %}{% elif survey.status == 'draft' %}{% trans "Draft" %}{% else %}{{ survey.get_status_display }}{% endif %}
     &middot; v{{ survey.version_number }} <i class="fas fa-angle-down caret"></i>
   </button>
+  {% include "editor/partials/_schedule_next_event.html" %}
   <div class="nav-menu left" style="min-width:290px;">
     <div class="nm-head">{% trans "Collection" %}</div>
     {% if survey.status == 'draft' %}
@@ -102,4 +103,5 @@ show_draft_actions, draft_copy, show_edit_published.
 </div>
 {% else %}
   <span class="pub-chip badge-{{ survey.status|status_badge_class }}">{{ survey.get_status_display }} &middot; v{{ survey.version_number }}</span>
+  {% include "editor/partials/_schedule_next_event.html" %}
 {% endif %}

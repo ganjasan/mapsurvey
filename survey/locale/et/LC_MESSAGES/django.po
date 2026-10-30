@@ -9490,3 +9490,62 @@ msgstr "Otsi versioone…"
 #: survey/templates/editor/partials/_export_modal.html
 msgid "No matching versions."
 msgstr "Sobivaid versioone pole."
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Survey period"
+msgstr "Küsitluse periood"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Leave a box empty for no limit. Times are in this time zone:"
+msgstr "Jätke lahter tühjaks, kui piirangut pole. Kellaajad on selles ajavööndis:"
+
+#: survey/editor_forms.py
+msgid "Opens on"
+msgstr "Avaneb"
+
+#: survey/editor_forms.py
+msgid "Closes on"
+msgstr "Sulgub"
+
+#: survey/editor_forms.py
+msgid "Before this, respondents see a page saying when the survey opens. The survey still has to be published."
+msgstr "Enne seda näevad vastajad lehte, mis ütleb, millal küsitlus avaneb. Küsitlus tuleb siiski avaldada."
+
+#: survey/editor_forms.py
+msgid "The survey closes by itself at this time. Reopening it by hand clears the date."
+msgstr "Sel ajal sulgub küsitlus ise. Käsitsi uuesti avamine kustutab kuupäeva."
+
+#: survey/editor_forms.py
+msgid "Unknown time zone."
+msgstr "Tundmatu ajavöönd."
+
+#: survey/editor_forms.py
+msgid "The survey must close after it opens."
+msgstr "Küsitlus peab sulguma pärast avanemist."
+
+#: survey/editor_forms.py
+msgid "Choose a closing time in the future."
+msgstr "Valige sulgemisaeg tulevikus."
+
+#: survey/templates/editor/partials/_schedule_next_event.html
+#, python-format
+msgid "Opens %(when)s"
+msgstr "Avaneb %(when)s"
+
+#: survey/templates/editor/partials/_schedule_next_event.html
+#, python-format
+msgid "Closes %(when)s"
+msgstr "Sulgub %(when)s"
+
+#: survey/templates/survey_not_yet_open.html
+msgid "Survey opens soon"
+msgstr "Küsitlus avaneb peagi"
+
+#: survey/templates/survey_not_yet_open.html
+msgid "This survey is not open yet."
+msgstr "See küsitlus ei ole veel avatud."
+
+#: survey/templates/survey_not_yet_open.html
+#, python-format
+msgid "It opens on %(when)s (%(zone)s)."
+msgstr "See avaneb %(when)s (%(zone)s)."

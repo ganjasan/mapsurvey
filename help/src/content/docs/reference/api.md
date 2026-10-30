@@ -151,6 +151,9 @@ the owner role, like the editor; the thanks page the editor role.
 | `thanks_html` | object or null |  | Thanks page per language; creator HTML, sanitised on save. |
 | `map_start` | MapStart or null |  |  |
 | `use_geolocation` | boolean or null |  |  |
+| `opens_at` | date-time or null |  | Start of the survey period: ISO 8601 with an offset, or a naive value read in schedule_timezone. Null clears it. |
+| `closes_at` | date-time or null |  | End of the survey period, after the start and in the future. Null clears it. Reopening a survey by hand clears a past end. |
+| `schedule_timezone` | string or null |  | IANA zone (e.g. "Europe/Berlin") naive period values are read in and times are shown in; "" = UTC. |
 
 **200** SurveyDetailOut
 
@@ -1255,6 +1258,9 @@ Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `p
 | `live_survey` | uuid or null |  | For unpublished changes: the live survey they replace. |
 | `unpublished_changes` | uuid or null |  | The uuid of this survey's unpublished changes, if any. |
 | `review` | `pending` or null |  | "pending" while content screening holds the survey. |
+| `opens_at` | date-time or null |  | Start of the survey period (UTC): before it respondents see an "opens on" page. Null = no start. |
+| `closes_at` | date-time or null |  | End of the survey period (UTC): the survey closes by itself then. Null = no end. |
+| `schedule_timezone` | string |  | IANA zone the period was entered in; "" = UTC. |
 | `url` | string | yes |  |
 | `created_at` | date-time | yes |  |
 | `updated_at` | date-time | yes |  |
@@ -1431,6 +1437,9 @@ Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `p
 | `live_survey` | uuid or null |  | For unpublished changes: the live survey they replace. |
 | `unpublished_changes` | uuid or null |  | The uuid of this survey's unpublished changes, if any. |
 | `review` | `pending` or null |  | "pending" while content screening holds the survey. |
+| `opens_at` | date-time or null |  | Start of the survey period (UTC): before it respondents see an "opens on" page. Null = no start. |
+| `closes_at` | date-time or null |  | End of the survey period (UTC): the survey closes by itself then. Null = no end. |
+| `schedule_timezone` | string |  | IANA zone the period was entered in; "" = UTC. |
 | `url` | string | yes |  |
 | `created_at` | date-time | yes |  |
 | `updated_at` | date-time | yes |  |
@@ -1466,6 +1475,9 @@ Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `p
 | `live_survey` | uuid or null |  | For unpublished changes: the live survey they replace. |
 | `unpublished_changes` | uuid or null |  | The uuid of this survey's unpublished changes, if any. |
 | `review` | `pending` or null |  | "pending" while content screening holds the survey. |
+| `opens_at` | date-time or null |  | Start of the survey period (UTC): before it respondents see an "opens on" page. Null = no start. |
+| `closes_at` | date-time or null |  | End of the survey period (UTC): the survey closes by itself then. Null = no end. |
+| `schedule_timezone` | string |  | IANA zone the period was entered in; "" = UTC. |
 | `url` | string | yes |  |
 | `created_at` | date-time | yes |  |
 | `updated_at` | date-time | yes |  |

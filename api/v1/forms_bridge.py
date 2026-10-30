@@ -36,6 +36,14 @@ def survey_settings(body):
         data['default_basemap'] = body['default_basemap'] or ''
     if 'show_branding' in body:
         data['show_branding'] = _bool(body['show_branding'])
+    # The survey period (change survey-schedule): the form reads ISO 8601; an
+    # offset is kept, a naive value is read in schedule_timezone; '' clears.
+    for key in ('opens_at', 'closes_at'):
+        if key in body:
+            value = body[key]
+            data[key] = value.isoformat() if value else ''
+    if 'schedule_timezone' in body:
+        data['schedule_timezone'] = body['schedule_timezone'] or ''
     return data
 
 

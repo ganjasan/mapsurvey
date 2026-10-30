@@ -75,6 +75,22 @@ def check_survey_access(request, survey):
             request.survey_noindex = True
             return render(request, 'survey_unavailable.html', status=404)
         mark_embeddable(request, survey)
+        # The survey period (change survey-schedule): exact to the minute here,
+        # whatever the periodic task has done. Before the start a findable
+        # "opens on" page (200, noindex); after the end the closed page a
+        # `closed` survey gets. Neither view creates a session.
+        from . import schedule
+        current = schedule.phase(survey)
+        if current == 'before':
+            request.survey_noindex = True
+            owner = schedule._canonical(survey)
+            return render(request, 'survey_not_yet_open.html', {
+                'survey': survey,
+                'opens_text': schedule.format_in_zone(owner.opens_at, survey),
+                'zone_name': schedule.zone_name(survey),
+            })
+        if current == 'after':
+            return render(request, 'survey_closed.html', {'survey': survey})
         return _check_published_access(request, survey)
 
     if status in ('closed', 'archived'):
