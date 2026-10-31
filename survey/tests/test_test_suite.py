@@ -131,6 +131,7 @@ UNMAPPED_MODULES = {
     'smoke': 'infrastructure smoke test',
     'structure': 'service-layer structure tests (api-v2-structure) spanning survey-editor and question-groups',
     'org-access-control': 'organisations, membership, invitations, role resolution — no spec written yet',
+    'workspace-invitation-journey': 'spec lives in the unarchived change invite-landing-journey',
     'survey-versioning': 'versioning model, clone and publish core — predates OpenSpec',
     'survey-lifecycle-states': 'draft/testing/published/closed transitions — predates OpenSpec',
     'survey-password-protection': 'password gate — predates OpenSpec',

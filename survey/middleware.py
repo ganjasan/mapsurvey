@@ -10,7 +10,8 @@ from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
-from .models import Membership, Organization, Invitation, UserActivity
+from . import invitations
+from .models import Membership, Organization, UserActivity
 
 
 class CloudflareIPMiddleware:
@@ -383,10 +384,12 @@ class ActiveOrgMiddleware:
         request.active_org = None
 
         if request.user.is_authenticated:
-            # Process pending invitation token from session
-            pending_token = request.session.pop('pending_invitation_token', None)
-            if pending_token:
-                self._process_pending_invitation(request, pending_token)
+            # A token the landing page parked: accept it on the first signed-in
+            # request (the one acceptance path, `survey/invitations.py`).
+            if request.session.get(invitations.SESSION_TOKEN_KEY):
+                invitations.accept_pending(
+                    request, request.user, surface=invitations.SURFACE_SIGN_IN,
+                )
 
             org_id = request.session.get('active_org_id')
             if org_id:
@@ -425,29 +428,6 @@ class ActiveOrgMiddleware:
                         request.session['active_org_id'] = org.id
 
         return self.get_response(request)
-
-    def _process_pending_invitation(self, request, token):
-        """Accept a pending invitation stored in the session."""
-        from django.contrib import messages
-        from django.utils import timezone
-
-        try:
-            invitation = Invitation.objects.select_related('organization').get(token=token)
-        except Invitation.DoesNotExist:
-            return
-
-        if not invitation.is_acceptable:
-            return
-
-        Membership.objects.get_or_create(
-            user=request.user,
-            organization=invitation.organization,
-            defaults={'role': invitation.role},
-        )
-        invitation.accepted_at = timezone.now()
-        invitation.save(update_fields=['accepted_at'])
-        request.session['active_org_id'] = invitation.organization_id
-        messages.success(request, f"You've joined '{invitation.organization.name}'.")
 
 
 class CreatorLanguageCookieMiddleware:

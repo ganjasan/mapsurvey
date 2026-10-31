@@ -9678,3 +9678,26 @@ msgstr "Permintaan ke tim Mapsurvey"
 #: api/templates/api/connections.html
 msgid "Your workspaces are on the Free plan. The first API or MCP call on a survey of a workspace that has never had a Pro trial starts it — no card needed."
 msgstr "Ruang kerja Anda menggunakan paket Free. Panggilan API atau MCP pertama pada survei dari ruang kerja yang belum pernah mendapat uji coba Pro akan memulainya — tanpa kartu."
+
+#: survey/templates/editor.html
+#, python-format
+msgid "You've joined %(workspace)s."
+msgstr "Anda telah bergabung dengan %(workspace)s."
+
+#: survey/templates/editor.html
+msgid "Surveys you create here, and the ones a colleague adds you to, appear on this page."
+msgstr "Survei yang Anda buat di sini, dan survei yang ditambahkan rekan untuk Anda, muncul di halaman ini."
+
+#: survey/templates/editor/partials/_dashboard_empty_text.html
+#, python-format
+msgid "No surveys of yours in %(workspace)s yet. Surveys you create here, and the ones a colleague adds you to, appear on this page."
+msgstr "Belum ada survei milik Anda di %(workspace)s. Survei yang Anda buat di sini, dan survei yang ditambahkan rekan untuk Anda, muncul di halaman ini."
+
+#: survey/templates/editor/partials/_dashboard_empty_text.html
+msgid "No surveys yet. Create your first one!"
+msgstr "Belum ada survei. Buat yang pertama!"
+
+#: survey/templates/django_registration/registration_form.html
+#, python-format
+msgid "Create an account to join %(workspace)s."
+msgstr "Buat akun untuk bergabung dengan %(workspace)s."

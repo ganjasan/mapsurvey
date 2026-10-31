@@ -217,6 +217,17 @@
         width: 40px; height: 40px; display: grid; place-items: center;
         border: 1px solid var(--border-color); border-radius: 8px; color: #6b7280;
     }
+    /* One row, one shape: the search field, "+ New Survey" and ⋯ share a
+       height, a radius and a border weight (owner review 2026-11-01 — they
+       were 34 / 31 / 40 px with two radii). */
+    body.mobile-nav-enabled .dashboard-search input {
+        height: 40px; border-radius: 8px; font-size: 0.85rem;
+    }
+    body.mobile-nav-enabled .btn-new-survey {
+        height: 40px; display: inline-flex; align-items: center; justify-content: center;
+        padding: 0 1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+        border: 1px solid transparent;
+    }
     /* Row above the collection — holds the count label (mobile title). */
     body.mobile-nav-enabled .list-controls {
         display: flex; align-items: center; margin: -0.5rem 0 0.75rem;
@@ -227,11 +238,12 @@
         body.mobile-nav-enabled .dashboard-title,
         body.mobile-nav-enabled .dashboard-header .spacer { display: none; }
         body.mobile-nav-enabled .dashboard-search { flex: 1; }
+        body.mobile-nav-enabled .dashboard-search input,
         body.mobile-nav-enabled .btn-new-survey,
         body.mobile-nav-enabled .dash-overflow > a {
-            min-height: 44px; display: inline-flex; align-items: center; justify-content: center;
+            height: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center;
         }
-        body.mobile-nav-enabled .dash-overflow > a { width: 44px; height: 44px; display: grid; }
+        body.mobile-nav-enabled .dash-overflow > a { width: 44px; display: grid; }
     }
 
     @media (max-width: 767.98px) {
@@ -380,6 +392,18 @@
     </div>
     {% endif %}
 
+    {% if joined_org %}
+    {% comment %}Shown once, on the first dashboard view after an invitation was
+    accepted (change invite-landing-journey, #512); the view consumes the mark.{% endcomment %}
+    <div class="alert alert-success alert-dismissible fade show py-2 mb-3" role="status" id="joined-banner" style="font-size:0.85rem;">
+        <strong>{% blocktrans with workspace=joined_org.name %}You've joined {{ workspace }}.{% endblocktrans %}</strong>
+        {% if org_role == 'editor' and not editor_sees_none %}{# the empty state below says it otherwise #}
+        {% trans "Surveys you create here, and the ones a colleague adds you to, appear on this page." %}
+        {% endif %}
+        <button type="button" class="close" data-dismiss="alert" aria-label="{% trans 'Close' %}"><span aria-hidden="true">&times;</span></button>
+    </div>
+    {% endif %}
+
     {% if messages %}
     <div class="mb-3">
         {% for message in messages %}
@@ -450,7 +474,7 @@
         {% empty %}
         <div style="grid-column:1/-1;text-align:center;padding:3rem;color:#9ca3af;">
             <i class="fas fa-poll-h" style="font-size:2rem;margin-bottom:0.5rem;display:block;"></i>
-            No surveys yet. Create your first one!
+            {% include "editor/partials/_dashboard_empty_text.html" %}
         </div>
         {% endfor %}
     </div>
@@ -493,7 +517,7 @@
         {% empty %}
         <div style="text-align:center;padding:3rem;color:#9ca3af;">
             <i class="fas fa-poll-h" style="font-size:2rem;margin-bottom:0.5rem;display:block;"></i>
-            No surveys yet. Create your first one!
+            {% include "editor/partials/_dashboard_empty_text.html" %}
         </div>
         {% endfor %}
     </div>

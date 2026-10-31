@@ -896,6 +896,22 @@ banner is `editor/partials/_confirm_email_banner.html` (both bases). Newsletter 
 "activated" use `confirmed_q()`. After a deploy that touches accounts, run
 `manage.py sync_email_verification` (idempotent) for rows the old instance created.
 
+**Workspace invitations (change `invite-landing-journey`, #512)**: `survey/invitations.py` is the ONE
+place an `Invitation` is accepted — `accept()` writes the membership (an existing member keeps their
+role), `accepted_at`, the active workspace and a one-shot "just joined" mark in the session, and
+emits `invitation_accepted` (org id, role, `surface` ∈ `link|register|sign_in|confirm`). The signed-in
+accept view, `ActiveOrgMiddleware` (token parked by the landing page), the registration receiver and
+the confirmation-time address match (`join_by_address`, rule of #487 unchanged) all call it; never
+write `Membership` from an invitation elsewhere. **A registration that carries an acceptable
+invitation gets NO personal workspace** (owner decision 2026-10-31): `create_personal_org_on_registration`
+asks `accept_pending()` first and returns when it joined; a dead token falls through to the personal
+workspace so no account is left without one. The landing page's two actions carry the token
+(`/accounts/register/?invite=<token>`, `/accounts/login/?next=<accept URL>`), and the register page
+pre-fills the invited address. The dashboard pops the mark once (`take_joined`): that render shows the
+"You've joined" banner and never redirects to the start page; `editor_sees_none` is the editor's empty
+state in a workspace that has surveys. `DirectActivationView.post` signs in BEFORE sending
+`user_activated`, because `login()` flushes a session another account held.
+
 **Content screening (phishing hold, change `phishing-content-review`)**: registration defenses stop
 bots; `survey/content_screening.py` is for the human who publishes an "XFINITY — click here" page on
 our domain. `screen_survey(survey, trigger=…)` runs at the moments creator text goes live —

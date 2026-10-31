@@ -25,6 +25,7 @@ from django import forms
 from django.views.generic import UpdateView
 from .forms import SurveySectionAnswerForm
 from . import product_events as pe
+from . import invitations
 from .events import (
     emit_event, build_session_start_metadata, store_utm_in_session,
     capture_signup_source, persist_signup_attribution,
@@ -178,7 +179,36 @@ class AbuseProtectedRegistrationView(AsyncEmailRegistrationView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["password_rules"] = password_checklist_rules()
+        ctx["invitation"] = self._invitation()
         return ctx
+
+    def get_initial(self):
+        initial = super().get_initial()
+        invitation = self._invitation()
+        if invitation is not None and self.request.method == "GET":
+            initial["email"] = invitation.email
+        return initial
+
+    def _invitation(self):
+        """The parked workspace invitation this registration will accept, if any.
+
+        The landing page parks the token in the session and links here with
+        `?invite=<token>` as well (change invite-landing-journey, #512), so a lost
+        session or another browser still carries it. The parameter is validated
+        and parked on GET; a dead one is ignored and the page is plain
+        registration. It takes no part in the honeypot, the rate limiter or the
+        attribution capture.
+        """
+        from . import invitations
+
+        if not hasattr(self, "_invitation_cache"):
+            invitation = None
+            if self.request.method == "GET":
+                invitation = invitations.acceptable(self.request.GET.get("invite"))
+                if invitation is not None:
+                    invitations.remember(self.request, invitation)
+            self._invitation_cache = invitation or invitations.pending(self.request)
+        return self._invitation_cache
 
     def dispatch(self, request, *args, **kwargs):
         # Capture acquisition source when the register page is loaded directly
@@ -360,20 +390,25 @@ class DirectActivationView(
                 activated_user = self.activate(form)
             except ActivationError as error:
                 return self._activation_error_response(request, form, error)
+            # Sign in only on the genuine inactive -> active transition. That
+            # makes the key single-use as a credential: replaying it lands in
+            # the already_activated branch, which does NOT sign anyone in.
+            if not self._sign_in(request, activated_user):
+                return render(request, "django_registration/activation_failed.html", {})
             # django-registration sends user_activated from form_valid(), which
             # this override bypasses by calling activate() directly. Without
             # this line the funnel's creator_activated_account never fired live
             # (found 2026-09-09: zero live events since the view shipped). Sent
             # only after a genuine transition -- the already_activated branch
-            # raised above and correctly emits nothing.
+            # raised above and correctly emits nothing -- and AFTER the sign-in:
+            # `login()` flushes the session when another account was signed in,
+            # which would lose what the receivers write into it (the workspace
+            # an invited address joins, change invite-landing-journey, #512).
             from django_registration import signals as registration_signals
             registration_signals.user_activated.send(
                 sender=self.__class__, user=activated_user, request=request,
             )
-            # Sign in only on the genuine inactive -> active transition. That
-            # makes the key single-use as a credential: replaying it lands in
-            # the already_activated branch, which does NOT sign anyone in.
-            return self._signed_in_redirect(request, activated_user)
+            return redirect(conf_settings.LOGIN_REDIRECT_URL)
         except Exception:
             return render(request, "django_registration/activation_failed.html", {})
 
@@ -432,16 +467,16 @@ class DirectActivationView(
             }},
         )
 
-    def _signed_in_redirect(self, request, user):
-        """Log the freshly activated `user` in and redirect to the editor."""
+    def _sign_in(self, request, user):
+        """Log the freshly activated `user` in; False for a missing or banned account."""
         from django.contrib.auth import login as auth_login
 
         if user is None or not user.is_active:
-            return render(request, "django_registration/activation_failed.html", {})
+            return False
         # Explicit backend: login() normally reads user.backend, set by
         # authenticate() — which never runs on this path.
         auth_login(request, user, backend=self.AUTH_BACKEND)
-        return redirect(conf_settings.LOGIN_REDIRECT_URL)
+        return True
 
     def activation_failure(self, error):
         return render(self.request, "django_registration/activation_failed.html", {})
@@ -673,16 +708,27 @@ def editor(request):
 	membership = get_org_membership(request.user, org)
 	org_role = membership.role if membership else None
 
+	# The workspace this account has just joined through an invitation (change
+	# invite-landing-journey, #512): the mark is read ONCE, and only counts when
+	# it names the active workspace. That render shows the "You've joined"
+	# banner and stays on the dashboard whatever the survey count -- the
+	# invitee asked for the team, not for "How do you want to start?".
+	joined_id = invitations.take_joined(request)
+	joined_org = org if org is not None and joined_id == org.id else None
+
+	org_has_surveys = SurveyHeader.objects.filter(
+		organization=org, is_canonical=True, deleted_at__isnull=True,
+	).exists()
+
 	# A creator whose org has no surveys has nothing to do on the dashboard —
 	# and 47% of registrations never make it past that empty screen. Send them
 	# to the start page (the three ways to begin, change first-survey-onboarding)
 	# rather than straight into one of them. Viewers are exempt: they cannot
 	# create, so the start page would be a dead end for them.
 	if (org_role in ('owner', 'admin', 'editor')
+			and joined_org is None
 			and request.GET.get('dashboard') != '1'
-			and not SurveyHeader.objects.filter(
-				organization=org, is_canonical=True, deleted_at__isnull=True,
-			).exists()):
+			and not org_has_surveys):
 		return redirect(reverse('editor_survey_start') + '?welcome=1')
 
 	if org_role in ('owner', 'admin'):
@@ -789,6 +835,10 @@ def editor(request):
 	context = {
 		"survey_headers": surveys_with_kpi,
 		"org_role": org_role,
+		"joined_org": joined_org,
+		# An editor sees own and collaborated surveys only; in a workspace that
+		# HAS surveys an empty list needs to say so, not "create your first one".
+		"editor_sees_none": org_role == 'editor' and org_has_surveys and not surveys_with_kpi,
 		"show_archived": show_archived,
 		"trashed_surveys": trashed_surveys,
 		"import_jobs": import_jobs,
