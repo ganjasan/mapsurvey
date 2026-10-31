@@ -97,6 +97,10 @@ API_TOKEN_FIRST_USE = 'api_token_first_use'   # once per token, when last_used_a
 # whether the consent page was skipped by memory -- never the client name.
 OAUTH_APP_CONNECTED = 'oauth_app_connected'
 OAUTH_APP_DISCONNECTED = 'oauth_app_disconnected'
+# Workspace invitations (change invite-landing-journey, #512): organisation id,
+# role and the surface the acceptance came through (link | register | sign_in |
+# confirm) -- never the address, never the token.
+INVITATION_ACCEPTED = 'invitation_accepted'
 SURFACE_START_BLANK = 'start_blank'     # one-click form on /editor/surveys/start/
 SURFACE_CREATE_PAGE = 'create_page'     # either action of /editor/surveys/new/
 MAP_SOURCE_CREATOR = 'creator'          # the creator framed the create-page map

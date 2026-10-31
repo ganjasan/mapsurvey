@@ -8,7 +8,10 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
+from django.urls import reverse
+from urllib.parse import urlencode
 
+from . import invitations
 from .email_verification import is_verified
 from .models import Organization, Membership, Invitation
 from .editor_forms import OrganizationSettingsForm
@@ -277,22 +280,20 @@ def accept_invitation(request, token):
             'error': 'This invitation has expired.',
         })
 
-    # Unauthenticated user: store token in session and show landing page
+    # Signed-out visitor: park the token and show the landing page. Its two
+    # actions carry the token forward too -- `?invite=` into registration,
+    # `?next=` back here after sign-in -- so a lost session or another browser
+    # does not lose the invitation (change invite-landing-journey, #512).
     if not request.user.is_authenticated:
-        request.session['pending_invitation_token'] = str(invitation.token)
+        invitations.remember(request, invitation)
+        accept_path = reverse('accept_invitation', args=[invitation.token])
         return render(request, 'org/invitation_landing.html', {
             'invitation': invitation,
+            'register_url': f"{reverse('django_registration_register')}?invite={invitation.token}",
+            'login_url': f"{reverse('login')}?{urlencode({'next': accept_path})}",
         })
 
-    # Authenticated user: accept immediately
-    Membership.objects.get_or_create(
-        user=request.user,
-        organization=invitation.organization,
-        defaults={'role': invitation.role},
-    )
-    invitation.accepted_at = timezone.now()
-    invitation.save(update_fields=['accepted_at'])
-    request.session['active_org_id'] = invitation.organization_id
-
-    messages.success(request, f"You've joined '{invitation.organization.name}'.")
+    # Signed-in: accept now. The dashboard shows "You've joined" from the mark
+    # `accept` leaves in the session; no flash message.
+    invitations.accept(invitation, request.user, request, surface=invitations.SURFACE_LINK)
     return redirect('editor')

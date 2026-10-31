@@ -1,0 +1,6 @@
+{% load i18n %}{% comment %}
+The dashboard's empty-state sentence, used by the card grid and the list alike
+(change invite-landing-journey, #512). An editor sees own and collaborated
+surveys only, so in a workspace that HAS surveys an empty list means "nothing
+of yours here yet", not "create your first one".
+{% endcomment %}{% if editor_sees_none %}{% blocktrans with workspace=active_org.name %}No surveys of yours in {{ workspace }} yet. Surveys you create here, and the ones a colleague adds you to, appear on this page.{% endblocktrans %}{% else %}{% trans "No surveys yet. Create your first one!" %}{% endif %}

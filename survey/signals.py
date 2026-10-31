@@ -9,10 +9,23 @@ from .models import Membership, Organization, SurveySession, Upload
 
 @receiver(user_registered)
 def create_personal_org_on_registration(sender, user, request, **kwargs):
+    """Give a new account a workspace: the one that invited it, else its own.
+
+    A registration that carries an acceptable invitation (the landing page parked
+    its token in the session) joins that workspace and gets NO personal
+    "<name>'s workspace" (owner decision 2026-10-31, change
+    invite-landing-journey, #512): the invitee lives where they were asked to,
+    and creates a workspace of their own only when they want one. The decision
+    is made here, synchronously, with the invitation's acceptability checked at
+    this moment -- an invitation that died between the landing page and the
+    submit falls through to the personal workspace, so no account is left
+    without one.
     """
-    When a new user registers, create a personal organization
-    and set it as the active org in their session.
-    """
+    if request is not None and hasattr(request, 'session'):
+        from . import invitations
+        if invitations.accept_pending(request, user, surface=invitations.SURFACE_REGISTER):
+            return
+
     base_name = f"{user.username}'s workspace"
     name = base_name
     base_slug = slugify(f"{user.username}-workspace")[:100] or 'workspace'
@@ -80,33 +93,27 @@ def emit_registration_event(sender, user, request, **kwargs):
     pe.emit(pe.CREATOR_REGISTERED, user.pk, props)
 
 
-def accept_invitations_for_email(user):
-    """Join the workspaces that invited this address in the last 7 days.
+def accept_invitations_for_email(user, request=None):
+    """Join the workspaces that invited this address (`invitations.join_by_address`).
 
     Matched by address alone, so it runs only once the address is CONFIRMED
     (change login-grace-period, #487): since an account may sign in before
     confirming, accepting at registration would let anyone who registers with
     an invited address walk into that workspace. An invitation LINK is
     different — its token was mailed, so `accept_invitation` keeps taking it.
+    With a request, the workspace joined becomes the active one and is marked,
+    so the confirmation's redirect lands on its dashboard with the "You've
+    joined" banner (change invite-landing-journey, #512).
     """
-    from django.utils import timezone
-
-    from .models import Invitation
-    pending = Invitation.objects.filter(email=user.email, accepted_at__isnull=True)
-    for invite in pending:
-        if (timezone.now() - invite.created_at).days <= 7:
-            Membership.objects.get_or_create(
-                user=user,
-                organization=invite.organization,
-                defaults={'role': invite.role},
-            )
-            invite.accepted_at = timezone.now()
-            invite.save(update_fields=['accepted_at'])
+    from . import invitations
+    return invitations.join_by_address(user, request)
 
 
 @receiver(user_activated)
 def accept_invitations_on_confirmation(sender, user, request, **kwargs):
-    accept_invitations_for_email(user)
+    accept_invitations_for_email(
+        user, request if request is not None and hasattr(request, 'session') else None,
+    )
 
 
 @receiver(user_activated)

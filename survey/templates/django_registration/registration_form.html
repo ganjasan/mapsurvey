@@ -8,7 +8,11 @@
 {% block content %}
 <div class="auth-card">
     <h2>{% trans "Create Account" %}</h2>
+    {% if invitation %}
+    <p class="auth-subtitle" id="invitation-subtitle">{% blocktrans with workspace=invitation.organization.name %}Create an account to join {{ workspace }}.{% endblocktrans %}</p>
+    {% else %}
     <p class="auth-subtitle">{% trans "Sign up to create and manage geo-surveys." %}</p>
+    {% endif %}
 
     <form method="post" action="">
         {% csrf_token %}

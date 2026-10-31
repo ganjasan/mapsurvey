@@ -30,11 +30,15 @@
             </p>
         </div>
 
-        <a href="{% url 'login' %}" class="btn-auth" style="display: block; text-align: center; text-decoration: none; margin-top: 1.5rem;">
-            {% trans "Sign In to Accept" %}
-        </a>
-        <a href="{% url 'django_registration_register' %}" class="btn-auth" style="display: block; text-align: center; text-decoration: none; margin-top: 0.75rem; background: #fff; color: #2a7f6f; border: 2px solid #2a7f6f;">
+        {% comment %}Both actions carry the invitation with them (change
+        invite-landing-journey, #512): the register link by `?invite=<token>`, the
+        sign-in link by `?next=` back to this URL -- so the invitation survives a
+        lost session, and either door ends in the same acceptance.{% endcomment %}
+        <a href="{{ register_url }}" class="btn-auth" style="display: block; text-align: center; text-decoration: none; margin-top: 1.5rem;">
             {% trans "Create Account" %}
+        </a>
+        <a href="{{ login_url }}" class="btn-auth" style="display: block; text-align: center; text-decoration: none; margin-top: 0.75rem; background: #fff; color: #2a7f6f; border: 2px solid #2a7f6f;">
+            {% trans "Sign In to Accept" %}
         </a>
 
         <p style="margin-top: 1.25rem; font-size: 0.8rem; color: #9ca3af; text-align: center;">

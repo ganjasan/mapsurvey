@@ -9659,3 +9659,26 @@ msgstr "Pyynnöt Mapsurvey-tiimille"
 #: api/templates/api/connections.html
 msgid "Your workspaces are on the Free plan. The first API or MCP call on a survey of a workspace that has never had a Pro trial starts it — no card needed."
 msgstr "Työtilasi ovat Free-tilauksessa. Ensimmäinen API- tai MCP-kutsu sellaisen työtilan kyselyyn, jolla ei ole koskaan ollut Pro-kokeilua, käynnistää sen – korttia ei tarvita."
+
+#: survey/templates/editor.html
+#, python-format
+msgid "You've joined %(workspace)s."
+msgstr "Liityit työtilaan %(workspace)s."
+
+#: survey/templates/editor.html
+msgid "Surveys you create here, and the ones a colleague adds you to, appear on this page."
+msgstr "Tänne luomasi kyselyt ja ne, joihin kollega lisää sinut, näkyvät tällä sivulla."
+
+#: survey/templates/editor/partials/_dashboard_empty_text.html
+#, python-format
+msgid "No surveys of yours in %(workspace)s yet. Surveys you create here, and the ones a colleague adds you to, appear on this page."
+msgstr "Sinulla ei ole vielä kyselyitä työtilassa %(workspace)s. Tänne luomasi kyselyt ja ne, joihin kollega lisää sinut, näkyvät tällä sivulla."
+
+#: survey/templates/editor/partials/_dashboard_empty_text.html
+msgid "No surveys yet. Create your first one!"
+msgstr "Ei vielä kyselyitä. Luo ensimmäinen!"
+
+#: survey/templates/django_registration/registration_form.html
+#, python-format
+msgid "Create an account to join %(workspace)s."
+msgstr "Luo tili liittyäksesi työtilaan %(workspace)s."
