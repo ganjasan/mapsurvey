@@ -15,6 +15,15 @@ localStorage so a close that failed to persist does not come back on the next pa
 <section class="wn-hero wn-hero-{{ entry.art|default:'image' }}" id="whatsNewHero" aria-label="{% trans "What's new" %}"
      data-entry-id="{{ entry.id }}" data-seen-url="{% url 'whats_new_seen' %}" data-cards-url="{% url 'whats_new_cards' %}">
   <button type="button" class="wn-close" data-wn="close" aria-label="{% trans 'Dismiss' %}"><i class="fas fa-times"></i></button>
+  {% comment %}Phones (change hero-banner-mobile, #514): the hero is this one row until tapped, so the
+  survey list stays on the first screen. Desktop hides the row; wn-hero-main is display: contents
+  there, so the three-column grid is the same as before.{% endcomment %}
+  <button type="button" class="wn-hero-toggle" aria-expanded="false" aria-controls="whatsNewHeroMain">
+    <span class="wn-hero-new">{% trans "New" %}</span>
+    <span class="wn-hero-toggle-title">{{ entry.title }}</span>
+    <i class="fas fa-chevron-down" aria-hidden="true"></i>
+  </button>
+  <div class="wn-hero-main" id="whatsNewHeroMain">
   <div class="wn-hero-art{% if entry.art %} {{ entry.art }}{% endif %}">
     {% if entry.image %}
       <img src="{% static entry.image %}" alt="">
@@ -43,6 +52,7 @@ localStorage so a close that failed to persist does not come back on the next pa
     {% endif %}{% endwith %}{% endif %}
     {% if whats_new.hero_note %}<div class="wn-hero-note"><i class="fas fa-star"></i> {{ whats_new.hero_note }}</div>{% endif %}
     <button type="button" class="wn-mute" data-wn="muted">{% trans "Don't show these" %}</button>
+  </div>
   </div>
 </section>
 <script>
@@ -87,6 +97,17 @@ localStorage so a close that failed to persist does not come back on the next pa
             // The call to action is a link: the POST rides along, the navigation proceeds.
             close(el.getAttribute('data-wn'), el.tagName === 'A');
         });
+    });
+    var toggle = hero.querySelector('.wn-hero-toggle');
+    var expandedOnce = false;
+    if (toggle) toggle.addEventListener('click', function () {
+        // Presentation only: no watermark POST, and the next page load starts collapsed again.
+        var open = hero.classList.toggle('wn-hero-open');
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (open && !expandedOnce) {
+            expandedOnce = true;
+            track('changelog_card_expanded', { entry_id: entryId, tier: 'hero' });
+        }
     });
     var help = hero.querySelector('[data-wn-help]');
     if (help) help.addEventListener('click', function () {

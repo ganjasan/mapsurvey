@@ -70,8 +70,24 @@ body.mobile-nav-enabled .wn-card { bottom: calc(1.25rem + 56px); }
 .wn-hero-note i { color: #b45309; }
 .wn-hero-actions .wn-mute { color: #9ca3af; font-size: .74rem; background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit; text-align: center; }
 .wn-hero-actions .wn-mute:hover { color: #6b7280; }
-@media (max-width: 760px) {
-  .wn-hero { grid-template-columns: 1fr; padding: 1rem; }
+/* Phones (change hero-banner-mobile, #514): one row until tapped, so the survey list stays on
+   the first screen. Desktop never shows the row; .wn-hero-main dissolves into the hero's grid. */
+.wn-hero-main { display: contents; }
+.wn-hero-toggle { display: none; }
+@media (max-width: 767.98px) {
+  .wn-hero { grid-template-columns: 1fr; gap: 0; padding: 0; margin-bottom: 1rem; border-radius: 12px; }
+  .wn-hero .wn-close { top: 50%; transform: translateY(-50%); right: .4rem; }
+  .wn-hero.wn-hero-open .wn-close { top: .55rem; transform: none; }
+  .wn-hero-toggle { display: flex; align-items: center; gap: .55rem; width: 100%; min-height: 48px; padding: .55rem 2.6rem .55rem .85rem; border: 0; background: transparent; font: inherit; color: #1f2937; text-align: left; cursor: pointer; border-radius: 12px; }
+  .wn-hero-toggle:focus { outline: none; }
+  .wn-hero-toggle:focus-visible { outline: 2px solid #2563eb; outline-offset: -2px; }
+  .wn-hero-toggle .wn-hero-new { flex: none; }
+  .wn-hero-toggle-title { flex: 1; min-width: 0; font-weight: 600; font-size: .92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wn-hero-toggle .fa-chevron-down { flex: none; color: #9ca3af; font-size: .75rem; transition: transform .15s; }
+  .wn-hero-open .wn-hero-toggle .fa-chevron-down { transform: rotate(180deg); }
+  .wn-hero-main { display: none; }
+  .wn-hero-open .wn-hero-main { display: grid; grid-template-columns: 1fr; gap: 1rem; padding: 0 1rem 1rem; }
+  .wn-hero-open .wn-hero-eyebrow, .wn-hero-open .wn-hero-text h3 { display: none; }
   .wn-hero-art { height: 72px; }
   .wn-hero-actions { min-width: 0; }
 }

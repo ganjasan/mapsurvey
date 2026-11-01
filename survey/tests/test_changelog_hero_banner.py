@@ -50,6 +50,25 @@ class ChangelogHeroTest(_ChangelogDirMixin, TestCase):
         return TokenProfile.objects.create(token=token, kind=KIND_OAUTH, audiences=['mcp'],
                                            revoked_at=timezone.now() if revoked else None)
 
+    def test_hero_carries_a_collapsed_disclosure_for_phones(self):
+        """
+        GIVEN a creator with a pending hero
+        WHEN the dashboard renders
+        THEN the hero carries a toggle row with the title, aria-expanded="false" and
+             aria-controls naming the element that wraps the body and the actions
+             (change hero-banner-mobile, #514: phones show only that row until tapped)
+        """
+        import re
+        html = self._dashboard()
+        toggle = re.search(r'<button type="button" class="wn-hero-toggle"([^>]*)>(.*?)</button>', html, re.S)
+        self.assertIsNotNone(toggle)
+        self.assertIn('aria-expanded="false"', toggle.group(1))
+        self.assertIn('aria-controls="whatsNewHeroMain"', toggle.group(1))
+        self.assertIn('Edit these surveys from your assistant', toggle.group(2))
+        main = html.split('id="whatsNewHeroMain"', 1)[1]
+        self.assertIn('data-wn="cta"', main)
+        self.assertIn('data-wn="muted"', main)
+
     def test_dashboard_renders_the_hero_and_no_card(self):
         """
         GIVEN a creator with a published survey, no MCP connection, a pending
