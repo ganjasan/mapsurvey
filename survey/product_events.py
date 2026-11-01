@@ -42,7 +42,7 @@ FORM_PRINTED = 'form_printed'
 # Paper forms from photos (change paper-photo-entry, #495): server-side, ids and
 # counts only — never a page's content or a file name. The per-call cost goes
 # separately through `emit_llm_generation` ($ai_generation).
-PAPER_BATCH_CREATED = 'paper_batch_created'          # survey_id
+PAPER_RESPONSE_CREATED = 'paper_response_created'    # survey_id, surface: new_response | stack
 PAPER_PAGE_RECOGNISED = 'paper_page_recognised'      # survey_id, outcome, code_source, doubtful
 PAPER_SHEET_ENTERED = 'paper_sheet_entered'          # survey_id, fields_total, fields_doubtful, fields_changed
 RESPONSES_VIEWED = 'responses_viewed'
@@ -192,10 +192,10 @@ def llm_trace_id(event_pk):
 def emit_llm_generation(event, trace_id=None, extra=None):
     """One PostHog LLM-analytics event per finished attempt-set. Never raises.
 
-    `$ai_span_name` is the event's kind (`survey_draft`, `paper_page`,
-    `paper_code`); `trace_id` defaults to the draft's own, and a paper call
-    passes `paper-batch-<id>` so a batch's pages roll up to one trace on the
-    LLM Analytics dashboard. `extra` is a few ids (survey, batch, page number)
+    `$ai_span_name` is the event's kind (`survey_draft`, `paper_page`);
+    `trace_id` defaults to the draft's own, and a paper call
+    passes `paper-response-<id>` so a response's pages roll up to one trace on the
+    LLM Analytics dashboard. `extra` is a few ids (survey, response, page number)
     — never content, see below.
 
     This is what puts the generator on PostHog's LLM Analytics dashboards —

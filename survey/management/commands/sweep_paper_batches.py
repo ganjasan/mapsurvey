@@ -1,15 +1,16 @@
-"""Close paper-photo batches nobody has touched for a month and drop their images.
+"""Delete the paper responses nobody has touched for a month.
 
-Page images live while a sheet is open for review and go when it is entered
-or skipped (change paper-photo-entry, #495). A batch someone started and
-walked away from would keep its photographs forever; this closes every open
-batch whose `last_activity_at` is older than PAPER_BATCH_TTL_DAYS and deletes
-the page images and any originals still waiting to be split. Rows stay —
-which sheet of which batch a session came from is still answerable.
+Page images live while a response is open for checking and go when it is
+stored (change paper-photo-entry, #495). A response someone started and walked
+away from would keep its photographs forever; this deletes every open response
+whose `last_activity_at` is older than PAPER_BATCH_TTL_DAYS — pages, images,
+its unfinished session (to the trash), the row — and deletes the images of
+set-aside photos (on no response) older than that and any original still
+waiting to be split. Stored responses are never touched.
 
 Usage:
   python manage.py sweep_paper_batches            # dry run: report only
-  python manage.py sweep_paper_batches --delete   # actually close and delete
+  python manage.py sweep_paper_batches --delete   # actually delete
 """
 from datetime import timedelta
 
@@ -19,39 +20,40 @@ from django.utils import timezone
 
 
 class Command(BaseCommand):
-    help = 'Close paper-photo batches untouched for PAPER_BATCH_TTL_DAYS and delete their images.'
+    help = 'Delete open paper responses untouched for PAPER_BATCH_TTL_DAYS, with their photos.'
 
     def add_arguments(self, parser):
         parser.add_argument('--delete', action='store_true',
-                            help='Actually close and delete. Default is a dry run.')
+                            help='Actually delete. Default is a dry run.')
         parser.add_argument('--days', type=int, default=settings.PAPER_BATCH_TTL_DAYS,
                             help='Inactivity window in days (default: %(default)s)')
 
     def handle(self, *args, **options):
-        from survey.models import PaperBatch
+        from survey.models import PaperPage, PaperSheet, PaperUpload
+        from survey.paper.sheets import delete_sheet
 
         cutoff = timezone.now() - timedelta(days=options['days'])
-        stale = PaperBatch.objects.filter(status=PaperBatch.STATUS_OPEN, last_activity_at__lt=cutoff)
-        batches = list(stale.select_related('survey'))
-        if not batches:
-            self.stdout.write('No open batches past the inactivity window.')
+        stale = list(PaperSheet.objects.filter(status__in=PaperSheet.OPEN_STATUSES, last_activity_at__lt=cutoff)
+                     .select_related('batch__survey'))
+        loose = list(PaperPage.objects.filter(sheet__isnull=True, created_at__lt=cutoff).exclude(image=''))
+        originals = list(PaperUpload.objects.filter(created_at__lt=cutoff).exclude(file=''))
+        if not (stale or loose or originals):
+            self.stdout.write('Nothing past the inactivity window.')
             return
-        for batch in batches:
-            images = batch.pages.exclude(image='').count()
-            originals = batch.uploads.exclude(file='').count()
-            self.stdout.write(f'batch {batch.pk} ({batch.survey.name}): last activity {batch.last_activity_at:%Y-%m-%d}, '
-                              f'{images} page image(s), {originals} original(s)')
-            if not options['delete']:
-                continue
-            for page in batch.pages.exclude(image=''):
-                page.discard_image()
-                page.save(update_fields=['image'])
-            for upload in batch.uploads.exclude(file=''):
-                upload.discard_file()
-                upload.save(update_fields=['file'])
-            batch.status = PaperBatch.STATUS_CLOSED
-            batch.save(update_fields=['status'])
-        if options['delete']:
-            self.stdout.write(f'Closed {len(batches)} batch(es).')
-        else:
-            self.stdout.write(f'{len(batches)} batch(es) would be closed. Re-run with --delete.')
+        for sheet in stale:
+            images = sheet.pages.exclude(image='').count()
+            self.stdout.write(f'response {sheet.pk} ({sheet.batch.survey.name}): last activity '
+                              f'{sheet.last_activity_at:%Y-%m-%d}, {images} page image(s)')
+        self.stdout.write(f'{len(loose)} set-aside photo(s), {len(originals)} original(s) past the window')
+        if not options['delete']:
+            self.stdout.write(f'{len(stale)} response(s) would be deleted. Re-run with --delete.')
+            return
+        for sheet in stale:
+            delete_sheet(sheet)
+        for page in loose:
+            page.discard_image()
+            page.save(update_fields=['image'])
+        for upload in originals:
+            upload.discard_file()
+            upload.save(update_fields=['file'])
+        self.stdout.write(f'Deleted {len(stale)} response(s).')

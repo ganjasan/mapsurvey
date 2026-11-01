@@ -1,0 +1,37 @@
+{% load i18n static %}{% comment %}The map page of a paper check (change paper-photo-entry, item 4):
+the right side reads like the paper — the printed frame as a live map with the marks on it, then
+the marks table with the printed rows (A1…An) and the printed columns, then the page's other
+questions. Rows are built by js/paper_marks.js from #paper-map-data; the hidden input per map
+question carries the features the section POST already understands (feature|feature).{% endcomment %}
+<div class="paper-marks" id="paper-marks">
+    <p class="paper-marks__hint">{% trans "The map is the printed frame. Drag a pin to move it; click a row to find its mark on the photo." %}</p>
+    <div class="paper-marks__mapwrap">
+        <div id="paper-map" class="paper-marks__map"></div>
+        <button type="button" class="btn btn-sm btn-light paper-marks__fit" data-marks-fit title="{% trans 'Back to the printed frame' %}">⤢ {% trans "Printed frame" %}</button>
+    </div>
+    {% for q in paper_map.questions %}
+    <div class="paper-marks__q{% if q.doubtful %} paper-marks__q--doubt{% endif %}" data-marks-question="{{ q.code }}">
+        <div class="paper-marks__title"><span class="paper-marks__letter">{{ q.letter }}</span> {{ q.name }}
+            {% if q.doubtful %}<span class="paper-marks__doubt">{% trans "Check this against the photo" %}</span>{% endif %}</div>
+        <table class="paper-marks__table">
+            <thead><tr>
+                <th class="paper-marks__c-label">{% trans "Mark" %}</th>
+                <th class="paper-marks__c-state">{% trans "On the map" %}</th>
+                {% for s in q.subs %}<th>{{ s.name }}{% if s.hint %}<small>{{ s.hint }}</small>{% endif %}</th>{% endfor %}
+                <th class="paper-marks__c-act"></th>
+            </tr></thead>
+            <tbody data-marks-rows="{{ q.code }}"></tbody>
+        </table>
+        <button type="button" class="btn btn-link btn-sm px-0 paper-marks__add" data-marks-add="{{ q.code }}">+ {% trans "Add a mark the reader missed" %}</button>
+        <input type="hidden" name="{{ q.code }}" data-marks-input="{{ q.code }}" value="">
+    </div>
+    {% endfor %}
+    <div class="paper-marks__i18n" hidden
+         data-placed="{% trans 'placed' %}" data-none="{% trans 'no mark' %}" data-empty="{% trans 'Row is empty on the paper. If a mark was missed:' %}"
+         data-place="{% trans 'place it on the map' %}" data-show="{% trans 'Find on the photo' %}" data-remove="{% trans 'Remove' %}"
+         data-line="{% trans 'line · {n} points' %}" data-area="{% trans 'area' %}" data-cloud="{% trans 'cloud · {n} dots' %}"
+         data-click="{% trans 'Click the map where the mark is' %}" data-draw="{% trans 'Draw it on the map, double-click to finish' %}"
+         data-dash="—"></div>
+</div>
+{{ paper_map|json_script:"paper-map-data" }}
+<script src="{% static 'js/paper_marks.js' %}"></script>

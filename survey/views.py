@@ -994,7 +994,44 @@ def _visible_chain_position(vmap, section):
 	return chain_ids.index(section.id) + 1, len(chain_ids)
 
 
-def _build_section_context(request, survey, session_survey, section, selected_language, section_current, section_total, vmap=None, session_id=None, entry=False, prefill=None):
+def geo_answer_features(question, q_answers):
+	"""A geo question's stored answers as the GeoJSON features the map restores
+	(`existing_geo_answers`): geometry plus the sub-answers as `{code: [values]}`.
+	Also what the paper check's map page lists as rows (change paper-photo-entry)."""
+	features = []
+	for answer in q_answers:
+		geometry = answer.geometry
+		if geometry is None:
+			continue
+		feature = {
+			'type': 'Feature',
+			'geometry': json.loads(geometry.geojson),
+			'properties': {'question_id': question.code},
+		}
+		child_answers = Answer.objects.filter(parent_answer_id=answer).select_related('question')
+		for child in child_answers:
+			sub_q = child.question
+			if child.upload_id:
+				# The token round-trips: the popup widget resolves it
+				# back to the uploaded state on revisit.
+				feature['properties'][sub_q.code] = [str(child.upload_id)]
+			elif sub_q.input_type in ('choice', 'multichoice', 'rating', 'thumbs', 'ranking'):
+				# By type, not by which columns are set: a choice answer with a
+				# write-in carries both codes and text (spec other-option-write-in).
+				if child.selected_choices:
+					feature['properties'][sub_q.code] = [str(c) for c in child.selected_choices]
+				_other = child.other_text()
+				if _other is not None:
+					feature['properties'][other_option.field_name(sub_q.code)] = [_other]
+			elif child.text is not None:
+				feature['properties'][sub_q.code] = [child.text]
+			elif child.numeric is not None:
+				feature['properties'][sub_q.code] = [str(child.numeric)]
+		features.append(feature)
+	return features
+
+
+def _build_section_context(request, survey, session_survey, section, selected_language, section_current, section_total, vmap=None, session_id=None, entry=False, prefill=None, questions_filter=None):
 	"""Build template context for a survey section (used by both GET and POST→next).
 
 	``session_id`` defaults to the respondent cookie's; the operator entry form
@@ -1003,7 +1040,9 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 
 	``prefill`` (change paper-photo-entry) is a dict in the shape of ``initial``
 	below — what a photographed sheet was read as — used for every question that
-	has no Answer row yet; a saved section's rows always win."""
+	has no Answer row yet; a saved section's rows always win. ``questions_filter``
+	(same change) keeps only the named codes: the review of a photographed page
+	shows the questions printed on THAT page, whatever else the section holds."""
 	from .visibility import popup_rules_for_client, client_rule
 	if session_id is None:
 		session_id = request.session['survey_session_id']
@@ -1054,6 +1093,8 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 			questions.append(q)
 		elif vmap.question_own.get(q.id, vmap.is_question_visible(q.id)):
 			questions.append(q)
+	if questions_filter is not None:
+		questions = [q for q in questions if q.code in questions_filter]
 
 	# Query existing answers for this session and section
 	existing_answers = Answer.objects.filter(
@@ -1076,36 +1117,7 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 			continue
 
 		if question.input_type in GEO_TYPES:
-			features = []
-			for answer in q_answers:
-				geometry = answer.geometry
-				if geometry is None:
-					continue
-				feature = {
-					'type': 'Feature',
-					'geometry': json.loads(geometry.geojson),
-					'properties': {'question_id': question.code},
-				}
-				child_answers = Answer.objects.filter(parent_answer_id=answer).select_related('question')
-				for child in child_answers:
-					sub_q = child.question
-					if child.upload_id:
-						# The token round-trips: the popup widget resolves it
-						# back to the uploaded state on revisit.
-						feature['properties'][sub_q.code] = [str(child.upload_id)]
-					elif sub_q.input_type in ('choice', 'multichoice', 'rating', 'thumbs', 'ranking'):
-						# By type, not by which columns are set: a choice answer with a
-						# write-in carries both codes and text (spec other-option-write-in).
-						if child.selected_choices:
-							feature['properties'][sub_q.code] = [str(c) for c in child.selected_choices]
-						_other = child.other_text()
-						if _other is not None:
-							feature['properties'][other_option.field_name(sub_q.code)] = [_other]
-					elif child.text is not None:
-						feature['properties'][sub_q.code] = [child.text]
-					elif child.numeric is not None:
-						feature['properties'][sub_q.code] = [str(child.numeric)]
-				features.append(feature)
+			features = geo_answer_features(question, q_answers)
 			if features:
 				existing_geo_answers[question.code] = features
 		else:
@@ -1155,10 +1167,18 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 
 	if prefill:
 		# Only questions without a stored answer; the write-in companion follows its question.
+		geo_codes = {q.code for q in questions if q.input_type in GEO_TYPES}
 		for key, value in prefill.items():
 			code = other_option.base_code(key)
-			if code not in answers_by_question:
-				initial.setdefault(key, value)
+			if code in answers_by_question:
+				continue
+			if code in geo_codes:
+				# Marks read off a photographed map (change paper-photo-entry, item 4):
+				# features in the shape the map restores, never a form field.
+				if isinstance(value, list) and value:
+					existing_geo_answers.setdefault(code, value)
+				continue
+			initial.setdefault(key, value)
 
 	form = SurveySectionAnswerForm(initial=initial, section=section, question=None, survey_session_id=session_id, language=selected_language, questions_override=questions, surface=surface)
 
@@ -1264,7 +1284,7 @@ def _add_shell_context(ctx, survey, section):
 	return ctx
 
 
-def save_section_answers(post, survey_session, session_survey, section, surface=SURFACE_RESPONDENT):
+def save_section_answers(post, survey_session, session_survey, section, surface=SURFACE_RESPONDENT, only_questions=None):
 	"""Store one section POST on ``survey_session`` and return the final visibility map.
 
 	The ONE answer writer for a section, shared by the respondent page and the
@@ -1272,8 +1292,15 @@ def save_section_answers(post, survey_session, session_survey, section, surface=
 	state, replace the section's answers by type, purge abandoned branches, replace
 	object answers. Events, the shared-map sync and navigation are the caller's —
 	an operator session gets none of the first two.
+
+	``only_questions`` (change paper-photo-entry): a set of codes — the review of a
+	photographed page posts the questions printed on that page, and a section that
+	spans two pages must keep the other page's answers. Only the named questions are
+	replaced; everything else in the section is left as stored.
 	"""
 	section_questions = section.questions()
+	if only_questions is not None:
+		section_questions = [q for q in section_questions if q.code in only_questions]
 
 	# Visibility under the SUBMITTED state: stored answers overlaid with the
 	# controller values in this POST. A value posted for a question hidden

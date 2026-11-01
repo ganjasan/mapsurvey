@@ -1,10 +1,11 @@
 """Every model call costed the moment it ends (design D5, owner 2026-10-29).
 
-One `AIGenerationEvent` row per call (`paper_page` for the answers, `paper_code`
-for the footer-text fallback) and, right after the row is written, its
-`$ai_generation` in PostHog — span name = the kind, trace = `paper-batch-<id>`
-so a batch rolls up on the LLM Analytics dashboard, ids only. PostHog prices
-the tokens by model; no dollar figure is stored here.
+One `AIGenerationEvent` row per call (`paper_page`: one page's answers; a page's
+code is never read by a model) and, right after the row is written, its
+`$ai_generation` in PostHog — span name = the kind, trace =
+`paper-response-<id>` so the pages of one paper response roll up on the LLM
+Analytics dashboard, ids only. PostHog prices the tokens by model; no dollar
+figure is stored here.
 
 The creator events (`paper_page_recognised`, …) are the product view of the
 same work; they carry counts and outcomes, never content.
@@ -13,8 +14,8 @@ from survey import product_events as pe
 from survey.models import AIGenerationEvent
 
 
-def trace_id(batch_id):
-    return f'paper-batch-{batch_id}'
+def trace_id(sheet_id):
+    return f'paper-response-{sheet_id}'
 
 
 def start(page, kind):
@@ -36,9 +37,9 @@ def finish(event, page, outcome, usage=None, error=''):
         event.latency_ms = usage.latency_ms
         event.total_latency_ms = usage.latency_ms
     event.save()
-    pe.emit_llm_generation(event, trace_id=trace_id(page.batch_id), extra={
+    pe.emit_llm_generation(event, trace_id=trace_id(page.sheet_id), extra={
         'survey_id': page.batch.survey_id,
-        'batch_id': page.batch_id,
+        'response_id': page.sheet_id,
         'page_number': page.page_number,
     })
     return event

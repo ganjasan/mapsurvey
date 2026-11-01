@@ -18,7 +18,9 @@ logger = logging.getLogger('survey.paper')
 # ~500 KB — what the browser shows, the decoder reads and the model receives.
 MAX_SIDE = 2200
 JPEG_QUALITY = 85
-PDF_DPI = 150
+# 200 dpi: a 20 mm QR gets ~4.7 px per module in a scanned PDF, comfortably above
+# what the decoder needs; the page is shrunk to MAX_SIDE for storage afterwards.
+PDF_DPI = 200
 
 KIND_PDF = 'pdf'
 KIND_IMAGE = 'image'
@@ -60,7 +62,11 @@ def _normalise(img):
 
 
 def iter_pages(data, kind):
-    """Yield (jpeg_bytes, width, height) per page of an upload's bytes."""
+    """Yield (jpeg_bytes, width, height, code) per page of an upload's bytes.
+
+    The code is read from the page at FULL resolution, before `_normalise`
+    shrinks it — that is where a QR has the most pixels."""
+    from survey.paper.codes import decode
     if kind == KIND_PDF:
         import pypdfium2 as pdfium
         pdf = pdfium.PdfDocument(data)
@@ -72,17 +78,20 @@ def iter_pages(data, kind):
                     img = bitmap.to_pil()
                 finally:
                     page.close()
-                yield _normalise(img)
+                code = decode(img)
+                yield (*_normalise(img), code)
                 del img
         finally:
             pdf.close()
         return
-    from PIL import Image
+    from PIL import Image, ImageOps
     import pillow_heif
     pillow_heif.register_heif_opener()
     with Image.open(io.BytesIO(data)) as img:
         img.load()
-        yield _normalise(img)
+        upright = ImageOps.exif_transpose(img)
+        code = decode(upright if upright.mode in ('RGB', 'L') else upright.convert('RGB'))
+        yield (*_normalise(upright), code)
 
 
 def ingest_upload(upload):
@@ -110,9 +119,16 @@ def ingest_upload(upload):
         return 0
     created = 0
     try:
-        for jpeg, width, height in iter_pages(data, kind):
+        upload.is_pdf = kind == KIND_PDF
+        for jpeg, width, height, code in iter_pages(data, kind):
             seq = _next_page_seq(batch)
             page = PaperPage(batch=batch, upload=upload, seq=seq, width=width, height=height)
+            if code is not None:
+                page.code_source = 'qr'
+                page.copy = code.copy
+                page.page_number = code.page
+                page.pages_total = code.pages
+                page.printed_form_id = _form_of_survey(batch, code.form_id)
             page.image.save(f'{seq}.jpg', ContentFile(jpeg), save=False)
             page.save()
             created += 1
@@ -130,6 +146,13 @@ def ingest_upload(upload):
     upload.save()
     batch.touch()
     return created
+
+
+def _form_of_survey(batch, form_id):
+    """The PrintedForm id when it is one of this inbox's survey's forms, else None
+    (a page of another survey's form is not ours to read)."""
+    from survey.models import PrintedForm
+    return PrintedForm.objects.filter(pk=form_id, survey_id=batch.survey_id).values_list('pk', flat=True).first()
 
 
 def _fail(upload, message):

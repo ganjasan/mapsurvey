@@ -308,8 +308,21 @@
                     <option value="letter"{% if print_default_paper == 'letter' %} selected{% endif %}>US Letter</option>
                 </select>
             </div>
+            {# Copies (change paper-photo-entry): numbered copies sort their photos by themselves; one copy is for the photocopier. #}
+            <div>
+                <label style="font-size:0.8rem;font-weight:500;display:block;">{% trans "Copies" %}</label>
+                <label style="font-size:0.85rem;margin-right:0.75rem;"><input type="radio" name="mode" value="copies" checked> {% trans "Numbered copies" %}</label>
+                <input type="number" name="copies" min="1" max="{{ print_max_copies }}" value="20" class="form-control form-control-sm d-inline-block" style="width:5.5rem;" aria-label="{% trans 'Number of copies' %}">
+                <label style="font-size:0.85rem;margin-left:0.75rem;"><input type="radio" name="mode" value="single"> {% trans "One copy to photocopy" %}</label>
+            </div>
+            <div>{# keep a map section whole (change paper-photo-entry): the marks table cut across pages read as a cut question #}
+                <label style="font-size:0.85rem;" title="{% trans 'A map that does not fit under the questions above it moves to the next page whole, instead of its tables being cut in two.' %}"><input type="checkbox" name="keep" value="1" checked> {% trans "Keep each map with its tables on one page" %}</label>
+            </div>
             <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-print"></i> {% trans "Download PDF" %}</button>
         </form>
+        <p style="font-size:0.8rem;color:#6b7280;margin:0.5rem 0 0;"><i class="fas fa-hashtag"></i>
+            {% if print_copies_printed %}{% blocktrans with n=print_copies_printed next=print_next_copy %}{{ n }} numbered copies printed so far; the next print starts at #{{ next }}.{% endblocktrans %}{% endif %}
+            {% trans "Numbered copies carry their own number on every page, so photos and scans of them sort themselves in any order. A copy made on a photocopier repeats its number — print more copies instead. With one copy to photocopy, upload one PDF per filled form, or add photos to a response by hand." %}</p>
         {% if survey.status == 'draft' or survey.status == 'testing' %}
         <p style="font-size:0.8rem;color:#6b7280;margin:0.5rem 0 0;"><i class="fas fa-info-circle"></i> {% trans "Until the survey is published the form prints with a DRAFT watermark — good for proofing, not for handing out." %}</p>
         {% endif %}

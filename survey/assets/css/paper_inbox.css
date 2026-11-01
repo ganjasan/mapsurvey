@@ -1,0 +1,80 @@
+/* Paper responses and one paper response (change paper-photo-entry, #495). */
+.paper-crumb { color: #6b7280; font-size: .9rem; margin-bottom: .5rem; }
+.paper-crumb a { color: #6b7280; }
+.paper-form-card { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; border: 1px solid #bfdbfe;
+  background: #eff6ff; border-radius: 8px; padding: .6rem .9rem; margin-bottom: .5rem; font-size: .9rem; }
+.paper-form-card--none { border-color: #e5e7eb; background: #f8fafc; color: #6b7280; }
+.paper-actions { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin: 1rem 0; }
+
+.paper-drop { border: 2px dashed #94a3b8; border-radius: 10px; padding: 1.1rem; text-align: center;
+  background: #f8fafc; color: #334155; margin-bottom: .5rem; }
+.paper-drop--slim { padding: .8rem; }
+.paper-drop.is-over { border-color: #2563eb; background: #eff6ff; }
+.paper-queue { margin-bottom: .75rem; }
+.paper-queue li { display: flex; align-items: center; gap: .5rem; font-size: .85rem; padding: .15rem 0; }
+.paper-queue .progress { flex: 1; height: 6px; }
+.paper-queue .paper-queue__err { color: #b91c1c; }
+/* The camera button only where there is a camera to open: touch devices. A
+   desktop browser ignores `capture` and would just show a file picker twice. */
+.paper-drop__camera { display: none; }
+@media (hover: none) and (pointer: coarse) { .paper-drop__camera { display: block; } }
+
+.paper-stripe { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; color: #6b7280; font-size: .9rem; margin: .75rem 0; }
+.paper-stripe b { color: #111827; }
+.paper-h3 { font-size: 1rem; margin: 1.5rem 0 .5rem; display: flex; align-items: center; gap: .5rem; }
+
+.paper-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: .6rem .9rem; margin-bottom: .5rem; background: #fff; }
+.paper-card--entered { opacity: .65; }
+.paper-card__head { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.paper-card__head b { font-size: 1rem; }
+.paper-card__actions { margin-left: auto; }
+.paper-thumbs { display: flex; gap: 4px; margin-top: .5rem; flex-wrap: wrap; }
+.paper-mini { width: 26px; height: 32px; border-radius: 4px; border: 1px solid #cbd5e1; font-size: 11px;
+  display: flex; align-items: flex-end; justify-content: center; padding-bottom: 2px; background: #f1f5f9; }
+.paper-mini--ok { background: #f0fdf4; border-color: #86efac; }
+.paper-mini--warn { background: #fffbeb; border-color: #fcd34d; }
+.paper-mini--miss { background: #fff; border-style: dashed; color: #94a3b8; }
+.paper-mini--busy { background: #f1f5f9; color: #64748b; }
+.paper-mini--failed { background: #fef2f2; border-color: #fca5a5; }
+
+.paper-loose { display: flex; gap: .75rem; align-items: flex-start; border: 1px solid #fecaca; border-radius: 8px;
+  padding: .5rem; margin-bottom: .5rem; background: #fff; }
+.paper-loose img { width: 90px; height: 120px; object-fit: cover; border-radius: 4px; border: 1px solid #e5e7eb; }
+.paper-assign { display: flex; gap: .35rem; align-items: center; margin: .35rem 0; flex-wrap: wrap; }
+.paper-assign select { width: auto; }
+.paper-assign input[type=number] { width: 5rem; }
+
+.paper-slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: .6rem; margin: .5rem 0 1rem; }
+.paper-slot { position: relative; height: 132px; border: 1px dashed #cbd5e1; border-radius: 6px; background: #fafafa;
+  overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.paper-slot img { width: 100%; height: 100%; object-fit: cover; }
+.paper-slot--ok, .paper-slot--warn, .paper-slot--busy, .paper-slot--failed { border-style: solid; }
+.paper-slot--ok { border-color: #86efac; }
+.paper-slot--warn { border-color: #f59e0b; }
+.paper-slot--failed { border-color: #ef4444; }
+.paper-slot__n { position: absolute; left: 4px; bottom: 4px; background: rgba(255,255,255,.9); border-radius: 3px;
+  padding: 0 .3rem; font-weight: 600; font-size: .85rem; }
+.paper-slot__state { position: absolute; left: 0; right: 0; top: 40%; text-align: center; font-size: .75rem; color: #64748b; }
+.paper-slot--busy .paper-slot__state { background: rgba(255,255,255,.8); }
+.paper-slot__x { position: absolute; right: 2px; top: 2px; }
+.paper-slot__x button { border: 0; background: rgba(255,255,255,.9); border-radius: 3px; line-height: 1; padding: 0 .35rem; cursor: pointer; }
+.paper-response__nav { display: flex; justify-content: space-between; align-items: center; gap: .5rem; margin-top: 1rem; flex-wrap: wrap; }
+.paper-attach-here { display: inline-flex; align-items: center; gap: .4rem; margin-left: .5rem; }
+.paper-attach-here .custom-select-sm { width: auto; display: inline-block; margin-left: .25rem; }
+/* The × on a response page's notices (replaced photo, set-aside photo, "it went there"). */
+.paper-note { position: relative; padding-right: 2.25rem; }
+.paper-note__x { position: absolute; top: 50%; right: .5rem; transform: translateY(-50%); margin: 0; }
+.paper-note__x button { border: 0; background: transparent; font-size: 1.15rem; line-height: 1; color: #6b7280; padding: .1rem .35rem; cursor: pointer; }
+.paper-note__x button:hover { color: #111827; }
+
+/* The notes of a response (replaced photos, photos that went elsewhere, set-aside
+   photos) in one collapsible block with "Dismiss all" (owner, 2026-11-01). */
+.paper-notes { border: 1px solid #e5e7eb; border-radius: 8px; margin: .75rem 0; background: #fff; }
+.paper-notes > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: .6rem; padding: .5rem .75rem; font-size: .85rem; }
+.paper-notes > summary::-webkit-details-marker { display: none; }
+.paper-notes > summary::before { content: '\25B8'; color: #6b7280; }
+.paper-notes[open] > summary::before { content: '\25BE'; }
+.paper-notes__count { color: #6b7280; }
+.paper-notes__all { margin-left: auto; }
+.paper-notes__list { padding: 0 .75rem .5rem; }
+.paper-notes__list .paper-note { margin-bottom: .4rem; }

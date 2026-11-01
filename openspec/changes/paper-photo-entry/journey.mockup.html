@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Paper photos — user journey mockup v2</title>
+<style>
+  :root { --ink:#1f2937; --mut:#6b7280; --line:#e5e7eb; --bg:#f8fafc; --acc:#2563eb; --amber:#f59e0b; --amber-bg:#fffbeb; --red:#dc2626; --green:#16a34a; --note:#fef3c7; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.45 -apple-system,Segoe UI,Roboto,sans-serif; color:var(--ink); background:#e9edf3; }
+  header { background:#111827; color:#fff; padding:14px 24px; }
+  header h1 { margin:0; font-size:18px; font-weight:600; }
+  header p { margin:4px 0 0; color:#cbd5e1; font-size:13px; }
+  nav.tabs { display:flex; gap:4px; padding:10px 24px 0; background:#111827; flex-wrap:wrap; }
+  nav.tabs button { border:0; background:#374151; color:#e5e7eb; padding:8px 12px; border-radius:6px 6px 0 0; cursor:pointer; font-size:13px; }
+  nav.tabs button.on { background:#e9edf3; color:#111827; font-weight:600; }
+  section.screen { display:none; padding:20px 24px 40px; }
+  section.screen.on { display:block; }
+  .frame { background:#fff; border:1px solid #cbd5e1; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,.08); max-width:1180px; margin:0 auto 18px; overflow:hidden; }
+  .frame.phone { max-width:390px; }
+  .chrome { background:#f1f5f9; border-bottom:1px solid var(--line); padding:8px 14px; font-size:12px; color:var(--mut); display:flex; gap:8px; align-items:center; }
+  .chrome .dot { width:10px; height:10px; border-radius:50%; background:#cbd5e1; display:inline-block; }
+  .appbar { display:flex; align-items:center; gap:16px; padding:10px 18px; border-bottom:1px solid var(--line); font-size:13px; }
+  .appbar b { font-size:15px; }
+  .appbar .tabs2 span { padding:6px 10px; color:var(--mut); }
+  .appbar .tabs2 span.on { color:var(--ink); border-bottom:2px solid var(--acc); }
+  .pad { padding:18px; }
+  h2.t { margin:0 0 4px; font-size:20px; }
+  .crumb { color:var(--mut); font-size:13px; margin-bottom:14px; }
+  .btn { display:inline-block; border:1px solid #cbd5e1; background:#fff; border-radius:6px; padding:6px 12px; font-size:13px; color:var(--ink); }
+  .btn.p { background:var(--acc); color:#fff; border-color:var(--acc); }
+  .btn.lg { padding:10px 18px; font-size:15px; }
+  .btn.ghost { border-color:transparent; color:var(--acc); }
+  .badge { display:inline-block; font-size:11px; padding:2px 7px; border-radius:10px; font-weight:600; }
+  .badge.amber { background:var(--amber-bg); color:#92400e; border:1px solid #fcd34d; }
+  .badge.red { background:#fef2f2; color:#991b1b; border:1px solid #fecaca; }
+  .badge.green { background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; }
+  .badge.grey { background:#f1f5f9; color:#475569; border:1px solid #e2e8f0; }
+  .drop { border:2px dashed #94a3b8; border-radius:10px; padding:22px; text-align:center; background:var(--bg); }
+  .drop small { color:var(--mut); display:block; margin-top:6px; }
+  .row { display:flex; gap:14px; align-items:flex-start; }
+  .col { flex:1; }
+  .card { border:1px solid var(--line); border-radius:8px; padding:12px 14px; margin-bottom:10px; background:#fff; }
+  .card.hl { border-color:#93c5fd; background:#eff6ff; }
+  .card .head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .card .head b { font-size:15px; }
+  .card .head .sp { margin-left:auto; display:flex; gap:6px; }
+  .thumbs { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
+  .th { width:46px; height:62px; border:1px solid #cbd5e1; border-radius:4px; background:repeating-linear-gradient(0deg,#fff 0 6px,#f1f5f9 6px 8px); position:relative; font-size:10px; }
+  .th i { position:absolute; left:2px; bottom:2px; font-style:normal; background:#fff; padding:0 3px; border-radius:3px; }
+  .th.ok::after { content:"✓"; position:absolute; right:2px; top:1px; color:var(--green); font-weight:700; }
+  .th.warn::after { content:"!"; position:absolute; right:3px; top:1px; color:var(--amber); font-weight:700; }
+  .th.miss { background:#fff; border-style:dashed; color:#94a3b8; display:flex; align-items:center; justify-content:center; }
+  .th.busy::after { content:"…"; position:absolute; right:3px; top:0; color:var(--mut); }
+  .th.big { width:90px; height:120px; }
+  .note { background:var(--note); border-left:4px solid var(--amber); padding:10px 14px; margin:14px auto; max-width:1180px; border-radius:6px; font-size:13.5px; }
+  .note b { color:#92400e; }
+  .q { background:#eef2ff; border-left:4px solid #6366f1; padding:10px 14px; margin:14px auto; max-width:1180px; border-radius:6px; font-size:13.5px; }
+  .q b { color:#3730a3; }
+  .split { display:grid; grid-template-columns:1fr 1fr; min-height:560px; }
+  .photo { background:#2b2f36; color:#e8eaed; position:relative; }
+  .photo .bar { display:flex; align-items:center; gap:8px; padding:8px 12px; background:#1f2227; font-size:12.5px; }
+  .photo .bar .sp { margin-left:auto; display:flex; gap:4px; }
+  .pbtn { border:1px solid #4a4f57; background:#2b2f36; color:#e8eaed; border-radius:4px; padding:2px 8px; font-size:12px; }
+  .paper { margin:16px auto; width:78%; background:#fdfdfb; color:#222; padding:16px 18px; box-shadow:0 2px 10px rgba(0,0,0,.5); font-size:11px; transform:rotate(-1.2deg); }
+  .paper .mark { width:9px; height:9px; background:#000; display:inline-block; }
+  .paper .qr { width:22px; height:22px; background:repeating-linear-gradient(45deg,#000 0 2px,#fff 2px 4px); display:inline-block; }
+  .paper h4 { margin:8px 0 2px; font-size:14px; }
+  .paper .hand { font-family:"Comic Sans MS","Segoe Print",cursive; color:#1d3fa8; }
+  .paper .line { border-bottom:1px solid #999; height:16px; }
+  .paper .foot { display:flex; justify-content:space-between; align-items:center; margin-top:12px; font-size:9px; }
+  .paper .office { border:1px solid #777; padding:3px 6px; font-size:9px; float:right; }
+  .attach { padding:60px 30px; text-align:center; }
+  .attach h3 { margin:10px 0 4px; }
+  .attach p { color:#aab; }
+  .form { padding:14px 18px; overflow:auto; }
+  .ebar { background:#fef3c7; color:#92400e; border:1px solid #fcd34d; border-radius:6px; padding:6px 10px; font-size:12.5px; display:flex; justify-content:space-between; margin-bottom:10px; }
+  .stepper { display:flex; gap:4px; margin:6px 0 14px; flex-wrap:wrap; align-items:center; }
+  .step { width:30px; height:30px; border-radius:6px; border:1px solid #cbd5e1; display:flex; align-items:center; justify-content:center; font-size:12px; position:relative; background:#fff; cursor:pointer; }
+  .step.cur { border-color:var(--acc); background:#dbeafe; font-weight:700; }
+  .step.ok { border-color:#bbf7d0; background:#f0fdf4; }
+  .step.warn { border-color:#fcd34d; background:var(--amber-bg); }
+  .step.miss { border-style:dashed; color:#94a3b8; }
+  .step.typed { border-color:#c7d2fe; background:#eef2ff; }
+  .legend { font-size:11.5px; color:var(--mut); margin-left:8px; }
+  .fld { border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin-bottom:10px; }
+  .fld.doubt { border-left:4px solid var(--amber); background:var(--amber-bg); }
+  .fld.blank { border-left:4px solid #cbd5e1; }
+  .fld label { display:block; font-size:13px; margin-bottom:6px; color:#374151; }
+  .fld .in { border:1px solid #cbd5e1; border-radius:6px; padding:6px 10px; background:#fff; display:inline-block; min-width:220px; }
+  .fld .hint { font-size:11.5px; color:#92400e; margin-bottom:4px; }
+  h3.sect { font-size:14px; margin:14px 0 8px; color:#374151; border-top:1px solid var(--line); padding-top:12px; }
+  .navbtns { display:flex; justify-content:space-between; margin-top:16px; }
+  .stripe { display:flex; gap:18px; font-size:13px; color:var(--mut); margin:12px 0; align-items:center; flex-wrap:wrap; }
+  .stripe b { color:var(--ink); }
+  .phone .pad { padding:14px; }
+  .bigcam { display:block; width:100%; padding:18px; border-radius:10px; background:var(--acc); color:#fff; text-align:center; font-size:17px; font-weight:600; margin:10px 0; }
+  .phshot { background:#111; height:200px; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#9ca3af; font-size:13px; position:relative; }
+  .phshot .corner { position:absolute; width:22px; height:22px; border:3px solid #fff; }
+  .phshot .tl { top:14px; left:14px; border-right:0; border-bottom:0; } .phshot .tr { top:14px; right:14px; border-left:0; border-bottom:0; }
+  .phshot .bl { bottom:14px; left:14px; border-right:0; border-top:0; } .phshot .br { bottom:14px; right:14px; border-left:0; border-top:0; }
+  .pagerow { display:flex; gap:6px; margin:12px 0; flex-wrap:wrap; }
+  .pagerow .step { width:26px; height:26px; }
+  table.cases { width:100%; border-collapse:collapse; background:#fff; font-size:13px; max-width:1180px; margin:0 auto; }
+  table.cases th, table.cases td { border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top; }
+  table.cases th { background:#f1f5f9; }
+  .small { font-size:12px; color:var(--mut); }
+  .slots { display:grid; grid-template-columns:repeat(10,1fr); gap:8px; margin:12px 0; }
+  .slot { border:1px dashed #cbd5e1; border-radius:6px; height:110px; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#94a3b8; font-size:12px; background:#fafafa; position:relative; }
+  .slot.has { border-style:solid; background:repeating-linear-gradient(0deg,#fff 0 6px,#f1f5f9 6px 8px); color:#111; }
+  .slot.has::after { content:"✓"; position:absolute; right:5px; top:3px; color:var(--green); font-weight:700; }
+  .slot.has.warn::after { content:"!"; color:var(--amber); }
+  .slot.busy::after { content:"⟳"; position:absolute; right:5px; top:3px; color:var(--mut); }
+  .slot b { font-size:14px; }
+  .dialog { max-width:520px; margin:0 auto; background:#fff; border:1px solid #cbd5e1; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,.15); padding:18px 20px; }
+  .dialog h3 { margin:0 0 10px; font-size:16px; }
+  .field { margin:10px 0; } .field label { display:block; font-size:12.5px; color:#374151; margin-bottom:4px; }
+  .field .in { border:1px solid #cbd5e1; border-radius:6px; padding:6px 10px; display:inline-block; min-width:180px; background:#fff; }
+  .radio::before { content:"○ "; color:#94a3b8; } .radio.on::before { content:"● "; color:var(--acc); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Paper forms from photos — user journey, v2</h1>
+  <p>Переработано по трём правилам владельца (31.10): нумерованные копии при печати · номер страницы без AI · сначала пустой ответ, потом фото в него. Жёлтое — пояснения, синее — вопросы.</p>
+</header>
+<nav class="tabs">
+  <button class="on" data-s="s0">0 · Принципы и сценарии</button>
+  <button data-s="s1">1 · Печать копий</button>
+  <button data-s="s2">2 · Paper responses</button>
+  <button data-s="s3">3 · Один ответ: фото в него</button>
+  <button data-s="s4">4 · Телефон</button>
+  <button data-s="s5">5 · Проверка страницы</button>
+  <button data-s="s6">6 · Нет страницы / чужая</button>
+  <button data-s="s7">7 · Сохранено</button>
+  <button data-s="s8">8 · Вопросы</button>
+</nav>
+
+<!-- ───────────────────────── 0 ───────────────────────── -->
+<section class="screen on" id="s0">
+  <div class="note"><b>Словарь.</b> <b>Form</b> — напечатанный бланк (MS-3, 10 страниц). <b>Copy</b> — его пронумерованный экземпляр («copy 37 of 50»). <b>Response</b> — заполненная одним человеком анкета; после сохранения это response на вкладке Responses. <b>Page</b> — одна страница, QR на ней говорит: форма, копия, номер страницы. Слова «sheet» и «batch» оператору не показываются.</div>
+  <table class="cases">
+    <tr><th style="width:30%">Правило</th><th>Что это даёт</th><th>Цена</th></tr>
+    <tr><td><b>1. Два режима печати.</b><br><b>Нумерованные копии:</b> Share → «Print 50 copies» → PDF 50 × 10 страниц; QR = <code>ms:form:3:37:2:10</code> (форма 3, копия 37, страница 2 из 10), в «Office use» напечатано «Copy 37». Нумерация продолжается с каждым запуском печати (51–100, 101–…) и уникальна в пределах опроса навсегда.<br><b>Без номеров</b> («1 copy», под ксерокс): страницы разных анкет неотличимы.</td>
+        <td><b>С номерами:</b> страница сама знает свою анкету — архив фото или PDF в любом порядке, дубли и пропуски система разбирает сама.<br><b>Без номеров:</b> вход только «отдельный PDF на каждую анкету» (один файл = один ответ) или вручную созданный ответ + фото в него. Россыпь фото без номеров не принимается — её нечем собрать.</td>
+        <td>Без номеров нельзя «Upload a stack» из фотографий: кнопка принимает только PDF и делает из каждого ответ. Страница печати говорит это прямо и советует печатать копии.</td></tr>
+    <tr><td><b>2. Номер страницы и копии читаются без AI.</b> QR 20 мм вместо 16, в ДВУХ углах страницы, коррекция H; декод по оригиналу фото до сжатия.</td>
+        <td>Группировка детерминирована и бесплатна. AI читает только ответы.</td>
+        <td>Если оба QR не читаются (смято, залито) — страница «не распознана», оператор назначает её вручную из списка (вкладка 6). Модель для кода не зовём.</td></tr>
+    <tr><td><b>3. Сначала пустой ответ, потом фото в него.</b> «New response» → карточка с 10 слотами → туда падают фото/PDF или снимаются с телефона.</td>
+        <td>Один ответ — одно действие, понятно где что. Массовая загрузка стопки остаётся вторым входом: ответы создаются сами по номерам копий.</td>
+        <td>Фото чужой копии, брошенное в карточку, в неё не попадёт — уйдёт в ответ своей копии (или создаст его), карточка это покажет.</td></tr>
+  </table>
+  <table class="cases" style="margin-top:14px">
+    <tr><th style="width:26%">Сценарий</th><th>Путь</th></tr>
+    <tr><td><b>A. Стопка, десктоп/телефон</b></td><td>Paper responses → «Upload a stack» → файлы в любом порядке → ответы появляются сами по копиям → «Check next».</td></tr>
+    <tr><td><b>B. Сканер</b></td><td>То же: один PDF на стопку. Автоподатчик может перемешать — неважно.</td></tr>
+    <tr><td><b>C. На стойке, по одной</b></td><td>«New response» → съёмка страниц по счётчику (телефон) → ответ закрывается на N of N → «Check» сразу или потом.</td></tr>
+    <tr><td><b>D. Пропуск / дубль / беспорядок</b></td><td>Дыра видна в слотах и на проверке — снимается на месте. Дубль — второй снимок той же (копия, страница): оператор выбирает лучший. Порядок — любой.</td></tr>
+    <tr><td><b>E. Одностраничная анкета</b></td><td>Каждое фото = ответ; слот один; проверка — один экран.</td></tr>
+    <tr><td><b>F. Ксерокопии одного бланка</b> (без номеров)</td><td>Только два пути: «New response» и фото в него, или «Upload a stack» из PDF — каждый PDF становится ответом (страницы внутри раскладываются по QR). Фото россыпью кнопка не принимает и объясняет почему.</td></tr>
+  </table>
+</section>
+
+<!-- ───────────────────────── 1 ───────────────────────── -->
+<section class="screen" id="s1">
+  <div class="frame">
+    <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span> …/share/  (Print a paper form, as today, plus copies)</div>
+    <div class="pad">
+      <div class="dialog" style="margin:0">
+        <h3>Print a paper form</h3>
+        <div class="field"><label>Language</label><span class="in">English ▾</span></div>
+        <div class="field"><label>Paper</label><span class="radio on">A4</span> &nbsp; <span class="radio">US Letter</span></div>
+        <div class="field"><label>Copies</label>
+          <div><span class="radio on">Numbered copies</span> <span class="in" style="min-width:70px;margin-left:6px">50</span> <span class="small">· 10 pages each → a 500-page PDF, copies 51–100 (50 printed before)</span></div>
+          <div style="margin-top:6px"><span class="radio">One copy to photocopy</span> <span class="small">· pages carry no copy number</span></div></div>
+        <div class="small" style="margin:8px 0 12px"><b>Numbered copies</b> find their response by themselves: photos and scans in any order, duplicates and missing pages sorted out for you. Every print run continues the numbering, so a copy number is never reused. <b>One copy to photocopy</b> gives pages that cannot tell one respondent from another: back in the office you will upload one PDF per filled form, or create a response and add its photos by hand.</div>
+        <div style="display:flex;gap:8px"><span class="btn p">Download PDF</span><span class="btn">Cancel</span></div>
+      </div>
+      <div class="row" style="margin-top:18px;gap:24px">
+        <div class="paper" style="margin:0;width:46%;transform:none">
+          <div style="display:flex;justify-content:space-between;align-items:center"><span class="mark"></span><span class="office">Office use · <b>Copy 37</b> · Sheet no. ____</span><span class="mark"></span></div>
+          <h4>Park survey</h4>
+          <div style="display:flex;gap:8px;align-items:center"><span class="qr"></span><span class="small">Prefer to answer online? Scan.</span></div>
+          <h4>About you</h4><div class="line"></div><div class="line"></div>
+          <div class="foot"><span class="qr"></span><span>MS-3 · copy 37 · page 1 of 10</span><span class="qr"></span></div>
+          <div style="display:flex;justify-content:space-between"><span class="mark"></span><span class="mark"></span></div>
+        </div>
+        <div class="col">
+          <div class="note" style="margin:0"><b>Что меняется на бланке.</b> QR страницы — в двух нижних углах, 20 мм, коррекция H (один можно залить кофе). Текстовый код в подписи читаем человеком: «MS-3 · copy 37 · page 1 of 10». В «Office use» номер копии напечатан, «Sheet no.» остаётся на случай, если команда ведёт свою нумерацию. Онлайн-QR сверху — как сейчас.</div>
+          <div class="q" style="margin:12px 0 0"><b>Вопрос A.</b> Лимит копий за одну печать — 200? PDF на 2000 страниц собирается наложением футера на один раз отрисованный бланк (pypdf), секунды, не минуты.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────────────────────── 2 ───────────────────────── -->
+<section class="screen" id="s2">
+  <div class="frame">
+    <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span> …/responses/paper/</div>
+    <div class="appbar"><b>Park survey</b><div class="tabs2"><span>Build</span><span>Share</span><span class="on">Responses</span><span>Public results</span></div>
+      <div style="margin-left:auto;display:flex;gap:8px"><span class="btn">Export data</span><span class="btn">Enter a response ▾</span></div></div>
+    <div class="pad">
+      <div class="crumb">Responses › <b>Paper responses</b></div>
+      <div class="row">
+        <div class="col">
+          <div class="card hl" style="margin:0"><div class="head"><b>Printed form MS-3</b><span class="badge grey">10 pages</span><span class="badge grey">English · v1</span><span class="badge grey">50 copies printed</span><span class="sp"><span class="btn ghost">Print more</span></span></div>
+            <div class="small">Photos must come from these copies. 23 of 50 copies are back so far.</div></div>
+        </div>
+      </div>
+      <div class="stripe" style="margin-top:16px">
+        <span class="btn p lg">＋ New response</span>
+        <span class="btn lg">⬆ Upload a stack</span>
+        <span class="small">New response: one filled form, photographed into its own card. Upload a stack: photos or PDFs in any order — responses are created from the copy numbers. (For a form printed without copy numbers the stack takes PDFs only, one per filled form.)</span>
+      </div>
+      <div class="stripe"><b>6</b> responses in progress · <b>2</b> to check · <b>1</b> reading · <b>17</b> stored <span style="margin-left:auto" class="btn p">Check next →</span></div>
+
+      <div class="card"><div class="head"><b>Copy 41</b><span class="badge grey">reading 3 of 10…</span><span class="sp"><span class="btn" style="opacity:.5">Check</span></span></div>
+        <div class="thumbs"><span class="th ok"><i>1</i></span><span class="th ok"><i>2</i></span><span class="th busy"><i>3</i></span><span class="th miss">4</span><span class="th miss">5</span><span class="th miss">6</span><span class="th miss">7</span><span class="th miss">8</span><span class="th miss">9</span><span class="th miss">10</span></div></div>
+      <div class="card"><div class="head"><b>Copy 37</b><span class="badge amber">2 fields to check</span><span class="badge green">10 of 10 pages</span><span class="sp"><span class="btn p">Check</span><span class="btn">Skip</span></span></div>
+        <div class="thumbs"><span class="th ok"><i>1</i></span><span class="th warn"><i>2</i></span><span class="th ok"><i>3</i></span><span class="th ok"><i>4</i></span><span class="th ok"><i>5</i></span><span class="th warn"><i>6</i></span><span class="th ok"><i>7</i></span><span class="th ok"><i>8</i></span><span class="th ok"><i>9</i></span><span class="th ok"><i>10</i></span></div></div>
+      <div class="card"><div class="head"><b>Copy 12</b><span class="badge red">page 7 missing</span><span class="badge amber">1 field to check</span><span class="sp"><span class="btn p">Check</span><span class="btn">Skip</span></span></div>
+        <div class="thumbs"><span class="th ok"><i>1</i></span><span class="th ok"><i>2</i></span><span class="th ok"><i>3</i></span><span class="th ok"><i>4</i></span><span class="th ok"><i>5</i></span><span class="th ok"><i>6</i></span><span class="th miss">7</span><span class="th ok"><i>8</i></span><span class="th ok"><i>9</i></span><span class="th ok"><i>10</i></span></div></div>
+      <div class="card"><div class="head"><b>New response</b> <span class="small">(no copy yet)</span><span class="badge grey">empty</span><span class="sp"><span class="btn p">Add photos</span><span class="btn ghost">Remove</span></span></div>
+        <div class="small">Created by artem 2 min ago. Drop photos or a PDF into it, or take photos on a phone.</div></div>
+      <h3 class="sect">Stored <span class="badge green">17</span> <span class="small">· on the Responses page with source “Paper form”</span></h3>
+      <div class="card" style="opacity:.6"><div class="head"><b>Copy 36</b><span class="badge green">stored as #58</span><span class="small">today 19:40 · artem</span><span class="sp"><span class="btn ghost">Open</span></span></div></div>
+      <div class="card" style="opacity:.6"><div class="head"><b>Copy 35</b><span class="badge green">stored as #57</span><span class="small">today 19:31 · artem</span></div></div>
+      <h3 class="sect">Not recognised <span class="badge red">1</span></h3>
+      <div class="row"><span class="th big"></span><div class="col"><div class="small">photo_0431.jpg · no code could be read on this page</div>
+        <div style="display:flex;gap:6px;margin-top:6px;align-items:center"><span class="btn">Copy 12 ▾</span><span class="btn">page 7 ▾</span><span class="btn p">Attach</span><span class="btn ghost">Remove</span></div>
+        <div class="small" style="margin-top:4px">Suggested: copy 12 is the only response missing a page.</div></div></div>
+    </div>
+  </div>
+  <div class="note"><b>Одна страница вместо «партий».</b> Список ответов этого опроса, снимки которых ещё обрабатываются или ждут проверки; сохранённые — ниже, притушены. Карточка названа по копии («Copy 37») — это то, что напечатано на бумаге у оператора в руках. Пустой ответ без копии получает номер с первой распознанной страницы.</div>
+</section>
+
+<!-- ───────────────────────── 3 ───────────────────────── -->
+<section class="screen" id="s3">
+  <div class="frame">
+    <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span> …/responses/paper/new/  → after the first page: …/paper/copy-37/</div>
+    <div class="pad">
+      <div class="crumb">Paper responses › <b>New response</b></div>
+      <div class="drop">📷 <b>Drop the photos or the PDF of this one form here</b> — or <a href="#">choose files</a> · <a href="#">take photos on a phone</a><small>Any order. Each page finds its slot by the code printed on it.</small></div>
+      <div class="slots">
+        <div class="slot"><b>1</b>page</div><div class="slot"><b>2</b>page</div><div class="slot"><b>3</b>page</div><div class="slot"><b>4</b>page</div><div class="slot"><b>5</b>page</div><div class="slot"><b>6</b>page</div><div class="slot"><b>7</b>page</div><div class="slot"><b>8</b>page</div><div class="slot"><b>9</b>page</div><div class="slot"><b>10</b>page</div>
+      </div>
+      <div class="small">10 pages expected (form MS-3). You can start checking as soon as the first page is read.</div>
+    </div>
+  </div>
+  <div class="frame">
+    <div class="chrome"><span class="dot"></span> …/paper/copy-37/ — four files dropped, in the wrong order</div>
+    <div class="pad">
+      <div class="crumb">Paper responses › <b>Copy 37</b> <span class="badge grey">4 of 10 pages</span> <span class="badge amber">1 field to check</span></div>
+      <div class="drop" style="padding:12px">📷 Drop more pages here · <a href="#">choose files</a> · <a href="#">take photos on a phone</a></div>
+      <div class="slots">
+        <div class="slot has"><b>1</b></div><div class="slot has warn"><b>2</b></div><div class="slot busy"><b>3</b>reading…</div><div class="slot"><b>4</b></div><div class="slot has"><b>5</b></div><div class="slot"><b>6</b></div><div class="slot"><b>7</b></div><div class="slot"><b>8</b></div><div class="slot"><b>9</b></div><div class="slot"><b>10</b></div>
+      </div>
+      <div class="card" style="border-color:#fcd34d;background:var(--amber-bg)"><div class="head"><span class="badge amber">set aside</span><span>photo_0440.jpg is <b>copy 38, page 1</b> — not this form. It went to <a href="#">Copy 38</a> (new).</span></div></div>
+      <div class="navbtns"><span class="btn">← Paper responses</span><span><span class="btn">Skip this response</span> &nbsp; <span class="btn p lg">Check Copy 37 →</span></span></div>
+    </div>
+  </div>
+  <div class="note"><b>Правило 3 в действии.</b> Первый клик создаёт пустой ответ; фото падают в него и раскладываются по слотам по коду, порядок любой. Карточка переименовывается в «Copy 37» с первой распознанной страницы. Чужая копия не портит ответ: уезжает к себе, об этом сказано прямо тут. Проверку можно начать, не дожидаясь всех страниц — слоты дочитаются по ходу.</div>
+</section>
+
+<!-- ───────────────────────── 4 ───────────────────────── -->
+<section class="screen" id="s4">
+  <div class="row" style="max-width:1180px;margin:0 auto;gap:24px;flex-wrap:wrap">
+    <div class="frame phone" style="margin:0">
+      <div class="chrome"><span class="dot"></span> …/responses/paper/</div>
+      <div class="pad">
+        <div class="crumb">Paper responses · form MS-3 · 10 pages</div>
+        <span class="bigcam">＋ New response</span>
+        <div class="small" style="text-align:center">One filled form: shoot its pages, in any order.</div>
+        <div style="text-align:center;margin:12px 0 6px"><span class="btn">⬆ Upload a stack</span></div>
+        <h3 class="sect">In progress</h3>
+        <div class="card"><div class="head"><b>Copy 37</b><span class="badge amber">2 to check</span><span class="sp"><span class="btn p">Check</span></span></div></div>
+        <div class="card"><div class="head"><b>Copy 12</b><span class="badge red">page 7 missing</span><span class="sp"><span class="btn p">Check</span></span></div></div>
+      </div>
+    </div>
+    <div class="frame phone" style="margin:0">
+      <div class="chrome"><span class="dot"></span> New response · camera</div>
+      <div class="pad">
+        <div class="crumb"><b>New response</b> · 0 of 10 pages</div>
+        <div class="phshot"><span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>Whole page, corner squares in frame</div>
+        <span class="bigcam" style="background:#111827">● Shoot a page</span>
+        <div class="pagerow"><span class="step">1</span><span class="step">2</span><span class="step">3</span><span class="step">4</span><span class="step">5</span><span class="step">6</span><span class="step">7</span><span class="step">8</span><span class="step">9</span><span class="step">10</span></div>
+        <div class="small">Shoot in any order — the code on the page puts it in its slot. Each shot is uploaded at once.</div>
+      </div>
+    </div>
+    <div class="frame phone" style="margin:0">
+      <div class="chrome"><span class="dot"></span> Copy 37 · after 5 shots</div>
+      <div class="pad">
+        <div class="crumb"><b>Copy 37</b> · 5 of 10 pages</div>
+        <div class="phshot"><span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>…</div>
+        <span class="bigcam" style="background:#111827">● Shoot a page</span>
+        <div class="pagerow"><span class="step ok">1</span><span class="step ok">2</span><span class="step warn">3</span><span class="step ok">4</span><span class="step cur">5</span><span class="step">6</span><span class="step">7</span><span class="step">8</span><span class="step">9</span><span class="step">10</span></div>
+        <div class="small"><b>Page 3:</b> blurred — shoot it again (the old shot is kept until a better one reads).</div>
+        <div style="display:flex;justify-content:space-between;margin-top:14px"><span class="btn">Done, pages missing</span><span class="btn p">Check now</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="note"><b>Телефон.</b> Тот же путь, что на десктопе, только файл берётся из камеры. Счётчик страниц — не «следующая», а «сколько есть из 10»: порядок не нужен. Когда все 10 на месте, ответ сам помечается «ready to check». «Done, pages missing» — для анкеты, сданной не целиком.</div>
+</section>
+
+<!-- ───────────────────────── 5 ───────────────────────── -->
+<section class="screen" id="s5">
+  <div class="frame">
+    <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span> …/paper/copy-37/pages/2/</div>
+    <div class="split">
+      <div class="photo">
+        <div class="bar">🗎 <b>Copy 37</b> · page 2 of 10 <span class="sp"><span class="pbtn">−</span><span class="pbtn">+</span><span class="pbtn">⟳</span><span class="pbtn">Map</span></span></div>
+        <div class="paper">
+          <div style="display:flex;justify-content:space-between"><span class="mark"></span><span class="mark"></span></div>
+          <h4>Rank what matters most (1 = most)</h4>
+          <div><span class="hand">1</span> __ Benches &nbsp; <span class="hand">3</span> __ Lighting &nbsp; <span class="hand">2</span> __ Toilets &nbsp; <span class="hand">4</span> __ Trees</div>
+          <h4>Anything else you want to tell us?</h4>
+          <div class="line hand">Great park, love it!</div><div class="line hand">more benches near the pond pls</div><div class="line"></div>
+          <h4>Points: places</h4>
+          <div style="height:90px;background:#dde7f0;border:1px solid #999;margin:4px 0;font-size:9px;padding:4px">[ map ]</div>
+          <div><b>A</b> Where do you like to sit? <span class="hand">A1 ●</span></div>
+          <div class="foot"><span class="qr"></span><span>MS-3 · copy 37 · page 2 of 10</span><span class="qr"></span></div>
+          <div style="display:flex;justify-content:space-between"><span class="mark"></span><span class="mark"></span></div>
+        </div>
+      </div>
+      <div class="form">
+        <div class="ebar"><span>✎ Checking a paper response · Copy 37 · <b>2 fields to check</b></span><span>Stop</span></div>
+        <div class="stepper">
+          <span class="step ok">1</span><span class="step cur warn">2</span><span class="step ok">3</span><span class="step ok">4</span><span class="step ok">5</span><span class="step warn">6</span><span class="step ok">7</span><span class="step ok">8</span><span class="step ok">9</span><span class="step ok">10</span>
+          <span class="legend">click a page to jump · ✓ read · ! to check · ✎ typed · ∅ no photo</span>
+        </div>
+        <h3 class="sect" style="border:0;padding:0;margin-top:0">About you <span class="small">(continued)</span></h3>
+        <div class="fld"><label>Rank what matters most</label><div class="in">1 Benches · 3 Lighting · 2 Toilets · 4 Trees</div></div>
+        <div class="fld doubt"><div class="hint">⚠ Check this against the photo — handwriting was hard to read</div><label>Anything else you want to tell us?</label><div class="in" style="min-width:380px">Great park, love it! more benches near the pond pls</div></div>
+        <h3 class="sect">Points: places</h3>
+        <div class="fld blank"><label>Where do you like to sit? <span class="small">· marks on the map are not read yet — place them from the photo</span></label><span class="btn">● Place on map</span> <span class="small">0 placed</span></div>
+        <div class="navbtns"><span class="btn">← Back</span><span class="btn p">Next →</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="note"><b>Проверка — как в v1</b> (это уже в коде): шаг = страница, слева фото, справа ровно то, что на ней напечатано, степпер кликабельный, Next/Back сохраняют только вопросы страницы.</div>
+</section>
+
+<!-- ───────────────────────── 6 ───────────────────────── -->
+<section class="screen" id="s6">
+  <div class="frame">
+    <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span> …/paper/copy-12/pages/7/</div>
+    <div class="split" style="min-height:420px">
+      <div class="photo">
+        <div class="bar">🗎 <b>Copy 12</b> · page 7 of 10</div>
+        <div class="attach">
+          <div style="font-size:42px">🗎</div>
+          <h3>Page 7 of copy 12 was not photographed</h3>
+          <p>Attach it: it will be read and the fields on the right will fill in.</p>
+          <p><span class="btn p lg">📷 Take photo</span> &nbsp; <span class="btn lg" style="background:#374151;color:#fff;border-color:#4a4f57">Choose a file</span></p>
+          <p class="small" style="color:#aab">No page at hand? Type the answers on the right, or press Next to leave them blank.</p>
+        </div>
+      </div>
+      <div class="form">
+        <div class="ebar"><span>✎ Checking a paper response · Copy 12 · <b>1 field to check</b></span><span>Stop</span></div>
+        <div class="stepper"><span class="step ok">1</span><span class="step ok">2</span><span class="step ok">3</span><span class="step ok">4</span><span class="step ok">5</span><span class="step warn">6</span><span class="step cur miss">7</span><span class="step ok">8</span><span class="step ok">9</span><span class="step ok">10</span></div>
+        <h3 class="sect" style="border:0;padding:0;margin-top:0">Lines + areas</h3>
+        <div class="fld blank"><label>Where should a fence go?</label><span class="btn">━ Draw on map</span></div>
+        <div class="fld blank"><label>Where should the new lawn be?</label><span class="btn">▭ Draw on map</span></div>
+        <div class="navbtns"><span class="btn">← Back</span><span class="btn p">Next →</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="frame" style="max-width:760px">
+    <div class="chrome"><span class="dot"></span> the attached photo turns out to be another copy's page</div>
+    <div class="pad"><div class="card" style="border-color:#fcd34d;background:var(--amber-bg);margin:0"><div class="head"><span class="badge amber">set aside</span><span>The photo you attached is <b>copy 12, page 8</b>, not page 7 — it replaced the blurred page 8. Page 7 is still missing.</span></div></div>
+      <div class="card" style="border-color:#fcd34d;background:var(--amber-bg);margin:10px 0 0"><div class="head"><span class="badge amber">set aside</span><span>The photo you attached is <b>copy 19, page 7</b> — another form. It went to <a href="#">Copy 19</a>.</span></div></div></div>
+  </div>
+  <div class="note"><b>Сценарий D + правило 2.</b> Код решает, куда идёт страница, даже когда оператор ошибся: страница другой копии уходит к себе, а здесь остаётся «не снята». Прикреплённый снимок, у которого код не читается вовсе, берётся за страницу 7 этой копии — оператор сказал, какая это страница.</div>
+</section>
+
+<!-- ───────────────────────── 7 ───────────────────────── -->
+<section class="screen" id="s7">
+  <div class="frame" style="max-width:640px">
+    <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span> …/saved/</div>
+    <div class="pad" style="text-align:center;padding:36px">
+      <div style="font-size:40px;color:var(--green)">✔</div>
+      <h2 class="t">Copy 37 stored</h2>
+      <p class="small">It is response <b>#59</b> on Responses — source “Paper form”, entered by artem. Its photos have been deleted.</p>
+      <div class="stripe" style="justify-content:center"><span class="badge amber">2 responses left to check</span><span class="badge grey">1 still reading</span></div>
+      <div style="display:flex;gap:10px;justify-content:center;margin-top:16px"><span class="btn">Paper responses</span><span class="btn p lg">Check Copy 12 →</span></div>
+    </div>
+  </div>
+  <div class="frame">
+    <div class="chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span> …/responses/  (detail drawer)</div>
+    <div class="pad"><div class="card" style="max-width:720px;margin:0"><div class="head"><b>#59</b><span class="badge grey">31 Oct 19:40</span><span class="badge amber">📄 Paper form · copy 37</span><span class="small">Entered by artem</span></div><div class="small" style="margin-top:8px">Your first name: Artem · Your age: 32 · Do you visit the park: Yes · …</div></div></div>
+  </div>
+  <div class="note"><b>Замыкание.</b> Номер копии остаётся на ответе навсегда — по нему можно найти бумажный оригинал в папке. Экспорт получает колонку <code>paper_copy</code>.</div>
+</section>
+
+<!-- ───────────────────────── 8 ───────────────────────── -->
+<section class="screen" id="s8">
+  <div class="q"><b>A. Печать копий:</b> лимит 200 копий за раз? И нужна ли опция «1 copy, photocopy-safe» явно, или просто «Copies: 1» с предупреждением?</div>
+  <div class="q"><b>B. Название карточки:</b> «Copy 37» (номер с бумаги) или «Response 37»? На бумаге напечатано «Copy 37», и оператор ищет именно его в стопке — предлагаю Copy.</div>
+  <div class="q"><b>C. Дубликат страницы</b> (та же копия, та же страница второй раз): автоматически брать ту, где код прочитался увереннее / позже снятую, а старую показывать как «replaced» с возможностью вернуть?</div>
+  <div class="q" style="background:#f0fdf4;border-color:#16a34a"><b>D — решено (владелец, 31.10).</b> Бланк без номеров: «Upload a stack» принимает только PDF (каждый — один ответ), иначе — «New response» и фото в него. Группировки россыпи по порядку нет.</div>
+  <div class="q"><b>E. «Check next»</b> ведёт к первому ответу с полным набором страниц, или к любому с хоть одной прочитанной? Предлагаю: сначала полные, потом неполные (их можно дособрать по ходу).</div>
+  <div class="note"><b>Что в коде уже есть и остаётся:</b> разрезка/нормализация/QR локально, извлечение одним вызовом на страницу, проверка по страницам с фото слева, прикрепление пропавшей страницы, Saved → next. <b>Что переделывается:</b> печать (копии, два QR, 20 мм, H), payload QR, модель (<code>copy</code> на странице и ответе), группировка по копии, страница «Paper responses» вместо партий, карточка со слотами, «New response» как первый клик, слово Copy/Response вместо sheet, последовательная загрузка.</div>
+</section>
+
+<script>
+  document.querySelectorAll('nav.tabs button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('nav.tabs button').forEach(function (x) { x.classList.remove('on'); });
+      document.querySelectorAll('section.screen').forEach(function (x) { x.classList.remove('on'); });
+      b.classList.add('on');
+      document.getElementById(b.dataset.s).classList.add('on');
+      history.replaceState(null, '', '#' + b.dataset.s);
+    });
+  });
+  if (location.hash) { var t = document.querySelector('nav.tabs button[data-s="' + location.hash.slice(1) + '"]'); if (t) t.click(); }
+</script>
+</body>
+</html>

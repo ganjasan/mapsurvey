@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Map page check — mockup</title>
+<style>
+  :root { --blue: #2563eb; --ink: #1f2937; --muted: #6b7280; --line: #e5e7eb; --amber: #b45309; --amber-bg: #fef3c7; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.45 Inter, system-ui, sans-serif; color: var(--ink); background: #f3f4f6; }
+  .head { position: sticky; top: 0; z-index: 5; height: 52px; display: flex; align-items: center; gap: 1rem; padding: 0 16px; background: #fff; border-bottom: 1px solid var(--line); }
+  .head .where { display: flex; gap: .75rem; align-items: center; white-space: nowrap; }
+  .head .where b { font-weight: 600; }
+  .head .pages { flex: 1; display: flex; justify-content: center; gap: 4px; }
+  .step { width: 30px; height: 30px; border: 1px dashed #cbd5e1; border-radius: 6px; display: grid; place-items: center; font-size: 12px; color: #94a3b8; background: #fff; }
+  .step.ok { border-style: solid; border-color: #16a34a; color: #166534; }
+  .step.cur { border: 2px solid var(--blue); color: var(--ink); font-weight: 600; }
+  .step.miss { color: #94a3b8; }
+  .legend { font-size: 11px; color: var(--muted); margin-left: .5rem; align-self: center; }
+  .tools { display: flex; gap: .4rem; align-items: center; }
+  .btn { border: 1px solid #d1d5db; background: #fff; border-radius: 4px; padding: .15rem .5rem; font-size: 12px; }
+  .stop { margin-left: .5rem; color: #92400e; text-decoration: underline; }
+
+  .cols { display: grid; grid-template-columns: 1fr 1fr; height: calc(100vh - 52px); }
+  .photo { background: #2b2f36; overflow: auto; position: relative; }
+  .paper { width: 92%; margin: 20px auto; background: #fafafa; aspect-ratio: 210 / 297; padding: 7%; position: relative; box-shadow: 0 6px 24px rgba(0,0,0,.4); transform: rotate(-1.2deg); color: #111; }
+  .sq { position: absolute; width: 2.9%; aspect-ratio: 1; background: #000; }
+  .sq.tl { left: 3.8%; top: 2.7%; } .sq.tr { right: 3.8%; top: 2.7%; } .sq.bl { left: 3.8%; bottom: 2.7%; } .sq.br { right: 3.8%; bottom: 2.7%; }
+  .paper h3 { margin: 0 0 6px; font-size: 18px; }
+  .pmap { width: 100%; aspect-ratio: 900 / 550; border: 1.5px solid #000; background:
+    linear-gradient(90deg, transparent 49%, #ddd 50%, transparent 51%) 0 0/60px 60px,
+    linear-gradient(0deg, transparent 49%, #ddd 50%, transparent 51%) 0 0/60px 60px, #f1e9df; position: relative; }
+  .pmark { position: absolute; left: 31%; top: 36%; width: 14px; height: 14px; border-radius: 50%; background: #1e1b8a; }
+  .pmark + b { position: absolute; left: 34.5%; top: 31%; color: #1e1b8a; font-size: 18px; font-family: "Comic Sans MS", cursive; }
+  .pmark2 { position: absolute; left: 62%; top: 60%; width: 14px; height: 14px; border-radius: 50%; background: #1e1b8a; }
+  .pmark2 + b { position: absolute; left: 65.5%; top: 55%; color: #1e1b8a; font-size: 18px; font-family: "Comic Sans MS", cursive; }
+  .pleg { font-size: 11px; margin: 8px 0 4px; } .pleg b { display: inline-block; width: 14px; }
+  table.ptab { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 6px; }
+  .ptab th, .ptab td { border: 1px solid #777; padding: 3px 5px; text-align: left; height: 26px; }
+  .ptab th { background: #eee; font-weight: 600; }
+  .hand { font-family: "Comic Sans MS", cursive; color: #1e1b8a; }
+  .frame-box { position: absolute; border: 3px solid var(--blue); border-radius: 6px; background: rgba(37,99,235,.08); }
+
+  .panel { overflow: auto; background: #fff; padding: 16px 24px 40px; border-left: 1px solid var(--line); }
+  .panel h2 { font-size: 18px; margin: 4px 0 10px; }
+  .note { font-size: 12px; color: var(--muted); margin: 0 0 8px; }
+  .map { position: relative; aspect-ratio: 900 / 550; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; background:
+    linear-gradient(90deg, transparent 49%, #e2e8f0 50%, transparent 51%) 0 0/60px 60px,
+    linear-gradient(0deg, transparent 49%, #e2e8f0 50%, transparent 51%) 0 0/60px 60px, #f8fafc; }
+  .map .ctl { position: absolute; right: 8px; top: 8px; display: flex; flex-direction: column; gap: 4px; }
+  .map .ctl span { width: 26px; height: 26px; border: 1px solid #cbd5e1; background: #fff; border-radius: 4px; display: grid; place-items: center; font-size: 13px; }
+  .map .fit { position: absolute; left: 8px; bottom: 8px; }
+  .pin { position: absolute; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; }
+  .pin i { width: 18px; height: 18px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: var(--blue); border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.4); }
+  .pin b { background: #fff; border: 1px solid var(--blue); color: var(--blue); border-radius: 10px; padding: 0 6px; font-size: 11px; margin-bottom: 2px; }
+  .pin.sel i { background: #1d4ed8; outline: 3px solid rgba(37,99,235,.35); }
+  .pin.ghost i { background: #fff; border-color: #94a3b8; } .pin.ghost b { color: #94a3b8; border-color: #94a3b8; border-style: dashed; }
+
+  table.marks { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+  .marks th, .marks td { border: 1px solid var(--line); padding: 6px 8px; vertical-align: middle; text-align: left; }
+  .marks th { background: #f9fafb; font-weight: 600; font-size: 12px; color: #374151; }
+  .marks th small { display: block; font-weight: 400; color: var(--muted); }
+  .marks tr.sel td { background: #eff6ff; box-shadow: inset 3px 0 0 var(--blue); }
+  .marks tr.doubt td:first-child { box-shadow: inset 3px 0 0 var(--amber); }
+  .tag { display: inline-block; border-radius: 999px; padding: 1px 8px; font-size: 11px; }
+  .tag.ok { background: #dcfce7; color: #166534; } .tag.warn { background: var(--amber-bg); color: var(--amber); } .tag.none { background: #f3f4f6; color: var(--muted); }
+  .marks input[type=text] { width: 100%; border: 1px solid #d1d5db; border-radius: 4px; padding: 4px 6px; font: inherit; }
+  .marks input.doubt { border-color: #f59e0b; background: #fffbeb; }
+  .lbl { font-weight: 700; font-size: 14px; }
+  .act { white-space: nowrap; font-size: 12px; }
+  .act a { color: var(--blue); margin-right: 8px; text-decoration: none; }
+  .act a.del { color: #9ca3af; }
+  .add { font-size: 13px; color: var(--blue); margin: 8px 0 18px; display: inline-block; }
+  .card { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin: 10px 0; background: #f9fafb; }
+  .card .q { font-weight: 500; margin-bottom: 6px; }
+  .card.doubt { border-left: 4px solid #f59e0b; background: #fffbeb; }
+  .card.doubt .why { color: var(--amber); font-size: 11px; margin-bottom: 4px; }
+  .rank { display: flex; gap: 6px; flex-wrap: wrap; } .rank span { background: #fff; border: 1px solid #d1d5db; border-radius: 6px; padding: 4px 10px; font-size: 13px; }
+  .online { color: var(--amber); font-size: 12px; }
+  .nav { display: flex; justify-content: space-between; margin-top: 18px; }
+  .nav .b { border-radius: 6px; padding: 8px 22px; font-weight: 500; }
+  .nav .back { border: 1px solid var(--blue); color: var(--blue); } .nav .next { background: var(--blue); color: #fff; }
+  .notes { max-width: 1100px; margin: 24px auto; padding: 0 16px 40px; font-size: 13px; }
+  .notes h4 { margin: 16px 0 4px; } .notes li { margin: 4px 0; }
+</style>
+</head>
+<body>
+
+<div class="head">
+  <div class="where"><a href="#" style="color:#4b5563;text-decoration:none">← Paper responses</a> <b>Copy 161 · MS-4 · en</b> <span style="color:var(--amber);font-weight:600">1 field to check</span></div>
+  <div class="pages">
+    <span class="step ok">1</span><span class="step cur">2</span><span class="step miss">3</span><span class="step miss">4</span><span class="step miss">5</span>
+    <span class="legend">✓ read · ! to check · ∅ no photo</span>
+  </div>
+  <div class="tools"><span class="btn">−</span><span class="btn">+</span><span class="btn">⟳</span><a class="stop" href="#">Stop</a></div>
+</div>
+
+<div class="cols">
+  <!-- LEFT: the photo -->
+  <div class="photo">
+    <div class="paper">
+      <span class="sq tl"></span><span class="sq tr"></span><span class="sq bl"></span><span class="sq br"></span>
+      <h3>Points: places</h3>
+      <div class="pmap">
+        <span class="pmark"></span><b>A1</b>
+        <span class="pmark2"></span><b>A2</b>
+        <div class="frame-box" style="left:27%;top:26%;width:18%;height:22%"></div>
+      </div>
+      <div class="pleg"><b>A</b> ● <b>Where do you like to sit?</b> — draw a dot and write the letter A next to it (up to 3)</div>
+      <table class="ptab">
+        <tr><th style="width:20%">Mark</th><th>Why here?</th><th>How often? <span style="font-weight:400">☐ daily ☐ weekly ☐ rarely</span></th></tr>
+        <tr><td>A1</td><td class="hand">shade, quiet</td><td class="hand">☑ weekly</td></tr>
+        <tr><td>A2</td><td class="hand">near the fountain</td><td class="hand">☐</td></tr>
+        <tr><td>A3</td><td></td><td></td></tr>
+      </table>
+      <h3 style="margin-top:14px">About you</h3>
+      <div style="font-size:12px"><b>Rank what matters most (1 = most)</b><br>
+        <span class="hand">2</span> Benches &nbsp; <span class="hand">1</span> Lighting &nbsp; <span class="hand">4</span> Toilets &nbsp; <span class="hand">3</span> Trees</div>
+      <div style="font-size:12px;margin-top:8px"><b>Anything else you want to tell us?</b><br><span class="hand">More benches please</span></div>
+      <div style="position:absolute;bottom:9%;left:12%;font-size:10px">MS-4 · #161 · Page 2 of 10</div>
+    </div>
+  </div>
+
+  <!-- RIGHT: the same page, live -->
+  <div class="panel">
+    <h2>Points: places</h2>
+    <p class="note">The map is the printed frame. Marks were read off the photo; drag a pin to move it, click a row to find its mark on the photo.</p>
+    <div class="map">
+      <div class="pin sel" style="left:32%;top:40%"><b>A1</b><i></i></div>
+      <div class="pin" style="left:63%;top:64%"><b>A2</b><i></i></div>
+      <div class="ctl"><span>+</span><span>−</span></div>
+      <span class="btn fit">⤢ Printed frame</span>
+    </div>
+
+    <table class="marks">
+      <tr>
+        <th style="width:60px">Mark</th>
+        <th style="width:110px">On the map</th>
+        <th>Why here? <small>text</small></th>
+        <th style="width:150px">How often? <small>daily · weekly · rarely</small></th>
+        <th style="width:90px"></th>
+      </tr>
+      <tr class="sel">
+        <td class="lbl">A1</td>
+        <td><span class="tag ok">placed</span></td>
+        <td><input type="text" value="shade, quiet"></td>
+        <td><select style="width:100%;font:inherit;padding:3px"><option>—</option><option>daily</option><option selected>weekly</option><option>rarely</option></select></td>
+        <td class="act"><a href="#">Show</a><a href="#" class="del">✕</a></td>
+      </tr>
+      <tr class="doubt">
+        <td class="lbl">A2</td>
+        <td><span class="tag ok">placed</span></td>
+        <td><input type="text" class="doubt" value="near the fountain"></td>
+        <td><select style="width:100%;font:inherit;padding:3px"><option selected>—</option><option>daily</option><option>weekly</option><option>rarely</option></select></td>
+        <td class="act"><a href="#">Show</a><a href="#" class="del">✕</a></td>
+      </tr>
+      <tr>
+        <td class="lbl" style="color:#9ca3af">A3</td>
+        <td><span class="tag none">no mark</span></td>
+        <td colspan="2" style="color:#9ca3af;font-size:12px">Row is empty on the paper. If a mark was missed: <a href="#" style="color:var(--blue)">place it on the map</a></td>
+        <td></td>
+      </tr>
+    </table>
+    <a class="add" href="#">+ Add a mark the reader missed</a>
+
+    <h2 style="margin-top:6px">About you</h2>
+    <div class="card doubt">
+      <div class="why">Check this against the photo</div>
+      <div class="q">Rank what matters most (1 = most)</div>
+      <div class="rank"><span>1 Lighting</span><span>2 Benches</span><span>3 Trees</span><span>4 Toilets</span></div>
+    </div>
+    <div class="card"><div class="q">Anything else you want to tell us?</div><input type="text" style="width:100%;border:1px solid #d1d5db;border-radius:6px;padding:8px;font:inherit" value="More benches please"></div>
+    <div class="card"><div class="q">A photo of your favourite spot</div><span class="online">Online only — nothing on paper</span></div>
+
+    <div class="nav"><span class="b back">Back</span><span class="b next">Next</span></div>
+  </div>
+</div>
+
+<div class="notes">
+  <h4>What changes against today</h4>
+  <ul>
+    <li><b>Half and half.</b> Photo left, page right, like every other page; no 420-px respondent panel, no hidden map behind the photo, no Map toggle.</li>
+    <li><b>The right side reads like the paper.</b> Map in the printed frame (one button returns to it), then the marks table with the same rows (A1…An) and the same columns as the printed table, then the page's other questions. The operator's eye goes photo → screen row by row.</li>
+    <li><b>Marks are rows.</b> Each row is one mark: label, <i>placed</i> / <i>no mark</i>, the sub-answers as inputs, Show (photo scrolls to the mark and outlines it — the form-leads rule), ✕. A row the reader doubted is amber. A row the paper left empty is grey and offers "place it on the map" for a mark the reader missed; "+ Add a mark" does the same beyond the printed rows.</li>
+    <li><b>Drag a pin</b> to correct a place; its row stays selected. Clicking a pin selects its row. The pop-up with sub-questions is not used here — the table is the pop-up.</li>
+    <li><b>Lines and areas</b> are rows too: the shape is drawn on the map, its vertices draggable; the row's "On the map" says <i>line · 4 points</i> / <i>area</i>.</li>
+    <li><b>Saving</b> is the same section POST: features from the map + the row inputs become the features' properties. Nothing new in storage.</li>
+    <li><b>Old flow stays for typing.</b> The operator entry form without photos (item 1) keeps the respondent panel and its pop-ups; this layout is only the photo check.</li>
+  </ul>
+</div>
+</body>
+</html>

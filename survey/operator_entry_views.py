@@ -205,21 +205,17 @@ def _sheet_context(survey, session, section, questions):
     sheet = session.paper_sheet
     if sheet is None:
         return {}, {}
-    from .paper.review import page_for_section, sheet_prefill
+    from .paper.review import page_for_section, pane_pages_json, sheet_prefill
     initial, doubtful, blank = sheet_prefill(sheet, questions)
     page, pages = page_for_section(sheet, section)
-    batch_url = reverse('paper_batch', args=[survey.uuid, sheet.batch_id])
     pane = {
         'paper_sheet': sheet,
         'paper_page': page,
-        'paper_pages': [{
-            'id': p.pk, 'number': p.page_number,
-            'url': reverse('paper_page_image', args=[survey.uuid, sheet.batch_id, p.pk]),
-        } for p in pages],
+        'paper_pages_json': pane_pages_json(survey, pages),
         'paper_doubtful': doubtful,
         'paper_blank': blank,
         'paper_review': True,
-        'entry_cancel_url': batch_url,
+        'entry_cancel_url': reverse('paper_response', args=[survey.uuid, sheet.pk]),
     }
     return initial, pane
 
@@ -339,16 +335,21 @@ def entry_saved(request, survey_uuid, session_id):
     }
     sheet = session.paper_sheet
     if sheet is not None:
-        # A sheet reviewed from photos (change paper-photo-entry): mark it entered, drop
-        # its images, and offer the batch's next sheet instead of the header.
+        # A paper response checked from photos (change paper-photo-entry): mark it
+        # stored, drop its images, and offer the next one to check instead of the header.
         _finish_sheet(request, sheet, session)
         from .paper.sheets import next_reviewable
-        following = next_reviewable(sheet.batch, after=sheet) or next_reviewable(sheet.batch)
+        from .paper.sheets import active_pages
+        following = next_reviewable(sheet.batch, after=sheet)
+        to_check = sum(1 for s in sheet.batch.sheets.filter(status__in=('review', 'incomplete')).exclude(pk=sheet.pk)
+                       if active_pages(s).filter(status='recognised').exists())
         ctx.update({
             'paper_sheet': sheet,
-            'batch_url': reverse('paper_batch', args=[survey.uuid, sheet.batch_id]),
-            'next_sheet_url': (reverse('paper_sheet_enter', args=[survey.uuid, sheet.batch_id, following.pk])
-                               if following else ''),
+            'paper_home_url': reverse('paper_home', args=[survey.uuid]),
+            'paper_left': to_check,
+            'paper_reading': sheet.batch.sheets.filter(status='recognising').count(),
+            'next_sheet': following,
+            'next_sheet_url': reverse('paper_response', args=[survey.uuid, following.pk]) if following else '',
         })
     else:
         next_query = urlencode({

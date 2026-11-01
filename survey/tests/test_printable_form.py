@@ -357,13 +357,30 @@ class FormContentTest(_FormFixture):
         """
         GIVEN HOW shown only when ALB = Yes, a write-in option and a photo question
         WHEN the form is built
-        THEN the condition, the write-in line and "Online only" are on the form
+        THEN the condition and the write-in line are on the form, and the photo question is not printed at all
         """
         _reader, text = _pdf_text(self.build().pdf)
         self.assertIn('Answer only if Albino? = Yes', text)
         self.assertIn('Other:', text)
-        self.assertIn('Online only', text)
+        self.assertNotIn('Online only', text)
         self.assertIn('Choose one', text)
+
+    def test_keep_together_is_its_own_form_and_moves_the_map_whole(self):
+        """
+        GIVEN the same survey printed with and without "keep each map with its tables on one page"
+        WHEN both are built
+        THEN they are two PrintedForm rows, and with keep the map section's heading and frame are on the
+             same page as its sub-question table (no page starts with a continuation of that table)
+        """
+        from survey.print.pdf import build_form
+        loose = build_form(self.survey, 'en', 'a4', base_url='https://example.test')
+        kept = build_form(self.survey, 'en', 'a4', base_url='https://example.test', keep=True)
+        self.assertNotEqual(loose.form.pk, kept.form.pk)
+        map_pages = [int(n) for n, rec in kept.form.layout.items() if 'map' in rec]
+        self.assertTrue(map_pages)
+        for n in map_pages:
+            rec = kept.form.layout[str(n)]
+            self.assertIn('section:' + rec['map']['section_code'], rec['items'])
 
     def test_unknown_type_fails_open(self):
         """
@@ -429,8 +446,7 @@ class FormContentTest(_FormFixture):
         code = result.form.code
         for n in range(1, len(reader.pages) + 1):
             page_text = reader.pages[n - 1].extract_text()
-            self.assertIn(f'MS-{code}-{n}', page_text)
-            self.assertIn(f'Page {n} of {len(reader.pages)}', page_text)
+            self.assertIn(f'MS-{code} · Page {n} of {len(reader.pages)}', page_text)
         self.assertIn('Office use', text)
         self.assertNotIn(str(self.survey.uuid), text)
         link = TrackedLink.objects.get(survey=self.survey, utm_source='paper')
@@ -492,7 +508,8 @@ class PrintViewTest(_FormFixture):
         """
         GIVEN an owner of the survey
         WHEN they download the form in de on A4
-        THEN the response is an attached PDF and form_printed carries the five properties
+        THEN the response is an attached PDF and form_printed carries the six properties
+             (one copy without numbers: copies 0)
         """
         with override_settings(MAPBOX_ACCESS_TOKEN='', MAPBOX_SERVER_TOKEN=''), mock.patch('survey.print.views.pe.emit') as emit:
             response = self.client.get(self.url, {'lang': 'de', 'paper': 'a4'})
@@ -503,8 +520,44 @@ class PrintViewTest(_FormFixture):
         self.assertTrue(response.content.startswith(b'%PDF'))
         event, _user, props = emit.call_args.args
         self.assertEqual(event, 'form_printed')
-        self.assertEqual(set(props), {'survey_id', 'paper', 'language', 'pages', 'map_pages'})
-        self.assertEqual((props['paper'], props['language']), ('a4', 'de'))
+        self.assertEqual(set(props), {'survey_id', 'paper', 'language', 'pages', 'map_pages', 'copies', 'keep_together'})
+        self.assertEqual((props['paper'], props['language'], props['copies']), ('a4', 'de', 0))
+
+    def test_numbered_copies_continue_the_survey_numbering(self):
+        """
+        GIVEN a survey printed in 3 numbered copies, then 2 more in another language
+        WHEN the PDFs are read back
+        THEN the first holds copies #1-#3 and the second #4-#5 (numbering per survey, never reused),
+             each page carries its copy number, and both QR corners decode to the copy locally
+        """
+        import pypdfium2 as pdfium
+        from survey.models import PrintRun
+        from survey.paper.codes import decode
+        with override_settings(MAPBOX_ACCESS_TOKEN=''):
+            first = self.client.get(self.url, {'lang': 'en', 'paper': 'a4', 'mode': 'copies', 'copies': 3})
+            second = self.client.get(self.url, {'lang': 'de', 'paper': 'a4', 'mode': 'copies', 'copies': 2})
+        self.assertEqual(first.status_code, 200)
+        self.assertIn('copies-1-3', first['Content-Disposition'])
+        self.assertIn('copies-4-5', second['Content-Disposition'])
+        self.assertEqual(list(PrintRun.objects.order_by('first_copy').values_list('first_copy', 'last_copy')),
+                         [(1, 3), (4, 5)])
+        reader, text = _pdf_text(second.content)
+        pages = len(reader.pages) // 2
+        self.assertIn(' · #5 · ', reader.pages[pages].extract_text())
+        doc = pdfium.PdfDocument(second.content)
+        code = decode(doc[pages].render(scale=200 / 72).to_pil())
+        self.assertEqual((code.copy, code.page, code.pages), (5, 1, pages))
+
+    def test_copies_bounds(self):
+        """
+        GIVEN a request for 0 or 201 copies, or an unknown mode
+        WHEN the form is requested
+        THEN the response is 400 and no copy numbers are spent
+        """
+        from survey.models import PrintRun
+        for params in ({'mode': 'copies', 'copies': 0}, {'mode': 'copies', 'copies': 201}, {'mode': 'stack'}):
+            self.assertEqual(self.client.get(self.url, dict(lang='en', paper='a4', **params)).status_code, 400)
+        self.assertFalse(PrintRun.objects.exists())
 
     def test_bad_language_and_paper(self):
         """

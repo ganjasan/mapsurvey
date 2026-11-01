@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "d35179b436be22d7ec8439cce6af47540eae89161b842b68e2aed63fcfd2cb0c"
+            "sha256": "4f28d76af00156ac517976272db610cfc8b431ade18b88ab64aca48041b04bf4"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -75,20 +75,20 @@
         },
         "boto3": {
             "hashes": [
-                "sha256:0599bdde7d0c03d914d9247b0a328ea48c15b0b3b5fb31a153857fa5bc7a4fd3",
-                "sha256:fc41ea80507416c30a3f7bdea3682124551ec0c36405c0d8149efaf65d9628e7"
+                "sha256:055fabb990c5d2f31fce4ca569255bd640cdd11a3ca68c9ecad35f4f8a5b83b5",
+                "sha256:d18d66e1e13faa0c25d0b1b8c5ce946e29fb5fc0b6456b655a93a678ff4cc313"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.10'",
-            "version": "==1.43.121"
+            "version": "==1.43.123"
         },
         "botocore": {
             "hashes": [
-                "sha256:39bfd17e69f3370350e6aac2072df64045d002f9878e09115e85b87c772bd473",
-                "sha256:69eb571c74ff140cc3a716aed3bc25d09eb7b12de4ea2f990c03785a634f9dcf"
+                "sha256:80948cb9b1cdf1a1a25809089a42e3a1bc4af0258d198222db6e97dcc660dd0c",
+                "sha256:e30580f9c1282c321529238ff8ff75066096a2adbd0a293c8ae592c21d1733a3"
             ],
             "markers": "python_version >= '3.10'",
-            "version": "==1.43.121"
+            "version": "==1.43.123"
         },
         "celery": {
             "extras": [
@@ -612,11 +612,11 @@
         },
         "google-api-core": {
             "hashes": [
-                "sha256:490ae28b0a292e7bef30382824671ded0dd5c9fc52bbd3a44099972f82c47297",
-                "sha256:c2b7138ceb84c756a960fd1d579c4c261534b7f7ecaafbf644c03bc4171bc830"
+                "sha256:5a9d21baab97fd3c0547ccfc186a9e64f4227d8d7026f393835316400b29a6d4",
+                "sha256:5dfc5e9d52982bcc03bd6af380a893365b5fdf907dc527f63d3a372833c33329"
             ],
             "markers": "python_version >= '3.10'",
-            "version": "==2.43.1"
+            "version": "==2.43.2"
         },
         "google-api-python-client": {
             "hashes": [
@@ -961,11 +961,11 @@
         },
         "oauthlib": {
             "hashes": [
-                "sha256:624c28c13a0a59cabf9747dfa52af63be3e512a7f2714df16e91b5b3a145e6cd",
-                "sha256:efb274799819440f95b4ab3b818869f1ce9ae26c5beacba0201d1a1b76b54f86"
+                "sha256:3d73febdb6faa00f277c81fb04be7b7586fb96fc3b7f0b9c772dada69a25ede7",
+                "sha256:498a298876e996301950a5b053d12c31628bb7b895db03666430c69ce182eb61"
             ],
             "markers": "python_version >= '3.9'",
-            "version": "==4.0.0"
+            "version": "==4.0.1"
         },
         "openpyxl": {
             "hashes": [
@@ -978,11 +978,11 @@
         },
         "opentelemetry-api": {
             "hashes": [
-                "sha256:aa38ed19bcc084ba42782a73255b3582283eced7ad6dddbd6695189e69adfb75",
-                "sha256:b31553efa588ae44bc306f863c785c5333a9ecc091248c6ee68b4b6c87fdedfb"
+                "sha256:2cbd737377e710ee740d261c94e93fa0f08e6d037c18f17513cc0a2d94479a34",
+                "sha256:d7b0008e21e5fd61cbe7a7f34ca3b6905a78ab677d9bc395e299359c75cda6b4"
             ],
             "markers": "python_version >= '3.10'",
-            "version": "==1.45.1"
+            "version": "==1.45.2"
         },
         "packaging": {
             "hashes": [
@@ -1544,6 +1544,15 @@
             "markers": "python_version >= '3.9'",
             "version": "==3.3.3"
         },
+        "pypdf": {
+            "hashes": [
+                "sha256:33e4fb41ca352810eb4e9838aa0d82d6888a5f8bf682f43e99cce5faa666255c",
+                "sha256:c8817e3f888d47a087872ded69812c1ef30cacb871d6e053e0c00bbaf0bc2163"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.9'",
+            "version": "==6.21.4"
+        },
         "pypdfium2": {
             "hashes": [
                 "sha256:0dfa61421b5eb68e1188b0b2231e7ba35735aef2d867d86e48ee6cab6975195e",
@@ -1924,15 +1933,6 @@
             ],
             "markers": "python_version >= '3.9'",
             "version": "==2.21.0"
-        },
-        "pypdf": {
-            "hashes": [
-                "sha256:33e4fb41ca352810eb4e9838aa0d82d6888a5f8bf682f43e99cce5faa666255c",
-                "sha256:c8817e3f888d47a087872ded69812c1ef30cacb871d6e053e0c00bbaf0bc2163"
-            ],
-            "index": "pypi",
-            "markers": "python_version >= '3.9'",
-            "version": "==6.21.4"
         },
         "pytest": {
             "hashes": [

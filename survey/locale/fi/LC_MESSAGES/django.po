@@ -9699,14 +9699,6 @@ msgstr "Muokkaa kartalla"
 msgid "Save and return to Responses"
 msgstr "Tallenna ja palaa vastauksiin"
 #: survey/paper_views.py
-msgid "This batch is closed."
-msgstr "Tämä erä on suljettu."
-
-#: survey/paper_views.py
-msgid "This batch is full. Start a new one."
-msgstr "Tämä erä on täynnä. Aloita uusi."
-
-#: survey/paper_views.py
 msgid "No file."
 msgstr "Ei tiedostoa."
 
@@ -9714,10 +9706,6 @@ msgstr "Ei tiedostoa."
 #, python-format
 msgid "This file is larger than %(mb)s MB."
 msgstr "Tämä tiedosto on suurempi kuin %(mb)s Mt."
-
-#: survey/paper_views.py
-msgid "Pick a printed form and a page number."
-msgstr "Valitse tulostettu lomake ja sivunumero."
 
 #: survey/templates/editor/analytics_dashboard_v2.html
 msgid "More ways to enter"
@@ -9727,23 +9715,9 @@ msgstr "Muita tapoja syöttää"
 msgid "Type in a response"
 msgstr "Kirjoita vastaus"
 
-#: survey/templates/editor/analytics_dashboard_v2.html
-msgid "From photos"
-msgstr "Valokuvista"
-
-#: survey/templates/editor/operator_entry/_entry_bar.html
-#, python-format
-msgid "sheet %(n)s"
-msgstr "lomake %(n)s"
-
 #: survey/templates/editor/operator_entry/_entry_bar.html
 msgid "{count} fields to check"
 msgstr "{count} kenttää tarkistettavana"
-
-#: survey/templates/editor/operator_entry/_paper_pane.html
-#, python-format
-msgid "Sheet %(n)s"
-msgstr "Lomake %(n)s"
 
 #: survey/templates/editor/operator_entry/_paper_pane.html
 msgid "Pages"
@@ -9769,59 +9743,13 @@ msgstr "Näytä kartta"
 msgid "Photographed page"
 msgstr "Valokuvattu sivu"
 
-#: survey/templates/editor/operator_entry/_paper_pane.html
-msgid "The photos of this sheet are gone."
-msgstr "Tämän lomakkeen valokuvat on poistettu."
-
 #: survey/templates/editor/operator_entry/header.html
 msgid "Have photos or scans of filled paper forms? Read them from photos instead."
 msgstr "Onko sinulla valokuvia tai skannauksia täytetyistä paperilomakkeista? Lue ne valokuvista."
 
-#: survey/templates/editor/operator_entry/saved.html
-#, python-format
-msgid "Sheet %(n)s is entered; its photos have been deleted."
-msgstr "Lomake %(n)s on syötetty; sen valokuvat on poistettu."
-
-#: survey/templates/editor/operator_entry/saved.html
-msgid "Back to the batch"
-msgstr "Takaisin erään"
-
-#: survey/templates/editor/operator_entry/saved.html
-msgid "Next sheet"
-msgstr "Seuraava lomake"
-
-#: survey/templates/editor/operator_entry/saved.html
-msgid "No more sheets to review"
-msgstr "Ei enempää lomakkeita tarkistettavana"
-
-#: survey/templates/editor/paper/_sheet_list.html
-msgid "to review"
-msgstr "tarkistettavana"
-
-#: survey/templates/editor/paper/_sheet_list.html
-msgid "entered"
-msgstr "syötetty"
-
-#: survey/templates/editor/paper/_sheet_list.html
-msgid "skipped"
-msgstr "ohitettu"
-
-#: survey/templates/editor/paper/_sheet_list.html
-msgid "not recognised"
-msgstr "ei tunnistettu"
-
-#: survey/templates/editor/paper/_sheet_list.html
-msgid "failed"
-msgstr "epäonnistui"
-
 #: survey/templates/editor/paper/_sheet_list.html
 msgid "reading…"
 msgstr "luetaan…"
-
-#: survey/templates/editor/paper/_sheet_list.html
-#, python-format
-msgid "Review sheet %(n)s"
-msgstr "Tarkista lomake %(n)s"
 
 #: survey/templates/editor/paper/_sheet_list.html
 #, python-format
@@ -9834,71 +9762,12 @@ msgid "Splitting “%(name)s” into pages…"
 msgstr "Jaetaan ”%(name)s” sivuiksi…"
 
 #: survey/templates/editor/paper/_sheet_list.html
-#, python-format
-msgid "page %(pages)s not uploaded"
-msgstr "sivua %(pages)s ei ladattu"
-
-#: survey/templates/editor/paper/_sheet_list.html
-#, python-format
-msgid "page %(pages)s twice — duplicate?"
-msgstr "sivu %(pages)s kahdesti — kaksoiskappale?"
-
-#: survey/templates/editor/paper/_sheet_list.html
-msgid "incomplete"
-msgstr "puutteellinen"
-
-#: survey/templates/editor/paper/_sheet_list.html
-msgid "Review"
-msgstr "Tarkista"
-
-#: survey/templates/editor/paper/_sheet_list.html
-msgid "Skip this sheet? Its photos will be deleted."
-msgstr "Ohitetaanko tämä lomake? Sen valokuvat poistetaan."
-
-#: survey/templates/editor/paper/_sheet_list.html
-msgid "Skip"
-msgstr "Ohita"
-
-#: survey/templates/editor/paper/_sheet_list.html
 msgid "Remove this page"
 msgstr "Poista tämä sivu"
 
 #: survey/templates/editor/paper/_sheet_list.html
-msgid "Remove this page from the batch?"
-msgstr "Poistetaanko tämä sivu erästä?"
-
-#: survey/templates/editor/paper/_sheet_list.html
-msgid "Drag a page here to start a new sheet"
-msgstr "Vedä sivu tähän aloittaaksesi uuden lomakkeen"
-
-#: survey/templates/editor/paper/_sheet_list.html
-msgid "Not recognised"
-msgstr "Ei tunnistettu"
-
-#: survey/templates/editor/paper/_sheet_list.html
-msgid "No form code could be read on these pages, or the code belongs to another survey. Tell us which printed form and page each one is, or remove it."
-msgstr "Näiltä sivuilta ei voitu lukea lomakekoodia, tai koodi kuuluu toiseen kyselyyn. Kerro, mikä tulostettu lomake ja sivu kukin on, tai poista se."
-
-#: survey/templates/editor/paper/_sheet_list.html
-msgid "pages"
-msgstr "sivua"
-
-#: survey/templates/editor/paper/_sheet_list.html
 msgid "Page number"
 msgstr "Sivunumero"
-
-#: survey/templates/editor/paper/_sheet_list.html
-msgid "Assign"
-msgstr "Määritä"
-
-#: survey/templates/editor/paper/_sheet_list.html
-msgid "Nothing here yet — drop the first photos above."
-msgstr "Täällä ei ole vielä mitään — pudota ensimmäiset valokuvat yllä."
-
-#: survey/templates/editor/paper/batch.html
-#, python-format
-msgid "Batch #%(n)s"
-msgstr "Erä nro %(n)s"
 
 #: survey/templates/editor/paper/batch.html
 msgid "Too large"
@@ -9913,77 +9782,12 @@ msgid "Uploaded"
 msgstr "Ladattu"
 
 #: survey/templates/editor/paper/batch.html
-msgid "Paper forms from photos"
-msgstr "Paperilomakkeet valokuvista"
-
-#: survey/templates/editor/paper/batch.html
-msgid "closed"
-msgstr "suljettu"
-
-#: survey/templates/editor/paper/batch.html
-msgid "Close this batch? Photos of sheets not yet entered will be deleted."
-msgstr "Suljetaanko tämä erä? Syöttämättömien lomakkeiden valokuvat poistetaan."
-
-#: survey/templates/editor/paper/batch.html
-msgid "Close batch"
-msgstr "Sulje erä"
-
-#: survey/templates/editor/paper/batch.html
-msgid "Drop photos, scans or a PDF here"
-msgstr "Pudota valokuvat, skannaukset tai PDF tähän"
-
-#: survey/templates/editor/paper/batch.html
 msgid "or"
 msgstr "tai"
 
 #: survey/templates/editor/paper/batch.html
 msgid "choose files"
 msgstr "valitse tiedostot"
-
-#: survey/templates/editor/paper/batch.html
-msgid "Photograph the whole page, flat, with all four corner marks in the picture. Add more files at any time; sheets are read in the order they arrive."
-msgstr "Kuvaa koko sivu tasaisena niin, että kaikki neljä kulmamerkkiä näkyvät. Lisää tiedostoja milloin vain; lomakkeet luetaan saapumisjärjestyksessä."
-
-#: survey/templates/editor/paper/batches.html
-msgid "Photograph or scan the filled sheets, drop the files here, and review what was read beside the picture. Each sheet is stored as a paper response."
-msgstr "Valokuvaa tai skannaa täytetyt lomakkeet, pudota tiedostot tähän ja tarkista luettu kuvan vierestä. Jokainen lomake tallennetaan paperivastauksena."
-
-#: survey/templates/editor/paper/batches.html
-msgid "New batch"
-msgstr "Uusi erä"
-
-#: survey/templates/editor/paper/batches.html
-msgid "Type in a response instead"
-msgstr "Kirjoita vastaus sen sijaan"
-
-#: survey/templates/editor/paper/batches.html
-msgid "Batch"
-msgstr "Erä"
-
-#: survey/templates/editor/paper/batches.html
-msgid "By"
-msgstr "Tekijä"
-
-#: survey/templates/editor/paper/batches.html
-msgid "To review"
-msgstr "Tarkistettavana"
-
-#: survey/templates/editor/paper/batches.html
-msgid "Entered"
-msgstr "Syötetty"
-
-#: survey/templates/editor/paper/batches.html
-msgid "No batches yet. Start one and drop the photos in."
-msgstr "Ei vielä eriä. Aloita yksi ja pudota valokuvat siihen."
-
-#: survey/templates/editor/paper/batches.html
-msgid "Photos are kept until the sheet is entered or skipped, and at most 30 days. The page image is sent to the AI provider for the duration of the reading."
-msgstr "Valokuvat säilytetään, kunnes lomake on syötetty tai ohitettu, enintään 30 päivää. Sivun kuva lähetetään tekoälypalvelulle lukemisen ajaksi."
-
-#: survey/templates/editor/partials/analytics_session_detail.html
-#, python-format
-msgid "Sheet %(n)s of batch %(m)s"
-msgstr "Lomake %(n)s erästä %(m)s"
 
 #: survey/templates/partials/survey_section_partial.html
 msgid "Check this against the photo"
@@ -10002,3 +9806,409 @@ msgid "%(n)s field to check"
 msgid_plural "%(n)s fields to check"
 msgstr[0] "%(n)s kenttä tarkistettavana"
 msgstr[1] "%(n)s kenttää tarkistettavana"
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "Nothing to type on this page — it holds the map and its marks. Press Next."
+msgstr "Tällä sivulla ei ole kirjoitettavaa — siinä on kartta ja sen merkinnät. Paina Seuraava."
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Uploading…"
+msgstr "Ladataan…"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Reading the page…"
+msgstr "Luetaan sivua…"
+
+#: survey/paper/sheets.py
+#, python-format
+msgid "This photo is %(copy)s, page %(page)s — it went there."
+msgstr "Tämä kuva on %(copy)s, sivu %(page)s — se siirtyi sinne."
+
+#: survey/paper/sheets.py
+msgid "This form has no copy numbers: add this photo to a response, or upload one PDF per filled form."
+msgstr "Tässä lomakkeessa ei ole kappalenumeroita: lisää kuva vastaukseen tai lataa yksi PDF täytettyä lomaketta kohden."
+
+#: survey/paper/sheets.py
+#, python-format
+msgid "%(copy)s is already stored — this photo was not used."
+msgstr "%(copy)s on jo tallennettu — tätä kuvaa ei käytetty."
+
+#: survey/paper/sheets.py
+#, python-format
+msgid "This page is from another printed form than %(copy)s."
+msgstr "Tämä sivu on eri tulostetusta lomakkeesta kuin %(copy)s."
+
+#: survey/paper_views.py
+msgid "This response is not open."
+msgstr "Tämä vastaus ei ole auki."
+
+#: survey/paper_views.py
+msgid "Pick a response and a page number."
+msgstr "Valitse vastaus ja sivunumero."
+
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "From photos of paper forms"
+msgstr "Paperilomakkeiden kuvista"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+#, python-format
+msgid "Page %(n)s of %(label)s was not photographed."
+msgstr "%(label)s: sivua %(n)s ei kuvattu."
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Attach it: it will be read and the fields beside it will fill in."
+msgstr "Liitä se: se luetaan ja viereiset kentät täyttyvät."
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "No page at hand? Type the answers beside it, or press Next to leave them blank."
+msgstr "Eikö sivua ole käsillä? Kirjoita vastaukset viereen tai paina Seuraava jättääksesi ne tyhjiksi."
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "The photos of this response are gone."
+msgstr "Tämän vastauksen kuvat on poistettu."
+
+#: survey/templates/editor/operator_entry/saved.html
+#, python-format
+msgid "%(label)s stored"
+msgstr "%(label)s tallennettu"
+
+#: survey/templates/editor/operator_entry/saved.html
+msgid "It is on the Responses page with the source “Paper form” and your name. Its photos have been deleted."
+msgstr "Se on Vastaukset-sivulla lähteenä ”Paperilomake” ja sinun nimelläsi. Sen kuvat on poistettu."
+
+#: survey/templates/editor/operator_entry/saved.html
+msgid "Paper responses"
+msgstr "Paperivastaukset"
+
+#: survey/templates/editor/operator_entry/saved.html
+#, python-format
+msgid "Check %(label)s"
+msgstr "Tarkista %(label)s"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "in progress"
+msgstr "kesken"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "to check"
+msgstr "tarkistettavana"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "stored"
+msgstr "tallennettu"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "set aside"
+msgstr "sivuun siirretty"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "empty"
+msgstr "tyhjä"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "all pages"
+msgstr "kaikki sivut"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "Add photos"
+msgstr "Lisää kuvia"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "Nothing in progress. Start with New response, or drop a stack above."
+msgstr "Mitään ei ole kesken. Aloita Uusi vastaus -painikkeella tai pudota pino yllä."
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "Set aside"
+msgstr "Sivuun siirretyt"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "No code could be read on this page."
+msgstr "Tältä sivulta ei voitu lukea koodia."
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "Attach"
+msgstr "Liitä"
+
+#: survey/templates/editor/paper/_home_list.html
+#, python-format
+msgid "Suggested: %(label)s is the only response missing a page (page %(n)s)."
+msgstr "Ehdotus: %(label)s on ainoa vastaus, josta puuttuu sivu (sivu %(n)s)."
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "Stored"
+msgstr "Tallennetut"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "on the Responses page with the source “Paper form”"
+msgstr "Vastaukset-sivulla lähteenä ”Paperilomake”"
+
+#: survey/templates/editor/paper/_response_slots.html
+#, python-format
+msgid "%(have)s pages"
+msgstr "%(have)s sivua"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "not photographed"
+msgstr "kuvaamatta"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "No page yet. Drop this form's photos or PDF above; the slots appear as the pages are read."
+msgstr "Ei vielä sivuja. Pudota tämän lomakkeen kuvat tai PDF yllä; paikat ilmestyvät, kun sivut luetaan."
+
+#: survey/templates/editor/paper/_response_slots.html
+#, python-format
+msgid "“%(name)s”"
+msgstr "”%(name)s”"
+
+#: survey/templates/editor/paper/_response_slots.html
+#, python-format
+msgid "Open %(label)s"
+msgstr "Avaa %(label)s"
+
+#: survey/templates/editor/paper/_response_slots.html
+#, python-format
+msgid "An earlier photo of page %(n)s was replaced by a newer one."
+msgstr "Sivun %(n)s aiempi kuva korvattiin uudemmalla."
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "Use the earlier photo"
+msgstr "Käytä aiempaa kuvaa"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "Open on Responses"
+msgstr "Avaa Vastauksissa"
+
+#: survey/templates/editor/paper/home.html
+msgid "Photograph or scan the filled forms and check what was read beside the picture. Each one is stored as a paper response."
+msgstr "Valokuvaa tai skannaa täytetyt lomakkeet ja tarkista luettu kuvan vierestä. Jokainen tallennetaan paperivastauksena."
+
+#: survey/templates/editor/paper/home.html
+#, python-format
+msgid "Printed form MS-%(code)s"
+msgstr "Tulostettu lomake MS-%(code)s"
+
+#: survey/templates/editor/paper/home.html
+#, python-format
+msgid "%(back)s of %(n)s numbered copies back"
+msgstr "%(back)s / %(n)s numeroitua kappaletta palautettu"
+
+#: survey/templates/editor/paper/home.html
+msgid "printed without copy numbers"
+msgstr "tulostettu ilman kappalenumeroita"
+
+#: survey/templates/editor/paper/home.html
+msgid "Print more"
+msgstr "Tulosta lisää"
+
+#: survey/templates/editor/paper/home.html
+msgid "No paper form has been printed for this survey yet."
+msgstr "Tälle kyselylle ei ole vielä tulostettu paperilomaketta."
+
+#: survey/templates/editor/paper/home.html
+msgid "Print one on the Share page"
+msgstr "Tulosta se Jaa-sivulla"
+
+#: survey/templates/editor/paper/home.html
+msgid "New response"
+msgstr "Uusi vastaus"
+
+#: survey/templates/editor/paper/home.html
+msgid "One filled form: photograph or upload its pages into its own card, in any order."
+msgstr "Yksi täytetty lomake: kuvaa tai lataa sen sivut omaan korttiinsa, missä tahansa järjestyksessä."
+
+#: survey/templates/editor/paper/home.html
+msgid "Upload a stack"
+msgstr "Lataa pino"
+
+#: survey/templates/editor/paper/home.html
+msgid "drop photos, scans or PDFs here, or"
+msgstr "pudota kuvat, skannaukset tai PDF:t tähän tai"
+
+#: survey/templates/editor/paper/home.html
+msgid "Any order: each page finds its response by the copy number printed on it."
+msgstr "Mikä tahansa järjestys: jokainen sivu löytää vastauksensa siihen painetun kappalenumeron avulla."
+
+#: survey/templates/editor/paper/home.html
+msgid "This survey's form was printed without copy numbers: upload one PDF per filled form, or use New response and add its photos."
+msgstr "Tämän kyselyn lomake tulostettiin ilman kappalenumeroita: lataa yksi PDF täytettyä lomaketta kohden tai käytä Uusi vastaus -painiketta ja lisää kuvat."
+
+#: survey/templates/editor/paper/response.html
+msgid "Drop the photos or the PDF of this one form here"
+msgstr "Pudota tämän yhden lomakkeen kuvat tai PDF tähän"
+
+#: survey/templates/editor/paper/response.html
+msgid "One page per shot, in any order; tap again for the next page."
+msgstr "Yksi sivu kuvaa kohden, missä tahansa järjestyksessä; napauta uudelleen seuraavaa varten."
+
+#: survey/templates/editor/paper/response.html
+msgid "Any order: each page finds its slot by the code printed on it."
+msgstr "Mikä tahansa järjestys: jokainen sivu löytää paikkansa siihen painetun koodin avulla."
+
+#: survey/templates/editor/survey_share.html
+msgid "Copies"
+msgstr "Kappaleet"
+
+#: survey/templates/editor/survey_share.html
+msgid "Numbered copies"
+msgstr "Numeroidut kappaleet"
+
+#: survey/templates/editor/survey_share.html
+msgid "Number of copies"
+msgstr "Kappalemäärä"
+
+#: survey/templates/editor/survey_share.html
+msgid "One copy to photocopy"
+msgstr "Yksi kappale kopioitavaksi"
+
+#: survey/templates/editor/survey_share.html
+#, python-format
+msgid "%(n)s numbered copies printed so far; the next print starts at #%(next)s."
+msgstr "Tähän mennessä tulostettu %(n)s numeroitua kappaletta; seuraava tuloste alkaa numerosta #%(next)s."
+
+#: survey/templates/editor/survey_share.html
+msgid "Numbered copies carry their own number on every page, so photos and scans of them sort themselves in any order. A copy made on a photocopier repeats its number — print more copies instead. With one copy to photocopy, upload one PDF per filled form, or add photos to a response by hand."
+msgstr "Numeroiduissa kappaleissa on jokaisella sivulla oma numero, joten niiden kuvat ja skannaukset järjestyvät itsestään missä tahansa järjestyksessä. Kopiokoneella tehty kopio toistaa numeron — tulosta mieluummin lisää kappaleita. Yhden kopioitavan kappaleen kanssa lataa yksi PDF täytettyä lomaketta kohden tai lisää kuvat vastaukseen käsin."
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "✓ read · ! to check · ∅ no photo"
+msgstr "✓ luettu · ! tarkista · ∅ ei kuvaa"
+
+#: survey/templates/editor/operator_entry/saved.html
+#, python-format
+msgid "%(n)s response left to check"
+msgid_plural "%(n)s responses left to check"
+msgstr[0] "%(n)s vastaus vielä tarkistettavana"
+msgstr[1] "%(n)s vastausta vielä tarkistettavana"
+
+#: survey/templates/editor/operator_entry/saved.html
+#, python-format
+msgid "%(n)s still being read"
+msgid_plural "%(n)s still being read"
+msgstr[0] "%(n)s luetaan vielä"
+msgstr[1] "%(n)s luetaan vielä"
+
+#: survey/templates/editor/paper/_home_list.html
+#, python-format
+msgid "page %(pages)s missing"
+msgid_plural "pages %(pages)s missing"
+msgstr[0] "sivu %(pages)s puuttuu"
+msgstr[1] "sivut %(pages)s puuttuvat"
+
+#: survey/templates/editor/paper/home.html
+#, python-format
+msgid "%(n)s page"
+msgid_plural "%(n)s pages"
+msgstr[0] "%(n)s sivu"
+msgstr[1] "%(n)s sivua"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "It is page"
+msgstr "Se on sivu"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "replaces the photo"
+msgstr "korvaa kuvan"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "Hide this note"
+msgstr "Piilota tämä huomautus"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "Delete this photo"
+msgstr "Poista tämä kuva"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "Delete the earlier photo"
+msgstr "Poista aiempi kuva"
+
+#: survey/templates/editor/operator_entry/_entry_bar.html
+msgid "{count} field to check"
+msgstr "{count} kenttä tarkistettavana"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "The map is the printed frame. Drag a pin to move it; click a row to find its mark on the photo."
+msgstr "Kartta on tulostettu kehys. Siirrä nastaa vetämällä; napsauta riviä löytääksesi sen merkin valokuvasta."
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "Back to the printed frame"
+msgstr "Takaisin tulostettuun kehykseen"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "Printed frame"
+msgstr "Tulostettu kehys"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "On the map"
+msgstr "Kartalla"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "Add a mark the reader missed"
+msgstr "Lisää merkki, jonka lukija ohitti"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "placed"
+msgstr "sijoitettu"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "no mark"
+msgstr "ei merkkiä"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "Row is empty on the paper. If a mark was missed:"
+msgstr "Rivi on paperilla tyhjä. Jos merkki jäi huomaamatta:"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "place it on the map"
+msgstr "sijoita se kartalle"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "line · {n} points"
+msgstr "viiva · {n} pistettä"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "area"
+msgstr "alue"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "cloud · {n} dots"
+msgstr "pilvi · {n} pistettä"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "Click the map where the mark is"
+msgstr "Napsauta karttaa kohdasta, jossa merkki on"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "Draw it on the map, double-click to finish"
+msgstr "Piirrä se kartalle, lopeta kaksoisnapsautuksella"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "Find on the photo"
+msgstr "Etsi valokuvasta"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "Dismiss all"
+msgstr "Sulje kaikki"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "Dismiss every note: the earlier photos are deleted, the photos that went elsewhere stay there."
+msgstr "Sulje kaikki huomautukset: aiemmat kuvat poistetaan, muualle siirtyneet kuvat jäävät sinne."
+
+#: survey/templates/editor/survey_share.html
+msgid "Keep each map with its tables on one page"
+msgstr "Pidä jokainen kartta taulukoineen yhdellä sivulla"
+
+#: survey/templates/editor/survey_share.html
+msgid "A map that does not fit under the questions above it moves to the next page whole, instead of its tables being cut in two."
+msgstr "Kartta, joka ei mahdu edellisten kysymysten alle, siirtyy kokonaisena seuraavalle sivulle sen sijaan, että sen taulukot katkeaisivat."
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "Delete this response and its photos? Its copy number can be uploaded again."
+msgstr "Poistetaanko tämä vastaus ja sen kuvat? Sen kappalenumeron voi ladata uudelleen."
+
+#: survey/templates/editor/paper/home.html
+msgid "Photos are kept until the response is stored or deleted, and at most 30 days: a response nobody touches for 30 days is deleted. Each page image is sent to the AI provider for the duration of the reading."
+msgstr "Kuvat säilytetään, kunnes vastaus tallennetaan tai poistetaan, enintään 30 päivää: vastaus, johon kukaan ei koske 30 päivään, poistetaan. Jokainen sivukuva lähetetään tekoälypalvelulle lukemisen ajaksi."
+
+#: survey/paper_views.py
+msgid "Too many photos are waiting. Check or delete some responses first."
+msgstr "Liian monta kuvaa odottaa. Tarkista tai poista ensin joitakin vastauksia."

@@ -2,21 +2,23 @@
 paper-photo-entry, design D6). Rendered inside #section-data so an HTMX section swap replaces it
 with the next section's page; js/paper_review.js moves it onto the stage (form layout) or over the
 map (map layout) and wires zoom, rotation and the page switcher. The images come from the gated
-`paper_page_image` view; `data-paper-pages` lists the sheet's pages for the switcher.{% endcomment %}
+`paper_page_image` view; `data-paper-pages` lists the response's pages for the switcher.{% endcomment %}
 <link rel="stylesheet" href="{% static 'css/paper_review.css' %}">
 <div id="paper-pane" class="paper-pane"
-     data-paper-pages='[{% for p in paper_pages %}{"id": {{ p.id }}, "number": {{ p.number|default:"null" }}, "url": "{{ p.url }}"}{% if not forloop.last %},{% endif %}{% endfor %}]'
+     data-paper-pages="{{ paper_pages_json|default:'[]' }}"
      data-paper-current="{% if paper_page %}{{ paper_page.pk }}{% endif %}"
-     data-paper-layout="{{ section.layout }}">
+     data-paper-layout="{{ section.layout }}"
+     data-paper-home-url="{% url 'paper_home' survey.uuid %}" data-paper-home-label="{% trans 'Paper responses' %}"
+     data-paper-meta="{{ paper_sheet.label }}{% if paper_sheet.printed_form %} · MS-{{ paper_sheet.printed_form.code }} · {{ paper_sheet.printed_form.language }}{% endif %}">
     <div class="paper-pane__bar">
         <span class="paper-pane__title"><i class="fas fa-file-image" aria-hidden="true"></i>
-            {% blocktrans with n=paper_sheet.seq %}Sheet {{ n }}{% endblocktrans %}</span>
+            {{ paper_sheet.label }}</span>
         <span class="paper-pane__pages" role="group" aria-label="{% trans 'Pages' %}"></span>
         <span class="paper-pane__tools">
             <button type="button" class="paper-pane__btn" data-paper-zoom="-" title="{% trans 'Zoom out' %}"><i class="fas fa-search-minus"></i></button>
             <button type="button" class="paper-pane__btn" data-paper-zoom="+" title="{% trans 'Zoom in' %}"><i class="fas fa-search-plus"></i></button>
             <button type="button" class="paper-pane__btn" data-paper-rotate title="{% trans 'Rotate' %}"><i class="fas fa-redo"></i></button>
-            {% if section.layout != 'form' and section.layout != 'image' %}
+            {% if section.layout != 'form' and section.layout != 'image' and not paper_map_mode %}
             <button type="button" class="paper-pane__btn paper-pane__toggle" data-paper-toggle title="{% trans 'Show the map' %}"><i class="fas fa-map"></i> {% trans "Map" %}</button>
             {% endif %}
         </span>
@@ -24,8 +26,23 @@ map (map layout) and wires zoom, rotation and the page switcher. The images come
     <div class="paper-pane__viewport">
         {% if paper_page %}
         <img class="paper-pane__img" alt="{% trans 'Photographed page' %}" draggable="false">
+        {% elif paper_missing %}
+        {# This page of the response was never photographed: attach it here, it joins the response and is read. #}
+        <div class="paper-attach" data-paper-attach-url="{{ paper_attach_url }}" data-paper-status-url="{{ paper_page_status_url }}"
+             data-paper-sheet="{{ paper_sheet.pk }}" data-paper-number="{{ paper_number }}" data-csrf="{{ csrf_token }}"
+             data-msg-uploading="{% trans 'Uploading…' %}" data-msg-reading="{% trans 'Reading the page…' %}" data-msg-failed="{% trans 'Upload failed' %}">
+            <i class="fas fa-file-image fa-2x mb-2" aria-hidden="true"></i>
+            <p class="paper-attach__title">{% blocktrans with n=paper_number label=paper_sheet.label %}Page {{ n }} of {{ label }} was not photographed.{% endblocktrans %}</p>
+            <p class="paper-attach__hint">{% trans "Attach it: it will be read and the fields beside it will fill in." %}</p>
+            <input type="file" class="paper-attach__camera" accept="image/*" capture="environment" hidden>
+            <input type="file" class="paper-attach__file" accept="image/*,.heic,.heif,.pdf" hidden>
+            <p><button type="button" class="btn btn-primary paper-attach__shoot"><i class="fas fa-camera mr-1" aria-hidden="true"></i> {% trans "Take photo" %}</button>
+               <button type="button" class="btn btn-outline-light paper-attach__pick">{% trans "choose files" %}</button></p>
+            <p class="paper-attach__state" hidden></p>
+            <p class="paper-attach__skip">{% trans "No page at hand? Type the answers beside it, or press Next to leave them blank." %}</p>
+        </div>
         {% else %}
-        <p class="paper-pane__empty">{% trans "The photos of this sheet are gone." %}</p>
+        <p class="paper-pane__empty">{% trans "The photos of this response are gone." %}</p>
         {% endif %}
     </div>
 </div>

@@ -9,8 +9,8 @@ by default) and the **language** (the survey's languages, the primary selected b
 Submitting it SHALL create a `SurveySession` on the chosen version's header with `source`,
 `language`, `entered_by` = the signed-in user and `opened_by_kind` derived as for any signed-in
 opener, then redirect to the first visible section of the entry flow. The header SHALL link to
-*From photos* (the paper batches of this survey, spec paper-photo-entry), and a sheet's review SHALL
-skip the header: the printed form's version and language and the source `paper` are the session's.
+*Paper responses* (spec paper-photo-entry), and checking a paper response SHALL skip the header:
+the printed form's version and language and the source `paper` are the session's.
 
 #### Scenario: Sheet from an archived version
 - **GIVEN** a survey with versions v1 (archived) and v2 (live)
@@ -25,8 +25,8 @@ skip the header: the printed form's version and language and the source `paper` 
 - **WHEN** the operator chooses `pl` on a survey offering `en` and `pl`
 - **THEN** the session's `language` is `pl` and the entry sections render in Polish
 
-#### Scenario: Sheet review skips the header
-- **WHEN** a sheet of a form printed from version v1 in `pl` is opened for review
+#### Scenario: Paper check skips the header
+- **WHEN** a paper response of a form printed from version v1 in `pl` is opened for checking
 - **THEN** the session is created on v1 in `pl` with `source='paper'` without rendering the header
 
 ### Requirement: The entry flow walks the survey like a respondent would, keyed by URL
@@ -37,9 +37,9 @@ view SHALL honour a session only when it belongs to the survey's version family,
 `source != online`, and the caller holds the `editor` role; the respondent browser-session cookie
 SHALL be neither read nor written. Section navigation, the visibility chain and answer storage SHALL
 be the respondent page's (the same save function), evaluated for the `operator` surface. When the
-session has a `paper_sheet`, the section SHALL be prefilled from the sheet's extraction for every
-question without an `Answer` row and rendered with the page pane (spec paper-photo-entry); a
-session without a sheet SHALL render exactly as before.
+session has a `paper_sheet`, the section SHALL be prefilled from the response's extraction for
+every question without an `Answer` row and rendered with the page pane (spec paper-photo-entry);
+a session without one SHALL render exactly as before.
 
 #### Scenario: Someone else's session id
 - **WHEN** an editor requests an entry URL whose session belongs to another survey
@@ -63,7 +63,7 @@ session without a sheet SHALL render exactly as before.
 - **WHEN** the operator enters "No" for Q1 and continues
 - **THEN** the hidden section is skipped and nothing is stored for it
 
-#### Scenario: Session without a sheet is unchanged
+#### Scenario: Session without a paper response is unchanged
 - **WHEN** a typed-in session's section renders
 - **THEN** no page pane and no prefill data are in the response
 
@@ -72,8 +72,9 @@ Submitting the last visible section SHALL set `end_datetime` on the session and 
 page with *Next sheet* — which opens the header prefilled with the previous source, version and
 language — and *Back to Responses*. Cancelling from the header SHALL create nothing; abandoning a
 started entry SHALL leave an empty session that Responses treats like any other empty session.
-For a session with a `paper_sheet`, finishing SHALL additionally mark the sheet `entered` and
-*Next sheet* SHALL open the batch's next sheet to review, or the batch list when none remains.
+For a session with a `paper_sheet`, finishing SHALL additionally mark the paper response `entered`,
+the Saved page SHALL read "<label> stored" and offer *Check next* instead of *Next sheet*, opening
+the next paper response to check, or *Paper responses* when none remains.
 
 #### Scenario: Finish completes the session
 - **WHEN** the operator submits the last visible section
@@ -88,17 +89,17 @@ For a session with a `paper_sheet`, finishing SHALL additionally mark the sheet 
 - **WHEN** the operator submits the header and closes the tab
 - **THEN** one empty session exists, hidden by the Responses default and shown by the empty-sessions toggle
 
-#### Scenario: Next sheet of a batch
-- **GIVEN** a sheet session whose batch has another sheet in `review`
-- **WHEN** the operator clicks *Next sheet* on the Saved page
-- **THEN** that sheet's review opens, not the header
+#### Scenario: Check next paper response
+- **GIVEN** a paper session of Copy 7 while Copy 9 is ready to check
+- **WHEN** the operator clicks *Check next* on the Saved page
+- **THEN** Copy 9 opens, not the header
 
 ### Requirement: Responses, the drawer and exports show the source
 The Responses table SHALL carry a *Source* column (after Status) with a values filter
 (`online`, `paper`, `assisted`, `field`, `other`); the detail drawer SHALL state the source and
-the operator's name and, for a session with a `paper_sheet`, the sheet and batch; every
-session-level export (`sessions` table, responses ZIP file) SHALL include `source`, `entered_by`
-(username), `paper_batch` and `paper_sheet` (sequence numbers, blank otherwise).
+the operator's name and, for a session with a `paper_sheet`, the paper response's label linking to
+it; every session-level export (`sessions` table, responses ZIP file) SHALL include `source`,
+`entered_by` (username) and `paper_copy` (the copy number printed on the paper, blank otherwise).
 Overview counts, question statistics, public results and the data export SHALL include operator
 sessions as answers.
 
@@ -112,7 +113,7 @@ sessions as answers.
 
 #### Scenario: Export columns
 - **WHEN** the workbook export runs
-- **THEN** the `sessions` sheet has `source`, `entered_by`, `paper_batch` and `paper_sheet` columns and an online session reads `online` and blanks
+- **THEN** the `sessions` sheet has `source`, `entered_by` and `paper_copy` columns and an online session reads `online` and blanks
 
 #### Scenario: Counted as answers
 - **GIVEN** 4 online sessions and 2 paper sessions with answers

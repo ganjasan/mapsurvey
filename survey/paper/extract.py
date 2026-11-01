@@ -85,16 +85,62 @@ def items_for_page(page):
     return items, whole
 
 
-def build_user_message(items, whole_form):
+def _item_line(item, indent=''):
+    line = f"{indent}- {item['code']} ({item['type']}): {item['name']}"
+    if item.get('options'):
+        opts = '; '.join(f"{o['code']} = {o['label']}" + (' [write-in]' if o.get('write_in') else '')
+                         for o in item['options'])
+        line += f'\n{indent}  options: {opts}'
+    return line
+
+
+def build_user_message(items, whole_form, geo_items=None):
     lines = [prompts.USER_HEAD_WHOLE_FORM if whole_form else prompts.USER_HEAD]
-    for item in items:
-        line = f"- {item['code']} ({item['type']}): {item['name']}"
-        if item.get('options'):
-            opts = '; '.join(f"{o['code']} = {o['label']}" + (' [write-in]' if o.get('write_in') else '')
-                             for o in item['options'])
-            line += f'\n  options: {opts}'
-        lines.append(line)
+    lines += [_item_line(item) for item in items]
+    if geo_items:
+        lines.append(prompts.USER_MAP_HEAD)
+        for item in geo_items:
+            shape = {'point': 'a dot', 'line': 'a line', 'polygon': 'an outlined area',
+                     'spraycan': 'a shaded area'}.get(item['type'], 'a dot')
+            lines.append(f"- {item['letter']} = {item['code']} ({item['type']}, {shape}): {item['name']}")
+            if item.get('subs'):
+                lines.append(f"  columns of the {item['letter']} table (one row per mark, {item['letter']}1, {item['letter']}2 …):")
+                lines += [_item_line(sub, '  ') for sub in item['subs']]
     return '\n'.join(lines)
+
+
+def map_record(page):
+    """`PrintedForm.layout[page]["map"]` when this page carries a map frame."""
+    form = page.printed_form
+    if form is None or not page.page_number:
+        return None
+    return ((form.layout or {}).get(str(page.page_number)) or {}).get('map')
+
+
+def geo_items_for_page(page):
+    """(map record, [geo item]) — the map questions whose marks are on this
+    page's frame (the section the frame belongs to), each with its legend letter
+    and the readable sub-questions of its table; (None, []) without a frame."""
+    from survey.print.structure import mark_letters
+    rec = map_record(page)
+    if not rec:
+        return None, []
+    form = page.printed_form
+    header = version_header(form)
+    language = form.language
+    for section, runs in plan_items(header, language):
+        if section.code != rec.get('section_code'):
+            continue
+        geo_q = [q for _g, members in runs for q in members if q.input_type in GEO_TYPES]
+        items = []
+        for q, letter in zip(geo_q, mark_letters(geo_q)):
+            item = describe_question(q, language)
+            item['letter'] = letter
+            item['subs'] = [describe_question(s, language) for s in q.subQuestions()
+                            if s.input_type in READABLE_TYPES]
+            items.append(item)
+        return rec, items
+    return rec, []
 
 
 def doubtful_threshold():
@@ -130,8 +176,38 @@ def coerce_fields(fields, items):
         value, ok = _coerce_value(item, value)
         if not ok:
             confidence = 0.0
+        elif item['type'] == 'datetime' and value and value.endswith(NO_TIME):
+            # No time on the paper: the field needs one, so 00:00 stands in and
+            # the operator is asked to look (below the doubtful threshold).
+            confidence = min(confidence, 0.5)
         out[code] = {'value': value, 'confidence': confidence, 'unreadable': unreadable or not ok}
+        box = _box(field.get('box'))
+        if box:
+            out[code]['box'] = box
     return out
+
+
+def _box(raw):
+    """[ymin, xmin, ymax, xmax] in 0..1000 (Gemini's box convention), or None.
+
+    Where the question sits on THIS photo — the review scrolls the photo to it
+    and outlines it while the operator is on that question. A box that is not
+    four numbers in range with a positive area is dropped, not repaired."""
+    if not isinstance(raw, (list, tuple)) or len(raw) != 4:
+        return None
+    try:
+        y0, x0, y1, x1 = (int(round(float(v))) for v in raw)
+    except (TypeError, ValueError):
+        return None
+    if not all(0 <= v <= 1000 for v in (y0, x0, y1, x1)) or y1 <= y0 or x1 <= x0:
+        return None
+    return [y0, x0, y1, x1]
+
+
+def page_boxes(page):
+    """{question code: box} of one page — what the photo pane outlines."""
+    return {code: f['box'] for code, f in (page.extraction or {}).items()
+            if isinstance(f, dict) and f.get('box') and not code.endswith('-other')}
 
 
 def _coerce_value(item, value):
@@ -165,7 +241,47 @@ def _coerce_value(item, value):
             return as_int, True
         return (str(int(number)) if number == int(number) else text), True
     raw = ' '.join(str(v) for v in value) if isinstance(value, list) else str(value)
+    if kind == 'datetime':
+        normal = normalise_datetime(raw)
+        return (normal, True) if normal else (None, False)
     return raw.strip() or None, True
+
+
+# What a date without a written time becomes (the datetime-local input needs a time).
+NO_TIME = 'T00:00'
+_DATE_FORMATS = ('%Y-%m-%d', '%d/%m/%Y', '%d.%m.%Y', '%d-%m-%Y', '%d/%m/%y', '%d.%m.%y', '%d-%m-%y')
+_TIME_FORMATS = ('%H:%M', '%H.%M', '%H:%M:%S')
+
+
+def normalise_datetime(text):
+    """'YYYY-MM-DDTHH:MM' — what the respondent page's datetime-local input holds —
+    from the model's answer (asked for ISO; day-first forms tolerated), or None.
+
+    A value the input cannot hold is dropped by the browser without a word, so a
+    date in any other shape never reaches the operator; it is checked here."""
+    from datetime import datetime
+    text = (text or '').strip().replace('T', ' ')
+    if not text:
+        return None
+    date_part, _, time_part = text.partition(' ')
+    time_part = time_part.strip()
+    for fmt in _DATE_FORMATS:
+        try:
+            day = datetime.strptime(date_part, fmt)
+            break
+        except ValueError:
+            continue
+    else:
+        return None
+    if not time_part:
+        return day.strftime('%Y-%m-%d') + NO_TIME
+    for fmt in _TIME_FORMATS:
+        try:
+            clock = datetime.strptime(time_part, fmt)
+            return day.strftime('%Y-%m-%d') + clock.strftime('T%H:%M')
+        except ValueError:
+            continue
+    return None
 
 
 def is_doubtful(field, threshold=None):
@@ -186,14 +302,30 @@ def merge_pages(pages):
 def extract_page(page, provider):
     """Ask the provider about `page`; returns (extraction dict, usage, items)."""
     items, whole = items_for_page(page)
+    map_rec, geo_items = geo_items_for_page(page)
     with page.image.open('rb') as fh:
         jpeg = fh.read()
+    # Thinking tokens count against max_tokens on Gemini (a 200-token cap once came back
+    # empty, all of it spent thinking); a page of
+    # fields is a few hundred tokens of answer, the rest is headroom for reasoning.
     blob, usage = provider.complete_structured(
-        system=prompts.SYSTEM, user=build_user_message(items, whole), schema=prompts.RESPONSE_SCHEMA,
-        max_tokens=8000, images=[('image/jpeg', jpeg)])
+        system=prompts.SYSTEM, user=build_user_message(items, whole, geo_items), schema=prompts.RESPONSE_SCHEMA,
+        max_tokens=16000, images=[('image/jpeg', jpeg)])
+    blob = blob if isinstance(blob, dict) else {}
+    extraction = coerce_fields(blob.get('fields'), items)
+    if geo_items and blob.get('marks'):
+        # Marks on the printed map → coordinates (item 4): registered on the
+        # photo itself, so the image is still needed here.
+        import io
+        from PIL import Image
+        from survey.paper import marks, texture
+        with Image.open(io.BytesIO(jpeg)) as img:
+            img.load()
+            extraction.update(marks.place_marks(blob.get('marks'), blob.get('map_frame'), geo_items,
+                                                map_rec, img, page.printed_form.paper,
+                                                frame_corners=blob.get('map_frame_corners'),
+                                                reference=texture.reference_image(page)))
     del jpeg
-    fields = (blob or {}).get('fields') if isinstance(blob, dict) else None
-    extraction = coerce_fields(fields, items)
     logger.info('paper page %s: %d items asked, %d fields read', page.pk, len(items), len(extraction))
     return extraction, usage, items
 

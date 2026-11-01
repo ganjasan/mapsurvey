@@ -17,8 +17,8 @@ import hashlib
 import html
 import io
 import json
+import logging
 import re
-import string
 from dataclasses import dataclass, field
 from xml.sax.saxutils import escape
 
@@ -42,17 +42,29 @@ from survey.layers import layer_lite
 from survey.models import PrintedForm, TrackedLink
 from survey.print import FONT_BOLD, FONT_REGULAR, register_fonts
 from survey.print import form_code, static_map
-from survey.print.structure import plan_items
+from survey.print.structure import mark_letters, plan_items
 from survey.question_types import GEO_TYPES, THUMBS_CHOICES
 from survey.versioning import canonical_of
 from survey.visibility import describe_rule
+
+log = logging.getLogger('survey.print')
 
 PAPERS = {PrintedForm.PAPER_A4: A4, PrintedForm.PAPER_LETTER: letter}
 MARGIN = 15 * mm
 MARK_SIZE = 6 * mm
 MARK_INSET = 8 * mm
-FOOTER_H = 14 * mm
-QR_MM = 16
+FIDUCIAL_SIZE = 5 * mm   # survey/paper/marks.py::FIDUCIAL_MM
+FIDUCIAL_OFFSET = 5 * mm   # centre of a fiducial beyond the frame's left/right edge; recorded as fiducial_dx_mm
+# The footer holds a 20 mm QR in each bottom corner (change paper-photo-entry): two
+# so that one smudged, folded or out-of-frame corner still leaves a readable code,
+# 20 mm at error level H so a phone photo of the whole page resolves it locally,
+# without asking a model. The QRs sit between the alignment marks' columns.
+FOOTER_H = 22 * mm
+QR_MM = 20
+QR_ERROR = 'h'
+# Bump when the page geometry changes: it is part of the structure hash, so a form
+# printed with an older layout is never silently reused with a different item map.
+LAYOUT_VERSION = 4   # 2: two QR + copy numbers; 3: fiducial squares beside the frame corners; 4: also mid-side
 BOX = '☐'
 SYMBOLS = {'point': '●', 'line': '━', 'polygon': '▭', 'spraycan': '░'}
 DEFAULT_MARKS = 3
@@ -160,6 +172,20 @@ class MapFrame(Flowable):
         c.setStrokeColor(colors.black)
         c.setLineWidth(0.8)
         c.rect(0, 0, self._w, self._h)
+        # Fiducials (item 4): a solid square in the margin beside each corner of
+        # the frame — level with its top and bottom edges, FIDUCIAL_OFFSET outside
+        # its left and right edges, touching neither the border nor the map — so a
+        # photo registers to the MAP, not only to the page: closer to the marks
+        # than the page corners, immune to paper curl, and still there when the
+        # photo is cropped to the map. `survey/paper/marks.py` reads them.
+        c.setFillColor(colors.black)
+        f = FIDUCIAL_SIZE
+        for fx in (-FIDUCIAL_OFFSET, self._w + FIDUCIAL_OFFSET):
+            # Corners, and the middle of each side (LAYOUT_VERSION 4): a page in a
+            # hand bends along its long axis, and a mark halfway down the frame's
+            # sides is what lets the reader bend its map the same way.
+            for fy in (0, self._h / 2, self._h):
+                c.rect(fx - f / 2, fy - f / 2, f, f, stroke=0, fill=1)
         x, y = c.absolutePosition(0, 0)
         spec = self.frame.spec
         # setdefault: the page's entry may already hold `items` (ItemMarker).
@@ -172,6 +198,11 @@ class MapFrame(Flowable):
             'zoom': spec.zoom,
             'basemap': spec.basemap if self.frame.basemap_ok else None,
             'section_code': spec.section_code,
+            'fiducials': True,
+            'fiducial_dx_mm': round(FIDUCIAL_OFFSET / mm, 2),
+            'fiducial_mids': True,
+            # Transient: build_form stores the frame image and replaces it with `ref_key`.
+            '_frame': self.frame,
         }
 
 
@@ -209,6 +240,55 @@ class PageChrome:
     online_label: str = ''
     office_label: str = ''
     page_label: str = 'Page %(n)s of %(total)s'
+    # False when the codes are stamped per copy afterwards (`stamp_copies`): the
+    # body is drawn once without them.
+    codes: bool = True
+
+
+def _vector_qr(canvas, payload, x, y, size):
+    """The QR as filled rectangles, one per run of dark modules in a row, with a
+    one-module quiet zone. Vector, not an embedded PNG: crisp at any print
+    resolution, and ~20x cheaper to draw — numbered copies stamp two per page."""
+    import segno
+    matrix = segno.make(payload, error=QR_ERROR).matrix
+    n = len(matrix)
+    m = size / (n + 2)
+    canvas.saveState()
+    canvas.setFillColor(colors.white)
+    canvas.rect(x, y, size, size, stroke=0, fill=1)
+    canvas.setFillColor(colors.black)
+    path = canvas.beginPath()
+    for r, row in enumerate(matrix):
+        c = 0
+        while c < n:
+            if row[c]:
+                start = c
+                while c < n and row[c]:
+                    c += 1
+                path.rect(x + (start + 1) * m, y + size - (r + 2) * m, (c - start) * m, m)
+            else:
+                c += 1
+    canvas.drawPath(path, stroke=0, fill=1)
+    canvas.restoreState()
+
+
+def draw_codes(canvas, page_size, form_id, page, total, copy=None, page_label='Page %(n)s of %(total)s'):
+    """The per-page identity: a QR in each bottom corner, the human line between
+    them and, on a numbered copy, its number large at the top right. Shared by the
+    single-copy chrome and the per-copy stamp, so the two print the same thing."""
+    w, h = page_size
+    payload = form_code.qr_payload(form_id, page, total, copy=copy)
+    size = QR_MM * mm
+    y = MARK_INSET - 1 * mm
+    _vector_qr(canvas, payload, MARGIN + 2 * mm, y, size)
+    _vector_qr(canvas, payload, w - MARGIN - 2 * mm - size, y, size)
+    canvas.setFont(FONT_BOLD, 9)
+    canvas.setFillColor(colors.black)
+    canvas.drawCentredString(w / 2, MARK_INSET + 1 * mm,
+                             form_code.page_text(form_id, page, total, copy=copy, page_label=page_label))
+    if copy:
+        canvas.setFont(FONT_BOLD, 15)
+        canvas.drawRightString(w - MARGIN - 4 * mm, h - MARGIN + 2 * mm, f'#{copy}')
 
 
 class _NumberedCanvas(rl_canvas.Canvas):
@@ -234,6 +314,9 @@ class _NumberedCanvas(rl_canvas.Canvas):
         super().save()
 
     def _decorate(self, page, total):
+        self._draw_chrome(page, total)
+
+    def _draw_chrome(self, page, total):
         chrome = self.chrome
         w, h = chrome.page_size
         self.saveState()
@@ -246,16 +329,10 @@ class _NumberedCanvas(rl_canvas.Canvas):
         self.setFont(FONT_REGULAR, 7.5)
         self.setFillColor(colors.HexColor('#555555'))
         self.drawString(MARGIN + 4 * mm, h - MARGIN + 3 * mm, chrome.title[:90])
-        # Footer: form code text left, page count centre, QR right.
-        code_text = form_code.page_text(chrome.form_id, page)
-        self.setFont(FONT_BOLD, 9)
-        self.setFillColor(colors.black)
-        self.drawString(MARGIN + 4 * mm, MARK_INSET + 1 * mm, code_text)
-        self.setFont(FONT_REGULAR, 8)
-        self.drawCentredString(w / 2, MARK_INSET + 1 * mm, chrome.page_label % {'n': page, 'total': total})
-        qr = form_code.qr_image(form_code.qr_payload(chrome.form_id, page, total), px=256)
-        size = QR_MM * mm
-        self.drawImage(ImageReader(qr), w - MARGIN - size - 4 * mm, MARK_INSET - 1 * mm, width=size, height=size)
+        # Footer: the page's identity (two QRs and the human line), unless the
+        # codes are stamped per copy afterwards.
+        if chrome.codes:
+            draw_codes(self, chrome.page_size, chrome.form_id, page, total, page_label=chrome.page_label)
         if chrome.watermark:
             self.saveState()
             self.setFont(FONT_BOLD, 54)
@@ -265,6 +342,45 @@ class _NumberedCanvas(rl_canvas.Canvas):
             self.drawCentredString(0, 0, chrome.watermark)
             self.restoreState()
         self.restoreState()
+
+
+class _CopiesCanvas(_NumberedCanvas):
+    """Numbered copies in one pass (change paper-photo-entry): while platypus lays
+    the form out ONCE, every page it draws is captured as a form XObject instead
+    of becoming a page; at save, each copy's page is that XObject + the chrome +
+    its own codes. The body (maps, pictures, text) is stored once whatever the
+    number of copies, and a copy costs a few hundred bytes of codes."""
+    copy_range = (1, 1)
+
+    def __init__(self, *args, **kwargs):
+        rl_canvas.Canvas.__init__(self, *args, **kwargs)
+        self._forms = []
+        self._open_form()
+
+    def _open_form(self):
+        name = f'body{len(self._forms) + 1}'
+        self._forms.append(name)
+        self.beginForm(name)
+
+    def showPage(self):
+        self.endForm()
+        self._startPage()
+        self._open_form()
+
+    def save(self):
+        self.endForm()
+        names = self._forms[:-1]   # platypus ends with a showPage: the last form is empty
+        total = len(names)
+        chrome = self.chrome
+        first, last = self.copy_range
+        for copy in range(first, last + 1):
+            for page, name in enumerate(names, start=1):
+                self.doForm(name)
+                self._draw_chrome(page, total)
+                draw_codes(self, chrome.page_size, chrome.form_id, page, total, copy=copy,
+                           page_label=chrome.page_label)
+                rl_canvas.Canvas.showPage(self)
+        rl_canvas.Canvas.save(self)
 
 
 # ── question shapes ────────────────────────────────────────────────────────
@@ -457,16 +573,12 @@ def _sub_table(q, ctx, rows, first_header):
     if not subs:
         return []
     head = [para(first_header, ctx.styles['cellhead'])]
+    cells = []   # what every row's cell carries: boxes to tick for a choice column, blank otherwise
     for s in subs:
         text = plain(s.get_translated_name(ctx.lang)) or s.code
-        if s.input_type in ('choice', 'multichoice', 'thumbs', 'rating'):
-            opts = ' '.join(f'{BOX}{plain(s.get_choice_name(c.get("code"), ctx.lang))}' for c in (s.choices or [])[:6])
-            text = f'{text}<br/><font size="7">{escape(opts)}</font>'
-            head.append(Paragraph(f'<b>{escape(plain(s.get_translated_name(ctx.lang)) or s.code)}</b><br/>'
-                                  f'<font size="7">{escape(opts)}</font>', ctx.styles['cell']))
-        else:
-            head.append(para(text, ctx.styles['cellhead']))
-    data = [head] + [[para(label, ctx.styles['cell'])] + [''] * len(subs) for label in rows]
+        head.append(para(text, ctx.styles['cellhead']))
+        cells.append(_sub_cell(s, ctx))
+    data = [head] + [[para(label, ctx.styles['cell'])] + [cell() for cell in cells] for label in rows]
     first_w = 28 * mm
     col_w = [first_w] + [(ctx.width - first_w) / len(subs)] * len(subs)
     table = Table(data, colWidths=col_w, rowHeights=[None] + [9 * mm] * len(rows), repeatRows=1)
@@ -477,6 +589,29 @@ def _sub_table(q, ctx, rows, first_header):
         ('FONTNAME', (0, 0), (-1, -1), FONT_REGULAR),
     ]))
     return [Spacer(1, 1.5 * mm), table]
+
+
+def _sub_cell(s, ctx):
+    """A factory for one column's row cell. A choice column gets its boxes IN THE
+    ROW (owner, 2026-10-31: boxes in the header alone left nothing to tick in the
+    row); up to six, else a numbered legend in the header would not fit either,
+    so the cell asks for the number. Rating: boxes 1…5; thumbs: up/down."""
+    options = []
+    if s.input_type in ('choice', 'multichoice'):
+        options = [plain(s.get_choice_name(c.get('code'), ctx.lang)) or str(c.get('code')) for c in (s.choices or [])]
+    elif s.input_type == 'rating':
+        options = [str(i) for i in range(1, 6)]
+    elif s.input_type == 'thumbs':
+        # The question's own labels, as shape_thumbs prints them (no catalog string).
+        options = ['▲ ' + (plain(s.get_choice_name(THUMBS_CHOICES[0]['code'], ctx.lang)) or 'up'),
+                   '▼ ' + (plain(s.get_choice_name(THUMBS_CHOICES[1]['code'], ctx.lang)) or 'down')]
+    if not options:
+        return lambda: ''
+    if len(options) > 6:
+        legend = '  '.join(f'{i} {o}' for i, o in enumerate(options, 1))
+        return lambda: Paragraph(f'<font size="6">{escape(legend)}</font><br/>№ ____', ctx.styles['cell'])
+    line = '  '.join(f'{BOX}{o}' for o in options)
+    return lambda: Paragraph(f'<font size="7">{escape(line)}</font>', ctx.styles['cell'])
 
 
 def map_block(section, survey, geo_questions, object_questions, ctx, records, page_height):
@@ -539,9 +674,10 @@ class BuildResult:
     form: PrintedForm
     pages: int
     map_pages: int
+    run: 'object' = None   # the PrintRun of numbered copies, else None
 
 
-def _structure(survey, language, paper):
+def _structure(survey, language, paper, keep=False):
     """(sections → printable runs, hash). The walk is `structure.plan_items`, shared
     with the photo reader (change paper-photo-entry), so the hash, the PDF and what
     a page is read against agree."""
@@ -561,7 +697,9 @@ def _structure(survey, language, paper):
         digest.append({'sec': section.code, 'title': plain(section.get_translated_title(language)),
                        'sub': plain(section.get_translated_subheading(language)), 'layout': section.layout,
                        'rule': section.visibility_rule})
-    payload = json.dumps({'lang': language, 'paper': paper, 'items': digest}, sort_keys=True, ensure_ascii=False)
+    payload = json.dumps({'lang': language, 'paper': paper, 'items': digest, 'layout': LAYOUT_VERSION,
+                          'keep': bool(keep)},
+                         sort_keys=True, ensure_ascii=False)
     return plan, hashlib.sha256(payload.encode('utf-8')).hexdigest()
 
 
@@ -572,14 +710,21 @@ def _tracked_link(canonical):
     return link
 
 
-def build_form(survey, language, paper, *, user=None, base_url=''):
-    """Render the paper form; returns BuildResult(pdf bytes, PrintedForm, pages, map pages)."""
+def build_form(survey, language, paper, *, user=None, base_url='', copies=None, keep=False):
+    """Render the paper form; returns BuildResult(pdf bytes, PrintedForm, pages, map pages).
+
+    `copies=N` prints N numbered copies in the same pass (`_CopiesCanvas`): the
+    copy numbers are allocated once the form is known, under a lock on the
+    canonical survey row (`_allocate_copies`), and the result carries the run.
+    `keep=True` keeps a map section's heading, frame, legend and tables on one
+    page (owner, 2026-11-01: the A2/A3 rows of a marks table on the next page
+    read as a cut question); the layout differs, so the form row differs."""
     if paper not in PAPERS:
         raise ValueError(f'unknown paper {paper!r}')
     register_fonts()
     canonical = canonical_of(survey)
     with translation.override(language):
-        plan, digest = _structure(survey, language, paper)
+        plan, digest = _structure(survey, language, paper, keep=keep)
         link = _tracked_link(canonical)
         form, _created = PrintedForm.objects.get_or_create(
             survey=canonical, version_number=survey.version_number, language=language, paper=paper,
@@ -619,20 +764,24 @@ def build_form(survey, language, paper, *, user=None, base_url=''):
             all_q = [q for _g, members in runs for q in members]
             geo_q = [q for q in all_q if q.input_type in GEO_TYPES]
             obj_q = [q for q in all_q if q.input_type == 'layer_objects']
-            for i, q in enumerate(geo_q):
-                ctx.letters[q.id] = string.ascii_uppercase[i % 26] * (1 + i // 26)
-            story.append(KeepTogether([
-                ItemMarker(f'section:{section.code}', records),
-                para(plain(section.get_translated_title(language)) or section.name, styles['section'])]))
+            for q, letter in zip(geo_q, mark_letters(geo_q)):
+                ctx.letters[q.id] = letter
+            head = [ItemMarker(f'section:{section.code}', records),
+                    para(plain(section.get_translated_title(language)) or section.name, styles['section'])]
             sub = plain(section.get_translated_subheading(language))
             if sub:
-                story.append(para(sub, styles['help']))
-            story += _rule_note('section', section, survey, ctx)
-            if geo_q or obj_q:
-                block = map_block(section, survey, geo_q, obj_q, ctx, records, page_h)
-                if block and section.layout == 'map':
-                    map_pages += 1
-                story += block
+                head.append(para(sub, styles['help']))
+            head += _rule_note('section', section, survey, ctx)
+            block = map_block(section, survey, geo_q, obj_q, ctx, records, page_h) if (geo_q or obj_q) else []
+            if block and section.layout == 'map':
+                map_pages += 1
+            if keep and block:
+                # Heading, frame, legend and the marks tables as one unit: moved to
+                # the next page whole rather than cut (split only if taller than a page).
+                story.append(KeepTogether(head + block))
+            else:
+                story.append(KeepTogether(head[:2]))
+                story += head[2:] + block
             for group, members in runs:
                 if group is not None:
                     story.append(KeepTogether([
@@ -649,7 +798,7 @@ def build_form(survey, language, paper, *, user=None, base_url=''):
         chrome = PageChrome(
             form_id=form.pk, title=survey.name, page_size=page_size,
             watermark='DRAFT — not for distribution' if survey.status in WATERMARK_STATUSES else '',
-            page_label=_('Page %(n)s of %(total)s'))
+            page_label=_('Page %(n)s of %(total)s'), codes=not copies)
         out = io.BytesIO()
         doc = BaseDocTemplate(out, pagesize=page_size, leftMargin=MARGIN, rightMargin=MARGIN,
                               topMargin=MARGIN + 2 * mm, bottomMargin=MARGIN + FOOTER_H,
@@ -658,11 +807,61 @@ def build_form(survey, language, paper, *, user=None, base_url=''):
                       leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0)
         doc.addPageTemplates([PageTemplate(id='form', frames=[frame])])
 
-        canvas_cls = type('_Canvas', (_NumberedCanvas,), {'chrome': chrome})
+        run = None
+        if copies:
+            run = _allocate_copies(canonical, form, copies, user)
+            canvas_cls = type('_Canvas', (_CopiesCanvas,), {
+                'chrome': chrome, 'copy_range': (run.first_copy, run.last_copy)})
+        else:
+            canvas_cls = type('_Canvas', (_NumberedCanvas,), {'chrome': chrome})
         doc.build(story, canvasmaker=canvas_cls)
         pdf = out.getvalue()
-        pages = doc.page
+        pages = doc.page   # body pages: platypus lays the form out once, copies or not
+        _keep_frame_references(form, records)
         PrintedForm.objects.filter(pk=form.pk).update(pages=pages, layout=records)
         form.pages, form.layout = pages, records
     return BuildResult(pdf=pdf, form=form, pages=pages,
-                       map_pages=sum(1 for rec in records.values() if 'map' in rec))
+                       map_pages=sum(1 for rec in records.values() if 'map' in rec), run=run)
+
+
+def _keep_frame_references(form, records):
+    """The frame image of every map page goes to the private tier as the page's
+    `ref_key` (`survey/paper/texture.py` matches photographed maps against it);
+    a grid stand-in is not kept — it has no landmarks. The transient `_frame`
+    leaves the record either way, since the record is stored as JSON."""
+    from survey.paper import texture
+    for page, rec in records.items():
+        map_rec = rec.get('map')
+        if not map_rec:
+            continue
+        frame = map_rec.pop('_frame', None)
+        if frame is None or not frame.basemap_ok:
+            continue
+        try:
+            map_rec['ref_key'] = texture.save_reference(form.pk, page, frame.image)
+        except Exception:  # noqa: BLE001 — the form prints; the photos fall back to a re-render
+            log.warning('print: could not keep the frame reference for form %s page %s', form.pk, page, exc_info=True)
+
+
+def _allocate_copies(canonical, form, copies, user):
+    """The next `copies` copy numbers of the survey, recorded as a PrintRun. The
+    numbering belongs to the canonical survey and only grows; the lock on its row
+    keeps two editors printing at once from getting the same numbers."""
+    from django.db import transaction
+    from django.db.models import Max
+
+    from survey.models import PrintRun, SurveyHeader
+
+    copies = int(copies)
+    if not 1 <= copies <= PrintRun.MAX_COPIES:
+        raise ValueError(f'copies must be 1..{PrintRun.MAX_COPIES}')
+    with transaction.atomic():
+        SurveyHeader.objects.select_for_update().filter(pk=canonical.pk).first()
+        last = PrintRun.objects.filter(survey=canonical).aggregate(m=Max('last_copy'))['m'] or 0
+        return PrintRun.objects.create(survey=canonical, form=form, first_copy=last + 1,
+                                       last_copy=last + copies, created_by=user)
+
+
+def print_copies(survey, language, paper, copies, *, user=None, base_url='', keep=False):
+    """N numbered copies of the paper form in one PDF (change paper-photo-entry)."""
+    return build_form(survey, language, paper, user=user, base_url=base_url, copies=copies, keep=keep)

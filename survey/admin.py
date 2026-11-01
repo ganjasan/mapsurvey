@@ -501,8 +501,8 @@ class AIGenerationEventAdmin(admin.ModelAdmin):
 
 @admin.register(PaperBatch)
 class PaperBatchAdmin(admin.ModelAdmin):
-    """Read-only viewer for paper-photo batches (change paper-photo-entry, #495):
-    which workspace is feeding sheets, how far each batch got, what failed."""
+    """Read-only viewer for the paper inboxes (change paper-photo-entry, #495; one
+    per survey): which workspace is feeding paper responses, what failed."""
 
     list_display = ('id', 'created_at', 'last_activity_at', 'status', 'survey', 'organization',
                     'created_by', 'uploads_count', 'pages_count', 'sheets_count')
@@ -525,7 +525,7 @@ class PaperBatchAdmin(admin.ModelAdmin):
     def pages_count(self, obj):
         return obj._pages
 
-    @admin.display(description='sheets', ordering='_sheets')
+    @admin.display(description='responses', ordering='_sheets')
     def sheets_count(self, obj):
         return obj._sheets
 
@@ -538,7 +538,7 @@ class PaperBatchAdmin(admin.ModelAdmin):
 
 @admin.register(PaperPage)
 class PaperPageAdmin(admin.ModelAdmin):
-    list_display = ('id', 'batch', 'seq', 'status', 'code_source', 'printed_form', 'page_number',
+    list_display = ('id', 'batch', 'seq', 'status', 'code_source', 'printed_form', 'copy', 'page_number',
                     'pages_total', 'sheet', 'error', 'created_at')
     list_filter = ('status', 'code_source')
     search_fields = ('batch__survey__name', 'error')
