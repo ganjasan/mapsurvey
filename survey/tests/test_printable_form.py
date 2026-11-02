@@ -141,14 +141,38 @@ class BasemapFetchTest(_MapFixture):
 
     def test_no_token_means_no_request(self):
         """
-        GIVEN an empty Mapbox token
+        GIVEN both Mapbox tokens empty
         WHEN the basemap is fetched
         THEN nothing is requested and None comes back
         """
-        with override_settings(MAPBOX_ACCESS_TOKEN=''), \
+        with override_settings(MAPBOX_ACCESS_TOKEN='', MAPBOX_SERVER_TOKEN=''), \
                 mock.patch('survey.print.static_map.requests.get') as get:
             self.assertIsNone(static_map.fetch_basemap(self.spec))
         get.assert_not_called()
+
+    def test_server_token_wins_over_public_token(self):
+        """
+        GIVEN both MAPBOX_SERVER_TOKEN and MAPBOX_ACCESS_TOKEN set
+        WHEN the basemap is fetched
+        THEN the Static Images request carries the server token
+        """
+        png = _png(FRAME_W * SCALE, FRAME_H * SCALE)
+        with override_settings(MAPBOX_ACCESS_TOKEN='pk.public', MAPBOX_SERVER_TOKEN='pk.server'), \
+                mock.patch('survey.print.static_map.requests.get', return_value=_response(200, png)) as get:
+            self.assertIsNotNone(static_map.fetch_basemap(self.spec))
+        self.assertEqual(get.call_args.kwargs['params']['access_token'], 'pk.server')
+
+    def test_public_token_is_the_fallback(self):
+        """
+        GIVEN MAPBOX_SERVER_TOKEN empty and MAPBOX_ACCESS_TOKEN set
+        WHEN the basemap is fetched
+        THEN the Static Images request carries the public token
+        """
+        png = _png(FRAME_W * SCALE, FRAME_H * SCALE)
+        with override_settings(MAPBOX_ACCESS_TOKEN='pk.public', MAPBOX_SERVER_TOKEN=''), \
+                mock.patch('survey.print.static_map.requests.get', return_value=_response(200, png)) as get:
+            self.assertIsNotNone(static_map.fetch_basemap(self.spec))
+        self.assertEqual(get.call_args.kwargs['params']['access_token'], 'pk.public')
 
     def test_http_error_and_timeout_mean_none(self):
         """
@@ -195,7 +219,7 @@ class FrameRenderTest(_MapFixture):
         SurveyMapLayer.objects.create(
             survey=self.survey, name='Spot', color='#ff0000',
             geojson=_fc(_feature({'type': 'Point', 'coordinates': [east[0], east[1]]})))
-        with override_settings(MAPBOX_ACCESS_TOKEN=''):
+        with override_settings(MAPBOX_ACCESS_TOKEN='', MAPBOX_SERVER_TOKEN=''):
             frame = static_map.render_frame(self.section, self.survey)
         self.assertFalse(frame.basemap_ok)
         self.assertEqual(frame.drawn_features, 1)
@@ -308,7 +332,7 @@ class _FormFixture(TestCase):
 
     def build(self, language='en', paper='a4', **kw):
         from survey.print.pdf import build_form
-        with override_settings(MAPBOX_ACCESS_TOKEN=''):
+        with override_settings(MAPBOX_ACCESS_TOKEN='', MAPBOX_SERVER_TOKEN=''):
             return build_form(self.survey, language, paper, user=self.owner, base_url='https://example.test', **kw)
 
 
@@ -469,7 +493,7 @@ class PrintViewTest(_FormFixture):
         WHEN they download the form in de on A4
         THEN the response is an attached PDF and form_printed carries the five properties
         """
-        with override_settings(MAPBOX_ACCESS_TOKEN=''), mock.patch('survey.print.views.pe.emit') as emit:
+        with override_settings(MAPBOX_ACCESS_TOKEN='', MAPBOX_SERVER_TOKEN=''), mock.patch('survey.print.views.pe.emit') as emit:
             response = self.client.get(self.url, {'lang': 'de', 'paper': 'a4'})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pdf')

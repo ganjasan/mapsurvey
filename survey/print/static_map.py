@@ -195,7 +195,8 @@ def _cache_key(style, lat, lng, zoom, width, height):
 def fetch_basemap(spec):
     """The basemap PNG as a Pillow image, or None on any failure (no token,
     HTTP error, timeout, unreadable body). Successes are cached for a day."""
-    token = getattr(settings, 'MAPBOX_ACCESS_TOKEN', '') or ''
+    token = (getattr(settings, 'MAPBOX_SERVER_TOKEN', '')
+             or getattr(settings, 'MAPBOX_ACCESS_TOKEN', '') or '')
     if not token or spec.basemap is None:
         return None
     style = basemap_style(spec.basemap)

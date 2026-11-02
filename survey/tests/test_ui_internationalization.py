@@ -492,7 +492,7 @@ class RespondentCatalogTest(TestCase):
             seen.add(args[0])
             return original(*args)
 
-        with patch.object(real, 'gettext', recorder), override_settings(MAPBOX_ACCESS_TOKEN=''):
+        with patch.object(real, 'gettext', recorder), override_settings(MAPBOX_ACCESS_TOKEN='', MAPBOX_SERVER_TOKEN=''):
             build_form(survey, 'pt', 'a4', base_url='https://example.test')
         self.assertIn('Mark on the map', seen)   # the walk reached the map legend
         missing = {}

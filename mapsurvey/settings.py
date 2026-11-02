@@ -424,6 +424,11 @@ SIGN_IN_GRACE_HOURS = int(os.environ.get('SIGN_IN_GRACE_HOURS', 24))
 MAPBOX_URL = os.environ.get('MAPBOX_URL', 'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/256/{z}/{x}/{y}@2x?access_token={accessToken}')
 MAPBOX_OUTDOORS_URL = os.environ.get('MAPBOX_OUTDOORS_URL', 'https://api.mapbox.com/styles/v1/mapbox/outdoors-v12/tiles/256/{z}/{x}/{y}@2x?access_token={accessToken}')
 MAPBOX_ACCESS_TOKEN = os.environ.get('MAPBOX_ACCESS_TOKEN', '')
+# Server-side Mapbox calls (the printable form's Static Images request) use their own
+# token. MAPBOX_ACCESS_TOKEN ships to every browser, so production restricts it to our
+# URLs — and a server request carries no Referer, so a restricted token answers 403.
+# Never render this one into a page. Empty = fall back to MAPBOX_ACCESS_TOKEN.
+MAPBOX_SERVER_TOKEN = os.environ.get('MAPBOX_SERVER_TOKEN', '')
 
 # Email backend
 EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
