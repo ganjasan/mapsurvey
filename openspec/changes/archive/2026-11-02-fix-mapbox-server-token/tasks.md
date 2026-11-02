@@ -15,4 +15,4 @@
 ## 3. Delivery
 
 - [x] 3.1 PR to `master`
-- [ ] 3.2 After merge: set `MAPBOX_SERVER_TOKEN` on the Render web service, print a map section and check the basemap is there
+- [x] 3.2 After merge: `MAPBOX_SERVER_TOKEN` set on the Render web service (2026-11-02); the printed-map check is left to a manual print
