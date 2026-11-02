@@ -85,6 +85,10 @@ services:
         value: "localhost mapsurvey.org mapsurvey.render.com *.render.com"
       - key: MAPBOX_ACCESS_TOKEN
         sync: false
+      # Server-only token for the printable form's Static Images calls. The public token
+      # above is URL-restricted, and server requests carry no Referer (issue #518).
+      - key: MAPBOX_SERVER_TOKEN
+        sync: false
       # AI survey draft generation. The web service only needs the provider
       # credentials to decide whether to render the AI panel; the worker below
       # makes the actual calls. A provider with no key = feature simply off.
