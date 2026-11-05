@@ -24,6 +24,17 @@ while anything is being read.{% endcomment %}
         {% if HELP_URL.paper_photos %}<a href="{{ HELP_URL.paper_photos }}" target="_blank" rel="noopener">{% trans "Learn more" %}</a>{% endif %}
     </p>
 
+    {% if forms %}
+    {# One collapsed line (owner, 2026-11-02: the cards took the page and said nothing); the forms are inside. #}
+    <details class="paper-notes paper-forms">
+        <summary>
+            <b>{% trans "Printed forms" %}</b>
+            <span class="paper-notes__count">{{ forms_total.count }}</span>
+            {% if forms_total.printed %}<span class="badge badge-light">{% blocktrans with n=forms_total.printed back=forms_total.back %}{{ back }} of {{ n }} numbered copies back{% endblocktrans %}</span>{% endif %}
+            <a class="paper-notes__all" href="{% url 'editor_survey_share' survey.uuid %}#print-form">{% trans "Print more" %}</a>
+        </summary>
+        <div class="paper-notes__list">
+    {% endif %}
     {% for f in forms %}
     <div class="paper-form-card">
         <b>{% blocktrans with code=f.form.code %}Printed form MS-{{ code }}{% endblocktrans %}</b>
@@ -41,6 +52,10 @@ while anything is being read.{% endcomment %}
         {% trans "No paper form has been printed for this survey yet." %} <a href="{% url 'editor_survey_share' survey.uuid %}#print-form">{% trans "Print one on the Share page" %}</a>
     </div>
     {% endfor %}
+    {% if forms %}
+        </div>
+    </details>
+    {% endif %}
 
     <div class="paper-actions">
         <form method="post" action="{% url 'paper_new' survey.uuid %}" class="d-inline">{% csrf_token %}

@@ -659,10 +659,12 @@ def _home_context(survey, batch):
     # The one response missing exactly one page is the likely home of a lone set-aside photo.
     gaps = [(s, s.missing) for s in open_sheets if s.missing]
     suggestion = gaps[0] if len(gaps) == 1 and len(gaps[0][1]) == 1 else None
+    forms = _forms_summary(canonical)
     return {
         'survey': survey,
         'batch': batch,
-        'forms': _forms_summary(canonical),
+        'forms': forms,
+        'forms_total': {'count': len(forms), 'printed': sum(f['printed'] for f in forms), 'back': sum(f['back'] for f in forms)},
         'numbered': PrintRun.objects.filter(survey=canonical).exists(),
         'open_sheets': open_sheets,
         'to_check': sum(1 for s in open_sheets if s.is_reviewable and s.has_pages),

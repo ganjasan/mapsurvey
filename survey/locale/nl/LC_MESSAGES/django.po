@@ -10250,3 +10250,15 @@ msgstr "Foto’s worden bewaard tot het antwoord is opgeslagen of verwijderd, en
 #: survey/paper_views.py
 msgid "Too many photos are waiting. Check or delete some responses first."
 msgstr "Te veel foto’s wachten. Controleer of verwijder eerst enkele antwoorden."
+
+#: survey/templates/editor/paper/home.html
+msgid "Printed forms"
+msgstr "Afgedrukte formulieren"
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "Mark as checked"
+msgstr "Markeren als gecontroleerd"
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "Checked"
+msgstr "Gecontroleerd"

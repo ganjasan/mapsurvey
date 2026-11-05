@@ -16,7 +16,7 @@
      data-visible-layers="{{ visible_layers_json|default:'[]' }}"
      data-session-id="{% if not entry %}{{ request.session.survey_session_id|default:'' }}{% endif %}"
      {% if entry %}data-entry-session="{{ entry_session.pk }}"{% endif %}
-     {% if paper_review %}data-paper-doubtful="{{ paper_doubtful|join:',' }}" data-paper-blank="{{ paper_blank|join:',' }}" data-paper-note="{% trans 'Check this against the photo' %}"{% endif %}
+     {% if paper_review %}data-paper-doubtful="{{ paper_doubtful|join:',' }}" data-paper-blank="{{ paper_blank|join:',' }}" data-paper-note="{% trans 'Check this against the photo' %}" data-paper-check-action="{% trans 'Mark as checked' %}" data-paper-checked-label="{% trans 'Checked' %}"{% endif %}
      data-section-name="{{ section.name|escapejs }}"
      data-section-current="{{ section_current }}"
      data-section-total="{{ section_total }}"

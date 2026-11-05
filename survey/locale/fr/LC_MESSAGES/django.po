@@ -10298,3 +10298,15 @@ msgstr "Les photos sont conservées jusqu’à l’enregistrement ou la suppress
 #: survey/paper_views.py
 msgid "Too many photos are waiting. Check or delete some responses first."
 msgstr "Trop de photos en attente. Vérifiez ou supprimez d’abord quelques réponses."
+
+#: survey/templates/editor/paper/home.html
+msgid "Printed forms"
+msgstr "Formulaires imprimés"
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "Mark as checked"
+msgstr "Marquer comme vérifié"
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "Checked"
+msgstr "Vérifié"

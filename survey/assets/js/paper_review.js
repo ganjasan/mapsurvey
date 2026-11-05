@@ -334,26 +334,76 @@
         var doubtful = (data.dataset.paperDoubtful || '').split(',').filter(Boolean);
         var blank = (data.dataset.paperBlank || '').split(',').filter(Boolean);
         var note = data.dataset.paperNote || 'Check this against the photo';
-        doubtful.forEach(function (code) {
-            var card = document.querySelector('.question-card[data-field-name="' + code + '"]');
-            if (card) { card.classList.add('paper-doubtful'); card.setAttribute('data-paper-note', note); }
-        });
-        blank.forEach(function (code) {
-            var card = document.querySelector('.question-card[data-field-name="' + code + '"]');
-            if (card && !card.classList.contains('paper-doubtful')) card.classList.add('paper-blank');
-        });
+        var actionLabel = data.dataset.paperCheckAction || 'Mark as checked';
+        var checkedLabel = data.dataset.paperCheckedLabel || 'Checked';
+        // What the operator has already checked on this page (owner, 2026-11-02: a
+        // flagged field must be markable as fixed): browser-side, per page URL.
+        var key = 'msPaperChecked:' + location.pathname;
+        var checked = {};
+        try { (JSON.parse(localStorage.getItem(key) || '[]')).forEach(function (c) { checked[c] = true; }); } catch (e) { /* no storage */ }
+        function save() {
+            try { localStorage.setItem(key, JSON.stringify(Object.keys(checked))); } catch (e) { /* no storage */ }
+        }
         var counter = document.querySelector('[data-paper-check-count]');
-        if (counter) {
-            if (doubtful.length) {
-                var tmpl = doubtful.length === 1
+        function count() {
+            if (!counter) return;
+            var left = doubtful.filter(function (c) { return !checked[c]; }).length;
+            if (left) {
+                var tmpl = left === 1
                     ? (counter.dataset.paperCheckLabelOne || '{count} field to check')
                     : (counter.dataset.paperCheckLabel || '{count} fields to check');
-                counter.textContent = tmpl.replace('{count}', String(doubtful.length));
+                counter.textContent = tmpl.replace('{count}', String(left));
                 counter.hidden = false;
             } else {
                 counter.hidden = true;
             }
         }
+        function paint(host, code, btn) {
+            var done = !!checked[code];
+            host.classList.toggle('paper-checked', done);
+            btn.textContent = '';
+            var text = document.createElement('span');
+            text.textContent = done ? checkedLabel : note;
+            btn.appendChild(text);
+            var action = document.createElement('span');
+            action.className = 'paper-check__action';
+            action.textContent = done ? '✓' : actionLabel;
+            btn.appendChild(action);
+            btn.setAttribute('aria-pressed', done ? 'true' : 'false');
+        }
+        doubtful.forEach(function (code) {
+            var card = document.querySelector('.question-card[data-field-name="' + code + '"]');
+            var block = document.querySelector('.paper-marks__q[data-marks-question="' + code + '"]');
+            var host = card || block;
+            if (!host) return;
+            host.classList.add(card ? 'paper-doubtful' : 'paper-marks__q--doubt');
+            var btn = host.querySelector('.paper-check');
+            if (!btn) {
+                btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'paper-check';
+                if (card) {
+                    host.insertBefore(btn, host.firstChild);
+                } else {
+                    var old = host.querySelector('.paper-marks__doubt');
+                    if (old) old.remove();
+                    var title = host.querySelector('.paper-marks__title') || host;
+                    title.appendChild(btn);
+                }
+                btn.addEventListener('click', function () {
+                    if (checked[code]) delete checked[code]; else checked[code] = true;
+                    save();
+                    paint(host, code, btn);
+                    count();
+                });
+            }
+            paint(host, code, btn);
+        });
+        blank.forEach(function (code) {
+            var card = document.querySelector('.question-card[data-field-name="' + code + '"]');
+            if (card && !card.classList.contains('paper-doubtful')) card.classList.add('paper-blank');
+        });
+        count();
     }
 
     document.addEventListener('DOMContentLoaded', init);

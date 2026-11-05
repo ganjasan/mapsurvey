@@ -10225,3 +10225,15 @@ msgstr "Foto disimpan sampai tanggapan tersimpan atau dihapus, paling lama 30 ha
 #: survey/paper_views.py
 msgid "Too many photos are waiting. Check or delete some responses first."
 msgstr "Terlalu banyak foto menunggu. Periksa atau hapus beberapa tanggapan dulu."
+
+#: survey/templates/editor/paper/home.html
+msgid "Printed forms"
+msgstr "Formulir tercetak"
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "Mark as checked"
+msgstr "Tandai sudah diperiksa"
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "Checked"
+msgstr "Sudah diperiksa"

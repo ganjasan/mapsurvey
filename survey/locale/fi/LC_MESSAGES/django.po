@@ -10212,3 +10212,15 @@ msgstr "Kuvat säilytetään, kunnes vastaus tallennetaan tai poistetaan, enint�
 #: survey/paper_views.py
 msgid "Too many photos are waiting. Check or delete some responses first."
 msgstr "Liian monta kuvaa odottaa. Tarkista tai poista ensin joitakin vastauksia."
+
+#: survey/templates/editor/paper/home.html
+msgid "Printed forms"
+msgstr "Tulostetut lomakkeet"
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "Mark as checked"
+msgstr "Merkitse tarkistetuksi"
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "Checked"
+msgstr "Tarkistettu"

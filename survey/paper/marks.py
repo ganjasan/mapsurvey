@@ -799,7 +799,12 @@ def place_marks(raw_marks, frame_box, geo_items, map_rec, img, paper, frame_corn
         # what the ink shows and the model did not name becomes a numbered mark
         # of this question when no other question of the kind shares the page.
         pairs, used = _match_marks(marks, candidates, h, img.size, map_rec, ppm)
-        unmatched_ink = [c for j, c in enumerate(candidates) if j not in used and not c.get('weak')]
+        # Ink the model did not name: every strong mark, and a fine pen's dot
+        # (weak, print-tested) that is not a fragment of a glyph — the model
+        # dropped A1 of three on copy 164 and the ink had it.
+        unmatched_ink = [c for j, c in enumerate(candidates) if j not in used
+                         and (not c.get('weak') or (c['kind'] == 'point' and not c.get('unprinted')
+                                                    and not _touches_text(c, ink_marks, ppm)))]
         if len(kinds_on_page[item['type']]) > 1:
             unmatched_ink = []
         features, boxes, labels, confidence, lost, from_ink = [], [], [], 1.0, 0, 0
@@ -820,7 +825,7 @@ def place_marks(raw_marks, frame_box, geo_items, map_rec, img, paper, frame_corn
             else:
                 coords = place_points(mark.get('points'), h, img.size, map_rec)
                 geometry = geometry_for(item['type'], coords)
-                box = _mark_box(mark.get('points'))
+                box = _mark_box(mark.get('points')) or _box_1000(mark.get('label_box'))
             if geometry is None:
                 if candidate is None:
                     lost += 1   # the model's vertices make no shape: the operator draws it
@@ -906,7 +911,9 @@ def _match_marks(marks, candidates, h, img_size, map_rec, ppm):
 
 
 def _mark_ref_px(mark, h, img_size, map_rec, ppm):
-    """A model mark's vertices as reference pixels of the frame."""
+    """A model mark's vertices as reference pixels of the frame — or, for a mark
+    the model could only LABEL (no points), the centre of its label box: the
+    row is named there, and the drawn mark is the ink nearest to it."""
     pts = []
     for pt in mark.get('points') or []:
         try:
@@ -916,6 +923,12 @@ def _mark_ref_px(mark, h, img_size, map_rec, ppm):
         page = apply(h, x / 1000 * img_size[0], y / 1000 * img_size[1])
         if page is not None:
             pts.append(((page[0] - map_rec['x_mm']) * ppm, (page[1] - map_rec['y_mm']) * ppm))
+    if not pts:
+        box = _box_1000(mark.get('label_box'))
+        if box:
+            page = apply(h, (box[1] + box[3]) / 2 / 1000 * img_size[0], (box[0] + box[2]) / 2 / 1000 * img_size[1])
+            if page is not None:
+                pts.append(((page[0] - map_rec['x_mm']) * ppm, (page[1] - map_rec['y_mm']) * ppm))
     return pts
 
 
@@ -970,6 +983,23 @@ def _mark_properties(item, mark, other_option, _coerce_value):
             continue
         properties[code] = [str(v) for v in value] if isinstance(value, list) else [str(value)]
     return properties
+
+
+def _touches_text(candidate, ink_marks, ppm):
+    """True when the candidate's box lies within GLYPH_GAP_MM of a piece of writing: a
+    fragment of a glyph, not a dot beside a label."""
+    gap = GLYPH_GAP_MM * ppm
+    u0, v0, u1, v1 = candidate['bbox']
+    for other in ink_marks:
+        if other['kind'] != 'text':
+            continue
+        a0, b0, a1, b1 = other['bbox']
+        if u0 - gap <= a1 and a0 <= u1 + gap and v0 - gap <= b1 and b0 <= v1 + gap:
+            return True
+    return False
+
+
+GLYPH_GAP_MM = 1.0
 
 
 def _box_1000(value):

@@ -92,6 +92,7 @@ def _blank_provider(n=20):
     return _FakeProvider([{'fields': []} for _ in range(n)])
 
 
+@override_settings(MAPBOX_ACCESS_TOKEN='')   # no static-map calls: the grid stand-in, and no frame reference
 class _PaperFixture(TestCase):
     """A Pro workspace, a two-section survey (choice + text + multichoice, then a point)."""
 

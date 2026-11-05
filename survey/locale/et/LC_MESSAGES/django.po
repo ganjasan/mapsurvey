@@ -10191,3 +10191,15 @@ msgstr "Fotosid hoitakse, kuni vastus salvestatakse või kustutatakse, kõige ro
 #: survey/paper_views.py
 msgid "Too many photos are waiting. Check or delete some responses first."
 msgstr "Liiga palju fotosid ootab. Kontrolli või kustuta enne mõned vastused."
+
+#: survey/templates/editor/paper/home.html
+msgid "Printed forms"
+msgstr "Prinditud vormid"
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "Mark as checked"
+msgstr "Märgi kontrollituks"
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "Checked"
+msgstr "Kontrollitud"

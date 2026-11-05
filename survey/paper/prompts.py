@@ -28,11 +28,11 @@ Rules of reading:
 Marks on the map (only when the message lists map questions): the page carries a printed map in a black rectangular frame. The respondent drew marks on it and wrote a letter and a number next to each (A1, A2, B1 …); the letter is the map question, the number is the row of that question's table below the map, where the respondent wrote the answers about that mark.
 - map_frame is the box of the printed map's black frame: [ymin, xmin, ymax, xmax], 0–1000 of the photo.
 - map_frame_corners are the four corners of that black frame as it appears on the photo, as [y, x] pairs 0–1000: top-left, top-right, bottom-left, bottom-right. A photo taken at an angle shows the frame as a trapezoid; give the actual corners of the black border, not of the box.
-- Report one entry in marks per drawn mark: label (e.g. "A1"), question (the code of the map question with that letter), points — the mark's vertices as [y, x] pairs, 0–1000 of the photo: one point for a dot; the vertices along a drawn line in order; the corners of an outlined or shaded area in order around it — and confidence.
+- Report one entry in marks per LABEL written on the map and per filled row of the table (A1, A2, …), whether or not you can make out the drawn mark itself: label (e.g. "A1"), question (the code of the map question with that letter), points — the mark's vertices as [y, x] pairs, 0–1000 of the photo: one point for a dot; the vertices along a drawn line in order; the corners of an outlined or shaded area in order around it — and confidence. If the drawn mark is unclear, leave points empty and still report the label, its label_box and the row's answers: the mark is read from the ink by other means, the row is not.
 - points are the ink of the SYMBOL only — the centre of the drawn dot, the drawn line, the drawn outline. The letter and number written next to it are a label, never part of the mark: do not centre on them or include them.
 - label_box is where that label is WRITTEN: the box around the handwritten letter and number, [ymin, xmin, ymax, xmax], 0–1000 of the photo. Omit it when nothing is written next to the mark.
 - A mark without a legible label: still report it, with the letter of the question whose symbol it is (dot, line, area) and the next free number.
-- answers are what is written in the mark's row of the table: one entry per column with the column's question code and the value, following the rules above for its type. Skip empty cells.
+- answers are what is written in the mark's row of the table: one entry per column with the column's question code and the value, following the rules above for its type. Skip empty cells; an empty row is an empty list, never a missing field.
 - Report nothing for the map when no mark is drawn on it; never invent a mark.
 """
 
@@ -103,7 +103,7 @@ RESPONSE_SCHEMA = {
                     },
                     'confidence': {'type': 'number', 'minimum': 0, 'maximum': 1},
                 },
-                'required': ['label', 'question', 'points', 'confidence'],
+                'required': ['label', 'question', 'answers', 'confidence'],
             },
         },
     },
