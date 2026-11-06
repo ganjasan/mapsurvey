@@ -82,7 +82,7 @@
 
 - [x] 11.1 Help page `help/src/content/docs/how-to/enter-paper-forms-from-photos.md` (how to photograph: whole page, flat, all four corner marks in frame; what the model reads well and badly; the review); `help_links` key `paper_photos`; "Learn more" link on the batch page; `npm run build` in `help/` passes
 - [x] 11.2 New creator strings appended to every offered catalog by hand (`TranslationCatalogHygieneTest`); `compilemessages`
-- [x] 11.3 Changelog entry `survey/changelog/<date>-paper-photos.html` (kind `new`, amends the paper-responses story of items 1–2 if a card exists for the epic — one card per epic)
+- [ ] 11.3 Changelog entry — taken out of this PR (owner 2026-11-06: no What's new card for now); the draft is kept outside the repo and ships when the owner decides
 - [x] 11.4 `POSTHOG_EXCLUDED_VIEW_NAMES` unchanged (batch pages are creator surfaces and ARE tracked); `_posthog_scrub_tags` needs nothing (no respondent prefix)
 - [x] 11.5 CLAUDE.md paragraph "Paper photos (change paper-photo-entry, #495)" next to the operator-entry/printable-form notes: the four rows, the worker-only rule, the items map, the prefill seam, the image lifetime
 
@@ -103,7 +103,7 @@ number is read without AI, one form starts as an empty response.
 - [x] 13.9 Strings: v2 strings in all ten catalogs; only this change's own obsolete v1 entries dropped; compiled; i18n hygiene green
 - [x] 13.10 Tests rewritten in `test_paper_photo_entry.py` (gate, upload, ingest, placement scenarios, extraction + quota, page check, missing page, sweep, events) and `test_printable_form.py` (footer, copies numbering, bounds)
 - [x] 13.11 OpenSpec artefacts: proposal, design (D1, D3, D4, D7, D8, D10), `paper-photo-entry` spec rewritten, `printable-form` delta (two QR, copies), `operator-entry` delta (Check next, `paper_copy`)
-- [x] 13.12 Help page `how-to/enter-paper-forms-from-photos` and the printing page rewritten for copies / New response / Upload a stack; changelog entry updated; CLAUDE.md paragraph updated
+- [x] 13.12 Help page `how-to/enter-paper-forms-from-photos` and the printing page rewritten for copies / New response / Upload a stack; CLAUDE.md paragraph updated
 - [x] 13.13 Full suite `./run_tests.sh survey billing api mcp newsletter`; `openspec validate paper-photo-entry --strict`
 - [x] 13.14 Second live check (2026-10-31): page 1 of a single-QR form with the footer cropped is placed by the page-1 online-link QR (`codes.shows_first_page_link`); a code-less photo dropped into a response offers "It is page [n]" + Attach; Check button back to normal size; Responses toolbar buttons one height
 - [x] 13.15 × on every notice of a response page (`paper_page_dismiss`): deletes a replaced or set-aside photo, clears the note of one that went to its own copy
