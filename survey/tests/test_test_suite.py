@@ -142,6 +142,7 @@ UNMAPPED_MODULES = {
     'creator-language-preference': 'spec lives in the unarchived change creator-ui-localization',
     'repo-hygiene': 'spec lives in the unarchived change ops-repo-separation',
     'paper-photo-entry': 'spec lives in the unarchived change paper-photo-entry',
+    'map-style-rendering': 'spec lives in the unarchived change map-styles-rendering-path',
 }
 
 # Capabilities with no module here: tested in another app, or not by any
