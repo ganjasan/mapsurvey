@@ -84,7 +84,7 @@ fi
 
 # Start Celery worker in background
 echo "🔴 Starting Celery worker..."
-celery -A mapsurvey worker -l info &
+celery -A mapsurvey worker -Q celery,styles -l info &
 CELERY_PID=$!
 echo "✓ Celery worker started (PID $CELERY_PID)"
 

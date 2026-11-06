@@ -34,16 +34,11 @@ CACHE_TTL = 24 * 3600
 MAX_FEATURES = 20_000
 WORLD_ZOOM = 1
 
-BASEMAP_STYLES = {
-    'streets': 'mapbox/streets-v12',
-    'topo': 'mapbox/outdoors-v12',
-    'paper': settings.MAPBOX_PAPER_STYLE,   # made for print (#534)
-    'paper_b': settings.MAPBOX_PAPER_B_STYLE,   # the planner's base map (#534)
-    # The respondent's satellite is Esri imagery, which has no static endpoint;
-    # satellite-streets is the nearest look and carries street names, which
-    # paper needs more than a screen does.
-    'satellite': 'mapbox/satellite-streets-v12',
-}
+# Which Mapbox style a basemap key prints with is the map style library's answer
+# (change map-styles-library, #542): `survey/basemaps.py::resolve(key, org, pins)`
+# gives the version's `static_style` — for the satellite preset that is
+# `mapbox/satellite-streets-v12`, because Esri imagery has no static endpoint and
+# satellite-streets carries street names, which paper needs more than a screen does.
 ATTRIBUTION = '© Mapbox © OpenStreetMap'
 
 
@@ -52,11 +47,12 @@ class FrameSpec:
     lat: float
     lng: float
     zoom: int                 # Leaflet zoom (256-px tiles)
-    basemap: str | None       # key of BASEMAP_STYLES, or None when no basemap can be fetched
+    basemap: str | None       # basemap key (survey/basemaps.py), or None when no basemap can be fetched
     section_code: str = ''
     width: int = FRAME_W
     height: int = FRAME_H
     note: str = ''            # why the position is a fallback, for the legend
+    static_style: str = ''    # Mapbox style id the Static Images API renders for `basemap`
 
     @property
     def style_zoom(self):
@@ -155,11 +151,12 @@ def _zoom_for_bounds(bbox, width=FRAME_W, height=FRAME_H):
 
 
 def _basemap_key(section, survey):
-    name = section.override_basemap or survey.default_basemap
-    if not name:
-        enabled = survey.basemaps or []
-        name = enabled[0] if enabled else 'streets'
-    return name if name in BASEMAP_STYLES else 'streets'
+    """The key the printed frame renders: the section's override, else the survey's
+    default, else the first enabled key — the first of those the workspace resolves,
+    with the survey's pins honoured, else `streets`."""
+    from survey import basemaps
+    wanted = [section.override_basemap, survey.default_basemap, *(survey.basemaps or [])]
+    return basemaps.first_available([k for k in wanted if k], survey.organization, survey.basemap_pins)
 
 
 def resolve_frame(section, survey):
@@ -167,26 +164,35 @@ def resolve_frame(section, survey):
     position, else the survey's, else the bounds of the reference layers, else
     the world (with a note for the legend)."""
     basemap = _basemap_key(section, survey)
+    static = basemap_style(basemap, survey)
     code = section.code or ''
     if section.start_map_postion:
         zoom = section.start_map_zoom if section.start_map_zoom is not None else (
             survey.start_map_zoom if survey.start_map_zoom is not None else 12)
-        return FrameSpec(section.start_map_postion.y, section.start_map_postion.x, int(zoom), basemap, code)
+        return FrameSpec(section.start_map_postion.y, section.start_map_postion.x, int(zoom), basemap, code,
+                         static_style=static)
     if survey.start_map_postion:
         zoom = survey.start_map_zoom if survey.start_map_zoom is not None else 12
-        return FrameSpec(survey.start_map_postion.y, survey.start_map_postion.x, int(zoom), basemap, code)
+        return FrameSpec(survey.start_map_postion.y, survey.start_map_postion.x, int(zoom), basemap, code,
+                         static_style=static)
     bbox = _layer_bounds(survey)
     if bbox:
         lat = (bbox[1] + bbox[3]) / 2
         lng = (bbox[0] + bbox[2]) / 2
-        return FrameSpec(lat, lng, _zoom_for_bounds(bbox), basemap, code, note='layers')
-    return FrameSpec(0.0, 0.0, WORLD_ZOOM, basemap, code, note='world')
+        return FrameSpec(lat, lng, _zoom_for_bounds(bbox), basemap, code, note='layers', static_style=static)
+    return FrameSpec(0.0, 0.0, WORLD_ZOOM, basemap, code, note='world', static_style=static)
 
 
 # ── basemap ────────────────────────────────────────────────────────────────
 
-def basemap_style(name):
-    return BASEMAP_STYLES.get(name, BASEMAP_STYLES['streets'])
+def basemap_style(name, survey=None):
+    """Mapbox style id the Static Images API renders for a basemap key. Without a survey
+    only presets resolve; a workspace style needs the survey's workspace and pins."""
+    from survey import basemaps
+    org = survey.organization if survey is not None else None
+    pins = survey.basemap_pins if survey is not None else None
+    basemap = basemaps.resolve(name, org, pins) or basemaps.resolve(basemaps.FALLBACK_KEY, None)
+    return basemap.static_style
 
 
 def _cache_key(style, lat, lng, zoom, width, height):
@@ -201,7 +207,7 @@ def fetch_basemap(spec):
              or getattr(settings, 'MAPBOX_ACCESS_TOKEN', '') or '')
     if not token or spec.basemap is None:
         return None
-    style = basemap_style(spec.basemap)
+    style = spec.static_style or basemap_style(spec.basemap)
     key = _cache_key(style, spec.lat, spec.lng, spec.style_zoom, spec.width, spec.height)
     cached = cache.get(key)
     if cached is None:

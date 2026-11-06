@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load static %}
 {% load l10n %}
+{% load basemap_tags %}
 
 {% block page_title %}{% trans "New Survey" %}{% endblock %}
 
@@ -489,14 +490,16 @@
         // becomes visible (openspec: mobile-adaptive-refactor, group 9).
         window._createMap = map;
 
-        // Base map providers — identical to what respondents get (see basemap_layers.html)
-        var providers = {
-            streets:   L.tileLayer('{{ MAPBOX_URL }}', { attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="https://osm.org/copyright">OpenStreetMap</a>', maxZoom: 23, accessToken: '{{ MAPBOX_ACCESS_TOKEN }}' }),
-            satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '&copy; Esri', maxZoom: 19 }),
-            topo:      L.tileLayer('{{ MAPBOX_OUTDOORS_URL }}', { attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="https://osm.org/copyright">OpenStreetMap</a>', maxZoom: 22, accessToken: '{{ MAPBOX_ACCESS_TOKEN }}' }),
-            paper:     L.tileLayer('{{ MAPBOX_PAPER_URL }}', { attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="https://osm.org/copyright">OpenStreetMap</a>', maxZoom: 22, accessToken: '{{ MAPBOX_ACCESS_TOKEN }}' }),
-            paper_b:   L.tileLayer('{{ MAPBOX_PAPER_B_URL }}', { attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="https://osm.org/copyright">OpenStreetMap</a>', maxZoom: 22, accessToken: '{{ MAPBOX_ACCESS_TOKEN }}' })
-        };
+        // Base map providers — the same table respondents get (survey/basemaps.py via
+        // basemap_table; change map-styles-library, #542): presets and the workspace's styles.
+        var BM_TABLE = {% basemap_table active_org %};
+        var providers = {};
+        Object.keys(BM_TABLE).forEach(function(slug) {
+            var p = BM_TABLE[slug];
+            var opts = Object.assign({}, p.opts);
+            if (p.provider === 'mapbox') opts.accessToken = '{{ MAPBOX_ACCESS_TOKEN }}';
+            providers[slug] = L.tileLayer(p.url, opts);
+        });
         var currentBase = null;
         function setBasemap(slug) {
             var layer = providers[slug] || providers.streets;
@@ -508,13 +511,12 @@
         setBasemap('streets');
 
         // On-map base-map DROPDOWN (compact toggle → menu), with icons.
-        var BM_META = {
-            streets:   { label: 'Streets',   icon: 'fa-map' },
-            satellite: { label: 'Satellite', icon: 'fa-satellite' },
-            topo:      { label: 'Topo',       icon: 'fa-mountain' },
-            paper:     { label: 'Paper A',    icon: 'fa-print' },
-            paper_b:   { label: 'Paper B',    icon: 'fa-print' }
-        };
+        var BM_ICONS = { streets: 'fa-map', satellite: 'fa-satellite', topo: 'fa-mountain', paper: 'fa-print', paper_b: 'fa-print' };
+        var BM_META = {};
+        var BM_KEYS = Object.keys(BM_TABLE);
+        BM_KEYS.forEach(function(slug) {
+            BM_META[slug] = { label: BM_TABLE[slug].name, icon: BM_ICONS[slug] || 'fa-palette' };
+        });
         var BasemapControl = L.Control.extend({
             options: { position: 'topright' },
             onAdd: function() {
@@ -542,7 +544,7 @@
                     });
                     menu.classList.remove('open');
                 }
-                ['streets', 'satellite', 'topo', 'paper', 'paper_b'].forEach(function(s) {
+                BM_KEYS.forEach(function(s) {
                     var opt = L.DomUtil.create('div', 'bm-option' + (s === slug ? ' active' : ''), menu);
                     opt.setAttribute('role', 'option');
                     opt.setAttribute('data-slug', s);

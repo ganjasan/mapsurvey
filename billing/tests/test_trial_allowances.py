@@ -19,7 +19,7 @@ from .. import trial
 from ..models import STATUS_REFUNDED, EntitlementGrant, GrantAllowance
 from .helpers import PPG_SETTINGS, make_org, make_sub
 
-OFFER = {'api': 500, 'unbranded': 1, 'pro_help': 1, 'operator_entry': None}
+OFFER = {'api': 500, 'unbranded': 1, 'pro_help': 1, 'operator_entry': None, 'map_styles': 2}
 CAPPED = {k: v for k, v in OFFER.items() if v is not None}
 
 
@@ -385,9 +385,9 @@ class BillingPageTest(TestCase):
         THEN the block says the trial used everything
         """
         grant = trial.claim(self.org, self.owner)
+        from django.db.models import F
         GrantAllowance.objects.filter(grant=grant, limit__isnull=True).delete()
-        GrantAllowance.objects.filter(grant=grant).update(used=500)
-        GrantAllowance.objects.filter(grant=grant).exclude(feature='api').update(used=1)
+        GrantAllowance.objects.filter(grant=grant).update(used=F('limit'))
         self.assertContains(self.client.get(self.url), 'data-trial-state="exhausted"')
 
     def test_uncapped_allowance_keeps_the_trial_live(self):

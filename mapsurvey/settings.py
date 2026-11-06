@@ -417,23 +417,21 @@ ACCOUNT_ACTIVATION_DAYS = int(os.environ.get('ACCOUNT_ACTIVATION_DAYS', 7))
 SIGN_IN_GRACE_HOURS = int(os.environ.get('SIGN_IN_GRACE_HOURS', 24))
 
 # Mapbox
-# Both style URLs are settings rather than template literals: Mapbox retires style
-# versions (outdoors-v11 -> v12), and the URL is referenced from several templates.
-# MAPBOX_OUTDOORS_URL backs the `topo` basemap — it must not be derived from
-# MAPBOX_URL by string replacement, which would break the moment MAPBOX_URL points
-# at a custom style, which is the reason that env var exists.
-MAPBOX_URL = os.environ.get('MAPBOX_URL', 'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/256/{z}/{x}/{y}@2x?access_token={accessToken}')
-MAPBOX_OUTDOORS_URL = os.environ.get('MAPBOX_OUTDOORS_URL', 'https://api.mapbox.com/styles/v1/mapbox/outdoors-v12/tiles/256/{z}/{x}/{y}@2x?access_token={accessToken}')
+# Which style a basemap key means is a row of the map style library (change
+# map-styles-library, #542): the presets Streets / Topo / Paper A / Paper B hold their
+# Mapbox style ids, a workspace style holds the id its version was published under.
+# This is the one tile template they are rendered through — 512-px tiles (#522: a
+# quarter of the billable requests of 256-px ones) with Leaflet's `tileSize: 512,
+# zoomOffset: -1`, which survey/basemaps.py derives from the URL, so an override that
+# still says `256` keeps working. `{style}` is the style id, `{accessToken}` the
+# public token the browser adds.
+MAPBOX_TILES_URL = os.environ.get('MAPBOX_TILES_URL', 'https://api.mapbox.com/styles/v1/{style}/tiles/512/{z}/{x}/{y}@2x?access_token={accessToken}')
 MAPBOX_ACCESS_TOKEN = os.environ.get('MAPBOX_ACCESS_TOKEN', '')
-# The `paper` basemap (#534): a Mapbox style built for print — white ground, cased streets with names,
-# no POI icons or route shields, city names only at regional zooms — so a pen mark stands out on a
-# greyscale copy. `<account>/<style id>`; the style must be readable with MAPBOX_ACCESS_TOKEN.
-MAPBOX_PAPER_STYLE = os.environ.get('MAPBOX_PAPER_STYLE', 'artemkonuchov/cmw4ul8hj00qw01r19ensc484')
-MAPBOX_PAPER_URL = f'https://api.mapbox.com/styles/v1/{MAPBOX_PAPER_STYLE}/tiles/256/{{z}}/{{x}}/{{y}}@2x?access_token={{accessToken}}'
-# `paper_b`: the planner's base map, after a customer's printed neighbourhood map — white streets, bold
-# street names, light-green parks, teal water.
-MAPBOX_PAPER_B_STYLE = os.environ.get('MAPBOX_PAPER_B_STYLE', 'artemkonuchov/cmw4v89eu00xu01s8hcrt5iqv')
-MAPBOX_PAPER_B_URL = f'https://api.mapbox.com/styles/v1/{MAPBOX_PAPER_B_STYLE}/tiles/256/{{z}}/{{x}}/{{y}}@2x?access_token={{accessToken}}'
+# Publishing a workspace style creates a Mapbox style in this account from the Celery
+# worker (survey/map_styles/tasks.py) with a SECRET token (styles:write, styles:list).
+# Never render MAPBOX_STYLES_TOKEN into a page or hand it to the web process's templates.
+MAPBOX_ACCOUNT = os.environ.get('MAPBOX_ACCOUNT', 'artemkonuchov')
+MAPBOX_STYLES_TOKEN = os.environ.get('MAPBOX_STYLES_TOKEN', '')
 # Server-side Mapbox calls (the printable form's Static Images request) use their own
 # token. MAPBOX_ACCESS_TOKEN ships to every browser, so production restricts it to our
 # URLs — and a server request carries no Referer, so a restricted token answers 403.
@@ -763,6 +761,13 @@ CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/
 CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
 CELERY_TASK_ALWAYS_EAGER = os.environ.get('CELERY_TASK_ALWAYS_EAGER', 'False').lower() == 'true'
 CELERY_TIMEZONE = 'UTC'
+# Map style publishing (change map-styles-library, #542) has its own queue so the
+# Styles API's 50 writes/min per account are paced by one rate-limited consumer; the
+# worker must consume it (`-Q celery,styles` in run_dev.sh and render.yaml).
+CELERY_TASK_ROUTES = {
+    'survey.map_styles.tasks.publish_map_style_version': {'queue': 'styles'},
+    'survey.map_styles.tasks.delete_mapbox_style': {'queue': 'styles'},
+}
 # Celery beat runs inside the worker (`celery worker -B`, see render.yaml). One entry: close
 # published surveys whose closing time has passed (change survey-schedule, #497). The
 # respondent gate already enforces the time to the minute; this materialises the status.

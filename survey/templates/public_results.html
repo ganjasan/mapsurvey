@@ -1,4 +1,4 @@
-{% load static i18n %}
+{% load static i18n basemap_tags %}
 <!DOCTYPE html>
 <html lang="{{ lang|default:'en' }}">
 <head>
@@ -150,13 +150,12 @@
     // already served to anonymous respondents on every survey page.
     // Declared before the render loop for the same hoisting reason as PALETTE.
     var MAPBOX_TOKEN = '{{ MAPBOX_ACCESS_TOKEN }}';
-    var BASEMAPS = {
-      streets:   { url: '{{ MAPBOX_URL }}',          opts: { attribution: '© Mapbox © OpenStreetMap', maxZoom: 23, accessToken: MAPBOX_TOKEN } },
-      satellite: { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', opts: { attribution: '© Esri', maxZoom: 19 } },
-      topo:      { url: '{{ MAPBOX_OUTDOORS_URL }}', opts: { attribution: '© Mapbox © OpenStreetMap', maxZoom: 22, accessToken: MAPBOX_TOKEN } },
-      paper:     { url: '{{ MAPBOX_PAPER_URL }}',    opts: { attribution: '© Mapbox © OpenStreetMap', maxZoom: 22, accessToken: MAPBOX_TOKEN } },
-      paper_b:   { url: '{{ MAPBOX_PAPER_B_URL }}',  opts: { attribution: '© Mapbox © OpenStreetMap', maxZoom: 22, accessToken: MAPBOX_TOKEN } }
-    };
+    // The same provider table the respondent map reads (survey/basemaps.py, change
+    // map-styles-library, #542), for this survey's workspace and pins.
+    var BASEMAPS = {% basemap_table survey.organization survey.basemap_pins %};
+    Object.keys(BASEMAPS).forEach(function(k) {
+      if (BASEMAPS[k].provider === 'mapbox') BASEMAPS[k].opts.accessToken = MAPBOX_TOKEN;
+    });
 
     var blocks = JSON.parse(document.getElementById('blocks-data').textContent || '[]');
     blocks.forEach(function(b){

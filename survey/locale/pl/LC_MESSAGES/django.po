@@ -10397,3 +10397,91 @@ msgstr "Co nowego"
 #: survey/templates/partials/_app_sidebar.html
 msgid "Help centre"
 msgstr "Centrum pomocy"
+
+#: map-style-library (#542)
+msgid "Map styles"
+msgstr "Style map"
+
+#: map-style-library (#542)
+msgid "Library"
+msgstr "Biblioteka"
+
+#: map-style-library (#542)
+msgid "Preset"
+msgstr "Predefiniowany"
+
+#: map-style-library (#542)
+msgid "Publishing…"
+msgstr "Publikowanie…"
+
+#: map-style-library (#542)
+msgid "Failed"
+msgstr "Nie powiodło się"
+
+
+#: map-style-library (#542)
+msgid "Rename"
+msgstr "Zmień nazwę"
+
+#: map-style-library (#542)
+msgid "New name"
+msgstr "Nowa nazwa"
+
+#: map-style-library (#542)
+msgid "Delete this map style?"
+msgstr "Usunąć ten styl mapy?"
+
+#: map-style-library (#542)
+msgid "Your own map styles"
+msgstr "Własne style map"
+
+#: map-style-library (#542)
+msgid "A style needs a name."
+msgstr "Styl musi mieć nazwę."
+
+#: map-style-library (#542)
+msgid "The hosted style is being created"
+msgstr "Trwa tworzenie stylu hostowanego"
+
+#: map-style-library (#542)
+msgid "Based on %(base)s"
+msgstr "Na podstawie %(base)s"
+
+#: map-style-library (#542)
+msgid "This base map cannot be duplicated."
+msgstr "Tej mapy podkładowej nie można zduplikować."
+
+#: map-style-library (#542)
+msgid "This style has no published version to copy yet."
+msgstr "Ten styl nie ma jeszcze opublikowanej wersji do skopiowania."
+
+#: map-style-library (#542)
+msgid "%(name)s copy"
+msgstr "Kopia %(name)s"
+
+#: map-style-library (#542)
+msgid "“%(name)s” is being published. It appears in survey settings once it is ready."
+msgstr "„%(name)s” jest publikowany. Pojawi się w ustawieniach ankiety, gdy będzie gotowy."
+
+#: map-style-library (#542)
+msgid "“%(name)s” is used by %(surveys)s. Choose another base map there first."
+msgstr "„%(name)s” jest używany przez %(surveys)s. Najpierw wybierz tam inną mapę podkładową."
+
+#: map-style-library (#542)
+msgid "“%(name)s” was deleted."
+msgstr "„%(name)s” został usunięty."
+
+#: map-style-library (#542)
+msgid "A published map style version cannot be changed; save a new version."
+msgstr "Opublikowanej wersji stylu mapy nie można zmienić; zapisz nową wersję."
+
+#: map-style-library (#542)
+msgid "A map style is the base map under your surveys, online and on paper. Pick any of these in a survey's settings. Duplicate a preset to give it your own name; the editor for colours and labels is coming next."
+msgstr "Styl mapy to mapa podkładowa pod Twoimi ankietami, online i na papierze. Wybierz dowolny z nich w ustawieniach ankiety. Zduplikuj predefiniowany styl, aby nadać mu własną nazwę; edytor kolorów i etykiet pojawi się wkrótce."
+
+#: map-style-library (#542)
+msgid "used in %(n)s survey"
+msgid_plural "used in %(n)s surveys"
+msgstr[0] "używany w %(n)s ankiecie"
+msgstr[1] "używany w %(n)s ankietach"
+msgstr[2] "używany w %(n)s ankietach"

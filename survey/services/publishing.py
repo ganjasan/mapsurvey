@@ -92,7 +92,12 @@ def transition(actor, survey, status, *, acknowledge_translation_gaps=False, cle
         survey.status = status
         if status == 'archived':
             survey.is_archived = True
-        survey.save(update_fields=['status', 'is_archived'])
+        if status == 'published':
+            # Pin the map style versions this publication shows (change
+            # map-styles-library, ADR 0001): a style saved later never changes it.
+            from survey import basemaps as basemap_registry
+            basemap_registry.pin_latest(survey)
+        survey.save(update_fields=['status', 'is_archived', 'basemap_pins'])
         if reopening:
             cleared = schedule.clear_past(survey)
             if cleared:

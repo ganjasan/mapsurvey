@@ -20,12 +20,13 @@ from billing import trial as billing_trial
 from . import other_option
 from .models import (
     SurveyHeader, SurveySection, Question, SurveyCollaborator, Answer,
-    Membership, SURVEY_ROLE_CHOICES, BASEMAP_CHOICES,
+    Membership, SURVEY_ROLE_CHOICES,
     INPUT_TYPE_CHOICES, SurveyMapLayer,
     CreatorPreferences,
     SURVEY_START_AI, SURVEY_START_CHOICES,
 )
 from . import map_start
+from . import basemaps as basemap_registry
 from .layers import (
     normalize_style, legend_for, LAYER_ICONS, layers_for, layer_owner, GEOMETRY_TEXT_FIELDS, MAX_LAYER_BYTES,
 )
@@ -241,7 +242,7 @@ def editor_survey_create(request):
             survey = form.save(commit=False)
             survey.use_geolocation = request.POST.get('use_geolocation') == '1'
             # Default base map (all basemaps stay enabled via the model default)
-            valid_basemaps = {slug for slug, _ in BASEMAP_CHOICES}
+            valid_basemaps = {slug for slug, _ in basemap_registry.choices_for(request.active_org)}
             chosen_basemap = request.POST.get('default_basemap')
             if chosen_basemap in valid_basemaps:
                 survey.default_basemap = chosen_basemap
@@ -454,7 +455,7 @@ def _start_survey_generation(request, form):
         map_target=brief_form.cleaned_data['map_target'],
         use_case=brief_form.cleaned_data['use_case'],
     )
-    valid_basemaps = {slug for slug, _ in BASEMAP_CHOICES}
+    valid_basemaps = {slug for slug, _ in basemap_registry.choices_for(request.active_org)}
     chosen_basemap = request.POST.get('default_basemap')
     header_overrides = header_overrides_from_form(
         name=form.cleaned_data['name'],
@@ -752,7 +753,7 @@ def editor_survey_settings(request, survey_uuid):
         'survey': survey,
         'form': form,
         'effective_role': request.effective_survey_role,
-        'basemap_choices': BASEMAP_CHOICES,
+        'basemap_choices': basemap_registry.choices_for(survey.organization),
         'map_layers': _editor_layers(survey),
         'layer_icons': LAYER_ICONS,
         'layers_enabled': settings.MAP_REFERENCE_LAYERS,
@@ -812,7 +813,7 @@ def editor_survey_settings_panel(request, survey_uuid):
         'form': form,
         'shadowed_by_draft': survey.get_draft_copy() if shadowed else None,
         'effective_role': request.effective_survey_role,
-        'basemap_choices': BASEMAP_CHOICES,
+        'basemap_choices': basemap_registry.choices_for(survey.organization),
         'map_layers': _editor_layers(survey),
         'layer_icons': LAYER_ICONS,
         'layers_enabled': settings.MAP_REFERENCE_LAYERS,
@@ -2099,7 +2100,7 @@ def editor_section_map_picker(request, survey_uuid, section_id):
     return render(request, 'editor/partials/section_map_picker.html', {
         'survey': survey,
         'section': section,
-        'basemap_choices': BASEMAP_CHOICES,
+        'basemap_choices': basemap_registry.choices_for(survey.organization),
     })
 
 
