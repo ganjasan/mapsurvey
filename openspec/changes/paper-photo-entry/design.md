@@ -392,6 +392,18 @@ a trapezoid on a tilted photo) and `_frame_quad` registers through them before f
 box — on page 7 that put the three dots within a few hundred metres of the ink.
 `LAYOUT_VERSION = 3`.
 
+**A table that runs onto the next page** (Stack #263): copy 165 was printed before keep-together,
+and its SPOT table's A2–A3 rows fell on page 3 under the ROUTE map, where the reader asked the model
+only about ROUTE — and a long table splits that way with keep-together too. The printer already
+records what is needed: a geo question's own block follows its table on paper, so the page of its
+`question:<code>` marker is the page the table ends on, and every page from the frame's to that one
+carries rows. `extract.table_items_for_page` lists those questions for a page, the message gets a
+"table rows continued" block (rows as marks with no points — the same schema), `marks.table_rows`
+keeps them as a `rows_only` field, `merge_pages` hangs them on the map page's field as `rows_extra`
+(an earlier page still wins the field itself), and `_paper_map_context` gives each row's answers to
+the mark of the same label, or lists the row as `unplaced`: the check draws it with its cells filled
+and a "place it on the map" link, so nothing written in the table is lost for want of a mark.
+
 **A re-shot page** (owner, 2026-11-01: "I shot it on the table — same result"): the table shot
 had been read correctly, but the page showed the answers Next had stored from the lap shot,
 because stored rows always win over the extraction. `review.supersede_machine_answers`, called by

@@ -964,6 +964,37 @@ def _point_segment(p, a, b):
     return ((p[0] - a[0] - t * dx) ** 2 + (p[1] - a[1] - t * dy) ** 2) ** 0.5
 
 
+def table_rows(raw_marks, table_items):
+    """{geo code: field} for rows of a marks table read on a page WITHOUT its map
+    (`extract.table_items_for_page`): `rows` = [{label, properties, confidence}]
+    with the row's answers coerced like a mark's, `rows_only` set; `merge_pages`
+    attaches them to the map page's field as `rows_extra`."""
+    from survey import other_option
+    from survey.paper.extract import _coerce_value
+
+    out = {}
+    for item in table_items:
+        rows, confidence = [], 1.0
+        for mark in raw_marks:
+            if str(mark.get('question') or '') != item['code']:
+                continue
+            properties = _mark_properties(item, mark, other_option, _coerce_value)
+            if len(properties) <= 1:
+                continue   # the row says nothing
+            try:
+                mark_confidence = float(mark.get('confidence', 1.0))
+            except (TypeError, ValueError):
+                mark_confidence = 0.0
+            confidence = min(confidence, mark_confidence)
+            rows.append({'label': str(mark.get('label') or '').strip().upper(), 'properties': properties,
+                         'confidence': mark_confidence})
+        if rows:
+            out[item['code']] = {'rows': rows, 'rows_only': True,
+                                 'marks': [m for m in raw_marks if str(m.get('question') or '') == item['code']],
+                                 'confidence': confidence, 'unreadable': False}
+    return out
+
+
 def _mark_properties(item, mark, other_option, _coerce_value):
     """The feature properties of a model mark: the question and the row's answers."""
     properties = {'question_id': item['code']}

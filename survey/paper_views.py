@@ -304,6 +304,23 @@ def _paper_map_context(sheet, session, map_rec, geo_questions, language, doubtfu
             survey_session=session, question=q, parent_answer_id__isnull=True).order_by('id'))
         features = stored or read or []
         boxes = (field.get('feature_boxes') or []) if not stored else []
+        # Rows of this table read on a later page (Stack #263): their answers go to the
+        # read mark of the same label; a label with no mark is a row the operator places.
+        unplaced = []
+        if not stored:
+            labels = field.get('feature_labels') or []
+            extra = list(field.get('rows_extra') or []) + (list(field.get('rows') or []) if field.get('rows_only') else [])
+            for row in extra:
+                label = str(row.get('label') or '').strip().upper()
+                props = dict(row.get('properties') or {})
+                props.pop('question_id', None)
+                i = labels.index(label) if label in labels else -1
+                if 0 <= i < len(features):
+                    target = features[i].setdefault('properties', {})
+                    for k, v in props.items():
+                        target.setdefault(k, v)
+                else:
+                    unplaced.append({'label': label, 'properties': props})
         subs = []
         for s in q.subQuestions():
             item = describe_question(s, language)
@@ -318,6 +335,7 @@ def _paper_map_context(sheet, session, map_rec, geo_questions, language, doubtfu
             'rows': _marks_count(q), 'max': hi if isinstance(hi, int) and hi > 0 else None,
             'doubtful': q.code in doubtful, 'subs': subs,
             'features': features, 'boxes': boxes, 'labels': field.get('feature_labels') or [],
+            'unplaced': unplaced,
         })
     return {'bbox': map_rec['bbox'], 'zoom': map_rec.get('zoom'), 'questions': questions}
 

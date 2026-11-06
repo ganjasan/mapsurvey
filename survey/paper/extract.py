@@ -94,7 +94,7 @@ def _item_line(item, indent=''):
     return line
 
 
-def build_user_message(items, whole_form, geo_items=None):
+def build_user_message(items, whole_form, geo_items=None, table_items=None):
     lines = [prompts.USER_HEAD_WHOLE_FORM if whole_form else prompts.USER_HEAD]
     lines += [_item_line(item) for item in items]
     if geo_items:
@@ -105,6 +105,14 @@ def build_user_message(items, whole_form, geo_items=None):
             lines.append(f"- {item['letter']} = {item['code']} ({item['type']}, {shape}): {item['name']}")
             if item.get('subs'):
                 lines.append(f"  columns of the {item['letter']} table (one row per mark, {item['letter']}1, {item['letter']}2 …):")
+                lines += [_item_line(sub, '  ') for sub in item['subs']]
+    if table_items:
+        lines.append(prompts.USER_TABLE_HEAD)
+        for item in table_items:
+            lines.append(f"- rows {item['letter']}1, {item['letter']}2 … of the table of {item['code']} ({item['name']}): "
+                         f"report each as a mark with question \"{item['code']}\" and no points")
+            if item.get('subs'):
+                lines.append('  columns of that table:')
                 lines += [_item_line(sub, '  ') for sub in item['subs']]
     return '\n'.join(lines)
 
@@ -132,15 +140,46 @@ def geo_items_for_page(page):
         if section.code != rec.get('section_code'):
             continue
         geo_q = [q for _g, members in runs for q in members if q.input_type in GEO_TYPES]
-        items = []
-        for q, letter in zip(geo_q, mark_letters(geo_q)):
-            item = describe_question(q, language)
-            item['letter'] = letter
-            item['subs'] = [describe_question(s, language) for s in q.subQuestions()
-                            if s.input_type in READABLE_TYPES]
-            items.append(item)
-        return rec, items
+        return rec, [_geo_item(q, letter, language) for q, letter in zip(geo_q, mark_letters(geo_q))]
     return rec, []
+
+
+def _geo_item(q, letter, language):
+    item = describe_question(q, language)
+    item['letter'] = letter
+    item['subs'] = [describe_question(s, language) for s in q.subQuestions() if s.input_type in READABLE_TYPES]
+    return item
+
+
+def table_items_for_page(page):
+    """[geo item] whose marks TABLE runs onto this page from the page that
+    carries its map frame (Stack #263: copy 165's A2–A3 rows on page 3 under the
+    ROUTE map). On paper a geo question's own block follows its table, so its
+    `question:<code>` marker names the page the table ends on; every page after
+    the frame's up to and including that one carries rows of it."""
+    from survey.print.structure import mark_letters
+    form = page.printed_form
+    n = page.page_number
+    if form is None or not n:
+        return []
+    layout = form.layout or {}
+    frame_pages = {rec['map'].get('section_code'): int(k) for k, rec in layout.items()
+                   if isinstance(rec, dict) and rec.get('map') and rec['map'].get('section_code')}
+    marker_pages = {key.split(':', 1)[1]: int(k) for k, rec in layout.items() if isinstance(rec, dict)
+                    for key in (rec.get('items') or []) if key.startswith('question:')}
+    header = version_header(form)
+    language = form.language
+    out = []
+    for section, runs in plan_items(header, language):
+        frame = frame_pages.get(section.code)
+        if frame is None or frame == n:
+            continue
+        geo_q = [q for _g, members in runs for q in members if q.input_type in GEO_TYPES]
+        for q, letter in zip(geo_q, mark_letters(geo_q)):
+            end = marker_pages.get(q.code)
+            if end is not None and frame < n <= end:
+                out.append(_geo_item(q, letter, language))
+    return out
 
 
 def doubtful_threshold():
@@ -294,7 +333,13 @@ def merge_pages(pages):
     merged = {}
     for page in sorted(pages, key=lambda p: (p.page_number or 0, p.seq)):
         for code, field in (page.extraction or {}).items():
-            merged.setdefault(code, field)
+            if code in merged:
+                if isinstance(field, dict) and field.get('rows_only') and isinstance(merged[code], dict):
+                    # The table's rows read on a later page join the map's field by label.
+                    merged[code] = dict(merged[code])
+                    merged[code]['rows_extra'] = list(merged[code].get('rows_extra') or []) + list(field.get('rows') or [])
+                continue
+            merged[code] = field
     doubtful = sum(1 for f in merged.values() if is_doubtful(f))
     return merged, doubtful
 
@@ -303,17 +348,26 @@ def extract_page(page, provider):
     """Ask the provider about `page`; returns (extraction dict, usage, items)."""
     items, whole = items_for_page(page)
     map_rec, geo_items = geo_items_for_page(page)
+    table_items = table_items_for_page(page)
     with page.image.open('rb') as fh:
         jpeg = fh.read()
     # Thinking tokens count against max_tokens on Gemini (a 200-token cap once came back
     # empty, all of it spent thinking); a page of
     # fields is a few hundred tokens of answer, the rest is headroom for reasoning.
     blob, usage = provider.complete_structured(
-        system=prompts.SYSTEM, user=build_user_message(items, whole, geo_items), schema=prompts.RESPONSE_SCHEMA,
+        system=prompts.SYSTEM, user=build_user_message(items, whole, geo_items, table_items), schema=prompts.RESPONSE_SCHEMA,
         max_tokens=16000, images=[('image/jpeg', jpeg)])
     blob = blob if isinstance(blob, dict) else {}
     extraction = coerce_fields(blob.get('fields'), items)
-    if geo_items and blob.get('marks'):
+    raw_marks = [m for m in (blob.get('marks') or []) if isinstance(m, dict)]
+    if table_items:
+        # Rows of a table whose map is on another page: answers by label, no geometry.
+        from survey.paper import marks
+        table_codes = {item['code'] for item in table_items}
+        table_marks = [m for m in raw_marks if str(m.get('question') or '') in table_codes]
+        raw_marks = [m for m in raw_marks if str(m.get('question') or '') not in table_codes]
+        extraction.update(marks.table_rows(table_marks, table_items))
+    if geo_items and raw_marks:
         # Marks on the printed map → coordinates (item 4): registered on the
         # photo itself, so the image is still needed here.
         import io
@@ -321,7 +375,7 @@ def extract_page(page, provider):
         from survey.paper import marks, texture
         with Image.open(io.BytesIO(jpeg)) as img:
             img.load()
-            extraction.update(marks.place_marks(blob.get('marks'), blob.get('map_frame'), geo_items,
+            extraction.update(marks.place_marks(raw_marks, blob.get('map_frame'), geo_items,
                                                 map_rec, img, page.printed_form.paper,
                                                 frame_corners=blob.get('map_frame_corners'),
                                                 reference=texture.reference_image(page)))

@@ -116,6 +116,13 @@ USER_MAP_HEAD = (
     'is written next to each mark, the number is the row of the table below the map:\n'
 )
 
+USER_TABLE_HEAD = (
+    '\nTable rows continued from another page. The map these marks are drawn on is NOT on this page; '
+    'this page carries rows of its table (the marks table that started on the page before). Report every '
+    'row with anything written in it as an entry in marks: its label, the question code given below, its '
+    'answers — and no points.\n'
+)
+
 USER_HEAD = 'The questions printed on this page, in order. Report the answers you can read.\n'
 USER_HEAD_WHOLE_FORM = (
     'The questions of the whole form, in order. This photo shows ONE of its pages: report only the '

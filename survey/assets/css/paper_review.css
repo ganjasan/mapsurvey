@@ -170,3 +170,6 @@ body.paper-head-on.survey-form-layout #info_page { top: auto; height: auto; marg
 #paper-map .leaflet-top.leaflet-left, #paper-map .leaflet-bottom.leaflet-left { left: 0 !important; }
 #paper-map .leaflet-top.leaflet-right, #paper-map .leaflet-bottom.leaflet-right { right: 0 !important; }
 #paper-map .leaflet-top { top: 0 !important; }
+
+/* A row read off the table on another page, its mark still to be placed (Stack #263). */
+.paper-marks__place { margin-left: .4rem; font-size: .8rem; }

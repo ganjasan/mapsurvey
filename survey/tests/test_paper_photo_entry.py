@@ -1274,6 +1274,66 @@ class MarksTest(_PaperFixture):
         self.assertGreater(len(cloud['value'][0]['geometry']['coordinates']), 20)
         self.assertEqual(texture.REF_WIDTH, ref.width)
 
+    def test_table_rows_on_the_next_page_join_their_marks(self):
+        """
+        GIVEN the map frame printed on page 2 and WHERE's marks table running onto page 3 (its
+              `question:WHERE` marker is there, the way copy 165 came off the printer), page 2 read with A1
+              placed and no row answers, and page 3 reporting rows A1 (NOTE "shade") and A2 (NOTE "bench")
+              with no points
+        WHEN page 3 is read and the check opens page 2
+        THEN page 3 was asked for the rows of WHERE's table and for no map, its field holds the two rows,
+             the response's field carries them beside the placed mark, A1's answer fills that mark's row and
+             A2 is an unplaced row with its answer for the operator to place
+        """
+        import html as html_lib
+        import re
+        self.form.layout = {
+            '1': {'items': ['section:S1', 'question:ALB', 'question:WHY', 'question:MOOD']},
+            '2': {'items': ['section:S2'], 'map': self.rec},
+            '3': {'items': ['question:WHERE']},
+        }
+        self.form.pages = 3
+        self.form.save()
+        sheet = sheets_mod.new_sheet(self.inbox, printed_form=self.form)
+        page2 = self.page_row(sheet=sheet, status='queued', printed_form=self.form, copy=None,
+                              page_number=2, pages_total=3, code_source='qr')
+        page2.image.save('render.jpg', ContentFile(self.render), save=True)
+        page3 = self.page_row(sheet=sheet, status='queued', printed_form=self.form, copy=None,
+                              page_number=3, pages_total=3, code_source='qr')
+        self.assertEqual([i['code'] for i in extract.table_items_for_page(page3)], ['WHERE'])
+        self.assertEqual(extract.table_items_for_page(page2), [])
+        provider2 = _FakeProvider([{'fields': [], 'marks': [
+            {'label': 'A1', 'question': 'WHERE', 'points': [self._mark_at(0.5, 0.5)], 'confidence': 0.9, 'answers': []}]}])
+        page2.extraction, _usage, _items = extract.extract_page(page2, provider2)
+        page2.status = 'recognised'
+        page2.save()
+        provider3 = _FakeProvider([{'fields': [], 'marks': [
+            {'label': 'A1', 'question': 'WHERE', 'answers': [{'code': 'NOTE', 'value': 'shade'}], 'confidence': 0.9},
+            {'label': 'A2', 'question': 'WHERE', 'answers': [{'code': 'NOTE', 'value': 'bench'}], 'confidence': 0.8},
+            {'label': 'A3', 'question': 'WHERE', 'answers': [], 'confidence': 0.9},
+        ]}])
+        page3.extraction, _usage, _items = extract.extract_page(page3, provider3)
+        user = provider3.requests[0]['user']
+        self.assertIn('Table rows continued', user)
+        self.assertIn('rows A1, A2 … of the table of WHERE', user)
+        self.assertNotIn('Map questions', user)
+        field = page3.extraction['WHERE']
+        self.assertTrue(field['rows_only'])
+        self.assertEqual([r['label'] for r in field['rows']], ['A1', 'A2'])   # A3 said nothing
+        page3.status = 'recognised'
+        page3.save()
+        sheets_mod.refresh_sheet(sheet)
+        sheet.refresh_from_db()
+        merged = sheet.extraction['WHERE']
+        self.assertEqual(len(merged['value']), 1)
+        self.assertEqual([r['label'] for r in merged['rows_extra']], ['A1', 'A2'])
+        self.client.post(self.url('paper_response_check', sheet.pk))
+        html = self.client.get(self.url('paper_response_page', sheet.pk, 2)).content.decode()
+        data = json.loads(html_lib.unescape(re.search(r'id="paper-map-data"[^>]*>(.*?)</script>', html, re.S).group(1)))
+        q = data['questions'][0]
+        self.assertEqual(q['features'][0]['properties']['NOTE'], ['shade'])
+        self.assertEqual(q['unplaced'], [{'label': 'A2', 'properties': {'NOTE': ['bench']}}])
+
     def test_the_printed_map_is_kept_for_the_photos(self):
         """
         GIVEN a basemap the static map API serves

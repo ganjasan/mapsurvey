@@ -277,6 +277,29 @@
         for (var i = 0; i < n; i++) {
             rows.push(buildRow(i, features[i] || null, (q.boxes || [])[i]));
         }
+        // Rows read off the table on another page whose mark the reader did not
+        // find: the answers fill the row's cells, the mark waits to be placed.
+        (q.unplaced || []).forEach(function (u) {
+            var idx = parseInt(String(u.label || '').replace(/^\D+/, ''), 10) - 1;
+            if (isNaN(idx) || idx < 0) return;
+            while (rows.length <= idx) rows.push(buildRow(rows.length, null, null));
+            var r = rows[idx];
+            if (r.layer) return;
+            r.props = u.properties || {};
+            q.subs.forEach(function (s) {
+                r.inputs[s.code] = makeInput(s, r.props[s.code], r.props[s.code + '_other']);
+                r.inputs[s.code].addEventListener('change', sync);
+                r.inputs[s.code].addEventListener('input', sync);
+                r.inputs[s.code].addEventListener('focusin', function () { select(r); });
+            });
+            fillCells(r);
+            var st = r.tr.querySelector('.paper-marks__tag');
+            var a = el('a', 'paper-marks__place', t.place);
+            a.href = '#';
+            a.addEventListener('click', function (e) { e.preventDefault(); startPlacing(r); });
+            st.parentNode.appendChild(a);
+            refreshState(r);
+        });
         addBtn.addEventListener('click', function () {
             if (q.max && rows.filter(function (r) { return r.layer; }).length >= q.max) return;
             var r = buildRow(rows.length, null, null);

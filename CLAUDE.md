@@ -263,7 +263,12 @@ respondent panel: form layout half and half, `_paper_marks.html` + `js/paper_mar
 printed frame as their own Leaflet map and the marks TABLE the paper has (rows A1…An, the
 sub-questions as columns), and a hidden input per geo question posts `feature|feature` in the dialect
 `save_section_answers` parses (`views.geo_answer_features` is the one builder of that feature shape).
-On paper, `pdf._sub_cell` prints a choice column's boxes in EVERY row. Images go when a response is
+On paper, `pdf._sub_cell` prints a choice column's boxes in EVERY row. A table that runs onto the
+next page (`extract.table_items_for_page`: the frame's page up to the page of the question's own
+`question:<code>` marker, which follows the table on paper) is asked for there as rows without
+geometry (`marks.table_rows`, a `rows_only` field); `merge_pages` hangs them on the map page's field
+as `rows_extra` and `_paper_map_context` joins them to the marks by label — a label with no mark is an
+`unplaced` row the check shows filled, with a place-it link. Images go when a response is
 stored (`delete_sheet_images`) or the response is deleted (`sheets.delete_sheet`: an open response goes whole, its copy number free again — there is no "skipped"), and by `sweep_paper_batches --delete` (in `reclaim.sh`, deletes
 open responses idle past `PAPER_BATCH_TTL_DAYS` the same way; stored rows stay). Export column `paper_copy`. Events:
 `paper_response_created`, `paper_page_recognised`, `paper_sheet_entered` (`fields_changed` vs the

@@ -299,7 +299,10 @@ within 25 mm; 8 mm for a glyph-sized piece), the geometry is the ink's and the l
 answers the model's; a line's further pieces along one model mark are sewn onto it; ink the model
 did not name becomes the next-numbered mark of the kind's only question on the page at confidence
 0.5; a model mark the ink does not show keeps the model's vertices at confidence 0.6; ink under a
-label the model boxed (`label_box`) is writing. Marks SHALL become GeoJSON
+label the model boxed (`label_box`) is writing. A page that carries rows of a marks table whose map is on an earlier page (from the frame's page to
+the page the question's own block lands on) SHALL be asked for those rows as marks without
+geometry; their answers SHALL join the map page's marks by label and a label with no mark SHALL be
+shown as an unplaced row with its answers. Marks SHALL become GeoJSON
 features per geo question — a dot a Point, a drawn line a LineString of ≥ 2 vertices, an outlined
 area a closed Polygon of ≥ 3, a shaded area a MultiPoint cloud sampled inside the outline — with the
 table answers as properties in the shape stored answers already take, stored in the page's
@@ -333,6 +336,11 @@ question as changed when the stored feature count differs from the placed one.
 - **GIVEN** the map page with a textured map, photographed at an angle, the middle of the map slid 4 mm sideways while its border and the fiducials stayed put
 - **WHEN** it is registered without and with the printed map as the reference
 - **THEN** the border alone misses the middle of the frame by more than 2 mm; with the reference the interior landmarks join the fit and every probe lands within 1 mm
+
+#### Scenario: The marks table runs onto the next page
+- **GIVEN** the map frame on one page and its marks table continuing on the next (the question's marker lands there), the frame page read with A1 placed and the next page reporting rows A1 ("shade") and A2 ("bench") without points
+- **WHEN** both pages are read and the check opens the frame page
+- **THEN** the next page was asked for the rows of that table and for no map, the response's field carries the rows beside the placed mark, A1's answer fills its row and A2 is an unplaced row with its answer for the operator to place
 
 #### Scenario: The ink draws, the model names
 - **GIVEN** a frame with a dot, line, area and spray question and, in blue ink: two dots, a 40-mm route in two pieces with a 6-mm skip, a 25-mm outline with a 3-mm gap, a hatched patch and "A2" written beside the first dot; the model reports A1 on those letters with their label_box, B1 along the route, C1 and D1 roughly, nothing for the second dot
