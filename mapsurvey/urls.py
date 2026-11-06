@@ -72,8 +72,10 @@ urlpatterns = [
 
 if settings.DEBUG:
     import debug_toolbar
+    from survey.proto_views import proto_style  # PROTOTYPE ONLY (#541)
     urlpatterns = [
         path('__debug__/', include(debug_toolbar.urls)),
+        path('__proto__/style/<slug:name>.json', proto_style, name='proto_style'),
     ] + urlpatterns
 
 # Serve media from local disk (in production whitenoise handles only static files)

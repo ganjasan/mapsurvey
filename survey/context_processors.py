@@ -18,6 +18,8 @@ def mapbox(request):
         'MAPBOX_PAPER_URL': settings.MAPBOX_PAPER_URL,
         'MAPBOX_PAPER_B_URL': settings.MAPBOX_PAPER_B_URL,
         'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
+        # PROTOTYPE ONLY (#541): ?basemap_proto=vector|raster512 under DEBUG
+        'BASEMAP_PROTO': request.GET.get('basemap_proto', '') if settings.DEBUG else '',
     }
 
 
