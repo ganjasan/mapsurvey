@@ -2722,8 +2722,13 @@ def survey_upload(request, survey_slug):
 		return JsonResponse({'error': 'unknown_question',
 		                     'message': _('This question does not accept files.')}, status=400)
 
-	if is_ratelimited(request, group='survey_upload', key='ip',
-	                  rate='60/h', method=['POST'], increment=True):
+	# The per-IP ceiling is for anonymous respondents, whose sessions cost
+	# nothing to create. An operator entering paper forms already passed
+	# _upload_entry_session (editor role, Pro operator_entry, a non-online
+	# session), so the limit would only stall a batch of scans (#528).
+	if entry_session is None and is_ratelimited(
+			request, group='survey_upload', key='ip',
+			rate='60/h', method=['POST'], increment=True):
 		return JsonResponse({'error': 'rate_limited',
 		                     'message': _('Too many uploads, try again later.')}, status=429)
 
