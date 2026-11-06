@@ -44,8 +44,8 @@ The repository SHALL hold an Architecture Decision Record at `openspec/docs/adr/
 - **THEN** it reads the token from `MAPBOX_STYLES_TOKEN` only, and no template under `survey/templates/` references `MAPBOX_STYLES_TOKEN`
 
 ### Requirement: Prototype code never leaves the branch
-The measurement prototype (the dev-only `basemap_proto` query parameter and the MapLibre include) SHALL NOT be present on `epic/map-styles` or `master`.
+The measurement prototype (the dev-only `basemap_proto` query parameter, the `__proto__/style/` view and its module) SHALL NOT be present on `epic/map-styles` or `master`. MapLibre itself is not banned: the decision puts it on the style editor page (#543).
 
 #### Scenario: Epic branch is clean
-- **WHEN** every template and first-party script under `survey/` on `epic/map-styles` is scanned
-- **THEN** none contains `basemap_proto` or `maplibre`
+- **WHEN** every Python file, template and first-party script under `survey/` and `mapsurvey/` on `epic/map-styles` is scanned
+- **THEN** none contains `basemap_proto`, `__proto__/style` or `proto_views`

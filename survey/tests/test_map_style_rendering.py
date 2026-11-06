@@ -193,6 +193,79 @@ class PublishingScriptTest(SimpleTestCase):
         self.assertIn('id', fetched)  # the input is untouched
 
 
+ADR = os.path.join(REPO, 'openspec', 'docs', 'adr', '0001-map-style-rendering-path.md')
+PATHS = ('vector', 'hosted-raster', 'hybrid')
+
+
+def _section(text, heading):
+    match = re.search(rf'^## {heading}\n(.*?)(?=^## |\Z)', text, re.M | re.S)
+    return match.group(1) if match else ''
+
+
+class RenderingDecisionTest(SimpleTestCase):
+    """Spec: map-style-rendering / Requirement: The rendering path is a recorded decision."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        with open(ADR) as handle:
+            cls.text = handle.read()
+
+    def test_record_present_and_decided(self):
+        """
+        GIVEN the ADR for the rendering path
+        WHEN its status line and Decision section are read
+        THEN the status is Accepted and the decision names exactly one path
+        """
+        self.assertRegex(self.text, r'(?m)^- \*\*Status:\*\* Accepted\b')
+        decision = _section(self.text, 'Decision')
+        lead = decision.strip().split('\n', 1)[0]
+        named = [p for p in PATHS if re.search(rf'\b{re.escape(p)}\b', lead)]
+        self.assertEqual(len(named), 1, lead)
+
+    def test_print_path_is_part_of_the_decision(self):
+        """
+        GIVEN the ADR's Decision section
+        WHEN it is read
+        THEN it names the API that produces the printed frame and the reference image
+        """
+        decision = _section(self.text, 'Decision')
+        self.assertIn('Static Images', decision)
+        self.assertIn('reference image', decision)
+
+    def test_measurements_are_reproducible(self):
+        """
+        GIVEN the ADR
+        WHEN the options and appendix are read
+        THEN they name the survey, viewports, zoom, device, date and runs
+        """
+        for needle in ('Copenhagen demo survey', '1280×800', '390×844', 'z15', 'Headless Chromium',
+                       '2026-11-06', 'two runs'):
+            self.assertIn(needle, self.text)
+        self.assertIn('## Appendix', self.text)
+
+
+class PrototypeStaysOffTheBranchTest(SimpleTestCase):
+    """Spec: map-style-rendering / Requirement: Prototype code never leaves the branch."""
+
+    def test_epic_branch_is_clean(self):
+        """
+        GIVEN the code under survey/ and mapsurvey/
+        WHEN it is scanned for the measurement prototype
+        THEN nothing names basemap_proto, the __proto__ style view or proto_views
+        """
+        offenders = []
+        for root in ('survey', 'mapsurvey'):
+            for path in glob.glob(os.path.join(REPO, root, '**', '*'), recursive=True):
+                if not path.endswith(('.py', '.html', '.js')) or os.path.abspath(path) == os.path.abspath(__file__):
+                    continue
+                with open(path, errors='replace') as handle:
+                    body = handle.read()
+                if any(needle in body for needle in ('basemap_proto', '__proto__/style', 'proto_views')):
+                    offenders.append(os.path.relpath(path, REPO))
+        self.assertEqual(offenders, [])
+
+
 def _colour_strings(value):
     if isinstance(value, str):
         return [value] if value.startswith(('#', 'hsl', 'rgb')) else []
