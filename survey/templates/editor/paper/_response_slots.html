@@ -1,0 +1,84 @@
+{% load i18n %}{% comment %}The page slots, notes and actions of one paper response (change paper-photo-entry).{% endcomment %}
+<div class="paper-list-inner" data-in-flight="{{ in_flight|yesno:'1,0' }}">
+    <div class="paper-stripe">
+        <h2 class="h4 mb-0">{{ sheet.label }}</h2>
+        {% if sheet.printed_form %}<span class="badge badge-light">MS-{{ sheet.printed_form.code }} · {{ sheet.printed_form.language }} · v{{ sheet.printed_form.version_number }}</span>{% endif %}
+        {% if sheet.status == 'entered' %}<span class="badge badge-success">{% trans "stored" %}</span>
+        {% elif sheet.slots %}<span class="badge badge-light">{% blocktrans with have=sheet.slots|length|add:0 %}{{ have }} pages{% endblocktrans %}</span>{% endif %}
+        {% if sheet.missing and sheet.is_open %}<span class="badge badge-danger">{% blocktrans with pages=sheet.missing|join:", " count n=sheet.missing|length %}page {{ pages }} missing{% plural %}pages {{ pages }} missing{% endblocktrans %}</span>{% endif %}
+        {% if sheet.doubtful_count and sheet.is_open %}<span class="badge badge-warning text-dark">{% blocktrans count n=sheet.doubtful_count %}{{ n }} field to check{% plural %}{{ n }} fields to check{% endblocktrans %}</span>{% endif %}
+        {% if in_flight %}<span class="spinner-border spinner-border-sm" aria-hidden="true"></span> {% trans "reading…" %}{% endif %}
+    </div>
+
+    {% if sheet.slots %}
+    <div class="paper-slots">
+        {% for slot in sheet.slots %}
+        <div class="paper-slot paper-slot--{{ slot.state }}">
+            {% if sheet.is_open and sheet.printed_form %}{# a click opens the check at this page (owner, 2026-11-06) #}
+            <form method="post" action="{% url 'paper_response_check' survey.uuid sheet.pk %}" class="paper-slot__open">{% csrf_token %}
+                <button name="page" value="{{ slot.n }}" title="{% blocktrans with n=slot.n %}Check page {{ n }}{% endblocktrans %}" aria-label="{% blocktrans with n=slot.n %}Check page {{ n }}{% endblocktrans %}">
+                    {% if slot.image_url %}<img src="{{ slot.image_url }}" alt="" loading="lazy">{% endif %}
+                </button></form>
+            {% elif slot.image_url %}<img src="{{ slot.image_url }}" alt="" loading="lazy">{% endif %}
+            <span class="paper-slot__n">{{ slot.n }}</span>
+            {% if slot.state == 'busy' %}<span class="paper-slot__state">{% trans "reading…" %}</span>
+            {% elif slot.state == 'failed' %}
+            <form method="post" action="{% url 'paper_page_retry' survey.uuid slot.page.pk %}" class="paper-slot__state">{% csrf_token %}<button class="btn btn-sm btn-light">{% trans "Retry" %}</button></form>
+            {% elif slot.state == 'miss' %}<span class="paper-slot__state">{% trans "not photographed" %}</span>{% endif %}
+            {% if slot.page and sheet.is_open %}
+            <form method="post" action="{% url 'paper_page_remove' survey.uuid slot.page.pk %}" class="paper-slot__x">{% csrf_token %}<button title="{% trans 'Remove this page' %}" aria-label="{% trans 'Remove this page' %}">&times;</button></form>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% elif sheet.is_open %}
+    <p class="text-muted">{% trans "No page yet. Drop this form's photos or PDF above; the slots appear as the pages are read." %}</p>
+    {% endif %}
+
+    {% if moved or replaced %}{# one block for every note, collapsible, with Dismiss all (owner, 2026-11-01) #}
+    <details class="paper-notes" open>
+        <summary><span>{% trans "Notes" %}</span><span class="paper-notes__count">{{ notes_count }}</span>
+            <form method="post" action="{% url 'paper_response_dismiss_notes' survey.uuid sheet.pk %}" class="paper-notes__all"
+                  onclick="event.stopPropagation()" title="{% trans 'Dismiss every note: the earlier photos are deleted, the photos that went elsewhere stay there.' %}">{% csrf_token %}
+                <button class="btn btn-sm btn-outline-secondary">{% trans "Dismiss all" %}</button></form></summary>
+        <div class="paper-notes__list">
+    {% for page in moved %}
+    <div class="alert alert-warning py-2 small mb-2 paper-note"><form method="post" action="{% url 'paper_page_dismiss' survey.uuid page.pk %}" class="paper-note__x">{% csrf_token %}<input type="hidden" name="next" value="{% url 'paper_response' survey.uuid sheet.pk %}"><button title="{% if page.sheet %}{% trans 'Hide this note' %}{% else %}{% trans 'Delete this photo' %}{% endif %}" aria-label="{% if page.sheet %}{% trans 'Hide this note' %}{% else %}{% trans 'Delete this photo' %}{% endif %}">&times;</button></form>{% blocktrans with name=page.upload.original_name %}“{{ name }}”{% endblocktrans %}: {{ page.error|default:_("set aside") }}
+        {% if page.sheet %} <a href="{% url 'paper_response' survey.uuid page.sheet.pk %}">{% blocktrans with label=page.sheet.label %}Open {{ label }}{% endblocktrans %}</a>
+        {% elif not page.has_code and sheet.is_open and sheet.slots %}
+        {# No code on it, but the operator put it here: they can say which page it is. #}
+        <form method="post" action="{% url 'paper_page_assign' survey.uuid page.pk %}" class="paper-attach-here">{% csrf_token %}
+            <input type="hidden" name="sheet" value="{{ sheet.pk }}">
+            <input type="hidden" name="next" value="{% url 'paper_response' survey.uuid sheet.pk %}">
+            <label class="mb-0">{% trans "It is page" %}
+                <select name="page_number" class="custom-select custom-select-sm">
+                    {% for slot in sheet.slots %}<option value="{{ slot.n }}"{% if slot.n == sheet.missing.0 %} selected{% endif %}>{{ slot.n }}{% if slot.state == 'miss' %}{% else %} ({% trans "replaces the photo" %}){% endif %}</option>{% endfor %}
+                </select></label>
+            <button class="btn btn-sm btn-outline-primary">{% trans "Attach" %}</button>
+        </form>
+        {% endif %}</div>
+    {% endfor %}
+    {% for page in replaced %}
+    <div class="alert alert-light py-2 small mb-2 paper-note"><form method="post" action="{% url 'paper_page_dismiss' survey.uuid page.pk %}" class="paper-note__x">{% csrf_token %}<input type="hidden" name="next" value="{% url 'paper_response' survey.uuid sheet.pk %}"><button title="{% trans 'Delete the earlier photo' %}" aria-label="{% trans 'Delete the earlier photo' %}">&times;</button></form>{% blocktrans with n=page.page_number %}An earlier photo of page {{ n }} was replaced by a newer one.{% endblocktrans %}
+        <form method="post" action="{% url 'paper_page_restore' survey.uuid page.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-link p-0 align-baseline">{% trans "Use the earlier photo" %}</button></form></div>
+    {% endfor %}
+        </div>
+    </details>
+    {% endif %}
+
+    <div class="paper-response__nav">
+        <a class="btn btn-outline-secondary" href="{{ home_url }}">← {% trans "Paper responses" %}</a>
+        {% if sheet.is_open %}
+        <span>
+            <form method="post" action="{% url 'paper_response_delete' survey.uuid sheet.pk %}" class="d-inline" onsubmit="return confirm('{% trans 'Delete this response and its photos? Its copy number can be uploaded again.' %}');">{% csrf_token %}
+                <button class="btn btn-outline-secondary">{% trans "Delete" %}</button></form>
+            {% if sheet.printed_form %}
+            <form method="post" action="{% url 'paper_response_check' survey.uuid sheet.pk %}" class="d-inline">{% csrf_token %}
+                <button class="btn btn-primary">{% blocktrans with label=sheet.label %}Check {{ label }}{% endblocktrans %} →</button></form>
+            {% endif %}
+        </span>
+        {% elif stored_session %}
+        <a class="btn btn-outline-primary" href="{% url 'editor_survey_analytics' survey.uuid %}">{% trans "Open on Responses" %}</a>
+        {% endif %}
+    </div>
+</div>

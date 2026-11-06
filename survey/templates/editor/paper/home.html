@@ -1,0 +1,91 @@
+{% extends "editor/editor_base.html" %}
+{% load i18n static survey_filters %}
+{% comment %}Paper responses (change paper-photo-entry, #495): the survey's one page for paper. The printed
+forms and how many copies are back, New response (an empty response to photograph one form into) and
+Upload a stack (any number of files; responses form themselves from the copy numbers), then the
+responses in progress, the stored ones and the photos set aside — `_home_list.html`, swapped by HTMX
+while anything is being read.{% endcomment %}
+{% block page_title %}{% trans "Paper responses" %} – {{ survey.name }}{% endblock %}
+
+{% block navbar_content %}
+{% survey_title survey %}
+{% include "editor/partials/_survey_nav_tabs.html" with active_tab="results" %}
+{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/paper_inbox.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="paper-home container py-4" style="max-width: 1000px;">
+    <div class="paper-crumb"><a href="{% url 'editor_survey_analytics' survey.uuid %}">{% trans "Responses" %}</a> › <b>{% trans "Paper responses" %}</b></div>
+    <p class="text-muted small mb-3">
+        {% trans "Photograph or scan the filled forms and check what was read beside the picture. Each one is stored as a paper response." %}
+        {% if HELP_URL.paper_photos %}<a href="{{ HELP_URL.paper_photos }}" target="_blank" rel="noopener">{% trans "Learn more" %}</a>{% endif %}
+    </p>
+
+    {% if forms %}
+    {# One collapsed line (owner, 2026-11-02: the cards took the page and said nothing); the forms are inside. #}
+    <details class="paper-notes paper-forms">
+        <summary>
+            <b>{% trans "Printed forms" %}</b>
+            <span class="paper-notes__count">{{ forms_total.count }}</span>
+            {% if forms_total.printed %}<span class="badge badge-light">{% blocktrans with n=forms_total.printed back=forms_total.back %}{{ back }} of {{ n }} numbered copies back{% endblocktrans %}</span>{% endif %}
+            <a class="paper-notes__all" href="{% url 'editor_survey_share' survey.uuid %}#print-form">{% trans "Print more" %}</a>
+        </summary>
+        <div class="paper-notes__list">
+    {% endif %}
+    {% for f in forms %}
+    <div class="paper-form-card">
+        <b>{% blocktrans with code=f.form.code %}Printed form MS-{{ code }}{% endblocktrans %}</b>
+        <span class="badge badge-light">{% blocktrans count n=f.form.pages %}{{ n }} page{% plural %}{{ n }} pages{% endblocktrans %}</span>
+        <span class="badge badge-light">{{ f.form.language|language_name }} · v{{ f.form.version_number }}</span>
+        {% if f.printed %}
+        <span class="badge badge-light">{% blocktrans with n=f.printed back=f.back %}{{ back }} of {{ n }} numbered copies back{% endblocktrans %}</span>
+        {% else %}
+        <span class="badge badge-warning text-dark">{% trans "printed without copy numbers" %}</span>
+        {% endif %}
+        <a class="ml-auto" href="{% url 'editor_survey_share' survey.uuid %}#print-form">{% trans "Print more" %}</a>
+    </div>
+    {% empty %}
+    <div class="paper-form-card paper-form-card--none">
+        {% trans "No paper form has been printed for this survey yet." %} <a href="{% url 'editor_survey_share' survey.uuid %}#print-form">{% trans "Print one on the Share page" %}</a>
+    </div>
+    {% endfor %}
+    {% if forms %}
+        </div>
+    </details>
+    {% endif %}
+
+    <div class="paper-actions">
+        <form method="post" action="{% url 'paper_new' survey.uuid %}" class="d-inline">{% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-plus mr-1" aria-hidden="true"></i>{% trans "New response" %}</button>
+        </form>
+        <span class="text-muted small">{% trans "One filled form: photograph or upload its pages into its own card, in any order." %}</span>
+    </div>
+
+    <div class="paper-drop" id="paper-drop" tabindex="0" data-paper-upload
+         data-upload-url="{{ upload_url }}" data-refresh-url="{{ list_url }}" data-refresh-target="#paper-list"
+         data-max-bytes="{{ max_bytes }}" data-csrf="{{ csrf_token }}"
+         data-msg-too-large="{% trans 'Too large' %}" data-msg-failed="{% trans 'Upload failed' %}" data-msg-uploaded="{% trans 'Uploaded' %}">
+        <input type="file" class="paper-files" multiple accept="image/*,.heic,.heif,.pdf" hidden>
+        <input type="file" class="paper-camera" accept="image/*" capture="environment" hidden>
+        <p class="mb-1"><i class="fas fa-layer-group mr-1" aria-hidden="true"></i><strong>{% trans "Upload a stack" %}</strong> — {% trans "drop photos, scans or PDFs here, or" %} <button type="button" class="btn btn-link p-0 align-baseline paper-pick">{% trans "choose files" %}</button></p>
+        <p class="paper-drop__camera mb-1"><button type="button" class="btn btn-outline-primary paper-shoot"><i class="fas fa-camera mr-1" aria-hidden="true"></i> {% trans "Take photo" %}</button></p>
+        <p class="text-muted small mb-0">
+            {% if numbered %}{% trans "Any order: each page finds its response by the copy number printed on it." %}
+            {% else %}{% trans "This survey's form was printed without copy numbers: upload one PDF per filled form, or use New response and add its photos." %}{% endif %}
+        </p>
+    </div>
+    <ul class="paper-queue list-unstyled"></ul>
+
+    <div id="paper-list" hx-get="{{ list_url }}" hx-trigger="every 3s [document.querySelector('#paper-list .paper-list-inner') && document.querySelector('#paper-list .paper-list-inner').dataset.inFlight === '1']" hx-swap="innerHTML">
+        {% include "editor/paper/_home_list.html" %}
+    </div>
+    <p class="text-muted small mt-4">{% trans "Photos are kept until the response is stored or deleted, and at most 30 days: a response nobody touches for 30 days is deleted. Each page image is sent to the AI provider for the duration of the reading." %}</p>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/paper_upload.js' %}"></script>
+{% endblock %}

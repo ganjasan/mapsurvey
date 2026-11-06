@@ -4,8 +4,8 @@
      data-map-lat="{{ section.start_map_postion.y|default:''|unlocalize }}"
      data-map-lng="{{ section.start_map_postion.x|default:''|unlocalize }}"
      data-map-zoom="{{ section.start_map_zoom|default:''|unlocalize }}"
-     data-layout="{{ section.layout }}"
-     data-panel-side="{{ section.panel_side }}"
+     data-layout="{% if paper_map_mode %}form{% else %}{{ section.layout }}{% endif %}"{# a map page of a paper check is photo + its own map, half and half (change paper-photo-entry, item 4) #}
+     data-panel-side="{% if paper_review %}right{% else %}{{ section.panel_side }}{% endif %}"
      data-panel-width="{{ section.panel_width }}"
      data-content-width="{{ section.content_width }}"
      data-content-valign="{{ section.content_valign }}"
@@ -16,6 +16,7 @@
      data-visible-layers="{{ visible_layers_json|default:'[]' }}"
      data-session-id="{% if not entry %}{{ request.session.survey_session_id|default:'' }}{% endif %}"
      {% if entry %}data-entry-session="{{ entry_session.pk }}"{% endif %}
+     {% if paper_review %}data-paper-doubtful="{{ paper_doubtful|join:',' }}" data-paper-blank="{{ paper_blank|join:',' }}" data-paper-note="{% trans 'Check this against the photo' %}" data-paper-check-action="{% trans 'Mark as checked' %}" data-paper-checked-label="{% trans 'Checked' %}"{% endif %}
      data-section-name="{{ section.name|escapejs }}"
      data-section-current="{{ section_current }}"
      data-section-total="{{ section_total }}"
@@ -31,7 +32,19 @@
     </div>
 
     {% if entry %}{% include "editor/operator_entry/_entry_bar.html" %}{% endif %}
+    {% if paper_review %}{% include "editor/operator_entry/_paper_pane.html" %}{% endif %}
+    {% if paper_page_mode %}{# the page stepper of a paper check (change paper-photo-entry): each button saves this page and opens that one #}
+    <div class="paper-stepper" role="group" aria-label="{% trans 'Pages' %}">
+        {% for step in paper_steps %}
+        <button type="submit" form="section_question_form" name="goto" value="{{ step.n }}"
+                class="paper-step paper-step--{{ step.state }}{% if step.n == paper_number %} paper-step--cur{% endif %}"
+                title="{% trans 'Page' %} {{ step.n }}">{{ step.n }}</button>
+        {% endfor %}
+        <span class="paper-stepper__legend">{% trans "✓ read · ! to check · ∅ no photo" %}</span>
+    </div>
+    {% else %}
     <div class="survey-progress">{{ section_current }} / {{ section_total }}</div>
+    {% endif %}
 
     <div id='content'>
         <div class='subheading'>
@@ -52,13 +65,39 @@
                   {% if preview %}hx-disable="true"{% endif %}>
                 {% csrf_token %}
                 {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
-                {% include "partials/question_fields.html" %}
+                {% if paper_page_mode %}{# the review of a photographed page (change paper-photo-entry): the questions printed on it, section by section, one form #}
+                    {% if paper_no_questions and not paper_map_mode %}<p class="text-muted">{% trans "Nothing to type on this page — it holds the map and its marks. Press Next." %}</p>{% endif %}
+                    {% for block in paper_blocks %}{# in the paper's order; the map and its marks where the printed frame is #}
+                        <h3 class="paper-section-title">{{ block.title }}</h3>
+                        {% if block.marks %}{% include "editor/operator_entry/_paper_marks.html" %}{% endif %}
+                        {% include "partials/question_fields.html" with form=block.form %}
+                    {% endfor %}
+                {% else %}
+                    {% include "partials/question_fields.html" %}
+                {% endif %}
             </form>
         </div>
     </div>
 
     <div id='navig_buttons' class="mt-auto">
         <div class="container navig_buttons">
+            {% if paper_page_mode %}{# page by page of the photographed sheet (change paper-photo-entry) #}
+            <div class="row">
+                <div class="col align-self-start">
+                    {% if paper_number > 1 %}
+                    <button type="submit" class="btn btn-outline-primary prev_button" style="width: 80%"
+                            form="section_question_form" name="nav_direction" value="back">{% trans "Back" %}</button>
+                    {% endif %}
+                </div>
+                <div class="col align-self-end">
+                    {% if is_last_section %}
+                    <input type="submit" class="btn btn-primary next_button" style="width: 80%" form="section_question_form" value="{% trans 'Finish' %}">
+                    {% else %}
+                    <input type="submit" class="btn btn-primary next_button" style="width: 80%" form="section_question_form" value="{% trans 'Next' %}">
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
             <div class="row">
                 <div class="col align-self-start">
                     {% if section.prev_section %}
@@ -100,6 +139,7 @@
                     </button>
                 </div>
             </div>
+            {% endif %}
             {% endif %}
         </div>
     </div>

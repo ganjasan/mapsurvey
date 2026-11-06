@@ -87,6 +87,8 @@ BASEMAP_CHOICES = [
     ('streets', _('Streets')),
     ('satellite', _('Satellite')),
     ('topo', _('Topo')),
+    ('paper', _('Paper A')),
+    ('paper_b', _('Paper B')),
 ]
 
 # `published`/`closed` -> `draft` is permitted only while the survey has never
@@ -236,6 +238,11 @@ class SurveySession(models.Model):
     source = models.CharField(max_length=12, choices=SOURCE_CHOICES, default=SOURCE_ONLINE, db_index=True)
     entered_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,
                                    on_delete=models.SET_NULL, related_name='entered_sessions')
+    # The photographed sheet this session was reviewed from (change paper-photo-entry,
+    # #495); the drawer and exports say "sheet N of batch M". SET_NULL: the sheet row
+    # outlives its images, the session outlives the sheet.
+    paper_sheet = models.OneToOneField('PaperSheet', null=True, blank=True, on_delete=models.SET_NULL,
+                                       related_name='session')
 
     objects = SurveySessionQuerySet.as_manager()
 
@@ -439,8 +446,12 @@ class PrintedForm(models.Model):
     # sha256 over the rendered items (codes, types, option codes, wording, language).
     structure_hash = models.CharField(max_length=64)
     pages = models.PositiveIntegerField(default=0)
-    # {"<page>": {"map": {"x_mm", "y_mm", "w_mm", "h_mm", "bbox": [w, s, e, n],
+    # {"<page>": {"items": ["section:<code>", "group:<code>", "question:<code>", ...],
+    #             "map": {"x_mm", "y_mm", "w_mm", "h_mm", "bbox": [w, s, e, n],
     #                     "zoom", "basemap" | null, "section_code"}}}
+    # `items` (change paper-photo-entry, #495) is what starts on that page, in drawing
+    # order — a photographed page is then read against exactly those questions. Rows
+    # printed before that change have no `items`; readers fall back to the whole form.
     layout = models.JSONField(default=dict, blank=True)
     tracked_link = models.ForeignKey('TrackedLink', null=True, blank=True, on_delete=models.SET_NULL,
                                      related_name='printed_forms')
@@ -463,6 +474,36 @@ class PrintedForm(models.Model):
 
     def __str__(self):
         return f'form {self.code} of {self.survey_id} v{self.version_number} {self.language} {self.paper}'
+
+
+class PrintRun(models.Model):
+    """One print of numbered copies (change paper-photo-entry, #495): copies
+    `first_copy`…`last_copy` of `form`. The numbering belongs to the CANONICAL
+    survey and only ever grows — every run continues where the last one stopped,
+    whatever form, version, language or paper it prints — so a copy number names
+    exactly one paper questionnaire for the life of the survey, and a stack of
+    photos in any order sorts itself by it."""
+    MAX_COPIES = 200
+
+    survey = models.ForeignKey('SurveyHeader', on_delete=models.CASCADE, related_name='print_runs',
+                               help_text=_('The canonical survey: the copy numbering is per survey.'))
+    form = models.ForeignKey(PrintedForm, on_delete=models.CASCADE, related_name='print_runs')
+    first_copy = models.PositiveIntegerField()
+    last_copy = models.PositiveIntegerField()
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+                                   related_name='print_runs')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ['-first_copy']
+
+    def __str__(self):
+        return f'copies {self.first_copy}-{self.last_copy} of form {self.form_id}'
+
+    @property
+    def count(self):
+        return self.last_copy - self.first_copy + 1
 
 
 class SurveyHeader(models.Model):
@@ -2460,6 +2501,9 @@ class CommentSeen(models.Model):
 
 AI_GENERATION_KIND_CHOICES = (
     ('survey_draft', _('Survey draft generation')),
+    # Paper forms from photos (change paper-photo-entry, #495): one row per vision
+    # call reading a page's answers. The page's code is read locally, never by AI.
+    ('paper_page', _('Paper page extraction')),
     # AI analytics (#92) and AI response triage (#95) append values here — no
     # schema change needed when they land.
 )
@@ -2694,3 +2738,237 @@ class SurveyImportJob(models.Model):
             except Exception:  # noqa: BLE001 — a missing object must not mask the outcome
                 pass
             self.file = None
+
+
+
+
+# --- Paper forms from photos (change paper-photo-entry, #495; epic #350 item 3) ---
+#
+# The operator sees two things: RESPONSES (one person's filled form — a
+# `PaperSheet` row; the word on screen is "Copy 37" for a numbered copy, else
+# "Response 4") and the PAGES photographed into them. Underneath, an UPLOAD is one
+# file as received until the worker has split it, and a BATCH is the survey's
+# inbox — exactly one open per survey, never shown. Images are deleted when a
+# response is stored or deleted; a stored response's rows stay.
+
+
+def paper_upload_key(instance, filename):
+    """paper_uploads/<uuid4> on the PRIVATE tier: a random key, never the file name,
+    deleted as soon as the worker has split the file into pages."""
+    return f'paper_uploads/{uuid_module.uuid4().hex}'
+
+
+def paper_page_key(instance, filename):
+    """paper_pages/<uuid4>.jpg on the PRIVATE tier: the normalised page image."""
+    return f'paper_pages/{uuid_module.uuid4().hex}.jpg'
+
+
+class PaperBatch(models.Model):
+    """The survey's paper inbox: one open row per canonical survey, holding the
+    counters every upload, page and response numbers itself from. Not a thing the
+    operator manages — `survey.paper.inbox_for(survey)` finds or makes it."""
+    STATUS_OPEN = 'open'
+    STATUS_CLOSED = 'closed'
+    STATUS_CHOICES = ((STATUS_OPEN, 'open'), (STATUS_CLOSED, 'closed'))
+
+    survey = models.ForeignKey('SurveyHeader', on_delete=models.CASCADE, related_name='paper_batches',
+                               help_text=_('The canonical survey; each response names its version.'))
+    organization = models.ForeignKey('Organization', on_delete=models.CASCADE, related_name='paper_batches')
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+                                   related_name='paper_batches')
+    status = models.CharField(max_length=8, choices=STATUS_CHOICES, default=STATUS_OPEN, db_index=True)
+    # Counters handed out under select_for_update.
+    next_upload_seq = models.PositiveIntegerField(default=1)
+    next_page_seq = models.PositiveIntegerField(default=1)
+    next_sheet_seq = models.PositiveIntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_activity_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ['-created_at', '-id']
+
+    def __str__(self):
+        return f'paper inbox {self.pk} of survey {self.survey_id}'
+
+    @property
+    def is_open(self):
+        return self.status == self.STATUS_OPEN
+
+    def touch(self):
+        self.last_activity_at = timezone.now()
+        PaperBatch.objects.filter(pk=self.pk).update(last_activity_at=self.last_activity_at)
+
+
+PAPER_UPLOAD_STATUS_CHOICES = (
+    ('queued', 'queued'),
+    ('split', 'split'),
+    ('failed', 'failed'),
+)
+
+
+class PaperUpload(models.Model):
+    batch = models.ForeignKey(PaperBatch, on_delete=models.CASCADE, related_name='uploads')
+    seq = models.PositiveIntegerField()
+    # Dropped into a response (its card, its review): the pages go there unless
+    # their code names another copy. `expected_page` is what a page whose code
+    # cannot be read is taken for — the operator said which page it is.
+    sheet = models.ForeignKey('PaperSheet', null=True, blank=True, on_delete=models.SET_NULL, related_name='uploads')
+    expected_page = models.PositiveIntegerField(null=True, blank=True)
+    file = models.FileField(upload_to=paper_upload_key, storage=_private_media_storage, max_length=500, blank=True)
+    original_name = models.CharField(max_length=255)
+    size = models.PositiveBigIntegerField(default=0)
+    is_pdf = models.BooleanField(default=False)
+    status = models.CharField(max_length=8, choices=PAPER_UPLOAD_STATUS_CHOICES, default='queued', db_index=True)
+    pages_count = models.PositiveIntegerField(default=0)
+    error = models.CharField(max_length=200, blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ['batch_id', 'seq']
+        constraints = [
+            models.UniqueConstraint(fields=['batch', 'seq'], name='paper_upload_seq_per_batch'),
+        ]
+
+    def __str__(self):
+        return f'paper upload {self.seq} of batch {self.batch_id} ({self.status})'
+
+    def discard_file(self):
+        """Remove the original from storage; the row keeps the outcome."""
+        if self.file:
+            try:
+                self.file.delete(save=False)
+            except Exception:  # noqa: BLE001 — a missing object must not mask the outcome
+                pass
+            self.file = None
+
+
+PAPER_PAGE_STATUS_CHOICES = (
+    ('queued', 'queued'),              # saved, its code read or not; placement and reading pending
+    ('recognised', 'recognised'),      # on a response, answers read
+    ('unrecognised', 'unrecognised'),  # no usable code, or nowhere it may go; the operator decides
+    ('failed', 'failed'),              # the provider failed for good; Retry in the list
+    ('replaced', 'replaced'),          # a later photo of the same page of the same response won
+)
+
+PAPER_CODE_SOURCE_CHOICES = (
+    ('', ''),
+    ('qr', 'qr'),          # decoded locally from the page's QR
+    ('manual', 'manual'),  # the operator said which page it is
+)
+
+
+class PaperPage(models.Model):
+    batch = models.ForeignKey(PaperBatch, on_delete=models.CASCADE, related_name='pages')
+    upload = models.ForeignKey(PaperUpload, on_delete=models.CASCADE, related_name='pages')
+    sheet = models.ForeignKey('PaperSheet', null=True, blank=True, on_delete=models.SET_NULL, related_name='pages')
+    seq = models.PositiveIntegerField()
+    image = models.FileField(upload_to=paper_page_key, storage=_private_media_storage, max_length=500, blank=True)
+    width = models.PositiveIntegerField(default=0)
+    height = models.PositiveIntegerField(default=0)
+    printed_form = models.ForeignKey('PrintedForm', null=True, blank=True, on_delete=models.SET_NULL,
+                                     related_name='paper_pages')
+    # The numbered copy the page belongs to (None on a form printed without numbers).
+    copy = models.PositiveIntegerField(null=True, blank=True)
+    page_number = models.PositiveIntegerField(null=True, blank=True)
+    pages_total = models.PositiveIntegerField(null=True, blank=True)
+    code_source = models.CharField(max_length=8, choices=PAPER_CODE_SOURCE_CHOICES, blank=True, default='')
+    status = models.CharField(max_length=14, choices=PAPER_PAGE_STATUS_CHOICES, default='queued', db_index=True)
+    # {"<question code>": {"value": ..., "confidence": 0.0-1.0, "unreadable": bool}}
+    extraction = models.JSONField(default=dict, blank=True)
+    # Why the page is not where the operator put it, or not on a response at all —
+    # shown on the card it was dropped into and in the "not recognised" list.
+    error = models.CharField(max_length=200, blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+    recognised_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ['batch_id', 'seq']
+        constraints = [
+            models.UniqueConstraint(fields=['batch', 'seq'], name='paper_page_seq_per_batch'),
+        ]
+
+    def __str__(self):
+        return f'paper page {self.seq} of batch {self.batch_id} ({self.status})'
+
+    @property
+    def has_code(self):
+        return self.printed_form_id is not None and self.page_number is not None
+
+    def discard_image(self):
+        if self.image:
+            try:
+                self.image.delete(save=False)
+            except Exception:  # noqa: BLE001 — a missing object must not mask the outcome
+                pass
+            self.image = None
+
+
+PAPER_SHEET_STATUS_CHOICES = (
+    ('recognising', 'recognising'),  # a page is still being read
+    ('review', 'review'),            # pages 1..N present, ready to check
+    ('incomplete', 'incomplete'),    # pages missing (or none yet); still checkable
+    ('entered', 'entered'),          # stored as a response
+)
+
+
+class PaperSheet(models.Model):
+    """One person's filled paper form, on its way to becoming a response."""
+    OPEN_STATUSES = ('recognising', 'review', 'incomplete')
+    REVIEWABLE_STATUSES = ('review', 'incomplete')
+
+    batch = models.ForeignKey(PaperBatch, on_delete=models.CASCADE, related_name='sheets')
+    seq = models.PositiveIntegerField()
+    printed_form = models.ForeignKey('PrintedForm', null=True, blank=True, on_delete=models.SET_NULL,
+                                     related_name='paper_sheets')
+    # The numbered copy this response is (unique per inbox), or None: made by hand
+    # ("New response") on a form without numbers, or one PDF of such a form.
+    copy = models.PositiveIntegerField(null=True, blank=True)
+    # One PDF of an unnumbered form is one response: the upload that made it.
+    source_upload = models.ForeignKey(PaperUpload, null=True, blank=True, on_delete=models.SET_NULL,
+                                      related_name='+')
+    status = models.CharField(max_length=12, choices=PAPER_SHEET_STATUS_CHOICES, default='incomplete',
+                              db_index=True)
+    # The merge of the pages' extractions by question code, an earlier page winning.
+    extraction = models.JSONField(default=dict, blank=True)
+    doubtful_count = models.PositiveIntegerField(default=0)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+                                   related_name='paper_sheets')
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_activity_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    entered_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ['batch_id', 'seq']
+        constraints = [
+            models.UniqueConstraint(fields=['batch', 'seq'], name='paper_sheet_seq_per_batch'),
+            models.UniqueConstraint(fields=['batch', 'copy'], condition=models.Q(copy__isnull=False),
+                                    name='paper_sheet_one_per_copy'),
+        ]
+
+    def __str__(self):
+        return f'paper response {self.seq} of batch {self.batch_id} ({self.status})'
+
+    @property
+    def is_open(self):
+        return self.status in self.OPEN_STATUSES
+
+    @property
+    def is_reviewable(self):
+        return self.status in self.REVIEWABLE_STATUSES
+
+    @property
+    def label(self):
+        """What the operator calls it: the number printed on the paper, else ours."""
+        from django.utils.translation import gettext as _t
+        if self.copy:
+            return _t('Copy %(n)s') % {'n': self.copy}
+        return _t('Response %(n)s') % {'n': self.seq}
+
+    def touch(self):
+        self.last_activity_at = timezone.now()
+        PaperSheet.objects.filter(pk=self.pk).update(last_activity_at=self.last_activity_at)

@@ -9744,3 +9744,542 @@ msgstr "Modifica sulla mappa"
 #: survey/templates/partials/survey_section_partial.html
 msgid "Save and return to Responses"
 msgstr "Salva e torna alle Risposte"
+#: survey/paper_views.py
+msgid "No file."
+msgstr "Nessun file."
+
+#: survey/paper_views.py
+#, python-format
+msgid "This file is larger than %(mb)s MB."
+msgstr "Questo file supera %(mb)s MB."
+
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "More ways to enter"
+msgstr "Altri modi per inserire"
+
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "Type in a response"
+msgstr "Digita una risposta"
+
+#: survey/templates/editor/operator_entry/_entry_bar.html
+msgid "{count} fields to check"
+msgstr "{count} campi da controllare"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Pages"
+msgstr "Pagine"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Zoom out"
+msgstr "Riduci"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Zoom in"
+msgstr "Ingrandisci"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Rotate"
+msgstr "Ruota"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Show the map"
+msgstr "Mostra la mappa"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Photographed page"
+msgstr "Pagina fotografata"
+
+#: survey/templates/editor/operator_entry/header.html
+msgid "Have photos or scans of filled paper forms? Read them from photos instead."
+msgstr "Hai foto o scansioni di moduli cartacei compilati? Leggili dalle foto."
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "reading…"
+msgstr "lettura…"
+
+#: survey/templates/editor/paper/_sheet_list.html
+#, python-format
+msgid "“%(name)s” failed"
+msgstr "“%(name)s” non riuscito"
+
+#: survey/templates/editor/paper/_sheet_list.html
+#, python-format
+msgid "Splitting “%(name)s” into pages…"
+msgstr "Divisione di “%(name)s” in pagine…"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Remove this page"
+msgstr "Rimuovi questa pagina"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Page number"
+msgstr "Numero di pagina"
+
+#: survey/templates/editor/paper/batch.html
+msgid "Too large"
+msgstr "Troppo grande"
+
+#: survey/templates/editor/paper/batch.html
+msgid "Upload failed"
+msgstr "Caricamento non riuscito"
+
+#: survey/templates/editor/paper/batch.html
+msgid "Uploaded"
+msgstr "Caricato"
+
+#: survey/templates/editor/paper/batch.html
+msgid "or"
+msgstr "oppure"
+
+#: survey/templates/editor/paper/batch.html
+msgid "choose files"
+msgstr "scegli i file"
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "Check this against the photo"
+msgstr "Controlla con la foto"
+
+#: survey/templates/editor/paper/_sheet_list.html
+#, python-format
+msgid "Reading %(n)s page…"
+msgid_plural "Reading %(n)s pages…"
+msgstr[0] "Lettura di %(n)s pagina…"
+msgstr[1] "Lettura di %(n)s pagine…"
+
+#: survey/templates/editor/paper/_sheet_list.html
+#, python-format
+msgid "%(n)s field to check"
+msgid_plural "%(n)s fields to check"
+msgstr[0] "%(n)s campo da controllare"
+msgstr[1] "%(n)s campi da controllare"
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "Nothing to type on this page — it holds the map and its marks. Press Next."
+msgstr "Niente da digitare in questa pagina: contiene la mappa e i suoi segni. Premi Avanti."
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Uploading…"
+msgstr "Caricamento…"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Reading the page…"
+msgstr "Lettura della pagina…"
+
+#: survey/paper/sheets.py
+#, python-format
+msgid "This photo is %(copy)s, page %(page)s — it went there."
+msgstr "Questa foto è %(copy)s, pagina %(page)s: è stata spostata lì."
+
+#: survey/paper/sheets.py
+msgid "This form has no copy numbers: add this photo to a response, or upload one PDF per filled form."
+msgstr "Questo modulo non ha numeri di copia: aggiungi la foto a una risposta oppure carica un PDF per ogni modulo compilato."
+
+#: survey/paper/sheets.py
+#, python-format
+msgid "%(copy)s is already stored — this photo was not used."
+msgstr "%(copy)s è già salvata: questa foto non è stata usata."
+
+#: survey/paper/sheets.py
+#, python-format
+msgid "This page is from another printed form than %(copy)s."
+msgstr "Questa pagina viene da un modulo stampato diverso da %(copy)s."
+
+#: survey/paper_views.py
+msgid "This response is not open."
+msgstr "Questa risposta non è aperta."
+
+#: survey/paper_views.py
+msgid "Pick a response and a page number."
+msgstr "Scegli una risposta e un numero di pagina."
+
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "From photos of paper forms"
+msgstr "Da foto di moduli cartacei"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+#, python-format
+msgid "Page %(n)s of %(label)s was not photographed."
+msgstr "La pagina %(n)s di %(label)s non è stata fotografata."
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Attach it: it will be read and the fields beside it will fill in."
+msgstr "Allegala: verrà letta e i campi accanto si compileranno."
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "No page at hand? Type the answers beside it, or press Next to leave them blank."
+msgstr "Non hai la pagina? Digita le risposte accanto, oppure premi Avanti per lasciarle vuote."
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "The photos of this response are gone."
+msgstr "Le foto di questa risposta sono state eliminate."
+
+#: survey/templates/editor/operator_entry/saved.html
+#, python-format
+msgid "%(label)s stored"
+msgstr "%(label)s salvata"
+
+#: survey/templates/editor/operator_entry/saved.html
+msgid "It is on the Responses page with the source “Paper form” and your name. Its photos have been deleted."
+msgstr "È nella pagina Risposte con la fonte «Modulo cartaceo» e il tuo nome. Le sue foto sono state eliminate."
+
+#: survey/templates/editor/operator_entry/saved.html
+msgid "Paper responses"
+msgstr "Risposte cartacee"
+
+#: survey/templates/editor/operator_entry/saved.html
+#, python-format
+msgid "Check %(label)s"
+msgstr "Controlla %(label)s"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "in progress"
+msgstr "in corso"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "to check"
+msgstr "da controllare"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "stored"
+msgstr "salvate"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "set aside"
+msgstr "messe da parte"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "empty"
+msgstr "vuota"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "all pages"
+msgstr "tutte le pagine"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "Add photos"
+msgstr "Aggiungi foto"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "Nothing in progress. Start with New response, or drop a stack above."
+msgstr "Niente in corso. Inizia con Nuova risposta, oppure trascina una pila qui sopra."
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "Set aside"
+msgstr "Messe da parte"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "No code could be read on this page."
+msgstr "Su questa pagina non è stato possibile leggere alcun codice."
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "Attach"
+msgstr "Assegna"
+
+#: survey/templates/editor/paper/_home_list.html
+#, python-format
+msgid "Suggested: %(label)s is the only response missing a page (page %(n)s)."
+msgstr "Suggerimento: %(label)s è l’unica risposta a cui manca una pagina (pagina %(n)s)."
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "Stored"
+msgstr "Salvate"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "on the Responses page with the source “Paper form”"
+msgstr "nella pagina Risposte con la fonte «Modulo cartaceo»"
+
+#: survey/templates/editor/paper/_response_slots.html
+#, python-format
+msgid "%(have)s pages"
+msgstr "%(have)s pagine"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "not photographed"
+msgstr "non fotografata"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "No page yet. Drop this form's photos or PDF above; the slots appear as the pages are read."
+msgstr "Ancora nessuna pagina. Trascina qui sopra le foto o il PDF di questo modulo; gli spazi compaiono man mano che le pagine vengono lette."
+
+#: survey/templates/editor/paper/_response_slots.html
+#, python-format
+msgid "“%(name)s”"
+msgstr "“%(name)s”"
+
+#: survey/templates/editor/paper/_response_slots.html
+#, python-format
+msgid "Open %(label)s"
+msgstr "Apri %(label)s"
+
+#: survey/templates/editor/paper/_response_slots.html
+#, python-format
+msgid "An earlier photo of page %(n)s was replaced by a newer one."
+msgstr "Una foto precedente della pagina %(n)s è stata sostituita da una più recente."
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "Use the earlier photo"
+msgstr "Usa la foto precedente"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "Open on Responses"
+msgstr "Apri in Risposte"
+
+#: survey/templates/editor/paper/home.html
+msgid "Photograph or scan the filled forms and check what was read beside the picture. Each one is stored as a paper response."
+msgstr "Fotografa o scansiona i moduli compilati e controlla ciò che è stato letto accanto all’immagine. Ognuno viene salvato come risposta cartacea."
+
+#: survey/templates/editor/paper/home.html
+#, python-format
+msgid "Printed form MS-%(code)s"
+msgstr "Modulo stampato MS-%(code)s"
+
+#: survey/templates/editor/paper/home.html
+#, python-format
+msgid "%(back)s of %(n)s numbered copies back"
+msgstr "%(back)s di %(n)s copie numerate rientrate"
+
+#: survey/templates/editor/paper/home.html
+msgid "printed without copy numbers"
+msgstr "stampato senza numeri di copia"
+
+#: survey/templates/editor/paper/home.html
+msgid "Print more"
+msgstr "Stampa altre"
+
+#: survey/templates/editor/paper/home.html
+msgid "No paper form has been printed for this survey yet."
+msgstr "Per questo sondaggio non è ancora stato stampato alcun modulo cartaceo."
+
+#: survey/templates/editor/paper/home.html
+msgid "Print one on the Share page"
+msgstr "Stampane uno nella pagina Condividi"
+
+#: survey/templates/editor/paper/home.html
+msgid "New response"
+msgstr "Nuova risposta"
+
+#: survey/templates/editor/paper/home.html
+msgid "One filled form: photograph or upload its pages into its own card, in any order."
+msgstr "Un modulo compilato: fotografa o carica le sue pagine nella sua scheda, in qualsiasi ordine."
+
+#: survey/templates/editor/paper/home.html
+msgid "Upload a stack"
+msgstr "Carica una pila"
+
+#: survey/templates/editor/paper/home.html
+msgid "drop photos, scans or PDFs here, or"
+msgstr "trascina qui foto, scansioni o PDF, oppure"
+
+#: survey/templates/editor/paper/home.html
+msgid "Any order: each page finds its response by the copy number printed on it."
+msgstr "Qualsiasi ordine: ogni pagina trova la sua risposta grazie al numero di copia stampato."
+
+#: survey/templates/editor/paper/home.html
+msgid "This survey's form was printed without copy numbers: upload one PDF per filled form, or use New response and add its photos."
+msgstr "Il modulo di questo sondaggio è stato stampato senza numeri di copia: carica un PDF per modulo compilato, oppure usa Nuova risposta e aggiungi le foto."
+
+#: survey/templates/editor/paper/response.html
+msgid "Drop the photos or the PDF of this one form here"
+msgstr "Trascina qui le foto o il PDF di questo modulo"
+
+#: survey/templates/editor/paper/response.html
+msgid "One page per shot, in any order; tap again for the next page."
+msgstr "Una pagina per scatto, in qualsiasi ordine; tocca di nuovo per la successiva."
+
+#: survey/templates/editor/paper/response.html
+msgid "Any order: each page finds its slot by the code printed on it."
+msgstr "Qualsiasi ordine: ogni pagina trova il suo posto grazie al codice stampato."
+
+#: survey/templates/editor/survey_share.html
+msgid "Copies"
+msgstr "Copie"
+
+#: survey/templates/editor/survey_share.html
+msgid "Numbered copies"
+msgstr "Copie numerate"
+
+#: survey/templates/editor/survey_share.html
+msgid "Number of copies"
+msgstr "Numero di copie"
+
+#: survey/templates/editor/survey_share.html
+msgid "One copy to photocopy"
+msgstr "Una copia da fotocopiare"
+
+#: survey/templates/editor/survey_share.html
+#, python-format
+msgid "%(n)s numbered copies printed so far; the next print starts at #%(next)s."
+msgstr "Finora %(n)s copie numerate stampate; la prossima stampa parte da #%(next)s."
+
+#: survey/templates/editor/survey_share.html
+msgid "Numbered copies carry their own number on every page, so photos and scans of them sort themselves in any order. A copy made on a photocopier repeats its number — print more copies instead. With one copy to photocopy, upload one PDF per filled form, or add photos to a response by hand."
+msgstr "Le copie numerate portano il proprio numero su ogni pagina, così foto e scansioni si ordinano da sole, in qualsiasi ordine. Una fotocopia ripete il numero: stampa invece altre copie. Con una copia da fotocopiare, carica un PDF per modulo compilato oppure aggiungi a mano le foto a una risposta."
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "✓ read · ! to check · ∅ no photo"
+msgstr "✓ letta · ! da controllare · ∅ nessuna foto"
+
+#: survey/templates/editor/operator_entry/saved.html
+#, python-format
+msgid "%(n)s response left to check"
+msgid_plural "%(n)s responses left to check"
+msgstr[0] "Resta %(n)s risposta da controllare"
+msgstr[1] "Restano %(n)s risposte da controllare"
+
+#: survey/templates/editor/operator_entry/saved.html
+#, python-format
+msgid "%(n)s still being read"
+msgid_plural "%(n)s still being read"
+msgstr[0] "%(n)s ancora in lettura"
+msgstr[1] "%(n)s ancora in lettura"
+
+#: survey/templates/editor/paper/_home_list.html
+#, python-format
+msgid "page %(pages)s missing"
+msgid_plural "pages %(pages)s missing"
+msgstr[0] "manca la pagina %(pages)s"
+msgstr[1] "mancano le pagine %(pages)s"
+
+#: survey/templates/editor/paper/home.html
+#, python-format
+msgid "%(n)s page"
+msgid_plural "%(n)s pages"
+msgstr[0] "%(n)s pagina"
+msgstr[1] "%(n)s pagine"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "It is page"
+msgstr "È la pagina"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "replaces the photo"
+msgstr "sostituisce la foto"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "Hide this note"
+msgstr "Nascondi questo avviso"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "Delete this photo"
+msgstr "Elimina questa foto"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "Delete the earlier photo"
+msgstr "Elimina la foto precedente"
+
+#: survey/templates/editor/operator_entry/_entry_bar.html
+msgid "{count} field to check"
+msgstr "{count} campo da controllare"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "The map is the printed frame. Drag a pin to move it; click a row to find its mark on the photo."
+msgstr "La mappa è il riquadro stampato. Trascina uno spillo per spostarlo; fai clic su una riga per trovare il suo segno nella foto."
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "Back to the printed frame"
+msgstr "Torna al riquadro stampato"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "Printed frame"
+msgstr "Riquadro stampato"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "On the map"
+msgstr "Sulla mappa"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "Add a mark the reader missed"
+msgstr "Aggiungi un segno che il lettore ha perso"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "placed"
+msgstr "posizionato"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "no mark"
+msgstr "nessun segno"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "Row is empty on the paper. If a mark was missed:"
+msgstr "La riga è vuota sulla carta. Se un segno è sfuggito:"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "place it on the map"
+msgstr "posizionalo sulla mappa"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "line · {n} points"
+msgstr "linea · {n} punti"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "area"
+msgstr "area"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "cloud · {n} dots"
+msgstr "nuvola · {n} punti"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "Click the map where the mark is"
+msgstr "Fai clic sulla mappa dove si trova il segno"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "Draw it on the map, double-click to finish"
+msgstr "Disegnalo sulla mappa, doppio clic per terminare"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "Find on the photo"
+msgstr "Trova nella foto"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "Dismiss all"
+msgstr "Chiudi tutti"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "Dismiss every note: the earlier photos are deleted, the photos that went elsewhere stay there."
+msgstr "Chiudi tutti gli avvisi: le foto precedenti vengono eliminate, quelle finite altrove restano lì."
+
+#: survey/templates/editor/survey_share.html
+msgid "Keep each map with its tables on one page"
+msgstr "Tieni ogni mappa con le sue tabelle su una sola pagina"
+
+#: survey/templates/editor/survey_share.html
+msgid "A map that does not fit under the questions above it moves to the next page whole, instead of its tables being cut in two."
+msgstr "Una mappa che non entra sotto le domande precedenti passa intera alla pagina successiva, invece di avere le tabelle tagliate in due."
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "Delete this response and its photos? Its copy number can be uploaded again."
+msgstr "Eliminare questa risposta e le sue foto? Il suo numero di copia potrà essere caricato di nuovo."
+
+#: survey/templates/editor/paper/home.html
+msgid "Photos are kept until the response is stored or deleted, and at most 30 days: a response nobody touches for 30 days is deleted. Each page image is sent to the AI provider for the duration of the reading."
+msgstr "Le foto restano finché la risposta non viene salvata o eliminata, e al massimo 30 giorni: una risposta che nessuno tocca per 30 giorni viene eliminata. Ogni immagine di pagina è inviata al fornitore di IA per la durata della lettura."
+
+#: survey/paper_views.py
+msgid "Too many photos are waiting. Check or delete some responses first."
+msgstr "Troppe foto in attesa. Controlla o elimina prima alcune risposte."
+
+#: survey/templates/editor/paper/home.html
+msgid "Printed forms"
+msgstr "Moduli stampati"
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "Mark as checked"
+msgstr "Segna come controllato"
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "Checked"
+msgstr "Controllato"
+
+#: survey/templates/editor/paper/_response_slots.html
+#, python-format
+msgid "Check page %(n)s"
+msgstr "Controlla la pagina %(n)s"
+
+#: survey/models.py
+msgid "Paper A"
+msgstr "Carta A"
+
+#: survey/models.py
+msgid "Paper B"
+msgstr "Carta B"

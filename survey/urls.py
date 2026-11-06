@@ -9,6 +9,7 @@ from . import layer_object_views
 from . import comment_views
 from . import analytics_views
 from . import operator_entry_views
+from . import paper_views
 from . import share_views
 from survey.print import views as print_views
 from . import translation_views
@@ -143,6 +144,25 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/responses/enter/', operator_entry_views.entry_header, name='operator_entry_header'),
     path('editor/surveys/<uuid:survey_uuid>/responses/enter/<int:session_id>/saved/', operator_entry_views.entry_saved, name='operator_entry_saved'),
     path('editor/surveys/<uuid:survey_uuid>/responses/enter/<int:session_id>/<str:section_name>/', operator_entry_views.entry_section, name='operator_entry_section'),
+    # Paper forms from photos (change paper-photo-entry, #495): batches, uploads, sheets.
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/', paper_views.paper_home, name='paper_home'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/list/', paper_views.paper_home_list, name='paper_home_list'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/new/', paper_views.paper_new, name='paper_new'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/next/', paper_views.paper_check_next, name='paper_check_next'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/upload/', paper_views.paper_upload, name='paper_upload'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/r/<int:sheet_id>/', paper_views.paper_response, name='paper_response'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/r/<int:sheet_id>/slots/', paper_views.paper_response_slots, name='paper_response_slots'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/r/<int:sheet_id>/check/', paper_views.paper_response_check, name='paper_response_check'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/r/<int:sheet_id>/delete/', paper_views.paper_response_delete, name='paper_response_delete'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/r/<int:sheet_id>/notes/dismiss/', paper_views.paper_response_dismiss_notes, name='paper_response_dismiss_notes'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/r/<int:sheet_id>/pages/<int:number>/', paper_views.paper_response_page, name='paper_response_page'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/r/<int:sheet_id>/pages/<int:number>/status/', paper_views.paper_response_page_status, name='paper_response_page_status'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/pages/<int:page_id>/image/', paper_views.paper_page_image, name='paper_page_image'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/pages/<int:page_id>/remove/', paper_views.paper_page_remove, name='paper_page_remove'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/pages/<int:page_id>/restore/', paper_views.paper_page_restore, name='paper_page_restore'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/pages/<int:page_id>/dismiss/', paper_views.paper_page_dismiss, name='paper_page_dismiss'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/pages/<int:page_id>/assign/', paper_views.paper_page_assign, name='paper_page_assign'),
+    path('editor/surveys/<uuid:survey_uuid>/responses/paper/pages/<int:page_id>/retry/', paper_views.paper_page_retry, name='paper_page_retry'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/questions/<int:question_id>/text/', analytics_views.analytics_text_answers, name='analytics_text_answers'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/sessions/<int:session_id>/', analytics_views.analytics_session_detail, name='analytics_session_detail'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/table/', analytics_views.analytics_table, name='analytics_table'),

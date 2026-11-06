@@ -76,7 +76,19 @@
     background: #fff;
     max-width: 160px;
 }
-.rv2-download { font-size: 0.8rem; white-space: nowrap; }
+.rv2-download, .rv2-enter-response-group .btn { font-size: 0.8rem; white-space: nowrap; }
+/* One height for everything in the pane row's end: the Split view chip, Export data
+   and the Enter a response split button stood at three different heights. */
+.rv2-panerow-end > .btn,
+.rv2-panerow-end > .rv2-chip,
+.rv2-panerow-end > .btn-group > .btn {
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;   /* a flex container drops the space between the icon and the label */
+    padding-top: 0;
+    padding-bottom: 0;
+}
 
 /* ── Global filter pills ─────────────────────────────────────────────── */
 .rv2-filter-pills {

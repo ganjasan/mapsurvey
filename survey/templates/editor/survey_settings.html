@@ -29,7 +29,7 @@
         <form method="post" action="{% url 'editor_survey_settings' survey.uuid %}" enctype="multipart/form-data">
             {% csrf_token %}
             {% for field in form %}
-            {% if field.name != 'default_rating_display_style' and field.name != 'use_accent_color' and field.name != 'accent_color' and field.name != 'opens_at' and field.name != 'closes_at' and field.name != 'schedule_timezone' %}
+            {% if field.name != 'default_rating_display_style' and field.name != 'use_accent_color' and field.name != 'accent_color' and field.name != 'opens_at' and field.name != 'closes_at' and field.name != 'schedule_timezone' and field.name != 'show_branding' %}
             <div class="form-group">
                 <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                 {% if field.name == 'available_languages' %}

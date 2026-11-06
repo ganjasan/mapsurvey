@@ -118,7 +118,7 @@ locale.{% endcomment %}
 </head>
 
 {# Server-rendered so a direct form-section load never flashes the map; initSection() keeps it in step across HTMX swaps. #}
-<body{% if section %}{% with cls=section.layout_classes %}{% if cls %} class="{{ cls }}"{% endif %}{% endwith %}{% endif %} data-icon-sprites='{{ ICON_SPRITES_JSON }}'>
+<body{% if paper_map_mode %} class="survey-form-layout"{% elif section %}{% with cls=section.layout_classes %}{% if cls %} class="{{ cls }}"{% endif %}{% endwith %}{% endif %} data-icon-sprites='{{ ICON_SPRITES_JSON }}'>
 
 <button id="showButton" onclick="toggleInfo(true)" style="visibility: hidden;">
         <i class="fas fa-angle-double-right" style="font-size:28px; width:28px; height:28px;"></i>

@@ -1,7 +1,8 @@
 {% extends "editor/editor_base.html" %}
 {% load i18n survey_filters %}
-{% comment %}Operator entry form, the end (change operator-entry): the sheet is stored; the next one
-starts with the same source, version and language.{% endcomment %}
+{% comment %}Operator entry form, the end (change operator-entry): the response is stored; the next one
+starts with the same source, version and language. A paper response checked from photos (change
+paper-photo-entry) says what it became and offers the next one to check instead.{% endcomment %}
 {% block page_title %}{% trans "Response saved" %} – {{ survey.name }}{% endblock %}
 
 {% block navbar_content %}
@@ -12,6 +13,22 @@ starts with the same source, version and language.{% endcomment %}
 {% block content %}
 <div class="operator-entry-saved container py-5 text-center" style="max-width: 560px;">
     <i class="fas fa-check-circle fa-3x text-success mb-3" aria-hidden="true"></i>
+    {% if paper_sheet %}
+    <h2 class="h4">{% blocktrans with label=paper_sheet.label %}{{ label }} stored{% endblocktrans %}</h2>
+    <p class="text-muted">{% trans "It is on the Responses page with the source “Paper form” and your name. Its photos have been deleted." %}</p>
+    {% if paper_left or paper_reading %}
+    <p class="mb-0">
+        {% if paper_left %}<span class="badge badge-warning text-dark">{% blocktrans count n=paper_left %}{{ n }} response left to check{% plural %}{{ n }} responses left to check{% endblocktrans %}</span>{% endif %}
+        {% if paper_reading %}<span class="badge badge-light">{% blocktrans count n=paper_reading %}{{ n }} still being read{% plural %}{{ n }} still being read{% endblocktrans %}</span>{% endif %}
+    </p>
+    {% endif %}
+    <div class="d-flex justify-content-center mt-4" style="gap: .75rem;">
+        <a class="btn btn-outline-secondary" href="{{ paper_home_url }}">{% trans "Paper responses" %}</a>
+        {% if next_sheet_url %}
+        <a class="btn btn-primary" href="{{ next_sheet_url }}" autofocus>{% blocktrans with label=next_sheet.label %}Check {{ label }}{% endblocktrans %} →</a>
+        {% endif %}
+    </div>
+    {% else %}
     <h2 class="h4">{% trans "Response saved" %}</h2>
     <p class="text-muted">
         {% blocktrans with source=session.get_source_display %}Stored as “{{ source }}”. It appears in Responses with its source and your name.{% endblocktrans %}
@@ -20,5 +37,6 @@ starts with the same source, version and language.{% endcomment %}
         <a class="btn btn-outline-secondary" href="{{ responses_url }}">{% trans "Back to Responses" %}</a>
         <a class="btn btn-primary" href="{{ next_url }}" autofocus>{% trans "Enter the next one" %}</a>
     </div>
+    {% endif %}
 </div>
 {% endblock %}

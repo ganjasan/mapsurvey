@@ -424,6 +424,15 @@ SIGN_IN_GRACE_HOURS = int(os.environ.get('SIGN_IN_GRACE_HOURS', 24))
 MAPBOX_URL = os.environ.get('MAPBOX_URL', 'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/256/{z}/{x}/{y}@2x?access_token={accessToken}')
 MAPBOX_OUTDOORS_URL = os.environ.get('MAPBOX_OUTDOORS_URL', 'https://api.mapbox.com/styles/v1/mapbox/outdoors-v12/tiles/256/{z}/{x}/{y}@2x?access_token={accessToken}')
 MAPBOX_ACCESS_TOKEN = os.environ.get('MAPBOX_ACCESS_TOKEN', '')
+# The `paper` basemap (#534): a Mapbox style built for print — white ground, cased streets with names,
+# no POI icons or route shields, city names only at regional zooms — so a pen mark stands out on a
+# greyscale copy. `<account>/<style id>`; the style must be readable with MAPBOX_ACCESS_TOKEN.
+MAPBOX_PAPER_STYLE = os.environ.get('MAPBOX_PAPER_STYLE', 'artemkonuchov/cmw4ul8hj00qw01r19ensc484')
+MAPBOX_PAPER_URL = f'https://api.mapbox.com/styles/v1/{MAPBOX_PAPER_STYLE}/tiles/256/{{z}}/{{x}}/{{y}}@2x?access_token={{accessToken}}'
+# `paper_b`: the planner's base map, after a customer's printed neighbourhood map — white streets, bold
+# street names, light-green parks, teal water.
+MAPBOX_PAPER_B_STYLE = os.environ.get('MAPBOX_PAPER_B_STYLE', 'artemkonuchov/cmw4v89eu00xu01s8hcrt5iqv')
+MAPBOX_PAPER_B_URL = f'https://api.mapbox.com/styles/v1/{MAPBOX_PAPER_B_STYLE}/tiles/256/{{z}}/{{x}}/{{y}}@2x?access_token={{accessToken}}'
 # Server-side Mapbox calls (the printable form's Static Images request) use their own
 # token. MAPBOX_ACCESS_TOKEN ships to every browser, so production restricts it to our
 # URLs — and a server request carries no Referer, so a restricted token answers 403.
@@ -707,6 +716,16 @@ CREATE_STEER_AI = os.environ.get('CREATE_STEER_AI', 'True').lower() in ('true', 
 # render nothing for respondents while the rest of the section keeps working.
 # Stored files stay readable to creators either way.
 FILE_UPLOAD_QUESTIONS = os.environ.get('FILE_UPLOAD_QUESTIONS', 'True').lower() in ('true', '1')
+
+# Photos of filled paper forms (change paper-photo-entry, #495). Sanity bounds, not quota:
+# one file per upload request (a phone photo is 3-8 MB, a 50-page scanner PDF ~30 MB);
+# pages per batch (the worker renders them one at a time, the list has to stay readable);
+# days an untouched batch keeps its page images before `sweep_paper_batches` deletes them;
+# the model confidence below which a field is marked for the operator to check.
+PAPER_UPLOAD_MAX_BYTES = int(os.environ.get('PAPER_UPLOAD_MAX_BYTES', str(40 * 1024 * 1024)))
+PAPER_BATCH_MAX_PAGES = int(os.environ.get('PAPER_BATCH_MAX_PAGES', '500'))
+PAPER_BATCH_TTL_DAYS = int(os.environ.get('PAPER_BATCH_TTL_DAYS', '30'))
+PAPER_DOUBTFUL_CONFIDENCE = float(os.environ.get('PAPER_DOUBTFUL_CONFIDENCE', '0.75'))
 
 # Responses v2 (openspec: responses-v2-refactor): flat pane set with an Overview
 # default, detail drawer, global filter pills. ON by default (owner decision,

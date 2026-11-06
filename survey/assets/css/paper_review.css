@@ -1,0 +1,175 @@
+/* The photographed page beside the entry form (change paper-photo-entry, #495).
+   The pane is rendered inside the panel (so an HTMX swap replaces it with the
+   next section's page) and moved by paper_review.js into #paper-stage, an
+   element it creates next to #map. On a form-layout section the stage is the
+   empty side of the layout; on a map section it covers the map until the
+   operator presses "Map" — geo answers still need the map, and item 4 of the
+   epic will read marks from this very pane. */
+/* The photo on the LEFT, the form on the right (owner, 2026-10-31): the eye reads
+   the sheet first and the field it fills second. On a map section paper_review.js
+   puts the panel on the right (`panel-right`, the layout option sections already
+   have), so the stage mirrors with it; on a form section the card has no map to
+   share the page with and the stage carves out the left half itself. */
+/* Fixed, not absolute: a form-layout page is taller than the window and the
+   document scrolls — an absolute stage scrolled away with the first screen and
+   left the photo behind while the operator went down the questions. */
+#paper-stage {
+  position: fixed;
+  top: 0; bottom: 0; left: 0;
+  right: var(--panel-w, 420px);
+  z-index: 2;
+  background: #2b2f36;
+  display: none;
+}
+body.paper-review #paper-stage { display: block; }
+body.paper-review.paper-show-map #paper-stage { display: none; }
+body.paper-review:not(.panel-right) #paper-stage { left: var(--panel-w, 420px); right: 0; }
+body.survey-form-layout.paper-review #info_page { max-width: none; width: 50%; margin: 0 0 0 50%; }
+body.survey-form-layout.paper-review #paper-stage { left: 0; right: 50%; }
+
+.paper-pane { display: flex; flex-direction: column; height: 100%; color: #e8eaed; }
+.paper-pane__bar {
+  display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+  padding: .4rem .6rem; background: #1f2227; font-size: .85rem;
+}
+.paper-pane__title { font-weight: 600; margin-right: .25rem; }
+.paper-pane__pages { display: inline-flex; gap: .25rem; }
+.paper-pane__tools { margin-left: auto; display: inline-flex; gap: .25rem; }
+.paper-pane__btn {
+  border: 1px solid #4a4f57; background: #2b2f36; color: #e8eaed; border-radius: 4px;
+  padding: .15rem .5rem; font-size: .8rem; cursor: pointer;
+}
+.paper-pane__btn.is-active { background: #e8eaed; color: #1f2227; }
+.paper-pane__viewport { flex: 1; overflow: auto; position: relative; }
+.paper-pane__img {
+  display: block; width: 100%; height: auto; transform-origin: top left;
+  user-select: none; cursor: grab;
+}
+.paper-pane__empty { padding: 2rem; text-align: center; color: #aaa; }
+.paper-attach { padding: 2.5rem 1.5rem; text-align: center; color: #e8eaed; }
+.paper-attach__title { font-weight: 600; font-size: 1.05rem; margin-bottom: .25rem; }
+.paper-attach__hint, .paper-attach__skip { color: #aab; font-size: .9rem; }
+.paper-attach__state { color: #fcd34d; }
+.paper-attach .btn { margin: .25rem; }
+/* The camera button only where there is a camera to open (see paper_batch.css). */
+.paper-attach__shoot { display: none; }
+@media (hover: none) and (pointer: coarse) { .paper-attach__shoot { display: inline-block; } }
+.paper-section-title { font-size: 1.05rem; font-weight: 600; margin: 1rem 0 .5rem; }
+
+/* The page stepper of a paper check: one button per printed page. */
+.paper-stepper { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin: 0 24px .75rem; }  /* lined up with the panel header and the questions */
+.paper-step { width: 30px; height: 30px; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff;
+  font-size: .8rem; cursor: pointer; position: relative; padding: 0; }
+.paper-step--ok { background: #f0fdf4; border-color: #86efac; }
+.paper-step--warn { background: #fffbeb; border-color: #f59e0b; }
+.paper-step--warn::after { content: "!"; position: absolute; right: 2px; top: -1px; font-size: .7rem; color: #b45309; font-weight: 700; }
+.paper-step--miss { border-style: dashed; color: #94a3b8; }
+.paper-step--busy { color: #64748b; }
+.paper-step--failed { background: #fef2f2; border-color: #fca5a5; }
+.paper-step--cur { outline: 2px solid #2563eb; outline-offset: 1px; font-weight: 700; }
+.paper-stepper__legend { font-size: .72rem; color: #6b7280; margin-left: .35rem; }
+
+/* The fields the model was unsure of, and the ones it saw blank. */
+.question-card.paper-doubtful { border-left: 4px solid #f59e0b; padding-left: .6rem; background: #fffbeb; }
+.question-card.paper-blank { border-left: 4px solid #cbd5e1; padding-left: .6rem; }
+.paper-check {
+  display: inline-flex; align-items: center; gap: .5rem; border: 0; background: #fef3c7; color: #92400e;
+  font-size: .75rem; border-radius: 999px; padding: 2px 10px; margin-bottom: .35rem; cursor: pointer; font-weight: 400;
+}
+.paper-check__action { font-weight: 600; text-decoration: underline; }
+.paper-checked .paper-check { background: #dcfce7; color: #166534; }
+.paper-checked .paper-check__action { text-decoration: none; }
+.question-card.paper-doubtful.paper-checked { border-left-color: #16a34a; background: #f0fdf4; }
+.paper-marks__q--doubt.paper-checked { border-color: #86efac; }
+.paper-marks__q--doubt.paper-checked .paper-marks__table tr.has-mark td:first-child { box-shadow: inset 3px 0 0 #16a34a; }
+.paper-marks__title .paper-check { margin: 0 0 0 .5rem; }
+.operator-entry-bar__check { margin-left: .4rem; font-weight: 600; }
+
+@media only screen and (max-width: 768px) {
+  /* On a phone the panel is the whole screen; the picture sits above the form. */
+  #paper-stage { position: static; height: 45vh; left: 0; }
+  body.survey-form-layout.paper-review #info_page { width: auto; }
+}
+
+/* One header over the photo and the form (owner, 2026-10-31), built by
+   paper_review.js::buildHead on desktop: where you are · the pages · photo tools
+   and Stop. The entry bar and the pane bar it replaces are hidden. */
+:root { --paper-head-h: 52px; }
+.paper-head {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--paper-head-h); z-index: 1100;
+  display: flex; align-items: center; gap: 1rem; padding: 0 16px;
+  background: #fff; border-bottom: 1px solid #e5e7eb; font-size: .85rem; color: #1f2937;
+}
+.paper-head__where { display: flex; align-items: center; gap: .75rem; white-space: nowrap; min-width: 0; }
+.paper-head__back { color: #4b5563; }
+.paper-head__meta { font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+.paper-head .operator-entry-bar__check { color: #b45309; margin-left: 0; }
+.paper-head__pages { flex: 1; display: flex; justify-content: center; min-width: 0; }
+.paper-head__pages .paper-stepper { margin: 0; flex-wrap: nowrap; overflow-x: auto; }
+.paper-head__tools { display: flex; align-items: center; gap: .5rem; white-space: nowrap; }
+.paper-head .paper-pane__tools { margin-left: 0; }
+.paper-head .paper-pane__btn { background: #fff; color: #374151; border-color: #d1d5db; }
+.paper-head .paper-pane__btn.is-active { background: #374151; color: #fff; }
+.paper-head__stop { margin-left: .5rem; color: #92400e; text-decoration: underline; }
+body.paper-head-on .operator-entry-bar,
+body.paper-head-on .paper-pane__bar { display: none; }
+body.paper-head-on #paper-stage { top: var(--paper-head-h); }
+body.paper-head-on #map { margin-top: var(--paper-head-h); height: calc(100vh - var(--paper-head-h)); }
+body.paper-head-on #info_page { top: var(--paper-head-h); height: calc(100% - var(--paper-head-h)); }
+body.paper-head-on.survey-form-layout #info_page { top: auto; height: auto; margin-top: var(--paper-head-h); }
+
+/* The form leads, the photo follows: the question the operator is on is outlined
+   on the photo and on its card, in the same blue (paper_review.js::makeFollow). */
+.paper-pane__box {
+  position: absolute; pointer-events: none; z-index: 1;
+  border: 3px solid #2563eb; border-radius: 6px; background: rgba(37, 99, 235, .08);
+  transition: top .2s ease, left .2s ease, width .2s ease, height .2s ease;
+}
+.question-card.paper-active { box-shadow: 0 0 0 2px #2563eb; }
+
+/* ── The map page of a check: the printed frame as a live map, then the marks
+   table with the printed rows and columns (item 4; map-page.mockup.html). ── */
+.paper-marks { margin: 0 0 1rem; }
+.paper-marks__hint { font-size: .8rem; color: #6b7280; margin: 0 0 .5rem; }
+.paper-marks__mapwrap { position: relative; }
+.paper-marks__map { width: 100%; aspect-ratio: 900 / 550; border: 1px solid #cbd5e1; border-radius: 8px; z-index: 0; }
+.paper-marks__fit { position: absolute; left: 8px; bottom: 8px; z-index: 500; font-size: .75rem; }
+.paper-marks__q { margin-top: .9rem; }
+.paper-marks__title { font-weight: 600; margin-bottom: .3rem; display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.paper-marks__letter { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 6px; background: #1f2937; color: #fff; font-size: .85rem; }
+.paper-marks__doubt { font-size: .72rem; font-weight: 400; color: #b45309; background: #fef3c7; border-radius: 999px; padding: 1px 8px; }
+.paper-marks__table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.paper-marks__table th, .paper-marks__table td { border: 1px solid #e5e7eb; padding: 5px 7px; vertical-align: middle; text-align: left; }
+.paper-marks__table th { background: #f9fafb; font-weight: 600; font-size: .78rem; color: #374151; }
+.paper-marks__table th small { display: block; font-weight: 400; color: #6b7280; }
+.paper-marks__c-label { width: 56px; } .paper-marks__c-state { width: 112px; } .paper-marks__c-act { width: 84px; }
+.paper-marks__table tr.is-sel td { background: #eff6ff; box-shadow: inset 3px 0 0 #2563eb; }
+.paper-marks__q--doubt .paper-marks__table tr.has-mark td:first-child { box-shadow: inset 3px 0 0 #b45309; }
+.paper-marks__table .lbl { font-weight: 700; }
+.paper-marks__table tr.is-empty .lbl { color: #9ca3af; }
+.paper-marks__table .empty { color: #9ca3af; font-size: .78rem; }
+.paper-marks__table input[type=text], .paper-marks__table input[type=number], .paper-marks__table input[type=datetime-local], .paper-marks__table select {
+  width: 100%; border: 1px solid #d1d5db; border-radius: 4px; padding: 3px 6px; font: inherit; font-size: .85rem; background: #fff; }
+.paper-marks__table label.chk { display: inline-flex; align-items: center; gap: 3px; margin: 0 6px 0 0; font-size: .8rem; }
+.paper-marks__tag { display: inline-block; border-radius: 999px; padding: 1px 8px; font-size: .72rem; white-space: nowrap; }
+.paper-marks__tag--ok { background: #dcfce7; color: #166534; } .paper-marks__tag--none { background: #f3f4f6; color: #6b7280; }
+.paper-marks__act { white-space: nowrap; font-size: .78rem; }
+.paper-marks__act a { color: #2563eb; margin-right: 8px; text-decoration: none; cursor: pointer; }
+.paper-marks__act a.del { color: #9ca3af; }
+.paper-marks__add { font-size: .82rem; }
+.paper-marks__placing .paper-marks__map { cursor: crosshair; outline: 3px solid rgba(37, 99, 235, .35); }
+.paper-marks__status { font-size: .8rem; color: #2563eb; margin: .3rem 0 0; }
+/* pins: the label above a teardrop */
+.paper-pin { background: transparent; border: 0; }
+.paper-pin__wrap { position: relative; width: 34px; height: 44px; transform: translate(-17px, -44px); display: flex; flex-direction: column; align-items: center; }
+.paper-pin__label { background: #fff; border: 1px solid var(--pin, #2563eb); color: var(--pin, #2563eb); border-radius: 10px; padding: 0 6px; font-size: 11px; font-weight: 700; line-height: 16px; }
+.paper-pin__dot { width: 16px; height: 16px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: var(--pin, #2563eb); border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, .4); margin-top: 6px; }
+.paper-pin.is-sel .paper-pin__dot { outline: 3px solid rgba(37, 99, 235, .35); }
+/* main.css moves every Leaflet control container past the respondent panel
+   (.leaflet-top.leaflet-left { left: <panel> }); this map lives inside the panel. */
+#paper-map .leaflet-top.leaflet-left, #paper-map .leaflet-bottom.leaflet-left { left: 0 !important; }
+#paper-map .leaflet-top.leaflet-right, #paper-map .leaflet-bottom.leaflet-right { right: 0 !important; }
+#paper-map .leaflet-top { top: 0 !important; }
+
+/* A row read off the table on another page, its mark still to be placed (Stack #263). */
+.paper-marks__place { margin-left: .4rem; font-size: .8rem; }

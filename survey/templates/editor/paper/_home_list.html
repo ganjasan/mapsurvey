@@ -1,0 +1,80 @@
+{% load i18n %}{% comment %}The responses list of Paper responses (change paper-photo-entry). Swapped whole every 3 s
+while anything is being read (`data-in-flight`).{% endcomment %}
+<div class="paper-list-inner" data-in-flight="{{ in_flight|yesno:'1,0' }}">
+    <div class="paper-stripe">
+        <span><b>{{ open_sheets|length }}</b> {% trans "in progress" %}</span> ·
+        <span><b>{{ to_check }}</b> {% trans "to check" %}</span> ·
+        <span><b>{{ stored_count }}</b> {% trans "stored" %}</span>
+        {% if loose_pages %} · <span class="text-danger"><b>{{ loose_pages|length }}</b> {% trans "set aside" %}</span>{% endif %}
+        {% if in_flight %} · <span class="spinner-border spinner-border-sm" aria-hidden="true"></span> {% trans "reading…" %}{% endif %}
+        {% if next_sheet %}<a class="btn btn-sm btn-primary ml-auto" href="{% url 'paper_response' survey.uuid next_sheet.pk %}">{% blocktrans with label=next_sheet.label %}Check {{ label }}{% endblocktrans %} →</a>{% endif %}
+    </div>
+
+    {% for upload in uploads %}
+    <div class="alert py-2 {% if upload.status == 'failed' %}alert-danger{% else %}alert-info{% endif %}" role="status">
+        {% if upload.status == 'failed' %}{% blocktrans with name=upload.original_name %}“{{ name }}” failed{% endblocktrans %}: {{ upload.error }}
+        {% else %}<span class="spinner-border spinner-border-sm mr-1" aria-hidden="true"></span>{% blocktrans with name=upload.original_name %}Splitting “{{ name }}” into pages…{% endblocktrans %}{% endif %}
+    </div>
+    {% endfor %}
+    {% if loose_queued %}
+    <div class="alert alert-info py-2" role="status"><span class="spinner-border spinner-border-sm mr-1" aria-hidden="true"></span>
+        {% blocktrans count n=loose_queued %}Reading {{ n }} page…{% plural %}Reading {{ n }} pages…{% endblocktrans %}</div>
+    {% endif %}
+
+    {% for sheet in open_sheets %}
+    <div class="paper-card paper-card--{{ sheet.status }}">
+        <div class="paper-card__head">
+            <a href="{% url 'paper_response' survey.uuid sheet.pk %}"><b>{{ sheet.label }}</b></a>
+            {% if not sheet.has_pages %}<span class="badge badge-light">{% trans "empty" %}</span>
+            {% elif sheet.status == 'recognising' %}<span class="badge badge-light">{% trans "reading…" %}</span>
+            {% else %}
+                {% if sheet.missing %}<span class="badge badge-danger">{% blocktrans with pages=sheet.missing|join:", " count n=sheet.missing|length %}page {{ pages }} missing{% plural %}pages {{ pages }} missing{% endblocktrans %}</span>{% endif %}
+                {% if sheet.doubtful_count %}<span class="badge badge-warning text-dark">{% blocktrans count n=sheet.doubtful_count %}{{ n }} field to check{% plural %}{{ n }} fields to check{% endblocktrans %}</span>{% endif %}
+                {% if not sheet.missing %}<span class="badge badge-success">{% trans "all pages" %}</span>{% endif %}
+            {% endif %}
+            <span class="paper-card__actions">
+                <a class="btn btn-sm {% if sheet.is_reviewable and sheet.has_pages %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="{% url 'paper_response' survey.uuid sheet.pk %}">{% if sheet.has_pages %}{% trans "Open" %}{% else %}{% trans "Add photos" %}{% endif %}</a>
+            </span>
+        </div>
+        {% if sheet.slots %}
+        <div class="paper-thumbs">
+            {% for slot in sheet.slots %}<span class="paper-mini paper-mini--{{ slot.state }}" title="{% trans 'Page' %} {{ slot.n }}">{{ slot.n }}</span>{% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% empty %}
+    <p class="text-muted">{% trans "Nothing in progress. Start with New response, or drop a stack above." %}</p>
+    {% endfor %}
+
+    {% if loose_pages %}
+    <h3 class="paper-h3">{% trans "Set aside" %} <span class="badge badge-danger">{{ loose_pages|length }}</span></h3>
+    {% for page in loose_pages %}
+    <div class="paper-loose">
+        <img src="{% url 'paper_page_image' survey.uuid page.pk %}" alt="" loading="lazy">
+        <div>
+            <div class="small text-muted">{{ page.upload.original_name }} · {{ page.error|default:_("No code could be read on this page.") }}</div>
+            {% if page.status == 'failed' %}
+            <form method="post" action="{% url 'paper_page_retry' survey.uuid page.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary">{% trans "Retry" %}</button></form>
+            {% elif open_sheets %}
+            <form method="post" action="{% url 'paper_page_assign' survey.uuid page.pk %}" class="paper-assign">{% csrf_token %}
+                <select name="sheet" class="form-control form-control-sm" aria-label="{% trans 'Response' %}">
+                    {% for s in open_sheets %}<option value="{{ s.pk }}"{% if suggestion and suggestion.0.pk == s.pk %} selected{% endif %}>{{ s.label }}</option>{% endfor %}
+                </select>
+                <input type="number" name="page_number" min="1" value="{% if suggestion %}{{ suggestion.1.0 }}{% else %}1{% endif %}" class="form-control form-control-sm" aria-label="{% trans 'Page number' %}">
+                <button type="submit" class="btn btn-sm btn-primary">{% trans "Attach" %}</button>
+            </form>
+            {% if suggestion %}<div class="small text-muted">{% blocktrans with label=suggestion.0.label n=suggestion.1.0 %}Suggested: {{ label }} is the only response missing a page (page {{ n }}).{% endblocktrans %}</div>{% endif %}
+            {% endif %}
+            <form method="post" action="{% url 'paper_page_remove' survey.uuid page.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-link text-danger">{% trans "Remove" %}</button></form>
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if stored %}
+    <h3 class="paper-h3">{% trans "Stored" %} <span class="badge badge-success">{{ stored_count }}</span> <span class="small text-muted">{% trans "on the Responses page with the source “Paper form”" %}</span></h3>
+    {% for sheet in stored %}
+    <div class="paper-card paper-card--entered"><div class="paper-card__head"><b>{{ sheet.label }}</b><span class="small text-muted">{{ sheet.entered_at|date:"j M, H:i" }}</span></div></div>
+    {% endfor %}
+    {% endif %}
+</div>

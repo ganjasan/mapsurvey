@@ -1,0 +1,44 @@
+{% extends "editor/editor_base.html" %}
+{% load i18n static survey_filters %}
+{% comment %}One paper response (change paper-photo-entry, #495): a slot per printed page, a drop zone (and the
+camera on a phone) that puts this form's photos or PDF here in any order, and Check. Photos that turn out
+to be another copy go to it and are named here. The slots are `_response_slots.html`, swapped while read.{% endcomment %}
+{% block page_title %}{{ sheet.label }} – {% trans "Paper responses" %} – {{ survey.name }}{% endblock %}
+
+{% block navbar_content %}
+{% survey_title survey %}
+{% include "editor/partials/_survey_nav_tabs.html" with active_tab="results" %}
+{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/paper_inbox.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="paper-response container py-4" style="max-width: 1000px;">
+    <div class="paper-crumb"><a href="{% url 'editor_survey_analytics' survey.uuid %}">{% trans "Responses" %}</a> › <a href="{{ home_url }}">{% trans "Paper responses" %}</a> › <b>{{ sheet.label }}</b></div>
+
+    {% if sheet.is_open %}
+    <div class="paper-drop paper-drop--slim" tabindex="0" data-paper-upload
+         data-upload-url="{{ upload_url }}" data-sheet="{{ sheet.pk }}" data-refresh-url="{{ slots_url }}" data-refresh-target="#paper-slots"
+         data-max-bytes="{{ max_bytes }}" data-csrf="{{ csrf_token }}"
+         data-msg-too-large="{% trans 'Too large' %}" data-msg-failed="{% trans 'Upload failed' %}" data-msg-uploaded="{% trans 'Uploaded' %}">
+        <input type="file" class="paper-files" multiple accept="image/*,.heic,.heif,.pdf" hidden>
+        <input type="file" class="paper-camera" accept="image/*" capture="environment" hidden>
+        <p class="mb-1"><strong>{% trans "Drop the photos or the PDF of this one form here" %}</strong> — {% trans "or" %} <button type="button" class="btn btn-link p-0 align-baseline paper-pick">{% trans "choose files" %}</button></p>
+        <p class="paper-drop__camera mb-1"><button type="button" class="btn btn-primary btn-lg paper-shoot"><i class="fas fa-camera mr-1" aria-hidden="true"></i> {% trans "Take photo" %}</button>
+            <span class="d-block text-muted small mt-1">{% trans "One page per shot, in any order; tap again for the next page." %}</span></p>
+        <p class="text-muted small mb-0">{% trans "Any order: each page finds its slot by the code printed on it." %}</p>
+    </div>
+    <ul class="paper-queue list-unstyled"></ul>
+    {% endif %}
+
+    <div id="paper-slots" hx-get="{{ slots_url }}" hx-trigger="every 3s [document.querySelector('#paper-slots .paper-list-inner') && document.querySelector('#paper-slots .paper-list-inner').dataset.inFlight === '1']" hx-swap="innerHTML">
+        {% include "editor/paper/_response_slots.html" %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/paper_upload.js' %}"></script>
+{% endblock %}

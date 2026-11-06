@@ -12,7 +12,9 @@
     var _providers = {
         'streets':   { name: 'Streets',   url: '{{ MAPBOX_URL }}',          opts: { attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a>', maxZoom: 23, accessToken: _mapboxToken }},
         'satellite': { name: 'Satellite', url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', opts: { attribution: '&copy; Esri', maxZoom: 19 }},
-        'topo':      { name: 'Topo',      url: '{{ MAPBOX_OUTDOORS_URL }}', opts: { attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a>', maxZoom: 22, accessToken: _mapboxToken }}
+        'topo':      { name: 'Topo',      url: '{{ MAPBOX_OUTDOORS_URL }}', opts: { attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a>', maxZoom: 22, accessToken: _mapboxToken }},
+        'paper':     { name: 'Paper A',   url: '{{ MAPBOX_PAPER_URL }}',    opts: { attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a>', maxZoom: 22, accessToken: _mapboxToken }},
+        'paper_b':   { name: 'Paper B',   url: '{{ MAPBOX_PAPER_B_URL }}',  opts: { attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a>', maxZoom: 22, accessToken: _mapboxToken }}
     };
 
     window._basemapLayers = {};

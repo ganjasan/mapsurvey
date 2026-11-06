@@ -105,7 +105,16 @@ def _render_share(request, survey, form=None, embed_form=None, status=200):
         'print_languages': list(survey.available_languages or ['en']),
         'print_default_paper': default_paper(request),
         'print_cjk': any(code in ('zh', 'ja', 'ko') for code in (survey.available_languages or [])),
+        # Numbered copies (change paper-photo-entry): the numbering is per survey and only grows.
+        **_print_copies_context(canonical),
     }, status=status)
+
+
+def _print_copies_context(canonical):
+    from django.db.models import Max
+    from .models import PrintRun
+    last = PrintRun.objects.filter(survey=canonical).aggregate(m=Max('last_copy'))['m'] or 0
+    return {'print_copies_printed': last, 'print_next_copy': last + 1, 'print_max_copies': PrintRun.MAX_COPIES}
 
 
 @survey_permission_required('editor')

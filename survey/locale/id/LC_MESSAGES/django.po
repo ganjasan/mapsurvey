@@ -9717,3 +9717,536 @@ msgstr "Edit di peta"
 #: survey/templates/partials/survey_section_partial.html
 msgid "Save and return to Responses"
 msgstr "Simpan dan kembali ke Jawaban"
+#: survey/paper_views.py
+msgid "No file."
+msgstr "Tidak ada berkas."
+
+#: survey/paper_views.py
+#, python-format
+msgid "This file is larger than %(mb)s MB."
+msgstr "Berkas ini lebih besar dari %(mb)s MB."
+
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "More ways to enter"
+msgstr "Cara lain memasukkan"
+
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "Type in a response"
+msgstr "Ketik tanggapan"
+
+#: survey/templates/editor/operator_entry/_entry_bar.html
+msgid "{count} fields to check"
+msgstr "{count} kolom untuk diperiksa"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Pages"
+msgstr "Halaman"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Zoom out"
+msgstr "Perkecil"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Zoom in"
+msgstr "Perbesar"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Rotate"
+msgstr "Putar"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Show the map"
+msgstr "Tampilkan peta"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Photographed page"
+msgstr "Halaman yang difoto"
+
+#: survey/templates/editor/operator_entry/header.html
+msgid "Have photos or scans of filled paper forms? Read them from photos instead."
+msgstr "Punya foto atau hasil pindai formulir kertas yang sudah diisi? Baca dari foto saja."
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "reading…"
+msgstr "membaca…"
+
+#: survey/templates/editor/paper/_sheet_list.html
+#, python-format
+msgid "“%(name)s” failed"
+msgstr "“%(name)s” gagal"
+
+#: survey/templates/editor/paper/_sheet_list.html
+#, python-format
+msgid "Splitting “%(name)s” into pages…"
+msgstr "Memisahkan “%(name)s” menjadi halaman…"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Remove this page"
+msgstr "Hapus halaman ini"
+
+#: survey/templates/editor/paper/_sheet_list.html
+msgid "Page number"
+msgstr "Nomor halaman"
+
+#: survey/templates/editor/paper/batch.html
+msgid "Too large"
+msgstr "Terlalu besar"
+
+#: survey/templates/editor/paper/batch.html
+msgid "Upload failed"
+msgstr "Unggahan gagal"
+
+#: survey/templates/editor/paper/batch.html
+msgid "Uploaded"
+msgstr "Terunggah"
+
+#: survey/templates/editor/paper/batch.html
+msgid "or"
+msgstr "atau"
+
+#: survey/templates/editor/paper/batch.html
+msgid "choose files"
+msgstr "pilih berkas"
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "Check this against the photo"
+msgstr "Periksa dengan foto"
+
+#: survey/templates/editor/paper/_sheet_list.html
+#, python-format
+msgid "Reading %(n)s page…"
+msgid_plural "Reading %(n)s pages…"
+msgstr[0] "Membaca %(n)s halaman…"
+
+#: survey/templates/editor/paper/_sheet_list.html
+#, python-format
+msgid "%(n)s field to check"
+msgid_plural "%(n)s fields to check"
+msgstr[0] "%(n)s kolom untuk diperiksa"
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "Nothing to type on this page — it holds the map and its marks. Press Next."
+msgstr "Tidak ada yang perlu diketik di halaman ini — isinya peta dan tandanya. Tekan Berikutnya."
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Uploading…"
+msgstr "Mengunggah…"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Reading the page…"
+msgstr "Membaca halaman…"
+
+#: survey/paper/sheets.py
+#, python-format
+msgid "This photo is %(copy)s, page %(page)s — it went there."
+msgstr "Foto ini adalah %(copy)s, halaman %(page)s — sudah dipindahkan ke sana."
+
+#: survey/paper/sheets.py
+msgid "This form has no copy numbers: add this photo to a response, or upload one PDF per filled form."
+msgstr "Formulir ini tidak bernomor salinan: tambahkan foto ini ke sebuah tanggapan, atau unggah satu PDF per formulir yang diisi."
+
+#: survey/paper/sheets.py
+#, python-format
+msgid "%(copy)s is already stored — this photo was not used."
+msgstr "%(copy)s sudah tersimpan — foto ini tidak dipakai."
+
+#: survey/paper/sheets.py
+#, python-format
+msgid "This page is from another printed form than %(copy)s."
+msgstr "Halaman ini dari formulir cetak yang berbeda dengan %(copy)s."
+
+#: survey/paper_views.py
+msgid "This response is not open."
+msgstr "Tanggapan ini tidak terbuka."
+
+#: survey/paper_views.py
+msgid "Pick a response and a page number."
+msgstr "Pilih tanggapan dan nomor halaman."
+
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "From photos of paper forms"
+msgstr "Dari foto formulir kertas"
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+#, python-format
+msgid "Page %(n)s of %(label)s was not photographed."
+msgstr "Halaman %(n)s dari %(label)s belum difoto."
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "Attach it: it will be read and the fields beside it will fill in."
+msgstr "Lampirkan: akan dibaca dan kolom di sampingnya terisi."
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "No page at hand? Type the answers beside it, or press Next to leave them blank."
+msgstr "Halamannya tidak ada? Ketik jawabannya di samping, atau tekan Berikutnya untuk membiarkannya kosong."
+
+#: survey/templates/editor/operator_entry/_paper_pane.html
+msgid "The photos of this response are gone."
+msgstr "Foto tanggapan ini sudah dihapus."
+
+#: survey/templates/editor/operator_entry/saved.html
+#, python-format
+msgid "%(label)s stored"
+msgstr "%(label)s tersimpan"
+
+#: survey/templates/editor/operator_entry/saved.html
+msgid "It is on the Responses page with the source “Paper form” and your name. Its photos have been deleted."
+msgstr "Tanggapan ini ada di halaman Tanggapan dengan sumber “Formulir kertas” dan nama Anda. Fotonya telah dihapus."
+
+#: survey/templates/editor/operator_entry/saved.html
+msgid "Paper responses"
+msgstr "Tanggapan kertas"
+
+#: survey/templates/editor/operator_entry/saved.html
+#, python-format
+msgid "Check %(label)s"
+msgstr "Periksa %(label)s"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "in progress"
+msgstr "sedang berjalan"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "to check"
+msgstr "untuk diperiksa"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "stored"
+msgstr "tersimpan"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "set aside"
+msgstr "disisihkan"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "empty"
+msgstr "kosong"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "all pages"
+msgstr "semua halaman"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "Add photos"
+msgstr "Tambah foto"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "Nothing in progress. Start with New response, or drop a stack above."
+msgstr "Belum ada yang berjalan. Mulai dengan Tanggapan baru, atau letakkan tumpukan di atas."
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "Set aside"
+msgstr "Disisihkan"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "No code could be read on this page."
+msgstr "Tidak ada kode yang terbaca di halaman ini."
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "Attach"
+msgstr "Tetapkan"
+
+#: survey/templates/editor/paper/_home_list.html
+#, python-format
+msgid "Suggested: %(label)s is the only response missing a page (page %(n)s)."
+msgstr "Saran: %(label)s satu-satunya tanggapan yang kurang satu halaman (halaman %(n)s)."
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "Stored"
+msgstr "Tersimpan"
+
+#: survey/templates/editor/paper/_home_list.html
+msgid "on the Responses page with the source “Paper form”"
+msgstr "di halaman Tanggapan dengan sumber “Formulir kertas”"
+
+#: survey/templates/editor/paper/_response_slots.html
+#, python-format
+msgid "%(have)s pages"
+msgstr "%(have)s halaman"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "not photographed"
+msgstr "belum difoto"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "No page yet. Drop this form's photos or PDF above; the slots appear as the pages are read."
+msgstr "Belum ada halaman. Letakkan foto atau PDF formulir ini di atas; slot muncul saat halaman dibaca."
+
+#: survey/templates/editor/paper/_response_slots.html
+#, python-format
+msgid "“%(name)s”"
+msgstr "“%(name)s”"
+
+#: survey/templates/editor/paper/_response_slots.html
+#, python-format
+msgid "Open %(label)s"
+msgstr "Buka %(label)s"
+
+#: survey/templates/editor/paper/_response_slots.html
+#, python-format
+msgid "An earlier photo of page %(n)s was replaced by a newer one."
+msgstr "Foto sebelumnya dari halaman %(n)s diganti dengan yang lebih baru."
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "Use the earlier photo"
+msgstr "Gunakan foto sebelumnya"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "Open on Responses"
+msgstr "Buka di Tanggapan"
+
+#: survey/templates/editor/paper/home.html
+msgid "Photograph or scan the filled forms and check what was read beside the picture. Each one is stored as a paper response."
+msgstr "Foto atau pindai formulir yang sudah diisi dan periksa hasil bacaan di samping gambar. Masing-masing disimpan sebagai tanggapan kertas."
+
+#: survey/templates/editor/paper/home.html
+#, python-format
+msgid "Printed form MS-%(code)s"
+msgstr "Formulir cetak MS-%(code)s"
+
+#: survey/templates/editor/paper/home.html
+#, python-format
+msgid "%(back)s of %(n)s numbered copies back"
+msgstr "%(back)s dari %(n)s salinan bernomor kembali"
+
+#: survey/templates/editor/paper/home.html
+msgid "printed without copy numbers"
+msgstr "dicetak tanpa nomor salinan"
+
+#: survey/templates/editor/paper/home.html
+msgid "Print more"
+msgstr "Cetak lagi"
+
+#: survey/templates/editor/paper/home.html
+msgid "No paper form has been printed for this survey yet."
+msgstr "Belum ada formulir kertas yang dicetak untuk survei ini."
+
+#: survey/templates/editor/paper/home.html
+msgid "Print one on the Share page"
+msgstr "Cetak di halaman Bagikan"
+
+#: survey/templates/editor/paper/home.html
+msgid "New response"
+msgstr "Tanggapan baru"
+
+#: survey/templates/editor/paper/home.html
+msgid "One filled form: photograph or upload its pages into its own card, in any order."
+msgstr "Satu formulir yang diisi: foto atau unggah halamannya ke kartunya sendiri, dalam urutan apa pun."
+
+#: survey/templates/editor/paper/home.html
+msgid "Upload a stack"
+msgstr "Unggah tumpukan"
+
+#: survey/templates/editor/paper/home.html
+msgid "drop photos, scans or PDFs here, or"
+msgstr "letakkan foto, hasil pindai, atau PDF di sini, atau"
+
+#: survey/templates/editor/paper/home.html
+msgid "Any order: each page finds its response by the copy number printed on it."
+msgstr "Urutan apa pun: setiap halaman menemukan tanggapannya lewat nomor salinan yang tercetak."
+
+#: survey/templates/editor/paper/home.html
+msgid "This survey's form was printed without copy numbers: upload one PDF per filled form, or use New response and add its photos."
+msgstr "Formulir survei ini dicetak tanpa nomor salinan: unggah satu PDF per formulir yang diisi, atau gunakan Tanggapan baru dan tambahkan fotonya."
+
+#: survey/templates/editor/paper/response.html
+msgid "Drop the photos or the PDF of this one form here"
+msgstr "Letakkan foto atau PDF formulir ini di sini"
+
+#: survey/templates/editor/paper/response.html
+msgid "One page per shot, in any order; tap again for the next page."
+msgstr "Satu halaman per foto, urutan apa pun; ketuk lagi untuk halaman berikutnya."
+
+#: survey/templates/editor/paper/response.html
+msgid "Any order: each page finds its slot by the code printed on it."
+msgstr "Urutan apa pun: setiap halaman menemukan slotnya lewat kode yang tercetak."
+
+#: survey/templates/editor/survey_share.html
+msgid "Copies"
+msgstr "Salinan"
+
+#: survey/templates/editor/survey_share.html
+msgid "Numbered copies"
+msgstr "Salinan bernomor"
+
+#: survey/templates/editor/survey_share.html
+msgid "Number of copies"
+msgstr "Jumlah salinan"
+
+#: survey/templates/editor/survey_share.html
+msgid "One copy to photocopy"
+msgstr "Satu salinan untuk difotokopi"
+
+#: survey/templates/editor/survey_share.html
+#, python-format
+msgid "%(n)s numbered copies printed so far; the next print starts at #%(next)s."
+msgstr "Sejauh ini %(n)s salinan bernomor dicetak; cetakan berikutnya dimulai dari #%(next)s."
+
+#: survey/templates/editor/survey_share.html
+msgid "Numbered copies carry their own number on every page, so photos and scans of them sort themselves in any order. A copy made on a photocopier repeats its number — print more copies instead. With one copy to photocopy, upload one PDF per filled form, or add photos to a response by hand."
+msgstr "Salinan bernomor membawa nomornya sendiri di setiap halaman, sehingga foto dan pindaiannya tersusun sendiri dalam urutan apa pun. Fotokopi mengulang nomornya — cetak lebih banyak salinan saja. Dengan satu salinan untuk difotokopi, unggah satu PDF per formulir yang diisi, atau tambahkan foto ke tanggapan secara manual."
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "✓ read · ! to check · ∅ no photo"
+msgstr "✓ terbaca · ! periksa · ∅ tanpa foto"
+
+#: survey/templates/editor/operator_entry/saved.html
+#, python-format
+msgid "%(n)s response left to check"
+msgid_plural "%(n)s responses left to check"
+msgstr[0] "%(n)s tanggapan lagi untuk diperiksa"
+
+#: survey/templates/editor/operator_entry/saved.html
+#, python-format
+msgid "%(n)s still being read"
+msgid_plural "%(n)s still being read"
+msgstr[0] "%(n)s masih dibaca"
+
+#: survey/templates/editor/paper/_home_list.html
+#, python-format
+msgid "page %(pages)s missing"
+msgid_plural "pages %(pages)s missing"
+msgstr[0] "halaman %(pages)s tidak ada"
+
+#: survey/templates/editor/paper/home.html
+#, python-format
+msgid "%(n)s page"
+msgid_plural "%(n)s pages"
+msgstr[0] "%(n)s halaman"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "It is page"
+msgstr "Ini halaman"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "replaces the photo"
+msgstr "menggantikan foto"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "Hide this note"
+msgstr "Sembunyikan catatan ini"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "Delete this photo"
+msgstr "Hapus foto ini"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "Delete the earlier photo"
+msgstr "Hapus foto sebelumnya"
+
+#: survey/templates/editor/operator_entry/_entry_bar.html
+msgid "{count} field to check"
+msgstr "{count} isian perlu dicek"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "The map is the printed frame. Drag a pin to move it; click a row to find its mark on the photo."
+msgstr "Peta ini adalah bingkai yang tercetak. Seret pin untuk memindahkannya; klik baris untuk menemukan tandanya di foto."
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "Back to the printed frame"
+msgstr "Kembali ke bingkai tercetak"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "Printed frame"
+msgstr "Bingkai tercetak"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "On the map"
+msgstr "Di peta"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "Add a mark the reader missed"
+msgstr "Tambahkan tanda yang terlewat oleh pembaca"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "placed"
+msgstr "ditempatkan"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "no mark"
+msgstr "tidak ada tanda"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "Row is empty on the paper. If a mark was missed:"
+msgstr "Baris ini kosong di kertas. Jika ada tanda yang terlewat:"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "place it on the map"
+msgstr "letakkan di peta"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "line · {n} points"
+msgstr "garis · {n} titik"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "area"
+msgstr "area"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "cloud · {n} dots"
+msgstr "awan · {n} titik"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "Click the map where the mark is"
+msgstr "Klik peta di tempat tanda berada"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "Draw it on the map, double-click to finish"
+msgstr "Gambar di peta, klik dua kali untuk selesai"
+
+#: survey/templates/editor/operator_entry/_paper_marks.html
+msgid "Find on the photo"
+msgstr "Temukan di foto"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "Dismiss all"
+msgstr "Tutup semua"
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "Dismiss every note: the earlier photos are deleted, the photos that went elsewhere stay there."
+msgstr "Tutup semua catatan: foto sebelumnya dihapus, foto yang pindah ke tempat lain tetap di sana."
+
+#: survey/templates/editor/survey_share.html
+msgid "Keep each map with its tables on one page"
+msgstr "Jaga setiap peta beserta tabelnya dalam satu halaman"
+
+#: survey/templates/editor/survey_share.html
+msgid "A map that does not fit under the questions above it moves to the next page whole, instead of its tables being cut in two."
+msgstr "Peta yang tidak muat di bawah pertanyaan di atasnya pindah utuh ke halaman berikutnya, alih-alih tabelnya terpotong dua."
+
+#: survey/templates/editor/paper/_response_slots.html
+msgid "Delete this response and its photos? Its copy number can be uploaded again."
+msgstr "Hapus tanggapan ini beserta fotonya? Nomor salinannya bisa diunggah lagi."
+
+#: survey/templates/editor/paper/home.html
+msgid "Photos are kept until the response is stored or deleted, and at most 30 days: a response nobody touches for 30 days is deleted. Each page image is sent to the AI provider for the duration of the reading."
+msgstr "Foto disimpan sampai tanggapan tersimpan atau dihapus, paling lama 30 hari: tanggapan yang tidak disentuh selama 30 hari akan dihapus. Setiap gambar halaman dikirim ke penyedia AI selama pembacaan."
+
+#: survey/paper_views.py
+msgid "Too many photos are waiting. Check or delete some responses first."
+msgstr "Terlalu banyak foto menunggu. Periksa atau hapus beberapa tanggapan dulu."
+
+#: survey/templates/editor/paper/home.html
+msgid "Printed forms"
+msgstr "Formulir tercetak"
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "Mark as checked"
+msgstr "Tandai sudah diperiksa"
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "Checked"
+msgstr "Sudah diperiksa"
+
+#: survey/templates/editor/paper/_response_slots.html
+#, python-format
+msgid "Check page %(n)s"
+msgstr "Periksa halaman %(n)s"
+
+#: survey/models.py
+msgid "Paper A"
+msgstr "Kertas A"
+
+#: survey/models.py
+msgid "Paper B"
+msgstr "Kertas B"
