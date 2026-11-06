@@ -14,7 +14,12 @@
     <div class="paper-slots">
         {% for slot in sheet.slots %}
         <div class="paper-slot paper-slot--{{ slot.state }}">
-            {% if slot.image_url %}<img src="{{ slot.image_url }}" alt="" loading="lazy">{% endif %}
+            {% if sheet.is_open and sheet.printed_form %}{# a click opens the check at this page (owner, 2026-11-06) #}
+            <form method="post" action="{% url 'paper_response_check' survey.uuid sheet.pk %}" class="paper-slot__open">{% csrf_token %}
+                <button name="page" value="{{ slot.n }}" title="{% blocktrans with n=slot.n %}Check page {{ n }}{% endblocktrans %}" aria-label="{% blocktrans with n=slot.n %}Check page {{ n }}{% endblocktrans %}">
+                    {% if slot.image_url %}<img src="{{ slot.image_url }}" alt="" loading="lazy">{% endif %}
+                </button></form>
+            {% elif slot.image_url %}<img src="{{ slot.image_url }}" alt="" loading="lazy">{% endif %}
             <span class="paper-slot__n">{{ slot.n }}</span>
             {% if slot.state == 'busy' %}<span class="paper-slot__state">{% trans "reading…" %}</span>
             {% elif slot.state == 'failed' %}

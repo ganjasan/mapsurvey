@@ -10237,3 +10237,8 @@ msgstr "Tandai sudah diperiksa"
 #: survey/templates/partials/survey_section_partial.html
 msgid "Checked"
 msgstr "Sudah diperiksa"
+
+#: survey/templates/editor/paper/_response_slots.html
+#, python-format
+msgid "Check page %(n)s"
+msgstr "Periksa halaman %(n)s"

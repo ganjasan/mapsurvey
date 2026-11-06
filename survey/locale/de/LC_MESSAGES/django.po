@@ -10314,3 +10314,8 @@ msgstr "Als geprüft markieren"
 #: survey/templates/partials/survey_section_partial.html
 msgid "Checked"
 msgstr "Geprüft"
+
+#: survey/templates/editor/paper/_response_slots.html
+#, python-format
+msgid "Check page %(n)s"
+msgstr "Seite %(n)s prüfen"

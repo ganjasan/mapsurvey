@@ -10224,3 +10224,8 @@ msgstr "Merkitse tarkistetuksi"
 #: survey/templates/partials/survey_section_partial.html
 msgid "Checked"
 msgstr "Tarkistettu"
+
+#: survey/templates/editor/paper/_response_slots.html
+#, python-format
+msgid "Check page %(n)s"
+msgstr "Tarkista sivu %(n)s"

@@ -52,6 +52,11 @@
 .paper-slot--ok { border-color: #86efac; }
 .paper-slot--warn { border-color: #f59e0b; }
 .paper-slot--failed { border-color: #ef4444; }
+/* The whole thumbnail opens the check at its page; number, state and × sit above it. */
+.paper-slot__open { position: absolute; inset: 0; margin: 0; }
+.paper-slot__open button { display: block; width: 100%; height: 100%; padding: 0; border: 0; background: none; cursor: pointer; }
+.paper-slot__open button:hover img, .paper-slot__open button:focus-visible img { opacity: .85; }
+.paper-slot__open button:focus-visible { outline: 2px solid #2563eb; outline-offset: -2px; }
 .paper-slot__n { position: absolute; left: 4px; bottom: 4px; background: rgba(255,255,255,.9); border-radius: 3px;
   padding: 0 .3rem; font-weight: 600; font-size: .85rem; }
 .paper-slot__state { position: absolute; left: 0; right: 0; top: 40%; text-align: center; font-size: .75rem; color: #64748b; }

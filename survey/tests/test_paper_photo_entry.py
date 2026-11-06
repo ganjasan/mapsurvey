@@ -22,7 +22,7 @@ from django.urls import reverse
 from django.utils import timezone
 from PIL import Image
 
-from billing.tests.helpers import make_sub
+from billing.tests.helpers import make_sub, trial_used_elsewhere
 from survey.ai.client import ProviderError
 from survey.models import (
     AIGenerationEvent, Answer, Membership, Organization, PaperPage, PaperSheet, PaperUpload, PrintedForm, Question,
@@ -209,11 +209,13 @@ class PaperPagesGateTest(_PaperFixture):
 
     def test_free_workspace_sees_the_refusal(self):
         """
-        GIVEN a workspace without Pro
+        GIVEN a workspace without Pro whose owner already used their Pro trial (a Free workspace that never
+              had one starts it on the first Pro use, change pro-trial-auto)
         WHEN an owner requests Paper responses
         THEN the response is the feature refusal
         """
         self.sub.delete()
+        trial_used_elsewhere(self.org)
         response = self.client.get(self.url('paper_home'))
         self.assertEqual(response.status_code, 403)
         self.assertTemplateUsed(response, 'billing/feature_required.html')
@@ -1675,6 +1677,24 @@ class CheckTest(_PaperFixture):
         response = self.client.post(self.url('paper_response_page', sheet.pk, 1), {'ALB': '0', 'goto': '2'})
         self.assertRedirects(response, self.url('paper_response_page', sheet.pk, 2), fetch_redirect_response=False)
         self.assertTrue(Answer.objects.filter(question=self.alb).exists())
+
+    def test_a_page_thumbnail_opens_the_check_at_that_page(self):
+        """
+        GIVEN an open response of a two-page printed form, shown on its card
+        WHEN the operator clicks the thumbnail of page 2 (a POST of the check with page=2), and then a forged
+             page number beyond the form
+        THEN the card offers every slot as a "Check page N" button, the check opens at page 2 with the
+             response's session created, and an out-of-range page falls back to page 1
+        """
+        sheet = self._sheet()
+        card = self.client.get(self.url('paper_response', sheet.pk))
+        self.assertContains(card, 'name="page" value="2"')
+        self.assertContains(card, 'Check page 2')
+        response = self.client.post(self.url('paper_response_check', sheet.pk), {'page': '2'})
+        self.assertRedirects(response, self.url('paper_response_page', sheet.pk, 2), fetch_redirect_response=False)
+        self.assertTrue(SurveySession.objects.filter(paper_sheet=sheet).exists())
+        response = self.client.post(self.url('paper_response_check', sheet.pk), {'page': '99'})
+        self.assertRedirects(response, self.url('paper_response_page', sheet.pk, 1), fetch_redirect_response=False)
 
     def test_missing_page_is_attached_from_the_check(self):
         """

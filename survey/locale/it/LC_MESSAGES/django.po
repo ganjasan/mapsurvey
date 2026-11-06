@@ -10270,3 +10270,8 @@ msgstr "Segna come controllato"
 #: survey/templates/partials/survey_section_partial.html
 msgid "Checked"
 msgstr "Controllato"
+
+#: survey/templates/editor/paper/_response_slots.html
+#, python-format
+msgid "Check page %(n)s"
+msgstr "Controlla la pagina %(n)s"

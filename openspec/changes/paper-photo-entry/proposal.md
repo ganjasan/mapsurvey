@@ -66,7 +66,7 @@ re-shot. The order of arrival cannot say whose page it is; only the paper can.
 
 ## Impact
 
-- **Models / migrations** (`0113`): `PrintRun`; `PaperBatch` (the inbox), `PaperUpload`, `PaperPage`,
+- **Models / migrations** (`0115`, after master's `0113_survey_period` and `0114`): `PrintRun`; `PaperBatch` (the inbox), `PaperUpload`, `PaperPage`,
   `PaperSheet` (private media tier, `paper_pages/<uuid>.jpg`); `SurveySession.paper_sheet`.
 - **Code**: `survey/print/` (copies canvas, two QR, `form_code` payload `MSFORM:…`), `survey/paper/`
   (ingest, codes, sheets, extract, prompts, review, accounting), `survey/paper_views.py`,

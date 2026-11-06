@@ -9,7 +9,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('survey', '0112_printedform'),
+        ('survey', '0114_auditlog_response_edit'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

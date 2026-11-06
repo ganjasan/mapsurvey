@@ -10203,3 +10203,8 @@ msgstr "Märgi kontrollituks"
 #: survey/templates/partials/survey_section_partial.html
 msgid "Checked"
 msgstr "Kontrollitud"
+
+#: survey/templates/editor/paper/_response_slots.html
+#, python-format
+msgid "Check page %(n)s"
+msgstr "Kontrolli lehekülge %(n)s"

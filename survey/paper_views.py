@@ -201,8 +201,9 @@ def _has_item_map(form):
 @entry_gate
 @require_POST
 def paper_response_check(request, survey_uuid, sheet_id):
-    """Open the check: page by page of the printed form; the section flow for a
-    form printed before the item map existed."""
+    """Open the check: page by page of the printed form (at `page` when a page
+    thumbnail was clicked); the section flow for a form printed before the item
+    map existed."""
     from .operator_entry_views import first_section_url
     survey = request.survey
     sheet = _sheet(request, sheet_id)
@@ -211,7 +212,13 @@ def paper_response_check(request, survey_uuid, sheet_id):
     session = _session_for_sheet(request, sheet)
     sheet.touch()
     if _has_item_map(sheet.printed_form):
-        return redirect(_page_url(survey, sheet, 1))
+        try:
+            number = int(request.POST.get('page') or 1)
+        except ValueError:
+            number = 1
+        if not 1 <= number <= (sheet.printed_form.pages or 1):
+            number = 1
+        return redirect(_page_url(survey, sheet, number))
     return redirect(first_section_url(survey, session, unanswered_first=True))
 
 

@@ -10332,3 +10332,8 @@ msgstr "Oznacz jako sprawdzone"
 #: survey/templates/partials/survey_section_partial.html
 msgid "Checked"
 msgstr "Sprawdzone"
+
+#: survey/templates/editor/paper/_response_slots.html
+#, python-format
+msgid "Check page %(n)s"
+msgstr "Sprawdź stronę %(n)s"

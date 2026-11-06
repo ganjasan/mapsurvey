@@ -453,7 +453,7 @@ boxes in every row (`pdf._sub_cell`): the header-only boxes left nothing to tick
 
 ## Migration Plan
 
-1. Migration `0113`: `PrintRun`, the four paper models, `SurveySession.paper_sheet`,
+1. Migration `0115` (was `0113` until the rebase onto master): `PrintRun`, the four paper models, `SurveySession.paper_sheet`,
    `AI_GENERATION_KIND_CHOICES` + `paper_page` (choices change only). Additive; no backfill.
    `PrintedForm.layout` gains `items` on the next print; old rows are read with the fallback.
 2. Requirements: `pypdfium2`, `pillow-heif`, `zxing-cpp` (and `pypdf` moved to runtime) in the
