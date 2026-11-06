@@ -176,6 +176,7 @@ TEMPLATES = [
                 'survey.context_processors.support_chat',
                 'survey.context_processors.help_site',
                 'survey.context_processors.email_verification',
+                'survey.context_processors.app_nav',
             ],
         },
     },

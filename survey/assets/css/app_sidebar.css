@@ -1,0 +1,157 @@
+/* The application sidebar (change app-sidebar, #538; mockup in
+   openspec/changes/app-sidebar/app-sidebar.mockup.html).
+
+   Fixed to the left edge; the body is padded by its width so every page keeps its own
+   layout and its calc(100vh - 49px). z-index 101: above the sticky editor navbar (100),
+   below every overlay and Bootstrap modal, so a modal still covers it. */
+:root {
+    --app-side-w: 256px;
+    --app-rail-w: 60px;
+    --app-side-bg: #fafafb;
+    --app-side-line: #e5e7eb;
+    --app-side-ink: #5b6172;
+    --app-side-ink-3: #8a90a0;
+    --app-side-accent: #4f46e5;
+    --app-side-accent-light: #eef0ff;
+    --app-side-pro: var(--pro, #6D4AE0);
+    --app-side-pro-soft: var(--pro-soft, rgba(109, 74, 224, 0.11));
+}
+
+body.app-has-sidebar { padding-left: var(--app-side-w); }
+body.app-has-sidebar.app-rail { padding-left: var(--app-rail-w); }
+
+.app-sidebar {
+    position: fixed; top: 0; bottom: 0; left: 0; z-index: 101;
+    width: var(--app-side-w);
+    display: flex; flex-direction: column;
+    background: var(--app-side-bg);
+    border-right: 1px solid var(--app-side-line);
+    font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+    font-size: 14px; line-height: 1.3;
+}
+body.app-rail .app-sidebar { width: var(--app-rail-w); }
+
+/* Head: 49px with a bottom border, level with the header next to it. */
+.app-side-head {
+    height: 49px; flex: none;
+    display: flex; align-items: center; gap: 8px; padding: 0 10px;
+    border-bottom: 1px solid var(--app-side-line);
+}
+.app-logo {
+    width: 28px; height: 28px; flex: none; border-radius: 8px;
+    background: linear-gradient(135deg, #4f46e5, #12b76a);
+    display: grid; place-items: center; color: #fff !important; font-weight: 700; font-size: 14px;
+    text-decoration: none !important;
+}
+.app-ws-dropdown { flex: 1; min-width: 0; }
+.app-ws {
+    width: 100%; display: flex; align-items: center; gap: 8px;
+    padding: 5px 8px; border: 0; border-radius: 8px; background: none;
+    font: inherit; color: #1f2937; cursor: pointer; text-align: left;
+}
+.app-ws:hover, .app-ws:focus-visible { background: #f0f0f4; outline: none; }
+.app-ws-av {
+    width: 22px; height: 22px; flex: none; border-radius: 6px;
+    background: #dfe3ff; color: var(--app-side-accent);
+    display: inline-grid; place-items: center; font-size: 11px; font-weight: 700;
+}
+.app-ws-name { flex: 1; min-width: 0; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.app-ws-plan {
+    flex: none; font-size: 10.5px; font-weight: 700; letter-spacing: .02em;
+    color: var(--app-side-pro); background: var(--app-side-pro-soft); border-radius: 4px; padding: 1px 5px;
+}
+.app-ws-caret { color: var(--app-side-ink-3); font-size: 11px; }
+.app-ws-dropdown .dropdown-menu { min-width: 240px; font-size: 14px; }
+.app-ws-option { display: flex; align-items: center; gap: 8px; }
+.app-ws-option.active .app-ws-av { background: #fff; }
+
+.app-nav { flex: 1; min-height: 0; overflow-y: auto; padding: 10px 8px; }
+.app-group { margin-top: 18px; }
+.app-group-title {
+    font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--app-side-ink-3); font-weight: 700; padding: 0 10px 6px; white-space: nowrap;
+}
+.app-item {
+    position: relative; width: 100%;
+    display: flex; align-items: center; gap: 10px;
+    height: 34px; padding: 0 10px; border: 0; border-radius: 7px; background: none;
+    color: var(--app-side-ink) !important; text-decoration: none !important;
+    font: inherit; white-space: nowrap; cursor: pointer; text-align: left;
+}
+.app-item > i { width: 18px; flex: none; text-align: center; font-size: 14px; color: var(--app-side-ink-3); }
+.app-item:hover, .app-item:focus-visible { background: #f0f0f4; color: #1f2937 !important; outline: none; }
+.app-item.active { background: var(--app-side-accent-light); color: var(--app-side-accent) !important; font-weight: 500; }
+.app-item.active > i { color: var(--app-side-accent); }
+.app-item > span { overflow: hidden; text-overflow: ellipsis; }
+.app-item-mark { margin-left: auto; font-style: normal; flex: none; }
+/* The sidebar has room for the mark, not its explanation ("· free to try", "· 480 left"):
+   the title attribute still carries it, and Plan & billing says it in full. */
+.app-item-mark .pro-badge__extra { display: none; }
+.app-item .app-dot { position: static; margin-left: auto; display: inline-block; }
+
+.app-side-foot { flex: none; border-top: 1px solid var(--app-side-line); padding: 8px; }
+.app-side-foot .app-item { height: 30px; font-size: 13px; }
+
+/* ── Rail: icons only, the label as a tooltip ─────────────────────────── */
+body.app-rail .app-logo,
+body.app-rail .app-ws-name, body.app-rail .app-ws-plan, body.app-rail .app-ws-caret,
+body.app-rail .app-item > span, body.app-rail .app-item-mark,
+body.app-rail .app-group-title { display: none; }
+body.app-rail .app-side-head { justify-content: center; padding: 0 8px; }
+body.app-rail .app-ws { width: auto; padding: 5px; }
+body.app-rail .app-ws .app-ws-av { width: 30px; height: 30px; font-size: 13px; }
+body.app-rail .app-group { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--app-side-line); }
+body.app-rail .app-item { justify-content: center; padding: 0; }
+body.app-rail .app-item .app-dot { position: absolute; top: 6px; right: 10px; margin: 0; }
+body.app-rail .app-nav { overflow: visible; }
+body.app-rail .app-collapse > i { transform: scaleX(-1); }
+body.app-rail .app-item:hover::after,
+body.app-rail .app-item:focus-visible::after {
+    content: attr(data-label);
+    position: absolute; left: calc(100% + 8px); top: 50%; transform: translateY(-50%);
+    background: #1f2330; color: #fff; font-size: 12px; font-weight: 400;
+    padding: 4px 8px; border-radius: 6px; white-space: nowrap; z-index: 1;
+    pointer-events: none;
+}
+
+/* ── Header bits added next to today's controls ───────────────────────── */
+.app-burger {
+    display: none; width: 34px; height: 34px; margin-left: -6px; flex: none;
+    border: 0; border-radius: 8px; background: none; color: #6b7280; cursor: pointer;
+}
+.app-burger:hover { background: #f0f0f4; color: #1f2937; }
+/* The sidebar carries the logo on a desktop; the brand stays on phones next to ☰. */
+@media (min-width: 768px) {
+    body.app-has-sidebar .app-brand-desktop-hidden { display: none !important; }
+}
+
+/* ── Phones: the drawer ───────────────────────────────────────────────── */
+@media (max-width: 767.98px) {
+    body.app-has-sidebar, body.app-has-sidebar.app-rail { padding-left: 0; }
+    .app-burger { display: inline-grid; place-items: center; }
+    .app-sidebar, body.app-rail .app-sidebar {
+        width: 280px; max-width: 85vw; z-index: 1035;
+        transform: translateX(-100%); transition: transform .2s ease;
+        box-shadow: none;
+    }
+    body.app-drawer-open .app-sidebar { transform: none; box-shadow: 0 0 40px rgba(15, 18, 30, .25); }
+    .app-backdrop { position: fixed; inset: 0; z-index: 1034; background: rgba(15, 18, 30, .35); }
+    .app-collapse { display: none !important; }
+    /* The drawer is always the full sidebar, never the rail. */
+    body.app-rail .app-logo { display: grid; }
+    body.app-rail .app-ws-name, body.app-rail .app-ws-caret { display: inline; }
+    body.app-rail .app-ws-plan { display: inline-block; }
+    body.app-rail .app-item > span, body.app-rail .app-group-title { display: block; }
+    body.app-rail .app-item-mark { display: inline; }
+    body.app-rail .app-side-head { justify-content: flex-start; padding: 0 10px; }
+    body.app-rail .app-ws { width: 100%; padding: 5px 8px; }
+    body.app-rail .app-ws .app-ws-av { width: 22px; height: 22px; font-size: 11px; }
+    body.app-rail .app-group { margin-top: 18px; padding-top: 0; border-top: 0; }
+    body.app-rail .app-item { justify-content: flex-start; padding: 0 10px; }
+    body.app-rail .app-item .app-dot { position: static; margin-left: auto; }
+    body.app-rail .app-item:hover::after, body.app-rail .app-item:focus-visible::after { display: none; }
+    body.app-rail .app-nav { overflow-y: auto; }
+}
+@media (min-width: 768px) {
+    .app-backdrop { display: none !important; }
+}

@@ -1081,13 +1081,19 @@
     </style>
     {% block extra_head %}{% endblock %}
 </head>
-<body{% if MOBILE_EDITOR_NAV %} class="mobile-nav-enabled"{% endif %} data-icon-sprites='{{ ICON_SPRITES_JSON }}'>
+<body{% if MOBILE_EDITOR_NAV or app_nav.show %} class="{% if MOBILE_EDITOR_NAV %}mobile-nav-enabled{% endif %}{% if app_nav.show and survey %} app-rail app-rail-default{% endif %}"{% endif %} data-icon-sprites='{{ ICON_SPRITES_JSON }}'>
+    {% comment %}The application sidebar (change app-sidebar): an icon rail on survey pages
+    (`app-rail-default`), expanded elsewhere. Without it the navbar renders as before.{% endcomment %}
+    {% if app_nav.show %}{% include "partials/_app_sidebar.html" %}{% endif %}
     {% block navbar %}
     <div class="editor-navbar">
         {% comment %}?dashboard=1 bypasses the no-surveys redirect in views.editor —
         without it a first-time creator clicking "Dashboard" from the create page
         is bounced straight back to the create page and the click looks dead.{% endcomment %}
-        <a href="{% url 'editor' %}?dashboard=1"><i class="fas fa-arrow-left"></i><span class="nav-desktop"> {% trans "Dashboard" %}</span></a>
+        {% if app_nav.show %}<button type="button" class="app-burger" data-app-drawer-open aria-label="{% trans 'Menu' %}"><i class="fas fa-bars"></i></button>{% endif %}
+        {% comment %}Off workspace-level pages the sidebar's Surveys item is the way back
+        (change app-sidebar); inside a survey the link stays, as the editor toolbar has it.{% endcomment %}
+        {% if survey or not app_nav.show %}<a href="{% url 'editor' %}?dashboard=1"><i class="fas fa-arrow-left"></i><span class="nav-desktop"> {% trans "Dashboard" %}</span></a>{% endif %}
         {% block navbar_content %}{% endblock %}
         <span class="spacer"></span>
         <!-- Clipboard status pill — populated by editor_clipboard.js -->
@@ -1144,11 +1150,12 @@
             {% endif %}
             {% comment %}In-app changelog (change in-app-changelog): dot = an entry this
             creator has not seen. Phones reach the page from the ⋯ menu above.{% endcomment %}
-            <a class="wn-nav-icon nav-desktop" href="{% url 'whats_new' %}" title="{% trans "What's new" %}" aria-label="{% trans "What's new" %}"><i class="fas fa-gift"></i>{% if whats_new.unseen_count %}<span class="wn-dot"></span>{% endif %}</a>
+            {% if not app_nav.show %}<a class="wn-nav-icon nav-desktop" href="{% url 'whats_new' %}" title="{% trans "What's new" %}" aria-label="{% trans "What's new" %}"><i class="fas fa-gift"></i>{% if whats_new.unseen_count %}<span class="wn-dot"></span>{% endif %}</a>{% endif %}
             {% include "editor/partials/_help_menu.html" with extra_class="d-inline nav-desktop" %}
             <div class="dropdown d-inline nav-desktop">
                 {% include "editor/partials/_language_menu.html" %}
             </div>
+            {% if not app_nav.show %}
             <div class="dropdown d-inline nav-desktop">
                 <a class="dropdown-toggle" href="#" role="button" data-toggle="dropdown" style="color:#6b7280;font-size:0.85rem;text-decoration:none;">
                     <i class="fas fa-building" style="margin-right:4px;"></i>{{ active_org.name|default:"No organization" }}
@@ -1180,7 +1187,8 @@
                     {% endif %}
                 </div>
             </div>
-            <span class="nav-desktop" style="color:#9ca3af;font-size:0.85rem;">{{ user.get_username }}</span>
+            {% endif %}
+            {% if app_nav.show %}{% include "partials/_app_user_menu.html" with extra_class="nav-desktop" editor_page=True %}{% else %}<span class="nav-desktop" style="color:#9ca3af;font-size:0.85rem;">{{ user.get_username }}</span>{% endif %}
             {% include "partials/_logout_form.html" with form_class="d-inline nav-desktop" %}
         {% endif %}
     </div>

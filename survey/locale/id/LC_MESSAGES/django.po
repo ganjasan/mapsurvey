@@ -10250,3 +10250,55 @@ msgstr "Kertas A"
 #: survey/models.py
 msgid "Paper B"
 msgstr "Kertas B"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Main navigation"
+msgstr "Navigasi utama"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Switch workspace"
+msgstr "Ganti ruang kerja"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "No organization"
+msgstr "Tidak ada organisasi"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "TRIAL"
+msgstr "UJI COBA"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "New workspace"
+msgstr "Ruang kerja baru"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Integrations"
+msgstr "Integrasi"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Expand sidebar"
+msgstr "Bentangkan bilah sisi"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Menu"
+msgstr "Menu"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Account"
+msgstr "Akun"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Surveys"
+msgstr "Survei"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Plan & billing"
+msgstr "Paket & penagihan"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "What's new"
+msgstr "Yang baru"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Help centre"
+msgstr "Pusat bantuan"

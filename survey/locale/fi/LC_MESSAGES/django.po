@@ -10237,3 +10237,55 @@ msgstr "Paperi A"
 #: survey/models.py
 msgid "Paper B"
 msgstr "Paperi B"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Main navigation"
+msgstr "Päänavigaatio"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Switch workspace"
+msgstr "Vaihda työtilaa"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "No organization"
+msgstr "Ei organisaatiota"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "TRIAL"
+msgstr "KOKEILU"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "New workspace"
+msgstr "Uusi työtila"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Integrations"
+msgstr "Integraatiot"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Expand sidebar"
+msgstr "Laajenna sivupalkki"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Menu"
+msgstr "Valikko"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Account"
+msgstr "Tili"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Surveys"
+msgstr "Kyselyt"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Plan & billing"
+msgstr "Tilaus ja laskutus"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "What's new"
+msgstr "Uutta"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Help centre"
+msgstr "Ohjekeskus"

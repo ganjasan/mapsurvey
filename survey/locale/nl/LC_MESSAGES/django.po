@@ -10275,3 +10275,55 @@ msgstr "Papier A"
 #: survey/models.py
 msgid "Paper B"
 msgstr "Papier B"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Main navigation"
+msgstr "Hoofdnavigatie"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Switch workspace"
+msgstr "Werkruimte wisselen"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "No organization"
+msgstr "Geen organisatie"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "TRIAL"
+msgstr "PROEF"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "New workspace"
+msgstr "Nieuwe werkruimte"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Integrations"
+msgstr "Integraties"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Expand sidebar"
+msgstr "Zijbalk uitklappen"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Menu"
+msgstr "Menu"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Account"
+msgstr "Account"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Surveys"
+msgstr "Enquêtes"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Plan & billing"
+msgstr "Abonnement & facturatie"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "What's new"
+msgstr "Wat is er nieuw"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Help centre"
+msgstr "Helpcentrum"

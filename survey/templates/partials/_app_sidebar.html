@@ -1,0 +1,101 @@
+{% load i18n static billing_tags %}
+{% comment %}The application sidebar (change app-sidebar, #538). Included by base.html and
+editor/editor_base.html when `app_nav.show`, right after <body>. Rows come from
+survey/app_nav.py through the `app_nav` context processor; this template decides nothing about
+which pages carry it or which item is active.
+
+Fixed to the left edge; the body gets padding-left of its width (css/app_sidebar.css), so page
+bodies and their calc(100vh - 49px) layouts are untouched. `app-rail` on <body> = icons only
+(set by editor_base on survey pages, or by the script below from localStorage elsewhere).
+Below 768px it is the drawer behind the header's ☰ button.{% endcomment %}
+<link rel="stylesheet" href="{% static 'css/app_sidebar.css' %}{% if debug %}?t={% now 'U' %}{% endif %}">
+<script>
+  document.body.classList.add('app-has-sidebar');
+  {% comment %}Before first paint: the creator's collapse choice, on workspace-level pages only
+  (a survey page sets app-rail in its markup and never reads this).{% endcomment %}
+  try {
+    if (!document.body.classList.contains('app-rail-default') && localStorage.getItem('msSidebar') === 'rail') {
+      document.body.classList.add('app-rail');
+    }
+  } catch (e) {}
+</script>
+<aside class="app-sidebar" id="appSidebar" aria-label="{% trans 'Main navigation' %}">
+  <div class="app-side-head">
+    <a class="app-logo" href="{% url 'editor' %}?dashboard=1" aria-label="Mapsurvey">M</a>
+    <div class="dropdown app-ws-dropdown">
+      <button type="button" class="app-ws" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+              title="{% trans 'Switch workspace' %}" aria-label="{% trans 'Switch workspace' %}">
+        <span class="app-ws-av">{{ active_org.name|default:"?"|slice:":1"|upper }}</span>
+        <span class="app-ws-name">{{ active_org.name|default:_("No organization") }}</span>
+        {% if app_nav.plan == 'pro' %}<span class="app-ws-plan">PRO</span>{% elif app_nav.plan == 'trial' %}<span class="app-ws-plan">{% trans "TRIAL" %}</span>{% endif %}
+        <i class="fas fa-sort app-ws-caret" aria-hidden="true"></i>
+      </button>
+      <div class="dropdown-menu">
+        <h6 class="dropdown-header">{% trans "Workspace" %}</h6>
+        {% for o in user_orgs %}
+        <form method="post" action="{% url 'org_switch' %}">
+          {% csrf_token %}
+          <input type="hidden" name="org_id" value="{{ o.id }}">
+          <button type="submit" class="dropdown-item app-ws-option{% if active_org and o.id == active_org.id %} active{% endif %}">
+            <span class="app-ws-av">{{ o.name|slice:":1"|upper }}</span>{{ o.name }}
+          </button>
+        </form>
+        {% endfor %}
+        <div class="dropdown-divider"></div>
+        <a class="dropdown-item" href="{% url 'org_create' %}"><i class="fas fa-plus" style="margin-right:6px;"></i>{% trans "New workspace" %}</a>
+      </div>
+    </div>
+  </div>
+
+  <nav class="app-nav">
+    {% for item in app_nav.modules %}
+    <a class="app-item{% if app_nav.active == item.key %} active{% endif %}" href="{% url item.url_name %}{% if item.query %}?{{ item.query }}{% endif %}"
+       data-nav-key="{{ item.key }}" data-label="{{ item.label }}" aria-label="{{ item.label }}"{% if app_nav.active == item.key %} aria-current="page"{% endif %}>
+      <i class="{{ item.icon }}" aria-hidden="true"></i><span>{{ item.label }}</span>
+    </a>
+    {% endfor %}
+
+    <div class="app-group">
+      <div class="app-group-title">{% trans "Integrations" %}</div>
+      {% for item in app_nav.integrations %}
+      <a class="app-item{% if app_nav.active == item.key %} active{% endif %}" href="{% url item.url_name %}{% if item.query %}?{{ item.query }}{% endif %}"
+         data-nav-key="{{ item.key }}" data-label="{{ item.label }}" aria-label="{{ item.label }}"{% if app_nav.active == item.key %} aria-current="page"{% endif %}>
+        <i class="{{ item.icon }}" aria-hidden="true"></i><span>{{ item.label }}</span>
+        {% if active_org %}<em class="app-item-mark">{% pro_badge active_org "api" False %}</em>{% endif %}
+      </a>
+      {% endfor %}
+    </div>
+
+    {% if active_org and app_nav.workspace %}
+    <div class="app-group">
+      <div class="app-group-title">{% trans "Workspace" %}</div>
+      {% for item in app_nav.workspace %}
+      <a class="app-item{% if app_nav.active == item.key %} active{% endif %}" href="{% url item.url_name active_org.slug %}"
+         data-nav-key="{{ item.key }}" data-label="{{ item.label }}" aria-label="{{ item.label }}"{% if app_nav.active == item.key %} aria-current="page"{% endif %}>
+        <i class="{{ item.icon }}" aria-hidden="true"></i><span>{{ item.label }}</span>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </nav>
+
+  <div class="app-side-foot">
+    <a class="app-item{% if app_nav.active == 'whats_new' %} active{% endif %}" href="{% url 'whats_new' %}" data-nav-key="whats_new"
+       data-label="{% trans "What's new" %}" aria-label="{% trans "What's new" %}">
+      <i class="fas fa-gift" aria-hidden="true"></i><span>{% trans "What's new" %}</span>{% if whats_new.unseen_count %}<em class="wn-dot app-dot"></em>{% endif %}
+    </a>
+    {% if HELP_URL %}
+    <a class="app-item" href="{{ HELP_URL.help_home }}" target="_blank" rel="noopener" data-nav-key="help_centre"
+       data-label="{% trans "Help centre" %}" aria-label="{% trans "Help centre" %}">
+      <i class="far fa-life-ring" aria-hidden="true"></i><span>{% trans "Help centre" %}</span>
+    </a>
+    {% endif %}
+    <button type="button" class="app-item app-collapse" id="appSidebarToggle"
+            data-label-collapse="{% trans 'Collapse' %}" data-label-expand="{% trans 'Expand sidebar' %}"
+            data-label="{% trans 'Expand sidebar' %}" aria-label="{% trans 'Collapse' %}">
+      <i class="fas fa-angle-double-left" aria-hidden="true"></i><span>{% trans "Collapse" %}</span>
+    </button>
+  </div>
+</aside>
+<div class="app-backdrop" id="appSidebarBackdrop" hidden></div>
+<script src="{% static 'js/app_sidebar.js' %}{% if debug %}?t={% now 'U' %}{% endif %}" defer></script>

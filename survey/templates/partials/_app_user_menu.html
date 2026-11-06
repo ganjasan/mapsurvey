@@ -1,0 +1,27 @@
+{% load i18n %}
+{% comment %}The username in the header becomes a small menu where the sidebar shows
+(change app-sidebar). It holds what had nowhere else to go once the workspace dropdown moved
+into the sidebar: Preferences and, on editor pages (`editor_page`), the confirmation toggle.
+Below 768px "?" and the language control are hidden, so — as the old dropdown did on phones —
+it also carries the language list and Help & support.
+
+`extra_class`: the includer's visibility class (`nav-desktop` in the editor, where phones use
+the ⋯ overflow instead).{% endcomment %}
+<div class="dropdown d-inline app-user-menu {{ extra_class }}">
+    <a class="dropdown-toggle nav-username" href="#" role="button" data-toggle="dropdown"
+       aria-haspopup="true" aria-expanded="false" aria-label="{% trans 'Account' %}"
+       style="color:#9ca3af;font-size:0.85rem;text-decoration:none;">{{ user.get_username }}</a>
+    <div class="dropdown-menu dropdown-menu-right">
+        <a class="dropdown-item" href="{% url 'editor_account_preferences' %}"><i class="fas fa-sliders-h" style="margin-right:4px;"></i>{% trans "Preferences" %}</a>
+        {% if editor_page %}
+        <a class="dropdown-item editor-confirm-toggle" href="#" onclick="EditorConfirm.toggle(event)"><i class="fas fa-check-square" style="margin-right:4px;" data-confirm-icon></i>{% trans "Ask before publishing or changing structure" %}</a>
+        {% endif %}
+        <div class="d-md-none">
+            <div class="dropdown-divider"></div>
+            {% include "editor/partials/_language_switcher.html" %}
+            <div class="dropdown-divider"></div>
+            {% if SUPPORT_CHAT %}<a class="dropdown-item" href="#" onclick="openSupportChat(event)"><i class="fas fa-comment-dots" style="margin-right:4px;"></i>{% trans "Help & support" %} <span class="wn-badge support-unread" hidden>{% trans "new" %}</span></a>{% elif CONTACT_EMAIL %}<a class="dropdown-item" href="mailto:{{ CONTACT_EMAIL }}"><i class="fas fa-envelope" style="margin-right:4px;"></i>{% trans "Email support" %}</a>{% endif %}
+            {% include "billing/_help_entries.html" %}
+        </div>
+    </div>
+</div>

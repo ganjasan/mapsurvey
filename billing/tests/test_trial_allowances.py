@@ -3,7 +3,7 @@
 Spec: openspec/changes/pro-trial-allowances/specs/pro-trial-allowances/spec.md
 (after archive: openspec/specs/pro-trial-allowances/spec.md). One module per capability -- see #273.
 """
-from datetime import date, timedelta
+from datetime import timedelta
 from unittest import mock
 
 from django.contrib.auth.models import User
@@ -471,32 +471,14 @@ class RefusalPageTest(TestCase):
 
 @override_settings(**PPG_SETTINGS)
 class TrialHeroTest(TestCase):
-    """The dashboard hero for the trial: `trial_available` + `has_surveys`, and its no-argument link."""
-
-    HERO_ID = '2026-10-28-try-pro'
-    A_DAY_LATER = date(2026, 10, 29)
+    """The `trial_available` audience and the no-argument try-pro link. The dashboard hero that
+    used them (`2026-10-28-try-pro`) was removed with change app-sidebar: the trial starts by
+    itself (pro-trial-auto), so the banner only advertised what every workspace already has."""
 
     def setUp(self):
         from survey.models import SurveyHeader
         self.org, self.owner = make_org()
         SurveyHeader.objects.create(organization=self.org, name='park_plan')
-
-    def _hero(self, user, org):
-        from survey import changelog
-        from survey.changelog_audience import Audience
-        hero = changelog.hero_for('', Audience(user, org), today=self.A_DAY_LATER)
-        return hero.id if hero else None
-
-    def test_owner_of_free_workspace_with_surveys_gets_the_hero(self):
-        """
-        GIVEN the owner of a Free workspace with a survey and no trial
-        WHEN the pending hero is asked for
-        THEN it is the Pro trial hero, linking to the no-argument try-pro address
-        """
-        from survey import changelog
-        self.assertEqual(self._hero(self.owner, self.org), self.HERO_ID)
-        entry = next(e for e in changelog.entries() if e.id == self.HERO_ID)
-        self.assertEqual(entry.link, 'billing_try_pro')
 
     def test_not_for_members_pro_or_claimed(self):
         """

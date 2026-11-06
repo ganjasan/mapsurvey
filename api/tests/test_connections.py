@@ -221,21 +221,21 @@ class TeaserDeltaTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], PAGE)
 
-    def test_mcp_block_connects_and_the_notify_button_is_gone(self):
+    def test_mcp_lives_on_its_own_page_and_the_notify_button_is_gone(self):
         """
-        GIVEN the connections page after the MCP server shipped (change mcp-server)
-        WHEN the creator reads it and an old form posts "notify"
-        THEN the block shows the endpoint URL and the Claude Code command, no "Tell me when it's ready";
-             the post just redirects and records nothing
+        GIVEN the API page after change app-sidebar split it from MCP
+        WHEN the creator reads the API page and the MCP page, and an old form posts "notify"
+        THEN the API page holds the tokens and no MCP block, the MCP page carries the server
+             URL, nothing says "Tell me when it's ready"; the post just redirects and records nothing
         """
         from django.conf import settings
         html = self.client.get(PAGE).content.decode()
-        self.assertIn('Create a Mapsurvey survey in Italian and English', html)
         self.assertIn('Personal access tokens', html)
-        self.assertIn(settings.MCP_RESOURCE_URL, html)
-        self.assertIn('claude mcp add --transport http mapsurvey', html)
+        self.assertNotIn('id="mcp"', html)
         self.assertNotIn("Tell me when it's ready", html)
         self.assertNotIn('Coming soon', html)
+        mcp_page = self.client.get(reverse('editor_survey_start_agent') + '?from=sidebar').content.decode()
+        self.assertIn(settings.MCP_RESOURCE_URL, mcp_page)
 
         with mock.patch('survey.product_events.emit') as emit:
             response = self.client.post(PAGE, {'action': 'notify'})
@@ -247,9 +247,9 @@ class TeaserDeltaTest(TestCase):
         """
         GIVEN the dashboard and an editor page
         WHEN both render
-        THEN the account menus carry "API & connections" without a soon badge linking to the
-             connections page, the "?" menu "Connect your AI agent" linking to the agent page
-             (change changelog-hero), and the connections page itself links to the agent page
+        THEN the sidebar carries "API" linking to the tokens page and "MCP" linking to the agent
+             page (change app-sidebar), without a soon badge, and the "?" menu keeps "Connect
+             your AI agent" (change changelog-hero)
         """
         SurveyHeader.objects.create(name='existing', organization=self.org, created_by=self.owner)
         dashboard = self.client.get(reverse('editor')).content.decode()
@@ -257,12 +257,9 @@ class TeaserDeltaTest(TestCase):
         agent = reverse('editor_survey_start_agent')
         for html in (dashboard, editor_page):
             self.assertIn('href="%s"' % PAGE, html)
-            self.assertRegex(html, r'API &(amp;)? connections')
+            self.assertIn('href="%s?from=sidebar"' % agent, html)
             self.assertNotIn('AI agents', html)
             self.assertNotIn('>soon<', html)
         self.assertIn('Connect your AI agent', editor_page)
         self.assertIn('href="%s?from=help"' % agent, editor_page)
         self.assertNotIn('href="%s"' % reverse('editor_account_mcp'), dashboard + editor_page)
-        connections = self.client.get(PAGE).content.decode()
-        self.assertLess(connections.index('%s?from=connections' % agent),
-                        connections.index('Personal access tokens'))

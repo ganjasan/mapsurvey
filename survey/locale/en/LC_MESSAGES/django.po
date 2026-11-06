@@ -6756,3 +6756,59 @@ msgstr ""
 
 msgid "A draft is renamed by renaming the published survey."
 msgstr ""
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Main navigation"
+msgstr ""
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Switch workspace"
+msgstr ""
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "No organization"
+msgstr ""
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "TRIAL"
+msgstr ""
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Workspace"
+msgstr ""
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "New workspace"
+msgstr ""
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Integrations"
+msgstr ""
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Expand sidebar"
+msgstr ""
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Menu"
+msgstr ""
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Account"
+msgstr ""
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Surveys"
+msgstr ""
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Plan & billing"
+msgstr ""
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "What's new"
+msgstr ""
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Help centre"
+msgstr ""

@@ -5,16 +5,9 @@
 
 {% block content %}
 <div class="container mt-4" style="max-width: 720px;">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <h4 class="mb-0">{{ org.name }}</h4>
-            <small class="text-muted">{% trans "Advice on your survey and results" %} {% pro_badge org "pro_help" %}</small>
-        </div>
-        <div>
-            <a href="{% url 'org_billing' org.slug %}" class="btn btn-outline-secondary btn-sm mr-1">{% trans "Plan & billing" %}</a>
-            <a href="{% url 'editor' %}" class="btn btn-outline-secondary btn-sm">{% trans "Dashboard" %}</a>
-        </div>
-    </div>
+    {% comment %}The section is the heading; the workspace name is in the sidebar, and so are
+    Plan & billing / Dashboard (change app-sidebar).{% endcomment %}
+    <h4 class="mb-3">{% trans "Advice on your survey and results" %} {% pro_badge org "pro_help" %}</h4>
 
     {% if form %}
         {% if submitted %}
