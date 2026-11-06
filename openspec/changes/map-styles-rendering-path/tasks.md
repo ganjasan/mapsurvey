@@ -38,10 +38,10 @@
 - [x] 6.1 Write `openspec/docs/adr/0001-map-style-rendering-path.md` per design D6: options table with every measurement, decision against the criteria of D5 in order, consequences for #542 (model and publishing job or client bundle), #543 (preview mechanism and latency promise), #544 (what an exported style carries), Mapbox account contents, appendix with the raw numbers and the device
 - [x] 6.2 Review the ADR with the owner; set `Status: Accepted` — accepted 2026-11-06 (hybrid)
 - [x] 6.3 ADR scenario test in `test_map_style_rendering.py`: file exists, status Accepted, exactly one path named, print mechanism named
-- [ ] 6.4 Update issues #542, #543, #544 with the consequences section; close #541 by the PR
+- [x] 6.4 Update issues #542, #543, #544 with the consequences section; close #541 by the PR — comments posted on #542, #543, #544; #541 closes with PR #547
 
 ## 7. Clean-up and PR
 
 - [x] 7.1 Delete every throw-away style from the Mapbox account; verify the list — *as done:* all 51 probe styles deleted and verified 404 through `…/draft`; the hand-built duplicates are not probes and wait for the owner (ADR, Mapbox account)
 - [x] 7.2 Build the PR branch into `epic/map-styles` by cherry-picking the script, fixture, tests, `.env.ports.example` and ADR commits; `test_epic_branch_is_clean` scans `survey/` for `basemap_proto` and `maplibre` — *as done:* no cherry-pick needed; the prototype was committed only on `feat/map-styles-render-proto`, this branch never held it
-- [ ] 7.3 Open the PR against `epic/map-styles`; keep the prototype commits on `feat/map-styles-render-proto` for reference until the epic ships
+- [x] 7.3 Open the PR against `epic/map-styles`; keep the prototype commits on `feat/map-styles-render-proto` for reference until the epic ships — PR #547
