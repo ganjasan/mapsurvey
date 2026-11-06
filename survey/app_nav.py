@@ -43,6 +43,13 @@ INTEGRATIONS = (
             roles=('owner', 'admin', 'editor')),
 )
 
+# Things a workspace keeps and reuses across surveys (change map-styles-library, #542):
+# today the map style library; shared layers and place-type sets are its future rows.
+# Every member may browse; creating a style carries the `map_styles` Pro mark.
+LIBRARY = (
+    NavItem('map_styles', _('Map styles'), 'org_map_styles', 'fas fa-palette', org_scoped=True),
+)
+
 WORKSPACE = (
     NavItem('members', _('Members'), 'org_members', 'fas fa-user-friends', org_scoped=True),
     NavItem('billing', _('Plan & billing'), 'org_billing', 'far fa-credit-card', org_scoped=True,
@@ -62,6 +69,8 @@ _ACTIVE_BY_URL_NAME = {
     'editor_account_mcp': 'api',
 }
 _ACTIVE_BY_PREFIX = (
+    ('org_map_styles', 'map_styles'),
+    ('org_map_style', 'map_styles'),
     ('org_members', 'members'),
     ('org_change_role', 'members'),
     ('org_remove_member', 'members'),

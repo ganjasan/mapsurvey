@@ -2,6 +2,7 @@
 from django.contrib.gis.geos import Point
 from django.db import transaction
 
+from .. import basemaps as basemap_registry
 from .. import product_events as pe
 from ..editor_forms import SurveySectionForm
 from ..models import SurveySection, SurveySectionTranslation
@@ -181,6 +182,8 @@ def set_map(actor, section, *, lat=None, lng=None, zoom=None, clear_position=Fal
         section.start_map_postion = Point(lng, lat)
         section.start_map_zoom = zoom
     section.use_geolocation = use_geolocation
+    if override_basemap and not basemap_registry.is_valid_key(override_basemap, survey.organization):
+        raise ValidationFailed.single('override_basemap', 'Choose a base map of this workspace.')
     section.override_basemap = override_basemap or None
     section.save(update_fields=['start_map_postion', 'start_map_zoom', 'use_geolocation', 'override_basemap'])
     if locks.is_live(survey):

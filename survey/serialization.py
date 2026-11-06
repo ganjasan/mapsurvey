@@ -754,6 +754,7 @@ def import_structure_from_archive(
     # Create sections
     sections_data = survey_data.get("sections", [])
     sections = create_sections(survey, sections_data, layer_ids)
+    warnings.extend(normalise_imported_basemaps(survey, sections))
 
     # Create questions for each section
     group_index = {}
@@ -824,6 +825,39 @@ def convert_legacy_option_group_to_choices(
                 choices.append({"code": code, "name": names})
             return choices
     return None
+
+
+def normalise_imported_basemaps(survey, sections):
+    """A basemap key the importing workspace cannot resolve — another workspace's
+    `style:<uuid>`, or a style deleted since the export — becomes `streets`, with a
+    report line per key (change map-styles-library, #542). Presets always resolve."""
+    from survey import basemaps as basemap_registry
+    org = survey.organization
+    warnings = []
+    valid = {key for key, _ in basemap_registry.choices_for(org)}
+
+    def keep(key, where):
+        if not key or key in valid:
+            return key
+        warnings.append(f"{where}: map style '{key}' is not available in this workspace; "
+                        f"using '{basemap_registry.FALLBACK_KEY}'")
+        return basemap_registry.FALLBACK_KEY
+
+    enabled = [keep(k, 'Base maps') for k in (survey.basemaps or [])]
+    deduped = list(dict.fromkeys(enabled)) or [basemap_registry.FALLBACK_KEY]
+    default = keep(survey.default_basemap, 'Default base map')
+    if default and default not in deduped:
+        default = deduped[0]
+    if deduped != (survey.basemaps or []) or default != survey.default_basemap:
+        survey.basemaps = deduped
+        survey.default_basemap = default
+        survey.save(update_fields=['basemaps', 'default_basemap'])
+    for section in (sections.values() if isinstance(sections, dict) else sections):
+        fixed = keep(section.override_basemap, f"Section '{section.code}'")
+        if fixed != section.override_basemap:
+            section.override_basemap = fixed
+            section.save(update_fields=['override_basemap'])
+    return warnings
 
 
 def create_survey_header(

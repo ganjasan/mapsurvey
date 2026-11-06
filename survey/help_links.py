@@ -35,6 +35,8 @@ HELP_LINKS = {
     'print_form': 'how-to/print-a-paper-form/',
     # Filled forms back in from photos (change paper-photo-entry, #495).
     'paper_photos': 'how-to/enter-paper-forms-from-photos/',
+    # The map style library (change map-styles-library, #542).
+    'map_styles': 'how-to/map-styles/',
     'faq': 'faq/',
 }
 

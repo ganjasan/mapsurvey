@@ -107,8 +107,10 @@ class SurveyOut(Schema):
 
 class SurveyDetailOut(SurveyOut):
     thanks_html: Dict[str, str]
-    basemaps: List[str]
-    default_basemap: str
+    basemaps: List[str] = Field(description='Base maps respondents may switch between: preset keys '
+                                            '(streets, satellite, topo, paper, paper_b) or "style:<uuid>" '
+                                            'of a workspace map style.')
+    default_basemap: str = Field(description='The base map the survey opens on; one of `basemaps`.')
     show_branding: bool
     map_start: Optional[MapStart]
     use_geolocation: bool
@@ -140,8 +142,10 @@ class SurveyPatchIn(In):
     redirect_url: Optional[str] = Field(None, description='"#" for the built-in thanks page, or an absolute http(s) URL.')
     languages: Optional[List[str]] = Field(None, min_length=1)
     visibility: Optional[Literal['public', 'private', 'demo']] = None
-    basemaps: Optional[List[str]] = None
-    default_basemap: Optional[str] = None
+    basemaps: Optional[List[str]] = Field(None, description='Preset keys (streets, satellite, topo, paper, '
+                                                             'paper_b) or "style:<uuid>" of a workspace map style; '
+                                                             'a key the workspace does not have is dropped.')
+    default_basemap: Optional[str] = Field(None, description='One of `basemaps`; else the first enabled key.')
     show_branding: Optional[bool] = None
     thanks_html: Optional[Dict[str, str]] = Field(None, description='Thanks page per language; creator HTML, sanitised on save.')
     map_start: Optional[MapStart] = None

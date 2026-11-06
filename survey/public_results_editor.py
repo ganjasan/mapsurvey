@@ -17,9 +17,10 @@ from django.utils.text import slugify
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.http import require_POST
 
+from . import basemaps as basemap_registry
 from .models import (
     PublicResultsPage, PublicResultsBlock, Question, Answer, SurveyHeader,
-    PUBLIC_RESULTS_BLOCK_TYPE_CHOICES, BASEMAP_CHOICES,
+    PUBLIC_RESULTS_BLOCK_TYPE_CHOICES,
 )
 from .comments import open_counts as _thread_counts
 from .permissions import (
@@ -145,7 +146,7 @@ def public_results_config(request, survey_uuid):
         # A spray cloud block has one rendering (density grid) and no popups.
         'selected_is_spray': bool(selected_block and selected_block.question_id
                                   and selected_block.question.input_type == 'spraycan'),
-        'basemap_choices': BASEMAP_CHOICES,
+        'basemap_choices': basemap_registry.choices_for(survey.organization),
     }
     from django.shortcuts import render
     return render(request, 'editor/public_results.html', context)
@@ -293,7 +294,7 @@ def public_results_block_edit(request, survey_uuid, block_id):
             block.image = request.FILES['image']
     if block.block_type == 'map':
         block.geo_label_fields = request.POST.getlist('geo_label_fields')
-        valid_basemaps = {slug for slug, _ in BASEMAP_CHOICES}
+        valid_basemaps = {slug for slug, _ in basemap_registry.choices_for(page.survey.organization)}
         posted_basemap = request.POST.get('basemap')
         if posted_basemap in valid_basemaps:
             block.basemap = posted_basemap

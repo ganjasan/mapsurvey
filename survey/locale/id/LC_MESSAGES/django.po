@@ -10302,3 +10302,89 @@ msgstr "Yang baru"
 #: survey/templates/partials/_app_sidebar.html
 msgid "Help centre"
 msgstr "Pusat bantuan"
+
+#: map-style-library (#542)
+msgid "Map styles"
+msgstr "Gaya peta"
+
+#: map-style-library (#542)
+msgid "Library"
+msgstr "Pustaka"
+
+#: map-style-library (#542)
+msgid "Preset"
+msgstr "Preset"
+
+#: map-style-library (#542)
+msgid "Publishing…"
+msgstr "Menerbitkan…"
+
+#: map-style-library (#542)
+msgid "Failed"
+msgstr "Gagal"
+
+
+#: map-style-library (#542)
+msgid "Rename"
+msgstr "Ganti nama"
+
+#: map-style-library (#542)
+msgid "New name"
+msgstr "Nama baru"
+
+#: map-style-library (#542)
+msgid "Delete this map style?"
+msgstr "Hapus gaya peta ini?"
+
+#: map-style-library (#542)
+msgid "Your own map styles"
+msgstr "Gaya peta Anda sendiri"
+
+#: map-style-library (#542)
+msgid "A style needs a name."
+msgstr "Gaya memerlukan nama."
+
+#: map-style-library (#542)
+msgid "The hosted style is being created"
+msgstr "Gaya yang dihosting sedang dibuat"
+
+#: map-style-library (#542)
+msgid "Based on %(base)s"
+msgstr "Berdasarkan %(base)s"
+
+#: map-style-library (#542)
+msgid "This base map cannot be duplicated."
+msgstr "Peta dasar ini tidak dapat diduplikasi."
+
+#: map-style-library (#542)
+msgid "This style has no published version to copy yet."
+msgstr "Gaya ini belum memiliki versi terbit untuk disalin."
+
+#: map-style-library (#542)
+msgid "%(name)s copy"
+msgstr "Salinan %(name)s"
+
+#: map-style-library (#542)
+msgid "“%(name)s” is being published. It appears in survey settings once it is ready."
+msgstr "“%(name)s” sedang diterbitkan. Gaya ini akan muncul di pengaturan survei setelah siap."
+
+#: map-style-library (#542)
+msgid "“%(name)s” is used by %(surveys)s. Choose another base map there first."
+msgstr "“%(name)s” digunakan oleh %(surveys)s. Pilih peta dasar lain di sana terlebih dahulu."
+
+#: map-style-library (#542)
+msgid "“%(name)s” was deleted."
+msgstr "“%(name)s” telah dihapus."
+
+#: map-style-library (#542)
+msgid "A published map style version cannot be changed; save a new version."
+msgstr "Versi gaya peta yang sudah terbit tidak dapat diubah; simpan versi baru."
+
+#: map-style-library (#542)
+msgid "A map style is the base map under your surveys, online and on paper. Pick any of these in a survey's settings. Duplicate a preset to give it your own name; the editor for colours and labels is coming next."
+msgstr "Gaya peta adalah peta dasar di bawah survei Anda, daring maupun di kertas. Pilih salah satunya di pengaturan survei. Duplikasi preset untuk memberinya nama Anda sendiri; editor warna dan label akan hadir berikutnya."
+
+#: map-style-library (#542)
+msgid "used in %(n)s survey"
+msgid_plural "used in %(n)s surveys"
+msgstr[0] "digunakan di %(n)s survei"

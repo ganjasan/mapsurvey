@@ -389,11 +389,8 @@
         {% endlocalize %}
 
         var map = L.map('survey-map-picker').setView([lat, lng], zoom);
-        L.tileLayer('{{ MAPBOX_URL }}', {
-            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>',
-            maxZoom: 23,
-            accessToken: '{{ MAPBOX_ACCESS_TOKEN }}'
-        }).addTo(map);
+        var _streets = {{ MAPBOX_STREETS|safe }};  // the resolver's Streets entry (survey/basemaps.py)
+        L.tileLayer(_streets.url, Object.assign({ accessToken: '{{ MAPBOX_ACCESS_TOKEN }}' }, _streets.opts)).addTo(map);
 
         // The centre is the position; the pin marks it; every settled move
         // saves (openspec: map-picker-centre-autosave).
@@ -699,7 +696,8 @@
             if (!pv || !window.L || !window.RefLayerFactory) return;
             if (!pvMap) {
                 pvMap = L.map(pv, { attributionControl: false, zoomControl: false });
-                L.tileLayer('{{ MAPBOX_URL }}', { maxZoom: 23, opacity: .6, accessToken: '{{ MAPBOX_ACCESS_TOKEN }}' }).addTo(pvMap);
+                var _pvStreets = {{ MAPBOX_STREETS|safe }};
+                L.tileLayer(_pvStreets.url, Object.assign({ accessToken: '{{ MAPBOX_ACCESS_TOKEN }}' }, _pvStreets.opts, { opacity: .6 })).addTo(pvMap);
             }
             function draw() {
                 if (pvLayer) pvMap.removeLayer(pvLayer);

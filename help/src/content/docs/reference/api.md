@@ -145,8 +145,8 @@ the owner role, like the editor; the thanks page the editor role.
 | `redirect_url` | string or null |  | "#" for the built-in thanks page, or an absolute http(s) URL. |
 | `languages` | list of string or null |  |  |
 | `visibility` | `public` | `private` | `demo` or null |  |  |
-| `basemaps` | list of string or null |  |  |
-| `default_basemap` | string or null |  |  |
+| `basemaps` | list of string or null |  | Preset keys (streets, satellite, topo, paper, paper_b) or "style:<uuid>" of a workspace map style; a key the workspace does not have is dropped. |
+| `default_basemap` | string or null |  | One of `basemaps`; else the first enabled key. |
 | `show_branding` | boolean or null |  |  |
 | `thanks_html` | object or null |  | Thanks page per language; creator HTML, sanitised on save. |
 | `map_start` | MapStart or null |  |  |
@@ -1444,8 +1444,8 @@ Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `p
 | `created_at` | date-time | yes |  |
 | `updated_at` | date-time | yes |  |
 | `thanks_html` | object | yes |  |
-| `basemaps` | list of string | yes |  |
-| `default_basemap` | string | yes |  |
+| `basemaps` | list of string | yes | Base maps respondents may switch between: preset keys (streets, satellite, topo, paper, paper_b) or "style:<uuid>" of a workspace map style. |
+| `default_basemap` | string | yes | The base map the survey opens on; one of `basemaps`. |
 | `show_branding` | boolean | yes |  |
 | `map_start` | MapStart or null | yes |  |
 | `use_geolocation` | boolean | yes |  |

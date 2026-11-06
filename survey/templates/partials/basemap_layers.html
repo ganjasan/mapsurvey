@@ -1,34 +1,41 @@
+{% load basemap_tags %}
 (function() {
     var _enabled = {{ survey.basemaps|safe }};
     if (!_enabled || !_enabled.length) _enabled = ['streets'];
     var _defaultSlug = '{{ survey.default_basemap|default:"" }}' || _enabled[0];
 
-    // Tile URLs come from the template context, not from variables in the including
-    // template's scope. This partial is included from five places; making each of them
-    // declare `var mapboxUrl` first is a coupling that stays invisible until a new
-    // including template forgets one and a basemap silently 404s. Every including view
-    // renders through render(request, ...), so the `mapbox` context processor always ran.
+    // The provider table comes from survey/basemaps.py through {% templatetag openblock %} basemap_table {% templatetag closeblock %}
+    // (change map-styles-library, #542): presets and the workspace's own styles, each with
+    // its tile URL and Leaflet options (512-px Mapbox tiles need tileSize/zoomOffset, #522),
+    // resolved for THIS survey's workspace and pins. This partial is included from six
+    // surfaces; none of them names a tile URL or a style id, so the surfaces cannot drift.
+    // `{accessToken}` is left in the URL for Leaflet to fill from `accessToken` below.
     var _mapboxToken = '{{ MAPBOX_ACCESS_TOKEN }}';
-    var _providers = {
-        'streets':   { name: 'Streets',   url: '{{ MAPBOX_URL }}',          opts: { attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a>', maxZoom: 23, accessToken: _mapboxToken }},
-        'satellite': { name: 'Satellite', url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', opts: { attribution: '&copy; Esri', maxZoom: 19 }},
-        'topo':      { name: 'Topo',      url: '{{ MAPBOX_OUTDOORS_URL }}', opts: { attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a>', maxZoom: 22, accessToken: _mapboxToken }},
-        'paper':     { name: 'Paper A',   url: '{{ MAPBOX_PAPER_URL }}',    opts: { attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a>', maxZoom: 22, accessToken: _mapboxToken }},
-        'paper_b':   { name: 'Paper B',   url: '{{ MAPBOX_PAPER_B_URL }}',  opts: { attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a>', maxZoom: 22, accessToken: _mapboxToken }}
-    };
+    var _providers = {% basemap_table survey.organization survey.basemap_pins %};
 
     window._basemapLayers = {};
     var _baseMaps = {};
     _enabled.forEach(function(slug) {
         var p = _providers[slug];
         if (!p) return;
-        var layer = L.tileLayer(p.url, p.opts);
+        var opts = Object.assign({}, p.opts);
+        if (p.provider === 'mapbox') opts.accessToken = _mapboxToken;
+        var layer = L.tileLayer(p.url, opts);
         _baseMaps[p.name] = layer;
         window._basemapLayers[slug] = layer;
     });
 
-    // Apply default basemap (or first enabled)
-    var defaultLayer = window._basemapLayers[_defaultSlug] || window._basemapLayers[_enabled[0]];
+    // Apply default basemap (or the first enabled key the workspace resolves)
+    var defaultLayer = window._basemapLayers[_defaultSlug];
+    if (!defaultLayer) {
+        var firstKey = Object.keys(window._basemapLayers)[0];
+        defaultLayer = firstKey ? window._basemapLayers[firstKey] : null;
+    }
+    if (!defaultLayer && _providers.streets) {
+        defaultLayer = L.tileLayer(_providers.streets.url, Object.assign({accessToken: _mapboxToken}, _providers.streets.opts));
+        window._basemapLayers.streets = defaultLayer;
+        _baseMaps[_providers.streets.name] = defaultLayer;
+    }
     if (defaultLayer) defaultLayer.addTo(map);
 
     // Shared with reference_layers.html: overlays join the same control, and

@@ -10268,3 +10268,90 @@ msgstr "Mis on uut"
 #: survey/templates/partials/_app_sidebar.html
 msgid "Help centre"
 msgstr "Abikeskus"
+
+#: map-style-library (#542)
+msgid "Map styles"
+msgstr "Kaardistiilid"
+
+#: map-style-library (#542)
+msgid "Library"
+msgstr "Kogu"
+
+#: map-style-library (#542)
+msgid "Preset"
+msgstr "Eelseade"
+
+#: map-style-library (#542)
+msgid "Publishing…"
+msgstr "Avaldamine…"
+
+#: map-style-library (#542)
+msgid "Failed"
+msgstr "Ebaõnnestus"
+
+
+#: map-style-library (#542)
+msgid "Rename"
+msgstr "Nimeta ümber"
+
+#: map-style-library (#542)
+msgid "New name"
+msgstr "Uus nimi"
+
+#: map-style-library (#542)
+msgid "Delete this map style?"
+msgstr "Kas kustutada see kaardistiil?"
+
+#: map-style-library (#542)
+msgid "Your own map styles"
+msgstr "Sinu oma kaardistiilid"
+
+#: map-style-library (#542)
+msgid "A style needs a name."
+msgstr "Stiilil peab olema nimi."
+
+#: map-style-library (#542)
+msgid "The hosted style is being created"
+msgstr "Hostitud stiili luuakse"
+
+#: map-style-library (#542)
+msgid "Based on %(base)s"
+msgstr "Põhineb stiilil %(base)s"
+
+#: map-style-library (#542)
+msgid "This base map cannot be duplicated."
+msgstr "Seda aluskaarti ei saa dubleerida."
+
+#: map-style-library (#542)
+msgid "This style has no published version to copy yet."
+msgstr "Sellel stiilil pole veel avaldatud versiooni, mida kopeerida."
+
+#: map-style-library (#542)
+msgid "%(name)s copy"
+msgstr "%(name)s koopia"
+
+#: map-style-library (#542)
+msgid "“%(name)s” is being published. It appears in survey settings once it is ready."
+msgstr "„%(name)s“ avaldatakse. See ilmub küsitluse seadetesse, kui on valmis."
+
+#: map-style-library (#542)
+msgid "“%(name)s” is used by %(surveys)s. Choose another base map there first."
+msgstr "„%(name)s“ on kasutusel: %(surveys)s. Vali seal esmalt teine aluskaart."
+
+#: map-style-library (#542)
+msgid "“%(name)s” was deleted."
+msgstr "„%(name)s“ kustutati."
+
+#: map-style-library (#542)
+msgid "A published map style version cannot be changed; save a new version."
+msgstr "Avaldatud kaardistiili versiooni ei saa muuta; salvesta uus versioon."
+
+#: map-style-library (#542)
+msgid "A map style is the base map under your surveys, online and on paper. Pick any of these in a survey's settings. Duplicate a preset to give it your own name; the editor for colours and labels is coming next."
+msgstr "Kaardistiil on aluskaart sinu küsitluste all, nii veebis kui paberil. Vali neist ükskõik milline küsitluse seadetes. Dubleeri eelseade, et anda sellele oma nimi; värvide ja siltide redaktor tuleb järgmisena."
+
+#: map-style-library (#542)
+msgid "used in %(n)s survey"
+msgid_plural "used in %(n)s surveys"
+msgstr[0] "kasutusel %(n)s küsitluses"
+msgstr[1] "kasutusel %(n)s küsitluses"
