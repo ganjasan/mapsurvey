@@ -27,7 +27,9 @@ The sidebar SHALL contain, top to bottom: the workspace switcher (active workspa
 chip, the creator's workspaces as `org_switch` POST controls, *New workspace*); the modules from
 the registry `survey/app_nav.py::MODULES`, today only *Surveys*; an *Integrations* group with
 *API* (personal tokens and connected apps) and *MCP* (the assistant set-up page, editor role
-and up), both carrying the `api` Pro mark; a *Workspace* group with *Members*, *Plan &
+and up), both carrying the `api` Pro mark; a *Library* group with *Map styles* (the workspace's
+map style library at the `org_map_styles` URL, every member), carrying the `map_styles` Pro mark;
+a *Workspace* group with *Members*, *Plan &
 billing* (owner and admin only) and *General* (name, slug and plan, at the `org_settings` URL); and a footer with *What's new* (a dot when
 `whats_new.unseen_count` is non-zero), *Help centre* when `HELP_URL` is set, and *Collapse*. The
 item for the current page SHALL be marked active, resolved from the URL name by
@@ -44,6 +46,10 @@ item for the current page SHALL be marked active, resolved from the URL name by
 #### Scenario: Plan & billing for owners only
 - **WHEN** a workspace member with the `editor` role opens the dashboard
 - **THEN** the sidebar has no *Plan & billing* item
+
+#### Scenario: Map styles for every member
+- **WHEN** a workspace member with the `viewer` role opens the dashboard
+- **THEN** the sidebar has a *Map styles* item under *Library* carrying the `map_styles` Pro mark, and opening it marks that item active
 
 #### Scenario: Plan chip reads the entitlement
 - **WHEN** the active workspace has a live Pro subscription
