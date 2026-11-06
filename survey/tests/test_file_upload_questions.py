@@ -11,6 +11,7 @@ import zipfile
 from survey.models import Organization, SurveyHeader, SurveySection, Question, SurveySession, Answer, Membership, SurveyCollaborator, PublicResultsPage
 from io import StringIO
 from django.core.management import call_command
+from survey.tests.test_operator_entry import _EntryFixture
 
 
 class UploadModelTest(TestCase):
@@ -953,3 +954,87 @@ class MultiFileExportTest(TestCase):
             [n for n in names if n.endswith('.geojson')][0]).decode()
         for i in range(2):
             self.assertIn(f'files/{session.id}/Q_SPOT_PH__spot{i}.jpg', geojson_text)
+
+
+@override_settings(FILE_UPLOAD_QUESTIONS=True)
+class UploadRateLimitTest(_EntryFixture):
+    """The per-IP upload limit binds anonymous respondents, never an admitted operator (#528)."""
+
+    JPEG = b'\xff\xd8\xff\xe0' + b'0' * 16
+
+    def setUp(self):
+        super().setUp()
+        self.photo = Question.objects.create(
+            survey_section=self.s1, code='PHOTO', name='Scan', input_type='photo', order_number=4)
+        # One language, so opening a section starts a respondent session instead of the picker.
+        self.survey.available_languages = ['en']
+        self.survey.save(update_fields=['available_languages'])
+        self.url = f'/surveys/{self.survey.uuid}/upload/'
+
+    def _upload(self, entry_session=None):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        data = {'question': 'PHOTO', 'file': SimpleUploadedFile('sheet.jpg', self.JPEG, content_type='image/jpeg')}
+        if entry_session is not None:
+            data['entry_session'] = entry_session
+        return self.client.post(self.url, data)
+
+    def _limit_reached(self):
+        from unittest import mock
+        return mock.patch('survey.views.is_ratelimited', return_value=True)
+
+    def test_anonymous_upload_is_limited(self):
+        """
+        GIVEN the address has used up its hourly uploads
+        WHEN an anonymous respondent with an open session uploads a file
+        THEN the endpoint answers 429 and stores nothing
+        """
+        from survey.models import Upload
+        self.client.logout()
+        self.client.get(f'/surveys/{self.survey.uuid}/s1/')
+        with self._limit_reached():
+            response = self._upload()
+        self.assertEqual(response.status_code, 429)
+        self.assertEqual(response.json()['error'], 'rate_limited')
+        self.assertFalse(Upload.objects.exists())
+
+    def test_operator_upload_is_not_limited(self):
+        """
+        GIVEN the address has used up its hourly uploads
+        WHEN an editor of a Pro workspace uploads a scan for an entered sheet
+        THEN the file is stored on that sheet and the limit is never consulted
+        """
+        from survey.models import Upload
+        _, session = self.start()
+        with self._limit_reached() as limited:
+            response = self._upload(session.pk)
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(Upload.objects.get(token=response.json()['token']).session, session)
+        limited.assert_not_called()
+
+    def test_online_session_does_not_bypass_the_limit(self):
+        """
+        GIVEN the address has used up its hourly uploads and the editor has an online session
+        WHEN the editor's upload names that online session as the entered sheet
+        THEN the request is treated as a respondent's and answered 429
+        """
+        self.client.get(f'/surveys/{self.survey.uuid}/s1/')
+        online = SurveySession.objects.get(pk=self.client.session['survey_session_id'])
+        self.assertEqual(online.source, SurveySession.SOURCE_ONLINE)
+        with self._limit_reached():
+            response = self._upload(online.pk)
+        self.assertEqual(response.status_code, 429)
+
+    def test_viewer_does_not_bypass_the_limit(self):
+        """
+        GIVEN the address has used up its hourly uploads and an entered sheet exists
+        WHEN a workspace viewer with an open respondent session names that sheet
+        THEN the viewer is not admitted as an operator and is answered 429
+        """
+        _, sheet = self.start()
+        viewer = User.objects.create_user('rl_viewer', password='pass')
+        Membership.objects.create(user=viewer, organization=self.org, role='viewer')
+        self.login(viewer)
+        self.client.get(f'/surveys/{self.survey.uuid}/s1/')
+        with self._limit_reached():
+            response = self._upload(sheet.pk)
+        self.assertEqual(response.status_code, 429)
