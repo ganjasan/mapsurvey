@@ -1,0 +1,17 @@
+{
+  "name": "Mapsurvey Print R (planner)",
+  "base": "mapbox/streets-v12",
+  "poi": false,
+  "paths": false,
+  "shields": false,
+  "relief": false,
+  "regions": false,
+  "land": "#ffffff",
+  "park": "#cfe6b8",
+  "water": "#2f8f86",
+  "buildings": {"fill": "#ffffff", "outline": "#3a3a3a", "minzoom": 14},
+  "roads": {"fill": "#ffffff", "minor_low_zoom": "#ffffff", "casing": "#bdbdbd"},
+  "boundary": "#9a9a9a",
+  "labels": {"major": "#111111", "minor": "#555555", "halo": "#ffffff", "halo_width": 1.5, "bold_roads": true},
+  "place_names_maxzoom": 10
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Mapsurvey Print A (block)",
+  "base": "mapbox/streets-v12",
+  "poi": false,
+  "paths": false,
+  "shields": false,
+  "relief": false,
+  "regions": false,
+  "land": "#ffffff",
+  "park": "#dcefd2",
+  "water": "#cfe2f2",
+  "buildings": {"fill": "#ffffff", "outline": "#a6a6a6"},
+  "roads": {"fill": "#ffffff", "minor_low_zoom": "#bdbdbd", "casing": "#8f8f8f"},
+  "boundary": "#9a9a9a",
+  "labels": {"major": "#333333", "minor": "#777777", "halo": "#ffffff", "halo_width": 1.5},
+  "place_names_maxzoom": 10
+}
