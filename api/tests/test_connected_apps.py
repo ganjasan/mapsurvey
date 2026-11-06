@@ -2,6 +2,7 @@
 from unittest import mock
 
 from django.test import TestCase
+from django.urls import reverse
 
 from survey import product_events as pe
 from survey.models import AuditLog
@@ -90,12 +91,14 @@ class ConnectedAppsTest(TestCase):
         """
         GIVEN the help site configured, with the MCP server live (change mcp-server)
         WHEN the page renders
-        THEN "How to connect an app" and the MCP set-up guide link to the help site through the registry
+        THEN "How to connect an app" links to the help site through the registry, and the MCP
+             set-up guide and tool reference do so from the MCP page (change app-sidebar)
         """
         from django.test import override_settings
         with override_settings(HELP_SITE_URL='https://help.example'):
             html = self.client.get(PAGE).content.decode()
+            mcp_page = self.client.get(reverse('editor_survey_start_agent') + '?from=sidebar').content.decode()
         self.assertIn('https://help.example/how-to/connect-an-app/', html)
         self.assertIn('How to connect an app', html)
-        self.assertIn('https://help.example/how-to/use-the-mcp-server/', html)
-        self.assertIn('https://help.example/reference/mcp-tools/', html)
+        self.assertIn('https://help.example/how-to/use-the-mcp-server/', mcp_page)
+        self.assertIn('https://help.example/reference/mcp-tools/', mcp_page)

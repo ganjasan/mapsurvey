@@ -442,15 +442,16 @@ class WhatsNewViewsTest(_ChangelogDirMixin, TestCase):
         """
         GIVEN a creator who has seen nothing and has three unseen entries
         WHEN they open the dashboard
-        THEN the card with the newest entry renders, the navbar dot and the
-             menu badge "3" are there
+        THEN the card with the newest entry renders, the sidebar's What's new dot
+             and the "?" menu badge "3" are there (change app-sidebar moved the dot
+             from the header gift to the sidebar footer)
         """
         page = self.client.get(reverse('editor') + '?dashboard=1')
         html = page.content.decode()
         self.assertIn('id="whatsNewCard"', html)
         self.assertIn('data-entry-id="2026-10-06-empty-sessions"', html)
         self.assertIn('Empty sessions are now hidden', html)
-        self.assertIn('class="wn-dot"', html)
+        self.assertIn('class="wn-dot app-dot"', html)
         self.assertIn('<span class="wn-badge">3</span>', html)
 
     def test_respondent_page_never_carries_the_card(self):

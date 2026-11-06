@@ -32,7 +32,9 @@ from .permissions import org_permission_required
 REQUEST_NAME_MAX = 40
 # Where the creator came from (`?from=`, change changelog-hero): the back link
 # and a property on the page's events. Anything else is dropped, never echoed.
-ORIGINS = ('dashboard', 'help', 'connections')
+# `sidebar` = the MCP item of the application sidebar (change app-sidebar): no back link,
+# the page is a destination there, not a step of "Ways to start".
+ORIGINS = ('dashboard', 'help', 'connections', 'sidebar')
 
 
 def prompt_templates():

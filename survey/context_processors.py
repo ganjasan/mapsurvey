@@ -162,6 +162,34 @@ def active_org(request):
     }
 
 
+def app_nav(request):
+    """The application sidebar (change app-sidebar): whether it shows, which item is active,
+    the rows this member sees and the workspace's plan chip. Lazy: pages without the sidebar
+    never touch billing."""
+    from django.utils.functional import SimpleLazyObject
+    from . import app_nav as nav
+
+    if not nav.shows_sidebar(request):
+        return {'app_nav': {'show': False}}
+
+    def build():
+        org = getattr(request, 'active_org', None)
+        role = None
+        if org is not None:
+            role = (Membership.objects.filter(user=request.user, organization=org)
+                    .values_list('role', flat=True).first())
+        return {
+            'show': True,
+            'active': nav.active_item(request),
+            'modules': nav.MODULES,
+            'integrations': nav.items_for(role, nav.INTEGRATIONS),
+            'workspace': nav.items_for(role) if org is not None else (),
+            'plan': nav.plan_chip(org, request.user),
+        }
+
+    return {'app_nav': SimpleLazyObject(build)}
+
+
 def icon_sprites(request):
     """Hashed sprite URLs and the picker catalog URL for the browser-side marker icon resolver.
 

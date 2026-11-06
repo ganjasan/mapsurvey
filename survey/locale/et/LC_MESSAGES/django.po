@@ -10216,3 +10216,55 @@ msgstr "Paber A"
 #: survey/models.py
 msgid "Paper B"
 msgstr "Paber B"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Main navigation"
+msgstr "Põhinavigatsioon"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Switch workspace"
+msgstr "Vaheta tööala"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "No organization"
+msgstr "Organisatsioon puudub"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "TRIAL"
+msgstr "PROOV"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "New workspace"
+msgstr "Uus tööala"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Integrations"
+msgstr "Integratsioonid"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Expand sidebar"
+msgstr "Laienda külgriba"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Menu"
+msgstr "Menüü"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Account"
+msgstr "Konto"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Surveys"
+msgstr "Küsitlused"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Plan & billing"
+msgstr "Pakett ja arveldus"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "What's new"
+msgstr "Mis on uut"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Help centre"
+msgstr "Abikeskus"

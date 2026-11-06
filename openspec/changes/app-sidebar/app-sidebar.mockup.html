@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>App sidebar — mockup v2</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<style>
+:root {
+  --bg: #ffffff; --page: #f9fafb;
+  --side-bg: #fafafb; --line: #e5e7eb;
+  --ink: #1f2937; --ink-2: #5b6172; --ink-3: #8a90a0;
+  --accent: #4f46e5; --accent-light: #eef0ff;
+  --blue: #1d6cf2; --pro: #6D4AE0; --pro-soft: rgba(109,74,224,.11); --green: #12b76a;
+  --side-w: 248px; --rail-w: 60px; --top-h: 49px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { font-family: 'DM Sans', system-ui, -apple-system, sans-serif; color: var(--ink); background: var(--bg); font-size: 14px; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+a { color: inherit; text-decoration: none; cursor: pointer; }
+
+/* mockup control strip */
+.mock-ctl { position: fixed; z-index: 100; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; align-items: center; padding: 8px 12px; border-radius: 12px; background: #1f2330; color: #fff; font-size: 12.5px; box-shadow: 0 8px 24px rgba(0,0,0,.25); white-space: nowrap; }
+.mock-ctl .seg { display: flex; background: #343a4a; border-radius: 8px; padding: 2px; }
+.mock-ctl .seg button { color: #cfd3dc; padding: 4px 10px; border-radius: 6px; }
+.mock-ctl .seg button.on { background: #fff; color: #1f2330; }
+.mock-ctl label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+.mock-ctl .tag { color: #9aa1b2; }
+
+/* shell */
+.shell { display: grid; grid-template-columns: var(--side-w) 1fr; height: 100vh; transition: grid-template-columns .18s ease; }
+body.collapsed .shell { grid-template-columns: var(--rail-w) 1fr; }
+
+/* sidebar (unchanged from v1) */
+.side { background: var(--side-bg); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+.side-head { height: var(--top-h); display: flex; align-items: center; gap: 8px; padding: 0 12px; border-bottom: 1px solid var(--line); }
+.logo { width: 28px; height: 28px; flex: none; border-radius: 8px; background: linear-gradient(135deg, #4f46e5, #12b76a); display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 14px; }
+.ws { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 8px; }
+.ws:hover { background: #f0f0f4; }
+.ws-av { width: 22px; height: 22px; border-radius: 6px; background: #dfe3ff; color: var(--accent); display: grid; place-items: center; font-size: 11px; font-weight: 700; flex: none; }
+.ws-name { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; text-align: left; }
+.ws-plan { font-size: 10.5px; font-weight: 700; color: var(--pro); background: var(--pro-soft); border-radius: 4px; padding: 1px 5px; }
+.ws .fa-sort { color: var(--ink-3); font-size: 11px; }
+.nav { flex: 1; overflow-y: auto; padding: 10px 8px; }
+.group { margin-top: 18px; }
+.group-title { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); font-weight: 700; padding: 0 10px 6px; white-space: nowrap; }
+.item { display: flex; align-items: center; gap: 10px; height: 34px; padding: 0 10px; border-radius: 7px; color: var(--ink-2); white-space: nowrap; position: relative; width: 100%; }
+.item i { width: 18px; text-align: center; font-size: 14px; color: var(--ink-3); flex: none; }
+.item:hover { background: #f0f0f4; color: var(--ink); }
+.item.active { background: var(--accent-light); color: var(--accent); font-weight: 500; }
+.item.active i { color: var(--accent); }
+.item .soon { margin-left: auto; font-style: normal; font-size: 10.5px; color: var(--ink-3); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; }
+.item .pro { margin-left: auto; font-style: normal; font-size: 10.5px; font-weight: 700; color: var(--pro); background: var(--pro-soft); border-radius: 4px; padding: 1px 5px; }
+.item .dot { width: 7px; height: 7px; border-radius: 50%; background: #ef4444; margin-left: auto; }
+.upcoming { display: none; }
+body.show-upcoming .upcoming { display: flex; }
+.side-foot { border-top: 1px solid var(--line); padding: 8px; }
+.side-foot .item { height: 30px; font-size: 13px; }
+body.collapsed .ws-name, body.collapsed .ws-plan, body.collapsed .ws .fa-sort, body.collapsed .item span, body.collapsed .item .soon, body.collapsed .item .pro, body.collapsed .group-title, body.collapsed .logo { display: none; }
+body.collapsed .side-head { padding: 0 8px; justify-content: center; }
+body.collapsed .ws { flex: none; padding: 6px; }
+body.collapsed .ws-av { width: 30px; height: 30px; font-size: 13px; }
+body.collapsed .group { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 10px; }
+body.collapsed .item { justify-content: center; padding: 0; }
+body.collapsed .item .dot { position: absolute; top: 6px; right: 10px; }
+body.collapsed .item:hover::after { content: attr(data-label); position: absolute; left: calc(100% + 8px); top: 50%; transform: translateY(-50%); background: #1f2330; color: #fff; font-size: 12px; padding: 4px 8px; border-radius: 6px; white-space: nowrap; z-index: 50; }
+body.collapsed .side, body.collapsed .nav { overflow: visible; }
+body.collapsed .collapse-btn i { transform: scaleX(-1); }
+
+/* popovers */
+.pop { display: none; position: fixed; z-index: 90; background: #fff; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 10px 30px rgba(20,24,40,.12); padding: 6px 0; min-width: 220px; }
+.pop.open { display: block; }
+.pop .p-item { display: flex; align-items: center; gap: 10px; padding: 7px 16px; color: var(--ink-2); white-space: nowrap; font-size: 13.5px; }
+.pop .p-item:hover { background: #f4f4f7; color: var(--ink); }
+.pop .p-item i { width: 16px; text-align: center; color: var(--ink-3); }
+.pop .p-sep { height: 1px; background: var(--line); margin: 6px 0; }
+.pop .p-cap { font-size: 11px; color: var(--ink-3); padding: 6px 16px 4px; }
+.pop .check { margin-left: auto; color: var(--accent); }
+#wsPop { top: calc(var(--top-h) - 2px); left: 10px; }
+#userPop { top: calc(var(--top-h) - 2px); right: 70px; }
+
+/* ===== the existing top bar: ?, language, username, Logout — nothing else ===== */
+.main { display: flex; flex-direction: column; min-width: 0; height: 100vh; background: var(--page); }
+.top { height: var(--top-h); background: #fff; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 16px; padding: 0 16px; flex: none; font-size: .85rem; color: #6b7280; }
+.top .burger { display: none; width: 34px; height: 34px; border-radius: 8px; margin-left: -8px; color: var(--ink-2); }
+.top .spacer { flex: 1; }
+.top a, .top button { color: #6b7280; }
+.top a:hover, .top button:hover { color: var(--accent); }
+.top .caret::after { content: ""; display: inline-block; margin-left: 5px; border: 4px solid transparent; border-top-color: currentColor; vertical-align: 1px; }
+.top .username { color: #9ca3af; }
+.top .help { font-size: 15px; }
+
+/* ===== dashboard body — as today ===== */
+.content { flex: 1; overflow-y: auto; }
+.wrap { max-width: 1100px; margin: 0 auto; padding: 24px 24px 90px; }
+.page-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+.page-head h1 { font-size: 20px; font-weight: 700; margin: 0; }
+.page-head .filter { height: 38px; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 0 12px; display: flex; align-items: center; gap: 8px; color: var(--ink-3); width: 200px; }
+.page-head .spacer { flex: 1; }
+.btn-primary { height: 38px; padding: 0 16px; border-radius: 8px; background: var(--blue); color: #fff; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
+.btn-more { height: 38px; width: 40px; background: #fff; border: 1px solid var(--line); border-radius: 8px; color: var(--ink-2); }
+.card { display: flex; align-items: center; gap: 16px; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; }
+.thumb { width: 48px; height: 48px; border-radius: 8px; color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 16px; flex: none; }
+.thumb.photo { background: linear-gradient(160deg,#9fb67a,#5a7a4a 50%,#c9c3a9); }
+.c-title { font-weight: 700; font-size: 15px; }
+.c-title small { color: var(--ink-3); font-weight: 400; font-size: 11px; }
+.c-meta { font-size: 12px; color: var(--ink-3); margin-top: 3px; display: flex; gap: 6px; align-items: center; }
+.badge { font-size: 11px; font-weight: 700; color: #fff; border-radius: 4px; padding: 1px 7px; }
+.b-pub { background: var(--green); } .b-draft { background: #6b7280; }
+.stats { margin-left: auto; display: flex; gap: 18px; color: var(--ink-2); font-size: 13px; white-space: nowrap; }
+.stats b { color: var(--ink); }
+.c-actions { display: flex; gap: 8px; align-items: center; color: var(--ink-2); }
+.c-actions .ic { width: 26px; text-align: center; font-size: 13px; }
+.btn-outline { height: 30px; padding: 0 10px; border: 1px solid #7c3aed; color: #7c3aed; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; white-space: nowrap; }
+.trash { margin-top: 28px; border-top: 1px solid var(--line); padding-top: 22px; }
+.trash h2 { font-size: 15px; font-weight: 700; margin: 0 0 4px; }
+.trash p { color: var(--ink-3); font-size: 13px; margin: 0 0 12px; }
+.trash .row { display: flex; align-items: center; gap: 12px; background: #f3f4f6; border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; }
+.trash .row b { display: block; font-size: 14px; }
+.trash .row span { font-size: 12px; color: var(--ink-3); }
+.trash .row .spacer { flex: 1; }
+.btn-sm { height: 30px; padding: 0 10px; border-radius: 6px; border: 1px solid var(--line); background: #fff; color: var(--ink-2); font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+.btn-sm.danger { color: #e11d48; border-color: #e11d48; }
+
+/* ===== members page — as today ===== */
+.members h1 { font-size: 20px; margin: 0 0 16px; }
+.members table { width: 100%; background: #fff; border: 1px solid var(--line); border-radius: 10px; border-collapse: separate; border-spacing: 0; overflow: hidden; }
+.members th, .members td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+.members th { font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); background: #fafafb; }
+.members tr:last-child td { border-bottom: 0; }
+.role { font-size: 11px; font-weight: 700; border-radius: 4px; padding: 1px 7px; background: #eef0ff; color: var(--accent); }
+.invite { margin-top: 18px; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: flex; gap: 10px; align-items: center; }
+.invite input { flex: 1; height: 36px; border: 1px solid var(--line); border-radius: 6px; padding: 0 10px; font: inherit; }
+.invite select { height: 36px; border: 1px solid var(--line); border-radius: 6px; padding: 0 8px; font: inherit; background: #fff; }
+
+/* ===== editor — the existing navbar, rail on the left ===== */
+.ed-nav { height: var(--top-h); background: #fff; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 14px; padding: 0 16px; flex: none; white-space: nowrap; overflow: hidden; }
+.ed-nav .back { color: #6b7280; font-size: 13px; }
+.ed-nav .name { font-weight: 700; font-size: 1.05rem; color: #111827; }
+.ed-nav .chip { font-size: 11px; font-weight: 700; color: #fff; background: var(--green); border-radius: 4px; padding: 2px 7px; }
+.ed-nav .tabs { display: flex; gap: 2px; margin-left: 6px; }
+.ed-nav .tabs a { padding: 6px 10px; border-radius: 6px; color: #6b7280; font-size: 13.5px; }
+.ed-nav .tabs a.on { background: var(--accent-light); color: var(--accent); font-weight: 500; }
+.ed-nav .spacer { flex: 1; }
+.ed-nav .act { color: #6b7280; font-size: 13.5px; }
+.ed-body { flex: 1; display: grid; grid-template-columns: 260px 1fr 380px; min-height: 0; }
+.ed-sections { background: #fff; border-right: 1px solid var(--line); padding: 14px; overflow-y: auto; }
+.ed-sections h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); margin: 0 0 10px; }
+.sec { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; background: #fff; }
+.sec.on { border-color: var(--accent); background: var(--accent-light); }
+.sec b { display: block; font-size: 13.5px; }
+.sec span { font-size: 12px; color: var(--ink-3); }
+.ed-main { padding: 18px; overflow-y: auto; }
+.q { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; display: flex; gap: 10px; align-items: center; }
+.q i { color: var(--ink-3); width: 18px; text-align: center; }
+.q b { font-weight: 500; font-size: 13.5px; }
+.q span { margin-left: auto; font-size: 11.5px; color: var(--ink-3); }
+.ed-preview { border-left: 1px solid var(--line); background: #fff; display: flex; flex-direction: column; }
+.ed-preview .ph { padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 12px; color: var(--ink-3); display: flex; justify-content: space-between; }
+.map { flex: 1; position: relative; overflow: hidden; background: repeating-linear-gradient(28deg, transparent 0 46px, #fff 46px 52px), repeating-linear-gradient(-62deg, transparent 0 70px, #fff 70px 78px), #e8ece4; }
+.map .park { position: absolute; left: 18%; top: 22%; width: 32%; height: 26%; background: #cfe6c4; border-radius: 30% 40% 25% 35%; }
+.map .water { position: absolute; right: 0; top: 0; width: 14%; height: 100%; background: #c6dcf0; }
+.map .pin { position: absolute; color: #e11d48; font-size: 22px; }
+.map .panel { position: absolute; left: 12px; right: 12px; bottom: 12px; background: #fff; border-radius: 8px; padding: 12px; font-size: 13px; box-shadow: 0 4px 12px rgba(20,24,40,.1); }
+.map .panel b { display: block; margin-bottom: 4px; }
+
+.view { display: none; }
+body.v-list .view-list, body.v-members .view-members { display: block; }
+body.v-editor .view-editor { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+
+/* mobile */
+.backdrop { display: none; }
+@media (max-width: 768px) {
+  .shell, body.collapsed .shell { grid-template-columns: 1fr; }
+  .side { position: fixed; z-index: 80; top: 0; bottom: 0; left: 0; width: 280px; transform: translateX(-100%); transition: transform .2s ease; }
+  body.drawer .side { transform: none; }
+  body.drawer .backdrop { display: block; position: fixed; inset: 0; z-index: 70; background: rgba(15,18,30,.35); }
+  .top .burger { display: grid; place-items: center; }
+  .top .hide-sm { display: none; }
+  .stats, .c-actions .ic { display: none; }
+  .page-head .filter { display: none; }
+  .ed-body { grid-template-columns: 1fr; }
+  .ed-sections, .ed-preview { display: none; }
+  .ed-nav .tabs, .ed-nav .act { display: none; }
+  .collapse-btn { display: none !important; }
+  body.collapsed .side .ws-name, body.collapsed .side .item span, body.collapsed .side .group-title { display: initial; }
+  body.collapsed .side .logo { display: grid; }
+  body.collapsed .side .item { justify-content: flex-start; padding: 0 10px; }
+  body.collapsed .side .ws { flex: 1; }
+  body.collapsed .side .item:hover::after { display: none; }
+  .mock-ctl { flex-wrap: wrap; white-space: normal; width: calc(100% - 24px); }
+}
+</style>
+</head>
+<body class="v-list">
+
+<div class="shell">
+  <aside class="side" id="side">
+    <div class="side-head">
+      <div class="logo">M</div>
+      <button class="ws" id="wsBtn" title="Switch workspace">
+        <span class="ws-av">M</span>
+        <span class="ws-name">Mapsurvey</span>
+        <span class="ws-plan">PRO</span>
+        <i class="fas fa-sort"></i>
+      </button>
+    </div>
+    <nav class="nav">
+      <a class="item" id="navSurveys" data-label="Surveys" data-go="list"><i class="fas fa-map-marked-alt"></i><span>Surveys</span></a>
+      <a class="item upcoming" data-label="Reports"><i class="far fa-chart-bar"></i><span>Reports</span><em class="soon">soon</em></a>
+      <a class="item upcoming" data-label="Presentations"><i class="fas fa-chalkboard"></i><span>Presentations</span><em class="soon">soon</em></a>
+      <a class="item upcoming" data-label="Layers library"><i class="fas fa-layer-group"></i><span>Layers library</span><em class="soon">soon</em></a>
+      <div class="group">
+        <div class="group-title">Integrations</div>
+        <a class="item" data-label="API &amp; connections"><i class="fas fa-plug"></i><span>API &amp; connections</span><em class="pro">PRO</em></a>
+      </div>
+      <div class="group">
+        <div class="group-title">Workspace</div>
+        <a class="item" id="navMembers" data-label="Members" data-go="members"><i class="fas fa-user-friends"></i><span>Members</span></a>
+        <a class="item" data-label="Billing &amp; plan"><i class="far fa-credit-card"></i><span>Billing &amp; plan</span></a>
+        <a class="item" data-label="Settings"><i class="fas fa-cog"></i><span>Settings</span></a>
+      </div>
+    </nav>
+    <div class="side-foot">
+      <a class="item" data-label="What's new"><i class="fas fa-gift"></i><span>What's new</span><em class="dot"></em></a>
+      <a class="item" data-label="Help centre"><i class="far fa-life-ring"></i><span>Help centre</span></a>
+      <button class="item collapse-btn" id="collapseBtn" data-label="Expand"><i class="fas fa-angle-double-left"></i><span>Collapse</span></button>
+    </div>
+  </aside>
+  <div class="backdrop" id="backdrop"></div>
+
+  <div class="main">
+    <!-- top bar: today's, minus the gift and the workspace dropdown -->
+    <header class="top">
+      <button class="burger" id="burger" aria-label="Menu"><i class="fas fa-bars"></i></button>
+      <span class="spacer"></span>
+      <a class="help" title="Help"><i class="fas fa-question-circle"></i></a>
+      <a class="caret hide-sm"><i class="fas fa-globe" style="margin-right:4px"></i>English</a>
+      <button class="username caret" id="userBtn">you</button>
+      <a class="hide-sm">Logout</a>
+    </header>
+
+    <!-- dashboard: as today -->
+    <div class="content view view-list">
+      <div class="wrap">
+        <div class="page-head">
+          <h1>My Surveys</h1>
+          <div class="filter"><i class="fas fa-search"></i> Search surveys…</div>
+          <span class="spacer"></span>
+          <a class="btn-primary"><i class="fas fa-plus"></i> New Survey</a>
+          <button class="btn-more"><i class="fas fa-ellipsis-h"></i></button>
+        </div>
+
+        <div class="card">
+          <div class="thumb photo"></div>
+          <div style="min-width:0">
+            <div class="c-title" data-go="editor">Riverside park redesign <small>v12</small></div>
+            <div class="c-meta"><span class="badge b-pub">Published</span>· 5 hours, 31 minutes ago</div>
+          </div>
+          <div class="stats"><span><b>844</b> started</span><span><b>135</b> completed</span><span><b>16%</b> rate</span></div>
+          <div class="c-actions">
+            <a class="ic" data-go="editor"><i class="fas fa-hammer"></i></a><span class="ic"><i class="far fa-chart-bar"></i></span><span class="ic"><i class="fas fa-globe"></i></span><span class="ic"><i class="fas fa-share-alt"></i></span>
+            <a class="btn-outline"><i class="fas fa-external-link-alt"></i>Preview</a>
+            <span class="ic"><i class="fas fa-ellipsis-h"></i> <i class="fas fa-caret-down" style="font-size:10px"></i></span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="thumb" style="background:linear-gradient(135deg,#10b981,#14b8a6)">C</div>
+          <div style="min-width:0">
+            <div class="c-title" data-go="editor">Cycling in Copenhagen: Mapsurvey demo</div>
+            <div class="c-meta"><span class="badge b-pub">Published</span>· 1 minute ago</div>
+          </div>
+          <div class="stats"><span><b>389</b> started</span><span><b>37</b> completed</span><span><b>10%</b> rate</span></div>
+          <div class="c-actions">
+            <a class="ic" data-go="editor"><i class="fas fa-hammer"></i></a><span class="ic"><i class="far fa-chart-bar"></i></span><span class="ic"><i class="fas fa-globe"></i></span><span class="ic"><i class="fas fa-share-alt"></i></span>
+            <a class="btn-outline"><i class="fas fa-external-link-alt"></i>Preview</a>
+            <span class="ic"><i class="fas fa-ellipsis-h"></i> <i class="fas fa-caret-down" style="font-size:10px"></i></span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="thumb" style="background:linear-gradient(135deg,#22c55e,#16a34a)">W</div>
+          <div style="min-width:0">
+            <div class="c-title" data-go="editor">School travel survey</div>
+            <div class="c-meta"><span class="badge b-draft">Draft</span>· 2 weeks, 4 days ago</div>
+          </div>
+          <div class="stats"><span><b>0</b> started</span><span><b>0</b> completed</span><span><b>0%</b> rate</span></div>
+          <div class="c-actions">
+            <a class="ic" data-go="editor"><i class="fas fa-hammer"></i></a><span class="ic"><i class="far fa-chart-bar"></i></span><span class="ic"><i class="fas fa-globe"></i></span><span class="ic"><i class="fas fa-share-alt"></i></span>
+            <a class="btn-outline"><i class="fas fa-external-link-alt"></i>Preview</a>
+            <span class="ic"><i class="fas fa-ellipsis-h"></i> <i class="fas fa-caret-down" style="font-size:10px"></i></span>
+          </div>
+        </div>
+
+        <div class="trash">
+          <h2><i class="fas fa-trash" style="color:var(--ink-2);margin-right:6px"></i>Trash</h2>
+          <p>Surveys here are hidden from respondents and will be deleted forever after 30 days.</p>
+          <div class="row">
+            <div><b>Riverside park redesign</b><span>Trashed 3 weeks ago · purges in 1 week, 1 day</span></div>
+            <span class="spacer"></span>
+            <a class="btn-sm"><i class="fas fa-trash-restore"></i>Restore</a>
+            <a class="btn-sm danger">Delete forever</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- members page: as today -->
+    <div class="content view view-members">
+      <div class="wrap members">
+        <h1>Members · Mapsurvey</h1>
+        <table>
+          <tr><th>User</th><th>Email</th><th>Role</th><th>Joined</th><th></th></tr>
+          <tr><td>you</td><td>owner@example.org</td><td><span class="role">owner</span></td><td>2025-03-02</td><td></td></tr>
+          <tr><td>lead-041</td><td>planner@example.org</td><td><span class="role">editor</span></td><td>2026-09-14</td><td><a class="btn-sm">Change role</a></td></tr>
+          <tr><td>lead-087</td><td>analyst@example.org</td><td><span class="role">viewer</span></td><td>2026-10-21</td><td><a class="btn-sm">Change role</a></td></tr>
+        </table>
+        <div class="invite">
+          <input placeholder="Invite by email…"><select><option>editor</option><option>viewer</option></select><a class="btn-primary" style="height:36px">Send invitation</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- inside a survey: the existing editor navbar + three panes; the sidebar is a rail -->
+    <div class="view view-editor">
+      <div class="ed-nav">
+        <a class="back" data-go="list"><i class="fas fa-arrow-left"></i> Dashboard</a>
+        <span class="name">Cycling in Copenhagen: Mapsurvey demo</span>
+        <span class="chip">Published</span>
+        <div class="tabs"><a class="on"><i class="fas fa-hammer"></i> Survey</a><a><i class="fas fa-language"></i> Translations</a><a><i class="far fa-chart-bar"></i> Responses</a><a><i class="fas fa-globe"></i> Public results</a></div>
+        <span class="spacer"></span>
+        <a class="act"><i class="fas fa-share-alt"></i> Share ▾</a>
+        <a class="act"><i class="fas fa-external-link-alt"></i> Preview ▾</a>
+        <a class="act"><i class="fas fa-cog"></i></a>
+      </div>
+      <div class="ed-body">
+        <div class="ed-sections">
+          <h3>Sections</h3>
+          <div class="sec on"><b>Your daily route</b><span>Map · 3 questions</span></div>
+          <div class="sec"><b>Where do you feel unsafe?</b><span>Map · 2 questions</span></div>
+          <div class="sec"><b>What would make you cycle more?</b><span>Form · 4 questions</span></div>
+          <div class="sec"><b>About you</b><span>Form · 3 questions</span></div>
+        </div>
+        <div class="ed-main">
+          <div class="q"><i class="fas fa-route"></i><b>Draw your usual route to work or school</b><span>line</span></div>
+          <div class="q"><i class="fas fa-map-marker-alt"></i><b>Where do you usually park your bike?</b><span>point</span></div>
+          <div class="q"><i class="fas fa-list"></i><b>How often do you cycle this route?</b><span>choice</span></div>
+        </div>
+        <div class="ed-preview">
+          <div class="ph"><span>Live preview</span><span>390 × 844</span></div>
+          <div class="map">
+            <div class="park"></div><div class="water"></div>
+            <i class="fas fa-map-marker-alt pin" style="left:46%;top:38%"></i>
+            <div class="panel"><b>Your daily route</b>Draw your usual route to work or school.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- workspace switcher (the old header dropdown, now under the workspace name) -->
+<div class="pop" id="wsPop">
+  <a class="p-item"><span class="ws-av">M</span>Mapsurvey<i class="fas fa-check check"></i></a>
+  <a class="p-item"><span class="ws-av" style="background:#dcfce7;color:#15803d">U</span>City planning team</a>
+  <a class="p-item"><span class="ws-av" style="background:#fef3c7;color:#b45309">A</span>Personal workspace</a>
+  <div class="p-sep"></div>
+  <a class="p-item"><i class="fas fa-plus"></i>New workspace</a>
+</div>
+<!-- the username becomes a two-item menu: what had nowhere else to go -->
+<div class="pop" id="userPop">
+  <a class="p-item"><i class="fas fa-sliders-h"></i>Preferences</a>
+  <a class="p-item"><i class="fas fa-check-square"></i>Ask before publishing or changing structure</a>
+</div>
+
+<div class="mock-ctl">
+  <span class="tag">Mockup v2</span>
+  <div class="seg">
+    <button class="on" data-view="list">Dashboard</button>
+    <button data-view="members">Members</button>
+    <button data-view="editor">Inside a survey</button>
+  </div>
+  <label><input type="checkbox" id="upcoming"> Upcoming modules</label>
+  <span class="tag">Narrow the window for the phone drawer</span>
+</div>
+
+<script>
+const body = document.body;
+let userCollapsed = false;
+function setView(v) {
+  ['list','members','editor'].forEach(k => body.classList.toggle('v-' + k, v === k));
+  document.querySelectorAll('[data-view]').forEach(b => b.classList.toggle('on', b.dataset.view === v));
+  document.getElementById('navSurveys').classList.toggle('active', v !== 'members');
+  document.getElementById('navMembers').classList.toggle('active', v === 'members');
+  body.classList.toggle('collapsed', v === 'editor' ? true : userCollapsed);
+  body.classList.remove('drawer');
+}
+document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+document.addEventListener('click', e => {
+  const go = e.target.closest('[data-go]');
+  if (go) { e.preventDefault(); setView(go.dataset.go); }
+  if (!e.target.closest('.pop') && !e.target.closest('#wsBtn') && !e.target.closest('#userBtn')) {
+    document.querySelectorAll('.pop').forEach(p => p.classList.remove('open'));
+  }
+});
+document.getElementById('collapseBtn').addEventListener('click', () => {
+  const now = !body.classList.contains('collapsed');
+  body.classList.toggle('collapsed', now);
+  if (!body.classList.contains('v-editor')) userCollapsed = now;
+});
+document.getElementById('upcoming').addEventListener('change', e => body.classList.toggle('show-upcoming', e.target.checked));
+document.getElementById('burger').addEventListener('click', () => body.classList.add('drawer'));
+document.getElementById('backdrop').addEventListener('click', () => body.classList.remove('drawer'));
+function popToggle(btnId, popId) {
+  const pop = document.getElementById(popId);
+  document.getElementById(btnId).addEventListener('click', () => {
+    document.querySelectorAll('.pop').forEach(p => { if (p !== pop) p.classList.remove('open'); });
+    pop.classList.toggle('open');
+  });
+}
+popToggle('wsBtn', 'wsPop');
+popToggle('userBtn', 'userPop');
+setView('list');
+</script>
+</body>
+</html>

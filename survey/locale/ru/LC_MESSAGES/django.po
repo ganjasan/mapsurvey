@@ -3866,8 +3866,9 @@ msgid "Delete this draft survey and everything in it? This can't be undone."
 msgstr ""
 
 #: survey/templates/editor/survey_settings.html:26
+#: survey/app_nav.py
 msgid "General"
-msgstr ""
+msgstr "Общие"
 
 #: survey/templates/editor/survey_settings.html:78
 msgid "Style"
@@ -8716,3 +8717,55 @@ msgstr "Запросы команде Mapsurvey"
 #: api/templates/api/connections.html
 msgid "Your workspaces are on the Free plan. The first API or MCP call on a survey of a workspace that has never had a Pro trial starts it — no card needed."
 msgstr "Ваши рабочие пространства на тарифе Free. Первый вызов API или MCP к опросу пространства, у которого ещё не было Pro-триала, запускает его — без карты."
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Main navigation"
+msgstr "Основная навигация"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Switch workspace"
+msgstr "Сменить рабочее пространство"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "No organization"
+msgstr "Нет организации"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "TRIAL"
+msgstr "ПРОБНЫЙ"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Workspace"
+msgstr "Рабочее пространство"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "New workspace"
+msgstr "Новое рабочее пространство"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Integrations"
+msgstr "Интеграции"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Expand sidebar"
+msgstr "Развернуть панель"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Menu"
+msgstr "Меню"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Account"
+msgstr "Аккаунт"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Surveys"
+msgstr "Опросы"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Plan & billing"
+msgstr "Тариф и оплата"
+
+#: survey/templates/partials/_app_sidebar.html
+msgid "Help centre"
+msgstr "Справочный центр"

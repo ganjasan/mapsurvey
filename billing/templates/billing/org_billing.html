@@ -5,17 +5,9 @@
 
 {% block content %}
 <div class="container mt-4" style="max-width: 1040px;">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <h4 class="mb-0">{{ org.name }}</h4>
-            <small class="text-muted">{% trans "Plan & billing" %}</small>
-        </div>
-        <div>
-            {% if is_owner %}<a href="{% url 'org_settings' org.slug %}" class="btn btn-outline-secondary btn-sm mr-1">{% trans "Settings" %}</a>{% endif %}
-            <a href="{% url 'org_members' org.slug %}" class="btn btn-outline-secondary btn-sm mr-1">{% trans "Members" %}</a>
-            <a href="{% url 'editor' %}" class="btn btn-outline-secondary btn-sm">{% trans "Dashboard" %}</a>
-        </div>
-    </div>
+    {% comment %}The section is the heading; the workspace name is in the sidebar, and so are
+    Settings / Members / Dashboard (change app-sidebar).{% endcomment %}
+    <h4 class="mb-3">{% trans "Plan & billing" %}</h4>
 
     {% if messages %}
     {% for message in messages %}

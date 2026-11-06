@@ -12,9 +12,9 @@ status poll sees a new MCP connection, or on "I've connected". "MCP", "token" an
 
 {% block page_title %}{% trans "Use your AI assistant" %}{% endblock %}
 
-{% block navbar_content %}
+{% block navbar_content %}{% if not app_nav.show %}
 <span class="survey-name">{% trans "Use your AI assistant" %}</span>
-{% endblock %}
+{% endif %}{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -94,7 +94,8 @@ status poll sees a new MCP connection, or on "I've connected". "MCP", "token" an
      data-default="{{ default_client }}"{% if origin %}
      data-from="{{ origin }}"{% endif %}>
   {% csrf_token %}
-  {% if origin == 'dashboard' %}
+  {% if origin == 'sidebar' %}{# the MCP item of the sidebar: a destination, no way back #}
+  {% elif origin == 'dashboard' %}
   <a href="{% url 'editor' %}?dashboard=1" class="ag-back"><i class="fas fa-arrow-left"></i> {% trans "Dashboard" %}</a>
   {% else %}
   <a href="{% url 'editor_survey_start' %}" class="ag-back"><i class="fas fa-arrow-left"></i> {% trans "Ways to start" %}</a>
@@ -196,6 +197,10 @@ status poll sees a new MCP connection, or on "I've connected". "MCP", "token" an
     </div>
     <p class="ag-hint" style="margin-top:1rem">{% blocktrans with url=dashboard_url %}The survey appears on your <a href="{{ url }}">dashboard</a> as soon as your assistant creates it. Open it there to check, edit and publish.{% endblocktrans %}</p>
   </section>
+
+  {% comment %}The two help links of the MCP block the API page carried before change app-sidebar
+  made this page the sidebar's MCP item.{% endcomment %}
+  {% if HELP_URL %}<p class="ag-hint" style="margin-top:1rem;font-size:.82rem"><a href="{{ HELP_URL.mcp }}" target="_blank" rel="noopener">{% trans "Set-up guide" %}</a> · <a href="{{ HELP_URL.mcp_tools }}" target="_blank" rel="noopener">{% trans "Every tool the agent gets" %}</a></p>{% endif %}
 
   {{ prompts|json_script:"agent-prompts" }}
   {{ prompt_targets|json_script:"agent-prompt-targets" }}

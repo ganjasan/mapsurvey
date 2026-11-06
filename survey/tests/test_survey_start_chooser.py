@@ -48,14 +48,16 @@ class EditorZeroSurveyRedirectTest(TestCase):
     def test_navbar_dashboard_link_carries_the_escape_flag(self):
         """
         GIVEN an organization with no surveys, landed on the create page
-        WHEN the page renders the editor navbar
-        THEN its "Dashboard" link carries ?dashboard=1, so clicking it does not
-             bounce the creator straight back to the create page
+        WHEN the page renders
+        THEN the way back to the dashboard -- the sidebar's Surveys item since change
+             app-sidebar -- carries ?dashboard=1, so clicking it does not bounce the creator
+             straight back to the create page
         """
         response = self.client.get(reverse('editor_survey_create') + '?welcome=1')
 
-        self.assertContains(
-            response, 'href="%s?dashboard=1"><i class="fas fa-arrow-left">' % reverse('editor'),
+        self.assertRegex(
+            response.content.decode(),
+            r'href="%s\?dashboard=1"\s+data-nav-key="surveys"' % reverse('editor'),
         )
 
     def test_org_with_a_survey_is_not_redirected(self):
