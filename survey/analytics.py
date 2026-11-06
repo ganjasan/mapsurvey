@@ -1128,6 +1128,8 @@ class SurveyAnalyticsService:
                 'question_id': q.id,
                 'question_name': q.name,
                 'section_name': q.survey_section.title or q.survey_section.name,
+                # The section's URL name: where the entry form edits this answer.
+                'section_url_name': q.survey_section.name,
                 'input_type': q.input_type,
                 'value': value,
                 'href': row_href,

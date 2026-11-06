@@ -9661,3 +9661,19 @@ msgstr "Küsitlusi veel pole. Looge esimene!"
 #, python-format
 msgid "Create an account to join %(workspace)s."
 msgstr "Looge konto, et liituda tööruumiga %(workspace)s."
+
+#: survey/templates/editor/partials/analytics_session_detail.html
+msgid "Edit response"
+msgstr "Muuda vastust"
+
+#: survey/templates/editor/partials/analytics_session_detail.html
+msgid "Edit this section"
+msgstr "Muuda seda jaotist"
+
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "Edit on the map"
+msgstr "Muuda kaardil"
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "Save and return to Responses"
+msgstr "Salvesta ja naase vastuste juurde"

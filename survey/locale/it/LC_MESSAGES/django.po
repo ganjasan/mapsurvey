@@ -9728,3 +9728,19 @@ msgstr "Ancora nessun sondaggio. Crea il primo!"
 #, python-format
 msgid "Create an account to join %(workspace)s."
 msgstr "Crea un account per entrare in %(workspace)s."
+
+#: survey/templates/editor/partials/analytics_session_detail.html
+msgid "Edit response"
+msgstr "Modifica risposta"
+
+#: survey/templates/editor/partials/analytics_session_detail.html
+msgid "Edit this section"
+msgstr "Modifica questa sezione"
+
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "Edit on the map"
+msgstr "Modifica sulla mappa"
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "Save and return to Responses"
+msgstr "Salva e torna alle Risposte"

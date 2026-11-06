@@ -256,6 +256,20 @@ def analytics_session_detail(request, survey_uuid, session_id):
 
     service = SurveyAnalyticsService(survey)
     answer_rows, geo_features = service.format_session_answers(session)
+    # An entered (paper, interview, field) response is corrected in the entry
+    # form; None for everything else (change operator-edit-from-responses).
+    from .operator_entry_views import edit_links
+    links = edit_links(request, survey, session)
+    if links:
+        section_of_object = {}
+        for row in answer_rows:
+            row['edit_url'] = links['section'](row['section_url_name'])
+            if row['geo_object_id']:
+                section_of_object[row['geo_object_id']] = row['section_url_name']
+        for feature in geo_features:
+            name = section_of_object.get(feature['properties']['object_id'])
+            if name:
+                feature['properties']['edit_url'] = links['section'](name, 'map')
     geo_collection = {'type': 'FeatureCollection', 'features': geo_features}
 
     from .comment_views import panel_context
@@ -265,6 +279,7 @@ def analytics_session_detail(request, survey_uuid, session_id):
         'session': session,
         'is_editor': request.effective_survey_role in ('editor', 'owner'),
         'answer_rows': answer_rows,
+        'edit_start_url': links['start'] if links else None,
         'geo_json': json.dumps(geo_collection),
         # The same payload as an object, for `json_script` — it escapes the
         # respondent text these properties carry without `|safe`, which plain

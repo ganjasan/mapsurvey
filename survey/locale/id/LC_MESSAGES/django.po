@@ -9701,3 +9701,19 @@ msgstr "Belum ada survei. Buat yang pertama!"
 #, python-format
 msgid "Create an account to join %(workspace)s."
 msgstr "Buat akun untuk bergabung dengan %(workspace)s."
+
+#: survey/templates/editor/partials/analytics_session_detail.html
+msgid "Edit response"
+msgstr "Edit jawaban"
+
+#: survey/templates/editor/partials/analytics_session_detail.html
+msgid "Edit this section"
+msgstr "Edit bagian ini"
+
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "Edit on the map"
+msgstr "Edit di peta"
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "Save and return to Responses"
+msgstr "Simpan dan kembali ke Jawaban"

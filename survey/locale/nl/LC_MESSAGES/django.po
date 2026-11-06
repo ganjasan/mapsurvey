@@ -9720,3 +9720,19 @@ msgstr "Nog geen enquêtes. Maak uw eerste!"
 #, python-format
 msgid "Create an account to join %(workspace)s."
 msgstr "Maak een account om lid te worden van %(workspace)s."
+
+#: survey/templates/editor/partials/analytics_session_detail.html
+msgid "Edit response"
+msgstr "Antwoord bewerken"
+
+#: survey/templates/editor/partials/analytics_session_detail.html
+msgid "Edit this section"
+msgstr "Deze sectie bewerken"
+
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "Edit on the map"
+msgstr "Op de kaart bewerken"
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "Save and return to Responses"
+msgstr "Opslaan en terug naar Antwoorden"

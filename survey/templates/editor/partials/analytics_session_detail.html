@@ -18,6 +18,11 @@
         {% if session.entered_by %}<small class="text-muted">{% blocktrans with name=session.entered_by.username %}Entered by {{ name }}{% endblocktrans %}</small>{% endif %}
         {% endif %}
         <div class="ml-auto d-flex" style="gap:0.4rem;">
+            {% if edit_start_url %}{# an entered response is corrected in the entry form (change operator-edit-from-responses) #}
+            <a class="btn btn-sm btn-outline-primary session-edit-entry" href="{{ edit_start_url }}">
+                <i class="fas fa-user-edit"></i> {% trans "Edit response" %}
+            </a>
+            {% endif %}
             {% if session.is_deleted %}
             <button class="btn btn-sm btn-outline-success" onclick="restoreSession({{ session.id }}); $('#sessionDetailModal').modal('hide');">
                 <i class="fas fa-undo"></i> {% trans "Restore" %}
@@ -68,7 +73,7 @@
             <tr>
                 <td>
                     <strong>{{ row.question_name }}</strong>
-                    <br><small class="text-muted">{{ row.section_name }}</small>
+                    <br>{% if row.edit_url %}<small><a class="session-edit-section" href="{{ row.edit_url }}" title="{% trans 'Edit this section' %}">{{ row.section_name }} <i class="fas fa-pen" style="font-size:0.7em;" aria-hidden="true"></i></a></small>{% else %}<small class="text-muted">{{ row.section_name }}</small>{% endif %}
                 </td>
                 <td>
                     <span id="detail-val-{{ row.question_id }}">{% if row.kind == 'image' %}<a href="{{ row.href }}" target="_blank" rel="noopener" title="{{ row.value }}"><img src="{{ row.href }}" alt="{{ row.value }}" style="max-width:96px;max-height:96px;object-fit:cover;border-radius:6px;border:1px solid #dee2e6;"></a>

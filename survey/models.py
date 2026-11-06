@@ -1745,6 +1745,9 @@ class AuditLog(models.Model):
         ('question_move', 'Question moved'),
         ('survey_duplicate', 'Survey duplicated'),
         ('version_restore', 'Version restored'),
+        # Change operator-edit-from-responses (#527): a section of a finished
+        # operator session saved again. Session id and section code only.
+        ('response_edit', 'Entered response edited'),
     )
 
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
