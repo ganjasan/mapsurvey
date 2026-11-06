@@ -117,7 +117,7 @@ not reappear for that draft.
 
 ### Requirement: Provider-agnostic LLM client
 LLM access SHALL go through a provider interface (`complete_structured(system, user,
-schema, max_tokens)`), selected by `AI_PROVIDER` (default `anthropic`). Vendor SDKs SHALL
+schema, max_tokens, images=None)`), selected by `AI_PROVIDER` (default `anthropic`). Vendor SDKs SHALL
 be imported only inside `survey/ai/client.py`; provider failures SHALL be normalized to
 `NotConfigured` (credentials absent) or `ProviderError` (call failed). The Anthropic
 implementation SHALL use the official SDK with model `AI_SURVEY_DRAFT_MODEL` (default
@@ -125,6 +125,11 @@ implementation SHALL use the official SDK with model `AI_SURVEY_DRAFT_MODEL` (de
 implementation (`AI_PROVIDER=gemini`, `GEMINI_API_KEY`, `GEMINI_MODEL`) SHALL be available
 over plain HTTP without adding a vendor SDK, adapting the shared schema to that provider's
 JSON Schema subset at the client boundary.
+
+`images` SHALL be an optional list of `(mime_type, bytes)`; each provider SHALL place them in its
+own request shape (Gemini: `inline_data` parts before the user text; Anthropic: `image` content
+blocks), and a call without `images` SHALL produce the same request body as before the parameter
+existed. No module outside `survey/ai/client.py` SHALL know how an image is encoded for a provider.
 
 Reasoning effort SHALL be a value this system sets rather than a provider default it inherits: the
 Gemini implementation SHALL send `AI_THINKING_LEVEL` (default `medium`, matching the provider's own
@@ -187,6 +192,14 @@ draft it describes.
 #### Scenario: A failing progress callback cannot fail the draft
 - **WHEN** the supplied callback raises
 - **THEN** the generation continues and completes normally
+
+#### Scenario: Image parts on a Gemini request
+- **WHEN** `complete_structured` is called with one JPEG in `images`
+- **THEN** the Gemini request body carries one `inline_data` part with `mime_type` `image/jpeg` and the base64 bytes before the text part
+
+#### Scenario: No images, no change
+- **WHEN** `complete_structured` is called without `images`
+- **THEN** the request body is identical to the one built before the parameter existed
 
 ### Requirement: Structural fields are computed, not generated
 The JSON schema requested from the model SHALL contain content fields only. The

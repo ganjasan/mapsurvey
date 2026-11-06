@@ -82,7 +82,7 @@
 
 - [x] 11.1 Help page `help/src/content/docs/how-to/enter-paper-forms-from-photos.md` (how to photograph: whole page, flat, all four corner marks in frame; what the model reads well and badly; the review); `help_links` key `paper_photos`; "Learn more" link on the batch page; `npm run build` in `help/` passes
 - [x] 11.2 New creator strings appended to every offered catalog by hand (`TranslationCatalogHygieneTest`); `compilemessages`
-- [ ] 11.3 Changelog entry — taken out of this PR (owner 2026-11-06: no What's new card for now); the draft is kept outside the repo and ships when the owner decides
+- [x] 11.3 Changelog entry — taken out of this PR (owner 2026-11-06: no What's new card for now); moved to #536
 - [x] 11.4 `POSTHOG_EXCLUDED_VIEW_NAMES` unchanged (batch pages are creator surfaces and ARE tracked); `_posthog_scrub_tags` needs nothing (no respondent prefix)
 - [x] 11.5 CLAUDE.md paragraph "Paper photos (change paper-photo-entry, #495)" next to the operator-entry/printable-form notes: the four rows, the worker-only rule, the items map, the prefill seam, the image lifetime
 
@@ -145,5 +145,5 @@ number is read without AI, one form starts as an empty response.
 ## 12. Verification
 
 - [x] 12.1 `./run_tests.sh survey.tests.test_paper_photo_entry survey.tests.test_operator_entry survey.tests.test_printable_form survey.tests.test_ai_survey_generation survey.tests.test_test_suite`, then the full `survey billing api mcp newsletter` once
-- [ ] 12.2 Live check on the worktree dev stack (`/verify`): print a two-page form of a seeded survey, photograph it with a phone (and export one HEIC), upload the photos plus the PDF, watch the list, print numbered copies, upload a shuffled stack, check one response end to end, confirm the session on Responses with the copy link, confirm the images are gone after entering
-- [ ] 12.3 Memory bump: `GUNICORN`/worker RSS before and after ingesting a 50-page PDF on the dev stack (the web process must not move)
+- [x] 12.2 Live check on the worktree dev stack (done by the owner, 2026-10-31…11-06, copies 164–167) (`/verify`): print a two-page form of a seeded survey, photograph it with a phone (and export one HEIC), upload the photos plus the PDF, watch the list, print numbered copies, upload a shuffled stack, check one response end to end, confirm the session on Responses with the copy link, confirm the images are gone after entering
+- [x] 12.3 Moved to #536 (not measured before the merge) — Memory bump: `GUNICORN`/worker RSS before and after ingesting a 50-page PDF on the dev stack (the web process must not move)

@@ -54,7 +54,9 @@ the **survey version** the answers belong to (every version of the family, the l
 by default) and the **language** (the survey's languages, the primary selected by default).
 Submitting it SHALL create a `SurveySession` on the chosen version's header with `source`,
 `language`, `entered_by` = the signed-in user and `opened_by_kind` derived as for any signed-in
-opener, then redirect to the first visible section of the entry flow.
+opener, then redirect to the first visible section of the entry flow. The header SHALL link to
+*Paper responses* (spec paper-photo-entry), and checking a paper response SHALL skip the header:
+the printed form's version and language and the source `paper` are the session's.
 
 #### Scenario: Sheet from an archived version
 - **GIVEN** a survey with versions v1 (archived) and v2 (live)
@@ -69,6 +71,10 @@ opener, then redirect to the first visible section of the entry flow.
 - **WHEN** the operator chooses `pl` on a survey offering `en` and `pl`
 - **THEN** the session's `language` is `pl` and the entry sections render in Polish
 
+#### Scenario: Paper check skips the header
+- **WHEN** a paper response of a form printed from version v1 in `pl` is opened for checking
+- **THEN** the session is created on v1 in `pl` with `source='paper'` without rendering the header
+
 ### Requirement: The entry flow walks the survey like a respondent would, keyed by URL
 Entry sections SHALL be served at `/editor/surveys/<uuid>/responses/enter/<session_id>/<section>/`
 and SHALL render the survey's sections with the same partials and scripts the respondent page uses,
@@ -76,7 +82,10 @@ in entry mode: no language picker, no abuse footer, no embed carrier, no product
 view SHALL honour a session only when it belongs to the survey's version family, has
 `source != online`, and the caller holds the `editor` role; the respondent browser-session cookie
 SHALL be neither read nor written. Section navigation, the visibility chain and answer storage SHALL
-be the respondent page's (the same save function), evaluated for the `operator` surface.
+be the respondent page's (the same save function), evaluated for the `operator` surface. When the
+session has a `paper_sheet`, the section SHALL be prefilled from the response's extraction for
+every question without an `Answer` row and rendered with the page pane (spec paper-photo-entry);
+a session without one SHALL render exactly as before.
 
 #### Scenario: Someone else's session id
 - **WHEN** an editor requests an entry URL whose session belongs to another survey
@@ -100,6 +109,10 @@ be the respondent page's (the same save function), evaluated for the `operator` 
 - **WHEN** the operator enters "No" for Q1 and continues
 - **THEN** the hidden section is skipped and nothing is stored for it
 
+#### Scenario: Session without a paper response is unchanged
+- **WHEN** a typed-in session's section renders
+- **THEN** no page pane and no prefill data are in the response
+
 ### Requirement: Respondent-facing required fields never block an operator
 In entry mode a question whose effective audience includes respondents SHALL be built without
 `required`, whatever `Question.required` says; a question whose effective audience is `operators`
@@ -121,6 +134,9 @@ Submitting the last visible section SHALL set `end_datetime` on the session and 
 page with *Next sheet* — which opens the header prefilled with the previous source, version and
 language — and *Back to Responses*. Cancelling from the header SHALL create nothing; abandoning a
 started entry SHALL leave an empty session that Responses treats like any other empty session.
+For a session with a `paper_sheet`, finishing SHALL additionally mark the paper response `entered`,
+the Saved page SHALL read "<label> stored" and offer *Check next* instead of *Next sheet*, opening
+the next paper response to check, or *Paper responses* when none remains.
 
 #### Scenario: Finish completes the session
 - **WHEN** the operator submits the last visible section
@@ -134,6 +150,11 @@ started entry SHALL leave an empty session that Responses treats like any other 
 #### Scenario: Abandoned entry
 - **WHEN** the operator submits the header and closes the tab
 - **THEN** one empty session exists, hidden by the Responses default and shown by the empty-sessions toggle
+
+#### Scenario: Check next paper response
+- **GIVEN** a paper session of Copy 7 while Copy 9 is ready to check
+- **WHEN** the operator clicks *Check next* on the Saved page
+- **THEN** Copy 9 opens, not the header
 
 ### Requirement: Operator sessions have no respondent side effects
 A session with `source != online` SHALL write no `SurveyEvent` rows, SHALL never emit
@@ -158,8 +179,9 @@ pane or any funnel.
 ### Requirement: Responses, the drawer and exports show the source
 The Responses table SHALL carry a *Source* column (after Status) with a values filter
 (`online`, `paper`, `assisted`, `field`, `other`); the detail drawer SHALL state the source and
-the operator's name; every session-level export (`sessions` table, responses ZIP file) SHALL
-include `source` and `entered_by` (username).
+the operator's name and, for a session with a `paper_sheet`, the paper response's label linking to
+it; every session-level export (`sessions` table, responses ZIP file) SHALL include `source`,
+`entered_by` (username) and `paper_copy` (the copy number printed on the paper, blank otherwise).
 Overview counts, question statistics, public results and the data export SHALL include operator
 sessions as answers.
 
@@ -173,7 +195,7 @@ sessions as answers.
 
 #### Scenario: Export columns
 - **WHEN** the workbook export runs
-- **THEN** the `sessions` sheet has `source` and `entered_by` columns and an online session reads `online` and blank
+- **THEN** the `sessions` sheet has `source`, `entered_by` and `paper_copy` columns and an online session reads `online` and blanks
 
 #### Scenario: Counted as answers
 - **GIVEN** 4 online sessions and 2 paper sessions with answers
