@@ -10289,3 +10289,90 @@ msgstr "Uutta"
 #: survey/templates/partials/_app_sidebar.html
 msgid "Help centre"
 msgstr "Ohjekeskus"
+
+#: map-style-library (#542)
+msgid "Map styles"
+msgstr "Karttatyylit"
+
+#: map-style-library (#542)
+msgid "Library"
+msgstr "Kirjasto"
+
+#: map-style-library (#542)
+msgid "Preset"
+msgstr "Esiasetus"
+
+#: map-style-library (#542)
+msgid "Publishing…"
+msgstr "Julkaistaan…"
+
+#: map-style-library (#542)
+msgid "Failed"
+msgstr "Epäonnistui"
+
+
+#: map-style-library (#542)
+msgid "Rename"
+msgstr "Nimeä uudelleen"
+
+#: map-style-library (#542)
+msgid "New name"
+msgstr "Uusi nimi"
+
+#: map-style-library (#542)
+msgid "Delete this map style?"
+msgstr "Poistetaanko tämä karttatyyli?"
+
+#: map-style-library (#542)
+msgid "Your own map styles"
+msgstr "Omat karttatyylisi"
+
+#: map-style-library (#542)
+msgid "A style needs a name."
+msgstr "Tyyli tarvitsee nimen."
+
+#: map-style-library (#542)
+msgid "The hosted style is being created"
+msgstr "Palvelimella olevaa tyyliä luodaan"
+
+#: map-style-library (#542)
+msgid "Based on %(base)s"
+msgstr "Perustuu tyyliin %(base)s"
+
+#: map-style-library (#542)
+msgid "This base map cannot be duplicated."
+msgstr "Tätä taustakarttaa ei voi monistaa."
+
+#: map-style-library (#542)
+msgid "This style has no published version to copy yet."
+msgstr "Tällä tyylillä ei ole vielä julkaistua versiota kopioitavaksi."
+
+#: map-style-library (#542)
+msgid "%(name)s copy"
+msgstr "%(name)s – kopio"
+
+#: map-style-library (#542)
+msgid "“%(name)s” is being published. It appears in survey settings once it is ready."
+msgstr "”%(name)s” julkaistaan. Se näkyy kyselyn asetuksissa, kun se on valmis."
+
+#: map-style-library (#542)
+msgid "“%(name)s” is used by %(surveys)s. Choose another base map there first."
+msgstr "”%(name)s” on käytössä: %(surveys)s. Valitse siellä ensin toinen taustakartta."
+
+#: map-style-library (#542)
+msgid "“%(name)s” was deleted."
+msgstr "”%(name)s” poistettiin."
+
+#: map-style-library (#542)
+msgid "A published map style version cannot be changed; save a new version."
+msgstr "Julkaistua karttatyylin versiota ei voi muuttaa; tallenna uusi versio."
+
+#: map-style-library (#542)
+msgid "A map style is the base map under your surveys, online and on paper. Pick any of these in a survey's settings. Duplicate a preset to give it your own name; the editor for colours and labels is coming next."
+msgstr "Karttatyyli on kyselyidesi taustakartta, verkossa ja paperilla. Valitse mikä tahansa näistä kyselyn asetuksissa. Monista esiasetus antaaksesi sille oman nimen; värien ja nimiöiden editori tulee seuraavaksi."
+
+#: map-style-library (#542)
+msgid "used in %(n)s survey"
+msgid_plural "used in %(n)s surveys"
+msgstr[0] "käytössä %(n)s kyselyssä"
+msgstr[1] "käytössä %(n)s kyselyssä"

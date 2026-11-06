@@ -230,7 +230,6 @@
 {% endblock %}
 {% block extra_scripts %}
 <script>
-  var mapboxUrl = '{{ MAPBOX_URL }}';
   var mapboxAccessToken = '{{ MAPBOX_ACCESS_TOKEN }}';
   {% comment %}See section_map_picker.html: a localized decimal comma here parses as an
   argument separator, so setView() would take a four-element array and the map pane would

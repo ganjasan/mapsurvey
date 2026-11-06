@@ -6,6 +6,7 @@ from . import editor_views
 from . import agent_views
 from . import editor_group_views
 from . import layer_object_views
+from . import map_style_views
 from . import comment_views
 from . import analytics_views
 from . import operator_entry_views
@@ -38,6 +39,16 @@ urlpatterns = [
     path('org/switch/', org_views.switch_org, name='org_switch'),
     re_path(r'^org/(?P<slug>[-.\w]+)/settings/$', org_views.org_settings, name='org_settings'),
     re_path(r'^org/(?P<slug>[-.\w]+)/members/$', org_views.org_members, name='org_members'),
+    # The map style library (change map-styles-library, #542).
+    re_path(r'^org/(?P<slug>[-.\w]+)/map-styles/$', map_style_views.org_map_styles, name='org_map_styles'),
+    re_path(r'^org/(?P<slug>[-.\w]+)/map-styles/(?P<uuid>[0-9a-f-]{36})/duplicate/$',
+            map_style_views.org_map_style_duplicate, name='org_map_style_duplicate'),
+    re_path(r'^org/(?P<slug>[-.\w]+)/map-styles/(?P<uuid>[0-9a-f-]{36})/rename/$',
+            map_style_views.org_map_style_rename, name='org_map_style_rename'),
+    re_path(r'^org/(?P<slug>[-.\w]+)/map-styles/(?P<uuid>[0-9a-f-]{36})/delete/$',
+            map_style_views.org_map_style_delete, name='org_map_style_delete'),
+    re_path(r'^org/(?P<slug>[-.\w]+)/map-styles/(?P<uuid>[0-9a-f-]{36})/retry/$',
+            map_style_views.org_map_style_retry, name='org_map_style_retry'),
     re_path(r'^org/(?P<slug>[-.\w]+)/members/(?P<user_id>\d+)/role/$', org_views.org_change_role, name='org_change_role'),
     re_path(r'^org/(?P<slug>[-.\w]+)/members/(?P<user_id>\d+)/remove/$', org_views.org_remove_member, name='org_remove_member'),
     re_path(r'^org/(?P<slug>[-.\w]+)/invite/$', org_views.org_send_invitation, name='org_send_invitation'),

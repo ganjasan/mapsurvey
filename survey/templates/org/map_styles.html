@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load i18n static billing_tags %}
+
+{% block title %}{{ org.name }} — {% trans "Map styles" %}{% endblock %}
+
+{% block extra_head %}
+{% comment %}base.html carries no HTMX (editor_base.html does); the card list re-polls itself with it
+while a style is being published.{% endcomment %}
+<script src="https://unpkg.com/htmx.org@1.9.10" crossorigin="anonymous"></script>
+<script src="{% static 'js/htmx_promise_guard.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+{% comment %}The workspace's map style library (change map-styles-library, #542). Laid out like
+Members and General. Cards for the five presets and the workspace's styles; the list re-polls
+itself while a style is being published (org/_map_style_cards.html).{% endcomment %}
+<div class="container mt-4" style="max-width: 900px;">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h4 class="mb-0">{% trans "Map styles" %} <small class="ml-1">{% pro_badge org "map_styles" %}</small></h4>
+        {% if HELP_URL.map_styles %}
+        <a href="{{ HELP_URL.map_styles }}" target="_blank" rel="noopener" class="small">{% trans "Learn more" %}</a>
+        {% endif %}
+    </div>
+    <p class="text-muted" style="font-size:0.9rem;">
+        {% blocktrans %}A map style is the base map under your surveys, online and on paper. Pick any of these in a survey's settings. Duplicate a preset to give it your own name; the editor for colours and labels is coming next.{% endblocktrans %}
+    </p>
+
+    {% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} py-2" style="font-size:0.9rem;">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+
+    {% include "org/_map_style_cards.html" %}
+</div>
+{% endblock %}

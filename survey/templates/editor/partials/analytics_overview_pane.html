@@ -253,10 +253,8 @@ latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
                went through basemap_layers.html and kept a hard-coded volunteer
                tile host -- the very surface the "Access blocked - 403" report
                came from. Guard tests reject that host anywhere under survey/. */
-            L.tileLayer('{{ MAPBOX_URL }}', {
-                attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a>',
-                maxZoom: 23, accessToken: '{{ MAPBOX_ACCESS_TOKEN }}',
-            }).addTo(m);
+            var _streets = {{ MAPBOX_STREETS|safe }};  // the resolver's Streets entry (survey/basemaps.py)
+            L.tileLayer(_streets.url, Object.assign({ accessToken: '{{ MAPBOX_ACCESS_TOKEN }}' }, _streets.opts)).addTo(m);
             mapEl.style.cursor = 'pointer';
             mapEl.addEventListener('click', function () { rv2Router.setPane('map'); });
             window._rv2OverviewMap = m;

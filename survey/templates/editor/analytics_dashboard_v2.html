@@ -1233,11 +1233,8 @@ function sessionGeoOpenMap(objectId) {
     $('#sessionGeoMapModal').one('shown.bs.modal', function () {
         /* mount() disposes whatever the previous open left on the container. */
         var map = EditorMap.mount('session-geo-modal-map', { zoomControl: true });
-        L.tileLayer('{{ MAPBOX_URL }}', {
-            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>',
-            maxZoom: 23,
-            accessToken: '{{ MAPBOX_ACCESS_TOKEN }}',
-        }).addTo(map);
+        var _streets = {{ MAPBOX_STREETS|safe }};  // the resolver's Streets entry (survey/basemaps.py)
+        L.tileLayer(_streets.url, Object.assign({ accessToken: '{{ MAPBOX_ACCESS_TOKEN }}' }, _streets.opts)).addTo(map);
 
         /* Reference layers from the Map pane's cache -- same visibility, order
            and opacity as its Layers panel, no second request. */

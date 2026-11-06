@@ -293,7 +293,10 @@ services:
     # two workers with `-B` fire every beat twice. Scaling the worker means moving beat
     # into a service of its own (`celery -A mapsurvey beat`). The schedule file lives in
     # /tmp: the container is ephemeral and beat recomputes it from settings on start.
-    dockerCommand: celery -A mapsurvey worker -B -s /tmp/celerybeat-schedule -l info --concurrency 2
+    # `-Q celery,styles`: map style publishing (change map-styles-library, #542) rides its
+    # own queue, rate-limited under the Styles API's 50 writes/min; a worker that does not
+    # consume it leaves every new style "Publishing…" forever.
+    dockerCommand: celery -A mapsurvey worker -Q celery,styles -B -s /tmp/celerybeat-schedule -l info --concurrency 2
     envVars:
       # Same group as the web service: the worker reads the files the web stores.
       # SECRET_KEY comes from the group too, on purpose (#388): a generated value
@@ -326,6 +329,13 @@ services:
       # Renders no templates, so this changes nothing here. Declared anyway so the two
       # services cannot drift into different PostHog configurations.
       - key: POSTHOG_CLIENT_HOST
+        sync: false
+      # Map style publishing (change map-styles-library, #542): the SECRET Mapbox token
+      # (styles:write, styles:list) lives on the worker only — the web service never
+      # gets it, so no template can leak it. The account is the one the styles live in.
+      - key: MAPBOX_STYLES_TOKEN
+        sync: false
+      - key: MAPBOX_ACCOUNT
         sync: false
       - key: DEFAULT_FROM_EMAIL
         sync: false

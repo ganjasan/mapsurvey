@@ -103,7 +103,7 @@ class PublishingScriptTest(SimpleTestCase):
         client = self.script.MapboxStylesClient('sk.test', 'acct')
         client.list_styles = lambda: [{'id': 'a', 'name': 'Twin'}, {'id': 'b', 'name': 'Twin'},
                                       {'id': 'c', 'name': 'Other'}]
-        with self.assertRaises(SystemExit) as raised:
+        with self.assertRaises(self.script.MapboxApiError) as raised:
             client.find_by_name('Twin')
         self.assertIn('a, b', str(raised.exception))
         self.assertEqual(client.find_by_name('Other'), 'c')

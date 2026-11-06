@@ -62,32 +62,36 @@ class BasemapTest(TestCase):
         resp = self.client.get(f'/surveys/{self.survey.uuid}/sec1/')
         self.assertContains(resp, 'mapbox/outdoors-v12')
 
-    @override_settings(MAPBOX_OUTDOORS_URL='https://example.test/custom-topo/{z}/{x}/{y}.png')
+    @override_settings(MAPBOX_TILES_URL='https://example.test/custom/{style}/{z}/{x}/{y}.png?t={accessToken}')
     def test_topo_tile_url_comes_from_settings(self):
         """
-        GIVEN MAPBOX_OUTDOORS_URL overridden to a custom style URL
+        GIVEN MAPBOX_TILES_URL overridden to a custom template
         WHEN the respondent loads the section page
-        THEN the rendered topo layer uses that URL, proving no template literal remains
+        THEN the rendered topo layer follows that template with the preset's style id,
+             proving no template literal remains
         """
         resp = self.client.get(f'/surveys/{self.survey.uuid}/sec1/')
-        self.assertContains(resp, 'https://example.test/custom-topo/')
+        self.assertContains(resp, 'https://example.test/custom/mapbox/outdoors-v12/')
 
-    @override_settings(MAPBOX_PAPER_URL='https://example.test/paper-style/{z}/{x}/{y}.png')
-    def test_paper_basemap_is_offered_and_comes_from_settings(self):
+    def test_paper_basemap_is_offered_and_comes_from_the_library(self):
         """
         GIVEN a survey that enables the paper basemap (the print style, #534)
         WHEN the respondent loads the section page
-        THEN the paper layer is built from MAPBOX_PAPER_URL, and the static map prints it with the configured style
+        THEN the paper layer is built from the preset row's style id as 512-px tiles, and
+             the static map prints it with the same id
         """
+        from survey import basemaps as basemap_registry
+        from survey.models import MapStyle
         from survey.print import static_map
         self.survey.basemaps = ['streets', 'paper']
         self.survey.save()
+        paper_id = MapStyle.objects.get(organization__isnull=True, key='paper').latest_ready().mapbox_style_id
         resp = self.client.get(f'/surveys/{self.survey.uuid}/sec1/')
-        self.assertContains(resp, 'https://example.test/paper-style/')
-        self.assertEqual(static_map.basemap_style('paper'), static_map.BASEMAP_STYLES['paper'])
+        self.assertContains(resp, f'{paper_id}/tiles/512/')
+        self.assertEqual(static_map.basemap_style('paper'), paper_id)
         self.assertNotIn(static_map.basemap_style('paper'), ('mapbox/streets-v12', 'mapbox/outdoors-v12'))
         self.assertNotEqual(static_map.basemap_style('paper_b'), static_map.basemap_style('paper'))
-        self.assertIn(('paper_b', 'Paper B'), [(s, str(l)) for s, l in __import__('survey.models', fromlist=['x']).BASEMAP_CHOICES])
+        self.assertIn(('paper_b', 'Paper B'), [(s, str(l)) for s, l in basemap_registry.choices_for(None)])
 
     def test_respondent_page_uses_no_volunteer_tile_servers(self):
         """
@@ -261,17 +265,17 @@ class VolunteerTileServerGuardTest(TestCase):
         sess = SurveySession.objects.create(survey=self.survey)
         Answer.objects.create(survey_session=sess, question=q, point=Point(13.405, 52.52))
 
-    @override_settings(RESPONSES_V2=True, MAPBOX_URL='https://example.test/streets/{z}/{x}/{y}')
+    @override_settings(RESPONSES_V2=True, MAPBOX_TILES_URL='https://example.test/streets/{style}/{z}/{x}/{y}?t={accessToken}')
     def test_responses_overview_thumbnail_uses_mapbox(self):
         """
-        GIVEN a survey owner, Responses v2 on and MAPBOX_URL overridden
+        GIVEN a survey owner, Responses v2 on and MAPBOX_TILES_URL overridden
         WHEN they open Responses, whose Overview pane renders a view-only thumbnail map
-        THEN the page carries the overridden Mapbox URL and names no volunteer tile host
+        THEN the page carries the overridden template with the Streets id and names no volunteer tile host
         """
         r = self.client.get(f'/editor/surveys/{self.survey.uuid}/analytics/')
         self.assertEqual(r.status_code, 200)
         self.assertTemplateUsed(r, 'editor/partials/analytics_overview_pane.html')
-        self.assertContains(r, 'https://example.test/streets/')
+        self.assertContains(r, 'https://example.test/streets/mapbox/streets-v12/')
         for host in self.VOLUNTEER_HOSTS:
             self.assertNotContains(r, host)
 

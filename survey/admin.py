@@ -8,7 +8,7 @@ from django.db.models import Count
 from django.shortcuts import render
 from .models import (
     Organization, SurveyHeader, SurveySection, Question, Answer,
-    SurveySession,
+    SurveySession, MapStyle, MapStyleVersion,
     SurveySectionTranslation, QuestionTranslation,
     Story, StoryImage, FunnelReport, SignupAttribution, AuditLog,
     Cohort, CohortDimension, UserCohort, DomainSegmentRule,
@@ -634,3 +634,22 @@ class CommentThreadAdmin(admin.ModelAdmin):
         # Deleting here would cascade past the app's soft delete (body cleared,
         # row kept, files removed); use the drawer.
         return False
+
+
+class MapStyleVersionInline(admin.TabularInline):
+    model = MapStyleVersion
+    extra = 0
+    fields = ('number', 'status', 'provider', 'mapbox_style_id', 'static_style', 'error', 'created_at')
+    readonly_fields = ('number', 'provider', 'mapbox_style_id', 'static_style', 'created_at')
+
+
+@admin.register(MapStyle)
+class MapStyleAdmin(admin.ModelAdmin):
+    """The map style library (change map-styles-library, #542): presets have no workspace.
+    Versions are read-only but for `status`/`error` — a stuck `pending` can be set to
+    `failed` here so the library offers *Try again*."""
+    list_display = ('name', 'key', 'organization', 'base', 'archived_at', 'updated_at')
+    list_filter = ('base',)
+    search_fields = ('name', 'key', 'uuid', 'organization__name', 'organization__slug')
+    readonly_fields = ('uuid', 'created_by', 'created_at', 'updated_at')
+    inlines = [MapStyleVersionInline]

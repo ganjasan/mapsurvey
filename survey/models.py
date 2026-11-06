@@ -83,6 +83,10 @@ def default_basemaps():
     return ['streets', 'satellite', 'topo']
 
 
+# The five system presets of the map style library (change map-styles-library, #542).
+# A survey's basemap fields hold one of these keys or `style:<uuid>` of a workspace
+# style; the labels here name the preset rows the migration seeds. Validation and
+# resolution live in survey/basemaps.py, never in a `choices=` on a field.
 BASEMAP_CHOICES = [
     ('streets', _('Streets')),
     ('satellite', _('Satellite')),
@@ -90,6 +94,8 @@ BASEMAP_CHOICES = [
     ('paper', _('Paper A')),
     ('paper_b', _('Paper B')),
 ]
+PRESET_BASEMAP_KEYS = tuple(key for key, _label in BASEMAP_CHOICES)
+STYLE_KEY_PREFIX = 'style:'
 
 # `published`/`closed` -> `draft` is permitted only while the survey has never
 # collected anything; the condition lives in can_transition_to. It is an undo for
@@ -521,8 +527,12 @@ class SurveyHeader(models.Model):
     test_token = models.UUIDField(default=uuid_module.uuid4, unique=True)
     cover_image = models.ImageField(upload_to='covers/', null=True, blank=True)
     validation_settings = models.JSONField(default=dict, blank=True, help_text=_('Survey-level validation thresholds: {fast_threshold_seconds, duplicate_window_hours}'))
-    basemaps = models.JSONField(default=default_basemaps, blank=True, help_text=_('Enabled basemaps for respondent map. List from: ["streets", "satellite", "topo"]'))
-    default_basemap = models.CharField(max_length=20, null=True, blank=True, choices=BASEMAP_CHOICES, help_text=_('Default basemap shown to respondents. If null, first from basemaps list.'))
+    basemaps = models.JSONField(default=default_basemaps, blank=True, help_text=_('Enabled basemaps for respondent map: preset keys ("streets", "satellite", "topo", "paper", "paper_b") or "style:<uuid>" of a workspace map style.'))
+    default_basemap = models.CharField(max_length=50, null=True, blank=True, help_text=_('Default basemap shown to respondents. If null, first from basemaps list.'))
+    # {style uuid: version number} for the workspace styles this survey shows, written when it
+    # is published so a new version of a style never changes a live survey (ADR 0001); a
+    # draft copy carries none and shows the latest version. Resolved by survey/basemaps.py.
+    basemap_pins = models.JSONField(default=dict, blank=True)
     start_map_postion = geomodels.PointField(null=True, blank=True, help_text=_('Default map position for the survey. Sections inherit this if not overridden.'))
     start_map_zoom = models.IntegerField(null=True, blank=True, help_text=_('Default map zoom for the survey. Sections inherit this if not overridden.'))
     use_geolocation = models.BooleanField(default=False, help_text=_('Auto-center map on respondent location when entering the survey.'))
@@ -975,7 +985,7 @@ class SurveySection(models.Model):
     start_map_postion = geomodels.PointField(null=True, blank=True, help_text=_('Override map position for this section. Null = keep current map position.'))
     start_map_zoom = models.IntegerField(null=True, blank=True, help_text=_('Override map zoom for this section. Null = keep current zoom.'))
     use_geolocation = models.BooleanField(default=False, help_text=_('If true, fly to respondent location when entering this section.'))
-    override_basemap = models.CharField(max_length=20, null=True, blank=True, choices=BASEMAP_CHOICES, help_text=_('Override basemap for this section. Null = keep current basemap.'))
+    override_basemap = models.CharField(max_length=50, null=True, blank=True, help_text=_('Override basemap for this section (a preset key or "style:<uuid>"). Null = keep current basemap.'))
     hidden_layers = models.JSONField(default=list, blank=True, help_text=_('IDs of SurveyMapLayer rows hidden on this section. Empty = all layers visible. Stale IDs are ignored at render time.'))
 
     next_section = models.ForeignKey("SurveySection", null=True, blank=True, on_delete=models.SET_NULL, related_name='survey_next_section')
@@ -2316,8 +2326,8 @@ class PublicResultsBlock(models.Model):
         help_text=_('Question codes whose values appear in geo popups. Empty = anonymous geometry only.')
     )
     basemap = models.CharField(
-        max_length=20, default='streets', choices=BASEMAP_CHOICES,
-        help_text=_('Tile basemap for map blocks (streets/satellite/topo).')
+        max_length=50, default='streets',
+        help_text=_('Tile basemap for map blocks: a preset key or "style:<uuid>" of a workspace map style.')
     )
     is_hidden = models.BooleanField(default=False)
     order = models.PositiveIntegerField(default=0)
@@ -2972,3 +2982,122 @@ class PaperSheet(models.Model):
     def touch(self):
         self.last_activity_at = timezone.now()
         PaperSheet.objects.filter(pk=self.pk).update(last_activity_at=self.last_activity_at)
+
+
+# ─── Map styles (change map-styles-library, #542; epic #545, ADR 0001) ───────────────────
+
+MAP_STYLE_BASE_STREETS = 'mapbox/streets-v12'
+MAPBOX_ATTRIBUTION = ('&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> '
+                      '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>')
+
+
+class MapStyle(models.Model):
+    """A base map a workspace can put under its surveys.
+
+    `organization` NULL = a system preset (Streets, Satellite, Topo, Paper A, Paper B),
+    identified by `key`; a workspace style has no key and is referenced from a survey's
+    basemap fields as `style:<uuid>`. The look lives in `MapStyleVersion` rows: one per
+    Save, never edited once published, so a survey pinned to a version keeps the map its
+    respondents saw (ADR 0001). `base` names the Mapbox style the generator builds on;
+    empty means the style cannot be duplicated (Satellite is Esri imagery, Topo's layer
+    ids are not the ones the generator knows).
+    """
+    uuid = models.UUIDField(default=uuid_module.uuid4, unique=True, editable=False)
+    organization = models.ForeignKey('Organization', null=True, blank=True, on_delete=models.CASCADE,
+                                     related_name='map_styles')
+    key = models.CharField(max_length=20, blank=True, default='')
+    name = models.CharField(max_length=120)
+    base = models.CharField(max_length=80, blank=True, default='')
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,
+                                   on_delete=models.SET_NULL, related_name='+')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    archived_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        app_label = 'survey'
+        constraints = [
+            models.UniqueConstraint(fields=['key'], condition=Q(organization__isnull=True) & ~Q(key=''),
+                                    name='map_style_preset_key_unique'),
+        ]
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def is_preset(self):
+        return self.organization_id is None
+
+    @property
+    def basemap_key(self):
+        return self.key if self.is_preset else f'{STYLE_KEY_PREFIX}{self.uuid}'
+
+    @property
+    def can_duplicate(self):
+        return self.base == MAP_STYLE_BASE_STREETS
+
+    def latest(self):
+        return self.versions.order_by('-number').first()
+
+    def latest_ready(self):
+        return self.versions.filter(status=MapStyleVersion.READY).order_by('-number').first()
+
+
+class MapStyleVersion(models.Model):
+    """One published look of a style. `settings` is the generator's document; the
+    hosted Mapbox style (`mapbox_style_id`) is created from it by a Celery task, and
+    `status` follows that task. A `ready` row is immutable: a changed look is a new
+    row, because a Mapbox style updated in place leaves raster tiles stale for hours
+    (ADR 0001, measured 2026-11-06)."""
+    MAPBOX, XYZ = 'mapbox', 'xyz'
+    PROVIDER_CHOICES = ((MAPBOX, 'Mapbox style'), (XYZ, 'XYZ tiles'))
+    PENDING, READY, FAILED = 'pending', 'ready', 'failed'
+    STATUS_CHOICES = ((PENDING, 'Pending'), (READY, 'Ready'), (FAILED, 'Failed'))
+    FROZEN_FIELDS = ('settings', 'provider', 'mapbox_style_id', 'tile_url', 'static_style')
+
+    style = models.ForeignKey(MapStyle, on_delete=models.CASCADE, related_name='versions')
+    number = models.PositiveIntegerField()
+    # Declared before `settings`, which shadows django.conf.settings inside this class body.
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,
+                                   on_delete=models.SET_NULL, related_name='+')
+    created_at = models.DateTimeField(auto_now_add=True)
+    settings = models.JSONField(default=dict, blank=True)
+    provider = models.CharField(max_length=10, choices=PROVIDER_CHOICES, default=MAPBOX)
+    # `<account>/<id>` of the hosted style (mapbox), or the tile URL template (xyz).
+    mapbox_style_id = models.CharField(max_length=120, blank=True, default='')
+    tile_url = models.CharField(max_length=500, blank=True, default='')
+    # Style id the Static Images API renders for print; empty = `mapbox_style_id`.
+    static_style = models.CharField(max_length=120, blank=True, default='')
+    attribution = models.CharField(max_length=300, default=MAPBOX_ATTRIBUTION)
+    max_zoom = models.PositiveSmallIntegerField(default=22)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=PENDING)
+    error = models.TextField(blank=True, default='')
+
+    class Meta:
+        app_label = 'survey'
+        unique_together = ('style', 'number')
+        ordering = ('style', 'number')
+
+    def __str__(self):
+        return f'{self.style} v{self.number}'
+
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super().from_db(db, field_names, values)
+        instance._frozen_snapshot = {f: getattr(instance, f) for f in cls.FROZEN_FIELDS if f in field_names}
+        instance._loaded_status = instance.status
+        return instance
+
+    def save(self, *args, **kwargs):
+        if self.pk and getattr(self, '_loaded_status', None) == self.READY:
+            changed = [f for f, old in getattr(self, '_frozen_snapshot', {}).items() if getattr(self, f) != old]
+            if changed:
+                raise ValidationError({f: _('A published map style version cannot be changed; save a new version.')
+                                       for f in changed})
+        super().save(*args, **kwargs)
+        self._frozen_snapshot = {f: getattr(self, f) for f in self.FROZEN_FIELDS}
+        self._loaded_status = self.status
+
+    @property
+    def print_style(self):
+        return self.static_style or self.mapbox_style_id
