@@ -9682,3 +9682,19 @@ msgstr "Ei vielä kyselyitä. Luo ensimmäinen!"
 #, python-format
 msgid "Create an account to join %(workspace)s."
 msgstr "Luo tili liittyäksesi työtilaan %(workspace)s."
+
+#: survey/templates/editor/partials/analytics_session_detail.html
+msgid "Edit response"
+msgstr "Muokkaa vastausta"
+
+#: survey/templates/editor/partials/analytics_session_detail.html
+msgid "Edit this section"
+msgstr "Muokkaa tätä osiota"
+
+#: survey/templates/editor/analytics_dashboard_v2.html
+msgid "Edit on the map"
+msgstr "Muokkaa kartalla"
+
+#: survey/templates/partials/survey_section_partial.html
+msgid "Save and return to Responses"
+msgstr "Tallenna ja palaa vastauksiin"

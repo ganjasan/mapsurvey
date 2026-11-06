@@ -250,7 +250,11 @@ it costs no request. Read-only — no draw or edit controls.
                     <i class="fas fa-map-marked-alt"></i>
                     <span id="session-geo-modal-title">{% trans "Response on the map" %}</span>
                 </h6>
-                <button type="button" class="close" data-dismiss="modal" aria-label="{% trans 'Close' %}"><span aria-hidden="true">&times;</span></button>
+                {# Entered responses only: the URL comes with the geo payload (change operator-edit-from-responses). #}
+                <a id="session-geo-modal-edit" class="btn btn-sm btn-outline-primary ml-auto mr-3" href="#" hidden>
+                    <i class="fas fa-user-edit"></i> <span>{% trans "Edit on the map" %}</span>
+                </a>
+                <button type="button" class="close ml-0" data-dismiss="modal" aria-label="{% trans 'Close' %}"><span aria-hidden="true">&times;</span></button>
             </div>
             <div class="modal-body p-0" style="position:relative;">
                 <div id="session-geo-modal-map" style="height:70vh;min-height:360px;"></div>
@@ -1176,6 +1180,14 @@ function sessionGeoPopup(props) {
         row.appendChild(document.createTextNode(attr.value));
         root.appendChild(row);
     });
+    if (props.edit_url) {
+        var edit = document.createElement('a');
+        edit.className = 'd-block mt-1 session-geo-edit';
+        edit.style.fontSize = '0.82rem';
+        edit.href = props.edit_url;
+        edit.textContent = document.querySelector('#session-geo-modal-edit span').textContent;
+        root.appendChild(edit);
+    }
     return root;
 }
 
@@ -1192,6 +1204,17 @@ function sessionGeoOpenMap(objectId) {
     var titleEl = document.getElementById('session-geo-modal-title');
     var drawerTitle = document.getElementById('rv2-drawer-title');
     if (titleEl && drawerTitle) titleEl.textContent = drawerTitle.textContent;
+
+    /* "Edit on the map": the section of the object opened on, else of the
+       first object that has one (only entered responses carry edit_url). */
+    var editBtn = document.getElementById('session-geo-modal-edit');
+    var editable = geoData.features.filter(function (f) { return f.properties.edit_url; });
+    var opened = editable.filter(function (f) {
+        return objectId && String(f.properties.object_id) === String(objectId);
+    })[0];
+    var editUrl = (opened || editable[0] || { properties: {} }).properties.edit_url;
+    editBtn.hidden = !editUrl;
+    editBtn.href = editUrl || '#';
 
     $('#sessionGeoMapModal').modal('show');
 
@@ -1259,8 +1282,10 @@ function sessionGeoOpenMap(objectId) {
             map.fitBounds(b.pad(0.4), { maxZoom: 17 });
             target.openPopup();
         } else {
+            /* maxZoom: a response with one point has zero-size bounds, which
+               would zoom past the tiles into a grey map. */
             var all = L.geoJSON(geoData).getBounds();
-            if (all.isValid()) map.fitBounds(all.pad(0.15));
+            if (all.isValid()) map.fitBounds(all.pad(0.15), { maxZoom: 17 });
         }
     });
 }
@@ -1284,6 +1309,25 @@ document.addEventListener('click', function (evt) {
 /* Overrides of the shared engine's destructive + modal paths. Defined after
    the engine include, so these win. */
 window.loadSessionDetail = rv2OpenDrawer;
+
+/* ?session=<id> opens that response; &map=1 its full-size map as well — where
+   "Save and return to Responses" lands (change operator-edit-from-responses).
+   A #thread- link is the comments drawer's to open. */
+(function () {
+    var m = window.location.search.match(/[?&]session=(\d+)/);
+    if (!m || /^#thread-\d+$/.test(window.location.hash)) return;
+    if (/[?&]map=1(&|$)/.test(window.location.search)) {
+        var onSwap = function (evt) {
+            if (!evt.detail.target || evt.detail.target.id !== 'rv2-drawer-body') return;
+            document.body.removeEventListener('htmx:afterSwap', onSwap);
+            sessionGeoOpenMap(null);
+        };
+        document.body.addEventListener('htmx:afterSwap', onSwap);
+    }
+    var open = function () { rv2OpenDrawer(parseInt(m[1], 10)); };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', open);
+    else open();
+})();
 window.trashSession = function (sid) {
     rv2Confirm('Move response to trash?', function () {
         var url = '{% url "analytics_session_trash" survey.uuid 0 %}'.replace(/\/0\//, '/' + sid + '/');

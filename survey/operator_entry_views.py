@@ -32,6 +32,7 @@ from billing import trial as billing_trial
 from billing.entitlements import for_organization
 from billing.gates import feature_required, require_feature
 
+from .audit import audit
 from .models import SurveyHeader, SurveySection, SurveySession
 from .permissions import survey_permission_required
 from .question_types import SURFACE_OPERATOR
@@ -129,8 +130,51 @@ def _vmap(session):
                               surface=SURFACE_OPERATOR)
 
 
-def _section_url(survey, session, section):
-    return reverse('operator_entry_section', args=[survey.uuid, session.pk, section.name])
+#: Where an entry opened from Responses goes back to (change
+#: operator-edit-from-responses, #527): the response in the drawer, or that and
+#: its full-size map. Any other value is ignored.
+RETURN_TARGETS = ('response', 'map')
+
+
+def _return_to(request):
+    value = request.GET.get('return_to', '')
+    return value if value in RETURN_TARGETS else None
+
+
+def _section_url(survey, session, section, return_to=None):
+    url = reverse('operator_entry_section', args=[survey.uuid, session.pk, section.name])
+    return url + '?' + urlencode({'return_to': return_to}) if return_to else url
+
+
+def _response_url(survey, session, return_to):
+    """Responses with this session open in the drawer (and its map for `map`)."""
+    query = {'session': session.pk}
+    if return_to == 'map':
+        query['map'] = 1
+    return reverse('editor_survey_analytics', args=[survey.uuid]) + '?' + urlencode(query)
+
+
+def edit_links(request, survey, session):
+    """The entry-form links the Responses drawer offers for one session, or None.
+
+    Only an operator session that is not trashed, only for the editor role and
+    up, and only while the organisation is covered for `operator_entry` — the
+    same test `sheet_gate` applies, so a link never leads to a refusal. Returns
+    `start` (the first visible section) and `section(name, return_to)`."""
+    if (request.effective_survey_role not in ('editor', 'owner')
+            or not session.is_operator_entry or session.is_deleted
+            or not for_organization(survey.organization).covers('operator_entry')):
+        return None
+    chain = _vmap(session).visible_sections
+
+    def section(name, return_to='response'):
+        url = reverse('operator_entry_section', args=[survey.uuid, session.pk, name])
+        return url + '?' + urlencode({'return_to': return_to})
+
+    return {
+        'start': section(chain[0].name) if chain else None,
+        'section': section,
+    }
 
 
 def _saved_url(survey, session):
@@ -185,17 +229,30 @@ def entry_section(request, survey_uuid, session_id, section_name):
     if session.language:
         translation.activate(session.language)
 
+    return_to = _return_to(request)
     vmap = _vmap(session)
     if request.method == 'POST':
+        # A save on a sheet that was already finished changes it (change
+        # operator-edit-from-responses): ids only, never the answers.
+        finished = session.end_datetime is not None
         vmap = save_section_answers(request.POST, session, session_survey, section,
                                     surface=SURFACE_OPERATOR)
+        if finished:
+            audit(request, 'response_edit', survey, session_id=session.pk, section=section.code)
+        direction = request.POST.get('nav_direction')
         chain = vmap.visible_sections
         ids = [s.id for s in chain]
         pos = ids.index(section.id) if section.id in ids else 0
-        back = request.POST.get('nav_direction') == 'back'
+        back = direction == 'back'
         target = (chain[pos - 1] if back and pos > 0 else
                   chain[pos + 1] if not back and pos + 1 < len(chain) else None)
-        url = _section_url(survey, session, target) if target else _saved_url(survey, session)
+        if direction == 'return' and return_to:
+            # One section fixed: back to the response, the sheet's completion untouched.
+            url = _response_url(survey, session, return_to)
+        elif target:
+            url = _section_url(survey, session, target, return_to)
+        else:
+            url = _saved_url(survey, session)
         if request.headers.get('HX-Request') == 'true':
             response = HttpResponse()
             response['HX-Redirect'] = url
@@ -207,14 +264,16 @@ def entry_section(request, survey_uuid, session_id, section_name):
         # Hidden for this sheet's answers (or for operators): start of the chain.
         if not chain_ids:
             return redirect(_saved_url(survey, session))
-        return redirect(_section_url(survey, session, vmap.visible_sections[0]))
+        return redirect(_section_url(survey, session, vmap.visible_sections[0], return_to))
     current, total = chain_ids.index(section.id) + 1, len(chain_ids)
     ctx = _build_section_context(request, survey, session_survey, section, session.language,
                                  current, total, vmap=vmap, session_id=session.pk, entry=True)
     ctx.update({
-        'form_post_url': _section_url(survey, session, section),
+        'form_post_url': _section_url(survey, session, section, return_to),
         'entry_session': session,
-        'entry_cancel_url': reverse('editor_survey_analytics', args=[survey.uuid]),
+        'entry_return_to': return_to,
+        'entry_cancel_url': (_response_url(survey, session, return_to) if return_to
+                             else reverse('editor_survey_analytics', args=[survey.uuid])),
         'is_last_section': current == total,
     })
     _add_shell_context(ctx, session_survey, section)

@@ -55,6 +55,19 @@ class ResponsesV2DrawerTest(TestCase):
         self.assertContains(response, 'window.loadSessionDetail = rv2OpenDrawer')
 
     @override_settings(RESPONSES_V2=True)
+    def test_page_opens_the_response_named_in_the_url(self):
+        """
+        GIVEN the v2 switch is on
+        WHEN GET the dashboard with ?session=<id>&map=1
+        THEN the page carries the opener that reads ?session= (leaving #thread- links to the
+             comments drawer) and re-opens the full-size map after the drawer swap
+        """
+        response = self.client.get(self.dash_url, {'session': self.sess.id, 'map': 1})
+        self.assertContains(response, r"window.location.search.match(/[?&]session=(\d+)/)")
+        self.assertContains(response, r"/^#thread-\d+$/.test(window.location.hash)")
+        self.assertContains(response, "evt.detail.target.id !== 'rv2-drawer-body'")
+
+    @override_settings(RESPONSES_V2=True)
     def test_drawer_uses_inpage_confirm(self):
         """
         GIVEN the v2 switch is on

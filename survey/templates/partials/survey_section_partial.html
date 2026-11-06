@@ -91,6 +91,16 @@
                     {% endwith %}
                 </div>
             </div>
+            {% if entry and entry_return_to %}{# operator entry opened from Responses (change operator-edit-from-responses) #}
+            <div class="row mt-2">
+                <div class="col text-center">
+                    <button type="submit" class="btn btn-outline-secondary entry-return-button" style="width: 90%"
+                            form="section_question_form" name="nav_direction" value="return">
+                        <i class="fas fa-reply" aria-hidden="true"></i> {% trans "Save and return to Responses" %}
+                    </button>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 
