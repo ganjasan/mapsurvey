@@ -10315,3 +10315,11 @@ msgstr "Vérifié"
 #, python-format
 msgid "Check page %(n)s"
 msgstr "Vérifier la page %(n)s"
+
+#: survey/models.py
+msgid "Paper A"
+msgstr "Papier A"
+
+#: survey/models.py
+msgid "Paper B"
+msgstr "Papier B"

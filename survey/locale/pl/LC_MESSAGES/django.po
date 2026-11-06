@@ -10337,3 +10337,11 @@ msgstr "Sprawdzone"
 #, python-format
 msgid "Check page %(n)s"
 msgstr "Sprawdź stronę %(n)s"
+
+#: survey/models.py
+msgid "Paper A"
+msgstr "Papier A"
+
+#: survey/models.py
+msgid "Paper B"
+msgstr "Papier B"

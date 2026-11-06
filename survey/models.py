@@ -87,6 +87,8 @@ BASEMAP_CHOICES = [
     ('streets', _('Streets')),
     ('satellite', _('Satellite')),
     ('topo', _('Topo')),
+    ('paper', _('Paper A')),
+    ('paper_b', _('Paper B')),
 ]
 
 # `published`/`closed` -> `draft` is permitted only while the survey has never

@@ -10294,3 +10294,11 @@ msgstr "Verificado"
 #, python-format
 msgid "Check page %(n)s"
 msgstr "Verificar a página %(n)s"
+
+#: survey/models.py
+msgid "Paper A"
+msgstr "Papel A"
+
+#: survey/models.py
+msgid "Paper B"
+msgstr "Papel B"

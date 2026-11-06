@@ -100,3 +100,25 @@ class BrandingSwitchInSettingsPanelTest(TestCase):
 
         base = (Path(settings.BASE_DIR) / 'survey/templates/editor/editor_base.html').read_text()
         self.assertIn('.pr-field label > .form-check-input { position: static; margin: 0; }', base)
+
+    def test_full_settings_page_renders_the_badge_switch_once(self):
+        """
+        GIVEN the survey owner opens the full "Survey settings" page
+        WHEN the General form renders its fields in a loop and the badge switch in its own block
+        THEN the switch appears exactly once, in its .form-check row — the loop skips it, so no second
+             bare position:absolute checkbox floats over the field above (owner, 2026-11-06)
+        """
+        from django.contrib.auth.models import User
+        from survey.models import Membership
+
+        owner = User.objects.create_user('brand_page_owner', password='pass')
+        org = _make_org("BrandPageOrg")
+        Membership.objects.create(user=owner, organization=org, role='owner')
+        survey = SurveyHeader.objects.create(name="brand_page", organization=org, created_by=owner)
+        SurveySection.objects.create(name="s1", survey_header=survey, is_head=True)
+
+        client = Client()
+        client.login(username='brand_page_owner', password='pass')
+        page = client.get(f'/editor/surveys/{survey.uuid}/settings/').content.decode()
+        self.assertEqual(page.count('id="id_show_branding"'), 1)
+        self.assertEqual(page.count('for="id_show_branding"'), 1)

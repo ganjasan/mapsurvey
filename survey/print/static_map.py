@@ -37,6 +37,8 @@ WORLD_ZOOM = 1
 BASEMAP_STYLES = {
     'streets': 'mapbox/streets-v12',
     'topo': 'mapbox/outdoors-v12',
+    'paper': settings.MAPBOX_PAPER_STYLE,   # made for print (#534)
+    'paper_b': settings.MAPBOX_PAPER_B_STYLE,   # the planner's base map (#534)
     # The respondent's satellite is Esri imagery, which has no static endpoint;
     # satellite-streets is the nearest look and carries street names, which
     # paper needs more than a screen does.

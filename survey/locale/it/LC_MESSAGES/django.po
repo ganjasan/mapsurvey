@@ -10275,3 +10275,11 @@ msgstr "Controllato"
 #, python-format
 msgid "Check page %(n)s"
 msgstr "Controlla la pagina %(n)s"
+
+#: survey/models.py
+msgid "Paper A"
+msgstr "Carta A"
+
+#: survey/models.py
+msgid "Paper B"
+msgstr "Carta B"

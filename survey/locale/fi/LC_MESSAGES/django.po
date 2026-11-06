@@ -10229,3 +10229,11 @@ msgstr "Tarkistettu"
 #, python-format
 msgid "Check page %(n)s"
 msgstr "Tarkista sivu %(n)s"
+
+#: survey/models.py
+msgid "Paper A"
+msgstr "Paperi A"
+
+#: survey/models.py
+msgid "Paper B"
+msgstr "Paperi B"

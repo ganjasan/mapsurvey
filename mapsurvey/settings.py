@@ -424,6 +424,15 @@ SIGN_IN_GRACE_HOURS = int(os.environ.get('SIGN_IN_GRACE_HOURS', 24))
 MAPBOX_URL = os.environ.get('MAPBOX_URL', 'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/256/{z}/{x}/{y}@2x?access_token={accessToken}')
 MAPBOX_OUTDOORS_URL = os.environ.get('MAPBOX_OUTDOORS_URL', 'https://api.mapbox.com/styles/v1/mapbox/outdoors-v12/tiles/256/{z}/{x}/{y}@2x?access_token={accessToken}')
 MAPBOX_ACCESS_TOKEN = os.environ.get('MAPBOX_ACCESS_TOKEN', '')
+# The `paper` basemap (#534): a Mapbox style built for print — white ground, cased streets with names,
+# no POI icons or route shields, city names only at regional zooms — so a pen mark stands out on a
+# greyscale copy. `<account>/<style id>`; the style must be readable with MAPBOX_ACCESS_TOKEN.
+MAPBOX_PAPER_STYLE = os.environ.get('MAPBOX_PAPER_STYLE', 'artemkonuchov/cmw4ul8hj00qw01r19ensc484')
+MAPBOX_PAPER_URL = f'https://api.mapbox.com/styles/v1/{MAPBOX_PAPER_STYLE}/tiles/256/{{z}}/{{x}}/{{y}}@2x?access_token={{accessToken}}'
+# `paper_b`: the planner's base map, after a customer's printed neighbourhood map — white streets, bold
+# street names, light-green parks, teal water.
+MAPBOX_PAPER_B_STYLE = os.environ.get('MAPBOX_PAPER_B_STYLE', 'artemkonuchov/cmw4v89eu00xu01s8hcrt5iqv')
+MAPBOX_PAPER_B_URL = f'https://api.mapbox.com/styles/v1/{MAPBOX_PAPER_B_STYLE}/tiles/256/{{z}}/{{x}}/{{y}}@2x?access_token={{accessToken}}'
 # Server-side Mapbox calls (the printable form's Static Images request) use their own
 # token. MAPBOX_ACCESS_TOKEN ships to every browser, so production restricts it to our
 # URLs — and a server request carries no Referer, so a restricted token answers 403.

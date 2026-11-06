@@ -153,7 +153,9 @@
     var BASEMAPS = {
       streets:   { url: '{{ MAPBOX_URL }}',          opts: { attribution: '© Mapbox © OpenStreetMap', maxZoom: 23, accessToken: MAPBOX_TOKEN } },
       satellite: { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', opts: { attribution: '© Esri', maxZoom: 19 } },
-      topo:      { url: '{{ MAPBOX_OUTDOORS_URL }}', opts: { attribution: '© Mapbox © OpenStreetMap', maxZoom: 22, accessToken: MAPBOX_TOKEN } }
+      topo:      { url: '{{ MAPBOX_OUTDOORS_URL }}', opts: { attribution: '© Mapbox © OpenStreetMap', maxZoom: 22, accessToken: MAPBOX_TOKEN } },
+      paper:     { url: '{{ MAPBOX_PAPER_URL }}',    opts: { attribution: '© Mapbox © OpenStreetMap', maxZoom: 22, accessToken: MAPBOX_TOKEN } },
+      paper_b:   { url: '{{ MAPBOX_PAPER_B_URL }}',  opts: { attribution: '© Mapbox © OpenStreetMap', maxZoom: 22, accessToken: MAPBOX_TOKEN } }
     };
 
     var blocks = JSON.parse(document.getElementById('blocks-data').textContent || '[]');

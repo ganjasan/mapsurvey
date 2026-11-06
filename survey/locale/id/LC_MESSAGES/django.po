@@ -10242,3 +10242,11 @@ msgstr "Sudah diperiksa"
 #, python-format
 msgid "Check page %(n)s"
 msgstr "Periksa halaman %(n)s"
+
+#: survey/models.py
+msgid "Paper A"
+msgstr "Kertas A"
+
+#: survey/models.py
+msgid "Paper B"
+msgstr "Kertas B"

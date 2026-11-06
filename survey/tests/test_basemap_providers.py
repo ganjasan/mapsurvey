@@ -72,6 +72,23 @@ class BasemapTest(TestCase):
         resp = self.client.get(f'/surveys/{self.survey.uuid}/sec1/')
         self.assertContains(resp, 'https://example.test/custom-topo/')
 
+    @override_settings(MAPBOX_PAPER_URL='https://example.test/paper-style/{z}/{x}/{y}.png')
+    def test_paper_basemap_is_offered_and_comes_from_settings(self):
+        """
+        GIVEN a survey that enables the paper basemap (the print style, #534)
+        WHEN the respondent loads the section page
+        THEN the paper layer is built from MAPBOX_PAPER_URL, and the static map prints it with the configured style
+        """
+        from survey.print import static_map
+        self.survey.basemaps = ['streets', 'paper']
+        self.survey.save()
+        resp = self.client.get(f'/surveys/{self.survey.uuid}/sec1/')
+        self.assertContains(resp, 'https://example.test/paper-style/')
+        self.assertEqual(static_map.basemap_style('paper'), static_map.BASEMAP_STYLES['paper'])
+        self.assertNotIn(static_map.basemap_style('paper'), ('mapbox/streets-v12', 'mapbox/outdoors-v12'))
+        self.assertNotEqual(static_map.basemap_style('paper_b'), static_map.basemap_style('paper'))
+        self.assertIn(('paper_b', 'Paper B'), [(s, str(l)) for s, l in __import__('survey.models', fromlist=['x']).BASEMAP_CHOICES])
+
     def test_respondent_page_uses_no_volunteer_tile_servers(self):
         """
         GIVEN a survey with every basemap enabled

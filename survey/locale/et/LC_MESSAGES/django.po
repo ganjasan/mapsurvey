@@ -10208,3 +10208,11 @@ msgstr "Kontrollitud"
 #, python-format
 msgid "Check page %(n)s"
 msgstr "Kontrolli lehekülge %(n)s"
+
+#: survey/models.py
+msgid "Paper A"
+msgstr "Paber A"
+
+#: survey/models.py
+msgid "Paper B"
+msgstr "Paber B"

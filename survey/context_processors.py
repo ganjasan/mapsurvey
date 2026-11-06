@@ -15,6 +15,8 @@ def mapbox(request):
     return {
         'MAPBOX_URL': settings.MAPBOX_URL,
         'MAPBOX_OUTDOORS_URL': settings.MAPBOX_OUTDOORS_URL,
+        'MAPBOX_PAPER_URL': settings.MAPBOX_PAPER_URL,
+        'MAPBOX_PAPER_B_URL': settings.MAPBOX_PAPER_B_URL,
         'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
     }
 
