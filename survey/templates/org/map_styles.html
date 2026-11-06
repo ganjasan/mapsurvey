@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n billing_tags %}
+{% load i18n static billing_tags %}
 
 {% block title %}{{ org.name }} — {% trans "Map styles" %}{% endblock %}
 
@@ -7,6 +7,7 @@
 {% comment %}base.html carries no HTMX (editor_base.html does); the card list re-polls itself with it
 while a style is being published.{% endcomment %}
 <script src="https://unpkg.com/htmx.org@1.9.10" crossorigin="anonymous"></script>
+<script src="{% static 'js/htmx_promise_guard.js' %}"></script>
 {% endblock %}
 
 {% block content %}

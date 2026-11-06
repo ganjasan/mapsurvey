@@ -49,6 +49,6 @@
 
 - [x] 7.1 `survey/tests/test_map_style_library.py` covering every scenario of the new spec; `UNMAPPED_MODULES` entry while the change is unarchived
 - [x] 7.2 Update `test_basemap_providers`, `test_printable_form`, `test_survey_editor`, `test_public_results_page`, e2e `conftest` for the table and 512-px URLs
-- [ ] 7.3 Full suite green; `openspec validate --strict`; migration number checked against `origin/master`
-- [ ] 7.4 Dev check on :8770: library page, duplicate Paper A (worker publishes), pick it in a survey, respondent page, print frame; screenshots for the owner
+- [x] 7.3 Full suite green; `openspec validate --strict`; migration number checked against `origin/master`
+- [x] 7.4 Dev check on :8770: library page, duplicate Paper A (worker publishes), pick it in a survey, respondent page, print frame; screenshots for the owner
 - [ ] 7.5 PR into `epic/map-styles`, merge, archive the change in a follow-up PR
