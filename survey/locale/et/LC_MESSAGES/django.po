@@ -10565,3 +10565,51 @@ msgid "Used in %(n)s survey."
 msgid_plural "Used in %(n)s surveys."
 msgstr[0] "Kasutusel %(n)s küsitluses."
 msgstr[1] "Kasutusel %(n)s küsitluses."
+
+#: map-style-import-export (#544)
+msgid "Import a style"
+msgstr "Impordi stiil"
+
+#: map-style-import-export (#544)
+msgid "Map style file"
+msgstr "Kaardistiili fail"
+
+#: map-style-import-export (#544)
+msgid "Download as a file"
+msgstr "Laadi alla failina"
+
+#: map-style-import-export (#544)
+msgid "Choose a file."
+msgstr "Vali fail."
+
+#: map-style-import-export (#544)
+msgid "The file is larger than a map style can be (64 KB)."
+msgstr "Fail on suurem, kui kaardistiil saab olla (64 KB)."
+
+#: map-style-import-export (#544)
+msgid "This file is not a Mapsurvey map style."
+msgstr "See fail ei ole Mapsurvey kaardistiil."
+
+#: map-style-import-export (#544)
+msgid "This map style needs a newer Mapsurvey."
+msgstr "See kaardistiil vajab uuemat Mapsurveyd."
+
+#: map-style-import-export (#544)
+msgid "The map style has no name."
+msgstr "Kaardistiilil pole nime."
+
+#: map-style-import-export (#544)
+msgid "Base map \"%(base)s\" is not supported here."
+msgstr "Aluskaarti „%(base)s“ siin ei toetata."
+
+#: map-style-import-export (#544)
+msgid "The map style has no settings."
+msgstr "Kaardistiilil pole seadeid."
+
+#: map-style-import-export (#544)
+msgid "Could not import the map style: %(reason)s"
+msgstr "Kaardistiili ei saanud importida: %(reason)s"
+
+#: map-style-import-export (#544)
+msgid "“%(name)s” was imported and is being published."
+msgstr "„%(name)s“ imporditi ja avaldatakse."

@@ -17,9 +17,19 @@ itself while a style is being published (org/_map_style_cards.html).{% endcommen
 <div class="container mt-4" style="max-width: 900px;">
     <div class="d-flex align-items-center justify-content-between mb-3">
         <h4 class="mb-0">{% trans "Map styles" %} <small class="ml-1">{% pro_badge org "map_styles" %}</small></h4>
-        {% if HELP_URL.map_styles %}
-        <a href="{{ HELP_URL.map_styles }}" target="_blank" rel="noopener" class="small">{% trans "Learn more" %}</a>
-        {% endif %}
+        <div class="d-flex align-items-center" style="gap:.75rem;">
+          {% if can_act %}
+          <form method="post" action="{% url 'org_map_style_import' org.slug %}" enctype="multipart/form-data" class="mb-0" id="map-style-import">
+            {% csrf_token %}
+            <label class="btn btn-sm btn-outline-primary mb-0" for="map-style-import-file">{% trans "Import a style" %} {% pro_badge org "map_styles" False %}</label>
+            <input type="file" id="map-style-import-file" name="file" accept="application/json,.json" class="d-none"
+                   onchange="this.form.submit()" aria-label="{% trans 'Map style file' %}">
+          </form>
+          {% endif %}
+          {% if HELP_URL.map_styles %}
+          <a href="{{ HELP_URL.map_styles }}" target="_blank" rel="noopener" class="small">{% trans "Learn more" %}</a>
+          {% endif %}
+        </div>
     </div>
     <p class="text-muted" style="font-size:0.9rem;">
         {% blocktrans %}A map style is the base map under your surveys, online and on paper. Pick any of these in a survey's settings. Duplicate a preset to give it your own name; the editor for colours and labels is coming next.{% endblocktrans %}

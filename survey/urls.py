@@ -8,6 +8,7 @@ from . import editor_group_views
 from . import layer_object_views
 from . import map_style_views
 from . import map_style_editor_views
+from . import map_style_io_views
 from . import comment_views
 from . import analytics_views
 from . import operator_entry_views
@@ -50,6 +51,11 @@ urlpatterns = [
             map_style_views.org_map_style_delete, name='org_map_style_delete'),
     re_path(r'^org/(?P<slug>[-.\w]+)/map-styles/(?P<uuid>[0-9a-f-]{36})/retry/$',
             map_style_views.org_map_style_retry, name='org_map_style_retry'),
+    # Export and import (change map-styles-import-export, #544).
+    re_path(r'^org/(?P<slug>[-.\w]+)/map-styles/import/$',
+            map_style_io_views.org_map_style_import, name='org_map_style_import'),
+    re_path(r'^org/(?P<slug>[-.\w]+)/map-styles/(?P<uuid>[0-9a-f-]{36})/export\.json$',
+            map_style_io_views.org_map_style_export, name='org_map_style_export'),
     # The style editor (change map-styles-editor, #543).
     re_path(r'^org/(?P<slug>[-.\w]+)/map-styles/(?P<uuid>[0-9a-f-]{36})/edit/$',
             map_style_editor_views.org_map_style_edit, name='org_map_style_edit'),

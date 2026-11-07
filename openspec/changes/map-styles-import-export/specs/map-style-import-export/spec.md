@@ -21,7 +21,7 @@ A map style as a portable file (epic #545, vision FE-6): the document format, ex
 
 #### Scenario: Round trip
 - **WHEN** a style is exported and the file is imported into another workspace
-- **THEN** that workspace has a new style of the same name whose version 1 settings equal the exported settings and is pending publication
+- **THEN** that workspace has a new style of the same name whose version 1 settings equal the exported settings as the editor's control schema normalises them, and is pending publication
 
 #### Scenario: Name taken
 - **WHEN** a document named "House style" is imported into a workspace that already has "House style"
