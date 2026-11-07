@@ -26,12 +26,12 @@ controls come from survey/map_styles/controls.py; the browser posts them to prev
           {% if pending %}{% trans "Publishing…" %}{% elif state.version.ready_number %}{% blocktrans with n=state.version.ready_number %}Version {{ n }} published{% endblocktrans %}{% endif %}
         </span>
         <button type="button" class="btn btn-primary btn-sm" id="mse-save"{% if pending or not can_save %} disabled{% endif %}>
-          {% trans "Save" %} {% pro_badge org "map_styles" False %}
+          {% trans "Save" %}
         </button>
       </div>
     </div>
     {% if not can_save %}
-    <div class="alert alert-warning py-2 mse-note">{% trans "Editing map styles is a Pro feature." %} {% pro_badge org "map_styles" %}</div>
+    <div class="alert alert-warning py-2 mse-note">{% trans "Editing map styles is a Pro feature." %} <a href="{% url 'org_billing' org.slug %}">{% trans "Plan & billing" %}</a></div>
     {% endif %}
     {% if messages %}{% for message in messages %}<div class="alert alert-{{ message.tags }} py-2 mse-note">{{ message }}</div>{% endfor %}{% endif %}
     <p class="mse-note text-muted">

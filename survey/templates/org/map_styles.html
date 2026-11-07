@@ -16,12 +16,13 @@ Members and General. Cards for the five presets and the workspace's styles; the 
 itself while a style is being published (org/_map_style_cards.html).{% endcomment %}
 <div class="container mt-4" style="max-width: 900px;">
     <div class="d-flex align-items-center justify-content-between mb-3">
-        <h4 class="mb-0">{% trans "Map styles" %} <small class="ml-1">{% pro_badge org "map_styles" %}</small></h4>
+        {% comment %}The Pro mark for map styles lives on the sidebar row only (owner, 2026-11-07).{% endcomment %}
+        <h4 class="mb-0">{% trans "Map styles" %}</h4>
         <div class="d-flex align-items-center" style="gap:.75rem;">
           {% if can_act %}
           <form method="post" action="{% url 'org_map_style_import' org.slug %}" enctype="multipart/form-data" class="mb-0" id="map-style-import">
             {% csrf_token %}
-            <label class="btn btn-sm btn-outline-primary mb-0" for="map-style-import-file">{% trans "Import a style" %} {% pro_badge org "map_styles" False %}</label>
+            <label class="btn btn-sm btn-outline-primary mb-0" for="map-style-import-file">{% trans "Import a style" %}</label>
             <input type="file" id="map-style-import-file" name="file" accept="application/json,.json" class="d-none"
                    onchange="this.form.submit()" aria-label="{% trans 'Map style file' %}">
           </form>
