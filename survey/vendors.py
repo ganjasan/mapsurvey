@@ -72,6 +72,12 @@ class Vendor:
     landing_key: str = ""     # seo_landings key of its /alternatives/ page, if one exists
     extras: tuple = ()        # ExtraRow, rendered after the criteria on the alternatives page
     gaps: tuple = ()          # only Mapsurvey states its own
+    # Change market-guide-verdict (#580): flags the hub turns into sentences ("tools that ..."),
+    # each set by hand next to the sourced fact that supports it, so a review reads both at once.
+    price_listed: bool = False      # the price or rates are public (own site, G-Cloud, or free)
+    free_publishable: bool = False  # a free hosted plan can run a live project, no time limit
+    self_serve: bool = False        # sign up and start the same day, no demo or sales call
+    draws_shapes: bool = False      # respondents can draw lines and polygons, not only pins
 
     def fact(self, key: str) -> Fact:
         return self.facts[key]
@@ -168,6 +174,7 @@ _MS_GITHUB = "https://github.com/ganjasan/mapsurvey"
 
 MAPSURVEY = Vendor(
     key="mapsurvey", name="Mapsurvey", maker="Mapsurvey", url=_MS_HOME, category="ppgis",
+    price_listed=True, free_publishable=True, self_serve=True, draws_shapes=True,
     summary="Map-based surveys where respondents place points, draw lines and outline polygons, "
             "each with follow-up questions; results come back as GIS files and a public results page.",
     facts={
@@ -197,6 +204,33 @@ _MT_COMPL = "https://maptionnaire.com/compliance"
 _PM_HOME = "https://www.partimap.eu/en"
 _PM_TERMS = "https://www.partimap.eu/en/p/DEMO-in-English/5"
 _PM_GITHUB = "https://github.com/k-monitor/partimap"
+
+# Added by change market-guide-verdict (#580), read on D2.
+D2 = "2026-11-07"
+_PC_HOME = "https://www.pocitovemapy.cz/"
+_PC_EN = "https://www.pocitovemapy.cz/en/"
+_CS_HOME = "https://www.crowdspot.com.au/"
+_CS_PRIVACY = "https://www.crowdspot.com.au/privacy"
+_CS_TERMS = "https://www.crowdspot.com.au/terms"
+_CS_CONTACT = "https://www.crowdspot.com.au/contact"
+_WM_HOME = "https://wikimapping.com/"
+_WM_PRICING = "https://wikimapping.com/pricing"
+_WM_ABOUT = "https://wikimapping.com/about-wikimapping"
+_SF_HOME = "https://www.senf.app/"
+_SF_PRICING = "https://www.senf.app/pricing"
+_SF_MAP = "https://www.senf.app/product/map-based-engagement"
+_EM_HOME = "https://e-mitwirkung.ch/"
+_EM_FEATURES = "https://e-mitwirkung.ch/funktionen"
+_EM_PLANNING = "https://e-mitwirkung.ch/raumplanung"
+_EM_FAQ = "https://e-mitwirkung.ch/faq"
+_EM_PRIVACY = "https://e-mitwirkung.ch/datenschutz-und-datensicherheit"
+_EM_PRICES = "https://e-mitwirkung.ch/preise-verwaltungen"
+_DP_HOME = "https://www.dipas.org/"
+_DP_START = "https://www.dipas.org/jetzt-loslegen"
+_DP_FAQ = "https://www.dipas.org/faq"
+_DP_FEATURES = "https://www.dipas.org/funktionen"
+_DP_WIKI_INPUT = "https://wiki.dipas.org/index.php?title=Beitragseingabe"
+_DP_WIKI_EXPORT = "https://wiki.dipas.org/index.php?title=Individuelles_Verfahren_verwalten_und_auswerten"
 
 # --- Engagement platforms with a map feature --------------------------------------------------
 _GV_MAP = "https://www.govocal.com/mapping"
@@ -259,6 +293,7 @@ VENDORS = (
     MAPSURVEY,
     Vendor(
         key="maptionnaire", name="Maptionnaire", maker="Mapita Oy, Helsinki",
+        draws_shapes=True,
         url="https://www.maptionnaire.com/", category="ppgis", landing_key="maptionnaire_alternative",
         summary="The reference PPGIS product: points, lines and areas with follow-up questions, "
                 "public project pages and reports on the higher tiers, sold by annual subscription.",
@@ -280,6 +315,7 @@ VENDORS = (
     ),
     Vendor(
         key="partimap", name="PARTIMAP", maker="K-Monitor, Budapest", url=_PM_HOME,
+        price_listed=True, free_publishable=True, self_serve=True, draws_shapes=True,
         category="ppgis",
         summary="A free, open-source map survey tool from a Hungarian transparency NGO: points, "
                 "lines and areas on a multilingual interface, exports to spreadsheet and KML.",
@@ -297,7 +333,80 @@ VENDORS = (
         },
     ),
     Vendor(
+        key="pocitove_mapy", name="Pocitové mapy", maker="Jiří Pánek and Ondřej Růžička, Czechia",
+        url=_PC_HOME, category="ppgis",
+        price_listed=True, draws_shapes=True,
+        summary="Czech 'feeling maps' run as a service by an academic and a developer: they set up "
+                "the questions with a town, collect answers online or with printed maps at events, "
+                "and deliver GIS data and summary maps.",
+        facts={
+            "geometry": Fact("Points, lines and areas, each with an optional comment (extended "
+                             "package)", _PC_HOME, D2),
+            "export": Fact("Raw data in a GIS format (shapefile or GeoJSON), plus a comment list "
+                           "with GPS coordinates", _PC_HOME, D2),
+            "licence": Fact(NP, _PC_HOME, D2),
+            "hosting": Fact("The survey runs on the vendor's website; server location, GDPR, "
+                            "ISO 27001 and accessibility not published", _PC_HOME, D2),
+            "pricing": Fact("Basic and extended packages by number of questions, or an individual "
+                            "quote; rates listed on the vendor's site", _PC_HOME, D2),
+            "free": Fact(NP, _PC_HOME, D2),
+            "public_results": Fact("Yes; every package includes a public web preview of the "
+                                   "results", _PC_HOME, D2),
+            "onboarding": Fact("Managed service: contact by email, the team defines the questions "
+                               "and builds the map with you", _PC_HOME, D2),
+            "languages": Fact(NP, _PC_EN, D2),
+        },
+    ),
+    Vendor(
+        key="crowdspot", name="CrowdSpot", maker="CrowdLab (CrowdSpot Pty Ltd), Australia",
+        url=_CS_HOME, category="ppgis",
+        summary="Australian crowd-mapping platform: the public drops pins with stories, photos and "
+                "survey answers on a campaign map, built from templates or by CrowdLab as a "
+                "custom 'Studio' build.",
+        facts={
+            "geometry": Fact("Pins with comments, photos and survey answers; lines and areas not "
+                             "published", _CS_TERMS, D2),
+            "export": Fact("Admins export submissions, for example CSV or GeoJSON", _CS_PRIVACY, D2),
+            "licence": Fact("No; proprietary hosted platform", _CS_TERMS, D2),
+            "hosting": Fact("Database in AWS region ap-southeast-2 via Supabase, some processing "
+                            "outside Australia; GDPR, ISO 27001, accessibility not published",
+                            _CS_PRIVACY, D2),
+            "pricing": Fact("Quote only: pricing is sent by email after a contact request",
+                            _CS_CONTACT, D2),
+            "free": Fact(NP, _CS_HOME, D2),
+            "public_results": Fact("Yes; approved contributions are on the public map, no account "
+                                   "needed", _CS_PRIVACY, D2),
+            "onboarding": Fact("Request pricing through a form; the terms describe delivery as "
+                               "largely a concierge service", _CS_TERMS, D2),
+            "languages": Fact(NP, _CS_HOME, D2),
+        },
+    ),
+    Vendor(
+        key="wikimapping", name="WikiMapping", maker="Krimsnatch LLC, Jenkintown",
+        url=_WM_HOME, category="ppgis",
+        price_listed=True, self_serve=True, draws_shapes=True,
+        summary="Map-based public input for planning consultants, MPOs and DOTs: pins, routes and "
+                "areas with linked surveys, board-style presentations and GIS export.",
+        facts={
+            "geometry": Fact("Points, lines and polygons, plus geotagged photos", _WM_PRICING, D2),
+            "export": Fact("GeoJSON, CSV, Shapefile and PDF", _WM_PRICING, D2),
+            "licence": Fact(NP, _WM_ABOUT, D2),
+            "hosting": Fact("Data location not published; states MFA, SAML SSO, audit logging and "
+                            "'GDPR-friendly'; accessibility not published", _WM_ABOUT, D2),
+            "pricing": Fact("Per project for a year; annual and team plans on request; the project "
+                            "rate is listed on the vendor's site", _WM_PRICING, D2),
+            "free": Fact("Free sign-up with all features to test on a real project; limits not "
+                         "published", _WM_PRICING, D2),
+            "public_results": Fact("Threaded public comments on map locations; findings shared as "
+                                   "link-based presentations", _WM_ABOUT, D2),
+            "onboarding": Fact("Self-serve sign-up; demo and guided setup on request", _WM_PRICING, D2),
+            "languages": Fact("Automatic translation; number of languages not published",
+                              _WM_PRICING, D2),
+        },
+    ),
+    Vendor(
         key="govocal", name="Go Vocal", maker="Go Vocal (formerly CitizenLab), Brussels",
+        price_listed=True, draws_shapes=True,
         url="https://www.govocal.com/", category="engagement",
         summary="The participation suite that named the category: project pages, surveys, ideation, "
                 "voting and participatory budgeting, with a mapping tool where residents drop pins "
@@ -316,6 +425,54 @@ VENDORS = (
             "public_results": Fact("Resident-facing project pages and a report builder", _GV_FEAT, D),
             "onboarding": Fact("Schedule a demo; three-phase onboarding with the vendor", _GV_GCLOUD, D),
             "languages": Fact("27, with automatic translation of residents' input", _GV_FEAT, D),
+        },
+    ),
+    Vendor(
+        key="senf", name="Senf", maker="Senf.app, Cologne", url=_SF_HOME, category="engagement",
+        price_listed=True, self_serve=True, draws_shapes=True,
+        summary="Engagement platform sold to planning, design and engineering consultancies: "
+                "project websites, surveys and dialogue maps, with AI comment tagging and ArcGIS "
+                "Online sync.",
+        facts={
+            "geometry": Fact("Points, lines and areas, each with a comment; surveys add point, line "
+                             "and area questions", _SF_MAP, D2),
+            "export": Fact("GeoJSON and Shapefile; live sync to ArcGIS Online", _SF_MAP, D2),
+            "licence": Fact(NP, _SF_HOME, D2),
+            "hosting": Fact("Servers in the US; screen-reader and keyboard support stated; "
+                            "ISO 27001 not published", _SF_HOME, D2),
+            "pricing": Fact("Per-project licence or annual licence for unlimited projects; rates "
+                            "listed on the vendor's site", _SF_PRICING, D2),
+            "free": Fact("Free tier for unlimited drafts to share and put in proposals; going live "
+                         "needs a paid licence", _SF_PRICING, D2),
+            "public_results": Fact("Participants comment on and like what others posted on the "
+                                   "map, without an account", _SF_MAP, D2),
+            "onboarding": Fact("Self-serve free sign-up; demos on request; paid licences include "
+                               "an onboarding session", _SF_PRICING, D2),
+            "languages": Fact("Automatic translation into 17 languages, built in", _SF_MAP, D2),
+        },
+    ),
+    Vendor(
+        key="emitwirkung", name="E-Mitwirkung", maker="Konova AG, Zug", url=_EM_HOME,
+        category="engagement",
+        price_listed=True,
+        summary="Swiss consultation platform for public administrations: statements on documents, "
+                "surveys and map-based feedback, with joint evaluation and report generation.",
+        facts={
+            "geometry": Fact("Georeferenced feedback on GIS maps or images; shape types not "
+                             "published", _EM_PLANNING, D2),
+            "export": Fact("Feedback exported as an Excel or Word report", _EM_FEATURES, D2),
+            "licence": Fact("No; delivered as SaaS, no open-source release published", _EM_FAQ, D2),
+            "hosting": Fact("Data stored and processed in Switzerland; ISO 9001/27001-certified data "
+                            "centres; Swiss revDSG; accessibility not published", _EM_PRIVACY, D2),
+            "pricing": Fact("Per project or annual licence, scaled to size and use; starting rates "
+                            "listed, exact quote from sales", _EM_PRICES, D2),
+            "free": Fact("No free tier; live demo, test access or a guided pilot on request",
+                         _EM_FAQ, D2),
+            "public_results": Fact("Participants can publish their statements on the portal and "
+                                   "others can endorse them", _EM_FEATURES, D2),
+            "onboarding": Fact("Book a demo or request a quote; guided introduction", _EM_PRICES, D2),
+            "languages": Fact("German, French, Italian and Romansh by default; others on request",
+                              _EM_PRICES, D2),
         },
     ),
     Vendor(
@@ -348,6 +505,7 @@ VENDORS = (
     ),
     Vendor(
         key="citizen_space", name="Citizen Space", maker="Delib, Bristol",
+        price_listed=True, draws_shapes=True,
         url="https://www.delib.net/citizen_space", category="engagement",
         summary="The default statutory-consultation platform of UK public bodies, with a Geospatial "
                 "add-on: pins, routes and areas, validation boundaries, GeoJSON and Shapefile both ways.",
@@ -369,6 +527,7 @@ VENDORS = (
     ),
     Vendor(
         key="commonplace", name="Commonplace", maker="Zencity (acquired Commonplace in 2025)",
+        price_listed=True,
         url=_CP_HOME, category="engagement",
         summary="UK planning-engagement platform built around a Community Heatmap: residents drop a "
                 "pin and answer a short survey about it; now part of Zencity.",
@@ -387,6 +546,7 @@ VENDORS = (
     ),
     Vendor(
         key="engagementhq", name="EngagementHQ", maker="Granicus", url=_EHQ_PROD,
+        price_listed=True,
         category="engagement",
         summary="Granicus's engagement suite (formerly Bang the Table) with a Places tool: a pin "
                 "drop with a photo and a short survey on one of eight map types.",
@@ -436,6 +596,7 @@ VENDORS = (
     ),
     Vendor(
         key="survey123", name="ArcGIS Survey123", maker="Esri", url=_S123_OVERVIEW,
+        self_serve=True, draws_shapes=True,
         category="field",
         summary="Esri's form-centric field app: geopoint, geotrace and geoshape questions that land "
                 "in ArcGIS Online or Enterprise feature layers, offline, with the whole Esri stack behind it.",
@@ -458,6 +619,7 @@ VENDORS = (
     ),
     Vendor(
         key="kobotoolbox", name="KoboToolbox", maker="Kobo Inc. (non-profit)",
+        price_listed=True, free_publishable=True, self_serve=True, draws_shapes=True,
         url="https://www.kobotoolbox.org/", category="field",
         summary="The humanitarian sector's open-source data-collection platform: point, line and "
                 "area questions, a free Community plan, and an EU server for residency.",
@@ -479,6 +641,7 @@ VENDORS = (
     ),
     Vendor(
         key="merginmaps", name="Mergin Maps", maker="Lutra Consulting", url=_MM_HOME,
+        price_listed=True, self_serve=True, draws_shapes=True,
         category="field",
         summary="QGIS in the field: your QGIS project and forms on a phone, points, lines and "
                 "polygons captured offline and synced; open-source Community Edition to self-host.",
@@ -499,7 +662,34 @@ VENDORS = (
         },
     ),
     Vendor(
+        key="dipas", name="DIPAS", maker="City of Hamburg with HafenCity University, Hamburg",
+        url=_DP_HOME, category="open_source",
+        price_listed=True, draws_shapes=True,
+        summary="Open-source digital participation system built by Hamburg's administration: "
+                "residents comment on plans and place ideas on maps, aerial photos and 3D models, "
+                "online or at touch tables.",
+        facts={
+            "geometry": Fact("Points, lines and polygons; a location can also be described in "
+                             "words", _DP_WIKI_INPUT, D2),
+            "export": Fact("CSV of contributions, comments and votes; GeoJSON for map "
+                           "contributions", _DP_WIKI_EXPORT, D2),
+            "licence": Fact("Yes, GPL; code on Bitbucket", _DP_FAQ, D2),
+            "hosting": Fact("Self-hosted, or run by Dataport in its BSI-certified data centre",
+                            _DP_START, D2),
+            "pricing": Fact("Free software to self-host; a hosted service from Dataport, rates "
+                            "not published", _DP_START, D2),
+            "free": Fact("Free to self-host under GPL; no hosted trial published", _DP_START, D2),
+            "public_results": Fact("Yes; all contributions are public and others can comment on "
+                                   "or rate them", _DP_FEATURES, D2),
+            "onboarding": Fact("Install it yourself, or order it from Dataport without a tender "
+                               "through the German administration cloud", _DP_START, D2),
+            "languages": Fact("No built-in translation; the FAQ advises browser translation",
+                              _DP_FAQ, D2),
+        },
+    ),
+    Vendor(
         key="decidim", name="Decidim", maker="Decidim Association, Barcelona", url=_DC_HOME,
+        price_listed=True,
         category="open_source",
         summary="The Barcelona-born participatory-democracy framework: processes, proposals, "
                 "assemblies and participatory budgeting; a proposal's address is geocoded to a map pin.",
@@ -521,6 +711,7 @@ VENDORS = (
     ),
     Vendor(
         key="consul", name="Consul Democracy", maker="Consul Democracy Foundation", url=_CD_HOME,
+        price_listed=True,
         category="open_source",
         summary="The Madrid-born open-source platform for proposals, debates, voting and "
                 "participatory budgeting; with geolocation on, residents place a proposal on a map.",
@@ -541,6 +732,7 @@ VENDORS = (
     ),
     Vendor(
         key="jotform", name="Jotform", maker="Jotform Inc.", url="https://www.jotform.com/",
+        price_listed=True, free_publishable=True, self_serve=True,
         category="forms",
         summary="A general form builder whose Geolocation widget captures one location per "
                 "response as a draggable Google Maps pin, address or coordinates.",
@@ -561,6 +753,7 @@ VENDORS = (
     ),
     Vendor(
         key="google_forms", name="Google Forms", maker="Google", url=_GF_PROD, category="forms",
+        price_listed=True, self_serve=True,
         summary="The form everyone already has: twelve question types, none of them a map, with "
                 "responses in a Google Sheet.",
         facts={
@@ -604,12 +797,27 @@ def compare_rows(vendor: Vendor):
 
 
 def hub_context():
-    """Everything `/participatory-mapping-tools/` renders, precomputed so the template loops only."""
+    """Everything `/participatory-mapping-tools/` renders, precomputed so the template loops only.
+
+    The `*_vendors` lists feed the hub's computed sentences (change market-guide-verdict, #580):
+    the page states who has a flag instead of asserting it, so a flag change rewrites the sentence.
+    """
+    ppgis = vendors_in("ppgis")
     return {
         "criteria": CRITERIA,
         "categories": [{"category": c, "vendors": vendors_in(c.key)} for c in CATEGORIES],
         "vendors": VENDORS,
         "mapsurvey": MAPSURVEY,
+        "vendor_count": len(VENDORS),
+        "category_count": len(CATEGORIES),
+        "criteria_count": len(CRITERIA),
+        # Specialised map-survey tools whose price is public, and those sold on request only.
+        "ppgis_price_listed": [v for v in ppgis if v.price_listed],
+        "ppgis_price_on_request": [v for v in ppgis if not v.price_listed],
+        # Free today, no sales call, and residents draw lines and polygons.
+        "start_today_vendors": [v for v in VENDORS
+                                if v.free_publishable and v.self_serve and v.draws_shapes],
+        "v": _BY_KEY,
     }
 
 
