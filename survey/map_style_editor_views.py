@@ -77,8 +77,13 @@ def org_map_style_edit(request, slug, uuid):
     spec = controls.controls_for_template()
     for item in spec['removals']:
         item['value'] = values[item['key']]
+    try:
+        base = controls.base_colours(preview.base_style()) if settings.MAPBOX_ACCESS_TOKEN else {}
+    except preview.PreviewUnavailable:
+        base = {}
     for pal in spec['palettes']:
         pal['value'] = values[pal['key']]
+        pal['base'] = base.get(pal['key'], '')
     state = {
         'values': values,
         'controls': spec,
@@ -91,6 +96,8 @@ def org_map_style_edit(request, slug, uuid):
             'publishing': _('Publishing…'),
             'failed': _('Publishing failed'),
             'published': _('Version %n published'),
+            'asBase': _('As base'),
+            'baseColour': _('The base map’s own colour'),
         },
         'surveys': _survey_frames(org),
         'version': _version_state(style),
