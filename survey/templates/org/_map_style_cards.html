@@ -31,20 +31,13 @@
         </form>
         {% endif %}
         {% if not card.style.is_preset %}
+          <a class="btn btn-sm btn-outline-secondary" href="{% url 'org_map_style_edit' org.slug card.style.uuid %}">{% trans "Edit" %}</a>
           {% if card.failed %}
           <form method="post" action="{% url 'org_map_style_retry' org.slug card.style.uuid %}" class="mb-0">
             {% csrf_token %}
             <button type="submit" class="btn btn-sm btn-outline-secondary">{% trans "Retry" %}</button>
           </form>
           {% endif %}
-          <details class="mb-0">
-            <summary class="btn btn-sm btn-link p-0">{% trans "Rename" %}</summary>
-            <form method="post" action="{% url 'org_map_style_rename' org.slug card.style.uuid %}" class="form-inline mt-1">
-              {% csrf_token %}
-              <input type="text" name="name" value="{{ card.style.name }}" maxlength="120" class="form-control form-control-sm mr-1" style="width:150px;" aria-label="{% trans 'New name' %}">
-              <button type="submit" class="btn btn-sm btn-secondary">{% trans "Save" %}</button>
-            </form>
-          </details>
           {% if not card.pending %}
           <form method="post" action="{% url 'org_map_style_delete' org.slug card.style.uuid %}" class="mb-0 ml-auto"
                 onsubmit="return confirm('{% trans "Delete this map style?" %}');">

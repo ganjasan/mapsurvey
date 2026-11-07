@@ -10466,3 +10466,213 @@ msgid "used in %(n)s survey"
 msgid_plural "used in %(n)s surveys"
 msgstr[0] "in %(n)s Umfrage verwendet"
 msgstr[1] "in %(n)s Umfragen verwendet"
+
+#: map-style-editor (#543)
+msgid "Map style"
+msgstr "Kartenstil"
+
+#: map-style-editor (#543)
+msgid "Style name"
+msgstr "Name des Stils"
+
+#: map-style-editor (#543)
+msgid "Version %(n)s published"
+msgstr "Version %(n)s veröffentlicht"
+
+#: map-style-editor (#543)
+msgid "Editing map styles is a Pro feature."
+msgstr "Kartenstile zu bearbeiten ist eine Pro-Funktion."
+
+#: map-style-editor (#543)
+msgid "Saving publishes a new version. A survey that is already published keeps the version it has until you publish it again; drafts preview the newest one."
+msgstr "Speichern veröffentlicht eine neue Version. Eine bereits veröffentlichte Umfrage behält ihre Version, bis Sie sie erneut veröffentlichen; Entwürfe zeigen die neueste."
+
+#: map-style-editor (#543)
+msgid "What stays on the map"
+msgstr "Was auf der Karte bleibt"
+
+#: map-style-editor (#543)
+msgid "Buildings"
+msgstr "Gebäude"
+
+#: map-style-editor (#543)
+msgid "Outlines from zoom 15; a paper map needs them only for a street or a block."
+msgstr "Umrisse ab Zoom 15; eine Papierkarte braucht sie nur für eine Straße oder einen Block."
+
+#: map-style-editor (#543)
+msgid "Colours"
+msgstr "Farben"
+
+#: map-style-editor (#543)
+msgid "Hex colour"
+msgstr "Hex-Farbe"
+
+#: map-style-editor (#543)
+msgid "Hard to tell apart from the land on a photocopy."
+msgstr "Auf einer Fotokopie kaum vom Land zu unterscheiden."
+
+#: map-style-editor (#543)
+msgid "Roads and labels"
+msgstr "Straßen und Beschriftungen"
+
+#: map-style-editor (#543)
+msgid "Road look"
+msgstr "Straßenbild"
+
+#: map-style-editor (#543)
+msgid "Bold street names"
+msgstr "Fette Straßennamen"
+
+#: map-style-editor (#543)
+msgid "City and region names up to zoom"
+msgstr "Stadt- und Regionsnamen bis Zoom"
+
+#: map-style-editor (#543)
+msgid "Below that zoom they stay; above it the map shows streets and districts only."
+msgstr "Darunter bleiben sie; darüber zeigt die Karte nur Straßen und Stadtteile."
+
+#: map-style-editor (#543)
+msgid "Greyscale"
+msgstr "Graustufen"
+
+#: map-style-editor (#543)
+msgid "Every colour becomes a grey, as a black-and-white copier sees it."
+msgstr "Jede Farbe wird zu einem Grau, wie ein Schwarz-Weiß-Kopierer sie sieht."
+
+#: map-style-editor (#543)
+msgid "Print"
+msgstr "Druck"
+
+#: map-style-editor (#543)
+msgid "Frame of a survey"
+msgstr "Ausschnitt einer Umfrage"
+
+#: map-style-editor (#543)
+msgid "Unsaved changes"
+msgstr "Ungespeicherte Änderungen"
+
+#: map-style-editor (#543)
+msgid "As a photocopy"
+msgstr "Als Fotokopie"
+
+#: map-style-editor (#543)
+msgid "Place icons and names"
+msgstr "Ortssymbole und -namen"
+
+#: map-style-editor (#543)
+msgid "Shops, stations, parks by name — the clutter a paper map does without."
+msgstr "Geschäfte, Bahnhöfe, Parks mit Namen — das Beiwerk, ohne das eine Papierkarte auskommt."
+
+#: map-style-editor (#543)
+msgid "Footpaths and steps"
+msgstr "Fußwege und Treppen"
+
+#: map-style-editor (#543)
+msgid "Pedestrian ways, stairs, crossings and park paths."
+msgstr "Gehwege, Treppen, Übergänge und Parkwege."
+
+#: map-style-editor (#543)
+msgid "Route shields and arrows"
+msgstr "Straßenschilder und Pfeile"
+
+#: map-style-editor (#543)
+msgid "Road numbers, one-way arrows, junction marks."
+msgstr "Straßennummern, Einbahnpfeile, Kreuzungsmarken."
+
+#: map-style-editor (#543)
+msgid "Relief and ferries"
+msgstr "Relief und Fähren"
+
+#: map-style-editor (#543)
+msgid "Hillshade, sea depth, ferry and cable-car lines."
+msgstr "Schummerung, Meerestiefe, Fähr- und Seilbahnlinien."
+
+#: map-style-editor (#543)
+msgid "Regional boundaries"
+msgstr "Regionale Grenzen"
+
+#: map-style-editor (#543)
+msgid "States, provinces, Länder. National borders always show."
+msgstr "Bundesländer, Provinzen, Staaten. Landesgrenzen werden immer gezeigt."
+
+#: map-style-editor (#543)
+msgid "Land"
+msgstr "Land"
+
+#: map-style-editor (#543)
+msgid "Parks and green"
+msgstr "Parks und Grün"
+
+#: map-style-editor (#543)
+msgid "Water"
+msgstr "Wasser"
+
+#: map-style-editor (#543)
+msgid "National borders"
+msgstr "Landesgrenzen"
+
+#: map-style-editor (#543)
+msgid "Street and city names"
+msgstr "Straßen- und Stadtnamen"
+
+#: map-style-editor (#543)
+msgid "Water and district names"
+msgstr "Gewässer- und Stadtteilnamen"
+
+#: map-style-editor (#543)
+msgid "Light"
+msgstr "Leicht"
+
+#: map-style-editor (#543)
+msgid "Strong"
+msgstr "Kräftig"
+
+#: map-style-editor (#543)
+msgid "Use a colour like #dcefd2."
+msgstr "Verwenden Sie eine Farbe wie #dcefd2."
+
+#: map-style-editor (#543)
+msgid "Copenhagen (example)"
+msgstr "Kopenhagen (Beispiel)"
+
+#: map-style-editor (#543)
+msgid "Preview unavailable"
+msgstr "Vorschau nicht verfügbar"
+
+#: map-style-editor (#543)
+msgid "No published version yet"
+msgstr "Noch keine veröffentlichte Version"
+
+#: map-style-editor (#543)
+msgid "Version %n is being published; this frame shows the last published one."
+msgstr "Version %n wird veröffentlicht; dieser Ausschnitt zeigt die zuletzt veröffentlichte."
+
+#: map-style-editor (#543)
+msgid "Unsaved changes are not in this frame yet."
+msgstr "Ungespeicherte Änderungen sind in diesem Ausschnitt noch nicht enthalten."
+
+#: map-style-editor (#543)
+msgid "Version %n, as the printed form renders it."
+msgstr "Version %n, wie das gedruckte Formular sie darstellt."
+
+#: map-style-editor (#543)
+msgid "Publishing failed"
+msgstr "Veröffentlichung fehlgeschlagen"
+
+#: map-style-editor (#543)
+msgid "Version %n published"
+msgstr "Version %n veröffentlicht"
+
+#: map-style-editor (#543)
+msgid "The previous version is still being published."
+msgstr "Die vorige Version wird noch veröffentlicht."
+
+#: map-style-editor (#543)
+msgid "Version %(n)s of “%(name)s” is being published."
+msgstr "Version %(n)s von „%(name)s“ wird veröffentlicht."
+
+#: map-style-editor (#543)
+msgid "Used in %(n)s survey."
+msgid_plural "Used in %(n)s surveys."
+msgstr[0] "In %(n)s Umfrage verwendet."
+msgstr[1] "In %(n)s Umfragen verwendet."

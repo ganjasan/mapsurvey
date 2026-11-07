@@ -28,11 +28,21 @@ The printed form uses the same style as the section it prints.
 
 1. Press **Duplicate** on Streets, Paper A or Paper B. (Satellite and Topo cannot be duplicated.)
 2. The copy appears as *Publishing…* for a few seconds while its hosted map is created, then it is ready to pick in survey settings.
-3. **Rename** it from the card.
+3. Press **Edit** on the copy to change how it looks.
 
-Creating a style is a **Pro** feature; the trial includes two. Using a style that already exists — a preset or your own — never needs Pro, so a survey keeps its map if a subscription lapses.
+Creating and editing styles is a **Pro** feature; the trial includes two styles. Using a style that already exists — a preset or your own — never needs Pro, so a survey keeps its map if a subscription lapses.
 
-An editor for colours and labels is on its way; today a copy looks exactly like the style it came from.
+## Edit a style
+
+The editor shows the controls on the left and the map on the right, framed at one of your surveys (pick another in the dropdown above the map).
+
+- **What stays on the map** — place icons and names, footpaths, route shields and arrows, relief and ferries, regional boundaries, buildings. Untick what a paper map does without.
+- **Colours** — land, parks, water, national borders, street and city names, water and district names. Pick a swatch or type a colour like `#dcefd2`. A warning under a colour means it is hard to tell apart from the land on a photocopy.
+- **Roads and labels** — the road look (light, medium, strong), bold street names, the zoom up to which city and region names show, and **Greyscale** for a map that is black and white from the start.
+
+Every change repaints the map at once. Press **Save** to publish the new version; it takes a few seconds and the name field saves with it. The **Print** tab shows the last published version as the printed form renders it; tick **As a photocopy** to see it in greyscale.
+
+A survey that is already published keeps the version it was published with until you publish it again; drafts and the editor preview always use the newest one.
 
 ## Delete a style
 
