@@ -27,7 +27,9 @@
         {% if card.style.can_duplicate and not card.pending %}
         <form method="post" action="{% url 'org_map_style_duplicate' org.slug card.style.uuid %}" class="mb-0">
           {% csrf_token %}
-          <button type="submit" class="btn btn-sm btn-outline-primary">{% trans "Duplicate" %} {% pro_badge org "map_styles" False %}</button>
+          {% comment %}No Pro mark here (owner, 2026-11-07): the page title and the sidebar row carry it once;
+          one on every card was noise. The gate itself is unchanged.{% endcomment %}
+          <button type="submit" class="btn btn-sm btn-outline-primary">{% trans "Duplicate" %}</button>
         </form>
         {% endif %}
         {% if card.style.can_duplicate %}

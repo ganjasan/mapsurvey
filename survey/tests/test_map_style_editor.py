@@ -145,6 +145,18 @@ class EditorPageTest(_EditorFixture):
         self.assertIn('value="#dcefd2"', html)  # the park colour of the ready version
         self.assertIn('maplibre-gl', html)
 
+    def test_editor_never_carries_the_whats_new_card(self):
+        """
+        GIVEN an owner who has not seen the newest changelog entry
+        WHEN they open the style editor
+        THEN the page carries no What's new card (it would cover the preview map) and says so in its context
+        """
+        from survey.models import CreatorPreferences
+        CreatorPreferences.objects.update_or_create(user=self.owner, defaults={'changelog_seen': ''})
+        response = self.client.get(self.edit_url)
+        self.assertTrue(response.context['suppress_whats_new_card'])
+        self.assertNotIn('id="whatsNewCard"', response.content.decode())
+
     def test_presets_and_foreign_styles_have_no_editor(self):
         """
         GIVEN a preset and a style of another workspace
