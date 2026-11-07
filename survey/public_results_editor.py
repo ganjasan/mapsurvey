@@ -141,7 +141,7 @@ def public_results_config(request, survey_uuid):
             ('auto', 'Auto (bar chart)'), ('bar', 'Bar chart'), ('pie', 'Pie'),
             ('donut', 'Donut'), ('table', 'Table'),
         ],
-        'map_viz_options': [('auto', 'Markers'), ('heatmap', 'Heatmap')],
+        'map_viz_options': [('auto', 'Markers'), ('heatmap', 'Heatmap'), ('cluster', 'Clusters')],
         # A spray cloud block has one rendering (density grid) and no popups.
         'selected_is_spray': bool(selected_block and selected_block.question_id
                                   and selected_block.question.input_type == 'spraycan'),

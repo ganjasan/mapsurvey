@@ -1049,6 +1049,29 @@ class PublicResultsEditorTest(TestCase):
         block.refresh_from_db()
         self.assertEqual(block.basemap, "topo")
 
+    def test_map_block_offers_and_keeps_clusters(self):
+        """
+        GIVEN a map block on a point question
+        WHEN the creator opens it and picks "Clusters"
+        THEN the visualization select offers Clusters next to Markers and Heatmap,
+             the value `cluster` persists, and the page carries the cluster rendering path
+        """
+        self._login()
+        page = self.client.get(self.base) and PublicResultsPage.objects.get(survey=self.survey)
+        block = PublicResultsBlock.objects.create(
+            page=page, block_type="map", question=self.point_q, order=0,
+        )
+        html = self.client.get(self.base + "?block={}".format(block.id)).content.decode()
+        self.assertIn('<option value="cluster" >Clusters</option>', html)
+        self.assertIn('<option value="heatmap" >Heatmap</option>', html)
+        self.client.post(self.base + "blocks/{}/edit/".format(block.id), {"viz": "cluster"})
+        block.refresh_from_db()
+        self.assertEqual(block.viz, "cluster")
+        preview = self.client.get(self.base + "preview/").content.decode()
+        self.assertIn("leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js", preview)
+        self.assertIn("var isCluster = (b.viz === 'cluster' && typeof L.markerClusterGroup === 'function');", preview)
+        self.assertIn("if ((isHeat || isCluster) && isPoint(feat)) return false;", preview)
+
 
 class PublicResultsPreviewTest(TestCase):
     """Tests for the editor preview endpoint (iframe source)."""

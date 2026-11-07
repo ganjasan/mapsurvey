@@ -295,6 +295,26 @@ document.addEventListener('DOMContentLoaded', function() {
             .openOn(map);
     }
 
+    // One click behaviour for an answer's marker, wherever it is drawn: the
+    // source layer and the cluster layer (spec responses-cluster-map) share it.
+    function bindAnswerClick(map, featureLayer, f, sid) {
+        featureLayer.on('click', function(e) {
+            var mode = window.geoToolMode || 'pointer';
+            if (mode === 'pointer') {
+                if (window.selectionManager) {
+                    if (e.originalEvent && e.originalEvent.ctrlKey) {
+                        window.selectionManager.toggle(sid);
+                    } else {
+                        window.selectionManager.setSelection([sid]);
+                    }
+                }
+                openAttributePopup(map, f, e.latlng);
+            } else if (mode === 'details') {
+                openSessionDetailModal(sid);
+            }
+        });
+    }
+
     LayerManager.prototype.init = function(map, geoData, colors) {
         this._map = map;
 
@@ -369,21 +389,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 }
 
-                featureLayer.on('click', function(e) {
-                    var mode = window.geoToolMode || 'pointer';
-                    if (mode === 'pointer') {
-                        if (window.selectionManager) {
-                            if (e.originalEvent && e.originalEvent.ctrlKey) {
-                                window.selectionManager.toggle(sid);
-                            } else {
-                                window.selectionManager.setSelection([sid]);
-                            }
-                        }
-                        openAttributePopup(map, f, e.latlng);
-                    } else if (mode === 'details') {
-                        openSessionDetailModal(sid);
-                    }
-                });
+                bindAnswerClick(map, featureLayer, f, sid);
 
                 featureLayer.addTo(map);
                 slot.features.push({ layer: featureLayer, sid: sid, feature: f });
@@ -548,6 +554,113 @@ document.addEventListener('DOMContentLoaded', function() {
         slot.heatLayer.redraw();
     };
 
+    // ── Cluster slots (spec responses-cluster-map) ────────────────
+    // A Point question's optional view: nearby answers merge into one counted
+    // circle that splits on zoom (Leaflet.markercluster). The slot holds its
+    // OWN markers, never the source's: a MarkerClusterGroup owns adding and
+    // removing its children, and the filter, visibility, selection and lasso
+    // paths all act on the source markers directly. While the slot exists the
+    // source is hidden -- the same points twice read as duplicates.
+    var HEX_COLOR = /^#[0-9a-f]{6}$/i;
+
+    function _clusterIcon(count, color) {
+        var size = count < 10 ? 30 : (count < 100 ? 36 : 44);
+        // Markup from a number and a palette colour only -- never respondent text.
+        var safe = HEX_COLOR.test(color || '') ? color : '#4f46e5';
+        return L.divIcon({
+            html: '<div style="--clu:' + safe + '">' + Number(count) + '</div>',
+            className: 'geo-cluster-icon',
+            iconSize: L.point(size, size),
+        });
+    }
+
+    LayerManager.prototype.canClusters = function(sourceId) {
+        var src = this._slots.get(sourceId);
+        return !!(src && src.type === 'features' && src.geomType === 'Point' && !src.spray
+                  && src.allPoints.length && typeof L.markerClusterGroup === 'function');
+    };
+
+    LayerManager.prototype.hasClustersFor = function(sourceId) {
+        return this._slots.has('cluster:' + sourceId);
+    };
+
+    LayerManager.prototype.createClusters = function(sourceId) {
+        if (!this.canClusters(sourceId)) return null;
+        var cluId = 'cluster:' + sourceId;
+        if (this._slots.has(cluId)) return null; // already exists
+        var src = this._slots.get(sourceId);
+        var map = this._map;
+        var paneName = this._createPane();
+        var color = src.color;
+        var group = L.markerClusterGroup({
+            clusterPane: paneName,
+            showCoverageOnHover: false,
+            maxClusterRadius: 50,
+            chunkedLoading: true,
+            iconCreateFunction: function(cluster) { return _clusterIcon(cluster.getChildCount(), color); },
+        });
+        var entries = [];
+        src.features.forEach(function(entry) {
+            if (typeof entry.layer.getLatLng !== 'function') return;
+            var marker = L.circleMarker(entry.layer.getLatLng(), {
+                radius: 5, color: color, fillColor: color, fillOpacity: 0.8, weight: 1, pane: paneName,
+            });
+            marker.feature = entry.feature;
+            bindAnswerClick(map, marker, entry.feature, entry.sid);
+            entries.push({ layer: marker, sid: entry.sid });
+        });
+        var slot = {
+            id: cluId,
+            type: 'cluster',
+            sourceId: sourceId,
+            label: null,
+            color: color,
+            pane: paneName,
+            visible: true,
+            group: group,
+            entries: entries,
+        };
+        this._slots.set(cluId, slot);
+        var srcIdx = this._order.indexOf(sourceId);
+        this._order.splice(srcIdx + 1, 0, cluId);
+        this._assignPaneZIndices();
+        this.setLayerVisible(sourceId, false);
+        this._rebuildClusters(slot);
+        return cluId;
+    };
+
+    LayerManager.prototype.removeClusters = function(cluId) {
+        var slot = this._slots.get(cluId);
+        if (!slot || slot.type !== 'cluster') return;
+        if (this._map.hasLayer(slot.group)) this._map.removeLayer(slot.group);
+        this._slots.delete(cluId);
+        var idx = this._order.indexOf(cluId);
+        if (idx !== -1) this._order.splice(idx, 1);
+        this._assignPaneZIndices();
+        if (this._slots.has(slot.sourceId)) this.setLayerVisible(slot.sourceId, true);
+    };
+
+    LayerManager.prototype._rebuildClusters = function(slot) {
+        var group = slot.group;
+        if (!slot.visible) {
+            if (this._map.hasLayer(group)) this._map.removeLayer(group);
+            return;
+        }
+        var sids = this._sids;
+        group.clearLayers();
+        group.addLayers(slot.entries.filter(function(entry) {
+            return sids === null || sids.has(entry.sid);
+        }).map(function(entry) { return entry.layer; }));
+        if (!this._map.hasLayer(group)) group.addTo(this._map);
+    };
+
+    LayerManager.prototype.getClusterBounds = function(cluId) {
+        var slot = this._slots.get(cluId);
+        var bounds = L.latLngBounds([]);
+        if (slot) slot.entries.forEach(function(entry) { bounds.extend(entry.layer.getLatLng()); });
+        return bounds;
+    };
+
     // ── Reference layer slots ─────────────────────────────────────
     // A creator-uploaded overlay from the Survey settings. Appended at the
     // bottom of the order so it starts beneath every answer layer; the panel
@@ -605,6 +718,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 this._rebuildHeat(slot);
             } else if (slot.type === 'coverage') {
                 this._rebuildCoverage(slot);
+            } else if (slot.type === 'cluster' && slot.visible) {
+                this._rebuildClusters(slot);
             }
             if (slot.spray) this._rebuildSprayHeat(slot);
         }.bind(this));
@@ -629,6 +744,8 @@ document.addEventListener('DOMContentLoaded', function() {
             this._rebuildHeat(slot);
         } else if (slot.type === 'coverage') {
             this._rebuildCoverage(slot);
+        } else if (slot.type === 'cluster') {
+            this._rebuildClusters(slot);
         } else if (slot.type === 'reference') {
             if (visible) {
                 if (!this._map.hasLayer(slot.layer)) slot.layer.addTo(this._map);
@@ -1261,6 +1378,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 item.remove();
             });
             row.appendChild(cDel);
+        } else if (slot.type === 'cluster') {
+            var kSwatch = document.createElement('span');
+            kSwatch.className = 'geo-legend-cluster-swatch';
+            kSwatch.style.setProperty('--clu', slot.color);
+            row.appendChild(kSwatch);
+
+            var kLabel = document.createElement('span');
+            kLabel.className = 'geo-legend-label';
+            kLabel.textContent = 'Clusters: ' + (slot.label || slot.sourceId);
+            kLabel.title = 'Zoom to layer';
+            kLabel.addEventListener('click', function() {
+                var b = window.layerManager.getClusterBounds(id);
+                if (b.isValid()) map.fitBounds(b.pad(0.05));
+            });
+            row.appendChild(kLabel);
+
+            var kDel = document.createElement('button');
+            kDel.className = 'geo-heat-settings-btn';
+            kDel.title = 'Remove clusters';
+            var kDelIcon = document.createElement('i');
+            kDelIcon.className = 'fas fa-times';
+            kDel.appendChild(kDelIcon);
+            kDel.addEventListener('click', function(e) {
+                e.stopPropagation();
+                window.layerManager.removeClusters(id);
+                _syncLegendCheckbox(slot.sourceId);
+                item.remove();
+                if (window.filterManager) window.filterManager._renderSelection();
+            });
+            row.appendChild(kDel);
         } else if (slot.type === 'reference') {
             var rSwatch = document.createElement('span');
             rSwatch.className = 'geo-legend-ref-swatch';
@@ -1559,13 +1706,17 @@ document.addEventListener('DOMContentLoaded', function() {
         _closeLayerMenu();
         var menu = document.createElement('div');
         menu.className = 'geo-layer-menu';
-        L.DomEvent.disableClickPropagation(menu);
+        // No L.DomEvent.disableClickPropagation here: the menu lives in <body>,
+        // outside the map, and Leaflet's fakeStop leaves a "skip the next click"
+        // flag that only the map's own handler clears -- so the first click on
+        // the map after choosing an entry was swallowed (a cluster did not zoom).
 
         var src = window.layerManager.getSlot(sourceId);
         if (src && src.geomType !== 'Point') {
             _appendCoverageMenuItem(menu, sourceId);
         } else {
             _appendHeatMenuItem(menu, sourceId);
+            if (window.layerManager.canClusters(sourceId)) _appendClusterMenuItem(menu, sourceId);
         }
 
         // Position near anchor
@@ -1606,6 +1757,35 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         menu.appendChild(covAction);
+    }
+
+    // A row's checkbox mirrors its slot after the manager changed visibility
+    // on its own (creating clusters hides the source, removing shows it).
+    function _syncLegendCheckbox(id) {
+        if (!_legendBody) return;
+        var item = _legendBody.querySelector('[data-layer-id="' + CSS.escape(id) + '"]');
+        var slot = window.layerManager.getSlot(id);
+        var cb = item && item.querySelector('.geo-legend-row input[type="checkbox"]');
+        if (cb && slot) cb.checked = slot.visible;
+    }
+
+    function _appendClusterMenuItem(menu, sourceId) {
+        var hasClu = window.layerManager.hasClustersFor(sourceId);
+        var cluAction = document.createElement('div');
+        cluAction.className = 'geo-layer-menu-item' + (hasClu ? ' disabled' : '');
+        var cluIcon = document.createElement('i');
+        cluIcon.className = 'fas fa-circle-notch';
+        cluAction.appendChild(cluIcon);
+        cluAction.appendChild(document.createTextNode(hasClu ? ' Clusters exist' : ' Create Clusters'));
+        if (!hasClu) {
+            cluAction.addEventListener('click', function() {
+                _insertDerivedLegendItem(sourceId, window.layerManager.createClusters(sourceId));
+                _syncLegendCheckbox(sourceId);
+                if (window.filterManager) window.filterManager._renderSelection();
+                _closeLayerMenu();
+            });
+        }
+        menu.appendChild(cluAction);
     }
 
     function _appendHeatMenuItem(menu, sourceId) {
