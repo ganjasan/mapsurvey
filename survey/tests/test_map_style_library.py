@@ -36,7 +36,7 @@ def ready_style(org, name='House style', mapbox_id='artemkonuchov/ready0001', nu
                 style=None):
     """A workspace style with one ready version (the shape the migration and the task leave)."""
     style = style or MapStyle.objects.create(organization=org, name=name, base='mapbox/streets-v12')
-    MapStyleVersion.objects.create(style=style, number=number, settings=settings or {'park': '#dcefd2'},
+    MapStyleVersion.objects.create(style=style, number=number, settings={'park': '#dcefd2'} if settings is None else settings,
                                    mapbox_style_id=mapbox_id, status=MapStyleVersion.READY)
     return style
 

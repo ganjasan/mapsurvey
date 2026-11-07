@@ -27,8 +27,18 @@
 .mse-swatch { width: 26px; height: 26px; border-radius: 50%; border: 1px solid rgba(0,0,0,.15); padding: 0; cursor: pointer;
               box-shadow: inset 0 0 0 2px #fff; }
 .mse-swatch.active { outline: 2px solid #2563eb; outline-offset: 1px; }
-.mse-hex { width: 86px; font-family: monospace; font-size: .8rem; padding: .15rem .35rem; border: 1px solid #ced4da; border-radius: .25rem; }
+.mse-hex { position: relative; display: inline-flex; align-items: center; gap: .35rem; min-width: 96px; margin: 0;
+           font-family: monospace; font-size: .8rem; font-weight: 400; padding: .15rem .45rem; border: 1px solid #ced4da;
+           border-radius: .25rem; background: #fff; cursor: pointer; }
+.mse-hex:hover { border-color: #2563eb; }
 .mse-hex.is-invalid { border-color: #dc3545; }
+/* The native picker covers the code, so a click anywhere on it opens the palette. */
+.mse-color { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; padding: 0; }
+.mse-hex-dot { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0,0,0,.2); flex: none;
+               background-image: linear-gradient(45deg, transparent 45%, #c0c0c0 45% 55%, transparent 55%); }
+.mse-reset { border: 0; background: none; color: #6b7280; padding: 0 .2rem; font-size: .75rem; cursor: pointer; }
+.mse-reset:hover { color: #1f2937; }
+.mse-sub { margin-left: 1.4rem; }
 .mse-warning { font-size: .76rem; color: #b45309; margin-top: .2rem; }
 .mse-presets { display: flex; gap: .5rem; margin-bottom: .5rem; }
 .mse-preset { display: flex; flex-direction: column; align-items: center; gap: .25rem; font-size: .8rem; font-weight: 400; cursor: pointer; margin: 0; }
@@ -53,3 +63,18 @@
 .mse-print-note { color: #6b7280; }
 #mse-print { display: block; width: 100%; height: auto; background: #f3f4f6; }
 #mse-print.mse-grey { filter: grayscale(1); }
+
+/* Place search in the preview bar (the shared .map-search control; main.css is not on this page). */
+.mse-search { flex: 1 1 240px; max-width: 360px; }
+.mse-search .map-search { position: relative; width: 100%; }
+.mse-search .map-search i { position: absolute; left: .6rem; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: .8rem; pointer-events: none; }
+.mse-search .map-search input { width: 100%; height: 31px; padding: 0 .6rem 0 1.9rem; border: 1px solid #ced4da; border-radius: .25rem; font-size: .85rem; }
+.mse-search .map-search input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37, 99, 235, .15); }
+.mse-search .map-search-results { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 20; margin: 0; padding: 4px 0; list-style: none; background: #fff; border: 1px solid #e5e7eb; border-radius: .25rem; box-shadow: 0 6px 18px rgba(0, 0, 0, .12); max-height: 280px; overflow-y: auto; }
+.mse-search .map-search-result { display: flex; flex-direction: column; gap: 1px; padding: 6px 10px; cursor: pointer; }
+.mse-search .map-search-result.active, .mse-search .map-search-result:hover { background: #eff6ff; }
+.mse-search .map-search-name { font-size: .85rem; color: #111827; }
+.mse-search .map-search-category { margin-left: .4rem; font-size: .75rem; color: #6b7280; }
+.mse-search .map-search-context { font-size: .75rem; color: #6b7280; }
+.mse-search .map-search-message, .mse-search .map-search-attribution { padding: 6px 10px; font-size: .8rem; color: #6b7280; }
+.mse-hex.is-base .mse-hex-text { color: #9ca3af; font-style: italic; }

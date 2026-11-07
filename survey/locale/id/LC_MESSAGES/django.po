@@ -10657,3 +10657,35 @@ msgstr "Mulai dari"
 #: map-styles-new-style
 msgid "A map style is the base map under your surveys, online and on paper. Pick any of these in a survey's settings, or make your own with New style: choose what stays on the map, the colours and the labels, and see how it prints."
 msgstr "Gaya peta adalah peta dasar di bawah survei Anda, daring maupun di kertas. Pilih salah satunya di pengaturan survei, atau buat sendiri dengan Gaya baru: apa yang tetap di peta, warna dan label, dan lihat hasil cetaknya."
+
+#: map-styles-editor-fidelity
+msgid "As base"
+msgstr "Seperti peta dasar"
+
+#: map-styles-editor-fidelity
+msgid "Show buildings from zoom"
+msgstr "Tampilkan bangunan mulai zoom"
+
+#: map-styles-editor-fidelity
+msgid "Lower shows them on wider views; 15 is the usual."
+msgstr "Lebih rendah menampilkannya pada tampilan yang lebih luas; 15 adalah yang biasa."
+
+#: map-styles-editor-fidelity
+msgid "A paper map needs them only for a street or a block."
+msgstr "Peta kertas hanya membutuhkannya untuk satu jalan atau satu blok."
+
+#: map-styles-editor-fidelity
+msgid "Pick a colour"
+msgstr "Pilih warna"
+
+#: map-styles-editor-fidelity
+msgid "Back to the base colour"
+msgstr "Kembali ke warna peta dasar"
+
+#: map-styles-editor-fidelity
+msgid "Custom"
+msgstr "Kustom"
+
+#: map-styles-editor-fidelity
+msgid "The base map’s own colour"
+msgstr "Warna asli peta dasar"

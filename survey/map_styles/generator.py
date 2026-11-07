@@ -209,7 +209,8 @@ def _paint_labels(by_id, labels):
                 paint['text-halo-color'] = halo
             if halo_width is not None:
                 paint['text-halo-width'] = halo_width
-    for layer_id in ICONLESS_LABELS:
+    # Place dots go with recoloured place names (Paper A/B); bold street names alone keep them.
+    for layer_id in ICONLESS_LABELS if 'major' in labels else ():
         layer = by_id.get(layer_id)
         if layer is not None and 'layout' in layer:
             layer['layout'].pop('icon-image', None)
