@@ -273,8 +273,8 @@
       if (tab.dataset.tab === 'print') updatePrint();
     });
   });
-  document.getElementById('mse-photocopy').addEventListener('change', function (e) {
-    document.getElementById('mse-print').classList.toggle('mse-grey', e.target.checked);
+  document.getElementById('mse-colour').addEventListener('change', function (e) {
+    document.getElementById('mse-print').classList.toggle('mse-grey', !e.target.checked);
   });
   window.addEventListener('beforeunload', function (e) { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
 

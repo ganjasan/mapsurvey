@@ -10743,3 +10743,7 @@ msgstr "Personalizado"
 #: map-styles-editor-fidelity
 msgid "The base map’s own colour"
 msgstr "El color propio del mapa base"
+
+#: map-styles-print-greyscale
+msgid "In colour"
+msgstr "En color"

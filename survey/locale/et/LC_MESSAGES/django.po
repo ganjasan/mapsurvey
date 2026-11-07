@@ -10657,3 +10657,7 @@ msgstr "Kohandatud"
 #: map-styles-editor-fidelity
 msgid "The base map’s own colour"
 msgstr "Aluskaardi enda värv"
+
+#: map-styles-print-greyscale
+msgid "In colour"
+msgstr "Värviline"
