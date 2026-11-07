@@ -22,14 +22,22 @@
     var r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
     return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
   }
+  // A colour left to the base is judged by the colour the base really draws.
+  function effective(role) {
+    if (values[role]) return values[role];
+    var p = S.controls.palettes.filter(function (x) { return x.key === role; })[0];
+    return (p && p.base) || '';
+  }
   function roadCasing() {
+    if (values.roads === 'custom') return (values.roads_custom || {}).casing || null;
+    if (values.roads === 'base') return null;
     var p = S.controls.roads.filter(function (r) { return r.key === values.roads; })[0];
-    return p ? p.triple.casing : '#8f8f8f';
+    return p ? p.triple.casing : null;
   }
   function updateWarnings() {
-    var land = lum(values.land);
-    var checks = { park: values.park, water: values.water, boundary: values.boundary,
-                   labels_major: values.labels_major, labels_minor: values.labels_minor, roads: roadCasing() };
+    var land = lum(effective('land'));
+    var checks = { park: effective('park'), water: effective('water'), boundary: effective('boundary'),
+                   labels_major: effective('labels_major'), labels_minor: effective('labels_minor'), roads: roadCasing() };
     Object.keys(checks).forEach(function (key) {
       var el = document.querySelector('[data-warning-for="' + key + '"]');
       if (!el) return;
@@ -76,10 +84,46 @@
     var uuid = sel ? sel.value : '';
     return S.surveys.filter(function (s) { return s.uuid === uuid; })[0] || S.surveys[0];
   }
+  // A searched place replaces the survey's frame until another survey is picked.
+  var place = null;
+  function currentFrame() { return place || currentSurvey(); }
   function frameSurvey() {
+    place = null;
+    var search = document.querySelector('#mse-search input');
+    if (search) search.value = '';
     var s = currentSurvey();
     if (map && s) map.jumpTo({ center: [s.lng, s.lat], zoom: s.zoom });
     updatePrint();
+  }
+
+  // ── place search: the shared control speaks Leaflet ([lat, lng], south-west first) ──
+  function attachSearch() {
+    var box = document.getElementById('mse-search');
+    if (!box || !window.MapPlaceSearch) return;
+    var adapter = {
+      getCenter: function () {
+        if (map) return map.getCenter();
+        var s = currentFrame();
+        return s ? { lat: s.lat, lng: s.lng } : { lat: 0, lng: 0 };
+      },
+      fitBounds: function (b) {
+        if (map) map.fitBounds([[b[0][1], b[0][0]], [b[1][1], b[1][0]]], { duration: 0, maxZoom: 17 });
+      },
+      flyTo: function (latlng, zoom) {
+        if (map) map.jumpTo({ center: [latlng[1], latlng[0]], zoom: zoom });
+      }
+    };
+    window.MapPlaceSearch.attach(adapter, {
+      accessToken: S.token, container: box,
+      language: document.documentElement.lang || '',
+      labels: { placeholder: box.dataset.placeholder },
+      onSelect: function () {
+        if (!map) return;
+        var c = map.getCenter();
+        place = { lng: c.lng, lat: c.lat, zoom: map.getZoom() };
+        updatePrint();
+      }
+    });
   }
 
   // ── print tab ──
@@ -87,7 +131,7 @@
     var img = document.getElementById('mse-print');
     var note = document.getElementById('mse-print-note');
     var v = S.version;
-    var s = currentSurvey();
+    var s = currentFrame();
     if (!v.ready_style_id || !s) {
       img.removeAttribute('src');
       note.textContent = i18n.noPrint;
@@ -146,8 +190,8 @@
           btn.disabled = false;
           var errors = (res.json && res.json.errors) || {};
           Object.keys(errors).forEach(function (k) {
-            var hex = document.querySelector('.mse-hex[data-key="' + k + '"]');
-            if (hex) { hex.classList.add('is-invalid'); hex.title = errors[k]; }
+            var hex = document.querySelector('.mse-color[data-key="' + k + '"]');
+            if (hex) { hex.closest('.mse-hex').classList.add('is-invalid'); hex.closest('.mse-hex').title = errors[k]; }
           });
         }
       }).catch(function () { btn.disabled = false; });
@@ -163,38 +207,57 @@
     updatePrint();
   }
   document.querySelectorAll('#mse-controls input[type=checkbox][data-key]').forEach(function (cb) {
-    cb.addEventListener('change', function () { setValue(cb.dataset.key, cb.checked); });
+    cb.addEventListener('change', function () {
+      if (cb.dataset.key === 'buildings') document.getElementById('mse-buildings-zoom').hidden = !cb.checked;
+      setValue(cb.dataset.key, cb.checked);
+    });
   });
   document.querySelectorAll('#mse-controls input[type=radio][data-key]').forEach(function (rb) {
     rb.addEventListener('change', function () { if (rb.checked) setValue(rb.dataset.key, rb.value); });
   });
-  var range = document.querySelector('#mse-controls input[type=range][data-key]');
-  if (range) {
+  document.querySelectorAll('#mse-controls input[type=range][data-key]').forEach(function (range) {
+    var out = document.querySelector('[data-output-for="' + range.dataset.key + '"]');
     range.addEventListener('input', function () {
-      document.getElementById('mse-zoom-out').textContent = range.value;
+      var noLimit = out && out.dataset.noLimit && range.value === out.dataset.noLimit;
+      if (out) out.textContent = noLimit ? out.dataset.noLimitLabel : range.value;
       setValue(range.dataset.key, parseInt(range.value, 10));
     });
-  }
+  });
+  // Colours: a swatch, or the native picker that opens when the code is clicked
+  // (owner, 2026-11-07); ↺ returns the role to the base's own colour (empty value).
   document.querySelectorAll('.mse-palette').forEach(function (pal) {
     var role = pal.dataset.role;
+    var picker = pal.querySelector('.mse-color');
+    var text = pal.querySelector('.mse-hex-text');
+    var dot = pal.querySelector('.mse-hex-dot');
+    var reset = pal.querySelector('.mse-reset');
+    var base = picker.dataset.base || '';
     var hex = pal.querySelector('.mse-hex');
-    function mark() {
+    var pickTitle = hex.title;
+    function show(v) {
+      text.textContent = v || base || i18n.asBase || 'As base';
+      dot.style.background = v || base || 'transparent';
+      hex.classList.toggle('is-base', !v);
+      if (!v) { hex.title = i18n.baseColour || ''; if (base) picker.value = base; }
+      else hex.title = pickTitle;
+      reset.hidden = !v;
       pal.querySelectorAll('.mse-swatch').forEach(function (sw) {
-        sw.classList.toggle('active', sw.dataset.colour.toLowerCase() === String(values[role]).toLowerCase());
+        sw.classList.toggle('active', !!v && sw.dataset.colour.toLowerCase() === v.toLowerCase());
       });
     }
+    function pick(v) {
+      if (v) picker.value = v;
+      show(v);
+      setValue(role, v);
+    }
     pal.querySelectorAll('.mse-swatch').forEach(function (sw) {
-      sw.addEventListener('click', function () {
-        hex.value = sw.dataset.colour; hex.classList.remove('is-invalid');
-        setValue(role, sw.dataset.colour); mark();
-      });
+      sw.addEventListener('click', function () { pick(sw.dataset.colour.toLowerCase()); });
     });
-    hex.addEventListener('input', function () {
-      var v = hex.value.trim();
-      if (HEX.test(v)) { hex.classList.remove('is-invalid'); setValue(role, v.toLowerCase()); mark(); }
-      else hex.classList.add('is-invalid');
+    picker.addEventListener('input', function () {
+      if (HEX.test(picker.value)) pick(picker.value.toLowerCase());
     });
-    mark();
+    reset.addEventListener('click', function () { pick(''); });
+    show(values[role] || '');
   });
   document.getElementById('mse-name').addEventListener('input', function () {
     dirty = true; document.getElementById('mse-unsaved').hidden = false;
@@ -216,6 +279,7 @@
   window.addEventListener('beforeunload', function (e) { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
 
   updateWarnings();
+  attachSearch();
   fetchPreview();
   if (document.getElementById('mse-status').dataset.pending === '1') pollStatus();
   window._mse = { values: values, map: function () { return map; }, state: S };

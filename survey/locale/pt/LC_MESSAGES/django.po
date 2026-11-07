@@ -10711,3 +10711,35 @@ msgstr "Começar a partir de"
 #: map-styles-new-style
 msgid "A map style is the base map under your surveys, online and on paper. Pick any of these in a survey's settings, or make your own with New style: choose what stays on the map, the colours and the labels, and see how it prints."
 msgstr "Um estilo de mapa é o mapa base sob os seus inquéritos, online e em papel. Escolha qualquer um nas definições de um inquérito ou crie o seu com Novo estilo: o que fica no mapa, as cores e os rótulos, e veja como fica impresso."
+
+#: map-styles-editor-fidelity
+msgid "As base"
+msgstr "Como a base"
+
+#: map-styles-editor-fidelity
+msgid "Show buildings from zoom"
+msgstr "Mostrar edifícios a partir do zoom"
+
+#: map-styles-editor-fidelity
+msgid "Lower shows them on wider views; 15 is the usual."
+msgstr "Um valor menor mostra-os em vistas mais amplas; 15 é o habitual."
+
+#: map-styles-editor-fidelity
+msgid "A paper map needs them only for a street or a block."
+msgstr "Um mapa em papel só precisa deles para uma rua ou um quarteirão."
+
+#: map-styles-editor-fidelity
+msgid "Pick a colour"
+msgstr "Escolher uma cor"
+
+#: map-styles-editor-fidelity
+msgid "Back to the base colour"
+msgstr "Voltar à cor da base"
+
+#: map-styles-editor-fidelity
+msgid "Custom"
+msgstr "Personalizado"
+
+#: map-styles-editor-fidelity
+msgid "The base map’s own colour"
+msgstr "A cor própria do mapa base"

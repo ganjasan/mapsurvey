@@ -10625,3 +10625,35 @@ msgstr "Alusta stiilist"
 #: map-styles-new-style
 msgid "A map style is the base map under your surveys, online and on paper. Pick any of these in a survey's settings, or make your own with New style: choose what stays on the map, the colours and the labels, and see how it prints."
 msgstr "Kaardistiil on aluskaart sinu küsitluste all, veebis ja paberil. Vali neist ükskõik milline küsitluse seadetes või loo oma nupuga Uus stiil: mis kaardile jääb, värvid ja sildid, ja vaata, kuidas see prinditult välja näeb."
+
+#: map-styles-editor-fidelity
+msgid "As base"
+msgstr "Nagu aluskaardil"
+
+#: map-styles-editor-fidelity
+msgid "Show buildings from zoom"
+msgstr "Näita hooneid alates suumist"
+
+#: map-styles-editor-fidelity
+msgid "Lower shows them on wider views; 15 is the usual."
+msgstr "Väiksem näitab neid laiemal vaatel; tavaline on 15."
+
+#: map-styles-editor-fidelity
+msgid "A paper map needs them only for a street or a block."
+msgstr "Paberkaart vajab neid ainult tänava või kvartali jaoks."
+
+#: map-styles-editor-fidelity
+msgid "Pick a colour"
+msgstr "Vali värv"
+
+#: map-styles-editor-fidelity
+msgid "Back to the base colour"
+msgstr "Tagasi aluskaardi värvi juurde"
+
+#: map-styles-editor-fidelity
+msgid "Custom"
+msgstr "Kohandatud"
+
+#: map-styles-editor-fidelity
+msgid "The base map’s own colour"
+msgstr "Aluskaardi enda värv"

@@ -7,7 +7,7 @@ import json
 from unittest import mock
 
 from django.contrib.auth.models import User
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 
 from billing.tests.helpers import make_sub, trial_used_elsewhere
@@ -40,7 +40,8 @@ class ControlsTest(SimpleTestCase):
         """
         GIVEN a posted document with a bad colour, an unknown key, a preset and an out-of-range zoom
         WHEN it is cleaned
-        THEN park is refused, foo is dropped, roads is the strong triple and the zoom is clamped to 16
+        THEN park is refused, foo is dropped, roads is the strong triple, a zoom of 40 clamps to "no limit"
+             (no key) and 3 clamps to 6
         """
         settings, errors = controls.clean_settings({'park': 'red', 'foo': 1, 'roads': 'strong', 'place_names_maxzoom': 40,
                                                     'land': '#ffffff', 'water': '#cfe2f2', 'boundary': '#9a9a9a',
@@ -48,7 +49,73 @@ class ControlsTest(SimpleTestCase):
         self.assertEqual(list(errors), ['park'])
         self.assertNotIn('foo', settings)
         self.assertEqual(settings['roads'], controls.ROAD_PRESETS['strong'])
-        self.assertEqual(settings['place_names_maxzoom'], 16)
+        self.assertNotIn('place_names_maxzoom', settings)
+        self.assertEqual(controls.clean_settings({'place_names_maxzoom': 3})[0]['place_names_maxzoom'], 6)
+
+    def test_streets_copy_stays_streets(self):
+        """
+        GIVEN Streets' settings document, which is empty (the base as it is)
+        WHEN it is turned into form values and cleaned back
+        THEN every control shows its base state (colours empty, roads "base", place names "no limit",
+             everything kept, buildings at zoom 15) and the cleaned document is empty again
+        """
+        values = controls.form_values({})
+        for role in controls.COLOUR_ROLES:
+            self.assertEqual(values[role], '', role)
+        self.assertEqual(values['roads'], controls.ROAD_BASE)
+        self.assertEqual(values['place_names_maxzoom'], controls.PLACE_NAMES_NO_LIMIT)
+        self.assertEqual(values['buildings_minzoom'], 15)
+        self.assertTrue(all(values[k] for k in ('poi', 'paths', 'shields', 'relief', 'regions', 'buildings')))
+        self.assertEqual(controls.clean_settings(values), ({}, {}))
+
+    def test_paper_b_round_trips_with_its_building_zoom(self):
+        """
+        GIVEN Paper B's document (buildings from zoom 14, bold street names)
+        WHEN it round-trips through the controls
+        THEN the generator receives the same document
+        """
+        with open('scripts/map_styles/paper_b.json') as handle:
+            paper = json.load(handle)
+        values = controls.form_values(paper)
+        self.assertEqual(values['buildings_minzoom'], 14)
+        cleaned, errors = controls.clean_settings(values)
+        self.assertEqual(errors, {})
+        self.assertEqual(cleaned, {k: v for k, v in paper.items() if k not in ('name', 'base')})
+
+    def test_base_colours_are_read_from_the_base(self):
+        """
+        GIVEN a base whose land interpolates by zoom, whose landuse matches by class and whose
+              water is a plain hsl colour
+        WHEN its base colours are read
+        THEN land is the street-zoom stop, park is the `park` arm, water is the literal, and a
+             role the base does not draw is left out
+        """
+        base = {'layers': [
+            {'id': 'land', 'paint': {'background-color': ['interpolate', ['linear'], ['zoom'], 9, '#000000', 11, 'hsl(0, 0%, 100%)']}},
+            {'id': 'landuse', 'paint': {'fill-color': ['match', ['get', 'class'], 'wood', '#111111', 'park', '#22aa22', '#333333']}},
+            {'id': 'water', 'paint': {'fill-color': 'hsla(200, 100%, 50%, 0.5)'}},
+        ]}
+        colours = controls.base_colours(base)
+        self.assertEqual(colours['land'], '#ffffff')
+        self.assertEqual(colours['park'], '#22aa22')
+        self.assertEqual(colours['water'], '#80d4ff')
+        self.assertNotIn('boundary', colours)
+
+    def test_buildings_zoom_alone(self):
+        """
+        GIVEN the base with buildings from zoom 13
+        WHEN cleaned and applied by the generator
+        THEN the document carries only that minzoom, and the building layer starts at 13 with its base colours
+        """
+        values = dict(controls.form_values({}), buildings_minzoom=13)
+        cleaned, _ = controls.clean_settings(values)
+        self.assertEqual(cleaned, {'buildings': {'minzoom': 13}})
+        from survey.map_styles.generator import apply_settings
+        base = {'version': 8, 'sources': {}, 'layers': [
+            {'id': 'building', 'type': 'fill', 'minzoom': 15, 'paint': {'fill-color': 'hsl(20, 15%, 85%)'}}]}
+        layer = apply_settings(base, cleaned)['layers'][0]
+        self.assertEqual(layer['minzoom'], 13)
+        self.assertEqual(layer['paint']['fill-color'], 'hsl(20, 15%, 85%)')
 
     def test_paper_a_round_trips(self):
         """
@@ -69,8 +136,9 @@ class ControlsTest(SimpleTestCase):
         WHEN it is cleaned
         THEN the generator gets no `poi` key (absent = leave the base as it is)
         """
-        cleaned, _ = controls.clean_settings({'poi': True, 'land': '#ffffff', 'park': '#dcefd2', 'water': '#cfe2f2',
-                                              'boundary': '#9a9a9a', 'labels_major': '#333333', 'labels_minor': '#777777'})
+        cleaned, _ = controls.clean_settings({'poi': True, 'paths': False, 'land': '#ffffff', 'park': '#dcefd2',
+                                              'water': '#cfe2f2', 'boundary': '#9a9a9a', 'labels_major': '#333333',
+                                              'labels_minor': '#777777'})
         self.assertNotIn('poi', cleaned)
         self.assertIs(cleaned['paths'], False)
 
@@ -144,6 +212,50 @@ class EditorPageTest(_EditorFixture):
             self.assertIn(f'data-role="{role}"', html)
         self.assertIn('value="#dcefd2"', html)  # the park colour of the ready version
         self.assertIn('maplibre-gl', html)
+
+    def test_colour_code_is_a_picker_and_buildings_have_a_zoom(self):
+        """
+        GIVEN a copy of Streets (an empty settings document)
+        WHEN the owner opens its editor
+        THEN every colour code is a native colour picker reading "As base", roads are "As base",
+             the buildings zoom slider spans 13–17 at 15, and place names read "no limit"
+        """
+        streets_copy = ready_style(self.org, name='Streets copy', mapbox_id='artemkonuchov/copy0001', settings={})
+        html = self.client.get(reverse('org_map_style_edit', args=[self.org.slug, streets_copy.uuid])).content.decode()
+        self.assertEqual(html.count('type="color" class="mse-color"'), 6)
+        self.assertIn('data-key="buildings_minzoom" min="13" max="17" value="15"', html)
+        self.assertIn('value="base" checked', html)
+        self.assertIn('>no limit</output>', html)
+        # The preview bar carries the shared place search (owner, 2026-11-07).
+        self.assertIn('id="mse-search"', html)
+        self.assertIn('js/components/map_place_search', html)
+
+    @override_settings(MAPBOX_ACCESS_TOKEN='pk.test')
+    def test_unset_colour_shows_the_base_colour(self):
+        """
+        GIVEN a copy of Streets and a base whose land is hsl(20, 20%, 95%)
+        WHEN the editor opens
+        THEN the land code reads the base's own colour, muted, and the picker starts from it
+        """
+        streets_copy = ready_style(self.org, name='Streets copy', mapbox_id='artemkonuchov/copy0002', settings={})
+        with mock.patch.object(preview, 'base_style', return_value=BASE):
+            html = self.client.get(reverse('org_map_style_edit', args=[self.org.slug, streets_copy.uuid])).content.decode()
+        self.assertIn('value="#f5f1f0"\n                       data-base="#f5f1f0"', html)
+        self.assertIn('<span class="mse-hex-text">#f5f1f0</span>', html)
+        self.assertIn('mse-hex is-base', html)
+
+    def test_custom_road_look_is_offered_and_kept(self):
+        """
+        GIVEN a style whose roads match no preset (Paper B's)
+        WHEN its editor opens
+        THEN a checked "Custom" road option is shown, and saving its values keeps the triple
+        """
+        roads = {'fill': '#ffffff', 'minor_low_zoom': '#ffffff', 'casing': '#bdbdbd'}
+        style = ready_style(self.org, name='Planner', mapbox_id='artemkonuchov/plan0001', settings={'roads': roads})
+        html = self.client.get(reverse('org_map_style_edit', args=[self.org.slug, style.uuid])).content.decode()
+        self.assertIn('value="custom" checked', html)
+        cleaned, _ = controls.clean_settings(controls.form_values({'roads': roads}))
+        self.assertEqual(cleaned, {'roads': roads})
 
     def test_editor_never_carries_the_whats_new_card(self):
         """

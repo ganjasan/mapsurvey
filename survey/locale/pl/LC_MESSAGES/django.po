@@ -10756,3 +10756,35 @@ msgstr "Zacznij od"
 #: map-styles-new-style
 msgid "A map style is the base map under your surveys, online and on paper. Pick any of these in a survey's settings, or make your own with New style: choose what stays on the map, the colours and the labels, and see how it prints."
 msgstr "Styl mapy to mapa podkładowa pod Twoimi ankietami, online i na papierze. Wybierz dowolny z nich w ustawieniach ankiety albo utwórz własny przyciskiem Nowy styl: co zostaje na mapie, kolory i etykiety — i zobacz, jak wygląda w druku."
+
+#: map-styles-editor-fidelity
+msgid "As base"
+msgstr "Jak w bazie"
+
+#: map-styles-editor-fidelity
+msgid "Show buildings from zoom"
+msgstr "Pokazuj budynki od powiększenia"
+
+#: map-styles-editor-fidelity
+msgid "Lower shows them on wider views; 15 is the usual."
+msgstr "Niższa wartość pokazuje je w szerszych widokach; zwykle 15."
+
+#: map-styles-editor-fidelity
+msgid "A paper map needs them only for a street or a block."
+msgstr "Mapa papierowa potrzebuje ich tylko dla ulicy lub kwartału."
+
+#: map-styles-editor-fidelity
+msgid "Pick a colour"
+msgstr "Wybierz kolor"
+
+#: map-styles-editor-fidelity
+msgid "Back to the base colour"
+msgstr "Wróć do koloru bazy"
+
+#: map-styles-editor-fidelity
+msgid "Custom"
+msgstr "Własny"
+
+#: map-styles-editor-fidelity
+msgid "The base map’s own colour"
+msgstr "Własny kolor mapy bazowej"
