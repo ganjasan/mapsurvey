@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load i18n static tz %}
+
+{% block title %}{% trans "Attendees" %} — {{ landing.title }}{% endblock %}
+
+{% block content %}
+{% comment %}One event's registrations (change landing-events, #579): owner / admin / editor only,
+no Pro needed — removing people's data must stay possible after a lapse.{% endcomment %}
+<div class="container mt-4" style="max-width: 900px;">
+  <a href="{% url 'editor_landing' landing.uuid %}#{{ event_block.anchor }}" class="small text-muted"><i class="fas fa-chevron-left" aria-hidden="true"></i> {{ landing.title }}</a>
+  <h4 class="mt-1">{{ event_block.title|default:_("Event") }}</h4>
+  {% timezone event_block.data.tz|default:"UTC" %}<p class="text-muted mb-2">{{ starts_at|date:"j F Y, H:i" }} ({{ event_block.data.tz|default:"UTC" }}){% if event_block.data.place %} · {{ event_block.data.place }}{% endif %}</p>{% endtimezone %}
+  <p class="mb-3">{% blocktrans count n=active %}{{ n }} registered{% plural %}{{ n }} registered{% endblocktrans %}{% if seats_left is not None %} · {% blocktrans with n=seats_left %}{{ n }} seats left{% endblocktrans %}{% endif %}
+    · <a href="?format=csv">{% trans "Download CSV" %}</a></p>
+  {% for message in messages %}<div class="alert alert-{{ message.tags }} py-2" style="font-size:.9rem;">{{ message }}</div>{% endfor %}
+  <p class="small text-muted">{% blocktrans with days=retention_days %}Names and emails are deleted automatically {{ days }} days after the event. Use them only for this event.{% endblocktrans %}</p>
+
+  {% if registrations %}
+  <table class="table table-sm">
+    <thead><tr><th>{% trans "Name" %}</th><th>{% trans "Email" %}</th><th>{% trans "Registered" %}</th><th>{% trans "Status" %}</th><th></th></tr></thead>
+    <tbody>
+    {% for r in registrations %}
+    <tr{% if not r.is_active %} class="text-muted"{% endif %}>
+      <td>{{ r.name }}</td><td>{{ r.email }}</td><td>{{ r.created_at|date:"j M Y H:i" }}</td>
+      <td>{% if r.is_active %}{% trans "registered" %}{% else %}{% trans "cancelled" %}{% endif %}</td>
+      <td class="text-right">
+        <form method="post" action="{% url 'editor_landing_attendees_remove' landing.uuid event_block.pk %}" class="d-inline mb-0">
+          {% csrf_token %}<input type="hidden" name="registration" value="{{ r.pk }}">
+          <button type="submit" class="btn btn-link btn-sm text-muted p-0">{% trans "Remove" %}</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <form method="post" action="{% url 'editor_landing_attendees_remove' landing.uuid event_block.pk %}"
+        onsubmit="return confirm('{% trans "Delete every registration of this event?" as q %}{{ q|escapejs }}');">
+    {% csrf_token %}<input type="hidden" name="registration" value="all">
+    <button type="submit" class="btn btn-sm btn-outline-danger">{% trans "Remove all" %}</button>
+  </form>
+  {% else %}
+  <p class="text-muted">{% trans "Nobody has registered yet." %}</p>
+  {% endif %}
+</div>
+{% endblock %}

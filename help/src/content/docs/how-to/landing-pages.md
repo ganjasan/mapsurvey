@@ -32,6 +32,14 @@ Press **Add block** and choose what to add:
 
 Give a block a **heading** and it also appears in the menu at the top of the page. Drag blocks by the handle to change their order.
 
+## Events and registration
+
+The **Event** block announces an open house, a walk or a workshop: date, start and end time in the event's time zone, the place (with an optional map link), a few words about it, and an optional number of seats.
+
+While **Registration open** is ticked and the event has not ended, the block carries a short form: name, email and a box the resident ticks to agree. They get an email with the details, a calendar file and a link to cancel; a cancelled registration frees its seat. The same email registers only once.
+
+Under the event in the builder, **Attendee list** shows who registered, with a CSV download and **Remove** / **Remove all**. Names and emails are for this event only: Mapsurvey deletes them automatically **30 days after the event** — the form says so to every resident. Owners, admins and editors of the workspace see the list; viewers do not.
+
 ## Surveys on the page
 
 **Surveys on this page** lists the surveys the page shows. Add one there or straight from a survey card. A survey can be on any number of landing pages — the same city-wide survey on two neighbourhood pages, for example. Removing a survey from the page removes its cards.

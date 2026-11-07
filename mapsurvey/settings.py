@@ -777,6 +777,11 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'survey.tasks.apply_survey_schedule',
         'schedule': 300.0,
     },
+    # Landing-event registrations are deleted 30 days after the event (change landing-events).
+    'purge-event-registrations': {
+        'task': 'survey.tasks.purge_event_registrations',
+        'schedule': 86400.0,
+    },
 }
 
 # Absolute-URL base for links built outside a request (Celery mail). Falls back

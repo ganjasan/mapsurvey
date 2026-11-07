@@ -6335,7 +6335,7 @@ msgstr ""
 
 #: survey/templates/metroquest_alternative.html:95
 msgid "Status"
-msgstr ""
+msgstr "Olek"
 
 #: survey/templates/metroquest_alternative.html:95
 msgid "Active, open source"
@@ -11255,3 +11255,233 @@ msgid "Based on %(n)s response."
 msgid_plural "Based on %(n)s responses."
 msgstr[0] "Põhineb %(n)s vastusel."
 msgstr[1] "Põhineb %(n)s vastusel."
+
+#: landing-events (#579)
+msgid "Date"
+msgstr "Kuupäev"
+
+#: landing-events (#579)
+msgid "Starts"
+msgstr "Algus"
+
+#: landing-events (#579)
+msgid "Ends"
+msgstr "Lõpp"
+
+#: landing-events (#579)
+msgid "Time zone"
+msgstr "Ajavöönd"
+
+#: landing-events (#579)
+msgid "Place, e.g. The boathouse, Riverside Park"
+msgstr "Koht, nt Paadimaja, Jõeäärne park"
+
+#: landing-events (#579)
+msgid "Map link to the place (optional)"
+msgstr "Kaardilink kohale (valikuline)"
+
+#: landing-events (#579)
+msgid "What happens there (optional)"
+msgstr "Mis seal toimub (valikuline)"
+
+#: landing-events (#579)
+msgid "Seats (empty = no limit)"
+msgstr "Kohad (tühi = piiranguta)"
+
+#: landing-events (#579)
+msgid "Registration open"
+msgstr "Registreerimine avatud"
+
+#: landing-events (#579)
+#, python-format
+msgid "%(n)s seats left"
+msgstr "Vabu kohti: %(n)s"
+
+#: landing-events (#579)
+msgid "Attendee list"
+msgstr "Osalejate nimekiri"
+
+#: landing-events (#579)
+msgid "Residents give their name and email. They get a confirmation with a calendar file; registrations are deleted 30 days after the event."
+msgstr "Elanikud sisestavad nime ja e-posti. Nad saavad kinnituse koos kalendrifailiga; registreeringud kustutatakse 30 päeva pärast üritust."
+
+#: landing-events (#579)
+msgid "Attendees"
+msgstr "Osalejad"
+
+#: landing-events (#579)
+msgid "Event"
+msgstr "Üritus"
+
+#: landing-events (#579)
+msgid "Download CSV"
+msgstr "Laadi CSV alla"
+
+#: landing-events (#579)
+#, python-format
+msgid "Names and emails are deleted automatically %(days)s days after the event. Use them only for this event."
+msgstr "Nimed ja e-posti aadressid kustutatakse automaatselt %(days)s päeva pärast üritust. Kasutage neid ainult selle ürituse jaoks."
+
+#: landing-events (#579)
+msgid "Registered"
+msgstr "Registreerunud"
+
+#: landing-events (#579)
+msgid "registered"
+msgstr "registreerunud"
+
+#: landing-events (#579)
+msgid "cancelled"
+msgstr "tühistatud"
+
+#: landing-events (#579)
+msgid "Delete every registration of this event?"
+msgstr "Kas kustutada kõik selle ürituse registreeringud?"
+
+#: landing-events (#579)
+msgid "Remove all"
+msgstr "Eemalda kõik"
+
+#: landing-events (#579)
+msgid "Nobody has registered yet."
+msgstr "Keegi pole veel registreerunud."
+
+#: landing-events (#579)
+msgid "Cancel registration"
+msgstr "Tühista registreerimine"
+
+#: landing-events (#579)
+msgid "Your registration is cancelled. Thank you for letting us know."
+msgstr "Teie registreerimine on tühistatud. Aitäh, et andsite teada."
+
+#: landing-events (#579)
+#, python-format
+msgid "Cancel the registration of %(name)s?"
+msgstr "Kas tühistada isiku %(name)s registreerimine?"
+
+#: landing-events (#579)
+msgid "Cancel my registration"
+msgstr "Tühista minu registreerimine"
+
+#: landing-events (#579)
+msgid "Back to the project page"
+msgstr "Tagasi projektilehele"
+
+#: landing-events (#579)
+msgid "Thank you! Check your inbox: we sent a confirmation with a calendar file and a link to cancel."
+msgstr "Aitäh! Vaadake postkasti: saatsime kinnituse koos kalendrifaili ja tühistamislingiga."
+
+#: landing-events (#579)
+msgid "Sorry, the event is full."
+msgstr "Vabandame, üritus on täis."
+
+#: landing-events (#579)
+msgid "Registration for this event is closed."
+msgstr "Sellele üritusele registreerimine on suletud."
+
+#: landing-events (#579)
+msgid "Please tick the box to agree before registering."
+msgstr "Märkige enne registreerimist nõusoleku kast."
+
+#: landing-events (#579)
+msgid "Please enter a valid email address."
+msgstr "Sisestage kehtiv e-posti aadress."
+
+#: landing-events (#579)
+msgid "Please enter your name."
+msgstr "Sisestage oma nimi."
+
+#: landing-events (#579)
+msgid "Your name"
+msgstr "Teie nimi"
+
+#: landing-events (#579)
+#, python-format
+msgid "%(org)s uses your name and email only for this event. They are deleted %(days)s days after it."
+msgstr "%(org)s kasutab teie nime ja e-posti ainult selle ürituse jaoks. Need kustutatakse %(days)s päeva pärast seda."
+
+#: landing-events (#579)
+msgid "The event is full."
+msgstr "Üritus on täis."
+
+#: landing-events (#579)
+#, python-format
+msgid "Hello %(name)s,"
+msgstr "Tere, %(name)s!"
+
+#: landing-events (#579)
+#, python-format
+msgid "you are registered for \"%(title)s\" by %(org)s."
+msgstr "olete registreerunud üritusele „%(title)s“, mille korraldab %(org)s."
+
+#: landing-events (#579)
+msgid "The attached calendar file adds the event to your calendar."
+msgstr "Lisatud kalendrifail lisab ürituse teie kalendrisse."
+
+#: landing-events (#579)
+msgid "About the project"
+msgstr "Projektist"
+
+#: landing-events (#579)
+msgid "Can't come? Cancel your registration"
+msgstr "Ei saa tulla? Tühistage registreerimine"
+
+#: landing-events (#579)
+#, python-format
+msgid "Your name and email are used only for this event and deleted %(days)s days after it."
+msgstr "Teie nime ja e-posti kasutatakse ainult selle ürituse jaoks ning need kustutatakse %(days)s päeva pärast seda."
+
+#: landing-events (#579)
+msgid "About the project:"
+msgstr "Projektist:"
+
+#: landing-events (#579)
+msgid "Can't come? Cancel here:"
+msgstr "Ei saa tulla? Tühistage siin:"
+
+#: landing-events (#579)
+msgid "Pick the date of the event."
+msgstr "Valige ürituse kuupäev."
+
+#: landing-events (#579)
+msgid "Enter the start time."
+msgstr "Sisestage algusaeg."
+
+#: landing-events (#579)
+msgid "The end time must be after the start."
+msgstr "Lõpuaeg peab olema pärast algust."
+
+#: landing-events (#579)
+msgid "Pick a time zone from the list, e.g. Europe/Berlin."
+msgstr "Valige loendist ajavöönd, nt Europe/Tallinn."
+
+#: landing-events (#579)
+msgid "Seats must be a number from 1 to 10000, or empty for no limit."
+msgstr "Kohtade arv peab olema 1 kuni 10000 või tühi, kui piirangut pole."
+
+#: landing-events (#579)
+msgid "Too many registrations from this connection. Please try again later."
+msgstr "Sellelt ühenduselt on liiga palju registreeringuid. Proovige hiljem uuesti."
+
+#: landing-events (#579)
+msgid "All registrations of this event are deleted."
+msgstr "Kõik selle ürituse registreeringud on kustutatud."
+
+#: landing-events (#579)
+#, python-format
+msgid "You're registered: %(title)s"
+msgstr "Olete registreerunud: %(title)s"
+
+#: landing-events (#579)
+#, python-format
+msgid "%(n)s registered"
+msgid_plural "%(n)s registered"
+msgstr[0] "%(n)s registreerunu"
+msgstr[1] "%(n)s registreerunut"
+
+#: landing-events (#579)
+#, python-format
+msgid "%(n)s seat left"
+msgid_plural "%(n)s seats left"
+msgstr[0] "Vaba on veel %(n)s koht"
+msgstr[1] "Vaba on veel %(n)s kohta"

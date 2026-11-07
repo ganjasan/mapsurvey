@@ -296,6 +296,13 @@ urlpatterns = [
     # Landing pages (change landing-core, #576): the public page and its report form.
     path('p/<slug:slug>/', landing_views.landing_public, name='landing_public'),
     path('p/<slug:slug>/report/', abuse_review_views.landing_report, name='landing_report'),
+    path('p/<slug:slug>/events/<int:block_id>/register/', landing_views.landing_event_register,
+         name='landing_event_register'),
+    path('p/events/cancel/<uuid:token>/', landing_views.landing_event_cancel, name='landing_event_cancel'),
+    path('editor/landings/<uuid:uuid>/events/<int:block_id>/', landing_views.editor_landing_attendees,
+         name='editor_landing_attendees'),
+    path('editor/landings/<uuid:uuid>/events/<int:block_id>/remove/', landing_views.editor_landing_attendees_remove,
+         name='editor_landing_attendees_remove'),
     # The builder (`editor_landing*` names light the sidebar row).
     path('editor/landings/', landing_views.editor_landings, name='editor_landings'),
     path('editor/landings/new/', landing_views.editor_landing_create, name='editor_landing_create'),
