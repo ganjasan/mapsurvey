@@ -68,6 +68,21 @@ class ChangelogHeroTest(_ChangelogDirMixin, TestCase):
         self.assertNotIn('wn-hero', html)
         self.assertNotIn('Export as Excel', html)
 
+    def test_a_newer_card_wins_over_an_older_hero(self):
+        """
+        GIVEN the pending hero and a card entry shipped after it
+        WHEN the dashboard renders
+        THEN the sidebar shows the newer card, not the hero (owner, 2026-11-07: the
+             sidebar shows the newest unseen entry)
+        """
+        newer_id = '%s-newer' % _dated(1)
+        self.use_entries({self.hero_id + '.html': _HERO, self.old_card_id + '.html': _ENTRY_A,
+                          newer_id + '.html': _ENTRY_A})
+        html = self._dashboard()
+        self.assertIn('data-tier="card"', html)
+        self.assertIn('data-entry-id="%s"' % newer_id, html)
+        self.assertNotIn('data-tier="hero"', html)
+
     def test_editor_page_shows_the_hero_in_the_sidebar(self):
         """
         GIVEN the same creator
