@@ -90,6 +90,8 @@ def org_map_styles(request, slug):
     context = {
         'org': org,
         'cards': cards,
+        # *New style* starts from one of these (the presets the generator can rebuild).
+        'starters': [c for c in cards if c['style'].is_preset and c['style'].can_duplicate and c['basemap']],
         'can_act': membership.role in ACTING_ROLES,
         'polling': any(c['pending'] for c in cards),
     }
@@ -116,28 +118,47 @@ def org_map_style_duplicate(request, slug, uuid):
     if not source.can_duplicate:
         messages.error(request, _('This base map cannot be duplicated.'))
         return redirect('org_map_styles', slug=org.slug)
+    name = (request.POST.get('name') or _('%(name)s copy') % {'name': source.name}).strip()[:NAME_MAX]
+    return _create_from(request, org, source, name or source.name, surface='duplicate')
+
+
+@login_required
+@require_POST
+def org_map_style_new(request, slug):
+    """*New style* (change map-styles-new-style): a workspace style started from a preset the
+    generator can rebuild (`base` = streets, paper or paper_b), opened straight in the editor."""
+    org, membership = _acting(request, slug)
+    if membership is None:
+        return HttpResponseForbidden()
+    source = MapStyle.objects.filter(organization__isnull=True, key=request.POST.get('base') or 'streets').first()
+    if source is None or not source.can_duplicate:
+        messages.error(request, _('This base map cannot be duplicated.'))
+        return redirect('org_map_styles', slug=org.slug)
+    from .map_styles.io import unique_name
+    return _create_from(request, org, source, unique_name(org, str(_('New style'))), surface='new')
+
+
+def _create_from(request, org, source, name, surface):
+    """Create a workspace style from `source`'s latest ready settings, publish it in the
+    background and open it in the editor, where the creator names and shapes it while the
+    worker publishes. One style created is one use of `map_styles`; the first one of a
+    workspace that never had a trial starts it (change pro-trial-auto)."""
     version = source.latest_ready()
     if version is None:
         messages.error(request, _('This style has no published version to copy yet.'))
         return redirect('org_map_styles', slug=org.slug)
-    # One style created is one use of `map_styles`; the first one of a workspace that never
-    # had a trial starts it (change pro-trial-auto).
     if not billing_trial.use(org, 'map_styles', actor=request.user):
         return feature_required(request, org, 'map_styles')
     billing_trial.flash_started(request, org)
-    name = (request.POST.get('name') or _('%(name)s copy') % {'name': source.name}).strip()[:NAME_MAX]
     with transaction.atomic():
-        style = MapStyle.objects.create(organization=org, name=name or source.name, base=source.base,
-                                        created_by=request.user)
+        style = MapStyle.objects.create(organization=org, name=name, base=source.base, created_by=request.user)
         new_version = MapStyleVersion.objects.create(
             style=style, number=1, settings=dict(version.settings), provider=MapStyleVersion.MAPBOX,
             attribution=version.attribution, max_zoom=version.max_zoom, created_by=request.user)
         transaction.on_commit(lambda: publish_map_style_version.delay(new_version.pk))
     product_events.emit('map_style_created', request.user.pk, {
-        'organization_id': org.pk, 'style_id': style.pk, 'source': source.key or 'workspace'})
-    messages.success(request, _('“%(name)s” is being published. It appears in survey settings once it is ready.')
-                     % {'name': style.name})
-    return redirect('org_map_styles', slug=org.slug)
+        'organization_id': org.pk, 'style_id': style.pk, 'source': source.key or 'workspace', 'surface': surface})
+    return redirect('org_map_style_edit', slug=org.slug, uuid=style.uuid)
 
 
 @login_required

@@ -10613,3 +10613,15 @@ msgstr "Kaardistiili ei saanud importida: %(reason)s"
 #: map-style-import-export (#544)
 msgid "“%(name)s” was imported and is being published."
 msgstr "„%(name)s“ imporditi ja avaldatakse."
+
+#: map-styles-new-style
+msgid "New style"
+msgstr "Uus stiil"
+
+#: map-styles-new-style
+msgid "Start from"
+msgstr "Alusta stiilist"
+
+#: map-styles-new-style
+msgid "A map style is the base map under your surveys, online and on paper. Pick any of these in a survey's settings, or make your own with New style: choose what stays on the map, the colours and the labels, and see how it prints."
+msgstr "Kaardistiil on aluskaart sinu küsitluste all, veebis ja paberil. Vali neist ükskõik milline küsitluse seadetes või loo oma nupuga Uus stiil: mis kaardile jääb, värvid ja sildid, ja vaata, kuidas see prinditult välja näeb."

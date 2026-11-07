@@ -10645,3 +10645,15 @@ msgstr "Tidak dapat mengimpor gaya peta: %(reason)s"
 #: map-style-import-export (#544)
 msgid "“%(name)s” was imported and is being published."
 msgstr "“%(name)s” telah diimpor dan sedang diterbitkan."
+
+#: map-styles-new-style
+msgid "New style"
+msgstr "Gaya baru"
+
+#: map-styles-new-style
+msgid "Start from"
+msgstr "Mulai dari"
+
+#: map-styles-new-style
+msgid "A map style is the base map under your surveys, online and on paper. Pick any of these in a survey's settings, or make your own with New style: choose what stays on the map, the colours and the labels, and see how it prints."
+msgstr "Gaya peta adalah peta dasar di bawah survei Anda, daring maupun di kertas. Pilih salah satunya di pengaturan survei, atau buat sendiri dengan Gaya baru: apa yang tetap di peta, warna dan label, dan lihat hasil cetaknya."
