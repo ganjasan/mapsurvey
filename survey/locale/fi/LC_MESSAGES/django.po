@@ -10678,3 +10678,7 @@ msgstr "Mukautettu"
 #: map-styles-editor-fidelity
 msgid "The base map’s own colour"
 msgstr "Pohjakartan oma väri"
+
+#: map-styles-print-greyscale
+msgid "In colour"
+msgstr "Värillisenä"

@@ -140,10 +140,12 @@ controls come from survey/map_styles/controls.py; the browser posts them to prev
         <div class="mse-pane" id="mse-pane-online"><div id="mse-map"></div><div class="mse-pane-note" id="mse-map-note" hidden></div></div>
         <div class="mse-pane" id="mse-pane-print" hidden>
           <div class="mse-print-tools">
-            <label class="mse-toggle mse-inline"><input type="checkbox" id="mse-photocopy"> <span>{% trans "As a photocopy" %}</span></label>
+            {% comment %}Paper forms are printed in black and white or photocopied (owner, 2026-11-07),
+            so the frame starts grey; "In colour" shows what a colour printer gives.{% endcomment %}
+            <label class="mse-toggle mse-inline"><input type="checkbox" id="mse-colour"> <span>{% trans "In colour" %}</span></label>
             <span class="mse-print-note" id="mse-print-note"></span>
           </div>
-          <img id="mse-print" alt="{% trans 'Printed frame' %}">
+          <img id="mse-print" class="mse-grey" alt="{% trans 'Printed frame' %}">
         </div>
       </div>
     </div>

@@ -10689,3 +10689,7 @@ msgstr "Kustom"
 #: map-styles-editor-fidelity
 msgid "The base map’s own colour"
 msgstr "Warna asli peta dasar"
+
+#: map-styles-print-greyscale
+msgid "In colour"
+msgstr "Berwarna"
