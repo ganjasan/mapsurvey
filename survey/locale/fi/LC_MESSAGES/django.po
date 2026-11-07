@@ -10586,3 +10586,51 @@ msgid "Used in %(n)s survey."
 msgid_plural "Used in %(n)s surveys."
 msgstr[0] "Käytössä %(n)s kyselyssä."
 msgstr[1] "Käytössä %(n)s kyselyssä."
+
+#: map-style-import-export (#544)
+msgid "Import a style"
+msgstr "Tuo tyyli"
+
+#: map-style-import-export (#544)
+msgid "Map style file"
+msgstr "Karttatyylitiedosto"
+
+#: map-style-import-export (#544)
+msgid "Download as a file"
+msgstr "Lataa tiedostona"
+
+#: map-style-import-export (#544)
+msgid "Choose a file."
+msgstr "Valitse tiedosto."
+
+#: map-style-import-export (#544)
+msgid "The file is larger than a map style can be (64 KB)."
+msgstr "Tiedosto on suurempi kuin karttatyyli voi olla (64 kt)."
+
+#: map-style-import-export (#544)
+msgid "This file is not a Mapsurvey map style."
+msgstr "Tämä tiedosto ei ole Mapsurvey-karttatyyli."
+
+#: map-style-import-export (#544)
+msgid "This map style needs a newer Mapsurvey."
+msgstr "Tämä karttatyyli tarvitsee uudemman Mapsurveyn."
+
+#: map-style-import-export (#544)
+msgid "The map style has no name."
+msgstr "Karttatyylillä ei ole nimeä."
+
+#: map-style-import-export (#544)
+msgid "Base map \"%(base)s\" is not supported here."
+msgstr "Taustakarttaa ”%(base)s” ei tueta täällä."
+
+#: map-style-import-export (#544)
+msgid "The map style has no settings."
+msgstr "Karttatyylillä ei ole asetuksia."
+
+#: map-style-import-export (#544)
+msgid "Could not import the map style: %(reason)s"
+msgstr "Karttatyyliä ei voitu tuoda: %(reason)s"
+
+#: map-style-import-export (#544)
+msgid "“%(name)s” was imported and is being published."
+msgstr "”%(name)s” tuotiin ja sitä julkaistaan."

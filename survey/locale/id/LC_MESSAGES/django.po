@@ -10597,3 +10597,51 @@ msgstr "Versi %(n)s dari “%(name)s” sedang diterbitkan."
 msgid "Used in %(n)s survey."
 msgid_plural "Used in %(n)s surveys."
 msgstr[0] "Digunakan di %(n)s survei."
+
+#: map-style-import-export (#544)
+msgid "Import a style"
+msgstr "Impor gaya"
+
+#: map-style-import-export (#544)
+msgid "Map style file"
+msgstr "Berkas gaya peta"
+
+#: map-style-import-export (#544)
+msgid "Download as a file"
+msgstr "Unduh sebagai berkas"
+
+#: map-style-import-export (#544)
+msgid "Choose a file."
+msgstr "Pilih berkas."
+
+#: map-style-import-export (#544)
+msgid "The file is larger than a map style can be (64 KB)."
+msgstr "Berkas lebih besar dari ukuran maksimum gaya peta (64 KB)."
+
+#: map-style-import-export (#544)
+msgid "This file is not a Mapsurvey map style."
+msgstr "Berkas ini bukan gaya peta Mapsurvey."
+
+#: map-style-import-export (#544)
+msgid "This map style needs a newer Mapsurvey."
+msgstr "Gaya peta ini memerlukan Mapsurvey yang lebih baru."
+
+#: map-style-import-export (#544)
+msgid "The map style has no name."
+msgstr "Gaya peta tidak memiliki nama."
+
+#: map-style-import-export (#544)
+msgid "Base map \"%(base)s\" is not supported here."
+msgstr "Peta dasar \"%(base)s\" tidak didukung di sini."
+
+#: map-style-import-export (#544)
+msgid "The map style has no settings."
+msgstr "Gaya peta tidak memiliki pengaturan."
+
+#: map-style-import-export (#544)
+msgid "Could not import the map style: %(reason)s"
+msgstr "Tidak dapat mengimpor gaya peta: %(reason)s"
+
+#: map-style-import-export (#544)
+msgid "“%(name)s” was imported and is being published."
+msgstr "“%(name)s” telah diimpor dan sedang diterbitkan."

@@ -30,6 +30,9 @@
           <button type="submit" class="btn btn-sm btn-outline-primary">{% trans "Duplicate" %} {% pro_badge org "map_styles" False %}</button>
         </form>
         {% endif %}
+        {% if card.style.can_duplicate %}
+        <a class="btn btn-sm btn-link p-0" href="{% url 'org_map_style_export' org.slug card.style.uuid %}" download title="{% trans 'Download as a file' %}">{% trans "Export" %}</a>
+        {% endif %}
         {% if not card.style.is_preset %}
           <a class="btn btn-sm btn-outline-secondary" href="{% url 'org_map_style_edit' org.slug card.style.uuid %}">{% trans "Edit" %}</a>
           {% if card.failed %}
