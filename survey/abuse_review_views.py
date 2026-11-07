@@ -79,7 +79,7 @@ def survey_report(request, survey_slug):
             return render(request, 'abuse/report_done.html', {'survey': survey})
     else:
         form = ReportForm()
-    return render(request, 'abuse/report.html', {'survey': survey, 'form': form})
+    return render(request, 'abuse/report.html', {'survey': survey, 'form': form, 'subject_name': survey.name})
 
 
 def _report_limited(request):
@@ -90,6 +90,29 @@ def _report_limited(request):
     except Exception:  # noqa: BLE001 — cache outage must not block a report
         return False
     return bool(usage) and usage['count'] >= usage['limit']
+
+
+@require_http_methods(['GET', 'POST'])
+def landing_report(request, slug):
+    """A visitor flags a landing (change landing-core). Never changes what visitors see;
+    an unpublished or held landing is a 404 here as on the page itself."""
+    from .models import Landing
+
+    landing = Landing.objects.filter(slug=slug, is_published=True).first()
+    if landing is None or cs.is_landing_held(landing):
+        return render(request, 'survey_unavailable.html', status=404)
+    if request.method == 'POST':
+        if _report_limited(request):
+            return HttpResponse(_('Too many reports from this connection. Please try again later.'),
+                                status=429, headers={'Retry-After': '3600'})
+        form = ReportForm(request.POST)
+        if form.is_valid():
+            _report_count(request)
+            cs.report_landing(landing, form.cleaned_data['reason'], form.cleaned_data['message'], request)
+            return render(request, 'abuse/report_done.html', {'landing': landing})
+    else:
+        form = ReportForm()
+    return render(request, 'abuse/report.html', {'landing': landing, 'form': form, 'subject_name': landing.title})
 
 
 def _report_count(request):

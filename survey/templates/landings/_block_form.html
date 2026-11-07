@@ -1,0 +1,75 @@
+{% load i18n %}
+{% comment %}One block's form (change landing-core). `kind`, `data` (the block's cleaned data or the
+posted values after a refusal), `title`, `action`, `errors`, `selected_survey`, `is_new`. Field names
+are what landing_views._raw_block reads; repeating rows (FAQ, timeline) post parallel lists.{% endcomment %}
+<form method="post" action="{{ action }}" enctype="multipart/form-data" class="lb-form" data-kind="{{ kind }}">
+  {% csrf_token %}
+  {% if is_new %}<input type="hidden" name="kind" value="{{ kind }}">{% endif %}
+  <div class="form-group">
+    <label class="small mb-0">{% trans "Heading (optional)" %}</label>
+    <input name="title" class="form-control form-control-sm" maxlength="120" value="{{ title|default:'' }}"
+           placeholder="{% trans 'Shown above the block and in the page menu' %}">
+  </div>
+
+  {% if kind == 'text' %}
+  <textarea name="body" class="form-control" rows="6" data-rich>{{ data.body|default:'' }}</textarea>
+  {% if errors.body %}<div class="text-danger small">{{ errors.body }}</div>{% endif %}
+
+  {% elif kind == 'image' %}
+  <input type="file" name="image" accept="image/jpeg,image/png,image/webp,image/gif" class="form-control-file form-control-sm">
+  {% if errors.image %}<div class="text-danger small">{{ errors.image }}</div>{% endif %}
+  <input name="alt" class="form-control form-control-sm mt-2" maxlength="200" value="{{ data.alt|default:'' }}" placeholder="{% trans 'Describe the picture for screen readers' %}">
+  <input name="caption" class="form-control form-control-sm mt-2" maxlength="300" value="{{ data.caption|default:'' }}" placeholder="{% trans 'Caption (optional)' %}">
+
+  {% elif kind == 'button' %}
+  <div class="form-row">
+    <div class="col-sm-5"><input name="label" class="form-control form-control-sm" maxlength="60" value="{{ data.label|default:'' }}" placeholder="{% trans 'Label, e.g. Read the draft plan' %}"></div>
+    <div class="col-sm-7"><input name="url" type="url" class="form-control form-control-sm" maxlength="250" value="{{ data.url|default:'' }}" placeholder="https://"></div>
+  </div>
+  {% if errors.label %}<div class="text-danger small">{{ errors.label }}</div>{% endif %}
+  {% if errors.url %}<div class="text-danger small">{{ errors.url }}</div>{% endif %}
+  <div class="mt-2 small">
+    <label class="mr-3"><input type="radio" name="style" value="primary"{% if data.style != 'secondary' %} checked{% endif %}> {% trans "Filled" %}</label>
+    <label><input type="radio" name="style" value="secondary"{% if data.style == 'secondary' %} checked{% endif %}> {% trans "Outline" %}</label>
+  </div>
+
+  {% elif kind == 'video' %}
+  <input name="url" type="url" class="form-control form-control-sm" maxlength="500" value="{{ data.url|default:'' }}" placeholder="{% trans 'YouTube or Vimeo link' %}">
+  {% if errors.url %}<div class="text-danger small">{{ errors.url }}</div>{% endif %}
+  <input name="caption" class="form-control form-control-sm mt-2" maxlength="300" value="{{ data.caption|default:'' }}" placeholder="{% trans 'Caption (optional)' %}">
+
+  {% elif kind == 'faq' %}
+  <div class="lb-rows" data-row-kind="faq">
+    {% for item in data.items %}{% include "landings/_faq_row.html" %}{% empty %}{% include "landings/_faq_row.html" with item=None %}{% endfor %}
+  </div>
+  <template class="lb-row-template">{% include "landings/_faq_row.html" with item=None %}</template>
+  <button type="button" class="btn btn-link btn-sm px-0 lb-row-add">+ {% trans "Add a question" %}</button>
+  {% if errors.items %}<div class="text-danger small">{{ errors.items }}</div>{% endif %}
+
+  {% elif kind == 'timeline' %}
+  <p class="small text-muted mb-1">{% trans "Phases in order. Tick the phase the project is in now; earlier phases show as done." %}</p>
+  <div class="lb-rows" data-row-kind="timeline">
+    {% for item in data.items %}{% include "landings/_phase_row.html" with index=forloop.counter0 current=data.current %}{% empty %}{% include "landings/_phase_row.html" with item=None index=0 %}{% endfor %}
+  </div>
+  <template class="lb-row-template">{% include "landings/_phase_row.html" with item=None index="" %}</template>
+  <button type="button" class="btn btn-link btn-sm px-0 lb-row-add">+ {% trans "Add a phase" %}</button>
+  {% if errors.items %}<div class="text-danger small">{{ errors.items }}</div>{% endif %}
+
+  {% elif kind == 'survey' %}
+  {% if all_linkable %}
+  <select name="survey" class="form-control form-control-sm" aria-label="{% trans 'Survey' %}">
+    {% for s in all_linkable %}<option value="{{ s.uuid }}"{% if s.uuid|stringformat:"s" == selected_survey|stringformat:"s" %} selected{% endif %}>{{ s.name }}</option>{% endfor %}
+  </select>
+  {% else %}
+  <p class="small text-muted mb-1">{% trans "This workspace has no survey to show yet." %}</p>
+  {% endif %}
+  {% if errors.survey %}<div class="text-danger small">{{ errors.survey }}</div>{% endif %}
+  <textarea name="description" class="form-control form-control-sm mt-2" rows="2" maxlength="300" placeholder="{% trans 'What residents are asked, how long it takes (optional)' %}">{{ data.description|default:'' }}</textarea>
+  <input name="button_label" class="form-control form-control-sm mt-2" maxlength="40" value="{{ data.button_label|default:'' }}" placeholder="{% trans 'Button label (default: Take part)' %}">
+  <p class="small text-muted mt-1 mb-0">{% trans "The card follows the survey: open, opening soon, or closed with a link to its public results." %}</p>
+  {% endif %}
+
+  <div class="mt-2">
+    <button type="submit" class="btn btn-sm btn-primary">{% if is_new %}{% trans "Add to page" %}{% else %}{% trans "Save block" %}{% endif %}</button>
+  </div>
+</form>

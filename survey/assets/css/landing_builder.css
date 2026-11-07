@@ -1,0 +1,32 @@
+/* The landing page builder (change landing-core, #576). */
+.lb { max-width: 1180px; }
+.lb-head { display: flex; align-items: flex-end; justify-content: space-between; gap: .75rem; flex-wrap: wrap; }
+.lb-actions { display: flex; gap: .5rem; align-items: center; }
+.lb-grid { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 1.25rem; margin-top: 1rem; align-items: start; }
+@media (max-width: 900px) { .lb-grid { grid-template-columns: minmax(0, 1fr); } }
+.lb-card { background: #fff; border: 1px solid #e3e6ea; border-radius: 8px; padding: .9rem 1rem; margin-bottom: 1rem; }
+.lb-card h6 { font-weight: 600; margin-bottom: .6rem; }
+.lb-card label { font-size: .8rem; color: #555; margin-bottom: .15rem; }
+.lb-cover-thumb { display: block; max-width: 100%; max-height: 120px; border-radius: 4px; margin-bottom: .4rem; }
+.lb-link { display: flex; justify-content: space-between; align-items: center; gap: .5rem; padding: .2rem 0; font-size: .9rem; }
+.lb-hero-preview { display: flex; gap: .75rem; align-items: center; background: #f6f7f9; border-radius: 8px; padding: .75rem; margin-bottom: .75rem; }
+.lb-hero-preview img { width: 96px; height: 64px; object-fit: cover; border-radius: 4px; }
+.lb-blocks { margin: 0; padding: 0; }
+.lb-block { background: #fff; border: 1px solid #e3e6ea; border-radius: 8px; margin-bottom: .6rem; }
+.lb-block-head { display: flex; align-items: center; gap: .5rem; padding: .5rem .75rem; min-height: 44px; }
+.lb-handle { cursor: grab; color: #9aa1a9; padding: 0 .25rem; }
+.lb-kind { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: #6c757d; background: #f1f3f5; border-radius: 4px; padding: .1rem .4rem; white-space: nowrap; }
+.lb-block-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .9rem; }
+.lb-block-form { display: none; border-top: 1px solid #eef0f2; padding: .75rem; }
+.lb-open .lb-block-form { display: block; }
+.lb-new { border-color: #7aa7d6; }
+.lb-row { border-left: 3px solid #e3e6ea; padding-left: .6rem; margin-bottom: .6rem; }
+.lb-quill { background: #fff; }
+.lb-quill .ql-editor { min-height: 90px; font-size: .95rem; }
+.lb-add { border-style: dashed; }
+.lb-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width: 520px) { .lb-picker { grid-template-columns: 1fr; } }
+.lb-picker-item { display: flex; align-items: center; gap: .6rem; padding: .45rem .5rem; border-radius: 6px; color: #222; }
+.lb-picker-item:hover { background: #f1f5fa; text-decoration: none; color: #222; }
+.lb-picker-item i { width: 1.6rem; height: 1.6rem; display: inline-flex; align-items: center; justify-content: center; background: #eef2f7; border-radius: 5px; color: #2f6fb0; }
+.lb-empty { border: 1px dashed #d5d9de; border-radius: 8px; }

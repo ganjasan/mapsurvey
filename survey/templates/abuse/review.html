@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
 {% load i18n %}
 
-{% block title %}Review: {{ survey.name }} - Mapsurvey{% endblock %}
+{% block title %}Review: {{ subject.name }} - Mapsurvey{% endblock %}
 
 {% block content %}
 <div class="container" style="max-width: 760px; margin-top: 40px;">
     <h3>
         {% if held %}<span class="badge badge-warning">Held</span>{% elif review.status == 'reported' %}<span class="badge badge-info">Reported</span>{% else %}<span class="badge badge-secondary">{{ status_label }}</span>{% endif %}
-        {{ survey.name }}
+        {{ subject.name }}
     </h3>
     <p class="text-muted">
         {% if review.source == 'report' %}Reported by a respondent{% if reason_label %} — {{ reason_label }}{% endif %} · {{ review.report_count }} report(s){% else %}Score {{ review.score }} · trigger <code>{{ review.trigger }}</code>{% endif %}
@@ -35,7 +35,7 @@
     {% if review.note %}<pre class="small text-muted" style="white-space:pre-wrap;">{{ review.note }}</pre>{% endif %}
 
     <p>
-        <a href="{{ survey_url }}" target="_blank" rel="noopener">Open the survey as a respondent</a> ·
+        <a href="{{ survey_url }}" target="_blank" rel="noopener">Open the {{ subject.kind }} as a visitor</a> ·
         <a href="{{ editor_url }}" target="_blank" rel="noopener">Open in the editor</a>
     </p>
 
@@ -56,7 +56,7 @@
                 {% csrf_token %}
                 <input type="hidden" name="action" value="release">
                 <button type="submit" class="btn btn-success btn-block">{% if held %}Release{% else %}Dismiss report{% endif %}</button>
-                <small class="text-muted d-block mt-2">{% if held %}The survey serves to respondents again. This exact content will not be held again; edits are screened afresh.{% else %}Closes the report. Nothing changes for the survey.{% endif %}</small>
+                <small class="text-muted d-block mt-2">{% if held %}The {{ subject.kind }} serves again. This exact content will not be held again; edits are screened afresh.{% else %}Closes the report. Nothing changes for the {{ subject.kind }}.{% endif %}</small>
             </form>
         </div>
         <div class="col-md-6 mb-3">
@@ -64,7 +64,7 @@
                 {% csrf_token %}
                 <input type="hidden" name="action" value="confirm">
                 <button type="submit" class="btn btn-danger btn-block">Confirm phishing</button>
-                <small class="text-muted d-block mt-2">Deactivates the account, closes every survey it created, ends its login sessions. Reversible from the admin.</small>
+                <small class="text-muted d-block mt-2">Deactivates the account, closes every survey it created, unpublishes its landing pages, ends its login sessions. Reversible from the admin.</small>
             </form>
         </div>
     </div>

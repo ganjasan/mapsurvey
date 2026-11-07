@@ -507,7 +507,8 @@ POSTHOG_SESSION_REPLAY = os.environ.get('POSTHOG_SESSION_REPLAY', 'False').lower
 # Enforced in `survey.context_processors.analytics` rather than by omitting the include from
 # `base_survey_template.html`, so a base template added later inherits the exclusion instead
 # of depending on which existing one its author happened to copy.
-POSTHOG_EXCLUDED_PREFIXES = ('/surveys/', '/r/')
+# /p/: landing pages (change landing-core) — read by our customers' residents, like /surveys/.
+POSTHOG_EXCLUDED_PREFIXES = ('/surveys/', '/r/', '/p/')
 
 # The same boundary, for respondent surfaces the prefix list cannot reach. The editor's Live
 # preview panel frames a real respondent page served from under `/editor/`, so its snippet used

@@ -1,0 +1,5 @@
+{% load i18n %}<div class="lb-row">
+  <input name="q" class="form-control form-control-sm" maxlength="200" value="{{ item.q|default:'' }}" placeholder="{% trans 'Question' %}">
+  <textarea name="a" class="form-control form-control-sm mt-1" rows="2" data-rich>{{ item.a|default:'' }}</textarea>
+  <button type="button" class="btn btn-link btn-sm text-muted px-0 lb-row-remove">{% trans "Remove" %}</button>
+</div>
