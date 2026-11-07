@@ -472,6 +472,17 @@ class PrintTabTest(_EditorFixture):
         self.assertIn('fresh=true', script)
         self.assertIn('/static/', script)
 
+    def test_print_frame_starts_black_and_white(self):
+        """
+        GIVEN a paper form is printed in black and white or photocopied
+        WHEN the editor renders
+        THEN the print frame starts greyscale and an unchecked "In colour" toggle shows the colour print
+        """
+        html = self.client.get(self.edit_url).content.decode()
+        self.assertIn('<img id="mse-print" class="mse-grey"', html)
+        self.assertIn('<input type="checkbox" id="mse-colour">', html)
+        self.assertNotIn('mse-photocopy', html)
+
 
 class ContrastTest(SimpleTestCase):
     """Spec: map-style-editor / Requirement: Contrast warnings are advice, not a gate."""
