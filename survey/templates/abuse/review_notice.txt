@@ -1,13 +1,13 @@
 {% autoescape off %}Review: {{ review_url }}
 
-{% if review.source == 'report' %}A respondent reported "{{ survey.name }}"{% if reason_label %} — {{ reason_label }}{% endif %}. The survey still serves.{% if review.note %}
-Report: {{ review.note }}{% endif %}{% else %}"{{ survey.name }}" is HELD (score {{ review.score }}, trigger {{ review.trigger }}). Respondents see "not available" until you decide.{% endif %}
+{% if review.source == 'report' %}A respondent reported "{{ subject.name }}"{% if reason_label %} — {{ reason_label }}{% endif %}. The {{ subject.kind }} still serves.{% if review.note %}
+Report: {{ review.note }}{% endif %}{% else %}"{{ subject.name }}" is HELD (score {{ review.score }}, trigger {{ review.trigger }}). Respondents see "not available" until you decide.{% endif %}
 
 Signals:{% for s in signals %}
 - {{ s.key }} (+{{ s.weight }}){% if s.excerpt %}: {{ s.excerpt }}{% endif %}{% empty %}
 - (none){% endfor %}
 
-Survey: {{ survey_url }}
+{{ subject.kind_label }}: {{ survey_url }}
 Editor: {{ editor_url }}
 {% if account %}
 Account: {{ account.username }} @{{ account.email_domain }}, joined {{ account.joined|date:"Y-m-d H:i" }} UTC, {{ account.surveys }} survey(s), {{ account.sessions }} session(s){% if not account.is_active %}, INACTIVE{% endif %}

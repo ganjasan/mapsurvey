@@ -1,0 +1,6 @@
+{% load i18n %}{% if block.data.embed %}<figure class="lp-figure">
+  <div class="lp-video"><iframe src="{{ block.data.embed }}" title="{{ block.title|default:_('Video') }}" loading="lazy"
+    allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen
+    referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+  {% if block.data.caption %}<figcaption>{{ block.data.caption }}</figcaption>{% endif %}
+</figure>{% endif %}

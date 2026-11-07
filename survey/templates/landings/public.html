@@ -1,0 +1,67 @@
+{% load i18n static %}<!DOCTYPE html>
+{% comment %}The public landing page /p/<slug>/ (change landing-core, #576). A page of its own, not a
+base template: residents of our customers read it, so no product analytics and no creator chrome
+(`/p/` is also in POSTHOG_EXCLUDED_PREFIXES). Labels render in the landing's language
+(translation.override in the view). Each block kind draws from landings/blocks/<kind>.html and reads
+only the keys landings.clean_block stores.{% endcomment %}
+<html lang="{{ landing.language }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ landing.title }}</title>
+  {% if landing.summary %}<meta name="description" content="{{ landing.summary }}">{% endif %}
+  {% if noindex %}<meta name="robots" content="noindex">{% else %}<link rel="canonical" href="{{ page_url }}">{% endif %}
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{{ landing.title }}">
+  {% if landing.summary %}<meta property="og:description" content="{{ landing.summary }}">{% endif %}
+  <meta property="og:url" content="{{ page_url }}">
+  {% if landing.cover %}<meta property="og:image" content="{{ landing.cover.url }}"><meta name="twitter:card" content="summary_large_image">{% endif %}
+  <link rel="icon" href="{% static 'favicon.ico' %}">
+  <link rel="stylesheet" href="{% static 'css/landing_public.css' %}">
+</head>
+<body class="lp">
+  {% if preview %}
+  <div class="lp-banner" role="status">
+    {% if held %}{% trans "Waiting for a safety review — only your workspace sees this page." %}{% else %}{% trans "Draft — only your workspace sees this." %}{% endif %}
+    <a href="{% url 'editor_landing' landing.uuid %}">{% trans "Back to the builder" %}</a>
+  </div>
+  {% endif %}
+
+  <header class="lp-hero{% if landing.cover %} lp-hero--cover{% endif %}">
+    {% if landing.cover %}<img class="lp-hero-img" src="{{ landing.cover.url }}" alt="{{ landing.cover_alt }}">{% endif %}
+    <div class="lp-wrap lp-hero-text">
+      <p class="lp-org">{{ org.name }}</p>
+      <h1>{{ landing.title }}</h1>
+      {% if landing.summary %}<p class="lp-summary">{{ landing.summary }}</p>{% endif %}
+    </div>
+  </header>
+
+  {% if nav|length > 1 %}
+  <nav class="lp-nav" aria-label="{% trans 'On this page' %}">
+    <div class="lp-wrap">
+      {% for anchor, title in nav %}<a href="#{{ anchor }}">{{ title }}</a>{% endfor %}
+    </div>
+  </nav>
+  {% endif %}
+
+  <main class="lp-wrap lp-main">
+    {% for block, card in blocks %}
+    <section class="lp-block lp-block--{{ block.kind }}" id="{{ block.anchor }}">
+      {% if block.title %}<h2>{{ block.title }}</h2>{% endif %}
+      {% with "landings/blocks/"|add:block.kind|add:".html" as tpl %}{% include tpl %}{% endwith %}
+    </section>
+    {% endfor %}
+  </main>
+
+  <footer class="lp-footer">
+    <div class="lp-wrap">
+      <p>{{ org.name }}</p>
+      {% if show_branding %}
+      <p><a class="lp-made" href="{% url 'django_registration_register' %}?utm_source=viral_loop&amp;utm_medium=landing" target="_blank" rel="noopener">{% trans "Made with" %} <b>Mapsurvey</b></a></p>
+      {% endif %}
+      <p class="lp-safety">{% trans "Never enter passwords or card numbers on this page." %}
+        {% if not preview %}<a href="{% url 'landing_report' landing.slug %}" rel="nofollow">{% trans "Report this page" %}</a>{% endif %}</p>
+    </div>
+  </footer>
+</body>
+</html>

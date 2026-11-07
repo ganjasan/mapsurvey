@@ -19,6 +19,7 @@ from . import translation_views
 from . import org_views
 from . import public_results_editor
 from . import abuse_review_views
+from . import landing_views
 from . import demo_request_views
 
 urlpatterns = [
@@ -292,6 +293,30 @@ urlpatterns = [
     path('alternatives/social-pinpoint/', views.social_pinpoint_alternative, name='social_pinpoint_alternative'),
     path('alternatives/metroquest/', views.metroquest_alternative, name='metroquest_alternative'),
     path('r/<slug:slug>/', views.public_results, name='public_results'),
+    # Landing pages (change landing-core, #576): the public page and its report form.
+    path('p/<slug:slug>/', landing_views.landing_public, name='landing_public'),
+    path('p/<slug:slug>/report/', abuse_review_views.landing_report, name='landing_report'),
+    # The builder (`editor_landing*` names light the sidebar row).
+    path('editor/landings/', landing_views.editor_landings, name='editor_landings'),
+    path('editor/landings/new/', landing_views.editor_landing_create, name='editor_landing_create'),
+    path('editor/landings/<uuid:uuid>/', landing_views.editor_landing, name='editor_landing'),
+    path('editor/landings/<uuid:uuid>/settings/', landing_views.editor_landing_settings,
+         name='editor_landing_settings'),
+    path('editor/landings/<uuid:uuid>/surveys/link/', landing_views.editor_landing_survey_link,
+         name='editor_landing_survey_link'),
+    path('editor/landings/<uuid:uuid>/surveys/<int:link_id>/unlink/', landing_views.editor_landing_survey_unlink,
+         name='editor_landing_survey_unlink'),
+    path('editor/landings/<uuid:uuid>/blocks/add/', landing_views.editor_landing_block_add,
+         name='editor_landing_block_add'),
+    path('editor/landings/<uuid:uuid>/blocks/order/', landing_views.editor_landing_blocks_reorder,
+         name='editor_landing_blocks_reorder'),
+    path('editor/landings/<uuid:uuid>/blocks/<int:block_id>/', landing_views.editor_landing_block_edit,
+         name='editor_landing_block_edit'),
+    path('editor/landings/<uuid:uuid>/blocks/<int:block_id>/delete/', landing_views.editor_landing_block_delete,
+         name='editor_landing_block_delete'),
+    path('editor/landings/<uuid:uuid>/publish/', landing_views.editor_landing_publish, name='editor_landing_publish'),
+    path('editor/landings/<uuid:uuid>/delete/', landing_views.editor_landing_delete, name='editor_landing_delete'),
+    path('editor/landings/<uuid:uuid>/qr/', landing_views.editor_landing_qr, name='editor_landing_qr'),
     # Embedding (change embed-surveys): oEmbed provider and the unhashed helper script.
     path('oembed/', views.oembed, name='oembed'),
     path('embed.js', views.embed_js, name='embed_js'),

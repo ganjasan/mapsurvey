@@ -10673,3 +10673,408 @@ msgstr "Otsi aluskaarti"
 #: map-styles-basemap-picker
 msgid "The base maps respondents can switch between. They open on the default below."
 msgstr "Aluskaardid, mille vahel vastajad saavad vahetada. Avaneb allpool valitud vaikimisi kaart."
+
+#: landing-core (#576)
+msgid "Heading (optional)"
+msgstr "Pealkiri (valikuline)"
+
+#: landing-core (#576)
+msgid "Shown above the block and in the page menu"
+msgstr "Kuvatakse ploki kohal ja lehe menüüs"
+
+#: landing-core (#576)
+msgid "Describe the picture for screen readers"
+msgstr "Kirjeldage pilti ekraanilugeri jaoks"
+
+#: landing-core (#576)
+msgid "Label, e.g. Read the draft plan"
+msgstr "Silt, nt Loe plaani eelnõu"
+
+#: landing-core (#576)
+msgid "Filled"
+msgstr "Täidetud"
+
+#: landing-core (#576)
+msgid "Outline"
+msgstr "Kontuur"
+
+#: landing-core (#576)
+msgid "YouTube or Vimeo link"
+msgstr "YouTube’i või Vimeo link"
+
+#: landing-core (#576)
+msgid "Add a question"
+msgstr "Lisa küsimus"
+
+#: landing-core (#576)
+msgid "Phases in order. Tick the phase the project is in now; earlier phases show as done."
+msgstr "Etapid järjekorras. Märkige etapp, milles projekt praegu on; varasemad etapid kuvatakse tehtuna."
+
+#: landing-core (#576)
+msgid "Add a phase"
+msgstr "Lisa etapp"
+
+#: landing-core (#576)
+msgid "This workspace has no survey to show yet."
+msgstr "Selles tööruumis pole veel ühtegi küsitlust, mida näidata."
+
+#: landing-core (#576)
+msgid "What residents are asked, how long it takes (optional)"
+msgstr "Mida elanikelt küsitakse ja kui kaua see aega võtab (valikuline)"
+
+#: landing-core (#576)
+msgid "Button label (default: Take part)"
+msgstr "Nupu silt (vaikimisi: Osale)"
+
+#: landing-core (#576)
+msgid "The card follows the survey: open, opening soon, or closed with a link to its public results."
+msgstr "Kaart järgib küsitlust: avatud, peagi avanev või suletud koos lingiga avalikele tulemustele."
+
+#: landing-core (#576)
+msgid "Add to page"
+msgstr "Lisa lehele"
+
+#: landing-core (#576)
+msgid "open"
+msgstr "avatud"
+
+#: landing-core (#576)
+#, python-format
+msgid "opens %(date)s"
+msgstr "avaneb %(date)s"
+
+#: landing-core (#576)
+msgid "coming soon"
+msgstr "peagi"
+
+#: landing-core (#576)
+msgid "closed"
+msgstr "suletud"
+
+#: landing-core (#576)
+msgid "results published"
+msgstr "tulemused avaldatud"
+
+#: landing-core (#576)
+msgid "not shown"
+msgstr "ei kuvata"
+
+#: landing-core (#576)
+msgid "Under review"
+msgstr "Ülevaatusel"
+
+#: landing-core (#576)
+msgid "Published · unlisted"
+msgstr "Avaldatud · loetlemata"
+
+#: landing-core (#576)
+msgid "Landing pages"
+msgstr "Projektilehed"
+
+#: landing-core (#576)
+msgid "Open page"
+msgstr "Ava leht"
+
+#: landing-core (#576)
+msgid "Landing pages are part of Pro. This workspace's plan has ended, so the page can't be edited; a published page stays online."
+msgstr "Projektilehed kuuluvad Pro paketti. Selle tööruumi pakett on lõppenud, seega lehte ei saa muuta; avaldatud leht jääb võrku."
+
+#: landing-core (#576)
+msgid "This page is waiting for a routine safety review and is not shown to visitors yet. You don't need to do anything."
+msgstr "See leht ootab tavapärast turvaülevaatust ega ole veel külastajatele nähtav. Te ei pea midagi tegema."
+
+#: landing-core (#576)
+msgid "Summary"
+msgstr "Kokkuvõte"
+
+#: landing-core (#576)
+msgid "One or two sentences under the title, also shown when the link is shared."
+msgstr "Üks või kaks lauset pealkirja all; kuvatakse ka lingi jagamisel."
+
+#: landing-core (#576)
+msgid "Cover picture"
+msgstr "Kaanefoto"
+
+#: landing-core (#576)
+msgid "Remove the picture"
+msgstr "Eemalda pilt"
+
+#: landing-core (#576)
+msgid "Picture description"
+msgstr "Pildi kirjeldus"
+
+#: landing-core (#576)
+msgid "Address"
+msgstr "Aadress"
+
+#: landing-core (#576)
+msgid "Changing the address of a published page breaks links and QR codes already printed."
+msgstr "Avaldatud lehe aadressi muutmine rikub lingid ja juba prinditud QR-koodid."
+
+#: landing-core (#576)
+msgid "Page language"
+msgstr "Lehe keel"
+
+#: landing-core (#576)
+msgid "Public — search engines may list it"
+msgstr "Avalik — otsingumootorid võivad selle loetleda"
+
+#: landing-core (#576)
+msgid "Unlisted — only people with the link"
+msgstr "Loetlemata — ainult lingi omanikele"
+
+#: landing-core (#576)
+msgid "Surveys on this page"
+msgstr "Küsitlused sellel lehel"
+
+#: landing-core (#576)
+msgid "A survey can be on any number of landing pages. Show one with a Survey card block."
+msgstr "Küsitlus võib olla mis tahes arvul projektilehtedel. Näidake seda plokiga „Küsitluse kaart“."
+
+#: landing-core (#576)
+msgid "Remove from this page"
+msgstr "Eemalda sellelt lehelt"
+
+#: landing-core (#576)
+msgid "No surveys yet."
+msgstr "Küsitlusi veel pole."
+
+#: landing-core (#576)
+msgid "Download QR code (PNG)"
+msgstr "Laadi QR-kood alla (PNG)"
+
+#: landing-core (#576)
+msgid "Delete this landing page? Its address stops working."
+msgstr "Kas kustutada see projektileht? Selle aadress lakkab töötamast."
+
+#: landing-core (#576)
+msgid "Delete page"
+msgstr "Kustuta leht"
+
+#: landing-core (#576)
+msgid "Delete this block?"
+msgstr "Kas kustutada see plokk?"
+
+#: landing-core (#576)
+msgid "Delete block"
+msgstr "Kustuta plokk"
+
+#: landing-core (#576)
+msgid "No blocks yet. Add the first one: a few words about the project, a timeline, or a card for the survey."
+msgstr "Plokke veel pole. Lisage esimene: paar sõna projektist, ajajoon või küsitluse kaart."
+
+#: landing-core (#576)
+msgid "New block"
+msgstr "Uus plokk"
+
+#: landing-core (#576)
+msgid "Phase, e.g. Online survey"
+msgstr "Etapp, nt Veebiküsitlus"
+
+#: landing-core (#576)
+msgid "When, e.g. March 2027"
+msgstr "Millal, nt märts 2027"
+
+#: landing-core (#576)
+msgid "Now"
+msgstr "Praegu"
+
+#: landing-core (#576)
+msgid "What happens in this phase (optional)"
+msgstr "Mis selles etapis toimub (valikuline)"
+
+#: landing-core (#576)
+msgid "Waiting for a safety review — only your workspace sees this page."
+msgstr "Ootab turvaülevaatust — seda lehte näeb ainult teie tööruum."
+
+#: landing-core (#576)
+msgid "Draft — only your workspace sees this."
+msgstr "Mustand — seda näeb ainult teie tööruum."
+
+#: landing-core (#576)
+msgid "Back to the builder"
+msgstr "Tagasi redaktorisse"
+
+#: landing-core (#576)
+msgid "On this page"
+msgstr "Sellel lehel"
+
+#: landing-core (#576)
+msgid "Never enter passwords or card numbers on this page."
+msgstr "Ärge kunagi sisestage sellel lehel paroole ega kaardinumbreid."
+
+#: landing-core (#576)
+msgid "Report this page"
+msgstr "Teata sellest lehest"
+
+#: landing-core (#576)
+msgid "Page title, e.g. Riverside Park plan"
+msgstr "Lehe pealkiri, nt Jõeäärse pargi plaan"
+
+#: landing-core (#576)
+msgid "New page"
+msgstr "Uus leht"
+
+#: landing-core (#576)
+msgid "Upgrade to Pro to create pages"
+msgstr "Lehtede loomiseks minge üle Pro paketile"
+
+#: landing-core (#576)
+msgid "One public page for an engagement: what the project is about, the timeline, the surveys residents can take part in, and what happens next. Put its address on flyers and QR codes; it stays the same from the first pilot to the final plan."
+msgstr "Üks avalik leht kaasamisprotsessi jaoks: millest projekt räägib, ajajoon, küsitlused, milles elanikud saavad osaleda, ja mis saab edasi. Pange selle aadress voldikutele ja QR-koodidele; see jääb samaks esimesest katsetusest lõpliku plaanini."
+
+#: landing-core (#576)
+msgid "No landing pages yet."
+msgstr "Projektilehti veel pole."
+
+#: landing-core (#576)
+msgid "Video"
+msgstr "Video"
+
+#: landing-core (#576)
+#, python-format
+msgid "Opens %(date)s"
+msgstr "Avaneb %(date)s"
+
+#: landing-core (#576)
+msgid "Take part"
+msgstr "Osale"
+
+#: landing-core (#576)
+msgid "Timeline"
+msgstr "Ajajoon"
+
+#: landing-core (#576)
+msgid "Survey card"
+msgstr "Küsitluse kaart"
+
+#: landing-core (#576)
+msgid "Button"
+msgstr "Nupp"
+
+#: landing-core (#576)
+msgid "Text-based content"
+msgstr "Tekstisisu"
+
+#: landing-core (#576)
+msgid "Media"
+msgstr "Meedia"
+
+#: landing-core (#576)
+msgid "Participation and links"
+msgstr "Osalemine ja lingid"
+
+#: landing-core (#576)
+msgid "Write some text."
+msgstr "Kirjutage tekst."
+
+#: landing-core (#576)
+msgid "Give the button a label."
+msgstr "Andke nupule silt."
+
+#: landing-core (#576)
+msgid "Enter a full web address that starts with https://"
+msgstr "Sisestage täielik veebiaadress, mis algab https://"
+
+#: landing-core (#576)
+msgid "Add at least one question."
+msgstr "Lisage vähemalt üks küsimus."
+
+#: landing-core (#576)
+msgid "Every answer needs its question."
+msgstr "Igal vastusel peab olema küsimus."
+
+#: landing-core (#576)
+msgid "Add at least one phase."
+msgstr "Lisage vähemalt üks etapp."
+
+#: landing-core (#576)
+msgid "Every phase needs a title."
+msgstr "Igal etapil peab olema pealkiri."
+
+#: landing-core (#576)
+msgid "Unknown block type."
+msgstr "Tundmatu ploki tüüp."
+
+#: landing-core (#576)
+msgid "The picture is larger than 5 MB."
+msgstr "Pilt on suurem kui 5 MB."
+
+#: landing-core (#576)
+msgid "Upload a JPEG, PNG, WebP or GIF picture."
+msgstr "Laadige üles JPEG-, PNG-, WebP- või GIF-pilt."
+
+#: landing-core (#576)
+msgid "Use 3–64 lowercase letters, digits and dashes."
+msgstr "Kasutage 3–64 väiketähte, numbrit ja sidekriipsu."
+
+#: landing-core (#576)
+msgid "This address is reserved. Pick another."
+msgstr "See aadress on reserveeritud. Valige mõni muu."
+
+#: landing-core (#576)
+msgid "Another landing page already uses this address."
+msgstr "Seda aadressi kasutab juba teine projektileht."
+
+#: landing-core (#576)
+msgid "The survey is archived or in the trash."
+msgstr "Küsitlus on arhiveeritud või prügikastis."
+
+#: landing-core (#576)
+msgid "The survey is waiting for a safety review."
+msgstr "Küsitlus ootab turvaülevaatust."
+
+#: landing-core (#576)
+msgid "Untitled landing page"
+msgstr "Nimetu projektileht"
+
+#: landing-core (#576)
+msgid "Give the page a title."
+msgstr "Andke lehele pealkiri."
+
+#: landing-core (#576)
+msgid "Page settings saved."
+msgstr "Lehe seaded salvestatud."
+
+#: landing-core (#576)
+msgid "Choose a picture."
+msgstr "Valige pilt."
+
+#: landing-core (#576)
+msgid "Pick one of this workspace’s surveys."
+msgstr "Valige üks selle tööruumi küsitlustest."
+
+#: landing-core (#576)
+msgid "The page is unpublished. Its address shows “not available” now."
+msgstr "Leht pole enam avaldatud. Selle aadressil kuvatakse nüüd „pole saadaval“."
+
+#: landing-core (#576)
+msgid "The page is published."
+msgstr "Leht on avaldatud."
+
+#: landing-core (#576)
+#, python-format
+msgid "“%(title)s” is deleted."
+msgstr "„%(title)s“ on kustutatud."
+
+#: landing-core (#576)
+msgid "Landing pages for your engagements"
+msgstr "Projektilehed teie kaasamisprotsessidele"
+
+#: landing-core (#576)
+#, python-format
+msgid "%(n)s phase"
+msgid_plural "%(n)s phases"
+msgstr[0] "%(n)s etapp"
+msgstr[1] "%(n)s etappi"
+
+#: landing-core (#576)
+#, python-format
+msgid "%(n)s survey"
+msgid_plural "%(n)s surveys"
+msgstr[0] "%(n)s küsitlus"
+msgstr[1] "%(n)s küsitlust"
+
+#: landing-core (#576)
+msgid "Open now"
+msgstr "Praegu avatud"

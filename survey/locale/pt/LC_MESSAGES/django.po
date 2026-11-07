@@ -10759,3 +10759,408 @@ msgstr "Procurar um mapa base"
 #: map-styles-basemap-picker
 msgid "The base maps respondents can switch between. They open on the default below."
 msgstr "Os mapas base entre os quais os participantes podem alternar. Abrem no predefinido abaixo."
+
+#: landing-core (#576)
+msgid "Heading (optional)"
+msgstr "Título (opcional)"
+
+#: landing-core (#576)
+msgid "Shown above the block and in the page menu"
+msgstr "Mostrado acima do bloco e no menu da página"
+
+#: landing-core (#576)
+msgid "Describe the picture for screen readers"
+msgstr "Descreva a imagem para leitores de ecrã"
+
+#: landing-core (#576)
+msgid "Label, e.g. Read the draft plan"
+msgstr "Texto, p. ex. Ler a proposta de plano"
+
+#: landing-core (#576)
+msgid "Filled"
+msgstr "Preenchido"
+
+#: landing-core (#576)
+msgid "Outline"
+msgstr "Contorno"
+
+#: landing-core (#576)
+msgid "YouTube or Vimeo link"
+msgstr "Link do YouTube ou Vimeo"
+
+#: landing-core (#576)
+msgid "Add a question"
+msgstr "Adicionar uma pergunta"
+
+#: landing-core (#576)
+msgid "Phases in order. Tick the phase the project is in now; earlier phases show as done."
+msgstr "Fases por ordem. Marque a fase em que o projeto está agora; as anteriores aparecem como concluídas."
+
+#: landing-core (#576)
+msgid "Add a phase"
+msgstr "Adicionar uma fase"
+
+#: landing-core (#576)
+msgid "This workspace has no survey to show yet."
+msgstr "Este espaço de trabalho ainda não tem nenhum inquérito para mostrar."
+
+#: landing-core (#576)
+msgid "What residents are asked, how long it takes (optional)"
+msgstr "O que se pergunta aos moradores e quanto tempo demora (opcional)"
+
+#: landing-core (#576)
+msgid "Button label (default: Take part)"
+msgstr "Texto do botão (predefinição: Participar)"
+
+#: landing-core (#576)
+msgid "The card follows the survey: open, opening soon, or closed with a link to its public results."
+msgstr "O cartão acompanha o inquérito: aberto, a abrir em breve ou fechado com uma ligação para os resultados públicos."
+
+#: landing-core (#576)
+msgid "Add to page"
+msgstr "Adicionar à página"
+
+#: landing-core (#576)
+msgid "open"
+msgstr "aberto"
+
+#: landing-core (#576)
+#, python-format
+msgid "opens %(date)s"
+msgstr "abre a %(date)s"
+
+#: landing-core (#576)
+msgid "coming soon"
+msgstr "abre em breve"
+
+#: landing-core (#576)
+msgid "closed"
+msgstr "fechado"
+
+#: landing-core (#576)
+msgid "results published"
+msgstr "resultados publicados"
+
+#: landing-core (#576)
+msgid "not shown"
+msgstr "não é mostrado"
+
+#: landing-core (#576)
+msgid "Under review"
+msgstr "Em revisão"
+
+#: landing-core (#576)
+msgid "Published · unlisted"
+msgstr "Publicada · não listada"
+
+#: landing-core (#576)
+msgid "Landing pages"
+msgstr "Páginas de projeto"
+
+#: landing-core (#576)
+msgid "Open page"
+msgstr "Abrir a página"
+
+#: landing-core (#576)
+msgid "Landing pages are part of Pro. This workspace's plan has ended, so the page can't be edited; a published page stays online."
+msgstr "As páginas de projeto fazem parte do Pro. O plano deste espaço de trabalho terminou, por isso a página não pode ser editada; uma página publicada continua online."
+
+#: landing-core (#576)
+msgid "This page is waiting for a routine safety review and is not shown to visitors yet. You don't need to do anything."
+msgstr "Esta página aguarda uma verificação de segurança de rotina e ainda não é mostrada aos visitantes. Não precisa de fazer nada."
+
+#: landing-core (#576)
+msgid "Summary"
+msgstr "Descrição breve"
+
+#: landing-core (#576)
+msgid "One or two sentences under the title, also shown when the link is shared."
+msgstr "Uma ou duas frases por baixo do título, também mostradas quando a ligação é partilhada."
+
+#: landing-core (#576)
+msgid "Cover picture"
+msgstr "Fotografia de capa"
+
+#: landing-core (#576)
+msgid "Remove the picture"
+msgstr "Remover a imagem"
+
+#: landing-core (#576)
+msgid "Picture description"
+msgstr "Descrição da imagem"
+
+#: landing-core (#576)
+msgid "Address"
+msgstr "Endereço"
+
+#: landing-core (#576)
+msgid "Changing the address of a published page breaks links and QR codes already printed."
+msgstr "Alterar o endereço de uma página publicada invalida as ligações e os códigos QR já impressos."
+
+#: landing-core (#576)
+msgid "Page language"
+msgstr "Idioma da página"
+
+#: landing-core (#576)
+msgid "Public — search engines may list it"
+msgstr "Pública — os motores de pesquisa podem indexá-la"
+
+#: landing-core (#576)
+msgid "Unlisted — only people with the link"
+msgstr "Não listada — apenas quem tiver a ligação"
+
+#: landing-core (#576)
+msgid "Surveys on this page"
+msgstr "Inquéritos nesta página"
+
+#: landing-core (#576)
+msgid "A survey can be on any number of landing pages. Show one with a Survey card block."
+msgstr "Um inquérito pode estar em quantas páginas de projeto quiser. Mostre-o com um bloco «Cartão do inquérito»."
+
+#: landing-core (#576)
+msgid "Remove from this page"
+msgstr "Remover desta página"
+
+#: landing-core (#576)
+msgid "No surveys yet."
+msgstr "Ainda não há inquéritos."
+
+#: landing-core (#576)
+msgid "Download QR code (PNG)"
+msgstr "Descarregar o código QR (PNG)"
+
+#: landing-core (#576)
+msgid "Delete this landing page? Its address stops working."
+msgstr "Eliminar esta página de projeto? O endereço deixará de funcionar."
+
+#: landing-core (#576)
+msgid "Delete page"
+msgstr "Eliminar a página"
+
+#: landing-core (#576)
+msgid "Delete this block?"
+msgstr "Eliminar este bloco?"
+
+#: landing-core (#576)
+msgid "Delete block"
+msgstr "Eliminar o bloco"
+
+#: landing-core (#576)
+msgid "No blocks yet. Add the first one: a few words about the project, a timeline, or a card for the survey."
+msgstr "Ainda não há blocos. Adicione o primeiro: algumas palavras sobre o projeto, um calendário ou um cartão para o inquérito."
+
+#: landing-core (#576)
+msgid "New block"
+msgstr "Novo bloco"
+
+#: landing-core (#576)
+msgid "Phase, e.g. Online survey"
+msgstr "Fase, p. ex. Inquérito online"
+
+#: landing-core (#576)
+msgid "When, e.g. March 2027"
+msgstr "Quando, p. ex. março de 2027"
+
+#: landing-core (#576)
+msgid "Now"
+msgstr "Agora"
+
+#: landing-core (#576)
+msgid "What happens in this phase (optional)"
+msgstr "O que acontece nesta fase (opcional)"
+
+#: landing-core (#576)
+msgid "Waiting for a safety review — only your workspace sees this page."
+msgstr "A aguardar verificação de segurança — só o seu espaço de trabalho vê esta página."
+
+#: landing-core (#576)
+msgid "Draft — only your workspace sees this."
+msgstr "Rascunho — só o seu espaço de trabalho o vê."
+
+#: landing-core (#576)
+msgid "Back to the builder"
+msgstr "Voltar ao editor"
+
+#: landing-core (#576)
+msgid "On this page"
+msgstr "Nesta página"
+
+#: landing-core (#576)
+msgid "Never enter passwords or card numbers on this page."
+msgstr "Nunca introduza palavras-passe ou números de cartão nesta página."
+
+#: landing-core (#576)
+msgid "Report this page"
+msgstr "Denunciar esta página"
+
+#: landing-core (#576)
+msgid "Page title, e.g. Riverside Park plan"
+msgstr "Título da página, p. ex. Plano do Parque Ribeirinho"
+
+#: landing-core (#576)
+msgid "New page"
+msgstr "Nova página"
+
+#: landing-core (#576)
+msgid "Upgrade to Pro to create pages"
+msgstr "Mude para Pro para criar páginas"
+
+#: landing-core (#576)
+msgid "One public page for an engagement: what the project is about, the timeline, the surveys residents can take part in, and what happens next. Put its address on flyers and QR codes; it stays the same from the first pilot to the final plan."
+msgstr "Uma página pública para um processo participativo: do que trata o projeto, o calendário, os inquéritos em que os moradores podem participar e o que acontece a seguir. Coloque o endereço em folhetos e códigos QR; mantém-se igual do primeiro piloto ao plano final."
+
+#: landing-core (#576)
+msgid "No landing pages yet."
+msgstr "Ainda não há páginas de projeto."
+
+#: landing-core (#576)
+msgid "Video"
+msgstr "Vídeo"
+
+#: landing-core (#576)
+#, python-format
+msgid "Opens %(date)s"
+msgstr "Abre a %(date)s"
+
+#: landing-core (#576)
+msgid "Take part"
+msgstr "Participar"
+
+#: landing-core (#576)
+msgid "Timeline"
+msgstr "Calendário"
+
+#: landing-core (#576)
+msgid "Survey card"
+msgstr "Cartão do inquérito"
+
+#: landing-core (#576)
+msgid "Button"
+msgstr "Botão"
+
+#: landing-core (#576)
+msgid "Text-based content"
+msgstr "Conteúdo de texto"
+
+#: landing-core (#576)
+msgid "Media"
+msgstr "Multimédia"
+
+#: landing-core (#576)
+msgid "Participation and links"
+msgstr "Participação e ligações"
+
+#: landing-core (#576)
+msgid "Write some text."
+msgstr "Escreva algum texto."
+
+#: landing-core (#576)
+msgid "Give the button a label."
+msgstr "Dê um texto ao botão."
+
+#: landing-core (#576)
+msgid "Enter a full web address that starts with https://"
+msgstr "Introduza um endereço web completo que comece por https://"
+
+#: landing-core (#576)
+msgid "Add at least one question."
+msgstr "Adicione pelo menos uma pergunta."
+
+#: landing-core (#576)
+msgid "Every answer needs its question."
+msgstr "Cada resposta precisa da sua pergunta."
+
+#: landing-core (#576)
+msgid "Add at least one phase."
+msgstr "Adicione pelo menos uma fase."
+
+#: landing-core (#576)
+msgid "Every phase needs a title."
+msgstr "Cada fase precisa de um título."
+
+#: landing-core (#576)
+msgid "Unknown block type."
+msgstr "Tipo de bloco desconhecido."
+
+#: landing-core (#576)
+msgid "The picture is larger than 5 MB."
+msgstr "A imagem tem mais de 5 MB."
+
+#: landing-core (#576)
+msgid "Upload a JPEG, PNG, WebP or GIF picture."
+msgstr "Carregue uma imagem JPEG, PNG, WebP ou GIF."
+
+#: landing-core (#576)
+msgid "Use 3–64 lowercase letters, digits and dashes."
+msgstr "Use 3 a 64 letras minúsculas, algarismos e hífenes."
+
+#: landing-core (#576)
+msgid "This address is reserved. Pick another."
+msgstr "Este endereço está reservado. Escolha outro."
+
+#: landing-core (#576)
+msgid "Another landing page already uses this address."
+msgstr "Outra página de projeto já usa este endereço."
+
+#: landing-core (#576)
+msgid "The survey is archived or in the trash."
+msgstr "O inquérito está arquivado ou no lixo."
+
+#: landing-core (#576)
+msgid "The survey is waiting for a safety review."
+msgstr "O inquérito aguarda uma verificação de segurança."
+
+#: landing-core (#576)
+msgid "Untitled landing page"
+msgstr "Página de projeto sem título"
+
+#: landing-core (#576)
+msgid "Give the page a title."
+msgstr "Dê um título à página."
+
+#: landing-core (#576)
+msgid "Page settings saved."
+msgstr "Definições da página guardadas."
+
+#: landing-core (#576)
+msgid "Choose a picture."
+msgstr "Escolha uma imagem."
+
+#: landing-core (#576)
+msgid "Pick one of this workspace’s surveys."
+msgstr "Escolha um dos inquéritos deste espaço de trabalho."
+
+#: landing-core (#576)
+msgid "The page is unpublished. Its address shows “not available” now."
+msgstr "A página deixou de estar publicada. O endereço mostra agora «indisponível»."
+
+#: landing-core (#576)
+msgid "The page is published."
+msgstr "A página está publicada."
+
+#: landing-core (#576)
+#, python-format
+msgid "“%(title)s” is deleted."
+msgstr "«%(title)s» foi eliminada."
+
+#: landing-core (#576)
+msgid "Landing pages for your engagements"
+msgstr "Páginas de projeto para os seus processos participativos"
+
+#: landing-core (#576)
+#, python-format
+msgid "%(n)s phase"
+msgid_plural "%(n)s phases"
+msgstr[0] "%(n)s fase"
+msgstr[1] "%(n)s fases"
+
+#: landing-core (#576)
+#, python-format
+msgid "%(n)s survey"
+msgid_plural "%(n)s surveys"
+msgstr[0] "%(n)s inquérito"
+msgstr[1] "%(n)s inquéritos"
+
+#: landing-core (#576)
+msgid "Open now"
+msgstr "Aberto agora"

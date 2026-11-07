@@ -1710,7 +1710,11 @@ class ContentReview(models.Model):
     )
     OPEN_STATUSES = ('pending', 'reported')
 
-    survey = models.ForeignKey('SurveyHeader', on_delete=models.CASCADE, related_name='content_reviews')
+    # Exactly one subject (change landing-core): a canonical survey or a landing.
+    survey = models.ForeignKey('SurveyHeader', null=True, blank=True, on_delete=models.CASCADE,
+                               related_name='content_reviews')
+    landing = models.ForeignKey('Landing', null=True, blank=True, on_delete=models.CASCADE,
+                                related_name='content_reviews')
     status = models.CharField(max_length=12, choices=STATUS_CHOICES, default='pending')
     source = models.CharField(max_length=8, choices=SOURCE_CHOICES, default='screen')
     trigger = models.CharField(max_length=16, blank=True, default='')
@@ -1730,9 +1734,16 @@ class ContentReview(models.Model):
         app_label = 'survey'
         ordering = ['-created_at']
         indexes = [models.Index(fields=['survey', 'status'], name='survey_contentreview_open_idx')]
+        constraints = [
+            models.CheckConstraint(
+                name='contentreview_one_subject',
+                condition=Q(survey__isnull=False, landing__isnull=True) | Q(survey__isnull=True, landing__isnull=False),
+            ),
+        ]
 
     def __str__(self):
-        return f"review #{self.pk} {self.status} survey={self.survey_id} score={self.score}"
+        subject = f'landing={self.landing_id}' if self.landing_id else f'survey={self.survey_id}'
+        return f"review #{self.pk} {self.status} {subject} score={self.score}"
 
     @property
     def is_open(self):
@@ -3101,3 +3112,110 @@ class MapStyleVersion(models.Model):
     @property
     def print_style(self):
         return self.static_style or self.mapbox_style_id
+
+
+# ─── Landing pages (change landing-core, #576; epic #348) ─────────────────────
+
+def landing_asset_key(instance, filename):
+    """landing_assets/<uuid4>.<ext> on the public tier: creator artwork under a random,
+    non-guessable key, like `layer_asset_key` (a draft landing's pictures are reachable by
+    anyone holding the URL, never listable)."""
+    ext = (os.path.splitext(filename)[1] or '')[:8].lower()
+    return f'landing_assets/{uuid_module.uuid4().hex}{ext}'
+
+
+LANDING_VISIBILITY_CHOICES = (
+    ('public', _('Public')),
+    ('unlisted', _('Unlisted')),
+)
+
+
+class Landing(models.Model):
+    """A workspace's public page for an engagement, served at /p/<slug>/.
+
+    Owned by the workspace, not by a survey: surveys are linked many-to-many through
+    `LandingSurvey`, so one survey can appear on any number of landings. The content is an
+    ordered list of `LandingBlock`s whose per-kind data is validated by ONE function,
+    `survey/landings.py::clean_block`. Pro (`landing_pages`) to create, edit and publish;
+    the public page never checks the plan, so a landing published under Pro survives a lapse.
+    """
+    uuid = models.UUIDField(default=uuid_module.uuid4, unique=True, editable=False)
+    organization = models.ForeignKey('Organization', on_delete=models.CASCADE, related_name='landings')
+    title = models.CharField(max_length=120)
+    summary = models.CharField(max_length=300, blank=True, default='')
+    cover = models.ImageField(upload_to=landing_asset_key, null=True, blank=True)
+    cover_alt = models.CharField(max_length=200, blank=True, default='')
+    slug = models.SlugField(max_length=64, unique=True)
+    language = models.CharField(max_length=10, default='en')
+    visibility = models.CharField(max_length=10, choices=LANDING_VISIBILITY_CHOICES, default='public')
+    is_published = models.BooleanField(default=False)
+    published_at = models.DateTimeField(null=True, blank=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,
+                                   on_delete=models.SET_NULL, related_name='landings_created')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ('-updated_at',)
+
+    def __str__(self):
+        return self.title
+
+    def get_absolute_url(self):
+        from django.urls import reverse
+        return reverse('landing_public', args=[self.slug])
+
+
+class LandingSurvey(models.Model):
+    """A survey linked to a landing. Always the CANONICAL survey: draft copies and archived
+    versions come and go, the canonical row is what respondents' links name."""
+    landing = models.ForeignKey(Landing, on_delete=models.CASCADE, related_name='survey_links')
+    survey = models.ForeignKey('SurveyHeader', on_delete=models.CASCADE, related_name='landing_links')
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ('order', 'id')
+        constraints = [models.UniqueConstraint(fields=['landing', 'survey'], name='landingsurvey_unique')]
+
+    def __str__(self):
+        return f'{self.landing} ↔ {self.survey}'
+
+
+LANDING_BLOCK_KIND_CHOICES = (
+    ('text', _('Text')),
+    ('image', _('Image')),
+    ('button', _('Button')),
+    ('video', _('Video')),
+    ('faq', _('FAQ')),
+    ('timeline', _('Timeline')),
+    ('survey', _('Survey card')),
+)
+
+
+class LandingBlock(models.Model):
+    """One block of a landing. `data` holds the kind's fields exactly as
+    `landings.clean_block` returned them; templates read nothing else. A survey card points
+    at its `LandingSurvey`, so unlinking the survey removes the card (CASCADE)."""
+    landing = models.ForeignKey(Landing, on_delete=models.CASCADE, related_name='blocks')
+    order = models.PositiveIntegerField(default=0)
+    kind = models.CharField(max_length=16, choices=LANDING_BLOCK_KIND_CHOICES)
+    title = models.CharField(max_length=120, blank=True, default='')
+    data = models.JSONField(default=dict, blank=True)
+    image = models.ImageField(upload_to=landing_asset_key, null=True, blank=True)
+    landing_survey = models.ForeignKey(LandingSurvey, null=True, blank=True, on_delete=models.CASCADE,
+                                       related_name='cards')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ('order', 'id')
+
+    def __str__(self):
+        return f'{self.landing} #{self.order} {self.kind}'
+
+    @property
+    def anchor(self):
+        return f'b-{self.pk}'

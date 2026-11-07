@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% load i18n static question_utils %}
+
+{% block title %}{{ landing.title }} — {% trans "Landing pages" %}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="{% static 'css/landing_builder.css' %}">
+{% endblock %}
+
+{% block content %}
+{% comment %}The landing builder (change landing-core, #576). Left: page settings and linked surveys.
+Right: the blocks, each with its own form; "Add block" opens the picker and renders an empty form for
+the chosen kind at the end of the list (?add=<kind>). Everything is a plain form post that comes back
+here; drag-to-reorder posts the id list as JSON. Read-only for viewers and for a lapsed workspace
+(may_edit false) — unpublish and remove stay available to editors either way.{% endcomment %}
+<div class="container-fluid lb mt-3" data-reorder-url="{% url 'editor_landing_blocks_reorder' landing.uuid %}">
+  <div class="lb-head">
+    <div>
+      <a href="{% url 'editor_landings' %}" class="small text-muted"><i class="fas fa-chevron-left" aria-hidden="true"></i> {% trans "Landing pages" %}</a>
+      <h4 class="mb-0 mt-1">{{ landing.title }} {% include "landings/_state_badge.html" %}</h4>
+    </div>
+    <div class="lb-actions">
+      <a class="btn btn-sm btn-outline-secondary" href="{% url 'landing_public' landing.slug %}" target="_blank" rel="noopener" id="landing-preview">
+        <i class="far fa-eye" aria-hidden="true"></i> {% if landing.is_published %}{% trans "Open page" %}{% else %}{% trans "Preview" %}{% endif %}</a>
+      {% if can_act %}
+      <form method="post" action="{% url 'editor_landing_publish' landing.uuid %}" class="d-inline mb-0">
+        {% csrf_token %}
+        {% if landing.is_published %}
+        <input type="hidden" name="action" value="unpublish">
+        <button type="submit" class="btn btn-sm btn-outline-danger">{% trans "Unpublish" %}</button>
+        {% elif may_edit %}
+        <input type="hidden" name="action" value="publish">
+        <button type="submit" class="btn btn-sm btn-success" id="landing-publish">{% trans "Publish" %}</button>
+        {% endif %}
+      </form>
+      {% endif %}
+    </div>
+  </div>
+
+  {% for message in messages %}
+  <div class="alert alert-{{ message.tags }} py-2 mt-2" style="font-size:.9rem;">{{ message }}</div>
+  {% endfor %}
+  {% if lapsed %}
+  <div class="alert alert-warning py-2 mt-2" style="font-size:.9rem;">
+    {% trans "Landing pages are part of Pro. This workspace's plan has ended, so the page can't be edited; a published page stays online." %}
+    <a href="{% url 'org_billing' org.slug %}">{% trans "Plan & billing" %}</a>
+  </div>
+  {% endif %}
+  {% if held %}
+  <div class="alert alert-warning py-2 mt-2" style="font-size:.9rem;">
+    {% trans "This page is waiting for a routine safety review and is not shown to visitors yet. You don't need to do anything." %}
+  </div>
+  {% endif %}
+
+  <div class="lb-grid">
+    <aside class="lb-side">
+      {# ── Settings ── #}
+      <section class="lb-card" id="settings">
+        <h6>{% trans "Page" %}</h6>
+        <form method="post" action="{% url 'editor_landing_settings' landing.uuid %}" enctype="multipart/form-data">
+          {% csrf_token %}
+          <fieldset {% if not may_edit %}disabled{% endif %}>
+          <div class="form-group">
+            <label for="lp-title">{% trans "Title" %}</label>
+            <input id="lp-title" name="title" class="form-control form-control-sm{% if settings_errors.title %} is-invalid{% endif %}" maxlength="120" value="{{ landing.title }}" required>
+            {% if settings_errors.title %}<div class="invalid-feedback">{{ settings_errors.title }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label for="lp-summary">{% trans "Summary" %}</label>
+            <textarea id="lp-summary" name="summary" class="form-control form-control-sm" rows="3" maxlength="300"
+                      placeholder="{% trans 'One or two sentences under the title, also shown when the link is shared.' %}">{{ landing.summary }}</textarea>
+          </div>
+          <div class="form-group">
+            <label for="lp-cover">{% trans "Cover picture" %}</label>
+            {% if landing.cover %}<img src="{{ landing.cover.url }}" alt="" class="lb-cover-thumb">{% endif %}
+            <input type="file" id="lp-cover" name="cover" accept="image/jpeg,image/png,image/webp,image/gif" class="form-control-file form-control-sm{% if settings_errors.cover %} is-invalid{% endif %}">
+            {% if settings_errors.cover %}<div class="invalid-feedback d-block">{{ settings_errors.cover }}</div>{% endif %}
+            {% if landing.cover %}<div class="form-check mt-1"><input type="checkbox" class="form-check-input" id="lp-remove-cover" name="remove_cover" value="1"><label class="form-check-label small" for="lp-remove-cover">{% trans "Remove the picture" %}</label></div>{% endif %}
+            <input name="cover_alt" class="form-control form-control-sm mt-1" maxlength="200" value="{{ landing.cover_alt }}" placeholder="{% trans 'Describe the picture for screen readers' %}" aria-label="{% trans 'Picture description' %}">
+          </div>
+          <div class="form-group">
+            <label for="lp-slug">{% trans "Address" %}</label>
+            <div class="input-group input-group-sm">
+              <div class="input-group-prepend"><span class="input-group-text">/p/</span></div>
+              <input id="lp-slug" name="slug" class="form-control{% if settings_errors.slug %} is-invalid{% endif %}" maxlength="64" value="{{ landing.slug }}" pattern="[a-z0-9]+(-[a-z0-9]+)*" required>
+              {% if settings_errors.slug %}<div class="invalid-feedback">{{ settings_errors.slug }}</div>{% endif %}
+            </div>
+            {% if landing.is_published %}<small class="text-muted">{% trans "Changing the address of a published page breaks links and QR codes already printed." %}</small>{% endif %}
+          </div>
+          <div class="form-row">
+            <div class="form-group col-6">
+              <label for="lp-language">{% trans "Page language" %}</label>
+              <select id="lp-language" name="language" class="form-control form-control-sm">
+                {% for code, name in languages %}<option value="{{ code }}"{% if code == landing.language %} selected{% endif %}>{{ name }}</option>{% endfor %}
+              </select>
+            </div>
+            <div class="form-group col-6">
+              <label for="lp-visibility">{% trans "Visibility" %}</label>
+              <select id="lp-visibility" name="visibility" class="form-control form-control-sm">
+                <option value="public"{% if landing.visibility == 'public' %} selected{% endif %}>{% trans "Public — search engines may list it" %}</option>
+                <option value="unlisted"{% if landing.visibility == 'unlisted' %} selected{% endif %}>{% trans "Unlisted — only people with the link" %}</option>
+              </select>
+            </div>
+          </div>
+          {% if may_edit %}<button type="submit" class="btn btn-sm btn-primary">{% trans "Save page settings" %}</button>{% endif %}
+          </fieldset>
+        </form>
+      </section>
+
+      {# ── Linked surveys ── #}
+      <section class="lb-card" id="surveys">
+        <h6>{% trans "Surveys on this page" %}</h6>
+        <p class="small text-muted mb-2">{% trans "A survey can be on any number of landing pages. Show one with a Survey card block." %}</p>
+        <ul class="list-unstyled mb-2">
+          {% for link, card in links %}
+          <li class="lb-link">
+            <span>{{ link.survey.name }} <small class="text-muted">· {% include "landings/_card_state.html" %}</small></span>
+            {% if can_act %}
+            <form method="post" action="{% url 'editor_landing_survey_unlink' landing.uuid link.pk %}" class="d-inline mb-0">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-link btn-sm text-muted p-0" title="{% trans 'Remove from this page' %}" aria-label="{% trans 'Remove from this page' %}"><i class="fas fa-times" aria-hidden="true"></i></button>
+            </form>
+            {% endif %}
+          </li>
+          {% empty %}
+          <li class="small text-muted">{% trans "No surveys yet." %}</li>
+          {% endfor %}
+        </ul>
+        {% if may_edit and linkable %}
+        <form method="post" action="{% url 'editor_landing_survey_link' landing.uuid %}" class="d-flex mb-0" style="gap:.4rem;">
+          {% csrf_token %}
+          <select name="survey" class="form-control form-control-sm" aria-label="{% trans 'Survey' %}">
+            {% for s in linkable %}<option value="{{ s.uuid }}">{{ s.name }}</option>{% endfor %}
+          </select>
+          <button type="submit" class="btn btn-sm btn-outline-primary text-nowrap">{% trans "Add" %}</button>
+        </form>
+        {% endif %}
+      </section>
+
+      {# ── Share ── #}
+      <section class="lb-card" id="share">
+        <h6>{% trans "Share" %}</h6>
+        <input class="form-control form-control-sm" readonly value="{{ public_url }}" aria-label="{% trans 'Page address' %}" onclick="this.select()">
+        <a class="small d-inline-block mt-1" href="{% url 'editor_landing_qr' landing.uuid %}">{% trans "Download QR code (PNG)" %}</a> ·
+        <a class="small" href="{% url 'editor_landing_qr' landing.uuid %}?format=svg">SVG</a>
+        {% if can_act %}
+        <form method="post" action="{% url 'editor_landing_delete' landing.uuid %}" class="mt-3 mb-0"
+              onsubmit="return confirm('{% trans "Delete this landing page? Its address stops working." as q %}{{ q|escapejs }}');">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-link btn-sm text-danger p-0">{% trans "Delete page" %}</button>
+        </form>
+        {% endif %}
+      </section>
+    </aside>
+
+    <main class="lb-main" id="blocks">
+      <div class="lb-hero-preview">
+        {% if landing.cover %}<img src="{{ landing.cover.url }}" alt="">{% endif %}
+        <div><strong>{{ landing.title }}</strong>{% if landing.summary %}<div class="text-muted small">{{ landing.summary }}</div>{% endif %}</div>
+      </div>
+
+      <ol class="lb-blocks list-unstyled" id="lb-blocks" {% if may_edit %}data-sortable="1"{% endif %}>
+        {% for block in blocks %}
+        {% with errors=block_errors|get_item:block.pk %}
+        <li class="lb-block{% if errors %} lb-open{% endif %}" id="{{ block.anchor }}" data-id="{{ block.pk }}">
+          <div class="lb-block-head">
+            {% if may_edit %}<span class="lb-handle" title="{% trans 'Drag to reorder' %}" aria-hidden="true"><i class="fas fa-grip-vertical"></i></span>{% endif %}
+            <span class="lb-kind">{{ kinds|get_item:block.kind }}</span>
+            <span class="lb-block-title">{% include "landings/_block_summary.html" %}</span>
+            {% if may_edit %}<button type="button" class="btn btn-link btn-sm lb-toggle">{% trans "Edit" %}</button>{% endif %}
+            {% if can_act %}
+            <form method="post" action="{% url 'editor_landing_block_delete' landing.uuid block.pk %}" class="d-inline mb-0"
+                  onsubmit="return confirm('{% trans "Delete this block?" as q %}{{ q|escapejs }}');">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-link btn-sm text-muted" aria-label="{% trans 'Delete block' %}" title="{% trans 'Delete block' %}"><i class="far fa-trash-alt" aria-hidden="true"></i></button>
+            </form>
+            {% endif %}
+          </div>
+          {% if may_edit %}
+          <div class="lb-block-form">
+            {% url 'editor_landing_block_edit' landing.uuid block.pk as action %}
+            {% include "landings/_block_form.html" with kind=block.kind data=block.data title=block.title action=action errors=errors selected_survey=block.landing_survey.survey.uuid %}
+          </div>
+          {% endif %}
+        </li>
+        {% endwith %}
+        {% empty %}
+        <li class="text-muted small py-3">{% trans "No blocks yet. Add the first one: a few words about the project, a timeline, or a card for the survey." %}</li>
+        {% endfor %}
+      </ol>
+
+      {% if new_kind %}
+      <div class="lb-block lb-open lb-new" id="new-block">
+        <div class="lb-block-head"><span class="lb-kind">{% trans "New block" %}: {{ kinds|get_item:new_kind }}</span>
+          <a href="{% url 'editor_landing' landing.uuid %}#blocks" class="btn btn-link btn-sm ml-auto">{% trans "Cancel" %}</a></div>
+        <div class="lb-block-form">
+          {% url 'editor_landing_block_add' landing.uuid as action %}
+          {% include "landings/_block_form.html" with kind=new_kind data=new_raw title=new_raw.title action=action errors=new_errors selected_survey=new_raw.survey is_new=True %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if may_edit %}
+      <button type="button" class="btn btn-outline-primary btn-block lb-add" data-toggle="modal" data-target="#lb-picker" id="landing-add-block">
+        <i class="fas fa-plus" aria-hidden="true"></i> {% trans "Add block" %}</button>
+      {% endif %}
+    </main>
+  </div>
+</div>
+
+{% if may_edit %}
+<div class="modal fade" id="lb-picker" tabindex="-1" role="dialog" aria-labelledby="lb-picker-title" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="lb-picker-title">{% trans "Add block" %}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="{% trans 'Close' %}"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body lb-picker">
+        {% for group_label, items in picker %}
+        <div class="lb-picker-group">
+          <div class="small text-muted mb-1">{{ group_label }}</div>
+          {% for kind, label, icon in items %}
+          <a class="lb-picker-item" href="{% url 'editor_landing' landing.uuid %}?add={{ kind }}#new-block" data-kind="{{ kind }}">
+            <i class="{{ icon }}" aria-hidden="true"></i> {{ label }}</a>
+          {% endfor %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<script src="{% static 'js/landing_builder.js' %}"></script>
+{% endblock %}

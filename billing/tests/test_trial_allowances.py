@@ -19,7 +19,8 @@ from .. import trial
 from ..models import STATUS_REFUNDED, EntitlementGrant, GrantAllowance
 from .helpers import PPG_SETTINGS, make_org, make_sub
 
-OFFER = {'api': 500, 'unbranded': 1, 'pro_help': 1, 'operator_entry': None, 'map_styles': 2}
+OFFER = {'api': 500, 'unbranded': 1, 'pro_help': 1, 'operator_entry': None, 'map_styles': 2,
+         'landing_pages': 1}
 CAPPED = {k: v for k, v in OFFER.items() if v is not None}
 
 
