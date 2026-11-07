@@ -10268,3 +10268,7 @@ msgstr "Mis on uut"
 #: survey/templates/partials/_app_sidebar.html
 msgid "Help centre"
 msgstr "Abikeskus"
+
+#: whats-new-in-sidebar
+msgid "Read more"
+msgstr "Loe edasi"

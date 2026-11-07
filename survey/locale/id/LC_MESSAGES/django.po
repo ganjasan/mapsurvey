@@ -10302,3 +10302,7 @@ msgstr "Yang baru"
 #: survey/templates/partials/_app_sidebar.html
 msgid "Help centre"
 msgstr "Pusat bantuan"
+
+#: whats-new-in-sidebar
+msgid "Read more"
+msgstr "Baca selengkapnya"

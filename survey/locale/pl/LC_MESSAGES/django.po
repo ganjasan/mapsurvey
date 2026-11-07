@@ -10397,3 +10397,7 @@ msgstr "Co nowego"
 #: survey/templates/partials/_app_sidebar.html
 msgid "Help centre"
 msgstr "Centrum pomocy"
+
+#: whats-new-in-sidebar
+msgid "Read more"
+msgstr "Czytaj dalej"

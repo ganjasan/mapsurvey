@@ -10289,3 +10289,7 @@ msgstr "Uutta"
 #: survey/templates/partials/_app_sidebar.html
 msgid "Help centre"
 msgstr "Ohjekeskus"
+
+#: whats-new-in-sidebar
+msgid "Read more"
+msgstr "Lue lisää"

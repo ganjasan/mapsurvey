@@ -92,6 +92,30 @@ body.app-rail .app-sidebar { width: var(--app-rail-w); }
 .app-side-foot { flex: none; border-top: 1px solid var(--app-side-line); padding: 8px; }
 .app-side-foot .app-item { height: 30px; font-size: 13px; }
 
+/* "What's new" above the footer (change whats-new-in-sidebar): the one place an unseen
+   changelog entry shows; the dashboard banner and the corner card are gone. */
+.app-wn {
+    position: relative; flex: none; margin: 0 8px 10px; padding: 10px 12px 10px;
+    background: #fff; border: 1px solid var(--app-side-line); border-radius: 10px;
+    font-size: 13px; color: var(--app-side-ink);
+}
+.app-wn.wn-hidden { display: none; }
+.app-wn-close {
+    position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; border: 0; border-radius: 6px;
+    background: none; color: var(--app-side-ink-3); font-size: 12px; cursor: pointer;
+}
+.app-wn-close:hover { background: #f0f0f4; color: #1f2937; }
+.app-wn-image { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 6px; margin-bottom: 8px; }
+.app-wn-eyebrow { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; font-weight: 700; color: var(--app-side-accent); padding-right: 22px; }
+.app-wn-eyebrow span { color: var(--app-side-ink-3); font-weight: 500; letter-spacing: 0; text-transform: none; margin-left: 4px; }
+.app-wn-title { margin: 4px 0 8px; font-weight: 600; color: #1f2937; line-height: 1.3; }
+.app-wn-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; font-size: 12.5px; }
+.app-wn-cta { font-weight: 600; }
+.app-wn-mute { border: 0; background: none; padding: 0; color: var(--app-side-ink-3); font-size: 12px; cursor: pointer; }
+.app-wn-mute:hover { text-decoration: underline; }
+body.app-rail .app-wn { display: none; }
+@media (max-height: 640px) { .app-wn-image { display: none; } }
+
 /* ── Rail: icons only, the label as a tooltip ─────────────────────────── */
 body.app-rail .app-logo,
 body.app-rail .app-ws-name, body.app-rail .app-ws-plan, body.app-rail .app-ws-caret,
