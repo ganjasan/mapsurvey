@@ -272,6 +272,12 @@ def whats_new(request):
         if changelog.hero_candidates(seen, timezone.localdate()):
             audience = Audience(user, org)
             hero = changelog.hero_for(seen, audience)
+        # The sidebar shows the NEWEST unseen entry (owner, 2026-11-07): a pending hero
+        # wins only when nothing newer has shipped since; an older hero no longer keeps a
+        # newer card out of sight for its 30 days. Ids start with the date, so newer = larger.
+        card = changelog.latest_card(seen)
+        if hero is not None and card is not None and card.id > hero.id:
+            hero = None
         if hero is not None:
             value['hero'] = hero
             value['hero_link'] = _hero_link(hero)
@@ -288,7 +294,6 @@ def whats_new(request):
                          .values_list('name', flat=True)[:len(hero.chips)])
             value['hero_chips'] = changelog.render_chips(hero, names)
             return value
-        card = changelog.latest_card(seen)
         value['card'] = card
         value['show_card'] = card is not None
         return value
