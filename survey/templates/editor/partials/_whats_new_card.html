@@ -8,9 +8,11 @@ context processor says `show_card`: an unseen entry exists and cards are on.
 seen itself); "Don't show these" posts the preference. The closed entry id is
 remembered in localStorage (change changelog-hero): a close whose POST failed
 stays closed on the next page instead of asking for a second click. `card` is
-the newest unseen `card`-tier entry; while a hero is pending it is None.
+the newest unseen `card`-tier entry; while a hero is pending it is None. A view that
+passes `suppress_whats_new_card` keeps the card off its page (the style editor, whose
+preview map it would cover); the sidebar dot and the page stay.
 {% endcomment %}
-{% if whats_new.show_card %}
+{% if whats_new.show_card and not suppress_whats_new_card %}
 {% with entry=whats_new.card %}
 <div class="wn-card" id="whatsNewCard" role="dialog" aria-label="{% trans "What's new" %}" data-entry-id="{{ entry.id }}"
      data-seen-url="{% url 'whats_new_seen' %}" data-cards-url="{% url 'whats_new_cards' %}">
