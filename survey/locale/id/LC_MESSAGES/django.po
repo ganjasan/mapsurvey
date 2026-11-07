@@ -10697,3 +10697,11 @@ msgstr "Warna asli peta dasar"
 #: map-styles-print-greyscale
 msgid "In colour"
 msgstr "Berwarna"
+
+#: map-styles-basemap-picker
+msgid "Find a base map"
+msgstr "Cari peta dasar"
+
+#: map-styles-basemap-picker
+msgid "The base maps respondents can switch between. They open on the default below."
+msgstr "Peta dasar yang dapat dipilih responden. Peta dibuka dengan peta bawaan di bawah."

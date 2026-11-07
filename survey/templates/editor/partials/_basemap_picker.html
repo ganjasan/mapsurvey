@@ -1,0 +1,96 @@
+{% load i18n %}
+{% comment %}The survey's base maps (change map-styles-basemap-picker): a workspace may hold
+hundreds of styles (owner, 2026-11-07), so the list is folded into one line naming what is on
+and opens as a filterable checklist. It writes the JSON list into the form's hidden
+`id_basemaps`, and keeps the "Default base map" select to the base maps that are on: a default
+that was switched off moves to the first one still on and tells the position map
+(`change` on the select, not bubbling, so the panel's autosave sees one change only).{% endcomment %}
+<div class="bm-picker" id="bm-picker">
+  <button type="button" class="form-control bm-summary" id="bm-toggle" aria-expanded="false" aria-controls="bm-panel">
+    <span class="bm-summary-text" id="bm-summary-text"></span>
+    <i class="fas fa-chevron-down" aria-hidden="true"></i>
+  </button>
+  <div class="bm-panel" id="bm-panel" hidden>
+    {% if basemap_choices|length > 8 %}
+    <input type="search" class="form-control form-control-sm bm-filter" id="bm-filter"
+           placeholder="{% trans 'Find a base map' %}" aria-label="{% trans 'Find a base map' %}">
+    {% endif %}
+    <div class="bm-list">
+      {% for slug, label in basemap_choices %}
+      <label class="bm-item" data-name="{{ label|lower }}">
+        <input class="basemap-cb" type="checkbox" id="bm_{{ slug }}" value="{{ slug }}"
+               data-label="{{ label }}"{% if slug in survey.basemaps %} checked{% endif %}>
+        <span>{{ label }}</span>
+      </label>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+<style>
+  .bm-picker { position: relative; }
+  .bm-summary { display: flex; align-items: center; justify-content: space-between; gap: .5rem; text-align: left; cursor: pointer; background: #fff; }
+  .bm-summary-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bm-summary[aria-expanded="true"] .fa-chevron-down { transform: rotate(180deg); }
+  .bm-panel { margin-top: .35rem; padding: .5rem; border: 1px solid #e5e7eb; border-radius: .35rem; background: #fff; }
+  .bm-filter { margin-bottom: .4rem; }
+  .bm-list { max-height: 240px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: .15rem .75rem; }
+  .bm-item { display: flex; gap: .45rem; align-items: center; margin: 0; padding: .15rem 0; font-weight: 400; cursor: pointer; min-width: 0; }
+  .bm-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+</style>
+<script>
+(function () {
+    var inp = document.getElementById('id_basemaps');
+    var cbs = Array.prototype.slice.call(document.querySelectorAll('#bm-picker .basemap-cb'));
+    var toggle = document.getElementById('bm-toggle');
+    var panel = document.getElementById('bm-panel');
+    var summary = document.getElementById('bm-summary-text');
+    var filter = document.getElementById('bm-filter');
+    // The default select is rendered after this partial: look it up when syncing.
+    function checked() { return cbs.filter(function (c) { return c.checked; }); }
+    function sync() {
+        var on = checked();
+        var keys = on.map(function (c) { return c.value; });
+        inp.value = JSON.stringify(keys.length ? keys : ['streets']);
+        var names = on.map(function (c) { return c.dataset.label; });
+        summary.textContent = names.length > 3
+            ? names.slice(0, 3).join(', ') + ' +' + (names.length - 3)
+            : (names.join(', ') || 'Streets');
+        var sel = document.getElementById('id_default_basemap');
+        if (!sel) return;
+        var allowed = keys.length ? keys : ['streets'];
+        Array.prototype.forEach.call(sel.options, function (o) {
+            var ok = allowed.indexOf(o.value) > -1;
+            o.hidden = !ok;
+            o.disabled = !ok;
+        });
+        if (allowed.indexOf(sel.value) < 0) {
+            sel.value = allowed[0];
+            sel.dispatchEvent(new Event('change'));   // does not bubble: the position map only
+        }
+    }
+    toggle.addEventListener('click', function () {
+        var open = panel.hidden;
+        panel.hidden = !open;
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (open && filter) filter.focus();
+    });
+    if (filter) {
+        filter.addEventListener('input', function (e) {
+            e.stopPropagation();   // a search is not a settings change: no autosave
+            var q = filter.value.trim().toLowerCase();
+            document.querySelectorAll('#bm-picker .bm-item').forEach(function (item) {
+                item.hidden = q && item.dataset.name.indexOf(q) < 0;
+            });
+        });
+        // Enter in the filter must not submit the settings form.
+        filter.addEventListener('keydown', function (e) { if (e.key === 'Enter') e.preventDefault(); });
+        filter.addEventListener('change', function (e) { e.stopPropagation(); });
+    }
+    cbs.forEach(function (c) { c.addEventListener('change', sync); });
+    sync();
+    // Again once the default select below exists: after parsing on a page load, at once
+    // on an HTMX swap (the whole panel is in the DOM before its scripts run).
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', sync);
+    else setTimeout(sync, 0);
+})();
+</script>

@@ -223,6 +223,9 @@ class SurveyHeaderForm(forms.ModelForm):
         # field carries no `choices` any more, so the ModelForm would give a free-text
         # CharField; a ChoiceField over the resolver's list is what the settings page needs.
         self._basemap_choices = basemap_registry.choices_for(getattr(self.instance, 'organization', None))
+        # The model's help text names storage keys; creators get what the control does.
+        self.fields['basemaps'].help_text = _(
+            'The base maps respondents can switch between. They open on the default below.')
         self.fields['default_basemap'] = forms.ChoiceField(
             choices=list(self._basemap_choices), required=False,
             label=self.fields['default_basemap'].label,

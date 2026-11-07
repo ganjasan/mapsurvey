@@ -10732,3 +10732,11 @@ msgstr "Il colore proprio della mappa di base"
 #: map-styles-print-greyscale
 msgid "In colour"
 msgstr "A colori"
+
+#: map-styles-basemap-picker
+msgid "Find a base map"
+msgstr "Trova una mappa di base"
+
+#: map-styles-basemap-picker
+msgid "The base maps respondents can switch between. They open on the default below."
+msgstr "Le mappe di base tra cui i partecipanti possono scegliere. Si apre quella predefinita qui sotto."

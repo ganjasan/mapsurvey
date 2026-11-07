@@ -10686,3 +10686,11 @@ msgstr "Pohjakartan oma väri"
 #: map-styles-print-greyscale
 msgid "In colour"
 msgstr "Värillisenä"
+
+#: map-styles-basemap-picker
+msgid "Find a base map"
+msgstr "Etsi pohjakartta"
+
+#: map-styles-basemap-picker
+msgid "The base maps respondents can switch between. They open on the default below."
+msgstr "Pohjakartat, joiden välillä vastaajat voivat vaihtaa. Ensin avautuu alla valittu oletus."
