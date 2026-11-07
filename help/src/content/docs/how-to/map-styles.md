@@ -44,6 +44,24 @@ Every change repaints the map at once. Press **Save** to publish the new version
 
 A survey that is already published keeps the version it was published with until you publish it again; drafts and the editor preview always use the newest one.
 
+## Export and import a style
+
+**Export** on a card downloads the style as one small JSON file; **Import a style** at the top of the page reads such a file into this workspace and publishes it like a copy. That is how a house style travels between your workspaces — or to a colleague's.
+
+The file carries only the style itself:
+
+```json
+{
+  "format": "mapsurvey-map-style",
+  "version": 1,
+  "name": "House style",
+  "base": "mapbox/streets-v12",
+  "settings": { "poi": false, "park": "#cfe6b8", "water": "#2f8f86" }
+}
+```
+
+No identifiers of your account or workspace are in it. On import the settings go through the same controls the editor has, so a file cannot do more than the editor can; a name already in the library gets a number after it. Importing counts as creating a style (a **Pro** feature); exporting needs Pro too.
+
 ## Delete a style
 
 **Delete** works only when no survey uses the style. If one does, the message names it: choose another base map there first.

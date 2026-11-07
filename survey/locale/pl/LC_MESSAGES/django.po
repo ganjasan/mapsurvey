@@ -10696,3 +10696,51 @@ msgid_plural "Used in %(n)s surveys."
 msgstr[0] "Używany w %(n)s ankiecie."
 msgstr[1] "Używany w %(n)s ankietach."
 msgstr[2] "Używany w %(n)s ankietach."
+
+#: map-style-import-export (#544)
+msgid "Import a style"
+msgstr "Importuj styl"
+
+#: map-style-import-export (#544)
+msgid "Map style file"
+msgstr "Plik stylu mapy"
+
+#: map-style-import-export (#544)
+msgid "Download as a file"
+msgstr "Pobierz jako plik"
+
+#: map-style-import-export (#544)
+msgid "Choose a file."
+msgstr "Wybierz plik."
+
+#: map-style-import-export (#544)
+msgid "The file is larger than a map style can be (64 KB)."
+msgstr "Plik jest większy, niż może być styl mapy (64 KB)."
+
+#: map-style-import-export (#544)
+msgid "This file is not a Mapsurvey map style."
+msgstr "Ten plik nie jest stylem mapy Mapsurvey."
+
+#: map-style-import-export (#544)
+msgid "This map style needs a newer Mapsurvey."
+msgstr "Ten styl mapy wymaga nowszego Mapsurvey."
+
+#: map-style-import-export (#544)
+msgid "The map style has no name."
+msgstr "Styl mapy nie ma nazwy."
+
+#: map-style-import-export (#544)
+msgid "Base map \"%(base)s\" is not supported here."
+msgstr "Mapa podkładowa „%(base)s” nie jest tu obsługiwana."
+
+#: map-style-import-export (#544)
+msgid "The map style has no settings."
+msgstr "Styl mapy nie ma ustawień."
+
+#: map-style-import-export (#544)
+msgid "Could not import the map style: %(reason)s"
+msgstr "Nie udało się zaimportować stylu mapy: %(reason)s"
+
+#: map-style-import-export (#544)
+msgid "“%(name)s” was imported and is being published."
+msgstr "„%(name)s” został zaimportowany i jest publikowany."
