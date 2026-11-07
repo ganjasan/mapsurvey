@@ -386,19 +386,21 @@ class LandingShowcaseRefreshTest(TestCase):
                 self.assertRegex(showcase, rf'img/landing/{stem}\.(?:[0-9a-f]+\.)?webp')
                 self.assertTrue(os.path.exists(os.path.join(assets, f'{stem}.webp')), stem)
 
-    def test_capabilities_are_the_six_new_cards_without_stale_claims(self):
+    def test_capabilities_are_the_nine_cards_without_stale_claims(self):
         """
         GIVEN the landing page
         WHEN it is rendered
-        THEN the capabilities grid holds exactly the six new cards, and the stale
+        THEN the capabilities grid holds exactly the nine cards (paper, embedding and the
+             AI agent since change landing-refresh-nov), and the stale
              "13 question types" and "GeoJSON + CSV" claims are gone
         """
         html = Client().get('/').content.decode()
         start = html.index('id="features"')
         features = html[start:html.index('</section>', start)]
         titles = ['Questions made for maps', 'Your data on the map', 'A map people build together',
-                  'Built to be answered', 'Clean and analyse', 'Export and publish']
-        self.assertEqual(features.count('class="feature-card__title"'), 6)
+                  'Built to be answered', 'Clean and analyse', 'Export and publish',
+                  'Paper forms and interviews', 'On your own site', 'Works with your AI agent']
+        self.assertEqual(features.count('class="feature-card__title"'), 9)
         for title in titles:
             self.assertIn(title, features)
         self.assertNotIn('13 question types', html)
