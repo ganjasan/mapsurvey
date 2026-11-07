@@ -74,7 +74,7 @@ msgstr ""
 #: survey/templates/editor/partials/survey_settings_panel.html:143
 #: survey/templates/org/org_settings.html:22
 msgid "Name"
-msgstr ""
+msgstr "Имя"
 
 #: survey/editor_forms.py:120
 msgid "Redirect URL"
@@ -1472,7 +1472,7 @@ msgstr ""
 #: survey/templates/django_registration/registration_form.html:76
 #: survey/templates/registration/registration_form.html:31
 msgid "Register"
-msgstr ""
+msgstr "Записаться"
 
 #: survey/templates/django_registration/registration_form.html:80
 msgid "This form is protected by Cloudflare Turnstile."
@@ -5502,7 +5502,7 @@ msgstr ""
 
 #: survey/templates/metroquest_alternative.html:95
 msgid "Status"
-msgstr ""
+msgstr "Статус"
 
 #: survey/templates/metroquest_alternative.html:95
 msgid "Active, open source"
@@ -9360,3 +9360,237 @@ msgstr[0] "По %(n)s ответу."
 msgstr[1] "По %(n)s ответам."
 msgstr[2] "По %(n)s ответам."
 msgstr[3] "По %(n)s ответа."
+
+#: landing-events (#579)
+msgid "Date"
+msgstr "Дата"
+
+#: landing-events (#579)
+msgid "Starts"
+msgstr "Начало"
+
+#: landing-events (#579)
+msgid "Ends"
+msgstr "Конец"
+
+#: landing-events (#579)
+msgid "Time zone"
+msgstr "Часовой пояс"
+
+#: landing-events (#579)
+msgid "Place, e.g. The boathouse, Riverside Park"
+msgstr "Место, например «Лодочная станция, парк у реки»"
+
+#: landing-events (#579)
+msgid "Map link to the place (optional)"
+msgstr "Ссылка на место на карте (необязательно)"
+
+#: landing-events (#579)
+msgid "What happens there (optional)"
+msgstr "Что там будет (необязательно)"
+
+#: landing-events (#579)
+msgid "Seats (empty = no limit)"
+msgstr "Мест (пусто = без ограничения)"
+
+#: landing-events (#579)
+msgid "Registration open"
+msgstr "Запись открыта"
+
+#: landing-events (#579)
+#, python-format
+msgid "%(n)s seats left"
+msgstr "Свободных мест: %(n)s"
+
+#: landing-events (#579)
+msgid "Attendee list"
+msgstr "Список участников"
+
+#: landing-events (#579)
+msgid "Residents give their name and email. They get a confirmation with a calendar file; registrations are deleted 30 days after the event."
+msgstr "Жители указывают имя и email. Они получают подтверждение с файлом календаря; записи удаляются через 30 дней после события."
+
+#: landing-events (#579)
+msgid "Attendees"
+msgstr "Записавшиеся"
+
+#: landing-events (#579)
+msgid "Event"
+msgstr "Событие"
+
+#: landing-events (#579)
+msgid "Download CSV"
+msgstr "Скачать CSV"
+
+#: landing-events (#579)
+#, python-format
+msgid "Names and emails are deleted automatically %(days)s days after the event. Use them only for this event."
+msgstr "Имена и email удаляются автоматически через %(days)s дн. после события. Используйте их только для этого события."
+
+#: landing-events (#579)
+msgid "Registered"
+msgstr "Записан"
+
+#: landing-events (#579)
+msgid "registered"
+msgstr "записан"
+
+#: landing-events (#579)
+msgid "cancelled"
+msgstr "отменено"
+
+#: landing-events (#579)
+msgid "Delete every registration of this event?"
+msgstr "Удалить все записи на это событие?"
+
+#: landing-events (#579)
+msgid "Remove all"
+msgstr "Удалить все"
+
+#: landing-events (#579)
+msgid "Nobody has registered yet."
+msgstr "Пока никто не записался."
+
+#: landing-events (#579)
+msgid "Cancel registration"
+msgstr "Отменить запись"
+
+#: landing-events (#579)
+msgid "Your registration is cancelled. Thank you for letting us know."
+msgstr "Ваша запись отменена. Спасибо, что предупредили."
+
+#: landing-events (#579)
+#, python-format
+msgid "Cancel the registration of %(name)s?"
+msgstr "Отменить запись: %(name)s?"
+
+#: landing-events (#579)
+msgid "Cancel my registration"
+msgstr "Отменить мою запись"
+
+#: landing-events (#579)
+msgid "Back to the project page"
+msgstr "Вернуться на страницу проекта"
+
+#: landing-events (#579)
+msgid "Thank you! Check your inbox: we sent a confirmation with a calendar file and a link to cancel."
+msgstr "Спасибо! Проверьте почту: мы отправили подтверждение с файлом календаря и ссылкой для отмены."
+
+#: landing-events (#579)
+msgid "Sorry, the event is full."
+msgstr "К сожалению, мест больше нет."
+
+#: landing-events (#579)
+msgid "Registration for this event is closed."
+msgstr "Запись на это событие закрыта."
+
+#: landing-events (#579)
+msgid "Please tick the box to agree before registering."
+msgstr "Отметьте галочку согласия перед записью."
+
+#: landing-events (#579)
+msgid "Please enter a valid email address."
+msgstr "Введите корректный адрес электронной почты."
+
+#: landing-events (#579)
+msgid "Please enter your name."
+msgstr "Введите ваше имя."
+
+#: landing-events (#579)
+msgid "Your name"
+msgstr "Ваше имя"
+
+#: landing-events (#579)
+#, python-format
+msgid "%(org)s uses your name and email only for this event. They are deleted %(days)s days after it."
+msgstr "%(org)s использует ваше имя и email только для этого события. Они будут удалены через %(days)s дн. после него."
+
+#: landing-events (#579)
+msgid "The event is full."
+msgstr "Мест нет."
+
+#: landing-events (#579)
+#, python-format
+msgid "Hello %(name)s,"
+msgstr "Здравствуйте, %(name)s!"
+
+#: landing-events (#579)
+#, python-format
+msgid "you are registered for \"%(title)s\" by %(org)s."
+msgstr "вы записаны на «%(title)s» (организатор — %(org)s)."
+
+#: landing-events (#579)
+msgid "The attached calendar file adds the event to your calendar."
+msgstr "Приложенный файл календаря добавит событие в ваш календарь."
+
+#: landing-events (#579)
+msgid "About the project"
+msgstr "О проекте"
+
+#: landing-events (#579)
+msgid "Can't come? Cancel your registration"
+msgstr "Не получается прийти? Отмените запись"
+
+#: landing-events (#579)
+#, python-format
+msgid "Your name and email are used only for this event and deleted %(days)s days after it."
+msgstr "Ваше имя и email используются только для этого события и удаляются через %(days)s дн. после него."
+
+#: landing-events (#579)
+msgid "About the project:"
+msgstr "О проекте:"
+
+#: landing-events (#579)
+msgid "Can't come? Cancel here:"
+msgstr "Не получается прийти? Отменить запись:"
+
+#: landing-events (#579)
+msgid "Pick the date of the event."
+msgstr "Выберите дату события."
+
+#: landing-events (#579)
+msgid "Enter the start time."
+msgstr "Укажите время начала."
+
+#: landing-events (#579)
+msgid "The end time must be after the start."
+msgstr "Время окончания должно быть позже начала."
+
+#: landing-events (#579)
+msgid "Pick a time zone from the list, e.g. Europe/Berlin."
+msgstr "Выберите часовой пояс из списка, например Europe/Moscow."
+
+#: landing-events (#579)
+msgid "Seats must be a number from 1 to 10000, or empty for no limit."
+msgstr "Число мест — от 1 до 10000; оставьте пустым, чтобы не ограничивать."
+
+#: landing-events (#579)
+msgid "Too many registrations from this connection. Please try again later."
+msgstr "Слишком много записей с этого подключения. Попробуйте позже."
+
+#: landing-events (#579)
+msgid "All registrations of this event are deleted."
+msgstr "Все записи на это событие удалены."
+
+#: landing-events (#579)
+#, python-format
+msgid "You're registered: %(title)s"
+msgstr "Вы записаны: %(title)s"
+
+#: landing-events (#579)
+#, python-format
+msgid "%(n)s registered"
+msgid_plural "%(n)s registered"
+msgstr[0] "%(n)s участник"
+msgstr[1] "%(n)s участника"
+msgstr[2] "%(n)s участников"
+msgstr[3] "%(n)s участника"
+
+#: landing-events (#579)
+#, python-format
+msgid "%(n)s seat left"
+msgid_plural "%(n)s seats left"
+msgstr[0] "Осталось %(n)s место"
+msgstr[1] "Осталось %(n)s места"
+msgstr[2] "Осталось %(n)s мест"
+msgstr[3] "Осталось %(n)s места"

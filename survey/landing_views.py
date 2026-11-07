@@ -25,7 +25,7 @@ from billing import trial as billing_trial
 from billing.entitlements import for_organization
 from billing.gates import feature_required
 
-from . import basemaps, landings, product_events, share
+from . import basemaps, landing_events, landings, product_events, share
 from .content_screening import is_landing_held, screen_landing
 from .models import Landing, LandingBlock, LandingFile, LandingSurvey, SurveyHeader
 from .permissions import get_org_membership
@@ -38,6 +38,11 @@ CONTENT_LANGUAGES = (
     'ka kk km kn ko ky lo lt lv mk ml mn mr ms my ne nl no pa pl pt ro ru si sk sl sq sr sv sw ta te tg '
     'th tk tl tr uk ur uz vi zh'
 ).split()
+
+
+def _timezones():
+    from zoneinfo import available_timezones
+    return sorted(z for z in available_timezones() if '/' in z and not z.startswith(('Etc/', 'SystemV/', 'US/')))
 
 
 def language_choices():
@@ -135,11 +140,14 @@ def _builder_context(request, landing, membership, **extra):
     for block in blocks:
         if block.kind == 'survey' and block.landing_survey is not None:
             cards[block.pk] = landings.survey_card(block.landing_survey.survey)
+    event_counts = {b.pk: (landing_events.active(b).count(), landing_events.seats_left(b))
+                    for b in blocks if b.kind == 'event'}
     results_missing = {b.pk for b in blocks if b.kind == 'results' and b.landing_survey is not None
                        and landings.results_question(b.landing_survey.survey, b.data.get('question_code')) is None}
     may_edit = _can_act(membership) and billing_trial.may(org, landings.FEATURE)
     ctx = {
         'org': org, 'landing': landing, 'blocks': blocks, 'cards': cards, 'results_missing': results_missing,
+        'event_counts': event_counts, 'timezones': _timezones(),
         'links': [(link, landings.survey_card(link.survey)) for link in links],
         'linkable': [s for s in landings.linkable_surveys(org) if s.pk not in linked_ids],
         'all_linkable': list(landings.linkable_surveys(org)),
@@ -263,7 +271,8 @@ def _raw_block(kind, post):
     """The posted fields of a block form as the dict `clean_block` reads."""
     raw = {key: post.get(key, '') for key in ('body', 'alt', 'caption', 'label', 'url', 'style',
                                               'button_label', 'description', 'current', 'color', 'basemap',
-                                              'viz')}
+                                              'viz', 'date', 'start', 'end', 'tz', 'place', 'place_url',
+                                              'capacity', 'open')}
     if kind == 'faq':
         raw['items'] = [{'q': q, 'a': a} for q, a in zip(post.getlist('q'), post.getlist('a'))]
     elif kind == 'timeline':
@@ -488,6 +497,16 @@ def editor_landing_delete(request, uuid):
 
 # ─── public page ──────────────────────────────────────────────────────────────
 
+def _event_notice(request):
+    """{'block': id, 'status': ...} from the redirect after a registration post, or None."""
+    if request.GET.get('registered', '').isdigit():
+        return {'block': int(request.GET['registered']), 'status': 'registered'}
+    if request.GET.get('event', '').isdigit() and request.GET.get('event_error') in (
+            'name', 'email', 'consent', 'full', 'closed'):
+        return {'block': int(request.GET['event']), 'status': request.GET['event_error']}
+    return None
+
+
 def landing_public(request, slug):
     """/p/<slug>/. Published and not held → everyone; otherwise only members of the owning
     workspace, with a draft banner, and the survey-unavailable 404 for everyone else. The
@@ -514,6 +533,7 @@ def landing_public(request, slug):
             'noindex': not live or landing.visibility == 'unlisted',
             'show_branding': not for_organization(landing.organization).has('unbranded'),
             'page_url': share.base() + reverse('landing_public', args=[landing.slug]),
+            'event_notice': _event_notice(request),
         })
     if not live:
         response['Cache-Control'] = 'private, no-store'
@@ -529,3 +549,113 @@ def editor_landing_qr(request, uuid):
     response = HttpResponse(body, content_type=content_type)
     response['Content-Disposition'] = f'attachment; filename="{landing.slug}-qr.{fmt}"'
     return response
+
+
+# ─── events (change landing-events, #579) ─────────────────────────────────────
+
+def _public_event(slug, block_id):
+    """(landing, block) for a published, not held landing's event block; 404 otherwise."""
+    landing = Landing.objects.filter(slug=slug, is_published=True).first()
+    if landing is None or is_landing_held(landing):
+        raise Http404
+    block = get_object_or_404(LandingBlock, pk=block_id, landing=landing, kind='event')
+    return landing, block
+
+
+@require_POST
+def landing_event_register(request, slug, block_id):
+    """A resident registers: honeypot → rate limit → form → locked insert → mail → back to the
+    page with a notice. Nothing personal is logged."""
+    from django.core.validators import validate_email
+    from django.core.exceptions import ValidationError
+    from django_ratelimit.core import get_usage, is_ratelimited
+
+    landing, block = _public_event(slug, block_id)
+    back = reverse('landing_public', args=[landing.slug])
+    if request.POST.get('website'):
+        return redirect(f'{back}?registered={block.pk}#{block.anchor}')
+    try:
+        usage = get_usage(request, group='landing_event', fn=None, key='survey.abuse.ratelimit_key',
+                          rate=landing_events.REGISTER_LIMIT, method='POST', increment=True)
+        limited = bool(usage) and usage['count'] > usage['limit']
+    except Exception:  # noqa: BLE001 — a cache outage must not block a registration
+        limited = False
+    if limited:
+        return HttpResponse(_('Too many registrations from this connection. Please try again later.'),
+                            status=429, headers={'Retry-After': '3600'})
+    name = ' '.join((request.POST.get('name') or '').split())[:120]
+    email = (request.POST.get('email') or '').strip()[:254]
+    problem = ''
+    try:
+        validate_email(email)
+    except ValidationError:
+        problem = 'email'
+    if not name:
+        problem = 'name'
+    if request.POST.get('consent') != '1':
+        problem = 'consent'
+    if problem:
+        return redirect(f'{back}?event_error={problem}&event={block.pk}#{block.anchor}')
+    status, reg = landing_events.register(block, name, email)
+    if status in (landing_events.REGISTERED, landing_events.ALREADY):
+        landing_events.queue_confirmation(reg)
+        return redirect(f'{back}?registered={block.pk}#{block.anchor}')
+    return redirect(f'{back}?event_error={status}&event={block.pk}#{block.anchor}')
+
+
+def landing_event_cancel(request, token):
+    """GET names the event and offers Cancel; only POST cancels (mail scanners prefetch links)."""
+    from .models import EventRegistration
+    reg = get_object_or_404(EventRegistration.objects.select_related('block__landing'), token=token)
+    landing = reg.block.landing
+    done = False
+    if request.method == 'POST':
+        landing_events.cancel(reg)
+        done = True
+    with translation.override(landing.language):
+        return render(request, 'landings/event_cancel.html', {
+            'registration': reg, 'block': reg.block, 'landing': landing, 'done': done or reg.cancelled_at is not None,
+            'starts_at': landing_events.starts_at(reg.block.data), 'tz': reg.block.data.get('tz') or 'UTC',
+        })
+
+
+def _attendee_access(request, uuid, block_id):
+    landing, membership = _landing(request, uuid)
+    if not _can_act(membership):
+        return landing, None, HttpResponseForbidden()
+    block = get_object_or_404(LandingBlock, pk=block_id, landing=landing, kind='event')
+    return landing, block, None
+
+
+@login_required
+def editor_landing_attendees(request, uuid, block_id):
+    """The attendee list of one event: owner / admin / editor; no Pro needed (deleting people's
+    data must stay possible after a lapse)."""
+    landing, block, refused = _attendee_access(request, uuid, block_id)
+    if refused is not None:
+        return refused
+    if request.GET.get('format') == 'csv':
+        response = HttpResponse(landing_events.csv_bytes(block), content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="{landing.slug}-event-{block.pk}.csv"'
+        return response
+    return render(request, 'landings/attendees.html', {
+        'org': landing.organization, 'landing': landing, 'event_block': block,
+        'registrations': block.registrations.order_by('created_at', 'id'),
+        'active': landing_events.active(block).count(), 'seats_left': landing_events.seats_left(block),
+        'starts_at': landing_events.starts_at(block.data), 'retention_days': landing_events.RETENTION_DAYS,
+    })
+
+
+@login_required
+@require_POST
+def editor_landing_attendees_remove(request, uuid, block_id):
+    landing, block, refused = _attendee_access(request, uuid, block_id)
+    if refused is not None:
+        return refused
+    which = request.POST.get('registration')
+    if which == 'all':
+        block.registrations.all().delete()
+        messages.success(request, _('All registrations of this event are deleted.'))
+    else:
+        block.registrations.filter(pk=which or 0).delete()
+    return redirect('editor_landing_attendees', uuid=landing.uuid, block_id=block.pk)

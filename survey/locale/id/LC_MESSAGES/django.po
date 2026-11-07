@@ -6320,7 +6320,7 @@ msgstr ""
 
 #: survey/templates/metroquest_alternative.html:95
 msgid "Status"
-msgstr ""
+msgstr "Status"
 
 #: survey/templates/metroquest_alternative.html:95
 msgid "Active, open source"
@@ -11281,3 +11281,231 @@ msgstr "Klaster"
 msgid "Based on %(n)s response."
 msgid_plural "Based on %(n)s responses."
 msgstr[0] "Berdasarkan %(n)s tanggapan."
+
+#: landing-events (#579)
+msgid "Date"
+msgstr "Tanggal"
+
+#: landing-events (#579)
+msgid "Starts"
+msgstr "Waktu mulai"
+
+#: landing-events (#579)
+msgid "Ends"
+msgstr "Waktu selesai"
+
+#: landing-events (#579)
+msgid "Time zone"
+msgstr "Zona waktu"
+
+#: landing-events (#579)
+msgid "Place, e.g. The boathouse, Riverside Park"
+msgstr "Tempat, mis. Rumah perahu, Taman Tepi Sungai"
+
+#: landing-events (#579)
+msgid "Map link to the place (optional)"
+msgstr "Tautan peta ke lokasi (opsional)"
+
+#: landing-events (#579)
+msgid "What happens there (optional)"
+msgstr "Apa yang terjadi di sana (opsional)"
+
+#: landing-events (#579)
+msgid "Seats (empty = no limit)"
+msgstr "Kursi (kosong = tanpa batas)"
+
+#: landing-events (#579)
+msgid "Registration open"
+msgstr "Pendaftaran dibuka"
+
+#: landing-events (#579)
+#, python-format
+msgid "%(n)s seats left"
+msgstr "Sisa %(n)s tempat"
+
+#: landing-events (#579)
+msgid "Attendee list"
+msgstr "Daftar peserta"
+
+#: landing-events (#579)
+msgid "Residents give their name and email. They get a confirmation with a calendar file; registrations are deleted 30 days after the event."
+msgstr "Warga memberikan nama dan email. Mereka menerima konfirmasi berisi berkas kalender; pendaftaran dihapus 30 hari setelah acara."
+
+#: landing-events (#579)
+msgid "Attendees"
+msgstr "Peserta"
+
+#: landing-events (#579)
+msgid "Event"
+msgstr "Acara"
+
+#: landing-events (#579)
+msgid "Download CSV"
+msgstr "Unduh CSV"
+
+#: landing-events (#579)
+#, python-format
+msgid "Names and emails are deleted automatically %(days)s days after the event. Use them only for this event."
+msgstr "Nama dan email dihapus otomatis %(days)s hari setelah acara. Gunakan hanya untuk acara ini."
+
+#: landing-events (#579)
+msgid "Registered"
+msgstr "Terdaftar"
+
+#: landing-events (#579)
+msgid "registered"
+msgstr "terdaftar"
+
+#: landing-events (#579)
+msgid "cancelled"
+msgstr "dibatalkan"
+
+#: landing-events (#579)
+msgid "Delete every registration of this event?"
+msgstr "Hapus semua pendaftaran acara ini?"
+
+#: landing-events (#579)
+msgid "Remove all"
+msgstr "Hapus semua"
+
+#: landing-events (#579)
+msgid "Nobody has registered yet."
+msgstr "Belum ada yang mendaftar."
+
+#: landing-events (#579)
+msgid "Cancel registration"
+msgstr "Batalkan pendaftaran"
+
+#: landing-events (#579)
+msgid "Your registration is cancelled. Thank you for letting us know."
+msgstr "Pendaftaran Anda dibatalkan. Terima kasih sudah memberi tahu."
+
+#: landing-events (#579)
+#, python-format
+msgid "Cancel the registration of %(name)s?"
+msgstr "Batalkan pendaftaran %(name)s?"
+
+#: landing-events (#579)
+msgid "Cancel my registration"
+msgstr "Batalkan pendaftaran saya"
+
+#: landing-events (#579)
+msgid "Back to the project page"
+msgstr "Kembali ke halaman proyek"
+
+#: landing-events (#579)
+msgid "Thank you! Check your inbox: we sent a confirmation with a calendar file and a link to cancel."
+msgstr "Terima kasih! Periksa kotak masuk Anda: kami mengirim konfirmasi berisi berkas kalender dan tautan untuk membatalkan."
+
+#: landing-events (#579)
+msgid "Sorry, the event is full."
+msgstr "Maaf, acara sudah penuh."
+
+#: landing-events (#579)
+msgid "Registration for this event is closed."
+msgstr "Pendaftaran untuk acara ini sudah ditutup."
+
+#: landing-events (#579)
+msgid "Please tick the box to agree before registering."
+msgstr "Centang kotak persetujuan sebelum mendaftar."
+
+#: landing-events (#579)
+msgid "Please enter a valid email address."
+msgstr "Masukkan alamat email yang valid."
+
+#: landing-events (#579)
+msgid "Please enter your name."
+msgstr "Masukkan nama Anda."
+
+#: landing-events (#579)
+msgid "Your name"
+msgstr "Nama Anda"
+
+#: landing-events (#579)
+#, python-format
+msgid "%(org)s uses your name and email only for this event. They are deleted %(days)s days after it."
+msgstr "%(org)s menggunakan nama dan email Anda hanya untuk acara ini. Data dihapus %(days)s hari setelahnya."
+
+#: landing-events (#579)
+msgid "The event is full."
+msgstr "Acara sudah penuh."
+
+#: landing-events (#579)
+#, python-format
+msgid "Hello %(name)s,"
+msgstr "Halo %(name)s,"
+
+#: landing-events (#579)
+#, python-format
+msgid "you are registered for \"%(title)s\" by %(org)s."
+msgstr "Anda terdaftar untuk “%(title)s” oleh %(org)s."
+
+#: landing-events (#579)
+msgid "The attached calendar file adds the event to your calendar."
+msgstr "Berkas kalender terlampir menambahkan acara ke kalender Anda."
+
+#: landing-events (#579)
+msgid "About the project"
+msgstr "Tentang proyek"
+
+#: landing-events (#579)
+msgid "Can't come? Cancel your registration"
+msgstr "Tidak bisa datang? Batalkan pendaftaran Anda"
+
+#: landing-events (#579)
+#, python-format
+msgid "Your name and email are used only for this event and deleted %(days)s days after it."
+msgstr "Nama dan email Anda hanya digunakan untuk acara ini dan dihapus %(days)s hari setelahnya."
+
+#: landing-events (#579)
+msgid "About the project:"
+msgstr "Tentang proyek:"
+
+#: landing-events (#579)
+msgid "Can't come? Cancel here:"
+msgstr "Tidak bisa datang? Batalkan di sini:"
+
+#: landing-events (#579)
+msgid "Pick the date of the event."
+msgstr "Pilih tanggal acara."
+
+#: landing-events (#579)
+msgid "Enter the start time."
+msgstr "Masukkan waktu mulai."
+
+#: landing-events (#579)
+msgid "The end time must be after the start."
+msgstr "Waktu selesai harus setelah waktu mulai."
+
+#: landing-events (#579)
+msgid "Pick a time zone from the list, e.g. Europe/Berlin."
+msgstr "Pilih zona waktu dari daftar, mis. Asia/Jakarta."
+
+#: landing-events (#579)
+msgid "Seats must be a number from 1 to 10000, or empty for no limit."
+msgstr "Kursi harus berupa angka 1 sampai 10000, atau kosong untuk tanpa batas."
+
+#: landing-events (#579)
+msgid "Too many registrations from this connection. Please try again later."
+msgstr "Terlalu banyak pendaftaran dari koneksi ini. Silakan coba lagi nanti."
+
+#: landing-events (#579)
+msgid "All registrations of this event are deleted."
+msgstr "Semua pendaftaran acara ini telah dihapus."
+
+#: landing-events (#579)
+#, python-format
+msgid "You're registered: %(title)s"
+msgstr "Anda terdaftar: %(title)s"
+
+#: landing-events (#579)
+#, python-format
+msgid "%(n)s registered"
+msgid_plural "%(n)s registered"
+msgstr[0] "%(n)s terdaftar"
+
+#: landing-events (#579)
+#, python-format
+msgid "%(n)s seat left"
+msgid_plural "%(n)s seats left"
+msgstr[0] "Sisa %(n)s tempat"

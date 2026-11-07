@@ -220,6 +220,10 @@ def collect_landing_text(landing, now=None) -> ScreenInput:
             for item in data.get('items') or []:
                 texts.append(('block.timeline',
                               f"{item.get('title') or ''} {item.get('when') or ''} {item.get('body') or ''}"))
+        elif block.kind == 'event':
+            texts.append(('block.event', f"{data.get('place') or ''} {data.get('description') or ''}"))
+            if data.get('place_url'):
+                links.append(data['place_url'])
         elif block.kind == 'button':
             texts.append(('block.button', data.get('label') or ''))
             if data.get('url'):

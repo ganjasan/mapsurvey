@@ -57,6 +57,7 @@ BLOCK_KINDS = {
     'map': (gettext_lazy('Map'), 'fas fa-draw-polygon', 'media'),
     'results': (gettext_lazy('Results'), 'fas fa-chart-bar', 'media'),
     'documents': (gettext_lazy('Documents'), 'far fa-file-pdf', 'participation'),
+    'event': (gettext_lazy('Event'), 'far fa-calendar-check', 'participation'),
     'survey': (gettext_lazy('Survey card'), 'fas fa-map-marked-alt', 'participation'),
     'button': (gettext_lazy('Button'), 'fas fa-link', 'participation'),
 }
@@ -213,6 +214,44 @@ def _clean_results(raw, errors, org=None):
             'caption': _plain(raw.get('caption'), 300)}
 
 
+_DATE = re.compile(r'^\d{4}-\d{2}-\d{2}$')
+_TIME = re.compile(r'^([01]\d|2[0-3]):[0-5]\d$')
+
+
+def _clean_event(raw, errors):
+    from zoneinfo import available_timezones
+    date = str(raw.get('date') or '').strip()
+    start = str(raw.get('start') or '').strip()
+    end = str(raw.get('end') or '').strip()
+    tz = str(raw.get('tz') or 'UTC').strip()
+    if not _DATE.match(date):
+        errors['date'] = _('Pick the date of the event.')
+    if not _TIME.match(start):
+        errors['start'] = _('Enter the start time.')
+    if end and (not _TIME.match(end) or (_TIME.match(start) and end <= start)):
+        errors['end'] = _('The end time must be after the start.')
+    if tz != 'UTC' and tz not in available_timezones():
+        errors['tz'] = _('Pick a time zone from the list, e.g. Europe/Berlin.')
+    place_url = str(raw.get('place_url') or '').strip()
+    if place_url and not (place_url.lower().startswith(('http://', 'https://')) and is_valid_redirect(place_url)):
+        errors['place_url'] = _('Enter a full web address that starts with https://')
+    capacity = str(raw.get('capacity') or '').strip()
+    if capacity:
+        try:
+            capacity = int(capacity)
+            if not 1 <= capacity <= 10000:
+                raise ValueError
+        except ValueError:
+            errors['capacity'] = _('Seats must be a number from 1 to 10000, or empty for no limit.')
+            capacity = None
+    else:
+        capacity = None
+    return {'date': date, 'start': start, 'end': end, 'tz': tz,
+            'place': _plain(raw.get('place'), 200), 'place_url': place_url[:250],
+            'description': ' '.join(str(raw.get('description') or '').split(' '))[:1000].strip(),
+            'capacity': capacity, 'open': raw.get('open') in (True, '1', 'on', 'true')}
+
+
 def _clean_survey(raw, errors):
     return {'button_label': _plain(raw.get('button_label'), 40),
             'description': _plain(raw.get('description'), 300)}
@@ -229,6 +268,7 @@ _CLEANERS = {
     'documents': _clean_documents,
     'map': _clean_map,
     'results': _clean_results,
+    'event': _clean_event,
 }
 
 
@@ -475,6 +515,15 @@ def page_blocks(landing, now=None, lang='en'):
             out.append((block, card))
             continue
         card = None
+        if block.kind == 'event':
+            from . import landing_events
+            start = landing_events.starts_at(block.data)
+            if start is None:
+                continue
+            card = {'starts_at': start, 'ends_at': landing_events.ends_at(block.data),
+                    'tz': block.data.get('tz') or 'UTC', 'accepting': landing_events.accepting(block, now=now),
+                    'seats_left': landing_events.seats_left(block),
+                    'retention_days': landing_events.RETENTION_DAYS}
         if block.kind == 'survey':
             if block.landing_survey is None:
                 continue

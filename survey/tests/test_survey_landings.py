@@ -814,3 +814,187 @@ class LandingResultsTest(LandingTestBase):
         self.assertContains(r, 'js/public_results_render.')
         self.assertContains(r, 'window.renderResultBlocks(blocks, BASEMAPS)')
         self.assertNotContains(r, 'function renderChoiceChart')
+
+
+class LandingEventTest(LandingTestBase):
+    """Spec `survey-landings`, events and registration (change landing-events, #579)."""
+
+    def setUp(self):
+        super().setUp()
+        from django.core.cache import cache
+        cache.clear()
+        from unittest import mock
+        from survey import landing_events
+        patcher = mock.patch('survey.tasks.send_event_confirmation.delay',
+                             side_effect=lambda pk: landing_events.send_confirmation(pk))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.login(self.editor)
+        future = (timezone.now() + timedelta(days=10)).date().isoformat()
+        r = self.client.post(self.url('editor_landing_block_add'), {
+            'kind': 'event', 'title': 'Open house', 'date': future, 'start': '18:00', 'end': '20:00',
+            'tz': 'Europe/Berlin', 'place': 'The boathouse', 'capacity': '2', 'open': '1'})
+        assert r.status_code == 302, r.content[:500]
+        self.block = self.landing.blocks.get(kind='event')
+        self.client.post(self.url('editor_landing_publish'), {'action': 'publish'})
+        self.client.logout()
+
+    def register(self, name='Ana', email='ana@example.org', **extra):
+        data = {'name': name, 'email': email, 'consent': '1'}
+        data.update(extra)
+        return self.client.post(reverse('landing_event_register', args=[self.landing.slug, self.block.pk]), data)
+
+    def test_registration_stored_and_confirmed(self):
+        """GIVEN an open event
+        WHEN a visitor registers with consent
+        THEN one active registration exists and a mail with an .ics and a cancel link is sent"""
+        from django.core import mail
+        r = self.register()
+        self.assertEqual(r.status_code, 302)
+        self.assertIn(f'registered={self.block.pk}', r['Location'])
+        reg = self.block.registrations.get()
+        self.assertEqual((reg.name, reg.email), ('Ana', 'ana@example.org'))
+        self.assertEqual(len(mail.outbox), 1)
+        msg = mail.outbox[0]
+        self.assertEqual(msg.to, ['ana@example.org'])
+        self.assertIn(str(reg.token), msg.body)
+        name, content, mimetype = msg.attachments[0]
+        self.assertEqual(name, 'event.ics')
+        self.assertIn('BEGIN:VEVENT', content)
+        self.assertIn('DTSTART:', content)
+        self.assertIn('T170000Z', content)  # 18:00 Berlin (CET) = 17:00 UTC
+        page = self.client.get(r['Location'])
+        self.assertContains(page, 'Check your inbox')
+
+    def test_full_event(self):
+        """GIVEN an event with 2 seats taken
+        WHEN a third visitor registers
+        THEN nothing is stored and the page says it is full"""
+        self.register('A', 'a@example.org')
+        self.register('B', 'b@example.org')
+        r = self.register('C', 'c@example.org')
+        self.assertIn('event_error=full', r['Location'])
+        self.assertEqual(self.block.registrations.count(), 2)
+        self.assertContains(self.client.get(r['Location']), 'The event is full.')
+
+    def test_same_email_twice(self):
+        """GIVEN one registration
+        WHEN the same email registers again
+        THEN one registration exists and two confirmations were sent"""
+        from django.core import mail
+        self.register()
+        self.register(name='Ana B', email='ANA@example.org')
+        self.assertEqual(self.block.registrations.count(), 1)
+        self.assertEqual(len(mail.outbox), 2)
+
+    def test_honeypot_and_consent(self):
+        """GIVEN a filled honeypot or no consent
+        WHEN the form is posted
+        THEN nothing is stored"""
+        self.register(website='spam')
+        self.client.post(reverse('landing_event_register', args=[self.landing.slug, self.block.pk]),
+                         {'name': 'X', 'email': 'x@example.org'})
+        self.assertFalse(self.block.registrations.exists())
+
+    def test_rate_limit(self):
+        """GIVEN 5 registration posts from one address within an hour
+        WHEN a sixth arrives
+        THEN it is answered 429"""
+        for i in range(5):
+            self.register(email=f'p{i}@example.org', consent='')
+        self.assertEqual(self.register(email='p9@example.org').status_code, 429)
+
+    def test_cancel_frees_the_seat(self):
+        """GIVEN a full 2-seat event
+        WHEN a registrant opens the cancel link and posts it
+        THEN the GET changes nothing, the POST cancels, and another visitor can register"""
+        self.register('A', 'a@example.org')
+        self.register('B', 'b@example.org')
+        reg = self.block.registrations.get(email='a@example.org')
+        url = reverse('landing_event_cancel', args=[reg.token])
+        self.assertContains(self.client.get(url), 'Cancel my registration')
+        reg.refresh_from_db()
+        self.assertIsNone(reg.cancelled_at)
+        self.client.post(url)
+        reg.refresh_from_db()
+        self.assertIsNotNone(reg.cancelled_at)
+        self.register('C', 'c@example.org')
+        self.assertTrue(self.block.registrations.filter(email='c@example.org').exists())
+        import uuid
+        self.assertEqual(self.client.get(reverse('landing_event_cancel', args=[uuid.uuid4()])).status_code, 404)
+
+    def test_closed_or_past_event(self):
+        """GIVEN registration switched off
+        WHEN the page renders and a post arrives
+        THEN no form is shown and nothing is stored"""
+        data = dict(self.block.data, open=False)
+        LandingBlock.objects.filter(pk=self.block.pk).update(data=data)
+        self.assertNotContains(self.client.get('/p/riverside-park-plan/'), 'name="consent"')
+        self.register()
+        self.assertFalse(self.block.registrations.exists())
+
+    def test_viewer_refused_editor_sees_list(self):
+        """GIVEN a registration
+        WHEN a viewer and an editor open the attendee list
+        THEN the viewer gets 403 and the editor sees the name"""
+        self.register()
+        url = reverse('editor_landing_attendees', args=[self.landing.uuid, self.block.pk])
+        self.login(self.viewer)
+        self.assertEqual(self.client.get(url).status_code, 403)
+        self.login(self.editor)
+        self.assertContains(self.client.get(url), 'ana@example.org')
+
+    def test_csv_guards_formulas(self):
+        """GIVEN a registrant named =HYPERLINK("x")
+        WHEN the editor downloads the CSV
+        THEN it has a header and the name cell starts with an apostrophe"""
+        self.register(name='=HYPERLINK("x")')
+        self.login(self.editor)
+        r = self.client.get(reverse('editor_landing_attendees', args=[self.landing.uuid, self.block.pk]) + '?format=csv')
+        text = r.content.decode('utf-8-sig')
+        self.assertTrue(text.startswith('name,email,registered_at,status'))
+        self.assertIn("'=HYPERLINK", text)
+
+    def test_remove_all_without_pro(self):
+        """GIVEN a lapsed workspace with registrations
+        WHEN the editor removes all
+        THEN they are deleted"""
+        self.register()
+        self.sub.delete()
+        trial_used_elsewhere(self.org)
+        self.login(self.editor)
+        self.client.post(reverse('editor_landing_attendees_remove', args=[self.landing.uuid, self.block.pk]),
+                         {'registration': 'all'})
+        self.assertFalse(self.block.registrations.exists())
+
+    def test_purge(self):
+        """GIVEN one event that ended 31 days ago and one tomorrow, both with registrations
+        WHEN the purge task runs
+        THEN only the old event's registrations are deleted"""
+        from survey.models import EventRegistration
+        from survey.tasks import purge_event_registrations
+        old = LandingBlock.objects.create(landing=self.landing, kind='event', order=9, data=dict(
+            self.block.data, date=(timezone.now() - timedelta(days=31)).date().isoformat()))
+        EventRegistration.objects.create(block=old, name='Old', email='old@example.org')
+        self.register()
+        purge_event_registrations()
+        self.assertFalse(old.registrations.exists())
+        self.assertTrue(self.block.registrations.exists())
+
+    def test_invalid_event_refused(self):
+        """GIVEN a bad date, an end before the start and an unknown zone
+        WHEN an event block is saved
+        THEN it is refused"""
+        self.login(self.editor)
+        r = self.client.post(self.url('editor_landing_block_add'), {
+            'kind': 'event', 'date': 'tomorrow', 'start': '18:00', 'end': '17:00', 'tz': 'Mars/Olympus'})
+        self.assertEqual(r.status_code, 400)
+
+    def test_policy_pages(self):
+        """GIVEN the terms and trust pages
+        WHEN they render
+        THEN both mention event registration and the 30-day deletion"""
+        for url in ('/terms/', '/trust/'):
+            r = self.client.get(url)
+            self.assertContains(r, 'registration', msg_prefix=url)
+            self.assertContains(r, '30 days after the event', msg_prefix=url)

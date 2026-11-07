@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n question_utils %}
 {% comment %}One block's form (change landing-core). `kind`, `data` (the block's cleaned data or the
 posted values after a refusal), `title`, `action`, `errors`, `selected_survey`, `is_new`. Field names
 are what landing_views._raw_block reads; repeating rows (FAQ, timeline) post parallel lists.{% endcomment %}
@@ -56,9 +56,9 @@ are what landing_views._raw_block reads; repeating rows (FAQ, timeline) post par
   {% if errors.items %}<div class="text-danger small">{{ errors.items }}</div>{% endif %}
 
   {% elif kind == 'documents' %}
-  {% if block %}
+  {% if edit_block %}
   <ul class="list-unstyled mb-2">
-    {% for f in block.files.all %}
+    {% for f in edit_block.files.all %}
     <li class="lb-file">
       <input name="file_title_{{ f.pk }}" class="form-control form-control-sm" maxlength="200" value="{{ f.title }}" aria-label="{% trans 'File title' %}">
       <small class="text-muted text-nowrap">{{ f.extension|upper }} · {{ f.size|filesizeformat }}</small>
@@ -115,6 +115,38 @@ are what landing_views._raw_block reads; repeating rows (FAQ, timeline) post par
   </div>
   <input name="caption" class="form-control form-control-sm mt-2" maxlength="300" value="{{ data.caption|default:'' }}" placeholder="{% trans 'Caption (optional)' %}">
   <p class="small text-muted mt-1 mb-0">{% trans "Answers are counted the same way as on the survey's public results page: small groups are masked, written answers are never shown." %}</p>
+
+  {% elif kind == 'event' %}
+  <div class="form-row">
+    <div class="col-sm-4"><label class="small mb-0">{% trans "Date" %}</label>
+      <input type="date" name="date" class="form-control form-control-sm" value="{{ data.date|default:'' }}" required></div>
+    <div class="col-4 col-sm-2"><label class="small mb-0">{% trans "Starts" %}</label>
+      <input type="time" name="start" class="form-control form-control-sm" value="{{ data.start|default:'' }}" required></div>
+    <div class="col-4 col-sm-2"><label class="small mb-0">{% trans "Ends" %}</label>
+      <input type="time" name="end" class="form-control form-control-sm" value="{{ data.end|default:'' }}"></div>
+    <div class="col-4 col-sm-4"><label class="small mb-0">{% trans "Time zone" %}</label>
+      <input name="tz" list="lb-timezones" class="form-control form-control-sm" value="{{ data.tz|default:'UTC' }}"></div>
+  </div>
+  {% if errors.date %}<div class="text-danger small">{{ errors.date }}</div>{% endif %}
+  {% if errors.start %}<div class="text-danger small">{{ errors.start }}</div>{% endif %}
+  {% if errors.end %}<div class="text-danger small">{{ errors.end }}</div>{% endif %}
+  {% if errors.tz %}<div class="text-danger small">{{ errors.tz }}</div>{% endif %}
+  <input name="place" class="form-control form-control-sm mt-2" maxlength="200" value="{{ data.place|default:'' }}" placeholder="{% trans 'Place, e.g. The boathouse, Riverside Park' %}">
+  <input name="place_url" type="url" class="form-control form-control-sm mt-2" maxlength="250" value="{{ data.place_url|default:'' }}" placeholder="{% trans 'Map link to the place (optional)' %}">
+  {% if errors.place_url %}<div class="text-danger small">{{ errors.place_url }}</div>{% endif %}
+  <textarea name="description" class="form-control form-control-sm mt-2" rows="3" maxlength="1000" placeholder="{% trans 'What happens there (optional)' %}">{{ data.description|default:'' }}</textarea>
+  <div class="form-row mt-2 align-items-center">
+    <div class="col-6"><label class="small mb-0">{% trans "Seats (empty = no limit)" %}</label>
+      <input type="number" name="capacity" min="1" max="10000" class="form-control form-control-sm" value="{{ data.capacity|default_if_none:'' }}"></div>
+    <div class="col-6 small pt-3"><label class="mb-0"><input type="checkbox" name="open" value="1"{% if data.open or is_new %} checked{% endif %}> {% trans "Registration open" %}</label></div>
+  </div>
+  {% if errors.capacity %}<div class="text-danger small">{{ errors.capacity }}</div>{% endif %}
+  {% if edit_block %}{% with counts=event_counts|get_item:edit_block.pk %}
+  <p class="small mt-2 mb-0">{% blocktrans count n=counts.0 %}{{ n }} registered{% plural %}{{ n }} registered{% endblocktrans %}{% if counts.1 is not None %} · {% blocktrans with n=counts.1 %}{{ n }} seats left{% endblocktrans %}{% endif %}
+    · <a href="{% url 'editor_landing_attendees' landing.uuid edit_block.pk %}">{% trans "Attendee list" %}</a></p>
+  {% endwith %}{% endif %}
+  <p class="small text-muted mt-1 mb-0">{% trans "Residents give their name and email. They get a confirmation with a calendar file; registrations are deleted 30 days after the event." %}</p>
+  <datalist id="lb-timezones">{% for z in timezones %}<option value="{{ z }}">{% endfor %}</datalist>
 
   {% elif kind == 'survey' %}
   {% if all_linkable %}

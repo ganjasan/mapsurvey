@@ -3193,6 +3193,8 @@ LANDING_BLOCK_KIND_CHOICES = (
     ('survey', _('Survey card')),
     ('documents', _('Documents')),
     ('map', _('Map')),
+    ('results', _('Results')),
+    ('event', _('Event')),
 )
 
 
@@ -3251,3 +3253,30 @@ class LandingFile(models.Model):
     @property
     def extension(self):
         return os.path.splitext(self.file.name)[1].lstrip('.').lower()
+
+
+class EventRegistration(models.Model):
+    """A resident's "I am coming" to an event block of a landing (change landing-events, #579).
+
+    The one place Mapsurvey stores a resident's name and email: for the organising workspace
+    only, for this event only, deleted 30 days after it ends (`survey.tasks.purge_event_registrations`)
+    or with the block. `token` is the cancel link's secret; a cancelled row keeps its seat free.
+    """
+    block = models.ForeignKey(LandingBlock, on_delete=models.CASCADE, related_name='registrations')
+    name = models.CharField(max_length=120)
+    email = models.EmailField()
+    token = models.UUIDField(default=uuid_module.uuid4, unique=True, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ('created_at', 'id')
+        indexes = [models.Index(fields=['block', 'email'], name='eventreg_block_email_idx')]
+
+    def __str__(self):
+        return f'{self.name} → {self.block_id}'
+
+    @property
+    def is_active(self):
+        return self.cancelled_at is None

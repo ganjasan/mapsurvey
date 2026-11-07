@@ -2389,7 +2389,7 @@ def trust_page(request):
 
 # Bump only when the text of terms.html changes: the page shows this as its
 # "Last updated" date, and the DPGA application links the page as evidence.
-TERMS_UPDATED = datetime(2026, 10, 29).date()
+TERMS_UPDATED = datetime(2026, 11, 8).date()
 
 
 def terms_page(request):

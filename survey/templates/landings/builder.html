@@ -182,7 +182,7 @@ here; drag-to-reorder posts the id list as JSON. Read-only for viewers and for a
           {% if may_edit %}
           <div class="lb-block-form">
             {% url 'editor_landing_block_edit' landing.uuid block.pk as action %}
-            {% include "landings/_block_form.html" with kind=block.kind data=block.data title=block.title action=action errors=errors selected_survey=block.landing_survey.survey.uuid %}
+            {% include "landings/_block_form.html" with edit_block=block kind=block.kind data=block.data title=block.title action=action errors=errors selected_survey=block.landing_survey.survey.uuid %}
           </div>
           {% endif %}
         </li>

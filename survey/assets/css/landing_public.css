@@ -71,3 +71,20 @@ body.lp { margin: 0; font: 17px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI
 .pr-table td, .objects-table td, .objects-table th { padding: 8px 10px; border-bottom: 1px solid var(--lp-line); text-align: left; }
 .pr-table td.val { text-align: right; font-variant-numeric: tabular-nums; color: var(--lp-muted); white-space: nowrap; }
 .objects-table tr.masked { color: var(--lp-muted); }
+.lp-event { border: 1px solid var(--lp-line); border-radius: 12px; padding: 20px; }
+.lp-event-when { display: flex; flex-direction: column; margin-bottom: 6px; }
+.lp-event-date { font-size: 20px; font-weight: 700; }
+.lp-event-time { color: var(--lp-muted); }
+.lp-event-place { margin: 4px 0; font-weight: 600; }
+.lp-event-desc { color: var(--lp-muted); margin: 6px 0 12px; }
+.lp-event-form { display: grid; gap: 10px; margin-top: 12px; }
+.lp-event-form label { display: grid; gap: 4px; font-size: 15px; }
+.lp-event-form input[type=text], .lp-event-form input[type=email] { font: inherit; padding: 9px 11px; border: 1px solid #c9ced4; border-radius: 8px; }
+.lp-event-form .lp-consent { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; color: var(--lp-muted); }
+.lp-event-form .lp-consent input { margin-top: 4px; }
+.lp-event-form .lp-btn { justify-self: start; cursor: pointer; font: inherit; font-weight: 600; }
+.lp-seats, .lp-event-full { font-size: 14px; color: var(--lp-muted); }
+.lp-hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.lp-notice { background: #eef6ee; border: 1px solid #b7dab8; color: #1f5122; border-radius: 8px; padding: 10px 14px; margin: 10px 0; }
+.lp-notice--warn { background: #fff4e5; border-color: #f2c98a; color: #6b4300; }
+.lp-event-place a { color: var(--lp-accent); }
