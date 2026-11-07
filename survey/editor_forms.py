@@ -3,7 +3,8 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
 from survey import marker_icons
-from .models import SurveyHeader, SurveySection, Question, QuestionGroup, Organization, BASEMAP_CHOICES, MAPLESS_LAYOUTS
+from . import basemaps as basemap_registry
+from .models import SurveyHeader, SurveySection, Question, QuestionGroup, Organization, MAPLESS_LAYOUTS
 from .html_sanitize import coerce_creator_html
 from . import schedule
 from .redirects import NO_REDIRECT, clean_redirect_url, is_valid_redirect, tidy_redirect_input
@@ -217,9 +218,15 @@ class SurveyHeaderForm(forms.ModelForm):
         # is still tolerated server-side and auto-fixed in ``clean()``,
         # which keeps existing rows (and tests posting without the field)
         # working without an additional migration.
-        self.fields['default_basemap'].required = False
-        self.fields['default_basemap'].empty_label = None
-        self.fields['default_basemap'].choices = list(BASEMAP_CHOICES)
+        # Presets, then the workspace's own ready styles (change map-styles-library, #542):
+        # the one list every picker and validation reads, from survey/basemaps.py. The model
+        # field carries no `choices` any more, so the ModelForm would give a free-text
+        # CharField; a ChoiceField over the resolver's list is what the settings page needs.
+        self._basemap_choices = basemap_registry.choices_for(getattr(self.instance, 'organization', None))
+        self.fields['default_basemap'] = forms.ChoiceField(
+            choices=list(self._basemap_choices), required=False,
+            label=self.fields['default_basemap'].label,
+            widget=forms.Select(attrs={'class': 'form-control'}))
         # "#" is how this model spells "no redirect" (views.py sends the
         # respondent to the thanks page when it sees it), and the model gives
         # the field that default -- but the field is not blank=True, so the
@@ -298,7 +305,7 @@ class SurveyHeaderForm(forms.ModelForm):
         return value
 
     def clean_basemaps(self):
-        VALID = {slug for slug, _ in BASEMAP_CHOICES}
+        VALID = {slug for slug, _ in self._basemap_choices}
         value = self.cleaned_data.get('basemaps') or []
         if not isinstance(value, list):
             raise forms.ValidationError("Invalid basemaps value.")

@@ -1,4 +1,4 @@
-{% load static i18n %}
+{% load static i18n basemap_tags %}
 <!DOCTYPE html>
 <html lang="{{ lang|default:'en' }}">
 <head>
@@ -20,6 +20,8 @@
 
   <link rel="icon" href="{% static 'favicon-32x32.png' %}" type="image/png" sizes="32x32">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
@@ -136,6 +138,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin="anonymous"></script>
   <script>
   (function(){
     // Segment palette for pie/doughnut charts. Declared before the render loop
@@ -150,13 +153,12 @@
     // already served to anonymous respondents on every survey page.
     // Declared before the render loop for the same hoisting reason as PALETTE.
     var MAPBOX_TOKEN = '{{ MAPBOX_ACCESS_TOKEN }}';
-    var BASEMAPS = {
-      streets:   { url: '{{ MAPBOX_URL }}',          opts: { attribution: '© Mapbox © OpenStreetMap', maxZoom: 23, accessToken: MAPBOX_TOKEN } },
-      satellite: { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', opts: { attribution: '© Esri', maxZoom: 19 } },
-      topo:      { url: '{{ MAPBOX_OUTDOORS_URL }}', opts: { attribution: '© Mapbox © OpenStreetMap', maxZoom: 22, accessToken: MAPBOX_TOKEN } },
-      paper:     { url: '{{ MAPBOX_PAPER_URL }}',    opts: { attribution: '© Mapbox © OpenStreetMap', maxZoom: 22, accessToken: MAPBOX_TOKEN } },
-      paper_b:   { url: '{{ MAPBOX_PAPER_B_URL }}',  opts: { attribution: '© Mapbox © OpenStreetMap', maxZoom: 22, accessToken: MAPBOX_TOKEN } }
-    };
+    // The same provider table the respondent map reads (survey/basemaps.py, change
+    // map-styles-library, #542), for this survey's workspace and pins.
+    var BASEMAPS = {% basemap_table survey.organization survey.basemap_pins %};
+    Object.keys(BASEMAPS).forEach(function(k) {
+      if (BASEMAPS[k].provider === 'mapbox') BASEMAPS[k].opts.accessToken = MAPBOX_TOKEN;
+    });
 
     var blocks = JSON.parse(document.getElementById('blocks-data').textContent || '[]');
     blocks.forEach(function(b){
@@ -278,25 +280,38 @@
 
       var fc = b.feature_collection || { features: [] };
       var isHeat = (b.viz === 'heatmap' || b.viz === 'heat');
+      // Clusters (spec public-results-page, change cluster-map): nearby points
+      // merge into a counted circle that splits on zoom. Without the plugin
+      // (CDN blocked) the block falls back to plain markers.
+      var isCluster = (b.viz === 'cluster' && typeof L.markerClusterGroup === 'function');
       var pts = [];
+      function isPoint(feat){ return !!(feat.geometry && feat.geometry.type === 'Point'); }
+      function bindProps(feat, lyr){
+        var props = feat.properties || {};
+        var keys = Object.keys(props);
+        if (keys.length) {
+          lyr.bindPopup(keys.map(function(k){ return '<b>' + k + ':</b> ' + props[k]; }).join('<br>'));
+        }
+      }
 
       // In heatmap mode, point features become heat intensity only — drawing the
       // individual markers on top (markerPane z-index 600) would completely hide
-      // the heat canvas (overlayPane z-index 400). Non-point geometries still
-      // render as shapes. In marker mode, everything renders as geoJSON features.
+      // the heat canvas (overlayPane z-index 400). In cluster mode they go into
+      // the cluster group below. Non-point geometries always render as shapes.
       var layer = L.geoJSON(fc, {
         filter: function(feat){
-          if (isHeat && feat.geometry && feat.geometry.type === 'Point') return false;
+          if ((isHeat || isCluster) && isPoint(feat)) return false;
           return true;
         },
-        onEachFeature: function(feat, lyr){
-          var props = feat.properties || {};
-          var keys = Object.keys(props);
-          if (keys.length) {
-            lyr.bindPopup(keys.map(function(k){ return '<b>' + k + ':</b> ' + props[k]; }).join('<br>'));
-          }
-        }
+        onEachFeature: bindProps
       }).addTo(map);
+
+      var clusters = null;
+      if (isCluster) {
+        clusters = L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 50, chunkedLoading: true });
+        clusters.addLayer(L.geoJSON(fc, { filter: isPoint, onEachFeature: bindProps }));
+        map.addLayer(clusters);
+      }
 
       // Collect point coordinates for the heat layer and for bounds.
       (fc.features || []).forEach(function(feat){
@@ -310,8 +325,9 @@
       }
 
       try {
+        // Heat and cluster modes keep points out of `layer`: widen by them.
         var bounds = layer.getBounds();
-        if (!bounds.isValid() && pts.length) { bounds = L.latLngBounds(pts); }
+        if (pts.length) { bounds = bounds.isValid() ? bounds.extend(L.latLngBounds(pts)) : L.latLngBounds(pts); }
         if (bounds && bounds.isValid()) { map.fitBounds(bounds.pad(0.2)); }
         else { map.setView([52.52, 13.405], 11); }
       } catch (e) { map.setView([52.52, 13.405], 11); }

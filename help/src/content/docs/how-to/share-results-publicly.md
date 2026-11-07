@@ -17,7 +17,7 @@ You end up with a public results page at `https://mapsurvey.org/r/<slug>/` showi
 1. Open the survey and choose the **Public results** tab. Mapsurvey has already drafted a page from your questions, one block per publishable question.
    <!-- screenshot: the Public results editor with the block list and the preview -->
 2. Arrange the blocks: drag to reorder, switch on **Hidden** for the ones you do not want, and press **Add block** to add a **Text block**, an **Image** or **Question results…** for a question that is not there yet.
-3. Open a map block's **Block settings** and choose its **Point popup fields** — the sub-questions whose values a visitor sees when they click a point. Leave it empty for anonymous geometry. Free-text sub-questions cannot be shown.
+3. Open a map block's **Block settings** and choose its **Visualization**: **Markers** draws every point, **Heatmap** shows where points concentrate, and **Clusters** merges nearby points into one circle with a count that splits as a visitor zooms in. Clusters suit points spread far apart, such as sites around the world. Then choose its **Point popup fields** — the sub-questions whose values a visitor sees when they click a point. Leave it empty for anonymous geometry. Free-text sub-questions cannot be shown.
 4. Under **Page settings**, choose:
    - **Visibility**: **Public** is indexed by search engines and can be listed; **Unlisted** opens only by direct link and is not indexed.
    - **Data mode**: live data, or **Freeze snapshot** to publish a fixed copy. A frozen page keeps showing the snapshot until you press **Update snapshot** or **Back to live**.

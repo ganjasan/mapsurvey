@@ -13,6 +13,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin="anonymous"></script>
 <script src="{% static 'js/spray_layer.js' %}"></script>
 {% include "editor/partials/_analytics_styles.html" %}
 {# v2 sheet loads after the shared styles so its overrides win. #}
@@ -1231,11 +1233,8 @@ function sessionGeoOpenMap(objectId) {
     $('#sessionGeoMapModal').one('shown.bs.modal', function () {
         /* mount() disposes whatever the previous open left on the container. */
         var map = EditorMap.mount('session-geo-modal-map', { zoomControl: true });
-        L.tileLayer('{{ MAPBOX_URL }}', {
-            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>',
-            maxZoom: 23,
-            accessToken: '{{ MAPBOX_ACCESS_TOKEN }}',
-        }).addTo(map);
+        var _streets = {{ MAPBOX_STREETS|safe }};  // the resolver's Streets entry (survey/basemaps.py)
+        L.tileLayer(_streets.url, Object.assign({ accessToken: '{{ MAPBOX_ACCESS_TOKEN }}' }, _streets.opts)).addTo(map);
 
         /* Reference layers from the Map pane's cache -- same visibility, order
            and opacity as its Layers panel, no second request. */

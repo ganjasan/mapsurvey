@@ -103,12 +103,28 @@ class SidebarContentsTest(_SidebarFixture):
         """
         GIVEN an owner on the dashboard
         WHEN the sidebar renders
-        THEN it lists Surveys, API, MCP, Members, Plan & billing, General, What's new,
+        THEN it lists Surveys, API, MCP, Map styles, Members, Plan & billing, General, What's new,
              in that order
         """
         html = self.html(reverse('editor') + '?dashboard=1')
         keys = re.findall(r'data-nav-key="([a-z_]+)"', html[html.index(SIDEBAR):])
-        self.assertEqual(keys[:7], ['surveys', 'api', 'mcp', 'members', 'billing', 'settings', 'whats_new'])
+        self.assertEqual(keys[:8], ['surveys', 'api', 'mcp', 'map_styles', 'members', 'billing', 'settings', 'whats_new'])
+
+    def test_map_styles_for_every_member(self):
+        """
+        GIVEN a member with the viewer role
+        WHEN they open the dashboard and then the library
+        THEN the sidebar has a Map styles item under Library with the map_styles Pro mark,
+             and the library page marks it active
+        """
+        viewer = User.objects.create_user('navviewer', password='pass')
+        Membership.objects.create(user=viewer, organization=self.org, role='viewer')
+        self.client.login(username='navviewer', password='pass')
+        html = self.html(reverse('editor') + '?dashboard=1')
+        self.assertIn('data-nav-key="map_styles"', html)
+        library = html[html.index('data-nav-key="map_styles"') - 600:html.index('data-nav-key="map_styles"')]
+        self.assertIn('Library', library)
+        self.assertEqual(self.active_keys(self.html(reverse('org_map_styles', args=[self.org.slug]))), ['map_styles'])
 
     def test_active_item_follows_the_page(self):
         """

@@ -87,7 +87,7 @@ Permission `surveys:write` · role **workspace editor**
 
 ### `update_survey`
 
-Change the fields you name: name, languages, redirect_url ("#" for the built-in thanks page), visibility, basemaps, branding, the thanks page per language, the map start, and the survey period (opens_at, closes_at, schedule_timezone: before opens_at respondents see an "opens on" page, at closes_at the survey closes by itself). Settings need the owner role; the thanks page the editor role.
+Change the fields you name: name, languages, redirect_url ("#" for the built-in thanks page), visibility, basemaps (preset keys or "style:<uuid>" of a workspace map style), branding, the thanks page per language, the map start, and the survey period (opens_at, closes_at, schedule_timezone: before opens_at respondents see an "opens on" page, at closes_at the survey closes by itself). Settings need the owner role; the thanks page the editor role.
 
 Permission `surveys:write` · role **owner**
 
@@ -97,8 +97,8 @@ Permission `surveys:write` · role **owner**
 | `redirect_url` | string |  | "#" for the built-in thanks page, or an absolute http(s) URL. |
 | `languages` | list of string |  |  |
 | `visibility` | `public` \| `private` \| `demo` |  |  |
-| `basemaps` | list of string |  |  |
-| `default_basemap` | string |  |  |
+| `basemaps` | list of string |  | Preset keys (streets, satellite, topo, paper, paper_b) or "style:<uuid>" of a workspace map style; a key the workspace does not have is dropped. |
+| `default_basemap` | string |  | One of `basemaps`; else the first enabled key. |
 | `show_branding` | boolean |  |  |
 | `thanks_html` | map |  | Thanks page per language; creator HTML, sanitised on save. |
 | `map_start` | object (`lat`, `lng`, `zoom`) |  |  |

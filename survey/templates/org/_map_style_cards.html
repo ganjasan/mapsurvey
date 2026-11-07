@@ -1,0 +1,59 @@
+{% load i18n billing_tags %}
+<div id="map-style-cards" class="row"{% if polling %} hx-get="{% url 'org_map_styles' org.slug %}" hx-trigger="every 3s" hx-swap="outerHTML"{% endif %}>
+{% for card in cards %}
+  <div class="col-sm-6 col-lg-4 mb-3">
+    <div class="card h-100 map-style-card" data-style-key="{{ card.style.basemap_key }}">
+      <div class="map-style-preview" style="height:150px;background:#eee url('{{ card.preview }}') center / cover no-repeat;border-radius:.25rem .25rem 0 0;" role="img" aria-label="{{ card.style.name }}"></div>
+      <div class="card-body py-2 px-3">
+        <div class="d-flex align-items-start justify-content-between">
+          <div style="min-width:0;">
+            <div class="font-weight-500 text-truncate" title="{{ card.style.name }}">{{ card.style.name }}</div>
+            <div class="text-muted" style="font-size:0.8rem;">
+              {% if card.style.is_preset %}{% trans "Preset" %}{% elif card.style.base %}{% blocktrans with base=card.style.base %}Based on {{ base }}{% endblocktrans %}{% endif %}
+              {% if card.usage is not None %}
+                · {% blocktrans count n=card.usage %}used in {{ n }} survey{% plural %}used in {{ n }} surveys{% endblocktrans %}
+              {% endif %}
+            </div>
+          </div>
+          {% if card.pending %}
+            <span class="badge badge-info ml-2" title="{% trans 'The hosted style is being created' %}">{% trans "Publishing…" %}</span>
+          {% elif card.failed %}
+            <span class="badge badge-danger ml-2" title="{{ card.error }}">{% trans "Failed" %}</span>
+          {% endif %}
+        </div>
+      </div>
+      {% if can_act %}
+      <div class="card-footer py-2 px-3 d-flex align-items-center" style="gap:.5rem;font-size:0.85rem;">
+        {% if card.style.can_duplicate and not card.pending %}
+        <form method="post" action="{% url 'org_map_style_duplicate' org.slug card.style.uuid %}" class="mb-0">
+          {% csrf_token %}
+          {% comment %}No Pro mark here (owner, 2026-11-07): the page title and the sidebar row carry it once;
+          one on every card was noise. The gate itself is unchanged.{% endcomment %}
+          <button type="submit" class="btn btn-sm btn-outline-primary">{% trans "Duplicate" %}</button>
+        </form>
+        {% endif %}
+        {% if card.style.can_duplicate %}
+        <a class="btn btn-sm btn-link p-0" href="{% url 'org_map_style_export' org.slug card.style.uuid %}" download title="{% trans 'Download as a file' %}">{% trans "Export" %}</a>
+        {% endif %}
+        {% if not card.style.is_preset %}
+          <a class="btn btn-sm btn-outline-secondary" href="{% url 'org_map_style_edit' org.slug card.style.uuid %}">{% trans "Edit" %}</a>
+          {% if card.failed %}
+          <form method="post" action="{% url 'org_map_style_retry' org.slug card.style.uuid %}" class="mb-0">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-secondary">{% trans "Retry" %}</button>
+          </form>
+          {% endif %}
+          {% if not card.pending %}
+          <form method="post" action="{% url 'org_map_style_delete' org.slug card.style.uuid %}" class="mb-0 ml-auto"
+                onsubmit="return confirm('{% trans "Delete this map style?" %}');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-link text-danger p-0">{% trans "Delete" %}</button>
+          </form>
+          {% endif %}
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+{% endfor %}
+</div>

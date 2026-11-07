@@ -49,6 +49,12 @@ FEATURES = {
     # sessions entered while Pro stay when the subscription lapses.
     'operator_entry': Feature('operator_entry', frozenset({PLAN_PRO}),
                               _('Enter responses for others: paper forms, interviews, field work')),
+    # The map style library (change map-styles-library, #542; epic #545): creating a
+    # workspace style — duplicating a preset today, the editor and import later — is
+    # Pro. Using a style that already exists, preset or the workspace's own, is not:
+    # a lapsed subscription must not change the map a live survey's respondents see.
+    'map_styles': Feature('map_styles', frozenset({PLAN_PRO}),
+                          _('Your own map styles')),
 }
 
 
@@ -68,6 +74,7 @@ TRIAL_ALLOWANCES = {
     # Operator sessions entered (change pro-trial-auto): starts the trial and is
     # counted, but has no cap until paper parsing (#495) brings the paper limit.
     'operator_entry': None,
+    'map_styles': 2,   # workspace styles created
 }
 TRIAL_DAYS = 90
 

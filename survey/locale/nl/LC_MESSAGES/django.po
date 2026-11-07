@@ -10331,3 +10331,396 @@ msgstr "Helpcentrum"
 #: whats-new-in-sidebar
 msgid "Read more"
 msgstr "Lees meer"
+
+#: map-style-library (#542)
+msgid "Map styles"
+msgstr "Kaartstijlen"
+
+#: map-style-library (#542)
+msgid "Library"
+msgstr "Bibliotheek"
+
+#: map-style-library (#542)
+msgid "Preset"
+msgstr "Voorinstelling"
+
+#: map-style-library (#542)
+msgid "Publishing…"
+msgstr "Publiceren…"
+
+#: map-style-library (#542)
+msgid "Failed"
+msgstr "Mislukt"
+
+
+#: map-style-library (#542)
+msgid "Rename"
+msgstr "Hernoemen"
+
+#: map-style-library (#542)
+msgid "New name"
+msgstr "Nieuwe naam"
+
+#: map-style-library (#542)
+msgid "Delete this map style?"
+msgstr "Deze kaartstijl verwijderen?"
+
+#: map-style-library (#542)
+msgid "Your own map styles"
+msgstr "Je eigen kaartstijlen"
+
+#: map-style-library (#542)
+msgid "A style needs a name."
+msgstr "Een stijl heeft een naam nodig."
+
+#: map-style-library (#542)
+msgid "The hosted style is being created"
+msgstr "De gehoste stijl wordt aangemaakt"
+
+#: map-style-library (#542)
+msgid "Based on %(base)s"
+msgstr "Gebaseerd op %(base)s"
+
+#: map-style-library (#542)
+msgid "This base map cannot be duplicated."
+msgstr "Deze basiskaart kan niet worden gedupliceerd."
+
+#: map-style-library (#542)
+msgid "This style has no published version to copy yet."
+msgstr "Deze stijl heeft nog geen gepubliceerde versie om te kopiëren."
+
+#: map-style-library (#542)
+msgid "%(name)s copy"
+msgstr "Kopie van %(name)s"
+
+#: map-style-library (#542)
+msgid "“%(name)s” is being published. It appears in survey settings once it is ready."
+msgstr "“%(name)s” wordt gepubliceerd. Hij verschijnt in de enquête-instellingen zodra hij klaar is."
+
+#: map-style-library (#542)
+msgid "“%(name)s” is used by %(surveys)s. Choose another base map there first."
+msgstr "“%(name)s” wordt gebruikt door %(surveys)s. Kies daar eerst een andere basiskaart."
+
+#: map-style-library (#542)
+msgid "“%(name)s” was deleted."
+msgstr "“%(name)s” is verwijderd."
+
+#: map-style-library (#542)
+msgid "A published map style version cannot be changed; save a new version."
+msgstr "Een gepubliceerde versie van een kaartstijl kan niet worden gewijzigd; sla een nieuwe versie op."
+
+#: map-style-library (#542)
+msgid "A map style is the base map under your surveys, online and on paper. Pick any of these in a survey's settings. Duplicate a preset to give it your own name; the editor for colours and labels is coming next."
+msgstr "Een kaartstijl is de basiskaart onder je enquêtes, online en op papier. Kies er een in de instellingen van een enquête. Dupliceer een voorinstelling om hem je eigen naam te geven; de editor voor kleuren en labels volgt binnenkort."
+
+#: map-style-library (#542)
+msgid "used in %(n)s survey"
+msgid_plural "used in %(n)s surveys"
+msgstr[0] "gebruikt in %(n)s enquête"
+msgstr[1] "gebruikt in %(n)s enquêtes"
+
+#: map-style-editor (#543)
+msgid "Map style"
+msgstr "Kaartstijl"
+
+#: map-style-editor (#543)
+msgid "Style name"
+msgstr "Naam van de stijl"
+
+#: map-style-editor (#543)
+msgid "Version %(n)s published"
+msgstr "Versie %(n)s gepubliceerd"
+
+#: map-style-editor (#543)
+msgid "Editing map styles is a Pro feature."
+msgstr "Kaartstijlen bewerken is een Pro-functie."
+
+#: map-style-editor (#543)
+msgid "Saving publishes a new version. A survey that is already published keeps the version it has until you publish it again; drafts preview the newest one."
+msgstr "Opslaan publiceert een nieuwe versie. Een al gepubliceerde enquête houdt haar versie tot je haar opnieuw publiceert; concepten tonen de nieuwste."
+
+#: map-style-editor (#543)
+msgid "What stays on the map"
+msgstr "Wat op de kaart blijft"
+
+#: map-style-editor (#543)
+msgid "Buildings"
+msgstr "Gebouwen"
+
+#: map-style-editor (#543)
+msgid "Outlines from zoom 15; a paper map needs them only for a street or a block."
+msgstr "Omtrekken vanaf zoom 15; een papieren kaart heeft ze alleen nodig voor een straat of een blok."
+
+#: map-style-editor (#543)
+msgid "Colours"
+msgstr "Kleuren"
+
+#: map-style-editor (#543)
+msgid "Hex colour"
+msgstr "Hex-kleur"
+
+#: map-style-editor (#543)
+msgid "Hard to tell apart from the land on a photocopy."
+msgstr "Op een fotokopie moeilijk van het land te onderscheiden."
+
+#: map-style-editor (#543)
+msgid "Roads and labels"
+msgstr "Wegen en labels"
+
+#: map-style-editor (#543)
+msgid "Road look"
+msgstr "Uiterlijk van wegen"
+
+#: map-style-editor (#543)
+msgid "Bold street names"
+msgstr "Vette straatnamen"
+
+#: map-style-editor (#543)
+msgid "City and region names up to zoom"
+msgstr "Stads- en regionamen tot zoom"
+
+#: map-style-editor (#543)
+msgid "Below that zoom they stay; above it the map shows streets and districts only."
+msgstr "Daaronder blijven ze; daarboven toont de kaart alleen straten en wijken."
+
+#: map-style-editor (#543)
+msgid "Greyscale"
+msgstr "Grijstinten"
+
+#: map-style-editor (#543)
+msgid "Every colour becomes a grey, as a black-and-white copier sees it."
+msgstr "Elke kleur wordt een grijs, zoals een zwart-witkopieerapparaat hem ziet."
+
+#: map-style-editor (#543)
+msgid "Print"
+msgstr "Afdrukken"
+
+#: map-style-editor (#543)
+msgid "Frame of a survey"
+msgstr "Kader van een enquête"
+
+#: map-style-editor (#543)
+msgid "Unsaved changes"
+msgstr "Niet-opgeslagen wijzigingen"
+
+#: map-style-editor (#543)
+msgid "As a photocopy"
+msgstr "Als fotokopie"
+
+#: map-style-editor (#543)
+msgid "Place icons and names"
+msgstr "Plaatspictogrammen en -namen"
+
+#: map-style-editor (#543)
+msgid "Shops, stations, parks by name — the clutter a paper map does without."
+msgstr "Winkels, stations, parken met naam — de drukte die een papieren kaart niet nodig heeft."
+
+#: map-style-editor (#543)
+msgid "Footpaths and steps"
+msgstr "Voetpaden en trappen"
+
+#: map-style-editor (#543)
+msgid "Pedestrian ways, stairs, crossings and park paths."
+msgstr "Voetgangerswegen, trappen, oversteekplaatsen en parkpaden."
+
+#: map-style-editor (#543)
+msgid "Route shields and arrows"
+msgstr "Wegschilden en pijlen"
+
+#: map-style-editor (#543)
+msgid "Road numbers, one-way arrows, junction marks."
+msgstr "Wegnummers, eenrichtingspijlen, kruispuntmarkeringen."
+
+#: map-style-editor (#543)
+msgid "Relief and ferries"
+msgstr "Reliëf en veerboten"
+
+#: map-style-editor (#543)
+msgid "Hillshade, sea depth, ferry and cable-car lines."
+msgstr "Schaduwreliëf, zeediepte, veer- en kabelbaanlijnen."
+
+#: map-style-editor (#543)
+msgid "Regional boundaries"
+msgstr "Regionale grenzen"
+
+#: map-style-editor (#543)
+msgid "States, provinces, Länder. National borders always show."
+msgstr "Staten, provincies, Länder. Landsgrenzen zijn altijd zichtbaar."
+
+#: map-style-editor (#543)
+msgid "Land"
+msgstr "Land"
+
+#: map-style-editor (#543)
+msgid "Parks and green"
+msgstr "Parken en groen"
+
+#: map-style-editor (#543)
+msgid "Water"
+msgstr "Water"
+
+#: map-style-editor (#543)
+msgid "National borders"
+msgstr "Landsgrenzen"
+
+#: map-style-editor (#543)
+msgid "Street and city names"
+msgstr "Straat- en stadsnamen"
+
+#: map-style-editor (#543)
+msgid "Water and district names"
+msgstr "Water- en wijknamen"
+
+#: map-style-editor (#543)
+msgid "Light"
+msgstr "Licht"
+
+#: map-style-editor (#543)
+msgid "Strong"
+msgstr "Sterk"
+
+#: map-style-editor (#543)
+msgid "Use a colour like #dcefd2."
+msgstr "Gebruik een kleur zoals #dcefd2."
+
+#: map-style-editor (#543)
+msgid "Copenhagen (example)"
+msgstr "Kopenhagen (voorbeeld)"
+
+#: map-style-editor (#543)
+msgid "Preview unavailable"
+msgstr "Voorbeeld niet beschikbaar"
+
+#: map-style-editor (#543)
+msgid "No published version yet"
+msgstr "Nog geen gepubliceerde versie"
+
+#: map-style-editor (#543)
+msgid "Version %n is being published; this frame shows the last published one."
+msgstr "Versie %n wordt gepubliceerd; dit kader toont de laatst gepubliceerde."
+
+#: map-style-editor (#543)
+msgid "Unsaved changes are not in this frame yet."
+msgstr "Niet-opgeslagen wijzigingen zitten nog niet in dit kader."
+
+#: map-style-editor (#543)
+msgid "Version %n, as the printed form renders it."
+msgstr "Versie %n, zoals het gedrukte formulier haar weergeeft."
+
+#: map-style-editor (#543)
+msgid "Publishing failed"
+msgstr "Publiceren mislukt"
+
+#: map-style-editor (#543)
+msgid "Version %n published"
+msgstr "Versie %n gepubliceerd"
+
+#: map-style-editor (#543)
+msgid "The previous version is still being published."
+msgstr "De vorige versie wordt nog gepubliceerd."
+
+#: map-style-editor (#543)
+msgid "Version %(n)s of “%(name)s” is being published."
+msgstr "Versie %(n)s van “%(name)s” wordt gepubliceerd."
+
+#: map-style-editor (#543)
+msgid "Used in %(n)s survey."
+msgid_plural "Used in %(n)s surveys."
+msgstr[0] "Gebruikt in %(n)s enquête."
+msgstr[1] "Gebruikt in %(n)s enquêtes."
+
+#: map-style-import-export (#544)
+msgid "Import a style"
+msgstr "Een stijl importeren"
+
+#: map-style-import-export (#544)
+msgid "Map style file"
+msgstr "Kaartstijlbestand"
+
+#: map-style-import-export (#544)
+msgid "Download as a file"
+msgstr "Downloaden als bestand"
+
+#: map-style-import-export (#544)
+msgid "Choose a file."
+msgstr "Kies een bestand."
+
+#: map-style-import-export (#544)
+msgid "The file is larger than a map style can be (64 KB)."
+msgstr "Het bestand is groter dan een kaartstijl kan zijn (64 kB)."
+
+#: map-style-import-export (#544)
+msgid "This file is not a Mapsurvey map style."
+msgstr "Dit bestand is geen Mapsurvey-kaartstijl."
+
+#: map-style-import-export (#544)
+msgid "This map style needs a newer Mapsurvey."
+msgstr "Deze kaartstijl heeft een nieuwere Mapsurvey nodig."
+
+#: map-style-import-export (#544)
+msgid "The map style has no name."
+msgstr "De kaartstijl heeft geen naam."
+
+#: map-style-import-export (#544)
+msgid "Base map \"%(base)s\" is not supported here."
+msgstr "Basiskaart “%(base)s” wordt hier niet ondersteund."
+
+#: map-style-import-export (#544)
+msgid "The map style has no settings."
+msgstr "De kaartstijl heeft geen instellingen."
+
+#: map-style-import-export (#544)
+msgid "Could not import the map style: %(reason)s"
+msgstr "De kaartstijl kon niet worden geïmporteerd: %(reason)s"
+
+#: map-style-import-export (#544)
+msgid "“%(name)s” was imported and is being published."
+msgstr "“%(name)s” is geïmporteerd en wordt gepubliceerd."
+
+#: map-styles-new-style
+msgid "New style"
+msgstr "Nieuwe stijl"
+
+#: map-styles-new-style
+msgid "Start from"
+msgstr "Beginnen met"
+
+#: map-styles-new-style
+msgid "A map style is the base map under your surveys, online and on paper. Pick any of these in a survey's settings, or make your own with New style: choose what stays on the map, the colours and the labels, and see how it prints."
+msgstr "Een kaartstijl is de basiskaart onder je enquêtes, online en op papier. Kies er een in de instellingen van een enquête of maak je eigen met Nieuwe stijl: wat op de kaart blijft, de kleuren en de labels, en zie hoe hij wordt afgedrukt."
+
+#: map-styles-editor-fidelity
+msgid "As base"
+msgstr "Zoals de basis"
+
+#: map-styles-editor-fidelity
+msgid "Show buildings from zoom"
+msgstr "Gebouwen tonen vanaf zoom"
+
+#: map-styles-editor-fidelity
+msgid "Lower shows them on wider views; 15 is the usual."
+msgstr "Lager toont ze al in ruimere weergaven; 15 is gebruikelijk."
+
+#: map-styles-editor-fidelity
+msgid "A paper map needs them only for a street or a block."
+msgstr "Een papieren kaart heeft ze alleen nodig voor een straat of een blok."
+
+#: map-styles-editor-fidelity
+msgid "Pick a colour"
+msgstr "Kies een kleur"
+
+#: map-styles-editor-fidelity
+msgid "Back to the base colour"
+msgstr "Terug naar de kleur van de basis"
+
+#: map-styles-editor-fidelity
+msgid "Custom"
+msgstr "Aangepast"
+
+#: map-styles-editor-fidelity
+msgid "The base map’s own colour"
+msgstr "De eigen kleur van de basiskaart"
+
+#: map-styles-print-greyscale
+msgid "In colour"
+msgstr "In kleur"

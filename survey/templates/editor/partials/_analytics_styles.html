@@ -275,6 +275,22 @@
         width: 20px; height: 6px; border-radius: 2px; flex-shrink: 0;
         background: linear-gradient(to right, color-mix(in srgb, var(--cov, #4f46e5) 15%, transparent), var(--cov, #4f46e5));
     }
+    /* Clusters row and icon (spec responses-cluster-map): a counted circle in
+       the source layer's colour, with a soft halo so it reads on any basemap. */
+    .geo-legend-cluster-swatch {
+        width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0;
+        background: var(--clu, #4f46e5);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--clu, #4f46e5) 30%, transparent);
+    }
+    .geo-cluster-icon { background: none; border: none; }
+    .geo-cluster-icon div {
+        width: 100%; height: 100%; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font: 600 12px/1 system-ui, sans-serif; font-variant-numeric: tabular-nums;
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--clu, #4f46e5) 35%, transparent), 0 1px 3px rgba(0,0,0,.3);
+        background: var(--clu, #4f46e5);
+    }
     .geo-legend-stats { font-size: 0.7rem; color: #6b7280; white-space: nowrap; font-variant-numeric: tabular-nums; }
     .geo-coverage-curve { margin: 0.35rem 0 0.1rem; }
     .geo-coverage-curve svg { display: block; border-bottom: 1px solid #e5e7eb; }

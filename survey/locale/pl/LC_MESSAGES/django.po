@@ -10401,3 +10401,398 @@ msgstr "Centrum pomocy"
 #: whats-new-in-sidebar
 msgid "Read more"
 msgstr "Czytaj dalej"
+
+#: map-style-library (#542)
+msgid "Map styles"
+msgstr "Style map"
+
+#: map-style-library (#542)
+msgid "Library"
+msgstr "Biblioteka"
+
+#: map-style-library (#542)
+msgid "Preset"
+msgstr "Predefiniowany"
+
+#: map-style-library (#542)
+msgid "Publishing…"
+msgstr "Publikowanie…"
+
+#: map-style-library (#542)
+msgid "Failed"
+msgstr "Nie powiodło się"
+
+
+#: map-style-library (#542)
+msgid "Rename"
+msgstr "Zmień nazwę"
+
+#: map-style-library (#542)
+msgid "New name"
+msgstr "Nowa nazwa"
+
+#: map-style-library (#542)
+msgid "Delete this map style?"
+msgstr "Usunąć ten styl mapy?"
+
+#: map-style-library (#542)
+msgid "Your own map styles"
+msgstr "Własne style map"
+
+#: map-style-library (#542)
+msgid "A style needs a name."
+msgstr "Styl musi mieć nazwę."
+
+#: map-style-library (#542)
+msgid "The hosted style is being created"
+msgstr "Trwa tworzenie stylu hostowanego"
+
+#: map-style-library (#542)
+msgid "Based on %(base)s"
+msgstr "Na podstawie %(base)s"
+
+#: map-style-library (#542)
+msgid "This base map cannot be duplicated."
+msgstr "Tej mapy podkładowej nie można zduplikować."
+
+#: map-style-library (#542)
+msgid "This style has no published version to copy yet."
+msgstr "Ten styl nie ma jeszcze opublikowanej wersji do skopiowania."
+
+#: map-style-library (#542)
+msgid "%(name)s copy"
+msgstr "Kopia %(name)s"
+
+#: map-style-library (#542)
+msgid "“%(name)s” is being published. It appears in survey settings once it is ready."
+msgstr "„%(name)s” jest publikowany. Pojawi się w ustawieniach ankiety, gdy będzie gotowy."
+
+#: map-style-library (#542)
+msgid "“%(name)s” is used by %(surveys)s. Choose another base map there first."
+msgstr "„%(name)s” jest używany przez %(surveys)s. Najpierw wybierz tam inną mapę podkładową."
+
+#: map-style-library (#542)
+msgid "“%(name)s” was deleted."
+msgstr "„%(name)s” został usunięty."
+
+#: map-style-library (#542)
+msgid "A published map style version cannot be changed; save a new version."
+msgstr "Opublikowanej wersji stylu mapy nie można zmienić; zapisz nową wersję."
+
+#: map-style-library (#542)
+msgid "A map style is the base map under your surveys, online and on paper. Pick any of these in a survey's settings. Duplicate a preset to give it your own name; the editor for colours and labels is coming next."
+msgstr "Styl mapy to mapa podkładowa pod Twoimi ankietami, online i na papierze. Wybierz dowolny z nich w ustawieniach ankiety. Zduplikuj predefiniowany styl, aby nadać mu własną nazwę; edytor kolorów i etykiet pojawi się wkrótce."
+
+#: map-style-library (#542)
+msgid "used in %(n)s survey"
+msgid_plural "used in %(n)s surveys"
+msgstr[0] "używany w %(n)s ankiecie"
+msgstr[1] "używany w %(n)s ankietach"
+msgstr[2] "używany w %(n)s ankietach"
+
+#: map-style-editor (#543)
+msgid "Map style"
+msgstr "Styl mapy"
+
+#: map-style-editor (#543)
+msgid "Style name"
+msgstr "Nazwa stylu"
+
+#: map-style-editor (#543)
+msgid "Version %(n)s published"
+msgstr "Wersja %(n)s opublikowana"
+
+#: map-style-editor (#543)
+msgid "Editing map styles is a Pro feature."
+msgstr "Edycja stylów map to funkcja Pro."
+
+#: map-style-editor (#543)
+msgid "Saving publishes a new version. A survey that is already published keeps the version it has until you publish it again; drafts preview the newest one."
+msgstr "Zapis publikuje nową wersję. Ankieta już opublikowana zachowuje swoją wersję, dopóki nie opublikujesz jej ponownie; szkice pokazują najnowszą."
+
+#: map-style-editor (#543)
+msgid "What stays on the map"
+msgstr "Co zostaje na mapie"
+
+#: map-style-editor (#543)
+msgid "Buildings"
+msgstr "Budynki"
+
+#: map-style-editor (#543)
+msgid "Outlines from zoom 15; a paper map needs them only for a street or a block."
+msgstr "Obrysy od zoomu 15; mapa papierowa potrzebuje ich tylko dla ulicy lub kwartału."
+
+#: map-style-editor (#543)
+msgid "Colours"
+msgstr "Kolory"
+
+#: map-style-editor (#543)
+msgid "Hex colour"
+msgstr "Kolor szesnastkowy"
+
+#: map-style-editor (#543)
+msgid "Hard to tell apart from the land on a photocopy."
+msgstr "Na kserokopii trudno odróżnić od lądu."
+
+#: map-style-editor (#543)
+msgid "Roads and labels"
+msgstr "Drogi i etykiety"
+
+#: map-style-editor (#543)
+msgid "Road look"
+msgstr "Wygląd dróg"
+
+#: map-style-editor (#543)
+msgid "Bold street names"
+msgstr "Pogrubione nazwy ulic"
+
+#: map-style-editor (#543)
+msgid "City and region names up to zoom"
+msgstr "Nazwy miast i regionów do zoomu"
+
+#: map-style-editor (#543)
+msgid "Below that zoom they stay; above it the map shows streets and districts only."
+msgstr "Poniżej zostają; powyżej mapa pokazuje tylko ulice i dzielnice."
+
+#: map-style-editor (#543)
+msgid "Greyscale"
+msgstr "Odcienie szarości"
+
+#: map-style-editor (#543)
+msgid "Every colour becomes a grey, as a black-and-white copier sees it."
+msgstr "Każdy kolor staje się szarością, tak jak widzi go czarno-biała kopiarka."
+
+#: map-style-editor (#543)
+msgid "Print"
+msgstr "Druk"
+
+#: map-style-editor (#543)
+msgid "Frame of a survey"
+msgstr "Kadr ankiety"
+
+#: map-style-editor (#543)
+msgid "Unsaved changes"
+msgstr "Niezapisane zmiany"
+
+#: map-style-editor (#543)
+msgid "As a photocopy"
+msgstr "Jak kserokopia"
+
+#: map-style-editor (#543)
+msgid "Place icons and names"
+msgstr "Ikony i nazwy miejsc"
+
+#: map-style-editor (#543)
+msgid "Shops, stations, parks by name — the clutter a paper map does without."
+msgstr "Sklepy, stacje, parki z nazwy — bałagan, bez którego mapa papierowa się obywa."
+
+#: map-style-editor (#543)
+msgid "Footpaths and steps"
+msgstr "Ścieżki i schody"
+
+#: map-style-editor (#543)
+msgid "Pedestrian ways, stairs, crossings and park paths."
+msgstr "Ciągi piesze, schody, przejścia i alejki parkowe."
+
+#: map-style-editor (#543)
+msgid "Route shields and arrows"
+msgstr "Tarcze dróg i strzałki"
+
+#: map-style-editor (#543)
+msgid "Road numbers, one-way arrows, junction marks."
+msgstr "Numery dróg, strzałki jednokierunkowe, oznaczenia skrzyżowań."
+
+#: map-style-editor (#543)
+msgid "Relief and ferries"
+msgstr "Rzeźba terenu i promy"
+
+#: map-style-editor (#543)
+msgid "Hillshade, sea depth, ferry and cable-car lines."
+msgstr "Cieniowanie, głębokość morza, linie promów i kolejek linowych."
+
+#: map-style-editor (#543)
+msgid "Regional boundaries"
+msgstr "Granice regionów"
+
+#: map-style-editor (#543)
+msgid "States, provinces, Länder. National borders always show."
+msgstr "Stany, prowincje, landy. Granice państw są zawsze widoczne."
+
+#: map-style-editor (#543)
+msgid "Land"
+msgstr "Ląd"
+
+#: map-style-editor (#543)
+msgid "Parks and green"
+msgstr "Parki i zieleń"
+
+#: map-style-editor (#543)
+msgid "Water"
+msgstr "Woda"
+
+#: map-style-editor (#543)
+msgid "National borders"
+msgstr "Granice państw"
+
+#: map-style-editor (#543)
+msgid "Street and city names"
+msgstr "Nazwy ulic i miast"
+
+#: map-style-editor (#543)
+msgid "Water and district names"
+msgstr "Nazwy wód i dzielnic"
+
+#: map-style-editor (#543)
+msgid "Light"
+msgstr "Lekki"
+
+#: map-style-editor (#543)
+msgid "Strong"
+msgstr "Mocny"
+
+#: map-style-editor (#543)
+msgid "Use a colour like #dcefd2."
+msgstr "Użyj koloru takiego jak #dcefd2."
+
+#: map-style-editor (#543)
+msgid "Copenhagen (example)"
+msgstr "Kopenhaga (przykład)"
+
+#: map-style-editor (#543)
+msgid "Preview unavailable"
+msgstr "Podgląd niedostępny"
+
+#: map-style-editor (#543)
+msgid "No published version yet"
+msgstr "Brak opublikowanej wersji"
+
+#: map-style-editor (#543)
+msgid "Version %n is being published; this frame shows the last published one."
+msgstr "Wersja %n jest publikowana; ten kadr pokazuje ostatnią opublikowaną."
+
+#: map-style-editor (#543)
+msgid "Unsaved changes are not in this frame yet."
+msgstr "Niezapisane zmiany nie są jeszcze w tym kadrze."
+
+#: map-style-editor (#543)
+msgid "Version %n, as the printed form renders it."
+msgstr "Wersja %n, tak jak renderuje ją wydrukowany formularz."
+
+#: map-style-editor (#543)
+msgid "Publishing failed"
+msgstr "Publikacja nie powiodła się"
+
+#: map-style-editor (#543)
+msgid "Version %n published"
+msgstr "Wersja %n opublikowana"
+
+#: map-style-editor (#543)
+msgid "The previous version is still being published."
+msgstr "Poprzednia wersja jest wciąż publikowana."
+
+#: map-style-editor (#543)
+msgid "Version %(n)s of “%(name)s” is being published."
+msgstr "Wersja %(n)s stylu „%(name)s” jest publikowana."
+
+#: map-style-editor (#543)
+msgid "Used in %(n)s survey."
+msgid_plural "Used in %(n)s surveys."
+msgstr[0] "Używany w %(n)s ankiecie."
+msgstr[1] "Używany w %(n)s ankietach."
+msgstr[2] "Używany w %(n)s ankietach."
+
+#: map-style-import-export (#544)
+msgid "Import a style"
+msgstr "Importuj styl"
+
+#: map-style-import-export (#544)
+msgid "Map style file"
+msgstr "Plik stylu mapy"
+
+#: map-style-import-export (#544)
+msgid "Download as a file"
+msgstr "Pobierz jako plik"
+
+#: map-style-import-export (#544)
+msgid "Choose a file."
+msgstr "Wybierz plik."
+
+#: map-style-import-export (#544)
+msgid "The file is larger than a map style can be (64 KB)."
+msgstr "Plik jest większy, niż może być styl mapy (64 KB)."
+
+#: map-style-import-export (#544)
+msgid "This file is not a Mapsurvey map style."
+msgstr "Ten plik nie jest stylem mapy Mapsurvey."
+
+#: map-style-import-export (#544)
+msgid "This map style needs a newer Mapsurvey."
+msgstr "Ten styl mapy wymaga nowszego Mapsurvey."
+
+#: map-style-import-export (#544)
+msgid "The map style has no name."
+msgstr "Styl mapy nie ma nazwy."
+
+#: map-style-import-export (#544)
+msgid "Base map \"%(base)s\" is not supported here."
+msgstr "Mapa podkładowa „%(base)s” nie jest tu obsługiwana."
+
+#: map-style-import-export (#544)
+msgid "The map style has no settings."
+msgstr "Styl mapy nie ma ustawień."
+
+#: map-style-import-export (#544)
+msgid "Could not import the map style: %(reason)s"
+msgstr "Nie udało się zaimportować stylu mapy: %(reason)s"
+
+#: map-style-import-export (#544)
+msgid "“%(name)s” was imported and is being published."
+msgstr "„%(name)s” został zaimportowany i jest publikowany."
+
+#: map-styles-new-style
+msgid "New style"
+msgstr "Nowy styl"
+
+#: map-styles-new-style
+msgid "Start from"
+msgstr "Zacznij od"
+
+#: map-styles-new-style
+msgid "A map style is the base map under your surveys, online and on paper. Pick any of these in a survey's settings, or make your own with New style: choose what stays on the map, the colours and the labels, and see how it prints."
+msgstr "Styl mapy to mapa podkładowa pod Twoimi ankietami, online i na papierze. Wybierz dowolny z nich w ustawieniach ankiety albo utwórz własny przyciskiem Nowy styl: co zostaje na mapie, kolory i etykiety — i zobacz, jak wygląda w druku."
+
+#: map-styles-editor-fidelity
+msgid "As base"
+msgstr "Jak w bazie"
+
+#: map-styles-editor-fidelity
+msgid "Show buildings from zoom"
+msgstr "Pokazuj budynki od powiększenia"
+
+#: map-styles-editor-fidelity
+msgid "Lower shows them on wider views; 15 is the usual."
+msgstr "Niższa wartość pokazuje je w szerszych widokach; zwykle 15."
+
+#: map-styles-editor-fidelity
+msgid "A paper map needs them only for a street or a block."
+msgstr "Mapa papierowa potrzebuje ich tylko dla ulicy lub kwartału."
+
+#: map-styles-editor-fidelity
+msgid "Pick a colour"
+msgstr "Wybierz kolor"
+
+#: map-styles-editor-fidelity
+msgid "Back to the base colour"
+msgstr "Wróć do koloru bazy"
+
+#: map-styles-editor-fidelity
+msgid "Custom"
+msgstr "Własny"
+
+#: map-styles-editor-fidelity
+msgid "The base map’s own colour"
+msgstr "Własny kolor mapy bazowej"
+
+#: map-styles-print-greyscale
+msgid "In colour"
+msgstr "W kolorze"

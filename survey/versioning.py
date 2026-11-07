@@ -308,6 +308,9 @@ def clone_survey_for_draft(canonical, structure_source=None):
         password_hash=canonical.password_hash,
         basemaps=canonical.basemaps,
         default_basemap=canonical.default_basemap,
+        # No pins on a draft: it previews the latest version of every style and is
+        # pinned when published (change map-styles-library, ADR 0001).
+        basemap_pins={},
         start_map_postion=canonical.start_map_postion,
         start_map_zoom=canonical.start_map_zoom,
         use_geolocation=canonical.use_geolocation,
@@ -571,6 +574,11 @@ def publish_draft(draft, force=False):
             thanks_html=canonical.thanks_html,
             show_branding=canonical.show_branding,
             style_settings=canonical.style_settings,
+            # The archived version keeps the maps it was published with: its
+            # Responses map and old paper forms read these (change map-styles-library).
+            basemaps=canonical.basemaps,
+            default_basemap=canonical.default_basemap,
+            basemap_pins=canonical.basemap_pins,
             status='closed',
             is_canonical=False,
             canonical_survey=canonical,
@@ -603,6 +611,11 @@ def publish_draft(draft, force=False):
         canonical.start_map_zoom = draft.start_map_zoom
         canonical.use_geolocation = draft.use_geolocation
         canonical.show_branding = draft.show_branding
+
+        # 5b. Pin the style versions this publication shows (change map-styles-library,
+        # ADR 0001): a style saved later never changes a live survey.
+        from survey import basemaps as basemap_registry
+        basemap_registry.pin_latest(canonical)
 
         # 6. Increment version
         canonical.version_number += 1
