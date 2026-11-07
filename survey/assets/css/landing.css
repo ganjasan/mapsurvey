@@ -521,6 +521,15 @@ a:hover { color: var(--color-accent-hover); }
     min-width: 0;
 }
 
+/* Market guide (#580): a long H1 and lead read as a narrow column at 760px. */
+.hero__content--wide {
+    max-width: 1080px;
+}
+
+.hero__content--wide .hero__description {
+    max-width: 860px;
+}
+
 .hero__headline {
     font-family: var(--font-display);
     font-size: clamp(2.25rem, 4.5vw, 3.5rem);

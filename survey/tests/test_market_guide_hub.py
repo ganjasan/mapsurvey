@@ -27,27 +27,32 @@ class MarketGuideHubTest(TestCase):
         """
         GIVEN the hub landing
         WHEN rendered
-        THEN it carries the H1, every vendor and category from the registry, the gaps block,
-             the sources list, links to every alternatives page, the pricing and sibling
-             sections, a FAQPage block and at least 1,500 visible words
+        THEN it carries the H1, the verdict before the method, every vendor and category from
+             the registry, the right-pick block then the better-fit block with the gaps, the
+             sources list, links to every alternatives page, the pricing and sibling sections,
+             a FAQPage block and at least 1,500 visible words
         """
         import json
+        from django.utils.html import escape
         from survey.vendors import CATEGORIES, VENDORS
         resp = Client().get(self.PATH)
         self.assertEqual(resp.status_code, 200)
         body = resp.content.decode()
         self.assertRegex(body, r"<h1[^>]*>[^<]*Participatory mapping tools")
+        self.assertLess(body.index('id="verdict"'), body.index('id="how-to-read"'))
         table = body[body.index('<table class="cmp guide-table">'):body.index("</table>")]
         for vendor in VENDORS:
-            self.assertIn(vendor.name, table)
+            self.assertIn(escape(vendor.name), table)
             self.assertIn(f'id="row-{vendor.key}"', table)
         for category in CATEGORIES:
             self.assertIn(category.title, body)
-        gaps = body[body.index('id="gaps"'):body.index('id="sources"')]
-        for word in ("participatory budgeting", "SSO", "United States", "falls short"):
+        self.assertLess(body.index('id="right-pick"'), body.index('id="better-fit"'))
+        gaps = body[body.index('id="better-fit"'):body.index('id="sources"')]
+        for word in ("participatory budgeting", "SSO", "United States"):
             self.assertIn(word, gaps)
         self.assertNotIn("EU-hosted", body)
         self.assertNotIn("Frankfurt", body)
+        self.assertNotIn("not a sales page", body)
         for href in ('href="/alternatives/maptionnaire/"', 'href="/alternatives/social-pinpoint/"',
                      'href="/alternatives/metroquest/"', 'href="/pro/"'):
             self.assertIn(href, body)
@@ -83,12 +88,14 @@ class MarketGuideHubTest(TestCase):
 
     def test_registry_drives_sitemap_robots_and_hreflang(self):
         """
-        GIVEN the hub is a registry landing with lastmod 2026-10-06
+        GIVEN the hub is a registry landing with a lastmod
         WHEN sitemap.xml, robots.txt and the page are fetched
         THEN the sitemap lists it with that lastmod, robots allows it, and x-default equals the canonical
         """
+        from survey.seo_landings import SEO_LANDINGS
+        lastmod = next(l.lastmod for l in SEO_LANDINGS if l.key == "participatory_mapping_tools")
         c = Client()
-        self.assertIn(f"<loc>http://testserver{self.PATH}</loc><lastmod>2026-10-06</lastmod>",
+        self.assertIn(f"<loc>http://testserver{self.PATH}</loc><lastmod>{lastmod}</lastmod>",
                       c.get("/sitemap.xml").content.decode())
         self.assertIn(f"Allow: {self.PATH}", c.get("/robots.txt").content.decode())
         body = c.get(self.PATH).content.decode()
