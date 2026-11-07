@@ -368,15 +368,19 @@ class ContrastTest(SimpleTestCase):
         """
         GIVEN land #ffffff and parks #f4f9f0
         WHEN the greyscale luminance difference is computed the way the page does
-        THEN it is below 0.12 (a warning), and the generator still accepts the settings
+        THEN it is below 0.08 (a warning) while Paper A's own parks #dcefd2 are not, the page uses
+             that threshold, and the generator still accepts the settings
         """
         from survey.map_styles.generator import parse_color, to_grey_hex
 
         def grey(hex_colour):
             return int(to_grey_hex(*parse_color(hex_colour))[1:3], 16) / 255
 
-        self.assertLess(abs(grey('#ffffff') - grey('#f4f9f0')), 0.12)
-        self.assertGreater(abs(grey('#ffffff') - grey('#2f8f86')), 0.12)
+        self.assertLess(abs(grey('#ffffff') - grey('#f4f9f0')), 0.08)
+        self.assertGreater(abs(grey('#ffffff') - grey('#dcefd2')), 0.08)
+        self.assertGreater(abs(grey('#ffffff') - grey('#2f8f86')), 0.08)
+        with open('survey/assets/js/map_style_editor.js') as handle:
+            self.assertIn('< 0.08', handle.read())
         cleaned, errors = controls.clean_settings({'land': '#ffffff', 'park': '#f4f9f0', 'water': '#cfe2f2', 'boundary': '#9a9a9a',
                                                    'labels_major': '#333333', 'labels_minor': '#777777'})
         self.assertEqual(errors, {})

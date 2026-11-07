@@ -10680,3 +10680,15 @@ msgstr "Impossibile importare lo stile di mappa: %(reason)s"
 #: map-style-import-export (#544)
 msgid "“%(name)s” was imported and is being published."
 msgstr "«%(name)s» è stato importato ed è in pubblicazione."
+
+#: map-styles-new-style
+msgid "New style"
+msgstr "Nuovo stile"
+
+#: map-styles-new-style
+msgid "Start from"
+msgstr "Parti da"
+
+#: map-styles-new-style
+msgid "A map style is the base map under your surveys, online and on paper. Pick any of these in a survey's settings, or make your own with New style: choose what stays on the map, the colours and the labels, and see how it prints."
+msgstr "Uno stile di mappa è la mappa di base sotto i tuoi sondaggi, online e su carta. Scegline uno nelle impostazioni di un sondaggio o crea il tuo con Nuovo stile: cosa resta sulla mappa, i colori e le etichette, e come viene stampato."

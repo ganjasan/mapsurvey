@@ -10744,3 +10744,15 @@ msgstr "Nie udało się zaimportować stylu mapy: %(reason)s"
 #: map-style-import-export (#544)
 msgid "“%(name)s” was imported and is being published."
 msgstr "„%(name)s” został zaimportowany i jest publikowany."
+
+#: map-styles-new-style
+msgid "New style"
+msgstr "Nowy styl"
+
+#: map-styles-new-style
+msgid "Start from"
+msgstr "Zacznij od"
+
+#: map-styles-new-style
+msgid "A map style is the base map under your surveys, online and on paper. Pick any of these in a survey's settings, or make your own with New style: choose what stays on the map, the colours and the labels, and see how it prints."
+msgstr "Styl mapy to mapa podkładowa pod Twoimi ankietami, online i na papierze. Wybierz dowolny z nich w ustawieniach ankiety albo utwórz własny przyciskiem Nowy styl: co zostaje na mapie, kolory i etykiety — i zobacz, jak wygląda w druku."
