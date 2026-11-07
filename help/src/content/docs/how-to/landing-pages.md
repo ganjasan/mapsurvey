@@ -26,6 +26,8 @@ Press **Add block** and choose what to add:
 - **Video** — a YouTube or Vimeo link.
 - **Survey card** — one of your surveys. The card follows the survey: *Open* with a **Take part** button, *Opens on …* before its period starts, *Coming soon* while it is a draft, and *Closed* with a link to its [public results](/how-to/share-results-publicly/) once you publish them.
 - **Button** — a link to anything else: the draft plan, the council's page, an event sign-up.
+- **Documents** — files to download: the input summary, the open-house boards, the draft plan. PDF, Word, Excel, PowerPoint, OpenDocument, CSV or plain text, up to 25 MB each and 20 per block. Each file gets a title (the file name to start with) that you can change; tick **Remove** to take one off.
+- **Map** — the project area on a map. Upload a GeoJSON file with the boundary, a route or a few points (up to 1 MB; export it from QGIS or draw it on [geojson.io](https://geojson.io)), pick a colour and one of your [map styles](/how-to/map-styles/). A shape's `name` shows when someone points at it.
 
 Give a block a **heading** and it also appears in the menu at the top of the page. Drag blocks by the handle to change their order.
 

@@ -25,9 +25,9 @@ from billing import trial as billing_trial
 from billing.entitlements import for_organization
 from billing.gates import feature_required
 
-from . import landings, product_events, share
+from . import basemaps, landings, product_events, share
 from .content_screening import is_landing_held, screen_landing
-from .models import Landing, LandingBlock, LandingSurvey, SurveyHeader
+from .models import Landing, LandingBlock, LandingFile, LandingSurvey, SurveyHeader
 from .permissions import get_org_membership
 from .versioning import canonical_of
 
@@ -147,6 +147,7 @@ def _builder_context(request, landing, membership, **extra):
         'picker': landings.picker(),
         'kinds': {k: v[0] for k, v in landings.BLOCK_KINDS.items()},
         'languages': language_choices(),
+        'basemap_choices': basemaps.choices_for(org),
         'public_url': request.build_absolute_uri(reverse('landing_public', args=[landing.slug])),
         'block_errors': {}, 'settings_errors': {}, 'new_kind': request.GET.get('add', ''),
         'new_errors': {}, 'new_raw': {},
@@ -256,7 +257,7 @@ def editor_landing_survey_unlink(request, uuid, link_id):
 def _raw_block(kind, post):
     """The posted fields of a block form as the dict `clean_block` reads."""
     raw = {key: post.get(key, '') for key in ('body', 'alt', 'caption', 'label', 'url', 'style',
-                                              'button_label', 'description', 'current')}
+                                              'button_label', 'description', 'current', 'color', 'basemap')}
     if kind == 'faq':
         raw['items'] = [{'q': q, 'a': a} for q, a in zip(post.getlist('q'), post.getlist('a'))]
     elif kind == 'timeline':
@@ -265,10 +266,47 @@ def _raw_block(kind, post):
     return raw
 
 
+def _document_changes(request, block):
+    """(renames {file: title}, removals [file], uploads [file], errors) for a documents block."""
+    errors = {}
+    existing = list(block.files.all()) if block is not None else []
+    renames, removals = {}, []
+    for f in existing:
+        if request.POST.get(f'remove_{f.pk}') == '1':
+            removals.append(f)
+            continue
+        title = ' '.join((request.POST.get(f'file_title_{f.pk}') or '').split())[:200]
+        if title and title != f.title:
+            renames[f] = title
+    uploads = request.FILES.getlist('files')
+    problems = [msg for msg in (landings.check_document(u) for u in uploads) if msg]
+    if problems:
+        errors['files'] = ' '.join(problems)
+    kept = len(existing) - len(removals)
+    if not problems and kept + len(uploads) == 0:
+        errors['files'] = _('Add at least one file.')
+    elif kept + len(uploads) > landings.DOCUMENTS_MAX:
+        errors['files'] = _('A documents block holds at most 20 files.')
+    return renames, removals, uploads, errors
+
+
 def _save_block(request, landing, block, kind):
     """Validate the posted block and save it. Returns {field: error} or {}."""
     raw = _raw_block(kind, request.POST)
-    data, errors = landings.clean_block(kind, raw)
+    map_upload = request.FILES.get('geojson_file') if kind == 'map' else None
+    map_error = ''
+    if kind == 'map':
+        if map_upload is not None:
+            raw['area'], map_error = landings.parse_geojson(map_upload)
+        elif block is not None:
+            raw['area'] = block.data.get('area')
+    data, errors = landings.clean_block(kind, raw, org=landing.organization)
+    if map_error:
+        errors['area'] = map_error
+    renames, removals, uploads = {}, [], []
+    if kind == 'documents':
+        renames, removals, uploads, doc_errors = _document_changes(request, block)
+        errors.update(doc_errors)
     upload = request.FILES.get('image')
     image_error = landings.check_image(upload)
     if image_error:
@@ -295,6 +333,18 @@ def _save_block(request, landing, block, kind):
         if kind == 'survey':
             block.landing_survey = link
         block.save()
+        for f, title in renames.items():
+            f.title = title
+            f.save(update_fields=['title'])
+        for f in removals:
+            f.file.delete(save=False)
+            f.delete()
+        last = block.files.order_by('-order').values_list('order', flat=True).first()
+        nxt = 0 if last is None else last + 1
+        for i, up in enumerate(uploads):
+            LandingFile.objects.create(block=block, file=up, title=landings.document_title(up.name),
+                                       size=up.size, content_type=(up.content_type or '')[:100],
+                                       order=nxt + i)
     _touched(landing)
     return {}, block
 
@@ -426,6 +476,7 @@ def landing_public(request, slug):
         response = render(request, 'landings/public.html', {
             'landing': landing, 'org': landing.organization, 'blocks': blocks,
             'nav': landings.nav_items(blocks), 'preview': not live, 'held': held,
+            'map_layers': landings.map_layers(landing, blocks),
             'noindex': not live or landing.visibility == 'unlisted',
             'show_branding': not for_organization(landing.organization).has('unbranded'),
             'page_url': share.base() + reverse('landing_public', args=[landing.slug]),

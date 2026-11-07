@@ -436,7 +436,7 @@ msgstr ""
 #: survey/templates/editor/partials/_mobile_nav.html:24
 #: survey/templates/editor/partials/_mobile_nav.html:29
 msgid "Map"
-msgstr ""
+msgstr "Карта"
 
 #: survey/models.py:558
 msgid "Form"
@@ -9175,3 +9175,127 @@ msgstr[3] "%(n)s опроса"
 #: landing-core (#576)
 msgid "Open now"
 msgstr "Открыт сейчас"
+
+#: landing-documents-map (#577)
+msgid "File title"
+msgstr "Название файла"
+
+#: landing-documents-map (#577)
+msgid "PDF, office documents, CSV or text; up to 25 MB each. You can rename them after adding."
+msgstr "PDF, офисные документы, CSV или текст; до 25 МБ каждый. После добавления их можно переименовать."
+
+#: landing-documents-map (#577)
+msgid "A GeoJSON file with the project area: a boundary, a route or a few points. Up to 1 MB."
+msgstr "Файл GeoJSON с территорией проекта: граница, маршрут или несколько точек. До 1 МБ."
+
+#: landing-documents-map (#577)
+msgid "Colour"
+msgstr "Цвет фигур"
+
+#: landing-documents-map (#577)
+msgid "Base map"
+msgstr "Подложка"
+
+#: landing-documents-map (#577)
+msgid "Map of the project area"
+msgstr "Карта территории проекта"
+
+#: landing-documents-map (#577)
+msgid "Documents"
+msgstr "Документы"
+
+#: landing-documents-map (#577)
+msgid "Document"
+msgstr "Документ"
+
+#: landing-documents-map (#577)
+msgid "Upload a GeoJSON file with the project area."
+msgstr "Загрузите файл GeoJSON с территорией проекта."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s”: upload a PDF, an office document, CSV or plain text."
+msgstr "«%(name)s»: загрузите PDF, офисный документ, CSV или простой текст."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s” is larger than 25 MB."
+msgstr "«%(name)s» больше 25 МБ."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s” is not a UTF-8 text file."
+msgstr "«%(name)s» — не текстовый файл в UTF-8."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s” looks like a web page, not a document."
+msgstr "«%(name)s» похож на веб-страницу, а не на документ."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s” is not the kind of file its name says."
+msgstr "«%(name)s» — файл не того типа, что указан в имени."
+
+#: landing-documents-map (#577)
+msgid "The GeoJSON file is larger than 1 MB."
+msgstr "Файл GeoJSON больше 1 МБ."
+
+#: landing-documents-map (#577)
+msgid "This is not a GeoJSON file."
+msgstr "Это не файл GeoJSON."
+
+#: landing-documents-map (#577)
+msgid "The file has more than 500 features."
+msgstr "В файле больше 500 объектов."
+
+#: landing-documents-map (#577)
+msgid "A shape in the file is broken."
+msgstr "Одна из фигур в файле повреждена."
+
+#: landing-documents-map (#577)
+msgid "Coordinates must be longitude and latitude (WGS84)."
+msgstr "Координаты должны быть долготой и широтой (WGS84)."
+
+#: landing-documents-map (#577)
+msgid "A polygon in the file crosses itself."
+msgstr "Многоугольник в файле пересекает сам себя."
+
+#: landing-documents-map (#577)
+msgid "The file has no points, lines or areas."
+msgstr "В файле нет точек, линий или областей."
+
+#: landing-documents-map (#577)
+msgid "Add at least one file."
+msgstr "Добавьте хотя бы один файл."
+
+#: landing-documents-map (#577)
+msgid "A documents block holds at most 20 files."
+msgstr "В блоке документов может быть не больше 20 файлов."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "%(n)s file"
+msgid_plural "%(n)s files"
+msgstr[0] "%(n)s файл"
+msgstr[1] "%(n)s файла"
+msgstr[2] "%(n)s файлов"
+msgstr[3] "%(n)s файла"
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "%(n)s shape"
+msgid_plural "%(n)s shapes"
+msgstr[0] "%(n)s фигура"
+msgstr[1] "%(n)s фигуры"
+msgstr[2] "%(n)s фигур"
+msgstr[3] "%(n)s фигуры"
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "%(n)s shape on the map. Upload a new file to replace it."
+msgid_plural "%(n)s shapes on the map. Upload a new file to replace them."
+msgstr[0] "На карте %(n)s фигура. Загрузите новый файл, чтобы её заменить."
+msgstr[1] "На карте %(n)s фигуры. Загрузите новый файл, чтобы их заменить."
+msgstr[2] "На карте %(n)s фигур. Загрузите новый файл, чтобы их заменить."
+msgstr[3] "На карте %(n)s фигуры. Загрузите новый файл, чтобы их заменить."

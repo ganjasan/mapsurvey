@@ -55,6 +55,38 @@ are what landing_views._raw_block reads; repeating rows (FAQ, timeline) post par
   <button type="button" class="btn btn-link btn-sm px-0 lb-row-add">+ {% trans "Add a phase" %}</button>
   {% if errors.items %}<div class="text-danger small">{{ errors.items }}</div>{% endif %}
 
+  {% elif kind == 'documents' %}
+  {% if block %}
+  <ul class="list-unstyled mb-2">
+    {% for f in block.files.all %}
+    <li class="lb-file">
+      <input name="file_title_{{ f.pk }}" class="form-control form-control-sm" maxlength="200" value="{{ f.title }}" aria-label="{% trans 'File title' %}">
+      <small class="text-muted text-nowrap">{{ f.extension|upper }} · {{ f.size|filesizeformat }}</small>
+      <label class="small text-nowrap mb-0"><input type="checkbox" name="remove_{{ f.pk }}" value="1"> {% trans "Remove" %}</label>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <input type="file" name="files" multiple class="form-control-file form-control-sm"
+         accept=".pdf,.docx,.xlsx,.pptx,.odt,.ods,.odp,.doc,.xls,.ppt,.csv,.txt">
+  <small class="text-muted d-block">{% trans "PDF, office documents, CSV or text; up to 25 MB each. You can rename them after adding." %}</small>
+  {% if errors.files %}<div class="text-danger small">{{ errors.files }}</div>{% endif %}
+
+  {% elif kind == 'map' %}
+  {% if data.area %}<p class="small text-muted mb-1">{% blocktrans count n=data.area.features|length %}{{ n }} shape on the map. Upload a new file to replace it.{% plural %}{{ n }} shapes on the map. Upload a new file to replace them.{% endblocktrans %}</p>{% endif %}
+  <input type="file" name="geojson_file" accept=".geojson,.json,application/geo+json,application/json" class="form-control-file form-control-sm">
+  <small class="text-muted d-block">{% trans "A GeoJSON file with the project area: a boundary, a route or a few points. Up to 1 MB." %}</small>
+  {% if errors.area %}<div class="text-danger small">{{ errors.area }}</div>{% endif %}
+  <div class="form-row mt-2">
+    <div class="col-4"><label class="small mb-0">{% trans "Colour" %}</label>
+      <input type="color" name="color" class="form-control form-control-sm" value="{{ data.color|default:'#2f6fb0' }}"></div>
+    <div class="col-8"><label class="small mb-0">{% trans "Base map" %}</label>
+      <select name="basemap" class="form-control form-control-sm">
+        {% for key, name in basemap_choices %}<option value="{{ key }}"{% if key == data.basemap %} selected{% endif %}>{{ name }}</option>{% endfor %}
+      </select></div>
+  </div>
+  <input name="caption" class="form-control form-control-sm mt-2" maxlength="300" value="{{ data.caption|default:'' }}" placeholder="{% trans 'Caption (optional)' %}">
+
   {% elif kind == 'survey' %}
   {% if all_linkable %}
   <select name="survey" class="form-control form-control-sm" aria-label="{% trans 'Survey' %}">

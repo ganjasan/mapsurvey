@@ -54,6 +54,8 @@ BLOCK_KINDS = {
     'timeline': (gettext_lazy('Timeline'), 'fas fa-stream', 'content'),
     'image': (gettext_lazy('Image'), 'far fa-image', 'media'),
     'video': (gettext_lazy('Video'), 'fab fa-youtube', 'media'),
+    'map': (gettext_lazy('Map'), 'fas fa-draw-polygon', 'media'),
+    'documents': (gettext_lazy('Documents'), 'far fa-file-pdf', 'participation'),
     'survey': (gettext_lazy('Survey card'), 'fas fa-map-marked-alt', 'participation'),
     'button': (gettext_lazy('Button'), 'fas fa-link', 'participation'),
 }
@@ -164,6 +166,30 @@ def _clean_timeline(raw, errors):
     return {'items': items, 'current': current}
 
 
+def _clean_documents(raw, errors):
+    # The files are LandingFile rows (change landing-documents-map); the block keeps no data.
+    return {}
+
+
+DEFAULT_MAP_COLOR = '#2f6fb0'
+_HEX = re.compile(r'^#[0-9a-fA-F]{6}$')
+
+
+def _clean_map(raw, errors, org=None):
+    from . import basemaps
+    color = str(raw.get('color') or '').strip()
+    color = color.lower() if _HEX.match(color) else DEFAULT_MAP_COLOR
+    basemap = str(raw.get('basemap') or '').strip()
+    if not basemap or (org is not None and basemaps.resolve(basemap, org) is None):
+        basemap = 'streets'
+    area = raw.get('area')
+    if not (isinstance(area, dict) and area.get('features')):
+        errors['area'] = _('Upload a GeoJSON file with the project area.')
+        area = None
+    return {'area': area, 'color': color, 'basemap': basemap,
+            'caption': _plain(raw.get('caption'), 300)}
+
+
 def _clean_survey(raw, errors):
     return {'button_label': _plain(raw.get('button_label'), 40),
             'description': _plain(raw.get('description'), 300)}
@@ -177,16 +203,22 @@ _CLEANERS = {
     'faq': _clean_faq,
     'timeline': _clean_timeline,
     'survey': _clean_survey,
+    'documents': _clean_documents,
+    'map': _clean_map,
 }
 
 
-def clean_block(kind, raw):
+def clean_block(kind, raw, org=None):
     """(data, errors) for a block of `kind` from the posted `raw` dict. `data` carries only
-    the kind's keys, trimmed and capped; rich text has passed `coerce_creator_html`."""
+    the kind's keys, trimmed and capped; rich text has passed `coerce_creator_html`. `org`
+    lets the map cleaner check its base map against the workspace's."""
     if kind not in _CLEANERS:
         return {}, {'kind': _('Unknown block type.')}
     errors = {}
-    data = _CLEANERS[kind](raw if isinstance(raw, dict) else {}, errors)
+    raw = raw if isinstance(raw, dict) else {}
+    if kind == 'map':
+        return _clean_map(raw, errors, org=org), errors
+    data = _CLEANERS[kind](raw, errors)
     return data, errors
 
 
@@ -203,6 +235,120 @@ def check_image(upload):
     if (getattr(upload, 'content_type', '') or '').lower() not in IMAGE_TYPES:
         return _('Upload a JPEG, PNG, WebP or GIF picture.')
     return ''
+
+
+# ─── documents (change landing-documents-map) ─────────────────────────────────
+
+DOCUMENT_MAX_BYTES = 25 * 1024 * 1024
+DOCUMENTS_MAX = 20
+_PDF, _ZIP, _OLE, _TEXT = 'pdf', 'zip', 'ole', 'text'
+DOCUMENT_FAMILIES = {
+    'pdf': _PDF, 'docx': _ZIP, 'xlsx': _ZIP, 'pptx': _ZIP, 'odt': _ZIP, 'ods': _ZIP, 'odp': _ZIP,
+    'doc': _OLE, 'xls': _OLE, 'ppt': _OLE, 'csv': _TEXT, 'txt': _TEXT,
+}
+_MAGIC = {_PDF: (b'%PDF-',), _ZIP: (b'PK\x03\x04',), _OLE: (b'\xd0\xcf\x11\xe0',)}
+_MARKUP = re.compile(rb'<\s*(html|script|svg|iframe|body|head|!doctype)', re.I)
+
+
+def check_document(upload):
+    """An error message for an uploaded document, or ''. Extension AND first bytes: a renamed
+    HTML or SVG must never reach the public media host, where it would run as a page."""
+    name = getattr(upload, 'name', '') or ''
+    ext = name.rsplit('.', 1)[-1].lower() if '.' in name else ''
+    family = DOCUMENT_FAMILIES.get(ext)
+    if family is None:
+        return _('“%(name)s”: upload a PDF, an office document, CSV or plain text.') % {'name': name}
+    if upload.size > DOCUMENT_MAX_BYTES:
+        return _('“%(name)s” is larger than 25 MB.') % {'name': name}
+    upload.seek(0)
+    head = upload.read(4096)
+    upload.seek(0)
+    if family == _TEXT:
+        try:
+            head.decode('utf-8')
+        except UnicodeDecodeError:
+            # A cut multi-byte character at the 4 KB edge is fine; garbage is not.
+            try:
+                head[:-3].decode('utf-8')
+            except UnicodeDecodeError:
+                return _('“%(name)s” is not a UTF-8 text file.') % {'name': name}
+        if _MARKUP.search(head):
+            return _('“%(name)s” looks like a web page, not a document.') % {'name': name}
+        return ''
+    if not any(head.startswith(m) for m in _MAGIC[family]):
+        return _('“%(name)s” is not the kind of file its name says.') % {'name': name}
+    return ''
+
+
+def document_title(filename):
+    base = filename.rsplit('/', 1)[-1]
+    base = base.rsplit('.', 1)[0] if '.' in base else base
+    return _plain(base.replace('_', ' '), 200) or _('Document')
+
+
+TYPE_LABELS = {'pdf': 'PDF', 'docx': 'Word', 'doc': 'Word', 'odt': 'Text document',
+               'xlsx': 'Excel', 'xls': 'Excel', 'ods': 'Spreadsheet', 'pptx': 'PowerPoint',
+               'ppt': 'PowerPoint', 'odp': 'Presentation', 'csv': 'CSV', 'txt': 'Text'}
+
+
+# ─── map area (change landing-documents-map) ──────────────────────────────────
+
+GEOJSON_MAX_BYTES = 1024 * 1024
+GEOJSON_MAX_FEATURES = 500
+GEOMETRY_TYPES = ('Point', 'LineString', 'Polygon', 'MultiPoint', 'MultiLineString', 'MultiPolygon')
+
+
+def _round(coords):
+    if isinstance(coords, (int, float)):
+        return round(float(coords), 6)
+    return [_round(c) for c in coords]
+
+
+def parse_geojson(upload):
+    """(FeatureCollection, '') from an uploaded GeoJSON file, or (None, error). Keeps only each
+    feature's geometry and a name; coordinates rounded to 6 decimals (~10 cm)."""
+    import json
+
+    from django.contrib.gis.geos import GEOSException, GEOSGeometry
+
+    if upload.size > GEOJSON_MAX_BYTES:
+        return None, _('The GeoJSON file is larger than 1 MB.')
+    try:
+        doc = json.loads(upload.read().decode('utf-8-sig'))
+    except (ValueError, UnicodeDecodeError):
+        return None, _('This is not a GeoJSON file.')
+    if not isinstance(doc, dict):
+        return None, _('This is not a GeoJSON file.')
+    if doc.get('type') == 'FeatureCollection':
+        features = doc.get('features') if isinstance(doc.get('features'), list) else []
+    elif doc.get('type') == 'Feature':
+        features = [doc]
+    else:
+        features = [{'type': 'Feature', 'geometry': doc, 'properties': {}}]
+    if len(features) > GEOJSON_MAX_FEATURES:
+        return None, _('The file has more than 500 features.')
+    out = []
+    for feature in features:
+        geometry = feature.get('geometry') if isinstance(feature, dict) else None
+        if not isinstance(geometry, dict) or geometry.get('type') not in GEOMETRY_TYPES:
+            continue
+        try:
+            geos = GEOSGeometry(json.dumps(geometry))
+        except (GEOSException, ValueError, TypeError):
+            return None, _('A shape in the file is broken.')
+        x0, y0, x1, y1 = geos.extent
+        if not (-180 <= x0 <= x1 <= 180 and -90 <= y0 <= y1 <= 90):
+            return None, _('Coordinates must be longitude and latitude (WGS84).')
+        if geometry['type'] in ('Polygon', 'MultiPolygon') and not geos.valid:
+            return None, _('A polygon in the file crosses itself.')
+        props = feature.get('properties') if isinstance(feature.get('properties'), dict) else {}
+        name = next((props[k] for k in ('name', 'title', 'Name') if isinstance(props.get(k), str)), '')
+        out.append({'type': 'Feature',
+                    'geometry': {'type': geometry['type'], 'coordinates': _round(geometry['coordinates'])},
+                    'properties': {'name': _plain(name, 120)} if name.strip() else {}})
+    if not out:
+        return None, _('The file has no points, lines or areas.')
+    return {'type': 'FeatureCollection', 'features': out}, ''
 
 
 # ─── slugs ────────────────────────────────────────────────────────────────────
@@ -285,14 +431,17 @@ def survey_card(survey, now=None):
 # ─── page ─────────────────────────────────────────────────────────────────────
 
 def blocks_for(landing):
-    return list(landing.blocks.select_related('landing_survey__survey').order_by('order', 'id'))
+    return list(landing.blocks.select_related('landing_survey__survey').prefetch_related('files')
+                .order_by('order', 'id'))
 
 
 def page_blocks(landing, now=None):
     """[(block, card-or-None)] as the public page draws them: survey cards resolved, hidden
-    survey cards dropped."""
+    survey cards dropped, documents blocks without files dropped."""
     out = []
     for block in blocks_for(landing):
+        if block.kind == 'documents' and not block.files.all():
+            continue
         card = None
         if block.kind == 'survey':
             if block.landing_survey is None:
@@ -301,6 +450,23 @@ def page_blocks(landing, now=None):
             if card['state'] == CARD_HIDDEN:
                 continue
         out.append((block, card))
+    return out
+
+
+def map_layers(landing, blocks):
+    """{base map key: Leaflet entry} for the map blocks on the page, or {} (no Leaflet then).
+    A key the workspace no longer resolves falls back to Streets."""
+    from . import basemaps
+    out = {}
+    for block, _card in blocks:
+        if block.kind != 'map':
+            continue
+        key = block.data.get('basemap') or 'streets'
+        if key in out:
+            continue
+        base = basemaps.resolve(key, landing.organization) or basemaps.resolve('streets', None)
+        if base is not None:
+            out[key] = base.leaflet()
     return out
 
 

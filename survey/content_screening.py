@@ -205,9 +205,12 @@ def collect_landing_text(landing, now=None) -> ScreenInput:
     texts = [('name', landing.title or ''), ('landing.summary', landing.summary or ''),
              ('landing.cover_alt', landing.cover_alt or '')]
     links = []
-    for block in landing.blocks.all().only('kind', 'title', 'data'):
+    for block in landing.blocks.all().only('id', 'kind', 'title', 'data'):
         data = block.data if isinstance(block.data, dict) else {}
         texts.append(('block.title', block.title or ''))
+        if block.kind == 'documents':
+            for title in block.files.values_list('title', flat=True):
+                texts.append(('block.file', title))
         if block.kind == 'text':
             texts.append(('block.text', data.get('body') or ''))
         elif block.kind == 'faq':
