@@ -10355,6 +10355,10 @@ msgstr "Novedades"
 msgid "Help centre"
 msgstr "Centro de ayuda"
 
+#: whats-new-in-sidebar
+msgid "Read more"
+msgstr "Leer más"
+
 #: map-style-library (#542)
 msgid "Map styles"
 msgstr "Estilos de mapa"

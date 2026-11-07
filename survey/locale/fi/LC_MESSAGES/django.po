@@ -10290,6 +10290,10 @@ msgstr "Uutta"
 msgid "Help centre"
 msgstr "Ohjekeskus"
 
+#: whats-new-in-sidebar
+msgid "Read more"
+msgstr "Lue lisää"
+
 #: map-style-library (#542)
 msgid "Map styles"
 msgstr "Karttatyylit"

@@ -10269,6 +10269,10 @@ msgstr "Mis on uut"
 msgid "Help centre"
 msgstr "Abikeskus"
 
+#: whats-new-in-sidebar
+msgid "Read more"
+msgstr "Loe edasi"
+
 #: map-style-library (#542)
 msgid "Map styles"
 msgstr "Kaardistiilid"

@@ -92,6 +92,8 @@ Below 768px it is the drawer behind the header's ☰ button.{% endcomment %}
     {% endif %}
   </nav>
 
+  {% include "partials/_sidebar_whats_new.html" %}
+
   <div class="app-side-foot">
     <a class="app-item{% if app_nav.active == 'whats_new' %} active{% endif %}" href="{% url 'whats_new' %}" data-nav-key="whats_new"
        data-label="{% trans "What's new" %}" aria-label="{% trans "What's new" %}">

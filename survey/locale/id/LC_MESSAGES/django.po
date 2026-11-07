@@ -10303,6 +10303,10 @@ msgstr "Yang baru"
 msgid "Help centre"
 msgstr "Pusat bantuan"
 
+#: whats-new-in-sidebar
+msgid "Read more"
+msgstr "Baca selengkapnya"
+
 #: map-style-library (#542)
 msgid "Map styles"
 msgstr "Gaya peta"

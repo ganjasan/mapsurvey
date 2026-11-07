@@ -10328,6 +10328,10 @@ msgstr "Wat is er nieuw"
 msgid "Help centre"
 msgstr "Helpcentrum"
 
+#: whats-new-in-sidebar
+msgid "Read more"
+msgstr "Lees meer"
+
 #: map-style-library (#542)
 msgid "Map styles"
 msgstr "Kaartstijlen"

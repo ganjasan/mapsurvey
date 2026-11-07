@@ -117,9 +117,6 @@ def org_map_style_edit(request, slug, uuid):
         'controls': state['controls'], 'values': values, 'usage': usage,
         'can_save': billing_trial.may(org, 'map_styles'),
         'pending': bool(latest and latest.status == MapStyleVersion.PENDING),
-        # The corner card would sit over the preview map (owner, 2026-11-07); the
-        # creator meets it on the next page. The sidebar dot still shows.
-        'suppress_whats_new_card': True,
     })
 
 

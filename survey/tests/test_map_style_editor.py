@@ -261,13 +261,14 @@ class EditorPageTest(_EditorFixture):
         """
         GIVEN an owner who has not seen the newest changelog entry
         WHEN they open the style editor
-        THEN the page carries no What's new card (it would cover the preview map) and says so in its context
+        THEN no What's new card floats over the preview map; the entry lives in the sidebar
+             (change whats-new-in-sidebar)
         """
         from survey.models import CreatorPreferences
         CreatorPreferences.objects.update_or_create(user=self.owner, defaults={'changelog_seen': ''})
-        response = self.client.get(self.edit_url)
-        self.assertTrue(response.context['suppress_whats_new_card'])
-        self.assertNotIn('id="whatsNewCard"', response.content.decode())
+        html = self.client.get(self.edit_url).content.decode()
+        self.assertNotIn('id="whatsNewCard"', html)
+        self.assertNotIn('id="whatsNewHero"', html)
 
     def test_presets_and_foreign_styles_have_no_editor(self):
         """
