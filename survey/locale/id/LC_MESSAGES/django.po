@@ -10388,3 +10388,212 @@ msgstr "Gaya peta adalah peta dasar di bawah survei Anda, daring maupun di kerta
 msgid "used in %(n)s survey"
 msgid_plural "used in %(n)s surveys"
 msgstr[0] "digunakan di %(n)s survei"
+
+#: map-style-editor (#543)
+msgid "Map style"
+msgstr "Gaya peta"
+
+#: map-style-editor (#543)
+msgid "Style name"
+msgstr "Nama gaya"
+
+#: map-style-editor (#543)
+msgid "Version %(n)s published"
+msgstr "Versi %(n)s diterbitkan"
+
+#: map-style-editor (#543)
+msgid "Editing map styles is a Pro feature."
+msgstr "Mengedit gaya peta adalah fitur Pro."
+
+#: map-style-editor (#543)
+msgid "Saving publishes a new version. A survey that is already published keeps the version it has until you publish it again; drafts preview the newest one."
+msgstr "Menyimpan akan menerbitkan versi baru. Survei yang sudah terbit tetap memakai versinya sampai Anda menerbitkannya lagi; draf menampilkan yang terbaru."
+
+#: map-style-editor (#543)
+msgid "What stays on the map"
+msgstr "Apa yang tetap di peta"
+
+#: map-style-editor (#543)
+msgid "Buildings"
+msgstr "Bangunan"
+
+#: map-style-editor (#543)
+msgid "Outlines from zoom 15; a paper map needs them only for a street or a block."
+msgstr "Garis luar mulai zoom 15; peta kertas hanya memerlukannya untuk satu jalan atau blok."
+
+#: map-style-editor (#543)
+msgid "Colours"
+msgstr "Warna-warna"
+
+#: map-style-editor (#543)
+msgid "Hex colour"
+msgstr "Warna hex"
+
+#: map-style-editor (#543)
+msgid "Hard to tell apart from the land on a photocopy."
+msgstr "Sulit dibedakan dari daratan pada fotokopi."
+
+#: map-style-editor (#543)
+msgid "Roads and labels"
+msgstr "Jalan dan label"
+
+#: map-style-editor (#543)
+msgid "Road look"
+msgstr "Tampilan jalan"
+
+#: map-style-editor (#543)
+msgid "Bold street names"
+msgstr "Nama jalan tebal"
+
+#: map-style-editor (#543)
+msgid "City and region names up to zoom"
+msgstr "Nama kota dan wilayah hingga zoom"
+
+#: map-style-editor (#543)
+msgid "Below that zoom they stay; above it the map shows streets and districts only."
+msgstr "Di bawahnya tetap ada; di atasnya peta hanya menampilkan jalan dan distrik."
+
+#: map-style-editor (#543)
+msgid "Greyscale"
+msgstr "Skala abu-abu"
+
+#: map-style-editor (#543)
+msgid "Every colour becomes a grey, as a black-and-white copier sees it."
+msgstr "Setiap warna menjadi abu-abu, seperti yang dilihat mesin fotokopi hitam-putih."
+
+#: map-style-editor (#543)
+msgid "Print"
+msgstr "Cetak"
+
+#: map-style-editor (#543)
+msgid "Frame of a survey"
+msgstr "Bingkai sebuah survei"
+
+#: map-style-editor (#543)
+msgid "Unsaved changes"
+msgstr "Perubahan belum disimpan"
+
+#: map-style-editor (#543)
+msgid "As a photocopy"
+msgstr "Sebagai fotokopi"
+
+#: map-style-editor (#543)
+msgid "Place icons and names"
+msgstr "Ikon dan nama tempat"
+
+#: map-style-editor (#543)
+msgid "Shops, stations, parks by name — the clutter a paper map does without."
+msgstr "Toko, stasiun, taman dengan nama — kekacauan yang tidak diperlukan peta kertas."
+
+#: map-style-editor (#543)
+msgid "Footpaths and steps"
+msgstr "Jalur pejalan kaki dan tangga"
+
+#: map-style-editor (#543)
+msgid "Pedestrian ways, stairs, crossings and park paths."
+msgstr "Jalur pejalan, tangga, penyeberangan, dan jalan setapak taman."
+
+#: map-style-editor (#543)
+msgid "Route shields and arrows"
+msgstr "Rambu rute dan panah"
+
+#: map-style-editor (#543)
+msgid "Road numbers, one-way arrows, junction marks."
+msgstr "Nomor jalan, panah satu arah, tanda persimpangan."
+
+#: map-style-editor (#543)
+msgid "Relief and ferries"
+msgstr "Relief dan feri"
+
+#: map-style-editor (#543)
+msgid "Hillshade, sea depth, ferry and cable-car lines."
+msgstr "Bayangan relief, kedalaman laut, jalur feri dan kereta gantung."
+
+#: map-style-editor (#543)
+msgid "Regional boundaries"
+msgstr "Batas wilayah"
+
+#: map-style-editor (#543)
+msgid "States, provinces, Länder. National borders always show."
+msgstr "Negara bagian, provinsi, Länder. Batas negara selalu ditampilkan."
+
+#: map-style-editor (#543)
+msgid "Land"
+msgstr "Daratan"
+
+#: map-style-editor (#543)
+msgid "Parks and green"
+msgstr "Taman dan hijau"
+
+#: map-style-editor (#543)
+msgid "Water"
+msgstr "Air"
+
+#: map-style-editor (#543)
+msgid "National borders"
+msgstr "Batas negara"
+
+#: map-style-editor (#543)
+msgid "Street and city names"
+msgstr "Nama jalan dan kota"
+
+#: map-style-editor (#543)
+msgid "Water and district names"
+msgstr "Nama perairan dan distrik"
+
+#: map-style-editor (#543)
+msgid "Light"
+msgstr "Tipis"
+
+#: map-style-editor (#543)
+msgid "Strong"
+msgstr "Tebal"
+
+#: map-style-editor (#543)
+msgid "Use a colour like #dcefd2."
+msgstr "Gunakan warna seperti #dcefd2."
+
+#: map-style-editor (#543)
+msgid "Copenhagen (example)"
+msgstr "Kopenhagen (contoh)"
+
+#: map-style-editor (#543)
+msgid "Preview unavailable"
+msgstr "Pratinjau tidak tersedia"
+
+#: map-style-editor (#543)
+msgid "No published version yet"
+msgstr "Belum ada versi terbit"
+
+#: map-style-editor (#543)
+msgid "Version %n is being published; this frame shows the last published one."
+msgstr "Versi %n sedang diterbitkan; bingkai ini menampilkan versi terbit terakhir."
+
+#: map-style-editor (#543)
+msgid "Unsaved changes are not in this frame yet."
+msgstr "Perubahan yang belum disimpan belum ada di bingkai ini."
+
+#: map-style-editor (#543)
+msgid "Version %n, as the printed form renders it."
+msgstr "Versi %n, seperti yang dicetak pada formulir."
+
+#: map-style-editor (#543)
+msgid "Publishing failed"
+msgstr "Penerbitan gagal"
+
+#: map-style-editor (#543)
+msgid "Version %n published"
+msgstr "Versi %n diterbitkan"
+
+#: map-style-editor (#543)
+msgid "The previous version is still being published."
+msgstr "Versi sebelumnya masih diterbitkan."
+
+#: map-style-editor (#543)
+msgid "Version %(n)s of “%(name)s” is being published."
+msgstr "Versi %(n)s dari “%(name)s” sedang diterbitkan."
+
+#: map-style-editor (#543)
+msgid "Used in %(n)s survey."
+msgid_plural "Used in %(n)s surveys."
+msgstr[0] "Digunakan di %(n)s survei."

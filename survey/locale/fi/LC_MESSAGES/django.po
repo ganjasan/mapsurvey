@@ -10376,3 +10376,213 @@ msgid "used in %(n)s survey"
 msgid_plural "used in %(n)s surveys"
 msgstr[0] "käytössä %(n)s kyselyssä"
 msgstr[1] "käytössä %(n)s kyselyssä"
+
+#: map-style-editor (#543)
+msgid "Map style"
+msgstr "Karttatyyli"
+
+#: map-style-editor (#543)
+msgid "Style name"
+msgstr "Tyylin nimi"
+
+#: map-style-editor (#543)
+msgid "Version %(n)s published"
+msgstr "Versio %(n)s julkaistu"
+
+#: map-style-editor (#543)
+msgid "Editing map styles is a Pro feature."
+msgstr "Karttatyylien muokkaus on Pro-ominaisuus."
+
+#: map-style-editor (#543)
+msgid "Saving publishes a new version. A survey that is already published keeps the version it has until you publish it again; drafts preview the newest one."
+msgstr "Tallennus julkaisee uuden version. Jo julkaistu kysely säilyttää versionsa, kunnes julkaiset sen uudelleen; luonnokset näyttävät uusimman."
+
+#: map-style-editor (#543)
+msgid "What stays on the map"
+msgstr "Mitä kartalle jää"
+
+#: map-style-editor (#543)
+msgid "Buildings"
+msgstr "Rakennukset"
+
+#: map-style-editor (#543)
+msgid "Outlines from zoom 15; a paper map needs them only for a street or a block."
+msgstr "Ääriviivat zoomista 15 alkaen; paperikartta tarvitsee niitä vain kadun tai korttelin kokoisena."
+
+#: map-style-editor (#543)
+msgid "Colours"
+msgstr "Värit"
+
+#: map-style-editor (#543)
+msgid "Hex colour"
+msgstr "Hex-väri"
+
+#: map-style-editor (#543)
+msgid "Hard to tell apart from the land on a photocopy."
+msgstr "Vaikea erottaa maasta valokopiossa."
+
+#: map-style-editor (#543)
+msgid "Roads and labels"
+msgstr "Tiet ja nimiöt"
+
+#: map-style-editor (#543)
+msgid "Road look"
+msgstr "Teiden ulkoasu"
+
+#: map-style-editor (#543)
+msgid "Bold street names"
+msgstr "Lihavoidut kadunnimet"
+
+#: map-style-editor (#543)
+msgid "City and region names up to zoom"
+msgstr "Kaupunkien ja alueiden nimet zoomiin asti"
+
+#: map-style-editor (#543)
+msgid "Below that zoom they stay; above it the map shows streets and districts only."
+msgstr "Sen alapuolella ne pysyvät; yläpuolella kartta näyttää vain kadut ja kaupunginosat."
+
+#: map-style-editor (#543)
+msgid "Greyscale"
+msgstr "Harmaasävy"
+
+#: map-style-editor (#543)
+msgid "Every colour becomes a grey, as a black-and-white copier sees it."
+msgstr "Jokainen väri muuttuu harmaaksi, kuten mustavalkokopiokone sen näkee."
+
+#: map-style-editor (#543)
+msgid "Print"
+msgstr "Tulostus"
+
+#: map-style-editor (#543)
+msgid "Frame of a survey"
+msgstr "Kyselyn rajaus"
+
+#: map-style-editor (#543)
+msgid "Unsaved changes"
+msgstr "Tallentamattomia muutoksia"
+
+#: map-style-editor (#543)
+msgid "As a photocopy"
+msgstr "Valokopiona"
+
+#: map-style-editor (#543)
+msgid "Place icons and names"
+msgstr "Paikkojen kuvakkeet ja nimet"
+
+#: map-style-editor (#543)
+msgid "Shops, stations, parks by name — the clutter a paper map does without."
+msgstr "Kaupat, asemat, puistot nimeltä — rönsyt, joita paperikartta ei tarvitse."
+
+#: map-style-editor (#543)
+msgid "Footpaths and steps"
+msgstr "Jalkakäytävät ja portaat"
+
+#: map-style-editor (#543)
+msgid "Pedestrian ways, stairs, crossings and park paths."
+msgstr "Kävelytiet, portaat, suojatiet ja puistopolut."
+
+#: map-style-editor (#543)
+msgid "Route shields and arrows"
+msgstr "Tiekilvet ja nuolet"
+
+#: map-style-editor (#543)
+msgid "Road numbers, one-way arrows, junction marks."
+msgstr "Tienumerot, yksisuuntaisuusnuolet, risteysmerkit."
+
+#: map-style-editor (#543)
+msgid "Relief and ferries"
+msgstr "Korkokuva ja lautat"
+
+#: map-style-editor (#543)
+msgid "Hillshade, sea depth, ferry and cable-car lines."
+msgstr "Vinovalovarjostus, meren syvyys, lautta- ja köysiratalinjat."
+
+#: map-style-editor (#543)
+msgid "Regional boundaries"
+msgstr "Alueelliset rajat"
+
+#: map-style-editor (#543)
+msgid "States, provinces, Länder. National borders always show."
+msgstr "Osavaltiot, maakunnat, osavaltiot. Valtioiden rajat näkyvät aina."
+
+#: map-style-editor (#543)
+msgid "Land"
+msgstr "Maa"
+
+#: map-style-editor (#543)
+msgid "Parks and green"
+msgstr "Puistot ja viheralueet"
+
+#: map-style-editor (#543)
+msgid "Water"
+msgstr "Vesi"
+
+#: map-style-editor (#543)
+msgid "National borders"
+msgstr "Valtioiden rajat"
+
+#: map-style-editor (#543)
+msgid "Street and city names"
+msgstr "Katujen ja kaupunkien nimet"
+
+#: map-style-editor (#543)
+msgid "Water and district names"
+msgstr "Vesistöjen ja kaupunginosien nimet"
+
+#: map-style-editor (#543)
+msgid "Light"
+msgstr "Kevyt"
+
+#: map-style-editor (#543)
+msgid "Strong"
+msgstr "Voimakas"
+
+#: map-style-editor (#543)
+msgid "Use a colour like #dcefd2."
+msgstr "Käytä väriä kuten #dcefd2."
+
+#: map-style-editor (#543)
+msgid "Copenhagen (example)"
+msgstr "Kööpenhamina (esimerkki)"
+
+#: map-style-editor (#543)
+msgid "Preview unavailable"
+msgstr "Esikatselu ei saatavilla"
+
+#: map-style-editor (#543)
+msgid "No published version yet"
+msgstr "Ei vielä julkaistua versiota"
+
+#: map-style-editor (#543)
+msgid "Version %n is being published; this frame shows the last published one."
+msgstr "Versiota %n julkaistaan; tämä rajaus näyttää viimeksi julkaistun."
+
+#: map-style-editor (#543)
+msgid "Unsaved changes are not in this frame yet."
+msgstr "Tallentamattomat muutokset eivät vielä ole tässä rajauksessa."
+
+#: map-style-editor (#543)
+msgid "Version %n, as the printed form renders it."
+msgstr "Versio %n, sellaisena kuin tulostettu lomake sen esittää."
+
+#: map-style-editor (#543)
+msgid "Publishing failed"
+msgstr "Julkaisu epäonnistui"
+
+#: map-style-editor (#543)
+msgid "Version %n published"
+msgstr "Versio %n julkaistu"
+
+#: map-style-editor (#543)
+msgid "The previous version is still being published."
+msgstr "Edellistä versiota julkaistaan yhä."
+
+#: map-style-editor (#543)
+msgid "Version %(n)s of “%(name)s” is being published."
+msgstr "Tyylin ”%(name)s” versiota %(n)s julkaistaan."
+
+#: map-style-editor (#543)
+msgid "Used in %(n)s survey."
+msgid_plural "Used in %(n)s surveys."
+msgstr[0] "Käytössä %(n)s kyselyssä."
+msgstr[1] "Käytössä %(n)s kyselyssä."
