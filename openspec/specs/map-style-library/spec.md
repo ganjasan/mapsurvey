@@ -60,7 +60,7 @@ A basemap key SHALL be a preset key or `style:<uuid>` of a workspace style. `sur
 - **THEN** its card shows a *Publishing…* chip, the page re-polls every few seconds, and the style is absent from survey pickers until the version is `ready`
 
 ### Requirement: Duplicate, rename and delete
-Owners, admins and editors SHALL be able to duplicate any style whose base the generator supports (`mapbox/streets-v12`): the copy is a workspace style named "<name> copy" with version 1 `pending`, published by a background task; rename a workspace style; delete a workspace style no survey references. Deleting a style that a survey references SHALL be refused with a message naming the surveys. Presets SHALL NOT be renamed or deleted. Satellite and Topo SHALL show no *Duplicate*.
+Owners, admins and editors SHALL be able to duplicate any style whose base the generator supports (`mapbox/streets-v12`): the copy is a workspace style named "<name> copy" with version 1 `pending`, published by a background task; open a workspace style in the editor, where its name is changed; delete a workspace style no survey references. Deleting a style that a survey references SHALL be refused with a message naming the surveys. Presets SHALL NOT be renamed, edited or deleted. Satellite and Topo SHALL show no *Duplicate*.
 
 #### Scenario: Duplicate publishes in the background
 - **WHEN** an editor duplicates Paper A
@@ -77,6 +77,10 @@ Owners, admins and editors SHALL be able to duplicate any style whose base the g
 #### Scenario: Viewer cannot act
 - **WHEN** a member with the `viewer` role posts to duplicate, rename or delete
 - **THEN** the response is 403 and nothing changes
+
+#### Scenario: Workspace card links to the editor
+- **WHEN** the library renders a workspace style
+- **THEN** its card carries *Edit* linking to the editor and no separate rename form; a preset's card carries no *Edit*
 
 ### Requirement: Creating a style is a Pro feature; using one is not
 `billing/features.py` SHALL declare `map_styles` for `PLAN_PRO` with a trial allowance of 2. The duplicate view SHALL pass `require_feature('map_styles')` and count a use through `billing.trial.use` when the row is created. Rename, delete, the library page itself and selecting any existing style in a survey SHALL NOT be gated.
