@@ -30,3 +30,5 @@
 .lb-picker-item:hover { background: #f1f5fa; text-decoration: none; color: #222; }
 .lb-picker-item i { width: 1.6rem; height: 1.6rem; display: inline-flex; align-items: center; justify-content: center; background: #eef2f7; border-radius: 5px; color: #2f6fb0; }
 .lb-empty { border: 1px dashed #d5d9de; border-radius: 8px; }
+.lb-file { display: flex; align-items: center; gap: .5rem; margin-bottom: .35rem; }
+.lb-file input[type=text], .lb-file input:not([type]) { flex: 1; }

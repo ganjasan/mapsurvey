@@ -3191,6 +3191,8 @@ LANDING_BLOCK_KIND_CHOICES = (
     ('faq', _('FAQ')),
     ('timeline', _('Timeline')),
     ('survey', _('Survey card')),
+    ('documents', _('Documents')),
+    ('map', _('Map')),
 )
 
 
@@ -3219,3 +3221,33 @@ class LandingBlock(models.Model):
     @property
     def anchor(self):
         return f'b-{self.pk}'
+
+
+def landing_file_key(instance, filename):
+    """landing_files/<uuid4>.<ext> on the public tier (change landing-documents-map). The
+    extension is the checked one (landings.check_document), so the served content type comes
+    from it; the original name lives on the row as the title."""
+    ext = (os.path.splitext(filename)[1] or '')[:8].lower()
+    return f'landing_files/{uuid_module.uuid4().hex}{ext}'
+
+
+class LandingFile(models.Model):
+    """A downloadable file of a documents block (change landing-documents-map, #577)."""
+    block = models.ForeignKey(LandingBlock, on_delete=models.CASCADE, related_name='files')
+    file = models.FileField(upload_to=landing_file_key, max_length=200)
+    title = models.CharField(max_length=200)
+    size = models.PositiveIntegerField(default=0)
+    content_type = models.CharField(max_length=100, blank=True, default='')
+    order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ('order', 'id')
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def extension(self):
+        return os.path.splitext(self.file.name)[1].lstrip('.').lower()

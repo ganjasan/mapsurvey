@@ -11164,3 +11164,121 @@ msgstr[1] "%(n)s encuestas"
 #: landing-core (#576)
 msgid "Open now"
 msgstr "Abierto ahora"
+
+#: landing-documents-map (#577)
+msgid "File title"
+msgstr "Título del archivo"
+
+#: landing-documents-map (#577)
+msgid "PDF, office documents, CSV or text; up to 25 MB each. You can rename them after adding."
+msgstr "PDF, documentos de ofimática, CSV o texto; hasta 25 MB cada uno. Puedes renombrarlos después de añadirlos."
+
+#: landing-documents-map (#577)
+msgid "A GeoJSON file with the project area: a boundary, a route or a few points. Up to 1 MB."
+msgstr "Un archivo GeoJSON con el área del proyecto: un límite, un recorrido o algunos puntos. Hasta 1 MB."
+
+#: landing-documents-map (#577)
+msgid "Colour"
+msgstr "Color de las formas"
+
+#: landing-documents-map (#577)
+msgid "Base map"
+msgstr "Mapa base"
+
+#: landing-documents-map (#577)
+msgid "Map of the project area"
+msgstr "Mapa del área del proyecto"
+
+#: landing-documents-map (#577)
+msgid "Documents"
+msgstr "Documentos"
+
+#: landing-documents-map (#577)
+msgid "Document"
+msgstr "Documento"
+
+#: landing-documents-map (#577)
+msgid "Upload a GeoJSON file with the project area."
+msgstr "Sube un archivo GeoJSON con el área del proyecto."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s”: upload a PDF, an office document, CSV or plain text."
+msgstr "«%(name)s»: sube un PDF, un documento de ofimática, CSV o texto sin formato."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s” is larger than 25 MB."
+msgstr "«%(name)s» ocupa más de 25 MB."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s” is not a UTF-8 text file."
+msgstr "«%(name)s» no es un archivo de texto UTF-8."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s” looks like a web page, not a document."
+msgstr "«%(name)s» parece una página web, no un documento."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s” is not the kind of file its name says."
+msgstr "«%(name)s» no es el tipo de archivo que indica su nombre."
+
+#: landing-documents-map (#577)
+msgid "The GeoJSON file is larger than 1 MB."
+msgstr "El archivo GeoJSON ocupa más de 1 MB."
+
+#: landing-documents-map (#577)
+msgid "This is not a GeoJSON file."
+msgstr "Esto no es un archivo GeoJSON."
+
+#: landing-documents-map (#577)
+msgid "The file has more than 500 features."
+msgstr "El archivo tiene más de 500 elementos."
+
+#: landing-documents-map (#577)
+msgid "A shape in the file is broken."
+msgstr "Una forma del archivo está dañada."
+
+#: landing-documents-map (#577)
+msgid "Coordinates must be longitude and latitude (WGS84)."
+msgstr "Las coordenadas deben ser longitud y latitud (WGS84)."
+
+#: landing-documents-map (#577)
+msgid "A polygon in the file crosses itself."
+msgstr "Un polígono del archivo se cruza consigo mismo."
+
+#: landing-documents-map (#577)
+msgid "The file has no points, lines or areas."
+msgstr "El archivo no tiene puntos, líneas ni áreas."
+
+#: landing-documents-map (#577)
+msgid "Add at least one file."
+msgstr "Añade al menos un archivo."
+
+#: landing-documents-map (#577)
+msgid "A documents block holds at most 20 files."
+msgstr "Un bloque de documentos admite como máximo 20 archivos."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "%(n)s file"
+msgid_plural "%(n)s files"
+msgstr[0] "%(n)s archivo"
+msgstr[1] "%(n)s archivos"
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "%(n)s shape"
+msgid_plural "%(n)s shapes"
+msgstr[0] "%(n)s forma"
+msgstr[1] "%(n)s formas"
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "%(n)s shape on the map. Upload a new file to replace it."
+msgid_plural "%(n)s shapes on the map. Upload a new file to replace them."
+msgstr[0] "%(n)s forma en el mapa. Sube un archivo nuevo para sustituirla."
+msgstr[1] "%(n)s formas en el mapa. Sube un archivo nuevo para sustituirlas."

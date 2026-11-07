@@ -15,7 +15,7 @@ from billing.models import STATUS_FINISHED
 from billing.tests.helpers import make_sub, trial_used_elsewhere
 from survey import landings
 from survey.content_screening import confirm_phishing
-from survey.models import (ContentReview, Landing, LandingBlock, LandingSurvey, Membership, Organization,
+from survey.models import (ContentReview, Landing, LandingBlock, LandingFile, LandingSurvey, Membership, Organization,
                            PublicResultsPage, SurveyHeader)
 
 
@@ -556,3 +556,151 @@ class LandingScreeningTest(LandingTestBase):
         r = self.client.get(review_path(review))
         self.assertContains(r, 'Riverside Park plan')
         self.assertContains(r, '/p/riverside-park-plan/')
+
+
+class LandingDocumentsTest(LandingTestBase):
+    """Spec `survey-landings`, documents block (change landing-documents-map, #577)."""
+
+    def setUp(self):
+        super().setUp()
+        self.login(self.editor)
+
+    def pdf(self, name='summary.pdf', body=b'%PDF-1.4\n%fake\n'):
+        return SimpleUploadedFile(name, body, content_type='application/pdf')
+
+    def test_pdf_added(self):
+        """GIVEN a PDF named summary.pdf
+        WHEN a documents block is added with it
+        THEN a file titled "summary" is stored under a random landing_files/ key and the page lists it"""
+        r = self.client.post(self.url('editor_landing_block_add'), {'kind': 'documents', 'files': [self.pdf()]})
+        self.assertEqual(r.status_code, 302)
+        f = LandingFile.objects.get()
+        self.assertEqual(f.title, 'summary')
+        self.assertTrue(f.file.name.startswith('landing_files/'))
+        self.assertNotIn('summary', f.file.name)
+        self.client.post(self.url('editor_landing_publish'), {'action': 'publish'})
+        page = self.client.get('/p/riverside-park-plan/')
+        self.assertContains(page, 'summary')
+        self.assertContains(page, 'PDF')
+
+    def test_disguised_html_refused(self):
+        """GIVEN a file named boards.pdf whose content is HTML
+        WHEN it is uploaded
+        THEN the save is refused naming the file and nothing is stored"""
+        r = self.client.post(self.url('editor_landing_block_add'), {
+            'kind': 'documents', 'files': [self.pdf('boards.pdf', b'<html><script>x</script></html>')]})
+        self.assertEqual(r.status_code, 400)
+        self.assertContains(r, 'boards.pdf', status_code=400)
+        self.assertFalse(LandingFile.objects.exists())
+        self.assertFalse(self.landing.blocks.exists())
+
+    def test_text_with_markup_refused(self):
+        """GIVEN a .txt file that is an SVG
+        WHEN it is uploaded
+        THEN it is refused"""
+        svg = SimpleUploadedFile('notes.txt', b'<svg onload="alert(1)"></svg>', content_type='text/plain')
+        r = self.client.post(self.url('editor_landing_block_add'), {'kind': 'documents', 'files': [svg]})
+        self.assertEqual(r.status_code, 400)
+
+    def test_rename_and_remove_in_one_save(self):
+        """GIVEN a documents block with two files
+        WHEN it is saved with a new title for one and the other removed
+        THEN the first is renamed and the second is gone"""
+        self.client.post(self.url('editor_landing_block_add'),
+                         {'kind': 'documents', 'files': [self.pdf('a.pdf'), self.pdf('b.pdf')]})
+        block = self.landing.blocks.get()
+        a, b = block.files.order_by('order')
+        self.client.post(self.url('editor_landing_block_edit', block.pk),
+                         {f'file_title_{a.pk}': 'Boards from the open house', f'remove_{b.pk}': '1'})
+        self.assertEqual(list(block.files.values_list('title', flat=True)), ['Boards from the open house'])
+
+    def test_block_without_files_refused(self):
+        """GIVEN a documents block with one file
+        WHEN it is saved with that file removed and nothing added
+        THEN the save is refused"""
+        self.client.post(self.url('editor_landing_block_add'), {'kind': 'documents', 'files': [self.pdf()]})
+        block = self.landing.blocks.get()
+        f = block.files.get()
+        r = self.client.post(self.url('editor_landing_block_edit', block.pk), {f'remove_{f.pk}': '1'})
+        self.assertEqual(r.status_code, 400)
+        self.assertTrue(block.files.exists())
+
+    def test_file_titles_are_screened(self):
+        """GIVEN a documents block whose file title is a lure
+        WHEN the landing text is collected for screening
+        THEN the title is part of it"""
+        from survey.content_screening import collect_landing_text
+        self.client.post(self.url('editor_landing_block_add'), {'kind': 'documents', 'files': [self.pdf()]})
+        LandingFile.objects.update(title='Verify your account now')
+        texts = ' '.join(t for _l, t in collect_landing_text(self.landing).texts)
+        self.assertIn('Verify your account now', texts)
+
+
+class LandingMapTest(LandingTestBase):
+    """Spec `survey-landings`, map block (change landing-documents-map, #577)."""
+
+    POLY = {'type': 'Feature', 'properties': {'name': 'Park', 'owner': 'x'},
+            'geometry': {'type': 'Polygon', 'coordinates': [[[13.1234567891, 52.1], [13.2, 52.1],
+                                                             [13.2, 52.2], [13.1234567891, 52.1]]]}}
+
+    def setUp(self):
+        super().setUp()
+        self.login(self.editor)
+
+    def geojson(self, doc, name='area.geojson'):
+        body = doc if isinstance(doc, bytes) else json.dumps(doc).encode()
+        return SimpleUploadedFile(name, body, content_type='application/geo+json')
+
+    def add_map(self, doc, **extra):
+        return self.client.post(self.url('editor_landing_block_add'),
+                                dict(kind='map', geojson_file=self.geojson(doc), **extra))
+
+    def test_polygon_normalised(self):
+        """GIVEN a Feature with 10-decimal coordinates and extra properties
+        WHEN a map block is saved
+        THEN one feature remains with only its name and 6-decimal coordinates"""
+        self.assertEqual(self.add_map(self.POLY, color='#AA0000').status_code, 302)
+        data = self.landing.blocks.get().data
+        feature = data['area']['features'][0]
+        self.assertEqual(feature['properties'], {'name': 'Park'})
+        self.assertEqual(feature['geometry']['coordinates'][0][0][0], 13.123457)
+        self.assertEqual((data['color'], data['basemap']), ('#aa0000', 'streets'))
+
+    def test_invalid_files_refused(self):
+        """GIVEN a non-JSON file, a document without geometry and a latitude of 120
+        WHEN each is saved as a map block
+        THEN each is refused and no block exists"""
+        bad = [b'not json', {'type': 'FeatureCollection', 'features': []},
+               {'type': 'Point', 'coordinates': [10, 120]}]
+        for doc in bad:
+            self.assertEqual(self.add_map(doc).status_code, 400, doc)
+        self.assertFalse(self.landing.blocks.exists())
+
+    def test_edit_keeps_area(self):
+        """GIVEN a map block
+        WHEN it is saved again with a caption and no new file
+        THEN the area stays"""
+        self.add_map(self.POLY)
+        block = self.landing.blocks.get()
+        self.client.post(self.url('editor_landing_block_edit', block.pk), {'caption': 'The park today'})
+        block.refresh_from_db()
+        self.assertEqual(block.data['caption'], 'The park today')
+        self.assertEqual(len(block.data['area']['features']), 1)
+
+    def test_unknown_basemap_falls_back(self):
+        """GIVEN a base map key the workspace does not have
+        WHEN the map block is saved
+        THEN Streets is stored"""
+        self.add_map(self.POLY, basemap='style:00000000-0000-0000-0000-000000000000')
+        self.assertEqual(self.landing.blocks.get().data['basemap'], 'streets')
+
+    def test_leaflet_only_where_needed(self):
+        """GIVEN a published landing
+        WHEN it has no map block, and then one
+        THEN Leaflet loads only in the second case"""
+        self.client.post(self.url('editor_landing_publish'), {'action': 'publish'})
+        self.assertNotContains(self.client.get('/p/riverside-park-plan/'), 'leaflet')
+        self.add_map(self.POLY)
+        r = self.client.get('/p/riverside-park-plan/')
+        self.assertContains(r, 'leaflet.js')
+        self.assertContains(r, 'id="area-b-')

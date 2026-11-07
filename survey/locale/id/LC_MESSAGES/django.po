@@ -11108,3 +11108,118 @@ msgstr[0] "%(n)s survei"
 #: landing-core (#576)
 msgid "Open now"
 msgstr "Sedang dibuka"
+
+#: landing-documents-map (#577)
+msgid "File title"
+msgstr "Judul berkas"
+
+#: landing-documents-map (#577)
+msgid "PDF, office documents, CSV or text; up to 25 MB each. You can rename them after adding."
+msgstr "PDF, dokumen perkantoran, CSV, atau teks; masing-masing hingga 25 MB. Anda bisa mengganti namanya setelah ditambahkan."
+
+#: landing-documents-map (#577)
+msgid "A GeoJSON file with the project area: a boundary, a route or a few points. Up to 1 MB."
+msgstr "Berkas GeoJSON berisi area proyek: batas, rute, atau beberapa titik. Hingga 1 MB."
+
+#: landing-documents-map (#577)
+msgid "Colour"
+msgstr "Warna bentuk"
+
+#: landing-documents-map (#577)
+msgid "Base map"
+msgstr "Peta dasar"
+
+#: landing-documents-map (#577)
+msgid "Map of the project area"
+msgstr "Peta area proyek"
+
+#: landing-documents-map (#577)
+msgid "Documents"
+msgstr "Dokumen"
+
+#: landing-documents-map (#577)
+msgid "Document"
+msgstr "Dokumen"
+
+#: landing-documents-map (#577)
+msgid "Upload a GeoJSON file with the project area."
+msgstr "Unggah berkas GeoJSON berisi area proyek."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s”: upload a PDF, an office document, CSV or plain text."
+msgstr "“%(name)s”: unggah PDF, dokumen perkantoran, CSV, atau teks biasa."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s” is larger than 25 MB."
+msgstr "“%(name)s” lebih besar dari 25 MB."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s” is not a UTF-8 text file."
+msgstr "“%(name)s” bukan berkas teks UTF-8."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s” looks like a web page, not a document."
+msgstr "“%(name)s” tampak seperti halaman web, bukan dokumen."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s” is not the kind of file its name says."
+msgstr "“%(name)s” bukan jenis berkas seperti yang disebut namanya."
+
+#: landing-documents-map (#577)
+msgid "The GeoJSON file is larger than 1 MB."
+msgstr "Berkas GeoJSON lebih besar dari 1 MB."
+
+#: landing-documents-map (#577)
+msgid "This is not a GeoJSON file."
+msgstr "Ini bukan berkas GeoJSON."
+
+#: landing-documents-map (#577)
+msgid "The file has more than 500 features."
+msgstr "Berkas berisi lebih dari 500 fitur."
+
+#: landing-documents-map (#577)
+msgid "A shape in the file is broken."
+msgstr "Ada bentuk yang rusak di dalam berkas."
+
+#: landing-documents-map (#577)
+msgid "Coordinates must be longitude and latitude (WGS84)."
+msgstr "Koordinat harus berupa bujur dan lintang (WGS84)."
+
+#: landing-documents-map (#577)
+msgid "A polygon in the file crosses itself."
+msgstr "Ada poligon di dalam berkas yang memotong dirinya sendiri."
+
+#: landing-documents-map (#577)
+msgid "The file has no points, lines or areas."
+msgstr "Berkas tidak berisi titik, garis, atau area."
+
+#: landing-documents-map (#577)
+msgid "Add at least one file."
+msgstr "Tambahkan setidaknya satu berkas."
+
+#: landing-documents-map (#577)
+msgid "A documents block holds at most 20 files."
+msgstr "Blok dokumen memuat paling banyak 20 berkas."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "%(n)s file"
+msgid_plural "%(n)s files"
+msgstr[0] "%(n)s berkas"
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "%(n)s shape"
+msgid_plural "%(n)s shapes"
+msgstr[0] "%(n)s bentuk"
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "%(n)s shape on the map. Upload a new file to replace it."
+msgid_plural "%(n)s shapes on the map. Upload a new file to replace them."
+msgstr[0] "%(n)s bentuk di peta. Unggah berkas baru untuk menggantinya."

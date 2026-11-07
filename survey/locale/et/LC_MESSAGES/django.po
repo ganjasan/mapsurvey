@@ -11078,3 +11078,121 @@ msgstr[1] "%(n)s küsitlust"
 #: landing-core (#576)
 msgid "Open now"
 msgstr "Praegu avatud"
+
+#: landing-documents-map (#577)
+msgid "File title"
+msgstr "Faili pealkiri"
+
+#: landing-documents-map (#577)
+msgid "PDF, office documents, CSV or text; up to 25 MB each. You can rename them after adding."
+msgstr "PDF, kontoridokumendid, CSV või tekst; igaüks kuni 25 MB. Pärast lisamist saate neid ümber nimetada."
+
+#: landing-documents-map (#577)
+msgid "A GeoJSON file with the project area: a boundary, a route or a few points. Up to 1 MB."
+msgstr "GeoJSON-fail projektialaga: piir, marsruut või mõni punkt. Kuni 1 MB."
+
+#: landing-documents-map (#577)
+msgid "Colour"
+msgstr "Kujundite värv"
+
+#: landing-documents-map (#577)
+msgid "Base map"
+msgstr "Aluskaart"
+
+#: landing-documents-map (#577)
+msgid "Map of the project area"
+msgstr "Projektiala kaart"
+
+#: landing-documents-map (#577)
+msgid "Documents"
+msgstr "Dokumendid"
+
+#: landing-documents-map (#577)
+msgid "Document"
+msgstr "Dokument"
+
+#: landing-documents-map (#577)
+msgid "Upload a GeoJSON file with the project area."
+msgstr "Laadige üles GeoJSON-fail projektialaga."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s”: upload a PDF, an office document, CSV or plain text."
+msgstr "„%(name)s“: laadige üles PDF, kontoridokument, CSV või lihttekst."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s” is larger than 25 MB."
+msgstr "„%(name)s“ on suurem kui 25 MB."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s” is not a UTF-8 text file."
+msgstr "„%(name)s“ ei ole UTF-8 tekstifail."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s” looks like a web page, not a document."
+msgstr "„%(name)s“ näeb välja nagu veebileht, mitte dokument."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s” is not the kind of file its name says."
+msgstr "„%(name)s“ ei ole seda tüüpi fail, mida nimi väidab."
+
+#: landing-documents-map (#577)
+msgid "The GeoJSON file is larger than 1 MB."
+msgstr "GeoJSON-fail on suurem kui 1 MB."
+
+#: landing-documents-map (#577)
+msgid "This is not a GeoJSON file."
+msgstr "See ei ole GeoJSON-fail."
+
+#: landing-documents-map (#577)
+msgid "The file has more than 500 features."
+msgstr "Failis on üle 500 objekti."
+
+#: landing-documents-map (#577)
+msgid "A shape in the file is broken."
+msgstr "Failis on vigane kujund."
+
+#: landing-documents-map (#577)
+msgid "Coordinates must be longitude and latitude (WGS84)."
+msgstr "Koordinaadid peavad olema pikkus- ja laiuskraadid (WGS84)."
+
+#: landing-documents-map (#577)
+msgid "A polygon in the file crosses itself."
+msgstr "Failis olev hulknurk lõikub iseendaga."
+
+#: landing-documents-map (#577)
+msgid "The file has no points, lines or areas."
+msgstr "Failis pole punkte, jooni ega alasid."
+
+#: landing-documents-map (#577)
+msgid "Add at least one file."
+msgstr "Lisage vähemalt üks fail."
+
+#: landing-documents-map (#577)
+msgid "A documents block holds at most 20 files."
+msgstr "Dokumendiplokis saab olla kuni 20 faili."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "%(n)s file"
+msgid_plural "%(n)s files"
+msgstr[0] "%(n)s fail"
+msgstr[1] "%(n)s faili"
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "%(n)s shape"
+msgid_plural "%(n)s shapes"
+msgstr[0] "%(n)s kujund"
+msgstr[1] "%(n)s kujundit"
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "%(n)s shape on the map. Upload a new file to replace it."
+msgid_plural "%(n)s shapes on the map. Upload a new file to replace them."
+msgstr[0] "Kaardil on %(n)s kujund. Selle asendamiseks laadige üles uus fail."
+msgstr[1] "Kaardil on %(n)s kujundit. Nende asendamiseks laadige üles uus fail."
