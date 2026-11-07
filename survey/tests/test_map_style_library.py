@@ -276,6 +276,77 @@ class LibraryPageTest(_LibraryFixture):
         self.assertIsNone(basemap_registry.resolve(style.basemap_key, self.org))
 
 
+class NewStyleTest(_LibraryFixture):
+    """Spec: map-style-library / Requirement: New style starts from a preset and opens the editor."""
+
+    def setUp(self):
+        super().setUp()
+        make_sub(self.org)
+        self.new_url = reverse('org_map_style_new', args=[self.org.slug])
+
+    def test_new_style_from_paper_b(self):
+        """
+        GIVEN a Pro editor
+        WHEN they choose New style → Paper B
+        THEN "New style" exists with version 1 pending carrying Paper B's settings, the task is enqueued,
+             and the response opens its editor
+        """
+        paper_b = MapStyle.objects.get(organization__isnull=True, key='paper_b')
+        with mock.patch.object(style_tasks.publish_map_style_version, 'delay') as delay, \
+                self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(self.new_url, {'base': 'paper_b'})
+        style = MapStyle.objects.get(organization=self.org)
+        self.assertEqual(style.name, 'New style')
+        self.assertEqual(response['Location'], reverse('org_map_style_edit', args=[self.org.slug, style.uuid]))
+        version = style.versions.get()
+        self.assertEqual((version.number, version.status), (1, MapStyleVersion.PENDING))
+        self.assertEqual(version.settings, paper_b.latest_ready().settings)
+        delay.assert_called_once_with(version.pk)
+        self.assertEqual(self.client.get(response['Location']).status_code, 200)  # the editor opens on a pending style
+
+    def test_second_new_style(self):
+        """
+        GIVEN an existing "New style"
+        WHEN another is created
+        THEN it is "New style (2)"
+        """
+        with mock.patch.object(style_tasks.publish_map_style_version, 'delay'):
+            self.client.post(self.new_url, {'base': 'streets'})
+            self.client.post(self.new_url, {'base': 'streets'})
+        self.assertEqual(sorted(MapStyle.objects.filter(organization=self.org).values_list('name', flat=True)),
+                         ['New style', 'New style (2)'])
+
+    def test_menu_lists_rebuildable_presets_only(self):
+        """
+        GIVEN the library
+        WHEN an editor and then a viewer open it
+        THEN the editor's New style menu offers streets, paper and paper_b only; the viewer sees no New style;
+             a post naming satellite creates nothing
+        """
+        html = self.client.get(reverse('org_map_styles', args=[self.org.slug])).content.decode()
+        menu = html[html.index('id="map-style-new"'):html.index('id="map-style-import"')]
+        self.assertEqual(re.findall(r'data-base="([a-z_]+)"', menu), ['streets', 'paper', 'paper_b'])
+        self.client.post(self.new_url, {'base': 'satellite'})
+        self.assertFalse(MapStyle.objects.filter(organization=self.org).exists())
+        viewer = User.objects.create_user('newviewer', password='pass')
+        Membership.objects.create(user=viewer, organization=self.org, role='viewer')
+        self.client.login(username='newviewer', password='pass')
+        self.assertNotIn('id="map-style-new"', self.client.get(reverse('org_map_styles', args=[self.org.slug])).content.decode())
+        self.assertEqual(self.client.post(self.new_url, {'base': 'streets'}).status_code, 403)
+
+    def test_spent_trial(self):
+        """
+        GIVEN a Free workspace whose map_styles allowance is spent
+        WHEN it chooses New style
+        THEN the Pro-required page answers and nothing is created
+        """
+        from billing.models import Subscription
+        Subscription.objects.filter(organization=self.org).delete()
+        trial_used_elsewhere(self.org)
+        self.assertEqual(self.client.post(self.new_url, {'base': 'streets'}).status_code, 403)
+        self.assertFalse(MapStyle.objects.filter(organization=self.org).exists())
+
+
 class LibraryActionsTest(_LibraryFixture):
     """Spec: map-style-library / Requirement: Duplicate, rename and delete; Creating a style is a Pro feature."""
 
@@ -297,6 +368,7 @@ class LibraryActionsTest(_LibraryFixture):
             response = self.client.post(reverse('org_map_style_duplicate', args=[self.org.slug, self.paper.uuid]))
         self.assertEqual(response.status_code, 302)
         style = MapStyle.objects.get(organization=self.org)
+        self.assertEqual(response['Location'], reverse('org_map_style_edit', args=[self.org.slug, style.uuid]))
         self.assertEqual(style.name, 'Paper A copy')
         version = style.versions.get()
         self.assertEqual((version.number, version.status), (1, MapStyleVersion.PENDING))

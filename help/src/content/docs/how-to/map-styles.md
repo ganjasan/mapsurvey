@@ -26,9 +26,11 @@ The printed form uses the same style as the section it prints.
 
 ## Make your own
 
-1. Press **Duplicate** on Streets, Paper A or Paper B. (Satellite and Topo cannot be duplicated.)
-2. The copy appears as *Publishing…* for a few seconds while its hosted map is created, then it is ready to pick in survey settings.
-3. Press **Edit** on the copy to change how it looks.
+1. Press **New style** at the top of the page and choose what to start from: Streets, Paper A or Paper B.
+2. The new style opens in the editor straight away. Give it a name, change what you like and press **Save**.
+3. Its hosted map is published in a few seconds; then the style is ready to pick in survey settings.
+
+**Duplicate** on a card does the same starting from that card's style, and also opens the copy in the editor. Satellite and Topo cannot be a starting point.
 
 Creating and editing styles is a **Pro** feature; the trial includes two styles. Using a style that already exists — a preset or your own — never needs Pro, so a survey keeps its map if a subscription lapses.
 

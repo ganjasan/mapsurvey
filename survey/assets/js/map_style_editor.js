@@ -34,7 +34,8 @@
       var el = document.querySelector('[data-warning-for="' + key + '"]');
       if (!el) return;
       var l = lum(checks[key]);
-      el.hidden = !(land !== null && l !== null && Math.abs(land - l) < 0.12);
+      // 0.08: Paper A's own parks (#dcefd2 on white, 0.087) pass; really pale colours warn.
+      el.hidden = !(land !== null && l !== null && Math.abs(land - l) < 0.08);
     });
   }
 

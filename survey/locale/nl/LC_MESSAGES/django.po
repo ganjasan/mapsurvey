@@ -10672,3 +10672,15 @@ msgstr "De kaartstijl kon niet worden geïmporteerd: %(reason)s"
 #: map-style-import-export (#544)
 msgid "“%(name)s” was imported and is being published."
 msgstr "“%(name)s” is geïmporteerd en wordt gepubliceerd."
+
+#: map-styles-new-style
+msgid "New style"
+msgstr "Nieuwe stijl"
+
+#: map-styles-new-style
+msgid "Start from"
+msgstr "Beginnen met"
+
+#: map-styles-new-style
+msgid "A map style is the base map under your surveys, online and on paper. Pick any of these in a survey's settings, or make your own with New style: choose what stays on the map, the colours and the labels, and see how it prints."
+msgstr "Een kaartstijl is de basiskaart onder je enquêtes, online en op papier. Kies er een in de instellingen van een enquête of maak je eigen met Nieuwe stijl: wat op de kaart blijft, de kleuren en de labels, en zie hoe hij wordt afgedrukt."

@@ -20,6 +20,25 @@ itself while a style is being published (org/_map_style_cards.html).{% endcommen
         <h4 class="mb-0">{% trans "Map styles" %}</h4>
         <div class="d-flex align-items-center" style="gap:.75rem;">
           {% if can_act %}
+          {% comment %}New style (change map-styles-new-style): pick the preset to start from; the style is
+          created and opens in the editor.{% endcomment %}
+          <div class="dropdown">
+            <button type="button" class="btn btn-sm btn-primary dropdown-toggle" id="map-style-new" data-toggle="dropdown"
+                    aria-haspopup="true" aria-expanded="false">{% trans "New style" %}</button>
+            <div class="dropdown-menu dropdown-menu-right p-2" aria-labelledby="map-style-new" style="min-width:260px;">
+              <div class="small text-muted px-1 pb-1">{% trans "Start from" %}</div>
+              {% for card in starters %}
+              <form method="post" action="{% url 'org_map_style_new' org.slug %}" class="mb-1">
+                {% csrf_token %}
+                <input type="hidden" name="base" value="{{ card.style.key }}">
+                <button type="submit" class="dropdown-item d-flex align-items-center px-1 rounded" style="gap:.6rem;" data-base="{{ card.style.key }}">
+                  <span style="width:56px;height:36px;border-radius:.2rem;background:#eee url('{{ card.preview }}') center / cover no-repeat;flex:none;"></span>
+                  <span>{{ card.style.name }}</span>
+                </button>
+              </form>
+              {% endfor %}
+            </div>
+          </div>
           <form method="post" action="{% url 'org_map_style_import' org.slug %}" enctype="multipart/form-data" class="mb-0" id="map-style-import">
             {% csrf_token %}
             <label class="btn btn-sm btn-outline-primary mb-0" for="map-style-import-file">{% trans "Import a style" %}</label>
@@ -33,7 +52,7 @@ itself while a style is being published (org/_map_style_cards.html).{% endcommen
         </div>
     </div>
     <p class="text-muted" style="font-size:0.9rem;">
-        {% blocktrans %}A map style is the base map under your surveys, online and on paper. Pick any of these in a survey's settings. Duplicate a preset to give it your own name; the editor for colours and labels is coming next.{% endblocktrans %}
+        {% blocktrans %}A map style is the base map under your surveys, online and on paper. Pick any of these in a survey's settings, or make your own with New style: choose what stays on the map, the colours and the labels, and see how it prints.{% endblocktrans %}
     </p>
 
     {% if messages %}
