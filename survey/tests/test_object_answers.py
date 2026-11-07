@@ -354,4 +354,8 @@ class ObjectAnswersReadTest(TestCase):
         self.assertNotIn('Keep the oaks', json.dumps(block))
         html = self.client.get(reverse('public_results', kwargs={'slug': 'oar'})).content.decode()
         self.assertIn('objects-holder', html)
-        self.assertIn('renderObjects', html)
+        # The renderer is the shared static file since change landing-results.
+        from django.contrib.staticfiles import finders
+        self.assertIn('js/public_results_render.', html)
+        with open(finders.find('js/public_results_render.js')) as fh:
+            self.assertIn('renderObjects', fh.read())

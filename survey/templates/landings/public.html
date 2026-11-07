@@ -18,7 +18,9 @@ only the keys landings.clean_block stores.{% endcomment %}
   {% if landing.cover %}<meta property="og:image" content="{{ landing.cover.url }}"><meta name="twitter:card" content="summary_large_image">{% endif %}
   <link rel="icon" href="{% static 'favicon.ico' %}">
   <link rel="stylesheet" href="{% static 'css/landing_public.css' %}">
-  {% if map_layers %}<link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css">{% endif %}
+  {% if map_layers or results_basemaps %}<link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css">{% endif %}
+  {% if results_basemaps %}<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">{% endif %}
 </head>
 <body class="lp">
   {% if preview %}
@@ -64,17 +66,37 @@ only the keys landings.clean_block stores.{% endcomment %}
         {% if not preview %}<a href="{% url 'landing_report' landing.slug %}" rel="nofollow">{% trans "Report this page" %}</a>{% endif %}</p>
     </div>
   </footer>
+  {% if map_layers or results_basemaps %}<script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js" crossorigin="anonymous"></script>{% endif %}
+  {% if results %}
+  {% comment %}Results blocks (change landing-results): the renderer /r/ uses, fed the payloads of
+  PublicResultsService; Chart.js and the Leaflet plugins only when a block needs them.{% endcomment %}
+  {{ results|json_script:"lp-results" }}
+  {{ results_basemaps|json_script:"lp-results-basemaps" }}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" crossorigin="anonymous"></script>
+  {% if results_basemaps %}
+  <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin="anonymous"></script>
+  {% endif %}
+  <script src="{% static 'js/public_results_render.js' %}"></script>
+  <script>
+  (function () {
+    var token = '{{ MAPBOX_ACCESS_TOKEN|escapejs }}';
+    var bases = JSON.parse(document.getElementById('lp-results-basemaps').textContent);
+    Object.keys(bases).forEach(function (k) { if (bases[k].provider === 'mapbox') bases[k].opts.accessToken = token; });
+    window.renderResultBlocks(JSON.parse(document.getElementById('lp-results').textContent), bases);
+  })();
+  </script>
+  {% endif %}
   {% if map_layers %}
   {% comment %}Map blocks (change landing-documents-map): Leaflet only on pages that have one; the
   tile layers come from the workspace's base maps (survey/basemaps.py), the Mapbox token is added
   here as on the public results page.{% endcomment %}
   {{ map_layers|json_script:"lp-basemaps" }}
-  <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js" crossorigin="anonymous"></script>
   <script>
   (function () {
     var token = '{{ MAPBOX_ACCESS_TOKEN|escapejs }}';
     var bases = JSON.parse(document.getElementById('lp-basemaps').textContent);
-    document.querySelectorAll('.lp-map').forEach(function (el) {
+    document.querySelectorAll('.lp-map[data-color]').forEach(function (el) {
       var area = JSON.parse(document.getElementById('area-' + el.id.replace('map-', 'b-')).textContent);
       var base = bases[el.dataset.basemap] || bases[Object.keys(bases)[0]];
       var opts = Object.assign({}, base.opts);

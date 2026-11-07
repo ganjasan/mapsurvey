@@ -11282,3 +11282,62 @@ msgid "%(n)s shape on the map. Upload a new file to replace it."
 msgid_plural "%(n)s shapes on the map. Upload a new file to replace them."
 msgstr[0] "%(n)s forma no mapa. Carregue um ficheiro novo para a substituir."
 msgstr[1] "%(n)s formas no mapa. Carregue um ficheiro novo para as substituir."
+
+#: landing-results (#578)
+msgid "the question was removed from the survey; the block is not shown"
+msgstr "a pergunta foi removida do inquérito; o bloco não é mostrado"
+
+#: landing-results (#578)
+msgid "No survey of this workspace has a question whose answers can be shown as a chart or a map."
+msgstr "Nenhum inquérito deste espaço de trabalho tem uma pergunta cujas respostas possam ser mostradas num gráfico ou num mapa."
+
+#: landing-results (#578)
+msgid "Chart or map style"
+msgstr "Tipo de gráfico ou de mapa"
+
+#: landing-results (#578)
+msgid "Maps"
+msgstr "Mapas"
+
+#: landing-results (#578)
+msgid "Base map (maps)"
+msgstr "Mapa base (para mapas)"
+
+#: landing-results (#578)
+msgid "Answers are counted the same way as on the survey's public results page: small groups are masked, written answers are never shown."
+msgstr "As respostas são contadas como na página de resultados públicos do inquérito: os grupos pequenos são ocultados e as respostas escritas nunca são mostradas."
+
+#: landing-results (#578)
+msgid "Pick a question whose answers can be shown as a chart or a map."
+msgstr "Escolha uma pergunta cujas respostas possam ser mostradas num gráfico ou num mapa."
+
+#: landing-results (#578)
+msgid "Bar chart"
+msgstr "Gráfico de barras"
+
+#: landing-results (#578)
+msgid "Pie"
+msgstr "Circular"
+
+#: landing-results (#578)
+msgid "Donut"
+msgstr "Anel"
+
+#: landing-results (#578)
+msgid "Markers"
+msgstr "Marcadores"
+
+#: landing-results (#578)
+msgid "Heatmap"
+msgstr "Mapa de calor"
+
+#: landing-results (#578)
+msgid "Clusters"
+msgstr "Agrupamentos"
+
+#: landing-results (#578)
+#, python-format
+msgid "Based on %(n)s response."
+msgid_plural "Based on %(n)s responses."
+msgstr[0] "Com base em %(n)s resposta."
+msgstr[1] "Com base em %(n)s respostas."

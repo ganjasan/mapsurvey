@@ -87,6 +87,35 @@ are what landing_views._raw_block reads; repeating rows (FAQ, timeline) post par
   </div>
   <input name="caption" class="form-control form-control-sm mt-2" maxlength="300" value="{{ data.caption|default:'' }}" placeholder="{% trans 'Caption (optional)' %}">
 
+  {% elif kind == 'results' %}
+  {% if results_choices %}
+  {% with sel=selected_survey|stringformat:"s"|add:":"|add:data.question_code %}
+  <select name="results_question" class="form-control form-control-sm" aria-label="{% trans 'Question' %}">
+    {% for survey, rows in results_choices %}
+    <optgroup label="{{ survey.name }}">
+      {% for value, name, rkind in rows %}<option value="{{ value }}"{% if value == sel %} selected{% endif %}>{{ name|truncatechars:90 }}</option>{% endfor %}
+    </optgroup>
+    {% endfor %}
+  </select>
+  {% endwith %}
+  {% else %}
+  <p class="small text-muted mb-1">{% trans "No survey of this workspace has a question whose answers can be shown as a chart or a map." %}</p>
+  {% endif %}
+  {% if errors.question %}<div class="text-danger small">{{ errors.question }}</div>{% endif %}
+  <div class="form-row mt-2">
+    <div class="col-6"><label class="small mb-0">{% trans "Chart or map style" %}</label>
+      <select name="viz" class="form-control form-control-sm">
+        <optgroup label="{% trans 'Charts' %}">{% for v, label in chart_viz %}<option value="{{ v }}"{% if data.result_kind != 'map' and v == data.viz %} selected{% endif %}>{{ label }}</option>{% endfor %}</optgroup>
+        <optgroup label="{% trans 'Maps' %}">{% for v, label in map_viz %}{% if v != 'auto' %}<option value="{{ v }}"{% if data.result_kind == 'map' and v == data.viz %} selected{% endif %}>{{ label }}</option>{% endif %}{% endfor %}</optgroup>
+      </select></div>
+    <div class="col-6"><label class="small mb-0">{% trans "Base map (maps)" %}</label>
+      <select name="basemap" class="form-control form-control-sm">
+        {% for key, name in basemap_choices %}<option value="{{ key }}"{% if key == data.basemap %} selected{% endif %}>{{ name }}</option>{% endfor %}
+      </select></div>
+  </div>
+  <input name="caption" class="form-control form-control-sm mt-2" maxlength="300" value="{{ data.caption|default:'' }}" placeholder="{% trans 'Caption (optional)' %}">
+  <p class="small text-muted mt-1 mb-0">{% trans "Answers are counted the same way as on the survey's public results page: small groups are masked, written answers are never shown." %}</p>
+
   {% elif kind == 'survey' %}
   {% if all_linkable %}
   <select name="survey" class="form-control form-control-sm" aria-label="{% trans 'Survey' %}">

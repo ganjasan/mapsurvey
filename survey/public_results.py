@@ -79,6 +79,14 @@ class PublicResultsService:
         self._survey_ids = self._collect_survey_ids()
         self._clean_ids = self._collect_clean_session_ids()
 
+    @classmethod
+    def for_survey(cls, survey, k, lang='en'):
+        """The same service without a results page (change landing-results): a landing's
+        results block aggregates one question of a linked survey with the same clean-session
+        rule and masking. `k` is the survey's results-page K, or the model default."""
+        from types import SimpleNamespace
+        return cls(SimpleNamespace(survey=survey, k_anonymity_threshold=k), lang=lang)
+
     # ---- clean session resolution -------------------------------------
 
     def _collect_survey_ids(self):

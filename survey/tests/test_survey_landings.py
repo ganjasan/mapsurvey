@@ -704,3 +704,113 @@ class LandingMapTest(LandingTestBase):
         r = self.client.get('/p/riverside-park-plan/')
         self.assertContains(r, 'leaflet.js')
         self.assertContains(r, 'id="area-b-')
+
+
+class LandingResultsTest(LandingTestBase):
+    """Spec `survey-landings`, results blocks (change landing-results, #578)."""
+
+    def setUp(self):
+        super().setUp()
+        from django.core.cache import cache
+        from survey.models import Question, SurveySection
+        cache.clear()
+        section = SurveySection.objects.create(survey_header=self.survey, name='s', code='S1', is_head=True)
+        self.choice_q = Question.objects.create(
+            survey_section=section, code='Q_CH', name='Do you use the park?', input_type='choice',
+            choices=[{'code': 1, 'name': 'Often'}, {'code': 2, 'name': 'Rarely'}])
+        self.point_q = Question.objects.create(survey_section=section, code='Q_PT', name='Mark a spot',
+                                               input_type='point')
+        self.text_q = Question.objects.create(survey_section=section, code='Q_TX', name='Comment', input_type='text')
+        self.login(self.editor)
+
+    def vote(self, code, n, **session_kw):
+        from survey.models import Answer, SurveySession
+        for _ in range(n):
+            s = SurveySession.objects.create(survey=self.survey, **session_kw)
+            Answer.objects.create(survey_session=s, question=self.choice_q, selected_choices=[code])
+
+    def add_results(self, question, **extra):
+        return self.client.post(self.url('editor_landing_block_add'), dict(
+            kind='results', results_question=f'{self.survey.uuid}:{question.code}', **extra))
+
+    def payload(self):
+        block = LandingBlock.objects.get(landing=self.landing, kind='results')
+        return landings.results_payload(block)
+
+    def test_choice_chart_with_masking(self):
+        """GIVEN 5 clean votes for Often and 1 for Rarely, K 3
+        WHEN a results block shows the question on a published landing
+        THEN Often is 5, Rarely is "<3" without a value, and the page loads the shared renderer"""
+        self.vote(1, 5)
+        self.vote(2, 1)
+        self.assertEqual(self.add_results(self.choice_q, viz='pie').status_code, 302)
+        items = {i['code']: i for i in self.payload()['items']}
+        self.assertEqual(items[1]['value'], 5)
+        self.assertEqual((items[2]['display'], items[2]['value']), ('<3', None))
+        self.assertTrue(self.landing.survey_links.filter(survey=self.survey).exists())
+        self.client.post(self.url('editor_landing_publish'), {'action': 'publish'})
+        r = self.client.get('/p/riverside-park-plan/')
+        self.assertContains(r, 'js/public_results_render.')
+        self.assertContains(r, 'chart.umd.min.js')
+        self.assertContains(r, 'id="chart-r')
+        self.assertNotContains(r, 'leaflet.markercluster')
+
+    def test_text_question_refused(self):
+        """GIVEN a text question
+        WHEN a results block is saved for it
+        THEN the save is refused"""
+        self.assertEqual(self.add_results(self.text_q).status_code, 400)
+        self.assertFalse(self.landing.blocks.exists())
+
+    def test_excluded_sessions_do_not_count(self):
+        """GIVEN 3 clean votes, one deleted and one not-approved session
+        WHEN the payload is built
+        THEN only the 3 clean votes count"""
+        self.vote(1, 3)
+        self.vote(1, 1, is_deleted=True)
+        self.vote(1, 1, validation_status='not_approved')
+        self.add_results(self.choice_q)
+        payload = self.payload()
+        self.assertEqual({i['code']: i['value'] for i in payload['items']}[1], 3)
+        self.assertEqual(payload['responses'], 3)
+
+    def test_results_page_k_applies(self):
+        """GIVEN the survey's results page uses K 5
+        WHEN 4 votes are shown on a landing
+        THEN they are masked as "<5\""""
+        PublicResultsPage.objects.create(survey=self.survey, slug='park-results', k_anonymity_threshold=5)
+        self.vote(1, 4)
+        self.add_results(self.choice_q)
+        self.assertEqual({i['code']: i['display'] for i in self.payload()['items']}[1], '<5')
+
+    def test_map_question_loads_map_libraries(self):
+        """GIVEN a results block for a point question with the heatmap style
+        WHEN the published landing renders
+        THEN Leaflet, the heat and cluster plugins and a map holder are there, and no popups are offered"""
+        self.add_results(self.point_q, viz='heatmap')
+        block = LandingBlock.objects.get(kind='results')
+        self.assertEqual(block.data['viz'], 'heatmap')
+        self.client.post(self.url('editor_landing_publish'), {'action': 'publish'})
+        r = self.client.get('/p/riverside-park-plan/')
+        self.assertContains(r, 'leaflet-heat.js')
+        self.assertContains(r, f'id="map-r{block.pk}"')
+
+    def test_deleted_question(self):
+        """GIVEN a results block whose question is then deleted
+        WHEN the page and the builder render
+        THEN the page omits it and the builder marks it"""
+        self.add_results(self.choice_q, title='What we heard')
+        self.choice_q.delete()
+        self.client.post(self.url('editor_landing_publish'), {'action': 'publish'})
+        self.assertNotContains(self.client.get('/p/riverside-park-plan/'), 'What we heard')
+        self.assertContains(self.client.get(self.url('editor_landing')), 'the question was removed')
+
+    def test_public_results_page_uses_shared_renderer(self):
+        """GIVEN a published public results page
+        WHEN /r/<slug>/ renders
+        THEN it loads the shared renderer and calls it"""
+        PublicResultsPage.objects.create(survey=self.survey, slug='park-results', is_published=True)
+        r = self.client.get('/r/park-results/')
+        self.assertContains(r, 'js/public_results_render.')
+        self.assertContains(r, 'window.renderResultBlocks(blocks, BASEMAPS)')
+        self.assertNotContains(r, 'function renderChoiceChart')

@@ -1069,8 +1069,13 @@ class PublicResultsEditorTest(TestCase):
         self.assertEqual(block.viz, "cluster")
         preview = self.client.get(self.base + "preview/").content.decode()
         self.assertIn("leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js", preview)
-        self.assertIn("var isCluster = (b.viz === 'cluster' && typeof L.markerClusterGroup === 'function');", preview)
-        self.assertIn("if ((isHeat || isCluster) && isPoint(feat)) return false;", preview)
+        # The renderer is the shared static file since change landing-results.
+        from django.contrib.staticfiles import finders
+        self.assertIn("js/public_results_render.", preview)
+        with open(finders.find("js/public_results_render.js")) as fh:
+            renderer = fh.read()
+        self.assertIn("var isCluster = (b.viz === 'cluster' && typeof L.markerClusterGroup === 'function');", renderer)
+        self.assertIn("if ((isHeat || isCluster) && isPoint(feat)) return false;", renderer)
 
 
 class PublicResultsPreviewTest(TestCase):

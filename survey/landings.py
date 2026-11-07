@@ -55,6 +55,7 @@ BLOCK_KINDS = {
     'image': (gettext_lazy('Image'), 'far fa-image', 'media'),
     'video': (gettext_lazy('Video'), 'fab fa-youtube', 'media'),
     'map': (gettext_lazy('Map'), 'fas fa-draw-polygon', 'media'),
+    'results': (gettext_lazy('Results'), 'fas fa-chart-bar', 'media'),
     'documents': (gettext_lazy('Documents'), 'far fa-file-pdf', 'participation'),
     'survey': (gettext_lazy('Survey card'), 'fas fa-map-marked-alt', 'participation'),
     'button': (gettext_lazy('Button'), 'fas fa-link', 'participation'),
@@ -190,6 +191,28 @@ def _clean_map(raw, errors, org=None):
             'caption': _plain(raw.get('caption'), 300)}
 
 
+CHART_VIZ = ('auto', 'bar', 'pie', 'donut', 'table')
+MAP_VIZ = ('auto', 'heatmap', 'cluster')
+
+
+def _clean_results(raw, errors, org=None):
+    """`question_code` and `kind_of` (chart | map | objects) are set by the view after it found
+    the question; the cleaner only bounds the options against that kind."""
+    from . import basemaps
+    code = _plain(raw.get('question_code'), 100)
+    result_kind = raw.get('result_kind')
+    if not code or result_kind not in ('chart', 'map', 'objects'):
+        errors['question'] = _('Pick a question whose answers can be shown as a chart or a map.')
+    allowed = MAP_VIZ if result_kind == 'map' else CHART_VIZ if result_kind == 'chart' else ('auto',)
+    viz = raw.get('viz') if raw.get('viz') in allowed else 'auto'
+    basemap = str(raw.get('basemap') or '').strip()
+    if not basemap or (org is not None and basemaps.resolve(basemap, org) is None):
+        basemap = 'streets'
+    return {'question_code': code, 'result_kind': result_kind or '', 'viz': viz,
+            'basemap': basemap if result_kind == 'map' else '',
+            'caption': _plain(raw.get('caption'), 300)}
+
+
 def _clean_survey(raw, errors):
     return {'button_label': _plain(raw.get('button_label'), 40),
             'description': _plain(raw.get('description'), 300)}
@@ -205,6 +228,7 @@ _CLEANERS = {
     'survey': _clean_survey,
     'documents': _clean_documents,
     'map': _clean_map,
+    'results': _clean_results,
 }
 
 
@@ -218,6 +242,8 @@ def clean_block(kind, raw, org=None):
     raw = raw if isinstance(raw, dict) else {}
     if kind == 'map':
         return _clean_map(raw, errors, org=org), errors
+    if kind == 'results':
+        return _clean_results(raw, errors, org=org), errors
     data = _CLEANERS[kind](raw, errors)
     return data, errors
 
@@ -435,12 +461,18 @@ def blocks_for(landing):
                 .order_by('order', 'id'))
 
 
-def page_blocks(landing, now=None):
+def page_blocks(landing, now=None, lang='en'):
     """[(block, card-or-None)] as the public page draws them: survey cards resolved, hidden
     survey cards dropped, documents blocks without files dropped."""
     out = []
     for block in blocks_for(landing):
         if block.kind == 'documents' and not block.files.all():
+            continue
+        if block.kind == 'results':
+            card = results_payload(block, lang=lang)
+            if card is None:
+                continue
+            out.append((block, card))
             continue
         card = None
         if block.kind == 'survey':
@@ -468,6 +500,80 @@ def map_layers(landing, blocks):
         if base is not None:
             out[key] = base.leaflet()
     return out
+
+
+# ─── results (change landing-results) ─────────────────────────────────────────
+
+RESULTS_CACHE_SECONDS = 60
+
+
+def results_question(survey, code):
+    """The canonical survey's current question with `code` (top level, publishable), or None."""
+    from .models import Question
+    from .public_results import block_type_for_question
+    q = (Question.objects.filter(survey_section__survey_header=survey, code=code,
+                                 parent_question_id__isnull=True).first() if code else None)
+    return q if q is not None and block_type_for_question(q) else None
+
+
+def results_choices(org):
+    """[(survey, [(value, question name, kind)])] for the picker: every publishable top-level
+    question of the workspace's linkable surveys; value = '<survey uuid>:<code>'."""
+    from .models import Question
+    from .public_results import block_type_for_question
+    out = []
+    for survey in linkable_surveys(org):
+        rows = []
+        for q in (Question.objects.filter(survey_section__survey_header=survey, parent_question_id__isnull=True)
+                  .order_by('survey_section__id', 'order_number')):
+            kind = block_type_for_question(q)
+            if kind and q.code:
+                rows.append((f'{survey.uuid}:{q.code}', q.name, kind))
+        if rows:
+            out.append((survey, rows))
+    return out
+
+
+def results_payload(block, lang='en'):
+    """The PublicResultsService payload of a results block, cached 60 s, or None when its
+    question is gone. Same clean sessions and masking as /r/; no popups."""
+    from types import SimpleNamespace
+
+    from django.core.cache import cache
+
+    from .models import PublicResultsPage
+    from .public_results import PublicResultsService, block_type_for_question
+
+    if block.landing_survey is None:
+        return None
+    key = f'landing-results:{block.pk}:{block.updated_at.timestamp()}:{lang}'
+    try:
+        hit = cache.get(key)
+    except Exception:  # noqa: BLE001 — a cache outage must not take the page down
+        hit = None
+    if hit is not None:
+        return hit or None
+    survey = block.landing_survey.survey
+    question = results_question(survey, block.data.get('question_code'))
+    payload = None
+    if question is not None:
+        page = PublicResultsPage.objects.filter(survey=survey).only('k_anonymity_threshold').first()
+        k = page.k_anonymity_threshold if page is not None else \
+            PublicResultsPage._meta.get_field('k_anonymity_threshold').default
+        service = PublicResultsService.for_survey(survey, k, lang=lang)
+        fake = SimpleNamespace(
+            id=f'r{block.pk}', block_type=block_type_for_question(question), viz=block.data.get('viz') or 'auto',
+            custom_title={}, question=question, question_id=question.pk, geo_label_fields=[],
+            basemap=block.data.get('basemap') or 'streets', content={}, image=None, is_hidden=False)
+        payload = service._build_block(fake)
+        if payload is not None:
+            payload['responses'] = service.response_count()
+            payload['k'] = service.k
+    try:
+        cache.set(key, payload or {}, RESULTS_CACHE_SECONDS)
+    except Exception:  # noqa: BLE001
+        pass
+    return payload
 
 
 def nav_items(blocks):

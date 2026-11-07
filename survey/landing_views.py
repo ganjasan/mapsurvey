@@ -135,9 +135,11 @@ def _builder_context(request, landing, membership, **extra):
     for block in blocks:
         if block.kind == 'survey' and block.landing_survey is not None:
             cards[block.pk] = landings.survey_card(block.landing_survey.survey)
+    results_missing = {b.pk for b in blocks if b.kind == 'results' and b.landing_survey is not None
+                       and landings.results_question(b.landing_survey.survey, b.data.get('question_code')) is None}
     may_edit = _can_act(membership) and billing_trial.may(org, landings.FEATURE)
     ctx = {
-        'org': org, 'landing': landing, 'blocks': blocks, 'cards': cards,
+        'org': org, 'landing': landing, 'blocks': blocks, 'cards': cards, 'results_missing': results_missing,
         'links': [(link, landings.survey_card(link.survey)) for link in links],
         'linkable': [s for s in landings.linkable_surveys(org) if s.pk not in linked_ids],
         'all_linkable': list(landings.linkable_surveys(org)),
@@ -148,6 +150,9 @@ def _builder_context(request, landing, membership, **extra):
         'kinds': {k: v[0] for k, v in landings.BLOCK_KINDS.items()},
         'languages': language_choices(),
         'basemap_choices': basemaps.choices_for(org),
+        'results_choices': landings.results_choices(org),
+        'chart_viz': [('auto', _('Bar chart')), ('pie', _('Pie')), ('donut', _('Donut')), ('table', _('Table'))],
+        'map_viz': [('auto', _('Markers')), ('heatmap', _('Heatmap')), ('cluster', _('Clusters'))],
         'public_url': request.build_absolute_uri(reverse('landing_public', args=[landing.slug])),
         'block_errors': {}, 'settings_errors': {}, 'new_kind': request.GET.get('add', ''),
         'new_errors': {}, 'new_raw': {},
@@ -257,7 +262,8 @@ def editor_landing_survey_unlink(request, uuid, link_id):
 def _raw_block(kind, post):
     """The posted fields of a block form as the dict `clean_block` reads."""
     raw = {key: post.get(key, '') for key in ('body', 'alt', 'caption', 'label', 'url', 'style',
-                                              'button_label', 'description', 'current', 'color', 'basemap')}
+                                              'button_label', 'description', 'current', 'color', 'basemap',
+                                              'viz')}
     if kind == 'faq':
         raw['items'] = [{'q': q, 'a': a} for q, a in zip(post.getlist('q'), post.getlist('a'))]
     elif kind == 'timeline':
@@ -290,6 +296,24 @@ def _document_changes(request, block):
     return renames, removals, uploads, errors
 
 
+def _results_target(landing, value):
+    """(link, question code, result kind) from the picker's '<survey uuid>:<code>', linking the
+    survey when it is one of the workspace's; (None, '', '') for anything else."""
+    from .public_results import block_type_for_question
+    uuid_part, _sep, code = value.partition(':')
+    survey = SurveyHeader.objects.filter(uuid=uuid_part).first() if uuid_part and code else None
+    if survey is None:
+        return None, '', ''
+    survey = canonical_of(survey)
+    question = landings.results_question(survey, code)
+    if question is None:
+        return None, '', ''
+    link = _link(landing, survey)
+    if link is None:
+        return None, '', ''
+    return link, code, block_type_for_question(question)
+
+
 def _save_block(request, landing, block, kind):
     """Validate the posted block and save it. Returns {field: error} or {}."""
     raw = _raw_block(kind, request.POST)
@@ -300,6 +324,10 @@ def _save_block(request, landing, block, kind):
             raw['area'], map_error = landings.parse_geojson(map_upload)
         elif block is not None:
             raw['area'] = block.data.get('area')
+    results_link = None
+    if kind == 'results':
+        results_link, raw['question_code'], raw['result_kind'] = _results_target(
+            landing, request.POST.get('results_question') or '')
     data, errors = landings.clean_block(kind, raw, org=landing.organization)
     if map_error:
         errors['area'] = map_error
@@ -332,6 +360,8 @@ def _save_block(request, landing, block, kind):
             block.image = upload
         if kind == 'survey':
             block.landing_survey = link
+        if kind == 'results':
+            block.landing_survey = results_link
         block.save()
         for f, title in renames.items():
             f.title = title
@@ -472,11 +502,15 @@ def landing_public(request, slug):
     if not live and not member:
         return render(request, 'survey_unavailable.html', status=404)
     with translation.override(landing.language):
-        blocks = landings.page_blocks(landing)
+        blocks = landings.page_blocks(landing, lang=landing.language)
         response = render(request, 'landings/public.html', {
             'landing': landing, 'org': landing.organization, 'blocks': blocks,
             'nav': landings.nav_items(blocks), 'preview': not live, 'held': held,
             'map_layers': landings.map_layers(landing, blocks),
+            'results': [card for b, card in blocks if b.kind == 'results'],
+            'results_basemaps': (basemaps.table_for(landing.organization)
+                                 if any(b.kind == 'results' and c.get('block_type') == 'map' for b, c in blocks)
+                                 else {}),
             'noindex': not live or landing.visibility == 'unlisted',
             'show_branding': not for_organization(landing.organization).has('unbranded'),
             'page_url': share.base() + reverse('landing_public', args=[landing.slug]),

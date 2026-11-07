@@ -11303,3 +11303,62 @@ msgid "%(n)s shape on the map. Upload a new file to replace it."
 msgid_plural "%(n)s shapes on the map. Upload a new file to replace them."
 msgstr[0] "%(n)s forme sur la carte. Importez un nouveau fichier pour la remplacer."
 msgstr[1] "%(n)s formes sur la carte. Importez un nouveau fichier pour les remplacer."
+
+#: landing-results (#578)
+msgid "the question was removed from the survey; the block is not shown"
+msgstr "la question a été retirée de l'enquête ; le bloc n'est pas affiché"
+
+#: landing-results (#578)
+msgid "No survey of this workspace has a question whose answers can be shown as a chart or a map."
+msgstr "Aucune enquête de cet espace de travail n'a de question dont les réponses peuvent être affichées en graphique ou sur une carte."
+
+#: landing-results (#578)
+msgid "Chart or map style"
+msgstr "Type de graphique ou de carte"
+
+#: landing-results (#578)
+msgid "Maps"
+msgstr "Cartes"
+
+#: landing-results (#578)
+msgid "Base map (maps)"
+msgstr "Fond de carte (pour les cartes)"
+
+#: landing-results (#578)
+msgid "Answers are counted the same way as on the survey's public results page: small groups are masked, written answers are never shown."
+msgstr "Les réponses sont comptées comme sur la page de résultats publique de l'enquête : les petits groupes sont masqués, les réponses rédigées ne sont jamais affichées."
+
+#: landing-results (#578)
+msgid "Pick a question whose answers can be shown as a chart or a map."
+msgstr "Choisissez une question dont les réponses peuvent être affichées en graphique ou sur une carte."
+
+#: landing-results (#578)
+msgid "Bar chart"
+msgstr "Diagramme en barres"
+
+#: landing-results (#578)
+msgid "Pie"
+msgstr "Camembert"
+
+#: landing-results (#578)
+msgid "Donut"
+msgstr "Anneau"
+
+#: landing-results (#578)
+msgid "Markers"
+msgstr "Marqueurs"
+
+#: landing-results (#578)
+msgid "Heatmap"
+msgstr "Carte de chaleur"
+
+#: landing-results (#578)
+msgid "Clusters"
+msgstr "Groupes"
+
+#: landing-results (#578)
+#, python-format
+msgid "Based on %(n)s response."
+msgid_plural "Based on %(n)s responses."
+msgstr[0] "Sur la base de %(n)s réponse."
+msgstr[1] "Sur la base de %(n)s réponses."

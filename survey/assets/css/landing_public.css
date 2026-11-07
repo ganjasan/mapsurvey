@@ -63,3 +63,11 @@ body.lp { margin: 0; font: 17px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI
 .lp-doc-ext { grid-row: span 2; align-self: center; font-size: 11px; font-weight: 700; color: #fff; background: var(--lp-accent); border-radius: 4px; padding: 6px 6px; min-width: 42px; text-align: center; }
 .lp-doc-title { font-weight: 600; }
 .lp-doc-meta { font-size: 14px; color: var(--lp-muted); }
+.lp-chart { position: relative; height: 320px; }
+.lp-chart.is-table { height: auto; }
+.lp-results-q { font-weight: 600; margin: 0 0 10px; }
+.lp-results-note, .lp-results-caption { font-size: 14px; color: var(--lp-muted); margin: 8px 0 0; }
+.pr-table, .objects-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.pr-table td, .objects-table td, .objects-table th { padding: 8px 10px; border-bottom: 1px solid var(--lp-line); text-align: left; }
+.pr-table td.val { text-align: right; font-variant-numeric: tabular-nums; color: var(--lp-muted); white-space: nowrap; }
+.objects-table tr.masked { color: var(--lp-muted); }

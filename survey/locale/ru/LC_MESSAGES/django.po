@@ -520,7 +520,7 @@ msgstr ""
 #: survey/models.py:888 survey/templates/editor.html:400
 #: survey/templates/editor.html:442
 msgid "Results"
-msgstr ""
+msgstr "Результаты"
 
 #: survey/models.py:889
 msgid "Article"
@@ -2062,11 +2062,11 @@ msgstr ""
 
 #: survey/templates/editor/partials/_mobile_nav.html:28
 msgid "Table"
-msgstr ""
+msgstr "Таблица"
 
 #: survey/templates/editor/partials/_mobile_nav.html:30
 msgid "Charts"
-msgstr ""
+msgstr "Диаграммы"
 
 #: survey/templates/editor/partials/_mobile_nav.html:34
 #: survey/templates/editor/partials/_mobile_nav.html:40
@@ -6055,7 +6055,7 @@ msgstr ""
 
 #: survey/templates/public_results.html:111
 msgid "Small groups are masked to protect privacy."
-msgstr ""
+msgstr "Маленькие группы скрыты ради защиты приватности."
 
 #: survey/templates/registration/login.html:14
 msgid ""
@@ -9299,3 +9299,64 @@ msgstr[0] "На карте %(n)s фигура. Загрузите новый ф�
 msgstr[1] "На карте %(n)s фигуры. Загрузите новый файл, чтобы их заменить."
 msgstr[2] "На карте %(n)s фигур. Загрузите новый файл, чтобы их заменить."
 msgstr[3] "На карте %(n)s фигуры. Загрузите новый файл, чтобы их заменить."
+
+#: landing-results (#578)
+msgid "the question was removed from the survey; the block is not shown"
+msgstr "вопрос удалён из опроса; блок не показывается"
+
+#: landing-results (#578)
+msgid "No survey of this workspace has a question whose answers can be shown as a chart or a map."
+msgstr "Ни в одном опросе этого рабочего пространства нет вопроса, ответы на который можно показать диаграммой или картой."
+
+#: landing-results (#578)
+msgid "Chart or map style"
+msgstr "Вид диаграммы или карты"
+
+#: landing-results (#578)
+msgid "Maps"
+msgstr "Карты"
+
+#: landing-results (#578)
+msgid "Base map (maps)"
+msgstr "Подложка (для карт)"
+
+#: landing-results (#578)
+msgid "Answers are counted the same way as on the survey's public results page: small groups are masked, written answers are never shown."
+msgstr "Ответы считаются так же, как на публичной странице результатов опроса: маленькие группы скрываются, текстовые ответы не показываются никогда."
+
+#: landing-results (#578)
+msgid "Pick a question whose answers can be shown as a chart or a map."
+msgstr "Выберите вопрос, ответы на который можно показать диаграммой или картой."
+
+#: landing-results (#578)
+msgid "Bar chart"
+msgstr "Столбчатая диаграмма"
+
+#: landing-results (#578)
+msgid "Pie"
+msgstr "Круговая"
+
+#: landing-results (#578)
+msgid "Donut"
+msgstr "Кольцевая"
+
+#: landing-results (#578)
+msgid "Markers"
+msgstr "Маркеры"
+
+#: landing-results (#578)
+msgid "Heatmap"
+msgstr "Тепловая карта"
+
+#: landing-results (#578)
+msgid "Clusters"
+msgstr "Кластеры"
+
+#: landing-results (#578)
+#, python-format
+msgid "Based on %(n)s response."
+msgid_plural "Based on %(n)s responses."
+msgstr[0] "По %(n)s ответу."
+msgstr[1] "По %(n)s ответам."
+msgstr[2] "По %(n)s ответам."
+msgstr[3] "По %(n)s ответа."
