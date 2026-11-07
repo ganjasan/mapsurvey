@@ -73,6 +73,13 @@ def update_settings(actor, survey, data, files=None, *, partial=False):
             form.add_error('show_branding', _('Your Pro trial has used its switch-off of the badge.'))
             raise ValidationFailed(form.errors, form=form)
     form.save()
+    # A live survey whose base maps change in place is pinned to the versions it now
+    # shows (change map-styles-editor, ADR 0001): a style saved later in the editor
+    # must not move a published map.
+    if locks.is_live(survey) and any(key in form.changed_data for key in ('basemaps', 'default_basemap')):
+        from survey import basemaps as basemap_registry
+        basemap_registry.pin_latest(survey)
+        survey.save(update_fields=['basemap_pins'])
     # The period belongs to the live survey even when the form was bound to the
     # draft copy (change survey-schedule).
     schedule.move_to_canonical(survey)
