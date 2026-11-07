@@ -10289,3 +10289,408 @@ msgstr "Uutta"
 #: survey/templates/partials/_app_sidebar.html
 msgid "Help centre"
 msgstr "Ohjekeskus"
+
+#: whats-new-in-sidebar
+msgid "Read more"
+msgstr "Lue lisää"
+
+#: map-style-library (#542)
+msgid "Map styles"
+msgstr "Karttatyylit"
+
+#: map-style-library (#542)
+msgid "Library"
+msgstr "Kirjasto"
+
+#: map-style-library (#542)
+msgid "Preset"
+msgstr "Esiasetus"
+
+#: map-style-library (#542)
+msgid "Publishing…"
+msgstr "Julkaistaan…"
+
+#: map-style-library (#542)
+msgid "Failed"
+msgstr "Epäonnistui"
+
+
+#: map-style-library (#542)
+msgid "Rename"
+msgstr "Nimeä uudelleen"
+
+#: map-style-library (#542)
+msgid "New name"
+msgstr "Uusi nimi"
+
+#: map-style-library (#542)
+msgid "Delete this map style?"
+msgstr "Poistetaanko tämä karttatyyli?"
+
+#: map-style-library (#542)
+msgid "Your own map styles"
+msgstr "Omat karttatyylisi"
+
+#: map-style-library (#542)
+msgid "A style needs a name."
+msgstr "Tyyli tarvitsee nimen."
+
+#: map-style-library (#542)
+msgid "The hosted style is being created"
+msgstr "Palvelimella olevaa tyyliä luodaan"
+
+#: map-style-library (#542)
+msgid "Based on %(base)s"
+msgstr "Perustuu tyyliin %(base)s"
+
+#: map-style-library (#542)
+msgid "This base map cannot be duplicated."
+msgstr "Tätä taustakarttaa ei voi monistaa."
+
+#: map-style-library (#542)
+msgid "This style has no published version to copy yet."
+msgstr "Tällä tyylillä ei ole vielä julkaistua versiota kopioitavaksi."
+
+#: map-style-library (#542)
+msgid "%(name)s copy"
+msgstr "%(name)s – kopio"
+
+#: map-style-library (#542)
+msgid "“%(name)s” is being published. It appears in survey settings once it is ready."
+msgstr "”%(name)s” julkaistaan. Se näkyy kyselyn asetuksissa, kun se on valmis."
+
+#: map-style-library (#542)
+msgid "“%(name)s” is used by %(surveys)s. Choose another base map there first."
+msgstr "”%(name)s” on käytössä: %(surveys)s. Valitse siellä ensin toinen taustakartta."
+
+#: map-style-library (#542)
+msgid "“%(name)s” was deleted."
+msgstr "”%(name)s” poistettiin."
+
+#: map-style-library (#542)
+msgid "A published map style version cannot be changed; save a new version."
+msgstr "Julkaistua karttatyylin versiota ei voi muuttaa; tallenna uusi versio."
+
+#: map-style-library (#542)
+msgid "A map style is the base map under your surveys, online and on paper. Pick any of these in a survey's settings. Duplicate a preset to give it your own name; the editor for colours and labels is coming next."
+msgstr "Karttatyyli on kyselyidesi taustakartta, verkossa ja paperilla. Valitse mikä tahansa näistä kyselyn asetuksissa. Monista esiasetus antaaksesi sille oman nimen; värien ja nimiöiden editori tulee seuraavaksi."
+
+#: map-style-library (#542)
+msgid "used in %(n)s survey"
+msgid_plural "used in %(n)s surveys"
+msgstr[0] "käytössä %(n)s kyselyssä"
+msgstr[1] "käytössä %(n)s kyselyssä"
+
+#: map-style-editor (#543)
+msgid "Map style"
+msgstr "Karttatyyli"
+
+#: map-style-editor (#543)
+msgid "Style name"
+msgstr "Tyylin nimi"
+
+#: map-style-editor (#543)
+msgid "Version %(n)s published"
+msgstr "Versio %(n)s julkaistu"
+
+#: map-style-editor (#543)
+msgid "Editing map styles is a Pro feature."
+msgstr "Karttatyylien muokkaus on Pro-ominaisuus."
+
+#: map-style-editor (#543)
+msgid "Saving publishes a new version. A survey that is already published keeps the version it has until you publish it again; drafts preview the newest one."
+msgstr "Tallennus julkaisee uuden version. Jo julkaistu kysely säilyttää versionsa, kunnes julkaiset sen uudelleen; luonnokset näyttävät uusimman."
+
+#: map-style-editor (#543)
+msgid "What stays on the map"
+msgstr "Mitä kartalle jää"
+
+#: map-style-editor (#543)
+msgid "Buildings"
+msgstr "Rakennukset"
+
+#: map-style-editor (#543)
+msgid "Outlines from zoom 15; a paper map needs them only for a street or a block."
+msgstr "Ääriviivat zoomista 15 alkaen; paperikartta tarvitsee niitä vain kadun tai korttelin kokoisena."
+
+#: map-style-editor (#543)
+msgid "Colours"
+msgstr "Värit"
+
+#: map-style-editor (#543)
+msgid "Hex colour"
+msgstr "Hex-väri"
+
+#: map-style-editor (#543)
+msgid "Hard to tell apart from the land on a photocopy."
+msgstr "Vaikea erottaa maasta valokopiossa."
+
+#: map-style-editor (#543)
+msgid "Roads and labels"
+msgstr "Tiet ja nimiöt"
+
+#: map-style-editor (#543)
+msgid "Road look"
+msgstr "Teiden ulkoasu"
+
+#: map-style-editor (#543)
+msgid "Bold street names"
+msgstr "Lihavoidut kadunnimet"
+
+#: map-style-editor (#543)
+msgid "City and region names up to zoom"
+msgstr "Kaupunkien ja alueiden nimet zoomiin asti"
+
+#: map-style-editor (#543)
+msgid "Below that zoom they stay; above it the map shows streets and districts only."
+msgstr "Sen alapuolella ne pysyvät; yläpuolella kartta näyttää vain kadut ja kaupunginosat."
+
+#: map-style-editor (#543)
+msgid "Greyscale"
+msgstr "Harmaasävy"
+
+#: map-style-editor (#543)
+msgid "Every colour becomes a grey, as a black-and-white copier sees it."
+msgstr "Jokainen väri muuttuu harmaaksi, kuten mustavalkokopiokone sen näkee."
+
+#: map-style-editor (#543)
+msgid "Print"
+msgstr "Tulostus"
+
+#: map-style-editor (#543)
+msgid "Frame of a survey"
+msgstr "Kyselyn rajaus"
+
+#: map-style-editor (#543)
+msgid "Unsaved changes"
+msgstr "Tallentamattomia muutoksia"
+
+#: map-style-editor (#543)
+msgid "As a photocopy"
+msgstr "Valokopiona"
+
+#: map-style-editor (#543)
+msgid "Place icons and names"
+msgstr "Paikkojen kuvakkeet ja nimet"
+
+#: map-style-editor (#543)
+msgid "Shops, stations, parks by name — the clutter a paper map does without."
+msgstr "Kaupat, asemat, puistot nimeltä — rönsyt, joita paperikartta ei tarvitse."
+
+#: map-style-editor (#543)
+msgid "Footpaths and steps"
+msgstr "Jalkakäytävät ja portaat"
+
+#: map-style-editor (#543)
+msgid "Pedestrian ways, stairs, crossings and park paths."
+msgstr "Kävelytiet, portaat, suojatiet ja puistopolut."
+
+#: map-style-editor (#543)
+msgid "Route shields and arrows"
+msgstr "Tiekilvet ja nuolet"
+
+#: map-style-editor (#543)
+msgid "Road numbers, one-way arrows, junction marks."
+msgstr "Tienumerot, yksisuuntaisuusnuolet, risteysmerkit."
+
+#: map-style-editor (#543)
+msgid "Relief and ferries"
+msgstr "Korkokuva ja lautat"
+
+#: map-style-editor (#543)
+msgid "Hillshade, sea depth, ferry and cable-car lines."
+msgstr "Vinovalovarjostus, meren syvyys, lautta- ja köysiratalinjat."
+
+#: map-style-editor (#543)
+msgid "Regional boundaries"
+msgstr "Alueelliset rajat"
+
+#: map-style-editor (#543)
+msgid "States, provinces, Länder. National borders always show."
+msgstr "Osavaltiot, maakunnat, osavaltiot. Valtioiden rajat näkyvät aina."
+
+#: map-style-editor (#543)
+msgid "Land"
+msgstr "Maa"
+
+#: map-style-editor (#543)
+msgid "Parks and green"
+msgstr "Puistot ja viheralueet"
+
+#: map-style-editor (#543)
+msgid "Water"
+msgstr "Vesi"
+
+#: map-style-editor (#543)
+msgid "National borders"
+msgstr "Valtioiden rajat"
+
+#: map-style-editor (#543)
+msgid "Street and city names"
+msgstr "Katujen ja kaupunkien nimet"
+
+#: map-style-editor (#543)
+msgid "Water and district names"
+msgstr "Vesistöjen ja kaupunginosien nimet"
+
+#: map-style-editor (#543)
+msgid "Light"
+msgstr "Kevyt"
+
+#: map-style-editor (#543)
+msgid "Strong"
+msgstr "Voimakas"
+
+#: map-style-editor (#543)
+msgid "Use a colour like #dcefd2."
+msgstr "Käytä väriä kuten #dcefd2."
+
+#: map-style-editor (#543)
+msgid "Copenhagen (example)"
+msgstr "Kööpenhamina (esimerkki)"
+
+#: map-style-editor (#543)
+msgid "Preview unavailable"
+msgstr "Esikatselu ei saatavilla"
+
+#: map-style-editor (#543)
+msgid "No published version yet"
+msgstr "Ei vielä julkaistua versiota"
+
+#: map-style-editor (#543)
+msgid "Version %n is being published; this frame shows the last published one."
+msgstr "Versiota %n julkaistaan; tämä rajaus näyttää viimeksi julkaistun."
+
+#: map-style-editor (#543)
+msgid "Unsaved changes are not in this frame yet."
+msgstr "Tallentamattomat muutokset eivät vielä ole tässä rajauksessa."
+
+#: map-style-editor (#543)
+msgid "Version %n, as the printed form renders it."
+msgstr "Versio %n, sellaisena kuin tulostettu lomake sen esittää."
+
+#: map-style-editor (#543)
+msgid "Publishing failed"
+msgstr "Julkaisu epäonnistui"
+
+#: map-style-editor (#543)
+msgid "Version %n published"
+msgstr "Versio %n julkaistu"
+
+#: map-style-editor (#543)
+msgid "The previous version is still being published."
+msgstr "Edellistä versiota julkaistaan yhä."
+
+#: map-style-editor (#543)
+msgid "Version %(n)s of “%(name)s” is being published."
+msgstr "Tyylin ”%(name)s” versiota %(n)s julkaistaan."
+
+#: map-style-editor (#543)
+msgid "Used in %(n)s survey."
+msgid_plural "Used in %(n)s surveys."
+msgstr[0] "Käytössä %(n)s kyselyssä."
+msgstr[1] "Käytössä %(n)s kyselyssä."
+
+#: map-style-import-export (#544)
+msgid "Import a style"
+msgstr "Tuo tyyli"
+
+#: map-style-import-export (#544)
+msgid "Map style file"
+msgstr "Karttatyylitiedosto"
+
+#: map-style-import-export (#544)
+msgid "Download as a file"
+msgstr "Lataa tiedostona"
+
+#: map-style-import-export (#544)
+msgid "Choose a file."
+msgstr "Valitse tiedosto."
+
+#: map-style-import-export (#544)
+msgid "The file is larger than a map style can be (64 KB)."
+msgstr "Tiedosto on suurempi kuin karttatyyli voi olla (64 kt)."
+
+#: map-style-import-export (#544)
+msgid "This file is not a Mapsurvey map style."
+msgstr "Tämä tiedosto ei ole Mapsurvey-karttatyyli."
+
+#: map-style-import-export (#544)
+msgid "This map style needs a newer Mapsurvey."
+msgstr "Tämä karttatyyli tarvitsee uudemman Mapsurveyn."
+
+#: map-style-import-export (#544)
+msgid "The map style has no name."
+msgstr "Karttatyylillä ei ole nimeä."
+
+#: map-style-import-export (#544)
+msgid "Base map \"%(base)s\" is not supported here."
+msgstr "Taustakarttaa ”%(base)s” ei tueta täällä."
+
+#: map-style-import-export (#544)
+msgid "The map style has no settings."
+msgstr "Karttatyylillä ei ole asetuksia."
+
+#: map-style-import-export (#544)
+msgid "Could not import the map style: %(reason)s"
+msgstr "Karttatyyliä ei voitu tuoda: %(reason)s"
+
+#: map-style-import-export (#544)
+msgid "“%(name)s” was imported and is being published."
+msgstr "”%(name)s” tuotiin ja sitä julkaistaan."
+
+#: map-styles-new-style
+msgid "New style"
+msgstr "Uusi tyyli"
+
+#: map-styles-new-style
+msgid "Start from"
+msgstr "Lähtökohta"
+
+#: map-styles-new-style
+msgid "A map style is the base map under your surveys, online and on paper. Pick any of these in a survey's settings, or make your own with New style: choose what stays on the map, the colours and the labels, and see how it prints."
+msgstr "Karttatyyli on kyselyidesi taustakartta verkossa ja paperilla. Valitse mikä tahansa näistä kyselyn asetuksissa tai tee oma Uusi tyyli -painikkeella: mitä kartalle jää, värit ja nimiöt, ja katso miltä se näyttää tulostettuna."
+
+#: map-styles-editor-fidelity
+msgid "As base"
+msgstr "Kuten pohjakartassa"
+
+#: map-styles-editor-fidelity
+msgid "Show buildings from zoom"
+msgstr "Näytä rakennukset zoomaustasosta"
+
+#: map-styles-editor-fidelity
+msgid "Lower shows them on wider views; 15 is the usual."
+msgstr "Pienempi näyttää ne laajemmissa näkymissä; 15 on tavallinen."
+
+#: map-styles-editor-fidelity
+msgid "A paper map needs them only for a street or a block."
+msgstr "Paperikartta tarvitsee niitä vain kadun tai korttelin kokoisella alueella."
+
+#: map-styles-editor-fidelity
+msgid "Pick a colour"
+msgstr "Valitse väri"
+
+#: map-styles-editor-fidelity
+msgid "Back to the base colour"
+msgstr "Takaisin pohjakartan väriin"
+
+#: map-styles-editor-fidelity
+msgid "Custom"
+msgstr "Mukautettu"
+
+#: map-styles-editor-fidelity
+msgid "The base map’s own colour"
+msgstr "Pohjakartan oma väri"
+
+#: map-styles-print-greyscale
+msgid "In colour"
+msgstr "Värillisenä"
+
+#: map-styles-basemap-picker
+msgid "Find a base map"
+msgstr "Etsi pohjakartta"
+
+#: map-styles-basemap-picker
+msgid "The base maps respondents can switch between. They open on the default below."
+msgstr "Pohjakartat, joiden välillä vastaajat voivat vaihtaa. Ensin avautuu alla valittu oletus."

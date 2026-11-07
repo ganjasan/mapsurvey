@@ -1,0 +1,71 @@
+{% load i18n static %}
+{% comment %}"What's new" in the sidebar (change whats-new-in-sidebar). The one place an unseen
+changelog entry shows: the entry the dashboard hero or the corner card used to carry — a pending
+hero (`whats_new.hero`), else the newest unseen card (`whats_new.card`); both are None when the
+creator switched cards off or has seen everything. Sits in the sidebar's empty space above the
+footer; hidden in the rail. × posts `how=close`, the call to action `how=cta` (and navigates
+without waiting), "Don't show these" switches cards off — the same endpoints and events the
+banner and the card used. The closed id is remembered in localStorage, so a close whose POST
+failed stays closed on the next page.{% endcomment %}
+{% with entry=whats_new.hero|default:whats_new.card %}
+{% if entry %}
+<div class="app-wn" id="whatsNewSide" data-entry-id="{{ entry.id }}" data-tier="{{ entry.tier }}"
+     data-seen-url="{% url 'whats_new_seen' %}" data-cards-url="{% url 'whats_new_cards' %}"
+     role="region" aria-label="{% trans "What's new" %}">
+  <button type="button" class="app-wn-close" data-wn="close" aria-label="{% trans 'Dismiss' %}"><i class="fas fa-times" aria-hidden="true"></i></button>
+  {% if entry.image %}<img class="app-wn-image" src="{% static entry.image %}" alt="">{% endif %}
+  <div class="app-wn-eyebrow"><i class="fas fa-gift" aria-hidden="true"></i> {% trans "What's new" %} <span>{{ entry.date }}</span></div>
+  <div class="app-wn-title">{{ entry.title }}</div>
+  <div class="app-wn-actions">
+    {% if whats_new.hero and whats_new.hero_link %}
+    <a class="app-wn-cta" href="{{ whats_new.hero_link }}" data-wn="cta">{{ entry.cta_label|default:_("Open") }}</a>
+    {% endif %}
+    <a href="{% url 'whats_new' %}#{{ entry.id }}" data-wn="read">{% trans "Read more" %}</a>
+    <button type="button" class="app-wn-mute" data-wn="muted">{% trans "Don't show these" %}</button>
+  </div>
+</div>
+<script>
+(function () {
+  var box = document.getElementById('whatsNewSide');
+  if (!box) return;
+  var closedKey = 'msWhatsNewClosed';
+  var csrf = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+  var entryId = box.getAttribute('data-entry-id');
+  var tier = box.getAttribute('data-tier');
+  function remembered() { try { return window.localStorage.getItem(closedKey); } catch (e) { return null; } }
+  function remember() { try { window.localStorage.setItem(closedKey, entryId); } catch (e) { /* no storage */ } }
+  function track(name, props) {
+    if (window.posthog && typeof window.posthog.capture === 'function') window.posthog.capture(name, props);
+  }
+  function post(url, body) {
+    return fetch(url, {
+      method: 'POST', credentials: 'same-origin', keepalive: true,
+      headers: { 'X-CSRFToken': csrf, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams(body).toString()
+    });
+  }
+  if (remembered() === entryId) {
+    // Closed before, but the watermark POST did not land: hide at once and retry.
+    box.classList.add('wn-hidden');
+    post(box.getAttribute('data-seen-url'), { how: 'close', entry_id: entryId }).catch(function () {});
+    return;
+  }
+  track('changelog_card_shown', { entry_id: entryId, tier: tier, surface: 'sidebar' });
+  box.querySelectorAll('[data-wn]').forEach(function (el) {
+    el.addEventListener('click', function () {
+      var how = el.getAttribute('data-wn');
+      if (how === 'read') return;  // the page marks everything seen itself
+      box.classList.add('wn-hidden');
+      remember();
+      var req = how === 'muted'
+        ? post(box.getAttribute('data-cards-url'), { enabled: '0', entry_id: entryId })
+        : post(box.getAttribute('data-seen-url'), { how: how, entry_id: entryId });
+      req.then(function () {
+        document.querySelectorAll('.wn-dot, .wn-badge').forEach(function (d) { d.remove(); });
+      }).catch(function () { /* the remembered id keeps it hidden on the next page */ });
+    });
+  });
+})();
+</script>
+{% endif %}
+{% endwith %}

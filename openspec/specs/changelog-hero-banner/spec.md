@@ -69,63 +69,26 @@ Predicates SHALL be evaluated only when an unseen hero within its lifetime exist
 - **THEN** resolving `whats_new` runs no audience query
 
 ### Requirement: The hero renders on the dashboard only, and suppresses the small card everywhere
-The dashboard `/editor/` SHALL render a pending hero above the survey list: the plate (`art`
-or `image`), the eyebrow, the title, the body, the chips, one primary call-to-action linking
-to `link` with `link_query`, the "How it works" link when `help` resolves to a help page, the
-`note` when `note_if` holds, a × and "Don't show these". While a hero is pending the system
-SHALL render no small card on any page, and SHALL render the hero on no page but the
-dashboard. The hero SHALL NOT render on respondent surfaces, for anonymous users, or when
-`changelog_cards` is off.
+A pending hero SHALL render in the sidebar's *What's new* block (capability `in-app-changelog`)
+on every page that carries the sidebar, in place of any OLDER card entry: its picture when set, the
+date, the title, one call to action linking to `link` with `link_query` labelled `cta_label`,
+*Read more*, × and *Don't show these*. When an unseen card entry is newer than the pending hero,
+the block SHALL show that card entry instead: the sidebar shows the newest unseen entry. No banner
+SHALL render on the dashboard or anywhere else. The hero SHALL NOT render on respondent surfaces,
+for anonymous users, or when `changelog_cards` is off.
 
-On a viewport narrower than 768 px the hero SHALL render collapsed to one row — the "New"
-badge, the title, a chevron and the × — and SHALL show the rest of the card only after the
-creator taps that row; a second tap collapses it again. The collapsed state SHALL NOT be
-remembered between page loads and SHALL NOT move the watermark. The first expand on a page
-SHALL capture `changelog_card_expanded` with `entry_id` and `tier: 'hero'`. On 768 px and wider
-the row SHALL NOT be shown and the full card SHALL render as before.
-
-#### Scenario: Dashboard shows the hero
+#### Scenario: Dashboard shows the hero in the sidebar
 - **WHEN** a creator with a pending hero opens `/editor/`
-- **THEN** the response contains the hero with its title, the CTA linking to the resolved
-  `link` plus `link_query`, and no small-card markup
+- **THEN** the sidebar block carries the hero's id with tier `hero`, its title and the call to
+  action to the resolved `link` plus `link_query`, and no banner markup is in the page
 
-#### Scenario: Editor page shows nothing while the hero is pending
+#### Scenario: Other creator pages show the same hero
 - **WHEN** the same creator opens a survey editor page
-- **THEN** the response contains neither the hero nor the small card
+- **THEN** its sidebar block carries the same hero and the page has no small card
 
-#### Scenario: Free workspace sees the note
-- **WHEN** the hero declares `note_if: free_plan` and the active workspace is on Free
-- **THEN** the hero shows the `note` line; on a Pro workspace it does not
-
-#### Scenario: Phone shows one row
-- **WHEN** a creator with a pending hero opens `/editor/` on a 390 px wide screen
-- **THEN** the hero is one row with the badge, the title and the ×, and the first survey card
-  is visible on the first screen
-
-#### Scenario: Tapping the row expands the card
-- **WHEN** the creator taps the collapsed row
-- **THEN** the body, the call to action and "Don't show these" appear, the row's
-  `aria-expanded` is `true`, and the watermark is unchanged
-
-#### Scenario: The disclosure is in the markup
-- **WHEN** the dashboard renders a pending hero
-- **THEN** the response contains a toggle button with `aria-expanded="false"` whose
-  `aria-controls` names the element holding the body and the actions
-
-### Requirement: Chips name the creator's own surveys
-Each `{survey}` in a chip SHALL be replaced by a survey name of the active workspace —
-published surveys first, newest first — one name per chip, cycling when there are fewer
-surveys than chips. A chip whose placeholder cannot be filled SHALL be dropped. Chips SHALL
-be plain text, escaped on render.
-
-#### Scenario: Two surveys, three chips
-- **WHEN** the workspace has published surveys "Park" and "Bikes" and the hero has three chips
-  with `{survey}`
-- **THEN** the chips read with "Park", "Bikes", "Park" in that order
-
-#### Scenario: Survey name with markup
-- **WHEN** a survey is named `<b>x</b>`
-- **THEN** the chip renders the escaped text, not bold
+#### Scenario: A newer card wins over an older hero
+- **WHEN** a card entry shipped after the pending hero is unseen
+- **THEN** the sidebar block carries that card entry and not the hero
 
 ### Requirement: Closing the hero covers everything and stays closed
 ×, the primary CTA and "Don't show these" on the hero SHALL move the watermark to the newest

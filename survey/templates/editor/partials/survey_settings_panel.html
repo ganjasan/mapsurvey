@@ -2,6 +2,7 @@
 {% load survey_filters %}
 {% load l10n %}
 {% load billing_tags %}
+{% load basemap_tags %}
 <div class="pr-panel-flush">
 
   <!-- Context bar — mirrors the Publish space's Page settings header -->
@@ -149,30 +150,8 @@
         <div class="pr-field">
           <label for="{{ form.basemaps.id_for_label }}">{{ form.basemaps.label }}</label>
           {{ form.basemaps }}
-          <div style="display:flex;flex-wrap:wrap;gap:.4rem 1rem;margin-top:.25rem;">
-            {% for slug, label in basemap_choices %}
-            <label style="font-weight:400;display:flex;gap:.4rem;align-items:center;margin:0;cursor:pointer;">
-              <input class="basemap-cb" type="checkbox"
-                     id="bm_{{ slug }}" value="{{ slug }}"
-                     {% if slug in survey.basemaps %}checked{% endif %}>
-              {{ label }}
-            </label>
-            {% endfor %}
-          </div>
+          {% include "editor/partials/_basemap_picker.html" %}
           {% if form.basemaps.help_text %}<div class="pr-help">{{ form.basemaps.help_text }}</div>{% endif %}
-          <script>
-          (function(){
-              var inp = document.getElementById('id_basemaps');
-              var cbs = document.querySelectorAll('.basemap-cb');
-              function sync(){
-                  var v = [];
-                  cbs.forEach(function(c){ if (c.checked) v.push(c.value); });
-                  inp.value = JSON.stringify(v.length ? v : ['streets']);
-              }
-              sync();
-              cbs.forEach(function(c){ c.addEventListener('change', sync); });
-          })();
-          </script>
         </div>
         <div class="pr-field">
           <label for="{{ form.default_basemap.id_for_label }}">{{ form.default_basemap.label }}</label>
@@ -389,11 +368,20 @@
         {% endlocalize %}
 
         var map = L.map('survey-map-picker').setView([lat, lng], zoom);
-        L.tileLayer('{{ MAPBOX_URL }}', {
-            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>',
-            maxZoom: 23,
-            accessToken: '{{ MAPBOX_ACCESS_TOKEN }}'
-        }).addTo(map);
+        // The position map draws the survey's default base map and follows the select
+        // (change map-styles-basemap-picker): the creator frames the start on what
+        // respondents will open on. Newest versions — this is a creator surface.
+        var BASEMAPS = {% basemap_table survey.organization %};
+        var baseLayer = null;
+        function setBase(key) {
+            var b = BASEMAPS[key] || BASEMAPS.streets || {{ MAPBOX_STREETS|safe }};
+            if (!b) return;
+            if (baseLayer) map.removeLayer(baseLayer);
+            baseLayer = L.tileLayer(b.url, Object.assign({ accessToken: '{{ MAPBOX_ACCESS_TOKEN }}' }, b.opts)).addTo(map);
+        }
+        var defaultSelect = document.getElementById('id_default_basemap');
+        setBase(defaultSelect ? defaultSelect.value : 'streets');
+        if (defaultSelect) defaultSelect.addEventListener('change', function () { setBase(defaultSelect.value); });
 
         // The centre is the position; the pin marks it; every settled move
         // saves (openspec: map-picker-centre-autosave).
@@ -699,7 +687,8 @@
             if (!pv || !window.L || !window.RefLayerFactory) return;
             if (!pvMap) {
                 pvMap = L.map(pv, { attributionControl: false, zoomControl: false });
-                L.tileLayer('{{ MAPBOX_URL }}', { maxZoom: 23, opacity: .6, accessToken: '{{ MAPBOX_ACCESS_TOKEN }}' }).addTo(pvMap);
+                var _pvStreets = {{ MAPBOX_STREETS|safe }};
+                L.tileLayer(_pvStreets.url, Object.assign({ accessToken: '{{ MAPBOX_ACCESS_TOKEN }}' }, _pvStreets.opts, { opacity: .6 })).addTo(pvMap);
             }
             function draw() {
                 if (pvLayer) pvMap.removeLayer(pvLayer);

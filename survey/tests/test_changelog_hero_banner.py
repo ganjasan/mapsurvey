@@ -50,68 +50,47 @@ class ChangelogHeroTest(_ChangelogDirMixin, TestCase):
         return TokenProfile.objects.create(token=token, kind=KIND_OAUTH, audiences=['mcp'],
                                            revoked_at=timezone.now() if revoked else None)
 
-    def test_hero_carries_a_collapsed_disclosure_for_phones(self):
-        """
-        GIVEN a creator with a pending hero
-        WHEN the dashboard renders
-        THEN the hero carries a toggle row with the title, aria-expanded="false" and
-             aria-controls naming the element that wraps the body and the actions
-             (change hero-banner-mobile, #514: phones show only that row until tapped)
-        """
-        import re
-        html = self._dashboard()
-        toggle = re.search(r'<button type="button" class="wn-hero-toggle"([^>]*)>(.*?)</button>', html, re.S)
-        self.assertIsNotNone(toggle)
-        self.assertIn('aria-expanded="false"', toggle.group(1))
-        self.assertIn('aria-controls="whatsNewHeroMain"', toggle.group(1))
-        self.assertIn('Edit these surveys from your assistant', toggle.group(2))
-        main = html.split('id="whatsNewHeroMain"', 1)[1]
-        self.assertIn('data-wn="cta"', main)
-        self.assertIn('data-wn="muted"', main)
-
     def test_dashboard_renders_the_hero_and_no_card(self):
         """
         GIVEN a creator with a published survey, no MCP connection, a pending
               hero and an older unseen card entry
         WHEN the dashboard renders
-        THEN the hero is there with the title, the call to action to the agent
-             page with ?from=dashboard, a chip naming the creator's survey
-             (escaped), the Free note -- and no small card at all
+        THEN the sidebar block carries the hero (title, call to action to the agent
+             page with ?from=dashboard), there is no banner above the survey list,
+             and the older card entry is not shown
         """
         html = self._dashboard()
-        self.assertIn('id="whatsNewHero"', html)
+        self.assertIn('id="whatsNewSide"', html)
+        self.assertIn('data-tier="hero"', html)
         self.assertIn('data-entry-id="%s"' % self.hero_id, html)
         self.assertIn('Edit these surveys from your assistant', html)
         self.assertIn('href="%s?from=dashboard"' % reverse('editor_survey_start_agent'), html)
-        self.assertIn('Summarise Park &lt;b&gt;x&lt;/b&gt;', html)
-        self.assertNotIn('Summarise Park <b>x</b>', html)
-        self.assertIn('Plain chip', html)
-        self.assertIn('Part of Pro', html)
-        self.assertNotIn('id="whatsNewCard"', html)
+        self.assertNotIn('wn-hero', html)
         self.assertNotIn('Export as Excel', html)
 
-    def test_chips_never_name_a_draft_copy(self):
+    def test_a_newer_card_wins_over_an_older_hero(self):
         """
-        GIVEN a closed survey whose newer "Unpublished changes" draft copy is
-              the most recently created survey in the workspace
-        WHEN the dashboard renders the hero
-        THEN the chip names the survey itself, never the draft copy
+        GIVEN the pending hero and a card entry shipped after it
+        WHEN the dashboard renders
+        THEN the sidebar shows the newer card, not the hero (owner, 2026-11-07: the
+             sidebar shows the newest unseen entry)
         """
-        self.park.status = 'closed'
-        self.park.save(update_fields=['status'])
-        SurveyHeader.objects.create(name='[draft] Park', organization=self.org, created_by=self.user,
-                                    status='draft', published_version=self.park)
+        newer_id = '%s-newer' % _dated(1)
+        self.use_entries({self.hero_id + '.html': _HERO, self.old_card_id + '.html': _ENTRY_A,
+                          newer_id + '.html': _ENTRY_A})
         html = self._dashboard()
-        self.assertIn('Summarise Park &lt;b&gt;x&lt;/b&gt;', html)
-        self.assertNotIn('[draft] Park', html)
+        self.assertIn('data-tier="card"', html)
+        self.assertIn('data-entry-id="%s"' % newer_id, html)
+        self.assertNotIn('data-tier="hero"', html)
 
-    def test_editor_page_shows_nothing_while_the_hero_is_pending(self):
+    def test_editor_page_shows_the_hero_in_the_sidebar(self):
         """
         GIVEN the same creator
-        WHEN a survey editor page renders
-        THEN neither the hero nor the small card is in it
+        WHEN another creator page renders
+        THEN its sidebar carries the same hero, and no page carries a banner or a corner card
         """
         html = self.client.get(reverse('editor_survey_create')).content.decode()
+        self.assertIn('data-tier="hero"', html)
         self.assertNotIn('id="whatsNewHero"', html)
         self.assertNotIn('id="whatsNewCard"', html)
 
@@ -125,12 +104,12 @@ class ChangelogHeroTest(_ChangelogDirMixin, TestCase):
         """
         profile = self._mcp_token()
         html = self._dashboard()
-        self.assertNotIn('id="whatsNewHero"', html)
-        self.assertIn('id="whatsNewCard"', html)
+        self.assertNotIn('data-tier="hero"', html)
+        self.assertIn('data-tier="card"', html)
         self.assertIn('data-entry-id="%s"' % self.old_card_id, html)
         profile.revoked_at = timezone.now()
         profile.save(update_fields=['revoked_at'])
-        self.assertIn('id="whatsNewHero"', self._dashboard())
+        self.assertIn('data-tier="hero"', self._dashboard())
 
     def test_expired_hero_shows_nothing_of_itself(self):
         """
@@ -144,8 +123,8 @@ class ChangelogHeroTest(_ChangelogDirMixin, TestCase):
         expired = '%s-assistant' % _dated(31)
         self.use_entries({expired + '.html': _HERO})
         html = self._dashboard()
-        self.assertNotIn('id="whatsNewHero"', html)
-        self.assertNotIn('id="whatsNewCard"', html)
+        self.assertNotIn('data-tier="hero"', html)
+        self.assertNotIn('data-tier="card"', html)
         request = RequestFactory().get('/editor/')
         request.user = self.user
         request.active_org = self.org
@@ -164,22 +143,8 @@ class ChangelogHeroTest(_ChangelogDirMixin, TestCase):
         self.park.deleted_at = timezone.now()
         self.park.save(update_fields=['deleted_at'])
         html = self.client.get(reverse('editor') + '?dashboard=1').content.decode()
-        self.assertNotIn('id="whatsNewHero"', html)
-        self.assertIn('id="whatsNewCard"', html)
-
-    def test_pro_workspace_sees_no_note(self):
-        """
-        GIVEN the workspace is on Pro
-        WHEN the dashboard renders
-        THEN the hero shows without the "Part of Pro" line
-        """
-        from billing.entitlements import Entitlements
-        from billing.features import PLAN_PRO, features_for_plan
-        pro = Entitlements(PLAN_PRO, 'active', None, features_for_plan(PLAN_PRO))
-        with patch('billing.entitlements.for_organization', return_value=pro):
-            html = self._dashboard()
-        self.assertIn('id="whatsNewHero"', html)
-        self.assertNotIn('Part of Pro', html)
+        self.assertNotIn('data-tier="hero"', html)
+        self.assertIn('data-tier="card"', html)
 
     def test_cta_closes_everything_and_emits_both_events(self):
         """
@@ -200,8 +165,8 @@ class ChangelogHeroTest(_ChangelogDirMixin, TestCase):
                       {'entry_id': self.hero_id, 'how': 'cta', 'tier': 'hero'}),
         ])
         html = self._dashboard()
-        self.assertNotIn('id="whatsNewHero"', html)
-        self.assertNotIn('id="whatsNewCard"', html)
+        self.assertNotIn('data-tier="hero"', html)
+        self.assertNotIn('data-tier="card"', html)
 
     def test_small_card_dismissal_carries_its_tier(self):
         """
@@ -217,17 +182,19 @@ class ChangelogHeroTest(_ChangelogDirMixin, TestCase):
 
     def test_partials_remember_the_closed_entry(self):
         """
-        GIVEN both partials
-        WHEN their scripts are read
-        THEN each remembers the closed id under one localStorage key and hides a
-             matching card on render -- the close that failed to persist stays closed
+        GIVEN the sidebar partial
+        WHEN its script is read
+        THEN it remembers the closed id under one localStorage key and hides a
+             matching entry on render -- the close that failed to persist stays closed;
+             the old banner and card partials are gone
         """
         import os
         from django.conf import settings as dj
-        base = os.path.join(dj.BASE_DIR, 'survey', 'templates', 'editor', 'partials')
+        base = os.path.join(dj.BASE_DIR, 'survey', 'templates')
+        with open(os.path.join(base, 'partials', '_sidebar_whats_new.html')) as fh:
+            src = fh.read()
+        self.assertIn("'msWhatsNewClosed'", src)
+        self.assertIn("remembered() === entryId", src)
+        self.assertIn("classList.add('wn-hidden')", src)
         for name in ('_whats_new_card.html', '_whats_new_hero.html'):
-            with open(os.path.join(base, name)) as fh:
-                src = fh.read()
-            self.assertIn("'msWhatsNewClosed'", src, name)
-            self.assertIn("remembered() === entryId", src, name)
-            self.assertIn("classList.add('wn-hidden')", src, name)
+            self.assertFalse(os.path.exists(os.path.join(base, 'editor', 'partials', name)), name)

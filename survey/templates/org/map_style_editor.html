@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% load i18n static billing_tags %}
+
+{% block title %}{{ style.name }} — {% trans "Map style" %}{% endblock %}
+
+{% block extra_head %}
+{% comment %}The style editor (change map-styles-editor, #543). MapLibre GL renders the generated
+style in the browser on THIS page only (ADR 0001): respondents get hosted raster tiles. The
+controls come from survey/map_styles/controls.py; the browser posts them to preview.json.{% endcomment %}
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js" crossorigin="anonymous"></script>
+<script src="{% static 'js/components/map_place_search.js' %}"></script>
+<link rel="stylesheet" href="{% static 'css/map_style_editor.css' %}{% if debug %}?t={% now 'U' %}{% endif %}">
+{% endblock %}
+
+{% block content_wrapper_class %}content container-fluid mse-page{% endblock %}
+
+{% block content %}
+<div class="mse" id="mse" data-state-id="mse-state">
+  <form id="mse-form" method="post" action="{{ state.urls.save }}" onsubmit="return false;">
+    {% csrf_token %}
+    <div class="mse-head">
+      <a class="mse-back" href="{{ state.urls.library }}">&larr; {% trans "Map styles" %}</a>
+      <input type="text" name="name" id="mse-name" class="mse-name" value="{{ style.name }}" maxlength="120" aria-label="{% trans 'Style name' %}">
+      <div class="mse-head-right">
+        <span class="mse-status" id="mse-status" data-pending="{{ pending|yesno:'1,0' }}">
+          {% if pending %}{% trans "Publishing…" %}{% elif state.version.ready_number %}{% blocktrans with n=state.version.ready_number %}Version {{ n }} published{% endblocktrans %}{% endif %}
+        </span>
+        <button type="button" class="btn btn-primary btn-sm" id="mse-save"{% if pending or not can_save %} disabled{% endif %}>
+          {% trans "Save" %}
+        </button>
+      </div>
+    </div>
+    {% if not can_save %}
+    <div class="alert alert-warning py-2 mse-note">{% trans "Editing map styles is a Pro feature." %} <a href="{% url 'org_billing' org.slug %}">{% trans "Plan & billing" %}</a></div>
+    {% endif %}
+    {% if messages %}{% for message in messages %}<div class="alert alert-{{ message.tags }} py-2 mse-note">{{ message }}</div>{% endfor %}{% endif %}
+    <p class="mse-note text-muted">
+      {% if usage %}{% blocktrans count n=usage %}Used in {{ n }} survey.{% plural %}Used in {{ n }} surveys.{% endblocktrans %}{% endif %}
+      {% trans "Saving publishes a new version. A survey that is already published keeps the version it has until you publish it again; drafts preview the newest one." %}
+    </p>
+
+    <div class="mse-body">
+      <div class="mse-controls" id="mse-controls">
+        <section class="mse-group">
+          <h6>{% trans "What stays on the map" %}</h6>
+          {% for item in controls.removals %}
+          <label class="mse-toggle">
+            <input type="checkbox" data-key="{{ item.key }}"{% if item.value %} checked{% endif %}>
+            <span>{{ item.label }}</span>
+            <small>{{ item.help }}</small>
+          </label>
+          {% endfor %}
+          <label class="mse-toggle">
+            <input type="checkbox" data-key="buildings"{% if values.buildings %} checked{% endif %}>
+            <span>{% trans "Buildings" %}</span>
+            <small>{% trans "A paper map needs them only for a street or a block." %}</small>
+          </label>
+          <label class="mse-range mse-sub" id="mse-buildings-zoom"{% if not values.buildings %} hidden{% endif %}>
+            <span>{% trans "Show buildings from zoom" %} <output data-output-for="buildings_minzoom">{{ values.buildings_minzoom }}</output></span>
+            <input type="range" data-key="buildings_minzoom" min="{{ controls.buildings_zoom_range.0 }}" max="{{ controls.buildings_zoom_range.1 }}" value="{{ values.buildings_minzoom }}">
+            <small>{% trans "Lower shows them on wider views; 15 is the usual." %}</small>
+          </label>
+        </section>
+
+        <section class="mse-group">
+          <h6>{% trans "Colours" %}</h6>
+          {% for pal in controls.palettes %}
+          <div class="mse-palette" data-role="{{ pal.key }}">
+            <div class="mse-palette-label">{{ pal.label }}</div>
+            <div class="mse-swatches">
+              {% for colour in pal.swatches %}
+              <button type="button" class="mse-swatch" data-colour="{{ colour }}" style="background:{{ colour }}" title="{{ colour }}" aria-label="{{ colour }}"></button>
+              {% endfor %}
+              {% comment %}Clicking the code opens the colour picker (owner, 2026-11-07). An empty value
+              leaves the base alone; the code then shows the colour the base really draws, muted.{% endcomment %}
+              <label class="mse-hex{% if not pal.value %} is-base{% endif %}" title="{% if pal.value %}{% trans 'Pick a colour' %}{% else %}{% trans 'The base map’s own colour' %}{% endif %}">
+                <input type="color" class="mse-color" data-key="{{ pal.key }}" value="{{ pal.value|default:pal.base|default:'#ffffff' }}"
+                       data-base="{{ pal.base }}" aria-label="{% trans 'Hex colour' %}">
+                <span class="mse-hex-dot" style="background:{{ pal.value|default:pal.base|default:'transparent' }}"></span>
+                <span class="mse-hex-text">{% if pal.value %}{{ pal.value }}{% elif pal.base %}{{ pal.base }}{% else %}{% trans "As base" %}{% endif %}</span>
+              </label>
+              <button type="button" class="mse-reset" data-reset="{{ pal.key }}" title="{% trans 'Back to the base colour' %}"{% if not pal.value %} hidden{% endif %}><i class="fas fa-undo" aria-hidden="true"></i></button>
+            </div>
+            <div class="mse-warning" data-warning-for="{{ pal.key }}" hidden>{% trans "Hard to tell apart from the land on a photocopy." %}</div>
+          </div>
+          {% endfor %}
+        </section>
+
+        <section class="mse-group">
+          <h6>{% trans "Roads and labels" %}</h6>
+          <div class="mse-presets" role="radiogroup" aria-label="{% trans 'Road look' %}">
+            {% for item in controls.roads %}
+            <label class="mse-preset">
+              <input type="radio" name="roads" data-key="roads" value="{{ item.key }}"{% if values.roads == item.key %} checked{% endif %}>
+              <span class="mse-preset-sample" style="--casing:{{ item.triple.casing }};--fill:{{ item.triple.fill }}"></span>
+              <span>{{ item.label }}</span>
+            </label>
+            {% endfor %}
+            {% if values.roads == 'custom' %}
+            <label class="mse-preset">
+              <input type="radio" name="roads" data-key="roads" value="custom" checked>
+              <span class="mse-preset-sample" style="--casing:{{ values.roads_custom.casing }};--fill:{{ values.roads_custom.fill }}"></span>
+              <span>{% trans "Custom" %}</span>
+            </label>
+            {% endif %}
+          </div>
+          <div class="mse-warning" data-warning-for="roads" hidden>{% trans "Hard to tell apart from the land on a photocopy." %}</div>
+          <label class="mse-toggle">
+            <input type="checkbox" data-key="bold_roads"{% if values.bold_roads %} checked{% endif %}>
+            <span>{% trans "Bold street names" %}</span>
+          </label>
+          <label class="mse-range">
+            <span>{% trans "City and region names up to zoom" %} <output data-output-for="place_names_maxzoom" data-no-limit="{{ controls.place_names_no_limit }}" data-no-limit-label="{% trans 'no limit' %}">{% if values.place_names_maxzoom == controls.place_names_no_limit %}{% trans "no limit" %}{% else %}{{ values.place_names_maxzoom }}{% endif %}</output></span>
+            <input type="range" data-key="place_names_maxzoom" min="{{ controls.place_names_range.0 }}" max="{{ controls.place_names_range.1 }}" value="{{ values.place_names_maxzoom }}">
+            <small>{% trans "Below that zoom they stay; above it the map shows streets and districts only." %}</small>
+          </label>
+          <label class="mse-toggle">
+            <input type="checkbox" data-key="greyscale"{% if values.greyscale %} checked{% endif %}>
+            <span>{% trans "Greyscale" %}</span>
+            <small>{% trans "Every colour becomes a grey, as a black-and-white copier sees it." %}</small>
+          </label>
+        </section>
+      </div>
+
+      <div class="mse-preview">
+        <div class="mse-preview-bar">
+          <div class="mse-tabs" role="tablist">
+            <button type="button" class="mse-tab active" data-tab="online" role="tab">{% trans "Online" %}</button>
+            <button type="button" class="mse-tab" data-tab="print" role="tab">{% trans "Print" %}</button>
+          </div>
+          <select id="mse-survey" class="form-control form-control-sm mse-survey" aria-label="{% trans 'Frame of a survey' %}">
+            {% for s in state.surveys %}<option value="{{ s.uuid }}">{{ s.name }}</option>{% endfor %}
+          </select>
+          {% comment %}Place search (owner, 2026-11-07): moves the preview and the print frame
+          to any place; the shared control of every Mapsurvey map, adapted to MapLibre in the JS.{% endcomment %}
+          <div class="mse-search" id="mse-search" data-placeholder="{% trans 'Search for a place — city, address, landmark…' %}"></div>
+          <span class="mse-unsaved" id="mse-unsaved" hidden>{% trans "Unsaved changes" %}</span>
+        </div>
+        <div class="mse-pane" id="mse-pane-online"><div id="mse-map"></div><div class="mse-pane-note" id="mse-map-note" hidden></div></div>
+        <div class="mse-pane" id="mse-pane-print" hidden>
+          <div class="mse-print-tools">
+            {% comment %}Paper forms are printed in black and white or photocopied (owner, 2026-11-07),
+            so the frame starts grey; "In colour" shows what a colour printer gives.{% endcomment %}
+            <label class="mse-toggle mse-inline"><input type="checkbox" id="mse-colour"> <span>{% trans "In colour" %}</span></label>
+            <span class="mse-print-note" id="mse-print-note"></span>
+          </div>
+          <img id="mse-print" class="mse-grey" alt="{% trans 'Printed frame' %}">
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+{{ state|json_script:"mse-state" }}
+<script src="{% static 'js/map_style_editor.js' %}{% if debug %}?t={% now 'U' %}{% endif %}" defer></script>
+{% endblock %}

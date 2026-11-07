@@ -432,6 +432,9 @@ SURVEY_COPY_EXCLUDED_FIELDS = (
     # The survey period is a date, not structure: a copy for next year must not
     # inherit this year's closing time (change survey-schedule).
     'opens_at', 'closes_at', 'schedule_timezone',
+    # Pins name the style versions a PUBLISHED survey shows; a copy is a draft and
+    # previews the latest versions until it is published (change map-styles-library).
+    'basemap_pins',
 )
 # Layer columns rebuilt from the copied objects (`rebuild_layer`).
 LAYER_DERIVED_FIELDS = ('geojson_gz', 'geojson_legacy', 'feature_count', 'size_bytes',

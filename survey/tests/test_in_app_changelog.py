@@ -390,7 +390,7 @@ class WhatsNewViewsTest(_ChangelogDirMixin, TestCase):
                                      {'entry_id': '2026-10-06-empty-sessions', 'how': 'got_it',
                                       'tier': 'card'})
         page = self.client.get(reverse('editor') + '?dashboard=1')
-        self.assertNotIn('id="whatsNewCard"', page.content.decode())
+        self.assertNotIn('id="whatsNewSide"', page.content.decode())
 
     def test_seen_rejects_unknown_how_and_anonymous(self):
         """
@@ -435,20 +435,20 @@ class WhatsNewViewsTest(_ChangelogDirMixin, TestCase):
         emit.assert_not_called()
         self.assertTrue(CreatorPreferences.objects.get(user=self.user).changelog_cards)
         page = self.client.get(reverse('editor') + '?dashboard=1')
-        self.assertNotIn('id="whatsNewCard"', page.content.decode())
+        self.assertNotIn('id="whatsNewSide"', page.content.decode())
         self.assertEqual(self.client.post(reverse('whats_new_cards'), {'enabled': 'maybe'}).status_code, 400)
 
     def test_dashboard_carries_card_and_indicator_for_unseen(self):
         """
         GIVEN a creator who has seen nothing and has three unseen entries
         WHEN they open the dashboard
-        THEN the card with the newest entry renders, the sidebar's What's new dot
+        THEN the sidebar's What's new block with the newest entry renders, the sidebar's What's new dot
              and the "?" menu badge "3" are there (change app-sidebar moved the dot
              from the header gift to the sidebar footer)
         """
         page = self.client.get(reverse('editor') + '?dashboard=1')
         html = page.content.decode()
-        self.assertIn('id="whatsNewCard"', html)
+        self.assertIn('id="whatsNewSide"', html)
         self.assertIn('data-entry-id="2026-10-06-empty-sessions"', html)
         self.assertIn('Empty sessions are now hidden', html)
         self.assertIn('class="wn-dot app-dot"', html)
@@ -468,7 +468,7 @@ class WhatsNewViewsTest(_ChangelogDirMixin, TestCase):
         response = self.client.get(reverse('survey', kwargs={'survey_slug': survey.uuid}), follow=True)
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
-        self.assertNotIn('whatsNewCard', html)
+        self.assertNotIn('whatsNewSide', html)
         self.assertNotIn('wn-nav-icon', html)
 
     def test_registration_seeds_the_watermark(self):

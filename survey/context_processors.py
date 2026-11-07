@@ -12,12 +12,18 @@ POSTHOG_API_HOST_DEFAULT = 'https://eu.i.posthog.com'
 
 
 def mapbox(request):
+    """The public token and the Streets entry (change map-styles-library, #542).
+
+    Surfaces that offer the survey's basemaps render `{% basemap_table %}`; the four
+    streets-only maps (settings picker, reference-layer style preview, Responses overview
+    thumbnail and map modal) build their one layer from `MAPBOX_STREETS` — the same
+    resolver entry, so the 512-px tile shape cannot drift between them. The secret
+    styles token is deliberately absent: it belongs to the worker."""
+    from . import basemaps
+    streets = basemaps.resolve('streets', None)
     return {
-        'MAPBOX_URL': settings.MAPBOX_URL,
-        'MAPBOX_OUTDOORS_URL': settings.MAPBOX_OUTDOORS_URL,
-        'MAPBOX_PAPER_URL': settings.MAPBOX_PAPER_URL,
-        'MAPBOX_PAPER_B_URL': settings.MAPBOX_PAPER_B_URL,
         'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
+        'MAPBOX_STREETS': json.dumps(streets.leaflet() if streets else None),
     }
 
 
@@ -183,6 +189,7 @@ def app_nav(request):
             'active': nav.active_item(request),
             'modules': nav.MODULES,
             'integrations': nav.items_for(role, nav.INTEGRATIONS),
+            'library': nav.items_for(role, nav.LIBRARY) if org is not None else (),
             'workspace': nav.items_for(role) if org is not None else (),
             'plan': nav.plan_chip(org, request.user),
         }
@@ -265,6 +272,12 @@ def whats_new(request):
         if changelog.hero_candidates(seen, timezone.localdate()):
             audience = Audience(user, org)
             hero = changelog.hero_for(seen, audience)
+        # The sidebar shows the NEWEST unseen entry (owner, 2026-11-07): a pending hero
+        # wins only when nothing newer has shipped since; an older hero no longer keeps a
+        # newer card out of sight for its 30 days. Ids start with the date, so newer = larger.
+        card = changelog.latest_card(seen)
+        if hero is not None and card is not None and card.id > hero.id:
+            hero = None
         if hero is not None:
             value['hero'] = hero
             value['hero_link'] = _hero_link(hero)
@@ -281,7 +294,6 @@ def whats_new(request):
                          .values_list('name', flat=True)[:len(hero.chips)])
             value['hero_chips'] = changelog.render_chips(hero, names)
             return value
-        card = changelog.latest_card(seen)
         value['card'] = card
         value['show_card'] = card is not None
         return value
