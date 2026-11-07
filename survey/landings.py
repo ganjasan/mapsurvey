@@ -31,7 +31,6 @@ FAQ_ANSWER_MAX = 4000
 FAQ_MAX_ITEMS = 30
 TIMELINE_MAX_ITEMS = 12
 IMAGE_MAX_BYTES = 5 * 1024 * 1024
-IMAGE_TYPES = ('image/jpeg', 'image/png', 'image/webp', 'image/gif')
 
 ACTING_ROLES = ('owner', 'admin', 'editor')
 FEATURE = 'landing_pages'
@@ -292,14 +291,31 @@ def clean_title(value):
     return _plain(value, TITLE_MAX)
 
 
+_IMAGE_FORMATS = {'JPEG': 'jpg', 'PNG': 'png', 'WEBP': 'webp', 'GIF': 'gif'}
+
+
 def check_image(upload):
-    """An error message for an uploaded picture, or ''."""
+    """An error message for an uploaded picture, or ''. The BYTES decide, never the browser's
+    content type or the file name: Pillow must recognise a JPEG, PNG, WebP or GIF, and the
+    upload is renamed to that format's extension, so the stored key (and the content type the
+    public media host serves) can only be an image — a renamed HTML or SVG never gets there."""
     if upload is None:
         return ''
     if upload.size > IMAGE_MAX_BYTES:
         return _('The picture is larger than 5 MB.')
-    if (getattr(upload, 'content_type', '') or '').lower() not in IMAGE_TYPES:
+    from PIL import Image, UnidentifiedImageError
+    try:
+        upload.seek(0)
+        with Image.open(upload) as img:
+            fmt = img.format
+            img.verify()
+    except (UnidentifiedImageError, OSError, ValueError, SyntaxError):
+        fmt = None
+    finally:
+        upload.seek(0)
+    if fmt not in _IMAGE_FORMATS:
         return _('Upload a JPEG, PNG, WebP or GIF picture.')
+    upload.name = f'image.{_IMAGE_FORMATS[fmt]}'
     return ''
 
 

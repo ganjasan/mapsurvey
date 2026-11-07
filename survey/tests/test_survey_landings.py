@@ -998,3 +998,44 @@ class LandingEventTest(LandingTestBase):
             r = self.client.get(url)
             self.assertContains(r, 'registration', msg_prefix=url)
             self.assertContains(r, '30 days after the event', msg_prefix=url)
+
+
+class LandingReviewFixesTest(LandingTestBase):
+    """Fixes from the epic review: image bytes decide, an edit error keeps what was typed."""
+
+    def setUp(self):
+        super().setUp()
+        self.login(self.editor)
+
+    def test_disguised_image_refused(self):
+        """GIVEN an HTML file named x.html posted with Content-Type image/jpeg
+        WHEN it is uploaded as a cover and as an image block
+        THEN both are refused and nothing is stored"""
+        fake = lambda: SimpleUploadedFile('x.html', b'<html><script>alert(1)</script></html>', content_type='image/jpeg')
+        r = self.client.post(self.url('editor_landing_settings'),
+                             {'title': 'T', 'slug': self.landing.slug, 'cover': fake()})
+        self.assertEqual(r.status_code, 400)
+        self.assertEqual(self.add_block('image', alt='x', image=fake()).status_code, 400)
+        self.landing.refresh_from_db()
+        self.assertFalse(self.landing.cover)
+        self.assertFalse(self.landing.blocks.exists())
+
+    def test_image_key_takes_the_real_format(self):
+        """GIVEN a real PNG uploaded under the name photo.html
+        WHEN it is saved as an image block
+        THEN the stored key ends in .png"""
+        png = _png()
+        png.name = 'photo.html'
+        self.add_block('image', alt='Park', image=png)
+        self.assertTrue(self.landing.blocks.get().image.name.endswith('.png'))
+
+    def test_edit_error_keeps_typed_values(self):
+        """GIVEN a FAQ block
+        WHEN it is saved with a new question and an answer whose question is empty
+        THEN the save is refused and the form shows the newly typed question"""
+        self.client.post(self.url('editor_landing_block_add'), {'kind': 'faq', 'q': ['Old?'], 'a': ['<p>A</p>']})
+        block = self.landing.blocks.get()
+        r = self.client.post(self.url('editor_landing_block_edit', block.pk),
+                             {'q': ['Brand new question?', ''], 'a': ['<p>x</p>', '<p>orphan</p>']})
+        self.assertEqual(r.status_code, 400)
+        self.assertContains(r, 'Brand new question?', status_code=400)

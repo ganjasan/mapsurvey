@@ -162,7 +162,7 @@ def _builder_context(request, landing, membership, **extra):
         'chart_viz': [('auto', _('Bar chart')), ('pie', _('Pie')), ('donut', _('Donut')), ('table', _('Table'))],
         'map_viz': [('auto', _('Markers')), ('heatmap', _('Heatmap')), ('cluster', _('Clusters'))],
         'public_url': request.build_absolute_uri(reverse('landing_public', args=[landing.slug])),
-        'block_errors': {}, 'settings_errors': {}, 'new_kind': request.GET.get('add', ''),
+        'block_errors': {}, 'block_posted': {}, 'settings_errors': {}, 'new_kind': request.GET.get('add', ''),
         'new_errors': {}, 'new_raw': {},
     }
     if ctx['new_kind'] not in landings.BLOCK_KINDS:
@@ -417,7 +417,14 @@ def editor_landing_block_edit(request, uuid, block_id):
     block = get_object_or_404(LandingBlock, pk=block_id, landing=landing)
     errors, result = _save_block(request, landing, block, block.kind)
     if errors:
-        ctx = _builder_context(request, landing, membership, block_errors={block.pk: errors})
+        # Keep what the creator typed: the form re-renders from the posted values, not the saved ones.
+        posted = dict(result, title=request.POST.get('title', ''))
+        if str(posted.get('current', '')).isdigit():
+            posted['current'] = int(posted['current'])
+        if block.kind == 'map' and not posted.get('area'):
+            posted['area'] = block.data.get('area')
+        ctx = _builder_context(request, landing, membership, block_errors={block.pk: errors},
+                               block_posted={block.pk: posted})
         return render(request, 'landings/builder.html', ctx, status=400)
     return _back(landing, block.anchor)
 
