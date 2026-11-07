@@ -40,10 +40,11 @@
 .mse-reset:hover { color: #1f2937; }
 .mse-sub { margin-left: 1.4rem; }
 .mse-warning { font-size: .76rem; color: #b45309; margin-top: .2rem; }
-.mse-presets { display: flex; gap: .5rem; margin-bottom: .5rem; }
-.mse-preset { display: flex; flex-direction: column; align-items: center; gap: .25rem; font-size: .8rem; font-weight: 400; cursor: pointer; margin: 0; }
+.mse-presets { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: .4rem; margin-bottom: .5rem; padding: 3px; }
+.mse-preset { display: flex; flex-direction: column; align-items: center; gap: .25rem; min-width: 0; font-size: .8rem; font-weight: 400; cursor: pointer; margin: 0; }
+.mse-preset > span:last-child { max-width: 100%; text-align: center; line-height: 1.15; overflow-wrap: anywhere; }
 .mse-preset input { position: absolute; opacity: 0; }
-.mse-preset-sample { width: 64px; height: 22px; border-radius: .25rem; background:
+.mse-preset-sample { width: 100%; max-width: 64px; height: 22px; border-radius: .25rem; background:
   linear-gradient(to bottom, var(--casing) 0 18%, var(--fill) 18% 82%, var(--casing) 82% 100%); border: 1px solid #e5e7eb; }
 .mse-preset input:checked + .mse-preset-sample { outline: 2px solid #2563eb; outline-offset: 1px; }
 .mse-range { display: flex; flex-direction: column; gap: .2rem; margin: 0 0 .5rem; font-weight: 400; font-size: .85rem; }
