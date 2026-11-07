@@ -509,6 +509,32 @@ class PickersAndImportTest(_LibraryFixture):
         self.assertIn(style.basemap_key, keys)
         self.assertNotIn(foreign.basemap_key, keys)
 
+    def test_settings_basemaps_fold_and_the_position_map_follows_the_default(self):
+        """
+        GIVEN a workspace with one ready style and a survey whose default is satellite
+        WHEN the settings panel renders
+        THEN the base maps are one folded line that opens a checklist (filterable once there
+             are more than eight), the help text names no storage keys, and the position map
+             draws from the provider table keyed by the default select
+        """
+        ready_style(self.org)
+        self.survey.basemaps = ['streets', 'satellite']
+        self.survey.default_basemap = 'satellite'
+        self.survey.save()
+        html = self.client.get(f'/editor/surveys/{self.survey.uuid}/settings-panel/').content.decode()
+        self.assertIn('id="bm-toggle" aria-expanded="false"', html)
+        self.assertIn('class="bm-panel" id="bm-panel" hidden', html)
+        self.assertNotIn('id="bm-filter"', html)   # six choices: no filter yet
+        self.assertIn('They open on the default below.', html)
+        self.assertNotIn('style:&lt;uuid&gt;', html)
+        self.assertIn("var BASEMAPS = {", html)
+        self.assertIn('"satellite": {', html)
+        self.assertIn("setBase(defaultSelect ? defaultSelect.value : 'streets')", html)
+        for n in range(3):
+            ready_style(self.org, name=f'Extra {n}', mapbox_id=f'artemkonuchov/extra{n}')
+        html = self.client.get(f'/editor/surveys/{self.survey.uuid}/settings-panel/').content.decode()
+        self.assertIn('id="bm-filter"', html)
+
     def test_section_override_is_validated(self):
         """
         GIVEN a style of another workspace

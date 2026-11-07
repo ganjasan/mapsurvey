@@ -10724,3 +10724,11 @@ msgstr "De eigen kleur van de basiskaart"
 #: map-styles-print-greyscale
 msgid "In colour"
 msgstr "In kleur"
+
+#: map-styles-basemap-picker
+msgid "Find a base map"
+msgstr "Basiskaart zoeken"
+
+#: map-styles-basemap-picker
+msgid "The base maps respondents can switch between. They open on the default below."
+msgstr "De basiskaarten waartussen respondenten kunnen wisselen. Ze openen op de standaardkaart hieronder."

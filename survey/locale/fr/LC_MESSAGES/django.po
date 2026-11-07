@@ -10772,3 +10772,11 @@ msgstr "La couleur propre au fond de carte"
 #: map-styles-print-greyscale
 msgid "In colour"
 msgstr "En couleur"
+
+#: map-styles-basemap-picker
+msgid "Find a base map"
+msgstr "Trouver un fond de carte"
+
+#: map-styles-basemap-picker
+msgid "The base maps respondents can switch between. They open on the default below."
+msgstr "Les fonds de carte entre lesquels les répondants peuvent basculer. Ils s’ouvrent sur celui par défaut ci-dessous."
