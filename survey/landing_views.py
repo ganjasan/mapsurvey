@@ -393,7 +393,7 @@ def _results_target(landing, value):
 
 
 # Error key → the posted fields it is about (an error on a field left empty waits, see _save_block).
-_ERROR_FIELDS = {'items': ('q', 'phase_title'), 'question': ('results_question',), 'area': ('geojson_file',),
+_ERROR_FIELDS = {'question': ('results_question',), 'area': ('geojson_file',),
                  'image': ('image',), 'files': ('files',)}
 
 
@@ -454,8 +454,10 @@ def _save_block(request, landing, block, kind):
     if errors and _is_autosave(request):
         # On the canvas an EMPTY field is not an error yet — the creator is still filling the
         # block in, and the public page skips it until it is complete (landings.is_complete).
-        # A wrong value (bad URL, end before start, unknown zone) still is.
-        errors = {k: v for k, v in errors.items() if _posted_value(request, raw, k)}
+        # A wrong value (bad URL, end before start, unknown zone) still is. A FAQ or timeline
+        # row without its question or title is an empty field too: it is kept and not drawn.
+        errors = {k: v for k, v in errors.items()
+                  if k != 'items' and _posted_value(request, raw, k)}
     if errors:
         return errors, raw
     with transaction.atomic():

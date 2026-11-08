@@ -335,7 +335,10 @@ def is_complete(block):
     if kind == 'video':
         return bool(data.get('embed'))
     if kind in ('faq', 'timeline'):
-        return bool(data.get('items'))
+        # A row still missing its question / title (saved while the creator types on the
+        # canvas) is not drawn; the block is drawn while one row is whole.
+        key = 'q' if kind == 'faq' else 'title'
+        return any(isinstance(i, dict) and i.get(key) for i in data.get('items') or ())
     if kind == 'documents':
         return bool(block.files.all())
     if kind == 'map':

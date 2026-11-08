@@ -1,8 +1,10 @@
 /* The canvas builder of landing pages (change landing-builder-redesign, #594; epic #348).
  *
  * The canvas is the page as visitors see it. Text marked `data-field` in a block (and
- * `data-page-field` in the hero) is edited in place; everything else lives in the block's panel
- * form, which holds the WHOLE block (canvas text travels in hidden fields of that form). Every
+ * `data-page-field` in the hero) is edited in place, and so is what makes a block a block (change
+ * landing-inline-editing, owner rule 2026-11-08): the picture, the files, the link, the date, the
+ * FAQ and timeline rows (`editor/_inline.html`). Refinements live in the block's panel form, which
+ * holds the WHOLE block: everything edited on the canvas travels in hidden fields of it. Every
  * change posts the panel form with `autosave=1`; the answer carries the re-rendered canvas block,
  * outline row and panel, swapped in unless the creator is typing there. Add, duplicate and
  * delete are plain posts. Fragments come from the server (rendered and escaped by Django) and are
@@ -159,12 +161,156 @@
         mountRich(el, function () { queueBlock(id); });
         return;
       }
-      el.setAttribute('contenteditable', plainMode);
-      el.addEventListener('input', function () { queueBlock(id); });
-      el.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' && !el.matches('.lp-event-desc, .lp-survey-desc')) { e.preventDefault(); el.blur(); }
+      bindPlain(el, id, !el.matches('.lp-event-desc, .lp-survey-desc'));
+    });
+    blk.querySelectorAll('[data-rows]').forEach(function (list) {
+      if (!list.querySelector('[data-row]')) addRow(blk, list, false);
+      list.querySelectorAll('[data-row]').forEach(function (row) { bindRow(row, id); });
+    });
+  }
+
+  function bindPlain(el, id, oneLine) {
+    el.setAttribute('contenteditable', plainMode);
+    el.addEventListener('input', function () { queueBlock(id); });
+    el.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && oneLine) { e.preventDefault(); el.blur(); }
+    });
+    el.addEventListener('blur', function () { if (timers[id]) flushBlock(id); });
+  }
+
+  /* FAQ and timeline rows: edited on the canvas, rebuilt into the panel form's row sink on save. */
+  function bindRow(row, id) {
+    row.querySelectorAll('[data-row-field]').forEach(function (el) {
+      if (el.matches('[data-row-rich]')) {
+        if (typeof Quill === 'undefined' || el._quill) return;
+        var html = el.innerHTML;
+        el.textContent = '';
+        newQuill(el, html, function () { queueBlock(id); });
+      } else {
+        bindPlain(el, id, el.dataset.rowField !== 'phase_body');
+      }
+    });
+  }
+
+  function addRow(blk, list, focus) {
+    var tpl = blk.querySelector('template[data-row-template]');
+    if (!tpl) return null;
+    var row = tpl.content.firstElementChild.cloneNode(true);
+    list.appendChild(row);
+    bindRow(row, blk.dataset.block);
+    if (focus) {
+      var first = row.querySelector('[data-row-field]');
+      if (first) first.focus();
+    }
+    return row;
+  }
+
+  function markPhases(list) {
+    var rows = list.querySelectorAll('[data-row]'), now = -1;
+    rows.forEach(function (r, i) { if (r.classList.contains('is-now')) now = i; });
+    rows.forEach(function (r, i) { r.classList.toggle('is-done', now >= 0 && i < now); });
+  }
+
+  /* Picture, GeoJSON and document uploads: the canvas only picks or receives the file; it goes
+   * into the panel form's hidden file input (DataTransfer) and the block saves at once. */
+  function fileInput(id, name) {
+    var form = blockForm(id);
+    return form && form.querySelector('input[type=file][name="' + name + '"]');
+  }
+
+  function takeFiles(id, name, files) {
+    var input = fileInput(id, name);
+    if (!input || !files || !files.length) return;
+    var dt = new DataTransfer();
+    Array.prototype.slice.call(files, 0, input.multiple ? files.length : 1).forEach(function (f) { dt.items.add(f); });
+    input.files = dt.files;
+    flushBlock(id, true);
+  }
+
+  function initInline() {
+    canvas.addEventListener('click', function (e) {
+      var blk = e.target.closest('.lb-blk');
+      if (!blk) return;
+      var id = blk.dataset.block;
+      var pick = e.target.closest('[data-file-pick]'), zone = e.target.closest('[data-file]');
+      if (pick || (zone && !e.target.closest('button, a, input'))) {
+        var name = pick ? pick.dataset.filePick : zone.dataset.file;
+        var input = fileInput(id, name), z = blk.querySelector('[data-file="' + name + '"]');
+        if (input) {
+          if (z && z.dataset.accept) input.accept = z.dataset.accept;
+          input.click();
+        }
+        return;
+      }
+      var rm = e.target.closest('[data-remove-file]');
+      if (rm) {
+        var form = blockForm(id), flag = form && form.querySelector('[name="remove_' + rm.dataset.removeFile + '"]');
+        if (flag) {
+          flag.value = '1';
+          var fileRow = rm.closest('[data-file-row]');
+          if (fileRow) fileRow.hidden = true;
+          flushBlock(id, true);
+        }
+        return;
+      }
+      var add = e.target.closest('[data-row-add]');
+      if (add) {
+        var list = blk.querySelector('[data-rows]');
+        if (list) addRow(blk, list, true);
+        return;
+      }
+      var x = e.target.closest('[data-row-remove]');
+      if (x) {
+        var row = x.closest('[data-row]'), rows = row && row.parentNode;
+        if (!row) return;
+        row.remove();
+        if (!rows.querySelector('[data-row]')) addRow(blk, rows, false);
+        if (rows.dataset.rows === 'timeline') markPhases(rows);
+        flushBlock(id);
+        return;
+      }
+      var now = e.target.closest('[data-now]');
+      if (now) {
+        var phase = now.closest('[data-row]'), tl = phase.parentNode, on = !phase.classList.contains('is-now');
+        tl.querySelectorAll('[data-row]').forEach(function (o) { o.classList.remove('is-now'); });
+        phase.classList.toggle('is-now', on);
+        markPhases(tl);
+        flushBlock(id);
+      }
+    });
+    canvas.addEventListener('input', function (e) {
+      var el = e.target.closest && e.target.closest('[data-input]'), blk = el && el.closest('.lb-blk');
+      if (blk && el.matches('input[type=url], input:not([type])')) queueBlock(blk.dataset.block);
+    });
+    canvas.addEventListener('change', function (e) {
+      var el = e.target.closest && e.target.closest('[data-input]'), blk = el && el.closest('.lb-blk');
+      if (blk) flushBlock(blk.dataset.block, el.tagName === 'SELECT');
+    });
+    canvas.addEventListener('keydown', function (e) {
+      var el = e.target.closest && e.target.closest('input[data-input]');
+      if (el && e.key === 'Enter') { e.preventDefault(); el.blur(); }
+    });
+    function hasFiles(e) { return e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') >= 0; }
+    ['dragenter', 'dragover'].forEach(function (type) {
+      canvas.addEventListener(type, function (e) {
+        var zone = e.target.closest && e.target.closest('[data-file]');
+        if (!zone || !hasFiles(e)) return;
+        e.preventDefault();
+        zone.classList.add('is-over');
       });
-      el.addEventListener('blur', function () { if (timers[id]) flushBlock(id); });
+    });
+    canvas.addEventListener('dragleave', function (e) {
+      var zone = e.target.closest && e.target.closest('[data-file]');
+      if (zone && !zone.contains(e.relatedTarget)) zone.classList.remove('is-over');
+    });
+    canvas.addEventListener('drop', function (e) {
+      var zone = e.target.closest && e.target.closest('[data-file]');
+      if (!zone || !e.dataTransfer || !e.dataTransfer.files.length) return;
+      e.preventDefault();
+      zone.classList.remove('is-over');
+      var blk = zone.closest('.lb-blk');
+      select(blk.dataset.block, false);
+      takeFiles(blk.dataset.block, zone.dataset.file, e.dataTransfer.files);
     });
   }
 
@@ -219,11 +365,28 @@
   function blockForm(id) { return panel.querySelector('.lb-pane[data-pane="' + id + '"] form.lb-form'); }
   function pageForm() { return panel.querySelector('.lb-page-form'); }
 
-  function renumberPhases(form) {
-    form.querySelectorAll('.lb-rows[data-row-kind=timeline] .lb-row').forEach(function (row, i) {
-      var r = row.querySelector('input[name=current]');
-      if (r) r.value = String(i);
+  function hiddenField(tag, name, value) {
+    var el = document.createElement(tag);
+    el.name = name;
+    if (tag === 'input') el.type = 'hidden'; else el.hidden = true;
+    el.value = value;
+    return el;
+  }
+
+  // The rows on the canvas become the sink's fields, in the order the server zips them.
+  function syncRows(blk, form) {
+    var list = blk.querySelector('[data-rows]'), sink = form.querySelector('.lb-row-sink');
+    if (!list || !sink) return;
+    sink.textContent = '';
+    var now = '';
+    list.querySelectorAll('[data-row]').forEach(function (row, i) {
+      row.querySelectorAll('[data-row-field]').forEach(function (el) {
+        var rich = el.matches('[data-row-rich]');
+        sink.appendChild(hiddenField(rich ? 'textarea' : 'input', el.dataset.rowField, rich ? richValue(el) : plainValue(el)));
+      });
+      if (row.classList.contains('is-now')) now = String(i);
     });
+    if (list.dataset.rows === 'timeline') sink.appendChild(hiddenField('input', 'current', now));
   }
 
   function syncBlock(id) {
@@ -233,8 +396,12 @@
       var input = form.querySelector('[name="' + el.dataset.field + '"]');
       if (input) input.value = el.matches('[data-rich]') ? richValue(el) : plainValue(el);
     });
+    blk.querySelectorAll('[data-input]').forEach(function (el) {
+      var input = form.querySelector('[name="' + el.dataset.input + '"]');
+      if (input) input.value = el.value;
+    });
     form.querySelectorAll('textarea[data-rich]').forEach(function (t) { if (t._host) t.value = richValue(t._host); });
-    renumberPhases(form);
+    syncRows(blk, form);
   }
 
   function bindRichTextarea(t, onChange) {
@@ -264,23 +431,7 @@
         now(t.type === 'file' || t.type === 'checkbox');
       }
     });
-    form.querySelectorAll('textarea[data-rich]').forEach(function (t) { bindRichTextarea(t, later); });
-    var add = form.querySelector('.lb-row-add'), tpl = form.querySelector('template.lb-row-template'),
-        rows = form.querySelector('.lb-rows');
-    if (add && tpl && rows) {
-      add.addEventListener('click', function () {
-        var node = tpl.content.firstElementChild.cloneNode(true);
-        rows.appendChild(node);
-        node.querySelectorAll('textarea[data-rich]').forEach(function (t) { bindRichTextarea(t, later); });
-        var first = node.querySelector('input');
-        if (first) first.focus();
-      });
-    }
-    form.addEventListener('click', function (e) {
-      var rm = e.target.closest('.lb-row-remove');
-      if (!rm) return;
-      if (form.querySelectorAll('.lb-rows .lb-row').length > 1) { rm.closest('.lb-row').remove(); now(); }
-    });
+    form.querySelectorAll('textarea[data-rich]:not([hidden])').forEach(function (t) { bindRichTextarea(t, later); });
   }
 
   function showErrors(form, errors) {
@@ -329,6 +480,7 @@
         status(inflight > 1 ? 'saving' : 'saved');
       } else if (res.status === 422) {
         showErrors(form, res.body.errors);
+        form.querySelectorAll('input[type=file]').forEach(function (i) { i.value = ''; });
         select(id, false);
         status('failed');
       } else {
@@ -579,6 +731,7 @@
   /* ─── start ──────────────────────────────────────────────────────────── */
   canvas.querySelectorAll('.lb-blk').forEach(function (blk) { initBlockEditing(blk); initVisuals(blk); });
   initHero();
+  if (MAY_EDIT) initInline();
   panel.querySelectorAll('.lb-pane').forEach(function (p) {
     initPanelForm(p.querySelector('form.lb-form'), p.dataset.pane);
   });

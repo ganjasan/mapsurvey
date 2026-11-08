@@ -1242,3 +1242,96 @@ class LandingOneClickCreateTest(LandingTestBase):
         self.client.post(reverse('editor_landing_settings', args=[landing.uuid]), {'title': 'Harbour', 'autosave': '1'})
         landing.refresh_from_db()
         self.assertEqual(landing.slug, 'untitled')
+
+
+class LandingInlineEditingTest(LandingTestBase):
+    """Spec `survey-landings`: a block's primary actions happen in the block (change
+    landing-inline-editing; owner rule 2026-11-08)."""
+
+    def setUp(self):
+        super().setUp()
+        self.login(self.editor)
+
+    def builder(self):
+        return self.client.get(self.url('editor_landing')).content.decode()
+
+    def test_empty_image_block_has_a_drop_zone(self):
+        """GIVEN an editor who adds an Image block
+        WHEN the builder renders
+        THEN the block shows a drop zone with a "choose a file" control, the panel's file input is
+             hidden, and no block points to the settings"""
+        for kind in ('image', 'video', 'button', 'faq', 'timeline', 'documents', 'map', 'event', 'survey', 'results'):
+            self.client.post(self.url('editor_landing_block_add'), {'kind': kind, 'empty': '1'})
+        html = self.builder()
+        self.assertIn('data-file="image"', html)
+        self.assertIn('data-file-pick="image"', html)
+        self.assertIn('choose a file', html)
+        self.assertIn('<input type="file" name="image" hidden>', html)
+        self.assertNotIn('in the settings on the right', html)
+        for name in ('url', 'date', 'start', 'end', 'place', 'survey'):
+            self.assertIn(f'data-input="{name}"', html, name)
+
+    def test_faq_edited_in_place(self):
+        """GIVEN an FAQ block with two questions
+        WHEN the builder renders it
+        THEN both rows are editable in the block with a remove control each and an "Add a question"
+             control, and the panel keeps them only as hidden fields"""
+        self.add_block('faq', q=['Who?', 'When?'], a=['<p>Everyone</p>', '<p>In May</p>'])
+        html = self.builder()
+        self.assertEqual(html.count('class="lb-qa" data-row>'), 2 + 1, 'two rows and the template')
+        self.assertIn('data-row-field="q"', html)
+        self.assertIn('data-row-field="a" data-row-rich', html)
+        self.assertEqual(html.count('data-row-remove'), 3)
+        self.assertIn('Add a question', html)
+        self.assertIn('<input type="hidden" name="q" value="Who?">', html)
+        self.assertNotIn('class="form-control form-control-sm" name="q"', html)
+
+    def test_row_still_being_written(self):
+        """GIVEN an FAQ block on a published page
+        WHEN the builder autosaves a second row whose answer came before its question
+        THEN it is saved without an error, and the public page draws only the row with a question"""
+        self.add_block('faq', q=['Who?'], a=['<p>Everyone</p>'])
+        block = self.landing.blocks.get()
+        self.client.post(self.url('editor_landing_publish'), {'action': 'publish'})
+        r = self.client.post(self.url('editor_landing_block_edit', block.pk),
+                             {'q': ['Who?', ''], 'a': ['<p>Everyone</p>', '<p>Half-written</p>'], 'autosave': '1'})
+        self.assertEqual(r.status_code, 200)
+        block.refresh_from_db()
+        self.assertEqual(len(block.data['items']), 2)
+        page = self.client.get('/p/riverside-park-plan/').content.decode()
+        self.assertIn('Who?', page)
+        self.assertNotIn('Half-written', page)
+        r = self.client.post(self.url('editor_landing_block_edit', block.pk),
+                             {'q': [''], 'a': ['<p>Only an answer</p>'], 'autosave': '1'})
+        self.assertEqual(r.status_code, 200)
+        block.refresh_from_db()
+        self.assertFalse(landings.is_complete(block))
+
+    def test_timeline_now_from_the_canvas(self):
+        """GIVEN a timeline block
+        WHEN the builder posts the phases with current=1 (the second marked Now)
+        THEN the first phase is done and the second is now on the canvas"""
+        self.add_block('timeline', phase_title=['Survey', 'Design'], phase_when=['May', 'June'], phase_body=['', ''])
+        block = self.landing.blocks.get()
+        r = self.client.post(self.url('editor_landing_block_edit', block.pk),
+                             {'phase_title': ['Survey', 'Design'], 'phase_when': ['May', 'June'],
+                              'phase_body': ['', ''], 'current': '1', 'autosave': '1'})
+        self.assertIn('lb-phase is-done', r.json()['block'])
+        self.assertIn('lb-phase is-now', r.json()['block'])
+
+    def test_secondary_options_stay_in_settings(self):
+        """GIVEN a map block and an event block
+        WHEN the builder renders their settings
+        THEN the map panel offers colour and base map and no visible GeoJSON upload, and the event
+             panel keeps the time zone, seats and registration switch while date and place are hidden"""
+        self.client.post(self.url('editor_landing_block_add'), {'kind': 'map', 'empty': '1'})
+        self.client.post(self.url('editor_landing_block_add'), {'kind': 'event', 'empty': '1'})
+        html = self.builder()
+        self.assertIn('name="color"', html)
+        self.assertIn('name="basemap"', html)
+        self.assertIn('<input type="file" name="geojson_file" hidden>', html)
+        self.assertIn('data-file="geojson_file"', html)
+        self.assertIn('name="tz"', html)
+        self.assertIn('name="capacity"', html)
+        self.assertIn('<input type="hidden" name="date" value="">', html)
+        self.assertIn('<input type="hidden" name="place" value="">', html)

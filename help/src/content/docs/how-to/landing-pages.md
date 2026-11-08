@@ -20,7 +20,8 @@ Landing pages are part of **Pro**. A workspace on the Pro trial can create one.
 The middle of the builder is the page itself, as residents will see it.
 
 - **Click any text to change it** — the title, the summary, a heading, a paragraph, a caption, a button label. Select words for bold, italic, links and lists.
-- **Click a block** to see its other settings on the right: the survey a card shows, the phases of a timeline, the files, the date of an event. With nothing selected, the right side holds the page settings: cover picture, address, language, visibility and the surveys on the page.
+- **Fill a block in where it is.** Drop a picture, a GeoJSON file or documents onto the block (or click to choose them), paste a video or button link into the field under it, type the questions of an FAQ and the phases of a timeline straight into the rows, set an event's date, time and place above its card, pick the survey of a card or the question of a results block from the list in the block.
+- **Click a block** to see its other settings on the right — the finer points: picture description, button style, map colour and style, chart type, time zone and seats of an event. With nothing selected, the right side holds the page settings: cover picture, address, language, visibility and the surveys on the page.
 - **Point between two blocks** and press **+** to add a block there, or use **Add block** at the bottom.
 - **Point at a block** for its toolbar: drag to move, up and down, duplicate, settings, delete. The list on the left shows every block; click one to jump to it, or drag to reorder.
 - **Everything saves by itself.** The top bar says *Saving…* and *All changes saved*. A block you have not finished (a picture without the picture, an event without a time) stays in the builder and is not shown on the page until it is complete.
@@ -32,12 +33,12 @@ Press **+** or **Add block** and choose what to add:
 
 - **Text** — formatted text: what the project is, why residents are asked, what happens with their answers.
 - **FAQ** — questions and answers that open on a tap.
-- **Timeline** — the phases of the engagement with their dates. Tick **Now** on the phase you are in; earlier phases show as done.
+- **Timeline** — the phases of the engagement with their dates. Press **Now** on the phase you are in; earlier phases show as done.
 - **Image** — a picture with a description for screen readers and an optional caption.
 - **Video** — a YouTube or Vimeo link.
 - **Survey card** — one of your surveys. The card follows the survey: *Open* with a **Take part** button, *Opens on …* before its period starts, *Coming soon* while it is a draft, and *Closed* with a link to its [public results](/how-to/share-results-publicly/) once you publish them.
 - **Button** — a link to anything else: the draft plan, the council's page, an event sign-up.
-- **Documents** — files to download: the input summary, the open-house boards, the draft plan. PDF, Word, Excel, PowerPoint, OpenDocument, CSV or plain text, up to 25 MB each and 20 per block. Each file gets a title (the file name to start with) that you can change; tick **Remove** to take one off.
+- **Documents** — files to download: the input summary, the open-house boards, the draft plan. PDF, Word, Excel, PowerPoint, OpenDocument, CSV or plain text, up to 25 MB each and 20 per block. Each file gets a title (the file name to start with) that you can change on the block; **×** takes one off.
 - **Results** — what residents said in a round: a chart of a choice, rating or number question, or a map (markers, heatmap or clusters) of a map question, from any survey of your workspace. Answers are counted as on the survey's [public results page](/how-to/share-results-publicly/): only reviewed, non-deleted responses, small groups masked, written answers never shown. The block updates by itself as answers come in.
 - **Map** — the project area on a map. Upload a GeoJSON file with the boundary, a route or a few points (up to 1 MB; export it from QGIS or draw it on [geojson.io](https://geojson.io)), pick a colour and one of your [map styles](/how-to/map-styles/). A shape's `name` shows when someone points at it.
 
