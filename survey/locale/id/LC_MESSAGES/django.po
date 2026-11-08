@@ -11757,3 +11757,65 @@ msgstr "Pertanyaan telah dihapus dari survei; blok tidak ditampilkan."
 #: landing-builder-redesign (#594)
 msgid "Not shown on the page until it is filled in."
 msgstr "Tidak ditampilkan di halaman sampai diisi."
+
+#: landing-builder-redesign (#594)
+#, python-format
+msgid "Remove %(name)s?"
+msgstr "Hapus %(name)s?"
+
+#: landing-builder-redesign (#594)
+msgid "Names and emails are deleted now. The registrants get no message."
+msgstr "Nama dan email langsung dihapus. Pendaftar tidak menerima pesan apa pun."
+
+#: landing-builder-redesign (#594)
+#, python-format
+msgid "Delete “%(title)s”?"
+msgstr "Hapus “%(title)s”?"
+
+#: landing-builder-redesign (#594)
+msgid "Its address stops working, and links and QR codes already printed lead nowhere."
+msgstr "Alamatnya tidak akan berfungsi lagi, dan tautan serta kode QR yang sudah dicetak tidak mengarah ke mana pun."
+
+#: landing-builder-redesign (#594)
+msgid "Blocks, files and event registrations are deleted with it. Your surveys stay."
+msgstr "Blok, berkas, dan pendaftaran acara ikut dihapus. Survei Anda tetap ada."
+
+#: landing-builder-redesign (#594)
+msgid "The block and everyone registered for the event are removed from the page. This cannot be undone."
+msgstr "Blok dan semua pendaftar acara dihapus dari halaman. Tindakan ini tidak dapat dibatalkan."
+
+#: landing-builder-redesign (#594)
+msgid "The block and its files are removed from the page. This cannot be undone."
+msgstr "Blok dan berkasnya dihapus dari halaman. Tindakan ini tidak dapat dibatalkan."
+
+#: landing-builder-redesign (#594)
+msgid "The block is removed from the page. This cannot be undone."
+msgstr "Blok dihapus dari halaman. Tindakan ini tidak dapat dibatalkan."
+
+#: landing-builder-redesign (#594)
+msgid "Write directly on the page; the toolbar above the text sets headings, bold, lists, links and alignment."
+msgstr "Tulis langsung di halaman; bilah alat di atas teks mengatur judul, tebal, daftar, tautan, dan perataan."
+
+#: landing-builder-redesign (#594)
+msgid "Applies to the whole page"
+msgstr "Berlaku untuk seluruh halaman"
+
+#: landing-builder-redesign (#594)
+msgid "Shown behind the title and when the link is shared. JPEG, PNG, WebP or GIF, up to 5 MB."
+msgstr "Ditampilkan di belakang judul dan saat tautan dibagikan. JPEG, PNG, WebP, atau GIF, hingga 5 MB."
+
+#: landing-builder-redesign (#594)
+msgid "Address and language"
+msgstr "Alamat dan bahasa"
+
+#: landing-builder-redesign (#594)
+msgid "Lowercase letters, digits and dashes. Settle it before you print it."
+msgstr "Huruf kecil, angka, dan tanda hubung. Tetapkan sebelum Anda mencetaknya."
+
+#: landing-builder-redesign (#594)
+msgid "The language of the page's buttons and labels."
+msgstr "Bahasa tombol dan label halaman."
+
+#: landing-builder-redesign (#594)
+msgid "Settings of this block"
+msgstr "Pengaturan blok ini"

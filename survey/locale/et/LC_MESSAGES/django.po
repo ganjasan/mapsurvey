@@ -11733,3 +11733,65 @@ msgstr "Küsimus eemaldati küsitlusest; plokki ei kuvata."
 #: landing-builder-redesign (#594)
 msgid "Not shown on the page until it is filled in."
 msgstr "Lehel ei kuvata enne, kui see on täidetud."
+
+#: landing-builder-redesign (#594)
+#, python-format
+msgid "Remove %(name)s?"
+msgstr "Kas eemaldada %(name)s?"
+
+#: landing-builder-redesign (#594)
+msgid "Names and emails are deleted now. The registrants get no message."
+msgstr "Nimed ja e-posti aadressid kustutatakse kohe. Registreerunud ei saa teadet."
+
+#: landing-builder-redesign (#594)
+#, python-format
+msgid "Delete “%(title)s”?"
+msgstr "Kas kustutada „%(title)s“?"
+
+#: landing-builder-redesign (#594)
+msgid "Its address stops working, and links and QR codes already printed lead nowhere."
+msgstr "Selle aadress lakkab töötamast ning lingid ja juba prinditud QR-koodid ei vii enam kuhugi."
+
+#: landing-builder-redesign (#594)
+msgid "Blocks, files and event registrations are deleted with it. Your surveys stay."
+msgstr "Plokid, failid ja ürituste registreeringud kustutatakse koos sellega. Teie küsitlused jäävad alles."
+
+#: landing-builder-redesign (#594)
+msgid "The block and everyone registered for the event are removed from the page. This cannot be undone."
+msgstr "Plokk ja kõik ürituse registreeringud eemaldatakse lehelt. Seda ei saa tagasi võtta."
+
+#: landing-builder-redesign (#594)
+msgid "The block and its files are removed from the page. This cannot be undone."
+msgstr "Plokk ja selle failid eemaldatakse lehelt. Seda ei saa tagasi võtta."
+
+#: landing-builder-redesign (#594)
+msgid "The block is removed from the page. This cannot be undone."
+msgstr "Plokk eemaldatakse lehelt. Seda ei saa tagasi võtta."
+
+#: landing-builder-redesign (#594)
+msgid "Write directly on the page; the toolbar above the text sets headings, bold, lists, links and alignment."
+msgstr "Kirjutage otse lehele; teksti kohal olev tööriistariba määrab pealkirjad, paksu kirja, loendid, lingid ja joonduse."
+
+#: landing-builder-redesign (#594)
+msgid "Applies to the whole page"
+msgstr "Kehtib kogu lehele"
+
+#: landing-builder-redesign (#594)
+msgid "Shown behind the title and when the link is shared. JPEG, PNG, WebP or GIF, up to 5 MB."
+msgstr "Kuvatakse pealkirja taustal ja lingi jagamisel. JPEG, PNG, WebP või GIF, kuni 5 MB."
+
+#: landing-builder-redesign (#594)
+msgid "Address and language"
+msgstr "Aadress ja keel"
+
+#: landing-builder-redesign (#594)
+msgid "Lowercase letters, digits and dashes. Settle it before you print it."
+msgstr "Väiketähed, numbrid ja sidekriipsud. Otsustage see enne printimist."
+
+#: landing-builder-redesign (#594)
+msgid "The language of the page's buttons and labels."
+msgstr "Lehe nuppude ja siltide keel."
+
+#: landing-builder-redesign (#594)
+msgid "Settings of this block"
+msgstr "Selle ploki seaded"

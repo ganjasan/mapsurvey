@@ -9850,3 +9850,65 @@ msgstr "Сохранение…"
 #: landing-builder-redesign (#594)
 msgid "Copied"
 msgstr "Скопировано"
+
+#: landing-builder-redesign (#594)
+#, python-format
+msgid "Remove %(name)s?"
+msgstr "Удалить: %(name)s?"
+
+#: landing-builder-redesign (#594)
+msgid "Names and emails are deleted now. The registrants get no message."
+msgstr "Имена и email удаляются сразу. Записавшиеся не получат никакого сообщения."
+
+#: landing-builder-redesign (#594)
+#, python-format
+msgid "Delete “%(title)s”?"
+msgstr "Удалить «%(title)s»?"
+
+#: landing-builder-redesign (#594)
+msgid "Its address stops working, and links and QR codes already printed lead nowhere."
+msgstr "Её адрес перестанет работать, а ссылки и уже напечатанные QR-коды будут вести в никуда."
+
+#: landing-builder-redesign (#594)
+msgid "Blocks, files and event registrations are deleted with it. Your surveys stay."
+msgstr "Блоки, файлы и записи на события удаляются вместе с ней. Ваши опросы останутся."
+
+#: landing-builder-redesign (#594)
+msgid "The block and everyone registered for the event are removed from the page. This cannot be undone."
+msgstr "Блок и все записи на событие удаляются со страницы. Это нельзя отменить."
+
+#: landing-builder-redesign (#594)
+msgid "The block and its files are removed from the page. This cannot be undone."
+msgstr "Блок и его файлы удаляются со страницы. Это нельзя отменить."
+
+#: landing-builder-redesign (#594)
+msgid "The block is removed from the page. This cannot be undone."
+msgstr "Блок удаляется со страницы. Это нельзя отменить."
+
+#: landing-builder-redesign (#594)
+msgid "Write directly on the page; the toolbar above the text sets headings, bold, lists, links and alignment."
+msgstr "Пишите прямо на странице; панель над текстом задаёт заголовки, жирный шрифт, списки, ссылки и выравнивание."
+
+#: landing-builder-redesign (#594)
+msgid "Applies to the whole page"
+msgstr "Действует для всей страницы"
+
+#: landing-builder-redesign (#594)
+msgid "Shown behind the title and when the link is shared. JPEG, PNG, WebP or GIF, up to 5 MB."
+msgstr "Показывается за заголовком и при отправке ссылки. JPEG, PNG, WebP или GIF, до 5 МБ."
+
+#: landing-builder-redesign (#594)
+msgid "Address and language"
+msgstr "Адрес и язык"
+
+#: landing-builder-redesign (#594)
+msgid "Lowercase letters, digits and dashes. Settle it before you print it."
+msgstr "Строчные латинские буквы, цифры и дефисы. Определитесь с ним до печати."
+
+#: landing-builder-redesign (#594)
+msgid "The language of the page's buttons and labels."
+msgstr "Язык кнопок и подписей страницы."
+
+#: landing-builder-redesign (#594)
+msgid "Settings of this block"
+msgstr "Настройки этого блока"

@@ -136,17 +136,23 @@ def editor_landing_create(request):
     membership = get_org_membership(request.user, org) if org is not None else None
     if not _can_act(membership):
         return HttpResponseForbidden()
-    title = landings.clean_title(request.POST.get('title')) or _('Untitled landing page')
+    # "New page" is one click (owner, 2026-11-08): no title asked first. The page opens with its
+    # placeholder title selected on the canvas; the address follows the first real title
+    # (landings.PLACEHOLDER_SLUG, see editor_landing_settings).
+    given = landings.clean_title(request.POST.get('title'))
+    title = given or _('Untitled landing page')
     if not billing_trial.use(org, landings.FEATURE, actor=request.user):
         return feature_required(request, org, landings.FEATURE)
     billing_trial.flash_started(request, org)
     landing = Landing.objects.create(
-        organization=org, title=title, slug=landings.unique_slug(title), created_by=request.user,
+        organization=org, title=title, created_by=request.user,
+        slug=landings.unique_slug(given or landings.PLACEHOLDER_SLUG),
         language=(request.LANGUAGE_CODE or 'en')[:2] if hasattr(request, 'LANGUAGE_CODE') else 'en',
     )
     product_events.emit('landing_created', request.user.pk, {
         'organization_id': org.pk, 'landing_id': landing.pk})
-    return _back(landing)
+    url = reverse('editor_landing', args=[landing.uuid])
+    return redirect(url if given else url + '?new=1')
 
 
 # ─── builder ──────────────────────────────────────────────────────────────────
@@ -237,6 +243,9 @@ def editor_landing_settings(request, uuid):
     if not title:
         errors['title'] = _('Give the page a title.')
     slug = (post.get('slug') or '').strip().lower() if 'slug' in post else landing.slug
+    if ('slug' not in post or slug == landing.slug) and title != landing.title \
+            and landings.has_placeholder_slug(landing):
+        slug = landings.unique_slug(title)
     slug_error = landings.slug_error(slug, landing) if slug != landing.slug else ''
     if slug_error:
         errors['slug'] = slug_error

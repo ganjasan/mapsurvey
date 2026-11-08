@@ -1174,3 +1174,71 @@ class LandingCanvasBuilderTest(LandingTestBase):
         self.assertEqual((self.landing.visibility, self.landing.title), ('unlisted', 'Riverside Park plan'))
         r = self.client.post(self.url('editor_landing_settings'), {'slug': 'Edit', 'autosave': '1'})
         self.assertEqual(r.status_code, 422)
+
+
+class LandingConfirmDialogTest(LandingTestBase):
+    """Destructive posts ask through the app's delete dialog, never the browser's confirm()."""
+
+    def test_builder_and_attendees_use_the_app_dialog(self):
+        """GIVEN a landing with an event block
+        WHEN the builder and the attendee list render
+        THEN both carry the #lb-confirm dialog, the delete forms opt in with data-confirm,
+             and no page calls the browser's confirm()"""
+        from django.contrib.staticfiles import finders
+        self.login(self.editor)
+        self.client.post(self.url('editor_landing_block_add'), {'kind': 'event', 'empty': '1'})
+        block = self.landing.blocks.get()
+        builder = self.client.get(self.url('editor_landing')).content.decode()
+        attendees = self.client.get(reverse('editor_landing_attendees', args=[self.landing.uuid, block.pk])).content.decode()
+        for html in (builder, attendees):
+            self.assertIn('id="lb-confirm"', html)
+            self.assertIn('js/landing_confirm.', html)
+            self.assertNotIn('confirm(', html)
+        self.assertIn('everyone registered for the event', builder)
+        for name in ('js/landing_builder.js', 'js/landing_confirm.js'):
+            with open(finders.find(name)) as fh:
+                self.assertNotIn('window.confirm', fh.read())
+
+
+class LandingOneClickCreateTest(LandingTestBase):
+    """"New page" is one click: no title first; the address follows the first real title."""
+
+    def test_new_page_without_a_title(self):
+        """GIVEN the landing list
+        WHEN an editor presses New page (no title posted)
+        THEN a draft with the placeholder title and an "untitled" address opens with ?new=1,
+             and the list page has no title field"""
+        self.login(self.editor)
+        self.assertNotContains(self.client.get(reverse('editor_landings')), 'name="title"')
+        r = self.client.post(reverse('editor_landing_create'))
+        landing = Landing.objects.exclude(pk=self.landing.pk).get()
+        self.assertTrue(r['Location'].endswith('?new=1'))
+        self.assertEqual(landing.title, 'Untitled landing page')
+        self.assertEqual(landing.slug, 'untitled')
+
+    def test_address_follows_the_first_title_until_published(self):
+        """GIVEN a page created with New page
+        WHEN its title is autosaved, and again after publishing
+        THEN the address follows the first title and stays once the page is published"""
+        self.login(self.editor)
+        self.client.post(reverse('editor_landing_create'))
+        landing = Landing.objects.exclude(pk=self.landing.pk).get()
+        url = reverse('editor_landing_settings', args=[landing.uuid])
+        self.client.post(url, {'title': 'Old Town square', 'autosave': '1'})
+        landing.refresh_from_db()
+        self.assertEqual(landing.slug, 'old-town-square')
+        self.client.post(url, {'title': 'Old Town square, phase 2', 'autosave': '1'})
+        landing.refresh_from_db()
+        self.assertEqual(landing.slug, 'old-town-square', 'a real address is not renamed again')
+
+    def test_published_placeholder_keeps_its_address(self):
+        """GIVEN a page published while still called "untitled"
+        WHEN its title changes
+        THEN the address stays: printed links must keep working"""
+        self.login(self.editor)
+        self.client.post(reverse('editor_landing_create'))
+        landing = Landing.objects.exclude(pk=self.landing.pk).get()
+        self.client.post(reverse('editor_landing_publish', args=[landing.uuid]), {'action': 'publish'})
+        self.client.post(reverse('editor_landing_settings', args=[landing.uuid]), {'title': 'Harbour', 'autosave': '1'})
+        landing.refresh_from_db()
+        self.assertEqual(landing.slug, 'untitled')

@@ -11,9 +11,9 @@ Landing pages are part of **Pro**. A workspace on the Pro trial can create one.
 
 ## Create a page
 
-1. Open **Landing pages** in the sidebar.
-2. Type a title, for example *Riverside Park plan*, and press **New page**. The page opens in the builder as a draft.
-3. Under **Page**, add a summary of one or two sentences and a cover picture. The summary is also what people see when the link is shared.
+1. Open **Landing pages** in the sidebar and press **New page**. The page opens in the builder as a draft, with its title selected.
+2. Type the title over it, for example *Riverside Park plan*. Until you publish, the page's address follows the title.
+3. Click the line under the title and write a summary of one or two sentences; add a cover picture in **Page settings** on the right. The summary is also what people see when the link is shared.
 
 ## How the builder works
 

@@ -12,7 +12,7 @@ from the canvas `[data-field]` elements, so this form is always the whole block 
 
   {% if kind == 'text' %}
   <textarea name="body" hidden>{{ data.body|default:'' }}</textarea>
-  <p class="small text-muted mb-0">{% trans "Write directly on the page. Select text for bold, italic, links and lists." %}</p>
+  <p class="lb-hint mt-0 mb-0">{% trans "Write directly on the page; the toolbar above the text sets headings, bold, lists, links and alignment." %}</p>
   {% if errors.body %}<div class="text-danger small">{{ errors.body }}</div>{% endif %}
 
   {% elif kind == 'image' %}

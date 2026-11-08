@@ -14,7 +14,7 @@ builder (it extends base.html): it is passed explicitly into the include below.{
     <form method="post" action="{% url 'editor_landing_block_duplicate' landing.uuid b.pk %}">{% csrf_token %}
       <button type="submit" title="{% trans 'Duplicate' %}" aria-label="{% trans 'Duplicate' %}"><i class="far fa-clone" aria-hidden="true"></i></button></form>
     <button type="button" data-select-target="{{ b.pk }}" title="{% trans 'Settings' %}" aria-label="{% trans 'Settings' %}"><i class="fas fa-sliders-h" aria-hidden="true"></i></button>
-    <form method="post" action="{% url 'editor_landing_block_delete' landing.uuid b.pk %}" data-confirm="{% trans 'Delete this block?' %}">{% csrf_token %}
+    <form method="post" action="{% url 'editor_landing_block_delete' landing.uuid b.pk %}" data-confirm="{% trans 'Delete this block?' %}" data-confirm-action="{% trans 'Delete block' %}" data-confirm-note="{% if b.kind == 'event' %}{% trans 'The block and everyone registered for the event are removed from the page. This cannot be undone.' %}{% elif b.kind == 'documents' %}{% trans 'The block and its files are removed from the page. This cannot be undone.' %}{% else %}{% trans 'The block is removed from the page. This cannot be undone.' %}{% endif %}">{% csrf_token %}
       <button type="submit" class="lb-del" title="{% trans 'Delete block' %}" aria-label="{% trans 'Delete block' %}"><i class="far fa-trash-alt" aria-hidden="true"></i></button></form>
   </div>
   {% endif %}

@@ -16,11 +16,9 @@ state; New page is a POST that creates a draft and opens the builder.{% endcomme
     <div class="d-flex align-items-center" style="gap:.75rem;">
       {% if can_act %}
         {% if may_create %}
-        <form method="post" action="{% url 'editor_landing_create' %}" class="d-flex mb-0" style="gap:.4rem;">
+        <form method="post" action="{% url 'editor_landing_create' %}" class="mb-0">
           {% csrf_token %}
-          <input type="text" name="title" class="form-control form-control-sm" maxlength="120" required
-                 placeholder="{% trans 'Page title, e.g. Riverside Park plan' %}" aria-label="{% trans 'Page title' %}" style="min-width:240px;">
-          <button type="submit" class="btn btn-sm btn-primary text-nowrap" id="landing-new">{% trans "New page" %}</button>
+          <button type="submit" class="btn btn-sm btn-primary text-nowrap" id="landing-new"><i class="fas fa-plus" aria-hidden="true"></i> {% trans "New page" %}</button>
         </form>
         {% else %}
         <a class="btn btn-sm btn-outline-primary" href="{% url 'org_billing' org.slug %}">{% trans "Upgrade to Pro to create pages" %}</a>

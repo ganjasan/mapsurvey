@@ -4,7 +4,7 @@
 {% block title %}{{ landing.title }} — {% trans "Landing pages" %}{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.bubble.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css">
@@ -124,6 +124,7 @@ workspace (may_edit false).{% endcomment %}
 </div>
 
 {% if may_edit %}{% include "landings/editor/_library.html" %}{% endif %}
+{% include "landings/editor/_confirm_modal.html" %}
 <datalist id="lb-timezones">{% for z in timezones %}<option value="{{ z }}">{% endfor %}</datalist>
 {{ basemap_table|json_script:"lb-basemaps" }}
 <script>window.LB_MAPBOX_TOKEN = '{{ MAPBOX_ACCESS_TOKEN|escapejs }}';
@@ -133,5 +134,6 @@ window.LB_TEXT = {saving: '{% trans "Saving…" as t %}{{ t|escapejs }}', saved:
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" crossorigin="anonymous"></script>
 <script src="{% static 'js/public_results_render.js' %}"></script>
+<script src="{% static 'js/landing_confirm.js' %}"></script>
 <script src="{% static 'js/landing_builder.js' %}"></script>
 {% endblock %}
