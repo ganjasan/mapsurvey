@@ -10,4 +10,4 @@
 - [x] 2.1 Tests for the scenarios; existing tests green
 - [x] 2.2 Help wording, translations
 - [x] 2.3 Full suite, validate, dev check per kind
-- [ ] 2.4 PR into `epic/landing-pages`, merge, archive
+- [x] 2.4 PR into `epic/landing-pages`, merge, archive
