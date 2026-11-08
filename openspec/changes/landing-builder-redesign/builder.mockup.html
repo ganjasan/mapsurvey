@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Landing builder — mockup v2</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<style>
+:root{--ink:#1f2933;--muted:#5f6b76;--line:#e4e7eb;--soft:#f5f7fa;--accent:#2f6fb0;--accent-soft:#e8f0fa;--green:#1f8a4c;--rail:#fbfbfc;--shadow:0 8px 30px rgba(20,30,50,.10);--r:10px}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:#eceff3;display:grid;grid-template-rows:52px 1fr;height:100vh;overflow:hidden}
+button{font:inherit;cursor:pointer}
+/* ─── top bar ─── */
+.top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;background:#fff;border-bottom:1px solid var(--line);padding:0 14px;gap:12px}
+.top .left{display:flex;align-items:center;gap:12px;min-width:0}
+.top .back{color:var(--muted);text-decoration:none;font-size:13px;display:flex;align-items:center;gap:6px}
+.top .title{font-weight:600;font-size:15px;outline:none;border-radius:6px;padding:3px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:360px}
+.top .title:hover,.top .title:focus{background:var(--soft)}
+.badge{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;border-radius:999px;padding:3px 9px;background:#eef0f3;color:var(--muted)}
+.badge.pub{background:#e4f5ea;color:var(--green)}
+.seg{display:inline-flex;background:var(--soft);border-radius:8px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;border-radius:6px;padding:5px 10px;color:var(--muted)}
+.seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.top .right{display:flex;align-items:center;justify-content:flex-end;gap:10px}
+.saved{color:var(--muted);font-size:12.5px;display:flex;align-items:center;gap:6px}
+.saved i{color:var(--green)}
+.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 12px;color:var(--ink);display:inline-flex;align-items:center;gap:7px}
+.btn:hover{background:var(--soft)}
+.btn.primary{background:var(--green);border-color:var(--green);color:#fff;font-weight:600}
+.btn.primary:hover{filter:brightness(1.06);background:var(--green)}
+/* ─── workspace ─── */
+.work{display:grid;grid-template-columns:248px 1fr 340px;min-height:0}
+.rail{background:var(--rail);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.rail .tabs{display:flex;border-bottom:1px solid var(--line);padding:0 10px}
+.rail .tabs button{border:0;background:none;padding:12px 10px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.rail .tabs button.on{color:var(--ink);border-color:var(--accent);font-weight:600}
+.outline{padding:10px;overflow:auto;flex:1}
+.outline .item{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:7px;color:var(--ink);cursor:pointer;font-size:13.5px}
+.outline .item:hover{background:#eef1f5}
+.outline .item.on{background:var(--accent-soft);color:var(--accent)}
+.outline .item i.k{width:18px;text-align:center;color:var(--muted);font-size:12px}
+.outline .item.on i.k{color:var(--accent)}
+.outline .item .h{margin-left:auto;color:#c3c9d0;opacity:0;cursor:grab}
+.outline .item:hover .h{opacity:1}
+.outline .item .warn{margin-left:auto;color:#d98a06;font-size:12px}
+.outline .sub{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding:14px 8px 4px}
+.rail .foot{padding:10px;border-top:1px solid var(--line)}
+.rail .foot .btn{width:100%;justify-content:center;border-style:dashed;color:var(--accent)}
+/* ─── canvas ─── */
+.canvas{overflow:auto;padding:28px 24px 80px;position:relative}
+.frame{margin:0 auto;background:#fff;border-radius:14px;box-shadow:var(--shadow);max-width:860px;transition:max-width .25s;position:relative;min-height:600px}
+.frame.mobile{max-width:390px}
+.frame.mobile .hero h1{font-size:30px}
+.frame.mobile .wrap{padding:0 18px}
+.wrap{max-width:720px;margin:0 auto;padding:0 32px}
+.hero{background:var(--soft);border-radius:14px 14px 0 0;padding:44px 0 34px;position:relative}
+.hero .org{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+.hero h1{margin:0;font-size:38px;line-height:1.15}
+.hero p{margin:12px 0 0;font-size:18px;color:#36424e;max-width:600px}
+.hero .cover-hint{position:absolute;top:14px;right:14px}
+.ghost{border:1px dashed #c6ccd3;background:rgba(255,255,255,.6);color:var(--muted);border-radius:8px;padding:6px 10px;font-size:12.5px;display:inline-flex;gap:6px;align-items:center}
+.ghost:hover{border-color:var(--accent);color:var(--accent)}
+/* editable text */
+[contenteditable]{outline:none;border-radius:4px}
+[contenteditable]:hover{box-shadow:0 0 0 1px #cfd8e3}
+[contenteditable]:focus{box-shadow:0 0 0 2px var(--accent)}
+/* blocks */
+.blocks{padding:8px 0 40px}
+.blk{position:relative;padding:22px 0;scroll-margin-top:60px}
+.blk::before{content:"";position:absolute;inset:8px -14px;border:1.5px solid transparent;border-radius:10px;pointer-events:none;transition:border-color .12s}
+.blk:hover::before{border-color:#c8d6e8}
+.blk.on::before{border-color:var(--accent)}
+.blk h2{font-size:22px;margin:0 0 10px}
+.blk .lead{color:#36424e;margin:0}
+.blk .lead+.lead{margin-top:10px}
+.tag{position:absolute;top:-4px;left:-14px;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;background:var(--accent);color:#fff;border-radius:6px 6px 6px 0;padding:2px 8px;opacity:0;transform:translateY(4px);transition:.12s;pointer-events:none}
+.blk:hover .tag,.blk.on .tag{opacity:1;transform:none}
+.tools{position:absolute;top:-6px;right:-14px;display:flex;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.10);opacity:0;transform:translateY(4px);transition:.12s;z-index:5}
+.blk:hover .tools,.blk.on .tools{opacity:1;transform:none}
+.tools button{border:0;background:none;width:32px;height:30px;color:var(--muted);border-right:1px solid var(--line)}
+.tools button:last-child{border-right:0;color:#c0392b}
+.tools button:hover{background:var(--soft);color:var(--ink)}
+.tools button.grab{cursor:grab}
+/* insertion line */
+.ins{height:18px;position:relative;display:flex;align-items:center;justify-content:center}
+.ins::before{content:"";position:absolute;left:-14px;right:-14px;top:50%;border-top:2px solid var(--accent);opacity:0;transition:.12s}
+.ins button{border:1px solid var(--accent);background:#fff;color:var(--accent);width:26px;height:26px;border-radius:50%;opacity:0;transition:.12s;display:grid;place-items:center;position:relative;z-index:2;font-size:12px}
+.ins:hover::before,.ins:hover button{opacity:1}
+/* block visuals */
+.card{border:1px solid var(--line);border-radius:12px;padding:18px;background:var(--soft)}
+.card.open{border-color:var(--accent);background:#f0f6fc}
+.state{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.card.open .state{color:var(--accent)}
+.card .name{font-size:19px;font-weight:700;margin:3px 0 4px}
+.card .desc{color:var(--muted);margin:0 0 12px}
+.cta{display:inline-block;background:var(--accent);color:#fff;border-radius:8px;padding:9px 18px;font-weight:600;text-decoration:none}
+.cta.outline{background:transparent;color:var(--accent);border:2px solid var(--accent)}
+.tl{list-style:none;margin:0;padding:0 0 0 20px;border-left:3px solid var(--line)}
+.tl li{position:relative;padding:0 0 16px 14px}
+.tl li::before{content:"";position:absolute;left:-30px;top:5px;width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid var(--line)}
+.tl li.done::before{background:var(--accent);border-color:var(--accent)}
+.tl li.now::before{border-color:var(--accent);box-shadow:0 0 0 4px rgba(47,111,176,.18)}
+.tl .w{font-size:12.5px;color:var(--muted)}
+.tl .t{font-weight:600}
+.tl li.done .t{color:var(--muted)}
+.now-pill{background:var(--accent);color:#fff;border-radius:10px;padding:0 7px;font-size:11px;margin-left:4px}
+.map{height:240px;border-radius:10px;background:linear-gradient(135deg,#e9f1e4,#d8e6f3 60%,#f3e9d8);position:relative;overflow:hidden}
+.map .poly{position:absolute;left:28%;top:18%;width:40%;height:58%;border:3px solid var(--accent);background:rgba(47,111,176,.15);clip-path:polygon(10% 0,100% 12%,88% 100%,0 80%)}
+.docs{list-style:none;margin:0;padding:0}
+.docs li{display:grid;grid-template-columns:auto 1fr;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);align-items:center}
+.docs .ext{background:var(--accent);color:#fff;font-size:11px;font-weight:700;border-radius:4px;padding:6px;min-width:40px;text-align:center}
+.docs .t{font-weight:600}
+.docs .m{font-size:13px;color:var(--muted)}
+.chart{display:grid;grid-template-columns:110px 1fr;gap:8px 10px;align-items:center;font-size:13px}
+.chart .bar{height:22px;background:#4f46e5;border-radius:4px}
+.event{border:1px solid var(--line);border-radius:12px;padding:18px}
+.event .d{font-size:19px;font-weight:700}
+.event .t{color:var(--muted)}
+.event form{display:grid;gap:8px;margin-top:12px;max-width:380px}
+.event input{font:inherit;padding:8px 10px;border:1px solid #c9ced4;border-radius:8px}
+.event .consent{font-size:12.5px;color:var(--muted);display:flex;gap:8px}
+.end-add{margin:10px 0 0;border:1.5px dashed #c6ccd3;border-radius:12px;padding:18px;text-align:center;color:var(--muted);cursor:pointer;background:#fff}
+.end-add:hover{border-color:var(--accent);color:var(--accent);background:#f7faff}
+/* ─── right panel ─── */
+.panel{background:#fff;border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.pane{display:flex;flex-direction:column;min-height:0;height:100%}
+.pane[hidden]{display:none}
+.panel .head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .head .kind{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.panel .head h3{margin:0;font-size:15px}
+.panel .head .x{margin-left:auto;border:0;background:none;color:var(--muted);font-size:16px}
+.panel .body{padding:14px 16px;overflow:auto;flex:1}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:4px}
+.field input,.field select,.field textarea{width:100%;font:inherit;padding:8px 10px;border:1px solid #d5dae0;border-radius:8px;background:#fff}
+.field textarea{min-height:70px;resize:vertical}
+.field .hint,.hint{font-size:12px;color:var(--muted);margin-top:4px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sw{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--line)}
+.sw small{display:block;color:var(--muted);font-size:12px}
+.toggle{width:38px;height:22px;border-radius:999px;background:#cfd5dc;position:relative;border:0;flex:none}
+.toggle::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.15s}
+.toggle.on{background:var(--accent)}
+.toggle.on::after{left:18px}
+.phases{display:grid;gap:8px}
+.phase{border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:grid;grid-template-columns:16px 1fr auto;gap:8px;align-items:center;background:#fff}
+.phase .g{color:#c3c9d0;cursor:grab}
+.phase .pt{font-weight:600;font-size:13px}
+.phase .pw{font-size:12px;color:var(--muted)}
+.phase .now{font-size:11px;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:1px 7px}
+.phase .pick{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:1px 7px;background:#fff}
+.linkish{border:0;background:none;color:var(--accent);padding:0;font-size:13px}
+.panel .foot{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:space-between;align-items:center}
+.danger{color:#c0392b}
+.pro{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#6d3fc6;background:#f1ebfb;border-radius:999px;padding:2px 8px}
+/* ─── block library ─── */
+.lib-back{position:fixed;inset:0;background:rgba(20,30,50,.35);display:none;z-index:30}
+.lib-back.show{display:block}
+.lib{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:720px;max-width:calc(100vw - 40px);background:#fff;border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,.25);z-index:31;display:none}
+.lib.show{display:block}
+.lib .lh{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line)}
+.lib .lh h3{margin:0;font-size:16px}
+.lib .lh input{margin-left:auto;font:inherit;padding:7px 10px 7px 32px;border:1px solid var(--line);border-radius:8px;width:240px;background:var(--soft) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%235f6b76' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") 10px center no-repeat}
+.lib .lb{display:grid;grid-template-columns:1fr 1fr;gap:18px 28px;padding:18px 20px 22px;max-height:70vh;overflow:auto}
+.lib .grp h4{margin:0 0 8px;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.tile{display:grid;grid-template-columns:36px 1fr;gap:10px;align-items:center;padding:8px;border-radius:9px;cursor:pointer;border:1px solid transparent}
+.tile:hover{background:var(--accent-soft);border-color:#c8d6e8}
+.tile i{width:36px;height:36px;border-radius:8px;background:var(--soft);display:grid;place-items:center;color:var(--accent);font-size:15px}
+.tile b{display:block;font-size:13.5px}
+.tile span{font-size:12px;color:var(--muted)}
+/* ─── publish popover ─── */
+.pop{position:absolute;right:14px;top:50px;width:360px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 20px 50px rgba(0,0,0,.18);z-index:25;display:none;padding:16px}
+.pop.show{display:block}
+.pop h4{margin:0 0 4px;font-size:15px}
+.pop .url{display:flex;gap:6px;margin:10px 0}
+.pop .url input{flex:1;font:inherit;font-size:13px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--soft)}
+.pop .sw{border-top:0;padding:8px 0}
+.pop .qr{width:72px;height:72px;background:repeating-conic-gradient(#222 0 25%,#fff 0 50%) 0 0/16px 16px;border-radius:6px;flex:none}
+.pop .q{display:flex;gap:12px;align-items:center;background:var(--soft);border-radius:10px;padding:10px}
+.pop .q small{color:var(--muted);display:block}
+/* floating text toolbar */
+.fmt{position:absolute;display:none;background:#1f2933;color:#fff;border-radius:8px;padding:4px;gap:2px;z-index:20;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.fmt.show{display:flex}
+.fmt button{border:0;background:none;color:#fff;width:28px;height:26px;border-radius:5px}
+.fmt button:hover{background:#3a4654}
+.note{position:fixed;left:14px;bottom:14px;background:#1f2933;color:#fff;border-radius:10px;padding:10px 14px;font-size:12.5px;max-width:420px;box-shadow:var(--shadow);z-index:40;opacity:.95}
+.note b{color:#9ecbff}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="left">
+    <a class="back" href="#"><i class="fas fa-chevron-left"></i> Landing pages</a>
+    <span style="color:#d5dae0">|</span>
+    <div class="title" contenteditable="true" spellcheck="false">Riverside Park master plan</div>
+    <span class="badge" id="status">Draft</span>
+  </div>
+  <div class="seg" id="device">
+    <button class="on" data-w="desktop" title="Desktop"><i class="fas fa-desktop"></i></button>
+    <button data-w="mobile" title="Phone"><i class="fas fa-mobile-alt"></i></button>
+  </div>
+  <div class="right">
+    <span class="saved"><i class="fas fa-check-circle"></i> <span>Saved just now</span></span>
+    <button class="btn"><i class="far fa-eye"></i> Preview</button>
+    <button class="btn primary" id="pubBtn"><span id="pubLabel">Publish</span> <i class="fas fa-chevron-down" style="font-size:11px"></i></button>
+  </div>
+</header>
+
+<div class="pop" id="pop">
+  <h4>Publish this page</h4>
+  <div style="color:var(--muted);font-size:13px">The page goes live at this address. Change the address before you print it.</div>
+  <div class="url"><input value="mapsurvey.org/p/riverside-park/" readonly><button class="btn"><i class="far fa-copy"></i></button></div>
+  <div class="sw"><div>Listed by search engines<small>Off = only people with the link</small></div><button class="toggle on"></button></div>
+  <div class="q"><div class="qr"></div><div><b>QR code</b><small>For flyers and posters. PNG and SVG.</small><button class="linkish" style="margin-top:4px">Download</button></div></div>
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="btn" id="popClose">Cancel</button><button class="btn primary" id="popGo">Publish now</button></div>
+</div>
+
+<div class="work">
+  <aside class="rail">
+    <div class="tabs"><button class="on">Blocks</button><button>Page</button></div>
+    <div class="outline" id="outline">
+      <div class="item" data-sel="hero"><i class="fas fa-heading k"></i> Title and cover</div>
+      <div class="sub">On the page</div>
+      <div class="item" data-sel="b1"><i class="fas fa-align-left k"></i> About the project<span class="h"><i class="fas fa-grip-vertical"></i></span></div>
+      <div class="item" data-sel="b2"><i class="fas fa-map-marked-alt k"></i> Take part · park_ideas<span class="h"><i class="fas fa-grip-vertical"></i></span></div>
+      <div class="item on" data-sel="b3"><i class="fas fa-stream k"></i> Timeline<span class="h"><i class="fas fa-grip-vertical"></i></span></div>
+      <div class="item" data-sel="b4"><i class="fas fa-draw-polygon k"></i> Where<span class="h"><i class="fas fa-grip-vertical"></i></span></div>
+      <div class="item" data-sel="b5"><i class="far fa-file-pdf k"></i> Documents<span class="h"><i class="fas fa-grip-vertical"></i></span></div>
+      <div class="item" data-sel="b6"><i class="fas fa-chart-bar k"></i> What we heard in the pilot<span class="h"><i class="fas fa-grip-vertical"></i></span></div>
+      <div class="item" data-sel="b7"><i class="far fa-calendar-check k"></i> Open house<span class="h"><i class="fas fa-grip-vertical"></i></span></div>
+      <div class="item" data-sel="b8"><i class="fas fa-map-marked-alt k"></i> concept_feedback <span class="warn" title="Draft survey — shown as “coming soon”"><i class="fas fa-circle" style="font-size:7px"></i></span></div>
+    </div>
+    <div class="foot"><button class="btn" id="addBottom"><i class="fas fa-plus"></i> Add block</button></div>
+  </aside>
+
+  <main class="canvas" id="canvas">
+    <div class="frame" id="frame">
+      <section class="hero blk" data-sel="hero" style="padding-top:44px">
+        <div class="wrap">
+          <p class="org">Riverside Council</p>
+          <h1 contenteditable="true" spellcheck="false">Riverside Park master plan</h1>
+          <p contenteditable="true" spellcheck="false">The council is redesigning Riverside Park. Tell us how you use it today and what you would change.</p>
+        </div>
+        <button class="ghost cover-hint"><i class="far fa-image"></i> Add a cover picture</button>
+      </section>
+
+      <div class="wrap blocks">
+        <div class="ins"><button title="Add block here">+</button></div>
+
+        <section class="blk" data-sel="b1">
+          <span class="tag">Text</span>
+          <div class="tools"><button class="grab" title="Drag"><i class="fas fa-grip-vertical"></i></button><button title="Move up"><i class="fas fa-arrow-up"></i></button><button title="Move down"><i class="fas fa-arrow-down"></i></button><button title="Duplicate"><i class="far fa-clone"></i></button><button title="Settings"><i class="fas fa-sliders-h"></i></button><button title="Delete"><i class="far fa-trash-alt"></i></button></div>
+          <h2 contenteditable="true" spellcheck="false">About the project</h2>
+          <p class="lead" contenteditable="true" spellcheck="false">Riverside Park is 40 hectares of meadows, woods and playgrounds along the river. Its master plan dates from 1998. Over 2027 the council will write a new one, <strong>with residents</strong>.</p>
+          <p class="lead" contenteditable="true" spellcheck="false">Your answers shape the draft plan the council votes on in the autumn.</p>
+        </section>
+
+        <div class="ins"><button title="Add block here">+</button></div>
+
+        <section class="blk" data-sel="b2">
+          <span class="tag">Survey card</span>
+          <div class="tools"><button class="grab"><i class="fas fa-grip-vertical"></i></button><button><i class="fas fa-arrow-up"></i></button><button><i class="fas fa-arrow-down"></i></button><button><i class="far fa-clone"></i></button><button><i class="fas fa-sliders-h"></i></button><button><i class="far fa-trash-alt"></i></button></div>
+          <h2 contenteditable="true" spellcheck="false">Take part</h2>
+          <div class="card open">
+            <div class="state">Open now</div>
+            <div class="name">park_ideas</div>
+            <p class="desc" contenteditable="true" spellcheck="false">Mark the places you use and what you would change. About 8 minutes.</p>
+            <a class="cta" href="#">Take part</a>
+          </div>
+        </section>
+
+        <div class="ins"><button title="Add block here">+</button></div>
+
+        <section class="blk on" data-sel="b3">
+          <span class="tag">Timeline</span>
+          <div class="tools"><button class="grab"><i class="fas fa-grip-vertical"></i></button><button><i class="fas fa-arrow-up"></i></button><button><i class="fas fa-arrow-down"></i></button><button><i class="far fa-clone"></i></button><button><i class="fas fa-sliders-h"></i></button><button><i class="far fa-trash-alt"></i></button></div>
+          <h2 contenteditable="true" spellcheck="false">Timeline</h2>
+          <ol class="tl">
+            <li class="done"><div class="w">January 2027</div><div class="t">Pilot survey</div><div class="w">Tested with 40 neighbours.</div></li>
+            <li class="now"><div class="w">March – April 2027 <span class="now-pill">Now</span></div><div class="t">Online survey</div></li>
+            <li><div class="w">May 2027</div><div class="t">Open house</div><div class="w">Draft concepts on boards at the boathouse.</div></li>
+            <li><div class="w">Autumn 2027</div><div class="t">Council decision</div></li>
+          </ol>
+        </section>
+
+        <div class="ins"><button title="Add block here">+</button></div>
+
+        <section class="blk" data-sel="b4">
+          <span class="tag">Map</span>
+          <div class="tools"><button class="grab"><i class="fas fa-grip-vertical"></i></button><button><i class="fas fa-arrow-up"></i></button><button><i class="fas fa-arrow-down"></i></button><button><i class="far fa-clone"></i></button><button><i class="fas fa-sliders-h"></i></button><button><i class="far fa-trash-alt"></i></button></div>
+          <h2 contenteditable="true" spellcheck="false">Where</h2>
+          <div class="map"><div class="poly"></div></div>
+          <p class="lead" style="font-size:13px;color:var(--muted);margin-top:6px" contenteditable="true">The park and the boathouse where the open house takes place.</p>
+        </section>
+
+        <div class="ins"><button title="Add block here">+</button></div>
+
+        <section class="blk" data-sel="b5">
+          <span class="tag">Documents</span>
+          <div class="tools"><button class="grab"><i class="fas fa-grip-vertical"></i></button><button><i class="fas fa-arrow-up"></i></button><button><i class="fas fa-arrow-down"></i></button><button><i class="far fa-clone"></i></button><button><i class="fas fa-sliders-h"></i></button><button><i class="far fa-trash-alt"></i></button></div>
+          <h2 contenteditable="true" spellcheck="false">Documents</h2>
+          <ul class="docs">
+            <li><span class="ext">PDF</span><div><div class="t" contenteditable="true">Stakeholder input summary, January 2027</div><div class="m">PDF · 234 KB</div></div></li>
+            <li><span class="ext">PDF</span><div><div class="t" contenteditable="true">Open house boards</div><div class="m">PDF · 1.8 MB</div></div></li>
+          </ul>
+          <button class="ghost" style="margin-top:10px"><i class="fas fa-upload"></i> Add files</button>
+        </section>
+
+        <div class="ins"><button title="Add block here">+</button></div>
+
+        <section class="blk" data-sel="b6">
+          <span class="tag">Results</span>
+          <div class="tools"><button class="grab"><i class="fas fa-grip-vertical"></i></button><button><i class="fas fa-arrow-up"></i></button><button><i class="fas fa-arrow-down"></i></button><button><i class="far fa-clone"></i></button><button><i class="fas fa-sliders-h"></i></button><button><i class="far fa-trash-alt"></i></button></div>
+          <h2 contenteditable="true" spellcheck="false">What we heard in the pilot</h2>
+          <div class="chart">
+            <span>Every day</span><div class="bar" style="width:72%"></div>
+            <span>Every week</span><div class="bar" style="width:100%"></div>
+            <span>A few times a year</span><div class="bar" style="width:0;background:none"></div>
+            <span>Never</span><div class="bar" style="width:44%"></div>
+          </div>
+          <div class="hint" style="margin-top:8px">Based on 40 responses. Small groups are masked to protect privacy.</div>
+        </section>
+
+        <div class="ins"><button title="Add block here">+</button></div>
+
+        <section class="blk" data-sel="b7">
+          <span class="tag">Event</span>
+          <div class="tools"><button class="grab"><i class="fas fa-grip-vertical"></i></button><button><i class="fas fa-arrow-up"></i></button><button><i class="fas fa-arrow-down"></i></button><button><i class="far fa-clone"></i></button><button><i class="fas fa-sliders-h"></i></button><button><i class="far fa-trash-alt"></i></button></div>
+          <h2 contenteditable="true" spellcheck="false">Open house at the boathouse</h2>
+          <div class="event">
+            <div class="d">Saturday, 15 May 2027</div>
+            <div class="t">17:00–19:30 (Europe/Copenhagen) · The boathouse, Riverside Park</div>
+            <p class="lead" style="margin-top:6px" contenteditable="true">See the draft concepts on boards, talk to the planners, leave a sticker on the big map.</p>
+            <form onsubmit="return false"><input placeholder="Your name" disabled><input placeholder="Email" disabled><label class="consent"><input type="checkbox" disabled style="width:auto"> Riverside Council uses your name and email only for this event. They are deleted 30 days after it.</label><div><a class="cta" href="#" style="pointer-events:none">Register</a> <span style="font-size:13px;color:var(--muted);margin-left:8px">59 seats left · <button class="linkish">3 registered</button></span></div></form>
+          </div>
+        </section>
+
+        <div class="ins"><button title="Add block here">+</button></div>
+
+        <section class="blk" data-sel="b8">
+          <span class="tag">Survey card</span>
+          <div class="tools"><button class="grab"><i class="fas fa-grip-vertical"></i></button><button><i class="fas fa-arrow-up"></i></button><button><i class="fas fa-arrow-down"></i></button><button><i class="far fa-clone"></i></button><button><i class="fas fa-sliders-h"></i></button><button><i class="far fa-trash-alt"></i></button></div>
+          <div class="card">
+            <div class="state">Coming soon</div>
+            <div class="name">concept_feedback</div>
+            <p class="desc" contenteditable="true">Feedback on the draft concepts.</p>
+            <div style="font-size:12.5px;color:#9a6b00;background:#fff6dd;border-radius:6px;padding:6px 10px;display:inline-block"><i class="fas fa-info-circle"></i> The survey is a draft. The card shows “Coming soon” until you publish it.</div>
+          </div>
+        </section>
+
+        <div class="end-add" id="addEnd"><i class="fas fa-plus"></i>&nbsp; Add block — text, timeline, survey card, results, event…</div>
+      </div>
+    </div>
+    <div class="fmt" id="fmt"><button><b>B</b></button><button><i>I</i></button><button><i class="fas fa-link"></i></button><button><i class="fas fa-list-ul"></i></button><button><i class="fas fa-heading"></i></button></div>
+  </main>
+
+  <aside class="panel" id="panel">
+    <div class="pane" data-pane="b3">
+      <div class="head"><div><div class="kind">Timeline</div><h3>Phases of the engagement</h3></div><button class="x" title="Back to page settings">×</button></div>
+      <div class="body">
+        <div class="field"><label>Heading</label><input value="Timeline"><div class="hint">Shown above the block and in the page menu.</div></div>
+        <div class="field"><label>Phases — drag to reorder, mark the one you are in</label>
+          <div class="phases">
+            <div class="phase"><i class="fas fa-grip-vertical g"></i><div><div class="pt">Pilot survey</div><div class="pw">January 2027</div></div><button class="pick">Now</button></div>
+            <div class="phase"><i class="fas fa-grip-vertical g"></i><div><div class="pt">Online survey</div><div class="pw">March – April 2027</div></div><span class="now">Now</span></div>
+            <div class="phase"><i class="fas fa-grip-vertical g"></i><div><div class="pt">Open house</div><div class="pw">May 2027</div></div><button class="pick">Now</button></div>
+            <div class="phase"><i class="fas fa-grip-vertical g"></i><div><div class="pt">Council decision</div><div class="pw">Autumn 2027</div></div><button class="pick">Now</button></div>
+          </div>
+          <button class="linkish" style="margin-top:8px">+ Add a phase</button>
+        </div>
+        <div class="sw"><div>Show in the page menu<small>Blocks with a heading appear as anchors.</small></div><button class="toggle on"></button></div>
+      </div>
+      <div class="foot"><button class="linkish"><i class="far fa-clone"></i> Duplicate</button><button class="linkish danger"><i class="far fa-trash-alt"></i> Delete block</button></div>
+    </div>
+
+    <div class="pane" data-pane="b2" hidden>
+      <div class="head"><div><div class="kind">Survey card</div><h3>park_ideas</h3></div><button class="x">×</button></div>
+      <div class="body">
+        <div class="field"><label>Survey</label><select><option>park_ideas — open</option><option>pilot_round — closed</option><option>concept_feedback — draft</option></select><div class="hint">The card follows the survey: open, opens on…, coming soon, closed with results.</div></div>
+        <div class="field"><label>Heading</label><input value="Take part"></div>
+        <div class="field"><label>What residents are asked, how long it takes</label><textarea>Mark the places you use and what you would change. About 8 minutes.</textarea></div>
+        <div class="field"><label>Button label</label><input placeholder="Take part"></div>
+      </div>
+      <div class="foot"><button class="linkish"><i class="far fa-clone"></i> Duplicate</button><button class="linkish danger"><i class="far fa-trash-alt"></i> Delete block</button></div>
+    </div>
+
+    <div class="pane" data-pane="b7" hidden>
+      <div class="head"><div><div class="kind">Event</div><h3>Open house at the boathouse</h3></div><button class="x">×</button></div>
+      <div class="body">
+        <div class="row"><div class="field"><label>Date</label><input type="date" value="2027-05-15"></div><div class="field"><label>Time zone</label><input value="Europe/Copenhagen"></div></div>
+        <div class="row"><div class="field"><label>Starts</label><input type="time" value="17:00"></div><div class="field"><label>Ends</label><input type="time" value="19:30"></div></div>
+        <div class="field"><label>Place</label><input value="The boathouse, Riverside Park"></div>
+        <div class="field"><label>Map link (optional)</label><input value="https://maps.example.org/boathouse"></div>
+        <div class="row"><div class="field"><label>Seats</label><input type="number" value="60"></div><div class="field"><label>&nbsp;</label><div class="sw" style="border:0;padding:6px 0">Registration open <button class="toggle on"></button></div></div></div>
+        <div class="field" style="background:var(--soft);border-radius:10px;padding:12px"><b>3 registered</b> · 59 seats left<div class="hint">Residents get a confirmation with a calendar file. Names and emails are deleted 30 days after the event.</div><button class="linkish" style="margin-top:6px">Attendee list and CSV →</button></div>
+      </div>
+      <div class="foot"><button class="linkish"><i class="far fa-clone"></i> Duplicate</button><button class="linkish danger"><i class="far fa-trash-alt"></i> Delete block</button></div>
+    </div>
+
+    <div class="pane" data-pane="b6" hidden>
+      <div class="head"><div><div class="kind">Results</div><h3>What we heard in the pilot</h3></div><button class="x">×</button></div>
+      <div class="body">
+        <div class="field"><label>Question</label><select><optgroup label="pilot_round"><option>How often do you visit the park?</option><option>Where do you like to sit?</option></optgroup><optgroup label="park_ideas"><option>What would you change?</option></optgroup></select></div>
+        <div class="field"><label>Show as</label><div class="seg" style="display:flex"><button class="on">Bars</button><button>Pie</button><button>Donut</button><button>Table</button></div></div>
+        <div class="field"><label>Caption (optional)</label><input placeholder="One line under the chart"></div>
+        <div class="hint">Counted the same way as on the survey's public results page: small groups masked, written answers never shown. Updates by itself.</div>
+      </div>
+      <div class="foot"><button class="linkish"><i class="far fa-clone"></i> Duplicate</button><button class="linkish danger"><i class="far fa-trash-alt"></i> Delete block</button></div>
+    </div>
+
+    <div class="pane" data-pane="generic" hidden>
+      <div class="head"><div><div class="kind" id="gk">Block</div><h3 id="gt">Settings</h3></div><button class="x">×</button></div>
+      <div class="body"><div class="field"><label>Heading</label><input id="gh"></div><div class="hint">Edit the text directly on the page. Options that are not text live here.</div></div>
+      <div class="foot"><button class="linkish"><i class="far fa-clone"></i> Duplicate</button><button class="linkish danger"><i class="far fa-trash-alt"></i> Delete block</button></div>
+    </div>
+
+    <div class="pane" data-pane="hero" hidden>
+      <div class="head"><div><div class="kind">Page</div><h3>Title, cover and address</h3></div></div>
+      <div class="body">
+        <div class="field"><label>Cover picture</label><button class="ghost" style="width:100%;justify-content:center;padding:18px"><i class="far fa-image"></i> Upload a picture</button><div class="hint">Shown behind the title and when the link is shared.</div></div>
+        <div class="field"><label>Address</label><div style="display:flex;border:1px solid #d5dae0;border-radius:8px;overflow:hidden"><span style="background:var(--soft);padding:8px 10px;color:var(--muted)">/p/</span><input value="riverside-park" style="border:0;border-radius:0"></div><div class="hint">Changing it after printing breaks QR codes.</div></div>
+        <div class="row"><div class="field"><label>Page language</label><select><option>English</option><option>Dansk</option><option>Deutsch</option></select></div><div class="field"><label>Visibility</label><select><option>Public</option><option>Unlisted</option></select></div></div>
+        <div class="sub" style="font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:12px 0 6px">Surveys on this page</div>
+        <div class="phase"><i class="fas fa-map-marked-alt" style="color:var(--muted)"></i><div><div class="pt">park_ideas</div><div class="pw">open</div></div><span class="pick">on page</span></div>
+        <div class="phase" style="margin-top:6px"><i class="fas fa-map-marked-alt" style="color:var(--muted)"></i><div><div class="pt">pilot_round</div><div class="pw">closed · results published</div></div><span class="pick">on page</span></div>
+        <div class="phase" style="margin-top:6px"><i class="fas fa-map-marked-alt" style="color:var(--muted)"></i><div><div class="pt">concept_feedback</div><div class="pw">draft</div></div><span class="pick">on page</span></div>
+        <div class="hint" style="margin-top:6px">A survey can be on any number of landing pages.</div>
+      </div>
+      <div class="foot"><span class="pro"><i class="fas fa-bolt"></i> Pro</span><button class="linkish danger">Delete page</button></div>
+    </div>
+  </aside>
+</div>
+
+<div class="lib-back" id="libBack"></div>
+<div class="lib" id="lib">
+  <div class="lh"><h3>Add block</h3><input placeholder="Search blocks…"><button class="x" id="libClose" style="border:0;background:none;font-size:18px;color:var(--muted)">×</button></div>
+  <div class="lb">
+    <div class="grp"><h4>Tell the story</h4>
+      <div class="tile"><i class="fas fa-align-left"></i><div><b>Text</b><span>Purpose, background, what happens next</span></div></div>
+      <div class="tile"><i class="fas fa-stream"></i><div><b>Timeline</b><span>Phases with dates; mark the one you are in</span></div></div>
+      <div class="tile"><i class="far fa-question-circle"></i><div><b>FAQ</b><span>Questions residents keep asking</span></div></div>
+      <div class="tile"><i class="far fa-image"></i><div><b>Image</b><span>A photo or a plan drawing with a caption</span></div></div>
+      <div class="tile"><i class="fab fa-youtube"></i><div><b>Video</b><span>YouTube or Vimeo</span></div></div>
+      <div class="tile"><i class="fas fa-draw-polygon"></i><div><b>Map</b><span>The project area from a GeoJSON file</span></div></div>
+    </div>
+    <div class="grp"><h4>Take part</h4>
+      <div class="tile"><i class="fas fa-map-marked-alt"></i><div><b>Survey card</b><span>One of your surveys; follows its status</span></div></div>
+      <div class="tile"><i class="far fa-calendar-check"></i><div><b>Event</b><span>Open house or walk, with registration</span></div></div>
+      <div class="tile"><i class="fas fa-link"></i><div><b>Button</b><span>A link to anything else</span></div></div>
+      <h4 style="margin-top:14px">Show the work</h4>
+      <div class="tile"><i class="fas fa-chart-bar"></i><div><b>Results</b><span>A chart or a map from a survey's answers</span></div></div>
+      <div class="tile"><i class="far fa-file-pdf"></i><div><b>Documents</b><span>Summaries, boards, the draft plan</span></div></div>
+      <div class="tile" style="opacity:.55"><i class="fas fa-comments"></i><div><b>You said, we did <span class="pro">soon</span></b><span>What changed because of residents' input</span></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="note"><b>Mockup.</b> Click a block to edit its settings on the right; hover between blocks for “+”; text edits in place; try the phone toggle and Publish.</div>
+
+<script>
+(function(){
+  var panes = document.querySelectorAll('.pane');
+  function select(id){
+    document.querySelectorAll('.blk').forEach(function(b){ b.classList.toggle('on', b.dataset.sel===id); });
+    document.querySelectorAll('.outline .item').forEach(function(i){ i.classList.toggle('on', i.dataset.sel===id); });
+    var found=false;
+    panes.forEach(function(p){ var hit = p.dataset.pane===id; p.hidden=!hit; found = found||hit; });
+    if(!found){
+      var blk=document.querySelector('.blk[data-sel="'+id+'"]');
+      var g=document.querySelector('.pane[data-pane="generic"]'); g.hidden=false;
+      document.getElementById('gk').textContent = blk.querySelector('.tag').textContent;
+      var h=blk.querySelector('h2'); document.getElementById('gt').textContent = h?h.textContent:'Block'; document.getElementById('gh').value=h?h.textContent:'';
+    }
+  }
+  document.querySelectorAll('.blk').forEach(function(b){ b.addEventListener('mousedown',function(e){ if(e.target.closest('.tools')) return; select(b.dataset.sel); }); });
+  document.querySelectorAll('.outline .item').forEach(function(i){ i.addEventListener('click',function(){ select(i.dataset.sel); var t=document.querySelector('.blk[data-sel="'+i.dataset.sel+'"]'); if(t) t.scrollIntoView({behavior:'smooth',block:'center'}); }); });
+  document.querySelectorAll('.pane .x').forEach(function(x){ x.addEventListener('click',function(){ select('hero'); }); });
+  document.querySelectorAll('#device button').forEach(function(b){ b.addEventListener('click',function(){ document.querySelectorAll('#device button').forEach(function(o){o.classList.remove('on')}); b.classList.add('on'); document.getElementById('frame').classList.toggle('mobile', b.dataset.w==='mobile'); }); });
+  function openLib(){ document.getElementById('lib').classList.add('show'); document.getElementById('libBack').classList.add('show'); }
+  function closeLib(){ document.getElementById('lib').classList.remove('show'); document.getElementById('libBack').classList.remove('show'); }
+  document.querySelectorAll('.ins button, #addEnd, #addBottom').forEach(function(b){ b.addEventListener('click',openLib); });
+  document.getElementById('libBack').addEventListener('click',closeLib); document.getElementById('libClose').addEventListener('click',closeLib);
+  document.querySelectorAll('.tile').forEach(function(t){ t.addEventListener('click',closeLib); });
+  var pop=document.getElementById('pop');
+  document.getElementById('pubBtn').addEventListener('click',function(){ pop.classList.toggle('show'); });
+  document.getElementById('popClose').addEventListener('click',function(){ pop.classList.remove('show'); });
+  document.getElementById('popGo').addEventListener('click',function(){ pop.classList.remove('show'); var s=document.getElementById('status'); s.textContent='Published'; s.classList.add('pub'); document.getElementById('pubLabel').textContent='Published'; });
+  var fmt=document.getElementById('fmt'), canvas=document.getElementById('canvas');
+  document.addEventListener('selectionchange',function(){
+    var sel=window.getSelection(); if(!sel.rangeCount||sel.isCollapsed){ fmt.classList.remove('show'); return; }
+    var n=sel.anchorNode.nodeType===3?sel.anchorNode.parentElement:sel.anchorNode; if(!n.closest('[contenteditable]')||!canvas.contains(n)){ fmt.classList.remove('show'); return; }
+    var r=sel.getRangeAt(0).getBoundingClientRect(), c=canvas.getBoundingClientRect();
+    fmt.style.left=(r.left-c.left+r.width/2-80+canvas.scrollLeft)+'px'; fmt.style.top=(r.top-c.top-40+canvas.scrollTop)+'px'; fmt.classList.add('show');
+  });
+  var saved=document.querySelector('.saved'), savedIcon=saved.querySelector('i'), savedText=saved.querySelector('span');
+  document.querySelectorAll('[contenteditable]').forEach(function(el){ el.addEventListener('input',function(){ savedIcon.className='fas fa-circle-notch fa-spin'; savedIcon.style.color='#999'; savedText.textContent='Saving…'; clearTimeout(window._t); window._t=setTimeout(function(){ savedIcon.className='fas fa-check-circle'; savedIcon.style.color=''; savedText.textContent='Saved just now'; },900); }); });
+})();
+</script>
+</body>
+</html>

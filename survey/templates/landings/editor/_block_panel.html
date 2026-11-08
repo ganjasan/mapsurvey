@@ -1,0 +1,27 @@
+{% load i18n question_utils %}{% comment %}The settings panel of one block (change landing-builder-redesign).
+Hidden until the block is selected; holds the block's whole form (see _block_form.html).{% endcomment %}
+<div class="lb-pane" data-pane="{{ b.pk }}"{% if selected != b.pk|stringformat:'s' %} hidden{% endif %}>
+  <div class="lb-pane-head">
+    <div><div class="lb-pane-kind">{{ kinds|get_item:b.kind }}</div><h3>{% if item.label %}{{ item.label|truncatechars:40 }}{% else %}{% trans "Settings" %}{% endif %}</h3></div>
+    <button type="button" class="lb-x" data-select-target="page" title="{% trans 'Page settings' %}" aria-label="{% trans 'Close' %}">×</button>
+  </div>
+  <div class="lb-pane-body">
+    {% if item.warn %}<p class="lb-warn"><i class="fas fa-info-circle" aria-hidden="true"></i> {{ item.warn }}</p>{% endif %}
+    <fieldset {% if not may_edit %}disabled{% endif %}>
+    {% url 'editor_landing_block_edit' landing.uuid b.pk as action %}
+    {% with posted=block_posted|get_item:b.pk errs=block_errors|get_item:b.pk %}
+    {% if posted %}
+    {% include "landings/_block_form.html" with edit_block=b kind=b.kind data=posted title=posted.title action=action errors=errs selected_survey=b.landing_survey.survey.uuid %}
+    {% else %}
+    {% include "landings/_block_form.html" with edit_block=b kind=b.kind data=b.data title=b.title action=action errors=errs selected_survey=b.landing_survey.survey.uuid %}
+    {% endif %}
+    {% endwith %}
+    </fieldset>
+  </div>
+  {% if may_edit %}
+  <div class="lb-pane-foot">
+    <form method="post" action="{% url 'editor_landing_block_duplicate' landing.uuid b.pk %}">{% csrf_token %}<button type="submit" class="lb-link"><i class="far fa-clone" aria-hidden="true"></i> {% trans "Duplicate" %}</button></form>
+    <form method="post" action="{% url 'editor_landing_block_delete' landing.uuid b.pk %}" data-confirm="{% trans 'Delete this block?' %}">{% csrf_token %}<button type="submit" class="lb-link lb-danger"><i class="far fa-trash-alt" aria-hidden="true"></i> {% trans "Delete block" %}</button></form>
+  </div>
+  {% endif %}
+</div>

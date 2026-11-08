@@ -1,8 +1,8 @@
 {% load i18n %}<div class="lb-row">
-  <div class="form-row">
-    <div class="col-sm-6"><input name="phase_title" class="form-control form-control-sm" maxlength="120" value="{{ item.title|default:'' }}" placeholder="{% trans 'Phase, e.g. Online survey' %}"></div>
-    <div class="col-sm-4"><input name="phase_when" class="form-control form-control-sm" maxlength="60" value="{{ item.when|default:'' }}" placeholder="{% trans 'When, e.g. March 2027' %}"></div>
-    <div class="col-sm-2 small pt-1"><label class="mb-0"><input type="radio" name="current" value="{{ index }}"{% if item and index == current %} checked{% endif %}> {% trans "Now" %}</label></div>
+  <input name="phase_title" class="form-control form-control-sm" maxlength="120" value="{{ item.title|default:'' }}" placeholder="{% trans 'Phase, e.g. Online survey' %}">
+  <div class="d-flex align-items-center mt-1" style="gap:.5rem;">
+    <input name="phase_when" class="form-control form-control-sm" maxlength="60" value="{{ item.when|default:'' }}" placeholder="{% trans 'When, e.g. March 2027' %}">
+    <label class="small mb-0 text-nowrap"><input type="radio" name="current" value="{{ index }}"{% if item and index == current %} checked{% endif %}> {% trans "Now" %}</label>
   </div>
   <textarea name="phase_body" class="form-control form-control-sm mt-1" rows="2" maxlength="600" placeholder="{% trans 'What happens in this phase (optional)' %}">{{ item.body|default:'' }}</textarea>
   <button type="button" class="btn btn-link btn-sm text-muted px-0 lb-row-remove">{% trans "Remove" %}</button>

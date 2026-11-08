@@ -11506,3 +11506,251 @@ msgid "%(n)s seat left"
 msgid_plural "%(n)s seats left"
 msgstr[0] "%(n)s paikka jäljellä"
 msgstr[1] "%(n)s paikkaa jäljellä"
+
+#: landing-builder-redesign (#594)
+msgid "Write directly on the page. Select text for bold, italic, links and lists."
+msgstr "Kirjoita suoraan sivulle. Valitse tekstiä lihavointia, kursiivia, linkkejä ja luetteloita varten."
+
+#: landing-builder-redesign (#594)
+msgid "Link"
+msgstr "Linkki"
+
+#: landing-builder-redesign (#594)
+msgid "Pick a question…"
+msgstr "Valitse kysymys…"
+
+#: landing-builder-redesign (#594)
+msgid "Place"
+msgstr "Paikka"
+
+#: landing-builder-redesign (#594)
+msgid "Pick a survey…"
+msgstr "Valitse kysely…"
+
+#: landing-builder-redesign (#594)
+msgid "Preview width"
+msgstr "Esikatselun leveys"
+
+#: landing-builder-redesign (#594)
+msgid "Desktop"
+msgstr "Tietokone"
+
+#: landing-builder-redesign (#594)
+msgid "Phone"
+msgstr "Puhelin"
+
+#: landing-builder-redesign (#594)
+msgid "The page is live"
+msgstr "Sivu on verkossa"
+
+#: landing-builder-redesign (#594)
+msgid "Publish this page"
+msgstr "Julkaise tämä sivu"
+
+#: landing-builder-redesign (#594)
+msgid "Residents open the page at this address. Change it before you print it."
+msgstr "Asukkaat avaavat sivun tästä osoitteesta. Muuta sitä ennen tulostamista."
+
+#: landing-builder-redesign (#594)
+msgid "Listed by search engines"
+msgstr "Näkyy hakukoneissa"
+
+#: landing-builder-redesign (#594)
+msgid "Off: only people with the link"
+msgstr "Pois: vain linkin saaneet"
+
+#: landing-builder-redesign (#594)
+msgid "For flyers and posters."
+msgstr "Esitteisiin ja julisteisiin."
+
+#: landing-builder-redesign (#594)
+msgid "Publish now"
+msgstr "Julkaise nyt"
+
+#: landing-builder-redesign (#594)
+msgid "Blocks on the page"
+msgstr "Sivun lohkot"
+
+#: landing-builder-redesign (#594)
+msgid "Blocks"
+msgstr "Lohkot"
+
+#: landing-builder-redesign (#594)
+msgid "Title and cover"
+msgstr "Otsikko ja pääkuva"
+
+#: landing-builder-redesign (#594)
+msgid "Add block here"
+msgstr "Lisää lohko tähän"
+
+#: landing-builder-redesign (#594)
+msgid "Add block — text, timeline, survey card, results, event…"
+msgstr "Lisää lohko — teksti, aikajana, kyselykortti, tulokset, tapahtuma…"
+
+#: landing-builder-redesign (#594)
+msgid "No blocks yet."
+msgstr "Ei vielä lohkoja."
+
+#: landing-builder-redesign (#594)
+msgid "Could not save — check the settings on the right"
+msgstr "Tallennus epäonnistui — tarkista oikealla olevat asetukset"
+
+#: landing-builder-redesign (#594)
+msgid "Could not save — check your connection"
+msgstr "Tallennus epäonnistui — tarkista yhteytesi"
+
+#: landing-builder-redesign (#594)
+msgid "Title, cover and address"
+msgstr "Otsikko, pääkuva ja osoite"
+
+#: landing-builder-redesign (#594)
+msgid "Shown behind the title and when the link is shared."
+msgstr "Näytetään otsikon taustalla ja kun linkki jaetaan."
+
+#: landing-builder-redesign (#594)
+msgid "Search blocks…"
+msgstr "Hae lohkoja…"
+
+#: landing-builder-redesign (#594)
+msgid "Search blocks"
+msgstr "Lohkohaku"
+
+#: landing-builder-redesign (#594)
+msgid "Block actions"
+msgstr "Lohkon toiminnot"
+
+#: landing-builder-redesign (#594)
+msgid "Move up"
+msgstr "Siirrä ylös"
+
+#: landing-builder-redesign (#594)
+msgid "Move down"
+msgstr "Siirrä alas"
+
+#: landing-builder-redesign (#594)
+msgid "Add a heading"
+msgstr "Lisää otsikko"
+
+#: landing-builder-redesign (#594)
+msgid "Headings also appear in the menu at the top of the page"
+msgstr "Otsikot näkyvät myös sivun yläreunan valikossa"
+
+#: landing-builder-redesign (#594)
+msgid "Write something…"
+msgstr "Kirjoita jotain…"
+
+#: landing-builder-redesign (#594)
+msgid "Upload a picture in the settings on the right."
+msgstr "Lataa kuva oikealla olevissa asetuksissa."
+
+#: landing-builder-redesign (#594)
+msgid "Paste a YouTube or Vimeo link in the settings on the right."
+msgstr "Liitä YouTube- tai Vimeo-linkki oikealla oleviin asetuksiin."
+
+#: landing-builder-redesign (#594)
+msgid "Set the label and the link in the settings on the right."
+msgstr "Aseta teksti ja linkki oikealla olevissa asetuksissa."
+
+#: landing-builder-redesign (#594)
+msgid "Add questions and answers in the settings on the right."
+msgstr "Lisää kysymykset ja vastaukset oikealla olevissa asetuksissa."
+
+#: landing-builder-redesign (#594)
+msgid "Add the phases in the settings on the right."
+msgstr "Lisää vaiheet oikealla olevissa asetuksissa."
+
+#: landing-builder-redesign (#594)
+msgid "Upload files in the settings on the right."
+msgstr "Lataa tiedostot oikealla olevissa asetuksissa."
+
+#: landing-builder-redesign (#594)
+msgid "Upload a GeoJSON file with the project area in the settings on the right."
+msgstr "Lataa GeoJSON-tiedosto hankealueesta oikealla olevissa asetuksissa."
+
+#: landing-builder-redesign (#594)
+msgid "Pick a question in the settings on the right."
+msgstr "Valitse kysymys oikealla olevissa asetuksissa."
+
+#: landing-builder-redesign (#594)
+msgid "Set the date and time in the settings on the right."
+msgstr "Aseta päivämäärä ja aika oikealla olevissa asetuksissa."
+
+#: landing-builder-redesign (#594)
+msgid "Pick a survey in the settings on the right."
+msgstr "Valitse kysely oikealla olevissa asetuksissa."
+
+#: landing-builder-redesign (#594)
+msgid "One or two sentences: what the project is and what you ask residents"
+msgstr "Yksi tai kaksi virkettä: mistä hankkeessa on kyse ja mitä kysyt asukkailta"
+
+#: landing-builder-redesign (#594)
+msgid "Change the cover picture"
+msgstr "Vaihda pääkuva"
+
+#: landing-builder-redesign (#594)
+msgid "Add a cover picture"
+msgstr "Lisää pääkuva"
+
+#: landing-builder-redesign (#594)
+msgid "Tell the story"
+msgstr "Kerro hankkeesta"
+
+#: landing-builder-redesign (#594)
+msgid "Purpose, background, what happens next"
+msgstr "Tarkoitus, tausta, mitä seuraavaksi"
+
+#: landing-builder-redesign (#594)
+msgid "Phases with dates; mark the one you are in"
+msgstr "Vaiheet päivämäärineen; merkitse nykyinen"
+
+#: landing-builder-redesign (#594)
+msgid "Questions residents keep asking"
+msgstr "Asukkaiden usein kysymät kysymykset"
+
+#: landing-builder-redesign (#594)
+msgid "A photo or a plan drawing with a caption"
+msgstr "Valokuva tai suunnitelmapiirros kuvatekstillä"
+
+#: landing-builder-redesign (#594)
+msgid "YouTube or Vimeo"
+msgstr "YouTube tai Vimeo"
+
+#: landing-builder-redesign (#594)
+msgid "The project area from a GeoJSON file"
+msgstr "Hankealue GeoJSON-tiedostosta"
+
+#: landing-builder-redesign (#594)
+msgid "One of your surveys; follows its status"
+msgstr "Yksi kyselyistäsi; seuraa sen tilaa"
+
+#: landing-builder-redesign (#594)
+msgid "Open house or walk, with registration"
+msgstr "Avoimet ovet tai kävely, ilmoittautumisella"
+
+#: landing-builder-redesign (#594)
+msgid "A link to anything else"
+msgstr "Linkki mihin tahansa muuhun"
+
+#: landing-builder-redesign (#594)
+msgid "Show the work"
+msgstr "Näytä työ"
+
+#: landing-builder-redesign (#594)
+msgid "A chart or a map from a survey's answers"
+msgstr "Kaavio tai kartta kyselyn vastauksista"
+
+#: landing-builder-redesign (#594)
+msgid "Summaries, boards, the draft plan"
+msgstr "Yhteenvedot, taulut, suunnitelmaluonnos"
+
+#: landing-builder-redesign (#594)
+msgid "The survey is a draft: the card shows “Coming soon” until you publish it."
+msgstr "Kysely on luonnos: kortissa lukee ”Tulossa pian”, kunnes julkaiset sen."
+
+#: landing-builder-redesign (#594)
+msgid "The question was removed from the survey; the block is not shown."
+msgstr "Kysymys on poistettu kyselystä; lohkoa ei näytetä."
+
+#: landing-builder-redesign (#594)
+msgid "Not shown on the page until it is filled in."
+msgstr "Ei näy sivulla ennen kuin se on täytetty."

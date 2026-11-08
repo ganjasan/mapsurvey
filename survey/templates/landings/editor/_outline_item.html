@@ -1,0 +1,6 @@
+{% load i18n question_utils %}<li class="lb-oi{% if selected == b.pk|stringformat:'s' %} on{% endif %}" data-block="{{ b.pk }}" data-select-target="{{ b.pk }}" tabindex="0">
+  <i class="{{ icons|get_item:b.kind }} lb-oi-k" aria-hidden="true"></i>
+  <span class="lb-oi-t">{% if item.label %}{{ item.label|truncatechars:42 }}{% else %}<em>{{ kinds|get_item:b.kind }}</em>{% endif %}</span>
+  {% if item.warn %}<span class="lb-oi-warn" title="{{ item.warn }}"><i class="fas fa-circle" aria-hidden="true"></i></span>{% endif %}
+  {% if may_edit %}<span class="lb-oi-h" aria-hidden="true"><i class="fas fa-grip-vertical"></i></span>{% endif %}
+</li>

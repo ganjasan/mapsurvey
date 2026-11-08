@@ -15,9 +15,20 @@ Landing pages are part of **Pro**. A workspace on the Pro trial can create one.
 2. Type a title, for example *Riverside Park plan*, and press **New page**. The page opens in the builder as a draft.
 3. Under **Page**, add a summary of one or two sentences and a cover picture. The summary is also what people see when the link is shared.
 
+## How the builder works
+
+The middle of the builder is the page itself, as residents will see it.
+
+- **Click any text to change it** — the title, the summary, a heading, a paragraph, a caption, a button label. Select words for bold, italic, links and lists.
+- **Click a block** to see its other settings on the right: the survey a card shows, the phases of a timeline, the files, the date of an event. With nothing selected, the right side holds the page settings: cover picture, address, language, visibility and the surveys on the page.
+- **Point between two blocks** and press **+** to add a block there, or use **Add block** at the bottom.
+- **Point at a block** for its toolbar: drag to move, up and down, duplicate, settings, delete. The list on the left shows every block; click one to jump to it, or drag to reorder.
+- **Everything saves by itself.** The top bar says *Saving…* and *All changes saved*. A block you have not finished (a picture without the picture, an event without a time) stays in the builder and is not shown on the page until it is complete.
+- The **phone** button at the top shows the page at phone width.
+
 ## Add blocks
 
-Press **Add block** and choose what to add:
+Press **+** or **Add block** and choose what to add:
 
 - **Text** — formatted text: what the project is, why residents are asked, what happens with their answers.
 - **FAQ** — questions and answers that open on a tap.
@@ -46,7 +57,7 @@ Under the event in the builder, **Attendee list** shows who registered, with a C
 
 ## Publish
 
-Press **Publish**. The page is at `mapsurvey.org/p/<address>/`; change the address under **Page** before you print it — changing it later breaks the links already out there. **Share** has the link and a QR code to download.
+Press **Publish** in the top bar. The panel that opens shows the address — `mapsurvey.org/p/<address>/`, with a copy button — a switch for search engines and the QR code to download; **Publish now** puts the page live. Change the address (page settings, **Address**) before you print it: changing it later breaks the links already out there.
 
 - **Public** pages may be listed by search engines.
 - **Unlisted** pages are reachable only by people who have the link.

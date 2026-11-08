@@ -8,7 +8,7 @@ landings.page_blocks: starts_at / ends_at (aware, the event's zone), accepting, 
     {% endtimezone %}
   </div>
   {% if block.data.place %}<p class="lp-event-place">{% if block.data.place_url %}<a href="{{ block.data.place_url }}" rel="noopener" target="_blank">{{ block.data.place }}</a>{% else %}{{ block.data.place }}{% endif %}</p>{% endif %}
-  {% if block.data.description %}<p class="lp-event-desc">{{ block.data.description|linebreaksbr }}</p>{% endif %}
+  {% if block.data.description or editing %}<p class="lp-event-desc" data-field="description">{{ block.data.description|linebreaksbr }}</p>{% endif %}
 
   {% if event_notice and event_notice.block == block.pk %}
   <div class="lp-notice{% if event_notice.status != 'registered' %} lp-notice--warn{% endif %}" role="status">

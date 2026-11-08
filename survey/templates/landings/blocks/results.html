@@ -13,5 +13,5 @@
     {% blocktrans count n=card.responses %}Based on {{ n }} response.{% plural %}Based on {{ n }} responses.{% endblocktrans %}
     {% if card.k > 1 and card.block_type != 'map' %}{% trans "Small groups are masked to protect privacy." %}{% endif %}
   </p>
-  {% if block.data.caption %}<p class="lp-results-caption">{{ block.data.caption }}</p>{% endif %}
+  {% if block.data.caption or editing %}<p class="lp-results-caption" data-field="caption">{{ block.data.caption }}</p>{% endif %}
 </div>
