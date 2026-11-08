@@ -15,7 +15,9 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
+from django.core.files.storage import default_storage
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone, translation
 from django.utils.translation import gettext as _
@@ -84,8 +86,26 @@ def _touched(landing):
         screen_landing(landing, trigger='live_edit')
 
 
-def _back(landing, anchor=''):
+def _is_autosave(request):
+    return request.POST.get('autosave') == '1'
+
+
+def _block_fragments(request, landing, membership, block):
+    """The canvas shell, the outline row and the panel of one block, re-rendered."""
+    ctx = _builder_context(request, landing, membership)
+    block = next(b for b in ctx['blocks'] if b.pk == block.pk)
+    ctx.update(b=block, item=ctx['items'][block.pk])
+    return {
+        'block': render_to_string('landings/editor/_canvas_block.html', ctx, request=request),
+        'outline': render_to_string('landings/editor/_outline_item.html', ctx, request=request),
+        'panel': render_to_string('landings/editor/_block_panel.html', ctx, request=request),
+    }
+
+
+def _back(landing, anchor='', select=None):
     url = reverse('editor_landing', args=[landing.uuid])
+    if select is not None:
+        url += f'?select={select}'
     return redirect(f'{url}#{anchor}' if anchor else url)
 
 
@@ -145,8 +165,31 @@ def _builder_context(request, landing, membership, **extra):
     results_missing = {b.pk for b in blocks if b.kind == 'results' and b.landing_survey is not None
                        and landings.results_question(b.landing_survey.survey, b.data.get('question_code')) is None}
     may_edit = _can_act(membership) and billing_trial.may(org, landings.FEATURE)
+    # One record per block for the canvas, the outline and the panel (change
+    # landing-builder-redesign): the same card the public page draws, whether the public page
+    # draws it at all, and why not.
+    items = {}
+    for b in blocks:
+        card = landings.block_card(b)
+        # A block whose template needs a card (results, event, survey) and has none is drawn as a
+        # placeholder, like an incomplete one.
+        complete = landings.is_complete(b) and not (b.kind in ('results', 'event', 'survey') and card is None)
+        warn = ''
+        if b.kind == 'survey' and card is not None and card['state'] == landings.CARD_HIDDEN:
+            warn = card['reason']
+        elif b.kind == 'survey' and card is not None and card['state'] == landings.CARD_UPCOMING \
+                and b.landing_survey.survey.status in ('draft', 'testing'):
+            warn = _('The survey is a draft: the card shows “Coming soon” until you publish it.')
+        elif b.pk in results_missing:
+            warn = _('The question was removed from the survey; the block is not shown.')
+        elif not complete:
+            warn = _('Not shown on the page until it is filled in.')
+        items[b.pk] = {'card': card, 'complete': complete, 'warn': warn,
+                       'label': landings.outline_label(b)}
     ctx = {
         'org': org, 'landing': landing, 'blocks': blocks, 'cards': cards, 'results_missing': results_missing,
+        'items': items, 'selected': request.GET.get('select', ''), 'last_pk': blocks[-1].pk if blocks else '',
+        'basemap_table': basemaps.table_for(org),
         'event_counts': event_counts, 'timezones': _timezones(),
         'links': [(link, landings.survey_card(link.survey)) for link in links],
         'linkable': [s for s in landings.linkable_surveys(org) if s.pk not in linked_ids],
@@ -156,6 +199,8 @@ def _builder_context(request, landing, membership, **extra):
         'held': is_landing_held(landing),
         'picker': landings.picker(),
         'kinds': {k: v[0] for k, v in landings.BLOCK_KINDS.items()},
+        'icons': {k: v[1] for k, v in landings.BLOCK_KINDS.items()},
+        'library': landings.library(),
         'languages': language_choices(),
         'basemap_choices': basemaps.choices_for(org),
         'results_choices': landings.results_choices(org),
@@ -184,18 +229,21 @@ def editor_landing_settings(request, uuid):
     refused = _refusal(request, landing, membership)
     if refused is not None:
         return refused
+    # Fields absent from the post keep their value: the canvas autosaves the title and the
+    # summary, the panel the rest, the publish popover only the visibility.
+    post = request.POST
     errors = {}
-    title = landings.clean_title(request.POST.get('title'))
+    title = landings.clean_title(post['title']) if 'title' in post else landing.title
     if not title:
         errors['title'] = _('Give the page a title.')
-    slug = (request.POST.get('slug') or '').strip().lower()
+    slug = (post.get('slug') or '').strip().lower() if 'slug' in post else landing.slug
     slug_error = landings.slug_error(slug, landing) if slug != landing.slug else ''
     if slug_error:
         errors['slug'] = slug_error
-    language = request.POST.get('language') or landing.language
+    language = post.get('language') or landing.language
     if language not in CONTENT_LANGUAGES:
         language = landing.language
-    visibility = request.POST.get('visibility')
+    visibility = post.get('visibility')
     if visibility not in ('public', 'unlisted'):
         visibility = landing.visibility
     cover = request.FILES.get('cover')
@@ -203,21 +251,33 @@ def editor_landing_settings(request, uuid):
     if cover_error:
         errors['cover'] = cover_error
     if errors:
+        if _is_autosave(request):
+            return JsonResponse({'ok': False, 'errors': errors}, status=422)
         ctx = _builder_context(request, landing, membership, settings_errors=errors)
         return render(request, 'landings/builder.html', ctx, status=400)
 
     landing.title = title
-    landing.summary = ' '.join((request.POST.get('summary') or '').split())[:landings.SUMMARY_MAX]
-    landing.cover_alt = ' '.join((request.POST.get('cover_alt') or '').split())[:200]
+    if 'summary' in post:
+        landing.summary = ' '.join(post['summary'].split())[:landings.SUMMARY_MAX]
+    if 'cover_alt' in post:
+        landing.cover_alt = ' '.join(post['cover_alt'].split())[:200]
     landing.slug = slug
     landing.language = language
     landing.visibility = visibility
     if cover is not None:
         landing.cover = cover
-    elif request.POST.get('remove_cover') == '1':
+    elif post.get('remove_cover') == '1':
         landing.cover = None
     landing.save()
     _touched(landing)
+    if _is_autosave(request):
+        ctx = _builder_context(request, landing, membership)
+        return JsonResponse({
+            'ok': True,
+            'hero': render_to_string('landings/editor/_hero.html', ctx, request=request),
+            'page_panel': render_to_string('landings/editor/_page_panel.html', ctx, request=request),
+            'title': landing.title, 'slug': landing.slug, 'public_url': ctx['public_url'],
+        })
     messages.success(request, _('Page settings saved.'))
     return _back(landing, 'settings')
 
@@ -323,8 +383,28 @@ def _results_target(landing, value):
     return link, code, block_type_for_question(question)
 
 
+# Error key → the posted fields it is about (an error on a field left empty waits, see _save_block).
+_ERROR_FIELDS = {'items': ('q', 'phase_title'), 'question': ('results_question',), 'area': ('geojson_file',),
+                 'image': ('image',), 'files': ('files',)}
+
+
+def _posted_value(request, raw, key):
+    names = _ERROR_FIELDS.get(key, (key,))
+    for name in names:
+        if any(v.strip() for v in request.POST.getlist(name)) or request.FILES.getlist(name):
+            return True
+        value = raw.get(name)
+        if isinstance(value, str) and value.strip():
+            return True
+    return False
+
+
 def _save_block(request, landing, block, kind):
-    """Validate the posted block and save it. Returns {field: error} or {}."""
+    """Validate the posted block and save it. Returns ({field: error}, raw) or ({}, block).
+    `empty=1` on an add is the block library creating an empty block (change
+    landing-builder-redesign): nothing is required yet; the public page skips it until the
+    creator fills it in (`landings.is_complete`)."""
+    creating = block is None and request.POST.get('empty') == '1'
     raw = _raw_block(kind, request.POST)
     map_upload = request.FILES.get('geojson_file') if kind == 'map' else None
     map_error = ''
@@ -337,18 +417,22 @@ def _save_block(request, landing, block, kind):
     if kind == 'results':
         results_link, raw['question_code'], raw['result_kind'] = _results_target(
             landing, request.POST.get('results_question') or '')
-    data, errors = landings.clean_block(kind, raw, org=landing.organization)
+    data, errors = landings.clean_block(kind, raw, org=landing.organization, creating=creating)
     if map_error:
         errors['area'] = map_error
     renames, removals, uploads = {}, [], []
-    if kind == 'documents':
+    if kind == 'documents' and not creating:
         renames, removals, uploads, doc_errors = _document_changes(request, block)
+        # An autosave may leave the block without files for a moment (remove, then add):
+        # the public page skips it until a file is back.
+        if _is_autosave(request) and doc_errors.get('files') == _('Add at least one file.'):
+            doc_errors.pop('files')
         errors.update(doc_errors)
     upload = request.FILES.get('image')
     image_error = landings.check_image(upload)
     if image_error:
         errors['image'] = image_error
-    if kind == 'image' and upload is None and not (block and block.image):
+    if kind == 'image' and upload is None and not (block and block.image) and not creating:
         errors['image'] = _('Choose a picture.')
     link = None
     if kind == 'survey':
@@ -356,8 +440,13 @@ def _save_block(request, landing, block, kind):
             if (request.POST.get('survey') or '').strip() else None
         if survey is not None:
             link = _link(landing, survey)
-        if link is None:
+        if link is None and not creating:
             errors['survey'] = _('Pick one of this workspace’s surveys.')
+    if errors and _is_autosave(request):
+        # On the canvas an EMPTY field is not an error yet — the creator is still filling the
+        # block in, and the public page skips it until it is complete (landings.is_complete).
+        # A wrong value (bad URL, end before start, unknown zone) still is.
+        errors = {k: v for k, v in errors.items() if _posted_value(request, raw, k)}
     if errors:
         return errors, raw
     with transaction.atomic():
@@ -376,8 +465,11 @@ def _save_block(request, landing, block, kind):
             f.title = title
             f.save(update_fields=['title'])
         for f in removals:
-            f.file.delete(save=False)
+            name = f.file.name
             f.delete()
+            # A duplicated documents block shares the stored file; delete it with the last row.
+            if not LandingFile.objects.filter(file=name).exists():
+                f.file.storage.delete(name)
         last = block.files.order_by('-order').values_list('order', flat=True).first()
         nxt = 0 if last is None else last + 1
         for i, up in enumerate(uploads):
@@ -398,13 +490,18 @@ def editor_landing_block_add(request, uuid):
     kind = request.POST.get('kind', '')
     if kind not in landings.BLOCK_KINDS:
         return HttpResponseBadRequest('unknown kind')
+    after = request.POST.get('after', '')
     errors, result = _save_block(request, landing, None, kind)
     if errors:
         ctx = _builder_context(request, landing, membership, new_kind=kind, new_errors=errors,
                                new_raw=dict(result, title=request.POST.get('title', ''),
                                             survey=request.POST.get('survey', '')))
         return render(request, 'landings/builder.html', ctx, status=400)
-    return _back(landing, result.anchor)
+    if after.isdigit():
+        _move_after(landing, result, int(after))
+    elif after == 'top':
+        _move_after(landing, result, None)
+    return _back(landing, result.anchor, select=result.pk)
 
 
 @login_required
@@ -416,6 +513,10 @@ def editor_landing_block_edit(request, uuid, block_id):
         return refused
     block = get_object_or_404(LandingBlock, pk=block_id, landing=landing)
     errors, result = _save_block(request, landing, block, block.kind)
+    if _is_autosave(request):
+        if errors:
+            return JsonResponse({'ok': False, 'errors': errors}, status=422)
+        return JsonResponse(dict(ok=True, **_block_fragments(request, landing, membership, result)))
     if errors:
         # Keep what the creator typed: the form re-renders from the posted values, not the saved ones.
         posted = dict(result, title=request.POST.get('title', ''))
@@ -426,7 +527,38 @@ def editor_landing_block_edit(request, uuid, block_id):
         ctx = _builder_context(request, landing, membership, block_errors={block.pk: errors},
                                block_posted={block.pk: posted})
         return render(request, 'landings/builder.html', ctx, status=400)
-    return _back(landing, block.anchor)
+    return _back(landing, block.anchor, select=block.pk)
+
+
+def _move_after(landing, block, after_id):
+    """Put `block` right after the block `after_id` (None = first)."""
+    rows = [b for b in landing.blocks.order_by('order', 'id') if b.pk != block.pk]
+    at = 0 if after_id is None else next((i + 1 for i, b in enumerate(rows) if b.pk == after_id), len(rows))
+    rows.insert(at, block)
+    landings.renumber(rows)
+
+
+@login_required
+@require_POST
+def editor_landing_block_duplicate(request, uuid, block_id):
+    """A copy right under the block: same kind, heading, data, picture, survey link and files
+    (the stored files are shared; event registrations are not copied)."""
+    landing, membership = _landing(request, uuid)
+    refused = _refusal(request, landing, membership)
+    if refused is not None:
+        return refused
+    block = get_object_or_404(LandingBlock, pk=block_id, landing=landing)
+    with transaction.atomic():
+        copy = LandingBlock.objects.create(
+            landing=landing, kind=block.kind, title=block.title, data=dict(block.data or {}),
+            image=block.image.name if block.image else None, landing_survey=block.landing_survey,
+            order=landings.next_order(landing))
+        for f in block.files.all():
+            LandingFile.objects.create(block=copy, file=f.file.name, title=f.title, size=f.size,
+                                       content_type=f.content_type, order=f.order)
+        _move_after(landing, copy, block.pk)
+    _touched(landing)
+    return _back(landing, copy.anchor, select=copy.pk)
 
 
 @login_required
@@ -436,7 +568,11 @@ def editor_landing_block_delete(request, uuid, block_id):
     if not _can_act(membership):
         return HttpResponseForbidden()
     block = get_object_or_404(LandingBlock, pk=block_id, landing=landing)
+    names = [f.file.name for f in block.files.all()]
     block.delete()
+    for name in names:
+        if not LandingFile.objects.filter(file=name).exists():
+            default_storage.delete(name)
     landings.renumber(list(landing.blocks.order_by('order', 'id')))
     _touched(landing)
     return _back(landing, 'blocks')

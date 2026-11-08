@@ -11592,3 +11592,251 @@ msgid "%(n)s seat left"
 msgid_plural "%(n)s seats left"
 msgstr[0] "Encore %(n)s place"
 msgstr[1] "Encore %(n)s places"
+
+#: landing-builder-redesign (#594)
+msgid "Write directly on the page. Select text for bold, italic, links and lists."
+msgstr "Écrivez directement sur la page. Sélectionnez du texte pour le gras, l’italique, les liens et les listes."
+
+#: landing-builder-redesign (#594)
+msgid "Link"
+msgstr "Lien"
+
+#: landing-builder-redesign (#594)
+msgid "Pick a question…"
+msgstr "Choisir une question…"
+
+#: landing-builder-redesign (#594)
+msgid "Place"
+msgstr "Lieu"
+
+#: landing-builder-redesign (#594)
+msgid "Pick a survey…"
+msgstr "Choisir une enquête…"
+
+#: landing-builder-redesign (#594)
+msgid "Preview width"
+msgstr "Largeur de l'aperçu"
+
+#: landing-builder-redesign (#594)
+msgid "Desktop"
+msgstr "Ordinateur"
+
+#: landing-builder-redesign (#594)
+msgid "Phone"
+msgstr "Téléphone"
+
+#: landing-builder-redesign (#594)
+msgid "The page is live"
+msgstr "La page est en ligne"
+
+#: landing-builder-redesign (#594)
+msgid "Publish this page"
+msgstr "Publier cette page"
+
+#: landing-builder-redesign (#594)
+msgid "Residents open the page at this address. Change it before you print it."
+msgstr "Les habitants ouvrent la page à cette adresse. Modifiez-la avant de l'imprimer."
+
+#: landing-builder-redesign (#594)
+msgid "Listed by search engines"
+msgstr "Référencée par les moteurs de recherche"
+
+#: landing-builder-redesign (#594)
+msgid "Off: only people with the link"
+msgstr "Désactivé : seulement les personnes ayant le lien"
+
+#: landing-builder-redesign (#594)
+msgid "For flyers and posters."
+msgstr "Pour les flyers et les affiches."
+
+#: landing-builder-redesign (#594)
+msgid "Publish now"
+msgstr "Publier maintenant"
+
+#: landing-builder-redesign (#594)
+msgid "Blocks on the page"
+msgstr "Blocs de la page"
+
+#: landing-builder-redesign (#594)
+msgid "Blocks"
+msgstr "Blocs"
+
+#: landing-builder-redesign (#594)
+msgid "Title and cover"
+msgstr "Titre et couverture"
+
+#: landing-builder-redesign (#594)
+msgid "Add block here"
+msgstr "Ajouter un bloc ici"
+
+#: landing-builder-redesign (#594)
+msgid "Add block — text, timeline, survey card, results, event…"
+msgstr "Ajouter un bloc — texte, calendrier, carte d'enquête, résultats, événement…"
+
+#: landing-builder-redesign (#594)
+msgid "No blocks yet."
+msgstr "Pas encore de bloc."
+
+#: landing-builder-redesign (#594)
+msgid "Could not save — check the settings on the right"
+msgstr "Échec de l'enregistrement — vérifiez les paramètres à droite"
+
+#: landing-builder-redesign (#594)
+msgid "Could not save — check your connection"
+msgstr "Échec de l'enregistrement — vérifiez votre connexion"
+
+#: landing-builder-redesign (#594)
+msgid "Title, cover and address"
+msgstr "Titre, couverture et adresse"
+
+#: landing-builder-redesign (#594)
+msgid "Shown behind the title and when the link is shared."
+msgstr "Affichée derrière le titre et lorsque le lien est partagé."
+
+#: landing-builder-redesign (#594)
+msgid "Search blocks…"
+msgstr "Rechercher un bloc…"
+
+#: landing-builder-redesign (#594)
+msgid "Search blocks"
+msgstr "Rechercher des blocs"
+
+#: landing-builder-redesign (#594)
+msgid "Block actions"
+msgstr "Actions du bloc"
+
+#: landing-builder-redesign (#594)
+msgid "Move up"
+msgstr "Monter"
+
+#: landing-builder-redesign (#594)
+msgid "Move down"
+msgstr "Descendre"
+
+#: landing-builder-redesign (#594)
+msgid "Add a heading"
+msgstr "Ajouter un titre"
+
+#: landing-builder-redesign (#594)
+msgid "Headings also appear in the menu at the top of the page"
+msgstr "Les titres apparaissent aussi dans le menu en haut de la page"
+
+#: landing-builder-redesign (#594)
+msgid "Write something…"
+msgstr "Écrivez quelque chose…"
+
+#: landing-builder-redesign (#594)
+msgid "Upload a picture in the settings on the right."
+msgstr "Importez une image dans les paramètres à droite."
+
+#: landing-builder-redesign (#594)
+msgid "Paste a YouTube or Vimeo link in the settings on the right."
+msgstr "Collez un lien YouTube ou Vimeo dans les paramètres à droite."
+
+#: landing-builder-redesign (#594)
+msgid "Set the label and the link in the settings on the right."
+msgstr "Définissez le libellé et le lien dans les paramètres à droite."
+
+#: landing-builder-redesign (#594)
+msgid "Add questions and answers in the settings on the right."
+msgstr "Ajoutez des questions et des réponses dans les paramètres à droite."
+
+#: landing-builder-redesign (#594)
+msgid "Add the phases in the settings on the right."
+msgstr "Ajoutez les phases dans les paramètres à droite."
+
+#: landing-builder-redesign (#594)
+msgid "Upload files in the settings on the right."
+msgstr "Importez des fichiers dans les paramètres à droite."
+
+#: landing-builder-redesign (#594)
+msgid "Upload a GeoJSON file with the project area in the settings on the right."
+msgstr "Importez un fichier GeoJSON avec le périmètre du projet dans les paramètres à droite."
+
+#: landing-builder-redesign (#594)
+msgid "Pick a question in the settings on the right."
+msgstr "Choisissez une question dans les paramètres à droite."
+
+#: landing-builder-redesign (#594)
+msgid "Set the date and time in the settings on the right."
+msgstr "Définissez la date et l'heure dans les paramètres à droite."
+
+#: landing-builder-redesign (#594)
+msgid "Pick a survey in the settings on the right."
+msgstr "Choisissez une enquête dans les paramètres à droite."
+
+#: landing-builder-redesign (#594)
+msgid "One or two sentences: what the project is and what you ask residents"
+msgstr "Une ou deux phrases : ce qu’est le projet et ce que vous demandez aux habitants"
+
+#: landing-builder-redesign (#594)
+msgid "Change the cover picture"
+msgstr "Changer la photo de couverture"
+
+#: landing-builder-redesign (#594)
+msgid "Add a cover picture"
+msgstr "Ajouter une photo de couverture"
+
+#: landing-builder-redesign (#594)
+msgid "Tell the story"
+msgstr "Raconter le projet"
+
+#: landing-builder-redesign (#594)
+msgid "Purpose, background, what happens next"
+msgstr "Objectif, contexte, la suite"
+
+#: landing-builder-redesign (#594)
+msgid "Phases with dates; mark the one you are in"
+msgstr "Phases avec dates ; cochez la phase en cours"
+
+#: landing-builder-redesign (#594)
+msgid "Questions residents keep asking"
+msgstr "Les questions que les habitants posent souvent"
+
+#: landing-builder-redesign (#594)
+msgid "A photo or a plan drawing with a caption"
+msgstr "Une photo ou un plan avec une légende"
+
+#: landing-builder-redesign (#594)
+msgid "YouTube or Vimeo"
+msgstr "YouTube ou Vimeo"
+
+#: landing-builder-redesign (#594)
+msgid "The project area from a GeoJSON file"
+msgstr "Le périmètre du projet depuis un fichier GeoJSON"
+
+#: landing-builder-redesign (#594)
+msgid "One of your surveys; follows its status"
+msgstr "Une de vos enquêtes ; suit son statut"
+
+#: landing-builder-redesign (#594)
+msgid "Open house or walk, with registration"
+msgstr "Portes ouvertes ou balade, avec inscription"
+
+#: landing-builder-redesign (#594)
+msgid "A link to anything else"
+msgstr "Un lien vers autre chose"
+
+#: landing-builder-redesign (#594)
+msgid "Show the work"
+msgstr "Montrer le travail"
+
+#: landing-builder-redesign (#594)
+msgid "A chart or a map from a survey's answers"
+msgstr "Un graphique ou une carte à partir des réponses d'une enquête"
+
+#: landing-builder-redesign (#594)
+msgid "Summaries, boards, the draft plan"
+msgstr "Synthèses, panneaux, le projet de plan"
+
+#: landing-builder-redesign (#594)
+msgid "The survey is a draft: the card shows “Coming soon” until you publish it."
+msgstr "L'enquête est un brouillon : la carte affiche « Bientôt disponible » jusqu'à sa publication."
+
+#: landing-builder-redesign (#594)
+msgid "The question was removed from the survey; the block is not shown."
+msgstr "La question a été retirée de l'enquête ; le bloc n'est pas affiché."
+
+#: landing-builder-redesign (#594)
+msgid "Not shown on the page until it is filled in."
+msgstr "N'apparaît sur la page qu'une fois rempli."

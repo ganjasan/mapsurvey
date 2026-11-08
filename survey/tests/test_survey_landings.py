@@ -803,7 +803,7 @@ class LandingResultsTest(LandingTestBase):
         self.choice_q.delete()
         self.client.post(self.url('editor_landing_publish'), {'action': 'publish'})
         self.assertNotContains(self.client.get('/p/riverside-park-plan/'), 'What we heard')
-        self.assertContains(self.client.get(self.url('editor_landing')), 'the question was removed')
+        self.assertContains(self.client.get(self.url('editor_landing')), 'question was removed')
 
     def test_public_results_page_uses_shared_renderer(self):
         """GIVEN a published public results page
@@ -1039,3 +1039,138 @@ class LandingReviewFixesTest(LandingTestBase):
                              {'q': ['Brand new question?', ''], 'a': ['<p>x</p>', '<p>orphan</p>']})
         self.assertEqual(r.status_code, 400)
         self.assertContains(r, 'Brand new question?', status_code=400)
+
+
+class LandingCanvasBuilderTest(LandingTestBase):
+    """Spec `survey-landings`, the canvas builder (change landing-builder-redesign, #594)."""
+
+    def setUp(self):
+        super().setUp()
+        self.login(self.editor)
+
+    def autosave(self, block, **fields):
+        return self.client.post(self.url('editor_landing_block_edit', block.pk), dict(autosave='1', **fields))
+
+    def test_autosave_answers_the_rerendered_block(self):
+        """GIVEN a text block
+        WHEN the builder posts a new body with autosave=1
+        THEN the answer is JSON with the block's canvas HTML and outline row, and the body is stored sanitised"""
+        self.add_block('text', body='<p>Old</p>')
+        block = self.landing.blocks.get()
+        r = self.autosave(block, body='<p>New text</p><script>x</script>', title='About')
+        self.assertEqual(r.status_code, 200)
+        data = r.json()
+        self.assertTrue(data['ok'])
+        self.assertIn('New text', data['block'])
+        self.assertIn(f'data-block="{block.pk}"', data['block'])
+        self.assertIn('About', data['outline'])
+        self.assertIn('data-pane=', data['panel'])
+        block.refresh_from_db()
+        self.assertEqual(block.data['body'], '<p>New text</p>')
+        self.assertEqual(block.title, 'About')
+
+    def test_autosave_refusal_keeps_the_block(self):
+        """GIVEN a button block
+        WHEN the builder posts the URL javascript:alert(1) with autosave=1
+        THEN the answer is 422 JSON with an error for url and the block is unchanged"""
+        self.add_block('button', label='Plan', url='https://city.example/plan')
+        block = self.landing.blocks.get()
+        r = self.autosave(block, label='Plan', url='javascript:alert(1)')
+        self.assertEqual(r.status_code, 422)
+        self.assertIn('url', r.json()['errors'])
+        block.refresh_from_db()
+        self.assertEqual(block.data['url'], 'https://city.example/plan')
+
+    def test_empty_field_waits_on_autosave(self):
+        """GIVEN an event block being filled in
+        WHEN only the date is posted with autosave=1
+        THEN it is saved without an error and stays off the public page until the start time is set"""
+        self.client.post(self.url('editor_landing_block_add'), {'kind': 'event', 'empty': '1'})
+        block = self.landing.blocks.get()
+        r = self.autosave(block, date='2030-06-12', start='', tz='UTC', open='1')
+        self.assertEqual(r.status_code, 200)
+        self.client.post(self.url('editor_landing_publish'), {'action': 'publish'})
+        self.assertNotContains(self.client.get('/p/riverside-park-plan/'), 'lp-event')
+        self.autosave(block, date='2030-06-12', start='10:00', tz='UTC', open='1')
+        self.assertContains(self.client.get('/p/riverside-park-plan/'), 'lp-event')
+
+    def test_library_adds_an_empty_block_off_the_page(self):
+        """GIVEN the block library
+        WHEN a text block is added empty after the first block
+        THEN the builder selects it, it sits second, and the published page does not draw it"""
+        self.add_block('text', body='<p>First</p>')
+        self.add_block('text', body='<p>Last</p>')
+        first = self.landing.blocks.order_by('order').first()
+        r = self.client.post(self.url('editor_landing_block_add'), {'kind': 'text', 'empty': '1', 'after': first.pk})
+        new = self.landing.blocks.order_by('-id').first()
+        self.assertIn(f'select={new.pk}', r['Location'])
+        self.assertEqual(list(self.landing.blocks.order_by('order').values_list('pk', flat=True))[1], new.pk)
+        self.assertContains(self.client.get(self.url('editor_landing') + f'?select={new.pk}'), 'lb-blk')
+        self.client.post(self.url('editor_landing_publish'), {'action': 'publish'})
+        page = self.client.get('/p/riverside-park-plan/').content.decode()
+        self.assertEqual(page.count('lp-block--text'), 2)
+
+    def test_canvas_renders_every_kind_editable(self):
+        """GIVEN a landing with one block of every kind
+        WHEN the builder renders
+        THEN every block has its canvas shell, a toolbar and a panel, and the headings are editable"""
+        self._every_kind()
+        self.client.post(self.url('editor_landing_block_add'), {'kind': 'documents', 'empty': '1'})
+        self.client.post(self.url('editor_landing_block_add'), {'kind': 'map', 'empty': '1'})
+        self.client.post(self.url('editor_landing_block_add'), {'kind': 'results', 'empty': '1'})
+        self.client.post(self.url('editor_landing_block_add'), {'kind': 'event', 'empty': '1'})
+        html = self.client.get(self.url('editor_landing')).content.decode()
+        for block in self.landing.blocks.all():
+            self.assertIn(f'class="lp-block lp-block--{block.kind} lb-blk', html, block.kind)
+            self.assertIn(f'data-pane="{block.pk}"', html)
+        self.assertEqual(html.count('class="lb-tools"'), self.landing.blocks.count())
+        self.assertIn('data-field="title"', html)
+        self.assertIn('data-field="body"', html)
+
+    def test_read_only_canvas(self):
+        """GIVEN a viewer, and an editor of a lapsed workspace
+        WHEN they open the builder
+        THEN no toolbar, no "+" and the panels are disabled"""
+        self.add_block('text', body='<p>Hi</p>')
+        for user in (self.viewer,):
+            self.login(user)
+            html = self.client.get(self.url('editor_landing')).content.decode()
+            self.assertNotIn('class="lb-tools"', html)
+            self.assertNotIn('lb-ins', html)
+            self.assertIn('<fieldset disabled', html)
+            self.assertIn('data-may-edit=""', html)
+        self.sub.delete()
+        trial_used_elsewhere(self.org)
+        self.login(self.editor)
+        html = self.client.get(self.url('editor_landing')).content.decode()
+        self.assertNotIn('class="lb-tools"', html)
+        self.assertIn('part of Pro', html)
+
+    def test_duplicate(self):
+        """GIVEN a documents block with a file
+        WHEN it is duplicated and the copy then removes the file
+        THEN the copy sits right after the original and the original's file is still stored"""
+        pdf = SimpleUploadedFile('a.pdf', b'%PDF-1.4\n', content_type='application/pdf')
+        self.client.post(self.url('editor_landing_block_add'), {'kind': 'documents', 'files': [pdf]})
+        self.add_block('text', body='<p>After</p>')
+        original = self.landing.blocks.get(kind='documents')
+        r = self.client.post(self.url('editor_landing_block_duplicate', original.pk))
+        copy = self.landing.blocks.filter(kind='documents').exclude(pk=original.pk).get()
+        self.assertIn(f'select={copy.pk}', r['Location'])
+        self.assertEqual(copy.order, original.order + 1)
+        f_copy = copy.files.get()
+        self.client.post(self.url('editor_landing_block_edit', copy.pk), {f'remove_{f_copy.pk}': '1', 'autosave': '1'})
+        f = original.files.get()
+        self.assertTrue(f.file.storage.exists(f.file.name))
+
+    def test_settings_autosave_partial(self):
+        """GIVEN the page panel
+        WHEN only the visibility is posted with autosave=1
+        THEN it changes, the title stays and the answer carries the hero"""
+        r = self.client.post(self.url('editor_landing_settings'), {'visibility': 'unlisted', 'autosave': '1'})
+        self.assertTrue(r.json()['ok'])
+        self.assertIn('Riverside Park plan', r.json()['hero'])
+        self.landing.refresh_from_db()
+        self.assertEqual((self.landing.visibility, self.landing.title), ('unlisted', 'Riverside Park plan'))
+        r = self.client.post(self.url('editor_landing_settings'), {'slug': 'Edit', 'autosave': '1'})
+        self.assertEqual(r.status_code, 422)

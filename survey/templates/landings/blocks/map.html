@@ -2,5 +2,5 @@
   <div class="lp-map" id="map-{{ block.pk }}" data-basemap="{{ block.data.basemap }}" data-color="{{ block.data.color }}"
        role="img" aria-label="{{ block.title|default:_('Map of the project area') }}"></div>
   {% with aid="area-"|add:block.anchor %}{{ block.data.area|json_script:aid }}{% endwith %}
-  {% if block.data.caption %}<figcaption>{{ block.data.caption }}</figcaption>{% endif %}
+  {% if block.data.caption or editing %}<figcaption data-field="caption">{{ block.data.caption }}</figcaption>{% endif %}
 </figure>{% endif %}

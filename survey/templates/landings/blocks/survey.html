@@ -6,9 +6,9 @@
     {% else %}{% trans "Closed" %}{% endif %}
   </div>
   <div class="lp-survey-name">{{ survey.name }}</div>
-  {% if block.data.description %}<p class="lp-survey-desc">{{ block.data.description }}</p>{% endif %}
+  {% if block.data.description or editing %}<p class="lp-survey-desc" data-field="description">{{ block.data.description }}</p>{% endif %}
   {% if card.state == 'open' %}
-  <a class="lp-btn" href="{{ card.url }}">{{ block.data.button_label|default:_("Take part") }}</a>
+  <a class="lp-btn" href="{{ card.url }}"{% if editing %} data-field="button_label" data-placeholder="{% trans 'Take part' %}"{% endif %}>{% if editing %}{{ block.data.button_label }}{% else %}{{ block.data.button_label|default:_("Take part") }}{% endif %}</a>
   {% elif card.results_url %}
   <a class="lp-btn lp-btn--outline" href="{{ card.results_url }}">{% trans "See the results" %}</a>
   {% endif %}

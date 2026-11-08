@@ -76,6 +76,35 @@ def picker():
     return out
 
 
+# The block library of the canvas builder (change landing-builder-redesign): groups named by what
+# the creator is doing, each tile with one line of what the block is for.
+LIBRARY = (
+    (gettext_lazy('Tell the story'), (
+        ('text', gettext_lazy('Purpose, background, what happens next')),
+        ('timeline', gettext_lazy('Phases with dates; mark the one you are in')),
+        ('faq', gettext_lazy('Questions residents keep asking')),
+        ('image', gettext_lazy('A photo or a plan drawing with a caption')),
+        ('video', gettext_lazy('YouTube or Vimeo')),
+        ('map', gettext_lazy('The project area from a GeoJSON file')),
+    )),
+    (gettext_lazy('Take part'), (
+        ('survey', gettext_lazy('One of your surveys; follows its status')),
+        ('event', gettext_lazy('Open house or walk, with registration')),
+        ('button', gettext_lazy('A link to anything else')),
+    )),
+    (gettext_lazy('Show the work'), (
+        ('results', gettext_lazy("A chart or a map from a survey's answers")),
+        ('documents', gettext_lazy('Summaries, boards, the draft plan')),
+    )),
+)
+
+
+def library():
+    """[(group label, [(kind, label, icon, description)])]; every kind appears exactly once."""
+    return [(label, [(k, BLOCK_KINDS[k][0], BLOCK_KINDS[k][1], desc) for k, desc in tiles])
+            for label, tiles in LIBRARY]
+
+
 def _plain(value, cap):
     return ' '.join(str(value or '').split())[:cap]
 
@@ -271,20 +300,54 @@ _CLEANERS = {
 }
 
 
-def clean_block(kind, raw, org=None):
+def clean_block(kind, raw, org=None, creating=False):
     """(data, errors) for a block of `kind` from the posted `raw` dict. `data` carries only
     the kind's keys, trimmed and capped; rich text has passed `coerce_creator_html`. `org`
-    lets the map cleaner check its base map against the workspace's."""
+    lets the map cleaner check its base map against the workspace's. `creating` (change
+    landing-builder-redesign) is the library adding an EMPTY block: the "required" errors are
+    dropped so the block exists on the canvas; `is_complete` keeps it off the public page."""
     if kind not in _CLEANERS:
         return {}, {'kind': _('Unknown block type.')}
     errors = {}
     raw = raw if isinstance(raw, dict) else {}
     if kind == 'map':
-        return _clean_map(raw, errors, org=org), errors
-    if kind == 'results':
-        return _clean_results(raw, errors, org=org), errors
-    data = _CLEANERS[kind](raw, errors)
+        data = _clean_map(raw, errors, org=org)
+    elif kind == 'results':
+        data = _clean_results(raw, errors, org=org)
+    else:
+        data = _CLEANERS[kind](raw, errors)
+    if creating:
+        errors.clear()
     return data, errors
+
+
+def is_complete(block):
+    """Whether the public page draws the block (change landing-builder-redesign): a block
+    the library just added, or one the creator emptied, stays in the builder only."""
+    data = block.data if isinstance(block.data, dict) else {}
+    kind = block.kind
+    if kind == 'text':
+        return not _is_empty_html(data.get('body'))
+    if kind == 'image':
+        return bool(block.image)
+    if kind == 'button':
+        return bool(data.get('label')) and bool(data.get('url'))
+    if kind == 'video':
+        return bool(data.get('embed'))
+    if kind in ('faq', 'timeline'):
+        return bool(data.get('items'))
+    if kind == 'documents':
+        return bool(block.files.all())
+    if kind == 'map':
+        return bool(data.get('area'))
+    if kind == 'results':
+        return bool(data.get('question_code')) and block.landing_survey_id is not None
+    if kind == 'event':
+        from . import landing_events
+        return bool(data.get('start')) and landing_events.starts_at(data) is not None
+    if kind == 'survey':
+        return block.landing_survey_id is not None
+    return True
 
 
 def clean_title(value):
@@ -517,35 +580,37 @@ def blocks_for(landing):
                 .order_by('order', 'id'))
 
 
+def block_card(block, now=None, lang='en'):
+    """What a block's template needs besides the block itself: the survey card, the event
+    times, the results payload — or None. Shared by the public page and the builder canvas."""
+    if block.kind == 'results':
+        return results_payload(block, lang=lang)
+    if block.kind == 'event':
+        from . import landing_events
+        start = landing_events.starts_at(block.data)
+        if start is None:
+            return None
+        return {'starts_at': start, 'ends_at': landing_events.ends_at(block.data),
+                'tz': block.data.get('tz') or 'UTC', 'accepting': landing_events.accepting(block, now=now),
+                'seats_left': landing_events.seats_left(block),
+                'retention_days': landing_events.RETENTION_DAYS}
+    if block.kind == 'survey' and block.landing_survey is not None:
+        return survey_card(block.landing_survey.survey, now=now)
+    return None
+
+
 def page_blocks(landing, now=None, lang='en'):
-    """[(block, card-or-None)] as the public page draws them: survey cards resolved, hidden
-    survey cards dropped, documents blocks without files dropped."""
+    """[(block, card-or-None)] as the public page draws them: incomplete blocks dropped,
+    survey cards resolved and hidden ones dropped, results without a question dropped."""
     out = []
     for block in blocks_for(landing):
-        if block.kind == 'documents' and not block.files.all():
+        if not is_complete(block):
             continue
-        if block.kind == 'results':
-            card = results_payload(block, lang=lang)
-            if card is None:
-                continue
-            out.append((block, card))
+        card = block_card(block, now=now, lang=lang)
+        if block.kind == 'results' and card is None:
             continue
-        card = None
-        if block.kind == 'event':
-            from . import landing_events
-            start = landing_events.starts_at(block.data)
-            if start is None:
-                continue
-            card = {'starts_at': start, 'ends_at': landing_events.ends_at(block.data),
-                    'tz': block.data.get('tz') or 'UTC', 'accepting': landing_events.accepting(block, now=now),
-                    'seats_left': landing_events.seats_left(block),
-                    'retention_days': landing_events.RETENTION_DAYS}
-        if block.kind == 'survey':
-            if block.landing_survey is None:
-                continue
-            card = survey_card(block.landing_survey.survey, now=now)
-            if card['state'] == CARD_HIDDEN:
-                continue
+        if block.kind == 'survey' and (card is None or card['state'] == CARD_HIDDEN):
+            continue
         out.append((block, card))
     return out
 
@@ -639,6 +704,23 @@ def results_payload(block, lang='en'):
     except Exception:  # noqa: BLE001
         pass
     return payload
+
+
+def outline_label(block):
+    """The outline row's text: the heading, else what the block shows."""
+    if block.title:
+        return block.title
+    data = block.data if isinstance(block.data, dict) else {}
+    if block.kind == 'survey' and block.landing_survey_id:
+        return block.landing_survey.survey.name
+    if block.kind == 'text':
+        from django.utils.html import strip_tags
+        return ' '.join(strip_tags(data.get('body') or '').split())[:60]
+    if block.kind == 'button':
+        return data.get('label') or ''
+    if block.kind in ('image', 'video', 'map'):
+        return data.get('caption') or ''
+    return ''
 
 
 def nav_items(blocks):

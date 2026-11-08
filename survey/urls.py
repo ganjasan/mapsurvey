@@ -321,6 +321,8 @@ urlpatterns = [
          name='editor_landing_block_edit'),
     path('editor/landings/<uuid:uuid>/blocks/<int:block_id>/delete/', landing_views.editor_landing_block_delete,
          name='editor_landing_block_delete'),
+    path('editor/landings/<uuid:uuid>/blocks/<int:block_id>/duplicate/', landing_views.editor_landing_block_duplicate,
+         name='editor_landing_block_duplicate'),
     path('editor/landings/<uuid:uuid>/publish/', landing_views.editor_landing_publish, name='editor_landing_publish'),
     path('editor/landings/<uuid:uuid>/delete/', landing_views.editor_landing_delete, name='editor_landing_delete'),
     path('editor/landings/<uuid:uuid>/qr/', landing_views.editor_landing_qr, name='editor_landing_qr'),

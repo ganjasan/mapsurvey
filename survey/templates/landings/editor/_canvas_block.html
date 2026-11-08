@@ -1,0 +1,36 @@
+{% load i18n question_utils %}{% comment %}One block on the builder canvas (change landing-builder-redesign): the public block
+template inside an editor shell — kind tag, hover toolbar, the heading editable in place. Text marked
+`data-field` in the block templates becomes editable through landing_builder.js. `b` is the block, `item`
+its record from _builder_context (card, complete, warn). Never name a context variable `block` in the
+builder (it extends base.html): it is passed explicitly into the include below.{% endcomment %}
+<section class="lp-block lp-block--{{ b.kind }} lb-blk{% if not item.complete %} lb-incomplete{% endif %}{% if selected == b.pk|stringformat:'s' %} on{% endif %}"
+         id="{{ b.anchor }}" data-block="{{ b.pk }}" data-kind="{{ b.kind }}">
+  <span class="lb-tag">{{ kinds|get_item:b.kind }}</span>
+  {% if may_edit %}
+  <div class="lb-tools" role="toolbar" aria-label="{% trans 'Block actions' %}">
+    <button type="button" class="lb-grab" title="{% trans 'Drag to reorder' %}" aria-label="{% trans 'Drag to reorder' %}"><i class="fas fa-grip-vertical" aria-hidden="true"></i></button>
+    <button type="button" data-move="up" title="{% trans 'Move up' %}" aria-label="{% trans 'Move up' %}"><i class="fas fa-arrow-up" aria-hidden="true"></i></button>
+    <button type="button" data-move="down" title="{% trans 'Move down' %}" aria-label="{% trans 'Move down' %}"><i class="fas fa-arrow-down" aria-hidden="true"></i></button>
+    <form method="post" action="{% url 'editor_landing_block_duplicate' landing.uuid b.pk %}">{% csrf_token %}
+      <button type="submit" title="{% trans 'Duplicate' %}" aria-label="{% trans 'Duplicate' %}"><i class="far fa-clone" aria-hidden="true"></i></button></form>
+    <button type="button" data-select-target="{{ b.pk }}" title="{% trans 'Settings' %}" aria-label="{% trans 'Settings' %}"><i class="fas fa-sliders-h" aria-hidden="true"></i></button>
+    <form method="post" action="{% url 'editor_landing_block_delete' landing.uuid b.pk %}" data-confirm="{% trans 'Delete this block?' %}">{% csrf_token %}
+      <button type="submit" class="lb-del" title="{% trans 'Delete block' %}" aria-label="{% trans 'Delete block' %}"><i class="far fa-trash-alt" aria-hidden="true"></i></button></form>
+  </div>
+  {% endif %}
+
+  <h2 data-field="title" data-placeholder="{% trans 'Add a heading' %}" title="{% trans 'Headings also appear in the menu at the top of the page' %}"{% if not b.title %} class="lb-empty-heading"{% endif %}>{{ b.title }}</h2>
+
+  {% if b.kind == 'text' %}
+  <div class="lp-rich lb-rich" data-field="body" data-rich data-placeholder="{% trans 'Write something…' %}">{{ b.data.body|safe }}</div>
+  {% elif item.complete %}
+  {% with "landings/blocks/"|add:b.kind|add:".html" as tpl %}{% include tpl with block=b card=item.card editing=True %}{% endwith %}
+  {% if b.kind == 'results' and item.card %}{% with rid="res-"|add:item.card.id %}{{ item.card|json_script:rid }}{% endwith %}{% endif %}
+  {% else %}
+  <div class="lb-placeholder" data-select-target="{{ b.pk }}">
+    <i class="{{ icons|get_item:b.kind }}" aria-hidden="true"></i>
+    <span>{% if b.kind == 'image' %}{% trans "Upload a picture in the settings on the right." %}{% elif b.kind == 'video' %}{% trans "Paste a YouTube or Vimeo link in the settings on the right." %}{% elif b.kind == 'button' %}{% trans "Set the label and the link in the settings on the right." %}{% elif b.kind == 'faq' %}{% trans "Add questions and answers in the settings on the right." %}{% elif b.kind == 'timeline' %}{% trans "Add the phases in the settings on the right." %}{% elif b.kind == 'documents' %}{% trans "Upload files in the settings on the right." %}{% elif b.kind == 'map' %}{% trans "Upload a GeoJSON file with the project area in the settings on the right." %}{% elif b.kind == 'results' %}{% trans "Pick a question in the settings on the right." %}{% elif b.kind == 'event' %}{% trans "Set the date and time in the settings on the right." %}{% elif b.kind == 'survey' %}{% trans "Pick a survey in the settings on the right." %}{% endif %}</span>
+  </div>
+  {% endif %}
+  {% if item.warn %}<p class="lb-warn"><i class="fas fa-info-circle" aria-hidden="true"></i> {{ item.warn }}</p>{% endif %}
+</section>

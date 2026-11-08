@@ -1,0 +1,83 @@
+{% load i18n %}{% comment %}The page panel (change landing-builder-redesign): shown when no block is selected.
+Cover, address, language, visibility, the surveys on this page. Autosaved like a block.{% endcomment %}
+<div class="lb-pane" data-pane="page" id="lb-page-pane"{% if selected and selected != 'page' %} hidden{% endif %}>
+  <div class="lb-pane-head"><div><div class="lb-pane-kind">{% trans "Page" %}</div><h3>{% trans "Title, cover and address" %}</h3></div></div>
+  <div class="lb-pane-body">
+    {% if settings_errors %}<div class="text-danger small mb-2" role="alert">{% for k, v in settings_errors.items %}{{ v }} {% endfor %}</div>{% endif %}
+    <form method="post" action="{% url 'editor_landing_settings' landing.uuid %}" enctype="multipart/form-data" class="lb-form lb-page-form">
+      {% csrf_token %}
+      <div class="lb-errors text-danger small" role="alert" hidden></div>
+      <fieldset {% if not may_edit %}disabled{% endif %}>
+      <input type="hidden" name="title" value="{{ landing.title }}">
+      <textarea name="summary" hidden>{{ landing.summary }}</textarea>
+      <div class="lb-field">
+        <label for="lp-cover">{% trans "Cover picture" %}</label>
+        {% if landing.cover %}<img src="{{ landing.cover.url }}" alt="" class="lb-cover-thumb">{% endif %}
+        <input type="file" id="lp-cover" name="cover" accept="image/jpeg,image/png,image/webp,image/gif" class="form-control-file form-control-sm">
+        {% if landing.cover %}<label class="small mt-1 mb-0"><input type="checkbox" name="remove_cover" value="1"> {% trans "Remove the picture" %}</label>{% endif %}
+        <input name="cover_alt" class="form-control form-control-sm mt-1" maxlength="200" value="{{ landing.cover_alt }}" placeholder="{% trans 'Describe the picture for screen readers' %}" aria-label="{% trans 'Picture description' %}">
+        <div class="lb-hint">{% trans "Shown behind the title and when the link is shared." %}</div>
+      </div>
+      <div class="lb-field">
+        <label for="lp-slug">{% trans "Address" %}</label>
+        <div class="input-group input-group-sm">
+          <div class="input-group-prepend"><span class="input-group-text">/p/</span></div>
+          <input id="lp-slug" name="slug" class="form-control" maxlength="64" value="{{ landing.slug }}" pattern="[a-z0-9]+(-[a-z0-9]+)*" required data-autosave="change">
+        </div>
+        {% if landing.is_published %}<div class="lb-hint">{% trans "Changing the address of a published page breaks links and QR codes already printed." %}</div>{% endif %}
+      </div>
+      <div class="form-row">
+        <div class="lb-field col-6">
+          <label for="lp-language">{% trans "Page language" %}</label>
+          <select id="lp-language" name="language" class="form-control form-control-sm">
+            {% for code, name in languages %}<option value="{{ code }}"{% if code == landing.language %} selected{% endif %}>{{ name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="lb-field col-6">
+          <label for="lp-visibility">{% trans "Visibility" %}</label>
+          <select id="lp-visibility" name="visibility" class="form-control form-control-sm">
+            <option value="public"{% if landing.visibility == 'public' %} selected{% endif %}>{% trans "Public" %}</option>
+            <option value="unlisted"{% if landing.visibility == 'unlisted' %} selected{% endif %}>{% trans "Unlisted" %}</option>
+          </select>
+        </div>
+      </div>
+      </fieldset>
+    </form>
+
+    <div class="lb-sub">{% trans "Surveys on this page" %}</div>
+    <ul class="list-unstyled mb-2">
+      {% for link, card in links %}
+      <li class="lb-link-row">
+        <i class="fas fa-map-marked-alt text-muted" aria-hidden="true"></i>
+        <span>{{ link.survey.name }} <small class="text-muted">· {% include "landings/_card_state.html" %}</small></span>
+        {% if can_act %}
+        <form method="post" action="{% url 'editor_landing_survey_unlink' landing.uuid link.pk %}" class="ml-auto mb-0">
+          {% csrf_token %}
+          <button type="submit" class="lb-link text-muted" title="{% trans 'Remove from this page' %}" aria-label="{% trans 'Remove from this page' %}"><i class="fas fa-times" aria-hidden="true"></i></button>
+        </form>
+        {% endif %}
+      </li>
+      {% empty %}
+      <li class="small text-muted">{% trans "No surveys yet." %}</li>
+      {% endfor %}
+    </ul>
+    {% if may_edit and linkable %}
+    <form method="post" action="{% url 'editor_landing_survey_link' landing.uuid %}" class="d-flex mb-0" style="gap:.4rem;">
+      {% csrf_token %}
+      <select name="survey" class="form-control form-control-sm" aria-label="{% trans 'Survey' %}">
+        {% for s in linkable %}<option value="{{ s.uuid }}">{{ s.name }}</option>{% endfor %}
+      </select>
+      <button type="submit" class="btn btn-sm btn-outline-primary text-nowrap">{% trans "Add" %}</button>
+    </form>
+    {% endif %}
+    <div class="lb-hint">{% trans "A survey can be on any number of landing pages. Show one with a Survey card block." %}</div>
+  </div>
+  {% if can_act %}
+  <div class="lb-pane-foot">
+    <span class="lb-pro"><i class="fas fa-bolt" aria-hidden="true"></i> Pro</span>
+    <form method="post" action="{% url 'editor_landing_delete' landing.uuid %}" data-confirm="{% trans 'Delete this landing page? Its address stops working.' %}">
+      {% csrf_token %}<button type="submit" class="lb-link lb-danger">{% trans "Delete page" %}</button>
+    </form>
+  </div>
+  {% endif %}
+</div>

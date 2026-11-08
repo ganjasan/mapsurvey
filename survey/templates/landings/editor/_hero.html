@@ -1,0 +1,11 @@
+{% load i18n %}{% comment %}The page head on the canvas (change landing-builder-redesign): the same look as the
+public hero; the title and the summary are edited in place and autosaved to the page settings.{% endcomment %}
+<header class="lp-hero{% if landing.cover %} lp-hero--cover{% endif %} lb-hero{% if selected == 'page' %} on{% endif %}" data-select="page" id="lb-hero">
+  {% if landing.cover %}<img class="lp-hero-img" src="{{ landing.cover.url }}" alt="{{ landing.cover_alt }}">{% endif %}
+  <div class="lp-wrap lp-hero-text">
+    <p class="lp-org">{{ org.name }}</p>
+    <h1 data-page-field="title" data-placeholder="{% trans 'Page title' %}">{{ landing.title }}</h1>
+    <p class="lp-summary" data-page-field="summary" data-placeholder="{% trans 'One or two sentences: what the project is and what you ask residents' %}">{{ landing.summary }}</p>
+  </div>
+  {% if may_edit %}<button type="button" class="lb-ghost lb-cover-btn" data-select-target="page"><i class="far fa-image" aria-hidden="true"></i> {% if landing.cover %}{% trans "Change the cover picture" %}{% else %}{% trans "Add a cover picture" %}{% endif %}</button>{% endif %}
+</header>
