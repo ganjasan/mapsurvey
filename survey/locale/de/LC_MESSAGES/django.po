@@ -11906,3 +11906,63 @@ msgstr "Die Sprache der Schaltflächen und Beschriftungen der Seite."
 #: landing-builder-redesign (#594)
 msgid "Settings of this block"
 msgstr "Einstellungen dieses Blocks"
+
+#: landing-inline-editing
+msgid "A boundary, a route or a few points; up to 1 MB"
+msgstr "Eine Grenze, eine Route oder einige Punkte; bis 1 MB"
+
+#: landing-inline-editing
+msgid "Drop a GeoJSON file with the project area"
+msgstr "GeoJSON-Datei mit dem Projektgebiet hier ablegen"
+
+#: landing-inline-editing
+msgid "Drop a picture here"
+msgstr "Bild hier ablegen"
+
+#: landing-inline-editing
+msgid "Drop files here"
+msgstr "Dateien hier ablegen"
+
+#: landing-inline-editing
+msgid "choose a file"
+msgstr "eine Datei auswählen"
+
+#: landing-inline-editing
+msgid "Edit this in the block on the page."
+msgstr "Bearbeiten Sie dies im Block auf der Seite."
+
+#: landing-inline-editing
+msgid "JPEG, PNG, WebP or GIF, up to 5 MB"
+msgstr "JPEG, PNG, WebP oder GIF, bis 5 MB"
+
+#: landing-inline-editing
+msgid "PDF, office documents, CSV or text; up to 25 MB each"
+msgstr "PDF, Office-Dokumente, CSV oder Text; jeweils bis 25 MB"
+
+#: landing-inline-editing
+msgid "Not filled in yet."
+msgstr "Noch nicht ausgefüllt."
+
+#: landing-inline-editing
+msgid "Paste a YouTube or Vimeo link"
+msgstr "YouTube- oder Vimeo-Link einfügen"
+
+#: landing-inline-editing
+msgid "Phase"
+msgstr "Phase"
+
+#: landing-inline-editing
+msgid "When"
+msgstr "Wann"
+
+#: landing-inline-editing
+msgid "The project is in this phase now"
+msgstr "Das Projekt ist jetzt in dieser Phase"
+
+#: landing-inline-editing
+msgid "Replace picture"
+msgstr "Bild ersetzen"
+
+#: landing-inline-editing
+msgid "Replace area"
+msgstr "Gebiet ersetzen"

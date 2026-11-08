@@ -11819,3 +11819,63 @@ msgstr "Bahasa tombol dan label halaman."
 #: landing-builder-redesign (#594)
 msgid "Settings of this block"
 msgstr "Pengaturan blok ini"
+
+#: landing-inline-editing
+msgid "A boundary, a route or a few points; up to 1 MB"
+msgstr "Batas, rute, atau beberapa titik; hingga 1 MB"
+
+#: landing-inline-editing
+msgid "Drop a GeoJSON file with the project area"
+msgstr "Letakkan berkas GeoJSON berisi area proyek"
+
+#: landing-inline-editing
+msgid "Drop a picture here"
+msgstr "Letakkan gambar di sini"
+
+#: landing-inline-editing
+msgid "Drop files here"
+msgstr "Letakkan berkas di sini"
+
+#: landing-inline-editing
+msgid "choose a file"
+msgstr "pilih satu berkas"
+
+#: landing-inline-editing
+msgid "Edit this in the block on the page."
+msgstr "Edit ini di blok pada halaman."
+
+#: landing-inline-editing
+msgid "JPEG, PNG, WebP or GIF, up to 5 MB"
+msgstr "JPEG, PNG, WebP, atau GIF, hingga 5 MB"
+
+#: landing-inline-editing
+msgid "PDF, office documents, CSV or text; up to 25 MB each"
+msgstr "PDF, dokumen perkantoran, CSV, atau teks; masing-masing hingga 25 MB"
+
+#: landing-inline-editing
+msgid "Not filled in yet."
+msgstr "Belum diisi."
+
+#: landing-inline-editing
+msgid "Paste a YouTube or Vimeo link"
+msgstr "Tempel tautan YouTube atau Vimeo"
+
+#: landing-inline-editing
+msgid "Phase"
+msgstr "Tahap"
+
+#: landing-inline-editing
+msgid "When"
+msgstr "Kapan"
+
+#: landing-inline-editing
+msgid "The project is in this phase now"
+msgstr "Proyek sedang berada di tahap ini"
+
+#: landing-inline-editing
+msgid "Replace picture"
+msgstr "Ganti gambar"
+
+#: landing-inline-editing
+msgid "Replace area"
+msgstr "Ganti area"

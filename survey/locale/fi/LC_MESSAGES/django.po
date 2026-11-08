@@ -11816,3 +11816,63 @@ msgstr "Sivun painikkeiden ja tekstien kieli."
 #: landing-builder-redesign (#594)
 msgid "Settings of this block"
 msgstr "Tämän lohkon asetukset"
+
+#: landing-inline-editing
+msgid "A boundary, a route or a few points; up to 1 MB"
+msgstr "Raja, reitti tai muutama piste; enintään 1 Mt"
+
+#: landing-inline-editing
+msgid "Drop a GeoJSON file with the project area"
+msgstr "Pudota GeoJSON-tiedosto hankealueesta"
+
+#: landing-inline-editing
+msgid "Drop a picture here"
+msgstr "Pudota kuva tähän"
+
+#: landing-inline-editing
+msgid "Drop files here"
+msgstr "Pudota tiedostot tähän"
+
+#: landing-inline-editing
+msgid "choose a file"
+msgstr "valitse tiedosto"
+
+#: landing-inline-editing
+msgid "Edit this in the block on the page."
+msgstr "Muokkaa tätä sivun lohkossa."
+
+#: landing-inline-editing
+msgid "JPEG, PNG, WebP or GIF, up to 5 MB"
+msgstr "JPEG, PNG, WebP tai GIF, enintään 5 Mt"
+
+#: landing-inline-editing
+msgid "PDF, office documents, CSV or text; up to 25 MB each"
+msgstr "PDF, toimisto-asiakirjat, CSV tai teksti; enintään 25 Mt kukin"
+
+#: landing-inline-editing
+msgid "Not filled in yet."
+msgstr "Ei vielä täytetty."
+
+#: landing-inline-editing
+msgid "Paste a YouTube or Vimeo link"
+msgstr "Liitä YouTube- tai Vimeo-linkki"
+
+#: landing-inline-editing
+msgid "Phase"
+msgstr "Vaihe"
+
+#: landing-inline-editing
+msgid "When"
+msgstr "Milloin"
+
+#: landing-inline-editing
+msgid "The project is in this phase now"
+msgstr "Hanke on nyt tässä vaiheessa"
+
+#: landing-inline-editing
+msgid "Replace picture"
+msgstr "Vaihda kuva"
+
+#: landing-inline-editing
+msgid "Replace area"
+msgstr "Vaihda alue"

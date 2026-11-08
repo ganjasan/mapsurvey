@@ -16,69 +16,49 @@ from the canvas `[data-field]` elements, so this form is always the whole block 
   {% if errors.body %}<div class="text-danger small">{{ errors.body }}</div>{% endif %}
 
   {% elif kind == 'image' %}
-  <input type="file" name="image" accept="image/jpeg,image/png,image/webp,image/gif" class="form-control-file form-control-sm">
+  <input type="file" name="image" hidden>
   {% if errors.image %}<div class="text-danger small">{{ errors.image }}</div>{% endif %}
-  <label class="small mb-0 mt-2">{% trans "Describe the picture for screen readers" %}</label>
+  <label class="small mb-0">{% trans "Describe the picture for screen readers" %}</label>
   <input name="alt" class="form-control form-control-sm" maxlength="200" value="{{ data.alt|default:'' }}">
   <input type="hidden" name="caption" value="{{ data.caption|default:'' }}">
 
   {% elif kind == 'button' %}
   <input type="hidden" name="label" value="{{ data.label|default:'' }}">
-  <label class="small mb-0">{% trans "Link" %}</label>
-  <input name="url" type="url" class="form-control form-control-sm" maxlength="250" value="{{ data.url|default:'' }}" placeholder="https://">
+  <input type="hidden" name="url" value="{{ data.url|default:'' }}">
   {% if errors.label %}<div class="text-danger small">{{ errors.label }}</div>{% endif %}
   {% if errors.url %}<div class="text-danger small">{{ errors.url }}</div>{% endif %}
-  <div class="mt-2 small">
+  <label class="small mb-0">{% trans "Style" %}</label>
+  <div class="small">
     <label class="mr-3"><input type="radio" name="style" value="primary"{% if data.style != 'secondary' %} checked{% endif %}> {% trans "Filled" %}</label>
     <label><input type="radio" name="style" value="secondary"{% if data.style == 'secondary' %} checked{% endif %}> {% trans "Outline" %}</label>
   </div>
 
   {% elif kind == 'video' %}
-  <label class="small mb-0">{% trans "YouTube or Vimeo link" %}</label>
-  <input name="url" type="url" class="form-control form-control-sm" maxlength="500" value="{{ data.url|default:'' }}" placeholder="{% trans 'YouTube or Vimeo link' %}">
+  <input type="hidden" name="url" value="{{ data.url|default:'' }}">
+  <p class="lb-hint mt-0">{% trans "Edit this in the block on the page." %}</p>
   {% if errors.url %}<div class="text-danger small">{{ errors.url }}</div>{% endif %}
   <input type="hidden" name="caption" value="{{ data.caption|default:'' }}">
 
   {% elif kind == 'faq' %}
-  <div class="lb-rows" data-row-kind="faq">
-    {% for item in data.items %}{% include "landings/_faq_row.html" %}{% empty %}{% include "landings/_faq_row.html" with item=None %}{% endfor %}
-  </div>
-  <template class="lb-row-template">{% include "landings/_faq_row.html" with item=None %}</template>
-  <button type="button" class="btn btn-link btn-sm px-0 lb-row-add">+ {% trans "Add a question" %}</button>
+  <div class="lb-row-sink" hidden>{% for it in data.items %}<input type="hidden" name="q" value="{{ it.q }}"><textarea name="a" hidden>{{ it.a }}</textarea>{% endfor %}</div>
+  <p class="lb-hint mt-0">{% trans "Edit this in the block on the page." %}</p>
   {% if errors.items %}<div class="text-danger small">{{ errors.items }}</div>{% endif %}
 
   {% elif kind == 'timeline' %}
-  <p class="small text-muted mb-1">{% trans "Phases in order. Tick the phase the project is in now; earlier phases show as done." %}</p>
-  <div class="lb-rows" data-row-kind="timeline">
-    {% for item in data.items %}{% include "landings/_phase_row.html" with index=forloop.counter0 current=data.current %}{% empty %}{% include "landings/_phase_row.html" with item=None index=0 %}{% endfor %}
-  </div>
-  <template class="lb-row-template">{% include "landings/_phase_row.html" with item=None index="" %}</template>
-  <button type="button" class="btn btn-link btn-sm px-0 lb-row-add">+ {% trans "Add a phase" %}</button>
+  <div class="lb-row-sink" hidden>{% for it in data.items %}<input type="hidden" name="phase_title" value="{{ it.title }}"><input type="hidden" name="phase_when" value="{{ it.when }}"><input type="hidden" name="phase_body" value="{{ it.body }}">{% endfor %}<input type="hidden" name="current" value="{{ data.current|default_if_none:'' }}"></div>
+  <p class="lb-hint mt-0">{% trans "Edit this in the block on the page." %}</p>
   {% if errors.items %}<div class="text-danger small">{{ errors.items }}</div>{% endif %}
 
   {% elif kind == 'documents' %}
-  {% if edit_block %}
-  <ul class="list-unstyled mb-2">
-    {% for f in edit_block.files.all %}
-    <li class="lb-file">
-      <input name="file_title_{{ f.pk }}" class="form-control form-control-sm" maxlength="200" value="{{ f.title }}" aria-label="{% trans 'File title' %}">
-      <small class="text-muted text-nowrap">{{ f.extension|upper }} · {{ f.size|filesizeformat }}</small>
-      <label class="small text-nowrap mb-0"><input type="checkbox" name="remove_{{ f.pk }}" value="1"> {% trans "Remove" %}</label>
-    </li>
-    {% endfor %}
-  </ul>
-  {% endif %}
-  <input type="file" name="files" multiple class="form-control-file form-control-sm"
-         accept=".pdf,.docx,.xlsx,.pptx,.odt,.ods,.odp,.doc,.xls,.ppt,.csv,.txt">
-  <small class="text-muted d-block">{% trans "PDF, office documents, CSV or text; up to 25 MB each. You can rename them after adding." %}</small>
+  {% if edit_block %}{% for f in edit_block.files.all %}<input type="hidden" name="file_title_{{ f.pk }}" value="{{ f.title }}"><input type="hidden" name="remove_{{ f.pk }}" value="">{% endfor %}{% endif %}
+  <input type="file" name="files" multiple hidden>
+  <p class="lb-hint mt-0">{% trans "Edit this in the block on the page." %}</p>
   {% if errors.files %}<div class="text-danger small">{{ errors.files }}</div>{% endif %}
 
   {% elif kind == 'map' %}
-  {% if data.area %}<p class="small text-muted mb-1">{% blocktrans count n=data.area.features|length %}{{ n }} shape on the map. Upload a new file to replace it.{% plural %}{{ n }} shapes on the map. Upload a new file to replace them.{% endblocktrans %}</p>{% endif %}
-  <input type="file" name="geojson_file" accept=".geojson,.json,application/geo+json,application/json" class="form-control-file form-control-sm">
-  <small class="text-muted d-block">{% trans "A GeoJSON file with the project area: a boundary, a route or a few points. Up to 1 MB." %}</small>
+  <input type="file" name="geojson_file" hidden>
   {% if errors.area %}<div class="text-danger small">{{ errors.area }}</div>{% endif %}
-  <div class="form-row mt-2">
+  <div class="form-row">
     <div class="col-4"><label class="small mb-0">{% trans "Colour" %}</label>
       <input type="color" name="color" class="form-control form-control-sm" value="{{ data.color|default:'#2f6fb0' }}"></div>
     <div class="col-8"><label class="small mb-0">{% trans "Base map" %}</label>
@@ -119,32 +99,23 @@ from the canvas `[data-field]` elements, so this form is always the whole block 
   <p class="small text-muted mt-1 mb-0">{% trans "Answers are counted the same way as on the survey's public results page: small groups are masked, written answers are never shown." %}</p>
 
   {% elif kind == 'event' %}
-  <div class="form-row">
-    <div class="col-7"><label class="small mb-0">{% trans "Date" %}</label>
-      <input type="date" name="date" class="form-control form-control-sm" value="{{ data.date|default:'' }}" required></div>
-    <div class="col-5"><label class="small mb-0">{% trans "Time zone" %}</label>
-      <input name="tz" list="lb-timezones" class="form-control form-control-sm" value="{{ data.tz|default:'UTC' }}" data-autosave="change"></div>
-  </div>
-  <div class="form-row mt-2">
-    <div class="col-6"><label class="small mb-0">{% trans "Starts" %}</label>
-      <input type="time" name="start" class="form-control form-control-sm" value="{{ data.start|default:'' }}" required></div>
-    <div class="col-6"><label class="small mb-0">{% trans "Ends" %}</label>
-      <input type="time" name="end" class="form-control form-control-sm" value="{{ data.end|default:'' }}"></div>
-  </div>
+  <input type="hidden" name="date" value="{{ data.date|default:'' }}">
+  <input type="hidden" name="start" value="{{ data.start|default:'' }}">
+  <input type="hidden" name="end" value="{{ data.end|default:'' }}">
+  <input type="hidden" name="place" value="{{ data.place|default:'' }}">
+  <label class="small mb-0">{% trans "Time zone" %}</label>
+  <input name="tz" list="lb-timezones" class="form-control form-control-sm" value="{{ data.tz|default:'UTC' }}" data-autosave="change">
   {% if errors.date %}<div class="text-danger small">{{ errors.date }}</div>{% endif %}
   {% if errors.start %}<div class="text-danger small">{{ errors.start }}</div>{% endif %}
   {% if errors.end %}<div class="text-danger small">{{ errors.end }}</div>{% endif %}
   {% if errors.tz %}<div class="text-danger small">{{ errors.tz }}</div>{% endif %}
-  <label class="small mb-0 mt-2">{% trans "Place" %}</label>
-  <input name="place" class="form-control form-control-sm" maxlength="200" value="{{ data.place|default:'' }}" placeholder="{% trans 'Place, e.g. The boathouse, Riverside Park' %}">
-  <input name="place_url" type="url" class="form-control form-control-sm mt-2" maxlength="250" value="{{ data.place_url|default:'' }}" placeholder="{% trans 'Map link to the place (optional)' %}">
+  <label class="small mb-0 mt-2">{% trans "Map link to the place (optional)" %}</label>
+  <input name="place_url" type="url" class="form-control form-control-sm" maxlength="250" value="{{ data.place_url|default:'' }}" placeholder="{% trans 'Map link to the place (optional)' %}">
   {% if errors.place_url %}<div class="text-danger small">{{ errors.place_url }}</div>{% endif %}
   <textarea name="description" hidden>{{ data.description|default:'' }}</textarea>
-  <div class="form-row mt-2 align-items-center">
-    <div class="col-6"><label class="small mb-0">{% trans "Seats (empty = no limit)" %}</label>
-      <input type="number" name="capacity" min="1" max="10000" class="form-control form-control-sm" value="{{ data.capacity|default_if_none:'' }}"></div>
-    <div class="col-6 small pt-3"><label class="mb-0"><input type="checkbox" name="open" value="1"{% if data.open or not data.date %} checked{% endif %}> {% trans "Registration open" %}</label></div>
-  </div>
+  <label class="small mb-0 mt-2">{% trans "Seats (empty = no limit)" %}</label>
+  <input type="number" name="capacity" min="1" max="10000" class="form-control form-control-sm" value="{{ data.capacity|default_if_none:'' }}">
+  <label class="lb-check mt-2 mb-0"><input type="checkbox" name="open" value="1"{% if data.open or not data.date %} checked{% endif %}> {% trans "Registration open" %}</label>
   {% if errors.capacity %}<div class="text-danger small">{{ errors.capacity }}</div>{% endif %}
   {% if edit_block %}{% with counts=event_counts|get_item:edit_block.pk %}
   <p class="small mt-2 mb-0">{% blocktrans count n=counts.0 %}{{ n }} registered{% plural %}{{ n }} registered{% endblocktrans %}{% if counts.1 is not None %} · {% blocktrans with n=counts.1 %}{{ n }} seats left{% endblocktrans %}{% endif %}

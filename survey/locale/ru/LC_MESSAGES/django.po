@@ -125,7 +125,7 @@ msgstr ""
 
 #: survey/editor_forms.py:215
 msgid "Button label"
-msgstr ""
+msgstr "Надпись на кнопке"
 
 #: survey/editor_forms.py:218
 msgid ""
@@ -2607,7 +2607,7 @@ msgstr "Вопрос"
 
 #: survey/templates/editor/partials/analytics_session_detail.html:60
 msgid "Answer"
-msgstr ""
+msgstr "Ответ"
 
 #: survey/templates/editor/partials/analytics_session_detail.html:97
 msgid "No answers in this session."
@@ -3872,7 +3872,7 @@ msgstr "Общие"
 
 #: survey/templates/editor/survey_settings.html:78
 msgid "Style"
-msgstr ""
+msgstr "Стиль"
 
 #: survey/templates/editor/survey_settings.html:89
 msgid ""
@@ -9912,3 +9912,71 @@ msgstr "Язык кнопок и подписей страницы."
 #: landing-builder-redesign (#594)
 msgid "Settings of this block"
 msgstr "Настройки этого блока"
+
+#: landing-inline-editing
+msgid "A boundary, a route or a few points; up to 1 MB"
+msgstr "Граница, маршрут или несколько точек; до 1 МБ"
+
+#: landing-inline-editing
+msgid "Drop a GeoJSON file with the project area"
+msgstr "Перетащите файл GeoJSON с территорией проекта"
+
+#: landing-inline-editing
+msgid "Drop a picture here"
+msgstr "Перетащите картинку сюда"
+
+#: landing-inline-editing
+msgid "Drop files here"
+msgstr "Перетащите файлы сюда"
+
+#: landing-inline-editing
+msgid "choose a file"
+msgstr "выберите файл"
+
+#: landing-inline-editing
+msgid "choose files"
+msgstr "выберите файлы"
+
+#: landing-inline-editing
+msgid "Edit this in the block on the page."
+msgstr "Это редактируется в блоке на странице."
+
+#: landing-inline-editing
+msgid "JPEG, PNG, WebP or GIF, up to 5 MB"
+msgstr "JPEG, PNG, WebP или GIF, до 5 МБ"
+
+#: landing-inline-editing
+msgid "PDF, office documents, CSV or text; up to 25 MB each"
+msgstr "PDF, офисные документы, CSV или текст; до 25 МБ каждый"
+
+#: landing-inline-editing
+msgid "Not filled in yet."
+msgstr "Пока не заполнено."
+
+#: landing-inline-editing
+msgid "Paste a YouTube or Vimeo link"
+msgstr "Вставьте ссылку на YouTube или Vimeo"
+
+#: landing-inline-editing
+msgid "Phase"
+msgstr "Этап"
+
+#: landing-inline-editing
+msgid "When"
+msgstr "Когда"
+
+#: landing-inline-editing
+msgid "The project is in this phase now"
+msgstr "Проект сейчас на этом этапе"
+
+#: landing-inline-editing
+msgid "Replace picture"
+msgstr "Заменить картинку"
+
+#: landing-inline-editing
+msgid "Replace area"
+msgstr "Заменить территорию"
+
+#: landing-inline-editing
+msgid "or"
+msgstr "или"

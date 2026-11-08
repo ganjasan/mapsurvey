@@ -21,16 +21,20 @@ builder (it extends base.html): it is passed explicitly into the include below.{
 
   <h2 data-field="title" data-placeholder="{% trans 'Add a heading' %}" title="{% trans 'Headings also appear in the menu at the top of the page' %}"{% if not b.title %} class="lb-empty-heading"{% endif %}>{{ b.title }}</h2>
 
+  {% comment %}Primary actions in the block (change landing-inline-editing): documents, FAQ and timeline are
+  edited row by row in their editor form; the other kinds show their public look when complete, with
+  their primary controls (_inline.html) beside it or as the empty state.{% endcomment %}
   {% if b.kind == 'text' %}
   <div class="lp-rich lb-rich" data-field="body" data-rich data-placeholder="{% trans 'Write something…' %}">{{ b.data.body|safe }}</div>
-  {% elif item.complete %}
+  {% elif may_edit and b.kind in 'documents faq timeline' %}
+  {% include "landings/editor/_inline.html" %}
+  {% else %}
+  {% if may_edit and b.kind == 'event' %}{% include "landings/editor/_inline.html" %}{% endif %}
+  {% if item.complete or b.kind == 'button' and may_edit %}
   {% with "landings/blocks/"|add:b.kind|add:".html" as tpl %}{% include tpl with block=b card=item.card editing=True %}{% endwith %}
   {% if b.kind == 'results' and item.card %}{% with rid="res-"|add:item.card.id %}{{ item.card|json_script:rid }}{% endwith %}{% endif %}
-  {% else %}
-  <div class="lb-placeholder" data-select-target="{{ b.pk }}">
-    <i class="{{ icons|get_item:b.kind }}" aria-hidden="true"></i>
-    <span>{% if b.kind == 'image' %}{% trans "Upload a picture in the settings on the right." %}{% elif b.kind == 'video' %}{% trans "Paste a YouTube or Vimeo link in the settings on the right." %}{% elif b.kind == 'button' %}{% trans "Set the label and the link in the settings on the right." %}{% elif b.kind == 'faq' %}{% trans "Add questions and answers in the settings on the right." %}{% elif b.kind == 'timeline' %}{% trans "Add the phases in the settings on the right." %}{% elif b.kind == 'documents' %}{% trans "Upload files in the settings on the right." %}{% elif b.kind == 'map' %}{% trans "Upload a GeoJSON file with the project area in the settings on the right." %}{% elif b.kind == 'results' %}{% trans "Pick a question in the settings on the right." %}{% elif b.kind == 'event' %}{% trans "Set the date and time in the settings on the right." %}{% elif b.kind == 'survey' %}{% trans "Pick a survey in the settings on the right." %}{% endif %}</span>
-  </div>
+  {% endif %}
+  {% if may_edit %}{% if b.kind != 'event' %}{% include "landings/editor/_inline.html" %}{% endif %}{% elif not item.complete %}<div class="lb-placeholder"><i class="{{ icons|get_item:b.kind }}" aria-hidden="true"></i><span>{% trans "Not filled in yet." %}</span></div>{% endif %}
   {% endif %}
   {% if item.warn %}<p class="lb-warn"><i class="fas fa-info-circle" aria-hidden="true"></i> {{ item.warn }}</p>{% endif %}
 </section>
