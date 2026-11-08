@@ -24,7 +24,8 @@ no Pro needed — removing people's data must stay possible after a lapse.{% end
       <td>{{ r.name }}</td><td>{{ r.email }}</td><td>{{ r.created_at|date:"j M Y H:i" }}</td>
       <td>{% if r.is_active %}{% trans "registered" %}{% else %}{% trans "cancelled" %}{% endif %}</td>
       <td class="text-right">
-        <form method="post" action="{% url 'editor_landing_attendees_remove' landing.uuid event_block.pk %}" class="d-inline mb-0">
+        <form method="post" action="{% url 'editor_landing_attendees_remove' landing.uuid event_block.pk %}" class="d-inline mb-0"
+              data-confirm="{% blocktrans with name=r.name %}Remove {{ name }}?{% endblocktrans %}" data-confirm-action="{% trans 'Remove' %}">
           {% csrf_token %}<input type="hidden" name="registration" value="{{ r.pk }}">
           <button type="submit" class="btn btn-link btn-sm text-muted p-0">{% trans "Remove" %}</button>
         </form>
@@ -34,7 +35,9 @@ no Pro needed — removing people's data must stay possible after a lapse.{% end
     </tbody>
   </table>
   <form method="post" action="{% url 'editor_landing_attendees_remove' landing.uuid event_block.pk %}"
-        onsubmit="return confirm('{% trans "Delete every registration of this event?" as q %}{{ q|escapejs }}');">
+        data-confirm="{% trans 'Delete every registration of this event?' %}"
+        data-confirm-note="{% trans 'Names and emails are deleted now. The registrants get no message.' %}"
+        data-confirm-action="{% trans 'Remove all' %}">
     {% csrf_token %}<input type="hidden" name="registration" value="all">
     <button type="submit" class="btn btn-sm btn-outline-danger">{% trans "Remove all" %}</button>
   </form>
@@ -42,4 +45,6 @@ no Pro needed — removing people's data must stay possible after a lapse.{% end
   <p class="text-muted">{% trans "Nobody has registered yet." %}</p>
   {% endif %}
 </div>
+{% include "landings/editor/_confirm_modal.html" %}
+<script src="{% static 'js/landing_confirm.js' %}"></script>
 {% endblock %}

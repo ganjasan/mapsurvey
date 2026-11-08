@@ -11819,3 +11819,65 @@ msgstr "La pregunta se ha quitado de la encuesta; el bloque no se muestra."
 #: landing-builder-redesign (#594)
 msgid "Not shown on the page until it is filled in."
 msgstr "No se muestra en la página hasta que se complete."
+
+#: landing-builder-redesign (#594)
+#, python-format
+msgid "Remove %(name)s?"
+msgstr "¿Quitar a %(name)s?"
+
+#: landing-builder-redesign (#594)
+msgid "Names and emails are deleted now. The registrants get no message."
+msgstr "Los nombres y correos se eliminan ahora. Los inscritos no reciben ningún mensaje."
+
+#: landing-builder-redesign (#594)
+#, python-format
+msgid "Delete “%(title)s”?"
+msgstr "¿Eliminar «%(title)s»?"
+
+#: landing-builder-redesign (#594)
+msgid "Its address stops working, and links and QR codes already printed lead nowhere."
+msgstr "Su dirección dejará de funcionar, y los enlaces y códigos QR ya impresos no llevarán a ninguna parte."
+
+#: landing-builder-redesign (#594)
+msgid "Blocks, files and event registrations are deleted with it. Your surveys stay."
+msgstr "Los bloques, archivos e inscripciones a eventos se eliminan con ella. Tus encuestas se mantienen."
+
+#: landing-builder-redesign (#594)
+msgid "The block and everyone registered for the event are removed from the page. This cannot be undone."
+msgstr "El bloque y todas las inscripciones al evento se quitan de la página. No se puede deshacer."
+
+#: landing-builder-redesign (#594)
+msgid "The block and its files are removed from the page. This cannot be undone."
+msgstr "El bloque y sus archivos se quitan de la página. No se puede deshacer."
+
+#: landing-builder-redesign (#594)
+msgid "The block is removed from the page. This cannot be undone."
+msgstr "El bloque se quita de la página. No se puede deshacer."
+
+#: landing-builder-redesign (#594)
+msgid "Write directly on the page; the toolbar above the text sets headings, bold, lists, links and alignment."
+msgstr "Escribe directamente en la página; la barra de herramientas sobre el texto define encabezados, negrita, listas, enlaces y alineación."
+
+#: landing-builder-redesign (#594)
+msgid "Applies to the whole page"
+msgstr "Se aplica a toda la página"
+
+#: landing-builder-redesign (#594)
+msgid "Shown behind the title and when the link is shared. JPEG, PNG, WebP or GIF, up to 5 MB."
+msgstr "Se muestra detrás del título y al compartir el enlace. JPEG, PNG, WebP o GIF, hasta 5 MB."
+
+#: landing-builder-redesign (#594)
+msgid "Address and language"
+msgstr "Dirección e idioma"
+
+#: landing-builder-redesign (#594)
+msgid "Lowercase letters, digits and dashes. Settle it before you print it."
+msgstr "Letras minúsculas, cifras y guiones. Decídela antes de imprimirla."
+
+#: landing-builder-redesign (#594)
+msgid "The language of the page's buttons and labels."
+msgstr "El idioma de los botones y etiquetas de la página."
+
+#: landing-builder-redesign (#594)
+msgid "Settings of this block"
+msgstr "Ajustes de este bloque"

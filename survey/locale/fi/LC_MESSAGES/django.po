@@ -11754,3 +11754,65 @@ msgstr "Kysymys on poistettu kyselystä; lohkoa ei näytetä."
 #: landing-builder-redesign (#594)
 msgid "Not shown on the page until it is filled in."
 msgstr "Ei näy sivulla ennen kuin se on täytetty."
+
+#: landing-builder-redesign (#594)
+#, python-format
+msgid "Remove %(name)s?"
+msgstr "Poistetaanko %(name)s?"
+
+#: landing-builder-redesign (#594)
+msgid "Names and emails are deleted now. The registrants get no message."
+msgstr "Nimet ja sähköpostit poistetaan heti. Ilmoittautuneet eivät saa viestiä."
+
+#: landing-builder-redesign (#594)
+#, python-format
+msgid "Delete “%(title)s”?"
+msgstr "Poistetaanko ”%(title)s”?"
+
+#: landing-builder-redesign (#594)
+msgid "Its address stops working, and links and QR codes already printed lead nowhere."
+msgstr "Sen osoite lakkaa toimimasta, eivätkä linkit ja jo tulostetut QR-koodit johda enää minnekään."
+
+#: landing-builder-redesign (#594)
+msgid "Blocks, files and event registrations are deleted with it. Your surveys stay."
+msgstr "Lohkot, tiedostot ja tapahtumien ilmoittautumiset poistetaan sen mukana. Kyselysi säilyvät."
+
+#: landing-builder-redesign (#594)
+msgid "The block and everyone registered for the event are removed from the page. This cannot be undone."
+msgstr "Lohko ja kaikki tapahtuman ilmoittautumiset poistetaan sivulta. Toimintoa ei voi perua."
+
+#: landing-builder-redesign (#594)
+msgid "The block and its files are removed from the page. This cannot be undone."
+msgstr "Lohko ja sen tiedostot poistetaan sivulta. Toimintoa ei voi perua."
+
+#: landing-builder-redesign (#594)
+msgid "The block is removed from the page. This cannot be undone."
+msgstr "Lohko poistetaan sivulta. Toimintoa ei voi perua."
+
+#: landing-builder-redesign (#594)
+msgid "Write directly on the page; the toolbar above the text sets headings, bold, lists, links and alignment."
+msgstr "Kirjoita suoraan sivulle; tekstin yläpuolella oleva työkalurivi asettaa otsikot, lihavoinnin, luettelot, linkit ja tasauksen."
+
+#: landing-builder-redesign (#594)
+msgid "Applies to the whole page"
+msgstr "Koskee koko sivua"
+
+#: landing-builder-redesign (#594)
+msgid "Shown behind the title and when the link is shared. JPEG, PNG, WebP or GIF, up to 5 MB."
+msgstr "Näytetään otsikon taustalla ja kun linkki jaetaan. JPEG, PNG, WebP tai GIF, enintään 5 Mt."
+
+#: landing-builder-redesign (#594)
+msgid "Address and language"
+msgstr "Osoite ja kieli"
+
+#: landing-builder-redesign (#594)
+msgid "Lowercase letters, digits and dashes. Settle it before you print it."
+msgstr "Pienet kirjaimet, numerot ja yhdysviivat. Päätä se ennen tulostamista."
+
+#: landing-builder-redesign (#594)
+msgid "The language of the page's buttons and labels."
+msgstr "Sivun painikkeiden ja tekstien kieli."
+
+#: landing-builder-redesign (#594)
+msgid "Settings of this block"
+msgstr "Tämän lohkon asetukset"

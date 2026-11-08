@@ -11840,3 +11840,65 @@ msgstr "La question a été retirée de l'enquête ; le bloc n'est pas affiché.
 #: landing-builder-redesign (#594)
 msgid "Not shown on the page until it is filled in."
 msgstr "N'apparaît sur la page qu'une fois rempli."
+
+#: landing-builder-redesign (#594)
+#, python-format
+msgid "Remove %(name)s?"
+msgstr "Retirer %(name)s ?"
+
+#: landing-builder-redesign (#594)
+msgid "Names and emails are deleted now. The registrants get no message."
+msgstr "Les noms et e-mails sont supprimés immédiatement. Les inscrits ne reçoivent aucun message."
+
+#: landing-builder-redesign (#594)
+#, python-format
+msgid "Delete “%(title)s”?"
+msgstr "Supprimer « %(title)s » ?"
+
+#: landing-builder-redesign (#594)
+msgid "Its address stops working, and links and QR codes already printed lead nowhere."
+msgstr "Son adresse cessera de fonctionner, et les liens et codes QR déjà imprimés ne mèneront nulle part."
+
+#: landing-builder-redesign (#594)
+msgid "Blocks, files and event registrations are deleted with it. Your surveys stay."
+msgstr "Les blocs, fichiers et inscriptions aux événements sont supprimés avec elle. Vos enquêtes restent."
+
+#: landing-builder-redesign (#594)
+msgid "The block and everyone registered for the event are removed from the page. This cannot be undone."
+msgstr "Le bloc et toutes les inscriptions à l'événement sont retirés de la page. Cette action est irréversible."
+
+#: landing-builder-redesign (#594)
+msgid "The block and its files are removed from the page. This cannot be undone."
+msgstr "Le bloc et ses fichiers sont retirés de la page. Cette action est irréversible."
+
+#: landing-builder-redesign (#594)
+msgid "The block is removed from the page. This cannot be undone."
+msgstr "Le bloc est retiré de la page. Cette action est irréversible."
+
+#: landing-builder-redesign (#594)
+msgid "Write directly on the page; the toolbar above the text sets headings, bold, lists, links and alignment."
+msgstr "Écrivez directement sur la page ; la barre d’outils au-dessus du texte gère les titres, le gras, les listes, les liens et l’alignement."
+
+#: landing-builder-redesign (#594)
+msgid "Applies to the whole page"
+msgstr "S'applique à toute la page"
+
+#: landing-builder-redesign (#594)
+msgid "Shown behind the title and when the link is shared. JPEG, PNG, WebP or GIF, up to 5 MB."
+msgstr "Affichée derrière le titre et lorsque le lien est partagé. JPEG, PNG, WebP ou GIF, 5 Mo maximum."
+
+#: landing-builder-redesign (#594)
+msgid "Address and language"
+msgstr "Adresse et langue"
+
+#: landing-builder-redesign (#594)
+msgid "Lowercase letters, digits and dashes. Settle it before you print it."
+msgstr "Lettres minuscules, chiffres et tirets. Fixez-la avant de l'imprimer."
+
+#: landing-builder-redesign (#594)
+msgid "The language of the page's buttons and labels."
+msgstr "La langue des boutons et libellés de la page."
+
+#: landing-builder-redesign (#594)
+msgid "Settings of this block"
+msgstr "Paramètres de ce bloc"

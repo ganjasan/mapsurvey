@@ -513,6 +513,16 @@ def slug_error(slug, landing=None):
     return ''
 
 
+PLACEHOLDER_SLUG = 'untitled'
+_PLACEHOLDER_RE = re.compile(r'^untitled(-\d+)?$')
+
+
+def has_placeholder_slug(landing):
+    """A page created with "New page" and never published keeps an address made from nothing;
+    the first real title gives it one."""
+    return not landing.is_published and landing.published_at is None and bool(_PLACEHOLDER_RE.match(landing.slug))
+
+
 def unique_slug(title):
     from .models import Landing
     base = slugify(title)[:SLUG_MAX - 4].strip('-') or 'landing'

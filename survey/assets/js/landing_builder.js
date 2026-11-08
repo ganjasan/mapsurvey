@@ -25,7 +25,20 @@
     if (BASES[k].provider === 'mapbox') BASES[k].opts.accessToken = window.LB_MAPBOX_TOKEN;
   });
 
-  var RICH_TOOLBAR = [['bold', 'italic', 'link'], [{ header: 2 }, { list: 'bullet' }, { list: 'ordered' }], ['clean']];
+  // The survey editor's toolbars (editor/partials/question_form_modal.html): a text block gets the
+  // Formatted Text block's, an FAQ answer the question help text's. Alignment is stored as an inline
+  // style, which the creator-HTML sanitiser keeps (text-align only).
+  var BODY_TOOLBAR = [
+    [{ header: [1, 2, 3, false] }],
+    ['bold', 'italic', 'underline'],
+    [{ align: [] }],
+    ['link'],
+    [{ list: 'ordered' }, { list: 'bullet' }],
+    ['blockquote'],
+    ['clean']
+  ];
+  var SHORT_TOOLBAR = [['bold', 'italic'], ['link'], [{ list: 'ordered' }, { list: 'bullet' }], ['clean']];
+  if (typeof Quill !== 'undefined') Quill.register(Quill.import('attributors/style/align'), true);
 
   function csrf() {
     var i = document.querySelector('input[name=csrfmiddlewaretoken]');
@@ -111,8 +124,8 @@
 
   function plainValue(el) { return (el.innerText || '').replace(/[ \t]+\n/g, '\n').trim(); }
 
-  function newQuill(host, html, onChange) {
-    var q = new Quill(host, { theme: 'bubble', placeholder: host.dataset.placeholder || '', modules: { toolbar: RICH_TOOLBAR } });
+  function newQuill(host, html, onChange, toolbar) {
+    var q = new Quill(host, { theme: 'snow', placeholder: host.dataset.placeholder || '', modules: { toolbar: toolbar || SHORT_TOOLBAR } });
     q.setContents(q.clipboard.convert({ html: html || '' }), 'silent');
     q.on('text-change', function (d, o, source) { if (source === 'user') onChange(); });
     host._quill = q;
@@ -124,7 +137,11 @@
     el.dataset.mounted = '1';
     var html = el.innerHTML;          // the server-sanitised body, read only
     el.textContent = '';
-    newQuill(el, html, onChange);
+    var wrap = document.createElement('div');
+    wrap.className = 'lb-rich-wrap';
+    el.parentNode.insertBefore(wrap, el);
+    wrap.appendChild(el);              // Quill puts its toolbar before the editor, inside the wrap
+    newQuill(el, html, onChange, BODY_TOOLBAR);
   }
 
   function richValue(el) {
@@ -521,11 +538,7 @@
     if (e.key === 'Escape') { closeLib(); closePop(); }
   });
 
-  /* ─── confirmations ──────────────────────────────────────────────────── */
-  document.addEventListener('submit', function (e) {
-    var f = e.target.closest('form[data-confirm]');
-    if (f && !window.confirm(f.dataset.confirm)) e.preventDefault();
-  });
+  /* Confirmations: landing_confirm.js (the app's delete dialog). */
 
   /* ─── device width ───────────────────────────────────────────────────── */
   document.querySelectorAll('#lb-device button').forEach(function (b) {
@@ -570,6 +583,23 @@
     initPanelForm(p.querySelector('form.lb-form'), p.dataset.pane);
   });
   select(root.dataset.selected, root.dataset.selected !== 'page');
+  // Just created ("New page" is one click): the placeholder title is selected, ready to type over.
+  if (MAY_EDIT && /[?&]new=1/.test(window.location.search)) {
+    var h1 = document.querySelector('#lb-hero [data-page-field=title]');
+    if (h1) {
+      h1.focus();
+      var range = document.createRange();
+      range.selectNodeContents(h1);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+    try {
+      var u = new URL(window.location.href);
+      u.searchParams.delete('new');
+      history.replaceState(null, '', u.pathname + u.search + u.hash);
+    } catch (e) { /* the parameter just stays */ }
+  }
   window.addEventListener('beforeunload', function (e) {
     var pending = inflight > 0 || pageTimer || Object.keys(timers).some(function (k) { return timers[k]; });
     if (pending) { e.preventDefault(); e.returnValue = ''; }
