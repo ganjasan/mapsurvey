@@ -11879,3 +11879,7 @@ msgstr "Ganti gambar"
 #: landing-inline-editing
 msgid "Replace area"
 msgstr "Ganti area"
+
+#: landing-inline-editing
+msgid "Shown behind the title and when the link is shared. Add, change or remove it on the page."
+msgstr "Ditampilkan di belakang judul dan saat tautan dibagikan. Tambahkan, ganti, atau hapus di halaman."

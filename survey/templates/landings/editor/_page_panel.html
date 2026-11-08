@@ -17,16 +17,13 @@ cards — cover, address and language, surveys on this page. Autosaved like a bl
 
       <div class="lb-card">
         <h6>{% trans "Cover picture" %}</h6>
-        {% if landing.cover %}<img src="{{ landing.cover.url }}" alt="" class="lb-cover-thumb">{% endif %}
-        <div class="lb-field">
-          <input type="file" id="lp-cover" name="cover" accept="image/jpeg,image/png,image/webp,image/gif" aria-label="{% trans 'Cover picture' %}">
-          <div class="lb-hint">{% trans "Shown behind the title and when the link is shared. JPEG, PNG, WebP or GIF, up to 5 MB." %}</div>
-        </div>
+        <input type="file" name="cover" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+        <input type="hidden" name="remove_cover" value="">
         <div class="lb-field">
           <label for="lp-cover-alt">{% trans "Picture description" %}</label>
           <input id="lp-cover-alt" name="cover_alt" class="form-control form-control-sm" maxlength="200" value="{{ landing.cover_alt }}" placeholder="{% trans 'Describe the picture for screen readers' %}">
+          <div class="lb-hint">{% trans "Shown behind the title and when the link is shared. Add, change or remove it on the page." %}</div>
         </div>
-        {% if landing.cover %}<label class="lb-check"><input type="checkbox" name="remove_cover" value="1"> {% trans "Remove the picture" %}</label>{% endif %}
       </div>
 
       <div class="lb-card">

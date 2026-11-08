@@ -11994,3 +11994,7 @@ msgstr "Zastąp obraz"
 #: landing-inline-editing
 msgid "Replace area"
 msgstr "Zastąp obszar"
+
+#: landing-inline-editing
+msgid "Shown behind the title and when the link is shared. Add, change or remove it on the page."
+msgstr "Widoczna za tytułem i po udostępnieniu linku. Dodaj, zmień lub usuń ją na stronie."

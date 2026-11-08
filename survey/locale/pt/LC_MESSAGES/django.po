@@ -11941,3 +11941,7 @@ msgstr "Substituir a imagem"
 #: landing-inline-editing
 msgid "Replace area"
 msgstr "Substituir a área"
+
+#: landing-inline-editing
+msgid "Shown behind the title and when the link is shared. Add, change or remove it on the page."
+msgstr "Mostrada atrás do título e quando a ligação é partilhada. Adicione, altere ou remova-a na página."
