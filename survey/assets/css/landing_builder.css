@@ -87,7 +87,8 @@
 .lb-ghost { border: 1px dashed #b9c1ca; background: rgba(255,255,255,.85); color: var(--muted); border-radius: 8px;
             padding: 5px 10px; font-size: 12.5px; display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
 .lb-ghost:hover { border-color: var(--accent); color: var(--accent); }
-.lb-cover-btn { position: absolute; top: 14px; right: 14px; z-index: 2; }
+.lb-cover-btn { position: absolute; top: 14px; right: 14px; z-index: 2; display: flex; gap: 6px; }
+.lb-hero.is-over::after { border-color: var(--accent) !important; border-style: dashed !important; background: rgba(79,70,229,.06); }
 .lb-blocks { padding-top: 6px; padding-bottom: 40px; }
 .lb-item { position: relative; }
 

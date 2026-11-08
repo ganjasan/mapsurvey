@@ -11855,3 +11855,7 @@ msgstr "Asenda pilt"
 #: landing-inline-editing
 msgid "Replace area"
 msgstr "Asenda ala"
+
+#: landing-inline-editing
+msgid "Shown behind the title and when the link is shared. Add, change or remove it on the page."
+msgstr "Kuvatakse pealkirja taustal ja lingi jagamisel. Lisage, muutke või eemaldage see lehel."

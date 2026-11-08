@@ -227,6 +227,45 @@
     flushBlock(id, true);
   }
 
+  /* The cover picture: chosen, dropped or removed on the hero, saved through the page form. */
+  function coverInput() { var f = pageForm(); return f && f.querySelector('input[type=file][name=cover]'); }
+  function initCover() {
+    document.addEventListener('click', function (e) {
+      if (e.target.closest('[data-cover-pick]')) {
+        var input = coverInput();
+        if (input) input.click();
+      } else if (e.target.closest('[data-cover-remove]')) {
+        var f = pageForm(), flag = f && f.querySelector('[name=remove_cover]');
+        if (flag) { flag.value = '1'; flushPage(true); }
+      }
+    });
+    function heroOf(e) { return e.target.closest && e.target.closest('#lb-hero'); }
+    function hasFiles(e) { return e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') >= 0; }
+    ['dragenter', 'dragover'].forEach(function (type) {
+      frame.addEventListener(type, function (e) {
+        var hero = heroOf(e);
+        if (!hero || !hasFiles(e)) return;
+        e.preventDefault();
+        hero.classList.add('is-over');
+      });
+    });
+    frame.addEventListener('dragleave', function (e) {
+      var hero = heroOf(e);
+      if (hero && !hero.contains(e.relatedTarget)) hero.classList.remove('is-over');
+    });
+    frame.addEventListener('drop', function (e) {
+      var hero = heroOf(e), input = coverInput();
+      if (!hero || !input || !e.dataTransfer || !e.dataTransfer.files.length) return;
+      e.preventDefault();
+      hero.classList.remove('is-over');
+      var dt = new DataTransfer();
+      dt.items.add(e.dataTransfer.files[0]);
+      input.files = dt.files;
+      select('page', false);
+      flushPage(true);
+    });
+  }
+
   function initInline() {
     canvas.addEventListener('click', function (e) {
       var blk = e.target.closest('.lb-blk');
@@ -571,7 +610,7 @@
         var url = document.getElementById('lb-url');
         if (url && res.body.public_url) url.value = res.body.public_url;
         var heroNow = document.getElementById('lb-hero');
-        if (heroNow && res.body.hero && !focusedIn(heroNow)) {
+        if (heroNow && res.body.hero && (force === true || !focusedIn(heroNow))) {
           var fresh = parseFragment(res.body.hero);
           fresh.classList.toggle('on', root.dataset.selected === 'page');
           heroNow.replaceWith(fresh);
@@ -587,6 +626,9 @@
         status(inflight > 1 ? 'saving' : 'saved');
       } else if (res.status === 422) {
         showErrors(form, res.body.errors);
+        form.querySelectorAll('input[type=file]').forEach(function (i) { i.value = ''; });
+        var rm = form.querySelector('[name=remove_cover]');
+        if (rm) rm.value = '';
         select('page', false);
         status('failed');
       } else {
@@ -731,7 +773,7 @@
   /* ─── start ──────────────────────────────────────────────────────────── */
   canvas.querySelectorAll('.lb-blk').forEach(function (blk) { initBlockEditing(blk); initVisuals(blk); });
   initHero();
-  if (MAY_EDIT) initInline();
+  if (MAY_EDIT) { initInline(); initCover(); }
   panel.querySelectorAll('.lb-pane').forEach(function (p) {
     initPanelForm(p.querySelector('form.lb-form'), p.dataset.pane);
   });

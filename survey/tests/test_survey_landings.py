@@ -1335,3 +1335,23 @@ class LandingInlineEditingTest(LandingTestBase):
         self.assertIn('name="capacity"', html)
         self.assertIn('<input type="hidden" name="date" value="">', html)
         self.assertIn('<input type="hidden" name="place" value="">', html)
+
+    def test_cover_picture_on_the_hero(self):
+        """GIVEN the page head on the canvas
+        WHEN an editor adds a cover with autosave and then removes it
+        THEN the hero carries the add / change and remove controls, the page panel only a hidden
+             file input and the description, and the cover is stored then cleared"""
+        html = self.builder()
+        self.assertIn('data-cover-pick', html)
+        self.assertNotIn('data-cover-remove', html)
+        self.assertIn('<input type="file" name="cover" accept="image/jpeg,image/png,image/webp,image/gif" hidden>', html)
+        self.assertNotIn('data-select-target="page"><i class="far fa-image"', html)
+        r = self.client.post(self.url('editor_landing_settings'), {'cover': _png(), 'autosave': '1'})
+        self.assertTrue(r.json()['ok'])
+        self.assertIn('lp-hero-img', r.json()['hero'])
+        self.assertIn('data-cover-remove', r.json()['hero'])
+        self.landing.refresh_from_db()
+        self.assertTrue(self.landing.cover)
+        self.client.post(self.url('editor_landing_settings'), {'remove_cover': '1', 'autosave': '1'})
+        self.landing.refresh_from_db()
+        self.assertFalse(self.landing.cover)

@@ -11876,3 +11876,7 @@ msgstr "Vaihda kuva"
 #: landing-inline-editing
 msgid "Replace area"
 msgstr "Vaihda alue"
+
+#: landing-inline-editing
+msgid "Shown behind the title and when the link is shared. Add, change or remove it on the page."
+msgstr "Näytetään otsikon taustalla ja kun linkki jaetaan. Lisää, vaihda tai poista se sivulla."

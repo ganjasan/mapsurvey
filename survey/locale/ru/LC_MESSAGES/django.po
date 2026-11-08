@@ -9980,3 +9980,7 @@ msgstr "Заменить территорию"
 #: landing-inline-editing
 msgid "or"
 msgstr "или"
+
+#: landing-inline-editing
+msgid "Shown behind the title and when the link is shared. Add, change or remove it on the page."
+msgstr "Показывается за заголовком и при отправке ссылки. Добавить, сменить или убрать её можно на странице."
