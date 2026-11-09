@@ -35,7 +35,7 @@ class NavItem:
 MODULES = (
     NavItem('surveys', _('Surveys'), 'editor', 'fas fa-map-marked-alt', query='dashboard=1'),
     # Sites (change landing-core, #576): a workspace's public pages for engagements.
-    NavItem('sites', _('Sites'), 'editor_sites', 'fas fa-flag', feature='sites'),
+    NavItem('sites', _('Sites'), 'editor_sites', 'far fa-window-maximize', feature='sites'),
 )
 
 # Two items, not one "API & connections" (owner, 2026-11-06): tokens and connected apps for
