@@ -13,13 +13,11 @@ import json
 from django.conf.locale import LANG_INFO
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db import transaction
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
-from django.core.files.storage import default_storage
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils import timezone, translation
+from django.utils import translation
 from django.utils.translation import gettext as _, pgettext
 from django.views.decorators.http import require_POST
 
@@ -27,19 +25,13 @@ from billing import trial as billing_trial
 from billing.entitlements import for_organization
 from billing.gates import feature_required
 
-from . import basemaps, site_events, sites, product_events, share
-from .content_screening import is_site_held, screen_site
-from .models import Site, SiteBlock, SiteFile, SiteSurvey, SurveyHeader
+from . import basemaps, site_events, sites, share
+from .content_screening import is_site_held
+from .models import Site, SiteBlock, SiteSurvey, SurveyHeader
 from .permissions import get_org_membership
-from .versioning import canonical_of
-
-# The survey-content language list (editor/partials/language_picker.html), for <html lang>
-# and the page's own labels.
-CONTENT_LANGUAGES = (
-    'af am ar az be bg bn bs ca cs cy da de el en es et eu fa fi fr ga gl gu he hi hr hu hy id is it ja '
-    'ka kk km kn ko ky lo lt lv mk ml mn mr ms my ne nl no pa pl pt ro ru si sk sl sq sr sv sw ta te tg '
-    'th tk tl tr uk ur uz vi zh'
-).split()
+from .services import sites as site_service
+from .services.context import Actor
+from .services.sites import CONTENT_LANGUAGES
 
 
 def _timezones():
@@ -77,13 +69,6 @@ def _refusal(request, site, membership):
     if not billing_trial.may(site.organization, sites.FEATURE):
         return feature_required(request, site.organization, sites.FEATURE)
     return None
-
-
-def _touched(site):
-    """After any saved change: bump `updated_at`, and re-screen a live site."""
-    Site.objects.filter(pk=site.pk).update(updated_at=timezone.now())
-    if site.is_published:
-        screen_site(site, trigger='live_edit')
 
 
 def _is_autosave(request):
@@ -140,17 +125,12 @@ def editor_site_create(request):
     # placeholder title selected on the canvas; the address follows the first real title
     # (sites.PLACEHOLDER_SLUG, see editor_site_settings).
     given = sites.clean_title(request.POST.get('title'))
-    title = given or _('Untitled site')
-    if not billing_trial.use(org, sites.FEATURE, actor=request.user):
+    language = (request.LANGUAGE_CODE or 'en')[:2] if hasattr(request, 'LANGUAGE_CODE') else 'en'
+    try:
+        site = site_service.create_site(Actor.from_request(request), org, title=given, language=language)
+    except site_service.SitesFeatureRequired:
         return feature_required(request, org, sites.FEATURE)
     billing_trial.flash_started(request, org)
-    site = Site.objects.create(
-        organization=org, title=title, created_by=request.user,
-        slug=sites.unique_slug(given or sites.PLACEHOLDER_SLUG),
-        language=(request.LANGUAGE_CODE or 'en')[:2] if hasattr(request, 'LANGUAGE_CODE') else 'en',
-    )
-    product_events.emit('site_created', request.user.pk, {
-        'organization_id': org.pk, 'site_id': site.pk})
     url = reverse('editor_site', args=[site.uuid])
     return redirect(url if given else url + '?new=1')
 
@@ -164,13 +144,11 @@ def editor_site_duplicate(request, uuid):
     if not _can_act(membership):
         return HttpResponseForbidden()
     org = site.organization
-    if not billing_trial.use(org, sites.FEATURE, actor=request.user):
+    try:
+        copy = site_service.duplicate_site(Actor.from_request(request), site)
+    except site_service.SitesFeatureRequired:
         return feature_required(request, org, sites.FEATURE)
     billing_trial.flash_started(request, org)
-    title = sites.clean_title(_('%(title)s (copy)') % {'title': site.title})
-    copy = sites.duplicate_site(site, request.user, title)
-    product_events.emit('site_created', request.user.pk, {
-        'organization_id': org.pk, 'site_id': copy.pk, 'from_site_id': site.pk})
     messages.success(request, _('This is a copy of “%(title)s”. It is not published.') % {'title': site.title})
     return redirect('editor_site', uuid=copy.uuid)
 
@@ -265,54 +243,18 @@ def editor_site_settings(request, uuid):
     refused = _refusal(request, site, membership)
     if refused is not None:
         return refused
-    # Fields absent from the post keep their value: the canvas autosaves the title and the
-    # summary, the panel the rest, the publish popover only the visibility.
     post = request.POST
-    errors = {}
-    title = sites.clean_title(post['title']) if 'title' in post else site.title
-    if not title:
-        errors['title'] = _('Give the site a title.')
-    slug = (post.get('slug') or '').strip().lower() if 'slug' in post else site.slug
-    if ('slug' not in post or slug == site.slug) and title != site.title \
-            and sites.has_placeholder_slug(site):
-        slug = sites.unique_slug(title)
-    slug_error = sites.slug_error(slug, site) if slug != site.slug else ''
-    if slug_error:
-        errors['slug'] = slug_error
-    language = post.get('language') or site.language
-    if language not in CONTENT_LANGUAGES:
-        language = site.language
-    visibility = post.get('visibility')
-    if visibility not in ('public', 'unlisted'):
-        visibility = site.visibility
-    width = post.get('width')
-    if width not in sites.SITE_WIDTHS:
-        width = site.width
-    cover = request.FILES.get('cover')
-    cover_error = sites.check_image(cover)
-    if cover_error:
-        errors['cover'] = cover_error
-    if errors:
+    values = {k: post[k] for k in site_service.SETTINGS_FIELDS if k in post}
+    try:
+        site_service.update_settings(Actor.from_request(request), site, values,
+                                     cover=request.FILES.get('cover'), remove_cover=post.get('remove_cover') == '1')
+    except site_service.ValidationFailed as exc:
+        errors = {k: v[0] for k, v in exc.fields.items()}
+        site.refresh_from_db()
         if _is_autosave(request):
             return JsonResponse({'ok': False, 'errors': errors}, status=422)
         ctx = _builder_context(request, site, membership, settings_errors=errors)
         return render(request, 'sites/builder.html', ctx, status=400)
-
-    site.title = title
-    if 'summary' in post:
-        site.summary = ' '.join(post['summary'].split())[:sites.SUMMARY_MAX]
-    if 'cover_alt' in post:
-        site.cover_alt = ' '.join(post['cover_alt'].split())[:200]
-    site.slug = slug
-    site.language = language
-    site.visibility = visibility
-    site.width = width
-    if cover is not None:
-        site.cover = cover
-    elif post.get('remove_cover') == '1':
-        site.cover = None
-    site.save()
-    _touched(site)
     if _is_autosave(request):
         ctx = _builder_context(request, site, membership)
         return JsonResponse({
@@ -327,19 +269,6 @@ def editor_site_settings(request, uuid):
 
 # ─── linked surveys ───────────────────────────────────────────────────────────
 
-def _link(site, survey):
-    """Link the canonical of `survey` (same workspace, linkable) and return the row, or None."""
-    canonical = canonical_of(survey)
-    if canonical.organization_id != site.organization_id:
-        return None
-    if not sites.linkable_surveys(site.organization).filter(pk=canonical.pk).exists():
-        return None
-    link, created = SiteSurvey.objects.get_or_create(
-        site=site, survey=canonical,
-        defaults={'order': site.survey_links.count()})
-    return link
-
-
 @login_required
 @require_POST
 def editor_site_survey_link(request, uuid):
@@ -348,9 +277,8 @@ def editor_site_survey_link(request, uuid):
     if refused is not None:
         return refused
     survey = get_object_or_404(SurveyHeader, uuid=request.POST.get('survey') or None)
-    if _link(site, survey) is None:
+    if site_service.link_survey(Actor.from_request(request), site, survey) is None:
         raise Http404
-    _touched(site)
     return _back(site, 'surveys')
 
 
@@ -362,174 +290,11 @@ def editor_site_survey_unlink(request, uuid, link_id):
         return HttpResponseForbidden()
     # Unlinking only removes content; a lapsed workspace may still do it.
     link = get_object_or_404(SiteSurvey, pk=link_id, site=site)
-    link.delete()
-    sites.renumber(list(site.blocks.order_by('order', 'id')))
-    _touched(site)
+    site_service.unlink_survey(Actor.from_request(request), site, link)
     return _back(site, 'surveys')
 
 
 # ─── blocks ───────────────────────────────────────────────────────────────────
-
-def _raw_block(kind, post):
-    """The posted fields of a block form as the dict `clean_block` reads."""
-    raw = {key: post.get(key, '') for key in ('body', 'alt', 'caption', 'label', 'url', 'style', 'size',
-                                              'button_label', 'description', 'current', 'color', 'basemap', 'wide',
-                                              'viz', 'date', 'start', 'end', 'tz', 'place', 'place_url',
-                                              'capacity', 'open', 'address', 'hours')}
-    if kind == 'faq':
-        raw['items'] = [{'q': q, 'a': a} for q, a in zip(post.getlist('q'), post.getlist('a'))]
-    elif kind == 'contacts':
-        raw['people'] = [{'name': n, 'role': r, 'email': e, 'phone': p} for n, r, e, p in
-                         zip(post.getlist('person_name'), post.getlist('person_role'),
-                             post.getlist('person_email'), post.getlist('person_phone'))]
-    elif kind == 'timeline':
-        raw['items'] = [{'title': t, 'when': w, 'body': b} for t, w, b in
-                        zip(post.getlist('phase_title'), post.getlist('phase_when'), post.getlist('phase_body'))]
-    return raw
-
-
-def _document_changes(request, block):
-    """(renames {file: title}, removals [file], uploads [file], errors) for a documents block."""
-    errors = {}
-    existing = list(block.files.all()) if block is not None else []
-    renames, removals = {}, []
-    for f in existing:
-        if request.POST.get(f'remove_{f.pk}') == '1':
-            removals.append(f)
-            continue
-        title = ' '.join((request.POST.get(f'file_title_{f.pk}') or '').split())[:200]
-        if title and title != f.title:
-            renames[f] = title
-    uploads = request.FILES.getlist('files')
-    problems = [msg for msg in (sites.check_document(u) for u in uploads) if msg]
-    if problems:
-        errors['files'] = ' '.join(problems)
-    kept = len(existing) - len(removals)
-    if not problems and kept + len(uploads) == 0:
-        errors['files'] = _('Add at least one file.')
-    elif kept + len(uploads) > sites.DOCUMENTS_MAX:
-        errors['files'] = _('A documents block holds at most 20 files.')
-    return renames, removals, uploads, errors
-
-
-def _results_target(site, value):
-    """(link, question code, result kind) from the picker's '<survey uuid>:<code>', linking the
-    survey when it is one of the workspace's; (None, '', '') for anything else."""
-    from .public_results import block_type_for_question
-    uuid_part, _sep, code = value.partition(':')
-    survey = SurveyHeader.objects.filter(uuid=uuid_part).first() if uuid_part and code else None
-    if survey is None:
-        return None, '', ''
-    survey = canonical_of(survey)
-    question = sites.results_question(survey, code)
-    if question is None:
-        return None, '', ''
-    link = _link(site, survey)
-    if link is None:
-        return None, '', ''
-    return link, code, block_type_for_question(question)
-
-
-# Error key → the posted fields it is about (an error on a field left empty waits, see _save_block).
-_ERROR_FIELDS = {'question': ('results_question',), 'area': ('geojson_file',), 'people': ('person_email',),
-                 'image': ('image',), 'files': ('files',)}
-
-
-def _posted_value(request, raw, key):
-    names = _ERROR_FIELDS.get(key, (key,))
-    for name in names:
-        if any(v.strip() for v in request.POST.getlist(name)) or request.FILES.getlist(name):
-            return True
-        value = raw.get(name)
-        if isinstance(value, str) and value.strip():
-            return True
-    return False
-
-
-def _save_block(request, site, block, kind):
-    """Validate the posted block and save it. Returns ({field: error}, raw) or ({}, block).
-    `empty=1` on an add is the block library creating an empty block (change
-    landing-builder-redesign): nothing is required yet; the public page skips it until the
-    creator fills it in (`sites.is_complete`)."""
-    creating = block is None and request.POST.get('empty') == '1'
-    raw = _raw_block(kind, request.POST)
-    map_upload = request.FILES.get('geojson_file') if kind == 'map' else None
-    map_error = ''
-    if kind == 'map':
-        if map_upload is not None:
-            raw['area'], map_error = sites.parse_geojson(map_upload)
-        elif block is not None:
-            raw['area'] = block.data.get('area')
-    results_link = None
-    if kind == 'results':
-        results_link, raw['question_code'], raw['result_kind'] = _results_target(
-            site, request.POST.get('results_question') or '')
-    data, errors = sites.clean_block(kind, raw, org=site.organization, creating=creating)
-    if map_error:
-        errors['area'] = map_error
-    renames, removals, uploads = {}, [], []
-    if kind == 'documents' and not creating:
-        renames, removals, uploads, doc_errors = _document_changes(request, block)
-        # An autosave may leave the block without files for a moment (remove, then add):
-        # the public page skips it until a file is back.
-        if _is_autosave(request) and doc_errors.get('files') == _('Add at least one file.'):
-            doc_errors.pop('files')
-        errors.update(doc_errors)
-    upload = request.FILES.get('image')
-    image_error = sites.check_image(upload)
-    if image_error:
-        errors['image'] = image_error
-    if kind == 'image' and upload is None and not (block and block.image) and not creating:
-        errors['image'] = _('Choose a picture.')
-    link = None
-    if kind == 'survey':
-        survey = SurveyHeader.objects.filter(uuid=request.POST.get('survey') or None).first() \
-            if (request.POST.get('survey') or '').strip() else None
-        if survey is not None:
-            link = _link(site, survey)
-        if link is None and not creating:
-            errors['survey'] = _('Pick one of this workspace’s surveys.')
-    if errors and _is_autosave(request):
-        # On the canvas an EMPTY field is not an error yet — the creator is still filling the
-        # block in, and the public page skips it until it is complete (sites.is_complete).
-        # A wrong value (bad URL, end before start, unknown zone) still is. A FAQ or timeline
-        # row without its question or title is an empty field too: it is kept and not drawn.
-        errors = {k: v for k, v in errors.items()
-                  if k != 'items' and _posted_value(request, raw, k)}
-    if errors:
-        return errors, raw
-    with transaction.atomic():
-        if block is None:
-            block = SiteBlock(site=site, kind=kind, order=sites.next_order(site))
-        block.title = sites.clean_title(request.POST.get('title'))
-        if 'menu' in request.POST:  # the panel posts 0 then, when ticked, 1 (the last one wins)
-            block.in_menu = request.POST.get('menu') == '1'
-        block.data = data
-        if kind == 'image' and upload is not None:
-            block.image = upload
-        if kind == 'survey':
-            block.site_survey = link
-        if kind == 'results':
-            block.site_survey = results_link
-        block.save()
-        for f, title in renames.items():
-            f.title = title
-            f.save(update_fields=['title'])
-        for f in removals:
-            name = f.file.name
-            f.delete()
-            # A duplicated documents block shares the stored file; delete it with the last row.
-            if not SiteFile.objects.filter(file=name).exists():
-                f.file.storage.delete(name)
-        last = block.files.order_by('-order').values_list('order', flat=True).first()
-        nxt = 0 if last is None else last + 1
-        for i, up in enumerate(uploads):
-            SiteFile.objects.create(block=block, file=up, title=sites.document_title(up.name),
-                                       size=up.size, content_type=(up.content_type or '')[:100],
-                                       order=nxt + i)
-    _touched(site)
-    return {}, block
-
 
 @login_required
 @require_POST
@@ -542,16 +307,19 @@ def editor_site_block_add(request, uuid):
     if kind not in sites.BLOCK_KINDS:
         return HttpResponseBadRequest('unknown kind')
     after = request.POST.get('after', '')
-    errors, result = _save_block(request, site, None, kind)
-    if errors:
-        ctx = _builder_context(request, site, membership, new_kind=kind, new_errors=errors,
-                               new_raw=dict(result, title=request.POST.get('title', ''),
+    try:
+        result = site_service.save_block(
+            Actor.from_request(request), site, None, kind, request.POST, request.FILES,
+            creating=request.POST.get('empty') == '1', lenient=_is_autosave(request))
+    except site_service.BlockRefused as exc:
+        ctx = _builder_context(request, site, membership, new_kind=kind, new_errors=exc.errors,
+                               new_raw=dict(exc.raw, title=request.POST.get('title', ''),
                                             survey=request.POST.get('survey', '')))
         return render(request, 'sites/builder.html', ctx, status=400)
     if after.isdigit():
-        _move_after(site, result, int(after))
+        site_service.move_after(site, result, int(after))
     elif after == 'top':
-        _move_after(site, result, None)
+        site_service.move_after(site, result, None)
     return _back(site, result.anchor, select=result.pk)
 
 
@@ -563,7 +331,12 @@ def editor_site_block_edit(request, uuid, block_id):
     if refused is not None:
         return refused
     block = get_object_or_404(SiteBlock, pk=block_id, site=site)
-    errors, result = _save_block(request, site, block, block.kind)
+    try:
+        result = site_service.save_block(Actor.from_request(request), site, block, block.kind,
+                                         request.POST, request.FILES, lenient=_is_autosave(request))
+        errors = {}
+    except site_service.BlockRefused as exc:
+        errors, result = exc.errors, exc.raw
     if _is_autosave(request):
         if errors:
             return JsonResponse({'ok': False, 'errors': errors}, status=422)
@@ -581,14 +354,6 @@ def editor_site_block_edit(request, uuid, block_id):
     return _back(site, block.anchor, select=block.pk)
 
 
-def _move_after(site, block, after_id):
-    """Put `block` right after the block `after_id` (None = first)."""
-    rows = [b for b in site.blocks.order_by('order', 'id') if b.pk != block.pk]
-    at = 0 if after_id is None else next((i + 1 for i, b in enumerate(rows) if b.pk == after_id), len(rows))
-    rows.insert(at, block)
-    sites.renumber(rows)
-
-
 @login_required
 @require_POST
 def editor_site_block_duplicate(request, uuid, block_id):
@@ -599,16 +364,7 @@ def editor_site_block_duplicate(request, uuid, block_id):
     if refused is not None:
         return refused
     block = get_object_or_404(SiteBlock, pk=block_id, site=site)
-    with transaction.atomic():
-        copy = SiteBlock.objects.create(
-            site=site, kind=block.kind, title=block.title, in_menu=block.in_menu, data=dict(block.data or {}),
-            image=block.image.name if block.image else None, site_survey=block.site_survey,
-            order=sites.next_order(site))
-        for f in block.files.all():
-            SiteFile.objects.create(block=copy, file=f.file.name, title=f.title, size=f.size,
-                                       content_type=f.content_type, order=f.order)
-        _move_after(site, copy, block.pk)
-    _touched(site)
+    copy = site_service.duplicate_block(Actor.from_request(request), site, block)
     return _back(site, copy.anchor, select=copy.pk)
 
 
@@ -619,13 +375,7 @@ def editor_site_block_delete(request, uuid, block_id):
     if not _can_act(membership):
         return HttpResponseForbidden()
     block = get_object_or_404(SiteBlock, pk=block_id, site=site)
-    names = [f.file.name for f in block.files.all()]
-    block.delete()
-    for name in names:
-        if not SiteFile.objects.filter(file=name).exists():
-            default_storage.delete(name)
-    sites.renumber(list(site.blocks.order_by('order', 'id')))
-    _touched(site)
+    site_service.delete_block(Actor.from_request(request), site, block)
     return _back(site, 'blocks')
 
 
@@ -640,11 +390,10 @@ def editor_site_blocks_reorder(request, uuid):
         order = [int(x) for x in json.loads(request.body or b'{}').get('order', [])]
     except (ValueError, TypeError, AttributeError):
         return HttpResponseBadRequest('bad order')
-    blocks = {b.pk: b for b in site.blocks.all()}
-    if sorted(order) != sorted(blocks):
+    try:
+        site_service.reorder_blocks(Actor.from_request(request), site, order)
+    except site_service.ValidationFailed:
         return HttpResponseBadRequest('order must list every block of this site once')
-    sites.renumber([blocks[pk] for pk in order])
-    _touched(site)
     return JsonResponse({'ok': True})
 
 
@@ -658,21 +407,13 @@ def editor_site_publish(request, uuid):
     if action == 'unpublish':
         if not _can_act(membership):
             return HttpResponseForbidden()
-        Site.objects.filter(pk=site.pk).update(is_published=False, updated_at=timezone.now())
+        site_service.unpublish(Actor.from_request(request), site)
         messages.success(request, _('The site is unpublished. Its address shows “not available” now.'))
         return _back(site)
     refused = _refusal(request, site, membership)
     if refused is not None:
         return refused
-    first = site.published_at is None
-    site.is_published = True
-    site.published_at = site.published_at or timezone.now()
-    site.save(update_fields=['is_published', 'published_at', 'updated_at'])
-    screen_site(site, trigger='publish')
-    product_events.emit('site_published', request.user.pk, {
-        'organization_id': site.organization_id, 'site_id': site.pk, 'first': first,
-        'blocks': site.blocks.count(), 'surveys': site.survey_links.count(),
-        'visibility': site.visibility})
+    site_service.publish(Actor.from_request(request), site)
     messages.success(request, _('The site is published.'))
     return _back(site)
 
@@ -684,7 +425,7 @@ def editor_site_delete(request, uuid):
     if not _can_act(membership):
         return HttpResponseForbidden()
     title = site.title
-    site.delete()
+    site_service.delete_site(Actor.from_request(request), site)
     messages.success(request, _('“%(title)s” is deleted.') % {'title': title})
     return redirect('editor_sites')
 
@@ -746,7 +487,7 @@ def editor_site_review_link(request, uuid):
     site, membership = _site(request, uuid)
     if not _can_act(membership):
         return HttpResponseForbidden()
-    sites.rotate_review_salt(site)
+    site_service.new_review_link(Actor.from_request(request), site)
     return JsonResponse({'ok': True, 'url': _review_url(request, site)})
 
 
@@ -867,9 +608,7 @@ def editor_site_attendees_remove(request, uuid, block_id):
     if refused is not None:
         return refused
     which = request.POST.get('registration')
+    site_service.remove_registrations(Actor.from_request(request), block, None if which == 'all' else which)
     if which == 'all':
-        block.registrations.all().delete()
         messages.success(request, _('All registrations of this event are deleted.'))
-    else:
-        block.registrations.filter(pk=which or 0).delete()
     return redirect('editor_site_attendees', uuid=site.uuid, block_id=block.pk)

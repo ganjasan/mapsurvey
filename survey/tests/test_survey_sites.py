@@ -1777,3 +1777,54 @@ class SiteAccessibilityTest(SiteTestBase):
         page = self.client.get('/p/riverside-park-plan/').content.decode()
         self.assertIn('<a class="lp-skip" href="#main">Skip to content</a>', page)
         self.assertIn('id="main"', page)
+
+
+class SiteServiceLayerTest(SiteTestBase):
+    """Spec `survey-sites`: every site write goes through the sites service (change
+    sites-service-layer, #617)."""
+
+    def test_views_write_nothing_themselves(self):
+        """GIVEN the site views module
+        WHEN its source is read
+        THEN it holds no direct model write: no save(), objects.create, delete() or update() of rows"""
+        import inspect
+        import re
+        from survey import site_views
+        source = inspect.getsource(site_views)
+        writes = re.findall(r'\.save\(|objects\.create\(|\.delete\(\)|\.objects\.[a-z_]*\.update\(|\)\.update\(', source)
+        self.assertEqual(writes, [], 'site views must call survey.services.sites')
+
+    def test_service_without_a_request(self):
+        """GIVEN an Actor and plain values
+        WHEN the service creates a site, adds a text block, publishes and duplicates it
+        THEN every step works without a request and leaves audit rows"""
+        from django.http import QueryDict
+        from survey.models import AuditLog
+        from survey.services import sites as site_service
+        from survey.services.context import Actor
+        actor = Actor(user=self.editor, surface='api')
+        site = site_service.create_site(actor, self.org, title='From the API')
+        fields = QueryDict(mutable=True)
+        fields.update({'title': 'About', 'body': '<p>Hello</p><script>x</script>'})
+        block = site_service.save_block(actor, site, None, 'text', fields)
+        self.assertEqual(block.data['body'], '<p>Hello</p>')
+        site_service.publish(actor, site)
+        copy = site_service.duplicate_site(actor, site)
+        self.assertEqual(copy.blocks.count(), 1)
+        self.assertFalse(copy.is_published)
+        actions = set(AuditLog.objects.filter(actor=self.editor).values_list('action', flat=True))
+        self.assertTrue({'site_create', 'site_publish', 'site_duplicate'} <= actions)
+
+    def test_refused_block_carries_the_typing(self):
+        """GIVEN a button block posted with an unsafe link
+        WHEN the service saves it
+        THEN BlockRefused carries the field error and what was typed"""
+        from django.http import QueryDict
+        from survey.services import sites as site_service
+        from survey.services.context import Actor
+        fields = QueryDict(mutable=True)
+        fields.update({'label': 'Plan', 'url': 'javascript:alert(1)'})
+        with self.assertRaises(site_service.BlockRefused) as ctx:
+            site_service.save_block(Actor(user=self.editor), self.site, None, 'button', fields)
+        self.assertIn('url', ctx.exception.errors)
+        self.assertEqual(ctx.exception.raw['label'], 'Plan')
