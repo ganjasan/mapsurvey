@@ -3235,6 +3235,8 @@ SITE_BLOCK_KIND_CHOICES = (
     ('results', _('Results')),
     ('event', _('Event')),
     ('contacts', _('Contacts')),
+    ('gallery', _('Gallery')),
+    ('compare', _('Before and after')),
 )
 
 

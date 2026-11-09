@@ -85,6 +85,39 @@ the block's panel form (the one serialisation): `data-input="<name>"` fields and
     <small>{% trans "PDF, office documents, CSV or text; up to 25 MB each" %}</small>
   </div>
 
+{% elif b.kind == 'gallery' %}
+  <div class="lp-gallery lp-gallery--{{ b.data.columns|default:3 }} lb-gallery">
+    {% for f in b.files.all %}
+    <figure class="lp-gallery-item" data-file-row="{{ f.pk }}">
+      <img src="{{ f.file.url }}" alt="{{ f.title }}">
+      <figcaption data-field="file_title_{{ f.pk }}" data-placeholder="{% trans 'Caption' %}">{{ f.title }}</figcaption>
+      <button type="button" class="lb-icon-btn lb-pic-x" data-remove-file="{{ f.pk }}" title="{% trans 'Remove' %}" aria-label="{% trans 'Remove' %}"><i class="fas fa-times" aria-hidden="true"></i></button>
+    </figure>
+    {% endfor %}
+  </div>
+  <div class="lb-drop{% if b.files.exists %} lb-drop--small{% endif %}" data-file="pictures" data-multiple="1" data-accept="image/jpeg,image/png,image/webp,image/gif">
+    <i class="far fa-images" aria-hidden="true"></i>
+    <span><b>{% trans "Drop pictures here" %}</b> {% trans "or" %} <button type="button" class="lb-link" data-file-pick="pictures">{% trans "choose pictures" %}</button></span>
+    <small>{% trans "Up to 12 pictures — JPEG, PNG, WebP or GIF, up to 5 MB each" %}</small>
+  </div>
+
+{% elif b.kind == 'compare' %}
+  {% with files=b.files.all %}
+  <div class="lb-compare">
+    {% for slot, name, label, field in compare_slots %}
+    <div class="lb-compare-slot">
+      {% for f in files %}{% if f.order == slot %}<img src="{{ f.file.url }}" alt="">
+      <button type="button" class="lb-ghost lb-replace" data-file-pick="{{ name }}"><i class="far fa-image" aria-hidden="true"></i> {% trans "Replace picture" %}</button>{% endif %}{% empty %}{% endfor %}
+      <div class="lb-drop lb-drop--small" data-file="{{ name }}" data-accept="image/jpeg,image/png,image/webp,image/gif">
+        <i class="far fa-image" aria-hidden="true"></i>
+        <span><b>{{ label }}</b> — {% trans "drop a picture or" %} <button type="button" class="lb-link" data-file-pick="{{ name }}">{% trans "choose a file" %}</button></span>
+      </div>
+      <div class="lb-compare-label" data-field="{{ field }}" data-placeholder="{{ label }}">{% if field == 'before_label' %}{{ b.data.before_label }}{% else %}{{ b.data.after_label }}{% endif %}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endwith %}
+
 {% elif b.kind == 'contacts' %}
   <div class="lp-contacts lb-rows-edit" data-rows="contacts">
     {% for p in b.data.people %}

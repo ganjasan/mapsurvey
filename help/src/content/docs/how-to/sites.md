@@ -38,6 +38,8 @@ Press **+** or **Add block** and choose what to add:
 - **FAQ** — questions and answers that open on a tap.
 - **Timeline** — the phases of the engagement with their dates. Press **Now** on the phase you are in; earlier phases show as done.
 - **Image** — a picture with a description for screen readers and an optional caption.
+- **Gallery** — up to 12 pictures (boards, renderings, site photos) in two to four columns; residents open them large with a tap. Drop the pictures onto the block and caption them there — the caption is also what screen readers read.
+- **Before and after** — two pictures of the same view, today and the proposal, with a slider between them. Drop each into its half of the block and name the two sides.
 - **Video** — a YouTube or Vimeo link.
 - **Survey card** — one of your surveys. The card follows the survey: *Open* with a **Take part** button, *Opens on …* before its period starts, *Coming soon* while it is a draft, and *Closed* with a link to its [public results](/how-to/share-results-publicly/) once you publish them.
 - **Button** — a link to anything else: the draft plan, the council's website, an event sign-up.

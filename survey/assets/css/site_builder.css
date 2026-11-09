@@ -334,3 +334,13 @@ fieldset.lb-card { border: 1px solid var(--line); padding: 1rem 1.1rem; }
 .lb-a11y-list b { display: block; font-size: 13px; color: #5b3fa8; }
 .lb-a11y-list small { display: block; color: var(--muted); font-size: 12px; margin: 2px 0 6px; }
 .lb-a11y-list ul { margin: 0; padding-left: 18px; font-size: 12.5px; }
+/* Gallery and before/after on the canvas (change site-gallery-compare) */
+.lb-gallery { margin-bottom: 10px; }
+.lb-gallery .lp-gallery-item[hidden] { display: none; }
+.lb-pic-x { position: absolute; top: 6px; right: 6px; background: rgba(255,255,255,.9); }
+.lb-blk:not(.on) .lb-pic-x { display: none; }
+.lb-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.lb-compare-slot img { display: block; width: 100%; border-radius: 6px; margin-bottom: 6px; }
+.lb-compare-slot img + .lb-replace + .lb-drop { display: none; }
+.lb-compare-label { font-size: 14px; color: var(--muted); margin-top: 6px; }
+.lb-blk:not(.on) .lb-gallery + .lb-drop--small { display: none; }

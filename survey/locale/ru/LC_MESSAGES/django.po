@@ -10467,3 +10467,79 @@ msgstr "Выберите один из шаблонов этого рабоче�
 #: site-templates
 msgid "Pick one of the templates."
 msgstr "Выберите один из шаблонов."
+
+#: site-gallery-compare
+msgid "Gallery"
+msgstr "Галерея"
+
+#: site-gallery-compare
+msgid "Before and after"
+msgstr "До и после"
+
+#: site-gallery-compare
+msgid "Boards, renderings or site photos, opened large on a tap"
+msgstr "Стенды, визуализации или фото места — открываются крупно по нажатию"
+
+#: site-gallery-compare
+msgid "Today and the proposal, side by side with a slider"
+msgstr "Сейчас и предложение — рядом, с ползунком"
+
+#: site-gallery-compare
+msgid "Some pictures have no caption, which is what screen readers read out."
+msgstr "У некоторых картинок нет подписи, а именно её читают экранные дикторы."
+
+#: site-gallery-compare
+msgid "Add at least one picture."
+msgstr "Добавьте хотя бы одну картинку."
+
+#: site-gallery-compare
+msgid "A gallery holds at most 12 pictures."
+msgstr "В галерее может быть не больше 12 картинок."
+
+#: site-gallery-compare
+msgid "Before label"
+msgstr "Подпись «До»"
+
+#: site-gallery-compare
+msgid "After label"
+msgstr "Подпись «После»"
+
+#: site-gallery-compare
+msgid "Drop pictures here"
+msgstr "Перетащите картинки сюда"
+
+#: site-gallery-compare
+msgid "choose pictures"
+msgstr "выберите картинки"
+
+#: site-gallery-compare
+msgid "Up to 12 pictures — JPEG, PNG, WebP or GIF, up to 5 MB each"
+msgstr "До 12 картинок — JPEG, PNG, WebP или GIF, до 5 МБ каждая"
+
+#: site-gallery-compare
+msgid "drop a picture or"
+msgstr "перетащите картинку или"
+
+#: site-gallery-compare
+msgid "Columns on a computer"
+msgstr "Колонки на компьютере"
+
+#: site-gallery-compare
+msgid "Add, caption and remove pictures in the block on the page. On a phone the gallery shows two columns."
+msgstr "Добавляйте, подписывайте и убирайте картинки в блоке на странице. На телефоне галерея показывает две колонки."
+
+#: site-gallery-compare
+msgid "Drop the two pictures and name them in the block on the page. Use pictures of the same size and view."
+msgstr "Перетащите две картинки в блок на странице и подпишите их. Используйте картинки одного размера и ракурса."
+
+#: site-gallery-compare
+msgid "Before"
+msgstr "До"
+
+#: site-gallery-compare
+msgid "After"
+msgstr "После"
+
+#: site-gallery-compare
+msgid "Slide to compare"
+msgstr "Сдвиньте, чтобы сравнить"

@@ -12398,3 +12398,79 @@ msgstr "Kies een van de sjablonen van deze werkruimte."
 #: site-templates
 msgid "Pick one of the templates."
 msgstr "Kies een van de sjablonen."
+
+#: site-gallery-compare
+msgid "Gallery"
+msgstr "Galerij"
+
+#: site-gallery-compare
+msgid "Before and after"
+msgstr "Voor en na"
+
+#: site-gallery-compare
+msgid "Boards, renderings or site photos, opened large on a tap"
+msgstr "Panelen, impressies of foto's van de plek, groot geopend met een tik"
+
+#: site-gallery-compare
+msgid "Today and the proposal, side by side with a slider"
+msgstr "Nu en het voorstel, naast elkaar met een schuifregelaar"
+
+#: site-gallery-compare
+msgid "Some pictures have no caption, which is what screen readers read out."
+msgstr "Sommige afbeeldingen hebben geen bijschrift, en dat is wat schermlezers voorlezen."
+
+#: site-gallery-compare
+msgid "Add at least one picture."
+msgstr "Voeg minstens één afbeelding toe."
+
+#: site-gallery-compare
+msgid "A gallery holds at most 12 pictures."
+msgstr "Een galerij bevat maximaal 12 afbeeldingen."
+
+#: site-gallery-compare
+msgid "Before label"
+msgstr "Label ‘Voor’"
+
+#: site-gallery-compare
+msgid "After label"
+msgstr "Label ‘Na’"
+
+#: site-gallery-compare
+msgid "Drop pictures here"
+msgstr "Sleep afbeeldingen hierheen"
+
+#: site-gallery-compare
+msgid "choose pictures"
+msgstr "kies afbeeldingen"
+
+#: site-gallery-compare
+msgid "Up to 12 pictures — JPEG, PNG, WebP or GIF, up to 5 MB each"
+msgstr "Tot 12 afbeeldingen — JPEG, PNG, WebP of GIF, elk tot 5 MB"
+
+#: site-gallery-compare
+msgid "drop a picture or"
+msgstr "sleep een afbeelding of"
+
+#: site-gallery-compare
+msgid "Columns on a computer"
+msgstr "Kolommen op een computer"
+
+#: site-gallery-compare
+msgid "Add, caption and remove pictures in the block on the page. On a phone the gallery shows two columns."
+msgstr "Voeg afbeeldingen toe, geef ze een bijschrift en verwijder ze in het blok op de pagina. Op een telefoon toont de galerij twee kolommen."
+
+#: site-gallery-compare
+msgid "Drop the two pictures and name them in the block on the page. Use pictures of the same size and view."
+msgstr "Sleep de twee afbeeldingen in het blok op de pagina en geef ze een naam. Gebruik afbeeldingen van dezelfde grootte en hetzelfde standpunt."
+
+#: site-gallery-compare
+msgid "Before"
+msgstr "Voor"
+
+#: site-gallery-compare
+msgid "After"
+msgstr "Na"
+
+#: site-gallery-compare
+msgid "Slide to compare"
+msgstr "Schuif om te vergelijken"

@@ -12406,3 +12406,79 @@ msgstr "Scegli uno dei modelli di questo spazio di lavoro."
 #: site-templates
 msgid "Pick one of the templates."
 msgstr "Scegli uno dei modelli."
+
+#: site-gallery-compare
+msgid "Gallery"
+msgstr "Galleria"
+
+#: site-gallery-compare
+msgid "Before and after"
+msgstr "Prima e dopo"
+
+#: site-gallery-compare
+msgid "Boards, renderings or site photos, opened large on a tap"
+msgstr "Pannelli, render o foto del luogo, aperti in grande con un tocco"
+
+#: site-gallery-compare
+msgid "Today and the proposal, side by side with a slider"
+msgstr "Oggi e la proposta, affiancati con un cursore"
+
+#: site-gallery-compare
+msgid "Some pictures have no caption, which is what screen readers read out."
+msgstr "Alcune immagini non hanno una didascalia, che è ciò che leggono i lettori di schermo."
+
+#: site-gallery-compare
+msgid "Add at least one picture."
+msgstr "Aggiungi almeno un'immagine."
+
+#: site-gallery-compare
+msgid "A gallery holds at most 12 pictures."
+msgstr "Una galleria contiene al massimo 12 immagini."
+
+#: site-gallery-compare
+msgid "Before label"
+msgstr "Etichetta «Prima»"
+
+#: site-gallery-compare
+msgid "After label"
+msgstr "Etichetta «Dopo»"
+
+#: site-gallery-compare
+msgid "Drop pictures here"
+msgstr "Trascina qui le immagini"
+
+#: site-gallery-compare
+msgid "choose pictures"
+msgstr "scegli le immagini"
+
+#: site-gallery-compare
+msgid "Up to 12 pictures — JPEG, PNG, WebP or GIF, up to 5 MB each"
+msgstr "Fino a 12 immagini — JPEG, PNG, WebP o GIF, fino a 5 MB ciascuna"
+
+#: site-gallery-compare
+msgid "drop a picture or"
+msgstr "trascina un'immagine o"
+
+#: site-gallery-compare
+msgid "Columns on a computer"
+msgstr "Colonne su computer"
+
+#: site-gallery-compare
+msgid "Add, caption and remove pictures in the block on the page. On a phone the gallery shows two columns."
+msgstr "Aggiungi, intitola e rimuovi le immagini nel blocco sulla pagina. Su un telefono la galleria mostra due colonne."
+
+#: site-gallery-compare
+msgid "Drop the two pictures and name them in the block on the page. Use pictures of the same size and view."
+msgstr "Trascina le due immagini e dai loro un nome nel blocco sulla pagina. Usa immagini della stessa dimensione e inquadratura."
+
+#: site-gallery-compare
+msgid "Before"
+msgstr "Prima"
+
+#: site-gallery-compare
+msgid "After"
+msgstr "Dopo"
+
+#: site-gallery-compare
+msgid "Slide to compare"
+msgstr "Scorri per confrontare"

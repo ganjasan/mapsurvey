@@ -241,6 +241,7 @@ def _builder_context(request, site, membership, **extra):
         'site_widths': [('narrow', pgettext('site width', 'Narrow')), ('standard', pgettext('site width', 'Standard')),
                         ('wide', pgettext('site width', 'Wide'))],
         'brand': branding.for_site(org),
+        'compare_slots': [(0, 'before', _('Before'), 'before_label'), (1, 'after', _('After'), 'after_label')],
         'heading_sizes': [('l', pgettext('heading size', 'Large')), ('m', pgettext('heading size', 'Medium')),
                           ('s', pgettext('heading size', 'Small'))],
         'library': sites.library(),
@@ -513,6 +514,7 @@ def site_public(request, slug):
                               if len(offered) > 1 else [],
             'nav': sites.nav_items(blocks), 'preview': not live and not review, 'review': review, 'held': held,
             'map_layers': sites.map_layers(site, blocks),
+            'media_script': any(b.kind in ('gallery', 'compare') for b, _c in blocks),
             'results': [card for b, card in blocks if b.kind == 'results'],
             'results_basemaps': (basemaps.table_for(site.organization)
                                  if any(b.kind == 'results' and c.get('block_type') == 'map' for b, c in blocks)

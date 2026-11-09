@@ -139,3 +139,36 @@ body.lp { margin: 0; font: 17px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI
 .lp-org { display: flex; align-items: center; gap: 10px; }
 .lp-logo { height: 32px; width: auto; max-width: 160px; object-fit: contain; }
 .lp-hero--cover .lp-logo { background: rgba(255,255,255,.9); border-radius: 6px; padding: 3px 6px; }
+
+/* Gallery and before/after (change site-gallery-compare) */
+.lp-gallery { display: grid; gap: 10px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.lp-gallery--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.lp-gallery--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 600px) { .lp-gallery, .lp-gallery--3, .lp-gallery--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.lp-gallery-item { margin: 0; position: relative; }
+.lp-gallery-item img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 6px; background: var(--lp-soft); }
+.lp-gallery-item figcaption { font-size: 14px; color: var(--lp-muted); margin-top: 4px; }
+.lp-block--wide .lp-gallery, .lp-block--wide .lp-compare {
+  position: relative; left: 50%; transform: translateX(-50%); width: min(1400px, 100cqw - 40px); max-width: none; }
+.lp-lightbox { border: 0; padding: 0; background: transparent; max-width: 96vw; max-height: 96vh; overflow: visible; }
+.lp-lightbox::backdrop { background: rgba(10, 14, 20, .88); }
+.lp-lightbox figure { margin: 0; text-align: center; }
+.lp-lightbox img { max-width: 92vw; max-height: 84vh; border-radius: 6px; }
+.lp-lightbox figcaption { color: #fff; margin-top: 8px; }
+.lp-lightbox button { position: fixed; background: rgba(255,255,255,.15); color: #fff; border: 0; border-radius: 999px;
+  width: 44px; height: 44px; font-size: 26px; line-height: 1; cursor: pointer; }
+.lp-lb-prev { left: 16px; top: 50%; } .lp-lb-next { right: 16px; top: 50%; } .lp-lb-close { right: 16px; top: 16px; }
+.lp-compare { position: relative; display: grid; gap: 10px; }
+.lp-compare-pane { margin: 0; }
+.lp-compare-pane img { display: block; width: 100%; border-radius: 6px; }
+.lp-compare-pane figcaption { font-size: 14px; color: var(--lp-muted); margin-top: 4px; }
+.lp-compare.is-live { display: block; }
+.lp-compare.is-live .lp-compare-after { position: absolute; inset: 0; }
+.lp-compare.is-live .lp-compare-pane figcaption { position: absolute; top: 10px; margin: 0; background: rgba(0,0,0,.55);
+  color: #fff; padding: 2px 8px; border-radius: 4px; }
+.lp-compare.is-live .lp-compare-pane:first-child figcaption { left: 10px; }
+.lp-compare.is-live .lp-compare-after figcaption { right: 10px; }
+.lp-compare.is-live::after { content: ""; position: absolute; top: 0; bottom: 0; left: var(--cut, 50%); width: 3px;
+  background: #fff; box-shadow: 0 0 6px rgba(0,0,0,.4); pointer-events: none; }
+.lp-compare-range { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: ew-resize; margin: 0; }
+.lp-compare-range:focus-visible { opacity: .25; }

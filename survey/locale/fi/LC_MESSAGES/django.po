@@ -12360,3 +12360,79 @@ msgstr "Valitse jokin tämän työtilan mallipohjista."
 #: site-templates
 msgid "Pick one of the templates."
 msgstr "Valitse jokin mallipohjista."
+
+#: site-gallery-compare
+msgid "Gallery"
+msgstr "Galleria"
+
+#: site-gallery-compare
+msgid "Before and after"
+msgstr "Ennen ja jälkeen"
+
+#: site-gallery-compare
+msgid "Boards, renderings or site photos, opened large on a tap"
+msgstr "Taulut, havainnekuvat tai valokuvat paikasta, avautuvat suurina napautuksella"
+
+#: site-gallery-compare
+msgid "Today and the proposal, side by side with a slider"
+msgstr "Nykytila ja ehdotus rinnakkain liukusäätimellä"
+
+#: site-gallery-compare
+msgid "Some pictures have no caption, which is what screen readers read out."
+msgstr "Joistakin kuvista puuttuu kuvateksti, jonka ruudunlukijat lukevat ääneen."
+
+#: site-gallery-compare
+msgid "Add at least one picture."
+msgstr "Lisää vähintään yksi kuva."
+
+#: site-gallery-compare
+msgid "A gallery holds at most 12 pictures."
+msgstr "Galleriassa voi olla enintään 12 kuvaa."
+
+#: site-gallery-compare
+msgid "Before label"
+msgstr "Teksti ”Ennen”"
+
+#: site-gallery-compare
+msgid "After label"
+msgstr "Teksti ”Jälkeen”"
+
+#: site-gallery-compare
+msgid "Drop pictures here"
+msgstr "Pudota kuvat tähän"
+
+#: site-gallery-compare
+msgid "choose pictures"
+msgstr "valitse kuvat"
+
+#: site-gallery-compare
+msgid "Up to 12 pictures — JPEG, PNG, WebP or GIF, up to 5 MB each"
+msgstr "Enintään 12 kuvaa — JPEG, PNG, WebP tai GIF, enintään 5 Mt kukin"
+
+#: site-gallery-compare
+msgid "drop a picture or"
+msgstr "pudota kuva tai"
+
+#: site-gallery-compare
+msgid "Columns on a computer"
+msgstr "Sarakkeet tietokoneella"
+
+#: site-gallery-compare
+msgid "Add, caption and remove pictures in the block on the page. On a phone the gallery shows two columns."
+msgstr "Lisää, kuvatekstitä ja poista kuvia sivun lohkossa. Puhelimessa galleria näyttää kaksi saraketta."
+
+#: site-gallery-compare
+msgid "Drop the two pictures and name them in the block on the page. Use pictures of the same size and view."
+msgstr "Pudota kaksi kuvaa sivun lohkoon ja nimeä ne. Käytä samankokoisia kuvia samasta kuvakulmasta."
+
+#: site-gallery-compare
+msgid "Before"
+msgstr "Ennen"
+
+#: site-gallery-compare
+msgid "After"
+msgstr "Jälkeen"
+
+#: site-gallery-compare
+msgid "Slide to compare"
+msgstr "Vertaa liu’uttamalla"

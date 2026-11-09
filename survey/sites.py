@@ -55,6 +55,8 @@ BLOCK_KINDS = {
     'image': (gettext_lazy('Image'), 'far fa-image', 'media'),
     'video': (gettext_lazy('Video'), 'fab fa-youtube', 'media'),
     'map': (gettext_lazy('Map'), 'fas fa-draw-polygon', 'media'),
+    'gallery': (gettext_lazy('Gallery'), 'far fa-images', 'media'),
+    'compare': (gettext_lazy('Before and after'), 'fas fa-columns', 'media'),
     'results': (gettext_lazy('Results'), 'fas fa-chart-bar', 'media'),
     'documents': (gettext_lazy('Documents'), 'far fa-file-pdf', 'participation'),
     'event': (gettext_lazy('Event'), 'far fa-calendar-check', 'participation'),
@@ -87,6 +89,8 @@ LIBRARY = (
         ('timeline', gettext_lazy('Phases with dates; mark the one you are in')),
         ('faq', gettext_lazy('Questions residents keep asking')),
         ('image', gettext_lazy('A photo or a plan drawing with a caption')),
+        ('gallery', gettext_lazy('Boards, renderings or site photos, opened large on a tap')),
+        ('compare', gettext_lazy('Today and the proposal, side by side with a slider')),
         ('video', gettext_lazy('YouTube or Vimeo')),
         ('map', gettext_lazy('The project area from a GeoJSON file')),
     )),
@@ -119,7 +123,9 @@ def _rich(value, cap):
 
 
 # Kinds that may break out of the site's column to the page edge (change site-width).
-WIDE_KINDS = ('image', 'video', 'map')
+WIDE_KINDS = ('image', 'video', 'map', 'gallery', 'compare')
+GALLERY_MAX = 12
+GALLERY_COLUMNS = ('2', '3', '4')
 SITE_WIDTHS = ('narrow', 'standard', 'wide')
 
 
@@ -260,6 +266,18 @@ def _plain_lines(value, cap):
     return '\n'.join(line for line in lines if line)[:cap]
 
 
+def _clean_gallery(raw, errors):
+    # The pictures are SiteFile rows (change site-gallery-compare), like a documents block's files.
+    columns = str(raw.get('columns') or '3')
+    return {'columns': int(columns if columns in GALLERY_COLUMNS else '3'), 'wide': _wide(raw)}
+
+
+def _clean_compare(raw, errors):
+    # Two SiteFile rows: order 0 is "before", order 1 is "after".
+    return {'before_label': _plain(raw.get('before_label'), 40), 'after_label': _plain(raw.get('after_label'), 40),
+            'wide': _wide(raw)}
+
+
 def _clean_documents(raw, errors):
     # The files are SiteFile rows (change landing-documents-map); the block keeps no data.
     return {}
@@ -363,6 +381,8 @@ _CLEANERS = {
     'results': _clean_results,
     'event': _clean_event,
     'contacts': _clean_contacts,
+    'gallery': _clean_gallery,
+    'compare': _clean_compare,
 }
 
 
@@ -394,6 +414,10 @@ def is_complete(block):
     kind = block.kind
     if kind == 'heading':
         return bool(block.title)
+    if kind == 'gallery':
+        return block.files.exists()
+    if kind == 'compare':
+        return set(block.files.values_list('order', flat=True)) >= {0, 1}
     if kind == 'contacts':
         return any(p.get('name') for p in data.get('people') or ()) or bool(data.get('address'))
     if kind == 'text':
@@ -631,6 +655,8 @@ def a11y_issues(site, blocks):
         found = []
         if b.kind == 'image' and b.image and not data.get('alt'):
             found.append(_('The picture has no description for screen readers.'))
+        if b.kind == 'gallery' and b.files.filter(title='').exists():
+            found.append(_('Some pictures have no caption, which is what screen readers read out.'))
         if b.kind == 'heading' and b.title:
             if data.get('size') == 's' and not seen_section_heading:
                 found.append(_('A small heading comes before any large or medium one: screen readers announce '
