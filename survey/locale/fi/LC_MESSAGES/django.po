@@ -10789,20 +10789,20 @@ msgid "Published · unlisted"
 msgstr "Julkaistu · listaamaton"
 
 #: landing-core (#576)
-msgid "Landing pages"
-msgstr "Projektisivut"
+msgid "Sites"
+msgstr "Sivustot"
 
 #: landing-core (#576)
-msgid "Open page"
-msgstr "Avaa sivu"
+msgid "Open site"
+msgstr "Avaa sivusto"
 
 #: landing-core (#576)
-msgid "Landing pages are part of Pro. This workspace's plan has ended, so the page can't be edited; a published page stays online."
-msgstr "Projektisivut kuuluvat Pro-tilaukseen. Tämän työtilan tilaus on päättynyt, joten sivua ei voi muokata; julkaistu sivu pysyy verkossa."
+msgid "Sites are part of Pro. This workspace's plan has ended, so the site can't be edited; a published site stays online."
+msgstr "Sivustot kuuluvat Pro-tilaukseen. Tämän työtilan tilaus on päättynyt, joten sivustoa ei voi muokata; julkaistu sivusto pysyy verkossa."
 
 #: landing-core (#576)
-msgid "This page is waiting for a routine safety review and is not shown to visitors yet. You don't need to do anything."
-msgstr "Tämä sivu odottaa tavanomaista turvallisuustarkistusta, eikä sitä vielä näytetä kävijöille. Sinun ei tarvitse tehdä mitään."
+msgid "This site is waiting for a routine safety review and is not shown to visitors yet. You don't need to do anything."
+msgstr "Tämä sivusto odottaa tavanomaista turvallisuustarkistusta, eikä sitä vielä näytetä kävijöille. Sinun ei tarvitse tehdä mitään."
 
 #: landing-core (#576)
 msgid "Summary"
@@ -10829,12 +10829,12 @@ msgid "Address"
 msgstr "Osoite"
 
 #: landing-core (#576)
-msgid "Changing the address of a published page breaks links and QR codes already printed."
-msgstr "Julkaistun sivun osoitteen muuttaminen rikkoo linkit ja jo tulostetut QR-koodit."
+msgid "Changing the address of a published site breaks links and QR codes already printed."
+msgstr "Julkaistun sivuston osoitteen muuttaminen rikkoo linkit ja jo tulostetut QR-koodit."
 
 #: landing-core (#576)
-msgid "Page language"
-msgstr "Sivun kieli"
+msgid "Site language"
+msgstr "Sivuston kieli"
 
 #: landing-core (#576)
 msgid "Public — search engines may list it"
@@ -10845,16 +10845,16 @@ msgid "Unlisted — only people with the link"
 msgstr "Listaamaton — vain linkin saaneille"
 
 #: landing-core (#576)
-msgid "Surveys on this page"
-msgstr "Kyselyt tällä sivulla"
+msgid "Surveys on this site"
+msgstr "Kyselyt tällä sivustolla"
 
 #: landing-core (#576)
-msgid "A survey can be on any number of landing pages. Show one with a Survey card block."
-msgstr "Kysely voi olla usealla projektisivulla. Näytä se Kyselykortti-lohkolla."
+msgid "A survey can be on any number of sites. Show one with a Survey card block."
+msgstr "Kysely voi olla usealla sivustolla. Näytä se Kyselykortti-lohkolla."
 
 #: landing-core (#576)
-msgid "Remove from this page"
-msgstr "Poista tältä sivulta"
+msgid "Remove from this site"
+msgstr "Poista tältä sivustolta"
 
 #: landing-core (#576)
 msgid "No surveys yet."
@@ -10869,8 +10869,8 @@ msgid "Delete this landing page? Its address stops working."
 msgstr "Poistetaanko tämä projektisivu? Sen osoite lakkaa toimimasta."
 
 #: landing-core (#576)
-msgid "Delete page"
-msgstr "Poista sivu"
+msgid "Delete site"
+msgstr "Poista sivusto"
 
 #: landing-core (#576)
 msgid "Delete this block?"
@@ -10905,8 +10905,8 @@ msgid "What happens in this phase (optional)"
 msgstr "Mitä tässä vaiheessa tapahtuu (valinnainen)"
 
 #: landing-core (#576)
-msgid "Waiting for a safety review — only your workspace sees this page."
-msgstr "Odottaa turvallisuustarkistusta — vain työtilasi näkee tämän sivun."
+msgid "Waiting for a safety review — only your workspace sees this site."
+msgstr "Odottaa turvallisuustarkistusta — vain työtilasi näkee tämän sivuston."
 
 #: landing-core (#576)
 msgid "Draft — only your workspace sees this."
@@ -10933,20 +10933,20 @@ msgid "Page title, e.g. Riverside Park plan"
 msgstr "Sivun otsikko, esim. Rantapuiston suunnitelma"
 
 #: landing-core (#576)
-msgid "New page"
-msgstr "Uusi sivu"
+msgid "New site"
+msgstr "Uusi sivusto"
 
 #: landing-core (#576)
-msgid "Upgrade to Pro to create pages"
-msgstr "Päivitä Pro-tilaukseen luodaksesi sivuja"
+msgid "Upgrade to Pro to create sites"
+msgstr "Päivitä Pro-tilaukseen luodaksesi sivustoja"
 
 #: landing-core (#576)
 msgid "One public page for an engagement: what the project is about, the timeline, the surveys residents can take part in, and what happens next. Put its address on flyers and QR codes; it stays the same from the first pilot to the final plan."
 msgstr "Yksi julkinen sivu osallistamiselle: mistä hankkeessa on kyse, aikataulu, kyselyt, joihin asukkaat voivat osallistua, ja mitä seuraavaksi tapahtuu. Laita sen osoite esitteisiin ja QR-koodeihin; se pysyy samana ensimmäisestä kokeilusta lopulliseen suunnitelmaan."
 
 #: landing-core (#576)
-msgid "No landing pages yet."
-msgstr "Ei vielä projektisivuja."
+msgid "No sites yet."
+msgstr "Ei vielä sivustoja."
 
 #: landing-core (#576)
 msgid "Video"
@@ -11034,8 +11034,8 @@ msgid "This address is reserved. Pick another."
 msgstr "Tämä osoite on varattu. Valitse toinen."
 
 #: landing-core (#576)
-msgid "Another landing page already uses this address."
-msgstr "Toinen projektisivu käyttää jo tätä osoitetta."
+msgid "Another site already uses this address."
+msgstr "Toinen sivusto käyttää jo tätä osoitetta."
 
 #: landing-core (#576)
 msgid "The survey is archived or in the trash."
@@ -11046,16 +11046,16 @@ msgid "The survey is waiting for a safety review."
 msgstr "Kysely odottaa turvallisuustarkistusta."
 
 #: landing-core (#576)
-msgid "Untitled landing page"
-msgstr "Nimetön projektisivu"
+msgid "Untitled site"
+msgstr "Nimetön sivusto"
 
 #: landing-core (#576)
-msgid "Give the page a title."
-msgstr "Anna sivulle otsikko."
+msgid "Give the site a title."
+msgstr "Anna sivustolle otsikko."
 
 #: landing-core (#576)
-msgid "Page settings saved."
-msgstr "Sivun asetukset tallennettu."
+msgid "Site settings saved."
+msgstr "Sivuston asetukset tallennettu."
 
 #: landing-core (#576)
 msgid "Choose a picture."
@@ -11066,12 +11066,12 @@ msgid "Pick one of this workspace’s surveys."
 msgstr "Valitse jokin tämän työtilan kyselyistä."
 
 #: landing-core (#576)
-msgid "The page is unpublished. Its address shows “not available” now."
-msgstr "Sivu ei ole enää julkaistu. Sen osoitteessa näkyy nyt ”ei saatavilla”."
+msgid "The site is unpublished. Its address shows “not available” now."
+msgstr "Sivusto ei ole enää julkaistu. Sen osoitteessa näkyy nyt ”ei saatavilla”."
 
 #: landing-core (#576)
-msgid "The page is published."
-msgstr "Sivu on julkaistu."
+msgid "The site is published."
+msgstr "Sivusto on julkaistu."
 
 #: landing-core (#576)
 #, python-format
@@ -11079,8 +11079,8 @@ msgid "“%(title)s” is deleted."
 msgstr "”%(title)s” on poistettu."
 
 #: landing-core (#576)
-msgid "Landing pages for your engagements"
-msgstr "Projektisivut osallistamishankkeillesi"
+msgid "Sites for your engagements"
+msgstr "Sivustot osallistamishankkeillesi"
 
 #: landing-core (#576)
 #, python-format
@@ -11385,8 +11385,8 @@ msgid "Cancel my registration"
 msgstr "Peru ilmoittautumiseni"
 
 #: landing-events (#579)
-msgid "Back to the project page"
-msgstr "Takaisin projektisivulle"
+msgid "Back to the project site"
+msgstr "Takaisin hankkeen sivustolle"
 
 #: landing-events (#579)
 msgid "Thank you! Check your inbox: we sent a confirmation with a calendar file and a link to cancel."
@@ -11540,16 +11540,16 @@ msgid "Phone"
 msgstr "Puhelin"
 
 #: landing-builder-redesign (#594)
-msgid "The page is live"
-msgstr "Sivu on verkossa"
+msgid "The site is live"
+msgstr "Sivusto on verkossa"
 
 #: landing-builder-redesign (#594)
-msgid "Publish this page"
-msgstr "Julkaise tämä sivu"
+msgid "Publish this site"
+msgstr "Julkaise tämä sivusto"
 
 #: landing-builder-redesign (#594)
-msgid "Residents open the page at this address. Change it before you print it."
-msgstr "Asukkaat avaavat sivun tästä osoitteesta. Muuta sitä ennen tulostamista."
+msgid "Residents open the site at this address. Change it before you print it."
+msgstr "Asukkaat avaavat sivuston tästä osoitteesta. Muuta sitä ennen tulostamista."
 
 #: landing-builder-redesign (#594)
 msgid "Listed by search engines"
@@ -11794,8 +11794,8 @@ msgid "Write directly on the page; the toolbar above the text sets headings, bol
 msgstr "Kirjoita suoraan sivulle; tekstin yläpuolella oleva työkalurivi asettaa otsikot, lihavoinnin, luettelot, linkit ja tasauksen."
 
 #: landing-builder-redesign (#594)
-msgid "Applies to the whole page"
-msgstr "Koskee koko sivua"
+msgid "Applies to the whole site"
+msgstr "Koskee koko sivustoa"
 
 #: landing-builder-redesign (#594)
 msgid "Shown behind the title and when the link is shared. JPEG, PNG, WebP or GIF, up to 5 MB."
@@ -11810,8 +11810,8 @@ msgid "Lowercase letters, digits and dashes. Settle it before you print it."
 msgstr "Pienet kirjaimet, numerot ja yhdysviivat. Päätä se ennen tulostamista."
 
 #: landing-builder-redesign (#594)
-msgid "The language of the page's buttons and labels."
-msgstr "Sivun painikkeiden ja tekstien kieli."
+msgid "The language of the site's buttons and labels."
+msgstr "Sivuston painikkeiden ja tekstien kieli."
 
 #: landing-builder-redesign (#594)
 msgid "Settings of this block"
@@ -11880,3 +11880,16 @@ msgstr "Vaihda alue"
 #: landing-inline-editing
 msgid "Shown behind the title and when the link is shared. Add, change or remove it on the page."
 msgstr "Näytetään otsikon taustalla ja kun linkki jaetaan. Lisää, vaihda tai poista se sivulla."
+
+#. rename-landings-to-sites
+msgid "Site settings"
+msgstr "Sivuston asetukset"
+
+#. rename-landings-to-sites
+#| msgid "Search address..."
+msgid "Site address"
+msgstr "Sivuston osoite"
+
+#. rename-landings-to-sites
+msgid "Site title"
+msgstr "Sivuston otsikko"

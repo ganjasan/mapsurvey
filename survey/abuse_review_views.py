@@ -93,13 +93,13 @@ def _report_limited(request):
 
 
 @require_http_methods(['GET', 'POST'])
-def landing_report(request, slug):
-    """A visitor flags a landing (change landing-core). Never changes what visitors see;
-    an unpublished or held landing is a 404 here as on the page itself."""
-    from .models import Landing
+def site_report(request, slug):
+    """A visitor flags a site (change landing-core). Never changes what visitors see;
+    an unpublished or held site is a 404 here as on the page itself."""
+    from .models import Site
 
-    landing = Landing.objects.filter(slug=slug, is_published=True).first()
-    if landing is None or cs.is_landing_held(landing):
+    site = Site.objects.filter(slug=slug, is_published=True).first()
+    if site is None or cs.is_site_held(site):
         return render(request, 'survey_unavailable.html', status=404)
     if request.method == 'POST':
         if _report_limited(request):
@@ -108,11 +108,11 @@ def landing_report(request, slug):
         form = ReportForm(request.POST)
         if form.is_valid():
             _report_count(request)
-            cs.report_landing(landing, form.cleaned_data['reason'], form.cleaned_data['message'], request)
-            return render(request, 'abuse/report_done.html', {'landing': landing})
+            cs.report_site(site, form.cleaned_data['reason'], form.cleaned_data['message'], request)
+            return render(request, 'abuse/report_done.html', {'site': site})
     else:
         form = ReportForm()
-    return render(request, 'abuse/report.html', {'landing': landing, 'form': form, 'subject_name': landing.title})
+    return render(request, 'abuse/report.html', {'site': site, 'form': form, 'subject_name': site.title})
 
 
 def _report_count(request):

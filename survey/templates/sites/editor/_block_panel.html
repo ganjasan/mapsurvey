@@ -1,0 +1,29 @@
+{% load i18n question_utils %}{% comment %}The settings panel of one block (change landing-builder-redesign).
+Hidden until the block is selected; holds the block's whole form (see _block_form.html).{% endcomment %}
+<div class="lb-pane" data-pane="{{ b.pk }}"{% if selected != b.pk|stringformat:'s' %} hidden{% endif %}>
+  <div class="lb-pane-head">
+    <span class="lb-ico"><i class="{{ icons|get_item:b.kind }}" aria-hidden="true"></i></span>
+    <div class="lb-pane-tt"><div class="lb-pane-t">{{ kinds|get_item:b.kind }}</div><div class="lb-pane-s">{% if item.label %}{{ item.label|truncatechars:44 }}{% else %}{% trans "Settings of this block" %}{% endif %}</div></div>
+    <button type="button" class="lb-x" data-select-target="page" title="{% trans 'Site settings' %}" aria-label="{% trans 'Close' %}">×</button>
+  </div>
+  <div class="lb-pane-body">
+    {% if item.warn %}<p class="lb-warn"><i class="fas fa-info-circle" aria-hidden="true"></i> {{ item.warn }}</p>{% endif %}
+    <fieldset class="lb-card" {% if not may_edit %}disabled{% endif %}>
+    <h6>{% trans "Settings" %}</h6>
+    {% url 'editor_site_block_edit' site.uuid b.pk as action %}
+    {% with posted=block_posted|get_item:b.pk errs=block_errors|get_item:b.pk %}
+    {% if posted %}
+    {% include "sites/_block_form.html" with edit_block=b kind=b.kind data=posted title=posted.title action=action errors=errs selected_survey=b.site_survey.survey.uuid %}
+    {% else %}
+    {% include "sites/_block_form.html" with edit_block=b kind=b.kind data=b.data title=b.title action=action errors=errs selected_survey=b.site_survey.survey.uuid %}
+    {% endif %}
+    {% endwith %}
+    </fieldset>
+  </div>
+  {% if may_edit %}
+  <div class="lb-pane-foot">
+    <form method="post" action="{% url 'editor_site_block_duplicate' site.uuid b.pk %}">{% csrf_token %}<button type="submit" class="lb-link"><i class="far fa-clone" aria-hidden="true"></i> {% trans "Duplicate" %}</button></form>
+    <form method="post" action="{% url 'editor_site_block_delete' site.uuid b.pk %}" data-confirm="{% trans 'Delete this block?' %}" data-confirm-action="{% trans 'Delete block' %}" data-confirm-note="{% if b.kind == 'event' %}{% trans 'The block and everyone registered for the event are removed from the page. This cannot be undone.' %}{% elif b.kind == 'documents' %}{% trans 'The block and its files are removed from the page. This cannot be undone.' %}{% else %}{% trans 'The block is removed from the page. This cannot be undone.' %}{% endif %}">{% csrf_token %}<button type="submit" class="lb-link lb-danger"><i class="far fa-trash-alt" aria-hidden="true"></i> {% trans "Delete block" %}</button></form>
+  </div>
+  {% endif %}
+</div>

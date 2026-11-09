@@ -195,17 +195,17 @@ def collect_text(survey, now=None) -> ScreenInput:
     return inp
 
 
-def collect_landing_text(landing, now=None) -> ScreenInput:
-    """The creator-authored text of a landing (change landing-core): title, summary, cover
+def collect_site_text(site, now=None) -> ScreenInput:
+    """The creator-authored text of a site (change landing-core): title, summary, cover
     alt text, every block's title and texts, FAQ, phases, captions, button labels. Button
-    links are the landing's outbound links, so the first one is scored like a survey's
+    links are the site's outbound links, so the first one is scored like a survey's
     `redirect_url` and the rest as links in the text."""
     now = now or timezone.now()
     inp = ScreenInput()
-    texts = [('name', landing.title or ''), ('landing.summary', landing.summary or ''),
-             ('landing.cover_alt', landing.cover_alt or '')]
+    texts = [('name', site.title or ''), ('site.summary', site.summary or ''),
+             ('site.cover_alt', site.cover_alt or '')]
     links = []
-    for block in landing.blocks.all().only('id', 'kind', 'title', 'data'):
+    for block in site.blocks.all().only('id', 'kind', 'title', 'data'):
         data = block.data if isinstance(block.data, dict) else {}
         texts.append(('block.title', block.title or ''))
         if block.kind == 'documents':
@@ -245,10 +245,10 @@ def collect_landing_text(landing, now=None) -> ScreenInput:
         inp.redirect_url = links[0]
         for url in links[1:]:
             inp.texts.append(('block.link', url))
-    # A landing is not a questionnaire: "one question or none" says nothing about it.
+    # A site is not a questionnaire: "one question or none" says nothing about it.
     inp.question_count = 99
 
-    user = landing.created_by
+    user = site.created_by
     if user is not None:
         if user.date_joined:
             inp.account_age_hours = max(0.0, (now - user.date_joined).total_seconds() / 3600)
@@ -427,21 +427,21 @@ def _screen(survey, trigger):
     return _hold({'survey': canonical}, f'survey={canonical.id}', collect_text(canonical), trigger)
 
 
-def screen_landing(landing, *, trigger: str):
-    """`screen_survey` for a landing (change landing-core): same table, same threshold,
+def screen_site(site, *, trigger: str):
+    """`screen_survey` for a site (change landing-core): same table, same threshold,
     same fail-open contract."""
     if not getattr(settings, 'CONTENT_SCREENING', True):
         return None
     try:
-        return _hold({'landing': landing}, f'landing={landing.id}', collect_landing_text(landing), trigger)
+        return _hold({'site': site}, f'site={site.id}', collect_site_text(site), trigger)
     except Exception:  # noqa: BLE001 — fail open, by design
-        logger.exception('content screening failed for landing %s (%s)', getattr(landing, 'id', '?'), trigger)
+        logger.exception('content screening failed for site %s (%s)', getattr(site, 'id', '?'), trigger)
         return None
 
 
 def _hold(subject, label, inp, trigger):
     """Score `inp`; at or above the threshold open (or re-open) the pending review of
-    `subject` ({'survey': canonical} or {'landing': landing})."""
+    `subject` ({'survey': canonical} or {'site': site})."""
     from .models import ContentReview
 
     result = score(inp)
@@ -484,9 +484,9 @@ def is_held(survey) -> bool:
     return ContentReview.objects.filter(survey=canonical_of(survey), status='pending').exists()
 
 
-def is_landing_held(landing) -> bool:
+def is_site_held(site) -> bool:
     from .models import ContentReview
-    return ContentReview.objects.filter(landing=landing, status='pending').exists()
+    return ContentReview.objects.filter(site=site, status='pending').exists()
 
 
 def pending_review_for(survey):
@@ -521,9 +521,9 @@ def report(survey, reason, message, request):
                    reason, message, request)
 
 
-def report_landing(landing, reason, message, request):
-    """A visitor flagged a landing (change landing-core). Same rules as a survey report."""
-    return _report({'landing': landing}, f'landing={landing.id}', lambda: collect_landing_text(landing),
+def report_site(site, reason, message, request):
+    """A visitor flagged a site (change landing-core). Same rules as a survey report."""
+    return _report({'site': site}, f'site={site.id}', lambda: collect_site_text(site),
                    reason, message, request)
 
 
@@ -581,13 +581,13 @@ def confirm_phishing(review, actor, request=None):
     end its login sessions, record everything. Reversible from the admin."""
     from django.contrib.sessions.models import Session
 
-    from .models import AuditLog, Landing, SurveyHeader
+    from .models import AuditLog, Site, SurveyHeader
 
     if not review.is_open:
         return False
     survey = review.survey
-    landing = review.landing
-    user = (landing or survey).created_by
+    site = review.site
+    user = (site or survey).created_by
     closed = []
     targets = SurveyHeader.objects.filter(status__in=('draft', 'testing', 'published'))
     if user is not None:
@@ -596,14 +596,14 @@ def confirm_phishing(review, actor, request=None):
         targets = targets.filter(pk=survey.pk)
     else:
         targets = targets.none()
-    # Landings (change landing-core): the creator's, or the reviewed one when nobody owns it.
-    landings = Landing.objects.filter(is_published=True)
+    # Sites (change landing-core): the creator's, or the reviewed one when nobody owns it.
+    sites = Site.objects.filter(is_published=True)
     if user is not None:
-        landings = landings.filter(created_by=user)
+        sites = sites.filter(created_by=user)
     else:
-        landings = landings.filter(pk=getattr(landing, 'pk', None))
-    unpublished = list(landings.values_list('id', flat=True))
-    landings.update(is_published=False)
+        sites = sites.filter(pk=getattr(site, 'pk', None))
+    unpublished = list(sites.values_list('id', flat=True))
+    sites.update(is_published=False)
     for s in targets:
         s.status = 'closed'
         s.save(update_fields=['status'])
@@ -631,7 +631,7 @@ def confirm_phishing(review, actor, request=None):
     review.decided_by = actor
     review.decided_at = timezone.now()
     review.note = (review.note + f'\nclosed surveys: {closed}'
-                   + (f'\nunpublished landings: {unpublished}' if unpublished else '')).strip()
+                   + (f'\nunpublished sites: {unpublished}' if unpublished else '')).strip()
     review.save(update_fields=['status', 'decided_by', 'decided_at', 'note'])
     _log('content_screen',
          f'confirm {_subject_label(review)} user={user.id if user else "none"} review={review.id}', request)
@@ -652,7 +652,7 @@ def review_from_token(token: str):
     except (signing.BadSignature, signing.SignatureExpired):
         return None
     return (ContentReview.objects
-            .select_related('survey', 'survey__created_by', 'landing', 'landing__created_by', 'decided_by')
+            .select_related('survey', 'survey__created_by', 'site', 'site__created_by', 'decided_by')
             .filter(pk=data.get('r')).first())
 
 
@@ -680,7 +680,7 @@ def notice_context(review) -> dict:
             'surveys': SurveyHeader.objects.filter(created_by=user).count(),
             'sessions': SurveySession.objects.filter(survey__created_by=user).count(),
             'prior_reviews': list(
-                ContentReview.objects.filter(Q(survey__created_by=user) | Q(landing__created_by=user))
+                ContentReview.objects.filter(Q(survey__created_by=user) | Q(site__created_by=user))
                 .exclude(pk=review.pk).values('id', 'status', 'score', 'created_at')
             ),
         }
@@ -698,17 +698,17 @@ def notice_context(review) -> dict:
 
 
 def review_subject(review) -> dict:
-    """What a review is about, for the notice and the review page: a survey or a landing
+    """What a review is about, for the notice and the review page: a survey or a site
     (change landing-core). {'kind', 'kind_label', 'name', 'url', 'editor_url', 'created_by'}."""
     from django.urls import reverse
 
     from .mail import absolute_url
-    if review.landing_id:
-        landing = review.landing
-        return {'kind': 'landing', 'kind_label': 'Landing page', 'name': landing.title,
-                'url': absolute_url(reverse('landing_public', args=[landing.slug])),
-                'editor_url': absolute_url(reverse('editor_landing', args=[landing.uuid])),
-                'created_by': landing.created_by}
+    if review.site_id:
+        site = review.site
+        return {'kind': 'site', 'kind_label': 'Site', 'name': site.title,
+                'url': absolute_url(reverse('site_public', args=[site.slug])),
+                'editor_url': absolute_url(reverse('editor_site', args=[site.uuid])),
+                'created_by': site.created_by}
     survey = review.survey
     return {'kind': 'survey', 'kind_label': 'Survey', 'name': survey.name,
             'url': absolute_url(f'/surveys/{survey.uuid}/'),
@@ -717,7 +717,7 @@ def review_subject(review) -> dict:
 
 
 def _subject_label(review):
-    return f'landing={review.landing_id}' if review.landing_id else f'survey={review.survey_id}'
+    return f'site={review.site_id}' if review.site_id else f'survey={review.survey_id}'
 
 
 def is_urgent(review) -> bool:
@@ -730,7 +730,7 @@ def notice_subject(review) -> str:
     if is_urgent(review):
         return f'[URGENT] [Mapsurvey] Child-abuse report: {name}'
     if review.source == 'report':
-        who = 'a visitor' if subject['kind'] == 'landing' else 'a respondent'
+        who = 'a visitor' if subject['kind'] == 'site' else 'a respondent'
         return f'[Mapsurvey] {kind} reported by {who}: {name}'
     return f'[Mapsurvey] {kind} held for review: {name} (score {review.score})'
 

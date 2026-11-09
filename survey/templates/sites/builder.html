@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% load i18n static question_utils %}
+
+{% block title %}{{ site.title }} — {% trans "Sites" %}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+<link rel="stylesheet" href="{% static 'css/site_public.css' %}">
+<link rel="stylesheet" href="{% static 'css/site_builder.css' %}">
+{% endblock %}
+
+{% block content_wrapper_class %}lb-content{% endblock %}
+
+{% block content %}
+{# The canvas needs the width: the app sidebar is icons only here, like on a survey's pages. #}
+<script>document.body.classList.add('app-rail', 'app-rail-default');</script>
+{% comment %}The canvas builder (change landing-builder-redesign, #594; epic #348). Top bar: back, title,
+status, device toggle, save state, Preview, Publish popover. Left: the outline. Middle: the page as
+visitors see it, every block editable in place (sites/editor/_canvas_block.html). Right: the settings
+of the selected block, or of the page. Everything autosaves (site_builder.js); add, duplicate and
+delete are plain posts that come back with the block selected. Read-only for viewers and a lapsed
+workspace (may_edit false).{% endcomment %}
+<div class="lb{% if not may_edit %} lb-readonly{% endif %}" id="lb"
+     data-reorder-url="{% url 'editor_site_blocks_reorder' site.uuid %}"
+     data-settings-url="{% url 'editor_site_settings' site.uuid %}"
+     data-may-edit="{{ may_edit|yesno:'1,' }}" data-selected="{{ selected|default:'page' }}">
+
+  <header class="lb-top">
+    <div class="lb-top-left">
+      <a class="lb-back" href="{% url 'editor_sites' %}"><i class="fas fa-chevron-left" aria-hidden="true"></i> {% trans "Sites" %}</a>
+      <span class="lb-sep" aria-hidden="true"></span>
+      <span class="lb-title" id="lb-title">{{ site.title }}</span>
+      <span id="lb-badge">{% include "sites/_state_badge.html" %}</span>
+    </div>
+    <div class="lb-seg" id="lb-device" role="group" aria-label="{% trans 'Preview width' %}">
+      <button type="button" class="on" data-width="desktop" title="{% trans 'Desktop' %}" aria-label="{% trans 'Desktop' %}"><i class="fas fa-desktop" aria-hidden="true"></i></button>
+      <button type="button" data-width="mobile" title="{% trans 'Phone' %}" aria-label="{% trans 'Phone' %}"><i class="fas fa-mobile-alt" aria-hidden="true"></i></button>
+    </div>
+    <div class="lb-top-right">
+      {% if may_edit %}<span class="lb-saved" id="lb-saved" aria-live="polite"><i class="fas fa-check-circle" aria-hidden="true"></i> <span>{% trans "All changes saved" %}</span></span>{% endif %}
+      <a class="lb-btn" href="{% url 'site_public' site.slug %}" target="_blank" rel="noopener" id="site-preview"><i class="far fa-eye" aria-hidden="true"></i> {% if site.is_published %}{% trans "Open site" %}{% else %}{% trans "Preview" %}{% endif %}</a>
+      {% if can_act %}
+      <div class="lb-pub">
+        <button type="button" class="lb-btn{% if not site.is_published %} lb-primary{% endif %}" id="lb-pub-btn" aria-haspopup="dialog" aria-expanded="false">
+          {% if site.is_published %}{% trans "Published" %}{% else %}{% trans "Publish" %}{% endif %} <i class="fas fa-chevron-down" aria-hidden="true"></i></button>
+        <div class="lb-pop" id="lb-pop" role="dialog" aria-label="{% trans 'Publish' %}" hidden>
+          <h4>{% if site.is_published %}{% trans "The site is live" %}{% else %}{% trans "Publish this site" %}{% endif %}</h4>
+          <p class="lb-hint">{% trans "Residents open the site at this address. Change it before you print it." %}</p>
+          <div class="lb-url"><input value="{{ public_url }}" readonly id="lb-url" aria-label="{% trans 'Site address' %}"><button type="button" class="lb-btn" id="lb-copy" title="{% trans 'Copy' %}" aria-label="{% trans 'Copy' %}"><i class="far fa-copy" aria-hidden="true"></i></button></div>
+          {% if may_edit %}
+          <label class="lb-switch"><span>{% trans "Listed by search engines" %}<small>{% trans "Off: only people with the link" %}</small></span>
+            <input type="checkbox" id="lb-listed"{% if site.visibility == 'public' %} checked{% endif %}><span class="lb-toggle" aria-hidden="true"></span></label>
+          {% endif %}
+          <div class="lb-qr"><img src="{% url 'editor_site_qr' site.uuid %}?format=svg" alt="" width="64" height="64">
+            <div><b>{% trans "QR code" %}</b><small>{% trans "For flyers and posters." %}</small>
+              <a href="{% url 'editor_site_qr' site.uuid %}">PNG</a> · <a href="{% url 'editor_site_qr' site.uuid %}?format=svg">SVG</a></div></div>
+          <form method="post" action="{% url 'editor_site_publish' site.uuid %}" class="lb-pop-actions">
+            {% csrf_token %}
+            {% if site.is_published %}
+            <input type="hidden" name="action" value="unpublish">
+            <button type="submit" class="lb-btn lb-danger-btn">{% trans "Unpublish" %}</button>
+            {% elif may_edit %}
+            <input type="hidden" name="action" value="publish">
+            <button type="submit" class="lb-btn lb-primary" id="site-publish">{% trans "Publish now" %}</button>
+            {% endif %}
+          </form>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </header>
+
+  {% if messages or lapsed or held or new_errors %}
+  <div class="lb-notices">
+    {% for message in messages %}<div class="alert alert-{{ message.tags }} py-2 mb-1">{{ message }}</div>{% endfor %}
+    {% if new_errors %}<div class="alert alert-danger py-2 mb-1">{% for k, v in new_errors.items %}{{ v }} {% endfor %}</div>{% endif %}
+    {% if lapsed %}<div class="alert alert-warning py-2 mb-1">{% trans "Sites are part of Pro. This workspace's plan has ended, so the site can't be edited; a published site stays online." %} <a href="{% url 'org_billing' org.slug %}">{% trans "Plan & billing" %}</a></div>{% endif %}
+    {% if held %}<div class="alert alert-warning py-2 mb-1">{% trans "This site is waiting for a routine safety review and is not shown to visitors yet. You don't need to do anything." %}</div>{% endif %}
+  </div>
+  {% endif %}
+
+  <div class="lb-work">
+    <aside class="lb-rail" aria-label="{% trans 'Blocks on the page' %}">
+      <div class="lb-rail-head">{% trans "Blocks" %}</div>
+      <ul class="lb-outline">
+        <li class="lb-oi lb-oi-page{% if not selected or selected == 'page' %} on{% endif %}" data-select-target="page" tabindex="0"><i class="fas fa-heading lb-oi-k" aria-hidden="true"></i><span class="lb-oi-t">{% trans "Title and cover" %}</span></li>
+      </ul>
+      <ul class="lb-outline" id="lb-outline">
+        {% for b in blocks %}{% with item=items|get_item:b.pk %}{% include "sites/editor/_outline_item.html" %}{% endwith %}{% endfor %}
+      </ul>
+      {% if may_edit %}<div class="lb-rail-foot"><button type="button" class="lb-btn lb-add-btn" data-add-after="{{ last_pk }}" id="site-add-block"><i class="fas fa-plus" aria-hidden="true"></i> {% trans "Add block" %}</button></div>{% endif %}
+    </aside>
+
+    <main class="lb-canvas" id="lb-canvas">
+      <div class="lb-frame" id="lb-frame">
+        {% include "sites/editor/_hero.html" %}
+        <div class="lp-wrap lb-blocks" id="lb-blocks">
+          {% if may_edit %}<div class="lb-ins" data-add-after="top"><button type="button" title="{% trans 'Add block here' %}" aria-label="{% trans 'Add block here' %}">+</button></div>{% endif %}
+          {% for b in blocks %}
+          <div class="lb-item" data-block="{{ b.pk }}">
+            {% with item=items|get_item:b.pk %}{% include "sites/editor/_canvas_block.html" %}{% endwith %}
+            {% if may_edit %}<div class="lb-ins" data-add-after="{{ b.pk }}"><button type="button" title="{% trans 'Add block here' %}" aria-label="{% trans 'Add block here' %}">+</button></div>{% endif %}
+          </div>
+          {% endfor %}
+          {% if may_edit %}
+          <button type="button" class="lb-end-add" data-add-after="{{ last_pk }}"><i class="fas fa-plus" aria-hidden="true"></i> {% trans "Add block — text, timeline, survey card, results, event…" %}</button>
+          {% elif not blocks %}
+          <p class="text-muted">{% trans "No blocks yet." %}</p>
+          {% endif %}
+        </div>
+      </div>
+    </main>
+
+    <aside class="lb-panel" id="lb-panel" aria-label="{% trans 'Settings' %}">
+      {% include "sites/editor/_page_panel.html" %}
+      {% for b in blocks %}{% with item=items|get_item:b.pk %}{% include "sites/editor/_block_panel.html" %}{% endwith %}{% endfor %}
+    </aside>
+  </div>
+</div>
+
+{% if may_edit %}{% include "sites/editor/_library.html" %}{% endif %}
+{% include "sites/editor/_confirm_modal.html" %}
+<datalist id="lb-timezones">{% for z in timezones %}<option value="{{ z }}">{% endfor %}</datalist>
+{{ basemap_table|json_script:"lb-basemaps" }}
+<script>window.LB_MAPBOX_TOKEN = '{{ MAPBOX_ACCESS_TOKEN|escapejs }}';
+window.LB_TEXT = {saving: '{% trans "Saving…" as t %}{{ t|escapejs }}', saved: '{% trans "All changes saved" as t %}{{ t|escapejs }}', failed: '{% trans "Could not save — check the settings on the right" as t %}{{ t|escapejs }}', offline: '{% trans "Could not save — check your connection" as t %}{{ t|escapejs }}', copied: '{% trans "Copied" as t %}{{ t|escapejs }}'};</script>
+<script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" crossorigin="anonymous"></script>
+<script src="{% static 'js/public_results_render.js' %}"></script>
+<script src="{% static 'js/site_confirm.js' %}"></script>
+<script src="{% static 'js/site_builder.js' %}"></script>
+{% endblock %}

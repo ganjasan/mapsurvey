@@ -10879,20 +10879,20 @@ msgid "Published · unlisted"
 msgstr "Veröffentlicht · nicht gelistet"
 
 #: landing-core (#576)
-msgid "Landing pages"
-msgstr "Landingpages"
+msgid "Sites"
+msgstr "Websites"
 
 #: landing-core (#576)
-msgid "Open page"
-msgstr "Seite öffnen"
+msgid "Open site"
+msgstr "Website öffnen"
 
 #: landing-core (#576)
-msgid "Landing pages are part of Pro. This workspace's plan has ended, so the page can't be edited; a published page stays online."
-msgstr "Landingpages gehören zu Pro. Der Tarif dieses Arbeitsbereichs ist abgelaufen, daher kann die Seite nicht bearbeitet werden; eine veröffentlichte Seite bleibt online."
+msgid "Sites are part of Pro. This workspace's plan has ended, so the site can't be edited; a published site stays online."
+msgstr "Websites gehören zu Pro. Der Tarif dieses Arbeitsbereichs ist abgelaufen, daher kann die Website nicht bearbeitet werden; eine veröffentlichte Website bleibt online."
 
 #: landing-core (#576)
-msgid "This page is waiting for a routine safety review and is not shown to visitors yet. You don't need to do anything."
-msgstr "Diese Seite wartet auf eine routinemäßige Sicherheitsprüfung und wird Besuchern noch nicht angezeigt. Sie müssen nichts tun."
+msgid "This site is waiting for a routine safety review and is not shown to visitors yet. You don't need to do anything."
+msgstr "Diese Website wartet auf eine routinemäßige Sicherheitsprüfung und wird Besuchern noch nicht angezeigt. Sie müssen nichts tun."
 
 #: landing-core (#576)
 msgid "Summary"
@@ -10919,12 +10919,12 @@ msgid "Address"
 msgstr "Adresse"
 
 #: landing-core (#576)
-msgid "Changing the address of a published page breaks links and QR codes already printed."
-msgstr "Wenn Sie die Adresse einer veröffentlichten Seite ändern, funktionieren bereits gedruckte Links und QR-Codes nicht mehr."
+msgid "Changing the address of a published site breaks links and QR codes already printed."
+msgstr "Wenn Sie die Adresse einer veröffentlichten Website ändern, funktionieren bereits gedruckte Links und QR-Codes nicht mehr."
 
 #: landing-core (#576)
-msgid "Page language"
-msgstr "Sprache der Seite"
+msgid "Site language"
+msgstr "Sprache der Website"
 
 #: landing-core (#576)
 msgid "Public — search engines may list it"
@@ -10935,16 +10935,16 @@ msgid "Unlisted — only people with the link"
 msgstr "Nicht gelistet — nur für Personen mit dem Link"
 
 #: landing-core (#576)
-msgid "Surveys on this page"
-msgstr "Umfragen auf dieser Seite"
+msgid "Surveys on this site"
+msgstr "Umfragen auf dieser Website"
 
 #: landing-core (#576)
-msgid "A survey can be on any number of landing pages. Show one with a Survey card block."
-msgstr "Eine Umfrage kann auf beliebig vielen Landingpages stehen. Zeigen Sie sie mit einem Block „Umfragekarte“."
+msgid "A survey can be on any number of sites. Show one with a Survey card block."
+msgstr "Eine Umfrage kann auf beliebig vielen Websites stehen. Zeigen Sie sie mit einem Block „Umfragekarte“."
 
 #: landing-core (#576)
-msgid "Remove from this page"
-msgstr "Von dieser Seite entfernen"
+msgid "Remove from this site"
+msgstr "Von dieser Website entfernen"
 
 #: landing-core (#576)
 msgid "No surveys yet."
@@ -10959,8 +10959,8 @@ msgid "Delete this landing page? Its address stops working."
 msgstr "Diese Landingpage löschen? Ihre Adresse funktioniert dann nicht mehr."
 
 #: landing-core (#576)
-msgid "Delete page"
-msgstr "Seite löschen"
+msgid "Delete site"
+msgstr "Website löschen"
 
 #: landing-core (#576)
 msgid "Delete this block?"
@@ -10995,8 +10995,8 @@ msgid "What happens in this phase (optional)"
 msgstr "Was in dieser Phase passiert (optional)"
 
 #: landing-core (#576)
-msgid "Waiting for a safety review — only your workspace sees this page."
-msgstr "Wartet auf eine Sicherheitsprüfung — nur Ihr Arbeitsbereich sieht diese Seite."
+msgid "Waiting for a safety review — only your workspace sees this site."
+msgstr "Wartet auf eine Sicherheitsprüfung — nur Ihr Arbeitsbereich sieht diese Website."
 
 #: landing-core (#576)
 msgid "Draft — only your workspace sees this."
@@ -11023,20 +11023,20 @@ msgid "Page title, e.g. Riverside Park plan"
 msgstr "Seitentitel, z. B. Plan Uferpark"
 
 #: landing-core (#576)
-msgid "New page"
-msgstr "Neue Seite"
+msgid "New site"
+msgstr "Neue Website"
 
 #: landing-core (#576)
-msgid "Upgrade to Pro to create pages"
-msgstr "Auf Pro upgraden, um Seiten zu erstellen"
+msgid "Upgrade to Pro to create sites"
+msgstr "Auf Pro upgraden, um Websites zu erstellen"
 
 #: landing-core (#576)
 msgid "One public page for an engagement: what the project is about, the timeline, the surveys residents can take part in, and what happens next. Put its address on flyers and QR codes; it stays the same from the first pilot to the final plan."
 msgstr "Eine öffentliche Seite für ein Beteiligungsverfahren: worum es im Projekt geht, der Zeitplan, die Umfragen, an denen Bürgerinnen und Bürger teilnehmen können, und wie es weitergeht. Drucken Sie ihre Adresse auf Flyer und QR-Codes; sie bleibt vom ersten Pilot bis zum fertigen Plan gleich."
 
 #: landing-core (#576)
-msgid "No landing pages yet."
-msgstr "Noch keine Landingpages."
+msgid "No sites yet."
+msgstr "Noch keine Websites."
 
 #: landing-core (#576)
 msgid "Video"
@@ -11124,8 +11124,8 @@ msgid "This address is reserved. Pick another."
 msgstr "Diese Adresse ist reserviert. Wählen Sie eine andere."
 
 #: landing-core (#576)
-msgid "Another landing page already uses this address."
-msgstr "Eine andere Landingpage verwendet diese Adresse bereits."
+msgid "Another site already uses this address."
+msgstr "Eine andere Website verwendet diese Adresse bereits."
 
 #: landing-core (#576)
 msgid "The survey is archived or in the trash."
@@ -11136,16 +11136,16 @@ msgid "The survey is waiting for a safety review."
 msgstr "Die Umfrage wartet auf eine Sicherheitsprüfung."
 
 #: landing-core (#576)
-msgid "Untitled landing page"
-msgstr "Unbenannte Landingpage"
+msgid "Untitled site"
+msgstr "Unbenannte Website"
 
 #: landing-core (#576)
-msgid "Give the page a title."
-msgstr "Geben Sie der Seite einen Titel."
+msgid "Give the site a title."
+msgstr "Geben Sie der Website einen Titel."
 
 #: landing-core (#576)
-msgid "Page settings saved."
-msgstr "Seiteneinstellungen gespeichert."
+msgid "Site settings saved."
+msgstr "Website-Einstellungen gespeichert."
 
 #: landing-core (#576)
 msgid "Choose a picture."
@@ -11156,12 +11156,12 @@ msgid "Pick one of this workspace’s surveys."
 msgstr "Wählen Sie eine Umfrage dieses Arbeitsbereichs."
 
 #: landing-core (#576)
-msgid "The page is unpublished. Its address shows “not available” now."
-msgstr "Die Seite ist nicht mehr veröffentlicht. Ihre Adresse zeigt jetzt „nicht verfügbar“."
+msgid "The site is unpublished. Its address shows “not available” now."
+msgstr "Die Website ist nicht mehr veröffentlicht. Ihre Adresse zeigt jetzt „nicht verfügbar“."
 
 #: landing-core (#576)
-msgid "The page is published."
-msgstr "Die Seite ist veröffentlicht."
+msgid "The site is published."
+msgstr "Die Website ist veröffentlicht."
 
 #: landing-core (#576)
 #, python-format
@@ -11169,8 +11169,8 @@ msgid "“%(title)s” is deleted."
 msgstr "„%(title)s“ wurde gelöscht."
 
 #: landing-core (#576)
-msgid "Landing pages for your engagements"
-msgstr "Landingpages für Ihre Beteiligungsverfahren"
+msgid "Sites for your engagements"
+msgstr "Websites für Ihre Beteiligungsverfahren"
 
 #: landing-core (#576)
 #, python-format
@@ -11475,8 +11475,8 @@ msgid "Cancel my registration"
 msgstr "Meine Anmeldung stornieren"
 
 #: landing-events (#579)
-msgid "Back to the project page"
-msgstr "Zurück zur Projektseite"
+msgid "Back to the project site"
+msgstr "Zurück zur Projekt-Website"
 
 #: landing-events (#579)
 msgid "Thank you! Check your inbox: we sent a confirmation with a calendar file and a link to cancel."
@@ -11630,16 +11630,16 @@ msgid "Phone"
 msgstr "Smartphone"
 
 #: landing-builder-redesign (#594)
-msgid "The page is live"
-msgstr "Die Seite ist online"
+msgid "The site is live"
+msgstr "Die Website ist online"
 
 #: landing-builder-redesign (#594)
-msgid "Publish this page"
-msgstr "Diese Seite veröffentlichen"
+msgid "Publish this site"
+msgstr "Diese Website veröffentlichen"
 
 #: landing-builder-redesign (#594)
-msgid "Residents open the page at this address. Change it before you print it."
-msgstr "Unter dieser Adresse öffnen Bürgerinnen und Bürger die Seite. Ändern Sie sie, bevor Sie sie drucken."
+msgid "Residents open the site at this address. Change it before you print it."
+msgstr "Unter dieser Adresse öffnen Bürgerinnen und Bürger die Website. Ändern Sie sie, bevor Sie sie drucken."
 
 #: landing-builder-redesign (#594)
 msgid "Listed by search engines"
@@ -11884,8 +11884,8 @@ msgid "Write directly on the page; the toolbar above the text sets headings, bol
 msgstr "Schreiben Sie direkt auf der Seite; die Werkzeugleiste über dem Text legt Überschriften, Fettdruck, Listen, Links und Ausrichtung fest."
 
 #: landing-builder-redesign (#594)
-msgid "Applies to the whole page"
-msgstr "Gilt für die ganze Seite"
+msgid "Applies to the whole site"
+msgstr "Gilt für die ganze Website"
 
 #: landing-builder-redesign (#594)
 msgid "Shown behind the title and when the link is shared. JPEG, PNG, WebP or GIF, up to 5 MB."
@@ -11900,8 +11900,8 @@ msgid "Lowercase letters, digits and dashes. Settle it before you print it."
 msgstr "Kleinbuchstaben, Ziffern und Bindestriche. Legen Sie sie fest, bevor Sie sie drucken."
 
 #: landing-builder-redesign (#594)
-msgid "The language of the page's buttons and labels."
-msgstr "Die Sprache der Schaltflächen und Beschriftungen der Seite."
+msgid "The language of the site's buttons and labels."
+msgstr "Die Sprache der Schaltflächen und Beschriftungen der Website."
 
 #: landing-builder-redesign (#594)
 msgid "Settings of this block"
@@ -11970,3 +11970,15 @@ msgstr "Gebiet ersetzen"
 #: landing-inline-editing
 msgid "Shown behind the title and when the link is shared. Add, change or remove it on the page."
 msgstr "Wird hinter dem Titel und beim Teilen des Links angezeigt. Hinzufügen, ändern oder entfernen Sie es auf der Seite."
+
+#. rename-landings-to-sites
+msgid "Site settings"
+msgstr "Website-Einstellungen"
+
+#. rename-landings-to-sites
+msgid "Site address"
+msgstr "Adresse der Website"
+
+#. rename-landings-to-sites
+msgid "Site title"
+msgstr "Titel der Website"
