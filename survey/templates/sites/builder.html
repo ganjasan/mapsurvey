@@ -59,6 +59,14 @@ workspace (may_edit false).{% endcomment %}
           <div class="lb-qr"><img src="{% url 'editor_site_qr' site.uuid %}?format=svg" alt="" width="64" height="64">
             <div><b>{% trans "QR code" %}</b><small>{% trans "For flyers and posters." %}</small>
               <a href="{% url 'editor_site_qr' site.uuid %}">PNG</a> · <a href="{% url 'editor_site_qr' site.uuid %}?format=svg">SVG</a></div></div>
+          {% if review_url and can_act %}
+          <div class="lb-review">
+            <b>{% trans "Share for review" %}</b>
+            <small>{% blocktrans %}Anyone with this link sees the draft read-only for 14 days — no account needed. New link stops the old one.{% endblocktrans %}</small>
+            <div class="lb-url"><input value="{{ review_url }}" readonly id="lb-review-url" aria-label="{% trans 'Review link' %}"><button type="button" class="lb-btn" id="lb-review-copy" title="{% trans 'Copy' %}" aria-label="{% trans 'Copy' %}"><i class="far fa-copy" aria-hidden="true"></i></button></div>
+            <button type="button" class="lb-link" id="lb-review-new" data-url="{% url 'editor_site_review_link' site.uuid %}"><i class="fas fa-sync-alt" aria-hidden="true"></i> {% trans "New link" %}</button>
+          </div>
+          {% endif %}
           <form method="post" action="{% url 'editor_site_publish' site.uuid %}" class="lb-pop-actions">
             {% csrf_token %}
             {% if site.is_published %}

@@ -237,6 +237,7 @@ def _builder_context(request, site, membership, **extra):
         'chart_viz': [('auto', _('Bar chart')), ('pie', _('Pie')), ('donut', _('Donut')), ('table', _('Table'))],
         'map_viz': [('auto', _('Markers')), ('heatmap', _('Heatmap')), ('cluster', _('Clusters'))],
         'public_url': request.build_absolute_uri(reverse('site_public', args=[site.slug])),
+        'review_url': _review_url(request, site) if not site.is_published else '',
         'block_errors': {}, 'block_posted': {}, 'settings_errors': {}, 'new_kind': request.GET.get('add', ''),
         'new_errors': {}, 'new_raw': {},
     }
@@ -706,13 +707,17 @@ def site_public(request, slug):
     live = site.is_published and not held
     member = (request.user.is_authenticated
               and get_org_membership(request.user, site.organization) is not None)
-    if not live and not member:
+    # A review link opens an unpublished draft for the client (change site-review-link) — never a
+    # site held for a safety review, and never more than members already see.
+    review = (not live and not member and not held
+              and sites.review_token_ok(site, request.GET.get('review')))
+    if not live and not member and not review:
         return render(request, 'survey_unavailable.html', status=404)
     with translation.override(site.language):
         blocks = sites.page_blocks(site, lang=site.language)
         response = render(request, 'sites/public.html', {
             'site': site, 'org': site.organization, 'blocks': blocks,
-            'nav': sites.nav_items(blocks), 'preview': not live, 'held': held,
+            'nav': sites.nav_items(blocks), 'preview': not live and not review, 'review': review, 'held': held,
             'map_layers': sites.map_layers(site, blocks),
             'results': [card for b, card in blocks if b.kind == 'results'],
             'results_basemaps': (basemaps.table_for(site.organization)
@@ -725,7 +730,23 @@ def site_public(request, slug):
         })
     if not live:
         response['Cache-Control'] = 'private, no-store'
+        response['Referrer-Policy'] = 'no-referrer'  # the review token must not leak to outbound links
     return response
+
+
+@login_required
+@require_POST
+def editor_site_review_link(request, uuid):
+    """New review link: the old one stops working (change site-review-link)."""
+    site, membership = _site(request, uuid)
+    if not _can_act(membership):
+        return HttpResponseForbidden()
+    sites.rotate_review_salt(site)
+    return JsonResponse({'ok': True, 'url': _review_url(request, site)})
+
+
+def _review_url(request, site):
+    return request.build_absolute_uri(reverse('site_public', args=[site.slug])) + '?review=' + sites.review_token(site)
 
 
 @login_required

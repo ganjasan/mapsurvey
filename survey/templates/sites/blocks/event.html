@@ -21,7 +21,9 @@ sites.page_blocks: starts_at / ends_at (aware, the event's zone), accepting, sea
   </div>
   {% endif %}
 
-  {% if card.accepting and card.seats_left != 0 %}
+  {% if review %}
+  <p class="lp-muted">{% trans "Registration opens when the site is published." %}</p>
+  {% elif card.accepting and card.seats_left != 0 %}
   <form method="post" action="{% url 'site_event_register' site.slug block.pk %}" class="lp-event-form">
     {% csrf_token %}
     <div class="lp-hp" aria-hidden="true"><label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>

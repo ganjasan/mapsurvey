@@ -785,6 +785,22 @@
       if (navigator.clipboard) navigator.clipboard.writeText(input.value).then(done, function () {});
       else { document.execCommand('copy'); done(); }
     });
+    var reviewInput = document.getElementById('lb-review-url');
+    if (reviewInput) {
+      document.getElementById('lb-review-copy').addEventListener('click', function () {
+        reviewInput.select();
+        if (navigator.clipboard) navigator.clipboard.writeText(reviewInput.value).then(function () {}, function () {});
+        else document.execCommand('copy');
+      });
+      var renew = document.getElementById('lb-review-new');
+      renew.addEventListener('click', function () {
+        renew.disabled = true;
+        post(renew.dataset.url, new FormData()).then(function (res) {
+          if (res.ok && res.body.url) reviewInput.value = res.body.url;
+          else status('offline');
+        }).catch(function () { status('offline'); }).then(function () { renew.disabled = false; });
+      });
+    }
     var listed = document.getElementById('lb-listed');
     if (listed) {
       listed.addEventListener('change', function () {

@@ -72,6 +72,8 @@ Press **Publish** in the top bar. The panel that opens shows the address — `ma
 
 Until you publish, only members of your workspace can open the site; they see a *Draft* banner. **Unpublish** takes the site offline at any time.
 
+To show the draft to a client before it goes live, copy the link under **Share for review** in the Publish panel. Anyone with it sees the draft read-only for 14 days, without an account; event registration stays closed. **New link** stops every link you sent before.
+
 ## If your Pro plan ends
 
 A published site stays online, so the QR codes you printed keep working. You can still unpublish or delete it, but not edit it, until the workspace is on Pro again.
