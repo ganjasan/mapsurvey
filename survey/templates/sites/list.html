@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load i18n static billing_tags %}
+
+{% block title %}{{ org.name }} — {% trans "Sites" %}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/site_builder.css' %}">
+{% endblock %}
+
+{% block content %}
+{% comment %}The workspace's sites (change landing-core, #576). One row per site with its
+state; New site is a POST that creates a draft and opens the builder.{% endcomment %}
+<div class="container mt-4" style="max-width: 900px;">
+  <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap" style="gap:.5rem;">
+    <h4 class="mb-0">{% trans "Sites" %}</h4>
+    <div class="d-flex align-items-center" style="gap:.75rem;">
+      {% if can_act %}
+        {% if may_create %}
+        <form method="post" action="{% url 'editor_site_create' %}" class="mb-0">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-primary text-nowrap" id="site-new"><i class="fas fa-plus" aria-hidden="true"></i> {% trans "New site" %}</button>
+        </form>
+        {% else %}
+        <a class="btn btn-sm btn-outline-primary" href="{% url 'org_billing' org.slug %}">{% trans "Upgrade to Pro to create sites" %}</a>
+        {% endif %}
+      {% endif %}
+      {% if HELP_URL.sites %}
+      <a href="{{ HELP_URL.sites }}" target="_blank" rel="noopener" class="small">{% trans "Learn more" %}</a>
+      {% endif %}
+    </div>
+  </div>
+  <p class="text-muted" style="font-size:.9rem;">
+    {% blocktrans %}One public page for an engagement: what the project is about, the timeline, the surveys residents can take part in, and what happens next. Put its address on flyers and QR codes; it stays the same from the first pilot to the final plan.{% endblocktrans %}
+  </p>
+
+  {% for message in messages %}
+  <div class="alert alert-{{ message.tags }} py-2" style="font-size:.9rem;">{{ message }}</div>
+  {% endfor %}
+
+  {% if rows %}
+  <div class="list-group">
+    {% for row in rows %}
+    <a class="list-group-item list-group-item-action d-flex align-items-center justify-content-between" href="{% url 'editor_site' row.site.uuid %}">
+      <span>
+        <strong>{{ row.site.title }}</strong>
+        <span class="text-muted small d-block">/p/{{ row.site.slug }}/ · {% blocktrans count n=row.surveys %}{{ n }} survey{% plural %}{{ n }} surveys{% endblocktrans %}</span>
+      </span>
+      {% include "sites/_state_badge.html" with site=row.site held=row.held %}
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="lb-empty text-center text-muted py-5">
+    <i class="fas fa-flag fa-2x mb-3 d-block" aria-hidden="true"></i>
+    {% trans "No sites yet." %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

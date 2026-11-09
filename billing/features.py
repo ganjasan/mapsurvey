@@ -55,11 +55,11 @@ FEATURES = {
     # a lapsed subscription must not change the map a live survey's respondents see.
     'map_styles': Feature('map_styles', frozenset({PLAN_PRO}),
                           _('Your own map styles')),
-    # Landing pages (change landing-core, #576; epic #348): a workspace's public page for an
+    # Sites (change landing-core, #576; epic #348): a workspace's public page for an
     # engagement. Creating, editing and publishing are Pro; the public page never checks the
-    # plan, so a landing published under Pro stays online after a lapse (printed QR codes).
-    'landing_pages': Feature('landing_pages', frozenset({PLAN_PRO}),
-                             _('Landing pages for your engagements')),
+    # plan, so a site published under Pro stays online after a lapse (printed QR codes).
+    'sites': Feature('sites', frozenset({PLAN_PRO}),
+                             _('Sites for your engagements')),
 }
 
 
@@ -80,7 +80,7 @@ TRIAL_ALLOWANCES = {
     # counted, but has no cap until paper parsing (#495) brings the paper limit.
     'operator_entry': None,
     'map_styles': 2,   # workspace styles created
-    'landing_pages': 1,  # landings created
+    'sites': 1,  # sites created
 }
 TRIAL_DAYS = 90
 

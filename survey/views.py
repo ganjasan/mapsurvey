@@ -2389,7 +2389,7 @@ def trust_page(request):
 
 # Bump only when the text of terms.html changes: the page shows this as its
 # "Last updated" date, and the DPGA application links the page as evidence.
-TERMS_UPDATED = datetime(2026, 11, 8).date()
+TERMS_UPDATED = datetime(2026, 11, 9).date()
 
 
 def terms_page(request):
@@ -2662,11 +2662,11 @@ def sitemap_xml(request):
 	from .models import PublicResultsPage
 	for page in PublicResultsPage.objects.filter(is_published=True, visibility='public'):
 		urls.append(f"  <url><loc>{base}/r/{page.slug}/</loc></url>")
-	# Landing pages (change landing-core): public, published and not held for review.
-	from .models import Landing
-	for landing in (Landing.objects.filter(is_published=True, visibility='public')
+	# Sites (change landing-core): public, published and not held for review.
+	from .models import Site
+	for site in (Site.objects.filter(is_published=True, visibility='public')
 					.exclude(content_reviews__status='pending').only('slug')):
-		urls.append(f"  <url><loc>{base}/p/{landing.slug}/</loc></url>")
+		urls.append(f"  <url><loc>{base}/p/{site.slug}/</loc></url>")
 	xml = (
 		'<?xml version="1.0" encoding="UTF-8"?>\n'
 		'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '

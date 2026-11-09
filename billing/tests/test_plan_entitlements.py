@@ -52,7 +52,7 @@ class EntitlementsTest(TestCase):
         self.assertTrue(e.is_pro)
         self.assertEqual(e.state, 'active')
         self.assertEqual(e.features, frozenset({'unbranded', 'pro_help', 'api', 'operator_entry', 'map_styles',
-                                                'landing_pages'}))
+                                                'sites'}))
 
     def test_terminated_but_paid_is_cancelling(self):
         """

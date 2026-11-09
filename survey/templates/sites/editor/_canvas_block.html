@@ -1,0 +1,40 @@
+{% load i18n question_utils %}{% comment %}One block on the builder canvas (change landing-builder-redesign): the public block
+template inside an editor shell — kind tag, hover toolbar, the heading editable in place. Text marked
+`data-field` in the block templates becomes editable through site_builder.js. `b` is the block, `item`
+its record from _builder_context (card, complete, warn). Never name a context variable `block` in the
+builder (it extends base.html): it is passed explicitly into the include below.{% endcomment %}
+<section class="lp-block lp-block--{{ b.kind }} lb-blk{% if not item.complete %} lb-incomplete{% endif %}{% if selected == b.pk|stringformat:'s' %} on{% endif %}"
+         id="{{ b.anchor }}" data-block="{{ b.pk }}" data-kind="{{ b.kind }}">
+  <span class="lb-tag">{{ kinds|get_item:b.kind }}</span>
+  {% if may_edit %}
+  <div class="lb-tools" role="toolbar" aria-label="{% trans 'Block actions' %}">
+    <button type="button" class="lb-grab" title="{% trans 'Drag to reorder' %}" aria-label="{% trans 'Drag to reorder' %}"><i class="fas fa-grip-vertical" aria-hidden="true"></i></button>
+    <button type="button" data-move="up" title="{% trans 'Move up' %}" aria-label="{% trans 'Move up' %}"><i class="fas fa-arrow-up" aria-hidden="true"></i></button>
+    <button type="button" data-move="down" title="{% trans 'Move down' %}" aria-label="{% trans 'Move down' %}"><i class="fas fa-arrow-down" aria-hidden="true"></i></button>
+    <form method="post" action="{% url 'editor_site_block_duplicate' site.uuid b.pk %}">{% csrf_token %}
+      <button type="submit" title="{% trans 'Duplicate' %}" aria-label="{% trans 'Duplicate' %}"><i class="far fa-clone" aria-hidden="true"></i></button></form>
+    <button type="button" data-select-target="{{ b.pk }}" title="{% trans 'Settings' %}" aria-label="{% trans 'Settings' %}"><i class="fas fa-sliders-h" aria-hidden="true"></i></button>
+    <form method="post" action="{% url 'editor_site_block_delete' site.uuid b.pk %}" data-confirm="{% trans 'Delete this block?' %}" data-confirm-action="{% trans 'Delete block' %}" data-confirm-note="{% if b.kind == 'event' %}{% trans 'The block and everyone registered for the event are removed from the page. This cannot be undone.' %}{% elif b.kind == 'documents' %}{% trans 'The block and its files are removed from the page. This cannot be undone.' %}{% else %}{% trans 'The block is removed from the page. This cannot be undone.' %}{% endif %}">{% csrf_token %}
+      <button type="submit" class="lb-del" title="{% trans 'Delete block' %}" aria-label="{% trans 'Delete block' %}"><i class="far fa-trash-alt" aria-hidden="true"></i></button></form>
+  </div>
+  {% endif %}
+
+  <h2 data-field="title" data-placeholder="{% trans 'Add a heading' %}" title="{% trans 'Headings also appear in the menu at the top of the page' %}"{% if not b.title %} class="lb-empty-heading"{% endif %}>{{ b.title }}</h2>
+
+  {% comment %}Primary actions in the block (change landing-inline-editing): documents, FAQ and timeline are
+  edited row by row in their editor form; the other kinds show their public look when complete, with
+  their primary controls (_inline.html) beside it or as the empty state.{% endcomment %}
+  {% if b.kind == 'text' %}
+  <div class="lp-rich lb-rich" data-field="body" data-rich data-placeholder="{% trans 'Write something…' %}">{{ b.data.body|safe }}</div>
+  {% elif may_edit and b.kind in 'documents faq timeline' %}
+  {% include "sites/editor/_inline.html" %}
+  {% else %}
+  {% if may_edit and b.kind == 'event' %}{% include "sites/editor/_inline.html" %}{% endif %}
+  {% if item.complete or b.kind == 'button' and may_edit %}
+  {% with "sites/blocks/"|add:b.kind|add:".html" as tpl %}{% include tpl with block=b card=item.card editing=True %}{% endwith %}
+  {% if b.kind == 'results' and item.card %}{% with rid="res-"|add:item.card.id %}{{ item.card|json_script:rid }}{% endwith %}{% endif %}
+  {% endif %}
+  {% if may_edit %}{% if b.kind != 'event' %}{% include "sites/editor/_inline.html" %}{% endif %}{% elif not item.complete %}<div class="lb-placeholder"><i class="{{ icons|get_item:b.kind }}" aria-hidden="true"></i><span>{% trans "Not filled in yet." %}</span></div>{% endif %}
+  {% endif %}
+  {% if item.warn %}<p class="lb-warn"><i class="fas fa-info-circle" aria-hidden="true"></i> {{ item.warn }}</p>{% endif %}
+</section>

@@ -1,9 +1,0 @@
-{% load landing_tags %}<ul class="lp-docs">
-  {% for f in block.files.all %}
-  <li><a href="{{ f.file.url }}" target="_blank" rel="noopener">
-    <span class="lp-doc-ext">{{ f.extension|upper }}</span>
-    <span class="lp-doc-title">{{ f.title }}</span>
-    <span class="lp-doc-meta">{{ f.extension|document_type }} · {{ f.size|filesizeformat }}</span>
-  </a></li>
-  {% endfor %}
-</ul>

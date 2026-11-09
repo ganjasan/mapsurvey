@@ -507,7 +507,7 @@ POSTHOG_SESSION_REPLAY = os.environ.get('POSTHOG_SESSION_REPLAY', 'False').lower
 # Enforced in `survey.context_processors.analytics` rather than by omitting the include from
 # `base_survey_template.html`, so a base template added later inherits the exclusion instead
 # of depending on which existing one its author happened to copy.
-# /p/: landing pages (change landing-core) — read by our customers' residents, like /surveys/.
+# /p/: sites (change landing-core) — read by our customers' residents, like /surveys/.
 POSTHOG_EXCLUDED_PREFIXES = ('/surveys/', '/r/', '/p/')
 
 # The same boundary, for respondent surfaces the prefix list cannot reach. The editor's Live
@@ -777,7 +777,7 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'survey.tasks.apply_survey_schedule',
         'schedule': 300.0,
     },
-    # Landing-event registrations are deleted 30 days after the event (change landing-events).
+    # Site-event registrations are deleted 30 days after the event (change landing-events).
     'purge-event-registrations': {
         'task': 'survey.tasks.purge_event_registrations',
         'schedule': 86400.0,

@@ -1,0 +1,125 @@
+{% load i18n question_utils %}{% comment %}A block's PRIMARY controls on the canvas (change landing-inline-editing; owner rule
+2026-11-08: what makes a block a block is edited in the block, refinements in Settings). Values flow into
+the block's panel form (the one serialisation): `data-input="<name>"` fields and contenteditable
+`data-field` text by name, files via `data-file="<name>"` drop zones, FAQ/timeline rows via `data-rows`.
+`b` the block, `item` its record, `may_edit`. Rendered only for editors who may edit.{% endcomment %}
+
+{% if b.kind == 'image' %}
+  {% if b.image %}
+  <button type="button" class="lb-ghost lb-replace" data-file-pick="image"><i class="far fa-image" aria-hidden="true"></i> {% trans "Replace picture" %}</button>
+  {% else %}
+  <div class="lb-drop" data-file="image" data-accept="image/jpeg,image/png,image/webp,image/gif">
+    <i class="far fa-image" aria-hidden="true"></i>
+    <span><b>{% trans "Drop a picture here" %}</b> {% trans "or" %} <button type="button" class="lb-link" data-file-pick="image">{% trans "choose a file" %}</button></span>
+    <small>{% trans "JPEG, PNG, WebP or GIF, up to 5 MB" %}</small>
+  </div>
+  {% endif %}
+
+{% elif b.kind == 'map' %}
+  {% if b.data.area %}
+  <button type="button" class="lb-ghost lb-replace" data-file-pick="geojson_file"><i class="fas fa-draw-polygon" aria-hidden="true"></i> {% trans "Replace area" %}</button>
+  {% else %}
+  <div class="lb-drop" data-file="geojson_file" data-accept=".geojson,.json,application/geo+json,application/json">
+    <i class="fas fa-draw-polygon" aria-hidden="true"></i>
+    <span><b>{% trans "Drop a GeoJSON file with the project area" %}</b> {% trans "or" %} <button type="button" class="lb-link" data-file-pick="geojson_file">{% trans "choose a file" %}</button></span>
+    <small>{% trans "A boundary, a route or a few points; up to 1 MB" %}</small>
+  </div>
+  {% endif %}
+
+{% elif b.kind == 'video' %}
+  <div class="lb-inline{% if b.data.embed %} lb-when-on{% endif %}">
+    <i class="fab fa-youtube" aria-hidden="true"></i>
+    <input type="url" data-input="url" value="{{ b.data.url|default:'' }}" placeholder="{% trans 'Paste a YouTube or Vimeo link' %}" aria-label="{% trans 'YouTube or Vimeo link' %}">
+  </div>
+
+{% elif b.kind == 'button' %}
+  <div class="lb-inline lb-when-on">
+    <i class="fas fa-link" aria-hidden="true"></i>
+    <input type="url" data-input="url" value="{{ b.data.url|default:'' }}" placeholder="https://…" aria-label="{% trans 'Link' %}">
+  </div>
+
+{% elif b.kind == 'survey' and not b.site_survey %}
+  <div class="lb-inline lb-inline--pick">
+    <i class="fas fa-map-marked-alt" aria-hidden="true"></i>
+    {% if all_linkable %}
+    <select data-input="survey" aria-label="{% trans 'Survey' %}">
+      <option value="">{% trans "Pick a survey…" %}</option>
+      {% for s in all_linkable %}<option value="{{ s.uuid }}">{{ s.name }}</option>{% endfor %}
+    </select>
+    {% else %}<span class="lb-muted">{% trans "This workspace has no survey to show yet." %}</span>{% endif %}
+  </div>
+
+{% elif b.kind == 'results' and not b.data.question_code %}
+  <div class="lb-inline lb-inline--pick">
+    <i class="fas fa-chart-bar" aria-hidden="true"></i>
+    {% if results_choices %}
+    <select data-input="results_question" aria-label="{% trans 'Question' %}">
+      <option value="">{% trans "Pick a question…" %}</option>
+      {% for survey, rows in results_choices %}<optgroup label="{{ survey.name }}">{% for value, name, rkind in rows %}<option value="{{ value }}">{{ name|truncatechars:90 }}</option>{% endfor %}</optgroup>{% endfor %}
+    </select>
+    {% else %}<span class="lb-muted">{% trans "No survey of this workspace has a question whose answers can be shown as a chart or a map." %}</span>{% endif %}
+  </div>
+
+{% elif b.kind == 'event' %}
+  <div class="lb-inline-grid{% if item.complete %} lb-when-on{% endif %}">
+    <label>{% trans "Date" %}<input type="date" data-input="date" value="{{ b.data.date|default:'' }}"></label>
+    <label>{% trans "Starts" %}<input type="time" data-input="start" value="{{ b.data.start|default:'' }}"></label>
+    <label>{% trans "Ends" %}<input type="time" data-input="end" value="{{ b.data.end|default:'' }}"></label>
+    <label class="lb-span">{% trans "Place" %}<input data-input="place" maxlength="200" value="{{ b.data.place|default:'' }}" placeholder="{% trans 'Place, e.g. The boathouse, Riverside Park' %}"></label>
+  </div>
+
+{% elif b.kind == 'documents' %}
+  <ul class="lp-docs lb-docs">
+    {% for f in b.files.all %}
+    <li data-file-row="{{ f.pk }}">
+      <span class="lp-doc-ext">{{ f.extension|upper }}</span>
+      <span class="lb-doc-main"><span class="lp-doc-title" data-field="file_title_{{ f.pk }}" data-placeholder="{% trans 'File title' %}">{{ f.title }}</span>
+        <span class="lp-doc-meta">{{ f.size|filesizeformat }}</span></span>
+      <button type="button" class="lb-icon-btn" data-remove-file="{{ f.pk }}" title="{% trans 'Remove' %}" aria-label="{% trans 'Remove' %}"><i class="fas fa-times" aria-hidden="true"></i></button>
+    </li>
+    {% endfor %}
+  </ul>
+  <div class="lb-drop lb-drop--small" data-file="files" data-multiple="1" data-accept=".pdf,.docx,.xlsx,.pptx,.odt,.ods,.odp,.doc,.xls,.ppt,.csv,.txt">
+    <i class="far fa-file-pdf" aria-hidden="true"></i>
+    <span><b>{% trans "Drop files here" %}</b> {% trans "or" %} <button type="button" class="lb-link" data-file-pick="files">{% trans "choose files" %}</button></span>
+    <small>{% trans "PDF, office documents, CSV or text; up to 25 MB each" %}</small>
+  </div>
+
+{% elif b.kind == 'faq' %}
+  <div class="lp-faq lb-rows-edit" data-rows="faq">
+    {% for it in b.data.items %}
+    <div class="lb-qa" data-row>
+      <div class="lb-qa-q" data-row-field="q" data-placeholder="{% trans 'Question' %}">{{ it.q }}</div>
+      <div class="lb-qa-a lp-rich" data-row-field="a" data-row-rich data-placeholder="{% trans 'Answer' %}">{{ it.a|safe }}</div>
+      <button type="button" class="lb-icon-btn lb-row-x" data-row-remove title="{% trans 'Remove' %}" aria-label="{% trans 'Remove' %}"><i class="fas fa-times" aria-hidden="true"></i></button>
+    </div>
+    {% endfor %}
+  </div>
+  <template data-row-template><div class="lb-qa" data-row>
+      <div class="lb-qa-q" data-row-field="q" data-placeholder="{% trans 'Question' %}"></div>
+      <div class="lb-qa-a lp-rich" data-row-field="a" data-row-rich data-placeholder="{% trans 'Answer' %}"></div>
+      <button type="button" class="lb-icon-btn lb-row-x" data-row-remove title="{% trans 'Remove' %}" aria-label="{% trans 'Remove' %}"><i class="fas fa-times" aria-hidden="true"></i></button>
+    </div></template>
+  <button type="button" class="lb-link lb-row-add-c" data-row-add><i class="fas fa-plus" aria-hidden="true"></i> {% trans "Add a question" %}</button>
+
+{% elif b.kind == 'timeline' %}
+  <ol class="lp-timeline lb-rows-edit" data-rows="timeline">
+    {% for it in b.data.items %}
+    <li class="lp-phase lb-phase{% if b.data.current is not None %}{% if forloop.counter0 < b.data.current %} is-done{% elif forloop.counter0 == b.data.current %} is-now{% endif %}{% endif %}" data-row>
+      <div class="lb-phase-top"><span class="lp-phase-when" data-row-field="phase_when" data-placeholder="{% trans 'When' %}">{{ it.when }}</span>
+        <button type="button" class="lb-now" data-now title="{% trans 'The project is in this phase now' %}">{% trans "Now" %}</button></div>
+      <div class="lp-phase-title" data-row-field="phase_title" data-placeholder="{% trans 'Phase' %}">{{ it.title }}</div>
+      <div class="lp-phase-body" data-row-field="phase_body" data-placeholder="{% trans 'What happens in this phase (optional)' %}">{{ it.body }}</div>
+      <button type="button" class="lb-icon-btn lb-row-x" data-row-remove title="{% trans 'Remove' %}" aria-label="{% trans 'Remove' %}"><i class="fas fa-times" aria-hidden="true"></i></button>
+    </li>
+    {% endfor %}
+  </ol>
+  <template data-row-template><li class="lp-phase lb-phase" data-row>
+      <div class="lb-phase-top"><span class="lp-phase-when" data-row-field="phase_when" data-placeholder="{% trans 'When' %}"></span>
+        <button type="button" class="lb-now" data-now title="{% trans 'The project is in this phase now' %}">{% trans "Now" %}</button></div>
+      <div class="lp-phase-title" data-row-field="phase_title" data-placeholder="{% trans 'Phase' %}"></div>
+      <div class="lp-phase-body" data-row-field="phase_body" data-placeholder="{% trans 'What happens in this phase (optional)' %}"></div>
+      <button type="button" class="lb-icon-btn lb-row-x" data-row-remove title="{% trans 'Remove' %}" aria-label="{% trans 'Remove' %}"><i class="fas fa-times" aria-hidden="true"></i></button>
+    </li></template>
+  <button type="button" class="lb-link lb-row-add-c" data-row-add><i class="fas fa-plus" aria-hidden="true"></i> {% trans "Add a phase" %}</button>
+{% endif %}

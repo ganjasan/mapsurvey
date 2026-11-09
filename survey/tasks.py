@@ -57,9 +57,9 @@ def send_thread_notification(self, thread_id, comment_id, actor_id, recipient_id
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=60)
 def send_event_confirmation(self, registration_id):
-    """Mail a landing-event registrant their confirmation with the .ics (change landing-events).
-    `landing_events.queue_confirmation` sends inline when the broker is down."""
-    from .landing_events import send_confirmation
+    """Mail a site-event registrant their confirmation with the .ics (change landing-events).
+    `site_events.queue_confirmation` sends inline when the broker is down."""
+    from .site_events import send_confirmation
     try:
         send_confirmation(registration_id)
     except Exception as exc:  # noqa: BLE001 — SMTP hiccup: retry, then let Celery report
@@ -68,8 +68,8 @@ def send_event_confirmation(self, registration_id):
 
 @shared_task(bind=True)
 def purge_event_registrations(self):
-    """Daily: delete landing-event registrations 30 days after their event (change landing-events)."""
-    from .landing_events import purge
+    """Daily: delete site-event registrations 30 days after their event (change landing-events)."""
+    from .site_events import purge
     deleted = purge()
     if deleted:
         logger.info('purged %s event registrations', deleted)

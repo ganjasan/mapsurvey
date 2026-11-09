@@ -1,0 +1,141 @@
+{% load i18n question_utils %}
+{% comment %}One block's settings form — the right panel of the canvas builder (changes landing-core,
+landing-builder-redesign). `kind`, `data` (the block's cleaned data or the posted values after a refusal),
+`title`, `action`, `errors`, `selected_survey`. Field names are what site_views._raw_block reads;
+repeating rows (FAQ, timeline) post parallel lists. Text the creator edits on the canvas (heading, body,
+captions, labels, descriptions) travels in HIDDEN fields of this form, kept in sync by site_builder.js
+from the canvas `[data-field]` elements, so this form is always the whole block and one post saves it.{% endcomment %}
+<form method="post" action="{{ action }}" enctype="multipart/form-data" class="lb-form" data-kind="{{ kind }}">
+  {% csrf_token %}
+  <input type="hidden" name="title" value="{{ title|default:'' }}">
+  <div class="lb-errors text-danger small" role="alert" hidden></div>
+
+  {% if kind == 'text' %}
+  <textarea name="body" hidden>{{ data.body|default:'' }}</textarea>
+  <p class="lb-hint mt-0 mb-0">{% trans "Write directly on the page; the toolbar above the text sets headings, bold, lists, links and alignment." %}</p>
+  {% if errors.body %}<div class="text-danger small">{{ errors.body }}</div>{% endif %}
+
+  {% elif kind == 'image' %}
+  <input type="file" name="image" hidden>
+  {% if errors.image %}<div class="text-danger small">{{ errors.image }}</div>{% endif %}
+  <label class="small mb-0">{% trans "Describe the picture for screen readers" %}</label>
+  <input name="alt" class="form-control form-control-sm" maxlength="200" value="{{ data.alt|default:'' }}">
+  <input type="hidden" name="caption" value="{{ data.caption|default:'' }}">
+
+  {% elif kind == 'button' %}
+  <input type="hidden" name="label" value="{{ data.label|default:'' }}">
+  <input type="hidden" name="url" value="{{ data.url|default:'' }}">
+  {% if errors.label %}<div class="text-danger small">{{ errors.label }}</div>{% endif %}
+  {% if errors.url %}<div class="text-danger small">{{ errors.url }}</div>{% endif %}
+  <label class="small mb-0">{% trans "Style" %}</label>
+  <div class="small">
+    <label class="mr-3"><input type="radio" name="style" value="primary"{% if data.style != 'secondary' %} checked{% endif %}> {% trans "Filled" %}</label>
+    <label><input type="radio" name="style" value="secondary"{% if data.style == 'secondary' %} checked{% endif %}> {% trans "Outline" %}</label>
+  </div>
+
+  {% elif kind == 'video' %}
+  <input type="hidden" name="url" value="{{ data.url|default:'' }}">
+  <p class="lb-hint mt-0">{% trans "Edit this in the block on the page." %}</p>
+  {% if errors.url %}<div class="text-danger small">{{ errors.url }}</div>{% endif %}
+  <input type="hidden" name="caption" value="{{ data.caption|default:'' }}">
+
+  {% elif kind == 'faq' %}
+  <div class="lb-row-sink" hidden>{% for it in data.items %}<input type="hidden" name="q" value="{{ it.q }}"><textarea name="a" hidden>{{ it.a }}</textarea>{% endfor %}</div>
+  <p class="lb-hint mt-0">{% trans "Edit this in the block on the page." %}</p>
+  {% if errors.items %}<div class="text-danger small">{{ errors.items }}</div>{% endif %}
+
+  {% elif kind == 'timeline' %}
+  <div class="lb-row-sink" hidden>{% for it in data.items %}<input type="hidden" name="phase_title" value="{{ it.title }}"><input type="hidden" name="phase_when" value="{{ it.when }}"><input type="hidden" name="phase_body" value="{{ it.body }}">{% endfor %}<input type="hidden" name="current" value="{{ data.current|default_if_none:'' }}"></div>
+  <p class="lb-hint mt-0">{% trans "Edit this in the block on the page." %}</p>
+  {% if errors.items %}<div class="text-danger small">{{ errors.items }}</div>{% endif %}
+
+  {% elif kind == 'documents' %}
+  {% if edit_block %}{% for f in edit_block.files.all %}<input type="hidden" name="file_title_{{ f.pk }}" value="{{ f.title }}"><input type="hidden" name="remove_{{ f.pk }}" value="">{% endfor %}{% endif %}
+  <input type="file" name="files" multiple hidden>
+  <p class="lb-hint mt-0">{% trans "Edit this in the block on the page." %}</p>
+  {% if errors.files %}<div class="text-danger small">{{ errors.files }}</div>{% endif %}
+
+  {% elif kind == 'map' %}
+  <input type="file" name="geojson_file" hidden>
+  {% if errors.area %}<div class="text-danger small">{{ errors.area }}</div>{% endif %}
+  <div class="form-row">
+    <div class="col-4"><label class="small mb-0">{% trans "Colour" %}</label>
+      <input type="color" name="color" class="form-control form-control-sm" value="{{ data.color|default:'#2f6fb0' }}"></div>
+    <div class="col-8"><label class="small mb-0">{% trans "Base map" %}</label>
+      <select name="basemap" class="form-control form-control-sm">
+        {% for key, name in basemap_choices %}<option value="{{ key }}"{% if key == data.basemap %} selected{% endif %}>{{ name }}</option>{% endfor %}
+      </select></div>
+  </div>
+  <input type="hidden" name="caption" value="{{ data.caption|default:'' }}">
+
+  {% elif kind == 'results' %}
+  {% if results_choices %}
+  {% with sel=selected_survey|stringformat:"s"|add:":"|add:data.question_code %}
+  <select name="results_question" class="form-control form-control-sm" aria-label="{% trans 'Question' %}">
+    {% if not data.question_code %}<option value="">{% trans "Pick a question…" %}</option>{% endif %}
+    {% for survey, rows in results_choices %}
+    <optgroup label="{{ survey.name }}">
+      {% for value, name, rkind in rows %}<option value="{{ value }}"{% if value == sel %} selected{% endif %}>{{ name|truncatechars:90 }}</option>{% endfor %}
+    </optgroup>
+    {% endfor %}
+  </select>
+  {% endwith %}
+  {% else %}
+  <p class="small text-muted mb-1">{% trans "No survey of this workspace has a question whose answers can be shown as a chart or a map." %}</p>
+  {% endif %}
+  {% if errors.question %}<div class="text-danger small">{{ errors.question }}</div>{% endif %}
+  <div class="form-row mt-2">
+    <div class="col-6"><label class="small mb-0">{% trans "Chart or map style" %}</label>
+      <select name="viz" class="form-control form-control-sm">
+        <optgroup label="{% trans 'Charts' %}">{% for v, label in chart_viz %}<option value="{{ v }}"{% if data.result_kind != 'map' and v == data.viz %} selected{% endif %}>{{ label }}</option>{% endfor %}</optgroup>
+        <optgroup label="{% trans 'Maps' %}">{% for v, label in map_viz %}{% if v != 'auto' %}<option value="{{ v }}"{% if data.result_kind == 'map' and v == data.viz %} selected{% endif %}>{{ label }}</option>{% endif %}{% endfor %}</optgroup>
+      </select></div>
+    <div class="col-6"><label class="small mb-0">{% trans "Base map (maps)" %}</label>
+      <select name="basemap" class="form-control form-control-sm">
+        {% for key, name in basemap_choices %}<option value="{{ key }}"{% if key == data.basemap %} selected{% endif %}>{{ name }}</option>{% endfor %}
+      </select></div>
+  </div>
+  <input type="hidden" name="caption" value="{{ data.caption|default:'' }}">
+  <p class="small text-muted mt-1 mb-0">{% trans "Answers are counted the same way as on the survey's public results page: small groups are masked, written answers are never shown." %}</p>
+
+  {% elif kind == 'event' %}
+  <input type="hidden" name="date" value="{{ data.date|default:'' }}">
+  <input type="hidden" name="start" value="{{ data.start|default:'' }}">
+  <input type="hidden" name="end" value="{{ data.end|default:'' }}">
+  <input type="hidden" name="place" value="{{ data.place|default:'' }}">
+  <label class="small mb-0">{% trans "Time zone" %}</label>
+  <input name="tz" list="lb-timezones" class="form-control form-control-sm" value="{{ data.tz|default:'UTC' }}" data-autosave="change">
+  {% if errors.date %}<div class="text-danger small">{{ errors.date }}</div>{% endif %}
+  {% if errors.start %}<div class="text-danger small">{{ errors.start }}</div>{% endif %}
+  {% if errors.end %}<div class="text-danger small">{{ errors.end }}</div>{% endif %}
+  {% if errors.tz %}<div class="text-danger small">{{ errors.tz }}</div>{% endif %}
+  <label class="small mb-0 mt-2">{% trans "Map link to the place (optional)" %}</label>
+  <input name="place_url" type="url" class="form-control form-control-sm" maxlength="250" value="{{ data.place_url|default:'' }}" placeholder="{% trans 'Map link to the place (optional)' %}">
+  {% if errors.place_url %}<div class="text-danger small">{{ errors.place_url }}</div>{% endif %}
+  <textarea name="description" hidden>{{ data.description|default:'' }}</textarea>
+  <label class="small mb-0 mt-2">{% trans "Seats (empty = no limit)" %}</label>
+  <input type="number" name="capacity" min="1" max="10000" class="form-control form-control-sm" value="{{ data.capacity|default_if_none:'' }}">
+  <label class="lb-check mt-2 mb-0"><input type="checkbox" name="open" value="1"{% if data.open or not data.date %} checked{% endif %}> {% trans "Registration open" %}</label>
+  {% if errors.capacity %}<div class="text-danger small">{{ errors.capacity }}</div>{% endif %}
+  {% if edit_block %}{% with counts=event_counts|get_item:edit_block.pk %}
+  <p class="small mt-2 mb-0">{% blocktrans count n=counts.0 %}{{ n }} registered{% plural %}{{ n }} registered{% endblocktrans %}{% if counts.1 is not None %} · {% blocktrans with n=counts.1 %}{{ n }} seats left{% endblocktrans %}{% endif %}
+    · <a href="{% url 'editor_site_attendees' site.uuid edit_block.pk %}">{% trans "Attendee list" %}</a></p>
+  {% endwith %}{% endif %}
+  <p class="small text-muted mt-1 mb-0">{% trans "Residents give their name and email. They get a confirmation with a calendar file; registrations are deleted 30 days after the event." %}</p>
+  <datalist id="lb-timezones">{% for z in timezones %}<option value="{{ z }}">{% endfor %}</datalist>
+
+  {% elif kind == 'survey' %}
+  {% if all_linkable %}
+  <select name="survey" class="form-control form-control-sm" aria-label="{% trans 'Survey' %}">
+    {% if not selected_survey %}<option value="">{% trans "Pick a survey…" %}</option>{% endif %}
+    {% for s in all_linkable %}<option value="{{ s.uuid }}"{% if s.uuid|stringformat:"s" == selected_survey|stringformat:"s" %} selected{% endif %}>{{ s.name }}</option>{% endfor %}
+  </select>
+  {% else %}
+  <p class="small text-muted mb-1">{% trans "This workspace has no survey to show yet." %}</p>
+  {% endif %}
+  {% if errors.survey %}<div class="text-danger small">{{ errors.survey }}</div>{% endif %}
+  <textarea name="description" hidden>{{ data.description|default:'' }}</textarea>
+  <input type="hidden" name="button_label" value="{{ data.button_label|default:'' }}">
+  <p class="small text-muted mt-1 mb-0">{% trans "The card follows the survey: open, opening soon, or closed with a link to its public results." %}</p>
+  {% endif %}
+</form>
