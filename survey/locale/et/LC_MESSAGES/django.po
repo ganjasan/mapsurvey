@@ -11872,3 +11872,46 @@ msgstr "Veebisaidi aadress"
 #. rename-landings-to-sites
 msgid "Site title"
 msgstr "Veebisaidi pealkiri"
+
+#: site-heading-block
+msgid "Heading"
+msgstr "Jaotise pealkiri"
+
+#: site-heading-block
+msgid "Normal text"
+msgstr "Tavatekst"
+
+#: site-heading-block
+msgid "Leave it empty for a block without a heading. A heading can also be a link in the menu at the top."
+msgstr "Jätke tühjaks, kui plokil pealkirja pole. Pealkiri võib olla ka link ülamenüüs."
+
+#: site-heading-block
+msgid "Show the heading in the menu at the top"
+msgstr "Näita pealkirja ülamenüüs"
+
+#: site-heading-block
+msgid "Size"
+msgstr "Suurus"
+
+#: site-heading-block
+msgid "Type the heading on the page. Large and medium are section headings; small is a subheading."
+msgstr "Kirjutage pealkiri lehele. Suur ja keskmine on jaotise pealkirjad, väike on alapealkiri."
+
+#: site-heading-block
+msgid "A section title on its own, in one of three sizes"
+msgstr "Eraldi jaotise pealkiri ühes kolmest suurusest"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Large"
+msgstr "Suur"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Medium"
+msgstr "Keskmise suurusega"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Small"
+msgstr "Väike"

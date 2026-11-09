@@ -19,12 +19,17 @@ builder (it extends base.html): it is passed explicitly into the include below.{
   </div>
   {% endif %}
 
-  <h2 data-field="title" data-placeholder="{% trans 'Add a heading' %}" title="{% trans 'Headings also appear in the menu at the top of the page' %}"{% if not b.title %} class="lb-empty-heading"{% endif %}>{{ b.title }}</h2>
+  {% if b.kind == 'heading' %}
+  {% include "sites/blocks/heading.html" with block=b editing=may_edit %}
+  {% else %}
+  <h2 data-field="title" data-placeholder="{% trans 'Heading (optional)' %}" title="{% trans 'Leave it empty for a block without a heading. A heading can also be a link in the menu at the top.' %}"{% if not b.title %} class="lb-empty-heading"{% endif %}>{{ b.title }}</h2>
 
   {% comment %}Primary actions in the block (change landing-inline-editing): documents, FAQ and timeline are
   edited row by row in their editor form; the other kinds show their public look when complete, with
   their primary controls (_inline.html) beside it or as the empty state.{% endcomment %}
-  {% if b.kind == 'text' %}
+  {% endif %}
+  {% if b.kind == 'heading' %}
+  {% elif b.kind == 'text' %}
   <div class="lp-rich lb-rich" data-field="body" data-rich data-placeholder="{% trans 'Write something…' %}">{{ b.data.body|safe }}</div>
   {% elif may_edit and b.kind in 'documents faq timeline' %}
   {% include "sites/editor/_inline.html" %}

@@ -9,8 +9,16 @@ from the canvas `[data-field]` elements, so this form is always the whole block 
   {% csrf_token %}
   <input type="hidden" name="title" value="{{ title|default:'' }}">
   <div class="lb-errors text-danger small" role="alert" hidden></div>
+  <input type="hidden" name="menu" value="0">
+  <label class="lb-check mb-2"><input type="checkbox" name="menu" value="1"{% if not edit_block or edit_block.in_menu %} checked{% endif %}> {% trans "Show the heading in the menu at the top" %}</label>
 
-  {% if kind == 'text' %}
+  {% if kind == 'heading' %}
+  <label class="small mb-0">{% trans "Size" %}</label>
+  <div class="lb-seg lb-seg--panel" role="radiogroup" aria-label="{% trans 'Size' %}">
+    {% for value, label in heading_sizes %}<label><input type="radio" name="size" value="{{ value }}"{% if data.size|default:'m' == value %} checked{% endif %}> {{ label }}</label>{% endfor %}
+  </div>
+  <p class="lb-hint">{% trans "Type the heading on the page. Large and medium are section headings; small is a subheading." %}</p>
+  {% elif kind == 'text' %}
   <textarea name="body" hidden>{{ data.body|default:'' }}</textarea>
   <p class="lb-hint mt-0 mb-0">{% trans "Write directly on the page; the toolbar above the text sets headings, bold, lists, links and alignment." %}</p>
   {% if errors.body %}<div class="text-danger small">{{ errors.body }}</div>{% endif %}

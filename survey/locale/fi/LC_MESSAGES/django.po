@@ -11893,3 +11893,46 @@ msgstr "Sivuston osoite"
 #. rename-landings-to-sites
 msgid "Site title"
 msgstr "Sivuston otsikko"
+
+#: site-heading-block
+msgid "Heading"
+msgstr "Osion otsikko"
+
+#: site-heading-block
+msgid "Normal text"
+msgstr "Tavallinen teksti"
+
+#: site-heading-block
+msgid "Leave it empty for a block without a heading. A heading can also be a link in the menu at the top."
+msgstr "Jätä tyhjäksi, jos lohkolla ei ole otsikkoa. Otsikko voi olla myös linkki yläreunan valikossa."
+
+#: site-heading-block
+msgid "Show the heading in the menu at the top"
+msgstr "Näytä otsikko yläreunan valikossa"
+
+#: site-heading-block
+msgid "Size"
+msgstr "Koko"
+
+#: site-heading-block
+msgid "Type the heading on the page. Large and medium are section headings; small is a subheading."
+msgstr "Kirjoita otsikko sivulle. Suuri ja keskikokoinen ovat osion otsikoita, pieni on alaotsikko."
+
+#: site-heading-block
+msgid "A section title on its own, in one of three sizes"
+msgstr "Erillinen osion otsikko yhdessä kolmesta koosta"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Large"
+msgstr "Suuri"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Medium"
+msgstr "Keskikokoinen"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Small"
+msgstr "Pieni"

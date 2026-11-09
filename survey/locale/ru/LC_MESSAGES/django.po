@@ -112,7 +112,7 @@ msgstr "Название"
 
 #: survey/editor_forms.py:212
 msgid "Subheading"
-msgstr ""
+msgstr "Подзаголовок"
 
 #: survey/editor_forms.py:213
 #: survey/templates/editor/partials/question_form_modal.html:256
@@ -9996,3 +9996,46 @@ msgstr "Адрес сайта"
 #. rename-landings-to-sites
 msgid "Site title"
 msgstr "Название сайта"
+
+#: site-heading-block
+msgid "Heading"
+msgstr "Заголовок"
+
+#: site-heading-block
+msgid "Normal text"
+msgstr "Обычный текст"
+
+#: site-heading-block
+msgid "Leave it empty for a block without a heading. A heading can also be a link in the menu at the top."
+msgstr "Оставьте пустым, если у блока нет заголовка. Заголовок может стать и ссылкой в меню вверху."
+
+#: site-heading-block
+msgid "Show the heading in the menu at the top"
+msgstr "Показывать заголовок в меню вверху"
+
+#: site-heading-block
+msgid "Size"
+msgstr "Размер"
+
+#: site-heading-block
+msgid "Type the heading on the page. Large and medium are section headings; small is a subheading."
+msgstr "Введите заголовок на странице. Крупный и средний — заголовки разделов, мелкий — подзаголовок."
+
+#: site-heading-block
+msgid "A section title on its own, in one of three sizes"
+msgstr "Отдельный заголовок раздела одного из трёх размеров"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Large"
+msgstr "Большой"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Medium"
+msgstr "Средний"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Small"
+msgstr "Маленький"

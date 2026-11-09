@@ -11957,3 +11957,46 @@ msgstr "Dirección del sitio"
 #. rename-landings-to-sites
 msgid "Site title"
 msgstr "Título del sitio"
+
+#: site-heading-block
+msgid "Heading"
+msgstr "Encabezado"
+
+#: site-heading-block
+msgid "Normal text"
+msgstr "Texto normal"
+
+#: site-heading-block
+msgid "Leave it empty for a block without a heading. A heading can also be a link in the menu at the top."
+msgstr "Déjalo vacío para un bloque sin encabezado. Un encabezado también puede ser un enlace en el menú superior."
+
+#: site-heading-block
+msgid "Show the heading in the menu at the top"
+msgstr "Mostrar el encabezado en el menú superior"
+
+#: site-heading-block
+msgid "Size"
+msgstr "Tamaño"
+
+#: site-heading-block
+msgid "Type the heading on the page. Large and medium are section headings; small is a subheading."
+msgstr "Escribe el encabezado en la página. Grande y mediano son encabezados de sección; pequeño es un subtítulo."
+
+#: site-heading-block
+msgid "A section title on its own, in one of three sizes"
+msgstr "Un título de sección suelto, en uno de tres tamaños"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Large"
+msgstr "Grande"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Medium"
+msgstr "Mediano"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Small"
+msgstr "Pequeño"

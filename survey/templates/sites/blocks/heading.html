@@ -1,0 +1,5 @@
+{% load i18n %}{% comment %}A heading block (change site-heading-block): the block's title on its own. Large and medium are
+<h2>, small is <h3>; the site title stays the page's only <h1>. `editing` makes it editable on the canvas.{% endcomment %}
+{% with size=block.data.size|default:'m' %}
+{% if size == 's' %}<h3{% else %}<h2{% endif %} class="lp-heading lp-heading--{{ size }}"{% if editing %} data-field="title" data-placeholder="{% trans 'Heading' %}"{% endif %}>{{ block.title }}{% if size == 's' %}</h3>{% else %}</h2>{% endif %}
+{% endwith %}

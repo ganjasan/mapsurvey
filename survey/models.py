@@ -3184,6 +3184,7 @@ class SiteSurvey(models.Model):
 
 
 SITE_BLOCK_KIND_CHOICES = (
+    ('heading', _('Heading')),
     ('text', _('Text')),
     ('image', _('Image')),
     ('button', _('Button')),
@@ -3206,6 +3207,8 @@ class SiteBlock(models.Model):
     order = models.PositiveIntegerField(default=0)
     kind = models.CharField(max_length=16, choices=SITE_BLOCK_KIND_CHOICES)
     title = models.CharField(max_length=120, blank=True, default='')
+    # Whether the heading is a link in the menu at the top of the site (change site-heading-block).
+    in_menu = models.BooleanField(default=True, db_default=True)
     data = models.JSONField(default=dict, blank=True)
     image = models.ImageField(upload_to=site_asset_key, null=True, blank=True)
     site_survey = models.ForeignKey(SiteSurvey, null=True, blank=True, on_delete=models.CASCADE,
