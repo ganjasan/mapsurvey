@@ -159,6 +159,7 @@ workspace (may_edit false).{% endcomment %}
     <aside class="lb-panel" id="lb-panel" aria-label="{% trans 'Settings' %}">
       {% include "sites/editor/_page_panel.html" %}
       {% include "sites/editor/_sitepage_panel.html" %}
+      {% include "sites/editor/_update_panel.html" %}
       {% for b in blocks %}{% with item=items|get_item:b.pk %}{% include "sites/editor/_block_panel.html" %}{% endwith %}{% endfor %}
     </aside>
   </div>

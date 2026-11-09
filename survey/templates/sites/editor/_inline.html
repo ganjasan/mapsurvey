@@ -15,6 +15,14 @@ the block's panel form (the one serialisation): `data-input="<name>"` fields and
   </div>
   {% endif %}
 
+{% elif b.kind == 'updates' %}
+  {% comment %}Change site-updates: adding is the block's primary action; site_pages.js posts it.{% endcomment %}
+  {% if not item.card %}<p class="lb-hint">{% trans "No updates yet. They show here newest first, and on the site once published." %}</p>{% endif %}
+  <div class="lb-update-add">
+    <button type="button" class="lb-ghost" data-add-update="news" data-url="{% url 'editor_site_update_add' site.uuid %}" data-page="{{ current_page.pk }}"><i class="far fa-newspaper" aria-hidden="true"></i> {% trans "Add news" %}</button>
+    <button type="button" class="lb-ghost" data-add-update="decision" data-url="{% url 'editor_site_update_add' site.uuid %}" data-page="{{ current_page.pk }}"><i class="far fa-comments" aria-hidden="true"></i> {% trans "Add “You said, we did”" %}</button>
+  </div>
+
 {% elif b.kind == 'map' %}
   {% if b.data.area %}
   <button type="button" class="lb-ghost lb-replace" data-file-pick="geojson_file"><i class="fas fa-draw-polygon" aria-hidden="true"></i> {% trans "Replace area" %}</button>

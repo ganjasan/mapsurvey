@@ -3268,6 +3268,7 @@ SITE_BLOCK_KIND_CHOICES = (
     ('contacts', _('Contacts')),
     ('gallery', _('Gallery')),
     ('compare', _('Before and after')),
+    ('updates', _('Updates')),
 )
 
 
@@ -3310,6 +3311,56 @@ class SiteBlock(models.Model):
     @property
     def anchor(self):
         return f'b-{self.pk}'
+
+
+SITE_UPDATE_KIND_CHOICES = (('news', _('News')), ('decision', _('You said, we did')))
+SITE_UPDATE_STATUS_CHOICES = (('included', _('Included')), ('partly', _('Partly included')),
+                              ('not', _('Not included')))
+
+
+class SiteUpdate(models.Model):
+    """A dated entry of a site's feed (change site-updates, #629; Sites Vision v2 FE-16).
+
+    `news`: title, `body`, optional link. `decision` ("You said, we did", epic #349): title, `said` (what
+    residents said, plain), `body` (what was done, rich) and `status`. Owned by the SITE, shown by any
+    number of `updates` blocks and served at /p/<slug>/updates/<pk>/ once published. Never copied with
+    the site: it is the record of that engagement. Written only by `services.sites`.
+    """
+    site = models.ForeignKey(Site, on_delete=models.CASCADE, related_name='updates')
+    kind = models.CharField(max_length=10, choices=SITE_UPDATE_KIND_CHOICES, default='news')
+    date = models.DateField()
+    title = models.CharField(max_length=160)
+    body = models.TextField(blank=True, default='')
+    said = models.TextField(blank=True, default='')
+    status = models.CharField(max_length=10, choices=SITE_UPDATE_STATUS_CHOICES, blank=True, default='')
+    site_survey = models.ForeignKey(SiteSurvey, null=True, blank=True, on_delete=models.SET_NULL,
+                                    related_name='updates')
+    link_url = models.URLField(max_length=500, blank=True, default='')
+    is_published = models.BooleanField(default=False)
+    # {lang: {title, body, said}} — keyed `update:<pk>:<field>` on the Translations tab.
+    translations = models.JSONField(default=dict, blank=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+                                   related_name='+')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ('-date', '-id')
+        indexes = [models.Index(fields=['site', 'is_published', '-date'], name='siteupdate_feed_idx')]
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def anchor(self):
+        return f'u-{self.pk}'
+
+    @property
+    def link_host(self):
+        from urllib.parse import urlsplit
+        host = urlsplit(self.link_url).hostname or ''
+        return host[4:] if host.startswith('www.') else host
 
 
 def site_file_key(instance, filename):

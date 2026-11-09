@@ -22,10 +22,18 @@
     text.textContent = T[kind] || '';
   }
 
-  document.querySelectorAll('form.lb-sitepage-form').forEach(function (form) {
+  // Page settings and update panes (change site-updates): autosave, 422 shows the field errors, the
+  // saved title goes to every element that names it (rail tab, canvas card, pane head).
+  document.querySelectorAll('form.lb-sitepage-form, form[data-autosave-json]').forEach(function (form) {
     var timer = null, box = form.querySelector('.lb-errors');
+    form.querySelectorAll('textarea[data-rich]').forEach(function (t) {
+      if (window.LBRich) window.LBRich.bind(t, function () { later(); });
+    });
     function flush() {
       timer = null;
+      form.querySelectorAll('textarea[data-rich]').forEach(function (t) {
+        if (t._host && window.LBRich) t.value = window.LBRich.value(t._host);
+      });
       var data = new FormData(form);
       data.append('autosave', '1');
       status('saving');
@@ -36,19 +44,46 @@
           if (box) { box.textContent = msgs.join(' '); box.hidden = !msgs.length; }
           status(res.ok ? 'saved' : 'failed');
           if (!res.ok) return;
-          var id = form.dataset.pageId;
-          document.querySelectorAll('[data-page-tab="' + id + '"], [data-page-title="' + id + '"]').forEach(function (el) {
-            el.textContent = res.body.title;
+          var sel = form.dataset.pageId
+            ? '[data-page-tab="' + form.dataset.pageId + '"], [data-page-title="' + form.dataset.pageId + '"]'
+            : '[data-label-for="' + form.dataset.label + '"]';
+          document.querySelectorAll(sel).forEach(function (el) {
+            var a = el.querySelector('a');
+            (a || el).textContent = res.body.title;
           });
         })
         .catch(function () { status('offline'); });
     }
     function later() { status('saving'); clearTimeout(timer); timer = setTimeout(flush, 600); }
     form.addEventListener('submit', function (e) { e.preventDefault(); clearTimeout(timer); flush(); });
-    form.addEventListener('input', function (e) { if (e.target.matches('input[type=text], input:not([type])')) later(); });
-    form.addEventListener('change', function (e) { if (e.target.type === 'checkbox') { clearTimeout(timer); flush(); } });
+    form.addEventListener('input', function (e) {
+      if (e.target.matches('input[type=text], input[type=url], input:not([type]), textarea')) later();
+    });
+    form.addEventListener('change', function (e) {
+      if (e.target.matches('input[type=checkbox], input[type=date], select')) { clearTimeout(timer); flush(); }
+    });
     window.addEventListener('beforeunload', function (e) { if (timer) { e.preventDefault(); e.returnValue = ''; } });
   });
+
+  // *Add news* / *Add "You said, we did"* inside an updates block (change site-updates). Forms inside a
+  // block are inert on the canvas, so the button posts a form of its own; the answer is the builder with
+  // the new draft selected.
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-add-update]');
+    if (!b) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var f = document.createElement('form');
+    f.method = 'post';
+    f.action = b.dataset.url;
+    [['csrfmiddlewaretoken', csrf()], ['kind', b.dataset.addUpdate], ['page', b.dataset.page || '']].forEach(function (kv) {
+      var i = document.createElement('input');
+      i.type = 'hidden'; i.name = kv[0]; i.value = kv[1];
+      f.appendChild(i);
+    });
+    document.body.appendChild(f);
+    f.submit();
+  }, true);
 
   var list = document.getElementById('lb-pages');
   if (list && typeof Sortable !== 'undefined') {

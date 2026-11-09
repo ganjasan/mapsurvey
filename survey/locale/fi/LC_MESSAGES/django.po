@@ -12486,10 +12486,6 @@ msgid "News"
 msgstr "Uutiset"
 
 #: site-pages
-msgid "<p>The latest from the project: what changed, and what comes next.</p>"
-msgstr "<p>Hankkeen uusimmat: mikä muuttui ja mitä seuraavaksi.</p>"
-
-#: site-pages
 msgid "Site pages"
 msgstr "Sivuston sivut"
 
@@ -12555,3 +12551,146 @@ msgid_plural "Its %(n)s blocks go with it, with their files and event registrati
 msgstr[0] "Sen %(n)s lohko poistetaan tiedostoineen ja ilmoittautumisineen. Tätä ei voi perua."
 msgstr[1] "Sen %(n)s lohkoa poistetaan tiedostoineen ja ilmoittautumisineen. Tätä ei voi perua."
 
+#: site-updates
+msgid "Updates"
+msgstr "Ajankohtaista"
+
+#: site-updates
+msgid "You said, we did"
+msgstr "Te sanoitte, me teimme"
+
+#: site-updates
+msgid "Included"
+msgstr "Otettu huomioon"
+
+#: site-updates
+msgid "Partly included"
+msgstr "Osittain huomioitu"
+
+#: site-updates
+msgid "Not included"
+msgstr "Ei huomioitu"
+
+#: site-updates
+msgid "News and “You said, we did”, newest first"
+msgstr "Uutiset ja ”Te sanoitte, me teimme”, uusimmat ensin"
+
+#: site-updates
+msgid "Pick news or “You said, we did”."
+msgstr "Valitse uutinen tai ”Te sanoitte, me teimme”."
+
+#: site-updates
+msgid "New update"
+msgstr "Uusi tiedote"
+
+#: site-updates
+msgid "Give the update a title."
+msgstr "Anna tiedotteelle otsikko."
+
+#: site-updates
+msgid "Enter a date."
+msgstr "Anna päivämäärä."
+
+#: site-updates
+msgid "Pick included, partly or not included."
+msgstr "Valitse huomioitu, osittain tai ei huomioitu."
+
+#: site-updates
+msgid "Enter a full address starting with https://"
+msgstr "Anna koko osoite, joka alkaa https://"
+
+#: site-updates
+msgid "Pick one of the surveys on this site."
+msgstr "Valitse jokin tämän sivuston kyselyistä."
+
+#: site-updates
+msgid "Pick an update of this site."
+msgstr "Valitse tämän sivuston tiedote."
+
+#: site-updates
+msgid "No status"
+msgstr "Ei tilaa"
+
+#: site-updates
+msgid "News and “You said, we did”"
+msgstr "Uutiset ja ”Te sanoitte, me teimme”"
+
+#: site-updates
+msgid "Update"
+msgstr "Tiedote"
+
+#: site-updates
+msgid "You said"
+msgstr "Te sanoitte"
+
+#: site-updates
+msgid "We did"
+msgstr "Me teimme"
+
+#: site-updates
+msgid "More on %(host)s"
+msgstr "Lisää: %(host)s"
+
+#: site-updates
+msgid "All updates"
+msgstr "Kaikki tiedotteet"
+
+#: site-updates
+msgid "No updates yet."
+msgstr "Ei vielä tiedotteita."
+
+#: site-updates
+msgid "Add updates in the block on the page; open one there to edit it."
+msgstr "Lisää tiedotteita sivun lohkossa; avaa se siellä muokataksesi."
+
+#: site-updates
+msgid "Show"
+msgstr "Näytä"
+
+#: site-updates
+msgid "Which updates"
+msgstr "Mitkä tiedotteet"
+
+#: site-updates
+msgid "No updates yet. They show here newest first, and on the site once published."
+msgstr "Ei vielä tiedotteita. Ne näkyvät tässä uusin ensin ja sivustolla, kun ne julkaistaan."
+
+#: site-updates
+msgid "Add news"
+msgstr "Lisää uutinen"
+
+#: site-updates
+msgid "Add “You said, we did”"
+msgstr "Lisää ”Te sanoitte, me teimme”"
+
+#: site-updates
+msgid "Drafts stay in the builder. Published updates show on the site, newest first."
+msgstr "Luonnokset jäävät muokkaimeen. Julkaistut tiedotteet näkyvät sivustolla uusin ensin."
+
+#: site-updates
+msgid "What residents asked for, in their words"
+msgstr "Mitä asukkaat toivoivat, heidän sanoin"
+
+#: site-updates
+msgid "About a survey"
+msgstr "Kyselystä"
+
+#: site-updates
+msgid "None"
+msgstr "Ei mitään"
+
+#: site-updates
+msgid "Open on the site"
+msgstr "Avaa sivustolla"
+
+#: site-updates
+msgid "Delete this update?"
+msgstr "Poistetaanko tämä tiedote?"
+
+#: site-updates
+msgid "Delete update"
+msgstr "Poista tiedote"
+
+#: site-updates
+msgid "It disappears from the site and from every updates block. This cannot be undone."
+msgstr "Se katoaa sivustolta ja kaikista tiedotelohkoista. Tätä ei voi perua."

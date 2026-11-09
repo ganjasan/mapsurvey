@@ -12524,10 +12524,6 @@ msgid "News"
 msgstr "Nieuws"
 
 #: site-pages
-msgid "<p>The latest from the project: what changed, and what comes next.</p>"
-msgstr "<p>Het laatste nieuws van het project: wat er veranderde en wat er komt.</p>"
-
-#: site-pages
 msgid "Site pages"
 msgstr "Pagina’s van de site"
 
@@ -12592,3 +12588,147 @@ msgid "Its %(n)s block goes with it, with its files and event registrations. Thi
 msgid_plural "Its %(n)s blocks go with it, with their files and event registrations. This cannot be undone."
 msgstr[0] "Het %(n)s blok gaat mee, met bestanden en aanmeldingen. Dit kan niet ongedaan worden gemaakt."
 msgstr[1] "De %(n)s blokken gaan mee, met bestanden en aanmeldingen. Dit kan niet ongedaan worden gemaakt."
+
+#: site-updates
+msgid "Updates"
+msgstr "Updates"
+
+#: site-updates
+msgid "You said, we did"
+msgstr "Jullie zeiden, wij deden"
+
+#: site-updates
+msgid "Included"
+msgstr "Overgenomen"
+
+#: site-updates
+msgid "Partly included"
+msgstr "Deels overgenomen"
+
+#: site-updates
+msgid "Not included"
+msgstr "Niet overgenomen"
+
+#: site-updates
+msgid "News and “You said, we did”, newest first"
+msgstr "Nieuws en ‘Jullie zeiden, wij deden’, nieuwste eerst"
+
+#: site-updates
+msgid "Pick news or “You said, we did”."
+msgstr "Kies nieuws of ‘Jullie zeiden, wij deden’."
+
+#: site-updates
+msgid "New update"
+msgstr "Nieuw bericht"
+
+#: site-updates
+msgid "Give the update a title."
+msgstr "Geef het bericht een titel."
+
+#: site-updates
+msgid "Enter a date."
+msgstr "Vul een datum in."
+
+#: site-updates
+msgid "Pick included, partly or not included."
+msgstr "Kies overgenomen, deels of niet overgenomen."
+
+#: site-updates
+msgid "Enter a full address starting with https://"
+msgstr "Vul een volledig adres in dat begint met https://"
+
+#: site-updates
+msgid "Pick one of the surveys on this site."
+msgstr "Kies een van de enquêtes op deze site."
+
+#: site-updates
+msgid "Pick an update of this site."
+msgstr "Kies een bericht van deze site."
+
+#: site-updates
+msgid "No status"
+msgstr "Geen status"
+
+#: site-updates
+msgid "News and “You said, we did”"
+msgstr "Nieuws en ‘Jullie zeiden, wij deden’"
+
+#: site-updates
+msgid "Update"
+msgstr "Bericht"
+
+#: site-updates
+msgid "You said"
+msgstr "Jullie zeiden"
+
+#: site-updates
+msgid "We did"
+msgstr "Wij deden"
+
+#: site-updates
+msgid "More on %(host)s"
+msgstr "Meer op %(host)s"
+
+#: site-updates
+msgid "All updates"
+msgstr "Alle updates"
+
+#: site-updates
+msgid "No updates yet."
+msgstr "Nog geen updates."
+
+#: site-updates
+msgid "Add updates in the block on the page; open one there to edit it."
+msgstr "Voeg berichten toe in het blok op de pagina; open er een om te bewerken."
+
+#: site-updates
+msgid "Show"
+msgstr "Tonen"
+
+#: site-updates
+msgid "Which updates"
+msgstr "Welke berichten"
+
+#: site-updates
+msgid "No updates yet. They show here newest first, and on the site once published."
+msgstr "Nog geen berichten. Ze staan hier, nieuwste eerst, en op de site zodra ze gepubliceerd zijn."
+
+#: site-updates
+msgid "Add news"
+msgstr "Nieuws toevoegen"
+
+#: site-updates
+msgid "Add “You said, we did”"
+msgstr "‘Jullie zeiden, wij deden’ toevoegen"
+
+#: site-updates
+msgid "Drafts stay in the builder. Published updates show on the site, newest first."
+msgstr "Concepten blijven in de editor. Gepubliceerde berichten staan op de site, nieuwste eerst."
+
+#: site-updates
+msgid "What residents asked for, in their words"
+msgstr "Wat inwoners vroegen, in hun eigen woorden"
+
+#: site-updates
+msgid "About a survey"
+msgstr "Over een enquête"
+
+#: site-updates
+msgid "None"
+msgstr "Geen"
+
+#: site-updates
+msgid "Open on the site"
+msgstr "Openen op de site"
+
+#: site-updates
+msgid "Delete this update?"
+msgstr "Dit bericht verwijderen?"
+
+#: site-updates
+msgid "Delete update"
+msgstr "Bericht verwijderen"
+
+#: site-updates
+msgid "It disappears from the site and from every updates block. This cannot be undone."
+msgstr "Het verdwijnt van de site en uit elk updateblok. Dit kan niet ongedaan worden gemaakt."

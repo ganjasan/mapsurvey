@@ -100,7 +100,7 @@ partials and page script (translation_table.js) over `site_translations`.{% endc
         {% for page in pages %}
         <tbody class="tt-page-row"><tr><td colspan="4">
             <i class="fas fa-file-alt"></i> {{ page.list.0.first.page_title }}
-            <a class="tt-goto" href="{% url 'editor_site' site.uuid %}{% with link=page.list.0.first.link %}{% if link.page_id %}?page={{ link.page_id }}{% if link.block_id %}&amp;select={{ link.block_id }}{% else %}&amp;select=sitepage:{{ link.page_id }}{% endif %}{% elif link.block_id %}?select={{ link.block_id }}{% endif %}{% endwith %}"><i class="fas fa-external-link-alt"></i> {% trans "Open in the builder" %}</a>
+            <a class="tt-goto" href="{% url 'editor_site' site.uuid %}{% with link=page.list.0.first.link %}{% if link.page_id %}?page={{ link.page_id }}{% if link.block_id %}&amp;select={{ link.block_id }}{% else %}&amp;select=sitepage:{{ link.page_id }}{% endif %}{% elif link.block_id %}?select={{ link.block_id }}{% elif link.update_id %}?select=update:{{ link.update_id }}{% endif %}{% endwith %}"><i class="fas fa-external-link-alt"></i> {% trans "Open in the builder" %}</a>
         </td></tr></tbody>
         {% for row in page.list %}{% include "editor/partials/translation_row.html" %}{% endfor %}
         {% endfor %}

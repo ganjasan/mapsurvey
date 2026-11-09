@@ -78,6 +78,9 @@ only the keys sites.clean_block stores.{% endcomment %}
 
   <div class="lp-stage">
   <main class="lp-wrap lp-main" id="main" tabindex="-1">
+    {% if updates_view %}
+    <section class="lp-block lp-block--updates">{% include "sites/updates/_feed.html" %}</section>
+    {% endif %}
     {% for block, card in blocks %}
     <section class="lp-block lp-block--{{ block.kind }}{% if block.data.wide %} lp-block--wide{% endif %}" id="{{ block.anchor }}">
       {% if block.title and block.kind != 'heading' %}<h2>{{ block.title }}</h2>{% endif %}

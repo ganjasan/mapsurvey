@@ -21,7 +21,7 @@ from billing import trial as billing_trial
 from .. import product_events, sites
 from ..audit import record as audit_record
 from ..content_screening import screen_site
-from ..models import Site, SiteBlock, SiteFile, SitePage, SiteSurvey, SurveyHeader
+from ..models import Site, SiteBlock, SiteFile, SitePage, SiteSurvey, SiteUpdate, SurveyHeader
 from ..versioning import canonical_of
 from .errors import ServiceError, ValidationFailed
 
@@ -187,7 +187,8 @@ def unlink_survey(actor, site, link):
 
 RAW_KEYS = ('body', 'alt', 'caption', 'label', 'url', 'style', 'size', 'button_label', 'description',
             'current', 'color', 'basemap', 'wide', 'viz', 'date', 'start', 'end', 'tz', 'place',
-            'place_url', 'capacity', 'open', 'address', 'hours', 'columns', 'before_label', 'after_label')
+            'place_url', 'capacity', 'open', 'address', 'hours', 'columns', 'before_label', 'after_label',
+            'count', 'kinds')
 
 # Error key → the posted fields it is about (an error on a field left empty waits under autosave).
 _ERROR_FIELDS = {'question': ('results_question',), 'area': ('geojson_file',), 'people': ('person_email',),
@@ -561,6 +562,95 @@ def move_block(actor, site, block, page):
     return block
 
 
+# ─── updates (change site-updates, #629) ──────────────────────────────────────
+
+def add_update(actor, site, kind):
+    """A draft update dated today, from *Add news* / *Add "You said, we did"* in a block."""
+    if kind not in ('news', 'decision'):
+        raise ValidationFailed.single('kind', _('Pick news or “You said, we did”.'))
+    title = _('New update') if kind == 'news' else _('You said, we did')
+    update = SiteUpdate.objects.create(site=site, kind=kind, date=timezone.localdate(), title=title,
+                                       created_by=actor.user)
+    audit_record(actor, 'site_update_create', site_id=site.pk, update_id=update.pk)
+    touched(site, screen=False)
+    return update
+
+
+UPDATE_FIELDS = ('title', 'date', 'body', 'said', 'status', 'survey', 'link_url', 'published')
+
+
+def save_update(actor, site, update, values):
+    """Save the keys present in `values` (PATCH semantics); everything is validated before anything is
+    written. `survey` is a survey uuid linked to this site ('' unlinks), `published` a flag."""
+    import datetime
+
+    from ..html_sanitize import coerce_creator_html
+    from ..redirects import is_valid_redirect
+    if update.site_id != site.pk:
+        raise ValidationFailed.single('update', _('Pick an update of this site.'))
+    errors, changes = {}, {}
+    if 'title' in values:
+        title = ' '.join(str(values.get('title') or '').split())[:sites.UPDATE_TITLE_MAX]
+        if not title:
+            errors['title'] = _('Give the update a title.')
+        changes['title'] = title
+    if 'date' in values:
+        try:
+            changes['date'] = datetime.date.fromisoformat(str(values.get('date') or ''))
+        except ValueError:
+            errors['date'] = _('Enter a date.')
+    if 'body' in values:
+        changes['body'] = coerce_creator_html(str(values.get('body') or ''))
+    if 'said' in values:
+        changes['said'] = str(values.get('said') or '').strip()[:sites.UPDATE_SAID_MAX]
+    if 'status' in values:
+        status = str(values.get('status') or '')
+        if status and status not in sites.UPDATE_STATUSES:
+            errors['status'] = _('Pick included, partly or not included.')
+        changes['status'] = status
+    if 'link_url' in values:
+        url = str(values.get('link_url') or '').strip()
+        if url and (not is_valid_redirect(url) or not url.startswith(('http://', 'https://'))):
+            errors['link_url'] = _('Enter a full address starting with https://')
+        changes['link_url'] = url
+    if 'survey' in values:
+        ref = str(values.get('survey') or '').strip()
+        link = None
+        if ref:
+            link = next((lk for lk in site.survey_links.select_related('survey') if str(lk.survey.uuid) == ref), None)
+            if link is None:
+                errors['survey'] = _('Pick one of the surveys on this site.')
+        changes['site_survey'] = link
+    if 'published' in values:
+        changes['is_published'] = values.get('published') in (True, '1', 'on', 'true')
+    if errors:
+        raise ValidationFailed({k: [v] for k, v in errors.items()})
+    was_published = update.is_published
+    for name, value in changes.items():
+        setattr(update, name, value)
+    update.save()
+    audit_record(actor, 'site_update_save', site_id=site.pk, update_id=update.pk)
+    if update.is_published and not was_published:
+        product_events.emit('site_update_published', actor.user_id, {
+            'organization_id': site.organization_id, 'site_id': site.pk, 'update_id': update.pk,
+            'kind': update.kind})
+    touched(site)
+    return update
+
+
+def delete_update(actor, site, update):
+    if update.site_id != site.pk:
+        raise ValidationFailed.single('update', _('Pick an update of this site.'))
+    update_id = update.pk
+    update.delete()
+    hashes = {lang: {k: v for k, v in (keys or {}).items() if not k.startswith(f'update:{update_id}:')}
+              for lang, keys in (site.translation_sources or {}).items()}
+    Site.objects.filter(pk=site.pk).update(translation_sources=hashes)
+    site.translation_sources = hashes
+    audit_record(actor, 'site_update_delete', site_id=site.pk, update_id=update_id)
+    touched(site, screen=False)
+
+
 # ─── translations (change site-translations, #618) ───────────────────────────
 
 def _clean_translation(kind, cap, text):
@@ -587,9 +677,24 @@ def set_translations(actor, site, language, items):
     hashes = dict(site.translation_sources or {})
     lang_hashes = dict(hashes.get(language) or {})
     site_tr = dict(site.translations or {})
-    blocks, pages = {}, {}
+    blocks, pages, updates = {}, {}, {}
     for entity_kind, entity, fld, text in items:
-        if entity_kind == 'page':
+        if entity_kind == 'update':
+            spec = next(((k, c) for n, k, c in st.UPDATE_FIELDS if n == fld), None)
+            if spec is None or entity.site_id != site.pk:
+                continue
+            update = updates.setdefault(entity.pk, entity)
+            value = _clean_translation(spec[0], spec[1], text)
+            tr = dict(update.translations or {})
+            row = dict(tr.get(language) or {})
+            if value:
+                row[fld] = value
+            else:
+                row.pop(fld, None)
+            tr[language] = row
+            update.translations = tr
+            key, source, kind = f'update:{update.pk}:{fld}', getattr(update, fld) or '', spec[0]
+        elif entity_kind == 'page':
             if fld != 'title' or entity.site_id != site.pk:
                 continue
             page = pages.setdefault(entity.pk, entity)
@@ -644,6 +749,8 @@ def set_translations(actor, site, language, items):
             SiteBlock.objects.filter(pk=block.pk).update(translations=block.translations)
         for page in pages.values():
             SitePage.objects.filter(pk=page.pk).update(translations=page.translations)
+        for update in updates.values():
+            SiteUpdate.objects.filter(pk=update.pk).update(translations=update.translations)
     touched(site)
     audit_record(actor, 'site_translations', site_id=site.pk, language=language, count=len(items))
 

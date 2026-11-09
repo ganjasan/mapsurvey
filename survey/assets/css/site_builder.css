@@ -367,3 +367,8 @@ fieldset.lb-card { border: 1px solid var(--line); padding: 1rem 1.1rem; }
 .lb-move-row { display: flex; gap: 6px; }
 /* The page menu on the canvas scrolls with the page: sticky, it would cover the block toolbars. */
 .lb-canvas-nav { position: static; }
+/* Updates on the canvas (change site-updates): a card opens its pane; drafts are marked. */
+.lb-blk .lp-update[data-select-target] { cursor: pointer; border-radius: 0 6px 6px 0; }
+.lb-blk .lp-update[data-select-target]:hover { background: #f5f7fa; }
+.lb-draft-badge { font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 1px 8px; border-radius: 999px; background: #fff3cd; color: #845400; }
+.lb-update-add { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }

@@ -63,6 +63,7 @@ BLOCK_KINDS = {
     'survey': (gettext_lazy('Survey card'), 'fas fa-map-marked-alt', 'participation'),
     'button': (gettext_lazy('Button'), 'fas fa-link', 'participation'),
     'contacts': (gettext_lazy('Contacts'), 'far fa-address-card', 'participation'),
+    'updates': (gettext_lazy('Updates'), 'far fa-newspaper', 'content'),
 }
 
 PICKER_GROUPS = (
@@ -103,6 +104,7 @@ LIBRARY = (
     (gettext_lazy('Show the work'), (
         ('results', gettext_lazy("A chart or a map from a survey's answers")),
         ('documents', gettext_lazy('Summaries, boards, the draft plan')),
+        ('updates', gettext_lazy('News and “You said, we did”, newest first')),
     )),
 )
 
@@ -367,6 +369,63 @@ def _clean_survey(raw, errors):
             'description': _plain(raw.get('description'), 300)}
 
 
+# ─── updates (change site-updates, #629) ──────────────────────────────────────
+
+UPDATE_COUNTS = ('3', '5', '10', '0')  # 0 = all
+UPDATE_KIND_FILTERS = ('', 'news', 'decision')
+UPDATE_TITLE_MAX = 160
+UPDATE_SAID_MAX = 2000
+UPDATE_STATUSES = ('included', 'partly', 'not')
+
+
+def _clean_updates(raw, errors):
+    count = str(raw.get('count') or '3')
+    kinds = str(raw.get('kinds') or '')
+    return {'count': int(count) if count in UPDATE_COUNTS else 3,
+            'kinds': kinds if kinds in UPDATE_KIND_FILTERS else ''}
+
+
+def feed(site, *, kinds='', drafts=False):
+    """The site's updates, newest first: published only unless `drafts`; one kind when `kinds`."""
+    qs = site.updates.select_related('site_survey__survey')
+    if not drafts:
+        qs = qs.filter(is_published=True)
+    if kinds:
+        qs = qs.filter(kind=kinds)
+    return qs.order_by('-date', '-id')
+
+
+def decorate_updates(site, updates, *, lang='', review=''):
+    """Give each update what its card links to: `url` (its own page), `survey_label`/`survey_url` (the
+    linked survey, opened while it runs, its results once closed)."""
+    for u in updates:
+        u.url = updates_url(site, u, lang=lang, review=review)
+        link = u.site_survey
+        u.survey_label, u.survey_url = '', ''
+        if link is not None:
+            card = survey_card(link.survey)
+            if card['state'] != CARD_HIDDEN:
+                u.survey_label = link.survey.name
+                u.survey_url = card['url'] or card['results_url']
+    return updates
+
+
+def updates_card(block, drafts=False):
+    """What an `updates` block draws: {'updates': [...], 'more': bool}, or None when it has nothing."""
+    data = block.data if isinstance(block.data, dict) else {}
+    rows = feed(block.site, kinds=data.get('kinds') or '', drafts=drafts)
+    count = data.get('count', 3)
+    if count:
+        items = list(rows[:count + 1])
+        more = len(items) > count
+        items = items[:count]
+    else:
+        items, more = list(rows), False
+    if not items:
+        return None
+    return {'updates': items, 'more': more}
+
+
 _CLEANERS = {
     'heading': _clean_heading,
     'text': _clean_text,
@@ -383,6 +442,7 @@ _CLEANERS = {
     'contacts': _clean_contacts,
     'gallery': _clean_gallery,
     'compare': _clean_compare,
+    'updates': _clean_updates,
 }
 
 
@@ -721,6 +781,17 @@ def page_url(site, page, *, lang='', review='', absolute=False):
     return url
 
 
+def updates_url(site, update=None, *, lang='', review=''):
+    """The feed's address, or one update's, keeping a non-primary language and a review link."""
+    from urllib.parse import urlencode
+
+    from django.urls import reverse
+    url = (reverse('site_update_public', args=[site.slug, update.pk]) if update is not None
+           else reverse('site_updates_public', args=[site.slug]))
+    query = {k: v for k, v in (('lang', lang if lang and lang != site.language else ''), ('review', review)) if v}
+    return url + ('?' + urlencode(query) if query else '')
+
+
 def menu(pages, page, blocks):
     """What the public menu shows: {'pages': [(page, current)] when two or more pages are in the
     menu, else [], 'anchors': [(anchor, title)] of the current page's titled blocks}."""
@@ -938,6 +1009,8 @@ def block_card(block, now=None, lang='en'):
                 'retention_days': site_events.RETENTION_DAYS}
     if block.kind == 'survey' and block.site_survey is not None:
         return survey_card(block.site_survey.survey, now=now)
+    if block.kind == 'updates':
+        return updates_card(block)
     return None
 
 
@@ -949,7 +1022,7 @@ def page_blocks(site, page=None, now=None, lang='en'):
         if not is_complete(block):
             continue
         card = block_card(block, now=now, lang=lang)
-        if block.kind == 'results' and card is None:
+        if block.kind in ('results', 'updates') and card is None:
             continue
         if block.kind == 'survey' and (card is None or card['state'] == CARD_HIDDEN):
             continue

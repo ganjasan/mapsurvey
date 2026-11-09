@@ -1,0 +1,24 @@
+{% load i18n %}{% comment %}One update (change site-updates, #629) on the public page, the feed and the builder
+canvas. `u` the update (decorated by sites.decorate_updates: url, survey_url, link_host), `link` whether the
+title links to the update's own page, `editing` on the canvas (the card opens the update in the panel).{% endcomment %}
+<article class="lp-update lp-update--{{ u.kind }}" id="{{ u.anchor }}"{% if editing %} data-select-target="update:{{ u.pk }}" tabindex="0"{% endif %}>
+  <div class="lp-update-meta">
+    <time datetime="{{ u.date|date:'Y-m-d' }}">{{ u.date|date:"DATE_FORMAT" }}</time>
+    <span class="lp-update-kind">{% if u.kind == 'decision' %}{% trans "You said, we did" %}{% else %}{% trans "News" %}{% endif %}</span>
+    {% if u.kind == 'decision' and u.status %}<span class="lp-status lp-status--{{ u.status }}">{% if u.status == 'included' %}{% trans "Included" %}{% elif u.status == 'partly' %}{% trans "Partly included" %}{% else %}{% trans "Not included" %}{% endif %}</span>{% endif %}
+    {% if editing and not u.is_published %}<span class="lb-draft-badge">{% trans "Draft" %}</span>{% endif %}
+  </div>
+  <h3 class="lp-update-title"{% if editing %} data-label-for="update:{{ u.pk }}"{% endif %}>{% if link and u.url %}<a href="{{ u.url }}">{{ u.title }}</a>{% else %}{{ u.title }}{% endif %}</h3>
+  {% if u.kind == 'decision' %}
+    {% if u.said %}<div class="lp-said"><div class="lp-said-label">{% trans "You said" %}</div><p>{{ u.said|linebreaksbr }}</p></div>{% endif %}
+    {% if u.body %}<div class="lp-did"><div class="lp-said-label">{% trans "We did" %}</div><div class="lp-rich">{{ u.body|safe }}</div></div>{% endif %}
+  {% elif u.body %}
+    <div class="lp-rich">{{ u.body|safe }}</div>
+  {% endif %}
+  {% if u.link_url or u.survey_label %}
+  <p class="lp-update-links">
+    {% if u.survey_label %}<span class="lp-update-survey">{% if u.survey_url %}<a href="{{ u.survey_url }}">{{ u.survey_label }}</a>{% else %}{{ u.survey_label }}{% endif %}</span>{% endif %}
+    {% if u.link_url %}<a class="lp-update-link" href="{{ u.link_url }}" rel="noopener">{% blocktrans with host=u.link_host %}More on {{ host }}{% endblocktrans %}</a>{% endif %}
+  </p>
+  {% endif %}
+</article>

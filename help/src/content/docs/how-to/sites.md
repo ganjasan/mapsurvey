@@ -63,6 +63,17 @@ With two or more pages the menu at the top lists the pages, and the headings of 
 
 Renaming a page's address breaks links you already shared, the same as for the site's address.
 
+## Updates and “You said, we did”
+
+A site can keep the record of the engagement: dated **updates** that residents read newest first.
+
+- Add an **Updates** block (under *Show the work* in the block library) wherever the feed should appear — the latest three on the home page, everything on a *News* page. Every Updates block shows the same feed; in its settings choose how many to show and which kind.
+- In the block, press **Add news** or **Add “You said, we did”**. The new update opens on the right: title, date, text, an optional link and the survey it is about. Click any update in the block to edit it again.
+- A **“You said, we did”** entry answers what residents asked for: *You said* (their words), *We did* (what changed) and a status — **Included**, **Partly included** or **Not included** — shown as a badge.
+- An update is a **draft** until you switch on **Published**. Drafts show only in the builder, marked *Draft*.
+- Every published update has its own address, and all of them are listed at `/p/<your site>/updates/`. A block that shows only the latest few links there.
+- Updates are translated on the **Translations** tab with the rest of the site. **Duplicate** and templates leave them out: they belong to this engagement.
+
 ## Events and registration
 
 The **Event** block announces an open house, a walk or a workshop: date, start and end time in the event's time zone, the place (with an optional map link), a few words about it, and an optional number of seats.
@@ -89,7 +100,7 @@ Visitors get the site in their browser's language when it is offered, and can sw
 
 **Duplicate** on the Sites list (or **Duplicate site** in the site settings) makes an unpublished copy to start the next engagement from: the same pages, blocks, files, surveys and settings, a new address. Event registrations are never copied.
 
-**From a template** next to **New site** starts from a ready layout: *Consultation* (why we ask, take part, how it works, meet us, questions, contact), *Master plan* (the plan, where, phases, take part, what we heard, documents, project team) or *Municipal site*, a site of four pages — *About*, *Take part*, *Documents* and *News*. Blocks that need your material — a picture, a survey, files, the project area — wait empty with their drop zones. **Save as template** in the site settings keeps any site as a starting point of your own: it has no surveys, is never published, and appears under *Templates* and in the same menu.
+**From a template** next to **New site** starts from a ready layout: *Consultation* (why we ask, take part, how it works, meet us, questions, contact), *Master plan* (the plan, where, phases, take part, what we heard, documents, project team) or *Municipal site*, a site of four pages — *About*, *Take part*, *Documents* and *News*, where *News* shows every update. Blocks that need your material — a picture, a survey, files, the project area — wait empty with their drop zones. **Save as template** in the site settings keeps any site as a starting point of your own: it has no surveys, is never published, and appears under *Templates* and in the same menu.
 
 ## Publish
 

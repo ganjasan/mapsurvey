@@ -1,0 +1,69 @@
+{% load i18n %}{% comment %}The side-panel pane of one update (change site-updates, #629): opened from its card in an
+updates block. Autosaved by js/site_pages.js (form[data-autosave-json]; 422 shows field errors).{% endcomment %}
+{% for u in site_updates %}
+<div class="lb-pane" data-pane="update:{{ u.pk }}"{% if selected != u.pane_id %} hidden{% endif %}>
+  <div class="lb-pane-head">
+    <span class="lb-ico"><i class="{% if u.kind == 'decision' %}far fa-comments{% else %}far fa-newspaper{% endif %}" aria-hidden="true"></i></span>
+    <div class="lb-pane-tt"><div class="lb-pane-t">{% if u.kind == 'decision' %}{% trans "You said, we did" %}{% else %}{% trans "News" %}{% endif %}</div><div class="lb-pane-s" data-label-for="update:{{ u.pk }}">{{ u.title|truncatechars:44 }}</div></div>
+    <button type="button" class="lb-x" data-select-target="page" title="{% trans 'Site settings' %}" aria-label="{% trans 'Close' %}">×</button>
+  </div>
+  <div class="lb-pane-body">
+    <form method="post" action="{% url 'editor_site_update_edit' site.uuid u.pk %}" data-autosave-json data-label="update:{{ u.pk }}">
+      {% csrf_token %}
+      <input type="hidden" name="page" value="{{ current_page.pk }}">
+      <div class="lb-errors" role="alert" hidden></div>
+      <fieldset class="lb-card" {% if not may_edit %}disabled{% endif %}>
+        <input type="hidden" name="published" value="0">
+        <label class="lb-check"><input type="checkbox" name="published" value="1"{% if u.is_published %} checked{% endif %}> {% trans "Published" %}</label>
+        <div class="lb-hint">{% trans "Drafts stay in the builder. Published updates show on the site, newest first." %}</div>
+        <div class="lb-field">
+          <label for="lb-u-title-{{ u.pk }}">{% trans "Title" %}</label>
+          <input id="lb-u-title-{{ u.pk }}" name="title" class="form-control form-control-sm" maxlength="160" value="{{ u.title }}" required>
+        </div>
+        <div class="lb-field">
+          <label for="lb-u-date-{{ u.pk }}">{% trans "Date" %}</label>
+          <input id="lb-u-date-{{ u.pk }}" type="date" name="date" class="form-control form-control-sm" value="{{ u.date|date:'Y-m-d' }}">
+        </div>
+        {% if u.kind == 'decision' %}
+        <div class="lb-field">
+          <label for="lb-u-said-{{ u.pk }}">{% trans "You said" %}</label>
+          <textarea id="lb-u-said-{{ u.pk }}" name="said" class="form-control form-control-sm" rows="3" maxlength="2000" placeholder="{% trans 'What residents asked for, in their words' %}">{{ u.said }}</textarea>
+        </div>
+        <div class="lb-field">
+          <label for="lb-u-body-{{ u.pk }}">{% trans "We did" %}</label>
+          <textarea id="lb-u-body-{{ u.pk }}" name="body" class="form-control form-control-sm" rows="5" data-rich>{{ u.body }}</textarea>
+        </div>
+        <div class="lb-field">
+          <label for="lb-u-status-{{ u.pk }}">{% trans "Status" %}</label>
+          <select id="lb-u-status-{{ u.pk }}" name="status" class="form-control form-control-sm">
+            {% for value, label in update_statuses %}<option value="{{ value }}"{% if u.status == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+        </div>
+        {% else %}
+        <div class="lb-field">
+          <label for="lb-u-body-{{ u.pk }}">{% trans "Text" %}</label>
+          <textarea id="lb-u-body-{{ u.pk }}" name="body" class="form-control form-control-sm" rows="6" data-rich>{{ u.body }}</textarea>
+        </div>
+        {% endif %}
+        <div class="lb-field">
+          <label for="lb-u-survey-{{ u.pk }}">{% trans "About a survey" %}</label>
+          <select id="lb-u-survey-{{ u.pk }}" name="survey" class="form-control form-control-sm">
+            <option value="">{% trans "None" %}</option>
+            {% for link, card in links %}<option value="{{ link.survey.uuid }}"{% if u.site_survey_id == link.pk %} selected{% endif %}>{{ link.survey.name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="lb-field">
+          <label for="lb-u-link-{{ u.pk }}">{% trans "Link" %}</label>
+          <input id="lb-u-link-{{ u.pk }}" type="url" name="link_url" class="form-control form-control-sm" maxlength="250" value="{{ u.link_url }}" placeholder="https://">
+        </div>
+      </fieldset>
+    </form>
+  </div>
+  {% if may_edit %}
+  <div class="lb-pane-foot">
+    {% if u.is_published %}<a class="lb-link" href="{% url 'site_update_public' site.slug u.pk %}" target="_blank" rel="noopener"><i class="far fa-eye" aria-hidden="true"></i> {% trans "Open on the site" %}</a>{% endif %}
+    <form method="post" action="{% url 'editor_site_update_delete' site.uuid u.pk %}" data-confirm="{% trans 'Delete this update?' %}" data-confirm-action="{% trans 'Delete update' %}" data-confirm-note="{% trans 'It disappears from the site and from every updates block. This cannot be undone.' %}">{% csrf_token %}<input type="hidden" name="page" value="{{ current_page.pk }}"><button type="submit" class="lb-link lb-danger"><i class="far fa-trash-alt" aria-hidden="true"></i> {% trans "Delete update" %}</button></form>
+  </div>
+  {% endif %}
+</div>
+{% endfor %}

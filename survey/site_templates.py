@@ -51,8 +51,8 @@ STARTERS = {
             ('contacts', _('Project team'), {}),
         ],
     },
-    # A site of several pages (change site-pages, #628): the first page is the home page. The News
-    # page holds a text block until updates (#629) arrive.
+    # A site of several pages (change site-pages, #628): the first page is the home page. News shows the
+    # whole update feed (change site-updates, #629).
     'municipal': {
         'title': _('Municipal site'),
         'description': _('A council programme with pages: About, Take part, Documents and News.'),
@@ -77,7 +77,7 @@ STARTERS = {
             ]),
             (_('News'), [
                 ('heading', _('News'), {'size': 'l'}),
-                ('text', '', {'body': _('<p>The latest from the project: what changed, and what comes next.</p>')}),
+                ('updates', '', {'count': 0}),
             ]),
         ],
     },

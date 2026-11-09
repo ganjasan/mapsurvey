@@ -12571,10 +12571,6 @@ msgid "News"
 msgstr "Actualités"
 
 #: site-pages
-msgid "<p>The latest from the project: what changed, and what comes next.</p>"
-msgstr "<p>Les dernières nouvelles du projet : ce qui a changé et la suite.</p>"
-
-#: site-pages
 msgid "Site pages"
 msgstr "Pages du site"
 
@@ -12640,3 +12636,146 @@ msgid_plural "Its %(n)s blocks go with it, with their files and event registrati
 msgstr[0] "Son %(n)s bloc est supprimé avec elle, avec ses fichiers et inscriptions. C’est irréversible."
 msgstr[1] "Ses %(n)s blocs sont supprimés avec elle, avec leurs fichiers et inscriptions. C’est irréversible."
 
+#: site-updates
+msgid "Updates"
+msgstr "Nouvelles"
+
+#: site-updates
+msgid "You said, we did"
+msgstr "Vous avez dit, nous avons fait"
+
+#: site-updates
+msgid "Included"
+msgstr "Retenu"
+
+#: site-updates
+msgid "Partly included"
+msgstr "Retenu en partie"
+
+#: site-updates
+msgid "Not included"
+msgstr "Non retenu"
+
+#: site-updates
+msgid "News and “You said, we did”, newest first"
+msgstr "Actualités et « Vous avez dit, nous avons fait », les plus récentes d’abord"
+
+#: site-updates
+msgid "Pick news or “You said, we did”."
+msgstr "Choisissez actualité ou « Vous avez dit, nous avons fait »."
+
+#: site-updates
+msgid "New update"
+msgstr "Nouvelle actualité"
+
+#: site-updates
+msgid "Give the update a title."
+msgstr "Donnez un titre à l’actualité."
+
+#: site-updates
+msgid "Enter a date."
+msgstr "Saisissez une date."
+
+#: site-updates
+msgid "Pick included, partly or not included."
+msgstr "Choisissez retenu, en partie ou non retenu."
+
+#: site-updates
+msgid "Enter a full address starting with https://"
+msgstr "Saisissez une adresse complète commençant par https://"
+
+#: site-updates
+msgid "Pick one of the surveys on this site."
+msgstr "Choisissez une des enquêtes de ce site."
+
+#: site-updates
+msgid "Pick an update of this site."
+msgstr "Choisissez une actualité de ce site."
+
+#: site-updates
+msgid "No status"
+msgstr "Sans statut"
+
+#: site-updates
+msgid "News and “You said, we did”"
+msgstr "Actualités et « Vous avez dit, nous avons fait »"
+
+#: site-updates
+msgid "Update"
+msgstr "Actualité"
+
+#: site-updates
+msgid "You said"
+msgstr "Vous avez dit"
+
+#: site-updates
+msgid "We did"
+msgstr "Nous avons fait"
+
+#: site-updates
+msgid "More on %(host)s"
+msgstr "Plus sur %(host)s"
+
+#: site-updates
+msgid "All updates"
+msgstr "Toutes les nouvelles"
+
+#: site-updates
+msgid "No updates yet."
+msgstr "Pas encore de nouvelles."
+
+#: site-updates
+msgid "Add updates in the block on the page; open one there to edit it."
+msgstr "Ajoutez des actualités dans le bloc de la page ; ouvrez-les là pour les modifier."
+
+#: site-updates
+msgid "Show"
+msgstr "Afficher"
+
+#: site-updates
+msgid "Which updates"
+msgstr "Quelles actualités"
+
+#: site-updates
+msgid "No updates yet. They show here newest first, and on the site once published."
+msgstr "Pas encore d’actualités. Elles s’affichent ici, la plus récente d’abord, et sur le site une fois publiées."
+
+#: site-updates
+msgid "Add news"
+msgstr "Ajouter une actualité"
+
+#: site-updates
+msgid "Add “You said, we did”"
+msgstr "Ajouter « Vous avez dit, nous avons fait »"
+
+#: site-updates
+msgid "Drafts stay in the builder. Published updates show on the site, newest first."
+msgstr "Les brouillons restent dans l’éditeur. Les actualités publiées s’affichent sur le site, la plus récente d’abord."
+
+#: site-updates
+msgid "What residents asked for, in their words"
+msgstr "Ce que les habitants ont demandé, avec leurs mots"
+
+#: site-updates
+msgid "About a survey"
+msgstr "À propos d’une enquête"
+
+#: site-updates
+msgid "None"
+msgstr "Aucune"
+
+#: site-updates
+msgid "Open on the site"
+msgstr "Ouvrir sur le site"
+
+#: site-updates
+msgid "Delete this update?"
+msgstr "Supprimer cette actualité ?"
+
+#: site-updates
+msgid "Delete update"
+msgstr "Supprimer l’actualité"
+
+#: site-updates
+msgid "It disappears from the site and from every updates block. This cannot be undone."
+msgstr "Elle disparaît du site et de tous les blocs d’actualités. C’est irréversible."
