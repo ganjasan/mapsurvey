@@ -107,3 +107,15 @@ body.lp { margin: 0; font: 17px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI
 .lp-notice { background: #eef6ee; border: 1px solid #b7dab8; color: #1f5122; border-radius: 8px; padding: 10px 14px; margin: 10px 0; }
 .lp-notice--warn { background: #fff4e5; border-color: #f2c98a; color: #6b4300; }
 .lp-event-place a { color: var(--lp-accent); }
+
+/* Contacts block (change site-contacts-block) */
+.lp-contacts { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.lp-person { position: relative; border: 1px solid var(--lp-line); border-radius: 10px; padding: 14px 16px; }
+.lp-person-name { font-weight: 600; }
+.lp-person-role { color: var(--lp-muted); font-size: 15px; margin-bottom: 6px; }
+.lp-person-line { display: flex; gap: 8px; align-items: baseline; font-size: 15px; overflow-wrap: anywhere; }
+.lp-person-line i { color: var(--lp-muted); width: 14px; }
+.lp-person-line a { color: var(--lp-accent); }
+.lp-contact-place { margin-top: 16px; }
+.lp-contact-place p { margin: 0 0 4px; }
+.lp-muted { color: var(--lp-muted); }
