@@ -349,9 +349,13 @@ def _raw_block(kind, post):
     raw = {key: post.get(key, '') for key in ('body', 'alt', 'caption', 'label', 'url', 'style', 'size',
                                               'button_label', 'description', 'current', 'color', 'basemap', 'wide',
                                               'viz', 'date', 'start', 'end', 'tz', 'place', 'place_url',
-                                              'capacity', 'open')}
+                                              'capacity', 'open', 'address', 'hours')}
     if kind == 'faq':
         raw['items'] = [{'q': q, 'a': a} for q, a in zip(post.getlist('q'), post.getlist('a'))]
+    elif kind == 'contacts':
+        raw['people'] = [{'name': n, 'role': r, 'email': e, 'phone': p} for n, r, e, p in
+                         zip(post.getlist('person_name'), post.getlist('person_role'),
+                             post.getlist('person_email'), post.getlist('person_phone'))]
     elif kind == 'timeline':
         raw['items'] = [{'title': t, 'when': w, 'body': b} for t, w, b in
                         zip(post.getlist('phase_title'), post.getlist('phase_when'), post.getlist('phase_body'))]
@@ -401,7 +405,7 @@ def _results_target(site, value):
 
 
 # Error key → the posted fields it is about (an error on a field left empty waits, see _save_block).
-_ERROR_FIELDS = {'question': ('results_question',), 'area': ('geojson_file',),
+_ERROR_FIELDS = {'question': ('results_question',), 'area': ('geojson_file',), 'people': ('person_email',),
                  'image': ('image',), 'files': ('files',)}
 
 

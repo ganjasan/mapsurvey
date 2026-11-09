@@ -60,6 +60,7 @@ BLOCK_KINDS = {
     'event': (gettext_lazy('Event'), 'far fa-calendar-check', 'participation'),
     'survey': (gettext_lazy('Survey card'), 'fas fa-map-marked-alt', 'participation'),
     'button': (gettext_lazy('Button'), 'fas fa-link', 'participation'),
+    'contacts': (gettext_lazy('Contacts'), 'far fa-address-card', 'participation'),
 }
 
 PICKER_GROUPS = (
@@ -93,6 +94,7 @@ LIBRARY = (
         ('survey', gettext_lazy('One of your surveys; follows its status')),
         ('event', gettext_lazy('Open house or walk, with registration')),
         ('button', gettext_lazy('A link to anything else')),
+        ('contacts', gettext_lazy('Who runs the project and how to reach them')),
     )),
     (gettext_lazy('Show the work'), (
         ('results', gettext_lazy("A chart or a map from a survey's answers")),
@@ -223,6 +225,41 @@ def _clean_timeline(raw, errors):
     return {'items': items, 'current': current}
 
 
+CONTACTS_MAX = 6
+
+
+def _clean_contacts(raw, errors):
+    """The project team (change site-contacts-block): up to six people, each name / role / e-mail /
+    phone, plus an address and opening hours. A row without a name is kept and not drawn (it is being
+    typed on the canvas); a malformed e-mail is refused."""
+    from django.core.exceptions import ValidationError
+    from django.core.validators import validate_email
+    people, bad = [], []
+    rows = raw.get('people')
+    for p in (rows if isinstance(rows, list) else [])[:CONTACTS_MAX]:
+        if not isinstance(p, dict):
+            continue
+        person = {'name': _plain(p.get('name'), 120), 'role': _plain(p.get('role'), 120),
+                  'email': _plain(p.get('email'), 254), 'phone': _plain(p.get('phone'), 40)}
+        if not any(person.values()):
+            continue
+        if person['email']:
+            try:
+                validate_email(person['email'])
+            except ValidationError:
+                bad.append(person['email'])
+        people.append(person)
+    if bad:
+        errors['people'] = _('“%(email)s” is not an e-mail address.') % {'email': bad[0]}
+    return {'people': people, 'address': _plain_lines(raw.get('address'), 300),
+            'hours': _plain(raw.get('hours'), 200)}
+
+
+def _plain_lines(value, cap):
+    lines = [' '.join(line.split()) for line in str(value or '').splitlines()]
+    return '\n'.join(line for line in lines if line)[:cap]
+
+
 def _clean_documents(raw, errors):
     # The files are SiteFile rows (change landing-documents-map); the block keeps no data.
     return {}
@@ -325,6 +362,7 @@ _CLEANERS = {
     'map': _clean_map,
     'results': _clean_results,
     'event': _clean_event,
+    'contacts': _clean_contacts,
 }
 
 
@@ -356,6 +394,8 @@ def is_complete(block):
     kind = block.kind
     if kind == 'heading':
         return bool(block.title)
+    if kind == 'contacts':
+        return any(p.get('name') for p in data.get('people') or ()) or bool(data.get('address'))
     if kind == 'text':
         return not _is_empty_html(data.get('body'))
     if kind == 'image':

@@ -319,3 +319,6 @@ fieldset.lb-card { border: 1px solid var(--line); padding: 1rem 1.1rem; }
   .lb-panel { border-left: 0; border-top: 1px solid var(--line); }
   .lb-pop { right: auto; left: 0; width: min(360px, calc(100vw - 24px)); }
 }
+/* Contacts rows on the canvas (change site-contacts-block) */
+.lb-person { padding-right: 34px; }
+.lb-person .lb-row-x { top: 8px; right: 6px; }

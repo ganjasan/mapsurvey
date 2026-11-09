@@ -1507,3 +1507,67 @@ class SiteWidthTest(SiteTestBase):
         self.assertNotIn('lp-block--text lp-block--wide', page)
         builder = self.client.get(self.url('editor_site')).content.decode()
         self.assertEqual(builder.count('name="wide"'), 1)
+
+
+class SiteContactsTest(SiteTestBase):
+    """Spec `survey-sites`: Contacts block (change site-contacts-block, #606)."""
+
+    def setUp(self):
+        super().setUp()
+        self.login(self.editor)
+
+    def person(self, **kw):
+        row = {'person_name': '', 'person_role': '', 'person_email': '', 'person_phone': ''}
+        row.update(kw)
+        return row
+
+    def test_team_on_the_page(self):
+        """GIVEN a contacts block with one person and an address
+        WHEN the site is published
+        THEN the page shows her card with mailto: and tel: links and the address"""
+        self.add_block('contacts', person_name='Ana Ruiz', person_role='Project lead',
+                       person_email='ana@city.example', person_phone='+1 410 555 0100',
+                       address='Town hall\n1 Market Square', hours='Mon–Thu 9–16')
+        self.client.post(self.url('editor_site_publish'), {'action': 'publish'})
+        page = self.client.get('/p/riverside-park-plan/').content.decode()
+        self.assertIn('Ana Ruiz', page)
+        self.assertIn('href="mailto:ana@city.example"', page)
+        self.assertIn('href="tel:+14105550100"', page)
+        self.assertIn('Town hall<br>1 Market Square', page)
+
+    def test_bad_email_refused(self):
+        """GIVEN a contacts block
+        WHEN a person's e-mail is saved as ana@
+        THEN the save is refused with an error naming the address"""
+        r = self.add_block('contacts', person_name='Ana', person_role='', person_email='ana@', person_phone='')
+        self.assertEqual(r.status_code, 400)
+        self.assertContains(r, 'is not an e-mail address', status_code=400)
+        self.assertFalse(self.site.blocks.exists())
+
+    def test_row_being_typed(self):
+        """GIVEN a contacts block with a named person
+        WHEN the builder autosaves a second row with a phone and no name
+        THEN it is kept and the public page does not draw it"""
+        self.add_block('contacts', person_name='Ana', person_role='', person_email='', person_phone='')
+        block = self.site.blocks.get()
+        r = self.client.post(self.url('editor_site_block_edit', block.pk), {
+            'person_name': ['Ana', ''], 'person_role': ['', ''], 'person_email': ['', ''],
+            'person_phone': ['', '555 0199'], 'autosave': '1'})
+        self.assertEqual(r.status_code, 200)
+        block.refresh_from_db()
+        self.assertEqual(len(block.data['people']), 2)
+        self.client.post(self.url('editor_site_publish'), {'action': 'publish'})
+        page = self.client.get('/p/riverside-park-plan/').content.decode()
+        self.assertNotIn('555 0199', page)
+        self.assertEqual(page.count('class="lp-person"'), 1)
+
+    def test_rows_editable_in_the_block(self):
+        """GIVEN a contacts block
+        WHEN the builder renders it
+        THEN the people are rows editable in the block with Add a person, and Settings holds the address"""
+        self.add_block('contacts', person_name='Ana', person_role='', person_email='', person_phone='')
+        html = self.client.get(self.url('editor_site')).content.decode()
+        self.assertIn('data-rows="contacts"', html)
+        self.assertIn('data-row-field="person_email"', html)
+        self.assertIn('Add a person', html)
+        self.assertIn('name="address"', html)

@@ -47,6 +47,14 @@ from the canvas `[data-field]` elements, so this form is always the whole block 
   {% if errors.url %}<div class="text-danger small">{{ errors.url }}</div>{% endif %}
   <input type="hidden" name="caption" value="{{ data.caption|default:'' }}">
 
+  {% elif kind == 'contacts' %}
+  <div class="lb-row-sink" hidden>{% for p in data.people %}<input type="hidden" name="person_name" value="{{ p.name }}"><input type="hidden" name="person_role" value="{{ p.role }}"><input type="hidden" name="person_email" value="{{ p.email }}"><input type="hidden" name="person_phone" value="{{ p.phone }}">{% endfor %}</div>
+  <p class="lb-hint mt-0">{% trans "Add the people in the block on the page." %}</p>
+  {% if errors.people %}<div class="text-danger small">{{ errors.people }}</div>{% endif %}
+  <label class="small mb-0 mt-2">{% trans "Address" %}</label>
+  <textarea name="address" class="form-control form-control-sm" rows="3" maxlength="300" placeholder="{% trans 'Planning office, Town hall, 1 Market Square' %}">{{ data.address|default:'' }}</textarea>
+  <label class="small mb-0 mt-2">{% trans "Opening hours" %}</label>
+  <input name="hours" class="form-control form-control-sm" maxlength="200" value="{{ data.hours|default:'' }}" placeholder="{% trans 'Mon–Thu 9:00–16:00' %}">
   {% elif kind == 'faq' %}
   <div class="lb-row-sink" hidden>{% for it in data.items %}<input type="hidden" name="q" value="{{ it.q }}"><textarea name="a" hidden>{{ it.a }}</textarea>{% endfor %}</div>
   <p class="lb-hint mt-0">{% trans "Edit this in the block on the page." %}</p>

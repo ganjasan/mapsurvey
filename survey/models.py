@@ -3205,6 +3205,7 @@ SITE_BLOCK_KIND_CHOICES = (
     ('map', _('Map')),
     ('results', _('Results')),
     ('event', _('Event')),
+    ('contacts', _('Contacts')),
 )
 
 
