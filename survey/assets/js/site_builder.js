@@ -629,6 +629,10 @@
         if (title) title.textContent = res.body.title;
         var url = document.getElementById('lb-url');
         if (url && res.body.public_url) url.value = res.body.public_url;
+        if (res.body.width && frame.dataset.width !== res.body.width) {
+          frame.dataset.width = res.body.width;
+          setTimeout(resizeMaps, 280);
+        }
         var heroNow = document.getElementById('lb-hero');
         if (heroNow && res.body.hero && (force === true || !focusedIn(heroNow))) {
           var fresh = parseFragment(res.body.hero);

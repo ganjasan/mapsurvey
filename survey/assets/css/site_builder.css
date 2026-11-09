@@ -76,6 +76,9 @@
 .lb-canvas { overflow: auto; padding: 24px 24px 80px; position: relative; }
 .lb-frame { margin: 0 auto; background: #fff; border-radius: 14px; box-shadow: 0 8px 30px rgba(20,30,50,.10);
             max-width: 880px; transition: max-width .25s; min-height: 400px; overflow: visible; }
+.lb-frame { container-type: inline-size; }
+.lb-frame[data-width="standard"] { max-width: 1080px; }
+.lb-frame[data-width="wide"] { max-width: 1320px; }
 .lb-frame.mobile { max-width: 390px; }
 .lb-frame.mobile .lp-wrap { padding: 0 18px; }
 .lb-frame.mobile .lp-hero h1 { font-size: 30px; }

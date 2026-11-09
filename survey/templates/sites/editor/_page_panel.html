@@ -27,6 +27,14 @@ cards — cover, address and language, surveys on this page. Autosaved like a bl
       </div>
 
       <div class="lb-card">
+        <h6>{% trans "Page width" %}</h6>
+        <div class="lb-seg lb-seg--panel" role="radiogroup" aria-label="{% trans 'Page width' %}">
+          {% for value, label in site_widths %}<label><input type="radio" name="width" value="{{ value }}"{% if site.width == value %} checked{% endif %}> {{ label }}</label>{% endfor %}
+        </div>
+        <div class="lb-hint">{% trans "How wide the column of text and blocks is on a computer. Pictures, maps and videos can also go full width in their own settings." %}</div>
+      </div>
+
+      <div class="lb-card">
         <h6>{% trans "Address and language" %}</h6>
         <div class="lb-field">
           <label for="lp-slug">{% trans "Address" %}</label>

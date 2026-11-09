@@ -257,7 +257,7 @@ class SiteBlockTest(SiteTestBase):
         WHEN clean_block runs
         THEN only the kind's keys remain, capped"""
         data, errors = sites.clean_block('image', {'caption': 'x' * 900, 'evil': 1})
-        self.assertEqual(set(data), {'alt', 'caption'})
+        self.assertEqual(set(data), {'alt', 'caption', 'wide'})
         self.assertEqual(len(data['caption']), 300)
         self.assertEqual(errors, {})
 
@@ -1455,3 +1455,55 @@ class SiteHeadingTest(SiteTestBase):
         self.assertIn('value="heading"', html)
         self.assertIn('Heading (optional)', html)
         self.assertIn('name="menu"', html)
+
+
+class SiteWidthTest(SiteTestBase):
+    """Spec `survey-sites`: page width and full-width blocks (change site-width, #605)."""
+
+    def setUp(self):
+        super().setUp()
+        self.login(self.editor)
+
+    def test_wide_site(self):
+        """GIVEN a site
+        WHEN an editor sets the page width to Wide and publishes
+        THEN the public page and the builder's canvas carry data-width wide"""
+        r = self.client.post(self.url('editor_site_settings'), {'width': 'wide', 'autosave': '1'})
+        self.assertEqual(r.json()['width'], 'wide')
+        self.site.refresh_from_db()
+        self.assertEqual(self.site.width, 'wide')
+        self.client.post(self.url('editor_site_publish'), {'action': 'publish'})
+        self.assertContains(self.client.get('/p/riverside-park-plan/'), '<body class="lp" data-width="wide">')
+        self.assertContains(self.client.get(self.url('editor_site')), 'id="lb-frame" data-width="wide"')
+
+    def test_new_site_is_narrow(self):
+        """GIVEN a site created without a width
+        WHEN it is read
+        THEN its width is narrow, so existing sites look as before"""
+        self.assertEqual(self.site.width, 'narrow')
+
+    def test_unknown_width_ignored(self):
+        """GIVEN a site with width standard
+        WHEN the settings are posted with width "huge"
+        THEN the site keeps standard"""
+        self.site.width = 'standard'
+        self.site.save()
+        self.client.post(self.url('editor_site_settings'), {'width': 'huge', 'autosave': '1'})
+        self.site.refresh_from_db()
+        self.assertEqual(self.site.width, 'standard')
+
+    def test_full_width_blocks(self):
+        """GIVEN an image block and a text block
+        WHEN the image is saved with Full width ticked
+        THEN it stores wide and renders with the full-width class; text offers no such switch"""
+        self.add_block('image', alt='Plan', image=_png(), wide='1')
+        self.add_block('text', body='<p>Words</p>', wide='1')
+        image = self.site.blocks.get(kind='image')
+        self.assertTrue(image.data['wide'])
+        self.assertNotIn('wide', self.site.blocks.get(kind='text').data)
+        self.client.post(self.url('editor_site_publish'), {'action': 'publish'})
+        page = self.client.get('/p/riverside-park-plan/').content.decode()
+        self.assertIn('lp-block--image lp-block--wide', page)
+        self.assertNotIn('lp-block--text lp-block--wide', page)
+        builder = self.client.get(self.url('editor_site')).content.decode()
+        self.assertEqual(builder.count('name="wide"'), 1)

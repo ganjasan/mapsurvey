@@ -1,8 +1,19 @@
 /* The public site /p/<slug>/ (change landing-core, #576). One column, phone first. */
 :root { --lp-ink: #1f2933; --lp-muted: #5f6b76; --lp-line: #e4e7eb; --lp-accent: #2f6fb0; --lp-bg: #fff; --lp-soft: #f5f7fa; }
 * { box-sizing: border-box; }
+/* Site width (change site-width): one variable read by every column. A full-width block measures itself
+   against .lp-stage (the builder: .lb-frame), never the body — a size container is also the containing
+   block of fixed-position descendants. */
+[data-width] { --lp-max: 760px; }
+.lp-stage { container-type: inline-size; }
+[data-width="standard"] { --lp-max: 960px; }
+[data-width="wide"] { --lp-max: 1200px; }
 body.lp { margin: 0; font: 17px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--lp-ink); background: var(--lp-bg); }
-.lp-wrap { max-width: 760px; margin: 0 auto; padding: 0 20px; }
+.lp-wrap { max-width: var(--lp-max, 760px); margin: 0 auto; padding: 0 20px; }
+.lp-block--wide .lp-figure, .lp-block--wide .lp-video, .lp-block--wide .lp-map {
+  position: relative; left: 50%; transform: translateX(-50%); width: min(1400px, 100cqw - 40px); max-width: none; }
+.lp-block--wide .lp-figure figcaption { padding: 0 4px; }
+.lp-block--wide .lp-map { height: min(70vh, 560px); }
 .lp-banner { background: #fff4d6; color: #6b4e00; text-align: center; padding: 8px 16px; font-size: 14px; }
 .lp-banner a { color: inherit; margin-left: 8px; }
 .lp-hero { background: var(--lp-soft); padding: 48px 0 36px; }

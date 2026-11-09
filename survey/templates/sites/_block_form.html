@@ -146,4 +146,7 @@ from the canvas `[data-field]` elements, so this form is always the whole block 
   <input type="hidden" name="button_label" value="{{ data.button_label|default:'' }}">
   <p class="small text-muted mt-1 mb-0">{% trans "The card follows the survey: open, opening soon, or closed with a link to its public results." %}</p>
   {% endif %}
+  {% if kind == 'image' or kind == 'video' or kind == 'map' %}
+  <label class="lb-check mt-2 mb-0"><input type="checkbox" name="wide" value="1"{% if data.wide %} checked{% endif %}> {% trans "Full width — from edge to edge of the page" %}</label>
+  {% endif %}
 </form>

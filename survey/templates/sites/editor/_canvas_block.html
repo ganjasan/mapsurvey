@@ -3,7 +3,7 @@ template inside an editor shell — kind tag, hover toolbar, the heading editabl
 `data-field` in the block templates becomes editable through site_builder.js. `b` is the block, `item`
 its record from _builder_context (card, complete, warn). Never name a context variable `block` in the
 builder (it extends base.html): it is passed explicitly into the include below.{% endcomment %}
-<section class="lp-block lp-block--{{ b.kind }} lb-blk{% if not item.complete %} lb-incomplete{% endif %}{% if selected == b.pk|stringformat:'s' %} on{% endif %}"
+<section class="lp-block lp-block--{{ b.kind }}{% if b.data.wide %} lp-block--wide{% endif %} lb-blk{% if not item.complete %} lb-incomplete{% endif %}{% if selected == b.pk|stringformat:'s' %} on{% endif %}"
          id="{{ b.anchor }}" data-block="{{ b.pk }}" data-kind="{{ b.kind }}">
   <span class="lb-tag">{{ kinds|get_item:b.kind }}</span>
   {% if may_edit %}

@@ -116,6 +116,15 @@ def _rich(value, cap):
     return html[:cap] if html else ''
 
 
+# Kinds that may break out of the site's column to the page edge (change site-width).
+WIDE_KINDS = ('image', 'video', 'map')
+SITE_WIDTHS = ('narrow', 'standard', 'wide')
+
+
+def _wide(raw):
+    return raw.get('wide') in ('1', 'on', True)
+
+
 def _is_empty_html(html):
     return not re.sub(r'<[^>]+>|&nbsp;|\s', '', html or '')
 
@@ -144,7 +153,7 @@ def _clean_text(raw, errors):
 
 
 def _clean_image(raw, errors):
-    return {'alt': _plain(raw.get('alt'), 200), 'caption': _plain(raw.get('caption'), 300)}
+    return {'alt': _plain(raw.get('alt'), 200), 'caption': _plain(raw.get('caption'), 300), 'wide': _wide(raw)}
 
 
 def _clean_button(raw, errors):
@@ -166,7 +175,7 @@ def _clean_video(raw, errors):
         embed = normalize_embed_url(url)
     except AssetRejected as exc:
         errors['url'] = str(exc)
-    return {'url': url[:500], 'embed': embed, 'caption': _plain(raw.get('caption'), 300)}
+    return {'url': url[:500], 'embed': embed, 'caption': _plain(raw.get('caption'), 300), 'wide': _wide(raw)}
 
 
 def _items(raw):
@@ -235,7 +244,7 @@ def _clean_map(raw, errors, org=None):
         errors['area'] = _('Upload a GeoJSON file with the project area.')
         area = None
     return {'area': area, 'color': color, 'basemap': basemap,
-            'caption': _plain(raw.get('caption'), 300)}
+            'caption': _plain(raw.get('caption'), 300), 'wide': _wide(raw)}
 
 
 CHART_VIZ = ('auto', 'bar', 'pie', 'donut', 'table')
