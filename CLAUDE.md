@@ -501,8 +501,17 @@ fields, every change autosaves with `autosave=1` (JSON fragments; an EMPTY field
 is a 422). Owner rules: a block's primary actions happen in the block, refinements in Settings; reuse
 the app's dialogs and toolbars (no `confirm()`). **Every write goes through `survey/services/sites.py`**
 (change `sites-service-layer`, #617) — `SiteServiceLayerTest` fails if a view writes a row itself.
+**Pages (change `site-pages`, #628)**: blocks belong to a `SitePage`; every site has ONE home page
+(`is_home`, `slug=''`, first, never deleted or reordered — printed QR codes open it) at `/p/<slug>/`,
+others at `/p/<slug>/<page slug>/` (`sites.RESERVED_PAGE_SLUGS` keeps `report`, `events`, `updates`,
+`embed`… free). A new site starts with one page (owner decision); multi-page comes from the
+*Municipal site* starter (`site_templates.STARTERS[…]['pages']`) and *Add page*. Read blocks through
+`sites.blocks_for(site, page)` / `page_blocks(site, page)` — never `site.blocks` for drawing — and
+build page links with `sites.page_url()` (keeps `lang` and `review`). `SiteBlock.save()` puts a block
+created with `site=` only on home. Page titles translate as `page:<pk>:title`. The builder selects
+`sitepage:<id>` (the id `page` is the SITE settings pane) and shows one page per `?page=`.
 Never name a template context variable `block` in a template extending a base (it is a `BlockNode`);
-the builder uses `b`/`edit_block`. CSS prefixes `lp-` (public) / `lb-` (builder) are historical
+the builder uses `b`/`edit_block`; `page` in `sites/public.html` is the current `SitePage`. CSS prefixes `lp-` (public) / `lb-` (builder) are historical
 internal names; the marketing `css/landing.css` and the SEO landings are a different thing. Plan of
 the next waves: ops `requirements/design/sites-v1.1-architecture-and-plan.md`.
 

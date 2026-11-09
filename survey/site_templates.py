@@ -51,7 +51,44 @@ STARTERS = {
             ('contacts', _('Project team'), {}),
         ],
     },
+    # A site of several pages (change site-pages, #628): the first page is the home page. The News
+    # page holds a text block until updates (#629) arrive.
+    'municipal': {
+        'title': _('Municipal site'),
+        'description': _('A council programme with pages: About, Take part, Documents and News.'),
+        'icon': 'fas fa-landmark',
+        'pages': [
+            (_('About'), [
+                ('heading', _('About the project'), {'size': 'l'}),
+                ('text', '', {'body': _('<p>What the council plans, why it asks residents, and what is already decided.</p>')}),
+                ('timeline', _('How it works'), {'items': [
+                    {'title': _('Tell us what you think'), 'when': '', 'body': ''},
+                    {'title': _('What we heard'), 'when': '', 'body': ''},
+                    {'title': _('Decision'), 'when': '', 'body': ''}], 'current': '0'}),
+                ('contacts', _('Contact'), {}),
+            ]),
+            (_('Take part'), [
+                ('survey', _('Take part'), {}),
+                ('event', _('Meet us'), {}),
+            ]),
+            (_('Documents'), [
+                ('documents', _('Documents'), {}),
+                ('map', _('Where'), {}),
+            ]),
+            (_('News'), [
+                ('heading', _('News'), {'size': 'l'}),
+                ('text', '', {'body': _('<p>The latest from the project: what changed, and what comes next.</p>')}),
+            ]),
+        ],
+    },
 }
+
+
+def page_specs(spec):
+    """[(page title or None for home, [blocks])] — one home page for a starter without pages."""
+    if 'pages' in spec:
+        return list(spec['pages'])
+    return [(None, spec['blocks'])]
 
 
 def starters():

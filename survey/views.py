@@ -2664,9 +2664,13 @@ def sitemap_xml(request):
 		urls.append(f"  <url><loc>{base}/r/{page.slug}/</loc></url>")
 	# Sites (change landing-core): public, published and not held for review.
 	from .models import Site
-	for site in (Site.objects.filter(is_published=True, visibility='public')
-					.exclude(content_reviews__status='pending').only('slug')):
+	# Every page of it (change site-pages); the home page has an empty slug.
+	for site in (Site.objects.filter(is_published=True, visibility='public', is_template=False)
+					.exclude(content_reviews__status='pending').only('slug').prefetch_related('pages')):
 		urls.append(f"  <url><loc>{base}/p/{site.slug}/</loc></url>")
+		for page in sorted(site.pages.all(), key=lambda p: (p.order, p.pk)):
+			if not page.is_home:
+				urls.append(f"  <url><loc>{base}/p/{site.slug}/{page.slug}/</loc></url>")
 	xml = (
 		'<?xml version="1.0" encoding="UTF-8"?>\n'
 		'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '

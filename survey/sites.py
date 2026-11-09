@@ -632,6 +632,105 @@ def unique_slug(title):
     return slug
 
 
+# ─── pages (change site-pages, #628) ──────────────────────────────────────────
+
+PAGES_MAX = 12
+PAGE_TITLE_MAX = 60
+# Segments under /p/<slug>/ that are routes of their own, now or in wave C (updates #629, embed #631).
+RESERVED_PAGE_SLUGS = frozenset({'report', 'events', 'updates', 'embed', 'review', 'feed', 'new', 'edit',
+                                 'admin', 'api', 'static', 'media'})
+
+
+def home_page(site):
+    """The site's home page, created on first need (new sites, and blocks saved with `site=` only)."""
+    from django.utils import translation
+
+    from .models import SitePage
+    page = SitePage.objects.filter(site=site, is_home=True).first()
+    if page is None:
+        with translation.override(site.language or 'en'):
+            title = _('Home')
+        page, _created = SitePage.objects.get_or_create(site=site, is_home=True,
+                                                        defaults={'title': title, 'order': 0})
+    return page
+
+
+def pages_for(site):
+    """The site's pages in order, home first (created when missing)."""
+    pages = list(site.pages.order_by('-is_home', 'order', 'id'))
+    if not pages or not pages[0].is_home:
+        home_page(site)
+        pages = list(site.pages.order_by('-is_home', 'order', 'id'))
+    return pages
+
+
+def page_for(site, slug):
+    """The page `slug` names ('' = home), or None."""
+    if not slug:
+        return home_page(site)
+    return site.pages.filter(slug=slug, is_home=False).first()
+
+
+def page_slug_error(slug, page):
+    """A field error for a page address, or ''."""
+    from .models import SitePage
+    if not (1 <= len(slug) <= SLUG_MAX) or not SLUG_RE.match(slug):
+        return _('Use lowercase letters, digits and dashes.')
+    if slug in RESERVED_PAGE_SLUGS:
+        return _('This address is reserved. Pick another.')
+    if SitePage.objects.filter(site_id=page.site_id, slug=slug, is_home=False).exclude(pk=page.pk).exists():
+        return _('Another page of this site already uses this address.')
+    return ''
+
+
+def unique_page_slug(site, title, exclude=None):
+    from .models import SitePage
+    base = slugify(title)[:SLUG_MAX - 4].strip('-') or 'page'
+    if base in RESERVED_PAGE_SLUGS:
+        base = f'{base}-page'
+    taken = SitePage.objects.filter(site=site, is_home=False)
+    if exclude is not None:
+        taken = taken.exclude(pk=exclude.pk)
+    taken = set(taken.values_list('slug', flat=True))
+    slug, n = base, 2
+    while slug in taken:
+        slug = f'{base}-{n}'
+        n += 1
+    return slug
+
+
+def page_url(site, page, *, lang='', review='', absolute=False):
+    """The address of `page`, keeping a non-primary language and an open review link."""
+    from urllib.parse import urlencode
+
+    from django.urls import reverse
+    if page is None or page.is_home:
+        url = reverse('site_public', args=[site.slug])
+    else:
+        url = reverse('site_page_public', args=[site.slug, page.slug])
+    query = {}
+    if lang and lang != site.language:
+        query['lang'] = lang
+    if review:
+        query['review'] = review
+    if query:
+        url += '?' + urlencode(query)
+    if absolute:
+        from .mail import absolute_url
+        url = absolute_url(url)
+    return url
+
+
+def menu(pages, page, blocks):
+    """What the public menu shows: {'pages': [(page, current)] when two or more pages are in the
+    menu, else [], 'anchors': [(anchor, title)] of the current page's titled blocks}."""
+    listed = [p for p in pages if p.is_home or p.in_menu]
+    return {
+        'pages': [(p, p.pk == page.pk) for p in listed] if len(listed) > 1 else [],
+        'anchors': [(b.anchor, b.title) for b, _card in blocks if b.title and b.in_menu],
+    }
+
+
 # ─── accessibility checks (change site-a11y-lint) ─────────────────────────────
 
 # Link texts that say nothing out of context (WCAG 2.4.4). Lower-case, compared after trimming.
@@ -706,11 +805,11 @@ def rotate_review_salt(site):
 
 def duplicate_site(site, user, title):
     """A new unpublished site that starts as a copy of `site` (change site-duplicate): its settings,
-    survey links, blocks and their files — the stored objects are shared, as when a block is
-    duplicated — but never event registrations. Survey cards and results blocks point at the
+    survey links, pages, blocks on their pages and their files — the stored objects are shared, as
+    when a block is duplicated — but never event registrations. Survey cards and results blocks point at the
     copy's own links. Wave B moves this into the sites service."""
     from django.db import transaction
-    from .models import Site, SiteBlock, SiteFile, SiteSurvey
+    from .models import Site, SiteBlock, SiteFile, SitePage, SiteSurvey
     with transaction.atomic():
         copy = Site.objects.create(
             organization=site.organization, title=title, summary=site.summary, created_by=user,
@@ -718,12 +817,20 @@ def duplicate_site(site, user, title):
             visibility=site.visibility, cover=site.cover.name if site.cover else None,
             cover_alt=site.cover_alt, languages=list(site.languages or []),
             translations=dict(site.translations or {}), translation_sources=dict(site.translation_sources or {}))
-        links, remap, files_remap = {}, {}, {}
+        links, remap, files_remap, pages = {}, {}, {}, {}
         for link in site.survey_links.order_by('order', 'id'):
             links[link.pk] = SiteSurvey.objects.create(site=copy, survey=link.survey, order=link.order)
+        # Pages (change site-pages): same titles, addresses, menu flags and translations, home stays home.
+        page_remap = {}
+        for page in pages_for(site):
+            pages[page.pk] = SitePage.objects.create(
+                site=copy, title=page.title, slug=page.slug, order=page.order, in_menu=page.in_menu,
+                is_home=page.is_home, translations={k: dict(v or {}) for k, v in (page.translations or {}).items()})
+            page_remap[page.pk] = pages[page.pk].pk
         for block in site.blocks.order_by('order', 'id'):
             new = SiteBlock.objects.create(
-                site=copy, kind=block.kind, order=block.order, title=block.title, in_menu=block.in_menu,
+                site=copy, page=pages[block.page_id], kind=block.kind, order=block.order, title=block.title,
+                in_menu=block.in_menu,
                 data=dict(block.data or {}), image=block.image.name if block.image else None,
                 site_survey=links.get(block.site_survey_id))
             tr = {lang: dict(row or {}) for lang, row in (block.translations or {}).items()}
@@ -748,6 +855,8 @@ def duplicate_site(site, user, title):
                 if parts[0] == 'block' and len(parts) == 3 and parts[1].isdigit() and int(parts[1]) in remap:
                     field = files_remap.get(parts[2], parts[2])
                     out[f'block:{remap[int(parts[1])]}:{field}'] = value
+                elif parts[0] == 'page' and len(parts) == 3 and parts[1].isdigit() and int(parts[1]) in page_remap:
+                    out[f'page:{page_remap[int(parts[1])]}:{parts[2]}'] = value
                 elif parts[0] == 'site':
                     out[key] = value
             hashes[lang] = out
@@ -806,8 +915,10 @@ def survey_card(survey, now=None):
 
 # ─── page ─────────────────────────────────────────────────────────────────────
 
-def blocks_for(site):
-    return list(site.blocks.select_related('site_survey__survey').prefetch_related('files')
+def blocks_for(site, page=None):
+    """The blocks of one page (home when `page` is None), in order."""
+    page = page or home_page(site)
+    return list(page.blocks.select_related('site_survey__survey').prefetch_related('files')
                 .order_by('order', 'id'))
 
 
@@ -830,11 +941,11 @@ def block_card(block, now=None, lang='en'):
     return None
 
 
-def page_blocks(site, now=None, lang='en'):
+def page_blocks(site, page=None, now=None, lang='en'):
     """[(block, card-or-None)] as the public page draws them: incomplete blocks dropped,
     survey cards resolved and hidden ones dropped, results without a question dropped."""
     out = []
-    for block in blocks_for(site):
+    for block in blocks_for(site, page):
         if not is_complete(block):
             continue
         card = block_card(block, now=now, lang=lang)
@@ -954,12 +1065,8 @@ def outline_label(block):
     return ''
 
 
-def nav_items(blocks):
-    return [(b.anchor, b.title) for b, _card in blocks if b.title and b.in_menu]
-
-
-def next_order(site):
-    last = site.blocks.order_by('-order').values_list('order', flat=True).first()
+def next_order(page):
+    last = page.blocks.order_by('-order').values_list('order', flat=True).first()
     return 0 if last is None else last + 1
 
 

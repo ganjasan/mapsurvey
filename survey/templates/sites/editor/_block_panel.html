@@ -20,6 +20,18 @@ Hidden until the block is selected; holds the block's whole form (see _block_for
     {% endwith %}
     </fieldset>
   </div>
+  {% if may_edit and other_pages %}
+  <form method="post" action="{% url 'editor_site_block_move' site.uuid b.pk %}" class="lb-card lb-move">
+    {% csrf_token %}
+    <h6><label for="lb-move-{{ b.pk }}">{% trans "Move to page" %}</label></h6>
+    <div class="lb-move-row">
+      <select id="lb-move-{{ b.pk }}" name="page" class="form-control form-control-sm">
+        {% for p in other_pages %}<option value="{{ p.pk }}">{{ p.title }}</option>{% endfor %}
+      </select>
+      <button type="submit" class="lb-btn">{% trans "Move" %}</button>
+    </div>
+  </form>
+  {% endif %}
   {% if may_edit %}
   <div class="lb-pane-foot">
     <form method="post" action="{% url 'editor_site_block_duplicate' site.uuid b.pk %}">{% csrf_token %}<button type="submit" class="lb-link"><i class="far fa-clone" aria-hidden="true"></i> {% trans "Duplicate" %}</button></form>

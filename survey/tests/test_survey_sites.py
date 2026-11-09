@@ -2167,3 +2167,446 @@ class SiteGalleryCompareTest(SiteTestBase):
         self.assertIn('data-file="after"', html)
         self.assertIn('name="columns"', html)
         self.assertEqual(html.count('name="wide"'), 2)
+
+
+class SitePagesTest(SiteTestBase):
+    """Spec `survey-sites`: a site is made of pages (change site-pages, #628; Sites Vision v2 FE-15)."""
+
+    def setUp(self):
+        super().setUp()
+        self.login(self.editor)
+
+    def add_page(self, title=None):
+        from survey.models import SitePage
+        sites.home_page(self.site)
+        before = set(SitePage.objects.filter(site=self.site).values_list('pk', flat=True))
+        r = self.client.post(self.url('editor_site_page_add'))
+        page = SitePage.objects.filter(site=self.site).exclude(pk__in=before).get()
+        if title:
+            self.edit_page(page, title=title, slug=sites.unique_page_slug(self.site, title, exclude=page))
+            page.refresh_from_db()
+        return page, r
+
+    def edit_page(self, page, **values):
+        return self.client.post(self.url('editor_site_page_edit', page.pk), dict(values, autosave='1'))
+
+    def publish(self):
+        self.client.post(self.url('editor_site_publish'), {'action': 'publish'})
+
+    # ─── model ────────────────────────────────────────────────────────────
+
+    def test_new_site_has_one_home_page(self):
+        """GIVEN an editor of a Pro workspace
+        WHEN they create a site with New site
+        THEN it has exactly one page, the home page, and the builder lists no other page"""
+        self.client.post(reverse('editor_site_create'), {'title': 'Old Town square'})
+        site = Site.objects.get(title='Old Town square')
+        self.assertEqual([(p.is_home, p.slug) for p in site.pages.all()], [(True, '')])
+        html = self.client.get(reverse('editor_site', args=[site.uuid])).content.decode()
+        self.assertEqual(html.count(' data-page="'), 1)
+
+    def test_block_without_page_lands_on_home(self):
+        """GIVEN a site
+        WHEN a block is created with only its site
+        THEN it belongs to the home page"""
+        block = SiteBlock.objects.create(site=self.site, kind='text', data={'body': '<p>x</p>'})
+        self.assertTrue(block.page.is_home)
+        self.assertEqual(block.page.site, self.site)
+
+    def test_backfill_creates_a_home_page_per_site(self):
+        """GIVEN a site without any page row (as before the migration)
+        WHEN the migration's backfill runs
+        THEN the site has one home page titled in its language"""
+        import importlib
+        from django.apps import apps
+        from survey.models import SitePage
+        SitePage.objects.filter(site=self.site).delete()
+        Site.objects.filter(pk=self.site.pk).update(language='de')
+        importlib.import_module('survey.migrations.0129_site_pages').create_home_pages(apps, None)
+        home = SitePage.objects.get(site=self.site)
+        self.assertTrue(home.is_home)
+        self.assertEqual(home.title, 'Startseite')
+
+    def test_one_home_per_site(self):
+        """GIVEN a site with its home page
+        WHEN a second home page is written
+        THEN the database refuses it"""
+        from survey.models import SitePage
+        sites.home_page(self.site)
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            SitePage.objects.create(site=self.site, title='Again', is_home=True)
+
+    # ─── builder ──────────────────────────────────────────────────────────
+
+    def test_add_page_in_one_click(self):
+        """GIVEN a one-page site
+        WHEN an editor presses Add page
+        THEN an "Untitled page" at untitled-page is last and the builder opens on it with its settings"""
+        page, r = self.add_page()
+        self.assertEqual((page.title, page.slug, page.is_home), ('Untitled page', 'untitled-page', False))
+        self.assertIn(f'page={page.pk}', r['Location'])
+        self.assertIn(f'select=sitepage%3A{page.pk}', r['Location'])
+        html = self.client.get(r['Location']).content.decode()
+        self.assertIn(f'data-pane="sitepage:{page.pk}"', html)
+        self.assertIn('name="page" value="%d"' % page.pk, html)
+
+    def test_same_title_gets_a_suffix(self):
+        """GIVEN a page "Take part"
+        WHEN a second page is given the same title
+        THEN its address is take-part-2"""
+        first, _r = self.add_page('Take part')
+        self.assertEqual(first.slug, 'take-part')
+        self.assertEqual(sites.unique_page_slug(self.site, 'Take part'), 'take-part-2')
+
+    def test_page_settings_autosave(self):
+        """GIVEN a page
+        WHEN its title, address and menu flag are autosaved, then a reserved, an invalid and a taken address
+        THEN the first answers ok with the title, the others 422 with an address error and keep the address"""
+        page, _r = self.add_page()
+        other, _r = self.add_page('Documents')
+        r = self.edit_page(page, title='Take part', slug='take-part', menu='0')
+        self.assertEqual(r.json()['title'], 'Take part')
+        page.refresh_from_db()
+        self.assertEqual((page.title, page.slug, page.in_menu), ('Take part', 'take-part', False))
+        for bad in ('report', 'events', 'Take Part', other.slug):
+            r = self.edit_page(page, slug=bad)
+            self.assertEqual(r.status_code, 422, bad)
+            self.assertIn('slug', r.json()['errors'])
+        page.refresh_from_db()
+        self.assertEqual(page.slug, 'take-part')
+
+    def test_home_cannot_be_deleted_or_moved(self):
+        """GIVEN a site with a home page and two others
+        WHEN the home page is deleted, or an order that names home is posted
+        THEN both are refused and home stays first; a valid order is applied"""
+        home = sites.home_page(self.site)
+        a, _r = self.add_page('A')
+        b, _r = self.add_page('B')
+        self.assertEqual(self.client.post(self.url('editor_site_page_delete', home.pk)).status_code, 400)
+        url = self.url('editor_site_pages_reorder')
+        bad = self.client.post(url, json.dumps({'order': [b.pk, home.pk, a.pk]}), content_type='application/json')
+        self.assertEqual(bad.status_code, 400)
+        ok = self.client.post(url, json.dumps({'order': [b.pk, a.pk]}), content_type='application/json')
+        self.assertEqual(ok.status_code, 200)
+        self.assertEqual([p.title for p in sites.pages_for(self.site)], [home.title, 'B', 'A'])
+
+    def test_page_limit(self):
+        """GIVEN a site with 12 pages
+        WHEN an editor adds another
+        THEN no page is created"""
+        from survey.models import SitePage
+        for i in range(sites.PAGES_MAX - 1):
+            self.client.post(self.url('editor_site_page_add'))
+        self.assertEqual(SitePage.objects.filter(site=self.site).count(), sites.PAGES_MAX)
+        self.client.post(self.url('editor_site_page_add'))
+        self.assertEqual(SitePage.objects.filter(site=self.site).count(), sites.PAGES_MAX)
+
+    def test_canvas_shows_the_selected_page(self):
+        """GIVEN blocks on Home and on Documents
+        WHEN the builder opens with ?page=<Documents>, and a block is added there
+        THEN only the Documents blocks are on the canvas and the new block belongs to Documents"""
+        self.add_block('text', title='On home', body='<p>Home text</p>')
+        docs, _r = self.add_page('Documents')
+        r = self.add_block('text', title='On docs', body='<p>Docs text</p>', page=docs.pk)
+        self.assertIn(f'page={docs.pk}', r['Location'])
+        self.assertEqual(SiteBlock.objects.get(title='On docs').page, docs)
+        html = self.client.get(self.url('editor_site'), {'page': docs.pk}).content.decode()
+        self.assertIn('Docs text', html)
+        self.assertNotIn('Home text', html)
+
+    def test_page_of_another_site_is_404(self):
+        """GIVEN a page of another site
+        WHEN a block is added to it, a block is moved to it, or the builder opens on it
+        THEN every answer is 404 and nothing moves"""
+        other = Site.objects.create(organization=self.org, title='Other', slug='other-site', created_by=self.owner)
+        foreign = sites.home_page(other)
+        self.add_block('text', body='<p>x</p>')
+        block = self.site.blocks.get()
+        self.assertEqual(self.add_block('text', body='<p>y</p>', page=foreign.pk).status_code, 404)
+        self.assertEqual(self.client.post(self.url('editor_site_block_move', block.pk),
+                                          {'page': foreign.pk}).status_code, 404)
+        self.assertEqual(self.client.get(self.url('editor_site'), {'page': foreign.pk}).status_code, 404)
+        block.refresh_from_db()
+        self.assertTrue(block.page.is_home)
+        self.assertEqual(self.site.blocks.count(), 1)
+
+    def test_reorder_blocks_within_a_page(self):
+        """GIVEN two blocks on Documents and one on Home
+        WHEN the canvas posts the order of the Documents blocks for that page
+        THEN it is applied; an order naming the Home block is refused"""
+        self.add_block('text', body='<p>home</p>')
+        docs, _r = self.add_page('Documents')
+        self.add_block('text', title='one', body='<p>1</p>', page=docs.pk)
+        self.add_block('text', title='two', body='<p>2</p>', page=docs.pk)
+        one, two = SiteBlock.objects.get(title='one'), SiteBlock.objects.get(title='two')
+        home_block = self.site.blocks.exclude(page=docs).get()
+        url = self.url('editor_site_blocks_reorder') + f'?page={docs.pk}'
+        ok = self.client.post(url, json.dumps({'order': [two.pk, one.pk]}), content_type='application/json')
+        self.assertEqual(ok.status_code, 200)
+        self.assertEqual(list(docs.blocks.order_by('order').values_list('title', flat=True)), ['two', 'one'])
+        bad = self.client.post(url, json.dumps({'order': [two.pk, one.pk, home_block.pk]}),
+                               content_type='application/json')
+        self.assertEqual(bad.status_code, 400)
+
+    def test_delete_page_with_blocks_and_registrations(self):
+        """GIVEN a page with a text block and an event with a registration
+        WHEN an editor deletes the page
+        THEN the page, both blocks and the registration are gone and the builder opens on home"""
+        from survey.models import EventRegistration, SitePage
+        page, _r = self.add_page('Take part')
+        self.add_block('text', body='<p>x</p>', page=page.pk)
+        self.add_block('event', date='2030-06-12', start='10:00', tz='UTC', open='1', place='Hall', page=page.pk)
+        event = page.blocks.get(kind='event')
+        EventRegistration.objects.create(block=event, name='Ana', email='ana@example.org')
+        r = self.client.post(self.url('editor_site_page_delete', page.pk))
+        self.assertEqual(r['Location'], self.url('editor_site'))
+        self.assertFalse(SitePage.objects.filter(pk=page.pk).exists())
+        self.assertFalse(self.site.blocks.exists())
+        self.assertFalse(EventRegistration.objects.exists())
+
+    def test_delete_dialog_names_the_blocks(self):
+        """GIVEN a page with two blocks
+        WHEN its settings are rendered
+        THEN Delete page goes through the app's confirm dialog naming the two blocks"""
+        page, _r = self.add_page('Take part')
+        self.add_block('text', body='<p>x</p>', page=page.pk)
+        self.add_block('text', body='<p>y</p>', page=page.pk)
+        html = self.client.get(self.url('editor_site'), {'page': page.pk}).content.decode()
+        self.assertIn('data-confirm="Delete the page', html)
+        self.assertIn('Its 2 blocks go with it', html)
+
+    def test_move_block_to_another_page(self):
+        """GIVEN a documents-like block on Home and a page Documents
+        WHEN the block is moved to Documents from its Settings
+        THEN it is the last block of Documents and Home no longer has it"""
+        docs, _r = self.add_page('Documents')
+        self.add_block('text', title='first', body='<p>1</p>', page=docs.pk)
+        self.add_block('text', title='mover', body='<p>m</p>')
+        mover = SiteBlock.objects.get(title='mover')
+        html = self.client.get(self.url('editor_site'), {'select': mover.pk}).content.decode()
+        self.assertIn('Move to page', html)
+        self.client.post(self.url('editor_site_block_move', mover.pk), {'page': docs.pk})
+        self.assertEqual(list(docs.blocks.order_by('order').values_list('title', flat=True)), ['first', 'mover'])
+        self.assertFalse(sites.home_page(self.site).blocks.exists())
+
+    def test_viewer_cannot_change_pages(self):
+        """GIVEN a viewer and a page
+        WHEN they post to every page endpoint
+        THEN each answer is 403 and nothing changes"""
+        page, _r = self.add_page('Take part')
+        self.login(self.viewer)
+        posts = [self.client.post(self.url('editor_site_page_add')),
+                 self.edit_page(page, title='Hacked'),
+                 self.client.post(self.url('editor_site_pages_reorder'), json.dumps({'order': [page.pk]}),
+                                  content_type='application/json'),
+                 self.client.post(self.url('editor_site_page_delete', page.pk))]
+        self.assertEqual([r.status_code for r in posts], [403] * 4)
+        page.refresh_from_db()
+        self.assertEqual(page.title, 'Take part')
+        self.assertEqual(self.site.pages.count(), 2)
+
+    # ─── public page ──────────────────────────────────────────────────────
+
+    def _three_pages(self):
+        self.add_block('text', title='Welcome', body='<p>Home body</p>')
+        take, _r = self.add_page('Take part')
+        self.add_block('text', title='Why', body='<p>Take part body</p>', page=take.pk)
+        self.add_block('text', title='How', body='<p>How body</p>', page=take.pk)
+        docs, _r = self.add_page('Documents')
+        self.add_block('text', title='Files', body='<p>Docs body</p>', page=docs.pk)
+        return take, docs
+
+    def test_one_page_keeps_the_block_menu(self):
+        """GIVEN a published one-page site with two titled blocks
+        WHEN it is opened
+        THEN the menu lists the block anchors and no page links"""
+        self.add_block('text', title='About', body='<p>a</p>')
+        self.add_block('text', title='Plan', body='<p>b</p>')
+        self.publish()
+        html = self.client.get('/p/riverside-park-plan/').content.decode()
+        self.assertIn('class="lp-anchors"', html)
+        self.assertNotIn('class="lp-pages"', html)
+
+    def test_several_pages(self):
+        """GIVEN a published site with Home, Take part and Documents
+        WHEN a visitor opens /p/<slug>/take-part/
+        THEN the menu lists the three pages with Take part current, only its blocks are drawn, the heading
+             and the <title> name the page, and the anchors line lists its two blocks"""
+        take, docs = self._three_pages()
+        self.publish()
+        self.client.logout()
+        r = self.client.get('/p/riverside-park-plan/take-part/')
+        self.assertEqual(r.status_code, 200)
+        html = r.content.decode()
+        self.assertIn('href="/p/riverside-park-plan/take-part/" aria-current="page"', html)
+        self.assertIn('href="/p/riverside-park-plan/documents/"', html)
+        self.assertIn('href="/p/riverside-park-plan/"', html)
+        self.assertIn('Take part body', html)
+        self.assertNotIn('Home body', html)
+        self.assertNotIn('Docs body', html)
+        self.assertIn('<h1>Take part</h1>', html)
+        self.assertIn('<title>Take part · Riverside Park plan</title>', html)
+        self.assertIn('class="lp-anchors"', html)
+        home = self.client.get('/p/riverside-park-plan/').content.decode()
+        self.assertIn('Home body', home)
+        self.assertIn('<h1>Riverside Park plan</h1>', home)
+
+    def test_hidden_page_and_unknown_page(self):
+        """GIVEN a page with the menu flag off
+        WHEN the site is opened, the hidden page is opened, and an unknown page is requested
+        THEN the menu leaves it out, its address renders it, and the unknown page is the unavailable 404"""
+        take, docs = self._three_pages()
+        self.edit_page(docs, menu='0')
+        self.publish()
+        self.client.logout()
+        home = self.client.get('/p/riverside-park-plan/').content.decode()
+        self.assertNotIn('/p/riverside-park-plan/documents/', home)
+        self.assertContains(self.client.get('/p/riverside-park-plan/documents/'), 'Docs body')
+        self.assertEqual(self.client.get('/p/riverside-park-plan/no-such-page/').status_code, 404)
+
+    def test_draft_and_unlisted_pages(self):
+        """GIVEN a draft site with a second page
+        WHEN an anonymous visitor opens the page, then the site is published unlisted
+        THEN the draft page is 404, and the unlisted page carries noindex"""
+        take, _docs = self._three_pages()
+        self.client.logout()
+        self.assertEqual(self.client.get('/p/riverside-park-plan/take-part/').status_code, 404)
+        Site.objects.filter(pk=self.site.pk).update(is_published=True, visibility='unlisted')
+        self.assertContains(self.client.get('/p/riverside-park-plan/take-part/'),
+                            '<meta name="robots" content="noindex">')
+
+    def test_language_and_review_link_travel(self):
+        """GIVEN a site offered in Spanish with a translated page title, and a draft review link
+        WHEN a visitor reads ?lang=es, and a client opens the review link
+        THEN the menu reads the Spanish title and its links keep lang=es, and the review token rides every link"""
+        take, _docs = self._three_pages()
+        self.client.post(self.url('editor_site_translation_add_language'), {'language': 'es'})
+        self.client.post(self.url('editor_site_translation_save'),
+                         {'key': f'page:{take.pk}:title', 'value': 'Participa', 'from': 'en', 'to': 'es'})
+        self.site.refresh_from_db()
+        token = sites.review_token(self.site)
+        self.client.logout()
+        review = self.client.get('/p/riverside-park-plan/', {'review': token}).content.decode()
+        self.assertIn(f'/p/riverside-park-plan/take-part/?review={token}', review.replace('%3A', ':'))
+        Site.objects.filter(pk=self.site.pk).update(is_published=True)
+        es = self.client.get('/p/riverside-park-plan/', {'lang': 'es'}).content.decode()
+        self.assertIn('href="/p/riverside-park-plan/take-part/?lang=es">Participa</a>', es)
+
+    def test_event_returns_to_its_page(self):
+        """GIVEN an open event block on the page Take part
+        WHEN a resident registers
+        THEN the browser goes back to /p/<slug>/take-part/ with the block's anchor"""
+        from unittest import mock
+        take, _r = self.add_page('Take part')
+        future = (timezone.now() + timedelta(days=10)).date().isoformat()
+        self.add_block('event', title='Open house', date=future, start='18:00', tz='UTC', place='Hall',
+                       open='1', page=take.pk)
+        block = take.blocks.get()
+        self.publish()
+        self.client.logout()
+        with mock.patch('survey.tasks.send_event_confirmation.delay'):
+            r = self.client.post(reverse('site_event_register', args=[self.site.slug, block.pk]),
+                                 {'name': 'Ana', 'email': 'ana@example.org', 'consent': '1'})
+        self.assertTrue(r['Location'].startswith('/p/riverside-park-plan/take-part/?registered='), r['Location'])
+        self.assertTrue(r['Location'].endswith(f'#b-{block.pk}'))
+
+    def test_sitemap_lists_every_page(self):
+        """GIVEN a public published site with three pages
+        WHEN the sitemap is built
+        THEN it lists the home page and the two others"""
+        self._three_pages()
+        self.publish()
+        xml = self.client.get('/sitemap.xml').content.decode()
+        self.assertIn('/p/riverside-park-plan/</loc>', xml)
+        self.assertIn('/p/riverside-park-plan/take-part/</loc>', xml)
+        self.assertIn('/p/riverside-park-plan/documents/</loc>', xml)
+
+    # ─── copies, starters, translations, screening ────────────────────────
+
+    def test_duplicate_copies_pages(self):
+        """GIVEN a site with three pages, blocks on each and a Spanish page title
+        WHEN it is duplicated
+        THEN the copy has the same pages, addresses, Spanish title and blocks on the same pages"""
+        take, docs = self._three_pages()
+        self.client.post(self.url('editor_site_translation_add_language'), {'language': 'es'})
+        self.client.post(self.url('editor_site_translation_save'),
+                         {'key': f'page:{take.pk}:title', 'value': 'Participa', 'from': 'en', 'to': 'es'})
+        self.client.post(self.url('editor_site_duplicate'))
+        copy = Site.objects.exclude(pk=self.site.pk).get()
+        pages = sites.pages_for(copy)
+        self.assertEqual([(p.is_home, p.slug) for p in pages], [(True, ''), (False, 'take-part'), (False, 'documents')])
+        self.assertEqual(pages[1].translations['es']['title'], 'Participa')
+        self.assertEqual(list(pages[1].blocks.values_list('title', flat=True)), ['Why', 'How'])
+        self.assertIn(f'page:{pages[1].pk}:title', copy.translation_sources['es'])
+
+    def test_template_keeps_pages(self):
+        """GIVEN a site with three pages saved as a template
+        WHEN a new site is started from the template
+        THEN it has the same three pages with their blocks"""
+        self._three_pages()
+        self.client.post(self.url('editor_site_save_template'))
+        template = Site.objects.get(is_template=True)
+        self.client.post(reverse('editor_site_create'), {'template': f'site:{template.uuid}'})
+        new = Site.objects.exclude(pk__in=[self.site.pk, template.pk]).get()
+        self.assertEqual([p.slug for p in sites.pages_for(new)], ['', 'take-part', 'documents'])
+        self.assertEqual(sites.pages_for(new)[2].blocks.get().title, 'Files')
+
+    def test_municipal_starter(self):
+        """GIVEN the Sites list
+        WHEN an editor picks the Municipal site starter
+        THEN a draft opens with About (home), Take part, Documents and News, each with its starter blocks"""
+        self.assertContains(self.client.get(reverse('editor_sites')), 'value="starter:municipal"')
+        self.client.post(reverse('editor_site_create'), {'template': 'starter:municipal'})
+        site = Site.objects.exclude(pk=self.site.pk).get()
+        pages = sites.pages_for(site)
+        self.assertEqual([(p.title, p.slug) for p in pages],
+                         [('About', ''), ('Take part', 'take-part'), ('Documents', 'documents'), ('News', 'news')])
+        self.assertEqual(list(pages[1].blocks.values_list('kind', flat=True)), ['survey', 'event'])
+        self.assertEqual(list(pages[2].blocks.values_list('kind', flat=True)), ['documents', 'map'])
+        self.assertTrue(pages[0].blocks.filter(kind='timeline').exists())
+
+    def test_page_titles_on_the_translations_tab(self):
+        """GIVEN a two-page site offered in Spanish
+        WHEN the Translations tab opens, and the page title changes after its translation was written
+        THEN the page title is a row, and that row reads outdated"""
+        from survey import site_translations as st
+        take, _docs = self._three_pages()
+        self.client.post(self.url('editor_site_translation_add_language'), {'language': 'es'})
+        html = self.client.get(self.url('editor_site_translations')).content.decode()
+        self.assertIn(f'data-occ="page:{take.pk}:title"', html)
+        self.client.post(self.url('editor_site_translation_save'),
+                         {'key': f'page:{take.pk}:title', 'value': 'Participa', 'from': 'en', 'to': 'es'})
+        self.edit_page(take, title='Have your say')
+        self.site.refresh_from_db()
+        occ = next(o for o in st.occurrences(self.site, 'es') if o.key == f'page:{take.pk}:title')
+        self.assertEqual(occ.status, 'stale')
+
+    def test_page_titles_are_screened(self):
+        """GIVEN a page titled with a lure and its translation
+        WHEN the site's text is collected for screening
+        THEN both are in it"""
+        from survey.content_screening import collect_site_text
+        page, _r = self.add_page('Verify your XFINITY account')
+        page.translations = {'es': {'title': 'Verifique su cuenta'}}
+        page.save()
+        texts = [t for _k, t in collect_site_text(self.site).texts]
+        self.assertIn('Verify your XFINITY account', texts)
+        self.assertIn('Verifique su cuenta', texts)
+
+    def test_canvas_shows_the_page_menu(self):
+        """GIVEN a site with pages Home, Take part and Documents, and a one-page site
+        WHEN the builder opens on Take part, and on the one-page site
+        THEN the canvas carries the page menu with Take part current and links into the builder, and the
+             one-page site's canvas has no page menu"""
+        take, docs = self._three_pages()
+        html = self.client.get(self.url('editor_site'), {'page': take.pk}).content.decode()
+        nav = html[html.index('class="lp-nav lb-canvas-nav"'):]
+        nav = nav[:nav.index('</nav>')]
+        builder = self.url('editor_site')
+        self.assertIn(f'href="{builder}?page={take.pk}" data-page-tab="{take.pk}" aria-current="page"', nav)
+        self.assertIn(f'href="{builder}?page={docs.pk}"', nav)
+        self.assertIn(f'href="{builder}" data-page-tab=', nav)
+        self.assertNotIn('/p/riverside-park-plan/', nav)
+        lone = Site.objects.create(organization=self.org, title='Lone', slug='lone-site', created_by=self.owner)
+        html = self.client.get(reverse('editor_site', args=[lone.uuid])).content.decode()
+        self.assertNotIn('lb-canvas-nav', html)

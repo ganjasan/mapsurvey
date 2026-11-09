@@ -23,7 +23,7 @@ button; only the POST cancels — mail scanners open links.{% endcomment %}
       <button type="submit" class="lp-btn">{% trans "Cancel my registration" %}</button>
     </form>
     {% endif %}
-    <p style="margin-top:24px;"><a href="{% url 'site_public' site.slug %}">{% trans "Back to the project site" %}</a></p>
+    <p style="margin-top:24px;"><a href="{{ back_url }}">{% trans "Back to the project site" %}</a></p>
   </main>
 </body>
 </html>

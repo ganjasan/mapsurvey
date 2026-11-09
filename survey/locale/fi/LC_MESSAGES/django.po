@@ -12436,3 +12436,122 @@ msgstr "Jälkeen"
 #: site-gallery-compare
 msgid "Slide to compare"
 msgstr "Vertaa liu’uttamalla"
+
+#: site-pages
+msgid "Use lowercase letters, digits and dashes."
+msgstr "Käytä pieniä kirjaimia, numeroita ja yhdysmerkkejä."
+
+#: site-pages
+msgid "Another page of this site already uses this address."
+msgstr "Toinen tämän sivuston sivu käyttää jo tätä osoitetta."
+
+#: site-pages
+msgid "Pick a page of this site."
+msgstr "Valitse tämän sivuston sivu."
+
+#: site-pages
+msgid "A site can have at most %(n)d pages."
+msgstr "Sivustolla voi olla enintään %(n)d sivua."
+
+#: site-pages
+msgid "Untitled page"
+msgstr "Nimetön sivu"
+
+#: site-pages
+msgid "Give the page a title."
+msgstr "Anna sivulle otsikko."
+
+#: site-pages
+msgid "The home page can’t be deleted."
+msgstr "Etusivua ei voi poistaa."
+
+#: site-pages
+msgid "Municipal site"
+msgstr "Kunnan sivusto"
+
+#: site-pages
+msgid "A council programme with pages: About, Take part, Documents and News."
+msgstr "Kunnan ohjelma sivuineen: Tietoa, Osallistu, Asiakirjat ja Uutiset."
+
+#: site-pages
+msgid "About"
+msgstr "Tietoa"
+
+#: site-pages
+msgid "<p>What the council plans, why it asks residents, and what is already decided.</p>"
+msgstr "<p>Mitä kunta suunnittelee, miksi se kysyy asukkailta ja mitä on jo päätetty.</p>"
+
+#: site-pages
+msgid "News"
+msgstr "Uutiset"
+
+#: site-pages
+msgid "<p>The latest from the project: what changed, and what comes next.</p>"
+msgstr "<p>Hankkeen uusimmat: mikä muuttui ja mitä seuraavaksi.</p>"
+
+#: site-pages
+msgid "Site pages"
+msgstr "Sivuston sivut"
+
+#: site-pages
+msgid "Not in the menu"
+msgstr "Ei valikossa"
+
+#: site-pages
+msgid "A site can have at most 12 pages."
+msgstr "Sivustolla voi olla enintään 12 sivua."
+
+#: site-pages
+msgid "Add page"
+msgstr "Lisää sivu"
+
+#: site-pages
+msgid "Home page"
+msgstr "Etusivu"
+
+#: site-pages
+msgid "Shown in the menu and as the page's heading."
+msgstr "Näkyy valikossa ja sivun otsikkona."
+
+#: site-pages
+msgid "Shown in the menu once the site has a second page."
+msgstr "Näkyy valikossa, kun sivustolla on toinen sivu."
+
+#: site-pages
+msgid "Links and QR codes already shared stop working when the address changes."
+msgstr "Jo jaetut linkit ja QR-koodit lakkaavat toimimasta, kun osoite muuttuu."
+
+#: site-pages
+msgid "Show in the menu"
+msgstr "Näytä valikossa"
+
+#: site-pages
+msgid "The home page opens at the site's address and is always first in the menu."
+msgstr "Etusivu avautuu sivuston osoitteessa ja on valikossa aina ensimmäisenä."
+
+#: site-pages
+msgid "Delete the page “%(title)s”?"
+msgstr "Poistetaanko sivu ”%(title)s”?"
+
+#: site-pages
+msgid "Delete page"
+msgstr "Poista sivu"
+
+#: site-pages
+msgid "The page is empty. Its address stops working."
+msgstr "Sivu on tyhjä. Sen osoite lakkaa toimimasta."
+
+#: site-pages
+msgid "Move to page"
+msgstr "Siirrä sivulle"
+
+#: site-pages
+msgid "Move"
+msgstr "Siirrä"
+
+#: site-pages
+msgid "Its %(n)s block goes with it, with its files and event registrations. This cannot be undone."
+msgid_plural "Its %(n)s blocks go with it, with their files and event registrations. This cannot be undone."
+msgstr[0] "Sen %(n)s lohko poistetaan tiedostoineen ja ilmoittautumisineen. Tätä ei voi perua."
+msgstr[1] "Sen %(n)s lohkoa poistetaan tiedostoineen ja ilmoittautumisineen. Tätä ei voi perua."
+

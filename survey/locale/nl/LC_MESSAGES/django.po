@@ -12474,3 +12474,121 @@ msgstr "Na"
 #: site-gallery-compare
 msgid "Slide to compare"
 msgstr "Schuif om te vergelijken"
+
+#: site-pages
+msgid "Use lowercase letters, digits and dashes."
+msgstr "Gebruik kleine letters, cijfers en streepjes."
+
+#: site-pages
+msgid "Another page of this site already uses this address."
+msgstr "Een andere pagina van deze site gebruikt dit adres al."
+
+#: site-pages
+msgid "Pick a page of this site."
+msgstr "Kies een pagina van deze site."
+
+#: site-pages
+msgid "A site can have at most %(n)d pages."
+msgstr "Een site kan maximaal %(n)d pagina’s hebben."
+
+#: site-pages
+msgid "Untitled page"
+msgstr "Naamloze pagina"
+
+#: site-pages
+msgid "Give the page a title."
+msgstr "Geef de pagina een titel."
+
+#: site-pages
+msgid "The home page can’t be deleted."
+msgstr "De startpagina kan niet worden verwijderd."
+
+#: site-pages
+msgid "Municipal site"
+msgstr "Gemeentelijke site"
+
+#: site-pages
+msgid "A council programme with pages: About, Take part, Documents and News."
+msgstr "Een gemeentelijk programma met pagina’s: Over, Doe mee, Documenten en Nieuws."
+
+#: site-pages
+msgid "About"
+msgstr "Over"
+
+#: site-pages
+msgid "<p>What the council plans, why it asks residents, and what is already decided.</p>"
+msgstr "<p>Wat de gemeente van plan is, waarom ze het de inwoners vraagt en wat al vaststaat.</p>"
+
+#: site-pages
+msgid "News"
+msgstr "Nieuws"
+
+#: site-pages
+msgid "<p>The latest from the project: what changed, and what comes next.</p>"
+msgstr "<p>Het laatste nieuws van het project: wat er veranderde en wat er komt.</p>"
+
+#: site-pages
+msgid "Site pages"
+msgstr "Pagina’s van de site"
+
+#: site-pages
+msgid "Not in the menu"
+msgstr "Niet in het menu"
+
+#: site-pages
+msgid "A site can have at most 12 pages."
+msgstr "Een site kan maximaal 12 pagina’s hebben."
+
+#: site-pages
+msgid "Add page"
+msgstr "Pagina toevoegen"
+
+#: site-pages
+msgid "Home page"
+msgstr "Startpagina"
+
+#: site-pages
+msgid "Shown in the menu and as the page's heading."
+msgstr "Staat in het menu en als kop van de pagina."
+
+#: site-pages
+msgid "Shown in the menu once the site has a second page."
+msgstr "Staat in het menu zodra de site een tweede pagina heeft."
+
+#: site-pages
+msgid "Links and QR codes already shared stop working when the address changes."
+msgstr "Al gedeelde links en QR-codes werken niet meer als het adres verandert."
+
+#: site-pages
+msgid "Show in the menu"
+msgstr "Tonen in het menu"
+
+#: site-pages
+msgid "The home page opens at the site's address and is always first in the menu."
+msgstr "De startpagina opent op het adres van de site en staat altijd als eerste in het menu."
+
+#: site-pages
+msgid "Delete the page “%(title)s”?"
+msgstr "De pagina ‘%(title)s’ verwijderen?"
+
+#: site-pages
+msgid "Delete page"
+msgstr "Pagina verwijderen"
+
+#: site-pages
+msgid "The page is empty. Its address stops working."
+msgstr "De pagina is leeg. Het adres werkt daarna niet meer."
+
+#: site-pages
+msgid "Move to page"
+msgstr "Verplaatsen naar pagina"
+
+#: site-pages
+msgid "Move"
+msgstr "Verplaatsen"
+
+#: site-pages
+msgid "Its %(n)s block goes with it, with its files and event registrations. This cannot be undone."
+msgid_plural "Its %(n)s blocks go with it, with their files and event registrations. This cannot be undone."
+msgstr[0] "Het %(n)s blok gaat mee, met bestanden en aanmeldingen. Dit kan niet ongedaan worden gemaakt."
+msgstr[1] "De %(n)s blokken gaan mee, met bestanden en aanmeldingen. Dit kan niet ongedaan worden gemaakt."

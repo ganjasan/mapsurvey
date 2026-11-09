@@ -8,13 +8,13 @@ only the keys sites.clean_block stores.{% endcomment %}
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ site.title }}</title>
+  <title>{% if not page.is_home %}{{ page.title }} · {% endif %}{{ site.title }}</title>
   {% if site.summary %}<meta name="description" content="{{ site.summary }}">{% endif %}
   {% if noindex %}<meta name="robots" content="noindex">{% else %}<link rel="canonical" href="{{ page_url }}">{% endif %}
   {% if site_languages and not noindex %}{% for code, name in site_languages %}<link rel="alternate" hreflang="{{ code }}" href="{{ base_url }}{% if not forloop.first %}?lang={{ code }}{% endif %}">
   {% endfor %}<link rel="alternate" hreflang="x-default" href="{{ base_url }}">{% endif %}
   <meta property="og:type" content="website">
-  <meta property="og:title" content="{{ site.title }}">
+  <meta property="og:title" content="{% if not page.is_home %}{{ page.title }} · {% endif %}{{ site.title }}">
   {% if site.summary %}<meta property="og:description" content="{{ site.summary }}">{% endif %}
   <meta property="og:url" content="{{ page_url }}">
   {% if site.cover %}<meta property="og:image" content="{{ site.cover.url }}"><meta name="twitter:card" content="summary_large_image">{% endif %}
@@ -36,8 +36,10 @@ only the keys sites.clean_block stores.{% endcomment %}
   </div>
   {% endif %}
 
-  <header class="lp-hero{% if site.cover %} lp-hero--cover{% endif %}">
-    {% if site.cover %}<img class="lp-hero-img" src="{{ site.cover.url }}" alt="{{ site.cover_alt }}">{% endif %}
+  {% comment %}The home page carries the hero; every other page (change site-pages) a compact header:
+  the brand, the site title linking home, the page title as the main heading. No cover.{% endcomment %}
+  <header class="lp-hero{% if not page.is_home %} lp-hero--page{% elif site.cover %} lp-hero--cover{% endif %}">
+    {% if page.is_home and site.cover %}<img class="lp-hero-img" src="{{ site.cover.url }}" alt="{{ site.cover_alt }}">{% endif %}
     {% if site_languages %}
     <nav class="lp-langs" aria-label="{% trans 'Language' %}">
       {% for code, name in site_languages %}<a href="?lang={{ code }}{% if review %}&amp;review={{ request.GET.review|urlencode }}{% endif %}" hreflang="{{ code }}" lang="{{ code }}"{% if code == lang %} aria-current="true" class="on"{% endif %}>{{ name }}</a>{% endfor %}
@@ -45,17 +47,33 @@ only the keys sites.clean_block stores.{% endcomment %}
     {% endif %}
     <div class="lp-wrap lp-hero-text">
       <p class="lp-org">{% if brand.logo_url %}<img class="lp-logo" src="{{ brand.logo_url }}" alt="">{% endif %}{{ brand.name }}</p>
+      {% if page.is_home %}
       <h1>{{ site.title }}</h1>
       {% if site.summary %}<p class="lp-summary">{{ site.summary }}</p>{% endif %}
+      {% else %}
+      <p class="lp-site-link"><a href="{{ home_url }}">{{ site.title }}</a></p>
+      <h1>{{ page.title }}</h1>
+      {% endif %}
     </div>
   </header>
 
-  {% if nav|length > 1 %}
-  <nav class="lp-nav" aria-label="{% trans 'On this page' %}">
-    <div class="lp-wrap">
-      {% for anchor, title in nav %}<a href="#{{ anchor }}">{{ title }}</a>{% endfor %}
-    </div>
-  </nav>
+  {% if pages_menu or nav|length > 1 %}
+  <div class="lp-nav">
+    {% if pages_menu %}
+    <nav class="lp-pages" aria-label="{% trans 'Site pages' %}">
+      <div class="lp-wrap">
+        {% for p, on in pages_menu %}<a href="{{ p.url }}"{% if on %} aria-current="page" class="on"{% endif %}>{{ p.title }}</a>{% endfor %}
+      </div>
+    </nav>
+    {% endif %}
+    {% if nav|length > 1 %}
+    <nav class="lp-anchors" aria-label="{% trans 'On this page' %}">
+      <div class="lp-wrap">
+        {% for anchor, title in nav %}<a href="#{{ anchor }}">{{ title }}</a>{% endfor %}
+      </div>
+    </nav>
+    {% endif %}
+  </div>
   {% endif %}
 
   <div class="lp-stage">

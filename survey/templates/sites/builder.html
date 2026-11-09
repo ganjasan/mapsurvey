@@ -26,7 +26,8 @@ of the selected block, or of the page. Everything autosaves (site_builder.js); a
 delete are plain posts that come back with the block selected. Read-only for viewers and a lapsed
 workspace (may_edit false).{% endcomment %}
 <div class="lb{% if not may_edit %} lb-readonly{% endif %}" id="lb"
-     data-reorder-url="{% url 'editor_site_blocks_reorder' site.uuid %}"
+     data-reorder-url="{% url 'editor_site_blocks_reorder' site.uuid %}?page={{ current_page.pk }}"
+     data-pages-reorder-url="{% url 'editor_site_pages_reorder' site.uuid %}"
      data-settings-url="{% url 'editor_site_settings' site.uuid %}"
      data-may-edit="{{ may_edit|yesno:'1,' }}" data-selected="{{ selected|default:'page' }}">
 
@@ -44,7 +45,7 @@ workspace (may_edit false).{% endcomment %}
     <div class="lb-top-right">
       {% if may_edit %}<span class="lb-saved" id="lb-saved" aria-live="polite"><i class="fas fa-check-circle" aria-hidden="true"></i> <span>{% trans "All changes saved" %}</span></span>{% endif %}
       <a class="lb-btn" href="{% url 'editor_site_translations' site.uuid %}" id="site-translations" title="{% trans 'Translations' %}"><i class="fas fa-language" aria-hidden="true"></i> {% trans "Translations" %}{% if site.languages %} <small class="text-muted">{{ site.languages|length|add:1 }}</small>{% endif %}</a>
-      <a class="lb-btn" href="{% url 'site_public' site.slug %}" target="_blank" rel="noopener" id="site-preview"><i class="far fa-eye" aria-hidden="true"></i> {% if site.is_published %}{% trans "Open site" %}{% else %}{% trans "Preview" %}{% endif %}</a>
+      <a class="lb-btn" href="{% if current_page.is_home %}{% url 'site_public' site.slug %}{% else %}{% url 'site_page_public' site.slug current_page.slug %}{% endif %}" target="_blank" rel="noopener" id="site-preview"><i class="far fa-eye" aria-hidden="true"></i> {% if site.is_published %}{% trans "Open site" %}{% else %}{% trans "Preview" %}{% endif %}</a>
       {% if can_act and not site.is_template %}
       <div class="lb-pub">
         <button type="button" class="lb-btn{% if not site.is_published %} lb-primary{% endif %}" id="lb-pub-btn" aria-haspopup="dialog" aria-expanded="false">
@@ -106,6 +107,7 @@ workspace (may_edit false).{% endcomment %}
 
   <div class="lb-work">
     <aside class="lb-rail" aria-label="{% trans 'Blocks on the page' %}">
+      {% include "sites/editor/_page_tabs.html" %}
       <div class="lb-rail-head">{% trans "Blocks" %}</div>
       <ul class="lb-outline">
         <li class="lb-oi lb-oi-page{% if not selected or selected == 'page' %} on{% endif %}" data-select-target="page" tabindex="0"><i class="fas fa-heading lb-oi-k" aria-hidden="true"></i><span class="lb-oi-t">{% trans "Title and cover" %}</span></li>
@@ -118,7 +120,25 @@ workspace (may_edit false).{% endcomment %}
 
     <main class="lb-canvas" id="lb-canvas">
       <div class="lb-frame" id="lb-frame" data-width="{{ site.width }}"{% if brand.custom_accent %} style="--lp-accent: {{ brand.accent }};"{% endif %}>
-        {% include "sites/editor/_hero.html" %}
+        {% if current_page.is_home %}{% include "sites/editor/_hero.html" %}{% else %}
+        <header class="lp-hero lp-hero--page lb-hero lb-hero--page" data-select-target="sitepage:{{ current_page.pk }}" id="lb-page-head">
+          <div class="lp-wrap lp-hero-text">
+            <p class="lp-org">{% if brand.logo_url %}<img class="lp-logo" src="{{ brand.logo_url }}" alt="">{% endif %}{{ brand.name }}</p>
+            <p class="lp-site-link"><a href="{% url 'editor_site' site.uuid %}">{{ site.title }}</a></p>
+            <h1 data-page-title="{{ current_page.pk }}">{{ current_page.title }}</h1>
+          </div>
+        </header>{% endif %}
+        {% if canvas_pages %}
+        {% comment %}The public page menu (change site-pages), drawn as visitors see it; a link opens that
+        page HERE (site_builder.js lets .lb-canvas-nav links through).{% endcomment %}
+        <div class="lp-nav lb-canvas-nav">
+          <nav class="lp-pages" aria-label="{% trans 'Site pages' %}">
+            <div class="lp-wrap">
+              {% for p, on in canvas_pages %}<a href="{% url 'editor_site' site.uuid %}{% if not p.is_home %}?page={{ p.pk }}{% endif %}" data-page-tab="{{ p.pk }}"{% if on %} aria-current="page" class="on"{% endif %}>{{ p.title }}</a>{% endfor %}
+            </div>
+          </nav>
+        </div>
+        {% endif %}
         <div class="lp-wrap lb-blocks" id="lb-blocks">
           {% if may_edit %}<div class="lb-ins" data-add-after="top"><button type="button" title="{% trans 'Add block here' %}" aria-label="{% trans 'Add block here' %}">+</button></div>{% endif %}
           {% for b in blocks %}
@@ -138,6 +158,7 @@ workspace (may_edit false).{% endcomment %}
 
     <aside class="lb-panel" id="lb-panel" aria-label="{% trans 'Settings' %}">
       {% include "sites/editor/_page_panel.html" %}
+      {% include "sites/editor/_sitepage_panel.html" %}
       {% for b in blocks %}{% with item=items|get_item:b.pk %}{% include "sites/editor/_block_panel.html" %}{% endwith %}{% endfor %}
     </aside>
   </div>
@@ -157,4 +178,5 @@ window.LB_TEXT = {saving: '{% trans "Saving…" as t %}{{ t|escapejs }}', saved:
 <script src="{% static 'js/site_confirm.js' %}"></script>
 <script src="{% static 'js/site_media.js' %}"></script>
 <script src="{% static 'js/site_builder.js' %}"></script>
+<script src="{% static 'js/site_pages.js' %}"></script>
 {% endblock %}

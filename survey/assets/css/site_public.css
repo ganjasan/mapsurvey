@@ -28,6 +28,18 @@ body.lp { margin: 0; font: 17px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI
 .lp-nav .lp-wrap::-webkit-scrollbar { display: none; }
 .lp-nav a { color: var(--lp-muted); text-decoration: none; }
 .lp-nav a:hover { color: var(--lp-accent); }
+/* Pages (change site-pages): the page menu, then the current page's anchors as a second line. */
+.lp-nav > nav > .lp-wrap { display: flex; gap: 18px; overflow-x: auto; white-space: nowrap; padding-top: 10px; padding-bottom: 10px; font-size: 15px; scrollbar-width: none; }
+.lp-nav > nav > .lp-wrap::-webkit-scrollbar { display: none; }
+.lp-pages a { color: var(--lp-ink); font-weight: 600; padding-bottom: 2px; border-bottom: 2px solid transparent; }
+.lp-pages a.on { color: var(--lp-accent); border-bottom-color: var(--lp-accent); }
+.lp-pages + .lp-anchors { border-top: 1px solid var(--lp-line); }
+.lp-pages + .lp-anchors .lp-wrap { font-size: 14px; padding-top: 6px; padding-bottom: 6px; }
+.lp-hero--page { padding: 28px 0 22px; }
+.lp-hero--page h1 { font-size: clamp(24px, 5vw, 36px); }
+.lp-site-link { margin: 0 0 4px; font-size: 15px; }
+.lp-site-link a { color: var(--lp-muted); text-decoration: none; }
+.lp-site-link a:hover { color: var(--lp-accent); text-decoration: underline; }
 .lp-main { padding-top: 12px; padding-bottom: 48px; }
 .lp-block { padding: 24px 0; scroll-margin-top: 56px; }
 .lp-block h2 { font-size: 24px; margin: 0 0 12px; }

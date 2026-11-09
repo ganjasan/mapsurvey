@@ -12415,3 +12415,122 @@ msgstr "Pärast"
 #: site-gallery-compare
 msgid "Slide to compare"
 msgstr "Libistage võrdlemiseks"
+
+#: site-pages
+msgid "Use lowercase letters, digits and dashes."
+msgstr "Kasuta väiketähti, numbreid ja sidekriipse."
+
+#: site-pages
+msgid "Another page of this site already uses this address."
+msgstr "Selle saidi teine leht kasutab juba seda aadressi."
+
+#: site-pages
+msgid "Pick a page of this site."
+msgstr "Vali selle saidi leht."
+
+#: site-pages
+msgid "A site can have at most %(n)d pages."
+msgstr "Saidil võib olla kuni %(n)d lehte."
+
+#: site-pages
+msgid "Untitled page"
+msgstr "Pealkirjata leht"
+
+#: site-pages
+msgid "Give the page a title."
+msgstr "Anna lehele pealkiri."
+
+#: site-pages
+msgid "The home page can’t be deleted."
+msgstr "Avalehte ei saa kustutada."
+
+#: site-pages
+msgid "Municipal site"
+msgstr "Omavalitsuse sait"
+
+#: site-pages
+msgid "A council programme with pages: About, Take part, Documents and News."
+msgstr "Omavalitsuse programm lehtedega: Projektist, Osale, Dokumendid ja Uudised."
+
+#: site-pages
+msgid "About"
+msgstr "Projektist"
+
+#: site-pages
+msgid "<p>What the council plans, why it asks residents, and what is already decided.</p>"
+msgstr "<p>Mida omavalitsus kavandab, miks ta elanikelt küsib ja mis on juba otsustatud.</p>"
+
+#: site-pages
+msgid "News"
+msgstr "Uudised"
+
+#: site-pages
+msgid "<p>The latest from the project: what changed, and what comes next.</p>"
+msgstr "<p>Viimased uudised projektist: mis muutus ja mis tuleb järgmisena.</p>"
+
+#: site-pages
+msgid "Site pages"
+msgstr "Saidi lehed"
+
+#: site-pages
+msgid "Not in the menu"
+msgstr "Menüüs pole"
+
+#: site-pages
+msgid "A site can have at most 12 pages."
+msgstr "Saidil võib olla kuni 12 lehte."
+
+#: site-pages
+msgid "Add page"
+msgstr "Lisa leht"
+
+#: site-pages
+msgid "Home page"
+msgstr "Avaleht"
+
+#: site-pages
+msgid "Shown in the menu and as the page's heading."
+msgstr "Kuvatakse menüüs ja lehe pealkirjana."
+
+#: site-pages
+msgid "Shown in the menu once the site has a second page."
+msgstr "Kuvatakse menüüs, kui saidil on teine leht."
+
+#: site-pages
+msgid "Links and QR codes already shared stop working when the address changes."
+msgstr "Juba jagatud lingid ja QR-koodid lakkavad aadressi muutmisel töötamast."
+
+#: site-pages
+msgid "Show in the menu"
+msgstr "Näita menüüs"
+
+#: site-pages
+msgid "The home page opens at the site's address and is always first in the menu."
+msgstr "Avaleht avaneb saidi aadressil ja on menüüs alati esimene."
+
+#: site-pages
+msgid "Delete the page “%(title)s”?"
+msgstr "Kas kustutada leht „%(title)s“?"
+
+#: site-pages
+msgid "Delete page"
+msgstr "Kustuta leht"
+
+#: site-pages
+msgid "The page is empty. Its address stops working."
+msgstr "Leht on tühi. Selle aadress lakkab töötamast."
+
+#: site-pages
+msgid "Move to page"
+msgstr "Teisalda lehele"
+
+#: site-pages
+msgid "Move"
+msgstr "Teisalda"
+
+#: site-pages
+msgid "Its %(n)s block goes with it, with its files and event registrations. This cannot be undone."
+msgid_plural "Its %(n)s blocks go with it, with their files and event registrations. This cannot be undone."
+msgstr[0] "Selle %(n)s plokk kustutatakse koos failide ja registreerumistega. Seda ei saa tagasi võtta."
+msgstr[1] "Selle %(n)s plokki kustutatakse koos failide ja registreerumistega. Seda ei saa tagasi võtta."
+

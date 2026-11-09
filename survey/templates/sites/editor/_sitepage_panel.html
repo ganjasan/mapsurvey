@@ -1,0 +1,42 @@
+{% load i18n question_utils %}{% comment %}The settings of the page the canvas shows (change site-pages, #628):
+title, address, menu flag, delete. Autosaved by js/site_pages.js (autosave=1 → JSON, 422 on a wrong
+address). The home page keeps the site's address and is always in the menu.{% endcomment %}
+{% with p=current_page n=page_block_counts|get_item:current_page.pk %}
+<div class="lb-pane" data-pane="sitepage:{{ p.pk }}"{% if selected != sitepage_pane %} hidden{% endif %}>
+  <div class="lb-pane-head">
+    <span class="lb-ico"><i class="{% if p.is_home %}fas fa-home{% else %}far fa-file{% endif %}" aria-hidden="true"></i></span>
+    <div class="lb-pane-tt"><div class="lb-pane-t">{% if p.is_home %}{% trans "Home page" %}{% else %}{% trans "Page" %}{% endif %}</div><div class="lb-pane-s">{{ p.title|truncatechars:44 }}</div></div>
+    <button type="button" class="lb-x" data-select-target="page" title="{% trans 'Site settings' %}" aria-label="{% trans 'Close' %}">×</button>
+  </div>
+  <div class="lb-pane-body">
+    <form method="post" action="{% url 'editor_site_page_edit' site.uuid p.pk %}" class="lb-sitepage-form" data-page-id="{{ p.pk }}">
+      {% csrf_token %}
+      <div class="lb-errors" role="alert" hidden></div>
+      <fieldset class="lb-card" {% if not may_edit %}disabled{% endif %}>
+        <h6>{% trans "Page" %}</h6>
+        <div class="lb-field">
+          <label for="lb-page-title">{% trans "Title" %}</label>
+          <input id="lb-page-title" name="title" class="form-control form-control-sm" maxlength="60" value="{{ p.title }}" required>
+          <div class="lb-hint">{% if pages|length > 1 %}{% trans "Shown in the menu and as the page's heading." %}{% else %}{% trans "Shown in the menu once the site has a second page." %}{% endif %}</div>
+        </div>
+        {% if not p.is_home %}
+        <div class="lb-field">
+          <label for="lb-page-slug">{% trans "Address" %}</label>
+          <div class="lb-slug"><span class="text-muted">/p/{{ site.slug }}/</span><input id="lb-page-slug" name="slug" class="form-control form-control-sm" maxlength="64" value="{{ p.slug }}" pattern="[a-z0-9]+(-[a-z0-9]+)*"></div>
+          <div class="lb-hint">{% trans "Links and QR codes already shared stop working when the address changes." %}</div>
+        </div>
+        <input type="hidden" name="menu" value="0">
+        <label class="lb-check"><input type="checkbox" name="menu" value="1"{% if p.in_menu %} checked{% endif %}> {% trans "Show in the menu" %}</label>
+        {% else %}
+        <div class="lb-hint">{% trans "The home page opens at the site's address and is always first in the menu." %}</div>
+        {% endif %}
+      </fieldset>
+    </form>
+  </div>
+  {% if may_edit and not p.is_home %}
+  <div class="lb-pane-foot">
+    <form method="post" action="{% url 'editor_site_page_delete' site.uuid p.pk %}" data-confirm="{% blocktrans with title=p.title %}Delete the page “{{ title }}”?{% endblocktrans %}" data-confirm-action="{% trans 'Delete page' %}" data-confirm-note="{% if n %}{% blocktrans count n=n %}Its {{ n }} block goes with it, with its files and event registrations. This cannot be undone.{% plural %}Its {{ n }} blocks go with it, with their files and event registrations. This cannot be undone.{% endblocktrans %}{% else %}{% trans 'The page is empty. Its address stops working.' %}{% endif %}">{% csrf_token %}<button type="submit" class="lb-link lb-danger"><i class="far fa-trash-alt" aria-hidden="true"></i> {% trans "Delete page" %}</button></form>
+  </div>
+  {% endif %}
+</div>
+{% endwith %}
