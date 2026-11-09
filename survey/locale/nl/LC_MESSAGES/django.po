@@ -12213,3 +12213,60 @@ msgstr "Deze tekst staat niet meer op de site. Laad de pagina opnieuw."
 #: site-translations
 msgid "This site is not offered in that language."
 msgstr "Deze site wordt niet in die taal aangeboden."
+
+#: workspace-branding
+msgid "Branding"
+msgstr "Huisstijl"
+
+#: workspace-branding
+msgid "How the workspace appears on its public sites: the name residents read, your logo and your colour for buttons and links."
+msgstr "Hoe de werkruimte op haar openbare sites verschijnt: de naam die bewoners lezen, je logo en je kleur voor knoppen en links."
+
+#: workspace-branding
+msgid "Public name"
+msgstr "Openbare naam"
+
+#: workspace-branding
+#, python-format
+msgid "Empty: “%(name)s”."
+msgstr "Leeg: ‘%(name)s’."
+
+#: workspace-branding
+msgid "Logo"
+msgstr "Logo"
+
+#: workspace-branding
+msgid "PNG, JPEG, WebP or GIF, up to 1 MB. Shown at the top of your sites."
+msgstr "PNG, JPEG, WebP of GIF, tot 1 MB. Bovenaan je sites getoond."
+
+#: workspace-branding
+msgid "Remove the logo"
+msgstr "Logo verwijderen"
+
+#: workspace-branding
+msgid "Accent colour"
+msgstr "Merkkleur"
+
+#: workspace-branding
+msgid "A link"
+msgstr "Een link"
+
+#: workspace-branding
+msgid "This colour is too light to read as text, so sites use a darker shade of it (shown here)."
+msgstr "Deze kleur is te licht om als tekst te lezen, dus sites gebruiken een donkerdere tint ervan (hier getoond)."
+
+#: workspace-branding
+msgid "Save branding"
+msgstr "Huisstijl opslaan"
+
+#: workspace-branding
+msgid "Branding saved."
+msgstr "Huisstijl opgeslagen."
+
+#: workspace-branding
+msgid "Pick a colour."
+msgstr "Kies een kleur."
+
+#: workspace-branding
+msgid "The logo can be at most 1 MB."
+msgstr "Het logo mag hoogstens 1 MB zijn."

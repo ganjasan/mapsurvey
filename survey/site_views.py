@@ -25,7 +25,7 @@ from billing import trial as billing_trial
 from billing.entitlements import for_organization
 from billing.gates import feature_required
 
-from . import basemaps, site_events, sites, share
+from . import basemaps, branding, site_events, sites, share
 from .content_screening import is_site_held
 from .models import Site, SiteBlock, SiteSurvey, SurveyHeader
 from .permissions import get_org_membership
@@ -207,6 +207,7 @@ def _builder_context(request, site, membership, **extra):
         'icons': {k: v[1] for k, v in sites.BLOCK_KINDS.items()},
         'site_widths': [('narrow', pgettext('site width', 'Narrow')), ('standard', pgettext('site width', 'Standard')),
                         ('wide', pgettext('site width', 'Wide'))],
+        'brand': branding.for_site(org),
         'heading_sizes': [('l', pgettext('heading size', 'Large')), ('m', pgettext('heading size', 'Medium')),
                           ('s', pgettext('heading size', 'Small'))],
         'library': sites.library(),
@@ -470,6 +471,7 @@ def site_public(request, slug):
         site_translations.localize(site, blocks, lang)
         response = render(request, 'sites/public.html', {
             'site': site, 'org': site.organization, 'blocks': blocks, 'lang': lang,
+            'brand': branding.for_site(site.organization),
             'site_languages': [(code, dict(language_choices()).get(code, code)) for code in offered]
                               if len(offered) > 1 else [],
             'nav': sites.nav_items(blocks), 'preview': not live and not review, 'review': review, 'held': held,

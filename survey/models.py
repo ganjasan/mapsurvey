@@ -369,15 +369,32 @@ def unique_org_slug(base, exclude_pk=None, model=None):
     return slug
 
 
+def org_logo_key(instance, filename):
+    """org_logos/<uuid4>.<ext> on the public tier (change workspace-branding): shown on the
+    workspace's public sites, so public, under a random key."""
+    ext = (os.path.splitext(filename)[1] or '')[:8].lower()
+    return f'org_logos/{uuid_module.uuid4().hex}{ext}'
+
+
 class Organization(models.Model):
     name = models.CharField(max_length=250)
     slug = models.SlugField(max_length=100, unique=True)
+    # Branding (change workspace-branding, #619): what the workspace's public sites carry — a
+    # logo, an accent colour (#rrggbb; empty = the default blue) and the name shown to the public
+    # (empty = `name`). One brand per workspace; the respondent panel and the flyer read it later.
+    logo = models.ImageField(upload_to=org_logo_key, null=True, blank=True)
+    accent_color = models.CharField(max_length=7, blank=True, default='', db_default='')
+    brand_name = models.CharField(max_length=120, blank=True, default='', db_default='')
 
     class Meta:
         app_label = 'survey'
 
     def __str__(self):
         return self.name
+
+    @property
+    def display_name(self):
+        return self.brand_name or self.name
 
     def save(self, *args, **kwargs):
         # Generate when empty, normalise when unroutable. `SlugField` does carry

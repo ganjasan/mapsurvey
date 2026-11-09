@@ -12154,3 +12154,60 @@ msgstr "Seda teksti pole enam veebisaidil. Laadige leht uuesti."
 #: site-translations
 msgid "This site is not offered in that language."
 msgstr "Seda veebisaiti ei pakuta selles keeles."
+
+#: workspace-branding
+msgid "Branding"
+msgstr "Bränding"
+
+#: workspace-branding
+msgid "How the workspace appears on its public sites: the name residents read, your logo and your colour for buttons and links."
+msgstr "Kuidas tööruum oma avalikel veebisaitidel välja näeb: nimi, mida elanikud loevad, teie logo ja teie värv nuppudele ja linkidele."
+
+#: workspace-branding
+msgid "Public name"
+msgstr "Avalik nimi"
+
+#: workspace-branding
+#, python-format
+msgid "Empty: “%(name)s”."
+msgstr "Tühi: „%(name)s“."
+
+#: workspace-branding
+msgid "Logo"
+msgstr "Logo"
+
+#: workspace-branding
+msgid "PNG, JPEG, WebP or GIF, up to 1 MB. Shown at the top of your sites."
+msgstr "PNG, JPEG, WebP või GIF, kuni 1 MB. Kuvatakse teie veebisaitide ülaosas."
+
+#: workspace-branding
+msgid "Remove the logo"
+msgstr "Eemalda logo"
+
+#: workspace-branding
+msgid "Accent colour"
+msgstr "Brändi värv"
+
+#: workspace-branding
+msgid "A link"
+msgstr "Näidislink"
+
+#: workspace-branding
+msgid "This colour is too light to read as text, so sites use a darker shade of it (shown here)."
+msgstr "See värv on tekstina lugemiseks liiga hele, seega kasutavad veebisaidid selle tumedamat tooni (näidatud siin)."
+
+#: workspace-branding
+msgid "Save branding"
+msgstr "Salvesta bränding"
+
+#: workspace-branding
+msgid "Branding saved."
+msgstr "Bränding salvestatud."
+
+#: workspace-branding
+msgid "Pick a colour."
+msgstr "Valige värv."
+
+#: workspace-branding
+msgid "The logo can be at most 1 MB."
+msgstr "Logo võib olla kuni 1 MB."

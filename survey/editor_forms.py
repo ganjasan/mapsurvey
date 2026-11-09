@@ -789,3 +789,50 @@ class QuestionGroupForm(AudienceFieldMixin, forms.ModelForm):
         # Creator markup on every respondent page: the same allow-list as
         # question help text (html_sanitize).
         return coerce_creator_html(self.cleaned_data.get('description') or '').strip()
+
+
+class OrganizationBrandingForm(forms.ModelForm):
+    """The workspace's brand on its public sites (change workspace-branding, #619): the name shown
+    to the public, an accent colour and a logo. The logo is checked by its bytes like a site's
+    pictures (`sites.check_image`); only raster images, so nothing executable reaches the public
+    media host."""
+    remove_logo = forms.BooleanField(required=False)
+
+    class Meta:
+        model = Organization
+        fields = ('brand_name', 'accent_color', 'logo')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['brand_name'].widget.attrs.update({'class': 'form-control', 'maxlength': 120})
+        self.fields['accent_color'].widget = forms.TextInput(attrs={'type': 'color', 'class': 'form-control form-control-color'})
+        self.fields['logo'].widget = forms.FileInput(attrs={'accept': 'image/png,image/jpeg,image/webp,image/gif'})
+
+    def clean_brand_name(self):
+        return ' '.join((self.cleaned_data.get('brand_name') or '').split())[:120]
+
+    def clean_accent_color(self):
+        from .branding import HEX
+        value = (self.cleaned_data.get('accent_color') or '').strip().lower()
+        if value and not HEX.match(value):
+            raise forms.ValidationError(_('Pick a colour.'))
+        return value
+
+    def clean_logo(self):
+        from . import sites
+        logo = self.cleaned_data.get('logo')
+        if logo and hasattr(logo, 'content_type'):  # a new upload, not the stored file
+            if logo.size > 1024 * 1024:
+                raise forms.ValidationError(_('The logo can be at most 1 MB.'))
+            error = sites.check_image(logo)
+            if error:
+                raise forms.ValidationError(error)
+        return logo
+
+    def save(self, commit=True):
+        org = super().save(commit=False)
+        if self.cleaned_data.get('remove_logo') and 'logo' not in self.files:
+            org.logo = None
+        if commit:
+            org.save()
+        return org

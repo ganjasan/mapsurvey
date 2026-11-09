@@ -1964,3 +1964,61 @@ class SiteTranslationsTest(SiteTestBase):
         self.save(f'block:{self.text.pk}:title', 'Haga clic aquí')
         self.site.refresh_from_db()
         self.assertIn('Haga clic aquí', ' '.join(t for _l, t in collect_site_text(self.site).texts))
+
+
+class SiteBrandingTest(SiteTestBase):
+    """Spec `survey-sites`: workspace branding on sites (change workspace-branding, #619)."""
+
+    def post_branding(self, **fields):
+        data = {'form': 'branding', 'brand_name': '', 'accent_color': ''}
+        data.update(fields)
+        return self.client.post(reverse('org_settings', args=[self.org.slug]), data)
+
+    def test_brand_on_the_site(self):
+        """GIVEN an owner who sets a public name, a logo and a dark accent colour
+        WHEN the published site is opened
+        THEN it shows the logo and the public name and uses the colour as is"""
+        self.login(self.owner)
+        r = self.post_branding(brand_name='Riverside Parks Dept.', accent_color='#1b5e20', logo=_png())
+        self.assertEqual(r.status_code, 302)
+        self.org.refresh_from_db()
+        self.assertTrue(self.org.logo.name.startswith('org_logos/'))
+        self.login(self.editor)
+        self.add_block('text', body='<p>Hi</p>')
+        self.client.post(self.url('editor_site_publish'), {'action': 'publish'})
+        page = self.client.get('/p/riverside-park-plan/').content.decode()
+        self.assertIn('Riverside Parks Dept.', page)
+        self.assertIn('class="lp-logo"', page)
+        self.assertIn('--lp-accent: #1b5e20;', page)
+
+    def test_light_colour_darkened(self):
+        """GIVEN a pale yellow accent
+        WHEN the brand is read for a site
+        THEN a darker shade with at least 4.5:1 against white is used, and the settings say so"""
+        from survey import branding
+        self.org.accent_color = '#ffeb3b'
+        self.org.save()
+        brand = branding.for_site(self.org)
+        self.assertTrue(brand['darkened'])
+        self.assertGreaterEqual(branding.contrast(brand['accent'], '#ffffff'), 4.5)
+        self.login(self.owner)
+        self.assertContains(self.client.get(reverse('org_settings', args=[self.org.slug])), 'too light to read')
+
+    def test_bad_logo_and_colour_refused(self):
+        """GIVEN an HTML file sent as a logo and a colour that is not #rrggbb
+        WHEN the branding form is posted
+        THEN both are refused and nothing is stored"""
+        self.login(self.owner)
+        fake = SimpleUploadedFile('logo.png', b'<html><script>x</script></html>', content_type='image/png')
+        r = self.post_branding(logo=fake, accent_color='red')
+        self.assertEqual(r.status_code, 400)
+        self.org.refresh_from_db()
+        self.assertFalse(self.org.logo)
+        self.assertEqual(self.org.accent_color, '')
+
+    def test_only_the_owner(self):
+        """GIVEN an editor of the workspace
+        WHEN they post the branding form
+        THEN it is refused"""
+        self.login(self.editor)
+        self.assertEqual(self.post_branding(brand_name='X').status_code, 403)

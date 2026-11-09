@@ -12175,3 +12175,60 @@ msgstr "Tätä tekstiä ei enää ole sivustolla. Lataa sivu uudelleen."
 #: site-translations
 msgid "This site is not offered in that language."
 msgstr "Tätä sivustoa ei tarjota sillä kielellä."
+
+#: workspace-branding
+msgid "Branding"
+msgstr "Visuaalinen ilme"
+
+#: workspace-branding
+msgid "How the workspace appears on its public sites: the name residents read, your logo and your colour for buttons and links."
+msgstr "Miltä työtila näyttää julkisilla sivustoillaan: nimi, jonka asukkaat lukevat, logosi ja värisi painikkeille ja linkeille."
+
+#: workspace-branding
+msgid "Public name"
+msgstr "Julkinen nimi"
+
+#: workspace-branding
+#, python-format
+msgid "Empty: “%(name)s”."
+msgstr "Tyhjä: ”%(name)s”."
+
+#: workspace-branding
+msgid "Logo"
+msgstr "Logo"
+
+#: workspace-branding
+msgid "PNG, JPEG, WebP or GIF, up to 1 MB. Shown at the top of your sites."
+msgstr "PNG, JPEG, WebP tai GIF, enintään 1 Mt. Näytetään sivustojesi yläreunassa."
+
+#: workspace-branding
+msgid "Remove the logo"
+msgstr "Poista logo"
+
+#: workspace-branding
+msgid "Accent colour"
+msgstr "Brändiväri"
+
+#: workspace-branding
+msgid "A link"
+msgstr "Esimerkkilinkki"
+
+#: workspace-branding
+msgid "This colour is too light to read as text, so sites use a darker shade of it (shown here)."
+msgstr "Tämä väri on liian vaalea tekstiksi, joten sivustot käyttävät sen tummempaa sävyä (näkyy tässä)."
+
+#: workspace-branding
+msgid "Save branding"
+msgstr "Tallenna ilme"
+
+#: workspace-branding
+msgid "Branding saved."
+msgstr "Ilme tallennettu."
+
+#: workspace-branding
+msgid "Pick a colour."
+msgstr "Valitse väri."
+
+#: workspace-branding
+msgid "The logo can be at most 1 MB."
+msgstr "Logo saa olla enintään 1 Mt."

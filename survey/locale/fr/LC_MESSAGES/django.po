@@ -12260,3 +12260,60 @@ msgstr "Ce texte n'est plus sur le site. Rechargez la page."
 #: site-translations
 msgid "This site is not offered in that language."
 msgstr "Ce site n'est pas proposé dans cette langue."
+
+#: workspace-branding
+msgid "Branding"
+msgstr "Identité visuelle"
+
+#: workspace-branding
+msgid "How the workspace appears on its public sites: the name residents read, your logo and your colour for buttons and links."
+msgstr "L'apparence de l'espace de travail sur ses sites publics : le nom que lisent les habitants, votre logo et votre couleur pour les boutons et les liens."
+
+#: workspace-branding
+msgid "Public name"
+msgstr "Nom public"
+
+#: workspace-branding
+#, python-format
+msgid "Empty: “%(name)s”."
+msgstr "Vide : « %(name)s »."
+
+#: workspace-branding
+msgid "Logo"
+msgstr "Logo"
+
+#: workspace-branding
+msgid "PNG, JPEG, WebP or GIF, up to 1 MB. Shown at the top of your sites."
+msgstr "PNG, JPEG, WebP ou GIF, 1 Mo maximum. Affiché en haut de vos sites."
+
+#: workspace-branding
+msgid "Remove the logo"
+msgstr "Retirer le logo"
+
+#: workspace-branding
+msgid "Accent colour"
+msgstr "Couleur de la marque"
+
+#: workspace-branding
+msgid "A link"
+msgstr "Un lien"
+
+#: workspace-branding
+msgid "This colour is too light to read as text, so sites use a darker shade of it (shown here)."
+msgstr "Cette couleur est trop claire pour un texte lisible : les sites en utilisent une nuance plus foncée (affichée ici)."
+
+#: workspace-branding
+msgid "Save branding"
+msgstr "Enregistrer l'identité visuelle"
+
+#: workspace-branding
+msgid "Branding saved."
+msgstr "Identité visuelle enregistrée."
+
+#: workspace-branding
+msgid "Pick a colour."
+msgstr "Choisissez une couleur."
+
+#: workspace-branding
+msgid "The logo can be at most 1 MB."
+msgstr "Le logo ne doit pas dépasser 1 Mo."
