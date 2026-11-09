@@ -608,6 +608,46 @@ def unique_slug(title):
     return slug
 
 
+# ─── accessibility checks (change site-a11y-lint) ─────────────────────────────
+
+# Link texts that say nothing out of context (WCAG 2.4.4). Lower-case, compared after trimming.
+VAGUE_LINK_TEXTS = frozenset({'here', 'click here', 'this link', 'link', 'more', 'read more', 'this'})
+_ANCHOR = re.compile(r'<a\b[^>]*>(.*?)</a>', re.S | re.I)
+
+
+def _vague(text):
+    return ' '.join(re.sub(r'<[^>]+>', '', text or '').split()).lower().strip('.:!') in VAGUE_LINK_TEXTS
+
+
+def a11y_issues(site, blocks):
+    """({block pk: [message]}, [site-level message]) — what a screen-reader or keyboard user would
+    trip over. Shown in the builder, never blocking publish."""
+    per_block, site_level = {}, []
+    if site.cover and not site.cover_alt:
+        site_level.append(_('The cover picture has no description for screen readers.'))
+    seen_section_heading = False
+    for b in blocks:
+        data = b.data if isinstance(b.data, dict) else {}
+        found = []
+        if b.kind == 'image' and b.image and not data.get('alt'):
+            found.append(_('The picture has no description for screen readers.'))
+        if b.kind == 'heading' and b.title:
+            if data.get('size') == 's' and not seen_section_heading:
+                found.append(_('A small heading comes before any large or medium one: screen readers announce '
+                               'it as a subsection of nothing. Make it medium, or add a heading above.'))
+            elif data.get('size') != 's':
+                seen_section_heading = True
+        elif b.title:
+            seen_section_heading = True
+        if b.kind == 'text' and any(_vague(m) for m in _ANCHOR.findall(data.get('body') or '')):
+            found.append(_('A link says only “here” or “more”. Name where it leads, e.g. “the draft plan (PDF)”.'))
+        if b.kind == 'button' and _vague(data.get('label')):
+            found.append(_('The button says only “here” or “more”. Name where it leads.'))
+        if found:
+            per_block[b.pk] = found
+    return per_block, site_level
+
+
 REVIEW_LINK_DAYS = 14
 
 

@@ -42,4 +42,5 @@ builder (it extends base.html): it is passed explicitly into the include below.{
   {% if may_edit %}{% if b.kind != 'event' %}{% include "sites/editor/_inline.html" %}{% endif %}{% elif not item.complete %}<div class="lb-placeholder"><i class="{{ icons|get_item:b.kind }}" aria-hidden="true"></i><span>{% trans "Not filled in yet." %}</span></div>{% endif %}
   {% endif %}
   {% if item.warn %}<p class="lb-warn"><i class="fas fa-info-circle" aria-hidden="true"></i> {{ item.warn }}</p>{% endif %}
+  {% if may_edit %}{% for msg in item.a11y %}<p class="lb-a11y"><i class="fas fa-universal-access" aria-hidden="true"></i> {{ msg }}</p>{% endfor %}{% endif %}
 </section>

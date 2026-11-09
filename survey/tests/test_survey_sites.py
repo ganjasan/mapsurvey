@@ -1710,3 +1710,70 @@ class SiteReviewLinkTest(SiteTestBase):
         self.assertContains(self.client.get(self.url('editor_site')), 'id="lb-review-url"')
         self.client.post(self.url('editor_site_publish'), {'action': 'publish'})
         self.assertNotContains(self.client.get(self.url('editor_site')), 'id="lb-review-url"')
+
+
+class SiteAccessibilityTest(SiteTestBase):
+    """Spec `survey-sites`: accessibility checks in the builder (change site-a11y-lint, #609)."""
+
+    def setUp(self):
+        super().setUp()
+        self.login(self.editor)
+
+    def issues(self):
+        per_block, site_level = sites.a11y_issues(self.site, list(self.site.blocks.order_by('order')))
+        return per_block, site_level
+
+    def test_picture_without_a_description(self):
+        """GIVEN an image block with a picture and no description
+        WHEN the builder renders
+        THEN the canvas shows the note and the popover counts one thing to check"""
+        self.add_block('image', alt='', image=_png())
+        html = self.client.get(self.url('editor_site')).content.decode()
+        self.assertIn('class="lb-a11y"', html)
+        self.assertIn('1 thing to check for accessibility', html)
+        self.login(self.viewer)
+        self.assertNotIn('class="lb-a11y"', self.client.get(self.url('editor_site')).content.decode())
+
+    def test_subheading_first(self):
+        """GIVEN a small heading block first, then a medium one, then another small one
+        WHEN the checks run
+        THEN only the first small heading is flagged"""
+        self.add_block('heading', title='Detail', size='s')
+        self.add_block('heading', title='Section', size='m')
+        self.add_block('heading', title='Subsection', size='s')
+        per_block, _site = self.issues()
+        first, _second, third = self.site.blocks.order_by('order')
+        self.assertIn(first.pk, per_block)
+        self.assertNotIn(third.pk, per_block)
+
+    def test_vague_link_text(self):
+        """GIVEN a text block with a link "here" and another naming its target, and a button "Read more"
+        WHEN the checks run
+        THEN the vague text and the button are flagged, the named link is not"""
+        self.add_block('text', body='<p>See <a href="https://a.example">here</a>.</p>')
+        self.add_block('text', body='<p>See <a href="https://a.example">the draft plan (PDF)</a>.</p>')
+        self.add_block('button', label='Read more', url='https://a.example')
+        per_block, _site = self.issues()
+        vague, named, button = self.site.blocks.order_by('order')
+        self.assertIn(vague.pk, per_block)
+        self.assertNotIn(named.pk, per_block)
+        self.assertIn(button.pk, per_block)
+
+    def test_cover_without_description(self):
+        """GIVEN a site with a cover and no description
+        WHEN the checks run
+        THEN the site-level list names it"""
+        self.client.post(self.url('editor_site_settings'), {'cover': _png(), 'autosave': '1'})
+        self.site.refresh_from_db()
+        _blocks, site_level = self.issues()
+        self.assertEqual(len(site_level), 1)
+
+    def test_skip_link(self):
+        """GIVEN a published site
+        WHEN it is opened
+        THEN the page has a Skip to content link to #main"""
+        self.add_block('text', body='<p>Words</p>')
+        self.client.post(self.url('editor_site_publish'), {'action': 'publish'})
+        page = self.client.get('/p/riverside-park-plan/').content.decode()
+        self.assertIn('<a class="lp-skip" href="#main">Skip to content</a>', page)
+        self.assertIn('id="main"', page)

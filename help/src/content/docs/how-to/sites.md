@@ -25,6 +25,7 @@ The middle of the builder is the site itself, as residents will see it.
 - **Point between two blocks** and press **+** to add a block there, or use **Add block** at the bottom.
 - **Point at a block** for its toolbar: drag to move, up and down, duplicate, settings, delete. The list on the left shows every block; click one to jump to it, or drag to reorder.
 - **Everything saves by itself.** The top bar says *Saving…* and *All changes saved*. A block you have not finished (a picture without the picture, an event without a time) stays in the builder and is not shown on the site until it is complete.
+- **Accessibility notes** (violet, with the accessibility icon) point at what a screen reader or keyboard user would trip over: a picture without a description, a small heading before any larger one, a link that only says “here”. The Publish panel lists them; they never stop you publishing.
 - The **phone** button at the top shows the site at phone width.
 - **Page width** (site settings) sets how wide the column is on a computer: *Narrow* for reading, *Standard*, or *Wide* for plans and drawings. Pictures, maps and videos can also go **Full width** — edge to edge of the page — in their own settings.
 
