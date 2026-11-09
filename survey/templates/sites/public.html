@@ -22,7 +22,7 @@ only the keys sites.clean_block stores.{% endcomment %}
   {% if results_basemaps %}<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">{% endif %}
 </head>
-<body class="lp">
+<body class="lp" data-width="{{ site.width }}">
   {% if preview %}
   <div class="lp-banner" role="status">
     {% if held %}{% trans "Waiting for a safety review — only your workspace sees this site." %}{% else %}{% trans "Draft — only your workspace sees this." %}{% endif %}
@@ -47,14 +47,16 @@ only the keys sites.clean_block stores.{% endcomment %}
   </nav>
   {% endif %}
 
+  <div class="lp-stage">
   <main class="lp-wrap lp-main">
     {% for block, card in blocks %}
-    <section class="lp-block lp-block--{{ block.kind }}" id="{{ block.anchor }}">
+    <section class="lp-block lp-block--{{ block.kind }}{% if block.data.wide %} lp-block--wide{% endif %}" id="{{ block.anchor }}">
       {% if block.title and block.kind != 'heading' %}<h2>{{ block.title }}</h2>{% endif %}
       {% with "sites/blocks/"|add:block.kind|add:".html" as tpl %}{% include tpl %}{% endwith %}
     </section>
     {% endfor %}
   </main>
+  </div>
 
   <footer class="lp-footer">
     <div class="lp-wrap">

@@ -3130,6 +3130,13 @@ SITE_VISIBILITY_CHOICES = (
 )
 
 
+SITE_WIDTH_CHOICES = (
+    ('narrow', _('Narrow')),
+    ('standard', _('Standard')),
+    ('wide', _('Wide')),
+)
+
+
 class Site(models.Model):
     """A workspace's public page for an engagement, served at /p/<slug>/.
 
@@ -3147,6 +3154,8 @@ class Site(models.Model):
     cover_alt = models.CharField(max_length=200, blank=True, default='')
     slug = models.SlugField(max_length=64, unique=True)
     language = models.CharField(max_length=10, default='en')
+    # The column every block sits in (change site-width): narrow 760 px, standard 960, wide 1200.
+    width = models.CharField(max_length=10, choices=SITE_WIDTH_CHOICES, default='narrow', db_default='narrow')
     visibility = models.CharField(max_length=10, choices=SITE_VISIBILITY_CHOICES, default='public')
     is_published = models.BooleanField(default=False)
     published_at = models.DateTimeField(null=True, blank=True)

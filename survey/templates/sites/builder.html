@@ -97,7 +97,7 @@ workspace (may_edit false).{% endcomment %}
     </aside>
 
     <main class="lb-canvas" id="lb-canvas">
-      <div class="lb-frame" id="lb-frame">
+      <div class="lb-frame" id="lb-frame" data-width="{{ site.width }}">
         {% include "sites/editor/_hero.html" %}
         <div class="lp-wrap lb-blocks" id="lb-blocks">
           {% if may_edit %}<div class="lb-ins" data-add-after="top"><button type="button" title="{% trans 'Add block here' %}" aria-label="{% trans 'Add block here' %}">+</button></div>{% endif %}

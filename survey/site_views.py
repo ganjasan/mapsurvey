@@ -206,6 +206,8 @@ def _builder_context(request, site, membership, **extra):
         'picker': sites.picker(),
         'kinds': {k: v[0] for k, v in sites.BLOCK_KINDS.items()},
         'icons': {k: v[1] for k, v in sites.BLOCK_KINDS.items()},
+        'site_widths': [('narrow', pgettext('site width', 'Narrow')), ('standard', pgettext('site width', 'Standard')),
+                        ('wide', pgettext('site width', 'Wide'))],
         'heading_sizes': [('l', pgettext('heading size', 'Large')), ('m', pgettext('heading size', 'Medium')),
                           ('s', pgettext('heading size', 'Small'))],
         'library': sites.library(),
@@ -257,6 +259,9 @@ def editor_site_settings(request, uuid):
     visibility = post.get('visibility')
     if visibility not in ('public', 'unlisted'):
         visibility = site.visibility
+    width = post.get('width')
+    if width not in sites.SITE_WIDTHS:
+        width = site.width
     cover = request.FILES.get('cover')
     cover_error = sites.check_image(cover)
     if cover_error:
@@ -275,6 +280,7 @@ def editor_site_settings(request, uuid):
     site.slug = slug
     site.language = language
     site.visibility = visibility
+    site.width = width
     if cover is not None:
         site.cover = cover
     elif post.get('remove_cover') == '1':
@@ -287,7 +293,7 @@ def editor_site_settings(request, uuid):
             'ok': True,
             'hero': render_to_string('sites/editor/_hero.html', ctx, request=request),
             'page_panel': render_to_string('sites/editor/_page_panel.html', ctx, request=request),
-            'title': site.title, 'slug': site.slug, 'public_url': ctx['public_url'],
+            'title': site.title, 'slug': site.slug, 'public_url': ctx['public_url'], 'width': site.width,
         })
     messages.success(request, _('Site settings saved.'))
     return _back(site, 'settings')
@@ -341,7 +347,7 @@ def editor_site_survey_unlink(request, uuid, link_id):
 def _raw_block(kind, post):
     """The posted fields of a block form as the dict `clean_block` reads."""
     raw = {key: post.get(key, '') for key in ('body', 'alt', 'caption', 'label', 'url', 'style', 'size',
-                                              'button_label', 'description', 'current', 'color', 'basemap',
+                                              'button_label', 'description', 'current', 'color', 'basemap', 'wide',
                                               'viz', 'date', 'start', 'end', 'tz', 'place', 'place_url',
                                               'capacity', 'open')}
     if kind == 'faq':
