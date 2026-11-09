@@ -36,6 +36,7 @@ DATA_FIELDS = {
     'survey': (('description', PLAIN, 300), ('button_label', PLAIN, 40)),
     'event': (('place', PLAIN, 200), ('description', PLAIN, 300)),
     'contacts': (('address', PLAIN, 300), ('hours', PLAIN, 200)),
+    'compare': (('before_label', PLAIN, 40), ('after_label', PLAIN, 40)),
 }
 ROW_FIELDS = {
     'faq': ('items', 'faq', (('q', PLAIN, 200), ('a', RICH, 0))),
@@ -62,7 +63,7 @@ def block_fields(block):
                 continue
             for name, kind, cap in fields:
                 out.append((f'{prefix}:{i}:{name}', kind, cap, item.get(name) or ''))
-    if block.kind == 'documents':
+    if block.kind in ('documents', 'gallery'):
         for f in block.files.all():
             out.append((f'file:{f.pk}', PLAIN, 200, f.title or ''))
     return out
@@ -92,6 +93,8 @@ def _label(field):
         return _('Person %(n)s role') % {'n': int(parts[1]) + 1}
     if parts[0] == 'file':
         return _('File title')
+    if field in ('before_label', 'after_label'):
+        return _('Before label') if field == 'before_label' else _('After label')
     return field
 
 
@@ -176,7 +179,7 @@ def localize(site, blocks, lang):
     """Put the `lang` translations on the in-memory site and blocks the public page draws (never
     saved): a missing translation keeps the primary text. Documents blocks get `file_list`."""
     for block, _card in blocks:
-        if block.kind == 'documents':
+        if block.kind in ('documents', 'gallery', 'compare'):
             block.file_list = list(block.files.all())
     if lang == site.language:
         return
@@ -201,7 +204,7 @@ def localize(site, blocks, lang):
                     value = tr.get(f'{prefix}:{i}:{name}')
                     if value and isinstance(item, dict):
                         item[name] = value
-        if block.kind == 'documents':
+        if block.kind in ('documents', 'gallery'):
             for f in block.file_list:
                 f.title = tr.get(f'file:{f.pk}') or f.title
         block.data = data

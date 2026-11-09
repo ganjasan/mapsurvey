@@ -1,0 +1,14 @@
+{% load i18n %}{% comment %}Before/after block (change site-gallery-compare): the "after" picture over the "before"
+one, revealed by a range slider (js/site_media.js). Without script both pictures show, one under the
+other.{% endcomment %}
+{% with files=block.file_list|default:block.files.all %}
+{% for f in files %}{% if f.order == 0 %}{% with before=f %}
+{% for g in files %}{% if g.order == 1 %}{% with after=g %}
+<div class="lp-compare" data-compare>
+  <figure class="lp-compare-pane"><img src="{{ before.file.url }}" alt="{{ block.data.before_label|default:_('Before') }}"><figcaption>{{ block.data.before_label|default:_('Before') }}</figcaption></figure>
+  <figure class="lp-compare-pane lp-compare-after"><img src="{{ after.file.url }}" alt="{{ block.data.after_label|default:_('After') }}"><figcaption>{{ block.data.after_label|default:_('After') }}</figcaption></figure>
+  <input type="range" min="0" max="100" value="50" class="lp-compare-range" aria-label="{% trans 'Slide to compare' %}" hidden>
+</div>
+{% endwith %}{% endif %}{% endfor %}
+{% endwith %}{% endif %}{% endfor %}
+{% endwith %}

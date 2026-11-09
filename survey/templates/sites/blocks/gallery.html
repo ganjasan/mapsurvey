@@ -1,0 +1,11 @@
+{% load i18n %}{% comment %}Gallery block (change site-gallery-compare): pictures in a grid that open large on a tap
+(js/site_media.js; without script a picture opens as a plain link). The caption is the picture's text
+alternative too.{% endcomment %}
+<div class="lp-gallery lp-gallery--{{ block.data.columns|default:3 }}" data-gallery>
+  {% for f in block.file_list|default:block.files.all %}
+  <figure class="lp-gallery-item">
+    <a href="{{ f.file.url }}" data-lightbox target="_blank" rel="noopener"><img src="{{ f.file.url }}" alt="{{ f.title }}" loading="lazy"></a>
+    {% if f.title %}<figcaption>{{ f.title }}</figcaption>{% endif %}
+  </figure>
+  {% endfor %}
+</div>

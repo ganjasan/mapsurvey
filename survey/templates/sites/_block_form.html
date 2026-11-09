@@ -47,6 +47,22 @@ from the canvas `[data-field]` elements, so this form is always the whole block 
   {% if errors.url %}<div class="text-danger small">{{ errors.url }}</div>{% endif %}
   <input type="hidden" name="caption" value="{{ data.caption|default:'' }}">
 
+  {% elif kind == 'gallery' %}
+  {% if edit_block %}{% for f in edit_block.files.all %}<input type="hidden" name="file_title_{{ f.pk }}" value="{{ f.title }}"><input type="hidden" name="remove_{{ f.pk }}" value="">{% endfor %}{% endif %}
+  <input type="file" name="pictures" multiple hidden>
+  {% if errors.pictures %}<div class="text-danger small">{{ errors.pictures }}</div>{% endif %}
+  <label class="small mb-0">{% trans "Columns on a computer" %}</label>
+  <div class="lb-seg lb-seg--panel" role="radiogroup" aria-label="{% trans 'Columns on a computer' %}">
+    {% for n in '234' %}<label><input type="radio" name="columns" value="{{ n }}"{% if data.columns|default:3|stringformat:'s' == n %} checked{% endif %}> {{ n }}</label>{% endfor %}
+  </div>
+  <p class="lb-hint">{% trans "Add, caption and remove pictures in the block on the page. On a phone the gallery shows two columns." %}</p>
+  {% elif kind == 'compare' %}
+  <input type="file" name="before" hidden><input type="file" name="after" hidden>
+  <input type="hidden" name="before_label" value="{{ data.before_label|default:'' }}">
+  <input type="hidden" name="after_label" value="{{ data.after_label|default:'' }}">
+  {% if errors.before %}<div class="text-danger small">{{ errors.before }}</div>{% endif %}
+  {% if errors.after %}<div class="text-danger small">{{ errors.after }}</div>{% endif %}
+  <p class="lb-hint mt-0">{% trans "Drop the two pictures and name them in the block on the page. Use pictures of the same size and view." %}</p>
   {% elif kind == 'contacts' %}
   <div class="lb-row-sink" hidden>{% for p in data.people %}<input type="hidden" name="person_name" value="{{ p.name }}"><input type="hidden" name="person_role" value="{{ p.role }}"><input type="hidden" name="person_email" value="{{ p.email }}"><input type="hidden" name="person_phone" value="{{ p.phone }}">{% endfor %}</div>
   <p class="lb-hint mt-0">{% trans "Add the people in the block on the page." %}</p>
@@ -154,7 +170,7 @@ from the canvas `[data-field]` elements, so this form is always the whole block 
   <input type="hidden" name="button_label" value="{{ data.button_label|default:'' }}">
   <p class="small text-muted mt-1 mb-0">{% trans "The card follows the survey: open, opening soon, or closed with a link to its public results." %}</p>
   {% endif %}
-  {% if kind == 'image' or kind == 'video' or kind == 'map' %}
+  {% if kind == 'image' or kind == 'video' or kind == 'map' or kind == 'gallery' or kind == 'compare' %}
   <label class="lb-check mt-2 mb-0"><input type="checkbox" name="wide" value="1"{% if data.wide %} checked{% endif %}> {% trans "Full width — from edge to edge of the page" %}</label>
   {% endif %}
 </form>

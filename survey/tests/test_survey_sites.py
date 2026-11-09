@@ -2091,3 +2091,79 @@ class SiteTemplatesTest(SiteTestBase):
         trial_used_elsewhere(self.org)
         self.client.post(reverse('editor_site_create'), {'template': 'starter:consultation'})
         self.assertEqual(Site.objects.count(), 1)
+
+
+class SiteGalleryCompareTest(SiteTestBase):
+    """Spec `survey-sites`: gallery and before/after blocks (change site-gallery-compare, #621)."""
+
+    def setUp(self):
+        super().setUp()
+        self.login(self.editor)
+
+    def add_empty(self, kind):
+        self.client.post(self.url('editor_site_block_add'), {'kind': kind, 'empty': '1'})
+        return self.site.blocks.get(kind=kind)
+
+    def edit(self, block, **fields):
+        fields.setdefault('autosave', '1')
+        return self.client.post(self.url('editor_site_block_edit', block.pk), fields)
+
+    def test_gallery(self):
+        """GIVEN an empty gallery block
+        WHEN two pictures are added, one is captioned, the columns set to 2, and the site published
+        THEN the page shows both in a two-column grid with the caption as text alternative and the
+             lightbox script, and an uncaptioned picture is flagged for accessibility"""
+        block = self.add_empty('gallery')
+        self.assertEqual(self.edit(block, pictures=[_png(), _png()], columns='3').status_code, 200)
+        first, second = block.files.order_by('order')
+        self.assertTrue(first.content_type.startswith('image/'))
+        self.edit(block, **{f'file_title_{first.pk}': 'Board 1', 'columns': '2'})
+        block.refresh_from_db()
+        self.assertEqual(block.data['columns'], 2)
+        issues, _site = sites.a11y_issues(self.site, [block])
+        self.assertIn(block.pk, issues)
+        self.client.post(self.url('editor_site_publish'), {'action': 'publish'})
+        page = self.client.get('/p/riverside-park-plan/').content.decode()
+        self.assertIn('lp-gallery lp-gallery--2', page)
+        self.assertIn('alt="Board 1"', page)
+        self.assertIn('js/site_media.', page)
+
+    def test_gallery_refuses_non_pictures(self):
+        """GIVEN a gallery block
+        WHEN an HTML file is sent as a picture
+        THEN it is refused and nothing is stored"""
+        block = self.add_empty('gallery')
+        fake = SimpleUploadedFile('x.png', b'<html><script>x</script></html>', content_type='image/png')
+        r = self.edit(block, pictures=[fake])
+        self.assertEqual(r.status_code, 422)
+        self.assertFalse(block.files.exists())
+
+    def test_compare(self):
+        """GIVEN an empty before/after block
+        WHEN the before picture is dropped, then the after one, then the before replaced
+        THEN the public page draws it only with both, with the labels, and a replaced picture keeps one row per slot"""
+        block = self.add_empty('compare')
+        self.edit(block, before=_png(), before_label='Today', after_label='Proposal')
+        self.assertFalse(sites.is_complete(block))
+        self.edit(block, after=_png(), before_label='Today', after_label='Proposal')
+        self.assertTrue(sites.is_complete(block))
+        self.edit(block, before=_png(), before_label='Today', after_label='Proposal')
+        self.assertEqual(sorted(block.files.values_list('order', flat=True)), [0, 1])
+        self.client.post(self.url('editor_site_publish'), {'action': 'publish'})
+        page = self.client.get('/p/riverside-park-plan/').content.decode()
+        self.assertIn('data-compare', page)
+        self.assertIn('alt="Today"', page)
+        self.assertIn('alt="Proposal"', page)
+
+    def test_canvas_primary_actions(self):
+        """GIVEN an empty gallery and an empty before/after block
+        WHEN the builder renders
+        THEN the pictures are dropped in the blocks, and Settings holds columns and Full width"""
+        self.add_empty('gallery')
+        self.add_empty('compare')
+        html = self.client.get(self.url('editor_site')).content.decode()
+        self.assertIn('data-file="pictures"', html)
+        self.assertIn('data-file="before"', html)
+        self.assertIn('data-file="after"', html)
+        self.assertIn('name="columns"', html)
+        self.assertEqual(html.count('name="wide"'), 2)

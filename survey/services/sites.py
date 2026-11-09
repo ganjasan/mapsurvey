@@ -186,11 +186,12 @@ def unlink_survey(actor, site, link):
 
 RAW_KEYS = ('body', 'alt', 'caption', 'label', 'url', 'style', 'size', 'button_label', 'description',
             'current', 'color', 'basemap', 'wide', 'viz', 'date', 'start', 'end', 'tz', 'place',
-            'place_url', 'capacity', 'open', 'address', 'hours')
+            'place_url', 'capacity', 'open', 'address', 'hours', 'columns', 'before_label', 'after_label')
 
 # Error key → the posted fields it is about (an error on a field left empty waits under autosave).
 _ERROR_FIELDS = {'question': ('results_question',), 'area': ('geojson_file',), 'people': ('person_email',),
-                 'image': ('image',), 'files': ('files',)}
+                 'image': ('image',), 'files': ('files',), 'pictures': ('pictures',), 'before': ('before',),
+                 'after': ('after',)}
 
 
 def raw_block(kind, fields):
@@ -218,7 +219,10 @@ class BlockRefused(ValidationFailed):
         self.raw = raw
 
 
-def _document_changes(fields, files, block):
+def _file_changes(fields, files, block, *, name='files', pictures=False):
+    """(renames {file: title}, removals [file], uploads [(upload, title, content type)], errors) for
+    a block whose content is its files: documents (`files`) or a gallery (`pictures`, checked by
+    their bytes as pictures)."""
     errors = {}
     existing = list(block.files.all()) if block is not None else []
     renames, removals = {}, []
@@ -229,16 +233,40 @@ def _document_changes(fields, files, block):
         title = ' '.join((fields.get(f'file_title_{f.pk}') or '').split())[:200]
         if title and title != f.title:
             renames[f] = title
-    uploads = files.getlist('files')
-    problems = [msg for msg in (sites.check_document(u) for u in uploads) if msg]
+    uploads, problems = [], []
+    for up in files.getlist(name):
+        title = sites.document_title(up.name)  # before check_image renames the upload
+        problem = sites.check_image(up) if pictures else sites.check_document(up)
+        if problem:
+            problems.append(problem)
+            continue
+        ctype = f'image/{up.name.rsplit(".", 1)[-1]}'.replace('jpg', 'jpeg') if pictures else (up.content_type or '')
+        uploads.append((up, title if not pictures else '', ctype[:100]))
     if problems:
-        errors['files'] = ' '.join(problems)
+        errors[name] = ' '.join(problems)
     kept = len(existing) - len(removals)
+    maximum = sites.GALLERY_MAX if pictures else sites.DOCUMENTS_MAX
     if not problems and kept + len(uploads) == 0:
-        errors['files'] = _('Add at least one file.')
-    elif kept + len(uploads) > sites.DOCUMENTS_MAX:
-        errors['files'] = _('A documents block holds at most 20 files.')
+        errors[name] = _('Add at least one picture.') if pictures else _('Add at least one file.')
+    elif kept + len(uploads) > maximum:
+        errors[name] = (_('A gallery holds at most 12 pictures.') if pictures
+                        else _('A documents block holds at most 20 files.'))
     return renames, removals, uploads, errors
+
+
+def _compare_changes(files, block):
+    """({slot: upload}, errors) for a before/after block: `before` is slot 0, `after` slot 1."""
+    out, errors = {}, {}
+    for slot, name in ((0, 'before'), (1, 'after')):
+        up = files.get(name)
+        if up is None:
+            continue
+        problem = sites.check_image(up)
+        if problem:
+            errors[name] = problem
+        else:
+            out[slot] = up
+    return out, errors
 
 
 def _results_target(actor, site, value):
@@ -299,13 +327,18 @@ def save_block(actor, site, block, kind, fields, files=None, *, creating=False, 
     data, errors = sites.clean_block(kind, raw, org=site.organization, creating=creating)
     if map_error:
         errors['area'] = map_error
-    renames, removals, uploads = {}, [], []
-    if kind == 'documents' and not creating:
-        renames, removals, uploads, doc_errors = _document_changes(fields, files, block)
+    renames, removals, uploads, slots = {}, [], [], {}
+    if kind in ('documents', 'gallery') and not creating:
+        name = 'pictures' if kind == 'gallery' else 'files'
+        renames, removals, uploads, doc_errors = _file_changes(fields, files, block, name=name,
+                                                               pictures=kind == 'gallery')
         # An autosave may leave the block without files for a moment (remove, then add).
-        if lenient and doc_errors.get('files') == _('Add at least one file.'):
-            doc_errors.pop('files')
+        if lenient and doc_errors.get(name) in (_('Add at least one file.'), _('Add at least one picture.')):
+            doc_errors.pop(name)
         errors.update(doc_errors)
+    if kind == 'compare':
+        slots, cmp_errors = _compare_changes(files, block)
+        errors.update(cmp_errors)
     upload = files.get('image')
     image_error = sites.check_image(upload)
     if image_error:
@@ -349,9 +382,16 @@ def save_block(actor, site, block, kind, fields, files=None, *, creating=False, 
                 f.file.storage.delete(name)
         last = block.files.order_by('-order').values_list('order', flat=True).first()
         nxt = 0 if last is None else last + 1
-        for i, up in enumerate(uploads):
-            SiteFile.objects.create(block=block, file=up, title=sites.document_title(up.name),
-                                    size=up.size, content_type=(up.content_type or '')[:100], order=nxt + i)
+        for i, (up, title, ctype) in enumerate(uploads):
+            SiteFile.objects.create(block=block, file=up, title=title, size=up.size, content_type=ctype, order=nxt + i)
+        for slot, up in slots.items():  # a before/after picture replaces the one in its slot
+            for old in block.files.filter(order=slot):
+                name = old.file.name
+                old.delete()
+                if not SiteFile.objects.filter(file=name).exists():
+                    default_storage.delete(name)
+            SiteFile.objects.create(block=block, file=up, title='', size=up.size,
+                                    content_type=f'image/{up.name.rsplit(".", 1)[-1]}'.replace('jpg', 'jpeg'), order=slot)
     touched(site)
     return block
 

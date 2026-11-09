@@ -129,5 +129,6 @@ only the keys sites.clean_block stores.{% endcomment %}
   })();
   </script>
   {% endif %}
+  {% if media_script %}<script src="{% static 'js/site_media.js' %}" defer></script>{% endif %}
 </body>
 </html>

@@ -12360,3 +12360,79 @@ msgstr "Pilih salah satu templat di ruang kerja ini."
 #: site-templates
 msgid "Pick one of the templates."
 msgstr "Pilih salah satu templat."
+
+#: site-gallery-compare
+msgid "Gallery"
+msgstr "Galeri"
+
+#: site-gallery-compare
+msgid "Before and after"
+msgstr "Sebelum dan sesudah"
+
+#: site-gallery-compare
+msgid "Boards, renderings or site photos, opened large on a tap"
+msgstr "Papan, render, atau foto lokasi, dibuka besar saat diketuk"
+
+#: site-gallery-compare
+msgid "Today and the proposal, side by side with a slider"
+msgstr "Hari ini dan usulan, berdampingan dengan penggeser"
+
+#: site-gallery-compare
+msgid "Some pictures have no caption, which is what screen readers read out."
+msgstr "Beberapa gambar tidak punya keterangan, padahal itulah yang dibacakan pembaca layar."
+
+#: site-gallery-compare
+msgid "Add at least one picture."
+msgstr "Tambahkan setidaknya satu gambar."
+
+#: site-gallery-compare
+msgid "A gallery holds at most 12 pictures."
+msgstr "Galeri memuat paling banyak 12 gambar."
+
+#: site-gallery-compare
+msgid "Before label"
+msgstr "Label “Sebelum”"
+
+#: site-gallery-compare
+msgid "After label"
+msgstr "Label “Sesudah”"
+
+#: site-gallery-compare
+msgid "Drop pictures here"
+msgstr "Letakkan gambar-gambar di sini"
+
+#: site-gallery-compare
+msgid "choose pictures"
+msgstr "pilih gambar-gambar"
+
+#: site-gallery-compare
+msgid "Up to 12 pictures — JPEG, PNG, WebP or GIF, up to 5 MB each"
+msgstr "Hingga 12 gambar — JPEG, PNG, WebP, atau GIF, masing-masing hingga 5 MB"
+
+#: site-gallery-compare
+msgid "drop a picture or"
+msgstr "letakkan gambar atau"
+
+#: site-gallery-compare
+msgid "Columns on a computer"
+msgstr "Kolom di komputer"
+
+#: site-gallery-compare
+msgid "Add, caption and remove pictures in the block on the page. On a phone the gallery shows two columns."
+msgstr "Tambah, beri keterangan, dan hapus gambar di blok pada halaman. Di ponsel galeri menampilkan dua kolom."
+
+#: site-gallery-compare
+msgid "Drop the two pictures and name them in the block on the page. Use pictures of the same size and view."
+msgstr "Letakkan dua gambar dan beri nama di blok pada halaman. Gunakan gambar dengan ukuran dan sudut pandang yang sama."
+
+#: site-gallery-compare
+msgid "Before"
+msgstr "Sebelum"
+
+#: site-gallery-compare
+msgid "After"
+msgstr "Sesudah"
+
+#: site-gallery-compare
+msgid "Slide to compare"
+msgstr "Geser untuk membandingkan"

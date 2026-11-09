@@ -12339,3 +12339,79 @@ msgstr "Valige üks selle tööruumi mallidest."
 #: site-templates
 msgid "Pick one of the templates."
 msgstr "Valige üks mallidest."
+
+#: site-gallery-compare
+msgid "Gallery"
+msgstr "Galerii"
+
+#: site-gallery-compare
+msgid "Before and after"
+msgstr "Enne ja pärast"
+
+#: site-gallery-compare
+msgid "Boards, renderings or site photos, opened large on a tap"
+msgstr "Stendid, visualiseeringud või fotod kohast, puudutusega suureks avatavad"
+
+#: site-gallery-compare
+msgid "Today and the proposal, side by side with a slider"
+msgstr "Täna ja ettepanek, kõrvuti liuguriga"
+
+#: site-gallery-compare
+msgid "Some pictures have no caption, which is what screen readers read out."
+msgstr "Mõnel pildil pole allkirja, aga just seda ekraanilugerid ette loevad."
+
+#: site-gallery-compare
+msgid "Add at least one picture."
+msgstr "Lisage vähemalt üks pilt."
+
+#: site-gallery-compare
+msgid "A gallery holds at most 12 pictures."
+msgstr "Galeriis saab olla kuni 12 pilti."
+
+#: site-gallery-compare
+msgid "Before label"
+msgstr "Silt „Enne“"
+
+#: site-gallery-compare
+msgid "After label"
+msgstr "Silt „Pärast“"
+
+#: site-gallery-compare
+msgid "Drop pictures here"
+msgstr "Lohistage pildid siia"
+
+#: site-gallery-compare
+msgid "choose pictures"
+msgstr "valige pildid"
+
+#: site-gallery-compare
+msgid "Up to 12 pictures — JPEG, PNG, WebP or GIF, up to 5 MB each"
+msgstr "Kuni 12 pilti — JPEG, PNG, WebP või GIF, igaüks kuni 5 MB"
+
+#: site-gallery-compare
+msgid "drop a picture or"
+msgstr "lohistage pilt või"
+
+#: site-gallery-compare
+msgid "Columns on a computer"
+msgstr "Veerud arvutis"
+
+#: site-gallery-compare
+msgid "Add, caption and remove pictures in the block on the page. On a phone the gallery shows two columns."
+msgstr "Lisage, allkirjastage ja eemaldage pilte lehel olevas plokis. Telefonis näitab galerii kahte veergu."
+
+#: site-gallery-compare
+msgid "Drop the two pictures and name them in the block on the page. Use pictures of the same size and view."
+msgstr "Lohistage kaks pilti lehel olevasse plokki ja nimetage need. Kasutage sama suuruse ja vaatenurgaga pilte."
+
+#: site-gallery-compare
+msgid "Before"
+msgstr "Enne"
+
+#: site-gallery-compare
+msgid "After"
+msgstr "Pärast"
+
+#: site-gallery-compare
+msgid "Slide to compare"
+msgstr "Libistage võrdlemiseks"
