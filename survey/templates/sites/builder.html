@@ -59,6 +59,16 @@ workspace (may_edit false).{% endcomment %}
           <div class="lb-qr"><img src="{% url 'editor_site_qr' site.uuid %}?format=svg" alt="" width="64" height="64">
             <div><b>{% trans "QR code" %}</b><small>{% trans "For flyers and posters." %}</small>
               <a href="{% url 'editor_site_qr' site.uuid %}">PNG</a> · <a href="{% url 'editor_site_qr' site.uuid %}?format=svg">SVG</a></div></div>
+          {% if may_edit and a11y_count %}
+          <div class="lb-a11y-list">
+            <b><i class="fas fa-universal-access" aria-hidden="true"></i> {% blocktrans count n=a11y_count %}{{ n }} thing to check for accessibility{% plural %}{{ n }} things to check for accessibility{% endblocktrans %}</b>
+            <small>{% trans "Residents using a screen reader or a keyboard trip over these. Publishing is not blocked." %}</small>
+            <ul>
+              {% for msg in a11y_site %}<li><a href="#" data-select-target="page">{{ msg }}</a></li>{% endfor %}
+              {% for b, label in a11y_blocks %}<li><a href="#{{ b.anchor }}" data-select-target="{{ b.pk }}">{{ label|truncatechars:48 }}</a></li>{% endfor %}
+            </ul>
+          </div>
+          {% endif %}
           {% if review_url and can_act %}
           <div class="lb-review">
             <b>{% trans "Share for review" %}</b>

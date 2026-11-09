@@ -23,6 +23,7 @@ only the keys sites.clean_block stores.{% endcomment %}
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">{% endif %}
 </head>
 <body class="lp" data-width="{{ site.width }}">
+  <a class="lp-skip" href="#main">{% trans "Skip to content" %}</a>
   {% if review %}
   <div class="lp-banner" role="status">{% trans "Shared for review — this site is not public yet." %}</div>
   {% endif %}
@@ -51,7 +52,7 @@ only the keys sites.clean_block stores.{% endcomment %}
   {% endif %}
 
   <div class="lp-stage">
-  <main class="lp-wrap lp-main">
+  <main class="lp-wrap lp-main" id="main" tabindex="-1">
     {% for block, card in blocks %}
     <section class="lp-block lp-block--{{ block.kind }}{% if block.data.wide %} lp-block--wide{% endif %}" id="{{ block.anchor }}">
       {% if block.title and block.kind != 'heading' %}<h2>{{ block.title }}</h2>{% endif %}

@@ -195,6 +195,7 @@ def _builder_context(request, site, membership, **extra):
     # landing-builder-redesign): the same card the public page draws, whether the public page
     # draws it at all, and why not.
     items = {}
+    a11y, a11y_site = sites.a11y_issues(site, blocks)
     for b in blocks:
         card = sites.block_card(b)
         # A block whose template needs a card (results, event, survey) and has none is drawn as a
@@ -211,7 +212,7 @@ def _builder_context(request, site, membership, **extra):
         elif not complete:
             warn = _('Not shown on the page until it is filled in.')
         items[b.pk] = {'card': card, 'complete': complete, 'warn': warn,
-                       'label': sites.outline_label(b)}
+                       'label': sites.outline_label(b), 'a11y': a11y.get(b.pk, [])}
     ctx = {
         'org': org, 'site': site, 'blocks': blocks, 'cards': cards, 'results_missing': results_missing,
         'items': items, 'selected': request.GET.get('select', ''), 'last_pk': blocks[-1].pk if blocks else '',
@@ -238,6 +239,10 @@ def _builder_context(request, site, membership, **extra):
         'map_viz': [('auto', _('Markers')), ('heatmap', _('Heatmap')), ('cluster', _('Clusters'))],
         'public_url': request.build_absolute_uri(reverse('site_public', args=[site.slug])),
         'review_url': _review_url(request, site) if not site.is_published else '',
+        'a11y_site': a11y_site,
+        'a11y_count': len(a11y_site) + sum(len(v) for v in a11y.values()),
+        'a11y_blocks': [(b, sites.outline_label(b) or sites.BLOCK_KINDS[b.kind][0])
+                        for b in blocks if b.pk in a11y],
         'block_errors': {}, 'block_posted': {}, 'settings_errors': {}, 'new_kind': request.GET.get('add', ''),
         'new_errors': {}, 'new_raw': {},
     }

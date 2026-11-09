@@ -327,3 +327,10 @@ fieldset.lb-card { border: 1px solid var(--line); padding: 1rem 1.1rem; }
 .lb-review b { display: block; font-size: 13px; }
 .lb-review small { display: block; color: var(--muted); font-size: 12px; margin: 2px 0 6px; }
 .lb-review .lb-link { margin-top: 6px; font-size: 12.5px; }
+/* Accessibility checks (change site-a11y-lint) */
+.lb-a11y { font-size: 12.5px; color: #5b3fa8; background: #f3effd; border-radius: 6px; padding: 6px 10px; margin: 8px 0 0; }
+.lb-oi-a11y { color: #6d4fd0; font-size: 11px; }
+.lb-a11y-list { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 12px; }
+.lb-a11y-list b { display: block; font-size: 13px; color: #5b3fa8; }
+.lb-a11y-list small { display: block; color: var(--muted); font-size: 12px; margin: 2px 0 6px; }
+.lb-a11y-list ul { margin: 0; padding-left: 18px; font-size: 12.5px; }
