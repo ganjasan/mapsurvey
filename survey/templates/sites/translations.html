@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% load i18n static survey_filters %}
+{% comment %}The Translations tab of a site (change site-translations, #618): the survey table's
+partials and page script (translation_table.js) over `site_translations`.{% endcomment %}
+{% block title %}{% trans "Translations" %} — {{ site.title }}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/translation_table.css' %}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js" crossorigin="anonymous"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3" style="max-width:1200px;">
+<p class="mb-2"><a href="{% url 'editor_site' site.uuid %}"><i class="fas fa-arrow-left" aria-hidden="true"></i> {% trans "Back to the builder" %}</a></p>
+<div class="tt-page" id="translations"
+     data-survey="site-{{ site.uuid }}"
+     data-save-url="{% url 'editor_site_translation_save' site.uuid %}"
+     data-add-url="{% url 'editor_site_translation_add_language' site.uuid %}"
+     data-page-url="{% url 'editor_site_translations' site.uuid %}"
+     data-from="{{ source|default:'' }}" data-to="{{ target|default:'' }}"
+     data-can-edit="{% if can_edit %}1{% else %}0{% endif %}">
+
+{% if rows is None %}
+    <div class="tt-empty">
+        <i class="fas fa-language"></i>
+        <h3>{% blocktrans with lang=primary|language_name %}This site is in {{ lang }} only{% endblocktrans %}</h3>
+        <p>{% trans "Add a language and every heading, text, question and answer, phase and caption of the site appears here, ready to translate — in this table or through a CSV for an outside translator. Visitors then pick the language at the top of the site." %}</p>
+        {% if can_add %}
+        <div class="tt-add-inline">
+            <input type="hidden" id="id_available_languages" value='{{ languages_json }}'>
+            {% include "editor/partials/language_picker.html" %}
+        </div>
+        {% endif %}
+    </div>
+{% else %}
+    <div class="tt-head">
+        <div>
+            <h1>{% trans "Translations" %}</h1>
+            <p class="tt-lead">{% trans "Every text of the site once, in page order. One translation fills every place the same text is used; a text left untranslated shows in the primary language." %}</p>
+        </div>
+        <div class="tt-actions">
+            <form method="get" class="tt-langs" id="tt-langs">
+                <i class="fas fa-language"></i>
+                <select name="from" title="{% trans 'Source column' %}">
+                    {% for code in languages %}<option value="{{ code }}"{% if code == source %} selected{% endif %}>{{ code|language_name }}{% if code == primary %} · {% trans "primary" %}{% endif %}</option>{% endfor %}
+                </select>
+                <span class="tt-arrow">→</span>
+                <select name="to" title="{% trans 'Target column' %}" id="tt-to">
+                    {% for code in targets %}<option value="{{ code }}"{% if code == target %} selected{% endif %}>{{ code|language_name }} ({{ code }})</option>{% endfor %}
+                    {% if can_add %}<option disabled>──────</option><option value="__add__">+ {% trans "Add language…" %}</option>{% endif %}
+                </select>
+            </form>
+            <a class="tt-btn" href="{{ export_url }}"><i class="fas fa-download"></i> {% trans "Export CSV" %}</a>
+            {% if can_edit %}<button type="button" class="tt-btn" id="tt-import-btn"><i class="fas fa-upload"></i> {% trans "Import CSV" %}</button>{% endif %}
+        </div>
+    </div>
+
+    {% if can_add %}
+    <div class="tt-add" id="tt-add" hidden>
+        <div class="tt-add-title">{% trans "Add a language" %} <button type="button" class="tt-link" id="tt-add-close"><i class="fas fa-times"></i></button></div>
+        <input type="hidden" id="id_available_languages" value='{{ languages_json }}'>
+        {% include "editor/partials/language_picker.html" %}
+    </div>
+    {% endif %}
+
+    {% if site.is_published and can_edit %}
+    <div class="tt-live"><i class="fas fa-broadcast-tower"></i> {% trans "This site is live: a saved translation reaches visitors at once." %}</div>
+    {% endif %}
+
+    {% if import_report %}
+    <div class="tt-report{% if import_report.error %} tt-report-warn{% endif %}">
+        <i class="fas fa-file-csv"></i>
+        <div>
+            {% if import_report.error %}{{ import_report.error }}{% else %}
+            <b>{% blocktrans with name=import_report.file %}{{ name }} imported.{% endblocktrans %}</b>
+            {% blocktrans with filled=import_report.filled overwritten=import_report.overwritten skipped=import_report.skipped unmatched=import_report.unmatched_total %}{{ filled }} filled · {{ overwritten }} overwritten · {{ skipped }} skipped (already translated) · {{ unmatched }} unmatched{% endblocktrans %}
+            {% endif %}
+        </div>
+        <button type="button" class="tt-link tt-close" onclick="this.parentNode.remove()"><i class="fas fa-times"></i></button>
+    </div>
+    {% endif %}
+
+    <div class="tt-status-bar">
+        <button type="button" class="tt-chip on" data-filter="all"><b>{% trans "All" %}</b> <span data-count="all">{{ rows|length }}</span></button>
+        <button type="button" class="tt-chip" data-filter="missing"><span class="tt-dot tt-dot-missing"></span> {% trans "Missing" %} <b data-count="missing">{{ counts.missing }}</b></button>
+        <button type="button" class="tt-chip" data-filter="stale"><span class="tt-dot tt-dot-stale"></span> {% trans "Outdated" %} <b data-count="stale">{{ counts.stale }}</b></button>
+        <button type="button" class="tt-chip" data-filter="translated"><span class="tt-dot tt-dot-ok"></span> {% trans "Translated" %} <b data-count="translated">{{ counts.translated }}</b></button>
+        <span class="tt-state autosave-indicator" id="tt-state" data-state="idle"></span>
+    </div>
+
+    <table class="tt-table">
+        <thead><tr>
+            <th class="tt-status"></th>
+            <th class="tt-where">{% trans "Where" %}</th>
+            <th class="tt-src">{{ source|language_name }}{% if source == primary %} <span class="tt-th-note">· {% trans "primary" %}</span>{% endif %}</th>
+            <th class="tt-tr">{{ target|language_name }}</th>
+        </tr></thead>
+        {% regroup rows by first.page as pages %}
+        {% for page in pages %}
+        <tbody class="tt-page-row"><tr><td colspan="4">
+            <i class="fas fa-file-alt"></i> {{ page.list.0.first.page_title }}
+            <a class="tt-goto" href="{% url 'editor_site' site.uuid %}{% if page.list.0.first.link.block_id %}?select={{ page.list.0.first.link.block_id }}{% endif %}"><i class="fas fa-external-link-alt"></i> {% trans "Open in the builder" %}</a>
+        </td></tr></tbody>
+        {% for row in page.list %}{% include "editor/partials/translation_row.html" %}{% endfor %}
+        {% endfor %}
+    </table>
+
+    {% if can_add and targets %}
+    <form method="post" action="{% url 'editor_site_translation_remove_language' site.uuid %}" class="mt-3 small"
+          data-confirm="{% blocktrans with lang=target|language_name %}Stop offering {{ lang }}?{% endblocktrans %}"
+          data-confirm-body="{% trans 'Visitors no longer see it in the language switch. The translations stay stored: adding the language back restores them.' %}"
+          data-confirm-action="{% trans 'Stop offering' %}">
+        {% csrf_token %}<input type="hidden" name="language" value="{{ target }}">
+        <button type="submit" class="btn btn-link btn-sm text-danger px-0">{% blocktrans with lang=target|language_name %}Stop offering {{ lang }}{% endblocktrans %}</button>
+    </form>
+    {% endif %}
+
+    {% if can_edit %}
+    <div class="tt-modal-backdrop" id="tt-import" hidden>
+        <form class="tt-modal" method="post" enctype="multipart/form-data" action="{% url 'editor_site_translations_import' site.uuid %}">
+            {% csrf_token %}
+            <input type="hidden" name="from" value="{{ source }}"><input type="hidden" name="to" value="{{ target }}">
+            <h3>{% blocktrans with lang=target|language_name %}Import {{ lang }} translations{% endblocktrans %}</h3>
+            <p>{% trans "A CSV in the layout of the export: a key column, or at least source and translation columns. Rows are matched by key, then by the source text." %}</p>
+            <input type="file" name="file" accept=".csv,text/csv" required>
+            <label><input type="checkbox" name="overwrite" value="1"> {% trans "Overwrite translations that already exist" %}</label>
+            <div class="tt-modal-foot">
+                <button type="button" class="tt-btn" id="tt-import-cancel">{% trans "Cancel" %}</button>
+                <button type="submit" class="tt-btn tt-btn-primary"><i class="fas fa-upload"></i> {% trans "Import" %}</button>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+{% endif %}
+</div>
+</div>
+{% include "sites/editor/_confirm_modal.html" %}
+<script src="{% static 'js/translation_table.js' %}"></script>
+<script src="{% static 'js/site_confirm.js' %}"></script>
+{% endblock %}

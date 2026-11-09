@@ -96,7 +96,8 @@ cards — cover, address and language, surveys on this page. Autosaved like a bl
   </div>
   {% if can_act %}
   <div class="lb-pane-foot">
-    <form method="post" action="{% url 'editor_site_duplicate' site.uuid %}">{% csrf_token %}<button type="submit" class="lb-link"><i class="far fa-clone" aria-hidden="true"></i> {% trans "Duplicate site" %}</button></form>
+    {% if not site.is_template %}<form method="post" action="{% url 'editor_site_duplicate' site.uuid %}">{% csrf_token %}<button type="submit" class="lb-link"><i class="far fa-clone" aria-hidden="true"></i> {% trans "Duplicate site" %}</button></form>
+    <form method="post" action="{% url 'editor_site_save_template' site.uuid %}">{% csrf_token %}<button type="submit" class="lb-link"><i class="far fa-copy" aria-hidden="true"></i> {% trans "Save as template" %}</button></form>{% endif %}
     <form method="post" action="{% url 'editor_site_delete' site.uuid %}" data-confirm="{% blocktrans with title=site.title %}Delete “{{ title }}”?{% endblocktrans %}" data-confirm-body="{% trans 'Its address stops working, and links and QR codes already printed lead nowhere.' %}" data-confirm-note="{% trans 'Blocks, files and event registrations are deleted with it. Your surveys stay.' %}" data-confirm-action="{% trans 'Delete site' %}">
       {% csrf_token %}<button type="submit" class="lb-link lb-danger"><i class="far fa-trash-alt" aria-hidden="true"></i> {% trans "Delete site" %}</button>
     </form>

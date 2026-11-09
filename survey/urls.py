@@ -20,6 +20,7 @@ from . import org_views
 from . import public_results_editor
 from . import abuse_review_views
 from . import site_views
+from . import site_translation_views
 from . import demo_request_views
 
 urlpatterns = [
@@ -308,7 +309,20 @@ urlpatterns = [
     path('editor/sites/new/', site_views.editor_site_create, name='editor_site_create'),
     path('editor/sites/<uuid:uuid>/', site_views.editor_site, name='editor_site'),
     path('editor/sites/<uuid:uuid>/duplicate/', site_views.editor_site_duplicate, name='editor_site_duplicate'),
+    path('editor/sites/<uuid:uuid>/save-template/', site_views.editor_site_save_template, name='editor_site_save_template'),
     path('editor/sites/<uuid:uuid>/review-link/', site_views.editor_site_review_link, name='editor_site_review_link'),
+    path('editor/sites/<uuid:uuid>/translations/', site_translation_views.editor_site_translations,
+         name='editor_site_translations'),
+    path('editor/sites/<uuid:uuid>/translations/save/', site_translation_views.editor_site_translation_save,
+         name='editor_site_translation_save'),
+    path('editor/sites/<uuid:uuid>/translations/export/', site_translation_views.editor_site_translations_export,
+         name='editor_site_translations_export'),
+    path('editor/sites/<uuid:uuid>/translations/import/', site_translation_views.editor_site_translations_import,
+         name='editor_site_translations_import'),
+    path('editor/sites/<uuid:uuid>/translations/language/', site_translation_views.editor_site_translation_add_language,
+         name='editor_site_translation_add_language'),
+    path('editor/sites/<uuid:uuid>/translations/language/remove/',
+         site_translation_views.editor_site_translation_remove_language, name='editor_site_translation_remove_language'),
     path('editor/sites/<uuid:uuid>/settings/', site_views.editor_site_settings,
          name='editor_site_settings'),
     path('editor/sites/<uuid:uuid>/surveys/link/', site_views.editor_site_survey_link,

@@ -1777,3 +1777,393 @@ class SiteAccessibilityTest(SiteTestBase):
         page = self.client.get('/p/riverside-park-plan/').content.decode()
         self.assertIn('<a class="lp-skip" href="#main">Skip to content</a>', page)
         self.assertIn('id="main"', page)
+
+
+class SiteServiceLayerTest(SiteTestBase):
+    """Spec `survey-sites`: every site write goes through the sites service (change
+    sites-service-layer, #617)."""
+
+    def test_views_write_nothing_themselves(self):
+        """GIVEN the site views module
+        WHEN its source is read
+        THEN it holds no direct model write: no save(), objects.create, delete() or update() of rows"""
+        import inspect
+        import re
+        from survey import site_views
+        source = inspect.getsource(site_views)
+        writes = re.findall(r'\.save\(|objects\.create\(|\.delete\(\)|\.objects\.[a-z_]*\.update\(|\)\.update\(', source)
+        self.assertEqual(writes, [], 'site views must call survey.services.sites')
+
+    def test_service_without_a_request(self):
+        """GIVEN an Actor and plain values
+        WHEN the service creates a site, adds a text block, publishes and duplicates it
+        THEN every step works without a request and leaves audit rows"""
+        from django.http import QueryDict
+        from survey.models import AuditLog
+        from survey.services import sites as site_service
+        from survey.services.context import Actor
+        actor = Actor(user=self.editor, surface='api')
+        site = site_service.create_site(actor, self.org, title='From the API')
+        fields = QueryDict(mutable=True)
+        fields.update({'title': 'About', 'body': '<p>Hello</p><script>x</script>'})
+        block = site_service.save_block(actor, site, None, 'text', fields)
+        self.assertEqual(block.data['body'], '<p>Hello</p>')
+        site_service.publish(actor, site)
+        copy = site_service.duplicate_site(actor, site)
+        self.assertEqual(copy.blocks.count(), 1)
+        self.assertFalse(copy.is_published)
+        actions = set(AuditLog.objects.filter(actor=self.editor).values_list('action', flat=True))
+        self.assertTrue({'site_create', 'site_publish', 'site_duplicate'} <= actions)
+
+    def test_refused_block_carries_the_typing(self):
+        """GIVEN a button block posted with an unsafe link
+        WHEN the service saves it
+        THEN BlockRefused carries the field error and what was typed"""
+        from django.http import QueryDict
+        from survey.services import sites as site_service
+        from survey.services.context import Actor
+        fields = QueryDict(mutable=True)
+        fields.update({'label': 'Plan', 'url': 'javascript:alert(1)'})
+        with self.assertRaises(site_service.BlockRefused) as ctx:
+            site_service.save_block(Actor(user=self.editor), self.site, None, 'button', fields)
+        self.assertIn('url', ctx.exception.errors)
+        self.assertEqual(ctx.exception.raw['label'], 'Plan')
+
+
+class SiteTranslationsTest(SiteTestBase):
+    """Spec `survey-sites`: a site in several languages (change site-translations, #618)."""
+
+    def setUp(self):
+        super().setUp()
+        self.login(self.editor)
+        self.add_block('text', title='About', body='<p>The park</p>')
+        self.add_block('faq', q=['Who?'], a=['<p>Everyone</p>'])
+        self.client.post(self.url('editor_site_translation_add_language'), {'language': 'es'})
+        self.site.refresh_from_db()
+        self.text = self.site.blocks.get(kind='text')
+
+    def save(self, key, value):
+        return self.client.post(self.url('editor_site_translation_save'),
+                                {'key': key, 'value': value, 'from': 'en', 'to': 'es'})
+
+    def test_table_lists_every_text(self):
+        """GIVEN a site with a title, a text block and an FAQ, offered in Spanish
+        WHEN the Translations tab opens
+        THEN it lists the site title, the block heading, the body, the question and the answer"""
+        self.assertEqual(self.site.languages, ['es'])
+        html = self.client.get(self.url('editor_site_translations')).content.decode()
+        for key in ('site:title', f'block:{self.text.pk}:title', f'block:{self.text.pk}:body'):
+            self.assertIn(f'data-occ="{key}"', html)
+        faq = self.site.blocks.get(kind='faq')
+        self.assertIn(f'block:{faq.pk}:faq:0:q', html)
+
+    def test_visitor_reads_spanish(self):
+        """GIVEN a Spanish heading and body saved in the table
+        WHEN a visitor opens the published site with ?lang=es, then without it, then with Accept-Language es
+        THEN the Spanish texts, lang="es", the switch and hreflang are there, the answer untranslated falls
+             back to English, and the choice is remembered in a cookie"""
+        self.assertEqual(self.save(f'block:{self.text.pk}:title', 'Acerca de').status_code, 200)
+        self.save(f'block:{self.text.pk}:body', '<p>El parque</p><script>x</script>')
+        self.text.refresh_from_db()
+        self.assertEqual(self.text.translations['es']['body'], '<p>El parque</p>')
+        self.client.post(self.url('editor_site_publish'), {'action': 'publish'})
+        self.client.logout()
+        r = self.client.get('/p/riverside-park-plan/', {'lang': 'es'})
+        page = r.content.decode()
+        self.assertIn('<html lang="es">', page)
+        self.assertIn('<h2>Acerca de</h2>', page)
+        self.assertIn('El parque', page)
+        self.assertIn('Everyone', page)
+        self.assertIn('hreflang="es"', page)
+        self.assertIn('class="lp-langs"', page)
+        self.assertEqual(r.cookies['p_lang'].value, 'es')
+        self.client.cookies.clear()
+        self.assertIn('<h2>About</h2>', self.client.get('/p/riverside-park-plan/').content.decode())
+        r = self.client.get('/p/riverside-park-plan/', HTTP_ACCEPT_LANGUAGE='es-MX,es;q=0.9')
+        self.assertIn('<h2>Acerca de</h2>', r.content.decode())
+
+    def test_outdated_after_the_source_changes(self):
+        """GIVEN a translated heading
+        WHEN the English heading changes
+        THEN the row reads outdated"""
+        from survey import site_translations as st
+        self.save(f'block:{self.text.pk}:title', 'Acerca de')
+        self.client.post(self.url('editor_site_block_edit', self.text.pk),
+                         {'title': 'About the park', 'body': '<p>The park</p>', 'autosave': '1'})
+        self.site.refresh_from_db()
+        occ = next(o for o in st.occurrences(self.site, 'es') if o.key == f'block:{self.text.pk}:title')
+        self.assertEqual(occ.status, 'stale')
+
+    def test_csv_round_trip(self):
+        """GIVEN the exported CSV with a Spanish column filled in
+        WHEN it is imported
+        THEN the translations are stored"""
+        import csv
+        import io
+        data = self.client.get(self.url('editor_site_translations_export') + '?from=en&to=es').content.decode('utf-8-sig')
+        rows = list(csv.DictReader(io.StringIO(data)))
+        for row in rows:
+            if row['source'] == 'About':
+                row['translation'] = 'Acerca de'
+        out = io.StringIO()
+        writer = csv.DictWriter(out, fieldnames=rows[0].keys())
+        writer.writeheader()
+        writer.writerows(rows)
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        upload = SimpleUploadedFile('es.csv', out.getvalue().encode(), content_type='text/csv')
+        self.client.post(self.url('editor_site_translations_import'), {'from': 'en', 'to': 'es', 'file': upload})
+        self.text.refresh_from_db()
+        self.assertEqual(self.text.translations['es']['title'], 'Acerca de')
+
+    def test_rights(self):
+        """GIVEN a viewer, and a language the site does not offer
+        WHEN the viewer saves a row, or an editor saves into German
+        THEN the viewer gets 403 and the German save 400"""
+        self.login(self.viewer)
+        self.assertEqual(self.save(f'block:{self.text.pk}:title', 'x').status_code, 403)
+        self.login(self.editor)
+        r = self.client.post(self.url('editor_site_translation_save'),
+                             {'key': f'block:{self.text.pk}:title', 'value': 'x', 'from': 'en', 'to': 'de'})
+        self.assertEqual(r.status_code, 400)
+
+    def test_duplicate_keeps_translations(self):
+        """GIVEN a site with a Spanish heading and a documents block with a Spanish file title
+        WHEN it is duplicated
+        THEN the copy offers Spanish with the same heading and the file title under the new file"""
+        from survey.models import Site
+        self.save(f'block:{self.text.pk}:title', 'Acerca de')
+        pdf = SimpleUploadedFile('plan.pdf', b'%PDF-1.4\n', content_type='application/pdf')
+        self.client.post(self.url('editor_site_block_add'), {'kind': 'documents', 'files': [pdf]})
+        docs = self.site.blocks.get(kind='documents')
+        f = docs.files.get()
+        self.save(f'block:{docs.pk}:file:{f.pk}', 'El plan')
+        self.client.post(self.url('editor_site_duplicate'))
+        copy = Site.objects.exclude(pk=self.site.pk).get()
+        self.assertEqual(copy.languages, ['es'])
+        self.assertEqual(copy.blocks.get(kind='text').translations['es']['title'], 'Acerca de')
+        new_docs = copy.blocks.get(kind='documents')
+        self.assertEqual(new_docs.translations['es'], {f'file:{new_docs.files.get().pk}': 'El plan'})
+
+    def test_registration_language(self):
+        """GIVEN a published Spanish-offering site with an open event
+        WHEN a visitor registers from the Spanish page
+        THEN the registration remembers Spanish for its confirmation mail"""
+        self.add_block('event', date='2030-06-12', start='10:00', tz='UTC', open='1', place='Boathouse')
+        self.client.post(self.url('editor_site_publish'), {'action': 'publish'})
+        event = self.site.blocks.get(kind='event')
+        self.client.logout()
+        self.client.post(reverse('site_event_register', args=[self.site.slug, event.pk]),
+                         {'name': 'Ana', 'email': 'ana@example.org', 'consent': '1', 'lang': 'es'})
+        self.assertEqual(event.registrations.get().language, 'es')
+
+    def test_translations_are_screened(self):
+        """GIVEN a Spanish heading
+        WHEN the site text is collected for screening
+        THEN the translation is part of it"""
+        from survey.content_screening import collect_site_text
+        self.save(f'block:{self.text.pk}:title', 'Haga clic aquí')
+        self.site.refresh_from_db()
+        self.assertIn('Haga clic aquí', ' '.join(t for _l, t in collect_site_text(self.site).texts))
+
+
+class SiteBrandingTest(SiteTestBase):
+    """Spec `survey-sites`: workspace branding on sites (change workspace-branding, #619)."""
+
+    def post_branding(self, **fields):
+        data = {'form': 'branding', 'brand_name': '', 'accent_color': ''}
+        data.update(fields)
+        return self.client.post(reverse('org_settings', args=[self.org.slug]), data)
+
+    def test_brand_on_the_site(self):
+        """GIVEN an owner who sets a public name, a logo and a dark accent colour
+        WHEN the published site is opened
+        THEN it shows the logo and the public name and uses the colour as is"""
+        self.login(self.owner)
+        r = self.post_branding(brand_name='Riverside Parks Dept.', accent_color='#1b5e20', logo=_png())
+        self.assertEqual(r.status_code, 302)
+        self.org.refresh_from_db()
+        self.assertTrue(self.org.logo.name.startswith('org_logos/'))
+        self.login(self.editor)
+        self.add_block('text', body='<p>Hi</p>')
+        self.client.post(self.url('editor_site_publish'), {'action': 'publish'})
+        page = self.client.get('/p/riverside-park-plan/').content.decode()
+        self.assertIn('Riverside Parks Dept.', page)
+        self.assertIn('class="lp-logo"', page)
+        self.assertIn('--lp-accent: #1b5e20;', page)
+
+    def test_light_colour_darkened(self):
+        """GIVEN a pale yellow accent
+        WHEN the brand is read for a site
+        THEN a darker shade with at least 4.5:1 against white is used, and the settings say so"""
+        from survey import branding
+        self.org.accent_color = '#ffeb3b'
+        self.org.save()
+        brand = branding.for_site(self.org)
+        self.assertTrue(brand['darkened'])
+        self.assertGreaterEqual(branding.contrast(brand['accent'], '#ffffff'), 4.5)
+        self.login(self.owner)
+        self.assertContains(self.client.get(reverse('org_settings', args=[self.org.slug])), 'too light to read')
+
+    def test_bad_logo_and_colour_refused(self):
+        """GIVEN an HTML file sent as a logo and a colour that is not #rrggbb
+        WHEN the branding form is posted
+        THEN both are refused and nothing is stored"""
+        self.login(self.owner)
+        fake = SimpleUploadedFile('logo.png', b'<html><script>x</script></html>', content_type='image/png')
+        r = self.post_branding(logo=fake, accent_color='red')
+        self.assertEqual(r.status_code, 400)
+        self.org.refresh_from_db()
+        self.assertFalse(self.org.logo)
+        self.assertEqual(self.org.accent_color, '')
+
+    def test_only_the_owner(self):
+        """GIVEN an editor of the workspace
+        WHEN they post the branding form
+        THEN it is refused"""
+        self.login(self.editor)
+        self.assertEqual(self.post_branding(brand_name='X').status_code, 403)
+
+
+class SiteTemplatesTest(SiteTestBase):
+    """Spec `survey-sites`: templates (change site-templates, #620)."""
+
+    def setUp(self):
+        super().setUp()
+        self.login(self.editor)
+
+    def test_starter(self):
+        """GIVEN the Sites list
+        WHEN an editor picks the Master plan starter
+        THEN a draft opens with the starter's blocks in order, the text filled and the rest empty for now"""
+        from survey.models import Site
+        self.assertContains(self.client.get(reverse('editor_sites')), 'value="starter:master-plan"')
+        r = self.client.post(reverse('editor_site_create'), {'template': 'starter:master-plan'})
+        site = Site.objects.exclude(pk=self.site.pk).get()
+        self.assertTrue(r['Location'].endswith('?new=1'))
+        self.assertEqual(list(site.blocks.values_list('kind', flat=True)),
+                         ['heading', 'text', 'map', 'timeline', 'survey', 'heading', 'results', 'documents', 'contacts'])
+        self.assertIn('<p>', site.blocks.get(kind='text').data['body'])
+        self.assertEqual(len(site.blocks.get(kind='timeline').data['items']), 4)
+        self.assertFalse(site.is_published)
+
+    def test_save_and_use_a_workspace_template(self):
+        """GIVEN a site with a survey card and a text block
+        WHEN it is saved as a template and a new site is started from it
+        THEN the template has no survey links and cannot be published or opened publicly, and the new
+             site copies its blocks"""
+        from survey.models import Site
+        self.client.post(self.url('editor_site_survey_link'), {'survey': self.survey.uuid})
+        self.add_block('survey', survey=self.survey.uuid, title='Take part')
+        self.add_block('text', body='<p>Our approach</p>')
+        self.client.post(self.url('editor_site_save_template'))
+        template = Site.objects.get(is_template=True)
+        self.assertFalse(template.survey_links.exists())
+        self.assertEqual(template.blocks.count(), 2)
+        self.client.post(reverse('editor_site_publish', args=[template.uuid]), {'action': 'publish'})
+        template.refresh_from_db()
+        self.assertFalse(template.is_published)
+        self.client.logout()
+        self.assertEqual(self.client.get(f'/p/{template.slug}/').status_code, 404)
+        self.login(self.editor)
+        listing = self.client.get(reverse('editor_sites')).content.decode()
+        self.assertIn(f'value="site:{template.uuid}"', listing)
+        self.client.post(reverse('editor_site_create'), {'template': f'site:{template.uuid}'})
+        new = Site.objects.exclude(pk__in=[self.site.pk, template.pk]).get()
+        self.assertFalse(new.is_template)
+        self.assertEqual(new.blocks.get(kind='text').data['body'], '<p>Our approach</p>')
+
+    def test_other_workspace_template_refused(self):
+        """GIVEN a template of another workspace
+        WHEN an editor posts it as their template
+        THEN the answer is 404 and nothing is created"""
+        from survey.models import Organization, Site
+        other = Organization.objects.create(name='Other', slug='other')
+        alien = Site.objects.create(organization=other, title='Alien', slug='alien-template', is_template=True)
+        self.assertEqual(self.client.post(reverse('editor_site_create'), {'template': f'site:{alien.uuid}'}).status_code, 404)
+        self.assertEqual(Site.objects.filter(organization=self.org).count(), 1)
+
+    def test_starter_is_a_sites_use(self):
+        """GIVEN a free workspace whose trial is used
+        WHEN an editor picks a starter
+        THEN no site is created"""
+        from survey.models import Site
+        self.sub.delete()
+        trial_used_elsewhere(self.org)
+        self.client.post(reverse('editor_site_create'), {'template': 'starter:consultation'})
+        self.assertEqual(Site.objects.count(), 1)
+
+
+class SiteGalleryCompareTest(SiteTestBase):
+    """Spec `survey-sites`: gallery and before/after blocks (change site-gallery-compare, #621)."""
+
+    def setUp(self):
+        super().setUp()
+        self.login(self.editor)
+
+    def add_empty(self, kind):
+        self.client.post(self.url('editor_site_block_add'), {'kind': kind, 'empty': '1'})
+        return self.site.blocks.get(kind=kind)
+
+    def edit(self, block, **fields):
+        fields.setdefault('autosave', '1')
+        return self.client.post(self.url('editor_site_block_edit', block.pk), fields)
+
+    def test_gallery(self):
+        """GIVEN an empty gallery block
+        WHEN two pictures are added, one is captioned, the columns set to 2, and the site published
+        THEN the page shows both in a two-column grid with the caption as text alternative and the
+             lightbox script, and an uncaptioned picture is flagged for accessibility"""
+        block = self.add_empty('gallery')
+        self.assertEqual(self.edit(block, pictures=[_png(), _png()], columns='3').status_code, 200)
+        first, second = block.files.order_by('order')
+        self.assertTrue(first.content_type.startswith('image/'))
+        self.edit(block, **{f'file_title_{first.pk}': 'Board 1', 'columns': '2'})
+        block.refresh_from_db()
+        self.assertEqual(block.data['columns'], 2)
+        issues, _site = sites.a11y_issues(self.site, [block])
+        self.assertIn(block.pk, issues)
+        self.client.post(self.url('editor_site_publish'), {'action': 'publish'})
+        page = self.client.get('/p/riverside-park-plan/').content.decode()
+        self.assertIn('lp-gallery lp-gallery--2', page)
+        self.assertIn('alt="Board 1"', page)
+        self.assertIn('js/site_media.', page)
+
+    def test_gallery_refuses_non_pictures(self):
+        """GIVEN a gallery block
+        WHEN an HTML file is sent as a picture
+        THEN it is refused and nothing is stored"""
+        block = self.add_empty('gallery')
+        fake = SimpleUploadedFile('x.png', b'<html><script>x</script></html>', content_type='image/png')
+        r = self.edit(block, pictures=[fake])
+        self.assertEqual(r.status_code, 422)
+        self.assertFalse(block.files.exists())
+
+    def test_compare(self):
+        """GIVEN an empty before/after block
+        WHEN the before picture is dropped, then the after one, then the before replaced
+        THEN the public page draws it only with both, with the labels, and a replaced picture keeps one row per slot"""
+        block = self.add_empty('compare')
+        self.edit(block, before=_png(), before_label='Today', after_label='Proposal')
+        self.assertFalse(sites.is_complete(block))
+        self.edit(block, after=_png(), before_label='Today', after_label='Proposal')
+        self.assertTrue(sites.is_complete(block))
+        self.edit(block, before=_png(), before_label='Today', after_label='Proposal')
+        self.assertEqual(sorted(block.files.values_list('order', flat=True)), [0, 1])
+        self.client.post(self.url('editor_site_publish'), {'action': 'publish'})
+        page = self.client.get('/p/riverside-park-plan/').content.decode()
+        self.assertIn('data-compare', page)
+        self.assertIn('alt="Today"', page)
+        self.assertIn('alt="Proposal"', page)
+
+    def test_canvas_primary_actions(self):
+        """GIVEN an empty gallery and an empty before/after block
+        WHEN the builder renders
+        THEN the pictures are dropped in the blocks, and Settings holds columns and Full width"""
+        self.add_empty('gallery')
+        self.add_empty('compare')
+        html = self.client.get(self.url('editor_site')).content.decode()
+        self.assertIn('data-file="pictures"', html)
+        self.assertIn('data-file="before"', html)
+        self.assertIn('data-file="after"', html)
+        self.assertIn('name="columns"', html)
+        self.assertEqual(html.count('name="wide"'), 2)

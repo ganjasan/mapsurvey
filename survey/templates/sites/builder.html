@@ -43,8 +43,9 @@ workspace (may_edit false).{% endcomment %}
     </div>
     <div class="lb-top-right">
       {% if may_edit %}<span class="lb-saved" id="lb-saved" aria-live="polite"><i class="fas fa-check-circle" aria-hidden="true"></i> <span>{% trans "All changes saved" %}</span></span>{% endif %}
+      <a class="lb-btn" href="{% url 'editor_site_translations' site.uuid %}" id="site-translations" title="{% trans 'Translations' %}"><i class="fas fa-language" aria-hidden="true"></i> {% trans "Translations" %}{% if site.languages %} <small class="text-muted">{{ site.languages|length|add:1 }}</small>{% endif %}</a>
       <a class="lb-btn" href="{% url 'site_public' site.slug %}" target="_blank" rel="noopener" id="site-preview"><i class="far fa-eye" aria-hidden="true"></i> {% if site.is_published %}{% trans "Open site" %}{% else %}{% trans "Preview" %}{% endif %}</a>
-      {% if can_act %}
+      {% if can_act and not site.is_template %}
       <div class="lb-pub">
         <button type="button" class="lb-btn{% if not site.is_published %} lb-primary{% endif %}" id="lb-pub-btn" aria-haspopup="dialog" aria-expanded="false">
           {% if site.is_published %}{% trans "Published" %}{% else %}{% trans "Publish" %}{% endif %} <i class="fas fa-chevron-down" aria-hidden="true"></i></button>
@@ -93,8 +94,9 @@ workspace (may_edit false).{% endcomment %}
     </div>
   </header>
 
-  {% if messages or lapsed or held or new_errors %}
+  {% if messages or lapsed or held or new_errors or site.is_template %}
   <div class="lb-notices">
+    {% if site.is_template %}<div class="alert alert-info py-2 mb-1"><i class="far fa-copy" aria-hidden="true"></i> {% trans "This is a template: it is never published. Start a site from it with New site → From a template on the Sites list." %}</div>{% endif %}
     {% for message in messages %}<div class="alert alert-{{ message.tags }} py-2 mb-1">{{ message }}</div>{% endfor %}
     {% if new_errors %}<div class="alert alert-danger py-2 mb-1">{% for k, v in new_errors.items %}{{ v }} {% endfor %}</div>{% endif %}
     {% if lapsed %}<div class="alert alert-warning py-2 mb-1">{% trans "Sites are part of Pro. This workspace's plan has ended, so the site can't be edited; a published site stays online." %} <a href="{% url 'org_billing' org.slug %}">{% trans "Plan & billing" %}</a></div>{% endif %}
@@ -115,7 +117,7 @@ workspace (may_edit false).{% endcomment %}
     </aside>
 
     <main class="lb-canvas" id="lb-canvas">
-      <div class="lb-frame" id="lb-frame" data-width="{{ site.width }}">
+      <div class="lb-frame" id="lb-frame" data-width="{{ site.width }}"{% if brand.custom_accent %} style="--lp-accent: {{ brand.accent }};"{% endif %}>
         {% include "sites/editor/_hero.html" %}
         <div class="lp-wrap lb-blocks" id="lb-blocks">
           {% if may_edit %}<div class="lb-ins" data-add-after="top"><button type="button" title="{% trans 'Add block here' %}" aria-label="{% trans 'Add block here' %}">+</button></div>{% endif %}
@@ -153,5 +155,6 @@ window.LB_TEXT = {saving: '{% trans "Saving…" as t %}{{ t|escapejs }}', saved:
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" crossorigin="anonymous"></script>
 <script src="{% static 'js/public_results_render.js' %}"></script>
 <script src="{% static 'js/site_confirm.js' %}"></script>
+<script src="{% static 'js/site_media.js' %}"></script>
 <script src="{% static 'js/site_builder.js' %}"></script>
 {% endblock %}

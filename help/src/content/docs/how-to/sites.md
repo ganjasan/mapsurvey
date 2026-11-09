@@ -38,6 +38,8 @@ Press **+** or **Add block** and choose what to add:
 - **FAQ** — questions and answers that open on a tap.
 - **Timeline** — the phases of the engagement with their dates. Press **Now** on the phase you are in; earlier phases show as done.
 - **Image** — a picture with a description for screen readers and an optional caption.
+- **Gallery** — up to 12 pictures (boards, renderings, site photos) in two to four columns; residents open them large with a tap. Drop the pictures onto the block and caption them there — the caption is also what screen readers read.
+- **Before and after** — two pictures of the same view, today and the proposal, with a slider between them. Drop each into its half of the block and name the two sides.
 - **Video** — a YouTube or Vimeo link.
 - **Survey card** — one of your surveys. The card follows the survey: *Open* with a **Take part** button, *Opens on …* before its period starts, *Coming soon* while it is a draft, and *Closed* with a link to its [public results](/how-to/share-results-publicly/) once you publish them.
 - **Button** — a link to anything else: the draft plan, the council's website, an event sign-up.
@@ -60,9 +62,21 @@ Under the event in the builder, **Attendee list** shows who registered, with a C
 
 **Surveys on this site** lists the surveys the site shows. Add one there or straight from a survey card. A survey can be on any number of sites — the same city-wide survey on two neighbourhood sites, for example. Removing a survey from the site removes its cards.
 
+## Your brand
+
+The workspace owner sets the **public name**, a **logo** and an **accent colour** in the workspace settings (**General → Branding**). Every site of the workspace shows the logo and the name at the top and uses the colour for buttons and links; a colour too light to read is darkened on the site automatically.
+
+## Other languages
+
+Press **Translations** in the top bar and add a language. Every text of the site is listed once, in page order — headings, text, questions and answers, phases, captions, button labels, contacts, file titles, the title and summary — ready to translate in the table or through a CSV for an outside translator; one translation fills every place the same text is used. A text you change later shows as *Outdated* until its translation is checked.
+
+Visitors get the site in their browser's language when it is offered, and can switch at the top of the page; a text without a translation shows in the primary language. Event confirmations go out in the language the visitor registered in. **Stop offering** a language hides it from visitors and keeps its translations.
+
 ## Start from an earlier site
 
 **Duplicate** on the Sites list (or **Duplicate site** in the site settings) makes an unpublished copy to start the next engagement from: the same blocks, files, surveys and settings, a new address. Event registrations are never copied.
+
+**From a template** next to **New site** starts from a ready layout: *Consultation* (why we ask, take part, how it works, meet us, questions, contact) or *Master plan* (the plan, where, phases, take part, what we heard, documents, project team). Blocks that need your material — a picture, a survey, files, the project area — wait empty with their drop zones. **Save as template** in the site settings keeps any site as a starting point of your own: it has no surveys, is never published, and appears under *Templates* and in the same menu.
 
 ## Publish
 

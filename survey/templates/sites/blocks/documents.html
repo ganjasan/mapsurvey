@@ -1,5 +1,5 @@
 {% load site_tags %}<ul class="lp-docs">
-  {% for f in block.files.all %}
+  {% for f in block.file_list|default:block.files.all %}
   <li><a href="{{ f.file.url }}" target="_blank" rel="noopener">
     <span class="lp-doc-ext">{{ f.extension|upper }}</span>
     <span class="lp-doc-title">{{ f.title }}</span>

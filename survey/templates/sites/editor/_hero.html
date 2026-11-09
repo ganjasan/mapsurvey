@@ -5,7 +5,7 @@ keeps only its description.{% endcomment %}
 <header class="lp-hero{% if site.cover %} lp-hero--cover{% endif %} lb-hero{% if selected == 'page' %} on{% endif %}" data-select="page" id="lb-hero">
   {% if site.cover %}<img class="lp-hero-img" src="{{ site.cover.url }}" alt="{{ site.cover_alt }}">{% endif %}
   <div class="lp-wrap lp-hero-text">
-    <p class="lp-org">{{ org.name }}</p>
+    <p class="lp-org">{% if brand.logo_url %}<img class="lp-logo" src="{{ brand.logo_url }}" alt="">{% endif %}{{ brand.name }}</p>
     <h1 data-page-field="title" data-placeholder="{% trans 'Site title' %}">{{ site.title }}</h1>
     <p class="lp-summary" data-page-field="summary" data-placeholder="{% trans 'One or two sentences: what the project is and what you ask residents' %}">{{ site.summary }}</p>
   </div>

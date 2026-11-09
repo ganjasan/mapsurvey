@@ -12165,3 +12165,338 @@ msgstr "Nome"
 msgctxt "action"
 msgid "Duplicate"
 msgstr "Duplicar"
+
+#: site-translations
+#, python-format
+msgid "This site is in %(lang)s only"
+msgstr "Este site só está em %(lang)s"
+
+#: site-translations
+msgid "Add a language and every heading, text, question and answer, phase and caption of the site appears here, ready to translate — in this table or through a CSV for an outside translator. Visitors then pick the language at the top of the site."
+msgstr "Adicione um idioma e cada título, texto, pergunta e resposta, fase e legenda do site aparece aqui, pronto a traduzir — nesta tabela ou através de um CSV para um tradutor externo. Os visitantes escolhem depois o idioma no topo do site."
+
+#: site-translations
+msgid "Every text of the site once, in page order. One translation fills every place the same text is used; a text left untranslated shows in the primary language."
+msgstr "Cada texto do site uma só vez, pela ordem da página. Uma tradução preenche todos os sítios onde o mesmo texto é usado; um texto sem tradução aparece no idioma principal."
+
+#: site-translations
+msgid "This site is live: a saved translation reaches visitors at once."
+msgstr "Este site está online: uma tradução guardada chega logo aos visitantes."
+
+#: site-translations
+msgid "Open in the builder"
+msgstr "Abrir no editor do site"
+
+#: site-translations
+#, python-format
+msgid "Stop offering %(lang)s?"
+msgstr "Deixar de oferecer %(lang)s?"
+
+#: site-translations
+msgid "Visitors no longer see it in the language switch. The translations stay stored: adding the language back restores them."
+msgstr "Os visitantes deixam de o ver no seletor de idioma. As traduções ficam guardadas: voltar a adicionar o idioma recupera-as."
+
+#: site-translations
+msgid "Stop offering"
+msgstr "Deixar de oferecer"
+
+#: site-translations
+#, python-format
+msgid "Stop offering %(lang)s"
+msgstr "Deixar de oferecer %(lang)s"
+
+#: site-translations
+msgid "A CSV in the layout of the export: a key column, or at least source and translation columns. Rows are matched by key, then by the source text."
+msgstr "Um CSV no formato da exportação: uma coluna de chave ou, pelo menos, colunas de origem e tradução. As linhas são associadas pela chave e depois pelo texto de origem."
+
+#: site-translations
+msgid "Caption"
+msgstr "Legenda"
+
+#: site-translations
+msgid "Cover picture description"
+msgstr "Descrição da fotografia de capa"
+
+#: site-translations
+#, python-format
+msgid "Answer %(n)s"
+msgstr "Resposta %(n)s"
+
+#: site-translations
+#, python-format
+msgid "Phase %(n)s"
+msgstr "Fase %(n)s"
+
+#: site-translations
+#, python-format
+msgid "Person %(n)s role"
+msgstr "Função da pessoa %(n)s"
+
+#: site-translations
+msgid "This text is no longer on the site. Reload the page."
+msgstr "Este texto já não está no site. Recarregue a página."
+
+#: site-translations
+msgid "This site is not offered in that language."
+msgstr "Este site não é oferecido nesse idioma."
+
+#: workspace-branding
+msgid "Branding"
+msgstr "Imagem de marca"
+
+#: workspace-branding
+msgid "How the workspace appears on its public sites: the name residents read, your logo and your colour for buttons and links."
+msgstr "Como o espaço de trabalho aparece nos seus sites públicos: o nome que os moradores leem, o seu logótipo e a sua cor para botões e ligações."
+
+#: workspace-branding
+msgid "Public name"
+msgstr "Nome público"
+
+#: workspace-branding
+#, python-format
+msgid "Empty: “%(name)s”."
+msgstr "Vazio: «%(name)s»."
+
+#: workspace-branding
+msgid "Logo"
+msgstr "Logótipo"
+
+#: workspace-branding
+msgid "PNG, JPEG, WebP or GIF, up to 1 MB. Shown at the top of your sites."
+msgstr "PNG, JPEG, WebP ou GIF, até 1 MB. Mostrado no topo dos seus sites."
+
+#: workspace-branding
+msgid "Remove the logo"
+msgstr "Remover o logótipo"
+
+#: workspace-branding
+msgid "Accent colour"
+msgstr "Cor da marca"
+
+#: workspace-branding
+msgid "A link"
+msgstr "Uma ligação"
+
+#: workspace-branding
+msgid "This colour is too light to read as text, so sites use a darker shade of it (shown here)."
+msgstr "Esta cor é demasiado clara para ser lida como texto, por isso os sites usam um tom mais escuro (mostrado aqui)."
+
+#: workspace-branding
+msgid "Save branding"
+msgstr "Guardar a imagem de marca"
+
+#: workspace-branding
+msgid "Branding saved."
+msgstr "Imagem de marca guardada."
+
+#: workspace-branding
+msgid "Pick a colour."
+msgstr "Escolha uma cor."
+
+#: workspace-branding
+msgid "The logo can be at most 1 MB."
+msgstr "O logótipo pode ter no máximo 1 MB."
+
+#: site-templates
+msgid "Consultation"
+msgstr "Consulta pública"
+
+#: site-templates
+msgid "One engagement: why we ask, how to take part, what happens next."
+msgstr "Um processo participativo: porque perguntamos, como participar, o que acontece a seguir."
+
+#: site-templates
+msgid "<p>What the project is, why residents are asked now, and what is already decided.</p>"
+msgstr "<p>O que é o projeto, porque se pergunta agora aos moradores e o que já está decidido.</p>"
+
+#: site-templates
+msgid "Tell us what you think"
+msgstr "Diga-nos o que pensa"
+
+#: site-templates
+msgid "What we heard"
+msgstr "O que ouvimos"
+
+#: site-templates
+msgid "Decision"
+msgstr "Decisão"
+
+#: site-templates
+msgid "Meet us"
+msgstr "Venha conhecer-nos"
+
+#: site-templates
+msgid "Who is running this consultation?"
+msgstr "Quem está a conduzir esta consulta?"
+
+#: site-templates
+msgid "What happens with my answers?"
+msgstr "O que acontece às minhas respostas?"
+
+#: site-templates
+msgid "Contact"
+msgstr "Contacto"
+
+#: site-templates
+msgid "Master plan"
+msgstr "Plano diretor"
+
+#: site-templates
+msgid "A design project over months: the area, the concepts, the documents, the results."
+msgstr "Um projeto de desenho ao longo de meses: a área, as propostas, os documentos, os resultados."
+
+#: site-templates
+msgid "The plan"
+msgstr "O plano"
+
+#: site-templates
+msgid "<p>The place, the people who use it, and what the plan sets out to change.</p>"
+msgstr "<p>O lugar, as pessoas que o usam e o que o plano pretende mudar.</p>"
+
+#: site-templates
+msgid "How the plan is made"
+msgstr "Como o plano é feito"
+
+#: site-templates
+msgid "Listen"
+msgstr "Ouvir"
+
+#: site-templates
+msgid "Concepts"
+msgstr "Propostas"
+
+#: site-templates
+msgid "Draft plan"
+msgstr "Proposta de plano"
+
+#: site-templates
+msgid "Final plan"
+msgstr "Plano final"
+
+#: site-templates
+msgid "Project team"
+msgstr "Equipa do projeto"
+
+#: site-templates
+msgid "From a template"
+msgstr "A partir de um modelo"
+
+#: site-templates
+msgid "Your templates"
+msgstr "Os seus modelos"
+
+#: site-templates
+#, python-format
+msgid "%(n)s block"
+msgid_plural "%(n)s blocks"
+msgstr[0] "%(n)s bloco"
+msgstr[1] "%(n)s blocos"
+
+#: site-templates
+msgid "Templates"
+msgstr "Modelos"
+
+#: site-templates
+msgid "Template"
+msgstr "Modelo"
+
+#: site-templates
+msgid "This is a template: it is never published. Start a site from it with New site → From a template on the Sites list."
+msgstr "Isto é um modelo: nunca é publicado. Crie um site a partir dele com «Novo site → A partir de um modelo» na lista de sites."
+
+#: site-templates
+msgid "Save as template"
+msgstr "Guardar como modelo"
+
+#: site-templates
+#, python-format
+msgid "“%(title)s” is saved as a template. Start a new site from it with New site → From a template."
+msgstr "«%(title)s» foi guardado como modelo. Crie um novo site a partir dele com «Novo site → A partir de um modelo»."
+
+#: site-templates
+msgid "A template is never published. Start a site from it instead."
+msgstr "Um modelo nunca é publicado. Crie antes um site a partir dele."
+
+#: site-templates
+msgid "Pick one of this workspace’s templates."
+msgstr "Escolha um dos modelos deste espaço de trabalho."
+
+#: site-templates
+msgid "Pick one of the templates."
+msgstr "Escolha um dos modelos."
+
+#: site-gallery-compare
+msgid "Gallery"
+msgstr "Galeria"
+
+#: site-gallery-compare
+msgid "Before and after"
+msgstr "Antes e depois"
+
+#: site-gallery-compare
+msgid "Boards, renderings or site photos, opened large on a tap"
+msgstr "Painéis, renderizações ou fotografias do local, abertos em grande com um toque"
+
+#: site-gallery-compare
+msgid "Today and the proposal, side by side with a slider"
+msgstr "Hoje e a proposta, lado a lado com um controlo deslizante"
+
+#: site-gallery-compare
+msgid "Some pictures have no caption, which is what screen readers read out."
+msgstr "Algumas imagens não têm legenda, que é o que os leitores de ecrã leem."
+
+#: site-gallery-compare
+msgid "Add at least one picture."
+msgstr "Adicione pelo menos uma imagem."
+
+#: site-gallery-compare
+msgid "A gallery holds at most 12 pictures."
+msgstr "Uma galeria tem no máximo 12 imagens."
+
+#: site-gallery-compare
+msgid "Before label"
+msgstr "Etiqueta «Antes»"
+
+#: site-gallery-compare
+msgid "After label"
+msgstr "Etiqueta «Depois»"
+
+#: site-gallery-compare
+msgid "Drop pictures here"
+msgstr "Largue imagens aqui"
+
+#: site-gallery-compare
+msgid "choose pictures"
+msgstr "escolha imagens"
+
+#: site-gallery-compare
+msgid "Up to 12 pictures — JPEG, PNG, WebP or GIF, up to 5 MB each"
+msgstr "Até 12 imagens — JPEG, PNG, WebP ou GIF, até 5 MB cada"
+
+#: site-gallery-compare
+msgid "drop a picture or"
+msgstr "largue uma imagem ou"
+
+#: site-gallery-compare
+msgid "Columns on a computer"
+msgstr "Colunas num computador"
+
+#: site-gallery-compare
+msgid "Add, caption and remove pictures in the block on the page. On a phone the gallery shows two columns."
+msgstr "Adicione, legende e remova imagens no bloco na página. Num telemóvel a galeria mostra duas colunas."
+
+#: site-gallery-compare
+msgid "Drop the two pictures and name them in the block on the page. Use pictures of the same size and view."
+msgstr "Largue as duas imagens e dê-lhes nome no bloco na página. Use imagens do mesmo tamanho e enquadramento."
+
+#: site-gallery-compare
+msgid "Before"
+msgstr "Antes"
+
+#: site-gallery-compare
+msgid "After"
+msgstr "Depois"
+
+#: site-gallery-compare
+msgid "Slide to compare"
+msgstr "Deslize para comparar"

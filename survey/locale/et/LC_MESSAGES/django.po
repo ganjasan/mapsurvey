@@ -12080,3 +12080,338 @@ msgstr "Nimi"
 msgctxt "action"
 msgid "Duplicate"
 msgstr "Tee koopia"
+
+#: site-translations
+#, python-format
+msgid "This site is in %(lang)s only"
+msgstr "See veebisait on ainult keeles %(lang)s"
+
+#: site-translations
+msgid "Add a language and every heading, text, question and answer, phase and caption of the site appears here, ready to translate — in this table or through a CSV for an outside translator. Visitors then pick the language at the top of the site."
+msgstr "Lisage keel ja iga veebisaidi pealkiri, tekst, küsimus ja vastus, etapp ja pildiallkiri ilmub siia tõlkimiseks valmis — selles tabelis või CSV-faili kaudu välisele tõlkijale. Külastajad valivad keele siis veebisaidi ülaosas."
+
+#: site-translations
+msgid "Every text of the site once, in page order. One translation fills every place the same text is used; a text left untranslated shows in the primary language."
+msgstr "Iga veebisaidi tekst üks kord, lehe järjekorras. Üks tõlge täidab iga koha, kus sama teksti kasutatakse; tõlkimata tekst kuvatakse põhikeeles."
+
+#: site-translations
+msgid "This site is live: a saved translation reaches visitors at once."
+msgstr "See veebisait on avalik: salvestatud tõlge jõuab külastajateni kohe."
+
+#: site-translations
+msgid "Open in the builder"
+msgstr "Ava veebisaidi redaktoris"
+
+#: site-translations
+#, python-format
+msgid "Stop offering %(lang)s?"
+msgstr "Kas lõpetada keele %(lang)s pakkumine?"
+
+#: site-translations
+msgid "Visitors no longer see it in the language switch. The translations stay stored: adding the language back restores them."
+msgstr "Külastajad ei näe seda enam keelevalikus. Tõlked jäävad alles: keele uuesti lisamisel need taastuvad."
+
+#: site-translations
+msgid "Stop offering"
+msgstr "Lõpeta pakkumine"
+
+#: site-translations
+#, python-format
+msgid "Stop offering %(lang)s"
+msgstr "Lõpeta keele %(lang)s pakkumine"
+
+#: site-translations
+msgid "A CSV in the layout of the export: a key column, or at least source and translation columns. Rows are matched by key, then by the source text."
+msgstr "CSV ekspordi kujul: võtmeveerg või vähemalt lähte- ja tõlkeveerg. Read seotakse võtme, seejärel lähteteksti järgi."
+
+#: site-translations
+msgid "Caption"
+msgstr "Allkiri"
+
+#: site-translations
+msgid "Cover picture description"
+msgstr "Kaanefoto kirjeldus"
+
+#: site-translations
+#, python-format
+msgid "Answer %(n)s"
+msgstr "Vastus %(n)s"
+
+#: site-translations
+#, python-format
+msgid "Phase %(n)s"
+msgstr "Etapp %(n)s"
+
+#: site-translations
+#, python-format
+msgid "Person %(n)s role"
+msgstr "Isiku %(n)s roll"
+
+#: site-translations
+msgid "This text is no longer on the site. Reload the page."
+msgstr "Seda teksti pole enam veebisaidil. Laadige leht uuesti."
+
+#: site-translations
+msgid "This site is not offered in that language."
+msgstr "Seda veebisaiti ei pakuta selles keeles."
+
+#: workspace-branding
+msgid "Branding"
+msgstr "Bränding"
+
+#: workspace-branding
+msgid "How the workspace appears on its public sites: the name residents read, your logo and your colour for buttons and links."
+msgstr "Kuidas tööruum oma avalikel veebisaitidel välja näeb: nimi, mida elanikud loevad, teie logo ja teie värv nuppudele ja linkidele."
+
+#: workspace-branding
+msgid "Public name"
+msgstr "Avalik nimi"
+
+#: workspace-branding
+#, python-format
+msgid "Empty: “%(name)s”."
+msgstr "Tühi: „%(name)s“."
+
+#: workspace-branding
+msgid "Logo"
+msgstr "Logo"
+
+#: workspace-branding
+msgid "PNG, JPEG, WebP or GIF, up to 1 MB. Shown at the top of your sites."
+msgstr "PNG, JPEG, WebP või GIF, kuni 1 MB. Kuvatakse teie veebisaitide ülaosas."
+
+#: workspace-branding
+msgid "Remove the logo"
+msgstr "Eemalda logo"
+
+#: workspace-branding
+msgid "Accent colour"
+msgstr "Brändi värv"
+
+#: workspace-branding
+msgid "A link"
+msgstr "Näidislink"
+
+#: workspace-branding
+msgid "This colour is too light to read as text, so sites use a darker shade of it (shown here)."
+msgstr "See värv on tekstina lugemiseks liiga hele, seega kasutavad veebisaidid selle tumedamat tooni (näidatud siin)."
+
+#: workspace-branding
+msgid "Save branding"
+msgstr "Salvesta bränding"
+
+#: workspace-branding
+msgid "Branding saved."
+msgstr "Bränding salvestatud."
+
+#: workspace-branding
+msgid "Pick a colour."
+msgstr "Valige värv."
+
+#: workspace-branding
+msgid "The logo can be at most 1 MB."
+msgstr "Logo võib olla kuni 1 MB."
+
+#: site-templates
+msgid "Consultation"
+msgstr "Kaasamine"
+
+#: site-templates
+msgid "One engagement: why we ask, how to take part, what happens next."
+msgstr "Üks kaasamisprotsess: miks me küsime, kuidas osaleda, mis saab edasi."
+
+#: site-templates
+msgid "<p>What the project is, why residents are asked now, and what is already decided.</p>"
+msgstr "<p>Mis projekt see on, miks elanikelt praegu küsitakse ja mis on juba otsustatud.</p>"
+
+#: site-templates
+msgid "Tell us what you think"
+msgstr "Andke meile teada, mida arvate"
+
+#: site-templates
+msgid "What we heard"
+msgstr "Mida me kuulsime"
+
+#: site-templates
+msgid "Decision"
+msgstr "Otsus"
+
+#: site-templates
+msgid "Meet us"
+msgstr "Tule kohtuma"
+
+#: site-templates
+msgid "Who is running this consultation?"
+msgstr "Kes seda kaasamist korraldab?"
+
+#: site-templates
+msgid "What happens with my answers?"
+msgstr "Mis saab minu vastustest?"
+
+#: site-templates
+msgid "Contact"
+msgstr "Kontakt"
+
+#: site-templates
+msgid "Master plan"
+msgstr "Üldplaan"
+
+#: site-templates
+msgid "A design project over months: the area, the concepts, the documents, the results."
+msgstr "Mitu kuud kestev planeerimisprojekt: ala, kontseptsioonid, dokumendid, tulemused."
+
+#: site-templates
+msgid "The plan"
+msgstr "Plaan"
+
+#: site-templates
+msgid "<p>The place, the people who use it, and what the plan sets out to change.</p>"
+msgstr "<p>Koht, inimesed, kes seda kasutavad, ja mida plaan muuta tahab.</p>"
+
+#: site-templates
+msgid "How the plan is made"
+msgstr "Kuidas plaan valmib"
+
+#: site-templates
+msgid "Listen"
+msgstr "Kuulamine"
+
+#: site-templates
+msgid "Concepts"
+msgstr "Kontseptsioonid"
+
+#: site-templates
+msgid "Draft plan"
+msgstr "Plaani eelnõu"
+
+#: site-templates
+msgid "Final plan"
+msgstr "Lõplik plaan"
+
+#: site-templates
+msgid "Project team"
+msgstr "Projektimeeskond"
+
+#: site-templates
+msgid "From a template"
+msgstr "Mallist"
+
+#: site-templates
+msgid "Your templates"
+msgstr "Teie mallid"
+
+#: site-templates
+#, python-format
+msgid "%(n)s block"
+msgid_plural "%(n)s blocks"
+msgstr[0] "%(n)s plokk"
+msgstr[1] "%(n)s plokki"
+
+#: site-templates
+msgid "Templates"
+msgstr "Mallid"
+
+#: site-templates
+msgid "Template"
+msgstr "Mall"
+
+#: site-templates
+msgid "This is a template: it is never published. Start a site from it with New site → From a template on the Sites list."
+msgstr "See on mall: seda ei avaldata kunagi. Looge selle põhjal veebisait veebisaitide loendis: „Uus veebisait → Mallist“."
+
+#: site-templates
+msgid "Save as template"
+msgstr "Salvesta mallina"
+
+#: site-templates
+#, python-format
+msgid "“%(title)s” is saved as a template. Start a new site from it with New site → From a template."
+msgstr "„%(title)s“ on salvestatud mallina. Looge selle põhjal uus veebisait: „Uus veebisait → Mallist“."
+
+#: site-templates
+msgid "A template is never published. Start a site from it instead."
+msgstr "Malli ei avaldata kunagi. Looge selle põhjal hoopis veebisait."
+
+#: site-templates
+msgid "Pick one of this workspace’s templates."
+msgstr "Valige üks selle tööruumi mallidest."
+
+#: site-templates
+msgid "Pick one of the templates."
+msgstr "Valige üks mallidest."
+
+#: site-gallery-compare
+msgid "Gallery"
+msgstr "Galerii"
+
+#: site-gallery-compare
+msgid "Before and after"
+msgstr "Enne ja pärast"
+
+#: site-gallery-compare
+msgid "Boards, renderings or site photos, opened large on a tap"
+msgstr "Stendid, visualiseeringud või fotod kohast, puudutusega suureks avatavad"
+
+#: site-gallery-compare
+msgid "Today and the proposal, side by side with a slider"
+msgstr "Täna ja ettepanek, kõrvuti liuguriga"
+
+#: site-gallery-compare
+msgid "Some pictures have no caption, which is what screen readers read out."
+msgstr "Mõnel pildil pole allkirja, aga just seda ekraanilugerid ette loevad."
+
+#: site-gallery-compare
+msgid "Add at least one picture."
+msgstr "Lisage vähemalt üks pilt."
+
+#: site-gallery-compare
+msgid "A gallery holds at most 12 pictures."
+msgstr "Galeriis saab olla kuni 12 pilti."
+
+#: site-gallery-compare
+msgid "Before label"
+msgstr "Silt „Enne“"
+
+#: site-gallery-compare
+msgid "After label"
+msgstr "Silt „Pärast“"
+
+#: site-gallery-compare
+msgid "Drop pictures here"
+msgstr "Lohistage pildid siia"
+
+#: site-gallery-compare
+msgid "choose pictures"
+msgstr "valige pildid"
+
+#: site-gallery-compare
+msgid "Up to 12 pictures — JPEG, PNG, WebP or GIF, up to 5 MB each"
+msgstr "Kuni 12 pilti — JPEG, PNG, WebP või GIF, igaüks kuni 5 MB"
+
+#: site-gallery-compare
+msgid "drop a picture or"
+msgstr "lohistage pilt või"
+
+#: site-gallery-compare
+msgid "Columns on a computer"
+msgstr "Veerud arvutis"
+
+#: site-gallery-compare
+msgid "Add, caption and remove pictures in the block on the page. On a phone the gallery shows two columns."
+msgstr "Lisage, allkirjastage ja eemaldage pilte lehel olevas plokis. Telefonis näitab galerii kahte veergu."
+
+#: site-gallery-compare
+msgid "Drop the two pictures and name them in the block on the page. Use pictures of the same size and view."
+msgstr "Lohistage kaks pilti lehel olevasse plokki ja nimetage need. Kasutage sama suuruse ja vaatenurgaga pilte."
+
+#: site-gallery-compare
+msgid "Before"
+msgstr "Enne"
+
+#: site-gallery-compare
+msgid "After"
+msgstr "Pärast"
+
+#: site-gallery-compare
+msgid "Slide to compare"
+msgstr "Libistage võrdlemiseks"

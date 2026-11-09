@@ -12139,3 +12139,338 @@ msgstr "Naam"
 msgctxt "action"
 msgid "Duplicate"
 msgstr "Dupliceren"
+
+#: site-translations
+#, python-format
+msgid "This site is in %(lang)s only"
+msgstr "Deze site is alleen in het %(lang)s"
+
+#: site-translations
+msgid "Add a language and every heading, text, question and answer, phase and caption of the site appears here, ready to translate — in this table or through a CSV for an outside translator. Visitors then pick the language at the top of the site."
+msgstr "Voeg een taal toe en elke kop, tekst, vraag en antwoord, fase en elk bijschrift van de site verschijnt hier, klaar om te vertalen — in deze tabel of via een CSV voor een externe vertaler. Bezoekers kiezen de taal dan bovenaan de site."
+
+#: site-translations
+msgid "Every text of the site once, in page order. One translation fills every place the same text is used; a text left untranslated shows in the primary language."
+msgstr "Elke tekst van de site één keer, in de volgorde van de pagina. Eén vertaling vult elke plek waar dezelfde tekst staat; een onvertaalde tekst verschijnt in de hoofdtaal."
+
+#: site-translations
+msgid "This site is live: a saved translation reaches visitors at once."
+msgstr "Deze site staat online: een opgeslagen vertaling is meteen zichtbaar voor bezoekers."
+
+#: site-translations
+msgid "Open in the builder"
+msgstr "Openen in de site-editor"
+
+#: site-translations
+#, python-format
+msgid "Stop offering %(lang)s?"
+msgstr "%(lang)s niet meer aanbieden?"
+
+#: site-translations
+msgid "Visitors no longer see it in the language switch. The translations stay stored: adding the language back restores them."
+msgstr "Bezoekers zien hem niet meer in de taalkeuze. De vertalingen blijven bewaard: voeg je de taal weer toe, dan zijn ze terug."
+
+#: site-translations
+msgid "Stop offering"
+msgstr "Niet meer aanbieden"
+
+#: site-translations
+#, python-format
+msgid "Stop offering %(lang)s"
+msgstr "%(lang)s niet meer aanbieden"
+
+#: site-translations
+msgid "A CSV in the layout of the export: a key column, or at least source and translation columns. Rows are matched by key, then by the source text."
+msgstr "Een CSV in de opmaak van de export: een sleutelkolom, of ten minste kolommen voor bron en vertaling. Rijen worden gekoppeld op sleutel, daarna op de brontekst."
+
+#: site-translations
+msgid "Caption"
+msgstr "Bijschrift"
+
+#: site-translations
+msgid "Cover picture description"
+msgstr "Beschrijving van de omslagfoto"
+
+#: site-translations
+#, python-format
+msgid "Answer %(n)s"
+msgstr "Antwoord %(n)s"
+
+#: site-translations
+#, python-format
+msgid "Phase %(n)s"
+msgstr "Fase %(n)s"
+
+#: site-translations
+#, python-format
+msgid "Person %(n)s role"
+msgstr "Rol van persoon %(n)s"
+
+#: site-translations
+msgid "This text is no longer on the site. Reload the page."
+msgstr "Deze tekst staat niet meer op de site. Laad de pagina opnieuw."
+
+#: site-translations
+msgid "This site is not offered in that language."
+msgstr "Deze site wordt niet in die taal aangeboden."
+
+#: workspace-branding
+msgid "Branding"
+msgstr "Huisstijl"
+
+#: workspace-branding
+msgid "How the workspace appears on its public sites: the name residents read, your logo and your colour for buttons and links."
+msgstr "Hoe de werkruimte op haar openbare sites verschijnt: de naam die bewoners lezen, je logo en je kleur voor knoppen en links."
+
+#: workspace-branding
+msgid "Public name"
+msgstr "Openbare naam"
+
+#: workspace-branding
+#, python-format
+msgid "Empty: “%(name)s”."
+msgstr "Leeg: ‘%(name)s’."
+
+#: workspace-branding
+msgid "Logo"
+msgstr "Logo"
+
+#: workspace-branding
+msgid "PNG, JPEG, WebP or GIF, up to 1 MB. Shown at the top of your sites."
+msgstr "PNG, JPEG, WebP of GIF, tot 1 MB. Bovenaan je sites getoond."
+
+#: workspace-branding
+msgid "Remove the logo"
+msgstr "Logo verwijderen"
+
+#: workspace-branding
+msgid "Accent colour"
+msgstr "Merkkleur"
+
+#: workspace-branding
+msgid "A link"
+msgstr "Een link"
+
+#: workspace-branding
+msgid "This colour is too light to read as text, so sites use a darker shade of it (shown here)."
+msgstr "Deze kleur is te licht om als tekst te lezen, dus sites gebruiken een donkerdere tint ervan (hier getoond)."
+
+#: workspace-branding
+msgid "Save branding"
+msgstr "Huisstijl opslaan"
+
+#: workspace-branding
+msgid "Branding saved."
+msgstr "Huisstijl opgeslagen."
+
+#: workspace-branding
+msgid "Pick a colour."
+msgstr "Kies een kleur."
+
+#: workspace-branding
+msgid "The logo can be at most 1 MB."
+msgstr "Het logo mag hoogstens 1 MB zijn."
+
+#: site-templates
+msgid "Consultation"
+msgstr "Inspraak"
+
+#: site-templates
+msgid "One engagement: why we ask, how to take part, what happens next."
+msgstr "Eén participatietraject: waarom we het vragen, hoe je meedoet, wat er daarna gebeurt."
+
+#: site-templates
+msgid "<p>What the project is, why residents are asked now, and what is already decided.</p>"
+msgstr "<p>Wat het project is, waarom bewoners nu gevraagd worden en wat al besloten is.</p>"
+
+#: site-templates
+msgid "Tell us what you think"
+msgstr "Laat ons weten wat je ervan vindt"
+
+#: site-templates
+msgid "What we heard"
+msgstr "Wat we hoorden"
+
+#: site-templates
+msgid "Decision"
+msgstr "Besluit"
+
+#: site-templates
+msgid "Meet us"
+msgstr "Kom langs"
+
+#: site-templates
+msgid "Who is running this consultation?"
+msgstr "Wie organiseert deze inspraak?"
+
+#: site-templates
+msgid "What happens with my answers?"
+msgstr "Wat gebeurt er met mijn antwoorden?"
+
+#: site-templates
+msgid "Contact"
+msgstr "Contact"
+
+#: site-templates
+msgid "Master plan"
+msgstr "Masterplan"
+
+#: site-templates
+msgid "A design project over months: the area, the concepts, the documents, the results."
+msgstr "Een ontwerpproject van maanden: het gebied, de concepten, de documenten, de resultaten."
+
+#: site-templates
+msgid "The plan"
+msgstr "Het plan"
+
+#: site-templates
+msgid "<p>The place, the people who use it, and what the plan sets out to change.</p>"
+msgstr "<p>De plek, de mensen die er komen en wat het plan wil veranderen.</p>"
+
+#: site-templates
+msgid "How the plan is made"
+msgstr "Hoe het plan tot stand komt"
+
+#: site-templates
+msgid "Listen"
+msgstr "Luisteren"
+
+#: site-templates
+msgid "Concepts"
+msgstr "Concepten"
+
+#: site-templates
+msgid "Draft plan"
+msgstr "Conceptplan"
+
+#: site-templates
+msgid "Final plan"
+msgstr "Definitief plan"
+
+#: site-templates
+msgid "Project team"
+msgstr "Projectteam"
+
+#: site-templates
+msgid "From a template"
+msgstr "Vanuit een sjabloon"
+
+#: site-templates
+msgid "Your templates"
+msgstr "Je sjablonen"
+
+#: site-templates
+#, python-format
+msgid "%(n)s block"
+msgid_plural "%(n)s blocks"
+msgstr[0] "%(n)s blok"
+msgstr[1] "%(n)s blokken"
+
+#: site-templates
+msgid "Templates"
+msgstr "Sjablonen"
+
+#: site-templates
+msgid "Template"
+msgstr "Sjabloon"
+
+#: site-templates
+msgid "This is a template: it is never published. Start a site from it with New site → From a template on the Sites list."
+msgstr "Dit is een sjabloon: het wordt nooit gepubliceerd. Maak er een site mee via ‘Nieuwe site → Vanuit een sjabloon’ in de lijst met sites."
+
+#: site-templates
+msgid "Save as template"
+msgstr "Opslaan als sjabloon"
+
+#: site-templates
+#, python-format
+msgid "“%(title)s” is saved as a template. Start a new site from it with New site → From a template."
+msgstr "‘%(title)s’ is opgeslagen als sjabloon. Maak er een nieuwe site mee via ‘Nieuwe site → Vanuit een sjabloon’."
+
+#: site-templates
+msgid "A template is never published. Start a site from it instead."
+msgstr "Een sjabloon wordt nooit gepubliceerd. Maak er in plaats daarvan een site mee."
+
+#: site-templates
+msgid "Pick one of this workspace’s templates."
+msgstr "Kies een van de sjablonen van deze werkruimte."
+
+#: site-templates
+msgid "Pick one of the templates."
+msgstr "Kies een van de sjablonen."
+
+#: site-gallery-compare
+msgid "Gallery"
+msgstr "Galerij"
+
+#: site-gallery-compare
+msgid "Before and after"
+msgstr "Voor en na"
+
+#: site-gallery-compare
+msgid "Boards, renderings or site photos, opened large on a tap"
+msgstr "Panelen, impressies of foto's van de plek, groot geopend met een tik"
+
+#: site-gallery-compare
+msgid "Today and the proposal, side by side with a slider"
+msgstr "Nu en het voorstel, naast elkaar met een schuifregelaar"
+
+#: site-gallery-compare
+msgid "Some pictures have no caption, which is what screen readers read out."
+msgstr "Sommige afbeeldingen hebben geen bijschrift, en dat is wat schermlezers voorlezen."
+
+#: site-gallery-compare
+msgid "Add at least one picture."
+msgstr "Voeg minstens één afbeelding toe."
+
+#: site-gallery-compare
+msgid "A gallery holds at most 12 pictures."
+msgstr "Een galerij bevat maximaal 12 afbeeldingen."
+
+#: site-gallery-compare
+msgid "Before label"
+msgstr "Label ‘Voor’"
+
+#: site-gallery-compare
+msgid "After label"
+msgstr "Label ‘Na’"
+
+#: site-gallery-compare
+msgid "Drop pictures here"
+msgstr "Sleep afbeeldingen hierheen"
+
+#: site-gallery-compare
+msgid "choose pictures"
+msgstr "kies afbeeldingen"
+
+#: site-gallery-compare
+msgid "Up to 12 pictures — JPEG, PNG, WebP or GIF, up to 5 MB each"
+msgstr "Tot 12 afbeeldingen — JPEG, PNG, WebP of GIF, elk tot 5 MB"
+
+#: site-gallery-compare
+msgid "drop a picture or"
+msgstr "sleep een afbeelding of"
+
+#: site-gallery-compare
+msgid "Columns on a computer"
+msgstr "Kolommen op een computer"
+
+#: site-gallery-compare
+msgid "Add, caption and remove pictures in the block on the page. On a phone the gallery shows two columns."
+msgstr "Voeg afbeeldingen toe, geef ze een bijschrift en verwijder ze in het blok op de pagina. Op een telefoon toont de galerij twee kolommen."
+
+#: site-gallery-compare
+msgid "Drop the two pictures and name them in the block on the page. Use pictures of the same size and view."
+msgstr "Sleep de twee afbeeldingen in het blok op de pagina en geef ze een naam. Gebruik afbeeldingen van dezelfde grootte en hetzelfde standpunt."
+
+#: site-gallery-compare
+msgid "Before"
+msgstr "Voor"
+
+#: site-gallery-compare
+msgid "After"
+msgstr "Na"
+
+#: site-gallery-compare
+msgid "Slide to compare"
+msgstr "Schuif om te vergelijken"

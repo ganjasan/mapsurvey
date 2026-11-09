@@ -12102,3 +12102,337 @@ msgstr "Nama"
 msgctxt "action"
 msgid "Duplicate"
 msgstr "Duplikat"
+
+#: site-translations
+#, python-format
+msgid "This site is in %(lang)s only"
+msgstr "Situs ini hanya dalam bahasa %(lang)s"
+
+#: site-translations
+msgid "Add a language and every heading, text, question and answer, phase and caption of the site appears here, ready to translate — in this table or through a CSV for an outside translator. Visitors then pick the language at the top of the site."
+msgstr "Tambahkan bahasa, lalu setiap judul, teks, pertanyaan dan jawaban, tahap, dan keterangan situs muncul di sini, siap diterjemahkan — di tabel ini atau melalui CSV untuk penerjemah luar. Pengunjung lalu memilih bahasa di bagian atas situs."
+
+#: site-translations
+msgid "Every text of the site once, in page order. One translation fills every place the same text is used; a text left untranslated shows in the primary language."
+msgstr "Setiap teks situs sekali, sesuai urutan halaman. Satu terjemahan mengisi setiap tempat yang memakai teks yang sama; teks yang belum diterjemahkan tampil dalam bahasa utama."
+
+#: site-translations
+msgid "This site is live: a saved translation reaches visitors at once."
+msgstr "Situs ini sudah tayang: terjemahan yang disimpan langsung terlihat oleh pengunjung."
+
+#: site-translations
+msgid "Open in the builder"
+msgstr "Buka di penyusun"
+
+#: site-translations
+#, python-format
+msgid "Stop offering %(lang)s?"
+msgstr "Berhenti menawarkan %(lang)s?"
+
+#: site-translations
+msgid "Visitors no longer see it in the language switch. The translations stay stored: adding the language back restores them."
+msgstr "Pengunjung tidak lagi melihatnya di pilihan bahasa. Terjemahan tetap tersimpan: menambahkan bahasa itu lagi akan memulihkannya."
+
+#: site-translations
+msgid "Stop offering"
+msgstr "Berhenti menawarkan"
+
+#: site-translations
+#, python-format
+msgid "Stop offering %(lang)s"
+msgstr "Berhenti menawarkan %(lang)s"
+
+#: site-translations
+msgid "A CSV in the layout of the export: a key column, or at least source and translation columns. Rows are matched by key, then by the source text."
+msgstr "CSV dengan tata letak ekspor: kolom kunci, atau setidaknya kolom sumber dan terjemahan. Baris dicocokkan berdasarkan kunci, lalu berdasarkan teks sumber."
+
+#: site-translations
+msgid "Caption"
+msgstr "Keterangan"
+
+#: site-translations
+msgid "Cover picture description"
+msgstr "Deskripsi foto sampul"
+
+#: site-translations
+#, python-format
+msgid "Answer %(n)s"
+msgstr "Jawaban %(n)s"
+
+#: site-translations
+#, python-format
+msgid "Phase %(n)s"
+msgstr "Tahap %(n)s"
+
+#: site-translations
+#, python-format
+msgid "Person %(n)s role"
+msgstr "Peran orang %(n)s"
+
+#: site-translations
+msgid "This text is no longer on the site. Reload the page."
+msgstr "Teks ini sudah tidak ada di situs. Muat ulang halaman."
+
+#: site-translations
+msgid "This site is not offered in that language."
+msgstr "Situs ini tidak tersedia dalam bahasa itu."
+
+#: workspace-branding
+msgid "Branding"
+msgstr "Identitas merek"
+
+#: workspace-branding
+msgid "How the workspace appears on its public sites: the name residents read, your logo and your colour for buttons and links."
+msgstr "Tampilan ruang kerja di situs publiknya: nama yang dibaca warga, logo Anda, dan warna Anda untuk tombol dan tautan."
+
+#: workspace-branding
+msgid "Public name"
+msgstr "Nama publik"
+
+#: workspace-branding
+#, python-format
+msgid "Empty: “%(name)s”."
+msgstr "Kosong: “%(name)s”."
+
+#: workspace-branding
+msgid "Logo"
+msgstr "Logo"
+
+#: workspace-branding
+msgid "PNG, JPEG, WebP or GIF, up to 1 MB. Shown at the top of your sites."
+msgstr "PNG, JPEG, WebP, atau GIF, hingga 1 MB. Ditampilkan di bagian atas situs Anda."
+
+#: workspace-branding
+msgid "Remove the logo"
+msgstr "Hapus logo"
+
+#: workspace-branding
+msgid "Accent colour"
+msgstr "Warna merek"
+
+#: workspace-branding
+msgid "A link"
+msgstr "Sebuah tautan"
+
+#: workspace-branding
+msgid "This colour is too light to read as text, so sites use a darker shade of it (shown here)."
+msgstr "Warna ini terlalu terang untuk dibaca sebagai teks, jadi situs memakai versi yang lebih gelap (ditampilkan di sini)."
+
+#: workspace-branding
+msgid "Save branding"
+msgstr "Simpan identitas merek"
+
+#: workspace-branding
+msgid "Branding saved."
+msgstr "Identitas merek disimpan."
+
+#: workspace-branding
+msgid "Pick a colour."
+msgstr "Pilih warna."
+
+#: workspace-branding
+msgid "The logo can be at most 1 MB."
+msgstr "Logo paling besar 1 MB."
+
+#: site-templates
+msgid "Consultation"
+msgstr "Konsultasi publik"
+
+#: site-templates
+msgid "One engagement: why we ask, how to take part, what happens next."
+msgstr "Satu kegiatan partisipasi: mengapa kami bertanya, cara ikut serta, apa yang terjadi selanjutnya."
+
+#: site-templates
+msgid "<p>What the project is, why residents are asked now, and what is already decided.</p>"
+msgstr "<p>Apa proyeknya, mengapa warga ditanya sekarang, dan apa yang sudah diputuskan.</p>"
+
+#: site-templates
+msgid "Tell us what you think"
+msgstr "Sampaikan pendapat Anda"
+
+#: site-templates
+msgid "What we heard"
+msgstr "Apa yang kami dengar"
+
+#: site-templates
+msgid "Decision"
+msgstr "Keputusan"
+
+#: site-templates
+msgid "Meet us"
+msgstr "Temui kami"
+
+#: site-templates
+msgid "Who is running this consultation?"
+msgstr "Siapa yang menyelenggarakan konsultasi ini?"
+
+#: site-templates
+msgid "What happens with my answers?"
+msgstr "Apa yang terjadi dengan jawaban saya?"
+
+#: site-templates
+msgid "Contact"
+msgstr "Kontak"
+
+#: site-templates
+msgid "Master plan"
+msgstr "Rencana induk"
+
+#: site-templates
+msgid "A design project over months: the area, the concepts, the documents, the results."
+msgstr "Proyek perancangan berbulan-bulan: area, konsep, dokumen, hasil."
+
+#: site-templates
+msgid "The plan"
+msgstr "Rencana"
+
+#: site-templates
+msgid "<p>The place, the people who use it, and what the plan sets out to change.</p>"
+msgstr "<p>Tempatnya, orang-orang yang memakainya, dan apa yang ingin diubah oleh rencana.</p>"
+
+#: site-templates
+msgid "How the plan is made"
+msgstr "Bagaimana rencana dibuat"
+
+#: site-templates
+msgid "Listen"
+msgstr "Mendengar"
+
+#: site-templates
+msgid "Concepts"
+msgstr "Konsep"
+
+#: site-templates
+msgid "Draft plan"
+msgstr "Draf rencana"
+
+#: site-templates
+msgid "Final plan"
+msgstr "Rencana akhir"
+
+#: site-templates
+msgid "Project team"
+msgstr "Tim proyek"
+
+#: site-templates
+msgid "From a template"
+msgstr "Dari templat"
+
+#: site-templates
+msgid "Your templates"
+msgstr "Templat Anda"
+
+#: site-templates
+#, python-format
+msgid "%(n)s block"
+msgid_plural "%(n)s blocks"
+msgstr[0] "%(n)s blok"
+
+#: site-templates
+msgid "Templates"
+msgstr "Templat"
+
+#: site-templates
+msgid "Template"
+msgstr "Templat"
+
+#: site-templates
+msgid "This is a template: it is never published. Start a site from it with New site → From a template on the Sites list."
+msgstr "Ini templat: tidak pernah diterbitkan. Buat situs darinya lewat Situs baru → Dari templat di daftar situs."
+
+#: site-templates
+msgid "Save as template"
+msgstr "Simpan sebagai templat"
+
+#: site-templates
+#, python-format
+msgid "“%(title)s” is saved as a template. Start a new site from it with New site → From a template."
+msgstr "“%(title)s” disimpan sebagai templat. Buat situs baru darinya lewat Situs baru → Dari templat."
+
+#: site-templates
+msgid "A template is never published. Start a site from it instead."
+msgstr "Templat tidak pernah diterbitkan. Buat situs darinya."
+
+#: site-templates
+msgid "Pick one of this workspace’s templates."
+msgstr "Pilih salah satu templat di ruang kerja ini."
+
+#: site-templates
+msgid "Pick one of the templates."
+msgstr "Pilih salah satu templat."
+
+#: site-gallery-compare
+msgid "Gallery"
+msgstr "Galeri"
+
+#: site-gallery-compare
+msgid "Before and after"
+msgstr "Sebelum dan sesudah"
+
+#: site-gallery-compare
+msgid "Boards, renderings or site photos, opened large on a tap"
+msgstr "Papan, render, atau foto lokasi, dibuka besar saat diketuk"
+
+#: site-gallery-compare
+msgid "Today and the proposal, side by side with a slider"
+msgstr "Hari ini dan usulan, berdampingan dengan penggeser"
+
+#: site-gallery-compare
+msgid "Some pictures have no caption, which is what screen readers read out."
+msgstr "Beberapa gambar tidak punya keterangan, padahal itulah yang dibacakan pembaca layar."
+
+#: site-gallery-compare
+msgid "Add at least one picture."
+msgstr "Tambahkan setidaknya satu gambar."
+
+#: site-gallery-compare
+msgid "A gallery holds at most 12 pictures."
+msgstr "Galeri memuat paling banyak 12 gambar."
+
+#: site-gallery-compare
+msgid "Before label"
+msgstr "Label “Sebelum”"
+
+#: site-gallery-compare
+msgid "After label"
+msgstr "Label “Sesudah”"
+
+#: site-gallery-compare
+msgid "Drop pictures here"
+msgstr "Letakkan gambar-gambar di sini"
+
+#: site-gallery-compare
+msgid "choose pictures"
+msgstr "pilih gambar-gambar"
+
+#: site-gallery-compare
+msgid "Up to 12 pictures — JPEG, PNG, WebP or GIF, up to 5 MB each"
+msgstr "Hingga 12 gambar — JPEG, PNG, WebP, atau GIF, masing-masing hingga 5 MB"
+
+#: site-gallery-compare
+msgid "drop a picture or"
+msgstr "letakkan gambar atau"
+
+#: site-gallery-compare
+msgid "Columns on a computer"
+msgstr "Kolom di komputer"
+
+#: site-gallery-compare
+msgid "Add, caption and remove pictures in the block on the page. On a phone the gallery shows two columns."
+msgstr "Tambah, beri keterangan, dan hapus gambar di blok pada halaman. Di ponsel galeri menampilkan dua kolom."
+
+#: site-gallery-compare
+msgid "Drop the two pictures and name them in the block on the page. Use pictures of the same size and view."
+msgstr "Letakkan dua gambar dan beri nama di blok pada halaman. Gunakan gambar dengan ukuran dan sudut pandang yang sama."
+
+#: site-gallery-compare
+msgid "Before"
+msgstr "Sebelum"
+
+#: site-gallery-compare
+msgid "After"
+msgstr "Sesudah"
+
+#: site-gallery-compare
+msgid "Slide to compare"
+msgstr "Geser untuk membandingkan"

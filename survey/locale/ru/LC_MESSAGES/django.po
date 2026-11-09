@@ -1566,7 +1566,7 @@ msgstr ""
 
 #: survey/templates/editor.html:316 survey/templates/editor.html:557
 msgid "Import"
-msgstr ""
+msgstr "Импорт"
 
 #: survey/templates/editor.html:325
 #: survey/templates/editor/_survey_more_menu.html:7
@@ -2989,7 +2989,7 @@ msgstr ""
 #: survey/templates/editor/partials/question_form_modal.html:354
 #: survey/templates/editor/partials/section_detail_form.html:70
 msgid "Translations"
-msgstr ""
+msgstr "Переводы"
 
 #: survey/templates/editor/partials/question_form_modal.html:383
 msgid "Respondent sees"
@@ -10206,3 +10206,340 @@ msgstr "Имя"
 msgctxt "action"
 msgid "Duplicate"
 msgstr "Дублировать"
+
+#: site-translations
+#, python-format
+msgid "This site is in %(lang)s only"
+msgstr "Этот сайт только на языке: %(lang)s"
+
+#: site-translations
+msgid "Add a language and every heading, text, question and answer, phase and caption of the site appears here, ready to translate — in this table or through a CSV for an outside translator. Visitors then pick the language at the top of the site."
+msgstr "Добавьте язык — и каждый заголовок, текст, вопрос и ответ, этап и подпись сайта появятся здесь, готовые к переводу: в этой таблице или через CSV для внешнего переводчика. Посетители выбирают язык вверху сайта."
+
+#: site-translations
+msgid "Every text of the site once, in page order. One translation fills every place the same text is used; a text left untranslated shows in the primary language."
+msgstr "Каждый текст сайта — один раз, в порядке страницы. Один перевод заполняет все места с тем же текстом; непереведённый текст показывается на основном языке."
+
+#: site-translations
+msgid "This site is live: a saved translation reaches visitors at once."
+msgstr "Сайт доступен: сохранённый перевод сразу видят посетители."
+
+#: site-translations
+msgid "Open in the builder"
+msgstr "Открыть в конструкторе"
+
+#: site-translations
+#, python-format
+msgid "Stop offering %(lang)s?"
+msgstr "Больше не предлагать язык: %(lang)s?"
+
+#: site-translations
+msgid "Visitors no longer see it in the language switch. The translations stay stored: adding the language back restores them."
+msgstr "Посетители больше не увидят его в переключателе языков. Переводы сохраняются: если добавить язык снова, они вернутся."
+
+#: site-translations
+msgid "Stop offering"
+msgstr "Больше не предлагать"
+
+#: site-translations
+#, python-format
+msgid "Stop offering %(lang)s"
+msgstr "Больше не предлагать язык: %(lang)s"
+
+#: site-translations
+msgid "A CSV in the layout of the export: a key column, or at least source and translation columns. Rows are matched by key, then by the source text."
+msgstr "CSV в формате экспорта: столбец ключа или хотя бы столбцы исходного текста и перевода. Строки сопоставляются по ключу, затем по исходному тексту."
+
+#: site-translations
+msgid "Caption"
+msgstr "Подпись"
+
+#: site-translations
+msgid "Cover picture description"
+msgstr "Описание обложки"
+
+#: site-translations
+#, python-format
+msgid "Answer %(n)s"
+msgstr "Ответ %(n)s"
+
+#: site-translations
+#, python-format
+msgid "Phase %(n)s"
+msgstr "Этап %(n)s"
+
+#: site-translations
+#, python-format
+msgid "Person %(n)s role"
+msgstr "Роль человека %(n)s"
+
+#: site-translations
+msgid "This text is no longer on the site. Reload the page."
+msgstr "Этого текста больше нет на сайте. Обновите страницу."
+
+#: site-translations
+msgid "This site is not offered in that language."
+msgstr "Этот сайт не предлагается на этом языке."
+
+#: workspace-branding
+msgid "Branding"
+msgstr "Фирменный стиль"
+
+#: workspace-branding
+msgid "How the workspace appears on its public sites: the name residents read, your logo and your colour for buttons and links."
+msgstr "Как рабочее пространство выглядит на своих публичных сайтах: название, которое видят жители, ваш логотип и ваш цвет кнопок и ссылок."
+
+#: workspace-branding
+msgid "Public name"
+msgstr "Публичное название"
+
+#: workspace-branding
+#, python-format
+msgid "Empty: “%(name)s”."
+msgstr "Пусто: «%(name)s»."
+
+#: workspace-branding
+msgid "Logo"
+msgstr "Логотип"
+
+#: workspace-branding
+msgid "PNG, JPEG, WebP or GIF, up to 1 MB. Shown at the top of your sites."
+msgstr "PNG, JPEG, WebP или GIF, до 1 МБ. Показывается вверху ваших сайтов."
+
+#: workspace-branding
+msgid "Remove the logo"
+msgstr "Убрать логотип"
+
+#: workspace-branding
+msgid "Accent colour"
+msgstr "Фирменный цвет"
+
+#: workspace-branding
+msgid "A link"
+msgstr "Пример ссылки"
+
+#: workspace-branding
+msgid "This colour is too light to read as text, so sites use a darker shade of it (shown here)."
+msgstr "Этот цвет слишком светлый для текста, поэтому сайты используют его более тёмный оттенок (показан здесь)."
+
+#: workspace-branding
+msgid "Save branding"
+msgstr "Сохранить фирменный стиль"
+
+#: workspace-branding
+msgid "Branding saved."
+msgstr "Фирменный стиль сохранён."
+
+#: workspace-branding
+msgid "Pick a colour."
+msgstr "Выберите цвет."
+
+#: workspace-branding
+msgid "The logo can be at most 1 MB."
+msgstr "Логотип может быть не больше 1 МБ."
+
+#: site-templates
+msgid "Consultation"
+msgstr "Обсуждение"
+
+#: site-templates
+msgid "One engagement: why we ask, how to take part, what happens next."
+msgstr "Одно обсуждение: зачем мы спрашиваем, как поучаствовать, что будет дальше."
+
+#: site-templates
+msgid "<p>What the project is, why residents are asked now, and what is already decided.</p>"
+msgstr "<p>Что это за проект, почему жителей спрашивают сейчас и что уже решено.</p>"
+
+#: site-templates
+msgid "Tell us what you think"
+msgstr "Расскажите, что вы думаете"
+
+#: site-templates
+msgid "What we heard"
+msgstr "Что мы услышали"
+
+#: site-templates
+msgid "Decision"
+msgstr "Решение"
+
+#: site-templates
+msgid "Meet us"
+msgstr "Приходите на встречу"
+
+#: site-templates
+msgid "Who is running this consultation?"
+msgstr "Кто проводит это обсуждение?"
+
+#: site-templates
+msgid "What happens with my answers?"
+msgstr "Что будет с моими ответами?"
+
+#: site-templates
+msgid "Contact"
+msgstr "Контакт"
+
+#: site-templates
+msgid "Master plan"
+msgstr "Мастер-план"
+
+#: site-templates
+msgid "A design project over months: the area, the concepts, the documents, the results."
+msgstr "Проект на несколько месяцев: территория, концепции, документы, результаты."
+
+#: site-templates
+msgid "The plan"
+msgstr "План"
+
+#: site-templates
+msgid "<p>The place, the people who use it, and what the plan sets out to change.</p>"
+msgstr "<p>Место, люди, которые им пользуются, и что план хочет изменить.</p>"
+
+#: site-templates
+msgid "How the plan is made"
+msgstr "Как создаётся план"
+
+#: site-templates
+msgid "Listen"
+msgstr "Слушаем"
+
+#: site-templates
+msgid "Concepts"
+msgstr "Концепции"
+
+#: site-templates
+msgid "Draft plan"
+msgstr "Проект плана"
+
+#: site-templates
+msgid "Final plan"
+msgstr "Итоговый план"
+
+#: site-templates
+msgid "Project team"
+msgstr "Команда проекта"
+
+#: site-templates
+msgid "From a template"
+msgstr "Из шаблона"
+
+#: site-templates
+msgid "Your templates"
+msgstr "Ваши шаблоны"
+
+#: site-templates
+#, python-format
+msgid "%(n)s block"
+msgid_plural "%(n)s blocks"
+msgstr[0] "%(n)s блок"
+msgstr[1] "%(n)s блока"
+msgstr[2] "%(n)s блоков"
+msgstr[3] "%(n)s блока"
+
+#: site-templates
+msgid "Templates"
+msgstr "Шаблоны"
+
+#: site-templates
+msgid "Template"
+msgstr "Шаблон"
+
+#: site-templates
+msgid "This is a template: it is never published. Start a site from it with New site → From a template on the Sites list."
+msgstr "Это шаблон: он никогда не публикуется. Создайте на его основе сайт через «Новый сайт → Из шаблона» в списке сайтов."
+
+#: site-templates
+msgid "Save as template"
+msgstr "Сохранить как шаблон"
+
+#: site-templates
+#, python-format
+msgid "“%(title)s” is saved as a template. Start a new site from it with New site → From a template."
+msgstr "«%(title)s» сохранён как шаблон. Создайте на его основе новый сайт через «Новый сайт → Из шаблона»."
+
+#: site-templates
+msgid "A template is never published. Start a site from it instead."
+msgstr "Шаблон никогда не публикуется. Создайте на его основе сайт."
+
+#: site-templates
+msgid "Pick one of this workspace’s templates."
+msgstr "Выберите один из шаблонов этого рабочего пространства."
+
+#: site-templates
+msgid "Pick one of the templates."
+msgstr "Выберите один из шаблонов."
+
+#: site-gallery-compare
+msgid "Gallery"
+msgstr "Галерея"
+
+#: site-gallery-compare
+msgid "Before and after"
+msgstr "До и после"
+
+#: site-gallery-compare
+msgid "Boards, renderings or site photos, opened large on a tap"
+msgstr "Стенды, визуализации или фото места — открываются крупно по нажатию"
+
+#: site-gallery-compare
+msgid "Today and the proposal, side by side with a slider"
+msgstr "Сейчас и предложение — рядом, с ползунком"
+
+#: site-gallery-compare
+msgid "Some pictures have no caption, which is what screen readers read out."
+msgstr "У некоторых картинок нет подписи, а именно её читают экранные дикторы."
+
+#: site-gallery-compare
+msgid "Add at least one picture."
+msgstr "Добавьте хотя бы одну картинку."
+
+#: site-gallery-compare
+msgid "A gallery holds at most 12 pictures."
+msgstr "В галерее может быть не больше 12 картинок."
+
+#: site-gallery-compare
+msgid "Before label"
+msgstr "Подпись «До»"
+
+#: site-gallery-compare
+msgid "After label"
+msgstr "Подпись «После»"
+
+#: site-gallery-compare
+msgid "Drop pictures here"
+msgstr "Перетащите картинки сюда"
+
+#: site-gallery-compare
+msgid "choose pictures"
+msgstr "выберите картинки"
+
+#: site-gallery-compare
+msgid "Up to 12 pictures — JPEG, PNG, WebP or GIF, up to 5 MB each"
+msgstr "До 12 картинок — JPEG, PNG, WebP или GIF, до 5 МБ каждая"
+
+#: site-gallery-compare
+msgid "drop a picture or"
+msgstr "перетащите картинку или"
+
+#: site-gallery-compare
+msgid "Columns on a computer"
+msgstr "Колонки на компьютере"
+
+#: site-gallery-compare
+msgid "Add, caption and remove pictures in the block on the page. On a phone the gallery shows two columns."
+msgstr "Добавляйте, подписывайте и убирайте картинки в блоке на странице. На телефоне галерея показывает две колонки."
+
+#: site-gallery-compare
+msgid "Drop the two pictures and name them in the block on the page. Use pictures of the same size and view."
+msgstr "Перетащите две картинки в блок на странице и подпишите их. Используйте картинки одного размера и ракурса."
+
+#: site-gallery-compare
+msgid "Before"
+msgstr "До"
+
+#: site-gallery-compare
+msgid "After"
+msgstr "После"
+
+#: site-gallery-compare
+msgid "Slide to compare"
+msgstr "Сдвиньте, чтобы сравнить"

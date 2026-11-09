@@ -60,7 +60,7 @@ A site SHALL link any number of canonical surveys of its own workspace (the page
 - **THEN** the card is deleted with the link
 
 ### Requirement: Blocks are a closed set validated by one function
-A site SHALL hold an ordered list of blocks of the kinds `heading`, `text`, `image`, `button`, `video`, `faq`, `timeline`, `survey`, `documents`, `map`, `results`, `event` and `contacts`, each with an optional title. Every write of a block SHALL pass `sites.clean_block(kind, data)`: rich text through `coerce_creator_html`, plain fields trimmed and capped, button URLs absolute `http(s)` only, video URLs accepted only when `layer_assets.embed_url` turns them into a YouTube or Vimeo player URL, FAQ 1–30 items, timeline 1–12 phases with an optional current phase, survey cards only for a survey linked to the same site, map colours `#rrggbb` only, base maps only keys the workspace resolves, results only for a publishable question of a survey of the same workspace with a visualisation from its type's list, events only with a valid date, times, IANA time zone and a seat limit of 1–10000 or none, heading sizes only `l`, `m` or `s` (default `m`), contacts at most six people with well-formed e-mails. Unknown keys SHALL be dropped. Blocks SHALL be reordered by posting the full id list; ids of another site SHALL be refused.
+A site SHALL hold an ordered list of blocks of the kinds `heading`, `text`, `image`, `button`, `video`, `faq`, `timeline`, `survey`, `documents`, `map`, `results`, `event`, `contacts`, `gallery` and `compare`, each with an optional title. Every write of a block SHALL pass `sites.clean_block(kind, data)`: rich text through `coerce_creator_html`, plain fields trimmed and capped, button URLs absolute `http(s)` only, video URLs accepted only when `layer_assets.embed_url` turns them into a YouTube or Vimeo player URL, FAQ 1–30 items, timeline 1–12 phases with an optional current phase, survey cards only for a survey linked to the same site, map colours `#rrggbb` only, base maps only keys the workspace resolves, results only for a publishable question of a survey of the same workspace with a visualisation from its type's list, events only with a valid date, times, IANA time zone and a seat limit of 1–10000 or none, heading sizes only `l`, `m` or `s` (default `m`), contacts at most six people with well-formed e-mails, gallery columns only 2, 3 or 4. Unknown keys SHALL be dropped. Blocks SHALL be reordered by posting the full id list; ids of another site SHALL be refused.
 
 #### Scenario: Rich text is sanitised
 - **WHEN** a text block is saved with `<p>Hello</p><script>alert(1)</script>`
@@ -373,4 +373,97 @@ The builder SHALL flag, without blocking publishing: an image block or the cover
 #### Scenario: Skip link
 - **WHEN** a published site is opened
 - **THEN** the page starts with a "Skip to content" link to `#main`
+
+### Requirement: Every site write goes through the sites service
+Creating, editing, duplicating, linking, publishing, unpublishing and deleting sites, their blocks, files and survey links, rotating the review link and removing event registrations SHALL be done by `survey/services/sites.py`, which takes an `Actor` and plain values and never a request, validates blocks through `sites.clean_block`, re-screens a live site after a change and records audit rows for the lifecycle steps. The editor views SHALL NOT write those rows themselves. Creating or duplicating a site SHALL count the Sites use in the service and refuse with `SitesFeatureRequired` when the workspace has none.
+
+#### Scenario: No request needed
+- **WHEN** a caller with an Actor creates a site, adds a text block, publishes and duplicates it
+- **THEN** each step succeeds without a request, the text is sanitised, and audit rows record create, publish and duplicate
+
+#### Scenario: Refused block keeps the typing
+- **WHEN** the service is asked to save a button with `javascript:alert(1)`
+- **THEN** it raises a refusal carrying the field error and the posted values
+
+#### Scenario: Views write nothing
+- **WHEN** the site views module is inspected
+- **THEN** it contains no direct save, create, update or delete of rows
+
+### Requirement: A site in several languages
+A site SHALL offer its primary language and any added content languages. Its **Translations** tab SHALL list every creator-written text of the site once per identical text, in page order, with a status (missing, outdated, translated), and SHALL save a row, export and import CSV in the layout of the survey table. Translations SHALL be written only through the sites service: rich text through `coerce_creator_html`, plain text trimmed and capped, an empty value removing the translation, the source hash recorded so a later change of the source marks the row outdated. Members SHALL read and export; owners, admins and editors of a workspace that may use Sites SHALL save, import, add and stop offering languages; a language the site does not offer SHALL be refused.
+
+The public page SHALL pick the language from `?lang=`, then a `p_lang` cookie set by an explicit choice, then the browser's Accept-Language, then the primary; it SHALL set `<html lang>`, list `hreflang` alternates and a language switch when more than one language is offered, and show the primary text wherever a translation is missing. An event registration SHALL remember the language for its confirmation mail and cancel page. Duplicating a site SHALL carry its languages and translations. Content screening SHALL read the translations.
+
+#### Scenario: Visitor reads Spanish
+- **WHEN** a site with a Spanish heading and body is opened with `?lang=es`
+- **THEN** the page has `lang="es"`, the Spanish texts, the English text where no translation exists, a language switch and hreflang links, and remembers the choice in a cookie
+
+#### Scenario: Browser language
+- **WHEN** a visitor whose browser asks for `es-MX` opens the same site without `?lang`
+- **THEN** the page is in Spanish
+
+#### Scenario: Outdated translation
+- **WHEN** the English heading changes after it was translated
+- **THEN** the row reads outdated
+
+#### Scenario: CSV round trip
+- **WHEN** the exported CSV comes back with the Spanish column filled in
+- **THEN** the translations are stored
+
+#### Scenario: Rights and languages
+- **WHEN** a viewer saves a row, or an editor saves into a language the site does not offer
+- **THEN** the viewer gets 403 and the save 400
+
+### Requirement: Sites carry the workspace brand
+The workspace owner SHALL be able to set, in workspace settings, a public name, a logo (a raster image up to 1 MB, verified by its bytes) and an accent colour (`#rrggbb`); anything else SHALL be refused. Every site of the workspace, public and in the builder, SHALL show the logo and the public name (the workspace name when empty) in its head, use the public name in the footer and the event consent line, and use the accent for buttons and links. An accent with less than 4.5:1 contrast against white SHALL be darkened on the site until it reaches it, and the settings SHALL say so; the stored colour SHALL stay unchanged.
+
+#### Scenario: Brand on the site
+- **WHEN** the owner sets "Riverside Parks Dept.", a logo and `#1b5e20` and the site is opened
+- **THEN** the site shows the logo and that name and uses `#1b5e20`
+
+#### Scenario: Light colour darkened
+- **WHEN** the accent is `#ffeb3b`
+- **THEN** the site uses a darker shade with at least 4.5:1 against white and the settings explain it
+
+#### Scenario: Bad input refused
+- **WHEN** an HTML file is sent as the logo or `red` as the colour
+- **THEN** the form is refused and nothing is stored
+
+#### Scenario: Owner only
+- **WHEN** an editor posts the branding form
+- **THEN** it is refused with 403
+
+### Requirement: Sites start from templates
+The Sites list SHALL offer *From a template* next to *New site* with the Mapsurvey starters (Consultation, Master plan) and the workspace's own templates. A starter SHALL create a draft site whose blocks pass the same validation as any block, with the blocks that need the creator's material added empty. *Save as template* SHALL create a copy of a site marked as a template, without survey links (its survey cards and results blocks kept, empty) and without event registrations; starting from it SHALL copy its blocks into a new draft. A template SHALL never be published or opened publicly. Starting a site from a starter or a template SHALL count as a Sites use; a template of another workspace SHALL be refused.
+
+#### Scenario: Master plan starter
+- **WHEN** an editor picks the Master plan starter
+- **THEN** a draft opens with heading, text, map, timeline, survey card, heading, results, documents and contacts blocks, the text and phases filled in
+
+#### Scenario: Workspace template
+- **WHEN** a site with a survey card is saved as a template and a new site is started from it
+- **THEN** the template keeps both blocks without survey links, publishing it is refused, its address is 404, and the new site has the same blocks
+
+#### Scenario: Another workspace's template
+- **WHEN** an editor posts the template of another workspace
+- **THEN** the answer is 404 and nothing is created
+
+#### Scenario: Trial used up
+- **WHEN** a free workspace whose trial is used picks a starter
+- **THEN** no site is created
+
+### Requirement: Gallery and before/after blocks
+A **Gallery** block SHALL hold 1–12 pictures, each verified by its bytes as a JPEG, PNG, WebP or GIF, added, captioned and removed in the block on the canvas, shown in 2–4 columns (two on a phone) and opened large on a tap; a picture's caption SHALL be its text alternative, and a picture without one SHALL be flagged by the accessibility checks. A **Before and after** block SHALL hold two verified pictures in two slots, each dropped or replaced in its half of the block, with an optional label per slot, and SHALL be drawn only when both are present, as the "after" picture over the "before" one revealed by a slider (both pictures one under the other without script). Both SHALL offer Full width and SHALL be translatable (captions, labels).
+
+#### Scenario: Gallery
+- **WHEN** two pictures are added to a gallery, one captioned "Board 1", the columns set to 2, and the site published
+- **THEN** the page shows a two-column grid with `alt="Board 1"` and loads the lightbox script, and the uncaptioned picture is flagged
+
+#### Scenario: Not a picture
+- **WHEN** an HTML file is sent as a gallery picture
+- **THEN** it is refused and nothing is stored
+
+#### Scenario: Before and after
+- **WHEN** only the before picture is present, then the after one is added, then the before one replaced
+- **THEN** the block is drawn only once both are there, and each slot holds exactly one picture
 

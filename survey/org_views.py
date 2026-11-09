@@ -14,7 +14,7 @@ from urllib.parse import urlencode
 from . import invitations
 from .email_verification import is_verified
 from .models import Organization, Membership, Invitation
-from .editor_forms import OrganizationSettingsForm
+from .editor_forms import OrganizationBrandingForm, OrganizationSettingsForm
 from .permissions import get_org_membership, ORG_ROLE_RANK
 
 
@@ -63,6 +63,17 @@ def org_settings(request, slug):
     if not membership or membership.role != 'owner':
         return HttpResponseForbidden()
 
+    branding = OrganizationBrandingForm(instance=org)
+    if request.method == 'POST' and request.POST.get('form') == 'branding':
+        branding = OrganizationBrandingForm(request.POST, request.FILES, instance=org)
+        if branding.is_valid():
+            branding.save()
+            messages.success(request, _('Branding saved.'))
+            return redirect('org_settings', slug=org.slug)
+        org.refresh_from_db()
+        return render(request, 'org/org_settings.html', {
+            'org': org, 'form': OrganizationSettingsForm(instance=org), 'branding': branding,
+            'brand': branding_preview(org)}, status=400)
     if request.method == 'POST':
         # Through a ModelForm so `SlugField`'s validator actually runs. Reading
         # POST by hand skipped it -- Django applies field validators only from
@@ -80,7 +91,13 @@ def org_settings(request, slug):
     else:
         form = OrganizationSettingsForm(instance=org)
 
-    return render(request, 'org/org_settings.html', {'org': org, 'form': form})
+    return render(request, 'org/org_settings.html', {'org': org, 'form': form, 'branding': branding,
+                                                     'brand': branding_preview(org)})
+
+
+def branding_preview(org):
+    from .branding import for_site
+    return for_site(org)
 
 
 # ─── Member Management ───────────────────────────────────────────────────────

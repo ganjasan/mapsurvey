@@ -31,7 +31,7 @@ builder (it extends base.html): it is passed explicitly into the include below.{
   {% if b.kind == 'heading' %}
   {% elif b.kind == 'text' %}
   <div class="lp-rich lb-rich" data-field="body" data-rich data-placeholder="{% trans 'Write something…' %}">{{ b.data.body|safe }}</div>
-  {% elif may_edit and b.kind in 'documents faq timeline contacts' %}
+  {% elif may_edit and b.kind in 'documents faq timeline contacts gallery compare' %}
   {% include "sites/editor/_inline.html" %}
   {% else %}
   {% if may_edit and b.kind == 'event' %}{% include "sites/editor/_inline.html" %}{% endif %}

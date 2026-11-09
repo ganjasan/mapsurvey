@@ -369,15 +369,32 @@ def unique_org_slug(base, exclude_pk=None, model=None):
     return slug
 
 
+def org_logo_key(instance, filename):
+    """org_logos/<uuid4>.<ext> on the public tier (change workspace-branding): shown on the
+    workspace's public sites, so public, under a random key."""
+    ext = (os.path.splitext(filename)[1] or '')[:8].lower()
+    return f'org_logos/{uuid_module.uuid4().hex}{ext}'
+
+
 class Organization(models.Model):
     name = models.CharField(max_length=250)
     slug = models.SlugField(max_length=100, unique=True)
+    # Branding (change workspace-branding, #619): what the workspace's public sites carry — a
+    # logo, an accent colour (#rrggbb; empty = the default blue) and the name shown to the public
+    # (empty = `name`). One brand per workspace; the respondent panel and the flyer read it later.
+    logo = models.ImageField(upload_to=org_logo_key, null=True, blank=True)
+    accent_color = models.CharField(max_length=7, blank=True, default='', db_default='')
+    brand_name = models.CharField(max_length=120, blank=True, default='', db_default='')
 
     class Meta:
         app_label = 'survey'
 
     def __str__(self):
         return self.name
+
+    @property
+    def display_name(self):
+        return self.brand_name or self.name
 
     def save(self, *args, **kwargs):
         # Generate when empty, normalise when unroutable. `SlugField` does carry
@@ -3159,6 +3176,15 @@ class Site(models.Model):
     # Part of the signing salt of the review link (change site-review-link); "New link" replaces it,
     # so every link handed out before stops working.
     review_salt = models.CharField(max_length=32, blank=True, default='', db_default='')
+    # Translations (change site-translations, #618): the languages offered besides `language`,
+    # {lang: {title, summary, cover_alt}}, and {lang: {occurrence key: source hash}} — the text a
+    # translation was written against, so the Translations tab can call it outdated.
+    # A template is a site kept to start others from (change site-templates): never published,
+    # no survey links, listed under Templates.
+    is_template = models.BooleanField(default=False, db_default=False)
+    languages = models.JSONField(default=list, blank=True, db_default=[])
+    translations = models.JSONField(default=dict, blank=True, db_default={})
+    translation_sources = models.JSONField(default=dict, blank=True, db_default={})
     visibility = models.CharField(max_length=10, choices=SITE_VISIBILITY_CHOICES, default='public')
     is_published = models.BooleanField(default=False)
     published_at = models.DateTimeField(null=True, blank=True)
@@ -3209,6 +3235,8 @@ SITE_BLOCK_KIND_CHOICES = (
     ('results', _('Results')),
     ('event', _('Event')),
     ('contacts', _('Contacts')),
+    ('gallery', _('Gallery')),
+    ('compare', _('Before and after')),
 )
 
 
@@ -3223,6 +3251,9 @@ class SiteBlock(models.Model):
     # Whether the heading is a link in the menu at the top of the site (change site-heading-block).
     in_menu = models.BooleanField(default=True, db_default=True)
     data = models.JSONField(default=dict, blank=True)
+    # {lang: {field: text}} — fields as `site_translations.block_fields` names them
+    # (title, body, caption, faq:0:q, phase:1:when, person:0:role, file:<pk>, …).
+    translations = models.JSONField(default=dict, blank=True, db_default={})
     image = models.ImageField(upload_to=site_asset_key, null=True, blank=True)
     site_survey = models.ForeignKey(SiteSurvey, null=True, blank=True, on_delete=models.CASCADE,
                                        related_name='cards')
@@ -3281,6 +3312,8 @@ class EventRegistration(models.Model):
     block = models.ForeignKey(SiteBlock, on_delete=models.CASCADE, related_name='registrations')
     name = models.CharField(max_length=120)
     email = models.EmailField()
+    # The language the registrant read the site in: the confirmation mail uses it.
+    language = models.CharField(max_length=10, blank=True, default='', db_default='')
     token = models.UUIDField(default=uuid_module.uuid4, unique=True, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
     cancelled_at = models.DateTimeField(null=True, blank=True)

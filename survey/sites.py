@@ -55,6 +55,8 @@ BLOCK_KINDS = {
     'image': (gettext_lazy('Image'), 'far fa-image', 'media'),
     'video': (gettext_lazy('Video'), 'fab fa-youtube', 'media'),
     'map': (gettext_lazy('Map'), 'fas fa-draw-polygon', 'media'),
+    'gallery': (gettext_lazy('Gallery'), 'far fa-images', 'media'),
+    'compare': (gettext_lazy('Before and after'), 'fas fa-columns', 'media'),
     'results': (gettext_lazy('Results'), 'fas fa-chart-bar', 'media'),
     'documents': (gettext_lazy('Documents'), 'far fa-file-pdf', 'participation'),
     'event': (gettext_lazy('Event'), 'far fa-calendar-check', 'participation'),
@@ -87,6 +89,8 @@ LIBRARY = (
         ('timeline', gettext_lazy('Phases with dates; mark the one you are in')),
         ('faq', gettext_lazy('Questions residents keep asking')),
         ('image', gettext_lazy('A photo or a plan drawing with a caption')),
+        ('gallery', gettext_lazy('Boards, renderings or site photos, opened large on a tap')),
+        ('compare', gettext_lazy('Today and the proposal, side by side with a slider')),
         ('video', gettext_lazy('YouTube or Vimeo')),
         ('map', gettext_lazy('The project area from a GeoJSON file')),
     )),
@@ -119,7 +123,9 @@ def _rich(value, cap):
 
 
 # Kinds that may break out of the site's column to the page edge (change site-width).
-WIDE_KINDS = ('image', 'video', 'map')
+WIDE_KINDS = ('image', 'video', 'map', 'gallery', 'compare')
+GALLERY_MAX = 12
+GALLERY_COLUMNS = ('2', '3', '4')
 SITE_WIDTHS = ('narrow', 'standard', 'wide')
 
 
@@ -260,6 +266,18 @@ def _plain_lines(value, cap):
     return '\n'.join(line for line in lines if line)[:cap]
 
 
+def _clean_gallery(raw, errors):
+    # The pictures are SiteFile rows (change site-gallery-compare), like a documents block's files.
+    columns = str(raw.get('columns') or '3')
+    return {'columns': int(columns if columns in GALLERY_COLUMNS else '3'), 'wide': _wide(raw)}
+
+
+def _clean_compare(raw, errors):
+    # Two SiteFile rows: order 0 is "before", order 1 is "after".
+    return {'before_label': _plain(raw.get('before_label'), 40), 'after_label': _plain(raw.get('after_label'), 40),
+            'wide': _wide(raw)}
+
+
 def _clean_documents(raw, errors):
     # The files are SiteFile rows (change landing-documents-map); the block keeps no data.
     return {}
@@ -363,6 +381,8 @@ _CLEANERS = {
     'results': _clean_results,
     'event': _clean_event,
     'contacts': _clean_contacts,
+    'gallery': _clean_gallery,
+    'compare': _clean_compare,
 }
 
 
@@ -394,6 +414,10 @@ def is_complete(block):
     kind = block.kind
     if kind == 'heading':
         return bool(block.title)
+    if kind == 'gallery':
+        return block.files.exists()
+    if kind == 'compare':
+        return set(block.files.values_list('order', flat=True)) >= {0, 1}
     if kind == 'contacts':
         return any(p.get('name') for p in data.get('people') or ()) or bool(data.get('address'))
     if kind == 'text':
@@ -631,6 +655,8 @@ def a11y_issues(site, blocks):
         found = []
         if b.kind == 'image' and b.image and not data.get('alt'):
             found.append(_('The picture has no description for screen readers.'))
+        if b.kind == 'gallery' and b.files.filter(title='').exists():
+            found.append(_('Some pictures have no caption, which is what screen readers read out.'))
         if b.kind == 'heading' and b.title:
             if data.get('size') == 's' and not seen_section_heading:
                 found.append(_('A small heading comes before any large or medium one: screen readers announce '
@@ -690,8 +716,9 @@ def duplicate_site(site, user, title):
             organization=site.organization, title=title, summary=site.summary, created_by=user,
             slug=unique_slug(title), language=site.language, width=site.width,
             visibility=site.visibility, cover=site.cover.name if site.cover else None,
-            cover_alt=site.cover_alt)
-        links = {}
+            cover_alt=site.cover_alt, languages=list(site.languages or []),
+            translations=dict(site.translations or {}), translation_sources=dict(site.translation_sources or {}))
+        links, remap, files_remap = {}, {}, {}
         for link in site.survey_links.order_by('order', 'id'):
             links[link.pk] = SiteSurvey.objects.create(site=copy, survey=link.survey, order=link.order)
         for block in site.blocks.order_by('order', 'id'):
@@ -699,9 +726,33 @@ def duplicate_site(site, user, title):
                 site=copy, kind=block.kind, order=block.order, title=block.title, in_menu=block.in_menu,
                 data=dict(block.data or {}), image=block.image.name if block.image else None,
                 site_survey=links.get(block.site_survey_id))
+            tr = {lang: dict(row or {}) for lang, row in (block.translations or {}).items()}
             for f in block.files.all():
-                SiteFile.objects.create(block=new, file=f.file.name, title=f.title, size=f.size,
-                                        content_type=f.content_type, order=f.order)
+                nf = SiteFile.objects.create(block=new, file=f.file.name, title=f.title, size=f.size,
+                                             content_type=f.content_type, order=f.order)
+                for row in tr.values():  # file titles follow the file to its new pk
+                    if f'file:{f.pk}' in row:
+                        row[f'file:{nf.pk}'] = row.pop(f'file:{f.pk}')
+            # Hashes are keyed by block id; the copy's are the original's under the new ids.
+            new.translations = tr
+            new.save(update_fields=['translations'])
+            remap[block.pk] = new.pk
+            files_remap.update({f'file:{a}': f'file:{b}' for a, b in zip(
+                block.files.order_by('order', 'id').values_list('pk', flat=True),
+                new.files.order_by('order', 'id').values_list('pk', flat=True))})
+        hashes = {}
+        for lang, keys in (site.translation_sources or {}).items():
+            out = {}
+            for key, value in keys.items():
+                parts = key.split(':', 2)
+                if parts[0] == 'block' and len(parts) == 3 and parts[1].isdigit() and int(parts[1]) in remap:
+                    field = files_remap.get(parts[2], parts[2])
+                    out[f'block:{remap[int(parts[1])]}:{field}'] = value
+                elif parts[0] == 'site':
+                    out[key] = value
+            hashes[lang] = out
+        copy.translation_sources = hashes
+        copy.save(update_fields=['translation_sources'])
     return copy
 
 

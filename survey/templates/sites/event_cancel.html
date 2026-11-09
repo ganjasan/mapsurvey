@@ -1,7 +1,7 @@
 {% load i18n static tz %}<!DOCTYPE html>
 {% comment %}Cancel a site-event registration (change landing-events). GET shows the event and a
 button; only the POST cancels — mail scanners open links.{% endcomment %}
-<html lang="{{ site.language }}">
+<html lang="{{ registration.language|default:site.language }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
