@@ -89,19 +89,19 @@ the block's panel form (the one serialisation): `data-input="<name>"` fields and
   <div class="lp-contacts lb-rows-edit" data-rows="contacts">
     {% for p in b.data.people %}
     <div class="lp-person lb-person" data-row>
-      <div class="lp-person-name" data-row-field="person_name" data-placeholder="{% trans 'Name' %}">{{ p.name }}</div>
+      <div class="lp-person-name" data-row-field="person_name" data-placeholder="{% trans 'Name' context 'person' %}">{{ p.name }}</div>
       <div class="lp-person-role" data-row-field="person_role" data-placeholder="{% trans 'Role, e.g. Project lead' %}">{{ p.role }}</div>
-      <div class="lp-person-line"><i class="far fa-envelope" aria-hidden="true"></i><span data-row-field="person_email" data-placeholder="{% trans 'E-mail' %}">{{ p.email }}</span></div>
-      <div class="lp-person-line"><i class="fas fa-phone" aria-hidden="true"></i><span data-row-field="person_phone" data-placeholder="{% trans 'Phone' %}">{{ p.phone }}</span></div>
+      <div class="lp-person-line"><i class="far fa-envelope" aria-hidden="true"></i><span data-row-field="person_email" data-placeholder="{% trans 'Email' %}">{{ p.email }}</span></div>
+      <div class="lp-person-line"><i class="fas fa-phone" aria-hidden="true"></i><span data-row-field="person_phone" data-placeholder="{% trans 'Phone' context 'contact' %}">{{ p.phone }}</span></div>
       <button type="button" class="lb-icon-btn lb-row-x" data-row-remove title="{% trans 'Remove' %}" aria-label="{% trans 'Remove' %}"><i class="fas fa-times" aria-hidden="true"></i></button>
     </div>
     {% endfor %}
   </div>
   <template data-row-template><div class="lp-person lb-person" data-row>
-      <div class="lp-person-name" data-row-field="person_name" data-placeholder="{% trans 'Name' %}"></div>
+      <div class="lp-person-name" data-row-field="person_name" data-placeholder="{% trans 'Name' context 'person' %}"></div>
       <div class="lp-person-role" data-row-field="person_role" data-placeholder="{% trans 'Role, e.g. Project lead' %}"></div>
-      <div class="lp-person-line"><i class="far fa-envelope" aria-hidden="true"></i><span data-row-field="person_email" data-placeholder="{% trans 'E-mail' %}"></span></div>
-      <div class="lp-person-line"><i class="fas fa-phone" aria-hidden="true"></i><span data-row-field="person_phone" data-placeholder="{% trans 'Phone' %}"></span></div>
+      <div class="lp-person-line"><i class="far fa-envelope" aria-hidden="true"></i><span data-row-field="person_email" data-placeholder="{% trans 'Email' %}"></span></div>
+      <div class="lp-person-line"><i class="fas fa-phone" aria-hidden="true"></i><span data-row-field="person_phone" data-placeholder="{% trans 'Phone' context 'contact' %}"></span></div>
       <button type="button" class="lb-icon-btn lb-row-x" data-row-remove title="{% trans 'Remove' %}" aria-label="{% trans 'Remove' %}"><i class="fas fa-times" aria-hidden="true"></i></button>
     </div></template>
   <button type="button" class="lb-link lb-row-add-c" data-row-add><i class="fas fa-plus" aria-hidden="true"></i> {% trans "Add a person" %}</button>

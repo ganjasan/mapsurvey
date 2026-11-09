@@ -11938,3 +11938,167 @@ msgstr "Sedang"
 msgctxt "heading size"
 msgid "Small"
 msgstr "Kecil"
+
+#: sites-wave-a
+msgid "Add the people in the block on the page."
+msgstr "Tambahkan orang di blok pada halaman."
+
+#: sites-wave-a
+msgid "Planning office, Town hall, 1 Market Square"
+msgstr "Kantor perencanaan, Balai Kota, Jl. Pasar No. 1"
+
+#: sites-wave-a
+msgid "Opening hours"
+msgstr "Jam buka"
+
+#: sites-wave-a
+msgid "Mon–Thu 9:00–16:00"
+msgstr "Sen–Kam 09.00–16.00"
+
+#: sites-wave-a
+msgid "Full width — from edge to edge of the page"
+msgstr "Lebar penuh — dari tepi ke tepi halaman"
+
+#: sites-wave-a
+#, python-format
+msgid "%(n)s thing to check for accessibility"
+msgid_plural "%(n)s things to check for accessibility"
+msgstr[0] "%(n)s hal aksesibilitas yang perlu diperiksa"
+
+#: sites-wave-a
+msgid "Residents using a screen reader or a keyboard trip over these. Publishing is not blocked."
+msgstr "Warga yang memakai pembaca layar atau keyboard akan terhambat oleh hal ini. Penerbitan tidak diblokir."
+
+#: sites-wave-a
+msgid "Share for review"
+msgstr "Bagikan untuk ditinjau"
+
+#: sites-wave-a
+msgid "Anyone with this link sees the draft read-only for 14 days — no account needed. New link stops the old one."
+msgstr "Siapa pun yang punya tautan ini bisa melihat draf (hanya baca) selama 14 hari — tanpa akun. Tautan baru menonaktifkan yang lama."
+
+#: sites-wave-a
+msgid "Review link"
+msgstr "Tautan tinjauan"
+
+#: sites-wave-a
+msgid "New link"
+msgstr "Tautan baru"
+
+#: sites-wave-a
+msgid "Skip to content"
+msgstr "Lewati ke konten"
+
+#: sites-wave-a
+msgid "Shared for review — this site is not public yet."
+msgstr "Dibagikan untuk ditinjau — situs ini belum publik."
+
+#: sites-wave-a
+#, python-format
+msgid "Duplicate “%(title)s”"
+msgstr "Duplikat “%(title)s”"
+
+#: sites-wave-a
+msgid "Role, e.g. Project lead"
+msgstr "Peran, mis. Pimpinan proyek"
+
+#: sites-wave-a
+msgid "Add a person"
+msgstr "Tambah orang"
+
+#: sites-wave-a
+msgid "Page width"
+msgstr "Lebar halaman"
+
+#: sites-wave-a
+msgid "How wide the column of text and blocks is on a computer. Pictures, maps and videos can also go full width in their own settings."
+msgstr "Seberapa lebar kolom teks dan blok di komputer. Gambar, peta, dan video juga bisa dibuat lebar penuh di pengaturannya sendiri."
+
+#: sites-wave-a
+msgid "Duplicate site"
+msgstr "Duplikat situs"
+
+#: sites-wave-a
+msgid "Registration opens when the site is published."
+msgstr "Pendaftaran dibuka saat situs diterbitkan."
+
+#: sites-wave-a
+msgid "Contacts"
+msgstr "Kontak"
+
+#: sites-wave-a
+msgid "Who runs the project and how to reach them"
+msgstr "Siapa yang menjalankan proyek dan cara menghubunginya"
+
+#: sites-wave-a
+#, python-format
+msgid "“%(email)s” is not an e-mail address."
+msgstr "“%(email)s” bukan alamat email."
+
+#: sites-wave-a
+msgid "The cover picture has no description for screen readers."
+msgstr "Foto sampul tidak punya deskripsi untuk pembaca layar."
+
+#: sites-wave-a
+msgid "The picture has no description for screen readers."
+msgstr "Gambar tidak punya deskripsi untuk pembaca layar."
+
+#: sites-wave-a
+msgid "A small heading comes before any large or medium one: screen readers announce it as a subsection of nothing. Make it medium, or add a heading above."
+msgstr "Judul kecil muncul sebelum judul besar atau sedang: pembaca layar mengumumkannya sebagai subbagian dari tidak ada. Jadikan sedang, atau tambahkan judul di atasnya."
+
+#: sites-wave-a
+msgid "A link says only “here” or “more”. Name where it leads, e.g. “the draft plan (PDF)”."
+msgstr "Tautan hanya bertuliskan “di sini” atau “selengkapnya”. Sebutkan tujuannya, mis. “draf rencana (PDF)”."
+
+#: sites-wave-a
+msgid "The button says only “here” or “more”. Name where it leads."
+msgstr "Tombol hanya bertuliskan “di sini” atau “selengkapnya”. Sebutkan tujuannya."
+
+#: sites-wave-a
+#, python-format
+msgid "%(title)s (copy)"
+msgstr "%(title)s (salinan)"
+
+#: sites-wave-a
+#, python-format
+msgid "This is a copy of “%(title)s”. It is not published."
+msgstr "Ini salinan dari “%(title)s”. Belum diterbitkan."
+
+#: sites-wave-a
+msgctxt "site width"
+msgid "Narrow"
+msgstr "Sempit"
+
+#: sites-wave-a
+msgctxt "site width"
+msgid "Standard"
+msgstr "Standar"
+
+#: sites-wave-a
+msgctxt "site width"
+msgid "Wide"
+msgstr "Lebar"
+
+#: sites-wave-a
+msgid "Standard"
+msgstr "Standar"
+
+#: sites-wave-a
+msgid "Wide"
+msgstr "Lebar"
+
+#: sites-wave-a
+msgctxt "contact"
+msgid "Phone"
+msgstr "Telepon"
+
+#: sites-wave-a
+msgctxt "person"
+msgid "Name"
+msgstr "Nama"
+
+#: sites-wave-a
+msgctxt "action"
+msgid "Duplicate"
+msgstr "Duplikat"

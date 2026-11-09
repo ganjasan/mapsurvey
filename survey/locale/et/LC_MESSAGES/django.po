@@ -11915,3 +11915,168 @@ msgstr "Keskmise suurusega"
 msgctxt "heading size"
 msgid "Small"
 msgstr "Väike"
+
+#: sites-wave-a
+msgid "Add the people in the block on the page."
+msgstr "Lisage inimesed lehel olevas plokis."
+
+#: sites-wave-a
+msgid "Planning office, Town hall, 1 Market Square"
+msgstr "Planeerimisosakond, raekoda, Turu plats 1"
+
+#: sites-wave-a
+msgid "Opening hours"
+msgstr "Lahtiolekuajad"
+
+#: sites-wave-a
+msgid "Mon–Thu 9:00–16:00"
+msgstr "E–N 9.00–16.00"
+
+#: sites-wave-a
+msgid "Full width — from edge to edge of the page"
+msgstr "Täislaius — lehe servast servani"
+
+#: sites-wave-a
+#, python-format
+msgid "%(n)s thing to check for accessibility"
+msgid_plural "%(n)s things to check for accessibility"
+msgstr[0] "%(n)s ligipääsetavuse küsimus üle vaadata"
+msgstr[1] "%(n)s ligipääsetavuse küsimust üle vaadata"
+
+#: sites-wave-a
+msgid "Residents using a screen reader or a keyboard trip over these. Publishing is not blocked."
+msgstr "Ekraanilugeri või klaviatuuri kasutajad komistavad nende otsa. Avaldamist see ei takista."
+
+#: sites-wave-a
+msgid "Share for review"
+msgstr "Jaga ülevaatamiseks"
+
+#: sites-wave-a
+msgid "Anyone with this link sees the draft read-only for 14 days — no account needed. New link stops the old one."
+msgstr "Selle lingiga näeb igaüks mustandit 14 päeva vaid lugemiseks — kontot pole vaja. „Uus link“ tühistab vana."
+
+#: sites-wave-a
+msgid "Review link"
+msgstr "Ülevaatuse link"
+
+#: sites-wave-a
+msgid "New link"
+msgstr "Uus link"
+
+#: sites-wave-a
+msgid "Skip to content"
+msgstr "Liigu sisu juurde"
+
+#: sites-wave-a
+msgid "Shared for review — this site is not public yet."
+msgstr "Jagatud ülevaatamiseks — see veebisait pole veel avalik."
+
+#: sites-wave-a
+#, python-format
+msgid "Duplicate “%(title)s”"
+msgstr "Tee koopia: „%(title)s“"
+
+#: sites-wave-a
+msgid "Role, e.g. Project lead"
+msgstr "Roll, nt projektijuht"
+
+#: sites-wave-a
+msgid "Add a person"
+msgstr "Lisa inimene"
+
+#: sites-wave-a
+msgid "Page width"
+msgstr "Lehe laius"
+
+#: sites-wave-a
+msgid "How wide the column of text and blocks is on a computer. Pictures, maps and videos can also go full width in their own settings."
+msgstr "Kui lai on teksti ja plokkide veerg arvutis. Pildid, kaardid ja videod võivad oma seadetes olla ka täislaiuses."
+
+#: sites-wave-a
+msgid "Duplicate site"
+msgstr "Tee veebisaidist koopia"
+
+#: sites-wave-a
+msgid "Registration opens when the site is published."
+msgstr "Registreerimine avaneb, kui veebisait on avaldatud."
+
+#: sites-wave-a
+msgid "Contacts"
+msgstr "Kontaktid"
+
+#: sites-wave-a
+msgid "Who runs the project and how to reach them"
+msgstr "Kes projekti juhib ja kuidas nendega ühendust võtta"
+
+#: sites-wave-a
+#, python-format
+msgid "“%(email)s” is not an e-mail address."
+msgstr "„%(email)s“ ei ole e-posti aadress."
+
+#: sites-wave-a
+msgid "The cover picture has no description for screen readers."
+msgstr "Kaanefotol pole ekraanilugeri jaoks kirjeldust."
+
+#: sites-wave-a
+msgid "The picture has no description for screen readers."
+msgstr "Pildil pole ekraanilugeri jaoks kirjeldust."
+
+#: sites-wave-a
+msgid "A small heading comes before any large or medium one: screen readers announce it as a subsection of nothing. Make it medium, or add a heading above."
+msgstr "Väike pealkiri on enne suurt või keskmist: ekraanilugerid loevad selle millegi puuduva alajaotiseks. Tehke see keskmiseks või lisage selle kohale pealkiri."
+
+#: sites-wave-a
+msgid "A link says only “here” or “more”. Name where it leads, e.g. “the draft plan (PDF)”."
+msgstr "Link ütleb ainult „siin“ või „rohkem“. Nimetage, kuhu see viib, nt „plaani eelnõu (PDF)“."
+
+#: sites-wave-a
+msgid "The button says only “here” or “more”. Name where it leads."
+msgstr "Nupp ütleb ainult „siin“ või „rohkem“. Nimetage, kuhu see viib."
+
+#: sites-wave-a
+#, python-format
+msgid "%(title)s (copy)"
+msgstr "%(title)s (koopia)"
+
+#: sites-wave-a
+#, python-format
+msgid "This is a copy of “%(title)s”. It is not published."
+msgstr "See on „%(title)s“ koopia. Seda pole avaldatud."
+
+#: sites-wave-a
+msgctxt "site width"
+msgid "Narrow"
+msgstr "Kitsas"
+
+#: sites-wave-a
+msgctxt "site width"
+msgid "Standard"
+msgstr "Tavaline"
+
+#: sites-wave-a
+msgctxt "site width"
+msgid "Wide"
+msgstr "Lai"
+
+#: sites-wave-a
+msgid "Standard"
+msgstr "Tavaline"
+
+#: sites-wave-a
+msgid "Wide"
+msgstr "Lai"
+
+#: sites-wave-a
+msgctxt "contact"
+msgid "Phone"
+msgstr "Telefon"
+
+#: sites-wave-a
+msgctxt "person"
+msgid "Name"
+msgstr "Nimi"
+
+#: sites-wave-a
+msgctxt "action"
+msgid "Duplicate"
+msgstr "Tee koopia"
