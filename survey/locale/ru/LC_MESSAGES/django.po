@@ -10337,3 +10337,133 @@ msgstr "Выберите цвет."
 #: workspace-branding
 msgid "The logo can be at most 1 MB."
 msgstr "Логотип может быть не больше 1 МБ."
+
+#: site-templates
+msgid "Consultation"
+msgstr "Обсуждение"
+
+#: site-templates
+msgid "One engagement: why we ask, how to take part, what happens next."
+msgstr "Одно обсуждение: зачем мы спрашиваем, как поучаствовать, что будет дальше."
+
+#: site-templates
+msgid "<p>What the project is, why residents are asked now, and what is already decided.</p>"
+msgstr "<p>Что это за проект, почему жителей спрашивают сейчас и что уже решено.</p>"
+
+#: site-templates
+msgid "Tell us what you think"
+msgstr "Расскажите, что вы думаете"
+
+#: site-templates
+msgid "What we heard"
+msgstr "Что мы услышали"
+
+#: site-templates
+msgid "Decision"
+msgstr "Решение"
+
+#: site-templates
+msgid "Meet us"
+msgstr "Приходите на встречу"
+
+#: site-templates
+msgid "Who is running this consultation?"
+msgstr "Кто проводит это обсуждение?"
+
+#: site-templates
+msgid "What happens with my answers?"
+msgstr "Что будет с моими ответами?"
+
+#: site-templates
+msgid "Contact"
+msgstr "Контакт"
+
+#: site-templates
+msgid "Master plan"
+msgstr "Мастер-план"
+
+#: site-templates
+msgid "A design project over months: the area, the concepts, the documents, the results."
+msgstr "Проект на несколько месяцев: территория, концепции, документы, результаты."
+
+#: site-templates
+msgid "The plan"
+msgstr "План"
+
+#: site-templates
+msgid "<p>The place, the people who use it, and what the plan sets out to change.</p>"
+msgstr "<p>Место, люди, которые им пользуются, и что план хочет изменить.</p>"
+
+#: site-templates
+msgid "How the plan is made"
+msgstr "Как создаётся план"
+
+#: site-templates
+msgid "Listen"
+msgstr "Слушаем"
+
+#: site-templates
+msgid "Concepts"
+msgstr "Концепции"
+
+#: site-templates
+msgid "Draft plan"
+msgstr "Проект плана"
+
+#: site-templates
+msgid "Final plan"
+msgstr "Итоговый план"
+
+#: site-templates
+msgid "Project team"
+msgstr "Команда проекта"
+
+#: site-templates
+msgid "From a template"
+msgstr "Из шаблона"
+
+#: site-templates
+msgid "Your templates"
+msgstr "Ваши шаблоны"
+
+#: site-templates
+#, python-format
+msgid "%(n)s block"
+msgid_plural "%(n)s blocks"
+msgstr[0] "%(n)s блок"
+msgstr[1] "%(n)s блока"
+msgstr[2] "%(n)s блоков"
+msgstr[3] "%(n)s блока"
+
+#: site-templates
+msgid "Templates"
+msgstr "Шаблоны"
+
+#: site-templates
+msgid "Template"
+msgstr "Шаблон"
+
+#: site-templates
+msgid "This is a template: it is never published. Start a site from it with New site → From a template on the Sites list."
+msgstr "Это шаблон: он никогда не публикуется. Создайте на его основе сайт через «Новый сайт → Из шаблона» в списке сайтов."
+
+#: site-templates
+msgid "Save as template"
+msgstr "Сохранить как шаблон"
+
+#: site-templates
+#, python-format
+msgid "“%(title)s” is saved as a template. Start a new site from it with New site → From a template."
+msgstr "«%(title)s» сохранён как шаблон. Создайте на его основе новый сайт через «Новый сайт → Из шаблона»."
+
+#: site-templates
+msgid "A template is never published. Start a site from it instead."
+msgstr "Шаблон никогда не публикуется. Создайте на его основе сайт."
+
+#: site-templates
+msgid "Pick one of this workspace’s templates."
+msgstr "Выберите один из шаблонов этого рабочего пространства."
+
+#: site-templates
+msgid "Pick one of the templates."
+msgstr "Выберите один из шаблонов."

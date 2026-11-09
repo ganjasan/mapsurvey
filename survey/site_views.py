@@ -104,13 +104,17 @@ def editor_sites(request):
     membership = get_org_membership(request.user, org)
     if membership is None:
         return redirect('editor')
-    rows = []
+    from . import site_templates
+    rows, templates = [], []
     for site in Site.objects.filter(organization=org).order_by('-updated_at'):
+        if site.is_template:
+            templates.append(site)
+            continue
         rows.append({'site': site, 'held': is_site_held(site),
                      'surveys': site.survey_links.count()})
     return render(request, 'sites/list.html', {
-        'org': org, 'rows': rows, 'can_act': _can_act(membership),
-        'may_create': billing_trial.may(org, sites.FEATURE),
+        'org': org, 'rows': rows, 'templates': templates, 'starters': site_templates.starters(),
+        'can_act': _can_act(membership), 'may_create': billing_trial.may(org, sites.FEATURE),
     })
 
 
@@ -126,10 +130,25 @@ def editor_site_create(request):
     # (sites.PLACEHOLDER_SLUG, see editor_site_settings).
     given = sites.clean_title(request.POST.get('title'))
     language = (request.LANGUAGE_CODE or 'en')[:2] if hasattr(request, 'LANGUAGE_CODE') else 'en'
+    # "From a template" posts `template` = starter:<key> or site:<uuid> (change site-templates).
+    template = request.POST.get('template') or ''
     try:
-        site = site_service.create_site(Actor.from_request(request), org, title=given, language=language)
+        if template.startswith('starter:'):
+            site = site_service.create_from_template(Actor.from_request(request), org,
+                                                     starter=template.split(':', 1)[1], language=language)
+            given = ''
+        elif template.startswith('site:'):
+            source = Site.objects.filter(uuid=template.split(':', 1)[1] or None, organization=org, is_template=True).first()
+            if source is None:
+                raise Http404
+            site = site_service.create_from_template(Actor.from_request(request), org, template=source)
+            given = site.title
+        else:
+            site = site_service.create_site(Actor.from_request(request), org, title=given, language=language)
     except site_service.SitesFeatureRequired:
         return feature_required(request, org, sites.FEATURE)
+    except site_service.ValidationFailed:
+        return HttpResponseBadRequest('unknown template')
     billing_trial.flash_started(request, org)
     url = reverse('editor_site', args=[site.uuid])
     return redirect(url if given else url + '?new=1')
@@ -151,6 +170,20 @@ def editor_site_duplicate(request, uuid):
     billing_trial.flash_started(request, org)
     messages.success(request, _('This is a copy of “%(title)s”. It is not published.') % {'title': site.title})
     return redirect('editor_site', uuid=copy.uuid)
+
+
+@login_required
+@require_POST
+def editor_site_save_template(request, uuid):
+    """Save the site as a template of the workspace (change site-templates, #620)."""
+    site, membership = _site(request, uuid)
+    refused = _refusal(request, site, membership)
+    if refused is not None:
+        return refused
+    template = site_service.save_as_template(Actor.from_request(request), site)
+    messages.success(request, _('“%(title)s” is saved as a template. Start a new site from it with New site → From a template.')
+                     % {'title': site.title})
+    return redirect('editor_site', uuid=template.uuid)
 
 
 # ─── builder ──────────────────────────────────────────────────────────────────
@@ -414,7 +447,11 @@ def editor_site_publish(request, uuid):
     refused = _refusal(request, site, membership)
     if refused is not None:
         return refused
-    site_service.publish(Actor.from_request(request), site)
+    try:
+        site_service.publish(Actor.from_request(request), site)
+    except site_service.ValidationFailed as exc:
+        messages.error(request, exc.message)
+        return _back(site)
     messages.success(request, _('The site is published.'))
     return _back(site)
 
@@ -451,7 +488,7 @@ def site_public(request, slug):
     if site is None:
         return render(request, 'survey_unavailable.html', status=404)
     held = is_site_held(site)
-    live = site.is_published and not held
+    live = site.is_published and not held and not site.is_template
     member = (request.user.is_authenticated
               and get_org_membership(request.user, site.organization) is not None)
     # A review link opens an unpublished draft for the client (change site-review-link) — never a

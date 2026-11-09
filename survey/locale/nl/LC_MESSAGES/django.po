@@ -12270,3 +12270,131 @@ msgstr "Kies een kleur."
 #: workspace-branding
 msgid "The logo can be at most 1 MB."
 msgstr "Het logo mag hoogstens 1 MB zijn."
+
+#: site-templates
+msgid "Consultation"
+msgstr "Inspraak"
+
+#: site-templates
+msgid "One engagement: why we ask, how to take part, what happens next."
+msgstr "Eén participatietraject: waarom we het vragen, hoe je meedoet, wat er daarna gebeurt."
+
+#: site-templates
+msgid "<p>What the project is, why residents are asked now, and what is already decided.</p>"
+msgstr "<p>Wat het project is, waarom bewoners nu gevraagd worden en wat al besloten is.</p>"
+
+#: site-templates
+msgid "Tell us what you think"
+msgstr "Laat ons weten wat je ervan vindt"
+
+#: site-templates
+msgid "What we heard"
+msgstr "Wat we hoorden"
+
+#: site-templates
+msgid "Decision"
+msgstr "Besluit"
+
+#: site-templates
+msgid "Meet us"
+msgstr "Kom langs"
+
+#: site-templates
+msgid "Who is running this consultation?"
+msgstr "Wie organiseert deze inspraak?"
+
+#: site-templates
+msgid "What happens with my answers?"
+msgstr "Wat gebeurt er met mijn antwoorden?"
+
+#: site-templates
+msgid "Contact"
+msgstr "Contact"
+
+#: site-templates
+msgid "Master plan"
+msgstr "Masterplan"
+
+#: site-templates
+msgid "A design project over months: the area, the concepts, the documents, the results."
+msgstr "Een ontwerpproject van maanden: het gebied, de concepten, de documenten, de resultaten."
+
+#: site-templates
+msgid "The plan"
+msgstr "Het plan"
+
+#: site-templates
+msgid "<p>The place, the people who use it, and what the plan sets out to change.</p>"
+msgstr "<p>De plek, de mensen die er komen en wat het plan wil veranderen.</p>"
+
+#: site-templates
+msgid "How the plan is made"
+msgstr "Hoe het plan tot stand komt"
+
+#: site-templates
+msgid "Listen"
+msgstr "Luisteren"
+
+#: site-templates
+msgid "Concepts"
+msgstr "Concepten"
+
+#: site-templates
+msgid "Draft plan"
+msgstr "Conceptplan"
+
+#: site-templates
+msgid "Final plan"
+msgstr "Definitief plan"
+
+#: site-templates
+msgid "Project team"
+msgstr "Projectteam"
+
+#: site-templates
+msgid "From a template"
+msgstr "Vanuit een sjabloon"
+
+#: site-templates
+msgid "Your templates"
+msgstr "Je sjablonen"
+
+#: site-templates
+#, python-format
+msgid "%(n)s block"
+msgid_plural "%(n)s blocks"
+msgstr[0] "%(n)s blok"
+msgstr[1] "%(n)s blokken"
+
+#: site-templates
+msgid "Templates"
+msgstr "Sjablonen"
+
+#: site-templates
+msgid "Template"
+msgstr "Sjabloon"
+
+#: site-templates
+msgid "This is a template: it is never published. Start a site from it with New site → From a template on the Sites list."
+msgstr "Dit is een sjabloon: het wordt nooit gepubliceerd. Maak er een site mee via ‘Nieuwe site → Vanuit een sjabloon’ in de lijst met sites."
+
+#: site-templates
+msgid "Save as template"
+msgstr "Opslaan als sjabloon"
+
+#: site-templates
+#, python-format
+msgid "“%(title)s” is saved as a template. Start a new site from it with New site → From a template."
+msgstr "‘%(title)s’ is opgeslagen als sjabloon. Maak er een nieuwe site mee via ‘Nieuwe site → Vanuit een sjabloon’."
+
+#: site-templates
+msgid "A template is never published. Start a site from it instead."
+msgstr "Een sjabloon wordt nooit gepubliceerd. Maak er in plaats daarvan een site mee."
+
+#: site-templates
+msgid "Pick one of this workspace’s templates."
+msgstr "Kies een van de sjablonen van deze werkruimte."
+
+#: site-templates
+msgid "Pick one of the templates."
+msgstr "Kies een van de sjablonen."

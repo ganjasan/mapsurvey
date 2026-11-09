@@ -2022,3 +2022,72 @@ class SiteBrandingTest(SiteTestBase):
         THEN it is refused"""
         self.login(self.editor)
         self.assertEqual(self.post_branding(brand_name='X').status_code, 403)
+
+
+class SiteTemplatesTest(SiteTestBase):
+    """Spec `survey-sites`: templates (change site-templates, #620)."""
+
+    def setUp(self):
+        super().setUp()
+        self.login(self.editor)
+
+    def test_starter(self):
+        """GIVEN the Sites list
+        WHEN an editor picks the Master plan starter
+        THEN a draft opens with the starter's blocks in order, the text filled and the rest empty for now"""
+        from survey.models import Site
+        self.assertContains(self.client.get(reverse('editor_sites')), 'value="starter:master-plan"')
+        r = self.client.post(reverse('editor_site_create'), {'template': 'starter:master-plan'})
+        site = Site.objects.exclude(pk=self.site.pk).get()
+        self.assertTrue(r['Location'].endswith('?new=1'))
+        self.assertEqual(list(site.blocks.values_list('kind', flat=True)),
+                         ['heading', 'text', 'map', 'timeline', 'survey', 'heading', 'results', 'documents', 'contacts'])
+        self.assertIn('<p>', site.blocks.get(kind='text').data['body'])
+        self.assertEqual(len(site.blocks.get(kind='timeline').data['items']), 4)
+        self.assertFalse(site.is_published)
+
+    def test_save_and_use_a_workspace_template(self):
+        """GIVEN a site with a survey card and a text block
+        WHEN it is saved as a template and a new site is started from it
+        THEN the template has no survey links and cannot be published or opened publicly, and the new
+             site copies its blocks"""
+        from survey.models import Site
+        self.client.post(self.url('editor_site_survey_link'), {'survey': self.survey.uuid})
+        self.add_block('survey', survey=self.survey.uuid, title='Take part')
+        self.add_block('text', body='<p>Our approach</p>')
+        self.client.post(self.url('editor_site_save_template'))
+        template = Site.objects.get(is_template=True)
+        self.assertFalse(template.survey_links.exists())
+        self.assertEqual(template.blocks.count(), 2)
+        self.client.post(reverse('editor_site_publish', args=[template.uuid]), {'action': 'publish'})
+        template.refresh_from_db()
+        self.assertFalse(template.is_published)
+        self.client.logout()
+        self.assertEqual(self.client.get(f'/p/{template.slug}/').status_code, 404)
+        self.login(self.editor)
+        listing = self.client.get(reverse('editor_sites')).content.decode()
+        self.assertIn(f'value="site:{template.uuid}"', listing)
+        self.client.post(reverse('editor_site_create'), {'template': f'site:{template.uuid}'})
+        new = Site.objects.exclude(pk__in=[self.site.pk, template.pk]).get()
+        self.assertFalse(new.is_template)
+        self.assertEqual(new.blocks.get(kind='text').data['body'], '<p>Our approach</p>')
+
+    def test_other_workspace_template_refused(self):
+        """GIVEN a template of another workspace
+        WHEN an editor posts it as their template
+        THEN the answer is 404 and nothing is created"""
+        from survey.models import Organization, Site
+        other = Organization.objects.create(name='Other', slug='other')
+        alien = Site.objects.create(organization=other, title='Alien', slug='alien-template', is_template=True)
+        self.assertEqual(self.client.post(reverse('editor_site_create'), {'template': f'site:{alien.uuid}'}).status_code, 404)
+        self.assertEqual(Site.objects.filter(organization=self.org).count(), 1)
+
+    def test_starter_is_a_sites_use(self):
+        """GIVEN a free workspace whose trial is used
+        WHEN an editor picks a starter
+        THEN no site is created"""
+        from survey.models import Site
+        self.sub.delete()
+        trial_used_elsewhere(self.org)
+        self.client.post(reverse('editor_site_create'), {'template': 'starter:consultation'})
+        self.assertEqual(Site.objects.count(), 1)

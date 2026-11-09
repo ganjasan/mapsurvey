@@ -124,6 +124,8 @@ def update_settings(actor, site, values, *, cover=None, remove_cover=False):
 
 
 def publish(actor, site):
+    if site.is_template:
+        raise ValidationFailed.single('is_template', _('A template is never published. Start a site from it instead.'))
     first = site.published_at is None
     site.is_published = True
     site.published_at = site.published_at or timezone.now()
@@ -506,4 +508,46 @@ def remove_language(actor, site, code):
     site.languages = [c for c in site.languages if c != code]
     site.save(update_fields=['languages', 'updated_at'])
     audit_record(actor, 'site_language_remove', site_id=site.pk, language=code)
+    return site
+
+
+# ─── templates (change site-templates, #620) ─────────────────────────────────
+
+def save_as_template(actor, site):
+    """A template from a site: a copy without survey links (cards and results blocks stay, empty)
+    and without registrations, never published. Not a Sites use — nobody visits a template."""
+    copy = sites.duplicate_site(site, actor.user, site.title)
+    # Cards and results blocks keep their place, empty: unhook them before the links go (CASCADE).
+    SiteBlock.objects.filter(site=copy).update(site_survey=None)
+    SiteSurvey.objects.filter(site=copy).delete()
+    copy.is_template = True
+    copy.slug = sites.unique_slug(f'{site.slug}-template')
+    copy.save(update_fields=['is_template', 'slug', 'updated_at'])
+    audit_record(actor, 'site_save_template', site_id=copy.pk, from_site_id=site.pk)
+    return copy
+
+
+def create_from_template(actor, org, *, starter=None, template=None, language='en'):
+    """A new draft site from a Mapsurvey starter (`site_templates.STARTERS` key) or from one of the
+    workspace's templates. Counts the Sites use like `create_site`."""
+    from .. import site_templates
+    if template is not None:
+        if template.organization_id != org.pk or not template.is_template:
+            raise ValidationFailed.single('template', _('Pick one of this workspace’s templates.'))
+        if not billing_trial.use(org, sites.FEATURE, actor=actor.user):
+            raise SitesFeatureRequired()
+        site = sites.duplicate_site(template, actor.user, template.title)
+        site.is_template = False
+        site.save(update_fields=['is_template'])
+    else:
+        spec = site_templates.STARTERS.get(starter or '')
+        if spec is None:
+            raise ValidationFailed.single('template', _('Pick one of the templates.'))
+        site = create_site(actor, org, language=language)
+        for kind, title, data in spec['blocks']:
+            save_block(actor, site, None, kind, site_templates.fields_for(kind, data, title), creating=True)
+    product_events.emit('site_created', actor.user_id, {
+        'organization_id': org.pk, 'site_id': site.pk, 'template': starter or ('workspace' if template else '')})
+    audit_record(actor, 'site_from_template', site_id=site.pk, starter=starter or '',
+                 template_id=template.pk if template else None)
     return site

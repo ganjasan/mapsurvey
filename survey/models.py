@@ -3179,6 +3179,9 @@ class Site(models.Model):
     # Translations (change site-translations, #618): the languages offered besides `language`,
     # {lang: {title, summary, cover_alt}}, and {lang: {occurrence key: source hash}} — the text a
     # translation was written against, so the Translations tab can call it outdated.
+    # A template is a site kept to start others from (change site-templates): never published,
+    # no survey links, listed under Templates.
+    is_template = models.BooleanField(default=False, db_default=False)
     languages = models.JSONField(default=list, blank=True, db_default=[])
     translations = models.JSONField(default=dict, blank=True, db_default={})
     translation_sources = models.JSONField(default=dict, blank=True, db_default={})

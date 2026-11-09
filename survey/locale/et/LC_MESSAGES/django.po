@@ -12211,3 +12211,131 @@ msgstr "Valige värv."
 #: workspace-branding
 msgid "The logo can be at most 1 MB."
 msgstr "Logo võib olla kuni 1 MB."
+
+#: site-templates
+msgid "Consultation"
+msgstr "Kaasamine"
+
+#: site-templates
+msgid "One engagement: why we ask, how to take part, what happens next."
+msgstr "Üks kaasamisprotsess: miks me küsime, kuidas osaleda, mis saab edasi."
+
+#: site-templates
+msgid "<p>What the project is, why residents are asked now, and what is already decided.</p>"
+msgstr "<p>Mis projekt see on, miks elanikelt praegu küsitakse ja mis on juba otsustatud.</p>"
+
+#: site-templates
+msgid "Tell us what you think"
+msgstr "Andke meile teada, mida arvate"
+
+#: site-templates
+msgid "What we heard"
+msgstr "Mida me kuulsime"
+
+#: site-templates
+msgid "Decision"
+msgstr "Otsus"
+
+#: site-templates
+msgid "Meet us"
+msgstr "Tule kohtuma"
+
+#: site-templates
+msgid "Who is running this consultation?"
+msgstr "Kes seda kaasamist korraldab?"
+
+#: site-templates
+msgid "What happens with my answers?"
+msgstr "Mis saab minu vastustest?"
+
+#: site-templates
+msgid "Contact"
+msgstr "Kontakt"
+
+#: site-templates
+msgid "Master plan"
+msgstr "Üldplaan"
+
+#: site-templates
+msgid "A design project over months: the area, the concepts, the documents, the results."
+msgstr "Mitu kuud kestev planeerimisprojekt: ala, kontseptsioonid, dokumendid, tulemused."
+
+#: site-templates
+msgid "The plan"
+msgstr "Plaan"
+
+#: site-templates
+msgid "<p>The place, the people who use it, and what the plan sets out to change.</p>"
+msgstr "<p>Koht, inimesed, kes seda kasutavad, ja mida plaan muuta tahab.</p>"
+
+#: site-templates
+msgid "How the plan is made"
+msgstr "Kuidas plaan valmib"
+
+#: site-templates
+msgid "Listen"
+msgstr "Kuulamine"
+
+#: site-templates
+msgid "Concepts"
+msgstr "Kontseptsioonid"
+
+#: site-templates
+msgid "Draft plan"
+msgstr "Plaani eelnõu"
+
+#: site-templates
+msgid "Final plan"
+msgstr "Lõplik plaan"
+
+#: site-templates
+msgid "Project team"
+msgstr "Projektimeeskond"
+
+#: site-templates
+msgid "From a template"
+msgstr "Mallist"
+
+#: site-templates
+msgid "Your templates"
+msgstr "Teie mallid"
+
+#: site-templates
+#, python-format
+msgid "%(n)s block"
+msgid_plural "%(n)s blocks"
+msgstr[0] "%(n)s plokk"
+msgstr[1] "%(n)s plokki"
+
+#: site-templates
+msgid "Templates"
+msgstr "Mallid"
+
+#: site-templates
+msgid "Template"
+msgstr "Mall"
+
+#: site-templates
+msgid "This is a template: it is never published. Start a site from it with New site → From a template on the Sites list."
+msgstr "See on mall: seda ei avaldata kunagi. Looge selle põhjal veebisait veebisaitide loendis: „Uus veebisait → Mallist“."
+
+#: site-templates
+msgid "Save as template"
+msgstr "Salvesta mallina"
+
+#: site-templates
+#, python-format
+msgid "“%(title)s” is saved as a template. Start a new site from it with New site → From a template."
+msgstr "„%(title)s“ on salvestatud mallina. Looge selle põhjal uus veebisait: „Uus veebisait → Mallist“."
+
+#: site-templates
+msgid "A template is never published. Start a site from it instead."
+msgstr "Malli ei avaldata kunagi. Looge selle põhjal hoopis veebisait."
+
+#: site-templates
+msgid "Pick one of this workspace’s templates."
+msgstr "Valige üks selle tööruumi mallidest."
+
+#: site-templates
+msgid "Pick one of the templates."
+msgstr "Valige üks mallidest."
