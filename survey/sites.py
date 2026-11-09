@@ -48,6 +48,7 @@ class BlockInvalid(Exception):
 
 # key → (label, icon, group) for the "Add block" picker, in picker order.
 BLOCK_KINDS = {
+    'heading': (gettext_lazy('Heading'), 'fas fa-heading', 'content'),
     'text': (gettext_lazy('Text'), 'fas fa-align-left', 'content'),
     'faq': (gettext_lazy('FAQ'), 'far fa-question-circle', 'content'),
     'timeline': (gettext_lazy('Timeline'), 'fas fa-stream', 'content'),
@@ -80,6 +81,7 @@ def picker():
 # the creator is doing, each tile with one line of what the block is for.
 LIBRARY = (
     (gettext_lazy('Tell the story'), (
+        ('heading', gettext_lazy('A section title on its own, in one of three sizes')),
         ('text', gettext_lazy('Purpose, background, what happens next')),
         ('timeline', gettext_lazy('Phases with dates; mark the one you are in')),
         ('faq', gettext_lazy('Questions residents keep asking')),
@@ -118,8 +120,24 @@ def _is_empty_html(html):
     return not re.sub(r'<[^>]+>|&nbsp;|\s', '', html or '')
 
 
+# A heading block's sizes (change site-heading-block): large and medium are <h2>, small is <h3>;
+# the site's title is the page's only <h1>.
+HEADING_SIZES = ('l', 'm', 's')
+
+
+def _clean_heading(raw, errors):
+    # The words are the block's title (edited on the canvas, capped by clean_title).
+    size = raw.get('size') if raw.get('size') in HEADING_SIZES else 'm'
+    return {'size': size}
+
+
+def _demote_h1(html):
+    """The site title is the page's only <h1>: a heading written in a text block is at most <h2>."""
+    return re.sub(r'<(/?)h1\b', r'<\1h2', html or '')
+
+
 def _clean_text(raw, errors):
-    body = _rich(raw.get('body'), RICH_TEXT_MAX)
+    body = _demote_h1(_rich(raw.get('body'), RICH_TEXT_MAX))
     if _is_empty_html(body):
         errors['body'] = _('Write some text.')
     return {'body': body}
@@ -286,6 +304,7 @@ def _clean_survey(raw, errors):
 
 
 _CLEANERS = {
+    'heading': _clean_heading,
     'text': _clean_text,
     'image': _clean_image,
     'button': _clean_button,
@@ -326,6 +345,8 @@ def is_complete(block):
     the library just added, or one the creator emptied, stays in the builder only."""
     data = block.data if isinstance(block.data, dict) else {}
     kind = block.kind
+    if kind == 'heading':
+        return bool(block.title)
     if kind == 'text':
         return not _is_empty_html(data.get('body'))
     if kind == 'image':
@@ -737,7 +758,7 @@ def outline_label(block):
 
 
 def nav_items(blocks):
-    return [(b.anchor, b.title) for b, _card in blocks if b.title]
+    return [(b.anchor, b.title) for b, _card in blocks if b.title and b.in_menu]
 
 
 def next_order(site):

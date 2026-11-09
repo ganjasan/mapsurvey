@@ -128,7 +128,7 @@ workspace (may_edit false).{% endcomment %}
 <datalist id="lb-timezones">{% for z in timezones %}<option value="{{ z }}">{% endfor %}</datalist>
 {{ basemap_table|json_script:"lb-basemaps" }}
 <script>window.LB_MAPBOX_TOKEN = '{{ MAPBOX_ACCESS_TOKEN|escapejs }}';
-window.LB_TEXT = {saving: '{% trans "Saving…" as t %}{{ t|escapejs }}', saved: '{% trans "All changes saved" as t %}{{ t|escapejs }}', failed: '{% trans "Could not save — check the settings on the right" as t %}{{ t|escapejs }}', offline: '{% trans "Could not save — check your connection" as t %}{{ t|escapejs }}', copied: '{% trans "Copied" as t %}{{ t|escapejs }}'};</script>
+window.LB_TEXT = {saving: '{% trans "Saving…" as t %}{{ t|escapejs }}', saved: '{% trans "All changes saved" as t %}{{ t|escapejs }}', failed: '{% trans "Could not save — check the settings on the right" as t %}{{ t|escapejs }}', offline: '{% trans "Could not save — check your connection" as t %}{{ t|escapejs }}', copied: '{% trans "Copied" as t %}{{ t|escapejs }}', heading: '{% trans "Heading" as t %}{{ t|escapejs }}', subheading: '{% trans "Subheading" as t %}{{ t|escapejs }}', normal: '{% trans "Normal text" as t %}{{ t|escapejs }}'};</script>
 <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin="anonymous"></script>

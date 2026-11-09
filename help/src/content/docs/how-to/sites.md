@@ -31,7 +31,8 @@ The middle of the builder is the site itself, as residents will see it.
 
 Press **+** or **Add block** and choose what to add:
 
-- **Text** — formatted text: what the project is, why residents are asked, what happens with their answers.
+- **Heading** — a section title on its own: large, medium or small (Settings, **Size**). Use it to open a part of the site, or for a subheading between blocks.
+- **Text** — formatted text: what the project is, why residents are asked, what happens with their answers. The toolbar offers **Heading** and **Subheading** inside the text.
 - **FAQ** — questions and answers that open on a tap.
 - **Timeline** — the phases of the engagement with their dates. Press **Now** on the phase you are in; earlier phases show as done.
 - **Image** — a picture with a description for screen readers and an optional caption.
@@ -42,7 +43,7 @@ Press **+** or **Add block** and choose what to add:
 - **Results** — what residents said in a round: a chart of a choice, rating or number question, or a map (markers, heatmap or clusters) of a map question, from any survey of your workspace. Answers are counted as on the survey's [public results page](/how-to/share-results-publicly/): only reviewed, non-deleted responses, small groups masked, written answers never shown. The block updates by itself as answers come in.
 - **Map** — the project area on a map. Upload a GeoJSON file with the boundary, a route or a few points (up to 1 MB; export it from QGIS or draw it on [geojson.io](https://geojson.io)), pick a colour and one of your [map styles](/how-to/map-styles/). A shape's `name` shows when someone points at it.
 
-Give a block a **heading** and it also appears in the menu at the top of the site. Drag blocks by the handle to change their order.
+Every block can have a **heading** above it — or none: leave *Heading (optional)* empty and the block starts with its content. A heading also becomes a link in the menu at the top of the site; untick **Show the heading in the menu at the top** in the block's settings to keep it out. The menu appears once it has two links. Drag blocks by the handle to change their order.
 
 ## Events and registration
 

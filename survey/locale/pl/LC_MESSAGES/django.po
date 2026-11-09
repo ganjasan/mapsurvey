@@ -12010,3 +12010,46 @@ msgstr "Adres witryny"
 #. rename-landings-to-sites
 msgid "Site title"
 msgstr "Tytuł witryny"
+
+#: site-heading-block
+msgid "Heading"
+msgstr "Nagłówek"
+
+#: site-heading-block
+msgid "Normal text"
+msgstr "Zwykły tekst"
+
+#: site-heading-block
+msgid "Leave it empty for a block without a heading. A heading can also be a link in the menu at the top."
+msgstr "Zostaw puste, jeśli blok ma nie mieć nagłówka. Nagłówek może też być linkiem w menu u góry."
+
+#: site-heading-block
+msgid "Show the heading in the menu at the top"
+msgstr "Pokaż nagłówek w menu u góry"
+
+#: site-heading-block
+msgid "Size"
+msgstr "Rozmiar"
+
+#: site-heading-block
+msgid "Type the heading on the page. Large and medium are section headings; small is a subheading."
+msgstr "Wpisz nagłówek na stronie. Duży i średni to nagłówki sekcji, mały to podtytuł."
+
+#: site-heading-block
+msgid "A section title on its own, in one of three sizes"
+msgstr "Samodzielny tytuł sekcji w jednym z trzech rozmiarów"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Large"
+msgstr "Duży"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Medium"
+msgstr "Średni"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Small"
+msgstr "Mały"

@@ -112,6 +112,14 @@
 .lb-tools .lb-grab { cursor: grab; }
 .lb-blk h2 { font-size: 24px; margin: 0 0 12px; }
 .lb-blk:not(.on):not(:hover) h2.lb-empty-heading:empty { display: none; }
+.lb-blk h2.lb-empty-heading:empty::before { font-size: 16px; font-weight: 400; color: #b6bec7; }
+.lb-blk h2.lp-heading--l { font-size: 34px; }
+.lb-blk h2.lp-heading--m { font-size: 26px; }
+.lb-seg--panel { display: flex; gap: 4px; margin-bottom: .4rem; }
+.lb-seg--panel label { flex: 1; display: flex !important; align-items: center; justify-content: center; gap: 4px;
+  border: 1px solid var(--line); border-radius: 6px; padding: 4px 0; font-weight: 400 !important; cursor: pointer; margin: 0 !important; }
+.lb-seg--panel label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.lb-seg--panel input { position: absolute; opacity: 0; pointer-events: none; }
 .lb-placeholder { display: flex; gap: 12px; align-items: center; border: 1.5px dashed #c9d2dc; border-radius: 10px; padding: 18px;
                   color: var(--muted); background: #fafbfc; cursor: pointer; }
 .lb-placeholder i { font-size: 18px; color: var(--accent); }

@@ -11931,3 +11931,46 @@ msgstr "Adres van de site"
 #. rename-landings-to-sites
 msgid "Site title"
 msgstr "Titel van de site"
+
+#: site-heading-block
+msgid "Heading"
+msgstr "Kop"
+
+#: site-heading-block
+msgid "Normal text"
+msgstr "Normale tekst"
+
+#: site-heading-block
+msgid "Leave it empty for a block without a heading. A heading can also be a link in the menu at the top."
+msgstr "Laat leeg voor een blok zonder kop. Een kop kan ook een link in het menu bovenaan zijn."
+
+#: site-heading-block
+msgid "Show the heading in the menu at the top"
+msgstr "Kop tonen in het menu bovenaan"
+
+#: site-heading-block
+msgid "Size"
+msgstr "Grootte"
+
+#: site-heading-block
+msgid "Type the heading on the page. Large and medium are section headings; small is a subheading."
+msgstr "Typ de kop op de pagina. Groot en middel zijn sectiekoppen; klein is een ondertitel."
+
+#: site-heading-block
+msgid "A section title on its own, in one of three sizes"
+msgstr "Een losse sectietitel in een van drie formaten"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Large"
+msgstr "Groot"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Medium"
+msgstr "Middel"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Small"
+msgstr "Klein"

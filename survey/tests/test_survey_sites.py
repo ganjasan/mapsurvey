@@ -1382,3 +1382,76 @@ class SiteNamingTest(SiteTestBase):
         THEN the answer is 404: the old address never shipped"""
         self.login(self.editor)
         self.assertEqual(self.client.get('/editor/landings/').status_code, 404)
+
+
+class SiteHeadingTest(SiteTestBase):
+    """Spec `survey-sites`: headings (change site-heading-block)."""
+
+    def setUp(self):
+        super().setUp()
+        self.login(self.editor)
+
+    def publish(self):
+        self.client.post(self.url('editor_site_publish'), {'action': 'publish'})
+        return self.client.get('/p/riverside-park-plan/').content.decode()
+
+    def test_heading_block_sizes(self):
+        """GIVEN three heading blocks, large, medium and small
+        WHEN the site is published
+        THEN large and medium are <h2> and small is <h3>, each in its size class, and an empty
+             heading block stays off the page"""
+        for title, size in (('Big one', 'l'), ('Middle one', 'm'), ('Small one', 's')):
+            self.add_block('heading', title=title, size=size)
+        self.client.post(self.url('editor_site_block_add'), {'kind': 'heading', 'empty': '1'})
+        page = self.publish()
+        self.assertIn('<h2 class="lp-heading lp-heading--l">Big one</h2>', page)
+        self.assertIn('<h2 class="lp-heading lp-heading--m">Middle one</h2>', page)
+        self.assertIn('<h3 class="lp-heading lp-heading--s">Small one</h3>', page)
+        self.assertEqual(page.count('lp-block--heading'), 3)
+        self.assertEqual(page.count('<h1'), 1)
+
+    def test_heading_out_of_the_menu(self):
+        """GIVEN two heading blocks and a text block with a heading
+        WHEN the text block's "Show the heading in the menu" is unticked
+        THEN the menu lists only the heading blocks, and the text block still shows its heading"""
+        self.add_block('heading', title='Phase one', size='m')
+        self.add_block('heading', title='Phase two', size='m')
+        self.add_block('text', title='Background', body='<p>Since 1998</p>')
+        text = self.site.blocks.get(kind='text')
+        r = self.client.post(self.url('editor_site_block_edit', text.pk),
+                             {'title': 'Background', 'body': '<p>Since 1998</p>', 'menu': ['0'], 'autosave': '1'})
+        self.assertEqual(r.status_code, 200)
+        text.refresh_from_db()
+        self.assertFalse(text.in_menu)
+        page = self.publish()
+        nav = page.split('<nav', 1)[1].split('</nav>', 1)[0]
+        self.assertIn('Phase two', nav)
+        self.assertNotIn('Background', nav)
+        self.assertIn('<h2>Background</h2>', page)
+
+    def test_text_without_heading(self):
+        """GIVEN a text block whose heading is left empty
+        WHEN the site is published
+        THEN the block has no heading and adds nothing to the menu"""
+        self.add_block('text', body='<p>Only words</p>')
+        page = self.publish()
+        self.assertIn('Only words', page)
+        self.assertNotIn('<h2></h2>', page)
+        self.assertNotIn('<nav', page)
+
+    def test_text_headings_stop_at_h2(self):
+        """GIVEN a text block posted with an <h1> heading
+        WHEN it is saved
+        THEN the heading is stored as <h2>: the site title is the page's only <h1>"""
+        self.add_block('text', body='<h1>Big</h1><p>Words</p>')
+        self.assertEqual(self.site.blocks.get().data['body'], '<h2>Big</h2><p>Words</p>')
+
+    def test_builder_offers_the_heading_block(self):
+        """GIVEN the builder
+        WHEN it renders
+        THEN the library offers a Heading block, and an empty block heading says it is optional"""
+        self.add_block('text', body='<p>Words</p>')
+        html = self.client.get(self.url('editor_site')).content.decode()
+        self.assertIn('value="heading"', html)
+        self.assertIn('Heading (optional)', html)
+        self.assertIn('name="menu"', html)

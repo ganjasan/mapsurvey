@@ -20,7 +20,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone, translation
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as _, pgettext
 from django.views.decorators.http import require_POST
 
 from billing import trial as billing_trial
@@ -206,6 +206,8 @@ def _builder_context(request, site, membership, **extra):
         'picker': sites.picker(),
         'kinds': {k: v[0] for k, v in sites.BLOCK_KINDS.items()},
         'icons': {k: v[1] for k, v in sites.BLOCK_KINDS.items()},
+        'heading_sizes': [('l', pgettext('heading size', 'Large')), ('m', pgettext('heading size', 'Medium')),
+                          ('s', pgettext('heading size', 'Small'))],
         'library': sites.library(),
         'languages': language_choices(),
         'basemap_choices': basemaps.choices_for(org),
@@ -338,7 +340,7 @@ def editor_site_survey_unlink(request, uuid, link_id):
 
 def _raw_block(kind, post):
     """The posted fields of a block form as the dict `clean_block` reads."""
-    raw = {key: post.get(key, '') for key in ('body', 'alt', 'caption', 'label', 'url', 'style',
+    raw = {key: post.get(key, '') for key in ('body', 'alt', 'caption', 'label', 'url', 'style', 'size',
                                               'button_label', 'description', 'current', 'color', 'basemap',
                                               'viz', 'date', 'start', 'end', 'tz', 'place', 'place_url',
                                               'capacity', 'open')}
@@ -464,6 +466,8 @@ def _save_block(request, site, block, kind):
         if block is None:
             block = SiteBlock(site=site, kind=kind, order=sites.next_order(site))
         block.title = sites.clean_title(request.POST.get('title'))
+        if 'menu' in request.POST:  # the panel posts 0 then, when ticked, 1 (the last one wins)
+            block.in_menu = request.POST.get('menu') == '1'
         block.data = data
         if kind == 'image' and upload is not None:
             block.image = upload
@@ -561,7 +565,7 @@ def editor_site_block_duplicate(request, uuid, block_id):
     block = get_object_or_404(SiteBlock, pk=block_id, site=site)
     with transaction.atomic():
         copy = SiteBlock.objects.create(
-            site=site, kind=block.kind, title=block.title, data=dict(block.data or {}),
+            site=site, kind=block.kind, title=block.title, in_menu=block.in_menu, data=dict(block.data or {}),
             image=block.image.name if block.image else None, site_survey=block.site_survey,
             order=sites.next_order(site))
         for f in block.files.all():

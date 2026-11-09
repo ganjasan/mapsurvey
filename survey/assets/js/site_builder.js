@@ -29,9 +29,10 @@
 
   // The survey editor's toolbars (editor/partials/question_form_modal.html): a text block gets the
   // Formatted Text block's, an FAQ answer the question help text's. Alignment is stored as an inline
-  // style, which the creator-HTML sanitiser keeps (text-align only).
+  // style, which the creator-HTML sanitiser keeps (text-align only). Headings stop at <h2>: the site
+  // title is the page's only <h1> (change site-heading-block); the picker says Heading / Subheading.
   var BODY_TOOLBAR = [
-    [{ header: [1, 2, 3, false] }],
+    [{ header: [2, 3, false] }],
     ['bold', 'italic', 'underline'],
     [{ align: [] }],
     ['link'],
@@ -126,8 +127,27 @@
 
   function plainValue(el) { return (el.innerText || '').replace(/[ \t]+\n/g, '\n').trim(); }
 
+  function nameHeadings(q) {
+    var tb = q.getModule('toolbar');
+    if (!tb || !tb.container) return;
+    var names = { '2': T.heading, '3': T.subheading, '': T.normal };
+    tb.container.querySelectorAll('.ql-header .ql-picker-item').forEach(function (it) {
+      var name = names[it.dataset.value || ''];
+      if (name) it.dataset.label = name;
+    });
+    var label = tb.container.querySelector('.ql-header .ql-picker-label');
+    var sync = function () {
+      if (!label) return;
+      var name = names[label.dataset.value || ''];
+      if (name) label.dataset.label = name;
+    };
+    sync();
+    q.on('editor-change', sync);
+  }
+
   function newQuill(host, html, onChange, toolbar) {
     var q = new Quill(host, { theme: 'snow', placeholder: host.dataset.placeholder || '', modules: { toolbar: toolbar || SHORT_TOOLBAR } });
+    nameHeadings(q);
     q.setContents(q.clipboard.convert({ html: html || '' }), 'silent');
     q.on('text-change', function (d, o, source) { if (source === 'user') onChange(); });
     host._quill = q;

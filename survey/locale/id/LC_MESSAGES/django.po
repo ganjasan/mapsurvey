@@ -11895,3 +11895,46 @@ msgstr "Alamat situs"
 #. rename-landings-to-sites
 msgid "Site title"
 msgstr "Judul situs"
+
+#: site-heading-block
+msgid "Heading"
+msgstr "Judul bagian"
+
+#: site-heading-block
+msgid "Normal text"
+msgstr "Teks biasa"
+
+#: site-heading-block
+msgid "Leave it empty for a block without a heading. A heading can also be a link in the menu at the top."
+msgstr "Biarkan kosong untuk blok tanpa judul. Judul juga bisa menjadi tautan di menu atas."
+
+#: site-heading-block
+msgid "Show the heading in the menu at the top"
+msgstr "Tampilkan judul di menu atas"
+
+#: site-heading-block
+msgid "Size"
+msgstr "Ukuran"
+
+#: site-heading-block
+msgid "Type the heading on the page. Large and medium are section headings; small is a subheading."
+msgstr "Ketik judul di halaman. Besar dan sedang adalah judul bagian; kecil adalah subjudul."
+
+#: site-heading-block
+msgid "A section title on its own, in one of three sizes"
+msgstr "Judul bagian tersendiri, dalam salah satu dari tiga ukuran"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Large"
+msgstr "Besar"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Medium"
+msgstr "Sedang"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Small"
+msgstr "Kecil"
