@@ -608,6 +608,33 @@ def unique_slug(title):
     return slug
 
 
+def duplicate_site(site, user, title):
+    """A new unpublished site that starts as a copy of `site` (change site-duplicate): its settings,
+    survey links, blocks and their files — the stored objects are shared, as when a block is
+    duplicated — but never event registrations. Survey cards and results blocks point at the
+    copy's own links. Wave B moves this into the sites service."""
+    from django.db import transaction
+    from .models import Site, SiteBlock, SiteFile, SiteSurvey
+    with transaction.atomic():
+        copy = Site.objects.create(
+            organization=site.organization, title=title, summary=site.summary, created_by=user,
+            slug=unique_slug(title), language=site.language, width=site.width,
+            visibility=site.visibility, cover=site.cover.name if site.cover else None,
+            cover_alt=site.cover_alt)
+        links = {}
+        for link in site.survey_links.order_by('order', 'id'):
+            links[link.pk] = SiteSurvey.objects.create(site=copy, survey=link.survey, order=link.order)
+        for block in site.blocks.order_by('order', 'id'):
+            new = SiteBlock.objects.create(
+                site=copy, kind=block.kind, order=block.order, title=block.title, in_menu=block.in_menu,
+                data=dict(block.data or {}), image=block.image.name if block.image else None,
+                site_survey=links.get(block.site_survey_id))
+            for f in block.files.all():
+                SiteFile.objects.create(block=new, file=f.file.name, title=f.title, size=f.size,
+                                        content_type=f.content_type, order=f.order)
+    return copy
+
+
 # ─── surveys ──────────────────────────────────────────────────────────────────
 
 def linkable_surveys(org):

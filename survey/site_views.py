@@ -155,6 +155,26 @@ def editor_site_create(request):
     return redirect(url if given else url + '?new=1')
 
 
+@login_required
+@require_POST
+def editor_site_duplicate(request, uuid):
+    """A copy of the site to start the next engagement from (change site-duplicate, #607). A new
+    site, so it is a Pro use like New site; the copy opens in the builder, unpublished."""
+    site, membership = _site(request, uuid)
+    if not _can_act(membership):
+        return HttpResponseForbidden()
+    org = site.organization
+    if not billing_trial.use(org, sites.FEATURE, actor=request.user):
+        return feature_required(request, org, sites.FEATURE)
+    billing_trial.flash_started(request, org)
+    title = sites.clean_title(_('%(title)s (copy)') % {'title': site.title})
+    copy = sites.duplicate_site(site, request.user, title)
+    product_events.emit('site_created', request.user.pk, {
+        'organization_id': org.pk, 'site_id': copy.pk, 'from_site_id': site.pk})
+    messages.success(request, _('This is a copy of “%(title)s”. It is not published.') % {'title': site.title})
+    return redirect('editor_site', uuid=copy.uuid)
+
+
 # ─── builder ──────────────────────────────────────────────────────────────────
 
 def _builder_context(request, site, membership, **extra):

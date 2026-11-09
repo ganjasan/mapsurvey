@@ -1571,3 +1571,71 @@ class SiteContactsTest(SiteTestBase):
         self.assertIn('data-row-field="person_email"', html)
         self.assertIn('Add a person', html)
         self.assertIn('name="address"', html)
+
+
+class SiteDuplicateTest(SiteTestBase):
+    """Spec `survey-sites`: a site can be duplicated (change site-duplicate, #607)."""
+
+    def setUp(self):
+        super().setUp()
+        self.login(self.editor)
+
+    def test_copy_for_the_next_engagement(self):
+        """GIVEN a published wide site with a survey card, an event with a registration and a documents block
+        WHEN an editor duplicates it
+        THEN a new unpublished site opens with the same blocks, the card on its own link, the same stored
+             file, the same width, and no registrations"""
+        from survey.models import EventRegistration, Site
+        self.site.width = 'wide'
+        self.site.save()
+        self.client.post(self.url('editor_site_survey_link'), {'survey': self.survey.uuid})
+        self.add_block('survey', survey=self.survey.uuid, title='Take part')
+        self.add_block('event', date='2030-06-12', start='10:00', tz='UTC', open='1', place='Boathouse')
+        pdf = SimpleUploadedFile('plan.pdf', b'%PDF-1.4\n', content_type='application/pdf')
+        self.client.post(self.url('editor_site_block_add'), {'kind': 'documents', 'files': [pdf]})
+        self.client.post(self.url('editor_site_publish'), {'action': 'publish'})
+        event = self.site.blocks.get(kind='event')
+        EventRegistration.objects.create(block=event, name='Ana', email='ana@example.org')
+
+        r = self.client.post(self.url('editor_site_duplicate'))
+        copy = Site.objects.exclude(pk=self.site.pk).get()
+        self.assertRedirects(r, reverse('editor_site', args=[copy.uuid]), fetch_redirect_response=False)
+        self.assertEqual(copy.title, 'Riverside Park plan (copy)')
+        self.assertNotEqual(copy.slug, self.site.slug)
+        self.assertFalse(copy.is_published)
+        self.assertEqual(copy.width, 'wide')
+        self.assertEqual(list(copy.blocks.values_list('kind', flat=True)),
+                         list(self.site.blocks.values_list('kind', flat=True)))
+        card = copy.blocks.get(kind='survey')
+        self.assertEqual(card.site_survey.site, copy)
+        self.assertEqual(card.site_survey.survey, self.survey)
+        self.assertFalse(EventRegistration.objects.filter(block__site=copy).exists())
+        self.assertEqual(copy.blocks.get(kind='documents').files.get().file.name,
+                         self.site.blocks.get(kind='documents').files.get().file.name)
+
+    def test_viewer_cannot_duplicate(self):
+        """GIVEN a viewer
+        WHEN they post the duplicate action
+        THEN the answer is 403 and no site is created"""
+        from survey.models import Site
+        self.login(self.viewer)
+        self.assertEqual(self.client.post(self.url('editor_site_duplicate')).status_code, 403)
+        self.assertEqual(Site.objects.count(), 1)
+
+    def test_free_workspace_refused(self):
+        """GIVEN a workspace without Pro whose trial is used
+        WHEN an editor duplicates a site
+        THEN no site is created"""
+        from survey.models import Site
+        self.sub.delete()
+        trial_used_elsewhere(self.org)
+        self.client.post(self.url('editor_site_duplicate'))
+        self.assertEqual(Site.objects.count(), 1)
+
+    def test_duplicate_offered(self):
+        """GIVEN a Pro editor
+        WHEN the list and the builder render
+        THEN both offer Duplicate"""
+        dup = reverse('editor_site_duplicate', args=[self.site.uuid])
+        self.assertContains(self.client.get(reverse('editor_sites')), dup)
+        self.assertContains(self.client.get(self.url('editor_site')), dup)
