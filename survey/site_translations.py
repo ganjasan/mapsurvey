@@ -149,7 +149,26 @@ def occurrences(site, language, source_language=None):
                 add(f'block:{block.pk}:{name}', kind, source, tr.get(language, {}).get(name, ''),
                     n, page_title, _label(name), 'block', block, name, cap,
                     tr.get(source_language, {}).get(name, ''), {'block_id': block.pk, 'page_id': site_page.pk})
+    # Updates (change site-updates): one group per update, drafts too, newest first.
+    for update in sites.feed(site, drafts=True):
+        n += 1
+        utr = update.translations or {}
+        group = f'{_("Update")}: {update.title}'[:90]
+        for name, kind, cap in UPDATE_FIELDS:
+            if name == 'said' and update.kind != 'decision':
+                continue
+            add(f'update:{update.pk}:{name}', kind, getattr(update, name) or '', utr.get(language, {}).get(name, ''),
+                n, group, _update_label(update, name), 'update', update, name, cap,
+                utr.get(source_language, {}).get(name, ''), {'block_id': '', 'update_id': update.pk})
     return out
+
+
+def _update_label(update, name):
+    if name == 'said':
+        return _('You said')
+    if name == 'body':
+        return _('We did') if update.kind == 'decision' else _('Text')
+    return _('Title')
 
 
 def apply(actor, site, language, values, *, overwrite=False, clear_empty=False):
@@ -190,14 +209,26 @@ def apply(actor, site, language, values, *, overwrite=False, clear_empty=False):
     return report
 
 
-def localize(site, blocks, lang, pages=()):
-    """Put the `lang` translations on the in-memory site, pages and blocks the public page draws
-    (never saved): a missing translation keeps the primary text. Documents blocks get `file_list`."""
+UPDATE_FIELDS = (('title', PLAIN, 160), ('said', PLAIN, 2000), ('body', RICH, None))
+
+
+def localize(site, blocks, lang, pages=(), updates=()):
+    """Put the `lang` translations on the in-memory site, pages, blocks and updates the public page
+    draws (never saved): a missing translation keeps the primary text. Documents blocks get `file_list`."""
     for block, _card in blocks:
         if block.kind in ('documents', 'gallery', 'compare'):
             block.file_list = list(block.files.all())
     if lang == site.language:
         return
+    shown = list(updates)
+    for block, card in blocks:
+        if block.kind == 'updates' and card:
+            shown.extend(card['updates'])
+    for update in shown:
+        row = (update.translations or {}).get(lang) or {}
+        for name, _kind, _cap in UPDATE_FIELDS:
+            if row.get(name):
+                setattr(update, name, row[name])
     for page in pages:
         value = ((page.translations or {}).get(lang) or {}).get('title')
         if value:

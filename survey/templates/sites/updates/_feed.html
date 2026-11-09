@@ -1,0 +1,9 @@
+{% load i18n %}{% comment %}The feed page /p/<slug>/updates/ and one update's page (change site-updates).{% endcomment %}
+{% if updates_view == 'update' %}
+  {% for u in feed_updates %}{% include "sites/updates/_card.html" with u=u link=False %}{% endfor %}
+  <p class="lp-updates-more"><a class="lp-back" href="{{ feed_url }}">{% trans "All updates" %}</a></p>
+{% else %}
+  <div class="lp-updates">
+    {% for u in feed_updates %}{% include "sites/updates/_card.html" with u=u link=True %}{% empty %}<p class="lp-muted">{% trans "No updates yet." %}</p>{% endfor %}
+  </div>
+{% endif %}

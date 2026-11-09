@@ -215,6 +215,15 @@ def collect_site_text(site, now=None) -> ScreenInput:
         for row in (page.translations or {}).values():
             for value in (row or {}).values():
                 texts.append(('page.translation', str(value)))
+    # Updates, drafts included, and their translations (change site-updates).
+    for update in site.updates.all().only('id', 'title', 'body', 'said', 'link_url', 'translations'):
+        texts += [('update.title', update.title or ''), ('update.body', update.body or ''),
+                  ('update.said', update.said or '')]
+        if update.link_url:
+            links.append(update.link_url)
+        for row in (update.translations or {}).values():
+            for value in (row or {}).values():
+                texts.append(('update.translation', str(value)))
     for block in site.blocks.all().only('id', 'kind', 'title', 'data', 'translations'):
         for row in (block.translations or {}).values():
             for value in (row or {}).values():

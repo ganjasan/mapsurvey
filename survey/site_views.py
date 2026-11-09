@@ -27,7 +27,7 @@ from billing.gates import feature_required
 
 from . import basemaps, branding, site_events, sites, share
 from .content_screening import is_site_held
-from .models import Site, SiteBlock, SitePage, SiteSurvey, SurveyHeader
+from .models import Site, SiteBlock, SitePage, SiteSurvey, SiteUpdate, SurveyHeader
 from .permissions import get_org_membership
 from .services import sites as site_service
 from .services.context import Actor
@@ -205,6 +205,14 @@ def editor_site_save_template(request, uuid):
 
 # ─── builder ──────────────────────────────────────────────────────────────────
 
+def _update_rows(site):
+    """Every update of the site, drafts too, for the side-panel panes (`pane_id` = selection id)."""
+    rows = list(sites.feed(site, drafts=True))
+    for u in rows:
+        u.pane_id = f'update:{u.pk}'
+    return rows
+
+
 def _builder_context(request, site, membership, page=None, **extra):
     org = site.organization
     page = page or _page_of(site, request.GET.get('page'))
@@ -227,7 +235,10 @@ def _builder_context(request, site, membership, page=None, **extra):
     items = {}
     a11y, a11y_site = sites.a11y_issues(site, blocks)
     for b in blocks:
-        card = sites.block_card(b)
+        # An updates block on the canvas shows drafts too (change site-updates).
+        card = sites.updates_card(b, drafts=True) if b.kind == 'updates' else sites.block_card(b)
+        if b.kind == 'updates' and card:
+            sites.decorate_updates(site, card['updates'])
         # A block whose template needs a card (results, event, survey) and has none is drawn as a
         # placeholder, like an incomplete one.
         complete = sites.is_complete(b) and not (b.kind in ('results', 'event', 'survey') and card is None)
@@ -250,6 +261,12 @@ def _builder_context(request, site, membership, page=None, **extra):
         'page_block_counts': {p.pk: p.blocks.count() for p in pages},
         'other_pages': [p for p in pages if p.pk != page.pk],
         'sitepage_pane': f'sitepage:{page.pk}',
+        'site_updates': _update_rows(site),
+        'update_statuses': [('', _('No status')), ('included', _('Included')), ('partly', _('Partly included')),
+                            ('not', _('Not included'))],
+        'update_counts': [('3', '3'), ('5', '5'), ('10', '10'), ('0', _('All'))],
+        'update_kinds': [('', _('News and “You said, we did”')), ('news', _('News')),
+                         ('decision', _('You said, we did'))],
         # The public page menu, on the canvas too (same rule: two or more pages in the menu).
         'canvas_pages': sites.menu(pages, page, [])['pages'],
         'items': items, 'selected': request.GET.get('select', ''), 'last_pk': blocks[-1].pk if blocks else '',
@@ -537,6 +554,59 @@ def editor_site_page_delete(request, uuid, page_id):
     return _back(site)
 
 
+# ─── updates (change site-updates, #629) ──────────────────────────────────────
+
+@login_required
+@require_POST
+def editor_site_update_add(request, uuid):
+    """*Add news* / *Add "You said, we did"* in an updates block: a draft, opened in the side panel."""
+    site, membership = _site(request, uuid)
+    refused = _refusal(request, site, membership)
+    if refused is not None:
+        return refused
+    page = _page_of(site, request.POST.get('page'))
+    try:
+        update = site_service.add_update(Actor.from_request(request), site, request.POST.get('kind', ''))
+    except site_service.ValidationFailed:
+        return HttpResponseBadRequest('kind must be news or decision')
+    return _back(site, update.anchor, select=f'update:{update.pk}', page=page)
+
+
+@login_required
+@require_POST
+def editor_site_update_edit(request, uuid, update_id):
+    """An update's fields from its panel; autosaved (JSON / 422) like a block."""
+    site, membership = _site(request, uuid)
+    refused = _refusal(request, site, membership)
+    if refused is not None:
+        return refused
+    update = get_object_or_404(SiteUpdate, pk=update_id, site=site)
+    values = {k: request.POST.get(k) for k in site_service.UPDATE_FIELDS if k in request.POST}
+    if 'published' in request.POST:  # the panel posts 0 then, when ticked, 1 (the last one wins)
+        values['published'] = request.POST.get('published') == '1'
+    try:
+        site_service.save_update(Actor.from_request(request), site, update, values)
+    except site_service.ValidationFailed as exc:
+        errors = {k: ' '.join(str(m) for m in v) for k, v in exc.fields.items()}
+        if _is_autosave(request):
+            return JsonResponse({'ok': False, 'errors': errors}, status=422)
+        messages.error(request, ' '.join(errors.values()))
+    if _is_autosave(request):
+        return JsonResponse({'ok': True, 'title': update.title, 'published': update.is_published})
+    return _back(site, update.anchor, select=f'update:{update.pk}', page=_page_of(site, request.POST.get('page')))
+
+
+@login_required
+@require_POST
+def editor_site_update_delete(request, uuid, update_id):
+    site, membership = _site(request, uuid)
+    if not _can_act(membership):
+        return HttpResponseForbidden()
+    update = get_object_or_404(SiteUpdate, pk=update_id, site=site)
+    site_service.delete_update(Actor.from_request(request), site, update)
+    return _back(site, page=_page_of(site, request.POST.get('page')))
+
+
 @login_required
 @require_POST
 def editor_site_block_move(request, uuid, block_id):
@@ -600,8 +670,10 @@ def _event_notice(request):
     return None
 
 
-def site_public(request, slug, page=''):
-    """/p/<slug>/ (the home page) and /p/<slug>/<page>/ (change site-pages). Published and not held →
+def site_public(request, slug, page='', view='page', update_id=None):
+    """/p/<slug>/ (the home page) and /p/<slug>/<page>/ (change site-pages); with `view='feed'` the update
+    feed /p/<slug>/updates/ and with `view='update'` one update /p/<slug>/updates/<id>/ (change
+    site-updates) — same access, header and menu, the feed in place of blocks. Published and not held →
     everyone; otherwise only members of the owning workspace, with a draft banner, and the
     survey-unavailable 404 for everyone else. The plan is never checked here: a site published
     under Pro survives a lapse."""
@@ -620,25 +692,51 @@ def site_public(request, slug, page=''):
         return render(request, 'survey_unavailable.html', status=404)
     # The visitor's language (change site-translations): ?lang=, the p_lang cookie, the browser,
     # then the primary. Fixed labels come from the respondent catalogs in that language.
+    from types import SimpleNamespace
+
     from . import site_translations
-    current = sites.page_for(site, page)
-    if current is None:
-        return render(request, 'survey_unavailable.html', status=404)
+    feed_updates, single = [], None
+    if view == 'page':
+        current = sites.page_for(site, page)
+        if current is None:
+            return render(request, 'survey_unavailable.html', status=404)
+        path = sites.page_url(site, current)
+    else:
+        # The feed is what visitors see; one update opens for members while it is a draft (preview).
+        rows = sites.feed(site)
+        if view == 'update':
+            single = sites.feed(site, drafts=member).filter(pk=update_id).first()
+            if single is None:
+                return render(request, 'survey_unavailable.html', status=404)
+            feed_updates = [single]
+            path = reverse('site_update_public', args=[site.slug, single.pk])
+        else:
+            feed_updates = list(rows)
+            path = reverse('site_updates_public', args=[site.slug])
+        current = None
     lang = site_translations.pick_language(request, site)
     offered = site_translations.languages(site)
     pages = sites.pages_for(site)
-    page_url = share.base() + sites.page_url(site, current)
+    page_url = share.base() + path
     review_token = request.GET.get('review', '') if review else ''
     with translation.override(lang):
-        blocks = sites.page_blocks(site, current, lang=lang)
-        site_translations.localize(site, blocks, lang, pages=pages)
-        current = next(p for p in pages if p.pk == current.pk)
+        blocks = sites.page_blocks(site, current, lang=lang) if current is not None else []
+        site_translations.localize(site, blocks, lang, pages=pages, updates=feed_updates)
+        if current is not None:
+            current = next(p for p in pages if p.pk == current.pk)
+        else:
+            current = SimpleNamespace(pk=None, is_home=False, slug='updates',
+                                      title=single.title if single else _('Updates'))
         menu = sites.menu(pages, current, blocks)
+        shown = list(feed_updates) + [u for b, c in blocks if b.kind == 'updates' and c for u in c['updates']]
+        sites.decorate_updates(site, shown, lang=lang, review=review_token)
         for p, _on in menu['pages']:
             p.url = sites.page_url(site, p, lang=lang, review=review_token)
         response = render(request, 'sites/public.html', {
             'site': site, 'org': site.organization, 'blocks': blocks, 'lang': lang,
             'page': current, 'pages_menu': menu['pages'],
+            'updates_view': view if view != 'page' else '', 'feed_updates': feed_updates,
+            'feed_url': sites.updates_url(site, lang=lang, review=review_token),
             'home_url': sites.page_url(site, pages[0], lang=lang, review=review_token),
             'brand': branding.for_site(site.organization),
             'site_languages': [(code, dict(language_choices()).get(code, code)) for code in offered]

@@ -474,6 +474,8 @@
     t.style.display = 'none';
     t._host = host;
   }
+  // The same rich-text field for forms outside the block panels (update panes, js/site_pages.js).
+  window.LBRich = { bind: bindRichTextarea, value: richValue };
 
   function initPanelForm(form, id) {
     if (!form || form.dataset.bound || !MAY_EDIT) return;

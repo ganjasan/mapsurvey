@@ -12465,10 +12465,6 @@ msgid "News"
 msgstr "Uudised"
 
 #: site-pages
-msgid "<p>The latest from the project: what changed, and what comes next.</p>"
-msgstr "<p>Viimased uudised projektist: mis muutus ja mis tuleb järgmisena.</p>"
-
-#: site-pages
 msgid "Site pages"
 msgstr "Saidi lehed"
 
@@ -12534,3 +12530,146 @@ msgid_plural "Its %(n)s blocks go with it, with their files and event registrati
 msgstr[0] "Selle %(n)s plokk kustutatakse koos failide ja registreerumistega. Seda ei saa tagasi võtta."
 msgstr[1] "Selle %(n)s plokki kustutatakse koos failide ja registreerumistega. Seda ei saa tagasi võtta."
 
+#: site-updates
+msgid "Updates"
+msgstr "Uuendused"
+
+#: site-updates
+msgid "You said, we did"
+msgstr "Teie ütlesite, meie tegime"
+
+#: site-updates
+msgid "Included"
+msgstr "Arvestatud"
+
+#: site-updates
+msgid "Partly included"
+msgstr "Osaliselt arvestatud"
+
+#: site-updates
+msgid "Not included"
+msgstr "Ei arvestatud"
+
+#: site-updates
+msgid "News and “You said, we did”, newest first"
+msgstr "Uudised ja „Teie ütlesite, meie tegime“, uusimad eespool"
+
+#: site-updates
+msgid "Pick news or “You said, we did”."
+msgstr "Vali uudis või „Teie ütlesite, meie tegime“."
+
+#: site-updates
+msgid "New update"
+msgstr "Uus uudis"
+
+#: site-updates
+msgid "Give the update a title."
+msgstr "Anna uudisele pealkiri."
+
+#: site-updates
+msgid "Enter a date."
+msgstr "Sisesta kuupäev."
+
+#: site-updates
+msgid "Pick included, partly or not included."
+msgstr "Vali arvestatud, osaliselt või ei arvestatud."
+
+#: site-updates
+msgid "Enter a full address starting with https://"
+msgstr "Sisesta täielik aadress, mis algab https://"
+
+#: site-updates
+msgid "Pick one of the surveys on this site."
+msgstr "Vali üks selle saidi küsitlustest."
+
+#: site-updates
+msgid "Pick an update of this site."
+msgstr "Vali selle saidi uudis."
+
+#: site-updates
+msgid "No status"
+msgstr "Olekuta"
+
+#: site-updates
+msgid "News and “You said, we did”"
+msgstr "Uudised ja „Teie ütlesite, meie tegime“"
+
+#: site-updates
+msgid "Update"
+msgstr "Uudis"
+
+#: site-updates
+msgid "You said"
+msgstr "Teie ütlesite"
+
+#: site-updates
+msgid "We did"
+msgstr "Meie tegime"
+
+#: site-updates
+msgid "More on %(host)s"
+msgstr "Rohkem: %(host)s"
+
+#: site-updates
+msgid "All updates"
+msgstr "Kõik uuendused"
+
+#: site-updates
+msgid "No updates yet."
+msgstr "Uuendusi veel pole."
+
+#: site-updates
+msgid "Add updates in the block on the page; open one there to edit it."
+msgstr "Lisa uudiseid lehel olevas plokis; muutmiseks ava see seal."
+
+#: site-updates
+msgid "Show"
+msgstr "Näita"
+
+#: site-updates
+msgid "Which updates"
+msgstr "Millised uudised"
+
+#: site-updates
+msgid "No updates yet. They show here newest first, and on the site once published."
+msgstr "Uudiseid veel pole. Need ilmuvad siia, uusimad eespool, ja saidile pärast avaldamist."
+
+#: site-updates
+msgid "Add news"
+msgstr "Lisa uudis"
+
+#: site-updates
+msgid "Add “You said, we did”"
+msgstr "Lisa „Teie ütlesite, meie tegime“"
+
+#: site-updates
+msgid "Drafts stay in the builder. Published updates show on the site, newest first."
+msgstr "Mustandid jäävad redaktorisse. Avaldatud uudised ilmuvad saidile, uusimad eespool."
+
+#: site-updates
+msgid "What residents asked for, in their words"
+msgstr "Mida elanikud soovisid, nende sõnadega"
+
+#: site-updates
+msgid "About a survey"
+msgstr "Küsitluse kohta"
+
+#: site-updates
+msgid "None"
+msgstr "Puudub"
+
+#: site-updates
+msgid "Open on the site"
+msgstr "Ava saidil"
+
+#: site-updates
+msgid "Delete this update?"
+msgstr "Kas kustutada see uudis?"
+
+#: site-updates
+msgid "Delete update"
+msgstr "Kustuta uudis"
+
+#: site-updates
+msgid "It disappears from the site and from every updates block. This cannot be undone."
+msgstr "See kaob saidilt ja kõigist uuenduste plokkidest. Seda ei saa tagasi võtta."

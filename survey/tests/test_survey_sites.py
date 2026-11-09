@@ -2610,3 +2610,270 @@ class SitePagesTest(SiteTestBase):
         lone = Site.objects.create(organization=self.org, title='Lone', slug='lone-site', created_by=self.owner)
         html = self.client.get(reverse('editor_site', args=[lone.uuid])).content.decode()
         self.assertNotIn('lb-canvas-nav', html)
+
+
+class SiteUpdatesTest(SiteTestBase):
+    """Spec `survey-sites`: a site's feed of updates and "You said, we did" (change site-updates, #629)."""
+
+    def setUp(self):
+        super().setUp()
+        self.login(self.editor)
+
+    def add(self, kind='news', **values):
+        from survey.models import SiteUpdate
+        before = set(SiteUpdate.objects.values_list('pk', flat=True))
+        r = self.client.post(self.url('editor_site_update_add'), {'kind': kind})
+        update = SiteUpdate.objects.exclude(pk__in=before).get()
+        if values:
+            self.save(update, **values)
+            update.refresh_from_db()
+        return update, r
+
+    def save(self, update, **values):
+        return self.client.post(self.url('editor_site_update_edit', update.pk), dict(values, autosave='1'))
+
+    def publish_site(self):
+        self.client.post(self.url('editor_site_publish'), {'action': 'publish'})
+
+    def updates_block(self, count='3', kinds='', page=None):
+        data = {'count': count, 'kinds': kinds}
+        if page is not None:
+            data['page'] = page.pk
+        self.add_block('updates', **data)
+        return self.site.blocks.filter(kind='updates').order_by('-pk').first()
+
+    # ─── model and service ────────────────────────────────────────────────
+
+    def test_news_update_and_drafts(self):
+        """GIVEN a published site with an updates block
+        WHEN a news update is published and another one stays a draft
+        THEN the public page shows the published one only, with its date and body"""
+        self.updates_block()
+        news, r = self.add('news', title='Draft plan published', date='2027-03-01',
+                           body='<p>Read the plan</p><script>x</script>', published='1')
+        self.assertIn(f'select=update%3A{news.pk}', r['Location'])
+        self.add('news', title='Still a draft')
+        self.assertEqual(news.body, '<p>Read the plan</p>')
+        self.publish_site()
+        self.client.logout()
+        html = self.client.get('/p/riverside-park-plan/').content.decode()
+        self.assertIn('Draft plan published', html)
+        self.assertIn('datetime="2027-03-01"', html)
+        self.assertIn('Read the plan', html)
+        self.assertNotIn('Still a draft', html)
+
+    def test_you_said_we_did(self):
+        """GIVEN a "You said, we did" update with the residents' words, the answer and status partly
+        WHEN the site is opened
+        THEN the card shows You said, the words, We did, the answer and the badge Partly included"""
+        self.updates_block()
+        self.add('decision', title='Shade by the playground', said='More shade by the playground',
+                 body='<p>Six trees are in the plan.</p>', status='partly', published='1')
+        self.publish_site()
+        html = self.client.get('/p/riverside-park-plan/').content.decode()
+        for text in ('You said', 'More shade by the playground', 'We did', 'Six trees are in the plan.',
+                     'Partly included', 'lp-status--partly'):
+            self.assertIn(text, html)
+
+    def test_bad_values_refused(self):
+        """GIVEN an update
+        WHEN it is saved with a javascript: link, an empty title, a bad date and status maybe
+        THEN the answer is 422 naming every field and the update is unchanged"""
+        update, _r = self.add('news', title='Kept')
+        r = self.save(update, link_url='javascript:alert(1)', title='', date='March', status='maybe')
+        self.assertEqual(r.status_code, 422)
+        self.assertEqual(set(r.json()['errors']), {'link_url', 'title', 'date', 'status'})
+        update.refresh_from_db()
+        self.assertEqual((update.title, update.link_url, update.status), ('Kept', '', ''))
+
+    def test_linked_survey_and_unlinking(self):
+        """GIVEN an update about a survey of the site
+        WHEN the survey is unlinked from the site
+        THEN the update stays without it; a survey not on the site is refused"""
+        self.client.post(self.url('editor_site_survey_link'), {'survey': self.survey.uuid})
+        update, _r = self.add('news', title='Survey open', survey=str(self.survey.uuid))
+        self.assertEqual(update.site_survey.survey, self.survey)
+        other = SurveyHeader.objects.create(name='other_survey', organization=self.org, created_by=self.owner)
+        self.assertEqual(self.save(update, survey=str(other.uuid)).status_code, 422)
+        link = self.site.survey_links.get()
+        self.client.post(self.url('editor_site_survey_unlink', link.pk))
+        update.refresh_from_db()
+        self.assertIsNone(update.site_survey)
+
+    def test_updates_are_not_copied(self):
+        """GIVEN a site with two updates
+        WHEN it is duplicated and saved as a template
+        THEN neither copy has updates"""
+        self.add('news', title='One')
+        self.add('decision', title='Two')
+        self.client.post(self.url('editor_site_duplicate'))
+        self.client.post(self.url('editor_site_save_template'))
+        for copy in Site.objects.exclude(pk=self.site.pk):
+            self.assertFalse(copy.updates.exists())
+
+    # ─── block ────────────────────────────────────────────────────────────
+
+    def test_latest_three_on_home_all_on_news(self):
+        """GIVEN five published updates, a block on home set to 3 and a block on News set to all
+        WHEN both pages are opened
+        THEN home shows the newest three and the All updates link, News all five and no link"""
+        from survey.models import SitePage
+        sites.home_page(self.site)
+        self.updates_block(count='3')
+        self.client.post(self.url('editor_site_page_add'))
+        news_page = SitePage.objects.get(site=self.site, is_home=False)
+        self.client.post(self.url('editor_site_page_edit', news_page.pk), {'title': 'News', 'slug': 'news', 'autosave': '1'})
+        self.updates_block(count='0', page=news_page)
+        for day in range(1, 6):
+            self.add('news', title=f'Update {day}', date=f'2027-03-0{day}', published='1')
+        self.publish_site()
+        self.client.logout()
+        home = self.client.get('/p/riverside-park-plan/').content.decode()
+        self.assertIn('Update 5', home)
+        self.assertIn('Update 3', home)
+        self.assertNotIn('Update 2', home)
+        self.assertIn('href="/p/riverside-park-plan/updates/"', home)
+        news = self.client.get('/p/riverside-park-plan/news/').content.decode()
+        self.assertIn('Update 1', news)
+        self.assertNotIn('All updates', news)
+
+    def test_kind_filter(self):
+        """GIVEN a news and a decision update and a block set to "You said, we did" only
+        WHEN the site is opened
+        THEN only the decision shows"""
+        self.updates_block(kinds='decision')
+        self.add('news', title='A news item', published='1')
+        self.add('decision', title='A decision', published='1')
+        self.publish_site()
+        html = self.client.get('/p/riverside-park-plan/').content.decode()
+        self.assertIn('A decision', html)
+        self.assertNotIn('A news item', html)
+
+    def test_empty_block_stays_off_the_page(self):
+        """GIVEN an updates block and only a draft update
+        WHEN the public page and the builder are opened
+        THEN the public page draws no updates block and the builder shows the draft marked"""
+        self.updates_block()
+        update, _r = self.add('news', title='Work in progress')
+        self.publish_site()
+        builder = self.client.get(self.url('editor_site')).content.decode()
+        self.assertIn('Work in progress', builder)
+        self.assertIn('lb-draft-badge', builder)
+        self.assertIn(f'data-select-target="update:{update.pk}"', builder)
+        self.assertIn(f'data-pane="update:{update.pk}"', builder)
+        self.client.logout()
+        self.assertNotIn('lp-block--updates', self.client.get('/p/riverside-park-plan/').content.decode())
+
+    def test_add_buttons_in_the_block(self):
+        """GIVEN an updates block
+        WHEN the builder renders it
+        THEN the block offers Add news and Add "You said, we did" posting to the add endpoint"""
+        self.updates_block()
+        html = self.client.get(self.url('editor_site')).content.decode()
+        self.assertIn('data-add-update="news"', html)
+        self.assertIn('data-add-update="decision"', html)
+
+    def test_viewer_cannot_change_updates(self):
+        """GIVEN a viewer and an update
+        WHEN they post to add, edit and delete
+        THEN each answer is 403 and nothing changes"""
+        update, _r = self.add('news', title='Kept')
+        self.login(self.viewer)
+        posts = [self.client.post(self.url('editor_site_update_add'), {'kind': 'news'}),
+                 self.save(update, title='Hacked'),
+                 self.client.post(self.url('editor_site_update_delete', update.pk))]
+        self.assertEqual([r.status_code for r in posts], [403] * 3)
+        update.refresh_from_db()
+        self.assertEqual(update.title, 'Kept')
+        self.assertEqual(self.site.updates.count(), 1)
+
+    def test_delete_update(self):
+        """GIVEN an update
+        WHEN an editor deletes it
+        THEN it is gone"""
+        update, _r = self.add('news', title='Gone soon')
+        self.client.post(self.url('editor_site_update_delete', update.pk))
+        self.assertFalse(self.site.updates.exists())
+
+    # ─── pages ────────────────────────────────────────────────────────────
+
+    def test_update_page_and_feed(self):
+        """GIVEN a published update and a draft on a published site
+        WHEN its address, the feed and the draft's address are opened
+        THEN the update page shows it with the <title> "<update> · <site>", the feed lists it, the draft is 404"""
+        published, _r = self.add('news', title='Draft plan published', published='1')
+        draft, _r = self.add('news', title='Not yet')
+        self.publish_site()
+        self.client.logout()
+        r = self.client.get(f'/p/riverside-park-plan/updates/{published.pk}/')
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, '<title>Draft plan published · Riverside Park plan</title>')
+        feed = self.client.get('/p/riverside-park-plan/updates/').content.decode()
+        self.assertIn(f'href="/p/riverside-park-plan/updates/{published.pk}/"', feed)
+        self.assertNotIn('Not yet', feed)
+        self.assertEqual(self.client.get(f'/p/riverside-park-plan/updates/{draft.pk}/').status_code, 404)
+
+    def test_update_of_a_draft_site_is_private(self):
+        """GIVEN a published update on a draft site
+        WHEN an anonymous visitor opens it
+        THEN the answer is the unavailable 404"""
+        update, _r = self.add('news', title='Early', published='1')
+        self.client.logout()
+        self.assertEqual(self.client.get(f'/p/riverside-park-plan/updates/{update.pk}/').status_code, 404)
+
+    def test_sitemap_lists_published_updates(self):
+        """GIVEN two published updates and a draft on a public published site
+        WHEN the sitemap is built
+        THEN it lists the feed and the two published updates, not the draft"""
+        a, _r = self.add('news', title='A', published='1')
+        b, _r = self.add('news', title='B', published='1')
+        c, _r = self.add('news', title='C')
+        self.publish_site()
+        xml = self.client.get('/sitemap.xml').content.decode()
+        self.assertIn('/p/riverside-park-plan/updates/</loc>', xml)
+        self.assertIn(f'/p/riverside-park-plan/updates/{a.pk}/</loc>', xml)
+        self.assertIn(f'/p/riverside-park-plan/updates/{b.pk}/</loc>', xml)
+        self.assertNotIn(f'/updates/{c.pk}/', xml)
+
+    def test_translated_update(self):
+        """GIVEN a site offered in Spanish with a translated update title
+        WHEN the Spanish feed is opened, and the English title changes
+        THEN it reads the Spanish title, and the row becomes outdated"""
+        from survey import site_translations as st
+        update, _r = self.add('news', title='Draft plan published', published='1')
+        self.client.post(self.url('editor_site_translation_add_language'), {'language': 'es'})
+        html = self.client.get(self.url('editor_site_translations')).content.decode()
+        self.assertIn(f'data-occ="update:{update.pk}:title"', html)
+        self.client.post(self.url('editor_site_translation_save'), {
+            'key': f'update:{update.pk}:title', 'value': 'Plan borrador publicado', 'from': 'en', 'to': 'es'})
+        self.publish_site()
+        es = self.client.get('/p/riverside-park-plan/updates/', {'lang': 'es'}).content.decode()
+        self.assertIn('Plan borrador publicado', es)
+        self.save(update, title='Draft plan is out')
+        self.site.refresh_from_db()
+        occ = next(o for o in st.occurrences(self.site, 'es') if o.key == f'update:{update.pk}:title')
+        self.assertEqual(occ.status, 'stale')
+
+    def test_updates_are_screened(self):
+        """GIVEN a draft update with a lure and a translation
+        WHEN the site's text is collected for screening
+        THEN both are in it and its link is scored"""
+        from survey.content_screening import collect_site_text
+        update, _r = self.add('news', title='Verify your XFINITY account', link_url='https://bit.ly/x')
+        update.translations = {'es': {'title': 'Verifique su cuenta'}}
+        update.save()
+        inp = collect_site_text(self.site)
+        texts = [t for _k, t in inp.texts]
+        self.assertIn('Verify your XFINITY account', texts)
+        self.assertIn('Verifique su cuenta', texts)
+        self.assertIn('https://bit.ly/x', [inp.redirect_url] + texts)
+
+    def test_municipal_starter_news_page(self):
+        """GIVEN the Municipal site starter
+        WHEN an editor picks it
+        THEN its News page holds an updates block showing all updates"""
+        self.client.post(reverse('editor_site_create'), {'template': 'starter:municipal'})
+        site = Site.objects.exclude(pk=self.site.pk).get()
+        news = sites.pages_for(site)[3]
+        block = news.blocks.get(kind='updates')
+        self.assertEqual(block.data, {'count': 0, 'kinds': ''})

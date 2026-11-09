@@ -12605,10 +12605,6 @@ msgid "News"
 msgstr "Aktualności"
 
 #: site-pages
-msgid "<p>The latest from the project: what changed, and what comes next.</p>"
-msgstr "<p>Najnowsze wiadomości z projektu: co się zmieniło i co dalej.</p>"
-
-#: site-pages
 msgid "Site pages"
 msgstr "Strony witryny"
 
@@ -12674,3 +12670,147 @@ msgid_plural "Its %(n)s blocks go with it, with their files and event registrati
 msgstr[0] "Razem z nią zniknie %(n)s blok z plikami i zapisami na wydarzenia. Tego nie można cofnąć."
 msgstr[1] "Razem z nią znikną %(n)s bloki z plikami i zapisami na wydarzenia. Tego nie można cofnąć."
 msgstr[2] "Razem z nią zniknie %(n)s bloków z plikami i zapisami na wydarzenia. Tego nie można cofnąć."
+
+#: site-updates
+msgid "Updates"
+msgstr "Aktualizacje"
+
+#: site-updates
+msgid "You said, we did"
+msgstr "Powiedzieliście, zrobiliśmy"
+
+#: site-updates
+msgid "Included"
+msgstr "Uwzględnione"
+
+#: site-updates
+msgid "Partly included"
+msgstr "Częściowo uwzględnione"
+
+#: site-updates
+msgid "Not included"
+msgstr "Nieuwzględnione"
+
+#: site-updates
+msgid "News and “You said, we did”, newest first"
+msgstr "Aktualności i „Powiedzieliście, zrobiliśmy”, najnowsze na górze"
+
+#: site-updates
+msgid "Pick news or “You said, we did”."
+msgstr "Wybierz aktualność lub „Powiedzieliście, zrobiliśmy”."
+
+#: site-updates
+msgid "New update"
+msgstr "Nowa aktualizacja"
+
+#: site-updates
+msgid "Give the update a title."
+msgstr "Nadaj aktualizacji tytuł."
+
+#: site-updates
+msgid "Enter a date."
+msgstr "Podaj datę."
+
+#: site-updates
+msgid "Pick included, partly or not included."
+msgstr "Wybierz: uwzględnione, częściowo lub nieuwzględnione."
+
+#: site-updates
+msgid "Enter a full address starting with https://"
+msgstr "Podaj pełny adres zaczynający się od https://"
+
+#: site-updates
+msgid "Pick one of the surveys on this site."
+msgstr "Wybierz jedną z ankiet tej witryny."
+
+#: site-updates
+msgid "Pick an update of this site."
+msgstr "Wybierz aktualizację tej witryny."
+
+#: site-updates
+msgid "No status"
+msgstr "Bez statusu"
+
+#: site-updates
+msgid "News and “You said, we did”"
+msgstr "Aktualności i „Powiedzieliście, zrobiliśmy”"
+
+#: site-updates
+msgid "Update"
+msgstr "Aktualizacja"
+
+#: site-updates
+msgid "You said"
+msgstr "Powiedzieliście"
+
+#: site-updates
+msgid "We did"
+msgstr "Zrobiliśmy"
+
+#: site-updates
+msgid "More on %(host)s"
+msgstr "Więcej na %(host)s"
+
+#: site-updates
+msgid "All updates"
+msgstr "Wszystkie aktualizacje"
+
+#: site-updates
+msgid "No updates yet."
+msgstr "Nie ma jeszcze aktualizacji."
+
+#: site-updates
+msgid "Add updates in the block on the page; open one there to edit it."
+msgstr "Dodawaj aktualizacje w bloku na stronie; otwórz je tam, aby edytować."
+
+#: site-updates
+msgid "Show"
+msgstr "Ile pokazać"
+
+#: site-updates
+msgid "Which updates"
+msgstr "Które aktualizacje"
+
+#: site-updates
+msgid "No updates yet. They show here newest first, and on the site once published."
+msgstr "Nie ma jeszcze aktualizacji. Pojawią się tu, najnowsze na górze, a na stronie po publikacji."
+
+#: site-updates
+msgid "Add news"
+msgstr "Dodaj aktualność"
+
+#: site-updates
+msgid "Add “You said, we did”"
+msgstr "Dodaj „Powiedzieliście, zrobiliśmy”"
+
+#: site-updates
+msgid "Drafts stay in the builder. Published updates show on the site, newest first."
+msgstr "Szkice zostają w edytorze. Opublikowane aktualizacje pojawiają się na stronie, najnowsze na górze."
+
+#: site-updates
+msgid "What residents asked for, in their words"
+msgstr "O co prosili mieszkańcy, ich słowami"
+
+#: site-updates
+msgid "About a survey"
+msgstr "O ankiecie"
+
+#: site-updates
+msgid "None"
+msgstr "Żadna"
+
+#: site-updates
+msgid "Open on the site"
+msgstr "Otwórz na stronie"
+
+#: site-updates
+msgid "Delete this update?"
+msgstr "Usunąć tę aktualizację?"
+
+#: site-updates
+msgid "Delete update"
+msgstr "Usuń aktualizację"
+
+#: site-updates
+msgid "It disappears from the site and from every updates block. This cannot be undone."
+msgstr "Zniknie ze strony i ze wszystkich bloków aktualizacji. Tego nie można cofnąć."

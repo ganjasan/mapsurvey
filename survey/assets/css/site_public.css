@@ -184,3 +184,29 @@ body.lp { margin: 0; font: 17px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI
   background: #fff; box-shadow: 0 0 6px rgba(0,0,0,.4); pointer-events: none; }
 .lp-compare-range { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: ew-resize; margin: 0; }
 .lp-compare-range:focus-visible { opacity: .25; }
+
+/* Updates and "You said, we did" (change site-updates, #629). */
+.lp-updates { display: flex; flex-direction: column; gap: 22px; }
+.lp-update { border-left: 3px solid var(--lp-line); padding: 2px 0 2px 16px; }
+.lp-update--decision { border-left-color: var(--lp-accent); }
+.lp-update-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13.5px; color: var(--lp-muted); }
+.lp-update-kind { text-transform: uppercase; letter-spacing: .04em; font-size: 12px; }
+.lp-status { font-size: 12px; font-weight: 600; padding: 1px 9px; border-radius: 999px; background: var(--lp-soft); color: var(--lp-ink); }
+.lp-status--included { background: #e3f4e8; color: #1d6b37; }
+.lp-status--partly { background: #fdf1d8; color: #845400; }
+.lp-status--not { background: #f1f2f4; color: #555c66; }
+.lp-update-title { margin: 6px 0 8px; font-size: 20px; line-height: 1.3; }
+.lp-update-title a { color: inherit; text-decoration: none; }
+.lp-update-title a:hover { color: var(--lp-accent); text-decoration: underline; }
+.lp-said, .lp-did { margin: 0 0 10px; }
+.lp-said p { margin: 0; font-style: italic; }
+.lp-said-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--lp-muted); margin-bottom: 2px; }
+.lp-update-links { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 4px 0 0; font-size: 14.5px; }
+.lp-update-links a { color: var(--lp-accent); }
+.lp-update-link::after { content: " ↗"; }
+.lp-updates-more a::after { content: " →"; }
+.lp-updates-more a.lp-back::before { content: "← "; }
+.lp-updates-more a.lp-back::after { content: none; }
+.lp-did .lp-rich > :first-child { margin-top: 0; }
+.lp-updates-more { margin: 18px 0 0; font-weight: 600; }
+.lp-updates-more a { color: var(--lp-accent); text-decoration: none; }

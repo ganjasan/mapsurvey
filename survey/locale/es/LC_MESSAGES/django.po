@@ -12550,10 +12550,6 @@ msgid "News"
 msgstr "Noticias"
 
 #: site-pages
-msgid "<p>The latest from the project: what changed, and what comes next.</p>"
-msgstr "<p>Lo último del proyecto: qué ha cambiado y qué viene después.</p>"
-
-#: site-pages
 msgid "Site pages"
 msgstr "Páginas del sitio"
 
@@ -12619,3 +12615,146 @@ msgid_plural "Its %(n)s blocks go with it, with their files and event registrati
 msgstr[0] "Su %(n)s bloque se elimina con ella, con sus archivos e inscripciones. No se puede deshacer."
 msgstr[1] "Sus %(n)s bloques se eliminan con ella, con sus archivos e inscripciones. No se puede deshacer."
 
+#: site-updates
+msgid "Updates"
+msgstr "Actualizaciones"
+
+#: site-updates
+msgid "You said, we did"
+msgstr "Lo que dijiste, lo que hicimos"
+
+#: site-updates
+msgid "Included"
+msgstr "Incluido"
+
+#: site-updates
+msgid "Partly included"
+msgstr "Incluido en parte"
+
+#: site-updates
+msgid "Not included"
+msgstr "No incluido"
+
+#: site-updates
+msgid "News and “You said, we did”, newest first"
+msgstr "Noticias y «Lo que dijiste, lo que hicimos», lo más reciente primero"
+
+#: site-updates
+msgid "Pick news or “You said, we did”."
+msgstr "Elige noticia o «Lo que dijiste, lo que hicimos»."
+
+#: site-updates
+msgid "New update"
+msgstr "Nueva novedad"
+
+#: site-updates
+msgid "Give the update a title."
+msgstr "Ponle un título a la novedad."
+
+#: site-updates
+msgid "Enter a date."
+msgstr "Introduce una fecha."
+
+#: site-updates
+msgid "Pick included, partly or not included."
+msgstr "Elige incluido, en parte o no incluido."
+
+#: site-updates
+msgid "Enter a full address starting with https://"
+msgstr "Introduce una dirección completa que empiece por https://"
+
+#: site-updates
+msgid "Pick one of the surveys on this site."
+msgstr "Elige una de las encuestas de este sitio."
+
+#: site-updates
+msgid "Pick an update of this site."
+msgstr "Elige una novedad de este sitio."
+
+#: site-updates
+msgid "No status"
+msgstr "Sin estado"
+
+#: site-updates
+msgid "News and “You said, we did”"
+msgstr "Noticias y «Lo que dijiste, lo que hicimos»"
+
+#: site-updates
+msgid "Update"
+msgstr "Novedad"
+
+#: site-updates
+msgid "You said"
+msgstr "Lo que dijiste"
+
+#: site-updates
+msgid "We did"
+msgstr "Lo que hicimos"
+
+#: site-updates
+msgid "More on %(host)s"
+msgstr "Más en %(host)s"
+
+#: site-updates
+msgid "All updates"
+msgstr "Todas las novedades"
+
+#: site-updates
+msgid "No updates yet."
+msgstr "Todavía no hay novedades."
+
+#: site-updates
+msgid "Add updates in the block on the page; open one there to edit it."
+msgstr "Añade novedades en el bloque de la página; ábrelas allí para editarlas."
+
+#: site-updates
+msgid "Show"
+msgstr "Cuántas mostrar"
+
+#: site-updates
+msgid "Which updates"
+msgstr "Qué novedades"
+
+#: site-updates
+msgid "No updates yet. They show here newest first, and on the site once published."
+msgstr "Todavía no hay novedades. Aparecen aquí, la más reciente primero, y en el sitio cuando se publican."
+
+#: site-updates
+msgid "Add news"
+msgstr "Añadir noticia"
+
+#: site-updates
+msgid "Add “You said, we did”"
+msgstr "Añadir «Lo que dijiste, lo que hicimos»"
+
+#: site-updates
+msgid "Drafts stay in the builder. Published updates show on the site, newest first."
+msgstr "Los borradores se quedan en el editor. Las novedades publicadas aparecen en el sitio, la más reciente primero."
+
+#: site-updates
+msgid "What residents asked for, in their words"
+msgstr "Lo que pidieron los vecinos, con sus palabras"
+
+#: site-updates
+msgid "About a survey"
+msgstr "Sobre una encuesta"
+
+#: site-updates
+msgid "None"
+msgstr "Ninguna"
+
+#: site-updates
+msgid "Open on the site"
+msgstr "Abrir en el sitio"
+
+#: site-updates
+msgid "Delete this update?"
+msgstr "¿Eliminar esta novedad?"
+
+#: site-updates
+msgid "Delete update"
+msgstr "Eliminar novedad"
+
+#: site-updates
+msgid "It disappears from the site and from every updates block. This cannot be undone."
+msgstr "Desaparece del sitio y de todos los bloques de novedades. No se puede deshacer."

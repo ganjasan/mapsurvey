@@ -63,6 +63,16 @@ from the canvas `[data-field]` elements, so this form is always the whole block 
   {% if errors.before %}<div class="text-danger small">{{ errors.before }}</div>{% endif %}
   {% if errors.after %}<div class="text-danger small">{{ errors.after }}</div>{% endif %}
   <p class="lb-hint mt-0">{% trans "Drop the two pictures and name them in the block on the page. Use pictures of the same size and view." %}</p>
+  {% elif kind == 'updates' %}
+  <p class="lb-hint mt-0">{% trans "Add updates in the block on the page; open one there to edit it." %}</p>
+  <label class="small mb-0 mt-2" for="lb-ucount-{{ edit_block.pk }}">{% trans "Show" %}</label>
+  <select id="lb-ucount-{{ edit_block.pk }}" name="count" class="form-control form-control-sm">
+    {% for value, label in update_counts %}<option value="{{ value }}"{% if data.count|stringformat:'s' == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+  <label class="small mb-0 mt-2" for="lb-ukinds-{{ edit_block.pk }}">{% trans "Which updates" %}</label>
+  <select id="lb-ukinds-{{ edit_block.pk }}" name="kinds" class="form-control form-control-sm">
+    {% for value, label in update_kinds %}<option value="{{ value }}"{% if data.kinds|default:'' == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
   {% elif kind == 'contacts' %}
   <div class="lb-row-sink" hidden>{% for p in data.people %}<input type="hidden" name="person_name" value="{{ p.name }}"><input type="hidden" name="person_role" value="{{ p.role }}"><input type="hidden" name="person_email" value="{{ p.email }}"><input type="hidden" name="person_phone" value="{{ p.phone }}">{% endfor %}</div>
   <p class="lb-hint mt-0">{% trans "Add the people in the block on the page." %}</p>

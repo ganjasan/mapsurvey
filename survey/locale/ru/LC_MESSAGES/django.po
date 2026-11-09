@@ -10593,10 +10593,6 @@ msgid "News"
 msgstr "Новости"
 
 #: site-pages
-msgid "<p>The latest from the project: what changed, and what comes next.</p>"
-msgstr "<p>Последнее о проекте: что изменилось и что будет дальше.</p>"
-
-#: site-pages
 msgid "Site pages"
 msgstr "Страницы сайта"
 
@@ -10667,3 +10663,139 @@ msgstr[3] "Вместе с ней удалятся %(n)s блоков с фай�
 #: site-pages
 msgid "Pages"
 msgstr "Страницы"
+
+#: site-updates
+msgid "Updates"
+msgstr "Обновления"
+
+#: site-updates
+msgid "You said, we did"
+msgstr "Вы сказали — мы сделали"
+
+#: site-updates
+msgid "Included"
+msgstr "Учтено"
+
+#: site-updates
+msgid "Partly included"
+msgstr "Учтено частично"
+
+#: site-updates
+msgid "Not included"
+msgstr "Не учтено"
+
+#: site-updates
+msgid "News and “You said, we did”, newest first"
+msgstr "Новости и «Вы сказали — мы сделали», сначала свежие"
+
+#: site-updates
+msgid "Pick news or “You said, we did”."
+msgstr "Выберите новость или «Вы сказали — мы сделали»."
+
+#: site-updates
+msgid "New update"
+msgstr "Новая запись"
+
+#: site-updates
+msgid "Give the update a title."
+msgstr "Дайте записи заголовок."
+
+#: site-updates
+msgid "Enter a date."
+msgstr "Укажите дату."
+
+#: site-updates
+msgid "Pick included, partly or not included."
+msgstr "Выберите «учтено», «частично» или «не учтено»."
+
+#: site-updates
+msgid "Enter a full address starting with https://"
+msgstr "Укажите полный адрес, начиная с https://"
+
+#: site-updates
+msgid "Pick one of the surveys on this site."
+msgstr "Выберите один из опросов этого сайта."
+
+#: site-updates
+msgid "Pick an update of this site."
+msgstr "Выберите запись этого сайта."
+
+#: site-updates
+msgid "No status"
+msgstr "Без статуса"
+
+#: site-updates
+msgid "News and “You said, we did”"
+msgstr "Новости и «Вы сказали — мы сделали»"
+
+#: site-updates
+msgid "Update"
+msgstr "Запись ленты"
+
+#: site-updates
+msgid "You said"
+msgstr "Вы сказали"
+
+#: site-updates
+msgid "We did"
+msgstr "Мы сделали"
+
+#: site-updates
+msgid "More on %(host)s"
+msgstr "Подробнее на %(host)s"
+
+#: site-updates
+msgid "No updates yet."
+msgstr "Обновлений пока нет."
+
+#: site-updates
+msgid "Add updates in the block on the page; open one there to edit it."
+msgstr "Добавляйте записи в блоке на странице и открывайте их там для правки."
+
+#: site-updates
+msgid "Which updates"
+msgstr "Какие записи"
+
+#: site-updates
+msgid "No updates yet. They show here newest first, and on the site once published."
+msgstr "Записей пока нет. Они появятся здесь, свежие сверху, а на сайте — после публикации."
+
+#: site-updates
+msgid "Add news"
+msgstr "Добавить новость"
+
+#: site-updates
+msgid "Add “You said, we did”"
+msgstr "Добавить «Вы сказали — мы сделали»"
+
+#: site-updates
+msgid "Drafts stay in the builder. Published updates show on the site, newest first."
+msgstr "Черновики видны только в конструкторе. Опубликованные записи показываются на сайте, свежие сверху."
+
+#: site-updates
+msgid "What residents asked for, in their words"
+msgstr "Чего просили жители — их словами"
+
+#: site-updates
+msgid "About a survey"
+msgstr "Об опросе"
+
+#: site-updates
+msgid "None"
+msgstr "Не выбран"
+
+#: site-updates
+msgid "Open on the site"
+msgstr "Открыть на сайте"
+
+#: site-updates
+msgid "Delete this update?"
+msgstr "Удалить эту запись?"
+
+#: site-updates
+msgid "Delete update"
+msgstr "Удалить запись"
+
+#: site-updates
+msgid "It disappears from the site and from every updates block. This cannot be undone."
+msgstr "Запись исчезнет с сайта и из всех блоков ленты. Это нельзя отменить."

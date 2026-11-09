@@ -1,0 +1,8 @@
+{% load i18n %}{% comment %}Updates block (change site-updates, #629): the site's feed, newest first — the latest N
+of one kind or both (block.data.count / kinds). `card` = sites.updates_card(): {'updates', 'more'}.{% endcomment %}
+{% if card %}
+<div class="lp-updates">
+  {% for u in card.updates %}{% include "sites/updates/_card.html" with u=u link=True %}{% endfor %}
+</div>
+{% if card.more and feed_url %}<p class="lp-updates-more"><a href="{{ feed_url }}">{% trans "All updates" %}</a></p>{% endif %}
+{% endif %}

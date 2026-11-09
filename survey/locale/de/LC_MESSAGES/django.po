@@ -12575,10 +12575,6 @@ msgid "News"
 msgstr "Aktuelles"
 
 #: site-pages
-msgid "<p>The latest from the project: what changed, and what comes next.</p>"
-msgstr "<p>Das Neueste aus dem Projekt: was sich geändert hat und was als Nächstes kommt.</p>"
-
-#: site-pages
 msgid "Site pages"
 msgstr "Seiten der Website"
 
@@ -12644,3 +12640,146 @@ msgid_plural "Its %(n)s blocks go with it, with their files and event registrati
 msgstr[0] "Sein %(n)s Block wird mitgelöscht, mit Dateien und Anmeldungen. Das lässt sich nicht rückgängig machen."
 msgstr[1] "Seine %(n)s Blöcke werden mitgelöscht, mit Dateien und Anmeldungen. Das lässt sich nicht rückgängig machen."
 
+#: site-updates
+msgid "Updates"
+msgstr "Aktuelle Meldungen"
+
+#: site-updates
+msgid "You said, we did"
+msgstr "Sie sagten, wir taten"
+
+#: site-updates
+msgid "Included"
+msgstr "Übernommen"
+
+#: site-updates
+msgid "Partly included"
+msgstr "Teilweise übernommen"
+
+#: site-updates
+msgid "Not included"
+msgstr "Nicht übernommen"
+
+#: site-updates
+msgid "News and “You said, we did”, newest first"
+msgstr "Neuigkeiten und „Sie sagten, wir taten“, das Neueste zuerst"
+
+#: site-updates
+msgid "Pick news or “You said, we did”."
+msgstr "Wählen Sie Neuigkeit oder „Sie sagten, wir taten“."
+
+#: site-updates
+msgid "New update"
+msgstr "Neue Meldung"
+
+#: site-updates
+msgid "Give the update a title."
+msgstr "Geben Sie der Meldung einen Titel."
+
+#: site-updates
+msgid "Enter a date."
+msgstr "Geben Sie ein Datum ein."
+
+#: site-updates
+msgid "Pick included, partly or not included."
+msgstr "Wählen Sie übernommen, teilweise oder nicht übernommen."
+
+#: site-updates
+msgid "Enter a full address starting with https://"
+msgstr "Geben Sie eine vollständige Adresse mit https:// ein"
+
+#: site-updates
+msgid "Pick one of the surveys on this site."
+msgstr "Wählen Sie eine Umfrage dieser Website."
+
+#: site-updates
+msgid "Pick an update of this site."
+msgstr "Wählen Sie eine Meldung dieser Website."
+
+#: site-updates
+msgid "No status"
+msgstr "Ohne Status"
+
+#: site-updates
+msgid "News and “You said, we did”"
+msgstr "Neuigkeiten und „Sie sagten, wir taten“"
+
+#: site-updates
+msgid "Update"
+msgstr "Meldung"
+
+#: site-updates
+msgid "You said"
+msgstr "Sie sagten"
+
+#: site-updates
+msgid "We did"
+msgstr "Wir taten"
+
+#: site-updates
+msgid "More on %(host)s"
+msgstr "Mehr auf %(host)s"
+
+#: site-updates
+msgid "All updates"
+msgstr "Alle Neuigkeiten"
+
+#: site-updates
+msgid "No updates yet."
+msgstr "Noch keine Neuigkeiten."
+
+#: site-updates
+msgid "Add updates in the block on the page; open one there to edit it."
+msgstr "Fügen Sie Meldungen im Block auf der Seite hinzu; zum Bearbeiten dort öffnen."
+
+#: site-updates
+msgid "Show"
+msgstr "Anzeigen"
+
+#: site-updates
+msgid "Which updates"
+msgstr "Welche Meldungen"
+
+#: site-updates
+msgid "No updates yet. They show here newest first, and on the site once published."
+msgstr "Noch keine Meldungen. Sie erscheinen hier, die neueste zuerst, und auf der Website, sobald sie veröffentlicht sind."
+
+#: site-updates
+msgid "Add news"
+msgstr "Neuigkeit hinzufügen"
+
+#: site-updates
+msgid "Add “You said, we did”"
+msgstr "„Sie sagten, wir taten“ hinzufügen"
+
+#: site-updates
+msgid "Drafts stay in the builder. Published updates show on the site, newest first."
+msgstr "Entwürfe bleiben im Editor. Veröffentlichte Meldungen erscheinen auf der Website, die neueste zuerst."
+
+#: site-updates
+msgid "What residents asked for, in their words"
+msgstr "Was die Bürgerinnen und Bürger wollten, in ihren Worten"
+
+#: site-updates
+msgid "About a survey"
+msgstr "Zu einer Umfrage"
+
+#: site-updates
+msgid "None"
+msgstr "Keine"
+
+#: site-updates
+msgid "Open on the site"
+msgstr "Auf der Website öffnen"
+
+#: site-updates
+msgid "Delete this update?"
+msgstr "Diese Meldung löschen?"
+
+#: site-updates
+msgid "Delete update"
+msgstr "Meldung löschen"
+
+#: site-updates
+msgid "It disappears from the site and from every updates block. This cannot be undone."
+msgstr "Sie verschwindet von der Website und aus jedem Neuigkeiten-Block. Das lässt sich nicht rückgängig machen."

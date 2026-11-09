@@ -510,6 +510,12 @@ others at `/p/<slug>/<page slug>/` (`sites.RESERVED_PAGE_SLUGS` keeps `report`, 
 build page links with `sites.page_url()` (keeps `lang` and `review`). `SiteBlock.save()` puts a block
 created with `site=` only on home. Page titles translate as `page:<pk>:title`. The builder selects
 `sitepage:<id>` (the id `page` is the SITE settings pane) and shows one page per `?page=`.
+**Updates (change `site-updates`, #629)**: `SiteUpdate` is a SITE feed (news, or "You said, we did" =
+`said` + `body` + `status`), drafts until `is_published`; any number of `updates` blocks show it
+(`sites.updates_card`, `count` 0 = all), each published update lives at `/p/<slug>/updates/<id>/` and the
+feed at `/p/<slug>/updates/` (both through `site_public(view=…)`). Never copied by duplicate/templates.
+Panes are `update:<id>`; *Add* buttons in the block post through `js/site_pages.js` (forms inside a block
+are inert on the canvas). Translations `update:<pk>:title|body|said`.
 Never name a template context variable `block` in a template extending a base (it is a `BlockNode`);
 the builder uses `b`/`edit_block`; `page` in `sites/public.html` is the current `SitePage`. CSS prefixes `lp-` (public) / `lb-` (builder) are historical
 internal names; the marketing `css/landing.css` and the SEO landings are a different thing. Plan of
