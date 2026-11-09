@@ -23,6 +23,9 @@ only the keys sites.clean_block stores.{% endcomment %}
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">{% endif %}
 </head>
 <body class="lp" data-width="{{ site.width }}">
+  {% if review %}
+  <div class="lp-banner" role="status">{% trans "Shared for review — this site is not public yet." %}</div>
+  {% endif %}
   {% if preview %}
   <div class="lp-banner" role="status">
     {% if held %}{% trans "Waiting for a safety review — only your workspace sees this site." %}{% else %}{% trans "Draft — only your workspace sees this." %}{% endif %}
@@ -65,7 +68,7 @@ only the keys sites.clean_block stores.{% endcomment %}
       <p><a class="lp-made" href="{% url 'django_registration_register' %}?utm_source=viral_loop&amp;utm_medium=site" target="_blank" rel="noopener">{% trans "Made with" %} <b>Mapsurvey</b></a></p>
       {% endif %}
       <p class="lp-safety">{% trans "Never enter passwords or card numbers on this page." %}
-        {% if not preview %}<a href="{% url 'site_report' site.slug %}" rel="nofollow">{% trans "Report this page" %}</a>{% endif %}</p>
+        {% if not preview and not review %}<a href="{% url 'site_report' site.slug %}" rel="nofollow">{% trans "Report this page" %}</a>{% endif %}</p>
     </div>
   </footer>
   {% if map_layers or results_basemaps %}<script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js" crossorigin="anonymous"></script>{% endif %}

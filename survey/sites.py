@@ -608,6 +608,36 @@ def unique_slug(title):
     return slug
 
 
+REVIEW_LINK_DAYS = 14
+
+
+def _review_signer(site):
+    from django.core.signing import TimestampSigner
+    return TimestampSigner(salt=f'site-review:{site.pk}:{site.review_salt}')
+
+
+def review_token(site):
+    """A link token that opens the draft read-only for someone without an account (change
+    site-review-link): signed with the site's review salt, valid REVIEW_LINK_DAYS."""
+    return _review_signer(site).sign(str(site.pk))
+
+
+def review_token_ok(site, token):
+    from django.core.signing import BadSignature
+    if not token:
+        return False
+    try:
+        return _review_signer(site).unsign(token, max_age=REVIEW_LINK_DAYS * 86400) == str(site.pk)
+    except BadSignature:  # also SignatureExpired
+        return False
+
+
+def rotate_review_salt(site):
+    import secrets
+    site.review_salt = secrets.token_hex(8)
+    site.save(update_fields=['review_salt', 'updated_at'])
+
+
 def duplicate_site(site, user, title):
     """A new unpublished site that starts as a copy of `site` (change site-duplicate): its settings,
     survey links, blocks and their files — the stored objects are shared, as when a block is

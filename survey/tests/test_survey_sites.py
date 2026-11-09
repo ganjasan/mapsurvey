@@ -1639,3 +1639,74 @@ class SiteDuplicateTest(SiteTestBase):
         dup = reverse('editor_site_duplicate', args=[self.site.uuid])
         self.assertContains(self.client.get(reverse('editor_sites')), dup)
         self.assertContains(self.client.get(self.url('editor_site')), dup)
+
+
+class SiteReviewLinkTest(SiteTestBase):
+    """Spec `survey-sites`: a draft can be shared for review (change site-review-link, #608)."""
+
+    def setUp(self):
+        super().setUp()
+        self.add_event()
+
+    def add_event(self):
+        self.login(self.editor)
+        self.add_block('event', date='2030-06-12', start='10:00', tz='UTC', open='1', place='Boathouse')
+        self.client.logout()
+
+    def open(self, token):
+        return self.client.get('/p/riverside-park-plan/', {'review': token})
+
+    def test_client_opens_the_draft(self):
+        """GIVEN an unpublished site and its review token
+        WHEN someone without an account opens it
+        THEN the draft renders with the review banner, no registration form, noindex and no-referrer"""
+        r = self.open(sites.review_token(self.site))
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, 'Shared for review')
+        self.assertContains(r, 'Registration opens when the site is published.')
+        self.assertNotContains(r, 'lp-event-form')
+        self.assertContains(r, 'noindex')
+        self.assertEqual(r['Referrer-Policy'], 'no-referrer')
+        self.assertIn('no-store', r['Cache-Control'])
+
+    def test_without_or_with_a_bad_token(self):
+        """GIVEN an unpublished site
+        WHEN it is opened without a token, with a tampered one, or after 15 days
+        THEN the answer is 404"""
+        from unittest import mock
+        token = sites.review_token(self.site)
+        self.assertEqual(self.client.get('/p/riverside-park-plan/').status_code, 404)
+        self.assertEqual(self.open(token[:-2] + 'xx').status_code, 404)
+        later = timezone.now() + timedelta(days=15)
+        with mock.patch('time.time', return_value=later.timestamp()):
+            self.assertEqual(self.open(token).status_code, 404)
+
+    def test_new_link_revokes_the_old_one(self):
+        """GIVEN a review link handed out
+        WHEN an editor presses New link
+        THEN the old token gives 404 and the new one opens the draft; a viewer cannot rotate"""
+        old = sites.review_token(self.site)
+        self.login(self.viewer)
+        self.assertEqual(self.client.post(self.url('editor_site_review_link')).status_code, 403)
+        self.login(self.editor)
+        r = self.client.post(self.url('editor_site_review_link'))
+        new_url = r.json()['url']
+        self.client.logout()
+        self.assertEqual(self.open(old).status_code, 404)
+        self.assertEqual(self.client.get(new_url).status_code, 200)
+
+    def test_held_site_stays_closed(self):
+        """GIVEN a site held for a safety review
+        WHEN it is opened with a valid review token
+        THEN the answer is 404"""
+        ContentReview.objects.create(site=self.site, status='pending')
+        self.assertEqual(self.open(sites.review_token(self.site)).status_code, 404)
+
+    def test_popover_offers_the_link_only_for_a_draft(self):
+        """GIVEN the builder
+        WHEN the site is a draft, then published
+        THEN the popover shows Share for review only for the draft"""
+        self.login(self.editor)
+        self.assertContains(self.client.get(self.url('editor_site')), 'id="lb-review-url"')
+        self.client.post(self.url('editor_site_publish'), {'action': 'publish'})
+        self.assertNotContains(self.client.get(self.url('editor_site')), 'id="lb-review-url"')

@@ -3156,6 +3156,9 @@ class Site(models.Model):
     language = models.CharField(max_length=10, default='en')
     # The column every block sits in (change site-width): narrow 760 px, standard 960, wide 1200.
     width = models.CharField(max_length=10, choices=SITE_WIDTH_CHOICES, default='narrow', db_default='narrow')
+    # Part of the signing salt of the review link (change site-review-link); "New link" replaces it,
+    # so every link handed out before stops working.
+    review_salt = models.CharField(max_length=32, blank=True, default='', db_default='')
     visibility = models.CharField(max_length=10, choices=SITE_VISIBILITY_CHOICES, default='public')
     is_published = models.BooleanField(default=False)
     published_at = models.DateTimeField(null=True, blank=True)

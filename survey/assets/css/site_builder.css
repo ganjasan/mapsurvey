@@ -322,3 +322,8 @@ fieldset.lb-card { border: 1px solid var(--line); padding: 1rem 1.1rem; }
 /* Contacts rows on the canvas (change site-contacts-block) */
 .lb-person { padding-right: 34px; }
 .lb-person .lb-row-x { top: 8px; right: 6px; }
+/* Review link in the publish popover (change site-review-link) */
+.lb-review { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 12px; }
+.lb-review b { display: block; font-size: 13px; }
+.lb-review small { display: block; color: var(--muted); font-size: 12px; margin: 2px 0 6px; }
+.lb-review .lb-link { margin-top: 6px; font-size: 12.5px; }
