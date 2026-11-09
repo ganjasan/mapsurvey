@@ -1,0 +1,40 @@
+{% load i18n tz %}{% comment %}An event with registration (change landing-events, #579). `card` comes from
+sites.page_blocks: starts_at / ends_at (aware, the event's zone), accepting, seats_left.{% endcomment %}
+<div class="lp-event">
+  <div class="lp-event-when">
+    {% timezone card.tz %}
+    <span class="lp-event-date">{{ card.starts_at|date:"l, j F Y" }}</span>
+    <span class="lp-event-time">{{ card.starts_at|time:"H:i" }}{% if block.data.end %}–{{ card.ends_at|time:"H:i" }}{% endif %} <small>({{ card.tz }})</small></span>
+    {% endtimezone %}
+  </div>
+  {% if block.data.place %}<p class="lp-event-place">{% if block.data.place_url %}<a href="{{ block.data.place_url }}" rel="noopener" target="_blank">{{ block.data.place }}</a>{% else %}{{ block.data.place }}{% endif %}</p>{% endif %}
+  {% if block.data.description or editing %}<p class="lp-event-desc" data-field="description">{{ block.data.description|linebreaksbr }}</p>{% endif %}
+
+  {% if event_notice and event_notice.block == block.pk %}
+  <div class="lp-notice{% if event_notice.status != 'registered' %} lp-notice--warn{% endif %}" role="status">
+    {% if event_notice.status == 'registered' %}{% trans "Thank you! Check your inbox: we sent a confirmation with a calendar file and a link to cancel." %}
+    {% elif event_notice.status == 'full' %}{% trans "Sorry, the event is full." %}
+    {% elif event_notice.status == 'closed' %}{% trans "Registration for this event is closed." %}
+    {% elif event_notice.status == 'consent' %}{% trans "Please tick the box to agree before registering." %}
+    {% elif event_notice.status == 'email' %}{% trans "Please enter a valid email address." %}
+    {% else %}{% trans "Please enter your name." %}{% endif %}
+  </div>
+  {% endif %}
+
+  {% if review %}
+  <p class="lp-muted">{% trans "Registration opens when the site is published." %}</p>
+  {% elif card.accepting and card.seats_left != 0 %}
+  <form method="post" action="{% url 'site_event_register' site.slug block.pk %}" class="lp-event-form">
+    {% csrf_token %}
+    <div class="lp-hp" aria-hidden="true"><label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+    <label>{% trans "Your name" %}<input type="text" name="name" maxlength="120" required autocomplete="name"></label>
+    <label>{% trans "Email" %}<input type="email" name="email" maxlength="254" required autocomplete="email"></label>
+    <label class="lp-consent"><input type="checkbox" name="consent" value="1" required>
+      {% blocktrans with org=org.name days=card.retention_days %}{{ org }} uses your name and email only for this event. They are deleted {{ days }} days after it.{% endblocktrans %}</label>
+    <button type="submit" class="lp-btn">{% trans "Register" %}</button>
+    {% if card.seats_left is not None %}<span class="lp-seats">{% blocktrans count n=card.seats_left %}{{ n }} seat left{% plural %}{{ n }} seats left{% endblocktrans %}</span>{% endif %}
+  </form>
+  {% elif card.accepting %}
+  <p class="lp-event-full">{% trans "The event is full." %}</p>
+  {% endif %}
+</div>

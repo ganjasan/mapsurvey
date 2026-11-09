@@ -1,0 +1,8 @@
+<div class="lp-faq">
+  {% for item in block.data.items %}{% if item.q %}
+  <details>
+    <summary>{{ item.q }}</summary>
+    {% if item.a %}<div class="lp-rich">{{ item.a|safe }}</div>{% endif %}
+  </details>
+  {% endif %}{% endfor %}
+</div>

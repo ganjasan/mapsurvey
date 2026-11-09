@@ -19,6 +19,7 @@ from . import translation_views
 from . import org_views
 from . import public_results_editor
 from . import abuse_review_views
+from . import site_views
 from . import demo_request_views
 
 urlpatterns = [
@@ -292,6 +293,41 @@ urlpatterns = [
     path('alternatives/social-pinpoint/', views.social_pinpoint_alternative, name='social_pinpoint_alternative'),
     path('alternatives/metroquest/', views.metroquest_alternative, name='metroquest_alternative'),
     path('r/<slug:slug>/', views.public_results, name='public_results'),
+    # Sites (change landing-core, #576): the public page and its report form.
+    path('p/<slug:slug>/', site_views.site_public, name='site_public'),
+    path('p/<slug:slug>/report/', abuse_review_views.site_report, name='site_report'),
+    path('p/<slug:slug>/events/<int:block_id>/register/', site_views.site_event_register,
+         name='site_event_register'),
+    path('p/events/cancel/<uuid:token>/', site_views.site_event_cancel, name='site_event_cancel'),
+    path('editor/sites/<uuid:uuid>/events/<int:block_id>/', site_views.editor_site_attendees,
+         name='editor_site_attendees'),
+    path('editor/sites/<uuid:uuid>/events/<int:block_id>/remove/', site_views.editor_site_attendees_remove,
+         name='editor_site_attendees_remove'),
+    # The builder (`editor_site*` names light the sidebar row).
+    path('editor/sites/', site_views.editor_sites, name='editor_sites'),
+    path('editor/sites/new/', site_views.editor_site_create, name='editor_site_create'),
+    path('editor/sites/<uuid:uuid>/', site_views.editor_site, name='editor_site'),
+    path('editor/sites/<uuid:uuid>/duplicate/', site_views.editor_site_duplicate, name='editor_site_duplicate'),
+    path('editor/sites/<uuid:uuid>/review-link/', site_views.editor_site_review_link, name='editor_site_review_link'),
+    path('editor/sites/<uuid:uuid>/settings/', site_views.editor_site_settings,
+         name='editor_site_settings'),
+    path('editor/sites/<uuid:uuid>/surveys/link/', site_views.editor_site_survey_link,
+         name='editor_site_survey_link'),
+    path('editor/sites/<uuid:uuid>/surveys/<int:link_id>/unlink/', site_views.editor_site_survey_unlink,
+         name='editor_site_survey_unlink'),
+    path('editor/sites/<uuid:uuid>/blocks/add/', site_views.editor_site_block_add,
+         name='editor_site_block_add'),
+    path('editor/sites/<uuid:uuid>/blocks/order/', site_views.editor_site_blocks_reorder,
+         name='editor_site_blocks_reorder'),
+    path('editor/sites/<uuid:uuid>/blocks/<int:block_id>/', site_views.editor_site_block_edit,
+         name='editor_site_block_edit'),
+    path('editor/sites/<uuid:uuid>/blocks/<int:block_id>/delete/', site_views.editor_site_block_delete,
+         name='editor_site_block_delete'),
+    path('editor/sites/<uuid:uuid>/blocks/<int:block_id>/duplicate/', site_views.editor_site_block_duplicate,
+         name='editor_site_block_duplicate'),
+    path('editor/sites/<uuid:uuid>/publish/', site_views.editor_site_publish, name='editor_site_publish'),
+    path('editor/sites/<uuid:uuid>/delete/', site_views.editor_site_delete, name='editor_site_delete'),
+    path('editor/sites/<uuid:uuid>/qr/', site_views.editor_site_qr, name='editor_site_qr'),
     # Embedding (change embed-surveys): oEmbed provider and the unhashed helper script.
     path('oembed/', views.oembed, name='oembed'),
     path('embed.js', views.embed_js, name='embed_js'),

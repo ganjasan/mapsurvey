@@ -1,0 +1,4 @@
+{% if block.image %}<figure class="lp-figure">
+  <img src="{{ block.image.url }}" alt="{{ block.data.alt }}" loading="lazy">
+  {% if block.data.caption or editing %}<figcaption data-field="caption">{{ block.data.caption }}</figcaption>{% endif %}
+</figure>{% endif %}

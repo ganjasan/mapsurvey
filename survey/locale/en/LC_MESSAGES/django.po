@@ -6812,3 +6812,11 @@ msgstr ""
 #: survey/templates/partials/_app_sidebar.html
 msgid "Help centre"
 msgstr ""
+
+#. rename-landings-to-sites
+msgid "Site settings"
+msgstr ""
+
+#. rename-landings-to-sites
+msgid "Site address"
+msgstr ""

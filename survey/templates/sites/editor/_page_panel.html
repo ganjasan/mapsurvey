@@ -1,0 +1,105 @@
+{% load i18n %}{% comment %}The page panel (change landing-builder-redesign): shown when no block is selected.
+Laid out like the survey editor's settings panel (survey_settings_panel.html): a context bar, then
+cards — cover, address and language, surveys on this page. Autosaved like a block.{% endcomment %}
+<div class="lb-pane" data-pane="page" id="lb-page-pane"{% if selected and selected != 'page' %} hidden{% endif %}>
+  <div class="lb-pane-head">
+    <span class="lb-ico"><i class="fas fa-cog" aria-hidden="true"></i></span>
+    <div class="lb-pane-tt"><div class="lb-pane-t">{% trans "Site settings" %}</div><div class="lb-pane-s">{% trans "Applies to the whole site" %}</div></div>
+  </div>
+  <div class="lb-pane-body">
+    {% if settings_errors %}<div class="lb-errors" role="alert">{% for k, v in settings_errors.items %}{{ v }} {% endfor %}</div>{% endif %}
+    <form method="post" action="{% url 'editor_site_settings' site.uuid %}" enctype="multipart/form-data" class="lb-form lb-page-form">
+      {% csrf_token %}
+      <div class="lb-errors" role="alert" hidden></div>
+      <fieldset {% if not may_edit %}disabled{% endif %}>
+      <input type="hidden" name="title" value="{{ site.title }}">
+      <textarea name="summary" hidden>{{ site.summary }}</textarea>
+
+      <div class="lb-card">
+        <h6>{% trans "Cover picture" %}</h6>
+        <input type="file" name="cover" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+        <input type="hidden" name="remove_cover" value="">
+        <div class="lb-field">
+          <label for="lp-cover-alt">{% trans "Picture description" %}</label>
+          <input id="lp-cover-alt" name="cover_alt" class="form-control form-control-sm" maxlength="200" value="{{ site.cover_alt }}" placeholder="{% trans 'Describe the picture for screen readers' %}">
+          <div class="lb-hint">{% trans "Shown behind the title and when the link is shared. Add, change or remove it on the page." %}</div>
+        </div>
+      </div>
+
+      <div class="lb-card">
+        <h6>{% trans "Page width" %}</h6>
+        <div class="lb-seg lb-seg--panel" role="radiogroup" aria-label="{% trans 'Page width' %}">
+          {% for value, label in site_widths %}<label><input type="radio" name="width" value="{{ value }}"{% if site.width == value %} checked{% endif %}> {{ label }}</label>{% endfor %}
+        </div>
+        <div class="lb-hint">{% trans "How wide the column of text and blocks is on a computer. Pictures, maps and videos can also go full width in their own settings." %}</div>
+      </div>
+
+      <div class="lb-card">
+        <h6>{% trans "Address and language" %}</h6>
+        <div class="lb-field">
+          <label for="lp-slug">{% trans "Address" %}</label>
+          <div class="input-group input-group-sm">
+            <div class="input-group-prepend"><span class="input-group-text">/p/</span></div>
+            <input id="lp-slug" name="slug" class="form-control" maxlength="64" value="{{ site.slug }}" pattern="[a-z0-9]+(-[a-z0-9]+)*" required data-autosave="change">
+          </div>
+          <div class="lb-hint">{% if site.is_published %}{% trans "Changing the address of a published site breaks links and QR codes already printed." %}{% else %}{% trans "Lowercase letters, digits and dashes. Settle it before you print it." %}{% endif %}</div>
+        </div>
+        <div class="lb-field">
+          <label for="lp-language">{% trans "Site language" %}</label>
+          <select id="lp-language" name="language" class="form-control form-control-sm">
+            {% for code, name in languages %}<option value="{{ code }}"{% if code == site.language %} selected{% endif %}>{{ name }}</option>{% endfor %}
+          </select>
+          <div class="lb-hint">{% trans "The language of the site's buttons and labels." %}</div>
+        </div>
+        <div class="lb-field mb-0">
+          <label for="lp-visibility">{% trans "Visibility" %}</label>
+          <select id="lp-visibility" name="visibility" class="form-control form-control-sm">
+            <option value="public"{% if site.visibility == 'public' %} selected{% endif %}>{% trans "Public — search engines may list it" %}</option>
+            <option value="unlisted"{% if site.visibility == 'unlisted' %} selected{% endif %}>{% trans "Unlisted — only people with the link" %}</option>
+          </select>
+        </div>
+      </div>
+      </fieldset>
+    </form>
+
+    <div class="lb-card">
+      <h6>{% trans "Surveys on this site" %}</h6>
+      {% if links %}
+      <ul class="lb-list">
+        {% for link, card in links %}
+        <li>
+          <i class="fas fa-map-marked-alt" aria-hidden="true"></i>
+          <span class="lb-list-t">{{ link.survey.name }}<small>{% include "sites/_card_state.html" %}</small></span>
+          {% if can_act %}
+          <form method="post" action="{% url 'editor_site_survey_unlink' site.uuid link.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="lb-icon-btn" title="{% trans 'Remove from this site' %}" aria-label="{% trans 'Remove from this site' %}"><i class="fas fa-times" aria-hidden="true"></i></button>
+          </form>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="lb-hint mt-0">{% trans "No surveys yet." %}</p>
+      {% endif %}
+      {% if may_edit and linkable %}
+      <form method="post" action="{% url 'editor_site_survey_link' site.uuid %}" class="lb-inline-form">
+        {% csrf_token %}
+        <select name="survey" class="form-control form-control-sm" aria-label="{% trans 'Survey' %}">
+          {% for s in linkable %}<option value="{{ s.uuid }}">{{ s.name }}</option>{% endfor %}
+        </select>
+        <button type="submit" class="btn btn-sm btn-outline-primary">{% trans "Add" %}</button>
+      </form>
+      {% endif %}
+      <div class="lb-hint">{% trans "A survey can be on any number of sites. Show one with a Survey card block." %}</div>
+    </div>
+  </div>
+  {% if can_act %}
+  <div class="lb-pane-foot">
+    <form method="post" action="{% url 'editor_site_duplicate' site.uuid %}">{% csrf_token %}<button type="submit" class="lb-link"><i class="far fa-clone" aria-hidden="true"></i> {% trans "Duplicate site" %}</button></form>
+    <form method="post" action="{% url 'editor_site_delete' site.uuid %}" data-confirm="{% blocktrans with title=site.title %}Delete “{{ title }}”?{% endblocktrans %}" data-confirm-body="{% trans 'Its address stops working, and links and QR codes already printed lead nowhere.' %}" data-confirm-note="{% trans 'Blocks, files and event registrations are deleted with it. Your surveys stay.' %}" data-confirm-action="{% trans 'Delete site' %}">
+      {% csrf_token %}<button type="submit" class="lb-link lb-danger"><i class="far fa-trash-alt" aria-hidden="true"></i> {% trans "Delete site" %}</button>
+    </form>
+  </div>
+  {% endif %}
+</div>

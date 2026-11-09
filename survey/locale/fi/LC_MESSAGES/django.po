@@ -6353,7 +6353,7 @@ msgstr ""
 
 #: survey/templates/metroquest_alternative.html:95
 msgid "Status"
-msgstr ""
+msgstr "Tila"
 
 #: survey/templates/metroquest_alternative.html:95
 msgid "Active, open source"
@@ -10694,3 +10694,1410 @@ msgstr "Etsi pohjakartta"
 #: map-styles-basemap-picker
 msgid "The base maps respondents can switch between. They open on the default below."
 msgstr "Pohjakartat, joiden välillä vastaajat voivat vaihtaa. Ensin avautuu alla valittu oletus."
+
+#: landing-core (#576)
+msgid "Heading (optional)"
+msgstr "Otsikko (valinnainen)"
+
+#: landing-core (#576)
+msgid "Shown above the block and in the page menu"
+msgstr "Näytetään lohkon yläpuolella ja sivun valikossa"
+
+#: landing-core (#576)
+msgid "Describe the picture for screen readers"
+msgstr "Kuvaile kuva ruudunlukijoita varten"
+
+#: landing-core (#576)
+msgid "Label, e.g. Read the draft plan"
+msgstr "Teksti, esim. Lue suunnitelmaluonnos"
+
+#: landing-core (#576)
+msgid "Filled"
+msgstr "Täytetty"
+
+#: landing-core (#576)
+msgid "Outline"
+msgstr "Ääriviiva"
+
+#: landing-core (#576)
+msgid "YouTube or Vimeo link"
+msgstr "YouTube- tai Vimeo-linkki"
+
+#: landing-core (#576)
+msgid "Add a question"
+msgstr "Lisää kysymys"
+
+#: landing-core (#576)
+msgid "Phases in order. Tick the phase the project is in now; earlier phases show as done."
+msgstr "Vaiheet järjestyksessä. Valitse vaihe, jossa hanke on nyt; aiemmat vaiheet näytetään valmiina."
+
+#: landing-core (#576)
+msgid "Add a phase"
+msgstr "Lisää vaihe"
+
+#: landing-core (#576)
+msgid "This workspace has no survey to show yet."
+msgstr "Tässä työtilassa ei ole vielä näytettävää kyselyä."
+
+#: landing-core (#576)
+msgid "What residents are asked, how long it takes (optional)"
+msgstr "Mitä asukkailta kysytään ja kauanko vastaaminen kestää (valinnainen)"
+
+#: landing-core (#576)
+msgid "Button label (default: Take part)"
+msgstr "Painikkeen teksti (oletus: Osallistu)"
+
+#: landing-core (#576)
+msgid "The card follows the survey: open, opening soon, or closed with a link to its public results."
+msgstr "Kortti seuraa kyselyä: avoinna, avautumassa pian tai suljettu ja linkki julkisiin tuloksiin."
+
+#: landing-core (#576)
+msgid "Add to page"
+msgstr "Lisää sivulle"
+
+#: landing-core (#576)
+msgid "open"
+msgstr "avoinna"
+
+#: landing-core (#576)
+#, python-format
+msgid "opens %(date)s"
+msgstr "avautuu %(date)s"
+
+#: landing-core (#576)
+msgid "coming soon"
+msgstr "avautuu pian"
+
+#: landing-core (#576)
+msgid "closed"
+msgstr "suljettu"
+
+#: landing-core (#576)
+msgid "results published"
+msgstr "tulokset julkaistu"
+
+#: landing-core (#576)
+msgid "not shown"
+msgstr "ei näytetä"
+
+#: landing-core (#576)
+msgid "Under review"
+msgstr "Tarkistettavana"
+
+#: landing-core (#576)
+msgid "Published · unlisted"
+msgstr "Julkaistu · listaamaton"
+
+#: landing-core (#576)
+msgid "Sites"
+msgstr "Sivustot"
+
+#: landing-core (#576)
+msgid "Open site"
+msgstr "Avaa sivusto"
+
+#: landing-core (#576)
+msgid "Sites are part of Pro. This workspace's plan has ended, so the site can't be edited; a published site stays online."
+msgstr "Sivustot kuuluvat Pro-tilaukseen. Tämän työtilan tilaus on päättynyt, joten sivustoa ei voi muokata; julkaistu sivusto pysyy verkossa."
+
+#: landing-core (#576)
+msgid "This site is waiting for a routine safety review and is not shown to visitors yet. You don't need to do anything."
+msgstr "Tämä sivusto odottaa tavanomaista turvallisuustarkistusta, eikä sitä vielä näytetä kävijöille. Sinun ei tarvitse tehdä mitään."
+
+#: landing-core (#576)
+msgid "Summary"
+msgstr "Tiivistelmä"
+
+#: landing-core (#576)
+msgid "One or two sentences under the title, also shown when the link is shared."
+msgstr "Yksi tai kaksi virkettä otsikon alla; näytetään myös, kun linkki jaetaan."
+
+#: landing-core (#576)
+msgid "Cover picture"
+msgstr "Pääkuva"
+
+#: landing-core (#576)
+msgid "Remove the picture"
+msgstr "Poista kuva"
+
+#: landing-core (#576)
+msgid "Picture description"
+msgstr "Kuvan kuvaus"
+
+#: landing-core (#576)
+msgid "Address"
+msgstr "Osoite"
+
+#: landing-core (#576)
+msgid "Changing the address of a published site breaks links and QR codes already printed."
+msgstr "Julkaistun sivuston osoitteen muuttaminen rikkoo linkit ja jo tulostetut QR-koodit."
+
+#: landing-core (#576)
+msgid "Site language"
+msgstr "Sivuston kieli"
+
+#: landing-core (#576)
+msgid "Public — search engines may list it"
+msgstr "Julkinen — hakukoneet voivat listata sen"
+
+#: landing-core (#576)
+msgid "Unlisted — only people with the link"
+msgstr "Listaamaton — vain linkin saaneille"
+
+#: landing-core (#576)
+msgid "Surveys on this site"
+msgstr "Kyselyt tällä sivustolla"
+
+#: landing-core (#576)
+msgid "A survey can be on any number of sites. Show one with a Survey card block."
+msgstr "Kysely voi olla usealla sivustolla. Näytä se Kyselykortti-lohkolla."
+
+#: landing-core (#576)
+msgid "Remove from this site"
+msgstr "Poista tältä sivustolta"
+
+#: landing-core (#576)
+msgid "No surveys yet."
+msgstr "Ei vielä kyselyitä."
+
+#: landing-core (#576)
+msgid "Download QR code (PNG)"
+msgstr "Lataa QR-koodi (PNG)"
+
+#: landing-core (#576)
+msgid "Delete this landing page? Its address stops working."
+msgstr "Poistetaanko tämä projektisivu? Sen osoite lakkaa toimimasta."
+
+#: landing-core (#576)
+msgid "Delete site"
+msgstr "Poista sivusto"
+
+#: landing-core (#576)
+msgid "Delete this block?"
+msgstr "Poistetaanko tämä lohko?"
+
+#: landing-core (#576)
+msgid "Delete block"
+msgstr "Poista lohko"
+
+#: landing-core (#576)
+msgid "No blocks yet. Add the first one: a few words about the project, a timeline, or a card for the survey."
+msgstr "Ei vielä lohkoja. Lisää ensimmäinen: muutama sana hankkeesta, aikajana tai kyselyn kortti."
+
+#: landing-core (#576)
+msgid "New block"
+msgstr "Uusi lohko"
+
+#: landing-core (#576)
+msgid "Phase, e.g. Online survey"
+msgstr "Vaihe, esim. Verkkokysely"
+
+#: landing-core (#576)
+msgid "When, e.g. March 2027"
+msgstr "Milloin, esim. maaliskuu 2027"
+
+#: landing-core (#576)
+msgid "Now"
+msgstr "Nyt"
+
+#: landing-core (#576)
+msgid "What happens in this phase (optional)"
+msgstr "Mitä tässä vaiheessa tapahtuu (valinnainen)"
+
+#: landing-core (#576)
+msgid "Waiting for a safety review — only your workspace sees this site."
+msgstr "Odottaa turvallisuustarkistusta — vain työtilasi näkee tämän sivuston."
+
+#: landing-core (#576)
+msgid "Draft — only your workspace sees this."
+msgstr "Luonnos — vain työtilasi näkee tämän."
+
+#: landing-core (#576)
+msgid "Back to the builder"
+msgstr "Takaisin muokkaimeen"
+
+#: landing-core (#576)
+msgid "On this page"
+msgstr "Tällä sivulla"
+
+#: landing-core (#576)
+msgid "Never enter passwords or card numbers on this page."
+msgstr "Älä koskaan syötä salasanoja tai korttinumeroita tällä sivulla."
+
+#: landing-core (#576)
+msgid "Report this page"
+msgstr "Ilmoita tästä sivusta"
+
+#: landing-core (#576)
+msgid "Page title, e.g. Riverside Park plan"
+msgstr "Sivun otsikko, esim. Rantapuiston suunnitelma"
+
+#: landing-core (#576)
+msgid "New site"
+msgstr "Uusi sivusto"
+
+#: landing-core (#576)
+msgid "Upgrade to Pro to create sites"
+msgstr "Päivitä Pro-tilaukseen luodaksesi sivustoja"
+
+#: landing-core (#576)
+msgid "One public page for an engagement: what the project is about, the timeline, the surveys residents can take part in, and what happens next. Put its address on flyers and QR codes; it stays the same from the first pilot to the final plan."
+msgstr "Yksi julkinen sivu osallistamiselle: mistä hankkeessa on kyse, aikataulu, kyselyt, joihin asukkaat voivat osallistua, ja mitä seuraavaksi tapahtuu. Laita sen osoite esitteisiin ja QR-koodeihin; se pysyy samana ensimmäisestä kokeilusta lopulliseen suunnitelmaan."
+
+#: landing-core (#576)
+msgid "No sites yet."
+msgstr "Ei vielä sivustoja."
+
+#: landing-core (#576)
+msgid "Video"
+msgstr "Video"
+
+#: landing-core (#576)
+#, python-format
+msgid "Opens %(date)s"
+msgstr "Avautuu %(date)s"
+
+#: landing-core (#576)
+msgid "Take part"
+msgstr "Osallistu"
+
+#: landing-core (#576)
+msgid "Timeline"
+msgstr "Aikajana"
+
+#: landing-core (#576)
+msgid "Survey card"
+msgstr "Kyselykortti"
+
+#: landing-core (#576)
+msgid "Button"
+msgstr "Painike"
+
+#: landing-core (#576)
+msgid "Text-based content"
+msgstr "Tekstisisältö"
+
+#: landing-core (#576)
+msgid "Media"
+msgstr "Media"
+
+#: landing-core (#576)
+msgid "Participation and links"
+msgstr "Osallistuminen ja linkit"
+
+#: landing-core (#576)
+msgid "Write some text."
+msgstr "Kirjoita tekstiä."
+
+#: landing-core (#576)
+msgid "Give the button a label."
+msgstr "Anna painikkeelle teksti."
+
+#: landing-core (#576)
+msgid "Enter a full web address that starts with https://"
+msgstr "Anna täydellinen verkko-osoite, joka alkaa https://"
+
+#: landing-core (#576)
+msgid "Add at least one question."
+msgstr "Lisää vähintään yksi kysymys."
+
+#: landing-core (#576)
+msgid "Every answer needs its question."
+msgstr "Jokainen vastaus tarvitsee kysymyksen."
+
+#: landing-core (#576)
+msgid "Add at least one phase."
+msgstr "Lisää vähintään yksi vaihe."
+
+#: landing-core (#576)
+msgid "Every phase needs a title."
+msgstr "Jokainen vaihe tarvitsee otsikon."
+
+#: landing-core (#576)
+msgid "Unknown block type."
+msgstr "Tuntematon lohkotyyppi."
+
+#: landing-core (#576)
+msgid "The picture is larger than 5 MB."
+msgstr "Kuva on suurempi kuin 5 Mt."
+
+#: landing-core (#576)
+msgid "Upload a JPEG, PNG, WebP or GIF picture."
+msgstr "Lataa JPEG-, PNG-, WebP- tai GIF-kuva."
+
+#: landing-core (#576)
+msgid "Use 3–64 lowercase letters, digits and dashes."
+msgstr "Käytä 3–64 pientä kirjainta, numeroa ja yhdysviivaa."
+
+#: landing-core (#576)
+msgid "This address is reserved. Pick another."
+msgstr "Tämä osoite on varattu. Valitse toinen."
+
+#: landing-core (#576)
+msgid "Another site already uses this address."
+msgstr "Toinen sivusto käyttää jo tätä osoitetta."
+
+#: landing-core (#576)
+msgid "The survey is archived or in the trash."
+msgstr "Kysely on arkistoitu tai roskakorissa."
+
+#: landing-core (#576)
+msgid "The survey is waiting for a safety review."
+msgstr "Kysely odottaa turvallisuustarkistusta."
+
+#: landing-core (#576)
+msgid "Untitled site"
+msgstr "Nimetön sivusto"
+
+#: landing-core (#576)
+msgid "Give the site a title."
+msgstr "Anna sivustolle otsikko."
+
+#: landing-core (#576)
+msgid "Site settings saved."
+msgstr "Sivuston asetukset tallennettu."
+
+#: landing-core (#576)
+msgid "Choose a picture."
+msgstr "Valitse kuva."
+
+#: landing-core (#576)
+msgid "Pick one of this workspace’s surveys."
+msgstr "Valitse jokin tämän työtilan kyselyistä."
+
+#: landing-core (#576)
+msgid "The site is unpublished. Its address shows “not available” now."
+msgstr "Sivusto ei ole enää julkaistu. Sen osoitteessa näkyy nyt ”ei saatavilla”."
+
+#: landing-core (#576)
+msgid "The site is published."
+msgstr "Sivusto on julkaistu."
+
+#: landing-core (#576)
+#, python-format
+msgid "“%(title)s” is deleted."
+msgstr "”%(title)s” on poistettu."
+
+#: landing-core (#576)
+msgid "Sites for your engagements"
+msgstr "Sivustot osallistamishankkeillesi"
+
+#: landing-core (#576)
+#, python-format
+msgid "%(n)s phase"
+msgid_plural "%(n)s phases"
+msgstr[0] "%(n)s vaihe"
+msgstr[1] "%(n)s vaihetta"
+
+#: landing-core (#576)
+#, python-format
+msgid "%(n)s survey"
+msgid_plural "%(n)s surveys"
+msgstr[0] "%(n)s kysely"
+msgstr[1] "%(n)s kyselyä"
+
+#: landing-core (#576)
+msgid "Open now"
+msgstr "Avoinna nyt"
+
+#: landing-documents-map (#577)
+msgid "File title"
+msgstr "Tiedoston otsikko"
+
+#: landing-documents-map (#577)
+msgid "PDF, office documents, CSV or text; up to 25 MB each. You can rename them after adding."
+msgstr "PDF, toimisto-asiakirjat, CSV tai teksti; enintään 25 Mt kukin. Voit nimetä ne uudelleen lisäämisen jälkeen."
+
+#: landing-documents-map (#577)
+msgid "A GeoJSON file with the project area: a boundary, a route or a few points. Up to 1 MB."
+msgstr "GeoJSON-tiedosto hankealueesta: raja, reitti tai muutama piste. Enintään 1 Mt."
+
+#: landing-documents-map (#577)
+msgid "Colour"
+msgstr "Muotojen väri"
+
+#: landing-documents-map (#577)
+msgid "Base map"
+msgstr "Taustakartta"
+
+#: landing-documents-map (#577)
+msgid "Map of the project area"
+msgstr "Hankealueen kartta"
+
+#: landing-documents-map (#577)
+msgid "Documents"
+msgstr "Asiakirjat"
+
+#: landing-documents-map (#577)
+msgid "Document"
+msgstr "Asiakirja"
+
+#: landing-documents-map (#577)
+msgid "Upload a GeoJSON file with the project area."
+msgstr "Lataa GeoJSON-tiedosto hankealueesta."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s”: upload a PDF, an office document, CSV or plain text."
+msgstr "”%(name)s”: lataa PDF, toimisto-asiakirja, CSV tai pelkkä teksti."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s” is larger than 25 MB."
+msgstr "”%(name)s” on suurempi kuin 25 Mt."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s” is not a UTF-8 text file."
+msgstr "”%(name)s” ei ole UTF-8-tekstitiedosto."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s” looks like a web page, not a document."
+msgstr "”%(name)s” näyttää verkkosivulta eikä asiakirjalta."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s” is not the kind of file its name says."
+msgstr "”%(name)s” ei ole nimensä mukainen tiedostotyyppi."
+
+#: landing-documents-map (#577)
+msgid "The GeoJSON file is larger than 1 MB."
+msgstr "GeoJSON-tiedosto on suurempi kuin 1 Mt."
+
+#: landing-documents-map (#577)
+msgid "This is not a GeoJSON file."
+msgstr "Tämä ei ole GeoJSON-tiedosto."
+
+#: landing-documents-map (#577)
+msgid "The file has more than 500 features."
+msgstr "Tiedostossa on yli 500 kohdetta."
+
+#: landing-documents-map (#577)
+msgid "A shape in the file is broken."
+msgstr "Tiedostossa on viallinen muoto."
+
+#: landing-documents-map (#577)
+msgid "Coordinates must be longitude and latitude (WGS84)."
+msgstr "Koordinaattien on oltava pituus- ja leveysasteita (WGS84)."
+
+#: landing-documents-map (#577)
+msgid "A polygon in the file crosses itself."
+msgstr "Tiedoston monikulmio leikkaa itseään."
+
+#: landing-documents-map (#577)
+msgid "The file has no points, lines or areas."
+msgstr "Tiedostossa ei ole pisteitä, viivoja eikä alueita."
+
+#: landing-documents-map (#577)
+msgid "Add at least one file."
+msgstr "Lisää vähintään yksi tiedosto."
+
+#: landing-documents-map (#577)
+msgid "A documents block holds at most 20 files."
+msgstr "Asiakirjalohkossa voi olla enintään 20 tiedostoa."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "%(n)s file"
+msgid_plural "%(n)s files"
+msgstr[0] "%(n)s tiedosto"
+msgstr[1] "%(n)s tiedostoa"
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "%(n)s shape"
+msgid_plural "%(n)s shapes"
+msgstr[0] "%(n)s muoto"
+msgstr[1] "%(n)s muotoa"
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "%(n)s shape on the map. Upload a new file to replace it."
+msgid_plural "%(n)s shapes on the map. Upload a new file to replace them."
+msgstr[0] "Kartalla on %(n)s muoto. Korvaa se lataamalla uusi tiedosto."
+msgstr[1] "Kartalla on %(n)s muotoa. Korvaa ne lataamalla uusi tiedosto."
+
+#: landing-results (#578)
+msgid "the question was removed from the survey; the block is not shown"
+msgstr "kysymys on poistettu kyselystä; lohkoa ei näytetä"
+
+#: landing-results (#578)
+msgid "No survey of this workspace has a question whose answers can be shown as a chart or a map."
+msgstr "Missään tämän työtilan kyselyssä ei ole kysymystä, jonka vastaukset voisi näyttää kaaviona tai karttana."
+
+#: landing-results (#578)
+msgid "Chart or map style"
+msgstr "Kaavion tai kartan tyyli"
+
+#: landing-results (#578)
+msgid "Maps"
+msgstr "Kartat"
+
+#: landing-results (#578)
+msgid "Base map (maps)"
+msgstr "Taustakartta (karttoja varten)"
+
+#: landing-results (#578)
+msgid "Answers are counted the same way as on the survey's public results page: small groups are masked, written answers are never shown."
+msgstr "Vastaukset lasketaan samoin kuin kyselyn julkisella tulossivulla: pienet ryhmät peitetään, eikä kirjoitettuja vastauksia näytetä koskaan."
+
+#: landing-results (#578)
+msgid "Pick a question whose answers can be shown as a chart or a map."
+msgstr "Valitse kysymys, jonka vastaukset voi näyttää kaaviona tai karttana."
+
+#: landing-results (#578)
+msgid "Bar chart"
+msgstr "Pylväskaavio"
+
+#: landing-results (#578)
+msgid "Pie"
+msgstr "Piirakka"
+
+#: landing-results (#578)
+msgid "Donut"
+msgstr "Rengas"
+
+#: landing-results (#578)
+msgid "Markers"
+msgstr "Merkit"
+
+#: landing-results (#578)
+msgid "Heatmap"
+msgstr "Lämpökartta"
+
+#: landing-results (#578)
+msgid "Clusters"
+msgstr "Klusterit"
+
+#: landing-results (#578)
+#, python-format
+msgid "Based on %(n)s response."
+msgid_plural "Based on %(n)s responses."
+msgstr[0] "Perustuu %(n)s vastaukseen."
+msgstr[1] "Perustuu %(n)s vastaukseen."
+
+#: landing-events (#579)
+msgid "Date"
+msgstr "Päivämäärä"
+
+#: landing-events (#579)
+msgid "Starts"
+msgstr "Alkaa"
+
+#: landing-events (#579)
+msgid "Ends"
+msgstr "Päättyy"
+
+#: landing-events (#579)
+msgid "Time zone"
+msgstr "Aikavyöhyke"
+
+#: landing-events (#579)
+msgid "Place, e.g. The boathouse, Riverside Park"
+msgstr "Paikka, esim. Venevaja, Rantapuisto"
+
+#: landing-events (#579)
+msgid "Map link to the place (optional)"
+msgstr "Karttalinkki paikkaan (valinnainen)"
+
+#: landing-events (#579)
+msgid "What happens there (optional)"
+msgstr "Mitä siellä tapahtuu (valinnainen)"
+
+#: landing-events (#579)
+msgid "Seats (empty = no limit)"
+msgstr "Paikat (tyhjä = ei rajaa)"
+
+#: landing-events (#579)
+msgid "Registration open"
+msgstr "Ilmoittautuminen auki"
+
+#: landing-events (#579)
+#, python-format
+msgid "%(n)s seats left"
+msgstr "Paikkoja jäljellä: %(n)s"
+
+#: landing-events (#579)
+msgid "Attendee list"
+msgstr "Osallistujaluettelo"
+
+#: landing-events (#579)
+msgid "Residents give their name and email. They get a confirmation with a calendar file; registrations are deleted 30 days after the event."
+msgstr "Asukkaat antavat nimensä ja sähköpostinsa. He saavat vahvistuksen ja kalenteritiedoston; ilmoittautumiset poistetaan 30 päivää tapahtuman jälkeen."
+
+#: landing-events (#579)
+msgid "Attendees"
+msgstr "Osallistujat"
+
+#: landing-events (#579)
+msgid "Event"
+msgstr "Tapahtuma"
+
+#: landing-events (#579)
+msgid "Download CSV"
+msgstr "Lataa CSV"
+
+#: landing-events (#579)
+#, python-format
+msgid "Names and emails are deleted automatically %(days)s days after the event. Use them only for this event."
+msgstr "Nimet ja sähköpostit poistetaan automaattisesti %(days)s päivää tapahtuman jälkeen. Käytä niitä vain tähän tapahtumaan."
+
+#: landing-events (#579)
+msgid "Registered"
+msgstr "Ilmoittautunut"
+
+#: landing-events (#579)
+msgid "registered"
+msgstr "ilmoittautunut"
+
+#: landing-events (#579)
+msgid "cancelled"
+msgstr "peruttu"
+
+#: landing-events (#579)
+msgid "Delete every registration of this event?"
+msgstr "Poistetaanko kaikki tämän tapahtuman ilmoittautumiset?"
+
+#: landing-events (#579)
+msgid "Remove all"
+msgstr "Poista kaikki"
+
+#: landing-events (#579)
+msgid "Nobody has registered yet."
+msgstr "Kukaan ei ole vielä ilmoittautunut."
+
+#: landing-events (#579)
+msgid "Cancel registration"
+msgstr "Peru ilmoittautuminen"
+
+#: landing-events (#579)
+msgid "Your registration is cancelled. Thank you for letting us know."
+msgstr "Ilmoittautumisesi on peruttu. Kiitos, että kerroit."
+
+#: landing-events (#579)
+#, python-format
+msgid "Cancel the registration of %(name)s?"
+msgstr "Perutaanko käyttäjän %(name)s ilmoittautuminen?"
+
+#: landing-events (#579)
+msgid "Cancel my registration"
+msgstr "Peru ilmoittautumiseni"
+
+#: landing-events (#579)
+msgid "Back to the project site"
+msgstr "Takaisin hankkeen sivustolle"
+
+#: landing-events (#579)
+msgid "Thank you! Check your inbox: we sent a confirmation with a calendar file and a link to cancel."
+msgstr "Kiitos! Tarkista sähköpostisi: lähetimme vahvistuksen, kalenteritiedoston ja peruutuslinkin."
+
+#: landing-events (#579)
+msgid "Sorry, the event is full."
+msgstr "Valitettavasti tapahtuma on täynnä."
+
+#: landing-events (#579)
+msgid "Registration for this event is closed."
+msgstr "Ilmoittautuminen tähän tapahtumaan on suljettu."
+
+#: landing-events (#579)
+msgid "Please tick the box to agree before registering."
+msgstr "Rastita ruutu hyväksyäksesi ennen ilmoittautumista."
+
+#: landing-events (#579)
+msgid "Please enter a valid email address."
+msgstr "Anna kelvollinen sähköpostiosoite."
+
+#: landing-events (#579)
+msgid "Please enter your name."
+msgstr "Anna nimesi."
+
+#: landing-events (#579)
+msgid "Your name"
+msgstr "Nimesi"
+
+#: landing-events (#579)
+#, python-format
+msgid "%(org)s uses your name and email only for this event. They are deleted %(days)s days after it."
+msgstr "%(org)s käyttää nimeäsi ja sähköpostiasi vain tähän tapahtumaan. Ne poistetaan %(days)s päivää sen jälkeen."
+
+#: landing-events (#579)
+msgid "The event is full."
+msgstr "Tapahtuma on täynnä."
+
+#: landing-events (#579)
+#, python-format
+msgid "Hello %(name)s,"
+msgstr "Hei %(name)s,"
+
+#: landing-events (#579)
+#, python-format
+msgid "you are registered for \"%(title)s\" by %(org)s."
+msgstr "olet ilmoittautunut tapahtumaan ”%(title)s”, jonka järjestää %(org)s."
+
+#: landing-events (#579)
+msgid "The attached calendar file adds the event to your calendar."
+msgstr "Liitteenä oleva kalenteritiedosto lisää tapahtuman kalenteriisi."
+
+#: landing-events (#579)
+msgid "About the project"
+msgstr "Tietoa hankkeesta"
+
+#: landing-events (#579)
+msgid "Can't come? Cancel your registration"
+msgstr "Etkö pääsekään? Peru ilmoittautumisesi"
+
+#: landing-events (#579)
+#, python-format
+msgid "Your name and email are used only for this event and deleted %(days)s days after it."
+msgstr "Nimeäsi ja sähköpostiasi käytetään vain tähän tapahtumaan, ja ne poistetaan %(days)s päivää sen jälkeen."
+
+#: landing-events (#579)
+msgid "About the project:"
+msgstr "Tietoa hankkeesta:"
+
+#: landing-events (#579)
+msgid "Can't come? Cancel here:"
+msgstr "Etkö pääsekään? Peru tästä:"
+
+#: landing-events (#579)
+msgid "Pick the date of the event."
+msgstr "Valitse tapahtuman päivämäärä."
+
+#: landing-events (#579)
+msgid "Enter the start time."
+msgstr "Anna alkamisaika."
+
+#: landing-events (#579)
+msgid "The end time must be after the start."
+msgstr "Päättymisajan on oltava alkamisen jälkeen."
+
+#: landing-events (#579)
+msgid "Pick a time zone from the list, e.g. Europe/Berlin."
+msgstr "Valitse aikavyöhyke luettelosta, esim. Europe/Helsinki."
+
+#: landing-events (#579)
+msgid "Seats must be a number from 1 to 10000, or empty for no limit."
+msgstr "Paikkojen on oltava luku 1–10000, tai tyhjä, jos rajaa ei ole."
+
+#: landing-events (#579)
+msgid "Too many registrations from this connection. Please try again later."
+msgstr "Liian monta ilmoittautumista tästä yhteydestä. Yritä myöhemmin uudelleen."
+
+#: landing-events (#579)
+msgid "All registrations of this event are deleted."
+msgstr "Kaikki tämän tapahtuman ilmoittautumiset on poistettu."
+
+#: landing-events (#579)
+#, python-format
+msgid "You're registered: %(title)s"
+msgstr "Olet ilmoittautunut: %(title)s"
+
+#: landing-events (#579)
+#, python-format
+msgid "%(n)s registered"
+msgid_plural "%(n)s registered"
+msgstr[0] "%(n)s ilmoittautunut"
+msgstr[1] "%(n)s ilmoittautunutta"
+
+#: landing-events (#579)
+#, python-format
+msgid "%(n)s seat left"
+msgid_plural "%(n)s seats left"
+msgstr[0] "%(n)s paikka jäljellä"
+msgstr[1] "%(n)s paikkaa jäljellä"
+
+#: landing-builder-redesign (#594)
+msgid "Write directly on the page. Select text for bold, italic, links and lists."
+msgstr "Kirjoita suoraan sivulle. Valitse tekstiä lihavointia, kursiivia, linkkejä ja luetteloita varten."
+
+#: landing-builder-redesign (#594)
+msgid "Link"
+msgstr "Linkki"
+
+#: landing-builder-redesign (#594)
+msgid "Pick a question…"
+msgstr "Valitse kysymys…"
+
+#: landing-builder-redesign (#594)
+msgid "Place"
+msgstr "Paikka"
+
+#: landing-builder-redesign (#594)
+msgid "Pick a survey…"
+msgstr "Valitse kysely…"
+
+#: landing-builder-redesign (#594)
+msgid "Preview width"
+msgstr "Esikatselun leveys"
+
+#: landing-builder-redesign (#594)
+msgid "Desktop"
+msgstr "Tietokone"
+
+#: landing-builder-redesign (#594)
+msgid "Phone"
+msgstr "Puhelin"
+
+#: landing-builder-redesign (#594)
+msgid "The site is live"
+msgstr "Sivusto on verkossa"
+
+#: landing-builder-redesign (#594)
+msgid "Publish this site"
+msgstr "Julkaise tämä sivusto"
+
+#: landing-builder-redesign (#594)
+msgid "Residents open the site at this address. Change it before you print it."
+msgstr "Asukkaat avaavat sivuston tästä osoitteesta. Muuta sitä ennen tulostamista."
+
+#: landing-builder-redesign (#594)
+msgid "Listed by search engines"
+msgstr "Näkyy hakukoneissa"
+
+#: landing-builder-redesign (#594)
+msgid "Off: only people with the link"
+msgstr "Pois: vain linkin saaneet"
+
+#: landing-builder-redesign (#594)
+msgid "For flyers and posters."
+msgstr "Esitteisiin ja julisteisiin."
+
+#: landing-builder-redesign (#594)
+msgid "Publish now"
+msgstr "Julkaise nyt"
+
+#: landing-builder-redesign (#594)
+msgid "Blocks on the page"
+msgstr "Sivun lohkot"
+
+#: landing-builder-redesign (#594)
+msgid "Blocks"
+msgstr "Lohkot"
+
+#: landing-builder-redesign (#594)
+msgid "Title and cover"
+msgstr "Otsikko ja pääkuva"
+
+#: landing-builder-redesign (#594)
+msgid "Add block here"
+msgstr "Lisää lohko tähän"
+
+#: landing-builder-redesign (#594)
+msgid "Add block — text, timeline, survey card, results, event…"
+msgstr "Lisää lohko — teksti, aikajana, kyselykortti, tulokset, tapahtuma…"
+
+#: landing-builder-redesign (#594)
+msgid "No blocks yet."
+msgstr "Ei vielä lohkoja."
+
+#: landing-builder-redesign (#594)
+msgid "Could not save — check the settings on the right"
+msgstr "Tallennus epäonnistui — tarkista oikealla olevat asetukset"
+
+#: landing-builder-redesign (#594)
+msgid "Could not save — check your connection"
+msgstr "Tallennus epäonnistui — tarkista yhteytesi"
+
+#: landing-builder-redesign (#594)
+msgid "Title, cover and address"
+msgstr "Otsikko, pääkuva ja osoite"
+
+#: landing-builder-redesign (#594)
+msgid "Shown behind the title and when the link is shared."
+msgstr "Näytetään otsikon taustalla ja kun linkki jaetaan."
+
+#: landing-builder-redesign (#594)
+msgid "Search blocks…"
+msgstr "Hae lohkoja…"
+
+#: landing-builder-redesign (#594)
+msgid "Search blocks"
+msgstr "Lohkohaku"
+
+#: landing-builder-redesign (#594)
+msgid "Block actions"
+msgstr "Lohkon toiminnot"
+
+#: landing-builder-redesign (#594)
+msgid "Move up"
+msgstr "Siirrä ylös"
+
+#: landing-builder-redesign (#594)
+msgid "Move down"
+msgstr "Siirrä alas"
+
+#: landing-builder-redesign (#594)
+msgid "Add a heading"
+msgstr "Lisää otsikko"
+
+#: landing-builder-redesign (#594)
+msgid "Headings also appear in the menu at the top of the page"
+msgstr "Otsikot näkyvät myös sivun yläreunan valikossa"
+
+#: landing-builder-redesign (#594)
+msgid "Write something…"
+msgstr "Kirjoita jotain…"
+
+#: landing-builder-redesign (#594)
+msgid "Upload a picture in the settings on the right."
+msgstr "Lataa kuva oikealla olevissa asetuksissa."
+
+#: landing-builder-redesign (#594)
+msgid "Paste a YouTube or Vimeo link in the settings on the right."
+msgstr "Liitä YouTube- tai Vimeo-linkki oikealla oleviin asetuksiin."
+
+#: landing-builder-redesign (#594)
+msgid "Set the label and the link in the settings on the right."
+msgstr "Aseta teksti ja linkki oikealla olevissa asetuksissa."
+
+#: landing-builder-redesign (#594)
+msgid "Add questions and answers in the settings on the right."
+msgstr "Lisää kysymykset ja vastaukset oikealla olevissa asetuksissa."
+
+#: landing-builder-redesign (#594)
+msgid "Add the phases in the settings on the right."
+msgstr "Lisää vaiheet oikealla olevissa asetuksissa."
+
+#: landing-builder-redesign (#594)
+msgid "Upload files in the settings on the right."
+msgstr "Lataa tiedostot oikealla olevissa asetuksissa."
+
+#: landing-builder-redesign (#594)
+msgid "Upload a GeoJSON file with the project area in the settings on the right."
+msgstr "Lataa GeoJSON-tiedosto hankealueesta oikealla olevissa asetuksissa."
+
+#: landing-builder-redesign (#594)
+msgid "Pick a question in the settings on the right."
+msgstr "Valitse kysymys oikealla olevissa asetuksissa."
+
+#: landing-builder-redesign (#594)
+msgid "Set the date and time in the settings on the right."
+msgstr "Aseta päivämäärä ja aika oikealla olevissa asetuksissa."
+
+#: landing-builder-redesign (#594)
+msgid "Pick a survey in the settings on the right."
+msgstr "Valitse kysely oikealla olevissa asetuksissa."
+
+#: landing-builder-redesign (#594)
+msgid "One or two sentences: what the project is and what you ask residents"
+msgstr "Yksi tai kaksi virkettä: mistä hankkeessa on kyse ja mitä kysyt asukkailta"
+
+#: landing-builder-redesign (#594)
+msgid "Change the cover picture"
+msgstr "Vaihda pääkuva"
+
+#: landing-builder-redesign (#594)
+msgid "Add a cover picture"
+msgstr "Lisää pääkuva"
+
+#: landing-builder-redesign (#594)
+msgid "Tell the story"
+msgstr "Kerro hankkeesta"
+
+#: landing-builder-redesign (#594)
+msgid "Purpose, background, what happens next"
+msgstr "Tarkoitus, tausta, mitä seuraavaksi"
+
+#: landing-builder-redesign (#594)
+msgid "Phases with dates; mark the one you are in"
+msgstr "Vaiheet päivämäärineen; merkitse nykyinen"
+
+#: landing-builder-redesign (#594)
+msgid "Questions residents keep asking"
+msgstr "Asukkaiden usein kysymät kysymykset"
+
+#: landing-builder-redesign (#594)
+msgid "A photo or a plan drawing with a caption"
+msgstr "Valokuva tai suunnitelmapiirros kuvatekstillä"
+
+#: landing-builder-redesign (#594)
+msgid "YouTube or Vimeo"
+msgstr "YouTube tai Vimeo"
+
+#: landing-builder-redesign (#594)
+msgid "The project area from a GeoJSON file"
+msgstr "Hankealue GeoJSON-tiedostosta"
+
+#: landing-builder-redesign (#594)
+msgid "One of your surveys; follows its status"
+msgstr "Yksi kyselyistäsi; seuraa sen tilaa"
+
+#: landing-builder-redesign (#594)
+msgid "Open house or walk, with registration"
+msgstr "Avoimet ovet tai kävely, ilmoittautumisella"
+
+#: landing-builder-redesign (#594)
+msgid "A link to anything else"
+msgstr "Linkki mihin tahansa muuhun"
+
+#: landing-builder-redesign (#594)
+msgid "Show the work"
+msgstr "Näytä työ"
+
+#: landing-builder-redesign (#594)
+msgid "A chart or a map from a survey's answers"
+msgstr "Kaavio tai kartta kyselyn vastauksista"
+
+#: landing-builder-redesign (#594)
+msgid "Summaries, boards, the draft plan"
+msgstr "Yhteenvedot, taulut, suunnitelmaluonnos"
+
+#: landing-builder-redesign (#594)
+msgid "The survey is a draft: the card shows “Coming soon” until you publish it."
+msgstr "Kysely on luonnos: kortissa lukee ”Tulossa pian”, kunnes julkaiset sen."
+
+#: landing-builder-redesign (#594)
+msgid "The question was removed from the survey; the block is not shown."
+msgstr "Kysymys on poistettu kyselystä; lohkoa ei näytetä."
+
+#: landing-builder-redesign (#594)
+msgid "Not shown on the page until it is filled in."
+msgstr "Ei näy sivulla ennen kuin se on täytetty."
+
+#: landing-builder-redesign (#594)
+#, python-format
+msgid "Remove %(name)s?"
+msgstr "Poistetaanko %(name)s?"
+
+#: landing-builder-redesign (#594)
+msgid "Names and emails are deleted now. The registrants get no message."
+msgstr "Nimet ja sähköpostit poistetaan heti. Ilmoittautuneet eivät saa viestiä."
+
+#: landing-builder-redesign (#594)
+#, python-format
+msgid "Delete “%(title)s”?"
+msgstr "Poistetaanko ”%(title)s”?"
+
+#: landing-builder-redesign (#594)
+msgid "Its address stops working, and links and QR codes already printed lead nowhere."
+msgstr "Sen osoite lakkaa toimimasta, eivätkä linkit ja jo tulostetut QR-koodit johda enää minnekään."
+
+#: landing-builder-redesign (#594)
+msgid "Blocks, files and event registrations are deleted with it. Your surveys stay."
+msgstr "Lohkot, tiedostot ja tapahtumien ilmoittautumiset poistetaan sen mukana. Kyselysi säilyvät."
+
+#: landing-builder-redesign (#594)
+msgid "The block and everyone registered for the event are removed from the page. This cannot be undone."
+msgstr "Lohko ja kaikki tapahtuman ilmoittautumiset poistetaan sivulta. Toimintoa ei voi perua."
+
+#: landing-builder-redesign (#594)
+msgid "The block and its files are removed from the page. This cannot be undone."
+msgstr "Lohko ja sen tiedostot poistetaan sivulta. Toimintoa ei voi perua."
+
+#: landing-builder-redesign (#594)
+msgid "The block is removed from the page. This cannot be undone."
+msgstr "Lohko poistetaan sivulta. Toimintoa ei voi perua."
+
+#: landing-builder-redesign (#594)
+msgid "Write directly on the page; the toolbar above the text sets headings, bold, lists, links and alignment."
+msgstr "Kirjoita suoraan sivulle; tekstin yläpuolella oleva työkalurivi asettaa otsikot, lihavoinnin, luettelot, linkit ja tasauksen."
+
+#: landing-builder-redesign (#594)
+msgid "Applies to the whole site"
+msgstr "Koskee koko sivustoa"
+
+#: landing-builder-redesign (#594)
+msgid "Shown behind the title and when the link is shared. JPEG, PNG, WebP or GIF, up to 5 MB."
+msgstr "Näytetään otsikon taustalla ja kun linkki jaetaan. JPEG, PNG, WebP tai GIF, enintään 5 Mt."
+
+#: landing-builder-redesign (#594)
+msgid "Address and language"
+msgstr "Osoite ja kieli"
+
+#: landing-builder-redesign (#594)
+msgid "Lowercase letters, digits and dashes. Settle it before you print it."
+msgstr "Pienet kirjaimet, numerot ja yhdysviivat. Päätä se ennen tulostamista."
+
+#: landing-builder-redesign (#594)
+msgid "The language of the site's buttons and labels."
+msgstr "Sivuston painikkeiden ja tekstien kieli."
+
+#: landing-builder-redesign (#594)
+msgid "Settings of this block"
+msgstr "Tämän lohkon asetukset"
+
+#: landing-inline-editing
+msgid "A boundary, a route or a few points; up to 1 MB"
+msgstr "Raja, reitti tai muutama piste; enintään 1 Mt"
+
+#: landing-inline-editing
+msgid "Drop a GeoJSON file with the project area"
+msgstr "Pudota GeoJSON-tiedosto hankealueesta"
+
+#: landing-inline-editing
+msgid "Drop a picture here"
+msgstr "Pudota kuva tähän"
+
+#: landing-inline-editing
+msgid "Drop files here"
+msgstr "Pudota tiedostot tähän"
+
+#: landing-inline-editing
+msgid "choose a file"
+msgstr "valitse tiedosto"
+
+#: landing-inline-editing
+msgid "Edit this in the block on the page."
+msgstr "Muokkaa tätä sivun lohkossa."
+
+#: landing-inline-editing
+msgid "JPEG, PNG, WebP or GIF, up to 5 MB"
+msgstr "JPEG, PNG, WebP tai GIF, enintään 5 Mt"
+
+#: landing-inline-editing
+msgid "PDF, office documents, CSV or text; up to 25 MB each"
+msgstr "PDF, toimisto-asiakirjat, CSV tai teksti; enintään 25 Mt kukin"
+
+#: landing-inline-editing
+msgid "Not filled in yet."
+msgstr "Ei vielä täytetty."
+
+#: landing-inline-editing
+msgid "Paste a YouTube or Vimeo link"
+msgstr "Liitä YouTube- tai Vimeo-linkki"
+
+#: landing-inline-editing
+msgid "Phase"
+msgstr "Vaihe"
+
+#: landing-inline-editing
+msgid "When"
+msgstr "Milloin"
+
+#: landing-inline-editing
+msgid "The project is in this phase now"
+msgstr "Hanke on nyt tässä vaiheessa"
+
+#: landing-inline-editing
+msgid "Replace picture"
+msgstr "Vaihda kuva"
+
+#: landing-inline-editing
+msgid "Replace area"
+msgstr "Vaihda alue"
+
+#: landing-inline-editing
+msgid "Shown behind the title and when the link is shared. Add, change or remove it on the page."
+msgstr "Näytetään otsikon taustalla ja kun linkki jaetaan. Lisää, vaihda tai poista se sivulla."
+
+#. rename-landings-to-sites
+msgid "Site settings"
+msgstr "Sivuston asetukset"
+
+#. rename-landings-to-sites
+#| msgid "Search address..."
+msgid "Site address"
+msgstr "Sivuston osoite"
+
+#. rename-landings-to-sites
+msgid "Site title"
+msgstr "Sivuston otsikko"
+
+#: site-heading-block
+msgid "Heading"
+msgstr "Osion otsikko"
+
+#: site-heading-block
+msgid "Normal text"
+msgstr "Tavallinen teksti"
+
+#: site-heading-block
+msgid "Leave it empty for a block without a heading. A heading can also be a link in the menu at the top."
+msgstr "Jätä tyhjäksi, jos lohkolla ei ole otsikkoa. Otsikko voi olla myös linkki yläreunan valikossa."
+
+#: site-heading-block
+msgid "Show the heading in the menu at the top"
+msgstr "Näytä otsikko yläreunan valikossa"
+
+#: site-heading-block
+msgid "Size"
+msgstr "Koko"
+
+#: site-heading-block
+msgid "Type the heading on the page. Large and medium are section headings; small is a subheading."
+msgstr "Kirjoita otsikko sivulle. Suuri ja keskikokoinen ovat osion otsikoita, pieni on alaotsikko."
+
+#: site-heading-block
+msgid "A section title on its own, in one of three sizes"
+msgstr "Erillinen osion otsikko yhdessä kolmesta koosta"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Large"
+msgstr "Suuri"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Medium"
+msgstr "Keskikokoinen"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Small"
+msgstr "Pieni"
+
+#: sites-wave-a
+msgid "Add the people in the block on the page."
+msgstr "Lisää henkilöt sivun lohkossa."
+
+#: sites-wave-a
+msgid "Planning office, Town hall, 1 Market Square"
+msgstr "Kaavoitus, kaupungintalo, Torikatu 1"
+
+#: sites-wave-a
+msgid "Opening hours"
+msgstr "Aukioloajat"
+
+#: sites-wave-a
+msgid "Mon–Thu 9:00–16:00"
+msgstr "Ma–to 9.00–16.00"
+
+#: sites-wave-a
+msgid "Full width — from edge to edge of the page"
+msgstr "Koko leveys — sivun reunasta reunaan"
+
+#: sites-wave-a
+#, python-format
+msgid "%(n)s thing to check for accessibility"
+msgid_plural "%(n)s things to check for accessibility"
+msgstr[0] "%(n)s saavutettavuusasia tarkistettavana"
+msgstr[1] "%(n)s saavutettavuusasiaa tarkistettavana"
+
+#: sites-wave-a
+msgid "Residents using a screen reader or a keyboard trip over these. Publishing is not blocked."
+msgstr "Ruudunlukijaa tai näppäimistöä käyttävät asukkaat kompastuvat näihin. Julkaisua ei estetä."
+
+#: sites-wave-a
+msgid "Share for review"
+msgstr "Jaa tarkistettavaksi"
+
+#: sites-wave-a
+msgid "Anyone with this link sees the draft read-only for 14 days — no account needed. New link stops the old one."
+msgstr "Kuka tahansa linkin saanut näkee luonnoksen 14 päivän ajan vain luku -tilassa ilman tiliä. ”Uusi linkki” mitätöi vanhan."
+
+#: sites-wave-a
+msgid "Review link"
+msgstr "Tarkistuslinkki"
+
+#: sites-wave-a
+msgid "New link"
+msgstr "Uusi linkki"
+
+#: sites-wave-a
+msgid "Skip to content"
+msgstr "Siirry sisältöön"
+
+#: sites-wave-a
+msgid "Shared for review — this site is not public yet."
+msgstr "Jaettu tarkistettavaksi — tämä sivusto ei ole vielä julkinen."
+
+#: sites-wave-a
+#, python-format
+msgid "Duplicate “%(title)s”"
+msgstr "Monista ”%(title)s”"
+
+#: sites-wave-a
+msgid "Role, e.g. Project lead"
+msgstr "Rooli, esim. projektipäällikkö"
+
+#: sites-wave-a
+msgid "Add a person"
+msgstr "Lisää henkilö"
+
+#: sites-wave-a
+msgid "Page width"
+msgstr "Sivun leveys"
+
+#: sites-wave-a
+msgid "How wide the column of text and blocks is on a computer. Pictures, maps and videos can also go full width in their own settings."
+msgstr "Kuinka leveä teksti- ja lohkopalsta on tietokoneella. Kuvat, kartat ja videot voivat omissa asetuksissaan olla myös koko levyisiä."
+
+#: sites-wave-a
+msgid "Duplicate site"
+msgstr "Monista sivusto"
+
+#: sites-wave-a
+msgid "Registration opens when the site is published."
+msgstr "Ilmoittautuminen avautuu, kun sivusto julkaistaan."
+
+#: sites-wave-a
+msgid "Contacts"
+msgstr "Yhteystiedot"
+
+#: sites-wave-a
+msgid "Who runs the project and how to reach them"
+msgstr "Kuka vetää hanketta ja miten tavoittaa"
+
+#: sites-wave-a
+#, python-format
+msgid "“%(email)s” is not an e-mail address."
+msgstr "”%(email)s” ei ole sähköpostiosoite."
+
+#: sites-wave-a
+msgid "The cover picture has no description for screen readers."
+msgstr "Pääkuvalla ei ole kuvausta ruudunlukijoille."
+
+#: sites-wave-a
+msgid "The picture has no description for screen readers."
+msgstr "Kuvalla ei ole kuvausta ruudunlukijoille."
+
+#: sites-wave-a
+msgid "A small heading comes before any large or medium one: screen readers announce it as a subsection of nothing. Make it medium, or add a heading above."
+msgstr "Pieni otsikko tulee ennen suurta tai keskikokoista: ruudunlukija ilmoittaa sen olemattoman osion alaosioksi. Tee siitä keskikokoinen tai lisää otsikko yläpuolelle."
+
+#: sites-wave-a
+msgid "A link says only “here” or “more”. Name where it leads, e.g. “the draft plan (PDF)”."
+msgstr "Linkissä lukee vain ”tästä” tai ”lisää”. Kerro, mihin se vie, esim. ”suunnitelmaluonnos (PDF)”."
+
+#: sites-wave-a
+msgid "The button says only “here” or “more”. Name where it leads."
+msgstr "Painikkeessa lukee vain ”tästä” tai ”lisää”. Kerro, mihin se vie."
+
+#: sites-wave-a
+#, python-format
+msgid "%(title)s (copy)"
+msgstr "%(title)s (kopio)"
+
+#: sites-wave-a
+#, python-format
+msgid "This is a copy of “%(title)s”. It is not published."
+msgstr "Tämä on kopio sivustosta ”%(title)s”. Sitä ei ole julkaistu."
+
+#: sites-wave-a
+msgctxt "site width"
+msgid "Narrow"
+msgstr "Kapea"
+
+#: sites-wave-a
+msgctxt "site width"
+msgid "Standard"
+msgstr "Normaali"
+
+#: sites-wave-a
+msgctxt "site width"
+msgid "Wide"
+msgstr "Leveä"
+
+#: sites-wave-a
+msgid "Standard"
+msgstr "Normaali"
+
+#: sites-wave-a
+msgid "Wide"
+msgstr "Leveä"
+
+#: sites-wave-a
+msgctxt "contact"
+msgid "Phone"
+msgstr "Puhelin"
+
+#: sites-wave-a
+msgctxt "person"
+msgid "Name"
+msgstr "Nimi"
+
+#: sites-wave-a
+msgctxt "action"
+msgid "Duplicate"
+msgstr "Monista"

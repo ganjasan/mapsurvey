@@ -79,7 +79,7 @@ def survey_report(request, survey_slug):
             return render(request, 'abuse/report_done.html', {'survey': survey})
     else:
         form = ReportForm()
-    return render(request, 'abuse/report.html', {'survey': survey, 'form': form})
+    return render(request, 'abuse/report.html', {'survey': survey, 'form': form, 'subject_name': survey.name})
 
 
 def _report_limited(request):
@@ -90,6 +90,29 @@ def _report_limited(request):
     except Exception:  # noqa: BLE001 — cache outage must not block a report
         return False
     return bool(usage) and usage['count'] >= usage['limit']
+
+
+@require_http_methods(['GET', 'POST'])
+def site_report(request, slug):
+    """A visitor flags a site (change landing-core). Never changes what visitors see;
+    an unpublished or held site is a 404 here as on the page itself."""
+    from .models import Site
+
+    site = Site.objects.filter(slug=slug, is_published=True).first()
+    if site is None or cs.is_site_held(site):
+        return render(request, 'survey_unavailable.html', status=404)
+    if request.method == 'POST':
+        if _report_limited(request):
+            return HttpResponse(_('Too many reports from this connection. Please try again later.'),
+                                status=429, headers={'Retry-After': '3600'})
+        form = ReportForm(request.POST)
+        if form.is_valid():
+            _report_count(request)
+            cs.report_site(site, form.cleaned_data['reason'], form.cleaned_data['message'], request)
+            return render(request, 'abuse/report_done.html', {'site': site})
+    else:
+        form = ReportForm()
+    return render(request, 'abuse/report.html', {'site': site, 'form': form, 'subject_name': site.title})
 
 
 def _report_count(request):

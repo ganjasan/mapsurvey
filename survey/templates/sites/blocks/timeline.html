@@ -1,0 +1,11 @@
+{% load i18n %}<ol class="lp-timeline">
+  {% for item in block.data.items %}
+  {% with cur=block.data.current %}{% if item.title %}
+  <li class="lp-phase{% if cur is not None %}{% if forloop.counter0 < cur %} is-done{% elif forloop.counter0 == cur %} is-now{% endif %}{% endif %}">
+    <div class="lp-phase-when">{{ item.when }}{% if cur is not None and forloop.counter0 == cur %} <span class="lp-now">{% trans "Now" %}</span>{% endif %}</div>
+    <div class="lp-phase-title">{{ item.title }}</div>
+    {% if item.body %}<div class="lp-phase-body">{{ item.body|linebreaksbr }}</div>{% endif %}
+  </li>
+  {% endif %}{% endwith %}
+  {% endfor %}
+</ol>

@@ -1,0 +1,20 @@
+{% load i18n %}{% comment %}Contacts block (change site-contacts-block): the project team and where to find them.
+People without a name are still being typed in the builder and are not drawn.{% endcomment %}
+{% with people=block.data.people %}
+<div class="lp-contacts">
+  {% for p in people %}{% if p.name %}
+  <div class="lp-person">
+    <div class="lp-person-name">{{ p.name }}</div>
+    {% if p.role %}<div class="lp-person-role">{{ p.role }}</div>{% endif %}
+    {% if p.email %}<div class="lp-person-line"><i class="far fa-envelope" aria-hidden="true"></i><a href="mailto:{{ p.email }}">{{ p.email }}</a></div>{% endif %}
+    {% if p.phone %}<div class="lp-person-line"><i class="fas fa-phone" aria-hidden="true"></i><a href="tel:{{ p.phone|cut:' ' }}">{{ p.phone }}</a></div>{% endif %}
+  </div>
+  {% endif %}{% endfor %}
+</div>
+{% endwith %}
+{% if block.data.address or block.data.hours %}
+<div class="lp-contact-place">
+  {% if block.data.address %}<p><i class="fas fa-map-marker-alt lp-muted" aria-hidden="true"></i> {{ block.data.address|linebreaksbr }}</p>{% endif %}
+  {% if block.data.hours %}<p class="lp-muted">{{ block.data.hours }}</p>{% endif %}
+</div>
+{% endif %}

@@ -1,0 +1,17 @@
+{% load i18n %}{% comment %}A results block (change landing-results): the holders the shared renderer
+(js/public_results_render.js) fills — chart-<id>, map-<id>, objects-<id> with id "r<pk>".{% endcomment %}
+<div class="lp-results">
+  {% if not block.title %}<p class="lp-results-q">{{ card.title }}</p>{% endif %}
+  {% if card.block_type == 'chart' %}
+  <div class="lp-chart"><canvas id="chart-{{ card.id }}"></canvas></div>
+  {% elif card.block_type == 'map' %}
+  <div class="lp-map" id="map-{{ card.id }}"></div>
+  {% elif card.block_type == 'objects' %}
+  <div class="lp-objects" id="objects-{{ card.id }}"></div>
+  {% endif %}
+  <p class="lp-results-note">
+    {% blocktrans count n=card.responses %}Based on {{ n }} response.{% plural %}Based on {{ n }} responses.{% endblocktrans %}
+    {% if card.k > 1 and card.block_type != 'map' %}{% trans "Small groups are masked to protect privacy." %}{% endif %}
+  </p>
+  {% if block.data.caption or editing %}<p class="lp-results-caption" data-field="caption">{{ block.data.caption }}</p>{% endif %}
+</div>

@@ -6389,7 +6389,7 @@ msgstr ""
 
 #: survey/templates/metroquest_alternative.html:95
 msgid "Status"
-msgstr ""
+msgstr "Status"
 
 #: survey/templates/metroquest_alternative.html:95
 msgid "Active, open source"
@@ -10732,3 +10732,1410 @@ msgstr "Basiskaart zoeken"
 #: map-styles-basemap-picker
 msgid "The base maps respondents can switch between. They open on the default below."
 msgstr "De basiskaarten waartussen respondenten kunnen wisselen. Ze openen op de standaardkaart hieronder."
+
+#: landing-core (#576)
+msgid "Heading (optional)"
+msgstr "Kop (optioneel)"
+
+#: landing-core (#576)
+msgid "Shown above the block and in the page menu"
+msgstr "Getoond boven het blok en in het paginamenu"
+
+#: landing-core (#576)
+msgid "Describe the picture for screen readers"
+msgstr "Beschrijf de afbeelding voor schermlezers"
+
+#: landing-core (#576)
+msgid "Label, e.g. Read the draft plan"
+msgstr "Tekst, bijv. Lees het conceptplan"
+
+#: landing-core (#576)
+msgid "Filled"
+msgstr "Gevuld"
+
+#: landing-core (#576)
+msgid "Outline"
+msgstr "Omlijnd"
+
+#: landing-core (#576)
+msgid "YouTube or Vimeo link"
+msgstr "YouTube- of Vimeo-link"
+
+#: landing-core (#576)
+msgid "Add a question"
+msgstr "Vraag toevoegen"
+
+#: landing-core (#576)
+msgid "Phases in order. Tick the phase the project is in now; earlier phases show as done."
+msgstr "Fases op volgorde. Vink de fase aan waarin het project nu zit; eerdere fases worden als afgerond getoond."
+
+#: landing-core (#576)
+msgid "Add a phase"
+msgstr "Fase toevoegen"
+
+#: landing-core (#576)
+msgid "This workspace has no survey to show yet."
+msgstr "Deze werkruimte heeft nog geen enquête om te tonen."
+
+#: landing-core (#576)
+msgid "What residents are asked, how long it takes (optional)"
+msgstr "Wat bewoners gevraagd wordt en hoe lang het duurt (optioneel)"
+
+#: landing-core (#576)
+msgid "Button label (default: Take part)"
+msgstr "Knoptekst (standaard: Doe mee)"
+
+#: landing-core (#576)
+msgid "The card follows the survey: open, opening soon, or closed with a link to its public results."
+msgstr "De kaart volgt de enquête: open, binnenkort open, of gesloten met een link naar de openbare resultaten."
+
+#: landing-core (#576)
+msgid "Add to page"
+msgstr "Toevoegen aan pagina"
+
+#: landing-core (#576)
+msgid "open"
+msgstr "open"
+
+#: landing-core (#576)
+#, python-format
+msgid "opens %(date)s"
+msgstr "opent op %(date)s"
+
+#: landing-core (#576)
+msgid "coming soon"
+msgstr "opent binnenkort"
+
+#: landing-core (#576)
+msgid "closed"
+msgstr "gesloten"
+
+#: landing-core (#576)
+msgid "results published"
+msgstr "resultaten gepubliceerd"
+
+#: landing-core (#576)
+msgid "not shown"
+msgstr "niet getoond"
+
+#: landing-core (#576)
+msgid "Under review"
+msgstr "In beoordeling"
+
+#: landing-core (#576)
+msgid "Published · unlisted"
+msgstr "Gepubliceerd · verborgen"
+
+#: landing-core (#576)
+msgid "Sites"
+msgstr "Sites"
+
+#: landing-core (#576)
+msgid "Open site"
+msgstr "Site openen"
+
+#: landing-core (#576)
+msgid "Sites are part of Pro. This workspace's plan has ended, so the site can't be edited; a published site stays online."
+msgstr "Sites horen bij Pro. Het abonnement van deze werkruimte is afgelopen, dus de site kan niet worden bewerkt; een gepubliceerde site blijft online."
+
+#: landing-core (#576)
+msgid "This site is waiting for a routine safety review and is not shown to visitors yet. You don't need to do anything."
+msgstr "Deze site wacht op een routinematige veiligheidscontrole en is nog niet zichtbaar voor bezoekers. Je hoeft niets te doen."
+
+#: landing-core (#576)
+msgid "Summary"
+msgstr "Samenvatting"
+
+#: landing-core (#576)
+msgid "One or two sentences under the title, also shown when the link is shared."
+msgstr "Eén of twee zinnen onder de titel, ook getoond wanneer de link wordt gedeeld."
+
+#: landing-core (#576)
+msgid "Cover picture"
+msgstr "Omslagfoto"
+
+#: landing-core (#576)
+msgid "Remove the picture"
+msgstr "Afbeelding verwijderen"
+
+#: landing-core (#576)
+msgid "Picture description"
+msgstr "Beschrijving van de afbeelding"
+
+#: landing-core (#576)
+msgid "Address"
+msgstr "Adres"
+
+#: landing-core (#576)
+msgid "Changing the address of a published site breaks links and QR codes already printed."
+msgstr "Als je het adres van een gepubliceerde site wijzigt, werken links en al gedrukte QR-codes niet meer."
+
+#: landing-core (#576)
+msgid "Site language"
+msgstr "Taal van de site"
+
+#: landing-core (#576)
+msgid "Public — search engines may list it"
+msgstr "Openbaar — zoekmachines mogen haar opnemen"
+
+#: landing-core (#576)
+msgid "Unlisted — only people with the link"
+msgstr "Verborgen — alleen mensen met de link"
+
+#: landing-core (#576)
+msgid "Surveys on this site"
+msgstr "Enquêtes op deze site"
+
+#: landing-core (#576)
+msgid "A survey can be on any number of sites. Show one with a Survey card block."
+msgstr "Een enquête kan op een willekeurig aantal sites staan. Toon haar met een blok Enquêtekaart."
+
+#: landing-core (#576)
+msgid "Remove from this site"
+msgstr "Van deze site verwijderen"
+
+#: landing-core (#576)
+msgid "No surveys yet."
+msgstr "Nog geen enquêtes."
+
+#: landing-core (#576)
+msgid "Download QR code (PNG)"
+msgstr "QR-code downloaden (PNG)"
+
+#: landing-core (#576)
+msgid "Delete this landing page? Its address stops working."
+msgstr "Deze projectpagina verwijderen? Het adres werkt dan niet meer."
+
+#: landing-core (#576)
+msgid "Delete site"
+msgstr "Site verwijderen"
+
+#: landing-core (#576)
+msgid "Delete this block?"
+msgstr "Dit blok verwijderen?"
+
+#: landing-core (#576)
+msgid "Delete block"
+msgstr "Blok verwijderen"
+
+#: landing-core (#576)
+msgid "No blocks yet. Add the first one: a few words about the project, a timeline, or a card for the survey."
+msgstr "Nog geen blokken. Voeg het eerste toe: een paar woorden over het project, een tijdlijn of een kaart voor de enquête."
+
+#: landing-core (#576)
+msgid "New block"
+msgstr "Nieuw blok"
+
+#: landing-core (#576)
+msgid "Phase, e.g. Online survey"
+msgstr "Fase, bijv. Online enquête"
+
+#: landing-core (#576)
+msgid "When, e.g. March 2027"
+msgstr "Wanneer, bijv. maart 2027"
+
+#: landing-core (#576)
+msgid "Now"
+msgstr "Nu"
+
+#: landing-core (#576)
+msgid "What happens in this phase (optional)"
+msgstr "Wat er in deze fase gebeurt (optioneel)"
+
+#: landing-core (#576)
+msgid "Waiting for a safety review — only your workspace sees this site."
+msgstr "Wacht op een veiligheidscontrole — alleen je werkruimte ziet deze site."
+
+#: landing-core (#576)
+msgid "Draft — only your workspace sees this."
+msgstr "Concept — alleen je werkruimte ziet dit."
+
+#: landing-core (#576)
+msgid "Back to the builder"
+msgstr "Terug naar de editor"
+
+#: landing-core (#576)
+msgid "On this page"
+msgstr "Op deze pagina"
+
+#: landing-core (#576)
+msgid "Never enter passwords or card numbers on this page."
+msgstr "Voer op deze pagina nooit wachtwoorden of kaartnummers in."
+
+#: landing-core (#576)
+msgid "Report this page"
+msgstr "Deze pagina melden"
+
+#: landing-core (#576)
+msgid "Page title, e.g. Riverside Park plan"
+msgstr "Paginatitel, bijv. Plan Rivierpark"
+
+#: landing-core (#576)
+msgid "New site"
+msgstr "Nieuwe site"
+
+#: landing-core (#576)
+msgid "Upgrade to Pro to create sites"
+msgstr "Upgrade naar Pro om sites te maken"
+
+#: landing-core (#576)
+msgid "One public page for an engagement: what the project is about, the timeline, the surveys residents can take part in, and what happens next. Put its address on flyers and QR codes; it stays the same from the first pilot to the final plan."
+msgstr "Eén openbare pagina voor een participatietraject: waar het project over gaat, de tijdlijn, de enquêtes waaraan bewoners kunnen meedoen en wat er daarna gebeurt. Zet het adres op flyers en QR-codes; het blijft gelijk van de eerste pilot tot het definitieve plan."
+
+#: landing-core (#576)
+msgid "No sites yet."
+msgstr "Nog geen sites."
+
+#: landing-core (#576)
+msgid "Video"
+msgstr "Video"
+
+#: landing-core (#576)
+#, python-format
+msgid "Opens %(date)s"
+msgstr "Opent op %(date)s"
+
+#: landing-core (#576)
+msgid "Take part"
+msgstr "Doe mee"
+
+#: landing-core (#576)
+msgid "Timeline"
+msgstr "Tijdlijn"
+
+#: landing-core (#576)
+msgid "Survey card"
+msgstr "Enquêtekaart"
+
+#: landing-core (#576)
+msgid "Button"
+msgstr "Knop"
+
+#: landing-core (#576)
+msgid "Text-based content"
+msgstr "Tekstinhoud"
+
+#: landing-core (#576)
+msgid "Media"
+msgstr "Media"
+
+#: landing-core (#576)
+msgid "Participation and links"
+msgstr "Deelname en links"
+
+#: landing-core (#576)
+msgid "Write some text."
+msgstr "Schrijf wat tekst."
+
+#: landing-core (#576)
+msgid "Give the button a label."
+msgstr "Geef de knop een tekst."
+
+#: landing-core (#576)
+msgid "Enter a full web address that starts with https://"
+msgstr "Voer een volledig webadres in dat begint met https://"
+
+#: landing-core (#576)
+msgid "Add at least one question."
+msgstr "Voeg minstens één vraag toe."
+
+#: landing-core (#576)
+msgid "Every answer needs its question."
+msgstr "Elk antwoord heeft een vraag nodig."
+
+#: landing-core (#576)
+msgid "Add at least one phase."
+msgstr "Voeg minstens één fase toe."
+
+#: landing-core (#576)
+msgid "Every phase needs a title."
+msgstr "Elke fase heeft een titel nodig."
+
+#: landing-core (#576)
+msgid "Unknown block type."
+msgstr "Onbekend bloktype."
+
+#: landing-core (#576)
+msgid "The picture is larger than 5 MB."
+msgstr "De afbeelding is groter dan 5 MB."
+
+#: landing-core (#576)
+msgid "Upload a JPEG, PNG, WebP or GIF picture."
+msgstr "Upload een JPEG-, PNG-, WebP- of GIF-afbeelding."
+
+#: landing-core (#576)
+msgid "Use 3–64 lowercase letters, digits and dashes."
+msgstr "Gebruik 3–64 kleine letters, cijfers en streepjes."
+
+#: landing-core (#576)
+msgid "This address is reserved. Pick another."
+msgstr "Dit adres is gereserveerd. Kies een ander."
+
+#: landing-core (#576)
+msgid "Another site already uses this address."
+msgstr "Een andere site gebruikt dit adres al."
+
+#: landing-core (#576)
+msgid "The survey is archived or in the trash."
+msgstr "De enquête is gearchiveerd of staat in de prullenbak."
+
+#: landing-core (#576)
+msgid "The survey is waiting for a safety review."
+msgstr "De enquête wacht op een veiligheidscontrole."
+
+#: landing-core (#576)
+msgid "Untitled site"
+msgstr "Naamloze site"
+
+#: landing-core (#576)
+msgid "Give the site a title."
+msgstr "Geef de site een titel."
+
+#: landing-core (#576)
+msgid "Site settings saved."
+msgstr "Site-instellingen opgeslagen."
+
+#: landing-core (#576)
+msgid "Choose a picture."
+msgstr "Kies een afbeelding."
+
+#: landing-core (#576)
+msgid "Pick one of this workspace’s surveys."
+msgstr "Kies een van de enquêtes van deze werkruimte."
+
+#: landing-core (#576)
+msgid "The site is unpublished. Its address shows “not available” now."
+msgstr "De site is niet meer gepubliceerd. Het adres toont nu ‘niet beschikbaar’."
+
+#: landing-core (#576)
+msgid "The site is published."
+msgstr "De site is gepubliceerd."
+
+#: landing-core (#576)
+#, python-format
+msgid "“%(title)s” is deleted."
+msgstr "‘%(title)s’ is verwijderd."
+
+#: landing-core (#576)
+msgid "Sites for your engagements"
+msgstr "Sites voor je participatietrajecten"
+
+#: landing-core (#576)
+#, python-format
+msgid "%(n)s phase"
+msgid_plural "%(n)s phases"
+msgstr[0] "%(n)s fase"
+msgstr[1] "%(n)s fases"
+
+#: landing-core (#576)
+#, python-format
+msgid "%(n)s survey"
+msgid_plural "%(n)s surveys"
+msgstr[0] "%(n)s enquête"
+msgstr[1] "%(n)s enquêtes"
+
+#: landing-core (#576)
+msgid "Open now"
+msgstr "Nu geopend"
+
+#: landing-documents-map (#577)
+msgid "File title"
+msgstr "Bestandstitel"
+
+#: landing-documents-map (#577)
+msgid "PDF, office documents, CSV or text; up to 25 MB each. You can rename them after adding."
+msgstr "PDF, Office-documenten, CSV of tekst; elk tot 25 MB. Je kunt ze na het toevoegen hernoemen."
+
+#: landing-documents-map (#577)
+msgid "A GeoJSON file with the project area: a boundary, a route or a few points. Up to 1 MB."
+msgstr "Een GeoJSON-bestand met het projectgebied: een grens, een route of een paar punten. Tot 1 MB."
+
+#: landing-documents-map (#577)
+msgid "Colour"
+msgstr "Kleur van de vormen"
+
+#: landing-documents-map (#577)
+msgid "Base map"
+msgstr "Achtergrondkaart"
+
+#: landing-documents-map (#577)
+msgid "Map of the project area"
+msgstr "Kaart van het projectgebied"
+
+#: landing-documents-map (#577)
+msgid "Documents"
+msgstr "Documenten"
+
+#: landing-documents-map (#577)
+msgid "Document"
+msgstr "Document"
+
+#: landing-documents-map (#577)
+msgid "Upload a GeoJSON file with the project area."
+msgstr "Upload een GeoJSON-bestand met het projectgebied."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s”: upload a PDF, an office document, CSV or plain text."
+msgstr "‘%(name)s’: upload een pdf, een Office-document, CSV of platte tekst."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s” is larger than 25 MB."
+msgstr "‘%(name)s’ is groter dan 25 MB."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s” is not a UTF-8 text file."
+msgstr "‘%(name)s’ is geen UTF-8-tekstbestand."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s” looks like a web page, not a document."
+msgstr "‘%(name)s’ lijkt een webpagina, geen document."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s” is not the kind of file its name says."
+msgstr "‘%(name)s’ is niet het soort bestand dat de naam aangeeft."
+
+#: landing-documents-map (#577)
+msgid "The GeoJSON file is larger than 1 MB."
+msgstr "Het GeoJSON-bestand is groter dan 1 MB."
+
+#: landing-documents-map (#577)
+msgid "This is not a GeoJSON file."
+msgstr "Dit is geen GeoJSON-bestand."
+
+#: landing-documents-map (#577)
+msgid "The file has more than 500 features."
+msgstr "Het bestand bevat meer dan 500 objecten."
+
+#: landing-documents-map (#577)
+msgid "A shape in the file is broken."
+msgstr "Een vorm in het bestand is beschadigd."
+
+#: landing-documents-map (#577)
+msgid "Coordinates must be longitude and latitude (WGS84)."
+msgstr "Coördinaten moeten lengte- en breedtegraad zijn (WGS84)."
+
+#: landing-documents-map (#577)
+msgid "A polygon in the file crosses itself."
+msgstr "Een polygoon in het bestand snijdt zichzelf."
+
+#: landing-documents-map (#577)
+msgid "The file has no points, lines or areas."
+msgstr "Het bestand bevat geen punten, lijnen of vlakken."
+
+#: landing-documents-map (#577)
+msgid "Add at least one file."
+msgstr "Voeg minstens één bestand toe."
+
+#: landing-documents-map (#577)
+msgid "A documents block holds at most 20 files."
+msgstr "Een documentenblok bevat maximaal 20 bestanden."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "%(n)s file"
+msgid_plural "%(n)s files"
+msgstr[0] "%(n)s bestand"
+msgstr[1] "%(n)s bestanden"
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "%(n)s shape"
+msgid_plural "%(n)s shapes"
+msgstr[0] "%(n)s vorm"
+msgstr[1] "%(n)s vormen"
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "%(n)s shape on the map. Upload a new file to replace it."
+msgid_plural "%(n)s shapes on the map. Upload a new file to replace them."
+msgstr[0] "%(n)s vorm op de kaart. Upload een nieuw bestand om haar te vervangen."
+msgstr[1] "%(n)s vormen op de kaart. Upload een nieuw bestand om ze te vervangen."
+
+#: landing-results (#578)
+msgid "the question was removed from the survey; the block is not shown"
+msgstr "de vraag is uit de enquête verwijderd; het blok wordt niet getoond"
+
+#: landing-results (#578)
+msgid "No survey of this workspace has a question whose answers can be shown as a chart or a map."
+msgstr "Geen enkele enquête in deze werkruimte heeft een vraag waarvan de antwoorden als grafiek of kaart kunnen worden getoond."
+
+#: landing-results (#578)
+msgid "Chart or map style"
+msgstr "Soort grafiek of kaart"
+
+#: landing-results (#578)
+msgid "Maps"
+msgstr "Kaartweergaven"
+
+#: landing-results (#578)
+msgid "Base map (maps)"
+msgstr "Achtergrondkaart (voor kaarten)"
+
+#: landing-results (#578)
+msgid "Answers are counted the same way as on the survey's public results page: small groups are masked, written answers are never shown."
+msgstr "Antwoorden worden geteld zoals op de openbare resultatenpagina van de enquête: kleine groepen worden verborgen, geschreven antwoorden worden nooit getoond."
+
+#: landing-results (#578)
+msgid "Pick a question whose answers can be shown as a chart or a map."
+msgstr "Kies een vraag waarvan de antwoorden als grafiek of kaart kunnen worden getoond."
+
+#: landing-results (#578)
+msgid "Bar chart"
+msgstr "Staafdiagram"
+
+#: landing-results (#578)
+msgid "Pie"
+msgstr "Taartdiagram"
+
+#: landing-results (#578)
+msgid "Donut"
+msgstr "Ringdiagram"
+
+#: landing-results (#578)
+msgid "Markers"
+msgstr "Markeringen"
+
+#: landing-results (#578)
+msgid "Heatmap"
+msgstr "Hittekaart"
+
+#: landing-results (#578)
+msgid "Clusters"
+msgstr "Clusters"
+
+#: landing-results (#578)
+#, python-format
+msgid "Based on %(n)s response."
+msgid_plural "Based on %(n)s responses."
+msgstr[0] "Op basis van %(n)s reactie."
+msgstr[1] "Op basis van %(n)s reacties."
+
+#: landing-events (#579)
+msgid "Date"
+msgstr "Datum"
+
+#: landing-events (#579)
+msgid "Starts"
+msgstr "Begint"
+
+#: landing-events (#579)
+msgid "Ends"
+msgstr "Eindigt"
+
+#: landing-events (#579)
+msgid "Time zone"
+msgstr "Tijdzone"
+
+#: landing-events (#579)
+msgid "Place, e.g. The boathouse, Riverside Park"
+msgstr "Plaats, bijv. Het botenhuis, Rivierpark"
+
+#: landing-events (#579)
+msgid "Map link to the place (optional)"
+msgstr "Kaartlink naar de plaats (optioneel)"
+
+#: landing-events (#579)
+msgid "What happens there (optional)"
+msgstr "Wat er gebeurt (optioneel)"
+
+#: landing-events (#579)
+msgid "Seats (empty = no limit)"
+msgstr "Plekken (leeg = geen limiet)"
+
+#: landing-events (#579)
+msgid "Registration open"
+msgstr "Aanmelden mogelijk"
+
+#: landing-events (#579)
+#, python-format
+msgid "%(n)s seats left"
+msgstr "Nog %(n)s plekken vrij"
+
+#: landing-events (#579)
+msgid "Attendee list"
+msgstr "Deelnemerslijst"
+
+#: landing-events (#579)
+msgid "Residents give their name and email. They get a confirmation with a calendar file; registrations are deleted 30 days after the event."
+msgstr "Bewoners geven hun naam en e-mailadres op. Ze krijgen een bevestiging met een agendabestand; aanmeldingen worden 30 dagen na het evenement verwijderd."
+
+#: landing-events (#579)
+msgid "Attendees"
+msgstr "Deelnemers"
+
+#: landing-events (#579)
+msgid "Event"
+msgstr "Evenement"
+
+#: landing-events (#579)
+msgid "Download CSV"
+msgstr "CSV downloaden"
+
+#: landing-events (#579)
+#, python-format
+msgid "Names and emails are deleted automatically %(days)s days after the event. Use them only for this event."
+msgstr "Namen en e-mailadressen worden %(days)s dagen na het evenement automatisch verwijderd. Gebruik ze alleen voor dit evenement."
+
+#: landing-events (#579)
+msgid "Registered"
+msgstr "Aangemeld"
+
+#: landing-events (#579)
+msgid "registered"
+msgstr "aangemeld"
+
+#: landing-events (#579)
+msgid "cancelled"
+msgstr "geannuleerd"
+
+#: landing-events (#579)
+msgid "Delete every registration of this event?"
+msgstr "Alle aanmeldingen voor dit evenement verwijderen?"
+
+#: landing-events (#579)
+msgid "Remove all"
+msgstr "Alles verwijderen"
+
+#: landing-events (#579)
+msgid "Nobody has registered yet."
+msgstr "Nog niemand heeft zich aangemeld."
+
+#: landing-events (#579)
+msgid "Cancel registration"
+msgstr "Aanmelding annuleren"
+
+#: landing-events (#579)
+msgid "Your registration is cancelled. Thank you for letting us know."
+msgstr "Je aanmelding is geannuleerd. Bedankt dat je het laat weten."
+
+#: landing-events (#579)
+#, python-format
+msgid "Cancel the registration of %(name)s?"
+msgstr "De aanmelding van %(name)s annuleren?"
+
+#: landing-events (#579)
+msgid "Cancel my registration"
+msgstr "Mijn aanmelding annuleren"
+
+#: landing-events (#579)
+msgid "Back to the project site"
+msgstr "Terug naar de projectsite"
+
+#: landing-events (#579)
+msgid "Thank you! Check your inbox: we sent a confirmation with a calendar file and a link to cancel."
+msgstr "Bedankt! Kijk in je inbox: we hebben een bevestiging gestuurd met een agendabestand en een link om te annuleren."
+
+#: landing-events (#579)
+msgid "Sorry, the event is full."
+msgstr "Sorry, het evenement is vol."
+
+#: landing-events (#579)
+msgid "Registration for this event is closed."
+msgstr "Aanmelden voor dit evenement is gesloten."
+
+#: landing-events (#579)
+msgid "Please tick the box to agree before registering."
+msgstr "Vink het vakje aan om akkoord te gaan voordat je je aanmeldt."
+
+#: landing-events (#579)
+msgid "Please enter a valid email address."
+msgstr "Voer een geldig e-mailadres in."
+
+#: landing-events (#579)
+msgid "Please enter your name."
+msgstr "Voer je naam in."
+
+#: landing-events (#579)
+msgid "Your name"
+msgstr "Je naam"
+
+#: landing-events (#579)
+#, python-format
+msgid "%(org)s uses your name and email only for this event. They are deleted %(days)s days after it."
+msgstr "%(org)s gebruikt je naam en e-mailadres alleen voor dit evenement. Ze worden %(days)s dagen daarna verwijderd."
+
+#: landing-events (#579)
+msgid "The event is full."
+msgstr "Het evenement is vol."
+
+#: landing-events (#579)
+#, python-format
+msgid "Hello %(name)s,"
+msgstr "Hallo %(name)s,"
+
+#: landing-events (#579)
+#, python-format
+msgid "you are registered for \"%(title)s\" by %(org)s."
+msgstr "je bent aangemeld voor ‘%(title)s’ van %(org)s."
+
+#: landing-events (#579)
+msgid "The attached calendar file adds the event to your calendar."
+msgstr "Met het bijgevoegde agendabestand zet je het evenement in je agenda."
+
+#: landing-events (#579)
+msgid "About the project"
+msgstr "Over het project"
+
+#: landing-events (#579)
+msgid "Can't come? Cancel your registration"
+msgstr "Kun je niet komen? Annuleer je aanmelding"
+
+#: landing-events (#579)
+#, python-format
+msgid "Your name and email are used only for this event and deleted %(days)s days after it."
+msgstr "Je naam en e-mailadres worden alleen voor dit evenement gebruikt en %(days)s dagen daarna verwijderd."
+
+#: landing-events (#579)
+msgid "About the project:"
+msgstr "Over het project:"
+
+#: landing-events (#579)
+msgid "Can't come? Cancel here:"
+msgstr "Kun je niet komen? Annuleer hier:"
+
+#: landing-events (#579)
+msgid "Pick the date of the event."
+msgstr "Kies de datum van het evenement."
+
+#: landing-events (#579)
+msgid "Enter the start time."
+msgstr "Voer de begintijd in."
+
+#: landing-events (#579)
+msgid "The end time must be after the start."
+msgstr "De eindtijd moet na de begintijd liggen."
+
+#: landing-events (#579)
+msgid "Pick a time zone from the list, e.g. Europe/Berlin."
+msgstr "Kies een tijdzone uit de lijst, bijv. Europe/Amsterdam."
+
+#: landing-events (#579)
+msgid "Seats must be a number from 1 to 10000, or empty for no limit."
+msgstr "Plekken moet een getal van 1 tot 10000 zijn, of leeg voor geen limiet."
+
+#: landing-events (#579)
+msgid "Too many registrations from this connection. Please try again later."
+msgstr "Te veel aanmeldingen vanaf deze verbinding. Probeer het later opnieuw."
+
+#: landing-events (#579)
+msgid "All registrations of this event are deleted."
+msgstr "Alle aanmeldingen voor dit evenement zijn verwijderd."
+
+#: landing-events (#579)
+#, python-format
+msgid "You're registered: %(title)s"
+msgstr "Je bent aangemeld: %(title)s"
+
+#: landing-events (#579)
+#, python-format
+msgid "%(n)s registered"
+msgid_plural "%(n)s registered"
+msgstr[0] "%(n)s aanmelding"
+msgstr[1] "%(n)s aanmeldingen"
+
+#: landing-events (#579)
+#, python-format
+msgid "%(n)s seat left"
+msgid_plural "%(n)s seats left"
+msgstr[0] "Nog %(n)s plek vrij"
+msgstr[1] "Nog %(n)s plekken vrij"
+
+#: landing-builder-redesign (#594)
+msgid "Write directly on the page. Select text for bold, italic, links and lists."
+msgstr "Schrijf direct op de pagina. Selecteer tekst voor vet, cursief, links en lijsten."
+
+#: landing-builder-redesign (#594)
+msgid "Link"
+msgstr "Link"
+
+#: landing-builder-redesign (#594)
+msgid "Pick a question…"
+msgstr "Kies een vraag…"
+
+#: landing-builder-redesign (#594)
+msgid "Place"
+msgstr "Plaats"
+
+#: landing-builder-redesign (#594)
+msgid "Pick a survey…"
+msgstr "Kies een enquête…"
+
+#: landing-builder-redesign (#594)
+msgid "Preview width"
+msgstr "Breedte van de voorbeeldweergave"
+
+#: landing-builder-redesign (#594)
+msgid "Desktop"
+msgstr "Desktop"
+
+#: landing-builder-redesign (#594)
+msgid "Phone"
+msgstr "Telefoon"
+
+#: landing-builder-redesign (#594)
+msgid "The site is live"
+msgstr "De site staat online"
+
+#: landing-builder-redesign (#594)
+msgid "Publish this site"
+msgstr "Deze site publiceren"
+
+#: landing-builder-redesign (#594)
+msgid "Residents open the site at this address. Change it before you print it."
+msgstr "Bewoners openen de site op dit adres. Wijzig het voordat je het drukt."
+
+#: landing-builder-redesign (#594)
+msgid "Listed by search engines"
+msgstr "Vindbaar via zoekmachines"
+
+#: landing-builder-redesign (#594)
+msgid "Off: only people with the link"
+msgstr "Uit: alleen mensen met de link"
+
+#: landing-builder-redesign (#594)
+msgid "For flyers and posters."
+msgstr "Voor flyers en posters."
+
+#: landing-builder-redesign (#594)
+msgid "Publish now"
+msgstr "Nu publiceren"
+
+#: landing-builder-redesign (#594)
+msgid "Blocks on the page"
+msgstr "Blokken op de pagina"
+
+#: landing-builder-redesign (#594)
+msgid "Blocks"
+msgstr "Blokken"
+
+#: landing-builder-redesign (#594)
+msgid "Title and cover"
+msgstr "Titel en omslag"
+
+#: landing-builder-redesign (#594)
+msgid "Add block here"
+msgstr "Hier een blok toevoegen"
+
+#: landing-builder-redesign (#594)
+msgid "Add block — text, timeline, survey card, results, event…"
+msgstr "Blok toevoegen — tekst, tijdlijn, enquêtekaart, resultaten, evenement…"
+
+#: landing-builder-redesign (#594)
+msgid "No blocks yet."
+msgstr "Nog geen blokken."
+
+#: landing-builder-redesign (#594)
+msgid "Could not save — check the settings on the right"
+msgstr "Opslaan mislukt — controleer de instellingen rechts"
+
+#: landing-builder-redesign (#594)
+msgid "Could not save — check your connection"
+msgstr "Opslaan mislukt — controleer je verbinding"
+
+#: landing-builder-redesign (#594)
+msgid "Title, cover and address"
+msgstr "Titel, omslag en adres"
+
+#: landing-builder-redesign (#594)
+msgid "Shown behind the title and when the link is shared."
+msgstr "Getoond achter de titel en wanneer de link wordt gedeeld."
+
+#: landing-builder-redesign (#594)
+msgid "Search blocks…"
+msgstr "Blokken zoeken…"
+
+#: landing-builder-redesign (#594)
+msgid "Search blocks"
+msgstr "Zoeken in blokken"
+
+#: landing-builder-redesign (#594)
+msgid "Block actions"
+msgstr "Blokacties"
+
+#: landing-builder-redesign (#594)
+msgid "Move up"
+msgstr "Omhoog"
+
+#: landing-builder-redesign (#594)
+msgid "Move down"
+msgstr "Omlaag"
+
+#: landing-builder-redesign (#594)
+msgid "Add a heading"
+msgstr "Kop toevoegen"
+
+#: landing-builder-redesign (#594)
+msgid "Headings also appear in the menu at the top of the page"
+msgstr "Koppen verschijnen ook in het menu boven aan de pagina"
+
+#: landing-builder-redesign (#594)
+msgid "Write something…"
+msgstr "Schrijf iets…"
+
+#: landing-builder-redesign (#594)
+msgid "Upload a picture in the settings on the right."
+msgstr "Upload een afbeelding in de instellingen rechts."
+
+#: landing-builder-redesign (#594)
+msgid "Paste a YouTube or Vimeo link in the settings on the right."
+msgstr "Plak een YouTube- of Vimeo-link in de instellingen rechts."
+
+#: landing-builder-redesign (#594)
+msgid "Set the label and the link in the settings on the right."
+msgstr "Stel de tekst en de link in bij de instellingen rechts."
+
+#: landing-builder-redesign (#594)
+msgid "Add questions and answers in the settings on the right."
+msgstr "Voeg vragen en antwoorden toe in de instellingen rechts."
+
+#: landing-builder-redesign (#594)
+msgid "Add the phases in the settings on the right."
+msgstr "Voeg de fases toe in de instellingen rechts."
+
+#: landing-builder-redesign (#594)
+msgid "Upload files in the settings on the right."
+msgstr "Upload bestanden in de instellingen rechts."
+
+#: landing-builder-redesign (#594)
+msgid "Upload a GeoJSON file with the project area in the settings on the right."
+msgstr "Upload een GeoJSON-bestand met het projectgebied in de instellingen rechts."
+
+#: landing-builder-redesign (#594)
+msgid "Pick a question in the settings on the right."
+msgstr "Kies een vraag in de instellingen rechts."
+
+#: landing-builder-redesign (#594)
+msgid "Set the date and time in the settings on the right."
+msgstr "Stel datum en tijd in bij de instellingen rechts."
+
+#: landing-builder-redesign (#594)
+msgid "Pick a survey in the settings on the right."
+msgstr "Kies een enquête in de instellingen rechts."
+
+#: landing-builder-redesign (#594)
+msgid "One or two sentences: what the project is and what you ask residents"
+msgstr "Eén of twee zinnen: waar het project over gaat en wat je bewoners vraagt"
+
+#: landing-builder-redesign (#594)
+msgid "Change the cover picture"
+msgstr "Omslagfoto wijzigen"
+
+#: landing-builder-redesign (#594)
+msgid "Add a cover picture"
+msgstr "Omslagfoto toevoegen"
+
+#: landing-builder-redesign (#594)
+msgid "Tell the story"
+msgstr "Vertel het verhaal"
+
+#: landing-builder-redesign (#594)
+msgid "Purpose, background, what happens next"
+msgstr "Doel, achtergrond, wat er daarna gebeurt"
+
+#: landing-builder-redesign (#594)
+msgid "Phases with dates; mark the one you are in"
+msgstr "Fases met data; markeer de huidige"
+
+#: landing-builder-redesign (#594)
+msgid "Questions residents keep asking"
+msgstr "Vragen die bewoners vaak stellen"
+
+#: landing-builder-redesign (#594)
+msgid "A photo or a plan drawing with a caption"
+msgstr "Een foto of plantekening met bijschrift"
+
+#: landing-builder-redesign (#594)
+msgid "YouTube or Vimeo"
+msgstr "YouTube of Vimeo"
+
+#: landing-builder-redesign (#594)
+msgid "The project area from a GeoJSON file"
+msgstr "Het projectgebied uit een GeoJSON-bestand"
+
+#: landing-builder-redesign (#594)
+msgid "One of your surveys; follows its status"
+msgstr "Een van je enquêtes; volgt de status"
+
+#: landing-builder-redesign (#594)
+msgid "Open house or walk, with registration"
+msgstr "Inloopavond of wandeling, met aanmelding"
+
+#: landing-builder-redesign (#594)
+msgid "A link to anything else"
+msgstr "Een link naar iets anders"
+
+#: landing-builder-redesign (#594)
+msgid "Show the work"
+msgstr "Laat het werk zien"
+
+#: landing-builder-redesign (#594)
+msgid "A chart or a map from a survey's answers"
+msgstr "Een grafiek of kaart van de antwoorden op een enquête"
+
+#: landing-builder-redesign (#594)
+msgid "Summaries, boards, the draft plan"
+msgstr "Samenvattingen, panelen, het conceptplan"
+
+#: landing-builder-redesign (#594)
+msgid "The survey is a draft: the card shows “Coming soon” until you publish it."
+msgstr "De enquête is een concept: de kaart toont ‘Binnenkort’ tot je haar publiceert."
+
+#: landing-builder-redesign (#594)
+msgid "The question was removed from the survey; the block is not shown."
+msgstr "De vraag is uit de enquête verwijderd; het blok wordt niet getoond."
+
+#: landing-builder-redesign (#594)
+msgid "Not shown on the page until it is filled in."
+msgstr "Wordt pas op de pagina getoond als het is ingevuld."
+
+#: landing-builder-redesign (#594)
+#, python-format
+msgid "Remove %(name)s?"
+msgstr "%(name)s verwijderen?"
+
+#: landing-builder-redesign (#594)
+msgid "Names and emails are deleted now. The registrants get no message."
+msgstr "Namen en e-mailadressen worden nu verwijderd. De aangemelden krijgen geen bericht."
+
+#: landing-builder-redesign (#594)
+#, python-format
+msgid "Delete “%(title)s”?"
+msgstr "‘%(title)s’ verwijderen?"
+
+#: landing-builder-redesign (#594)
+msgid "Its address stops working, and links and QR codes already printed lead nowhere."
+msgstr "Het adres werkt dan niet meer, en links en al gedrukte QR-codes leiden nergens meer heen."
+
+#: landing-builder-redesign (#594)
+msgid "Blocks, files and event registrations are deleted with it. Your surveys stay."
+msgstr "Blokken, bestanden en aanmeldingen voor evenementen worden mee verwijderd. Je enquêtes blijven bestaan."
+
+#: landing-builder-redesign (#594)
+msgid "The block and everyone registered for the event are removed from the page. This cannot be undone."
+msgstr "Het blok en alle aanmeldingen voor het evenement worden van de pagina verwijderd. Dit kan niet ongedaan worden gemaakt."
+
+#: landing-builder-redesign (#594)
+msgid "The block and its files are removed from the page. This cannot be undone."
+msgstr "Het blok en de bestanden worden van de pagina verwijderd. Dit kan niet ongedaan worden gemaakt."
+
+#: landing-builder-redesign (#594)
+msgid "The block is removed from the page. This cannot be undone."
+msgstr "Het blok wordt van de pagina verwijderd. Dit kan niet ongedaan worden gemaakt."
+
+#: landing-builder-redesign (#594)
+msgid "Write directly on the page; the toolbar above the text sets headings, bold, lists, links and alignment."
+msgstr "Schrijf direct op de pagina; de werkbalk boven de tekst regelt koppen, vet, lijsten, links en uitlijning."
+
+#: landing-builder-redesign (#594)
+msgid "Applies to the whole site"
+msgstr "Geldt voor de hele site"
+
+#: landing-builder-redesign (#594)
+msgid "Shown behind the title and when the link is shared. JPEG, PNG, WebP or GIF, up to 5 MB."
+msgstr "Getoond achter de titel en wanneer de link wordt gedeeld. JPEG, PNG, WebP of GIF, tot 5 MB."
+
+#: landing-builder-redesign (#594)
+msgid "Address and language"
+msgstr "Adres en taal"
+
+#: landing-builder-redesign (#594)
+msgid "Lowercase letters, digits and dashes. Settle it before you print it."
+msgstr "Kleine letters, cijfers en streepjes. Leg het vast voordat je het drukt."
+
+#: landing-builder-redesign (#594)
+msgid "The language of the site's buttons and labels."
+msgstr "De taal van de knoppen en labels van de site."
+
+#: landing-builder-redesign (#594)
+msgid "Settings of this block"
+msgstr "Instellingen van dit blok"
+
+#: landing-inline-editing
+msgid "A boundary, a route or a few points; up to 1 MB"
+msgstr "Een grens, een route of een paar punten; tot 1 MB"
+
+#: landing-inline-editing
+msgid "Drop a GeoJSON file with the project area"
+msgstr "Sleep een GeoJSON-bestand met het projectgebied hierheen"
+
+#: landing-inline-editing
+msgid "Drop a picture here"
+msgstr "Sleep een afbeelding hierheen"
+
+#: landing-inline-editing
+msgid "Drop files here"
+msgstr "Sleep bestanden hierheen"
+
+#: landing-inline-editing
+msgid "choose a file"
+msgstr "kies een bestand"
+
+#: landing-inline-editing
+msgid "Edit this in the block on the page."
+msgstr "Bewerk dit in het blok op de pagina."
+
+#: landing-inline-editing
+msgid "JPEG, PNG, WebP or GIF, up to 5 MB"
+msgstr "JPEG, PNG, WebP of GIF, tot 5 MB"
+
+#: landing-inline-editing
+msgid "PDF, office documents, CSV or text; up to 25 MB each"
+msgstr "PDF, Office-documenten, CSV of tekst; elk tot 25 MB"
+
+#: landing-inline-editing
+msgid "Not filled in yet."
+msgstr "Nog niet ingevuld."
+
+#: landing-inline-editing
+msgid "Paste a YouTube or Vimeo link"
+msgstr "Plak een YouTube- of Vimeo-link"
+
+#: landing-inline-editing
+msgid "Phase"
+msgstr "Fase"
+
+#: landing-inline-editing
+msgid "When"
+msgstr "Wanneer"
+
+#: landing-inline-editing
+msgid "The project is in this phase now"
+msgstr "Het project zit nu in deze fase"
+
+#: landing-inline-editing
+msgid "Replace picture"
+msgstr "Afbeelding vervangen"
+
+#: landing-inline-editing
+msgid "Replace area"
+msgstr "Gebied vervangen"
+
+#: landing-inline-editing
+msgid "Shown behind the title and when the link is shared. Add, change or remove it on the page."
+msgstr "Getoond achter de titel en wanneer de link wordt gedeeld. Voeg haar toe, wijzig of verwijder haar op de pagina."
+
+#. rename-landings-to-sites
+msgid "Site settings"
+msgstr "Site-instellingen"
+
+#. rename-landings-to-sites
+#| msgid "Search address..."
+msgid "Site address"
+msgstr "Adres van de site"
+
+#. rename-landings-to-sites
+msgid "Site title"
+msgstr "Titel van de site"
+
+#: site-heading-block
+msgid "Heading"
+msgstr "Kop"
+
+#: site-heading-block
+msgid "Normal text"
+msgstr "Normale tekst"
+
+#: site-heading-block
+msgid "Leave it empty for a block without a heading. A heading can also be a link in the menu at the top."
+msgstr "Laat leeg voor een blok zonder kop. Een kop kan ook een link in het menu bovenaan zijn."
+
+#: site-heading-block
+msgid "Show the heading in the menu at the top"
+msgstr "Kop tonen in het menu bovenaan"
+
+#: site-heading-block
+msgid "Size"
+msgstr "Grootte"
+
+#: site-heading-block
+msgid "Type the heading on the page. Large and medium are section headings; small is a subheading."
+msgstr "Typ de kop op de pagina. Groot en middel zijn sectiekoppen; klein is een ondertitel."
+
+#: site-heading-block
+msgid "A section title on its own, in one of three sizes"
+msgstr "Een losse sectietitel in een van drie formaten"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Large"
+msgstr "Groot"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Medium"
+msgstr "Middel"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Small"
+msgstr "Klein"
+
+#: sites-wave-a
+msgid "Add the people in the block on the page."
+msgstr "Voeg de personen toe in het blok op de pagina."
+
+#: sites-wave-a
+msgid "Planning office, Town hall, 1 Market Square"
+msgstr "Afdeling Ruimtelijke Ordening, Stadhuis, Marktplein 1"
+
+#: sites-wave-a
+msgid "Opening hours"
+msgstr "Openingstijden"
+
+#: sites-wave-a
+msgid "Mon–Thu 9:00–16:00"
+msgstr "Ma–do 9:00–16:00"
+
+#: sites-wave-a
+msgid "Full width — from edge to edge of the page"
+msgstr "Volle breedte — van rand tot rand van de pagina"
+
+#: sites-wave-a
+#, python-format
+msgid "%(n)s thing to check for accessibility"
+msgid_plural "%(n)s things to check for accessibility"
+msgstr[0] "%(n)s toegankelijkheidspunt om na te kijken"
+msgstr[1] "%(n)s toegankelijkheidspunten om na te kijken"
+
+#: sites-wave-a
+msgid "Residents using a screen reader or a keyboard trip over these. Publishing is not blocked."
+msgstr "Bewoners met een schermlezer of alleen een toetsenbord lopen hierop vast. Publiceren wordt niet geblokkeerd."
+
+#: sites-wave-a
+msgid "Share for review"
+msgstr "Delen ter beoordeling"
+
+#: sites-wave-a
+msgid "Anyone with this link sees the draft read-only for 14 days — no account needed. New link stops the old one."
+msgstr "Iedereen met deze link ziet het concept 14 dagen alleen-lezen — zonder account. ‘Nieuwe link’ maakt de oude ongeldig."
+
+#: sites-wave-a
+msgid "Review link"
+msgstr "Beoordelingslink"
+
+#: sites-wave-a
+msgid "New link"
+msgstr "Nieuwe link"
+
+#: sites-wave-a
+msgid "Skip to content"
+msgstr "Naar de inhoud"
+
+#: sites-wave-a
+msgid "Shared for review — this site is not public yet."
+msgstr "Gedeeld ter beoordeling — deze site is nog niet openbaar."
+
+#: sites-wave-a
+#, python-format
+msgid "Duplicate “%(title)s”"
+msgstr "‘%(title)s’ dupliceren"
+
+#: sites-wave-a
+msgid "Role, e.g. Project lead"
+msgstr "Rol, bijv. Projectleider"
+
+#: sites-wave-a
+msgid "Add a person"
+msgstr "Persoon toevoegen"
+
+#: sites-wave-a
+msgid "Page width"
+msgstr "Paginabreedte"
+
+#: sites-wave-a
+msgid "How wide the column of text and blocks is on a computer. Pictures, maps and videos can also go full width in their own settings."
+msgstr "Hoe breed de kolom met tekst en blokken op een computer is. Afbeeldingen, kaarten en video’s kunnen in hun eigen instellingen ook de volle breedte krijgen."
+
+#: sites-wave-a
+msgid "Duplicate site"
+msgstr "Site dupliceren"
+
+#: sites-wave-a
+msgid "Registration opens when the site is published."
+msgstr "Aanmelden kan zodra de site is gepubliceerd."
+
+#: sites-wave-a
+msgid "Contacts"
+msgstr "Contactpersonen"
+
+#: sites-wave-a
+msgid "Who runs the project and how to reach them"
+msgstr "Wie het project leidt en hoe je ze bereikt"
+
+#: sites-wave-a
+#, python-format
+msgid "“%(email)s” is not an e-mail address."
+msgstr "‘%(email)s’ is geen e-mailadres."
+
+#: sites-wave-a
+msgid "The cover picture has no description for screen readers."
+msgstr "De omslagfoto heeft geen beschrijving voor schermlezers."
+
+#: sites-wave-a
+msgid "The picture has no description for screen readers."
+msgstr "De afbeelding heeft geen beschrijving voor schermlezers."
+
+#: sites-wave-a
+msgid "A small heading comes before any large or medium one: screen readers announce it as a subsection of nothing. Make it medium, or add a heading above."
+msgstr "Een kleine kop staat vóór elke grote of middelgrote: schermlezers melden hem als onderdeel van niets. Maak hem middel of zet er een kop boven."
+
+#: sites-wave-a
+msgid "A link says only “here” or “more”. Name where it leads, e.g. “the draft plan (PDF)”."
+msgstr "Een link zegt alleen ‘hier’ of ‘meer’. Zeg waar hij heen gaat, bijv. ‘het conceptplan (pdf)’."
+
+#: sites-wave-a
+msgid "The button says only “here” or “more”. Name where it leads."
+msgstr "De knop zegt alleen ‘hier’ of ‘meer’. Zeg waar hij heen gaat."
+
+#: sites-wave-a
+#, python-format
+msgid "%(title)s (copy)"
+msgstr "%(title)s (kopie)"
+
+#: sites-wave-a
+#, python-format
+msgid "This is a copy of “%(title)s”. It is not published."
+msgstr "Dit is een kopie van ‘%(title)s’. Hij is niet gepubliceerd."
+
+#: sites-wave-a
+msgctxt "site width"
+msgid "Narrow"
+msgstr "Smal"
+
+#: sites-wave-a
+msgctxt "site width"
+msgid "Standard"
+msgstr "Normaal"
+
+#: sites-wave-a
+msgctxt "site width"
+msgid "Wide"
+msgstr "Breed"
+
+#: sites-wave-a
+msgid "Standard"
+msgstr "Normaal"
+
+#: sites-wave-a
+msgid "Wide"
+msgstr "Breed"
+
+#: sites-wave-a
+msgctxt "contact"
+msgid "Phone"
+msgstr "Telefoon"
+
+#: sites-wave-a
+msgctxt "person"
+msgid "Name"
+msgstr "Naam"
+
+#: sites-wave-a
+msgctxt "action"
+msgid "Duplicate"
+msgstr "Dupliceren"

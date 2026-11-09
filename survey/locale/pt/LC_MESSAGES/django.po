@@ -6362,7 +6362,7 @@ msgstr ""
 
 #: survey/templates/metroquest_alternative.html:95
 msgid "Status"
-msgstr ""
+msgstr "Estado"
 
 #: survey/templates/metroquest_alternative.html:95
 msgid "Active, open source"
@@ -10759,3 +10759,1409 @@ msgstr "Procurar um mapa base"
 #: map-styles-basemap-picker
 msgid "The base maps respondents can switch between. They open on the default below."
 msgstr "Os mapas base entre os quais os participantes podem alternar. Abrem no predefinido abaixo."
+
+#: landing-core (#576)
+msgid "Heading (optional)"
+msgstr "Título (opcional)"
+
+#: landing-core (#576)
+msgid "Shown above the block and in the page menu"
+msgstr "Mostrado acima do bloco e no menu da página"
+
+#: landing-core (#576)
+msgid "Describe the picture for screen readers"
+msgstr "Descreva a imagem para leitores de ecrã"
+
+#: landing-core (#576)
+msgid "Label, e.g. Read the draft plan"
+msgstr "Texto, p. ex. Ler a proposta de plano"
+
+#: landing-core (#576)
+msgid "Filled"
+msgstr "Preenchido"
+
+#: landing-core (#576)
+msgid "Outline"
+msgstr "Contorno"
+
+#: landing-core (#576)
+msgid "YouTube or Vimeo link"
+msgstr "Link do YouTube ou Vimeo"
+
+#: landing-core (#576)
+msgid "Add a question"
+msgstr "Adicionar uma pergunta"
+
+#: landing-core (#576)
+msgid "Phases in order. Tick the phase the project is in now; earlier phases show as done."
+msgstr "Fases por ordem. Marque a fase em que o projeto está agora; as anteriores aparecem como concluídas."
+
+#: landing-core (#576)
+msgid "Add a phase"
+msgstr "Adicionar uma fase"
+
+#: landing-core (#576)
+msgid "This workspace has no survey to show yet."
+msgstr "Este espaço de trabalho ainda não tem nenhum inquérito para mostrar."
+
+#: landing-core (#576)
+msgid "What residents are asked, how long it takes (optional)"
+msgstr "O que se pergunta aos moradores e quanto tempo demora (opcional)"
+
+#: landing-core (#576)
+msgid "Button label (default: Take part)"
+msgstr "Texto do botão (predefinição: Participar)"
+
+#: landing-core (#576)
+msgid "The card follows the survey: open, opening soon, or closed with a link to its public results."
+msgstr "O cartão acompanha o inquérito: aberto, a abrir em breve ou fechado com uma ligação para os resultados públicos."
+
+#: landing-core (#576)
+msgid "Add to page"
+msgstr "Adicionar à página"
+
+#: landing-core (#576)
+msgid "open"
+msgstr "aberto"
+
+#: landing-core (#576)
+#, python-format
+msgid "opens %(date)s"
+msgstr "abre a %(date)s"
+
+#: landing-core (#576)
+msgid "coming soon"
+msgstr "abre em breve"
+
+#: landing-core (#576)
+msgid "closed"
+msgstr "fechado"
+
+#: landing-core (#576)
+msgid "results published"
+msgstr "resultados publicados"
+
+#: landing-core (#576)
+msgid "not shown"
+msgstr "não é mostrado"
+
+#: landing-core (#576)
+msgid "Under review"
+msgstr "Em revisão"
+
+#: landing-core (#576)
+msgid "Published · unlisted"
+msgstr "Publicada · não listada"
+
+#: landing-core (#576)
+msgid "Sites"
+msgstr "Sites"
+
+#: landing-core (#576)
+msgid "Open site"
+msgstr "Abrir o site"
+
+#: landing-core (#576)
+msgid "Sites are part of Pro. This workspace's plan has ended, so the site can't be edited; a published site stays online."
+msgstr "Os sites fazem parte do Pro. O plano deste espaço de trabalho terminou, por isso o site não pode ser editado; um site publicado continua online."
+
+#: landing-core (#576)
+msgid "This site is waiting for a routine safety review and is not shown to visitors yet. You don't need to do anything."
+msgstr "Este site aguarda uma verificação de segurança de rotina e ainda não é mostrado aos visitantes. Não precisa de fazer nada."
+
+#: landing-core (#576)
+msgid "Summary"
+msgstr "Descrição breve"
+
+#: landing-core (#576)
+msgid "One or two sentences under the title, also shown when the link is shared."
+msgstr "Uma ou duas frases por baixo do título, também mostradas quando a ligação é partilhada."
+
+#: landing-core (#576)
+msgid "Cover picture"
+msgstr "Fotografia de capa"
+
+#: landing-core (#576)
+msgid "Remove the picture"
+msgstr "Remover a imagem"
+
+#: landing-core (#576)
+msgid "Picture description"
+msgstr "Descrição da imagem"
+
+#: landing-core (#576)
+msgid "Address"
+msgstr "Endereço"
+
+#: landing-core (#576)
+msgid "Changing the address of a published site breaks links and QR codes already printed."
+msgstr "Alterar o endereço de um site publicado invalida as ligações e os códigos QR já impressos."
+
+#: landing-core (#576)
+msgid "Site language"
+msgstr "Idioma do site"
+
+#: landing-core (#576)
+msgid "Public — search engines may list it"
+msgstr "Pública — os motores de pesquisa podem indexá-la"
+
+#: landing-core (#576)
+msgid "Unlisted — only people with the link"
+msgstr "Não listada — apenas quem tiver a ligação"
+
+#: landing-core (#576)
+msgid "Surveys on this site"
+msgstr "Inquéritos neste site"
+
+#: landing-core (#576)
+msgid "A survey can be on any number of sites. Show one with a Survey card block."
+msgstr "Um inquérito pode estar em quantos sites quiser. Mostre-o com um bloco «Cartão do inquérito»."
+
+#: landing-core (#576)
+msgid "Remove from this site"
+msgstr "Remover deste site"
+
+#: landing-core (#576)
+msgid "No surveys yet."
+msgstr "Ainda não há inquéritos."
+
+#: landing-core (#576)
+msgid "Download QR code (PNG)"
+msgstr "Descarregar o código QR (PNG)"
+
+#: landing-core (#576)
+msgid "Delete this landing page? Its address stops working."
+msgstr "Eliminar esta página de projeto? O endereço deixará de funcionar."
+
+#: landing-core (#576)
+msgid "Delete site"
+msgstr "Eliminar o site"
+
+#: landing-core (#576)
+msgid "Delete this block?"
+msgstr "Eliminar este bloco?"
+
+#: landing-core (#576)
+msgid "Delete block"
+msgstr "Eliminar o bloco"
+
+#: landing-core (#576)
+msgid "No blocks yet. Add the first one: a few words about the project, a timeline, or a card for the survey."
+msgstr "Ainda não há blocos. Adicione o primeiro: algumas palavras sobre o projeto, um calendário ou um cartão para o inquérito."
+
+#: landing-core (#576)
+msgid "New block"
+msgstr "Novo bloco"
+
+#: landing-core (#576)
+msgid "Phase, e.g. Online survey"
+msgstr "Fase, p. ex. Inquérito online"
+
+#: landing-core (#576)
+msgid "When, e.g. March 2027"
+msgstr "Quando, p. ex. março de 2027"
+
+#: landing-core (#576)
+msgid "Now"
+msgstr "Agora"
+
+#: landing-core (#576)
+msgid "What happens in this phase (optional)"
+msgstr "O que acontece nesta fase (opcional)"
+
+#: landing-core (#576)
+msgid "Waiting for a safety review — only your workspace sees this site."
+msgstr "A aguardar verificação de segurança — só o seu espaço de trabalho vê este site."
+
+#: landing-core (#576)
+msgid "Draft — only your workspace sees this."
+msgstr "Rascunho — só o seu espaço de trabalho o vê."
+
+#: landing-core (#576)
+msgid "Back to the builder"
+msgstr "Voltar ao editor"
+
+#: landing-core (#576)
+msgid "On this page"
+msgstr "Nesta página"
+
+#: landing-core (#576)
+msgid "Never enter passwords or card numbers on this page."
+msgstr "Nunca introduza palavras-passe ou números de cartão nesta página."
+
+#: landing-core (#576)
+msgid "Report this page"
+msgstr "Denunciar esta página"
+
+#: landing-core (#576)
+msgid "Page title, e.g. Riverside Park plan"
+msgstr "Título da página, p. ex. Plano do Parque Ribeirinho"
+
+#: landing-core (#576)
+msgid "New site"
+msgstr "Novo site"
+
+#: landing-core (#576)
+msgid "Upgrade to Pro to create sites"
+msgstr "Mude para Pro para criar sites"
+
+#: landing-core (#576)
+msgid "One public page for an engagement: what the project is about, the timeline, the surveys residents can take part in, and what happens next. Put its address on flyers and QR codes; it stays the same from the first pilot to the final plan."
+msgstr "Uma página pública para um processo participativo: do que trata o projeto, o calendário, os inquéritos em que os moradores podem participar e o que acontece a seguir. Coloque o endereço em folhetos e códigos QR; mantém-se igual do primeiro piloto ao plano final."
+
+#: landing-core (#576)
+msgid "No sites yet."
+msgstr "Ainda não há sites."
+
+#: landing-core (#576)
+msgid "Video"
+msgstr "Vídeo"
+
+#: landing-core (#576)
+#, python-format
+msgid "Opens %(date)s"
+msgstr "Abre a %(date)s"
+
+#: landing-core (#576)
+msgid "Take part"
+msgstr "Participar"
+
+#: landing-core (#576)
+msgid "Timeline"
+msgstr "Calendário"
+
+#: landing-core (#576)
+msgid "Survey card"
+msgstr "Cartão do inquérito"
+
+#: landing-core (#576)
+msgid "Button"
+msgstr "Botão"
+
+#: landing-core (#576)
+msgid "Text-based content"
+msgstr "Conteúdo de texto"
+
+#: landing-core (#576)
+msgid "Media"
+msgstr "Multimédia"
+
+#: landing-core (#576)
+msgid "Participation and links"
+msgstr "Participação e ligações"
+
+#: landing-core (#576)
+msgid "Write some text."
+msgstr "Escreva algum texto."
+
+#: landing-core (#576)
+msgid "Give the button a label."
+msgstr "Dê um texto ao botão."
+
+#: landing-core (#576)
+msgid "Enter a full web address that starts with https://"
+msgstr "Introduza um endereço web completo que comece por https://"
+
+#: landing-core (#576)
+msgid "Add at least one question."
+msgstr "Adicione pelo menos uma pergunta."
+
+#: landing-core (#576)
+msgid "Every answer needs its question."
+msgstr "Cada resposta precisa da sua pergunta."
+
+#: landing-core (#576)
+msgid "Add at least one phase."
+msgstr "Adicione pelo menos uma fase."
+
+#: landing-core (#576)
+msgid "Every phase needs a title."
+msgstr "Cada fase precisa de um título."
+
+#: landing-core (#576)
+msgid "Unknown block type."
+msgstr "Tipo de bloco desconhecido."
+
+#: landing-core (#576)
+msgid "The picture is larger than 5 MB."
+msgstr "A imagem tem mais de 5 MB."
+
+#: landing-core (#576)
+msgid "Upload a JPEG, PNG, WebP or GIF picture."
+msgstr "Carregue uma imagem JPEG, PNG, WebP ou GIF."
+
+#: landing-core (#576)
+msgid "Use 3–64 lowercase letters, digits and dashes."
+msgstr "Use 3 a 64 letras minúsculas, algarismos e hífenes."
+
+#: landing-core (#576)
+msgid "This address is reserved. Pick another."
+msgstr "Este endereço está reservado. Escolha outro."
+
+#: landing-core (#576)
+msgid "Another site already uses this address."
+msgstr "Outro site já usa este endereço."
+
+#: landing-core (#576)
+msgid "The survey is archived or in the trash."
+msgstr "O inquérito está arquivado ou no lixo."
+
+#: landing-core (#576)
+msgid "The survey is waiting for a safety review."
+msgstr "O inquérito aguarda uma verificação de segurança."
+
+#: landing-core (#576)
+msgid "Untitled site"
+msgstr "Site sem título"
+
+#: landing-core (#576)
+msgid "Give the site a title."
+msgstr "Dê um título ao site."
+
+#: landing-core (#576)
+msgid "Site settings saved."
+msgstr "Definições do site guardadas."
+
+#: landing-core (#576)
+msgid "Choose a picture."
+msgstr "Escolha uma imagem."
+
+#: landing-core (#576)
+msgid "Pick one of this workspace’s surveys."
+msgstr "Escolha um dos inquéritos deste espaço de trabalho."
+
+#: landing-core (#576)
+msgid "The site is unpublished. Its address shows “not available” now."
+msgstr "O site deixou de estar publicado. O endereço mostra agora «indisponível»."
+
+#: landing-core (#576)
+msgid "The site is published."
+msgstr "O site está publicado."
+
+#: landing-core (#576)
+#, python-format
+msgid "“%(title)s” is deleted."
+msgstr "«%(title)s» foi eliminada."
+
+#: landing-core (#576)
+msgid "Sites for your engagements"
+msgstr "Sites para os seus processos participativos"
+
+#: landing-core (#576)
+#, python-format
+msgid "%(n)s phase"
+msgid_plural "%(n)s phases"
+msgstr[0] "%(n)s fase"
+msgstr[1] "%(n)s fases"
+
+#: landing-core (#576)
+#, python-format
+msgid "%(n)s survey"
+msgid_plural "%(n)s surveys"
+msgstr[0] "%(n)s inquérito"
+msgstr[1] "%(n)s inquéritos"
+
+#: landing-core (#576)
+msgid "Open now"
+msgstr "Aberto agora"
+
+#: landing-documents-map (#577)
+msgid "File title"
+msgstr "Título do ficheiro"
+
+#: landing-documents-map (#577)
+msgid "PDF, office documents, CSV or text; up to 25 MB each. You can rename them after adding."
+msgstr "PDF, documentos de escritório, CSV ou texto; até 25 MB cada. Pode mudar-lhes o nome depois de os adicionar."
+
+#: landing-documents-map (#577)
+msgid "A GeoJSON file with the project area: a boundary, a route or a few points. Up to 1 MB."
+msgstr "Um ficheiro GeoJSON com a área do projeto: um limite, um percurso ou alguns pontos. Até 1 MB."
+
+#: landing-documents-map (#577)
+msgid "Colour"
+msgstr "Cor das formas"
+
+#: landing-documents-map (#577)
+msgid "Base map"
+msgstr "Mapa base"
+
+#: landing-documents-map (#577)
+msgid "Map of the project area"
+msgstr "Mapa da área do projeto"
+
+#: landing-documents-map (#577)
+msgid "Documents"
+msgstr "Documentos"
+
+#: landing-documents-map (#577)
+msgid "Document"
+msgstr "Documento"
+
+#: landing-documents-map (#577)
+msgid "Upload a GeoJSON file with the project area."
+msgstr "Carregue um ficheiro GeoJSON com a área do projeto."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s”: upload a PDF, an office document, CSV or plain text."
+msgstr "«%(name)s»: carregue um PDF, um documento de escritório, CSV ou texto simples."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s” is larger than 25 MB."
+msgstr "«%(name)s» tem mais de 25 MB."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s” is not a UTF-8 text file."
+msgstr "«%(name)s» não é um ficheiro de texto UTF-8."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s” looks like a web page, not a document."
+msgstr "«%(name)s» parece uma página web, não um documento."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "“%(name)s” is not the kind of file its name says."
+msgstr "«%(name)s» não é o tipo de ficheiro que o nome indica."
+
+#: landing-documents-map (#577)
+msgid "The GeoJSON file is larger than 1 MB."
+msgstr "O ficheiro GeoJSON tem mais de 1 MB."
+
+#: landing-documents-map (#577)
+msgid "This is not a GeoJSON file."
+msgstr "Isto não é um ficheiro GeoJSON."
+
+#: landing-documents-map (#577)
+msgid "The file has more than 500 features."
+msgstr "O ficheiro tem mais de 500 elementos."
+
+#: landing-documents-map (#577)
+msgid "A shape in the file is broken."
+msgstr "Uma forma do ficheiro está danificada."
+
+#: landing-documents-map (#577)
+msgid "Coordinates must be longitude and latitude (WGS84)."
+msgstr "As coordenadas têm de ser longitude e latitude (WGS84)."
+
+#: landing-documents-map (#577)
+msgid "A polygon in the file crosses itself."
+msgstr "Um polígono do ficheiro cruza-se a si próprio."
+
+#: landing-documents-map (#577)
+msgid "The file has no points, lines or areas."
+msgstr "O ficheiro não tem pontos, linhas nem áreas."
+
+#: landing-documents-map (#577)
+msgid "Add at least one file."
+msgstr "Adicione pelo menos um ficheiro."
+
+#: landing-documents-map (#577)
+msgid "A documents block holds at most 20 files."
+msgstr "Um bloco de documentos tem no máximo 20 ficheiros."
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "%(n)s file"
+msgid_plural "%(n)s files"
+msgstr[0] "%(n)s ficheiro"
+msgstr[1] "%(n)s ficheiros"
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "%(n)s shape"
+msgid_plural "%(n)s shapes"
+msgstr[0] "%(n)s forma"
+msgstr[1] "%(n)s formas"
+
+#: landing-documents-map (#577)
+#, python-format
+msgid "%(n)s shape on the map. Upload a new file to replace it."
+msgid_plural "%(n)s shapes on the map. Upload a new file to replace them."
+msgstr[0] "%(n)s forma no mapa. Carregue um ficheiro novo para a substituir."
+msgstr[1] "%(n)s formas no mapa. Carregue um ficheiro novo para as substituir."
+
+#: landing-results (#578)
+msgid "the question was removed from the survey; the block is not shown"
+msgstr "a pergunta foi removida do inquérito; o bloco não é mostrado"
+
+#: landing-results (#578)
+msgid "No survey of this workspace has a question whose answers can be shown as a chart or a map."
+msgstr "Nenhum inquérito deste espaço de trabalho tem uma pergunta cujas respostas possam ser mostradas num gráfico ou num mapa."
+
+#: landing-results (#578)
+msgid "Chart or map style"
+msgstr "Tipo de gráfico ou de mapa"
+
+#: landing-results (#578)
+msgid "Maps"
+msgstr "Mapas"
+
+#: landing-results (#578)
+msgid "Base map (maps)"
+msgstr "Mapa base (para mapas)"
+
+#: landing-results (#578)
+msgid "Answers are counted the same way as on the survey's public results page: small groups are masked, written answers are never shown."
+msgstr "As respostas são contadas como na página de resultados públicos do inquérito: os grupos pequenos são ocultados e as respostas escritas nunca são mostradas."
+
+#: landing-results (#578)
+msgid "Pick a question whose answers can be shown as a chart or a map."
+msgstr "Escolha uma pergunta cujas respostas possam ser mostradas num gráfico ou num mapa."
+
+#: landing-results (#578)
+msgid "Bar chart"
+msgstr "Gráfico de barras"
+
+#: landing-results (#578)
+msgid "Pie"
+msgstr "Circular"
+
+#: landing-results (#578)
+msgid "Donut"
+msgstr "Anel"
+
+#: landing-results (#578)
+msgid "Markers"
+msgstr "Marcadores"
+
+#: landing-results (#578)
+msgid "Heatmap"
+msgstr "Mapa de calor"
+
+#: landing-results (#578)
+msgid "Clusters"
+msgstr "Agrupamentos"
+
+#: landing-results (#578)
+#, python-format
+msgid "Based on %(n)s response."
+msgid_plural "Based on %(n)s responses."
+msgstr[0] "Com base em %(n)s resposta."
+msgstr[1] "Com base em %(n)s respostas."
+
+#: landing-events (#579)
+msgid "Date"
+msgstr "Data"
+
+#: landing-events (#579)
+msgid "Starts"
+msgstr "Começa"
+
+#: landing-events (#579)
+msgid "Ends"
+msgstr "Fim"
+
+#: landing-events (#579)
+msgid "Time zone"
+msgstr "Fuso horário"
+
+#: landing-events (#579)
+msgid "Place, e.g. The boathouse, Riverside Park"
+msgstr "Local, p. ex. Casa dos barcos, Parque Ribeirinho"
+
+#: landing-events (#579)
+msgid "Map link to the place (optional)"
+msgstr "Ligação para o local num mapa (opcional)"
+
+#: landing-events (#579)
+msgid "What happens there (optional)"
+msgstr "O que lá acontece (opcional)"
+
+#: landing-events (#579)
+msgid "Seats (empty = no limit)"
+msgstr "Lugares (vazio = sem limite)"
+
+#: landing-events (#579)
+msgid "Registration open"
+msgstr "Inscrições abertas"
+
+#: landing-events (#579)
+#, python-format
+msgid "%(n)s seats left"
+msgstr "Restam %(n)s lugares"
+
+#: landing-events (#579)
+msgid "Attendee list"
+msgstr "Lista de inscritos"
+
+#: landing-events (#579)
+msgid "Residents give their name and email. They get a confirmation with a calendar file; registrations are deleted 30 days after the event."
+msgstr "Os moradores indicam o nome e o e-mail. Recebem uma confirmação com um ficheiro de calendário; as inscrições são eliminadas 30 dias após o evento."
+
+#: landing-events (#579)
+msgid "Attendees"
+msgstr "Inscritos"
+
+#: landing-events (#579)
+msgid "Event"
+msgstr "Evento"
+
+#: landing-events (#579)
+msgid "Download CSV"
+msgstr "Descarregar CSV"
+
+#: landing-events (#579)
+#, python-format
+msgid "Names and emails are deleted automatically %(days)s days after the event. Use them only for this event."
+msgstr "Os nomes e e-mails são eliminados automaticamente %(days)s dias após o evento. Use-os apenas para este evento."
+
+#: landing-events (#579)
+msgid "Registered"
+msgstr "Inscrito"
+
+#: landing-events (#579)
+msgid "registered"
+msgstr "inscrito"
+
+#: landing-events (#579)
+msgid "cancelled"
+msgstr "cancelado"
+
+#: landing-events (#579)
+msgid "Delete every registration of this event?"
+msgstr "Eliminar todas as inscrições deste evento?"
+
+#: landing-events (#579)
+msgid "Remove all"
+msgstr "Eliminar tudo"
+
+#: landing-events (#579)
+msgid "Nobody has registered yet."
+msgstr "Ainda ninguém se inscreveu."
+
+#: landing-events (#579)
+msgid "Cancel registration"
+msgstr "Cancelar a inscrição"
+
+#: landing-events (#579)
+msgid "Your registration is cancelled. Thank you for letting us know."
+msgstr "A sua inscrição foi cancelada. Obrigado por nos avisar."
+
+#: landing-events (#579)
+#, python-format
+msgid "Cancel the registration of %(name)s?"
+msgstr "Cancelar a inscrição de %(name)s?"
+
+#: landing-events (#579)
+msgid "Cancel my registration"
+msgstr "Cancelar a minha inscrição"
+
+#: landing-events (#579)
+msgid "Back to the project site"
+msgstr "Voltar ao site do projeto"
+
+#: landing-events (#579)
+msgid "Thank you! Check your inbox: we sent a confirmation with a calendar file and a link to cancel."
+msgstr "Obrigado! Verifique a sua caixa de entrada: enviámos uma confirmação com um ficheiro de calendário e uma ligação para cancelar."
+
+#: landing-events (#579)
+msgid "Sorry, the event is full."
+msgstr "Lamentamos, o evento está esgotado."
+
+#: landing-events (#579)
+msgid "Registration for this event is closed."
+msgstr "As inscrições para este evento estão encerradas."
+
+#: landing-events (#579)
+msgid "Please tick the box to agree before registering."
+msgstr "Assinale a caixa para concordar antes de se inscrever."
+
+#: landing-events (#579)
+msgid "Please enter a valid email address."
+msgstr "Introduza um endereço de e-mail válido."
+
+#: landing-events (#579)
+msgid "Please enter your name."
+msgstr "Introduza o seu nome."
+
+#: landing-events (#579)
+msgid "Your name"
+msgstr "O seu nome"
+
+#: landing-events (#579)
+#, python-format
+msgid "%(org)s uses your name and email only for this event. They are deleted %(days)s days after it."
+msgstr "%(org)s usa o seu nome e e-mail apenas para este evento. São eliminados %(days)s dias depois."
+
+#: landing-events (#579)
+msgid "The event is full."
+msgstr "O evento está esgotado."
+
+#: landing-events (#579)
+#, python-format
+msgid "Hello %(name)s,"
+msgstr "Olá %(name)s,"
+
+#: landing-events (#579)
+#, python-format
+msgid "you are registered for \"%(title)s\" by %(org)s."
+msgstr "está inscrito em «%(title)s», organizado por %(org)s."
+
+#: landing-events (#579)
+msgid "The attached calendar file adds the event to your calendar."
+msgstr "O ficheiro de calendário em anexo adiciona o evento ao seu calendário."
+
+#: landing-events (#579)
+msgid "About the project"
+msgstr "Sobre o projeto"
+
+#: landing-events (#579)
+msgid "Can't come? Cancel your registration"
+msgstr "Não pode ir? Cancele a sua inscrição"
+
+#: landing-events (#579)
+#, python-format
+msgid "Your name and email are used only for this event and deleted %(days)s days after it."
+msgstr "O seu nome e e-mail são usados apenas para este evento e eliminados %(days)s dias depois."
+
+#: landing-events (#579)
+msgid "About the project:"
+msgstr "Sobre o projeto:"
+
+#: landing-events (#579)
+msgid "Can't come? Cancel here:"
+msgstr "Não pode ir? Cancele aqui:"
+
+#: landing-events (#579)
+msgid "Pick the date of the event."
+msgstr "Escolha a data do evento."
+
+#: landing-events (#579)
+msgid "Enter the start time."
+msgstr "Introduza a hora de início."
+
+#: landing-events (#579)
+msgid "The end time must be after the start."
+msgstr "A hora de fim tem de ser posterior à de início."
+
+#: landing-events (#579)
+msgid "Pick a time zone from the list, e.g. Europe/Berlin."
+msgstr "Escolha um fuso horário da lista, p. ex. Europe/Lisbon."
+
+#: landing-events (#579)
+msgid "Seats must be a number from 1 to 10000, or empty for no limit."
+msgstr "Os lugares têm de ser um número de 1 a 10000, ou vazio para sem limite."
+
+#: landing-events (#579)
+msgid "Too many registrations from this connection. Please try again later."
+msgstr "Demasiadas inscrições a partir desta ligação. Tente novamente mais tarde."
+
+#: landing-events (#579)
+msgid "All registrations of this event are deleted."
+msgstr "Todas as inscrições deste evento foram eliminadas."
+
+#: landing-events (#579)
+#, python-format
+msgid "You're registered: %(title)s"
+msgstr "Está inscrito: %(title)s"
+
+#: landing-events (#579)
+#, python-format
+msgid "%(n)s registered"
+msgid_plural "%(n)s registered"
+msgstr[0] "%(n)s inscrito"
+msgstr[1] "%(n)s inscritos"
+
+#: landing-events (#579)
+#, python-format
+msgid "%(n)s seat left"
+msgid_plural "%(n)s seats left"
+msgstr[0] "Resta %(n)s lugar"
+msgstr[1] "Restam %(n)s lugares"
+
+#: landing-builder-redesign (#594)
+msgid "Write directly on the page. Select text for bold, italic, links and lists."
+msgstr "Escreva diretamente na página. Selecione texto para negrito, itálico, ligações e listas."
+
+#: landing-builder-redesign (#594)
+msgid "Link"
+msgstr "Ligação"
+
+#: landing-builder-redesign (#594)
+msgid "Pick a question…"
+msgstr "Escolha uma pergunta…"
+
+#: landing-builder-redesign (#594)
+msgid "Place"
+msgstr "Local"
+
+#: landing-builder-redesign (#594)
+msgid "Pick a survey…"
+msgstr "Escolha um inquérito…"
+
+#: landing-builder-redesign (#594)
+msgid "Preview width"
+msgstr "Largura da pré-visualização"
+
+#: landing-builder-redesign (#594)
+msgid "Desktop"
+msgstr "Computador"
+
+#: landing-builder-redesign (#594)
+msgid "Phone"
+msgstr "Telemóvel"
+
+#: landing-builder-redesign (#594)
+msgid "The site is live"
+msgstr "O site está online"
+
+#: landing-builder-redesign (#594)
+msgid "Publish this site"
+msgstr "Publicar este site"
+
+#: landing-builder-redesign (#594)
+msgid "Residents open the site at this address. Change it before you print it."
+msgstr "Os moradores abrem o site neste endereço. Altere-o antes de o imprimir."
+
+#: landing-builder-redesign (#594)
+msgid "Listed by search engines"
+msgstr "Indexada pelos motores de pesquisa"
+
+#: landing-builder-redesign (#594)
+msgid "Off: only people with the link"
+msgstr "Desligado: apenas quem tiver a ligação"
+
+#: landing-builder-redesign (#594)
+msgid "For flyers and posters."
+msgstr "Para folhetos e cartazes."
+
+#: landing-builder-redesign (#594)
+msgid "Publish now"
+msgstr "Publicar agora"
+
+#: landing-builder-redesign (#594)
+msgid "Blocks on the page"
+msgstr "Blocos da página"
+
+#: landing-builder-redesign (#594)
+msgid "Blocks"
+msgstr "Blocos"
+
+#: landing-builder-redesign (#594)
+msgid "Title and cover"
+msgstr "Título e capa"
+
+#: landing-builder-redesign (#594)
+msgid "Add block here"
+msgstr "Adicionar um bloco aqui"
+
+#: landing-builder-redesign (#594)
+msgid "Add block — text, timeline, survey card, results, event…"
+msgstr "Adicionar um bloco — texto, calendário, cartão do inquérito, resultados, evento…"
+
+#: landing-builder-redesign (#594)
+msgid "No blocks yet."
+msgstr "Ainda não há blocos."
+
+#: landing-builder-redesign (#594)
+msgid "Could not save — check the settings on the right"
+msgstr "Não foi possível guardar — verifique as definições à direita"
+
+#: landing-builder-redesign (#594)
+msgid "Could not save — check your connection"
+msgstr "Não foi possível guardar — verifique a sua ligação"
+
+#: landing-builder-redesign (#594)
+msgid "Title, cover and address"
+msgstr "Título, capa e endereço"
+
+#: landing-builder-redesign (#594)
+msgid "Shown behind the title and when the link is shared."
+msgstr "Mostrada atrás do título e quando a ligação é partilhada."
+
+#: landing-builder-redesign (#594)
+msgid "Search blocks…"
+msgstr "Pesquisar blocos…"
+
+#: landing-builder-redesign (#594)
+msgid "Search blocks"
+msgstr "Pesquisar nos blocos"
+
+#: landing-builder-redesign (#594)
+msgid "Block actions"
+msgstr "Ações do bloco"
+
+#: landing-builder-redesign (#594)
+msgid "Move up"
+msgstr "Mover para cima"
+
+#: landing-builder-redesign (#594)
+msgid "Move down"
+msgstr "Mover para baixo"
+
+#: landing-builder-redesign (#594)
+msgid "Add a heading"
+msgstr "Adicionar um título"
+
+#: landing-builder-redesign (#594)
+msgid "Headings also appear in the menu at the top of the page"
+msgstr "Os títulos também aparecem no menu no topo da página"
+
+#: landing-builder-redesign (#594)
+msgid "Write something…"
+msgstr "Escreva algo…"
+
+#: landing-builder-redesign (#594)
+msgid "Upload a picture in the settings on the right."
+msgstr "Carregue uma imagem nas definições à direita."
+
+#: landing-builder-redesign (#594)
+msgid "Paste a YouTube or Vimeo link in the settings on the right."
+msgstr "Cole uma ligação do YouTube ou Vimeo nas definições à direita."
+
+#: landing-builder-redesign (#594)
+msgid "Set the label and the link in the settings on the right."
+msgstr "Defina o texto e a ligação nas definições à direita."
+
+#: landing-builder-redesign (#594)
+msgid "Add questions and answers in the settings on the right."
+msgstr "Adicione perguntas e respostas nas definições à direita."
+
+#: landing-builder-redesign (#594)
+msgid "Add the phases in the settings on the right."
+msgstr "Adicione as fases nas definições à direita."
+
+#: landing-builder-redesign (#594)
+msgid "Upload files in the settings on the right."
+msgstr "Carregue ficheiros nas definições à direita."
+
+#: landing-builder-redesign (#594)
+msgid "Upload a GeoJSON file with the project area in the settings on the right."
+msgstr "Carregue um ficheiro GeoJSON com a área do projeto nas definições à direita."
+
+#: landing-builder-redesign (#594)
+msgid "Pick a question in the settings on the right."
+msgstr "Escolha uma pergunta nas definições à direita."
+
+#: landing-builder-redesign (#594)
+msgid "Set the date and time in the settings on the right."
+msgstr "Defina a data e a hora nas definições à direita."
+
+#: landing-builder-redesign (#594)
+msgid "Pick a survey in the settings on the right."
+msgstr "Escolha um inquérito nas definições à direita."
+
+#: landing-builder-redesign (#594)
+msgid "One or two sentences: what the project is and what you ask residents"
+msgstr "Uma ou duas frases: o que é o projeto e o que pergunta aos moradores"
+
+#: landing-builder-redesign (#594)
+msgid "Change the cover picture"
+msgstr "Alterar a fotografia de capa"
+
+#: landing-builder-redesign (#594)
+msgid "Add a cover picture"
+msgstr "Adicionar uma fotografia de capa"
+
+#: landing-builder-redesign (#594)
+msgid "Tell the story"
+msgstr "Contar o projeto"
+
+#: landing-builder-redesign (#594)
+msgid "Purpose, background, what happens next"
+msgstr "Objetivo, contexto, próximos passos"
+
+#: landing-builder-redesign (#594)
+msgid "Phases with dates; mark the one you are in"
+msgstr "Fases com datas; marque a atual"
+
+#: landing-builder-redesign (#594)
+msgid "Questions residents keep asking"
+msgstr "Perguntas que os moradores fazem muitas vezes"
+
+#: landing-builder-redesign (#594)
+msgid "A photo or a plan drawing with a caption"
+msgstr "Uma fotografia ou planta com legenda"
+
+#: landing-builder-redesign (#594)
+msgid "YouTube or Vimeo"
+msgstr "YouTube ou Vimeo"
+
+#: landing-builder-redesign (#594)
+msgid "The project area from a GeoJSON file"
+msgstr "A área do projeto a partir de um ficheiro GeoJSON"
+
+#: landing-builder-redesign (#594)
+msgid "One of your surveys; follows its status"
+msgstr "Um dos seus inquéritos; acompanha o estado"
+
+#: landing-builder-redesign (#594)
+msgid "Open house or walk, with registration"
+msgstr "Dia aberto ou passeio, com inscrição"
+
+#: landing-builder-redesign (#594)
+msgid "A link to anything else"
+msgstr "Uma ligação para outra coisa"
+
+#: landing-builder-redesign (#594)
+msgid "Show the work"
+msgstr "Mostrar o trabalho"
+
+#: landing-builder-redesign (#594)
+msgid "A chart or a map from a survey's answers"
+msgstr "Um gráfico ou mapa com as respostas de um inquérito"
+
+#: landing-builder-redesign (#594)
+msgid "Summaries, boards, the draft plan"
+msgstr "Resumos, painéis, a proposta de plano"
+
+#: landing-builder-redesign (#594)
+msgid "The survey is a draft: the card shows “Coming soon” until you publish it."
+msgstr "O inquérito é um rascunho: o cartão mostra «Brevemente» até o publicar."
+
+#: landing-builder-redesign (#594)
+msgid "The question was removed from the survey; the block is not shown."
+msgstr "A pergunta foi removida do inquérito; o bloco não é mostrado."
+
+#: landing-builder-redesign (#594)
+msgid "Not shown on the page until it is filled in."
+msgstr "Não aparece na página até ser preenchido."
+
+#: landing-builder-redesign (#594)
+#, python-format
+msgid "Remove %(name)s?"
+msgstr "Remover %(name)s?"
+
+#: landing-builder-redesign (#594)
+msgid "Names and emails are deleted now. The registrants get no message."
+msgstr "Os nomes e e-mails são eliminados agora. Os inscritos não recebem nenhuma mensagem."
+
+#: landing-builder-redesign (#594)
+#, python-format
+msgid "Delete “%(title)s”?"
+msgstr "Eliminar «%(title)s»?"
+
+#: landing-builder-redesign (#594)
+msgid "Its address stops working, and links and QR codes already printed lead nowhere."
+msgstr "O endereço deixará de funcionar, e as ligações e códigos QR já impressos não levarão a lado nenhum."
+
+#: landing-builder-redesign (#594)
+msgid "Blocks, files and event registrations are deleted with it. Your surveys stay."
+msgstr "Os blocos, ficheiros e inscrições em eventos são eliminados com ela. Os seus inquéritos mantêm-se."
+
+#: landing-builder-redesign (#594)
+msgid "The block and everyone registered for the event are removed from the page. This cannot be undone."
+msgstr "O bloco e todas as inscrições no evento são removidos da página. Não é possível anular."
+
+#: landing-builder-redesign (#594)
+msgid "The block and its files are removed from the page. This cannot be undone."
+msgstr "O bloco e os seus ficheiros são removidos da página. Não é possível anular."
+
+#: landing-builder-redesign (#594)
+msgid "The block is removed from the page. This cannot be undone."
+msgstr "O bloco é removido da página. Não é possível anular."
+
+#: landing-builder-redesign (#594)
+msgid "Write directly on the page; the toolbar above the text sets headings, bold, lists, links and alignment."
+msgstr "Escreva diretamente na página; a barra de ferramentas acima do texto define títulos, negrito, listas, ligações e alinhamento."
+
+#: landing-builder-redesign (#594)
+msgid "Applies to the whole site"
+msgstr "Aplica-se a todo o site"
+
+#: landing-builder-redesign (#594)
+msgid "Shown behind the title and when the link is shared. JPEG, PNG, WebP or GIF, up to 5 MB."
+msgstr "Mostrada atrás do título e quando a ligação é partilhada. JPEG, PNG, WebP ou GIF, até 5 MB."
+
+#: landing-builder-redesign (#594)
+msgid "Address and language"
+msgstr "Endereço e idioma"
+
+#: landing-builder-redesign (#594)
+msgid "Lowercase letters, digits and dashes. Settle it before you print it."
+msgstr "Letras minúsculas, algarismos e hífenes. Defina-o antes de o imprimir."
+
+#: landing-builder-redesign (#594)
+msgid "The language of the site's buttons and labels."
+msgstr "O idioma dos botões e etiquetas do site."
+
+#: landing-builder-redesign (#594)
+msgid "Settings of this block"
+msgstr "Definições deste bloco"
+
+#: landing-inline-editing
+msgid "A boundary, a route or a few points; up to 1 MB"
+msgstr "Um limite, um percurso ou alguns pontos; até 1 MB"
+
+#: landing-inline-editing
+msgid "Drop a GeoJSON file with the project area"
+msgstr "Largue um ficheiro GeoJSON com a área do projeto"
+
+#: landing-inline-editing
+msgid "Drop a picture here"
+msgstr "Largue uma imagem aqui"
+
+#: landing-inline-editing
+msgid "Drop files here"
+msgstr "Largue ficheiros aqui"
+
+#: landing-inline-editing
+msgid "choose a file"
+msgstr "escolha um ficheiro"
+
+#: landing-inline-editing
+msgid "Edit this in the block on the page."
+msgstr "Edite isto no bloco na página."
+
+#: landing-inline-editing
+msgid "JPEG, PNG, WebP or GIF, up to 5 MB"
+msgstr "JPEG, PNG, WebP ou GIF, até 5 MB"
+
+#: landing-inline-editing
+msgid "PDF, office documents, CSV or text; up to 25 MB each"
+msgstr "PDF, documentos de escritório, CSV ou texto; até 25 MB cada"
+
+#: landing-inline-editing
+msgid "Not filled in yet."
+msgstr "Ainda não preenchido."
+
+#: landing-inline-editing
+msgid "Paste a YouTube or Vimeo link"
+msgstr "Cole uma ligação do YouTube ou Vimeo"
+
+#: landing-inline-editing
+msgid "Phase"
+msgstr "Fase"
+
+#: landing-inline-editing
+msgid "When"
+msgstr "Quando"
+
+#: landing-inline-editing
+msgid "The project is in this phase now"
+msgstr "O projeto está agora nesta fase"
+
+#: landing-inline-editing
+msgid "Replace picture"
+msgstr "Substituir a imagem"
+
+#: landing-inline-editing
+msgid "Replace area"
+msgstr "Substituir a área"
+
+#: landing-inline-editing
+msgid "Shown behind the title and when the link is shared. Add, change or remove it on the page."
+msgstr "Mostrada atrás do título e quando a ligação é partilhada. Adicione, altere ou remova-a na página."
+
+#. rename-landings-to-sites
+msgid "Site settings"
+msgstr "Definições do site"
+
+#. rename-landings-to-sites
+msgid "Site address"
+msgstr "Endereço do site"
+
+#. rename-landings-to-sites
+msgid "Site title"
+msgstr "Título do site"
+
+#: site-heading-block
+msgid "Heading"
+msgstr "Título de secção"
+
+#: site-heading-block
+msgid "Normal text"
+msgstr "Texto normal"
+
+#: site-heading-block
+msgid "Leave it empty for a block without a heading. A heading can also be a link in the menu at the top."
+msgstr "Deixe vazio para um bloco sem título. Um título também pode ser uma ligação no menu do topo."
+
+#: site-heading-block
+msgid "Show the heading in the menu at the top"
+msgstr "Mostrar o título no menu do topo"
+
+#: site-heading-block
+msgid "Size"
+msgstr "Tamanho"
+
+#: site-heading-block
+msgid "Type the heading on the page. Large and medium are section headings; small is a subheading."
+msgstr "Escreva o título na página. Grande e médio são títulos de secção; pequeno é um subtítulo."
+
+#: site-heading-block
+msgid "A section title on its own, in one of three sizes"
+msgstr "Um título de secção isolado, num de três tamanhos"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Large"
+msgstr "Grande"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Medium"
+msgstr "Médio"
+
+#: site-heading-block
+msgctxt "heading size"
+msgid "Small"
+msgstr "Pequeno"
+
+#: sites-wave-a
+msgid "Add the people in the block on the page."
+msgstr "Adicione as pessoas no bloco na página."
+
+#: sites-wave-a
+msgid "Planning office, Town hall, 1 Market Square"
+msgstr "Gabinete de planeamento, Câmara Municipal, Praça do Mercado 1"
+
+#: sites-wave-a
+msgid "Opening hours"
+msgstr "Horário de atendimento"
+
+#: sites-wave-a
+msgid "Mon–Thu 9:00–16:00"
+msgstr "Seg–qui 9:00–16:00"
+
+#: sites-wave-a
+msgid "Full width — from edge to edge of the page"
+msgstr "Largura total — de uma margem à outra da página"
+
+#: sites-wave-a
+#, python-format
+msgid "%(n)s thing to check for accessibility"
+msgid_plural "%(n)s things to check for accessibility"
+msgstr[0] "%(n)s aspeto de acessibilidade a verificar"
+msgstr[1] "%(n)s aspetos de acessibilidade a verificar"
+
+#: sites-wave-a
+msgid "Residents using a screen reader or a keyboard trip over these. Publishing is not blocked."
+msgstr "Os moradores que usam um leitor de ecrã ou o teclado tropeçam nisto. A publicação não fica bloqueada."
+
+#: sites-wave-a
+msgid "Share for review"
+msgstr "Partilhar para revisão"
+
+#: sites-wave-a
+msgid "Anyone with this link sees the draft read-only for 14 days — no account needed. New link stops the old one."
+msgstr "Quem tiver esta ligação vê o rascunho só para leitura durante 14 dias, sem conta. «Nova ligação» anula a anterior."
+
+#: sites-wave-a
+msgid "Review link"
+msgstr "Ligação de revisão"
+
+#: sites-wave-a
+msgid "New link"
+msgstr "Nova ligação"
+
+#: sites-wave-a
+msgid "Skip to content"
+msgstr "Saltar para o conteúdo"
+
+#: sites-wave-a
+msgid "Shared for review — this site is not public yet."
+msgstr "Partilhado para revisão — este site ainda não é público."
+
+#: sites-wave-a
+#, python-format
+msgid "Duplicate “%(title)s”"
+msgstr "Duplicar «%(title)s»"
+
+#: sites-wave-a
+msgid "Role, e.g. Project lead"
+msgstr "Função, p. ex. Responsável pelo projeto"
+
+#: sites-wave-a
+msgid "Add a person"
+msgstr "Adicionar uma pessoa"
+
+#: sites-wave-a
+msgid "Page width"
+msgstr "Largura da página"
+
+#: sites-wave-a
+msgid "How wide the column of text and blocks is on a computer. Pictures, maps and videos can also go full width in their own settings."
+msgstr "A largura da coluna de texto e blocos num computador. Imagens, mapas e vídeos também podem ocupar a largura total nas suas próprias definições."
+
+#: sites-wave-a
+msgid "Duplicate site"
+msgstr "Duplicar o site"
+
+#: sites-wave-a
+msgid "Registration opens when the site is published."
+msgstr "As inscrições abrem quando o site for publicado."
+
+#: sites-wave-a
+msgid "Contacts"
+msgstr "Contactos"
+
+#: sites-wave-a
+msgid "Who runs the project and how to reach them"
+msgstr "Quem gere o projeto e como contactar"
+
+#: sites-wave-a
+#, python-format
+msgid "“%(email)s” is not an e-mail address."
+msgstr "«%(email)s» não é um endereço de e-mail."
+
+#: sites-wave-a
+msgid "The cover picture has no description for screen readers."
+msgstr "A fotografia de capa não tem descrição para leitores de ecrã."
+
+#: sites-wave-a
+msgid "The picture has no description for screen readers."
+msgstr "A imagem não tem descrição para leitores de ecrã."
+
+#: sites-wave-a
+msgid "A small heading comes before any large or medium one: screen readers announce it as a subsection of nothing. Make it medium, or add a heading above."
+msgstr "Um título pequeno surge antes de qualquer grande ou médio: os leitores de ecrã anunciam-no como subsecção de nada. Torne-o médio ou adicione um título acima."
+
+#: sites-wave-a
+msgid "A link says only “here” or “more”. Name where it leads, e.g. “the draft plan (PDF)”."
+msgstr "Uma ligação diz só «aqui» ou «mais». Indique para onde leva, p. ex. «a proposta de plano (PDF)»."
+
+#: sites-wave-a
+msgid "The button says only “here” or “more”. Name where it leads."
+msgstr "O botão diz só «aqui» ou «mais». Indique para onde leva."
+
+#: sites-wave-a
+#, python-format
+msgid "%(title)s (copy)"
+msgstr "%(title)s (cópia)"
+
+#: sites-wave-a
+#, python-format
+msgid "This is a copy of “%(title)s”. It is not published."
+msgstr "Esta é uma cópia de «%(title)s». Não está publicada."
+
+#: sites-wave-a
+msgctxt "site width"
+msgid "Narrow"
+msgstr "Estreita"
+
+#: sites-wave-a
+msgctxt "site width"
+msgid "Standard"
+msgstr "Padrão"
+
+#: sites-wave-a
+msgctxt "site width"
+msgid "Wide"
+msgstr "Larga"
+
+#: sites-wave-a
+msgid "Standard"
+msgstr "Padrão"
+
+#: sites-wave-a
+msgid "Wide"
+msgstr "Larga"
+
+#: sites-wave-a
+msgctxt "contact"
+msgid "Phone"
+msgstr "Telefone"
+
+#: sites-wave-a
+msgctxt "person"
+msgid "Name"
+msgstr "Nome"
+
+#: sites-wave-a
+msgctxt "action"
+msgid "Duplicate"
+msgstr "Duplicar"

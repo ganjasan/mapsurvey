@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 {% load i18n %}
 
-{% block title %}{% trans "Report this survey" %} - Mapsurvey{% endblock %}
+{% block title %}{% if site %}{% trans "Report this page" %}{% else %}{% trans "Report this survey" %}{% endif %} - Mapsurvey{% endblock %}
 
 {% block content %}
 <div class="container" style="max-width: 560px; margin-top: 60px;">
-    <h3>{% trans "Report this survey" %}</h3>
-    <p class="text-muted">{% blocktrans with name=survey.name %}Tell us what is wrong with “{{ name }}”. A person reviews every report.{% endblocktrans %}</p>
+    <h3>{% if site %}{% trans "Report this page" %}{% else %}{% trans "Report this survey" %}{% endif %}</h3>
+    <p class="text-muted">{% blocktrans with name=subject_name %}Tell us what is wrong with “{{ name }}”. A person reviews every report.{% endblocktrans %}</p>
     <form method="post">
         {% csrf_token %}
         <div class="form-group">
@@ -24,7 +24,7 @@
             {% if form.message.errors %}<div class="text-danger small">{{ form.message.errors.0 }}</div>{% endif %}
         </div>
         <button type="submit" class="btn btn-primary">{% trans "Send report" %}</button>
-        <a href="{% url 'survey' survey.uuid %}" class="btn btn-link">{% trans "Cancel" %}</a>
+        <a href="{% if site %}{% url 'site_public' site.slug %}{% else %}{% url 'survey' survey.uuid %}{% endif %}" class="btn btn-link">{% trans "Cancel" %}</a>
     </form>
 </div>
 {% endblock %}

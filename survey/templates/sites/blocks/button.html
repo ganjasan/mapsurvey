@@ -1,0 +1,1 @@
+{% load i18n %}<p><a class="lp-btn{% if block.data.style == 'secondary' %} lp-btn--outline{% endif %}" href="{{ block.data.url }}" rel="noopener" data-field="label"{% if editing %} data-placeholder="{% trans 'Button label' %}"{% endif %}>{{ block.data.label }}</a></p>

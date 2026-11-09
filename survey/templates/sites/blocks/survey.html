@@ -1,0 +1,16 @@
+{% load i18n %}{% with survey=block.site_survey.survey %}
+<div class="lp-survey lp-survey--{{ card.state }}">
+  <div class="lp-survey-state">
+    {% if card.state == 'open' %}{% trans "Open now" %}{% if card.closes_at %} · {% blocktrans with date=card.closes_at|date:"j F Y" %}until {{ date }}{% endblocktrans %}{% endif %}
+    {% elif card.state == 'upcoming' %}{% if card.opens_at %}{% blocktrans with date=card.opens_at|date:"j F Y" %}Opens {{ date }}{% endblocktrans %}{% else %}{% trans "Coming soon" %}{% endif %}
+    {% else %}{% trans "Closed" %}{% endif %}
+  </div>
+  <div class="lp-survey-name">{{ survey.name }}</div>
+  {% if block.data.description or editing %}<p class="lp-survey-desc" data-field="description">{{ block.data.description }}</p>{% endif %}
+  {% if card.state == 'open' %}
+  <a class="lp-btn" href="{{ card.url }}"{% if editing %} data-field="button_label" data-placeholder="{% trans 'Take part' %}"{% endif %}>{% if editing %}{{ block.data.button_label }}{% else %}{{ block.data.button_label|default:_("Take part") }}{% endif %}</a>
+  {% elif card.results_url %}
+  <a class="lp-btn lp-btn--outline" href="{{ card.results_url }}">{% trans "See the results" %}</a>
+  {% endif %}
+</div>
+{% endwith %}

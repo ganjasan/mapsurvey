@@ -37,6 +37,7 @@ HELP_LINKS = {
     'paper_photos': 'how-to/enter-paper-forms-from-photos/',
     # The map style library (change map-styles-library, #542).
     'map_styles': 'how-to/map-styles/',
+    'sites': 'how-to/sites/',
     'faq': 'faq/',
 }
 

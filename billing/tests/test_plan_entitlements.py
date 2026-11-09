@@ -51,7 +51,8 @@ class EntitlementsTest(TestCase):
         e = ents.for_organization(self.org)
         self.assertTrue(e.is_pro)
         self.assertEqual(e.state, 'active')
-        self.assertEqual(e.features, frozenset({'unbranded', 'pro_help', 'api', 'operator_entry', 'map_styles'}))
+        self.assertEqual(e.features, frozenset({'unbranded', 'pro_help', 'api', 'operator_entry', 'map_styles',
+                                                'sites'}))
 
     def test_terminated_but_paid_is_cancelling(self):
         """

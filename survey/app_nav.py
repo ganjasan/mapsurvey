@@ -28,10 +28,14 @@ class NavItem:
     roles: tuple = None
     # Query string appended to the URL (no leading "?").
     query: str = ''
+    # The Pro feature whose mark the row carries ('' = none).
+    feature: str = ''
 
 
 MODULES = (
     NavItem('surveys', _('Surveys'), 'editor', 'fas fa-map-marked-alt', query='dashboard=1'),
+    # Sites (change landing-core, #576): a workspace's public pages for engagements.
+    NavItem('sites', _('Sites'), 'editor_sites', 'far fa-window-maximize', feature='sites'),
 )
 
 # Two items, not one "API & connections" (owner, 2026-11-06): tokens and connected apps for
@@ -69,6 +73,7 @@ _ACTIVE_BY_URL_NAME = {
     'editor_account_mcp': 'api',
 }
 _ACTIVE_BY_PREFIX = (
+    ('editor_site', 'sites'),
     ('org_map_styles', 'map_styles'),
     ('org_map_style', 'map_styles'),
     ('org_members', 'members'),
