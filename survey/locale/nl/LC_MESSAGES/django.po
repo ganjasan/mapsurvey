@@ -11974,3 +11974,168 @@ msgstr "Middel"
 msgctxt "heading size"
 msgid "Small"
 msgstr "Klein"
+
+#: sites-wave-a
+msgid "Add the people in the block on the page."
+msgstr "Voeg de personen toe in het blok op de pagina."
+
+#: sites-wave-a
+msgid "Planning office, Town hall, 1 Market Square"
+msgstr "Afdeling Ruimtelijke Ordening, Stadhuis, Marktplein 1"
+
+#: sites-wave-a
+msgid "Opening hours"
+msgstr "Openingstijden"
+
+#: sites-wave-a
+msgid "Mon–Thu 9:00–16:00"
+msgstr "Ma–do 9:00–16:00"
+
+#: sites-wave-a
+msgid "Full width — from edge to edge of the page"
+msgstr "Volle breedte — van rand tot rand van de pagina"
+
+#: sites-wave-a
+#, python-format
+msgid "%(n)s thing to check for accessibility"
+msgid_plural "%(n)s things to check for accessibility"
+msgstr[0] "%(n)s toegankelijkheidspunt om na te kijken"
+msgstr[1] "%(n)s toegankelijkheidspunten om na te kijken"
+
+#: sites-wave-a
+msgid "Residents using a screen reader or a keyboard trip over these. Publishing is not blocked."
+msgstr "Bewoners met een schermlezer of alleen een toetsenbord lopen hierop vast. Publiceren wordt niet geblokkeerd."
+
+#: sites-wave-a
+msgid "Share for review"
+msgstr "Delen ter beoordeling"
+
+#: sites-wave-a
+msgid "Anyone with this link sees the draft read-only for 14 days — no account needed. New link stops the old one."
+msgstr "Iedereen met deze link ziet het concept 14 dagen alleen-lezen — zonder account. ‘Nieuwe link’ maakt de oude ongeldig."
+
+#: sites-wave-a
+msgid "Review link"
+msgstr "Beoordelingslink"
+
+#: sites-wave-a
+msgid "New link"
+msgstr "Nieuwe link"
+
+#: sites-wave-a
+msgid "Skip to content"
+msgstr "Naar de inhoud"
+
+#: sites-wave-a
+msgid "Shared for review — this site is not public yet."
+msgstr "Gedeeld ter beoordeling — deze site is nog niet openbaar."
+
+#: sites-wave-a
+#, python-format
+msgid "Duplicate “%(title)s”"
+msgstr "‘%(title)s’ dupliceren"
+
+#: sites-wave-a
+msgid "Role, e.g. Project lead"
+msgstr "Rol, bijv. Projectleider"
+
+#: sites-wave-a
+msgid "Add a person"
+msgstr "Persoon toevoegen"
+
+#: sites-wave-a
+msgid "Page width"
+msgstr "Paginabreedte"
+
+#: sites-wave-a
+msgid "How wide the column of text and blocks is on a computer. Pictures, maps and videos can also go full width in their own settings."
+msgstr "Hoe breed de kolom met tekst en blokken op een computer is. Afbeeldingen, kaarten en video’s kunnen in hun eigen instellingen ook de volle breedte krijgen."
+
+#: sites-wave-a
+msgid "Duplicate site"
+msgstr "Site dupliceren"
+
+#: sites-wave-a
+msgid "Registration opens when the site is published."
+msgstr "Aanmelden kan zodra de site is gepubliceerd."
+
+#: sites-wave-a
+msgid "Contacts"
+msgstr "Contactpersonen"
+
+#: sites-wave-a
+msgid "Who runs the project and how to reach them"
+msgstr "Wie het project leidt en hoe je ze bereikt"
+
+#: sites-wave-a
+#, python-format
+msgid "“%(email)s” is not an e-mail address."
+msgstr "‘%(email)s’ is geen e-mailadres."
+
+#: sites-wave-a
+msgid "The cover picture has no description for screen readers."
+msgstr "De omslagfoto heeft geen beschrijving voor schermlezers."
+
+#: sites-wave-a
+msgid "The picture has no description for screen readers."
+msgstr "De afbeelding heeft geen beschrijving voor schermlezers."
+
+#: sites-wave-a
+msgid "A small heading comes before any large or medium one: screen readers announce it as a subsection of nothing. Make it medium, or add a heading above."
+msgstr "Een kleine kop staat vóór elke grote of middelgrote: schermlezers melden hem als onderdeel van niets. Maak hem middel of zet er een kop boven."
+
+#: sites-wave-a
+msgid "A link says only “here” or “more”. Name where it leads, e.g. “the draft plan (PDF)”."
+msgstr "Een link zegt alleen ‘hier’ of ‘meer’. Zeg waar hij heen gaat, bijv. ‘het conceptplan (pdf)’."
+
+#: sites-wave-a
+msgid "The button says only “here” or “more”. Name where it leads."
+msgstr "De knop zegt alleen ‘hier’ of ‘meer’. Zeg waar hij heen gaat."
+
+#: sites-wave-a
+#, python-format
+msgid "%(title)s (copy)"
+msgstr "%(title)s (kopie)"
+
+#: sites-wave-a
+#, python-format
+msgid "This is a copy of “%(title)s”. It is not published."
+msgstr "Dit is een kopie van ‘%(title)s’. Hij is niet gepubliceerd."
+
+#: sites-wave-a
+msgctxt "site width"
+msgid "Narrow"
+msgstr "Smal"
+
+#: sites-wave-a
+msgctxt "site width"
+msgid "Standard"
+msgstr "Normaal"
+
+#: sites-wave-a
+msgctxt "site width"
+msgid "Wide"
+msgstr "Breed"
+
+#: sites-wave-a
+msgid "Standard"
+msgstr "Normaal"
+
+#: sites-wave-a
+msgid "Wide"
+msgstr "Breed"
+
+#: sites-wave-a
+msgctxt "contact"
+msgid "Phone"
+msgstr "Telefoon"
+
+#: sites-wave-a
+msgctxt "person"
+msgid "Name"
+msgstr "Naam"
+
+#: sites-wave-a
+msgctxt "action"
+msgid "Duplicate"
+msgstr "Dupliceren"

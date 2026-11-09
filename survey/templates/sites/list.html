@@ -48,7 +48,7 @@ state; New site is a POST that creates a draft and opens the builder.{% endcomme
       {% include "sites/_state_badge.html" with site=row.site held=row.held %}
       {% if can_act and may_create %}
       <form method="post" action="{% url 'editor_site_duplicate' row.site.uuid %}" class="mb-0 ml-2">{% csrf_token %}
-        <button type="submit" class="btn btn-sm btn-link text-muted" title="{% trans 'Duplicate' %}" aria-label="{% blocktrans with title=row.site.title %}Duplicate “{{ title }}”{% endblocktrans %}"><i class="far fa-clone" aria-hidden="true"></i></button>
+        <button type="submit" class="btn btn-sm btn-link text-muted" title="{% trans 'Duplicate' context 'action' %}" aria-label="{% blocktrans with title=row.site.title %}Duplicate “{{ title }}”{% endblocktrans %}"><i class="far fa-clone" aria-hidden="true"></i></button>
       </form>
       {% endif %}
     </div>

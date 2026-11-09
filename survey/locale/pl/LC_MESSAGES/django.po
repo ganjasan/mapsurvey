@@ -12053,3 +12053,169 @@ msgstr "Średni"
 msgctxt "heading size"
 msgid "Small"
 msgstr "Mały"
+
+#: sites-wave-a
+msgid "Add the people in the block on the page."
+msgstr "Dodaj osoby w bloku na stronie."
+
+#: sites-wave-a
+msgid "Planning office, Town hall, 1 Market Square"
+msgstr "Wydział planowania, Urząd Miasta, Rynek 1"
+
+#: sites-wave-a
+msgid "Opening hours"
+msgstr "Godziny otwarcia"
+
+#: sites-wave-a
+msgid "Mon–Thu 9:00–16:00"
+msgstr "Pon–czw 9:00–16:00"
+
+#: sites-wave-a
+msgid "Full width — from edge to edge of the page"
+msgstr "Pełna szerokość — od krawędzi do krawędzi strony"
+
+#: sites-wave-a
+#, python-format
+msgid "%(n)s thing to check for accessibility"
+msgid_plural "%(n)s things to check for accessibility"
+msgstr[0] "%(n)s kwestia dostępności do sprawdzenia"
+msgstr[1] "%(n)s kwestie dostępności do sprawdzenia"
+msgstr[2] "%(n)s kwestii dostępności do sprawdzenia"
+
+#: sites-wave-a
+msgid "Residents using a screen reader or a keyboard trip over these. Publishing is not blocked."
+msgstr "Mieszkańcy korzystający z czytnika ekranu lub klawiatury potkną się o to. Publikacja nie jest blokowana."
+
+#: sites-wave-a
+msgid "Share for review"
+msgstr "Udostępnij do przeglądu"
+
+#: sites-wave-a
+msgid "Anyone with this link sees the draft read-only for 14 days — no account needed. New link stops the old one."
+msgstr "Każdy z tym linkiem zobaczy wersję roboczą tylko do odczytu przez 14 dni — bez konta. „Nowy link” unieważnia stary."
+
+#: sites-wave-a
+msgid "Review link"
+msgstr "Link do przeglądu"
+
+#: sites-wave-a
+msgid "New link"
+msgstr "Nowy link"
+
+#: sites-wave-a
+msgid "Skip to content"
+msgstr "Przejdź do treści"
+
+#: sites-wave-a
+msgid "Shared for review — this site is not public yet."
+msgstr "Udostępnione do przeglądu — ta witryna nie jest jeszcze publiczna."
+
+#: sites-wave-a
+#, python-format
+msgid "Duplicate “%(title)s”"
+msgstr "Duplikuj „%(title)s”"
+
+#: sites-wave-a
+msgid "Role, e.g. Project lead"
+msgstr "Rola, np. Kierownik projektu"
+
+#: sites-wave-a
+msgid "Add a person"
+msgstr "Dodaj osobę"
+
+#: sites-wave-a
+msgid "Page width"
+msgstr "Szerokość strony"
+
+#: sites-wave-a
+msgid "How wide the column of text and blocks is on a computer. Pictures, maps and videos can also go full width in their own settings."
+msgstr "Szerokość kolumny tekstu i bloków na komputerze. Obrazy, mapy i filmy mogą też zajmować pełną szerokość we własnych ustawieniach."
+
+#: sites-wave-a
+msgid "Duplicate site"
+msgstr "Duplikuj witrynę"
+
+#: sites-wave-a
+msgid "Registration opens when the site is published."
+msgstr "Zapisy ruszą po opublikowaniu witryny."
+
+#: sites-wave-a
+msgid "Contacts"
+msgstr "Kontakty"
+
+#: sites-wave-a
+msgid "Who runs the project and how to reach them"
+msgstr "Kto prowadzi projekt i jak się skontaktować"
+
+#: sites-wave-a
+#, python-format
+msgid "“%(email)s” is not an e-mail address."
+msgstr "„%(email)s” nie jest adresem e-mail."
+
+#: sites-wave-a
+msgid "The cover picture has no description for screen readers."
+msgstr "Zdjęcie na okładkę nie ma opisu dla czytników ekranu."
+
+#: sites-wave-a
+msgid "The picture has no description for screen readers."
+msgstr "Obraz nie ma opisu dla czytników ekranu."
+
+#: sites-wave-a
+msgid "A small heading comes before any large or medium one: screen readers announce it as a subsection of nothing. Make it medium, or add a heading above."
+msgstr "Mały nagłówek stoi przed jakimkolwiek dużym lub średnim: czytniki ekranu ogłoszą go jako podsekcję niczego. Zmień go na średni albo dodaj nagłówek nad nim."
+
+#: sites-wave-a
+msgid "A link says only “here” or “more”. Name where it leads, e.g. “the draft plan (PDF)”."
+msgstr "Link mówi tylko „tutaj” albo „więcej”. Napisz, dokąd prowadzi, np. „projekt planu (PDF)”."
+
+#: sites-wave-a
+msgid "The button says only “here” or “more”. Name where it leads."
+msgstr "Przycisk mówi tylko „tutaj” albo „więcej”. Napisz, dokąd prowadzi."
+
+#: sites-wave-a
+#, python-format
+msgid "%(title)s (copy)"
+msgstr "%(title)s (kopia)"
+
+#: sites-wave-a
+#, python-format
+msgid "This is a copy of “%(title)s”. It is not published."
+msgstr "To kopia „%(title)s”. Nie jest opublikowana."
+
+#: sites-wave-a
+msgctxt "site width"
+msgid "Narrow"
+msgstr "Wąska"
+
+#: sites-wave-a
+msgctxt "site width"
+msgid "Standard"
+msgstr "Standardowa"
+
+#: sites-wave-a
+msgctxt "site width"
+msgid "Wide"
+msgstr "Szeroka"
+
+#: sites-wave-a
+msgid "Standard"
+msgstr "Standardowa"
+
+#: sites-wave-a
+msgid "Wide"
+msgstr "Szeroka"
+
+#: sites-wave-a
+msgctxt "contact"
+msgid "Phone"
+msgstr "Telefon"
+
+#: sites-wave-a
+msgctxt "person"
+msgid "Name"
+msgstr "Imię i nazwisko"
+
+#: sites-wave-a
+msgctxt "action"
+msgid "Duplicate"
+msgstr "Duplikuj"

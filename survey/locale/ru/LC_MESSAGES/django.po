@@ -10039,3 +10039,170 @@ msgstr "Средний"
 msgctxt "heading size"
 msgid "Small"
 msgstr "Маленький"
+
+#: sites-wave-a
+msgid "Add the people in the block on the page."
+msgstr "Добавьте людей в блоке на странице."
+
+#: sites-wave-a
+msgid "Planning office, Town hall, 1 Market Square"
+msgstr "Отдел планирования, мэрия, Рыночная площадь, 1"
+
+#: sites-wave-a
+msgid "Opening hours"
+msgstr "Часы работы"
+
+#: sites-wave-a
+msgid "Mon–Thu 9:00–16:00"
+msgstr "Пн–Чт 9:00–16:00"
+
+#: sites-wave-a
+msgid "Full width — from edge to edge of the page"
+msgstr "Во всю ширину — от края до края страницы"
+
+#: sites-wave-a
+#, python-format
+msgid "%(n)s thing to check for accessibility"
+msgid_plural "%(n)s things to check for accessibility"
+msgstr[0] "%(n)s замечание по доступности"
+msgstr[1] "%(n)s замечания по доступности"
+msgstr[2] "%(n)s замечаний по доступности"
+msgstr[3] "%(n)s замечания по доступности"
+
+#: sites-wave-a
+msgid "Residents using a screen reader or a keyboard trip over these. Publishing is not blocked."
+msgstr "Жители с экранным диктором или клавиатурой на этом спотыкаются. Публикации это не мешает."
+
+#: sites-wave-a
+msgid "Share for review"
+msgstr "Поделиться для проверки"
+
+#: sites-wave-a
+msgid "Anyone with this link sees the draft read-only for 14 days — no account needed. New link stops the old one."
+msgstr "Любой, у кого есть эта ссылка, 14 дней видит черновик только для чтения, без аккаунта. «Новая ссылка» отменяет старую."
+
+#: sites-wave-a
+msgid "Review link"
+msgstr "Ссылка для проверки"
+
+#: sites-wave-a
+msgid "New link"
+msgstr "Новая ссылка"
+
+#: sites-wave-a
+msgid "Skip to content"
+msgstr "Перейти к содержимому"
+
+#: sites-wave-a
+msgid "Shared for review — this site is not public yet."
+msgstr "Открыт для проверки — этот сайт пока не публичный."
+
+#: sites-wave-a
+#, python-format
+msgid "Duplicate “%(title)s”"
+msgstr "Дублировать «%(title)s»"
+
+#: sites-wave-a
+msgid "Role, e.g. Project lead"
+msgstr "Роль, например «Руководитель проекта»"
+
+#: sites-wave-a
+msgid "Add a person"
+msgstr "Добавить человека"
+
+#: sites-wave-a
+msgid "Page width"
+msgstr "Ширина страницы"
+
+#: sites-wave-a
+msgid "How wide the column of text and blocks is on a computer. Pictures, maps and videos can also go full width in their own settings."
+msgstr "Ширина колонки с текстом и блоками на компьютере. Картинки, карты и видео в своих настройках тоже можно растянуть во всю ширину."
+
+#: sites-wave-a
+msgid "Duplicate site"
+msgstr "Дублировать сайт"
+
+#: sites-wave-a
+msgid "Registration opens when the site is published."
+msgstr "Запись откроется после публикации сайта."
+
+#: sites-wave-a
+msgid "Contacts"
+msgstr "Контакты"
+
+#: sites-wave-a
+msgid "Who runs the project and how to reach them"
+msgstr "Кто ведёт проект и как с ним связаться"
+
+#: sites-wave-a
+#, python-format
+msgid "“%(email)s” is not an e-mail address."
+msgstr "«%(email)s» — не адрес электронной почты."
+
+#: sites-wave-a
+msgid "The cover picture has no description for screen readers."
+msgstr "У обложки нет описания для экранных дикторов."
+
+#: sites-wave-a
+msgid "The picture has no description for screen readers."
+msgstr "У картинки нет описания для экранных дикторов."
+
+#: sites-wave-a
+msgid "A small heading comes before any large or medium one: screen readers announce it as a subsection of nothing. Make it medium, or add a heading above."
+msgstr "Мелкий заголовок стоит раньше крупного или среднего: экранный диктор объявит его подразделом пустоты. Сделайте его средним или добавьте заголовок выше."
+
+#: sites-wave-a
+msgid "A link says only “here” or “more”. Name where it leads, e.g. “the draft plan (PDF)”."
+msgstr "Ссылка говорит только «здесь» или «подробнее». Назовите, куда она ведёт, например «проект плана (PDF)»."
+
+#: sites-wave-a
+msgid "The button says only “here” or “more”. Name where it leads."
+msgstr "Кнопка говорит только «здесь» или «подробнее». Назовите, куда она ведёт."
+
+#: sites-wave-a
+#, python-format
+msgid "%(title)s (copy)"
+msgstr "%(title)s (копия)"
+
+#: sites-wave-a
+#, python-format
+msgid "This is a copy of “%(title)s”. It is not published."
+msgstr "Это копия «%(title)s». Она не опубликована."
+
+#: sites-wave-a
+msgctxt "site width"
+msgid "Narrow"
+msgstr "Узкая"
+
+#: sites-wave-a
+msgctxt "site width"
+msgid "Standard"
+msgstr "Стандартная"
+
+#: sites-wave-a
+msgctxt "site width"
+msgid "Wide"
+msgstr "Широкая"
+
+#: sites-wave-a
+msgid "Standard"
+msgstr "Стандартная"
+
+#: sites-wave-a
+msgid "Wide"
+msgstr "Широкая"
+
+#: sites-wave-a
+msgctxt "contact"
+msgid "Phone"
+msgstr "Телефон"
+
+#: sites-wave-a
+msgctxt "person"
+msgid "Name"
+msgstr "Имя"
+
+#: sites-wave-a
+msgctxt "action"
+msgid "Duplicate"
+msgstr "Дублировать"
