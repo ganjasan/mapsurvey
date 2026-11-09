@@ -12080,3 +12080,77 @@ msgstr "Nimi"
 msgctxt "action"
 msgid "Duplicate"
 msgstr "Tee koopia"
+
+#: site-translations
+#, python-format
+msgid "This site is in %(lang)s only"
+msgstr "See veebisait on ainult keeles %(lang)s"
+
+#: site-translations
+msgid "Add a language and every heading, text, question and answer, phase and caption of the site appears here, ready to translate — in this table or through a CSV for an outside translator. Visitors then pick the language at the top of the site."
+msgstr "Lisage keel ja iga veebisaidi pealkiri, tekst, küsimus ja vastus, etapp ja pildiallkiri ilmub siia tõlkimiseks valmis — selles tabelis või CSV-faili kaudu välisele tõlkijale. Külastajad valivad keele siis veebisaidi ülaosas."
+
+#: site-translations
+msgid "Every text of the site once, in page order. One translation fills every place the same text is used; a text left untranslated shows in the primary language."
+msgstr "Iga veebisaidi tekst üks kord, lehe järjekorras. Üks tõlge täidab iga koha, kus sama teksti kasutatakse; tõlkimata tekst kuvatakse põhikeeles."
+
+#: site-translations
+msgid "This site is live: a saved translation reaches visitors at once."
+msgstr "See veebisait on avalik: salvestatud tõlge jõuab külastajateni kohe."
+
+#: site-translations
+msgid "Open in the builder"
+msgstr "Ava veebisaidi redaktoris"
+
+#: site-translations
+#, python-format
+msgid "Stop offering %(lang)s?"
+msgstr "Kas lõpetada keele %(lang)s pakkumine?"
+
+#: site-translations
+msgid "Visitors no longer see it in the language switch. The translations stay stored: adding the language back restores them."
+msgstr "Külastajad ei näe seda enam keelevalikus. Tõlked jäävad alles: keele uuesti lisamisel need taastuvad."
+
+#: site-translations
+msgid "Stop offering"
+msgstr "Lõpeta pakkumine"
+
+#: site-translations
+#, python-format
+msgid "Stop offering %(lang)s"
+msgstr "Lõpeta keele %(lang)s pakkumine"
+
+#: site-translations
+msgid "A CSV in the layout of the export: a key column, or at least source and translation columns. Rows are matched by key, then by the source text."
+msgstr "CSV ekspordi kujul: võtmeveerg või vähemalt lähte- ja tõlkeveerg. Read seotakse võtme, seejärel lähteteksti järgi."
+
+#: site-translations
+msgid "Caption"
+msgstr "Allkiri"
+
+#: site-translations
+msgid "Cover picture description"
+msgstr "Kaanefoto kirjeldus"
+
+#: site-translations
+#, python-format
+msgid "Answer %(n)s"
+msgstr "Vastus %(n)s"
+
+#: site-translations
+#, python-format
+msgid "Phase %(n)s"
+msgstr "Etapp %(n)s"
+
+#: site-translations
+#, python-format
+msgid "Person %(n)s role"
+msgstr "Isiku %(n)s roll"
+
+#: site-translations
+msgid "This text is no longer on the site. Reload the page."
+msgstr "Seda teksti pole enam veebisaidil. Laadige leht uuesti."
+
+#: site-translations
+msgid "This site is not offered in that language."
+msgstr "Seda veebisaiti ei pakuta selles keeles."

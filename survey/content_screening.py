@@ -205,7 +205,14 @@ def collect_site_text(site, now=None) -> ScreenInput:
     texts = [('name', site.title or ''), ('site.summary', site.summary or ''),
              ('site.cover_alt', site.cover_alt or '')]
     links = []
-    for block in site.blocks.all().only('id', 'kind', 'title', 'data'):
+    # Translations are text the creator publishes too (change site-translations).
+    for row in (site.translations or {}).values():
+        for value in (row or {}).values():
+            texts.append(('site.translation', str(value)))
+    for block in site.blocks.all().only('id', 'kind', 'title', 'data', 'translations'):
+        for row in (block.translations or {}).values():
+            for value in (row or {}).values():
+                texts.append(('block.translation', str(value)))
         data = block.data if isinstance(block.data, dict) else {}
         texts.append(('block.title', block.title or ''))
         if block.kind == 'documents':

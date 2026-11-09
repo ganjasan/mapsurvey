@@ -3159,6 +3159,12 @@ class Site(models.Model):
     # Part of the signing salt of the review link (change site-review-link); "New link" replaces it,
     # so every link handed out before stops working.
     review_salt = models.CharField(max_length=32, blank=True, default='', db_default='')
+    # Translations (change site-translations, #618): the languages offered besides `language`,
+    # {lang: {title, summary, cover_alt}}, and {lang: {occurrence key: source hash}} — the text a
+    # translation was written against, so the Translations tab can call it outdated.
+    languages = models.JSONField(default=list, blank=True, db_default=[])
+    translations = models.JSONField(default=dict, blank=True, db_default={})
+    translation_sources = models.JSONField(default=dict, blank=True, db_default={})
     visibility = models.CharField(max_length=10, choices=SITE_VISIBILITY_CHOICES, default='public')
     is_published = models.BooleanField(default=False)
     published_at = models.DateTimeField(null=True, blank=True)
@@ -3223,6 +3229,9 @@ class SiteBlock(models.Model):
     # Whether the heading is a link in the menu at the top of the site (change site-heading-block).
     in_menu = models.BooleanField(default=True, db_default=True)
     data = models.JSONField(default=dict, blank=True)
+    # {lang: {field: text}} — fields as `site_translations.block_fields` names them
+    # (title, body, caption, faq:0:q, phase:1:when, person:0:role, file:<pk>, …).
+    translations = models.JSONField(default=dict, blank=True, db_default={})
     image = models.ImageField(upload_to=site_asset_key, null=True, blank=True)
     site_survey = models.ForeignKey(SiteSurvey, null=True, blank=True, on_delete=models.CASCADE,
                                        related_name='cards')
@@ -3281,6 +3290,8 @@ class EventRegistration(models.Model):
     block = models.ForeignKey(SiteBlock, on_delete=models.CASCADE, related_name='registrations')
     name = models.CharField(max_length=120)
     email = models.EmailField()
+    # The language the registrant read the site in: the confirmation mail uses it.
+    language = models.CharField(max_length=10, blank=True, default='', db_default='')
     token = models.UUIDField(default=uuid_module.uuid4, unique=True, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
     cancelled_at = models.DateTimeField(null=True, blank=True)

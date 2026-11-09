@@ -12186,3 +12186,77 @@ msgstr "Nom"
 msgctxt "action"
 msgid "Duplicate"
 msgstr "Dupliquer"
+
+#: site-translations
+#, python-format
+msgid "This site is in %(lang)s only"
+msgstr "Ce site n'existe qu'en %(lang)s"
+
+#: site-translations
+msgid "Add a language and every heading, text, question and answer, phase and caption of the site appears here, ready to translate — in this table or through a CSV for an outside translator. Visitors then pick the language at the top of the site."
+msgstr "Ajoutez une langue : chaque titre, texte, question et réponse, phase et légende du site apparaît ici, prêt à traduire — dans ce tableau ou via un CSV pour un traducteur externe. Les visiteurs choisissent ensuite la langue en haut du site."
+
+#: site-translations
+msgid "Every text of the site once, in page order. One translation fills every place the same text is used; a text left untranslated shows in the primary language."
+msgstr "Chaque texte du site une seule fois, dans l'ordre de la page. Une traduction remplit tous les endroits où le même texte est utilisé ; un texte non traduit s'affiche dans la langue principale."
+
+#: site-translations
+msgid "This site is live: a saved translation reaches visitors at once."
+msgstr "Ce site est en ligne : une traduction enregistrée est visible immédiatement."
+
+#: site-translations
+msgid "Open in the builder"
+msgstr "Ouvrir dans l'éditeur du site"
+
+#: site-translations
+#, python-format
+msgid "Stop offering %(lang)s?"
+msgstr "Ne plus proposer %(lang)s ?"
+
+#: site-translations
+msgid "Visitors no longer see it in the language switch. The translations stay stored: adding the language back restores them."
+msgstr "Les visiteurs ne la voient plus dans le sélecteur de langue. Les traductions restent enregistrées : rajouter la langue les restaure."
+
+#: site-translations
+msgid "Stop offering"
+msgstr "Ne plus proposer"
+
+#: site-translations
+#, python-format
+msgid "Stop offering %(lang)s"
+msgstr "Ne plus proposer %(lang)s"
+
+#: site-translations
+msgid "A CSV in the layout of the export: a key column, or at least source and translation columns. Rows are matched by key, then by the source text."
+msgstr "Un CSV au format de l'export : une colonne clé, ou au moins des colonnes source et traduction. Les lignes sont associées par clé, puis par texte source."
+
+#: site-translations
+msgid "Caption"
+msgstr "Légende"
+
+#: site-translations
+msgid "Cover picture description"
+msgstr "Description de la photo de couverture"
+
+#: site-translations
+#, python-format
+msgid "Answer %(n)s"
+msgstr "Réponse %(n)s"
+
+#: site-translations
+#, python-format
+msgid "Phase %(n)s"
+msgstr "Phase %(n)s"
+
+#: site-translations
+#, python-format
+msgid "Person %(n)s role"
+msgstr "Rôle de la personne %(n)s"
+
+#: site-translations
+msgid "This text is no longer on the site. Reload the page."
+msgstr "Ce texte n'est plus sur le site. Rechargez la page."
+
+#: site-translations
+msgid "This site is not offered in that language."
+msgstr "Ce site n'est pas proposé dans cette langue."

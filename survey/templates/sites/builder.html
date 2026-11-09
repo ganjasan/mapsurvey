@@ -43,6 +43,7 @@ workspace (may_edit false).{% endcomment %}
     </div>
     <div class="lb-top-right">
       {% if may_edit %}<span class="lb-saved" id="lb-saved" aria-live="polite"><i class="fas fa-check-circle" aria-hidden="true"></i> <span>{% trans "All changes saved" %}</span></span>{% endif %}
+      <a class="lb-btn" href="{% url 'editor_site_translations' site.uuid %}" id="site-translations" title="{% trans 'Translations' %}"><i class="fas fa-language" aria-hidden="true"></i> {% trans "Translations" %}{% if site.languages %} <small class="text-muted">{{ site.languages|length|add:1 }}</small>{% endif %}</a>
       <a class="lb-btn" href="{% url 'site_public' site.slug %}" target="_blank" rel="noopener" id="site-preview"><i class="far fa-eye" aria-hidden="true"></i> {% if site.is_published %}{% trans "Open site" %}{% else %}{% trans "Preview" %}{% endif %}</a>
       {% if can_act %}
       <div class="lb-pub">

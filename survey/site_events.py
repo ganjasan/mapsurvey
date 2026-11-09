@@ -73,7 +73,7 @@ def accepting(block, now=None):
     return bool(block.data.get('open')) and end is not None and (now or timezone.now()) < end
 
 
-def register(block, name, email):
+def register(block, name, email, language=''):
     """(status, registration) — REGISTERED (new row), ALREADY (same email active: no new row,
     the caller sends the confirmation again), FULL, CLOSED. The block row is locked so two
     visitors cannot take the last seat."""
@@ -89,7 +89,8 @@ def register(block, name, email):
         capacity = locked.data.get('capacity')
         if capacity and active(locked).count() >= capacity:
             return FULL, None
-        reg = EventRegistration.objects.create(block=locked, name=name.strip()[:120], email=email)
+        reg = EventRegistration.objects.create(block=locked, name=name.strip()[:120], email=email,
+                                               language=(language or '')[:10])
     return REGISTERED, reg
 
 
@@ -187,7 +188,7 @@ def send_confirmation(registration_id):
     if reg is None or reg.cancelled_at is not None:
         return False
     ctx = mail_context(reg)
-    with translation.override(reg.block.site.language):
+    with translation.override(reg.language or reg.block.site.language):
         from django.utils.translation import gettext as _
         subject = _("You're registered: %(title)s") % {'title': ctx['title']}
         text = render_to_string('sites/mail/event_confirmation.txt', ctx)
