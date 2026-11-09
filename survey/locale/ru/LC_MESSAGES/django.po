@@ -1566,7 +1566,7 @@ msgstr ""
 
 #: survey/templates/editor.html:316 survey/templates/editor.html:557
 msgid "Import"
-msgstr ""
+msgstr "Импорт"
 
 #: survey/templates/editor.html:325
 #: survey/templates/editor/_survey_more_menu.html:7
@@ -2989,7 +2989,7 @@ msgstr ""
 #: survey/templates/editor/partials/question_form_modal.html:354
 #: survey/templates/editor/partials/section_detail_form.html:70
 msgid "Translations"
-msgstr ""
+msgstr "Переводы"
 
 #: survey/templates/editor/partials/question_form_modal.html:383
 msgid "Respondent sees"
@@ -10206,3 +10206,77 @@ msgstr "Имя"
 msgctxt "action"
 msgid "Duplicate"
 msgstr "Дублировать"
+
+#: site-translations
+#, python-format
+msgid "This site is in %(lang)s only"
+msgstr "Этот сайт только на языке: %(lang)s"
+
+#: site-translations
+msgid "Add a language and every heading, text, question and answer, phase and caption of the site appears here, ready to translate — in this table or through a CSV for an outside translator. Visitors then pick the language at the top of the site."
+msgstr "Добавьте язык — и каждый заголовок, текст, вопрос и ответ, этап и подпись сайта появятся здесь, готовые к переводу: в этой таблице или через CSV для внешнего переводчика. Посетители выбирают язык вверху сайта."
+
+#: site-translations
+msgid "Every text of the site once, in page order. One translation fills every place the same text is used; a text left untranslated shows in the primary language."
+msgstr "Каждый текст сайта — один раз, в порядке страницы. Один перевод заполняет все места с тем же текстом; непереведённый текст показывается на основном языке."
+
+#: site-translations
+msgid "This site is live: a saved translation reaches visitors at once."
+msgstr "Сайт доступен: сохранённый перевод сразу видят посетители."
+
+#: site-translations
+msgid "Open in the builder"
+msgstr "Открыть в конструкторе"
+
+#: site-translations
+#, python-format
+msgid "Stop offering %(lang)s?"
+msgstr "Больше не предлагать язык: %(lang)s?"
+
+#: site-translations
+msgid "Visitors no longer see it in the language switch. The translations stay stored: adding the language back restores them."
+msgstr "Посетители больше не увидят его в переключателе языков. Переводы сохраняются: если добавить язык снова, они вернутся."
+
+#: site-translations
+msgid "Stop offering"
+msgstr "Больше не предлагать"
+
+#: site-translations
+#, python-format
+msgid "Stop offering %(lang)s"
+msgstr "Больше не предлагать язык: %(lang)s"
+
+#: site-translations
+msgid "A CSV in the layout of the export: a key column, or at least source and translation columns. Rows are matched by key, then by the source text."
+msgstr "CSV в формате экспорта: столбец ключа или хотя бы столбцы исходного текста и перевода. Строки сопоставляются по ключу, затем по исходному тексту."
+
+#: site-translations
+msgid "Caption"
+msgstr "Подпись"
+
+#: site-translations
+msgid "Cover picture description"
+msgstr "Описание обложки"
+
+#: site-translations
+#, python-format
+msgid "Answer %(n)s"
+msgstr "Ответ %(n)s"
+
+#: site-translations
+#, python-format
+msgid "Phase %(n)s"
+msgstr "Этап %(n)s"
+
+#: site-translations
+#, python-format
+msgid "Person %(n)s role"
+msgstr "Роль человека %(n)s"
+
+#: site-translations
+msgid "This text is no longer on the site. Reload the page."
+msgstr "Этого текста больше нет на сайте. Обновите страницу."
+
+#: site-translations
+msgid "This site is not offered in that language."
+msgstr "Этот сайт не предлагается на этом языке."

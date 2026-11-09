@@ -12102,3 +12102,77 @@ msgstr "Nama"
 msgctxt "action"
 msgid "Duplicate"
 msgstr "Duplikat"
+
+#: site-translations
+#, python-format
+msgid "This site is in %(lang)s only"
+msgstr "Situs ini hanya dalam bahasa %(lang)s"
+
+#: site-translations
+msgid "Add a language and every heading, text, question and answer, phase and caption of the site appears here, ready to translate — in this table or through a CSV for an outside translator. Visitors then pick the language at the top of the site."
+msgstr "Tambahkan bahasa, lalu setiap judul, teks, pertanyaan dan jawaban, tahap, dan keterangan situs muncul di sini, siap diterjemahkan — di tabel ini atau melalui CSV untuk penerjemah luar. Pengunjung lalu memilih bahasa di bagian atas situs."
+
+#: site-translations
+msgid "Every text of the site once, in page order. One translation fills every place the same text is used; a text left untranslated shows in the primary language."
+msgstr "Setiap teks situs sekali, sesuai urutan halaman. Satu terjemahan mengisi setiap tempat yang memakai teks yang sama; teks yang belum diterjemahkan tampil dalam bahasa utama."
+
+#: site-translations
+msgid "This site is live: a saved translation reaches visitors at once."
+msgstr "Situs ini sudah tayang: terjemahan yang disimpan langsung terlihat oleh pengunjung."
+
+#: site-translations
+msgid "Open in the builder"
+msgstr "Buka di penyusun"
+
+#: site-translations
+#, python-format
+msgid "Stop offering %(lang)s?"
+msgstr "Berhenti menawarkan %(lang)s?"
+
+#: site-translations
+msgid "Visitors no longer see it in the language switch. The translations stay stored: adding the language back restores them."
+msgstr "Pengunjung tidak lagi melihatnya di pilihan bahasa. Terjemahan tetap tersimpan: menambahkan bahasa itu lagi akan memulihkannya."
+
+#: site-translations
+msgid "Stop offering"
+msgstr "Berhenti menawarkan"
+
+#: site-translations
+#, python-format
+msgid "Stop offering %(lang)s"
+msgstr "Berhenti menawarkan %(lang)s"
+
+#: site-translations
+msgid "A CSV in the layout of the export: a key column, or at least source and translation columns. Rows are matched by key, then by the source text."
+msgstr "CSV dengan tata letak ekspor: kolom kunci, atau setidaknya kolom sumber dan terjemahan. Baris dicocokkan berdasarkan kunci, lalu berdasarkan teks sumber."
+
+#: site-translations
+msgid "Caption"
+msgstr "Keterangan"
+
+#: site-translations
+msgid "Cover picture description"
+msgstr "Deskripsi foto sampul"
+
+#: site-translations
+#, python-format
+msgid "Answer %(n)s"
+msgstr "Jawaban %(n)s"
+
+#: site-translations
+#, python-format
+msgid "Phase %(n)s"
+msgstr "Tahap %(n)s"
+
+#: site-translations
+#, python-format
+msgid "Person %(n)s role"
+msgstr "Peran orang %(n)s"
+
+#: site-translations
+msgid "This text is no longer on the site. Reload the page."
+msgstr "Teks ini sudah tidak ada di situs. Muat ulang halaman."
+
+#: site-translations
+msgid "This site is not offered in that language."
+msgstr "Situs ini tidak tersedia dalam bahasa itu."

@@ -368,14 +368,20 @@ def duplicate_block(actor, site, block):
     with transaction.atomic():
         copy = SiteBlock.objects.create(
             site=site, kind=block.kind, title=block.title, in_menu=block.in_menu, data=dict(block.data or {}),
-            image=block.image.name if block.image else None, site_survey=block.site_survey,
-            order=sites.next_order(site))
+            translations=_without_files(block.translations), image=block.image.name if block.image else None,
+            site_survey=block.site_survey, order=sites.next_order(site))
         for f in block.files.all():
             SiteFile.objects.create(block=copy, file=f.file.name, title=f.title, size=f.size,
                                     content_type=f.content_type, order=f.order)
         move_after(site, copy, block.pk)
     touched(site)
     return copy
+
+
+def _without_files(translations):
+    """Block translations without the `file:<pk>` titles — a copied file has a new pk."""
+    return {lang: {k: v for k, v in (row or {}).items() if not k.startswith('file:')}
+            for lang, row in (translations or {}).items()}
 
 
 def delete_block(actor, site, block):
@@ -407,3 +413,97 @@ def remove_registrations(actor, block, registration_id=None):
     count = rows.count()
     rows.delete()
     audit_record(actor, 'site_registrations_remove', site_id=block.site_id, block_id=block.pk, count=count)
+
+
+# ─── translations (change site-translations, #618) ───────────────────────────
+
+def _clean_translation(kind, cap, text):
+    from ..html_sanitize import coerce_creator_html
+    from ..translation_table import RICH
+    text = (text or '').strip()
+    if not text:
+        return ''
+    if kind == RICH:
+        return coerce_creator_html(text)
+    text = ' '.join(text.split())
+    return text[:cap] if cap else text
+
+
+def set_translations(actor, site, language, items):
+    """Write translations for `language`: `items = [(entity kind, entity, field, text)]` with
+    entity kind `site` or `block`. Rich fields pass `coerce_creator_html`, plain ones are trimmed
+    and capped; an empty text removes the translation. Every written field records the hash of
+    its source text, so the Translations tab can call it outdated when the source changes."""
+    from .. import site_translations as st
+    from ..translation_table import source_hash
+    if language not in st.languages(site)[1:]:
+        raise ValidationFailed.single('language', _('This site is not offered in that language.'))
+    hashes = dict(site.translation_sources or {})
+    lang_hashes = dict(hashes.get(language) or {})
+    site_tr = dict(site.translations or {})
+    blocks = {}
+    for entity_kind, entity, fld, text in items:
+        if entity_kind == 'site':
+            spec = next(((k, c) for n, k, c in st.SITE_FIELDS if n == fld), None)
+            if spec is None:
+                continue
+            value = _clean_translation(spec[0], spec[1], text)
+            row = dict(site_tr.get(language) or {})
+            if value:
+                row[fld] = value
+            else:
+                row.pop(fld, None)
+            site_tr[language] = row
+            key, source, kind = f'site:{fld}', getattr(site, fld) or '', spec[0]
+        else:
+            block = blocks.setdefault(entity.pk, entity)
+            spec = st.field_spec(block, fld)
+            if spec is None:
+                continue
+            value = _clean_translation(spec[0], spec[1], text)
+            tr = dict(block.translations or {})
+            row = dict(tr.get(language) or {})
+            if value:
+                row[fld] = value
+            else:
+                row.pop(fld, None)
+            tr[language] = row
+            block.translations = tr
+            key = f'block:{block.pk}:{fld}'
+            source = next(src for n, _k, _c, src in st.block_fields(block) if n == fld)
+            kind = spec[0]
+        if value:
+            lang_hashes[key] = source_hash(source, kind)
+        else:
+            lang_hashes.pop(key, None)
+    hashes[language] = lang_hashes
+    with transaction.atomic():
+        Site.objects.filter(pk=site.pk).update(translations=site_tr, translation_sources=hashes)
+        site.translations, site.translation_sources = site_tr, hashes
+        for block in blocks.values():
+            SiteBlock.objects.filter(pk=block.pk).update(translations=block.translations)
+    touched(site)
+    audit_record(actor, 'site_translations', site_id=site.pk, language=language, count=len(items))
+
+
+def add_language(actor, site, code):
+    from .. import site_translations as st
+    code = (code or '').strip().lower()
+    if code not in CONTENT_LANGUAGES:
+        raise ValidationFailed.single('language', _('Pick a language from the list.'))
+    if code in st.languages(site):
+        return site
+    site.languages = list(site.languages or []) + [code]
+    site.save(update_fields=['languages', 'updated_at'])
+    audit_record(actor, 'site_language_add', site_id=site.pk, language=code)
+    return site
+
+
+def remove_language(actor, site, code):
+    """Stop offering a language; its translations stay stored (adding it back restores them)."""
+    if code not in (site.languages or []):
+        return site
+    site.languages = [c for c in site.languages if c != code]
+    site.save(update_fields=['languages', 'updated_at'])
+    audit_record(actor, 'site_language_remove', site_id=site.pk, language=code)
+    return site

@@ -4,13 +4,15 @@ base template: residents of our customers read it, so no product analytics and n
 (`/p/` is also in POSTHOG_EXCLUDED_PREFIXES). Labels render in the site's language
 (translation.override in the view). Each block kind draws from sites/blocks/<kind>.html and reads
 only the keys sites.clean_block stores.{% endcomment %}
-<html lang="{{ site.language }}">
+<html lang="{{ lang|default:site.language }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ site.title }}</title>
   {% if site.summary %}<meta name="description" content="{{ site.summary }}">{% endif %}
   {% if noindex %}<meta name="robots" content="noindex">{% else %}<link rel="canonical" href="{{ page_url }}">{% endif %}
+  {% if site_languages and not noindex %}{% for code, name in site_languages %}<link rel="alternate" hreflang="{{ code }}" href="{{ base_url }}{% if not forloop.first %}?lang={{ code }}{% endif %}">
+  {% endfor %}<link rel="alternate" hreflang="x-default" href="{{ base_url }}">{% endif %}
   <meta property="og:type" content="website">
   <meta property="og:title" content="{{ site.title }}">
   {% if site.summary %}<meta property="og:description" content="{{ site.summary }}">{% endif %}
@@ -36,6 +38,11 @@ only the keys sites.clean_block stores.{% endcomment %}
 
   <header class="lp-hero{% if site.cover %} lp-hero--cover{% endif %}">
     {% if site.cover %}<img class="lp-hero-img" src="{{ site.cover.url }}" alt="{{ site.cover_alt }}">{% endif %}
+    {% if site_languages %}
+    <nav class="lp-langs" aria-label="{% trans 'Language' %}">
+      {% for code, name in site_languages %}<a href="?lang={{ code }}{% if review %}&amp;review={{ request.GET.review|urlencode }}{% endif %}" hreflang="{{ code }}" lang="{{ code }}"{% if code == lang %} aria-current="true" class="on"{% endif %}>{{ name }}</a>{% endfor %}
+    </nav>
+    {% endif %}
     <div class="lp-wrap lp-hero-text">
       <p class="lp-org">{{ org.name }}</p>
       <h1>{{ site.title }}</h1>

@@ -690,8 +690,9 @@ def duplicate_site(site, user, title):
             organization=site.organization, title=title, summary=site.summary, created_by=user,
             slug=unique_slug(title), language=site.language, width=site.width,
             visibility=site.visibility, cover=site.cover.name if site.cover else None,
-            cover_alt=site.cover_alt)
-        links = {}
+            cover_alt=site.cover_alt, languages=list(site.languages or []),
+            translations=dict(site.translations or {}), translation_sources=dict(site.translation_sources or {}))
+        links, remap, files_remap = {}, {}, {}
         for link in site.survey_links.order_by('order', 'id'):
             links[link.pk] = SiteSurvey.objects.create(site=copy, survey=link.survey, order=link.order)
         for block in site.blocks.order_by('order', 'id'):
@@ -699,9 +700,33 @@ def duplicate_site(site, user, title):
                 site=copy, kind=block.kind, order=block.order, title=block.title, in_menu=block.in_menu,
                 data=dict(block.data or {}), image=block.image.name if block.image else None,
                 site_survey=links.get(block.site_survey_id))
+            tr = {lang: dict(row or {}) for lang, row in (block.translations or {}).items()}
             for f in block.files.all():
-                SiteFile.objects.create(block=new, file=f.file.name, title=f.title, size=f.size,
-                                        content_type=f.content_type, order=f.order)
+                nf = SiteFile.objects.create(block=new, file=f.file.name, title=f.title, size=f.size,
+                                             content_type=f.content_type, order=f.order)
+                for row in tr.values():  # file titles follow the file to its new pk
+                    if f'file:{f.pk}' in row:
+                        row[f'file:{nf.pk}'] = row.pop(f'file:{f.pk}')
+            # Hashes are keyed by block id; the copy's are the original's under the new ids.
+            new.translations = tr
+            new.save(update_fields=['translations'])
+            remap[block.pk] = new.pk
+            files_remap.update({f'file:{a}': f'file:{b}' for a, b in zip(
+                block.files.order_by('order', 'id').values_list('pk', flat=True),
+                new.files.order_by('order', 'id').values_list('pk', flat=True))})
+        hashes = {}
+        for lang, keys in (site.translation_sources or {}).items():
+            out = {}
+            for key, value in keys.items():
+                parts = key.split(':', 2)
+                if parts[0] == 'block' and len(parts) == 3 and parts[1].isdigit() and int(parts[1]) in remap:
+                    field = files_remap.get(parts[2], parts[2])
+                    out[f'block:{remap[int(parts[1])]}:{field}'] = value
+                elif parts[0] == 'site':
+                    out[key] = value
+            hashes[lang] = out
+        copy.translation_sources = hashes
+        copy.save(update_fields=['translation_sources'])
     return copy
 
 

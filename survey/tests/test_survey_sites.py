@@ -1828,3 +1828,139 @@ class SiteServiceLayerTest(SiteTestBase):
             site_service.save_block(Actor(user=self.editor), self.site, None, 'button', fields)
         self.assertIn('url', ctx.exception.errors)
         self.assertEqual(ctx.exception.raw['label'], 'Plan')
+
+
+class SiteTranslationsTest(SiteTestBase):
+    """Spec `survey-sites`: a site in several languages (change site-translations, #618)."""
+
+    def setUp(self):
+        super().setUp()
+        self.login(self.editor)
+        self.add_block('text', title='About', body='<p>The park</p>')
+        self.add_block('faq', q=['Who?'], a=['<p>Everyone</p>'])
+        self.client.post(self.url('editor_site_translation_add_language'), {'language': 'es'})
+        self.site.refresh_from_db()
+        self.text = self.site.blocks.get(kind='text')
+
+    def save(self, key, value):
+        return self.client.post(self.url('editor_site_translation_save'),
+                                {'key': key, 'value': value, 'from': 'en', 'to': 'es'})
+
+    def test_table_lists_every_text(self):
+        """GIVEN a site with a title, a text block and an FAQ, offered in Spanish
+        WHEN the Translations tab opens
+        THEN it lists the site title, the block heading, the body, the question and the answer"""
+        self.assertEqual(self.site.languages, ['es'])
+        html = self.client.get(self.url('editor_site_translations')).content.decode()
+        for key in ('site:title', f'block:{self.text.pk}:title', f'block:{self.text.pk}:body'):
+            self.assertIn(f'data-occ="{key}"', html)
+        faq = self.site.blocks.get(kind='faq')
+        self.assertIn(f'block:{faq.pk}:faq:0:q', html)
+
+    def test_visitor_reads_spanish(self):
+        """GIVEN a Spanish heading and body saved in the table
+        WHEN a visitor opens the published site with ?lang=es, then without it, then with Accept-Language es
+        THEN the Spanish texts, lang="es", the switch and hreflang are there, the answer untranslated falls
+             back to English, and the choice is remembered in a cookie"""
+        self.assertEqual(self.save(f'block:{self.text.pk}:title', 'Acerca de').status_code, 200)
+        self.save(f'block:{self.text.pk}:body', '<p>El parque</p><script>x</script>')
+        self.text.refresh_from_db()
+        self.assertEqual(self.text.translations['es']['body'], '<p>El parque</p>')
+        self.client.post(self.url('editor_site_publish'), {'action': 'publish'})
+        self.client.logout()
+        r = self.client.get('/p/riverside-park-plan/', {'lang': 'es'})
+        page = r.content.decode()
+        self.assertIn('<html lang="es">', page)
+        self.assertIn('<h2>Acerca de</h2>', page)
+        self.assertIn('El parque', page)
+        self.assertIn('Everyone', page)
+        self.assertIn('hreflang="es"', page)
+        self.assertIn('class="lp-langs"', page)
+        self.assertEqual(r.cookies['p_lang'].value, 'es')
+        self.client.cookies.clear()
+        self.assertIn('<h2>About</h2>', self.client.get('/p/riverside-park-plan/').content.decode())
+        r = self.client.get('/p/riverside-park-plan/', HTTP_ACCEPT_LANGUAGE='es-MX,es;q=0.9')
+        self.assertIn('<h2>Acerca de</h2>', r.content.decode())
+
+    def test_outdated_after_the_source_changes(self):
+        """GIVEN a translated heading
+        WHEN the English heading changes
+        THEN the row reads outdated"""
+        from survey import site_translations as st
+        self.save(f'block:{self.text.pk}:title', 'Acerca de')
+        self.client.post(self.url('editor_site_block_edit', self.text.pk),
+                         {'title': 'About the park', 'body': '<p>The park</p>', 'autosave': '1'})
+        self.site.refresh_from_db()
+        occ = next(o for o in st.occurrences(self.site, 'es') if o.key == f'block:{self.text.pk}:title')
+        self.assertEqual(occ.status, 'stale')
+
+    def test_csv_round_trip(self):
+        """GIVEN the exported CSV with a Spanish column filled in
+        WHEN it is imported
+        THEN the translations are stored"""
+        import csv
+        import io
+        data = self.client.get(self.url('editor_site_translations_export') + '?from=en&to=es').content.decode('utf-8-sig')
+        rows = list(csv.DictReader(io.StringIO(data)))
+        for row in rows:
+            if row['source'] == 'About':
+                row['translation'] = 'Acerca de'
+        out = io.StringIO()
+        writer = csv.DictWriter(out, fieldnames=rows[0].keys())
+        writer.writeheader()
+        writer.writerows(rows)
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        upload = SimpleUploadedFile('es.csv', out.getvalue().encode(), content_type='text/csv')
+        self.client.post(self.url('editor_site_translations_import'), {'from': 'en', 'to': 'es', 'file': upload})
+        self.text.refresh_from_db()
+        self.assertEqual(self.text.translations['es']['title'], 'Acerca de')
+
+    def test_rights(self):
+        """GIVEN a viewer, and a language the site does not offer
+        WHEN the viewer saves a row, or an editor saves into German
+        THEN the viewer gets 403 and the German save 400"""
+        self.login(self.viewer)
+        self.assertEqual(self.save(f'block:{self.text.pk}:title', 'x').status_code, 403)
+        self.login(self.editor)
+        r = self.client.post(self.url('editor_site_translation_save'),
+                             {'key': f'block:{self.text.pk}:title', 'value': 'x', 'from': 'en', 'to': 'de'})
+        self.assertEqual(r.status_code, 400)
+
+    def test_duplicate_keeps_translations(self):
+        """GIVEN a site with a Spanish heading and a documents block with a Spanish file title
+        WHEN it is duplicated
+        THEN the copy offers Spanish with the same heading and the file title under the new file"""
+        from survey.models import Site
+        self.save(f'block:{self.text.pk}:title', 'Acerca de')
+        pdf = SimpleUploadedFile('plan.pdf', b'%PDF-1.4\n', content_type='application/pdf')
+        self.client.post(self.url('editor_site_block_add'), {'kind': 'documents', 'files': [pdf]})
+        docs = self.site.blocks.get(kind='documents')
+        f = docs.files.get()
+        self.save(f'block:{docs.pk}:file:{f.pk}', 'El plan')
+        self.client.post(self.url('editor_site_duplicate'))
+        copy = Site.objects.exclude(pk=self.site.pk).get()
+        self.assertEqual(copy.languages, ['es'])
+        self.assertEqual(copy.blocks.get(kind='text').translations['es']['title'], 'Acerca de')
+        new_docs = copy.blocks.get(kind='documents')
+        self.assertEqual(new_docs.translations['es'], {f'file:{new_docs.files.get().pk}': 'El plan'})
+
+    def test_registration_language(self):
+        """GIVEN a published Spanish-offering site with an open event
+        WHEN a visitor registers from the Spanish page
+        THEN the registration remembers Spanish for its confirmation mail"""
+        self.add_block('event', date='2030-06-12', start='10:00', tz='UTC', open='1', place='Boathouse')
+        self.client.post(self.url('editor_site_publish'), {'action': 'publish'})
+        event = self.site.blocks.get(kind='event')
+        self.client.logout()
+        self.client.post(reverse('site_event_register', args=[self.site.slug, event.pk]),
+                         {'name': 'Ana', 'email': 'ana@example.org', 'consent': '1', 'lang': 'es'})
+        self.assertEqual(event.registrations.get().language, 'es')
+
+    def test_translations_are_screened(self):
+        """GIVEN a Spanish heading
+        WHEN the site text is collected for screening
+        THEN the translation is part of it"""
+        from survey.content_screening import collect_site_text
+        self.save(f'block:{self.text.pk}:title', 'Haga clic aquí')
+        self.site.refresh_from_db()
+        self.assertIn('Haga clic aquí', ' '.join(t for _l, t in collect_site_text(self.site).texts))

@@ -60,6 +60,12 @@ Under the event in the builder, **Attendee list** shows who registered, with a C
 
 **Surveys on this site** lists the surveys the site shows. Add one there or straight from a survey card. A survey can be on any number of sites — the same city-wide survey on two neighbourhood sites, for example. Removing a survey from the site removes its cards.
 
+## Other languages
+
+Press **Translations** in the top bar and add a language. Every text of the site is listed once, in page order — headings, text, questions and answers, phases, captions, button labels, contacts, file titles, the title and summary — ready to translate in the table or through a CSV for an outside translator; one translation fills every place the same text is used. A text you change later shows as *Outdated* until its translation is checked.
+
+Visitors get the site in their browser's language when it is offered, and can switch at the top of the page; a text without a translation shows in the primary language. Event confirmations go out in the language the visitor registered in. **Stop offering** a language hides it from visitors and keeps its translations.
+
 ## Start from an earlier site
 
 **Duplicate** on the Sites list (or **Duplicate site** in the site settings) makes an unpublished copy to start the next engagement from: the same blocks, files, surveys and settings, a new address. Event registrations are never copied.

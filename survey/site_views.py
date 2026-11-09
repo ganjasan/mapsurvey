@@ -459,10 +459,19 @@ def site_public(request, slug):
               and sites.review_token_ok(site, request.GET.get('review')))
     if not live and not member and not review:
         return render(request, 'survey_unavailable.html', status=404)
-    with translation.override(site.language):
-        blocks = sites.page_blocks(site, lang=site.language)
+    # The visitor's language (change site-translations): ?lang=, the p_lang cookie, the browser,
+    # then the primary. Fixed labels come from the respondent catalogs in that language.
+    from . import site_translations
+    lang = site_translations.pick_language(request, site)
+    offered = site_translations.languages(site)
+    page_url = share.base() + reverse('site_public', args=[site.slug])
+    with translation.override(lang):
+        blocks = sites.page_blocks(site, lang=lang)
+        site_translations.localize(site, blocks, lang)
         response = render(request, 'sites/public.html', {
-            'site': site, 'org': site.organization, 'blocks': blocks,
+            'site': site, 'org': site.organization, 'blocks': blocks, 'lang': lang,
+            'site_languages': [(code, dict(language_choices()).get(code, code)) for code in offered]
+                              if len(offered) > 1 else [],
             'nav': sites.nav_items(blocks), 'preview': not live and not review, 'review': review, 'held': held,
             'map_layers': sites.map_layers(site, blocks),
             'results': [card for b, card in blocks if b.kind == 'results'],
@@ -471,9 +480,13 @@ def site_public(request, slug):
                                  else {}),
             'noindex': not live or site.visibility == 'unlisted',
             'show_branding': not for_organization(site.organization).has('unbranded'),
-            'page_url': share.base() + reverse('site_public', args=[site.slug]),
+            'page_url': page_url + (f'?lang={lang}' if lang != offered[0] else ''),
+            'base_url': page_url,
             'event_notice': _event_notice(request),
         })
+    if request.GET.get('lang') == lang and len(offered) > 1:
+        response.set_cookie('p_lang', lang, max_age=180 * 86400, path='/p/', samesite='Lax',
+                            secure=request.is_secure())
     if not live:
         response['Cache-Control'] = 'private, no-store'
         response['Referrer-Policy'] = 'no-referrer'  # the review token must not leak to outbound links
@@ -551,7 +564,10 @@ def site_event_register(request, slug, block_id):
         problem = 'consent'
     if problem:
         return redirect(f'{back}?event_error={problem}&event={block.pk}#{block.anchor}')
-    status, reg = site_events.register(block, name, email)
+    from . import site_translations
+    lang = request.POST.get('lang') or ''
+    status, reg = site_events.register(block, name, email,
+                                       language=lang if lang in site_translations.languages(block.site) else '')
     if status in (site_events.REGISTERED, site_events.ALREADY):
         site_events.queue_confirmation(reg)
         return redirect(f'{back}?registered={block.pk}#{block.anchor}')
@@ -567,7 +583,7 @@ def site_event_cancel(request, token):
     if request.method == 'POST':
         site_events.cancel(reg)
         done = True
-    with translation.override(site.language):
+    with translation.override(reg.language or site.language):
         return render(request, 'sites/event_cancel.html', {
             'registration': reg, 'block': reg.block, 'site': site, 'done': done or reg.cancelled_at is not None,
             'starts_at': site_events.starts_at(reg.block.data), 'tz': reg.block.data.get('tz') or 'UTC',
