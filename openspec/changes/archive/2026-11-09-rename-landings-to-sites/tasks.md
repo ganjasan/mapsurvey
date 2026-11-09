@@ -11,4 +11,4 @@
 
 - [x] 2.1 Tests for the new requirement; full suite
 - [x] 2.2 Dev database recreated, builder checked
-- [ ] 2.3 PR into `epic/landing-pages`, merge, archive; #593 description and title
+- [x] 2.3 PR into `epic/landing-pages`, merge, archive; #593 description and title
