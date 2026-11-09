@@ -40,13 +40,18 @@ state; New site is a POST that creates a draft and opens the builder.{% endcomme
   {% if rows %}
   <div class="list-group">
     {% for row in rows %}
-    <a class="list-group-item list-group-item-action d-flex align-items-center justify-content-between" href="{% url 'editor_site' row.site.uuid %}">
-      <span>
+    <div class="list-group-item d-flex align-items-center justify-content-between">
+      <a class="flex-grow-1 text-reset text-decoration-none" href="{% url 'editor_site' row.site.uuid %}">
         <strong>{{ row.site.title }}</strong>
         <span class="text-muted small d-block">/p/{{ row.site.slug }}/ · {% blocktrans count n=row.surveys %}{{ n }} survey{% plural %}{{ n }} surveys{% endblocktrans %}</span>
-      </span>
+      </a>
       {% include "sites/_state_badge.html" with site=row.site held=row.held %}
-    </a>
+      {% if can_act and may_create %}
+      <form method="post" action="{% url 'editor_site_duplicate' row.site.uuid %}" class="mb-0 ml-2">{% csrf_token %}
+        <button type="submit" class="btn btn-sm btn-link text-muted" title="{% trans 'Duplicate' %}" aria-label="{% blocktrans with title=row.site.title %}Duplicate “{{ title }}”{% endblocktrans %}"><i class="far fa-clone" aria-hidden="true"></i></button>
+      </form>
+      {% endif %}
+    </div>
     {% endfor %}
   </div>
   {% else %}

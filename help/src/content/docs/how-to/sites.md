@@ -59,6 +59,10 @@ Under the event in the builder, **Attendee list** shows who registered, with a C
 
 **Surveys on this site** lists the surveys the site shows. Add one there or straight from a survey card. A survey can be on any number of sites — the same city-wide survey on two neighbourhood sites, for example. Removing a survey from the site removes its cards.
 
+## Start from an earlier site
+
+**Duplicate** on the Sites list (or **Duplicate site** in the site settings) makes an unpublished copy to start the next engagement from: the same blocks, files, surveys and settings, a new address. Event registrations are never copied.
+
 ## Publish
 
 Press **Publish** in the top bar. The panel that opens shows the address — `mapsurvey.org/p/<address>/`, with a copy button — a switch for search engines and the QR code to download; **Publish now** puts the site live. Change the address (site settings, **Address**) before you print it: changing it later breaks the links already out there.

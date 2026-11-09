@@ -307,6 +307,7 @@ urlpatterns = [
     path('editor/sites/', site_views.editor_sites, name='editor_sites'),
     path('editor/sites/new/', site_views.editor_site_create, name='editor_site_create'),
     path('editor/sites/<uuid:uuid>/', site_views.editor_site, name='editor_site'),
+    path('editor/sites/<uuid:uuid>/duplicate/', site_views.editor_site_duplicate, name='editor_site_duplicate'),
     path('editor/sites/<uuid:uuid>/settings/', site_views.editor_site_settings,
          name='editor_site_settings'),
     path('editor/sites/<uuid:uuid>/surveys/link/', site_views.editor_site_survey_link,
