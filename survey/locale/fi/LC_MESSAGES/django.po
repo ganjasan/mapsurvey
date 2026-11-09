@@ -12232,3 +12232,131 @@ msgstr "Valitse väri."
 #: workspace-branding
 msgid "The logo can be at most 1 MB."
 msgstr "Logo saa olla enintään 1 Mt."
+
+#: site-templates
+msgid "Consultation"
+msgstr "Kuuleminen"
+
+#: site-templates
+msgid "One engagement: why we ask, how to take part, what happens next."
+msgstr "Yksi osallistaminen: miksi kysymme, miten osallistua, mitä seuraavaksi tapahtuu."
+
+#: site-templates
+msgid "<p>What the project is, why residents are asked now, and what is already decided.</p>"
+msgstr "<p>Mistä hankkeessa on kyse, miksi asukkailta kysytään nyt ja mitä on jo päätetty.</p>"
+
+#: site-templates
+msgid "Tell us what you think"
+msgstr "Kerro mielipiteesi"
+
+#: site-templates
+msgid "What we heard"
+msgstr "Mitä kuulimme"
+
+#: site-templates
+msgid "Decision"
+msgstr "Päätös"
+
+#: site-templates
+msgid "Meet us"
+msgstr "Tapaa meidät"
+
+#: site-templates
+msgid "Who is running this consultation?"
+msgstr "Kuka järjestää tämän kuulemisen?"
+
+#: site-templates
+msgid "What happens with my answers?"
+msgstr "Mitä vastauksilleni tapahtuu?"
+
+#: site-templates
+msgid "Contact"
+msgstr "Yhteystiedot"
+
+#: site-templates
+msgid "Master plan"
+msgstr "Yleissuunnitelma"
+
+#: site-templates
+msgid "A design project over months: the area, the concepts, the documents, the results."
+msgstr "Kuukausia kestävä suunnitteluhanke: alue, luonnokset, asiakirjat, tulokset."
+
+#: site-templates
+msgid "The plan"
+msgstr "Suunnitelma"
+
+#: site-templates
+msgid "<p>The place, the people who use it, and what the plan sets out to change.</p>"
+msgstr "<p>Paikka, sen käyttäjät ja mitä suunnitelma pyrkii muuttamaan.</p>"
+
+#: site-templates
+msgid "How the plan is made"
+msgstr "Miten suunnitelma tehdään"
+
+#: site-templates
+msgid "Listen"
+msgstr "Kuuntelu"
+
+#: site-templates
+msgid "Concepts"
+msgstr "Luonnokset"
+
+#: site-templates
+msgid "Draft plan"
+msgstr "Suunnitelmaluonnos"
+
+#: site-templates
+msgid "Final plan"
+msgstr "Lopullinen suunnitelma"
+
+#: site-templates
+msgid "Project team"
+msgstr "Hanketiimi"
+
+#: site-templates
+msgid "From a template"
+msgstr "Mallipohjasta"
+
+#: site-templates
+msgid "Your templates"
+msgstr "Omat mallipohjat"
+
+#: site-templates
+#, python-format
+msgid "%(n)s block"
+msgid_plural "%(n)s blocks"
+msgstr[0] "%(n)s lohko"
+msgstr[1] "%(n)s lohkoa"
+
+#: site-templates
+msgid "Templates"
+msgstr "Mallipohjat"
+
+#: site-templates
+msgid "Template"
+msgstr "Mallipohja"
+
+#: site-templates
+msgid "This is a template: it is never published. Start a site from it with New site → From a template on the Sites list."
+msgstr "Tämä on mallipohja: sitä ei koskaan julkaista. Aloita siitä sivusto sivustoluettelossa kohdasta ”Uusi sivusto → Mallipohjasta”."
+
+#: site-templates
+msgid "Save as template"
+msgstr "Tallenna mallipohjaksi"
+
+#: site-templates
+#, python-format
+msgid "“%(title)s” is saved as a template. Start a new site from it with New site → From a template."
+msgstr "”%(title)s” on tallennettu mallipohjaksi. Aloita siitä uusi sivusto kohdasta ”Uusi sivusto → Mallipohjasta”."
+
+#: site-templates
+msgid "A template is never published. Start a site from it instead."
+msgstr "Mallipohjaa ei koskaan julkaista. Aloita siitä sen sijaan sivusto."
+
+#: site-templates
+msgid "Pick one of this workspace’s templates."
+msgstr "Valitse jokin tämän työtilan mallipohjista."
+
+#: site-templates
+msgid "Pick one of the templates."
+msgstr "Valitse jokin mallipohjista."

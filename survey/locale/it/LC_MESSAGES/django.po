@@ -12278,3 +12278,131 @@ msgstr "Scegli un colore."
 #: workspace-branding
 msgid "The logo can be at most 1 MB."
 msgstr "Il logo può essere al massimo di 1 MB."
+
+#: site-templates
+msgid "Consultation"
+msgstr "Consultazione"
+
+#: site-templates
+msgid "One engagement: why we ask, how to take part, what happens next."
+msgstr "Un percorso partecipativo: perché chiediamo, come partecipare, cosa succede dopo."
+
+#: site-templates
+msgid "<p>What the project is, why residents are asked now, and what is already decided.</p>"
+msgstr "<p>Che cos’è il progetto, perché si chiede ora ai residenti e cosa è già deciso.</p>"
+
+#: site-templates
+msgid "Tell us what you think"
+msgstr "Dicci cosa ne pensi"
+
+#: site-templates
+msgid "What we heard"
+msgstr "Cosa abbiamo sentito"
+
+#: site-templates
+msgid "Decision"
+msgstr "Decisione"
+
+#: site-templates
+msgid "Meet us"
+msgstr "Incontraci"
+
+#: site-templates
+msgid "Who is running this consultation?"
+msgstr "Chi conduce questa consultazione?"
+
+#: site-templates
+msgid "What happens with my answers?"
+msgstr "Cosa succede alle mie risposte?"
+
+#: site-templates
+msgid "Contact"
+msgstr "Contatto"
+
+#: site-templates
+msgid "Master plan"
+msgstr "Masterplan"
+
+#: site-templates
+msgid "A design project over months: the area, the concepts, the documents, the results."
+msgstr "Un progetto di più mesi: l’area, le proposte, i documenti, i risultati."
+
+#: site-templates
+msgid "The plan"
+msgstr "Il piano"
+
+#: site-templates
+msgid "<p>The place, the people who use it, and what the plan sets out to change.</p>"
+msgstr "<p>Il luogo, le persone che lo frequentano e cosa il piano vuole cambiare.</p>"
+
+#: site-templates
+msgid "How the plan is made"
+msgstr "Come nasce il piano"
+
+#: site-templates
+msgid "Listen"
+msgstr "Ascolto"
+
+#: site-templates
+msgid "Concepts"
+msgstr "Proposte"
+
+#: site-templates
+msgid "Draft plan"
+msgstr "Bozza del piano"
+
+#: site-templates
+msgid "Final plan"
+msgstr "Piano definitivo"
+
+#: site-templates
+msgid "Project team"
+msgstr "Gruppo di progetto"
+
+#: site-templates
+msgid "From a template"
+msgstr "Da un modello"
+
+#: site-templates
+msgid "Your templates"
+msgstr "I tuoi modelli"
+
+#: site-templates
+#, python-format
+msgid "%(n)s block"
+msgid_plural "%(n)s blocks"
+msgstr[0] "%(n)s blocco"
+msgstr[1] "%(n)s blocchi"
+
+#: site-templates
+msgid "Templates"
+msgstr "Modelli"
+
+#: site-templates
+msgid "Template"
+msgstr "Modello"
+
+#: site-templates
+msgid "This is a template: it is never published. Start a site from it with New site → From a template on the Sites list."
+msgstr "Questo è un modello: non viene mai pubblicato. Crea un sito da esso con «Nuovo sito → Da un modello» nell’elenco dei siti."
+
+#: site-templates
+msgid "Save as template"
+msgstr "Salva come modello"
+
+#: site-templates
+#, python-format
+msgid "“%(title)s” is saved as a template. Start a new site from it with New site → From a template."
+msgstr "«%(title)s» è salvato come modello. Crea un nuovo sito da esso con «Nuovo sito → Da un modello»."
+
+#: site-templates
+msgid "A template is never published. Start a site from it instead."
+msgstr "Un modello non viene mai pubblicato. Crea invece un sito da esso."
+
+#: site-templates
+msgid "Pick one of this workspace’s templates."
+msgstr "Scegli uno dei modelli di questo spazio di lavoro."
+
+#: site-templates
+msgid "Pick one of the templates."
+msgstr "Scegli uno dei modelli."

@@ -74,6 +74,8 @@ Visitors get the site in their browser's language when it is offered, and can sw
 
 **Duplicate** on the Sites list (or **Duplicate site** in the site settings) makes an unpublished copy to start the next engagement from: the same blocks, files, surveys and settings, a new address. Event registrations are never copied.
 
+**From a template** next to **New site** starts from a ready layout: *Consultation* (why we ask, take part, how it works, meet us, questions, contact) or *Master plan* (the plan, where, phases, take part, what we heard, documents, project team). Blocks that need your material — a picture, a survey, files, the project area — wait empty with their drop zones. **Save as template** in the site settings keeps any site as a starting point of your own: it has no surveys, is never published, and appears under *Templates* and in the same menu.
+
 ## Publish
 
 Press **Publish** in the top bar. The panel that opens shows the address — `mapsurvey.org/p/<address>/`, with a copy button — a switch for search engines and the QR code to download; **Publish now** puts the site live. Change the address (site settings, **Address**) before you print it: changing it later breaks the links already out there.

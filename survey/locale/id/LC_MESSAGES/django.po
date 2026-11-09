@@ -12233,3 +12233,130 @@ msgstr "Pilih warna."
 #: workspace-branding
 msgid "The logo can be at most 1 MB."
 msgstr "Logo paling besar 1 MB."
+
+#: site-templates
+msgid "Consultation"
+msgstr "Konsultasi publik"
+
+#: site-templates
+msgid "One engagement: why we ask, how to take part, what happens next."
+msgstr "Satu kegiatan partisipasi: mengapa kami bertanya, cara ikut serta, apa yang terjadi selanjutnya."
+
+#: site-templates
+msgid "<p>What the project is, why residents are asked now, and what is already decided.</p>"
+msgstr "<p>Apa proyeknya, mengapa warga ditanya sekarang, dan apa yang sudah diputuskan.</p>"
+
+#: site-templates
+msgid "Tell us what you think"
+msgstr "Sampaikan pendapat Anda"
+
+#: site-templates
+msgid "What we heard"
+msgstr "Apa yang kami dengar"
+
+#: site-templates
+msgid "Decision"
+msgstr "Keputusan"
+
+#: site-templates
+msgid "Meet us"
+msgstr "Temui kami"
+
+#: site-templates
+msgid "Who is running this consultation?"
+msgstr "Siapa yang menyelenggarakan konsultasi ini?"
+
+#: site-templates
+msgid "What happens with my answers?"
+msgstr "Apa yang terjadi dengan jawaban saya?"
+
+#: site-templates
+msgid "Contact"
+msgstr "Kontak"
+
+#: site-templates
+msgid "Master plan"
+msgstr "Rencana induk"
+
+#: site-templates
+msgid "A design project over months: the area, the concepts, the documents, the results."
+msgstr "Proyek perancangan berbulan-bulan: area, konsep, dokumen, hasil."
+
+#: site-templates
+msgid "The plan"
+msgstr "Rencana"
+
+#: site-templates
+msgid "<p>The place, the people who use it, and what the plan sets out to change.</p>"
+msgstr "<p>Tempatnya, orang-orang yang memakainya, dan apa yang ingin diubah oleh rencana.</p>"
+
+#: site-templates
+msgid "How the plan is made"
+msgstr "Bagaimana rencana dibuat"
+
+#: site-templates
+msgid "Listen"
+msgstr "Mendengar"
+
+#: site-templates
+msgid "Concepts"
+msgstr "Konsep"
+
+#: site-templates
+msgid "Draft plan"
+msgstr "Draf rencana"
+
+#: site-templates
+msgid "Final plan"
+msgstr "Rencana akhir"
+
+#: site-templates
+msgid "Project team"
+msgstr "Tim proyek"
+
+#: site-templates
+msgid "From a template"
+msgstr "Dari templat"
+
+#: site-templates
+msgid "Your templates"
+msgstr "Templat Anda"
+
+#: site-templates
+#, python-format
+msgid "%(n)s block"
+msgid_plural "%(n)s blocks"
+msgstr[0] "%(n)s blok"
+
+#: site-templates
+msgid "Templates"
+msgstr "Templat"
+
+#: site-templates
+msgid "Template"
+msgstr "Templat"
+
+#: site-templates
+msgid "This is a template: it is never published. Start a site from it with New site → From a template on the Sites list."
+msgstr "Ini templat: tidak pernah diterbitkan. Buat situs darinya lewat Situs baru → Dari templat di daftar situs."
+
+#: site-templates
+msgid "Save as template"
+msgstr "Simpan sebagai templat"
+
+#: site-templates
+#, python-format
+msgid "“%(title)s” is saved as a template. Start a new site from it with New site → From a template."
+msgstr "“%(title)s” disimpan sebagai templat. Buat situs baru darinya lewat Situs baru → Dari templat."
+
+#: site-templates
+msgid "A template is never published. Start a site from it instead."
+msgstr "Templat tidak pernah diterbitkan. Buat situs darinya."
+
+#: site-templates
+msgid "Pick one of this workspace’s templates."
+msgstr "Pilih salah satu templat di ruang kerja ini."
+
+#: site-templates
+msgid "Pick one of the templates."
+msgstr "Pilih salah satu templat."

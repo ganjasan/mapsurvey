@@ -20,6 +20,20 @@ state; New site is a POST that creates a draft and opens the builder.{% endcomme
           {% csrf_token %}
           <button type="submit" class="btn btn-sm btn-primary text-nowrap" id="site-new"><i class="fas fa-plus" aria-hidden="true"></i> {% trans "New site" %}</button>
         </form>
+        <details class="st-menu">
+          <summary class="btn btn-sm btn-outline-primary text-nowrap">{% trans "From a template" %} <i class="fas fa-chevron-down" aria-hidden="true"></i></summary>
+          <div class="st-pop">
+            {% for key, title, description, icon in starters %}
+            <form method="post" action="{% url 'editor_site_create' %}">{% csrf_token %}<input type="hidden" name="template" value="starter:{{ key }}">
+              <button type="submit" class="st-item"><i class="{{ icon }}" aria-hidden="true"></i><span><b>{{ title }}</b><small>{{ description }}</small></span></button></form>
+            {% endfor %}
+            {% if templates %}<div class="st-sep">{% trans "Your templates" %}</div>{% endif %}
+            {% for t in templates %}
+            <form method="post" action="{% url 'editor_site_create' %}">{% csrf_token %}<input type="hidden" name="template" value="site:{{ t.uuid }}">
+              <button type="submit" class="st-item"><i class="far fa-copy" aria-hidden="true"></i><span><b>{{ t.title }}</b><small>{% blocktrans count n=t.blocks.count %}{{ n }} block{% plural %}{{ n }} blocks{% endblocktrans %}</small></span></button></form>
+            {% endfor %}
+          </div>
+        </details>
         {% else %}
         <a class="btn btn-sm btn-outline-primary" href="{% url 'org_billing' org.slug %}">{% trans "Upgrade to Pro to create sites" %}</a>
         {% endif %}
@@ -60,5 +74,31 @@ state; New site is a POST that creates a draft and opens the builder.{% endcomme
     {% trans "No sites yet." %}
   </div>
   {% endif %}
+
+  {% if templates %}
+  <h6 class="mt-4 mb-2 text-muted" style="font-size:.8rem;letter-spacing:.05em;text-transform:uppercase;">{% trans "Templates" %}</h6>
+  <div class="list-group">
+    {% for t in templates %}
+    <a class="list-group-item list-group-item-action d-flex align-items-center justify-content-between" href="{% url 'editor_site' t.uuid %}">
+      <span><i class="far fa-copy text-muted mr-2" aria-hidden="true"></i><strong>{{ t.title }}</strong></span>
+      <span class="badge badge-light">{% trans "Template" %}</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
 </div>
+<style>
+.st-menu { position: relative; }
+.st-menu summary { list-style: none; cursor: pointer; }
+.st-menu summary::-webkit-details-marker { display: none; }
+.st-pop { position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; width: 320px; background: #fff; border: 1px solid #e5e7eb;
+  border-radius: 10px; box-shadow: 0 10px 30px rgba(20,30,50,.15); padding: 6px; }
+.st-pop form { margin: 0; }
+.st-item { display: flex; gap: 10px; align-items: flex-start; width: 100%; text-align: left; border: 0; background: none; padding: 8px 10px; border-radius: 8px; }
+.st-item:hover { background: #eef2ff; }
+.st-item i { color: #4f46e5; width: 18px; margin-top: 3px; }
+.st-item b { display: block; font-size: .9rem; }
+.st-item small { display: block; color: #6b7280; font-size: .78rem; }
+.st-sep { font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: #9ca3af; padding: 8px 10px 2px; }
+</style>
 {% endblock %}
