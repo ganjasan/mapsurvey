@@ -12436,3 +12436,121 @@ msgstr "Sesudah"
 #: site-gallery-compare
 msgid "Slide to compare"
 msgstr "Geser untuk membandingkan"
+
+#: site-pages
+msgid "Use lowercase letters, digits and dashes."
+msgstr "Gunakan huruf kecil, angka, dan tanda hubung."
+
+#: site-pages
+msgid "Another page of this site already uses this address."
+msgstr "Halaman lain di situs ini sudah memakai alamat ini."
+
+#: site-pages
+msgid "Pick a page of this site."
+msgstr "Pilih halaman dari situs ini."
+
+#: site-pages
+msgid "A site can have at most %(n)d pages."
+msgstr "Sebuah situs dapat memiliki paling banyak %(n)d halaman."
+
+#: site-pages
+msgid "Untitled page"
+msgstr "Halaman tanpa judul"
+
+#: site-pages
+msgid "Give the page a title."
+msgstr "Beri judul pada halaman."
+
+#: site-pages
+msgid "The home page can’t be deleted."
+msgstr "Halaman beranda tidak dapat dihapus."
+
+#: site-pages
+msgid "Municipal site"
+msgstr "Situs pemerintah daerah"
+
+#: site-pages
+msgid "A council programme with pages: About, Take part, Documents and News."
+msgstr "Program pemerintah daerah dengan halaman: Tentang, Ikut serta, Dokumen, dan Berita."
+
+#: site-pages
+msgid "About"
+msgstr "Tentang"
+
+#: site-pages
+msgid "<p>What the council plans, why it asks residents, and what is already decided.</p>"
+msgstr "<p>Apa yang direncanakan pemerintah daerah, mengapa warga ditanya, dan apa yang sudah diputuskan.</p>"
+
+#: site-pages
+msgid "News"
+msgstr "Berita"
+
+#: site-pages
+msgid "<p>The latest from the project: what changed, and what comes next.</p>"
+msgstr "<p>Kabar terbaru dari proyek: apa yang berubah dan apa berikutnya.</p>"
+
+#: site-pages
+msgid "Site pages"
+msgstr "Halaman situs"
+
+#: site-pages
+msgid "Not in the menu"
+msgstr "Tidak di menu"
+
+#: site-pages
+msgid "A site can have at most 12 pages."
+msgstr "Sebuah situs dapat memiliki paling banyak 12 halaman."
+
+#: site-pages
+msgid "Add page"
+msgstr "Tambah halaman"
+
+#: site-pages
+msgid "Home page"
+msgstr "Halaman beranda"
+
+#: site-pages
+msgid "Shown in the menu and as the page's heading."
+msgstr "Ditampilkan di menu dan sebagai judul halaman."
+
+#: site-pages
+msgid "Shown in the menu once the site has a second page."
+msgstr "Ditampilkan di menu setelah situs memiliki halaman kedua."
+
+#: site-pages
+msgid "Links and QR codes already shared stop working when the address changes."
+msgstr "Tautan dan kode QR yang sudah dibagikan berhenti berfungsi saat alamat berubah."
+
+#: site-pages
+msgid "Show in the menu"
+msgstr "Tampilkan di menu"
+
+#: site-pages
+msgid "The home page opens at the site's address and is always first in the menu."
+msgstr "Halaman beranda terbuka di alamat situs dan selalu pertama di menu."
+
+#: site-pages
+msgid "Delete the page “%(title)s”?"
+msgstr "Hapus halaman “%(title)s”?"
+
+#: site-pages
+msgid "Delete page"
+msgstr "Hapus halaman"
+
+#: site-pages
+msgid "The page is empty. Its address stops working."
+msgstr "Halaman ini kosong. Alamatnya akan berhenti berfungsi."
+
+#: site-pages
+msgid "Move to page"
+msgstr "Pindahkan ke halaman"
+
+#: site-pages
+msgid "Move"
+msgstr "Pindahkan"
+
+#: site-pages
+msgid "Its %(n)s block goes with it, with its files and event registrations. This cannot be undone."
+msgid_plural "Its %(n)s blocks go with it, with their files and event registrations. This cannot be undone."
+msgstr[0] "%(n)s bloknya ikut terhapus, beserta berkas dan pendaftaran acara. Ini tidak dapat dibatalkan."
+

@@ -767,7 +767,7 @@ msgstr "На главную"
 #: survey/templates/admin/assign_cohort.html:6
 #: survey/templates/admin/funnel_dashboard.html:6
 msgid "Home"
-msgstr ""
+msgstr "Главная"
 
 #: survey/templates/admin/assign_cohort.html:7
 msgid "Users"
@@ -10543,3 +10543,127 @@ msgstr "После"
 #: site-gallery-compare
 msgid "Slide to compare"
 msgstr "Сдвиньте, чтобы сравнить"
+
+#: site-pages
+msgid "Use lowercase letters, digits and dashes."
+msgstr "Используйте строчные латинские буквы, цифры и дефисы."
+
+#: site-pages
+msgid "Another page of this site already uses this address."
+msgstr "Этот адрес уже занят другой страницей сайта."
+
+#: site-pages
+msgid "Pick a page of this site."
+msgstr "Выберите страницу этого сайта."
+
+#: site-pages
+msgid "A site can have at most %(n)d pages."
+msgstr "На сайте может быть не больше %(n)d страниц."
+
+#: site-pages
+msgid "Untitled page"
+msgstr "Страница без названия"
+
+#: site-pages
+msgid "Give the page a title."
+msgstr "Дайте странице название."
+
+#: site-pages
+msgid "The home page can’t be deleted."
+msgstr "Главную страницу удалить нельзя."
+
+#: site-pages
+msgid "Municipal site"
+msgstr "Муниципальный сайт"
+
+#: site-pages
+msgid "A council programme with pages: About, Take part, Documents and News."
+msgstr "Программа муниципалитета со страницами: О программе, Участвуйте, Документы и Новости."
+
+#: site-pages
+msgid "About"
+msgstr "О программе"
+
+#: site-pages
+msgid "<p>What the council plans, why it asks residents, and what is already decided.</p>"
+msgstr "<p>Что планирует муниципалитет, зачем он спрашивает жителей и что уже решено.</p>"
+
+#: site-pages
+msgid "News"
+msgstr "Новости"
+
+#: site-pages
+msgid "<p>The latest from the project: what changed, and what comes next.</p>"
+msgstr "<p>Последнее о проекте: что изменилось и что будет дальше.</p>"
+
+#: site-pages
+msgid "Site pages"
+msgstr "Страницы сайта"
+
+#: site-pages
+msgid "Not in the menu"
+msgstr "Не в меню"
+
+#: site-pages
+msgid "A site can have at most 12 pages."
+msgstr "На сайте может быть не больше 12 страниц."
+
+#: site-pages
+msgid "Add page"
+msgstr "Добавить страницу"
+
+#: site-pages
+msgid "Home page"
+msgstr "Главная страница"
+
+#: site-pages
+msgid "Shown in the menu and as the page's heading."
+msgstr "Показывается в меню и как заголовок страницы."
+
+#: site-pages
+msgid "Shown in the menu once the site has a second page."
+msgstr "Появится в меню, когда у сайта будет вторая страница."
+
+#: site-pages
+msgid "Links and QR codes already shared stop working when the address changes."
+msgstr "Уже разосланные ссылки и QR-коды перестанут работать, если сменить адрес."
+
+#: site-pages
+msgid "Show in the menu"
+msgstr "Показывать в меню"
+
+#: site-pages
+msgid "The home page opens at the site's address and is always first in the menu."
+msgstr "Главная открывается по адресу сайта и всегда стоит в меню первой."
+
+#: site-pages
+msgid "Delete the page “%(title)s”?"
+msgstr "Удалить страницу «%(title)s»?"
+
+#: site-pages
+msgid "Delete page"
+msgstr "Удалить страницу"
+
+#: site-pages
+msgid "The page is empty. Its address stops working."
+msgstr "Страница пуста. Её адрес перестанет работать."
+
+#: site-pages
+msgid "Move to page"
+msgstr "Перенести на страницу"
+
+#: site-pages
+msgid "Move"
+msgstr "Перенести"
+
+#: site-pages
+msgid "Its %(n)s block goes with it, with its files and event registrations. This cannot be undone."
+msgid_plural "Its %(n)s blocks go with it, with their files and event registrations. This cannot be undone."
+msgstr[0] "Вместе с ней удалится %(n)s блок с файлами и регистрациями на события. Это нельзя отменить."
+msgstr[1] "Вместе с ней удалятся %(n)s блока с файлами и регистрациями на события. Это нельзя отменить."
+msgstr[2] "Вместе с ней удалятся %(n)s блоков с файлами и регистрациями на события. Это нельзя отменить."
+msgstr[3] "Вместе с ней удалятся %(n)s блоков с файлами и регистрациями на события. Это нельзя отменить."
+
+#: site-pages
+msgid "Pages"
+msgstr "Страницы"

@@ -27,7 +27,7 @@ from billing.gates import feature_required
 
 from . import basemaps, branding, site_events, sites, share
 from .content_screening import is_site_held
-from .models import Site, SiteBlock, SiteSurvey, SurveyHeader
+from .models import Site, SiteBlock, SitePage, SiteSurvey, SurveyHeader
 from .permissions import get_org_membership
 from .services import sites as site_service
 from .services.context import Actor
@@ -87,11 +87,28 @@ def _block_fragments(request, site, membership, block):
     }
 
 
-def _back(site, anchor='', select=None):
+def _back(site, anchor='', select=None, page=None):
+    from urllib.parse import urlencode
     url = reverse('editor_site', args=[site.uuid])
+    query = {}
+    if page is not None and not page.is_home:
+        query['page'] = page.pk
     if select is not None:
-        url += f'?select={select}'
+        query['select'] = select
+    if query:
+        url += '?' + urlencode(query)
     return redirect(f'{url}#{anchor}' if anchor else url)
+
+
+def _page_of(site, value):
+    """The page `value` (a posted or queried id) names on this site; home when empty; 404 for any
+    other site's page (change site-pages)."""
+    value = str(value or '').strip()
+    if not value:
+        return sites.home_page(site)
+    if not value.isdigit():
+        raise Http404
+    return get_object_or_404(SitePage, pk=int(value), site=site)
 
 
 # ─── list and create ──────────────────────────────────────────────────────────
@@ -188,9 +205,11 @@ def editor_site_save_template(request, uuid):
 
 # ─── builder ──────────────────────────────────────────────────────────────────
 
-def _builder_context(request, site, membership, **extra):
+def _builder_context(request, site, membership, page=None, **extra):
     org = site.organization
-    blocks = sites.blocks_for(site)
+    page = page or _page_of(site, request.GET.get('page'))
+    pages = sites.pages_for(site)
+    blocks = sites.blocks_for(site, page)
     links = list(site.survey_links.select_related('survey').order_by('order', 'id'))
     linked_ids = {link.survey_id for link in links}
     cards = {}
@@ -226,6 +245,13 @@ def _builder_context(request, site, membership, **extra):
                        'label': sites.outline_label(b), 'a11y': a11y.get(b.pk, [])}
     ctx = {
         'org': org, 'site': site, 'blocks': blocks, 'cards': cards, 'results_missing': results_missing,
+        # Pages (change site-pages): the rail's tabs, the page the canvas shows, room for more.
+        'pages': pages, 'current_page': page, 'pages_full': len(pages) >= sites.PAGES_MAX,
+        'page_block_counts': {p.pk: p.blocks.count() for p in pages},
+        'other_pages': [p for p in pages if p.pk != page.pk],
+        'sitepage_pane': f'sitepage:{page.pk}',
+        # The public page menu, on the canvas too (same rule: two or more pages in the menu).
+        'canvas_pages': sites.menu(pages, page, [])['pages'],
         'items': items, 'selected': request.GET.get('select', ''), 'last_pk': blocks[-1].pk if blocks else '',
         'basemap_table': basemaps.table_for(org),
         'event_counts': event_counts, 'timezones': _timezones(),
@@ -342,12 +368,13 @@ def editor_site_block_add(request, uuid):
     if kind not in sites.BLOCK_KINDS:
         return HttpResponseBadRequest('unknown kind')
     after = request.POST.get('after', '')
+    page = _page_of(site, request.POST.get('page'))
     try:
         result = site_service.save_block(
             Actor.from_request(request), site, None, kind, request.POST, request.FILES,
-            creating=request.POST.get('empty') == '1', lenient=_is_autosave(request))
+            creating=request.POST.get('empty') == '1', lenient=_is_autosave(request), page=page)
     except site_service.BlockRefused as exc:
-        ctx = _builder_context(request, site, membership, new_kind=kind, new_errors=exc.errors,
+        ctx = _builder_context(request, site, membership, page=page, new_kind=kind, new_errors=exc.errors,
                                new_raw=dict(exc.raw, title=request.POST.get('title', ''),
                                             survey=request.POST.get('survey', '')))
         return render(request, 'sites/builder.html', ctx, status=400)
@@ -355,7 +382,7 @@ def editor_site_block_add(request, uuid):
         site_service.move_after(site, result, int(after))
     elif after == 'top':
         site_service.move_after(site, result, None)
-    return _back(site, result.anchor, select=result.pk)
+    return _back(site, result.anchor, select=result.pk, page=page)
 
 
 @login_required
@@ -383,10 +410,10 @@ def editor_site_block_edit(request, uuid, block_id):
             posted['current'] = int(posted['current'])
         if block.kind == 'map' and not posted.get('area'):
             posted['area'] = block.data.get('area')
-        ctx = _builder_context(request, site, membership, block_errors={block.pk: errors},
+        ctx = _builder_context(request, site, membership, page=block.page, block_errors={block.pk: errors},
                                block_posted={block.pk: posted})
         return render(request, 'sites/builder.html', ctx, status=400)
-    return _back(site, block.anchor, select=block.pk)
+    return _back(site, block.anchor, select=block.pk, page=block.page)
 
 
 @login_required
@@ -400,7 +427,7 @@ def editor_site_block_duplicate(request, uuid, block_id):
         return refused
     block = get_object_or_404(SiteBlock, pk=block_id, site=site)
     copy = site_service.duplicate_block(Actor.from_request(request), site, block)
-    return _back(site, copy.anchor, select=copy.pk)
+    return _back(site, copy.anchor, select=copy.pk, page=copy.page)
 
 
 @login_required
@@ -410,8 +437,9 @@ def editor_site_block_delete(request, uuid, block_id):
     if not _can_act(membership):
         return HttpResponseForbidden()
     block = get_object_or_404(SiteBlock, pk=block_id, site=site)
+    page = block.page
     site_service.delete_block(Actor.from_request(request), site, block)
-    return _back(site, 'blocks')
+    return _back(site, 'blocks', page=page)
 
 
 @login_required
@@ -425,11 +453,102 @@ def editor_site_blocks_reorder(request, uuid):
         order = [int(x) for x in json.loads(request.body or b'{}').get('order', [])]
     except (ValueError, TypeError, AttributeError):
         return HttpResponseBadRequest('bad order')
+    page = _page_of(site, request.GET.get('page'))
     try:
-        site_service.reorder_blocks(Actor.from_request(request), site, order)
+        site_service.reorder_blocks(Actor.from_request(request), site, order, page=page)
     except site_service.ValidationFailed:
-        return HttpResponseBadRequest('order must list every block of this site once')
+        return HttpResponseBadRequest('order must list every block of this page once')
     return JsonResponse({'ok': True})
+
+
+# ─── pages (change site-pages, #628) ──────────────────────────────────────────
+
+@login_required
+@require_POST
+def editor_site_page_add(request, uuid):
+    """One click: an untitled page at the end, selected."""
+    site, membership = _site(request, uuid)
+    refused = _refusal(request, site, membership)
+    if refused is not None:
+        return refused
+    try:
+        page = site_service.add_page(Actor.from_request(request), site)
+    except site_service.ValidationFailed as exc:
+        messages.error(request, ' '.join(str(m) for v in exc.fields.values() for m in v))
+        return _back(site)
+    return _back(site, select=f'sitepage:{page.pk}', page=page)
+
+
+@login_required
+@require_POST
+def editor_site_page_edit(request, uuid, page_id):
+    """A page's title, address and menu flag; autosaved (JSON / 422) like a block."""
+    site, membership = _site(request, uuid)
+    refused = _refusal(request, site, membership)
+    if refused is not None:
+        return refused
+    page = get_object_or_404(SitePage, pk=page_id, site=site)
+    values = {k: request.POST.get(k) for k in ('title', 'slug') if k in request.POST}
+    if 'menu' in request.POST:  # the panel posts 0 then, when ticked, 1 (the last one wins)
+        values['in_menu'] = request.POST.get('menu') == '1'
+    try:
+        site_service.update_page(Actor.from_request(request), site, page, values)
+    except site_service.ValidationFailed as exc:
+        errors = {k: ' '.join(str(m) for m in v) for k, v in exc.fields.items()}
+        if _is_autosave(request):
+            return JsonResponse({'ok': False, 'errors': errors}, status=422)
+        messages.error(request, ' '.join(errors.values()))
+        return _back(site, select=f'sitepage:{page.pk}', page=page)
+    if _is_autosave(request):
+        return JsonResponse({'ok': True, 'title': page.title, 'slug': page.slug, 'in_menu': page.in_menu,
+                             'url': request.build_absolute_uri(sites.page_url(site, page))})
+    return _back(site, select=f'sitepage:{page.pk}', page=page)
+
+
+@login_required
+@require_POST
+def editor_site_pages_reorder(request, uuid):
+    site, membership = _site(request, uuid)
+    refused = _refusal(request, site, membership)
+    if refused is not None:
+        return refused
+    try:
+        order = [int(x) for x in json.loads(request.body or b'{}').get('order', [])]
+    except (ValueError, TypeError, AttributeError):
+        return HttpResponseBadRequest('bad order')
+    try:
+        site_service.reorder_pages(Actor.from_request(request), site, order)
+    except site_service.ValidationFailed:
+        return HttpResponseBadRequest('order must list every page of this site but home once')
+    return JsonResponse({'ok': True})
+
+
+@login_required
+@require_POST
+def editor_site_page_delete(request, uuid, page_id):
+    site, membership = _site(request, uuid)
+    if not _can_act(membership):
+        return HttpResponseForbidden()
+    page = get_object_or_404(SitePage, pk=page_id, site=site)
+    try:
+        site_service.delete_page(Actor.from_request(request), site, page)
+    except site_service.ValidationFailed:
+        return HttpResponseBadRequest('the home page cannot be deleted')
+    return _back(site)
+
+
+@login_required
+@require_POST
+def editor_site_block_move(request, uuid, block_id):
+    """*Move to page* in a block's Settings: the block goes to the end of the chosen page."""
+    site, membership = _site(request, uuid)
+    refused = _refusal(request, site, membership)
+    if refused is not None:
+        return refused
+    block = get_object_or_404(SiteBlock, pk=block_id, site=site)
+    page = _page_of(site, request.POST.get('page'))
+    site_service.move_block(Actor.from_request(request), site, block, page)
+    return _back(site, block.anchor, select=block.pk, page=page)
 
 
 # ─── publish, delete ──────────────────────────────────────────────────────────
@@ -481,10 +600,11 @@ def _event_notice(request):
     return None
 
 
-def site_public(request, slug):
-    """/p/<slug>/. Published and not held → everyone; otherwise only members of the owning
-    workspace, with a draft banner, and the survey-unavailable 404 for everyone else. The
-    plan is never checked here: a site published under Pro survives a lapse."""
+def site_public(request, slug, page=''):
+    """/p/<slug>/ (the home page) and /p/<slug>/<page>/ (change site-pages). Published and not held →
+    everyone; otherwise only members of the owning workspace, with a draft banner, and the
+    survey-unavailable 404 for everyone else. The plan is never checked here: a site published
+    under Pro survives a lapse."""
     site = Site.objects.select_related('organization').filter(slug=slug).first()
     if site is None:
         return render(request, 'survey_unavailable.html', status=404)
@@ -501,18 +621,29 @@ def site_public(request, slug):
     # The visitor's language (change site-translations): ?lang=, the p_lang cookie, the browser,
     # then the primary. Fixed labels come from the respondent catalogs in that language.
     from . import site_translations
+    current = sites.page_for(site, page)
+    if current is None:
+        return render(request, 'survey_unavailable.html', status=404)
     lang = site_translations.pick_language(request, site)
     offered = site_translations.languages(site)
-    page_url = share.base() + reverse('site_public', args=[site.slug])
+    pages = sites.pages_for(site)
+    page_url = share.base() + sites.page_url(site, current)
+    review_token = request.GET.get('review', '') if review else ''
     with translation.override(lang):
-        blocks = sites.page_blocks(site, lang=lang)
-        site_translations.localize(site, blocks, lang)
+        blocks = sites.page_blocks(site, current, lang=lang)
+        site_translations.localize(site, blocks, lang, pages=pages)
+        current = next(p for p in pages if p.pk == current.pk)
+        menu = sites.menu(pages, current, blocks)
+        for p, _on in menu['pages']:
+            p.url = sites.page_url(site, p, lang=lang, review=review_token)
         response = render(request, 'sites/public.html', {
             'site': site, 'org': site.organization, 'blocks': blocks, 'lang': lang,
+            'page': current, 'pages_menu': menu['pages'],
+            'home_url': sites.page_url(site, pages[0], lang=lang, review=review_token),
             'brand': branding.for_site(site.organization),
             'site_languages': [(code, dict(language_choices()).get(code, code)) for code in offered]
                               if len(offered) > 1 else [],
-            'nav': sites.nav_items(blocks), 'preview': not live and not review, 'review': review, 'held': held,
+            'nav': menu['anchors'], 'preview': not live and not review, 'review': review, 'held': held,
             'map_layers': sites.map_layers(site, blocks),
             'media_script': any(b.kind in ('gallery', 'compare') for b, _c in blocks),
             'results': [card for b, card in blocks if b.kind == 'results'],
@@ -580,7 +711,7 @@ def site_event_register(request, slug, block_id):
     from django_ratelimit.core import get_usage, is_ratelimited
 
     site, block = _public_event(slug, block_id)
-    back = reverse('site_public', args=[site.slug])
+    back = sites.page_url(site, block.page)  # the page the event is on (change site-pages)
     if request.POST.get('website'):
         return redirect(f'{back}?registered={block.pk}#{block.anchor}')
     try:
@@ -627,6 +758,7 @@ def site_event_cancel(request, token):
     with translation.override(reg.language or site.language):
         return render(request, 'sites/event_cancel.html', {
             'registration': reg, 'block': reg.block, 'site': site, 'done': done or reg.cancelled_at is not None,
+            'back_url': sites.page_url(site, reg.block.page, lang=reg.language),
             'starts_at': site_events.starts_at(reg.block.data), 'tz': reg.block.data.get('tz') or 'UTC',
         })
 

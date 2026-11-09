@@ -12,6 +12,7 @@ back with the new block selected.{% endcomment %}
     {% csrf_token %}
     <input type="hidden" name="empty" value="1">
     <input type="hidden" name="after" id="lb-lib-after" value="">
+    <input type="hidden" name="page" value="{{ current_page.pk }}">
     {% for group_label, tiles in library %}
     <div class="lb-lib-grp">
       <h4>{{ group_label }}</h4>

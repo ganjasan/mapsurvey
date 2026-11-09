@@ -112,10 +112,11 @@
     }
   });
 
-  // Links inside the canvas are the visitor's: never follow them here.
+  // Links inside the canvas are the visitor's: never follow them here — except the page menu,
+  // which opens that page in the builder (change site-pages).
   canvas.addEventListener('click', function (e) {
     var a = e.target.closest('a');
-    if (a && !a.closest('.lb-tools')) e.preventDefault();
+    if (a && !a.closest('.lb-tools, .lb-canvas-nav')) e.preventDefault();
   });
 
   /* ─── editable text ──────────────────────────────────────────────────── */

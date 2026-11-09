@@ -125,15 +125,30 @@ def occurrences(site, language, source_language=None):
         add(f'site:{name}', kind, getattr(site, name) or '', site_tr.get(language, {}).get(name, ''),
             1, head, _label(name), 'site', site, name, cap, site_tr.get(source_language, {}).get(name, ''),
             {'block_id': ''})
-    for n, block in enumerate(sites.blocks_for(site), start=2):
-        tr = block.translations or {}
-        label = sites.outline_label(block) or str(sites.BLOCK_KINDS[block.kind][0])
-        page_title = f'{n - 1}. {sites.BLOCK_KINDS[block.kind][0]}' + (f': {label}' if label else '')
-        page_title = page_title[:90]
-        for name, kind, cap, source in block_fields(block):
-            add(f'block:{block.pk}:{name}', kind, source, tr.get(language, {}).get(name, ''),
-                n, page_title, _label(name), 'block', block, name, cap,
-                tr.get(source_language, {}).get(name, ''), {'block_id': block.pk})
+    # Page by page (change site-pages): the page's title, then its blocks. `n` numbers the table's
+    # groups; it is a label, never a key.
+    pages = sites.pages_for(site)
+    n = 1
+    for site_page in pages:
+        ptr = site_page.translations or {}
+        if len(pages) > 1:
+            n += 1
+            add(f'page:{site_page.pk}:title', PLAIN, site_page.title, ptr.get(language, {}).get('title', ''),
+                n, f'{_("Page")}: {site_page.title}'[:90], _('Page title'), 'page', site_page, 'title',
+                sites.PAGE_TITLE_MAX, ptr.get(source_language, {}).get('title', ''),
+                {'block_id': '', 'page_id': site_page.pk})
+        for block in sites.blocks_for(site, site_page):
+            n += 1
+            tr = block.translations or {}
+            label = sites.outline_label(block) or str(sites.BLOCK_KINDS[block.kind][0])
+            page_title = f'{n - 1}. {sites.BLOCK_KINDS[block.kind][0]}' + (f': {label}' if label else '')
+            if len(pages) > 1:
+                page_title = f'{site_page.title} · {page_title}'
+            page_title = page_title[:90]
+            for name, kind, cap, source in block_fields(block):
+                add(f'block:{block.pk}:{name}', kind, source, tr.get(language, {}).get(name, ''),
+                    n, page_title, _label(name), 'block', block, name, cap,
+                    tr.get(source_language, {}).get(name, ''), {'block_id': block.pk, 'page_id': site_page.pk})
     return out
 
 
@@ -175,14 +190,18 @@ def apply(actor, site, language, values, *, overwrite=False, clear_empty=False):
     return report
 
 
-def localize(site, blocks, lang):
-    """Put the `lang` translations on the in-memory site and blocks the public page draws (never
-    saved): a missing translation keeps the primary text. Documents blocks get `file_list`."""
+def localize(site, blocks, lang, pages=()):
+    """Put the `lang` translations on the in-memory site, pages and blocks the public page draws
+    (never saved): a missing translation keeps the primary text. Documents blocks get `file_list`."""
     for block, _card in blocks:
         if block.kind in ('documents', 'gallery', 'compare'):
             block.file_list = list(block.files.all())
     if lang == site.language:
         return
+    for page in pages:
+        value = ((page.translations or {}).get(lang) or {}).get('title')
+        if value:
+            page.title = value
     for name, _kind, _cap in SITE_FIELDS:
         value = (site.translations or {}).get(lang, {}).get(name)
         if value:

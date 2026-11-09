@@ -1,0 +1,26 @@
+{% load i18n %}{% comment %}The site's pages in the outline rail (change site-pages, #628). Another page is a
+link (the builder renders one page at a time, ?page=<id>); the current one selects its settings.
+Pages other than home are dragged by their handle (js/site_pages.js); home stays first.{% endcomment %}
+<div class="lb-rail-head">{% trans "Pages" %}</div>
+<ul class="lb-pages" id="lb-pages">
+  {% for p in pages %}
+  <li class="lb-pg{% if p.pk == current_page.pk %} on{% endif %}{% if p.is_home %} lb-pg-home{% endif %}" data-page="{{ p.pk }}">
+    {% if p.pk == current_page.pk %}
+    <button type="button" class="lb-pg-a" data-select-target="sitepage:{{ p.pk }}" aria-current="page" title="{% trans 'Page settings' %}">
+    {% else %}
+    <a class="lb-pg-a" href="{% url 'editor_site' site.uuid %}{% if not p.is_home %}?page={{ p.pk }}{% endif %}">
+    {% endif %}
+      <i class="{% if p.is_home %}fas fa-home{% else %}far fa-file{% endif %} lb-oi-k" aria-hidden="true"></i>
+      <span class="lb-pg-t" data-page-tab="{{ p.pk }}">{{ p.title }}</span>
+      {% if not p.in_menu and not p.is_home %}<i class="far fa-eye-slash lb-pg-hidden" title="{% trans 'Not in the menu' %}" aria-label="{% trans 'Not in the menu' %}"></i>{% endif %}
+    {% if p.pk == current_page.pk %}</button>{% else %}</a>{% endif %}
+    {% if may_edit and not p.is_home %}<span class="lb-pg-h" aria-hidden="true"><i class="fas fa-grip-vertical"></i></span>{% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% if may_edit %}
+<form method="post" action="{% url 'editor_site_page_add' site.uuid %}" class="lb-rail-foot lb-pages-foot">
+  {% csrf_token %}
+  <button type="submit" class="lb-btn lb-add-btn" id="site-add-page"{% if pages_full %} disabled title="{% blocktrans %}A site can have at most 12 pages.{% endblocktrans %}"{% endif %}><i class="fas fa-plus" aria-hidden="true"></i> {% trans "Add page" %}</button>
+</form>
+{% endif %}

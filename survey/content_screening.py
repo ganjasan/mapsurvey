@@ -209,6 +209,12 @@ def collect_site_text(site, now=None) -> ScreenInput:
     for row in (site.translations or {}).values():
         for value in (row or {}).values():
             texts.append(('site.translation', str(value)))
+    # Page titles and their translations (change site-pages).
+    for page in site.pages.all().only('id', 'title', 'translations'):
+        texts.append(('page.title', page.title or ''))
+        for row in (page.translations or {}).values():
+            for value in (row or {}).values():
+                texts.append(('page.translation', str(value)))
     for block in site.blocks.all().only('id', 'kind', 'title', 'data', 'translations'):
         for row in (block.translations or {}).values():
             for value in (row or {}).values():

@@ -21,7 +21,7 @@ from billing import trial as billing_trial
 from .. import product_events, sites
 from ..audit import record as audit_record
 from ..content_screening import screen_site
-from ..models import Site, SiteBlock, SiteFile, SiteSurvey, SurveyHeader
+from ..models import Site, SiteBlock, SiteFile, SitePage, SiteSurvey, SurveyHeader
 from ..versioning import canonical_of
 from .errors import ServiceError, ValidationFailed
 
@@ -61,6 +61,7 @@ def create_site(actor, org, *, title='', language='en'):
         organization=org, title=given or _('Untitled site'), created_by=actor.user,
         slug=sites.unique_slug(given or sites.PLACEHOLDER_SLUG),
         language=language if language in CONTENT_LANGUAGES else 'en')
+    sites.home_page(site)
     product_events.emit('site_created', actor.user_id, {'organization_id': org.pk, 'site_id': site.pk})
     audit_record(actor, 'site_create', site_id=site.pk)
     return site
@@ -178,7 +179,7 @@ def link_survey(actor, site, survey, *, touch=True):
 def unlink_survey(actor, site, link):
     """Unlinking removes the survey's cards too (CASCADE); always allowed — it only removes content."""
     link.delete()
-    sites.renumber(list(site.blocks.order_by('order', 'id')))
+    _renumber_all(site)
     touched(site)
 
 
@@ -305,12 +306,14 @@ class _NoFiles:
         return []
 
 
-def save_block(actor, site, block, kind, fields, files=None, *, creating=False, lenient=False):
+def save_block(actor, site, block, kind, fields, files=None, *, creating=False, lenient=False, page=None):
     """Validate a block's posted fields and save it; returns the block or raises `BlockRefused`.
     `creating` is the block library adding an EMPTY block (nothing required yet; the public page
     skips it until it is complete). `lenient` is the canvas autosave: an EMPTY field is not an
     error yet, a wrong value still is; a FAQ or timeline row without its question or title is
-    kept and not drawn."""
+    kept and not drawn. A new block goes at the end of `page` (home when None)."""
+    if page is not None and page.site_id != site.pk:
+        raise ValidationFailed.single('page', _('Pick a page of this site.'))
     files = files if files is not None else _NoFiles()
     raw = raw_block(kind, fields)
     map_upload = files.get('geojson_file') if kind == 'map' else None
@@ -359,7 +362,8 @@ def save_block(actor, site, block, kind, fields, files=None, *, creating=False, 
         raise BlockRefused(errors, raw)
     with transaction.atomic():
         if block is None:
-            block = SiteBlock(site=site, kind=kind, order=sites.next_order(site))
+            page = page or sites.home_page(site)
+            block = SiteBlock(site=site, page=page, kind=kind, order=sites.next_order(page))
         block.title = sites.clean_title(fields.get('title'))
         if 'menu' in fields:  # the panel posts 0 then, when ticked, 1 (the last one wins)
             block.in_menu = fields.get('menu') == '1'
@@ -397,8 +401,8 @@ def save_block(actor, site, block, kind, fields, files=None, *, creating=False, 
 
 
 def move_after(site, block, after_id):
-    """Put `block` right after the block `after_id` (None = first)."""
-    rows = [b for b in site.blocks.order_by('order', 'id') if b.pk != block.pk]
+    """Put `block` right after the block `after_id` of its page (None = first)."""
+    rows = [b for b in block.page.blocks.order_by('order', 'id') if b.pk != block.pk]
     at = 0 if after_id is None else next((i + 1 for i, b in enumerate(rows) if b.pk == after_id), len(rows))
     rows.insert(at, block)
     sites.renumber(rows)
@@ -409,9 +413,10 @@ def duplicate_block(actor, site, block):
     (stored files shared; event registrations never copied)."""
     with transaction.atomic():
         copy = SiteBlock.objects.create(
-            site=site, kind=block.kind, title=block.title, in_menu=block.in_menu, data=dict(block.data or {}),
-            translations=_without_files(block.translations), image=block.image.name if block.image else None,
-            site_survey=block.site_survey, order=sites.next_order(site))
+            site=site, page=block.page, kind=block.kind, title=block.title, in_menu=block.in_menu,
+            data=dict(block.data or {}), translations=_without_files(block.translations),
+            image=block.image.name if block.image else None, site_survey=block.site_survey,
+            order=sites.next_order(block.page))
         for f in block.files.all():
             SiteFile.objects.create(block=copy, file=f.file.name, title=f.title, size=f.size,
                                     content_type=f.content_type, order=f.order)
@@ -428,20 +433,22 @@ def _without_files(translations):
 
 def delete_block(actor, site, block):
     """Always allowed — it only removes content. A stored file goes with its last row."""
+    page = block.page
     names = [f.file.name for f in block.files.all()]
     block.delete()
     for name in names:
         if not SiteFile.objects.filter(file=name).exists():
             default_storage.delete(name)
-    sites.renumber(list(site.blocks.order_by('order', 'id')))
+    sites.renumber(list(page.blocks.order_by('order', 'id')))
     touched(site)
 
 
-def reorder_blocks(actor, site, order):
-    """`order` lists every block id of this site once; anything else is refused."""
-    blocks = {b.pk: b for b in site.blocks.all()}
+def reorder_blocks(actor, site, order, page=None):
+    """`order` lists every block id of the page once (home when None); anything else is refused."""
+    page = page or sites.home_page(site)
+    blocks = {b.pk: b for b in page.blocks.all()}
     if sorted(order) != sorted(blocks):
-        raise ValidationFailed.single('order', 'order must list every block of this site once')
+        raise ValidationFailed.single('order', 'order must list every block of this page once')
     sites.renumber([blocks[pk] for pk in order])
     touched(site)
 
@@ -455,6 +462,103 @@ def remove_registrations(actor, block, registration_id=None):
     count = rows.count()
     rows.delete()
     audit_record(actor, 'site_registrations_remove', site_id=block.site_id, block_id=block.pk, count=count)
+
+
+def _renumber_all(site):
+    for page in site.pages.all():
+        sites.renumber(list(page.blocks.order_by('order', 'id')))
+
+
+# ─── pages (change site-pages, #628) ──────────────────────────────────────────
+
+PAGE_FIELDS = ('title', 'slug', 'in_menu')
+
+
+def add_page(actor, site, *, title=''):
+    """A new page at the end — "Untitled page" in one click — or refused at `sites.PAGES_MAX`."""
+    if site.pages.count() >= sites.PAGES_MAX:
+        raise ValidationFailed.single('page', _('A site can have at most %(n)d pages.') % {'n': sites.PAGES_MAX})
+    sites.home_page(site)
+    title = (title or '').strip()[:sites.PAGE_TITLE_MAX] or _('Untitled page')
+    last = site.pages.order_by('-order').values_list('order', flat=True).first() or 0
+    page = SitePage.objects.create(site=site, title=title, slug=sites.unique_page_slug(site, title), order=last + 1)
+    product_events.emit('site_page_created', actor.user_id, {
+        'organization_id': site.organization_id, 'site_id': site.pk, 'page_count': site.pages.count()})
+    audit_record(actor, 'site_page_create', site_id=site.pk, page_id=page.pk)
+    touched(site)
+    return page
+
+
+def update_page(actor, site, page, values):
+    """A page's title, address (not home's) and menu flag; keys absent from `values` keep theirs."""
+    if page.site_id != site.pk:
+        raise ValidationFailed.single('page', _('Pick a page of this site.'))
+    errors = {}
+    if 'title' in values:
+        title = ' '.join(str(values.get('title') or '').split())[:sites.PAGE_TITLE_MAX]
+        if not title:
+            errors['title'] = _('Give the page a title.')
+        page.title = title or page.title
+    if 'slug' in values and not page.is_home:
+        slug = str(values.get('slug') or '').strip()
+        problem = sites.page_slug_error(slug, page)
+        if problem:
+            errors['slug'] = problem
+        else:
+            page.slug = slug
+    if 'in_menu' in values and not page.is_home:
+        page.in_menu = values.get('in_menu') in (True, '1', 'on', 'true')
+    if errors:
+        raise _errors(errors)
+    page.save()
+    audit_record(actor, 'site_page_update', site_id=site.pk, page_id=page.pk)
+    touched(site)
+    return page
+
+
+def reorder_pages(actor, site, order):
+    """`order` lists every page id but home's once; home stays first."""
+    pages = {p.pk: p for p in site.pages.filter(is_home=False)}
+    if sorted(order) != sorted(pages):
+        raise ValidationFailed.single('order', 'order must list every page of this site but home once')
+    for i, pk in enumerate(order, start=1):
+        if pages[pk].order != i:
+            pages[pk].order = i
+            pages[pk].save(update_fields=['order', 'updated_at'])
+    touched(site)
+
+
+def delete_page(actor, site, page):
+    """A page with its blocks (their files released, event registrations deleted); never home."""
+    if page.site_id != site.pk or page.is_home:
+        raise ValidationFailed.single('page', _('The home page can’t be deleted.'))
+    with transaction.atomic():
+        for block in list(page.blocks.all()):
+            delete_block(actor, site, block)
+        page_id = page.pk
+        page.delete()
+        # Translation hashes of the page's title go with it.
+        hashes = {lang: {k: v for k, v in (keys or {}).items() if not k.startswith(f'page:{page_id}:')}
+                  for lang, keys in (site.translation_sources or {}).items()}
+        Site.objects.filter(pk=site.pk).update(translation_sources=hashes)
+        site.translation_sources = hashes
+    audit_record(actor, 'site_page_delete', site_id=site.pk, page_id=page_id)
+    touched(site)
+
+
+def move_block(actor, site, block, page):
+    """Put `block` at the end of `page` of the same site, data unchanged."""
+    if page.site_id != site.pk or block.site_id != site.pk:
+        raise ValidationFailed.single('page', _('Pick a page of this site.'))
+    if block.page_id == page.pk:
+        return block
+    old = block.page
+    with transaction.atomic():
+        block.page, block.order = page, sites.next_order(page)
+        block.save(update_fields=['page', 'order', 'updated_at'])
+        sites.renumber(list(old.blocks.order_by('order', 'id')))
+    touched(site)
+    return block
 
 
 # ─── translations (change site-translations, #618) ───────────────────────────
@@ -473,7 +577,7 @@ def _clean_translation(kind, cap, text):
 
 def set_translations(actor, site, language, items):
     """Write translations for `language`: `items = [(entity kind, entity, field, text)]` with
-    entity kind `site` or `block`. Rich fields pass `coerce_creator_html`, plain ones are trimmed
+    entity kind `site`, `page` (its title) or `block`. Rich fields pass `coerce_creator_html`, plain ones are trimmed
     and capped; an empty text removes the translation. Every written field records the hash of
     its source text, so the Translations tab can call it outdated when the source changes."""
     from .. import site_translations as st
@@ -483,9 +587,23 @@ def set_translations(actor, site, language, items):
     hashes = dict(site.translation_sources or {})
     lang_hashes = dict(hashes.get(language) or {})
     site_tr = dict(site.translations or {})
-    blocks = {}
+    blocks, pages = {}, {}
     for entity_kind, entity, fld, text in items:
-        if entity_kind == 'site':
+        if entity_kind == 'page':
+            if fld != 'title' or entity.site_id != site.pk:
+                continue
+            page = pages.setdefault(entity.pk, entity)
+            value = _clean_translation(st.PLAIN, sites.PAGE_TITLE_MAX, text)
+            tr = dict(page.translations or {})
+            row = dict(tr.get(language) or {})
+            if value:
+                row['title'] = value
+            else:
+                row.pop('title', None)
+            tr[language] = row
+            page.translations = tr
+            key, source, kind = f'page:{page.pk}:title', page.title, st.PLAIN
+        elif entity_kind == 'site':
             spec = next(((k, c) for n, k, c in st.SITE_FIELDS if n == fld), None)
             if spec is None:
                 continue
@@ -524,6 +642,8 @@ def set_translations(actor, site, language, items):
         site.translations, site.translation_sources = site_tr, hashes
         for block in blocks.values():
             SiteBlock.objects.filter(pk=block.pk).update(translations=block.translations)
+        for page in pages.values():
+            SitePage.objects.filter(pk=page.pk).update(translations=page.translations)
     touched(site)
     audit_record(actor, 'site_translations', site_id=site.pk, language=language, count=len(items))
 
@@ -584,8 +704,16 @@ def create_from_template(actor, org, *, starter=None, template=None, language='e
         if spec is None:
             raise ValidationFailed.single('template', _('Pick one of the templates.'))
         site = create_site(actor, org, language=language)
-        for kind, title, data in spec['blocks']:
-            save_block(actor, site, None, kind, site_templates.fields_for(kind, data, title), creating=True)
+        for n, (page_title, blocks) in enumerate(site_templates.page_specs(spec)):
+            if n == 0:
+                page = sites.home_page(site)
+                if page_title:
+                    update_page(actor, site, page, {'title': str(page_title)})
+            else:
+                page = add_page(actor, site, title=str(page_title))
+            for kind, title, data in blocks:
+                save_block(actor, site, None, kind, site_templates.fields_for(kind, data, title),
+                           creating=True, page=page)
     product_events.emit('site_created', actor.user_id, {
         'organization_id': org.pk, 'site_id': site.pk, 'template': starter or ('workspace' if template else '')})
     audit_record(actor, 'site_from_template', site_id=site.pk, starter=starter or '',

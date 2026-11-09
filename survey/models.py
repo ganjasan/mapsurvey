@@ -3221,6 +3221,37 @@ class SiteSurvey(models.Model):
         return f'{self.site} ↔ {self.survey}'
 
 
+class SitePage(models.Model):
+    """One page of a site (change site-pages, #628; Sites Vision v2 FE-15).
+
+    Every site has exactly one HOME page — created with the site, first, never deleted, served at the
+    site's own address `/p/<slug>/` with `slug=''` — and up to `sites.PAGES_MAX - 1` others at
+    `/p/<slug>/<page slug>/`. Blocks belong to a page. `translations` = {lang: {'title': …}}, keyed
+    `page:<pk>:title` on the Translations tab (ids are fine in site keys: sites have no draft copies).
+    """
+    site = models.ForeignKey(Site, on_delete=models.CASCADE, related_name='pages')
+    title = models.CharField(max_length=60)
+    slug = models.SlugField(max_length=64, blank=True, default='')
+    order = models.PositiveIntegerField(default=0)
+    in_menu = models.BooleanField(default=True, db_default=True)
+    is_home = models.BooleanField(default=False, db_default=False)
+    translations = models.JSONField(default=dict, blank=True, db_default={})
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ('order', 'id')
+        constraints = [
+            models.UniqueConstraint(fields=['site'], condition=models.Q(is_home=True), name='sitepage_one_home'),
+            models.UniqueConstraint(fields=['site', 'slug'], condition=models.Q(is_home=False),
+                                    name='sitepage_slug_unique'),
+        ]
+
+    def __str__(self):
+        return f'{self.site} / {self.title}'
+
+
 SITE_BLOCK_KIND_CHOICES = (
     ('heading', _('Heading')),
     ('text', _('Text')),
@@ -3245,6 +3276,8 @@ class SiteBlock(models.Model):
     `sites.clean_block` returned them; templates read nothing else. A survey card points
     at its `SiteSurvey`, so unlinking the survey removes the card (CASCADE)."""
     site = models.ForeignKey(Site, on_delete=models.CASCADE, related_name='blocks')
+    # The page the block is drawn on (change site-pages); `order` counts within the page.
+    page = models.ForeignKey(SitePage, on_delete=models.CASCADE, related_name='blocks')
     order = models.PositiveIntegerField(default=0)
     kind = models.CharField(max_length=16, choices=SITE_BLOCK_KIND_CHOICES)
     title = models.CharField(max_length=120, blank=True, default='')
@@ -3266,6 +3299,13 @@ class SiteBlock(models.Model):
 
     def __str__(self):
         return f'{self.site} #{self.order} {self.kind}'
+
+    def save(self, *args, **kwargs):
+        # A block created with `site=` only (tests, the old code during a deploy) lands on home.
+        if self.page_id is None and self.site_id is not None:
+            from .sites import home_page
+            self.page = home_page(self.site)
+        super().save(*args, **kwargs)
 
     @property
     def anchor(self):

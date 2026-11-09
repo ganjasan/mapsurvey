@@ -12525,3 +12525,122 @@ msgstr "Nachher"
 #: site-gallery-compare
 msgid "Slide to compare"
 msgstr "Zum Vergleichen schieben"
+
+#: site-pages
+msgid "Use lowercase letters, digits and dashes."
+msgstr "Nur Kleinbuchstaben, Ziffern und Bindestriche."
+
+#: site-pages
+msgid "Another page of this site already uses this address."
+msgstr "Eine andere Seite dieser Website nutzt diese Adresse bereits."
+
+#: site-pages
+msgid "Pick a page of this site."
+msgstr "Wählen Sie eine Seite dieser Website."
+
+#: site-pages
+msgid "A site can have at most %(n)d pages."
+msgstr "Eine Website kann höchstens %(n)d Seiten haben."
+
+#: site-pages
+msgid "Untitled page"
+msgstr "Seite ohne Titel"
+
+#: site-pages
+msgid "Give the page a title."
+msgstr "Geben Sie der Seite einen Titel."
+
+#: site-pages
+msgid "The home page can’t be deleted."
+msgstr "Die Startseite kann nicht gelöscht werden."
+
+#: site-pages
+msgid "Municipal site"
+msgstr "Kommunale Website"
+
+#: site-pages
+msgid "A council programme with pages: About, Take part, Documents and News."
+msgstr "Ein Programm der Kommune mit Seiten: Über, Mitmachen, Dokumente und Aktuelles."
+
+#: site-pages
+msgid "About"
+msgstr "Über"
+
+#: site-pages
+msgid "<p>What the council plans, why it asks residents, and what is already decided.</p>"
+msgstr "<p>Was die Kommune plant, warum sie die Bürgerinnen und Bürger fragt und was schon entschieden ist.</p>"
+
+#: site-pages
+msgid "News"
+msgstr "Aktuelles"
+
+#: site-pages
+msgid "<p>The latest from the project: what changed, and what comes next.</p>"
+msgstr "<p>Das Neueste aus dem Projekt: was sich geändert hat und was als Nächstes kommt.</p>"
+
+#: site-pages
+msgid "Site pages"
+msgstr "Seiten der Website"
+
+#: site-pages
+msgid "Not in the menu"
+msgstr "Nicht im Menü"
+
+#: site-pages
+msgid "A site can have at most 12 pages."
+msgstr "Eine Website kann höchstens 12 Seiten haben."
+
+#: site-pages
+msgid "Add page"
+msgstr "Seite hinzufügen"
+
+#: site-pages
+msgid "Home page"
+msgstr "Startseite"
+
+#: site-pages
+msgid "Shown in the menu and as the page's heading."
+msgstr "Erscheint im Menü und als Überschrift der Seite."
+
+#: site-pages
+msgid "Shown in the menu once the site has a second page."
+msgstr "Erscheint im Menü, sobald die Website eine zweite Seite hat."
+
+#: site-pages
+msgid "Links and QR codes already shared stop working when the address changes."
+msgstr "Bereits geteilte Links und QR-Codes funktionieren nach einer Adressänderung nicht mehr."
+
+#: site-pages
+msgid "Show in the menu"
+msgstr "Im Menü zeigen"
+
+#: site-pages
+msgid "The home page opens at the site's address and is always first in the menu."
+msgstr "Die Startseite öffnet unter der Adresse der Website und steht im Menü immer zuerst."
+
+#: site-pages
+msgid "Delete the page “%(title)s”?"
+msgstr "Seite „%(title)s“ löschen?"
+
+#: site-pages
+msgid "Delete page"
+msgstr "Seite löschen"
+
+#: site-pages
+msgid "The page is empty. Its address stops working."
+msgstr "Die Seite ist leer. Ihre Adresse funktioniert dann nicht mehr."
+
+#: site-pages
+msgid "Move to page"
+msgstr "Auf Seite verschieben"
+
+#: site-pages
+msgid "Move"
+msgstr "Verschieben"
+
+#: site-pages
+msgid "Its %(n)s block goes with it, with its files and event registrations. This cannot be undone."
+msgid_plural "Its %(n)s blocks go with it, with their files and event registrations. This cannot be undone."
+msgstr[0] "Sein %(n)s Block wird mitgelöscht, mit Dateien und Anmeldungen. Das lässt sich nicht rückgängig machen."
+msgstr[1] "Seine %(n)s Blöcke werden mitgelöscht, mit Dateien und Anmeldungen. Das lässt sich nicht rückgängig machen."
+

@@ -50,6 +50,19 @@ Press **+** or **Add block** and choose what to add:
 
 Every block can have a **heading** above it — or none: leave *Heading (optional)* empty and the block starts with its content. A heading also becomes a link in the menu at the top of the site; untick **Show the heading in the menu at the top** in the block's settings to keep it out. The menu appears once it has two links. Drag blocks by the handle to change their order.
 
+## Pages
+
+A site starts as one page. When residents should find their way rather than scroll — *About*, *Take part*, *Documents*, *News* — give it more pages:
+
+- **Add page** in the list on the left creates an untitled page and opens it. Click the page you are on to change its **title**, its **address** (the part after the site's address, e.g. `/p/riverside-park/take-part/`) and whether it is **in the menu**. A page left out of the menu still opens at its address — useful for a page you link to from a button.
+- **Click another page** to edit it. The middle shows one page at a time; blocks you add go on that page. To move a block to another page, use **Move to page** in its settings.
+- **Drag** pages to reorder them. The **home page** opens at the site's own address, comes first and cannot be deleted, so the QR codes you printed always lead to it.
+- **Delete page** removes the page with its blocks, their files and their event registrations.
+
+With two or more pages the menu at the top lists the pages, and the headings of the page you are on move to a second line. Pages other than home show the site's name as a link back home, and the page title as their heading. Page titles are translated on the **Translations** tab with the rest of the site.
+
+Renaming a page's address breaks links you already shared, the same as for the site's address.
+
 ## Events and registration
 
 The **Event** block announces an open house, a walk or a workshop: date, start and end time in the event's time zone, the place (with an optional map link), a few words about it, and an optional number of seats.
@@ -74,9 +87,9 @@ Visitors get the site in their browser's language when it is offered, and can sw
 
 ## Start from an earlier site
 
-**Duplicate** on the Sites list (or **Duplicate site** in the site settings) makes an unpublished copy to start the next engagement from: the same blocks, files, surveys and settings, a new address. Event registrations are never copied.
+**Duplicate** on the Sites list (or **Duplicate site** in the site settings) makes an unpublished copy to start the next engagement from: the same pages, blocks, files, surveys and settings, a new address. Event registrations are never copied.
 
-**From a template** next to **New site** starts from a ready layout: *Consultation* (why we ask, take part, how it works, meet us, questions, contact) or *Master plan* (the plan, where, phases, take part, what we heard, documents, project team). Blocks that need your material — a picture, a survey, files, the project area — wait empty with their drop zones. **Save as template** in the site settings keeps any site as a starting point of your own: it has no surveys, is never published, and appears under *Templates* and in the same menu.
+**From a template** next to **New site** starts from a ready layout: *Consultation* (why we ask, take part, how it works, meet us, questions, contact), *Master plan* (the plan, where, phases, take part, what we heard, documents, project team) or *Municipal site*, a site of four pages — *About*, *Take part*, *Documents* and *News*. Blocks that need your material — a picture, a survey, files, the project area — wait empty with their drop zones. **Save as template** in the site settings keeps any site as a starting point of your own: it has no surveys, is never published, and appears under *Templates* and in the same menu.
 
 ## Publish
 

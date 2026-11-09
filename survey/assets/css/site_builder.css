@@ -344,3 +344,26 @@ fieldset.lb-card { border: 1px solid var(--line); padding: 1rem 1.1rem; }
 .lb-compare-slot img + .lb-replace + .lb-drop { display: none; }
 .lb-compare-label { font-size: 14px; color: var(--muted); margin-top: 6px; }
 .lb-blk:not(.on) .lb-gallery + .lb-drop--small { display: none; }
+
+/* ── pages (change site-pages, #628) ── */
+.lb-pages { list-style: none; margin: 0; padding: 2px 8px; max-height: 40vh; overflow: auto; }
+.lb-pg { display: flex; align-items: center; border-radius: 7px; }
+.lb-pg:hover { background: #eef1f5; }
+.lb-pg.on { background: var(--accent-soft); }
+.lb-pg-a { display: flex; align-items: center; gap: 9px; flex: 1; min-width: 0; padding: 7px 8px; border: 0; background: none;
+  font: inherit; font-size: 13.5px; color: inherit; text-align: left; text-decoration: none; cursor: pointer; border-radius: 7px; }
+.lb-pg-a:hover { color: inherit; text-decoration: none; }
+.lb-pg.on .lb-pg-a, .lb-pg.on .lb-oi-k { color: var(--accent); font-weight: 600; }
+.lb-pg-a:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.lb-pg-t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-pg-hidden { color: var(--muted); font-size: 11px; }
+.lb-pg-h { color: #c3c9d0; opacity: 0; cursor: grab; padding: 0 8px; }
+.lb-pg:hover .lb-pg-h { opacity: 1; }
+.lb-pages-foot { border-top: 0; border-bottom: 1px solid var(--line); padding-top: 4px; }
+.lb-hero--page { cursor: pointer; }
+.lb-slug { display: flex; align-items: center; gap: 4px; font-size: 12.5px; }
+.lb-slug input { flex: 1; min-width: 0; }
+.lb-move { margin: 0 16px 12px; }
+.lb-move-row { display: flex; gap: 6px; }
+/* The page menu on the canvas scrolls with the page: sticky, it would cover the block toolbars. */
+.lb-canvas-nav { position: static; }
