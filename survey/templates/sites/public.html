@@ -24,7 +24,7 @@ only the keys sites.clean_block stores.{% endcomment %}
   {% if results_basemaps %}<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">{% endif %}
 </head>
-<body class="lp" data-width="{{ site.width }}">
+<body class="lp" data-width="{{ site.width }}"{% if brand.custom_accent %} style="--lp-accent: {{ brand.accent }};"{% endif %}>
   <a class="lp-skip" href="#main">{% trans "Skip to content" %}</a>
   {% if review %}
   <div class="lp-banner" role="status">{% trans "Shared for review — this site is not public yet." %}</div>
@@ -44,7 +44,7 @@ only the keys sites.clean_block stores.{% endcomment %}
     </nav>
     {% endif %}
     <div class="lp-wrap lp-hero-text">
-      <p class="lp-org">{{ org.name }}</p>
+      <p class="lp-org">{% if brand.logo_url %}<img class="lp-logo" src="{{ brand.logo_url }}" alt="">{% endif %}{{ brand.name }}</p>
       <h1>{{ site.title }}</h1>
       {% if site.summary %}<p class="lp-summary">{{ site.summary }}</p>{% endif %}
     </div>
@@ -71,7 +71,7 @@ only the keys sites.clean_block stores.{% endcomment %}
 
   <footer class="lp-footer">
     <div class="lp-wrap">
-      <p>{{ org.name }}</p>
+      <p>{{ brand.name }}</p>
       {% if show_branding %}
       <p><a class="lp-made" href="{% url 'django_registration_register' %}?utm_source=viral_loop&amp;utm_medium=site" target="_blank" rel="noopener">{% trans "Made with" %} <b>Mapsurvey</b></a></p>
       {% endif %}

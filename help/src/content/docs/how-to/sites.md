@@ -60,6 +60,10 @@ Under the event in the builder, **Attendee list** shows who registered, with a C
 
 **Surveys on this site** lists the surveys the site shows. Add one there or straight from a survey card. A survey can be on any number of sites — the same city-wide survey on two neighbourhood sites, for example. Removing a survey from the site removes its cards.
 
+## Your brand
+
+The workspace owner sets the **public name**, a **logo** and an **accent colour** in the workspace settings (**General → Branding**). Every site of the workspace shows the logo and the name at the top and uses the colour for buttons and links; a colour too light to read is darkened on the site automatically.
+
 ## Other languages
 
 Press **Translations** in the top bar and add a language. Every text of the site is listed once, in page order — headings, text, questions and answers, phases, captions, button labels, contacts, file titles, the title and summary — ready to translate in the table or through a CSV for an outside translator; one translation fills every place the same text is used. A text you change later shows as *Outdated* until its translation is checked.

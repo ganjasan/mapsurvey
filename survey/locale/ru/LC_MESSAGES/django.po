@@ -10280,3 +10280,60 @@ msgstr "Этого текста больше нет на сайте. Обнов�
 #: site-translations
 msgid "This site is not offered in that language."
 msgstr "Этот сайт не предлагается на этом языке."
+
+#: workspace-branding
+msgid "Branding"
+msgstr "Фирменный стиль"
+
+#: workspace-branding
+msgid "How the workspace appears on its public sites: the name residents read, your logo and your colour for buttons and links."
+msgstr "Как рабочее пространство выглядит на своих публичных сайтах: название, которое видят жители, ваш логотип и ваш цвет кнопок и ссылок."
+
+#: workspace-branding
+msgid "Public name"
+msgstr "Публичное название"
+
+#: workspace-branding
+#, python-format
+msgid "Empty: “%(name)s”."
+msgstr "Пусто: «%(name)s»."
+
+#: workspace-branding
+msgid "Logo"
+msgstr "Логотип"
+
+#: workspace-branding
+msgid "PNG, JPEG, WebP or GIF, up to 1 MB. Shown at the top of your sites."
+msgstr "PNG, JPEG, WebP или GIF, до 1 МБ. Показывается вверху ваших сайтов."
+
+#: workspace-branding
+msgid "Remove the logo"
+msgstr "Убрать логотип"
+
+#: workspace-branding
+msgid "Accent colour"
+msgstr "Фирменный цвет"
+
+#: workspace-branding
+msgid "A link"
+msgstr "Пример ссылки"
+
+#: workspace-branding
+msgid "This colour is too light to read as text, so sites use a darker shade of it (shown here)."
+msgstr "Этот цвет слишком светлый для текста, поэтому сайты используют его более тёмный оттенок (показан здесь)."
+
+#: workspace-branding
+msgid "Save branding"
+msgstr "Сохранить фирменный стиль"
+
+#: workspace-branding
+msgid "Branding saved."
+msgstr "Фирменный стиль сохранён."
+
+#: workspace-branding
+msgid "Pick a colour."
+msgstr "Выберите цвет."
+
+#: workspace-branding
+msgid "The logo can be at most 1 MB."
+msgstr "Логотип может быть не больше 1 МБ."

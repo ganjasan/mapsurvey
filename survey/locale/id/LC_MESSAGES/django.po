@@ -12176,3 +12176,60 @@ msgstr "Teks ini sudah tidak ada di situs. Muat ulang halaman."
 #: site-translations
 msgid "This site is not offered in that language."
 msgstr "Situs ini tidak tersedia dalam bahasa itu."
+
+#: workspace-branding
+msgid "Branding"
+msgstr "Identitas merek"
+
+#: workspace-branding
+msgid "How the workspace appears on its public sites: the name residents read, your logo and your colour for buttons and links."
+msgstr "Tampilan ruang kerja di situs publiknya: nama yang dibaca warga, logo Anda, dan warna Anda untuk tombol dan tautan."
+
+#: workspace-branding
+msgid "Public name"
+msgstr "Nama publik"
+
+#: workspace-branding
+#, python-format
+msgid "Empty: “%(name)s”."
+msgstr "Kosong: “%(name)s”."
+
+#: workspace-branding
+msgid "Logo"
+msgstr "Logo"
+
+#: workspace-branding
+msgid "PNG, JPEG, WebP or GIF, up to 1 MB. Shown at the top of your sites."
+msgstr "PNG, JPEG, WebP, atau GIF, hingga 1 MB. Ditampilkan di bagian atas situs Anda."
+
+#: workspace-branding
+msgid "Remove the logo"
+msgstr "Hapus logo"
+
+#: workspace-branding
+msgid "Accent colour"
+msgstr "Warna merek"
+
+#: workspace-branding
+msgid "A link"
+msgstr "Sebuah tautan"
+
+#: workspace-branding
+msgid "This colour is too light to read as text, so sites use a darker shade of it (shown here)."
+msgstr "Warna ini terlalu terang untuk dibaca sebagai teks, jadi situs memakai versi yang lebih gelap (ditampilkan di sini)."
+
+#: workspace-branding
+msgid "Save branding"
+msgstr "Simpan identitas merek"
+
+#: workspace-branding
+msgid "Branding saved."
+msgstr "Identitas merek disimpan."
+
+#: workspace-branding
+msgid "Pick a colour."
+msgstr "Pilih warna."
+
+#: workspace-branding
+msgid "The logo can be at most 1 MB."
+msgstr "Logo paling besar 1 MB."

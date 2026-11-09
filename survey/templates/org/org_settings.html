@@ -43,6 +43,41 @@ workspace pages next to each other. The workspace name is in the sidebar and in 
         </div>
     </div>
 
+    <div class="card mb-4" id="branding">
+        <div class="card-header" style="font-size:0.9rem;font-weight:600;">{% trans "Branding" %}</div>
+        <div class="card-body">
+            <p class="text-muted small mb-3">{% trans "How the workspace appears on its public sites: the name residents read, your logo and your colour for buttons and links." %}</p>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="form" value="branding">
+                <div class="form-group">
+                    <label for="{{ branding.brand_name.id_for_label }}" style="font-weight:500;font-size:0.9rem;">{% trans "Public name" %}</label>
+                    {{ branding.brand_name }}
+                    <small class="form-text text-muted">{% blocktrans with name=org.name %}Empty: “{{ name }}”.{% endblocktrans %}</small>
+                </div>
+                <div class="form-group">
+                    <label style="font-weight:500;font-size:0.9rem;">{% trans "Logo" %}</label>
+                    {% if org.logo %}<div class="mb-2"><img src="{{ org.logo.url }}" alt="" style="max-height:48px;max-width:200px;"></div>{% endif %}
+                    {{ branding.logo }}
+                    {% for error in branding.logo.errors %}<small class="text-danger d-block">{{ error }}</small>{% endfor %}
+                    <small class="form-text text-muted">{% trans "PNG, JPEG, WebP or GIF, up to 1 MB. Shown at the top of your sites." %}</small>
+                    {% if org.logo %}<label class="small mt-1"><input type="checkbox" name="remove_logo" value="1"> {% trans "Remove the logo" %}</label>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="{{ branding.accent_color.id_for_label }}" style="font-weight:500;font-size:0.9rem;">{% trans "Accent colour" %}</label>
+                    <div class="d-flex align-items-center" style="gap:10px;">
+                        <input type="color" name="accent_color" id="{{ branding.accent_color.id_for_label }}" value="{{ org.accent_color|default:'#2f6fb0' }}" style="width:56px;height:34px;padding:2px;">
+                        <span class="btn btn-sm text-white" style="background:{{ brand.accent }};">{% trans "Take part" %}</span>
+                        <a href="#" onclick="return false" style="color:{{ brand.accent }};">{% trans "A link" %}</a>
+                    </div>
+                    {% for error in branding.accent_color.errors %}<small class="text-danger d-block">{{ error }}</small>{% endfor %}
+                    {% if brand.darkened %}<small class="form-text text-warning">{% trans "This colour is too light to read as text, so sites use a darker shade of it (shown here)." %}</small>{% endif %}
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">{% trans "Save branding" %}</button>
+            </form>
+        </div>
+    </div>
+
     {% entitlements_for org as ent %}{% ppg_products_configured as products_configured %}
     <div class="card mb-4">
         <div class="card-header" style="font-size:0.9rem;font-weight:600;">{% trans "Plan" %}</div>
