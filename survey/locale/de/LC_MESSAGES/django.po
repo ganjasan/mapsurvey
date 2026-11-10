@@ -12525,3 +12525,16 @@ msgstr "Nachher"
 #: site-gallery-compare
 msgid "Slide to compare"
 msgstr "Zum Vergleichen schieben"
+
+#: survey/templates/org/invitation_landing.html:26
+#, python-format
+msgid "You've already joined %(org_name)s"
+msgstr "Sie sind %(org_name)s bereits beigetreten"
+
+#: survey/templates/org/invitation_landing.html:27
+msgid "Sign in with the account you joined with to open it."
+msgstr "Melden Sie sich mit dem Konto an, mit dem Sie beigetreten sind."
+
+#: survey/abuse.py:299
+msgid "An account with this email already exists."
+msgstr "Ein Konto mit dieser E-Mail-Adresse existiert bereits."

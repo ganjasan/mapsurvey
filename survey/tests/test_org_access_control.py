@@ -1340,13 +1340,15 @@ class InvitationFlowTest(TestCase):
         """
         GIVEN an invitation that has already been accepted
         WHEN an unauthenticated user visits the accept URL
-        THEN they see an "already used" message
+        THEN they are told they already joined and offered sign-in, not
+             registration (change one-account-per-email, #639)
         """
         from django.utils import timezone
         invitation = self._make_invitation(accepted_at=timezone.now())
         response = self.client.get(f'/invitations/{invitation.token}/accept/')
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'already been used')
+        self.assertContains(response, 'already joined')
+        self.assertNotContains(response, '/accounts/register/')
 
     def test_invalid_token_shows_error(self):
         """

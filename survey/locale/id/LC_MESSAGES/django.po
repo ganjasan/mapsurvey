@@ -12436,3 +12436,16 @@ msgstr "Sesudah"
 #: site-gallery-compare
 msgid "Slide to compare"
 msgstr "Geser untuk membandingkan"
+
+#: survey/templates/org/invitation_landing.html:26
+#, python-format
+msgid "You've already joined %(org_name)s"
+msgstr "Anda sudah bergabung dengan %(org_name)s"
+
+#: survey/templates/org/invitation_landing.html:27
+msgid "Sign in with the account you joined with to open it."
+msgstr "Masuk dengan akun yang Anda gunakan saat bergabung untuk membukanya."
+
+#: survey/abuse.py:299
+msgid "An account with this email already exists."
+msgstr "Akun dengan email ini sudah ada."

@@ -12415,3 +12415,16 @@ msgstr "Pärast"
 #: site-gallery-compare
 msgid "Slide to compare"
 msgstr "Libistage võrdlemiseks"
+
+#: survey/templates/org/invitation_landing.html:26
+#, python-format
+msgid "You've already joined %(org_name)s"
+msgstr "Oled juba liitunud: %(org_name)s"
+
+#: survey/templates/org/invitation_landing.html:27
+msgid "Sign in with the account you joined with to open it."
+msgstr "Avamiseks logi sisse kontoga, millega liitusid."
+
+#: survey/abuse.py:299
+msgid "An account with this email already exists."
+msgstr "Selle e-posti aadressiga konto on juba olemas."

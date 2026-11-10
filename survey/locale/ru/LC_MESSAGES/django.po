@@ -10543,3 +10543,16 @@ msgstr "После"
 #: site-gallery-compare
 msgid "Slide to compare"
 msgstr "Сдвиньте, чтобы сравнить"
+
+#: survey/templates/org/invitation_landing.html:26
+#, python-format
+msgid "You've already joined %(org_name)s"
+msgstr "Вы уже состоите в %(org_name)s"
+
+#: survey/templates/org/invitation_landing.html:27
+msgid "Sign in with the account you joined with to open it."
+msgstr "Войдите в аккаунт, с которым вступали, чтобы открыть его."
+
+#: survey/abuse.py:299
+msgid "An account with this email already exists."
+msgstr "Аккаунт с этим адресом уже существует."
