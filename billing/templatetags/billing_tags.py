@@ -68,6 +68,24 @@ def pro_badge(organization, feature_key, link=True):
     }
 
 
+@register.inclusion_tag('billing/_pro_nav_mark.html')
+def pro_nav_mark(organization, feature_key):
+    """`{% pro_nav_mark org "sites" %}` -- the Pro mark of a NAVIGATION item
+    (change onboarding-friction, #638): nothing while the workspace can use the
+    feature (plan, trial, or the first use would start the trial), a lock when
+    it cannot. A "PRO" label in the sidebar read as "not for you" to Free
+    creators the trial was meant for; controls keep `pro_badge`."""
+    if feature_key not in FEATURES:
+        from django.conf import settings
+        if settings.DEBUG:
+            raise template.TemplateSyntaxError(f'pro_nav_mark: unknown feature {feature_key!r}')
+        return {'locked': False}
+    if organization is None:
+        return {'locked': False}
+    state, _ = pro_badge_state(organization, feature_key)
+    return {'locked': state == 'locked'}
+
+
 @register.simple_tag
 def entitlements_for(organization):
     return for_organization(organization)

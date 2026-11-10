@@ -83,10 +83,8 @@ body.app-rail .app-sidebar { width: var(--app-rail-w); }
 .app-item.active { background: var(--app-side-accent-light); color: var(--app-side-accent) !important; font-weight: 500; }
 .app-item.active > i { color: var(--app-side-accent); }
 .app-item > span { overflow: hidden; text-overflow: ellipsis; }
+/* Holds {% pro_nav_mark %}: empty unless the workspace is locked out of the feature. */
 .app-item-mark { margin-left: auto; font-style: normal; flex: none; }
-/* The sidebar has room for the mark, not its explanation ("· free to try", "· 480 left"):
-   the title attribute still carries it, and Plan & billing says it in full. */
-.app-item-mark .pro-badge__extra { display: none; }
 .app-item .app-dot { position: static; margin-left: auto; display: inline-block; }
 
 .app-side-foot { flex: none; border-top: 1px solid var(--app-side-line); padding: 8px; }

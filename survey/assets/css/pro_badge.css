@@ -38,3 +38,8 @@
 .pro-badge--startable { color: #fff; background: var(--pro); }
 .pro-badge--locked { color: var(--pro-lock); background: var(--pro-lock-soft); border-color: var(--pro-lock-line); }
 a.pro-badge--locked:hover { color: #5A6680; }
+
+/* The navigation variant ({% pro_nav_mark %}, change onboarding-friction): a lock and no word,
+   only where the workspace is locked out of the feature. */
+.pro-nav-lock { display: inline-flex; align-items: center; color: var(--pro-lock); vertical-align: middle; }
+.pro-nav-lock svg { width: 11px; height: 11px; }

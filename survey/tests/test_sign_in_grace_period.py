@@ -351,20 +351,28 @@ class HeldUntilConfirmedTest(_Base):
         self.assertFalse(Invitation.objects.filter(email="colleague@example.org").exists())
         self.assertEqual(len(mail.outbox), 0)
 
-    def test_building_works_and_the_banner_shows(self):
+    def test_building_works_without_a_banner(self):
         """
         GIVEN an unconfirmed creator in the grace period
-        WHEN they open the survey in the editor
-        THEN the page renders with the confirm-your-email banner
+        WHEN they open the dashboard and the survey in the editor
+        THEN both render with no confirm-your-email banner and no countdown (change
+             onboarding-friction, #638), and the editor carries the publish dialog with the address
         """
+        for url in (reverse("editor") + "?dashboard=1", reverse("editor_survey_detail", args=[self.survey.uuid])):
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, 200)
+                self.assertNotContains(response, "msConfirmEmailBanner")
+                self.assertNotContains(response, "Confirm your email address.")
+                self.assertNotContains(response, "you can sign in for")
         response = self.client.get(reverse("editor_survey_detail", args=[self.survey.uuid]))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Confirm your email address.")
+        self.assertContains(response, 'id="msConfirmEmailModal"')
+        self.assertContains(response, "Confirm your email to publish")
         self.assertContains(response, "builder@example.org")
 
-    def test_banner_resend_sends_a_link(self):
+    def test_dialog_resend_sends_a_link(self):
         """
-        GIVEN the banner's "Send the link again"
+        GIVEN the publish dialog's "Send the link again"
         WHEN it is pressed
         THEN one mail goes out and the script gets {sent: true}
         """
@@ -372,15 +380,15 @@ class HeldUntilConfirmedTest(_Base):
         self.assertEqual(response.json(), {"sent": True})
         self.assertEqual(len(mail.outbox), 1)
 
-    def test_banner_gone_once_confirmed(self):
+    def test_dialog_gone_once_confirmed(self):
         """
         GIVEN a confirmed creator
         WHEN they open the editor
-        THEN no banner renders
+        THEN the confirm-to-publish dialog does not render
         """
         ev.mark_verified(self.user)
         response = self.client.get(reverse("editor_survey_detail", args=[self.survey.uuid]))
-        self.assertNotContains(response, "Confirm your email address.")
+        self.assertNotContains(response, 'id="msConfirmEmailModal"')
 
 
 class ApiAndMcpTest(_Base):

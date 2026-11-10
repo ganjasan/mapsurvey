@@ -563,7 +563,9 @@ notice. The owner gets a start mail (on commit) and one "ends in 7 days" mail
 (`notify_trials_ending`, daily from `reclaim.sh`, `ending_notified_at`). **Every Pro control carries
 `{% pro_badge org "key" %}`** (`billing/_pro_badge.html`, `css/pro_badge.css`, violet `--pro`
 tokens — teal is for actions): plan / trial / startable ("free to try") / locked; never hand-write a
-Pro label. Tests that need a Free workspace REFUSED call `billing.tests.helpers.trial_used_elsewhere(org)`.
+Pro label. Navigation items (the sidebar) use `{% pro_nav_mark org "key" %}` instead (change
+`onboarding-friction`, #638): nothing unless the workspace is `locked`, then a grey lock without the
+word — a "PRO" in the sidebar read as "not for you" to the Free creators the trial is for. Tests that need a Free workspace REFUSED call `billing.tests.helpers.trial_used_elsewhere(org)`.
 `pro_help` is "Advice on your survey and results" (#438), listed in every menu below a free "Suggest
 an idea or report a bug" (`billing/_help_entries.html`). The webhook still owns
 `Subscription`; a grant is a different row with a different writer. **Three questions on
@@ -1005,8 +1007,10 @@ accounts build freely for 24 h, but `services/publishing` refuses to publish (`E
 invite; email-matched invitations are accepted on CONFIRMATION (`user_activated`), not at
 registration. Past the deadline the backend refuses the password, `SignInForm` names the reason
 to whoever typed the CORRECT password and sends a link (per-address daily cap shared by every
-send), and `GracePeriodMiddleware` ends a grace session at its next request. The confirm-email
-banner is `editor/partials/_confirm_email_banner.html` (both bases). Newsletter and funnel
+send), and `GracePeriodMiddleware` ends a grace session at its next request. There is no standing
+confirm-email banner (removed in change `onboarding-friction`, #638 — it pulled new creators off
+onboarding): `editor/partials/_confirm_email_banner.html` (both bases) now holds only the
+"Confirm your email to publish" dialog and its resend script; do not bring a banner back. Newsletter and funnel
 "activated" use `confirmed_q()`. After a deploy that touches accounts, run
 `manage.py sync_email_verification` (idempotent) for rows the old instance created.
 

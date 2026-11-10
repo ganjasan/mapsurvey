@@ -115,8 +115,7 @@ class SidebarContentsTest(_SidebarFixture):
         """
         GIVEN a member with the viewer role
         WHEN they open the dashboard and then the library
-        THEN the sidebar has a Map styles item under Library with the map_styles Pro mark,
-             and the library page marks it active
+        THEN the sidebar has a Map styles item under Library, and the library page marks it active
         """
         viewer = User.objects.create_user('navviewer', password='pass')
         Membership.objects.create(user=viewer, organization=self.org, role='viewer')
@@ -126,6 +125,39 @@ class SidebarContentsTest(_SidebarFixture):
         library = html[html.index('data-nav-key="map_styles"') - 600:html.index('data-nav-key="map_styles"')]
         self.assertIn('Library', library)
         self.assertEqual(self.active_keys(self.html(reverse('org_map_styles', args=[self.org.slug]))), ['map_styles'])
+
+    def _nav_html(self):
+        html = self.html(reverse('editor') + '?dashboard=1')
+        side = html[html.index(SIDEBAR):]
+        return side[side.index('class="app-nav"'):side.index('app-side-foot')]
+
+    def test_no_pro_label_where_the_workspace_can_use_the_features(self):
+        """
+        GIVEN the same workspace startable for the trial, then in a live trial, then on Pro
+        WHEN the dashboard renders
+        THEN no sidebar item carries a Pro mark of any state (change onboarding-friction, #638)
+        """
+        from billing.trial import claim
+        self.assertNotIn('data-pro-state', self._nav_html())
+        claim(self.org, self.owner)
+        self.assertNotIn('data-pro-state', self._nav_html())
+        make_sub(self.org)
+        nav = self._nav_html()
+        self.assertNotIn('data-pro-state', nav)
+        self.assertNotIn('pro-badge', nav)
+
+    def test_lock_where_the_feature_is_out_of_reach(self):
+        """
+        GIVEN a Free workspace whose owner used their trial elsewhere
+        WHEN the dashboard renders
+        THEN Sites, API, MCP and Map styles each carry a lock and no "Pro" text
+        """
+        from billing.tests.helpers import trial_used_elsewhere
+        trial_used_elsewhere(self.org)
+        nav = self._nav_html()
+        self.assertEqual(nav.count('class="pro-nav-lock" data-pro-state="locked"'), 4)
+        self.assertNotIn('pro-badge', nav)
+        self.assertNotIn('>Pro<', nav)
 
     def test_active_item_follows_the_page(self):
         """
