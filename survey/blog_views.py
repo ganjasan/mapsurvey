@@ -59,7 +59,8 @@ def _article_jsonld(article):
     }
     if article.cover:
         data["image"] = f"{SITE_ORIGIN}{static(article.cover)}"
-    return json.dumps(data, ensure_ascii=False)
+    # Rendered |safe inside <script>: a '</script>' in a title must not end the element.
+    return json.dumps(data, ensure_ascii=False).replace('<', '\\u003c')
 
 
 def blog_post(request, slug):
@@ -74,6 +75,8 @@ def blog_post(request, slug):
         'body_html': blog.render_body(article),
         'is_draft_preview': article.draft,
         'canonical': f"{SITE_ORIGIN}{article.url}",
+        # Absolute: link-preview scrapers do not resolve a relative og:image.
+        'og_image': f"{public_base_url(request)}{static(article.cover)}" if article.cover else '',
         'topic_chips': topic_chips,
         'changelog_entries': [entries[i] for i in article.changelog if i in entries],
         'article_jsonld': _article_jsonld(article),
@@ -82,11 +85,18 @@ def blog_post(request, slug):
     })
 
 
+def _public_entries():
+    """Entries anyone may read. A hero with `show_if` was written for one signed-in audience
+    ("these surveys", "your assistant") and stays in the editor; its feature has an ordinary
+    entry of its own."""
+    return [entry for entry in changelog.entries() if not entry.show_if]
+
+
 def changelog_public(request):
     """/changelog/ -- every changelog entry, newest first, for anyone. Editor links ("Open") and
     hero chips stay in the editor: they point at pages a visitor cannot open."""
     articles = blog.article_map()
-    rows = [{'entry': entry, 'article': articles.get(entry.id)} for entry in changelog.entries()]
+    rows = [{'entry': entry, 'article': articles.get(entry.id)} for entry in _public_entries()]
     return render(request, 'changelog_public.html', {
         'rows': rows,
         'breadcrumb_jsonld': build_breadcrumb_jsonld((HOME, CHANGELOG_CRUMB)),
@@ -98,7 +108,11 @@ def _rss(feed):
 
 
 def _pubdate(day):
-    return datetime.datetime.combine(day, datetime.time(9, 0), tzinfo=datetime.timezone.utc)
+    """Midnight UTC of the day: never in the future on the day it is published. None stays None
+    (the item is then undated)."""
+    if day is None:
+        return None
+    return datetime.datetime.combine(day, datetime.time(0, 0), tzinfo=datetime.timezone.utc)
 
 
 def blog_feed(request):
@@ -110,7 +124,8 @@ def blog_feed(request):
         description="Features, ideas and customer stories from Mapsurvey.", language="en")
     for item in blog.feed_items()[:BLOG_FEED_SIZE]:
         feed.add_item(title=item.title, link=f"{base}{item.url}", unique_id=f"{base}{item.url}",
-                      description=item.summary, pubdate=_pubdate(item.date),
+                      description=item.summary,
+                      pubdate=(item.story.published_date if item.story else _pubdate(item.date)),
                       categories=[blog.STORY_FILTER[0] if item.kind == 'story' else item.article.label])
     return _rss(feed)
 
@@ -120,7 +135,7 @@ def changelog_feed(request):
     feed = Rss201rev2Feed(
         title="Mapsurvey changelog", link=f"{base}/changelog/", feed_url=f"{base}/changelog/feed.xml",
         description="What changed in Mapsurvey, newest first.", language="en")
-    for entry in changelog.entries()[:CHANGELOG_FEED_SIZE]:
+    for entry in _public_entries()[:CHANGELOG_FEED_SIZE]:
         link = f"{base}/changelog/#{entry.id}"
         feed.add_item(title=entry.title, link=link, unique_id=link, description=entry.body,
                       pubdate=_pubdate(entry.day), categories=['Fixed' if entry.kind == 'fixed' else 'New'])

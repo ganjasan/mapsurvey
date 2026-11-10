@@ -11,7 +11,7 @@ the article body with {static:} tokens resolved; it is written in the repo and r
 {% block canonical_url %}{{ canonical }}{% endblock %}
 {% block og_url %}{{ canonical }}{% endblock %}
 {% block og_title %}{{ article.title }}{% endblock %}
-{% block og_image %}{% if article.cover %}{% static article.cover %}{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block og_image %}{% if og_image %}{{ og_image }}{% else %}{{ block.super }}{% endif %}{% endblock %}
 
 {% block extra_head %}{% if is_draft_preview %}<meta name="robots" content="noindex, nofollow">{% endif %}<link rel="alternate" type="application/rss+xml" title="Mapsurvey blog" href="{% url 'blog_feed' %}">{% endblock %}
 {% block structured_data %}

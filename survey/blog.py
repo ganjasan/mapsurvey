@@ -34,6 +34,10 @@ from functools import lru_cache
 ARTICLES_DIR = os.path.join(os.path.dirname(__file__), 'blog')
 FILENAME = re.compile(r'^(\d{4}-\d{2}-\d{2})-([a-z0-9]+(?:-[a-z0-9]+)*)$')
 STATIC_TOKEN = re.compile(r'\{static:([^}\s]+)\}')
+# `{help:<key>}` = a help-centre URL from survey/help_links.py, so a renamed help page is
+# one registry edit and HelpSiteLinksTest covers the link.
+HELP_TOKEN = re.compile(r'\{help:([a-z0-9_]+)\}')
+ASSETS_DIR = os.path.join(os.path.dirname(__file__), 'assets')
 FENCE = '---'
 DEFAULT_AUTHOR = 'Mapsurvey'
 
@@ -197,9 +201,28 @@ def article_map():
 
 
 def render_body(article):
-    """The body with `{static:<path>}` tokens resolved to static URLs."""
+    """The body with `{static:<path>}` and `{help:<key>}` tokens resolved to URLs."""
     from django.templatetags.static import static
-    return STATIC_TOKEN.sub(lambda m: static(m.group(1)), article.body)
+    from .help_links import help_urls
+    urls = help_urls()
+    body = STATIC_TOKEN.sub(lambda m: static(m.group(1)), article.body)
+    return HELP_TOKEN.sub(lambda m: urls.get(m.group(1), '#'), body)
+
+
+def asset_problems():
+    """Static paths (cover, `{static:}`) with no file under survey/assets/ and `{help:}` keys
+    not in the registry, as 'file: what' strings. Production serves static files through a
+    manifest storage, where a missing file raises on render -- so a test over the shipped
+    directory runs this, and a typo fails CI instead of the page."""
+    from .help_links import HELP_LINKS
+    bad = []
+    for article in articles():
+        paths = ([article.cover] if article.cover else []) + STATIC_TOKEN.findall(article.body)
+        bad += [f'{article.id}.html: no static file {p}' for p in paths
+                if not os.path.isfile(os.path.join(ASSETS_DIR, p))]
+        bad += [f'{article.id}.html: unknown help key {k}' for k in HELP_TOKEN.findall(article.body)
+                if k not in HELP_LINKS]
+    return bad
 
 
 def clear_cache():
@@ -213,7 +236,7 @@ def clear_cache():
 class FeedItem:
     kind: str          # 'story' | an article kind
     filter: str        # the ?kind= value that keeps it
-    date: datetime.date
+    date: datetime.date    # None for a story with no publication date: listed last, undated
     title: str
     summary: str
     url: str
@@ -228,18 +251,20 @@ def filters():
 
 def feed_items(kind_filter=''):
     """Published stories and articles, newest first; `kind_filter` is a value of `filters()`."""
+    from django.urls import reverse
     from .models import Story
     items = []
     if kind_filter in ('', STORY_FILTER[1]):
         for story in Story.objects.filter(is_published=True):
-            day = story.published_date.date() if story.published_date else datetime.date.min
+            day = story.published_date.date() if story.published_date else None
             items.append(FeedItem(kind='story', filter=STORY_FILTER[1], date=day, title=story.title,
-                                  summary=story.summary, url=f'/stories/{story.slug}/', story=story))
+                                  summary=story.summary, url=reverse('story_detail', args=[story.slug]),
+                                  story=story))
     for article in published():
         value = KINDS[article.kind][1]
         if kind_filter in ('', value):
             items.append(FeedItem(kind=article.kind, filter=value, date=article.date,
                                   title=article.title, summary=article.summary, url=article.url,
                                   article=article))
-    items.sort(key=lambda item: item.date, reverse=True)
+    items.sort(key=lambda item: item.date or datetime.date.min, reverse=True)
     return items

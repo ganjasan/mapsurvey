@@ -2695,7 +2695,9 @@ def sitemap_xml(request):
 		urls.append(f"  <url><loc>{base}/stories/{story.slug}/</loc>{lastmod}</url>")
 	# Blog + published articles, and the public changelog (change public-blog-and-changelog).
 	from . import blog, changelog
-	newest = max((a.updated or a.date for a in blog.published()), default=None)
+	# The index lists stories too, so its lastmod is the newest of both.
+	newest = max([a.updated or a.date for a in blog.published()]
+				 + [i.date for i in blog.feed_items('stories') if i.date], default=None)
 	urls.append(f"  <url><loc>{base}/blog/</loc>"
 				+ (f"<lastmod>{newest.isoformat()}</lastmod>" if newest else "") + "</url>")
 	for article in blog.published():

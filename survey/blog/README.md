@@ -42,6 +42,7 @@ draft: true
 - `draft: true` — only staff can open it (with `noindex`); it is on no list, feed or sitemap.
   Remove the line to publish.
 
+Help-centre links are `{help:<key>}` tokens (keys of `survey/help_links.py`), never a typed URL.
 Pictures in the body are `{static:<path>}` tokens, never hard-coded `/static/...` URLs: the
 storage adds content hashes to file names.
 

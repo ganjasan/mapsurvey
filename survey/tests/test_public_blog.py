@@ -71,6 +71,18 @@ class BlogArticlesTest(_BlogDirMixin, SimpleTestCase):
         self.addCleanup(blog.clear_cache)
         self.assertTrue(blog.articles())
         self.assertEqual(blog.changelog_problems(), [])
+        self.assertEqual(blog.asset_problems(), [])
+
+    def test_missing_static_file_and_help_key_are_reported(self):
+        """
+        GIVEN an article whose body names a static file that does not exist and an unknown help key
+        WHEN the shipped-directory check runs
+        THEN both are reported with the file name (production's manifest storage would 500)
+        """
+        self.use_articles({'2026-11-10-a.html': _POST.replace('favicon-32x32.png', 'img/blog/nope.png')
+                           + '<a href="{help:no_such_key}">x</a>\n'})
+        self.assertEqual(blog.asset_problems(), ['2026-11-10-a.html: no static file img/blog/nope.png',
+                                                 '2026-11-10-a.html: unknown help key no_such_key'])
 
     def test_unknown_changelog_id_is_reported(self):
         """
