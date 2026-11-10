@@ -71,6 +71,22 @@ def i18n_json():
         'nOfMMarked': _('{n} of {m} marked'),
         'atLeastNRequired': _('at least {n} required'),
         'allMarkedThanks': _('All {m} marked — thank you!'),
+
+        # Budget questions (change budget-question): budget_question.js reads
+        # these as window.BudgetI18n through the `budget` key.
+        'budget': {
+            'left': _('{left} left'),
+            'allIn': _('✓ all allocated'),
+            'over': _('{over} over the budget'),
+            'needAll': _('Allocate the whole {total} — {left} is still unallocated.'),
+            'needOne': _('Give at least one item an amount.'),
+            'needMin': _('Pick at least {n}.'),
+            'tooDear': _('{over} over what is left.'),
+            'capReached': _('You placed the most allowed.'),
+            'noCost': _("No cost set — can't be picked."),
+            'markTooDear': _('This mark would cost {cost}, but only {left} is left.'),
+            'leftAfter': _('{left} left after it'),
+        },
     }
     return mark_safe(json.dumps(translations, ensure_ascii=False))
 

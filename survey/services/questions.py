@@ -21,7 +21,8 @@ from ..layers import (
     GEOMETRY_TEXT_FIELDS, backfill_question_layer, layer_lite, layer_owner,
 )
 from ..models import Answer, Question, QuestionTranslation, SurveyMapLayer
-from ..question_types import CHOICE_TYPES, MULTI_FEATURE_TYPES, SHARED_MAP_SOURCE_TYPES, normalise_choice_extras
+from .. import budget as budget_rules
+from ..question_types import BUDGET_TYPES, CHOICE_TYPES, GEO_TYPES, MULTI_FEATURE_TYPES, SHARED_MAP_SOURCE_TYPES, normalise_choice_extras
 from ..versioning import (
     family_ids, question_snapshot, removed_answered_choices, structural_edit_message,
     structural_question_changes,
@@ -35,7 +36,11 @@ from .errors import DeleteBlocked, StructureLocked, ValidationFailed
 
 TRANSLATION_FIELDS = ('name', 'subtext')
 FILE_TYPES = ('photo', 'audio', 'document')
-SETTINGS_ON_CREATE = frozenset(MULTI_FEATURE_TYPES) | {'number', 'range', 'text', 'text_line', 'spraycan'}
+SETTINGS_ON_CREATE = frozenset(MULTI_FEATURE_TYPES) | {'number', 'range', 'text', 'text_line', 'spraycan'} | set(BUDGET_TYPES)
+
+# The Pro feature a map-bound budget question needs (change budget-question,
+# design D10): the placed-items type, and a budget whose items are a layer's objects.
+BUDGET_MAP_FEATURE = 'budget_map'
 
 
 class Stage:
@@ -217,6 +222,40 @@ def parse_validation_settings(input_type, data, base=None):
         value = _int(raw('max_files')) if raw('max_files') else None
         if value and value >= 1:
             vs['max_files'] = min(value, PLATFORM_MAX_FILES)
+    if input_type in GEO_TYPES:
+        # A price under a budget group (change budget-question): amount and
+        # what it is per; an empty amount removes the price.
+        if 'price' in data and isinstance(data.get('price'), (dict, type(None))):
+            vs['price'] = budget_rules.normalise_price(data.get('price'), input_type)
+        elif 'vs_price_amount' in data or 'vs_price_per' in data:
+            vs['price'] = budget_rules.normalise_price(
+                {'amount': raw('price_amount'), 'per': raw('price_per') or budget_rules.PER_FEATURE}, input_type)
+        if vs.get('price') is None:
+            vs.pop('price', None)
+    if input_type in BUDGET_TYPES:
+        # The budget record (change budget-question): the modal's vs_budget_<key>
+        # fields, or — from the API — the whole record under `budget`. One
+        # validator; a refusal names the key as the modal's field.
+        record = data.get('budget') if isinstance(data.get('budget'), dict) else None
+        if record is None:
+            record = dict((vs.get('budget') or {}))
+            for key in budget_rules.KEYS:
+                posted = data.get(f'vs_budget_{key}')
+                if posted is None:
+                    continue
+                if key == 'show_shares':
+                    record[key] = posted in ('1', 'true', 'on', True)
+                else:
+                    record[key] = posted.strip() if isinstance(posted, str) else posted
+            # The modal's Block was rendered: an unchecked box means off. The API
+            # (`vs_budget_present`, forms_bridge) only changes what it names.
+            if ('vs_budget_show_shares' not in data and 'vs_budget_present' not in data
+                    and any(k.startswith('vs_budget_') for k in data)):
+                record['show_shares'] = False
+        try:
+            vs['budget'] = budget_rules.normalise_budget_settings(record, input_type)
+        except budget_rules.BudgetSettingsError as err:
+            raise _failed(Stage.SETTINGS, {f'vs_budget_{err.field}': [str(err)]}, message=str(err))
     # Feature-count limits apply to every geo type (polygon keeps its area
     # factor above as well, hence a separate `if`).
     if input_type in MULTI_FEATURE_TYPES:
@@ -229,6 +268,67 @@ def parse_validation_settings(input_type, data, base=None):
                 'Max places must be greater than or equal to min places.']},
                 message='Max places must be greater than or equal to min places.')
     return vs
+
+
+# ─── Budget questions (change budget-question) ───────────────────────────────
+
+def _check_budget(question, form=None):
+    """Items of a Projects budget and of a placed-items catalogue each need a
+    cost (spec budget-question "Items carry description, cost and count cap");
+    a Split item's cost is a guide and optional. Layer-sourced items are read
+    at render time, so nothing to check here but the binding the form made."""
+    if question.input_type not in BUDGET_TYPES:
+        return
+    settings = (question.validation_settings or {}).get('budget') or {}
+    if question.input_type == 'budget' and settings.get('source') == budget_rules.SOURCE_LAYER:
+        return
+    needs_cost = settings.get('mode') == budget_rules.MODE_PROJECTS
+    if not needs_cost:
+        return
+    missing = [c for c in (question.choices or [])
+               if isinstance(c, dict) and c.get('cost') is None]
+    if missing:
+        name = missing[0].get('name')
+        name = name if isinstance(name, str) else (next(iter(name.values()), '') if isinstance(name, dict) else '')
+        label = name or f'#{missing[0].get("code")}'
+        raise _failed(Stage.CHOICES, {'choices': [
+            f'Every item needs a cost — “{label}” has none.']}, form,
+            message=f'Every item needs a cost — “{label}” has none.')
+
+
+def _is_map_bound_budget(input_type, validation_settings, layer_id):
+    if input_type == 'budget':
+        settings = (validation_settings or {}).get('budget') or {}
+        return settings.get('source') == budget_rules.SOURCE_LAYER
+    return False
+
+
+def _budget_pro_gate(question, survey, actor, *, was_map_bound):
+    """A layer-sourced budget needs `budget_map` on the owning workspace
+    (design D10); budget GROUPS are free on every plan (owner, 2026-11-10).
+    Asked at save; a question that was already map-bound is not re-gated on
+    an ordinary edit (a lapsed workspace keeps editing names). Returns True
+    when the save should COUNT one trial use."""
+    now_bound = _is_map_bound_budget(question.input_type, question.validation_settings, question.layer_id)
+    if not now_bound or was_map_bound:
+        return False
+    require_budget_map(survey.organization)
+    return True
+
+
+def require_budget_map(organization):
+    """Raise ProRequired unless the workspace may use `budget_map`."""
+    from billing import trial
+    if not trial.may(organization, BUDGET_MAP_FEATURE):
+        from .errors import ProRequired
+        raise ProRequired(BUDGET_MAP_FEATURE,
+                          'A budget over a reference layer is a Pro feature. Upgrade the workspace, '
+                          'or type the items as a list.')
+
+
+def _count_budget_map_use(survey, actor):
+    from billing import trial
+    trial.use(survey.organization, BUDGET_MAP_FEATURE, actor=getattr(actor, 'user', None))
 
 
 # ─── Shared map (Objects on the map sourced from answers) ────────────────────
@@ -371,6 +471,36 @@ def set_choice_names(question, language, names):
     return question
 
 
+def set_choice_descriptions(question, language, descriptions):
+    """The Translations tab's write of budget item descriptions (change
+    budget-question): `description_i18n[language]` of the listed codes, and
+    nothing else; the primary `description` is the source and its hash is
+    recorded. An empty text removes the language's entry."""
+    survey = question.survey_section.survey_header
+    choices = [dict(c) if isinstance(c, dict) else c for c in (question.choices or [])]
+    hashed = []
+    for choice in choices:
+        if not isinstance(choice, dict) or str(choice.get('code')) not in descriptions:
+            continue
+        translated = dict(choice.get('description_i18n') or {})
+        text = (descriptions[str(choice.get('code'))] or '').strip()
+        if text:
+            translated[language] = text
+        else:
+            translated.pop(language, None)
+        if translated:
+            choice['description_i18n'] = translated
+        else:
+            choice.pop('description_i18n', None)
+        hashed.append((f'{translation_table.question_prefix(question)}:choice:{choice.get("code")}:description',
+                       choice.get('description') or '', translation_table.PLAIN, text))
+    question.choices = normalise_choice_extras(choices)
+    question.save(update_fields=['choices'])
+    if hashed:
+        translation_table.record_hashes(survey, language, hashed)
+    return question
+
+
 def _emit_first_question(actor, survey, question):
     """Funnel stage, so it fires only for a survey's *first* question --
     emitting per question would count questions, not creators who got past
@@ -458,10 +588,14 @@ def create(actor, section, data, files=None, *, parent=None, group=None,
             raise
         if vs or question.input_type in FILE_TYPES:
             question.validation_settings = vs
+    _check_budget(question, form)
+    counted = _budget_pro_gate(question, survey, actor, was_map_bound=False)
     question.save()
     if parent is None:
         _apply_shared_map_settings(question, data)
         _emit_first_question(actor, survey, question)
+    if counted:
+        _count_budget_map_use(survey, actor)
     if translations is not UNSET:
         save_translations_for(question, survey, translations)
     return question
@@ -497,12 +631,18 @@ def update(actor, question, data, files=None, *, translations=UNSET, visibility_
     if partial and not any(k.startswith('vs_') for k in data):
         vs = dict(q.validation_settings or {})
     else:
+        # A PATCH naming one budget key keeps the rest of the record.
+        base = ({'budget': (before.get('validation_settings') or {}).get('budget')}
+                if partial and q.input_type in BUDGET_TYPES else None)
         try:
-            vs = parse_validation_settings(q.input_type, data)
+            vs = parse_validation_settings(q.input_type, data, base=base)
         except ValidationFailed as err:
             err.form = form
             raise
     q.validation_settings = vs
+    _check_budget(q, form)
+    counted = _budget_pro_gate(q, survey, actor, was_map_bound=_is_map_bound_budget(
+        before['input_type'], before.get('validation_settings'), before['layer_id']))
     present, rule = _visibility(visibility_rule, visibility_input, form)
     if present:
         _check_rule(rule, q, strict, parent=q.parent_question_id if is_subquestion else None)
@@ -518,6 +658,8 @@ def update(actor, question, data, files=None, *, translations=UNSET, visibility_
             err.form = form
             raise err
     q.save()
+    if counted:
+        _count_budget_map_use(survey, actor)
     _apply_shared_map_settings(q, data)
     if translations is not UNSET:
         save_translations_for(q, survey, translations)

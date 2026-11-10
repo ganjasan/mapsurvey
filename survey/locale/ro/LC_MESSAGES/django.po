@@ -1242,3 +1242,147 @@ msgstr "Preferați să răspundeți online? Scanați acest cod."
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* obligatoriu"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Niciun cost stabilit — nu poate fi ales."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Partea medie din buget pe care locuitorii au dat-o fiecărui element."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Procentul locuitorilor care au finanțat fiecare proiect. Verde: proiectele cele mai susținute care încap împreună în buget."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Partea din tot ce au cheltuit locuitorii, pe element."
+
+#: budget-question
+msgid "{left} left"
+msgstr "Rămas: {left}"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ totul alocat"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "{over} peste buget"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Alocați întreaga sumă de {total} — {left} nu este încă alocat."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Alocați o sumă cel puțin unui element."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Alegeți cel puțin {n}."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "{over} peste ce a rămas."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Ați plasat numărul maxim permis."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "din %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "Împărțiți %(total)s între elemente. Sumele trebuie să totalizeze %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "Împărțiți până la %(total)s între elemente."
+
+#: budget-question
+msgid "Total"
+msgstr "Total"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Bifați proiectele pe care le-ați finanța. Costurile lor nu pot depăși împreună %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Scrieți numărul elementului lângă fiecare semn. Elementele nu pot costa împreună mai mult de %(total)s."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "cel mult %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Mai puțin"
+
+#: budget-question
+msgid "More"
+msgstr "Mai mult"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Împarte restul în mod egal"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Element de plasat"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Plasează pe hartă"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Alegeți un element, apoi atingeți harta pentru a-l plasa."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "Răspunsuri: %(n)s · buget %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Acest marcaj ar costa {cost}, dar au mai rămas doar {left}."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Preț: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Buget: %(total)s — marcajele din acest grup nu pot costa împreună mai mult de atât."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s bucata"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "după aceasta rămân {left}"

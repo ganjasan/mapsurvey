@@ -36,9 +36,14 @@
         {% for field in form %}{% if field.name != 'audience' %}
         {% if field.name == 'layout' %}<fieldset class="section-layout-block"><legend>{% trans "Layout" %}</legend>{% endif %}
         <div class="form-group" data-layout-control="{{ field.name }}">
+            {% if field.name == 'keep_panel_open' %}
+            {# A checkbox: Bootstrap's .form-check-input is position:absolute and needs the .form-check wrapper, or it floats out of its row. #}
+            <div class="form-check">{{ field }}<label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label></div>
+            {% else %}
             {# Base fields hold the primary language; name it when translations exist so "Title" doesn't read as a language-neutral default. #}
             <label for="{{ field.id_for_label }}">{{ field.label }}{% if survey.available_languages|length > 1 and field.name == 'title' or survey.available_languages|length > 1 and field.name == 'subheading' or survey.available_languages|length > 1 and field.name == 'next_label' %} ({{ survey.available_languages.0|language_name }}){% endif %}</label>
             {{ field }}
+            {% endif %}
             {% comment %}The subheading has always been rendered |safe on the section page;
             this is where the creator finally gets to write it as formatted text instead of
             hand-typed HTML. The textarea above stays the value the form posts.{% endcomment %}

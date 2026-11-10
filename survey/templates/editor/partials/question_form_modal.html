@@ -1,5 +1,5 @@
 {% load i18n %}
-{% load static question_utils survey_filters %}
+{% load static question_utils survey_filters billing_tags %}
 {% get_current_language as LANGUAGE_CODE %}
 <style>
     /* Wide two-pane question dialog. The id selector outranks .modal-lg. */
@@ -168,14 +168,17 @@
             {% if structure_locked and question and not is_read_only %}
             {% comment %}Live survey: the type is structure (change edit-live-survey).
             The picker stays in the DOM for the type-scoped field toggles, hidden.{% endcomment %}
-            <div style="display:none;">{% question_type_picker field %}</div>
+            <div style="display:none;">{% question_type_picker field survey.organization %}</div>
             <div class="live-type-line" style="font-size:.85rem;">
                 <span class="badge badge-secondary">{{ question|input_type_label }}</span>
                 <span class="text-muted">{% trans "The type of a question on a live survey is changed in unpublished changes." %}</span>
                 <a href="#" data-gate="type" data-gate-section="{{ question.survey_section.code }}">{% trans "Change type…" %}</a>
             </div>
+            {% elif question or parent %}
+            {% question_type_picker field survey.organization %}
             {% else %}
-            {% question_type_picker field %}
+            {# The create picker also offers what is not a question type (a budget group). #}
+            {% question_type_picker field survey.organization True %}
             {% endif %}
             <div class="qtp-hint-line" id="qtp-hint-line"></div>
             {% for error in field.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
@@ -516,7 +519,13 @@
         <!-- Choices editor -->
         <style>
             .choices-editor--no-other .choice-other-cell { display: none; }
-            .choices-editor:not(.choices-editor--grid) .choice-grid-cell { display: none; }
+            .choices-editor:not(.choices-editor--grid):not(.choices-editor--budget) .choice-grid-cell { display: none; }
+            /* Budget items take an icon and a colour (the bar's segment), not a group. */
+            .choices-editor--budget:not(.choices-editor--grid) .choice-group-cell { display: none; }
+            /* Budget items (change budget-question): Description + Cost columns. */
+            .choices-editor:not(.choices-editor--budget) .choice-budget-cell { display: none; }
+            .choices-editor--cost-required .choice-cost:placeholder-shown { border-color: #f59e0b; }
+            .choices-editor--budget .choice-desc { min-width: 160px; }
             .choice-color-wrap { display: inline-flex; align-items: center; gap: 2px; }
             .choice-color-wrap .choice-color { width: 32px; height: 28px; padding: 1px; border: 1px solid #d1d5db; border-radius: 4px; background: #fff; cursor: pointer; }
             .choice-color-wrap .choice-color[data-unset] { opacity: 0.3; }
@@ -526,7 +535,7 @@
         {% comment %}Icon/Group mean something only to the icon grid (spec survey-editor). Hidden
         cells keep their values, so switching the style back restores them.{% endcomment %}
         <div class="choices-editor" id="choices-editor" style="display:none;">
-            <label style="font-weight:600;">{% trans "Choices" %}</label>
+            <label style="font-weight:600;" id="choices-caption">{% trans "Choices" %}</label>
             <table class="table table-sm">
                 <thead>
                     <tr>
@@ -541,7 +550,9 @@
                         {% endif %}
                         <th class="choice-grid-cell" style="width:56px;" title="{% trans 'Shown on the option tile in the icon grid' %}">{% trans "Icon" %}</th>
                         <th class="choice-grid-cell" style="width:76px;" title="{% trans 'Icon colour for this option; cleared = the question colour' %}">{% trans "Color" %}</th>
-                        <th class="choice-grid-cell" style="width:120px;" title="{% trans 'Options with the same group sit together under one heading' %}">{% trans "Group" %}</th>
+                        <th class="choice-grid-cell choice-group-cell" style="width:120px;" title="{% trans 'Options with the same group sit together under one heading' %}">{% trans "Group" %}</th>
+                        <th class="choice-budget-cell" title="{% trans 'One line under the item on the respondent page' %}">{% trans "Description" %}</th>
+                        <th class="choice-budget-cell" style="width:110px;" title="{% trans 'What the item costs. Required for projects; a guide for a split budget.' %}">{% trans "Cost" %}</th>
                         <th class="choice-other-cell" style="width:64px;" title="{% trans 'Write-in option: respondents who pick it get a text field to say what they mean' %}">{% trans "Other" %}</th>
                         <th style="width:40px;"></th>
                     </tr>
@@ -599,6 +610,114 @@
                        placeholder="10">
             </div>
         </div>
+        {% comment %}Budget block (change budget-question, spec budget-question). One record,
+        validated by survey.budget.normalise_budget_settings on save; the live preview
+        posts the same fields. `bs` is the stored record (empty on a new question).{% endcomment %}
+        {% with bs=question.validation_settings.budget %}
+        <div id="vs-budget-fields" style="display:none;" class="mt-2 lo-card">
+            <label style="font-size:0.8rem;font-weight:600;"><i class="fas fa-coins"></i> {% trans "Budget" %}</label>
+            <div class="lo-field" id="budget-mode-field">
+                <div class="budget-modes">
+                    <label class="budget-mode{% if not bs.mode or bs.mode == 'split' %} on{% endif %}">
+                        <input type="radio" name="vs_budget_mode" value="split"{% if not bs.mode or bs.mode == 'split' %} checked{% endif %}>
+                        <b>{% trans "Split a budget" %}</b>
+                        <small>{% trans "Every item gets an amount; the amounts add up to the budget. Results: average share per item." %}</small>
+                    </label>
+                    <label class="budget-mode{% if bs.mode == 'projects' %} on{% endif %}">
+                        <input type="radio" name="vs_budget_mode" value="projects"{% if bs.mode == 'projects' %} checked{% endif %}>
+                        <b>{% trans "Choose projects within a budget" %}</b>
+                        <small>{% trans "Each item has a cost; the respondent picks projects until the budget is spent. Results: share of respondents per project." %}</small>
+                    </label>
+                </div>
+            </div>
+            <div class="lo-row budget-settings-row">
+                <div class="form-group" style="margin:0;">
+                    <label style="font-size:0.75rem;">{% trans "Total budget" %}</label>
+                    <input type="number" step="any" min="0" name="vs_budget_total" class="form-control form-control-sm" style="width:140px;"
+                           value="{{ bs.total|default_if_none:'' }}" placeholder="20000000">
+                </div>
+                <div class="form-group" style="margin:0;">
+                    <label style="font-size:0.75rem;">{% trans "Unit" %}</label>
+                    <div class="lo-seg" id="budget-unit-seg">
+                        <label class="lo-seg__opt"><input type="radio" name="vs_budget_unit" value="currency"{% if not bs.unit or bs.unit == 'currency' %} checked{% endif %}><span>{% trans "Currency" %}</span></label>
+                        <label class="lo-seg__opt"><input type="radio" name="vs_budget_unit" value="points"{% if bs.unit == 'points' %} checked{% endif %}><span>{% trans "Points" %}</span></label>
+                        <label class="lo-seg__opt"><input type="radio" name="vs_budget_unit" value="percent"{% if bs.unit == 'percent' %} checked{% endif %}><span>%</span></label>
+                    </div>
+                </div>
+                <div class="form-group" style="margin:0;" id="budget-symbol-field">
+                    <label style="font-size:0.75rem;">{% trans "Symbol" %}</label>
+                    <input type="text" name="vs_budget_symbol" maxlength="4" class="form-control form-control-sm" style="width:70px;"
+                           value="{{ bs.symbol|default:'' }}" placeholder="£">
+                </div>
+                <div class="form-group" style="margin:0;">
+                    <label style="font-size:0.75rem;">{% trans "Step" %}</label>
+                    <input type="number" step="any" min="0" name="vs_budget_step" class="form-control form-control-sm" style="width:120px;"
+                           value="{{ bs.step|default_if_none:'' }}" placeholder="{% trans 'auto' %}">
+                </div>
+            </div>
+            <small class="text-muted" style="font-size:0.72rem;">{% trans "Amounts move in steps; 20 000 000 reads as £20M. Per cent fixes the total at 100." %}{% if HELP_URL.budget %} <a href="{{ HELP_URL.budget }}" target="_blank" rel="noopener">{% trans "Learn more" %}</a>{% endif %}</small>
+            {% for e in form.errors.vs_budget_total %}<div class="text-danger" style="font-size:0.8rem;">{{ e }}</div>{% endfor %}
+            {% for e in form.errors.vs_budget_step %}<div class="text-danger" style="font-size:0.8rem;">{{ e }}</div>{% endfor %}
+
+            <div class="lo-field" id="budget-rule-field">
+                <label class="lo-label">{% trans "Rule" %}</label>
+                <div><label style="font-weight:400;font-size:.85rem;margin:0;"><input type="radio" name="vs_budget_rule" value="all"{% if not bs.rule or bs.rule == 'all' %} checked{% endif %}> {% trans "Must allocate the whole budget" %}</label></div>
+                <div><label style="font-weight:400;font-size:.85rem;margin:0;"><input type="radio" name="vs_budget_rule" value="upto"{% if bs.rule == 'upto' %} checked{% endif %}> {% trans "Can allocate up to the budget" %}</label></div>
+            </div>
+            <div class="lo-row" style="flex-wrap:wrap;gap:14px;align-items:flex-end;margin-top:6px;">
+                <div class="form-group" style="margin:0;" id="budget-min-items-field">
+                    <label style="font-size:0.75rem;">{% trans "Minimum items" %}</label>
+                    <input type="number" step="1" min="0" name="vs_budget_min_items" class="form-control form-control-sm" style="width:90px;"
+                           value="{{ bs.min_items|default:0 }}">
+                </div>
+                <label style="font-weight:400;font-size:0.8rem;margin:0;"><input type="checkbox" name="vs_budget_show_shares" value="1"{% if bs.show_shares %} checked{% endif %}> {% trans "Show each item's share in % next to the amount" %}</label>
+            </div>
+
+            <div class="lo-field" id="budget-source-field">
+                <label class="lo-label">{% trans "Items" %}</label>
+                <div class="lo-row" style="gap:8px;align-items:center;">
+                    <div class="lo-seg">
+                        <label class="lo-seg__opt"><input type="radio" name="vs_budget_source" value="list"{% if not bs.source or bs.source == 'list' %} checked{% endif %}><span><i class="fas fa-list"></i> {% trans "Type a list" %}</span></label>
+                        <label class="lo-seg__opt"><input type="radio" name="vs_budget_source" value="layer"{% if bs.source == 'layer' %} checked{% endif %}><span><i class="fas fa-layer-group"></i> {% trans "Objects of a layer" %}</span></label>
+                    </div>
+                    {% pro_badge survey.organization "budget_map" link=False %}
+                </div>
+                <div id="budget-layer-fields" style="display:none;margin-top:8px;">
+                    <div class="lo-row" style="flex-wrap:wrap;gap:10px;align-items:flex-end;">
+                        <div class="form-group" style="margin:0;flex:1;min-width:200px;">
+                            <label style="font-size:0.75rem;">{{ form.layer.label }}</label>
+                            <div id="budget-layer-slot"></div>
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label style="font-size:0.75rem;">{% trans "Cost from property" %}</label>
+                            <input type="text" name="vs_budget_cost_property" id="budget-cost-property" class="form-control form-control-sm" style="width:180px;"
+                                   value="{{ bs.cost_property|default:'' }}" placeholder="cost" autocomplete="off">
+                            {% for l in form.fields.layer.queryset %}<datalist id="budget-props-{{ l.id }}">{% for p in l.property_names %}<option value="{{ p }}"></option>{% endfor %}</datalist>{% endfor %}
+                        </div>
+                    </div>
+                    <small class="text-muted" style="font-size:0.72rem;">{% trans "Each object of the layer is an item; its cost is read from that property. Objects without a number there are shown but cannot be picked." %}</small>
+                    {% for e in form.errors.vs_budget_cost_property %}<div class="text-danger" style="font-size:0.8rem;">{{ e }}</div>{% endfor %}
+                    {% for e in form.layer.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ e }}</div>{% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+        <style>
+            .budget-modes { display:flex; gap:8px; }
+            .budget-mode { flex:1; border:1px solid #d1d5db; border-radius:8px; padding:8px 10px; cursor:pointer; font-weight:400; margin:0; }
+            .budget-mode input { position:absolute; opacity:0; width:0; height:0; }
+            .budget-mode b { display:block; font-size:.82rem; }
+            .budget-mode small { display:block; color:#6b7280; font-size:.72rem; line-height:1.3; }
+            .budget-mode.on { border-color:#4f46e5; background:#eef2ff; }
+            /* Total / Unit / Symbol / Step on one line: same label line, same control height. */
+            .budget-settings-row { display:flex; flex-wrap:wrap; gap:10px; align-items:flex-start; margin-top:10px; }
+            .budget-settings-row > .form-group > label { display:block; font-size:.75rem; line-height:1.2; margin:0 0 4px; }
+            .budget-settings-row .form-control-sm { height:32px; }
+            #budget-unit-seg { height:32px; }
+            #budget-unit-seg .lo-seg__opt span { height:100%; padding:0 12px; }
+            #budget-source-field .lo-seg__opt span { white-space:nowrap; }
+            #budget-min-items-field + label { padding-bottom:6px; }
+        </style>
         <div id="vs-spray-fields" style="display:none;" class="mt-2">
             <label style="font-size:0.8rem;font-weight:600;"><i class="fas fa-cog"></i> {% trans "Validation" %}</label>
             <div class="form-group">
@@ -626,8 +745,8 @@
             </div>
         </div>
         <div id="vs-geo-fields" style="display:none;" class="mt-2">
-            <label style="font-size:0.8rem;font-weight:600;"><i class="fas fa-map-marker-alt"></i> {% trans "Places per respondent" %}</label>
-            <div class="form-row">
+            <label style="font-size:0.8rem;font-weight:600;" id="vs-features-label"><i class="fas fa-map-marker-alt"></i> {% trans "Places per respondent" %}</label>
+            <div class="form-row" id="vs-features-row">
                 <div class="form-group col-4">
                     <label style="font-size:0.75rem;">{% trans "Min" %}</label>
                     <input type="number" step="1" min="0" name="vs_min_features" class="form-control form-control-sm"
@@ -640,6 +759,32 @@
                 </div>
             </div>
             <small class="text-muted" style="font-size:0.72rem;">{% trans "Respondents can add several places to one map question. Leave max empty for unlimited; the export stays a single layer either way." %}</small>
+            {% comment %}Price under a budget group (change budget-question). Offered only
+            when the question sits in a group that has a budget; `vs_price_per` is
+            narrowed to what the type can measure by syncPriceFields.{% endcomment %}
+            {% if question and question.group_id and question.group.budget %}
+            {% with pr=question.validation_settings.price bs=question.group.budget %}
+            <div id="vs-price-fields" class="mt-2">
+                <label style="font-size:0.8rem;font-weight:600;"><i class="fas fa-coins"></i> {% trans "Price" %} <small class="text-muted" style="font-weight:400;">{% blocktrans with name=question.group.title|default:_("the group") %}in the budget of “{{ name }}”{% endblocktrans %}</small></label>
+                <div class="form-row">
+                    <div class="form-group col-5">
+                        <label style="font-size:0.75rem;">{% trans "Amount" %}{% if bs.symbol %} ({{ bs.symbol }}){% elif bs.unit == 'points' %} ({% trans "points" %}){% endif %}</label>
+                        <input type="number" step="any" min="0" name="vs_price_amount" class="form-control form-control-sm"
+                               value="{{ pr.amount|default_if_none:'' }}" placeholder="{% trans 'free' %}">
+                    </div>
+                    <div class="form-group col-7">
+                        <label style="font-size:0.75rem;">{% trans "Per" %}</label>
+                        <select name="vs_price_per" class="form-control form-control-sm" id="vs-price-per">
+                            <option value="feature"{% if not pr.per or pr.per == 'feature' %} selected{% endif %} data-types="point line polygon spraycan">{% trans "mark" %}</option>
+                            <option value="length"{% if pr.per == 'length' %} selected{% endif %} data-types="line">{% trans "metre of the line" %}</option>
+                            <option value="area"{% if pr.per == 'area' %} selected{% endif %} data-types="polygon spraycan">{% trans "square metre of the area" %}</option>
+                        </select>
+                    </div>
+                </div>
+                <small class="text-muted" style="font-size:0.72rem;">{% trans "What one mark costs against the group's budget. Empty = respondents place these for free." %}</small>
+            </div>
+            {% endwith %}
+            {% endif %}
         </div>
 
         {% if survey.available_languages|length > 1 %}
@@ -774,18 +919,35 @@
     var multilingual = languages.length > 1;
     var choicesEditor = document.getElementById('choices-editor');
     var inputTypeSelect = document.querySelector('#questionModalBody select[name="input_type"]');
-    var choiceTypes = ['choice', 'multichoice', 'range', 'rating', 'ranking'];
+    var choiceTypes = ['choice', 'multichoice', 'range', 'rating', 'ranking', 'budget'];
+
+    function budgetSource() {
+        var el = document.querySelector('#questionModalBody input[name="vs_budget_source"]:checked');
+        return el ? el.value : 'list';
+    }
+    function budgetMode() {
+        var el = document.querySelector('#questionModalBody input[name="vs_budget_mode"]:checked');
+        return el ? el.value : 'split';
+    }
 
     function toggleChoicesEditor() {
         // The write-in column only means something for choice/multichoice;
         // rating/range/ranking share this table and must not show it.
         var t = inputTypeSelect ? inputTypeSelect.value : '';
         choicesEditor.classList.toggle('choices-editor--no-other', t !== 'choice' && t !== 'multichoice');
-        if (inputTypeSelect && choiceTypes.indexOf(inputTypeSelect.value) !== -1) {
+        // Budget items (change budget-question): Description and Cost columns;
+        // the table hides altogether when the items are a layer's objects.
+        var isBudget = BUDGET_TYPES.indexOf(t) !== -1;
+        choicesEditor.classList.toggle('choices-editor--budget', isBudget);
+        choicesEditor.classList.toggle('choices-editor--cost-required', t === 'budget' && budgetMode() === 'projects');
+        var layerSourced = t === 'budget' && budgetSource() === 'layer';
+        if (inputTypeSelect && choiceTypes.indexOf(inputTypeSelect.value) !== -1 && !layerSourced) {
             choicesEditor.style.display = 'block';
         } else {
             choicesEditor.style.display = 'none';
         }
+        var caption = document.getElementById('choices-caption');
+        if (caption) caption.textContent = isBudget ? '{% trans "Items" %}' : '{% trans "Choices" %}';
     }
 
     function toggleValidationFields() {
@@ -799,8 +961,33 @@
         if (polyEl) polyEl.style.display = (t === 'polygon') ? 'block' : 'none';
         var sprayEl = document.getElementById('vs-spray-fields');
         if (sprayEl) sprayEl.style.display = (t === 'spraycan') ? 'block' : 'none';
+        var budgetEl = document.getElementById('vs-budget-fields');
+        if (budgetEl) { budgetEl.style.display = (BUDGET_TYPES.indexOf(t) !== -1) ? 'block' : 'none'; syncBudgetBlock(t); }
         // Places per respondent: not for a spray cloud (one per respondent).
         if (geoEl) geoEl.style.display = (MULTI_FEATURE_TYPES.indexOf(t) !== -1) ? 'block' : 'none';
+        // The price block lives inside the geo block; a spray cloud has no
+        // min/max but may still carry a price, so it shows on its own then.
+        var priceEl = document.getElementById('vs-price-fields');
+        if (priceEl) {
+            var geoAny = GEO_TYPES.indexOf(t) !== -1;
+            if (geoEl && t === 'spraycan') geoEl.style.display = 'block';
+            // One cloud per respondent: the min/max row means nothing for spray.
+            ['vs-features-label', 'vs-features-row'].forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el) el.style.display = t === 'spraycan' ? 'none' : '';
+            });
+            priceEl.style.display = geoAny ? 'block' : 'none';
+            var per = document.getElementById('vs-price-per');
+            if (per) {
+                var ok = false;
+                Array.prototype.forEach.call(per.options, function (o) {
+                    var fits = (o.getAttribute('data-types') || '').split(' ').indexOf(t) !== -1;
+                    o.disabled = !fits; o.hidden = !fits;
+                    if (fits && o.selected) ok = true;
+                });
+                if (!ok) per.value = 'feature';
+            }
+        }
         var fileEl = document.getElementById('vs-file-fields');
         if (fileEl) fileEl.style.display = (t === 'photo' || t === 'audio' || t === 'document') ? 'block' : 'none';
         // Empty input = this type's default; say which. Mirrors
@@ -811,6 +998,48 @@
             maxFilesEl.placeholder = defaults[t] ? 'default ' + defaults[t] : '';
         }
     }
+
+    // Budget block (change budget-question): which of its fields belong to the
+    // current type and mode, and where the layer select lives. The `layer`
+    // control is ONE element shared with the Objects-on-the-map card — it is
+    // moved into the budget block for a layer-sourced budget and back again.
+    var layerSelect = document.querySelector('#questionModalBody select[name="layer"]');
+    var layerHome = layerSelect ? layerSelect.parentNode : null;
+    var layerHomeNext = layerSelect ? layerSelect.nextSibling : null;
+    function syncBudgetBlock(t) {
+        var isBudget = BUDGET_TYPES.indexOf(t) !== -1;
+        var isItems = false;
+        var mode = budgetMode();
+        var src = budgetSource();
+        document.querySelectorAll('#vs-budget-fields .budget-mode').forEach(function(el) {
+            el.classList.toggle('on', !!el.querySelector('input:checked'));
+        });
+        show('budget-mode-field', isBudget && !isItems);
+        show('budget-rule-field', isBudget && !isItems && mode === 'split');
+        show('budget-source-field', isBudget && !isItems);
+        var unit = document.querySelector('#questionModalBody input[name="vs_budget_unit"]:checked');
+        show('budget-symbol-field', !unit || unit.value === 'currency');
+        var total = document.querySelector('#questionModalBody input[name="vs_budget_total"]');
+        if (total) total.disabled = !!(unit && unit.value === 'percent');
+        if (total && unit && unit.value === 'percent') total.value = 100;
+        var layerSourced = isBudget && !isItems && src === 'layer';
+        show('budget-layer-fields', layerSourced);
+        var slot = document.getElementById('budget-layer-slot');
+        if (layerSelect && slot) {
+            if (layerSourced && layerSelect.parentNode !== slot) slot.appendChild(layerSelect);
+            else if (!layerSourced && layerSelect.parentNode === slot && layerHome) layerHome.insertBefore(layerSelect, layerHomeNext);
+            var prop = document.getElementById('budget-cost-property');
+            if (prop) prop.setAttribute('list', 'budget-props-' + layerSelect.value);
+        }
+        toggleChoicesEditor();
+    }
+    document.querySelectorAll('#vs-budget-fields input[type="radio"], #vs-budget-fields select').forEach(function(el) {
+        el.addEventListener('change', function() { syncBudgetBlock(inputTypeSelect ? inputTypeSelect.value : ''); });
+    });
+    if (layerSelect) layerSelect.addEventListener('change', function() {
+        var prop = document.getElementById('budget-cost-property');
+        if (prop) prop.setAttribute('list', 'budget-props-' + layerSelect.value);
+    });
 
     // Types whose rendering the creator can pick. Mirrors
     // survey.question_types.DISPLAY_STYLES_BY_TYPE — keep the two in step.
@@ -920,6 +1149,7 @@
     // Mirrors survey.question_types.GEO_TYPES / MULTI_FEATURE_TYPES.
     var GEO_TYPES = ['point', 'line', 'polygon', 'spraycan'];
     var MULTI_FEATURE_TYPES = ['point', 'line', 'polygon'];
+    var BUDGET_TYPES = ['budget'];
     var DISPLAY_BLOCK_TYPES = ['image', 'html'];
     // Mirrors survey.question_types.PARENT_TYPES / NOT_REQUIRABLE_TYPES.
     var PARENT_TYPES = ['point', 'line', 'polygon', 'spraycan', 'layer_objects'];
@@ -1162,6 +1392,20 @@
             var card = e.target.closest('.qtp-card');
             if (!card) return;
             var form = picker.closest('form');
+            // A card that creates something other than a question (change
+            // budget-question): a budget group, through the group endpoint.
+            if (card.getAttribute('data-qtp-action') === 'budget_group') {
+                if (form._draftPending) return;
+                form._draftPending = true;
+                card.classList.add('selected');
+                var nameEl0 = form.querySelector('[name="name"]');
+                htmx.ajax('POST', GROUP_CREATE_URL, {
+                    target: '#questionModalBody', swap: 'innerHTML',
+                    values: { budget: '1', title: nameEl0 ? nameEl0.value : '' },
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                });
+                return;
+            }
             if (form && form.hasAttribute('data-create-picker')) {
                 // Create the row now; the response is the edit modal plus the
                 // section-list item out of band (editor_question_create draft=1).
@@ -1414,7 +1658,8 @@
     // this point and adds five star rows — can call it. The assignment form threw
     // `ReferenceError: addChoiceRow is not defined` there and aborted the whole
     // script for star-rating questions (PostHog, 2026-09-14).
-    function addChoiceRow(code, name, other, icon, group, color) {
+    function addChoiceRow(code, name, other, icon, group, color, extras) {
+        extras = extras || {};
         var tbody = document.getElementById('choices-rows');
         var row = document.createElement('tr');
         var codeVal;
@@ -1469,7 +1714,10 @@
         // be empty, so the flag is what means "follow the question colour".
         cells += '<td class="choice-grid-cell choice-icon-cell"><input type="text" class="choice-icon"></td>';
         cells += '<td class="choice-grid-cell choice-color-cell"><span class="choice-color-wrap"><input type="color" class="choice-color" value="#374151" data-unset="1" title="{% trans 'Icon colour' %}"><button type="button" class="choice-color-clear" title="{% trans 'Use the question colour' %}">&times;</button></span></td>';
-        cells += '<td class="choice-grid-cell"><input type="text" class="form-control form-control-sm choice-group" maxlength="60"></td>';
+        cells += '<td class="choice-grid-cell choice-group-cell"><input type="text" class="form-control form-control-sm choice-group" maxlength="60"></td>';
+        // Budget item extras (change budget-question); values set through .value below.
+        cells += '<td class="choice-budget-cell"><input type="text" class="form-control form-control-sm choice-desc" maxlength="300"></td>';
+        cells += '<td class="choice-budget-cell"><input type="number" class="form-control form-control-sm choice-cost" min="0" step="any" placeholder="{% trans 'cost' %}"></td>';
         // The write-in flag (spec other-option-write-in): a checkbox, not a radio,
         // so a flag can be taken off again; exclusivity is enforced on change.
         cells += '<td class="choice-other-cell text-center"><input type="checkbox" class="choice-other" title="{% trans 'Write-in option' %}"' + (other ? ' checked' : '') + '></td>';
@@ -1478,6 +1726,13 @@
         tbody.appendChild(row);
         row.querySelector('.choice-icon').value = typeof icon === 'string' ? icon : '';
         row.querySelector('.choice-group').value = typeof group === 'string' ? group : '';
+        row.querySelector('.choice-desc').value = typeof extras.description === 'string' ? extras.description : '';
+        row.querySelector('.choice-cost').value = (typeof extras.cost === 'number') ? extras.cost : '';
+        // Translated descriptions are written on the Translations tab; carried
+        // through untouched so a save here never drops them.
+        if (extras.description_i18n && typeof extras.description_i18n === 'object') {
+            row.dataset.descI18n = JSON.stringify(extras.description_i18n);
+        }
         if (typeof color === 'string' && /^#[0-9a-fA-F]{6}$/.test(color)) {
             var colorInp = row.querySelector('.choice-color');
             colorInp.value = color.toLowerCase();
@@ -1582,6 +1837,15 @@
             if (groupInp && groupInp.value.trim()) entry.group = groupInp.value.trim();
             var colorInp = row.querySelector('.choice-color');
             if (colorInp && !colorInp.hasAttribute('data-unset')) entry.color = colorInp.value.toLowerCase();
+            // Budget extras: only when set, and only for the budget types, so
+            // an option list of any other type stays byte-identical.
+            if (choicesEditor.classList.contains('choices-editor--budget')) {
+                var descInp = row.querySelector('.choice-desc');
+                if (descInp && descInp.value.trim()) entry.description = descInp.value.trim();
+                var costInp = row.querySelector('.choice-cost');
+                if (costInp && costInp.value.trim() !== '' && !isNaN(parseFloat(costInp.value))) entry.cost = parseFloat(costInp.value);
+                if (row.dataset.descI18n) { try { entry.description_i18n = JSON.parse(row.dataset.descI18n); } catch (e) {} }
+            }
             choices.push(entry);
         });
 
@@ -1623,6 +1887,7 @@
     // machinery (editor_question_preview_live) — no save, no Apply.
     var previewFrame = document.getElementById('question-preview-frame');
     var PREVIEW_LIVE_URL = '{% url "editor_question_preview_live" survey.uuid section.id %}{% if survey.available_languages %}?lang={{ survey.available_languages.0 }}{% endif %}';
+    var GROUP_CREATE_URL = '{% url "editor_group_create" survey.uuid section.id %}';
     var previewTimer = null;
     var previewSeq = 0;
 
@@ -1632,10 +1897,18 @@
         var f = document.querySelector('#questionModalBody form');
         if (!f) return;
         var fd = new FormData();
-        ['name', 'subtext', 'color', 'icon_class', 'layer', 'objects_search', 'min_objects'].forEach(function(n) {
+        ['name', 'subtext', 'color', 'icon_class', 'layer', 'objects_search', 'min_objects',
+         'vs_budget_total', 'vs_budget_symbol', 'vs_budget_step', 'vs_budget_min_items', 'vs_budget_cost_property'].forEach(function(n) {
             var el = f.querySelector('[name="' + n + '"]');
             if (el) fd.append(n, el.value);
         });
+        // Budget radios and the shares switch (change budget-question).
+        ['vs_budget_mode', 'vs_budget_unit', 'vs_budget_rule', 'vs_budget_source'].forEach(function(n) {
+            var el = f.querySelector('input[name="' + n + '"]:checked');
+            if (el) fd.append(n, el.value);
+        });
+        var shares = f.querySelector('input[name="vs_budget_show_shares"]');
+        if (shares && shares.checked) fd.append('vs_budget_show_shares', '1');
         var pm = f.querySelector('input[name="panel_mode"]:checked');
         if (pm) fd.append('panel_mode', pm.value);
         {% if question %}fd.append('question_id', '{{ question.id }}');{% endif %}
@@ -1677,7 +1950,9 @@
     {% if question and question.choices %}
     var existingChoices = JSON.parse(document.getElementById('existing-choices-data').textContent);
     existingChoices.forEach(function(choice) {
-        addChoiceRow(choice.code, choice.name, !!choice.other, choice.icon, choice.group, choice.color);
+        addChoiceRow(choice.code, choice.name, !!choice.other, choice.icon, choice.group, choice.color,
+                     { description: choice.description, cost: choice.cost,
+                       description_i18n: choice.description_i18n });
     });
     // The init block saw an empty table; now the star count can read the rows.
     savedChoicesLoaded = true;

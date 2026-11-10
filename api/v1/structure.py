@@ -48,6 +48,12 @@ def find_group(survey, group_id):
 
 def group_args(body):
     data = {k: ('' if body[k] is None else body[k]) for k in ('title', 'description', 'display_style', 'audience') if k in body}
+    if 'budget' in body:
+        # The group form's three plain fields (change budget-question); null clears.
+        b = body['budget'] or {}
+        data.update(budget_present='1',
+                    budget_total='' if b.get('total') is None else str(b['total']),
+                    budget_unit=b.get('unit') or 'currency', budget_symbol=b.get('symbol') or '')
     translations = forms_bridge.translations(body) if 'translations' in body else UNSET
     return data, forms_bridge.visibility(body), translations
 

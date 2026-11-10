@@ -12415,3 +12415,402 @@ msgstr "Pärast"
 #: site-gallery-compare
 msgid "Slide to compare"
 msgstr "Libistage võrdlemiseks"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Hind on määramata — ei saa valida."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Keskmine eelarve osa, mille elanikud igale objektile andsid."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Elanike osakaal, kes rahastasid iga projekti. Roheline: enim toetatud projektid, mis mahuvad koos eelarvesse."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Iga objekti osa kõigest, mida elanikud kulutasid."
+
+#: budget-question
+msgid "{left} left"
+msgstr "{left} jäänud"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ kõik jaotatud"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "{over} üle eelarve"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Jaotage kogu {total} — {left} on veel jaotamata."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Andke vähemalt ühele objektile summa."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Valige vähemalt {n}."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "{over} rohkem, kui alles on."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Olete paigutanud lubatud maksimumi."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "%(total)s-st"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "Jaotage %(total)s objektide vahel. Summad peavad kokku andma %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "Jaotage kuni %(total)s objektide vahel."
+
+#: budget-question
+msgid "Total"
+msgstr "Kokku"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Märkige projektid, mida rahastaksite. Nende maksumus kokku ei tohi ületada %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Kirjutage iga märgi kõrvale objekti number. Objektid kokku ei tohi maksta rohkem kui %(total)s."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "kõige rohkem %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Vähem"
+
+#: budget-question
+msgid "More"
+msgstr "Rohkem"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Jaota ülejäänu võrdselt"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Paigutatav objekt"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Paiguta kaardile"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Valige objekt ja puudutage siis kaarti, et see paigutada."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s vastust · eelarve %(total)s"
+
+#: budget-question
+msgid "One line under the item on the respondent page"
+msgstr "Üks rida kirje all vastaja lehel"
+
+#: budget-question
+msgid "What the item costs. Required for projects and for items placed on the map; a guide for a split budget."
+msgstr "Kirje maksumus. Kohustuslik projektidel ja kaardile paigutatavatel kirjetel; jagatava eelarve puhul suunav."
+
+#: budget-question
+msgid "Cost"
+msgstr "Maksumus"
+
+#: budget-question
+msgid "At most this many of the item per respondent; empty = no cap"
+msgstr "Kõige rohkem nii palju seda kirjet vastaja kohta; tühi = piiranguta"
+
+#: budget-question
+msgid "Budget"
+msgstr "Eelarve"
+
+#: budget-question
+msgid "Split a budget"
+msgstr "Eelarve jagamine"
+
+#: budget-question
+msgid "Every item gets an amount; the amounts add up to the budget. Results: average share per item."
+msgstr "Iga kirje saab summa; summad annavad kokku eelarve. Tulemused: keskmine osakaal kirje kohta."
+
+#: budget-question
+msgid "Choose projects within a budget"
+msgstr "Projektide valimine eelarve piires"
+
+#: budget-question
+msgid "Each item has a cost; the respondent picks projects until the budget is spent. Results: share of respondents per project."
+msgstr "Igal kirjel on maksumus; vastaja valib projekte, kuni eelarve on kulutatud. Tulemused: vastajate osakaal projekti kohta."
+
+#: budget-question
+msgid "Total budget"
+msgstr "Kogueelarve"
+
+#: budget-question
+msgid "Unit"
+msgstr "Ühik"
+
+#: budget-question
+msgid "Currency"
+msgstr "Valuuta"
+
+#: budget-question
+msgid "Points"
+msgstr "Punktid"
+
+#: budget-question
+msgid "Symbol"
+msgstr "Sümbol"
+
+#: budget-question
+msgid "Step"
+msgstr "Samm"
+
+#: budget-question
+msgid "auto"
+msgstr "auto"
+
+#: budget-question
+msgid "Amounts move in steps; 20 000 000 reads as £20M. Per cent fixes the total at 100."
+msgstr "Summad muutuvad sammu kaupa; 20 000 000 kuvatakse kui £20M. Protsentide korral on kogusumma alati 100."
+
+#: budget-question
+msgid "Rule"
+msgstr "Reegel"
+
+#: budget-question
+msgid "Must allocate the whole budget"
+msgstr "Kogu eelarve tuleb jagada"
+
+#: budget-question
+msgid "Can allocate up to the budget"
+msgstr "Võib jagada kuni eelarveni"
+
+#: budget-question
+msgid "Minimum items"
+msgstr "Kirjeid vähemalt"
+
+#: budget-question
+msgid "Items"
+msgstr "Kirjed"
+
+#: budget-question
+msgid "Type a list"
+msgstr "Sisesta loend"
+
+#: budget-question
+msgid "Objects of a layer"
+msgstr "Kihi objektid"
+
+#: budget-question
+msgid "Cost from property"
+msgstr "Maksumus omadusest"
+
+#: budget-question
+msgid "Each object of the layer is an item; its cost is read from that property. Objects without a number there are shown but cannot be picked."
+msgstr "Iga kihi objekt on kirje; selle maksumus loetakse sellest omadusest. Objektid, millel seal arvu pole, kuvatakse, kuid neid ei saa valida."
+
+#: budget-question
+msgid "cost"
+msgstr "maksumus"
+
+#: budget-question
+msgid "budget"
+msgstr "eelarve"
+
+#: budget-question
+msgid "spent on average"
+msgstr "kulutati keskmiselt"
+
+#: budget-question
+msgid "of spend"
+msgstr "kulutustest"
+
+#: budget-question
+msgid "Most supported projects that fit the budget together"
+msgstr "Enim toetatud projektid, mis mahuvad koos eelarvesse"
+
+#: budget-question
+msgid "Where they were placed — see the map."
+msgstr "Kuhu need paigutati – vaata kaarti."
+
+#: budget-question
+msgid "Budget: place items on the map"
+msgstr "Eelarve: paiguta kirjed kaardile"
+
+#: budget-question
+msgid "Budget questions on the map"
+msgstr "Eelarveküsimused kaardil"
+
+#: budget-question
+msgid "Pick the reference layer whose objects are the budget items."
+msgstr "Vali taustakiht, mille objektid on eelarve kirjed."
+
+#: budget-question
+#, python-format
+msgid "%(q)s item description"
+msgstr "%(q)s – kirje kirjeldus"
+
+#: budget-question
+msgid "Show each item's share in % next to the amount"
+msgstr "Näita iga kirje osakaalu (%) summa kõrval"
+
+#: budget-question
+msgid "Add the items in Items below."
+msgstr "Lisa kirjed allpool jaotises Kirjed."
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "See märge maksaks {cost}, kuid alles on vaid {left}."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Hind: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Eelarve: %(total)s — selle rühma märked ei tohi kokku rohkem maksta."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s tükk"
+
+#: budget-question
+msgid "What the item costs. Required for projects; a guide for a split budget."
+msgstr "Mida kirje maksab. Projektide puhul kohustuslik; eelarve jagamisel suunav."
+
+#: budget-question
+#, python-format
+msgid "in the budget of “%(name)s”"
+msgstr "eelarves „%(name)s“"
+
+#: budget-question
+msgid "Amount"
+msgstr "Summa"
+
+#: budget-question
+msgid "points"
+msgstr "punkti"
+
+#: budget-question
+msgid "free"
+msgstr "tasuta"
+
+#: budget-question
+msgid "Per"
+msgstr "Ühiku kohta"
+
+#: budget-question
+msgid "mark"
+msgstr "märge"
+
+#: budget-question
+msgid "metre of the line"
+msgstr "joone meeter"
+
+#: budget-question
+msgid "square metre of the area"
+msgstr "ala ruutmeeter"
+
+#: budget-question
+msgid "What one mark costs against the group's budget. Empty = respondents place these for free."
+msgstr "Mida üks märge rühma eelarvest maksab. Tühi = vastajad asetavad need tasuta."
+
+#: budget-question
+msgid "With a total, the map questions in this group become a budget: give each a price in its dialog (per mark, per metre or per m²) and respondents place marks until the total is spent. Leave empty for an ordinary group."
+msgstr "Kogusummaga muutuvad selle rühma kaardiküsimused eelarveks: anna igaühele tema dialoogis hind (märke, meetri või m² kohta) ja vastajad asetavad märkeid, kuni kogusumma on kulutatud. Tavalise rühma jaoks jäta tühjaks."
+
+#: budget-question
+#, python-format
+msgid "%(m)s of %(n)s questions inside have a price; the others place marks for free."
+msgstr "%(m)s küsimusel %(n)s-st rühmas on hind; ülejäänutes on märked tasuta."
+
+#: budget-question
+msgid "Budget group: the map questions inside carry a price"
+msgstr "Eelarverühm: selles olevatel kaardiküsimustel on hind"
+
+#: budget-question
+msgid "Budget group"
+msgstr "Eelarverühm"
+
+#: budget-question
+msgid "Map questions inside carry the price."
+msgstr "Hind on selles olevatel kaardiküsimustel."
+
+#: budget-question
+msgid "Add the map questions you want funded — benches, lamp posts, paths, flower beds — to this group, then open each and set its price under “Places per respondent”."
+msgstr "Lisa sellesse rühma kaardiküsimused, mida soovid rahastada — pingid, laternapostid, teerajad, lillepeenrad —, seejärel ava igaüks ja määra selle hind jaotises „Kohti vastaja kohta“."
+
+#: budget-question
+msgid "Per mark, per metre or per square metre."
+msgstr "Märke, meetri või ruutmeetri kohta."
+
+#: budget-question
+msgid "A point is priced per mark; a line can be priced per metre; an area or a spray per square metre — so a long path or a big bed costs more."
+msgstr "Punkti hind on märke kohta; joone hind võib olla meetri kohta; ala või pihustusala hind ruutmeetri kohta — nii maksab pikk teerada või suur peenar rohkem."
+
+#: budget-question
+msgid "Respondents see what is left."
+msgstr "Vastajad näevad, mis on alles."
+
+#: budget-question
+msgid "The bar at the top of the group counts their marks against the total. A mark that no longer fits is greyed out with the reason; a line or area drawn too long is not kept."
+msgstr "Rühma ülaosas olev riba loeb nende märkeid kogusumma vastu. Märge, mis enam ei mahu, kuvatakse hallina koos põhjusega; liiga pikaks joonistatud joont või ala ei salvestata."
+
+#: budget-question
+msgid "No price, no cost."
+msgstr "Pole hinda, pole kulu."
+
+#: budget-question
+msgid "A map question in the group without a price places marks for free; the dialog counts how many are priced."
+msgstr "Rühma kaardiküsimus ilma hinnata asetab märkeid tasuta; dialoog loeb, mitmel on hind."
+
+#: budget-question
+msgid "Results."
+msgstr "Tulemused."
+
+#: budget-question
+msgid "Responses shows one block for the group — marks, metres or m² per question, what they cost — and the marks themselves stay on the map. Each mark exports with its cost."
+msgstr "Vastused näitab rühma kohta ühte plokki — märked, meetrid või m² küsimuse kohta ja mida need maksavad — ning märked ise jäävad kaardile. Iga märge eksporditakse koos oma kuluga."
+
+#: budget-question
+msgid "Budget questions over a reference layer"
+msgstr "Eelarveküsimused viitekihi põhjal"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "pärast seda jääb {left}"

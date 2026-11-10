@@ -77,14 +77,16 @@ def section_layer_ids(section):
     """The layers on a section's map: those bound by its top-level Objects-on-
     the-map questions, in question order (spec reference-overlay-layers "Layer
     visibility is controllable per section": visibility IS binding — there is
-    no second list). Form-layout sections have no map and no layers."""
+    no second list). Form-layout sections have no map and no layers.
+    A budget whose items are a layer's objects binds its layer the same way
+    (change budget-question); the form keeps `layer` only for that source."""
     from survey.models import Question
     if not section.has_map:
         return []
     seen = []
     rows = (Question.objects
             .filter(survey_section=section, parent_question_id__isnull=True,
-                    input_type='layer_objects', layer__isnull=False)
+                    input_type__in=('layer_objects', 'budget'), layer__isnull=False)
             .order_by('order_number', 'id')
             .values_list('layer_id', flat=True))
     for layer_id in rows:

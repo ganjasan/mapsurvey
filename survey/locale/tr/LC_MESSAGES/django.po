@@ -1241,3 +1241,147 @@ msgstr "Çevrim içi yanıtlamayı mı tercih edersiniz? Bu kodu tarayın."
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* zorunlu"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Maliyet belirlenmemiş — seçilemez."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Sakinlerin her kaleme ayırdığı ortalama bütçe payı."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Her projeyi finanse eden sakinlerin oranı. Yeşil: birlikte bütçeye sığan en çok desteklenen projeler."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Sakinlerin harcadığı toplamın kalemlere göre payı."
+
+#: budget-question
+msgid "{left} left"
+msgstr "{left} kaldı"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ tamamı dağıtıldı"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "Bütçenin {over} üzerinde"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "{total} tutarın tamamını dağıtın — {left} henüz dağıtılmadı."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "En az bir kaleme tutar girin."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "En az {n} seçin."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "Kalandan {over} fazla."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "İzin verilen en fazla sayıda yerleştirdiniz."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "%(total)s içinden"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "%(total)s tutarını kalemler arasında paylaştırın. Tutarların toplamı %(total)s olmalı."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "%(total)s tutarına kadar kalemler arasında paylaştırın."
+
+#: budget-question
+msgid "Total"
+msgstr "Toplam"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Finanse edeceğiniz projeleri işaretleyin. Maliyetlerinin toplamı %(total)s tutarını geçmemeli."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Her işaretin yanına kalem numarasını yazın. Kalemlerin toplamı %(total)s tutarını geçmemeli."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "en fazla %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Azalt"
+
+#: budget-question
+msgid "More"
+msgstr "Artır"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Kalanı eşit dağıt"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Yerleştirilecek öğe"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Haritaya yerleştir"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Bir öğe seçin, sonra yerleştirmek için haritaya dokunun."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s yanıt · bütçe %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Bu işaret {cost} tutar, ancak yalnızca {left} kaldı."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Fiyat: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Bütçe: %(total)s — bu gruptaki işaretlerin toplam maliyeti bunu aşmamalıdır."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "adet başına %(amount)s"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "sonrasında {left} kalır"

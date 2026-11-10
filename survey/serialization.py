@@ -31,7 +31,7 @@ from .redirects import clean_redirect_url
 from .layers import layers_for, normalize_style, GEOMETRY_TEXT_FIELDS
 
 logger = logging.getLogger(__name__)
-from .question_types import CHOICE_TYPES, allowed_display_styles, normalise_choice_extras, normalise_audience
+from .question_types import CHOICE_TYPES, GEO_TYPES, allowed_display_styles, normalise_choice_extras, normalise_audience
 
 # Format version for compatibility checking
 FORMAT_VERSION = "1.0"
@@ -219,6 +219,8 @@ def _serialize_groups(section: SurveySection, parent: Optional[Question]) -> Lis
             "visibility_rule": g.visibility_rule,
             "audience": g.audience,
             "order_number": g.order_number,
+            # A budget group (change budget-question): total, unit, symbol.
+            "budget": g.budget,
             "translations": [
                 {"language": t.language, "title": t.title, "description": t.description}
                 for t in g.translations.all()
@@ -255,6 +257,12 @@ def _serialize_question(question: Question) -> Dict[str, Any]:
         # Objects on the map: the bound layer travels as its position in the
         # exported `layers` array (ids mean nothing elsewhere), like hidden_layers.
         "layer": _layer_position(question),
+        # Budget questions (change budget-question): the settings record; a
+        # layer-sourced budget's layer rides in `layer` like Objects on the map.
+        "budget": (question.validation_settings or {}).get("budget")
+        if question.input_type == "budget" else None,
+        # A geo question's price under a budget group (change budget-question).
+        "price": (question.validation_settings or {}).get("price") if question.input_type in GEO_TYPES else None,
         "min_objects": question.min_objects,
         "objects_search": question.objects_search,
         "panel_mode": question.panel_mode,
@@ -271,7 +279,7 @@ def _serialize_question(question: Question) -> Dict[str, Any]:
 
 
 def _layer_position(question: Question) -> Optional[int]:
-    if question.input_type != 'layer_objects' or not question.layer_id:
+    if question.input_type not in ('layer_objects', 'budget') or not question.layer_id:
         return None
     for index, layer in enumerate(layers_for(question.survey_section.survey_header)):
         if layer.pk == question.layer_id:
@@ -381,6 +389,8 @@ def _serialize_answer(answer: Answer) -> Dict[str, Any]:
         "line": geo_to_wkt(answer.line),
         "polygon": geo_to_wkt(answer.polygon),
         "multipoint": geo_to_wkt(answer.multipoint),
+        # A budget answer (change budget-question): item codes and amounts.
+        "allocation": answer.allocation,
         "choices": serialize_choices(answer),
         "sub_answers": [
             _serialize_answer(sub_a)
@@ -1007,6 +1017,18 @@ def _import_rich_text(raw: Optional[str]) -> Optional[str]:
 _GROUP_STYLES = {value for value, _label in GROUP_DISPLAY_STYLE_CHOICES}
 
 
+def _group_budget_from_archive(raw):
+    """A group's budget record through the one validator; an invalid one
+    imports as no budget (change budget-question)."""
+    from . import budget
+    if not isinstance(raw, dict):
+        return None
+    try:
+        return budget.normalise_budget_settings(raw, budget.GROUP)
+    except budget.BudgetSettingsError:
+        return None
+
+
 def _create_groups(section, parent, groups_data, group_index):
     """Create the groups of one bucket before its questions (change
     question-groups); `group_index[(section id, parent id, exported code)]` is how
@@ -1029,6 +1051,7 @@ def _create_groups(section, parent, groups_data, group_index):
             description=_import_rich_text(g.get("description")) or "",
             display_style=style, order_number=order,
             audience=normalise_audience(g.get("audience")),
+            budget=_group_budget_from_archive(g.get("budget")),
         )
         if code:
             group.code = code
@@ -1122,6 +1145,8 @@ def _create_question(
     if display_style not in allowed_display_styles(input_type):
         display_style = "default"
 
+    validation_settings = _budget_settings_from_archive(question_data, input_type, original_code, layer_ids, warnings)
+
     question = Question.objects.create(
         survey_section=section,
         parent_question_id=parent,
@@ -1145,6 +1170,7 @@ def _create_question(
         objects_search=question_data.get("objects_search") if question_data.get("objects_search") in ('auto', 'on', 'off') else 'auto',
         panel_mode=question_data.get("panel_mode") if question_data.get("panel_mode") in ('list', 'legend') else 'list',
         share_with_respondents=bool(question_data.get("share_with_respondents", False)),
+        validation_settings=validation_settings,
         group=_group_for(section, parent, question_data, group_index, warnings),
         audience=_audience_from_archive(question_data, original_code, warnings),
         # image is handled separately during extraction
@@ -1185,13 +1211,42 @@ def _spray_brush_from_archive(question_data, code, warnings):
 
 
 def _layer_id_from_archive(question_data, input_type, layer_ids):
-    if input_type != 'layer_objects':
+    if input_type == 'budget':
+        if ((question_data.get("budget") or {}).get("source")) != 'layer':
+            return None
+    elif input_type != 'layer_objects':
         return None
     index = question_data.get("layer")
     ids = layer_ids or []
     if isinstance(index, int) and 0 <= index < len(ids):
         return ids[index]
     return None
+
+
+def _budget_settings_from_archive(question_data, input_type, code, layer_ids, warnings):
+    """`validation_settings` of an imported budget question (change
+    budget-question): the archive's `budget` record through the one validator.
+    A record that cannot be made valid imports as the defaults, and a
+    layer-sourced budget whose layer is not in the archive falls back to a
+    typed list — each with a report line."""
+    from . import budget
+    if input_type in GEO_TYPES:
+        price = budget.normalise_price(question_data.get("price"), input_type)
+        return {"price": price} if price else {}
+    if input_type != 'budget':
+        return {}
+    raw = question_data.get("budget") if isinstance(question_data.get("budget"), dict) else {}
+    if raw.get("source") == budget.SOURCE_LAYER and _layer_id_from_archive(question_data, input_type, layer_ids) is None:
+        raw = {**raw, "source": budget.SOURCE_LIST, "cost_property": ""}
+        if warnings is not None:
+            warnings.append(f"Question '{code}': its budget layer is not in the archive; items imported as a typed list")
+    try:
+        return {"budget": budget.normalise_budget_settings(raw, input_type)}
+    except budget.BudgetSettingsError as err:
+        if warnings is not None:
+            warnings.append(f"Question '{code}': budget settings invalid ({err}); imported with defaults")
+        return {"budget": budget.normalise_budget_settings(
+            {"total": 100, "unit": budget.UNIT_POINTS}, input_type)}
 
 
 def _audience_from_archive(question_data, code, warnings):
@@ -1685,6 +1740,7 @@ def create_answer(
         line=wkt_to_geo(answer_data.get("line"), "line"),
         polygon=wkt_to_geo(answer_data.get("polygon"), "polygon"),
         multipoint=wkt_to_geo(answer_data.get("multipoint"), "multipoint"),
+        allocation=answer_data.get("allocation") if isinstance(answer_data.get("allocation"), dict) else None,
     )
 
     # Link choices by name -> code

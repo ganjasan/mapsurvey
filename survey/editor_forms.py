@@ -13,7 +13,7 @@ from .question_types import GEO_TYPES, MAP_ONLY_TYPES, SHARED_MAP_SOURCE_TYPES, 
 
 # Parent-capable types cannot themselves be sub-questions: a sub-question lives
 # inside an object's popup, and an object cannot contain more objects.
-SUBQUESTION_DISALLOWED_INPUT_TYPES = ('point', 'line', 'polygon', 'spraycan', 'layer_objects')
+SUBQUESTION_DISALLOWED_INPUT_TYPES = ('point', 'line', 'polygon', 'spraycan', 'layer_objects', 'budget')
 
 USE_CASE_CHOICES = (
     ('urban_planning', 'Urban planning'),
@@ -723,6 +723,24 @@ class QuestionForm(AudienceFieldMixin, forms.ModelForm):
             cleaned['min_objects'] = cleaned.get('min_objects') or 0
             cleaned['objects_search'] = cleaned.get('objects_search') or 'auto'
             cleaned['panel_mode'] = cleaned.get('panel_mode') or 'list'
+        elif input_type == 'budget' and self.data.get('vs_budget_source') == 'layer':
+            # A budget whose items are a layer's objects (change budget-question,
+            # design D4) keeps the binding; the rest of the layer_objects fields
+            # mean nothing here.
+            layer = cleaned.get('layer')
+            if not layer:
+                self.add_error('layer', _('Pick the reference layer whose objects are the budget items.'))
+            elif self.section is not None:
+                twin = (Question.objects
+                        .filter(survey_section=self.section, input_type__in=('layer_objects', 'budget'),
+                                layer=layer, parent_question_id__isnull=True)
+                        .exclude(pk=self.instance.pk or 0)
+                        .first())
+                if twin is not None:
+                    self.add_error('layer', _('Already on this section’s map as “%(name)s”.') % {'name': twin.name or _('(unnamed)')})
+            cleaned['min_objects'] = 0
+            cleaned['objects_search'] = 'auto'
+            cleaned['panel_mode'] = 'list'
         else:
             # The binding is meaningful for one type only; never keep a stale
             # layer on a question that switched type (PROTECT would then block
@@ -776,6 +794,12 @@ class QuestionGroupForm(AudienceFieldMixin, forms.ModelForm):
     display style. The visibility rule and the translations are read by the
     view, like the question form's."""
 
+    # A budget group (change budget-question): three plain fields the modal
+    # posts; `clean()` folds them into `budget` or clears it. Empty total = no budget.
+    budget_total = forms.CharField(required=False)
+    budget_unit = forms.ChoiceField(required=False, choices=(('', ''),) + tuple((u, u) for u in ('currency', 'points')))
+    budget_symbol = forms.CharField(required=False, max_length=4)
+
     class Meta:
         model = QuestionGroup
         fields = ['title', 'description', 'display_style', 'audience']
@@ -789,6 +813,23 @@ class QuestionGroupForm(AudienceFieldMixin, forms.ModelForm):
         # Creator markup on every respondent page: the same allow-list as
         # question help text (html_sanitize).
         return coerce_creator_html(self.cleaned_data.get('description') or '').strip()
+
+    def clean(self):
+        cleaned = super().clean()
+        if 'budget_total' not in self.data and 'budget_present' not in self.data:
+            return cleaned   # the block was not posted: keep the stored budget
+        from survey import budget as budget_rules
+        total = (cleaned.get('budget_total') or '').strip()
+        if not total:
+            self.instance.budget = None
+            return cleaned
+        try:
+            self.instance.budget = budget_rules.normalise_budget_settings({
+                'total': total, 'unit': cleaned.get('budget_unit') or 'currency',
+                'symbol': cleaned.get('budget_symbol') or ''}, budget_rules.GROUP)
+        except budget_rules.BudgetSettingsError as err:
+            self.add_error('budget_' + err.field if err.field in ('total', 'unit', 'symbol') else None, str(err))
+        return cleaned
 
 
 class OrganizationBrandingForm(forms.ModelForm):

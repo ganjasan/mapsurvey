@@ -1241,3 +1241,147 @@ msgstr "Onlayn cavab vermək istəyirsiniz? Bu kodu skan edin."
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* məcburi"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Xərc təyin edilməyib — seçilə bilməz."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Sakinlərin hər bəndə ayırdığı orta büdcə payı."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Hər layihəni maliyyələşdirən sakinlərin payı. Yaşıl: birlikdə büdcəyə sığan ən çox dəstəklənən layihələr."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Sakinlərin xərclədiyi ümumi məbləğdə hər bəndin payı."
+
+#: budget-question
+msgid "{left} left"
+msgstr "{left} qalıb"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ hamısı bölüşdürülüb"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "büdcədən {over} artıq"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Bütün {total} məbləğini bölüşdürün — {left} hələ bölüşdürülməyib."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Ən azı bir bəndə məbləğ verin."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Ən azı {n} seçin."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "Qalandan {over} artıq."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "İcazə verilən maksimum sayda yerləşdirmisiniz."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "%(total)s məbləğindən"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "%(total)s məbləğini bəndlər arasında bölüşdürün. Məbləğlərin cəmi %(total)s olmalıdır."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "%(total)s məbləğinədək bəndlər arasında bölüşdürün."
+
+#: budget-question
+msgid "Total"
+msgstr "Cəmi"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Maliyyələşdirəcəyiniz layihələri işarələyin. Onların xərclərinin cəmi %(total)s məbləğindən çox olmamalıdır."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Hər işarənin yanına bəndin nömrəsini yazın. Bəndlərin ümumi dəyəri %(total)s məbləğindən çox olmamalıdır."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "ən çox %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Azalt"
+
+#: budget-question
+msgid "More"
+msgstr "Artır"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Qalanı bərabər bölüşdür"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Yerləşdiriləcək bənd"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Xəritədə yerləşdir"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Bənd seçin, sonra onu yerləşdirmək üçün xəritəyə toxunun."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s cavab · büdcə %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Bu işarə {cost} dəyərində olardı, amma yalnız {left} qalıb."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Qiymət: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Büdcə: %(total)s — bu qrupdakı işarələr birlikdə bundan baha olmamalıdır."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s hər biri"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "ondan sonra {left} qalır"

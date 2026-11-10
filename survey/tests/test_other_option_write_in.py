@@ -317,10 +317,10 @@ class OtherOptionWriteInTest(TestCase):
         q = Question.objects.get(survey_section=self.section, name='Which?')
         self.assertEqual([c.get('other') for c in q.choices], [None, True, None])
         html = self.client.get(reverse('editor_question_edit', args=[self.survey.uuid, q.id])).content.decode()
-        self.assertIn('addChoiceRow(choice.code, choice.name, !!choice.other, choice.icon, choice.group, choice.color)', html)
+        self.assertIn('addChoiceRow(choice.code, choice.name, !!choice.other, choice.icon, choice.group, choice.color,', html)
         self.assertIn('"other": true', html)
         self.assertIn('class="choice-other-cell"', html)
-        self.assertIn('function addChoiceRow(code, name, other, icon, group, color)', html)
+        self.assertIn('function addChoiceRow(code, name, other, icon, group, color, extras)', html)
         self.assertNotIn('window.addChoiceRow = function', html)
 
     def test_live_preview_clamps_and_renders_the_write_in(self):

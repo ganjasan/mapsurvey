@@ -1243,3 +1243,147 @@ msgstr "Well gennych ateb ar-lein? Sganiwch y cod hwn."
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* gofynnol"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Dim cost wedi'i osod — does dim modd ei ddewis."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Cyfran gyfartalog y gyllideb a roddodd trigolion i bob eitem."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Cyfran y trigolion a ariannodd bob prosiect. Gwyrdd: y prosiectau â'r mwyaf o gefnogaeth sy'n ffitio'r gyllideb gyda'i gilydd."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Cyfran pob eitem o'r cyfan a wariodd trigolion."
+
+#: budget-question
+msgid "{left} left"
+msgstr "{left} ar ôl"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ y cyfan wedi'i ddyrannu"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "{over} dros y gyllideb"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Dyrannwch y {total} cyfan — mae {left} heb ei ddyrannu o hyd."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Rhowch swm i o leiaf un eitem."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Dewiswch o leiaf {n}."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "{over} yn fwy na'r hyn sydd ar ôl."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Rydych wedi gosod yr uchafswm a ganiateir."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "o %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "Rhannwch %(total)s rhwng yr eitemau. Rhaid i'r symiau adio i %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "Rhannwch hyd at %(total)s rhwng yr eitemau."
+
+#: budget-question
+msgid "Total"
+msgstr "Cyfanswm"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Ticiwch y prosiectau y byddech yn eu hariannu. Ni ddylai eu costau adio i fwy na %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Ysgrifennwch rif yr eitem wrth bob marc. Ni ddylai'r eitemau gostio mwy na %(total)s gyda'i gilydd."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "dim mwy na %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Llai"
+
+#: budget-question
+msgid "More"
+msgstr "Mwy"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Rhannu'r gweddill yn gyfartal"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Eitem i'w gosod"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Gosod ar y map"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Dewiswch eitem, yna tapiwch y map i'w gosod."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s ymateb · cyllideb %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Byddai'r marc hwn yn costio {cost}, ond dim ond {left} sydd ar ôl."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Pris: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Cyllideb: %(total)s — ni chaiff y marciau yn y grŵp hwn gostio mwy na hynny gyda'i gilydd."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s yr un"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "{left} ar ôl wedyn"

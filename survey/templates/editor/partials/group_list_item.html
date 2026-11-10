@@ -8,6 +8,7 @@ the list the group sits in (survey_detail.html); groups never go inside groups.
         <i class="fas fa-object-group group-icon" aria-hidden="true"></i>
         <span class="q-name"><b>{{ group.title|default:_("Untitled group") }}</b></span>
         <span class="badge badge-group">{% blocktrans with n=members|length %}Group · {{ n }}{% endblocktrans %}</span>
+        {% if group.budget %}<span class="badge" style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;" title="{% trans 'Budget group: the map questions inside carry a price' %}"><i class="fas fa-coins"></i> {{ group|group_budget_label }}</span>{% endif %}
         {% with vis=group|visibility_info:survey %}{% if vis %}
         {% if vis.broken %}
         <span class="badge badge-warning" title="{{ vis.reason }}. Shown to everyone until fixed."><i class="fas fa-exclamation-triangle"></i> {% trans "broken rule" %}</span>

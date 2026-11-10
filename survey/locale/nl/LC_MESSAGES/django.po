@@ -12474,3 +12474,402 @@ msgstr "Na"
 #: site-gallery-compare
 msgid "Slide to compare"
 msgstr "Schuif om te vergelijken"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Geen kosten ingesteld — kan niet worden gekozen."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Gemiddeld deel van het budget dat inwoners aan elk onderdeel gaven."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Aandeel inwoners dat elk project financierde. Groen: de meest gesteunde projecten die samen binnen het budget passen."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Aandeel van alles wat inwoners uitgaven, per onderdeel."
+
+#: budget-question
+msgid "{left} left"
+msgstr "Nog {left} over"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ alles verdeeld"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "{over} boven het budget"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Verdeel het hele bedrag van {total} — {left} is nog niet verdeeld."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Geef ten minste één onderdeel een bedrag."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Kies er ten minste {n}."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "{over} meer dan er over is."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "U hebt het maximale aantal geplaatst."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "van %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "Verdeel %(total)s over de onderdelen. De bedragen moeten samen %(total)s zijn."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "Verdeel maximaal %(total)s over de onderdelen."
+
+#: budget-question
+msgid "Total"
+msgstr "Totaal"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Vink de projecten aan die u zou financieren. Hun kosten mogen samen niet meer zijn dan %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Schrijf het nummer van het onderdeel bij elke markering. De onderdelen mogen samen niet meer kosten dan %(total)s."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "hoogstens %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Minder"
+
+#: budget-question
+msgid "More"
+msgstr "Meer"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Verdeel de rest gelijk"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Te plaatsen onderdeel"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Op de kaart plaatsen"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Kies een onderdeel en tik dan op de kaart om het te plaatsen."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s antwoorden · budget %(total)s"
+
+#: budget-question
+msgid "One line under the item on the respondent page"
+msgstr "Eén regel onder het item op de pagina voor respondenten"
+
+#: budget-question
+msgid "What the item costs. Required for projects and for items placed on the map; a guide for a split budget."
+msgstr "Wat het item kost. Verplicht voor projecten en voor items op de kaart; een richtlijn bij een te verdelen budget."
+
+#: budget-question
+msgid "Cost"
+msgstr "Kosten"
+
+#: budget-question
+msgid "At most this many of the item per respondent; empty = no cap"
+msgstr "Maximaal zoveel van dit item per respondent; leeg = geen limiet"
+
+#: budget-question
+msgid "Budget"
+msgstr "Budget"
+
+#: budget-question
+msgid "Split a budget"
+msgstr "Budget verdelen"
+
+#: budget-question
+msgid "Every item gets an amount; the amounts add up to the budget. Results: average share per item."
+msgstr "Elk item krijgt een bedrag; de bedragen tellen op tot het budget. Resultaten: gemiddeld aandeel per item."
+
+#: budget-question
+msgid "Choose projects within a budget"
+msgstr "Projecten kiezen binnen een budget"
+
+#: budget-question
+msgid "Each item has a cost; the respondent picks projects until the budget is spent. Results: share of respondents per project."
+msgstr "Elk item heeft kosten; de respondent kiest projecten tot het budget op is. Resultaten: aandeel respondenten per project."
+
+#: budget-question
+msgid "Total budget"
+msgstr "Totaalbudget"
+
+#: budget-question
+msgid "Unit"
+msgstr "Eenheid"
+
+#: budget-question
+msgid "Currency"
+msgstr "Valuta"
+
+#: budget-question
+msgid "Points"
+msgstr "Punten"
+
+#: budget-question
+msgid "Symbol"
+msgstr "Symbool"
+
+#: budget-question
+msgid "Step"
+msgstr "Stap"
+
+#: budget-question
+msgid "auto"
+msgstr "auto"
+
+#: budget-question
+msgid "Amounts move in steps; 20 000 000 reads as £20M. Per cent fixes the total at 100."
+msgstr "Bedragen veranderen in stappen; 20 000 000 wordt weergegeven als £20M. Bij procent ligt het totaal vast op 100."
+
+#: budget-question
+msgid "Rule"
+msgstr "Regel"
+
+#: budget-question
+msgid "Must allocate the whole budget"
+msgstr "Moet het hele budget verdelen"
+
+#: budget-question
+msgid "Can allocate up to the budget"
+msgstr "Mag tot het budget verdelen"
+
+#: budget-question
+msgid "Minimum items"
+msgstr "Minimum aantal items"
+
+#: budget-question
+msgid "Items"
+msgstr "Items"
+
+#: budget-question
+msgid "Type a list"
+msgstr "Lijst typen"
+
+#: budget-question
+msgid "Objects of a layer"
+msgstr "Objecten van een laag"
+
+#: budget-question
+msgid "Cost from property"
+msgstr "Kosten uit eigenschap"
+
+#: budget-question
+msgid "Each object of the layer is an item; its cost is read from that property. Objects without a number there are shown but cannot be picked."
+msgstr "Elk object van de laag is een item; de kosten worden uit die eigenschap gelezen. Objecten zonder getal daarin worden getoond, maar kunnen niet worden gekozen."
+
+#: budget-question
+msgid "cost"
+msgstr "kosten"
+
+#: budget-question
+msgid "budget"
+msgstr "budget"
+
+#: budget-question
+msgid "spent on average"
+msgstr "gemiddeld uitgegeven"
+
+#: budget-question
+msgid "of spend"
+msgstr "van de uitgaven"
+
+#: budget-question
+msgid "Most supported projects that fit the budget together"
+msgstr "Meest gesteunde projecten die samen binnen het budget passen"
+
+#: budget-question
+msgid "Where they were placed — see the map."
+msgstr "Waar ze zijn geplaatst — zie de kaart."
+
+#: budget-question
+msgid "Budget: place items on the map"
+msgstr "Budget: items op de kaart plaatsen"
+
+#: budget-question
+msgid "Budget questions on the map"
+msgstr "Budgetvragen op de kaart"
+
+#: budget-question
+msgid "Pick the reference layer whose objects are the budget items."
+msgstr "Kies de referentielaag waarvan de objecten de budgetitems zijn."
+
+#: budget-question
+#, python-format
+msgid "%(q)s item description"
+msgstr "%(q)s: beschrijving van item"
+
+#: budget-question
+msgid "Show each item's share in % next to the amount"
+msgstr "Aandeel van elk item in % naast het bedrag tonen"
+
+#: budget-question
+msgid "Add the items in Items below."
+msgstr "Voeg de items hieronder toe bij Items."
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Deze markering zou {cost} kosten, maar er is nog maar {left} over."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Prijs: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Budget: %(total)s — de markeringen in deze groep mogen samen niet meer kosten dan dat."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s per stuk"
+
+#: budget-question
+msgid "What the item costs. Required for projects; a guide for a split budget."
+msgstr "Wat het item kost. Verplicht voor projecten; een richtlijn bij het verdelen van een budget."
+
+#: budget-question
+#, python-format
+msgid "in the budget of “%(name)s”"
+msgstr "in het budget van ‘%(name)s’"
+
+#: budget-question
+msgid "Amount"
+msgstr "Bedrag"
+
+#: budget-question
+msgid "points"
+msgstr "punten"
+
+#: budget-question
+msgid "free"
+msgstr "gratis"
+
+#: budget-question
+msgid "Per"
+msgstr "Per"
+
+#: budget-question
+msgid "mark"
+msgstr "markering"
+
+#: budget-question
+msgid "metre of the line"
+msgstr "meter van de lijn"
+
+#: budget-question
+msgid "square metre of the area"
+msgstr "vierkante meter van het gebied"
+
+#: budget-question
+msgid "What one mark costs against the group's budget. Empty = respondents place these for free."
+msgstr "Wat één markering kost van het budget van de groep. Leeg = respondenten plaatsen ze gratis."
+
+#: budget-question
+msgid "With a total, the map questions in this group become a budget: give each a price in its dialog (per mark, per metre or per m²) and respondents place marks until the total is spent. Leave empty for an ordinary group."
+msgstr "Met een totaal worden de kaartvragen in deze groep een budget: geef elke vraag een prijs in haar venster (per markering, per meter of per m²) en respondenten plaatsen markeringen tot het totaal op is. Laat leeg voor een gewone groep."
+
+#: budget-question
+#, python-format
+msgid "%(m)s of %(n)s questions inside have a price; the others place marks for free."
+msgstr "%(m)s van %(n)s vragen hierin hebben een prijs; bij de andere zijn markeringen gratis."
+
+#: budget-question
+msgid "Budget group: the map questions inside carry a price"
+msgstr "Budgetgroep: de kaartvragen hierin hebben een prijs"
+
+#: budget-question
+msgid "Budget group"
+msgstr "Budgetgroep"
+
+#: budget-question
+msgid "Map questions inside carry the price."
+msgstr "De kaartvragen hierin dragen de prijs."
+
+#: budget-question
+msgid "Add the map questions you want funded — benches, lamp posts, paths, flower beds — to this group, then open each and set its price under “Places per respondent”."
+msgstr "Voeg de kaartvragen die u wilt financieren — bankjes, lantaarnpalen, paden, bloemperken — aan deze groep toe, open dan elke vraag en stel de prijs in onder “Plekken per respondent”."
+
+#: budget-question
+msgid "Per mark, per metre or per square metre."
+msgstr "Per markering, per meter of per vierkante meter."
+
+#: budget-question
+msgid "A point is priced per mark; a line can be priced per metre; an area or a spray per square metre — so a long path or a big bed costs more."
+msgstr "Een punt kost per markering; een lijn kan per meter kosten; een gebied of een spray per vierkante meter — een lang pad of een groot perk kost dus meer."
+
+#: budget-question
+msgid "Respondents see what is left."
+msgstr "Respondenten zien wat er over is."
+
+#: budget-question
+msgid "The bar at the top of the group counts their marks against the total. A mark that no longer fits is greyed out with the reason; a line or area drawn too long is not kept."
+msgstr "De balk bovenaan de groep telt hun markeringen tegen het totaal. Een markering die niet meer past, wordt grijs met de reden erbij; een te lang getekende lijn of een te groot gebied wordt niet bewaard."
+
+#: budget-question
+msgid "No price, no cost."
+msgstr "Geen prijs, geen kosten."
+
+#: budget-question
+msgid "A map question in the group without a price places marks for free; the dialog counts how many are priced."
+msgstr "Een kaartvraag in de groep zonder prijs plaatst markeringen gratis; het dialoogvenster telt hoeveel er een prijs hebben."
+
+#: budget-question
+msgid "Results."
+msgstr "Resultaten."
+
+#: budget-question
+msgid "Responses shows one block for the group — marks, metres or m² per question, what they cost — and the marks themselves stay on the map. Each mark exports with its cost."
+msgstr "Reacties toont één blok voor de groep — markeringen, meters of m² per vraag en wat ze kosten — en de markeringen zelf blijven op de kaart. Elke markering wordt met de kosten geëxporteerd."
+
+#: budget-question
+msgid "Budget questions over a reference layer"
+msgstr "Budgetvragen over een referentielaag"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "daarna nog {left} over"

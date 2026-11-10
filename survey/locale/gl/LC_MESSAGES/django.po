@@ -1241,3 +1241,147 @@ msgstr "Prefires responder en liña? Escanea este código."
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* obrigatorio"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Sen custo definido — non se pode escoller."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Parte media do orzamento que os veciños deron a cada elemento."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Parte dos veciños que financiaron cada proxecto. En verde: os proxectos con máis apoio que caben xuntos no orzamento."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Parte de todo o que gastaron os veciños, por elemento."
+
+#: budget-question
+msgid "{left} left"
+msgstr "Quedan {left}"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ todo repartido"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "{over} por riba do orzamento"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Reparte todo o {total} — aínda quedan {left} sen repartir."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Asigna unha cantidade a polo menos un elemento."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Escolle polo menos {n}."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "{over} máis do que queda."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Colocaches o máximo permitido."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "de %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "Reparte %(total)s entre os elementos. As cantidades deben sumar %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "Reparte ata %(total)s entre os elementos."
+
+#: budget-question
+msgid "Total"
+msgstr "Total"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Marca os proxectos que financiarías. O seu custo non debe sumar máis de %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Escribe o número do elemento xunto a cada marca. Os elementos non deben custar máis de %(total)s en total."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "como máximo %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Menos"
+
+#: budget-question
+msgid "More"
+msgstr "Máis"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Repartir o resto por igual"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Elemento para colocar"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Colocar no mapa"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Escolle un elemento e despois toca o mapa para colocalo."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s respostas · orzamento %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Esta marca custaría {cost}, pero só quedan {left}."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Prezo: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Orzamento: %(total)s — as marcas deste grupo non poden custar máis ca iso en conxunto."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s cada unha"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "quedan {left} despois"

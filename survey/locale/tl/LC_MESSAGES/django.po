@@ -1242,3 +1242,147 @@ msgstr "Mas gusto mong sumagot online? I-scan ang code na ito."
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* kinakailangan"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Walang nakatakdang halaga — hindi mapipili."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Karaniwang bahagi ng badyet na ibinigay ng mga residente sa bawat item."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Bahagi ng mga residenteng pumondo sa bawat proyekto. Berde: ang mga proyektong may pinakamaraming suporta na kasya sa badyet nang magkakasama."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Bahagi ng lahat ng ginastos ng mga residente, ayon sa item."
+
+#: budget-question
+msgid "{left} left"
+msgstr "{left} ang natitira"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ naipamahagi na lahat"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "{over} lampas sa badyet"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Ipamahagi ang buong {total} — {left} pa ang hindi naipapamahagi."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Bigyan ng halaga ang kahit isang item."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Pumili ng hindi bababa sa {n}."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "{over} lampas sa natitira."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Naabot mo na ang pinakamaraming pinapayagan."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "sa %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "Hatiin ang %(total)s sa mga item. Dapat umabot sa %(total)s ang kabuuan ng mga halaga."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "Hatiin ang hanggang %(total)s sa mga item."
+
+#: budget-question
+msgid "Total"
+msgstr "Kabuuan"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Lagyan ng tsek ang mga proyektong popondohan mo. Hindi dapat lumampas sa %(total)s ang kabuuang gastos nila."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Isulat ang numero ng item sa tabi ng bawat marka. Hindi dapat lumampas sa %(total)s ang kabuuang halaga ng mga item."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "hanggang %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Bawasan"
+
+#: budget-question
+msgid "More"
+msgstr "Dagdagan"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Hatiin nang pantay ang natitira"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Item na ilalagay"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Ilagay sa mapa"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Pumili ng item, pagkatapos ay i-tap ang mapa para ilagay ito."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s sagot · badyet %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Magkakahalaga ng {cost} ang markang ito, ngunit {left} na lang ang natitira."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Presyo: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Badyet: %(total)s — hindi dapat lumampas doon ang kabuuang halaga ng mga marka sa pangkat na ito."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s bawat isa"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "{left} ang matitira pagkatapos nito"

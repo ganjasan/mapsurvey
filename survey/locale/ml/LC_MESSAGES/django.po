@@ -1241,3 +1241,147 @@ msgstr "ഓൺലൈനായി ഉത്തരം നൽകണോ? ഈ കോ�
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* നിർബന്ധം"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "ചെലവ് നൽകിയിട്ടില്ല — തിരഞ്ഞെടുക്കാൻ കഴിയില്ല."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "താമസക്കാർ ഓരോ ഇനത്തിനും നൽകിയ ബജറ്റിന്റെ ശരാശരി വിഹിതം."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "ഓരോ പദ്ധതിക്കും പണം നൽകിയ താമസക്കാരുടെ വിഹിതം. പച്ച: ഒരുമിച്ച് ബജറ്റിൽ ഒതുങ്ങുന്ന, ഏറ്റവും പിന്തുണ ലഭിച്ച പദ്ധതികൾ."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "താമസക്കാർ ചെലവാക്കിയ ആകെ തുകയിലെ വിഹിതം, ഇനം തിരിച്ച്."
+
+#: budget-question
+msgid "{left} left"
+msgstr "{left} ബാക്കി"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ എല്ലാം വിതരണം ചെയ്തു"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "ബജറ്റിനേക്കാൾ {over} കൂടുതൽ"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "മുഴുവൻ {total} വിതരണം ചെയ്യുക — {left} ഇനിയും വിതരണം ചെയ്തിട്ടില്ല."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "കുറഞ്ഞത് ഒരു ഇനത്തിനെങ്കിലും തുക നൽകുക."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "കുറഞ്ഞത് {n} എണ്ണം തിരഞ്ഞെടുക്കുക."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "ബാക്കിയുള്ളതിനേക്കാൾ {over} കൂടുതൽ."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "അനുവദനീയമായ പരമാവധി എണ്ണം നിങ്ങൾ സ്ഥാപിച്ചു."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "ആകെ %(total)s-ൽ"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "%(total)s ഇനങ്ങൾക്കിടയിൽ വീതിക്കുക. തുകകളുടെ ആകെ %(total)s ആയിരിക്കണം."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "%(total)s വരെ ഇനങ്ങൾക്കിടയിൽ വീതിക്കുക."
+
+#: budget-question
+msgid "Total"
+msgstr "ആകെ"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "നിങ്ങൾ പണം നൽകുന്ന പദ്ധതികൾ അടയാളപ്പെടുത്തുക. അവയുടെ ആകെ ചെലവ് %(total)s-ൽ കൂടരുത്."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "ഓരോ അടയാളത്തിനും അരികിൽ ഇനത്തിന്റെ നമ്പർ എഴുതുക. ഇനങ്ങളുടെ ആകെ ചെലവ് %(total)s-ൽ കൂടരുത്."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "പരമാവധി %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "കുറയ്ക്കുക"
+
+#: budget-question
+msgid "More"
+msgstr "കൂട്ടുക"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "ബാക്കി തുല്യമായി വീതിക്കുക"
+
+#: budget-question
+msgid "Item to place"
+msgstr "സ്ഥാപിക്കേണ്ട ഇനം"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "മാപ്പിൽ സ്ഥാപിക്കുക"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "ഒരു ഇനം തിരഞ്ഞെടുത്ത്, അത് സ്ഥാപിക്കാൻ മാപ്പിൽ ടാപ്പ് ചെയ്യുക."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s പ്രതികരണങ്ങൾ · ബജറ്റ് %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "ഈ അടയാളത്തിന് {cost} ചെലവാകും, പക്ഷേ {left} മാത്രമേ ബാക്കിയുള്ളൂ."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "വില: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "ബജറ്റ്: %(total)s — ഈ ഗ്രൂപ്പിലെ അടയാളങ്ങൾക്ക് ആകെ ഇതിലും കൂടുതൽ ചെലവാകാൻ പാടില്ല."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "ഒന്നിന് %(amount)s"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "ഇതിനു ശേഷം {left} ബാക്കി"

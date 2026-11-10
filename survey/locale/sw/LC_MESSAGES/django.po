@@ -1241,3 +1241,147 @@ msgstr "Unapendelea kujibu mtandaoni? Changanua msimbo huu."
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* lazima"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Hakuna gharama iliyowekwa — haiwezi kuchaguliwa."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Wastani wa sehemu ya bajeti ambayo wakazi walitoa kwa kila kipengele."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Sehemu ya wakazi waliofadhili kila mradi. Kijani: miradi inayoungwa mkono zaidi inayotoshea kwenye bajeti pamoja."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Sehemu ya kila kitu ambacho wakazi walitumia, kwa kila kipengele."
+
+#: budget-question
+msgid "{left} left"
+msgstr "Zimebaki {left}"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ yote yamegawanywa"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "{over} zaidi ya bajeti"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Gawa {total} yote — {left} bado haijagawanywa."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Weka kiasi kwa angalau kipengele kimoja."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Chagua angalau {n}."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "{over} zaidi ya kilichobaki."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Umeweka idadi kubwa zaidi inayoruhusiwa."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "kati ya %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "Gawa %(total)s kati ya vipengele. Jumla ya viasi lazima iwe %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "Gawa hadi %(total)s kati ya vipengele."
+
+#: budget-question
+msgid "Total"
+msgstr "Jumla"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Weka alama kwenye miradi ambayo ungefadhili. Gharama zake kwa pamoja zisizidi %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Andika namba ya kipengele kando ya kila alama. Vipengele kwa pamoja visigharimu zaidi ya %(total)s."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "si zaidi ya %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Punguza"
+
+#: budget-question
+msgid "More"
+msgstr "Ongeza"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Gawa kilichobaki kwa usawa"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Kipengele cha kuweka"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Weka kwenye ramani"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Chagua kipengele, kisha gusa ramani ili kukiweka."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "majibu %(n)s · bajeti %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Alama hii ingegharimu {cost}, lakini imebaki {left} tu."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Bei: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Bajeti: %(total)s — alama zote katika kundi hili kwa pamoja hazipaswi kugharimu zaidi ya hapo."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s kila moja"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "{left} zitasalia baada yake"

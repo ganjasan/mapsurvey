@@ -1240,3 +1240,147 @@ msgstr "ចង់ឆ្លើយតាមអនឡាញ? ស្កេនកូ�
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* ត្រូវតែបំពេញ"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "មិនទាន់កំណត់តម្លៃ — មិនអាចជ្រើសរើសបានទេ។"
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "ចំណែកថវិកាជាមធ្យមដែលប្រជាពលរដ្ឋបានផ្តល់ឱ្យធាតុនីមួយៗ។"
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "ភាគរយនៃប្រជាពលរដ្ឋដែលបានផ្តល់មូលនិធិដល់គម្រោងនីមួយៗ។ ពណ៌បៃតង៖ គម្រោងដែលទទួលបានការគាំទ្រច្រើនបំផុត ហើយរួមគ្នាសមនឹងថវិកា។"
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "ចំណែកនៃការចំណាយសរុបរបស់ប្រជាពលរដ្ឋ តាមធាតុនីមួយៗ។"
+
+#: budget-question
+msgid "{left} left"
+msgstr "នៅសល់ {left}"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ បានបែងចែកទាំងអស់"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "លើសថវិកា {over}"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "សូមបែងចែក {total} ទាំងអស់ — នៅមាន {left} មិនទាន់បានបែងចែក។"
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "សូមផ្តល់ចំនួនទឹកប្រាក់ឱ្យធាតុយ៉ាងហោចណាស់មួយ។"
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "សូមជ្រើសរើសយ៉ាងហោចណាស់ {n}។"
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "លើសចំនួនដែលនៅសល់ {over}។"
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "អ្នកបានដាក់ចំនួនអតិបរមាដែលអនុញ្ញាតហើយ។"
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "ក្នុងចំណោម %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "សូមបែងចែក %(total)s ទៅធាតុនានា។ ចំនួនទឹកប្រាក់សរុបត្រូវតែស្មើ %(total)s។"
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "សូមបែងចែករហូតដល់ %(total)s ទៅធាតុនានា។"
+
+#: budget-question
+msgid "Total"
+msgstr "សរុប"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "សូមគូសធីកគម្រោងដែលអ្នកនឹងផ្តល់មូលនិធិ។ តម្លៃសរុបរបស់វាមិនត្រូវលើសពី %(total)s ទេ។"
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "សូមសរសេរលេខធាតុនៅក្បែរសញ្ញានីមួយៗ។ តម្លៃសរុបនៃធាតុមិនត្រូវលើសពី %(total)s ទេ។"
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "យ៉ាងច្រើន %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "តិចជាង"
+
+#: budget-question
+msgid "More"
+msgstr "ច្រើនជាង"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "បែងចែកចំនួនដែលនៅសល់ឱ្យស្មើៗគ្នា"
+
+#: budget-question
+msgid "Item to place"
+msgstr "ធាតុដែលត្រូវដាក់"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "ដាក់លើផែនទី"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "សូមជ្រើសរើសធាតុមួយ រួចប៉ះលើផែនទីដើម្បីដាក់វា។"
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s ចម្លើយ · ថវិកា %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "សញ្ញានេះនឹងត្រូវចំណាយ {cost} ប៉ុន្តែនៅសល់តែ {left} ប៉ុណ្ណោះ។"
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "តម្លៃ៖ %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "ថវិកា៖ %(total)s — សញ្ញាទាំងអស់ក្នុងក្រុមនេះរួមគ្នាមិនត្រូវចំណាយលើសពីនេះទេ។"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / ម"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / ម²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s ក្នុងមួយ"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "នៅសល់ {left} បន្ទាប់ពីនេះ"

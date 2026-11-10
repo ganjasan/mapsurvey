@@ -1243,3 +1243,147 @@ msgstr "Norite atsakyti internetu? Nuskenuokite šį kodą."
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* privaloma"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Kaina nenustatyta — negalima pasirinkti."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Vidutinė biudžeto dalis, kurią gyventojai skyrė kiekvienam punktui."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Gyventojų, finansavusių kiekvieną projektą, dalis. Žalia: labiausiai remiami projektai, kurie kartu telpa į biudžetą."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Visų gyventojų išleistų lėšų dalis pagal punktą."
+
+#: budget-question
+msgid "{left} left"
+msgstr "Liko {left}"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ viskas paskirstyta"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "Biudžetas viršytas {over}"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Paskirstykite visą {total} sumą — dar nepaskirstyta {left}."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Skirkite sumą bent vienam punktui."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Pasirinkite bent {n}."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "{over} daugiau, nei liko."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Padėjote didžiausią leistiną skaičių."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "iš %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "Paskirstykite %(total)s tarp punktų. Sumos kartu turi sudaryti %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "Paskirstykite iki %(total)s tarp punktų."
+
+#: budget-question
+msgid "Total"
+msgstr "Iš viso"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Pažymėkite projektus, kuriuos finansuotumėte. Jų kainų suma negali viršyti %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Prie kiekvienos žymos parašykite punkto numerį. Punktai kartu negali kainuoti daugiau nei %(total)s."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "ne daugiau kaip %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Mažiau"
+
+#: budget-question
+msgid "More"
+msgstr "Daugiau"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Likutį paskirstyti po lygiai"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Punktas, kurį padėti"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Padėti žemėlapyje"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Pasirinkite punktą, tada bakstelėkite žemėlapį, kad jį padėtumėte."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "Atsakymų: %(n)s · biudžetas %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Šis žymuo kainuotų {cost}, bet liko tik {left}."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Kaina: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Biudžetas: %(total)s — šios grupės žymenys kartu negali kainuoti daugiau."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s už vienetą"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "po to lieka {left}"

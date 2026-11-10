@@ -10,6 +10,8 @@ Membership is never set here field by field. It is a position in the one
 continuous order of a bucket (a section's top level or one pop-up), so every
 change of it goes through `questions.apply_nested_order`.
 """
+import copy
+
 from django.db import transaction
 
 from .. import product_events as pe
@@ -174,13 +176,22 @@ def update(actor, group, data=None, *, visibility_rule=UNSET, translations=UNSET
     _, structure_locked = locks.locks(survey)
     changes_rule = visibility_rule is not UNSET and visibility_rule != group.visibility_rule
     audience_before = group.audience
+    budget_before = copy.deepcopy(group.budget)
     form = validate(bind(QuestionGroupForm, data or {}, instance=group, partial=True))
     changes_audience = form.cleaned_data.get('audience', audience_before) != audience_before
+    # The budget's total and unit decide which marks were admitted (change
+    # budget-question): structure on a live survey. The symbol is content.
+    old_b, new_b = budget_before or {}, group.budget or {}
+    changes_budget = (old_b.get('total'), old_b.get('unit')) != (new_b.get('total'), new_b.get('unit'))
     reasons = ((['visibility rule'] if changes_rule else []) + (['the audience'] if changes_audience else [])
+               + (['the budget'] if changes_budget else [])
                + (['members'] if question_ids is not None else []))
     if structure_locked and reasons:
         group.audience = audience_before  # the bound form already wrote it onto the instance
+        group.budget = budget_before
         raise StructureLocked(locks.STRUCTURE_LOCKED_MESSAGE, reasons=reasons, draft=locks._draft(survey))
+    # A budget group is free on every plan (owner decision 2026-11-10); only a
+    # budget question whose items are a layer's objects is Pro (services.questions).
     group = form.save(commit=False)
     if changes_rule:
         _check_group_rule(visibility_rule, group, strict)

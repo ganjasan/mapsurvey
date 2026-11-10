@@ -1242,3 +1242,147 @@ msgstr "Radije biste odgovorili online? Skenirajte ovaj kod."
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* obavezno"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Trošak nije postavljen — ne može se odabrati."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Prosječni udio budžeta koji su stanovnici dali svakoj stavci."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Udio stanovnika koji su finansirali svaki projekat. Zeleno: najpodržaniji projekti koji zajedno staju u budžet."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Udio svake stavke u ukupnoj potrošnji stanovnika."
+
+#: budget-question
+msgid "{left} left"
+msgstr "Preostalo: {left}"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ sve je raspoređeno"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "{over} preko budžeta"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Rasporedite cijeli iznos od {total} — {left} još nije raspoređeno."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Dodijelite iznos barem jednoj stavci."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Odaberite barem {n}."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "{over} više od preostalog."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Postavili ste najveći dozvoljeni broj."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "od %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "Rasporedite %(total)s između stavki. Iznosi moraju ukupno iznositi %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "Rasporedite do %(total)s između stavki."
+
+#: budget-question
+msgid "Total"
+msgstr "Ukupno"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Označite projekte koje biste finansirali. Njihovi troškovi ukupno ne smiju biti veći od %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Napišite broj stavke pored svake oznake. Stavke zajedno ne smiju koštati više od %(total)s."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "najviše %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Manje"
+
+#: budget-question
+msgid "More"
+msgstr "Više"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Ravnomjerno rasporedi ostatak"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Stavka za postavljanje"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Postavi na mapu"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Odaberite stavku, a zatim dodirnite mapu da je postavite."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s odgovora · budžet %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Ova oznaka bi koštala {cost}, ali je preostalo samo {left}."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Cijena: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Budžet: %(total)s — oznake u ovoj grupi zajedno ne smiju koštati više od toga."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s po komadu"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "nakon toga ostaje {left}"

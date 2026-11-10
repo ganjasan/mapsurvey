@@ -1241,3 +1241,147 @@ msgstr "Сакате да одговорите онлајн? Скенирајт�
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* задолжително"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Нема поставена цена — не може да се избере."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Просечен удел од буџетот што жителите го дадоа на секоја ставка."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Удел на жители кои го финансираа секој проект. Зелено: најподдржаните проекти што заедно се вклопуваат во буџетот."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Удел од сè што потрошија жителите, по ставка."
+
+#: budget-question
+msgid "{left} left"
+msgstr "Преостанато: {left}"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ сè е распределено"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "{over} над буџетот"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Распределете го целиот износ {total} — {left} сè уште не е распределено."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Доделете износ барем на една ставка."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Изберете најмалку {n}."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "{over} повеќе од преостанатото."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Поставивте најмногу што е дозволено."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "од %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "Поделете %(total)s меѓу ставките. Износите мора вкупно да изнесуваат %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "Поделете до %(total)s меѓу ставките."
+
+#: budget-question
+msgid "Total"
+msgstr "Вкупно"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Штиклирајте ги проектите што би ги финансирале. Нивните трошоци вкупно не смеат да надминат %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Напишете го бројот на ставката покрај секоја ознака. Ставките заедно не смеат да чинат повеќе од %(total)s."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "најмногу %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Помалку"
+
+#: budget-question
+msgid "More"
+msgstr "Повеќе"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Рамномерно распредели го остатокот"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Ставка за поставување"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Постави на картата"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Изберете ставка, а потоа допрете ја картата за да ја поставите."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "Одговори: %(n)s · буџет %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Оваа ознака би чинела {cost}, но преостануваат само {left}."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Цена: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Буџет: %(total)s — ознаките во оваа група заедно не смеат да чинат повеќе од тоа."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s по парче"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "потоа остануваат {left}"

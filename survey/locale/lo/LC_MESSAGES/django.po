@@ -1240,3 +1240,147 @@ msgstr "ຢາກຕອບແບບອອນລາຍບໍ? ສະແກນລ�
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* ຈຳເປັນ"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "ບໍ່ໄດ້ກຳນົດລາຄາ — ເລືອກບໍ່ໄດ້."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "ສ່ວນແບ່ງງົບປະມານສະເລ່ຍທີ່ຊາວບ້ານໃຫ້ແຕ່ລະລາຍການ."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "ສ່ວນຂອງຊາວບ້ານທີ່ໃຫ້ທຶນແຕ່ລະໂຄງການ. ສີຂຽວ: ໂຄງການທີ່ໄດ້ຮັບການສະໜັບສະໜູນຫຼາຍທີ່ສຸດ ທີ່ລວມກັນແລ້ວຢູ່ໃນງົບປະມານ."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "ສ່ວນແບ່ງຂອງທັງໝົດທີ່ຊາວບ້ານໃຊ້ຈ່າຍ, ຕາມລາຍການ."
+
+#: budget-question
+msgid "{left} left"
+msgstr "ເຫຼືອ {left}"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ ຈັດສັນຄົບແລ້ວ"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "ເກີນງົບປະມານ {over}"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "ຈັດສັນທັງໝົດ {total} — ຍັງເຫຼືອ {left} ທີ່ບໍ່ໄດ້ຈັດສັນ."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "ໃສ່ຈຳນວນເງິນໃຫ້ຢ່າງໜ້ອຍໜຶ່ງລາຍການ."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "ເລືອກຢ່າງໜ້ອຍ {n}."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "ເກີນຈຳນວນທີ່ເຫຼືອ {over}."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "ທ່ານວາງໄດ້ສູງສຸດທີ່ອະນຸຍາດແລ້ວ."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "ຈາກ %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "ແບ່ງ %(total)s ໃຫ້ລາຍການຕ່າງໆ. ຈຳນວນເງິນລວມກັນຕ້ອງເທົ່າກັບ %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "ແບ່ງບໍ່ເກີນ %(total)s ໃຫ້ລາຍການຕ່າງໆ."
+
+#: budget-question
+msgid "Total"
+msgstr "ລວມ"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "ໝາຍໂຄງການທີ່ທ່ານຈະໃຫ້ທຶນ. ລາຄາລວມຂອງພວກມັນຕ້ອງບໍ່ເກີນ %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "ຂຽນເລກລາຍການໄວ້ຂ້າງແຕ່ລະເຄື່ອງໝາຍ. ລາຍການທັງໝົດລວມກັນຕ້ອງບໍ່ເກີນ %(total)s."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "ບໍ່ເກີນ %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "ໜ້ອຍລົງ"
+
+#: budget-question
+msgid "More"
+msgstr "ຫຼາຍຂຶ້ນ"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "ແບ່ງສ່ວນທີ່ເຫຼືອເທົ່າໆກັນ"
+
+#: budget-question
+msgid "Item to place"
+msgstr "ລາຍການທີ່ຈະວາງ"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "ວາງໃສ່ແຜນທີ່"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "ເລືອກລາຍການ, ແລ້ວແຕະແຜນທີ່ເພື່ອວາງ."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s ຄຳຕອບ · ງົບປະມານ %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "ເຄື່ອງໝາຍນີ້ຈະມີລາຄາ {cost} ແຕ່ຍັງເຫຼືອພຽງ {left} ເທົ່ານັ້ນ."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "ລາຄາ: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "ງົບປະມານ: %(total)s — ເຄື່ອງໝາຍທັງໝົດໃນກຸ່ມນີ້ລວມກັນຕ້ອງບໍ່ເກີນຈຳນວນນີ້."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s ຕໍ່ອັນ"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "ເຫຼືອ {left} ຫຼັງຈາກນີ້"

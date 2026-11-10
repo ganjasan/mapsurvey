@@ -1241,3 +1241,147 @@ msgstr "ಆನ್‌ಲೈನ್‌ನಲ್ಲಿ ಉತ್ತರಿಸಲು �
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* ಕಡ್ಡಾಯ"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "ವೆಚ್ಚ ನಿಗದಿಯಾಗಿಲ್ಲ — ಆಯ್ಕೆ ಮಾಡಲು ಸಾಧ್ಯವಿಲ್ಲ."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "ನಿವಾಸಿಗಳು ಪ್ರತಿ ಐಟಂಗೆ ನೀಡಿದ ಬಜೆಟ್‌ನ ಸರಾಸರಿ ಪಾಲು."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "ಪ್ರತಿ ಯೋಜನೆಗೆ ಹಣ ನೀಡಿದ ನಿವಾಸಿಗಳ ಪಾಲು. ಹಸಿರು: ಒಟ್ಟಿಗೆ ಬಜೆಟ್‌ನಲ್ಲಿ ಹೊಂದುವ, ಅತಿ ಹೆಚ್ಚು ಬೆಂಬಲ ಪಡೆದ ಯೋಜನೆಗಳು."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "ನಿವಾಸಿಗಳು ಖರ್ಚು ಮಾಡಿದ ಒಟ್ಟು ಮೊತ್ತದಲ್ಲಿ ಪ್ರತಿ ಐಟಂನ ಪಾಲು."
+
+#: budget-question
+msgid "{left} left"
+msgstr "{left} ಉಳಿದಿದೆ"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ ಎಲ್ಲವೂ ಹಂಚಿಕೆಯಾಗಿದೆ"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "ಬಜೆಟ್‌ಗಿಂತ {over} ಹೆಚ್ಚು"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "ಪೂರ್ತಿ {total} ಹಂಚಿ — ಇನ್ನೂ {left} ಹಂಚಿಕೆಯಾಗಿಲ್ಲ."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "ಕನಿಷ್ಠ ಒಂದು ಐಟಂಗೆ ಮೊತ್ತ ನೀಡಿ."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "ಕನಿಷ್ಠ {n} ಆಯ್ಕೆ ಮಾಡಿ."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "ಉಳಿದಿರುವುದಕ್ಕಿಂತ {over} ಹೆಚ್ಚು."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "ಅನುಮತಿಸಿದ ಗರಿಷ್ಠ ಸಂಖ್ಯೆಯನ್ನು ನೀವು ಇರಿಸಿದ್ದೀರಿ."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "%(total)s ರಲ್ಲಿ"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "%(total)s ಅನ್ನು ಐಟಂಗಳ ನಡುವೆ ಹಂಚಿ. ಮೊತ್ತಗಳ ಒಟ್ಟು %(total)s ಆಗಿರಬೇಕು."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "%(total)s ವರೆಗೆ ಐಟಂಗಳ ನಡುವೆ ಹಂಚಿ."
+
+#: budget-question
+msgid "Total"
+msgstr "ಒಟ್ಟು"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "ನೀವು ಹಣ ನೀಡುವ ಯೋಜನೆಗಳನ್ನು ಗುರುತಿಸಿ. ಅವುಗಳ ಒಟ್ಟು ವೆಚ್ಚ %(total)s ಮೀರಬಾರದು."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "ಪ್ರತಿ ಗುರುತಿನ ಪಕ್ಕದಲ್ಲಿ ಐಟಂ ಸಂಖ್ಯೆಯನ್ನು ಬರೆಯಿರಿ. ಐಟಂಗಳ ಒಟ್ಟು ವೆಚ್ಚ %(total)s ಮೀರಬಾರದು."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "ಗರಿಷ್ಠ %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "ಕಡಿಮೆ"
+
+#: budget-question
+msgid "More"
+msgstr "ಹೆಚ್ಚು"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "ಉಳಿದದ್ದನ್ನು ಸಮವಾಗಿ ಹಂಚಿ"
+
+#: budget-question
+msgid "Item to place"
+msgstr "ಇರಿಸಬೇಕಾದ ಐಟಂ"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "ನಕ್ಷೆಯಲ್ಲಿ ಇರಿಸಿ"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "ಒಂದು ಐಟಂ ಆಯ್ಕೆ ಮಾಡಿ, ನಂತರ ಅದನ್ನು ಇರಿಸಲು ನಕ್ಷೆಯ ಮೇಲೆ ಟ್ಯಾಪ್ ಮಾಡಿ."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s ಪ್ರತಿಕ್ರಿಯೆಗಳು · ಬಜೆಟ್ %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "ಈ ಗುರುತಿಗೆ {cost} ವೆಚ್ಚವಾಗುತ್ತದೆ, ಆದರೆ ಕೇವಲ {left} ಮಾತ್ರ ಉಳಿದಿದೆ."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "ಬೆಲೆ: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "ಬಜೆಟ್: %(total)s — ಈ ಗುಂಪಿನ ಗುರುತುಗಳ ಒಟ್ಟು ವೆಚ್ಚ ಇದಕ್ಕಿಂತ ಹೆಚ್ಚಿರಬಾರದು."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / ಮೀ"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / ಮೀ²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "ಪ್ರತಿಯೊಂದಕ್ಕೆ %(amount)s"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "ಇದರ ನಂತರ {left} ಉಳಿಯುತ್ತದೆ"

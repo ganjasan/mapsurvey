@@ -42,7 +42,7 @@ the section list, never here. On close the section list is re-rendered (groupsCh
       data-preview-url="{% url 'editor_group_preview_live' survey.uuid group.id %}{% if primary_language %}?lang={{ primary_language }}{% endif %}">
     {% csrf_token %}
     <div class="modal-header">
-        <h5 class="modal-title"><i class="fas fa-object-group" style="color:#6366f1;"></i> {% trans "Question group" %}</h5>
+        <h5 class="modal-title">{% if group.budget %}<i class="fas fa-coins" style="color:#6366f1;"></i> {% trans "Budget group" %}{% else %}<i class="fas fa-object-group" style="color:#6366f1;"></i> {% trans "Question group" %}{% endif %}</h5>
         {% badge_key 'group' group.code as cm_bk %}{% with cm_n=thread_counts|thread_count:cm_bk %}<button type="button" class="btn btn-sm btn-outline-primary cm-toolbar-btn ml-3" data-cm-open="group:{{ group.id }}" data-thread-badge="{{ cm_bk }}" title="{% trans 'Comments on this group' %}"><i class="fas fa-comments" aria-hidden="true"></i> {% trans "Comments" %} <span class="cm-count" data-cm-n>{% if cm_n %}{{ cm_n }}{% endif %}</span></button>{% endwith %}
         <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
     </div>
@@ -73,6 +73,47 @@ the section list, never here. On close the section list is re-rendered (groupsCh
                         {% endfor %}
                     </div>
                 </div>
+                {% load billing_tags question_utils %}{% comment %}Budget group (change budget-question): a total over the map questions
+                inside; each of them gets a price in its own dialog. Empty total = ordinary group.{% endcomment %}
+                {% with bs=group.budget %}
+                <div class="form-group" id="group-budget">
+                    <input type="hidden" name="budget_present" value="1">
+                    <label>{% trans "Budget" %}</label>
+                    <div class="grp-budget-row">
+                        <div>
+                            <small>{% trans "Total" %}</small>
+                            <input type="number" step="any" min="0" name="budget_total" class="form-control form-control-sm" style="width:130px;"
+                                   value="{{ bs.total|default_if_none:'' }}" placeholder="60000" {% if is_read_only %}disabled{% endif %}>
+                        </div>
+                        <div>
+                            <small>{% trans "Unit" %}</small>
+                            <div class="grp-seg">
+                                <label><input type="radio" name="budget_unit" value="currency"{% if not bs.unit or bs.unit == 'currency' %} checked{% endif %}><span>{% trans "Currency" %}</span></label>
+                                <label><input type="radio" name="budget_unit" value="points"{% if bs.unit == 'points' %} checked{% endif %}><span>{% trans "Points" %}</span></label>
+                            </div>
+                        </div>
+                        <div id="group-budget-symbol">
+                            <small>{% trans "Symbol" %}</small>
+                            <input type="text" name="budget_symbol" maxlength="4" class="form-control form-control-sm" style="width:70px;"
+                                   value="{{ bs.symbol|default:'' }}" placeholder="£" {% if is_read_only %}disabled{% endif %}>
+                        </div>
+                    </div>
+                    <small class="form-text text-muted">{% trans "With a total, the map questions in this group become a budget: give each a price in its dialog (per mark, per metre or per m²) and respondents place marks until the total is spent. Leave empty for an ordinary group." %}{% if HELP_URL.budget %} <a href="{{ HELP_URL.budget }}" target="_blank" rel="noopener">{% trans "Learn more" %}</a>{% endif %}</small>
+                    {% if members %}{% with priced=members|priced_count %}{% if bs and priced < members|length %}
+                    <small class="form-text" style="color:#b45309;"><i class="fas fa-exclamation-triangle"></i> {% blocktrans with n=members|length m=priced %}{{ m }} of {{ n }} questions inside have a price; the others place marks for free.{% endblocktrans %}</small>
+                    {% endif %}{% endwith %}{% endif %}
+                </div>
+                {% endwith %}
+                <style>
+                    .grp-budget-row { display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; }
+                    .grp-budget-row small { display:block; font-size:.72rem; color:#6b7280; margin-bottom:3px; }
+                    .grp-seg { display:flex; border:1px solid #d1d5db; border-radius:6px; overflow:hidden; height:31px; }
+                    .grp-seg label { margin:0; cursor:pointer; }
+                    .grp-seg label + label { border-left:1px solid #d1d5db; }
+                    .grp-seg input { position:absolute; opacity:0; width:0; height:0; }
+                    .grp-seg span { display:flex; align-items:center; height:100%; padding:0 10px; font-size:.82rem; color:#5f6368; }
+                    .grp-seg input:checked + span { background:#eef2ff; color:#4f46e5; }
+                </style>
                 {% include "editor/partials/_audience_field.html" %}
                 {% include "editor/partials/_visibility_block.html" %}
                 {% if visibility_enabled %}<small class="form-text text-muted" style="margin:-.5rem 0 1rem;">{% trans "Every question inside is hidden with the group. A question can add its own rule on top." %}</small>{% endif %}
@@ -105,12 +146,24 @@ the section list, never here. On close the section list is re-rendered (groupsCh
                 </div>
                 <div class="grp-tips">
                     <div style="font-weight:600;font-size:.85rem;margin-bottom:6px;"><i class="far fa-lightbulb"></i> {% trans "Tips" %}</div>
+                    {% if group.budget %}
+                    {% comment %}A budget group's own tips (change budget-question): how the money
+                    works, not how the frame looks.{% endcomment %}
+                    <ul>
+                        <li><b>{% trans "Map questions inside carry the price." %}</b> {% trans "Add the map questions you want funded — benches, lamp posts, paths, flower beds — to this group, then open each and set its price under “Places per respondent”." %}</li>
+                        <li><b>{% trans "Per mark, per metre or per square metre." %}</b> {% trans "A point is priced per mark; a line can be priced per metre; an area or a spray per square metre — so a long path or a big bed costs more." %}</li>
+                        <li><b>{% trans "Respondents see what is left." %}</b> {% trans "The bar at the top of the group counts their marks against the total. A mark that no longer fits is greyed out with the reason; a line or area drawn too long is not kept." %}</li>
+                        <li><b>{% trans "No price, no cost." %}</b> {% trans "A map question in the group without a price places marks for free; the dialog counts how many are priced." %}</li>
+                        <li><b>{% trans "Results." %}</b> {% trans "Responses shows one block for the group — marks, metres or m² per question, what they cost — and the marks themselves stay on the map. Each mark exports with its cost." %}</li>
+                    </ul>
+                    {% else %}
                     <ul>
                         <li data-tip-for="plain"><b>{% trans "Plain" %}</b> — {% trans "a heading and a line along the left edge of the group; the questions keep their own cards. Use it to split a long list into parts without boxing anything in." %}</li>
                         <li data-tip-for="card"><b>{% trans "Card" %}</b> — {% trans "one framed block around the questions, which lose their own frames. Reads as one unit: best for “About this place” blocks in a map pop-up." %}</li>
                         <li data-tip-for="collapsible"><b>{% trans "Collapsible" %}</b> — {% trans "a card that stays closed until the respondent taps its title, showing only how many questions are inside. For optional or long blocks. If a required question inside is empty, the group opens by itself on submit." %}</li>
                         <li>{% trans "A visibility rule on the group hides every question inside at once — set it here instead of on each question." %}</li>
                     </ul>
+                    {% endif %}
                 </div>
             </div>
         </div>

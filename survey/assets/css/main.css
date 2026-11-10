@@ -2092,3 +2092,65 @@ body.survey-form-layout #info_page {
 /* "Other, please specify" write-in under its option (openspec: other-option-write-in) */
 .other-writein { margin: .25rem 0 .5rem 1.5rem; }
 .other-writein__input { max-width: 28rem; }
+
+/* ── Budget questions (change budget-question, spec budget-question) ──
+   One look for both types: a sticky bar with the remainder, then the items. */
+.budget { position: relative; }
+.budget__bar { position: sticky; top: 0; z-index: 2; background: var(--panel-bg); padding: 8px 0 10px; margin-bottom: 8px; border-bottom: 1px solid var(--card-border); }
+.budget__nums { display: flex; justify-content: space-between; gap: 8px; font-size: 0.85rem; margin-bottom: 6px; }
+.budget__nums b { font-size: 1rem; font-variant-numeric: tabular-nums; }
+.budget__left { color: var(--text-secondary); }
+.budget__left.is-ok { color: #15803d; font-weight: 600; }
+.budget__left.is-over { color: var(--danger); font-weight: 600; }
+.budget__track { height: 8px; border-radius: 6px; background: #e5e7eb; overflow: hidden; display: flex; }
+.budget__track > i { display: block; flex: none; height: 100%; width: 0; background: var(--accent); transition: width var(--transition); }
+.budget__track.is-over { outline: 2px solid var(--danger); }
+.budget--group .budget__track > i { background: #16a34a; }
+.budget--group { margin: 4px 0 10px; }
+.budget--group .budget__bar { position: static; border-bottom: 0; padding: 4px 0 0; margin: 0; }
+.geo-price { font-weight: 500; color: var(--text-secondary); font-size: 0.78rem; white-space: nowrap; }
+/* The chip over the draw bar while a priced mark is being placed. */
+#budget-draw-chip { position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%); z-index: 16; display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 999px; background: rgba(17, 24, 39, 0.92); color: #fff; font-size: 0.85rem; font-weight: 500; box-shadow: var(--shadow-md); white-space: nowrap; max-width: calc(100vw - 32px); overflow: hidden; text-overflow: ellipsis; }
+#budget-draw-chip[hidden] { display: none; }
+#budget-draw-chip > i { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+#budget-draw-chip.is-over { background: var(--danger); }
+.budget__list { list-style: none; margin: 0; padding: 0; }
+.budget__empty { color: var(--text-tertiary); font-size: 0.85rem; }
+.budget__hint { color: var(--danger); font-size: 0.82rem; margin: 6px 0 0; min-height: 1em; }
+.budget__spread { border: 0; background: none; color: var(--accent); font-size: 0.82rem; padding: 4px 0; }
+.budget__spread:disabled { color: var(--text-tertiary); }
+
+.budget-item { border: 1px solid var(--card-border); border-left: 4px solid var(--item-color, var(--accent)); border-radius: var(--radius-sm); padding: 8px 10px; margin-bottom: 6px; background: var(--input-bg); }
+.budget-item__top { display: flex; align-items: center; gap: 8px; }
+.budget-item__ic { width: 26px; height: 26px; border-radius: 6px; background: var(--item-color, var(--accent)); display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; color: #fff; flex: none; }
+.budget-item__ic:empty { width: 12px; height: 12px; border-radius: 50%; margin: 0 7px; }
+.budget-item__name { flex: 1; font-weight: 600; font-size: 0.9rem; margin: 0; }
+.budget-item__cost { color: var(--text-tertiary); font-size: 0.75rem; }
+.budget-item__desc { color: var(--text-secondary); font-size: 0.8rem; margin: 2px 0 6px; }
+.budget-item__ctl { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+.budget-step { width: 34px; height: 34px; border: 1px solid var(--input-border); border-radius: var(--radius-sm); background: var(--input-bg); font-size: 1.1rem; line-height: 1; flex: none; }
+.budget-step:disabled { opacity: 0.35; }
+.budget .budget-amount { width: 120px !important; flex: 0 0 120px; text-align: center; border: 1px solid var(--input-border); border-radius: var(--radius-sm); padding: 5px 6px; font-weight: 600; font-variant-numeric: tabular-nums; -moz-appearance: textfield; }
+.budget-amount::-webkit-outer-spin-button, .budget-amount::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.budget-slider { flex: 1; min-width: 60px; accent-color: var(--item-color, var(--accent)); }
+.budget-item__pct { min-width: 36px; text-align: right; color: var(--text-secondary); font-size: 0.75rem; }
+
+.budget-proj { border: 1px solid var(--card-border); border-left: 4px solid var(--item-color, var(--accent)); border-radius: var(--radius-sm); margin-bottom: 6px; background: var(--input-bg); }
+.budget-proj.is-in { background: color-mix(in srgb, var(--item-color, var(--accent)) 10%, #fff); }
+.budget-proj.is-cant { opacity: 0.55; }
+.budget-proj__row { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; margin: 0; cursor: pointer; font-weight: 400; }
+.budget-proj__row input { margin-top: 3px; width: 18px; height: 18px; accent-color: var(--item-color, var(--accent)); flex: none; }
+.budget-proj__body { flex: 1; display: flex; flex-direction: column; }
+.budget-proj__name { font-weight: 600; font-size: 0.9rem; }
+.budget-proj__desc { color: var(--text-secondary); font-size: 0.8rem; }
+.budget-proj__why { color: #b45309; font-size: 0.75rem; }
+.budget-proj__where { font-size: 0.75rem; color: var(--accent); }
+.budget-proj__cost { font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+
+@media (max-width: 768px) {
+    .budget-slider { display: none; }
+    .budget-step { width: 40px; height: 40px; }
+    .budget-item__ctl { justify-content: space-between; }
+    .budget .budget-amount { flex: 1 1 auto; width: auto !important; }
+}

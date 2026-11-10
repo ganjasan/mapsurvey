@@ -1240,3 +1240,147 @@ msgstr "オンラインで回答しますか？このコードを読み取って
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* 必須"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "費用が未設定です — 選べません。"
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "住民が各項目に配分した予算の平均割合。"
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "各事業に予算を配分した住民の割合。緑：予算内に一緒に収まる、最も支持された事業。"
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "住民が使った総額に占める各項目の割合。"
+
+#: budget-question
+msgid "{left} left"
+msgstr "残り {left}"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ すべて配分済み"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "予算を {over} 超過"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "{total} をすべて配分してください — まだ {left} が未配分です。"
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "少なくとも 1 つの項目に金額を入れてください。"
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "{n} 件以上選んでください。"
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "残額を {over} 超えています。"
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "置ける上限に達しました。"
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "／ %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "%(total)s を項目に配分してください。金額の合計は %(total)s にする必要があります。"
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "最大 %(total)s を項目に配分してください。"
+
+#: budget-question
+msgid "Total"
+msgstr "合計"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "予算を付けたい事業にチェックを入れてください。費用の合計は %(total)s 以下にしてください。"
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "各印の横に項目番号を書いてください。項目の費用の合計は %(total)s 以下にしてください。"
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "最大 %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "減らす"
+
+#: budget-question
+msgid "More"
+msgstr "増やす"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "残りを均等に配分"
+
+#: budget-question
+msgid "Item to place"
+msgstr "置く項目"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "地図に置く"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "項目を選んでから、地図をタップして置いてください。"
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "回答 %(n)s 件 · 予算 %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "このマークには{cost}かかりますが、残りは{left}しかありません。"
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "価格: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "予算: %(total)s — このグループのマークの合計は、この金額を超えてはいけません。"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "1件あたり%(amount)s"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "この後の残り {left}"

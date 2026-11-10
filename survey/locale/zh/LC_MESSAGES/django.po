@@ -1240,3 +1240,147 @@ msgstr "想在线作答？请扫描此码。"
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* 必填"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "未设置费用 — 无法选择。"
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "居民分配给每个项目的平均预算比例。"
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "资助每个项目的居民比例。绿色：合计不超出预算、获得支持最多的项目。"
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "居民全部支出中各项目所占的比例。"
+
+#: budget-question
+msgid "{left} left"
+msgstr "剩余 {left}"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ 已全部分配"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "超出预算 {over}"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "请分配全部 {total} — 还有 {left} 未分配。"
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "请至少为一个项目填写金额。"
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "请至少选择 {n} 个。"
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "超出剩余金额 {over}。"
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "已达到允许放置的最大数量。"
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "（共 %(total)s）"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "将 %(total)s 分配给各项目。金额合计必须等于 %(total)s。"
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "将最多 %(total)s 分配给各项目。"
+
+#: budget-question
+msgid "Total"
+msgstr "合计"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "勾选您愿意资助的项目。其费用合计不得超过 %(total)s。"
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "在每个标记旁写上项目编号。各项目费用合计不得超过 %(total)s。"
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "最多 %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "减少"
+
+#: budget-question
+msgid "More"
+msgstr "增加"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "将剩余金额平均分配"
+
+#: budget-question
+msgid "Item to place"
+msgstr "要放置的项目"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "放到地图上"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "选择一个项目，然后点击地图进行放置。"
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s 份回答 · 预算 %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "此标记需花费 {cost}，但仅剩 {left}。"
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "价格：%(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "预算：%(total)s — 本组中所有标记的总花费不得超过此金额。"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "每个 %(amount)s"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "之后剩余 {left}"

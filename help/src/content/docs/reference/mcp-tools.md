@@ -259,10 +259,12 @@ Permission `surveys:write` · role **editor**
 |---|---|---|---|
 | `name` | string |  |  |
 | `subtext` | string |  |  |
-| `input_type` | `text` \| `number` \| `choice` \| `multichoice` \| `range` \| `rating` \| `ranking` \| `datetime` \| `point` \| `line` \| `polygon` \| `spraycan` \| `image` \| `text_line` \| `html` \| `photo` \| `audio` \| `document` \| `thumbs` \| `layer_objects` | **required** |  |
+| `input_type` | `text` \| `number` \| `choice` \| `multichoice` \| `range` \| `rating` \| `ranking` \| `datetime` \| `point` \| `line` \| `polygon` \| `spraycan` \| `image` \| `text_line` \| `html` \| `photo` \| `audio` \| `document` \| `thumbs` \| `layer_objects` \| `budget` | **required** |  |
 | `required` | boolean |  |  |
-| `choices` | list of object (`code`, `name`, `other`, `icon`, `group`, `color`) |  |  |
+| `choices` | list of object (`code`, `name`, `other`, `icon`, `group`, `color`, `description`, `cost`) |  |  |
 | `validation_settings` | object (`min_value`, `max_value`, `outlier_sigma`, `min_length`, `area_outlier_factor`, `max_dots`, `max_file_mb`, `max_files`, `min_features`, `max_features`) |  |  |
+| `budget` | object (`mode`, `total`, `unit`, `symbol`, `step`, `rule`, `min_items`, `show_shares`, `source`, `cost_property`) |  | Settings of a `budget` question. |
+| `price` | object (`amount`, `per`) |  | A map question's price under a budget group; null removes it. |
 | `color` | string |  |  |
 | `icon_class` | string |  |  |
 | `display_style` | string |  |  |
@@ -287,10 +289,12 @@ Permission `surveys:write` · role **editor**
 |---|---|---|---|
 | `name` | string |  |  |
 | `subtext` | string |  |  |
-| `input_type` | `text` \| `number` \| `choice` \| `multichoice` \| `range` \| `rating` \| `ranking` \| `datetime` \| `point` \| `line` \| `polygon` \| `spraycan` \| `image` \| `text_line` \| `html` \| `photo` \| `audio` \| `document` \| `thumbs` \| `layer_objects` |  |  |
+| `input_type` | `text` \| `number` \| `choice` \| `multichoice` \| `range` \| `rating` \| `ranking` \| `datetime` \| `point` \| `line` \| `polygon` \| `spraycan` \| `image` \| `text_line` \| `html` \| `photo` \| `audio` \| `document` \| `thumbs` \| `layer_objects` \| `budget` |  |  |
 | `required` | boolean |  |  |
-| `choices` | list of object (`code`, `name`, `other`, `icon`, `group`, `color`) |  |  |
+| `choices` | list of object (`code`, `name`, `other`, `icon`, `group`, `color`, `description`, `cost`) |  |  |
 | `validation_settings` | object (`min_value`, `max_value`, `outlier_sigma`, `min_length`, `area_outlier_factor`, `max_dots`, `max_file_mb`, `max_files`, `min_features`, `max_features`) |  |  |
+| `budget` | object (`mode`, `total`, `unit`, `symbol`, `step`, `rule`, `min_items`, `show_shares`, `source`, `cost_property`) |  | Settings of a `budget` question. |
+| `price` | object (`amount`, `per`) |  | A map question's price under a budget group; null removes it. |
 | `color` | string |  |  |
 | `icon_class` | string |  |  |
 | `display_style` | string |  |  |
@@ -337,7 +341,7 @@ Permission `surveys:write` · role **editor**
 
 | Argument | Type | | Notes |
 |---|---|---|---|
-| `choices` | list of object (`code`, `name`, `other`, `icon`, `group`, `color`) | **required** |  |
+| `choices` | list of object (`code`, `name`, `other`, `icon`, `group`, `color`, `description`, `cost`) | **required** |  |
 | `survey` | uuid | **required** | The survey uuid. |
 | `question_id` | integer | **required** | The question id (from get_survey). |
 
@@ -672,6 +676,7 @@ Permission `surveys:write` · role **editor**
 | `title` | string |  |  |
 | `description` | string |  |  |
 | `display_style` | `plain` \| `card` \| `collapsible` |  |  |
+| `budget` | object (`mode`, `total`, `unit`, `symbol`, `step`, `rule`, `min_items`, `show_shares`, `source`, `cost_property`) |  | Makes the group a budget: its map questions carry a price and respondents place marks until the total is spent (total, unit, symbol). Null removes the budget. |
 | `visibility_rule` | object (`question_code`, `choice_codes`, `answered`) |  |  |
 | `audience` | `everyone` \| `respondents` \| `operators` |  | Who sees it: everyone, respondents only, or operators only (the "Enter a response" form workspace members fill in for someone else). Changing it on a live survey needs unpublished changes. |
 | `translations` | map |  |  |
@@ -691,6 +696,7 @@ Permission `surveys:write` · role **editor**
 | `title` | string |  |  |
 | `description` | string |  |  |
 | `display_style` | `plain` \| `card` \| `collapsible` |  |  |
+| `budget` | object (`mode`, `total`, `unit`, `symbol`, `step`, `rule`, `min_items`, `show_shares`, `source`, `cost_property`) |  | Makes the group a budget: its map questions carry a price and respondents place marks until the total is spent (total, unit, symbol). Null removes the budget. |
 | `visibility_rule` | object (`question_code`, `choice_codes`, `answered`) |  |  |
 | `audience` | `everyone` \| `respondents` \| `operators` |  | Who sees it: everyone, respondents only, or operators only (the "Enter a response" form workspace members fill in for someone else). Changing it on a live survey needs unpublished changes. |
 | `translations` | map |  |  |

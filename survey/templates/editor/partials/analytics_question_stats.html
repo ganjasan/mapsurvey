@@ -322,6 +322,48 @@
         <span class="text-muted" style="font-size:0.85rem;">{% trans "Loading..." %}</span>
     </div>
 
+    {% elif stat.type == 'budget' or stat.type == 'budget_group' %}
+    {% comment %}Budgets (change budget-question): the aggregate from survey/budget_stats.py —
+    mean share per item (Split), share of respondents per project with the set that fits
+    the budget (Projects), or — for a budget GROUP, shown before its first member — the
+    marks, metres or m² each priced map question collected and what they cost.{% endcomment %}
+    {% with b=stat.budget %}
+    {% if b %}
+    <p class="mb-2"><small class="text-muted">
+        {% blocktrans count n=b.respondents %}{{ n }} respondent{% plural %}{{ n }} respondents{% endblocktrans %}
+        · {% trans "budget" %} {{ b.total_label }}
+        {% if b.mode != 'split' and b.mean_spent_label %} · {% trans "spent on average" %} {{ b.mean_spent_label }}{% endif %}
+    </small></p>
+    <div class="budget-stats">
+        {% for e in b.items %}
+        <div class="budget-stats__row{% if b.fits and e.code in b.fits %} is-fit{% endif %}">
+            <span class="budget-stats__name">{{ e.name }}{% if e.cost_label %} <small class="text-muted">{{ e.cost_label }}</small>{% endif %}</span>
+            {% if b.mode == 'split' %}
+            <span class="budget-stats__bar"><i style="width:{% widthratio e.mean_share 1 100 %}%;{% if e.color %}background:{{ e.color }};{% endif %}"></i></span>
+            <span class="budget-stats__val">{% widthratio e.mean_share 1 100 %}% <small class="text-muted">{{ e.mean_amount_label }}</small></span>
+            {% elif b.mode == 'projects' %}
+            <span class="budget-stats__bar"><i style="width:{% widthratio e.pick_share 1 100 %}%;{% if e.color %}background:{{ e.color }};{% endif %}"></i></span>
+            <span class="budget-stats__val">{% widthratio e.pick_share 1 100 %}% <small class="text-muted">({{ e.n }})</small></span>
+            {% else %}
+            <span class="budget-stats__bar"><i style="width:{% widthratio e.budget_share 1 100 %}%;{% if e.color %}background:{{ e.color }};{% endif %}"></i></span>
+            <span class="budget-stats__val">{{ e.measure_label }} <small class="text-muted">{{ e.cost_label }} · {% widthratio e.budget_share 1 100 %}% {% trans "of spend" %}</small></span>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% if b.mode == 'projects' and b.fits %}<p class="mt-1 mb-0"><small class="text-muted"><span class="budget-stats__key"></span> {% trans "Most supported projects that fit the budget together" %}</small></p>{% endif %}
+    {% if b.mode == 'group' %}<p class="mt-1 mb-0"><small class="text-muted">{% trans "Where they were placed — see the map." %}</small></p>{% endif %}
+    {% endif %}
+    {% endwith %}
+    <style>
+        .budget-stats__row { display:grid; grid-template-columns:minmax(120px,1.2fr) 2fr minmax(90px,auto); gap:10px; align-items:center; margin:5px 0; font-size:.85rem; }
+        .budget-stats__bar { height:14px; background:#e5e7eb; border-radius:4px; overflow:hidden; }
+        .budget-stats__bar i { display:block; height:100%; background:#4f46e5; }
+        .budget-stats__row.is-fit .budget-stats__bar i, .budget-stats__key { background:#16a34a; }
+        .budget-stats__key { display:inline-block; width:10px; height:10px; border-radius:2px; vertical-align:middle; }
+        .budget-stats__val { text-align:right; font-variant-numeric:tabular-nums; }
+    </style>
+
     {% elif stat.type == 'geo' %}
     <p class="mb-1"><small class="text-muted">{% blocktrans count n=stat.total_answers %}{{ n }} geo feature — see map above{% plural %}{{ n }} geo features — see map above{% endblocktrans %}</small></p>
 

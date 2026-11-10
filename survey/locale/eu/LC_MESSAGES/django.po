@@ -1241,3 +1241,147 @@ msgstr "Nahiago duzu linean erantzun? Eskaneatu kode hau."
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* beharrezkoa"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Ez dago kosturik ezarrita — ezin da aukeratu."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Bizilagunek elementu bakoitzari emandako aurrekontuaren batez besteko zatia."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Proiektu bakoitza finantzatu duten bizilagunen ehunekoa. Berdea: babes handiena duten proiektuak, elkarrekin aurrekontuan sartzen direnak."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Bizilagunek gastatutako guztiaren zatia, elementuka."
+
+#: budget-question
+msgid "{left} left"
+msgstr "{left} geratzen da"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ dena banatuta"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "{over} aurrekontutik gora"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Banatu {total} osoa — {left} banatu gabe dago oraindik."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Eman zenbateko bat gutxienez elementu bati."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Aukeratu gutxienez {n}."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "Geratzen dena baino {over} gehiago."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Baimendutako gehienezkoa jarri duzu."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "%(total)s-(e)tik"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "Banatu %(total)s elementuen artean. Zenbatekoen batura %(total)s izan behar da."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "Banatu gehienez %(total)s elementuen artean."
+
+#: budget-question
+msgid "Total"
+msgstr "Guztira"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Markatu finantzatuko zenituzkeen proiektuak. Haien kostuek ezin dute guztira %(total)s gainditu."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Idatzi elementuaren zenbakia marka bakoitzaren ondoan. Elementuek ezin dute guztira %(total)s baino gehiago kostatu."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "gehienez %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Gutxiago"
+
+#: budget-question
+msgid "More"
+msgstr "Gehiago"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Banatu gainerakoa berdin"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Jartzeko elementua"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Jarri mapan"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Aukeratu elementu bat eta ukitu mapa hura jartzeko."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s erantzun · aurrekontua %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Marka honek {cost} kostatuko luke, baina {left} baino ez da geratzen."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Prezioa: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Aurrekontua: %(total)s — talde honetako markek ezin dute guztira hori baino gehiago kostatu."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s bakoitza"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "ondoren {left} geratzen da"

@@ -1240,3 +1240,147 @@ msgstr "온라인으로 답하시겠어요? 이 코드를 스캔하세요."
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* 필수"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "비용이 설정되지 않았습니다 — 선택할 수 없습니다."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "주민들이 각 항목에 배정한 예산의 평균 비율."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "각 사업에 예산을 배정한 주민의 비율. 초록색: 함께 예산 안에 들어가는, 가장 많은 지지를 받은 사업."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "주민들이 쓴 전체 금액 중 항목별 비율."
+
+#: budget-question
+msgid "{left} left"
+msgstr "{left} 남음"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ 모두 배정됨"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "예산 {over} 초과"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "전체 금액 {total}을(를) 모두 배정하세요 — 아직 {left} 남아 있습니다."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "하나 이상의 항목에 금액을 입력하세요."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "{n}개 이상 선택하세요."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "남은 금액보다 {over} 많습니다."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "허용된 최대 개수를 배치했습니다."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "/ %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "%(total)s을(를) 항목에 나누어 배정하세요. 금액의 합계가 %(total)s이(가) 되어야 합니다."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "최대 %(total)s까지 항목에 나누어 배정하세요."
+
+#: budget-question
+msgid "Total"
+msgstr "합계"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "예산을 배정할 사업에 체크하세요. 비용 합계가 %(total)s을(를) 넘으면 안 됩니다."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "각 표시 옆에 항목 번호를 쓰세요. 항목 비용의 합계가 %(total)s을(를) 넘으면 안 됩니다."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "최대 %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "줄이기"
+
+#: budget-question
+msgid "More"
+msgstr "늘리기"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "나머지를 균등하게 배분"
+
+#: budget-question
+msgid "Item to place"
+msgstr "배치할 항목"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "지도에 배치"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "항목을 고른 다음 지도를 탭해 배치하세요."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "응답 %(n)s개 · 예산 %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "이 표시에는 {cost}이(가) 들지만 {left}만 남아 있습니다."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "가격: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "예산: %(total)s — 이 그룹의 표시들은 합쳐서 이 금액을 넘을 수 없습니다."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "개당 %(amount)s"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "이후 {left} 남음"

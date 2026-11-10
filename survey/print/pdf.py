@@ -511,11 +511,64 @@ def _how_to_mark(q, letter):
 
 def shape_geo(q, ctx):
     letter = ctx.letters.get(q.id, '?')
-    return [para(_('Mark on the map') + f' ({letter}). ' + _how_to_mark(q, letter), ctx.styles['note'])]
+    out = [para(_('Mark on the map') + f' ({letter}). ' + _how_to_mark(q, letter), ctx.styles['note'])]
+    # A price under a budget group (change budget-question).
+    from survey import budget
+    group = q.group if q.group_id else None
+    settings = budget.group_settings(group)
+    price = budget.price_of(q)
+    if settings and price:
+        out.append(para(_('Price: %(price)s') % {'price': budget.format_price(price, settings)}, ctx.styles['note']))
+    return out
 
 
 def shape_layer_objects(q, ctx):
     return []   # the objects table prints with the map block
+
+
+def _budget_total_line(settings, ctx, label):
+    from survey import budget
+    return Paragraph(f'<b>{escape(label)}</b> ______ &nbsp; '
+                     + escape(_('of %(total)s') % {'total': budget.format_amount(settings['total'], settings, compact=False)}),
+                     ctx.styles['option'])
+
+
+def shape_budget(q, ctx):
+    """A budget on paper (change budget-question): Split is an amount per item
+    and a total, Projects a box per project with its cost and a total."""
+    from survey import budget
+    settings = budget.settings_of(q)
+    if settings is None:
+        return [RuledLines(2)]
+    items = budget.items_of(q, ctx.lang)
+    total = budget.format_amount(settings['total'], settings, compact=False)
+    unit = settings.get('symbol') or ('%' if settings['unit'] == budget.UNIT_PERCENT else '')
+    if settings['mode'] == budget.MODE_SPLIT:
+        hint = (_('Share %(total)s between the items. The amounts must add up to %(total)s.')
+                if settings['rule'] == budget.RULE_ALL else
+                _('Share up to %(total)s between the items.')) % {'total': total}
+        out = [para(hint, ctx.styles['help'])]
+        for item in items:
+            out.append(Paragraph(f'{escape(unit)} ________ &nbsp; {escape(plain(item["name"]))}', ctx.styles['option']))
+        out.append(_budget_total_line(settings, ctx, _('Total')))
+        return out
+    out = [para(_('Tick the projects you would fund. Their costs must not add up to more than %(total)s.')
+                % {'total': total}, ctx.styles['help'])]
+    for item in items:
+        cost = budget.format_amount(item['cost'], settings, compact=False) if item['cost'] is not None else '—'
+        out.append(Paragraph(f'{BOX} {escape(plain(item["name"]))} — {escape(cost)}', ctx.styles['option']))
+    out.append(_budget_total_line(settings, ctx, _('Total')))
+    return out
+
+
+def _group_budget_note(group):
+    """'Budget: £60k — the marks below must not cost more together.' or ''."""
+    from survey import budget
+    settings = budget.group_settings(group)
+    if not settings:
+        return ''
+    return _('Budget: %(total)s — the marks in this group must not cost more than that together.') % {
+        'total': budget.format_amount(settings['total'], settings, compact=False)}
 
 
 def shape_unknown(q, ctx):
@@ -530,6 +583,7 @@ QUESTION_SHAPES = {
     'photo': shape_file, 'audio': shape_file, 'document': shape_file,
     'point': shape_geo, 'line': shape_geo, 'polygon': shape_geo, 'spraycan': shape_geo,
     'layer_objects': shape_layer_objects,
+    'budget': shape_budget,
 }
 
 
@@ -787,6 +841,9 @@ def build_form(survey, language, paper, *, user=None, base_url='', copies=None, 
                     story.append(KeepTogether([
                         ItemMarker(f'group:{group.code}', records),
                         para(plain(group.get_translated_title(language)) or 'Group', styles['group'])]))
+                    _bs = _group_budget_note(group)
+                    if _bs:
+                        story.append(para(_bs, styles['note']))
                     desc = plain(group.get_translated_description(language))
                     if desc:
                         story.append(para(desc, styles['help']))

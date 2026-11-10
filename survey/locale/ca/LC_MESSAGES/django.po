@@ -1241,3 +1241,147 @@ msgstr "Preferiu respondre en línia? Escanegeu aquest codi."
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* obligatori"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Sense cost definit — no es pot triar."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Part mitjana del pressupost que els veïns han donat a cada element."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Percentatge de veïns que han finançat cada projecte. En verd: els projectes amb més suport que caben junts dins del pressupost."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Part de tot el que han gastat els veïns, per element."
+
+#: budget-question
+msgid "{left} left"
+msgstr "Queden {left}"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ tot repartit"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "{over} per sobre del pressupost"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Repartiu tot el {total} — encara queden {left} per repartir."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Assigneu un import a almenys un element."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Trieu-ne almenys {n}."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "{over} més del que queda."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Heu col·locat el màxim permès."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "de %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "Repartiu %(total)s entre els elements. Els imports han de sumar %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "Repartiu fins a %(total)s entre els elements."
+
+#: budget-question
+msgid "Total"
+msgstr "Total"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Marqueu els projectes que finançaríeu. Els seus costos no poden sumar més de %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Escriviu el número de l'element al costat de cada marca. Els elements no poden costar més de %(total)s en total."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "com a màxim %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Menys"
+
+#: budget-question
+msgid "More"
+msgstr "Més"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Reparteix la resta a parts iguals"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Element per col·locar"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Col·loca al mapa"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Trieu un element i toqueu el mapa per col·locar-lo."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s respostes · pressupost %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Aquesta marca costaria {cost}, però només queden {left}."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Preu: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Pressupost: %(total)s — les marques d'aquest grup no poden costar més que això en conjunt."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s cadascuna"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "en queden {left} després"

@@ -12555,3 +12555,402 @@ msgstr "Po"
 #: site-gallery-compare
 msgid "Slide to compare"
 msgstr "Przesuń, aby porównać"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Brak ustalonego kosztu — nie można wybrać."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Średni udział budżetu, jaki mieszkańcy przyznali każdej pozycji."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Odsetek mieszkańców, którzy sfinansowali każdy projekt. Na zielono: najczęściej popierane projekty, które razem mieszczą się w budżecie."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Udział we wszystkich wydatkach mieszkańców, według pozycji."
+
+#: budget-question
+msgid "{left} left"
+msgstr "Zostało {left}"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ wszystko rozdzielone"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "{over} ponad budżet"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Rozdziel całą kwotę {total} — nierozdzielone pozostaje jeszcze {left}."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Przyznaj kwotę co najmniej jednej pozycji."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Wybierz co najmniej {n}."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "{over} więcej, niż zostało."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Umieszczono maksymalną dozwoloną liczbę."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "z %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "Rozdziel %(total)s między pozycje. Kwoty muszą sumować się do %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "Rozdziel do %(total)s między pozycje."
+
+#: budget-question
+msgid "Total"
+msgstr "Razem"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Zaznacz projekty, które chcesz sfinansować. Ich łączny koszt nie może przekroczyć %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Wpisz numer pozycji obok każdego znaku. Pozycje razem nie mogą kosztować więcej niż %(total)s."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "najwyżej %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Mniej"
+
+#: budget-question
+msgid "More"
+msgstr "Więcej"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Rozdziel resztę po równo"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Pozycja do umieszczenia"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Umieść na mapie"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Wybierz pozycję, a potem dotknij mapy, aby ją umieścić."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "Odpowiedzi: %(n)s · budżet %(total)s"
+
+#: budget-question
+msgid "One line under the item on the respondent page"
+msgstr "Jedna linia pod pozycją na stronie respondenta"
+
+#: budget-question
+msgid "What the item costs. Required for projects and for items placed on the map; a guide for a split budget."
+msgstr "Koszt pozycji. Wymagany dla projektów i pozycji umieszczanych na mapie; orientacyjny przy podziale budżetu."
+
+#: budget-question
+msgid "Cost"
+msgstr "Koszt"
+
+#: budget-question
+msgid "At most this many of the item per respondent; empty = no cap"
+msgstr "Maksymalnie tyle tej pozycji na respondenta; puste = bez limitu"
+
+#: budget-question
+msgid "Budget"
+msgstr "Budżet"
+
+#: budget-question
+msgid "Split a budget"
+msgstr "Podział budżetu"
+
+#: budget-question
+msgid "Every item gets an amount; the amounts add up to the budget. Results: average share per item."
+msgstr "Każda pozycja otrzymuje kwotę; kwoty sumują się do budżetu. Wyniki: średni udział każdej pozycji."
+
+#: budget-question
+msgid "Choose projects within a budget"
+msgstr "Wybór projektów w ramach budżetu"
+
+#: budget-question
+msgid "Each item has a cost; the respondent picks projects until the budget is spent. Results: share of respondents per project."
+msgstr "Każda pozycja ma koszt; respondent wybiera projekty, aż wyczerpie budżet. Wyniki: odsetek respondentów na projekt."
+
+#: budget-question
+msgid "Total budget"
+msgstr "Budżet całkowity"
+
+#: budget-question
+msgid "Unit"
+msgstr "Jednostka"
+
+#: budget-question
+msgid "Currency"
+msgstr "Waluta"
+
+#: budget-question
+msgid "Points"
+msgstr "Punkty"
+
+#: budget-question
+msgid "Symbol"
+msgstr "Symbol"
+
+#: budget-question
+msgid "Step"
+msgstr "Krok"
+
+#: budget-question
+msgid "auto"
+msgstr "auto"
+
+#: budget-question
+msgid "Amounts move in steps; 20 000 000 reads as £20M. Per cent fixes the total at 100."
+msgstr "Kwoty zmieniają się o krok; 20 000 000 wyświetla się jako £20M. Przy procentach suma wynosi stale 100."
+
+#: budget-question
+msgid "Rule"
+msgstr "Reguła"
+
+#: budget-question
+msgid "Must allocate the whole budget"
+msgstr "Trzeba rozdzielić cały budżet"
+
+#: budget-question
+msgid "Can allocate up to the budget"
+msgstr "Można rozdzielić do wysokości budżetu"
+
+#: budget-question
+msgid "Minimum items"
+msgstr "Minimalna liczba pozycji"
+
+#: budget-question
+msgid "Items"
+msgstr "Pozycje"
+
+#: budget-question
+msgid "Type a list"
+msgstr "Wpisz listę"
+
+#: budget-question
+msgid "Objects of a layer"
+msgstr "Obiekty warstwy"
+
+#: budget-question
+msgid "Cost from property"
+msgstr "Koszt z właściwości"
+
+#: budget-question
+msgid "Each object of the layer is an item; its cost is read from that property. Objects without a number there are shown but cannot be picked."
+msgstr "Każdy obiekt warstwy jest pozycją; jego koszt jest odczytywany z tej właściwości. Obiekty bez liczby w niej są widoczne, ale nie można ich wybrać."
+
+#: budget-question
+msgid "cost"
+msgstr "koszt"
+
+#: budget-question
+msgid "budget"
+msgstr "budżet"
+
+#: budget-question
+msgid "spent on average"
+msgstr "wydane średnio"
+
+#: budget-question
+msgid "of spend"
+msgstr "wydatków"
+
+#: budget-question
+msgid "Most supported projects that fit the budget together"
+msgstr "Najczęściej popierane projekty, które razem mieszczą się w budżecie"
+
+#: budget-question
+msgid "Where they were placed — see the map."
+msgstr "Gdzie je umieszczono – zobacz mapę."
+
+#: budget-question
+msgid "Budget: place items on the map"
+msgstr "Budżet: umieść pozycje na mapie"
+
+#: budget-question
+msgid "Budget questions on the map"
+msgstr "Pytania budżetowe na mapie"
+
+#: budget-question
+msgid "Pick the reference layer whose objects are the budget items."
+msgstr "Wybierz warstwę referencyjną, której obiekty są pozycjami budżetu."
+
+#: budget-question
+#, python-format
+msgid "%(q)s item description"
+msgstr "%(q)s – opis pozycji"
+
+#: budget-question
+msgid "Show each item's share in % next to the amount"
+msgstr "Pokaż udział każdej pozycji w % obok kwoty"
+
+#: budget-question
+msgid "Add the items in Items below."
+msgstr "Dodaj pozycje w sekcji Pozycje poniżej."
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Ten znacznik kosztowałby {cost}, ale zostało tylko {left}."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Cena: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Budżet: %(total)s — znaczniki w tej grupie nie mogą łącznie kosztować więcej."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s za sztukę"
+
+#: budget-question
+msgid "What the item costs. Required for projects; a guide for a split budget."
+msgstr "Ile kosztuje pozycja. Wymagane dla projektów; orientacyjne przy podziale budżetu."
+
+#: budget-question
+#, python-format
+msgid "in the budget of “%(name)s”"
+msgstr "w budżecie „%(name)s”"
+
+#: budget-question
+msgid "Amount"
+msgstr "Kwota"
+
+#: budget-question
+msgid "points"
+msgstr "punkty"
+
+#: budget-question
+msgid "free"
+msgstr "bezpłatnie"
+
+#: budget-question
+msgid "Per"
+msgstr "Za"
+
+#: budget-question
+msgid "mark"
+msgstr "znacznik"
+
+#: budget-question
+msgid "metre of the line"
+msgstr "metr linii"
+
+#: budget-question
+msgid "square metre of the area"
+msgstr "metr kwadratowy obszaru"
+
+#: budget-question
+msgid "What one mark costs against the group's budget. Empty = respondents place these for free."
+msgstr "Ile jeden znacznik kosztuje z budżetu grupy. Puste = respondenci stawiają je bezpłatnie."
+
+#: budget-question
+msgid "With a total, the map questions in this group become a budget: give each a price in its dialog (per mark, per metre or per m²) and respondents place marks until the total is spent. Leave empty for an ordinary group."
+msgstr "Po podaniu sumy pytania mapowe w tej grupie stają się budżetem: nadaj każdemu cenę w jego oknie (za znacznik, za metr lub za m²), a respondenci będą stawiać znaczniki, aż wyczerpią sumę. Zostaw puste dla zwykłej grupy."
+
+#: budget-question
+#, python-format
+msgid "%(m)s of %(n)s questions inside have a price; the others place marks for free."
+msgstr "%(m)s z %(n)s pytań w grupie ma cenę; w pozostałych znaczniki są bezpłatne."
+
+#: budget-question
+msgid "Budget group: the map questions inside carry a price"
+msgstr "Grupa budżetowa: pytania mapowe w niej mają cenę"
+
+#: budget-question
+msgid "Budget group"
+msgstr "Grupa budżetowa"
+
+#: budget-question
+msgid "Map questions inside carry the price."
+msgstr "Cenę mają pytania mapowe w grupie."
+
+#: budget-question
+msgid "Add the map questions you want funded — benches, lamp posts, paths, flower beds — to this group, then open each and set its price under “Places per respondent”."
+msgstr "Dodaj do tej grupy pytania mapowe, które mają być finansowane — ławki, latarnie, ścieżki, klomby — a potem otwórz każde i ustaw jego cenę w sekcji „Miejsca na respondenta”."
+
+#: budget-question
+msgid "Per mark, per metre or per square metre."
+msgstr "Za znacznik, za metr lub za metr kwadratowy."
+
+#: budget-question
+msgid "A point is priced per mark; a line can be priced per metre; an area or a spray per square metre — so a long path or a big bed costs more."
+msgstr "Punkt jest wyceniany za znacznik; linia może być wyceniana za metr; obszar lub spray za metr kwadratowy — więc długa ścieżka lub duży klomb kosztują więcej."
+
+#: budget-question
+msgid "Respondents see what is left."
+msgstr "Respondenci widzą, ile zostało."
+
+#: budget-question
+msgid "The bar at the top of the group counts their marks against the total. A mark that no longer fits is greyed out with the reason; a line or area drawn too long is not kept."
+msgstr "Pasek u góry grupy zlicza ich znaczniki względem sumy. Znacznik, który już się nie mieści, jest wyszarzony z podaniem powodu; zbyt długa linia lub obszar nie są zapisywane."
+
+#: budget-question
+msgid "No price, no cost."
+msgstr "Bez ceny, bez kosztu."
+
+#: budget-question
+msgid "A map question in the group without a price places marks for free; the dialog counts how many are priced."
+msgstr "Pytanie mapowe w grupie bez ceny stawia znaczniki bezpłatnie; okno dialogowe liczy, ile z nich ma cenę."
+
+#: budget-question
+msgid "Results."
+msgstr "Wyniki."
+
+#: budget-question
+msgid "Responses shows one block for the group — marks, metres or m² per question, what they cost — and the marks themselves stay on the map. Each mark exports with its cost."
+msgstr "Odpowiedzi pokazują jeden blok dla grupy — znaczniki, metry lub m² na pytanie i ile kosztują — a same znaczniki pozostają na mapie. Każdy znacznik jest eksportowany ze swoim kosztem."
+
+#: budget-question
+msgid "Budget questions over a reference layer"
+msgstr "Pytania budżetowe na warstwie referencyjnej"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "po tym zostaje {left}"

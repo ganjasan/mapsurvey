@@ -5,7 +5,7 @@ from survey import marker_icons
 
 register = template.Library()
 
-CARD_INPUT_TYPES = {'text', 'text_line', 'number', 'choice', 'multichoice', 'range', 'rating',
+CARD_INPUT_TYPES = {'text', 'text_line', 'number', 'choice', 'multichoice', 'range', 'rating', 'budget',
                     'ranking', 'datetime', 'photo', 'audio', 'document', 'thumbs'}
 
 
@@ -54,17 +54,18 @@ def get_range(count):
 
 
 @register.inclusion_tag('editor/partials/question_type_picker.html')
-def question_type_picker(bound_field):
+def question_type_picker(bound_field, organization=None, actions=False):
     """Grouped card grid for the input_type field.
 
     Renders from the bound field's own choices, so sub-question restrictions
     (QuestionForm filters them out of the field) carry through without the
-    picker knowing about them.
+    picker knowing about them. `organization` lets a Pro-gated type carry its
+    `{% pro_badge %}` (question_types.PRO_FEATURE_BY_TYPE).
     """
     from survey.question_types import picker_groups_for
 
     choices = list(bound_field.field.choices)
-    groups = picker_groups_for(choices, getattr(bound_field.field, 'unavailable_types', None))
+    groups = picker_groups_for(choices, getattr(bound_field.field, 'unavailable_types', None), actions=actions)
     current = bound_field.value()
     if not current:
         # The form pre-selects 'text' for new questions; this fallback only
@@ -77,7 +78,23 @@ def question_type_picker(bound_field):
     return {
         'groups': groups,
         'current': current,
+        'organization': organization,
     }
+
+
+@register.filter
+def group_budget_label(group):
+    """"£60k" for a budget group's editor badge (change budget-question)."""
+    from survey import budget
+    settings = budget.group_settings(group)
+    return budget.format_amount(settings['total'], settings) if settings else ''
+
+
+@register.filter
+def priced_count(members):
+    """How many of a group's members carry a price."""
+    from survey import budget
+    return sum(1 for q in members if budget.price_of(q))
 
 
 @register.filter
@@ -102,7 +119,7 @@ def star_color(field):
 # caption, so all four are deliberately absent.
 SUBTEXT_IN_TEMPLATE_TYPES = {
     'text', 'text_line', 'number', 'choice', 'multichoice', 'range', 'rating', 'ranking',
-    'datetime', 'photo', 'audio', 'document', 'thumbs',
+    'datetime', 'photo', 'audio', 'document', 'thumbs', 'budget',
 }
 
 

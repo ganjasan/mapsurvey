@@ -1241,3 +1241,147 @@ msgstr "ஆன்லைனில் பதிலளிக்க விரும�
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* கட்டாயம்"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "செலவு அமைக்கப்படவில்லை — தேர்ந்தெடுக்க முடியாது."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "ஒவ்வொரு உருப்படிக்கும் குடியிருப்பாளர்கள் வழங்கிய பட்ஜெட்டின் சராசரி பங்கு."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "ஒவ்வொரு திட்டத்திற்கும் நிதியளித்த குடியிருப்பாளர்களின் பங்கு. பச்சை: ஒன்றாக பட்ஜெட்டுக்குள் அடங்கும், அதிக ஆதரவு பெற்ற திட்டங்கள்."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "குடியிருப்பாளர்கள் செலவழித்த மொத்தத்தில் ஒவ்வொரு உருப்படியின் பங்கு."
+
+#: budget-question
+msgid "{left} left"
+msgstr "{left} மீதம்"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ அனைத்தும் ஒதுக்கப்பட்டது"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "பட்ஜெட்டை விட {over} அதிகம்"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "முழு {total} தொகையையும் ஒதுக்குங்கள் — {left} இன்னும் ஒதுக்கப்படவில்லை."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "குறைந்தது ஒரு உருப்படிக்குத் தொகை கொடுங்கள்."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "குறைந்தது {n} தேர்ந்தெடுக்கவும்."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "மீதமுள்ளதை விட {over} அதிகம்."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "அனுமதிக்கப்பட்ட அதிகபட்ச எண்ணிக்கையை வைத்துவிட்டீர்கள்."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "%(total)s இல்"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "%(total)s தொகையை உருப்படிகளுக்கு இடையே பகிருங்கள். தொகைகளின் கூட்டுத்தொகை %(total)s ஆக இருக்க வேண்டும்."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "%(total)s வரை உருப்படிகளுக்கு இடையே பகிருங்கள்."
+
+#: budget-question
+msgid "Total"
+msgstr "மொத்தம்"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "நீங்கள் நிதியளிக்கும் திட்டங்களைக் குறியிடுங்கள். அவற்றின் மொத்தச் செலவு %(total)s ஐ விட அதிகமாக இருக்கக்கூடாது."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "ஒவ்வொரு குறிக்கும் அருகில் உருப்படி எண்ணை எழுதுங்கள். உருப்படிகளின் மொத்தச் செலவு %(total)s ஐ விட அதிகமாக இருக்கக்கூடாது."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "அதிகபட்சம் %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "குறைவு"
+
+#: budget-question
+msgid "More"
+msgstr "அதிகம்"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "மீதியைச் சமமாகப் பகிர்"
+
+#: budget-question
+msgid "Item to place"
+msgstr "வைக்க வேண்டிய உருப்படி"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "வரைபடத்தில் வை"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "ஒரு உருப்படியைத் தேர்ந்தெடுத்து, அதை வைக்க வரைபடத்தைத் தட்டவும்."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s பதில்கள் · பட்ஜெட் %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "இந்தக் குறிக்கு {cost} செலவாகும், ஆனால் {left} மட்டுமே மீதமுள்ளது."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "விலை: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "பட்ஜெட்: %(total)s — இந்தக் குழுவில் உள்ள குறிகளின் மொத்தச் செலவு இதை விட அதிகமாக இருக்கக் கூடாது."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "ஒவ்வொன்றும் %(amount)s"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "இதற்குப் பிறகு {left} மீதம்"

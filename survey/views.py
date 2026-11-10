@@ -43,6 +43,7 @@ from django.core.serializers import serialize
 import geojson
 from django.contrib.gis.geos import GEOSGeometry
 from survey.question_types import GEO_TYPES, geo_column, SPRAY_HARD_CEILING, SURFACE_RESPONDENT
+from survey import budget as budget_rules
 from django.contrib.gis.geos.error import GEOSException
 import sys
 from io import BytesIO
@@ -1146,6 +1147,10 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 				# Order matters here, unlike multichoice: this list is the answer.
 				if answer.selected_choices:
 					initial[question.code] = [str(c) for c in answer.selected_choices]
+			elif question.input_type == 'budget':
+				# The widget reads {item code: amount} back (change budget-question).
+				if answer.allocation:
+					initial[question.code] = dict((answer.allocation or {}).get('items') or {})
 			elif question.input_type in FILE_INPUT_TYPES:
 				# All tokens for the question; the widget resolves each to the
 				# uploaded state (thumbnail + signed link) at render time.
@@ -1485,8 +1490,22 @@ def save_section_answers(post, survey_session, session_survey, section, surface=
 
 			# html/image collect nothing; any other type stores nothing.
 
+		if question.input_type == 'budget':
+			# Split posts one amount input per item (`<code>__<item>`), so
+			# `result` is empty for it; Projects posts ticked codes under the
+			# question's own name. One parser judges both (survey/budget.py).
+			allocation = budget_rules.parse_submission(question, post)
+			if allocation is not None:
+				Answer.objects.create(survey_session=survey_session, question=question, allocation=allocation)
+
 	# A replaced or dropped file: its upload no longer has an Answer after the
 	# rewrite above, so it goes back to attached=False for orphan reclamation.
+	# Budget groups (change budget-question): the marks of a group's priced geo
+	# questions are admitted in stored order until the group's budget is spent;
+	# the rest are dropped — the widget never posts them, so only a tampered
+	# POST reaches this.
+	_enforce_group_budgets(survey_session, section, section_questions, vmap_post)
+
 	detach_unreferenced(survey_session, section_question_ids)
 
 	# Abandoned-branch cleanup: with the new answers stored, purge answers to
@@ -1519,6 +1538,24 @@ def save_section_answers(post, survey_session, session_survey, section, surface=
 			continue
 		_save_object_answers(post, survey_session, question, surface=surface)
 	return vmap_final
+
+
+def _enforce_group_budgets(survey_session, section, section_questions, vmap):
+	from .groups import groups_for
+	posted = {q.id for q in section_questions}
+	for group in groups_for(section):
+		if not group.budget or not vmap.is_group_visible(group.id):
+			continue
+		spend = budget_rules.GroupSpend(group)
+		members = [q for q in group.members() if q.input_type in GEO_TYPES and q.id in posted]
+		if not members:
+			continue
+		rows = (Answer.objects
+		        .filter(survey_session=survey_session, question__in=members, parent_answer_id__isnull=True)
+		        .order_by('id'))
+		for answer in rows:
+			if not spend.admit(answer.question_id, answer.geometry):
+				answer.delete()
 
 
 def survey_section(request, survey_slug, section_name):

@@ -1241,3 +1241,147 @@ msgstr "Онлайнаар хариулах уу? Энэ кодыг уншуул
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* заавал"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Өртөг тогтоогоогүй — сонгох боломжгүй."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Оршин суугчдын зүйл бүрт өгсөн төсвийн дундаж хувь."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Төсөл бүрийг санхүүжүүлсэн оршин суугчдын хувь. Ногоон: хамтдаа төсөвт багтах, хамгийн их дэмжлэг авсан төслүүд."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Оршин суугчдын зарцуулсан нийт дүнгийн хувь, зүйлээр."
+
+#: budget-question
+msgid "{left} left"
+msgstr "{left} үлдсэн"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ бүгдийг хуваарилсан"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "Төсвөөс {over} хэтэрсэн"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Нийт {total} дүнг бүрэн хуваарилна уу — {left} хуваарилагдаагүй хэвээр байна."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Дор хаяж нэг зүйлд дүн оноогоно уу."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Хамгийн багадаа {n} сонгоно уу."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "Үлдэгдлээс {over} илүү."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Та зөвшөөрөгдөх дээд хэмжээгээр байршууллаа."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "(нийт %(total)s)"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "%(total)s дүнг зүйлсийн хооронд хуваарилна уу. Дүнгүүдийн нийлбэр %(total)s байх ёстой."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "%(total)s хүртэлх дүнг зүйлсийн хооронд хуваарилна уу."
+
+#: budget-question
+msgid "Total"
+msgstr "Нийт"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Санхүүжүүлэх төслүүдээ тэмдэглэнэ үү. Тэдгээрийн өртгийн нийлбэр %(total)s дүнгээс хэтрэхгүй байх ёстой."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Тэмдэг бүрийн хажууд зүйлийн дугаарыг бичнэ үү. Зүйлсийн нийт өртөг %(total)s дүнгээс хэтрэхгүй байх ёстой."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "дээд тал нь %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Багасгах"
+
+#: budget-question
+msgid "More"
+msgstr "Нэмэх"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Үлдэгдлийг тэнцүү хуваах"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Байршуулах зүйл"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Газрын зураг дээр байршуулах"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Зүйл сонгоод, газрын зураг дээр дарж байршуулна уу."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s хариулт · төсөв %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Энэ тэмдэглэгээ {cost} болох боловч ердөө {left} үлдсэн байна."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Үнэ: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Төсөв: %(total)s — энэ бүлгийн тэмдэглэгээнүүд нийлээд үүнээс илүү өртөгтэй байж болохгүй."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "тус бүр %(amount)s"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "үүний дараа {left} үлдэнэ"

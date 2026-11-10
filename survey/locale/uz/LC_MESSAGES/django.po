@@ -1240,3 +1240,147 @@ msgstr "Onlayn javob bermoqchimisiz? Ushbu kodni skanerlang."
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* majburiy"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Narx belgilanmagan — tanlab bo'lmaydi."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Aholi har bir bandga ajratgan byudjetning o'rtacha ulushi."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Har bir loyihani moliyalashtirgan aholi ulushi. Yashil: birgalikda byudjetga sig'adigan eng ko'p qo'llab-quvvatlangan loyihalar."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Aholi sarflagan barcha mablag'ning bandlar bo'yicha ulushi."
+
+#: budget-question
+msgid "{left} left"
+msgstr "{left} qoldi"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ hammasi taqsimlandi"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "Byudjetdan {over} ortiq"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Butun {total} ni taqsimlang — {left} hali taqsimlanmagan."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Kamida bitta bandga summa bering."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Kamida {n} ta tanlang."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "Qolgan mablag'dan {over} ortiq."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Ruxsat etilgan eng ko'p miqdorni joylashtirdingiz."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "%(total)s dan"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "%(total)s ni bandlar orasida taqsimlang. Summalar jami %(total)s bo'lishi kerak."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "%(total)s gacha bandlar orasida taqsimlang."
+
+#: budget-question
+msgid "Total"
+msgstr "Jami"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Moliyalashtirmoqchi bo'lgan loyihalarni belgilang. Ularning jami narxi %(total)s dan oshmasligi kerak."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Har bir belgi yoniga band raqamini yozing. Bandlar jami %(total)s dan qimmat bo'lmasligi kerak."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "ko'pi bilan %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Kamroq"
+
+#: budget-question
+msgid "More"
+msgstr "Ko'proq"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Qolganini teng taqsimlash"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Joylashtiriladigan band"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Xaritaga joylashtirish"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Bandni tanlang, so'ng uni joylashtirish uchun xaritaga bosing."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s ta javob · byudjet %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Bu belgi {cost} turadi, ammo atigi {left} qoldi."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Narx: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Byudjet: %(total)s — bu guruhdagi belgilar jami bundan qimmat bo'lmasligi kerak."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "har biri %(amount)s"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "undan keyin {left} qoladi"

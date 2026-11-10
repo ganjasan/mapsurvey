@@ -1243,3 +1243,147 @@ msgstr "Radšej odpoviete online? Naskenujte tento kód."
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* povinné"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Nie je zadaná cena — nedá sa vybrať."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Priemerný podiel rozpočtu, ktorý obyvatelia dali každej položke."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Podiel obyvateľov, ktorí financovali každý projekt. Zelenou: najpodporovanejšie projekty, ktoré sa spolu zmestia do rozpočtu."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Podiel na všetkom, čo obyvatelia minuli, podľa položky."
+
+#: budget-question
+msgid "{left} left"
+msgstr "Zostáva {left}"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ všetko rozdelené"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "Rozpočet prekročený o {over}"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Rozdeľte celú sumu {total} — ešte zostáva nerozdelených {left}."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Prideľte sumu aspoň jednej položke."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Vyberte aspoň {n}."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "O {over} viac, než zostáva."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Umiestnili ste najviac, koľko je povolené."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "z %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "Rozdeľte %(total)s medzi položky. Sumy musia dať spolu %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "Rozdeľte najviac %(total)s medzi položky."
+
+#: budget-question
+msgid "Total"
+msgstr "Spolu"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Zaškrtnite projekty, ktoré by ste financovali. Ich náklady spolu nesmú presiahnuť %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Ku každej značke napíšte číslo položky. Položky spolu nesmú stáť viac ako %(total)s."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "najviac %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Menej"
+
+#: budget-question
+msgid "More"
+msgstr "Viac"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Zvyšok rozdeliť rovnomerne"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Položka na umiestnenie"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Umiestniť na mapu"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Vyberte položku a potom ťuknite na mapu, aby ste ju umiestnili."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "Odpovede: %(n)s · rozpočet %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Táto značka by stála {cost}, ale zostáva už len {left}."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Cena: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Rozpočet: %(total)s — značky v tejto skupine nesmú spolu stáť viac."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s za kus"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "potom zostáva {left}"

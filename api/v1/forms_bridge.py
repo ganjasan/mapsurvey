@@ -89,6 +89,20 @@ def question(body, *, create=False):
         vs = body['validation_settings'] or {}
         for key in VS_KEYS:
             data[f'vs_{key}'] = '' if vs.get(key) is None else str(vs[key])
+    if body.get('budget') is not None:
+        # The modal's Budget block keys (change budget-question); the service
+        # validates the record with survey.budget.normalise_budget_settings.
+        for key, value in body['budget'].items():
+            if value is None:
+                continue
+            if key == 'show_shares':
+                if value:
+                    data['vs_budget_show_shares'] = '1'
+                continue
+            data[f'vs_budget_{key}'] = str(value)
+        data.setdefault('vs_budget_present', '1')
+    if 'price' in body:
+        data['price'] = body['price']   # the service's parser takes the record as is
     if create:
         # What the modal posts for a field the creator did not touch.
         data.setdefault('name', '')

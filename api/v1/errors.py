@@ -70,6 +70,8 @@ def from_service_error(err):
                         'Open the confirmation link we mailed, or request a new one at /accounts/activate/resend/.')
     if isinstance(err, svc.LimitReached):
         return ApiError(409, codes.LIMIT_REACHED, err.message)
+    if isinstance(err, svc.ProRequired):
+        return ApiError(403, codes.PRO_REQUIRED, err.message, feature=err.feature)
     return ApiError(409, codes.CONFLICT, err.message or 'Conflict.')
 
 

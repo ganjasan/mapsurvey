@@ -1241,3 +1241,147 @@ msgstr "გირჩევნიათ ონლაინ პასუხი? �
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* სავალდებულო"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "ღირებულება არ არის მითითებული — ვერ აირჩევთ."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "ბიუჯეტის საშუალო წილი, რომელიც მაცხოვრებლებმა თითოეულ ელემენტს მისცეს."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "იმ მაცხოვრებლების წილი, რომლებმაც თითოეული პროექტი დააფინანსეს. მწვანე: ყველაზე მხარდაჭერილი პროექტები, რომლებიც ერთად ეტევა ბიუჯეტში."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "მაცხოვრებლების მიერ დახარჯული მთლიანი თანხის წილი, ელემენტების მიხედვით."
+
+#: budget-question
+msgid "{left} left"
+msgstr "დარჩა {left}"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ ყველაფერი განაწილებულია"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "{over} ბიუჯეტზე მეტი"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "გაანაწილეთ მთელი {total} — ჯერ კიდევ გაუნაწილებელია {left}."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "ერთ ელემენტს მაინც მიანიჭეთ თანხა."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "აირჩიეთ მინიმუმ {n}."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "{over} დარჩენილზე მეტი."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "თქვენ განათავსეთ დაშვებული მაქსიმუმი."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "%(total)s-დან"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "გაანაწილეთ %(total)s ელემენტებს შორის. თანხების ჯამი უნდა იყოს %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "გაანაწილეთ %(total)s-მდე ელემენტებს შორის."
+
+#: budget-question
+msgid "Total"
+msgstr "სულ"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "მონიშნეთ პროექტები, რომლებსაც დააფინანსებდით. მათი ჯამური ღირებულება არ უნდა აღემატებოდეს %(total)s-ს."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "თითოეული ნიშნის გვერდით დაწერეთ ელემენტის ნომერი. ელემენტების ჯამური ღირებულება არ უნდა აღემატებოდეს %(total)s-ს."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "მაქსიმუმ %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "ნაკლები"
+
+#: budget-question
+msgid "More"
+msgstr "მეტი"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "დარჩენილის თანაბრად განაწილება"
+
+#: budget-question
+msgid "Item to place"
+msgstr "განსათავსებელი ელემენტი"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "რუკაზე განთავსება"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "აირჩიეთ ელემენტი, შემდეგ შეეხეთ რუკას მის განსათავსებლად."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s პასუხი · ბიუჯეტი %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "ეს ნიშანი {cost} დაჯდება, მაგრამ დარჩენილია მხოლოდ {left}."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "ფასი: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "ბიუჯეტი: %(total)s — ამ ჯგუფის ნიშნები ერთად ამაზე მეტი არ უნდა ღირდეს."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / მ"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / მ²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s თითოეული"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "ამის შემდეგ რჩება {left}"

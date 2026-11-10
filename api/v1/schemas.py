@@ -230,6 +230,32 @@ class ChoiceIn(In):
     icon: Optional[str] = None
     group: Optional[str] = None
     color: Optional[str] = None
+    description: Optional[str] = Field(None, max_length=300, description='Budget questions: one line under the item.')
+    cost: Optional[float] = Field(None, ge=0, description='Budget questions: what the item costs. Required for projects.')
+
+
+class BudgetSettingsIn(In):
+    """A `budget` question's settings, or a budget group's (total, unit, symbol)."""
+    mode: Optional[Literal['split', 'projects']] = Field(
+        None, description='`budget` only: split the budget between items, or pick projects within it.')
+    total: Optional[float] = Field(None, gt=0, description='The budget. Fixed at 100 when unit is percent.')
+    unit: Optional[Literal['currency', 'points', 'percent']] = None
+    symbol: Optional[str] = Field(None, max_length=4, description='Currency symbol, e.g. £.')
+    step: Optional[float] = Field(None, gt=0, description='Amounts move in steps of this size (split).')
+    rule: Optional[Literal['all', 'upto']] = Field(None, description='Split: the whole budget must be allocated, or up to it.')
+    min_items: Optional[int] = Field(None, ge=0)
+    show_shares: Optional[bool] = None
+    source: Optional[Literal['list', 'layer']] = Field(
+        None, description='`budget` only: items from `choices`, or the objects of `layer_id` (Pro).')
+    cost_property: Optional[str] = Field(None, max_length=80,
+                                         description='With source `layer`: the object property holding the cost.')
+
+
+class PriceIn(In):
+    """What a map question's marks cost under a budget group (change budget-question)."""
+    amount: float = Field(gt=0)
+    per: Literal['feature', 'length', 'area'] = Field(
+        'feature', description='Per mark, per metre of a line, or per square metre of an area / spray.')
 
 
 class ValidationSettingsIn(In):
@@ -282,6 +308,8 @@ class QuestionIn(In):
     required: Optional[bool] = None
     choices: Optional[List[ChoiceIn]] = None
     validation_settings: Optional[ValidationSettingsIn] = None
+    budget: Optional[BudgetSettingsIn] = Field(None, description='Settings of a `budget` question.')
+    price: Optional[PriceIn] = Field(None, description='A map question\'s price under a budget group; null removes it.')
     color: Optional[str] = None
     icon_class: Optional[str] = None
     display_style: Optional[str] = None
@@ -339,6 +367,7 @@ class GroupOut(Schema):
     title: str
     description: str
     display_style: GroupDisplayStyle
+    budget: Optional[dict]
     visibility_rule: Optional[dict]
     audience: Audience
     question_ids: List[int]
@@ -349,6 +378,9 @@ class GroupIn(In):
     title: Optional[str] = Field(None, max_length=512)
     description: Optional[str] = None
     display_style: Optional[GroupDisplayStyle] = None
+    budget: Optional[BudgetSettingsIn] = Field(
+        None, description='Makes the group a budget: its map questions carry a price and respondents place '
+                          'marks until the total is spent (total, unit, symbol). Null removes the budget.')
     visibility_rule: Optional[VisibilityRule] = None
     audience: Optional[Audience] = Field(None, description=AUDIENCE_DESCRIPTION)
     translations: Optional[Dict[str, GroupTranslation]] = None

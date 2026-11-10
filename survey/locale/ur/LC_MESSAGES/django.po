@@ -1239,3 +1239,147 @@ msgstr "آن لائن جواب دینا چاہتے ہیں؟ یہ کوڈ اسکی
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* لازمی"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "لاگت مقرر نہیں — منتخب نہیں کیا جا سکتا۔"
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "بجٹ کا اوسط حصہ جو رہائشیوں نے ہر مد کو دیا۔"
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "ہر منصوبے کو فنڈ دینے والے رہائشیوں کا تناسب۔ سبز: سب سے زیادہ حمایت یافتہ منصوبے جو مل کر بجٹ میں آ جاتے ہیں۔"
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "رہائشیوں کے کل خرچ میں ہر مد کا حصہ۔"
+
+#: budget-question
+msgid "{left} left"
+msgstr "{left} باقی"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ سب تقسیم ہو گیا"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "بجٹ سے {over} زیادہ"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "پورا {total} تقسیم کریں — {left} ابھی تقسیم نہیں ہوا۔"
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "کم از کم ایک مد کو رقم دیں۔"
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "کم از کم {n} منتخب کریں۔"
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "باقی سے {over} زیادہ۔"
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "آپ نے زیادہ سے زیادہ اجازت شدہ تعداد رکھ دی ہے۔"
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "%(total)s میں سے"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "%(total)s کو مدوں میں تقسیم کریں۔ رقوم کا مجموعہ %(total)s ہونا چاہیے۔"
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "%(total)s تک مدوں میں تقسیم کریں۔"
+
+#: budget-question
+msgid "Total"
+msgstr "کل"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "جن منصوبوں کو آپ فنڈ دیں گے ان پر نشان لگائیں۔ ان کی کل لاگت %(total)s سے زیادہ نہیں ہونی چاہیے۔"
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "ہر نشان کے ساتھ مد کا نمبر لکھیں۔ مدوں کی کل لاگت %(total)s سے زیادہ نہیں ہونی چاہیے۔"
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "زیادہ سے زیادہ %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "کم"
+
+#: budget-question
+msgid "More"
+msgstr "زیادہ"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "باقی برابر تقسیم کریں"
+
+#: budget-question
+msgid "Item to place"
+msgstr "رکھنے کے لیے مد"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "نقشے پر رکھیں"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "ایک مد منتخب کریں، پھر اسے رکھنے کے لیے نقشے پر ٹیپ کریں۔"
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s جوابات · بجٹ %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "اس نشان کی لاگت {cost} ہوگی، لیکن صرف {left} باقی ہے۔"
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "قیمت: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "بجٹ: %(total)s — اس گروپ کے نشانات کی کل لاگت اس سے زیادہ نہیں ہونی چاہیے۔"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "فی عدد %(amount)s"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "اس کے بعد {left} باقی"

@@ -1241,3 +1241,147 @@ msgstr "Онлайн жооп бергиңиз келеби? Бул кодду �
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* милдеттүү"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Баасы белгиленген эмес — тандоого болбойт."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Тургундар ар бир элементке берген бюджеттин орточо үлүшү."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Ар бир долбоорду каржылаган тургундардын үлүшү. Жашыл: бюджетке чогуу батан эң көп колдоого алынган долбоорлор."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Тургундар короткон бардык каражаттагы ар бир элементтин үлүшү."
+
+#: budget-question
+msgid "{left} left"
+msgstr "{left} калды"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ баары бөлүштүрүлдү"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "Бюджеттен {over} ашык"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Бүт {total} сумманы бөлүштүрүңүз — дагы {left} бөлүштүрүлө элек."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Жок дегенде бир элементке сумма бериңиз."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Жок дегенде {n} тандаңыз."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "Калгандан {over} ашык."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Уруксат берилген эң көп санды жайгаштырдыңыз."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "/ %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "%(total)s сумманы элементтер арасында бөлүштүрүңүз. Суммалардын жыйындысы %(total)s болушу керек."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "%(total)s чейинки сумманы элементтер арасында бөлүштүрүңүз."
+
+#: budget-question
+msgid "Total"
+msgstr "Бардыгы"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Каржылай турган долбоорлоруңузду белгилеңиз. Алардын жалпы баасы %(total)s ашпашы керек."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Ар бир белгинин жанына элементтин номерин жазыңыз. Элементтердин жалпы баасы %(total)s ашпашы керек."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "эң көп %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Азайтуу"
+
+#: budget-question
+msgid "More"
+msgstr "Көбөйтүү"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Калганын бирдей бөлүштүрүү"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Жайгаштырыла турган элемент"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Картага жайгаштыруу"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Элементти тандап, анан аны жайгаштыруу үчүн картаны басыңыз."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s жооп · бюджет %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Бул белги {cost} турмак, бирок {left} гана калды."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Баасы: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Бюджет: %(total)s — бул топтогу белгилер чогуу мындан кымбат болбошу керек."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / м"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / м²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "ар бири %(amount)s"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "андан кийин {left} калат"
