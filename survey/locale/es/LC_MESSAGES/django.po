@@ -12500,3 +12500,16 @@ msgstr "Después"
 #: site-gallery-compare
 msgid "Slide to compare"
 msgstr "Desliza para comparar"
+
+#: survey/templates/org/invitation_landing.html:26
+#, python-format
+msgid "You've already joined %(org_name)s"
+msgstr "Ya te uniste a %(org_name)s"
+
+#: survey/templates/org/invitation_landing.html:27
+msgid "Sign in with the account you joined with to open it."
+msgstr "Inicia sesión con la cuenta con la que te uniste para abrirlo."
+
+#: survey/abuse.py:299
+msgid "An account with this email already exists."
+msgstr "Ya existe una cuenta con este correo electrónico."

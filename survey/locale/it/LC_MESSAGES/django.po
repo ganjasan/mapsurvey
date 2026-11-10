@@ -12482,3 +12482,16 @@ msgstr "Dopo"
 #: site-gallery-compare
 msgid "Slide to compare"
 msgstr "Scorri per confrontare"
+
+#: survey/templates/org/invitation_landing.html:26
+#, python-format
+msgid "You've already joined %(org_name)s"
+msgstr "Fai già parte di %(org_name)s"
+
+#: survey/templates/org/invitation_landing.html:27
+msgid "Sign in with the account you joined with to open it."
+msgstr "Accedi con l'account con cui ti sei unito per aprirlo."
+
+#: survey/abuse.py:299
+msgid "An account with this email already exists."
+msgstr "Esiste già un account con questa email."

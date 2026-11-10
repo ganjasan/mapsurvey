@@ -18,6 +18,21 @@
             <span class="auth-divider">|</span>
             <a href="{% url 'django_registration_register' %}">{% trans "Create Account" %}</a>
         </div>
+    {% elif used %}
+        {% comment %}An accepted invitation's link is how a member gets back to the
+        workspace (change one-account-per-email, #639). No Create Account here: it
+        made a second account on the same address, in an empty workspace.{% endcomment %}
+        <div class="auth-message">
+            <span class="auth-icon">&#9993;</span>
+            <h2>{% blocktrans with org_name=invitation.organization.name %}You've already joined {{ org_name }}{% endblocktrans %}</h2>
+            <p>{% trans "Sign in with the account you joined with to open it." %}</p>
+        </div>
+        <a href="{{ login_url }}" class="btn-auth" style="display: block; text-align: center; text-decoration: none; margin-top: 1.5rem;">
+            {% trans "Sign In" %}
+        </a>
+        <div class="auth-links" style="margin-top: 1rem;">
+            <a href="{% url 'password_reset' %}">{% trans "Forgot password?" %}</a>
+        </div>
     {% else %}
         <div class="auth-message">
             <span class="auth-icon">&#9993;</span>

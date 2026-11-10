@@ -12436,3 +12436,16 @@ msgstr "Jälkeen"
 #: site-gallery-compare
 msgid "Slide to compare"
 msgstr "Vertaa liu’uttamalla"
+
+#: survey/templates/org/invitation_landing.html:26
+#, python-format
+msgid "You've already joined %(org_name)s"
+msgstr "Olet jo liittynyt: %(org_name)s"
+
+#: survey/templates/org/invitation_landing.html:27
+msgid "Sign in with the account you joined with to open it."
+msgstr "Avaa se kirjautumalla tilillä, jolla liityit."
+
+#: survey/abuse.py:299
+msgid "An account with this email already exists."
+msgstr "Tällä sähköpostiosoitteella on jo tili."

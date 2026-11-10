@@ -281,12 +281,21 @@ def accept_invitation(request, token):
             'error': 'Invalid invitation link.',
         })
 
+    # A used link is the bookmark a member keeps for the workspace: it leads
+    # back in, never to a second account (change one-account-per-email, #639).
     if invitation.accepted_at:
+        accept_path = reverse('accept_invitation', args=[invitation.token])
         if request.user.is_authenticated:
-            messages.info(request, 'This invitation has already been used.')
+            if Membership.objects.filter(user=request.user,
+                                         organization=invitation.organization).exists():
+                request.session['active_org_id'] = invitation.organization_id
+            else:
+                messages.info(request, 'This invitation has already been used.')
             return redirect('editor')
         return render(request, 'org/invitation_landing.html', {
-            'error': 'This invitation has already been used.',
+            'invitation': invitation,
+            'used': True,
+            'login_url': f"{reverse('login')}?{urlencode({'next': accept_path})}",
         })
 
     if invitation.is_expired:
