@@ -12508,3 +12508,16 @@ msgstr "Ocultar o botão do chat"
 #: survey/templates/editor/partials/_help_menu.html
 msgid "Show chat button"
 msgstr "Mostrar o botão do chat"
+
+#: survey/templates/org/invitation_landing.html:26
+#, python-format
+msgid "You've already joined %(org_name)s"
+msgstr "Já aderiu a %(org_name)s"
+
+#: survey/templates/org/invitation_landing.html:27
+msgid "Sign in with the account you joined with to open it."
+msgstr "Inicie sessão com a conta com que aderiu para o abrir."
+
+#: survey/abuse.py:299
+msgid "An account with this email already exists."
+msgstr "Já existe uma conta com este email."

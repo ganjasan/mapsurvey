@@ -533,6 +533,105 @@ class RegistrationAcceptTermsTest(TestCase):
         self.assertFalse(User.objects.filter(username='termsuser').exists())
 
 
+class OneAccountPerEmailTest(TestCase):
+    """Registration refuses an address that already has an account (#639)."""
+
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+        self.addCleanup(cache.clear)
+        mail.outbox = []
+
+    def _post(self, **overrides):
+        data = {
+            'username': 'second', 'email': 'person@example.org',
+            'password1': 'Xx12345!secure', 'password2': 'Xx12345!secure',
+            'website': '', 'accept_terms': 'on',
+        }
+        data.update(overrides)
+        return self.client.post('/accounts/register/', data,
+                                REMOTE_ADDR='10.%d.%d.%d' % tuple(uuid.uuid4().bytes[:3]))
+
+    def test_registered_address_is_refused_case_insensitively(self):
+        """
+        GIVEN an account with person@example.org
+        WHEN the form is submitted with Person@Example.org
+        THEN the page shows the email error with sign-in and reset links, and no user
+             is created and no mail sent
+        """
+        User.objects.create_user('first', 'person@example.org', 'Xx12345!secure')
+
+        response = self._post(email='Person@Example.org')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'An account with this email already exists.')
+        self.assertContains(response, 'data-email-taken')
+        self.assertContains(response, f'href="{reverse("login")}"')
+        self.assertContains(response, f'href="{reverse("password_reset")}"')
+        self.assertFalse(User.objects.filter(username='second').exists())
+        self.assertEqual(mail.outbox, [])
+
+    def test_banned_account_address_is_refused_too(self):
+        """
+        GIVEN a banned account (is_active=False) with the address
+        WHEN the form is submitted with it
+        THEN no user is created
+        """
+        User.objects.create_user('first', 'person@example.org', 'Xx12345!secure', is_active=False)
+
+        response = self._post()
+
+        self.assertContains(response, 'An account with this email already exists.')
+        self.assertFalse(User.objects.filter(username='second').exists())
+
+    def test_invited_registration_with_a_registered_address(self):
+        """
+        GIVEN an acceptable invitation and an account that already holds the typed address
+        WHEN the visitor follows Create account and submits that address
+        THEN no user is created and the invitation stays unaccepted
+        """
+        from survey.models import Invitation, Membership
+        from survey.tests.helpers import _make_org
+
+        org = _make_org('Team Org')
+        owner = User.objects.create_user('owner', 'owner@example.org', 'Xx12345!secure')
+        Membership.objects.create(user=owner, organization=org, role='owner')
+        invitation = Invitation.objects.create(email='person@example.org', organization=org,
+                                               role='editor', invited_by=owner)
+        User.objects.create_user('first', 'person@example.org', 'Xx12345!secure')
+        self.client.get(f'/accounts/register/?invite={invitation.token}')
+
+        response = self._post()
+
+        self.assertContains(response, 'data-email-taken')
+        self.assertFalse(User.objects.filter(username='second').exists())
+        invitation.refresh_from_db()
+        self.assertIsNone(invitation.accepted_at)
+
+    def test_new_address_registers_as_before(self):
+        """
+        GIVEN an account with another address
+        WHEN the form is submitted with a new address
+        THEN the account is created and no "already exists" link renders
+        """
+        User.objects.create_user('first', 'other@example.org', 'Xx12345!secure')
+
+        response = self._post()
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(User.objects.filter(username='second').exists())
+
+    def test_fresh_form_shows_no_taken_links(self):
+        """
+        GIVEN the registration page
+        WHEN it is opened
+        THEN the "already exists" links are absent
+        """
+        response = self.client.get('/accounts/register/')
+
+        self.assertNotContains(response, 'data-email-taken')
+
+
 class TurnstileRemovedTest(TestCase):
     """Cloudflare Turnstile was off in production and is gone (#490); nothing may still claim it."""
 

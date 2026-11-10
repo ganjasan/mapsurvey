@@ -282,6 +282,22 @@ class RegistrationAbuseForm(RegistrationForm):
             label=_("I am 16 or older and accept the Terms of use"),
             error_messages={"required": _("Please confirm you are 16 or older and accept the Terms of use.")},
         )
+        self.email_taken = False
+
+    def clean_email(self):
+        """One account per address (change one-account-per-email, #639).
+
+        The upstream form checks the username only, so a member who forgot their
+        account registered the same address again and landed in an empty
+        workspace. Banned accounts count too. `email_taken` lets the template put
+        the sign-in and reset links under the error, which itself is escaped text.
+        """
+        email = self.cleaned_data.get("email")
+        if email and get_user_model().objects.filter(email__iexact=email).exists():
+            self.email_taken = True
+            raise forms.ValidationError(
+                _("An account with this email already exists."), code="email_taken")
+        return email
 
 
 class ResendActivationForm(forms.Form):
