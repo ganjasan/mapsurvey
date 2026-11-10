@@ -7891,8 +7891,6 @@ msgstr "Uw AI-agent koppelen"
 msgid "Let Claude, ChatGPT or Cursor build and edit surveys for you through MCP, with a token you control."
 msgstr "Laat Claude, ChatGPT of Cursor enquêtes voor u bouwen en bewerken via MCP, met een token dat u beheert."
 
-
-
 #: survey/templates/editor/account_mcp.html
 msgid "AI agents & MCP"
 msgstr "AI-agenten & MCP"
@@ -10351,7 +10349,6 @@ msgstr "Publiceren…"
 #: map-style-library (#542)
 msgid "Failed"
 msgstr "Mislukt"
-
 
 #: map-style-library (#542)
 msgid "Rename"
@@ -12873,3 +12870,24 @@ msgstr "Budgetvragen over een referentielaag"
 #: budget-question
 msgid "{left} left after it"
 msgstr "daarna nog {left} over"
+
+#: survey/context_processors.py
+msgid "Hide the chat button"
+msgstr "Chatknop verbergen"
+
+#: survey/templates/editor/partials/_help_menu.html
+msgid "Show chat button"
+msgstr "Chatknop tonen"
+
+#: survey/templates/org/invitation_landing.html:26
+#, python-format
+msgid "You've already joined %(org_name)s"
+msgstr "Je bent al lid van %(org_name)s"
+
+#: survey/templates/org/invitation_landing.html:27
+msgid "Sign in with the account you joined with to open it."
+msgstr "Log in met het account waarmee je lid bent geworden om het te openen."
+
+#: survey/abuse.py:299
+msgid "An account with this email already exists."
+msgstr "Er bestaat al een account met dit e-mailadres."

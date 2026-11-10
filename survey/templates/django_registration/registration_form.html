@@ -75,6 +75,13 @@
                             <li>{{ error }}</li>
                         {% endfor %}
                         </ul>
+                        {% if field.name == "email" and form.email_taken %}
+                        {# One account per address (change one-account-per-email, #639). #}
+                        <p class="helptext" data-email-taken>
+                            <a href="{% url 'login' %}">{% trans "Sign In" %}</a> ·
+                            <a href="{% url 'password_reset' %}">{% trans "Forgot password?" %}</a>
+                        </p>
+                        {% endif %}
                     {% endif %}
                 </div>
             {% endif %}

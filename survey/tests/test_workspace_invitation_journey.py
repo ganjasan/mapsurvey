@@ -500,6 +500,114 @@ class EditorEmptyStateTest(_Base):
         self.assertNotContains(response, 'No surveys of yours')
 
 
+class UsedInvitationLinkTest(_Base):
+    """A used link leads its member back in, never to a second account (#639)."""
+
+    def _used(self, user):
+        invitation = self._invite(email=user.email)
+        invitations.accept(invitation, user)
+        return invitation
+
+    def _messages(self, response):
+        return [str(m) for m in response.wsgi_request._messages]
+
+    def test_member_opens_the_old_link_while_signed_in(self):
+        """
+        GIVEN a member of the workspace whose active workspace is another one
+        WHEN they open the link of the invitation they accepted earlier
+        THEN they land on the dashboard with that workspace active, no "already used"
+             message and no joined mark
+        """
+        user = User.objects.create_user('member', 'member@example.org', PASSWORD)
+        own = _make_org('Own Org')
+        Membership.objects.create(user=user, organization=own, role='owner')
+        invitation = self._used(user)
+        self.client.login(username='member', password=PASSWORD)
+        session = self.client.session
+        session['active_org_id'] = own.pk
+        session.save()
+
+        response = self.client.get(self._accept_url(invitation))
+
+        self.assertRedirects(response, '/editor/', fetch_redirect_response=False)
+        self.assertEqual(self._active_org_id(), self.org.pk)
+        self.assertIsNone(self.client.session.get(invitations.JOINED_KEY))
+        self.assertEqual(self._messages(response), [])
+
+    def test_non_member_opens_a_used_link_while_signed_in(self):
+        """
+        GIVEN a used invitation and a signed-in user who is not a member
+        WHEN they open its link
+        THEN they are told it has been used and the active workspace is unchanged
+        """
+        joined = User.objects.create_user('joined', 'joined@example.org', PASSWORD)
+        invitation = self._used(joined)
+        User.objects.create_user('stranger', 'stranger@example.org', PASSWORD)
+        self.client.login(username='stranger', password=PASSWORD)
+
+        response = self.client.get(self._accept_url(invitation))
+
+        self.assertRedirects(response, '/editor/', fetch_redirect_response=False)
+        self.assertEqual(self._messages(response), ['This invitation has already been used.'])
+        self.assertNotEqual(self._active_org_id(), self.org.pk)
+
+    def test_signed_out_visitor_is_offered_sign_in_not_registration(self):
+        """
+        GIVEN a used invitation
+        WHEN a signed-out visitor opens its link
+        THEN the page names the workspace, offers sign-in back through the link and a
+             password reset, and links nowhere into registration
+        """
+        joined = User.objects.create_user('joined', 'joined@example.org', PASSWORD)
+        invitation = self._used(joined)
+
+        response = self.client.get(self._accept_url(invitation))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'already joined Team Org')
+        accept_path = self._accept_url(invitation).replace('/', '%2F')
+        self.assertContains(response, f'/accounts/login/?next={accept_path}')
+        self.assertContains(response, reverse('password_reset'))
+        self.assertNotContains(response, '/accounts/register/')
+        self.assertNotContains(response, 'Invitation Unavailable')
+
+    def test_sign_in_through_the_used_link_opens_the_workspace(self):
+        """
+        GIVEN a member who opened their used link signed out
+        WHEN they sign in through the page's Sign in
+        THEN they end on the dashboard with the workspace active
+        """
+        user = User.objects.create_user('member', 'member@example.org', PASSWORD)
+        own = _make_org('Own Org')
+        Membership.objects.create(user=user, organization=own, role='owner')
+        invitation = self._used(user)
+
+        response = self.client.post(
+            f"/accounts/login/?next={self._accept_url(invitation)}",
+            {'username': 'member', 'password': PASSWORD})
+        self.assertRedirects(response, self._accept_url(invitation), fetch_redirect_response=False)
+        response = self.client.get(self._accept_url(invitation))
+
+        self.assertRedirects(response, '/editor/', fetch_redirect_response=False)
+        self.assertEqual(self._active_org_id(), self.org.pk)
+
+    def test_nothing_is_written_to_a_used_invitation(self):
+        """
+        GIVEN a used invitation
+        WHEN its link is opened signed out and signed in
+        THEN its accepted_at stays the original one
+        """
+        user = User.objects.create_user('member', 'member@example.org', PASSWORD)
+        invitation = self._used(user)
+        accepted_at = Invitation.objects.get(pk=invitation.pk).accepted_at
+
+        self.client.get(self._accept_url(invitation))
+        self.client.login(username='member', password=PASSWORD)
+        self.client.get(self._accept_url(invitation))
+
+        self.assertEqual(Invitation.objects.get(pk=invitation.pk).accepted_at, accepted_at)
+
+
 class PendingHelperTest(TestCase):
     """`acceptable` tolerates whatever the query string carries."""
 

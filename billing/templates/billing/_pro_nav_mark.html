@@ -1,0 +1,5 @@
+{% load i18n %}{% comment %}
+The Pro mark of a navigation item (change onboarding-friction, #638). Rendered only by
+{% pro_nav_mark org "feature" %}: nothing unless the workspace is locked out of the feature, then a
+lock and no word. Points of use keep {% pro_badge %}. Styles: css/pro_badge.css.
+{% endcomment %}{% if locked %}<span class="pro-nav-lock" data-pro-state="locked" title="{% trans 'A Pro feature. See Plan & billing.' %}"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4 7V5a4 4 0 118 0v2h1v8H3V7h1zm2 0h4V5a2 2 0 10-4 0v2z"/></svg></span>{% endif %}

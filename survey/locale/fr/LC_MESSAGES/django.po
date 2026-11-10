@@ -7939,8 +7939,6 @@ msgstr "Connecter votre agent IA"
 msgid "Let Claude, ChatGPT or Cursor build and edit surveys for you through MCP, with a token you control."
 msgstr "Laissez Claude, ChatGPT ou Cursor créer et modifier vos enquêtes via MCP, avec un jeton que vous contrôlez."
 
-
-
 #: survey/templates/editor/account_mcp.html
 msgid "AI agents & MCP"
 msgstr "Agents IA & MCP"
@@ -10399,7 +10397,6 @@ msgstr "Publication…"
 #: map-style-library (#542)
 msgid "Failed"
 msgstr "Échec"
-
 
 #: map-style-library (#542)
 msgid "Rename"
@@ -12920,3 +12917,24 @@ msgstr "Questions budgétaires sur une couche de référence"
 #: budget-question
 msgid "{left} left after it"
 msgstr "il reste {left} après"
+
+#: survey/context_processors.py
+msgid "Hide the chat button"
+msgstr "Masquer le bouton de chat"
+
+#: survey/templates/editor/partials/_help_menu.html
+msgid "Show chat button"
+msgstr "Afficher le bouton de chat"
+
+#: survey/templates/org/invitation_landing.html:26
+#, python-format
+msgid "You've already joined %(org_name)s"
+msgstr "Vous avez déjà rejoint %(org_name)s"
+
+#: survey/templates/org/invitation_landing.html:27
+msgid "Sign in with the account you joined with to open it."
+msgstr "Connectez-vous avec le compte utilisé pour le rejoindre."
+
+#: survey/abuse.py:299
+msgid "An account with this email already exists."
+msgstr "Un compte existe déjà avec cette adresse e-mail."

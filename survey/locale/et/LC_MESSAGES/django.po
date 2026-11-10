@@ -7832,8 +7832,6 @@ msgstr "Ühendage oma tehisaru agent"
 msgid "Let Claude, ChatGPT or Cursor build and edit surveys for you through MCP, with a token you control."
 msgstr "Laske Claude'il, ChatGPT-l või Cursoril MCP kaudu teie eest küsitlusi luua ja muuta – teie kontrollitava võtmega."
 
-
-
 #: survey/templates/editor/account_mcp.html
 msgid "AI agents & MCP"
 msgstr "Tehisaru agendid ja MCP"
@@ -10292,7 +10290,6 @@ msgstr "Avaldamine…"
 #: map-style-library (#542)
 msgid "Failed"
 msgstr "Ebaõnnestus"
-
 
 #: map-style-library (#542)
 msgid "Rename"
@@ -12814,3 +12811,24 @@ msgstr "Eelarveküsimused viitekihi põhjal"
 #: budget-question
 msgid "{left} left after it"
 msgstr "pärast seda jääb {left}"
+
+#: survey/context_processors.py
+msgid "Hide the chat button"
+msgstr "Peida vestlusnupp"
+
+#: survey/templates/editor/partials/_help_menu.html
+msgid "Show chat button"
+msgstr "Näita vestlusnuppu"
+
+#: survey/templates/org/invitation_landing.html:26
+#, python-format
+msgid "You've already joined %(org_name)s"
+msgstr "Oled juba liitunud: %(org_name)s"
+
+#: survey/templates/org/invitation_landing.html:27
+msgid "Sign in with the account you joined with to open it."
+msgstr "Avamiseks logi sisse kontoga, millega liitusid."
+
+#: survey/abuse.py:299
+msgid "An account with this email already exists."
+msgstr "Selle e-posti aadressiga konto on juba olemas."

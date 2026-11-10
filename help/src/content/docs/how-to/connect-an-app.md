@@ -34,7 +34,7 @@ has the steps for each one — [Claude](/how-to/use-the-mcp-server/#claude),
 [Le Chat](/how-to/use-the-mcp-server/#le-chat), [Perplexity](/how-to/use-the-mcp-server/#perplexity),
 [Cursor](/how-to/use-the-mcp-server/#cursor), [VS Code](/how-to/use-the-mcp-server/#vs-code),
 [Claude Code](/how-to/use-the-mcp-server/#claude-code), [Codex](/how-to/use-the-mcp-server/#codex)
-and more. In the product, **New Survey → Use your AI assistant** gives the same steps with one
+and more. In the product, **MCP** in the sidebar gives the same steps with one
 button where the assistant allows it.
 
 Desktop tools (Claude Code, Codex, Cursor, VS Code) listen on a local port for the answer, which is
