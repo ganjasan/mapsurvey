@@ -8,9 +8,9 @@ The account menu in both creator bases (`base.html` and `editor/editor_base.html
 list "API & connections" without a badge linking to `/editor/account/connections/`, and that
 page SHALL open with a link "Use your AI assistant" to `/editor/surveys/start/agent/?from=connections`
 above the tokens section. The editor's "?" help menu SHALL list "Connect your AI agent"
-linking to `/editor/surveys/start/agent/?from=help`. The start page's third card links to the
-agent page (change `agent-onboarding`). The URL name `editor_account_mcp` SHALL survive as the
-redirect to the connections page.
+linking to `/editor/surveys/start/agent/?from=help`. The sidebar's *MCP* item links to the agent
+page (`?from=sidebar`). The start page carries no card for it (change `onboarding-friction`). The
+URL name `editor_account_mcp` SHALL survive as the redirect to the connections page.
 
 #### Scenario: Dashboard account menu
 - **WHEN** the dashboard renders for a signed-in creator
