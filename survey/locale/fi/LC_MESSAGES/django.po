@@ -12436,3 +12436,11 @@ msgstr "Jälkeen"
 #: site-gallery-compare
 msgid "Slide to compare"
 msgstr "Vertaa liu’uttamalla"
+
+#: survey/context_processors.py
+msgid "Hide the chat button"
+msgstr "Piilota chat-painike"
+
+#: survey/templates/editor/partials/_help_menu.html
+msgid "Show chat button"
+msgstr "Näytä chat-painike"

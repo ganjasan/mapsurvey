@@ -117,22 +117,28 @@ class SupportChatTest(TestCase):
         self.assertContains(response, "script.src = baseUrl + '/packs/js/sdk.js';")
         self.assertEqual(self._config_on(response)['website_token'], self.WEBSITE_TOKEN)
         self.assertContains(response, 'var hideBubble = false;')
+        self.assertContains(response, 'var editorBubble = false;')
         self.assertNotContains(response, 'help-nav-icon')
         self.assertIsNone(self._identity_on(response))
 
-    def test_editor_page_identifies_creator_and_hides_bubble(self):
+    def test_editor_page_identifies_creator_and_runs_the_editor_bubble(self):
         """
-        GIVEN the widget is configured and MOBILE_EDITOR_NAV is on
+        GIVEN the widget is configured
         WHEN a signed-in creator opens the editor dashboard
-        THEN the page carries the signed identity, hides the bubble, and never the HMAC token
+        THEN the page carries the signed identity and never the HMAC token, and runs the
+             editor bubble (change onboarding-friction): shown on a desktop unless hidden
+             in this browser, never on a phone, never an unread pop-up
         """
         self.client.login(username='chatuser', password='pass')
         with self.settings(CHATWOOT_WEBSITE_TOKEN=self.WEBSITE_TOKEN,
                            CHATWOOT_HMAC_TOKEN=self.HMAC_TOKEN, MOBILE_EDITOR_NAV=True):
             response = self.client.get('/editor/')
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'var hideBubble = true;')
+        self.assertContains(response, 'var editorBubble = true;')
+        self.assertContains(response, "window.matchMedia('(max-width: 767.98px)')")
+        self.assertContains(response, 'showUnreadMessagesDialog: !hideBubble && !editorBubble')
         config = self._config_on(response)
+        self.assertEqual(config['hide_label'], 'Hide the chat button')
         self.assertEqual(config['identity']['identifier'], str(self.user.pk))
         self.assertEqual(len(config['identity']['identifier_hash']), 64)
         self.assertEqual(config['attributes'], {'workspace': 'chatorg', 'plan': 'free'})
@@ -143,16 +149,23 @@ class SupportChatTest(TestCase):
         self.assertContains(response, 'support-unread')
         self.assertContains(response, 'We reply within a day')
 
-    def test_bubble_shown_on_editor_without_mobile_nav(self):
+    def test_editor_bubble_can_be_hidden_and_restored(self):
         """
-        GIVEN the widget is configured and MOBILE_EDITOR_NAV is off
+        GIVEN the widget is configured
         WHEN a signed-in creator opens the editor dashboard
-        THEN the bubble is shown
+        THEN the page carries the bubble's "×" style and the "?" menu's hidden
+             "Show chat button" item, whatever MOBILE_EDITOR_NAV says
         """
         self.client.login(username='chatuser', password='pass')
-        with self.settings(CHATWOOT_WEBSITE_TOKEN=self.WEBSITE_TOKEN, MOBILE_EDITOR_NAV=False):
-            response = self.client.get('/editor/')
-        self.assertContains(response, 'var hideBubble = false;')
+        for mobile_nav in (True, False):
+            with self.subTest(mobile_nav=mobile_nav):
+                with self.settings(CHATWOOT_WEBSITE_TOKEN=self.WEBSITE_TOKEN, MOBILE_EDITOR_NAV=mobile_nav):
+                    response = self.client.get('/editor/')
+                self.assertContains(response, 'var editorBubble = true;')
+                self.assertContains(response, '.ms-support-hide {')
+                self.assertContains(response, "var BUBBLE_KEY = 'msSupportBubble';")
+                self.assertContains(response, 'class="dropdown-item support-bubble-restore" href="#" '
+                                              'onclick="showSupportBubble(event)" hidden')
 
     def test_widget_locale_follows_page_language(self):
         """

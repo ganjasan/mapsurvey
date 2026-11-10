@@ -1,7 +1,9 @@
 {% extends "editor/editor_base.html" %}
 {% load i18n %}
 {% load static %}
-{% comment %}The three ways to begin (openspec: first-survey-onboarding, start-cards-one-click).
+{% comment %}The two ways to begin (openspec: first-survey-onboarding, start-cards-one-click;
+the third card, Use your AI assistant, went in change onboarding-friction, #638 -- the agent
+page is reached from the sidebar's MCP item, the "?" menu and the help centre).
 
 The redirect target for a workspace with no surveys and, until a default is
 set in Preferences, where "+ New Survey" leads. Cards read like a life-path
@@ -10,8 +12,7 @@ One click on a card does the card's action -- the blank card IS the submit
 button of its form, the AI card IS a link. No selection step, no detail block:
 the first version had both and creators clicked the card over and over (#335).
 The wizard (AI draft) card comes first, badged "Best to start": AI drafts reach publication
-about 2.5x as often as empty surveys. The third card leads to the agent page, /editor/surveys/start/agent/ (change
-agent-onboarding, #312): one tile per assistant and its simplest way to connect.{% endcomment %}
+about 2.5x as often as empty surveys.{% endcomment %}
 
 {% block page_title %}{% trans "New survey" %}{% endblock %}
 
@@ -21,14 +22,14 @@ agent-onboarding, #312): one tile per assistant and its simplest way to connect.
 
 {% block extra_head %}
 <style>
-  .start-wrap { padding: 2rem 1.5rem 3rem; max-width: 1120px; margin: 0 auto; }
+  .start-wrap { padding: 2rem 1.5rem 3rem; max-width: 860px; margin: 0 auto; }
   .start-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
   .start-head h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -.01em; margin: 0; }
   .start-head p { color: #5f6368; margin: .35rem 0 0; font-size: .92rem; }
   .start-skip { font-size: .82rem; color: #5f6368; white-space: nowrap; padding-top: .4rem; }
   .start-current { font-size: .85rem; color: #5f6368; margin-top: .5rem; }
 
-  .start-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; align-items: stretch; }
+  .start-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; align-items: stretch; }
   .start-card {
     background: #fff; border: 2px solid var(--border-color); border-radius: 16px;
     display: flex; flex-direction: column; position: relative; overflow: hidden;
@@ -54,11 +55,6 @@ agent-onboarding, #312): one tile per assistant and its simplest way to connect.
   .start-art.blank { background: linear-gradient(145deg, #0f766e, #14b8a6 60%, #5eead4); }
   .start-art.ai { background: linear-gradient(145deg, #3730a3, #6366f1 55%, #a5b4fc); }
   .start-art.ai i { transform: translateY(-38px); }  /* above the example-brief bubble */
-  .start-art.agent { background: linear-gradient(145deg, #7c2d12, #d97757 55%, #fbcfb4); }
-  .start-art.agent i { transform: translateY(-30px); }
-  .start-art .logos { position: absolute; top: 12px; left: 16px; display: flex; gap: 6px; z-index: 1; }
-  .start-art .logos span { background: rgba(255,255,255,.92); color: #1f2937; border-radius: 999px; font-size: .68rem; font-weight: 600; padding: 2px 8px; }
-  .start-badge-new { background: #ecfdf5; color: #047857; }
   .start-art .chat { position: absolute; left: 16px; right: 16px; bottom: 14px; background: rgba(255,255,255,.92); color: #1f2937; border-radius: 10px; padding: 7px 10px; font-size: .74rem; line-height: 1.35; }
   .start-art .chat small { display: block; color: #9aa0a6; font-size: .62rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; margin-bottom: 2px; }
   .start-body { padding: 1rem 1.25rem 1.25rem; display: flex; flex-direction: column; gap: .35rem; flex: 1; }
@@ -87,8 +83,7 @@ agent-onboarding, #312): one tile per assistant and its simplest way to connect.
     .start-art { width: 56px; height: 56px; margin: .75rem 0 0 1rem; flex: 0 0 auto; }
     .start-art i { font-size: 22px; }
     .start-art.ai i { transform: none; }
-    .start-art .chat, .start-art::before, .start-art .logos { display: none; }
-    .start-art.agent i { transform: none; }
+    .start-art .chat, .start-art::before { display: none; }
     .start-body { flex: 1; min-width: 0; padding: .75rem 1rem .5rem; }
     .start-title { font-size: 1rem; }
     .start-what { font-size: .85rem; color: #5f6368; }
@@ -156,19 +151,6 @@ agent-onboarding, #312): one tile per assistant and its simplest way to connect.
         </span>
       </button>
     </form>
-
-    {# ── 3 · Use your AI assistant: the agent page (change agent-onboarding) ── #}
-    <a class="start-card" data-path="agent" href="{% url 'editor_survey_start_agent' %}">
-      <span class="start-label"><span>{% trans "Your assistant" %}</span><span class="start-badge start-badge-new">{% trans "New" %}</span></span>
-      <span class="start-art agent"><span class="logos"><span>Claude</span><span>ChatGPT</span></span><i class="fas fa-comments"></i>
-        <span class="chat"><small>{% trans "you, in Claude" %}</small>{% trans "Make a survey about where people want new benches in our park" %}</span>
-      </span>
-      <span class="start-body">
-        <span class="start-title">{% trans "Use your AI assistant" %}</span>
-        <span class="start-what">{% trans "Connect Mapsurvey to Claude or ChatGPT in a minute, then ask it to build and edit surveys right from the chat." %}</span>
-        <span class="start-who">{% trans "For people who already work in Claude or ChatGPT." %}</span>
-      </span>
-    </a>
 
   </div>
 </div>

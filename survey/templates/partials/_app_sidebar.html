@@ -12,14 +12,19 @@ Below 768px it is the drawer behind the header's ☰ button.{% endcomment %}
 <script>
   document.body.classList.add('app-has-sidebar');
   {% comment %}Before first paint: the creator's collapse choice, on workspace-level pages only
-  (a survey page sets app-rail in its markup and never reads this).{% endcomment %}
-  try {
-    if (!document.body.classList.contains('app-rail-default') && localStorage.getItem('msSidebar') === 'rail') {
+  (a survey page sets app-rail in its markup and never reads this). Before the first survey
+  (`app_nav.onboarding`, change onboarding-friction) the rail is the default and only an
+  explicit Expand ('wide') keeps the sidebar open.{% endcomment %}
+  (function () {
+    if (document.body.classList.contains('app-rail-default')) return;
+    var choice = null;
+    try { choice = localStorage.getItem('msSidebar'); } catch (e) {}
+    if (choice === 'rail' || ({% if app_nav.onboarding %}true{% else %}false{% endif %} && choice !== 'wide')) {
       document.body.classList.add('app-rail');
     }
-  } catch (e) {}
+  })();
 </script>
-<aside class="app-sidebar" id="appSidebar" aria-label="{% trans 'Main navigation' %}">
+<aside class="app-sidebar" id="appSidebar" aria-label="{% trans 'Main navigation' %}"{% if app_nav.onboarding %} data-onboarding="1"{% endif %}>
   <div class="app-side-head">
     <a class="app-logo" href="{% url 'editor' %}?dashboard=1" aria-label="Mapsurvey">M</a>
     <div class="dropdown app-ws-dropdown">

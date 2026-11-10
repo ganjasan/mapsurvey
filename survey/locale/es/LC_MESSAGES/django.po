@@ -12500,3 +12500,11 @@ msgstr "Después"
 #: site-gallery-compare
 msgid "Slide to compare"
 msgstr "Desliza para comparar"
+
+#: survey/context_processors.py
+msgid "Hide the chat button"
+msgstr "Ocultar el botón del chat"
+
+#: survey/templates/editor/partials/_help_menu.html
+msgid "Show chat button"
+msgstr "Mostrar el botón del chat"

@@ -449,13 +449,15 @@ class AgentHelpGuideTest(SimpleTestCase):
                 if 'claude_desktop_config.json' in text:
                     self.assertNotIn('"url"', text, os.path.join(dirpath, name))
 
-    def test_start_guide_names_the_third_way(self):
+    def test_start_guide_names_the_assistant_way(self):
         """
         GIVEN the start guide
         WHEN it is read
-        THEN it describes "Use your AI assistant" and links to the MCP guide
+        THEN it sends readers who use an assistant to the sidebar's MCP item (the start page
+             card went in change onboarding-friction) and links to the MCP guide
         """
         guide = self._read('how-to/choose-how-to-start.md')
-        self.assertIn('Use your AI assistant', guide)
+        self.assertIn('click **MCP** in the sidebar', guide)
+        self.assertNotIn('**Use your AI assistant**', guide)
         self.assertIn('/how-to/use-the-mcp-server/', guide)
         self.assertNotIn('is coming', guide)

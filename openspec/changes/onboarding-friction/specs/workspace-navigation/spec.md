@@ -47,3 +47,29 @@ item for the current page SHALL be marked active, resolved from the URL name by
 #### Scenario: Registry URLs resolve
 - **WHEN** a module row names a URL name that does not resolve
 - **THEN** `test_every_module_resolves` fails
+
+### Requirement: Two widths, the rail inside a survey
+The sidebar SHALL render expanded on workspace-level pages and as an icon rail (labels as hover
+tooltips and accessible names) on every `editor_base` page with a survey in context. While the
+active workspace has no surveys — a creator who has just registered, before their first survey
+exists — workspace-level pages SHALL also open as the rail (`app_nav.onboarding`), so nothing in
+the navigation competes with the start page; an explicit *Expand* the creator made
+(`localStorage['msSidebar'] = 'wide'`) wins. On a workspace-level page *Collapse* / *Expand* SHALL
+persist in `localStorage['msSidebar']` and be applied before first paint. Inside a survey
+*Expand* SHALL last for that page only.
+
+#### Scenario: Survey page opens as a rail
+- **WHEN** a creator opens a survey's Build page
+- **THEN** `body` carries the `app-rail` class
+
+#### Scenario: Dashboard opens expanded
+- **WHEN** a creator who never collapsed the sidebar opens the dashboard of a workspace that has surveys
+- **THEN** `body` does not carry `app-rail`
+
+#### Scenario: A new creator starts with the rail
+- **WHEN** a creator whose active workspace has no surveys opens the start page or the dashboard
+- **THEN** the page marks the sidebar for the rail before first paint (`data-onboarding="1"` on the sidebar, read by the partial's inline script), unless `localStorage['msSidebar']` is `wide`
+
+#### Scenario: The rail ends with the first survey
+- **WHEN** the same creator opens the dashboard after their first survey exists
+- **THEN** the sidebar is not marked for onboarding

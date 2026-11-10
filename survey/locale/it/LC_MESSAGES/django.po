@@ -12482,3 +12482,11 @@ msgstr "Dopo"
 #: site-gallery-compare
 msgid "Slide to compare"
 msgstr "Scorri per confrontare"
+
+#: survey/context_processors.py
+msgid "Hide the chat button"
+msgstr "Nascondi il pulsante della chat"
+
+#: survey/templates/editor/partials/_help_menu.html
+msgid "Show chat button"
+msgstr "Mostra il pulsante della chat"

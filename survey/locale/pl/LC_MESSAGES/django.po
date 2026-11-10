@@ -12555,3 +12555,11 @@ msgstr "Po"
 #: site-gallery-compare
 msgid "Slide to compare"
 msgstr "Przesuń, aby porównać"
+
+#: survey/context_processors.py
+msgid "Hide the chat button"
+msgstr "Ukryj przycisk czatu"
+
+#: survey/templates/editor/partials/_help_menu.html
+msgid "Show chat button"
+msgstr "Pokaż przycisk czatu"

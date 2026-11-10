@@ -41,3 +41,21 @@ sign-in refusal after the deadline, or the invitation refusal.
 ## Migration Plan
 
 Template and CSS only; deploy and revert are plain.
+
+## Additions (same change, after review on the dev stand)
+
+- **Start page: two cards.** The agent card is removed rather than demoted: the owner wants nothing
+  on the first screen that does not make a survey. The page narrows to 860 px so two cards do not
+  stretch. The agent page keeps its three entrances (sidebar *MCP*, "?" menu, help centre).
+- **Onboarding rail = "the active workspace has no surveys"**, the same test as the dashboard's
+  redirect to the start page, for owner/admin/editor only. Rendered as a flag into the sidebar's
+  inline before-paint script, so no flash; `localStorage['msSidebar'] === 'wide'` (an explicit
+  Expand) wins, and Expand on such a page is remembered by the existing toggle code. An invitee
+  joining a workspace with surveys never sees the rail by default.
+- **Chat bubble: per browser, not per account.** `localStorage['msSupportBubble']`, like
+  `msSidebar` and `msEditorConfirmations`; the cost is that a creator re-hides it on a new device.
+  A `CreatorPreferences` column was the alternative and is the follow-up if that turns out to
+  matter. Phone = the editor's one breakpoint, 767.98 px, read once on load. The "×" is our own
+  fixed button beside Chatwoot's bubble (the SDK has no dismiss), removed with
+  `$chatwoot.toggleBubbleVisibility('hide')`. The editor keeps `showUnreadMessagesDialog: false`
+  with the bubble shown: the widget still never speaks over the work.

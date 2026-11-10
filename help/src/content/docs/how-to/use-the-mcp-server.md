@@ -10,7 +10,7 @@ when you ask it to — "add a point question to the first section asking where a
 with a sub-question rating how urgent it is", "summarise the answers and map where people want
 benches" — while the data stays in Mapsurvey.
 
-The quickest way in is the product itself: **New Survey → Use your AI assistant** shows a tile for
+The quickest way in is the product itself: **MCP** in the sidebar shows a tile for
 every assistant below, with one button or one command where the assistant allows it, and notices
 by itself when you are connected. This page is the same set of instructions, for reference.
 

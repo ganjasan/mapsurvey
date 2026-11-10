@@ -308,3 +308,41 @@ class WidthTest(_SidebarFixture):
         for url in (reverse('editor') + '?dashboard=1', reverse('editor_account_preferences')):
             with self.subTest(url=url):
                 self.assertNotRegex(self.html(url), self.BODY_RAIL)
+
+    def test_a_new_creator_starts_with_the_rail(self):
+        """
+        GIVEN an owner whose workspace has no surveys yet
+        WHEN they open the start page and the dashboard
+        THEN the sidebar is marked for onboarding and the inline script picks the rail unless
+             the creator chose Expand (change onboarding-friction, #638)
+        """
+        from survey.models import SurveyHeader
+        SurveyHeader.objects.filter(organization=self.org).delete()
+        for url in (reverse('editor_survey_start'), reverse('editor') + '?dashboard=1'):
+            with self.subTest(url=url):
+                html = self.html(url)
+                self.assertIn('id="appSidebar" aria-label="Main navigation" data-onboarding="1"', html)
+                self.assertIn("if (choice === 'rail' || (true && choice !== 'wide'))", html)
+
+    def test_the_rail_ends_with_the_first_survey(self):
+        """
+        GIVEN an owner whose workspace has a survey
+        WHEN they open the dashboard
+        THEN the sidebar is not marked for onboarding
+        """
+        html = self.html(reverse('editor') + '?dashboard=1')
+        self.assertNotIn('data-onboarding', html)
+        self.assertIn("if (choice === 'rail' || (false && choice !== 'wide'))", html)
+
+    def test_viewers_are_never_onboarding(self):
+        """
+        GIVEN a viewer in a workspace with no surveys
+        WHEN they open the dashboard
+        THEN the sidebar is not marked for onboarding (they cannot create)
+        """
+        from survey.models import SurveyHeader
+        SurveyHeader.objects.filter(organization=self.org).delete()
+        viewer = User.objects.create_user('railviewer', password='pass')
+        Membership.objects.create(user=viewer, organization=self.org, role='viewer')
+        self.client.login(username='railviewer', password='pass')
+        self.assertNotIn('data-onboarding', self.html(reverse('editor') + '?dashboard=1'))

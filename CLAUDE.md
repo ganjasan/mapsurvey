@@ -589,11 +589,14 @@ the admin; the counters are read-only there.
 creator's identity come from `survey.context_processors.support_chat`. The identifier is
 `str(user.pk)`, signed with `identifier_hash = HMAC-SHA256(CHATWOOT_HMAC_TOKEN, pk)` on the
 server — the token never reaches the browser; empty `CHATWOOT_WEBSITE_TOKEN` = no widget, no
-third-party request (tests, local dev, previews without the env group). On working surfaces
-(`hide_bubble`, i.e. `MOBILE_EDITOR_NAV`) the widget never speaks first: no bubble, no unread
-pop-up; the entry point is the "?" menu in the header (`editor/partials/_help_menu.html`) and
-"Help & support" in the ⋯/account menus, and an agent reply lights the `.support-unread` dot on
-them. `openSupportChat(event, context)` opens the chat and sends `context` to the agent as
+third-party request (tests, local dev, previews without the env group). The creator bases
+include it with `editor_bubble=True` (change `onboarding-friction`, #638): the bubble shows on a
+desktop and never below 768 px, carries our own "×" that hides it in this browser
+(`localStorage['msSupportBubble']`), and "Show chat button" in the "?" menu
+(`.support-bubble-restore`, `showSupportBubble`) brings it back. The editor widget never speaks
+first, bubble or not: no unread pop-up; the "?" menu in the header (`editor/partials/_help_menu.html`)
+and "Help & support" in the ⋯/account menus stay the entry points, and an agent reply lights the
+`.support-unread` dot on them. `openSupportChat(event, context)` opens the chat and sends `context` to the agent as
 contact custom attributes (workspace, plan, page, survey are sent on every page) — the hook for
 help at the point of failure (#295). Chatwoot's own cookies outlive our session, so a page
 rendered for a different visitor clears them before the SDK loads; do not use
@@ -839,8 +842,13 @@ respondent redirects go through `survey/redirects.py::completion_url(survey)`, i
 as the "After the last page" choice; the form refuses anything that is not a full http(s) address.
 
 **Ways to start (change `first-survey-onboarding`)**: a workspace with no surveys and, by default,
-"+ New Survey" lead to the START PAGE `/editor/surveys/start/` (`editor_survey_start`) — three cards,
-*Start from scratch* / *Draft with AI* / *Connect your AI agent* — not to the create page.
+"+ New Survey" lead to the START PAGE `/editor/surveys/start/` (`editor_survey_start`) — two cards,
+*Survey wizard* / *Start from scratch* — not to the create page. The third card (*Use your AI
+assistant*) was removed in change `onboarding-friction` (#638): nothing on the first screen that
+does not make a survey; the agent page is reached from the sidebar's *MCP* item, the "?" menu and
+the help centre. Before the first survey (`app_nav.onboarding`: no canonical, non-trashed survey in
+the active workspace; owner/admin/editor) workspace-level pages open the sidebar as the rail unless
+the creator chose Expand (`msSidebar = 'wide'`).
 **One click on a card does its action** (change `start-cards-one-click`, #335): the blank card IS
 the submit `<button>` of its form, the AI card IS a link to `?from=start`, comes FIRST and is
 called the *Survey wizard* with a "Best to start" badge (AI drafts publish ~2.5x as often; the

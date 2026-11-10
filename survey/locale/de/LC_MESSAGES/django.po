@@ -12525,3 +12525,11 @@ msgstr "Nachher"
 #: site-gallery-compare
 msgid "Slide to compare"
 msgstr "Zum Vergleichen schieben"
+
+#: survey/context_processors.py
+msgid "Hide the chat button"
+msgstr "Chat-Schaltfläche ausblenden"
+
+#: survey/templates/editor/partials/_help_menu.html
+msgid "Show chat button"
+msgstr "Chat-Schaltfläche anzeigen"

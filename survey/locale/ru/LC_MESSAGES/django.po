@@ -10543,3 +10543,11 @@ msgstr "После"
 #: site-gallery-compare
 msgid "Slide to compare"
 msgstr "Сдвиньте, чтобы сравнить"
+
+#: survey/context_processors.py
+msgid "Hide the chat button"
+msgstr "Скрыть кнопку чата"
+
+#: survey/templates/editor/partials/_help_menu.html
+msgid "Show chat button"
+msgstr "Показать кнопку чата"

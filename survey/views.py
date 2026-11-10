@@ -722,7 +722,7 @@ def editor(request):
 
 	# A creator whose org has no surveys has nothing to do on the dashboard —
 	# and 47% of registrations never make it past that empty screen. Send them
-	# to the start page (the three ways to begin, change first-survey-onboarding)
+	# to the start page (the ways to begin, change first-survey-onboarding)
 	# rather than straight into one of them. Viewers are exempt: they cannot
 	# create, so the start page would be a dead end for them.
 	if (org_role in ('owner', 'admin', 'editor')
