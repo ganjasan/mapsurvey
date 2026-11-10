@@ -2,6 +2,7 @@
 
 Moved from survey/tests.py by #273; classes are unchanged.
 """
+import re
 from django.test import TestCase, override_settings
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point
@@ -122,13 +123,13 @@ class SurveyStartTest(TestCase):
     # ── start page ──
 
     @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
-    def test_start_page_shows_three_cards(self):
+    def test_start_page_shows_two_cards(self):
         """
         GIVEN an editor-or-higher creator and a configured provider
         WHEN the start page is opened
-        THEN the three cards render: the blank card is the submit button of the blank form,
-             the wizard (AI draft) card is a link to the brief, the agent card is a link to
-             the agent page (change agent-onboarding)
+        THEN two cards render: the blank card is the submit button of the blank form and
+             the wizard (AI draft) card is a link to the brief; the assistant card is gone
+             (change onboarding-friction), so the cards hold no link to the agent page
         """
         response = self.client.get(reverse('editor_survey_start'))
 
@@ -143,15 +144,11 @@ class SurveyStartTest(TestCase):
         self.assertNotIn('Draft with AI', html)
         self.assertIn('<a class="start-card start-primary" data-path="ai" href="%s?from=start">'
                       % reverse('editor_survey_create'), html)
-        self.assertIn('<a class="start-card" data-path="agent" href="%s">'
-                      % reverse('editor_survey_start_agent'), html)
-        card = html[html.index('data-path="agent"'):html.index('</a>', html.index('data-path="agent"'))]
-        self.assertIn('Use your AI assistant', card)
-        self.assertIn('New', card)
-        for word in ('Claude', 'ChatGPT'):
-            self.assertIn(word, card)
-        for gone in ('aria-disabled', 'Coming soon', 'MCP', 'token'):
-            self.assertNotIn(gone, card)
+        cards = html[html.index('id="start-cards"'):html.index('js/survey_start')]
+        self.assertEqual(len(re.findall(r'class="start-card[ "]', cards)), 2)
+        self.assertNotIn('data-path="agent"', cards)
+        self.assertNotIn('Use your AI assistant', cards)
+        self.assertNotIn(reverse('editor_survey_start_agent'), cards)
         self.assertNotIn('Skip to dashboard', html)
 
     @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='', GEMINI_API_KEY='')

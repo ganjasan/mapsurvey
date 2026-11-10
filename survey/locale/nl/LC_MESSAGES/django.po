@@ -12475,6 +12475,14 @@ msgstr "Na"
 msgid "Slide to compare"
 msgstr "Schuif om te vergelijken"
 
+#: survey/context_processors.py
+msgid "Hide the chat button"
+msgstr "Chatknop verbergen"
+
+#: survey/templates/editor/partials/_help_menu.html
+msgid "Show chat button"
+msgstr "Chatknop tonen"
+
 #: survey/templates/org/invitation_landing.html:26
 #, python-format
 msgid "You've already joined %(org_name)s"

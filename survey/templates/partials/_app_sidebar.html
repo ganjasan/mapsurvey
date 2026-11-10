@@ -12,14 +12,19 @@ Below 768px it is the drawer behind the header's ☰ button.{% endcomment %}
 <script>
   document.body.classList.add('app-has-sidebar');
   {% comment %}Before first paint: the creator's collapse choice, on workspace-level pages only
-  (a survey page sets app-rail in its markup and never reads this).{% endcomment %}
-  try {
-    if (!document.body.classList.contains('app-rail-default') && localStorage.getItem('msSidebar') === 'rail') {
+  (a survey page sets app-rail in its markup and never reads this). Before the first survey
+  (`app_nav.onboarding`, change onboarding-friction) the rail is the default and only an
+  explicit Expand ('wide') keeps the sidebar open.{% endcomment %}
+  (function () {
+    if (document.body.classList.contains('app-rail-default')) return;
+    var choice = null;
+    try { choice = localStorage.getItem('msSidebar'); } catch (e) {}
+    if (choice === 'rail' || ({% if app_nav.onboarding %}true{% else %}false{% endif %} && choice !== 'wide')) {
       document.body.classList.add('app-rail');
     }
-  } catch (e) {}
+  })();
 </script>
-<aside class="app-sidebar" id="appSidebar" aria-label="{% trans 'Main navigation' %}">
+<aside class="app-sidebar" id="appSidebar" aria-label="{% trans 'Main navigation' %}"{% if app_nav.onboarding %} data-onboarding="1"{% endif %}>
   <div class="app-side-head">
     <a class="app-logo" href="{% url 'editor' %}?dashboard=1" aria-label="Mapsurvey">M</a>
     <div class="dropdown app-ws-dropdown">
@@ -52,7 +57,7 @@ Below 768px it is the drawer behind the header's ☰ button.{% endcomment %}
     <a class="app-item{% if app_nav.active == item.key %} active{% endif %}" href="{% url item.url_name %}{% if item.query %}?{{ item.query }}{% endif %}"
        data-nav-key="{{ item.key }}" data-label="{{ item.label }}" aria-label="{{ item.label }}"{% if app_nav.active == item.key %} aria-current="page"{% endif %}>
       <i class="{{ item.icon }}" aria-hidden="true"></i><span>{{ item.label }}</span>
-      {% if item.feature and active_org %}<em class="app-item-mark">{% pro_badge active_org item.feature False %}</em>{% endif %}
+      {% if item.feature and active_org %}<em class="app-item-mark">{% pro_nav_mark active_org item.feature %}</em>{% endif %}
     </a>
     {% endfor %}
 
@@ -62,7 +67,7 @@ Below 768px it is the drawer behind the header's ☰ button.{% endcomment %}
       <a class="app-item{% if app_nav.active == item.key %} active{% endif %}" href="{% url item.url_name %}{% if item.query %}?{{ item.query }}{% endif %}"
          data-nav-key="{{ item.key }}" data-label="{{ item.label }}" aria-label="{{ item.label }}"{% if app_nav.active == item.key %} aria-current="page"{% endif %}>
         <i class="{{ item.icon }}" aria-hidden="true"></i><span>{{ item.label }}</span>
-        {% if active_org %}<em class="app-item-mark">{% pro_badge active_org "api" False %}</em>{% endif %}
+        {% if active_org %}<em class="app-item-mark">{% pro_nav_mark active_org "api" %}</em>{% endif %}
       </a>
       {% endfor %}
     </div>
@@ -74,7 +79,7 @@ Below 768px it is the drawer behind the header's ☰ button.{% endcomment %}
       <a class="app-item{% if app_nav.active == item.key %} active{% endif %}" href="{% url item.url_name active_org.slug %}"
          data-nav-key="{{ item.key }}" data-label="{{ item.label }}" aria-label="{{ item.label }}"{% if app_nav.active == item.key %} aria-current="page"{% endif %}>
         <i class="{{ item.icon }}" aria-hidden="true"></i><span>{{ item.label }}</span>
-        <em class="app-item-mark">{% pro_badge active_org "map_styles" False %}</em>
+        <em class="app-item-mark">{% pro_nav_mark active_org "map_styles" %}</em>
       </a>
       {% endfor %}
     </div>

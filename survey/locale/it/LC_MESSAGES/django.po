@@ -12483,6 +12483,14 @@ msgstr "Dopo"
 msgid "Slide to compare"
 msgstr "Scorri per confrontare"
 
+#: survey/context_processors.py
+msgid "Hide the chat button"
+msgstr "Nascondi il pulsante della chat"
+
+#: survey/templates/editor/partials/_help_menu.html
+msgid "Show chat button"
+msgstr "Mostra il pulsante della chat"
+
 #: survey/templates/org/invitation_landing.html:26
 #, python-format
 msgid "You've already joined %(org_name)s"

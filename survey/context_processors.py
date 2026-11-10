@@ -3,6 +3,7 @@ import hmac
 import json
 from django.conf import settings
 from django.db.models import Case, IntegerField, When
+from django.utils.translation import gettext as _
 
 from .models import Membership
 
@@ -168,6 +169,18 @@ def active_org(request):
     }
 
 
+def _onboarding(org, role):
+    """A creator before their first survey (change onboarding-friction, #638): the
+    sidebar opens as the rail on workspace-level pages too, so nothing in the
+    navigation competes with the start page. Same test as the dashboard's
+    redirect to the start page; viewers cannot create, so never."""
+    if org is None or role not in ('owner', 'admin', 'editor'):
+        return False
+    from .models import SurveyHeader
+    return not SurveyHeader.objects.filter(
+        organization=org, is_canonical=True, deleted_at__isnull=True).exists()
+
+
 def app_nav(request):
     """The application sidebar (change app-sidebar): whether it shows, which item is active,
     the rows this member sees and the workspace's plan chip. Lazy: pages without the sidebar
@@ -192,6 +205,7 @@ def app_nav(request):
             'library': nav.items_for(role, nav.LIBRARY) if org is not None else (),
             'workspace': nav.items_for(role) if org is not None else (),
             'plan': nav.plan_chip(org, request.user),
+            'onboarding': _onboarding(org, role),
         }
 
     return {'app_nav': SimpleLazyObject(build)}
@@ -343,6 +357,7 @@ def support_chat(request):
             'identity': identity,
             'attributes': attributes,
             'open_on_load': open_on_load,
+            'hide_label': str(_('Hide the chat button')),
         },
     }
 
@@ -358,9 +373,10 @@ def help_site(request):
 
 
 def email_verification(request):
-    """The confirm-your-email banner state (change login-grace-period, #487).
+    """The confirm-your-email dialog state (change login-grace-period, #487; the
+    standing banner went in change onboarding-friction, #638).
 
-    Lazy, like `whats_new`: only the banner partial reads it, so no query runs
+    Lazy, like `whats_new`: only the dialog partial reads it, so no query runs
     on a page that does not render it; a session already known to be confirmed
     (`GracePeriodMiddleware.CONFIRMED_FLAG`) costs nothing either. Empty when
     there is nothing to say.
@@ -368,7 +384,7 @@ def email_verification(request):
     from django.utils.functional import SimpleLazyObject
 
     def build():
-        from .email_verification import grace_deadline, is_verified
+        from .email_verification import is_verified
         from .middleware import GracePeriodMiddleware
         user = getattr(request, 'user', None)
         if user is None or not user.is_authenticated:
@@ -381,6 +397,6 @@ def email_verification(request):
             return {}
         if is_verified(user):
             return {}
-        return {'email': user.email, 'deadline': grace_deadline(user)}
+        return {'email': user.email}
 
     return {'email_confirmation': SimpleLazyObject(build)}

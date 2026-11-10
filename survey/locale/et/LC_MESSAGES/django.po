@@ -12416,6 +12416,14 @@ msgstr "Pärast"
 msgid "Slide to compare"
 msgstr "Libistage võrdlemiseks"
 
+#: survey/context_processors.py
+msgid "Hide the chat button"
+msgstr "Peida vestlusnupp"
+
+#: survey/templates/editor/partials/_help_menu.html
+msgid "Show chat button"
+msgstr "Näita vestlusnuppu"
+
 #: survey/templates/org/invitation_landing.html:26
 #, python-format
 msgid "You've already joined %(org_name)s"

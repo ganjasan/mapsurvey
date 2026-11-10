@@ -12437,6 +12437,14 @@ msgstr "Sesudah"
 msgid "Slide to compare"
 msgstr "Geser untuk membandingkan"
 
+#: survey/context_processors.py
+msgid "Hide the chat button"
+msgstr "Sembunyikan tombol obrolan"
+
+#: survey/templates/editor/partials/_help_menu.html
+msgid "Show chat button"
+msgstr "Tampilkan tombol obrolan"
+
 #: survey/templates/org/invitation_landing.html:26
 #, python-format
 msgid "You've already joined %(org_name)s"

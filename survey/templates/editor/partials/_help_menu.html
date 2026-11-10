@@ -23,6 +23,8 @@ is the per-template visibility class (`nav-desktop`, `d-none d-md-inline-block`)
         {% if SUPPORT_CHAT %}
         <a class="dropdown-item" href="#" onclick="openSupportChat(event)"><i class="fas fa-comment-dots" style="margin-right:4px;"></i>{% trans "Help & support" %} <span class="wn-badge support-unread" hidden>{% trans "new" %}</span></a>
         <div style="font-size:.75rem;color:#9ca3af;padding:0 1.5rem .4rem;white-space:normal;">{% trans "We reply within a day — by email if you have left the page." %}</div>
+        {# Shown by _support_chat.html only after the creator hid the bubble with its "×" (change onboarding-friction). #}
+        <a class="dropdown-item support-bubble-restore" href="#" onclick="showSupportBubble(event)" hidden><i class="fas fa-eye" style="margin-right:4px;"></i>{% trans "Show chat button" %}</a>
         {% elif CONTACT_EMAIL %}
         <a class="dropdown-item" href="mailto:{{ CONTACT_EMAIL }}"><i class="fas fa-envelope" style="margin-right:4px;"></i>{% trans "Email support" %}</a>
         {% endif %}

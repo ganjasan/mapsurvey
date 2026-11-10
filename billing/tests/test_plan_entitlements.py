@@ -244,6 +244,36 @@ class ProBadgeTest(TestCase):
         html = self._render('api')
         self.assertIn('data-pro-state="plan"', html)
 
+    def test_nav_mark_is_silent_unless_locked(self):
+        """
+        GIVEN the api feature on a startable Free workspace, then with a live trial, then on Pro,
+              and on a workspace whose owner used their trial elsewhere
+        WHEN {% pro_nav_mark %} renders
+        THEN it renders nothing three times, then a lock with no "Pro" text
+        """
+        from ..trial import claim
+        from .helpers import trial_used_elsewhere
+
+        def nav():
+            ents.forget(self.org)
+            if hasattr(self.org, '_trial_startable'):
+                del self.org._trial_startable
+            return Template('{% load billing_tags %}{% pro_nav_mark org "api" %}').render(
+                Context({'org': self.org})).strip()
+
+        self.assertEqual(nav(), '')
+        claim(self.org, self.owner)
+        self.assertEqual(nav(), '')
+        _sub(self.org)
+        self.assertEqual(nav(), '')
+
+        other = make_org('Nav Locked', owner_username='nav_locked_owner')[0]
+        trial_used_elsewhere(other)
+        html = Template('{% load billing_tags %}{% pro_nav_mark org "api" %}').render(Context({'org': other}))
+        self.assertIn('data-pro-state="locked"', html)
+        self.assertIn('<svg', html)
+        self.assertNotIn('Pro<', html)
+
     def test_uncapped_feature_shows_the_end_date(self):
         """
         GIVEN a live trial ending on a known day

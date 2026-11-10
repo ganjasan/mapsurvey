@@ -1,11 +1,14 @@
 {% load i18n %}{% get_current_language as SUPPORT_CHAT_LANG %}
 {% comment %}
 Support chat (openspec: chatwoot-support-chat, #291). Included by base_landing.html,
-base.html and editor/editor_base.html; pass `hide_bubble=True` on working surfaces,
-where the chat opens only from the "?" help menu / "Help & support" items
-(window.openSupportChat) and the widget never speaks first: no bubble, no unread
-pop-up, no pop-out button. The only signal it gives is the `.support-unread` dot on
-those entry points. Config and identity come from the support_chat context
+base.html and editor/editor_base.html. The creator bases pass `editor_bubble=True`
+(change onboarding-friction, #638): the bubble shows on a desktop and never on a phone,
+carries a "×" that hides it in this browser (localStorage['msSupportBubble']), and the
+"?" menu's "Show chat button" (`.support-bubble-restore`, window.showSupportBubble)
+brings it back. On the editor the widget never speaks first, bubble or not: no unread
+pop-up, no pop-out button; the `.support-unread` dot on the "?" / "Help & support"
+entry points (window.openSupportChat) is its signal. `hide_bubble=True` hides the
+bubble outright. Config and identity come from the support_chat context
 processor; with no website token nothing loads and openSupportChat is a no-op, so
 the menu items never throw.
 
@@ -13,17 +16,29 @@ openSupportChat(event, context): `context` (an object of strings) is sent to the
 agent as custom attributes before the chat opens — this is the hook for #295,
 "Contact support" at the point of failure.
 {% endcomment %}
-{% if SUPPORT_CHAT %}{{ SUPPORT_CHAT|json_script:"support-chat-config" }}{% endif %}
+{% if SUPPORT_CHAT %}{{ SUPPORT_CHAT|json_script:"support-chat-config" }}{% if editor_bubble %}
+<style>
+/* The bubble's "×" (change onboarding-friction): a small chip on the bubble's top-left edge.
+   Chatwoot draws the bubble 64 px wide, 20 px from the right and bottom edges. */
+.ms-support-hide { position: fixed; right: 68px; bottom: 70px; z-index: 2147483001; width: 20px; height: 20px;
+    padding: 0; border: 1px solid #d1d5db; border-radius: 50%; background: #fff; color: #6b7280;
+    font-size: 14px; line-height: 17px; text-align: center; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+.ms-support-hide:hover { color: #111827; border-color: #9ca3af; }
+@media (max-width: 767.98px) { .ms-support-hide { display: none; } }
+</style>{% endif %}{% endif %}
 <script>
 (function () {
     {% if not SUPPORT_CHAT %}
     window.openSupportChat = function (e) { if (e) e.preventDefault(); };
+    window.showSupportBubble = function (e) { if (e) e.preventDefault(); };
     {% else %}
     var config = JSON.parse(document.getElementById('support-chat-config').textContent);
     var identity = config.identity;
     var websiteToken = config.website_token;
     var baseUrl = config.base_url;
     var hideBubble = {{ hide_bubble|yesno:"true,false" }};
+    var editorBubble = {{ editor_bubble|yesno:"true,false" }};
+    var BUBBLE_KEY = 'msSupportBubble';
 
     // Which creator this browser last identified to Chatwoot. Chatwoot keeps the
     // conversation in its own first-party cookies, which outlive our session, so a page
@@ -44,10 +59,19 @@ agent as custom attributes before the chat opens — this is the hook for #295,
     // flag only for authenticated users, so an anonymous visitor's URL is ignored.
     var ready = false, openWhenReady = !!config.open_on_load, pendingContext = null;
 
-    // Read by the SDK before it renders, so a hidden bubble never flashes.
+    // Editor pages (change onboarding-friction): the bubble on a desktop, never on a phone,
+    // where it covers the panel's controls; a creator who finds it in the way hides it with
+    // its "×", remembered in this browser, and gets it back from the "?" menu.
+    var phone = window.matchMedia('(max-width: 767.98px)');
+    if (editorBubble) {
+        hideBubble = phone.matches || storage(function (s) { return s.getItem(BUBBLE_KEY); }) === 'hidden';
+    }
+
+    // Read by the SDK before it renders, so a hidden bubble never flashes. The editor's
+    // widget never speaks first, bubble or not: no unread pop-up over the work.
     window.chatwootSettings = {
         hideMessageBubble: hideBubble,
-        showUnreadMessagesDialog: !hideBubble,
+        showUnreadMessagesDialog: !hideBubble && !editorBubble,
         showPopoutButton: false,
         locale: '{{ SUPPORT_CHAT_LANG|escapejs }}',
         position: 'right',
@@ -95,7 +119,40 @@ agent as custom attributes before the chat opens — this is the hook for #295,
         }
         sendContext(pendingContext);
         if (openWhenReady) window.$chatwoot.toggle('open');
+        if (editorBubble && !hideBubble) addHideButton();
+        syncRestoreItems();
     });
+
+    // The "×" beside the bubble, and the "?" menu's "Show chat button" (`.support-bubble-restore`).
+    function addHideButton() {
+        if (document.getElementById('msSupportBubbleHide')) return;
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.id = 'msSupportBubbleHide';
+        btn.className = 'ms-support-hide';
+        btn.title = config.hide_label;
+        btn.setAttribute('aria-label', config.hide_label);
+        btn.textContent = '×';
+        btn.addEventListener('click', function () { setBubble(false); });
+        document.body.appendChild(btn);
+    }
+    function syncRestoreItems() {
+        var hidden = editorBubble && !phone.matches && hideBubble;
+        var items = document.querySelectorAll('.support-bubble-restore');
+        for (var i = 0; i < items.length; i++) items[i].hidden = !hidden;
+    }
+    function setBubble(show) {
+        hideBubble = !show;
+        storage(function (s) { if (show) s.removeItem(BUBBLE_KEY); else s.setItem(BUBBLE_KEY, 'hidden'); });
+        try { window.$chatwoot.toggleBubbleVisibility(show ? 'show' : 'hide'); } catch (err) {}
+        var btn = document.getElementById('msSupportBubbleHide');
+        if (show) addHideButton(); else if (btn) btn.remove();
+        syncRestoreItems();
+    }
+    window.showSupportBubble = function (e) {
+        if (e) e.preventDefault();
+        if (ready) setBubble(true);
+    };
 
     window.openSupportChat = function (e, context) {
         if (e) e.preventDefault();
