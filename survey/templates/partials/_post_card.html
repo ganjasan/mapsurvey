@@ -1,0 +1,19 @@
+{% load static %}
+{% comment %}
+One article card on /blog/ (change public-blog-and-changelog). Expects `article` (survey.blog.Article).
+Same classes as partials/_story_card.html, so a feed of both reads as one grid.
+{% endcomment %}
+<a class="story-card story-card--post" href="{{ article.url }}">
+  <div class="story-card__cover{% if not article.cover %} story-card__cover--empty{% endif %}">
+    {% if article.cover %}<img src="{% static article.cover %}" alt="{{ article.cover_alt }}" loading="lazy">{% endif %}
+    <span class="story-card__type">{{ article.label }}</span>
+  </div>
+  <div class="story-card__body">
+    <h3 class="story-card__title">{{ article.title }}</h3>
+    <p class="story-card__text">{{ article.summary }}</p>
+    <div class="story-card__foot">
+      <span class="story-card__org">{{ article.date|date:"j M Y" }}</span>
+      <span class="story-card__more">Read the article &rarr;</span>
+    </div>
+  </div>
+</a>

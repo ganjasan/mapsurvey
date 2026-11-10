@@ -1,0 +1,54 @@
+{% extends "base_landing.html" %}
+{% load static i18n %}
+{% comment %}
+/blog/ (change public-blog-and-changelog): customer stories and articles in one grid, newest
+first. Stories keep their own card and URL (/stories/<slug>/); articles use _post_card.html,
+built on the same classes. ?kind= chips are plain links; the canonical never carries them.
+{% endcomment %}
+
+{% block title %}Blog — features, ideas and customer stories | Mapsurvey{% endblock %}
+{% block meta_description %}What we build at Mapsurvey and why: new features for map-based surveys, the ideas behind them, and projects our customers ran with them.{% endblock %}
+{% block canonical_url %}https://mapsurvey.org/blog/{% endblock %}
+{% block og_url %}https://mapsurvey.org/blog/{% endblock %}
+{% block og_title %}Mapsurvey blog{% endblock %}
+
+{% block extra_head %}<link rel="alternate" type="application/rss+xml" title="Mapsurvey blog" href="{% url 'blog_feed' %}">{% endblock %}
+{% block structured_data %}
+{% if breadcrumb_jsonld %}<script type="application/ld+json">{{ breadcrumb_jsonld|safe }}</script>{% endif %}
+{% endblock %}
+
+{% block content %}
+<section class="hero hero--compact hero--page" id="hero">
+  <div class="hero__content">
+    <h1 class="hero__headline">Blog</h1>
+    <p class="hero__description">
+      New features and the reasons behind them, ideas we are working on, and projects our customers ran with Mapsurvey.
+      Short updates go to the <a href="{% url 'changelog_public' %}">changelog</a>.
+    </p>
+  </div>
+</section>
+
+<section class="showcase" id="posts">
+  <div class="landing-inner">
+    {% if kind_chips %}
+    <nav class="topic-chips topic-filter" aria-label="Filter by kind">
+      <a href="{% url 'blog_index' %}"{% if not active_kind %} class="is-active" aria-current="true"{% endif %}>All</a>
+      {% for value, label in kind_chips %}<a href="{% url 'blog_index' %}?kind={{ value }}"{% if active_kind == value %} class="is-active" aria-current="true"{% endif %}>{{ label }}</a>{% endfor %}
+    </nav>
+    {% endif %}
+    {% if items %}
+    <div class="story-grid">
+      {% for item in items %}
+        {% if item.story %}{% with story=item.story %}{% include "partials/_story_card.html" %}{% endwith %}
+        {% else %}{% with article=item.article %}{% include "partials/_post_card.html" %}{% endwith %}{% endif %}
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="story-empty">
+      <p>Nothing published yet — check back soon.</p>
+    </div>
+    {% endif %}
+    <p class="blog-feed-link"><a href="{% url 'blog_feed' %}">RSS</a> · <a href="{% url 'changelog_public' %}">Changelog</a></p>
+  </div>
+</section>
+{% endblock %}

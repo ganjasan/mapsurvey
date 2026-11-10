@@ -10706,3 +10706,15 @@ msgstr "Войдите в аккаунт, с которым вступали, ч
 #: survey/abuse.py:299
 msgid "An account with this email already exists."
 msgstr "Аккаунт с этим адресом уже существует."
+
+#: survey/templates/base_landing.html
+msgid "Blog"
+msgstr "Блог"
+
+#: survey/templates/base_landing.html
+msgid "Changelog"
+msgstr "Список изменений"
+
+#: survey/templates/editor/whats_new.html
+msgid "Read the article"
+msgstr "Читать статью"

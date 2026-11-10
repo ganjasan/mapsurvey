@@ -22,6 +22,7 @@ from . import abuse_review_views
 from . import site_views
 from . import site_translation_views
 from . import demo_request_views
+from . import blog_views
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -271,6 +272,12 @@ urlpatterns = [
     path('surveys/<str:survey_slug>/download', views.download_data, name='download_data'),
     path('stories/', views.stories_index, name='stories_index'),
     path('stories/<slug:slug>/', views.story_detail, name='story_detail'),
+    # Blog and public changelog (change public-blog-and-changelog, #647). feed.xml before <slug>.
+    path('blog/', blog_views.blog_index, name='blog_index'),
+    path('blog/feed.xml', blog_views.blog_feed, name='blog_feed'),
+    path('blog/<slug:slug>/', blog_views.blog_post, name='blog_post'),
+    path('changelog/', blog_views.changelog_public, name='changelog_public'),
+    path('changelog/feed.xml', blog_views.changelog_feed, name='changelog_feed'),
     path('for-educators/', views.for_educators, name='for_educators'),
     path('for-planners/', views.for_planners, name='for_planners'),
     path('for-researchers/', views.for_researchers, name='for_researchers'),

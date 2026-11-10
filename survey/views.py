@@ -2693,6 +2693,17 @@ def sitemap_xml(request):
 	for story in Story.objects.filter(is_published=True).order_by('-published_date'):
 		lastmod = f"<lastmod>{story.published_date.date().isoformat()}</lastmod>" if story.published_date else ""
 		urls.append(f"  <url><loc>{base}/stories/{story.slug}/</loc>{lastmod}</url>")
+	# Blog + published articles, and the public changelog (change public-blog-and-changelog).
+	from . import blog, changelog
+	newest = max((a.updated or a.date for a in blog.published()), default=None)
+	urls.append(f"  <url><loc>{base}/blog/</loc>"
+				+ (f"<lastmod>{newest.isoformat()}</lastmod>" if newest else "") + "</url>")
+	for article in blog.published():
+		urls.append(f"  <url><loc>{base}{article.url}</loc>"
+					f"<lastmod>{(article.updated or article.date).isoformat()}</lastmod></url>")
+	latest_entry = changelog.latest()
+	urls.append(f"  <url><loc>{base}/changelog/</loc>"
+				+ (f"<lastmod>{latest_entry.date}</lastmod>" if latest_entry else "") + "</url>")
 	for survey in surveys:
 		urls.append(f"  <url><loc>{base}/surveys/{survey.uuid}/</loc></url>")
 	# Public (indexable) results pages; unlisted pages are excluded.

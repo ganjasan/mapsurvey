@@ -12938,3 +12938,7 @@ msgstr "Connectez-vous avec le compte utilisé pour le rejoindre."
 #: survey/abuse.py:299
 msgid "An account with this email already exists."
 msgstr "Un compte existe déjà avec cette adresse e-mail."
+
+#: survey/templates/editor/whats_new.html
+msgid "Read the article"
+msgstr "Lire l'article"

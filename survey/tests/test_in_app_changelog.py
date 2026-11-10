@@ -496,3 +496,67 @@ class WhatsNewViewsTest(_ChangelogDirMixin, TestCase):
         newcomer = User.objects.create_user('wn_newcomer2', password='pw')
         user_registered.send(sender=self.__class__, user=newcomer, request=None)
         self.assertEqual(CreatorPreferences.objects.get(user=newcomer).changelog_seen, '')
+
+
+class PublicChangelogTest(_ChangelogDirMixin, TestCase):
+    """/changelog/, its RSS feed and the article link (change public-blog-and-changelog, #647)."""
+
+    _ARTICLE = ("---\ntitle: Exports, explained\nkind: feature\nsummary: Five formats.\n"
+                "changelog: 2026-09-29-export-formats\n---\n<p>Body.</p>\n")
+
+    def setUp(self):
+        import tempfile
+        from survey import blog
+        self.use_entries({'2026-09-24-geo-edit.html': _ENTRY_FIX,
+                          '2026-09-29-export-formats.html': _ENTRY_A,
+                          '2026-10-06-empty-sessions.html': _ENTRY_B})
+        directory = tempfile.mkdtemp()
+        with open(os.path.join(directory, '2026-09-30-exports.html'), 'w', encoding='utf-8') as fh:
+            fh.write(self._ARTICLE)
+        patcher = mock.patch.object(blog, 'ARTICLES_DIR', directory)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        blog.clear_cache()
+        self.addCleanup(blog.clear_cache)
+
+    def test_anonymous_visitor_reads_every_entry_newest_first(self):
+        """
+        GIVEN three entries, one of them a fix, and an article expanding the export entry
+        WHEN an anonymous visitor opens /changelog/
+        THEN all three render newest first under their id anchors, the export entry links to the
+             article, and no editor "Open" link is rendered
+        """
+        response = self.client.get('/changelog/')
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        ids = ['id="2026-10-06-empty-sessions"', 'id="2026-09-29-export-formats"', 'id="2026-09-24-geo-edit"']
+        self.assertEqual([html.index(i) for i in ids], sorted(html.index(i) for i in ids))
+        self.assertIn('href="/blog/exports/"', html)
+        self.assertIn('Fixed', html)
+        listing = html.split('class="changelog-list"')[1].split('</section>')[0]
+        self.assertNotIn('href="/editor/"', listing)
+
+    def test_rss_links_the_anchors(self):
+        """
+        GIVEN the same entries
+        WHEN /changelog/feed.xml is fetched
+        THEN each item links to /changelog/#<id>
+        """
+        body = self.client.get('/changelog/feed.xml').content.decode()
+        self.assertIn('/changelog/#2026-10-06-empty-sessions</link>', body)
+        self.assertEqual(body.count('<item>'), 3)
+
+    def test_whats_new_page_links_the_article(self):
+        """
+        GIVEN a signed-in creator and the article expanding the export entry
+        WHEN they open /editor/whats-new/
+        THEN the export entry carries the "Read the article" link
+        """
+        org = Organization.objects.create(name="Public CL Org")
+        user = User.objects.create_user('public_cl', password='pw')
+        Membership.objects.create(user=user, organization=org, role='owner')
+        self.client.force_login(user)
+        session = self.client.session
+        session['active_org_id'] = org.id
+        session.save()
+        self.assertContains(self.client.get('/editor/whats-new/'), 'href="/blog/exports/"')

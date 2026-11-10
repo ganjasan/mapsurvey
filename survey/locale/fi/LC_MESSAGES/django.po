@@ -12853,3 +12853,7 @@ msgstr "Avaa se kirjautumalla tilillä, jolla liityit."
 #: survey/abuse.py:299
 msgid "An account with this email already exists."
 msgstr "Tällä sähköpostiosoitteella on jo tili."
+
+#: survey/templates/editor/whats_new.html
+msgid "Read the article"
+msgstr "Lue artikkeli"

@@ -12899,3 +12899,7 @@ msgstr "Accedi con l'account con cui ti sei unito per aprirlo."
 #: survey/abuse.py:299
 msgid "An account with this email already exists."
 msgstr "Esiste già un account con questa email."
+
+#: survey/templates/editor/whats_new.html
+msgid "Read the article"
+msgstr "Leggi l'articolo"

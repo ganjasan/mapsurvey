@@ -12942,3 +12942,7 @@ msgstr "Melden Sie sich mit dem Konto an, mit dem Sie beigetreten sind."
 #: survey/abuse.py:299
 msgid "An account with this email already exists."
 msgstr "Ein Konto mit dieser E-Mail-Adresse existiert bereits."
+
+#: survey/templates/editor/whats_new.html
+msgid "Read the article"
+msgstr "Artikel lesen"
