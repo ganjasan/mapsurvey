@@ -1241,3 +1241,147 @@ msgstr "ఆన్‌లైన్‌లో సమాధానం ఇవ్వా�
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* తప్పనిసరి"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "ఖర్చు నిర్ణయించలేదు — ఎంచుకోలేరు."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "ప్రతి అంశానికి నివాసితులు ఇచ్చిన బడ్జెట్ సగటు వాటా."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "ప్రతి ప్రాజెక్టుకు నిధులు ఇచ్చిన నివాసితుల వాటా. ఆకుపచ్చ: కలిసి బడ్జెట్‌లో సరిపోయే, అత్యధిక మద్దతు పొందిన ప్రాజెక్టులు."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "నివాసితులు ఖర్చు చేసిన మొత్తంలో ఒక్కో అంశం వాటా."
+
+#: budget-question
+msgid "{left} left"
+msgstr "{left} మిగిలింది"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ మొత్తం కేటాయించబడింది"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "బడ్జెట్ కంటే {over} ఎక్కువ"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "మొత్తం {total} కేటాయించండి — ఇంకా {left} కేటాయించలేదు."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "కనీసం ఒక అంశానికి మొత్తం ఇవ్వండి."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "కనీసం {n} ఎంచుకోండి."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "మిగిలిన దానికంటే {over} ఎక్కువ."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "అనుమతించిన గరిష్ఠ సంఖ్యను ఉంచారు."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "%(total)s లో"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "%(total)s ను అంశాల మధ్య పంచండి. మొత్తాలు కలిపి %(total)s కావాలి."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "%(total)s వరకు అంశాల మధ్య పంచండి."
+
+#: budget-question
+msgid "Total"
+msgstr "మొత్తం"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "మీరు నిధులు ఇచ్చే ప్రాజెక్టులను టిక్ చేయండి. వాటి ఖర్చులు కలిపి %(total)s మించకూడదు."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "ప్రతి గుర్తు పక్కన అంశం సంఖ్య రాయండి. అంశాల ఖర్చు కలిపి %(total)s మించకూడదు."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "గరిష్ఠంగా %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "తగ్గించు"
+
+#: budget-question
+msgid "More"
+msgstr "పెంచు"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "మిగిలినదాన్ని సమానంగా పంచు"
+
+#: budget-question
+msgid "Item to place"
+msgstr "ఉంచాల్సిన అంశం"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "మ్యాప్‌లో ఉంచు"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "ఒక అంశాన్ని ఎంచుకుని, దాన్ని ఉంచడానికి మ్యాప్‌ను తాకండి."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s సమాధానాలు · బడ్జెట్ %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "ఈ గుర్తుకు {cost} ఖర్చవుతుంది, కానీ {left} మాత్రమే మిగిలి ఉంది."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "ధర: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "బడ్జెట్: %(total)s — ఈ గుంపులోని గుర్తుల మొత్తం ఖర్చు దీని కంటే ఎక్కువ ఉండకూడదు."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "ఒక్కొక్కటి %(amount)s"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "దీని తర్వాత {left} మిగులుతుంది"

@@ -421,6 +421,39 @@ def structural_question_changes(before, after, removed_choices=()):
         reasons.append('the audience')  # who sees it is structure (change operator-entry)
     for _code, label, count in removed_choices:
         reasons.append(f'the option “{label}” ({count} answer{"s" if count != 1 else ""})')
+    reasons.extend(_budget_structural_changes(before, after))
+    return reasons
+
+
+# Budget settings whose change makes stored allocations unreadable (change
+# budget-question, design D9). Rule, minimum, shares and symbol are content.
+BUDGET_STRUCTURAL_KEYS = ('mode', 'total', 'unit', 'step', 'source', 'cost_property')
+
+
+def _budget_structural_changes(before, after):
+    if before['input_type'] != after.input_type:
+        return []
+    reasons = []
+    old_vs = before.get('validation_settings') or {}
+    new_vs = after.validation_settings or {}
+    if after.input_type == 'budget':
+        old = old_vs.get('budget') or {}
+        new = new_vs.get('budget') or {}
+        for key in BUDGET_STRUCTURAL_KEYS:
+            if old.get(key) != new.get(key):
+                reasons.append(f'the budget {key.replace("_", " ")}')
+        old_costs = {str(c.get('code')): c.get('cost')
+                     for c in before.get('choices') or [] if isinstance(c, dict)}
+        for choice in after.choices or []:
+            if not isinstance(choice, dict):
+                continue
+            code = str(choice.get('code'))
+            if code in old_costs and old_costs[code] != choice.get('cost'):
+                reasons.append(f'the cost of “{choice.get("name") or code}”')
+    # A geo question's price under a budget group: stored marks were admitted
+    # against it (change budget-question).
+    if (old_vs.get('price') or None) != (new_vs.get('price') or None):
+        reasons.append('the price')
     return reasons
 
 
@@ -431,6 +464,7 @@ def question_snapshot(question):
         'visibility_rule': question.visibility_rule,
         'audience': question.audience,
         'choices': list(question.choices or []),
+        'validation_settings': dict(question.validation_settings or {}),
     }
 
 

@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Budget question — user journey mockup v1</title>
+<style>
+  :root { --ink:#1f2937; --mut:#6b7280; --line:#e5e7eb; --bg:#f8fafc; --acc:#4f46e5; --acc-l:#eef2ff; --amber:#f59e0b; --amber-bg:#fffbeb; --red:#dc2626; --green:#16a34a; --note:#fef3c7; --pro:#7c3aed; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.45 -apple-system,Segoe UI,Roboto,sans-serif; color:var(--ink); background:#e9edf3; }
+  header { background:#111827; color:#fff; padding:14px 24px; }
+  header h1 { margin:0; font-size:18px; font-weight:600; }
+  header p { margin:4px 0 0; color:#cbd5e1; font-size:13px; }
+  nav.tabs { display:flex; gap:4px; padding:10px 24px 0; background:#111827; flex-wrap:wrap; }
+  nav.tabs button { border:0; background:#374151; color:#e5e7eb; padding:8px 12px; border-radius:6px 6px 0 0; cursor:pointer; font-size:13px; }
+  nav.tabs button.on { background:#e9edf3; color:#111827; font-weight:600; }
+  section.screen { display:none; padding:20px 24px 40px; }
+  section.screen.on { display:block; }
+  .frame { background:#fff; border:1px solid #cbd5e1; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,.08); max-width:1180px; margin:0 auto 18px; overflow:hidden; }
+  .frame.phone { max-width:390px; }
+  .frame.mid { max-width:760px; }
+  .chrome { background:#f1f5f9; border-bottom:1px solid var(--line); padding:8px 14px; font-size:12px; color:var(--mut); display:flex; gap:8px; align-items:center; }
+  .chrome .dot { width:10px; height:10px; border-radius:50%; background:#cbd5e1; display:inline-block; }
+  .pad { padding:18px; }
+  h2.t { margin:0 0 4px; font-size:20px; }
+  .crumb { color:var(--mut); font-size:13px; margin-bottom:14px; }
+  .btn { display:inline-block; border:1px solid #cbd5e1; background:#fff; border-radius:6px; padding:6px 12px; font-size:13px; color:var(--ink); cursor:default; }
+  .btn.p { background:var(--acc); color:#fff; border-color:var(--acc); }
+  .btn.lg { padding:10px 18px; font-size:15px; }
+  .btn.ghost { border-color:transparent; color:var(--acc); }
+  .btn.dis { opacity:.45; }
+  .badge { display:inline-block; font-size:11px; padding:2px 7px; border-radius:10px; font-weight:600; }
+  .badge.amber { background:var(--amber-bg); color:#92400e; border:1px solid #fcd34d; }
+  .badge.red { background:#fef2f2; color:#991b1b; border:1px solid #fecaca; }
+  .badge.green { background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; }
+  .badge.grey { background:#f1f5f9; color:#475569; border:1px solid #e2e8f0; }
+  .badge.pro { background:#f5f3ff; color:var(--pro); border:1px solid #ddd6fe; }
+  .row { display:flex; gap:14px; align-items:flex-start; }
+  .pal { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .pi { border:1px solid var(--line); border-radius:8px; padding:8px 10px; display:flex; gap:8px; align-items:center; }
+  .pi.on { border-color:var(--acc); background:var(--acc-l); }
+  .pi.cant { opacity:.45; }
+  .pi .ic { width:30px; height:30px; border-radius:50%; background:#4f46e5; color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px; flex:none; }
+  .pi .nm { font-weight:600; font-size:13px; }
+  .pi .c { font-size:12px; color:var(--mut); }
+  .pi .cnt { margin-left:auto; font-size:12px; background:#fff; border:1px solid #cbd5e1; border-radius:10px; padding:1px 7px; }
+  .placed { display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid var(--line); font-size:13px; }
+  .placed .ic { width:22px; height:22px; border-radius:50%; background:#4f46e5; color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; }
+  .placed .cost { margin-left:auto; font-weight:600; }
+  .map .obj { position:absolute; transform:translate(-50%,-50%); width:28px; height:28px; border-radius:50%; background:#4f46e5; color:#fff; border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center; font-size:13px; }
+  .map .cross { position:absolute; transform:translate(-50%,-50%); width:44px; height:44px; border:2px dashed var(--acc); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; background:rgba(238,242,255,.7); }
+  .map .park { position:absolute; left:18%; top:18%; width:62%; height:64%; background:rgba(134,239,172,.35); border:2px solid #4ade80; border-radius:30% 40% 35% 45%; }
+  .col { flex:1; }
+  .card { border:1px solid var(--line); border-radius:8px; padding:12px 14px; margin-bottom:10px; background:#fff; }
+  .card.hl { border-color:#a5b4fc; background:var(--acc-l); }
+  .note { background:var(--note); border-left:4px solid var(--amber); padding:10px 14px; margin:14px auto; max-width:1180px; border-radius:6px; font-size:13.5px; }
+  .note b { color:#92400e; }
+  .q { background:var(--acc-l); border-left:4px solid #6366f1; padding:10px 14px; margin:14px auto; max-width:1180px; border-radius:6px; font-size:13.5px; }
+  .q b { color:#3730a3; }
+  .small { font-size:12px; color:var(--mut); }
+  table.cases { width:100%; border-collapse:collapse; background:#fff; font-size:13px; max-width:1180px; margin:0 auto; }
+  table.cases th, table.cases td { border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top; }
+  table.cases th { background:#f1f5f9; }
+
+  /* editor modal */
+  .modal { max-width:760px; margin:0 auto; background:#fff; border:1px solid #cbd5e1; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,.15); }
+  .modal .mh { display:flex; align-items:center; padding:14px 18px; border-bottom:1px solid var(--line); font-weight:600; font-size:16px; }
+  .modal .mh .x { margin-left:auto; color:var(--mut); font-weight:400; }
+  .modal .mb { padding:16px 18px; }
+  .blk { border:1px solid var(--line); border-radius:8px; margin-bottom:12px; }
+  .blk .bh { padding:9px 12px; font-weight:600; font-size:13px; background:#f8fafc; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:8px; }
+  .blk .bb { padding:12px; }
+  .field { margin:8px 0; } .field label { display:block; font-size:12.5px; color:#374151; margin-bottom:4px; }
+  .field .in { border:1px solid #cbd5e1; border-radius:6px; padding:6px 10px; display:inline-block; min-width:180px; background:#fff; }
+  .field .in.w { min-width:100%; }
+  .field .in.n { min-width:90px; text-align:right; }
+  .radio::before { content:"○ "; color:#94a3b8; } .radio.on::before { content:"● "; color:var(--acc); }
+  .check::before { content:"☐ "; color:#94a3b8; } .check.on::before { content:"☑ "; color:var(--acc); }
+  .seg { display:inline-flex; border:1px solid #cbd5e1; border-radius:8px; overflow:hidden; }
+  .seg span { padding:7px 12px; font-size:13px; border-right:1px solid #cbd5e1; }
+  .seg span:last-child { border-right:0; }
+  .seg span.on { background:var(--acc-l); color:#3730a3; font-weight:600; }
+  .modecard { flex:1; border:1px solid #cbd5e1; border-radius:8px; padding:12px; }
+  .modecard.on { border-color:var(--acc); background:var(--acc-l); }
+  .modecard b { display:block; margin-bottom:4px; }
+  .typegrid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+  .type { border:1px solid var(--line); border-radius:6px; padding:8px; font-size:12.5px; text-align:center; }
+  .type.on { border-color:var(--acc); background:var(--acc-l); font-weight:600; }
+  table.ch { width:100%; border-collapse:collapse; font-size:13px; }
+  table.ch th, table.ch td { border-bottom:1px solid var(--line); padding:6px 8px; text-align:left; }
+  table.ch th { color:var(--mut); font-weight:500; font-size:12px; }
+  table.ch .in { border:1px solid #cbd5e1; border-radius:5px; padding:3px 8px; display:inline-block; background:#fff; }
+  .grip { color:#cbd5e1; }
+
+  /* respondent */
+  .resp { display:grid; grid-template-columns:420px 1fr; min-height:560px; }
+  .resp.wide { grid-template-columns:1fr; min-height:0; }
+  .panel { padding:20px 22px; border-right:1px solid var(--line); overflow:auto; }
+  .panel h3 { margin:0 0 4px; font-size:18px; }
+  .panel .sub { color:var(--mut); margin-bottom:14px; }
+  .map { background:#e8eef2 url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><path d='M0 60 H120 M60 0 V120 M0 20 H120 M0 100 H120 M20 0 V120 M100 0 V120' stroke='%23d5dde3' stroke-width='3' fill='none'/></svg>"); position:relative; }
+  .map .pin { position:absolute; transform:translate(-50%,-100%); text-align:center; }
+  .map .pin .dot { width:16px; height:16px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); background:#4f46e5; border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,.4); margin:0 auto; }
+  .map .pin .tag { background:#fff; border:1px solid #cbd5e1; border-radius:12px; padding:1px 7px; font-size:11px; font-weight:600; white-space:nowrap; margin-top:3px; box-shadow:0 1px 2px rgba(0,0,0,.1); }
+  .map .pin.in .dot { background:var(--green); }
+  .map .pin.in .tag { border-color:#86efac; background:#f0fdf4; color:#166534; }
+  .map .pin.dim .dot { background:#9ca3af; }
+  .map .pin.dim .tag { color:#9ca3af; }
+  .popup { position:absolute; background:#fff; border-radius:10px; box-shadow:0 6px 24px rgba(0,0,0,.2); width:280px; padding:12px 14px; font-size:13px; }
+  .popup b { font-size:14px; display:block; }
+  .popup .cost { font-size:18px; font-weight:700; margin:6px 0; }
+  .popup img.ph { width:100%; height:90px; border-radius:6px; background:linear-gradient(135deg,#c7d2fe,#a5f3fc); display:block; margin-bottom:8px; }
+  .popup::after { content:""; position:absolute; left:50%; bottom:-8px; width:16px; height:16px; background:#fff; transform:translateX(-50%) rotate(45deg); }
+
+  .budgetbar { position:sticky; top:0; background:#fff; padding:10px 0 12px; border-bottom:1px solid var(--line); margin-bottom:12px; z-index:2; }
+  .budgetbar .nums { display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px; }
+  .budgetbar .nums b { font-size:16px; }
+  .track { height:10px; border-radius:6px; background:#e5e7eb; overflow:hidden; display:flex; }
+  .track i { display:block; height:100%; }
+  .track.over { outline:2px solid var(--red); }
+  .left { color:var(--mut); } .left.ok { color:var(--green); font-weight:600; } .left.over { color:var(--red); font-weight:600; }
+
+  .alloc { border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin-bottom:8px; }
+  .alloc .top { display:flex; align-items:center; gap:10px; }
+  .alloc .ic { width:28px; height:28px; border-radius:6px; background:var(--acc-l); color:var(--acc); display:flex; align-items:center; justify-content:center; font-size:13px; }
+  .alloc .nm { flex:1; font-weight:600; }
+  .alloc .desc { color:var(--mut); font-size:12.5px; margin:4px 0 8px 38px; }
+  .alloc .ctl { display:flex; align-items:center; gap:8px; margin-left:38px; }
+  .stp { width:34px; height:34px; border:1px solid #cbd5e1; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; background:#fff; }
+  .amt { min-width:84px; text-align:center; border:1px solid #cbd5e1; border-radius:8px; padding:6px 8px; font-weight:600; font-variant-numeric:tabular-nums; }
+  .amt.z { color:#9ca3af; font-weight:400; }
+  .slider { flex:1; height:6px; background:#e5e7eb; border-radius:4px; position:relative; }
+  .slider i { position:absolute; left:0; top:0; height:100%; background:var(--acc); border-radius:4px; }
+  .slider b { position:absolute; top:50%; width:20px; height:20px; border-radius:50%; background:#fff; border:2px solid var(--acc); transform:translate(-50%,-50%); }
+  .pct { min-width:38px; text-align:right; color:var(--mut); font-size:12px; }
+
+  .proj { border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin-bottom:8px; display:flex; gap:10px; align-items:flex-start; }
+  .proj.in { border-color:#86efac; background:#f0fdf4; }
+  .proj.cant { opacity:.5; }
+  .proj .cb { width:22px; height:22px; border:2px solid #cbd5e1; border-radius:6px; flex:none; margin-top:1px; }
+  .proj.in .cb { border-color:var(--green); background:var(--green); color:#fff; text-align:center; font-size:14px; line-height:18px; }
+  .proj .body { flex:1; }
+  .proj .nm { font-weight:600; }
+  .proj .desc { color:var(--mut); font-size:12.5px; }
+  .proj .cost { font-weight:700; white-space:nowrap; }
+  .proj .where { font-size:11.5px; color:var(--acc); }
+
+  .navbtns { display:flex; justify-content:space-between; margin-top:16px; }
+  .err { background:#fef2f2; border:1px solid #fecaca; color:#991b1b; border-radius:6px; padding:8px 10px; font-size:12.5px; margin-bottom:10px; }
+  .phone .panel { border-right:0; padding:14px; }
+  .phone .budgetbar { padding-top:6px; }
+  .phone .stp { width:40px; height:40px; }
+  .phone .resp { grid-template-columns:1fr; }
+  .phone .mapstrip { height:150px; }
+
+  /* results */
+  .res { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .bars .r { display:grid; grid-template-columns:200px 1fr 70px; gap:10px; align-items:center; margin:7px 0; font-size:13px; }
+  .bars .r .bar { height:18px; background:#e5e7eb; border-radius:4px; overflow:hidden; }
+  .bars .r .bar i { display:block; height:100%; background:var(--acc); }
+  .bars .r .bar i.g { background:var(--green); }
+  .bars .r .v { text-align:right; font-variant-numeric:tabular-nums; }
+  .bars .r .v small { color:var(--mut); }
+  .kpis { display:flex; gap:10px; margin-bottom:12px; }
+  .kpi { flex:1; border:1px solid var(--line); border-radius:8px; padding:10px 12px; }
+  .kpi b { display:block; font-size:20px; }
+  .kpi span { color:var(--mut); font-size:12px; }
+  .cols { font-family:ui-monospace,Menlo,monospace; font-size:12px; background:#f8fafc; border:1px solid var(--line); border-radius:6px; padding:8px 10px; overflow:auto; white-space:nowrap; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Budget question — user journey, v1</h1>
+  <p>Один тип вопроса <b>Budget</b> (Split a budget · Choose projects within a budget) + <b>бюджет группы</b>: у обычных гео-вопросов внутри группы появляется цена × два источника позиций (список · объекты слоя на карте). Пример: «How would you spend £20M across Immingham» (prod #1435, сейчас сделан через ranking).</p>
+</header>
+<nav class="tabs">
+  <button class="on" data-t="s0">0 · Карта журни</button>
+  <button data-t="s1">1 · Редактор: тип и режим</button>
+  <button data-t="s2">2 · Редактор: позиции и источник</button>
+  <button data-t="s3">3 · Респондент: Split (desktop)</button>
+  <button data-t="s4">4 · Респондент: Split (phone)</button>
+  <button data-t="s5">5 · Респондент: Projects (список)</button>
+  <button data-t="s6">6 · Респондент: Projects на карте</button>
+  <button data-t="s6b">6b · Респондент: бюджет группы (цена у гео-вопросов)</button>
+  <button data-t="s7">7 · Ошибки и крайние случаи</button>
+  <button data-t="s8">8 · Responses и экспорт</button>
+  <button data-t="s9">9 · Public results</button>
+  <button data-t="s10">10 · Открытые вопросы</button>
+</nav>
+
+<!-- 0 -->
+<section class="screen on" id="s0">
+  <div class="frame"><div class="pad">
+    <h2 class="t">Карта журни</h2>
+    <table class="cases">
+      <tr><th style="width:120px">Кто</th><th>Шаг</th><th>Экран</th><th>Что решается</th></tr>
+      <tr><td>Автор</td><td>Добавляет вопрос, выбирает тип <b>Budget</b></td><td>1</td><td>Тип один; режим — первый выбор внутри. Группа «plain», как ranking.</td></tr>
+      <tr><td>Автор</td><td>Задаёт бюджет: сумма, единица, шаг, правило «потратить всё / до»</td><td>1</td><td>Единица — валюта (символ), «points», «%». «%» = total 100 без символа.</td></tr>
+      <tr><td>Автор</td><td>Заполняет позиции: категории (Split) или проекты со стоимостью (Projects)</td><td>2</td><td>Позиции = <code>choices</code> с extras (<code>icon</code>, <code>color</code>, новые <code>description</code>, <code>cost</code>). ИЛИ источник = слой: позиции берутся из объектов, стоимость — из свойства объекта.</td></tr>
+      <tr><td>Респондент</td><td>Split: двигает деньги между категориями, пока не разложит бюджет</td><td>3, 4</td><td>Степперы ±шаг + слайдер; липкая полоса «осталось». Телефон — те же степперы, без слайдера.</td></tr>
+      <tr><td>Респондент</td><td>Projects: отмечает проекты, пока хватает бюджета</td><td>5</td><td>Проект дороже остатка — виден, но недоступен, с подписью почему.</td></tr>
+      <tr><td>Респондент</td><td>Projects на карте: видит ценники на объектах, добавляет из попапа</td><td>6</td><td>Тот же Leaflet-попап, что у layer_objects; добавленные — зелёные, недоступные — серые.</td></tr>
+      <tr><td>Респондент</td><td>Бюджет группы: ставит отметки на обычные гео-вопросы с ценой, пока хватает денег</td><td>6b</td><td>Полоса в заголовке группы; цена на кнопке; кнопка «за штуку» гаснет, когда не влезает; длинная линия / большая площадь не принимается. Гео-вопросы не меняются.</td></tr>
+      <tr><td>Респондент</td><td>Нажимает Next с ошибкой / без JS / возвращается назад</td><td>7</td><td>Серверная проверка повторяет клиентскую; ответ восстанавливается.</td></tr>
+      <tr><td>Автор</td><td>Смотрит Responses, выгружает</td><td>8</td><td>Split: средняя доля и сумма на категорию. Projects: % выбравших, «набор-победитель» под бюджет. Колонка на позицию.</td></tr>
+      <tr><td>Все</td><td>Public results</td><td>9</td><td>Тот же агрегат, k-анонимность как у choice.</td></tr>
+    </table>
+    <div class="q"><b>Гибкость.</b> Split и Projects × источник (список · слой) дают 4 комбинации, Place items — пятая (каталог всегда список, геометрия — респондента), но UI один: Split-на-карте = категории-объекты с суммой у каждого пина; Projects-списком = карточки без карты. Стоимость у проекта опциональна и в Split (тогда это «ориентир», не ограничение).</div>
+  </div></div>
+</section>
+
+<!-- 1 -->
+<section class="screen" id="s1">
+  <div class="note"><b>Где:</b> модал вопроса в Build (<code>question_form_modal.html</code>). Новый тип в сетке типов, рядом с Ranking. Блок «Budget» появляется вместо блока Validation, как у range/rating свои блоки.</div>
+  <div class="modal">
+    <div class="mh">Edit question <span class="x">✕</span></div>
+    <div class="mb">
+      <div class="field"><label>Question</label><span class="in w">How would you spend the £20M fund?</span></div>
+      <div class="field"><label>Help text</label><span class="in w small">Split the fund between the five investment areas. You can leave an area at zero.</span></div>
+
+      <div class="blk"><div class="bh">Type</div><div class="bb">
+        <div class="typegrid">
+          <div class="type">Text</div><div class="type">Number</div><div class="type">Single choice</div><div class="type">Multiple choice</div>
+          <div class="type">Slider</div><div class="type">Rating</div><div class="type">Ranking</div><div class="type on">💷 Budget</div>
+          <div class="type">Point</div><div class="type">Line</div><div class="type">Area</div><div class="type">Objects on the map</div>
+        </div>
+        <p class="small" style="margin:8px 0 0">Budget — respondent splits a fixed budget between items, or picks projects until the budget runs out.</p>
+      </div></div>
+
+      <div class="blk"><div class="bh">Budget</div><div class="bb">
+        <div class="row" style="margin-bottom:12px">
+          <div class="modecard on"><b>Split a budget</b><span class="small">Every item gets an amount; amounts add up to the budget. Results: average share per item.</span></div>
+          <div class="modecard"><b>Choose projects within a budget</b><span class="small">Each item has a cost; respondent picks projects until the budget is spent. Results: share of respondents per project.</span></div>
+          <div class="modecard"><b>Place items on the map</b><span class="small">A catalogue of priced items; respondent places them on the map until the budget is spent. Results: items per type, where they go.</span></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>Total budget</label><span class="in n">20 000 000</span></div>
+          <div class="field"><label>Unit</label><span class="seg"><span class="on">Currency</span><span>Points</span><span>%</span></span></div>
+          <div class="field"><label>Symbol</label><span class="in" style="min-width:70px">£</span></div>
+          <div class="field"><label>Step</label><span class="in n">500 000</span></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>Rule</label>
+            <div><span class="radio on">Must allocate the whole budget</span></div>
+            <div><span class="radio">Can allocate up to the budget</span></div>
+          </div>
+          <div class="field"><label>Display large amounts</label><span class="in">£20M · £0.5M</span> <span class="small">(auto: 20 000 000 → £20M)</span></div>
+        </div>
+        <div class="field"><span class="check">Show each item's share in % next to the amount</span></div>
+      </div></div>
+
+      <div class="blk"><div class="bh">Items <span class="badge grey">5</span></div><div class="bb small">→ экран 2</div></div>
+      <div class="blk"><div class="bh">Visibility</div><div class="bb small">как у всех типов</div></div>
+      <div class="navbtns"><span class="btn">Delete</span><span><span class="btn">Cancel</span> <span class="btn p">Save</span></span></div>
+    </div>
+  </div>
+  <div class="q"><b>Решение:</b> режим — это поле вопроса (<code>validation_settings.budget.mode</code>), не два типа. Смена режима после ответов — структурное изменение (как смена типа) → Unpublished changes.</div>
+</section>
+
+<!-- 2 -->
+<section class="screen" id="s2">
+  <div class="note"><b>Где:</b> тот же модал, блок Items. Это таблица Choices с двумя новыми колонками; для Projects колонка Cost обязательна. Переключатель источника — вверху блока.</div>
+  <div class="modal">
+    <div class="mh">Edit question · Items <span class="x">✕</span></div>
+    <div class="mb">
+      <div class="blk"><div class="bh">Items
+        <span class="seg" style="margin-left:auto"><span class="on">Type a list</span><span>Objects of a layer</span></span>
+      </div><div class="bb">
+        <table class="ch">
+          <tr><th></th><th>Item</th><th>Description</th><th>Icon</th><th>Cost <span class="small">(optional in Split)</span></th><th></th></tr>
+          <tr><td class="grip">⋮⋮</td><td><span class="in">Thriving places &amp; community spaces</span></td><td><span class="in small">Better park facilities and green spaces…</span></td><td>🌳</td><td><span class="in n">—</span></td><td>✕</td></tr>
+          <tr><td class="grip">⋮⋮</td><td><span class="in">Stronger, safer &amp; more connected communities</span></td><td><span class="in small">Tackling antisocial behaviour, safety…</span></td><td>🛡</td><td><span class="in n">—</span></td><td>✕</td></tr>
+          <tr><td class="grip">⋮⋮</td><td><span class="in">Opportunities for young people</span></td><td><span class="in small">Activities, facilities, skills…</span></td><td>🎓</td><td><span class="in n">—</span></td><td>✕</td></tr>
+          <tr><td class="grip">⋮⋮</td><td><span class="in">Local opportunity &amp; community prosperity</span></td><td><span class="in small">Local people benefit from growth…</span></td><td>📈</td><td><span class="in n">—</span></td><td>✕</td></tr>
+          <tr><td class="grip">⋮⋮</td><td><span class="in">Community voice &amp; local leadership</span></td><td><span class="in small"></span></td><td>🗣</td><td><span class="in n">—</span></td><td>✕</td></tr>
+        </table>
+        <p style="margin:10px 0 0"><span class="btn ghost">+ Add item</span> <span class="btn ghost">Paste a list…</span></p>
+      </div></div>
+
+      <div class="blk" style="border-color:#a5b4fc"><div class="bh">Items — <i>Objects of a layer</i> (второе состояние переключателя)</div><div class="bb">
+        <div class="row">
+          <div class="field"><label>Layer</label><span class="in">Candidate projects (12 objects)</span></div>
+          <div class="field"><label>Cost from property</label><span class="in">cost_gbp</span></div>
+          <div class="field"><label>Description from</label><span class="in">object description</span></div>
+        </div>
+        <p class="small">Объекты без числа в <code>cost_gbp</code>: 2 — они показаны на карте, но их нельзя выбрать <span class="badge amber">проверить</span>. Этот вопрос ставит слой на карту секции, как Objects on the map; секция должна быть с картой.</p>
+      </div></div>
+      <div class="navbtns"><span></span><span><span class="btn">Cancel</span> <span class="btn p">Save</span></span></div>
+    </div>
+  </div>
+  <div class="q"><b>Решение:</b> источник «слой» переиспользует <code>Question.layer</code> (PROTECT, как у layer_objects) и свойства объекта; ничего не копируется. Ответ хранится по ключу объекта, как ответы на подвопросы объектов.</div>
+</section>
+
+<!-- 3 -->
+<section class="screen" id="s3">
+  <div class="note"><b>Где:</b> панель респондента, секция с картой или без (тип не геометрический — может стоять в любой секции). Полоса бюджета липкая, остаток — главный индикатор.</div>
+  <div class="frame"><div class="chrome"><span class="dot"></span><span class="dot"></span> mapsurvey.org/surveys/…/S3</div>
+    <div class="resp">
+      <div class="panel">
+        <h3>How would you spend the £20M fund?</h3>
+        <div class="sub">Split the fund between the five investment areas. You can leave an area at zero.</div>
+        <div class="budgetbar">
+          <div class="nums"><span>Allocated <b>£14.5M</b> of £20M</span><span class="left">£5.5M left</span></div>
+          <div class="track"><i style="width:30%;background:#4f46e5"></i><i style="width:20%;background:#6366f1"></i><i style="width:12.5%;background:#818cf8"></i><i style="width:10%;background:#a5b4fc"></i></div>
+        </div>
+        <div class="alloc"><div class="top"><span class="ic">🌳</span><span class="nm">Thriving places &amp; community spaces</span></div>
+          <div class="desc">Better park facilities and green spaces that are well maintained and accessible to all.</div>
+          <div class="ctl"><span class="stp">−</span><span class="amt">£6.0M</span><span class="stp">+</span><span class="slider"><i style="width:30%"></i><b style="left:30%"></b></span><span class="pct">30%</span></div></div>
+        <div class="alloc"><div class="top"><span class="ic">🛡</span><span class="nm">Stronger, safer &amp; more connected communities</span></div>
+          <div class="desc">Tackling antisocial behaviour and safety concerns while keeping community hubs open.</div>
+          <div class="ctl"><span class="stp">−</span><span class="amt">£4.0M</span><span class="stp">+</span><span class="slider"><i style="width:20%"></i><b style="left:20%"></b></span><span class="pct">20%</span></div></div>
+        <div class="alloc"><div class="top"><span class="ic">🎓</span><span class="nm">Opportunities for young people</span></div>
+          <div class="ctl"><span class="stp">−</span><span class="amt">£2.5M</span><span class="stp">+</span><span class="slider"><i style="width:12.5%"></i><b style="left:12.5%"></b></span><span class="pct">13%</span></div></div>
+        <div class="alloc"><div class="top"><span class="ic">📈</span><span class="nm">Local opportunity &amp; community prosperity</span></div>
+          <div class="ctl"><span class="stp">−</span><span class="amt">£2.0M</span><span class="stp">+</span><span class="slider"><i style="width:10%"></i><b style="left:10%"></b></span><span class="pct">10%</span></div></div>
+        <div class="alloc"><div class="top"><span class="ic">🗣</span><span class="nm">Community voice &amp; local leadership</span></div>
+          <div class="ctl"><span class="stp">−</span><span class="amt z">£0</span><span class="stp">+</span><span class="slider"><i style="width:0"></i><b style="left:0"></b></span><span class="pct">0%</span></div></div>
+        <p class="small">Spread the rest evenly · Reset</p>
+        <div class="navbtns"><span class="btn">Back</span><span class="btn p dis">Next — allocate £5.5M more</span></div>
+      </div>
+      <div class="map"></div>
+    </div>
+  </div>
+  <div class="q"><b>Решения:</b> шаг автора ограничивает слайдер и степперы (нет «£3 712 455»); слайдер не даёт уйти за остаток — упирается, полоса остатка мигает. «Spread the rest evenly» — одна кнопка, чтобы правило «потратить всё» не превращалось в арифметику. Кнопка Next подписывает, чего не хватает, вместо того чтобы молча отказывать.</div>
+</section>
+
+<!-- 4 -->
+<section class="screen" id="s4">
+  <div class="note"><b>Телефон:</b> без слайдера — степперы 40 px и ввод числа по тапу на сумму. Полоса бюджета липнет к верху панели. Проценты скрыты, если автор не включил.</div>
+  <div class="frame phone"><div class="chrome"><span class="dot"></span> 390 × 844</div>
+    <div class="panel">
+      <h3 style="font-size:16px">How would you spend the £20M fund?</h3>
+      <div class="budgetbar"><div class="nums"><span><b>£20M</b> of £20M</span><span class="left ok">✓ all allocated</span></div>
+        <div class="track"><i style="width:30%;background:#4f46e5"></i><i style="width:20%;background:#6366f1"></i><i style="width:12.5%;background:#818cf8"></i><i style="width:10%;background:#a5b4fc"></i><i style="width:27.5%;background:#c7d2fe"></i></div></div>
+      <div class="alloc"><div class="top"><span class="ic">🌳</span><span class="nm">Thriving places</span></div><div class="ctl" style="margin-left:0;justify-content:space-between"><span class="stp">−</span><span class="amt">£6.0M</span><span class="stp">+</span></div></div>
+      <div class="alloc"><div class="top"><span class="ic">🛡</span><span class="nm">Safer communities</span></div><div class="ctl" style="margin-left:0;justify-content:space-between"><span class="stp">−</span><span class="amt">£4.0M</span><span class="stp">+</span></div></div>
+      <div class="alloc"><div class="top"><span class="ic">🎓</span><span class="nm">Young people</span></div><div class="ctl" style="margin-left:0;justify-content:space-between"><span class="stp">−</span><span class="amt">£2.5M</span><span class="stp">+</span></div></div>
+      <div class="alloc"><div class="top"><span class="ic">📈</span><span class="nm">Local prosperity</span></div><div class="ctl" style="margin-left:0;justify-content:space-between"><span class="stp">−</span><span class="amt">£2.0M</span><span class="stp">+</span></div></div>
+      <div class="alloc"><div class="top"><span class="ic">🗣</span><span class="nm">Community voice</span></div><div class="ctl" style="margin-left:0;justify-content:space-between"><span class="stp">−</span><span class="amt">£5.5M</span><span class="stp">+</span></div></div>
+      <div class="navbtns"><span class="btn">Back</span><span class="btn p">Next</span></div>
+    </div>
+  </div>
+  <div class="q"><b>Решение:</b> тап по сумме открывает числовую клавиатуру (<code>inputmode=numeric</code>), ввод округляется к шагу. Длинное удержание ± — ускоренный повтор.</div>
+</section>
+
+<!-- 5 -->
+<section class="screen" id="s5">
+  <div class="note"><b>Режим Projects, источник — список.</b> Секция без карты (layout form). Карточки проектов, стоимость справа, чекбокс слева. Что дороже остатка — приглушено с подсказкой.</div>
+  <div class="frame mid"><div class="chrome"><span class="dot"></span> layout: form</div>
+    <div class="panel" style="border-right:0">
+      <h3>Which projects would you fund with £20M?</h3>
+      <div class="sub">Pick as many as fit. Costs are the council's estimates.</div>
+      <div class="budgetbar"><div class="nums"><span>Spent <b>£17.0M</b> of £20M</span><span class="left">£3.0M left</span></div>
+        <div class="track"><i style="width:85%;background:var(--green)"></i></div></div>
+      <div class="proj in"><span class="cb">✓</span><div class="body"><div class="nm">New skate park at Pilgrim Park</div><div class="desc">Concrete park, lighting, seating.</div></div><span class="cost">£1.5M</span></div>
+      <div class="proj in"><span class="cb">✓</span><div class="body"><div class="nm">Refurbish Civic Centre as a community hub</div><div class="desc">Roof, heating, accessible entrance.</div></div><span class="cost">£8.0M</span></div>
+      <div class="proj in"><span class="cb">✓</span><div class="body"><div class="nm">Safer crossings on Pelham Road</div><div class="desc">Three signalised crossings and lighting.</div></div><span class="cost">£2.5M</span></div>
+      <div class="proj in"><span class="cb">✓</span><div class="body"><div class="nm">Youth centre extension</div></div><span class="cost">£5.0M</span></div>
+      <div class="proj"><span class="cb"></span><div class="body"><div class="nm">Town centre public realm</div><div class="desc">Paving, planting, seating.</div></div><span class="cost">£3.0M</span></div>
+      <div class="proj cant"><span class="cb"></span><div class="body"><div class="nm">Leisure centre pool refurbishment</div><div class="desc small">Needs £4.0M — £1.0M over what's left. Untick something to fit it.</div></div><span class="cost">£4.0M</span></div>
+      <div class="proj"><span class="cb"></span><div class="body"><div class="nm">Allotments and community orchard</div></div><span class="cost">£0.4M</span></div>
+      <div class="navbtns"><span class="btn">Back</span><span class="btn p">Next</span></div>
+    </div>
+  </div>
+  <div class="q"><b>Решение:</b> в Projects «потратить всё» нет — всегда «до бюджета» (точно в ноль выйти нельзя). Правило автора здесь другое: <i>минимум N проектов</i> (как <code>min_objects</code>). Ответ — набор ключей; сумма вычисляется, не хранится.</div>
+</section>
+
+<!-- 6 -->
+<section class="screen" id="s6">
+  <div class="note"><b>Режим Projects, источник — слой.</b> Это дифференциатор: Maptionnaire зовёт это Geobudgeting. Тот же Leaflet-попап, что у Objects on the map (карточка объекта + действие), ценник на пине.</div>
+  <div class="frame"><div class="chrome"><span class="dot"></span><span class="dot"></span> layout: map · layer “Candidate projects”</div>
+    <div class="resp">
+      <div class="panel">
+        <h3>Which projects would you fund with £20M?</h3>
+        <div class="sub">Tap a project on the map or in the list.</div>
+        <div class="budgetbar"><div class="nums"><span>Spent <b>£12.0M</b> of £20M</span><span class="left">£8.0M left</span></div>
+          <div class="track"><i style="width:60%;background:var(--green)"></i></div></div>
+        <div class="proj in"><span class="cb">✓</span><div class="body"><div class="nm">Civic Centre hub</div><div class="where">● on the map</div></div><span class="cost">£8.0M</span></div>
+        <div class="proj in"><span class="cb">✓</span><div class="body"><div class="nm">Pelham Road crossings</div><div class="where">● on the map</div></div><span class="cost">£2.5M</span></div>
+        <div class="proj in"><span class="cb">✓</span><div class="body"><div class="nm">Skate park</div><div class="where">● on the map</div></div><span class="cost">£1.5M</span></div>
+        <div class="proj"><span class="cb"></span><div class="body"><div class="nm">Youth centre extension</div></div><span class="cost">£5.0M</span></div>
+        <div class="proj"><span class="cb"></span><div class="body"><div class="nm">Town centre public realm</div></div><span class="cost">£3.0M</span></div>
+        <div class="proj cant"><span class="cb"></span><div class="body"><div class="nm">Leisure centre pool</div><div class="desc small">£4.0M — fits only if you untick £4M+</div></div><span class="cost">£12.0M</span></div>
+        <div class="proj"><span class="cb"></span><div class="body"><div class="nm">Allotments &amp; orchard</div></div><span class="cost">£0.4M</span></div>
+        <div class="navbtns"><span class="btn">Back</span><span class="btn p">Next</span></div>
+      </div>
+      <div class="map">
+        <div class="pin in" style="left:22%;top:38%"><div class="dot"></div><div class="tag">✓ £8.0M</div></div>
+        <div class="pin in" style="left:48%;top:62%"><div class="dot"></div><div class="tag">✓ £2.5M</div></div>
+        <div class="pin in" style="left:70%;top:30%"><div class="dot"></div><div class="tag">✓ £1.5M</div></div>
+        <div class="pin" style="left:60%;top:82%"><div class="dot"></div><div class="tag">£5.0M</div></div>
+        <div class="pin" style="left:35%;top:78%"><div class="dot"></div><div class="tag">£3.0M</div></div>
+        <div class="pin dim" style="left:82%;top:70%"><div class="dot"></div><div class="tag">£12.0M</div></div>
+        <div class="pin" style="left:15%;top:85%"><div class="dot"></div><div class="tag">£0.4M</div></div>
+        <div class="popup" style="left:46%;top:16%">
+          <img class="ph" alt="">
+          <b>Youth centre extension</b>
+          <span class="small">Two new rooms, a recording studio and a kitchen for the youth club on Kings Road.</span>
+          <div class="cost">£5.0M <span class="small" style="font-weight:400">· fits in your £8.0M</span></div>
+          <span class="btn p" style="width:100%;text-align:center">Add to my budget</span>
+          <div class="small" style="margin-top:6px">👍 Also asked: “How urgent is this?” (sub-question) </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="q"><b>Решения:</b> список в панели — навигация (вариант A из layer_objects): клик по строке открывает тот же попап. Добавленный проект — зелёный пин с ✓, недоступный — серый. Подвопросы объекта (urgency, comment) остаются обычным механизмом sub-questions и показываются в том же попапе. Split-на-карте = тот же экран, где вместо «Add» в попапе степпер суммы, а на ценнике — выделенная сумма.</div>
+</section>
+
+<!-- 6b -->
+<section class="screen" id="s6b">
+  <div class="note"><b>Бюджет группы (переработка 2026-11-10).</b> Отдельного типа «place items» нет. Автор делает обычную группу вопросов, задаёт ей <b>бюджет</b> (сумма, единица, символ) и у каждого гео-вопроса внутри ставит <b>цену</b>: за отметку, за метр линии или за м² площади. Гео-вопросы ведут себя как всегда (подвопросы, min/max, tap-to-place); бюджет только ограничивает, сколько всего можно поставить.</div>
+  <div class="frame"><div class="chrome"><span class="dot"></span><span class="dot"></span> layout: map · группа «You have £60k for Pilgrim Park»</div>
+    <div class="resp">
+      <div class="panel">
+        <h3>Improve Pilgrim Park</h3>
+        <div class="card hl" style="padding:12px 14px">
+          <b>You have £60k for Pilgrim Park</b>
+          <div class="small">Place what you would build. Each mark has a price.</div>
+          <div class="budgetbar" style="position:static;border:0;padding-top:8px"><div class="nums"><span><b>£43k</b> / £60k</span><span class="left">£17k left</span></div>
+            <div class="track"><i style="width:72%;background:var(--green)"></i></div></div>
+          <div class="proj"><span style="width:28px;height:28px;border-radius:6px;background:#fef3c7;display:flex;align-items:center;justify-content:center">🪑</span><div class="body"><div class="nm">Benches <small class="small">£2 000 each</small></div><div class="desc">Where would a bench help?</div></div><span class="cost" style="background:#92400e;color:#fff;border-radius:10px;padding:0 8px">3</span></div>
+          <div class="proj"><span style="width:28px;height:28px;border-radius:6px;background:#fef9c3;display:flex;align-items:center;justify-content:center">💡</span><div class="body"><div class="nm">Lamp posts <small class="small">£5 000 each</small></div></div><span class="cost" style="background:#ca8a04;color:#fff;border-radius:10px;padding:0 8px">2</span></div>
+          <div class="proj"><span style="width:28px;height:28px;border-radius:6px;background:#eef2ff;display:flex;align-items:center;justify-content:center">〰</span><div class="body"><div class="nm">New paths <small class="small">£50 / m</small></div><div class="desc">Draw where a path should run.</div></div><span class="cost" style="background:#4f46e5;color:#fff;border-radius:10px;padding:0 8px">1</span></div>
+          <div class="proj"><span style="width:28px;height:28px;border-radius:6px;background:#fce7f3;display:flex;align-items:center;justify-content:center">▱</span><div class="body"><div class="nm">Flower beds <small class="small">£30 / m²</small></div></div></div>
+          <div class="proj cant"><span style="width:28px;height:28px;border-radius:6px;background:#cffafe;display:flex;align-items:center;justify-content:center">🛝</span><div class="body"><div class="nm">Play equipment <small class="small">£15k each</small></div><div class="desc small" style="color:#b45309">£13k over what is left.</div></div><span class="cost" style="background:#0891b2;color:#fff;border-radius:10px;padding:0 8px">1</span></div>
+        </div>
+        <div class="navbtns"><span class="btn">Back</span><span class="btn p">Finish</span></div>
+      </div>
+      <div class="map">
+        <div class="park"></div>
+        <div class="obj" style="left:40%;top:72%;background:#0891b2">🛝</div>
+        <div class="obj" style="left:30%;top:40%;background:#ca8a04">💡</div>
+        <div class="obj" style="left:62%;top:45%;background:#ca8a04">💡</div>
+        <div class="obj" style="left:35%;top:55%;background:#92400e">🪑</div><div class="obj" style="left:55%;top:60%;background:#92400e">🪑</div><div class="obj" style="left:68%;top:30%;background:#92400e">🪑</div>
+        <svg style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none"><polyline points="150,180 260,260 380,300 520,420" fill="none" stroke="#4f46e5" stroke-width="4"/></svg>
+      </div>
+    </div>
+  </div>
+  <div class="q"><b>Решения:</b> бюджет = <code>QuestionGroup.budget</code> {total, unit, symbol}; цена = <code>validation_settings['price']</code> {amount, per ∈ feature | length | area} у гео-вопроса, блок Price показывается в модале вопроса только внутри бюджетной группы. Стоимость отметки = amount × (1 | метры | м²), на сервере через Web Mercator с поправкой cos(lat) как у spray, в браузере distanceTo / geodesicArea. Кнопка «за штуку», которая уже не влезает, гаснет с причиной; линию или площадь, которая дороже остатка, страница не оставляет и пишет, сколько она бы стоила. Сервер принимает отметки группы по порядку, пока хватает бюджета, остальные отбрасывает (как max_features). Нового пути размещения нет.</div>
+  <div class="q"><b>Результаты (экран 8):</b> блок группы перед её вопросами: по каждому — отметок / метров / м², стоимость, доля расхода; сами отметки — на карте, как у любого гео-вопроса. Экспорт: свойство <code>cost</code> у каждой платной отметки, колонка «‹группа›: spent» у респондента.</div>
+</section>
+
+<!-- 7 -->
+<section class="screen" id="s7">
+  <div class="frame mid"><div class="pad">
+    <h2 class="t">Ошибки и крайние случаи</h2>
+    <div class="err">Please allocate the whole £20M — £5.5M is still unallocated.</div>
+    <div class="err">The projects you picked cost £21.5M, which is over the £20M budget. (серверная проверка — если клиент обойдён или JS выключен)</div>
+    <table class="cases">
+      <tr><th>Случай</th><th>Поведение</th></tr>
+      <tr><td>Вопрос не required, респондент ничего не трогал</td><td>Ответа нет (как у ranking). Если тронул хоть одну позицию — включаются правила.</td></tr>
+      <tr><td>required + Split «потратить всё»</td><td>Next недоступен, подпись говорит сколько осталось; сервер повторяет проверку.</td></tr>
+      <tr><td>Split «до бюджета», required</td><td>Хотя бы одна позиция &gt; 0.</td></tr>
+      <tr><td>Сумма не кратна шагу (ручной ввод)</td><td>Округляем к ближайшему шагу на клиенте; сервер отклоняет некратное.</td></tr>
+      <tr><td>Автор меняет total после ответов</td><td>Структурное изменение → Unpublished changes (старые ответы хранят абсолютные суммы и свой total в <code>Answer</code>; доли считаем от сохранённого total версии).</td></tr>
+      <tr><td>Автор удаляет позицию с ответами</td><td>Как удаление отвеченной опции у choice — структурное, 409 acknowledgement.</td></tr>
+      <tr><td>Объект слоя без стоимости (Projects по слою)</td><td>На карте виден, в попапе «No cost set — can't be picked»; в редакторе бейдж «2 objects have no cost».</td></tr>
+      <tr><td>Слой изменён после публикации (стоимость объекта)</td><td>Живо для новых респондентов (слои не копируются); ответы хранят ключ объекта + стоимость на момент ответа.</td></tr>
+      <tr><td>Без JS</td><td>Split: числовые поля; Projects: чекбоксы; проверка только серверная.</td></tr>
+      <tr><td>Бумажная форма (print)</td><td>Split: таблица «позиция — ____ £»; Projects: чекбоксы со стоимостью и строка «Total». Распознавание в paper-entry — потом.</td></tr>
+      <tr><td>Переводы</td><td>Названия и описания позиций — через существующие choice-переводы (<code>question:&lt;code&gt;:choice:&lt;code&gt;</code>) + новый ключ для description.</td></tr>
+    </table>
+  </div></div>
+</section>
+
+<!-- 8 -->
+<section class="screen" id="s8">
+  <div class="note"><b>Responses → Overview.</b> Блок вопроса рядом с choice-блоками. Агрегат — один модуль (как <code>object_stats.py</code> для объектов), им же пользуется Public results.</div>
+  <div class="frame"><div class="pad">
+    <div class="res">
+      <div>
+        <h3 style="margin:0 0 6px">How would you spend the £20M fund? <span class="badge grey">Budget · split</span></h3>
+        <div class="kpis"><div class="kpi"><b>212</b><span>respondents</span></div><div class="kpi"><b>£20M</b><span>budget</span></div><div class="kpi"><b>2.1</b><span>items left at £0 on average</span></div></div>
+        <div class="bars">
+          <div class="r"><span>Thriving places</span><span class="bar"><i style="width:31%"></i></span><span class="v">31% <small>£6.2M</small></span></div>
+          <div class="r"><span>Safer communities</span><span class="bar"><i style="width:26%"></i></span><span class="v">26% <small>£5.2M</small></span></div>
+          <div class="r"><span>Young people</span><span class="bar"><i style="width:22%"></i></span><span class="v">22% <small>£4.4M</small></span></div>
+          <div class="r"><span>Local prosperity</span><span class="bar"><i style="width:14%"></i></span><span class="v">14% <small>£2.8M</small></span></div>
+          <div class="r"><span>Community voice</span><span class="bar"><i style="width:7%"></i></span><span class="v">7% <small>£1.4M</small></span></div>
+        </div>
+        <p class="small">Mean share · toggle: median · distribution per item (box) · % who gave the item nothing</p>
+      </div>
+      <div>
+        <h3 style="margin:0 0 6px">Which projects would you fund? <span class="badge grey">Budget · projects</span></h3>
+        <div class="kpis"><div class="kpi"><b>198</b><span>respondents</span></div><div class="kpi"><b>£18.6M</b><span>spent on average</span></div><div class="kpi"><b>4.3</b><span>projects picked on average</span></div></div>
+        <div class="bars">
+          <div class="r"><span>Civic Centre hub <small>£8.0M</small></span><span class="bar"><i class="g" style="width:71%"></i></span><span class="v">71%</span></div>
+          <div class="r"><span>Pelham Rd crossings <small>£2.5M</small></span><span class="bar"><i class="g" style="width:64%"></i></span><span class="v">64%</span></div>
+          <div class="r"><span>Skate park <small>£1.5M</small></span><span class="bar"><i class="g" style="width:58%"></i></span><span class="v">58%</span></div>
+          <div class="r"><span>Youth centre <small>£5.0M</small></span><span class="bar"><i class="g" style="width:52%"></i></span><span class="v">52%</span></div>
+          <div class="r"><span>Town centre realm <small>£3.0M</small></span><span class="bar"><i style="width:40%"></i></span><span class="v">40%</span></div>
+          <div class="r"><span>Allotments <small>£0.4M</small></span><span class="bar"><i style="width:33%"></i></span><span class="v">33%</span></div>
+          <div class="r"><span>Leisure pool <small>£12.0M</small></span><span class="bar"><i style="width:12%"></i></span><span class="v">12%</span></div>
+        </div>
+        <p class="small">Зелёные = «набор-победитель»: проекты по убыванию поддержки, пока укладываются в £20M (= £17.0M). На Map pane те же объекты окрашены по доле поддержки.</p>
+      </div>
+    </div>
+    <h3 style="margin:18px 0 6px">Экспорт (flat table / xlsx)</h3>
+    <div class="cols">session | … | Budget: Thriving places (£) | Budget: Safer communities (£) | Budget: Young people (£) | … | Budget: total (£) | Projects: Civic Centre hub | Projects: Pelham Rd crossings | … | Projects: total (£)</div>
+    <p class="small">Колонка на позицию (как у ranking): сумма в Split, 1/0 в Projects; плюс итог. В GeoJSON слоя объектов — свойства <code>picked_share</code>, <code>mean_amount</code> на объект.</p>
+  </div></div>
+</section>
+
+<!-- 9 -->
+<section class="screen" id="s9">
+  <div class="note"><b>Public results.</b> Блок типа «budget» в конструкторе страницы; тот же агрегат, k-анонимность: позиция с &lt; K ненулевых ответов (Split) или &lt; K выборов (Projects) маскируется как у choice.</div>
+  <div class="frame mid"><div class="pad">
+    <h3 style="margin:0 0 2px">How residents would split the £20M</h3>
+    <p class="small" style="margin:0 0 12px">212 responses · average allocation</p>
+    <div class="bars">
+      <div class="r"><span>Thriving places</span><span class="bar"><i style="width:31%"></i></span><span class="v">£6.2M</span></div>
+      <div class="r"><span>Safer communities</span><span class="bar"><i style="width:26%"></i></span><span class="v">£5.2M</span></div>
+      <div class="r"><span>Young people</span><span class="bar"><i style="width:22%"></i></span><span class="v">£4.4M</span></div>
+      <div class="r"><span>Local prosperity</span><span class="bar"><i style="width:14%"></i></span><span class="v">£2.8M</span></div>
+      <div class="r"><span>Community voice</span><span class="bar"><i style="width:7%"></i></span><span class="v">£1.4M</span></div>
+    </div>
+    <p class="small" style="margin-top:14px">Для Projects-на-карте: публичная карта объектов, окрашенная по доле поддержки, с ценником и «% chose this» в попапе (только geo_label_fields + агрегат, ничего индивидуального).</p>
+  </div></div>
+</section>
+
+<!-- 10 -->
+<section class="screen" id="s10">
+  <div class="frame mid"><div class="pad">
+    <h2 class="t">Открытые вопросы к владельцу</h2>
+    <table class="cases">
+      <tr><th style="width:40%">Вопрос</th><th>Моё предложение</th></tr>
+      <tr><td>Pro или free?</td><td><b>Free</b> — Split и Projects списком; <b>Pro</b> — источник «объекты слоя» и режим Place items (оба — карта, geobudgeting). Это как раз то, что продаёт картографическому заказчику, а списочный вариант нужен, чтобы precept-консультации вообще делали у нас, а не в Commonplace.</td></tr>
+      <tr><td>Где хранить ответ</td><td>Новое поле <code>Answer.budget</code> (JSON): <code>{"total": 20000000, "items": {"1": 6000000, …}}</code> для Split; <code>{"total": …, "picked": ["1","3"], "costs": {…}}</code> для Projects; для слоя ключи — ключи объектов. <code>selected_choices</code> не трогаем, чтобы не ломать choice-стек.</td></tr>
+      <tr><td>Проценты как единица</td><td>Это Split с total=100, символ «%», шаг 5 по умолчанию. Не отдельный режим.</td></tr>
+      <tr><td>Третий кандидат из #447 — налоговый trade-off (increase/keep/decrease по услугам с эффектом на счёт)</td><td>Не в этой change; это матричный вопрос с формулой. Отдельный issue после.</td></tr>
+      <tr><td>Ограничение «не больше X на одну позицию» в Split</td><td>Опционально <code>max_per_item</code>, v1 без него, если не попросят.</td></tr>
+      <tr><td>Place items: цена за штуку одинаковая, или размер объекта влияет (площадка маленькая/большая)?</td><td>v1 — фиксированная цена за тип; «размеры» = два типа в каталоге.</td></tr>
+      <tr><td>Нужна ли «полоса остатка» в Split-на-карте на телефоне поверх карты</td><td>Да, как у панели: липкий верх панели-оверлея.</td></tr>
+    </table>
+  </div></div>
+</section>
+
+<script>
+  document.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('nav.tabs button').forEach(x => x.classList.remove('on'));
+    document.querySelectorAll('section.screen').forEach(x => x.classList.remove('on'));
+    b.classList.add('on'); document.getElementById(b.dataset.t).classList.add('on');
+  }));
+</script>
+</body>
+</html>

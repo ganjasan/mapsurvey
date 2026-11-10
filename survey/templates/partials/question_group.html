@@ -23,6 +23,20 @@ rule; base_survey_template.html binds the collapsible toggle.
         {% if run.description %}<div class="question-group__desc">{{ run.description|safe }}</div>{% endif %}
     </div>
     {% endif %}
+    {% if run.budget %}
+    {% comment %}Budget group (change budget-question): the bar the page script keeps
+    current from the marks placed on the member map questions (`data-budget-group`).{% endcomment %}
+    <div class="budget budget--group" data-budget-group="{{ group.code }}" data-budget-config="{{ run.budget.config }}">
+        <div class="budget__bar" data-budget-bar>
+            <div class="budget__nums">
+                <span><b data-budget-spent>0</b> / <span>{{ run.budget.total_label }}</span></span>
+                <span class="budget__left" data-budget-left aria-live="polite"></span>
+            </div>
+            <div class="budget__track" data-budget-track><i></i></div>
+        </div>
+        <p class="budget__hint" data-budget-hint aria-live="polite"></p>
+    </div>
+    {% endif %}
     <div class="question-group__body" id="qg-body-{{ group.code }}"{% if style == 'collapsible' %} hidden{% endif %}>
         {% include "partials/question_cards.html" with run_fields=run.fields %}
     </div>

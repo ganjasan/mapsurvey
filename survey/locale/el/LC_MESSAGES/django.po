@@ -1242,3 +1242,147 @@ msgstr "Προτιμάτε να απαντήσετε διαδικτυακά; Σ�
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* υποχρεωτικό"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Δεν έχει οριστεί κόστος — δεν μπορεί να επιλεγεί."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Μέσο μερίδιο του προϋπολογισμού που έδωσαν οι κάτοικοι σε κάθε στοιχείο."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Ποσοστό κατοίκων που χρηματοδότησαν κάθε έργο. Πράσινο: τα έργα με τη μεγαλύτερη υποστήριξη που χωρούν μαζί στον προϋπολογισμό."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Μερίδιο κάθε στοιχείου σε όλα όσα ξόδεψαν οι κάτοικοι."
+
+#: budget-question
+msgid "{left} left"
+msgstr "Απομένουν {left}"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ όλα κατανεμήθηκαν"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "{over} πάνω από τον προϋπολογισμό"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Κατανείμετε όλο το ποσό {total} — {left} δεν έχουν κατανεμηθεί ακόμη."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Δώστε ποσό σε τουλάχιστον ένα στοιχείο."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Επιλέξτε τουλάχιστον {n}."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "{over} περισσότερα από όσα απομένουν."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Τοποθετήσατε τον μέγιστο επιτρεπόμενο αριθμό."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "από %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "Μοιράστε %(total)s στα στοιχεία. Τα ποσά πρέπει να αθροίζουν %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "Μοιράστε έως %(total)s στα στοιχεία."
+
+#: budget-question
+msgid "Total"
+msgstr "Σύνολο"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Σημειώστε τα έργα που θα χρηματοδοτούσατε. Το συνολικό κόστος τους δεν πρέπει να ξεπερνά τα %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Γράψτε τον αριθμό του στοιχείου δίπλα σε κάθε σημάδι. Τα στοιχεία μαζί δεν πρέπει να κοστίζουν πάνω από %(total)s."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "έως %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Λιγότερο"
+
+#: budget-question
+msgid "More"
+msgstr "Περισσότερο"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Μοίρασε το υπόλοιπο ισόποσα"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Στοιχείο για τοποθέτηση"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Τοποθέτηση στον χάρτη"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Επιλέξτε ένα στοιχείο και μετά πατήστε στον χάρτη για να το τοποθετήσετε."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s απαντήσεις · προϋπολογισμός %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Αυτό το σημάδι θα κόστιζε {cost}, αλλά απομένουν μόνο {left}."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Τιμή: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Προϋπολογισμός: %(total)s — τα σημάδια αυτής της ομάδας δεν πρέπει να κοστίζουν συνολικά περισσότερο από αυτό."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s το καθένα"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "μετά απομένουν {left}"

@@ -1241,3 +1241,147 @@ msgstr "Vil du hellere svare online? Scan denne kode."
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* påkrævet"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Ingen pris angivet — kan ikke vælges."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Gennemsnitlig andel af budgettet, som borgerne gav hvert punkt."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Andel af borgerne, der finansierede hvert projekt. Grøn: de mest støttede projekter, der tilsammen kan være i budgettet."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Hvert punkts andel af alt, hvad borgerne brugte."
+
+#: budget-question
+msgid "{left} left"
+msgstr "{left} tilbage"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ alt fordelt"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "{over} over budgettet"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Fordel hele {total} — {left} er endnu ikke fordelt."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Giv mindst ét punkt et beløb."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Vælg mindst {n}."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "{over} mere end det, der er tilbage."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Du har placeret det maksimalt tilladte."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "af %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "Fordel %(total)s mellem punkterne. Beløbene skal give %(total)s i alt."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "Fordel op til %(total)s mellem punkterne."
+
+#: budget-question
+msgid "Total"
+msgstr "I alt"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Sæt kryds ved de projekter, du ville finansiere. Deres samlede pris må ikke overstige %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Skriv punktets nummer ved hver markering. Punkterne må tilsammen ikke koste mere end %(total)s."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "højst %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Mindre"
+
+#: budget-question
+msgid "More"
+msgstr "Mere"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Fordel resten ligeligt"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Punkt, der skal placeres"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Placer på kortet"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Vælg et punkt, og tryk derefter på kortet for at placere det."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s svar · budget %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Denne markering ville koste {cost}, men der er kun {left} tilbage."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Pris: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Budget: %(total)s — markeringerne i denne gruppe må tilsammen ikke koste mere end det."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s pr. stk."
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "{left} tilbage derefter"

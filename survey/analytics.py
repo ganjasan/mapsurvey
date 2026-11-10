@@ -752,6 +752,50 @@ class SurveyAnalyticsService:
             ),
         }
 
+    def _stats_budget(self, question):
+        """A budget question's aggregate (change budget-question): the one
+        computation in survey/budget_stats.py over this lineage's answers in
+        the current filter."""
+        from .budget_stats import aggregate
+        answers = Answer.objects.filter(question_id__in=self._lineage_ids(question), **self._session_filter())
+        agg = aggregate(question, answers=answers)
+        return {
+            'type': 'budget',
+            'budget': agg,
+            'total_answers': agg['respondents'] if agg else 0,
+        }
+
+    def _with_budget_groups(self, stats, questions):
+        from .budget_stats import group_aggregate
+        from .models import QuestionGroup
+        groups = {g.id: g for g in QuestionGroup.objects.filter(
+            survey_section__survey_header=self.survey, parent_question__isnull=True, budget__isnull=False)}
+        if not groups:
+            return stats
+        out, done = [], set()
+        by_code = {s['question'].code: s for s in stats if hasattr(s['question'], 'code')}
+        for q in questions:
+            gid = q.group_id
+            if gid in groups and gid not in done:
+                done.add(gid)
+                group = groups[gid]
+                answers_by_q = {m.id: Answer.objects.filter(question_id__in=self._lineage_ids(m), **self._session_filter())
+                                for m in group.members()}
+                # The card header reads the group, not its first member.
+                from types import SimpleNamespace
+                head = SimpleNamespace(id=f'group-{group.id}', code=None, name=group.title or 'Budget group',
+                                       input_type='budget group')
+                out.append({
+                    'question': head, 'section': q.survey_section, 'archived': False, 'versions': '',
+                    'type': 'budget_group', 'group': group,
+                    'budget': group_aggregate(group, answers_by_question=answers_by_q),
+                })
+            if q.code in by_code:
+                out.append(by_code[q.code])
+        seen = {id(s) for s in out}
+        out.extend(s for s in stats if id(s) not in seen)
+        return out
+
     def _stats_other(self, question):
         """Compute stats for unknown question types (lineage-wide)."""
         return {
@@ -836,6 +880,7 @@ class SurveyAnalyticsService:
         'line': _stats_geo,
         'polygon': _stats_geo,
         'spraycan': _stats_geo,
+        'budget': _stats_budget,
     }
 
     def get_question_stats(self, question):
@@ -923,6 +968,9 @@ class SurveyAnalyticsService:
             self.get_question_stats(q) for q in questions
             if q.input_type not in GEO_TYPES
         ]
+        # Budget groups (change budget-question): one block per group with what
+        # its priced geo questions collected, placed before the group's members.
+        stats = self._with_budget_groups(stats, questions)
 
         # Archived lineages: represented by their newest question object.
         # Only shown when they actually have answers in scope (_lineage_ids

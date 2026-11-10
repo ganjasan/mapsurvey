@@ -1243,3 +1243,147 @@ msgstr "Raději odpovíte online? Naskenujte tento kód."
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* povinné"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Cena není zadána — nelze vybrat."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Průměrný podíl rozpočtu, který obyvatelé dali každé položce."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Podíl obyvatel, kteří financovali jednotlivé projekty. Zeleně: nejvíce podporované projekty, které se společně vejdou do rozpočtu."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Podíl každé položky na všem, co obyvatelé utratili."
+
+#: budget-question
+msgid "{left} left"
+msgstr "Zbývá {left}"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ vše rozděleno"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "{over} nad rozpočet"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Rozdělte celou částku {total} — {left} ještě není rozděleno."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Zadejte částku alespoň u jedné položky."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Vyberte alespoň {n}."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "O {over} více, než zbývá."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Umístili jste maximální povolený počet."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "z %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "Rozdělte %(total)s mezi položky. Součet částek musí být %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "Rozdělte až %(total)s mezi položky."
+
+#: budget-question
+msgid "Total"
+msgstr "Celkem"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Zaškrtněte projekty, které byste financovali. Jejich náklady nesmí dohromady přesáhnout %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Ke každé značce napište číslo položky. Položky dohromady nesmí stát víc než %(total)s."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "nejvýše %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Méně"
+
+#: budget-question
+msgid "More"
+msgstr "Více"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Rozdělit zbytek rovnoměrně"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Položka k umístění"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Umístit na mapu"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Vyberte položku a potom klepněte do mapy, kam ji umístit."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s odpovědí · rozpočet %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Tato značka by stála {cost}, ale zbývá jen {left}."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Cena: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Rozpočet: %(total)s — značky v této skupině nesmí dohromady stát víc."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s za kus"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "poté zbývá {left}"

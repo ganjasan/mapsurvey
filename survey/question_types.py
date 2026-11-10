@@ -39,6 +39,9 @@ PICKER_TYPES = {
                     "hint": "One point on a labelled scale — scores each item independently"},
     "ranking":     {"group": "plain", "icon": "fa-sort-amount-down",
                     "hint": "Respondent drags items into order — every rank used once"},
+    "budget":      {"group": "plain", "icon": "fa-coins",
+                    "label": "Budget",
+                    "hint": "Respondent splits a fixed budget between items, or picks projects until it runs out"},
     "datetime":    {"group": "plain", "icon": "fa-calendar-alt",
                     "hint": "Date and time picker"},
     "thumbs":      {"group": "plain", "icon": "fa-thumbs-up",
@@ -200,7 +203,11 @@ NOT_REQUIRABLE_TYPES = DISPLAY_BLOCK_TYPES + ("layer_objects",)
 # editor and never edited: that is what lets the whole choice-based stack
 # (storage, export, analytics, visibility rules, public results) treat 👍/👎
 # as a choice with two codes without a second aggregation path.
-CHOICE_TYPES = ("choice", "multichoice", "range", "rating", "ranking", "thumbs")
+# `budget` (change budget-question) carries its ITEMS in `choices` — the
+# choices table, translations and import treat them as any option list — but
+# never writes `selected_choices`: its answer is `Answer.allocation`.
+CHOICE_TYPES = ("choice", "multichoice", "range", "rating", "ranking", "thumbs", "budget")
+BUDGET_TYPES = ("budget",)
 
 THUMBS_UP, THUMBS_DOWN = 1, 0
 THUMBS_CHOICES = [{"code": THUMBS_UP, "name": "up"}, {"code": THUMBS_DOWN, "name": "down"}]
@@ -225,7 +232,7 @@ def allowed_display_styles(input_type):
 # Optional per-option keys the icon grid reads (spec inline-choices). Blank or
 # non-string values are dropped so a survey that never uses the grid keeps
 # byte-identical choices.
-CHOICE_EXTRA_LIMITS = {"icon": 64, "group": 60}
+CHOICE_EXTRA_LIMITS = {"icon": 64, "group": 60, "description": 300}
 HEX_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 # Question.color's model default: every existing question carries it, so on the
 # icon grid it means "not set" and the tile keeps its grey glyph.
@@ -259,10 +266,69 @@ def normalise_choice_extras(choices):
                 choice["color"] = value.lower()
             else:
                 del choice["color"]
+        # Budget item extras (change budget-question): a non-negative cost;
+        # anything else is dropped, never refused here — whether a cost is
+        # REQUIRED is the question form's call by mode.
+        if "cost" in choice:
+            cost = _number(choice["cost"])
+            if cost is not None and cost >= 0:
+                choice["cost"] = cost
+            else:
+                del choice["cost"]
+        choice.pop("max_count", None)
+        # Translated descriptions: {lang: text}, written only by the
+        # Translations tab; the primary text stays in `description`.
+        if "description_i18n" in choice:
+            raw = choice["description_i18n"]
+            clean = {}
+            if isinstance(raw, dict):
+                for lang, text in raw.items():
+                    if isinstance(lang, str) and 0 < len(lang) <= 10 and isinstance(text, str) and text.strip():
+                        clean[lang] = text.strip()[:CHOICE_EXTRA_LIMITS["description"]].strip()
+            if clean:
+                choice["description_i18n"] = clean
+            else:
+                del choice["description_i18n"]
     return choices
 
 
-def picker_groups_for(choices, unavailable=None):
+def _number(value):
+    """A finite number from an int, float or numeric string; None otherwise.
+    Booleans are not numbers here (`True` would read as a cost of 1)."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        number = float(value)
+    elif isinstance(value, str):
+        try:
+            number = float(value.strip().replace(",", "").replace(" ", ""))
+        except ValueError:
+            return None
+    else:
+        return None
+    if number != number or number in (float("inf"), float("-inf")):
+        return None
+    return int(number) if number.is_integer() else number
+
+
+# Types the picker marks with a Pro badge: the feature key `{% pro_badge %}`
+# renders. None today: the map-side budget is a group setting (change budget-question).
+PRO_FEATURE_BY_TYPE = {}
+
+# Picker cards that are NOT input types (change budget-question): a budget
+# group is a QuestionGroup with a budget, but creators look for it where the
+# map questions are, so the "New question" picker offers it there and the card
+# creates the group instead of a question (`action`). Offered only where the
+# map questions are (a map section, top level); never in the type-switch
+# picker of an existing question. Separate from PICKER_TYPES so the
+# model/picker parity test stays about input types.
+PICKER_ACTIONS = {
+    "budget_group": {"group": "geo", "icon": "fa-coins", "label": "Budget group",
+                     "hint": "A group of map questions with a budget: each gets a price, respondents place marks until the total is spent"},
+}
+
+
+def picker_groups_for(choices, unavailable=None, actions=False):
     """Group `choices` (an input_type choices iterable, e.g. the form field's —
     already filtered for sub-questions) for the picker template.
 
@@ -275,6 +341,8 @@ def picker_groups_for(choices, unavailable=None):
     `unavailable` maps types left out of `choices` to `(model_label, reason)`
     — why they cannot be picked here; those come back with `disabled` and `reason` so the picker
     shows them greyed out instead of dropping them (a Form section's map types).
+    `actions` adds PICKER_ACTIONS to their groups (the create picker only), disabled with the
+    same reason when every input type of that group is.
     """
     allowed = {value: model_label for value, model_label in choices}
     unavailable = unavailable or {}
@@ -294,5 +362,17 @@ def picker_groups_for(choices, unavailable=None):
             "hint": meta["hint"],
             "disabled": reason is not None,
             "reason": reason,
+            "pro": PRO_FEATURE_BY_TYPE.get(value),
         })
+    if actions:
+        for value, meta in PICKER_ACTIONS.items():
+            cards = by_group[meta["group"]]
+            if not cards:
+                continue   # the group is not offered here at all (a sub-question picker)
+            reason = cards[0]["reason"] if all(c["disabled"] for c in cards) else None
+            cards.append({
+                "value": value, "label": meta["label"], "icon": meta["icon"], "hint": meta["hint"],
+                "disabled": reason is not None, "reason": reason, "pro": meta.get("pro"),
+                "action": value,
+            })
     return [(label, by_group[key]) for key, label in PICKER_GROUPS if by_group[key]]

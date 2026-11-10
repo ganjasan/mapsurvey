@@ -1,8 +1,9 @@
 from django import forms
 from django.forms import widgets
 from .models import SurveySection, Question, Answer, INPUT_TYPE_CHOICES, SurveySession
-from .question_types import DISPLAY_STYLES_BY_TYPE, allowed_display_styles, section_geo_count, tap_to_place_active
+from .question_types import DISPLAY_STYLES_BY_TYPE, GEO_TYPES, allowed_display_styles, section_geo_count, tap_to_place_active
 from django.utils import html
+import json
 import logging
 from django import forms
 from django.utils.safestring import mark_safe
@@ -231,6 +232,8 @@ class LeafletDrawButtonWidget(widgets.Widget):
         context['widget']['max_dots'] = context['widget']['attrs'].get('max_dots', '')
         context['widget']['brush_sizes'] = context['widget']['attrs'].get('brush_sizes', '')
         context['widget']['tap_to_place'] = context['widget']['attrs'].get('tap_to_place', False)
+        context['widget']['price'] = context['widget']['attrs'].get('price')
+        context['widget']['price_label'] = context['widget']['attrs'].get('price_label', '')
         return context
 
 class PointDrawButtonWidget(LeafletDrawButtonWidget):
@@ -472,6 +475,71 @@ class RankingField(forms.Field):
         return attrs
 
 
+class BudgetWidget(widgets.Widget):
+    """A `budget` question (change budget-question): the sticky budget bar and
+    either one amount input per item (Split, named `<code>__<item>`, so it
+    works without JavaScript) or one checkbox per item (Projects, named after
+    the question). `js/budget_question.js` adds steppers, sliders, the
+    remainder and the Next hint; the server re-checks everything."""
+    template_name = 'budget.html'
+
+    def __init__(self, attrs=None):
+        attrs = dict(attrs or {})
+        self.question = attrs.pop('question', None)
+        self.language = attrs.pop('language', None)
+        super().__init__(attrs)
+
+    def get_context(self, name, value, attrs):
+        from survey import budget
+        context = super().get_context(name, value, attrs)
+        question = self.question
+        settings = budget.settings_of(question) or budget.normalise_budget_settings(
+            {'total': 100, 'unit': 'points'}, 'budget')
+        stored = value if isinstance(value, dict) else {}
+        items = []
+        for item in budget.items_of(question, self.language):
+            amount = stored.get(item['code'])
+            items.append({
+                **item,
+                'field': budget.amount_field(name, item['code']),
+                'amount': amount if amount is not None else (0 if settings['mode'] == budget.MODE_SPLIT else None),
+                'picked': item['code'] in stored,
+                'cost_label': budget.format_amount(item['cost'], settings) if item['cost'] is not None else '',
+            })
+        context['widget'].update({
+            'items': items,
+            'settings': settings,
+            'mode': settings['mode'],
+            'total_label': budget.format_amount(settings['total'], settings),
+            'step_label': budget.format_amount(settings['step'], settings),
+            'config': json.dumps({
+                'total': settings['total'], 'step': settings['step'], 'unit': settings['unit'],
+                'symbol': settings['symbol'], 'rule': settings['rule'], 'mode': settings['mode'],
+                'min_items': settings['min_items'], 'show_shares': settings['show_shares'],
+                # The bar is stacked in the items' colours (owner, 2026-11-10).
+                'colors': {i['code']: i['color'] for i in items if i.get('color')},
+            }),
+            'layer_id': question.layer_id if settings.get('source') == budget.SOURCE_LAYER else None,
+        })
+        return context
+
+    def value_from_datadict(self, data, files, name):
+        return data.getlist(name) if hasattr(data, 'getlist') else data.get(name)
+
+
+class BudgetField(forms.Field):
+    """Display-and-collect: the section POST stores through
+    `budget.parse_submission`, not through `cleaned_data`, so this field never
+    refuses (required is enforced by the widget's Next hint)."""
+
+    def __init__(self, *, question, language=None, **kwargs):
+        kwargs['required'] = False
+        kwargs.setdefault('widget', BudgetWidget(attrs={'question': question, 'language': language}))
+        super().__init__(**kwargs)
+        self.question = question
+        self.budget_required = question.required
+
+
 class LayerObjectsWidget(widgets.Widget):
     """The "Objects on the map" block: header, search/chips, list container.
 
@@ -549,6 +617,39 @@ class ShowImageField(forms.Field):
         attrs['subtitle'] = self.subtitle
 
         return attrs
+
+def _run_budget(group, members):
+    """What question_group.html renders as the budget bar, or None."""
+    from survey import budget as budget_rules
+    settings = budget_rules.group_settings(group)
+    if not settings:
+        return None
+    geo = [q for q in members if q.input_type in GEO_TYPES]
+    priced = {q.code: budget_rules.price_of(q) for q in geo}
+    from survey.question_types import UNSET_QUESTION_COLOR
+    return {
+        'settings': settings,
+        'total_label': budget_rules.format_amount(settings['total'], settings),
+        'config': json.dumps({'total': settings['total'], 'unit': settings['unit'], 'symbol': settings['symbol'],
+                              'prices': {code: p for code, p in priced.items() if p},
+                              # Each question's marker colour is its segment of the bar.
+                              'colors': {q.code: q.color for q in geo if q.color and q.color != UNSET_QUESTION_COLOR},
+                              'titles': {q.code: q.name for q in geo}}),
+    }
+
+
+def _stamp_price(widget, question):
+    """Hand a geo button its price under a budget group (change budget-question):
+    `data-price-amount` / `data-price-per` for the page script, the caption for
+    the respondent. No group, no price: the button renders as always."""
+    from survey import budget as budget_rules
+    group = question.group if question.group_id else None
+    settings = budget_rules.group_settings(group)
+    price = budget_rules.price_of(question)
+    if settings and price:
+        widget.attrs['price'] = price
+        widget.attrs['price_label'] = budget_rules.format_price(price, settings)
+
 
 def _stamp_tap_to_place(widget, question, geo_count):
     """Mark the point button whose question a map click places (spec
@@ -712,6 +813,11 @@ class SurveySectionAnswerForm(forms.Form):
             return LayerObjectsField(widget=LayerObjectsWidget, label=False, title=label,
                                      subtitle=sublabel, question=question)
 
+        elif input_type == 'budget':
+            # Change budget-question: Split amounts or Projects ticks; stored
+            # through survey/budget.py::parse_submission, never cleaned_data.
+            return BudgetField(question=question, language=language, label=label)
+
         elif input_type == 'ranking':
             # `initial` carries the respondent's stored order when they navigate
             # back; otherwise the creator's order stands.
@@ -764,6 +870,8 @@ class SurveySectionAnswerForm(forms.Form):
         if question.input_type == 'point':
             _stamp_tap_to_place(field.widget, question,
                                 section_geo_count(question.survey_section, with_question=question))
+        if question.input_type in GEO_TYPES:
+            _stamp_price(field.widget, question)
         form.fields[question.code] = field
         return form
 
@@ -834,6 +942,8 @@ class SurveySectionAnswerForm(forms.Form):
                 self.fields[field_name].widget.star_color = question.star_color()
             if question.input_type == 'point':
                 _stamp_tap_to_place(self.fields[field_name].widget, question, geo_count)
+            if question.input_type in GEO_TYPES:
+                _stamp_price(self.fields[field_name].widget, question)
 
 
     @property
@@ -862,6 +972,9 @@ class SurveySectionAnswerForm(forms.Form):
                 'title': group.get_translated_title(self.language) if group else '',
                 'description': group.get_translated_description(self.language) if group else '',
                 'fields': fields,
+                # A budget group's bar (change budget-question): the budget and
+                # the member codes the page script sums the placed marks of.
+                'budget': _run_budget(group, members),
             })
         return runs
 

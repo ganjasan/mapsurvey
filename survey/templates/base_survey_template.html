@@ -24,6 +24,7 @@ locale.{% endcomment %}
     <script type="text/javascript" src="{% static 'js/choice_icon_grid.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/components/map_place_search.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/components/ranking.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/budget_question.js' %}"></script>
     {% if FILE_UPLOAD_QUESTIONS %}<script type="text/javascript" src="{% static 'js/file_upload.js' %}"></script>{% endif %}
 
     <link rel="stylesheet" type="text/css" href="{% static 'css/main.css' %}">
@@ -494,6 +495,8 @@ navigation from #section-data[data-stage-image].{% endcomment %}
         hideDrawbar();
         layer.editing.disable();
         currentEditLayer = null;
+        // A reshaped priced line or area changes what it costs.
+        refreshGeoQuestionUI();
     }
 
     function showCrosshair(color, iconClass, editLayer) {
@@ -988,6 +991,9 @@ navigation from #section-data[data-stage-image].{% endcomment %}
                 $progress.toggleClass('geo-progress-met', n >= min);
             }
         });
+        // Budget groups' bars follow every add/remove/edit, and may disable a
+        // draw button the loop above just enabled (change budget-question).
+        if (window.BudgetQuestion) BudgetQuestion.refreshGroups(_geoLayersFor);
     }
 
 
@@ -1016,6 +1022,15 @@ navigation from #section-data[data-stage-image].{% endcomment %}
         feature.type = feature.type || "Feature";
         var props = feature.properties = feature.properties || {};
         props.question_id = currentQ;
+        // A priced mark under a budget group that does not fit is not kept
+        // (change budget-question); the group's bar says why.
+        if (window.BudgetQuestion && !BudgetQuestion.admit(layer, currentQ)) {
+            hideDrawbar();
+            toggleInfo(true);
+            currentQ = null;
+            refreshGeoQuestionUI();
+            return;
+        }
 
         var formId = 'subquestion_form_' + L.Util.stamp(layer);
         layer._formId = formId;
@@ -1343,6 +1358,13 @@ navigation from #section-data[data-stage-image].{% endcomment %}
                 }
             });
 
+            // 4) budget questions short of their rule (change budget-question):
+            // the hint under the block already says what is missing.
+            if (!softEntry && window.BudgetQuestion) {
+                var budgetInvalid = BudgetQuestion.firstInvalid(form);
+                if (budgetInvalid && !firstInvalid) firstInvalid = budgetInvalid;
+            }
+
             if (firstInvalid) {
                 // preventDefault() is what actually aborts the HTMX request;
                 // detail.cancel alone is NOT honoured by htmx:configRequest.
@@ -1490,6 +1512,12 @@ navigation from #section-data[data-stage-image].{% endcomment %}
             var count = currentDrawFeature._markers.length;
             $('#draw-finish').prop('disabled', count < drawMinVertices);
         }
+        if (window.BudgetQuestion) BudgetQuestion.drawing(currentDrawFeature, currentQ);
+    });
+    // A priced line or area under a budget group: its running cost follows the
+    // pointer (change budget-question). Cheap — nothing runs unless drawing.
+    map.on('mousemove', function() {
+        if (currentDrawFeature && window.BudgetQuestion) BudgetQuestion.drawing(currentDrawFeature, currentQ);
     });
 
     // =====================================================================

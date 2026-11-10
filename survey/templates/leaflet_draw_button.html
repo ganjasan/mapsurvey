@@ -7,13 +7,14 @@
 		{% if widget.brush_px %}data-brush-px="{{ widget.brush_px }}"{% endif %}
 		{% if widget.max_dots %}data-max-dots="{{ widget.max_dots }}"{% endif %}
 		{% if widget.brush_sizes %}data-brush-sizes="{{ widget.brush_sizes }}"{% endif %}
-		{% if widget.tap_to_place %}data-tap-to-place="1"{% endif %} >
+		{% if widget.tap_to_place %}data-tap-to-place="1"{% endif %}
+		{% if widget.price %}data-price-amount="{{ widget.price.amount|stringformat:'s' }}" data-price-per="{{ widget.price.per }}"{% endif %} >
 		<div class="geo-question">
 			<div class="geo-question-icon" style="background: {{ widget.color }}15;">
 				{% marker_icon widget.draw_icon_class color=widget.color style="font-size:22px;width:22px;height:22px;" %}
 			</div>
 			<div class="geo-question-text">
-				<p class="geo-question-title">{{ widget.title }}</p>
+				<p class="geo-question-title">{{ widget.title }}{% if widget.price_label %} <span class="geo-price">{{ widget.price_label }}</span>{% endif %}</p>
 				{# Always rendered: the "add another" invitation lands here even when the creator wrote no subtext #}
 				<div class="geo-question-subtitle">{{ widget.subtitle|default:""|safe }}</div>
 				{# Progress lives inside the button so it is unambiguous which question it belongs to; JS shows it only when min/max is set #}

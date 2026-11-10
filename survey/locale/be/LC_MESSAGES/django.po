@@ -1243,3 +1243,147 @@ msgstr "Хочаце адказаць анлайн? Адскануйце гэт�
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* абавязкова"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Кошт не зададзены — выбраць нельга."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Сярэдняя доля бюджэту, якую жыхары аддалі кожнаму пункту."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Доля жыхароў, якія прафінансавалі кожны праект. Зялёным: найбольш падтрыманыя праекты, якія разам укладваюцца ў бюджэт."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Доля кожнага пункта ва ўсім, што выдаткавалі жыхары."
+
+#: budget-question
+msgid "{left} left"
+msgstr "Засталося {left}"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ усё размеркавана"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "{over} звыш бюджэту"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Размяркуйце ўсю суму {total} — {left} яшчэ не размеркавана."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Прызначце суму хаця б аднаму пункту."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Выберыце не менш за {n}."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "На {over} больш, чым засталося."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Вы паставілі максімальна дазволеную колькасць."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "з %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "Размяркуйце %(total)s паміж пунктамі. Сума павінна складаць %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "Размяркуйце да %(total)s паміж пунктамі."
+
+#: budget-question
+msgid "Total"
+msgstr "Разам"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Адзначце праекты, якія вы б прафінансавалі. Іх кошт разам не павінен перавышаць %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Напішыце нумар пункта побач з кожнай пазнакай. Пункты разам не павінны каштаваць больш за %(total)s."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "не больш за %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Менш"
+
+#: budget-question
+msgid "More"
+msgstr "Больш"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Размеркаваць астатняе пароўну"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Пункт для размяшчэння"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Размясціць на карце"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Выберыце пункт, затым націсніце на карту, каб яго размясціць."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s адказаў · бюджэт %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Гэтая адзнака каштавала б {cost}, але засталося толькі {left}."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Цана: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Бюджэт: %(total)s — адзнакі ў гэтай групе разам не павінны каштаваць больш за гэта."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / м"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / м²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s за кожную"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "пасля гэтага застанецца {left}"

@@ -1241,3 +1241,147 @@ msgstr "Preferoni të përgjigjeni online? Skanoni këtë kod."
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* e detyrueshme"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Pa kosto — nuk mund të zgjidhet."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Pjesa mesatare e buxhetit që banorët i dhanë çdo zëri."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Përqindja e banorëve që financuan çdo projekt. E gjelbër: projektet më të mbështetura që së bashku hyjnë në buxhet."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Pjesa e gjithçkaje që shpenzuan banorët, sipas zërit."
+
+#: budget-question
+msgid "{left} left"
+msgstr "Mbeten {left}"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ u shpërnda gjithçka"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "{over} mbi buxhetin"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Shpërndani të gjithë shumën {total} — {left} ende nuk janë shpërndarë."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Jepini të paktën një zëri një shumë."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Zgjidhni të paktën {n}."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "{over} më shumë se sa ka mbetur."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Keni vendosur numrin maksimal të lejuar."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "nga %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "Ndani %(total)s midis zërave. Shumat duhet të japin gjithsej %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "Ndani deri në %(total)s midis zërave."
+
+#: budget-question
+msgid "Total"
+msgstr "Gjithsej"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Shënoni projektet që do të financonit. Kostot e tyre së bashku nuk duhet të kalojnë %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Shkruani numrin e zërit pranë çdo shenje. Zërat së bashku nuk duhet të kushtojnë më shumë se %(total)s."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "më së shumti %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Më pak"
+
+#: budget-question
+msgid "More"
+msgstr "Më shumë"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Ndaje pjesën e mbetur në mënyrë të barabartë"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Zëri për t'u vendosur"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Vendose në hartë"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Zgjidhni një zë, pastaj prekni hartën për ta vendosur."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s përgjigje · buxheti %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Kjo shenjë do të kushtonte {cost}, por kanë mbetur vetëm {left}."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Çmimi: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Buxheti: %(total)s — shenjat në këtë grup së bashku nuk duhet të kushtojnë më shumë se kaq."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s secila"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "pas kësaj mbeten {left}"

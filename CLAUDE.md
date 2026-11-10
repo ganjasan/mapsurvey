@@ -115,7 +115,7 @@ Organization
 
 **Dynamic Form Generation**: `SurveySectionAnswerForm` in `survey/forms.py` dynamically builds form fields based on question `input_type`. Each type maps to specific Django fields and custom Leaflet widgets for GIS input.
 
-**Question Types**: `text`, `text_line`, `number`, `choice`, `multichoice`, `range`, `rating`, `datetime`, `point`, `line`, `polygon`, `image`, `html`
+**Question Types**: `text`, `text_line`, `number`, `choice`, `multichoice`, `range`, `rating`, `datetime`, `point`, `line`, `polygon`, `image`, `html`, `budget`
 
 **Creator rich text (`Question.subtext`, `SurveySection.subheading`, `SurveyHeader.thanks_html`)**:
 everything a creator writes in their own words is authored in Quill and rendered to respondents as
@@ -390,6 +390,39 @@ Responses (Map pane and Overview thumbnail) draws a spray question as one
 `L.SprayAgreementLayer` — the public grid's look: share of respondents per geographic cell,
 each counted once, NOT `leaflet.heat` (its zoom scaling flattens it); the public page gets a server-side grid of distinct-respondent counts per cell with cells below K
 omitted (`survey/public_results_grid.py`), never the dots.
+
+**Budget questions (`survey/budget.py`, `survey/budget_stats.py`, change `budget-question`, #447)**: ONE
+question type and ONE group setting — never a geo type (the first build had one, `budget_items`, and
+the owner rejected it: "keep the geo questions as they are, just give each object a price"). `budget`
+(a `CHOICE_TYPES` member, NOT geo) has a `mode` — `split` (amounts per item that add up to the
+budget) or `projects` (pick items until the budget is spent) — and stores ONE `Answer` per respondent
+in `Answer.allocation = {"total", "items": {code: amount}}` (Projects: the cost at answer time);
+`selected_choices` is never set, so no choice consumer picks a budget up. Settings live in
+`validation_settings['budget']`; items are `choices` with the extras `description`, `cost`,
+`description_i18n` (and the icon grid's `icon`/`color` — the bar is stacked per item in the item's
+colour, a group member's `Question.color`) capped in `normalise_choice_extras`; `source == 'layer'` takes the items from
+`Question.layer`'s objects (cost from `cost_property`) and joins `layers.section_layer_ids`. **A budget
+on the map is a GROUP**: `QuestionGroup.budget = {total, unit, symbol}` (group dialog, empty total =
+ordinary group) and a PRICE on each member geo question, `validation_settings['price'] = {amount, per}`
+with `per` ∈ `feature | length | area` narrowed by type (`budget.PERS_BY_TYPE`; the Price block shows in
+the question dialog only inside a budget group). Creators find it in the "New question" picker: the
+**Budget group** card in Map questions is a picker ACTION (`question_types.PICKER_ACTIONS`, not an input
+type — the parity test is about `PICKER_TYPES`) that posts `budget=1` to `editor_group_create` and opens
+the group dialog, which reads "Budget group" with its own tips. The geo questions keep everything else. One validator
+for every record (`normalise_budget_settings(…, input_type | 'group')`, `normalise_price`), one cost
+(`feature_cost` = amount × `measure`: 1 / metres / m² in Web Mercator corrected by cos(lat) like
+`spray.cloud_area_m2`; the browser mirrors it with `distanceTo` / `L.GeometryUtil.geodesicArea`). The
+section POST has no error path for budgets either: `budget.parse_submission` stores nothing for an
+impossible allocation, `views._enforce_group_budgets` admits a group's marks in stored order
+(`budget.GroupSpend`) and deletes the rest, and the client (`js/budget_question.js`: `refreshGroups`
+from `refreshGeoQuestionUI`, `admit` from `draw:created`, `firstInvalid` from Next) says why — no new
+placement path. Aggregates: `budget_stats.aggregate` (question) and `group_aggregate` (group; Responses
+inserts a `budget_group` block before the group's first member); export writes a `cost` property per
+priced mark and a `<group>: spent` column. Budget groups are FREE on every plan (owner 2026-11-10); Pro feature
+`budget_map` is asked only where a budget question becomes layer-sourced (`services.questions.
+_budget_pro_gate`) → `ProRequired`; respondents never meet it. A group's total/unit, a question's
+price, and a budget question's mode/total/unit/step/source/cost property/item costs are structural on
+a live survey (`versioning._budget_structural_changes`, `services.groups.update`).
 
 **Vendor facts on comparison pages (`survey/vendors.py`, change `market-guide-landscape-hub`, #259)**:
 every claim the marketing site makes about another vendor is a `Fact(text, source, verified)` in

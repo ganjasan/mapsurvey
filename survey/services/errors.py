@@ -74,6 +74,17 @@ class TransitionRefused(ServiceError):
     code = 'transition_refused'
 
 
+class ProRequired(ServiceError):
+    """The owning workspace's plan (or trial) does not cover `feature`. Raised
+    where a Pro-only thing is SAVED — a map-bound budget question (change
+    budget-question) — never on a respondent surface."""
+    code = 'pro_required'
+
+    def __init__(self, feature, message=''):
+        super().__init__(message or 'This is a Pro feature.', feature=feature)
+        self.feature = feature
+
+
 class EmailUnconfirmed(ServiceError):
     """The acting account has not confirmed its email address, and nothing goes
     live from an unconfirmed address: publishing waits for it (change

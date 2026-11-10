@@ -1241,3 +1241,147 @@ msgstr "በመስመር ላይ መመለስ ይመርጣሉ? ይህን ኮድ �
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* ግዴታ"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "ወጪ አልተቀመጠም — መምረጥ አይቻልም።"
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "ነዋሪዎች ለእያንዳንዱ ንጥል የሰጡት አማካይ የበጀት ድርሻ።"
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "እያንዳንዱን ፕሮጀክት የደገፉ ነዋሪዎች ድርሻ። አረንጓዴ፦ በአንድ ላይ በበጀቱ ውስጥ የሚገቡ በጣም የተደገፉ ፕሮጀክቶች።"
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "ነዋሪዎች ካወጡት ጠቅላላ ገንዘብ የእያንዳንዱ ንጥል ድርሻ።"
+
+#: budget-question
+msgid "{left} left"
+msgstr "{left} ቀርቷል"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ ሁሉም ተመድቧል"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "ከበጀቱ በ{over} በልጧል"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "ሙሉውን {total} ይመድቡ — {left} ገና አልተመደበም።"
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "ቢያንስ ለአንድ ንጥል መጠን ይስጡ።"
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "ቢያንስ {n} ይምረጡ።"
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "ከቀረው በ{over} ይበልጣል።"
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "የተፈቀደውን ከፍተኛ ቁጥር አስቀምጠዋል።"
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "ከ%(total)s ውስጥ"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "%(total)s በንጥሎቹ መካከል ያከፋፍሉ። መጠኖቹ በድምሩ %(total)s መሆን አለባቸው።"
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "እስከ %(total)s በንጥሎቹ መካከል ያከፋፍሉ።"
+
+#: budget-question
+msgid "Total"
+msgstr "ጠቅላላ"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "የሚደግፏቸውን ፕሮጀክቶች ምልክት ያድርጉ። ወጪያቸው በድምሩ ከ%(total)s መብለጥ የለበትም።"
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "ከእያንዳንዱ ምልክት አጠገብ የንጥሉን ቁጥር ይጻፉ። ንጥሎቹ በአንድ ላይ ከ%(total)s በላይ መሆን የለባቸውም።"
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "ቢበዛ %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "ቀንስ"
+
+#: budget-question
+msgid "More"
+msgstr "ጨምር"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "ቀሪውን በእኩል አከፋፍል"
+
+#: budget-question
+msgid "Item to place"
+msgstr "የሚቀመጥ ንጥል"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "በካርታው ላይ አስቀምጥ"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "ንጥል ይምረጡ፣ ከዚያ ለማስቀመጥ ካርታውን ይንኩ።"
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s ምላሾች · በጀት %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "ይህ ምልክት {cost} ያስወጣል፣ ነገር ግን የቀረው {left} ብቻ ነው።"
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "ዋጋ፦ %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "በጀት፦ %(total)s — በዚህ ቡድን ውስጥ ያሉት ምልክቶች በአንድነት ከዚህ በላይ ማስወጣት የለባቸውም።"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / ሜ"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / ሜ²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s እያንዳንዱ"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "ከዚያ በኋላ {left} ይቀራል"

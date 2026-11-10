@@ -1240,3 +1240,147 @@ msgstr "Muốn trả lời trực tuyến? Quét mã này."
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* bắt buộc"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Chưa đặt chi phí — không thể chọn."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Tỷ lệ ngân sách trung bình mà người dân dành cho từng hạng mục."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Tỷ lệ người dân đã cấp kinh phí cho từng dự án. Màu xanh lá: các dự án được ủng hộ nhiều nhất mà cộng lại vẫn nằm trong ngân sách."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Tỷ lệ trên tổng số tiền người dân đã chi, theo hạng mục."
+
+#: budget-question
+msgid "{left} left"
+msgstr "Còn {left}"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ đã phân bổ hết"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "Vượt ngân sách {over}"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Hãy phân bổ toàn bộ {total} — vẫn còn {left} chưa phân bổ."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Hãy nhập số tiền cho ít nhất một hạng mục."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Chọn ít nhất {n}."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "Vượt số còn lại {over}."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Bạn đã đặt số lượng tối đa cho phép."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "trên %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "Chia %(total)s cho các hạng mục. Tổng các khoản phải bằng %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "Chia tối đa %(total)s cho các hạng mục."
+
+#: budget-question
+msgid "Total"
+msgstr "Tổng"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Đánh dấu các dự án bạn muốn cấp kinh phí. Tổng chi phí của chúng không được vượt quá %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Ghi số hạng mục bên cạnh mỗi dấu. Tổng chi phí các hạng mục không được vượt quá %(total)s."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "tối đa %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Giảm"
+
+#: budget-question
+msgid "More"
+msgstr "Tăng"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Chia đều phần còn lại"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Hạng mục cần đặt"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Đặt lên bản đồ"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Chọn một hạng mục, rồi chạm vào bản đồ để đặt."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s câu trả lời · ngân sách %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Dấu này sẽ tốn {cost}, nhưng chỉ còn lại {left}."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Giá: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Ngân sách: %(total)s — tổng chi phí các dấu trong nhóm này không được vượt quá số đó."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s mỗi cái"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "còn lại {left} sau đó"

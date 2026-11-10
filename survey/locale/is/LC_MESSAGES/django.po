@@ -1241,3 +1241,147 @@ msgstr "Viltu frekar svara á netinu? Skannaðu þennan kóða."
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* skylda"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Enginn kostnaður skráður — ekki hægt að velja."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Meðalhlutur fjárhagsáætlunar sem íbúar veittu hverjum lið."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Hlutfall íbúa sem fjármögnuðu hvert verkefni. Grænt: verkefnin með mestan stuðning sem rúmast saman innan fjárhagsáætlunar."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Hlutur hvers liðar af öllu sem íbúar vörðu."
+
+#: budget-question
+msgid "{left} left"
+msgstr "{left} eftir"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ öllu ráðstafað"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "{over} umfram fjárhagsáætlun"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Ráðstafaðu allri upphæðinni, {total} — enn er {left} óráðstafað."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Settu upphæð á að minnsta kosti einn lið."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Veldu að minnsta kosti {n}."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "{over} umfram það sem eftir er."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Þú hefur sett hámarksfjöldann."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "af %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "Skiptu %(total)s á milli liðanna. Upphæðirnar verða að vera samtals %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "Skiptu allt að %(total)s á milli liðanna."
+
+#: budget-question
+msgid "Total"
+msgstr "Samtals"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Merktu við verkefnin sem þú myndir fjármagna. Samanlagður kostnaður þeirra má ekki vera meiri en %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Skrifaðu númer liðar við hvert merki. Liðirnir mega samtals ekki kosta meira en %(total)s."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "í mesta lagi %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Minna"
+
+#: budget-question
+msgid "More"
+msgstr "Meira"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Dreifa afganginum jafnt"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Liður til að setja"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Setja á kortið"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Veldu lið og pikkaðu svo á kortið til að setja hann."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s svör · fjárhagsáætlun %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Þessi merking myndi kosta {cost}, en aðeins {left} eru eftir."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Verð: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Fjárhagsáætlun: %(total)s — merkingarnar í þessum hópi mega samanlagt ekki kosta meira en það."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s stk."
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "{left} eftir á eftir"

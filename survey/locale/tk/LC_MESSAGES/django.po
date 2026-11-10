@@ -1241,3 +1241,147 @@ msgstr "Onlaýn jogap bermek isleýärsiňizmi? Şu kody skanirläň."
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* hökmany"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Bahasy bellenmedik — saýlap bolmaýar."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Ýaşaýjylaryň her bir bende beren býudjetiniň ortaça paýy."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Her taslamany maliýeleşdiren ýaşaýjylaryň paýy. Ýaşyl: bilelikde býudjete sygýan iň köp goldanan taslamalar."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Ýaşaýjylaryň sarp eden ähli serişdesiniň bentler boýunça paýy."
+
+#: budget-question
+msgid "{left} left"
+msgstr "{left} galdy"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ hemmesi paýlandy"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "Býudjetden {over} artyk"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Tutuş {total} paýlaň — {left} heniz paýlanmady."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Iň bolmanda bir bende mukdar beriň."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Iň bolmanda {n} saýlaň."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "Galandan {over} artyk."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Rugsat berlen iň köp sany ýerleşdirdiňiz."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "%(total)s-dan"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "%(total)s-y bentleriň arasynda paýlaň. Mukdarlaryň jemi %(total)s bolmaly."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "%(total)s çenli bentleriň arasynda paýlaň."
+
+#: budget-question
+msgid "Total"
+msgstr "Jemi"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Maliýeleşdirjek taslamalaryňyzy belläň. Olaryň bahasynyň jemi %(total)s-dan geçmeli däl."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Her belginiň ýanyna bendiň belgisini ýazyň. Bentleriň jemi bahasy %(total)s-dan köp bolmaly däl."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "iň köp %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Azalt"
+
+#: budget-question
+msgid "More"
+msgstr "Köpelt"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Galanyny deň paýla"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Ýerleşdiriljek bent"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Kartada ýerleşdir"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Bent saýlaň, soňra ýerleşdirmek üçin karta basyň."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s jogap · býudjet %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Bu belgi {cost} durar, ýöne diňe {left} galdy."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Baha: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Býujet: %(total)s — bu topardaky belgiler bilelikde mundan köp durmaly däl."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "her biri %(amount)s"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "ondan soň {left} galýar"

@@ -60,6 +60,13 @@ FEATURES = {
     # plan, so a site published under Pro stays online after a lapse (printed QR codes).
     'sites': Feature('sites', frozenset({PLAN_PRO}),
                              _('Sites for your engagements')),
+    # A budget question whose items are a reference layer's objects (change
+    # budget-question, #447). Checked where the question is SAVED; respondents
+    # never meet the gate, so a published survey keeps collecting after a lapse.
+    # Split and Projects from a typed list, and budget GROUPS over priced map
+    # questions, are free on every plan (owner decision 2026-11-10).
+    'budget_map': Feature('budget_map', frozenset({PLAN_PRO}),
+                          _('Budget questions over a reference layer')),
 }
 
 
@@ -81,6 +88,7 @@ TRIAL_ALLOWANCES = {
     'operator_entry': None,
     'map_styles': 2,   # workspace styles created
     'sites': 1,  # sites created
+    'budget_map': None,  # layer-sourced budget questions created: counted, no cap
 }
 TRIAL_DAYS = 90
 

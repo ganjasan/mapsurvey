@@ -136,6 +136,7 @@ INPUT_TYPE_CHOICES = (
     ("document", _("Document Upload")),
     ("thumbs", _("Thumbs up / down")),
     ("layer_objects", _("Objects on the map")),
+    ("budget", _("Budget")),
 )
 
 # `layer_objects` only: how the question presents its layer in the panel
@@ -1206,6 +1207,24 @@ class Question(models.Model):
         from survey.question_types import THUMBS_CHOICES
         return [dict(c) for c in THUMBS_CHOICES]
 
+    def budget_settings(self):
+        """The normalised budget record of a `budget` question (change
+        budget-question), None for any other type."""
+        from survey import budget
+        return budget.settings_of(self)
+
+    def price(self):
+        """A geo question's price under a budget group (change budget-question):
+        `{"amount", "per"}` or None."""
+        from survey import budget
+        return budget.price_of(self)
+
+    def budget_items(self, language=None):
+        """The items a `budget` question allocates to — from `choices` or from
+        the bound layer's objects, see `budget.items_of`."""
+        from survey import budget
+        return budget.items_of(self, language)
+
     def subQuestions(self):
     	if not hasattr(self, "__sqcache"):
     		self.__sqcache = Question.objects.filter(parent_question_id=self).order_by('order_number')
@@ -1365,6 +1384,11 @@ class QuestionGroup(models.Model):
     visibility_rule = models.JSONField(null=True, blank=True)
     audience = models.CharField(max_length=12, choices=AUDIENCE_CHOICES, default=AUDIENCE_EVERYONE)
     order_number = models.IntegerField(default=0)
+    # A budget group (change budget-question): `{"total", "unit", "symbol"}`
+    # through survey.budget.normalise_budget_settings(…, 'group'). Its member
+    # geo questions carry a price (`validation_settings['price']`); the
+    # respondent places marks until the budget is spent. Null = an ordinary group.
+    budget = models.JSONField(null=True, blank=True)
 
     class Meta:
         app_label = 'survey'
@@ -1372,6 +1396,11 @@ class QuestionGroup(models.Model):
 
     def __str__(self):
         return self.title or self.code
+
+    def budget_settings(self):
+        """The normalised budget record, or None for an ordinary group."""
+        from survey import budget
+        return budget.group_settings(self)
 
     def members(self):
         return self.questions.order_by('order_number', 'id')
@@ -1486,6 +1515,11 @@ class Answer(models.Model):
     question = models.ForeignKey("Question", on_delete=models.CASCADE)
     parent_answer_id = models.ForeignKey('self', default=None, null=True, blank=True, on_delete=models.CASCADE)
     selected_choices = models.JSONField(null=True, blank=True)
+    # `budget` answers (change budget-question): `{"total": <budget>, "items":
+    # {"<item code>": <amount>}}` — in Split the amount given, in Projects the
+    # cost of each picked item at answer time. One row per respondent; the
+    # total rides along so shares survive a later change of the budget.
+    allocation = models.JSONField(null=True, blank=True)
 
     numeric = models.FloatField(null=True,blank=True)
     text = models.TextField(null=True, blank=True)
@@ -2258,6 +2292,7 @@ PUBLIC_RESULTS_BLOCK_TYPE_CHOICES = (
     ("chart", _("Chart")),
     ("map", _("Map")),
     ("objects", _("Objects")),   # per-object aggregates of an Objects-on-the-map question
+    ("budget", _("Budget")),     # a budget question's aggregate (change budget-question)
 )
 
 # Current snapshot serialization format. Bumped when the per-block payload

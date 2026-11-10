@@ -120,6 +120,7 @@ def group(obj):
         'title': obj.title or '',
         'description': obj.description or '',
         'display_style': obj.display_style,
+        'budget': obj.budget,
         'visibility_rule': obj.visibility_rule,
         'audience': obj.audience,
         'question_ids': [q.pk for q in obj.members()],

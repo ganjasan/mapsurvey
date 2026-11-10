@@ -7850,8 +7850,6 @@ msgstr "Подключить своего AI-агента"
 msgid "Let Claude, ChatGPT or Cursor build and edit surveys for you through MCP, with a token you control."
 msgstr "Пусть Claude, ChatGPT или Cursor создают и правят опросы за вас через MCP, с токеном под вашим контролем."
 
-
-
 #: survey/templates/editor/account_mcp.html
 msgid "AI agents & MCP"
 msgstr "AI-агенты и MCP"
@@ -10543,6 +10541,150 @@ msgstr "После"
 #: site-gallery-compare
 msgid "Slide to compare"
 msgstr "Сдвиньте, чтобы сравнить"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Стоимость не задана — выбрать нельзя."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Средняя доля бюджета, которую жители отдали каждому пункту."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Доля жителей, профинансировавших каждый проект. Зелёным: самые поддерживаемые проекты, которые вместе укладываются в бюджет."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Доля от всех потраченных жителями средств, по пунктам."
+
+#: budget-question
+msgid "{left} left"
+msgstr "Осталось {left}"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ всё распределено"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "Бюджет превышен на {over}"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Распределите всю сумму {total} — ещё не распределено {left}."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Укажите сумму хотя бы для одного пункта."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Выберите не меньше {n}."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "На {over} больше, чем осталось."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Вы разместили максимально допустимое количество."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "из %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "Распределите %(total)s между пунктами. В сумме должно получиться %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "Распределите до %(total)s между пунктами."
+
+#: budget-question
+msgid "Total"
+msgstr "Итого"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Отметьте проекты, которые вы бы профинансировали. Их общая стоимость не должна превышать %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Напишите номер пункта рядом с каждой отметкой. Вместе пункты не должны стоить больше %(total)s."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "не больше %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Меньше"
+
+#: budget-question
+msgid "More"
+msgstr "Больше"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Распределить остаток поровну"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Что разместить"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Разместить на карте"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Выберите пункт, затем нажмите на карту, чтобы разместить его."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "Ответов: %(n)s · бюджет %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Эта отметка стоила бы {cost}, но осталось только {left}."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Цена: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Бюджет: %(total)s — отметки в этой группе вместе не должны стоить больше."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s за штуку"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "после него останется {left}"
 
 #: survey/context_processors.py
 msgid "Hide the chat button"

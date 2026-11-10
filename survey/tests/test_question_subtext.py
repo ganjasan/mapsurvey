@@ -31,6 +31,7 @@ class QuestionSubtextRenderingTest(TestCase):
         'line':        (True, True),
         'polygon':     (True, True),
         'spraycan':    (True, True),
+        'budget':      (True, True),
         # The name identifies the block in the editor and is used as an
         # internal label in published surveys; rendering it would put
         # "html_block_1" on the respondent's screen.

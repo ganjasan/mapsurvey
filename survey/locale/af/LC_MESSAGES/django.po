@@ -1241,3 +1241,147 @@ msgstr "Verkies jy om aanlyn te antwoord? Skandeer hierdie kode."
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* verpligtend"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Geen koste gestel nie — kan nie gekies word nie."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Gemiddelde deel van die begroting wat inwoners aan elke item gegee het."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Deel van inwoners wat elke projek befonds het. Groen: die mees ondersteunde projekte wat saam binne die begroting pas."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Deel van alles wat inwoners bestee het, per item."
+
+#: budget-question
+msgid "{left} left"
+msgstr "{left} oor"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ alles toegeken"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "{over} oor die begroting"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Ken die hele {total} toe — {left} is nog nie toegeken nie."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Gee ten minste een item 'n bedrag."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Kies ten minste {n}."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "{over} meer as wat oor is."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Jy het die meeste geplaas wat toegelaat word."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "van %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "Verdeel %(total)s tussen die items. Die bedrae moet saam %(total)s wees."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "Verdeel tot %(total)s tussen die items."
+
+#: budget-question
+msgid "Total"
+msgstr "Totaal"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Merk die projekte wat jy sou befonds. Hul koste mag saam nie meer as %(total)s wees nie."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Skryf die itemnommer langs elke merk. Die items mag saam nie meer as %(total)s kos nie."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "hoogstens %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Minder"
+
+#: budget-question
+msgid "More"
+msgstr "Meer"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Versprei die res eweredig"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Item om te plaas"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Plaas op die kaart"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Kies 'n item en tik dan op die kaart om dit te plaas."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s antwoorde · begroting %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Hierdie merk sou {cost} kos, maar daar is net {left} oor."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Prys: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Begroting: %(total)s — die merke in hierdie groep mag saam nie meer as dit kos nie."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s elk"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "{left} oor daarna"

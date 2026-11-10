@@ -70,7 +70,7 @@ def _sanitize_filename(name):
 EXPORT_VALUE_TYPES = frozenset({
     'text', 'text_line', 'number', 'range',
     'choice', 'rating', 'thumbs', 'multichoice', 'datetime', 'ranking',
-    'photo', 'audio', 'document',
+    'photo', 'audio', 'document', 'budget',
 })
 
 # Exported as GeoJSON layers in their own right, never as a cell.
@@ -185,7 +185,29 @@ def _answer_cell(question, answers):
             ranks[f"{question.name}: {question.get_choice_name(code)}"] = position
         return ranks
 
+    if input_type == 'budget':
+        return budget_cells(question, answer.allocation)
+
     return ""
+
+
+def budget_cells(question, allocation):
+    """A `budget` answer as one column per item plus a total (change
+    budget-question, spec response-data-export): Split writes the amount,
+    Projects 1 or 0. Every item gets its column even at zero, so the columns
+    line up across respondents."""
+    from . import budget
+    settings = budget.settings_of(question) or {}
+    chosen = (allocation or {}).get('items') or {}
+    unit = f" ({settings['symbol']})" if settings.get('symbol') else (' (%)' if settings.get('unit') == 'percent' else '')
+    cells = {}
+    for item in budget.items_of(question):
+        if settings.get('mode') == budget.MODE_PROJECTS:
+            cells[f"{question.name}: {item['name']}"] = 1 if item['code'] in chosen else 0
+        else:
+            cells[f"{question.name}: {item['name']}{unit}"] = chosen.get(item['code'], 0)
+    cells[f"{question.name}: total{unit}"] = budget.spent(allocation)
+    return cells
 
 
 # ---------------------------------------------------------------------------
@@ -304,6 +326,10 @@ def _geo_layer(survey, question, excluded_session_ids, limit=None):
     verdicts = shared_map_verdicts(survey, question)
     layer.has_verdicts = bool(verdicts)
     geo_type = question.input_type
+    # A price under a budget group (change budget-question): every mark
+    # carries what it cost, so the GIS files and the observations table can sum it.
+    from . import budget as budget_rules
+    price = budget_rules.price_of(question) if question.group_id and question.group.budget else None
     for geo_answer in question.answers():
         if geo_answer.survey_session_id in excluded_session_ids:
             continue
@@ -344,6 +370,8 @@ def _geo_layer(survey, question, excluded_session_ids, limit=None):
             from survey import spray
             properties["dot_count"] = len(geom)
             properties["area_m2"] = int(round(spray.cloud_area_m2(geom)))
+        if price:
+            properties["cost"] = round(budget_rules.feature_cost(price, geom), 2)
 
         session = geo_answer.survey_session
         properties["session"] = str(session)
@@ -387,9 +415,16 @@ def _collect_part(survey, prefix, excluded_session_ids):
         if session.id in excluded_session_ids:
             continue
         properties = {}
+        spent = {}
         for answer in session.answers():
             if not answer.question:
                 continue
+            if answer.question.input_type in GEO_TYPES and answer.question.group_id:
+                # Marks under a budget group add up to one "spent" column per group.
+                group = answer.question.group
+                if group.budget:
+                    cost = budget_rules.feature_cost(budget_rules.price_of(answer.question), answer.geometry)
+                    spent[group] = spent.get(group, 0) + cost
             cell = _answer_cell(answer.question, [answer])
             # Geometry questions are exported as their own GeoJSON layers and
             # display-only questions collect nothing, so neither gets a column.
@@ -404,6 +439,10 @@ def _collect_part(survey, prefix, excluded_session_ids):
                 properties[answer.question.name] += '; ' + cell
             else:
                 properties[answer.question.name] = cell
+        for group, amount in spent.items():
+            settings = budget_rules.group_settings(group) or {}
+            unit = f" ({settings['symbol']})" if settings.get('symbol') else ''
+            properties[f"{group.title or group.code}: spent{unit}"] = round(amount, 2)
         properties["session"] = str(session)
         properties["session_id"] = session.id
         properties["datetime"] = session.start_datetime

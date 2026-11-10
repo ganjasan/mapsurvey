@@ -1240,3 +1240,147 @@ msgstr "အွန်လိုင်းဖြင့် ဖြေလိုပါ�
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* မဖြစ်မနေ"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "ကုန်ကျစရိတ် မသတ်မှတ်ရသေးပါ — ရွေး၍မရပါ။"
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "နေထိုင်သူများက အရာတစ်ခုစီသို့ ပေးခဲ့သော ဘတ်ဂျက်၏ ပျမ်းမျှဝေစု။"
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "စီမံကိန်းတစ်ခုစီကို ငွေထောက်ပံ့ခဲ့သော နေထိုင်သူများ၏ ရာခိုင်နှုန်း။ အစိမ်း- ဘတ်ဂျက်အတွင်း အတူဆံ့သော အထောက်ခံအများဆုံး စီမံကိန်းများ။"
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "နေထိုင်သူများ သုံးစွဲခဲ့သမျှ၏ ဝေစု၊ အရာအလိုက်။"
+
+#: budget-question
+msgid "{left} left"
+msgstr "{left} ကျန်သည်"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ အားလုံး ခွဲဝေပြီး"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "ဘတ်ဂျက်ထက် {over} ကျော်နေသည်"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "{total} တစ်ခုလုံးကို ခွဲဝေပါ — {left} ကို မခွဲဝေရသေးပါ။"
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "အနည်းဆုံး အရာတစ်ခုကို ပမာဏ ပေးပါ။"
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "အနည်းဆုံး {n} ခု ရွေးပါ။"
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "ကျန်ရှိသည်ထက် {over} ပိုနေသည်။"
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "ခွင့်ပြုထားသော အများဆုံးအရေအတွက်ကို နေရာချပြီးပါပြီ။"
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "%(total)s အနက်"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "%(total)s ကို အရာများကြား ခွဲဝေပါ။ ပမာဏများ ပေါင်းလျှင် %(total)s ဖြစ်ရမည်။"
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "%(total)s အထိ အရာများကြား ခွဲဝေပါ။"
+
+#: budget-question
+msgid "Total"
+msgstr "စုစုပေါင်း"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "သင် ငွေထောက်ပံ့မည့် စီမံကိန်းများကို အမှန်ခြစ်ပါ။ ၎င်းတို့၏ ကုန်ကျစရိတ် ပေါင်းလျှင် %(total)s ထက် မကျော်ရပါ။"
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "အမှတ်အသားတစ်ခုစီဘေးတွင် အရာနံပါတ်ကို ရေးပါ။ အရာများ ပေါင်းလျှင် %(total)s ထက် ပိုမကုန်ရပါ။"
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "အများဆုံး %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "လျှော့ရန်"
+
+#: budget-question
+msgid "More"
+msgstr "တိုးရန်"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "ကျန်ငွေကို ညီတူညီမျှ ခွဲပါ"
+
+#: budget-question
+msgid "Item to place"
+msgstr "နေရာချမည့် အရာ"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "မြေပုံပေါ်တွင် နေရာချပါ"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "အရာတစ်ခု ရွေးပြီး နေရာချရန် မြေပုံကို တို့ပါ။"
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "တုံ့ပြန်မှု %(n)s ခု · ဘတ်ဂျက် %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "ဤအမှတ်အသားသည် {cost} ကုန်ကျမည်ဖြစ်သော်လည်း {left} သာ ကျန်ရှိပါသည်။"
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "ဈေးနှုန်း: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "ဘတ်ဂျက်: %(total)s — ဤအုပ်စုရှိ အမှတ်အသားများ၏ စုစုပေါင်းကုန်ကျစရိတ်သည် ထိုပမာဏထက် မကျော်လွန်ရပါ။"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "တစ်ခုလျှင် %(amount)s"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "ထို့နောက် {left} ကျန်မည်"

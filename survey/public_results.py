@@ -45,6 +45,10 @@ CHART_INPUT_TYPES = ('choice', 'multichoice', 'rating', 'thumbs', 'number', 'ran
 
 def block_type_for_question(question):
     """Map a question's input type to its public-page block type (or None)."""
+    # Budget questions publish their aggregate, the placed-items one too:
+    # what was funded is the result (change budget-question).
+    if question.input_type == 'budget':
+        return 'budget'
     if question.input_type in GEO_INPUT_TYPES:
         return 'map'
     if question.input_type in CHART_INPUT_TYPES:
@@ -144,7 +148,50 @@ class PublicResultsService:
             if block.question_id is None or block.question is None:
                 return None
             return self._objects_payload(block)
+        if block.block_type == 'budget':
+            if block.question_id is None or block.question is None:
+                return None
+            return self._budget_payload(block)
         return None
+
+    def _budget_payload(self, block):
+        """A budget question's aggregate over clean sessions, every item behind
+        fewer than k respondents masked (spec public-results-page "Budget
+        block"). Individual allocations never leave survey/budget_stats.py."""
+        from .budget_stats import aggregate, masked
+        payload = self._base(block)
+        payload['data_type'] = 'budget'
+        agg = masked(aggregate(block.question, session_ids=self._clean_ids, language=self.lang), self.k)
+        if agg is None:
+            payload['budget'] = None
+            return payload
+        rows = []
+        for e in agg['items']:
+            if agg['mode'] == 'split':
+                share = e.get('mean_share')
+                detail = e.get('mean_amount_label') or ''
+            elif agg['mode'] == 'projects':
+                share = e.get('pick_share')
+                detail = e.get('cost_label') or ''
+            else:
+                share = e.get('budget_share')
+                detail = '' if e.get('masked') else '×%s' % e.get('total_count', 0)
+            rows.append({
+                'name': e['name'],
+                'color': e.get('color') or '',
+                'masked': bool(e.get('masked')),
+                'percent': None if share is None else round(share * 100),
+                'detail': detail,
+                'fit': e['code'] in (agg.get('fits') or []),
+            })
+        payload['budget'] = {
+            'mode': agg['mode'],
+            'total_label': agg['total_label'],
+            'respondents': self._mask(agg['respondents']),
+            'rows': rows,
+        }
+        payload['k'] = self.k
+        return payload
 
     def _objects_payload(self, block):
         """Per-object aggregates of an Objects-on-the-map question, masked by k

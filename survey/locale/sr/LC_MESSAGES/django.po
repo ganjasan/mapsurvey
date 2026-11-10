@@ -1242,3 +1242,147 @@ msgstr "Радије бисте одговорили онлајн? Скенир�
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* обавезно"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Цена није постављена — не може се изабрати."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Просечан удео буџета који су становници дали свакој ставци."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Удео становника који су финансирали сваки пројекат. Зелено: најподржанији пројекти који заједно стају у буџет."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Удео свега што су становници потрошили, по ставкама."
+
+#: budget-question
+msgid "{left} left"
+msgstr "Преостало: {left}"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ све је распоређено"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "{over} преко буџета"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Распоредите цео износ од {total} — још {left} није распоређено."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Доделите износ бар једној ставци."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Изаберите бар {n}."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "{over} више од преосталог."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Поставили сте највише што је дозвољено."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "од %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "Поделите %(total)s између ставки. Износи морају укупно да износе %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "Поделите до %(total)s између ставки."
+
+#: budget-question
+msgid "Total"
+msgstr "Укупно"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Означите пројекте које бисте финансирали. Њихови трошкови укупно не смеју прећи %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Поред сваке ознаке упишите број ставке. Ставке заједно не смеју коштати више од %(total)s."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "највише %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Мање"
+
+#: budget-question
+msgid "More"
+msgstr "Више"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Распореди остатак равномерно"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Ставка за постављање"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Постави на мапу"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Изаберите ставку, па додирните мапу да је поставите."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s одговора · буџет %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Ова ознака би коштала {cost}, али је преостало само {left}."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Цена: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Буџет: %(total)s — ознаке у овој групи заједно не смеју да коштају више од тога."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s по комаду"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "након тога остаје {left}"

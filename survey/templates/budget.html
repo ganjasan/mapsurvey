@@ -1,0 +1,70 @@
+{% load i18n %}
+{% comment %}
+A `budget` question (change budget-question, spec budget-question). Works
+without JavaScript: Split posts one number input per item (`<code>__<item>`),
+Projects posts the ticked items under the question's name. budget_question.js
+adds steppers, sliders, the live remainder and the Next hint; the server
+re-checks everything in survey/budget.py::parse_submission.
+{% endcomment %}
+<div class="budget" data-budget data-budget-question="{{ widget.name }}" data-budget-config="{{ widget.config }}"
+     {% if widget.layer_id %}data-budget-layer="{{ widget.layer_id }}"{% endif %}>
+    <div class="budget__bar" data-budget-bar>
+        <div class="budget__nums">
+            <span><b data-budget-spent>0</b> / <span>{{ widget.total_label }}</span></span>
+            <span class="budget__left" data-budget-left aria-live="polite"></span>
+        </div>
+        <div class="budget__track" data-budget-track><i></i></div>
+    </div>
+
+    {% if not widget.items %}
+    <p class="budget__empty"><i class="fas fa-coins" aria-hidden="true"></i>
+        {% trans "Add the items in Items below." %}</p>
+    {% endif %}
+
+    {% if widget.mode == 'split' %}
+    <ul class="budget__list">
+        {% for item in widget.items %}
+        <li class="budget-item" data-budget-item="{{ item.code }}"{% if not item.selectable %} data-budget-off{% endif %} style="--item-color:{{ item.color }};">
+            <div class="budget-item__top">
+                <span class="budget-item__ic" aria-hidden="true">{% if item.icon %}<i class="{{ item.icon }}"></i>{% endif %}</span>
+                <label class="budget-item__name" for="id_{{ item.field }}">{{ item.name }}</label>
+                {% if item.cost_label %}<span class="budget-item__cost">~{{ item.cost_label }}</span>{% endif %}
+            </div>
+            {% if item.description %}<div class="budget-item__desc">{{ item.description|safe }}</div>{% endif %}
+            <div class="budget-item__ctl">
+                <button type="button" class="budget-step" data-budget-dec aria-label="{% trans 'Less' %}">−</button>
+                <input type="number" inputmode="numeric" class="budget-amount" id="id_{{ item.field }}"
+                       name="{{ item.field }}" value="{{ item.amount|default_if_none:0|stringformat:'s' }}"
+                       min="0" step="{{ widget.settings.step|stringformat:'s' }}" max="{{ widget.settings.total|stringformat:'s' }}">
+                <button type="button" class="budget-step" data-budget-inc aria-label="{% trans 'More' %}">+</button>
+                <input type="range" class="budget-slider" tabindex="-1" aria-hidden="true"
+                       min="0" max="{{ widget.settings.total|stringformat:'s' }}" step="{{ widget.settings.step|stringformat:'s' }}"
+                       value="{{ item.amount|default_if_none:0|stringformat:'s' }}">
+                <span class="budget-item__pct" data-budget-pct{% if not widget.settings.show_shares %} hidden{% endif %}></span>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% if widget.settings.rule == 'all' %}
+    <button type="button" class="budget__spread" data-budget-spread>{% trans "Spread the rest evenly" %}</button>
+    {% endif %}
+    {% else %}
+    <ul class="budget__list">
+        {% for item in widget.items %}
+        <li class="budget-proj{% if item.picked %} is-in{% endif %}" data-budget-item="{{ item.code }}"
+            data-budget-cost="{{ item.cost|default_if_none:''|stringformat:'s' }}"{% if not item.selectable %} data-budget-off{% endif %} style="--item-color:{{ item.color }};">
+            <label class="budget-proj__row">
+                <input type="checkbox" name="{{ widget.name }}" value="{{ item.code }}"{% if item.picked %} checked{% endif %}{% if not item.selectable %} disabled{% endif %}>
+                <span class="budget-proj__body">
+                    <span class="budget-proj__name">{{ item.name }}</span>
+                    {% if item.description %}<span class="budget-proj__desc">{{ item.description|safe }}</span>{% endif %}
+                    <span class="budget-proj__why" data-budget-why>{% if not item.selectable %}{% trans "No cost set — can't be picked." %}{% endif %}</span>
+                </span>
+                <span class="budget-proj__cost">{{ item.cost_label }}</span>
+            </label>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    <p class="budget__hint" data-budget-hint aria-live="polite"></p>
+</div>

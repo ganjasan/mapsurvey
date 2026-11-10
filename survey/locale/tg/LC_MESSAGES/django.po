@@ -1241,3 +1241,147 @@ msgstr "Мехоҳед онлайн ҷавоб диҳед? Ин рамзро с�
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* ҳатмӣ"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Арзиш муайян нашудааст — интихоб кардан мумкин нест."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Ҳиссаи миёнаи буҷет, ки сокинон ба ҳар банд доданд."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Ҳиссаи сокиноне, ки ҳар лоиҳаро маблағгузорӣ карданд. Сабз: лоиҳаҳои аз ҳама бештар дастгиришуда, ки якҷоя ба буҷет мегунҷанд."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Ҳиссаи ҳамаи харҷи сокинон аз рӯи бандҳо."
+
+#: budget-question
+msgid "{left} left"
+msgstr "{left} боқӣ монд"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ ҳама тақсим шуд"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "{over} аз буҷет зиёд"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Тамоми {total}-ро тақсим кунед — {left} ҳоло тақсим нашудааст."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Ақаллан ба як банд маблағ диҳед."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Ақаллан {n} интихоб кунед."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "{over} аз боқимонда зиёд."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Шумо ҳадди аксари иҷозатдодашударо гузоштед."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "аз %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "%(total)s-ро байни бандҳо тақсим кунед. Ҷамъи маблағҳо бояд %(total)s бошад."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "То %(total)s-ро байни бандҳо тақсим кунед."
+
+#: budget-question
+msgid "Total"
+msgstr "Ҳамагӣ"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Лоиҳаҳоеро, ки маблағгузорӣ мекардед, қайд кунед. Ҷамъи арзиши онҳо набояд аз %(total)s зиёд бошад."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Дар назди ҳар аломат рақами бандро нависед. Бандҳо якҷоя набояд аз %(total)s қимат бошанд."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "на зиёда аз %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Камтар"
+
+#: budget-question
+msgid "More"
+msgstr "Бештар"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Боқимондаро баробар тақсим кунед"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Банд барои гузоштан"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Ба харита гузоштан"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Бандро интихоб кунед, баъд харитаро пахш кунед, то онро гузоред."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s ҷавоб · буҷет %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Ин аломат {cost} арзиш дорад, аммо танҳо {left} боқӣ мондааст."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Нарх: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Буҷет: %(total)s — аломатҳои ин гурӯҳ якҷоя набояд аз ин бештар арзиш дошта бошанд."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s барои як дона"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "пас аз он {left} мемонад"

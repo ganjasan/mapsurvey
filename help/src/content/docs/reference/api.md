@@ -264,6 +264,7 @@ A group at the end of the section (or of a pop-up with `parent_id`); `question_i
 | `title` | string or null |  |  |
 | `description` | string or null |  |  |
 | `display_style` | `plain` | `card` | `collapsible` or null |  |  |
+| `budget` | BudgetSettingsIn or null |  | Makes the group a budget: its map questions carry a price and respondents place marks until the total is spent (total, unit, symbol). Null removes the budget. |
 | `visibility_rule` | VisibilityRule or null |  |  |
 | `audience` | `everyone` | `respondents` | `operators` or null |  | Who sees it: everyone, respondents only, or operators only (the "Enter a response" form workspace members fill in for someone else). Changing it on a live survey needs unpublished changes. |
 | `translations` | object or null |  |  |
@@ -303,6 +304,7 @@ Wording and style apply to a live survey in place; the rule and `question_ids` a
 | `title` | string or null |  |  |
 | `description` | string or null |  |  |
 | `display_style` | `plain` | `card` | `collapsible` or null |  |  |
+| `budget` | BudgetSettingsIn or null |  | Makes the group a budget: its map questions carry a price and respondents place marks until the total is spent (total, unit, symbol). Null removes the budget. |
 | `visibility_rule` | VisibilityRule or null |  |  |
 | `audience` | `everyone` | `respondents` | `operators` or null |  | Who sees it: everyone, respondents only, or operators only (the "Enter a response" form workspace members fill in for someone else). Changing it on a live survey needs unpublished changes. |
 | `translations` | object or null |  |  |
@@ -612,10 +614,12 @@ Add a question at the end of the section.
 |---|---|---|---|
 | `name` | string or null |  |  |
 | `subtext` | string or null |  |  |
-| `input_type` | `text` | `number` | `choice` | `multichoice` | `range` | `rating` | `ranking` | `datetime` | `point` | `line` | `polygon` | `spraycan` | `image` | `text_line` | `html` | `photo` | `audio` | `document` | `thumbs` | `layer_objects` | yes |  |
+| `input_type` | `text` | `number` | `choice` | `multichoice` | `range` | `rating` | `ranking` | `datetime` | `point` | `line` | `polygon` | `spraycan` | `image` | `text_line` | `html` | `photo` | `audio` | `document` | `thumbs` | `layer_objects` | `budget` | yes |  |
 | `required` | boolean or null |  |  |
 | `choices` | list of ChoiceIn or null |  |  |
 | `validation_settings` | ValidationSettingsIn or null |  |  |
+| `budget` | BudgetSettingsIn or null |  | Settings of a `budget` question. |
+| `price` | PriceIn or null |  | A map question's price under a budget group; null removes it. |
 | `color` | string or null |  |  |
 | `icon_class` | string or null |  |  |
 | `display_style` | string or null |  |  |
@@ -683,10 +687,12 @@ visibility rule and removing an answered option are structure
 |---|---|---|---|
 | `name` | string or null |  |  |
 | `subtext` | string or null |  |  |
-| `input_type` | `text` | `number` | `choice` | `multichoice` | `range` | `rating` | `ranking` | `datetime` | `point` | `line` | `polygon` | `spraycan` | `image` | `text_line` | `html` | `photo` | `audio` | `document` | `thumbs` | `layer_objects` or null |  |  |
+| `input_type` | `text` | `number` | `choice` | `multichoice` | `range` | `rating` | `ranking` | `datetime` | `point` | `line` | `polygon` | `spraycan` | `image` | `text_line` | `html` | `photo` | `audio` | `document` | `thumbs` | `layer_objects` | `budget` or null |  |  |
 | `required` | boolean or null |  |  |
 | `choices` | list of ChoiceIn or null |  |  |
 | `validation_settings` | ValidationSettingsIn or null |  |  |
+| `budget` | BudgetSettingsIn or null |  | Settings of a `budget` question. |
+| `price` | PriceIn or null |  | A map question's price under a budget group; null removes it. |
 | `color` | string or null |  |  |
 | `icon_class` | string or null |  |  |
 | `display_style` | string or null |  |  |
@@ -754,10 +760,12 @@ object of an Objects question: the sub-question appears in its pop-up.
 |---|---|---|---|
 | `name` | string or null |  |  |
 | `subtext` | string or null |  |  |
-| `input_type` | `text` | `number` | `choice` | `multichoice` | `range` | `rating` | `ranking` | `datetime` | `point` | `line` | `polygon` | `spraycan` | `image` | `text_line` | `html` | `photo` | `audio` | `document` | `thumbs` | `layer_objects` | yes |  |
+| `input_type` | `text` | `number` | `choice` | `multichoice` | `range` | `rating` | `ranking` | `datetime` | `point` | `line` | `polygon` | `spraycan` | `image` | `text_line` | `html` | `photo` | `audio` | `document` | `thumbs` | `layer_objects` | `budget` | yes |  |
 | `required` | boolean or null |  |  |
 | `choices` | list of ChoiceIn or null |  |  |
 | `validation_settings` | ValidationSettingsIn or null |  |  |
+| `budget` | BudgetSettingsIn or null |  | Settings of a `budget` question. |
+| `price` | PriceIn or null |  | A map question's price under a budget group; null removes it. |
 | `color` | string or null |  |  |
 | `icon_class` | string or null |  |  |
 | `display_style` | string or null |  |  |
@@ -1287,6 +1295,7 @@ Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `p
 | `title` | string | yes |  |
 | `description` | string | yes |  |
 | `display_style` | `plain` | `card` | `collapsible` | yes |  |
+| `budget` | object or null | yes |  |
 | `visibility_rule` | object or null | yes |  |
 | `audience` | `everyone` | `respondents` | `operators` | yes |  |
 | `question_ids` | list of integer | yes |  |

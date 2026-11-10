@@ -96,8 +96,16 @@ def editor_group_create(request, survey_uuid, section_id):
     if parent_id:
         parent = get_object_or_404(
             Question, id=parent_id, survey_section=section, parent_question_id__isnull=True)
+    # The "New question" picker's Budget group card (change budget-question):
+    # a group that starts with a budget, named from what was typed, if anything.
+    data = None
+    if request.POST.get('budget') == '1':
+        if parent is not None:
+            return HttpResponse('A budget group belongs to the section, not a pop-up.', status=400)
+        data = {'title': (request.POST.get('title') or '').strip()[:512],
+                'budget_present': '1', 'budget_total': '10000', 'budget_unit': 'currency', 'budget_symbol': ''}
     try:
-        group = svc_groups.create(Actor.from_request(request), section, parent=parent)
+        group = svc_groups.create(Actor.from_request(request), section, data, parent=parent)
     except ValidationFailed as err:
         return HttpResponse(err.message, status=400)
     except ServiceError as err:
@@ -127,7 +135,7 @@ def editor_group_edit(request, survey_uuid, group_id):
     try:
         svc_groups.update(
             Actor.from_request(request), group,
-            {name: request.POST.get(name, '') for name in QuestionGroupForm._meta.fields},
+            {name: request.POST.get(name, '') for name in (*QuestionGroupForm._meta.fields, 'budget_total', 'budget_unit', 'budget_symbol', 'budget_present')},
             visibility_rule=vis_rule if vis_present else UNSET,
             translations=_posted_group_translations(request, survey))
     except StructureLocked as err:

@@ -31,7 +31,7 @@ from .layers import (
     normalize_style, legend_for, LAYER_ICONS, layers_for, layer_owner, GEOMETRY_TEXT_FIELDS, MAX_LAYER_BYTES,
 )
 from . import product_events as pe
-from .question_types import SHARED_MAP_SOURCE_TYPES, allowed_display_styles, normalise_choice_extras
+from .question_types import BUDGET_TYPES, SHARED_MAP_SOURCE_TYPES, allowed_display_styles, normalise_choice_extras
 from .groups import group_from_request
 from .html_sanitize import coerce_creator_html
 from .content_screening import pending_review_for
@@ -1714,6 +1714,16 @@ def editor_question_preview_live(request, survey_uuid, section_id):
             parent_question_id_id=int(qid), parent_question_id__survey_section__survey_header=survey).exists()
     if input_type == 'thumbs':
         question.choices = question.thumbs_choices()
+    if input_type in BUDGET_TYPES:
+        # The draft's budget record and, for a layer-sourced budget, its layer
+        # (change budget-question); an invalid record previews the defaults.
+        try:
+            question.validation_settings = svc_questions.parse_validation_settings(input_type, request.POST)
+        except ValidationFailed:
+            question.validation_settings = {}
+        raw_layer = request.POST.get('layer', '').strip()
+        if raw_layer.isdigit() and (question.validation_settings.get('budget') or {}).get('source') == 'layer':
+            question.layer = layers_for(survey).filter(pk=int(raw_layer)).first()
 
     lang = _preview_language(request, survey)
     form = SurveySectionAnswerForm.single_question_form(question, lang)

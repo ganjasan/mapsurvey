@@ -142,6 +142,7 @@ UNMAPPED_MODULES = {
     'creator-language-preference': 'spec lives in the unarchived change creator-ui-localization',
     'repo-hygiene': 'spec lives in the unarchived change ops-repo-separation',
     'paper-photo-entry': 'spec lives in the unarchived change paper-photo-entry',
+    'budget-question': 'spec lives in the unarchived change budget-question',
 }
 
 # Capabilities with no module here: tested in another app, or not by any

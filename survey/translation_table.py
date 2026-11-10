@@ -37,7 +37,7 @@ from dataclasses import dataclass, field
 from django.utils.translation import gettext as _
 
 from .html_sanitize import coerce_creator_html
-from .question_types import CHOICE_TYPES
+from .question_types import BUDGET_TYPES, CHOICE_TYPES
 from .versioning import canonical_of
 
 PLAIN, RICH = 'plain', 'rich'
@@ -217,6 +217,12 @@ def record_choice_hashes(survey, question, old_choices, new_choices, force=()):
                 record_hashes(survey, lang, [(f'{prefix}:choice:{code}', _choice_primary(choice, primary), PLAIN, new_name)])
 
 
+def _choice_description(choice, lang):
+    """A budget item's description translated into `lang` (empty when none)."""
+    translated = choice.get('description_i18n') if isinstance(choice, dict) else None
+    return (translated or {}).get(lang) or '' if isinstance(translated, dict) else ''
+
+
 def _choice_primary(choice, primary):
     name = choice.get('name') if isinstance(choice, dict) else None
     if isinstance(name, dict):
@@ -331,6 +337,14 @@ def occurrences(survey, language, source_language=None):
                         page, page_title, opt, f'{where_prefix} · {opt}',
                         'question', question, f'choice:{choice.get("code")}',
                         shown=_choice_name(choice, source_language), link=qlink)
+                    # A budget item's one-line description (change budget-question).
+                    if question.input_type in BUDGET_TYPES and choice.get('description'):
+                        desc = _('%(q)s item description') % {'q': element}
+                        add(f'{qprefix}:choice:{choice.get("code")}:description', PLAIN,
+                            choice.get('description') or '', _choice_description(choice, language),
+                            page, page_title, desc, f'{where_prefix} · {desc}',
+                            'question', question, f'choice:{choice.get("code")}:description',
+                            shown=_choice_description(choice, source_language), link=qlink)
 
         for group, questions in group_runs(list(section.questions()), groups.get((section.id, None), [])):
             if group is not None:
@@ -428,7 +442,7 @@ def apply(actor, survey, language, values, *, overwrite=False, clear_empty=False
     from .services import locks
     from .services.common import surface_props
     from .services.groups import save_translations_for as save_group
-    from .services.questions import save_translations_for as save_question, set_choice_names
+    from .services.questions import save_translations_for as save_question, set_choice_descriptions, set_choice_names
     from .services.sections import save_translations_for as save_section
     from .services.surveys import set_thanks
 
@@ -477,12 +491,17 @@ def apply(actor, survey, language, values, *, overwrite=False, clear_empty=False
         elif kind == 'group':
             _write_rows(save_group, entity, survey, language, fields, ('title', 'description'))
         elif kind == 'question':
-            names = {f.split(':', 1)[1]: v for f, v in fields.items() if f.startswith('choice:')}
+            descriptions = {f.split(':')[1]: v for f, v in fields.items()
+                            if f.startswith('choice:') and f.endswith(':description')}
+            names = {f.split(':', 1)[1]: v for f, v in fields.items()
+                     if f.startswith('choice:') and not f.endswith(':description')}
             plain = {f: v for f, v in fields.items() if not f.startswith('choice:')}
             if plain:
                 _write_rows(save_question, entity, survey, language, plain, ('name', 'subtext'))
             if names:
                 set_choice_names(entity, language, names)
+            if descriptions:
+                set_choice_descriptions(entity, language, descriptions)
         elif kind == 'survey':
             set_thanks(actor, survey, {language: fields.get('thanks', '')}, languages=[language])
             thanks = survey.thanks_html if isinstance(survey.thanks_html, dict) else {}

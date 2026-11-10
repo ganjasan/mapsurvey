@@ -1244,3 +1244,147 @@ msgstr "Ar mhaith leat freagairt ar líne? Scan an cód seo."
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* riachtanach"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Níl costas socraithe — ní féidir é a roghnú."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Meánsciar den bhuiséad a thug na cónaitheoirí do gach mír."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Sciar na gcónaitheoirí a mhaoinigh gach tionscadal. Glas: na tionscadail is mó tacaíochta a oireann don bhuiséad le chéile."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Sciar de gach a chaith na cónaitheoirí, de réir míre."
+
+#: budget-question
+msgid "{left} left"
+msgstr "{left} fágtha"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ gach rud leithdháilte"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "{over} thar an mbuiséad"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Leithdháil an {total} ar fad — tá {left} fós gan leithdháileadh."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Tabhair suim do mhír amháin ar a laghad."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Roghnaigh {n} ar a laghad."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "{over} níos mó ná a bhfuil fágtha."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Chuir tú an líon is mó a cheadaítear."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "as %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "Roinn %(total)s idir na míreanna. Caithfidh na suimeanna a bheith cothrom le %(total)s san iomlán."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "Roinn suas le %(total)s idir na míreanna."
+
+#: budget-question
+msgid "Total"
+msgstr "Iomlán"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Cuir tic leis na tionscadail a mhaoineofá. Ní ceart dá gcostais a bheith níos mó ná %(total)s san iomlán."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Scríobh uimhir na míre in aice le gach marc. Ní ceart do na míreanna níos mó ná %(total)s a chosaint le chéile."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "%(n)s ar a mhéad"
+
+#: budget-question
+msgid "Less"
+msgstr "Níos lú"
+
+#: budget-question
+msgid "More"
+msgstr "Níos mó"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Roinn an chuid eile go cothrom"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Mír le cur"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Cuir ar an léarscáil"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Roghnaigh mír, ansin tapáil an léarscáil chun í a chur."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s freagra · buiséad %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Chosnódh an marc seo {cost}, ach níl ach {left} fágtha."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Praghas: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Buiséad: %(total)s — ní cheadaítear do na marcanna sa ghrúpa seo níos mó ná sin a chosaint le chéile."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s an ceann"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "{left} fágtha ina dhiaidh"

@@ -1241,3 +1241,147 @@ msgstr "Онлайн жауап бергіңіз келе ме? Осы кодт�
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* міндетті"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Құны көрсетілмеген — таңдауға болмайды."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Тұрғындардың әр элементке берген бюджет үлесінің орташа мәні."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Әр жобаны қаржыландырған тұрғындардың үлесі. Жасыл: бюджетке бірге сыятын ең көп қолдау алған жобалар."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Тұрғындар жұмсаған барлық қаражаттағы әр элементтің үлесі."
+
+#: budget-question
+msgid "{left} left"
+msgstr "{left} қалды"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ бәрі бөлінді"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "Бюджеттен {over} асып кетті"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Барлық {total} соманы бөліңіз — әлі {left} бөлінбеген."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Кемінде бір элементке сома беріңіз."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Кемінде {n} таңдаңыз."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "Қалғаннан {over} артық."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Рұқсат етілген ең көп санды орналастырдыңыз."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "/ %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "%(total)s соманы элементтер арасында бөліңіз. Сомалардың жиыны %(total)s болуы керек."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "%(total)s дейінгі соманы элементтер арасында бөліңіз."
+
+#: budget-question
+msgid "Total"
+msgstr "Барлығы"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Қаржыландыратын жобаларыңызды белгілеңіз. Олардың жалпы құны %(total)s аспауы керек."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Әр белгінің жанына элемент нөмірін жазыңыз. Элементтердің жалпы құны %(total)s аспауы керек."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "ең көбі %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Азайту"
+
+#: budget-question
+msgid "More"
+msgstr "Көбейту"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Қалғанын тең бөлу"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Орналастырылатын элемент"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Картаға орналастыру"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Элементті таңдаңыз, содан кейін оны орналастыру үшін картаны түртіңіз."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s жауап · бюджет %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Бұл белгі {cost} тұрар еді, бірақ тек {left} қалды."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Бағасы: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Бюджет: %(total)s — осы топтағы белгілер жиынтығында бұдан қымбат болмауы керек."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / м"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / м²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "әрқайсысы %(amount)s"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "одан кейін {left} қалады"

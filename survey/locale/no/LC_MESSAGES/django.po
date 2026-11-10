@@ -1241,3 +1241,147 @@ msgstr "Vil du heller svare på nett? Skann denne koden."
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* obligatorisk"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Ingen kostnad satt — kan ikke velges."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Gjennomsnittlig andel av budsjettet innbyggerne ga hver post."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Andel innbyggere som finansierte hvert prosjekt. Grønt: de mest støttede prosjektene som til sammen passer innenfor budsjettet."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Andel av alt innbyggerne brukte, per post."
+
+#: budget-question
+msgid "{left} left"
+msgstr "{left} igjen"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ alt er fordelt"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "{over} over budsjettet"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Fordel hele {total} — {left} er fortsatt ikke fordelt."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Gi minst én post et beløp."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Velg minst {n}."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "{over} mer enn det som er igjen."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Du har plassert så mange som er tillatt."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "av %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "Fordel %(total)s mellom postene. Beløpene må til sammen bli %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "Fordel opptil %(total)s mellom postene."
+
+#: budget-question
+msgid "Total"
+msgstr "Totalt"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Kryss av prosjektene du ville finansiert. Kostnadene deres kan til sammen ikke overstige %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Skriv postens nummer ved hvert merke. Postene kan til sammen ikke koste mer enn %(total)s."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "høyst %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Mindre"
+
+#: budget-question
+msgid "More"
+msgstr "Mer"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Fordel resten jevnt"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Post å plassere"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Plasser på kartet"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Velg en post, og trykk så på kartet for å plassere den."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s svar · budsjett %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Denne markeringen ville koste {cost}, men det er bare {left} igjen."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Pris: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Budsjett: %(total)s — markeringene i denne gruppen kan til sammen ikke koste mer enn det."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s per stykk"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "{left} igjen etterpå"

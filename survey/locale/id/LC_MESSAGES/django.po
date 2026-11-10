@@ -7872,8 +7872,6 @@ msgstr "Hubungkan agen AI Anda"
 msgid "Let Claude, ChatGPT or Cursor build and edit surveys for you through MCP, with a token you control."
 msgstr "Biarkan Claude, ChatGPT, atau Cursor membuat dan mengedit survei untuk Anda melalui MCP, dengan token yang Anda kendalikan."
 
-
-
 #: survey/templates/editor/account_mcp.html
 msgid "AI agents & MCP"
 msgstr "Agen AI & MCP"
@@ -10327,7 +10325,6 @@ msgstr "Menerbitkan…"
 msgid "Failed"
 msgstr "Gagal"
 
-
 #: map-style-library (#542)
 msgid "Rename"
 msgstr "Ganti nama"
@@ -12436,6 +12433,405 @@ msgstr "Sesudah"
 #: site-gallery-compare
 msgid "Slide to compare"
 msgstr "Geser untuk membandingkan"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Belum ada biaya — tidak bisa dipilih."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Rata-rata bagian anggaran yang diberikan warga untuk tiap item."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Persentase warga yang mendanai tiap proyek. Hijau: proyek dengan dukungan terbanyak yang muat bersama dalam anggaran."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Bagian dari seluruh pengeluaran warga, per item."
+
+#: budget-question
+msgid "{left} left"
+msgstr "Sisa {left}"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ semua sudah dibagi"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "{over} melebihi anggaran"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Bagikan seluruh {total} — masih ada {left} yang belum dibagi."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Beri jumlah untuk setidaknya satu item."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Pilih setidaknya {n}."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "{over} melebihi sisa."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Anda sudah menempatkan jumlah maksimum."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "dari %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "Bagikan %(total)s ke item-item. Jumlahnya harus tepat %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "Bagikan hingga %(total)s ke item-item."
+
+#: budget-question
+msgid "Total"
+msgstr "Total"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Centang proyek yang ingin Anda danai. Total biayanya tidak boleh lebih dari %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Tulis nomor item di samping setiap tanda. Total biaya item tidak boleh lebih dari %(total)s."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "maksimal %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Kurangi"
+
+#: budget-question
+msgid "More"
+msgstr "Tambah"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Bagi sisanya secara merata"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Item untuk ditempatkan"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Tempatkan di peta"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Pilih item, lalu ketuk peta untuk menempatkannya."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s tanggapan · anggaran %(total)s"
+
+#: budget-question
+msgid "One line under the item on the respondent page"
+msgstr "Satu baris di bawah item pada halaman responden"
+
+#: budget-question
+msgid "What the item costs. Required for projects and for items placed on the map; a guide for a split budget."
+msgstr "Biaya item. Wajib untuk proyek dan item yang ditempatkan di peta; sebagai panduan untuk anggaran yang dibagi."
+
+#: budget-question
+msgid "Cost"
+msgstr "Biaya"
+
+#: budget-question
+msgid "At most this many of the item per respondent; empty = no cap"
+msgstr "Paling banyak sejumlah ini dari item per responden; kosong = tanpa batas"
+
+#: budget-question
+msgid "Budget"
+msgstr "Anggaran"
+
+#: budget-question
+msgid "Split a budget"
+msgstr "Bagi anggaran"
+
+#: budget-question
+msgid "Every item gets an amount; the amounts add up to the budget. Results: average share per item."
+msgstr "Setiap item mendapat jumlah; semua jumlah bertotal sama dengan anggaran. Hasil: rata-rata porsi per item."
+
+#: budget-question
+msgid "Choose projects within a budget"
+msgstr "Pilih proyek dalam anggaran"
+
+#: budget-question
+msgid "Each item has a cost; the respondent picks projects until the budget is spent. Results: share of respondents per project."
+msgstr "Setiap item memiliki biaya; responden memilih proyek sampai anggaran habis. Hasil: porsi responden per proyek."
+
+#: budget-question
+msgid "Total budget"
+msgstr "Total anggaran"
+
+#: budget-question
+msgid "Unit"
+msgstr "Satuan"
+
+#: budget-question
+msgid "Currency"
+msgstr "Mata uang"
+
+#: budget-question
+msgid "Points"
+msgstr "Poin"
+
+#: budget-question
+msgid "Symbol"
+msgstr "Simbol"
+
+#: budget-question
+msgid "Step"
+msgstr "Langkah"
+
+#: budget-question
+msgid "auto"
+msgstr "otomatis"
+
+#: budget-question
+msgid "Amounts move in steps; 20 000 000 reads as £20M. Per cent fixes the total at 100."
+msgstr "Jumlah berubah per langkah; 20 000 000 ditampilkan sebagai £20M. Persen menetapkan total pada 100."
+
+#: budget-question
+msgid "Rule"
+msgstr "Aturan"
+
+#: budget-question
+msgid "Must allocate the whole budget"
+msgstr "Harus mengalokasikan seluruh anggaran"
+
+#: budget-question
+msgid "Can allocate up to the budget"
+msgstr "Boleh mengalokasikan hingga anggaran"
+
+#: budget-question
+msgid "Minimum items"
+msgstr "Item minimum"
+
+#: budget-question
+msgid "Items"
+msgstr "Item"
+
+#: budget-question
+msgid "Type a list"
+msgstr "Ketik daftar"
+
+#: budget-question
+msgid "Objects of a layer"
+msgstr "Objek dari lapisan"
+
+#: budget-question
+msgid "Cost from property"
+msgstr "Biaya dari properti"
+
+#: budget-question
+msgid "Each object of the layer is an item; its cost is read from that property. Objects without a number there are shown but cannot be picked."
+msgstr "Setiap objek di lapisan adalah item; biayanya dibaca dari properti tersebut. Objek tanpa angka di sana tetap ditampilkan tetapi tidak dapat dipilih."
+
+#: budget-question
+msgid "cost"
+msgstr "biaya"
+
+#: budget-question
+msgid "budget"
+msgstr "anggaran"
+
+#: budget-question
+msgid "spent on average"
+msgstr "dibelanjakan rata-rata"
+
+#: budget-question
+msgid "of spend"
+msgstr "dari belanja"
+
+#: budget-question
+msgid "Most supported projects that fit the budget together"
+msgstr "Proyek paling didukung yang muat bersama dalam anggaran"
+
+#: budget-question
+msgid "Where they were placed — see the map."
+msgstr "Tempat item ditempatkan — lihat peta."
+
+#: budget-question
+msgid "Budget: place items on the map"
+msgstr "Anggaran: tempatkan item di peta"
+
+#: budget-question
+msgid "Budget questions on the map"
+msgstr "Pertanyaan anggaran di peta"
+
+#: budget-question
+msgid "Pick the reference layer whose objects are the budget items."
+msgstr "Pilih lapisan rujukan yang objeknya menjadi item anggaran."
+
+#: budget-question
+#, python-format
+msgid "%(q)s item description"
+msgstr "Deskripsi item %(q)s"
+
+#: budget-question
+msgid "Show each item's share in % next to the amount"
+msgstr "Tampilkan porsi setiap item dalam % di samping jumlah"
+
+#: budget-question
+msgid "Add the items in Items below."
+msgstr "Tambahkan item di bagian Item di bawah."
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Tanda ini akan menelan biaya {cost}, tetapi hanya tersisa {left}."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Harga: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Anggaran: %(total)s — tanda-tanda dalam kelompok ini secara keseluruhan tidak boleh melebihi jumlah itu."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s per buah"
+
+#: budget-question
+msgid "What the item costs. Required for projects; a guide for a split budget."
+msgstr "Biaya item ini. Wajib untuk proyek; sebagai panduan saat membagi anggaran."
+
+#: budget-question
+#, python-format
+msgid "in the budget of “%(name)s”"
+msgstr "dalam anggaran “%(name)s”"
+
+#: budget-question
+msgid "Amount"
+msgstr "Jumlah"
+
+#: budget-question
+msgid "points"
+msgstr "poin"
+
+#: budget-question
+msgid "free"
+msgstr "gratis"
+
+#: budget-question
+msgid "Per"
+msgstr "Per"
+
+#: budget-question
+msgid "mark"
+msgstr "tanda"
+
+#: budget-question
+msgid "metre of the line"
+msgstr "meter garis"
+
+#: budget-question
+msgid "square metre of the area"
+msgstr "meter persegi area"
+
+#: budget-question
+msgid "What one mark costs against the group's budget. Empty = respondents place these for free."
+msgstr "Biaya satu tanda dari anggaran grup. Kosong = responden menempatkannya secara gratis."
+
+#: budget-question
+msgid "With a total, the map questions in this group become a budget: give each a price in its dialog (per mark, per metre or per m²) and respondents place marks until the total is spent. Leave empty for an ordinary group."
+msgstr "Dengan total, pertanyaan peta dalam grup ini menjadi anggaran: beri setiap pertanyaan harga di dialognya (per tanda, per meter, atau per m²) dan responden menempatkan tanda sampai total habis. Biarkan kosong untuk grup biasa."
+
+#: budget-question
+#, python-format
+msgid "%(m)s of %(n)s questions inside have a price; the others place marks for free."
+msgstr "%(m)s dari %(n)s pertanyaan di dalamnya punya harga; yang lain menempatkan tanda secara gratis."
+
+#: budget-question
+msgid "Budget group: the map questions inside carry a price"
+msgstr "Grup anggaran: pertanyaan peta di dalamnya punya harga"
+
+#: budget-question
+msgid "Budget group"
+msgstr "Grup anggaran"
+
+#: budget-question
+msgid "Map questions inside carry the price."
+msgstr "Pertanyaan peta di dalamnya yang membawa harga."
+
+#: budget-question
+msgid "Add the map questions you want funded — benches, lamp posts, paths, flower beds — to this group, then open each and set its price under “Places per respondent”."
+msgstr "Tambahkan pertanyaan peta yang ingin didanai — bangku, tiang lampu, jalan setapak, petak bunga — ke grup ini, lalu buka masing-masing dan tetapkan harganya di bagian “Jumlah tempat per responden”."
+
+#: budget-question
+msgid "Per mark, per metre or per square metre."
+msgstr "Per tanda, per meter, atau per meter persegi."
+
+#: budget-question
+msgid "A point is priced per mark; a line can be priced per metre; an area or a spray per square metre — so a long path or a big bed costs more."
+msgstr "Titik dihargai per tanda; garis dapat dihargai per meter; area atau semprotan per meter persegi — jadi jalan setapak yang panjang atau petak bunga yang besar lebih mahal."
+
+#: budget-question
+msgid "Respondents see what is left."
+msgstr "Responden melihat sisa anggaran."
+
+#: budget-question
+msgid "The bar at the top of the group counts their marks against the total. A mark that no longer fits is greyed out with the reason; a line or area drawn too long is not kept."
+msgstr "Bilah di bagian atas grup menghitung tanda mereka terhadap total. Tanda yang tidak lagi muat ditampilkan abu-abu beserta alasannya; garis atau area yang digambar terlalu panjang tidak disimpan."
+
+#: budget-question
+msgid "No price, no cost."
+msgstr "Tanpa harga, tanpa biaya."
+
+#: budget-question
+msgid "A map question in the group without a price places marks for free; the dialog counts how many are priced."
+msgstr "Pertanyaan peta dalam grup tanpa harga menempatkan tanda secara gratis; dialog menghitung berapa yang punya harga."
+
+#: budget-question
+msgid "Results."
+msgstr "Hasil."
+
+#: budget-question
+msgid "Responses shows one block for the group — marks, metres or m² per question, what they cost — and the marks themselves stay on the map. Each mark exports with its cost."
+msgstr "Tanggapan menampilkan satu blok untuk grup — tanda, meter, atau m² per pertanyaan, dan biayanya — dan tanda itu sendiri tetap ada di peta. Setiap tanda diekspor beserta biayanya."
+
+#: budget-question
+msgid "Budget questions over a reference layer"
+msgstr "Pertanyaan anggaran di atas lapisan referensi"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "sisa {left} setelahnya"
 
 #: survey/context_processors.py
 msgid "Hide the chat button"

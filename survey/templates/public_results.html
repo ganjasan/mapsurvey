@@ -114,6 +114,31 @@
         {% endif %}
       {% elif block.block_type == 'map' %}
         <div class="map-holder" id="map-{{ block.id }}"></div>
+      {% elif block.block_type == 'budget' and block.budget %}
+        {% comment %}Budget block (change budget-question): server-rendered bars, no script.{% endcomment %}
+        <p class="budget-meta">{% blocktrans with n=block.budget.respondents.display total=block.budget.total_label %}{{ n }} responses · budget {{ total }}{% endblocktrans %}</p>
+        <div class="pr-budget">
+          {% for r in block.budget.rows %}
+          <div class="pr-budget__row{% if r.fit %} is-fit{% endif %}{% if r.masked %} masked{% endif %}">
+            <span class="pr-budget__name">{{ r.name }}</span>
+            <span class="pr-budget__bar"><i style="width:{{ r.percent|default:0 }}%;{% if r.color %}background:{{ r.color }};{% endif %}"></i></span>
+            <span class="pr-budget__val">{% if r.masked %}&lt;{{ block.k }}{% else %}{{ r.percent }}%{% if r.detail %} · {{ r.detail }}{% endif %}{% endif %}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% if block.budget.mode == 'split' %}<div class="kanon-note">{% trans "Average share of the budget residents gave each item." %}</div>
+        {% elif block.budget.mode == 'projects' %}<div class="kanon-note">{% trans "Share of residents who funded each project. Green: the most supported projects that fit the budget together." %}</div>
+        {% else %}<div class="kanon-note">{% trans "Share of everything residents spent, by item." %}</div>{% endif %}
+        {% if page.k_anonymity_threshold > 1 %}<div class="kanon-note">{% trans "Small groups are masked to protect privacy." %}</div>{% endif %}
+        <style>
+          .pr-budget__row { display:grid; grid-template-columns:minmax(110px,1.3fr) 2fr minmax(70px,auto); gap:10px; align-items:center; margin:6px 0; font-size:.9rem; }
+          .pr-budget__bar { height:14px; background:#e5e7eb; border-radius:4px; overflow:hidden; }
+          .pr-budget__bar i { display:block; height:100%; background:#4f46e5; }
+          .pr-budget__row.is-fit .pr-budget__bar i { background:#16a34a; }
+          .pr-budget__row.masked { color:#9ca3af; }
+          .pr-budget__val { text-align:right; font-variant-numeric:tabular-nums; }
+          .budget-meta { color:#6b7280; font-size:.85rem; margin:0 0 .5rem; }
+        </style>
       {% elif block.block_type == 'objects' %}
         <div class="objects-holder" id="objects-{{ block.id }}"></div>
         {% if page.k_anonymity_threshold > 1 %}

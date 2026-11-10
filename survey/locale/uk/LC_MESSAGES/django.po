@@ -1243,3 +1243,147 @@ msgstr "Зручніше відповісти онлайн? Відскануйт
 #: survey/print/pdf.py
 msgid "* required"
 msgstr "* обов'язково"
+
+#: budget-question
+msgid "No cost set — can't be picked."
+msgstr "Вартість не вказано — вибрати не можна."
+
+#: budget-question
+msgid "Average share of the budget residents gave each item."
+msgstr "Середня частка бюджету, яку мешканці віддали кожній позиції."
+
+#: budget-question
+msgid "Share of residents who funded each project. Green: the most supported projects that fit the budget together."
+msgstr "Частка мешканців, які профінансували кожен проєкт. Зелений: найпопулярніші проєкти, що разом вкладаються в бюджет."
+
+#: budget-question
+msgid "Share of everything residents spent, by item."
+msgstr "Частка всіх витрат мешканців за позиціями."
+
+#: budget-question
+msgid "{left} left"
+msgstr "Залишилося {left}"
+
+#: budget-question
+msgid "✓ all allocated"
+msgstr "✓ усе розподілено"
+
+#: budget-question
+msgid "{over} over the budget"
+msgstr "{over} понад бюджет"
+
+#: budget-question
+msgid "Allocate the whole {total} — {left} is still unallocated."
+msgstr "Розподіліть усі {total} — {left} ще не розподілено."
+
+#: budget-question
+msgid "Give at least one item an amount."
+msgstr "Вкажіть суму хоча б для однієї позиції."
+
+#: budget-question
+msgid "Pick at least {n}."
+msgstr "Виберіть щонайменше {n}."
+
+#: budget-question
+msgid "{over} over what is left."
+msgstr "{over} понад залишок."
+
+#: budget-question
+msgid "You placed the most allowed."
+msgstr "Ви розмістили максимально дозволену кількість."
+
+#: budget-question
+#, python-format
+msgid "of %(total)s"
+msgstr "з %(total)s"
+
+#: budget-question
+#, python-format
+msgid "Share %(total)s between the items. The amounts must add up to %(total)s."
+msgstr "Розподіліть %(total)s між позиціями. Сума має дорівнювати %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Share up to %(total)s between the items."
+msgstr "Розподіліть до %(total)s між позиціями."
+
+#: budget-question
+msgid "Total"
+msgstr "Разом"
+
+#: budget-question
+#, python-format
+msgid "Tick the projects you would fund. Their costs must not add up to more than %(total)s."
+msgstr "Позначте проєкти, які ви б профінансували. Їхня загальна вартість не має перевищувати %(total)s."
+
+#: budget-question
+#, python-format
+msgid "Write the item number next to each mark. The items must not cost more than %(total)s together."
+msgstr "Біля кожної позначки напишіть номер позиції. Разом позиції не мають коштувати більше ніж %(total)s."
+
+#: budget-question
+#, python-format
+msgid "at most %(n)s"
+msgstr "не більше %(n)s"
+
+#: budget-question
+msgid "Less"
+msgstr "Менше"
+
+#: budget-question
+msgid "More"
+msgstr "Більше"
+
+#: budget-question
+msgid "Spread the rest evenly"
+msgstr "Розподілити решту порівну"
+
+#: budget-question
+msgid "Item to place"
+msgstr "Що розмістити"
+
+#: budget-question
+msgid "Place on the map"
+msgstr "Розмістити на карті"
+
+#: budget-question
+msgid "Pick an item, then tap the map to place it."
+msgstr "Виберіть позицію, а потім торкніться карти, щоб її розмістити."
+
+#: budget-question
+#, python-format
+msgid "%(n)s responses · budget %(total)s"
+msgstr "%(n)s відповідей · бюджет %(total)s"
+
+#: budget-question
+msgid "This mark would cost {cost}, but only {left} is left."
+msgstr "Ця позначка коштувала б {cost}, але залишилося лише {left}."
+
+#: budget-question
+#, python-format
+msgid "Price: %(price)s"
+msgstr "Ціна: %(price)s"
+
+#: budget-question
+#, python-format
+msgid "Budget: %(total)s — the marks in this group must not cost more than that together."
+msgstr "Бюджет: %(total)s — позначки в цій групі разом не повинні коштувати більше."
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m"
+msgstr "%(amount)s / m"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s / m²"
+msgstr "%(amount)s / m²"
+
+#: budget-question
+#, python-format
+msgid "%(amount)s each"
+msgstr "%(amount)s за штуку"
+
+#: budget-question
+msgid "{left} left after it"
+msgstr "після нього залишиться {left}"
