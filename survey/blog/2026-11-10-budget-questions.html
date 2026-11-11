@@ -1,0 +1,57 @@
+---
+title: Budget questions: ask what people would give up
+kind: feature
+summary: A new question type and a budget on a group of map questions. Residents split a fixed sum between priorities, fund projects until the money runs out, or place benches, paths and flower beds on the map against a budget.
+cover: img/blog/budget-questions/park.jpg
+cover_alt: A survey panel with a £10,000 park budget, £4,000 spent on two benches shown on the map
+topics: participatory-budgeting, public-consultation
+changelog: 2026-11-10-budget-questions
+---
+<p>Councils that run a budget or precept consultation on Mapsurvey were building it from ranking
+questions: put parks, safety and youth services in order. A ranking tells you what matters to
+people. It does not tell you what they would give up, because nothing on the list costs anything.</p>
+
+<p>Budget questions add the missing constraint. There is a fixed amount, every choice takes some
+of it, and the survey will not move on until the respondent has decided where the money goes.</p>
+
+<h2>Three ways to ask</h2>
+
+<h3>Split a budget</h3>
+<p>You give a total — £2M, 100 points, or 100% — and a list of priorities. The respondent moves
+each amount up or down in steps you choose, and a bar at the top fills in the items' colours, so
+they always see what is left. You decide whether the whole budget must be allocated or only up to
+it; Next waits until the rule is met.</p>
+<p><img src="{static:img/blog/budget-questions/split.jpg}" alt="A budget question on a phone: £2M split between parks, safer streets, youth services, cycling and community centres, with a stacked colour bar marked all allocated" width="360"></p>
+<p>In the results you get the average share of the budget per item: the number a cabinet report
+needs, and one that moves when you take something away.</p>
+
+<h3>Choose projects within a budget</h3>
+<p>Each item has a cost. Respondents tick projects until the money runs out; a project dearer
+than what is left greys out and says by how much. Results show the share of respondents who funded
+each project and the most supported set that fits the budget together. The projects can also be
+objects of a map layer, so each one sits where it would be built (that option is part of Pro).</p>
+
+<h3>A budget on a group of map questions</h3>
+<p>This one needs a map. Put ordinary map questions in a group, give the group
+a total, and give each question a price: a bench £2,000 each, a path £50 a metre, a flower bed
+£30 a square metre. Respondents place marks the way they always do, and the budget decides how
+many fit.</p>
+<p><img src="{static:img/blog/budget-questions/placing.jpg}" alt="Placing a bench on the map: a label under the marker reads Bench, £2,000, £8,000 left after it, with Cancel and Apply buttons" width="1200"></p>
+<p>Before a mark goes down, the label says what it costs and what will be left. A line drawn too
+long or an area drawn too large is refused with what it would have cost. Sub-questions, minimum
+and maximum marks and tap-to-place work as before, because the questions are the same map
+questions with a price on them.</p>
+<p>Responses show the marks, metres or square metres per question, what they cost and the share
+of spend, and the marks themselves on the map. In the GeoJSON, GeoPackage, Shapefile and KML
+exports every priced mark carries its <code>cost</code>, and each respondent's row has what they
+spent.</p>
+
+<h2>Where it fits</h2>
+<p>Participatory budgeting rounds, precept and council-tax consultations, a park redesign with a
+fixed capital sum, a ward fund. Anywhere the honest answer to "what do you want?" is "everything",
+and the question you actually need answered is what comes first when there is not enough.</p>
+<p>Split and projects work in any section; a budget group needs a map section. Everything is free
+except projects taken from a map layer. The steps are in the help centre:
+<a href="{help:budget}">Ask how to spend a budget</a>. For
+how Mapsurvey handles a whole participatory budgeting process, see
+<a href="/participatory-budgeting/">participatory budgeting</a>.</p>

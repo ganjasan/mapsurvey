@@ -12832,3 +12832,7 @@ msgstr "Avamiseks logi sisse kontoga, millega liitusid."
 #: survey/abuse.py:299
 msgid "An account with this email already exists."
 msgstr "Selle e-posti aadressiga konto on juba olemas."
+
+#: survey/templates/editor/whats_new.html
+msgid "Read the article"
+msgstr "Loe artiklit"

@@ -2597,6 +2597,9 @@ def whats_new_page(request):
     newest = _mark_changelog_seen(prefs)
     if newest is not None:
         pe.emit(pe.CHANGELOG_PAGE_VIEWED, request.user.pk, {'entry_id': newest.id})
+    # Change public-blog-and-changelog: an entry a blog article expands links to it.
+    from .blog import article_map
+    articles = article_map()
     rows = []
     for entry in entries:
         link = ''
@@ -2607,7 +2610,8 @@ def whats_new_page(request):
                 # An entry pointing at a URL name that was renamed since: the page
                 # still renders, just without the "Open" link.
                 link = ''
-        rows.append({'entry': entry, 'is_new': entry.id in unseen_ids, 'link': link})
+        rows.append({'entry': entry, 'is_new': entry.id in unseen_ids, 'link': link,
+                     'article': articles.get(entry.id)})
     return render(request, 'editor/whats_new.html', {
         'rows': rows,
         'new_count': len(unseen_ids),

@@ -1,0 +1,82 @@
+{% extends "base_landing.html" %}
+{% load static %}
+{% comment %}
+An article at /blog/<slug>/ (change public-blog-and-changelog). Layout and styles are the story
+page's (.story-detail, .sd-*), so a story and an article read as one publication. `body_html` is
+the article body with {static:} tokens resolved; it is written in the repo and reviewed in the PR.
+{% endcomment %}
+
+{% block title %}{{ article.title }} — Mapsurvey blog{% endblock %}
+{% block meta_description %}{{ article.summary }}{% endblock %}
+{% block canonical_url %}{{ canonical }}{% endblock %}
+{% block og_url %}{{ canonical }}{% endblock %}
+{% block og_title %}{{ article.title }}{% endblock %}
+{% block og_image %}{% if og_image %}{{ og_image }}{% else %}{{ block.super }}{% endif %}{% endblock %}
+
+{% block extra_head %}{% if is_draft_preview %}<meta name="robots" content="noindex, nofollow">{% endif %}<link rel="alternate" type="application/rss+xml" title="Mapsurvey blog" href="{% url 'blog_feed' %}">{% endblock %}
+{% block structured_data %}
+<script type="application/ld+json">{{ article_jsonld|safe }}</script>
+{% if breadcrumb_jsonld %}<script type="application/ld+json">{{ breadcrumb_jsonld|safe }}</script>{% endif %}
+{% endblock %}
+
+{% block content %}
+<article class="story-detail blog-post">
+    <div class="landing-inner">
+        {% if is_draft_preview %}<p class="sd-draft-banner">Draft — not public. Only staff see this page; remove <code>draft: true</code> from the file to publish it.</p>{% endif %}
+        <nav class="sd-crumbs"><a href="/">Home</a> / <a href="{% url 'blog_index' %}">Blog</a> / {{ article.label }}</nav>
+        <p class="sd-eyebrow">{{ article.label }}</p>
+        <h1 class="story-detail__title">{{ article.title }}</h1>
+        {% if topic_chips %}
+        <p class="topic-chips sd-topics">{% for label, path in topic_chips %}{% if path %}<a href="{{ path }}">{{ label }}</a>{% else %}<span>{{ label }}</span>{% endif %}{% endfor %}</p>
+        {% endif %}
+        <p class="sd-lead">{{ article.summary }}</p>
+
+        <div class="sd-byline">
+            <span class="sd-org"><span>{{ article.author }}</span></span>
+            <span><time datetime="{{ article.date|date:'Y-m-d' }}">{{ article.date|date:"j F Y" }}</time>{% if article.updated %} · Updated <time datetime="{{ article.updated|date:'Y-m-d' }}">{{ article.updated|date:"j F Y" }}</time>{% endif %}</span>
+        </div>
+
+        {% if article.cover %}
+        <figure class="sd-figure sd-figure--hero">
+            <img src="{% static article.cover %}" alt="{{ article.cover_alt }}" class="story-detail__cover">
+        </figure>
+        {% endif %}
+
+        <div class="story-detail__body">
+            {{ body_html|safe }}
+        </div>
+
+        {% if changelog_entries %}
+        <aside class="blog-post__changelog">
+            <h2>In the changelog</h2>
+            <ul>{% for entry in changelog_entries %}<li><a href="{% url 'changelog_public' %}#{{ entry.id }}">{{ entry.title }}</a> <span>{{ entry.day|date:"j M Y" }}</span></li>{% endfor %}</ul>
+        </aside>
+        {% endif %}
+
+        <div class="sd-cta">
+            <h2>Try it on your next consultation</h2>
+            <p>Draw your area, write your questions and share one link. Free to start.</p>
+            <a href="{% url 'django_registration_register' %}" class="btn-primary-landing">Create your map survey</a>
+        </div>
+        <p class="blog-feed-link"><a href="{% url 'blog_index' %}">&larr; All posts</a> · <a href="{% url 'blog_feed' %}">RSS</a></p>
+    </div>
+</article>
+
+<div class="story-lightbox" id="storyLightbox" role="dialog" aria-modal="true" aria-label="Picture" aria-describedby="storyLightboxCaption" hidden>
+    <button type="button" class="story-lightbox__close" aria-label="Close">&times;</button>
+    <button type="button" class="story-lightbox__nav story-lightbox__nav--prev" data-dir="-1" aria-label="Previous picture">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <div class="story-lightbox__stage">
+        <figure class="story-lightbox__figure">
+            <img class="story-lightbox__img" alt="">
+            <figcaption class="story-lightbox__caption" id="storyLightboxCaption"></figcaption>
+        </figure>
+    </div>
+    <button type="button" class="story-lightbox__nav story-lightbox__nav--next" data-dir="1" aria-label="Next picture">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+    </button>
+    <span class="story-lightbox__counter" aria-live="polite"></span>
+</div>
+<script src="{% static 'js/story_lightbox.js' %}" defer></script>
+{% endblock %}

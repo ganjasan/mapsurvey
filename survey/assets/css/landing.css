@@ -2385,3 +2385,34 @@ table.guide-table td.ms { font-weight: 500; }
 .guide-source ul { list-style: none; padding: 0; margin: 0; }
 .guide-source li { font-size: 12.5px; line-height: 1.5; color: #556; word-break: break-all; }
 .guide-source__when { color: #889; white-space: nowrap; }
+
+/* ===== Blog and public changelog (change public-blog-and-changelog, #647) =====
+   The feed and article pages reuse the story styles (.story-grid, .story-card, .story-detail,
+   .sd-*); only what stories do not have lives here. */
+.story-card--post .story-card__cover--empty { background: linear-gradient(135deg, var(--color-primary-light), var(--color-bg-warm)); }
+.blog-feed-link { margin-top: 2rem; font-family: var(--font-display); font-size: 0.9rem; color: var(--color-text-tertiary); }
+.blog-feed-link a { color: var(--color-text-secondary); }
+.blog-post__changelog { margin-top: 2.5rem; padding: 20px 24px; border: 1px solid var(--color-border-light); border-radius: var(--radius-lg); max-width: 720px; }
+.blog-post__changelog h2 { font-family: var(--font-display); font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-text-tertiary); margin: 0 0 0.6rem; }
+.blog-post__changelog ul { list-style: none; margin: 0; padding: 0; }
+.blog-post__changelog li { margin: 0.3rem 0; }
+.blog-post__changelog li span { color: var(--color-text-tertiary); font-size: 0.85rem; margin-left: 0.4rem; }
+.hero__description a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.hero--page { min-height: 0; padding: 8rem 0 1rem; }
+
+.changelog-list { padding: 1rem 0 4rem; }
+.changelog-list .landing-inner { max-width: 760px; }
+.cl-month { font-family: var(--font-display); font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-text-tertiary); margin: 2.5rem 0 0.5rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--color-border-light); }
+.cl-entry { padding: 1.4rem 0 1.6rem; border-bottom: 1px solid var(--color-border-light); scroll-margin-top: 90px; }
+.cl-entry:target { background: var(--color-bg-warm); margin: 0 -16px; padding-left: 16px; padding-right: 16px; border-radius: var(--radius-sm); }
+.cl-meta { display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 0.78rem; color: var(--color-text-tertiary); margin-bottom: 0.5rem; }
+.cl-tag { padding: 2px 8px; border-radius: 999px; background: var(--color-accent-light); color: var(--color-accent); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+.cl-tag--fixed { background: var(--color-bg-warm); color: var(--color-text-secondary); border: 1px solid var(--color-border); }
+.cl-anchor { color: var(--color-text-tertiary); text-decoration: none; opacity: 0; }
+.cl-entry:hover .cl-anchor, .cl-anchor:focus { opacity: 1; }
+.cl-title { font-family: var(--font-display); font-size: 1.25rem; line-height: 1.35; margin: 0 0 0.6rem; color: var(--color-text); }
+.cl-image img { width: 100%; height: auto; border: 1px solid var(--color-border); border-radius: var(--radius-sm); margin: 0.4rem 0 0.8rem; }
+.cl-body { font-family: var(--font-body); line-height: 1.6; color: var(--color-text-secondary); }
+.cl-body p { margin: 0 0 0.7rem; }
+.cl-article { display: inline-block; margin-top: 0.3rem; font-family: var(--font-display); font-weight: 600; color: var(--color-primary); text-decoration: none; }
+.cl-article:hover { text-decoration: underline; }

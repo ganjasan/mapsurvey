@@ -51,6 +51,10 @@ card preference; the page itself is reachable whatever it says.
             {% if row.link %}
             <a class="wn-go" href="{{ row.link }}">{% trans "Open" %} <i class="fas fa-arrow-right"></i></a>
             {% endif %}
+            {% if row.article %}
+            {# Change public-blog-and-changelog: the blog article that expands this entry. #}
+            <a class="wn-go wn-article" href="{{ row.article.url }}" target="_blank" rel="noopener">{% trans "Read the article" %} <i class="fas fa-arrow-right"></i></a>
+            {% endif %}
         </div>
     {% endfor %}
 </div>

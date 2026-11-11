@@ -100,6 +100,7 @@ homepage views set it (change ru-landing-hreflang).
             </li>
             <li><a href="{% url 'pricing' %}">{% trans "Pricing" %}</a></li>
             <li><a href="{% url 'services' %}">{% trans "Services" %}</a></li>
+            <li><a href="{% url 'blog_index' %}">{% trans "Blog" %}</a></li>
             <li><a href="{% url 'trust_page' %}">{% trans "Trust" %}</a></li>
             {% if GITHUB_REPO_URL %}
             <li><a href="{{ GITHUB_REPO_URL }}" target="_blank" rel="noopener" class="landing-nav__github">
@@ -192,6 +193,8 @@ homepage views set it (change ru-landing-hreflang).
                 <div class="landing-footer__col">
                     <div class="landing-footer__col-title">{% trans "Resources" %}</div>
                     <ul class="landing-footer__links">
+                        <li><a href="{% url 'blog_index' %}">{% trans "Blog" %}</a></li>
+                        <li><a href="{% url 'changelog_public' %}">{% trans "Changelog" %}</a></li>
                         <li><a href="{% url 'stories_index' %}">{% trans "Customer stories" %}</a></li>
                         <li><a href="{% url 'participatory_mapping_tools' %}">{% trans "Tools compared" %}</a></li>
                         <li><a href="{% url 'maptionnaire_alternative' %}">{% trans "vs Maptionnaire" %}</a></li>

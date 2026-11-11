@@ -979,6 +979,21 @@ Rewriting a landing means bumping its `lastmod` in `seo_landings.py` and rewriti
 variant queries Search Console shows it for (`googlesearchconsole_search_analytics_by_query_page`
 in PostHog).
 
+**Blog and public changelog (change `public-blog-and-changelog`, #647)**: `/blog/` is ONE feed of
+published customer stories (`Story` rows, still at `/stories/<slug>/`) and **articles**, which are
+FILES — `survey/blog/<YYYY-MM-DD>-<slug>.html`, a `---` header (`title`, `kind: feature|idea`,
+`summary`; optional `cover`/`cover_alt`, `author`, `topics`, `changelog`, `updated`, `draft`) and an
+HTML body whose pictures are `{static:img/blog/<slug>/…}` tokens. An article ships in the PR of the
+feature it describes, so a merge publishes it — never put articles on `Story` (that path needs a
+production `seed_story` and the customer's consent); format and rules in `survey/blog/README.md`,
+loader `survey/blog.py` (`feed_items`, `article_map`), views `survey/blog_views.py`. Articles are for
+the MOST important changes and are not a copy of the changelog entry; the entry ids named in an
+article's `changelog` header get "Read the article" on `/changelog/` and `/editor/whats-new/`.
+`/changelog/` renders the same `survey/changelog/` entries publicly (anchors = entry ids, no editor
+links, no hero chips). RSS: `/blog/feed.xml`, `/changelog/feed.xml` (absolute links from
+`public_base_url`). `draft: true` = staff-only + `noindex`, off the feed, RSS and sitemap.
+`BlogArticlesTest.test_shipped_articles_load` fails CI on a malformed file.
+
 **Customer stories (`Story`, `StoryImage`; change `customer-stories-showcase`)**: the homepage
 "From the field" carousel and `/stories/<slug>/` are DB rows, but the REPO is the source:
 `survey/story_data/<slug>/` holds `story.json` (fields, cover/card/logo file names, `images`

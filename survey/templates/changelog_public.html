@@ -1,0 +1,52 @@
+{% extends "base_landing.html" %}
+{% load static %}
+{% comment %}
+/changelog/ (change public-blog-and-changelog): the same survey/changelog/ entries the editor's
+"What's new" shows, for anyone. Each entry's element id is its entry id, so /changelog/#<id> is
+the link the RSS feed and blog articles use. No "Open" links (they lead into the editor) and no
+hero chips. `row.article` is the published blog article that expands the entry, if any.
+{% endcomment %}
+
+{% block title %}Changelog — what's new in Mapsurvey{% endblock %}
+{% block meta_description %}Every change to Mapsurvey, newest first: new question types, map and analysis features, integrations and fixes.{% endblock %}
+{% block canonical_url %}https://mapsurvey.org/changelog/{% endblock %}
+{% block og_url %}https://mapsurvey.org/changelog/{% endblock %}
+{% block og_title %}Mapsurvey changelog{% endblock %}
+
+{% block extra_head %}<link rel="alternate" type="application/rss+xml" title="Mapsurvey changelog" href="{% url 'changelog_feed' %}">{% endblock %}
+{% block structured_data %}
+{% if breadcrumb_jsonld %}<script type="application/ld+json">{{ breadcrumb_jsonld|safe }}</script>{% endif %}
+{% endblock %}
+
+{% block content %}
+<section class="hero hero--compact hero--page" id="hero">
+  <div class="hero__content">
+    <h1 class="hero__headline">Changelog</h1>
+    <p class="hero__description">
+      What changed in Mapsurvey, newest first. The bigger features get an article on the <a href="{% url 'blog_index' %}">blog</a>.
+      <a href="{% url 'changelog_feed' %}">RSS</a>
+    </p>
+  </div>
+</section>
+
+<section class="changelog-list">
+  <div class="landing-inner">
+    {% for row in rows %}
+      {% ifchanged row.entry.date|slice:":7" %}<h2 class="cl-month">{{ row.entry.day|date:"F Y" }}</h2>{% endifchanged %}
+      <article class="cl-entry" id="{{ row.entry.id }}">
+        <div class="cl-meta">
+          <span class="cl-tag{% if row.entry.kind == 'fixed' %} cl-tag--fixed{% endif %}">{% if row.entry.kind == 'fixed' %}Fixed{% else %}New{% endif %}</span>
+          <time datetime="{{ row.entry.date }}">{{ row.entry.day|date:"j M Y" }}</time>
+          <a class="cl-anchor" href="#{{ row.entry.id }}" aria-label="Link to this entry">#</a>
+        </div>
+        <h3 class="cl-title">{{ row.entry.title }}</h3>
+        {% if row.entry.image %}<div class="cl-image"><img src="{% static row.entry.image %}" alt="" loading="lazy"></div>{% endif %}
+        <div class="cl-body">{{ row.entry.body|safe }}</div>
+        {% if row.article %}<a class="cl-article" href="{{ row.article.url }}">Read the article: {{ row.article.title }} &rarr;</a>{% endif %}
+      </article>
+    {% empty %}
+      <p class="story-empty">Nothing yet.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
