@@ -106,10 +106,12 @@ def endpoint(request):
         return _error(RpcError(PARSE_ERROR, 'Parse error.', http_status=400))
 
     session_key = f'tok:{principal.token_id}'
+    request.mcp_session = None   # read by mcp.analytics
     session_id = request.META.get('HTTP_MCP_SESSION_ID')
     if session_id:
         try:
-            session_key = f'sid:{sessions.verify(session_id, principal.token_id)}'
+            request.mcp_session = sessions.verify(session_id, principal.token_id)
+            session_key = f'sid:{request.mcp_session.nonce}'
         except sessions.BadSession:
             return _error(RpcError(SESSION_UNKNOWN, 'Session not found; initialize again.', http_status=404))
 
