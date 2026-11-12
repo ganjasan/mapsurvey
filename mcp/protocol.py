@@ -17,6 +17,7 @@ specification splits protocol errors from tool errors (design D5).
 import base64
 import json
 import logging
+import time
 
 from django.core.serializers.json import DjangoJSONEncoder
 from pydantic import ValidationError
@@ -29,7 +30,7 @@ from api.decorators import _capture
 from api.errors import SERVER_ERROR, ApiError
 from api.v1.errors import from_service_error
 
-from . import tools
+from . import analytics, tools
 from .errors import INVALID_PARAMS, METHOD_NOT_FOUND, UNTRUSTED_NOTE, RpcError
 
 logger = logging.getLogger(__name__)
@@ -76,7 +77,9 @@ def dispatch(request, message, session_key):
         return {}, {}
     if method == 'tools/list':
         limits.check_request(request.principal, 'GET')
-        return {'tools': [t.listing() for t in tools.tools_for(request.principal)]}, {}
+        listed = [t.listing() for t in tools.tools_for(request.principal)]
+        analytics.tools_list(request, [t['name'] for t in listed])
+        return {'tools': listed}, {}
     if method == 'tools/call':
         return call_tool(request, params, session_key), {}
     if method == 'resources/list':
@@ -99,7 +102,10 @@ def initialize(request, params):
         'serverInfo': SERVER_INFO,
         'instructions': INSTRUCTIONS,
     }
-    return body, {'Mcp-Session-Id': sessions.issue(request.principal.token_id)}
+    session_id = sessions.issue(request.principal.token_id, client=params.get('clientInfo'),
+                                protocol_version=version)
+    analytics.initialize(request, sessions.verify(session_id, request.principal.token_id), version)
+    return body, {'Mcp-Session-Id': session_id}
 
 
 # ─── tools/call ──────────────────────────────────────────────────────────────
@@ -150,14 +156,15 @@ def call_tool(request, params, session_key):
     if tool is None:
         raise RpcError(INVALID_PARAMS, f'Unknown tool: {name!r}')
     arguments = params.get('arguments') or {}
-    outcome = 'ok'
+    started = time.monotonic()
+    outcome, status = 'ok', None
     try:
         if tool.scope is not None:
             rights.require_scope(principal, tool.scope)
         try:
             args = tool.args.model_validate(arguments)
         except ValidationError as exc:
-            outcome = 'invalid_arguments'
+            outcome = analytics.INVALID_ARGUMENTS
             raise RpcError(INVALID_PARAMS, f'Invalid arguments for {name}.', data={'fields': _fields(exc)})
         limits.check_request(principal, 'GET' if tool.read_only else 'POST')
         limits.check_group('mcp.session', session_key)
@@ -166,14 +173,14 @@ def call_tool(request, params, session_key):
     except RpcError:
         raise
     except ApiError as err:
-        outcome = err.code
+        outcome, status = err.code, err.status
         return error_result(err)
     except svc.ServiceError as err:
         err = from_service_error(err)
-        outcome = err.code
+        outcome, status = err.code, err.status
         return error_result(err)
     except Exception as exc:  # noqa: BLE001 -- the envelope, then PostHog; never a trace
-        outcome = SERVER_ERROR
+        outcome, status = SERVER_ERROR, 500
         logger.exception('mcp: unhandled error in tool %s', name)
         _capture(exc, request)
         return error_result(ApiError(500, SERVER_ERROR, 'Something went wrong on our side.'))
@@ -181,3 +188,4 @@ def call_tool(request, params, session_key):
         pe.emit(pe.MCP_TOOL_CALLED, principal.user.pk, {
             'tool': name, 'outcome': outcome, 'token_id': principal.token_id, 'kind': principal.kind,
         })
+        analytics.tool_call(request, name, outcome, status, (time.monotonic() - started) * 1000)

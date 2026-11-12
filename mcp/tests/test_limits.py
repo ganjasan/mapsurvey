@@ -92,4 +92,7 @@ class LimitsTest(TestCase):
         self.assertNotIn(b'Traceback', response.content)
         self.assertNotIn(b'SurveyHeader', response.content)
         capture.assert_called_once()
-        self.assertEqual(emit.call_args.args[2]['outcome'], 'server_error')
+        (event,) = [c.args[2] for c in emit.call_args_list if c.args[0] == pe.MCP_TOOL_CALLED]
+        self.assertEqual(event['outcome'], 'server_error')
+        (mcp_call,) = [c.args[2] for c in emit.call_args_list if c.args[0] == '$mcp_tool_call']
+        self.assertEqual((mcp_call['$mcp_error_type'], mcp_call['$mcp_error_status']), ('internal', 500))
