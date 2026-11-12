@@ -43,7 +43,7 @@ module") is a tested requirement: Mapsurvey collects the where, not the how much
     <h2 class="section-heading">{% trans "Where participatory budgeting software usually goes wrong" %}</h2>
     <div class="cat-def">
       <p>{% trans "Participatory budgeting gives residents a direct say over part of a public budget: they propose projects, the administration checks feasibility and cost, and residents vote on what gets funded. Most participatory budgeting software is built for the last step. It is a ballot with a budget constraint: pick projects until the virtual money runs out, or drag sliders to balance a budget. That step matters, but it comes months after the step where most PB programmes lose their residents: idea collection." %}</p>
-      <p>{% trans "Idea collection usually happens in a form. 'Describe your proposal and where it would go.' The answers are paragraphs, the locations are addresses typed from memory, and someone in the council spends weeks geocoding and de-duplicating them before anyone can see that forty people asked for the same crossing. A participatory budgeting map turns that around. Residents put the proposal where it belongs, as a pin, a line or an outlined area, answer the questions attached to it, and add a photo. Duplicates become a cluster, and the cluster is the first result of the programme." %}</p>
+      <p>{% trans "Idea collection usually happens in a form. 'Describe your proposal and where it would go.' The answers are paragraphs, the locations are addresses typed from memory, and someone in the council spends weeks geocoding and de-duplicating them before anyone can see that forty people asked for the same crossing. A participatory budgeting map turns that around. Residents put the proposal where it belongs, as a pin, a route or an outlined area, answer the questions attached to it, and add a photo. Duplicates become a cluster, and the cluster is the first result of the programme." %}</p>
       <p>{% trans "Mapsurvey is that map. It is a participatory budgeting tool for the proposal and prioritisation rounds: collecting locations, showing them on a shared map so residents can react to each other's ideas with a thumbs up or down and a comment, and exporting the whole set to the GIS and the spreadsheet where feasibility and costing happen. It is not a budget-allocation or voting module. Reactions are one per session and do not verify voters; the binding vote on a fixed budget belongs in a PB voting tool or on paper, and many programmes combine the two." %}</p>
       <p>{% trans "PB budgets should fund projects, not software licences. Mapsurvey is free to run, with no per-project or per-response fees, and open source under the AGPLv3 licence, so a city that wants its residents' proposals on its own servers can host the same software itself. The hosted version runs in the United States." %}</p>
     </div>
@@ -102,7 +102,7 @@ module") is a tested requirement: Mapsurvey collects the where, not the how much
       </div>
       <div class="aud-card">
         <h3>{% trans "Proposals with evidence" %}</h3>
-        <p>{% trans "A photo of the broken bench, a line along the missing pavement, a polygon around the lot. Costing starts from a place, not a paragraph." %}</p>
+        <p>{% trans "A photo of the broken bench, a route along the missing pavement, an outline around the lot. Costing starts from a place, not a paragraph." %}</p>
       </div>
       <div class="aud-card">
         <h3>{% trans "GIS-ready output" %}</h3>
@@ -130,7 +130,7 @@ module") is a tested requirement: Mapsurvey collects the where, not the how much
           <tr><th>{% trans "Free tier for real projects" %}</th><td class="ms">{% trans "Yes, hosted, unlimited proposals and respondents" %}</td><td class="mt">{% trans "Free software; you host it or pay a partner" %}</td><td class="mt">{% trans "Free trial; pricing on request" %}</td></tr>
           <tr><th>{% trans "Pricing" %}</th><td class="ms">{% trans "Published: free, or one flat workspace price" %}</td><td class="mt">{% trans "Software free; managed hosting prices not published" %}</td><td class="mt">{% trans "Quote only" %}</td></tr>
           <tr><th>{% trans "Open source / self-hosting" %}</th><td class="ms">{% trans "Yes, AGPLv3, Docker on your servers" %}</td><td class="mt">{% trans "Yes, AGPLv3; self-hosting is the default" %}</td><td class="mt">{% trans "No, SaaS only" %}</td></tr>
-          <tr><th>{% trans "What a respondent can draw" %}</th><td class="ms">{% trans "Points, lines and polygons, each with follow-up questions" %}</td><td class="mt">{% trans "An address geocoded to a pin on a proposal; no line or polygon drawing published" %}</td><td class="mt">{% trans "No map input published" %}</td></tr>
+          <tr><th>{% trans "What a respondent can draw" %}</th><td class="ms">{% trans "Places, routes and areas, each with follow-up questions" %}</td><td class="mt">{% trans "An address geocoded to a pin on a proposal; no route or area drawing published" %}</td><td class="mt">{% trans "No map input published" %}</td></tr>
           <tr><th>{% trans "GIS export" %}</th><td class="ms">{% trans "GeoJSON, GeoPackage, Shapefile, KML, plus CSV and Excel" %}</td><td class="mt">{% trans "CSV, JSON, Excel; coordinates not in the proposals export" %}</td><td class="mt">{% trans "Spreadsheet of record-level submissions" %}</td></tr>
           <tr><th>{% trans "Respondent account" %}</th><td class="ms">{% trans "None needed" %}</td><td class="mt">{% trans "Registration required to propose, comment or vote" %}</td><td class="mt">{% trans "Not published for simulations; receipts are anonymous" %}</td></tr>
           <tr><th>{% trans "Languages" %}</th><td class="ms">{% trans "75, included" %}</td><td class="mt">{% trans "18 or more, community-translated" %}</td><td class="mt">{% trans "English, Spanish, French; others on request" %}</td></tr>
@@ -164,7 +164,7 @@ module") is a tested requirement: Mapsurvey collects the where, not the how much
       <li>{% trans "Neighbourhood PB: small capital projects, pinned where they would go, with a photo of the problem." %}</li>
       <li>{% trans "School and youth PB: pupils map the routes, crossings and spaces around their school and propose what to fix." %}</li>
       <li>{% trans "Green PB: trees, pocket parks and rain gardens, outlined as areas so the parks team can cost them." %}</li>
-      <li>{% trans "Mobility PB: missing pavements, cycle links and lighting drawn as lines along the streets concerned." %}</li>
+      <li>{% trans "Mobility PB: missing pavements, cycle links and lighting drawn along the streets concerned." %}</li>
       <li>{% trans "Rural and village PB: one map for a whole parish, with the proposals visible to every hamlet." %}</li>
       <li>{% trans "Second-round reactions: shortlisted projects on a shared map, residents give a thumbs up or down before the vote." %}</li>
     </ul>

@@ -138,7 +138,7 @@ class SeoCategoryLandingContractTest(TestCase):
         GIVEN the five pages whose titles were rewritten for CTR
         WHEN each is rendered
         THEN the title starts with the head term, the description is at most 160 characters,
-             and the Social Pinpoint page names drawing, point markers and quote-only pricing
+             and the Social Pinpoint page names drawing, pins and quote-only pricing
         """
         import html as html_mod
         c = Client()
@@ -160,7 +160,7 @@ class SeoCategoryLandingContractTest(TestCase):
         title = self._re.search(r"<title>(.*?)</title>", sp, self._re.S).group(1)
         self.assertRegex(title, r"[Ll]ines|[Aa]reas|[Dd]raw")
         desc = self._re.search(r'<meta name="description" content="(.*?)"', sp, self._re.S).group(1)
-        self.assertIn("point markers", desc)
+        self.assertIn("pins", desc)
         self.assertIn("quote", desc)
 
     def test_sitemap_lastmod_bumped_for_rewritten_pages(self):

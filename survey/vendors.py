@@ -103,8 +103,8 @@ class Vendor:
 
 CRITERIA = (
     Criterion("geometry", "What respondents can draw",
-              "Can a resident draw a route or outline an area, or only drop a pin? Lines and "
-              "polygons are what mobility, green-space and land-use questions need."),
+              "Can a resident draw a route or outline an area, or only drop a pin? Routes and "
+              "areas are what mobility, green-space and land-use questions need."),
     Criterion("export", "Export formats",
               "Does the geometry come back as GeoJSON or Shapefile for your GIS, or only as a "
               "spreadsheet of coordinates?"),
@@ -131,7 +131,7 @@ CRITERIA = (
 CATEGORIES = (
     Category("ppgis", "Specialised map-based survey tools",
              "Public-participation GIS (PPGIS) tools: the survey is the product and the map is the "
-             "main question. Respondents place points, draw routes and outline areas, answer "
+             "main question. Respondents mark places, draw routes and outline areas, answer "
              "follow-up questions about each, and the result is a spatial dataset.",
              "Planning departments, transport and mobility consultancies, universities running "
              "PPGIS research, and parish or town councils that need one map survey rather than a "
@@ -151,7 +151,7 @@ CATEGORIES = (
     Category("open_source", "Open-source participation frameworks",
              "Free software a city installs and operates itself (or pays a partner to host): "
              "proposals, debates, voting and participatory budgeting, with an address geocoded to a "
-             "point on a map. Drawing is not the point.",
+             "pin on a map. Drawing is not what they are for.",
              "Cities with an IT department or a civic-tech partner, and governments whose "
              "procurement rules favour open source."),
     Category("forms", "Generic form builders with a location question",
@@ -175,10 +175,10 @@ _MS_GITHUB = "https://github.com/ganjasan/mapsurvey"
 MAPSURVEY = Vendor(
     key="mapsurvey", name="Mapsurvey", maker="Mapsurvey", url=_MS_HOME, category="ppgis",
     price_listed=True, free_publishable=True, self_serve=True, draws_shapes=True,
-    summary="Map-based surveys where respondents place points, draw lines and outline polygons, "
+    summary="Map-based surveys where respondents mark places, draw routes and outline areas, "
             "each with follow-up questions; results come back as GIS files and a public results page.",
     facts={
-        "geometry": Fact("Points, lines and polygons, each with follow-up questions", _MS_HOME, D),
+        "geometry": Fact("Places, routes and areas, each with follow-up questions", _MS_HOME, D),
         "export": Fact("GeoJSON, GeoPackage, Shapefile, KML, CSV and Excel", _MS_HOME, D),
         "licence": Fact("Yes, AGPLv3; Docker stack on your own servers", _MS_GITHUB, D),
         "hosting": Fact("Hosted in the United States (Render, Oregon); self-host anywhere for EU "
@@ -298,7 +298,7 @@ VENDORS = (
         summary="The reference PPGIS product: points, lines and areas with follow-up questions, "
                 "public project pages and reports on the higher tiers, sold by annual subscription.",
         facts={
-            "geometry": Fact("Points, lines and areas (polygons)", _MT_SUB, D),
+            "geometry": Fact("Points, lines and areas", _MT_SUB, D),
             "export": Fact("Shapefile, GeoJSON, Excel with coordinates, PNG map image", _MT_SUB, D),
             "licence": Fact("No; proprietary SaaS", _MT_SUB, D),
             "hosting": Fact("AWS, US and Ireland data centres; GDPR, ISO 27001 certified, "
@@ -388,7 +388,7 @@ VENDORS = (
         summary="Map-based public input for planning consultants, MPOs and DOTs: pins, routes and "
                 "areas with linked surveys, board-style presentations and GIS export.",
         facts={
-            "geometry": Fact("Points, lines and polygons, plus geotagged photos", _WM_PRICING, D2),
+            "geometry": Fact("Points, lines and areas, plus geotagged photos", _WM_PRICING, D2),
             "export": Fact("GeoJSON, CSV, Shapefile and PDF", _WM_PRICING, D2),
             "licence": Fact(NP, _WM_ABOUT, D2),
             "hosting": Fact("Data location not published; states MFA, SAML SSO, audit logging and "
@@ -410,9 +410,9 @@ VENDORS = (
         url="https://www.govocal.com/", category="engagement",
         summary="The participation suite that named the category: project pages, surveys, ideation, "
                 "voting and participatory budgeting, with a mapping tool where residents drop pins "
-                "and draw lines and polygons.",
+                "and draw lines and areas.",
         facts={
-            "geometry": Fact("Pins, lines and polygons; Shapefile upload for context layers", _GV_MAP, D),
+            "geometry": Fact("Pins, lines and areas; Shapefile upload for context layers", _GV_MAP, D),
             "export": Fact("'Export all data at any time' and an API; a unified format described "
                            "as importable in GIS tools; file formats not named", _GV_FEAT, D),
             "licence": Fact("Free Edition under AGPLv3 to self-host; the commercial edition is "
@@ -483,7 +483,7 @@ VENDORS = (
                 "tools, among them a Social Map where participants pin a comment and vote on "
                 "others' pins.",
         facts={
-            "geometry": Fact("Pin a comment on the map; line or polygon drawing not published",
+            "geometry": Fact("Pin a comment on the map; line or area drawing not published",
                              _OP_TOOLS, D),
             "export": Fact("XLS, CSV, PDF or GeoJSON from Social Map reporting", _OP_REPORT, D),
             "licence": Fact("No; proprietary SaaS", _OP_TOOLS, D),
@@ -532,7 +532,7 @@ VENDORS = (
         summary="UK planning-engagement platform built around a Community Heatmap: residents drop a "
                 "pin and answer a short survey about it; now part of Zencity.",
         facts={
-            "geometry": Fact("Pin-drop on the Community Heatmap; line or polygon drawing not "
+            "geometry": Fact("Pin-drop on the Community Heatmap; line or area drawing not "
                              "published", _CP_GCLOUD, D),
             "export": Fact("CSV", _CP_GCLOUD, D),
             "licence": Fact("No; proprietary SaaS", _CP_GCLOUD, D),
@@ -669,7 +669,7 @@ VENDORS = (
                 "residents comment on plans and place ideas on maps, aerial photos and 3D models, "
                 "online or at touch tables.",
         facts={
-            "geometry": Fact("Points, lines and polygons; a location can also be described in "
+            "geometry": Fact("Points, lines and areas; a location can also be described in "
                              "words", _DP_WIKI_INPUT, D2),
             "export": Fact("CSV of contributions, comments and votes; GeoJSON for map "
                            "contributions", _DP_WIKI_EXPORT, D2),
@@ -694,7 +694,7 @@ VENDORS = (
         summary="The Barcelona-born participatory-democracy framework: processes, proposals, "
                 "assemblies and participatory budgeting; a proposal's address is geocoded to a map pin.",
         facts={
-            "geometry": Fact("A proposal or meeting address geocoded to a point on a map; drawing "
+            "geometry": Fact("A proposal or meeting address geocoded to a pin on a map; drawing "
                              "not published", _DC_MAPS, D),
             "export": Fact("Proposals as CSV, JSON and Excel, with address and coordinates since "
                            "release 0.26", _DC_EXPORT, D),
@@ -716,7 +716,7 @@ VENDORS = (
         summary="The Madrid-born open-source platform for proposals, debates, voting and "
                 "participatory budgeting; with geolocation on, residents place a proposal on a map.",
         facts={
-            "geometry": Fact("A proposal placed as a point on the map when geolocation is "
+            "geometry": Fact("A proposal placed as a pin on the map when geolocation is "
                              "enabled; drawing not published", _CD_ADMIN, D),
             "export": Fact(NP, _CD_ADMIN, D),
             "licence": Fact("Yes, AGPL v3; you install it", _CD_GITHUB, D),

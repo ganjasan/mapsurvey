@@ -84,8 +84,9 @@ _A_EXPORT = (
     "spreadsheet. You own the data."
 )
 _A_GEO = (
-    "Respondents can drop points, draw lines (routes), and outline polygons "
-    "(areas) directly on the map, alongside ordinary survey questions."
+    "Respondents mark places, draw routes and outline areas directly on the "
+    "map, alongside ordinary survey questions. The export holds them as points, "
+    "lines and polygons."
 )
 
 
@@ -112,9 +113,9 @@ SEO_LANDINGS = (
         breadcrumbs=(HOME, Crumb("For Researchers", "/for-researchers/")),
         faq=(
             QA("Is Mapsurvey suitable for PPGIS and participatory research?",
-               "Yes — it is built for public-participation GIS: point, line, and "
-               "polygon input captured against your own questions, exported as "
-               "analysis-ready GeoJSON/CSV."),
+               "Yes — it is built for public-participation GIS: participants mark "
+               "places, draw routes and outline areas against your own questions, "
+               "and you get points, lines and polygons as analysis-ready GeoJSON/CSV."),
             QA("How do I get the raw spatial data for analysis?", _A_EXPORT),
             QA("Do participants need an account?", _A_ACCOUNT),
             QA("Can I self-host for ethics/data-governance requirements?", _A_SELFHOST),
@@ -190,8 +191,8 @@ SEO_LANDINGS = (
                "learns the figure from sales, usually per instance and per year."),
             QA("Is there a free community engagement platform for local government?",
                "Yes. Mapsurvey's Free plan is the full product, not a trial: every "
-               "question type including point, line and polygon input, follow-up "
-               "questions on each place, 75 languages and every export format. It is "
+               "question type, including marking places, drawing routes and outlining "
+               "areas, follow-up questions on each mark, 75 languages and every export format. It is "
                "open source (AGPLv3), so a council IT team can also run it on its own "
                "servers at no licence cost."),
             QA("What can residents mark on the map?", _A_GEO),
@@ -371,7 +372,7 @@ SEO_LANDINGS = (
                "Yes — Mapsurvey is a free, open-source alternative for map-based "
                "surveys, with no per-survey fee and no free-tier gate on the "
                "open-source path."),
-            QA("Does it support the same point, line, and polygon input?", _A_GEO),
+            QA("Does it support the same map input: places, routes and areas?", _A_GEO),
             QA("Can I export to GeoJSON like a GIS-first tool?", _A_EXPORT),
             QA("Can I self-host or keep data in the EU?", _A_SELFHOST),
         ),
@@ -388,9 +389,9 @@ SEO_LANDINGS = (
                "Yes — it is an open-source, self-hostable alternative for "
                "map-based engagement, with no per-project licence on the "
                "open-source path."),
-            QA("Can respondents draw, not just drop markers?",
-               "Yes — respondents can drop points and also draw lines (routes) "
-               "and polygons (areas), then you export the geometry."),
+            QA("Can respondents draw, not just drop pins?",
+               "Yes — respondents drop pins and also draw routes and outline "
+               "areas, then you export the geometry."),
             QA("Can I export the raw spatial data?", _A_EXPORT),
             QA("Can I self-host it?", _A_SELFHOST),
         ),
@@ -407,9 +408,9 @@ SEO_LANDINGS = (
                "MetroQuest has been folded into the Open Point suite. Mapsurvey "
                "is a free, open-source option for map-based public input you can "
                "self-host and fully export."),
-            QA("Does Mapsurvey support drawing on the map, not just markers?",
-               "Yes — points, lines, and polygons, alongside standard survey "
-               "questions."),
+            QA("Does Mapsurvey support drawing on the map, not just pins?",
+               "Yes — respondents mark places, draw routes and outline areas, "
+               "alongside standard survey questions."),
             QA("Can I export the results?", _A_EXPORT),
             QA("Is it free and self-hostable?", _A_SELFHOST),
         ),
@@ -428,7 +429,7 @@ SEO_LANDINGS = (
             # to assistants, in their words, from the same registry facts as the table.
             QA("Which tool should I use for a single map-based survey of residents?",
                "If residents need to draw routes and areas, not only drop pins, and you want the "
-               "data back in your GIS, start with Mapsurvey: points, lines and polygons with "
+               "data back in your GIS, start with Mapsurvey: places, routes and areas with "
                "follow-up questions on each, GeoJSON, GeoPackage, Shapefile, KML, CSV and Excel "
                "export, a public results page, and a free plan that publishes a live survey. "
                "Maptionnaire and WikiMapping offer the same geometry on a subscription or a "
@@ -437,7 +438,7 @@ SEO_LANDINGS = (
             QA("Is there a free participatory mapping tool?",
                "Yes. Among the tools in this guide, Mapsurvey, PARTIMAP and KoboToolbox can be "
                "signed up for the same day and publish a live project for free with residents "
-               "drawing lines and polygons. Mapsurvey's free plan has unlimited surveys and "
+               "drawing routes and areas. Mapsurvey's free plan has unlimited surveys and "
                "responses and no time limit and returns GIS files; PARTIMAP exports XLSX and KML; "
                "KoboToolbox is built for trained field collectors. Decidim and Consul are free "
                "software you host yourself. Most commercial tools offer a trial or a sandbox that "
@@ -457,7 +458,7 @@ SEO_LANDINGS = (
                "survey. A council that needs a permanent portal with ideas and budgeting should "
                "look at the engagement platforms instead."),
             QA("What is a participatory mapping tool?",
-               "Software that asks the public questions on a map: respondents drop points, draw "
+               "Software that asks the public questions on a map: respondents mark places, draw "
                "routes or outline areas and answer follow-up questions about each, and the "
                "organisers get a spatial dataset back. The research term is PPGIS, public "
                "participation GIS. Engagement platforms, field-collection apps and form builders "
@@ -469,9 +470,9 @@ SEO_LANDINGS = (
                "(project pages, ideas, forums, participatory budgeting) and offers a map as one "
                "tool among many, usually a pin with a comment. If the deliverable is a layer in "
                "your GIS, start with the first group; if it is a standing portal, the second."),
-            QA("Which tools let respondents draw lines and polygons, not only drop a pin?",
+            QA("Which tools let respondents draw routes and areas, not only drop a pin?",
                "On the pages we read: Mapsurvey, Maptionnaire, PARTIMAP, WikiMapping, Pocitové "
-               "mapy, Go Vocal, Senf, Citizen Space and DIPAS state lines and polygons for "
+               "mapy, Go Vocal, Senf, Citizen Space and DIPAS state line and area drawing for "
                "respondents; ArcGIS Survey123, KoboToolbox and Mergin Maps do too, for trained "
                "collectors. Open Point, Commonplace, EngagementHQ, MetroQuest, CrowdSpot, Decidim, "
                "Consul and Jotform publish a pin or an address and do not state drawing, and "

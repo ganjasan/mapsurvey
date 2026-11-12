@@ -48,12 +48,12 @@ vendors by registry key (v.<key>), so it cannot name a tool the table does not h
     <div class="guide-cats guide-verdict">
       <div class="guide-cat" id="verdict-map-survey">
         <h3>{% trans "One map survey: residents draw routes and areas and answer questions about each" %}</h3>
-        <p><strong>{% trans "Start with Mapsurvey." %}</strong> {% blocktrans with export=v.mapsurvey.facts.export.text %}Points, lines and polygons, each with its own follow-up questions; the data comes back as {{ export }}; a public results page per survey; 75 respondent languages; and the free plan publishes a live survey with no time limit.{% endblocktrans %}</p>
+        <p><strong>{% trans "Start with Mapsurvey." %}</strong> {% blocktrans with export=v.mapsurvey.facts.export.text %}Places, routes and areas, each with its own follow-up questions; the data comes back as {{ export }}; a public results page per survey; 75 respondent languages; and the free plan publishes a live survey with no time limit.{% endblocktrans %}</p>
         <p>{% blocktrans with mt=v.maptionnaire.name wm=v.wikimapping.name %}{{ mt }} and {{ wm }} do the same geometry. Choose {{ mt }} if your organisation buys an annual subscription with a sales-led onboarding, or {{ wm }} if you sell US planning work by the project and want board-style presentations of the results.{% endblocktrans %}</p>
       </div>
       <div class="guide-cat" id="verdict-today">
         <h3>{% trans "No procurement yet, no budget line, and the survey has to go out this month" %}</h3>
-        <p>{% trans "Tools in this guide that you can sign up for the same day, publish free, and that let residents draw lines and polygons:" %} {% for t in start_today_vendors %}<strong>{{ t.name }}</strong>{% if not forloop.last %}, {% endif %}{% endfor %}.</p>
+        <p>{% trans "Tools in this guide that you can sign up for the same day, publish free, and that let residents draw routes and outline areas:" %} {% for t in start_today_vendors %}<strong>{{ t.name }}</strong>{% if not forloop.last %}, {% endif %}{% endfor %}.</p>
         <p>{% blocktrans with pm=v.partimap.name kobo=v.kobotoolbox.name %}Of those, {{ pm }} returns a spreadsheet report and KML, and {{ kobo }} is built for trained collectors with an account; Mapsurvey is the one whose free plan returns GIS files and a public results page for an anonymous public. When the project grows, its price is published on this page, not quoted.{% endblocktrans %}</p>
       </div>
       <div class="guide-cat" id="verdict-research">
@@ -74,7 +74,7 @@ vendors by registry key (v.<key>), so it cannot name a tool the table does not h
       </div>
       <div class="guide-cat" id="verdict-selfhost">
         <h3>{% trans "A free, self-hosted stack the municipality runs itself" %}</h3>
-        <p>{% blocktrans with dc=v.decidim.name cd=v.consul.name dp=v.dipas.name %}For a whole participation portal, {{ dc }} or {{ cd }}; in Germany, {{ dp }}, built by Hamburg's administration, with lines and polygons on maps and 3D models. For the map survey on its own servers, Mapsurvey ships as a Docker stack under AGPLv3, and the hosted and self-hosted versions are the same code.{% endblocktrans %}</p>
+        <p>{% blocktrans with dc=v.decidim.name cd=v.consul.name dp=v.dipas.name %}For a whole participation portal, {{ dc }} or {{ cd }}; in Germany, {{ dp }}, built by Hamburg's administration, with lines and areas on maps and 3D models. For the map survey on its own servers, Mapsurvey ships as a Docker stack under AGPLv3, and the hosted and self-hosted versions are the same code.{% endblocktrans %}</p>
       </div>
     </div>
   </div>
@@ -182,7 +182,7 @@ vendors by registry key (v.<key>), so it cannot name a tool the table does not h
     <div class="cmp-fair">
       <p>{% trans "Mapsurvey is a map-based survey tool, not a participation portal. Pick it when the deliverable is the map data and the people answering are the public:" %}</p>
       <ul>
-        <li>{% trans "Residents draw lines and polygons, not only pins, and answer follow-up questions about each shape they drew." %}</li>
+        <li>{% trans "Residents draw routes and outline areas, not only drop pins, and answer follow-up questions about each one." %}</li>
         <li>{% blocktrans with export=mapsurvey.facts.export.text %}Your GIS person wants the data back as files: {{ export }}.{% endblocktrans %}</li>
         <li>{% trans "Residents see what others said on a public results page, without an account." %}</li>
         <li>{% trans "You start today: self-serve sign-up, and a free plan that publishes a live survey with unlimited responses and no time limit." %}</li>
