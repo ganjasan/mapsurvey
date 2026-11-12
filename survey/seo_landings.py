@@ -421,7 +421,7 @@ SEO_LANDINGS = (
         url_name="participatory_mapping_tools",
         template="participatory_mapping_tools.html",
         breadcrumbs=(HOME, Crumb("Participatory mapping tools", "/participatory-mapping-tools/")),
-        lastmod="2026-11-07",
+        lastmod="2026-11-11",
         # Change market-guide-landscape-hub (#259): the buyer's guide above the /alternatives/
         # pages. Vendor facts come from survey/vendors.py, never from this file.
         faq=(
@@ -457,6 +457,18 @@ SEO_LANDINGS = (
                "department asks where the data lives. PARTIMAP is the other free, open-source map "
                "survey. A council that needs a permanent portal with ideas and budgeting should "
                "look at the engagement platforms instead."),
+            # Change market-guide-filters (#651): the public and non-profit tools, from the
+            # registry's backing facts.
+            QA("Are there participatory mapping tools run by governments or non-profits?",
+               "Yes. In this guide DIPAS was built by Hamburg's administration, 'by the "
+               "administration for the administration', with HafenCity University; PARTIMAP is run "
+               "by the Budapest non-profit K-Monitor with development supported by the European "
+               "Commission; KoboToolbox is maintained by the non-profit Kobo; Decidim and Consul "
+               "Democracy are stewarded by a non-profit association and a foundation; Pocitové mapy "
+               "is run by a university researcher as a paid service. Several are built around one "
+               "country's language and procurement, so check the languages and hosting columns "
+               "before using one elsewhere. Mapsurvey is an independent open-source project: a "
+               "hosted free plan, and AGPLv3 code a public body can run on its own servers."),
             QA("What is a participatory mapping tool?",
                "Software that asks the public questions on a map: respondents mark places, draw "
                "routes or outline areas and answer follow-up questions about each, and the "
@@ -582,6 +594,33 @@ def build_story_collection_jsonld(request, stories) -> str:
     return json.dumps(data, ensure_ascii=False)
 
 
+def build_vendor_itemlist_jsonld(vendors) -> str:
+    """Return an ``ItemList`` JSON-LD naming every tool in the market guide (change
+    market-guide-filters, #651), so a crawler reads the roundup as a list, not only as a table.
+
+    Plain ``ListItem`` entries (name, url, description), deliberately not ``SoftwareApplication``:
+    Google validates that type for offers and ratings we do not publish for other vendors.
+    """
+    data = {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "name": "Participatory mapping tools compared",
+        "url": _abs("/participatory-mapping-tools/"),
+        "numberOfItems": len(vendors),
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": i + 1,
+                "name": vendor.name,
+                "url": vendor.url,
+                "description": vendor.summary,
+            }
+            for i, vendor in enumerate(vendors)
+        ],
+    }
+    return json.dumps(data, ensure_ascii=False)
+
+
 def render_seo_landing(request, key: str):
     """Render an SEO landing, injecting its FAQ + structured data from the registry."""
     from .events import capture_signup_source  # local import: events is import-light
@@ -608,4 +647,5 @@ def render_seo_landing(request, key: str):
     }
     if key == "participatory_mapping_tools":
         context.update(hub_context())
+        context["itemlist_jsonld"] = build_vendor_itemlist_jsonld(context["vendors"])
     return render(request, landing.template, context)

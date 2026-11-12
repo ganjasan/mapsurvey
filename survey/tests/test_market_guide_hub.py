@@ -40,7 +40,7 @@ class MarketGuideHubTest(TestCase):
         body = resp.content.decode()
         self.assertRegex(body, r"<h1[^>]*>[^<]*Participatory mapping tools")
         self.assertLess(body.index('id="verdict"'), body.index('id="how-to-read"'))
-        table = body[body.index('<table class="cmp guide-table">'):body.index("</table>")]
+        table = body[body.index('<table class="cmp guide-table"'):body.index("</table>")]
         for vendor in VENDORS:
             self.assertIn(escape(vendor.name), table)
             self.assertIn(f'id="row-{vendor.key}"', table)
@@ -74,7 +74,7 @@ class MarketGuideHubTest(TestCase):
         from survey.vendors import VENDORS
         body = Client().get(self.PATH).content.decode()
         sources = body[body.index('id="sources"'):body.index('id="compare"')]
-        table = body[body.index('<table class="cmp guide-table">'):body.index("</table>")]
+        table = body[body.index('<table class="cmp guide-table"'):body.index("</table>")]
         for vendor in VENDORS:
             with self.subTest(vendor=vendor.key):
                 self.assertIn(f'id="src-{vendor.key}"', sources)
@@ -206,3 +206,126 @@ class MarketGuideHubTest(TestCase):
         hub_related = hub_related[:hub_related.index("</section>")]
         self.assertNotIn('href="/participatory-mapping-tools/"', hub_related)
         self.assertIn('href="/community-engagement-platform/"', hub_related)
+
+
+class MarketGuideFiltersTest(TestCase):
+    """Change market-guide-filters (#651): vendor links, who is behind each tool, the filter bar
+    over a table that stays complete without JavaScript, and the ItemList structured data."""
+
+    PATH = "/participatory-mapping-tools/"
+    _LD_RE = re.compile(r'<script type="application/ld\+json">(.*?)</script>', re.S)
+
+    def _body(self):
+        return Client().get(self.PATH).content.decode()
+
+    @staticmethod
+    def _row(body, key):
+        row = body[body.index(f'id="row-{key}"'):]
+        return row[:row.index("</tr>")]
+
+    def test_every_tool_name_links_to_the_vendor_site(self):
+        """
+        GIVEN only three of 22 names used to be links, and those pointed at our own pages
+        WHEN the hub is rendered
+        THEN every table row and every category entry links the name to the vendor's own URL,
+             and the "vs Mapsurvey" link stays only where an alternatives page exists
+        """
+        from django.utils.html import escape
+        from survey.vendors import VENDORS
+        body = self._body()
+        cats = body[body.index('id="categories"'):body.index('id="criteria"')]
+        for vendor in VENDORS:
+            with self.subTest(vendor=vendor.key):
+                link = f'href="{escape(vendor.url)}" rel="noopener" target="_blank">{escape(vendor.name)}</a>'
+                self.assertIn(link, self._row(body, vendor.key))
+                self.assertIn(link, cats)
+                self.assertEqual("vs Mapsurvey in detail" in self._row(body, vendor.key),
+                                 bool(vendor.landing_key))
+
+    def test_rows_carry_the_filter_facets_and_the_backing_cell(self):
+        """
+        GIVEN each vendor's category, region, backing kind and flags in the registry
+        WHEN the hub is rendered
+        THEN its row carries them as data attributes, and the "Who is behind it" cell shows the
+             backing fact with its source host and date
+        """
+        from django.utils.html import escape
+        from survey.vendors import VENDORS
+        body = self._body()
+        self.assertIn('<th role="columnheader">Who is behind it</th>', body)
+        for vendor in VENDORS:
+            with self.subTest(vendor=vendor.key):
+                row = self._row(body, vendor.key)
+                for attr in (f'data-category="{vendor.category}"', f'data-region="{vendor.region}"',
+                             f'data-backing="{vendor.backing_kind}"', f'data-has="{vendor.flag_keys}"'):
+                    self.assertIn(attr, row)
+                self.assertIn(escape(vendor.backing.text), row)
+                # The phone layout labels every cell from data-label.
+                self.assertEqual(row.count('role="cell" data-label="'), len(vendor.facts) + 2)
+                self.assertIn(f"Source: {vendor.backing.host}, read {vendor.backing.verified}", row)
+
+    def test_filter_bar_is_hidden_until_the_script_runs(self):
+        """
+        GIVEN crawlers and assistants read the page without running JavaScript
+        WHEN the hub is rendered
+        THEN every vendor row is in the HTML and none is hidden, the filter bar is rendered with
+             the hidden attribute, every chip value is one some vendor has, and the script is loaded
+        """
+        from survey.vendors import VENDORS, hub_context
+        body = self._body()
+        self.assertIn('<div class="guide-filters" id="guide-filters" hidden>', body)
+        self.assertIn("js/market_guide_filters", body)
+        for vendor in VENDORS:
+            self.assertNotIn(" hidden", self._row(body, vendor.key).split(">")[0])
+        for group in hub_context()["filter_groups"]:
+            self.assertIn(f'data-param="{group["param"]}"', body)
+            for chip in group["chips"]:
+                self.assertGreater(chip["count"], 0)
+                self.assertIn(f'data-value="{chip["value"]}"', body)
+
+    def test_verdict_names_public_and_non_profit_tools_from_the_registry(self):
+        """
+        GIVEN backing kinds in the registry
+        WHEN the hub is rendered
+        THEN the public-body scenario names every vendor whose backing is public, non-profit or
+             academic, links each to its row, and no company's product
+        """
+        from survey.vendors import VENDORS
+        body = self._body()
+        block = body[body.index('id="verdict-public"'):body.index('id="verdict-selfhost"')]
+        for vendor in VENDORS:
+            with self.subTest(vendor=vendor.key):
+                listed = f'href="#row-{vendor.key}"' in block
+                self.assertEqual(listed, vendor.backing_kind != "commercial")
+        self.assertIn('data-guide-filter="backing=public,nonprofit,academic"', block)
+
+    def test_itemlist_names_every_tool(self):
+        """
+        GIVEN a crawler reads structured data before the table
+        WHEN the hub is rendered
+        THEN one ItemList block lists every vendor in registry order with its name and URL
+        """
+        from survey.vendors import VENDORS
+        blocks = [json.loads(m) for m in self._LD_RE.findall(self._body())]
+        lists = [b for b in blocks if b.get("@type") == "ItemList"]
+        self.assertEqual(len(lists), 1)
+        items = lists[0]["itemListElement"]
+        self.assertEqual(lists[0]["numberOfItems"], len(VENDORS))
+        self.assertEqual([(i["name"], i["url"]) for i in items], [(v.name, v.url) for v in VENDORS])
+
+    def test_registry_refuses_a_vendor_without_backing_or_with_an_unknown_country(self):
+        """
+        GIVEN the import-time validator
+        WHEN a vendor names a country outside COUNTRY_REGION or has no backing Fact
+        THEN validation raises
+        """
+        import dataclasses
+        from survey import vendors
+        bad_country = dataclasses.replace(vendors.MAPSURVEY, key="x1", country="Atlantis")
+        no_backing = dataclasses.replace(vendors.MAPSURVEY, key="x2", backing=None)
+        for bad in (bad_country, no_backing):
+            with self.subTest(vendor=bad.key):
+                with patch.object(vendors, "VENDORS", vendors.VENDORS + (bad,)), \
+                        patch.object(vendors, "_BY_KEY", {**vendors._BY_KEY, bad.key: bad}):
+                    with self.assertRaises((ValueError, AttributeError)):
+                        vendors._validate()
