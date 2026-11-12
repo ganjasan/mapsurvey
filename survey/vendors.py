@@ -50,6 +50,7 @@ class Category:
     title: str
     purpose: str      # what the tools in it are for
     buyers: str       # who buys them
+    chip: str = ""    # short label for the hub's filter chip (change market-guide-filters)
 
 
 @dataclass(frozen=True)
@@ -78,6 +79,13 @@ class Vendor:
     free_publishable: bool = False  # a free hosted plan can run a live project, no time limit
     self_serve: bool = False        # sign up and start the same day, no demo or sales call
     draws_shapes: bool = False      # respondents can draw lines and polygons, not only pins
+    open_source: bool = False       # the code is published under an open licence and self-hosts
+    # Change market-guide-filters (#651): where the maker is based and who is behind the tool.
+    # `country` must be a key of COUNTRY_REGION; `backing` is a sourced Fact like every cell, and
+    # `backing_kind` one of BACKING_KINDS, the bucket the filter and the verdict group it under.
+    country: str = ""
+    backing: Fact = None
+    backing_kind: str = ""
 
     def fact(self, key: str) -> Fact:
         return self.facts[key]
@@ -87,15 +95,33 @@ class Vendor:
         return [self.facts[c.key] for c in CRITERIA]
 
     @property
+    def facts_with_criteria(self):
+        """(Fact, Criterion) pairs in column order: the hub's phone layout labels every cell."""
+        return [(self.facts[c.key], c) for c in CRITERIA]
+
+    @property
+    def region(self) -> str:
+        return COUNTRY_REGION[self.country]
+
+    @property
+    def flag_keys(self):
+        """The FILTER_FLAGS this vendor has, as the space-separated list the table row carries."""
+        return " ".join(key for key, _ in FILTER_FLAGS if getattr(self, key))
+
+    @property
+    def _all_facts(self):
+        return list(self.facts.values()) + [self.backing] + [e.theirs for e in self.extras]
+
+    @property
     def verified_on(self) -> str:
         """The EARLIEST date among the facts: the honest one to print for the row."""
-        return min(f.verified for f in self.facts.values())
+        return min(f.verified for f in list(self.facts.values()) + [self.backing])
 
     @property
     def sources(self):
         """Distinct source URLs with the date each was read, in first-seen order."""
         seen = {}
-        for f in list(self.facts.values()) + [e.theirs for e in self.extras]:
+        for f in self._all_facts:
             seen.setdefault(f.source, f.verified)
         return [{"url": url, "verified": when, "host": urlsplit(url).netloc.replace("www.", "", 1)}
                 for url, when in seen.items()]
@@ -135,36 +161,76 @@ CATEGORIES = (
              "follow-up questions about each, and the result is a spatial dataset.",
              "Planning departments, transport and mobility consultancies, universities running "
              "PPGIS research, and parish or town councils that need one map survey rather than a "
-             "participation portal."),
+             "participation portal.", chip="Map survey tools"),
     Category("engagement", "Engagement platforms with a map feature",
              "Participation suites that run a council's whole engagement programme — project pages, "
              "surveys, ideas, forums, participatory budgeting — with a map tool among many. The "
              "map is usually a pin-drop with a comment.",
              "Local and regional governments buying a standing portal, usually through procurement "
-             "and with a named customer-success manager; consultancies that run engagement for them."),
+             "and with a named customer-success manager; consultancies that run engagement for them.",
+             chip="Engagement platforms"),
     Category("field", "Field data collection apps",
              "Mobile apps for trained staff and volunteers collecting observations offline: GPS "
              "points, traces and shapes with attribute forms and photos, synced to a server. Built "
              "for enumerators, not for anonymous residents following a link.",
              "Ecology and archaeology teams, utilities, humanitarian organisations, and anyone "
-             "already standing inside the Esri or QGIS ecosystem."),
+             "already standing inside the Esri or QGIS ecosystem.", chip="Field apps"),
     Category("open_source", "Open-source participation frameworks",
              "Free software a city installs and operates itself (or pays a partner to host): "
-             "proposals, debates, voting and participatory budgeting, with an address geocoded to a "
-             "point on a map. Drawing is not the point.",
+             "proposals, debates, voting and participatory budgeting. In most of them the map is an "
+             "address geocoded to a point; the one built for urban planning also takes lines and "
+             "polygons on maps and 3D models.",
              "Cities with an IT department or a civic-tech partner, and governments whose "
-             "procurement rules favour open source."),
+             "procurement rules favour open source.", chip="Open-source frameworks"),
     Category("forms", "Generic form builders with a location question",
              "Everyday form tools where a location is one field among many: a pin or an address, "
              "no drawing, no spatial export. Enough for 'where do you live', not for 'where is the "
              "problem'.",
-             "Teams that already pay for the form tool and need one address per response."),
+             "Teams that already pay for the form tool and need one address per response.",
+             chip="Form builders"),
 )
 
 _CATEGORY_KEYS = {c.key for c in CATEGORIES}
 _CRITERION_KEYS = [c.key for c in CRITERIA]
 
+# Change market-guide-filters (#651). The region is derived from the maker's country, never set
+# by hand, so a vendor cannot sit in a region its country contradicts. Order = chip order.
+REGIONS = (
+    ("europe", "Europe"),
+    ("north_america", "North America"),
+    ("australia", "Australia"),
+    ("central_asia", "Central Asia"),
+    ("international", "International"),
+)
+COUNTRY_REGION = {
+    "Belgium": "europe", "Czechia": "europe", "Finland": "europe", "Germany": "europe",
+    "Hungary": "europe", "Netherlands": "europe", "Spain": "europe", "Switzerland": "europe",
+    "United Kingdom": "europe",
+    "Canada": "north_america", "United States": "north_america",
+    "Australia": "australia",
+    "Kyrgyzstan": "central_asia",
+    # A maker that describes itself as international and names no seat on the pages read.
+    "International": "international",
+}
+BACKING_KINDS = (
+    ("public", "Public administration"),
+    ("nonprofit", "Non-profit or foundation"),
+    ("academic", "University researchers"),
+    ("commercial", "Company"),
+)
+# Vendor booleans the table can be filtered on ("must have"), in chip order.
+FILTER_FLAGS = (
+    ("free_publishable", "Free plan that publishes"),
+    ("self_serve", "Sign up the same day"),
+    ("draws_shapes", "Lines and polygons"),
+    ("price_listed", "Price is public"),
+    ("open_source", "Open source"),
+)
+_REGION_KEYS = {k for k, _ in REGIONS}
+_BACKING_KEYS = {k for k, _ in BACKING_KINDS}
+
 D = "2026-10-06"  # the day every page below was read
+D3 = "2026-11-11"  # change market-guide-filters (#651): who is behind each tool
 
 # --- Mapsurvey -------------------------------------------------------------------------------
 _MS_TRUST = "https://mapsurvey.org/trust/"
@@ -174,7 +240,10 @@ _MS_GITHUB = "https://github.com/ganjasan/mapsurvey"
 
 MAPSURVEY = Vendor(
     key="mapsurvey", name="Mapsurvey", maker="Mapsurvey", url=_MS_HOME, category="ppgis",
-    price_listed=True, free_publishable=True, self_serve=True, draws_shapes=True,
+    price_listed=True, free_publishable=True, self_serve=True, draws_shapes=True, open_source=True,
+    country="Kyrgyzstan", backing_kind="commercial",
+    backing=Fact("Independent: one developer's business; no government, investor or corporation "
+                 "owns it", _MS_TRUST + "#ownership", D3),
     summary="Map-based surveys where respondents place points, draw lines and outline polygons, "
             "each with follow-up questions; results come back as GIS files and a public results page.",
     facts={
@@ -231,6 +300,16 @@ _DP_FAQ = "https://www.dipas.org/faq"
 _DP_FEATURES = "https://www.dipas.org/funktionen"
 _DP_WIKI_INPUT = "https://wiki.dipas.org/index.php?title=Beitragseingabe"
 _DP_WIKI_EXPORT = "https://wiki.dipas.org/index.php?title=Individuelles_Verfahren_verwalten_und_auswerten"
+
+# Added by change market-guide-filters (#651): who is behind each tool, read on D3. Pages the
+# earlier changes read on D or D2 keep that date where they were the source of the statement.
+_MT_HOME = "https://www.maptionnaire.com/"
+_GV_HOME = "https://www.govocal.com/"
+_CSP_HOME = "https://www.delib.net/citizen_space"
+_KOBO_ABOUT = "https://support.kobotoolbox.org/about_kobotoolbox.html"
+_DC_ABOUT = "https://decidim.org/about/"
+_CD_ABOUT = "https://consuldemocracy.org/about/"
+_JF_HOME = "https://www.jotform.com/"
 
 # --- Engagement platforms with a map feature --------------------------------------------------
 _GV_MAP = "https://www.govocal.com/mapping"
@@ -294,6 +373,8 @@ VENDORS = (
     Vendor(
         key="maptionnaire", name="Maptionnaire", maker="Mapita Oy, Helsinki",
         draws_shapes=True,
+        country="Finland", backing_kind="commercial",
+        backing=Fact("Company: Mapita Oy", _MT_HOME, D3),
         url="https://www.maptionnaire.com/", category="ppgis", landing_key="maptionnaire_alternative",
         summary="The reference PPGIS product: points, lines and areas with follow-up questions, "
                 "public project pages and reports on the higher tiers, sold by annual subscription.",
@@ -316,6 +397,9 @@ VENDORS = (
     Vendor(
         key="partimap", name="PARTIMAP", maker="K-Monitor, Budapest", url=_PM_HOME,
         price_listed=True, free_publishable=True, self_serve=True, draws_shapes=True,
+        open_source=True, country="Hungary", backing_kind="nonprofit",
+        backing=Fact("Non-profit: K-Monitor, a Budapest public-benefit association; development "
+                     "supported by the European Commission (DG Regio)", _PM_HOME, D3),
         category="ppgis",
         summary="A free, open-source map survey tool from a Hungarian transparency NGO: points, "
                 "lines and areas on a multilingual interface, exports to spreadsheet and KML.",
@@ -336,6 +420,9 @@ VENDORS = (
         key="pocitove_mapy", name="Pocitové mapy", maker="Jiří Pánek and Ondřej Růžička, Czechia",
         url=_PC_HOME, category="ppgis",
         price_listed=True, draws_shapes=True,
+        country="Czechia", backing_kind="academic",
+        backing=Fact("University researchers: an associate professor at Palacký University "
+                     "Olomouc and a web-map developer, selling it as a service", _PC_EN, D3),
         summary="Czech 'feeling maps' run as a service by an academic and a developer: they set up "
                 "the questions with a town, collect answers online or with printed maps at events, "
                 "and deliver GIS data and summary maps.",
@@ -360,6 +447,8 @@ VENDORS = (
     Vendor(
         key="crowdspot", name="CrowdSpot", maker="CrowdLab (CrowdSpot Pty Ltd), Australia",
         url=_CS_HOME, category="ppgis",
+        country="Australia", backing_kind="commercial",
+        backing=Fact("Company: CrowdSpot Pty Ltd, a CrowdLab product", _CS_TERMS, D3),
         summary="Australian crowd-mapping platform: the public drops pins with stories, photos and "
                 "survey answers on a campaign map, built from templates or by CrowdLab as a "
                 "custom 'Studio' build.",
@@ -385,6 +474,8 @@ VENDORS = (
         key="wikimapping", name="WikiMapping", maker="Krimsnatch LLC, Jenkintown",
         url=_WM_HOME, category="ppgis",
         price_listed=True, self_serve=True, draws_shapes=True,
+        country="United States", backing_kind="commercial",
+        backing=Fact("Company: Krimsnatch LLC, a Jenkintown mapping studio", _WM_ABOUT, D3),
         summary="Map-based public input for planning consultants, MPOs and DOTs: pins, routes and "
                 "areas with linked surveys, board-style presentations and GIS export.",
         facts={
@@ -406,8 +497,10 @@ VENDORS = (
     ),
     Vendor(
         key="govocal", name="Go Vocal", maker="Go Vocal (formerly CitizenLab), Brussels",
-        price_listed=True, draws_shapes=True,
-        url="https://www.govocal.com/", category="engagement",
+        price_listed=True, draws_shapes=True, open_source=True,
+        country="Belgium", backing_kind="commercial",
+        backing=Fact("Company: Go Vocal", _GV_HOME, D3),
+        url=_GV_HOME, category="engagement",
         summary="The participation suite that named the category: project pages, surveys, ideation, "
                 "voting and participatory budgeting, with a mapping tool where residents drop pins "
                 "and draw lines and polygons.",
@@ -430,6 +523,8 @@ VENDORS = (
     Vendor(
         key="senf", name="Senf", maker="Senf.app, Cologne", url=_SF_HOME, category="engagement",
         price_listed=True, self_serve=True, draws_shapes=True,
+        country="Germany", backing_kind="commercial",
+        backing=Fact("Company: Senf", _SF_HOME, D3),
         summary="Engagement platform sold to planning, design and engineering consultancies: "
                 "project websites, surveys and dialogue maps, with AI comment tagging and ArcGIS "
                 "Online sync.",
@@ -455,6 +550,8 @@ VENDORS = (
         key="emitwirkung", name="E-Mitwirkung", maker="Konova AG, Zug", url=_EM_HOME,
         category="engagement",
         price_listed=True,
+        country="Switzerland", backing_kind="commercial",
+        backing=Fact("Company: Konova AG, Zug", _EM_PRIVACY, D3),
         summary="Swiss consultation platform for public administrations: statements on documents, "
                 "surveys and map-based feedback, with joint evaluation and report generation.",
         facts={
@@ -479,6 +576,8 @@ VENDORS = (
         key="openpoint", name="Open Point (Social Pinpoint)", maker="Open Point, Melbourne",
         url="https://www.openpoint.com/", category="engagement",
         landing_key="social_pinpoint_alternative",
+        country="Australia", backing_kind="commercial",
+        backing=Fact("Company: Open Point, formerly Social Pinpoint", _OP_TOOLS, D),
         summary="The engagement hub behind Social Pinpoint, Social Point and MetroQuest: dozens of "
                 "tools, among them a Social Map where participants pin a comment and vote on "
                 "others' pins.",
@@ -506,7 +605,9 @@ VENDORS = (
     Vendor(
         key="citizen_space", name="Citizen Space", maker="Delib, Bristol",
         price_listed=True, draws_shapes=True,
-        url="https://www.delib.net/citizen_space", category="engagement",
+        url=_CSP_HOME, category="engagement",
+        country="United Kingdom", backing_kind="commercial",
+        backing=Fact("Company: Delib Limited", _CSP_HOME, D3),
         summary="The default statutory-consultation platform of UK public bodies, with a Geospatial "
                 "add-on: pins, routes and areas, validation boundaries, GeoJSON and Shapefile both ways.",
         facts={
@@ -529,6 +630,8 @@ VENDORS = (
         key="commonplace", name="Commonplace", maker="Zencity (acquired Commonplace in 2025)",
         price_listed=True,
         url=_CP_HOME, category="engagement",
+        country="United Kingdom", backing_kind="commercial",
+        backing=Fact("Company: Zencity", _CP_HOME, D3),
         summary="UK planning-engagement platform built around a Community Heatmap: residents drop a "
                 "pin and answer a short survey about it; now part of Zencity.",
         facts={
@@ -548,6 +651,8 @@ VENDORS = (
         key="engagementhq", name="EngagementHQ", maker="Granicus", url=_EHQ_PROD,
         price_listed=True,
         category="engagement",
+        country="United States", backing_kind="commercial",
+        backing=Fact("Company: Granicus", _EHQ_PROD, D3),
         summary="Granicus's engagement suite (formerly Bang the Table) with a Places tool: a pin "
                 "drop with a photo and a short survey on one of eight map types.",
         facts={
@@ -567,6 +672,9 @@ VENDORS = (
     Vendor(
         key="metroquest", name="MetroQuest", maker="MetroQuest, Vancouver (Social Pinpoint since 2023)",
         url="https://metroquest.com/", category="engagement", landing_key="metroquest_alternative",
+        country="Canada", backing_kind="commercial",
+        backing=Fact("Company: part of Social Pinpoint (now Open Point) since July 2023",
+                     _OP_MQ_ACQ, D),
         summary="The visual five-screen survey built for transport planning, with a map-marker "
                 "screen; acquired by Social Pinpoint in July 2023 and sold on annual subscription.",
         facts={
@@ -598,6 +706,8 @@ VENDORS = (
         key="survey123", name="ArcGIS Survey123", maker="Esri", url=_S123_OVERVIEW,
         self_serve=True, draws_shapes=True,
         category="field",
+        country="United States", backing_kind="commercial",
+        backing=Fact("Company: Esri", _S123_OVERVIEW, D3),
         summary="Esri's form-centric field app: geopoint, geotrace and geoshape questions that land "
                 "in ArcGIS Online or Enterprise feature layers, offline, with the whole Esri stack behind it.",
         facts={
@@ -620,6 +730,9 @@ VENDORS = (
     Vendor(
         key="kobotoolbox", name="KoboToolbox", maker="Kobo Inc. (non-profit)",
         price_listed=True, free_publishable=True, self_serve=True, draws_shapes=True,
+        open_source=True, country="International", backing_kind="nonprofit",
+        backing=Fact("Non-profit: hosted and maintained by the international non-profit Kobo",
+                     _KOBO_ABOUT, D3),
         url="https://www.kobotoolbox.org/", category="field",
         summary="The humanitarian sector's open-source data-collection platform: point, line and "
                 "area questions, a free Community plan, and an EU server for residency.",
@@ -641,8 +754,11 @@ VENDORS = (
     ),
     Vendor(
         key="merginmaps", name="Mergin Maps", maker="Lutra Consulting", url=_MM_HOME,
-        price_listed=True, self_serve=True, draws_shapes=True,
+        price_listed=True, self_serve=True, draws_shapes=True, open_source=True,
         category="field",
+        country="United Kingdom", backing_kind="commercial",
+        backing=Fact("Company: Lutra Consulting Limited, registered in England and Wales",
+                     _MM_HOME, D3),
         summary="QGIS in the field: your QGIS project and forms on a phone, points, lines and "
                 "polygons captured offline and synced; open-source Community Edition to self-host.",
         facts={
@@ -664,7 +780,12 @@ VENDORS = (
     Vendor(
         key="dipas", name="DIPAS", maker="City of Hamburg with HafenCity University, Hamburg",
         url=_DP_HOME, category="open_source",
-        price_listed=True, draws_shapes=True,
+        price_listed=True, draws_shapes=True, open_source=True,
+        country="Germany", backing_kind="public",
+        backing=Fact("Public administration: built 'by the administration for the "
+                     "administration' by Hamburg's Ministry of Urban Development and Housing, its "
+                     "geoinformation agency and HafenCity University's CityScienceLab",
+                     _DP_HOME, D3),
         summary="Open-source digital participation system built by Hamburg's administration: "
                 "residents comment on plans and place ideas on maps, aerial photos and 3D models, "
                 "online or at touch tables.",
@@ -689,8 +810,11 @@ VENDORS = (
     ),
     Vendor(
         key="decidim", name="Decidim", maker="Decidim Association, Barcelona", url=_DC_HOME,
-        price_listed=True,
+        price_listed=True, open_source=True,
         category="open_source",
+        country="Spain", backing_kind="nonprofit",
+        backing=Fact("Non-profit: the Decidim Free Software Association maintains the code",
+                     _DC_ABOUT, D3),
         summary="The Barcelona-born participatory-democracy framework: processes, proposals, "
                 "assemblies and participatory budgeting; a proposal's address is geocoded to a map pin.",
         facts={
@@ -710,8 +834,12 @@ VENDORS = (
         },
     ),
     Vendor(
-        key="consul", name="Consul Democracy", maker="Consul Democracy Foundation", url=_CD_HOME,
-        price_listed=True,
+        key="consul", name="Consul Democracy", maker="Consul Democracy Foundation, Amsterdam",
+        url=_CD_HOME,
+        price_listed=True, open_source=True,
+        country="Netherlands", backing_kind="nonprofit",
+        backing=Fact("Non-profit: the Consul Democracy Foundation, seated in Amsterdam, stewards "
+                     "the code", _CD_ABOUT, D3),
         category="open_source",
         summary="The Madrid-born open-source platform for proposals, debates, voting and "
                 "participatory budgeting; with geolocation on, residents place a proposal on a map.",
@@ -731,8 +859,10 @@ VENDORS = (
         },
     ),
     Vendor(
-        key="jotform", name="Jotform", maker="Jotform Inc.", url="https://www.jotform.com/",
+        key="jotform", name="Jotform", maker="Jotform Inc., San Francisco", url=_JF_HOME,
         price_listed=True, free_publishable=True, self_serve=True,
+        country="United States", backing_kind="commercial",
+        backing=Fact("Company: Jotform Inc.", _JF_HOME, D3),
         category="forms",
         summary="A general form builder whose Geolocation widget captures one location per "
                 "response as a draggable Google Maps pin, address or coordinates.",
@@ -754,6 +884,8 @@ VENDORS = (
     Vendor(
         key="google_forms", name="Google Forms", maker="Google", url=_GF_PROD, category="forms",
         price_listed=True, self_serve=True,
+        country="United States", backing_kind="commercial",
+        backing=Fact("Company: Google", _GF_PROD, D3),
         summary="The form everyone already has: twelve question types, none of them a map, with "
                 "responses in a Google Sheet.",
         facts={
@@ -818,7 +950,33 @@ def hub_context():
         "start_today_vendors": [v for v in VENDORS
                                 if v.free_publishable and v.self_serve and v.draws_shapes],
         "v": _BY_KEY,
+        # Change market-guide-filters (#651): the filter chips (only values some vendor has, with
+        # counts) and the verdict's computed list of tools that are not a company's product.
+        "filter_groups": _filter_groups(),
+        "non_commercial": [
+            {"key": key, "label": label, "vendors": [v for v in VENDORS if v.backing_kind == key]}
+            for key, label in BACKING_KINDS
+            if key != "commercial" and any(v.backing_kind == key for v in VENDORS)
+        ],
     }
+
+
+def _filter_groups():
+    """Chip groups over the hub table. `param` is the key in the `#tools?…` hash; within a group
+    chips are alternatives (OR), across groups and inside "Must have" they all apply (AND)."""
+    def chips(pairs, has):
+        return [{"value": k, "label": label, "count": n}
+                for k, label in pairs if (n := sum(1 for v in VENDORS if has(v, k)))]
+    return [
+        {"param": "category", "label": "Kind of tool", "mode": "any",
+         "chips": chips([(c.key, c.chip or c.title) for c in CATEGORIES], lambda v, k: v.category == k)},
+        {"param": "region", "label": "Maker based in", "mode": "any",
+         "chips": chips(REGIONS, lambda v, k: v.region == k)},
+        {"param": "backing", "label": "Who is behind it", "mode": "any",
+         "chips": chips(BACKING_KINDS, lambda v, k: v.backing_kind == k)},
+        {"param": "has", "label": "Must have", "mode": "all",
+         "chips": chips(FILTER_FLAGS, lambda v, k: getattr(v, k))},
+    ]
 
 
 def _validate():
@@ -829,7 +987,15 @@ def _validate():
         missing = [k for k in _CRITERION_KEYS if k not in v.facts]
         if missing:
             raise ValueError(f"vendors.py: {v.key} lacks facts for {missing}")
-        for f in list(v.facts.values()) + [e.theirs for e in v.extras]:
+        if v.country not in COUNTRY_REGION:
+            raise ValueError(f"vendors.py: {v.key} names unknown country {v.country!r}")
+        if COUNTRY_REGION[v.country] not in _REGION_KEYS:
+            raise ValueError(f"vendors.py: {v.country} maps to an unknown region")
+        if v.backing_kind not in _BACKING_KEYS:
+            raise ValueError(f"vendors.py: {v.key} has unknown backing_kind {v.backing_kind!r}")
+        if not isinstance(v.backing, Fact):
+            raise ValueError(f"vendors.py: {v.key} has no sourced backing Fact")
+        for f in v._all_facts:
             if not f.source.startswith("https://"):
                 raise ValueError(f"vendors.py: {v.key}: fact {f.text!r} has no https source")
             try:

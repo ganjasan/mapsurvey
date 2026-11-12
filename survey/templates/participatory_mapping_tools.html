@@ -9,6 +9,9 @@ partials/_landing_pricing.html only.
 Change market-guide-verdict (#580): the verdict draws conclusions from those facts and names
 vendors by registry key (v.<key>), so it cannot name a tool the table does not have; the
 "who has X" sentences are computed lists from hub_context, never literals.
+Change market-guide-filters (#651): every tool name links to the vendor's own site; the filter
+bar is progressive enhancement over a table that is complete in the server HTML (crawlers and
+assistants run no JavaScript), and its state lives in the #tools?… hash, never in a query URL.
 {% endcomment %}
 
 {% block title %}{% blocktrans %}Participatory Mapping Tools Compared: {{ vendor_count }} Map-Based Survey and Engagement Platforms (2026){% endblocktrans %}{% endblock %}
@@ -44,7 +47,7 @@ vendors by registry key (v.<key>), so it cannot name a tool the table does not h
   <div class="landing-inner">
     <p class="section-eyebrow">{% trans "The short answer" %}</p>
     <h2 class="section-heading">{% trans "Which tool for which project" %}</h2>
-    <p class="aud-lead" style="color:#556;text-align:center;">{% trans "Seven situations buyers are in, and the tools that fit each one. The conclusions are ours; every fact behind them is in the table below with its source." %}</p>
+    <p class="aud-lead" style="color:#556;text-align:center;">{% trans "Eight situations buyers are in, and the tools that fit each one. The conclusions are ours; every fact behind them is in the table below with its source." %}</p>
     <div class="guide-cats guide-verdict">
       <div class="guide-cat" id="verdict-map-survey">
         <h3>{% trans "One map survey: residents draw routes and areas and answer questions about each" %}</h3>
@@ -71,6 +74,11 @@ vendors by registry key (v.<key>), so it cannot name a tool the table does not h
       <div class="guide-cat" id="verdict-residency">
         <h3>{% trans "The hosted service must keep data in the UK, the EU or Switzerland under contract" %}</h3>
         <p>{% blocktrans with gv=v.govocal.name gv_h=v.govocal.facts.hosting.text cs=v.citizen_space.name cs_h=v.citizen_space.facts.hosting.text mt=v.maptionnaire.name mt_h=v.maptionnaire.facts.hosting.text em=v.emitwirkung.name em_h=v.emitwirkung.facts.hosting.text %}Check the hosting column. {{ gv }}: {{ gv_h }}. {{ cs }}: {{ cs_h }}. {{ mt }}: {{ mt_h }}. {{ em }}: {{ em_h }}.{% endblocktrans %} {% blocktrans with ms_h=v.mapsurvey.facts.hosting.text %}Mapsurvey: {{ ms_h }}.{% endblocktrans %}</p>
+      </div>
+      <div class="guide-cat" id="verdict-public">
+        <h3>{% trans "A tool from a public body, a non-profit or a university" %}</h3>
+        <p>{% for group in non_commercial %}<strong>{{ group.label }}:</strong> {% for t in group.vendors %}<a href="#row-{{ t.key }}">{{ t.name }}</a> ({{ t.country }}){% if not forloop.last %}, {% endif %}{% endfor %}.{% if not forloop.last %} {% endif %}{% endfor %}</p>
+        <p>{% blocktrans with dp=v.dipas.name pc=v.pocitove_mapy.name %}All but {{ pc }}, a paid service, are free software or have a free plan, and several are built around one country's language and procurement: {{ dp }}, for one, has no built-in translation. Check the languages and hosting columns before you use one outside its home country.{% endblocktrans %} {% trans "Mapsurvey is not one of them: it is an independent open-source project, with a hosted free plan and AGPLv3 code a public body can run on its own servers." %} <a href="#table" data-guide-filter="backing={% for group in non_commercial %}{{ group.key }}{% if not forloop.last %},{% endif %}{% endfor %}" class="guide-filter-link">{% trans "Show them in the table" %}</a></p>
       </div>
       <div class="guide-cat" id="verdict-selfhost">
         <h3>{% trans "A free, self-hosted stack the municipality runs itself" %}</h3>
@@ -108,9 +116,10 @@ vendors by registry key (v.<key>), so it cannot name a tool the table does not h
         <ul class="guide-cat__vendors">
           {% for v in row.vendors %}
           <li>
-            <strong>{% if v.landing_key %}<a href="{% url v.landing_key %}">{{ v.name }}</a>{% else %}{{ v.name }}{% endif %}</strong>
-            <span class="guide-cat__maker">{{ v.maker }}</span>
+            <strong><a href="{{ v.url }}" rel="noopener" target="_blank">{{ v.name }}</a></strong>
+            <span class="guide-cat__maker">{{ v.maker }} · {{ v.country }}</span>
             <span>{{ v.summary }}</span>
+            {% if v.landing_key %}<a class="guide-cat__vs" href="{% url v.landing_key %}">{% trans "vs Mapsurvey in detail" %}</a>{% endif %}
           </li>
           {% endfor %}
         </ul>
@@ -136,7 +145,7 @@ vendors by registry key (v.<key>), so it cannot name a tool the table does not h
       <li><strong>{{ c.label }}.</strong> {{ c.ask }}</li>
       {% endfor %}
     </ol>
-    <p class="cmp-note" style="text-align:center;">{% trans "These are the columns of the table below. A tenth column, Verified, shows the earliest date among the row's sources; the title of every cell names its page." %}</p>
+    <p class="cmp-note" style="text-align:center;">{% trans "These are the columns of the table below. Two more frame them: who is behind the tool (a company, a non-profit, a public administration or university researchers) and Verified, the earliest date among the row's sources. Every cell names the page it was read from." %}</p>
   </div>
 </section>
 
@@ -144,30 +153,49 @@ vendors by registry key (v.<key>), so it cannot name a tool the table does not h
   <div class="landing-inner">
     <p class="section-eyebrow">{% trans "The table" %}</p>
     <h2 class="section-heading">{% blocktrans %}{{ vendor_count }} tools on {{ criteria_count }} criteria{% endblocktrans %}</h2>
-    <p class="aud-lead" style="color:#556;text-align:center;">{% trans "Scroll sideways on a phone; the tool name stays put. Hover a cell for its source. Green is the author's row." %}</p>
+    <p class="aud-lead" style="color:#556;text-align:center;">{% trans "On a phone each tool is a card. Every cell names its source (hover on a computer, under the text on a phone). Green is the author's row." %}</p>
+    <div class="guide-filters" id="guide-filters" hidden>
+      <button type="button" class="guide-filters__toggle" id="guide-filters-toggle" aria-expanded="false" aria-controls="guide-filters">{% trans "Filters" %} <span class="guide-filters__toggle-n"></span></button>
+      {% for group in filter_groups %}
+      <div class="guide-filters__group" role="group" aria-label="{{ group.label }}" data-param="{{ group.param }}" data-mode="{{ group.mode }}">
+        <span class="guide-filters__label">{{ group.label }}</span>
+        {% for chip in group.chips %}
+        <button type="button" class="guide-chip" aria-pressed="false" data-value="{{ chip.value }}">{{ chip.label }} <span class="guide-chip__n">{{ chip.count }}</span></button>
+        {% endfor %}
+      </div>
+      {% endfor %}
+      <div class="guide-filters__status">
+        <span id="guide-filters-count" aria-live="polite"></span>
+        <button type="button" class="guide-filters__clear" id="guide-filters-clear" hidden>{% trans "Clear filters" %}</button>
+      </div>
+    </div>
     <div class="cmp-table-wrap guide-table-wrap">
-      <table class="cmp guide-table">
-        <thead>
-          <tr>
-            <th>{% trans "Tool" %}</th>
-            {% for c in criteria %}<th>{{ c.label }}</th>{% endfor %}
-            <th>{% trans "Verified" %}</th>
+      {% comment %}Explicit ARIA roles: the phone layout sets display:block, which makes browsers drop the table semantics.{% endcomment %}
+      <table class="cmp guide-table" role="table">
+        <thead role="rowgroup">
+          <tr role="row">
+            <th role="columnheader">{% trans "Tool" %}</th>
+            <th role="columnheader">{% trans "Who is behind it" %}</th>
+            {% for c in criteria %}<th role="columnheader">{{ c.label }}</th>{% endfor %}
+            <th role="columnheader">{% trans "Verified" %}</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody role="rowgroup">
           {% for v in vendors %}
-          <tr{% if v.key == "mapsurvey" %} class="guide-table__ours"{% endif %} id="row-{{ v.key }}">
-            <th>
-              <span class="guide-table__name">{{ v.name }}</span>
-              <span class="guide-table__maker">{{ v.maker }}</span>
+          <tr role="row"{% if v.key == "mapsurvey" %} class="guide-table__ours"{% endif %} id="row-{{ v.key }}" data-category="{{ v.category }}" data-region="{{ v.region }}" data-backing="{{ v.backing_kind }}" data-has="{{ v.flag_keys }}">
+            <th role="rowheader">
+              <a class="guide-table__name" href="{{ v.url }}" rel="noopener" target="_blank">{{ v.name }}</a>
+              <span class="guide-table__maker">{{ v.maker }} · {{ v.country }}</span>
               {% if v.landing_key %}<a class="guide-table__vs" href="{% url v.landing_key %}">{% trans "vs Mapsurvey in detail" %}</a>{% endif %}
             </th>
-            {% for f in v.ordered_facts %}
-            <td class="{% if v.key == "mapsurvey" %}ms{% else %}mt{% endif %}" title="{% trans 'Source' %}: {{ f.host }}, {% trans 'read' %} {{ f.verified }}">{{ f.text }}</td>
+            {% with f=v.backing %}<td role="cell" data-label="{% trans 'Who is behind it' %}" class="{% if v.key == "mapsurvey" %}ms{% else %}mt{% endif %}" title="{% trans 'Source' %}: {{ f.host }}, {% trans 'read' %} {{ f.verified }}">{{ f.text }}<span class="guide-cell__src">{{ f.host }} · {{ f.verified }}</span></td>{% endwith %}
+            {% for f, c in v.facts_with_criteria %}
+            <td role="cell" data-label="{{ c.label }}" class="{% if v.key == "mapsurvey" %}ms{% else %}mt{% endif %}" title="{% trans 'Source' %}: {{ f.host }}, {% trans 'read' %} {{ f.verified }}">{{ f.text }}<span class="guide-cell__src">{{ f.host }} · {{ f.verified }}</span></td>
             {% endfor %}
-            <td class="mt"><a href="#src-{{ v.key }}">{{ v.verified_on }}</a></td>
+            <td role="cell" data-label="{% trans 'Verified' %}" class="mt"><a href="#src-{{ v.key }}">{{ v.verified_on }}</a></td>
           </tr>
           {% endfor %}
+          <tr role="row" class="guide-table__empty" id="guide-table-empty" hidden><td role="cell" colspan="{{ criteria_count|add:3 }}">{% trans "No tool in this guide matches every filter. Clear one to see more." %}</td></tr>
         </tbody>
       </table>
     </div>
@@ -249,4 +277,8 @@ vendors by registry key (v.<key>), so it cannot name a tool the table does not h
 {% include "partials/_landing_siblings.html" with current="participatory_mapping_tools" audience="for_planners" %}
 {% include "partials/_faq_section.html" %}
 
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/market_guide_filters.js' %}" defer></script>
 {% endblock %}

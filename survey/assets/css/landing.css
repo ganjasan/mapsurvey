@@ -2385,6 +2385,57 @@ table.guide-table td.ms { font-weight: 500; }
 .guide-source ul { list-style: none; padding: 0; margin: 0; }
 .guide-source li { font-size: 12.5px; line-height: 1.5; color: #556; word-break: break-all; }
 .guide-source__when { color: #889; white-space: nowrap; }
+/* Change market-guide-filters (#651): links to vendors, the filter bar (shown by
+   js/market_guide_filters.js only), and the per-cell source line that replaces the hover title
+   on touch screens. */
+table.guide-table a.guide-table__name { display: block; color: #1b2a3a; text-decoration: none; }
+table.guide-table a.guide-table__name:hover { text-decoration: underline; }
+.guide-cat__vendors li strong a { color: inherit; }
+.guide-cat__vs { display: inline-block; margin-left: 6px; font-size: 12.5px; font-weight: 500; }
+.guide-cell__src { display: none; margin-top: 4px; font-size: 11px; font-weight: 400; color: #99a; word-break: break-all; }
+@media (hover: none) { .guide-cell__src { display: block; } }
+.guide-filters { max-width: 1200px; margin: 22px auto 0; padding: 14px 16px; background: #f7f8fa; border: 1px solid #e6eaef; border-radius: 12px; text-align: left; display: flex; flex-direction: column; gap: 10px; }
+.guide-filters[hidden], .guide-filters__clear[hidden], .guide-table__empty[hidden] { display: none; }
+.guide-filters__group { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.guide-filters__label { font-size: 12.5px; font-weight: 600; color: #556; min-width: 118px; }
+.guide-chip { font: inherit; font-size: 13px; line-height: 1.2; padding: 6px 11px; border: 1px solid #d6dce3; border-radius: 999px; background: #fff; color: #334; cursor: pointer; }
+.guide-chip:hover { border-color: #9fb3c8; }
+.guide-chip:focus-visible { outline: 2px solid #1f7a4d; outline-offset: 2px; }
+.guide-chip[aria-pressed="true"] { background: #1f7a4d; border-color: #1f7a4d; color: #fff; }
+.guide-chip__n { font-size: 11px; opacity: .7; margin-left: 2px; }
+.guide-filters__status { display: flex; align-items: center; gap: 12px; font-size: 13px; color: #556; }
+.guide-filters__clear { font: inherit; font-size: 13px; padding: 0; border: 0; background: none; color: #1f6fb2; cursor: pointer; text-decoration: underline; }
+.guide-table__empty td { text-align: center; color: #667; padding: 18px; }
+.guide-filters__toggle { display: none; }
+@media (max-width: 720px) {
+  .guide-filters { margin-left: 0; margin-right: 0; padding: 12px; }
+  .guide-filters__label { min-width: 0; width: 100%; }
+  /* Filters fold into one button on a phone; the status line stays in view. */
+  .guide-filters__toggle { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 14px; font-weight: 600; padding: 8px 14px; border: 1px solid #d6dce3; border-radius: 999px; background: #fff; color: #1b2a3a; cursor: pointer; align-self: flex-start; }
+  .guide-filters__toggle[aria-expanded="true"] { border-color: #1f7a4d; color: #1f7a4d; }
+  .guide-filters:not(.is-open) .guide-filters__group { display: none; }
+
+  /* Stacked table: each tool is a card of label / value pairs. The markup stays one table
+     (explicit ARIA roles keep its semantics once display:block drops them). */
+  .guide-table-wrap { overflow: visible; }
+  table.guide-table, table.guide-table tbody, table.guide-table tr,
+  table.guide-table th, table.guide-table td { display: block; }
+  table.guide-table { border: 0; background: none; font-size: 14px; }
+  table.guide-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  table.guide-table tr[hidden] { display: none; }
+  table.guide-table tbody tr { background: #fff; border: 1px solid #e6eaef; border-radius: 12px; margin: 0 0 12px; overflow: hidden; scroll-margin-top: 80px; }
+  table.guide-table th, table.guide-table td,
+  table.guide-table th:first-child, table.guide-table td:first-child { position: static; min-width: 0; box-shadow: none; }
+  table.guide-table tbody th { padding: 12px 14px 10px; background: #f4f8fb; border-bottom: 1px solid #eef1f4; }
+  table.guide-table .guide-table__ours th { background: #e3f1ea; }
+  table.guide-table a.guide-table__name { font-size: 16px; }
+  table.guide-table td[data-label] { display: grid; grid-template-columns: minmax(96px, 36%) 1fr; gap: 10px; padding: 8px 14px; border-bottom: 1px solid #f1f3f6; }
+  table.guide-table td[data-label]::before { content: attr(data-label); font-size: 11.5px; font-weight: 600; color: #889; text-transform: uppercase; letter-spacing: .03em; line-height: 1.4; }
+  table.guide-table td[data-label] .guide-cell__src { grid-column: 2; margin-top: -6px; }
+  table.guide-table tr:last-child td { border-bottom: 0; }
+  table.guide-table td:last-child { border-bottom: 0; }
+  .guide-table__empty td { border: 1px dashed #d6dce3; border-radius: 12px; background: #fff; }
+}
 
 /* ===== Blog and public changelog (change public-blog-and-changelog, #647) =====
    The feed and article pages reuse the story styles (.story-grid, .story-card, .story-detail,
