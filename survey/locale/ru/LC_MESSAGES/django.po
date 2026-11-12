@@ -4860,11 +4860,11 @@ msgstr "Самый простой способ собирать геоданны
 
 #: survey/templates/landing.html:11
 msgid ""
-"Think Google Forms — but people answer by drawing points, lines, and areas "
-"on a map. Free to start, no coding required."
+"Think Google Forms — but people answer on a map: they mark places, draw "
+"routes and outline areas. Free to start, no coding required."
 msgstr ""
-"Как Google Формы, только люди отвечают на карте: ставят точки, рисуют линии "
-"и обводят территории. Начать можно бесплатно и без программирования."
+"Как Google Формы, только люди отвечают на карте: отмечают места, рисуют "
+"маршруты и обводят территории. Начать можно бесплатно и без программирования."
 
 #: survey/templates/landing.html:15 survey/templates/landing.html:251
 msgid "Go to Dashboard"
@@ -7388,11 +7388,11 @@ msgstr "Вопросы, созданные для карты"
 
 #: survey/templates/landing.html
 msgid ""
-"Points, lines and areas, as many as a person needs, each with its own "
+"Places, routes and areas, as many as a person needs, each with its own "
 "follow-up questions and photo. Pick a marker icon from almost two thousand, "
 "and let people search for an address."
 msgstr ""
-"Точки, линии и полигоны, сколько нужно участнику, у каждого свои уточняющие "
+"Места, маршруты и территории, сколько нужно участнику, у каждого свои уточняющие "
 "вопросы и фото. Выберите значок маркера из почти двух тысяч и дайте людям "
 "искать по адресу."
 
