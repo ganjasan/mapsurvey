@@ -59,7 +59,7 @@ The title of each of the four category pages and of `/alternatives/social-pinpoi
 
 #### Scenario: Social Pinpoint alternative title
 - **WHEN** `/alternatives/social-pinpoint/` is rendered
-- **THEN** its `<title>` starts with "Social Pinpoint Alternative" and mentions drawing lines or areas, and its meta description mentions point markers and that pricing is quote-only
+- **THEN** its `<title>` starts with "Social Pinpoint Alternative" and mentions drawing routes or areas, and its meta description mentions pins and that pricing is quote-only
 
 #### Scenario: Category page description length
 - **WHEN** any of the four category pages is rendered
