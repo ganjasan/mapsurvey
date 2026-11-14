@@ -12895,3 +12895,21 @@ msgstr "Er bestaat al een account met dit e-mailadres."
 #: survey/templates/editor/whats_new.html
 msgid "Read the article"
 msgstr "Lees het artikel"
+
+#: survey/templates/editor/partials/_export_modal.html:106
+msgid "Trashed, on-hold and not-approved responses are left out unless you switch this on."
+msgstr "Verwijderde, in de wacht gezette en niet goedgekeurde antwoorden worden weggelaten, tenzij u dit inschakelt."
+
+#: survey/templates/editor/partials/_moderated_sessions_line.html:10
+#, python-format
+msgid "including %(counter)s on hold"
+msgid_plural "including %(counter)s on hold"
+msgstr[0] "waarvan %(counter)s in de wacht"
+msgstr[1] "waarvan %(counter)s in de wacht"
+
+#: survey/templates/editor/partials/_moderated_sessions_line.html:10
+#, python-format
+msgid "%(counter)s not approved"
+msgid_plural "%(counter)s not approved"
+msgstr[0] "%(counter)s niet goedgekeurd"
+msgstr[1] "%(counter)s niet goedgekeurd"

@@ -798,11 +798,10 @@ def sync_question_layers_for_session(session, questions):
 
 
 def clean_session_filter(qs, prefix='source_session'):
-    """The clean-session rule (public_results): not deleted, not on hold, not
-    rejected. Applied to objects (via their source session) and to reactions."""
-    from survey.public_results import EXCLUDED_VALIDATION_STATUSES
-    return (qs.filter(**{f'{prefix}__is_deleted': False})
-              .exclude(**{f'{prefix}__validation_status__in': EXCLUDED_VALIDATION_STATUSES}))
+    """Objects (via their source session) or reactions of CLEAN sessions only:
+    not trashed, not on hold, not rejected — `data.scope`'s default scope."""
+    from data.scope import SessionScope
+    return qs.filter(SessionScope(()).related_q(prefix))
 
 
 def visible_objects(layer, exclude_session_id=None):

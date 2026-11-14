@@ -70,7 +70,7 @@ Each map question is a FeatureCollection named after the question. Every feature
 | Option | Default | Effect |
 |---|---|---|
 | **Version** | the current version | Shown only when the survey has published more than one version. **All versions** prefixes every file with `v<n>_` and adds a `version` column |
-| **Include excluded responses** | off | Adds trashed and not-approved responses |
+| **Include excluded responses** | off | Adds trashed, on-hold and not-approved responses |
 | **Completed responses only** | off | Keeps respondents who answered the last section — the same count as "completed" on the Responses overview |
 | **Include attached files** | off | Shown only when the survey has photo, audio or document questions. Adds the uploads under `files/<session>/`; Excel, GeoPackage and KML then download as a ZIP with the file next to the `files/` folder. GeoJSON + CSV always includes files |
 

@@ -1058,7 +1058,7 @@ Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `p
 ### `GET /surveys/{uuid}/responses/summary`
 
 Counts and per-question statistics over the sessions the export of the
-same parameters contains: no empty, deleted or rejected responses unless
+same parameters contains: no empty, deleted, held or rejected responses unless
 `include_all`. Sub-questions of map questions are nested under them.
 
 | Parameter | In | Type | Required |
@@ -1123,7 +1123,7 @@ it checks again that you may read the survey and that its workspace is on Pro.
 |---|---|---|---|
 | `format` | `zip` | `xlsx` | `csv` | `gpkg` | `shp` | `kml` |  |  |
 | `version` | string or null |  | One version (`v3`), several separated by commas (`v10,v11`), or omit for every version. |
-| `include_all` | boolean |  | Also deleted and rejected responses. |
+| `include_all` | boolean |  | Also deleted, on-hold and rejected responses. |
 | `completed_only` | boolean |  | Only responses that reached the last section. |
 | `files` | boolean |  | Add uploaded files (turns a single-file format into a ZIP). |
 

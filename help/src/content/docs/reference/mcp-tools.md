@@ -376,7 +376,7 @@ Permission `responses:read` · role **viewer** · read-only
 |---|---|---|---|
 | `survey` | uuid | **required** | The survey uuid (from list_surveys). |
 | `version` | string |  | One version (v3), several separated by commas (v10,v11), or omit for every version. |
-| `include_all` | boolean |  | Also count deleted and rejected responses. Default `False`. |
+| `include_all` | boolean |  | Also count deleted, on-hold and rejected responses. Default `False`. |
 | `completed_only` | boolean |  | Only responses that reached the last section. Default `False`. |
 
 ### `list_responses`
@@ -403,7 +403,7 @@ Permission `responses:read` · role **viewer** · read-only
 | `survey` | uuid | **required** | The survey uuid (from list_surveys). |
 | `question_id` | integer | **required** | A question id from get_survey. |
 | `version` | string |  | One version (v3), several separated by commas (v10,v11), or omit for every version. |
-| `include_all` | boolean |  | Also count deleted and rejected responses. Default `False`. |
+| `include_all` | boolean |  | Also count deleted, on-hold and rejected responses. Default `False`. |
 | `completed_only` | boolean |  | Only responses that reached the last section. Default `False`. |
 | `cursor` | string |  | `next_cursor` of the previous page. |
 | `limit` | integer |  | Default `50`. |
@@ -419,7 +419,7 @@ Permission `responses:read` · role **viewer** · read-only
 | `survey` | uuid | **required** | The survey uuid (from list_surveys). |
 | `question_id` | integer | **required** | A question id from get_survey. |
 | `version` | string |  | One version (v3), several separated by commas (v10,v11), or omit for every version. |
-| `include_all` | boolean |  | Also count deleted and rejected responses. Default `False`. |
+| `include_all` | boolean |  | Also count deleted, on-hold and rejected responses. Default `False`. |
 | `completed_only` | boolean |  | Only responses that reached the last section. Default `False`. |
 | `limit` | integer |  | Most features to return. Default `200`. |
 
@@ -434,13 +434,13 @@ Permission `responses:read` · role **viewer** · read-only
 | `survey` | uuid | **required** | The survey uuid (from list_surveys). |
 | `format` | `xlsx` \| `csv` \| `zip` \| `gpkg` \| `shp` \| `kml` |  | Default `xlsx`. |
 | `version` | string |  | One version (v3), several separated by commas (v10,v11), or omit for every version. |
-| `include_all` | boolean |  | Also count deleted and rejected responses. Default `False`. |
+| `include_all` | boolean |  | Also count deleted, on-hold and rejected responses. Default `False`. |
 | `completed_only` | boolean |  | Only responses that reached the last section. Default `False`. |
 | `files` | boolean |  | Add files respondents uploaded. Default `False`. |
 
 ### `moderate_response`
 
-Set a response's status: approved, on_hold, not_approved (rejected responses leave exports, summaries and public results), or "" to clear it. It can be changed back. Needs the editor role.
+Set a response's status: approved, on_hold, not_approved (held and rejected responses leave exports, summaries and public results), or "" to clear it. It can be changed back. Needs the editor role.
 
 Permission `responses:moderate` · role **editor**
 

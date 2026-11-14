@@ -110,9 +110,13 @@ class PublicResultsServiceTest(TestCase):
         )
 
     def _session(self, survey=None, status="", deleted=False):
-        return SurveySession.objects.create(
+        # Answered: public results count non-empty sessions only (change data-scope, §6.2).
+        # A text answer is never published, so it adds a response without moving any chart.
+        session = SurveySession.objects.create(
             survey=survey or self.survey, validation_status=status, is_deleted=deleted,
         )
+        Answer.objects.create(survey_session=session, question=self.text_q, text="hi")
+        return session
 
     def _service(self):
         from survey.public_results import PublicResultsService
@@ -349,9 +353,14 @@ class PublicResultsFreezeTest(TestCase):
         self.page = PublicResultsPage.objects.create(
             survey=self.survey, slug="prf", is_published=True,
         )
+        self.text_q = Question.objects.create(
+            survey_section=self.section, code="PRF_TX", name="Comment", input_type="text",
+        )
 
     def _add_session(self):
-        SurveySession.objects.create(survey=self.survey)
+        # Answered: public results count non-empty sessions only (change data-scope, §6.2).
+        session = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=session, question=self.text_q, text="hi")
 
     def test_freeze_captures_current_data(self):
         """

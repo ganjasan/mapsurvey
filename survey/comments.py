@@ -142,10 +142,9 @@ def session_seq(canonical, session):
     the family's kept NON-EMPTY sessions ordered by start time (analytics'
     `sequence_numbers`). None for an empty session, which carries no number
     (spec responses-empty-sessions)."""
+    from data.scope import SessionScope
     from .analytics import nonempty_sessions
-    kept = SurveySession.objects.filter(
-        survey_id__in=family_ids_with_draft(canonical), is_deleted=False,
-    )
+    kept = SessionScope(family_ids_with_draft(canonical), include_moderated=True).sessions()
     if not nonempty_sessions(SurveySession.objects.filter(pk=session.pk)).exists():
         return None
     return (nonempty_sessions(kept.filter(start_datetime__lte=session.start_datetime))

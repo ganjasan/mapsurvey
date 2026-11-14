@@ -158,10 +158,10 @@ def emit_first_response_event(sender, instance, created, **kwargs):
     owner_id = getattr(instance.survey, 'created_by_id', None)
     if owner_id is None:
         return
-    already = (SurveySession.objects
-               .filter(survey_id=instance.survey_id, is_deleted=False,
-                       opened_by_kind=SurveySession.OPENED_BY_EXTERNAL,
-                       source=SurveySession.SOURCE_ONLINE)
+    from data.scope import SessionScope
+    already = (SessionScope([instance.survey_id], external_only=True, include_moderated=True)
+               .sessions()
+               .filter(source=SurveySession.SOURCE_ONLINE)
                .exclude(pk=instance.pk)
                .exists())
     if already:

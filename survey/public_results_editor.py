@@ -7,6 +7,8 @@ The page is lazily created on first visit.
 
 import json
 
+from data.scope import SessionScope
+
 from django.conf import settings
 from django.contrib.auth.views import redirect_to_login
 from django.http import HttpResponse, JsonResponse, Http404
@@ -91,7 +93,8 @@ def _survey_questions(survey):
             'block_type': _block_type_for_question(q),
             'publishable': q.input_type not in TEXT_INPUT_TYPES,
             'input_type_display': q.get_input_type_display(),
-            'answer_count': Answer.objects.filter(question=q, survey_session__is_deleted=False).count(),
+            'answer_count': Answer.objects.filter(question=q).filter(
+                SessionScope((), include_moderated=True).related_q('survey_session')).count(),
         })
     return rows
 

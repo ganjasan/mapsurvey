@@ -930,9 +930,23 @@ all sessions). `service.empty_count` feeds the "N opened without answering" line
 (`editor/partials/_empty_sessions_toggle.html`). Response numbers `#N` come from
 `service.sequence_numbers()` — rank among non-empty sessions; empty rows carry none — and
 `comments.session_seq` follows the same rule. "Empty" is not an Issues-menu entry on v2. Exports
-never contain empty sessions, whatever `include_all` says. The funnel/Perf pane (`SurveyEvent`) and
-the public results `response_count` still count every session. The section POST treats
+never contain empty sessions, whatever `include_all` says, and since `data-scope` neither does the
+public results `response_count`; the funnel/Perf pane (`SurveyEvent`) still counts every session. The section POST treats
 whitespace-only values as blank and stores text/number values stripped.
+
+**Session scope (`data.scope`, change `data-scope`, Data epic #676)**: which sessions a surface
+counts is ONE builder, `data.scope.SessionScope(survey_ids, include_deleted=, include_moderated=,
+nonempty=, completed_headers=, external_only=)` — `.sessions()`, `.ids()`, `.q(prefix)` (related rows
+of those surveys) and `.related_q(prefix)` (related rows of an already-narrowed query). No switch =
+clean: not trashed, not `on_hold`, not `not_approved`. The owner's ADR-001 §6 decisions (2026-11-14) are
+the surfaces' switches: `/r/` and Site results blocks use `SessionScope.public(survey)` (clean +
+non-empty, so they count what Responses counts); the export keeps moderated and trashed sessions only
+with `include_all` (on-hold included), and the API/MCP response scope follows the export; Responses
+keeps moderated sessions (`include_moderated=True`) and names them in the headline
+(`_moderated_sessions_line.html`). **Never filter `is_deleted` / `validation_status` / emptiness by
+hand outside `data/`**: `SessionFilterGuardTest` (`test_session_scope.py`) fails on a new copy, and its
+allow-list (single-session lookups, staff dashboards, the model) may only shrink. `data/` is a plain
+package until the dataset registry (#667) makes it an app.
 
 **Data export (`survey/export.py`, spec `responses-export-formats`)**: `download_data` is a thin
 view; the work is one collector and several writers. `collect()` walks the database ONCE into an
@@ -964,7 +978,7 @@ creator. Tests wrap web-import POSTs in `_eager_import()`, which turns `.delay` 
 itself — the suite has no broker. The task runs once per job: a redelivered message finds the
 row past `queued` and returns.
 
-**Public results page**: Creators expose aggregated results at `/r/<slug>/` via `PublicResultsPage` (1:1 with `SurveyHeader`) + ordered `PublicResultsBlock`s. Config tab at `/editor/surveys/<uuid>/public-results/`. Rendering logic in `survey/public_results.py` (`PublicResultsService`, `render_page_data`, `freeze_page`/`unfreeze_page`); editor views in `survey/public_results_editor.py`. Aggregates run over CLEAN sessions only (not deleted, excludes `not_approved`/`on_hold`) across the canonical survey + all versions. Privacy: k-anonymity masks buckets `<K` (default 3); geo popups expose only creator-selected `geo_label_fields`; individual free-text answers are never published. Hybrid `live` (60s cache) vs `frozen` (snapshot) mode. Visibility `public` (indexed, in sitemap) vs `unlisted` (noindex). The page config is intentionally NOT included in survey ZIP export/import.
+**Public results page**: Creators expose aggregated results at `/r/<slug>/` via `PublicResultsPage` (1:1 with `SurveyHeader`) + ordered `PublicResultsBlock`s. Config tab at `/editor/surveys/<uuid>/public-results/`. Rendering logic in `survey/public_results.py` (`PublicResultsService`, `render_page_data`, `freeze_page`/`unfreeze_page`); editor views in `survey/public_results_editor.py`. Aggregates run over CLEAN, NON-EMPTY sessions only (`data.scope.SessionScope.public`: not deleted, excludes `not_approved`/`on_hold`, at least one top-level answer) across the canonical survey + all versions. Privacy: k-anonymity masks buckets `<K` (default 3); geo popups expose only creator-selected `geo_label_fields`; individual free-text answers are never published. Hybrid `live` (60s cache) vs `frozen` (snapshot) mode. Visibility `public` (indexed, in sitemap) vs `unlisted` (noindex). The page config is intentionally NOT included in survey ZIP export/import.
 
 **Category landings (`/community-engagement-platform/`, `/civic-engagement/`,
 `/public-consultation-software/`, `/participatory-budgeting/`; change `seo-landings-rewrite`, #251)**:

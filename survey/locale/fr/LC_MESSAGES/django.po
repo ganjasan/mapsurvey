@@ -12942,3 +12942,21 @@ msgstr "Un compte existe déjà avec cette adresse e-mail."
 #: survey/templates/editor/whats_new.html
 msgid "Read the article"
 msgstr "Lire l'article"
+
+#: survey/templates/editor/partials/_export_modal.html:106
+msgid "Trashed, on-hold and not-approved responses are left out unless you switch this on."
+msgstr "Les réponses supprimées, en suspens et non validées sont exclues, sauf si vous activez cette option."
+
+#: survey/templates/editor/partials/_moderated_sessions_line.html:10
+#, python-format
+msgid "including %(counter)s on hold"
+msgid_plural "including %(counter)s on hold"
+msgstr[0] "dont %(counter)s en suspens"
+msgstr[1] "dont %(counter)s en suspens"
+
+#: survey/templates/editor/partials/_moderated_sessions_line.html:10
+#, python-format
+msgid "%(counter)s not approved"
+msgid_plural "%(counter)s not approved"
+msgstr[0] "%(counter)s non validée"
+msgstr[1] "%(counter)s non validées"
