@@ -11,8 +11,9 @@ count responses only, and whitespace-only input that never creates an answer. Im
 ### Requirement: One definition of an empty session
 A session SHALL be empty when it has no `Answer` row with `parent_answer_id IS NULL`. Answers about
 layer objects and answers a moderator hid SHALL count as answers. The Responses page, the session
-issue computation and the data export SHALL decide emptiness through one shared helper, so they
-never disagree about which sessions are empty.
+issue computation, the data export and the public results page SHALL decide emptiness through one
+shared predicate — the `nonempty` switch of the session scope (`session-scope`) — so they never
+disagree about which sessions are empty.
 
 #### Scenario: Object answer makes a session non-empty
 - **WHEN** a session's only answer is a reaction to a layer object (`layer_object` set, no parent)
@@ -24,7 +25,8 @@ never disagree about which sessions are empty.
 
 #### Scenario: Geo sub-answer alone does not count
 - **WHEN** a session has no top-level answer at all
-- **THEN** the session is empty, and the `empty` issue and the export agree on it
+- **THEN** the session is empty, and the `empty` issue, the export and the public results page
+  agree on it
 
 ### Requirement: Responses hides empty sessions by default
 When `RESPONSES_V2` is on, the Responses page SHALL leave empty sessions out of the table, the
@@ -94,4 +96,17 @@ This SHALL apply to the main section fields and to answers about layer objects.
 #### Scenario: Surrounding spaces are trimmed
 - **WHEN** a respondent submits "  bus stop  " in a text field
 - **THEN** the stored answer text is "bus stop"
+
+### Requirement: The headline names moderated responses
+Responses SHALL keep showing sessions that are `on_hold` or `not_approved` (the creator moderates
+there), and when the shown scope holds any, the headline SHALL say how many: "including N on hold"
+and/or "M not approved". Nothing SHALL be added when the scope holds none.
+
+#### Scenario: Moderated responses are named
+- **WHEN** a survey has 10 shown responses of which 2 are on hold and 1 is not approved
+- **THEN** the headline shows 10 responses and states 2 on hold and 1 not approved
+
+#### Scenario: Nothing to name
+- **WHEN** no shown response is on hold or not approved
+- **THEN** the headline carries no moderation line
 
