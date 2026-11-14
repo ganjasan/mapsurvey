@@ -303,7 +303,7 @@ def _clean_map(raw, errors, org=None):
 
 
 CHART_VIZ = ('auto', 'bar', 'pie', 'donut', 'table')
-MAP_VIZ = ('auto', 'heatmap', 'cluster')
+MAP_VIZ = ('auto',)   # every public map is a grid of cells (change data-aggregate)
 
 
 def _clean_results(raw, errors, org=None):

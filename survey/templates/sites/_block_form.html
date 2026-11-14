@@ -120,7 +120,6 @@ from the canvas `[data-field]` elements, so this form is always the whole block 
     <div class="col-6"><label class="small mb-0">{% trans "Chart or map style" %}</label>
       <select name="viz" class="form-control form-control-sm">
         <optgroup label="{% trans 'Charts' %}">{% for v, label in chart_viz %}<option value="{{ v }}"{% if data.result_kind != 'map' and v == data.viz %} selected{% endif %}>{{ label }}</option>{% endfor %}</optgroup>
-        <optgroup label="{% trans 'Maps' %}">{% for v, label in map_viz %}{% if v != 'auto' %}<option value="{{ v }}"{% if data.result_kind == 'map' and v == data.viz %} selected{% endif %}>{{ label }}</option>{% endif %}{% endfor %}</optgroup>
       </select></div>
     <div class="col-6"><label class="small mb-0">{% trans "Base map (maps)" %}</label>
       <select name="basemap" class="form-control form-control-sm">

@@ -12873,3 +12873,8 @@ msgstr[0] "termasuk %(counter)s ditangguhkan"
 msgid "%(counter)s not approved"
 msgid_plural "%(counter)s not approved"
 msgstr[0] "%(counter)s tidak disetujui"
+
+#: survey/templates/editor/public_results.html:153
+#, python-format
+msgid "The public map shows squares that count respondents; squares with fewer than %(k)s respondents are hidden. Exact points stay in Responses and the export."
+msgstr "Peta publik menampilkan kotak yang menghitung responden; kotak dengan kurang dari %(k)s responden disembunyikan. Titik yang tepat tetap ada di Respons dan ekspor."

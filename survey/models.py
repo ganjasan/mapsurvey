@@ -2298,7 +2298,7 @@ PUBLIC_RESULTS_BLOCK_TYPE_CHOICES = (
 # Current snapshot serialization format. Bumped when the per-block payload
 # shape changes so a stale snapshot can show a "re-freeze needed" notice
 # instead of rendering wrong/broken data.
-PUBLIC_RESULTS_SNAPSHOT_VERSION = 2   # 2: spraycan map blocks publish a density grid
+PUBLIC_RESULTS_SNAPSHOT_VERSION = 3   # 2: spraycan density grid; 3: every map block is a grid (data-aggregate)
 
 
 class PublicResultsPage(models.Model):
