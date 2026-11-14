@@ -173,30 +173,33 @@ class PublicResultsServiceTest(TestCase):
 
     def test_geo_has_no_record_identifiers(self):
         """
-        GIVEN point answers and a map block with no popup fields selected
+        GIVEN three respondents' points in one place and a map block with no popup fields
         WHEN the map payload is built
-        THEN features carry empty properties and no session id is exposed
+        THEN it is one grid cell counting 3 respondents, with no answer geometry and no session id
+             (change data-aggregate: a public map never carries an individual geometry)
         """
-        for _ in range(2):
+        for _ in range(3):
             s = self._session()
             Answer.objects.create(survey_session=s, question=self.point_q, point=Point(30.0, 59.0))
         block = PublicResultsBlock.objects.create(
             page=self.page, block_type="map", question=self.point_q, order=0,
         )
         payload = self._service()._build_block(block)
-        self.assertEqual(payload["count"], 2)
-        for feat in payload["feature_collection"]["features"]:
-            self.assertEqual(feat["properties"], {})
+        self.assertEqual(payload["data_type"], "grid")
+        self.assertEqual(payload["count"], 1)
+        feat = payload["cells"]["features"][0]
+        self.assertEqual(feat["properties"], {"respondents": 3})
+        self.assertEqual(feat["geometry"]["type"], "Polygon")
+        self.assertNotIn("feature_collection", payload)
         self.assertNotIn("session_id", json.dumps(payload))
 
-    def test_geo_popup_uses_point_subanswers(self):
+    def test_geo_popup_shows_the_cells_masked_distribution(self):
         """
-        GIVEN a map block whose geo question has a choice sub-question selected
+        GIVEN a map block whose geo question has a choice sub-question selected, a cell with 3
+              points answered "Walking" and 1 answered "Cycling" (K = 3), and a free-text sub-answer
         WHEN the map payload is built
-        THEN each point's popup shows that point's own sub-answer, and free-text
-             sub-answers never appear
+        THEN the cell's popup shows Walking 3 and Cycling "<3", and the free text never appears
         """
-        # Sub-questions of the point question (attributes of each point)
         sub_choice = Question.objects.create(
             survey_section=self.section, code="SQ_ACT", name="Activity",
             input_type="choice", parent_question_id=self.point_q,
@@ -206,45 +209,36 @@ class PublicResultsServiceTest(TestCase):
             survey_section=self.section, code="SQ_TX", name="Note",
             input_type="text", parent_question_id=self.point_q,
         )
-        s = self._session()
-        pt = Answer.objects.create(survey_session=s, question=self.point_q, point=Point(30.0, 59.0))
-        Answer.objects.create(survey_session=s, question=sub_choice, selected_choices=[1], parent_answer_id=pt)
-        Answer.objects.create(survey_session=s, question=sub_text, text="secret", parent_answer_id=pt)
+        for code in (1, 1, 1, 2):
+            s = self._session()
+            pt = Answer.objects.create(survey_session=s, question=self.point_q, point=Point(30.0, 59.0))
+            Answer.objects.create(survey_session=s, question=sub_choice, selected_choices=[code], parent_answer_id=pt)
+            Answer.objects.create(survey_session=s, question=sub_text, text="secret", parent_answer_id=pt)
         block = PublicResultsBlock.objects.create(
             page=self.page, block_type="map", question=self.point_q, order=0,
-            geo_label_fields=["SQ_ACT"],
+            geo_label_fields=["SQ_ACT", "SQ_TX"],
         )
         payload = self._service()._build_block(block)
-        props = payload["feature_collection"]["features"][0]["properties"]
-        self.assertEqual(props, {"Activity": "Walking"})
+        props = payload["cells"]["features"][0]["properties"]
+        self.assertEqual(props["respondents"], 4)
+        self.assertEqual(props["fields"], [{"name": "Activity", "values": [
+            {"label": "Walking", "display": "3"}, {"label": "Cycling", "display": "<3"}]}])
         self.assertNotIn("secret", json.dumps(payload))
 
-    def test_geo_popup_is_per_point_not_per_session(self):
+    def test_lone_point_is_not_published(self):
         """
-        GIVEN one respondent who marks two points with different sub-answers
+        GIVEN one respondent's point far from every other answer (K = 3)
         WHEN the map payload is built
-        THEN each point's popup shows its own value (proves per-point join)
+        THEN no cell is published for it
         """
-        sub_choice = Question.objects.create(
-            survey_section=self.section, code="SQ_ACT", name="Activity",
-            input_type="choice", parent_question_id=self.point_q,
-            choices=[{"code": 1, "name": "Walking"}, {"code": 2, "name": "Cycling"}],
-        )
         s = self._session()
-        p1 = Answer.objects.create(survey_session=s, question=self.point_q, point=Point(30.0, 59.0))
-        p2 = Answer.objects.create(survey_session=s, question=self.point_q, point=Point(31.0, 60.0))
-        Answer.objects.create(survey_session=s, question=sub_choice, selected_choices=[1], parent_answer_id=p1)
-        Answer.objects.create(survey_session=s, question=sub_choice, selected_choices=[2], parent_answer_id=p2)
+        Answer.objects.create(survey_session=s, question=self.point_q, point=Point(30.0, 59.0))
         block = PublicResultsBlock.objects.create(
             page=self.page, block_type="map", question=self.point_q, order=0,
-            geo_label_fields=["SQ_ACT"],
         )
         payload = self._service()._build_block(block)
-        values = sorted(
-            f["properties"].get("Activity")
-            for f in payload["feature_collection"]["features"]
-        )
-        self.assertEqual(values, ["Cycling", "Walking"])
+        self.assertEqual(payload["cells"]["features"], [])
+        self.assertEqual(payload["respondents_total"], 1)
 
     def test_map_payload_includes_basemap(self):
         """
@@ -1058,12 +1052,12 @@ class PublicResultsEditorTest(TestCase):
         block.refresh_from_db()
         self.assertEqual(block.basemap, "topo")
 
-    def test_map_block_offers_and_keeps_clusters(self):
+    def test_map_block_offers_no_point_visualizations(self):
         """
         GIVEN a map block on a point question
-        WHEN the creator opens it and picks "Clusters"
-        THEN the visualization select offers Clusters next to Markers and Heatmap,
-             the value `cluster` persists, and the page carries the cluster rendering path
+        WHEN the creator opens it in the editor
+        THEN there is no Markers / Heatmap / Clusters choice and a note says the public map
+             shows squares counting respondents (change data-aggregate)
         """
         self._login()
         page = self.client.get(self.base) and PublicResultsPage.objects.get(survey=self.survey)
@@ -1071,20 +1065,9 @@ class PublicResultsEditorTest(TestCase):
             page=page, block_type="map", question=self.point_q, order=0,
         )
         html = self.client.get(self.base + "?block={}".format(block.id)).content.decode()
-        self.assertIn('<option value="cluster" >Clusters</option>', html)
-        self.assertIn('<option value="heatmap" >Heatmap</option>', html)
-        self.client.post(self.base + "blocks/{}/edit/".format(block.id), {"viz": "cluster"})
-        block.refresh_from_db()
-        self.assertEqual(block.viz, "cluster")
-        preview = self.client.get(self.base + "preview/").content.decode()
-        self.assertIn("leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js", preview)
-        # The renderer is the shared static file since change landing-results.
-        from django.contrib.staticfiles import finders
-        self.assertIn("js/public_results_render.", preview)
-        with open(finders.find("js/public_results_render.js")) as fh:
-            renderer = fh.read()
-        self.assertIn("var isCluster = (b.viz === 'cluster' && typeof L.markerClusterGroup === 'function');", renderer)
-        self.assertIn("if ((isHeat || isCluster) && isPoint(feat)) return false;", renderer)
+        self.assertNotIn('value="cluster"', html)
+        self.assertNotIn('value="heatmap"', html)
+        self.assertIn('data-testid="pr-map-grid-note"', html)
 
 
 class PublicResultsPreviewTest(TestCase):

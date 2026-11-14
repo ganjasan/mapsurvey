@@ -118,65 +118,14 @@ window.renderResultBlocks = function (blocks, BASEMAPS) {
     var base = BASEMAPS[b.basemap] || BASEMAPS.streets;
     L.tileLayer(base.url, base.opts).addTo(map);
 
-    if (b.data_type === 'grid') { return renderGrid(map, b); }
-
-    var fc = b.feature_collection || { features: [] };
-    var isHeat = (b.viz === 'heatmap' || b.viz === 'heat');
-    // Clusters (spec public-results-page, change cluster-map): nearby points
-    // merge into a counted circle that splits on zoom. Without the plugin
-    // (CDN blocked) the block falls back to plain markers.
-    var isCluster = (b.viz === 'cluster' && typeof L.markerClusterGroup === 'function');
-    var pts = [];
-    function isPoint(feat){ return !!(feat.geometry && feat.geometry.type === 'Point'); }
-    function bindProps(feat, lyr){
-      var props = feat.properties || {};
-      var keys = Object.keys(props);
-      if (keys.length) {
-        lyr.bindPopup(keys.map(function(k){ return '<b>' + k + ':</b> ' + props[k]; }).join('<br>'));
-      }
-    }
-
-    // In heatmap mode, point features become heat intensity only — drawing the
-    // individual markers on top (markerPane z-index 600) would completely hide
-    // the heat canvas (overlayPane z-index 400). In cluster mode they go into
-    // the cluster group below. Non-point geometries always render as shapes.
-    var layer = L.geoJSON(fc, {
-      filter: function(feat){
-        if ((isHeat || isCluster) && isPoint(feat)) return false;
-        return true;
-      },
-      onEachFeature: bindProps
-    }).addTo(map);
-
-    var clusters = null;
-    if (isCluster) {
-      clusters = L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 50, chunkedLoading: true });
-      clusters.addLayer(L.geoJSON(fc, { filter: isPoint, onEachFeature: bindProps }));
-      map.addLayer(clusters);
-    }
-
-    // Collect point coordinates for the heat layer and for bounds.
-    (fc.features || []).forEach(function(feat){
-      if (feat.geometry && feat.geometry.type === 'Point') {
-        pts.push([feat.geometry.coordinates[1], feat.geometry.coordinates[0]]);
-      }
-    });
-
-    if (isHeat && pts.length) {
-      L.heatLayer(pts, { radius: 25, blur: 18, minOpacity: 0.35 }).addTo(map);
-    }
-
-    try {
-      // Heat and cluster modes keep points out of `layer`: widen by them.
-      var bounds = layer.getBounds();
-      if (pts.length) { bounds = bounds.isValid() ? bounds.extend(L.latLngBounds(pts)) : L.latLngBounds(pts); }
-      if (bounds && bounds.isValid()) { map.fitBounds(bounds.pad(0.2)); }
-      else { map.setView([52.52, 13.405], 11); }
-    } catch (e) { map.setView([52.52, 13.405], 11); }
+    // Every public map is a grid of respondent counts per cell (change data-aggregate):
+    // the payload carries no answer geometry, so there is nothing else to draw.
+    renderGrid(map, b);
   }
 
-  // Spray-cloud blocks (spec spraycan-density-views): a server-side grid of
-  // respondent counts per cell; opacity grows with the count. No popups, no dots.
+  // Public maps (spec public-aggregates): a server-side grid of respondent counts per cell,
+  // cells under K already left out; opacity grows with the count. A cell's popup lists the
+  // masked distribution of the creator-selected fields, built with textContent only.
   function renderGrid(map, b){
     var cells = b.cells || { features: [] };
     var max = b.max || 1;
@@ -185,6 +134,25 @@ window.renderResultBlocks = function (blocks, BASEMAPS) {
       style: function(feat){
         var n = (feat.properties || {}).respondents || 0;
         return { stroke: false, fillColor: paint, fillOpacity: 0.15 + 0.6 * (n / max) };
+      },
+      onEachFeature: function(feat, lyr){
+        var props = feat.properties || {};
+        var box = document.createElement('div');
+        var head = document.createElement('b');
+        head.textContent = (props.respondents || 0) + ' respondents';
+        box.appendChild(head);
+        (props.fields || []).forEach(function(f){
+          var row = document.createElement('div');
+          var name = document.createElement('span');
+          name.style.fontWeight = '600';
+          name.textContent = f.name + ': ';
+          row.appendChild(name);
+          var text = (f.values || []).map(function(v){ return v.label + ' ' + v.display; }).join(', ');
+          if (f.mean != null) { text = 'average ' + f.mean; }
+          row.appendChild(document.createTextNode(text));
+          box.appendChild(row);
+        });
+        lyr.bindPopup(box);
       }
     }).addTo(map);
     try {

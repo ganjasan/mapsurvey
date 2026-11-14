@@ -249,7 +249,6 @@ def _builder_context(request, site, membership, **extra):
         'basemap_choices': basemaps.choices_for(org),
         'results_choices': sites.results_choices(org),
         'chart_viz': [('auto', _('Bar chart')), ('pie', _('Pie')), ('donut', _('Donut')), ('table', _('Table'))],
-        'map_viz': [('auto', _('Markers')), ('heatmap', _('Heatmap')), ('cluster', _('Clusters'))],
         'public_url': request.build_absolute_uri(reverse('site_public', args=[site.slug])),
         'review_url': _review_url(request, site) if not site.is_published else '',
         'a11y_site': a11y_site,

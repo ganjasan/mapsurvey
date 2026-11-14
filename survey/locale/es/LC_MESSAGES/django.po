@@ -12939,3 +12939,8 @@ msgid "%(counter)s not approved"
 msgid_plural "%(counter)s not approved"
 msgstr[0] "%(counter)s no aprobada"
 msgstr[1] "%(counter)s no aprobadas"
+
+#: survey/templates/editor/public_results.html:153
+#, python-format
+msgid "The public map shows squares that count respondents; squares with fewer than %(k)s respondents are hidden. Exact points stay in Responses and the export."
+msgstr "El mapa público muestra cuadrados que cuentan participantes; los cuadrados con menos de %(k)s participantes se ocultan. Los puntos exactos siguen en Respuestas y en la exportación."

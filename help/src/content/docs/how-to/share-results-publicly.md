@@ -17,7 +17,7 @@ You end up with a public results page at `https://mapsurvey.org/r/<slug>/` showi
 1. Open the survey and choose the **Public results** tab. Mapsurvey has already drafted a page from your questions, one block per publishable question.
    <!-- screenshot: the Public results editor with the block list and the preview -->
 2. Arrange the blocks: drag to reorder, switch on **Hidden** for the ones you do not want, and press **Add block** to add a **Text block**, an **Image** or **Question results…** for a question that is not there yet.
-3. Open a map block's **Block settings** and choose its **Visualization**: **Markers** draws every point, **Heatmap** shows where points concentrate, and **Clusters** merges nearby points into one circle with a count that splits as a visitor zooms in. Clusters suit points spread far apart, such as sites around the world. Then choose its **Point popup fields** — the sub-questions whose values a visitor sees when they click a point. Leave it empty for anonymous geometry. Free-text sub-questions cannot be shown.
+3. Open a map block's **Block settings** and choose its **Point popup fields** — the sub-questions a visitor sees summarised when they click a square of the map. Free-text sub-questions cannot be shown. The public map never shows a respondent's own point, line or area: it shows squares coloured by how many respondents marked them, and hides any square with fewer respondents than the k-anonymity threshold — a single pin at a front door can tell neighbours who answered and what they said. The exact points stay in **Responses** and in the export.
 4. Under **Page settings**, choose:
    - **Visibility**: **Public** is indexed by search engines and can be listed; **Unlisted** opens only by direct link and is not indexed.
    - **Data mode**: live data, or **Freeze snapshot** to publish a fixed copy. A frozen page keeps showing the snapshot until you press **Update snapshot** or **Back to live**.
@@ -28,7 +28,7 @@ You end up with a public results page at `https://mapsurvey.org/r/<slug>/` showi
 
 ## Result
 
-Visitors see the intro, the blocks in your order, and — for a frozen page — a "Data as of" date. Small groups show "Small groups are masked to protect privacy"; a spray area block shows a density grid of how many respondents painted each cell, never the dots. Only clean responses count: trashed, not-approved and on-hold responses are left out. The page carries the "Made with Mapsurvey" badge on Free.
+Visitors see the intro, the blocks in your order, and — for a frozen page — a "Data as of" date. Small groups show "Small groups are masked to protect privacy"; every map block shows a grid of how many respondents marked each square, never the individual points, lines, areas or dots; a square's popup lists the chosen sub-question answers in it, small groups masked. Only clean responses count: trashed, not-approved and on-hold responses are left out. The page carries the "Made with Mapsurvey" badge on Free.
 
 **Unpublish** takes the page down; the address stops opening for visitors.
 
