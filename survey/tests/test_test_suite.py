@@ -143,7 +143,6 @@ UNMAPPED_MODULES = {
     'repo-hygiene': 'spec lives in the unarchived change ops-repo-separation',
     'paper-photo-entry': 'spec lives in the unarchived change paper-photo-entry',
     'budget-question': 'spec lives in the unarchived change budget-question',
-    'public-aggregates': 'spec lives in the unarchived change data-aggregate',
 }
 
 # Capabilities with no module here: tested in another app, or not by any
