@@ -57,7 +57,7 @@ the action-styled Trash button (openspec: responses-v2-refactor, 4.3).
         <span class="text-muted ml-2" style="font-size:0.85rem;">
             {{ total }} shown
         </span>
-        {% if not show_trash %}<span class="text-muted ml-2" style="font-size:0.85rem;">{% include "editor/partials/_empty_sessions_toggle.html" %}</span>{% endif %}
+        {% if not show_trash %}<span class="text-muted ml-2" style="font-size:0.85rem;">{% include "editor/partials/_empty_sessions_toggle.html" %} {% include "editor/partials/_moderated_sessions_line.html" %}</span>{% endif %}
         <button type="button" id="show-all-rows-btn" class="btn btn-sm btn-link p-0 ml-2" style="font-size:0.75rem;color:#6b7280;display:none;" onclick="filterManager.showAll()">
             <i class="fas fa-eye"></i> Show hidden
         </button>

@@ -8,8 +8,8 @@ from django.db import transaction
 from django.db.models import F, Q
 from pydantic import Field
 
-from survey.analytics import nonempty_sessions
-from survey.models import Question, SurveyHeader, SurveySession
+from data.scope import SessionScope
+from survey.models import Question, SurveyHeader
 from survey.services import groups as svc_groups
 from survey.services import publishing as svc_publishing
 from survey.services import sections as svc_sections
@@ -140,8 +140,8 @@ def answered_external_sessions(obj):
     """Respondents' answered sessions on the survey and all of its versions."""
     canonical = canonical_of(obj)
     versions = SurveyHeader.objects.filter(Q(pk=canonical.pk) | Q(canonical_survey=canonical))
-    qs = SurveySession.objects.filter(survey__in=versions, opened_by_kind='external', is_deleted=False)
-    return nonempty_sessions(qs).count()
+    return SessionScope(versions.values_list('pk', flat=True), external_only=True,
+                        include_moderated=True, nonempty=True).sessions().count()
 
 
 @tool(

@@ -206,7 +206,7 @@ def _scope(survey, version, include_all, completed_only):
 def summary(request, uuid: UUID, version: Optional[str] = None, include_all: bool = False,
             completed_only: bool = False):
     """Counts and per-question statistics over the sessions the export of the
-    same parameters contains: no empty, deleted or rejected responses unless
+    same parameters contains: no empty, deleted, held or rejected responses unless
     `include_all`. Sub-questions of map questions are nested under them."""
     survey = deps.survey(request, uuid)
     return build_summary(survey, _scope(survey, version, include_all, completed_only))

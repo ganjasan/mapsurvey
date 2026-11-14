@@ -12836,3 +12836,21 @@ msgstr "Selle e-posti aadressiga konto on juba olemas."
 #: survey/templates/editor/whats_new.html
 msgid "Read the article"
 msgstr "Loe artiklit"
+
+#: survey/templates/editor/partials/_export_modal.html:106
+msgid "Trashed, on-hold and not-approved responses are left out unless you switch this on."
+msgstr "Kustutatud, ootel ja kinnitamata vastused jäetakse välja, kui te seda sisse ei lülita."
+
+#: survey/templates/editor/partials/_moderated_sessions_line.html:10
+#, python-format
+msgid "including %(counter)s on hold"
+msgid_plural "including %(counter)s on hold"
+msgstr[0] "sh %(counter)s ootel"
+msgstr[1] "sh %(counter)s ootel"
+
+#: survey/templates/editor/partials/_moderated_sessions_line.html:10
+#, python-format
+msgid "%(counter)s not approved"
+msgid_plural "%(counter)s not approved"
+msgstr[0] "%(counter)s kinnitamata"
+msgstr[1] "%(counter)s kinnitamata"

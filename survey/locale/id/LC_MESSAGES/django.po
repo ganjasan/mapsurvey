@@ -12857,3 +12857,19 @@ msgstr "Akun dengan email ini sudah ada."
 #: survey/templates/editor/whats_new.html
 msgid "Read the article"
 msgstr "Baca artikel"
+
+#: survey/templates/editor/partials/_export_modal.html:106
+msgid "Trashed, on-hold and not-approved responses are left out unless you switch this on."
+msgstr "Respons yang dihapus, ditangguhkan, dan tidak disetujui tidak disertakan kecuali Anda mengaktifkan ini."
+
+#: survey/templates/editor/partials/_moderated_sessions_line.html:10
+#, python-format
+msgid "including %(counter)s on hold"
+msgid_plural "including %(counter)s on hold"
+msgstr[0] "termasuk %(counter)s ditangguhkan"
+
+#: survey/templates/editor/partials/_moderated_sessions_line.html:10
+#, python-format
+msgid "%(counter)s not approved"
+msgid_plural "%(counter)s not approved"
+msgstr[0] "%(counter)s tidak disetujui"

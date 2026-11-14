@@ -12857,3 +12857,21 @@ msgstr "Tällä sähköpostiosoitteella on jo tili."
 #: survey/templates/editor/whats_new.html
 msgid "Read the article"
 msgstr "Lue artikkeli"
+
+#: survey/templates/editor/partials/_export_modal.html:106
+msgid "Trashed, on-hold and not-approved responses are left out unless you switch this on."
+msgstr "Poistetut, odottavat ja hyväksymättömät vastaukset jätetään pois, ellet ota tätä käyttöön."
+
+#: survey/templates/editor/partials/_moderated_sessions_line.html:10
+#, python-format
+msgid "including %(counter)s on hold"
+msgid_plural "including %(counter)s on hold"
+msgstr[0] "joista %(counter)s odottaa"
+msgstr[1] "joista %(counter)s odottaa"
+
+#: survey/templates/editor/partials/_moderated_sessions_line.html:10
+#, python-format
+msgid "%(counter)s not approved"
+msgid_plural "%(counter)s not approved"
+msgstr[0] "%(counter)s hyväksymätön"
+msgstr[1] "%(counter)s hyväksymätöntä"

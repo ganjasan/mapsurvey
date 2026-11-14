@@ -1,7 +1,7 @@
 import json
 import statistics
 
-from django.db.models import Count, Avg, Exists, Min, Max, OuterRef, Q
+from django.db.models import Count, Avg, Min, Max, Q
 from survey.question_types import GEO_TYPES, geo_column
 from django.db.models.functions import Coalesce, TruncHour
 
@@ -11,6 +11,8 @@ from .models import (
     SurveyHeader, SurveySession, SurveySection, Answer, Question, SurveyEvent,
     VALIDATION_STATUS_CHOICES,
 )
+from data.scope import SessionScope, empty as _scope_empty, moderation_counts, nonempty as _scope_nonempty
+
 from .versioning import (
     DRAFT_SCOPE, canonical_of, draft_copy_of, lineage_map,
     resolve_version_scope as resolve_scope,
@@ -138,10 +140,9 @@ def _get_last_section(survey):
     return ordered[-1] if ordered else None
 
 
-def _has_top_level_answer():
-    return Exists(Answer.objects.filter(
-        survey_session_id=OuterRef('pk'), parent_answer_id__isnull=True,
-    ))
+def _answers_q():
+    """Answers of non-trashed sessions, moderated ones included — what Responses counts."""
+    return SessionScope((), include_moderated=True).related_q('survey_session')
 
 
 def nonempty_sessions(qs):
@@ -151,14 +152,15 @@ def nonempty_sessions(qs):
     is empty when it has no Answer with ``parent_answer_id IS NULL``. Answers
     about layer objects are top-level rows and moderator-hidden answers are
     still rows, so both count. The Responses page, ``compute_session_issues``
-    and the data export all decide emptiness here.
+    and the data export all decide emptiness here — through `data.scope`, whose
+    ``nonempty`` switch is the same predicate.
     """
-    return qs.filter(_has_top_level_answer())
+    return _scope_nonempty(qs)
 
 
 def empty_sessions(qs):
     """Sessions from ``qs`` with no top-level answer (see nonempty_sessions)."""
-    return qs.filter(~_has_top_level_answer())
+    return _scope_empty(qs)
 
 
 def completed_session_filter(qs, headers):
@@ -236,25 +238,26 @@ class SurveyAnalyticsService:
         self.version = version
         self.scope = resolve_scope(survey, version)
         self.scope_ids = self.scope.ids
-        if include_deleted:
-            self.base_qs = SurveySession.objects.filter(survey_id__in=self.scope_ids)
-        else:
-            self.base_qs = SurveySession.objects.active().filter(survey_id__in=self.scope_ids)
-        # The v2 Responses page hides empty sessions unless the creator shows
-        # them (spec responses-empty-sessions). Every other caller keeps the
-        # default and sees every session, as before.
+        # Responses keeps moderated sessions (the creator moderates here) and names
+        # them in the headline (ADR-001 §6.5). The v2 page hides empty sessions
+        # unless the creator shows them (spec responses-empty-sessions); every other
+        # caller keeps the default and sees every session, as before.
         self.include_empty = include_empty
-        if not include_empty:
-            self.base_qs = nonempty_sessions(self.base_qs)
+        self.session_scope = SessionScope(
+            self.scope_ids, include_deleted=include_deleted, include_moderated=True,
+            nonempty=not include_empty,
+        )
+        self.base_qs = self.session_scope.sessions()
 
     def _session_filter(self):
         """The answer filter every per-question statistic shares."""
         if self.sessions is not None:
             return {'survey_session__in': self.sessions}
-        return {'survey_session__is_deleted': False}
+        return {'survey_session__in': self._active_scope_qs().values('pk')}
 
     def _active_scope_qs(self):
-        return SurveySession.objects.active().filter(survey_id__in=self.scope_ids)
+        """Every non-trashed session of the scope, empty or not, moderated or not."""
+        return SessionScope(self.scope_ids, include_moderated=True).sessions()
 
     @property
     def empty_count(self):
@@ -263,6 +266,13 @@ class SurveyAnalyticsService:
         if not hasattr(self, '_empty_count_cache'):
             self._empty_count_cache = empty_sessions(self._active_scope_qs()).count()
         return self._empty_count_cache
+
+    def moderated_counts(self):
+        """{'on_hold': n, 'not_approved': m} among the responses shown — what the headline
+        names (ADR-001 §6.5): Responses keeps moderated sessions, so it says how many."""
+        if not hasattr(self, '_moderated_cache'):
+            self._moderated_cache = moderation_counts(self.base_qs)
+        return self._moderated_cache
 
     def sequence_numbers(self):
         """{session_id: N} — the per-survey response number: rank by start
@@ -601,8 +611,8 @@ class SurveyAnalyticsService:
             .filter(
                 question__survey_section__survey_header_id__in=self.scope_ids,
                 question__input_type__in=GEO_TYPES,
-                survey_session__is_deleted=False,
             )
+            .filter(_answers_q())
             .select_related('question')
         )
 
@@ -826,8 +836,8 @@ class SurveyAnalyticsService:
             for a in (Answer.objects
                       .filter(layer_object__layer=layer,
                               question__parent_question_id=question,
-                              question__input_type__in=('text', 'text_line'),
-                              survey_session__is_deleted=False)
+                              question__input_type__in=('text', 'text_line'))
+                      .filter(_answers_q())
                       .exclude(text__isnull=True).exclude(text='')
                       .select_related('layer_object')
                       .order_by('-id')):
@@ -901,9 +911,8 @@ class SurveyAnalyticsService:
 
     def _stats_language(self):
         """Build a choices-style stat for the session language (multilingual surveys only)."""
-        lang_qs = SurveySession.objects.filter(survey_id__in=self.scope_ids, is_deleted=False)
-        if not self.include_empty:
-            lang_qs = nonempty_sessions(lang_qs)
+        lang_qs = SessionScope(self.scope_ids, include_moderated=True,
+                               nonempty=not self.include_empty).sessions()
         langs = list(lang_qs.values_list('language', flat=True))
         counts = {}
         for lang in langs:
@@ -1000,7 +1009,8 @@ class SurveyAnalyticsService:
         qs = (
             Answer.objects
             .filter(question_id__in=self._lineage_ids(question),
-                    text__isnull=False, survey_session__is_deleted=False)
+                    text__isnull=False)
+            .filter(_answers_q())
             .exclude(text='')
             .select_related('survey_session')
             .order_by('-survey_session__start_datetime')
@@ -1039,8 +1049,8 @@ class SurveyAnalyticsService:
             .filter(
                 question__survey_section__survey_header_id__in=self.scope_ids,
                 question__input_type__in=['choice', 'multichoice', 'rating', 'thumbs'],
-                survey_session__is_deleted=False,
             )
+            .filter(_answers_q())
             .exclude(selected_choices__isnull=True)
             .values(
                 'survey_session_id',
@@ -1070,8 +1080,8 @@ class SurveyAnalyticsService:
                 question__survey_section__survey_header_id__in=self.scope_ids,
                 question__input_type__in=['number', 'range'],
                 numeric__isnull=False,
-                survey_session__is_deleted=False,
             )
+            .filter(_answers_q())
             .values(
                 'survey_session_id',
                 'survey_session__start_datetime',

@@ -87,10 +87,9 @@ def family_ids_with_draft(survey):
 def family_sessions(survey, include_deleted=False):
     """Sessions across the whole version family (each counted exactly once —
     a session FK-points at exactly one version header)."""
-    qs = SurveySession.objects.filter(survey_id__in=family_ids(survey))
-    if not include_deleted:
-        qs = qs.filter(is_deleted=False)
-    return qs
+    from data.scope import SessionScope
+    return SessionScope(family_ids(survey), include_deleted=include_deleted,
+                        include_moderated=True).sessions()
 
 
 # ─── The `version` request filter ────────────────────────────────────────────

@@ -1,7 +1,7 @@
 """Read-only rendering service for the public survey results page.
 
 Builds ordered, privacy-guarded per-block payloads for a PublicResultsPage:
-- aggregates over CLEAN sessions only (not deleted, not not_approved/on_hold)
+- aggregates over CLEAN, NON-EMPTY sessions only (`data.scope.SessionScope.public`)
 - spans the canonical survey and all its version copies
 - masks small buckets via k-anonymity
 - strips record-level identifiers from geo features and exposes only the
@@ -21,7 +21,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 
 from .models import (
-    SurveySession, Answer, Question,
+    Answer, Question,
     PublicResultsPage, PublicResultsBlock,
     PUBLIC_RESULTS_SNAPSHOT_VERSION,
 )
@@ -30,9 +30,6 @@ from .versioning import canonical_of, family_ids
 
 # Live aggregates are cached briefly so viral traffic does not hammer the DB.
 LIVE_CACHE_TTL = 60
-
-# Validation statuses that must never reach the public page.
-EXCLUDED_VALIDATION_STATUSES = ('not_approved', 'on_hold')
 
 # Question types whose individual answers are never published.
 TEXT_INPUT_TYPES = ('text', 'text_line')
@@ -97,12 +94,9 @@ class PublicResultsService:
         return family_ids(self.canonical)
 
     def _collect_clean_session_ids(self):
-        return set(
-            SurveySession.objects
-            .filter(survey_id__in=self._survey_ids, is_deleted=False)
-            .exclude(validation_status__in=EXCLUDED_VALIDATION_STATUSES)
-            .values_list('id', flat=True)
-        )
+        # Clean and non-empty (ADR-001 §6.2): the same answered responses Responses shows.
+        from data.scope import SessionScope
+        return SessionScope(self._survey_ids, nonempty=True).ids()
 
     def response_count(self):
         return len(self._clean_ids)
