@@ -129,7 +129,6 @@ class WorkerCacheIsolationTest(SimpleTestCase):
 # missing spec or a set of classes to fold into one; this list should shrink.
 UNMAPPED_MODULES = {
     'data-links': 'spec lives in the unarchived change data-links',
-    'data-metadata': 'spec lives in the unarchived change data-metadata',
     'smoke': 'infrastructure smoke test',
     'structure': 'service-layer structure tests (api-v2-structure) spanning survey-editor and question-groups',
     'org-access-control': 'organisations, membership, invitations, role resolution — no spec written yet',
