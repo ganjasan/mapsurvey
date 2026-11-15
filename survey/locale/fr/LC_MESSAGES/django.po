@@ -13231,3 +13231,129 @@ msgstr "Jamais mise à jour"
 #: data/models.py
 msgid "The team or role that keeps the dataset current."
 msgstr "L'équipe ou le rôle qui tient le jeu de données à jour."
+
+#: data/links.py
+msgid "Only a layer dataset can be shown on a map."
+msgstr "Seul un jeu de données de couche peut être affiché sur une carte."
+
+#: data/links.py
+msgid "This dataset is private. Make it public on its page in Data first."
+msgstr "Ce jeu de données est privé. Rendez-le d'abord public sur sa page dans Données."
+
+#: data/links.py
+msgid "This layer already belongs to the survey."
+msgstr "Cette couche appartient déjà au questionnaire."
+
+#: data/links.py
+#, python-format
+msgid "The dataset has %(n)s objects; a survey map takes up to %(max)s."
+msgstr "Le jeu de données compte %(n)s objets ; une carte de questionnaire en accepte %(max)s au plus."
+
+#: data/links.py
+#, python-format
+msgid "The dataset is larger than %(mb)s MB, the limit for a survey map."
+msgstr "Le jeu de données dépasse %(mb)s Mo, la limite d’une carte de questionnaire."
+
+#: data/links.py
+#, python-format
+msgid "A survey has at most %(n)s reference layers."
+msgstr "Un questionnaire a au plus %(n)s couches de référence."
+
+#: data/links.py
+msgid "Only a dataset of this workspace can be linked."
+msgstr "Seul un jeu de données de cet espace peut être lié."
+
+#: data/links.py
+#, python-format
+msgid "The question “%(name)s” shows this layer. Remove the question or pick another layer first."
+msgstr "La question « %(name)s » affiche cette couche. Supprimez d’abord la question ou choisissez une autre couche."
+
+#: data/links.py
+msgid "Pick a dataset of this workspace."
+msgstr "Choisissez un jeu de données de cet espace."
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "From Data"
+msgstr "Depuis Données"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Open in Data"
+msgstr "Ouvrir dans Données"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Unlink"
+msgstr "Délier"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Fields on the object card"
+msgstr "Champs sur la fiche d'objet"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "pick a dataset"
+msgstr "choisir un jeu de données"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Linked, not copied: an edit of the dataset shows on this survey's map."
+msgstr "Lié, pas copié : une modification du jeu de données apparaît sur la carte de ce questionnaire."
+
+#: survey/templates/sites/_block_form.html
+msgid "The map shows"
+msgstr "La carte montre"
+
+#: survey/templates/sites/_block_form.html
+msgid "The uploaded project area"
+msgstr "La zone de projet importée"
+
+#: survey/templates/sites/_block_form.html
+#, python-format
+msgid "Dataset: %(name)s"
+msgstr "Jeu de données : %(name)s"
+
+#: data/views.py
+msgid "Linked datasets stay public. Unlink it from every survey and site below first."
+msgstr "Les jeux de données liés restent publics. Déliez-le d'abord de chaque questionnaire et site ci-dessous."
+
+#: data/views.py
+msgid "Dataset deleted."
+msgstr "Jeu de données supprimé."
+
+#: data/templates/data/dataset.html
+msgid "Used by"
+msgstr "Utilisé par"
+
+#: data/templates/data/dataset.html
+msgid "Belongs to survey"
+msgstr "Appartient au questionnaire"
+
+#: data/templates/data/dataset.html
+msgid "No survey or site shows this dataset yet. Add it to a survey from its Reference layers card, or to a Site map block."
+msgstr "Aucun questionnaire ni site n'affiche encore ce jeu de données. Ajoutez-le à un questionnaire depuis sa carte Couches de référence, ou à un bloc Carte d'un site."
+
+#: data/templates/data/dataset.html
+msgid "Delete dataset"
+msgstr "Supprimer le jeu de données"
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "Delete “%(name)s”?"
+msgstr "Supprimer « %(name)s » ?"
+
+#: data/templates/data/delete.html
+msgid "No survey or site uses it."
+msgstr "Aucun questionnaire ni site ne l'utilise."
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "The question “%(name)s” shows this dataset. Remove the question or pick another layer for it first."
+msgstr "La question « %(name)s » affiche ce jeu de données. Supprimez d’abord la question ou choisissez-lui une autre couche."
+
+#: data/templates/data/delete.html
+msgid "Surveys and sites stop showing it, and its objects are deleted. This cannot be undone."
+msgstr "Les questionnaires et les sites cessent de l'afficher, et ses objets sont supprimés. Cette action est irréversible."
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "It is used in %(n)s place:"
+msgid_plural "It is used in %(n)s places:"
+msgstr[0] "Il est utilisé à %(n)s endroit :"
+msgstr[1] "Il est utilisé à %(n)s endroits :"

@@ -15,7 +15,7 @@ from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question
 from .tasks import run_survey_import
 from .models import FILE_INPUT_TYPES
 from .uploads import attach_upload, detach_unreferenced
-from .layers import build_map_layers_metadata, layer_owner, section_layer_ids, GEOMETRY_TEXT_FIELDS
+from .layers import build_map_layers_metadata, layer_owner, layers_for, section_layer_ids, GEOMETRY_TEXT_FIELDS
 from .permissions import (
     org_permission_required, survey_permission_required,
     get_effective_survey_role, get_org_membership, SURVEY_ROLE_RANK,
@@ -2238,7 +2238,9 @@ def _gated_layer(request, survey_slug, layer_id, with_geojson=True):
 		raise Http404
 	# Versions and draft copies borrow the canonical survey's layers.
 	qs = SurveyMapLayer.objects if with_geojson else SurveyMapLayer.objects.defer(*GEOMETRY_TEXT_FIELDS)
-	layer = get_object_or_404(qs, pk=layer_id, survey=layer_owner(survey))
+	# Datasets linked "From Data" (change data-links) resolve like the survey's own.
+	layer = get_object_or_404(qs.filter(pk__in=layers_for(survey).values('pk')), pk=layer_id)
+	layer.gated_survey = survey
 	# `question` layers answer differently to the creator (every mark, every
 	# status) and to a respondent (other people's visible marks only); the two
 	# endpoints read this instead of re-deriving the role.
@@ -2263,7 +2265,8 @@ def survey_layer_object(request, survey_slug, layer_id, key):
 		obj = get_object_or_404(visible_objects(layer, request.session.get('survey_session_id')), key=key)
 	else:
 		obj = get_object_or_404(LayerObject, layer=layer, key=key)
-	payload = object_card_payload(obj)
+	from data.links import card_field_names
+	payload = object_card_payload(obj, only=card_field_names(layer.gated_survey, layer.pk))
 	# What other respondents see is decided by the SUB-QUESTIONS that share
 	# their answers, whatever the layer's source (spec shared-map-layer).
 	from .layers import shared_kinds

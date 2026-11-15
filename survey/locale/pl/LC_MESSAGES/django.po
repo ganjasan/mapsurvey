@@ -13272,3 +13272,130 @@ msgstr "Nieaktualizowany"
 #: data/models.py
 msgid "The team or role that keeps the dataset current."
 msgstr "Zespół lub rola, która aktualizuje zbiór danych."
+
+#: data/links.py
+msgid "Only a layer dataset can be shown on a map."
+msgstr "Na mapie można pokazać tylko zbiór danych warstwy."
+
+#: data/links.py
+msgid "This dataset is private. Make it public on its page in Data first."
+msgstr "Ten zbiór danych jest prywatny. Najpierw ustaw go jako publiczny na jego stronie w Danych."
+
+#: data/links.py
+msgid "This layer already belongs to the survey."
+msgstr "Ta warstwa należy już do ankiety."
+
+#: data/links.py
+#, python-format
+msgid "The dataset has %(n)s objects; a survey map takes up to %(max)s."
+msgstr "Zbiór danych ma %(n)s obiektów; mapa ankiety mieści do %(max)s."
+
+#: data/links.py
+#, python-format
+msgid "The dataset is larger than %(mb)s MB, the limit for a survey map."
+msgstr "Zbiór danych jest większy niż %(mb)s MB, limit mapy ankiety."
+
+#: data/links.py
+#, python-format
+msgid "A survey has at most %(n)s reference layers."
+msgstr "Ankieta ma najwyżej %(n)s warstw referencyjnych."
+
+#: data/links.py
+msgid "Only a dataset of this workspace can be linked."
+msgstr "Można połączyć tylko zbiór danych z tego obszaru roboczego."
+
+#: data/links.py
+#, python-format
+msgid "The question “%(name)s” shows this layer. Remove the question or pick another layer first."
+msgstr "Pytanie „%(name)s” pokazuje tę warstwę. Najpierw usuń pytanie lub wybierz inną warstwę."
+
+#: data/links.py
+msgid "Pick a dataset of this workspace."
+msgstr "Wybierz zbiór danych z tego obszaru roboczego."
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "From Data"
+msgstr "Z Danych"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Open in Data"
+msgstr "Otwórz w Danych"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Unlink"
+msgstr "Usuń połączenie"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Fields on the object card"
+msgstr "Pola na karcie obiektu"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "pick a dataset"
+msgstr "wybierz zbiór danych"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Linked, not copied: an edit of the dataset shows on this survey's map."
+msgstr "Połączone, nie skopiowane: zmiana zbioru danych pojawi się na mapie tej ankiety."
+
+#: survey/templates/sites/_block_form.html
+msgid "The map shows"
+msgstr "Mapa pokazuje"
+
+#: survey/templates/sites/_block_form.html
+msgid "The uploaded project area"
+msgstr "Wgrany obszar projektu"
+
+#: survey/templates/sites/_block_form.html
+#, python-format
+msgid "Dataset: %(name)s"
+msgstr "Zbiór danych: %(name)s"
+
+#: data/views.py
+msgid "Linked datasets stay public. Unlink it from every survey and site below first."
+msgstr "Połączone zbiory danych pozostają publiczne. Najpierw odłącz go od każdej ankiety i strony poniżej."
+
+#: data/views.py
+msgid "Dataset deleted."
+msgstr "Usunięto zbiór danych."
+
+#: data/templates/data/dataset.html
+msgid "Used by"
+msgstr "Używany w"
+
+#: data/templates/data/dataset.html
+msgid "Belongs to survey"
+msgstr "Należy do ankiety"
+
+#: data/templates/data/dataset.html
+msgid "No survey or site shows this dataset yet. Add it to a survey from its Reference layers card, or to a Site map block."
+msgstr "Żadna ankieta ani strona nie pokazuje jeszcze tego zbioru danych. Dodaj go do ankiety z karty Warstwy referencyjne lub do bloku mapy na stronie."
+
+#: data/templates/data/dataset.html
+msgid "Delete dataset"
+msgstr "Usuń zbiór danych"
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "Delete “%(name)s”?"
+msgstr "Usunąć „%(name)s”?"
+
+#: data/templates/data/delete.html
+msgid "No survey or site uses it."
+msgstr "Nie używa go żadna ankieta ani strona."
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "The question “%(name)s” shows this dataset. Remove the question or pick another layer for it first."
+msgstr "Pytanie „%(name)s” pokazuje ten zbiór danych. Najpierw usuń pytanie lub wybierz dla niego inną warstwę."
+
+#: data/templates/data/delete.html
+msgid "Surveys and sites stop showing it, and its objects are deleted. This cannot be undone."
+msgstr "Ankiety i strony przestaną go pokazywać, a jego obiekty zostaną usunięte. Tego nie można cofnąć."
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "It is used in %(n)s place:"
+msgid_plural "It is used in %(n)s places:"
+msgstr[0] "Jest używany w %(n)s miejscu:"
+msgstr[1] "Jest używany w %(n)s miejscach:"
+msgstr[2] "Jest używany w %(n)s miejscach:"

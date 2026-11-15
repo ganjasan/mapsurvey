@@ -63,13 +63,15 @@ def labels(layer_id):
             if isinstance(f, dict) and isinstance(f.get('name'), str) and not f.get('private')}
 
 
-def card_fields(obj, label_map=None):
+def card_fields(obj, label_map=None, only=None):
     """`[{label, value}]` for the respondent's object card: the layer's public documented fields
     with a non-empty value, in dictionary order. Nothing for an undocumented layer."""
     label_map = labels(obj.layer_id) if label_map is None else label_map
     props = obj.properties if isinstance(obj.properties, dict) else {}
     out = []
     for name, label in label_map.items():
+        if only is not None and name not in only:
+            continue
         value = props.get(name)
         if value is None or value == '':
             continue

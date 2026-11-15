@@ -107,6 +107,34 @@ class Dataset(models.Model):
         return f'{self.name} ({self.kind})'
 
 
+class DatasetLink(models.Model):
+    """A place that shows a dataset without a copy (change data-links, #670): a survey's reference
+    layers (the CANONICAL survey, like layer ownership) or a Site map block. Every link is a
+    "used by" record; `data.links` writes and reads them."""
+    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE, related_name='links')
+    survey = models.ForeignKey('survey.SurveyHeader', null=True, blank=True, on_delete=models.CASCADE,
+                               related_name='dataset_links')
+    site_block = models.ForeignKey('survey.SiteBlock', null=True, blank=True, on_delete=models.CASCADE,
+                                   related_name='dataset_links')
+    # The public fields the respondent's object card shows for this link ([] = all of them).
+    fields = models.JSONField(default=list, blank=True)
+    created_by = models.ForeignKey('auth.User', null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at', 'id']
+        constraints = [
+            models.UniqueConstraint(fields=['dataset', 'survey'], condition=Q(survey__isnull=False),
+                                    name='data_link_one_per_survey'),
+            models.UniqueConstraint(fields=['site_block'], condition=Q(site_block__isnull=False),
+                                    name='data_link_one_per_site_block'),
+            models.CheckConstraint(
+                condition=(Q(survey__isnull=False, site_block__isnull=True)
+                           | Q(survey__isnull=True, site_block__isnull=False)),
+                name='data_link_one_place'),
+        ]
+
+
 def data_import_key(instance, filename):
     """data_imports/<uuid4><ext> on the PRIVATE tier: a random key, never the creator's
     filename, deleted when the job finishes."""

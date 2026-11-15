@@ -151,7 +151,8 @@ def catalogue_rows(org, user):
     from survey.models import LayerObject
     visible = visible_survey_ids(org, user)
     family = _family_map(org)
-    datasets = list(sync(org).select_related('layer', 'survey'))
+    # The layer's geometry text never rides along (layer memory rules).
+    datasets = list(sync(org).select_related('layer', 'survey').defer('layer__geojson_gz', 'layer__geojson_legacy'))
     surveys = {s.id: s for s in SurveyHeader.objects.filter(id__in=visible).only('id', 'uuid', 'name')}
 
     # rows and last change of collected kinds, grouped per canonical survey
@@ -178,9 +179,16 @@ def catalogue_rows(org, user):
 
     # used by
     bound = defaultdict(int)
-    for layer_id, n in (Question.objects.filter(layer__isnull=False, layer__survey_id__in=visible)
+    # Questions on canonical surveys bound to any layer of the workspace — a linked dataset's
+    # layer is bound from other surveys too (change data-links).
+    for layer_id, n in (Question.objects.filter(layer__isnull=False, layer__organization=org,
+                                                survey_section__survey_header__canonical_survey__isnull=True,
+                                                survey_section__survey_header__published_version__isnull=True)
                         .values('layer_id').annotate(n=Count('id')).values_list('layer_id', 'n')):
         bound[layer_id] = n
+    from data.models import DatasetLink
+    links = dict(DatasetLink.objects.filter(dataset__organization=org).values('dataset_id')
+                 .annotate(n=Count('id')).values_list('dataset_id', 'n'))
     pr_blocks = defaultdict(int)
     for sid, code in (PublicResultsBlock.objects.filter(page__survey_id__in=visible, question__isnull=False)
                       .values_list('page__survey_id', 'question__code')):
@@ -207,12 +215,12 @@ def catalogue_rows(org, user):
         row = Row(dataset=ds, survey=survey)
         if workspace_owned:
             row.rows = ds.layer.feature_count
-            row.used_by = bound.get(ds.layer_id, 0)
+            row.used_by = bound.get(ds.layer_id, 0) + links.get(ds.pk, 0)
             row.changed = ds.layer.updated_at
             row.extra['uploaded'] = True
         elif ds.kind == Dataset.KIND_LAYER:
             row.rows = ds.layer.feature_count
-            row.used_by = 1 + bound.get(ds.layer_id, 0)
+            row.used_by = 1 + bound.get(ds.layer_id, 0) + links.get(ds.pk, 0)
             row.changed = ds.layer.updated_at
             row.link = reverse('editor_survey_settings', args=[survey.uuid]) if survey else ''
         elif ds.kind == Dataset.KIND_SHARED_MAP:

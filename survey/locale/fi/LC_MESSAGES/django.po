@@ -13146,3 +13146,129 @@ msgstr "Ei päivitetä"
 #: data/models.py
 msgid "The team or role that keeps the dataset current."
 msgstr "Tiimi tai rooli, joka pitää aineiston ajan tasalla."
+
+#: data/links.py
+msgid "Only a layer dataset can be shown on a map."
+msgstr "Kartalla voi näyttää vain tason aineiston."
+
+#: data/links.py
+msgid "This dataset is private. Make it public on its page in Data first."
+msgstr "Tämä aineisto on yksityinen. Tee siitä ensin julkinen sen sivulla kohdassa Data."
+
+#: data/links.py
+msgid "This layer already belongs to the survey."
+msgstr "Tämä taso kuuluu jo kyselyyn."
+
+#: data/links.py
+#, python-format
+msgid "The dataset has %(n)s objects; a survey map takes up to %(max)s."
+msgstr "Aineistossa on %(n)s kohdetta; kyselyn karttaan mahtuu enintään %(max)s."
+
+#: data/links.py
+#, python-format
+msgid "The dataset is larger than %(mb)s MB, the limit for a survey map."
+msgstr "Aineisto on suurempi kuin %(mb)s Mt, kyselykartan raja."
+
+#: data/links.py
+#, python-format
+msgid "A survey has at most %(n)s reference layers."
+msgstr "Kyselyssä on enintään %(n)s viitetasoa."
+
+#: data/links.py
+msgid "Only a dataset of this workspace can be linked."
+msgstr "Vain tämän työtilan aineiston voi linkittää."
+
+#: data/links.py
+#, python-format
+msgid "The question “%(name)s” shows this layer. Remove the question or pick another layer first."
+msgstr "Kysymys ”%(name)s” näyttää tämän tason. Poista ensin kysymys tai valitse toinen taso."
+
+#: data/links.py
+msgid "Pick a dataset of this workspace."
+msgstr "Valitse tämän työtilan aineisto."
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "From Data"
+msgstr "Datasta"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Open in Data"
+msgstr "Avaa Datassa"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Unlink"
+msgstr "Poista linkitys"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Fields on the object card"
+msgstr "Kentät kohdekortissa"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "pick a dataset"
+msgstr "valitse aineisto"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Linked, not copied: an edit of the dataset shows on this survey's map."
+msgstr "Linkitetty, ei kopioitu: aineiston muutos näkyy tämän kyselyn kartalla."
+
+#: survey/templates/sites/_block_form.html
+msgid "The map shows"
+msgstr "Kartta näyttää"
+
+#: survey/templates/sites/_block_form.html
+msgid "The uploaded project area"
+msgstr "Ladattu hankealue"
+
+#: survey/templates/sites/_block_form.html
+#, python-format
+msgid "Dataset: %(name)s"
+msgstr "Aineisto: %(name)s"
+
+#: data/views.py
+msgid "Linked datasets stay public. Unlink it from every survey and site below first."
+msgstr "Linkitetyt aineistot pysyvät julkisina. Poista ensin linkitys jokaisesta alla olevasta kyselystä ja sivustosta."
+
+#: data/views.py
+msgid "Dataset deleted."
+msgstr "Aineisto poistettu."
+
+#: data/templates/data/dataset.html
+msgid "Used by"
+msgstr "Käytössä"
+
+#: data/templates/data/dataset.html
+msgid "Belongs to survey"
+msgstr "Kuuluu kyselyyn"
+
+#: data/templates/data/dataset.html
+msgid "No survey or site shows this dataset yet. Add it to a survey from its Reference layers card, or to a Site map block."
+msgstr "Mikään kysely tai sivusto ei vielä näytä tätä aineistoa. Lisää se kyselyyn sen Viitetasot-kortilta tai sivuston karttalohkoon."
+
+#: data/templates/data/dataset.html
+msgid "Delete dataset"
+msgstr "Poista aineisto"
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "Delete “%(name)s”?"
+msgstr "Poistetaanko ”%(name)s”?"
+
+#: data/templates/data/delete.html
+msgid "No survey or site uses it."
+msgstr "Mikään kysely tai sivusto ei käytä sitä."
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "The question “%(name)s” shows this dataset. Remove the question or pick another layer for it first."
+msgstr "Kysymys ”%(name)s” näyttää tämän aineiston. Poista ensin kysymys tai valitse sille toinen taso."
+
+#: data/templates/data/delete.html
+msgid "Surveys and sites stop showing it, and its objects are deleted. This cannot be undone."
+msgstr "Kyselyt ja sivustot lakkaavat näyttämästä sitä, ja sen kohteet poistetaan. Tätä ei voi perua."
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "It is used in %(n)s place:"
+msgid_plural "It is used in %(n)s places:"
+msgstr[0] "Sitä käytetään %(n)s paikassa:"
+msgstr[1] "Sitä käytetään %(n)s paikassa:"

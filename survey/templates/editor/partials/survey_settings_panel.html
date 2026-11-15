@@ -198,6 +198,31 @@
 
         <div id="ref-layers-list">
           {% for item in map_layers %}
+          {% if item.link %}
+          {% comment %}A dataset linked "From Data" (change data-links): read-only here — its look and
+          objects are the dataset's, shared by every place that links it.{% endcomment %}
+          <div class="ref-layer is-linked" data-layer-id="{{ item.layer.pk }}" data-link-id="{{ item.link.pk }}">
+            <div class="ref-layer-head">
+              <span class="ref-layer-swatch" style="background:{{ item.layer.color }}"></span>
+              <b class="ref-layer-name">{{ item.layer.name }}</b>
+              <span class="badge badge-pill" style="background:var(--accent-light);color:var(--accent);font-size:.68rem;margin-left:.4rem;">{% trans "From Data" %}</span>
+              <span class="pr-help ref-layer-meta">{{ item.layer.feature_count }} {% trans "objects" %}</span>
+              <a class="btn btn-sm btn-outline-primary" href="{% url 'editor_data_dataset' item.link.dataset_id %}" style="font-size:.74rem;padding:.15rem .55rem;margin-left:.4rem;">{% trans "Open in Data" %}</a>
+              <button type="button" class="ref-layer-unlink btn btn-sm btn-link" data-url="{% url 'editor_survey_layer_unlink' survey.uuid item.link.pk %}" style="font-size:.74rem;">{% trans "Unlink" %}</button>
+            </div>
+            {% if item.card_fields %}
+            <div class="pr-field" style="margin:.4rem 0 0;" data-fields-url="{% url 'editor_survey_layer_link_fields' survey.uuid item.link.pk %}">
+              <label>{% trans "Fields on the object card" %}</label>
+              <div style="display:flex;flex-wrap:wrap;gap:.25rem .9rem;font-size:.82rem;">
+                {% for f in item.card_fields %}<label class="mb-0" style="font-weight:400;"><input type="checkbox" value="{{ f.name }}" {% if f.shown %}checked{% endif %}> {{ f.label }}</label>{% endfor %}
+              </div>
+            </div>
+            {% endif %}
+            <div class="pr-help" style="margin:.2rem 0 0;">
+              {% if item.shown_in %}{% trans "On the map in" %} {% for t in item.shown_in %}<b>{{ t }}</b>{% if not forloop.last %}, {% endif %}{% endfor %}.{% else %}{% trans "Not on any map yet — add an “Objects on the map” question to a section and pick this layer." %}{% endif %}
+            </div>
+          </div>
+          {% else %}
           <div class="ref-layer" data-layer-id="{{ item.layer.pk }}" data-source="{{ item.layer.source }}">
             <div class="ref-layer-head">
               <span class="ref-layer-swatch" style="background:{{ item.layer.color }}"></span>
@@ -303,6 +328,7 @@
               <div class="ref-layer-status pr-help"></div>
             </div>
           </div>
+          {% endif %}
           {% endfor %}
         </div>
 
@@ -320,6 +346,19 @@
             <i class="fas fa-plus"></i> {% trans "New empty layer — draw objects in the editor" %}
           </button>
         </div>
+        {% if data_choices %}
+        <div class="pr-field" style="margin-top:.75rem;" id="ref-layers-from-data" data-url="{% url 'editor_survey_layer_link' survey.uuid %}">
+          <label for="ref-layers-dataset">{% trans "From Data" %}</label>
+          <div style="display:flex;gap:.4rem;">
+            <select id="ref-layers-dataset" class="custom-select custom-select-sm">
+              <option value="">— {% trans "pick a dataset" %} —</option>
+              {% for ds, refusal in data_choices %}<option value="{{ ds.pk }}"{% if refusal %} disabled title="{{ refusal }}"{% endif %}>{{ ds.name }} · {{ ds.layer.feature_count }}{% if refusal %} — {{ refusal }}{% endif %}</option>{% endfor %}
+            </select>
+            <button type="button" class="btn btn-sm btn-outline-primary text-nowrap" id="ref-layers-link-btn">{% trans "Add" %}</button>
+          </div>
+          <div class="pr-help">{% trans "Linked, not copied: an edit of the dataset shows on this survey's map." %}</div>
+        </div>
+        {% endif %}
         <div class="ref-layers-error text-danger" id="ref-layers-error" style="font-size:.8rem;margin-top:.4rem;"></div>
       </div>
       {% endif %}
@@ -557,7 +596,32 @@
             field.addEventListener('change', handler);
         });
     }
-    list.querySelectorAll('.ref-layer').forEach(bindLayer);
+    list.querySelectorAll('.ref-layer:not(.is-linked)').forEach(bindLayer);
+    // Datasets linked "From Data" (change data-links): unlink, card fields, add.
+    list.querySelectorAll('.ref-layer.is-linked').forEach(function(el) {
+        el.querySelector('.ref-layer-unlink').addEventListener('click', function(e) {
+            errorBox.textContent = '';
+            post(e.currentTarget.dataset.url, new FormData()).then(function() { el.remove(); })
+                .catch(function(err) { errorBox.textContent = err.message; });
+        });
+        var box = el.querySelector('[data-fields-url]');
+        if (box) box.addEventListener('change', function() {
+            var fd = new FormData();
+            box.querySelectorAll('input:checked').forEach(function(c) { fd.append('fields', c.value); });
+            post(box.dataset.fieldsUrl, fd).catch(function(err) { errorBox.textContent = err.message; });
+        });
+    });
+    var linkBtn = document.getElementById('ref-layers-link-btn');
+    if (linkBtn) linkBtn.addEventListener('click', function() {
+        var pick = document.getElementById('ref-layers-dataset');
+        if (!pick.value) return;
+        errorBox.textContent = '';
+        var fd = new FormData();
+        fd.append('dataset', pick.value);
+        post(document.getElementById('ref-layers-from-data').dataset.url, fd)
+            .then(function() { window.location.reload(); })
+            .catch(function(err) { errorBox.textContent = err.message; });
+    });
 
     // ── Layer style editor (spec layer-style) ────────────────────────────
     var PALETTE = ['#e69f00', '#56b4e9', '#009e73', '#f0e442', '#0072b2', '#d55e00', '#cc79a7', '#000000',

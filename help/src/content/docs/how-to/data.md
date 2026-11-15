@@ -45,6 +45,21 @@ For a layer, the page also lists its **fields** — the columns of the file, or 
 
 Owners, admins and editors who work on the survey change the details; viewers read them.
 
+## Use a dataset in a survey or on a site
+
+A layer in Data can be shown in several places without uploading it again. It is **linked, not copied**: when the dataset changes, every survey and site that shows it changes too.
+
+- **In a survey**: in the survey's settings, the **Reference layers** card has **From Data**. Pick the dataset and press **Add**. The layer appears in the list marked *From Data*; choose which fields its object card shows, or **Unlink** it. Its colour, style and objects are edited in Data, for every place at once.
+- **On a site**: in a **Map** block, **Show** picks the dataset instead of an uploaded area.
+
+Only a **public** dataset can be linked — a new upload is private until you switch **Access** to *Public* on its page. A linked dataset stays public until you unlink it everywhere. A survey map takes up to 5,000 objects and 10 MB per layer, and up to 10 layers.
+
+The dataset's page lists everything that uses it under **Used by**: the survey it belongs to, the surveys and sites that link it, and the questions that show it.
+
+## Delete a dataset
+
+**Delete dataset** on the page of a dataset you uploaded first lists every place that uses it. Surveys and sites stop showing it once you confirm. While an "Objects on the map" question shows it, the delete waits: remove the question or pick another layer for it first. A layer that belongs to a survey is deleted in that survey's settings.
+
 ## Download a layer
 
 On a layer's page, **CSV** and **GeoJSON** download its objects with the field labels as column names. Private fields are left out.

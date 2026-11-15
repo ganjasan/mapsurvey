@@ -389,18 +389,29 @@
   function initVisuals(blk) {
     if (typeof L !== 'undefined') {
       blk.querySelectorAll('.lp-map[data-color]').forEach(function (el) {
+        if (maps.has(el)) return;
         var src = document.getElementById('area-' + el.id.replace('map-', 'b-'));
-        if (!src || maps.has(el)) return;
+        if (!src && !el.dataset.geojsonUrl) return;
         var base = BASES[el.dataset.basemap] || BASES.streets || BASES[Object.keys(BASES)[0]];
         var map = L.map(el, { scrollWheelZoom: false });
         if (base) L.tileLayer(base.url, Object.assign({}, base.opts)).addTo(map);
-        var color = el.dataset.color || '#2f6fb0';
-        var layer = L.geoJSON(JSON.parse(src.textContent), {
-          style: function () { return { color: color, weight: 3, fillOpacity: 0.15 }; },
-          pointToLayer: function (f, ll) { return L.circleMarker(ll, { radius: 7, color: color, weight: 2, fillOpacity: 0.8 }); }
-        }).addTo(map);
-        map.fitBounds(layer.getBounds(), { padding: [24, 24], maxZoom: 17 });
         maps.set(el, map);
+        var color = el.dataset.color || '#2f6fb0';
+        var draw = function (gj) {
+          var layer = L.geoJSON(gj, {
+            style: function () { return { color: color, weight: 3, fillOpacity: 0.15 }; },
+            pointToLayer: function (f, ll) { return L.circleMarker(ll, { radius: 7, color: color, weight: 2, fillOpacity: 0.8 }); }
+          }).addTo(map);
+          if (layer.getBounds().isValid()) map.fitBounds(layer.getBounds(), { padding: [24, 24], maxZoom: 17 });
+        };
+        // A dataset block (change data-links) fetches its GeoJSON; an area block carries it inline.
+        if (el.dataset.geojsonUrl) {
+          fetch(el.dataset.geojsonUrl, { credentials: 'same-origin' })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (gj) { if (gj && maps.get(el) === map) draw(gj); });
+        } else {
+          draw(JSON.parse(src.textContent));
+        }
       });
     }
     if (blk.dataset.kind === 'results' && window.renderResultBlocks) {
