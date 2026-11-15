@@ -204,7 +204,7 @@
           <div class="ref-layer is-linked" data-layer-id="{{ item.layer.pk }}" data-link-id="{{ item.link.pk }}">
             <div class="ref-layer-head">
               <span class="ref-layer-swatch" style="background:{{ item.layer.color }}"></span>
-              <b class="ref-layer-name">{{ item.layer.name }}</b>
+              <b class="ref-layer-name">{{ item.layer.name }}{% if item.link.view %} › {{ item.link.view.name }}{% endif %}</b>
               <span class="badge badge-pill" style="background:var(--accent-light);color:var(--accent);font-size:.68rem;margin-left:.4rem;">{% trans "From Data" %}</span>
               <span class="pr-help ref-layer-meta">{{ item.layer.feature_count }} {% trans "objects" %}</span>
               <a class="btn btn-sm btn-outline-primary" href="{% url 'editor_data_dataset' item.link.dataset_id %}" style="font-size:.74rem;padding:.15rem .55rem;margin-left:.4rem;">{% trans "Open in Data" %}</a>
@@ -352,7 +352,7 @@
           <div style="display:flex;gap:.4rem;">
             <select id="ref-layers-dataset" class="custom-select custom-select-sm">
               <option value="">— {% trans "pick a dataset" %} —</option>
-              {% for ds, refusal in data_choices %}<option value="{{ ds.pk }}"{% if refusal %} disabled title="{{ refusal }}"{% endif %}>{{ ds.name }} · {{ ds.layer.feature_count }}{% if refusal %} — {{ refusal }}{% endif %}</option>{% endfor %}
+              {% for value, label, refusal in data_choices %}<option value="{{ value }}"{% if refusal %} disabled title="{{ refusal }}"{% endif %}>{{ label }}{% if refusal %} — {{ refusal }}{% endif %}</option>{% endfor %}
             </select>
             <button type="button" class="btn btn-sm btn-outline-primary text-nowrap" id="ref-layers-link-btn">{% trans "Add" %}</button>
           </div>

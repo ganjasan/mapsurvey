@@ -180,6 +180,7 @@ def dataset(request, dataset_id):
     ds = row.dataset
     can_edit = _can_edit(request.user, membership, row)
     form = _details_form(instance=ds)
+    view_errors = {}
     if request.method == 'POST':
         if not can_edit:
             from django.http import HttpResponseForbidden
@@ -194,6 +195,16 @@ def dataset(request, dataset_id):
         elif action == 'fields' and ds.kind == Dataset.KIND_LAYER:
             _save_dictionary(request, ds)
             messages.success(request, _('Field dictionary saved.'))
+            return redirect('editor_data_dataset', dataset_id=ds.pk)
+        elif action == 'view_create':
+            errors = _create_view(request, ds)
+            if errors:
+                view_errors = errors
+            else:
+                messages.success(request, _('View saved.'))
+                return redirect('editor_data_dataset', dataset_id=ds.pk)
+        elif action == 'view_delete':
+            _delete_view(request, ds)
             return redirect('editor_data_dataset', dataset_id=ds.pk)
         elif action in ('version', 'apply', 'discard') and _versionable(ds):
             _version_action(request, ds, action)
@@ -223,7 +234,50 @@ def dataset(request, dataset_id):
         'can_upload_version': (can_edit and _versionable(ds) and bool(ds.layer.key_field)
                                and (version_job is None or version_job.status in ('done', 'failed'))),
         'versions': list(ds.versions.select_related('created_by')[:20]),
+        **_views_context(ds),
+        'view_errors': view_errors,
+        'condition_rows': range(3),
     })
+
+
+def _views_context(ds):
+    """The views card (change data-views): the dataset's views with how many places use each."""
+    from django.db.models import Count
+    from data.dataviews import kind_for, public_fields
+    kind = kind_for(ds)
+    if kind is None:
+        return {'view_kind': None}
+    labels = public_fields(ds) if kind == 'objects' else {}
+    views = list(ds.views.annotate(uses=Count('links')).order_by('name'))
+    for v in views:   # labels, not raw names, in the summary (change data-metadata)
+        v.summary = [{**c, 'label': labels.get(c.get('field'), c.get('field'))} for c in v.conditions or []]
+    return {
+        'view_kind': kind,
+        'dataset_views': views,
+        'view_fields': list(public_fields(ds).items()) if kind == 'objects' else [],
+    }
+
+
+def _create_view(request, ds):
+    from data.dataviews import clean
+    from data.models import DatasetView
+    values, errors = clean(ds, request.POST)
+    if errors:
+        return errors
+    DatasetView.objects.create(dataset=ds, created_by=request.user, **values)
+    return {}
+
+
+def _delete_view(request, ds):
+    from data.models import DatasetView
+    view = ds.views.filter(pk=request.POST.get('view') or 0).first()
+    if view is None:
+        return
+    if view.links.exists():
+        messages.error(request, _('“%(name)s” is shown in a survey or on a site. Unlink it there first.')
+                       % {'name': view.name})
+        return
+    view.delete()
 
 
 def _versionable(ds):

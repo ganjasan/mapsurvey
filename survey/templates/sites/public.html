@@ -127,7 +127,7 @@ only the keys sites.clean_block stores.{% endcomment %}
         },
         onEachFeature: function (f, l) {
           var p = f.properties || {};
-          var name = p.name || p._title;
+          var name = p.name || p._title || (p.respondents != null ? p.respondents + ' {% trans "respondents" %}' : null);
           if (name) l.bindTooltip(String(name));
         }
       }).addTo(map);

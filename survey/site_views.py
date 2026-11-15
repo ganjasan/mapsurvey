@@ -503,9 +503,13 @@ def site_block_dataset(request, slug, block_id):
     if not live and not member and not review:
         raise Http404
     block = get_object_or_404(SiteBlock, pk=block_id, site=site, kind='map')
-    ds, _reason = site_dataset(site.organization, (block.data or {}).get('dataset') or 0)
+    data = block.data or {}
+    ds, view, _reason = site_dataset(site.organization, data.get('dataset') or 0, data.get('view'))
     if ds is None:
         raise Http404
+    if view is not None:   # a view (change data-views): its objects, or a grid of counts
+        from data.dataviews import geojson_response
+        return geojson_response(request, view)
     return cached_geojson_response(request, get_object_or_404(SurveyMapLayer, pk=ds.layer_id))
 
 

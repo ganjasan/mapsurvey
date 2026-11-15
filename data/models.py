@@ -107,6 +107,33 @@ class Dataset(models.Model):
         return f'{self.name} ({self.kind})'
 
 
+class DatasetView(models.Model):
+    """A saved, named filter, field set and colour over a dataset (change data-views, #672). Its id is
+    stable across versions: it names fields, never objects. `kind` follows the dataset's privacy:
+    `objects` for a layer, `grid` (counts of distinct respondents, K-masked) for collected answers."""
+    KIND_OBJECTS = 'objects'
+    KIND_GRID = 'grid'
+    KIND_CHOICES = [(KIND_OBJECTS, _('Objects')), (KIND_GRID, _('Grid of counts'))]
+
+    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE, related_name='views')
+    name = models.CharField(max_length=120)
+    kind = models.CharField(max_length=8, choices=KIND_CHOICES, default=KIND_OBJECTS)
+    # [{'field', 'op' (eq | in | gt | lt), 'value' (str) | 'values' ([str])}], all must hold.
+    conditions = models.JSONField(default=list, blank=True)
+    # Public field names the view keeps ([] = every public field).
+    fields = models.JSONField(default=list, blank=True)
+    color = models.CharField(max_length=7, blank=True, default='')
+    created_by = models.ForeignKey('auth.User', null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name', 'id']
+
+    def __str__(self):
+        return self.name
+
+
 class DatasetLink(models.Model):
     """A place that shows a dataset without a copy (change data-links, #670): a survey's reference
     layers (the CANONICAL survey, like layer ownership) or a Site map block. Every link is a
@@ -116,6 +143,8 @@ class DatasetLink(models.Model):
                                related_name='dataset_links')
     site_block = models.ForeignKey('survey.SiteBlock', null=True, blank=True, on_delete=models.CASCADE,
                                    related_name='dataset_links')
+    # A view of the dataset instead of all of it (change data-views); null = the whole dataset.
+    view = models.ForeignKey(DatasetView, null=True, blank=True, on_delete=models.RESTRICT, related_name='links')
     # The public fields the respondent's object card shows for this link ([] = all of them).
     fields = models.JSONField(default=list, blank=True)
     created_by = models.ForeignKey('auth.User', null=True, blank=True, on_delete=models.SET_NULL, related_name='+')

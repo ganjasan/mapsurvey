@@ -13339,3 +13339,113 @@ msgstr "Asli — belum ada versi baru yang diunggah."
 msgid "%(n)s answer about a removed object will be deleted."
 msgid_plural "%(n)s answers about removed objects will be deleted."
 msgstr[0] "%(n)s jawaban tentang objek yang dihapus akan ikut dihapus."
+
+#: data/dataviews.py
+msgid "Views are made of layers and of map answers."
+msgstr "Tampilan dibuat dari lapisan dan jawaban peta."
+
+#: data/dataviews.py
+msgid "Give the view a name."
+msgstr "Beri nama tampilan."
+
+#: data/dataviews.py
+msgid "A condition can only use a public field of this dataset."
+msgstr "Kondisi hanya dapat memakai kolom publik dataset ini."
+
+#: data/dataviews.py
+msgid "“Greater than” and “less than” need a number."
+msgstr "“Lebih dari” dan “kurang dari” memerlukan angka."
+
+#: data/dataviews.py
+msgid "A view can only keep public fields of this dataset."
+msgstr "Tampilan hanya dapat menyimpan kolom publik dataset ini."
+
+#: data/links.py
+msgid "Pick a view of this dataset."
+msgstr "Pilih tampilan dataset ini."
+
+#: data/links.py
+msgid "A grid of counts can be shown on a site, not as a survey layer."
+msgstr "Kisi hitungan dapat ditampilkan di situs, bukan sebagai lapisan survei."
+
+#: data/views.py
+msgid "View saved."
+msgstr "Tampilan disimpan."
+
+#: data/views.py
+#, python-format
+msgid "“%(name)s” is shown in a survey or on a site. Unlink it there first."
+msgstr "“%(name)s” ditampilkan di survei atau situs. Lepaskan tautannya di sana terlebih dahulu."
+
+#: data/models.py
+msgid "Grid of counts"
+msgstr "Kisi hitungan"
+
+#: data/templates/data/dataset.html
+msgid "Views"
+msgstr "Tampilan"
+
+#: data/templates/data/dataset.html
+msgid "A view of collected answers is a grid of counts: how many respondents marked each cell, small groups hidden. It can be shown in a Site map block."
+msgstr "Tampilan jawaban yang terkumpul adalah kisi hitungan: berapa responden menandai tiap sel, kelompok kecil disembunyikan. Dapat ditampilkan di blok peta Situs."
+
+#: data/templates/data/dataset.html
+msgid "A view keeps the objects that match its conditions, with the fields you choose. Surveys and site map blocks can show a view instead of the whole dataset."
+msgstr "Tampilan menyimpan objek yang memenuhi kondisinya, dengan kolom pilihan Anda. Survei dan blok peta situs dapat menampilkan tampilan, bukan seluruh dataset."
+
+#: data/templates/data/dataset.html
+msgid "grid of counts"
+msgstr "kisi hitungan"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Delete view %(name)s"
+msgstr "Hapus tampilan %(name)s"
+
+#: data/templates/data/dataset.html
+msgid "New view"
+msgstr "Tampilan baru"
+
+#: data/templates/data/dataset.html
+msgid "Show objects where"
+msgstr "Tampilkan objek dengan"
+
+#: data/templates/data/dataset.html
+msgid "Field"
+msgstr "Kolom"
+
+#: data/templates/data/dataset.html
+msgid "Condition"
+msgstr "Kondisi"
+
+#: data/templates/data/dataset.html
+msgid "is"
+msgstr "sama dengan"
+
+#: data/templates/data/dataset.html
+msgid "is one of"
+msgstr "salah satu dari"
+
+#: data/templates/data/dataset.html
+msgid "greater than"
+msgstr "lebih dari"
+
+#: data/templates/data/dataset.html
+msgid "less than"
+msgstr "kurang dari"
+
+#: data/templates/data/dataset.html
+msgid "Value"
+msgstr "Nilai"
+
+#: data/templates/data/dataset.html
+msgid "Fields it keeps"
+msgstr "Kolom yang disimpan"
+
+#: data/templates/data/dataset.html
+msgid "Save view"
+msgstr "Simpan tampilan"
+
+#: survey/templates/sites/public.html
+msgid "respondents"
+msgstr "responden"

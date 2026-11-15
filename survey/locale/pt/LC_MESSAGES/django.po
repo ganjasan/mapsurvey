@@ -13412,3 +13412,113 @@ msgid "%(n)s answer about a removed object will be deleted."
 msgid_plural "%(n)s answers about removed objects will be deleted."
 msgstr[0] "%(n)s resposta sobre um objeto removido será eliminada."
 msgstr[1] "%(n)s respostas sobre objetos removidos serão eliminadas."
+
+#: data/dataviews.py
+msgid "Views are made of layers and of map answers."
+msgstr "As vistas fazem-se de camadas e de respostas no mapa."
+
+#: data/dataviews.py
+msgid "Give the view a name."
+msgstr "Dê um nome à vista."
+
+#: data/dataviews.py
+msgid "A condition can only use a public field of this dataset."
+msgstr "Uma condição só pode usar um campo público deste conjunto de dados."
+
+#: data/dataviews.py
+msgid "“Greater than” and “less than” need a number."
+msgstr "«Maior que» e «menor que» precisam de um número."
+
+#: data/dataviews.py
+msgid "A view can only keep public fields of this dataset."
+msgstr "Uma vista só pode manter campos públicos deste conjunto de dados."
+
+#: data/links.py
+msgid "Pick a view of this dataset."
+msgstr "Escolha uma vista deste conjunto de dados."
+
+#: data/links.py
+msgid "A grid of counts can be shown on a site, not as a survey layer."
+msgstr "Uma grelha de contagens pode ser mostrada num site, não como camada de inquérito."
+
+#: data/views.py
+msgid "View saved."
+msgstr "Vista guardada."
+
+#: data/views.py
+#, python-format
+msgid "“%(name)s” is shown in a survey or on a site. Unlink it there first."
+msgstr "«%(name)s» é mostrada num inquérito ou num site. Desligue-a lá primeiro."
+
+#: data/models.py
+msgid "Grid of counts"
+msgstr "Grelha de contagens"
+
+#: data/templates/data/dataset.html
+msgid "Views"
+msgstr "Vistas"
+
+#: data/templates/data/dataset.html
+msgid "A view of collected answers is a grid of counts: how many respondents marked each cell, small groups hidden. It can be shown in a Site map block."
+msgstr "Uma vista de respostas recolhidas é uma grelha de contagens: quantos inquiridos marcaram cada célula, com os grupos pequenos ocultos. Pode ser mostrada num bloco de mapa de um site."
+
+#: data/templates/data/dataset.html
+msgid "A view keeps the objects that match its conditions, with the fields you choose. Surveys and site map blocks can show a view instead of the whole dataset."
+msgstr "Uma vista mantém os objetos que cumprem as suas condições, com os campos que escolher. Os inquéritos e os blocos de mapa dos sites podem mostrar uma vista em vez de todo o conjunto de dados."
+
+#: data/templates/data/dataset.html
+msgid "grid of counts"
+msgstr "grelha de contagens"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Delete view %(name)s"
+msgstr "Eliminar a vista %(name)s"
+
+#: data/templates/data/dataset.html
+msgid "New view"
+msgstr "Nova vista"
+
+#: data/templates/data/dataset.html
+msgid "Show objects where"
+msgstr "Mostrar os objetos em que"
+
+#: data/templates/data/dataset.html
+msgid "Field"
+msgstr "Campo"
+
+#: data/templates/data/dataset.html
+msgid "Condition"
+msgstr "Condição"
+
+#: data/templates/data/dataset.html
+msgid "is"
+msgstr "é"
+
+#: data/templates/data/dataset.html
+msgid "is one of"
+msgstr "é um de"
+
+#: data/templates/data/dataset.html
+msgid "greater than"
+msgstr "maior que"
+
+#: data/templates/data/dataset.html
+msgid "less than"
+msgstr "menor que"
+
+#: data/templates/data/dataset.html
+msgid "Value"
+msgstr "Valor do campo"
+
+#: data/templates/data/dataset.html
+msgid "Fields it keeps"
+msgstr "Campos que mantém"
+
+#: data/templates/data/dataset.html
+msgid "Save view"
+msgstr "Guardar a vista"
+
+#: survey/templates/sites/public.html
+msgid "respondents"
+msgstr "inquiridos"

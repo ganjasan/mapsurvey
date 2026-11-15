@@ -94,7 +94,7 @@ from the canvas `[data-field]` elements, so this form is always the whole block 
   <label class="small mb-0" for="map-dataset-{{ edit_block.pk|default:'new' }}">{% trans "The map shows" %}</label>
   <select name="dataset" id="map-dataset-{{ edit_block.pk|default:'new' }}" class="form-control form-control-sm mb-1">
     <option value="">{% trans "The uploaded project area" %}</option>
-    {% for ds, refusal in map_datasets %}<option value="{{ ds.pk }}"{% if ds.pk == data.dataset %} selected{% endif %}{% if refusal %} disabled{% endif %}>{% blocktrans with name=ds.name %}Dataset: {{ name }}{% endblocktrans %}{% if refusal %} — {{ refusal }}{% endif %}</option>{% endfor %}
+    {% for value, label, refusal in map_datasets %}<option value="{{ value }}"{% if value == data.choice %} selected{% endif %}{% if refusal %} disabled{% endif %}>{% blocktrans with name=label %}Dataset: {{ name }}{% endblocktrans %}{% if refusal %} — {{ refusal }}{% endif %}</option>{% endfor %}
   </select>
   {% if errors.dataset %}<div class="text-danger small">{{ errors.dataset }}</div>{% endif %}
   {% endif %}

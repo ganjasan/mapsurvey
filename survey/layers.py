@@ -317,13 +317,21 @@ def build_map_layers_metadata(survey):
     if not django_settings.MAP_REFERENCE_LAYERS:
         return []
     from data.fields import hidden_names
+    from data.models import DatasetLink
+    # A survey showing a VIEW of a linked dataset (change data-views) draws it in the view's colour.
+    view_colors = {layer_id: color for layer_id, color in
+                   DatasetLink.objects.filter(survey=layer_owner(survey), view__isnull=False)
+                   .values_list('dataset__layer_id', 'view__color')}
     out = []
     # defer('geojson'): the 100s-of-KB geometry column loaded on every map
     # surface render fragments the worker heap into an RSS ratchet (the
     # 2026-09 "exceeded memory limits" incident); only config fields render.
     for layer in layers_for(survey).defer(*GEOMETRY_TEXT_FIELDS):
         hidden = hidden_names(layer)
-        style = normalize_style(layer.style, layer.color)
+        color = view_colors.get(layer.pk) or layer.color
+        style = normalize_style(layer.style, color)
+        if layer.pk in view_colors and view_colors[layer.pk]:
+            style = {k: v for k, v in style.items() if k != 'by'}
         if hidden and (style.get('by') or {}).get('field') in hidden:
             # A rule on a private field would leak its values as class labels (data-metadata);
             # the stored style keeps it, so making the field public again restores it.
@@ -332,7 +340,7 @@ def build_map_layers_metadata(survey):
         out.append({
             'id': layer.pk,
             'name': layer.name,
-            'color': layer.color,
+            'color': color,
             # On a `question` layer `label_field` names a sub-question, not a
             # feature property; the title already carries it (`_title`), so no
             # permanent map label — the tally badge takes that spot.

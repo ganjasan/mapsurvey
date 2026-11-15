@@ -27,9 +27,15 @@ def linkable(dataset):
     return dataset.kind == Dataset.KIND_LAYER and dataset.layer_id is not None
 
 
-def link_refusal(dataset, survey=None):
-    """Why `dataset` cannot be linked (into `survey` when given), or ''."""
+def link_refusal(dataset, survey=None, view=None):
+    """Why `dataset` (or its `view`) cannot be linked (into `survey` when given), or ''."""
     from survey.layers import MAX_LAYER_BYTES, MAX_LAYER_FEATURES, MAX_LAYERS_PER_SURVEY, layer_owner
+    if view is not None and view.dataset_id != dataset.pk:
+        return _('Pick a view of this dataset.')
+    if view is not None and view.kind == 'grid':
+        # Aggregated data leaves only as a grid of counts (change data-views): a Site block may
+        # show it; a survey's reference layer is objects respondents open, never counts.
+        return _('A grid of counts can be shown on a site, not as a survey layer.') if survey is not None else ''
     if not linkable(dataset):
         return _('Only a layer dataset can be shown on a map.')
     if dataset.privacy_class != Dataset.PRIVACY_PUBLIC:
@@ -51,20 +57,20 @@ def link_refusal(dataset, survey=None):
     return ''
 
 
-def link_survey(dataset, survey, user=None):
-    """Link `dataset` into the canonical survey of `survey`; returns the link (an existing one
-    is returned as is). Raises LinkRefused."""
+def link_survey(dataset, survey, user=None, view=None):
+    """Link `dataset` (or one of its views) into the canonical survey of `survey`; returns the
+    link (an existing link of the dataset is returned as is). Raises LinkRefused."""
     from survey.layers import layer_owner
     owner = layer_owner(survey)
     existing = DatasetLink.objects.filter(dataset=dataset, survey=owner).first()
     if existing is not None:
         return existing
-    reason = link_refusal(dataset, owner)
+    reason = link_refusal(dataset, owner, view)
     if reason:
         raise LinkRefused(reason)
     if dataset.organization_id != owner.organization_id:
         raise LinkRefused(_('Only a dataset of this workspace can be linked.'))
-    return DatasetLink.objects.create(dataset=dataset, survey=owner, created_by=user)
+    return DatasetLink.objects.create(dataset=dataset, survey=owner, view=view, created_by=user)
 
 
 def bound_questions(layer_id, survey=None):
@@ -93,33 +99,61 @@ def unlink_survey(link):
     link.delete()
 
 
-def sync_site_block(block, dataset_id):
-    """Keep a Site map block's link in step with its `dataset` (None = no link)."""
+def sync_site_block(block, dataset_id, view_id=None):
+    """Keep a Site map block's link in step with its `dataset` / `view` (None = no link)."""
     if not dataset_id:
         DatasetLink.objects.filter(site_block=block).delete()
         return
     link = DatasetLink.objects.filter(site_block=block).first()
     if link is None:
-        DatasetLink.objects.create(site_block=block, dataset_id=dataset_id)
-    elif link.dataset_id != dataset_id:
-        link.dataset_id = dataset_id
-        link.save(update_fields=['dataset'])
+        DatasetLink.objects.create(site_block=block, dataset_id=dataset_id, view_id=view_id)
+    elif (link.dataset_id, link.view_id) != (dataset_id, view_id):
+        link.dataset_id, link.view_id = dataset_id, view_id
+        link.save(update_fields=['dataset', 'view'])
 
 
-def site_dataset(org, dataset_id):
-    """The workspace's dataset a Site map block may show, or (None, reason)."""
-    ds = Dataset.objects.select_related('layer').defer(*_LAYER_TEXT).filter(pk=dataset_id, organization=org).first()
+def site_dataset(org, dataset_id, view_id=None):
+    """(dataset, view, reason) a Site map block may show; dataset None when refused."""
+    from data.models import DatasetView
+    ds = (Dataset.objects.select_related('layer', 'survey').defer(*_LAYER_TEXT)
+          .filter(pk=dataset_id, organization=org).first())
     if ds is None:
-        return None, _('Pick a dataset of this workspace.')
-    reason = link_refusal(ds)
-    return (None, reason) if reason else (ds, '')
+        return None, None, _('Pick a dataset of this workspace.')
+    view = DatasetView.objects.filter(pk=view_id, dataset=ds).first() if view_id else None
+    if view_id and view is None:
+        return None, None, _('Pick a view of this dataset.')
+    reason = link_refusal(ds, view=view)
+    return (None, None, reason) if reason else (ds, view, '')
+
+
+def _choices_with_views(datasets, refusal):
+    """[(value, label, refusal)] — each dataset, then each of its views as "dataset › view"."""
+    from data.models import DatasetView
+    views = {}
+    for v in DatasetView.objects.filter(dataset__in=[d.pk for d in datasets]).order_by('name'):
+        views.setdefault(v.dataset_id, []).append(v)
+    out = []
+    for ds in datasets:
+        if ds.kind == Dataset.KIND_LAYER:
+            out.append((str(ds.pk), ds.name, refusal(ds, None)))
+        for v in views.get(ds.pk, []):
+            out.append((f'{ds.pk}:{v.pk}', f'{ds.name} › {v.name}', refusal(ds, v)))
+    return out
+
+
+def parse_choice(value):
+    """'12' → (12, None); '12:5' → (12, 5); anything else → (None, None)."""
+    parts = str(value or '').split(':')
+    if not all(p.isdigit() for p in parts) or len(parts) > 2:
+        return None, None
+    return int(parts[0]), (int(parts[1]) if len(parts) == 2 else None)
 
 
 def site_choices(org):
-    """(dataset, refusal) for every layer dataset of the workspace — the block form's picker."""
-    rows = (Dataset.objects.filter(organization=org, kind=Dataset.KIND_LAYER).select_related('layer')
-            .defer(*_LAYER_TEXT).order_by('name'))
-    return [(ds, link_refusal(ds)) for ds in rows]
+    """[(value, label, refusal)] for the Site map block: layer datasets and every view."""
+    rows = list(Dataset.objects.filter(organization=org, kind__in=(Dataset.KIND_LAYER, Dataset.KIND_ANSWERS))
+                .select_related('layer').defer(*_LAYER_TEXT).order_by('name'))
+    return _choices_with_views(rows, lambda ds, v: link_refusal(ds, view=v))
 
 
 def survey_choices(org, survey):
@@ -130,22 +164,32 @@ def survey_choices(org, survey):
     owner = layer_owner(survey)
     sync(org)
     linked = set(DatasetLink.objects.filter(survey=owner).values_list('dataset_id', flat=True))
-    out = []
-    for ds in (Dataset.objects.filter(organization=org, kind=Dataset.KIND_LAYER).select_related('layer')
-               .defer(*_LAYER_TEXT)
-               .order_by('name')):
-        if ds.pk in linked or ds.layer.survey_id == owner.pk:
-            continue
-        out.append((ds, link_refusal(ds, owner)))
-    return out
+    rows = [ds for ds in (Dataset.objects.filter(organization=org, kind=Dataset.KIND_LAYER).select_related('layer')
+                          .defer(*_LAYER_TEXT).order_by('name'))
+            if ds.pk not in linked and ds.layer.survey_id != owner.pk]
+    return _choices_with_views(rows, lambda ds, v: link_refusal(ds, owner, v))
 
 
 def card_field_names(survey, layer_id):
     """The field names a survey's link shows on the object card, or None (= every public field)."""
     from survey.layers import layer_owner
-    names = (DatasetLink.objects.filter(survey=layer_owner(survey), dataset__layer_id=layer_id)
-             .values_list('fields', flat=True).first())
-    return list(names) if names else None
+    link = (DatasetLink.objects.filter(survey=layer_owner(survey), dataset__layer_id=layer_id)
+            .select_related('view').first())
+    if link is None:
+        return None
+    if link.fields:
+        return list(link.fields)
+    if link.view is not None and link.view.fields:
+        return list(link.view.fields)
+    return None
+
+
+def survey_view(survey, layer_id):
+    """The view a survey shows of a linked layer, or None (the whole dataset / an own layer)."""
+    from survey.layers import layer_owner
+    link = (DatasetLink.objects.filter(survey=layer_owner(survey), dataset__layer_id=layer_id, view__isnull=False)
+            .select_related('view__dataset__layer').first())
+    return link.view if link else None
 
 
 @dataclass
@@ -159,16 +203,18 @@ def used_by(dataset):
     """Every place that uses a dataset, for the dataset page, the delete page and the catalogue."""
     from django.urls import reverse
     places = []
-    if dataset.layer_id:
+    if dataset.layer_id and dataset.layer.survey_id:
         layer = dataset.layer
-        if layer.survey_id:
-            places.append(Place('survey', layer.survey.name, reverse('editor_survey_settings', args=[layer.survey.uuid])))
-        for link in dataset.links.select_related('survey', 'site_block__site'):
-            if link.survey_id:
-                places.append(Place('link', link.survey.name, reverse('editor_survey_settings', args=[link.survey.uuid])))
-            else:
-                site = link.site_block.site
-                places.append(Place('site', site.title or site.slug, reverse('editor_site', args=[site.uuid])))
+        places.append(Place('survey', layer.survey.name, reverse('editor_survey_settings', args=[layer.survey.uuid])))
+    for link in dataset.links.select_related('survey', 'site_block__site', 'view'):
+        suffix = f' › {link.view.name}' if link.view_id else ''
+        if link.survey_id:
+            places.append(Place('link', link.survey.name + suffix,
+                                reverse('editor_survey_settings', args=[link.survey.uuid])))
+        else:
+            site = link.site_block.site
+            places.append(Place('site', (site.title or site.slug) + suffix, reverse('editor_site', args=[site.uuid])))
+    if dataset.layer_id:
         for q in bound_questions(dataset.layer_id):
             header = q.survey_section.survey_header
             if header.canonical_survey_id or header.published_version_id:

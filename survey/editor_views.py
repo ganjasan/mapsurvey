@@ -932,7 +932,7 @@ def _editor_layers(survey):
     from data.models import DatasetLink
     from .layers import source_question_for
     links = {link.dataset.layer_id: link for link in
-             DatasetLink.objects.filter(survey=layer_owner(survey)).select_related('dataset')}
+             DatasetLink.objects.filter(survey=layer_owner(survey)).select_related('dataset', 'view')}
     items = []
     for layer in layers_for(survey):
         link = links.get(layer.pk)
@@ -1078,16 +1078,18 @@ def editor_survey_layer_link(request, survey_uuid):
     _layers_enabled_or_404()
     from data.links import LinkRefused, link_survey
     from data.models import Dataset
-    try:
-        dataset_id = int(request.POST.get('dataset') or 0)
-    except ValueError:
-        dataset_id = 0
-    dataset = Dataset.objects.select_related('layer').filter(
-        pk=dataset_id, organization=request.survey.organization).first()
+    from data.links import parse_choice
+    from data.models import DatasetView
+    dataset_id, view_id = parse_choice(request.POST.get('dataset'))
+    dataset = Dataset.objects.select_related('layer').defer('layer__geojson_gz', 'layer__geojson_legacy').filter(
+        pk=dataset_id or 0, organization=request.survey.organization).first()
     if dataset is None:
         return JsonResponse({'error': _('Pick a dataset of this workspace.')}, status=400)
+    view = DatasetView.objects.filter(pk=view_id, dataset=dataset).first() if view_id else None
+    if view_id and view is None:
+        return JsonResponse({'error': _('Pick a view of this dataset.')}, status=400)
     try:
-        link = link_survey(dataset, request.survey, request.user)
+        link = link_survey(dataset, request.survey, request.user, view=view)
     except LinkRefused as exc:
         return JsonResponse({'error': exc.message}, status=400)
     return JsonResponse({'id': link.pk, 'layer': dataset.layer_id}, status=201)
