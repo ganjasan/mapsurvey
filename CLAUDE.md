@@ -966,6 +966,17 @@ REST/MCP `object_out`, the ZIP's `serialize_layer_objects` and budget cost prope
 (`merge_private`). A new output of `LayerObject.properties` must go through `data.fields` too. Saving
 a dictionary whose private set changed rebuilds the layer. The respondent card shows the public
 dictionary fields by label (`object_card_payload['fields']`).
+**Links (change `data-links`, #670)**: a dataset is LINKED, never copied — `data.models.DatasetLink`
+(canonical `survey` OR `site_block`, plus the card `fields` a survey shows). `survey.layers.layers_for`
+returns owned layers ∪ the layers of PUBLIC datasets linked to the canonical survey (subquery on ids),
+so every read surface follows (respondent metadata, question layer picker, Responses, print, ZIP,
+the gated endpoint `_gated_layer`); WRITE paths keep `owner.map_layers` / `survey=layer_owner(...)`, so
+a survey never edits or deletes a layer it borrows — do not switch a write path to `layers_for`.
+Guards are `data.links.link_refusal` (public only, survey caps 5,000/10 MB, 10 layers incl. links);
+a linked dataset cannot go private; unlink/delete refuse while a question is bound. A Site map block
+stores `data['dataset']` and the page fetches `/p/<slug>/blocks/<id>/dataset.geojson` (never inlined);
+`services.sites.save_block`/`duplicate_block` keep its link row; `clone_survey` re-links. "Used by" =
+`data.links.used_by` (dataset page, delete page `/editor/data/<id>/delete/`, catalogue count).
 
 **Session scope (`data.scope`, change `data-scope`, Data epic #676)**: which sessions a surface
 counts is ONE builder, `data.scope.SessionScope(survey_ids, include_deleted=, include_moderated=,

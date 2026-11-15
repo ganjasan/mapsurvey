@@ -48,8 +48,18 @@ GEOMETRY_TEXT_FIELDS = ('geojson_gz', 'geojson_legacy')
 
 def layers_for(survey):
     """QuerySet of the layers a survey (or any of its versions) renders, with the
-    geometry text deferred (see GEOMETRY_TEXT_FIELDS)."""
-    return layer_owner(survey).map_layers.defer(*GEOMETRY_TEXT_FIELDS)
+    geometry text deferred (see GEOMETRY_TEXT_FIELDS): the canonical survey's own
+    layers plus the layers of the PUBLIC datasets linked to it "From Data" (change
+    data-links) — linked, never copied, so a dataset edit shows on every survey. A
+    subquery on ids, so an owned layer is never repeated by the join. Write paths
+    resolve owned layers only (`owner.map_layers` / `survey=layer_owner(...)`)."""
+    from django.db.models import Q
+    from data.models import DatasetLink
+    from survey.models import SurveyMapLayer
+    owner = layer_owner(survey)
+    linked = (DatasetLink.objects.filter(survey=owner, dataset__privacy_class='public')
+              .values('dataset__layer_id'))
+    return SurveyMapLayer.objects.filter(Q(survey=owner) | Q(pk__in=linked)).defer(*GEOMETRY_TEXT_FIELDS)
 
 
 def layer_lite(question):

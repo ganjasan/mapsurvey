@@ -90,6 +90,14 @@ from the canvas `[data-field]` elements, so this form is always the whole block 
   {% elif kind == 'map' %}
   <input type="file" name="geojson_file" hidden>
   {% if errors.area %}<div class="text-danger small">{{ errors.area }}</div>{% endif %}
+  {% if map_datasets %}
+  <label class="small mb-0" for="map-dataset-{{ edit_block.pk|default:'new' }}">{% trans "The map shows" %}</label>
+  <select name="dataset" id="map-dataset-{{ edit_block.pk|default:'new' }}" class="form-control form-control-sm mb-1">
+    <option value="">{% trans "The uploaded project area" %}</option>
+    {% for ds, refusal in map_datasets %}<option value="{{ ds.pk }}"{% if ds.pk == data.dataset %} selected{% endif %}{% if refusal %} disabled{% endif %}>{% blocktrans with name=ds.name %}Dataset: {{ name }}{% endblocktrans %}{% if refusal %} — {{ refusal }}{% endif %}</option>{% endfor %}
+  </select>
+  {% if errors.dataset %}<div class="text-danger small">{{ errors.dataset }}</div>{% endif %}
+  {% endif %}
   <div class="form-row">
     <div class="col-4"><label class="small mb-0">{% trans "Colour" %}</label>
       <input type="color" name="color" class="form-control form-control-sm" value="{{ data.color|default:'#2f6fb0' }}"></div>

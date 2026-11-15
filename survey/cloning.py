@@ -530,4 +530,10 @@ def clone_survey(source, *, created_by, created_files=None):
         if layer_id in layer_map:
             Question.objects.filter(survey_section__survey_header=survey, code=code).update(
                 layer=layer_map[layer_id])
+    # Datasets linked "From Data" are linked again, not copied (change data-links): a question
+    # bound to one keeps its layer id, which the copy's links make resolvable.
+    from data.models import DatasetLink
+    DatasetLink.objects.bulk_create([
+        DatasetLink(dataset_id=link.dataset_id, survey=survey, fields=link.fields)
+        for link in DatasetLink.objects.filter(survey=layer_owner(source))])
     return survey

@@ -128,6 +128,7 @@ class WorkerCacheIsolationTest(SimpleTestCase):
 # Modules that no capability in openspec/specs/ owns yet. Each is either a
 # missing spec or a set of classes to fold into one; this list should shrink.
 UNMAPPED_MODULES = {
+    'data-links': 'spec lives in the unarchived change data-links',
     'data-metadata': 'spec lives in the unarchived change data-metadata',
     'smoke': 'infrastructure smoke test',
     'structure': 'service-layer structure tests (api-v2-structure) spanning survey-editor and question-groups',

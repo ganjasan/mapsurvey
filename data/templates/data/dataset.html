@@ -94,6 +94,22 @@ download. This page and the object editor are the only places a private field is
     </div>
   </div>
 
+  <div class="card mb-3" data-testid="used-by">
+    <div class="card-body">
+      <h6 class="card-title mb-1">{% trans "Used by" %}</h6>
+      {% if used_by %}
+      <ul class="list-unstyled mb-0" style="font-size:.9rem;">
+        {% for p in used_by %}
+        <li class="py-1"><span class="badge badge-light mr-1">{% if p.kind == 'survey' %}{% trans "Belongs to survey" %}{% elif p.kind == 'link' %}{% trans "Survey" %}{% elif p.kind == 'site' %}{% trans "Site" %}{% else %}{% trans "Question" %}{% endif %}</span>{% if p.url %}<a href="{{ p.url }}">{{ p.label }}</a>{% else %}{{ p.label }}{% endif %}</li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="text-muted small mb-0">{% trans "No survey or site shows this dataset yet. Add it to a survey from its Reference layers card, or to a Site map block." %}</p>
+      {% endif %}
+      {% if can_delete %}<a class="btn btn-sm btn-outline-danger mt-3" href="{% url 'editor_data_delete' ds.pk %}">{% trans "Delete dataset" %}</a>{% endif %}
+    </div>
+  </div>
+
   {% if has_dictionary %}
   <div class="card mb-4">
     <div class="card-body">

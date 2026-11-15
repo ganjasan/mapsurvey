@@ -115,6 +115,9 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/layers/', editor_views.editor_survey_layer_create, name='editor_survey_layer_create'),
     path('editor/surveys/<uuid:survey_uuid>/layers/<int:layer_id>/', editor_views.editor_survey_layer_update, name='editor_survey_layer_update'),
     path('editor/surveys/<uuid:survey_uuid>/layers/<int:layer_id>/delete/', editor_views.editor_survey_layer_delete, name='editor_survey_layer_delete'),
+    path('editor/surveys/<uuid:survey_uuid>/layers/link/', editor_views.editor_survey_layer_link, name='editor_survey_layer_link'),
+    path('editor/surveys/<uuid:survey_uuid>/layers/link/<int:link_id>/unlink/', editor_views.editor_survey_layer_unlink, name='editor_survey_layer_unlink'),
+    path('editor/surveys/<uuid:survey_uuid>/layers/link/<int:link_id>/fields/', editor_views.editor_survey_layer_link_fields, name='editor_survey_layer_link_fields'),
     path('editor/surveys/<uuid:survey_uuid>/layers/<int:layer_id>/style-summary/', editor_views.editor_survey_layer_style_summary, name='editor_survey_layer_style_summary'),
     # Object editor (overlay-features): one page per layer + its JSON endpoints.
     path('editor/surveys/<uuid:survey_uuid>/layers/new/', layer_object_views.layer_create_empty, name='editor_layer_create_empty'),
@@ -306,6 +309,8 @@ urlpatterns = [
     # Sites (change landing-core, #576): the public page and its report form.
     path('p/<slug:slug>/', site_views.site_public, name='site_public'),
     path('p/<slug:slug>/report/', abuse_review_views.site_report, name='site_report'),
+    path('p/<slug:slug>/blocks/<int:block_id>/dataset.geojson', site_views.site_block_dataset,
+         name='site_block_dataset'),
     path('p/<slug:slug>/events/<int:block_id>/register/', site_views.site_event_register,
          name='site_event_register'),
     path('p/events/cancel/<uuid:token>/', site_views.site_event_cancel, name='site_event_cancel'),
@@ -322,6 +327,7 @@ urlpatterns = [
     path('editor/data/jobs/<int:job_id>/dismiss/', data_views.dismiss, name='editor_data_job_dismiss'),
     path('editor/data/<int:dataset_id>/', data_views.dataset, name='editor_data_dataset'),
     path('editor/data/<int:dataset_id>/download/', data_views.download, name='editor_data_download'),
+    path('editor/data/<int:dataset_id>/delete/', data_views.delete, name='editor_data_delete'),
     path('editor/sites/new/', site_views.editor_site_create, name='editor_site_create'),
     path('editor/sites/<uuid:uuid>/', site_views.editor_site, name='editor_site'),
     path('editor/sites/<uuid:uuid>/duplicate/', site_views.editor_site_duplicate, name='editor_site_duplicate'),

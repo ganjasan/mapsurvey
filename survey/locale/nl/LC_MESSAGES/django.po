@@ -13184,3 +13184,129 @@ msgstr "Nooit bijgewerkt"
 #: data/models.py
 msgid "The team or role that keeps the dataset current."
 msgstr "Het team of de rol die de dataset actueel houdt."
+
+#: data/links.py
+msgid "Only a layer dataset can be shown on a map."
+msgstr "Alleen een laagdataset kan op een kaart worden getoond."
+
+#: data/links.py
+msgid "This dataset is private. Make it public on its page in Data first."
+msgstr "Deze dataset is privé. Maak hem eerst openbaar op zijn pagina in Data."
+
+#: data/links.py
+msgid "This layer already belongs to the survey."
+msgstr "Deze laag hoort al bij de enquête."
+
+#: data/links.py
+#, python-format
+msgid "The dataset has %(n)s objects; a survey map takes up to %(max)s."
+msgstr "De dataset heeft %(n)s objecten; een enquêtekaart neemt er maximaal %(max)s."
+
+#: data/links.py
+#, python-format
+msgid "The dataset is larger than %(mb)s MB, the limit for a survey map."
+msgstr "De dataset is groter dan %(mb)s MB, de limiet van een enquêtekaart."
+
+#: data/links.py
+#, python-format
+msgid "A survey has at most %(n)s reference layers."
+msgstr "Een enquête heeft maximaal %(n)s referentielagen."
+
+#: data/links.py
+msgid "Only a dataset of this workspace can be linked."
+msgstr "Alleen een dataset van deze werkruimte kan worden gekoppeld."
+
+#: data/links.py
+#, python-format
+msgid "The question “%(name)s” shows this layer. Remove the question or pick another layer first."
+msgstr "De vraag “%(name)s” toont deze laag. Verwijder eerst de vraag of kies een andere laag."
+
+#: data/links.py
+msgid "Pick a dataset of this workspace."
+msgstr "Kies een dataset van deze werkruimte."
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "From Data"
+msgstr "Uit Data"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Open in Data"
+msgstr "Openen in Data"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Unlink"
+msgstr "Ontkoppelen"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Fields on the object card"
+msgstr "Velden op de objectkaart"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "pick a dataset"
+msgstr "kies een dataset"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Linked, not copied: an edit of the dataset shows on this survey's map."
+msgstr "Gekoppeld, niet gekopieerd: een wijziging van de dataset verschijnt op de kaart van deze enquête."
+
+#: survey/templates/sites/_block_form.html
+msgid "The map shows"
+msgstr "De kaart toont"
+
+#: survey/templates/sites/_block_form.html
+msgid "The uploaded project area"
+msgstr "Het geüploade projectgebied"
+
+#: survey/templates/sites/_block_form.html
+#, python-format
+msgid "Dataset: %(name)s"
+msgstr "Dataset: %(name)s"
+
+#: data/views.py
+msgid "Linked datasets stay public. Unlink it from every survey and site below first."
+msgstr "Gekoppelde datasets blijven openbaar. Ontkoppel hem eerst van elke enquête en site hieronder."
+
+#: data/views.py
+msgid "Dataset deleted."
+msgstr "Dataset verwijderd."
+
+#: data/templates/data/dataset.html
+msgid "Used by"
+msgstr "Gebruikt door"
+
+#: data/templates/data/dataset.html
+msgid "Belongs to survey"
+msgstr "Hoort bij enquête"
+
+#: data/templates/data/dataset.html
+msgid "No survey or site shows this dataset yet. Add it to a survey from its Reference layers card, or to a Site map block."
+msgstr "Nog geen enquête of site toont deze dataset. Voeg hem toe aan een enquête via de kaart Referentielagen, of aan een kaartblok van een site."
+
+#: data/templates/data/dataset.html
+msgid "Delete dataset"
+msgstr "Dataset verwijderen"
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "Delete “%(name)s”?"
+msgstr "“%(name)s” verwijderen?"
+
+#: data/templates/data/delete.html
+msgid "No survey or site uses it."
+msgstr "Geen enquête of site gebruikt hem."
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "The question “%(name)s” shows this dataset. Remove the question or pick another layer for it first."
+msgstr "De vraag “%(name)s” toont deze dataset. Verwijder eerst de vraag of kies er een andere laag voor."
+
+#: data/templates/data/delete.html
+msgid "Surveys and sites stop showing it, and its objects are deleted. This cannot be undone."
+msgstr "Enquêtes en sites tonen hem niet meer en zijn objecten worden verwijderd. Dit kan niet ongedaan worden gemaakt."
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "It is used in %(n)s place:"
+msgid_plural "It is used in %(n)s places:"
+msgstr[0] "Hij wordt op %(n)s plek gebruikt:"
+msgstr[1] "Hij wordt op %(n)s plekken gebruikt:"

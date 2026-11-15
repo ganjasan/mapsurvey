@@ -13139,3 +13139,128 @@ msgstr "Tidak pernah diperbarui"
 #: data/models.py
 msgid "The team or role that keeps the dataset current."
 msgstr "Tim atau peran yang menjaga dataset tetap mutakhir."
+
+#: data/links.py
+msgid "Only a layer dataset can be shown on a map."
+msgstr "Hanya dataset lapisan yang dapat ditampilkan di peta."
+
+#: data/links.py
+msgid "This dataset is private. Make it public on its page in Data first."
+msgstr "Dataset ini privat. Jadikan publik terlebih dahulu di halamannya di Data."
+
+#: data/links.py
+msgid "This layer already belongs to the survey."
+msgstr "Lapisan ini sudah milik survei."
+
+#: data/links.py
+#, python-format
+msgid "The dataset has %(n)s objects; a survey map takes up to %(max)s."
+msgstr "Dataset memiliki %(n)s objek; peta survei menampung hingga %(max)s."
+
+#: data/links.py
+#, python-format
+msgid "The dataset is larger than %(mb)s MB, the limit for a survey map."
+msgstr "Dataset lebih besar dari %(mb)s MB, batas peta survei."
+
+#: data/links.py
+#, python-format
+msgid "A survey has at most %(n)s reference layers."
+msgstr "Survei memiliki paling banyak %(n)s lapisan referensi."
+
+#: data/links.py
+msgid "Only a dataset of this workspace can be linked."
+msgstr "Hanya dataset dari ruang kerja ini yang dapat ditautkan."
+
+#: data/links.py
+#, python-format
+msgid "The question “%(name)s” shows this layer. Remove the question or pick another layer first."
+msgstr "Pertanyaan “%(name)s” menampilkan lapisan ini. Hapus pertanyaan atau pilih lapisan lain terlebih dahulu."
+
+#: data/links.py
+msgid "Pick a dataset of this workspace."
+msgstr "Pilih dataset dari ruang kerja ini."
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "From Data"
+msgstr "Dari Data"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Open in Data"
+msgstr "Buka di Data"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Unlink"
+msgstr "Lepas tautan"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Fields on the object card"
+msgstr "Kolom pada kartu objek"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "pick a dataset"
+msgstr "pilih dataset"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Linked, not copied: an edit of the dataset shows on this survey's map."
+msgstr "Ditautkan, bukan disalin: perubahan dataset tampil di peta survei ini."
+
+#: survey/templates/sites/_block_form.html
+msgid "The map shows"
+msgstr "Peta menampilkan"
+
+#: survey/templates/sites/_block_form.html
+msgid "The uploaded project area"
+msgstr "Area proyek yang diunggah"
+
+#: survey/templates/sites/_block_form.html
+#, python-format
+msgid "Dataset: %(name)s"
+msgstr "Dataset: %(name)s"
+
+#: data/views.py
+msgid "Linked datasets stay public. Unlink it from every survey and site below first."
+msgstr "Dataset yang ditautkan tetap publik. Lepaskan dulu tautannya dari setiap survei dan situs di bawah."
+
+#: data/views.py
+msgid "Dataset deleted."
+msgstr "Dataset dihapus."
+
+#: data/templates/data/dataset.html
+msgid "Used by"
+msgstr "Digunakan oleh"
+
+#: data/templates/data/dataset.html
+msgid "Belongs to survey"
+msgstr "Milik survei"
+
+#: data/templates/data/dataset.html
+msgid "No survey or site shows this dataset yet. Add it to a survey from its Reference layers card, or to a Site map block."
+msgstr "Belum ada survei atau situs yang menampilkan dataset ini. Tambahkan ke survei dari kartu Lapisan referensinya, atau ke blok peta Situs."
+
+#: data/templates/data/dataset.html
+msgid "Delete dataset"
+msgstr "Hapus dataset"
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "Delete “%(name)s”?"
+msgstr "Hapus “%(name)s”?"
+
+#: data/templates/data/delete.html
+msgid "No survey or site uses it."
+msgstr "Tidak ada survei atau situs yang menggunakannya."
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "The question “%(name)s” shows this dataset. Remove the question or pick another layer for it first."
+msgstr "Pertanyaan “%(name)s” menampilkan dataset ini. Hapus pertanyaan atau pilih lapisan lain untuknya terlebih dahulu."
+
+#: data/templates/data/delete.html
+msgid "Surveys and sites stop showing it, and its objects are deleted. This cannot be undone."
+msgstr "Survei dan situs berhenti menampilkannya, dan objeknya dihapus. Tindakan ini tidak dapat dibatalkan."
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "It is used in %(n)s place:"
+msgid_plural "It is used in %(n)s places:"
+msgstr[0] "Digunakan di %(n)s tempat:"

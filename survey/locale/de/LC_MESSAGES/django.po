@@ -13235,3 +13235,129 @@ msgstr "Nie aktualisiert"
 #: data/models.py
 msgid "The team or role that keeps the dataset current."
 msgstr "Das Team oder die Rolle, die den Datensatz aktuell hält."
+
+#: data/links.py
+msgid "Only a layer dataset can be shown on a map."
+msgstr "Nur ein Ebenen-Datensatz kann auf einer Karte gezeigt werden."
+
+#: data/links.py
+msgid "This dataset is private. Make it public on its page in Data first."
+msgstr "Dieser Datensatz ist privat. Machen Sie ihn zuerst auf seiner Seite unter Daten öffentlich."
+
+#: data/links.py
+msgid "This layer already belongs to the survey."
+msgstr "Diese Ebene gehört bereits zur Umfrage."
+
+#: data/links.py
+#, python-format
+msgid "The dataset has %(n)s objects; a survey map takes up to %(max)s."
+msgstr "Der Datensatz hat %(n)s Objekte; eine Umfragekarte nimmt bis zu %(max)s auf."
+
+#: data/links.py
+#, python-format
+msgid "The dataset is larger than %(mb)s MB, the limit for a survey map."
+msgstr "Der Datensatz ist größer als %(mb)s MB, das Limit einer Umfragekarte."
+
+#: data/links.py
+#, python-format
+msgid "A survey has at most %(n)s reference layers."
+msgstr "Eine Umfrage hat höchstens %(n)s Referenzebenen."
+
+#: data/links.py
+msgid "Only a dataset of this workspace can be linked."
+msgstr "Nur ein Datensatz dieses Arbeitsbereichs kann verknüpft werden."
+
+#: data/links.py
+#, python-format
+msgid "The question “%(name)s” shows this layer. Remove the question or pick another layer first."
+msgstr "Die Frage „%(name)s“ zeigt diese Ebene. Entfernen Sie zuerst die Frage oder wählen Sie eine andere Ebene."
+
+#: data/links.py
+msgid "Pick a dataset of this workspace."
+msgstr "Wählen Sie einen Datensatz dieses Arbeitsbereichs."
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "From Data"
+msgstr "Aus Daten"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Open in Data"
+msgstr "In Daten öffnen"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Unlink"
+msgstr "Verknüpfung lösen"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Fields on the object card"
+msgstr "Felder auf der Objektkarte"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "pick a dataset"
+msgstr "Datensatz wählen"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Linked, not copied: an edit of the dataset shows on this survey's map."
+msgstr "Verknüpft, nicht kopiert: Eine Änderung am Datensatz erscheint auf der Karte dieser Umfrage."
+
+#: survey/templates/sites/_block_form.html
+msgid "The map shows"
+msgstr "Die Karte zeigt"
+
+#: survey/templates/sites/_block_form.html
+msgid "The uploaded project area"
+msgstr "Das hochgeladene Projektgebiet"
+
+#: survey/templates/sites/_block_form.html
+#, python-format
+msgid "Dataset: %(name)s"
+msgstr "Datensatz: %(name)s"
+
+#: data/views.py
+msgid "Linked datasets stay public. Unlink it from every survey and site below first."
+msgstr "Verknüpfte Datensätze bleiben öffentlich. Lösen Sie zuerst die Verknüpfung mit jeder Umfrage und jeder Seite unten."
+
+#: data/views.py
+msgid "Dataset deleted."
+msgstr "Datensatz gelöscht."
+
+#: data/templates/data/dataset.html
+msgid "Used by"
+msgstr "Verwendet in"
+
+#: data/templates/data/dataset.html
+msgid "Belongs to survey"
+msgstr "Gehört zur Umfrage"
+
+#: data/templates/data/dataset.html
+msgid "No survey or site shows this dataset yet. Add it to a survey from its Reference layers card, or to a Site map block."
+msgstr "Noch keine Umfrage und keine Seite zeigt diesen Datensatz. Fügen Sie ihn einer Umfrage über deren Karte „Referenzebenen“ oder einem Kartenblock einer Seite hinzu."
+
+#: data/templates/data/dataset.html
+msgid "Delete dataset"
+msgstr "Datensatz löschen"
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "Delete “%(name)s”?"
+msgstr "„%(name)s“ löschen?"
+
+#: data/templates/data/delete.html
+msgid "No survey or site uses it."
+msgstr "Keine Umfrage und keine Seite verwendet ihn."
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "The question “%(name)s” shows this dataset. Remove the question or pick another layer for it first."
+msgstr "Die Frage „%(name)s“ zeigt diesen Datensatz. Entfernen Sie zuerst die Frage oder wählen Sie für sie eine andere Ebene."
+
+#: data/templates/data/delete.html
+msgid "Surveys and sites stop showing it, and its objects are deleted. This cannot be undone."
+msgstr "Umfragen und Seiten zeigen ihn nicht mehr, und seine Objekte werden gelöscht. Das lässt sich nicht rückgängig machen."
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "It is used in %(n)s place:"
+msgid_plural "It is used in %(n)s places:"
+msgstr[0] "Er wird an %(n)s Stelle verwendet:"
+msgstr[1] "Er wird an %(n)s Stellen verwendet:"

@@ -10,6 +10,7 @@ from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
 from data.datasets import catalogue_rows
+from data.links import used_by
 from data.models import DataImportJob, Dataset
 
 UPLOAD_EXTENSIONS = ('.gpkg', '.zip', '.kml', '.geojson', '.json', '.csv')
@@ -196,7 +197,10 @@ def dataset(request, dataset_id):
             return redirect('editor_data_dataset', dataset_id=ds.pk)
         elif action == 'privacy' and ds.kind == Dataset.KIND_LAYER:
             value = request.POST.get('privacy_class')
-            if value in (Dataset.PRIVACY_PUBLIC, Dataset.PRIVACY_PRIVATE):
+            if value == Dataset.PRIVACY_PRIVATE and ds.links.exists():
+                # A private dataset cannot sit in a public surface (change data-links).
+                messages.error(request, _('Linked datasets stay public. Unlink it from every survey and site below first.'))
+            elif value in (Dataset.PRIVACY_PUBLIC, Dataset.PRIVACY_PRIVATE):
                 Dataset.objects.filter(pk=ds.pk).update(privacy_class=value)
             return redirect('editor_data_dataset', dataset_id=ds.pk)
     return render(request, 'data/dataset.html', {
@@ -208,6 +212,40 @@ def dataset(request, dataset_id):
         'fields': dictionary(ds) if ds.kind == Dataset.KIND_LAYER else [],
         'field_types': FIELD_TYPES,
         'has_dictionary': ds.kind == Dataset.KIND_LAYER,
+        'used_by': used_by(ds),
+        'can_delete': can_edit and _deletable(ds),
+    })
+
+
+def _deletable(ds):
+    """Only a workspace upload is deleted here; a survey's layer is deleted in its survey."""
+    return ds.kind == Dataset.KIND_LAYER and ds.layer_id is not None and ds.layer.survey_id is None
+
+
+@login_required
+def delete(request, dataset_id):
+    """Every place that uses the dataset first, then the confirm (change data-links). Refused
+    while a question is bound to its layer; links and site blocks let go of it otherwise."""
+    from data.links import bound_questions
+    org, membership, row = _dataset_row(request, dataset_id)
+    ds = row.dataset
+    if not (_can_edit(request.user, membership, row) and _deletable(ds)):
+        raise Http404
+    questions = bound_questions(ds.layer_id)
+    if request.method == 'POST' and not questions:
+        from django.db import transaction
+        from survey.models import SiteBlock, SurveyMapLayer
+        with transaction.atomic():
+            for link in ds.links.filter(site_block__isnull=False).select_related('site_block'):
+                block = link.site_block
+                block.data = {**(block.data or {}), 'dataset': None}
+                block.save(update_fields=['data'])
+            SurveyMapLayer.objects.filter(pk=ds.layer_id).delete()   # cascades the dataset and its links
+        messages.success(request, _('Dataset deleted.'))
+        return redirect('editor_data')
+    return render(request, 'data/delete.html', {
+        'org': org, 'ds': ds, 'used_by': used_by(ds), 'questions': questions,
+        'refused': request.method == 'POST',
     })
 
 
