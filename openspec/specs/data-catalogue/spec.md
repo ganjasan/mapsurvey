@@ -47,3 +47,11 @@ link), and each row SHALL link to where the data is edited or read today.
 - **WHEN** a member opens any editor page
 - **THEN** the sidebar shows a Data item linking to the catalogue
 
+### Requirement: Workspace datasets without a survey
+A dataset that belongs to the workspace rather than to a survey (an upload made in Data) SHALL be
+listed to every member of the workspace, with its source shown as "Uploaded".
+
+#### Scenario: Every member sees an upload
+- **WHEN** an owner uploads a register in Data and a workspace editor opens the catalogue
+- **THEN** the editor sees the register's dataset
+
