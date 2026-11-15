@@ -12958,3 +12958,184 @@ msgstr[0] "%(n)s baris tanpa lokasi dilewati"
 msgid "%(n)s duplicate key skipped"
 msgid_plural "%(n)s duplicate keys skipped"
 msgstr[0] "%(n)s kunci ganda dilewati"
+
+#: data/templates/data/dataset.html
+msgid "Breadcrumb"
+msgstr "Jejak navigasi"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "changed %(when)s"
+msgstr "diubah %(when)s"
+
+#: data/templates/data/dataset.html
+msgid "Open the source"
+msgstr "Buka sumber"
+
+#: data/templates/data/dataset.html
+msgid "Access"
+msgstr "Akses"
+
+#: data/templates/data/dataset.html
+msgid "Details"
+msgstr "Rincian"
+
+#: data/templates/data/dataset.html
+msgid "Theme"
+msgstr "Tema"
+
+#: data/templates/data/dataset.html
+msgid "Maintainer"
+msgstr "Pengelola"
+
+#: data/templates/data/dataset.html
+msgid "Team or role, e.g. Parks team"
+msgstr "Tim atau peran, mis. tim taman"
+
+#: data/templates/data/dataset.html
+msgid "Updated"
+msgstr "Pembaruan"
+
+#: data/templates/data/dataset.html
+msgid "Licence"
+msgstr "Lisensi"
+
+#: data/templates/data/dataset.html
+msgid "Save details"
+msgstr "Simpan rincian"
+
+#: data/templates/data/dataset.html
+msgid "Fields"
+msgstr "Kolom"
+
+#: data/templates/data/dataset.html
+msgid "Labels replace the raw names on object cards and in downloads. A private field stays on this page and in the object editor: no map, export, download or API shows it."
+msgstr "Label menggantikan nama mentah pada kartu objek dan unduhan. Kolom privat tetap di halaman ini dan di editor objek: tidak ada peta, ekspor, unduhan, atau API yang menampilkannya."
+
+#: data/templates/data/dataset.html
+msgid "Label"
+msgstr "Label"
+
+#: data/templates/data/dataset.html
+msgid "Type"
+msgstr "Tipe"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Label of %(name)s"
+msgstr "Label %(name)s"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Type of %(name)s"
+msgstr "Tipe %(name)s"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Description of %(name)s"
+msgstr "Deskripsi %(name)s"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "%(name)s is private"
+msgstr "%(name)s privat"
+
+#: data/templates/data/dataset.html
+msgid "Save fields"
+msgstr "Simpan kolom"
+
+#: data/templates/data/dataset.html
+msgid "The objects of this layer carry no fields yet."
+msgstr "Objek pada lapisan ini belum memiliki kolom."
+
+#: data/views.py
+msgid "Details saved."
+msgstr "Rincian disimpan."
+
+#: data/views.py
+msgid "Field dictionary saved."
+msgstr "Kamus kolom disimpan."
+
+#: data/models.py
+msgid "Agriculture, fisheries, forestry and food"
+msgstr "Pertanian, perikanan, kehutanan, dan pangan"
+
+#: data/models.py
+msgid "Economy and finance"
+msgstr "Ekonomi dan keuangan"
+
+#: data/models.py
+msgid "Education, culture and sport"
+msgstr "Pendidikan, budaya, dan olahraga"
+
+#: data/models.py
+msgid "Energy"
+msgstr "Energi"
+
+#: data/models.py
+msgid "Environment"
+msgstr "Lingkungan"
+
+#: data/models.py
+msgid "Government and public sector"
+msgstr "Pemerintahan dan sektor publik"
+
+#: data/models.py
+msgid "Health"
+msgstr "Kesehatan"
+
+#: data/models.py
+msgid "International issues"
+msgstr "Isu internasional"
+
+#: data/models.py
+msgid "Justice, legal system and public safety"
+msgstr "Keadilan, sistem hukum, dan keamanan publik"
+
+#: data/models.py
+msgid "Regions and cities"
+msgstr "Wilayah dan kota"
+
+#: data/models.py
+msgid "Population and society"
+msgstr "Kependudukan dan masyarakat"
+
+#: data/models.py
+msgid "Science and technology"
+msgstr "Ilmu pengetahuan dan teknologi"
+
+#: data/models.py
+msgid "Transport"
+msgstr "Transportasi"
+
+#: data/models.py
+msgid "As needed"
+msgstr "Sesuai kebutuhan"
+
+#: data/models.py
+msgid "Daily"
+msgstr "Harian"
+
+#: data/models.py
+msgid "Weekly"
+msgstr "Mingguan"
+
+#: data/models.py
+msgid "Monthly"
+msgstr "Bulanan"
+
+#: data/models.py
+msgid "Quarterly"
+msgstr "Triwulanan"
+
+#: data/models.py
+msgid "Yearly"
+msgstr "Tahunan"
+
+#: data/models.py
+msgid "Never updated"
+msgstr "Tidak pernah diperbarui"
+
+#: data/models.py
+msgid "The team or role that keeps the dataset current."
+msgstr "Tim atau peran yang menjaga dataset tetap mutakhir."

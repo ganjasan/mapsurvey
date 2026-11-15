@@ -130,3 +130,188 @@ def dismiss(request, job_id):
     if job.status in ('done', 'failed'):
         job.delete()
     return redirect('editor_data')
+
+
+# ─── The dataset page (change data-metadata, #669) ───────────────────────────
+
+def _dataset_row(request, dataset_id):
+    """(org, membership, row) for a dataset the member may see — 404 otherwise. The catalogue's
+    own visibility rule decides, so the page and the list can never disagree."""
+    org, membership = _member(request)
+    if org is None or membership is None:
+        raise Http404
+    get_object_or_404(Dataset, pk=dataset_id, organization=org)
+    row = next((r for r in catalogue_rows(org, request.user) if r.dataset.pk == dataset_id), None)
+    if row is None:
+        raise Http404
+    return org, membership, row
+
+
+def _can_edit(user, membership, row):
+    if membership.role not in ('owner', 'admin', 'editor'):
+        return False
+    if row.survey is None:
+        return True   # a workspace upload: every editor of the workspace
+    from survey.permissions import SURVEY_ROLE_RANK, get_effective_survey_role
+    role = get_effective_survey_role(user, row.survey)
+    return SURVEY_ROLE_RANK.get(role, -1) >= SURVEY_ROLE_RANK['editor']
+
+
+def _details_form(data=None, instance=None):
+    from django import forms
+
+    class DatasetDetailsForm(forms.ModelForm):
+        class Meta:
+            model = Dataset
+            fields = ['name', 'description', 'theme', 'maintainer', 'update_frequency', 'licence']
+            widgets = {'description': forms.Textarea(attrs={'rows': 3})}
+
+    form = DatasetDetailsForm(data, instance=instance)
+    for name in ('theme', 'update_frequency', 'licence'):
+        form.fields[name].required = False
+    return form
+
+
+@login_required
+def dataset(request, dataset_id):
+    from data.fields import FIELD_TYPES, dictionary
+    org, membership, row = _dataset_row(request, dataset_id)
+    ds = row.dataset
+    can_edit = _can_edit(request.user, membership, row)
+    form = _details_form(instance=ds)
+    if request.method == 'POST':
+        if not can_edit:
+            from django.http import HttpResponseForbidden
+            return HttpResponseForbidden()
+        action = request.POST.get('action')
+        if action == 'details':
+            form = _details_form(request.POST, instance=ds)
+            if form.is_valid():
+                form.save()
+                messages.success(request, _('Details saved.'))
+                return redirect('editor_data_dataset', dataset_id=ds.pk)
+        elif action == 'fields' and ds.kind == Dataset.KIND_LAYER:
+            _save_dictionary(request, ds)
+            messages.success(request, _('Field dictionary saved.'))
+            return redirect('editor_data_dataset', dataset_id=ds.pk)
+        elif action == 'privacy' and ds.kind == Dataset.KIND_LAYER:
+            value = request.POST.get('privacy_class')
+            if value in (Dataset.PRIVACY_PUBLIC, Dataset.PRIVACY_PRIVATE):
+                Dataset.objects.filter(pk=ds.pk).update(privacy_class=value)
+            return redirect('editor_data_dataset', dataset_id=ds.pk)
+    return render(request, 'data/dataset.html', {
+        'org': org,
+        'row': row,
+        'ds': ds,
+        'form': form,
+        'can_edit': can_edit,
+        'fields': dictionary(ds) if ds.kind == Dataset.KIND_LAYER else [],
+        'field_types': FIELD_TYPES,
+        'has_dictionary': ds.kind == Dataset.KIND_LAYER,
+    })
+
+
+def _save_dictionary(request, ds):
+    """Store labels, types, descriptions and private flags for the names the dictionary knows;
+    rebuild the layer's derived GeoJSON when the private set changed, so every surface reading
+    it follows at once."""
+    from data.fields import FIELD_TYPES, dictionary, hidden_names
+    before = hidden_names(ds.layer_id)
+    entries = []
+    for i, f in enumerate(dictionary(ds)):
+        if request.POST.get(f'name_{i}') != f['name']:
+            entries.append(f)   # the page changed under the form: keep what is stored
+            continue
+        ftype = request.POST.get(f'type_{i}')
+        entries.append({
+            'name': f['name'],
+            'label': (request.POST.get(f'label_{i}') or '').strip()[:200] or f['name'],
+            'type': ftype if ftype in FIELD_TYPES else f.get('type', 'text'),
+            'description': (request.POST.get(f'description_{i}') or '').strip()[:500],
+            'private': request.POST.get(f'private_{i}') == '1',
+        })
+    Dataset.objects.filter(pk=ds.pk).update(fields=entries, updated_at=timezone.now())
+    after = frozenset(f['name'] for f in entries if f['private'])
+    if after != before and ds.layer_id:
+        from survey.layers import rebuild_layer
+        from survey.models import SurveyMapLayer
+        rebuild_layer(SurveyMapLayer.objects.get(pk=ds.layer_id))
+
+
+@login_required
+def download(request, dataset_id):
+    """A layer dataset as CSV or GeoJSON: public fields only, labels as column names / keys."""
+    import csv
+    import io
+    import json
+    from django.http import StreamingHttpResponse
+    from django.utils.text import slugify
+    from data.fields import labels
+    _org, _membership, row = _dataset_row(request, dataset_id)
+    ds = row.dataset
+    if ds.kind != Dataset.KIND_LAYER:
+        raise Http404
+    fmt = request.GET.get('format', 'csv')
+    if fmt not in ('csv', 'geojson'):
+        raise Http404
+    label_map = labels(ds.layer_id)
+    if not ds.fields:   # an undocumented survey layer: its (public) property names, raw
+        label_map = {n: n for n in (ds.layer.property_names or [])}
+    columns, used = [], {'key', 'title', 'category', 'lon', 'lat', 'wkt'}
+    for name, label in label_map.items():
+        out = label if label not in used else f'{label} ({name})'
+        used.add(out)
+        columns.append((name, out))
+    from survey.models import LayerObject
+    objects = (LayerObject.objects.filter(layer_id=ds.layer_id).order_by('position', 'id')
+               .values('key', 'title', 'category', 'properties', 'geometry'))
+    filename = slugify(ds.name) or 'dataset'
+
+    def csv_rows():
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        writer.writerow(['key', 'title', 'category', 'lon', 'lat', 'wkt'] + [c for _n, c in columns])
+        for o in objects.iterator(chunk_size=500):
+            props = o['properties'] if isinstance(o['properties'], dict) else {}
+            c = o['geometry'].centroid
+            writer.writerow([o['key'], o['title'], o['category'], round(c.x, 7), round(c.y, 7), o['geometry'].wkt]
+                            + [_csv_cell(props.get(n)) for n, _c in columns])
+            yield buf.getvalue()
+            buf.seek(0)
+            buf.truncate()
+
+    def geojson_parts():
+        yield '{"type":"FeatureCollection","features":['
+        first = True
+        for o in objects.iterator(chunk_size=500):
+            props = o['properties'] if isinstance(o['properties'], dict) else {}
+            feature = {'type': 'Feature', 'geometry': json.loads(o['geometry'].geojson),
+                       'properties': {'key': o['key'], 'title': o['title'], 'category': o['category'],
+                                      **{c: props.get(n) for n, c in columns}}}
+            yield ('' if first else ',') + json.dumps(feature, ensure_ascii=False)
+            first = False
+        yield ']}'
+
+    if fmt == 'csv':
+        response = StreamingHttpResponse(csv_rows(), content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="{filename}.csv"'
+    else:
+        response = StreamingHttpResponse(geojson_parts(), content_type='application/geo+json')
+        response['Content-Disposition'] = f'attachment; filename="{filename}.geojson"'
+    return response
+
+
+def _csv_cell(value):
+    """A property value as a CSV cell; a formula-looking text is apostrophe-guarded."""
+    if value is None:
+        return ''
+    text = value if isinstance(value, str) else str(value)
+    return "'" + text if text[:1] in ('=', '+', '-', '@') and not _is_number(text) else text
+
+
+def _is_number(text):
+    try:
+        float(text)
+        return True
+    except ValueError:
+        return False

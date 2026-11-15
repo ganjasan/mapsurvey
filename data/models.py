@@ -45,9 +45,46 @@ class Dataset(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True, default='')
     privacy_class = models.CharField(max_length=12, choices=PRIVACY_CHOICES, default=PRIVACY_PRIVATE)
-    licence = models.CharField(max_length=32, blank=True, default='')
-    # The field dictionary (change data-upload): [{'name', 'label', 'type', 'private'}]. A private
-    # field never leaves the dataset's own editor (enforced from #669).
+    # Closed list (owner 2026-11-14); `data.fields.LICENCES` names them.
+    LICENCE_CHOICES = [
+        ('ogl-uk-3.0', 'Open Government Licence v3.0'),
+        ('cc-by-4.0', 'CC BY 4.0'),
+        ('cc0-1.0', 'CC0 1.0'),
+        ('dl-de-by-2.0', 'Datenlizenz Deutschland – Namensnennung 2.0'),
+    ]
+    # The DCAT-AP data themes (EU vocabulary) — what an open-data feed (#675) publishes.
+    THEME_CHOICES = [
+        ('AGRI', _('Agriculture, fisheries, forestry and food')),
+        ('ECON', _('Economy and finance')),
+        ('EDUC', _('Education, culture and sport')),
+        ('ENER', _('Energy')),
+        ('ENVI', _('Environment')),
+        ('GOVE', _('Government and public sector')),
+        ('HEAL', _('Health')),
+        ('INTR', _('International issues')),
+        ('JUST', _('Justice, legal system and public safety')),
+        ('REGI', _('Regions and cities')),
+        ('SOCI', _('Population and society')),
+        ('TECH', _('Science and technology')),
+        ('TRAN', _('Transport')),
+    ]
+    FREQUENCY_CHOICES = [
+        ('as_needed', _('As needed')),
+        ('daily', _('Daily')),
+        ('weekly', _('Weekly')),
+        ('monthly', _('Monthly')),
+        ('quarterly', _('Quarterly')),
+        ('yearly', _('Yearly')),
+        ('never', _('Never updated')),
+    ]
+    licence = models.CharField(max_length=32, blank=True, default='', choices=LICENCE_CHOICES)
+    theme = models.CharField(max_length=8, blank=True, default='', choices=THEME_CHOICES)
+    maintainer = models.CharField(max_length=200, blank=True, default='',
+                                  help_text=_('The team or role that keeps the dataset current.'))
+    update_frequency = models.CharField(max_length=12, blank=True, default='', choices=FREQUENCY_CHOICES)
+    # The field dictionary: [{'name', 'label', 'type', 'description', 'private'}] (data-upload
+    # writes it, data-metadata edits it). A private field never leaves the dataset's own editor —
+    # `data.fields` is the rule every output goes through.
     fields = models.JSONField(default=list, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

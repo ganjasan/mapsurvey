@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ ds.name }} — {% trans "Data" %}{% endblock %}
+
+{% block content %}
+{% comment %}The dataset page (change data-metadata, #669): details, the field dictionary and the
+download. This page and the object editor are the only places a private field is shown.{% endcomment %}
+<div class="container mt-4" style="max-width: 980px;">
+  <nav aria-label="{% trans 'Breadcrumb' %}" class="small mb-2"><a href="{% url 'editor_data' %}">{% trans "Data" %}</a> / {{ ds.name }}</nav>
+  <div class="d-flex align-items-start justify-content-between flex-wrap mb-2" style="gap:.5rem;">
+    <div style="min-width:0;">
+      <h4 class="mb-1">{{ ds.name }}</h4>
+      <div class="text-muted small" data-testid="dataset-facts">
+        {% if row.extra.uploaded %}{% trans "Uploaded" %}{% else %}{{ ds.get_kind_display }}{% endif %}{% if row.survey %} · {{ row.survey.name }}{% endif %}
+        · {% blocktrans count n=row.rows %}{{ n }} row{% plural %}{{ n }} rows{% endblocktrans %}
+        · {% blocktrans count n=row.used_by %}used in {{ n }} place{% plural %}used in {{ n }} places{% endblocktrans %}
+        {% if row.changed %}· {% blocktrans with when=row.changed|date:"j M Y" %}changed {{ when }}{% endblocktrans %}{% endif %}
+        {% if row.link %}· <a href="{{ row.link }}">{% trans "Open the source" %}</a>{% endif %}
+      </div>
+    </div>
+    <div class="d-flex align-items-center" style="gap:.5rem;">
+      {% if has_dictionary %}
+      <div class="btn-group btn-group-sm" role="group" aria-label="{% trans 'Download' %}">
+        <a class="btn btn-outline-secondary" href="{% url 'editor_data_download' ds.pk %}?format=csv" data-testid="download-csv"><i class="fas fa-download" aria-hidden="true"></i> CSV</a>
+        <a class="btn btn-outline-secondary" href="{% url 'editor_data_download' ds.pk %}?format=geojson">GeoJSON</a>
+      </div>
+      {% endif %}
+      {% if has_dictionary and can_edit %}
+      <form method="post" class="mb-0 d-flex align-items-center" style="gap:.35rem;">
+        {% csrf_token %}<input type="hidden" name="action" value="privacy">
+        <label for="ds-privacy" class="small text-muted mb-0">{% trans "Access" %}</label>
+        <select id="ds-privacy" name="privacy_class" class="custom-select custom-select-sm" style="width:auto;" onchange="this.form.submit()">
+          <option value="private"{% if ds.privacy_class == 'private' %} selected{% endif %}>{% trans "Private" %}</option>
+          <option value="public"{% if ds.privacy_class == 'public' %} selected{% endif %}>{% trans "Public" %}</option>
+        </select>
+      </form>
+      {% else %}
+      <span class="badge {% if ds.privacy_class == 'public' %}badge-success{% elif ds.privacy_class == 'aggregated' %}badge-info{% else %}badge-secondary{% endif %}">{{ ds.get_privacy_class_display }}</span>
+      {% endif %}
+    </div>
+  </div>
+
+  {% for message in messages %}
+  <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} py-2" style="font-size:.9rem;">{{ message }}</div>
+  {% endfor %}
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <h6 class="card-title">{% trans "Details" %}</h6>
+      <form method="post" data-testid="details-form">
+        {% csrf_token %}<input type="hidden" name="action" value="details">
+        <fieldset {% if not can_edit %}disabled{% endif %}>
+        <div class="form-row">
+          <div class="form-group col-md-8">
+            <label for="{{ form.name.id_for_label }}">{% trans "Name" %}</label>
+            <input type="text" class="form-control form-control-sm{% if form.name.errors %} is-invalid{% endif %}" id="{{ form.name.id_for_label }}" name="name" value="{{ form.name.value|default:'' }}" maxlength="200" required>
+            {% for e in form.name.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="form-group col-md-4">
+            <label for="{{ form.theme.id_for_label }}">{% trans "Theme" %}</label>
+            <select class="custom-select custom-select-sm{% if form.theme.errors %} is-invalid{% endif %}" id="{{ form.theme.id_for_label }}" name="theme">
+              {% for value, label in form.theme.field.choices %}<option value="{{ value }}"{% if form.theme.value == value %} selected{% endif %}>{% if value %}{{ label }}{% else %}—{% endif %}</option>{% endfor %}
+            </select>
+            {% for e in form.theme.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="{{ form.description.id_for_label }}">{% trans "Description" %}</label>
+          <textarea class="form-control form-control-sm" id="{{ form.description.id_for_label }}" name="description" rows="3">{{ form.description.value|default:'' }}</textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-4">
+            <label for="{{ form.maintainer.id_for_label }}">{% trans "Maintainer" %}</label>
+            <input type="text" class="form-control form-control-sm" id="{{ form.maintainer.id_for_label }}" name="maintainer" value="{{ form.maintainer.value|default:'' }}" maxlength="200" placeholder="{% trans 'Team or role, e.g. Parks team' %}">
+          </div>
+          <div class="form-group col-md-4">
+            <label for="{{ form.update_frequency.id_for_label }}">{% trans "Updated" %}</label>
+            <select class="custom-select custom-select-sm" id="{{ form.update_frequency.id_for_label }}" name="update_frequency">
+              {% for value, label in form.update_frequency.field.choices %}<option value="{{ value }}"{% if form.update_frequency.value == value %} selected{% endif %}>{% if value %}{{ label }}{% else %}—{% endif %}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="form-group col-md-4">
+            <label for="{{ form.licence.id_for_label }}">{% trans "Licence" %}</label>
+            <select class="custom-select custom-select-sm{% if form.licence.errors %} is-invalid{% endif %}" id="{{ form.licence.id_for_label }}" name="licence">
+              {% for value, label in form.licence.field.choices %}<option value="{{ value }}"{% if form.licence.value == value %} selected{% endif %}>{% if value %}{{ label }}{% else %}—{% endif %}</option>{% endfor %}
+            </select>
+            {% for e in form.licence.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+          </div>
+        </div>
+        {% if can_edit %}<button type="submit" class="btn btn-sm btn-primary">{% trans "Save details" %}</button>{% endif %}
+        </fieldset>
+      </form>
+    </div>
+  </div>
+
+  {% if has_dictionary %}
+  <div class="card mb-4">
+    <div class="card-body">
+      <h6 class="card-title mb-1">{% trans "Fields" %}</h6>
+      <p class="text-muted small">{% blocktrans %}Labels replace the raw names on object cards and in downloads. A private field stays on this page and in the object editor: no map, export, download or API shows it.{% endblocktrans %}</p>
+      {% if fields %}
+      <form method="post" data-testid="fields-form">
+        {% csrf_token %}<input type="hidden" name="action" value="fields">
+        <fieldset {% if not can_edit %}disabled{% endif %}>
+        <div class="table-responsive">
+        <table class="table table-sm mb-2" style="font-size:.88rem;">
+          <thead><tr><th scope="col">{% trans "Name" %}</th><th scope="col">{% trans "Label" %}</th><th scope="col">{% trans "Type" %}</th><th scope="col">{% trans "Description" %}</th><th scope="col" class="text-center">{% trans "Private" %}</th></tr></thead>
+          <tbody>
+          {% for f in fields %}
+          <tr data-field="{{ f.name }}">
+            <td class="text-monospace align-middle" style="word-break:break-all;">{{ f.name }}<input type="hidden" name="name_{{ forloop.counter0 }}" value="{{ f.name }}"></td>
+            <td><label class="sr-only" for="label_{{ forloop.counter0 }}">{% blocktrans with name=f.name %}Label of {{ name }}{% endblocktrans %}</label><input class="form-control form-control-sm" id="label_{{ forloop.counter0 }}" name="label_{{ forloop.counter0 }}" value="{{ f.label }}" maxlength="200"></td>
+            <td><label class="sr-only" for="type_{{ forloop.counter0 }}">{% blocktrans with name=f.name %}Type of {{ name }}{% endblocktrans %}</label><select class="custom-select custom-select-sm" id="type_{{ forloop.counter0 }}" name="type_{{ forloop.counter0 }}">{% for t in field_types %}<option value="{{ t }}"{% if f.type == t %} selected{% endif %}>{{ t }}</option>{% endfor %}</select></td>
+            <td><label class="sr-only" for="description_{{ forloop.counter0 }}">{% blocktrans with name=f.name %}Description of {{ name }}{% endblocktrans %}</label><input class="form-control form-control-sm" id="description_{{ forloop.counter0 }}" name="description_{{ forloop.counter0 }}" value="{{ f.description }}" maxlength="500"></td>
+            <td class="text-center align-middle"><label class="sr-only" for="private_{{ forloop.counter0 }}">{% blocktrans with name=f.name %}{{ name }} is private{% endblocktrans %}</label><input type="checkbox" id="private_{{ forloop.counter0 }}" name="private_{{ forloop.counter0 }}" value="1"{% if f.private %} checked{% endif %}></td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        </div>
+        {% if can_edit %}<button type="submit" class="btn btn-sm btn-primary">{% trans "Save fields" %}</button>{% endif %}
+        </fieldset>
+      </form>
+      {% else %}
+      <p class="text-muted small mb-0">{% trans "The objects of this layer carry no fields yet." %}</p>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

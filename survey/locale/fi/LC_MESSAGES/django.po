@@ -12965,3 +12965,184 @@ msgid "%(n)s duplicate key skipped"
 msgid_plural "%(n)s duplicate keys skipped"
 msgstr[0] "%(n)s kaksoisavain ohitettiin"
 msgstr[1] "%(n)s kaksoisavainta ohitettiin"
+
+#: data/templates/data/dataset.html
+msgid "Breadcrumb"
+msgstr "Murupolku"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "changed %(when)s"
+msgstr "muutettu %(when)s"
+
+#: data/templates/data/dataset.html
+msgid "Open the source"
+msgstr "Avaa lähde"
+
+#: data/templates/data/dataset.html
+msgid "Access"
+msgstr "Käyttöoikeus"
+
+#: data/templates/data/dataset.html
+msgid "Details"
+msgstr "Tiedot"
+
+#: data/templates/data/dataset.html
+msgid "Theme"
+msgstr "Teema"
+
+#: data/templates/data/dataset.html
+msgid "Maintainer"
+msgstr "Ylläpitäjä"
+
+#: data/templates/data/dataset.html
+msgid "Team or role, e.g. Parks team"
+msgstr "Tiimi tai rooli, esim. puistotiimi"
+
+#: data/templates/data/dataset.html
+msgid "Updated"
+msgstr "Päivitys"
+
+#: data/templates/data/dataset.html
+msgid "Licence"
+msgstr "Lisenssi"
+
+#: data/templates/data/dataset.html
+msgid "Save details"
+msgstr "Tallenna tiedot"
+
+#: data/templates/data/dataset.html
+msgid "Fields"
+msgstr "Kentät"
+
+#: data/templates/data/dataset.html
+msgid "Labels replace the raw names on object cards and in downloads. A private field stays on this page and in the object editor: no map, export, download or API shows it."
+msgstr "Nimikkeet korvaavat raakanimet kohdekorteissa ja latauksissa. Yksityinen kenttä pysyy tällä sivulla ja kohde-editorissa: mikään kartta, vienti, lataus tai API ei näytä sitä."
+
+#: data/templates/data/dataset.html
+msgid "Label"
+msgstr "Nimike"
+
+#: data/templates/data/dataset.html
+msgid "Type"
+msgstr "Tyyppi"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Label of %(name)s"
+msgstr "Kentän %(name)s nimike"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Type of %(name)s"
+msgstr "Kentän %(name)s tyyppi"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Description of %(name)s"
+msgstr "Kentän %(name)s kuvaus"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "%(name)s is private"
+msgstr "%(name)s on yksityinen"
+
+#: data/templates/data/dataset.html
+msgid "Save fields"
+msgstr "Tallenna kentät"
+
+#: data/templates/data/dataset.html
+msgid "The objects of this layer carry no fields yet."
+msgstr "Tämän tason kohteilla ei ole vielä kenttiä."
+
+#: data/views.py
+msgid "Details saved."
+msgstr "Tiedot tallennettu."
+
+#: data/views.py
+msgid "Field dictionary saved."
+msgstr "Kenttäsanasto tallennettu."
+
+#: data/models.py
+msgid "Agriculture, fisheries, forestry and food"
+msgstr "Maatalous, kalastus, metsätalous ja elintarvikkeet"
+
+#: data/models.py
+msgid "Economy and finance"
+msgstr "Talous ja raha-asiat"
+
+#: data/models.py
+msgid "Education, culture and sport"
+msgstr "Koulutus, kulttuuri ja urheilu"
+
+#: data/models.py
+msgid "Energy"
+msgstr "Energia"
+
+#: data/models.py
+msgid "Environment"
+msgstr "Ympäristö"
+
+#: data/models.py
+msgid "Government and public sector"
+msgstr "Hallinto ja julkinen sektori"
+
+#: data/models.py
+msgid "Health"
+msgstr "Terveys"
+
+#: data/models.py
+msgid "International issues"
+msgstr "Kansainväliset kysymykset"
+
+#: data/models.py
+msgid "Justice, legal system and public safety"
+msgstr "Oikeus, oikeusjärjestelmä ja yleinen turvallisuus"
+
+#: data/models.py
+msgid "Regions and cities"
+msgstr "Alueet ja kaupungit"
+
+#: data/models.py
+msgid "Population and society"
+msgstr "Väestö ja yhteiskunta"
+
+#: data/models.py
+msgid "Science and technology"
+msgstr "Tiede ja teknologia"
+
+#: data/models.py
+msgid "Transport"
+msgstr "Liikenne"
+
+#: data/models.py
+msgid "As needed"
+msgstr "Tarpeen mukaan"
+
+#: data/models.py
+msgid "Daily"
+msgstr "Päivittäin"
+
+#: data/models.py
+msgid "Weekly"
+msgstr "Viikoittain"
+
+#: data/models.py
+msgid "Monthly"
+msgstr "Kuukausittain"
+
+#: data/models.py
+msgid "Quarterly"
+msgstr "Neljännesvuosittain"
+
+#: data/models.py
+msgid "Yearly"
+msgstr "Vuosittain"
+
+#: data/models.py
+msgid "Never updated"
+msgstr "Ei päivitetä"
+
+#: data/models.py
+msgid "The team or role that keeps the dataset current."
+msgstr "Tiimi tai rooli, joka pitää aineiston ajan tasalla."
