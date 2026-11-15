@@ -52,7 +52,7 @@ see, counts only. Filters are links, so a filtered view is an address.{% endcomm
   {% if rows %}
   <div class="list-group" data-testid="data-rows">
     {% for row in rows %}
-    <a class="list-group-item list-group-item-action d-flex align-items-center justify-content-between" href="{{ row.link }}" data-dataset="{{ row.dataset.pk }}" data-kind="{{ row.dataset.kind }}">
+    <a class="list-group-item list-group-item-action d-flex align-items-center justify-content-between" href="{% url 'editor_data_dataset' row.dataset.pk %}" data-dataset="{{ row.dataset.pk }}" data-kind="{{ row.dataset.kind }}">
       <span class="flex-grow-1" style="min-width:0;">
         <strong>{{ row.dataset.name }}</strong>
         <span class="text-muted small d-block">{% if row.extra.uploaded %}{% trans "Uploaded" %}{% else %}{{ row.dataset.get_kind_display }}{% endif %}{% if row.survey %} · {{ row.survey.name }}{% endif %}</span>

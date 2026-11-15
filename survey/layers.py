@@ -306,22 +306,35 @@ def build_map_layers_metadata(survey):
     from django.urls import reverse
     if not django_settings.MAP_REFERENCE_LAYERS:
         return []
-    return [
-        {
+    from data.fields import hidden_names
+    out = []
+    # defer('geojson'): the 100s-of-KB geometry column loaded on every map
+    # surface render fragments the worker heap into an RSS ratchet (the
+    # 2026-09 "exceeded memory limits" incident); only config fields render.
+    for layer in layers_for(survey).defer(*GEOMETRY_TEXT_FIELDS):
+        hidden = hidden_names(layer)
+        style = normalize_style(layer.style, layer.color)
+        if hidden and (style.get('by') or {}).get('field') in hidden:
+            # A rule on a private field would leak its values as class labels (data-metadata);
+            # the stored style keeps it, so making the field public again restores it.
+            style = {k: v for k, v in style.items() if k != 'by'}
+        label_field = '' if layer.source == 'question' or layer.label_field in hidden else layer.label_field
+        out.append({
             'id': layer.pk,
             'name': layer.name,
             'color': layer.color,
             # On a `question` layer `label_field` names a sub-question, not a
             # feature property; the title already carries it (`_title`), so no
             # permanent map label — the tally badge takes that spot.
-            'label_field': '' if layer.source == 'question' else layer.label_field,
+            # A private field is never a map label (change data-metadata).
+            'label_field': label_field,
             'show_popups': layer.show_popups,
             'source': layer.source,
             'show_tallies': shared_kinds(layer)['tallies'],
             # Layer style (spec layer-style): the normalised style the factory
             # draws with, and the legend rows the layers control shows.
-            'style': normalize_style(layer.style, layer.color),
-            'legend': legend_for(layer),
+            'style': style,
+            'legend': legend_for(layer, style),
             # Bound to an Objects-on-the-map question: features are clickable
             # and open the object popup (card + sub-questions) instead of the
             # read-only name/description popup — spec reference-overlay-layers.
@@ -332,12 +345,8 @@ def build_map_layers_metadata(survey):
             'object_url': reverse('survey_layer_object', kwargs={
                 'survey_slug': str(survey.uuid), 'layer_id': layer.pk, 'key': 'KEY',
             }),
-        }
-        # defer('geojson'): the 100s-of-KB geometry column loaded on every map
-        # surface render fragments the worker heap into an RSS ratchet (the
-        # 2026-09 "exceeded memory limits" incident); only config fields render.
-        for layer in layers_for(survey).defer(*GEOMETRY_TEXT_FIELDS)
-    ]
+        })
+    return out
 
 
 # ─── Objects ────────────────────────────────────────────────────────────────
@@ -494,11 +503,14 @@ def objects_from_features(layer, features, mapping=None, sanitize=None):
     return report
 
 
-def _object_props(properties, key, title, category, description, link, cover_url='', status=None):
-    """An object's feature properties: its raw properties without the reserved names, then the
-    reserved fields in a fixed order. The ONE builder for `feature_for_object` and the streamed
-    `_feature_json`, so the two can never drift."""
-    props = dict(properties or {})
+def _object_props(properties, key, title, category, description, link, cover_url='', status=None,
+                  hidden=frozenset()):
+    """An object's feature properties: its raw properties without the reserved names and without
+    the dataset's private fields (`hidden`, change data-metadata), then the reserved fields in a
+    fixed order. The ONE builder for `feature_for_object` and the streamed `_feature_json`, so the
+    two can never drift — and every reader of the derived GeoJSON inherits the private rule."""
+    from data.fields import public_properties
+    props = public_properties(properties, hidden)
     for reserved in RESERVED_PROPS:
         props.pop(reserved, None)
     props['_key'] = key
@@ -511,10 +523,13 @@ def _object_props(properties, key, title, category, description, link, cover_url
     return props
 
 
-def feature_for_object(obj, cover_url=''):
-    """The derived GeoJSON feature: raw properties + the reserved fields."""
+def feature_for_object(obj, cover_url='', hidden=None):
+    """The derived GeoJSON feature: public properties + the reserved fields."""
+    if hidden is None:
+        from data.fields import hidden_names
+        hidden = hidden_names(obj.layer_id)
     props = _object_props(obj.properties, obj.key, obj.title, obj.category,
-                          obj.description, obj.link, cover_url)
+                          obj.description, obj.link, cover_url, hidden=hidden)
     return {
         'type': 'Feature',
         'id': obj.key,
@@ -526,12 +541,12 @@ def feature_for_object(obj, cover_url=''):
 _OBJECT_ROW_FIELDS = ('pk', 'key', 'title', 'category', 'description', 'link', 'properties', 'geometry')
 
 
-def _feature_json(row, cover_url='', status=None):
+def _feature_json(row, cover_url='', status=None, hidden=frozenset()):
     """One feature as compact JSON text from a `values()` row — the same keys
     in the same order as `feature_for_object`, so the streamed collection is
     byte-identical to `json.dumps` of the whole tree (guarded by a test)."""
     props = _object_props(row['properties'], row['key'], row['title'], row['category'],
-                          row['description'], row['link'], cover_url, status)
+                          row['description'], row['link'], cover_url, status, hidden)
     feature = {
         'type': 'Feature',
         'id': row['key'],
@@ -546,7 +561,9 @@ def stream_layer_geojson(layer):
     object order, built one feature at a time from `values()` rows: no model
     instances, no GEOS geometry kept past its feature, no whole-collection
     tree (change layer-memory-diet — that tree was +64 MB on an 8.6 MB layer)."""
+    from data.fields import hidden_names
     from survey.models import LayerObjectAsset
+    hidden = hidden_names(layer)
     covers = {}
     for asset in (LayerObjectAsset.objects
                   .filter(object__layer=layer, kind='image')
@@ -564,8 +581,8 @@ def stream_layer_geojson(layer):
     for row in rows.iterator(chunk_size=500):
         props = row['properties']
         if isinstance(props, dict):
-            names.update(k for k in props if isinstance(k, str) and k not in RESERVED_PROPS)
-        parts.append(_feature_json(row, covers.get(row['pk'], ''), row.get('status')))
+            names.update(k for k in props if isinstance(k, str) and k not in RESERVED_PROPS and k not in hidden)
+        parts.append(_feature_json(row, covers.get(row['pk'], ''), row.get('status'), hidden))
     return '{"type":"FeatureCollection","features":[' + ','.join(parts) + ']}', sorted(names)
 
 
@@ -1005,6 +1022,9 @@ def normalize_style(raw, base_color='#2c7be5'):
 
 
 def _property_values(layer, field):
+    from data.fields import hidden_names
+    if field in hidden_names(layer):
+        return
     for obj_props in layer.items.values_list('properties', flat=True):
         if isinstance(obj_props, dict) and field in obj_props:
             yield obj_props[field]

@@ -16,7 +16,7 @@ Nothing is moved or copied to get there: the list reads the data where it alread
 
 ## Open the list
 
-Choose **Data** in the left sidebar. Each row shows where the dataset comes from, how many rows it has, how many places use it (a survey, a results page, a site block) and when it last changed. Click a row to open it where you edit or read it today — a layer in the survey's settings, answers in **Responses**.
+Choose **Data** in the left sidebar. Each row shows where the dataset comes from, how many rows it has, how many places use it (a survey, a results page, a site block) and when it last changed. Click a row to open the dataset's page; **Open the source** there takes you to where you edit or read it today — a layer in the survey's settings, answers in **Responses**.
 
 Filter by source (Layer, Shared map, Answers, Responses) or by privacy, or search by name. A filtered list is a link you can share with a colleague.
 
@@ -32,6 +32,22 @@ The file is read in the background — you can leave the page. When it is ready,
 Columns that look like email addresses, phone numbers or people's names are kept **private** — they never leave the dataset. A new upload is private as a whole until you decide otherwise.
 
 Limits: 10 MB and 5,000 objects per file on Free; 50 MB and 100,000 objects on Pro.
+
+## Describe a dataset
+
+A dataset's page holds its **details**: name, description, theme, maintainer (the team or role that keeps it current), how often it is updated, and the licence. The licence is one of the Open Government Licence v3.0, CC BY 4.0, CC0 and Datenlizenz Deutschland – Namensnennung 2.0.
+
+For a layer, the page also lists its **fields** — the columns of the file, or the properties of the objects you drew. For each field you can set:
+
+- a **label** that people read instead of the raw name: `TR_HGT_M` becomes "Tree height (m)" on the object card a respondent opens and in the downloads;
+- its **type** and a short **description**;
+- **private** — the field stays on this page and in the object editor. No map, export, download or API shows it, and a map label or a style rule built on it is switched off while it is private.
+
+Owners, admins and editors who work on the survey change the details; viewers read them.
+
+## Download a layer
+
+On a layer's page, **CSV** and **GeoJSON** download its objects with the field labels as column names. Private fields are left out.
 
 ## Privacy
 

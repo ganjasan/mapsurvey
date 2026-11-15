@@ -13003,3 +13003,184 @@ msgid "%(n)s duplicate key skipped"
 msgid_plural "%(n)s duplicate keys skipped"
 msgstr[0] "%(n)s dubbele sleutel overgeslagen"
 msgstr[1] "%(n)s dubbele sleutels overgeslagen"
+
+#: data/templates/data/dataset.html
+msgid "Breadcrumb"
+msgstr "Kruimelpad"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "changed %(when)s"
+msgstr "gewijzigd op %(when)s"
+
+#: data/templates/data/dataset.html
+msgid "Open the source"
+msgstr "Bron openen"
+
+#: data/templates/data/dataset.html
+msgid "Access"
+msgstr "Toegang"
+
+#: data/templates/data/dataset.html
+msgid "Details"
+msgstr "Gegevens"
+
+#: data/templates/data/dataset.html
+msgid "Theme"
+msgstr "Thema"
+
+#: data/templates/data/dataset.html
+msgid "Maintainer"
+msgstr "Beheerder"
+
+#: data/templates/data/dataset.html
+msgid "Team or role, e.g. Parks team"
+msgstr "Team of rol, bijv. team groen"
+
+#: data/templates/data/dataset.html
+msgid "Updated"
+msgstr "Bijwerking"
+
+#: data/templates/data/dataset.html
+msgid "Licence"
+msgstr "Licentie"
+
+#: data/templates/data/dataset.html
+msgid "Save details"
+msgstr "Gegevens opslaan"
+
+#: data/templates/data/dataset.html
+msgid "Fields"
+msgstr "Velden"
+
+#: data/templates/data/dataset.html
+msgid "Labels replace the raw names on object cards and in downloads. A private field stays on this page and in the object editor: no map, export, download or API shows it."
+msgstr "Labels vervangen de ruwe namen op objectkaarten en in downloads. Een privéveld blijft op deze pagina en in de objecteditor: geen kaart, export, download of API toont het."
+
+#: data/templates/data/dataset.html
+msgid "Label"
+msgstr "Label"
+
+#: data/templates/data/dataset.html
+msgid "Type"
+msgstr "Type"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Label of %(name)s"
+msgstr "Label van %(name)s"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Type of %(name)s"
+msgstr "Type van %(name)s"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Description of %(name)s"
+msgstr "Beschrijving van %(name)s"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "%(name)s is private"
+msgstr "%(name)s is privé"
+
+#: data/templates/data/dataset.html
+msgid "Save fields"
+msgstr "Velden opslaan"
+
+#: data/templates/data/dataset.html
+msgid "The objects of this layer carry no fields yet."
+msgstr "De objecten van deze laag hebben nog geen velden."
+
+#: data/views.py
+msgid "Details saved."
+msgstr "Gegevens opgeslagen."
+
+#: data/views.py
+msgid "Field dictionary saved."
+msgstr "Veldenwoordenboek opgeslagen."
+
+#: data/models.py
+msgid "Agriculture, fisheries, forestry and food"
+msgstr "Landbouw, visserij, bosbouw en voedsel"
+
+#: data/models.py
+msgid "Economy and finance"
+msgstr "Economie en financiën"
+
+#: data/models.py
+msgid "Education, culture and sport"
+msgstr "Onderwijs, cultuur en sport"
+
+#: data/models.py
+msgid "Energy"
+msgstr "Energie"
+
+#: data/models.py
+msgid "Environment"
+msgstr "Milieu"
+
+#: data/models.py
+msgid "Government and public sector"
+msgstr "Overheid en publieke sector"
+
+#: data/models.py
+msgid "Health"
+msgstr "Gezondheid"
+
+#: data/models.py
+msgid "International issues"
+msgstr "Internationale vraagstukken"
+
+#: data/models.py
+msgid "Justice, legal system and public safety"
+msgstr "Justitie, rechtsstelsel en openbare veiligheid"
+
+#: data/models.py
+msgid "Regions and cities"
+msgstr "Regio’s en steden"
+
+#: data/models.py
+msgid "Population and society"
+msgstr "Bevolking en samenleving"
+
+#: data/models.py
+msgid "Science and technology"
+msgstr "Wetenschap en technologie"
+
+#: data/models.py
+msgid "Transport"
+msgstr "Vervoer"
+
+#: data/models.py
+msgid "As needed"
+msgstr "Wanneer nodig"
+
+#: data/models.py
+msgid "Daily"
+msgstr "Dagelijks"
+
+#: data/models.py
+msgid "Weekly"
+msgstr "Wekelijks"
+
+#: data/models.py
+msgid "Monthly"
+msgstr "Maandelijks"
+
+#: data/models.py
+msgid "Quarterly"
+msgstr "Per kwartaal"
+
+#: data/models.py
+msgid "Yearly"
+msgstr "Jaarlijks"
+
+#: data/models.py
+msgid "Never updated"
+msgstr "Nooit bijgewerkt"
+
+#: data/models.py
+msgid "The team or role that keeps the dataset current."
+msgstr "Het team of de rol die de dataset actueel houdt."

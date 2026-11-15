@@ -13054,3 +13054,184 @@ msgid "%(n)s duplicate key skipped"
 msgid_plural "%(n)s duplicate keys skipped"
 msgstr[0] "%(n)s doppelter Schlüssel übersprungen"
 msgstr[1] "%(n)s doppelte Schlüssel übersprungen"
+
+#: data/templates/data/dataset.html
+msgid "Breadcrumb"
+msgstr "Brotkrumennavigation"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "changed %(when)s"
+msgstr "geändert am %(when)s"
+
+#: data/templates/data/dataset.html
+msgid "Open the source"
+msgstr "Quelle öffnen"
+
+#: data/templates/data/dataset.html
+msgid "Access"
+msgstr "Zugang"
+
+#: data/templates/data/dataset.html
+msgid "Details"
+msgstr "Angaben"
+
+#: data/templates/data/dataset.html
+msgid "Theme"
+msgstr "Thema"
+
+#: data/templates/data/dataset.html
+msgid "Maintainer"
+msgstr "Verantwortlich"
+
+#: data/templates/data/dataset.html
+msgid "Team or role, e.g. Parks team"
+msgstr "Team oder Rolle, z. B. Grünflächenamt"
+
+#: data/templates/data/dataset.html
+msgid "Updated"
+msgstr "Aktualisierung"
+
+#: data/templates/data/dataset.html
+msgid "Licence"
+msgstr "Lizenz"
+
+#: data/templates/data/dataset.html
+msgid "Save details"
+msgstr "Angaben speichern"
+
+#: data/templates/data/dataset.html
+msgid "Fields"
+msgstr "Felder"
+
+#: data/templates/data/dataset.html
+msgid "Labels replace the raw names on object cards and in downloads. A private field stays on this page and in the object editor: no map, export, download or API shows it."
+msgstr "Bezeichnungen ersetzen die Rohnamen auf Objektkarten und in Downloads. Ein privates Feld bleibt auf dieser Seite und im Objekteditor: keine Karte, kein Export, kein Download und keine API zeigt es."
+
+#: data/templates/data/dataset.html
+msgid "Label"
+msgstr "Bezeichnung"
+
+#: data/templates/data/dataset.html
+msgid "Type"
+msgstr "Typ"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Label of %(name)s"
+msgstr "Bezeichnung von %(name)s"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Type of %(name)s"
+msgstr "Typ von %(name)s"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Description of %(name)s"
+msgstr "Beschreibung von %(name)s"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "%(name)s is private"
+msgstr "%(name)s ist privat"
+
+#: data/templates/data/dataset.html
+msgid "Save fields"
+msgstr "Felder speichern"
+
+#: data/templates/data/dataset.html
+msgid "The objects of this layer carry no fields yet."
+msgstr "Die Objekte dieser Ebene haben noch keine Felder."
+
+#: data/views.py
+msgid "Details saved."
+msgstr "Angaben gespeichert."
+
+#: data/views.py
+msgid "Field dictionary saved."
+msgstr "Feldverzeichnis gespeichert."
+
+#: data/models.py
+msgid "Agriculture, fisheries, forestry and food"
+msgstr "Landwirtschaft, Fischerei, Forstwirtschaft und Nahrungsmittel"
+
+#: data/models.py
+msgid "Economy and finance"
+msgstr "Wirtschaft und Finanzen"
+
+#: data/models.py
+msgid "Education, culture and sport"
+msgstr "Bildung, Kultur und Sport"
+
+#: data/models.py
+msgid "Energy"
+msgstr "Energie"
+
+#: data/models.py
+msgid "Environment"
+msgstr "Umwelt"
+
+#: data/models.py
+msgid "Government and public sector"
+msgstr "Regierung und öffentlicher Sektor"
+
+#: data/models.py
+msgid "Health"
+msgstr "Gesundheit"
+
+#: data/models.py
+msgid "International issues"
+msgstr "Internationale Themen"
+
+#: data/models.py
+msgid "Justice, legal system and public safety"
+msgstr "Justiz, Rechtssystem und öffentliche Sicherheit"
+
+#: data/models.py
+msgid "Regions and cities"
+msgstr "Regionen und Städte"
+
+#: data/models.py
+msgid "Population and society"
+msgstr "Bevölkerung und Gesellschaft"
+
+#: data/models.py
+msgid "Science and technology"
+msgstr "Wissenschaft und Technologie"
+
+#: data/models.py
+msgid "Transport"
+msgstr "Verkehr"
+
+#: data/models.py
+msgid "As needed"
+msgstr "Nach Bedarf"
+
+#: data/models.py
+msgid "Daily"
+msgstr "Täglich"
+
+#: data/models.py
+msgid "Weekly"
+msgstr "Wöchentlich"
+
+#: data/models.py
+msgid "Monthly"
+msgstr "Monatlich"
+
+#: data/models.py
+msgid "Quarterly"
+msgstr "Vierteljährlich"
+
+#: data/models.py
+msgid "Yearly"
+msgstr "Jährlich"
+
+#: data/models.py
+msgid "Never updated"
+msgstr "Nie aktualisiert"
+
+#: data/models.py
+msgid "The team or role that keeps the dataset current."
+msgstr "Das Team oder die Rolle, die den Datensatz aktuell hält."

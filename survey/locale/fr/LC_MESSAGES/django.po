@@ -13050,3 +13050,184 @@ msgid "%(n)s duplicate key skipped"
 msgid_plural "%(n)s duplicate keys skipped"
 msgstr[0] "%(n)s clé en double ignorée"
 msgstr[1] "%(n)s clés en double ignorées"
+
+#: data/templates/data/dataset.html
+msgid "Breadcrumb"
+msgstr "Fil d'Ariane"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "changed %(when)s"
+msgstr "modifié le %(when)s"
+
+#: data/templates/data/dataset.html
+msgid "Open the source"
+msgstr "Ouvrir la source"
+
+#: data/templates/data/dataset.html
+msgid "Access"
+msgstr "Accès"
+
+#: data/templates/data/dataset.html
+msgid "Details"
+msgstr "Détails"
+
+#: data/templates/data/dataset.html
+msgid "Theme"
+msgstr "Thème"
+
+#: data/templates/data/dataset.html
+msgid "Maintainer"
+msgstr "Responsable"
+
+#: data/templates/data/dataset.html
+msgid "Team or role, e.g. Parks team"
+msgstr "Équipe ou rôle, p. ex. service des parcs"
+
+#: data/templates/data/dataset.html
+msgid "Updated"
+msgstr "Mise à jour"
+
+#: data/templates/data/dataset.html
+msgid "Licence"
+msgstr "Licence"
+
+#: data/templates/data/dataset.html
+msgid "Save details"
+msgstr "Enregistrer les détails"
+
+#: data/templates/data/dataset.html
+msgid "Fields"
+msgstr "Champs"
+
+#: data/templates/data/dataset.html
+msgid "Labels replace the raw names on object cards and in downloads. A private field stays on this page and in the object editor: no map, export, download or API shows it."
+msgstr "Les libellés remplacent les noms bruts sur les fiches d'objet et dans les téléchargements. Un champ privé reste sur cette page et dans l'éditeur d'objets : aucune carte, aucun export, aucun téléchargement ni aucune API ne l'affiche."
+
+#: data/templates/data/dataset.html
+msgid "Label"
+msgstr "Libellé"
+
+#: data/templates/data/dataset.html
+msgid "Type"
+msgstr "Type"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Label of %(name)s"
+msgstr "Libellé de %(name)s"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Type of %(name)s"
+msgstr "Type de %(name)s"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Description of %(name)s"
+msgstr "Description de %(name)s"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "%(name)s is private"
+msgstr "%(name)s est privé"
+
+#: data/templates/data/dataset.html
+msgid "Save fields"
+msgstr "Enregistrer les champs"
+
+#: data/templates/data/dataset.html
+msgid "The objects of this layer carry no fields yet."
+msgstr "Les objets de cette couche n'ont pas encore de champs."
+
+#: data/views.py
+msgid "Details saved."
+msgstr "Détails enregistrés."
+
+#: data/views.py
+msgid "Field dictionary saved."
+msgstr "Dictionnaire des champs enregistré."
+
+#: data/models.py
+msgid "Agriculture, fisheries, forestry and food"
+msgstr "Agriculture, pêche, sylviculture et alimentation"
+
+#: data/models.py
+msgid "Economy and finance"
+msgstr "Économie et finances"
+
+#: data/models.py
+msgid "Education, culture and sport"
+msgstr "Éducation, culture et sport"
+
+#: data/models.py
+msgid "Energy"
+msgstr "Énergie"
+
+#: data/models.py
+msgid "Environment"
+msgstr "Environnement"
+
+#: data/models.py
+msgid "Government and public sector"
+msgstr "Gouvernement et secteur public"
+
+#: data/models.py
+msgid "Health"
+msgstr "Santé"
+
+#: data/models.py
+msgid "International issues"
+msgstr "Questions internationales"
+
+#: data/models.py
+msgid "Justice, legal system and public safety"
+msgstr "Justice, système juridique et sécurité publique"
+
+#: data/models.py
+msgid "Regions and cities"
+msgstr "Régions et villes"
+
+#: data/models.py
+msgid "Population and society"
+msgstr "Population et société"
+
+#: data/models.py
+msgid "Science and technology"
+msgstr "Science et technologie"
+
+#: data/models.py
+msgid "Transport"
+msgstr "Transports"
+
+#: data/models.py
+msgid "As needed"
+msgstr "Selon les besoins"
+
+#: data/models.py
+msgid "Daily"
+msgstr "Quotidienne"
+
+#: data/models.py
+msgid "Weekly"
+msgstr "Hebdomadaire"
+
+#: data/models.py
+msgid "Monthly"
+msgstr "Mensuelle"
+
+#: data/models.py
+msgid "Quarterly"
+msgstr "Trimestrielle"
+
+#: data/models.py
+msgid "Yearly"
+msgstr "Annuelle"
+
+#: data/models.py
+msgid "Never updated"
+msgstr "Jamais mise à jour"
+
+#: data/models.py
+msgid "The team or role that keeps the dataset current."
+msgstr "L'équipe ou le rôle qui tient le jeu de données à jour."

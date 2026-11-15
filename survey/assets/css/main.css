@@ -1497,6 +1497,9 @@ body.sidebar-hidden .leaflet-top.leaflet-left {
 .lo-card__cover { height:150px; background-size:cover; background-position:center; border-radius:8px 8px 0 0; margin:0 0 8px; }
 .lo-card__title { font-weight:700; font-size:1rem; margin:0 0 2px; }
 .lo-card__cat { font-size:.75rem; color:var(--text-secondary); margin-bottom:6px; }
+.lo-card__fields { display:grid; grid-template-columns:auto 1fr; gap:2px 10px; font-size:.8rem; margin:6px 0; }
+.lo-card__fields dt { font-weight:500; color:var(--text-secondary); }
+.lo-card__fields dd { margin:0; overflow-wrap:anywhere; }
 .lo-card__body { font-size:.88rem; margin-bottom:8px; }
 .lo-card__body img { max-width:100%; border-radius:6px; }
 .lo-card__assets { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }

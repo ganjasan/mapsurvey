@@ -98,11 +98,16 @@ def layer_out(layer, survey):
     return data
 
 
-def object_out(obj):
+def object_out(obj, hidden=None):
+    """An object as the API shows it: private dictionary fields left out (change data-metadata);
+    list callers pass the layer's `hidden` once."""
+    from data.fields import hidden_names, public_properties
+    if hidden is None:
+        hidden = hidden_names(obj.layer_id)
     return {
         'key': obj.key, 'title': obj.title, 'category': obj.category, 'description': obj.description,
         'link': obj.link, 'geometry': json.loads(obj.geometry.geojson) if obj.geometry else None,
-        'properties': obj.properties or {}, 'position': obj.position,
+        'properties': public_properties(obj.properties, hidden), 'position': obj.position,
         'status': obj.status,
     }
 
@@ -210,7 +215,9 @@ def list_objects(request, uuid: UUID, layer_id: int, cursor: Optional[str] = Non
     survey = deps.survey(request, uuid)
     layer = _layer(request, survey, layer_id)
     items, next_cursor = page(LayerObject.objects.filter(layer=layer), f'objects:{layer.pk}', cursor, limit)
-    return {'items': [object_out(o) for o in items], 'next_cursor': next_cursor}
+    from data.fields import hidden_names
+    hidden = hidden_names(layer)
+    return {'items': [object_out(o, hidden) for o in items], 'next_cursor': next_cursor}
 
 
 @router.post('/surveys/{uuid}/layers/{layer_id}/objects', auth=WRITE, response={201: dict},

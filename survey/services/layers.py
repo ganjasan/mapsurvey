@@ -247,7 +247,10 @@ def _apply_object_fields(obj, fields):
     if 'description' in fields:
         obj.description = coerce_creator_html(str(fields.get('description') or ''))
     if 'properties' in fields and isinstance(fields['properties'], dict):
-        obj.properties = {k: v for k, v in fields['properties'].items() if isinstance(k, str)}
+        new = {k: v for k, v in fields['properties'].items() if isinstance(k, str)}
+        # A writer that never saw the private fields (REST/MCP) cannot erase them (data-metadata).
+        from data.fields import hidden_names, merge_private
+        obj.properties = merge_private(obj.properties if obj.pk else {}, new, hidden_names(obj.layer_id))
 
 
 def create_object(actor, layer, fields):

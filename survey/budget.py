@@ -357,7 +357,10 @@ def items_of(question, language=None):
 def _layer_items(question, cost_property):
     if not question.layer_id:
         return []
+    from data.fields import hidden_names
     from survey.models import LayerObject
+    if cost_property and cost_property in hidden_names(question.layer_id):
+        cost_property = ''   # a private field never reaches a respondent (change data-metadata)
     items = []
     objects = LayerObject.objects.filter(layer_id=question.layer_id).order_by("position", "id")
     for index, obj in enumerate(objects):

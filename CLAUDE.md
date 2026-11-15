@@ -952,6 +952,20 @@ National Grid by value range; anything else refused), profiles fields into `Data
 (type, private for email/phone/name columns) and feeds `objects_from_features` in two passes.
 Limits by plan in `data.tasks.limits_for` (Free 10 MB/5,000, Pro 50 MB/100,000). Uploads start
 `private`; reaching a survey map is #670 and stays within the survey layer caps.
+**Dataset page and private fields (change `data-metadata`, #669)**: `/editor/data/<id>/`
+(`data.views.dataset`; visibility = the catalogue's `catalogue_rows`, edit = workspace editor+ and,
+for a survey's dataset, survey editor+) holds the details (`theme` = DCAT-AP themes, `maintainer`,
+`update_frequency`, `licence` from the closed list), the field dictionary
+(`Dataset.fields[{name,label,type,description,private}]`, `data.fields.dictionary` merges stored
+entries with `layer.property_names`) and the labelled CSV/GeoJSON download. **A private field never
+leaves the dataset page and the object editor**: `data.fields.hidden_names(layer)` is applied in
+`layers._object_props` (so the derived GeoJSON, every reader of it, and `property_names` — hence the
+editor pickers — lose it), `build_map_layers_metadata` (label field, style rule), `style_summary`,
+REST/MCP `object_out`, the ZIP's `serialize_layer_objects` and budget cost properties; a
+`properties` write through `services.layers` keeps the private values the writer never saw
+(`merge_private`). A new output of `LayerObject.properties` must go through `data.fields` too. Saving
+a dictionary whose private set changed rebuilds the layer. The respondent card shows the public
+dictionary fields by label (`object_card_payload['fields']`).
 
 **Session scope (`data.scope`, change `data-scope`, Data epic #676)**: which sessions a surface
 counts is ONE builder, `data.scope.SessionScope(survey_ids, include_deleted=, include_moderated=,
