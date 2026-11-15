@@ -1,6 +1,8 @@
 from django.urls import path, re_path
 from django.views.generic import RedirectView
 
+from data import views as data_views
+
 from . import views
 from . import editor_views
 from . import agent_views
@@ -313,6 +315,8 @@ urlpatterns = [
          name='editor_site_attendees_remove'),
     # The builder (`editor_site*` names light the sidebar row).
     path('editor/sites/', site_views.editor_sites, name='editor_sites'),
+    # The Data catalogue (change data-catalogue, epic #676; `editor_data*` names light the sidebar row).
+    path('editor/data/', data_views.catalogue, name='editor_data'),
     path('editor/sites/new/', site_views.editor_site_create, name='editor_site_create'),
     path('editor/sites/<uuid:uuid>/', site_views.editor_site, name='editor_site'),
     path('editor/sites/<uuid:uuid>/duplicate/', site_views.editor_site_duplicate, name='editor_site_duplicate'),

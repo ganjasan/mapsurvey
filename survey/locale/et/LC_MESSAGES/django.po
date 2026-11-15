@@ -12859,3 +12859,45 @@ msgstr[1] "%(counter)s kinnitamata"
 #, python-format
 msgid "The public map shows squares that count respondents; squares with fewer than %(k)s respondents are hidden. Exact points stay in Responses and the export."
 msgstr "Avalik kaart näitab ruute, mis loendavad vastajaid; ruudud, kus on alla %(k)s vastaja, on peidetud. Täpsed punktid jäävad vastustesse ja eksporti."
+
+#: data/templates/data/catalogue.html
+msgid "Search datasets"
+msgstr "Otsi andmestikke"
+
+#: data/templates/data/catalogue.html
+msgid "No dataset matches these filters."
+msgstr "Ükski andmestik ei vasta nendele filtritele."
+
+#: data/models.py
+msgid "Layer"
+msgstr "Kiht"
+
+#: data/models.py
+msgid "Shared map"
+msgstr "Jagatud kaart"
+
+#: data/models.py
+msgid "Aggregated"
+msgstr "Koondatud"
+
+#: data/templates/data/catalogue.html
+msgid "Every place dataset of this workspace: the layers you uploaded or drew, and the answers your surveys collect. Counts only — individual answers stay in Responses."
+msgstr "Selle tööruumi kõik kohaandmestikud: üles laaditud või joonistatud kihid ja teie küsitluste kogutud vastused. Ainult arvud — üksikud vastused jäävad vastustesse."
+
+#: data/templates/data/catalogue.html
+msgid "No data yet. Layers you add to a survey and the answers it collects will appear here."
+msgstr "Andmeid veel pole. Siia ilmuvad küsitlusele lisatud kihid ja selle kogutud vastused."
+
+#: data/templates/data/catalogue.html
+#, python-format
+msgid "%(n)s row"
+msgid_plural "%(n)s rows"
+msgstr[0] "%(n)s rida"
+msgstr[1] "%(n)s rida"
+
+#: data/templates/data/catalogue.html
+#, python-format
+msgid "used in %(n)s place"
+msgid_plural "used in %(n)s places"
+msgstr[0] "kasutusel %(n)s kohas"
+msgstr[1] "kasutusel %(n)s kohas"

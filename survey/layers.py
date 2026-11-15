@@ -494,16 +494,27 @@ def objects_from_features(layer, features, mapping=None, sanitize=None):
     return report
 
 
-def feature_for_object(obj, cover_url=''):
-    """The derived GeoJSON feature: raw properties + the reserved fields."""
-    props = dict(obj.properties or {})
+def _object_props(properties, key, title, category, description, link, cover_url='', status=None):
+    """An object's feature properties: its raw properties without the reserved names, then the
+    reserved fields in a fixed order. The ONE builder for `feature_for_object` and the streamed
+    `_feature_json`, so the two can never drift."""
+    props = dict(properties or {})
     for reserved in RESERVED_PROPS:
         props.pop(reserved, None)
-    props['_key'] = obj.key
-    props['_title'] = obj.title
-    props['_category'] = obj.category
-    props['_has_content'] = bool(obj.description or obj.link or cover_url)
+    props['_key'] = key
+    props['_title'] = title
+    props['_category'] = category
+    props['_has_content'] = bool(description or link or cover_url)
     props['_cover'] = cover_url
+    if status is not None:
+        props['_status'] = status
+    return props
+
+
+def feature_for_object(obj, cover_url=''):
+    """The derived GeoJSON feature: raw properties + the reserved fields."""
+    props = _object_props(obj.properties, obj.key, obj.title, obj.category,
+                          obj.description, obj.link, cover_url)
     return {
         'type': 'Feature',
         'id': obj.key,
@@ -519,16 +530,8 @@ def _feature_json(row, cover_url='', status=None):
     """One feature as compact JSON text from a `values()` row — the same keys
     in the same order as `feature_for_object`, so the streamed collection is
     byte-identical to `json.dumps` of the whole tree (guarded by a test)."""
-    props = dict(row['properties'] or {})
-    for reserved in RESERVED_PROPS:
-        props.pop(reserved, None)
-    props['_key'] = row['key']
-    props['_title'] = row['title']
-    props['_category'] = row['category']
-    props['_has_content'] = bool(row['description'] or row['link'] or cover_url)
-    props['_cover'] = cover_url
-    if status is not None:
-        props['_status'] = status
+    props = _object_props(row['properties'], row['key'], row['title'], row['category'],
+                          row['description'], row['link'], cover_url, status)
     feature = {
         'type': 'Feature',
         'id': row['key'],

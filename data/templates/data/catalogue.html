@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ org.name }} — {% trans "Data" %}{% endblock %}
+
+{% block content %}
+{% comment %}The Data catalogue (change data-catalogue, #667): one row per dataset the member may
+see, counts only. Filters are links, so a filtered view is an address.{% endcomment %}
+<div class="container mt-4" style="max-width: 980px;">
+  <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap" style="gap:.5rem;">
+    <h4 class="mb-0">{% trans "Data" %}{% if HELP_URL.data %} <a href="{{ HELP_URL.data }}" target="_blank" rel="noopener" class="small font-weight-normal ml-2">{% trans "Learn more" %}</a>{% endif %}</h4>
+    <form method="get" class="form-inline mb-0" role="search">
+      {% if kind %}<input type="hidden" name="kind" value="{{ kind }}">{% endif %}
+      {% if privacy %}<input type="hidden" name="privacy" value="{{ privacy }}">{% endif %}
+      <label for="data-q" class="sr-only">{% trans "Search datasets" %}</label>
+      <input id="data-q" type="search" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="{% trans 'Search datasets' %}">
+    </form>
+  </div>
+  <p class="text-muted" style="font-size:.9rem;">
+    {% blocktrans %}Every place dataset of this workspace: the layers you uploaded or drew, and the answers your surveys collect. Counts only — individual answers stay in Responses.{% endblocktrans %}
+  </p>
+
+  <div class="d-flex flex-wrap mb-3" style="gap:.4rem;font-size:.85rem;" data-testid="data-filters">
+    <a class="badge badge-pill {% if not kind %}badge-primary{% else %}badge-light{% endif %} px-3 py-2" href="?{% if privacy %}privacy={{ privacy }}&{% endif %}{% if q %}q={{ q|urlencode }}{% endif %}">{% trans "All" %} · {{ total }}</a>
+    {% for value, label, n in kind_filters %}{% if n %}
+    <a class="badge badge-pill {% if kind == value %}badge-primary{% else %}badge-light{% endif %} px-3 py-2" data-kind="{{ value }}" href="?kind={{ value }}{% if privacy %}&privacy={{ privacy }}{% endif %}{% if q %}&q={{ q|urlencode }}{% endif %}">{{ label }} · {{ n }}</a>
+    {% endif %}{% endfor %}
+    <span class="mx-1 text-muted">|</span>
+    {% for value, label, n in privacy_filters %}{% if n %}
+    <a class="badge badge-pill {% if privacy == value %}badge-primary{% else %}badge-light{% endif %} px-3 py-2" data-privacy="{{ value }}" href="?privacy={{ value }}{% if kind %}&kind={{ kind }}{% endif %}{% if q %}&q={{ q|urlencode }}{% endif %}">{{ label }} · {{ n }}</a>
+    {% endif %}{% endfor %}
+  </div>
+
+  {% if rows %}
+  <div class="list-group" data-testid="data-rows">
+    {% for row in rows %}
+    <a class="list-group-item list-group-item-action d-flex align-items-center justify-content-between" href="{{ row.link }}" data-dataset="{{ row.dataset.pk }}" data-kind="{{ row.dataset.kind }}">
+      <span class="flex-grow-1" style="min-width:0;">
+        <strong>{{ row.dataset.name }}</strong>
+        <span class="text-muted small d-block">{{ row.dataset.get_kind_display }}{% if row.survey %} · {{ row.survey.name }}{% endif %}</span>
+      </span>
+      <span class="text-muted small text-right ml-3 text-nowrap">
+        {% blocktrans count n=row.rows %}{{ n }} row{% plural %}{{ n }} rows{% endblocktrans %}
+        · {% blocktrans count n=row.used_by %}used in {{ n }} place{% plural %}used in {{ n }} places{% endblocktrans %}
+        {% if row.changed %}<span class="d-block">{{ row.changed|date:"j M Y" }}</span>{% endif %}
+      </span>
+      <span class="badge {% if row.dataset.privacy_class == 'public' %}badge-success{% elif row.dataset.privacy_class == 'aggregated' %}badge-info{% else %}badge-secondary{% endif %} ml-3">{{ row.dataset.get_privacy_class_display }}</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-muted border rounded p-4 text-center" data-testid="data-empty">
+    {% if total %}{% trans "No dataset matches these filters." %}{% else %}{% trans "No data yet. Layers you add to a survey and the answers it collects will appear here." %}{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

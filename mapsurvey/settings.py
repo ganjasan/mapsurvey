@@ -70,6 +70,8 @@ INSTALLED_APPS = [
     'api.apps.ApiConfig',
     # The MCP server, the second resource server on the layer above (change mcp-server, #306).
     'mcp.apps.McpConfig',
+    # The Data module (Platform Vision v0.4, epic #676): dataset registry, session scope, aggregation.
+    'data.apps.DataConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

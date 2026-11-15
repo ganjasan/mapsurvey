@@ -12944,3 +12944,45 @@ msgstr[1] "%(counter)s no aprobadas"
 #, python-format
 msgid "The public map shows squares that count respondents; squares with fewer than %(k)s respondents are hidden. Exact points stay in Responses and the export."
 msgstr "El mapa público muestra cuadrados que cuentan participantes; los cuadrados con menos de %(k)s participantes se ocultan. Los puntos exactos siguen en Respuestas y en la exportación."
+
+#: data/templates/data/catalogue.html
+msgid "Search datasets"
+msgstr "Buscar conjuntos de datos"
+
+#: data/templates/data/catalogue.html
+msgid "No dataset matches these filters."
+msgstr "Ningún conjunto de datos coincide con estos filtros."
+
+#: data/models.py
+msgid "Layer"
+msgstr "Capa"
+
+#: data/models.py
+msgid "Shared map"
+msgstr "Mapa compartido"
+
+#: data/models.py
+msgid "Aggregated"
+msgstr "Agregado"
+
+#: data/templates/data/catalogue.html
+msgid "Every place dataset of this workspace: the layers you uploaded or drew, and the answers your surveys collect. Counts only — individual answers stay in Responses."
+msgstr "Cada conjunto de datos de lugares de este espacio: las capas que subiste o dibujaste y las respuestas que recogen tus encuestas. Solo cifras: las respuestas individuales siguen en Respuestas."
+
+#: data/templates/data/catalogue.html
+msgid "No data yet. Layers you add to a survey and the answers it collects will appear here."
+msgstr "Aún no hay datos. Las capas que añadas a una encuesta y las respuestas que recoja aparecerán aquí."
+
+#: data/templates/data/catalogue.html
+#, python-format
+msgid "%(n)s row"
+msgid_plural "%(n)s rows"
+msgstr[0] "%(n)s fila"
+msgstr[1] "%(n)s filas"
+
+#: data/templates/data/catalogue.html
+#, python-format
+msgid "used in %(n)s place"
+msgid_plural "used in %(n)s places"
+msgstr[0] "usado en %(n)s lugar"
+msgstr[1] "usado en %(n)s lugares"

@@ -12878,3 +12878,43 @@ msgstr[0] "%(counter)s tidak disetujui"
 #, python-format
 msgid "The public map shows squares that count respondents; squares with fewer than %(k)s respondents are hidden. Exact points stay in Responses and the export."
 msgstr "Peta publik menampilkan kotak yang menghitung responden; kotak dengan kurang dari %(k)s responden disembunyikan. Titik yang tepat tetap ada di Respons dan ekspor."
+
+#: data/templates/data/catalogue.html
+msgid "Search datasets"
+msgstr "Cari dataset"
+
+#: data/templates/data/catalogue.html
+msgid "No dataset matches these filters."
+msgstr "Tidak ada dataset yang cocok dengan filter ini."
+
+#: data/models.py
+msgid "Layer"
+msgstr "Lapisan"
+
+#: data/models.py
+msgid "Shared map"
+msgstr "Peta bersama"
+
+#: data/models.py
+msgid "Aggregated"
+msgstr "Teragregasi"
+
+#: data/templates/data/catalogue.html
+msgid "Every place dataset of this workspace: the layers you uploaded or drew, and the answers your surveys collect. Counts only — individual answers stay in Responses."
+msgstr "Setiap dataset tempat di ruang kerja ini: lapisan yang Anda unggah atau gambar, dan jawaban yang dikumpulkan survei Anda. Hanya angka — jawaban perorangan tetap di Respons."
+
+#: data/templates/data/catalogue.html
+msgid "No data yet. Layers you add to a survey and the answers it collects will appear here."
+msgstr "Belum ada data. Lapisan yang Anda tambahkan ke survei dan jawaban yang dikumpulkannya akan muncul di sini."
+
+#: data/templates/data/catalogue.html
+#, python-format
+msgid "%(n)s row"
+msgid_plural "%(n)s rows"
+msgstr[0] "%(n)s baris"
+
+#: data/templates/data/catalogue.html
+#, python-format
+msgid "used in %(n)s place"
+msgid_plural "used in %(n)s places"
+msgstr[0] "dipakai di %(n)s tempat"

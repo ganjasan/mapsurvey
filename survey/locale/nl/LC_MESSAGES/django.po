@@ -12918,3 +12918,45 @@ msgstr[1] "%(counter)s niet goedgekeurd"
 #, python-format
 msgid "The public map shows squares that count respondents; squares with fewer than %(k)s respondents are hidden. Exact points stay in Responses and the export."
 msgstr "De openbare kaart toont vakken die respondenten tellen; vakken met minder dan %(k)s respondenten worden verborgen. De exacte punten blijven in Antwoorden en in de export."
+
+#: data/templates/data/catalogue.html
+msgid "Search datasets"
+msgstr "Datasets zoeken"
+
+#: data/templates/data/catalogue.html
+msgid "No dataset matches these filters."
+msgstr "Geen dataset komt overeen met deze filters."
+
+#: data/models.py
+msgid "Layer"
+msgstr "Laag"
+
+#: data/models.py
+msgid "Shared map"
+msgstr "Gedeelde kaart"
+
+#: data/models.py
+msgid "Aggregated"
+msgstr "Geaggregeerd"
+
+#: data/templates/data/catalogue.html
+msgid "Every place dataset of this workspace: the layers you uploaded or drew, and the answers your surveys collect. Counts only — individual answers stay in Responses."
+msgstr "Elke plaatsdataset van deze werkruimte: de lagen die u uploadde of tekende en de antwoorden die uw enquêtes verzamelen. Alleen aantallen — afzonderlijke antwoorden blijven in Antwoorden."
+
+#: data/templates/data/catalogue.html
+msgid "No data yet. Layers you add to a survey and the answers it collects will appear here."
+msgstr "Nog geen gegevens. Lagen die u aan een enquête toevoegt en de antwoorden die die verzamelt, verschijnen hier."
+
+#: data/templates/data/catalogue.html
+#, python-format
+msgid "%(n)s row"
+msgid_plural "%(n)s rows"
+msgstr[0] "%(n)s rij"
+msgstr[1] "%(n)s rijen"
+
+#: data/templates/data/catalogue.html
+#, python-format
+msgid "used in %(n)s place"
+msgid_plural "used in %(n)s places"
+msgstr[0] "gebruikt op %(n)s plek"
+msgstr[1] "gebruikt op %(n)s plekken"
