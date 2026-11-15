@@ -13543,3 +13543,11 @@ msgstr "Enregistrer la vue"
 #: survey/templates/sites/public.html
 msgid "respondents"
 msgstr "répondants"
+
+#: data/templates/data/dataset.html
+msgid "Comma-separated, e.g. Riverside plan 2027"
+msgstr "Séparées par des virgules, p. ex. Plan Riverside 2027"
+
+#: data/templates/data/dataset.html
+msgid "Tags group the datasets and surveys of one engagement; the Data list and the survey dashboard filter by them."
+msgstr "Les étiquettes regroupent les jeux de données et les questionnaires d'une même concertation ; la liste Données et le tableau de bord des questionnaires filtrent par elles."

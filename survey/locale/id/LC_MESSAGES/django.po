@@ -13449,3 +13449,11 @@ msgstr "Simpan tampilan"
 #: survey/templates/sites/public.html
 msgid "respondents"
 msgstr "responden"
+
+#: data/templates/data/dataset.html
+msgid "Comma-separated, e.g. Riverside plan 2027"
+msgstr "Pisahkan dengan koma, mis. Rencana Riverside 2027"
+
+#: data/templates/data/dataset.html
+msgid "Tags group the datasets and surveys of one engagement; the Data list and the survey dashboard filter by them."
+msgstr "Tag mengelompokkan dataset dan survei dari satu kegiatan partisipasi; daftar Data dan dasbor survei memfilter menurutnya."

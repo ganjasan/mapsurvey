@@ -31,6 +31,15 @@ def catalogue(request):
     kind = request.GET.get('kind') if request.GET.get('kind') in FILTER_KINDS else ''
     privacy = request.GET.get('privacy') if request.GET.get('privacy') in FILTER_PRIVACY else ''
     query = (request.GET.get('q') or '').strip()[:100]
+    # Tags (change data-tags): one query for every row's tags, a link per tag to filter by it.
+    from data.models import Tag
+    row_tags = {}
+    for tag in Tag.objects.filter(organization=org).prefetch_related('datasets'):
+        for ds_id in tag.datasets.values_list('pk', flat=True):
+            row_tags.setdefault(ds_id, []).append(tag)
+    tag = request.GET.get('tag') or ''
+    for row in rows:
+        row.extra['tags'] = row_tags.get(row.dataset.pk, [])
     counts_kind = {k: 0 for k in FILTER_KINDS}
     counts_privacy = {p: 0 for p in FILTER_PRIVACY}
     for row in rows:
@@ -39,6 +48,7 @@ def catalogue(request):
     shown = [r for r in rows
              if (not kind or r.dataset.kind == kind)
              and (not privacy or r.dataset.privacy_class == privacy)
+             and (not tag or any(t.slug == tag for t in r.extra['tags']))
              and (not query or query.lower() in r.dataset.name.lower()
                   or (r.survey is not None and query.lower() in r.survey.name.lower()))]
     shown.sort(key=lambda r: (r.survey.name.lower() if r.survey else '', FILTER_KINDS.index(r.dataset.kind),
@@ -49,7 +59,8 @@ def catalogue(request):
         'can_upload': _can_upload(request.user, org),
         'rows': shown,
         'total': len(rows),
-        'kind': kind, 'privacy': privacy, 'q': query,
+        'kind': kind, 'privacy': privacy, 'q': query, 'tag': tag,
+        'tag_filters': sorted({t.slug: t for ts in row_tags.values() for t in ts}.values(), key=lambda t: t.name.lower()),
         'kind_filters': [(k, label, counts_kind[k]) for k, label in Dataset.KIND_CHOICES],
         'privacy_filters': [(p, label, counts_privacy[p]) for p, label in Dataset.PRIVACY_CHOICES],
     })
@@ -190,6 +201,8 @@ def dataset(request, dataset_id):
             form = _details_form(request.POST, instance=ds)
             if form.is_valid():
                 form.save()
+                from data.tags import set_tags   # change data-tags
+                set_tags(org, ds, request.POST.get('tags', ''))
                 messages.success(request, _('Details saved.'))
                 return redirect('editor_data_dataset', dataset_id=ds.pk)
         elif action == 'fields' and ds.kind == Dataset.KIND_LAYER:
@@ -228,6 +241,7 @@ def dataset(request, dataset_id):
         'field_types': FIELD_TYPES,
         'has_dictionary': ds.kind == Dataset.KIND_LAYER,
         'used_by': used_by(ds),
+        'tags_text': ', '.join(t.name for t in ds.tags.all()),
         'can_delete': can_edit and _deletable(ds),
         'versionable': _versionable(ds),
         'version_job': version_job,

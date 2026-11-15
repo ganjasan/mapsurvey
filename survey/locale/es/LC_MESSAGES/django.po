@@ -13522,3 +13522,11 @@ msgstr "Guardar la vista"
 #: survey/templates/sites/public.html
 msgid "respondents"
 msgstr "participantes"
+
+#: data/templates/data/dataset.html
+msgid "Comma-separated, e.g. Riverside plan 2027"
+msgstr "Separadas por comas, p. ej. Plan Riverside 2027"
+
+#: data/templates/data/dataset.html
+msgid "Tags group the datasets and surveys of one engagement; the Data list and the survey dashboard filter by them."
+msgstr "Las etiquetas agrupan los conjuntos de datos y las encuestas de un mismo proceso participativo; la lista de Datos y el panel de encuestas filtran por ellas."

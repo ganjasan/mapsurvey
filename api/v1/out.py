@@ -55,6 +55,8 @@ def survey(obj):
         'unpublished_changes': draft.uuid if draft is not None else None,
         'review': 'pending' if pending_review_for(obj) is not None else None,
         'url': _abs(reverse('survey', args=[str(obj.uuid)])),
+        # Workspace tags (change data-tags) live on the canonical survey.
+        'tags': [t.name for t in (obj.published_version or obj.canonical_survey or obj).tags.all()],
         'created_at': obj.created_at,
         'updated_at': obj.updated_at,
     }

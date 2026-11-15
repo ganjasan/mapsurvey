@@ -115,6 +115,7 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/layers/', editor_views.editor_survey_layer_create, name='editor_survey_layer_create'),
     path('editor/surveys/<uuid:survey_uuid>/layers/<int:layer_id>/', editor_views.editor_survey_layer_update, name='editor_survey_layer_update'),
     path('editor/surveys/<uuid:survey_uuid>/layers/<int:layer_id>/delete/', editor_views.editor_survey_layer_delete, name='editor_survey_layer_delete'),
+    path('editor/surveys/<uuid:survey_uuid>/tags/', editor_views.editor_survey_tags, name='editor_survey_tags'),
     path('editor/surveys/<uuid:survey_uuid>/layers/link/', editor_views.editor_survey_layer_link, name='editor_survey_layer_link'),
     path('editor/surveys/<uuid:survey_uuid>/layers/link/<int:link_id>/unlink/', editor_views.editor_survey_layer_unlink, name='editor_survey_layer_unlink'),
     path('editor/surveys/<uuid:survey_uuid>/layers/link/<int:link_id>/fields/', editor_views.editor_survey_layer_link_fields, name='editor_survey_layer_link_fields'),

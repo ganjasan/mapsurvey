@@ -363,6 +363,31 @@
       </div>
       {% endif %}
 
+      {% comment %}Tags (change data-tags): a nameless input saved through its own endpoint, like the
+      layers card, so it stays out of the settings autosave.{% endcomment %}
+      <div class="pr-card" id="survey-tags-card" data-url="{% url 'editor_survey_tags' survey.uuid %}">
+        <h6><label for="survey-tags" class="mb-0">{% trans "Tags" %}</label></h6>
+        <input type="text" id="survey-tags" value="{{ survey_tags_text }}" maxlength="500" class="form-control form-control-sm" placeholder="{% trans 'Comma-separated, e.g. Riverside plan 2027' %}">
+        <div class="pr-help">{% trans "Tags group the datasets and surveys of one engagement; the Data list and the survey dashboard filter by them." %}</div>
+        <span class="pr-help" id="survey-tags-status" role="status" aria-live="polite"></span>
+      </div>
+      <script>
+      (function() {
+        var card = document.getElementById('survey-tags-card');
+        if (!card) return;
+        var input = document.getElementById('survey-tags'), status = document.getElementById('survey-tags-status');
+        input.addEventListener('change', function() {
+          var fd = new FormData();
+          fd.append('tags', input.value);
+          var m = document.cookie.match(/csrftoken=([^;]+)/);
+          fetch(card.dataset.url, {method: 'POST', headers: {'X-CSRFToken': m ? m[1] : ''}, body: fd})
+            .then(function(r) { return r.json(); })
+            .then(function(d) { input.value = d.tags.join(', '); status.textContent = '{{ _("Saved")|escapejs }}'; })
+            .catch(function() { status.textContent = '{{ _("Not saved")|escapejs }}'; });
+        });
+      })();
+      </script>
+
       <div class="pr-card">
         <h6>{% trans "Cover image" %}</h6>
         <div class="pr-field">

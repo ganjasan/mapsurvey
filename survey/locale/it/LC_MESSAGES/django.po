@@ -13504,3 +13504,11 @@ msgstr "Salva la vista"
 #: survey/templates/sites/public.html
 msgid "respondents"
 msgstr "rispondenti"
+
+#: data/templates/data/dataset.html
+msgid "Comma-separated, e.g. Riverside plan 2027"
+msgstr "Separati da virgole, es. Piano Riverside 2027"
+
+#: data/templates/data/dataset.html
+msgid "Tags group the datasets and surveys of one engagement; the Data list and the survey dashboard filter by them."
+msgstr "I tag raggruppano i set di dati e i sondaggi di un percorso partecipativo; l’elenco Dati e la bacheca dei sondaggi filtrano per tag."

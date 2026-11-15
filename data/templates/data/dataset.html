@@ -88,6 +88,11 @@ download. This page and the object editor are the only places a private field is
             {% for e in form.licence.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
           </div>
         </div>
+        <div class="form-group">
+          <label for="ds-tags">{% trans "Tags" %}</label>
+          <input type="text" class="form-control form-control-sm" id="ds-tags" name="tags" value="{{ tags_text }}" maxlength="500" placeholder="{% trans 'Comma-separated, e.g. Riverside plan 2027' %}">
+          <small class="form-text text-muted">{% trans "Tags group the datasets and surveys of one engagement; the Data list and the survey dashboard filter by them." %}</small>
+        </div>
         {% if can_edit %}<button type="submit" class="btn btn-sm btn-primary">{% trans "Save details" %}</button>{% endif %}
         </fieldset>
       </form>

@@ -13547,3 +13547,11 @@ msgstr "Ansicht speichern"
 #: survey/templates/sites/public.html
 msgid "respondents"
 msgstr "Befragte"
+
+#: data/templates/data/dataset.html
+msgid "Comma-separated, e.g. Riverside plan 2027"
+msgstr "Durch Kommas getrennt, z. B. Riverside-Plan 2027"
+
+#: data/templates/data/dataset.html
+msgid "Tags group the datasets and surveys of one engagement; the Data list and the survey dashboard filter by them."
+msgstr "Schlagwörter fassen die Datensätze und Umfragen eines Beteiligungsverfahrens zusammen; die Datenliste und die Umfrageübersicht filtern danach."
