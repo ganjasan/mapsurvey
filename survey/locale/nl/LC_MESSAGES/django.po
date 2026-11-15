@@ -13386,3 +13386,113 @@ msgid "%(n)s answer about a removed object will be deleted."
 msgid_plural "%(n)s answers about removed objects will be deleted."
 msgstr[0] "%(n)s antwoord over een verwijderd object wordt gewist."
 msgstr[1] "%(n)s antwoorden over verwijderde objecten worden gewist."
+
+#: data/dataviews.py
+msgid "Views are made of layers and of map answers."
+msgstr "Weergaven bestaan voor lagen en kaartantwoorden."
+
+#: data/dataviews.py
+msgid "Give the view a name."
+msgstr "Geef de weergave een naam."
+
+#: data/dataviews.py
+msgid "A condition can only use a public field of this dataset."
+msgstr "Een voorwaarde kan alleen een openbaar veld van deze dataset gebruiken."
+
+#: data/dataviews.py
+msgid "“Greater than” and “less than” need a number."
+msgstr "“Groter dan” en “kleiner dan” vragen een getal."
+
+#: data/dataviews.py
+msgid "A view can only keep public fields of this dataset."
+msgstr "Een weergave kan alleen openbare velden van deze dataset houden."
+
+#: data/links.py
+msgid "Pick a view of this dataset."
+msgstr "Kies een weergave van deze dataset."
+
+#: data/links.py
+msgid "A grid of counts can be shown on a site, not as a survey layer."
+msgstr "Een raster met aantallen kan op een site staan, niet als enquêtelaag."
+
+#: data/views.py
+msgid "View saved."
+msgstr "Weergave opgeslagen."
+
+#: data/views.py
+#, python-format
+msgid "“%(name)s” is shown in a survey or on a site. Unlink it there first."
+msgstr "“%(name)s” staat in een enquête of op een site. Ontkoppel hem daar eerst."
+
+#: data/models.py
+msgid "Grid of counts"
+msgstr "Raster met aantallen"
+
+#: data/templates/data/dataset.html
+msgid "Views"
+msgstr "Weergaven"
+
+#: data/templates/data/dataset.html
+msgid "A view of collected answers is a grid of counts: how many respondents marked each cell, small groups hidden. It can be shown in a Site map block."
+msgstr "Een weergave van verzamelde antwoorden is een raster met aantallen: hoeveel respondenten elke cel markeerden, kleine groepen verborgen. Hij kan in een kaartblok van een site staan."
+
+#: data/templates/data/dataset.html
+msgid "A view keeps the objects that match its conditions, with the fields you choose. Surveys and site map blocks can show a view instead of the whole dataset."
+msgstr "Een weergave houdt de objecten die aan haar voorwaarden voldoen, met de velden die u kiest. Enquêtes en kaartblokken van sites kunnen een weergave tonen in plaats van de hele dataset."
+
+#: data/templates/data/dataset.html
+msgid "grid of counts"
+msgstr "raster met aantallen"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Delete view %(name)s"
+msgstr "Weergave %(name)s verwijderen"
+
+#: data/templates/data/dataset.html
+msgid "New view"
+msgstr "Nieuwe weergave"
+
+#: data/templates/data/dataset.html
+msgid "Show objects where"
+msgstr "Objecten tonen waarbij"
+
+#: data/templates/data/dataset.html
+msgid "Field"
+msgstr "Veld"
+
+#: data/templates/data/dataset.html
+msgid "Condition"
+msgstr "Voorwaarde"
+
+#: data/templates/data/dataset.html
+msgid "is"
+msgstr "is"
+
+#: data/templates/data/dataset.html
+msgid "is one of"
+msgstr "is een van"
+
+#: data/templates/data/dataset.html
+msgid "greater than"
+msgstr "groter dan"
+
+#: data/templates/data/dataset.html
+msgid "less than"
+msgstr "kleiner dan"
+
+#: data/templates/data/dataset.html
+msgid "Value"
+msgstr "Waarde"
+
+#: data/templates/data/dataset.html
+msgid "Fields it keeps"
+msgstr "Velden die ze houdt"
+
+#: data/templates/data/dataset.html
+msgid "Save view"
+msgstr "Weergave opslaan"
+
+#: survey/templates/sites/public.html
+msgid "respondents"
+msgstr "respondenten"

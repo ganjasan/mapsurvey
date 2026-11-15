@@ -374,7 +374,7 @@ def save_block(actor, site, block, kind, fields, files=None, *, creating=False, 
         block.save()
         if kind == 'map':   # the block's "used by" record (change data-links)
             from data.links import sync_site_block
-            sync_site_block(block, data.get('dataset'))
+            sync_site_block(block, data.get('dataset'), data.get('view'))
         for f, title in renames.items():
             f.title = title
             f.save(update_fields=['title'])
@@ -421,7 +421,7 @@ def duplicate_block(actor, site, block):
                                     content_type=f.content_type, order=f.order)
         if copy.kind == 'map':
             from data.links import sync_site_block
-            sync_site_block(copy, (copy.data or {}).get('dataset'))
+            sync_site_block(copy, (copy.data or {}).get('dataset'), (copy.data or {}).get('view'))
         move_after(site, copy, block.pk)
     touched(site)
     return copy

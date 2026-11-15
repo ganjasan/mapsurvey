@@ -2265,6 +2265,12 @@ def survey_layer_object(request, survey_slug, layer_id, key):
 		obj = get_object_or_404(visible_objects(layer, request.session.get('survey_session_id')), key=key)
 	else:
 		obj = get_object_or_404(LayerObject, layer=layer, key=key)
+		from data.links import survey_view
+		view = survey_view(layer.gated_survey, layer.pk)
+		if view is not None:
+			from data.dataviews import matches
+			if not matches(view, obj.properties):
+				raise Http404
 	from data.links import card_field_names
 	payload = object_card_payload(obj, only=card_field_names(layer.gated_survey, layer.pk))
 	# What other respondents see is decided by the SUB-QUESTIONS that share
@@ -2296,6 +2302,12 @@ def survey_layer_geojson(request, survey_slug, layer_id):
 	indistinguishable from nonexistent surveys.
 	"""
 	layer = _gated_layer(request, survey_slug, layer_id)
+	# A view of a linked dataset (change data-views): only its objects, only its fields.
+	from data.links import survey_view
+	view = survey_view(layer.gated_survey, layer.pk)
+	if view is not None:
+		from data.dataviews import geojson_response
+		return geojson_response(request, view)
 
 	if layer.source == 'question' and not layer.collaborator_access:
 		# Other people's marks, computed per request (spec shared-map-layer):

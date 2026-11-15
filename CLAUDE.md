@@ -984,6 +984,14 @@ apply (status `applying`, recomputes the diff, updates matched `LayerObject` row
 `Answer.layer_object` survive, adds/removes, merges the field dictionary, rebuilds, writes a
 `DatasetVersion`). Never replace objects by delete + create on a version: answers hang on the row.
 Refused without a key field, above `limits_for`, or above the survey caps while linked into a survey.
+**Views (change `data-views`, #672)**: `DatasetView(dataset, name, kind, conditions, fields, color)`, stable
+across versions. `kind` follows the dataset — `objects` for a layer (conditions on PUBLIC fields, eq/in/gt/lt,
+evaluated in Python by `data.dataviews.matches`; collection streamed with `layers._feature_json` keeping only
+`kept_names`, cached per view/layer rebuild/view edit), `grid` for answers (`data.aggregate.grid` over
+`SessionScope.public` with the survey's public-results K; polygons + masked counts only). `DatasetLink.view`
+(RESTRICT): the survey's gated GeoJSON, object card and map colour go through `data.links.survey_view`; a Site
+map block stores `data['view']`/`data['choice']` (`<dataset>:<view>`). A grid view is refused as a survey
+layer. Analysis view types and Responses' saved views as views are #692.
 
 **Session scope (`data.scope`, change `data-scope`, Data epic #676)**: which sessions a surface
 counts is ONE builder, `data.scope.SessionScope(survey_ids, include_deleted=, include_moderated=,

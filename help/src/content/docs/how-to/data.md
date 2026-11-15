@@ -56,6 +56,15 @@ Only a **public** dataset can be linked — a new upload is private until you sw
 
 The dataset's page lists everything that uses it under **Used by**: the survey it belongs to, the surveys and sites that link it, and the questions that show it.
 
+## Save a view
+
+A **view** is a saved selection of a dataset that keeps its name: "Trees in poor condition", "Answers to *Where would you plant a tree?* as counts". Surveys and site map blocks can show a view instead of the whole dataset, and it follows every new version of the dataset.
+
+- On a **layer**, open **New view** under **Views**: give it a name and a colour, add up to three conditions (a field *is*, *is one of*, *greater than* or *less than* a value) and tick the fields it keeps. Only public fields can be used.
+- On the **answers** to a map question, a view is always a **grid of counts**: how many respondents marked each cell, with small groups hidden — never anyone's own mark. It can be shown in a site's **Map** block, not as a survey layer.
+
+Pick a view in a survey's **From Data** list or a site's **Map** block — it appears as *Dataset › View*. A view that is shown somewhere cannot be deleted until it is unlinked there.
+
 ## Upload a new version
 
 When the data changes — the trees were re-inspected, the bus stops moved — press **Upload new version** on the dataset's page and pick the new file. Rows are matched to the dataset's objects on its **key column** (an ID per row, such as `TREE_ID`), so the dataset needs one: a file uploaded without an ID column needs a new upload instead.

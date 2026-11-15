@@ -299,18 +299,21 @@ def _clean_map(raw, errors, org=None):
         area = None
     # A dataset from Data instead of an uploaded area (change data-links): public layer datasets
     # of the workspace only; the page fetches its GeoJSON, it is never stored in the block.
-    dataset = None
+    # ... or a view of one, `<dataset>:<view>` (change data-views).
+    dataset = view = None
     value = str(raw.get('dataset') or '').strip()
-    if value.isdigit() and org is not None:
-        from data.links import site_dataset
-        ds, reason = site_dataset(org, int(value))
+    if value and org is not None:
+        from data.links import parse_choice, site_dataset
+        ds_id, view_id = parse_choice(value)
+        ds, view_obj, reason = site_dataset(org, ds_id, view_id) if ds_id else (None, None, _('Pick a dataset of this workspace.'))
         if reason:
             errors['dataset'] = reason
         else:
-            dataset = ds.pk
+            dataset, view = ds.pk, (view_obj.pk if view_obj else None)
     if area is None and dataset is None and 'dataset' not in errors:
         errors['area'] = _('Upload a GeoJSON file with the project area.')
-    return {'area': area, 'dataset': dataset, 'color': color, 'basemap': basemap,
+    choice = '' if dataset is None else (f'{dataset}:{view}' if view else str(dataset))
+    return {'area': area, 'dataset': dataset, 'view': view, 'choice': choice, 'color': color, 'basemap': basemap,
             'caption': _plain(raw.get('caption'), 300), 'wide': _wide(raw)}
 
 

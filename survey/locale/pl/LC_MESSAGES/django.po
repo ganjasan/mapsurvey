@@ -13476,3 +13476,113 @@ msgid_plural "%(n)s answers about removed objects will be deleted."
 msgstr[0] "Zostanie usunięta %(n)s odpowiedź o usuniętym obiekcie."
 msgstr[1] "Zostaną usunięte %(n)s odpowiedzi o usuniętych obiektach."
 msgstr[2] "Zostanie usuniętych %(n)s odpowiedzi o usuniętych obiektach."
+
+#: data/dataviews.py
+msgid "Views are made of layers and of map answers."
+msgstr "Widoki tworzy się z warstw i odpowiedzi na mapie."
+
+#: data/dataviews.py
+msgid "Give the view a name."
+msgstr "Nadaj widokowi nazwę."
+
+#: data/dataviews.py
+msgid "A condition can only use a public field of this dataset."
+msgstr "Warunek może używać tylko publicznego pola tego zbioru danych."
+
+#: data/dataviews.py
+msgid "“Greater than” and “less than” need a number."
+msgstr "„Większe niż” i „mniejsze niż” wymagają liczby."
+
+#: data/dataviews.py
+msgid "A view can only keep public fields of this dataset."
+msgstr "Widok może zachować tylko publiczne pola tego zbioru danych."
+
+#: data/links.py
+msgid "Pick a view of this dataset."
+msgstr "Wybierz widok tego zbioru danych."
+
+#: data/links.py
+msgid "A grid of counts can be shown on a site, not as a survey layer."
+msgstr "Siatkę liczebności można pokazać na stronie, nie jako warstwę ankiety."
+
+#: data/views.py
+msgid "View saved."
+msgstr "Zapisano widok."
+
+#: data/views.py
+#, python-format
+msgid "“%(name)s” is shown in a survey or on a site. Unlink it there first."
+msgstr "„%(name)s” jest pokazywany w ankiecie lub na stronie. Najpierw go tam odłącz."
+
+#: data/models.py
+msgid "Grid of counts"
+msgstr "Siatka liczebności"
+
+#: data/templates/data/dataset.html
+msgid "Views"
+msgstr "Widoki"
+
+#: data/templates/data/dataset.html
+msgid "A view of collected answers is a grid of counts: how many respondents marked each cell, small groups hidden. It can be shown in a Site map block."
+msgstr "Widok zebranych odpowiedzi to siatka liczebności: ilu respondentów zaznaczyło każdą komórkę, małe grupy ukryte. Można go pokazać w bloku mapy na stronie."
+
+#: data/templates/data/dataset.html
+msgid "A view keeps the objects that match its conditions, with the fields you choose. Surveys and site map blocks can show a view instead of the whole dataset."
+msgstr "Widok zachowuje obiekty spełniające jego warunki, z wybranymi polami. Ankiety i bloki mapy na stronach mogą pokazać widok zamiast całego zbioru danych."
+
+#: data/templates/data/dataset.html
+msgid "grid of counts"
+msgstr "siatka liczebności"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Delete view %(name)s"
+msgstr "Usuń widok %(name)s"
+
+#: data/templates/data/dataset.html
+msgid "New view"
+msgstr "Nowy widok"
+
+#: data/templates/data/dataset.html
+msgid "Show objects where"
+msgstr "Pokaż obiekty, w których"
+
+#: data/templates/data/dataset.html
+msgid "Field"
+msgstr "Pole"
+
+#: data/templates/data/dataset.html
+msgid "Condition"
+msgstr "Warunek"
+
+#: data/templates/data/dataset.html
+msgid "is"
+msgstr "jest"
+
+#: data/templates/data/dataset.html
+msgid "is one of"
+msgstr "jest jednym z"
+
+#: data/templates/data/dataset.html
+msgid "greater than"
+msgstr "większe niż"
+
+#: data/templates/data/dataset.html
+msgid "less than"
+msgstr "mniejsze niż"
+
+#: data/templates/data/dataset.html
+msgid "Value"
+msgstr "Wartość"
+
+#: data/templates/data/dataset.html
+msgid "Fields it keeps"
+msgstr "Pola, które zachowuje"
+
+#: data/templates/data/dataset.html
+msgid "Save view"
+msgstr "Zapisz widok"
+
+#: survey/templates/sites/public.html
+msgid "respondents"
+msgstr "respondentów"

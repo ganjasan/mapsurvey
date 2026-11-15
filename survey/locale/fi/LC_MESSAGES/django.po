@@ -13348,3 +13348,113 @@ msgid "%(n)s answer about a removed object will be deleted."
 msgid_plural "%(n)s answers about removed objects will be deleted."
 msgstr[0] "%(n)s vastaus poistetusta kohteesta poistetaan."
 msgstr[1] "%(n)s vastausta poistetuista kohteista poistetaan."
+
+#: data/dataviews.py
+msgid "Views are made of layers and of map answers."
+msgstr "Näkymiä tehdään tasoista ja karttavastauksista."
+
+#: data/dataviews.py
+msgid "Give the view a name."
+msgstr "Anna näkymälle nimi."
+
+#: data/dataviews.py
+msgid "A condition can only use a public field of this dataset."
+msgstr "Ehto voi käyttää vain tämän aineiston julkista kenttää."
+
+#: data/dataviews.py
+msgid "“Greater than” and “less than” need a number."
+msgstr "”Suurempi kuin” ja ”pienempi kuin” vaativat luvun."
+
+#: data/dataviews.py
+msgid "A view can only keep public fields of this dataset."
+msgstr "Näkymä voi säilyttää vain tämän aineiston julkisia kenttiä."
+
+#: data/links.py
+msgid "Pick a view of this dataset."
+msgstr "Valitse tämän aineiston näkymä."
+
+#: data/links.py
+msgid "A grid of counts can be shown on a site, not as a survey layer."
+msgstr "Määräruudukon voi näyttää sivustolla, ei kyselyn tasona."
+
+#: data/views.py
+msgid "View saved."
+msgstr "Näkymä tallennettu."
+
+#: data/views.py
+#, python-format
+msgid "“%(name)s” is shown in a survey or on a site. Unlink it there first."
+msgstr "”%(name)s” näkyy kyselyssä tai sivustolla. Poista ensin linkitys sieltä."
+
+#: data/models.py
+msgid "Grid of counts"
+msgstr "Määräruudukko"
+
+#: data/templates/data/dataset.html
+msgid "Views"
+msgstr "Näkymät"
+
+#: data/templates/data/dataset.html
+msgid "A view of collected answers is a grid of counts: how many respondents marked each cell, small groups hidden. It can be shown in a Site map block."
+msgstr "Kerättyjen vastausten näkymä on määräruudukko: kuinka moni vastaaja merkitsi kunkin solun, pienet ryhmät piilotettuina. Sen voi näyttää sivuston karttalohkossa."
+
+#: data/templates/data/dataset.html
+msgid "A view keeps the objects that match its conditions, with the fields you choose. Surveys and site map blocks can show a view instead of the whole dataset."
+msgstr "Näkymä säilyttää ehtonsa täyttävät kohteet valitsemillasi kentillä. Kyselyt ja sivustojen karttalohkot voivat näyttää näkymän koko aineiston sijaan."
+
+#: data/templates/data/dataset.html
+msgid "grid of counts"
+msgstr "määräruudukko"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Delete view %(name)s"
+msgstr "Poista näkymä %(name)s"
+
+#: data/templates/data/dataset.html
+msgid "New view"
+msgstr "Uusi näkymä"
+
+#: data/templates/data/dataset.html
+msgid "Show objects where"
+msgstr "Näytä kohteet, joissa"
+
+#: data/templates/data/dataset.html
+msgid "Field"
+msgstr "Kenttä"
+
+#: data/templates/data/dataset.html
+msgid "Condition"
+msgstr "Ehto"
+
+#: data/templates/data/dataset.html
+msgid "is"
+msgstr "on"
+
+#: data/templates/data/dataset.html
+msgid "is one of"
+msgstr "on jokin näistä"
+
+#: data/templates/data/dataset.html
+msgid "greater than"
+msgstr "suurempi kuin"
+
+#: data/templates/data/dataset.html
+msgid "less than"
+msgstr "pienempi kuin"
+
+#: data/templates/data/dataset.html
+msgid "Value"
+msgstr "Arvo"
+
+#: data/templates/data/dataset.html
+msgid "Fields it keeps"
+msgstr "Kentät, jotka se säilyttää"
+
+#: data/templates/data/dataset.html
+msgid "Save view"
+msgstr "Tallenna näkymä"
+
+#: survey/templates/sites/public.html
+msgid "respondents"
+msgstr "vastaajaa"
