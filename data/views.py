@@ -73,7 +73,7 @@ def _jobs(org, user):
     """The member's open import jobs and those finished in the last 24 h."""
     since = timezone.now() - timezone.timedelta(hours=24)
     from django.db.models import Q
-    return list(DataImportJob.objects.filter(organization=org, user=user)
+    return list(DataImportJob.objects.filter(organization=org, user=user, target__isnull=True)
                 .filter(Q(status__in=('queued', 'running')) | Q(finished_at__gte=since))
                 .select_related('dataset')[:10])
 
@@ -195,6 +195,9 @@ def dataset(request, dataset_id):
             _save_dictionary(request, ds)
             messages.success(request, _('Field dictionary saved.'))
             return redirect('editor_data_dataset', dataset_id=ds.pk)
+        elif action in ('version', 'apply', 'discard') and _versionable(ds):
+            _version_action(request, ds, action)
+            return redirect('editor_data_dataset', dataset_id=ds.pk)
         elif action == 'privacy' and ds.kind == Dataset.KIND_LAYER:
             value = request.POST.get('privacy_class')
             if value == Dataset.PRIVACY_PRIVATE and ds.links.exists():
@@ -203,6 +206,7 @@ def dataset(request, dataset_id):
             elif value in (Dataset.PRIVACY_PUBLIC, Dataset.PRIVACY_PRIVATE):
                 Dataset.objects.filter(pk=ds.pk).update(privacy_class=value)
             return redirect('editor_data_dataset', dataset_id=ds.pk)
+    version_job = _version_job(ds) if _versionable(ds) else None
     return render(request, 'data/dataset.html', {
         'org': org,
         'row': row,
@@ -214,7 +218,69 @@ def dataset(request, dataset_id):
         'has_dictionary': ds.kind == Dataset.KIND_LAYER,
         'used_by': used_by(ds),
         'can_delete': can_edit and _deletable(ds),
+        'versionable': _versionable(ds),
+        'version_job': version_job,
+        'can_upload_version': (can_edit and _versionable(ds) and bool(ds.layer.key_field)
+                               and (version_job is None or version_job.status in ('done', 'failed'))),
+        'versions': list(ds.versions.select_related('created_by')[:20]),
     })
+
+
+def _versionable(ds):
+    """A layer of objects (not a shared map) can take a new version (change data-versions)."""
+    return ds.kind == Dataset.KIND_LAYER and ds.layer_id is not None and ds.layer.source != 'question'
+
+
+def _version_job(ds):
+    """The version job the page shows: an open one, or one that finished in the last hour."""
+    since = timezone.now() - timezone.timedelta(hours=1)
+    from django.db.models import Q
+    return (DataImportJob.objects.filter(target=ds)
+            .filter(Q(status__in=('queued', 'running', 'preview', 'applying')) | Q(finished_at__gte=since))
+            .select_related('user').first())
+
+
+def _version_action(request, ds, action):
+    """Upload a version file (→ preview), apply a previewed version with a note, or discard it."""
+    from data.tasks import limits_for, run_data_version
+    if action == 'version':
+        upload = request.FILES.get('file')
+        if upload is None:
+            return
+        if os.path.splitext(upload.name)[1].lower() not in UPLOAD_EXTENSIONS:
+            messages.error(request, _('Upload a GeoPackage (.gpkg), a zipped shapefile (.zip), KML, GeoJSON or a CSV with coordinate columns.'))
+            return
+        max_bytes, _features = limits_for(ds.organization)
+        if upload.size > max_bytes:
+            messages.error(request, _('The file is larger than %(mb)s MB, the limit for this workspace.')
+                           % {'mb': max_bytes // (1024 * 1024)})
+            return
+        DataImportJob.objects.filter(target=ds, status__in=('preview', 'failed', 'done')).delete()
+        job = DataImportJob.objects.create(organization=ds.organization, user=request.user, target=ds, file=upload,
+                                           original_name=os.path.basename(upload.name)[:255])
+        _enqueue(run_data_version, job.pk)
+        return
+    job = DataImportJob.objects.filter(target=ds, pk=request.POST.get('job') or 0).first()
+    if job is None:
+        return
+    if action == 'discard':
+        if job.status in ('preview', 'failed', 'done'):
+            if job.file:
+                job.file.delete(save=False)
+            job.delete()
+        return
+    if job.status == 'preview':
+        job.status = 'applying'
+        job.note = (request.POST.get('note') or '').strip()[:300]
+        job.save(update_fields=['status', 'note'])
+        _enqueue(run_data_version, job.pk, True)
+
+
+def _enqueue(task, *args):
+    try:
+        task.delay(*args)
+    except Exception:  # noqa: BLE001 — no broker: run it here rather than leave the card stuck
+        task(*args)
 
 
 def _deletable(ds):

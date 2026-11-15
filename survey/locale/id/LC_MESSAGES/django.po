@@ -13264,3 +13264,78 @@ msgstr "Survei dan situs berhenti menampilkannya, dan objeknya dihapus. Tindakan
 msgid "It is used in %(n)s place:"
 msgid_plural "It is used in %(n)s places:"
 msgstr[0] "Digunakan di %(n)s tempat:"
+
+#: data/templates/data/dataset.html
+msgid "Upload new version"
+msgstr "Unggah versi baru"
+
+#: data/templates/data/dataset.html
+msgid "New versions are matched row by row on a key column. This dataset has none, so a new version needs a new upload."
+msgstr "Versi baru dicocokkan baris demi baris berdasarkan kolom kunci. Dataset ini tidak memilikinya, jadi versi baru memerlukan unggahan baru."
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Rows are matched on “%(key)s”. Objects whose key stays keep their answers."
+msgstr "Baris dicocokkan berdasarkan “%(key)s”. Objek yang kuncinya tetap mempertahankan jawabannya."
+
+#: data/templates/data/dataset.html
+msgid "Applying the new version…"
+msgstr "Menerapkan versi baru…"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Reading %(name)s…"
+msgstr "Membaca %(name)s…"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "%(a)s added · %(c)s changed · %(r)s removed · %(u)s unchanged"
+msgstr "%(a)s ditambahkan · %(c)s diubah · %(r)s dihapus · %(u)s tidak berubah"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Skipped: %(k)s rows without a key, %(d)s repeated keys."
+msgstr "Dilewati: %(k)s baris tanpa kunci, %(d)s kunci berulang."
+
+#: data/templates/data/dataset.html
+msgid "What changed"
+msgstr "Apa yang berubah"
+
+#: data/templates/data/dataset.html
+msgid "What changed, e.g. Spring 2027 inspection"
+msgstr "Apa yang berubah, mis. inspeksi musim semi 2027"
+
+#: data/templates/data/dataset.html
+msgid "Apply version"
+msgstr "Terapkan versi"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Version %(n)s applied."
+msgstr "Versi %(n)s diterapkan."
+
+#: data/templates/data/dataset.html
+msgid "Author"
+msgstr "Penulis"
+
+#: data/templates/data/dataset.html
+msgid "Note"
+msgstr "Catatan"
+
+#: data/templates/data/dataset.html
+msgid "Changes"
+msgstr "Perubahan"
+
+#: data/templates/data/dataset.html
+msgid "First upload"
+msgstr "Unggahan pertama"
+
+#: data/templates/data/dataset.html
+msgid "Original — no new version uploaded yet."
+msgstr "Asli — belum ada versi baru yang diunggah."
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "%(n)s answer about a removed object will be deleted."
+msgid_plural "%(n)s answers about removed objects will be deleted."
+msgstr[0] "%(n)s jawaban tentang objek yang dihapus akan ikut dihapus."
