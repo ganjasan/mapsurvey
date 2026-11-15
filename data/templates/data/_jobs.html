@@ -1,0 +1,31 @@
+{% load i18n %}
+{% comment %}Data import job cards (change data-upload, #668), the same behaviour as the dashboard's
+ZIP import cards: while a job is open the wrapper polls itself every 3 s and swaps whole.{% endcomment %}
+<div id="data-jobs"{% if jobs_open %} hx-get="{% url 'editor_data_jobs' %}" hx-trigger="every 3s" hx-swap="outerHTML"{% endif %}>
+{% for job in jobs %}
+  <div class="alert py-2 d-flex align-items-start {% if job.status == 'done' %}alert-success{% elif job.status == 'failed' %}alert-danger{% else %}alert-info{% endif %}"
+       role="status" style="font-size:0.85rem;" data-data-job="{{ job.pk }}" data-job-status="{{ job.status }}">
+    <div class="flex-grow-1">
+      {% if job.status == 'done' %}
+        {% blocktrans with name=job.original_name %}Imported “{{ name }}”{% endblocktrans %}
+        <span class="d-block text-muted">
+          {% blocktrans count n=job.report.created %}{{ n }} object{% plural %}{{ n }} objects{% endblocktrans %}
+          · {{ job.report.crs }}{% if job.report.no_location %} · {% blocktrans count n=job.report.no_location %}{{ n }} row without a location skipped{% plural %}{{ n }} rows without a location skipped{% endblocktrans %}{% endif %}{% if job.report.duplicates %} · {% blocktrans count n=job.report.duplicates %}{{ n }} duplicate key skipped{% plural %}{{ n }} duplicate keys skipped{% endblocktrans %}{% endif %}
+        </span>
+        {% if job.report.private_fields %}<span class="d-block">{% trans "Kept private:" %} {{ job.report.private_fields|join:", " }}</span>{% endif %}
+      {% elif job.status == 'failed' %}
+        {% blocktrans with name=job.original_name %}Import of “{{ name }}” failed{% endblocktrans %}: {{ job.error }}
+      {% else %}
+        <span class="spinner-border spinner-border-sm mr-1" aria-hidden="true"></span>
+        {% blocktrans with name=job.original_name %}Importing “{{ name }}”…{% endblocktrans %}
+        <span class="text-muted">{% trans "You can leave this page; the dataset will appear here when it is ready." %}</span>
+      {% endif %}
+    </div>
+    {% if job.status == 'done' or job.status == 'failed' %}
+    <form method="post" action="{% url 'editor_data_job_dismiss' job.pk %}" class="mb-0">{% csrf_token %}
+      <button type="submit" class="close ml-2" aria-label="{% trans 'Dismiss' %}"><span aria-hidden="true">&times;</span></button>
+    </form>
+    {% endif %}
+  </div>
+{% endfor %}
+</div>

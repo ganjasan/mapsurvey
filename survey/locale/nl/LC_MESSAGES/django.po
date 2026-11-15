@@ -12960,3 +12960,46 @@ msgid "used in %(n)s place"
 msgid_plural "used in %(n)s places"
 msgstr[0] "gebruikt op %(n)s plek"
 msgstr[1] "gebruikt op %(n)s plekken"
+
+#: data/templates/data/catalogue.html
+msgid "New dataset"
+msgstr "Nieuwe dataset"
+
+#: data/templates/data/_jobs.html
+msgid "Kept private:"
+msgstr "Privé gehouden:"
+
+#: data/templates/data/_jobs.html
+msgid "You can leave this page; the dataset will appear here when it is ready."
+msgstr "U kunt deze pagina verlaten; de dataset verschijnt hier zodra hij klaar is."
+
+#: data/views.py
+msgid "Upload a GeoPackage (.gpkg), a zipped shapefile (.zip), KML, GeoJSON or a CSV with coordinate columns."
+msgstr "Upload een GeoPackage (.gpkg), een gezipte shapefile (.zip), KML, GeoJSON of een CSV met coördinaatkolommen."
+
+#: data/views.py
+#, python-format
+msgid "The file is larger than %(mb)s MB, the limit for this workspace."
+msgstr "Het bestand is groter dan %(mb)s MB, de limiet van deze werkruimte."
+
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s object"
+msgid_plural "%(n)s objects"
+msgstr[0] "%(n)s object"
+msgstr[1] "%(n)s objecten"
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s row without a location skipped"
+msgid_plural "%(n)s rows without a location skipped"
+msgstr[0] "%(n)s rij zonder locatie overgeslagen"
+msgstr[1] "%(n)s rijen zonder locatie overgeslagen"
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s duplicate key skipped"
+msgid_plural "%(n)s duplicate keys skipped"
+msgstr[0] "%(n)s dubbele sleutel overgeslagen"
+msgstr[1] "%(n)s dubbele sleutels overgeslagen"

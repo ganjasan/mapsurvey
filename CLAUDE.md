@@ -943,6 +943,15 @@ filters by survey access (`visible_survey_ids`: org owner/admin/viewer see all, 
 collaborations) and counts through `data.scope`. Privacy defaults: collected kinds `aggregated`,
 creator layers `public`. `data.features.question_features(survey, code, scope)` is the one reader of an
 answers dataset as features. Sidebar item `data` in `app_nav.MODULES`; help `how-to/data/`.
+**Uploads (change `data-upload`, #668)**: a workspace dataset needs no survey — `SurveyMapLayer.survey`
+is nullable and `organization` says whose a layer is (set in `save()` from the survey for survey
+layers, so no creation path has to). "+ New dataset" stores the file on the private tier and runs
+`data.tasks.run_data_import` (once per job, file deleted after): `data.imports.open_source` reads
+GPKG/zipped SHP/KML/GeoJSON with GDAL (reprojected to 4326) and CSV with `csv` (lon/lat, or British
+National Grid by value range; anything else refused), profiles fields into `Dataset.fields`
+(type, private for email/phone/name columns) and feeds `objects_from_features` in two passes.
+Limits by plan in `data.tasks.limits_for` (Free 10 MB/5,000, Pro 50 MB/100,000). Uploads start
+`private`; reaching a survey map is #670 and stays within the survey layer caps.
 
 **Session scope (`data.scope`, change `data-scope`, Data epic #676)**: which sessions a surface
 counts is ONE builder, `data.scope.SessionScope(survey_ids, include_deleted=, include_moderated=,
