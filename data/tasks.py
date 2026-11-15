@@ -56,10 +56,12 @@ def import_file(job):
             result = objects_from_features(
                 layer, source.features(),
                 mapping={'key': profile['key_field']} if profile['key_field'] else None)
-            rebuild_layer(layer)
+            # The dataset row (with its field dictionary) BEFORE the rebuild: the rebuild reads the
+            # dictionary to leave private columns out of the cached GeoJSON (change data-metadata).
             dataset, _created = Dataset.objects.update_or_create(
                 layer=layer, defaults=dict(organization=job.organization, kind=Dataset.KIND_LAYER, name=name,
                                            privacy_class=Dataset.PRIVACY_PRIVATE, fields=profile['fields']))
+            rebuild_layer(layer)
             from data.models import DatasetVersion
             DatasetVersion.objects.get_or_create(dataset=dataset, number=1, defaults=dict(
                 created_by=job.user, added=result['created']))

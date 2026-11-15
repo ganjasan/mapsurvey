@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
+from data import services
 from data.datasets import catalogue_rows
 from data.links import used_by
 from data.models import DataImportJob, Dataset
@@ -104,23 +105,16 @@ def upload(request):
     upload = request.FILES.get('file')
     if upload is None:
         return redirect('editor_data')
-    ext = os.path.splitext(upload.name)[1].lower()
-    if ext not in UPLOAD_EXTENSIONS:
-        messages.error(request, _('Upload a GeoPackage (.gpkg), a zipped shapefile (.zip), KML, GeoJSON or a CSV with coordinate columns.'))
-        return redirect('editor_data')
-    from data.tasks import limits_for, run_data_import
-    max_bytes, _features = limits_for(org)
-    if upload.size > max_bytes:
-        messages.error(request, _('The file is larger than %(mb)s MB, the limit for this workspace.')
-                       % {'mb': max_bytes // (1024 * 1024)})
-        return redirect('editor_data')
-    job = DataImportJob.objects.create(organization=org, user=request.user, file=upload,
-                                       original_name=os.path.basename(upload.name)[:255])
     try:
-        run_data_import.delay(job.pk)
-    except Exception:  # noqa: BLE001 — no broker: run it here rather than leave the card stuck
-        run_data_import(job.pk)
+        services.start_upload(_actor(request), org, upload)
+    except services.DataRefused as exc:
+        messages.error(request, exc.message)
     return redirect('editor_data')
+
+
+def _actor(request):
+    from survey.services.context import Actor
+    return Actor.from_request(request)
 
 
 @login_required
@@ -152,36 +146,14 @@ def _dataset_row(request, dataset_id):
     org, membership = _member(request)
     if org is None or membership is None:
         raise Http404
-    get_object_or_404(Dataset, pk=dataset_id, organization=org)
-    row = next((r for r in catalogue_rows(org, request.user) if r.dataset.pk == dataset_id), None)
+    row = services.dataset_row(org, request.user, dataset_id)
     if row is None:
         raise Http404
     return org, membership, row
 
 
-def _can_edit(user, membership, row):
-    if membership.role not in ('owner', 'admin', 'editor'):
-        return False
-    if row.survey is None:
-        return True   # a workspace upload: every editor of the workspace
-    from survey.permissions import SURVEY_ROLE_RANK, get_effective_survey_role
-    role = get_effective_survey_role(user, row.survey)
-    return SURVEY_ROLE_RANK.get(role, -1) >= SURVEY_ROLE_RANK['editor']
-
-
-def _details_form(data=None, instance=None):
-    from django import forms
-
-    class DatasetDetailsForm(forms.ModelForm):
-        class Meta:
-            model = Dataset
-            fields = ['name', 'description', 'theme', 'maintainer', 'update_frequency', 'licence']
-            widgets = {'description': forms.Textarea(attrs={'rows': 3})}
-
-    form = DatasetDetailsForm(data, instance=instance)
-    for name in ('theme', 'update_frequency', 'licence'):
-        form.fields[name].required = False
-    return form
+_can_edit = services.can_edit
+_details_form = services.details_form
 
 
 @login_required
@@ -200,9 +172,8 @@ def dataset(request, dataset_id):
         if action == 'details':
             form = _details_form(request.POST, instance=ds)
             if form.is_valid():
-                form.save()
-                from data.tags import set_tags   # change data-tags
-                set_tags(org, ds, request.POST.get('tags', ''))
+                services.update_details(_actor(request), ds, request.POST)
+                services.set_tags(_actor(request), ds, request.POST.get('tags', ''))
                 messages.success(request, _('Details saved.'))
                 return redirect('editor_data_dataset', dataset_id=ds.pk)
         elif action == 'fields' and ds.kind == Dataset.KIND_LAYER:
@@ -223,12 +194,10 @@ def dataset(request, dataset_id):
             _version_action(request, ds, action)
             return redirect('editor_data_dataset', dataset_id=ds.pk)
         elif action == 'privacy' and ds.kind == Dataset.KIND_LAYER:
-            value = request.POST.get('privacy_class')
-            if value == Dataset.PRIVACY_PRIVATE and ds.links.exists():
-                # A private dataset cannot sit in a public surface (change data-links).
-                messages.error(request, _('Linked datasets stay public. Unlink it from every survey and site below first.'))
-            elif value in (Dataset.PRIVACY_PUBLIC, Dataset.PRIVACY_PRIVATE):
-                Dataset.objects.filter(pk=ds.pk).update(privacy_class=value)
+            try:
+                services.set_privacy(_actor(request), ds, request.POST.get('privacy_class'))
+            except services.DataRefused as exc:
+                messages.error(request, exc.message)
             return redirect('editor_data_dataset', dataset_id=ds.pk)
     version_job = _version_job(ds) if _versionable(ds) else None
     return render(request, 'data/dataset.html', {
@@ -273,25 +242,31 @@ def _views_context(ds):
 
 
 def _create_view(request, ds):
-    from data.dataviews import clean
-    from data.models import DatasetView
-    values, errors = clean(ds, request.POST)
-    if errors:
-        return errors
-    DatasetView.objects.create(dataset=ds, created_by=request.user, **values)
+    conditions = []
+    for i in range(5):
+        field = request.POST.get(f'field_{i}')
+        if not field:
+            continue
+        op = request.POST.get(f'op_{i}') or 'eq'
+        value = request.POST.get(f'value_{i}') or ''
+        conditions.append({'field': field, 'op': op, 'values': [v.strip() for v in value.split(',') if v.strip()]}
+                          if op == 'in' else {'field': field, 'op': op, 'value': value})
+    try:
+        services.create_view(_actor(request), ds, request.POST.get('name', ''), request.POST.get('color', ''),
+                             conditions, request.POST.getlist('fields'))
+    except services.DataRefused as exc:
+        return {k: v[0] for k, v in exc.fields.items()} or {'name': exc.message}
     return {}
 
 
 def _delete_view(request, ds):
-    from data.models import DatasetView
     view = ds.views.filter(pk=request.POST.get('view') or 0).first()
     if view is None:
         return
-    if view.links.exists():
-        messages.error(request, _('“%(name)s” is shown in a survey or on a site. Unlink it there first.')
-                       % {'name': view.name})
-        return
-    view.delete()
+    try:
+        services.delete_view(_actor(request), view)
+    except services.DataRefused as exc:
+        messages.error(request, exc.message)
 
 
 def _versionable(ds):
@@ -310,45 +285,21 @@ def _version_job(ds):
 
 def _version_action(request, ds, action):
     """Upload a version file (→ preview), apply a previewed version with a note, or discard it."""
-    from data.tasks import limits_for, run_data_version
-    if action == 'version':
-        upload = request.FILES.get('file')
-        if upload is None:
-            return
-        if os.path.splitext(upload.name)[1].lower() not in UPLOAD_EXTENSIONS:
-            messages.error(request, _('Upload a GeoPackage (.gpkg), a zipped shapefile (.zip), KML, GeoJSON or a CSV with coordinate columns.'))
-            return
-        max_bytes, _features = limits_for(ds.organization)
-        if upload.size > max_bytes:
-            messages.error(request, _('The file is larger than %(mb)s MB, the limit for this workspace.')
-                           % {'mb': max_bytes // (1024 * 1024)})
-            return
-        DataImportJob.objects.filter(target=ds, status__in=('preview', 'failed', 'done')).delete()
-        job = DataImportJob.objects.create(organization=ds.organization, user=request.user, target=ds, file=upload,
-                                           original_name=os.path.basename(upload.name)[:255])
-        _enqueue(run_data_version, job.pk)
-        return
-    job = DataImportJob.objects.filter(target=ds, pk=request.POST.get('job') or 0).first()
-    if job is None:
-        return
-    if action == 'discard':
-        if job.status in ('preview', 'failed', 'done'):
-            if job.file:
-                job.file.delete(save=False)
-            job.delete()
-        return
-    if job.status == 'preview':
-        job.status = 'applying'
-        job.note = (request.POST.get('note') or '').strip()[:300]
-        job.save(update_fields=['status', 'note'])
-        _enqueue(run_data_version, job.pk, True)
-
-
-def _enqueue(task, *args):
     try:
-        task.delay(*args)
-    except Exception:  # noqa: BLE001 — no broker: run it here rather than leave the card stuck
-        task(*args)
+        if action == 'version':
+            upload = request.FILES.get('file')
+            if upload is not None:
+                services.start_version(_actor(request), ds, upload)
+            return
+        job = DataImportJob.objects.filter(target=ds, pk=request.POST.get('job') or 0).first()
+        if job is None:
+            return
+        if action == 'discard':
+            services.discard_version(_actor(request), job)
+        elif job.status == 'preview':
+            services.apply_version(_actor(request), job, request.POST.get('note') or '')
+    except services.DataRefused as exc:
+        messages.error(request, exc.message)
 
 
 def _deletable(ds):
@@ -367,14 +318,7 @@ def delete(request, dataset_id):
         raise Http404
     questions = bound_questions(ds.layer_id)
     if request.method == 'POST' and not questions:
-        from django.db import transaction
-        from survey.models import SiteBlock, SurveyMapLayer
-        with transaction.atomic():
-            for link in ds.links.filter(site_block__isnull=False).select_related('site_block'):
-                block = link.site_block
-                block.data = {**(block.data or {}), 'dataset': None}
-                block.save(update_fields=['data'])
-            SurveyMapLayer.objects.filter(pk=ds.layer_id).delete()   # cascades the dataset and its links
+        services.delete_dataset(_actor(request), ds)
         messages.success(request, _('Dataset deleted.'))
         return redirect('editor_data')
     return render(request, 'data/delete.html', {
@@ -384,30 +328,18 @@ def delete(request, dataset_id):
 
 
 def _save_dictionary(request, ds):
-    """Store labels, types, descriptions and private flags for the names the dictionary knows;
-    rebuild the layer's derived GeoJSON when the private set changed, so every surface reading
-    it follows at once."""
-    from data.fields import FIELD_TYPES, dictionary, hidden_names
-    before = hidden_names(ds.layer_id)
+    """The table's rows as entries for `services.set_fields` (a row whose name changed under the
+    form is left as stored)."""
+    from data.fields import dictionary
     entries = []
     for i, f in enumerate(dictionary(ds)):
         if request.POST.get(f'name_{i}') != f['name']:
-            entries.append(f)   # the page changed under the form: keep what is stored
             continue
-        ftype = request.POST.get(f'type_{i}')
-        entries.append({
-            'name': f['name'],
-            'label': (request.POST.get(f'label_{i}') or '').strip()[:200] or f['name'],
-            'type': ftype if ftype in FIELD_TYPES else f.get('type', 'text'),
-            'description': (request.POST.get(f'description_{i}') or '').strip()[:500],
-            'private': request.POST.get(f'private_{i}') == '1',
-        })
-    Dataset.objects.filter(pk=ds.pk).update(fields=entries, updated_at=timezone.now())
-    after = frozenset(f['name'] for f in entries if f['private'])
-    if after != before and ds.layer_id:
-        from survey.layers import rebuild_layer
-        from survey.models import SurveyMapLayer
-        rebuild_layer(SurveyMapLayer.objects.get(pk=ds.layer_id))
+        entries.append({'name': f['name'], 'label': request.POST.get(f'label_{i}') or '',
+                        'type': request.POST.get(f'type_{i}'),
+                        'description': request.POST.get(f'description_{i}') or '',
+                        'private': request.POST.get(f'private_{i}') == '1'})
+    services.set_fields(_actor(request), ds, entries)
 
 
 @login_required
