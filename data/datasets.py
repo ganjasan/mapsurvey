@@ -76,10 +76,16 @@ def sync(org):
         existing[key] = ds
 
     wanted = {}
-    for layer in (SurveyMapLayer.objects.filter(survey_id__in=survey_ids)
+    from django.db.models import Q
+    for layer in (SurveyMapLayer.objects.filter(Q(survey_id__in=survey_ids)
+                                                | Q(survey__isnull=True, organization=org))
                   .only('id', 'name', 'source', 'survey_id')):
         kind = Dataset.KIND_SHARED_MAP if layer.source == 'question' else Dataset.KIND_LAYER
         privacy = Dataset.PRIVACY_AGGREGATED if kind == Dataset.KIND_SHARED_MAP else Dataset.PRIVACY_PUBLIC
+        if layer.survey_id is None:
+            # A workspace upload keeps the privacy its owner set (uploads start private).
+            privacy = existing[('layer', layer.id)].privacy_class if ('layer', layer.id) in existing \
+                else Dataset.PRIVACY_PRIVATE
         wanted[('layer', layer.id)] = dict(kind=kind, layer_id=layer.id, survey_id=None, question_code='',
                                            name=layer.name, privacy_class=privacy)
     questions = _geo_questions(org)
@@ -194,11 +200,17 @@ def catalogue_rows(org, user):
     out = []
     for ds in datasets:
         sid = ds.layer.survey_id if ds.layer_id else ds.survey_id
-        if sid not in visible:
+        workspace_owned = ds.layer_id is not None and sid is None
+        if not workspace_owned and sid not in visible:
             continue
         survey = surveys.get(sid)
         row = Row(dataset=ds, survey=survey)
-        if ds.kind == Dataset.KIND_LAYER:
+        if workspace_owned:
+            row.rows = ds.layer.feature_count
+            row.used_by = bound.get(ds.layer_id, 0)
+            row.changed = ds.layer.updated_at
+            row.extra['uploaded'] = True
+        elif ds.kind == Dataset.KIND_LAYER:
             row.rows = ds.layer.feature_count
             row.used_by = 1 + bound.get(ds.layer_id, 0)
             row.changed = ds.layer.updated_at

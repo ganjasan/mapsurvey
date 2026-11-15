@@ -12901,3 +12901,46 @@ msgid "used in %(n)s place"
 msgid_plural "used in %(n)s places"
 msgstr[0] "kasutusel %(n)s kohas"
 msgstr[1] "kasutusel %(n)s kohas"
+
+#: data/templates/data/catalogue.html
+msgid "New dataset"
+msgstr "Uus andmestik"
+
+#: data/templates/data/_jobs.html
+msgid "Kept private:"
+msgstr "Jäetud privaatseks:"
+
+#: data/templates/data/_jobs.html
+msgid "You can leave this page; the dataset will appear here when it is ready."
+msgstr "Võite sellelt lehelt lahkuda; andmestik ilmub siia, kui see on valmis."
+
+#: data/views.py
+msgid "Upload a GeoPackage (.gpkg), a zipped shapefile (.zip), KML, GeoJSON or a CSV with coordinate columns."
+msgstr "Laadige üles GeoPackage (.gpkg), pakitud shapefile (.zip), KML, GeoJSON või koordinaatveergudega CSV."
+
+#: data/views.py
+#, python-format
+msgid "The file is larger than %(mb)s MB, the limit for this workspace."
+msgstr "Fail on suurem kui %(mb)s MB, selle tööruumi piirang."
+
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s object"
+msgid_plural "%(n)s objects"
+msgstr[0] "%(n)s objekt"
+msgstr[1] "%(n)s objekti"
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s row without a location skipped"
+msgid_plural "%(n)s rows without a location skipped"
+msgstr[0] "%(n)s asukohata rida jäeti vahele"
+msgstr[1] "%(n)s asukohata rida jäeti vahele"
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s duplicate key skipped"
+msgid_plural "%(n)s duplicate keys skipped"
+msgstr[0] "%(n)s topeltvõti jäeti vahele"
+msgstr[1] "%(n)s topeltvõtit jäeti vahele"

@@ -12922,3 +12922,46 @@ msgid "used in %(n)s place"
 msgid_plural "used in %(n)s places"
 msgstr[0] "käytössä %(n)s paikassa"
 msgstr[1] "käytössä %(n)s paikassa"
+
+#: data/templates/data/catalogue.html
+msgid "New dataset"
+msgstr "Uusi aineisto"
+
+#: data/templates/data/_jobs.html
+msgid "Kept private:"
+msgstr "Pidetty yksityisenä:"
+
+#: data/templates/data/_jobs.html
+msgid "You can leave this page; the dataset will appear here when it is ready."
+msgstr "Voit poistua tältä sivulta; aineisto ilmestyy tähän, kun se on valmis."
+
+#: data/views.py
+msgid "Upload a GeoPackage (.gpkg), a zipped shapefile (.zip), KML, GeoJSON or a CSV with coordinate columns."
+msgstr "Lataa GeoPackage (.gpkg), pakattu shapefile (.zip), KML, GeoJSON tai CSV, jossa on koordinaattisarakkeet."
+
+#: data/views.py
+#, python-format
+msgid "The file is larger than %(mb)s MB, the limit for this workspace."
+msgstr "Tiedosto on suurempi kuin %(mb)s Mt, tämän työtilan raja."
+
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s object"
+msgid_plural "%(n)s objects"
+msgstr[0] "%(n)s kohde"
+msgstr[1] "%(n)s kohdetta"
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s row without a location skipped"
+msgid_plural "%(n)s rows without a location skipped"
+msgstr[0] "%(n)s sijainniton rivi ohitettiin"
+msgstr[1] "%(n)s sijainnitonta riviä ohitettiin"
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s duplicate key skipped"
+msgid_plural "%(n)s duplicate keys skipped"
+msgstr[0] "%(n)s kaksoisavain ohitettiin"
+msgstr[1] "%(n)s kaksoisavainta ohitettiin"

@@ -12918,3 +12918,43 @@ msgstr[0] "%(n)s baris"
 msgid "used in %(n)s place"
 msgid_plural "used in %(n)s places"
 msgstr[0] "dipakai di %(n)s tempat"
+
+#: data/templates/data/catalogue.html
+msgid "New dataset"
+msgstr "Dataset baru"
+
+#: data/templates/data/_jobs.html
+msgid "Kept private:"
+msgstr "Tetap privat:"
+
+#: data/templates/data/_jobs.html
+msgid "You can leave this page; the dataset will appear here when it is ready."
+msgstr "Anda boleh meninggalkan halaman ini; dataset akan muncul di sini saat siap."
+
+#: data/views.py
+msgid "Upload a GeoPackage (.gpkg), a zipped shapefile (.zip), KML, GeoJSON or a CSV with coordinate columns."
+msgstr "Unggah GeoPackage (.gpkg), shapefile dalam ZIP (.zip), KML, GeoJSON, atau CSV dengan kolom koordinat."
+
+#: data/views.py
+#, python-format
+msgid "The file is larger than %(mb)s MB, the limit for this workspace."
+msgstr "File lebih besar dari %(mb)s MB, batas ruang kerja ini."
+
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s object"
+msgid_plural "%(n)s objects"
+msgstr[0] "%(n)s objek"
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s row without a location skipped"
+msgid_plural "%(n)s rows without a location skipped"
+msgstr[0] "%(n)s baris tanpa lokasi dilewati"
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s duplicate key skipped"
+msgid_plural "%(n)s duplicate keys skipped"
+msgstr[0] "%(n)s kunci ganda dilewati"

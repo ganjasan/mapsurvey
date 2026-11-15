@@ -317,6 +317,9 @@ urlpatterns = [
     path('editor/sites/', site_views.editor_sites, name='editor_sites'),
     # The Data catalogue (change data-catalogue, epic #676; `editor_data*` names light the sidebar row).
     path('editor/data/', data_views.catalogue, name='editor_data'),
+    path('editor/data/upload/', data_views.upload, name='editor_data_upload'),
+    path('editor/data/jobs/', data_views.jobs, name='editor_data_jobs'),
+    path('editor/data/jobs/<int:job_id>/dismiss/', data_views.dismiss, name='editor_data_job_dismiss'),
     path('editor/sites/new/', site_views.editor_site_create, name='editor_site_create'),
     path('editor/sites/<uuid:uuid>/', site_views.editor_site, name='editor_site'),
     path('editor/sites/<uuid:uuid>/duplicate/', site_views.editor_site_duplicate, name='editor_site_duplicate'),

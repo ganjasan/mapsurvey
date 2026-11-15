@@ -13007,3 +13007,46 @@ msgid "used in %(n)s place"
 msgid_plural "used in %(n)s places"
 msgstr[0] "utilisé à %(n)s endroit"
 msgstr[1] "utilisé à %(n)s endroits"
+
+#: data/templates/data/catalogue.html
+msgid "New dataset"
+msgstr "Nouveau jeu de données"
+
+#: data/templates/data/_jobs.html
+msgid "Kept private:"
+msgstr "Gardé privé :"
+
+#: data/templates/data/_jobs.html
+msgid "You can leave this page; the dataset will appear here when it is ready."
+msgstr "Vous pouvez quitter cette page ; le jeu de données apparaîtra ici quand il sera prêt."
+
+#: data/views.py
+msgid "Upload a GeoPackage (.gpkg), a zipped shapefile (.zip), KML, GeoJSON or a CSV with coordinate columns."
+msgstr "Importez un GeoPackage (.gpkg), un shapefile zippé (.zip), du KML, du GeoJSON ou un CSV avec des colonnes de coordonnées."
+
+#: data/views.py
+#, python-format
+msgid "The file is larger than %(mb)s MB, the limit for this workspace."
+msgstr "Le fichier dépasse %(mb)s Mo, la limite de cet espace."
+
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s object"
+msgid_plural "%(n)s objects"
+msgstr[0] "%(n)s objet"
+msgstr[1] "%(n)s objets"
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s row without a location skipped"
+msgid_plural "%(n)s rows without a location skipped"
+msgstr[0] "%(n)s ligne sans emplacement ignorée"
+msgstr[1] "%(n)s lignes sans emplacement ignorées"
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s duplicate key skipped"
+msgid_plural "%(n)s duplicate keys skipped"
+msgstr[0] "%(n)s clé en double ignorée"
+msgstr[1] "%(n)s clés en double ignorées"

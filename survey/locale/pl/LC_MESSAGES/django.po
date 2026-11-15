@@ -13045,3 +13045,49 @@ msgid_plural "used in %(n)s places"
 msgstr[0] "używany w %(n)s miejscu"
 msgstr[1] "używany w %(n)s miejscach"
 msgstr[2] "używany w %(n)s miejscach"
+
+#: data/templates/data/catalogue.html
+msgid "New dataset"
+msgstr "Nowy zbiór danych"
+
+#: data/templates/data/_jobs.html
+msgid "Kept private:"
+msgstr "Zachowane jako prywatne:"
+
+#: data/templates/data/_jobs.html
+msgid "You can leave this page; the dataset will appear here when it is ready."
+msgstr "Możesz opuścić tę stronę; zbiór danych pojawi się tutaj, gdy będzie gotowy."
+
+#: data/views.py
+msgid "Upload a GeoPackage (.gpkg), a zipped shapefile (.zip), KML, GeoJSON or a CSV with coordinate columns."
+msgstr "Wgraj GeoPackage (.gpkg), spakowany shapefile (.zip), KML, GeoJSON lub CSV z kolumnami współrzędnych."
+
+#: data/views.py
+#, python-format
+msgid "The file is larger than %(mb)s MB, the limit for this workspace."
+msgstr "Plik jest większy niż %(mb)s MB, limit tego obszaru roboczego."
+
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s object"
+msgid_plural "%(n)s objects"
+msgstr[0] "%(n)s obiekt"
+msgstr[1] "%(n)s obiekty"
+msgstr[2] "%(n)s obiektów"
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s row without a location skipped"
+msgid_plural "%(n)s rows without a location skipped"
+msgstr[0] "pominięto %(n)s wiersz bez lokalizacji"
+msgstr[1] "pominięto %(n)s wiersze bez lokalizacji"
+msgstr[2] "pominięto %(n)s wierszy bez lokalizacji"
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s duplicate key skipped"
+msgid_plural "%(n)s duplicate keys skipped"
+msgstr[0] "pominięto %(n)s zduplikowany klucz"
+msgstr[1] "pominięto %(n)s zduplikowane klucze"
+msgstr[2] "pominięto %(n)s zduplikowanych kluczy"

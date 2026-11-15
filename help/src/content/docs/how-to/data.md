@@ -20,6 +20,19 @@ Choose **Data** in the left sidebar. Each row shows where the dataset comes from
 
 Filter by source (Layer, Shared map, Answers, Responses) or by privacy, or search by name. A filtered list is a link you can share with a colleague.
 
+## Upload a file
+
+Press **New dataset** and pick a file. Mapsurvey reads:
+
+- **GeoPackage** (`.gpkg`), a **zipped shapefile** (`.zip` holding the `.shp`, `.dbf`, `.shx` and `.prj`), **KML** and **GeoJSON** — in any coordinate system the file names; Mapsurvey converts it.
+- **CSV** with `latitude` and `longitude` columns, or with `easting` and `northing` columns in the British National Grid. For any other projected grid, export the file as WGS 84 first.
+
+The file is read in the background — you can leave the page. When it is ready, a card shows how many objects were created, the coordinate system that was read, and rows that were skipped: rows without a location and repeated keys never stop the import.
+
+Columns that look like email addresses, phone numbers or people's names are kept **private** — they never leave the dataset. A new upload is private as a whole until you decide otherwise.
+
+Limits: 10 MB and 5,000 objects per file on Free; 50 MB and 100,000 objects on Pro.
+
 ## Privacy
 
 Every dataset has a privacy class:
