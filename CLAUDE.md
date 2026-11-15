@@ -992,6 +992,12 @@ evaluated in Python by `data.dataviews.matches`; collection streamed with `layer
 (RESTRICT): the survey's gated GeoJSON, object card and map colour go through `data.links.survey_view`; a Site
 map block stores `data['view']`/`data['choice']` (`<dataset>:<view>`). A grid view is refused as a survey
 layer. Analysis view types and Responses' saved views as views are #692.
+**Tags (change `data-tags`, #673)**: `data.models.Tag(organization, name, slug)` with `datasets` and `surveys`
+(canonical) relations declared on the tag — a module that takes tags adds a relation there, never a column.
+`data.tags.set_tags(org, obj, names)` is the ONE writer (dataset page, `editor_survey_tags`, REST
+`PUT /api/v1/surveys/{uuid}/tags`, MCP `set_survey_tags`): trimmed, ≤10, ≤40 chars, matched by slug, orphans
+deleted. Filters are `?tag=<slug>` on the catalogue and the dashboard; `out.survey` carries `tags`;
+`api.v1.surveys.tag_filter` serves REST and MCP `list_surveys(tag)`.
 
 **Session scope (`data.scope`, change `data-scope`, Data epic #676)**: which sessions a surface
 counts is ONE builder, `data.scope.SessionScope(survey_ids, include_deleted=, include_moderated=,

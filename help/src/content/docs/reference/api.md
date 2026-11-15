@@ -88,12 +88,14 @@ Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `p
 
 ### `GET /surveys`
 
-Your surveys across the workspaces whose plan includes the API, newest first.
+Your surveys across the workspaces whose plan includes the API, newest first; `tag` keeps
+those carrying a workspace tag (its name or slug).
 
 | Parameter | In | Type | Required |
 |---|---|---|---|
 | `cursor` | query | string or null |  |
 | `limit` | query | integer |  |
+| `tag` | query | string or null |  |
 
 **200** SurveyList
 
@@ -168,6 +170,24 @@ Move the survey to the trash; it can be restored in the editor for 30 days.
 | `uuid` | path | uuid | yes |
 
 **204** no body
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `PUT /surveys/{uuid}/tags`
+
+Replace the survey's workspace tags. Editor role.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `tags` | list of string | yes | The survey's new tags (replacing the old ones); created in the workspace on first use, matched by slug, at most 40 characters each. |
+
+**200** SurveyOut
 
 Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
 
@@ -1270,6 +1290,7 @@ Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `p
 | `closes_at` | date-time or null |  | End of the survey period (UTC): the survey closes by itself then. Null = no end. |
 | `schedule_timezone` | string |  | IANA zone the period was entered in; "" = UTC. |
 | `url` | string | yes |  |
+| `tags` | list of string |  | Workspace tags that group the survey with other items of one engagement. |
 | `created_at` | date-time | yes |  |
 | `updated_at` | date-time | yes |  |
 | `sections` | integer | yes |  |
@@ -1450,6 +1471,7 @@ Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `p
 | `closes_at` | date-time or null |  | End of the survey period (UTC): the survey closes by itself then. Null = no end. |
 | `schedule_timezone` | string |  | IANA zone the period was entered in; "" = UTC. |
 | `url` | string | yes |  |
+| `tags` | list of string |  | Workspace tags that group the survey with other items of one engagement. |
 | `created_at` | date-time | yes |  |
 | `updated_at` | date-time | yes |  |
 | `thanks_html` | object | yes |  |
@@ -1488,6 +1510,7 @@ Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `p
 | `closes_at` | date-time or null |  | End of the survey period (UTC): the survey closes by itself then. Null = no end. |
 | `schedule_timezone` | string |  | IANA zone the period was entered in; "" = UTC. |
 | `url` | string | yes |  |
+| `tags` | list of string |  | Workspace tags that group the survey with other items of one engagement. |
 | `created_at` | date-time | yes |  |
 | `updated_at` | date-time | yes |  |
 

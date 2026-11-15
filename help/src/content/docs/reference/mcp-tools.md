@@ -61,6 +61,7 @@ Permission `surveys:read` · role **viewer** · read-only
 |---|---|---|---|
 | `cursor` | string |  | `next_cursor` of the previous page. |
 | `limit` | integer |  | Default `50`. |
+| `tag` | string |  | Only surveys carrying this workspace tag (its name or slug). |
 
 ### `get_survey`
 
@@ -84,6 +85,17 @@ Permission `surveys:write` · role **workspace editor**
 | `workspace` | string |  | Workspace slug; optional when the token is bound to one or you belong to one. |
 | `language` | string |  | Default `en`. |
 | `map_start` | object (`lat`, `lng`, `zoom`) |  |  |
+
+### `set_survey_tags`
+
+Replace the survey's workspace tags, which group it with the datasets and other surveys of one engagement ("Riverside plan 2027"). Tags are created on first use and matched by slug; at most 10. Editor role.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `tags` | list of string | **required** | The survey's new tags (replacing the old ones); created in the workspace on first use, matched by slug, at most 40 characters each. |
+| `survey` | uuid | **required** | The survey uuid (from list_surveys or create_survey). |
 
 ### `update_survey`
 

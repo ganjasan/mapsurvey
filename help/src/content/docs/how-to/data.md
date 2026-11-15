@@ -56,6 +56,12 @@ Only a **public** dataset can be linked — a new upload is private until you sw
 
 The dataset's page lists everything that uses it under **Used by**: the survey it belongs to, the surveys and sites that link it, and the questions that show it.
 
+## Group an engagement with tags
+
+An engagement is usually a survey, a site and a few datasets. **Tags** keep them together: type them on a dataset's page (under the details) and in a survey's settings panel, separated by commas — "Riverside plan 2027", "Parks". A tag is created the first time you use it and disappears when nothing carries it any more.
+
+The **Data** list and the survey dashboard show each item's tags; click a tag to see only what carries it, and the dashboard search finds tags too. Over the API and MCP, a survey's tags come with it, `GET /api/v1/surveys?tag=…` filters by one and `PUT /api/v1/surveys/{uuid}/tags` (or the `set_survey_tags` tool) sets them.
+
 ## Save a view
 
 A **view** is a saved selection of a dataset that keeps its name: "Trees in poor condition", "Answers to *Where would you plant a tree?* as counts". Surveys and site map blocks can show a view instead of the whole dataset, and it follows every new version of the dataset.

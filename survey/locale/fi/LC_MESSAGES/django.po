@@ -13458,3 +13458,11 @@ msgstr "Tallenna näkymä"
 #: survey/templates/sites/public.html
 msgid "respondents"
 msgstr "vastaajaa"
+
+#: data/templates/data/dataset.html
+msgid "Comma-separated, e.g. Riverside plan 2027"
+msgstr "Pilkuilla erotettuina, esim. Riverside-suunnitelma 2027"
+
+#: data/templates/data/dataset.html
+msgid "Tags group the datasets and surveys of one engagement; the Data list and the survey dashboard filter by them."
+msgstr "Tunnisteet ryhmittelevät yhden osallistamishankkeen aineistot ja kyselyt; Data-luettelo ja kyselyjen kojelauta suodattavat niiden mukaan."

@@ -220,3 +220,23 @@ class DatasetVersion(models.Model):
     class Meta:
         ordering = ['-number']
         constraints = [models.UniqueConstraint(fields=['dataset', 'number'], name='data_version_number_unique')]
+
+
+class Tag(models.Model):
+    """A free workspace tag (change data-tags, #673): how an engagement or programme is grouped
+    ("Riverside plan 2027") — the platform has no project entity. One table; each module that takes
+    tags adds a relation here. `data.tags.set_tags` is the one writer."""
+    organization = models.ForeignKey('survey.Organization', on_delete=models.CASCADE, related_name='tags')
+    name = models.CharField(max_length=40)
+    slug = models.SlugField(max_length=50, allow_unicode=True)
+    datasets = models.ManyToManyField(Dataset, related_name='tags', blank=True)
+    # The CANONICAL survey; drafts and versions answer with it.
+    surveys = models.ManyToManyField('survey.SurveyHeader', related_name='tags', blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['name', 'id']
+        constraints = [models.UniqueConstraint(fields=['organization', 'slug'], name='data_tag_unique_per_workspace')]
+
+    def __str__(self):
+        return self.name

@@ -758,6 +758,7 @@ def editor_survey_settings(request, survey_uuid):
         'data_choices': _data_choices(survey),
         'layer_icons': LAYER_ICONS,
         'layers_enabled': settings.MAP_REFERENCE_LAYERS,
+        'survey_tags_text': _survey_tags_text(survey),
     })
 
 
@@ -819,6 +820,7 @@ def editor_survey_settings_panel(request, survey_uuid):
         'data_choices': _data_choices(survey),
         'layer_icons': LAYER_ICONS,
         'layers_enabled': settings.MAP_REFERENCE_LAYERS,
+        'survey_tags_text': _survey_tags_text(survey),
     })
 
 
@@ -1061,6 +1063,20 @@ def editor_survey_layer_delete(request, survey_uuid, layer_id):
     except svc_layers.LayerError as exc:
         return JsonResponse({'error': exc.message}, status=400)
     return HttpResponse(status=204)
+
+
+def _survey_tags_text(survey):
+    from data.tags import tags_of
+    return ', '.join(t.name for t in tags_of(survey))
+
+
+@survey_permission_required('editor')
+@require_POST
+def editor_survey_tags(request, survey_uuid):
+    """Replace the survey's workspace tags (change data-tags); answers the saved names."""
+    from data.tags import set_tags
+    tags = set_tags(request.survey.organization, request.survey, request.POST.get('tags', ''))
+    return JsonResponse({'tags': [t.name for t in tags]})
 
 
 def _data_choices(survey):

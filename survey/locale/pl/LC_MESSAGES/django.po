@@ -13586,3 +13586,11 @@ msgstr "Zapisz widok"
 #: survey/templates/sites/public.html
 msgid "respondents"
 msgstr "respondentów"
+
+#: data/templates/data/dataset.html
+msgid "Comma-separated, e.g. Riverside plan 2027"
+msgstr "Oddzielone przecinkami, np. Plan Riverside 2027"
+
+#: data/templates/data/dataset.html
+msgid "Tags group the datasets and surveys of one engagement; the Data list and the survey dashboard filter by them."
+msgstr "Tagi grupują zbiory danych i ankiety jednego procesu konsultacji; lista Danych i panel ankiet filtrują według nich."

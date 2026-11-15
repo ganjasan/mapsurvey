@@ -776,6 +776,15 @@ def editor(request):
 	if not show_archived:
 		survey_list = survey_list.exclude(status='archived')
 
+	# Tags (change data-tags): `?tag=<slug>` narrows the list; every card shows its tags.
+	from data.models import Tag
+	tag_filter = request.GET.get('tag') or ''
+	workspace_tags = list(Tag.objects.filter(organization=org, surveys__isnull=False).distinct().order_by('name')) \
+		if org is not None else []
+	if tag_filter:
+		survey_list = survey_list.filter(tags__slug=tag_filter, tags__organization=org)
+	survey_list = survey_list.prefetch_related('tags')
+
 	# Reverse OneToOne used by the "Results live" card chip — avoid N+1
 	survey_list = survey_list.select_related('public_results_page')
 
@@ -835,6 +844,8 @@ def editor(request):
 	import_jobs = import_jobs_for(request.user, org) if org_role in ('owner', 'admin', 'editor') else []
 	context = {
 		"survey_headers": surveys_with_kpi,
+		"workspace_tags": workspace_tags,
+		"tag_filter": tag_filter,
 		"org_role": org_role,
 		"joined_org": joined_org,
 		# An editor sees own and collaborated surveys only; in a workspace that

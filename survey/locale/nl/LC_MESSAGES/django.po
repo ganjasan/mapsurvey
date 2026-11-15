@@ -13496,3 +13496,11 @@ msgstr "Weergave opslaan"
 #: survey/templates/sites/public.html
 msgid "respondents"
 msgstr "respondenten"
+
+#: data/templates/data/dataset.html
+msgid "Comma-separated, e.g. Riverside plan 2027"
+msgstr "Gescheiden door komma’s, bijv. Plan Riverside 2027"
+
+#: data/templates/data/dataset.html
+msgid "Tags group the datasets and surveys of one engagement; the Data list and the survey dashboard filter by them."
+msgstr "Tags groeperen de datasets en enquêtes van één participatietraject; de Data-lijst en het enquêteoverzicht filteren erop."
