@@ -835,6 +835,142 @@ Permission `surveys:read` · read-only
 | `set` | `maki` \| `temaki` \| `fa` |  |  |
 | `limit` | integer |  | Default `20`. |
 
+### `list_datasets`
+
+The datasets of a workspace you may see: layers (uploaded or drawn), shared maps, answers to each map question and respondent rows, with privacy, tags, row counts and how many places use each. Filter by kind (layer, shared_map, answers, responses), a tag or a name.
+
+Permission `surveys:read` · role **workspace member** · read-only
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `workspace` | string |  | Workspace slug; needed when you belong to several. |
+| `kind` | string |  |  |
+| `tag` | string |  |  |
+| `q` | string |  |  |
+
+### `get_dataset`
+
+One dataset: details (licence, theme, maintainer, update frequency), its field dictionary (names, labels, types, which are private — private values are never returned), views, versions and the places that use it.
+
+Permission `surveys:read` · role **workspace member** · read-only
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `dataset_id` | integer | **required** | A dataset id from list_datasets. |
+
+### `upload_dataset`
+
+Create a workspace dataset from a file (GeoJSON, CSV with coordinates, KML, GeoPackage, zipped shapefile). It runs in the background: poll get_dataset_job until done or failed. A new dataset is private, and columns that look like emails, phone numbers or names are marked private.
+
+Permission `surveys:write` · role **workspace editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `filename` | string | **required** | The file name with its extension: .geojson, .json, .csv, .kml, .gpkg or .zip (a shapefile). |
+| `content` | string |  | The file as text (GeoJSON, CSV, KML). |
+| `content_base64` | string |  | The file as base64 (GeoPackage, zipped shapefile, or any text format). |
+| `workspace` | string |  | Workspace slug. |
+
+### `get_dataset_job`
+
+An upload or a new version: status (queued, running, preview, applying, done, failed), the dataset, and the report or preview counts.
+
+Permission `surveys:read` · read-only
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `job_id` | integer | **required** | The job id an upload returned. |
+
+### `update_dataset`
+
+Change the details you name: name, description, theme (DCAT-AP code such as ENVI or TRAN), maintainer, update_frequency, licence (ogl-uk-3.0, cc-by-4.0, cc0-1.0, dl-de-by-2.0), access (public or private; a dataset shown somewhere stays public) and tags.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `name` | string |  |  |
+| `description` | string |  |  |
+| `theme` | string |  | A DCAT-AP theme code (ENVI, TRAN, …) or "". |
+| `maintainer` | string |  | The team or role that keeps the dataset current. |
+| `update_frequency` | string |  | as_needed \| daily \| weekly \| monthly \| quarterly \| yearly \| never \| "". |
+| `licence` | string |  | ogl-uk-3.0 \| cc-by-4.0 \| cc0-1.0 \| dl-de-by-2.0 \| "". |
+| `privacy_class` | `public` \| `private` |  | Layer datasets only; a linked dataset stays public. |
+| `tags` | list of string |  | Replace the workspace tags. |
+| `dataset_id` | integer | **required** | A dataset id from list_datasets. |
+
+### `set_dataset_fields`
+
+Labels, types, descriptions and the private flag of named fields of a layer dataset. A private field never reaches a map, an export or the API.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `dataset_id` | integer | **required** | A dataset id from list_datasets. |
+| `fields` | list of object (`name`, `label`, `type`, `description`, `private`) | **required** |  |
+
+### `create_dataset_view`
+
+A named view of a dataset: on a layer, conditions on public fields (eq, in, gt, lt) and the fields it keeps; on collected answers, always a grid of counts with small groups hidden. Surveys and site map blocks can show a view instead of the whole dataset.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `name` | string | **required** |  |
+| `color` | string |  | #rrggbb |
+| `conditions` | list of object (`field`, `op`, `value`, `values`) |  | All must hold. Layer datasets only; collected answers are a grid. |
+| `fields` | list of string |  | Public fields the view keeps; empty = all. |
+| `dataset_id` | integer | **required** | A dataset id from list_datasets. |
+
+### `upload_dataset_version`
+
+A new file for a layer dataset, matched row by row on its key field. The job stops at preview with added, changed, removed and unchanged counts — nothing is saved until apply_dataset_version.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `dataset_id` | integer | **required** | A dataset id from list_datasets. |
+| `filename` | string | **required** | The file name with its extension: .geojson, .json, .csv, .kml, .gpkg or .zip (a shapefile). |
+| `content` | string |  | The file as text (GeoJSON, CSV, KML). |
+| `content_base64` | string |  | The file as base64 (GeoPackage, zipped shapefile, or any text format). |
+
+### `apply_dataset_version`
+
+Apply a previewed version with a note. Objects whose key stays are updated in place and keep their answers; every survey and site that shows the dataset shows the new version.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `job_id` | integer | **required** | The version job id. |
+| `note` | string |  | What changed. |
+
+### `link_dataset`
+
+Add a public layer dataset (or one of its views) to a survey's reference layers — linked, not copied, so an edit of the dataset shows on the survey. Up to 5,000 objects and 10 layers per survey. Owner role.
+
+Permission `surveys:write` · role **owner**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+| `dataset_id` | integer | **required** | A dataset id from list_datasets. |
+| `view_id` | integer |  | A view id from get_dataset. |
+
+### `unlink_dataset`
+
+Remove a linked dataset from a survey's reference layers; refused while a question of the survey shows it. Owner role.
+
+Permission `surveys:write` · role **owner**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+| `link_id` | integer | **required** | The link id link_dataset returned. |
+
 ## Errors
 
 A refused call comes back as a tool error carrying the same envelope as the REST API:

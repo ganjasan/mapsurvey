@@ -998,6 +998,15 @@ layer. Analysis view types and Responses' saved views as views are #692.
 `PUT /api/v1/surveys/{uuid}/tags`, MCP `set_survey_tags`): trimmed, ≤10, ≤40 chars, matched by slug, orphans
 deleted. Filters are `?tag=<slug>` on the catalogue and the dashboard; `out.survey` carries `tags`;
 `api.v1.surveys.tag_filter` serves REST and MCP `list_surveys(tag)`.
+**Data in the API and MCP (change `data-api`, #674)**: `data/services.py` is the ONE write path of the
+Data module (details, access, fields, tags, views, uploads, versions, delete, survey links) taking an
+`Actor`; the dataset page, `api/v1/datasets.py` (`/datasets…`, `/dataset-jobs/…`,
+`/surveys/{uuid}/datasets`) and `mcp/tools/data.py` all call it, and `DataRefused` maps to 422/409. Scopes
+are `surveys:read` / `surveys:write`; visibility `services.dataset_row`, edit `services.can_edit`, linking
+the survey owner role, Pro gate on the dataset's workspace. Raw features exist only for layer datasets
+(private fields already out of the cache); collected answers leave as grid views. MCP takes files as
+`content` or `content_base64` (≤ `MCP_IMPORT_MAX_BYTES`). The import writes the dataset row BEFORE
+`rebuild_layer` — the rebuild reads the dictionary to drop private columns.
 
 **Session scope (`data.scope`, change `data-scope`, Data epic #676)**: which sessions a surface
 counts is ONE builder, `data.scope.SessionScope(survey_ids, include_deleted=, include_moderated=,

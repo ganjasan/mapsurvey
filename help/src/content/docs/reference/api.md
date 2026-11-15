@@ -1268,6 +1268,251 @@ Which sites may embed the survey (editor role); an empty list lets any site.
 
 Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
 
+## Datasets
+
+### `GET /datasets`
+
+The workspace's datasets you may see — layers, shared maps, answers to each map question,
+respondent rows — with their facts. Filter by `kind`, a `tag` (name or slug) or a name `q`.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `workspace` | query | string or null |  |
+| `kind` | query | string or null |  |
+| `tag` | query | string or null |  |
+| `q` | query | string or null |  |
+
+**200** object
+
+Errors: `bad_cursor`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `POST /datasets`
+
+A new workspace dataset from a GeoPackage, zipped shapefile, KML, GeoJSON or CSV, as a job.
+Poll `/dataset-jobs/{id}` until `status` is `done` or `failed`; it starts private.
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `file` | binary | yes |  |
+| `workspace` | string or null |  |  |
+
+**202** object
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `GET /datasets/{dataset_id}`
+
+One dataset: details, field dictionary (names and flags; private values never), views,
+versions and every place that uses it.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `dataset_id` | path | integer | yes |
+
+**200** object
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `PATCH /datasets/{dataset_id}`
+
+Details, access and tags; the fields you leave out keep their values.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `dataset_id` | path | integer | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `name` | string or null |  |  |
+| `description` | string or null |  |  |
+| `theme` | string or null |  | A DCAT-AP theme code (ENVI, TRAN, …) or "". |
+| `maintainer` | string or null |  | The team or role that keeps the dataset current. |
+| `update_frequency` | string or null |  | as_needed | daily | weekly | monthly | quarterly | yearly | never | "". |
+| `licence` | string or null |  | ogl-uk-3.0 | cc-by-4.0 | cc0-1.0 | dl-de-by-2.0 | "". |
+| `privacy_class` | `public` | `private` or null |  | Layer datasets only; a linked dataset stays public. |
+| `tags` | list of string or null |  | Replace the workspace tags. |
+
+**200** object
+
+Errors: `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `DELETE /datasets/{dataset_id}`
+
+Delete a dataset you uploaded; refused while a question shows it.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `dataset_id` | path | integer | yes |
+
+**200** object
+
+Errors: `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `GET /datasets/{dataset_id}/features`
+
+A layer dataset's objects as GeoJSON, without private fields. Collected answers leave only
+as a grid: create a view and read its features.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `dataset_id` | path | integer | yes |
+
+**200** no body
+
+Errors: `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `PUT /datasets/{dataset_id}/fields`
+
+Labels, types, descriptions and private flags of the named fields (layer datasets).
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `dataset_id` | path | integer | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `fields` | list of FieldIn | yes |  |
+
+**200** object
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `POST /datasets/{dataset_id}/versions`
+
+A new version of a layer dataset, matched by its key field. The job stops at `preview` with
+added / changed / removed / unchanged counts; apply it with `/dataset-jobs/{id}/apply`.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `dataset_id` | path | integer | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `file` | binary | yes |  |
+
+**202** object
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `GET /dataset-jobs/{job_id}`
+
+One of your dataset jobs: an upload, or a version (with its preview counts).
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `job_id` | path | integer | yes |
+
+**200** object
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `POST /dataset-jobs/{job_id}/apply`
+
+Apply a previewed version. Objects whose key stays keep their answers.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `job_id` | path | integer | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `note` | string |  | What changed, shown in the version history. |
+
+**202** object
+
+Errors: `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `POST /datasets/{dataset_id}/views`
+
+A saved view: conditions on public fields and the fields it keeps (layers), or a grid of
+counts (collected answers — the privacy class decides).
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `dataset_id` | path | integer | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `name` | string | yes |  |
+| `color` | string or null |  | #rrggbb |
+| `conditions` | list of ConditionIn |  | All must hold. Layer datasets only; collected answers are a grid. |
+| `fields` | list of string |  | Public fields the view keeps; empty = all. |
+
+**201** object
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `GET /datasets/{dataset_id}/views/{view_id}/features`
+
+A view's GeoJSON: the matching objects with its fields, or the grid cells with their counts.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `dataset_id` | path | integer | yes |
+| `view_id` | path | integer | yes |
+
+**200** no body
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `DELETE /datasets/{dataset_id}/views/{view_id}`
+
+Delete a view nothing shows.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `dataset_id` | path | integer | yes |
+| `view_id` | path | integer | yes |
+
+**200** object
+
+Errors: `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `POST /surveys/{uuid}/datasets`
+
+Show a public layer dataset (or a view of it) among the survey's reference layers — linked,
+not copied. Owner role on the survey.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `dataset` | integer | yes |  |
+| `view` | integer or null |  | A view of the dataset instead of all of it. |
+
+**201** object
+
+Errors: `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `DELETE /surveys/{uuid}/datasets/{link_id}`
+
+Stop showing a linked dataset; refused while a question of the survey shows it.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `link_id` | path | integer | yes |
+
+**200** object
+
+Errors: `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
 ## Objects
 
 ### DuplicateSurveyOut

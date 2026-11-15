@@ -176,6 +176,24 @@ class ReportTest(_UploadFixture):
         self.assertEqual(job.report['private_fields'], ['INSP_EMAIL'])
 
 
+class PrivateOnArrivalTest(_UploadFixture):
+    """Regression (found by the data-api tests): the import rebuilt the layer's cached GeoJSON
+    before the dataset row with its field dictionary existed, so private columns were cached."""
+
+    def test_cached_geojson_has_no_private_column_after_upload(self):
+        """
+        GIVEN a CSV with an email column
+        WHEN it is uploaded
+        THEN the layer's cached GeoJSON carries neither the column nor its values
+        """
+        self.upload('t.csv', b'id,latitude,longitude,INSP_EMAIL\n1,59.9,30.3,a@b.org\n')
+        layer = self.job().dataset.layer
+        layer.refresh_from_db()
+        self.assertNotIn('INSP_EMAIL', layer.geojson)
+        self.assertNotIn('a@b.org', layer.geojson)
+        self.assertNotIn('INSP_EMAIL', layer.property_names)
+
+
 class LimitsAndVisibilityTest(_UploadFixture):
     """Requirements: uploads respect the workspace's limits; workspace datasets for every member."""
 

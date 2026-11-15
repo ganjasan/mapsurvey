@@ -11,7 +11,7 @@ envelope (`errors.register`).
 """
 from ninja import NinjaAPI
 
-from . import data, errors, layers, me, questions, responses, sections, share, structure, surveys
+from . import data, datasets, errors, layers, me, questions, responses, sections, share, structure, surveys
 from .auth import Bearer
 
 api = NinjaAPI(
@@ -42,3 +42,4 @@ api.add_router('', layers.router)
 api.add_router('', data.router)
 api.add_router('', responses.router)
 api.add_router('', share.router)
+api.add_router('', datasets.router)
