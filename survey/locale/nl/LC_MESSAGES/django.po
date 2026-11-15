@@ -13310,3 +13310,79 @@ msgid "It is used in %(n)s place:"
 msgid_plural "It is used in %(n)s places:"
 msgstr[0] "Hij wordt op %(n)s plek gebruikt:"
 msgstr[1] "Hij wordt op %(n)s plekken gebruikt:"
+
+#: data/templates/data/dataset.html
+msgid "Upload new version"
+msgstr "Nieuwe versie uploaden"
+
+#: data/templates/data/dataset.html
+msgid "New versions are matched row by row on a key column. This dataset has none, so a new version needs a new upload."
+msgstr "Nieuwe versies worden rij voor rij gekoppeld op een sleutelkolom. Deze dataset heeft er geen, dus een nieuwe versie vraagt een nieuwe upload."
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Rows are matched on “%(key)s”. Objects whose key stays keep their answers."
+msgstr "Rijen worden gekoppeld op “%(key)s”. Objecten waarvan de sleutel blijft, houden hun antwoorden."
+
+#: data/templates/data/dataset.html
+msgid "Applying the new version…"
+msgstr "Nieuwe versie wordt toegepast…"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Reading %(name)s…"
+msgstr "%(name)s wordt gelezen…"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "%(a)s added · %(c)s changed · %(r)s removed · %(u)s unchanged"
+msgstr "%(a)s toegevoegd · %(c)s gewijzigd · %(r)s verwijderd · %(u)s ongewijzigd"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Skipped: %(k)s rows without a key, %(d)s repeated keys."
+msgstr "Overgeslagen: %(k)s rijen zonder sleutel, %(d)s herhaalde sleutels."
+
+#: data/templates/data/dataset.html
+msgid "What changed"
+msgstr "Wat er veranderde"
+
+#: data/templates/data/dataset.html
+msgid "What changed, e.g. Spring 2027 inspection"
+msgstr "Wat er veranderde, bijv. inspectie voorjaar 2027"
+
+#: data/templates/data/dataset.html
+msgid "Apply version"
+msgstr "Versie toepassen"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Version %(n)s applied."
+msgstr "Versie %(n)s toegepast."
+
+#: data/templates/data/dataset.html
+msgid "Author"
+msgstr "Auteur"
+
+#: data/templates/data/dataset.html
+msgid "Note"
+msgstr "Notitie"
+
+#: data/templates/data/dataset.html
+msgid "Changes"
+msgstr "Wijzigingen"
+
+#: data/templates/data/dataset.html
+msgid "First upload"
+msgstr "Eerste upload"
+
+#: data/templates/data/dataset.html
+msgid "Original — no new version uploaded yet."
+msgstr "Origineel — nog geen nieuwe versie geüpload."
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "%(n)s answer about a removed object will be deleted."
+msgid_plural "%(n)s answers about removed objects will be deleted."
+msgstr[0] "%(n)s antwoord over een verwijderd object wordt gewist."
+msgstr[1] "%(n)s antwoorden over verwijderde objecten worden gewist."

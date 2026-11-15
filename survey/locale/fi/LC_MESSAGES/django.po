@@ -13272,3 +13272,79 @@ msgid "It is used in %(n)s place:"
 msgid_plural "It is used in %(n)s places:"
 msgstr[0] "Sitä käytetään %(n)s paikassa:"
 msgstr[1] "Sitä käytetään %(n)s paikassa:"
+
+#: data/templates/data/dataset.html
+msgid "Upload new version"
+msgstr "Lataa uusi versio"
+
+#: data/templates/data/dataset.html
+msgid "New versions are matched row by row on a key column. This dataset has none, so a new version needs a new upload."
+msgstr "Uudet versiot yhdistetään rivi riviltä avainsarakkeen perusteella. Tällä aineistolla sitä ei ole, joten uusi versio vaatii uuden latauksen."
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Rows are matched on “%(key)s”. Objects whose key stays keep their answers."
+msgstr "Rivit yhdistetään kentän ”%(key)s” perusteella. Kohteet, joiden avain pysyy, säilyttävät vastauksensa."
+
+#: data/templates/data/dataset.html
+msgid "Applying the new version…"
+msgstr "Uutta versiota otetaan käyttöön…"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Reading %(name)s…"
+msgstr "Luetaan %(name)s…"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "%(a)s added · %(c)s changed · %(r)s removed · %(u)s unchanged"
+msgstr "%(a)s lisätty · %(c)s muutettu · %(r)s poistettu · %(u)s ennallaan"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Skipped: %(k)s rows without a key, %(d)s repeated keys."
+msgstr "Ohitettu: %(k)s riviä ilman avainta, %(d)s toistuvaa avainta."
+
+#: data/templates/data/dataset.html
+msgid "What changed"
+msgstr "Mikä muuttui"
+
+#: data/templates/data/dataset.html
+msgid "What changed, e.g. Spring 2027 inspection"
+msgstr "Mikä muuttui, esim. kevään 2027 tarkastus"
+
+#: data/templates/data/dataset.html
+msgid "Apply version"
+msgstr "Ota versio käyttöön"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Version %(n)s applied."
+msgstr "Versio %(n)s otettu käyttöön."
+
+#: data/templates/data/dataset.html
+msgid "Author"
+msgstr "Tekijä"
+
+#: data/templates/data/dataset.html
+msgid "Note"
+msgstr "Huomautus"
+
+#: data/templates/data/dataset.html
+msgid "Changes"
+msgstr "Muutokset"
+
+#: data/templates/data/dataset.html
+msgid "First upload"
+msgstr "Ensimmäinen lataus"
+
+#: data/templates/data/dataset.html
+msgid "Original — no new version uploaded yet."
+msgstr "Alkuperäinen — uutta versiota ei ole vielä ladattu."
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "%(n)s answer about a removed object will be deleted."
+msgid_plural "%(n)s answers about removed objects will be deleted."
+msgstr[0] "%(n)s vastaus poistetusta kohteesta poistetaan."
+msgstr[1] "%(n)s vastausta poistetuista kohteista poistetaan."

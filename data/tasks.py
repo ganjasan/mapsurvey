@@ -60,6 +60,9 @@ def import_file(job):
             dataset, _created = Dataset.objects.update_or_create(
                 layer=layer, defaults=dict(organization=job.organization, kind=Dataset.KIND_LAYER, name=name,
                                            privacy_class=Dataset.PRIVACY_PRIVATE, fields=profile['fields']))
+            from data.models import DatasetVersion
+            DatasetVersion.objects.get_or_create(dataset=dataset, number=1, defaults=dict(
+                created_by=job.user, added=result['created']))
         report = {
             'created': result['created'],
             'no_location': profile['no_location'],
@@ -106,6 +109,63 @@ def run_data_import(self, job_id):
     job.finished_at = timezone.now()
     job.save(update_fields=['status', 'error', 'dataset', 'report', 'finished_at'])
     _delete_file(job)
+
+
+def _local_copy(job):
+    """(workdir, local path) of the job's file — GDAL needs a path, the storage may be S3."""
+    workdir = tempfile.mkdtemp(prefix='data-version-')
+    local = os.path.join(workdir, 'upload' + os.path.splitext(job.original_name)[1].lower())
+    with job.file.open('rb') as src, open(local, 'wb') as dst:
+        shutil.copyfileobj(src, dst)
+    return workdir, local
+
+
+@shared_task(bind=True)
+def run_data_version(self, job_id, apply=False):
+    """A new version of `job.target` (change data-versions): `apply=False` computes the diff and
+    stops at `preview` keeping the file; `apply=True` (status `applying`, set by the confirm)
+    writes it and deletes the file. Once per state: a redelivered message finds the row moved on."""
+    from django.utils import timezone
+    from data import versions
+    from data.imports import ImportRefused, open_source
+    from data.models import DataImportJob
+
+    job = DataImportJob.objects.select_related('organization', 'user', 'target__layer').filter(pk=job_id).first()
+    if job is None or job.target is None:
+        return
+    expected = 'applying' if apply else 'queued'
+    if job.status != expected:
+        return
+    if not apply:
+        job.status = 'running'
+        job.save(update_fields=['status'])
+    workdir = None
+    try:
+        workdir, local = _local_copy(job)
+        source = open_source(local, job.original_name)
+        if apply:
+            version = versions.apply(job.target, source, user=job.user, note=job.note)
+            job.status, job.dataset = 'done', job.target
+            job.report = {**job.report, 'version': version.number}
+        else:
+            job.report = versions.preview(job.target, source)
+            job.status = 'preview'
+    except (ImportRefused, versions.VersionRefused) as exc:
+        job.status, job.error = 'failed', exc.message if hasattr(exc, 'message') else str(exc)
+    except Exception:
+        job.status, job.error = 'failed', 'The file could not be read. Try again or contact support.'
+        job.finished_at = timezone.now()
+        job.save(update_fields=['status', 'error', 'finished_at'])
+        _delete_file(job)
+        raise
+    finally:
+        if workdir:
+            shutil.rmtree(workdir, ignore_errors=True)
+    if job.status != 'preview':
+        job.finished_at = timezone.now()
+    job.save(update_fields=['status', 'error', 'dataset', 'report', 'finished_at'])
+    if job.status in ('done', 'failed'):
+        _delete_file(job)
 
 
 def _delete_file(job):

@@ -13357,3 +13357,79 @@ msgid "It is used in %(n)s place:"
 msgid_plural "It is used in %(n)s places:"
 msgstr[0] "Il est utilisé à %(n)s endroit :"
 msgstr[1] "Il est utilisé à %(n)s endroits :"
+
+#: data/templates/data/dataset.html
+msgid "Upload new version"
+msgstr "Importer une nouvelle version"
+
+#: data/templates/data/dataset.html
+msgid "New versions are matched row by row on a key column. This dataset has none, so a new version needs a new upload."
+msgstr "Les nouvelles versions sont rapprochées ligne par ligne sur une colonne clé. Ce jeu de données n'en a pas : une nouvelle version demande un nouvel import."
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Rows are matched on “%(key)s”. Objects whose key stays keep their answers."
+msgstr "Les lignes sont rapprochées sur « %(key)s ». Les objets dont la clé reste gardent leurs réponses."
+
+#: data/templates/data/dataset.html
+msgid "Applying the new version…"
+msgstr "Application de la nouvelle version…"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Reading %(name)s…"
+msgstr "Lecture de %(name)s…"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "%(a)s added · %(c)s changed · %(r)s removed · %(u)s unchanged"
+msgstr "%(a)s ajoutés · %(c)s modifiés · %(r)s supprimés · %(u)s inchangés"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Skipped: %(k)s rows without a key, %(d)s repeated keys."
+msgstr "Ignorées : %(k)s lignes sans clé, %(d)s clés répétées."
+
+#: data/templates/data/dataset.html
+msgid "What changed"
+msgstr "Ce qui a changé"
+
+#: data/templates/data/dataset.html
+msgid "What changed, e.g. Spring 2027 inspection"
+msgstr "Ce qui a changé, p. ex. inspection du printemps 2027"
+
+#: data/templates/data/dataset.html
+msgid "Apply version"
+msgstr "Appliquer la version"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Version %(n)s applied."
+msgstr "Version %(n)s appliquée."
+
+#: data/templates/data/dataset.html
+msgid "Author"
+msgstr "Auteur"
+
+#: data/templates/data/dataset.html
+msgid "Note"
+msgstr "Note"
+
+#: data/templates/data/dataset.html
+msgid "Changes"
+msgstr "Modifications"
+
+#: data/templates/data/dataset.html
+msgid "First upload"
+msgstr "Premier import"
+
+#: data/templates/data/dataset.html
+msgid "Original — no new version uploaded yet."
+msgstr "Original — aucune nouvelle version importée pour l'instant."
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "%(n)s answer about a removed object will be deleted."
+msgid_plural "%(n)s answers about removed objects will be deleted."
+msgstr[0] "%(n)s réponse sur un objet supprimé sera effacée."
+msgstr[1] "%(n)s réponses sur des objets supprimés seront effacées."

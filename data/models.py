@@ -152,7 +152,10 @@ def _private_storage():
 class DataImportJob(models.Model):
     """A file being turned into a workspace dataset (change data-upload, #668). The upload view
     stores the file and enqueues `data.tasks.run_data_import`; the catalogue shows the card."""
-    STATUS_CHOICES = [('queued', 'queued'), ('running', 'running'), ('done', 'done'), ('failed', 'failed')]
+    # A NEW VERSION of a dataset (change data-versions) is a job with `target`: it stops at
+    # `preview` with the diff in `report`, keeping the file, until the creator applies it.
+    STATUS_CHOICES = [('queued', 'queued'), ('running', 'running'), ('preview', 'preview'),
+                      ('applying', 'applying'), ('done', 'done'), ('failed', 'failed')]
 
     organization = models.ForeignKey('survey.Organization', on_delete=models.CASCADE, related_name='data_imports')
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='data_imports')
@@ -160,6 +163,9 @@ class DataImportJob(models.Model):
     original_name = models.CharField(max_length=255)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='queued', db_index=True)
     dataset = models.ForeignKey(Dataset, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    target = models.ForeignKey(Dataset, on_delete=models.CASCADE, null=True, blank=True,
+                               related_name='version_jobs', help_text='The dataset a new version is for.')
+    note = models.CharField(max_length=300, blank=True, default='')
     report = models.JSONField(default=dict, blank=True)
     error = models.TextField(blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -167,3 +173,21 @@ class DataImportJob(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+
+class DatasetVersion(models.Model):
+    """One applied version of a layer dataset (change data-versions, #671): the upload is number 1,
+    each "Upload new version" adds the next with its note and counts."""
+    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE, related_name='versions')
+    number = models.PositiveIntegerField()
+    note = models.CharField(max_length=300, blank=True, default='')
+    created_by = models.ForeignKey('auth.User', null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
+    created_at = models.DateTimeField(auto_now_add=True)
+    added = models.PositiveIntegerField(default=0)
+    changed = models.PositiveIntegerField(default=0)
+    removed = models.PositiveIntegerField(default=0)
+    unchanged = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['-number']
+        constraints = [models.UniqueConstraint(fields=['dataset', 'number'], name='data_version_number_unique')]

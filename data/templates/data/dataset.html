@@ -94,6 +94,69 @@ download. This page and the object editor are the only places a private field is
     </div>
   </div>
 
+  {% if versionable %}
+  <div class="card mb-3" data-testid="versions">
+    <div class="card-body">
+      <div class="d-flex align-items-center justify-content-between flex-wrap" style="gap:.5rem;">
+        <h6 class="card-title mb-0">{% trans "Versions" %}</h6>
+        {% if can_upload_version %}
+        <form method="post" enctype="multipart/form-data" class="mb-0">
+          {% csrf_token %}<input type="hidden" name="action" value="version">
+          <label class="btn btn-sm btn-outline-primary mb-0" for="ds-version-file"><i class="fas fa-upload" aria-hidden="true"></i> {% trans "Upload new version" %}</label>
+          <input type="file" id="ds-version-file" name="file" class="d-none" accept=".gpkg,.zip,.kml,.geojson,.json,.csv" onchange="this.form.submit()">
+        </form>
+        {% endif %}
+      </div>
+      {% if not ds.layer.key_field %}
+      <p class="text-muted small mt-2 mb-0">{% trans "New versions are matched row by row on a key column. This dataset has none, so a new version needs a new upload." %}</p>
+      {% else %}
+      <p class="text-muted small mt-2 mb-2">{% blocktrans with key=ds.layer.key_field %}Rows are matched on “{{ key }}”. Objects whose key stays keep their answers.{% endblocktrans %}</p>
+      {% endif %}
+
+      {% if version_job %}
+      <div class="border rounded p-2 mb-2" data-testid="version-job" style="font-size:.88rem;">
+        {% if version_job.status == 'queued' or version_job.status == 'running' or version_job.status == 'applying' %}
+        <meta http-equiv="refresh" content="3">
+        <i class="fas fa-spinner fa-spin" aria-hidden="true"></i> {% if version_job.status == 'applying' %}{% trans "Applying the new version…" %}{% else %}{% blocktrans with name=version_job.original_name %}Reading {{ name }}…{% endblocktrans %}{% endif %}
+        {% elif version_job.status == 'preview' %}
+        <div><strong>{{ version_job.original_name }}</strong></div>
+        <div data-testid="version-counts">{% blocktrans with a=version_job.report.added c=version_job.report.changed r=version_job.report.removed u=version_job.report.unchanged %}{{ a }} added · {{ c }} changed · {{ r }} removed · {{ u }} unchanged{% endblocktrans %}</div>
+        {% if version_job.report.removed_answers %}<div class="text-danger">{% blocktrans count n=version_job.report.removed_answers %}{{ n }} answer about a removed object will be deleted.{% plural %}{{ n }} answers about removed objects will be deleted.{% endblocktrans %}</div>{% endif %}
+        {% if version_job.report.no_key or version_job.report.repeated %}<div class="text-muted">{% blocktrans with k=version_job.report.no_key d=version_job.report.repeated %}Skipped: {{ k }} rows without a key, {{ d }} repeated keys.{% endblocktrans %}</div>{% endif %}
+        {% if can_edit %}
+        <form method="post" class="mt-2 d-flex flex-wrap" style="gap:.4rem;">
+          {% csrf_token %}<input type="hidden" name="job" value="{{ version_job.pk }}">
+          <label class="sr-only" for="ds-version-note">{% trans "What changed" %}</label>
+          <input id="ds-version-note" name="note" class="form-control form-control-sm" style="max-width:360px;" maxlength="300" placeholder="{% trans 'What changed, e.g. Spring 2027 inspection' %}">
+          <button type="submit" name="action" value="apply" class="btn btn-sm btn-primary">{% trans "Apply version" %}</button>
+          <button type="submit" name="action" value="discard" class="btn btn-sm btn-outline-secondary">{% trans "Discard" %}</button>
+        </form>
+        {% endif %}
+        {% elif version_job.status == 'failed' %}
+        <div class="text-danger">{{ version_job.error }}</div>
+        {% else %}
+        <div class="text-success">{% blocktrans with n=version_job.report.version %}Version {{ n }} applied.{% endblocktrans %}</div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% if versions %}
+      <table class="table table-sm mb-0" style="font-size:.85rem;">
+        <thead><tr><th scope="col">#</th><th scope="col">{% trans "Date" %}</th><th scope="col">{% trans "Author" %}</th><th scope="col">{% trans "Note" %}</th><th scope="col">{% trans "Changes" %}</th></tr></thead>
+        <tbody>
+        {% for v in versions %}
+        <tr data-version="{{ v.number }}"><td>{{ v.number }}</td><td class="text-nowrap">{{ v.created_at|date:"j M Y" }}</td><td>{{ v.created_by.get_full_name|default:v.created_by.username|default:"—" }}</td><td>{% if v.number == 1 and not v.note %}{% trans "First upload" %}{% else %}{{ v.note }}{% endif %}</td>
+          <td class="text-nowrap text-muted">{% if v.number == 1 %}{{ v.added }}{% else %}+{{ v.added }} · ~{{ v.changed }} · −{{ v.removed }}{% endif %}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="text-muted small mb-0">{% trans "Original — no new version uploaded yet." %}</p>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
   <div class="card mb-3" data-testid="used-by">
     <div class="card-body">
       <h6 class="card-title mb-1">{% trans "Used by" %}</h6>

@@ -977,6 +977,13 @@ a linked dataset cannot go private; unlink/delete refuse while a question is bou
 stores `data['dataset']` and the page fetches `/p/<slug>/blocks/<id>/dataset.geojson` (never inlined);
 `services.sites.save_block`/`duplicate_block` keep its link row; `clone_survey` re-links. "Used by" =
 `data.links.used_by` (dataset page, delete page `/editor/data/<id>/delete/`, catalogue count).
+**Versions (change `data-versions`, #671)**: "Upload new version" is a `DataImportJob` with `target`;
+`data.tasks.run_data_version` runs twice — preview (diff by the layer's `key_field`, keys derived by
+`layers.derive_key`, counts + answers on removed objects in `report`, file kept, status `preview`) and
+apply (status `applying`, recomputes the diff, updates matched `LayerObject` rows IN PLACE so their
+`Answer.layer_object` survive, adds/removes, merges the field dictionary, rebuilds, writes a
+`DatasetVersion`). Never replace objects by delete + create on a version: answers hang on the row.
+Refused without a key field, above `limits_for`, or above the survey caps while linked into a survey.
 
 **Session scope (`data.scope`, change `data-scope`, Data epic #676)**: which sessions a surface
 counts is ONE builder, `data.scope.SessionScope(survey_ids, include_deleted=, include_moderated=,

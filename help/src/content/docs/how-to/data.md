@@ -56,6 +56,14 @@ Only a **public** dataset can be linked — a new upload is private until you sw
 
 The dataset's page lists everything that uses it under **Used by**: the survey it belongs to, the surveys and sites that link it, and the questions that show it.
 
+## Upload a new version
+
+When the data changes — the trees were re-inspected, the bus stops moved — press **Upload new version** on the dataset's page and pick the new file. Rows are matched to the dataset's objects on its **key column** (an ID per row, such as `TREE_ID`), so the dataset needs one: a file uploaded without an ID column needs a new upload instead.
+
+Before anything is saved, the page shows how many objects will be **added**, **changed**, **removed** and left **unchanged**, and how many answers hang on the objects that would be removed. Write what changed and press **Apply version**, or **Discard** it.
+
+Objects whose key stays are updated in place: answers residents gave about them stay attached. Every survey and site that shows the dataset shows the new version at once. The **Versions** list keeps the date, author, note and counts of each one.
+
 ## Delete a dataset
 
 **Delete dataset** on the page of a dataset you uploaded first lists every place that uses it. Surveys and sites stop showing it once you confirm. While an "Objects on the map" question shows it, the delete waits: remove the question or pick another layer for it first. A layer that belongs to a survey is deleted in that survey's settings.
