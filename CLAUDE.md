@@ -934,6 +934,16 @@ never contain empty sessions, whatever `include_all` says, and since `data-scope
 public results `response_count`; the funnel/Perf pane (`SurveyEvent`) still counts every session. The section POST treats
 whitespace-only values as blank and stores text/number values stripped.
 
+**Data catalogue (`data` app, change `data-catalogue`, #667)**: `data.models.Dataset` is a REGISTRY row
+over data that stays where it is — `layer` (a creator's reference layer, FK), `shared_map`, `answers`
+(a canonical survey's answers to one top-level geo question, by code across versions) and `responses`
+(a survey's respondent rows). `data.datasets.sync(org)` creates/renames/drops rows idempotently and runs
+when `/editor/data/` opens (a read-time sync cannot miss a write path); `catalogue_rows(org, user)`
+filters by survey access (`visible_survey_ids`: org owner/admin/viewer see all, an editor their
+collaborations) and counts through `data.scope`. Privacy defaults: collected kinds `aggregated`,
+creator layers `public`. `data.features.question_features(survey, code, scope)` is the one reader of an
+answers dataset as features. Sidebar item `data` in `app_nav.MODULES`; help `how-to/data/`.
+
 **Session scope (`data.scope`, change `data-scope`, Data epic #676)**: which sessions a surface
 counts is ONE builder, `data.scope.SessionScope(survey_ids, include_deleted=, include_moderated=,
 nonempty=, completed_headers=, external_only=)` — `.sessions()`, `.ids()`, `.q(prefix)` (related rows

@@ -12880,3 +12880,45 @@ msgstr[1] "%(counter)s hyväksymätöntä"
 #, python-format
 msgid "The public map shows squares that count respondents; squares with fewer than %(k)s respondents are hidden. Exact points stay in Responses and the export."
 msgstr "Julkinen kartta näyttää ruutuja, jotka laskevat vastaajia; ruudut, joissa on alle %(k)s vastaajaa, piilotetaan. Tarkat pisteet pysyvät Vastauksissa ja viennissä."
+
+#: data/templates/data/catalogue.html
+msgid "Search datasets"
+msgstr "Hae aineistoja"
+
+#: data/templates/data/catalogue.html
+msgid "No dataset matches these filters."
+msgstr "Mikään aineisto ei vastaa näitä suodattimia."
+
+#: data/models.py
+msgid "Layer"
+msgstr "Taso"
+
+#: data/models.py
+msgid "Shared map"
+msgstr "Jaettu kartta"
+
+#: data/models.py
+msgid "Aggregated"
+msgstr "Koottu"
+
+#: data/templates/data/catalogue.html
+msgid "Every place dataset of this workspace: the layers you uploaded or drew, and the answers your surveys collect. Counts only — individual answers stay in Responses."
+msgstr "Tämän työtilan kaikki paikka-aineistot: lataamasi tai piirtämäsi tasot ja kyselyjesi keräämät vastaukset. Vain lukumäärät — yksittäiset vastaukset pysyvät Vastauksissa."
+
+#: data/templates/data/catalogue.html
+msgid "No data yet. Layers you add to a survey and the answers it collects will appear here."
+msgstr "Ei vielä aineistoja. Kyselyyn lisäämäsi tasot ja sen keräämät vastaukset näkyvät täällä."
+
+#: data/templates/data/catalogue.html
+#, python-format
+msgid "%(n)s row"
+msgid_plural "%(n)s rows"
+msgstr[0] "%(n)s rivi"
+msgstr[1] "%(n)s riviä"
+
+#: data/templates/data/catalogue.html
+#, python-format
+msgid "used in %(n)s place"
+msgid_plural "used in %(n)s places"
+msgstr[0] "käytössä %(n)s paikassa"
+msgstr[1] "käytössä %(n)s paikassa"

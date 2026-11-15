@@ -38,6 +38,8 @@ HELP_LINKS = {
     # The map style library (change map-styles-library, #542).
     'map_styles': 'how-to/map-styles/',
     'sites': 'how-to/sites/',
+    # The Data catalogue (change data-catalogue, #667).
+    'data': 'how-to/data/',
     # Budget questions (change budget-question, #447).
     'budget': 'how-to/budget-questions/',
     'faq': 'faq/',
