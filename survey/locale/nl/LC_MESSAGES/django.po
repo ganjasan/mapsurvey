@@ -13516,3 +13516,40 @@ msgid "%(n)s respondent is in an area with fewer than %(k)s people and is not sh
 msgid_plural "%(n)s respondents are in areas with fewer than %(k)s people and are not shown."
 msgstr[0] "%(n)s respondent bevindt zich in een gebied met minder dan %(k)s mensen en wordt niet getoond."
 msgstr[1] "%(n)s respondenten bevinden zich in gebieden met minder dan %(k)s mensen en worden niet getoond."
+
+# change responses-required-unanswered (#691)
+msgid "Complete"
+msgstr "Volledig"
+
+msgid "Required unanswered"
+msgstr "Verplicht onbeantwoord"
+
+msgid "Responses that left at least one required question unanswered"
+msgstr "Antwoorden waarin minstens één verplichte vraag onbeantwoord bleef"
+
+msgid "Required questions unanswered"
+msgstr "Verplichte vragen onbeantwoord"
+
+#, python-format
+msgid "Didn't answer %(counter)s required question: %(list)s"
+msgid_plural "Didn't answer %(counter)s required questions: %(list)s"
+msgstr[0] "%(counter)s verplichte vraag niet beantwoord: %(list)s"
+msgstr[1] "%(counter)s verplichte vragen niet beantwoord: %(list)s"
+
+msgid "The edges of this shape cross each other. It may not open correctly in GIS software."
+msgstr "De randen van deze vorm kruisen elkaar. Hij opent mogelijk niet goed in GIS-software."
+
+msgid "Respondents can't enter a number outside this range."
+msgstr "Respondenten kunnen geen getal buiten dit bereik invoeren."
+
+msgid "Move 1 response to trash? You can restore it from the trash."
+msgstr "1 antwoord naar de prullenbak verplaatsen? Je kunt het uit de prullenbak terugzetten."
+
+msgid "Move __N__ responses to trash? You can restore them from the trash."
+msgstr "__N__ antwoorden naar de prullenbak verplaatsen? Je kunt ze uit de prullenbak terugzetten."
+
+msgid "Permanently delete 1 response? This cannot be undone."
+msgstr "1 antwoord definitief verwijderen? Dit kan niet ongedaan worden gemaakt."
+
+msgid "Permanently delete __N__ responses? This cannot be undone."
+msgstr "__N__ antwoorden definitief verwijderen? Dit kan niet ongedaan worden gemaakt."

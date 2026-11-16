@@ -98,14 +98,19 @@ class SessionScopeTest(_ScopeFixture):
         self.assertIn(self.ok.id, ids)
         self.assertNotIn(empty.id, ids)
 
-    def test_completed_headers_keep_sessions_that_reached_the_last_section(self):
+    def test_completed_keeps_sessions_without_missing_required_questions(self):
         """
-        GIVEN one approved session that answered the last section and one that did not
-        WHEN the scope is built with completed_headers=[survey]
+        GIVEN a required last question, one approved session that answered it and one that did not
+        WHEN the scope is built with completed=True
         THEN only the completed session is in scope
         """
+        from survey.required_state import refresh_many
+        from survey.models import SurveySession
+        self.q_last.required = True
+        self.q_last.save()
         done = self._session('approved', last=True)
-        ids = SessionScope([self.survey.id], completed_headers=[self.survey]).ids()
+        refresh_many(SurveySession.objects.filter(survey=self.survey))
+        ids = SessionScope([self.survey.id], completed=True).ids()
         self.assertEqual(ids, {done.id})
 
     def test_external_only(self):

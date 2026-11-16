@@ -1,0 +1,3 @@
+{% load i18n %}{% comment %}The quiet "required questions unanswered" marker (change
+responses-required-unanswered, #691). `names`: the unanswered questions' names. Muted colour,
+no count chip, no "issue" wording; the tooltip says what it means and names them.{% endcomment %}<span class="rv2-required-mark" tabindex="0" data-testid="required-mark" title="{% blocktrans count counter=names|length with list=names|join:', ' %}Didn't answer {{ counter }} required question: {{ list }}{% plural %}Didn't answer {{ counter }} required questions: {{ list }}{% endblocktrans %}"><i class="far fa-question-circle" aria-hidden="true"></i><span class="sr-only">{% trans "Required questions unanswered" %}</span></span>

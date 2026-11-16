@@ -13542,3 +13542,40 @@ msgid "%(n)s respondent is in an area with fewer than %(k)s people and is not sh
 msgid_plural "%(n)s respondents are in areas with fewer than %(k)s people and are not shown."
 msgstr[0] "%(n)s participante está en una zona con menos de %(k)s personas y no se muestra."
 msgstr[1] "%(n)s participantes están en zonas con menos de %(k)s personas y no se muestran."
+
+# change responses-required-unanswered (#691)
+msgid "Complete"
+msgstr "Completas"
+
+msgid "Required unanswered"
+msgstr "Obligatorias sin responder"
+
+msgid "Responses that left at least one required question unanswered"
+msgstr "Respuestas que dejaron al menos una pregunta obligatoria sin responder"
+
+msgid "Required questions unanswered"
+msgstr "Preguntas obligatorias sin responder"
+
+#, python-format
+msgid "Didn't answer %(counter)s required question: %(list)s"
+msgid_plural "Didn't answer %(counter)s required questions: %(list)s"
+msgstr[0] "No respondió %(counter)s pregunta obligatoria: %(list)s"
+msgstr[1] "No respondió %(counter)s preguntas obligatorias: %(list)s"
+
+msgid "The edges of this shape cross each other. It may not open correctly in GIS software."
+msgstr "Los bordes de esta forma se cruzan. Puede que no se abra correctamente en un software SIG."
+
+msgid "Respondents can't enter a number outside this range."
+msgstr "Los encuestados no pueden introducir un número fuera de este rango."
+
+msgid "Move 1 response to trash? You can restore it from the trash."
+msgstr "¿Mover 1 respuesta a la papelera? Podrás restaurarla desde la papelera."
+
+msgid "Move __N__ responses to trash? You can restore them from the trash."
+msgstr "¿Mover __N__ respuestas a la papelera? Podrás restaurarlas desde la papelera."
+
+msgid "Permanently delete 1 response? This cannot be undone."
+msgstr "¿Eliminar definitivamente 1 respuesta? Esto no se puede deshacer."
+
+msgid "Permanently delete __N__ responses? This cannot be undone."
+msgstr "¿Eliminar definitivamente __N__ respuestas? Esto no se puede deshacer."

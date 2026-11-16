@@ -92,16 +92,22 @@ class ResponsesV2NavigationTest(TestCase):
         )
         self.url = f'/editor/surveys/{self.survey.uuid}/analytics/'
 
-    def test_violations_badge_on_responses_pane_item(self):
+    def test_no_badge_with_unanswered_required_questions(self):
         """
-        GIVEN a survey with one empty (flagged) session and empty sessions shown
+        GIVEN a survey with an empty session (shown) and a session that skipped a required question
         WHEN GET the v2 dashboard
-        THEN the Responses pane item carries the violations badge
+        THEN the Responses pane item carries no badge (change responses-required-unanswered)
         """
-        SurveySession.objects.create(survey=self.survey)  # no answers → 'empty'
+        from survey.required_state import refresh
+        SurveySession.objects.create(survey=self.survey)
+        Question.objects.create(survey_section=self.section, name='Q2', code='q2', input_type='text',
+                                order_number=2, required=True)
+        sess = SurveySession.objects.create(survey=self.survey)
+        Answer.objects.create(survey_session=sess, question=self.q, text='partial')
+        refresh(sess)
         self.client.cookies['rv2_show_empty'] = '1'
         response = self.client.get(self.url)
-        self.assertContains(response, 'rv2-responses-badge')
+        self.assertNotContains(response, 'rv2-responses-badge')
 
     def test_no_badge_without_violations(self):
         """

@@ -274,7 +274,7 @@ Permission `surveys:write` · role **editor**
 | `input_type` | `text` \| `number` \| `choice` \| `multichoice` \| `range` \| `rating` \| `ranking` \| `datetime` \| `point` \| `line` \| `polygon` \| `spraycan` \| `image` \| `text_line` \| `html` \| `photo` \| `audio` \| `document` \| `thumbs` \| `layer_objects` \| `budget` | **required** |  |
 | `required` | boolean |  |  |
 | `choices` | list of object (`code`, `name`, `other`, `icon`, `group`, `color`, `description`, `cost`) |  |  |
-| `validation_settings` | object (`min_value`, `max_value`, `outlier_sigma`, `min_length`, `area_outlier_factor`, `max_dots`, `max_file_mb`, `max_files`, `min_features`, `max_features`) |  |  |
+| `validation_settings` | object (`min_value`, `max_value`, `max_dots`, `max_file_mb`, `max_files`, `min_features`, `max_features`) |  |  |
 | `budget` | object (`mode`, `total`, `unit`, `symbol`, `step`, `rule`, `min_items`, `show_shares`, `source`, `cost_property`) |  | Settings of a `budget` question. |
 | `price` | object (`amount`, `per`) |  | A map question's price under a budget group; null removes it. |
 | `color` | string |  |  |
@@ -304,7 +304,7 @@ Permission `surveys:write` · role **editor**
 | `input_type` | `text` \| `number` \| `choice` \| `multichoice` \| `range` \| `rating` \| `ranking` \| `datetime` \| `point` \| `line` \| `polygon` \| `spraycan` \| `image` \| `text_line` \| `html` \| `photo` \| `audio` \| `document` \| `thumbs` \| `layer_objects` \| `budget` |  |  |
 | `required` | boolean |  |  |
 | `choices` | list of object (`code`, `name`, `other`, `icon`, `group`, `color`, `description`, `cost`) |  |  |
-| `validation_settings` | object (`min_value`, `max_value`, `outlier_sigma`, `min_length`, `area_outlier_factor`, `max_dots`, `max_file_mb`, `max_files`, `min_features`, `max_features`) |  |  |
+| `validation_settings` | object (`min_value`, `max_value`, `max_dots`, `max_file_mb`, `max_files`, `min_features`, `max_features`) |  |  |
 | `budget` | object (`mode`, `total`, `unit`, `symbol`, `step`, `rule`, `min_items`, `show_shares`, `source`, `cost_property`) |  | Settings of a `budget` question. |
 | `price` | object (`amount`, `per`) |  | A map question's price under a budget group; null removes it. |
 | `color` | string |  |  |
@@ -389,7 +389,7 @@ Permission `responses:read` · role **viewer** · read-only
 | `survey` | uuid | **required** | The survey uuid (from list_surveys). |
 | `version` | string |  | One version (v3), several separated by commas (v10,v11), or omit for every version. |
 | `include_all` | boolean |  | Also count deleted, on-hold and rejected responses. Default `False`. |
-| `completed_only` | boolean |  | Only responses that reached the last section. Default `False`. |
+| `completed_only` | boolean |  | Only responses that answered every required question. Default `False`. |
 
 ### `list_responses`
 
@@ -416,7 +416,7 @@ Permission `responses:read` · role **viewer** · read-only
 | `question_id` | integer | **required** | A question id from get_survey. |
 | `version` | string |  | One version (v3), several separated by commas (v10,v11), or omit for every version. |
 | `include_all` | boolean |  | Also count deleted, on-hold and rejected responses. Default `False`. |
-| `completed_only` | boolean |  | Only responses that reached the last section. Default `False`. |
+| `completed_only` | boolean |  | Only responses that answered every required question. Default `False`. |
 | `cursor` | string |  | `next_cursor` of the previous page. |
 | `limit` | integer |  | Default `50`. |
 
@@ -432,7 +432,7 @@ Permission `responses:read` · role **viewer** · read-only
 | `question_id` | integer | **required** | A question id from get_survey. |
 | `version` | string |  | One version (v3), several separated by commas (v10,v11), or omit for every version. |
 | `include_all` | boolean |  | Also count deleted, on-hold and rejected responses. Default `False`. |
-| `completed_only` | boolean |  | Only responses that reached the last section. Default `False`. |
+| `completed_only` | boolean |  | Only responses that answered every required question. Default `False`. |
 | `limit` | integer |  | Most features to return. Default `200`. |
 
 ### `get_export_link`
@@ -447,7 +447,7 @@ Permission `responses:read` · role **viewer** · read-only
 | `format` | `xlsx` \| `csv` \| `zip` \| `gpkg` \| `shp` \| `kml` |  | Default `xlsx`. |
 | `version` | string |  | One version (v3), several separated by commas (v10,v11), or omit for every version. |
 | `include_all` | boolean |  | Also count deleted, on-hold and rejected responses. Default `False`. |
-| `completed_only` | boolean |  | Only responses that reached the last section. Default `False`. |
+| `completed_only` | boolean |  | Only responses that answered every required question. Default `False`. |
 | `files` | boolean |  | Add files respondents uploaded. Default `False`. |
 
 ### `moderate_response`

@@ -291,7 +291,7 @@ class ViewInUseTest(_TwoSurveys):
 
 
 class PagesBecomeReportsTest(TransactionTestCase):
-    """Requirement: Existing public results pages are reports (migrations reports/0002, survey/0131)."""
+    """Requirement: Existing public results pages are reports (migrations reports/0002, survey/0133)."""
 
     BEFORE = [('reports', '0001_initial'), ('survey', '0130_map_layer_workspace')]
 

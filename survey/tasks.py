@@ -409,3 +409,11 @@ def delete_sheet_images(self, sheet_id):
     for page in sheet.pages.all():
         page.discard_image()
         page.save(update_fields=['image'])
+
+
+@shared_task(bind=True)
+def recompute_required_state(self, header_id):
+    """Recompute every session's required-questions state of one survey version after
+    an in-place edit changed what is required (change responses-required-unanswered)."""
+    from .required_state import refresh_survey
+    return refresh_survey(header_id)

@@ -605,7 +605,8 @@ class DashboardCompletionCountsTest(TestCase):
         self.client.login(username='kpiowner', password='pass')
 
     def _header(self, name, **kwargs):
-        """A survey version with two sections; returns (header, q_first, q_last)."""
+        """A survey version with two sections whose last question is required;
+        returns (header, q_first, q_last)."""
         header = SurveyHeader.objects.create(
             name=name, organization=self.org, created_by=self.user, **kwargs,
         )
@@ -617,7 +618,7 @@ class DashboardCompletionCountsTest(TestCase):
             survey_section=first, name='Q1', code='q1', input_type='text', order_number=1,
         )
         q_last = Question.objects.create(
-            survey_section=last, name='Q2', code='q2', input_type='text', order_number=1,
+            survey_section=last, name='Q2', code='q2', input_type='text', order_number=1, required=True,
         )
         return header, q_first, q_last
 
@@ -625,6 +626,8 @@ class DashboardCompletionCountsTest(TestCase):
         session = SurveySession.objects.create(survey=header, **kwargs)
         for q in questions:
             Answer.objects.create(survey_session=session, question=q, text='x')
+        from survey.required_state import refresh
+        refresh(session)
         return session
 
     def _card(self, response, survey):
@@ -632,9 +635,9 @@ class DashboardCompletionCountsTest(TestCase):
 
     def test_card_numbers_match_overview_across_versions(self):
         """
-        GIVEN a survey with an archived version, completed and partial sessions on
-              both, a deleted completed session, an empty session and a completed
-              preview session on its draft copy
+        GIVEN a survey with an archived version, sessions that answered its required
+              question and sessions that did not on both, a deleted completed session,
+              an empty session and a completed preview session on its draft copy
         WHEN the dashboard is loaded
         THEN the card's completed count and rate equal get_overview() — 3 of 6, 50%
         """

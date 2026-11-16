@@ -1,6 +1,7 @@
 from django import template
 from django.conf import settings
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _lazy
 
 register = template.Library()
 
@@ -97,22 +98,18 @@ def cover_gradient(name):
     return f'linear-gradient(135deg, hsl({h}, 55%, 50%), hsl({(h + 40) % 360}, 45%, 40%))'
 
 
+# The one per-answer note Responses keeps (change responses-required-unanswered).
 LINT_DESCRIPTIONS = {
-    'self_intersection': 'Polygon has self-intersecting geometry',
-    'empty_required': 'Required question was not answered',
-    'out_of_range': 'Value is outside the allowed min/max range',
-    'numeric_outlier': 'Value is a statistical outlier (>3σ from mean)',
-    'short_text': 'Text answer is suspiciously short',
-    'area_outlier': 'Polygon area is much larger or smaller than typical',
+    'self_intersection': _lazy('The edges of this shape cross each other. It may not open correctly in GIS software.'),
 }
 
 
 @register.filter
 def lint_tooltip(lint_list):
-    """Convert a list of lint codes to human-readable tooltip text."""
+    """The tooltip of a cell's note; unknown codes say nothing."""
     if not lint_list:
         return ''
-    return '; '.join(LINT_DESCRIPTIONS.get(code, code) for code in lint_list)
+    return ' '.join(str(LINT_DESCRIPTIONS[code]) for code in lint_list if code in LINT_DESCRIPTIONS)
 
 
 @register.filter

@@ -13478,3 +13478,40 @@ msgid "%(n)s respondent is in an area with fewer than %(k)s people and is not sh
 msgid_plural "%(n)s respondents are in areas with fewer than %(k)s people and are not shown."
 msgstr[0] "%(n)s vastaaja on alueella, jolla on alle %(k)s ihmistä, eikä häntä näytetä."
 msgstr[1] "%(n)s vastaajaa on alueilla, joilla on alle %(k)s ihmistä, eikä heitä näytetä."
+
+# change responses-required-unanswered (#691)
+msgid "Complete"
+msgstr "Valmiit"
+
+msgid "Required unanswered"
+msgstr "Pakollisia vastaamatta"
+
+msgid "Responses that left at least one required question unanswered"
+msgstr "Vastaukset, joissa vähintään yksi pakollinen kysymys jäi vastaamatta"
+
+msgid "Required questions unanswered"
+msgstr "Pakollisia kysymyksiä vastaamatta"
+
+#, python-format
+msgid "Didn't answer %(counter)s required question: %(list)s"
+msgid_plural "Didn't answer %(counter)s required questions: %(list)s"
+msgstr[0] "%(counter)s pakollinen kysymys vastaamatta: %(list)s"
+msgstr[1] "%(counter)s pakollista kysymystä vastaamatta: %(list)s"
+
+msgid "The edges of this shape cross each other. It may not open correctly in GIS software."
+msgstr "Tämän muodon reunat leikkaavat toisensa. Se ei välttämättä avaudu oikein GIS-ohjelmistossa."
+
+msgid "Respondents can't enter a number outside this range."
+msgstr "Vastaajat eivät voi syöttää tämän välin ulkopuolista lukua."
+
+msgid "Move 1 response to trash? You can restore it from the trash."
+msgstr "Siirretäänkö 1 vastaus roskakoriin? Sen voi palauttaa roskakorista."
+
+msgid "Move __N__ responses to trash? You can restore them from the trash."
+msgstr "Siirretäänkö __N__ vastausta roskakoriin? Ne voi palauttaa roskakorista."
+
+msgid "Permanently delete 1 response? This cannot be undone."
+msgstr "Poistetaanko 1 vastaus pysyvästi? Tätä ei voi kumota."
+
+msgid "Permanently delete __N__ responses? This cannot be undone."
+msgstr "Poistetaanko __N__ vastausta pysyvästi? Tätä ei voi kumota."

@@ -5,7 +5,7 @@ Rows are copied WITH their primary keys: comment threads anchored to a block, fr
 becomes a dataset of the Data module plus the question's code — a map block reads the `answers`
 dataset of (canonical survey, code), every other question block the survey's `responses` dataset.
 Registry rows that `data.datasets.sync` has not written yet are created with the values it would
-write. `survey/0131` drops the old tables afterwards.
+write. `survey/0133` drops the old tables afterwards.
 """
 from django.db import migrations
 
@@ -97,7 +97,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # The reverse leaves the copies in place: 0131's reverse recreates the old tables empty,
+        # The reverse leaves the copies in place: 0133's reverse recreates the old tables empty,
         # and a real rollback is a database restore (design.md, Migration Plan).
         migrations.RunPython(copy_pages, migrations.RunPython.noop),
     ]

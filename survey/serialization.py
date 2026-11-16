@@ -1648,13 +1648,21 @@ def import_responses_from_archive(
     warnings = []
 
     sessions_data = data.get("sessions", [])
+    imported_ids = []
 
     for session_data in sessions_data:
         session = create_session(survey, session_data)
+        imported_ids.append(session.id)
 
         for answer_data in session_data.get("answers", []):
             _, answer_warnings = create_answer(session, answer_data, code_remap)
             warnings.extend(answer_warnings)
+
+    # Imported answers never went through a section POST: compute the required-
+    # questions state here (change responses-required-unanswered).
+    if imported_ids:
+        from .required_state import refresh_many
+        refresh_many(SurveySession.objects.filter(id__in=imported_ids))
 
     # Extract uploaded images (currently a stub)
     upload_warnings = extract_upload_images(zip_file, survey)

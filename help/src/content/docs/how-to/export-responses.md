@@ -23,7 +23,7 @@ You end up with a file of every response — map answers as GIS layers, everythi
 3. If the survey has published more than one version, open **Versions** and tick what to export: **All versions**, one, or several — say only the last two, when earlier versions asked different questions. With many versions, type a number into the search box to find one. With several, each version's files and layers are prefixed `v10_`, `v11_`, … so you can tell them apart.
 4. Switch on what you need:
    - **Include excluded responses** to add trashed, on-hold and not-approved responses.
-   - **Completed responses only** to keep only respondents who reached the last section — the same number as "completed" on the Overview.
+   - **Completed responses only** to keep only respondents who answered every required question they were shown — the same number as "completed" on the Overview.
    - **Include attached files** (shown when the survey has photo, audio or document questions) to add the uploads; Excel, GeoPackage and KML then arrive as a ZIP with the file next to a `files/` folder.
 5. Press **Export**. The download starts; the address shown under the switches is the export itself — copy it to repeat the same export later.
 

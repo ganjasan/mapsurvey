@@ -669,6 +669,13 @@ def _stamp_other_choice(widget, question, language, initial=None):
     widget.other_value = (initial or {}).get(other_option.field_name(question.code), '') or ''
 
 
+def _bound_attr(value):
+    """A Min / Max setting as an HTML attribute value, or None when unset."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    return format(value, 'g') if isinstance(value, float) else str(value)
+
+
 class SurveySectionAnswerForm(forms.Form):
 
     # Question types whose rendering the creator can pick, and the styles each
@@ -707,7 +714,15 @@ class SurveySectionAnswerForm(forms.Form):
             return forms.CharField(widget=forms.TextInput, label=label, required=required)
 
         elif input_type == 'number':
-            return forms.CharField(widget=forms.NumberInput, label=label, required=required)
+            # Min / Max limit what a respondent can submit (spec number-question-bounds):
+            # the browser refuses an out-of-range value; the section POST drops one.
+            vs = question.validation_settings or {}
+            attrs = {key: _bound_attr(vs.get(field))
+                     for key, field in (('min', 'min_value'), ('max', 'max_value'))
+                     if _bound_attr(vs.get(field)) is not None}
+            if attrs:
+                attrs['step'] = 'any'
+            return forms.CharField(widget=forms.NumberInput(attrs=attrs), label=label, required=required)
 
         elif input_type == 'choice':
             choices = [(c["code"], question.get_choice_name(c["code"], language)) for c in (question.choices or [])]
