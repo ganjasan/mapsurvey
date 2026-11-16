@@ -27,7 +27,7 @@ SURVEY = (UUID, Field(description='The survey uuid (from list_surveys).'))
 QUESTION = (int, Field(description='A question id from get_survey.'))
 VERSION = (Optional[str], Field(None, description='One version (v3), several separated by commas (v10,v11), or omit for every version.'))
 INCLUDE_ALL = (bool, Field(False, description='Also count deleted, on-hold and rejected responses.'))
-COMPLETED_ONLY = (bool, Field(False, description='Only responses that reached the last section.'))
+COMPLETED_ONLY = (bool, Field(False, description='Only responses that answered every required question.'))
 SCOPE_FIELDS = dict(version=VERSION, include_all=INCLUDE_ALL, completed_only=COMPLETED_ONLY)
 
 

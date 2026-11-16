@@ -13567,3 +13567,40 @@ msgid "%(n)s respondent is in an area with fewer than %(k)s people and is not sh
 msgid_plural "%(n)s respondents are in areas with fewer than %(k)s people and are not shown."
 msgstr[0] "%(n)s befragte Person ist in einem Bereich mit weniger als %(k)s Personen und wird nicht gezeigt."
 msgstr[1] "%(n)s Befragte sind in Bereichen mit weniger als %(k)s Personen und werden nicht gezeigt."
+
+# change responses-required-unanswered (#691)
+msgid "Complete"
+msgstr "Vollständig"
+
+msgid "Required unanswered"
+msgstr "Pflichtfragen offen"
+
+msgid "Responses that left at least one required question unanswered"
+msgstr "Antworten, bei denen mindestens eine Pflichtfrage unbeantwortet blieb"
+
+msgid "Required questions unanswered"
+msgstr "Pflichtfragen unbeantwortet"
+
+#, python-format
+msgid "Didn't answer %(counter)s required question: %(list)s"
+msgid_plural "Didn't answer %(counter)s required questions: %(list)s"
+msgstr[0] "%(counter)s Pflichtfrage nicht beantwortet: %(list)s"
+msgstr[1] "%(counter)s Pflichtfragen nicht beantwortet: %(list)s"
+
+msgid "The edges of this shape cross each other. It may not open correctly in GIS software."
+msgstr "Die Kanten dieser Form überschneiden sich. In GIS-Software öffnet sie sich womöglich nicht richtig."
+
+msgid "Respondents can't enter a number outside this range."
+msgstr "Befragte können keine Zahl außerhalb dieses Bereichs eingeben."
+
+msgid "Move 1 response to trash? You can restore it from the trash."
+msgstr "1 Antwort in den Papierkorb verschieben? Sie lässt sich aus dem Papierkorb wiederherstellen."
+
+msgid "Move __N__ responses to trash? You can restore them from the trash."
+msgstr "__N__ Antworten in den Papierkorb verschieben? Sie lassen sich aus dem Papierkorb wiederherstellen."
+
+msgid "Permanently delete 1 response? This cannot be undone."
+msgstr "1 Antwort endgültig löschen? Das lässt sich nicht rückgängig machen."
+
+msgid "Permanently delete __N__ responses? This cannot be undone."
+msgstr "__N__ Antworten endgültig löschen? Das lässt sich nicht rückgängig machen."

@@ -50,15 +50,6 @@
 }
 .rv2-pane-tab:hover { color: var(--accent); }
 .rv2-pane-tab.active { color: var(--accent); font-weight: 600; border-bottom-color: var(--accent); }
-.rv2-badge {
-    background: #dc2626;
-    color: #fff;
-    font-size: 0.65rem;
-    font-weight: 700;
-    border-radius: 999px;
-    padding: 1px 6px;
-    line-height: 1.4;
-}
 .rv2-panerow-end {
     margin-left: auto;
     display: flex;
@@ -162,8 +153,6 @@
     background: none; border: 0; padding: 0; font: inherit;
     color: var(--accent, #2563eb); text-decoration: underline; cursor: pointer;
 }
-.rv2-kpi.rv2-flag { border-color: #fcd34d; background: #fffbeb; }
-.rv2-kpi.rv2-flag b { color: #d97706; }
 
 /* ── Overview layout ──────────────────────────────────────────────────── */
 .rv2-overview-body {
@@ -285,40 +274,6 @@
     width: 170px;
     color: #374151;
     background: transparent;
-}
-
-/* ── Issues menu (replaces the Violations sidebar) ────────────────────── */
-.rv2-issues-menu { min-width: 235px; max-height: 60vh; overflow-y: auto; }
-.rv2-issues-group {
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: #9ca3af;
-    font-weight: 700;
-    padding: 8px 12px 2px;
-}
-.rv2-issues-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 0;
-    font-weight: normal;
-    cursor: pointer;
-}
-.rv2-issues-item i { width: 16px; font-size: 0.75rem; }
-.rv2-issues-item span:not(.rv2-issues-count) { flex: 1; }
-.rv2-issues-count {
-    font-size: 0.68rem;
-    color: #6b7280;
-    background: #f3f4f6;
-    border-radius: 999px;
-    padding: 1px 7px;
-}
-.rv2-issues-clear {
-    border-top: 1px solid var(--border-color);
-    margin-top: 4px;
-    color: var(--accent);
-    font-weight: 600;
 }
 
 /* ── Pills-bar selection actions (one bar, no per-panel duplicate) ───── */

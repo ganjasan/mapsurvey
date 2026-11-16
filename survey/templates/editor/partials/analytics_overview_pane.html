@@ -37,9 +37,6 @@ latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
         {% if overview_extras.geo_features_today %}<span class="rv2-delta">+{{ overview_extras.geo_features_today }}</span>{% endif %}
     </div>
     {% endif %}
-    {% if flagged_count %}
-    <div class="rv2-kpi rv2-flag"><b>{{ flagged_count }}</b><span>{% trans "flagged" %}</span></div>
-    {% endif %}
 </div>
 
 <div class="rv2-overview-body">
@@ -88,21 +85,6 @@ latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
     </div>
 
     <div class="rv2-ov-side">
-        {% if overview_extras.needs_review %}
-        <div class="rv2-card" data-testid="rv2-needs-review">
-            <h6>{% trans "Needs review" %} <span class="rv2-badge">{{ flagged_count }}</span></h6>
-            {% for item in overview_extras.needs_review %}
-            <button type="button" class="rv2-feed-item" onclick="rv2OpenSession({{ item.id }})">
-                <span class="rv2-feed-ava">{% if item.seq %}#{{ item.seq }}{% else %}—{% endif %}</span>
-                <span class="rv2-feed-mid">
-                    <b>{{ item.started|date:"j M H:i" }}{% if item.duration_display %} · {{ item.duration_display }}{% endif %}</b>
-                    <span>{{ item.issues|join:", " }}</span>
-                </span>
-                <span class="rv2-chip-status err">{{ item.issues.0 }}</span>
-            </button>
-            {% endfor %}
-        </div>
-        {% endif %}
         <div class="rv2-card" data-testid="rv2-latest">
             <h6>{% trans "Latest responses" %}
                 <a class="rv2-lnk" href="#responses" onclick="rv2Router.setPane('responses');return false;">{% trans "All ›" %}</a>
@@ -115,9 +97,7 @@ latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
                     <span>{% if item.geo_count %}{{ item.geo_count }} {% trans "geo" %} · {% endif %}{% if item.text_excerpt %}“{{ item.text_excerpt }}”{% elif not item.geo_count %}{% trans "no answers" %}{% endif %}</span>
                 </span>
                 {% load comment_utils %}{% badge_key 'session' item.id as cm_bk %}{% with cm_n=thread_counts|thread_count:cm_bk cm_new=thread_counts|thread_new:cm_bk %}<span class="cm-badge{% if not cm_n %} cm-ghost{% endif %}{% if cm_new %} cm-badge--new{% endif %}" role="button" tabindex="0" data-thread-badge="{{ cm_bk }}" data-cm-session="{{ item.id }}" aria-label="{% if cm_n %}{{ cm_n }} open comment{{ cm_n|pluralize }}{% if cm_new %}, {% trans 'new activity' %}{% endif %}{% else %}{% trans 'Add a comment' %}{% endif %}" title="{% if cm_n %}{{ cm_n }} open comment{{ cm_n|pluralize }}{% else %}{% trans 'Add a comment' %}{% endif %}"><i class="fas fa-comment" aria-hidden="true"></i> <span data-cm-n>{% if cm_n %}{{ cm_n }}{% endif %}</span></span>{% endwith %}
-                {% if item.issues %}
-                <span class="rv2-chip-status err">{{ item.issues.0 }}</span>
-                {% elif item.status == 'on_hold' %}
+                {% if item.status == 'on_hold' %}
                 <span class="rv2-chip-status warn">{% trans "on hold" %}</span>
                 {% elif item.status == 'not_approved' %}
                 <span class="rv2-chip-status err">{% trans "rejected" %}</span>

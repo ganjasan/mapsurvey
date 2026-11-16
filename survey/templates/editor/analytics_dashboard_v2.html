@@ -49,7 +49,6 @@
         </button>
         <button type="button" class="rv2-pane-tab" data-pane="responses" role="tab">
             <i class="fas fa-list"></i> {% trans "Responses" %}
-            {% if flagged_count %}<span class="rv2-badge" id="rv2-responses-badge">{{ flagged_count }}</span>{% endif %}
         </button>
         <button type="button" class="rv2-pane-tab" data-pane="charts" role="tab">
             <i class="fas fa-chart-bar"></i> {% trans "Charts" %}
@@ -159,7 +158,6 @@
                 <div id="pane-table-content" style="flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;">
                     <div class="text-center text-muted py-5"><i class="fas fa-table mr-2"></i>{% trans "Loading table..." %}</div>
                 </div>
-                {# Violations live in the toolbar chips (Issues N) — no sidebar in v2. #}
             </div>
         </section>
 
@@ -218,34 +216,6 @@
         <div class="rv2-m-sheet-grab"></div>
         <div id="rv2-m-sheet-body"></div>
         <button type="button" class="btn btn-sm btn-outline-secondary btn-block mt-2" onclick="rv2CloseMobileSheet()">{% trans "Done" %}</button>
-    </div>
-</div>
-
-{# Validation Settings Modal #}
-<div class="modal fade" id="validationSettingsModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-cog"></i> {% trans "Validation Settings" %}</h5>
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label style="font-size:0.85rem;font-weight:600;">{% trans "Fast completion threshold (seconds)" %}</label>
-                    <input type="number" id="vs-fast-threshold" class="form-control form-control-sm" value="30" min="1" step="1">
-                    <small class="text-muted">{% trans "Sessions completed faster than this are flagged" %}</small>
-                </div>
-                <div class="form-group">
-                    <label style="font-size:0.85rem;font-weight:600;">{% trans "Duplicate detection window (hours)" %}</label>
-                    <input type="number" id="vs-dup-window" class="form-control form-control-sm" value="1" min="0.1" step="0.5">
-                    <small class="text-muted">{% trans "Sessions from same browser within this window are flagged" %}</small>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-sm btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
-                <button class="btn btn-sm btn-primary" onclick="saveValidationSettings()">{% trans "Save" %}</button>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -431,105 +401,8 @@ function rv2Chip(kind) {
     var form = document.getElementById('table-state-form');
     if (!form) return;
     form.querySelector('[name=trash]').value = kind === 'trash' ? '1' : '0';
-    form.querySelector('[name=issues]').value = kind === 'complete' ? 'complete' : '';
+    form.querySelector('[name=required]').value = (kind === 'complete' || kind === 'missing') ? kind : '';
     loadTable({page: '1'});
-}
-
-/* ── Issues menu: per-type multi-select with counts ────────────────────
-   Restores what the Violations sidebar did (owner review): individual
-   violation types, grouped errors/warnings, with counts — as a menu instead
-   of a 230px panel. Writes the comma-separated `issues` param. */
-function rv2IssuesMenu(event, trigger) {
-    event.stopPropagation();
-    var open = document.getElementById('rv2-issues-menu');
-    if (open) { open.remove(); return; }
-
-    var counts = {};
-    var el = document.getElementById('anomaly-counts-data');
-    if (el) { try { counts = JSON.parse(el.textContent); } catch (e) {} }
-    var form = document.getElementById('table-state-form');
-    var activeRaw = form ? (form.querySelector('[name=issues]') || {}).value || '' : '';
-    var active = new Set(activeRaw.split(',').filter(function (v) { return v && v !== 'complete'; }));
-
-    var menu = document.createElement('div');
-    menu.id = 'rv2-issues-menu';
-    menu.className = 'attr-col-menu-dropdown rv2-issues-menu';
-    var rect = trigger.getBoundingClientRect();
-    menu.style.position = 'fixed';
-    menu.style.left = rect.left + 'px';
-    menu.style.top = (rect.bottom + 4) + 'px';
-    menu.addEventListener('click', function (e) { e.stopPropagation(); });
-
-    function apply() {
-        var picked = [];
-        menu.querySelectorAll('input[data-issue]:checked').forEach(function (cb) {
-            picked.push(cb.dataset.issue);
-        });
-        if (form) {
-            form.querySelector('[name=issues]').value = picked.join(',');
-            form.querySelector('[name=trash]').value = '0';
-        }
-        loadTable({page: '1'});
-    }
-
-    function group(title, defs) {
-        var keys = Object.keys(defs).filter(function (k) { return (counts[k] || 0) > 0; });
-        if (!keys.length) return;
-        var head = document.createElement('div');
-        head.className = 'rv2-issues-group';
-        head.textContent = title;
-        menu.appendChild(head);
-        keys.forEach(function (key) {
-            var row = document.createElement('label');
-            row.className = 'attr-col-menu-item rv2-issues-item';
-            var cb = document.createElement('input');
-            cb.type = 'checkbox';
-            cb.dataset.issue = key;
-            cb.checked = active.has(key);
-            cb.addEventListener('change', apply);
-            var icon = document.createElement('i');
-            icon.className = defs[key].icon;
-            icon.style.color = defs[key].color;
-            var label = document.createElement('span');
-            label.textContent = defs[key].label;
-            var badge = document.createElement('span');
-            badge.className = 'rv2-issues-count';
-            badge.textContent = counts[key];
-            row.appendChild(cb); row.appendChild(icon);
-            row.appendChild(label); row.appendChild(badge);
-            menu.appendChild(row);
-        });
-    }
-
-    group('Errors', _ANOMALY_ERRORS);
-    group('Warnings', _ANOMALY_WARNINGS);
-
-    if (!menu.childNodes.length) {
-        var none = document.createElement('div');
-        none.className = 'attr-col-menu-item';
-        none.style.color = '#6b7280';
-        none.textContent = 'No violations in this survey';
-        menu.appendChild(none);
-    } else {
-        var clear = document.createElement('div');
-        clear.className = 'attr-col-menu-item rv2-issues-clear';
-        clear.textContent = 'Clear violation filters';
-        clear.addEventListener('click', function () {
-            menu.querySelectorAll('input[data-issue]').forEach(function (cb) { cb.checked = false; });
-            apply();
-            menu.remove();
-        });
-        menu.appendChild(clear);
-    }
-
-    document.body.appendChild(menu);
-    setTimeout(function () {
-        document.addEventListener('click', function close() {
-            var m = document.getElementById('rv2-issues-menu');
-            if (m) m.remove();
-            document.removeEventListener('click', close);
-        }, { once: true });
-    }, 0);
 }
 
 /* ── Free-text search across all columns ───────────────────────────────── */
@@ -567,11 +440,10 @@ function rv2CloseMobileSheet() {
 
 function _rv2SheetState() {
     var form = document.getElementById('table-state-form');
-    var issues = form ? (form.querySelector('[name=issues]') || {}).value || '' : '';
     return {
         form: form,
         trash: form ? (form.querySelector('[name=trash]') || {}).value === '1' : false,
-        issues: issues.split(',').filter(Boolean),
+        required: form ? (form.querySelector('[name=required]') || {}).value || '' : '',
         sort: form ? (form.querySelector('[name=sort]') || {}).value : 'start_datetime',
         dir: form ? (form.querySelector('[name=dir]') || {}).value : 'desc',
     };
@@ -596,11 +468,12 @@ function _rv2RenderMobileSheet() {
         return wrap;
     }
 
-    /* Show: All / Complete / Trash */
+    /* Show: All / Complete / Required unanswered / Trash — the desktop chips. */
     var show = section('Show');
     [
-        ['all', 'All ' + (counts.all || ''), !state.trash && state.issues.indexOf('complete') === -1],
-        ['complete', 'Complete ' + (counts.complete || ''), state.issues.indexOf('complete') !== -1],
+        ['all', 'All ' + (counts.all || ''), !state.trash && !state.required],
+        ['complete', 'Complete ' + (counts.complete || ''), state.required === 'complete'],
+        ['missing', '{% filter escapejs %}{% trans "Required unanswered" %}{% endfilter %} ' + (counts.required || ''), state.required === 'missing'],
         ['trash', 'Trash ' + (counts.trash || ''), state.trash],
     ].forEach(function (def) {
         var chip = document.createElement('button');
@@ -610,40 +483,6 @@ function _rv2RenderMobileSheet() {
         chip.addEventListener('click', function () { rv2Chip(def[0]); });
         show.appendChild(chip);
     });
-
-    /* Violations: per-type multi-select with counts (parity with desktop) */
-    var anomalyCounts = {};
-    try { anomalyCounts = JSON.parse(document.getElementById('anomaly-counts-data').textContent); } catch (e) {}
-    var haveAny = false;
-    var vio = section('Violations');
-    [['Errors', window._ANOMALY_ERRORS || {}], ['Warnings', window._ANOMALY_WARNINGS || {}]].forEach(function (group) {
-        Object.keys(group[1]).forEach(function (key) {
-            if (!(anomalyCounts[key] > 0)) return;
-            haveAny = true;
-            var def = group[1][key];
-            var chip = document.createElement('button');
-            chip.type = 'button';
-            chip.className = 'rv2-chip' + (state.issues.indexOf(key) !== -1 ? ' active' : '');
-            chip.textContent = def.label + ' ' + anomalyCounts[key];
-            chip.addEventListener('click', function () {
-                var next = state.issues.filter(function (k) { return k !== 'complete'; });
-                var at = next.indexOf(key);
-                if (at === -1) next.push(key); else next.splice(at, 1);
-                if (state.form) {
-                    state.form.querySelector('[name=issues]').value = next.join(',');
-                    state.form.querySelector('[name=trash]').value = '0';
-                }
-                loadTable({page: '1'});
-            });
-            vio.appendChild(chip);
-        });
-    });
-    if (!haveAny) {
-        var none = document.createElement('span');
-        none.className = 'rv2-ms-none';
-        none.textContent = 'No violations in this survey';
-        vio.appendChild(none);
-    }
 
     /* Column metadata (ships with the table partial) drives sort + filters —
        every column the desktop headers offer is offerable here. */
@@ -1349,7 +1188,7 @@ window.hardDeleteSession = function (sid) {
         _sessionAction(url, function () { rv2CloseDrawer(); });
     });
 };
-window._bulkAction = function (url, body, confirmMsg) {
+window._bulkAction = function (url, body, confirmMsg, confirmOpts) {
     var run = function () {
         fetch(url, {
             method: 'POST',
@@ -1360,7 +1199,10 @@ window._bulkAction = function (url, body, confirmMsg) {
             body: JSON.stringify(body),
         }).then(function (resp) { if (resp.ok) loadTable(); });
     };
-    if (confirmMsg) rv2Confirm(confirmMsg, run); else run();
+    if (!confirmMsg) { run(); return; }
+    // Destructive bulk actions ask through the app's dialog with the count
+    // (change responses-required-unanswered, #691).
+    _bulkConfirm(confirmMsg, confirmOpts).then(function (ok) { if (ok) run(); });
 };
 
 /* ── Select all = the whole filtered set ────────────────────────────────

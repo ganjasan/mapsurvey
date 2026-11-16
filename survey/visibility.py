@@ -176,30 +176,44 @@ def _rule_verdict(rule, host_kind, host_section_index, host_order, questions_ind
 	return entry, matchable, None
 
 
-def compute_visibility(survey, answers_by_code, enabled=None, surface=SURFACE_RESPONDENT):
+class VisibilityStructure:
+	"""The structure ``compute_visibility`` walks, loaded once: sections in chain
+	order, their top-level questions and groups, and the code index. A caller that
+	judges many sessions of one survey (``required_state.refresh_many``) builds it
+	once instead of re-reading the sections per session."""
+
+	def __init__(self, survey):
+		self.sections = _ordered_sections(survey)
+		self.groups_by_section = _section_groups(survey)
+		self.questions_by_section = {s.id: list(_iter_questions(s)) for s in self.sections}
+		self.questions_index = {}
+		for s_idx, section in enumerate(self.sections):
+			for question in self.questions_by_section[section.id]:
+				self.questions_index[question.code] = {
+					"question": question,
+					"section_index": s_idx,
+					"order": question.order_number,
+				}
+
+
+def compute_visibility(survey, answers_by_code, enabled=None, surface=SURFACE_RESPONDENT, structure=None):
 	"""Evaluate every rule of ``survey`` against ``answers_by_code``.
 
 	``answers_by_code``: {question_code: [selected choice codes as ints]} — only
 	choice-type answers matter; absent/empty means unanswered.
 	``enabled``: override for tests; defaults to settings.CONDITIONAL_VISIBILITY.
 	``surface``: whose page is being judged — audience applies whatever ``enabled`` is.
+	``structure``: a ``VisibilityStructure`` of ``survey`` already loaded, or None.
 	"""
 	if enabled is None:
 		enabled = getattr(settings, "CONDITIONAL_VISIBILITY", True)
 
 	vmap = VisibilityMap()
 	vmap.surface = surface
-	sections = _ordered_sections(survey)
-	groups_by_section = _section_groups(survey)
-
-	questions_index = {}
-	for s_idx, section in enumerate(sections):
-		for question in _iter_questions(section):
-			questions_index[question.code] = {
-				"question": question,
-				"section_index": s_idx,
-				"order": question.order_number,
-			}
+	structure = structure or VisibilityStructure(survey)
+	sections = structure.sections
+	groups_by_section = structure.groups_by_section
+	questions_index = structure.questions_index
 
 	def rule_satisfied(rule, host_kind, host_key, s_idx, order):
 		"""True when the item should be shown because of this rule."""
@@ -230,7 +244,7 @@ def compute_visibility(survey, answers_by_code, enabled=None, surface=SURFACE_RE
 		if section_shown:
 			vmap.visible_sections.append(section)
 
-		for kind, item in walk(_iter_questions(section), groups_by_section.get(section.id, [])):
+		for kind, item in walk(structure.questions_by_section[section.id], groups_by_section.get(section.id, [])):
 			if not enabled or item.visibility_rule is None:
 				own = True
 			else:

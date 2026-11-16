@@ -94,16 +94,21 @@ class AnalyticsServiceTest(TestCase):
 
     def test_overview_with_completed_and_abandoned(self):
         """
-        GIVEN a survey with 3 completed, 2 abandoned, and 1 partial session
+        GIVEN a required page-2 question, 3 sessions that answered it, 2 abandoned and
+              1 partial session that stopped after page 1
         WHEN get_overview is called
         THEN total=6, completed=3, rate=50
         """
+        from survey.required_state import refresh_many
+        self.q_text.required = True
+        self.q_text.save()
         self._create_completed_session()
         self._create_completed_session(choice_code=2, number=20, text='OK')
         self._create_completed_session(choice_code=1, number=5, text='Fine')
         self._create_abandoned_session()
         self._create_abandoned_session()
         self._create_partial_session()
+        refresh_many(SurveySession.objects.filter(survey=self.survey))
 
         service = self.SurveyAnalyticsService(self.survey)
         overview = service.get_overview()

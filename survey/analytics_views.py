@@ -176,7 +176,6 @@ def analytics_dashboard(request, survey_uuid):
         'total_sessions': overview['total_sessions'],
         'completed_count': overview['completed_count'],
         'completion_rate': overview['completion_rate'],
-        'flagged_count': overview['flagged_count'],
         'show_empty': show_empty,
         'empty_count': service.empty_count if responses_v2 else 0,
         'moderated': service.moderated_counts() if responses_v2 else None,
@@ -323,8 +322,11 @@ def analytics_table(request, survey_uuid):
         if k.startswith('search_') and v.strip():
             col_search[k[7:]] = v.strip()
 
-    issues_filter_raw = request.GET.get('issues', '').strip()
-    issues_filter = [f for f in issues_filter_raw.split(',') if f] if issues_filter_raw else None
+    # Required questions unanswered (change responses-required-unanswered): one
+    # on/off filter plus Complete. An `issues=` parameter from an old link is ignored.
+    required_filter = request.GET.get('required', '').strip()
+    if required_filter not in ('missing', 'complete'):
+        required_filter = ''
 
     # Typed column filters: cf_<col_key>=v:val1|val2 or r:min|max or d:min|max or t:query
     col_filters = {}
@@ -353,7 +355,7 @@ def analytics_table(request, survey_uuid):
     result = service.get_table_page(
         page=page, page_size=page_size, session_ids=session_ids,
         sort_col=sort_col, sort_dir=sort_dir, col_search=col_search,
-        show_trash=show_trash, issues_filter=issues_filter,
+        show_trash=show_trash, required_filter=required_filter or None,
         col_filters=col_filters, v2=responses_v2,
         query=request.GET.get('q', '').strip(),
     )
@@ -375,8 +377,7 @@ def analytics_table(request, survey_uuid):
         'moderated': service.moderated_counts() if responses_v2 else None,
         'is_editor': request.effective_survey_role in ('editor', 'owner'),
         'page_size_options': [10, 25, 50, 100, 250, 500],
-        'issues_filter': ','.join(issues_filter) if issues_filter else '',
-        'issues_filter_list': issues_filter or [],
+        'required_filter': required_filter,
         'search_query': request.GET.get('q', '').strip(),
         'filtered_ids_json': json.dumps(result.pop('filtered_ids', None) or []),
         # Column metadata for the mobile sort/filter sheet: key, label, type.
@@ -387,31 +388,10 @@ def analytics_table(request, survey_uuid):
         'default_hidden_json': json.dumps(
             [c['key'] for c in result['columns'] if c.get('default_hidden')]
         ),
-        'anomaly_counts_json': json.dumps(result.pop('anomaly_counts', {})),
         'unique_values_json': json.dumps(result.pop('unique_values', {})),
         'col_filters_json': json.dumps(col_filters),
         'col_filters_params': {k: v for k, v in request.GET.items() if k.startswith('cf_') and v.strip()},
         **result,
-    })
-
-
-@survey_permission_required('editor')
-def analytics_validation_settings(request, survey_uuid):
-    """GET: return current validation settings. POST: save new settings."""
-    survey = request.survey
-    if request.method == 'POST':
-        try:
-            body = json.loads(request.body)
-        except (json.JSONDecodeError, AttributeError):
-            return HttpResponse(status=400)
-        allowed_keys = {'fast_threshold_seconds', 'duplicate_window_hours'}
-        settings = {k: v for k, v in body.items() if k in allowed_keys}
-        survey.validation_settings = settings
-        survey.save(update_fields=['validation_settings'])
-        return HttpResponse(status=204)
-    return JsonResponse(survey.validation_settings or {
-        'fast_threshold_seconds': 30,
-        'duplicate_window_hours': 1,
     })
 
 
@@ -467,6 +447,8 @@ def analytics_answer_edit(request, survey_uuid, session_id, question_id):
             return HttpResponse(status=400)
         answer.save(update_fields=['selected_choices'])
 
+    from . import required_state
+    required_state.refresh(session)
     return HttpResponse(status=204)
 
 

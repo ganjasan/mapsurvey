@@ -62,8 +62,8 @@ def translations(body):
             for lang, values in (body.get('translations') or {}).items()}
 
 
-VS_KEYS = ('min_value', 'max_value', 'outlier_sigma', 'min_length', 'area_outlier_factor',
-           'max_dots', 'max_file_mb', 'max_files', 'min_features', 'max_features')
+VS_KEYS = ('min_value', 'max_value', 'max_dots', 'max_file_mb', 'max_files', 'min_features',
+           'max_features')
 
 
 def question(body, *, create=False):

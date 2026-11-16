@@ -94,23 +94,6 @@
             <div id="pane-table-content" style="flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;">
                 <div class="text-center text-muted py-5"><i class="fas fa-table mr-2"></i>{% trans "Loading table..." %}</div>
             </div>
-            {# Collapsed strip #}
-            <div id="anomalies-strip" style="display:none;width:28px;flex-shrink:0;border-left:1px solid #e5e7eb;cursor:pointer;background:#f8f9fa;position:relative;" onclick="expandAnomaliesSidebar()" title="{% trans 'Expand Violations panel' %}">
-                <div style="writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg);padding:12px 4px;font-size:0.75rem;font-weight:600;color:#6b7280;white-space:nowrap;display:flex;align-items:center;gap:6px;">
-                    <i class="fas fa-exclamation-triangle" style="color:#d97706;"></i>
-                    <span>{% trans "Violations" %}</span>
-                    <span id="anomalies-strip-count" class="badge badge-warning" style="font-size:0.65rem;"></span>
-                </div>
-            </div>
-            {# Expanded sidebar #}
-            <div id="anomalies-sidebar" style="display:none;width:220px;flex-shrink:0;border-left:1px solid #e5e7eb;padding:0.75rem;font-size:0.82rem;overflow-y:auto;background:#f9fafb;box-shadow:-2px 0 6px rgba(0,0,0,0.04);">
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                    <strong style="font-size:0.85rem;"><i class="fas fa-exclamation-triangle" style="color:#d97706;margin-right:4px;"></i>{% trans "Violations" %}</strong>
-                    <button class="btn btn-sm btn-link p-0" onclick="collapseAnomaliesSidebar()" title="{% trans 'Collapse' %}"><i class="fas fa-chevron-right" style="color:#9ca3af;"></i></button>
-                </div>
-                <div id="anomalies-errors"></div>
-                <div id="anomalies-warnings" class="mt-2"></div>
-            </div>
         </div>
     </div>
     {# Map sub-panel — use visibility instead of display:none so Leaflet can init properly #}
@@ -184,34 +167,6 @@
             </div>
             <div class="modal-body" id="sessionDetailModalBody">
                 <div class="text-center text-muted py-4">{% trans "Loading..." %}</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-{# Validation Settings Modal #}
-<div class="modal fade" id="validationSettingsModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-cog"></i> {% trans "Validation Settings" %}</h5>
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label style="font-size:0.85rem;font-weight:600;">{% trans "Fast completion threshold (seconds)" %}</label>
-                    <input type="number" id="vs-fast-threshold" class="form-control form-control-sm" value="30" min="1" step="1">
-                    <small class="text-muted">{% trans "Sessions completed faster than this are flagged" %}</small>
-                </div>
-                <div class="form-group">
-                    <label style="font-size:0.85rem;font-weight:600;">{% trans "Duplicate detection window (hours)" %}</label>
-                    <input type="number" id="vs-dup-window" class="form-control form-control-sm" value="1" min="0.1" step="0.5">
-                    <small class="text-muted">{% trans "Sessions from same browser within this window are flagged" %}</small>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-sm btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
-                <button class="btn btn-sm btn-primary" onclick="saveValidationSettings()">{% trans "Save" %}</button>
             </div>
         </div>
     </div>

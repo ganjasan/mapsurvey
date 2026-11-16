@@ -13607,3 +13607,41 @@ msgid_plural "%(n)s respondents are in areas with fewer than %(k)s people and ar
 msgstr[0] "%(n)s respondent jest na obszarze z mniej niż %(k)s osobami i nie jest pokazany."
 msgstr[1] "%(n)s respondentów jest na obszarach z mniej niż %(k)s osobami i nie są pokazani."
 msgstr[2] "%(n)s respondentów jest na obszarach z mniej niż %(k)s osobami i nie są pokazani."
+
+# change responses-required-unanswered (#691)
+msgid "Complete"
+msgstr "Kompletne"
+
+msgid "Required unanswered"
+msgstr "Pominięte obowiązkowe"
+
+msgid "Responses that left at least one required question unanswered"
+msgstr "Odpowiedzi, w których co najmniej jedno pytanie obowiązkowe pozostało bez odpowiedzi"
+
+msgid "Required questions unanswered"
+msgstr "Pytania obowiązkowe bez odpowiedzi"
+
+#, python-format
+msgid "Didn't answer %(counter)s required question: %(list)s"
+msgid_plural "Didn't answer %(counter)s required questions: %(list)s"
+msgstr[0] "Bez odpowiedzi na %(counter)s pytanie obowiązkowe: %(list)s"
+msgstr[1] "Bez odpowiedzi na %(counter)s pytania obowiązkowe: %(list)s"
+msgstr[2] "Bez odpowiedzi na %(counter)s pytań obowiązkowych: %(list)s"
+
+msgid "The edges of this shape cross each other. It may not open correctly in GIS software."
+msgstr "Krawędzie tego kształtu przecinają się. Może nie otworzyć się poprawnie w oprogramowaniu GIS."
+
+msgid "Respondents can't enter a number outside this range."
+msgstr "Respondenci nie mogą wpisać liczby spoza tego zakresu."
+
+msgid "Move 1 response to trash? You can restore it from the trash."
+msgstr "Przenieść 1 odpowiedź do kosza? Można ją przywrócić z kosza."
+
+msgid "Move __N__ responses to trash? You can restore them from the trash."
+msgstr "Przenieść odpowiedzi (__N__) do kosza? Można je przywrócić z kosza."
+
+msgid "Permanently delete 1 response? This cannot be undone."
+msgstr "Trwale usunąć 1 odpowiedź? Tej operacji nie można cofnąć."
+
+msgid "Permanently delete __N__ responses? This cannot be undone."
+msgstr "Trwale usunąć odpowiedzi (__N__)? Tej operacji nie można cofnąć."

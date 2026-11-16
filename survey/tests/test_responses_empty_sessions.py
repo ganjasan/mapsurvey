@@ -72,17 +72,19 @@ class EmptySessionDefinitionTest(_EmptySessionFixture):
         Answer.objects.create(survey_session=sess, question=self.q_text, layer_object=obj, text='nice')
         self.assertFalse(empty_sessions(SurveySession.objects.filter(pk=sess.pk)).exists())
 
-    def test_issue_and_helper_agree(self):
+    def test_table_badge_and_helper_agree(self):
         """
         GIVEN an answered and an empty session
-        WHEN compute_session_issues runs
-        THEN exactly the helper's empty session carries the 'empty' issue
+        WHEN the table is built with empties shown
+        THEN exactly the helper's empty session is flagged empty and carries no required marker
         """
         answered = self._session()
         blank = self._session(answered=False)
-        issues = SurveyAnalyticsService(self.survey).compute_session_issues([answered.id, blank.id])
-        self.assertIn('empty', issues[blank.id])
-        self.assertNotIn('empty', issues[answered.id])
+        rows = SurveyAnalyticsService(self.survey).get_table_page(v2=True)['rows']
+        by_id = {r['session_id']: r for r in rows}
+        self.assertTrue(by_id[blank.id]['is_empty'])
+        self.assertEqual(by_id[blank.id]['required'], [])
+        self.assertFalse(by_id[answered.id]['is_empty'])
 
 
 class EmptySessionServiceTest(_EmptySessionFixture):
@@ -102,9 +104,9 @@ class EmptySessionServiceTest(_EmptySessionFixture):
 
     def test_hidden_empties_leave_kpis(self):
         """
-        GIVEN 2 sessions that answered the last section and 2 empty sessions
+        GIVEN 2 answered sessions (no required questions) and 2 empty sessions
         WHEN the service hides empty sessions
-        THEN total is 2, completion is 100%, nothing is flagged and empty_count is 2
+        THEN total is 2, completion is 100% and empty_count is 2
         """
         self._session()
         self._session()
@@ -114,7 +116,6 @@ class EmptySessionServiceTest(_EmptySessionFixture):
         overview = service.get_overview()
         self.assertEqual(overview['total_sessions'], 2)
         self.assertEqual(overview['completion_rate'], 100)
-        self.assertEqual(overview['flagged_count'], 0)
         self.assertEqual(service.empty_count, 2)
 
     def test_empty_count_ignores_trash(self):
@@ -131,13 +132,14 @@ class EmptySessionServiceTest(_EmptySessionFixture):
         """
         GIVEN 30 recent empty sessions and one older answered session
         WHEN the overview extras are built with empties hidden
-        THEN neither feed lists an empty session
+        THEN the latest feed lists no empty session
         """
         answered = self._session()
         empties = [self._session(answered=False).id for _ in range(30)]
         extras = SurveyAnalyticsService(self.survey, include_empty=False).get_overview_extras()
         self.assertEqual([f['id'] for f in extras['latest_feed']], [answered.id])
-        self.assertFalse(set(empties) & {f['id'] for f in extras['needs_review']})
+        self.assertFalse(set(empties) & {f['id'] for f in extras['latest_feed']})
+        self.assertNotIn('needs_review', extras)
 
     def test_sequence_numbers_count_responses_only(self):
         """
@@ -159,11 +161,11 @@ class EmptySessionServiceTest(_EmptySessionFixture):
             else:
                 self.assertNotIn(b.id, seq)
 
-    def test_table_counts_and_issue_menu(self):
+    def test_table_counts_leave_empties_out_of_the_partition(self):
         """
         GIVEN 2 answered and 3 empty sessions
         WHEN the v2 table page is built with empties shown
-        THEN All counts 5 but the Issues count and menu leave 'empty' out
+        THEN All counts 5, Complete counts the 2 answered and Required unanswered counts none
         """
         self._session()
         self._session()
@@ -171,8 +173,8 @@ class EmptySessionServiceTest(_EmptySessionFixture):
             self._session(answered=False)
         page = SurveyAnalyticsService(self.survey, include_empty=True).get_table_page(v2=True)
         self.assertEqual(page['v2_counts']['all'], 5)
-        self.assertEqual(page['v2_counts']['issues'], 0)
-        self.assertNotIn('empty', page['anomaly_counts'])
+        self.assertEqual(page['v2_counts']['complete'], 2)
+        self.assertEqual(page['v2_counts']['required'], 0)
 
 
 @override_settings(RESPONSES_V2=True)

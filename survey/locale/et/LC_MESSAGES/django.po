@@ -13457,3 +13457,40 @@ msgid "%(n)s respondent is in an area with fewer than %(k)s people and is not sh
 msgid_plural "%(n)s respondents are in areas with fewer than %(k)s people and are not shown."
 msgstr[0] "%(n)s vastaja on alal, kus on vähem kui %(k)s inimest, ja teda ei näidata."
 msgstr[1] "%(n)s vastajat on aladel, kus on vähem kui %(k)s inimest, ja neid ei näidata."
+
+# change responses-required-unanswered (#691)
+msgid "Complete"
+msgstr "Täielikud"
+
+msgid "Required unanswered"
+msgstr "Kohustuslikud vastamata"
+
+msgid "Responses that left at least one required question unanswered"
+msgstr "Vastused, kus vähemalt üks kohustuslik küsimus jäi vastamata"
+
+msgid "Required questions unanswered"
+msgstr "Kohustuslikud küsimused vastamata"
+
+#, python-format
+msgid "Didn't answer %(counter)s required question: %(list)s"
+msgid_plural "Didn't answer %(counter)s required questions: %(list)s"
+msgstr[0] "%(counter)s kohustuslik küsimus vastamata: %(list)s"
+msgstr[1] "%(counter)s kohustuslikku küsimust vastamata: %(list)s"
+
+msgid "The edges of this shape cross each other. It may not open correctly in GIS software."
+msgstr "Selle kujundi servad lõikuvad. See ei pruugi GIS-tarkvaras õigesti avaneda."
+
+msgid "Respondents can't enter a number outside this range."
+msgstr "Vastajad ei saa sisestada arvu väljaspool seda vahemikku."
+
+msgid "Move 1 response to trash? You can restore it from the trash."
+msgstr "Kas viia 1 vastus prügikasti? Selle saab prügikastist taastada."
+
+msgid "Move __N__ responses to trash? You can restore them from the trash."
+msgstr "Kas viia __N__ vastust prügikasti? Need saab prügikastist taastada."
+
+msgid "Permanently delete 1 response? This cannot be undone."
+msgstr "Kas kustutada 1 vastus jäädavalt? Seda ei saa tagasi võtta."
+
+msgid "Permanently delete __N__ responses? This cannot be undone."
+msgstr "Kas kustutada __N__ vastust jäädavalt? Seda ei saa tagasi võtta."
