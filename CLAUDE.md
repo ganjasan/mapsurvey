@@ -1117,8 +1117,19 @@ message; an import is always unpublished and `workspace`-only, text re-sanitised
 turned into that file by the ops repo's `scripts/report_html_to_file.py` — customers' reports never enter this
 repo. (4) The page (`public_results.html`) renders `rows`; a text payload carries `html`, and a snapshot frozen
 before this change has only `body`, which the template ESCAPES. A report without a survey has no comment
-threads (threads hang on a survey) and no "N responses". Next in #704: live cross-tab / engagement blocks, a
-map that may show marks (the survey owner's choice, per block), live numbers in text.
+threads (threads hang on a survey) and no "N responses".
+**Live blocks (change `reports-live-blocks`, #704 part 2)**: `crosstab` and `engagement` blocks point at a
+`DatasetView` of that kind (`ReportBlock.view`, `VIEW_BLOCK_TYPES`); `services.add_view_block` MAKES the view in
+Data (`data.services.create_view`, or reuses an identical one) — Data's refusals are the block's. The payload is
+`dataviews.result(view, lang, k=<the REPORT's K>)` plus presentation only (`render._view_payload`): no count is
+produced in `reports/`. **A map block may show the marks themselves** — `config = {"marks": true}`, a per-block
+switch, off by default (owner decision 2026-11-16: the survey owner's choice and responsibility); the payload is
+then `data_type: "marks"`, geometry only. That exception is a report block's ALONE: Site results blocks, grid /
+coverage / density views, the Data API and MCP keep the grid (`public-aggregates`). **Live numbers**:
+`reports/tokens.py` fills `{responses}` `{opened}` `{finished}` `{marks:CODE}` `{respondents:CODE}` in Text
+blocks, key numbers and the opening paragraph from the HOME survey, masked with the report's K; a token that
+cannot be filled stays as written; a frozen snapshot stores the filled text (and `intro_body`). The report file
+carries all of it (`crosstab` by survey + two codes, `engagement` by survey, a map's `marks`).
 **Reports (`reports/`, change `reports-object`, #703; epic #712)**: what was the public results
 page is a **report** — `reports.models.Report` (a workspace object at `/r/<slug>/`, `survey` = its
 HOME survey, nullable and not unique) with ordered `ReportBlock`s. A question block names a

@@ -77,8 +77,41 @@ def add_question_block(actor, report, question, **values):
     return block
 
 
+def add_view_block(actor, report, block_type, survey, rows='', columns=''):
+    """A cross-tab or an engagement block of `survey`: the analysis view is made in the Data
+    module (`data.services.create_view`, which refuses what the dataset does not allow) and the
+    block points at it. The survey must belong to the report's workspace."""
+    from data import services as data_services
+    from data.models import DatasetView
+    from data.responses_views import responses_dataset
+    from survey.versioning import canonical_of
+    if block_type not in ('crosstab', 'engagement'):
+        raise ReportRefused('unknown_block', _('Unknown block type.'))
+    survey = canonical_of(survey)
+    if survey.organization_id != report.organization_id:
+        raise ReportRefused('other_workspace', _('Only a survey of this workspace can be shown.'))
+    dataset = responses_dataset(survey)
+    config = {'rows': rows, 'columns': columns} if block_type == 'crosstab' else {}
+    view = None
+    if block_type == 'engagement':
+        view = dataset.views.filter(kind=DatasetView.KIND_ENGAGEMENT).order_by('id').first()
+    else:
+        view = dataset.views.filter(kind=DatasetView.KIND_CROSSTAB, config=config).order_by('id').first()
+    if view is None:
+        name = ('%s × %s' % (rows, columns)) if block_type == 'crosstab' else str(_('Who took part'))
+        try:
+            view = data_services.create_view(actor, dataset, name[:120], kind=block_type, config=config)
+        except data_services.DataRefused as refusal:
+            raise ReportRefused('view_refused', refusal.message)
+    block = ReportBlock.objects.create(report=report, block_type=block_type, dataset=dataset, view=view,
+                                       order=_next_order(report))
+    bump_version(report)
+    return block
+
+
 def update_block(actor, block, *, viz=None, is_hidden=None, custom_title=None, content=None, image=None,
-                 geo_label_fields=None, basemap=None, valid_basemaps=(), width=None, items=None):
+                 geo_label_fields=None, basemap=None, valid_basemaps=(), width=None, items=None,
+                 show_marks=None):
     """Update what the block's type allows; None leaves a value as it is. `items` is the list of a
     key-numbers or quotes block ([{value, label}] / [{text, source}])."""
     from reports import story
@@ -103,6 +136,8 @@ def update_block(actor, block, *, viz=None, is_hidden=None, custom_title=None, c
             block.geo_label_fields = list(geo_label_fields)
         if basemap in set(valid_basemaps):
             block.basemap = basemap
+        if show_marks is not None:
+            block.config = story.clean_config('map', {'marks': bool(show_marks)})
     block.save()
     bump_version(block.report)
     return block
@@ -185,6 +220,6 @@ def unfreeze(actor, report):
 
 
 __all__ = ['QUESTION_BLOCK_TYPES', 'ReportRefused', 'add_image_block', 'add_question_block', 'add_story_block',
-           'add_text_block',
+           'add_text_block', 'add_view_block',
            'create_report', 'delete_block', 'freeze', 'reorder_blocks', 'set_published', 'unfreeze',
            'update_block', 'update_settings']

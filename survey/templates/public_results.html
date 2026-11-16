@@ -79,6 +79,21 @@
     .quotes blockquote{margin:0;padding:14px 18px;background:#f5f6f8;border-radius:10px;font-size:1rem;line-height:1.5;font-style:italic;color:#1f2937;}
     .quotes cite{display:block;margin-top:6px;font-size:.8rem;font-style:normal;color:var(--text-secondary);}
     .kanon-note{margin-top:10px;font-size:.8rem;color:var(--text-secondary);}
+    .xtab-wrap{overflow-x:auto;}
+    .xtab{width:100%;border-collapse:collapse;font-size:.88rem;font-variant-numeric:tabular-nums;}
+    .xtab th,.xtab td{padding:7px 10px;border-bottom:1px solid var(--border);text-align:right;}
+    .xtab th[scope=row],.xtab thead th:first-child{text-align:left;font-weight:500;}
+    .xtab thead th{font-weight:600;color:var(--text-secondary);font-size:.8rem;vertical-align:bottom;}
+    .xtab td.masked{color:var(--text-secondary);}
+    .xtab .total{font-weight:600;}
+    .funnel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0;padding:0;list-style:none;}
+    .funnel li{background:#f5f6f8;border-radius:10px;padding:14px 14px 12px;}
+    .funnel b{display:block;font-size:1.6rem;font-weight:700;line-height:1.15;}
+    .funnel span{display:block;font-size:.85rem;color:var(--text-secondary);margin-top:3px;}
+    .series{display:flex;align-items:flex-end;gap:2px;height:110px;margin-top:16px;}
+    .series .bar{flex:1;min-width:2px;background:#dfe3fb;border-radius:2px 2px 0 0;position:relative;}
+    .series .bar i{position:absolute;left:0;right:0;bottom:0;background:var(--accent);border-radius:2px 2px 0 0;}
+    .series-axis{display:flex;justify-content:space-between;font-size:.75rem;color:var(--text-secondary);margin-top:4px;}
     .empty{text-align:center;color:var(--text-secondary);padding:40px 0;}
     .footer{margin-top:48px;text-align:center;}
     .footer .made{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--border);border-radius:999px;padding:8px 16px;text-decoration:none;color:var(--text-secondary);font-size:.85rem;}
@@ -140,6 +155,38 @@
         <div class="quotes">
           {% for item in block.items %}<blockquote>“{{ item.text }}”{% if item.source %}<cite>{{ item.source }}</cite>{% endif %}</blockquote>{% endfor %}
         </div>
+      {% elif block.block_type == 'crosstab' %}
+        {% comment %}A cross-tab (change reports-live-blocks): computed by data.analysis, masked
+        cells and withheld totals arrive that way — the page only draws the table.{% endcomment %}
+        <div class="xtab-wrap">
+          <table class="xtab">
+            <caption class="sr-only" style="position:absolute;left:-9999px;">{{ block.data.rows.name }} × {{ block.data.columns.name }}</caption>
+            <thead><tr><th scope="col">{{ block.data.rows.name }}</th>
+              {% for item in block.data.columns.items %}<th scope="col">{{ item.label }}</th>{% endfor %}
+              <th scope="col">{% trans "Total" %}</th></tr></thead>
+            <tbody>
+              {% for line in block.table %}
+              <tr><th scope="row">{{ line.item.label }}</th>
+                {% for cell in line.cells %}<td{% if cell.masked %} class="masked"{% endif %}>{{ cell.display }}</td>{% endfor %}
+                <td class="total">{{ line.item.total.display }}</td></tr>
+              {% endfor %}
+            </tbody>
+            <tfoot><tr><th scope="row">{% trans "Total" %}</th>
+              {% for item in block.data.columns.items %}<td class="total">{{ item.total.display }}</td>{% endfor %}
+              <td class="total">{{ block.data.respondents.display }}</td></tr></tfoot>
+          </table>
+        </div>
+        <div class="kanon-note">{% trans "People who answered both questions." %}{% if block.data.rows.multiple or block.data.columns.multiple %} {% trans "Someone who picked several options counts in each." %}{% endif %}{% if block.data.masked_cells %} {% blocktrans with k=block.k %}A group smaller than {{ k }} reads “<{{ k }}”, and totals that would give it away read “—”.{% endblocktrans %}{% endif %}</div>
+      {% elif block.block_type == 'engagement' %}
+        <ul class="funnel">
+          {% for step in block.data.steps %}<li><b>{{ step.display }}</b><span>{% if step.key == 'opened' %}{% trans "opened the survey" %}{% elif step.key == 'answered' %}{% trans "answered" %}{% else %}{% trans "finished" %}{% endif %}</span></li>{% endfor %}
+        </ul>
+        {% if block.data.series|length > 1 %}
+        <div class="series" role="img" aria-label="{% trans 'Opened and answered over time' %}">
+          {% for point in block.data.series %}<div class="bar" style="height:{{ point.opened_percent }}%" title="{{ point.start }}: {{ point.opened.display }} / {{ point.answered.display }}"><i style="height:{% widthratio point.answered_percent point.opened_percent|default:1 100 %}%"></i></div>{% endfor %}
+        </div>
+        <div class="series-axis"><span>{{ block.data.first }}</span><span>{% if block.data.period == 'day' %}{% trans "per day: opened, and answered (dark)" %}{% elif block.data.period == 'week' %}{% trans "per week: opened, and answered (dark)" %}{% else %}{% trans "per month: opened, and answered (dark)" %}{% endif %}</span><span>{{ block.data.last }}</span></div>
+        {% endif %}
       {% elif block.block_type == 'chart' %}
         <div class="chart-holder"><canvas id="chart-{{ block.id }}"></canvas></div>
         {% if page.k_anonymity_threshold > 1 %}

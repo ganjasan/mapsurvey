@@ -76,6 +76,8 @@ class ReportService:
         self.k = max(1, report.k_anonymity_threshold or 1)
         self.home = canonical_of(report.survey) if getattr(report, 'survey', None) is not None else None
         self._scopes = {}      # canonical survey id -> (family header ids, clean session ids)
+        from reports.tokens import Tokens
+        self.tokens = Tokens(self.home, self.k)    # live numbers in text (reports.tokens)
 
     @classmethod
     def for_survey(cls, survey, k, lang='en'):
@@ -127,7 +129,8 @@ class ReportService:
         payloads = []
         from reports.sources import attach_questions
         blocks = attach_questions(
-            self.report.blocks.filter(is_hidden=False).select_related('dataset__survey', 'view'))
+            self.report.blocks.filter(is_hidden=False)
+            .select_related('dataset__survey', 'view__dataset__survey'))
         for block in blocks:
             payload = self._build_block(block)
             if payload is not None:
@@ -143,9 +146,14 @@ class ReportService:
             return payload if payload['title'] else None
         if block.block_type in ('numbers', 'quotes'):
             payload = self._base(block)
-            payload['items'] = list((block.config or {}).get('items') or [])
-            payload['note'] = _localize(block.content, self.lang)
+            payload['items'] = [dict(item) for item in (block.config or {}).get('items') or []]
+            if block.block_type == 'numbers':
+                for item in payload['items']:      # a key number may be a live token
+                    item['value'] = self.tokens.fill_plain(item.get('value', ''))
+            payload['note'] = self.tokens.fill_plain(_localize(block.content, self.lang))
             return payload if payload['items'] else None
+        if block.block_type in ('crosstab', 'engagement'):
+            return self._view_payload(block)
         if block.block_type == 'image':
             return self._image_payload(block)
         if block.block_type in ('chart', 'map'):
@@ -266,7 +274,32 @@ class ReportService:
         payload['body'] = _localize(block.content, self.lang)
         # Rich text since change reports-story. A snapshot frozen before it has `body` only, and
         # the page escapes that one.
-        payload['html'] = clean_html(payload['body'])
+        payload['html'] = self.tokens.fill(clean_html(payload['body']))
+        return payload
+
+    def _view_payload(self, block):
+        """A cross-tab or an engagement block: the result of its analysis view, computed by
+        `data.dataviews.result` with this report's K. Nothing is aggregated here."""
+        from data.dataviews import result
+        view = block.view if block.view_id else None
+        if view is None or view.kind != block.block_type:
+            return None
+        payload = self._base(block)
+        data = result(view, lang=self.lang, k=self.k)
+        if not data or data.get('missing'):
+            return None
+        payload['data'] = data
+        payload['k'] = self.k
+        if block.block_type == 'crosstab':
+            payload['title'] = payload['title'] or '%s × %s' % (data['rows']['name'], data['columns']['name'])
+            payload['table'] = [{'item': item, 'cells': data['cells'][i]}
+                                for i, item in enumerate(data['rows']['items'])]
+        else:
+            peak = max((p['opened']['value'] or 0 for p in data['series']), default=0)
+            for point in data['series']:
+                for key in ('opened', 'answered'):
+                    value = point[key]['value'] or 0
+                    point[key + '_percent'] = round(100 * value / peak) if peak else 0
         return payload
 
     def _image_payload(self, block):
@@ -375,6 +408,17 @@ class ReportService:
             .only('id', 'survey_session_id', geo_field)
         )
         members = [(a.survey_session_id, a.id, getattr(a, geo_field)) for a in rows]
+        if (getattr(block, 'config', None) or {}).get('marks'):
+            # The author chose to show the marks themselves (owner decision 2026-11-16: the survey
+            # owner answers for that). Geometry only — no answer id, no session, no sub-answers.
+            payload['data_type'] = 'marks'
+            payload['marks'] = {'type': 'FeatureCollection', 'features': [
+                {'type': 'Feature', 'properties': {}, 'geometry': json.loads(geom.geojson)}
+                for _session, _answer, geom in members]}
+            payload['count'] = len(members)
+            payload['respondents_total'] = len({session for session, _a, _g in members})
+            payload['spray'] = question.input_type == 'spraycan'
+            return payload
         from data.aggregate import grid
         # The finest grid that shows most respondents (change data-grid-adaptive), cells under K
         # omitted whatever the size.
@@ -472,6 +516,8 @@ class ReportService:
             'lang': self.lang,
             'response_count': self.response_count(),
             'blocks': self.build_blocks(),
+            # The opening paragraph with its live numbers as they stood at the freeze.
+            'intro_body': self.tokens.fill_plain(_localize((self.report.intro or {}).get('body'), self.lang)),
         }
 
 
@@ -498,6 +544,11 @@ def build_context(report, lang='en'):
     intro = report.intro or {}
     intro_title = _localize(intro.get('title'), lang) or (survey.name if survey is not None else report.slug)
     intro_body = _localize(intro.get('body'), lang)
+    if data.get('frozen'):
+        intro_body = data.get('intro_body') or intro_body
+    elif canonical is not None and '{' in (intro_body or ''):
+        from reports.tokens import Tokens
+        intro_body = Tokens(canonical, report.k_anonymity_threshold).fill_plain(intro_body)
 
     return {
         'page': report,
@@ -664,6 +715,7 @@ def render_data(report, lang='en'):
             'frozen': True, 'stale': False,
             'response_count': snap.get('response_count', 0),
             'blocks': snap.get('blocks', []),
+            'intro_body': snap.get('intro_body'),
             'frozen_at': report.frozen_at,
             'lang': snap.get('lang'),
         }

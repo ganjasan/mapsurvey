@@ -21,6 +21,8 @@
                             <option value="numbers">{% trans "Key numbers" %}</option>
                             <option value="quotes">{% trans "Quotes" %}</option>
                             {% if question_rows %}<option value="question" selected>{% trans "Question results…" %}</option>{% endif %}
+                            {% if crosstab_questions|length > 1 %}<option value="crosstab">{% trans "Cross-tab: two questions against each other" %}</option>{% endif %}
+                            {% if survey %}<option value="engagement">{% trans "Engagement: opened, answered, finished" %}</option>{% endif %}
                         </select>
                     </div>
                     <div class="pr-field" id="prQWrap"{% if not question_rows %} style="display:none;"{% endif %}>
@@ -50,6 +52,17 @@
                             {% endfor %}
                         </select>
                         <div class="pr-help"><i class="fas fa-info-circle"></i> {% trans "Text questions are not available for publication — individual answers are never shown publicly." %}</div>
+                    </div>
+                    <div class="pr-field" id="prXtabWrap" style="display:none;">
+                        <label for="prXtabRows">{% trans "Rows" %}</label>
+                        <select name="rows" id="prXtabRows" class="form-control mb-2">
+                            {% for q in crosstab_questions %}<option value="{{ q.code }}">{{ q.name|default:q.code|striptags|truncatechars:70 }}</option>{% endfor %}
+                        </select>
+                        <label for="prXtabColumns">{% trans "Columns" %}</label>
+                        <select name="columns" id="prXtabColumns" class="form-control">
+                            {% for q in crosstab_questions %}<option value="{{ q.code }}"{% if forloop.counter == 2 %} selected{% endif %}>{{ q.name|default:q.code|striptags|truncatechars:70 }}</option>{% endfor %}
+                        </select>
+                        <div class="pr-help">{% trans "How many people gave each pair of answers, among those who answered both. Groups too small to show are hidden." %}</div>
                     </div>
                     <div class="pr-field" id="prImgWrap" style="display:none;">
                         <label>{% trans "Image file" %}</label>
@@ -115,6 +128,7 @@ function prToggleAddBlockFields() {
     var type = document.getElementById('prBlockType').value;
     document.getElementById('prQWrap').style.display = type === 'question' ? '' : 'none';
     document.getElementById('prImgWrap').style.display = type === 'image' ? '' : 'none';
+    document.getElementById('prXtabWrap').style.display = type === 'crosstab' ? '' : 'none';
 }
 (function() {
     var select = document.getElementById('prQ');

@@ -10,7 +10,8 @@ here leaves as one and comes back into any workspace its member may edit.
     heading → "text"; text → "html"; image → "image" (path in the ZIP), "caption";
     numbers → "items" [{value, label}], "note"; quotes → "items" [{text, source}];
     chart / map / objects / budget → "survey" (uuid), "question" (code), "viz", "basemap",
-    "popup_fields".
+    "popup_fields"; a map also "marks" (true = the marks themselves instead of the grid);
+    crosstab → "survey", "rows", "columns" (question codes); engagement → "survey".
 
 An import never publishes: the report arrives unpublished and workspace-only. A question block is
 re-bound when the workspace has that survey and question code, and dropped with a line in the
@@ -25,7 +26,7 @@ from django.core.files.base import ContentFile
 from django.utils.translation import gettext as _
 
 from reports import story
-from reports.models import QUESTION_BLOCK_TYPES, STORY_BLOCK_TYPES, Report, ReportBlock
+from reports.models import QUESTION_BLOCK_TYPES, STORY_BLOCK_TYPES, VIEW_BLOCK_TYPES, Report, ReportBlock
 from reports.render import bump_version, unique_slug
 
 FORMAT = 1
@@ -56,7 +57,7 @@ def export_report(report):
     blocks_out = []
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as archive:
-        blocks = attach_questions(report.blocks.select_related('dataset__survey'))
+        blocks = attach_questions(report.blocks.select_related('dataset__survey', 'view'))
         for index, block in enumerate(blocks):
             entry = {'type': block.block_type, 'width': block.width, 'hidden': block.is_hidden,
                      'title': _en(block.custom_title)}
@@ -80,6 +81,14 @@ def export_report(report):
                 entry.update(survey=str(survey.uuid) if survey is not None else None,
                              question=block.question_code, viz=block.viz, basemap=block.basemap,
                              popup_fields=list(block.geo_label_fields or []))
+                if block.block_type == 'map' and (block.config or {}).get('marks'):
+                    entry['marks'] = True
+            elif block.block_type in VIEW_BLOCK_TYPES:
+                survey = block.dataset.survey if block.dataset_id and block.dataset.survey_id else None
+                entry['survey'] = str(survey.uuid) if survey is not None else None
+                if block.block_type == 'crosstab' and block.view_id:
+                    entry.update(rows=(block.view.config or {}).get('rows'),
+                                 columns=(block.view.config or {}).get('columns'))
             blocks_out.append(entry)
         document = {
             'format': FORMAT,
@@ -201,7 +210,23 @@ def import_report(actor, organization, upload):
                 ReportBlock.objects.create(
                     block_type=block_type, dataset=dataset_for(question), question_code=question.code,
                     viz=str(raw.get('viz') or 'auto')[:20], basemap=str(raw.get('basemap') or 'streets')[:50],
-                    geo_label_fields=[str(c) for c in (raw.get('popup_fields') or [])][:20], **common)
+                    geo_label_fields=[str(c) for c in (raw.get('popup_fields') or [])][:20],
+                    config=story.clean_config('map', raw) if block_type == 'map' else {}, **common)
+            elif block_type in VIEW_BLOCK_TYPES:
+                from reports import services
+                survey = surveys.get(str(raw.get('survey') or ''))
+                try:
+                    if survey is None:
+                        raise services.ReportRefused('no_survey')
+                    block = services.add_view_block(actor, report, block_type, survey,
+                                                    rows=str(raw.get('rows') or ''), columns=str(raw.get('columns') or ''))
+                except services.ReportRefused:
+                    notes.append(_('“%(title)s” shows a survey question this workspace does not have; the block was left out.')
+                                 % {'title': raw.get('title') or block_type})
+                    continue
+                ReportBlock.objects.filter(pk=block.pk).update(
+                    order=order, width=common['width'], is_hidden=common['is_hidden'],
+                    custom_title=common['custom_title'])
             else:
                 continue
             order += 1

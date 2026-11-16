@@ -194,6 +194,21 @@ def _refused(request, refusal, status=400):
     return redirect(_url(request, 'config'))
 
 
+def _crosstab_questions(survey):
+    """The questions a cross-tab of the report's home survey may name."""
+    if survey is None:
+        return []
+    from data.analysis import CROSSTAB_TYPES
+    from data.questions import top_level_questions
+    from survey.versioning import canonical_of
+    return top_level_questions(canonical_of(survey), CROSSTAB_TYPES)
+
+
+def _token_help():
+    from reports.tokens import HELP
+    return HELP
+
+
 class _NoThreads(dict):
     """Comment counts of a report without a home survey: threads hang on a survey."""
     total = 0
@@ -245,6 +260,8 @@ def _config(request):
         'selected_lines': (story.lines_from_items(selected_block.block_type, selected_block.config)
                            if selected_block and selected_block.block_type in ('numbers', 'quotes') else ''),
         'export_url': reverse('editor_report_export', args=[page.uuid]),
+        'crosstab_questions': _crosstab_questions(survey),
+        'token_help': _token_help(),
         'reports_url': reverse('editor_reports'),
         'blocks': blocks,
         'thread_counts': _thread_counts(survey, request.user) if survey is not None else _NoThreads(),
@@ -363,6 +380,9 @@ def _block_add(request):
             block = services.add_story_block(actor, page, block_type)
         elif block_type == 'image':
             block = services.add_image_block(actor, page, request.FILES.get('image'))
+        elif block_type in ('crosstab', 'engagement') and survey is not None:
+            block = services.add_view_block(actor, page, block_type, survey,
+                                            rows=request.POST.get('rows', ''), columns=request.POST.get('columns', ''))
         elif block_type == 'question' and survey is not None:
             question = get_object_or_404(
                 Question.objects.select_related('survey_section__survey_header'),
@@ -398,6 +418,9 @@ def _block_edit(request, block_id):
         geo_label_fields=post.getlist('geo_label_fields') if block.block_type == 'map' else None,
         width=post.get('width') if 'width' in post else None,
         items=items,
+        # The switch posts a hidden marker beside the checkbox, so an autosave that lacks the
+        # box means "off" and a form without the field leaves the choice alone.
+        show_marks=(post.get('show_marks') == 'on') if 'show_marks_present' in post else None,
         basemap=post.get('basemap'),
         valid_basemaps={slug for slug, _label in basemap_registry.choices_for(page.organization)})
     if _is_ajax(request):

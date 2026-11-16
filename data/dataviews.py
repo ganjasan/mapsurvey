@@ -212,23 +212,24 @@ def grid_geojson(view):
     return json.dumps(cells(view), separators=(',', ':'))
 
 
-def cells(view):
+def cells(view, k=None):
     """A cell view's FeatureCollection as a dict — `grid`, `coverage` or `density`
     (`data.analysis.cells`), with the K it used."""
     from data.analysis import cells as _cells
     ds = view.dataset
-    return _cells(ds.survey, ds.question_code, _k_for(ds.survey), kind=view.kind)
+    return _cells(ds.survey, ds.question_code, k or _k_for(ds.survey), kind=view.kind)
 
 
-def result(view, lang='en'):
+def result(view, lang='en', k=None):
     """What a computed view yields, as a dict: the cells of a grid / coverage / density view, the
     steps and series of an engagement view, the table of a cross-tab. Masked for every reader
     (design decision 6). None for a saved filter (objects, responses)."""
     from data import analysis
     ds = view.dataset
     if view.kind in DatasetView.CELL_KINDS:
-        return cells(view)
-    k = _k_for(ds.survey)
+        return cells(view, k)
+    # A report passes its own K; any other reader gets the K of the survey's report.
+    k = max(1, int(k)) if k else _k_for(ds.survey)
     if view.kind == DatasetView.KIND_ENGAGEMENT:
         return analysis.engagement(ds.survey, k)
     if view.kind == DatasetView.KIND_CROSSTAB:
