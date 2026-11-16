@@ -83,6 +83,18 @@ A **frozen** report's PDF is made once: after that its published page shows a **
 
 The numbers in a CSV are the ones the page shows: a group too small to show reads "<3" there too, and a map lists its squares, not people's marks, unless you chose to show the marks.
 
+## See whether it is read
+
+**Page settings → Readers** shows how many times the report's page was opened, how many times it was shown inside another site, and how many times its PDF was downloaded — in total and in the last 30 days. The numbers are counted on Mapsurvey's own server: the page loads no analytics script, and nothing about a reader is stored, so they are "times opened", not "people". Your own visits and your colleagues' are left out.
+
+## Group it with tags
+
+Under **Page settings → Tags** give the report the same tags as its surveys and datasets ("Riverside plan 2027"). The **Reports** page shows them and filters by one.
+
+## From your assistant or your own code
+
+With an assistant connected to Mapsurvey ([Use the MCP server](/how-to/use-the-mcp-server/)) you can ask for the report itself: "draft a consultation summary from the Riverside survey, add a paragraph about the bridge and show me the checks". The assistant drafts by the same rules as the cards, writes the blocks you ask for, and reads you the quotes and maps of marks before it may publish — it cannot publish those without your yes. The same operations are in the [REST API](/reference/api/) under `/reports`. Pictures are added in the editor.
+
 ## Result
 
 Visitors see the opening, the blocks in your order, and — for a frozen page — a "Data as of" date. Small groups show "Small groups are masked to protect privacy"; every map block shows a grid of how many respondents marked each square, never the individual points, lines, areas or dots; a square's popup lists the chosen sub-question answers in it, small groups masked. Only clean responses count: trashed, not-approved and on-hold responses are left out. The page carries the "Made with Mapsurvey" badge on Free.

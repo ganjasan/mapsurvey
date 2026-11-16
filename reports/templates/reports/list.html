@@ -33,6 +33,12 @@ report file.{% endcomment %}
     {% blocktrans %}A report tells what a survey found: text, with charts, maps and quotes between the paragraphs. Each survey's public results page is a report; a report made elsewhere can be imported as a file.{% endblocktrans %}
   </p>
 
+  {% if tag_filters %}
+  <div class="mb-2" style="font-size:.85rem;" data-testid="report-tags">
+    <a class="badge {% if not tag %}badge-primary{% else %}badge-light border{% endif %}" href="{% url 'editor_reports' %}">{% trans "All" %}</a>
+    {% for t in tag_filters %}<a class="badge {% if tag == t.slug %}badge-primary{% else %}badge-light border{% endif %}" href="?tag={{ t.slug }}">{{ t.name }}</a> {% endfor %}
+  </div>
+  {% endif %}
   {% if rows %}
   <div class="list-group" data-testid="report-rows">
     {% for row in rows %}
@@ -43,6 +49,7 @@ report file.{% endcomment %}
           {% if row.report.survey_id %}{{ row.report.survey.name }} · {% endif %}
           {% blocktrans count n=row.blocks %}{{ n }} block{% plural %}{{ n }} blocks{% endblocktrans %}
           · {% blocktrans with when=row.report.updated_at|date:"SHORT_DATE_FORMAT" %}changed {{ when }}{% endblocktrans %}
+          {% for t in row.report.tags.all %}<a class="badge badge-light border" href="?tag={{ t.slug }}">{{ t.name }}</a> {% endfor %}
         </span>
       </span>
       <span class="d-flex align-items-center" style="gap:.4rem;font-size:.8rem;">

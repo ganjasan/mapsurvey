@@ -32,6 +32,11 @@ def create_report(actor, organization, survey=None, title='', **values):
                                  intro=intro, created_by=actor.user, **values)
 
 
+def delete_report(actor, report):
+    """Delete a report with its blocks, pictures and stored PDFs. The answers stay."""
+    report.delete()
+
+
 def _next_order(report):
     return report.blocks.count()
 
@@ -195,7 +200,7 @@ def set_published(actor, report, publish, ack=False, visibility=None, mode=None)
 
 
 def update_settings(actor, report, *, is_published=None, visibility=None, intro_title='', intro_body='',
-                    intro_eyebrow=None, embed_hosts=None, show_response_count=False, show_participate_cta=False, show_on_thanks=False,
+                    intro_eyebrow=None, embed_hosts=None, tags=None, show_response_count=False, show_participate_cta=False, show_on_thanks=False,
                     feature_in_listing=False, k=None, slug=''):
     """Save the report's settings form. Returns True when the requested slug was taken (the
     report then keeps its address). `is_published` None leaves the publication state alone."""
@@ -234,6 +239,9 @@ def update_settings(actor, report, *, is_published=None, visibility=None, intro_
         else:
             report.slug = new_slug
     report.save()
+    if tags is not None:
+        from data.tags import set_tags
+        set_tags(report.organization, report, tags)
     return slug_taken
 
 
@@ -289,7 +297,7 @@ def unfreeze(actor, report):
     return unfreeze_report(report)
 
 
-__all__ = ['QUESTION_BLOCK_TYPES', 'ReportRefused', 'add_image_block', 'add_question_block', 'add_story_block',
+__all__ = ['QUESTION_BLOCK_TYPES', 'ReportRefused', 'delete_report', 'add_image_block', 'add_question_block', 'add_story_block',
            'add_text_block', 'add_view_block', 'pdf_stamp', 'ready_pdf', 'request_pdf',
            'create_report', 'delete_block', 'freeze', 'reorder_blocks', 'set_published', 'unfreeze',
            'update_block', 'update_settings']

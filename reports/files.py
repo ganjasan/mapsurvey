@@ -50,6 +50,38 @@ def _en(value):
 
 # ── export ────────────────────────────────────────────────────────────────────
 
+def entry_of(block):
+    """One block as its `report.json` entry (without a picture's path) — also what the API returns
+    for a block (`reports.blocks.describe`)."""
+    entry = {'type': block.block_type, 'width': block.width, 'hidden': block.is_hidden,
+             'title': _en(block.custom_title)}
+    if block.block_type == 'heading':
+        entry['text'] = _en(block.content)
+    elif block.block_type == 'text':
+        entry['html'] = _en(block.content)
+    elif block.block_type == 'image':
+        entry['caption'] = _en(block.content)
+    elif block.block_type in ('numbers', 'quotes'):
+        entry['items'] = (block.config or {}).get('items') or []
+        entry['note'] = _en(block.content)
+    elif block.block_type in QUESTION_BLOCK_TYPES:
+        survey = block.dataset.survey if block.dataset_id and block.dataset.survey_id else None
+        entry.update(survey=str(survey.uuid) if survey is not None else None,
+                     question=block.question_code, viz=block.viz, basemap=block.basemap,
+                     popup_fields=list(block.geo_label_fields or []))
+        if block.block_type == 'map':
+            entry['description'] = _en(block.content)
+            if (block.config or {}).get('marks'):
+                entry['marks'] = True
+    elif block.block_type in VIEW_BLOCK_TYPES:
+        survey = block.dataset.survey if block.dataset_id and block.dataset.survey_id else None
+        entry['survey'] = str(survey.uuid) if survey is not None else None
+        if block.block_type == 'crosstab' and block.view_id:
+            entry.update(rows=(block.view.config or {}).get('rows'),
+                         columns=(block.view.config or {}).get('columns'))
+    return entry
+
+
 def export_report(report):
     """(file name, bytes) of the report's ZIP."""
     from reports.sources import attach_questions
@@ -59,36 +91,13 @@ def export_report(report):
     with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as archive:
         blocks = attach_questions(report.blocks.select_related('dataset__survey', 'view'))
         for index, block in enumerate(blocks):
-            entry = {'type': block.block_type, 'width': block.width, 'hidden': block.is_hidden,
-                     'title': _en(block.custom_title)}
-            if block.block_type == 'heading':
-                entry['text'] = _en(block.content)
-            elif block.block_type == 'text':
-                entry['html'] = _en(block.content)
-            elif block.block_type == 'image':
-                entry['caption'] = _en(block.content)
-                if block.image:
-                    ext = os.path.splitext(block.image.name)[1].lower() or '.png'
-                    path = f'images/{index:03d}{ext}'
-                    with block.image.open('rb') as handle:
-                        archive.writestr(path, handle.read())
-                    entry['image'] = path
-            elif block.block_type in ('numbers', 'quotes'):
-                entry['items'] = (block.config or {}).get('items') or []
-                entry['note'] = _en(block.content)
-            elif block.block_type in QUESTION_BLOCK_TYPES:
-                survey = block.dataset.survey if block.dataset_id and block.dataset.survey_id else None
-                entry.update(survey=str(survey.uuid) if survey is not None else None,
-                             question=block.question_code, viz=block.viz, basemap=block.basemap,
-                             popup_fields=list(block.geo_label_fields or []))
-                if block.block_type == 'map' and (block.config or {}).get('marks'):
-                    entry['marks'] = True
-            elif block.block_type in VIEW_BLOCK_TYPES:
-                survey = block.dataset.survey if block.dataset_id and block.dataset.survey_id else None
-                entry['survey'] = str(survey.uuid) if survey is not None else None
-                if block.block_type == 'crosstab' and block.view_id:
-                    entry.update(rows=(block.view.config or {}).get('rows'),
-                                 columns=(block.view.config or {}).get('columns'))
+            entry = entry_of(block)
+            if block.block_type == 'image' and block.image:
+                ext = os.path.splitext(block.image.name)[1].lower() or '.png'
+                path = f'images/{index:03d}{ext}'
+                with block.image.open('rb') as handle:
+                    archive.writestr(path, handle.read())
+                entry['image'] = path
             blocks_out.append(entry)
         document = {
             'format': FORMAT,
@@ -211,7 +220,9 @@ def import_report(actor, organization, upload):
                     block_type=block_type, dataset=dataset_for(question), question_code=question.code,
                     viz=str(raw.get('viz') or 'auto')[:20], basemap=str(raw.get('basemap') or 'streets')[:50],
                     geo_label_fields=[str(c) for c in (raw.get('popup_fields') or [])][:20],
-                    config=story.clean_config('map', raw) if block_type == 'map' else {}, **common)
+                    config=story.clean_config('map', raw) if block_type == 'map' else {},
+                    content={'en': str(raw.get('description') or '')[:2000]} if block_type == 'map' else {},
+                    **common)
             elif block_type in VIEW_BLOCK_TYPES:
                 from reports import services
                 survey = surveys.get(str(raw.get('survey') or ''))

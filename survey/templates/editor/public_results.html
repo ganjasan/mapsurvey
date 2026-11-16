@@ -380,6 +380,13 @@ write answers the upgrade page — with the way to Pro in front of it.{% endcomm
               {% trans "Mask buckets smaller than K as “<K”. Set to 1 to disable." as k_help %}<div class="pr-help">{{ k_help|force_escape }}</div></div>
           </div>
 
+          <div class="pr-card" data-testid="report-tags-card">
+            <h6>{% trans "Tags" %}</h6>
+            <div class="pr-field"><label for="prTags" class="sr-only">{% trans "Tags" %}</label>
+              <input class="form-control" id="prTags" name="tags" value="{{ tags_text }}" placeholder="{% trans 'Riverside plan 2027' %}">
+              <div class="pr-help">{% trans "Comma-separated. The same tags group this report with its surveys and datasets." %}</div></div>
+          </div>
+
           <div class="pr-card" data-testid="report-embed">
             <h6>{% trans "Embed on another site" %}</h6>
             <p class="pr-help" style="margin-top:0;">{% trans "Paste this where the report should appear. It always shows the published version and grows to its height. One block can be embedded on its own: open the block for its code." %}</p>
@@ -393,6 +400,17 @@ write answers the upgrade page — with the way to Pro in front of it.{% endcomm
           <div class="autosave-status" data-autosave-status><i class="fas fa-check"></i> <span>{% trans "Changes save automatically" %}</span></div>
           <noscript><button class="btn btn-primary" type="submit"><i class="fas fa-check"></i> {% trans "Save page settings" %}</button></noscript>
         </form>
+
+        {% comment %}Readers (change reports-usage-api, #710): counted on our server, no visitor stored.{% endcomment %}
+        <div class="pr-card" style="margin-top:1.1rem;" data-testid="report-usage">
+          <h6>{% trans "Readers" %}</h6>
+          <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
+            <div><div style="font-size:1.4rem;font-weight:700;">{{ usage.view.total }}</div><div class="pr-help" style="margin:0;">{% trans "times the page was opened" %}</div></div>
+            <div><div style="font-size:1.4rem;font-weight:700;">{{ usage.embed.total }}</div><div class="pr-help" style="margin:0;">{% trans "times shown inside another site" %}</div></div>
+            <div><div style="font-size:1.4rem;font-weight:700;">{{ usage.pdf.total }}</div><div class="pr-help" style="margin:0;">{% trans "PDF downloads" %}</div></div>
+          </div>
+          <p class="pr-help">{% blocktrans with views=usage.view.recent embeds=usage.embed.recent %}In the last 30 days: {{ views }} opened, {{ embeds }} embedded.{% endblocktrans %} {% trans "Your own visits and your colleagues' are not counted, and nothing about a reader is stored." %}</p>
+        </div>
 
         <div class="pr-card" style="margin-top:1.1rem;" data-testid="report-file">
           <h6>{% trans "Report file" %}</h6>

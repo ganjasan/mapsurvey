@@ -32,6 +32,9 @@ def _relation(obj):
     from data.models import Dataset
     if isinstance(obj, Dataset):
         return obj, 'datasets'
+    from reports.models import Report
+    if isinstance(obj, Report):
+        return obj, 'reports'
     canonical = obj.published_version or obj.canonical_survey or obj
     return canonical, 'surveys'
 
@@ -54,7 +57,8 @@ def set_tags(org, obj, names):
     target.tags.set(wanted)
     dropped = previous - {t.pk for t in wanted}
     if dropped:
-        Tag.objects.filter(pk__in=dropped, datasets__isnull=True, surveys__isnull=True).delete()
+        Tag.objects.filter(pk__in=dropped, datasets__isnull=True, surveys__isnull=True,
+                           reports__isnull=True).delete()
     return wanted
 
 
