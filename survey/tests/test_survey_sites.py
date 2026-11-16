@@ -784,15 +784,17 @@ class SiteResultsTest(SiteTestBase):
         self.assertEqual({i['code']: i['display'] for i in self.payload()['items']}[1], '<5')
 
     def test_map_question_loads_map_libraries(self):
-        """GIVEN a results block for a point question with the heatmap style
+        """GIVEN a results block for a point question saved with a leftover "heatmap" style
         WHEN the published site renders
-        THEN Leaflet, the heat and cluster plugins and a map holder are there, and no popups are offered"""
+        THEN the style is stored as auto (every public map is a grid, change data-aggregate),
+             Leaflet and a map holder are there, and no heat or cluster plugin is loaded"""
         self.add_results(self.point_q, viz='heatmap')
         block = SiteBlock.objects.get(kind='results')
-        self.assertEqual(block.data['viz'], 'heatmap')
+        self.assertEqual(block.data['viz'], 'auto')
         self.client.post(self.url('editor_site_publish'), {'action': 'publish'})
         r = self.client.get('/p/riverside-park-plan/')
-        self.assertContains(r, 'leaflet-heat.js')
+        self.assertContains(r, 'leaflet.css')
+        self.assertNotContains(r, 'leaflet-heat.js')
         self.assertContains(r, f'id="map-r{block.pk}"')
 
     def test_deleted_question(self):

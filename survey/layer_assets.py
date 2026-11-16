@@ -116,7 +116,9 @@ def normalize_embed_url(url):
     return f'https://player.vimeo.com/video/{video_id}'
 
 
-def object_card_payload(obj):
+def object_card_payload(obj, only=None):
+    """`only`: the field names a survey's link shows (change data-links); None = all public."""
+    from data.fields import card_fields
     """What the respondent popup (and the editor preview) render for one object."""
     assets = []
     cover = ''
@@ -138,4 +140,7 @@ def object_card_payload(obj):
         'link': _safe_link(obj.link),
         'cover': cover,
         'assets': assets,
+        # The layer's public documented fields as label/value (change data-metadata) — plain
+        # text, escaped by the card; nothing for an undocumented layer.
+        'fields': card_fields(obj, only=only),
     }

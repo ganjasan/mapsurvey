@@ -1,4 +1,10 @@
-{% load i18n %}{% if block.data.area %}<figure class="lp-figure">
+{% load i18n %}{% if block.data.dataset %}<figure class="lp-figure">
+  {% comment %}A dataset from Data (change data-links): fetched from its gated endpoint, never inlined.{% endcomment %}
+  <div class="lp-map" id="map-{{ block.pk }}" data-basemap="{{ block.data.basemap }}" data-color="{{ block.data.color }}"
+       data-geojson-url="{% url 'site_block_dataset' block.site.slug block.pk %}{% if review %}?review={{ request.GET.review|urlencode }}{% endif %}"
+       role="img" aria-label="{{ block.title|default:_('Map of the project area') }}"></div>
+  {% if block.data.caption or editing %}<figcaption data-field="caption">{{ block.data.caption }}</figcaption>{% endif %}
+</figure>{% elif block.data.area %}<figure class="lp-figure">
   <div class="lp-map" id="map-{{ block.pk }}" data-basemap="{{ block.data.basemap }}" data-color="{{ block.data.color }}"
        role="img" aria-label="{{ block.title|default:_('Map of the project area') }}"></div>
   {% with aid="area-"|add:block.anchor %}{{ block.data.area|json_script:aid }}{% endwith %}

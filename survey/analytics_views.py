@@ -18,7 +18,7 @@ from .permissions import survey_permission_required
 from billing.trial import may as trial_may
 from .analytics import (
     SurveyAnalyticsService, PerformanceAnalyticsService, SessionValidationService,
-    EDITABLE_ANSWER_TYPES, version_choices,
+    EDITABLE_ANSWER_TYPES, version_choices, _answers_q as _responses_answers_q,
 )
 from .events import emit_event
 from .layers import build_map_layers_metadata, layers_for, GEOMETRY_TEXT_FIELDS
@@ -79,14 +79,12 @@ def _resolve_filtered_session_ids(survey, filter_map, service=None):
             base = Answer.objects.filter(
                 question_id__in=qid_list,
                 question__survey_section__survey_header_id__in=service.scope_ids,
-                survey_session__is_deleted=False,
-            )
+            ).filter(_responses_answers_q())
         else:
             base = Answer.objects.filter(
                 question_id=question_id,
                 question__survey_section__survey_header=survey,
-                survey_session__is_deleted=False,
-            )
+            ).filter(_responses_answers_q())
 
         matching = set(
             base.filter(q_obj).values_list('survey_session_id', flat=True)
@@ -181,6 +179,7 @@ def analytics_dashboard(request, survey_uuid):
         'flagged_count': overview['flagged_count'],
         'show_empty': show_empty,
         'empty_count': service.empty_count if responses_v2 else 0,
+        'moderated': service.moderated_counts() if responses_v2 else None,
         'hourly_data_json': json.dumps(hourly_sessions),
         'session_hours_json': json.dumps(session_hours),
         'geo_json': json.dumps(geo_collection),
@@ -373,6 +372,7 @@ def analytics_table(request, survey_uuid):
         'trash_count': trash_count,
         'show_empty': show_empty,
         'empty_count': service.empty_count if responses_v2 else 0,
+        'moderated': service.moderated_counts() if responses_v2 else None,
         'is_editor': request.effective_survey_role in ('editor', 'owner'),
         'page_size_options': [10, 25, 50, 100, 250, 500],
         'issues_filter': ','.join(issues_filter) if issues_filter else '',

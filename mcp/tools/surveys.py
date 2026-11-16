@@ -8,8 +8,8 @@ from django.db import transaction
 from django.db.models import F, Q
 from pydantic import Field
 
-from survey.analytics import nonempty_sessions
-from survey.models import Question, SurveyHeader, SurveySession
+from data.scope import SessionScope
+from survey.models import Question, SurveyHeader
 from survey.services import groups as svc_groups
 from survey.services import publishing as svc_publishing
 from survey.services import sections as svc_sections
@@ -19,7 +19,7 @@ from survey.versioning import canonical_of
 from api import limits, scopes
 from api.v1 import forms_bridge, out
 from api.v1.pagination import page
-from api.v1.schemas import DraftPublishIn, PublishIn, SurveyCreateIn, SurveyPatchIn
+from api.v1.schemas import DraftPublishIn, PublishIn, SurveyCreateIn, SurveyPatchIn, SurveyTagsIn
 from api.v1.surveys import MapStart, draft_of, visible_surveys, workspace_for
 
 from ..errors import confirmation_required, has_responses
@@ -46,10 +46,13 @@ SurveyRef = args_model('SurveyRef', survey=SURVEY)
         'ListSurveysArgs',
         cursor=(Optional[str], Field(None, description='`next_cursor` of the previous page.')),
         limit=(int, Field(50, ge=1, le=200)),
+        tag=(Optional[str], Field(None, description='Only surveys carrying this workspace tag (its name or slug).')),
     ),
 )
 def list_surveys(request, args):
+    from api.v1.surveys import tag_filter
     qs, hidden = visible_surveys(request.principal)
+    qs = tag_filter(qs, args.tag).prefetch_related('tags')
     items, next_cursor = page(qs, f'surveys:{request.principal.user.pk}', args.cursor, args.limit)
     return {'items': [out.survey(s) for s in items], 'next_cursor': next_cursor, 'hidden_by_plan': hidden}
 
@@ -99,6 +102,25 @@ def create_survey(request, args):
 
 
 @tool(
+    'set_survey_tags',
+    title='Set survey tags',
+    description=(
+        'Replace the survey\'s workspace tags, which group it with the datasets and other surveys of one '
+        'engagement ("Riverside plan 2027"). Tags are created on first use and matched by slug; at most 10. '
+        'Editor role.'
+    ),
+    scope=scopes.SURVEYS_WRITE, role='editor', idempotent=True,
+    args=args_model('SetSurveyTagsArgs', SurveyTagsIn, survey=SURVEY),
+)
+def set_survey_tags(request, args):
+    from data.tags import set_tags
+    obj = survey(request, args.survey, role='editor')
+    set_tags(obj.organization, obj, args.tags)
+    obj.refresh_from_db()
+    return out.survey(obj)
+
+
+@tool(
     'update_survey',
     title='Update survey settings',
     description=(
@@ -140,8 +162,8 @@ def answered_external_sessions(obj):
     """Respondents' answered sessions on the survey and all of its versions."""
     canonical = canonical_of(obj)
     versions = SurveyHeader.objects.filter(Q(pk=canonical.pk) | Q(canonical_survey=canonical))
-    qs = SurveySession.objects.filter(survey__in=versions, opened_by_kind='external', is_deleted=False)
-    return nonempty_sessions(qs).count()
+    return SessionScope(versions.values_list('pk', flat=True), external_only=True,
+                        include_moderated=True, nonempty=True).sessions().count()
 
 
 @tool(

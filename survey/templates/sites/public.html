@@ -21,8 +21,6 @@ only the keys sites.clean_block stores.{% endcomment %}
   <link rel="icon" href="{% static 'favicon.ico' %}">
   <link rel="stylesheet" href="{% static 'css/site_public.css' %}">
   {% if map_layers or results_basemaps %}<link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css">{% endif %}
-  {% if results_basemaps %}<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">{% endif %}
 </head>
 <body class="lp" data-width="{{ site.width }}"{% if brand.custom_accent %} style="--lp-accent: {{ brand.accent }};"{% endif %}>
   <a class="lp-skip" href="#main">{% trans "Skip to content" %}</a>
@@ -86,10 +84,6 @@ only the keys sites.clean_block stores.{% endcomment %}
   {{ results|json_script:"lp-results" }}
   {{ results_basemaps|json_script:"lp-results-basemaps" }}
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" crossorigin="anonymous"></script>
-  {% if results_basemaps %}
-  <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" crossorigin="anonymous"></script>
-  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin="anonymous"></script>
-  {% endif %}
   <script src="{% static 'js/public_results_render.js' %}"></script>
   <script>
   (function () {
@@ -110,7 +104,16 @@ only the keys sites.clean_block stores.{% endcomment %}
     var token = '{{ MAPBOX_ACCESS_TOKEN|escapejs }}';
     var bases = JSON.parse(document.getElementById('lp-basemaps').textContent);
     document.querySelectorAll('.lp-map[data-color]').forEach(function (el) {
-      var area = JSON.parse(document.getElementById('area-' + el.id.replace('map-', 'b-')).textContent);
+      // A dataset block fetches its GeoJSON (change data-links); an area block carries it inline.
+      if (el.dataset.geojsonUrl) {
+        fetch(el.dataset.geojsonUrl, { credentials: 'same-origin' })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (gj) { if (gj) draw(el, gj); });
+        return;
+      }
+      draw(el, JSON.parse(document.getElementById('area-' + el.id.replace('map-', 'b-')).textContent));
+    });
+    function draw(el, area) {
       var base = bases[el.dataset.basemap] || bases[Object.keys(bases)[0]];
       var opts = Object.assign({}, base.opts);
       if (base.provider === 'mapbox') opts.accessToken = token;
@@ -122,10 +125,14 @@ only the keys sites.clean_block stores.{% endcomment %}
         pointToLayer: function (f, latlng) {
           return L.circleMarker(latlng, { radius: 7, color: color, weight: 2, fillOpacity: 0.8 });
         },
-        onEachFeature: function (f, l) { if (f.properties && f.properties.name) l.bindTooltip(f.properties.name); }
+        onEachFeature: function (f, l) {
+          var p = f.properties || {};
+          var name = p.name || p._title || (p.respondents != null ? p.respondents + ' {% trans "respondents" %}' : null);
+          if (name) l.bindTooltip(String(name));
+        }
       }).addTo(map);
-      map.fitBounds(layer.getBounds(), { padding: [24, 24], maxZoom: 17 });
-    });
+      if (layer.getBounds().isValid()) map.fitBounds(layer.getBounds(), { padding: [24, 24], maxZoom: 17 });
+    }
   })();
   </script>
   {% endif %}

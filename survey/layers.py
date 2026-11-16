@@ -48,8 +48,18 @@ GEOMETRY_TEXT_FIELDS = ('geojson_gz', 'geojson_legacy')
 
 def layers_for(survey):
     """QuerySet of the layers a survey (or any of its versions) renders, with the
-    geometry text deferred (see GEOMETRY_TEXT_FIELDS)."""
-    return layer_owner(survey).map_layers.defer(*GEOMETRY_TEXT_FIELDS)
+    geometry text deferred (see GEOMETRY_TEXT_FIELDS): the canonical survey's own
+    layers plus the layers of the PUBLIC datasets linked to it "From Data" (change
+    data-links) — linked, never copied, so a dataset edit shows on every survey. A
+    subquery on ids, so an owned layer is never repeated by the join. Write paths
+    resolve owned layers only (`owner.map_layers` / `survey=layer_owner(...)`)."""
+    from django.db.models import Q
+    from data.models import DatasetLink
+    from survey.models import SurveyMapLayer
+    owner = layer_owner(survey)
+    linked = (DatasetLink.objects.filter(survey=owner, dataset__privacy_class='public')
+              .values('dataset__layer_id'))
+    return SurveyMapLayer.objects.filter(Q(survey=owner) | Q(pk__in=linked)).defer(*GEOMETRY_TEXT_FIELDS)
 
 
 def layer_lite(question):
@@ -306,22 +316,43 @@ def build_map_layers_metadata(survey):
     from django.urls import reverse
     if not django_settings.MAP_REFERENCE_LAYERS:
         return []
-    return [
-        {
+    from data.fields import hidden_names
+    from data.models import DatasetLink
+    # A survey showing a VIEW of a linked dataset (change data-views) draws it in the view's colour.
+    view_colors = {layer_id: color for layer_id, color in
+                   DatasetLink.objects.filter(survey=layer_owner(survey), view__isnull=False)
+                   .values_list('dataset__layer_id', 'view__color')}
+    out = []
+    # defer('geojson'): the 100s-of-KB geometry column loaded on every map
+    # surface render fragments the worker heap into an RSS ratchet (the
+    # 2026-09 "exceeded memory limits" incident); only config fields render.
+    for layer in layers_for(survey).defer(*GEOMETRY_TEXT_FIELDS):
+        hidden = hidden_names(layer)
+        color = view_colors.get(layer.pk) or layer.color
+        style = normalize_style(layer.style, color)
+        if layer.pk in view_colors and view_colors[layer.pk]:
+            style = {k: v for k, v in style.items() if k != 'by'}
+        if hidden and (style.get('by') or {}).get('field') in hidden:
+            # A rule on a private field would leak its values as class labels (data-metadata);
+            # the stored style keeps it, so making the field public again restores it.
+            style = {k: v for k, v in style.items() if k != 'by'}
+        label_field = '' if layer.source == 'question' or layer.label_field in hidden else layer.label_field
+        out.append({
             'id': layer.pk,
             'name': layer.name,
-            'color': layer.color,
+            'color': color,
             # On a `question` layer `label_field` names a sub-question, not a
             # feature property; the title already carries it (`_title`), so no
             # permanent map label — the tally badge takes that spot.
-            'label_field': '' if layer.source == 'question' else layer.label_field,
+            # A private field is never a map label (change data-metadata).
+            'label_field': label_field,
             'show_popups': layer.show_popups,
             'source': layer.source,
             'show_tallies': shared_kinds(layer)['tallies'],
             # Layer style (spec layer-style): the normalised style the factory
             # draws with, and the legend rows the layers control shows.
-            'style': normalize_style(layer.style, layer.color),
-            'legend': legend_for(layer),
+            'style': style,
+            'legend': legend_for(layer, style),
             # Bound to an Objects-on-the-map question: features are clickable
             # and open the object popup (card + sub-questions) instead of the
             # read-only name/description popup — spec reference-overlay-layers.
@@ -332,12 +363,8 @@ def build_map_layers_metadata(survey):
             'object_url': reverse('survey_layer_object', kwargs={
                 'survey_slug': str(survey.uuid), 'layer_id': layer.pk, 'key': 'KEY',
             }),
-        }
-        # defer('geojson'): the 100s-of-KB geometry column loaded on every map
-        # surface render fragments the worker heap into an RSS ratchet (the
-        # 2026-09 "exceeded memory limits" incident); only config fields render.
-        for layer in layers_for(survey).defer(*GEOMETRY_TEXT_FIELDS)
-    ]
+        })
+    return out
 
 
 # ─── Objects ────────────────────────────────────────────────────────────────
@@ -494,16 +521,33 @@ def objects_from_features(layer, features, mapping=None, sanitize=None):
     return report
 
 
-def feature_for_object(obj, cover_url=''):
-    """The derived GeoJSON feature: raw properties + the reserved fields."""
-    props = dict(obj.properties or {})
+def _object_props(properties, key, title, category, description, link, cover_url='', status=None,
+                  hidden=frozenset()):
+    """An object's feature properties: its raw properties without the reserved names and without
+    the dataset's private fields (`hidden`, change data-metadata), then the reserved fields in a
+    fixed order. The ONE builder for `feature_for_object` and the streamed `_feature_json`, so the
+    two can never drift — and every reader of the derived GeoJSON inherits the private rule."""
+    from data.fields import public_properties
+    props = public_properties(properties, hidden)
     for reserved in RESERVED_PROPS:
         props.pop(reserved, None)
-    props['_key'] = obj.key
-    props['_title'] = obj.title
-    props['_category'] = obj.category
-    props['_has_content'] = bool(obj.description or obj.link or cover_url)
+    props['_key'] = key
+    props['_title'] = title
+    props['_category'] = category
+    props['_has_content'] = bool(description or link or cover_url)
     props['_cover'] = cover_url
+    if status is not None:
+        props['_status'] = status
+    return props
+
+
+def feature_for_object(obj, cover_url='', hidden=None):
+    """The derived GeoJSON feature: public properties + the reserved fields."""
+    if hidden is None:
+        from data.fields import hidden_names
+        hidden = hidden_names(obj.layer_id)
+    props = _object_props(obj.properties, obj.key, obj.title, obj.category,
+                          obj.description, obj.link, cover_url, hidden=hidden)
     return {
         'type': 'Feature',
         'id': obj.key,
@@ -515,20 +559,12 @@ def feature_for_object(obj, cover_url=''):
 _OBJECT_ROW_FIELDS = ('pk', 'key', 'title', 'category', 'description', 'link', 'properties', 'geometry')
 
 
-def _feature_json(row, cover_url='', status=None):
+def _feature_json(row, cover_url='', status=None, hidden=frozenset()):
     """One feature as compact JSON text from a `values()` row — the same keys
     in the same order as `feature_for_object`, so the streamed collection is
     byte-identical to `json.dumps` of the whole tree (guarded by a test)."""
-    props = dict(row['properties'] or {})
-    for reserved in RESERVED_PROPS:
-        props.pop(reserved, None)
-    props['_key'] = row['key']
-    props['_title'] = row['title']
-    props['_category'] = row['category']
-    props['_has_content'] = bool(row['description'] or row['link'] or cover_url)
-    props['_cover'] = cover_url
-    if status is not None:
-        props['_status'] = status
+    props = _object_props(row['properties'], row['key'], row['title'], row['category'],
+                          row['description'], row['link'], cover_url, status, hidden)
     feature = {
         'type': 'Feature',
         'id': row['key'],
@@ -543,7 +579,9 @@ def stream_layer_geojson(layer):
     object order, built one feature at a time from `values()` rows: no model
     instances, no GEOS geometry kept past its feature, no whole-collection
     tree (change layer-memory-diet — that tree was +64 MB on an 8.6 MB layer)."""
+    from data.fields import hidden_names
     from survey.models import LayerObjectAsset
+    hidden = hidden_names(layer)
     covers = {}
     for asset in (LayerObjectAsset.objects
                   .filter(object__layer=layer, kind='image')
@@ -561,8 +599,8 @@ def stream_layer_geojson(layer):
     for row in rows.iterator(chunk_size=500):
         props = row['properties']
         if isinstance(props, dict):
-            names.update(k for k in props if isinstance(k, str) and k not in RESERVED_PROPS)
-        parts.append(_feature_json(row, covers.get(row['pk'], ''), row.get('status')))
+            names.update(k for k in props if isinstance(k, str) and k not in RESERVED_PROPS and k not in hidden)
+        parts.append(_feature_json(row, covers.get(row['pk'], ''), row.get('status'), hidden))
     return '{"type":"FeatureCollection","features":[' + ','.join(parts) + ']}', sorted(names)
 
 
@@ -798,11 +836,10 @@ def sync_question_layers_for_session(session, questions):
 
 
 def clean_session_filter(qs, prefix='source_session'):
-    """The clean-session rule (public_results): not deleted, not on hold, not
-    rejected. Applied to objects (via their source session) and to reactions."""
-    from survey.public_results import EXCLUDED_VALIDATION_STATUSES
-    return (qs.filter(**{f'{prefix}__is_deleted': False})
-              .exclude(**{f'{prefix}__validation_status__in': EXCLUDED_VALIDATION_STATUSES}))
+    """Objects (via their source session) or reactions of CLEAN sessions only:
+    not trashed, not on hold, not rejected — `data.scope`'s default scope."""
+    from data.scope import SessionScope
+    return qs.filter(SessionScope(()).related_q(prefix))
 
 
 def visible_objects(layer, exclude_session_id=None):
@@ -1003,6 +1040,9 @@ def normalize_style(raw, base_color='#2c7be5'):
 
 
 def _property_values(layer, field):
+    from data.fields import hidden_names
+    if field in hidden_names(layer):
+        return
     for obj_props in layer.items.values_list('properties', flat=True):
         if isinstance(obj_props, dict) and field in obj_props:
             yield obj_props[field]

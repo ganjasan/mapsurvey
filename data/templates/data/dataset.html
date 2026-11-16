@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ ds.name }} — {% trans "Data" %}{% endblock %}
+
+{% block content %}
+{% comment %}The dataset page (change data-metadata, #669): details, the field dictionary and the
+download. This page and the object editor are the only places a private field is shown.{% endcomment %}
+<div class="container mt-4" style="max-width: 980px;">
+  <nav aria-label="{% trans 'Breadcrumb' %}" class="small mb-2"><a href="{% url 'editor_data' %}">{% trans "Data" %}</a> / {{ ds.name }}</nav>
+  <div class="d-flex align-items-start justify-content-between flex-wrap mb-2" style="gap:.5rem;">
+    <div style="min-width:0;">
+      <h4 class="mb-1">{{ ds.name }}</h4>
+      <div class="text-muted small" data-testid="dataset-facts">
+        {% if row.extra.uploaded %}{% trans "Uploaded" %}{% else %}{{ ds.get_kind_display }}{% endif %}{% if row.survey %} · {{ row.survey.name }}{% endif %}
+        · {% blocktrans count n=row.rows %}{{ n }} row{% plural %}{{ n }} rows{% endblocktrans %}
+        · {% blocktrans count n=row.used_by %}used in {{ n }} place{% plural %}used in {{ n }} places{% endblocktrans %}
+        {% if row.changed %}· {% blocktrans with when=row.changed|date:"j M Y" %}changed {{ when }}{% endblocktrans %}{% endif %}
+        {% if row.link %}· <a href="{{ row.link }}">{% trans "Open the source" %}</a>{% endif %}
+      </div>
+    </div>
+    <div class="d-flex align-items-center" style="gap:.5rem;">
+      {% if has_dictionary %}
+      <div class="btn-group btn-group-sm" role="group" aria-label="{% trans 'Download' %}">
+        <a class="btn btn-outline-secondary" href="{% url 'editor_data_download' ds.pk %}?format=csv" data-testid="download-csv"><i class="fas fa-download" aria-hidden="true"></i> CSV</a>
+        <a class="btn btn-outline-secondary" href="{% url 'editor_data_download' ds.pk %}?format=geojson">GeoJSON</a>
+      </div>
+      {% endif %}
+      {% if has_dictionary and can_edit %}
+      <form method="post" class="mb-0 d-flex align-items-center" style="gap:.35rem;">
+        {% csrf_token %}<input type="hidden" name="action" value="privacy">
+        <label for="ds-privacy" class="small text-muted mb-0">{% trans "Access" %}</label>
+        <select id="ds-privacy" name="privacy_class" class="custom-select custom-select-sm" style="width:auto;" onchange="this.form.submit()">
+          <option value="private"{% if ds.privacy_class == 'private' %} selected{% endif %}>{% trans "Private" %}</option>
+          <option value="public"{% if ds.privacy_class == 'public' %} selected{% endif %}>{% trans "Public" %}</option>
+        </select>
+      </form>
+      {% else %}
+      <span class="badge {% if ds.privacy_class == 'public' %}badge-success{% elif ds.privacy_class == 'aggregated' %}badge-info{% else %}badge-secondary{% endif %}">{{ ds.get_privacy_class_display }}</span>
+      {% endif %}
+    </div>
+  </div>
+
+  {% for message in messages %}
+  <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} py-2" style="font-size:.9rem;">{{ message }}</div>
+  {% endfor %}
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <h6 class="card-title">{% trans "Details" %}</h6>
+      <form method="post" data-testid="details-form">
+        {% csrf_token %}<input type="hidden" name="action" value="details">
+        <fieldset {% if not can_edit %}disabled{% endif %}>
+        <div class="form-row">
+          <div class="form-group col-md-8">
+            <label for="{{ form.name.id_for_label }}">{% trans "Name" %}</label>
+            <input type="text" class="form-control form-control-sm{% if form.name.errors %} is-invalid{% endif %}" id="{{ form.name.id_for_label }}" name="name" value="{{ form.name.value|default:'' }}" maxlength="200" required>
+            {% for e in form.name.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="form-group col-md-4">
+            <label for="{{ form.theme.id_for_label }}">{% trans "Theme" %}</label>
+            <select class="custom-select custom-select-sm{% if form.theme.errors %} is-invalid{% endif %}" id="{{ form.theme.id_for_label }}" name="theme">
+              {% for value, label in form.theme.field.choices %}<option value="{{ value }}"{% if form.theme.value == value %} selected{% endif %}>{% if value %}{{ label }}{% else %}—{% endif %}</option>{% endfor %}
+            </select>
+            {% for e in form.theme.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="{{ form.description.id_for_label }}">{% trans "Description" %}</label>
+          <textarea class="form-control form-control-sm" id="{{ form.description.id_for_label }}" name="description" rows="3">{{ form.description.value|default:'' }}</textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-4">
+            <label for="{{ form.maintainer.id_for_label }}">{% trans "Maintainer" %}</label>
+            <input type="text" class="form-control form-control-sm" id="{{ form.maintainer.id_for_label }}" name="maintainer" value="{{ form.maintainer.value|default:'' }}" maxlength="200" placeholder="{% trans 'Team or role, e.g. Parks team' %}">
+          </div>
+          <div class="form-group col-md-4">
+            <label for="{{ form.update_frequency.id_for_label }}">{% trans "Updated" %}</label>
+            <select class="custom-select custom-select-sm" id="{{ form.update_frequency.id_for_label }}" name="update_frequency">
+              {% for value, label in form.update_frequency.field.choices %}<option value="{{ value }}"{% if form.update_frequency.value == value %} selected{% endif %}>{% if value %}{{ label }}{% else %}—{% endif %}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="form-group col-md-4">
+            <label for="{{ form.licence.id_for_label }}">{% trans "Licence" %}</label>
+            <select class="custom-select custom-select-sm{% if form.licence.errors %} is-invalid{% endif %}" id="{{ form.licence.id_for_label }}" name="licence">
+              {% for value, label in form.licence.field.choices %}<option value="{{ value }}"{% if form.licence.value == value %} selected{% endif %}>{% if value %}{{ label }}{% else %}—{% endif %}</option>{% endfor %}
+            </select>
+            {% for e in form.licence.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="ds-tags">{% trans "Tags" %}</label>
+          <input type="text" class="form-control form-control-sm" id="ds-tags" name="tags" value="{{ tags_text }}" maxlength="500" placeholder="{% trans 'Comma-separated, e.g. Riverside plan 2027' %}">
+          <small class="form-text text-muted">{% trans "Tags group the datasets and surveys of one engagement; the Data list and the survey dashboard filter by them." %}</small>
+        </div>
+        {% if can_edit %}<button type="submit" class="btn btn-sm btn-primary">{% trans "Save details" %}</button>{% endif %}
+        </fieldset>
+      </form>
+    </div>
+  </div>
+
+  {% if view_kind %}
+  <div class="card mb-3" data-testid="views">
+    <div class="card-body">
+      <h6 class="card-title mb-1">{% trans "Views" %}</h6>
+      <p class="text-muted small mb-2">{% if view_kind == 'grid' %}{% trans "A view of collected answers is a grid of counts: how many respondents marked each cell, small groups hidden. It can be shown in a Site map block." %}{% else %}{% trans "A view keeps the objects that match its conditions, with the fields you choose. Surveys and site map blocks can show a view instead of the whole dataset." %}{% endif %}</p>
+      {% if dataset_views %}
+      <ul class="list-unstyled mb-2" style="font-size:.9rem;">
+        {% for v in dataset_views %}
+        <li class="d-flex align-items-center py-1" style="gap:.5rem;" data-view="{{ v.pk }}">
+          <span class="d-inline-block rounded" style="width:12px;height:12px;background:{{ v.color|default:'#888888' }};"></span>
+          <strong>{{ v.name }}</strong>
+          <span class="text-muted small">{% for c in v.summary %}{{ c.label }} {% if c.op == 'in' %}∈ {{ c.values|join:", " }}{% elif c.op == 'gt' %}&gt; {{ c.value }}{% elif c.op == 'lt' %}&lt; {{ c.value }}{% else %}= {{ c.value }}{% endif %}{% if not forloop.last %} · {% endif %}{% empty %}{% if v.kind == 'grid' %}{% trans "grid of counts" %}{% endif %}{% endfor %}</span>
+          <span class="text-muted small ml-auto">{% blocktrans count n=v.uses %}used in {{ n }} place{% plural %}used in {{ n }} places{% endblocktrans %}</span>
+          {% if can_edit %}<form method="post" class="mb-0">{% csrf_token %}<input type="hidden" name="action" value="view_delete"><input type="hidden" name="view" value="{{ v.pk }}"><button type="submit" class="btn btn-sm btn-link text-danger p-0" aria-label="{% blocktrans with name=v.name %}Delete view {{ name }}{% endblocktrans %}"><i class="fas fa-trash" aria-hidden="true"></i></button></form>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      {% if can_edit %}
+      <details{% if view_errors %} open{% endif %}>
+        <summary class="small">{% trans "New view" %}</summary>
+        <form method="post" class="mt-2" data-testid="view-form">
+          {% csrf_token %}<input type="hidden" name="action" value="view_create">
+          {% for key, msg in view_errors.items %}<div class="text-danger small">{{ msg }}</div>{% endfor %}
+          <div class="form-row">
+            <div class="form-group col-8 mb-2"><label class="small mb-0" for="view-name">{% trans "Name" %}</label><input id="view-name" name="name" class="form-control form-control-sm" maxlength="120" required></div>
+            <div class="form-group col-4 mb-2"><label class="small mb-0" for="view-color">{% trans "Colour" %}</label><input id="view-color" type="color" name="color" class="form-control form-control-sm" value="#d55e00"></div>
+          </div>
+          {% if view_kind == 'objects' %}
+          <div class="small mb-1">{% trans "Show objects where" %}</div>
+          {% for i in condition_rows %}
+          <div class="form-row mb-1">
+            <div class="col-5"><label class="sr-only" for="view-field-{{ i }}">{% trans "Field" %}</label><select id="view-field-{{ i }}" name="field_{{ i }}" class="custom-select custom-select-sm"><option value="">—</option>{% for name, label in view_fields %}<option value="{{ name }}">{{ label }}</option>{% endfor %}</select></div>
+            <div class="col-3"><label class="sr-only" for="view-op-{{ i }}">{% trans "Condition" %}</label><select id="view-op-{{ i }}" name="op_{{ i }}" class="custom-select custom-select-sm"><option value="eq">{% trans "is" %}</option><option value="in">{% trans "is one of" %}</option><option value="gt">{% trans "greater than" %}</option><option value="lt">{% trans "less than" %}</option></select></div>
+            <div class="col-4"><label class="sr-only" for="view-value-{{ i }}">{% trans "Value" %}</label><input id="view-value-{{ i }}" name="value_{{ i }}" class="form-control form-control-sm" maxlength="200"></div>
+          </div>
+          {% endfor %}
+          <div class="small mt-2 mb-1">{% trans "Fields it keeps" %}</div>
+          <div class="d-flex flex-wrap mb-2" style="gap:.25rem .9rem;font-size:.85rem;">
+            {% for name, label in view_fields %}<label class="mb-0" style="font-weight:400;"><input type="checkbox" name="fields" value="{{ name }}" checked> {{ label }}</label>{% endfor %}
+          </div>
+          {% endif %}
+          <button type="submit" class="btn btn-sm btn-primary">{% trans "Save view" %}</button>
+        </form>
+      </details>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if versionable %}
+  <div class="card mb-3" data-testid="versions">
+    <div class="card-body">
+      <div class="d-flex align-items-center justify-content-between flex-wrap" style="gap:.5rem;">
+        <h6 class="card-title mb-0">{% trans "Versions" %}</h6>
+        {% if can_upload_version %}
+        <form method="post" enctype="multipart/form-data" class="mb-0">
+          {% csrf_token %}<input type="hidden" name="action" value="version">
+          <label class="btn btn-sm btn-outline-primary mb-0" for="ds-version-file"><i class="fas fa-upload" aria-hidden="true"></i> {% trans "Upload new version" %}</label>
+          <input type="file" id="ds-version-file" name="file" class="d-none" accept=".gpkg,.zip,.kml,.geojson,.json,.csv" onchange="this.form.submit()">
+        </form>
+        {% endif %}
+      </div>
+      {% if not ds.layer.key_field %}
+      <p class="text-muted small mt-2 mb-0">{% trans "New versions are matched row by row on a key column. This dataset has none, so a new version needs a new upload." %}</p>
+      {% else %}
+      <p class="text-muted small mt-2 mb-2">{% blocktrans with key=ds.layer.key_field %}Rows are matched on “{{ key }}”. Objects whose key stays keep their answers.{% endblocktrans %}</p>
+      {% endif %}
+
+      {% if version_job %}
+      <div class="border rounded p-2 mb-2" data-testid="version-job" style="font-size:.88rem;">
+        {% if version_job.status == 'queued' or version_job.status == 'running' or version_job.status == 'applying' %}
+        <meta http-equiv="refresh" content="3">
+        <i class="fas fa-spinner fa-spin" aria-hidden="true"></i> {% if version_job.status == 'applying' %}{% trans "Applying the new version…" %}{% else %}{% blocktrans with name=version_job.original_name %}Reading {{ name }}…{% endblocktrans %}{% endif %}
+        {% elif version_job.status == 'preview' %}
+        <div><strong>{{ version_job.original_name }}</strong></div>
+        <div data-testid="version-counts">{% blocktrans with a=version_job.report.added c=version_job.report.changed r=version_job.report.removed u=version_job.report.unchanged %}{{ a }} added · {{ c }} changed · {{ r }} removed · {{ u }} unchanged{% endblocktrans %}</div>
+        {% if version_job.report.removed_answers %}<div class="text-danger">{% blocktrans count n=version_job.report.removed_answers %}{{ n }} answer about a removed object will be deleted.{% plural %}{{ n }} answers about removed objects will be deleted.{% endblocktrans %}</div>{% endif %}
+        {% if version_job.report.no_key or version_job.report.repeated %}<div class="text-muted">{% blocktrans with k=version_job.report.no_key d=version_job.report.repeated %}Skipped: {{ k }} rows without a key, {{ d }} repeated keys.{% endblocktrans %}</div>{% endif %}
+        {% if can_edit %}
+        <form method="post" class="mt-2 d-flex flex-wrap" style="gap:.4rem;">
+          {% csrf_token %}<input type="hidden" name="job" value="{{ version_job.pk }}">
+          <label class="sr-only" for="ds-version-note">{% trans "What changed" %}</label>
+          <input id="ds-version-note" name="note" class="form-control form-control-sm" style="max-width:360px;" maxlength="300" placeholder="{% trans 'What changed, e.g. Spring 2027 inspection' %}">
+          <button type="submit" name="action" value="apply" class="btn btn-sm btn-primary">{% trans "Apply version" %}</button>
+          <button type="submit" name="action" value="discard" class="btn btn-sm btn-outline-secondary">{% trans "Discard" %}</button>
+        </form>
+        {% endif %}
+        {% elif version_job.status == 'failed' %}
+        <div class="text-danger">{{ version_job.error }}</div>
+        {% else %}
+        <div class="text-success">{% blocktrans with n=version_job.report.version %}Version {{ n }} applied.{% endblocktrans %}</div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% if versions %}
+      <table class="table table-sm mb-0" style="font-size:.85rem;">
+        <thead><tr><th scope="col">#</th><th scope="col">{% trans "Date" %}</th><th scope="col">{% trans "Author" %}</th><th scope="col">{% trans "Note" %}</th><th scope="col">{% trans "Changes" %}</th></tr></thead>
+        <tbody>
+        {% for v in versions %}
+        <tr data-version="{{ v.number }}"><td>{{ v.number }}</td><td class="text-nowrap">{{ v.created_at|date:"j M Y" }}</td><td>{{ v.created_by.get_full_name|default:v.created_by.username|default:"—" }}</td><td>{% if v.number == 1 and not v.note %}{% trans "First upload" %}{% else %}{{ v.note }}{% endif %}</td>
+          <td class="text-nowrap text-muted">{% if v.number == 1 %}{{ v.added }}{% else %}+{{ v.added }} · ~{{ v.changed }} · −{{ v.removed }}{% endif %}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="text-muted small mb-0">{% trans "Original — no new version uploaded yet." %}</p>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="card mb-3" data-testid="used-by">
+    <div class="card-body">
+      <h6 class="card-title mb-1">{% trans "Used by" %}</h6>
+      {% if used_by %}
+      <ul class="list-unstyled mb-0" style="font-size:.9rem;">
+        {% for p in used_by %}
+        <li class="py-1"><span class="badge badge-light mr-1">{% if p.kind == 'survey' %}{% trans "Belongs to survey" %}{% elif p.kind == 'link' %}{% trans "Survey" %}{% elif p.kind == 'site' %}{% trans "Site" %}{% else %}{% trans "Question" %}{% endif %}</span>{% if p.url %}<a href="{{ p.url }}">{{ p.label }}</a>{% else %}{{ p.label }}{% endif %}</li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="text-muted small mb-0">{% trans "No survey or site shows this dataset yet. Add it to a survey from its Reference layers card, or to a Site map block." %}</p>
+      {% endif %}
+      {% if can_delete %}<a class="btn btn-sm btn-outline-danger mt-3" href="{% url 'editor_data_delete' ds.pk %}">{% trans "Delete dataset" %}</a>{% endif %}
+    </div>
+  </div>
+
+  {% if has_dictionary %}
+  <div class="card mb-4">
+    <div class="card-body">
+      <h6 class="card-title mb-1">{% trans "Fields" %}</h6>
+      <p class="text-muted small">{% blocktrans %}Labels replace the raw names on object cards and in downloads. A private field stays on this page and in the object editor: no map, export, download or API shows it.{% endblocktrans %}</p>
+      {% if fields %}
+      <form method="post" data-testid="fields-form">
+        {% csrf_token %}<input type="hidden" name="action" value="fields">
+        <fieldset {% if not can_edit %}disabled{% endif %}>
+        <div class="table-responsive">
+        <table class="table table-sm mb-2" style="font-size:.88rem;">
+          <thead><tr><th scope="col">{% trans "Name" %}</th><th scope="col">{% trans "Label" %}</th><th scope="col">{% trans "Type" %}</th><th scope="col">{% trans "Description" %}</th><th scope="col" class="text-center">{% trans "Private" %}</th></tr></thead>
+          <tbody>
+          {% for f in fields %}
+          <tr data-field="{{ f.name }}">
+            <td class="text-monospace align-middle" style="word-break:break-all;">{{ f.name }}<input type="hidden" name="name_{{ forloop.counter0 }}" value="{{ f.name }}"></td>
+            <td><label class="sr-only" for="label_{{ forloop.counter0 }}">{% blocktrans with name=f.name %}Label of {{ name }}{% endblocktrans %}</label><input class="form-control form-control-sm" id="label_{{ forloop.counter0 }}" name="label_{{ forloop.counter0 }}" value="{{ f.label }}" maxlength="200"></td>
+            <td><label class="sr-only" for="type_{{ forloop.counter0 }}">{% blocktrans with name=f.name %}Type of {{ name }}{% endblocktrans %}</label><select class="custom-select custom-select-sm" id="type_{{ forloop.counter0 }}" name="type_{{ forloop.counter0 }}">{% for t in field_types %}<option value="{{ t }}"{% if f.type == t %} selected{% endif %}>{{ t }}</option>{% endfor %}</select></td>
+            <td><label class="sr-only" for="description_{{ forloop.counter0 }}">{% blocktrans with name=f.name %}Description of {{ name }}{% endblocktrans %}</label><input class="form-control form-control-sm" id="description_{{ forloop.counter0 }}" name="description_{{ forloop.counter0 }}" value="{{ f.description }}" maxlength="500"></td>
+            <td class="text-center align-middle"><label class="sr-only" for="private_{{ forloop.counter0 }}">{% blocktrans with name=f.name %}{{ name }} is private{% endblocktrans %}</label><input type="checkbox" id="private_{{ forloop.counter0 }}" name="private_{{ forloop.counter0 }}" value="1"{% if f.private %} checked{% endif %}></td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        </div>
+        {% if can_edit %}<button type="submit" class="btn btn-sm btn-primary">{% trans "Save fields" %}</button>{% endif %}
+        </fieldset>
+      </form>
+      {% else %}
+      <p class="text-muted small mb-0">{% trans "The objects of this layer carry no fields yet." %}</p>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

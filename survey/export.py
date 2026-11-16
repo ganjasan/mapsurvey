@@ -1027,23 +1027,19 @@ def excluded_sessions(version_surveys, include_all, completed_only):
     not_approved unless include_all, plus every non-completed session when
     completed_only.
     "Completed" is the Responses overview's definition, through one helper."""
-    from .analytics import completed_session_filter, empty_sessions
+    from data.scope import SessionScope
     headers = [header for header, _ in version_surveys]
-    qs = SurveySession.objects.filter(survey__in=headers)
-    # Sessions without a single answer are never exported, whatever
-    # include_all and completed_only say (spec responses-export-formats):
-    # they would only add blank rows.
-    excluded = set(empty_sessions(qs).values_list('id', flat=True))
-    if not include_all:
-        from django.db.models import Q
-        excluded |= set(
-            qs.filter(Q(is_deleted=True) | Q(validation_status='not_approved'))
-            .values_list('id', flat=True)
-        )
-    if completed_only:
-        completed = set(completed_session_filter(qs, headers).values_list('id', flat=True))
-        excluded |= set(qs.values_list('id', flat=True)) - completed
-    return excluded
+    # Kept = non-empty sessions (never exported empty, whatever the switches say:
+    # they would only add blank rows), clean unless include_all — trashed, on-hold
+    # and not-approved sessions come back only with it (ADR-001 §6.1) — and
+    # completed ones when completed_only.
+    kept = SessionScope(
+        [header.id for header in headers], include_deleted=bool(include_all),
+        include_moderated=bool(include_all), nonempty=True,
+        completed_headers=headers if completed_only else None,
+    ).ids()
+    every = set(SurveySession.objects.filter(survey__in=headers).values_list('id', flat=True))
+    return every - kept
 
 
 # ---------------------------------------------------------------------------

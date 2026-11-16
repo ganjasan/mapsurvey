@@ -786,7 +786,13 @@ class SurveyMapLayer(models.Model):
 
     Layers hang off the CANONICAL survey; draft copies and archived versions
     borrow them through `survey.layers.layers_for()` and never get copies."""
-    survey = models.ForeignKey("SurveyHeader", on_delete=models.CASCADE, related_name='map_layers')
+    # A survey's layer, or (change data-upload, #668) a workspace dataset made in Data with no
+    # survey: then `organization` alone says whose it is. Every reader of a survey's layers
+    # filters by survey, so a workspace layer reaches a survey only through a link (#670).
+    survey = models.ForeignKey("SurveyHeader", on_delete=models.CASCADE, related_name='map_layers',
+                               null=True, blank=True)
+    organization = models.ForeignKey('Organization', on_delete=models.CASCADE, related_name='map_layers',
+                                     null=True, blank=True)
     name = models.CharField(max_length=100)
     color = models.CharField(max_length=7, default='#2c7be5', help_text=_('Fallback style; simplestyle properties inside the file win.'))
     label_field = models.CharField(max_length=100, blank=True, default='', help_text=_('Feature property rendered as a permanent map label. Empty = no labels. Also the default title mapping for imports.'))
@@ -826,7 +832,19 @@ class SurveyMapLayer(models.Model):
         ordering = ['position', 'id']
 
     def __str__(self):
-        return f"{self.survey.name} / {self.name}"
+        owner = self.survey.name if self.survey_id else 'Data'
+        return f"{owner} / {self.name}"
+
+    def save(self, *args, **kwargs):
+        # A survey's layer belongs to the survey's workspace (change data-upload): set here so
+        # no creation path (editor, API, MCP, ZIP import, cloning) has to remember it.
+        if self.organization_id is None and self.survey_id is not None:
+            self.organization_id = (SurveyHeader.objects.filter(pk=self.survey_id)
+                                    .values_list('organization_id', flat=True).first())
+            update_fields = kwargs.get('update_fields')
+            if update_fields is not None:
+                kwargs['update_fields'] = list(update_fields) + ['organization']
+        super().save(*args, **kwargs)
 
     @property
     def geojson(self):
@@ -2298,7 +2316,7 @@ PUBLIC_RESULTS_BLOCK_TYPE_CHOICES = (
 # Current snapshot serialization format. Bumped when the per-block payload
 # shape changes so a stale snapshot can show a "re-freeze needed" notice
 # instead of rendering wrong/broken data.
-PUBLIC_RESULTS_SNAPSHOT_VERSION = 2   # 2: spraycan map blocks publish a density grid
+PUBLIC_RESULTS_SNAPSHOT_VERSION = 3   # 2: spraycan density grid; 3: every map block is a grid (data-aggregate)
 
 
 class PublicResultsPage(models.Model):

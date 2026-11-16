@@ -12895,3 +12895,624 @@ msgstr "Er bestaat al een account met dit e-mailadres."
 #: survey/templates/editor/whats_new.html
 msgid "Read the article"
 msgstr "Lees het artikel"
+
+#: survey/templates/editor/partials/_export_modal.html:106
+msgid "Trashed, on-hold and not-approved responses are left out unless you switch this on."
+msgstr "Verwijderde, in de wacht gezette en niet goedgekeurde antwoorden worden weggelaten, tenzij u dit inschakelt."
+
+#: survey/templates/editor/partials/_moderated_sessions_line.html:10
+#, python-format
+msgid "including %(counter)s on hold"
+msgid_plural "including %(counter)s on hold"
+msgstr[0] "waarvan %(counter)s in de wacht"
+msgstr[1] "waarvan %(counter)s in de wacht"
+
+#: survey/templates/editor/partials/_moderated_sessions_line.html:10
+#, python-format
+msgid "%(counter)s not approved"
+msgid_plural "%(counter)s not approved"
+msgstr[0] "%(counter)s niet goedgekeurd"
+msgstr[1] "%(counter)s niet goedgekeurd"
+
+#: survey/templates/editor/public_results.html:153
+#, python-format
+msgid "The public map shows squares that count respondents; squares with fewer than %(k)s respondents are hidden. Exact points stay in Responses and the export."
+msgstr "De openbare kaart toont vakken die respondenten tellen; vakken met minder dan %(k)s respondenten worden verborgen. De exacte punten blijven in Antwoorden en in de export."
+
+#: data/templates/data/catalogue.html
+msgid "Search datasets"
+msgstr "Datasets zoeken"
+
+#: data/templates/data/catalogue.html
+msgid "No dataset matches these filters."
+msgstr "Geen dataset komt overeen met deze filters."
+
+#: data/models.py
+msgid "Layer"
+msgstr "Laag"
+
+#: data/models.py
+msgid "Shared map"
+msgstr "Gedeelde kaart"
+
+#: data/models.py
+msgid "Aggregated"
+msgstr "Geaggregeerd"
+
+#: data/templates/data/catalogue.html
+msgid "Every place dataset of this workspace: the layers you uploaded or drew, and the answers your surveys collect. Counts only — individual answers stay in Responses."
+msgstr "Elke plaatsdataset van deze werkruimte: de lagen die u uploadde of tekende en de antwoorden die uw enquêtes verzamelen. Alleen aantallen — afzonderlijke antwoorden blijven in Antwoorden."
+
+#: data/templates/data/catalogue.html
+msgid "No data yet. Layers you add to a survey and the answers it collects will appear here."
+msgstr "Nog geen gegevens. Lagen die u aan een enquête toevoegt en de antwoorden die die verzamelt, verschijnen hier."
+
+#: data/templates/data/catalogue.html
+#, python-format
+msgid "%(n)s row"
+msgid_plural "%(n)s rows"
+msgstr[0] "%(n)s rij"
+msgstr[1] "%(n)s rijen"
+
+#: data/templates/data/catalogue.html
+#, python-format
+msgid "used in %(n)s place"
+msgid_plural "used in %(n)s places"
+msgstr[0] "gebruikt op %(n)s plek"
+msgstr[1] "gebruikt op %(n)s plekken"
+
+#: data/templates/data/catalogue.html
+msgid "New dataset"
+msgstr "Nieuwe dataset"
+
+#: data/templates/data/_jobs.html
+msgid "Kept private:"
+msgstr "Privé gehouden:"
+
+#: data/templates/data/_jobs.html
+msgid "You can leave this page; the dataset will appear here when it is ready."
+msgstr "U kunt deze pagina verlaten; de dataset verschijnt hier zodra hij klaar is."
+
+#: data/views.py
+msgid "Upload a GeoPackage (.gpkg), a zipped shapefile (.zip), KML, GeoJSON or a CSV with coordinate columns."
+msgstr "Upload een GeoPackage (.gpkg), een gezipte shapefile (.zip), KML, GeoJSON of een CSV met coördinaatkolommen."
+
+#: data/views.py
+#, python-format
+msgid "The file is larger than %(mb)s MB, the limit for this workspace."
+msgstr "Het bestand is groter dan %(mb)s MB, de limiet van deze werkruimte."
+
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s object"
+msgid_plural "%(n)s objects"
+msgstr[0] "%(n)s object"
+msgstr[1] "%(n)s objecten"
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s row without a location skipped"
+msgid_plural "%(n)s rows without a location skipped"
+msgstr[0] "%(n)s rij zonder locatie overgeslagen"
+msgstr[1] "%(n)s rijen zonder locatie overgeslagen"
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s duplicate key skipped"
+msgid_plural "%(n)s duplicate keys skipped"
+msgstr[0] "%(n)s dubbele sleutel overgeslagen"
+msgstr[1] "%(n)s dubbele sleutels overgeslagen"
+
+#: data/templates/data/dataset.html
+msgid "Breadcrumb"
+msgstr "Kruimelpad"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "changed %(when)s"
+msgstr "gewijzigd op %(when)s"
+
+#: data/templates/data/dataset.html
+msgid "Open the source"
+msgstr "Bron openen"
+
+#: data/templates/data/dataset.html
+msgid "Access"
+msgstr "Toegang"
+
+#: data/templates/data/dataset.html
+msgid "Details"
+msgstr "Gegevens"
+
+#: data/templates/data/dataset.html
+msgid "Theme"
+msgstr "Thema"
+
+#: data/templates/data/dataset.html
+msgid "Maintainer"
+msgstr "Beheerder"
+
+#: data/templates/data/dataset.html
+msgid "Team or role, e.g. Parks team"
+msgstr "Team of rol, bijv. team groen"
+
+#: data/templates/data/dataset.html
+msgid "Updated"
+msgstr "Bijwerking"
+
+#: data/templates/data/dataset.html
+msgid "Licence"
+msgstr "Licentie"
+
+#: data/templates/data/dataset.html
+msgid "Save details"
+msgstr "Gegevens opslaan"
+
+#: data/templates/data/dataset.html
+msgid "Fields"
+msgstr "Velden"
+
+#: data/templates/data/dataset.html
+msgid "Labels replace the raw names on object cards and in downloads. A private field stays on this page and in the object editor: no map, export, download or API shows it."
+msgstr "Labels vervangen de ruwe namen op objectkaarten en in downloads. Een privéveld blijft op deze pagina en in de objecteditor: geen kaart, export, download of API toont het."
+
+#: data/templates/data/dataset.html
+msgid "Label"
+msgstr "Label"
+
+#: data/templates/data/dataset.html
+msgid "Type"
+msgstr "Type"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Label of %(name)s"
+msgstr "Label van %(name)s"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Type of %(name)s"
+msgstr "Type van %(name)s"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Description of %(name)s"
+msgstr "Beschrijving van %(name)s"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "%(name)s is private"
+msgstr "%(name)s is privé"
+
+#: data/templates/data/dataset.html
+msgid "Save fields"
+msgstr "Velden opslaan"
+
+#: data/templates/data/dataset.html
+msgid "The objects of this layer carry no fields yet."
+msgstr "De objecten van deze laag hebben nog geen velden."
+
+#: data/views.py
+msgid "Details saved."
+msgstr "Gegevens opgeslagen."
+
+#: data/views.py
+msgid "Field dictionary saved."
+msgstr "Veldenwoordenboek opgeslagen."
+
+#: data/models.py
+msgid "Agriculture, fisheries, forestry and food"
+msgstr "Landbouw, visserij, bosbouw en voedsel"
+
+#: data/models.py
+msgid "Economy and finance"
+msgstr "Economie en financiën"
+
+#: data/models.py
+msgid "Education, culture and sport"
+msgstr "Onderwijs, cultuur en sport"
+
+#: data/models.py
+msgid "Energy"
+msgstr "Energie"
+
+#: data/models.py
+msgid "Environment"
+msgstr "Milieu"
+
+#: data/models.py
+msgid "Government and public sector"
+msgstr "Overheid en publieke sector"
+
+#: data/models.py
+msgid "Health"
+msgstr "Gezondheid"
+
+#: data/models.py
+msgid "International issues"
+msgstr "Internationale vraagstukken"
+
+#: data/models.py
+msgid "Justice, legal system and public safety"
+msgstr "Justitie, rechtsstelsel en openbare veiligheid"
+
+#: data/models.py
+msgid "Regions and cities"
+msgstr "Regio’s en steden"
+
+#: data/models.py
+msgid "Population and society"
+msgstr "Bevolking en samenleving"
+
+#: data/models.py
+msgid "Science and technology"
+msgstr "Wetenschap en technologie"
+
+#: data/models.py
+msgid "Transport"
+msgstr "Vervoer"
+
+#: data/models.py
+msgid "As needed"
+msgstr "Wanneer nodig"
+
+#: data/models.py
+msgid "Daily"
+msgstr "Dagelijks"
+
+#: data/models.py
+msgid "Weekly"
+msgstr "Wekelijks"
+
+#: data/models.py
+msgid "Monthly"
+msgstr "Maandelijks"
+
+#: data/models.py
+msgid "Quarterly"
+msgstr "Per kwartaal"
+
+#: data/models.py
+msgid "Yearly"
+msgstr "Jaarlijks"
+
+#: data/models.py
+msgid "Never updated"
+msgstr "Nooit bijgewerkt"
+
+#: data/models.py
+msgid "The team or role that keeps the dataset current."
+msgstr "Het team of de rol die de dataset actueel houdt."
+
+#: data/links.py
+msgid "Only a layer dataset can be shown on a map."
+msgstr "Alleen een laagdataset kan op een kaart worden getoond."
+
+#: data/links.py
+msgid "This dataset is private. Make it public on its page in Data first."
+msgstr "Deze dataset is privé. Maak hem eerst openbaar op zijn pagina in Data."
+
+#: data/links.py
+msgid "This layer already belongs to the survey."
+msgstr "Deze laag hoort al bij de enquête."
+
+#: data/links.py
+#, python-format
+msgid "The dataset has %(n)s objects; a survey map takes up to %(max)s."
+msgstr "De dataset heeft %(n)s objecten; een enquêtekaart neemt er maximaal %(max)s."
+
+#: data/links.py
+#, python-format
+msgid "The dataset is larger than %(mb)s MB, the limit for a survey map."
+msgstr "De dataset is groter dan %(mb)s MB, de limiet van een enquêtekaart."
+
+#: data/links.py
+#, python-format
+msgid "A survey has at most %(n)s reference layers."
+msgstr "Een enquête heeft maximaal %(n)s referentielagen."
+
+#: data/links.py
+msgid "Only a dataset of this workspace can be linked."
+msgstr "Alleen een dataset van deze werkruimte kan worden gekoppeld."
+
+#: data/links.py
+#, python-format
+msgid "The question “%(name)s” shows this layer. Remove the question or pick another layer first."
+msgstr "De vraag “%(name)s” toont deze laag. Verwijder eerst de vraag of kies een andere laag."
+
+#: data/links.py
+msgid "Pick a dataset of this workspace."
+msgstr "Kies een dataset van deze werkruimte."
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "From Data"
+msgstr "Uit Data"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Open in Data"
+msgstr "Openen in Data"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Unlink"
+msgstr "Ontkoppelen"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Fields on the object card"
+msgstr "Velden op de objectkaart"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "pick a dataset"
+msgstr "kies een dataset"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Linked, not copied: an edit of the dataset shows on this survey's map."
+msgstr "Gekoppeld, niet gekopieerd: een wijziging van de dataset verschijnt op de kaart van deze enquête."
+
+#: survey/templates/sites/_block_form.html
+msgid "The map shows"
+msgstr "De kaart toont"
+
+#: survey/templates/sites/_block_form.html
+msgid "The uploaded project area"
+msgstr "Het geüploade projectgebied"
+
+#: survey/templates/sites/_block_form.html
+#, python-format
+msgid "Dataset: %(name)s"
+msgstr "Dataset: %(name)s"
+
+#: data/views.py
+msgid "Linked datasets stay public. Unlink it from every survey and site below first."
+msgstr "Gekoppelde datasets blijven openbaar. Ontkoppel hem eerst van elke enquête en site hieronder."
+
+#: data/views.py
+msgid "Dataset deleted."
+msgstr "Dataset verwijderd."
+
+#: data/templates/data/dataset.html
+msgid "Used by"
+msgstr "Gebruikt door"
+
+#: data/templates/data/dataset.html
+msgid "Belongs to survey"
+msgstr "Hoort bij enquête"
+
+#: data/templates/data/dataset.html
+msgid "No survey or site shows this dataset yet. Add it to a survey from its Reference layers card, or to a Site map block."
+msgstr "Nog geen enquête of site toont deze dataset. Voeg hem toe aan een enquête via de kaart Referentielagen, of aan een kaartblok van een site."
+
+#: data/templates/data/dataset.html
+msgid "Delete dataset"
+msgstr "Dataset verwijderen"
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "Delete “%(name)s”?"
+msgstr "“%(name)s” verwijderen?"
+
+#: data/templates/data/delete.html
+msgid "No survey or site uses it."
+msgstr "Geen enquête of site gebruikt hem."
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "The question “%(name)s” shows this dataset. Remove the question or pick another layer for it first."
+msgstr "De vraag “%(name)s” toont deze dataset. Verwijder eerst de vraag of kies er een andere laag voor."
+
+#: data/templates/data/delete.html
+msgid "Surveys and sites stop showing it, and its objects are deleted. This cannot be undone."
+msgstr "Enquêtes en sites tonen hem niet meer en zijn objecten worden verwijderd. Dit kan niet ongedaan worden gemaakt."
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "It is used in %(n)s place:"
+msgid_plural "It is used in %(n)s places:"
+msgstr[0] "Hij wordt op %(n)s plek gebruikt:"
+msgstr[1] "Hij wordt op %(n)s plekken gebruikt:"
+
+#: data/templates/data/dataset.html
+msgid "Upload new version"
+msgstr "Nieuwe versie uploaden"
+
+#: data/templates/data/dataset.html
+msgid "New versions are matched row by row on a key column. This dataset has none, so a new version needs a new upload."
+msgstr "Nieuwe versies worden rij voor rij gekoppeld op een sleutelkolom. Deze dataset heeft er geen, dus een nieuwe versie vraagt een nieuwe upload."
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Rows are matched on “%(key)s”. Objects whose key stays keep their answers."
+msgstr "Rijen worden gekoppeld op “%(key)s”. Objecten waarvan de sleutel blijft, houden hun antwoorden."
+
+#: data/templates/data/dataset.html
+msgid "Applying the new version…"
+msgstr "Nieuwe versie wordt toegepast…"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Reading %(name)s…"
+msgstr "%(name)s wordt gelezen…"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "%(a)s added · %(c)s changed · %(r)s removed · %(u)s unchanged"
+msgstr "%(a)s toegevoegd · %(c)s gewijzigd · %(r)s verwijderd · %(u)s ongewijzigd"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Skipped: %(k)s rows without a key, %(d)s repeated keys."
+msgstr "Overgeslagen: %(k)s rijen zonder sleutel, %(d)s herhaalde sleutels."
+
+#: data/templates/data/dataset.html
+msgid "What changed"
+msgstr "Wat er veranderde"
+
+#: data/templates/data/dataset.html
+msgid "What changed, e.g. Spring 2027 inspection"
+msgstr "Wat er veranderde, bijv. inspectie voorjaar 2027"
+
+#: data/templates/data/dataset.html
+msgid "Apply version"
+msgstr "Versie toepassen"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Version %(n)s applied."
+msgstr "Versie %(n)s toegepast."
+
+#: data/templates/data/dataset.html
+msgid "Author"
+msgstr "Auteur"
+
+#: data/templates/data/dataset.html
+msgid "Note"
+msgstr "Notitie"
+
+#: data/templates/data/dataset.html
+msgid "Changes"
+msgstr "Wijzigingen"
+
+#: data/templates/data/dataset.html
+msgid "First upload"
+msgstr "Eerste upload"
+
+#: data/templates/data/dataset.html
+msgid "Original — no new version uploaded yet."
+msgstr "Origineel — nog geen nieuwe versie geüpload."
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "%(n)s answer about a removed object will be deleted."
+msgid_plural "%(n)s answers about removed objects will be deleted."
+msgstr[0] "%(n)s antwoord over een verwijderd object wordt gewist."
+msgstr[1] "%(n)s antwoorden over verwijderde objecten worden gewist."
+
+#: data/dataviews.py
+msgid "Views are made of layers and of map answers."
+msgstr "Weergaven bestaan voor lagen en kaartantwoorden."
+
+#: data/dataviews.py
+msgid "Give the view a name."
+msgstr "Geef de weergave een naam."
+
+#: data/dataviews.py
+msgid "A condition can only use a public field of this dataset."
+msgstr "Een voorwaarde kan alleen een openbaar veld van deze dataset gebruiken."
+
+#: data/dataviews.py
+msgid "“Greater than” and “less than” need a number."
+msgstr "“Groter dan” en “kleiner dan” vragen een getal."
+
+#: data/dataviews.py
+msgid "A view can only keep public fields of this dataset."
+msgstr "Een weergave kan alleen openbare velden van deze dataset houden."
+
+#: data/links.py
+msgid "Pick a view of this dataset."
+msgstr "Kies een weergave van deze dataset."
+
+#: data/links.py
+msgid "A grid of counts can be shown on a site, not as a survey layer."
+msgstr "Een raster met aantallen kan op een site staan, niet als enquêtelaag."
+
+#: data/views.py
+msgid "View saved."
+msgstr "Weergave opgeslagen."
+
+#: data/views.py
+#, python-format
+msgid "“%(name)s” is shown in a survey or on a site. Unlink it there first."
+msgstr "“%(name)s” staat in een enquête of op een site. Ontkoppel hem daar eerst."
+
+#: data/models.py
+msgid "Grid of counts"
+msgstr "Raster met aantallen"
+
+#: data/templates/data/dataset.html
+msgid "Views"
+msgstr "Weergaven"
+
+#: data/templates/data/dataset.html
+msgid "A view of collected answers is a grid of counts: how many respondents marked each cell, small groups hidden. It can be shown in a Site map block."
+msgstr "Een weergave van verzamelde antwoorden is een raster met aantallen: hoeveel respondenten elke cel markeerden, kleine groepen verborgen. Hij kan in een kaartblok van een site staan."
+
+#: data/templates/data/dataset.html
+msgid "A view keeps the objects that match its conditions, with the fields you choose. Surveys and site map blocks can show a view instead of the whole dataset."
+msgstr "Een weergave houdt de objecten die aan haar voorwaarden voldoen, met de velden die u kiest. Enquêtes en kaartblokken van sites kunnen een weergave tonen in plaats van de hele dataset."
+
+#: data/templates/data/dataset.html
+msgid "grid of counts"
+msgstr "raster met aantallen"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Delete view %(name)s"
+msgstr "Weergave %(name)s verwijderen"
+
+#: data/templates/data/dataset.html
+msgid "New view"
+msgstr "Nieuwe weergave"
+
+#: data/templates/data/dataset.html
+msgid "Show objects where"
+msgstr "Objecten tonen waarbij"
+
+#: data/templates/data/dataset.html
+msgid "Field"
+msgstr "Veld"
+
+#: data/templates/data/dataset.html
+msgid "Condition"
+msgstr "Voorwaarde"
+
+#: data/templates/data/dataset.html
+msgid "is"
+msgstr "is"
+
+#: data/templates/data/dataset.html
+msgid "is one of"
+msgstr "is een van"
+
+#: data/templates/data/dataset.html
+msgid "greater than"
+msgstr "groter dan"
+
+#: data/templates/data/dataset.html
+msgid "less than"
+msgstr "kleiner dan"
+
+#: data/templates/data/dataset.html
+msgid "Value"
+msgstr "Waarde"
+
+#: data/templates/data/dataset.html
+msgid "Fields it keeps"
+msgstr "Velden die ze houdt"
+
+#: data/templates/data/dataset.html
+msgid "Save view"
+msgstr "Weergave opslaan"
+
+#: survey/templates/sites/public.html
+msgid "respondents"
+msgstr "respondenten"
+
+#: data/templates/data/dataset.html
+msgid "Comma-separated, e.g. Riverside plan 2027"
+msgstr "Gescheiden door komma’s, bijv. Plan Riverside 2027"
+
+#: data/templates/data/dataset.html
+msgid "Tags group the datasets and surveys of one engagement; the Data list and the survey dashboard filter by them."
+msgstr "Tags groeperen de datasets en enquêtes van één participatietraject; de Data-lijst en het enquêteoverzicht filteren erop."
+
+#: survey/public_results.py
+#, python-format
+msgid "Not enough answers yet to show this map without revealing anyone: areas with fewer than %(k)s people stay hidden."
+msgstr "Nog te weinig antwoorden om deze kaart te tonen zonder iemand herkenbaar te maken: gebieden met minder dan %(k)s mensen blijven verborgen."
+
+#: survey/public_results.py
+#, python-format
+msgid "%(n)s respondent is in an area with fewer than %(k)s people and is not shown."
+msgid_plural "%(n)s respondents are in areas with fewer than %(k)s people and are not shown."
+msgstr[0] "%(n)s respondent bevindt zich in een gebied met minder dan %(k)s mensen en wordt niet getoond."
+msgstr[1] "%(n)s respondenten bevinden zich in gebieden met minder dan %(k)s mensen en worden niet getoond."

@@ -423,10 +423,17 @@
     {% include "editor/partials/import_jobs.html" %}
     {% endif %}
 
+    {% if workspace_tags %}
+    {% comment %}Tags (change data-tags): links, so a filtered dashboard is an address.{% endcomment %}
+    <div class="d-flex flex-wrap mb-3" style="gap:.4rem;font-size:.85rem;" data-testid="survey-tag-filters">
+      {% for t in workspace_tags %}<a class="badge badge-pill {% if tag_filter == t.slug %}badge-primary{% else %}badge-light{% endif %} px-3 py-2" data-tag="{{ t.slug }}" href="?{% if tag_filter != t.slug %}tag={{ t.slug|urlencode }}{% endif %}{% if show_archived %}&show_archived=1{% endif %}"><i class="fas fa-tag" aria-hidden="true"></i> {{ t.name }}</a>{% endfor %}
+    </div>
+    {% endif %}
+
     <!-- Cards View -->
     <div class="dashboard-grid" id="view-grid">
         {% for survey in survey_headers %}
-        <div class="survey-card" data-search="{{ survey.name|lower }} {{ survey.get_status_display|lower }}">
+        <div class="survey-card" data-search="{{ survey.name|lower }} {{ survey.get_status_display|lower }}{% for t in survey.tags.all %} {{ t.name|lower }}{% endfor %}">
             <a href="{% url 'editor_survey_detail' survey.uuid %}" class="card-link">
                 {% if survey.cover_image %}
                 <div class="card-cover" style="background-image:url('{{ survey.cover_image.url }}');"></div>
@@ -445,6 +452,7 @@
                         {% if survey.has_unpublished_changes %}<span class="status-pill badge badge-warning" title="{% trans 'Edited, not yet published — respondents still see the live survey' %}">{% trans "Unpublished changes" %}</span>{% endif %}
                         {% if survey.public_results_page.is_published %}<span class="status-pill badge badge-primary" title="{% trans 'Results page is live' %}">{% trans "Results live" %}</span>{% endif %}
                     </div>
+                    {% if survey.tags.all %}<div class="card-tags" style="font-size:.72rem;margin:-.15rem 0 .35rem;">{% for t in survey.tags.all %}<span class="badge badge-light mr-1" data-card-tag="{{ t.slug }}"><i class="fas fa-tag" aria-hidden="true"></i> {{ t.name }}</span>{% endfor %}</div>{% endif %}
                     <div class="card-kpi">
                         <span><span class="kpi-value">{{ survey.session_count }}</span> {% trans "started" %}</span>
                         <span><span class="kpi-value">{{ survey.completed_count }}</span> {% trans "completed" %}</span>
@@ -479,7 +487,7 @@
     <!-- List View -->
     <div class="dashboard-list hidden" id="view-list">
         {% for survey in survey_headers %}
-        <div class="survey-row" data-search="{{ survey.name|lower }} {{ survey.get_status_display|lower }}">
+        <div class="survey-row" data-search="{{ survey.name|lower }} {{ survey.get_status_display|lower }}{% for t in survey.tags.all %} {{ t.name|lower }}{% endfor %}">
             <a href="{% url 'editor_survey_detail' survey.uuid %}" class="row-link">
                 {% if survey.cover_image %}
                 <div class="row-cover" style="background-image:url('{{ survey.cover_image.url }}');"></div>

@@ -1,7 +1,7 @@
 """Read-only rendering service for the public survey results page.
 
 Builds ordered, privacy-guarded per-block payloads for a PublicResultsPage:
-- aggregates over CLEAN sessions only (not deleted, not not_approved/on_hold)
+- aggregates over CLEAN, NON-EMPTY sessions only (`data.scope.SessionScope.public`)
 - spans the canonical survey and all its version copies
 - masks small buckets via k-anonymity
 - strips record-level identifiers from geo features and exposes only the
@@ -21,7 +21,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 
 from .models import (
-    SurveySession, Answer, Question,
+    Answer, Question,
     PublicResultsPage, PublicResultsBlock,
     PUBLIC_RESULTS_SNAPSHOT_VERSION,
 )
@@ -30,9 +30,6 @@ from .versioning import canonical_of, family_ids
 
 # Live aggregates are cached briefly so viral traffic does not hammer the DB.
 LIVE_CACHE_TTL = 60
-
-# Validation statuses that must never reach the public page.
-EXCLUDED_VALIDATION_STATUSES = ('not_approved', 'on_hold')
 
 # Question types whose individual answers are never published.
 TEXT_INPUT_TYPES = ('text', 'text_line')
@@ -97,12 +94,9 @@ class PublicResultsService:
         return family_ids(self.canonical)
 
     def _collect_clean_session_ids(self):
-        return set(
-            SurveySession.objects
-            .filter(survey_id__in=self._survey_ids, is_deleted=False)
-            .exclude(validation_status__in=EXCLUDED_VALIDATION_STATUSES)
-            .values_list('id', flat=True)
-        )
+        # Clean and non-empty (ADR-001 §6.2): the same answered responses Responses shows.
+        from data.scope import SessionScope
+        return SessionScope(self._survey_ids, nonempty=True).ids()
 
     def response_count(self):
         return len(self._clean_ids)
@@ -116,9 +110,8 @@ class PublicResultsService:
         sentinel value of None — so the raw number cannot be recovered from
         the served payload.
         """
-        if 0 < count < self.k:
-            return {'value': None, 'display': '<{}'.format(self.k), 'masked': True}
-        return {'value': count, 'display': str(count), 'masked': False}
+        from data.aggregate import mask
+        return mask(count, self.k)
 
     # ---- block payloads -----------------------------------------------
 
@@ -333,124 +326,113 @@ class PublicResultsService:
         }
 
     def _map_payload(self, block):
+        """A public map is a grid of cells counting distinct respondents, cells under K left
+        out (change data-aggregate, ADR-001 §6.3): never an answer's own geometry. Each cell's
+        popup carries the masked distribution of the creator-selected sub-question fields."""
         question = block.question
         payload = self._base(block)
         payload['basemap'] = block.basemap or 'streets'
-        if question.input_type == 'spraycan':
-            return self._spray_grid_payload(block, payload)
-        label_codes = set(block.geo_label_fields or [])
-
-        features = []
-        geo_field = geo_column(question.input_type) if question.input_type in GEO_INPUT_TYPES else None
-        if geo_field is None:
-            payload['data_type'] = 'geo'
-            payload['feature_collection'] = {'type': 'FeatureCollection', 'features': []}
+        payload['data_type'] = 'grid'
+        payload['color'] = (question.color if (question.color or '').lower() not in ('', '#000000')
+                            else ('#d6336c' if question.input_type == 'spraycan' else '#4f46e5'))
+        empty = {'type': 'FeatureCollection', 'features': []}
+        if question.input_type not in GEO_INPUT_TYPES:
+            payload.update(cells=empty, max=0, respondents_total=0, respondents_hidden=0, cell_m=0, count=0,
+                           note='')
             return payload
-
-        geo_answers = list(
+        geo_field = geo_column(question.input_type)
+        rows = list(
             self._answers(question)
             .exclude(**{'{}__isnull'.format(geo_field): True})
-            .select_related('question')
+            .only('id', 'survey_session_id', geo_field)
         )
-
-        # Popup attributes are the point's OWN sub-answers (parent_answer),
-        # so different points from the same respondent show their own values.
-        labels_by_point = {}
-        if label_codes:
-            labels_by_point = self._collect_point_labels(geo_answers, label_codes)
-
-        for a in geo_answers:
-            geom = a.geometry
-            if geom is None:
-                continue
-            features.append({
-                'type': 'Feature',
-                'geometry': json.loads(geom.geojson),
-                'properties': labels_by_point.get(a.id, {}),
-            })
-
-        payload['data_type'] = 'geo'
-        payload['feature_collection'] = {'type': 'FeatureCollection', 'features': features}
-        payload['count'] = len(features)
-        return payload
-
-    # Spray clouds (spec spraycan-density-views): the public page never sees a
-    # respondent's dots. The service bins every dot of every clean session into
-    # Web Mercator cells, counts DISTINCT sessions per cell and drops the cells
-    # below the page's k — omitted, not "<K", because the cell's location is
-    # the sensitive fact. Cell size: the clouds' bbox is ~SPRAY_GRID_CELLS
-    # across its longer side, never finer than SPRAY_GRID_MIN_M.
-    SPRAY_GRID_CELLS = 40
-    SPRAY_GRID_MIN_M = 20.0
-
-    def _spray_grid_payload(self, block, payload):
+        members = [(a.survey_session_id, a.id, getattr(a, geo_field)) for a in rows]
+        from data.aggregate import grid
+        # The finest grid that shows most respondents (change data-grid-adaptive), cells under K
+        # omitted whatever the size.
+        cells = grid(members, k=self.k, min_cell_m=self.MAP_GRID_MIN_M)
+        label_codes = set(block.geo_label_fields or []) if question.input_type != 'spraycan' else set()
+        fields_by_cell = self._cell_fields(cells['cells'], label_codes) if label_codes else {}
         from django.contrib.gis.geos import Polygon as GeosPolygon
-        from survey.public_results_grid import spray_grid
-
-        question = block.question
-        clouds = [
-            (a.survey_session_id, a.multipoint)
-            for a in self._answers(question).exclude(multipoint__isnull=True)
-        ]
-        grid = spray_grid(clouds, k=self.k, cells_across=self.SPRAY_GRID_CELLS,
-                          min_cell_m=self.SPRAY_GRID_MIN_M)
         features = []
-        for cell in grid['cells']:
+        for i, cell in enumerate(cells['cells']):
+            props = {'respondents': cell['respondents']}
+            if fields_by_cell.get(i):
+                props['fields'] = fields_by_cell[i]
             features.append({
                 'type': 'Feature',
                 'geometry': json.loads(GeosPolygon.from_bbox(cell['bbox']).geojson),
-                'properties': {'respondents': cell['respondents']},
+                'properties': props,
             })
-        payload['data_type'] = 'grid'
-        payload['color'] = question.color if (question.color or '').lower() not in ('', '#000000') else '#d6336c'
         payload['cells'] = {'type': 'FeatureCollection', 'features': features}
-        payload['max'] = grid['max']
-        payload['respondents_total'] = grid['respondents_total']
-        payload['cell_m'] = grid['cell_m']
+        payload['max'] = cells['max']
+        payload['respondents_total'] = cells['respondents_total']
+        payload['respondents_hidden'] = cells['respondents_hidden']
+        payload['cell_m'] = cells['cell_m']
         payload['count'] = len(features)
+        payload['note'] = self._grid_note(cells)
         return payload
 
-    def _collect_point_labels(self, geo_answers, label_codes):
-        """Map geo_answer_id -> {label: value} from each point's own sub-answers.
+    def _grid_note(self, cells):
+        """What a visitor reads under (or instead of) the map: why nothing or not everyone shows."""
+        from django.utils import translation
+        from django.utils.translation import gettext, ngettext
+        total, hidden = cells['respondents_total'], cells['respondents_hidden']
+        if not total or not hidden:
+            return ''
+        with translation.override(self.lang):
+            if not cells['cells']:
+                return gettext('Not enough answers yet to show this map without revealing anyone: '
+                               'areas with fewer than %(k)s people stay hidden.') % {'k': self.k}
+            return ngettext('%(n)s respondent is in an area with fewer than %(k)s people and is not shown.',
+                            '%(n)s respondents are in areas with fewer than %(k)s people and are not shown.',
+                            hidden) % {'n': hidden, 'k': self.k}
 
-        Only sub-answers of the given geo answers (via parent_answer), for the
-        creator-selected sub-question codes, within clean sessions. Free text
-        self-excludes (see _answer_display_value). No identifiers are emitted.
-        """
-        parent_ids = [a.id for a in geo_answers]
-        if not parent_ids:
+    # Cell size: the finest of data.aggregate.GRID_STEPS cells across the answers' bbox that shows
+    # most respondents, never finer than MAP_GRID_MIN_M (change data-grid-adaptive).
+    MAP_GRID_MIN_M = 20.0
+
+    def _cell_fields(self, cells, label_codes):
+        """{cell index: [{'name', 'values': [{'label', 'display'}]} | {'name', 'mean'}]} —
+        the selected sub-questions answered by the cell's geo answers, masked: a choice under K
+        shows "<K", a number's mean only when at least K values exist. Free text never."""
+        member_cell = {}
+        for i, cell in enumerate(cells):
+            for member in cell['members']:
+                member_cell.setdefault(member, []).append(i)
+        if not member_cell:
             return {}
-        sub_answers = (
-            Answer.objects
-            .filter(
-                parent_answer_id__in=parent_ids,
-                question__code__in=label_codes,
-                survey_session_id__in=self._clean_ids,
-            )
-            .select_related('question')
-        )
-        result = {}
-        for a in sub_answers:
-            value = self._answer_display_value(a)
-            if value in (None, ''):
+        subs = (Answer.objects
+                .filter(parent_answer_id__in=list(member_cell), question__code__in=label_codes,
+                        survey_session_id__in=self._clean_ids)
+                .exclude(question__input_type__in=TEXT_INPUT_TYPES)
+                .select_related('question'))
+        acc = {}     # (cell, code) -> {'q': question, 'choices': {code: n}, 'numbers': []}
+        for a in subs:
+            for i in member_cell.get(a.parent_answer_id_id, ()):
+                entry = acc.setdefault((i, a.question.code),
+                                       {'q': a.question, 'choices': {}, 'numbers': []})
+                if a.question.input_type in ('number', 'range'):
+                    if a.numeric is not None:
+                        entry['numbers'].append(a.numeric)
+                else:
+                    for code in (a.selected_choices or []):
+                        entry['choices'][code] = entry['choices'].get(code, 0) + 1
+        out = {}
+        for (i, _code), entry in sorted(acc.items(), key=lambda kv: (kv[0][0], kv[1]['q'].order_number)):
+            q = entry['q']
+            if q.input_type in ('number', 'range'):
+                if len(entry['numbers']) >= self.k:
+                    out.setdefault(i, []).append(
+                        {'name': q.name, 'mean': round(sum(entry['numbers']) / len(entry['numbers']), 1)})
                 continue
-            # The FK field is literally named `parent_answer_id`, so the raw id
-            # is `parent_answer_id_id` (accessing `.parent_answer_id` returns the
-            # related Answer object, not its pk).
-            result.setdefault(a.parent_answer_id_id, {})[a.question.name] = value
-        return result
-
-    def _answer_display_value(self, answer):
-        q = answer.question
-        if q.input_type in ('choice', 'multichoice', 'rating', 'thumbs'):
-            names = [q.get_choice_name(code, self.lang) for code in (answer.selected_choices or [])]
-            return ', '.join(n for n in names if n)
-        if q.input_type in ('number', 'range'):
-            return answer.numeric
-        # Free text is never exposed in popups.
-        if q.input_type in TEXT_INPUT_TYPES:
-            return None
-        return None
+            values = []
+            for code, n in sorted(entry['choices'].items(), key=lambda kv: -kv[1]):
+                masked = self._mask(n)
+                values.append({'label': q.get_choice_name(code, self.lang), 'display': masked['display']})
+            if values:
+                out.setdefault(i, []).append({'name': q.name, 'values': values})
+        return out
 
     # ---- snapshot ------------------------------------------------------
 

@@ -247,9 +247,9 @@ def _builder_context(request, site, membership, **extra):
         'library': sites.library(),
         'languages': language_choices(),
         'basemap_choices': basemaps.choices_for(org),
+        'map_datasets': _map_datasets(org),
         'results_choices': sites.results_choices(org),
         'chart_viz': [('auto', _('Bar chart')), ('pie', _('Pie')), ('donut', _('Donut')), ('table', _('Table'))],
-        'map_viz': [('auto', _('Markers')), ('heatmap', _('Heatmap')), ('cluster', _('Clusters'))],
         'public_url': request.build_absolute_uri(reverse('site_public', args=[site.slug])),
         'review_url': _review_url(request, site) if not site.is_published else '',
         'a11y_site': a11y_site,
@@ -479,6 +479,38 @@ def _event_notice(request):
             'name', 'email', 'consent', 'full', 'closed'):
         return {'block': int(request.GET['event']), 'status': request.GET['event_error']}
     return None
+
+
+def _map_datasets(org):
+    from data.links import site_choices
+    return site_choices(org)
+
+
+def site_block_dataset(request, slug, block_id):
+    """The GeoJSON of the dataset a Site map block shows (change data-links): the page's own
+    access rule, the dataset's stored collection — never inlined in the page."""
+    from data.links import site_dataset
+    from .views import cached_geojson_response
+    from .models import SurveyMapLayer
+    site = Site.objects.select_related('organization').filter(slug=slug).first()
+    if site is None:
+        raise Http404
+    live = site.is_published and not is_site_held(site) and not site.is_template
+    member = (request.user.is_authenticated
+              and get_org_membership(request.user, site.organization) is not None)
+    review = (not live and not member and not is_site_held(site)
+              and sites.review_token_ok(site, request.GET.get('review')))
+    if not live and not member and not review:
+        raise Http404
+    block = get_object_or_404(SiteBlock, pk=block_id, site=site, kind='map')
+    data = block.data or {}
+    ds, view, _reason = site_dataset(site.organization, data.get('dataset') or 0, data.get('view'))
+    if ds is None:
+        raise Http404
+    if view is not None:   # a view (change data-views): its objects, or a grid of counts
+        from data.dataviews import geojson_response
+        return geojson_response(request, view)
+    return cached_geojson_response(request, get_object_or_404(SurveyMapLayer, pk=ds.layer_id))
 
 
 def site_public(request, slug):

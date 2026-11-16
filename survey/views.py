@@ -15,7 +15,7 @@ from .models import SurveyHeader, SurveySession, SurveySection, Answer, Question
 from .tasks import run_survey_import
 from .models import FILE_INPUT_TYPES
 from .uploads import attach_upload, detach_unreferenced
-from .layers import build_map_layers_metadata, layer_owner, section_layer_ids, GEOMETRY_TEXT_FIELDS
+from .layers import build_map_layers_metadata, layer_owner, layers_for, section_layer_ids, GEOMETRY_TEXT_FIELDS
 from .permissions import (
     org_permission_required, survey_permission_required,
     get_effective_survey_role, get_org_membership, SURVEY_ROLE_RANK,
@@ -776,6 +776,15 @@ def editor(request):
 	if not show_archived:
 		survey_list = survey_list.exclude(status='archived')
 
+	# Tags (change data-tags): `?tag=<slug>` narrows the list; every card shows its tags.
+	from data.models import Tag
+	tag_filter = request.GET.get('tag') or ''
+	workspace_tags = list(Tag.objects.filter(organization=org, surveys__isnull=False).distinct().order_by('name')) \
+		if org is not None else []
+	if tag_filter:
+		survey_list = survey_list.filter(tags__slug=tag_filter, tags__organization=org)
+	survey_list = survey_list.prefetch_related('tags')
+
 	# Reverse OneToOne used by the "Results live" card chip — avoid N+1
 	survey_list = survey_list.select_related('public_results_page')
 
@@ -835,6 +844,8 @@ def editor(request):
 	import_jobs = import_jobs_for(request.user, org) if org_role in ('owner', 'admin', 'editor') else []
 	context = {
 		"survey_headers": surveys_with_kpi,
+		"workspace_tags": workspace_tags,
+		"tag_filter": tag_filter,
 		"org_role": org_role,
 		"joined_org": joined_org,
 		# An editor sees own and collaborated surveys only; in a workspace that
@@ -2238,7 +2249,9 @@ def _gated_layer(request, survey_slug, layer_id, with_geojson=True):
 		raise Http404
 	# Versions and draft copies borrow the canonical survey's layers.
 	qs = SurveyMapLayer.objects if with_geojson else SurveyMapLayer.objects.defer(*GEOMETRY_TEXT_FIELDS)
-	layer = get_object_or_404(qs, pk=layer_id, survey=layer_owner(survey))
+	# Datasets linked "From Data" (change data-links) resolve like the survey's own.
+	layer = get_object_or_404(qs.filter(pk__in=layers_for(survey).values('pk')), pk=layer_id)
+	layer.gated_survey = survey
 	# `question` layers answer differently to the creator (every mark, every
 	# status) and to a respondent (other people's visible marks only); the two
 	# endpoints read this instead of re-deriving the role.
@@ -2263,7 +2276,14 @@ def survey_layer_object(request, survey_slug, layer_id, key):
 		obj = get_object_or_404(visible_objects(layer, request.session.get('survey_session_id')), key=key)
 	else:
 		obj = get_object_or_404(LayerObject, layer=layer, key=key)
-	payload = object_card_payload(obj)
+		from data.links import survey_view
+		view = survey_view(layer.gated_survey, layer.pk)
+		if view is not None:
+			from data.dataviews import matches
+			if not matches(view, obj.properties):
+				raise Http404
+	from data.links import card_field_names
+	payload = object_card_payload(obj, only=card_field_names(layer.gated_survey, layer.pk))
 	# What other respondents see is decided by the SUB-QUESTIONS that share
 	# their answers, whatever the layer's source (spec shared-map-layer).
 	from .layers import shared_kinds
@@ -2293,6 +2313,12 @@ def survey_layer_geojson(request, survey_slug, layer_id):
 	indistinguishable from nonexistent surveys.
 	"""
 	layer = _gated_layer(request, survey_slug, layer_id)
+	# A view of a linked dataset (change data-views): only its objects, only its fields.
+	from data.links import survey_view
+	view = survey_view(layer.gated_survey, layer.pk)
+	if view is not None:
+		from data.dataviews import geojson_response
+		return geojson_response(request, view)
 
 	if layer.source == 'question' and not layer.collaborator_access:
 		# Other people's marks, computed per request (spec shared-map-layer):

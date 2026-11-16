@@ -25,6 +25,7 @@ latest-responses feeds. Rendered only inside analytics_dashboard_v2.html.
         <b>{{ total_sessions }}</b><span>{% trans "responses" %}</span>
         {% if overview_extras.responses_today %}<span class="rv2-delta">+{{ overview_extras.responses_today }} {% trans "today" %}</span>{% endif %}
         {% include "editor/partials/_empty_sessions_toggle.html" %}
+        {% include "editor/partials/_moderated_sessions_line.html" %}
     </div>
     <div class="rv2-kpi"><b class="rv2-green">{{ completion_rate }}%</b><span>{% trans "completion" %}</span></div>
     {% if overview_extras.median_display %}

@@ -61,6 +61,7 @@ Permission `surveys:read` · role **viewer** · read-only
 |---|---|---|---|
 | `cursor` | string |  | `next_cursor` of the previous page. |
 | `limit` | integer |  | Default `50`. |
+| `tag` | string |  | Only surveys carrying this workspace tag (its name or slug). |
 
 ### `get_survey`
 
@@ -84,6 +85,17 @@ Permission `surveys:write` · role **workspace editor**
 | `workspace` | string |  | Workspace slug; optional when the token is bound to one or you belong to one. |
 | `language` | string |  | Default `en`. |
 | `map_start` | object (`lat`, `lng`, `zoom`) |  |  |
+
+### `set_survey_tags`
+
+Replace the survey's workspace tags, which group it with the datasets and other surveys of one engagement ("Riverside plan 2027"). Tags are created on first use and matched by slug; at most 10. Editor role.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `tags` | list of string | **required** | The survey's new tags (replacing the old ones); created in the workspace on first use, matched by slug, at most 40 characters each. |
+| `survey` | uuid | **required** | The survey uuid (from list_surveys or create_survey). |
 
 ### `update_survey`
 
@@ -376,7 +388,7 @@ Permission `responses:read` · role **viewer** · read-only
 |---|---|---|---|
 | `survey` | uuid | **required** | The survey uuid (from list_surveys). |
 | `version` | string |  | One version (v3), several separated by commas (v10,v11), or omit for every version. |
-| `include_all` | boolean |  | Also count deleted and rejected responses. Default `False`. |
+| `include_all` | boolean |  | Also count deleted, on-hold and rejected responses. Default `False`. |
 | `completed_only` | boolean |  | Only responses that reached the last section. Default `False`. |
 
 ### `list_responses`
@@ -403,7 +415,7 @@ Permission `responses:read` · role **viewer** · read-only
 | `survey` | uuid | **required** | The survey uuid (from list_surveys). |
 | `question_id` | integer | **required** | A question id from get_survey. |
 | `version` | string |  | One version (v3), several separated by commas (v10,v11), or omit for every version. |
-| `include_all` | boolean |  | Also count deleted and rejected responses. Default `False`. |
+| `include_all` | boolean |  | Also count deleted, on-hold and rejected responses. Default `False`. |
 | `completed_only` | boolean |  | Only responses that reached the last section. Default `False`. |
 | `cursor` | string |  | `next_cursor` of the previous page. |
 | `limit` | integer |  | Default `50`. |
@@ -419,7 +431,7 @@ Permission `responses:read` · role **viewer** · read-only
 | `survey` | uuid | **required** | The survey uuid (from list_surveys). |
 | `question_id` | integer | **required** | A question id from get_survey. |
 | `version` | string |  | One version (v3), several separated by commas (v10,v11), or omit for every version. |
-| `include_all` | boolean |  | Also count deleted and rejected responses. Default `False`. |
+| `include_all` | boolean |  | Also count deleted, on-hold and rejected responses. Default `False`. |
 | `completed_only` | boolean |  | Only responses that reached the last section. Default `False`. |
 | `limit` | integer |  | Most features to return. Default `200`. |
 
@@ -434,13 +446,13 @@ Permission `responses:read` · role **viewer** · read-only
 | `survey` | uuid | **required** | The survey uuid (from list_surveys). |
 | `format` | `xlsx` \| `csv` \| `zip` \| `gpkg` \| `shp` \| `kml` |  | Default `xlsx`. |
 | `version` | string |  | One version (v3), several separated by commas (v10,v11), or omit for every version. |
-| `include_all` | boolean |  | Also count deleted and rejected responses. Default `False`. |
+| `include_all` | boolean |  | Also count deleted, on-hold and rejected responses. Default `False`. |
 | `completed_only` | boolean |  | Only responses that reached the last section. Default `False`. |
 | `files` | boolean |  | Add files respondents uploaded. Default `False`. |
 
 ### `moderate_response`
 
-Set a response's status: approved, on_hold, not_approved (rejected responses leave exports, summaries and public results), or "" to clear it. It can be changed back. Needs the editor role.
+Set a response's status: approved, on_hold, not_approved (held and rejected responses leave exports, summaries and public results), or "" to clear it. It can be changed back. Needs the editor role.
 
 Permission `responses:moderate` · role **editor**
 
@@ -822,6 +834,142 @@ Permission `surveys:read` · read-only
 | `lang` | string |  | ISO 639-1 code of the words in `q`. |
 | `set` | `maki` \| `temaki` \| `fa` |  |  |
 | `limit` | integer |  | Default `20`. |
+
+### `list_datasets`
+
+The datasets of a workspace you may see: layers (uploaded or drawn), shared maps, answers to each map question and respondent rows, with privacy, tags, row counts and how many places use each. Filter by kind (layer, shared_map, answers, responses), a tag or a name.
+
+Permission `surveys:read` · role **workspace member** · read-only
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `workspace` | string |  | Workspace slug; needed when you belong to several. |
+| `kind` | string |  |  |
+| `tag` | string |  |  |
+| `q` | string |  |  |
+
+### `get_dataset`
+
+One dataset: details (licence, theme, maintainer, update frequency), its field dictionary (names, labels, types, which are private — private values are never returned), views, versions and the places that use it.
+
+Permission `surveys:read` · role **workspace member** · read-only
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `dataset_id` | integer | **required** | A dataset id from list_datasets. |
+
+### `upload_dataset`
+
+Create a workspace dataset from a file (GeoJSON, CSV with coordinates, KML, GeoPackage, zipped shapefile). It runs in the background: poll get_dataset_job until done or failed. A new dataset is private, and columns that look like emails, phone numbers or names are marked private.
+
+Permission `surveys:write` · role **workspace editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `filename` | string | **required** | The file name with its extension: .geojson, .json, .csv, .kml, .gpkg or .zip (a shapefile). |
+| `content` | string |  | The file as text (GeoJSON, CSV, KML). |
+| `content_base64` | string |  | The file as base64 (GeoPackage, zipped shapefile, or any text format). |
+| `workspace` | string |  | Workspace slug. |
+
+### `get_dataset_job`
+
+An upload or a new version: status (queued, running, preview, applying, done, failed), the dataset, and the report or preview counts.
+
+Permission `surveys:read` · read-only
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `job_id` | integer | **required** | The job id an upload returned. |
+
+### `update_dataset`
+
+Change the details you name: name, description, theme (DCAT-AP code such as ENVI or TRAN), maintainer, update_frequency, licence (ogl-uk-3.0, cc-by-4.0, cc0-1.0, dl-de-by-2.0), access (public or private; a dataset shown somewhere stays public) and tags.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `name` | string |  |  |
+| `description` | string |  |  |
+| `theme` | string |  | A DCAT-AP theme code (ENVI, TRAN, …) or "". |
+| `maintainer` | string |  | The team or role that keeps the dataset current. |
+| `update_frequency` | string |  | as_needed \| daily \| weekly \| monthly \| quarterly \| yearly \| never \| "". |
+| `licence` | string |  | ogl-uk-3.0 \| cc-by-4.0 \| cc0-1.0 \| dl-de-by-2.0 \| "". |
+| `privacy_class` | `public` \| `private` |  | Layer datasets only; a linked dataset stays public. |
+| `tags` | list of string |  | Replace the workspace tags. |
+| `dataset_id` | integer | **required** | A dataset id from list_datasets. |
+
+### `set_dataset_fields`
+
+Labels, types, descriptions and the private flag of named fields of a layer dataset. A private field never reaches a map, an export or the API.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `dataset_id` | integer | **required** | A dataset id from list_datasets. |
+| `fields` | list of object (`name`, `label`, `type`, `description`, `private`) | **required** |  |
+
+### `create_dataset_view`
+
+A named view of a dataset: on a layer, conditions on public fields (eq, in, gt, lt) and the fields it keeps; on collected answers, always a grid of counts with small groups hidden. Surveys and site map blocks can show a view instead of the whole dataset.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `name` | string | **required** |  |
+| `color` | string |  | #rrggbb |
+| `conditions` | list of object (`field`, `op`, `value`, `values`) |  | All must hold. Layer datasets only; collected answers are a grid. |
+| `fields` | list of string |  | Public fields the view keeps; empty = all. |
+| `dataset_id` | integer | **required** | A dataset id from list_datasets. |
+
+### `upload_dataset_version`
+
+A new file for a layer dataset, matched row by row on its key field. The job stops at preview with added, changed, removed and unchanged counts — nothing is saved until apply_dataset_version.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `dataset_id` | integer | **required** | A dataset id from list_datasets. |
+| `filename` | string | **required** | The file name with its extension: .geojson, .json, .csv, .kml, .gpkg or .zip (a shapefile). |
+| `content` | string |  | The file as text (GeoJSON, CSV, KML). |
+| `content_base64` | string |  | The file as base64 (GeoPackage, zipped shapefile, or any text format). |
+
+### `apply_dataset_version`
+
+Apply a previewed version with a note. Objects whose key stays are updated in place and keep their answers; every survey and site that shows the dataset shows the new version.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `job_id` | integer | **required** | The version job id. |
+| `note` | string |  | What changed. |
+
+### `link_dataset`
+
+Add a public layer dataset (or one of its views) to a survey's reference layers — linked, not copied, so an edit of the dataset shows on the survey. Up to 5,000 objects and 10 layers per survey. Owner role.
+
+Permission `surveys:write` · role **owner**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+| `dataset_id` | integer | **required** | A dataset id from list_datasets. |
+| `view_id` | integer |  | A view id from get_dataset. |
+
+### `unlink_dataset`
+
+Remove a linked dataset from a survey's reference layers; refused while a question of the survey shows it. Owner role.
+
+Permission `surveys:write` · role **owner**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+| `link_id` | integer | **required** | The link id link_dataset returned. |
 
 ## Errors
 

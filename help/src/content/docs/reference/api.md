@@ -88,12 +88,14 @@ Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `p
 
 ### `GET /surveys`
 
-Your surveys across the workspaces whose plan includes the API, newest first.
+Your surveys across the workspaces whose plan includes the API, newest first; `tag` keeps
+those carrying a workspace tag (its name or slug).
 
 | Parameter | In | Type | Required |
 |---|---|---|---|
 | `cursor` | query | string or null |  |
 | `limit` | query | integer |  |
+| `tag` | query | string or null |  |
 
 **200** SurveyList
 
@@ -168,6 +170,24 @@ Move the survey to the trash; it can be restored in the editor for 30 days.
 | `uuid` | path | uuid | yes |
 
 **204** no body
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `PUT /surveys/{uuid}/tags`
+
+Replace the survey's workspace tags. Editor role.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `tags` | list of string | yes | The survey's new tags (replacing the old ones); created in the workspace on first use, matched by slug, at most 40 characters each. |
+
+**200** SurveyOut
 
 Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
 
@@ -1058,7 +1078,7 @@ Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `p
 ### `GET /surveys/{uuid}/responses/summary`
 
 Counts and per-question statistics over the sessions the export of the
-same parameters contains: no empty, deleted or rejected responses unless
+same parameters contains: no empty, deleted, held or rejected responses unless
 `include_all`. Sub-questions of map questions are nested under them.
 
 | Parameter | In | Type | Required |
@@ -1123,7 +1143,7 @@ it checks again that you may read the survey and that its workspace is on Pro.
 |---|---|---|---|
 | `format` | `zip` | `xlsx` | `csv` | `gpkg` | `shp` | `kml` |  |  |
 | `version` | string or null |  | One version (`v3`), several separated by commas (`v10,v11`), or omit for every version. |
-| `include_all` | boolean |  | Also deleted and rejected responses. |
+| `include_all` | boolean |  | Also deleted, on-hold and rejected responses. |
 | `completed_only` | boolean |  | Only responses that reached the last section. |
 | `files` | boolean |  | Add uploaded files (turns a single-file format into a ZIP). |
 
@@ -1248,6 +1268,251 @@ Which sites may embed the survey (editor role); an empty list lets any site.
 
 Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
 
+## Datasets
+
+### `GET /datasets`
+
+The workspace's datasets you may see — layers, shared maps, answers to each map question,
+respondent rows — with their facts. Filter by `kind`, a `tag` (name or slug) or a name `q`.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `workspace` | query | string or null |  |
+| `kind` | query | string or null |  |
+| `tag` | query | string or null |  |
+| `q` | query | string or null |  |
+
+**200** object
+
+Errors: `bad_cursor`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `POST /datasets`
+
+A new workspace dataset from a GeoPackage, zipped shapefile, KML, GeoJSON or CSV, as a job.
+Poll `/dataset-jobs/{id}` until `status` is `done` or `failed`; it starts private.
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `file` | binary | yes |  |
+| `workspace` | string or null |  |  |
+
+**202** object
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `GET /datasets/{dataset_id}`
+
+One dataset: details, field dictionary (names and flags; private values never), views,
+versions and every place that uses it.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `dataset_id` | path | integer | yes |
+
+**200** object
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `PATCH /datasets/{dataset_id}`
+
+Details, access and tags; the fields you leave out keep their values.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `dataset_id` | path | integer | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `name` | string or null |  |  |
+| `description` | string or null |  |  |
+| `theme` | string or null |  | A DCAT-AP theme code (ENVI, TRAN, …) or "". |
+| `maintainer` | string or null |  | The team or role that keeps the dataset current. |
+| `update_frequency` | string or null |  | as_needed | daily | weekly | monthly | quarterly | yearly | never | "". |
+| `licence` | string or null |  | ogl-uk-3.0 | cc-by-4.0 | cc0-1.0 | dl-de-by-2.0 | "". |
+| `privacy_class` | `public` | `private` or null |  | Layer datasets only; a linked dataset stays public. |
+| `tags` | list of string or null |  | Replace the workspace tags. |
+
+**200** object
+
+Errors: `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `DELETE /datasets/{dataset_id}`
+
+Delete a dataset you uploaded; refused while a question shows it.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `dataset_id` | path | integer | yes |
+
+**200** object
+
+Errors: `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `GET /datasets/{dataset_id}/features`
+
+A layer dataset's objects as GeoJSON, without private fields. Collected answers leave only
+as a grid: create a view and read its features.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `dataset_id` | path | integer | yes |
+
+**200** no body
+
+Errors: `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `PUT /datasets/{dataset_id}/fields`
+
+Labels, types, descriptions and private flags of the named fields (layer datasets).
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `dataset_id` | path | integer | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `fields` | list of FieldIn | yes |  |
+
+**200** object
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `POST /datasets/{dataset_id}/versions`
+
+A new version of a layer dataset, matched by its key field. The job stops at `preview` with
+added / changed / removed / unchanged counts; apply it with `/dataset-jobs/{id}/apply`.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `dataset_id` | path | integer | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `file` | binary | yes |  |
+
+**202** object
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `GET /dataset-jobs/{job_id}`
+
+One of your dataset jobs: an upload, or a version (with its preview counts).
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `job_id` | path | integer | yes |
+
+**200** object
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `POST /dataset-jobs/{job_id}/apply`
+
+Apply a previewed version. Objects whose key stays keep their answers.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `job_id` | path | integer | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `note` | string |  | What changed, shown in the version history. |
+
+**202** object
+
+Errors: `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `POST /datasets/{dataset_id}/views`
+
+A saved view: conditions on public fields and the fields it keeps (layers), or a grid of
+counts (collected answers — the privacy class decides).
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `dataset_id` | path | integer | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `name` | string | yes |  |
+| `color` | string or null |  | #rrggbb |
+| `conditions` | list of ConditionIn |  | All must hold. Layer datasets only; collected answers are a grid. |
+| `fields` | list of string |  | Public fields the view keeps; empty = all. |
+
+**201** object
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `GET /datasets/{dataset_id}/views/{view_id}/features`
+
+A view's GeoJSON: the matching objects with its fields, or the grid cells with their counts.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `dataset_id` | path | integer | yes |
+| `view_id` | path | integer | yes |
+
+**200** no body
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `DELETE /datasets/{dataset_id}/views/{view_id}`
+
+Delete a view nothing shows.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `dataset_id` | path | integer | yes |
+| `view_id` | path | integer | yes |
+
+**200** object
+
+Errors: `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `POST /surveys/{uuid}/datasets`
+
+Show a public layer dataset (or a view of it) among the survey's reference layers — linked,
+not copied. Owner role on the survey.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `dataset` | integer | yes |  |
+| `view` | integer or null |  | A view of the dataset instead of all of it. |
+
+**201** object
+
+Errors: `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `DELETE /surveys/{uuid}/datasets/{link_id}`
+
+Stop showing a linked dataset; refused while a question of the survey shows it.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `link_id` | path | integer | yes |
+
+**200** object
+
+Errors: `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
 ## Objects
 
 ### DuplicateSurveyOut
@@ -1270,6 +1535,7 @@ Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `p
 | `closes_at` | date-time or null |  | End of the survey period (UTC): the survey closes by itself then. Null = no end. |
 | `schedule_timezone` | string |  | IANA zone the period was entered in; "" = UTC. |
 | `url` | string | yes |  |
+| `tags` | list of string |  | Workspace tags that group the survey with other items of one engagement. |
 | `created_at` | date-time | yes |  |
 | `updated_at` | date-time | yes |  |
 | `sections` | integer | yes |  |
@@ -1450,6 +1716,7 @@ Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `p
 | `closes_at` | date-time or null |  | End of the survey period (UTC): the survey closes by itself then. Null = no end. |
 | `schedule_timezone` | string |  | IANA zone the period was entered in; "" = UTC. |
 | `url` | string | yes |  |
+| `tags` | list of string |  | Workspace tags that group the survey with other items of one engagement. |
 | `created_at` | date-time | yes |  |
 | `updated_at` | date-time | yes |  |
 | `thanks_html` | object | yes |  |
@@ -1488,6 +1755,7 @@ Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `p
 | `closes_at` | date-time or null |  | End of the survey period (UTC): the survey closes by itself then. Null = no end. |
 | `schedule_timezone` | string |  | IANA zone the period was entered in; "" = UTC. |
 | `url` | string | yes |  |
+| `tags` | list of string |  | Workspace tags that group the survey with other items of one engagement. |
 | `created_at` | date-time | yes |  |
 | `updated_at` | date-time | yes |  |
 

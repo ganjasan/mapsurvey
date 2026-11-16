@@ -12857,3 +12857,614 @@ msgstr "Akun dengan email ini sudah ada."
 #: survey/templates/editor/whats_new.html
 msgid "Read the article"
 msgstr "Baca artikel"
+
+#: survey/templates/editor/partials/_export_modal.html:106
+msgid "Trashed, on-hold and not-approved responses are left out unless you switch this on."
+msgstr "Respons yang dihapus, ditangguhkan, dan tidak disetujui tidak disertakan kecuali Anda mengaktifkan ini."
+
+#: survey/templates/editor/partials/_moderated_sessions_line.html:10
+#, python-format
+msgid "including %(counter)s on hold"
+msgid_plural "including %(counter)s on hold"
+msgstr[0] "termasuk %(counter)s ditangguhkan"
+
+#: survey/templates/editor/partials/_moderated_sessions_line.html:10
+#, python-format
+msgid "%(counter)s not approved"
+msgid_plural "%(counter)s not approved"
+msgstr[0] "%(counter)s tidak disetujui"
+
+#: survey/templates/editor/public_results.html:153
+#, python-format
+msgid "The public map shows squares that count respondents; squares with fewer than %(k)s respondents are hidden. Exact points stay in Responses and the export."
+msgstr "Peta publik menampilkan kotak yang menghitung responden; kotak dengan kurang dari %(k)s responden disembunyikan. Titik yang tepat tetap ada di Respons dan ekspor."
+
+#: data/templates/data/catalogue.html
+msgid "Search datasets"
+msgstr "Cari dataset"
+
+#: data/templates/data/catalogue.html
+msgid "No dataset matches these filters."
+msgstr "Tidak ada dataset yang cocok dengan filter ini."
+
+#: data/models.py
+msgid "Layer"
+msgstr "Lapisan"
+
+#: data/models.py
+msgid "Shared map"
+msgstr "Peta bersama"
+
+#: data/models.py
+msgid "Aggregated"
+msgstr "Teragregasi"
+
+#: data/templates/data/catalogue.html
+msgid "Every place dataset of this workspace: the layers you uploaded or drew, and the answers your surveys collect. Counts only — individual answers stay in Responses."
+msgstr "Setiap dataset tempat di ruang kerja ini: lapisan yang Anda unggah atau gambar, dan jawaban yang dikumpulkan survei Anda. Hanya angka — jawaban perorangan tetap di Respons."
+
+#: data/templates/data/catalogue.html
+msgid "No data yet. Layers you add to a survey and the answers it collects will appear here."
+msgstr "Belum ada data. Lapisan yang Anda tambahkan ke survei dan jawaban yang dikumpulkannya akan muncul di sini."
+
+#: data/templates/data/catalogue.html
+#, python-format
+msgid "%(n)s row"
+msgid_plural "%(n)s rows"
+msgstr[0] "%(n)s baris"
+
+#: data/templates/data/catalogue.html
+#, python-format
+msgid "used in %(n)s place"
+msgid_plural "used in %(n)s places"
+msgstr[0] "dipakai di %(n)s tempat"
+
+#: data/templates/data/catalogue.html
+msgid "New dataset"
+msgstr "Dataset baru"
+
+#: data/templates/data/_jobs.html
+msgid "Kept private:"
+msgstr "Tetap privat:"
+
+#: data/templates/data/_jobs.html
+msgid "You can leave this page; the dataset will appear here when it is ready."
+msgstr "Anda boleh meninggalkan halaman ini; dataset akan muncul di sini saat siap."
+
+#: data/views.py
+msgid "Upload a GeoPackage (.gpkg), a zipped shapefile (.zip), KML, GeoJSON or a CSV with coordinate columns."
+msgstr "Unggah GeoPackage (.gpkg), shapefile dalam ZIP (.zip), KML, GeoJSON, atau CSV dengan kolom koordinat."
+
+#: data/views.py
+#, python-format
+msgid "The file is larger than %(mb)s MB, the limit for this workspace."
+msgstr "File lebih besar dari %(mb)s MB, batas ruang kerja ini."
+
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s object"
+msgid_plural "%(n)s objects"
+msgstr[0] "%(n)s objek"
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s row without a location skipped"
+msgid_plural "%(n)s rows without a location skipped"
+msgstr[0] "%(n)s baris tanpa lokasi dilewati"
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s duplicate key skipped"
+msgid_plural "%(n)s duplicate keys skipped"
+msgstr[0] "%(n)s kunci ganda dilewati"
+
+#: data/templates/data/dataset.html
+msgid "Breadcrumb"
+msgstr "Jejak navigasi"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "changed %(when)s"
+msgstr "diubah %(when)s"
+
+#: data/templates/data/dataset.html
+msgid "Open the source"
+msgstr "Buka sumber"
+
+#: data/templates/data/dataset.html
+msgid "Access"
+msgstr "Akses"
+
+#: data/templates/data/dataset.html
+msgid "Details"
+msgstr "Rincian"
+
+#: data/templates/data/dataset.html
+msgid "Theme"
+msgstr "Tema"
+
+#: data/templates/data/dataset.html
+msgid "Maintainer"
+msgstr "Pengelola"
+
+#: data/templates/data/dataset.html
+msgid "Team or role, e.g. Parks team"
+msgstr "Tim atau peran, mis. tim taman"
+
+#: data/templates/data/dataset.html
+msgid "Updated"
+msgstr "Pembaruan"
+
+#: data/templates/data/dataset.html
+msgid "Licence"
+msgstr "Lisensi"
+
+#: data/templates/data/dataset.html
+msgid "Save details"
+msgstr "Simpan rincian"
+
+#: data/templates/data/dataset.html
+msgid "Fields"
+msgstr "Kolom"
+
+#: data/templates/data/dataset.html
+msgid "Labels replace the raw names on object cards and in downloads. A private field stays on this page and in the object editor: no map, export, download or API shows it."
+msgstr "Label menggantikan nama mentah pada kartu objek dan unduhan. Kolom privat tetap di halaman ini dan di editor objek: tidak ada peta, ekspor, unduhan, atau API yang menampilkannya."
+
+#: data/templates/data/dataset.html
+msgid "Label"
+msgstr "Label"
+
+#: data/templates/data/dataset.html
+msgid "Type"
+msgstr "Tipe"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Label of %(name)s"
+msgstr "Label %(name)s"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Type of %(name)s"
+msgstr "Tipe %(name)s"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Description of %(name)s"
+msgstr "Deskripsi %(name)s"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "%(name)s is private"
+msgstr "%(name)s privat"
+
+#: data/templates/data/dataset.html
+msgid "Save fields"
+msgstr "Simpan kolom"
+
+#: data/templates/data/dataset.html
+msgid "The objects of this layer carry no fields yet."
+msgstr "Objek pada lapisan ini belum memiliki kolom."
+
+#: data/views.py
+msgid "Details saved."
+msgstr "Rincian disimpan."
+
+#: data/views.py
+msgid "Field dictionary saved."
+msgstr "Kamus kolom disimpan."
+
+#: data/models.py
+msgid "Agriculture, fisheries, forestry and food"
+msgstr "Pertanian, perikanan, kehutanan, dan pangan"
+
+#: data/models.py
+msgid "Economy and finance"
+msgstr "Ekonomi dan keuangan"
+
+#: data/models.py
+msgid "Education, culture and sport"
+msgstr "Pendidikan, budaya, dan olahraga"
+
+#: data/models.py
+msgid "Energy"
+msgstr "Energi"
+
+#: data/models.py
+msgid "Environment"
+msgstr "Lingkungan"
+
+#: data/models.py
+msgid "Government and public sector"
+msgstr "Pemerintahan dan sektor publik"
+
+#: data/models.py
+msgid "Health"
+msgstr "Kesehatan"
+
+#: data/models.py
+msgid "International issues"
+msgstr "Isu internasional"
+
+#: data/models.py
+msgid "Justice, legal system and public safety"
+msgstr "Keadilan, sistem hukum, dan keamanan publik"
+
+#: data/models.py
+msgid "Regions and cities"
+msgstr "Wilayah dan kota"
+
+#: data/models.py
+msgid "Population and society"
+msgstr "Kependudukan dan masyarakat"
+
+#: data/models.py
+msgid "Science and technology"
+msgstr "Ilmu pengetahuan dan teknologi"
+
+#: data/models.py
+msgid "Transport"
+msgstr "Transportasi"
+
+#: data/models.py
+msgid "As needed"
+msgstr "Sesuai kebutuhan"
+
+#: data/models.py
+msgid "Daily"
+msgstr "Harian"
+
+#: data/models.py
+msgid "Weekly"
+msgstr "Mingguan"
+
+#: data/models.py
+msgid "Monthly"
+msgstr "Bulanan"
+
+#: data/models.py
+msgid "Quarterly"
+msgstr "Triwulanan"
+
+#: data/models.py
+msgid "Yearly"
+msgstr "Tahunan"
+
+#: data/models.py
+msgid "Never updated"
+msgstr "Tidak pernah diperbarui"
+
+#: data/models.py
+msgid "The team or role that keeps the dataset current."
+msgstr "Tim atau peran yang menjaga dataset tetap mutakhir."
+
+#: data/links.py
+msgid "Only a layer dataset can be shown on a map."
+msgstr "Hanya dataset lapisan yang dapat ditampilkan di peta."
+
+#: data/links.py
+msgid "This dataset is private. Make it public on its page in Data first."
+msgstr "Dataset ini privat. Jadikan publik terlebih dahulu di halamannya di Data."
+
+#: data/links.py
+msgid "This layer already belongs to the survey."
+msgstr "Lapisan ini sudah milik survei."
+
+#: data/links.py
+#, python-format
+msgid "The dataset has %(n)s objects; a survey map takes up to %(max)s."
+msgstr "Dataset memiliki %(n)s objek; peta survei menampung hingga %(max)s."
+
+#: data/links.py
+#, python-format
+msgid "The dataset is larger than %(mb)s MB, the limit for a survey map."
+msgstr "Dataset lebih besar dari %(mb)s MB, batas peta survei."
+
+#: data/links.py
+#, python-format
+msgid "A survey has at most %(n)s reference layers."
+msgstr "Survei memiliki paling banyak %(n)s lapisan referensi."
+
+#: data/links.py
+msgid "Only a dataset of this workspace can be linked."
+msgstr "Hanya dataset dari ruang kerja ini yang dapat ditautkan."
+
+#: data/links.py
+#, python-format
+msgid "The question “%(name)s” shows this layer. Remove the question or pick another layer first."
+msgstr "Pertanyaan “%(name)s” menampilkan lapisan ini. Hapus pertanyaan atau pilih lapisan lain terlebih dahulu."
+
+#: data/links.py
+msgid "Pick a dataset of this workspace."
+msgstr "Pilih dataset dari ruang kerja ini."
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "From Data"
+msgstr "Dari Data"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Open in Data"
+msgstr "Buka di Data"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Unlink"
+msgstr "Lepas tautan"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Fields on the object card"
+msgstr "Kolom pada kartu objek"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "pick a dataset"
+msgstr "pilih dataset"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Linked, not copied: an edit of the dataset shows on this survey's map."
+msgstr "Ditautkan, bukan disalin: perubahan dataset tampil di peta survei ini."
+
+#: survey/templates/sites/_block_form.html
+msgid "The map shows"
+msgstr "Peta menampilkan"
+
+#: survey/templates/sites/_block_form.html
+msgid "The uploaded project area"
+msgstr "Area proyek yang diunggah"
+
+#: survey/templates/sites/_block_form.html
+#, python-format
+msgid "Dataset: %(name)s"
+msgstr "Dataset: %(name)s"
+
+#: data/views.py
+msgid "Linked datasets stay public. Unlink it from every survey and site below first."
+msgstr "Dataset yang ditautkan tetap publik. Lepaskan dulu tautannya dari setiap survei dan situs di bawah."
+
+#: data/views.py
+msgid "Dataset deleted."
+msgstr "Dataset dihapus."
+
+#: data/templates/data/dataset.html
+msgid "Used by"
+msgstr "Digunakan oleh"
+
+#: data/templates/data/dataset.html
+msgid "Belongs to survey"
+msgstr "Milik survei"
+
+#: data/templates/data/dataset.html
+msgid "No survey or site shows this dataset yet. Add it to a survey from its Reference layers card, or to a Site map block."
+msgstr "Belum ada survei atau situs yang menampilkan dataset ini. Tambahkan ke survei dari kartu Lapisan referensinya, atau ke blok peta Situs."
+
+#: data/templates/data/dataset.html
+msgid "Delete dataset"
+msgstr "Hapus dataset"
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "Delete “%(name)s”?"
+msgstr "Hapus “%(name)s”?"
+
+#: data/templates/data/delete.html
+msgid "No survey or site uses it."
+msgstr "Tidak ada survei atau situs yang menggunakannya."
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "The question “%(name)s” shows this dataset. Remove the question or pick another layer for it first."
+msgstr "Pertanyaan “%(name)s” menampilkan dataset ini. Hapus pertanyaan atau pilih lapisan lain untuknya terlebih dahulu."
+
+#: data/templates/data/delete.html
+msgid "Surveys and sites stop showing it, and its objects are deleted. This cannot be undone."
+msgstr "Survei dan situs berhenti menampilkannya, dan objeknya dihapus. Tindakan ini tidak dapat dibatalkan."
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "It is used in %(n)s place:"
+msgid_plural "It is used in %(n)s places:"
+msgstr[0] "Digunakan di %(n)s tempat:"
+
+#: data/templates/data/dataset.html
+msgid "Upload new version"
+msgstr "Unggah versi baru"
+
+#: data/templates/data/dataset.html
+msgid "New versions are matched row by row on a key column. This dataset has none, so a new version needs a new upload."
+msgstr "Versi baru dicocokkan baris demi baris berdasarkan kolom kunci. Dataset ini tidak memilikinya, jadi versi baru memerlukan unggahan baru."
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Rows are matched on “%(key)s”. Objects whose key stays keep their answers."
+msgstr "Baris dicocokkan berdasarkan “%(key)s”. Objek yang kuncinya tetap mempertahankan jawabannya."
+
+#: data/templates/data/dataset.html
+msgid "Applying the new version…"
+msgstr "Menerapkan versi baru…"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Reading %(name)s…"
+msgstr "Membaca %(name)s…"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "%(a)s added · %(c)s changed · %(r)s removed · %(u)s unchanged"
+msgstr "%(a)s ditambahkan · %(c)s diubah · %(r)s dihapus · %(u)s tidak berubah"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Skipped: %(k)s rows without a key, %(d)s repeated keys."
+msgstr "Dilewati: %(k)s baris tanpa kunci, %(d)s kunci berulang."
+
+#: data/templates/data/dataset.html
+msgid "What changed"
+msgstr "Apa yang berubah"
+
+#: data/templates/data/dataset.html
+msgid "What changed, e.g. Spring 2027 inspection"
+msgstr "Apa yang berubah, mis. inspeksi musim semi 2027"
+
+#: data/templates/data/dataset.html
+msgid "Apply version"
+msgstr "Terapkan versi"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Version %(n)s applied."
+msgstr "Versi %(n)s diterapkan."
+
+#: data/templates/data/dataset.html
+msgid "Author"
+msgstr "Penulis"
+
+#: data/templates/data/dataset.html
+msgid "Note"
+msgstr "Catatan"
+
+#: data/templates/data/dataset.html
+msgid "Changes"
+msgstr "Perubahan"
+
+#: data/templates/data/dataset.html
+msgid "First upload"
+msgstr "Unggahan pertama"
+
+#: data/templates/data/dataset.html
+msgid "Original — no new version uploaded yet."
+msgstr "Asli — belum ada versi baru yang diunggah."
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "%(n)s answer about a removed object will be deleted."
+msgid_plural "%(n)s answers about removed objects will be deleted."
+msgstr[0] "%(n)s jawaban tentang objek yang dihapus akan ikut dihapus."
+
+#: data/dataviews.py
+msgid "Views are made of layers and of map answers."
+msgstr "Tampilan dibuat dari lapisan dan jawaban peta."
+
+#: data/dataviews.py
+msgid "Give the view a name."
+msgstr "Beri nama tampilan."
+
+#: data/dataviews.py
+msgid "A condition can only use a public field of this dataset."
+msgstr "Kondisi hanya dapat memakai kolom publik dataset ini."
+
+#: data/dataviews.py
+msgid "“Greater than” and “less than” need a number."
+msgstr "“Lebih dari” dan “kurang dari” memerlukan angka."
+
+#: data/dataviews.py
+msgid "A view can only keep public fields of this dataset."
+msgstr "Tampilan hanya dapat menyimpan kolom publik dataset ini."
+
+#: data/links.py
+msgid "Pick a view of this dataset."
+msgstr "Pilih tampilan dataset ini."
+
+#: data/links.py
+msgid "A grid of counts can be shown on a site, not as a survey layer."
+msgstr "Kisi hitungan dapat ditampilkan di situs, bukan sebagai lapisan survei."
+
+#: data/views.py
+msgid "View saved."
+msgstr "Tampilan disimpan."
+
+#: data/views.py
+#, python-format
+msgid "“%(name)s” is shown in a survey or on a site. Unlink it there first."
+msgstr "“%(name)s” ditampilkan di survei atau situs. Lepaskan tautannya di sana terlebih dahulu."
+
+#: data/models.py
+msgid "Grid of counts"
+msgstr "Kisi hitungan"
+
+#: data/templates/data/dataset.html
+msgid "Views"
+msgstr "Tampilan"
+
+#: data/templates/data/dataset.html
+msgid "A view of collected answers is a grid of counts: how many respondents marked each cell, small groups hidden. It can be shown in a Site map block."
+msgstr "Tampilan jawaban yang terkumpul adalah kisi hitungan: berapa responden menandai tiap sel, kelompok kecil disembunyikan. Dapat ditampilkan di blok peta Situs."
+
+#: data/templates/data/dataset.html
+msgid "A view keeps the objects that match its conditions, with the fields you choose. Surveys and site map blocks can show a view instead of the whole dataset."
+msgstr "Tampilan menyimpan objek yang memenuhi kondisinya, dengan kolom pilihan Anda. Survei dan blok peta situs dapat menampilkan tampilan, bukan seluruh dataset."
+
+#: data/templates/data/dataset.html
+msgid "grid of counts"
+msgstr "kisi hitungan"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Delete view %(name)s"
+msgstr "Hapus tampilan %(name)s"
+
+#: data/templates/data/dataset.html
+msgid "New view"
+msgstr "Tampilan baru"
+
+#: data/templates/data/dataset.html
+msgid "Show objects where"
+msgstr "Tampilkan objek dengan"
+
+#: data/templates/data/dataset.html
+msgid "Field"
+msgstr "Kolom"
+
+#: data/templates/data/dataset.html
+msgid "Condition"
+msgstr "Kondisi"
+
+#: data/templates/data/dataset.html
+msgid "is"
+msgstr "sama dengan"
+
+#: data/templates/data/dataset.html
+msgid "is one of"
+msgstr "salah satu dari"
+
+#: data/templates/data/dataset.html
+msgid "greater than"
+msgstr "lebih dari"
+
+#: data/templates/data/dataset.html
+msgid "less than"
+msgstr "kurang dari"
+
+#: data/templates/data/dataset.html
+msgid "Value"
+msgstr "Nilai"
+
+#: data/templates/data/dataset.html
+msgid "Fields it keeps"
+msgstr "Kolom yang disimpan"
+
+#: data/templates/data/dataset.html
+msgid "Save view"
+msgstr "Simpan tampilan"
+
+#: survey/templates/sites/public.html
+msgid "respondents"
+msgstr "responden"
+
+#: data/templates/data/dataset.html
+msgid "Comma-separated, e.g. Riverside plan 2027"
+msgstr "Pisahkan dengan koma, mis. Rencana Riverside 2027"
+
+#: data/templates/data/dataset.html
+msgid "Tags group the datasets and surveys of one engagement; the Data list and the survey dashboard filter by them."
+msgstr "Tag mengelompokkan dataset dan survei dari satu kegiatan partisipasi; daftar Data dan dasbor survei memfilter menurutnya."
+
+#: survey/public_results.py
+#, python-format
+msgid "Not enough answers yet to show this map without revealing anyone: areas with fewer than %(k)s people stay hidden."
+msgstr "Jawaban belum cukup untuk menampilkan peta ini tanpa mengungkap siapa pun: area dengan kurang dari %(k)s orang tetap disembunyikan."
+
+#: survey/public_results.py
+#, python-format
+msgid "%(n)s respondent is in an area with fewer than %(k)s people and is not shown."
+msgid_plural "%(n)s respondents are in areas with fewer than %(k)s people and are not shown."
+msgstr[0] "%(n)s responden berada di area dengan kurang dari %(k)s orang dan tidak ditampilkan."

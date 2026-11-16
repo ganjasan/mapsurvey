@@ -186,10 +186,11 @@ def unlink_survey(actor, site, link):
 
 RAW_KEYS = ('body', 'alt', 'caption', 'label', 'url', 'style', 'size', 'button_label', 'description',
             'current', 'color', 'basemap', 'wide', 'viz', 'date', 'start', 'end', 'tz', 'place',
-            'place_url', 'capacity', 'open', 'address', 'hours', 'columns', 'before_label', 'after_label')
+            'place_url', 'capacity', 'open', 'address', 'hours', 'columns', 'before_label', 'after_label',
+            'dataset')
 
 # Error key → the posted fields it is about (an error on a field left empty waits under autosave).
-_ERROR_FIELDS = {'question': ('results_question',), 'area': ('geojson_file',), 'people': ('person_email',),
+_ERROR_FIELDS = {'question': ('results_question',), 'area': ('geojson_file',), 'dataset': ('dataset',), 'people': ('person_email',),
                  'image': ('image',), 'files': ('files',), 'pictures': ('pictures',), 'before': ('before',),
                  'after': ('after',)}
 
@@ -371,6 +372,9 @@ def save_block(actor, site, block, kind, fields, files=None, *, creating=False, 
         if kind == 'results':
             block.site_survey = results_link
         block.save()
+        if kind == 'map':   # the block's "used by" record (change data-links)
+            from data.links import sync_site_block
+            sync_site_block(block, data.get('dataset'), data.get('view'))
         for f, title in renames.items():
             f.title = title
             f.save(update_fields=['title'])
@@ -415,6 +419,9 @@ def duplicate_block(actor, site, block):
         for f in block.files.all():
             SiteFile.objects.create(block=copy, file=f.file.name, title=f.title, size=f.size,
                                     content_type=f.content_type, order=f.order)
+        if copy.kind == 'map':
+            from data.links import sync_site_block
+            sync_site_block(copy, (copy.data or {}).get('dataset'), (copy.data or {}).get('view'))
         move_after(site, copy, block.pk)
     touched(site)
     return copy

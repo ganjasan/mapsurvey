@@ -8,8 +8,13 @@ from collections import defaultdict
 
 from django.db.models import Q
 
+from data.scope import SessionScope
+
 from .models import Answer, Question
 
+# Responses' object statistics: trashed sessions out, moderated ones in (the creator
+# moderates on that page). Public callers narrow further with `session_ids`.
+RESPONSES_SCOPE = SessionScope((), include_moderated=True)
 
 def sub_questions_of(question):
     return list(Question.objects.filter(parent_question_id=question).order_by('order_number', 'id'))
@@ -29,7 +34,7 @@ def object_aggregates(question, session_ids=None, excluded_session_ids=None, inc
     by_code = {q.code: q for q in subs}
     qs = (Answer.objects
           .filter(question__in=subs, layer_object__isnull=False)
-          .exclude(survey_session__is_deleted=True)
+          .filter(RESPONSES_SCOPE.related_q('survey_session'))
           .select_related('layer_object', 'question'))
     if session_ids is not None:
         qs = qs.filter(survey_session_id__in=session_ids)
@@ -151,7 +156,7 @@ def layer_object_stats(layer, excluded_session_ids=None):
         sessions = defaultdict(set)
         rows = (Answer.objects
                 .filter(question__parent_question_id=question, layer_object__isnull=False)
-                .exclude(survey_session__is_deleted=True))
+                .filter(RESPONSES_SCOPE.related_q('survey_session')))
         if excluded_session_ids:
             rows = rows.exclude(survey_session_id__in=excluded_session_ids)
         for key, sid in rows.values_list('layer_object__key', 'survey_session_id'):
@@ -170,15 +175,13 @@ def shared_map_tallies(layer, shared_only=True):
     shared-map-layer). Counts 👍/👎 sub-answers and non-hidden text
     sub-answers of every SHARED sub-question (Question.share_with_respondents)
     under the questions bound to the layer, over clean sessions only."""
-    from .public_results import EXCLUDED_VALIDATION_STATUSES
     rows = (Answer.objects
             .filter(layer_object__layer=layer,
                     question__parent_question_id__layer=layer,
                     question__parent_question_id__input_type='layer_objects',
                     question__input_type__in=('thumbs', 'text', 'text_line'),
-                    hidden=False,
-                    survey_session__is_deleted=False)
-            .exclude(survey_session__validation_status__in=EXCLUDED_VALIDATION_STATUSES))
+                    hidden=False)
+            .filter(SessionScope(()).related_q('survey_session')))
     if shared_only:
         # What RESPONDENTS see; the creator's export (shared_map_verdicts)
         # counts every answer.
@@ -196,14 +199,12 @@ def shared_map_tallies(layer, shared_only=True):
 
 def shared_map_comments(obj, limit=10):
     """Newest non-hidden comments on one mark, as plain strings, no author."""
-    from .public_results import EXCLUDED_VALIDATION_STATUSES
     rows = (Answer.objects
             .filter(layer_object=obj, hidden=False,
                     question__input_type__in=('text', 'text_line'),
                     question__share_with_respondents=True,
-                    question__parent_question_id__input_type='layer_objects',
-                    survey_session__is_deleted=False)
-            .exclude(survey_session__validation_status__in=EXCLUDED_VALIDATION_STATUSES)
+                    question__parent_question_id__input_type='layer_objects')
+            .filter(SessionScope(()).related_q('survey_session'))
             .exclude(text__isnull=True).exclude(text='')
             .order_by('-id')
             .values_list('text', flat=True)[:limit])

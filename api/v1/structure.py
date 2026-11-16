@@ -11,8 +11,8 @@ from uuid import UUID
 from ninja import Router, Status
 
 from survey import icon_search
-from survey.analytics import nonempty_sessions
-from survey.models import AuditLog, Membership, Question, QuestionGroup, SurveyHeader, SurveySection, SurveySession
+from data.scope import SessionScope
+from survey.models import AuditLog, Membership, Question, QuestionGroup, SurveyHeader, SurveySection
 from survey.permissions import ORG_ROLE_RANK
 from survey.services import groups as svc_groups
 from survey.services import publishing as svc_publishing
@@ -247,7 +247,8 @@ def _version(header, current, published):
         'published_at': published.get(header.version_number),
         'sections': SurveySection.objects.filter(survey_header=header).count(),
         'questions': Question.objects.filter(survey_section__survey_header=header).count(),
-        'responses': nonempty_sessions(SurveySession.objects.filter(survey=header)).count(),
+        # Non-trashed answered sessions (moderated ones included), as Responses counts.
+        'responses': SessionScope([header.id], include_moderated=True, nonempty=True).sessions().count(),
     }
 
 

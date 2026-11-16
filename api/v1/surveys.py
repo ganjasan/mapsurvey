@@ -18,7 +18,7 @@ from .auth import Bearer
 from .docs import errors, list_errors
 from .pagination import page
 from .schemas import (
-    DraftPublishIn, PublishIn, SurveyCreateIn, SurveyDetailOut, SurveyList, SurveyOut, SurveyPatchIn,
+    DraftPublishIn, PublishIn, SurveyCreateIn, SurveyDetailOut, SurveyList, SurveyOut, SurveyPatchIn, SurveyTagsIn,
 )
 
 router = Router(tags=['Surveys'])
@@ -47,10 +47,20 @@ def _visible_surveys(principal):
     return qs, hidden
 
 
+def tag_filter(qs, tag):
+    """Surveys carrying the workspace tag `tag` (a name or its slug) — change data-tags."""
+    if not tag:
+        return qs
+    from django.utils.text import slugify
+    return qs.filter(tags__slug=slugify(tag, allow_unicode=True)).distinct()
+
+
 @router.get('/surveys', response=SurveyList, auth=READ, openapi_extra=list_errors())
-def list_surveys(request, cursor: Optional[str] = None, limit: int = 50):
-    """Your surveys across the workspaces whose plan includes the API, newest first."""
+def list_surveys(request, cursor: Optional[str] = None, limit: int = 50, tag: Optional[str] = None):
+    """Your surveys across the workspaces whose plan includes the API, newest first; `tag` keeps
+    those carrying a workspace tag (its name or slug)."""
     qs, hidden = _visible_surveys(request.principal)
+    qs = tag_filter(qs, tag).prefetch_related('tags')
     items, next_cursor = page(qs, f'surveys:{request.principal.user.pk}', cursor, limit)
     return {'items': [out.survey(s) for s in items], 'next_cursor': next_cursor, 'hidden_by_plan': hidden}
 
@@ -102,6 +112,16 @@ def get_survey(request, uuid: UUID):
 
 SETTINGS_FIELDS = ('name', 'redirect_url', 'languages', 'visibility', 'basemaps', 'default_basemap',
                    'show_branding')
+
+
+@router.put('/surveys/{uuid}/tags', response=SurveyOut, auth=WRITE, openapi_extra=errors())
+def put_survey_tags(request, uuid: UUID, payload: SurveyTagsIn):
+    """Replace the survey's workspace tags. Editor role."""
+    from data.tags import set_tags
+    survey = deps.survey(request, uuid, role='editor')
+    set_tags(survey.organization, survey, payload.tags)
+    survey.refresh_from_db()
+    return out.survey(survey)
 
 
 @router.patch('/surveys/{uuid}', response=SurveyDetailOut, auth=WRITE, openapi_extra=errors(409))

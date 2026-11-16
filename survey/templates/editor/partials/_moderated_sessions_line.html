@@ -1,0 +1,12 @@
+{% load i18n %}
+{% comment %}
+Moderated responses in the Responses headline (change data-scope, ADR-001 §6.5): Responses
+keeps on-hold and not-approved sessions (the creator moderates here), so it says how many of
+the shown responses they are. Renders nothing when there are none.
+Context: moderated = {'on_hold': n, 'not_approved': m} or None.
+{% endcomment %}
+{% if moderated.on_hold or moderated.not_approved %}
+<span class="rv2-empty-line" data-testid="rv2-moderated-sessions">
+    {% if moderated.on_hold %}{% blocktrans count counter=moderated.on_hold %}including {{ counter }} on hold{% plural %}including {{ counter }} on hold{% endblocktrans %}{% endif %}{% if moderated.on_hold and moderated.not_approved %} · {% endif %}{% if moderated.not_approved %}{% blocktrans count counter=moderated.not_approved %}{{ counter }} not approved{% plural %}{{ counter }} not approved{% endblocktrans %}{% endif %}
+</span>
+{% endif %}

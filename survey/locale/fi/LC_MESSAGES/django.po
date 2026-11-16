@@ -12857,3 +12857,624 @@ msgstr "Tällä sähköpostiosoitteella on jo tili."
 #: survey/templates/editor/whats_new.html
 msgid "Read the article"
 msgstr "Lue artikkeli"
+
+#: survey/templates/editor/partials/_export_modal.html:106
+msgid "Trashed, on-hold and not-approved responses are left out unless you switch this on."
+msgstr "Poistetut, odottavat ja hyväksymättömät vastaukset jätetään pois, ellet ota tätä käyttöön."
+
+#: survey/templates/editor/partials/_moderated_sessions_line.html:10
+#, python-format
+msgid "including %(counter)s on hold"
+msgid_plural "including %(counter)s on hold"
+msgstr[0] "joista %(counter)s odottaa"
+msgstr[1] "joista %(counter)s odottaa"
+
+#: survey/templates/editor/partials/_moderated_sessions_line.html:10
+#, python-format
+msgid "%(counter)s not approved"
+msgid_plural "%(counter)s not approved"
+msgstr[0] "%(counter)s hyväksymätön"
+msgstr[1] "%(counter)s hyväksymätöntä"
+
+#: survey/templates/editor/public_results.html:153
+#, python-format
+msgid "The public map shows squares that count respondents; squares with fewer than %(k)s respondents are hidden. Exact points stay in Responses and the export."
+msgstr "Julkinen kartta näyttää ruutuja, jotka laskevat vastaajia; ruudut, joissa on alle %(k)s vastaajaa, piilotetaan. Tarkat pisteet pysyvät Vastauksissa ja viennissä."
+
+#: data/templates/data/catalogue.html
+msgid "Search datasets"
+msgstr "Hae aineistoja"
+
+#: data/templates/data/catalogue.html
+msgid "No dataset matches these filters."
+msgstr "Mikään aineisto ei vastaa näitä suodattimia."
+
+#: data/models.py
+msgid "Layer"
+msgstr "Taso"
+
+#: data/models.py
+msgid "Shared map"
+msgstr "Jaettu kartta"
+
+#: data/models.py
+msgid "Aggregated"
+msgstr "Koottu"
+
+#: data/templates/data/catalogue.html
+msgid "Every place dataset of this workspace: the layers you uploaded or drew, and the answers your surveys collect. Counts only — individual answers stay in Responses."
+msgstr "Tämän työtilan kaikki paikka-aineistot: lataamasi tai piirtämäsi tasot ja kyselyjesi keräämät vastaukset. Vain lukumäärät — yksittäiset vastaukset pysyvät Vastauksissa."
+
+#: data/templates/data/catalogue.html
+msgid "No data yet. Layers you add to a survey and the answers it collects will appear here."
+msgstr "Ei vielä aineistoja. Kyselyyn lisäämäsi tasot ja sen keräämät vastaukset näkyvät täällä."
+
+#: data/templates/data/catalogue.html
+#, python-format
+msgid "%(n)s row"
+msgid_plural "%(n)s rows"
+msgstr[0] "%(n)s rivi"
+msgstr[1] "%(n)s riviä"
+
+#: data/templates/data/catalogue.html
+#, python-format
+msgid "used in %(n)s place"
+msgid_plural "used in %(n)s places"
+msgstr[0] "käytössä %(n)s paikassa"
+msgstr[1] "käytössä %(n)s paikassa"
+
+#: data/templates/data/catalogue.html
+msgid "New dataset"
+msgstr "Uusi aineisto"
+
+#: data/templates/data/_jobs.html
+msgid "Kept private:"
+msgstr "Pidetty yksityisenä:"
+
+#: data/templates/data/_jobs.html
+msgid "You can leave this page; the dataset will appear here when it is ready."
+msgstr "Voit poistua tältä sivulta; aineisto ilmestyy tähän, kun se on valmis."
+
+#: data/views.py
+msgid "Upload a GeoPackage (.gpkg), a zipped shapefile (.zip), KML, GeoJSON or a CSV with coordinate columns."
+msgstr "Lataa GeoPackage (.gpkg), pakattu shapefile (.zip), KML, GeoJSON tai CSV, jossa on koordinaattisarakkeet."
+
+#: data/views.py
+#, python-format
+msgid "The file is larger than %(mb)s MB, the limit for this workspace."
+msgstr "Tiedosto on suurempi kuin %(mb)s Mt, tämän työtilan raja."
+
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s object"
+msgid_plural "%(n)s objects"
+msgstr[0] "%(n)s kohde"
+msgstr[1] "%(n)s kohdetta"
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s row without a location skipped"
+msgid_plural "%(n)s rows without a location skipped"
+msgstr[0] "%(n)s sijainniton rivi ohitettiin"
+msgstr[1] "%(n)s sijainnitonta riviä ohitettiin"
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s duplicate key skipped"
+msgid_plural "%(n)s duplicate keys skipped"
+msgstr[0] "%(n)s kaksoisavain ohitettiin"
+msgstr[1] "%(n)s kaksoisavainta ohitettiin"
+
+#: data/templates/data/dataset.html
+msgid "Breadcrumb"
+msgstr "Murupolku"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "changed %(when)s"
+msgstr "muutettu %(when)s"
+
+#: data/templates/data/dataset.html
+msgid "Open the source"
+msgstr "Avaa lähde"
+
+#: data/templates/data/dataset.html
+msgid "Access"
+msgstr "Käyttöoikeus"
+
+#: data/templates/data/dataset.html
+msgid "Details"
+msgstr "Tiedot"
+
+#: data/templates/data/dataset.html
+msgid "Theme"
+msgstr "Teema"
+
+#: data/templates/data/dataset.html
+msgid "Maintainer"
+msgstr "Ylläpitäjä"
+
+#: data/templates/data/dataset.html
+msgid "Team or role, e.g. Parks team"
+msgstr "Tiimi tai rooli, esim. puistotiimi"
+
+#: data/templates/data/dataset.html
+msgid "Updated"
+msgstr "Päivitys"
+
+#: data/templates/data/dataset.html
+msgid "Licence"
+msgstr "Lisenssi"
+
+#: data/templates/data/dataset.html
+msgid "Save details"
+msgstr "Tallenna tiedot"
+
+#: data/templates/data/dataset.html
+msgid "Fields"
+msgstr "Kentät"
+
+#: data/templates/data/dataset.html
+msgid "Labels replace the raw names on object cards and in downloads. A private field stays on this page and in the object editor: no map, export, download or API shows it."
+msgstr "Nimikkeet korvaavat raakanimet kohdekorteissa ja latauksissa. Yksityinen kenttä pysyy tällä sivulla ja kohde-editorissa: mikään kartta, vienti, lataus tai API ei näytä sitä."
+
+#: data/templates/data/dataset.html
+msgid "Label"
+msgstr "Nimike"
+
+#: data/templates/data/dataset.html
+msgid "Type"
+msgstr "Tyyppi"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Label of %(name)s"
+msgstr "Kentän %(name)s nimike"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Type of %(name)s"
+msgstr "Kentän %(name)s tyyppi"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Description of %(name)s"
+msgstr "Kentän %(name)s kuvaus"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "%(name)s is private"
+msgstr "%(name)s on yksityinen"
+
+#: data/templates/data/dataset.html
+msgid "Save fields"
+msgstr "Tallenna kentät"
+
+#: data/templates/data/dataset.html
+msgid "The objects of this layer carry no fields yet."
+msgstr "Tämän tason kohteilla ei ole vielä kenttiä."
+
+#: data/views.py
+msgid "Details saved."
+msgstr "Tiedot tallennettu."
+
+#: data/views.py
+msgid "Field dictionary saved."
+msgstr "Kenttäsanasto tallennettu."
+
+#: data/models.py
+msgid "Agriculture, fisheries, forestry and food"
+msgstr "Maatalous, kalastus, metsätalous ja elintarvikkeet"
+
+#: data/models.py
+msgid "Economy and finance"
+msgstr "Talous ja raha-asiat"
+
+#: data/models.py
+msgid "Education, culture and sport"
+msgstr "Koulutus, kulttuuri ja urheilu"
+
+#: data/models.py
+msgid "Energy"
+msgstr "Energia"
+
+#: data/models.py
+msgid "Environment"
+msgstr "Ympäristö"
+
+#: data/models.py
+msgid "Government and public sector"
+msgstr "Hallinto ja julkinen sektori"
+
+#: data/models.py
+msgid "Health"
+msgstr "Terveys"
+
+#: data/models.py
+msgid "International issues"
+msgstr "Kansainväliset kysymykset"
+
+#: data/models.py
+msgid "Justice, legal system and public safety"
+msgstr "Oikeus, oikeusjärjestelmä ja yleinen turvallisuus"
+
+#: data/models.py
+msgid "Regions and cities"
+msgstr "Alueet ja kaupungit"
+
+#: data/models.py
+msgid "Population and society"
+msgstr "Väestö ja yhteiskunta"
+
+#: data/models.py
+msgid "Science and technology"
+msgstr "Tiede ja teknologia"
+
+#: data/models.py
+msgid "Transport"
+msgstr "Liikenne"
+
+#: data/models.py
+msgid "As needed"
+msgstr "Tarpeen mukaan"
+
+#: data/models.py
+msgid "Daily"
+msgstr "Päivittäin"
+
+#: data/models.py
+msgid "Weekly"
+msgstr "Viikoittain"
+
+#: data/models.py
+msgid "Monthly"
+msgstr "Kuukausittain"
+
+#: data/models.py
+msgid "Quarterly"
+msgstr "Neljännesvuosittain"
+
+#: data/models.py
+msgid "Yearly"
+msgstr "Vuosittain"
+
+#: data/models.py
+msgid "Never updated"
+msgstr "Ei päivitetä"
+
+#: data/models.py
+msgid "The team or role that keeps the dataset current."
+msgstr "Tiimi tai rooli, joka pitää aineiston ajan tasalla."
+
+#: data/links.py
+msgid "Only a layer dataset can be shown on a map."
+msgstr "Kartalla voi näyttää vain tason aineiston."
+
+#: data/links.py
+msgid "This dataset is private. Make it public on its page in Data first."
+msgstr "Tämä aineisto on yksityinen. Tee siitä ensin julkinen sen sivulla kohdassa Data."
+
+#: data/links.py
+msgid "This layer already belongs to the survey."
+msgstr "Tämä taso kuuluu jo kyselyyn."
+
+#: data/links.py
+#, python-format
+msgid "The dataset has %(n)s objects; a survey map takes up to %(max)s."
+msgstr "Aineistossa on %(n)s kohdetta; kyselyn karttaan mahtuu enintään %(max)s."
+
+#: data/links.py
+#, python-format
+msgid "The dataset is larger than %(mb)s MB, the limit for a survey map."
+msgstr "Aineisto on suurempi kuin %(mb)s Mt, kyselykartan raja."
+
+#: data/links.py
+#, python-format
+msgid "A survey has at most %(n)s reference layers."
+msgstr "Kyselyssä on enintään %(n)s viitetasoa."
+
+#: data/links.py
+msgid "Only a dataset of this workspace can be linked."
+msgstr "Vain tämän työtilan aineiston voi linkittää."
+
+#: data/links.py
+#, python-format
+msgid "The question “%(name)s” shows this layer. Remove the question or pick another layer first."
+msgstr "Kysymys ”%(name)s” näyttää tämän tason. Poista ensin kysymys tai valitse toinen taso."
+
+#: data/links.py
+msgid "Pick a dataset of this workspace."
+msgstr "Valitse tämän työtilan aineisto."
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "From Data"
+msgstr "Datasta"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Open in Data"
+msgstr "Avaa Datassa"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Unlink"
+msgstr "Poista linkitys"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Fields on the object card"
+msgstr "Kentät kohdekortissa"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "pick a dataset"
+msgstr "valitse aineisto"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Linked, not copied: an edit of the dataset shows on this survey's map."
+msgstr "Linkitetty, ei kopioitu: aineiston muutos näkyy tämän kyselyn kartalla."
+
+#: survey/templates/sites/_block_form.html
+msgid "The map shows"
+msgstr "Kartta näyttää"
+
+#: survey/templates/sites/_block_form.html
+msgid "The uploaded project area"
+msgstr "Ladattu hankealue"
+
+#: survey/templates/sites/_block_form.html
+#, python-format
+msgid "Dataset: %(name)s"
+msgstr "Aineisto: %(name)s"
+
+#: data/views.py
+msgid "Linked datasets stay public. Unlink it from every survey and site below first."
+msgstr "Linkitetyt aineistot pysyvät julkisina. Poista ensin linkitys jokaisesta alla olevasta kyselystä ja sivustosta."
+
+#: data/views.py
+msgid "Dataset deleted."
+msgstr "Aineisto poistettu."
+
+#: data/templates/data/dataset.html
+msgid "Used by"
+msgstr "Käytössä"
+
+#: data/templates/data/dataset.html
+msgid "Belongs to survey"
+msgstr "Kuuluu kyselyyn"
+
+#: data/templates/data/dataset.html
+msgid "No survey or site shows this dataset yet. Add it to a survey from its Reference layers card, or to a Site map block."
+msgstr "Mikään kysely tai sivusto ei vielä näytä tätä aineistoa. Lisää se kyselyyn sen Viitetasot-kortilta tai sivuston karttalohkoon."
+
+#: data/templates/data/dataset.html
+msgid "Delete dataset"
+msgstr "Poista aineisto"
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "Delete “%(name)s”?"
+msgstr "Poistetaanko ”%(name)s”?"
+
+#: data/templates/data/delete.html
+msgid "No survey or site uses it."
+msgstr "Mikään kysely tai sivusto ei käytä sitä."
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "The question “%(name)s” shows this dataset. Remove the question or pick another layer for it first."
+msgstr "Kysymys ”%(name)s” näyttää tämän aineiston. Poista ensin kysymys tai valitse sille toinen taso."
+
+#: data/templates/data/delete.html
+msgid "Surveys and sites stop showing it, and its objects are deleted. This cannot be undone."
+msgstr "Kyselyt ja sivustot lakkaavat näyttämästä sitä, ja sen kohteet poistetaan. Tätä ei voi perua."
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "It is used in %(n)s place:"
+msgid_plural "It is used in %(n)s places:"
+msgstr[0] "Sitä käytetään %(n)s paikassa:"
+msgstr[1] "Sitä käytetään %(n)s paikassa:"
+
+#: data/templates/data/dataset.html
+msgid "Upload new version"
+msgstr "Lataa uusi versio"
+
+#: data/templates/data/dataset.html
+msgid "New versions are matched row by row on a key column. This dataset has none, so a new version needs a new upload."
+msgstr "Uudet versiot yhdistetään rivi riviltä avainsarakkeen perusteella. Tällä aineistolla sitä ei ole, joten uusi versio vaatii uuden latauksen."
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Rows are matched on “%(key)s”. Objects whose key stays keep their answers."
+msgstr "Rivit yhdistetään kentän ”%(key)s” perusteella. Kohteet, joiden avain pysyy, säilyttävät vastauksensa."
+
+#: data/templates/data/dataset.html
+msgid "Applying the new version…"
+msgstr "Uutta versiota otetaan käyttöön…"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Reading %(name)s…"
+msgstr "Luetaan %(name)s…"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "%(a)s added · %(c)s changed · %(r)s removed · %(u)s unchanged"
+msgstr "%(a)s lisätty · %(c)s muutettu · %(r)s poistettu · %(u)s ennallaan"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Skipped: %(k)s rows without a key, %(d)s repeated keys."
+msgstr "Ohitettu: %(k)s riviä ilman avainta, %(d)s toistuvaa avainta."
+
+#: data/templates/data/dataset.html
+msgid "What changed"
+msgstr "Mikä muuttui"
+
+#: data/templates/data/dataset.html
+msgid "What changed, e.g. Spring 2027 inspection"
+msgstr "Mikä muuttui, esim. kevään 2027 tarkastus"
+
+#: data/templates/data/dataset.html
+msgid "Apply version"
+msgstr "Ota versio käyttöön"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Version %(n)s applied."
+msgstr "Versio %(n)s otettu käyttöön."
+
+#: data/templates/data/dataset.html
+msgid "Author"
+msgstr "Tekijä"
+
+#: data/templates/data/dataset.html
+msgid "Note"
+msgstr "Huomautus"
+
+#: data/templates/data/dataset.html
+msgid "Changes"
+msgstr "Muutokset"
+
+#: data/templates/data/dataset.html
+msgid "First upload"
+msgstr "Ensimmäinen lataus"
+
+#: data/templates/data/dataset.html
+msgid "Original — no new version uploaded yet."
+msgstr "Alkuperäinen — uutta versiota ei ole vielä ladattu."
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "%(n)s answer about a removed object will be deleted."
+msgid_plural "%(n)s answers about removed objects will be deleted."
+msgstr[0] "%(n)s vastaus poistetusta kohteesta poistetaan."
+msgstr[1] "%(n)s vastausta poistetuista kohteista poistetaan."
+
+#: data/dataviews.py
+msgid "Views are made of layers and of map answers."
+msgstr "Näkymiä tehdään tasoista ja karttavastauksista."
+
+#: data/dataviews.py
+msgid "Give the view a name."
+msgstr "Anna näkymälle nimi."
+
+#: data/dataviews.py
+msgid "A condition can only use a public field of this dataset."
+msgstr "Ehto voi käyttää vain tämän aineiston julkista kenttää."
+
+#: data/dataviews.py
+msgid "“Greater than” and “less than” need a number."
+msgstr "”Suurempi kuin” ja ”pienempi kuin” vaativat luvun."
+
+#: data/dataviews.py
+msgid "A view can only keep public fields of this dataset."
+msgstr "Näkymä voi säilyttää vain tämän aineiston julkisia kenttiä."
+
+#: data/links.py
+msgid "Pick a view of this dataset."
+msgstr "Valitse tämän aineiston näkymä."
+
+#: data/links.py
+msgid "A grid of counts can be shown on a site, not as a survey layer."
+msgstr "Määräruudukon voi näyttää sivustolla, ei kyselyn tasona."
+
+#: data/views.py
+msgid "View saved."
+msgstr "Näkymä tallennettu."
+
+#: data/views.py
+#, python-format
+msgid "“%(name)s” is shown in a survey or on a site. Unlink it there first."
+msgstr "”%(name)s” näkyy kyselyssä tai sivustolla. Poista ensin linkitys sieltä."
+
+#: data/models.py
+msgid "Grid of counts"
+msgstr "Määräruudukko"
+
+#: data/templates/data/dataset.html
+msgid "Views"
+msgstr "Näkymät"
+
+#: data/templates/data/dataset.html
+msgid "A view of collected answers is a grid of counts: how many respondents marked each cell, small groups hidden. It can be shown in a Site map block."
+msgstr "Kerättyjen vastausten näkymä on määräruudukko: kuinka moni vastaaja merkitsi kunkin solun, pienet ryhmät piilotettuina. Sen voi näyttää sivuston karttalohkossa."
+
+#: data/templates/data/dataset.html
+msgid "A view keeps the objects that match its conditions, with the fields you choose. Surveys and site map blocks can show a view instead of the whole dataset."
+msgstr "Näkymä säilyttää ehtonsa täyttävät kohteet valitsemillasi kentillä. Kyselyt ja sivustojen karttalohkot voivat näyttää näkymän koko aineiston sijaan."
+
+#: data/templates/data/dataset.html
+msgid "grid of counts"
+msgstr "määräruudukko"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Delete view %(name)s"
+msgstr "Poista näkymä %(name)s"
+
+#: data/templates/data/dataset.html
+msgid "New view"
+msgstr "Uusi näkymä"
+
+#: data/templates/data/dataset.html
+msgid "Show objects where"
+msgstr "Näytä kohteet, joissa"
+
+#: data/templates/data/dataset.html
+msgid "Field"
+msgstr "Kenttä"
+
+#: data/templates/data/dataset.html
+msgid "Condition"
+msgstr "Ehto"
+
+#: data/templates/data/dataset.html
+msgid "is"
+msgstr "on"
+
+#: data/templates/data/dataset.html
+msgid "is one of"
+msgstr "on jokin näistä"
+
+#: data/templates/data/dataset.html
+msgid "greater than"
+msgstr "suurempi kuin"
+
+#: data/templates/data/dataset.html
+msgid "less than"
+msgstr "pienempi kuin"
+
+#: data/templates/data/dataset.html
+msgid "Value"
+msgstr "Arvo"
+
+#: data/templates/data/dataset.html
+msgid "Fields it keeps"
+msgstr "Kentät, jotka se säilyttää"
+
+#: data/templates/data/dataset.html
+msgid "Save view"
+msgstr "Tallenna näkymä"
+
+#: survey/templates/sites/public.html
+msgid "respondents"
+msgstr "vastaajaa"
+
+#: data/templates/data/dataset.html
+msgid "Comma-separated, e.g. Riverside plan 2027"
+msgstr "Pilkuilla erotettuina, esim. Riverside-suunnitelma 2027"
+
+#: data/templates/data/dataset.html
+msgid "Tags group the datasets and surveys of one engagement; the Data list and the survey dashboard filter by them."
+msgstr "Tunnisteet ryhmittelevät yhden osallistamishankkeen aineistot ja kyselyt; Data-luettelo ja kyselyjen kojelauta suodattavat niiden mukaan."
+
+#: survey/public_results.py
+#, python-format
+msgid "Not enough answers yet to show this map without revealing anyone: areas with fewer than %(k)s people stay hidden."
+msgstr "Vastauksia ei ole vielä tarpeeksi, jotta kartan voisi näyttää paljastamatta ketään: alueet, joilla on alle %(k)s ihmistä, pysyvät piilossa."
+
+#: survey/public_results.py
+#, python-format
+msgid "%(n)s respondent is in an area with fewer than %(k)s people and is not shown."
+msgid_plural "%(n)s respondents are in areas with fewer than %(k)s people and are not shown."
+msgstr[0] "%(n)s vastaaja on alueella, jolla on alle %(k)s ihmistä, eikä häntä näytetä."
+msgstr[1] "%(n)s vastaajaa on alueilla, joilla on alle %(k)s ihmistä, eikä heitä näytetä."

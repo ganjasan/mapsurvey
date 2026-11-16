@@ -12921,3 +12921,624 @@ msgstr "Já existe uma conta com este email."
 #: survey/templates/editor/whats_new.html
 msgid "Read the article"
 msgstr "Ler o artigo"
+
+#: survey/templates/editor/partials/_export_modal.html:106
+msgid "Trashed, on-hold and not-approved responses are left out unless you switch this on."
+msgstr "As respostas eliminadas, em espera e não aprovadas ficam de fora, a menos que ative esta opção."
+
+#: survey/templates/editor/partials/_moderated_sessions_line.html:10
+#, python-format
+msgid "including %(counter)s on hold"
+msgid_plural "including %(counter)s on hold"
+msgstr[0] "incluindo %(counter)s em espera"
+msgstr[1] "incluindo %(counter)s em espera"
+
+#: survey/templates/editor/partials/_moderated_sessions_line.html:10
+#, python-format
+msgid "%(counter)s not approved"
+msgid_plural "%(counter)s not approved"
+msgstr[0] "%(counter)s não aprovada"
+msgstr[1] "%(counter)s não aprovadas"
+
+#: survey/templates/editor/public_results.html:153
+#, python-format
+msgid "The public map shows squares that count respondents; squares with fewer than %(k)s respondents are hidden. Exact points stay in Responses and the export."
+msgstr "O mapa público mostra quadrados que contam inquiridos; os quadrados com menos de %(k)s inquiridos ficam ocultos. Os pontos exatos continuam em Respostas e na exportação."
+
+#: data/templates/data/catalogue.html
+msgid "Search datasets"
+msgstr "Pesquisar conjuntos de dados"
+
+#: data/templates/data/catalogue.html
+msgid "No dataset matches these filters."
+msgstr "Nenhum conjunto de dados corresponde a estes filtros."
+
+#: data/models.py
+msgid "Layer"
+msgstr "Camada"
+
+#: data/models.py
+msgid "Shared map"
+msgstr "Mapa partilhado"
+
+#: data/models.py
+msgid "Aggregated"
+msgstr "Agregado"
+
+#: data/templates/data/catalogue.html
+msgid "Every place dataset of this workspace: the layers you uploaded or drew, and the answers your surveys collect. Counts only — individual answers stay in Responses."
+msgstr "Cada conjunto de dados de lugares deste espaço: as camadas que carregou ou desenhou e as respostas que os seus inquéritos recolhem. Só contagens — as respostas individuais ficam em Respostas."
+
+#: data/templates/data/catalogue.html
+msgid "No data yet. Layers you add to a survey and the answers it collects will appear here."
+msgstr "Ainda não há dados. As camadas que adicionar a um inquérito e as respostas recolhidas aparecerão aqui."
+
+#: data/templates/data/catalogue.html
+#, python-format
+msgid "%(n)s row"
+msgid_plural "%(n)s rows"
+msgstr[0] "%(n)s linha"
+msgstr[1] "%(n)s linhas"
+
+#: data/templates/data/catalogue.html
+#, python-format
+msgid "used in %(n)s place"
+msgid_plural "used in %(n)s places"
+msgstr[0] "usado em %(n)s lugar"
+msgstr[1] "usado em %(n)s lugares"
+
+#: data/templates/data/catalogue.html
+msgid "New dataset"
+msgstr "Novo conjunto de dados"
+
+#: data/templates/data/_jobs.html
+msgid "Kept private:"
+msgstr "Mantido privado:"
+
+#: data/templates/data/_jobs.html
+msgid "You can leave this page; the dataset will appear here when it is ready."
+msgstr "Pode sair desta página; o conjunto de dados aparecerá aqui quando estiver pronto."
+
+#: data/views.py
+msgid "Upload a GeoPackage (.gpkg), a zipped shapefile (.zip), KML, GeoJSON or a CSV with coordinate columns."
+msgstr "Carregue um GeoPackage (.gpkg), um shapefile em ZIP (.zip), KML, GeoJSON ou um CSV com colunas de coordenadas."
+
+#: data/views.py
+#, python-format
+msgid "The file is larger than %(mb)s MB, the limit for this workspace."
+msgstr "O ficheiro tem mais de %(mb)s MB, o limite deste espaço."
+
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s object"
+msgid_plural "%(n)s objects"
+msgstr[0] "%(n)s objeto"
+msgstr[1] "%(n)s objetos"
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s row without a location skipped"
+msgid_plural "%(n)s rows without a location skipped"
+msgstr[0] "%(n)s linha sem localização ignorada"
+msgstr[1] "%(n)s linhas sem localização ignoradas"
+
+#: data/templates/data/_jobs.html
+#, python-format
+msgid "%(n)s duplicate key skipped"
+msgid_plural "%(n)s duplicate keys skipped"
+msgstr[0] "%(n)s chave duplicada ignorada"
+msgstr[1] "%(n)s chaves duplicadas ignoradas"
+
+#: data/templates/data/dataset.html
+msgid "Breadcrumb"
+msgstr "Trilho de navegação"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "changed %(when)s"
+msgstr "alterado em %(when)s"
+
+#: data/templates/data/dataset.html
+msgid "Open the source"
+msgstr "Abrir a origem"
+
+#: data/templates/data/dataset.html
+msgid "Access"
+msgstr "Acesso"
+
+#: data/templates/data/dataset.html
+msgid "Details"
+msgstr "Detalhes"
+
+#: data/templates/data/dataset.html
+msgid "Theme"
+msgstr "Tema"
+
+#: data/templates/data/dataset.html
+msgid "Maintainer"
+msgstr "Responsável"
+
+#: data/templates/data/dataset.html
+msgid "Team or role, e.g. Parks team"
+msgstr "Equipa ou função, p. ex. equipa de parques"
+
+#: data/templates/data/dataset.html
+msgid "Updated"
+msgstr "Atualização"
+
+#: data/templates/data/dataset.html
+msgid "Licence"
+msgstr "Licença"
+
+#: data/templates/data/dataset.html
+msgid "Save details"
+msgstr "Guardar os detalhes"
+
+#: data/templates/data/dataset.html
+msgid "Fields"
+msgstr "Campos"
+
+#: data/templates/data/dataset.html
+msgid "Labels replace the raw names on object cards and in downloads. A private field stays on this page and in the object editor: no map, export, download or API shows it."
+msgstr "Os rótulos substituem os nomes originais nas fichas de objeto e nas transferências. Um campo privado fica nesta página e no editor de objetos: nenhum mapa, exportação, transferência ou API o mostra."
+
+#: data/templates/data/dataset.html
+msgid "Label"
+msgstr "Rótulo"
+
+#: data/templates/data/dataset.html
+msgid "Type"
+msgstr "Tipo"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Label of %(name)s"
+msgstr "Rótulo de %(name)s"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Type of %(name)s"
+msgstr "Tipo de %(name)s"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Description of %(name)s"
+msgstr "Descrição de %(name)s"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "%(name)s is private"
+msgstr "%(name)s é privado"
+
+#: data/templates/data/dataset.html
+msgid "Save fields"
+msgstr "Guardar os campos"
+
+#: data/templates/data/dataset.html
+msgid "The objects of this layer carry no fields yet."
+msgstr "Os objetos desta camada ainda não têm campos."
+
+#: data/views.py
+msgid "Details saved."
+msgstr "Detalhes guardados."
+
+#: data/views.py
+msgid "Field dictionary saved."
+msgstr "Dicionário de campos guardado."
+
+#: data/models.py
+msgid "Agriculture, fisheries, forestry and food"
+msgstr "Agricultura, pescas, silvicultura e alimentação"
+
+#: data/models.py
+msgid "Economy and finance"
+msgstr "Economia e finanças"
+
+#: data/models.py
+msgid "Education, culture and sport"
+msgstr "Educação, cultura e desporto"
+
+#: data/models.py
+msgid "Energy"
+msgstr "Energia"
+
+#: data/models.py
+msgid "Environment"
+msgstr "Ambiente"
+
+#: data/models.py
+msgid "Government and public sector"
+msgstr "Governo e setor público"
+
+#: data/models.py
+msgid "Health"
+msgstr "Saúde"
+
+#: data/models.py
+msgid "International issues"
+msgstr "Questões internacionais"
+
+#: data/models.py
+msgid "Justice, legal system and public safety"
+msgstr "Justiça, sistema jurídico e segurança pública"
+
+#: data/models.py
+msgid "Regions and cities"
+msgstr "Regiões e cidades"
+
+#: data/models.py
+msgid "Population and society"
+msgstr "População e sociedade"
+
+#: data/models.py
+msgid "Science and technology"
+msgstr "Ciência e tecnologia"
+
+#: data/models.py
+msgid "Transport"
+msgstr "Transportes"
+
+#: data/models.py
+msgid "As needed"
+msgstr "Conforme necessário"
+
+#: data/models.py
+msgid "Daily"
+msgstr "Diária"
+
+#: data/models.py
+msgid "Weekly"
+msgstr "Semanal"
+
+#: data/models.py
+msgid "Monthly"
+msgstr "Mensal"
+
+#: data/models.py
+msgid "Quarterly"
+msgstr "Trimestral"
+
+#: data/models.py
+msgid "Yearly"
+msgstr "Anual"
+
+#: data/models.py
+msgid "Never updated"
+msgstr "Nunca atualizado"
+
+#: data/models.py
+msgid "The team or role that keeps the dataset current."
+msgstr "A equipa ou função que mantém o conjunto de dados atualizado."
+
+#: data/links.py
+msgid "Only a layer dataset can be shown on a map."
+msgstr "Só um conjunto de dados de camada pode ser mostrado num mapa."
+
+#: data/links.py
+msgid "This dataset is private. Make it public on its page in Data first."
+msgstr "Este conjunto de dados é privado. Torne-o primeiro público na sua página em Dados."
+
+#: data/links.py
+msgid "This layer already belongs to the survey."
+msgstr "Esta camada já pertence ao inquérito."
+
+#: data/links.py
+#, python-format
+msgid "The dataset has %(n)s objects; a survey map takes up to %(max)s."
+msgstr "O conjunto de dados tem %(n)s objetos; um mapa de inquérito aceita até %(max)s."
+
+#: data/links.py
+#, python-format
+msgid "The dataset is larger than %(mb)s MB, the limit for a survey map."
+msgstr "O conjunto de dados tem mais de %(mb)s MB, o limite de um mapa de inquérito."
+
+#: data/links.py
+#, python-format
+msgid "A survey has at most %(n)s reference layers."
+msgstr "Um inquérito tem no máximo %(n)s camadas de referência."
+
+#: data/links.py
+msgid "Only a dataset of this workspace can be linked."
+msgstr "Só é possível ligar um conjunto de dados deste espaço."
+
+#: data/links.py
+#, python-format
+msgid "The question “%(name)s” shows this layer. Remove the question or pick another layer first."
+msgstr "A pergunta «%(name)s» mostra esta camada. Remova primeiro a pergunta ou escolha outra camada."
+
+#: data/links.py
+msgid "Pick a dataset of this workspace."
+msgstr "Escolha um conjunto de dados deste espaço."
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "From Data"
+msgstr "Dos Dados"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Open in Data"
+msgstr "Abrir em Dados"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Unlink"
+msgstr "Remover ligação"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Fields on the object card"
+msgstr "Campos na ficha do objeto"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "pick a dataset"
+msgstr "escolha um conjunto de dados"
+
+#: survey/templates/editor/partials/survey_settings_panel.html
+msgid "Linked, not copied: an edit of the dataset shows on this survey's map."
+msgstr "Ligado, não copiado: uma alteração do conjunto de dados aparece no mapa deste inquérito."
+
+#: survey/templates/sites/_block_form.html
+msgid "The map shows"
+msgstr "O mapa mostra"
+
+#: survey/templates/sites/_block_form.html
+msgid "The uploaded project area"
+msgstr "A área do projeto carregada"
+
+#: survey/templates/sites/_block_form.html
+#, python-format
+msgid "Dataset: %(name)s"
+msgstr "Conjunto de dados: %(name)s"
+
+#: data/views.py
+msgid "Linked datasets stay public. Unlink it from every survey and site below first."
+msgstr "Os conjuntos de dados ligados continuam públicos. Desligue-o primeiro de cada inquérito e site abaixo."
+
+#: data/views.py
+msgid "Dataset deleted."
+msgstr "Conjunto de dados eliminado."
+
+#: data/templates/data/dataset.html
+msgid "Used by"
+msgstr "Usado em"
+
+#: data/templates/data/dataset.html
+msgid "Belongs to survey"
+msgstr "Pertence ao inquérito"
+
+#: data/templates/data/dataset.html
+msgid "No survey or site shows this dataset yet. Add it to a survey from its Reference layers card, or to a Site map block."
+msgstr "Nenhum inquérito ou site mostra ainda este conjunto de dados. Adicione-o a um inquérito a partir do cartão Camadas de referência, ou a um bloco de mapa de um site."
+
+#: data/templates/data/dataset.html
+msgid "Delete dataset"
+msgstr "Eliminar o conjunto de dados"
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "Delete “%(name)s”?"
+msgstr "Eliminar «%(name)s»?"
+
+#: data/templates/data/delete.html
+msgid "No survey or site uses it."
+msgstr "Nenhum inquérito ou site o usa."
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "The question “%(name)s” shows this dataset. Remove the question or pick another layer for it first."
+msgstr "A pergunta «%(name)s» mostra este conjunto de dados. Remova primeiro a pergunta ou escolha outra camada para ela."
+
+#: data/templates/data/delete.html
+msgid "Surveys and sites stop showing it, and its objects are deleted. This cannot be undone."
+msgstr "Os inquéritos e os sites deixam de o mostrar e os seus objetos são eliminados. Não é possível anular."
+
+#: data/templates/data/delete.html
+#, python-format
+msgid "It is used in %(n)s place:"
+msgid_plural "It is used in %(n)s places:"
+msgstr[0] "É usado em %(n)s lugar:"
+msgstr[1] "É usado em %(n)s lugares:"
+
+#: data/templates/data/dataset.html
+msgid "Upload new version"
+msgstr "Carregar nova versão"
+
+#: data/templates/data/dataset.html
+msgid "New versions are matched row by row on a key column. This dataset has none, so a new version needs a new upload."
+msgstr "As novas versões são emparelhadas linha a linha por uma coluna-chave. Este conjunto de dados não tem nenhuma, por isso uma nova versão precisa de um novo carregamento."
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Rows are matched on “%(key)s”. Objects whose key stays keep their answers."
+msgstr "As linhas são emparelhadas por «%(key)s». Os objetos cuja chave se mantém conservam as suas respostas."
+
+#: data/templates/data/dataset.html
+msgid "Applying the new version…"
+msgstr "A aplicar a nova versão…"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Reading %(name)s…"
+msgstr "A ler %(name)s…"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "%(a)s added · %(c)s changed · %(r)s removed · %(u)s unchanged"
+msgstr "%(a)s adicionados · %(c)s alterados · %(r)s removidos · %(u)s sem alterações"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Skipped: %(k)s rows without a key, %(d)s repeated keys."
+msgstr "Ignoradas: %(k)s linhas sem chave, %(d)s chaves repetidas."
+
+#: data/templates/data/dataset.html
+msgid "What changed"
+msgstr "O que mudou"
+
+#: data/templates/data/dataset.html
+msgid "What changed, e.g. Spring 2027 inspection"
+msgstr "O que mudou, p. ex. inspeção da primavera de 2027"
+
+#: data/templates/data/dataset.html
+msgid "Apply version"
+msgstr "Aplicar a versão"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Version %(n)s applied."
+msgstr "Versão %(n)s aplicada."
+
+#: data/templates/data/dataset.html
+msgid "Author"
+msgstr "Autor"
+
+#: data/templates/data/dataset.html
+msgid "Note"
+msgstr "Nota"
+
+#: data/templates/data/dataset.html
+msgid "Changes"
+msgstr "Alterações"
+
+#: data/templates/data/dataset.html
+msgid "First upload"
+msgstr "Primeiro carregamento"
+
+#: data/templates/data/dataset.html
+msgid "Original — no new version uploaded yet."
+msgstr "Original — ainda não foi carregada nenhuma nova versão."
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "%(n)s answer about a removed object will be deleted."
+msgid_plural "%(n)s answers about removed objects will be deleted."
+msgstr[0] "%(n)s resposta sobre um objeto removido será eliminada."
+msgstr[1] "%(n)s respostas sobre objetos removidos serão eliminadas."
+
+#: data/dataviews.py
+msgid "Views are made of layers and of map answers."
+msgstr "As vistas fazem-se de camadas e de respostas no mapa."
+
+#: data/dataviews.py
+msgid "Give the view a name."
+msgstr "Dê um nome à vista."
+
+#: data/dataviews.py
+msgid "A condition can only use a public field of this dataset."
+msgstr "Uma condição só pode usar um campo público deste conjunto de dados."
+
+#: data/dataviews.py
+msgid "“Greater than” and “less than” need a number."
+msgstr "«Maior que» e «menor que» precisam de um número."
+
+#: data/dataviews.py
+msgid "A view can only keep public fields of this dataset."
+msgstr "Uma vista só pode manter campos públicos deste conjunto de dados."
+
+#: data/links.py
+msgid "Pick a view of this dataset."
+msgstr "Escolha uma vista deste conjunto de dados."
+
+#: data/links.py
+msgid "A grid of counts can be shown on a site, not as a survey layer."
+msgstr "Uma grelha de contagens pode ser mostrada num site, não como camada de inquérito."
+
+#: data/views.py
+msgid "View saved."
+msgstr "Vista guardada."
+
+#: data/views.py
+#, python-format
+msgid "“%(name)s” is shown in a survey or on a site. Unlink it there first."
+msgstr "«%(name)s» é mostrada num inquérito ou num site. Desligue-a lá primeiro."
+
+#: data/models.py
+msgid "Grid of counts"
+msgstr "Grelha de contagens"
+
+#: data/templates/data/dataset.html
+msgid "Views"
+msgstr "Vistas"
+
+#: data/templates/data/dataset.html
+msgid "A view of collected answers is a grid of counts: how many respondents marked each cell, small groups hidden. It can be shown in a Site map block."
+msgstr "Uma vista de respostas recolhidas é uma grelha de contagens: quantos inquiridos marcaram cada célula, com os grupos pequenos ocultos. Pode ser mostrada num bloco de mapa de um site."
+
+#: data/templates/data/dataset.html
+msgid "A view keeps the objects that match its conditions, with the fields you choose. Surveys and site map blocks can show a view instead of the whole dataset."
+msgstr "Uma vista mantém os objetos que cumprem as suas condições, com os campos que escolher. Os inquéritos e os blocos de mapa dos sites podem mostrar uma vista em vez de todo o conjunto de dados."
+
+#: data/templates/data/dataset.html
+msgid "grid of counts"
+msgstr "grelha de contagens"
+
+#: data/templates/data/dataset.html
+#, python-format
+msgid "Delete view %(name)s"
+msgstr "Eliminar a vista %(name)s"
+
+#: data/templates/data/dataset.html
+msgid "New view"
+msgstr "Nova vista"
+
+#: data/templates/data/dataset.html
+msgid "Show objects where"
+msgstr "Mostrar os objetos em que"
+
+#: data/templates/data/dataset.html
+msgid "Field"
+msgstr "Campo"
+
+#: data/templates/data/dataset.html
+msgid "Condition"
+msgstr "Condição"
+
+#: data/templates/data/dataset.html
+msgid "is"
+msgstr "é"
+
+#: data/templates/data/dataset.html
+msgid "is one of"
+msgstr "é um de"
+
+#: data/templates/data/dataset.html
+msgid "greater than"
+msgstr "maior que"
+
+#: data/templates/data/dataset.html
+msgid "less than"
+msgstr "menor que"
+
+#: data/templates/data/dataset.html
+msgid "Value"
+msgstr "Valor do campo"
+
+#: data/templates/data/dataset.html
+msgid "Fields it keeps"
+msgstr "Campos que mantém"
+
+#: data/templates/data/dataset.html
+msgid "Save view"
+msgstr "Guardar a vista"
+
+#: survey/templates/sites/public.html
+msgid "respondents"
+msgstr "inquiridos"
+
+#: data/templates/data/dataset.html
+msgid "Comma-separated, e.g. Riverside plan 2027"
+msgstr "Separadas por vírgulas, p. ex. Plano Riverside 2027"
+
+#: data/templates/data/dataset.html
+msgid "Tags group the datasets and surveys of one engagement; the Data list and the survey dashboard filter by them."
+msgstr "As etiquetas agrupam os conjuntos de dados e os inquéritos de um mesmo processo participativo; a lista de Dados e o painel de inquéritos filtram por elas."
+
+#: survey/public_results.py
+#, python-format
+msgid "Not enough answers yet to show this map without revealing anyone: areas with fewer than %(k)s people stay hidden."
+msgstr "Ainda não há respostas suficientes para mostrar este mapa sem revelar ninguém: as áreas com menos de %(k)s pessoas ficam ocultas."
+
+#: survey/public_results.py
+#, python-format
+msgid "%(n)s respondent is in an area with fewer than %(k)s people and is not shown."
+msgid_plural "%(n)s respondents are in areas with fewer than %(k)s people and are not shown."
+msgstr[0] "%(n)s inquirido está numa área com menos de %(k)s pessoas e não é mostrado."
+msgstr[1] "%(n)s inquiridos estão em áreas com menos de %(k)s pessoas e não são mostrados."

@@ -26,7 +26,7 @@ from .registry import args_model, tool
 SURVEY = (UUID, Field(description='The survey uuid (from list_surveys).'))
 QUESTION = (int, Field(description='A question id from get_survey.'))
 VERSION = (Optional[str], Field(None, description='One version (v3), several separated by commas (v10,v11), or omit for every version.'))
-INCLUDE_ALL = (bool, Field(False, description='Also count deleted and rejected responses.'))
+INCLUDE_ALL = (bool, Field(False, description='Also count deleted, on-hold and rejected responses.'))
 COMPLETED_ONLY = (bool, Field(False, description='Only responses that reached the last section.'))
 SCOPE_FIELDS = dict(version=VERSION, include_all=INCLUDE_ALL, completed_only=COMPLETED_ONLY)
 
@@ -144,7 +144,7 @@ def get_export_link(request, args):
     'moderate_response',
     title='Approve, hold or reject a response',
     description=(
-        'Set a response\'s status: approved, on_hold, not_approved (rejected responses leave exports, '
+        'Set a response\'s status: approved, on_hold, not_approved (held and rejected responses leave exports, '
         'summaries and public results), or "" to clear it. It can be changed back. Needs the editor role.'
     ),
     scope=scopes.RESPONSES_MODERATE, role='editor', idempotent=True,

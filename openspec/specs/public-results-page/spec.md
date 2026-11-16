@@ -30,7 +30,7 @@ Making the results page live SHALL be an explicit, prominent action in the Publi
 - **THEN** the publishing widget shows "Draft — not live yet" with a link into the Publish space
 
 ### Requirement: Human-readable visualization names and masking note honesty
-Visualization selects SHALL show human labels (e.g. "Markers", "Heatmap", "Bar chart", "Pie", "Donut", "Table") while storing the existing values. The "Small groups are masked to protect privacy." note SHALL render only when `k_anonymity_threshold > 1`.
+Visualization selects SHALL show human labels (e.g. "Bar chart", "Pie", "Donut", "Table") while storing the existing values. The "Small groups are masked to protect privacy." note SHALL render only when `k_anonymity_threshold > 1`.
 
 #### Scenario: Masking note hidden when masking disabled
 - **WHEN** a page has `k_anonymity_threshold = 1`
@@ -96,7 +96,7 @@ The page SHALL support two visibility modes: `public` and `unlisted`. Public pag
 - **THEN** the system returns 200 and renders the page
 
 ### Requirement: Curated content blocks
-The creator SHALL compose the page from an ordered list of blocks. Each block is one of: `text`, `image`, `chart` (bound to a question), or `map` (bound to a geo question) — there is no standalone counter block, since the response count is already available as a page-level affordance (see "Engagement affordances and platform footer"). Blocks SHALL render in the creator-defined order, and the order SHALL be editable via drag-and-drop. A block may be individually hidden without deletion. A `chart` block SHALL render using the creator-selected visualization (`auto`/`bar` as a bar chart, `pie`, `donut`, or `table`); a `map` block SHALL render using its selected visualization (`auto` markers, `heatmap` or `cluster`) over a creator-selected basemap — any key the map style library resolves for the survey's workspace: a preset or `style:<uuid>` of a workspace style, default `streets`. In `heatmap` mode the individual point markers SHALL NOT be drawn (they would obscure the heat layer); non-point geometries still render as shapes. In `cluster` mode point answers SHALL be grouped into counted clusters that split as the visitor zooms in, each single point keeping the popup it has in marker mode; non-point geometries still render as shapes. An `image` block holds one creator-uploaded image with an optional multilingual caption; a block with no image attached (defensive) is omitted from rendering, mirroring a chart/map block whose question was deleted.
+The creator SHALL compose the page from an ordered list of blocks. Each block is one of: `text`, `image`, `chart` (bound to a question), or `map` (bound to a geo question) — there is no standalone counter block, since the response count is already available as a page-level affordance (see "Engagement affordances and platform footer"). Blocks SHALL render in the creator-defined order, and the order SHALL be editable via drag-and-drop. A block may be individually hidden without deletion. A `chart` block SHALL render using the creator-selected visualization (`auto`/`bar` as a bar chart, `pie`, `donut`, or `table`); a `map` block SHALL render as a grid of cells counting respondents (see "Anonymous geo display" and `public-aggregates`) over a creator-selected basemap — any key the map style library resolves for the survey's workspace: a preset or `style:<uuid>` of a workspace style, default `streets`. The editor SHALL offer no marker, heatmap or cluster choice for a map block; it SHALL say that the public map shows squares counting respondents, hides squares under K, and that exact points stay in Responses and the export. An `image` block holds one creator-uploaded image with an optional multilingual caption; a block with no image attached (defensive) is omitted from rendering, mirroring a chart/map block whose question was deleted.
 
 #### Scenario: Blocks render in configured order
 - **WHEN** a visitor loads a page with blocks ordered [intro text, chart, map]
@@ -115,14 +115,9 @@ The creator SHALL compose the page from an ordered list of blocks. Each block is
 - **THEN** the public page and the editor preview render that visualization, not a bar chart
 - **AND** `bar` and `auto` render as a bar chart (preserving the existing horizontal/vertical orientation per data type)
 
-#### Scenario: Map heatmap shows the heat layer, not markers
-- **WHEN** the creator sets a map block's visualization to `heatmap`
-- **THEN** the public page renders a heat layer over the point answers and does NOT draw the individual point markers on top of it
-
-#### Scenario: Map clusters group nearby points
-- **WHEN** the creator sets a map block's visualization to `cluster`
-- **THEN** the public page draws the point answers as clusters with a count, which split into single points on zoom, and lines and polygons as shapes
-- **AND** the editor offers the value under the label "Clusters"
+#### Scenario: Map block offers no point visualizations
+- **WHEN** the creator selects a map block in the editor
+- **THEN** there is no Markers / Heatmap / Clusters choice, and a note says the public map shows squares counting respondents, with squares under K hidden
 
 #### Scenario: Map basemap is honored
 - **WHEN** the creator selects a basemap key offered by the block editor (a preset or one of the workspace's ready styles) for a map block
@@ -172,30 +167,48 @@ The page SHALL support a `live` mode and a `frozen` mode. In live mode, blocks S
 - **AND** the 60-second cache window still applies to newly arriving responses (data), not to configuration changes
 
 ### Requirement: Clean-session data source on the canonical survey
-Aggregates and geo features SHALL be computed only from sessions that are not deleted and not marked invalid, aggregated against the canonical survey, reusing the existing analytics filtering.
+Aggregates, geo features and the response counter SHALL be computed only from sessions that are not
+deleted, not marked invalid or on hold, and not empty (a session with no top-level answer, as
+defined in `responses-empty-sessions`), aggregated against the canonical survey, through the shared
+session scope (`session-scope`). The same scope SHALL apply to Site results blocks, so the public
+page, a Site block and the Responses headline count the same answered responses.
 
 #### Scenario: Deleted and invalid sessions excluded
 - **WHEN** a survey has sessions that are deleted or marked invalid
 - **THEN** those sessions contribute to neither the counts, charts, nor map of the public page
 
+#### Scenario: Empty sessions are not counted
+- **WHEN** a survey has 5 answered clean sessions and 2 clean sessions without any answer
+- **THEN** the public page's response counter shows 5
+
 #### Scenario: Aggregation spans versions via canonical survey
 - **WHEN** a survey has multiple published versions sharing one canonical survey
 - **THEN** the public page aggregates responses across versions and the response count does not reset on a version transition
 
+#### Scenario: Frozen page keeps its snapshot
+- **WHEN** a page was frozen before this rule changed
+- **THEN** it keeps showing the counts stored in its snapshot until the creator refreshes it
+
 ### Requirement: Anonymous geo display
-The public page SHALL render geo answers (points/lines/polygons) as anonymous geometry. Each geometry's popup SHALL expose only per-point attributes that the creator explicitly selected — namely the **sub-questions of that geo question** — resolved from that geometry's own sub-answers (`parent_answer`). Popups SHALL NOT be filled from session-level answers, SHALL NOT include free-text answers, and SHALL NEVER expose record identifiers (session id, IP, UTM, timestamps). A geo question with no eligible (non-text) sub-questions SHALL render anonymous geometry only.
+The public page SHALL render geo answers (points/lines/polygons) as a grid of cells counting
+distinct respondents, with cells under K omitted (`public-aggregates`), never as the answers' own
+geometry. Each cell's popup SHALL show its number of respondents and, for each sub-question of that
+geo question the creator explicitly selected, the distribution of the cell's answers to it: choice
+counts masked below K, a mean only when at least K values exist. Popups SHALL NOT be filled from
+session-level answers, SHALL NOT include free-text answers, and SHALL NEVER expose record
+identifiers (session id, IP, UTM, timestamps).
 
-#### Scenario: Default popup is empty of attributes
+#### Scenario: Default popup shows only the count
 - **WHEN** a map block has no popup fields selected
-- **THEN** each feature's properties are empty and no identifiers appear anywhere in the payload
+- **THEN** each cell's properties hold its respondent count only and no identifiers appear anywhere in the payload
 
-#### Scenario: Popup shows only selected sub-question attributes, per point
-- **WHEN** a map block selects one sub-question of its geo question as a popup field
-- **THEN** each point's popup shows that point's own answer to the sub-question, and points from the same respondent can show different values
+#### Scenario: Popup shows the cell's distribution of a selected sub-question
+- **WHEN** a map block selects a choice sub-question and a cell holds 4 points answered "Unsafe" and 1 answered "No shade", K = 3
+- **THEN** the cell's popup shows "Unsafe" 4 and "No shade" "<3"
 
 #### Scenario: Free-text sub-answers are never shown
 - **WHEN** a geo question has a free-text sub-question
-- **THEN** it is not offered as a popup field and never appears in any point's popup
+- **THEN** it is not offered as a popup field and never appears in any cell's popup
 
 #### Scenario: Editor offers the geo question's sub-questions as popup fields
 - **WHEN** the creator configures a map block whose geo question has sub-questions

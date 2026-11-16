@@ -755,8 +755,10 @@ def editor_survey_settings(request, survey_uuid):
         'effective_role': request.effective_survey_role,
         'basemap_choices': basemap_registry.choices_for(survey.organization),
         'map_layers': _editor_layers(survey),
+        'data_choices': _data_choices(survey),
         'layer_icons': LAYER_ICONS,
         'layers_enabled': settings.MAP_REFERENCE_LAYERS,
+        'survey_tags_text': _survey_tags_text(survey),
     })
 
 
@@ -815,8 +817,10 @@ def editor_survey_settings_panel(request, survey_uuid):
         'effective_role': request.effective_survey_role,
         'basemap_choices': basemap_registry.choices_for(survey.organization),
         'map_layers': _editor_layers(survey),
+        'data_choices': _data_choices(survey),
         'layer_icons': LAYER_ICONS,
         'layers_enabled': settings.MAP_REFERENCE_LAYERS,
+        'survey_tags_text': _survey_tags_text(survey),
     })
 
 
@@ -926,12 +930,21 @@ def _editor_layers(survey):
     """Layers with their property names, for the settings card's field pickers."""
     if not settings.MAP_REFERENCE_LAYERS:
         return []
+    from data.fields import labels
+    from data.models import DatasetLink
     from .layers import source_question_for
+    links = {link.dataset.layer_id: link for link in
+             DatasetLink.objects.filter(survey=layer_owner(survey)).select_related('dataset', 'view')}
     items = []
     for layer in layers_for(survey):
-        item = {'layer': layer, 'properties': _layer_property_names(layer),
+        link = links.get(layer.pk)
+        item = {'layer': layer, 'properties': _layer_property_names(layer), 'link': link,
                 'style': normalize_style(layer.style, layer.color),
                 'geojson_url': reverse('survey_layer_geojson', kwargs={'survey_slug': str(survey.uuid), 'layer_id': layer.pk})}
+        if link is not None:
+            shown = set(link.fields or [])
+            item['card_fields'] = [{'name': n, 'label': lab, 'shown': not shown or n in shown}
+                                   for n, lab in labels(layer.pk).items()]
         if layer.source == 'question':
             item['source_question'] = source_question_for(layer)
             item['used_by'] = list(layer.questions.values_list('name', flat=True))
@@ -1049,6 +1062,84 @@ def editor_survey_layer_delete(request, survey_uuid, layer_id):
         svc_layers.delete(Actor.from_request(request), layer)
     except svc_layers.LayerError as exc:
         return JsonResponse({'error': exc.message}, status=400)
+    return HttpResponse(status=204)
+
+
+def _survey_tags_text(survey):
+    from data.tags import tags_of
+    return ', '.join(t.name for t in tags_of(survey))
+
+
+@survey_permission_required('editor')
+@require_POST
+def editor_survey_tags(request, survey_uuid):
+    """Replace the survey's workspace tags (change data-tags); answers the saved names."""
+    from data.tags import set_tags
+    tags = set_tags(request.survey.organization, request.survey, request.POST.get('tags', ''))
+    return JsonResponse({'tags': [t.name for t in tags]})
+
+
+def _data_choices(survey):
+    """(dataset, refusal) for the card's "From Data" picker (change data-links)."""
+    if not settings.MAP_REFERENCE_LAYERS:
+        return []
+    from data.links import survey_choices
+    return survey_choices(survey.organization, survey)
+
+
+@survey_permission_required('owner')
+@require_POST
+def editor_survey_layer_link(request, survey_uuid):
+    """Link a public layer dataset of the workspace into the survey "From Data"."""
+    _layers_enabled_or_404()
+    from data.links import LinkRefused, link_survey
+    from data.models import Dataset
+    from data.links import parse_choice
+    from data.models import DatasetView
+    dataset_id, view_id = parse_choice(request.POST.get('dataset'))
+    dataset = Dataset.objects.select_related('layer').defer('layer__geojson_gz', 'layer__geojson_legacy').filter(
+        pk=dataset_id or 0, organization=request.survey.organization).first()
+    if dataset is None:
+        return JsonResponse({'error': _('Pick a dataset of this workspace.')}, status=400)
+    view = DatasetView.objects.filter(pk=view_id, dataset=dataset).first() if view_id else None
+    if view_id and view is None:
+        return JsonResponse({'error': _('Pick a view of this dataset.')}, status=400)
+    try:
+        link = link_survey(dataset, request.survey, request.user, view=view)
+    except LinkRefused as exc:
+        return JsonResponse({'error': exc.message}, status=400)
+    return JsonResponse({'id': link.pk, 'layer': dataset.layer_id}, status=201)
+
+
+def _survey_link(request, link_id):
+    from data.models import DatasetLink
+    return get_object_or_404(DatasetLink.objects.select_related('dataset', 'survey'),
+                             pk=link_id, survey=layer_owner(request.survey))
+
+
+@survey_permission_required('owner')
+@require_POST
+def editor_survey_layer_unlink(request, survey_uuid, link_id):
+    _layers_enabled_or_404()
+    from data.links import LinkRefused, unlink_survey
+    try:
+        unlink_survey(_survey_link(request, link_id))
+    except LinkRefused as exc:
+        return JsonResponse({'error': exc.message}, status=400)
+    return HttpResponse(status=204)
+
+
+@survey_permission_required('owner')
+@require_POST
+def editor_survey_layer_link_fields(request, survey_uuid, link_id):
+    """The public fields this survey's object card shows for a linked dataset."""
+    _layers_enabled_or_404()
+    from data.fields import labels
+    link = _survey_link(request, link_id)
+    known = list(labels(link.dataset.layer_id))
+    chosen = [n for n in request.POST.getlist('fields') if n in known]
+    link.fields = [] if set(chosen) == set(known) else chosen
+    link.save(update_fields=['fields'])
     return HttpResponse(status=204)
 
 

@@ -194,6 +194,12 @@ description, which the object endpoint passed through coerce_creator_html.
         }
         // Server-sanitized creator HTML (coerce_creator_html on the object endpoint).
         if (card.description) h += '<div class="lo-card__body">' + card.description + '</div>';
+        // The layer's public documented fields, by label (change data-metadata); plain text.
+        if (card.fields && card.fields.length) {
+            h += '<dl class="lo-card__fields">' + card.fields.map(function(f) {
+                return '<dt>' + esc(f.label) + '</dt><dd>' + esc(f.value) + '</dd>';
+            }).join('') + '</dl>';
+        }
         var media = (card.assets || []).filter(function(a) { return a.kind !== 'image' || a.url !== card.cover; });
         if (media.length) {
             h += '<div class="lo-card__assets">';

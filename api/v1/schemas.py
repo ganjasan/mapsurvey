@@ -101,6 +101,7 @@ class SurveyOut(Schema):
     closes_at: Optional[datetime] = Field(None, description='End of the survey period (UTC): the survey closes by itself then. Null = no end.')
     schedule_timezone: str = Field('', description='IANA zone the period was entered in; "" = UTC.')
     url: str
+    tags: List[str] = Field(default_factory=list, description='Workspace tags that group the survey with other items of one engagement.')
     created_at: datetime
     updated_at: datetime
 
@@ -120,6 +121,10 @@ class SurveyDetailOut(SurveyOut):
 class SurveyList(Page):
     items: List[SurveyOut]
     hidden_by_plan: int = Field(0, description='Workspaces of yours whose surveys are hidden: they are on the Free plan.')
+
+
+class SurveyTagsIn(In):
+    tags: List[str] = Field(max_length=10, description='The survey\'s new tags (replacing the old ones); created in the workspace on first use, matched by slug, at most 40 characters each.')
 
 
 class SurveyCreateIn(In):
@@ -488,7 +493,7 @@ class ResponseList(Page):
 class ExportLinkIn(In):
     format: Literal['zip', 'xlsx', 'csv', 'gpkg', 'shp', 'kml'] = 'xlsx'
     version: Optional[str] = Field(None, description='One version (`v3`), several separated by commas (`v10,v11`), or omit for every version.')
-    include_all: bool = Field(False, description='Also deleted and rejected responses.')
+    include_all: bool = Field(False, description='Also deleted, on-hold and rejected responses.')
     completed_only: bool = Field(False, description='Only responses that reached the last section.')
     files: bool = Field(False, description='Add uploaded files (turns a single-file format into a ZIP).')
 

@@ -150,16 +150,7 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
               </select>
             </div>
             {% elif selected_block.block_type == 'map' %}
-            {% if not selected_is_spray %}
-            <div class="pr-field">
-              <label>{% trans "Visualization" %}</label>
-              <select class="form-control" name="viz">
-                {% for val, label in map_viz_options %}
-                <option value="{{ val }}" {% if selected_block.viz == val %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            {% endif %}
+            <p class="pr-help" data-testid="pr-map-grid-note">{% blocktrans with k=page.k_anonymity_threshold %}The public map shows squares that count respondents; squares with fewer than {{ k }} respondents are hidden. Exact points stay in Responses and the export.{% endblocktrans %}</p>
             <div class="pr-field">
               <label>{% trans "Basemap" %}</label>
               <select class="form-control" name="basemap">

@@ -156,7 +156,9 @@ def delete_layer(request, args):
 def list_layer_objects(request, args):
     layer = _layer(survey(request, args.survey), args.layer_id)
     items, next_cursor = page(LayerObject.objects.filter(layer=layer), f'objects:{layer.pk}', args.cursor, args.limit)
-    return {'items': [object_out(o) for o in items], 'next_cursor': next_cursor}
+    from data.fields import hidden_names
+    hidden = hidden_names(layer)
+    return {'items': [object_out(o, hidden) for o in items], 'next_cursor': next_cursor}
 
 
 OBJECT_FIELDS = dict(

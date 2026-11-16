@@ -296,14 +296,29 @@ def _clean_map(raw, errors, org=None):
         basemap = 'streets'
     area = raw.get('area')
     if not (isinstance(area, dict) and area.get('features')):
-        errors['area'] = _('Upload a GeoJSON file with the project area.')
         area = None
-    return {'area': area, 'color': color, 'basemap': basemap,
+    # A dataset from Data instead of an uploaded area (change data-links): public layer datasets
+    # of the workspace only; the page fetches its GeoJSON, it is never stored in the block.
+    # ... or a view of one, `<dataset>:<view>` (change data-views).
+    dataset = view = None
+    value = str(raw.get('dataset') or '').strip()
+    if value and org is not None:
+        from data.links import parse_choice, site_dataset
+        ds_id, view_id = parse_choice(value)
+        ds, view_obj, reason = site_dataset(org, ds_id, view_id) if ds_id else (None, None, _('Pick a dataset of this workspace.'))
+        if reason:
+            errors['dataset'] = reason
+        else:
+            dataset, view = ds.pk, (view_obj.pk if view_obj else None)
+    if area is None and dataset is None and 'dataset' not in errors:
+        errors['area'] = _('Upload a GeoJSON file with the project area.')
+    choice = '' if dataset is None else (f'{dataset}:{view}' if view else str(dataset))
+    return {'area': area, 'dataset': dataset, 'view': view, 'choice': choice, 'color': color, 'basemap': basemap,
             'caption': _plain(raw.get('caption'), 300), 'wide': _wide(raw)}
 
 
 CHART_VIZ = ('auto', 'bar', 'pie', 'donut', 'table')
-MAP_VIZ = ('auto', 'heatmap', 'cluster')
+MAP_VIZ = ('auto',)   # every public map is a grid of cells (change data-aggregate)
 
 
 def _clean_results(raw, errors, org=None):
@@ -436,7 +451,7 @@ def is_complete(block):
     if kind == 'documents':
         return bool(block.files.all())
     if kind == 'map':
-        return bool(data.get('area'))
+        return bool(data.get('area') or data.get('dataset'))
     if kind == 'results':
         return bool(data.get('question_code')) and block.site_survey_id is not None
     if kind == 'event':

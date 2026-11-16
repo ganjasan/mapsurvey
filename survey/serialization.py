@@ -109,7 +109,10 @@ def serialize_layer_objects(layer, index: int) -> List[Dict[str, Any]]:
     """Object content + attachment manifest for `layers/<index>/objects.json`.
 
     Geometry is NOT repeated here — it travels in the derived GeoJSON keyed by
-    `_key`. File attachments are referenced by their archive path; embeds by URL."""
+    `_key`. File attachments are referenced by their archive path; embeds by URL. Private
+    dictionary fields stay out of the archive (change data-metadata)."""
+    from data.fields import hidden_names, public_properties
+    hidden = hidden_names(layer)
     out = []
     for obj in layer.items.prefetch_related('assets').order_by('position', 'id'):
         assets = []
@@ -127,7 +130,7 @@ def serialize_layer_objects(layer, index: int) -> List[Dict[str, Any]]:
             "category": obj.category,
             "description": obj.description,
             "link": obj.link,
-            "properties": obj.properties or {},
+            "properties": public_properties(obj.properties, hidden),
             "assets": assets,
         })
     return out
