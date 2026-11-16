@@ -276,6 +276,50 @@
     background: transparent;
 }
 
+/* ── Saved views menu (change data-analysis-views) ───────────────────── */
+.rv2-views { position: relative; display: inline-block; }
+.rv2-views > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+.rv2-views > summary::-webkit-details-marker { display: none; }
+.rv2-views-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    z-index: 1050;
+    width: 280px;
+    max-width: 86vw;
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    padding: 6px;
+    font-size: 0.82rem;
+}
+.rv2-views-row { display: flex; align-items: center; gap: 4px; }
+.rv2-views-open {
+    flex: 1;
+    min-width: 0;
+    padding: 5px 8px;
+    border-radius: 6px;
+    color: #374151;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.rv2-views-open:hover, .rv2-views-open.active { background: var(--accent-light); color: var(--accent); text-decoration: none; }
+.rv2-views-delete { border: none; background: none; color: #9ca3af; padding: 4px 6px; border-radius: 6px; }
+.rv2-views-delete:hover { color: #dc2626; background: #fee2e2; }
+.rv2-views-empty { color: #6b7280; padding: 5px 8px; }
+.rv2-views-save { display: flex; gap: 6px; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border-color); }
+.rv2-views-save input {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 0.8rem;
+}
+.rv2-views-error { color: #dc2626; padding: 4px 8px 0; }
+
 /* ── Pills-bar selection actions (one bar, no per-panel duplicate) ───── */
 .rv2-pills-action {
     border: 1px solid var(--accent);

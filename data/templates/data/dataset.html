@@ -103,14 +103,16 @@ download. This page and the object editor are the only places a private field is
   <div class="card mb-3" data-testid="views">
     <div class="card-body">
       <h6 class="card-title mb-1">{% trans "Views" %}</h6>
-      <p class="text-muted small mb-2">{% if view_kind == 'grid' %}{% trans "A view of collected answers is a grid of counts: how many respondents marked each cell, small groups hidden. It can be shown in a Site map block." %}{% else %}{% trans "A view keeps the objects that match its conditions, with the fields you choose. Surveys and site map blocks can show a view instead of the whole dataset." %}{% endif %}</p>
+      <p class="text-muted small mb-2">{% if view_kind == 'grid' %}{% trans "A view of collected answers is a grid: how many respondents marked each cell, small groups hidden. Lines and areas can also be read as coverage, points and spray as density. It can be shown in a Site map block." %}{% elif view_kind == 'engagement' %}{% trans "A view of responses computes something a report can show: how many people opened, answered and finished, or how two questions relate. Small groups are hidden. Filters saved on the Responses page are listed here too." %}{% else %}{% trans "A view keeps the objects that match its conditions, with the fields you choose. Surveys and site map blocks can show a view instead of the whole dataset." %}{% endif %}</p>
       {% if dataset_views %}
       <ul class="list-unstyled mb-2" style="font-size:.9rem;">
         {% for v in dataset_views %}
         <li class="d-flex align-items-center py-1" style="gap:.5rem;" data-view="{{ v.pk }}">
-          <span class="d-inline-block rounded" style="width:12px;height:12px;background:{{ v.color|default:'#888888' }};"></span>
+          {% if view_kind != 'engagement' %}<span class="d-inline-block rounded" style="width:12px;height:12px;background:{{ v.color|default:'#888888' }};"></span>{% endif %}
           <strong>{{ v.name }}</strong>
-          <span class="text-muted small">{% for c in v.summary %}{{ c.label }} {% if c.op == 'in' %}∈ {{ c.values|join:", " }}{% elif c.op == 'gt' %}&gt; {{ c.value }}{% elif c.op == 'lt' %}&lt; {{ c.value }}{% else %}= {{ c.value }}{% endif %}{% if not forloop.last %} · {% endif %}{% empty %}{% if v.kind == 'grid' %}{% trans "grid of counts" %}{% endif %}{% endfor %}</span>
+          {% if view_kind != 'objects' %}<span class="badge badge-light border" data-view-kind="{{ v.kind }}">{{ v.get_kind_display }}</span>{% endif %}
+          <span class="text-muted small">{% for c in v.summary %}{{ c.label }} {% if c.op == 'in' %}∈ {{ c.values|join:", " }}{% elif c.op == 'gt' %}&gt; {{ c.value }}{% elif c.op == 'lt' %}&lt; {{ c.value }}{% else %}= {{ c.value }}{% endif %}{% if not forloop.last %} · {% endif %}{% empty %}{{ v.detail }}{% endfor %}</span>
+          {% if v.open_url %}<a class="small" href="{{ v.open_url }}">{% if v.kind == 'responses' %}{% trans "Open in Responses" %}{% else %}{% trans "Preview" %}{% endif %}</a>{% endif %}
           <span class="text-muted small ml-auto">{% blocktrans count n=v.uses %}used in {{ n }} place{% plural %}used in {{ n }} places{% endblocktrans %}</span>
           {% if can_edit %}<form method="post" class="mb-0">{% csrf_token %}<input type="hidden" name="action" value="view_delete"><input type="hidden" name="view" value="{{ v.pk }}"><button type="submit" class="btn btn-sm btn-link text-danger p-0" aria-label="{% blocktrans with name=v.name %}Delete view {{ name }}{% endblocktrans %}"><i class="fas fa-trash" aria-hidden="true"></i></button></form>{% endif %}
         </li>
@@ -125,8 +127,22 @@ download. This page and the object editor are the only places a private field is
           {% for key, msg in view_errors.items %}<div class="text-danger small">{{ msg }}</div>{% endfor %}
           <div class="form-row">
             <div class="form-group col-8 mb-2"><label class="small mb-0" for="view-name">{% trans "Name" %}</label><input id="view-name" name="name" class="form-control form-control-sm" maxlength="120" required></div>
-            <div class="form-group col-4 mb-2"><label class="small mb-0" for="view-color">{% trans "Colour" %}</label><input id="view-color" type="color" name="color" class="form-control form-control-sm" value="#d55e00"></div>
+            {% if view_kind != 'engagement' %}<div class="form-group col-4 mb-2"><label class="small mb-0" for="view-color">{% trans "Colour" %}</label><input id="view-color" type="color" name="color" class="form-control form-control-sm" value="#d55e00"></div>{% endif %}
           </div>
+          {% if view_kind_choices|length > 1 %}
+          <div class="form-group mb-2">
+            <label class="small mb-0" for="view-kind">{% trans "What it shows" %}</label>
+            <select id="view-kind" name="kind" class="custom-select custom-select-sm" onchange="document.getElementById('view-crosstab').hidden = this.value !== 'crosstab';">
+              {% for key, label in view_kind_choices %}<option value="{{ key }}"{% if key == posted_kind %} selected{% endif %}>{{ label }}</option>{% endfor %}
+            </select>
+          </div>
+          {% endif %}
+          {% if crosstab_questions %}
+          <div id="view-crosstab" class="form-row mb-2"{% if posted_kind != 'crosstab' %} hidden{% endif %}>
+            <div class="col-6"><label class="small mb-0" for="view-rows">{% trans "Rows" %}</label><select id="view-rows" name="rows" class="custom-select custom-select-sm"><option value="">—</option>{% for q in crosstab_questions %}<option value="{{ q.code }}">{{ q.name|default:q.code|striptags|truncatechars:60 }}</option>{% endfor %}</select></div>
+            <div class="col-6"><label class="small mb-0" for="view-columns">{% trans "Columns" %}</label><select id="view-columns" name="columns" class="custom-select custom-select-sm"><option value="">—</option>{% for q in crosstab_questions %}<option value="{{ q.code }}">{{ q.name|default:q.code|striptags|truncatechars:60 }}</option>{% endfor %}</select></div>
+          </div>
+          {% endif %}
           {% if view_kind == 'objects' %}
           <div class="small mb-1">{% trans "Show objects where" %}</div>
           {% for i in condition_rows %}

@@ -67,11 +67,15 @@ def _bin(items, bounds, sessions, k, cells_across, min_cell_m):
         return math.floor((x - minx) / cell), math.floor((y - miny) / cell)
 
     per_cell = {}
+    marks = {}      # cell -> points and spray dots inside it; a line or polygon is one mark per cell
     for session_id, member_id, m in items:
         keys = set()
         if m.geom_type in _POINT_TYPES:
             coords = [m.coords] if m.geom_type == 'Point' else list(m.coords)
-            keys = {index(x, y) for x, y in coords}
+            for x, y in coords:
+                key = index(x, y)
+                keys.add(key)
+                marks[key] = marks.get(key, 0) + 1
         else:
             prepared = m.prepared
             x0, y0, x1, y1 = m.extent
@@ -83,6 +87,7 @@ def _bin(items, bounds, sessions, k, cells_across, min_cell_m):
                     box.srid = 3857
                     if prepared.intersects(box):
                         keys.add((ix, iy))
+                        marks[(ix, iy)] = marks.get((ix, iy), 0) + 1
         for key in keys:
             entry = per_cell.setdefault(key, (set(), set()))
             entry[0].add(session_id)
@@ -100,7 +105,8 @@ def _bin(items, bounds, sessions, k, cells_across, min_cell_m):
                                  minx + (ix + 1) * cell, miny + (iy + 1) * cell))
         box.srid = 3857
         box.transform(to_wgs)
-        cells.append({'bbox': tuple(box.extent), 'respondents': n, 'members': cell_members})
+        cells.append({'bbox': tuple(box.extent), 'respondents': n, 'members': cell_members,
+                      'marks': marks.get((ix, iy), 0)})
     return {
         'cells': cells,
         'max': max((c['respondents'] for c in cells), default=0),
@@ -116,7 +122,7 @@ def grid(members, k=1, cells_across=None, min_cell_m=20.0, steps=GRID_STEPS, tar
     """`members`: iterable of (session_id, member_id, geometry in WGS 84), any geometry type.
 
     Returns {'cells': [{'bbox': (minx, miny, maxx, maxy) WGS 84, 'respondents': n,
-                        'members': {member ids}}],
+                        'members': {member ids}, 'marks': points and spray dots inside}],
              'max', 'respondents_total', 'respondents_shown', 'respondents_hidden', 'cell_m',
              'cells_across'}.
     ``members`` per cell is for the caller's per-cell summaries; never serialise it.

@@ -92,6 +92,40 @@ class GridTest(SimpleTestCase):
         self.assertEqual([c['respondents'] for c in out['cells']], [3])
 
 
+class MarksTest(SimpleTestCase):
+    """Requirement: The grid counts marks as well as respondents."""
+
+    def test_two_points_from_one_respondent(self):
+        """
+        GIVEN 3 respondents with points in one cell, one of them two points, K = 3
+        WHEN the grid is built
+        THEN the cell reports 3 respondents and 4 marks
+        """
+        members = [(1, 'a', Point(30.0, 59.0, srid=4326)), (1, 'b', Point(30.00001, 59.0, srid=4326)),
+                   (2, 'c', Point(30.0, 59.0, srid=4326)), (3, 'd', Point(30.0, 59.0, srid=4326))]
+        out = grid(members, k=3)
+        self.assertEqual([(c['respondents'], c['marks']) for c in out['cells']], [(3, 4)])
+
+    def test_spray_dots_are_marks(self):
+        """
+        GIVEN a spray cloud of two dots and two single points in one cell
+        WHEN the grid is built with K = 3
+        THEN the cell reports 4 marks
+        """
+        cloud = MultiPoint([Point(30.0, 59.0), Point(30.00001, 59.00001)], srid=4326)
+        members = [(1, 1, cloud), (2, 2, Point(30.0, 59.0, srid=4326)), (3, 3, Point(30.0, 59.0, srid=4326))]
+        self.assertEqual([c['marks'] for c in grid(members, k=3)['cells']], [4])
+
+    def test_marks_do_not_unlock_a_cell(self):
+        """
+        GIVEN 2 respondents with 10 points in one cell, K = 3
+        WHEN the grid is built
+        THEN the cell is omitted
+        """
+        members = [(sid, f'{sid}-{i}', Point(30.0 + i * 1e-6, 59.0, srid=4326)) for sid in (1, 2) for i in range(5)]
+        self.assertEqual(grid(members, k=3)['cells'], [])
+
+
 class AdaptiveGridTest(SimpleTestCase):
     """Requirement: A public map never carries an individual geometry — cell size (change
     data-grid-adaptive)."""

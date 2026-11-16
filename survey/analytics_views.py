@@ -4,7 +4,7 @@ from django.conf import settings
 from django.utils import timezone
 from django.core.cache import cache
 from django.db.models import Q
-from django.http import HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -298,39 +298,52 @@ def analytics_table(request, survey_uuid):
         survey, include_deleted=show_trash, version=version, include_empty=show_empty,
     )
 
+    # A saved view (change data-analysis-views): `view=<id>` on the first request of a page
+    # opened from one. Its stored state — keyed by question CODES — becomes the table's own
+    # parameters here, so the rendered state form holds the filter and later requests repeat it.
+    from data import responses_views
+    params = request.GET
+    opened_view = responses_views.view_for(survey, request.GET.get('view')) if request.GET.get('view') else None
+    if opened_view is not None and not show_trash:
+        params = request.GET.copy()
+        for key in [k for k in params if k.startswith('cf_')] + ['required', 'q', 'sort', 'dir']:
+            params.pop(key, None)
+        for key, value in responses_views.params_from_config(opened_view.config, service).items():
+            params[key] = value
+
     # Reuse existing filter parsing (ignored in trash mode)
-    filter_map = _parse_filter_param(request.GET.get('filters', ''))
+    filter_map = _parse_filter_param(params.get('filters', ''))
     session_ids = _resolve_filtered_session_ids(survey, filter_map, service=service) if not show_trash else None
 
     try:
-        page = int(request.GET.get('page', 1))
+        page = int(params.get('page', 1))
     except (ValueError, TypeError):
         page = 1
 
-    sort_col = request.GET.get('sort', 'start_datetime')
-    sort_dir = request.GET.get('dir', 'desc')
+    sort_col = params.get('sort', 'start_datetime')
+    sort_dir = params.get('dir', 'desc')
 
     try:
-        page_size = int(request.GET.get('page_size', 50))
+        page_size = int(params.get('page_size', 50))
     except (ValueError, TypeError):
         page_size = 50
     page_size = min(max(page_size, 10), 500)
 
     # Per-column search: search_<col_key>=value
     col_search = {}
-    for k, v in request.GET.items():
+    for k, v in params.items():
         if k.startswith('search_') and v.strip():
             col_search[k[7:]] = v.strip()
 
     # Required questions unanswered (change responses-required-unanswered): one
     # on/off filter plus Complete. An `issues=` parameter from an old link is ignored.
-    required_filter = request.GET.get('required', '').strip()
+    required_filter = params.get('required', '').strip()
     if required_filter not in ('missing', 'complete'):
         required_filter = ''
 
     # Typed column filters: cf_<col_key>=v:val1|val2 or r:min|max or d:min|max or t:query
     col_filters = {}
-    for k, v in request.GET.items():
+    for k, v in params.items():
         if k.startswith('cf_') and v.strip():
             col_key = k[3:]
             val = v.strip()
@@ -357,7 +370,7 @@ def analytics_table(request, survey_uuid):
         sort_col=sort_col, sort_dir=sort_dir, col_search=col_search,
         show_trash=show_trash, required_filter=required_filter or None,
         col_filters=col_filters, v2=responses_v2,
-        query=request.GET.get('q', '').strip(),
+        query=params.get('q', '').strip(),
     )
 
     trash_count = 0
@@ -378,7 +391,7 @@ def analytics_table(request, survey_uuid):
         'is_editor': request.effective_survey_role in ('editor', 'owner'),
         'page_size_options': [10, 25, 50, 100, 250, 500],
         'required_filter': required_filter,
-        'search_query': request.GET.get('q', '').strip(),
+        'search_query': params.get('q', '').strip(),
         'filtered_ids_json': json.dumps(result.pop('filtered_ids', None) or []),
         # Column metadata for the mobile sort/filter sheet: key, label, type.
         'columns_meta_json': json.dumps([
@@ -390,9 +403,46 @@ def analytics_table(request, survey_uuid):
         ),
         'unique_values_json': json.dumps(result.pop('unique_values', {})),
         'col_filters_json': json.dumps(col_filters),
-        'col_filters_params': {k: v for k, v in request.GET.items() if k.startswith('cf_') and v.strip()},
+        'col_filters_params': {k: v for k, v in params.items() if k.startswith('cf_') and v.strip()},
+        'saved_views': responses_views.views_of(survey) if responses_v2 else [],
+        'opened_view': opened_view,
         **result,
     })
+
+
+@survey_permission_required('editor')
+@require_POST
+def analytics_view_save(request, survey_uuid):
+    """Save the table's current filter as a view of the survey's responses dataset (change
+    data-analysis-views). The body carries the table's own parameters."""
+    from data import responses_views, services as data_services
+    from survey.services.context import Actor
+    survey = request.survey
+    version = request.POST.get('version', 'all')
+    service = SurveyAnalyticsService(survey, version=version, include_empty=True)
+    config = responses_views.config_from_params(request.POST, service)
+    try:
+        view = data_services.save_responses_view(Actor.from_request(request), survey,
+                                                 request.POST.get('name', ''), config)
+    except data_services.DataRefused as exc:
+        return JsonResponse({'error': exc.message}, status=exc.status)
+    return JsonResponse({'id': view.pk, 'name': view.name, 'url': responses_views.open_url(view)}, status=201)
+
+
+@survey_permission_required('editor')
+@require_POST
+def analytics_view_delete(request, survey_uuid, view_id):
+    """Delete a saved Responses view nothing uses."""
+    from data import responses_views, services as data_services
+    from survey.services.context import Actor
+    view = responses_views.view_for(request.survey, view_id)
+    if view is None:
+        raise Http404
+    try:
+        data_services.delete_view(Actor.from_request(request), view)
+    except data_services.DataRefused as exc:
+        return JsonResponse({'error': exc.message}, status=exc.status)
+    return JsonResponse({'deleted': view_id})
 
 
 @survey_permission_required('editor')
