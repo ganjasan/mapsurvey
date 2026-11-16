@@ -42,6 +42,15 @@ def add_text_block(actor, report):
     return block
 
 
+def add_story_block(actor, report, block_type):
+    """An empty heading, text, key-numbers or quotes block at the end of the story."""
+    if block_type not in ('heading', 'text', 'numbers', 'quotes'):
+        raise ReportRefused('unknown_block', _('Unknown block type.'))
+    block = ReportBlock.objects.create(report=report, block_type=block_type, order=_next_order(report))
+    bump_version(report)
+    return block
+
+
 def add_image_block(actor, report, image):
     if not image:
         raise ReportRefused('image_required', _('An image file is required.'))
@@ -69,16 +78,24 @@ def add_question_block(actor, report, question, **values):
 
 
 def update_block(actor, block, *, viz=None, is_hidden=None, custom_title=None, content=None, image=None,
-                 geo_label_fields=None, basemap=None, valid_basemaps=()):
-    """Update what the block's type allows; None leaves a value as it is."""
+                 geo_label_fields=None, basemap=None, valid_basemaps=(), width=None, items=None):
+    """Update what the block's type allows; None leaves a value as it is. `items` is the list of a
+    key-numbers or quotes block ([{value, label}] / [{text, source}])."""
+    from reports import story
     if viz is not None:
         block.viz = viz
     if is_hidden is not None:
         block.is_hidden = bool(is_hidden)
     if custom_title is not None:
         block.custom_title = {'en': custom_title}
-    if block.block_type in ('text', 'image') and content is not None:
-        block.content = {'en': content}
+    if width is not None:
+        block.width = story.clean_width(width)
+    if block.block_type == 'text' and content is not None:
+        block.content = {'en': story.clean_html(content)}
+    elif block.block_type in ('image', 'heading', 'numbers', 'quotes') and content is not None:
+        block.content = {'en': str(content)[:2000]}
+    if block.block_type in ('numbers', 'quotes') and items is not None:
+        block.config = story.clean_config(block.block_type, {'items': items})
     if block.block_type == 'image' and image:
         block.image = image
     if block.block_type == 'map':
@@ -125,7 +142,7 @@ def set_published(actor, report, publish):
 
 
 def update_settings(actor, report, *, is_published=None, visibility=None, intro_title='', intro_body='',
-                    show_response_count=False, show_participate_cta=False, show_on_thanks=False,
+                    intro_eyebrow=None, show_response_count=False, show_participate_cta=False, show_on_thanks=False,
                     feature_in_listing=False, k=None, slug=''):
     """Save the report's settings form. Returns True when the requested slug was taken (the
     report then keeps its address). `is_published` None leaves the publication state alone."""
@@ -135,7 +152,10 @@ def update_settings(actor, report, *, is_published=None, visibility=None, intro_
         report.is_published = bool(is_published)
     if visibility in VISIBILITIES:
         report.visibility = visibility
+    eyebrow = (report.intro or {}).get('eyebrow') if intro_eyebrow is None else {'en': str(intro_eyebrow)[:160]}
     report.intro = {'title': {'en': intro_title or ''}, 'body': {'en': intro_body or ''}}
+    if eyebrow:
+        report.intro['eyebrow'] = eyebrow
     report.show_response_count = bool(show_response_count)
     report.show_participate_cta = bool(show_participate_cta)
     report.show_on_thanks = bool(show_on_thanks)
@@ -164,6 +184,7 @@ def unfreeze(actor, report):
     return unfreeze_report(report)
 
 
-__all__ = ['QUESTION_BLOCK_TYPES', 'ReportRefused', 'add_image_block', 'add_question_block', 'add_text_block',
+__all__ = ['QUESTION_BLOCK_TYPES', 'ReportRefused', 'add_image_block', 'add_question_block', 'add_story_block',
+           'add_text_block',
            'create_report', 'delete_block', 'freeze', 'reorder_blocks', 'set_published', 'unfreeze',
            'update_block', 'update_settings']

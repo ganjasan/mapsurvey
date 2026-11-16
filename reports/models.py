@@ -23,8 +23,11 @@ MODE_CHOICES = (
 )
 
 BLOCK_TYPE_CHOICES = (
+    ('heading', _('Heading')),   # a section title of the story (change reports-story, #704)
     ('text', _('Text')),
     ('image', _('Image')),
+    ('numbers', _('Key numbers')),   # a strip of value + label, typed by hand
+    ('quotes', _('Quotes')),         # text + source line, typed or pasted by the author
     ('chart', _('Chart')),
     ('map', _('Map')),
     ('objects', _('Objects')),   # per-object aggregates of an Objects-on-the-map question
@@ -33,6 +36,11 @@ BLOCK_TYPE_CHOICES = (
 
 # Block types that show one question of a dataset.
 QUESTION_BLOCK_TYPES = ('chart', 'map', 'objects', 'budget')
+# Block types the author writes: nothing in them is computed.
+STORY_BLOCK_TYPES = ('heading', 'text', 'image', 'numbers', 'quotes')
+
+WIDTH_CHOICES = (('full', _('Full width')), ('half', _('Half width')))
+MAX_ITEMS = 12          # values in a Key numbers block, quotes in a Quotes block
 
 # Current snapshot serialization format. Bumped when the per-block payload shape changes so a stale
 # snapshot shows a "re-freeze needed" notice instead of wrong data.
@@ -149,6 +157,12 @@ class ReportBlock(models.Model):
     basemap = models.CharField(
         max_length=50, default='streets',
         help_text=_('Tile basemap for map blocks: a preset key or "style:<uuid>" of a workspace map style.'))
+    # What a story block holds beyond its text (change reports-story):
+    # numbers → {'items': [{'value', 'label'}]}; quotes → {'items': [{'text', 'source'}]}.
+    # `reports.story.clean_config` is the one writer.
+    config = models.JSONField(default=dict, blank=True)
+    # Two consecutive half-width blocks sit side by side on a wide screen.
+    width = models.CharField(max_length=4, choices=WIDTH_CHOICES, default='full')
     is_hidden = models.BooleanField(default=False)
     order = models.PositiveIntegerField(default=0)
 

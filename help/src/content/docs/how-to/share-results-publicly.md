@@ -26,9 +26,23 @@ You end up with a public results page at `https://mapsurvey.org/r/<slug>/` showi
 5. Press **Publish page**. The address is shown next to **Public URL**; **Copy public link** copies it, and the same link appears under **Results page** on the Share page.
 6. To show the page to respondents after they finish, switch on **Show a “See the results” button** on the thanks page.
 
+## Tell it as a story
+
+The page is read top to bottom like an article, so write it like one. Under **Add block**, beside the results of a question, there are blocks you write yourself:
+
+- **Heading** starts a section.
+- **Text** is a paragraph, a list or a few of them, with bold, italics and links.
+- **Image** is a picture with a caption — a photo, or a chart or map you made elsewhere.
+- **Key numbers** is a strip of figures with a word under each. Enter one per line as `447 | residents answered`. You type these numbers; they do not change when new answers arrive.
+- **Quotes** shows what people wrote, one per line, with an optional source after ` | `: `Give us the bridge back. | Pin: needs attention`. A quote is published exactly as you enter it, so leave out anything that names a person.
+
+Set a block's **Width** to *Half width* to put two blocks side by side on a wide screen; on a phone they stack. Under **Page settings → Opening** add a line above the title and an opening paragraph.
+
+All reports of the workspace are on the **Reports** page of the sidebar. **New report** starts a blank one that belongs to no survey. **Export report** (Page settings → Report file) saves the whole report — text, numbers, quotes, pictures and which questions its charts and maps show — as one file; **Import a report** on the Reports page brings such a file in, here or in another workspace. An imported report is not published and only the workspace sees it until you change that; a chart or map of a survey the workspace does not have is left out, and you are told which.
+
 ## Result
 
-Visitors see the intro, the blocks in your order, and — for a frozen page — a "Data as of" date. Small groups show "Small groups are masked to protect privacy"; every map block shows a grid of how many respondents marked each square, never the individual points, lines, areas or dots; a square's popup lists the chosen sub-question answers in it, small groups masked. Only clean responses count: trashed, not-approved and on-hold responses are left out. The page carries the "Made with Mapsurvey" badge on Free.
+Visitors see the opening, the blocks in your order, and — for a frozen page — a "Data as of" date. Small groups show "Small groups are masked to protect privacy"; every map block shows a grid of how many respondents marked each square, never the individual points, lines, areas or dots; a square's popup lists the chosen sub-question answers in it, small groups masked. Only clean responses count: trashed, not-approved and on-hold responses are left out. The page carries the "Made with Mapsurvey" badge on Free.
 
 **Unpublish** takes the page down; the address stops opening for visitors.
 
