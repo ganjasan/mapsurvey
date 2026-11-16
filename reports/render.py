@@ -137,6 +137,15 @@ class ReportService:
     def _build_block(self, block):
         if block.block_type == 'text':
             return self._text_payload(block)
+        if block.block_type == 'heading':
+            payload = self._base(block)
+            payload['title'] = payload['title'] or _localize(block.content, self.lang)
+            return payload if payload['title'] else None
+        if block.block_type in ('numbers', 'quotes'):
+            payload = self._base(block)
+            payload['items'] = list((block.config or {}).get('items') or [])
+            payload['note'] = _localize(block.content, self.lang)
+            return payload if payload['items'] else None
         if block.block_type == 'image':
             return self._image_payload(block)
         if block.block_type in ('chart', 'map'):
@@ -248,11 +257,16 @@ class ReportService:
             'block_type': block.block_type,
             'viz': block.viz,
             'title': title,
+            'width': getattr(block, 'width', 'full') or 'full',
         }
 
     def _text_payload(self, block):
+        from reports.story import clean_html
         payload = self._base(block)
         payload['body'] = _localize(block.content, self.lang)
+        # Rich text since change reports-story. A snapshot frozen before it has `body` only, and
+        # the page escapes that one.
+        payload['html'] = clean_html(payload['body'])
         return payload
 
     def _image_payload(self, block):
@@ -492,6 +506,8 @@ def build_context(report, lang='en'):
         'lang': lang,
         'intro_title': intro_title,
         'intro_body': intro_body,
+        'intro_eyebrow': _localize(intro.get('eyebrow'), lang),
+        'rows': story_rows(data['blocks']),
         'response_count': data['response_count'],
         'blocks': data['blocks'],
         'blocks_json': json.dumps(data['blocks'], ensure_ascii=False),
@@ -504,6 +520,19 @@ def build_context(report, lang='en'):
         'survey_url': reverse('survey', kwargs={'survey_slug': str(survey.uuid)}) if survey is not None else '',
         'noindex': report.visibility != 'public',
     }
+
+
+def story_rows(blocks):
+    """The blocks as the rows of a story: two consecutive half-width blocks share a row, any other
+    block has its own. [[payload], [payload, payload], …]"""
+    rows = []
+    for block in blocks:
+        half = block.get('width') == 'half'
+        if half and rows and len(rows[-1]) == 1 and rows[-1][0].get('width') == 'half':
+            rows[-1].append(block)
+        else:
+            rows.append([block])
+    return rows
 
 
 def _live_cache_key(report, lang):

@@ -79,7 +79,7 @@ _ACTIVE_BY_URL_NAME = {
 _ACTIVE_BY_PREFIX = (
     ('editor_site', 'sites'),
     ('editor_data', 'data'),
-    ('editor_reports', 'reports'),
+    ('editor_report', 'reports'),
     ('org_map_styles', 'map_styles'),
     ('org_map_style', 'map_styles'),
     ('org_members', 'members'),

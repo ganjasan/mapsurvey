@@ -4,6 +4,8 @@ from django.contrib.auth.views import redirect_to_login
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 
+from django.utils.translation import gettext as _
+
 from reports.models import Report
 from reports.render import build_context
 
@@ -62,4 +64,69 @@ def report_list(request):
                   .annotate(n=Count('blocks')).values_list('pk', 'n'))
     rows = [{'report': r, 'blocks': counts.get(r.pk, 0),
              'public_url': request.build_absolute_uri('/r/{}/'.format(r.slug))} for r in reports]
-    return render(request, 'reports/list.html', {'org': org, 'rows': rows})
+    return render(request, 'reports/list.html', {'org': org, 'rows': rows, 'can_edit': _can_edit(request.user, org)})
+
+
+# ── The report as a file, and deleting one (change reports-story, #704) ──────
+
+def _can_edit(user, org):
+    from survey.permissions import get_org_membership
+    membership = get_org_membership(user, org)
+    return membership is not None and membership.role in ('owner', 'admin', 'editor')
+
+
+def _editable_report(request, report_uuid):
+    from reports.editor_views import may_edit_report
+    report = get_object_or_404(Report.objects.select_related('survey', 'organization'), uuid=report_uuid)
+    if not may_edit_report(request, report):
+        raise Http404
+    return report
+
+
+@login_required
+def report_export(request, report_uuid):
+    """The report as a ZIP: its settings, blocks and pictures (`reports.files`)."""
+    from django.http import HttpResponse
+    from reports.files import export_report
+    name, data = export_report(_editable_report(request, report_uuid))
+    response = HttpResponse(data, content_type='application/zip')
+    response['Content-Disposition'] = f'attachment; filename="{name}"'
+    return response
+
+
+@login_required
+def report_import(request):
+    """A report file into the active workspace: unpublished, workspace-only, opened in the editor."""
+    from django.contrib import messages
+    from reports.files import ReportFileRefused, import_report
+    from survey.services.context import Actor
+    org = getattr(request, 'active_org', None)
+    if org is None or not _can_edit(request.user, org):
+        raise Http404
+    upload = request.FILES.get('file') if request.method == 'POST' else None
+    if upload is None:
+        return redirect('editor_reports')
+    try:
+        report, notes = import_report(Actor.from_request(request), org, upload)
+    except ReportFileRefused as refusal:
+        messages.error(request, refusal.message)
+        return redirect('editor_reports')
+    for note in notes[:8]:
+        messages.warning(request, note)
+    messages.success(request, _('Report imported. It is not published; only this workspace sees it.'))
+    return redirect('editor_report', report_uuid=report.uuid)
+
+
+@login_required
+def report_delete(request, report_uuid):
+    """What goes with the report first, then the confirm. A survey's home report (the one its
+    Public results tab opens) is recreated empty the next time that tab opens."""
+    from django.contrib import messages
+    report = _editable_report(request, report_uuid)
+    if request.method == 'POST':
+        title = report.title
+        report.delete()
+        messages.success(request, _('“%(name)s” deleted.') % {'name': title})
+        return redirect('editor_reports')
+    return render(request, 'reports/delete.html', {'org': report.organization, 'report': report,
+                                                   'blocks': report.blocks.count()})

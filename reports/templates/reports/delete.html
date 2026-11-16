@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Delete report" %} — {{ report.title }}{% endblock %}
+
+{% block content %}
+{% comment %}Deleting a report (change reports-story, #704): a page that says what goes, then the
+confirm. The survey's answers are untouched — a report owns no data.{% endcomment %}
+<div class="container mt-4" style="max-width: 720px;">
+  <nav aria-label="{% trans 'Breadcrumb' %}" class="small mb-2"><a href="{% url 'editor_reports' %}">{% trans "Reports" %}</a> / <a href="{% url 'editor_report' report.uuid %}">{{ report.title }}</a></nav>
+  <h4 class="mb-3">{% blocktrans with name=report.title %}Delete “{{ name }}”?{% endblocktrans %}</h4>
+  {% if report.is_published %}
+  <p>{% blocktrans with slug=report.slug %}It is published at /r/{{ slug }}/. That address stops opening.{% endblocktrans %}</p>
+  {% endif %}
+  <p class="text-muted small">{% blocktrans count n=blocks %}Its {{ n }} block, with its text and pictures, is deleted. The survey answers it shows stay where they are. This cannot be undone — export the report first if you may want it back.{% plural %}Its {{ n }} blocks, with their text and pictures, are deleted. The survey answers they show stay where they are. This cannot be undone — export the report first if you may want it back.{% endblocktrans %}</p>
+  <form method="post" class="d-flex" style="gap:.5rem;">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-sm btn-danger">{% trans "Delete report" %}</button>
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'editor_report_export' report.uuid %}">{% trans "Export first" %}</a>
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'editor_report' report.uuid %}">{% trans "Cancel" %}</a>
+  </form>
+</div>
+{% endblock %}

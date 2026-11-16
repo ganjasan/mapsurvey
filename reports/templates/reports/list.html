@@ -4,12 +4,30 @@
 {% block title %}{{ org.name }} — {% trans "Reports" %}{% endblock %}
 
 {% block content %}
-{% comment %}The Reports list (change reports-object, #703): one row per report the member may see.
-A report opens in its home survey's Public results tab until the story editor (#704).{% endcomment %}
+{% comment %}The Reports list (changes reports-object #703, reports-story #704): one row per report
+the member may see, each opening in the report's own editor; a new one starts blank or from a
+report file.{% endcomment %}
 <div class="container mt-4" style="max-width: 980px;">
-  <h4 class="mb-2">{% trans "Reports" %}</h4>
+  <div class="d-flex align-items-center justify-content-between flex-wrap mb-2" style="gap:.5rem;">
+    <h4 class="mb-0">{% trans "Reports" %}</h4>
+    {% if can_edit %}
+    <div class="d-flex align-items-center" style="gap:.5rem;">
+      <form method="post" action="{% url 'editor_report_import' %}" enctype="multipart/form-data" class="mb-0" data-testid="report-import">
+        {% csrf_token %}
+        <label class="btn btn-sm btn-outline-secondary mb-0" style="cursor:pointer;">
+          <i class="fas fa-file-import" aria-hidden="true"></i> {% trans "Import a report" %}
+          <input type="file" name="file" accept=".zip,application/zip" hidden onchange="this.form.submit()">
+        </label>
+      </form>
+      <form method="post" action="{% url 'editor_report_create' %}" class="mb-0" data-testid="report-create">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-plus" aria-hidden="true"></i> {% trans "New report" %}</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
   <p class="text-muted" style="font-size:.9rem;">
-    {% blocktrans %}What this workspace publishes from its data: pages of charts and maps that never show a single respondent. Each survey's public results page is a report.{% endblocktrans %}
+    {% blocktrans %}A report tells what a survey found: text, with charts, maps and quotes between the paragraphs. Each survey's public results page is a report; a report made elsewhere can be imported as a file.{% endblocktrans %}
   </p>
 
   {% if rows %}
@@ -17,11 +35,7 @@ A report opens in its home survey's Public results tab until the story editor (#
     {% for row in rows %}
     <div class="list-group-item d-flex align-items-center justify-content-between flex-wrap" style="gap:.5rem;" data-report="{{ row.report.pk }}">
       <span class="flex-grow-1" style="min-width:0;">
-        {% if row.report.survey_id %}
-        <a href="{% url 'editor_survey_public_results' row.report.survey.uuid %}"><strong>{{ row.report.title }}</strong></a>
-        {% else %}
-        <strong>{{ row.report.title }}</strong>
-        {% endif %}
+        {% if can_edit %}<a href="{% url 'editor_report' row.report.uuid %}"><strong>{{ row.report.title }}</strong></a>{% else %}<strong>{{ row.report.title }}</strong>{% endif %}
         <span class="d-block text-muted" style="font-size:.82rem;">
           {% if row.report.survey_id %}{{ row.report.survey.name }} · {% endif %}
           {% blocktrans count n=row.blocks %}{{ n }} block{% plural %}{{ n }} blocks{% endblocktrans %}

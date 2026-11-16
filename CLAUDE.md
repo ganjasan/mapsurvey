@@ -1098,6 +1098,27 @@ creator. Tests wrap web-import POSTs in `_eager_import()`, which turns `.delay` 
 itself — the suite has no broker. The task runs once per job: a redelivered message finds the
 row past `queued` and returns.
 
+**The report as a story (change `reports-story`, #704 part 1; owner direction 2026-11-16)**: Reports is a
+STORYTELLING module and v1 is the LINEAR story — one column, text with charts, maps and quotes between the
+paragraphs. Acceptance rule: every report made by hand can be opened by its customer in Reports and edited
+there. So: (1) **story blocks** — `heading`, `text` (rich, `reports.story.clean_html` = `coerce_creator_html`),
+`image`, `numbers` and `quotes` (`ReportBlock.config = {"items": […]}`, typed by the author: typed numbers are
+ALLOWED; `reports.story.clean_config` is the one cleaner, the editor posts them as lines `value | label` /
+`quote | source`); `ReportBlock.width` `full | half`, two consecutive halves share a row
+(`render.story_rows`) — never a container block. (2) **One editor, two ways in**: every view in
+`reports/editor_views.py` is written once and exported twice, `on_survey(view)` (the survey's Public results
+tab, URL names `editor_public_results_*`) and `on_report(view)` (`/editor/reports/<uuid>/…`, names
+`editor_report*`); both set `request.report` / `request.survey` (None for a blank or imported report) and
+the template takes EVERY url from the `u` dict (`_urls(request)`) — never `{% url … survey.uuid %}` there.
+`may_edit_report` = workspace editor + editor on the home survey when there is one; strangers get 404.
+(3) **The report file** (`reports/files.py`): a ZIP with `report.json` (`format: 1`) + `images/`; question
+blocks by survey uuid + question CODE, re-bound on import (`data.questions.question_of`) or left out with a
+message; an import is always unpublished and `workspace`-only, text re-sanitised. Hand-made HTML reports are
+turned into that file by the ops repo's `scripts/report_html_to_file.py` — customers' reports never enter this
+repo. (4) The page (`public_results.html`) renders `rows`; a text payload carries `html`, and a snapshot frozen
+before this change has only `body`, which the template ESCAPES. A report without a survey has no comment
+threads (threads hang on a survey) and no "N responses". Next in #704: live cross-tab / engagement blocks, a
+map that may show marks (the survey owner's choice, per block), live numbers in text.
 **Reports (`reports/`, change `reports-object`, #703; epic #712)**: what was the public results
 page is a **report** — `reports.models.Report` (a workspace object at `/r/<slug>/`, `survey` = its
 HOME survey, nullable and not unique) with ordered `ReportBlock`s. A question block names a

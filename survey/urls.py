@@ -327,6 +327,22 @@ urlpatterns = [
     path('editor/data/', data_views.catalogue, name='editor_data'),
     # Reports (change reports-object, epic #712; `editor_reports*` names light the sidebar row).
     path('editor/reports/', report_views.report_list, name='editor_reports'),
+    # The report's own editor (change reports-story, #704): the same views a survey's Public
+    # results tab reaches, addressed by the report.
+    path('editor/reports/new/', public_results_editor.report_create, name='editor_report_create'),
+    path('editor/reports/import/', report_views.report_import, name='editor_report_import'),
+    path('editor/reports/<uuid:report_uuid>/', public_results_editor.report_config, name='editor_report'),
+    path('editor/reports/<uuid:report_uuid>/preview/', public_results_editor.report_preview, name='editor_report_preview'),
+    path('editor/reports/<uuid:report_uuid>/settings/', public_results_editor.report_save_settings, name='editor_report_save'),
+    path('editor/reports/<uuid:report_uuid>/blocks/add/', public_results_editor.report_block_add, name='editor_report_block_add'),
+    path('editor/reports/<uuid:report_uuid>/blocks/<int:block_id>/edit/', public_results_editor.report_block_edit, name='editor_report_block_edit'),
+    path('editor/reports/<uuid:report_uuid>/blocks/<int:block_id>/delete/', public_results_editor.report_block_delete, name='editor_report_block_delete'),
+    path('editor/reports/<uuid:report_uuid>/blocks/reorder/', public_results_editor.report_blocks_reorder, name='editor_report_blocks_reorder'),
+    path('editor/reports/<uuid:report_uuid>/set-published/', public_results_editor.report_set_published, name='editor_report_set_published'),
+    path('editor/reports/<uuid:report_uuid>/freeze/', public_results_editor.report_freeze, name='editor_report_freeze'),
+    path('editor/reports/<uuid:report_uuid>/unfreeze/', public_results_editor.report_unfreeze, name='editor_report_unfreeze'),
+    path('editor/reports/<uuid:report_uuid>/export/', report_views.report_export, name='editor_report_export'),
+    path('editor/reports/<uuid:report_uuid>/delete/', report_views.report_delete, name='editor_report_delete'),
     path('editor/data/upload/', data_views.upload, name='editor_data_upload'),
     path('editor/data/jobs/', data_views.jobs, name='editor_data_jobs'),
     path('editor/data/jobs/<int:job_id>/dismiss/', data_views.dismiss, name='editor_data_job_dismiss'),
