@@ -261,6 +261,7 @@ def _config(request):
         'selected_lines': (story.lines_from_items(selected_block.block_type, selected_block.config)
                            if selected_block and selected_block.block_type in ('numbers', 'quotes') else ''),
         'export_url': reverse('editor_report_export', args=[page.uuid]),
+        'pdf_url': reverse('editor_report_pdf', args=[page.uuid]),
         'crosstab_questions': _crosstab_questions(survey),
         'token_help': _token_help(),
         'reports_url': reverse('editor_reports'),

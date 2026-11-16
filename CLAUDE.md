@@ -1153,6 +1153,17 @@ body `editor/partials/pr_checks.html` fetched by HTMX from the `checks` route ea
 `visibility` and `mode` (live | frozen). A map block's `content` is its description: shown under the map and
 `role="img"` + `aria-label` on the container. The preview pane has phone / computer widths. Comment threads
 exist on blocks of a survey's report only (a thread belongs to a survey).
+**The PDF of a report (change `reports-pdf`, #707)**: `reports/pdf.py::build_pdf(report, base_url)` lays out
+the PAGE'S OWN payload (`render.build_context` → `rows`) on A4 with reportlab — NOT a headless browser — so a
+number in the PDF is the number on the page and nothing is counted there; a new block type needs a branch in
+`pdf._block` as it does in the template. Maps = `survey.print.static_map` basemap of the block's extent with
+cells / marks painted by Pillow (no token or a Mapbox error → plain ground). Every block is `KeepTogether` and a
+heading is folded into the block after it. **Never rendered in a web request**: `services.request_pdf` creates
+a `ReportPdf` row (private media tier, `report_pdfs/<uuid>.pdf`) and enqueues `reports.tasks.render_report_pdf`,
+which claims the row (`queued → running`), so a redelivered message does nothing; the editor's button polls
+`editor_report_pdf`. `stamp`: a FROZEN report has one PDF per snapshot, reused and linked from its page
+(`/r/<slug>/pdf/`, the page's own visibility guard); a LIVE report gets a new rendering per request and no public
+link. No PDF is made at freezing time. Tests patch `survey.print.static_map.fetch_basemap` so no test calls Mapbox.
 **Reports (`reports/`, change `reports-object`, #703; epic #712)**: what was the public results
 page is a **report** — `reports.models.Report` (a workspace object at `/r/<slug>/`, `survey` = its
 HOME survey, nullable and not unique) with ordered `ReportBlock`s. A question block names a

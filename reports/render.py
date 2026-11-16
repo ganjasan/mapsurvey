@@ -571,6 +571,7 @@ def build_context(report, lang='en'):
                          and canonical.can_accept_responses()),
         'survey_url': reverse('survey', kwargs={'survey_slug': str(survey.uuid)}) if survey is not None else '',
         'noindex': report.visibility != 'public',
+        'pdf_url': _page_pdf_url(report),
     }
 
 
@@ -585,6 +586,15 @@ def story_rows(blocks):
         else:
             rows.append([block])
     return rows
+
+
+def _page_pdf_url(report):
+    """Where the stored PDF of a published, frozen report is served, or '' when there is none."""
+    if not report.is_published or report.mode != 'frozen' or not report.pk:
+        return ''
+    from django.urls import reverse
+    from reports.services import ready_pdf
+    return reverse('report_page_pdf', args=[report.slug]) if ready_pdf(report) is not None else ''
 
 
 def _live_cache_key(report, lang):

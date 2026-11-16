@@ -366,6 +366,11 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
           <h6>{% trans "Report file" %}</h6>
           <p class="pr-help" style="margin-top:0;">{% trans "The whole report — text, numbers, quotes, pictures and which questions its charts and maps show — as one file. Import it on the Reports page, here or in another workspace." %}</p>
           <a class="btn btn-sm btn-outline-secondary" href="{{ export_url }}"><i class="fas fa-file-export"></i> {% trans "Export report" %}</a>
+          {% comment %}The PDF is made on the worker (change reports-pdf): the button asks for it,
+          polls, then opens it.{% endcomment %}
+          <button type="button" class="btn btn-sm btn-outline-secondary" id="prPdfButton" data-url="{{ pdf_url }}" onclick="prMakePdf(this)"><i class="fas fa-file-pdf"></i> {% trans "PDF (A4)" %}</button>
+          <span class="pr-help" id="prPdfStatus" role="status" style="margin-left:.4rem;"></span>
+          <div class="pr-help">{% trans "A frozen report's PDF is made once and linked from its page; a live report's PDF shows the numbers of the moment you ask." %}</div>
           {% if not survey %}<a class="btn btn-sm btn-outline-danger" href="{% url 'editor_report_delete' page.uuid %}"><i class="fas fa-trash"></i> {% trans "Delete report…" %}</a>{% endif %}
         </div>
 
@@ -468,6 +473,28 @@ document.addEventListener('click', function(event){
   if (pane) pane.style.width = device === 'phone' ? '420px' : Math.max(720, Math.round(window.innerWidth * 0.55)) + 'px';
   if (window.posthog) { try { window.posthog.capture('report_previewed', { device: device }); } catch (e) {} }
 });
+// The PDF: ask, poll every two seconds, open when done.
+function prMakePdf(button){
+  var token = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+  var status = document.getElementById('prPdfStatus');
+  var url = button.dataset.url;
+  button.disabled = true;
+  status.textContent = '{% filter escapejs %}{% trans "Making the PDF…" %}{% endfilter %}';
+  function done(text){ button.disabled = false; status.textContent = text; }
+  function poll(job){
+    fetch(url + '?job=' + job, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.status === 'done') { done(''); window.open(data.url, '_blank'); }
+        else if (data.status === 'failed') { done('{% filter escapejs %}{% trans "The PDF could not be made. Try again." %}{% endfilter %}'); }
+        else { setTimeout(function(){ poll(job); }, 2000); }
+      }).catch(function(){ done('{% filter escapejs %}{% trans "The PDF could not be made. Try again." %}{% endfilter %}'); });
+  }
+  fetch(url, { method: 'POST', headers: { 'X-CSRFToken': token, 'X-Requested-With': 'XMLHttpRequest' } })
+    .then(function(r){ return r.json(); })
+    .then(function(data){ poll(data.job); })
+    .catch(function(){ done('{% filter escapejs %}{% trans "The PDF could not be made. Try again." %}{% endfilter %}'); });
+}
 // Copy the public /r/<slug>/ URL. Exists so that sharing results does not mean
 // copying the editor URL out of the address bar — that yields the private
 // preview link, which strangers cannot open.

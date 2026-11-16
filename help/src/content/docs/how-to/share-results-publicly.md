@@ -68,6 +68,12 @@ All reports of the workspace are on the **Reports** page of the sidebar. **New r
 
 In the editor's preview, the phone and screen buttons show the page as on a phone or on a computer.
 
+## A PDF for the meeting pack
+
+Under **Page settings → Report file** press **PDF (A4)**. The PDF is made in the background — a report with several maps takes up to a minute — and opens when it is ready. It holds the same text, numbers, charts and maps as the page, in the same order, with the report's address and the page number at the foot of every page; a block is never split between two pages.
+
+A **frozen** report's PDF is made once: after that its published page shows a **PDF** link next to "Data as of", for everyone who can open the page. A **live** report's PDF shows the numbers of the moment you ask and is not linked from the page.
+
 ## Result
 
 Visitors see the opening, the blocks in your order, and — for a frozen page — a "Data as of" date. Small groups show "Small groups are masked to protect privacy"; every map block shows a grid of how many respondents marked each square, never the individual points, lines, areas or dots; a square's popup lists the chosen sub-question answers in it, small groups masked. Only clean responses count: trashed, not-approved and on-hold responses are left out. The page carries the "Made with Mapsurvey" badge on Free.
