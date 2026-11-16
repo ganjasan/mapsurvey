@@ -26,6 +26,17 @@ You end up with a public results page at `https://mapsurvey.org/r/<slug>/` showi
 5. Press **Publish page**. The address is shown next to **Public URL**; **Copy public link** copies it, and the same link appears under **Results page** on the Share page.
 6. To show the page to respondents after they finish, switch on **Show a “See the results” button** on the thanks page.
 
+## Start from a draft
+
+You do not have to begin with an empty page. Press **New report** on the **Reports** page, or **Make a report** on a survey's Responses page, choose the survey and press one of the cards:
+
+- **Consultation summary** — who took part, then every question people answered in the survey's order, with the survey's sections as headings.
+- **Council paper** — numbered sections, results as tables, a place for recommendations.
+- **Engagement update** — short, for while the survey is still open: the numbers, the maps and a link to take part.
+- **You said — we did** — each result followed by a place to say what was done about it.
+
+The draft is built by fixed rules from the answers, not written by an AI. It is not published. Answers to open questions arrive as a hidden **Quotes** block to pick from: delete the lines you do not want, then switch off **Hidden**. Places where you are expected to write arrive as hidden text blocks with a hint; write over the hint and un-hide them. **Blank report** starts empty, and **Copy an earlier report** gives you the same story to change for the next round.
+
 ## Tell it as a story
 
 The page is read top to bottom like an article, so write it like one. Under **Add block**, beside the results of a question, there are blocks you write yourself:

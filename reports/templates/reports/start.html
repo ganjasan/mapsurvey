@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "New report" %} — {{ org.name }}{% endblock %}
+
+{% block content %}
+{% comment %}Ways to start a report (change reports-start, #705). One click on a card does its action:
+every card is the submit button of its own form, as on the survey start page — no "choose, then
+confirm" step. The survey a draft is made from is picked once, above the cards.{% endcomment %}
+<style>
+  .rs-wrap { max-width: 1040px; }
+  .rs-pick { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; margin: 1rem 0 1.25rem; }
+  .rs-group { font-size: .78rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #5f6368; margin: 1.5rem 0 .6rem; }
+  .rs-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 1rem; }
+  .rs-form { display: flex; margin: 0; }
+  .rs-card {
+    width: 100%; text-align: left; font: inherit; background: #fff; color: inherit;
+    border: 2px solid var(--border-color, #e5e7eb); border-radius: 14px; padding: 1rem 1.1rem 1.1rem;
+    display: flex; flex-direction: column; gap: .35rem; cursor: pointer;
+    transition: transform .12s, border-color .12s; -webkit-appearance: none; appearance: none;
+  }
+  .rs-card:hover { transform: translateY(-2px); border-color: #4f46e5; }
+  .rs-card:focus-visible { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 4px #c7d2fe; }
+  .rs-card.rs-primary { border-color: #4f46e5; box-shadow: 0 0 0 4px #e0e7ff; }
+  .rs-card i { font-size: 1.3rem; color: #4f46e5; }
+  .rs-title { font-weight: 700; font-size: 1rem; display: block; }
+  .rs-what { font-size: .86rem; color: #5f6368; line-height: 1.4; display: block; }
+  .rs-badge { align-self: flex-start; font-size: .68rem; font-weight: 600; background: #e0e7ff; color: #4338ca; border-radius: 999px; padding: 2px 9px; }
+  .rs-copy { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+</style>
+<div class="container mt-4 rs-wrap">
+  <nav aria-label="{% trans 'Breadcrumb' %}" class="small mb-2"><a href="{% url 'editor_reports' %}">{% trans "Reports" %}</a> / {% trans "New report" %}</nav>
+  <h4 class="mb-1">{% trans "Start a report" %}</h4>
+  <p class="text-muted mb-0" style="font-size:.92rem;">{% trans "Begin with a draft made from a survey's answers and cut it down to what you want to say — or start empty. Nothing is published until you publish it." %}</p>
+
+  {% if surveys %}
+  <div class="rs-group">{% trans "Draft from a survey" %}</div>
+  <form method="get" class="rs-pick" data-testid="report-start-survey">
+    <input type="hidden" name="from" value="{{ surface }}">
+    <label for="rs-survey" class="mb-0" style="font-size:.9rem;">{% trans "Survey" %}</label>
+    <select id="rs-survey" name="survey" class="custom-select custom-select-sm" style="width:auto;max-width:100%;" onchange="this.form.submit()">
+      {% for s in surveys %}<option value="{{ s.uuid }}"{% if chosen and s.pk == chosen.pk %} selected{% endif %}>{{ s.name }}</option>{% endfor %}
+    </select>
+    <noscript><button type="submit" class="btn btn-sm btn-outline-secondary">{% trans "Choose" %}</button></noscript>
+  </form>
+  <div class="rs-cards" data-testid="report-start-drafts">
+    {% for key, label, what in templates %}
+    <form method="post" class="rs-form">
+      {% csrf_token %}
+      <input type="hidden" name="kind" value="draft">
+      <input type="hidden" name="template" value="{{ key }}">
+      <input type="hidden" name="survey" value="{{ chosen.uuid }}">
+      <input type="hidden" name="from" value="{{ surface }}">
+      <button type="submit" class="rs-card{% if forloop.first %} rs-primary{% endif %}" data-template="{{ key }}">
+        <i class="fas {% if key == 'summary' %}fa-book-open{% elif key == 'council' %}fa-landmark{% elif key == 'update' %}fa-bullhorn{% else %}fa-comments{% endif %}" aria-hidden="true"></i>
+        {% if forloop.first %}<span class="rs-badge">{% trans "Best to start" %}</span>{% endif %}
+        <span class="rs-title">{{ label }}</span>
+        <span class="rs-what">{{ what }}</span>
+      </button>
+    </form>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="text-muted mt-3" style="font-size:.9rem;" data-testid="report-start-no-survey">{% trans "A draft is made from a published survey's answers. This workspace has none yet, so start empty." %}</p>
+  {% endif %}
+
+  <div class="rs-group">{% trans "Or" %}</div>
+  <div class="rs-cards">
+    <form method="post" class="rs-form">
+      {% csrf_token %}
+      <input type="hidden" name="kind" value="blank">
+      <input type="hidden" name="from" value="{{ surface }}">
+      <button type="submit" class="rs-card" data-testid="report-start-blank">
+        <i class="far fa-file" aria-hidden="true"></i>
+        <span class="rs-title">{% trans "Blank report" %}</span>
+        <span class="rs-what">{% trans "An empty page: add headings, text, pictures, numbers and quotes yourself." %}</span>
+      </button>
+    </form>
+    {% if earlier %}
+    <form method="post" class="rs-card" style="cursor:default;" data-testid="report-start-copy">
+      {% csrf_token %}
+      <input type="hidden" name="kind" value="copy">
+      <input type="hidden" name="from" value="{{ surface }}">
+      <i class="far fa-copy" aria-hidden="true"></i>
+      <span class="rs-title">{% trans "Copy an earlier report" %}</span>
+      <span class="rs-what">{% trans "The same story for the next round: change what changed." %}</span>
+      <span class="rs-copy">
+        <label for="rs-report" class="sr-only">{% trans "Report to copy" %}</label>
+        <select id="rs-report" name="report" class="custom-select custom-select-sm" style="flex:1;min-width:0;">
+          {% for r in earlier %}<option value="{{ r.uuid }}">{{ r.title }}</option>{% endfor %}
+        </select>
+        <button type="submit" class="btn btn-sm btn-outline-primary">{% trans "Copy" %}</button>
+      </span>
+    </form>
+    {% endif %}
+  </div>
+  <p class="text-muted mt-4" style="font-size:.85rem;">{% trans "A report made elsewhere? Import its file on the Reports page." %}</p>
+</div>
+{% endblock %}

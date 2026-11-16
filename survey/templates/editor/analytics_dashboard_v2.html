@@ -83,6 +83,13 @@
                     title="{% trans 'Export responses as Excel, GeoPackage, Shapefile, GeoJSON, KML or CSV' %}">
                 <i class="fas fa-file-export"></i> {% trans "Export data" %}
             </button>
+            {% comment %}"Create report" where the data is (change reports-start, #705).{% endcomment %}
+            {% if can_enter_responses and survey.status != 'draft' %}
+            <a class="btn btn-sm btn-outline-secondary" href="{% url 'editor_report_start' %}?survey={{ survey.uuid }}&amp;from=responses"
+               data-testid="rv2-make-report" title="{% trans 'Draft a report from these answers' %}">
+                <i class="far fa-file-alt"></i> {% trans "Make a report" %}
+            </a>
+            {% endif %}
             {% if can_enter_responses %}{% comment %}Operator entry form (change operator-entry): Pro.{% endcomment %}
             {% if operator_entry_available %}
             <div class="btn-group rv2-enter-response-group">

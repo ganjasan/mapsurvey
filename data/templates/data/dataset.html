@@ -17,6 +17,7 @@ download. This page and the object editor are the only places a private field is
         · {% blocktrans count n=row.used_by %}used in {{ n }} place{% plural %}used in {{ n }} places{% endblocktrans %}
         {% if row.changed %}· {% blocktrans with when=row.changed|date:"j M Y" %}changed {{ when }}{% endblocktrans %}{% endif %}
         {% if row.link %}· <a href="{{ row.link }}">{% trans "Open the source" %}</a>{% endif %}
+        {% if can_edit and row.survey and ds.kind == 'responses' %}· <a href="{% url 'editor_report_start' %}?survey={{ row.survey.uuid }}&amp;from=data" data-testid="dataset-make-report">{% trans "Make a report" %}</a>{% endif %}
       </div>
     </div>
     <div class="d-flex align-items-center" style="gap:.5rem;">

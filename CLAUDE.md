@@ -1130,6 +1130,19 @@ coverage / density views, the Data API and MCP keep the grid (`public-aggregates
 blocks, key numbers and the opening paragraph from the HOME survey, masked with the report's K; a token that
 cannot be filled stays as written; a frozen snapshot stores the filled text (and `intro_body`). The report file
 carries all of it (`crosstab` by survey + two codes, `engagement` by survey, a map's `marks`).
+**Starting a report (change `reports-start`, #705)**: `/editor/reports/start/` (`reports.views.report_start`,
+`reports/start.html`) — one click on a card does its action (each card is the submit button of its own form;
+do not add a "choose, then confirm" step). `reports/drafting.py::build_draft(actor, survey, template)` builds a
+NEW report by RULES, never a model and never into the survey's first report: key numbers and the engagement
+block first, then one block per top-level question that has answers in clean sessions, in respondent order,
+section titles as headings; four arrangements (`TEMPLATES`: `summary`, `council`, `update`, `yousaid`) are
+small builder functions over `_Draft`. **Hidden instead of placeholder**: prompts ("Write what this part…") and
+candidate quotes from free-text questions (≤ 8 recent answers of 30–320 chars) are real blocks with
+`is_hidden=True`, so publishing an unfinished draft shows none of them and a quote reaches the page only after
+the author un-hides it. `copy_report` = the report file's export + import in memory (a copy cannot keep what an
+export would lose). Entry links: Reports list, Responses of a published survey, the responses dataset.
+Events `report_entry_seen` / `report_created` carry ids and choice names only. `Report.template` records the
+arrangement.
 **Reports (`reports/`, change `reports-object`, #703; epic #712)**: what was the public results
 page is a **report** — `reports.models.Report` (a workspace object at `/r/<slug>/`, `survey` = its
 HOME survey, nullable and not unique) with ordered `ReportBlock`s. A question block names a
