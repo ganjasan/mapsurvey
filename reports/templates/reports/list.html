@@ -23,6 +23,12 @@ report file.{% endcomment %}
     </div>
     {% endif %}
   </div>
+  {% if reports_locked %}
+  <div class="alert alert-warning d-flex align-items-center flex-wrap" style="gap:.5rem;" data-testid="reports-locked" role="status">
+    <span class="flex-grow-1">{% trans "Reports are part of Pro. On the current plan this workspace's reports are read-only: published ones stay online with the numbers they had, and nothing is deleted." %}</span>
+    <a class="btn btn-sm btn-primary" href="{% url 'org_billing' org.slug %}">{% trans "See Pro" %}</a>
+  </div>
+  {% endif %}
   <p class="text-muted" style="font-size:.9rem;">
     {% blocktrans %}A report tells what a survey found: text, with charts, maps and quotes between the paragraphs. Each survey's public results page is a report; a report made elsewhere can be imported as a file.{% endblocktrans %}
   </p>

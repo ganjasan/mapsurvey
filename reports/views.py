@@ -26,6 +26,8 @@ def report_page(request, slug):
         from survey.permissions import get_org_membership
         if get_org_membership(request.user, report.organization) is None:
             raise Http404
+    from reports import gate
+    gate.freeze_if_lapsed(report)       # no Reports feature: the page is its snapshot, never a 404
     lang = request.GET.get('lang') or 'en'
     return render(request, 'public_results.html', _framed_context(request, report, build_context(report, lang=lang)))
 
@@ -40,6 +42,8 @@ def _guard(request, slug):
         from survey.permissions import get_org_membership
         if get_org_membership(request.user, report.organization) is None:
             raise Http404
+    from reports import gate
+    gate.freeze_if_lapsed(report)
     return report, None
 
 
@@ -160,10 +164,16 @@ def report_list(request):
                   .annotate(n=Count('blocks')).values_list('pk', 'n'))
     rows = [{'report': r, 'blocks': counts.get(r.pk, 0),
              'public_url': request.build_absolute_uri('/r/{}/'.format(r.slug))} for r in reports]
-    return render(request, 'reports/list.html', {'org': org, 'rows': rows, 'can_edit': _can_edit(request.user, org)})
+    return render(request, 'reports/list.html', {'org': org, 'rows': rows, 'can_edit': _can_edit(request.user, org),
+                                                 'reports_locked': not _may_write(org)})
 
 
 # ── The report as a file, and deleting one (change reports-story, #704) ──────
+
+def _may_write(org):
+    from reports import gate
+    return gate.may_write(org)
+
 
 def _can_edit(user, org):
     from survey.permissions import get_org_membership
@@ -201,6 +211,10 @@ def report_start(request):
     chosen = next((s for s in surveys if str(s.uuid) == (request.GET.get('survey') or request.POST.get('survey'))), None)
 
     if request.method == 'POST':
+        from reports import gate
+        from reports.editor_views import paywall
+        if not gate.use(org, request.user):
+            return paywall(request, org, 'start')
         actor = Actor.from_request(request)
         kind = request.POST.get('kind')
         template = ''
@@ -227,6 +241,7 @@ def report_start(request):
         'org': org, 'surveys': surveys, 'chosen': chosen or (surveys[0] if surveys else None),
         'templates': [(key, value['label'], value['what']) for key, value in drafting.TEMPLATES.items()],
         'earlier': visible_reports(org, request.user)[:30], 'surface': surface,
+        'reports_locked': not _may_write(org),
     })
 
 
@@ -304,6 +319,10 @@ def report_import(request):
     upload = request.FILES.get('file') if request.method == 'POST' else None
     if upload is None:
         return redirect('editor_reports')
+    from reports import gate
+    from reports.editor_views import paywall
+    if not gate.use(org, request.user):
+        return paywall(request, org, 'import')
     try:
         report, notes = import_report(Actor.from_request(request), org, upload)
     except ReportFileRefused as refusal:

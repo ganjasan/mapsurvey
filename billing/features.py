@@ -67,6 +67,11 @@ FEATURES = {
     # questions, are free on every plan (owner decision 2026-11-10).
     'budget_map': Feature('budget_map', frozenset({PLAN_PRO}),
                           _('Budget questions over a reference layer')),
+    # Reports (change reports-pro, #709; owner decision 2026-11-16): the module is Pro as a
+    # whole. WRITING a report is gated (`reports.gate.use`); reading never is — a published
+    # report of a workspace without the feature is served as a frozen snapshot, never a 404.
+    'reports': Feature('reports', frozenset({PLAN_PRO}),
+                       _('Reports: tell what a survey found, as a page, a PDF or an embed')),
 }
 
 
@@ -89,6 +94,7 @@ TRIAL_ALLOWANCES = {
     'map_styles': 2,   # workspace styles created
     'sites': 1,  # sites created
     'budget_map': None,  # layer-sourced budget questions created: counted, no cap
+    'reports': None,     # writes to reports: counted, no cap — the trial's limit is its 90 days
 }
 TRIAL_DAYS = 90
 

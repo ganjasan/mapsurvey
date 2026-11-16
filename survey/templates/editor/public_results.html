@@ -102,6 +102,15 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
 </div>
 {% endif %}
 
+{% if reports_locked %}
+{% comment %}No Reports feature (change reports-pro, #709): the report opens read-only — every
+write answers the upgrade page — with the way to Pro in front of it.{% endcomment %}
+<div class="pr-banner" style="margin:.5rem 1rem 0;flex-shrink:0;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;" data-testid="reports-locked" role="status">
+  <i class="fas fa-lock"></i>
+  <span style="flex:1;min-width:0;">{% trans "Reports are part of Pro. On the current plan this report is read-only: a published report stays online with the numbers it had, and nothing is deleted. You can still export it and make its PDF." %}</span>
+  <a class="btn btn-sm btn-primary" href="{% url 'org_billing' page.organization.slug %}">{% trans "See Pro" %}</a>
+</div>
+{% endif %}
 <div class="pr-container" data-active-pane="{% if selected_block %}edit{% else %}structure{% endif %}">
 
   <!-- LEFT: page-settings entry + blocks (styled like the Survey Editor sidebar) -->

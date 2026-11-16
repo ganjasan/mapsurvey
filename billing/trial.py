@@ -54,6 +54,7 @@ UNIT_LABELS = {
     'unbranded': _('Surveys without the Mapsurvey badge'),
     'pro_help': _('Requests to the Mapsurvey team'),
     'operator_entry': _('Paper responses entered'),
+    'reports': _('Reports written'),
 }
 
 
@@ -73,6 +74,7 @@ STARTED_HOW = {
     'pro_help': _('by sending a request to the Mapsurvey team'),
     'api': _('with a call to the API or the MCP server'),
     'operator_entry': _('by entering a paper response'),
+    'reports': _('by working on a report'),
 }
 
 

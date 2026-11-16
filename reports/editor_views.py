@@ -87,6 +87,30 @@ def may_edit_report(request, report):
     return _check_survey_role(get_effective_survey_role(request.user, report.survey), 'editor')
 
 
+def paywall(request, organization, surface='editor'):
+    """The answer to a write the workspace's plan does not allow (change reports-pro, #709)."""
+    from billing.gates import feature_required
+    from reports.gate import FEATURE
+    from survey import product_events as pe
+    pe.emit(pe.REPORT_PAYWALL_SHOWN, request.user.pk, {'surface': surface})
+    if _is_ajax(request):
+        return JsonResponse({'ok': False, 'error': 'pro_required'}, status=403)
+    return feature_required(request, organization, FEATURE)
+
+
+def _gated(request, organization):
+    """None when this request may go on: a read always may, a write when the workspace has the
+    Reports feature (or starts its trial with it). Otherwise the upgrade page."""
+    from billing import trial
+    from reports import gate
+    if request.method != 'POST':
+        return None
+    if gate.use(organization, request.user):
+        trial.flash_started(request, organization)
+        return None
+    return paywall(request, organization)
+
+
 def on_survey(view):
     """The view reached through a survey's Public results tab."""
     @survey_permission_required('editor')
@@ -94,6 +118,9 @@ def on_survey(view):
     def wrapper(request, survey_uuid, *args, **kwargs):
         request.report_route = 'survey'
         request.report = None
+        refusal = _gated(request, request.survey.organization)
+        if refusal is not None:
+            return refusal
         return view(request, *args, **kwargs)
     return wrapper
 
@@ -112,6 +139,9 @@ def on_report(view):
         request.survey = report.survey if report.survey_id else None
         request.effective_survey_role = (get_effective_survey_role(request.user, report.survey)
                                          if report.survey_id else 'editor')
+        refusal = _gated(request, report.organization)
+        if refusal is not None:
+            return refusal
         return view(request, *args, **kwargs)
     return wrapper
 
@@ -193,6 +223,11 @@ def _refused(request, refusal, status=400):
     from django.contrib import messages
     messages.error(request, refusal.message)
     return redirect(_url(request, 'config'))
+
+
+def _may_write(organization):
+    from reports import gate
+    return gate.may_write(organization)
 
 
 def _crosstab_questions(survey):
@@ -285,6 +320,7 @@ def _config(request):
         'export_url': reverse('editor_report_export', args=[page.uuid]),
         'pdf_url': reverse('editor_report_pdf', args=[page.uuid]),
         'crosstab_questions': _crosstab_questions(survey),
+        'reports_locked': not _may_write(page.organization),
         **_elsewhere(request, page, selected_block),
         'token_help': _token_help(),
         'reports_url': reverse('editor_reports'),
@@ -551,6 +587,9 @@ def report_create(request):
     membership = get_org_membership(request.user, org) if org is not None else None
     if membership is None or membership.role not in ('owner', 'admin', 'editor'):
         raise Http404
+    from reports import gate
+    if not gate.use(org, request.user):
+        return paywall(request, org, 'start')
     title = (request.POST.get('title') or '').strip()[:200] or 'Untitled report'
     report = services.create_report(Actor.from_request(request), org, title=title, visibility='workspace')
     return redirect('editor_report', report_uuid=report.uuid)

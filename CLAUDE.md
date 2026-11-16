@@ -1175,6 +1175,20 @@ links. **CSV and PNG are made from the block's PAYLOAD, never from answers** —
 the CSV and its value is not in the file. Public CSV at `/r/<slug>/block/<id>/data.csv`; an editor's CSV / PNG at
 `editor_report_block_file`; all blocks as one ZIP = the PDF's worker job with `ReportPdf.kind = 'zip'`
 (`reports.tasks.build_zip`). A "Report" block for Sites is not built (a Sites block kind; follow-up).
+**Reports is Pro (change `reports-pro`, #709; owner decision 2026-11-16)**: feature `reports` in
+`billing/features.py`, in the trial UNCAPPED (the trial's limit is its 90 days). `reports/gate.py` is the one
+place: `covered(org)` = plan or a live trial (`Entitlements.covers`, NOT `may` — a report made under the trial
+stays alive until the trial ends); `use(org, user)` lets a WRITE through, starting the workspace's trial when it
+never had one; `freeze_if_lapsed(report)` freezes a published live report of an uncovered workspace. **Writes are
+gated, reading never is**: every POST of the report editor passes `_gated` in the `on_survey` / `on_report`
+wrappers, plus `report_create`, `report_start` and `report_import`; the refusal is `editor_views.paywall`
+(`billing.gates.feature_required`, or 403 JSON `pro_required` for autosave) and emits `report_paywall_shown`.
+The editor's GET, export, PDF and ZIP work on any plan (banner `reports_locked`). **The public routes never
+answer 404 or an upgrade page for the plan**: `report_page` and `_guard` (block page, CSV) call
+`freeze_if_lapsed` first, so a lapsed or never-Pro workspace's report is its snapshot at the same address.
+`manage.py freeze_reports_without_pro [--dry-run]` lists and freezes them all (ship day). The survey's first
+report is still drafted for free by `scaffold_report` — the product drafting, not a member writing. A new
+write endpoint for reports must go through the wrappers or call `gate.use`.
 **Reports (`reports/`, change `reports-object`, #703; epic #712)**: what was the public results
 page is a **report** — `reports.models.Report` (a workspace object at `/r/<slug>/`, `survey` = its
 HOME survey, nullable and not unique) with ordered `ReportBlock`s. A question block names a
