@@ -135,7 +135,7 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
     {% if selected_block %}
       {# ---- selected block config ---- #}
       <div class="pr-ctxbar">
-        <span class="ico"><i class="fas {% if selected_block.block_type == 'map' %}fa-map-marked-alt{% elif selected_block.block_type == 'chart' %}fa-chart-bar{% elif selected_block.block_type == 'image' %}fa-image{% elif selected_block.block_type == 'text' %}fa-align-left{% elif selected_block.block_type == 'numbers' %}fa-hashtag{% elif selected_block.block_type == 'quotes' %}fa-quote-right{% else %}fa-heading{% endif %}"></i></span>
+        <span class="ico"><i class="fas {% if selected_block.block_type == 'map' %}fa-map-marked-alt{% elif selected_block.block_type == 'chart' %}fa-chart-bar{% elif selected_block.block_type == 'image' %}fa-image{% elif selected_block.block_type == 'text' %}fa-align-left{% elif selected_block.block_type == 'numbers' %}fa-hashtag{% elif selected_block.block_type == 'quotes' %}fa-quote-right{% elif selected_block.block_type == 'crosstab' %}fa-table{% elif selected_block.block_type == 'engagement' %}fa-users{% else %}fa-heading{% endif %}"></i></span>
         <div><div class="t">{% trans "Block" %}: {{ selected_block.get_block_type_display }}</div><div class="s">{% if selected_block.question %}{{ selected_block.question.name }}{% endif %}</div></div>
       </div>
       <div class="pr-scroll">
@@ -166,6 +166,11 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
             </div>
             {% elif selected_block.block_type == 'map' %}
             <p class="pr-help" data-testid="pr-map-grid-note">{% blocktrans with k=page.k_anonymity_threshold %}The public map shows squares that count respondents; squares with fewer than {{ k }} respondents are hidden. Exact points stay in Responses and the export.{% endblocktrans %}</p>
+            {% comment %}The survey owner's choice (owner decision 2026-11-16): the marks themselves
+            instead of the grid. Off by default; the hidden marker lets an autosave say "off".{% endcomment %}
+            <input type="hidden" name="show_marks_present" value="1">
+            <label class="pr-switch" data-testid="pr-map-marks"><span>{% trans "Show the marks themselves" %} <small class="pr-help">{% trans "every place, line or area as it was drawn, instead of the squares. A mark can point at someone's home: you decide whether that is right for this survey." %}</small></span>
+              <input type="checkbox" name="show_marks" {% if selected_block.config.marks %}checked{% endif %}></label>
             <div class="pr-field">
               <label>{% trans "Basemap" %}</label>
               <select class="form-control" name="basemap">
@@ -198,7 +203,12 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
               field carries the HTML, sanitised on save by reports.story.clean_html.{% endcomment %}
               <input type="hidden" name="content" id="prTextContent" value="{{ selected_block.content.en|default:'' }}">
               <div id="prTextEditor" style="background:#fff;min-height:220px;"></div>
+              {% if survey %}<div class="pr-help" data-testid="pr-token-help">{% trans "A number can follow the answers: write a token and the page fills it in." %} {% for token in token_help %}<code>{{ token }}</code> {% endfor %} {% trans "CODE is a question's code. A frozen report keeps the numbers of the day it was frozen." %}</div>{% endif %}
             </div>
+            {% elif selected_block.block_type == 'crosstab' %}
+            <p class="pr-help" data-testid="pr-xtab-note">{% blocktrans with rows=selected_block.view.config.rows columns=selected_block.view.config.columns k=page.k_anonymity_threshold %}Questions {{ rows }} (rows) × {{ columns }} (columns): how many people gave each pair of answers, among those who answered both. A group smaller than {{ k }} is hidden, with the totals that would give it away. To compare other questions, add another cross-tab.{% endblocktrans %}</p>
+            {% elif selected_block.block_type == 'engagement' %}
+            <p class="pr-help">{% trans "How many people opened the survey, answered at least one question and finished it, and how that went over time. Trashed and moderated-out responses are not counted." %}</p>
             {% elif selected_block.block_type == 'numbers' %}
             <div class="pr-field">
               <label for="prItems">{% trans "Numbers" %}</label>

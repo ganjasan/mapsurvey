@@ -212,6 +212,50 @@ class ImportTest(_Files):
             self.assertTrue([m for m in response.context['messages'] if m.level_tag == 'error'])
         self.assertFalse(Report.objects.exists())
 
+    def _live_report(self):
+        from reports import services
+        from survey.services.context import Actor
+        age = Question.objects.create(survey_section=self.section, code='Q_AGE', name='Age', input_type='choice',
+                                      choices=[{'code': 1, 'name': 'Under 30'}, {'code': 2, 'name': 'Over 60'}])
+        where = Question.objects.create(survey_section=self.section, code='Q_WHERE', name='Where', input_type='point')
+        report = Report.objects.create(survey=self.survey, slug='live-story', intro={'title': {'en': 'Live'}})
+        actor = Actor(user=self.owner, ip=None, surface='editor')
+        services.add_view_block(actor, report, 'crosstab', self.survey, rows='Q_PRIO', columns=age.code)
+        services.add_view_block(actor, report, 'engagement', self.survey)
+        ReportBlock.objects.create(report=report, block_type='map', question=where, config={'marks': True}, order=2)
+        return report
+
+    def test_round_trip_of_a_crosstab_and_a_map_with_marks(self):
+        """
+        GIVEN a report with a cross-tab, an engagement block and a map showing marks
+        WHEN it is exported and imported in the same workspace
+        THEN the copy has the three blocks, the cross-tab on the same questions, the map still showing marks
+        """
+        original = self._live_report()
+        self.upload(self.export(original))
+        copy = Report.objects.exclude(pk=original.pk).get()
+        blocks = list(copy.blocks.select_related('view'))
+        self.assertEqual([b.block_type for b in blocks], ['crosstab', 'engagement', 'map'])
+        self.assertEqual(blocks[0].view.config, {'rows': 'Q_PRIO', 'columns': 'Q_AGE'})
+        self.assertEqual(blocks[1].view.kind, 'engagement')
+        self.assertEqual(blocks[2].config, {'marks': True})
+
+    def test_live_blocks_into_a_workspace_without_the_survey(self):
+        """
+        GIVEN that file
+        WHEN it is imported into another workspace
+        THEN the three blocks are left out and the member is told
+        """
+        data = self.export(self._live_report())
+        other_org, other_owner = make_pro_org('LiveTargetOrg', 'livetargetowner')
+        self.login(other_owner, other_org)
+        response = self.client.post(
+            reverse('editor_report_import'),
+            {'file': SimpleUploadedFile('r.report.zip', data, content_type='application/zip')}, follow=True)
+        copy = Report.objects.get(organization=other_org)
+        self.assertEqual(copy.blocks.count(), 0)
+        self.assertContains(response, 'this workspace does not have')
+
     def test_a_viewer(self):
         """
         GIVEN a viewer of the workspace

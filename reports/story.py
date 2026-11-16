@@ -47,6 +47,9 @@ def clean_config(block_type, raw):
             if text:
                 out.append({'text': text, 'source': _text(item.get('source'), MAX_SOURCE)})
         return {'items': out}
+    if block_type == 'map':
+        # Individual marks instead of the grid: the survey owner's choice (owner, 2026-11-16).
+        return {'marks': True} if raw.get('marks') else {}
     return {}
 
 

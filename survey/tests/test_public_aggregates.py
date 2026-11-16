@@ -261,6 +261,28 @@ class PublicSurfacesTest(TestCase):
         self.assertEqual([f['properties']['respondents'] for f in payload['cells']['features']], [3])
         self.assertNotIn('"Point"', str(payload))
 
+    def test_a_site_block_keeps_the_grid_when_a_report_shows_marks(self):
+        """
+        GIVEN a report whose map block shows the marks of the point question
+        WHEN a Site results block shows the same question
+        THEN the report's payload holds marks, and the Site block's holds cells and no mark
+        """
+        from types import SimpleNamespace
+        from reports.render import ReportService
+        for _ in range(3):
+            self._respondent(1)
+        report = Report.objects.create(survey=self.survey, slug='marks-on', is_published=True)
+        block = ReportBlock.objects.create(report=report, block_type='map', question=self.point,
+                                           config={'marks': True})
+        shown = ReportService(report)._build_block(block)
+        self.assertEqual((shown['data_type'], len(shown['marks']['features'])), ('marks', 3))
+        site_like = SimpleNamespace(id='r3', block_type='map', viz='auto', custom_title={}, question=self.point,
+                                    question_id=self.point.pk, geo_label_fields=[], basemap='streets',
+                                    content={}, image=None, is_hidden=False)
+        payload = ReportService.for_survey(self.survey, 3)._build_block(site_like)
+        self.assertEqual(payload['data_type'], 'grid')
+        self.assertNotIn('marks', payload)
+
     def test_frozen_snapshot_of_an_earlier_format_is_stale(self):
         """
         GIVEN a page frozen with a version-2 snapshot that holds point features

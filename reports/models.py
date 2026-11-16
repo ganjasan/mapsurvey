@@ -32,7 +32,13 @@ BLOCK_TYPE_CHOICES = (
     ('map', _('Map')),
     ('objects', _('Objects')),   # per-object aggregates of an Objects-on-the-map question
     ('budget', _('Budget')),     # a budget question's aggregate
+    # Blocks that show a computed view of the Data module (change reports-live-blocks, #704):
+    ('crosstab', _('Cross-tab')),       # two questions against each other
+    ('engagement', _('Engagement')),    # opened → answered → finished, and over time
 )
+
+# Block types that show an analysis view (`ReportBlock.view`, kinds of `data.analysis`).
+VIEW_BLOCK_TYPES = ('crosstab', 'engagement')
 
 # Block types that show one question of a dataset.
 QUESTION_BLOCK_TYPES = ('chart', 'map', 'objects', 'budget')
@@ -158,7 +164,8 @@ class ReportBlock(models.Model):
         max_length=50, default='streets',
         help_text=_('Tile basemap for map blocks: a preset key or "style:<uuid>" of a workspace map style.'))
     # What a story block holds beyond its text (change reports-story):
-    # numbers → {'items': [{'value', 'label'}]}; quotes → {'items': [{'text', 'source'}]}.
+    # numbers → {'items': [{'value', 'label'}]}; quotes → {'items': [{'text', 'source'}]};
+    # map → {'marks': True} when the author chose to show individual marks instead of the grid.
     # `reports.story.clean_config` is the one writer.
     config = models.JSONField(default=dict, blank=True)
     # Two consecutive half-width blocks sit side by side on a wide screen.

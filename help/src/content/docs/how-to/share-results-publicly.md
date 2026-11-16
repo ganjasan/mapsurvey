@@ -36,6 +36,13 @@ The page is read top to bottom like an article, so write it like one. Under **Ad
 - **Key numbers** is a strip of figures with a word under each. Enter one per line as `447 | residents answered`. You type these numbers; they do not change when new answers arrive.
 - **Quotes** shows what people wrote, one per line, with an optional source after ` | `: `Give us the bridge back. | Pin: needs attention`. A quote is published exactly as you enter it, so leave out anything that names a person.
 
+Blocks that follow the answers:
+
+- **Cross-tab** puts two questions against each other — transport by age, say: how many people gave each pair of answers, among those who answered both. Pick the question for the rows and the one for the columns when you add it.
+- **Engagement** shows how many people opened the survey, answered and finished, and how that went over time.
+- A **map** block shows squares that count respondents. Switch on **Show the marks themselves** in the block's settings to show every place, line or area as it was drawn instead. A mark can point at someone's home, so decide whether that is right for your survey; the default stays the squares.
+- **Numbers in the text** can follow the answers too. Write `{responses}` in a text, a key number or the opening paragraph and the page fills in how many people answered; `{opened}` and `{finished}` are the other two steps, `{marks:CODE}` the marks placed on a map question and `{respondents:CODE}` the people who answered a question, CODE being the question's code. A frozen page keeps the numbers of the day it was frozen. A count smaller than the privacy threshold reads "<3".
+
 Set a block's **Width** to *Half width* to put two blocks side by side on a wide screen; on a phone they stack. Under **Page settings → Opening** add a line above the title and an opening paragraph.
 
 All reports of the workspace are on the **Reports** page of the sidebar. **New report** starts a blank one that belongs to no survey. **Export report** (Page settings → Report file) saves the whole report — text, numbers, quotes, pictures and which questions its charts and maps show — as one file; **Import a report** on the Reports page brings such a file in, here or in another workspace. An imported report is not published and only the workspace sees it until you change that; a chart or map of a survey the workspace does not have is left out, and you are told which.
