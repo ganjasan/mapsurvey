@@ -88,6 +88,8 @@ class Report(models.Model):
         default=False, help_text=_('Show a card in the public stories listing (public visibility only).'))
     k_anonymity_threshold = models.PositiveIntegerField(
         default=DEFAULT_K, help_text=_('Mask buckets with 0 < count < K as "<K". Set to 1 to disable.'))
+    # The arrangement a draft was made with (`reports.drafting.TEMPLATES`); '' = made by hand.
+    template = models.CharField(max_length=12, blank=True, default='')
     scaffolded_at = models.DateTimeField(
         null=True, blank=True,
         help_text=_('When default blocks were auto-drafted. Set once; blocks the creator deletes are never re-created.'))

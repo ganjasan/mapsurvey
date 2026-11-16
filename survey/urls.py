@@ -330,6 +330,7 @@ urlpatterns = [
     # The report's own editor (change reports-story, #704): the same views a survey's Public
     # results tab reaches, addressed by the report.
     path('editor/reports/new/', public_results_editor.report_create, name='editor_report_create'),
+    path('editor/reports/start/', report_views.report_start, name='editor_report_start'),
     path('editor/reports/import/', report_views.report_import, name='editor_report_import'),
     path('editor/reports/<uuid:report_uuid>/', public_results_editor.report_config, name='editor_report'),
     path('editor/reports/<uuid:report_uuid>/preview/', public_results_editor.report_preview, name='editor_report_preview'),

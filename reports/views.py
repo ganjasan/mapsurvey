@@ -84,6 +84,57 @@ def _editable_report(request, report_uuid):
 
 
 @login_required
+def report_start(request):
+    """Ways to start a report (change reports-start, #705): a draft made from a survey by rules in
+    one of four arrangements, a blank report, or a copy of an earlier one. One click on a card
+    does it — every card is the submit button of its own form."""
+    from django.contrib import messages
+    from data.datasets import visible_survey_ids
+    from reports import drafting, services
+    from survey import product_events as pe
+    from survey.models import SurveyHeader
+    from survey.services.context import Actor
+    org = getattr(request, 'active_org', None)
+    if org is None or not _can_edit(request.user, org):
+        raise Http404
+    surface = request.GET.get('from') or request.POST.get('from') or 'reports'
+    if surface not in ('reports', 'responses', 'data', 'survey'):
+        surface = 'reports'
+    surveys = list(SurveyHeader.objects.filter(id__in=visible_survey_ids(org, request.user))
+                   .exclude(status='draft').order_by('-id'))
+    chosen = next((s for s in surveys if str(s.uuid) == (request.GET.get('survey') or request.POST.get('survey'))), None)
+
+    if request.method == 'POST':
+        actor = Actor.from_request(request)
+        kind = request.POST.get('kind')
+        template = ''
+        if kind == 'draft' and chosen is not None:
+            template = request.POST.get('template') if request.POST.get('template') in drafting.TEMPLATES else 'summary'
+            report = drafting.build_draft(actor, chosen, template)
+        elif kind == 'copy':
+            source = next((r for r in visible_reports(org, request.user)
+                           if str(r.uuid) == request.POST.get('report')), None)
+            if source is None:
+                raise Http404
+            report = drafting.copy_report(actor, source)
+        elif kind == 'blank':
+            report = services.create_report(actor, org, title=str(_('Untitled report')), visibility='workspace')
+        else:
+            messages.error(request, _('Choose a survey to draft a report from.'))
+            return redirect('editor_report_start')
+        pe.emit(pe.REPORT_CREATED, request.user.pk,
+                {'report_id': str(report.pk), 'surface': surface, 'start': kind, 'template': template})
+        return redirect('editor_report', report_uuid=report.uuid)
+
+    pe.emit(pe.REPORT_ENTRY_SEEN, request.user.pk, {'surface': surface})
+    return render(request, 'reports/start.html', {
+        'org': org, 'surveys': surveys, 'chosen': chosen or (surveys[0] if surveys else None),
+        'templates': [(key, value['label'], value['what']) for key, value in drafting.TEMPLATES.items()],
+        'earlier': visible_reports(org, request.user)[:30], 'surface': surface,
+    })
+
+
+@login_required
 def report_export(request, report_uuid):
     """The report as a ZIP: its settings, blocks and pictures (`reports.files`)."""
     from django.http import HttpResponse
