@@ -241,6 +241,7 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/public-results/blocks/reorder/', public_results_editor.public_results_blocks_reorder, name='editor_public_results_blocks_reorder'),
     path('editor/surveys/<uuid:survey_uuid>/public-results/set-published/', public_results_editor.public_results_set_published, name='editor_public_results_set_published'),
     path('editor/surveys/<uuid:survey_uuid>/public-results/freeze/', public_results_editor.public_results_freeze, name='editor_public_results_freeze'),
+    path('editor/surveys/<uuid:survey_uuid>/public-results/checks/', public_results_editor.public_results_checks, name='editor_public_results_checks'),
     path('editor/surveys/<uuid:survey_uuid>/public-results/unfreeze/', public_results_editor.public_results_unfreeze, name='editor_public_results_unfreeze'),
 
     # Share & tracking links
@@ -341,6 +342,7 @@ urlpatterns = [
     path('editor/reports/<uuid:report_uuid>/blocks/reorder/', public_results_editor.report_blocks_reorder, name='editor_report_blocks_reorder'),
     path('editor/reports/<uuid:report_uuid>/set-published/', public_results_editor.report_set_published, name='editor_report_set_published'),
     path('editor/reports/<uuid:report_uuid>/freeze/', public_results_editor.report_freeze, name='editor_report_freeze'),
+    path('editor/reports/<uuid:report_uuid>/checks/', public_results_editor.report_checks, name='editor_report_checks'),
     path('editor/reports/<uuid:report_uuid>/unfreeze/', public_results_editor.report_unfreeze, name='editor_report_unfreeze'),
     path('editor/reports/<uuid:report_uuid>/export/', report_views.report_export, name='editor_report_export'),
     path('editor/reports/<uuid:report_uuid>/delete/', report_views.report_delete, name='editor_report_delete'),
