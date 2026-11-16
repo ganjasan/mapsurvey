@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('reports', '0002_copy_public_results'),
-        ('survey', '0130_map_layer_workspace'),
+        ('survey', '0132_backfill_session_required_state'),
     ]
 
     operations = [

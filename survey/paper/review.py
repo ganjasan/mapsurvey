@@ -94,6 +94,9 @@ def supersede_machine_answers(sheet, old_extraction, new_extraction):
             Answer.objects.filter(parent_answer_id__in=[r.pk for r in rows]).delete()
             Answer.objects.filter(pk__in=[r.pk for r in rows]).delete()
             superseded.append(code)
+    if superseded:
+        from survey import required_state
+        required_state.refresh(session)
     return superseded
 
 

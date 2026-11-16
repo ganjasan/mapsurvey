@@ -6,6 +6,7 @@ from survey.question_types import GEO_TYPES, geo_column
 from django.db.models.functions import Coalesce, TruncHour
 
 from django.utils import timezone
+from django.utils.html import strip_tags
 
 from .models import (
     SurveyHeader, SurveySession, SurveySection, Answer, Question, SurveyEvent,
@@ -134,12 +135,6 @@ def _format_seconds(seconds):
     return f'{minutes}m {secs}s' if minutes else f'{secs}s'
 
 
-def _get_last_section(survey):
-    """Return the last section in linked-list order, or None."""
-    ordered = _get_ordered_sections(survey)
-    return ordered[-1] if ordered else None
-
-
 def _answers_q():
     """Answers of non-trashed sessions, moderated ones included — what Responses counts."""
     return SessionScope((), include_moderated=True).related_q('survey_session')
@@ -151,7 +146,7 @@ def nonempty_sessions(qs):
     The ONE definition of "empty" (spec responses-empty-sessions): a session
     is empty when it has no Answer with ``parent_answer_id IS NULL``. Answers
     about layer objects are top-level rows and moderator-hidden answers are
-    still rows, so both count. The Responses page, ``compute_session_issues``
+    still rows, so both count. The Responses page, the completion state
     and the data export all decide emptiness here — through `data.scope`, whose
     ``nonempty`` switch is the same predicate.
     """
@@ -163,19 +158,13 @@ def empty_sessions(qs):
     return _scope_empty(qs)
 
 
-def completed_session_filter(qs, headers):
-    """Sessions from ``qs`` that answered a question of their version's last
-    section. The ONE definition of "completed": the Responses overview counts
-    with it and the export's completed_only filters with it, so the two never
-    disagree (spec responses-export-formats)."""
-    last_ids = set()
-    for header in headers:
-        last = _get_last_section(header)
-        if last:
-            last_ids.add(last.id)
-    if not last_ids:
-        return qs.none()
-    return qs.filter(answer__question__survey_section_id__in=last_ids).distinct()
+def completed_session_filter(qs):
+    """Sessions from ``qs`` that are completed: not empty and no required question
+    they saw left unanswered (spec responses-required-unanswered). The ONE
+    definition of "completed": the Responses overview and table, the dashboard
+    cards, the export's ``completed_only``, the REST summary and MCP all count with
+    it, over the state `survey/required_state.py` stores on each session."""
+    return nonempty_sessions(qs).filter(required_complete=True)
 
 
 def family_completion_counts(surveys):
@@ -184,9 +173,8 @@ def family_completion_counts(surveys):
     The dashboard's card numbers (#362). Same scope and same rule as
     ``SurveyAnalyticsService(survey).get_overview()`` with its defaults — the
     family (canonical + archived versions, never the draft copy), non-deleted
-    sessions, completed = answered a question of its version's last section —
-    but four queries for the whole list instead of a dozen per survey, and
-    no per-session issue flags, which no card shows.
+    sessions, completed through ``completed_session_filter`` — in three queries
+    for the whole list instead of a dozen per survey.
     """
     ids = [s.id for s in surveys]
     if not ids:
@@ -197,11 +185,6 @@ def family_completion_counts(surveys):
         .annotate(fam=Coalesce('canonical_survey_id', 'id'))
         .values_list('id', 'fam')
     )
-    sections_by_header = {}
-    for section in SurveySection.objects.filter(survey_header_id__in=list(family_of)):
-        sections_by_header.setdefault(section.survey_header_id, []).append(section)
-    last_ids = [_order_sections(secs)[-1].id for secs in sections_by_header.values()]
-
     sessions = (
         SurveySession.objects.active()
         .filter(survey_id__in=list(family_of))
@@ -210,9 +193,8 @@ def family_completion_counts(surveys):
     )
     totals = dict(sessions.annotate(n=Count('id')).values_list('fam', 'n'))
     completed = dict(
-        sessions.filter(answer__question__survey_section_id__in=last_ids)
-        .annotate(n=Count('id', distinct=True)).values_list('fam', 'n')
-    ) if last_ids else {}
+        completed_session_filter(sessions).annotate(n=Count('id')).values_list('fam', 'n')
+    )
     return {sid: (totals.get(sid, 0), completed.get(sid, 0)) for sid in ids}
 
 
@@ -341,18 +323,9 @@ class SurveyAnalyticsService:
             self._rep_by_qid_cache = mapping
         return self._rep_by_qid_cache
 
-    def _last_section_ids(self):
-        """Ids of every scoped version's last section (completion targets)."""
-        ids = set()
-        for header in self._scope_surveys:
-            last = _get_last_section(header)
-            if last:
-                ids.add(last.id)
-        return ids
-
     def _completed_filter_qs(self, qs):
-        """Sessions from qs that answered their version's last section."""
-        return completed_session_filter(qs, self._scope_surveys)
+        """Completed sessions from qs (``completed_session_filter``)."""
+        return completed_session_filter(qs)
 
     def get_overview(self):
         """Return overview stats: total sessions, completed, completion rate."""
@@ -365,21 +338,13 @@ class SurveyAnalyticsService:
 
         rate = round(completed / total * 100) if total > 0 else 0
 
-        # Count flagged sessions
-        flagged_count = 0
-        if total > 0:
-            all_pks = list(self.base_qs.values_list('id', flat=True))
-            issues = self.compute_session_issues(all_pks)
-            flagged_count = sum(1 for v in issues.values() if v)
-
         return {
             'total_sessions': total,
             'completed_count': completed,
             'completion_rate': rate,
-            'flagged_count': flagged_count,
         }
 
-    def get_overview_extras(self, issues=None):
+    def get_overview_extras(self):
         """Overview-pane aggregates (openspec: responses-v2-refactor).
 
         Daily deltas use the local calendar day (``timezone.localtime`` — the
@@ -389,8 +354,6 @@ class SurveyAnalyticsService:
         (0 of 4586 production sessions), so wall-clock duration only exists
         for event-tracked sessions.
 
-        ``issues`` lets the caller pass the map already computed by
-        ``get_overview`` so the needs-review feed doesn't recompute it.
         """
         today_start = timezone.localtime().replace(
             hour=0, minute=0, second=0, microsecond=0,
@@ -434,9 +397,6 @@ class SurveyAnalyticsService:
                 int(median_seconds) // 60, int(median_seconds) % 60,
             )
 
-        if issues is None:
-            issues = self.compute_session_issues(session_pks) if session_pks else {}
-
         def _fmt_duration(seconds):
             if seconds is None:
                 return None
@@ -452,7 +412,6 @@ class SurveyAnalyticsService:
                 .first()
             )
             geo_count = Answer.objects.filter(survey_session=session).filter(geo_q).count()
-            session_issues = issues.get(session.id) or []
             return {
                 'id': session.id,
                 'seq': seq,
@@ -461,7 +420,6 @@ class SurveyAnalyticsService:
                 'duration_display': _fmt_duration(durations.get(session.id)),
                 'text_excerpt': (first_text or '')[:80],
                 'geo_count': geo_count,
-                'issues': session_issues,
                 'status': session.validation_status,
             }
 
@@ -472,22 +430,12 @@ class SurveyAnalyticsService:
             for session in latest_sessions
         ]
 
-        flagged_ids = [sid for sid, v in issues.items() if v]
-        needs_review = []
-        if flagged_ids:
-            flagged_sessions = list(
-                self.base_qs.filter(id__in=flagged_ids).order_by('-start_datetime')[:5]
-            )
-            for session in flagged_sessions:
-                needs_review.append(_feed_entry(session, seq_by_id.get(session.id)))
-
         return {
             'responses_today': responses_today,
             'geo_features_today': geo_features_today,
             'median_seconds': median_seconds,
             'median_display': median_display,
             'latest_feed': latest_feed,
-            'needs_review': needs_review,
         }
 
     def get_daily_sessions(self):
@@ -530,20 +478,16 @@ class SurveyAnalyticsService:
             .order_by('hour')
         )
 
-        completed_by_hour = {}
-        last_ids = self._last_section_ids()
-        if last_ids:
-            completed_hourly = (
-                self.base_qs
-                .filter(answer__question__survey_section_id__in=last_ids)
-                .annotate(hour=TruncHour('start_datetime'))
-                .values('hour')
-                .annotate(completed=Count('id', distinct=True))
-                .order_by('hour')
-            )
-            completed_by_hour = {
-                r['hour'].isoformat(): r['completed'] for r in completed_hourly
-            }
+        completed_hourly = (
+            self._completed_filter_qs(self.base_qs)
+            .annotate(hour=TruncHour('start_datetime'))
+            .values('hour')
+            .annotate(completed=Count('id'))
+            .order_by('hour')
+        )
+        completed_by_hour = {
+            r['hour'].isoformat(): r['completed'] for r in completed_hourly
+        }
 
         result = []
         for row in hourly:
@@ -1204,285 +1148,19 @@ class SurveyAnalyticsService:
 
     # ── Auto-validation ────────────────────────────────────────────
 
-    def compute_session_issues(self, session_pks):
-        """Compute validation issues for sessions. Returns {sid: [issue_list]}.
-
-        Rules:
-        - 'empty': session has 0 top-level answers
-        - 'incomplete': session has no answer in the last section
-        - 'missing_required': session visited a section but skipped a required question in it
-        """
-        if not session_pks:
-            return {}
-
-        issues = {sid: [] for sid in session_pks}
-
-        # Rule 1: Empty sessions (0 top-level answers)
-        empty_sids = set(
-            empty_sessions(SurveySession.objects.filter(id__in=session_pks))
-            .values_list('id', flat=True)
-        )
-        for sid in empty_sids:
-            issues[sid].append('empty')
-
-        # Rule 2: Incomplete sessions (no answer in their version's last section)
-        last_ids = self._last_section_ids()
-        if last_ids:
-            completed_sids = set(
-                Answer.objects
-                .filter(
-                    survey_session_id__in=session_pks,
-                    parent_answer_id__isnull=True,
-                    question__survey_section_id__in=last_ids,
-                )
-                .values_list('survey_session_id', flat=True)
-                .distinct()
-            )
-            for sid in session_pks:
-                if sid not in completed_sids and sid not in empty_sids:
-                    issues[sid].append('incomplete')
-
-        # Rule 3: Missing required questions in visited sections.
-        # Spanning the scope keeps this version-correct automatically:
-        # sections are version-specific objects, so a v2 session's visited
-        # sections only ever match v2's required sets.
-        required_questions = list(
-            Question.objects
-            .filter(
-                survey_section__survey_header_id__in=self.scope_ids,
-                required=True,
-                parent_question_id__isnull=True,
-            )
-            .values_list('id', 'survey_section_id')
-        )
-        if required_questions:
-            # Build {section_id: set(required_question_ids)}
-            required_by_section = {}
-            for qid, sec_id in required_questions:
-                required_by_section.setdefault(sec_id, set()).add(qid)
-
-            # Get all (session_id, question_id) pairs for answered questions
-            answered_pairs = set(
-                Answer.objects
-                .filter(
-                    survey_session_id__in=session_pks,
-                    parent_answer_id__isnull=True,
-                    question__survey_section__survey_header_id__in=self.scope_ids,
-                )
-                .values_list('survey_session_id', 'question_id')
-            )
-
-            # Build {session_id: set(answered_question_ids)} and visited sections
-            answered_by_session = {}
-            visited_sections_by_session = {}
-            for sid, qid in answered_pairs:
-                answered_by_session.setdefault(sid, set()).add(qid)
-
-            # Determine visited sections from answered questions
-            question_to_section = {qid: sec_id for qid, sec_id in
-                Question.objects
-                .filter(survey_section__survey_header_id__in=self.scope_ids, parent_question_id__isnull=True)
-                .values_list('id', 'survey_section_id')
-            }
-            for sid, qid in answered_pairs:
-                sec_id = question_to_section.get(qid)
-                if sec_id:
-                    visited_sections_by_session.setdefault(sid, set()).add(sec_id)
-
-            # Check each session
-            for sid in session_pks:
-                if sid in empty_sids:
-                    continue
-                visited = visited_sections_by_session.get(sid, set())
-                answered = answered_by_session.get(sid, set())
-                for sec_id in visited:
-                    required_qs = required_by_section.get(sec_id, set())
-                    if not required_qs.issubset(answered):
-                        issues[sid].append('missing_required')
-                        break
-
-        # Rule 4: Fast completion (session_start to survey_complete < 30 seconds)
-        start_events = dict(
-            SurveyEvent.objects
-            .filter(session_id__in=session_pks, event_type='session_start')
-            .values_list('session_id', 'created_at')
-        )
-        complete_events = dict(
-            SurveyEvent.objects
-            .filter(session_id__in=session_pks, event_type='survey_complete')
-            .values_list('session_id', 'created_at')
-        )
-        for sid in session_pks:
-            start_at = start_events.get(sid)
-            complete_at = complete_events.get(sid)
-            if start_at and complete_at:
-                duration = (complete_at - start_at).total_seconds()
-                fast_threshold = (self.survey.validation_settings or {}).get('fast_threshold_seconds', 30)
-                if duration < fast_threshold:
-                    issues[sid].append('fast')
-
-        # Rule 5: Duplicate sessions (same user_agent within 1 hour)
-        ua_events = list(
-            SurveyEvent.objects
-            .filter(session_id__in=session_pks, event_type='session_start')
-            .exclude(metadata__user_agent='')
-            .values_list('session_id', 'created_at', 'metadata')
-        )
-        # Group by user_agent
-        ua_groups = {}
-        for sid, created_at, metadata in ua_events:
-            ua = (metadata or {}).get('user_agent', '')
-            if ua:
-                ua_groups.setdefault(ua, []).append((sid, created_at))
-        # Flag sessions where same UA appears within 1 hour
-        dup_window = (self.survey.validation_settings or {}).get('duplicate_window_hours', 1) * 3600
-        for ua, entries in ua_groups.items():
-            if len(entries) < 2:
-                continue
-            entries.sort(key=lambda x: x[1])
-            for i in range(1, len(entries)):
-                prev_sid, prev_t = entries[i - 1]
-                cur_sid, cur_t = entries[i]
-                if (cur_t - prev_t).total_seconds() < dup_window:
-                    if 'duplicate' not in issues.get(cur_sid, []):
-                        issues[cur_sid].append('duplicate')
-                    if 'duplicate' not in issues.get(prev_sid, []):
-                        issues[prev_sid].append('duplicate')
-
-        return issues
-
-    def compute_answer_lints(self, session_pks, answers_iter, questions):
-        """Compute per-answer lints. Returns {sid: {str(qid): [lint_types]}}.
-
-        Errors (red):
-        - 'self_intersection': polygon with invalid geometry
-        - 'empty_required': required question with no answer in visited section
-
-        Warnings (yellow):
-        - 'numeric_outlier': numeric value > mean ± 3σ
-        - 'short_text': text answer < 3 chars
-        - 'area_outlier': polygon area > median × 10 or < median / 10
-        """
-        lint_map = {}  # {session_id: {str(question_id): [lints]}}
-
-        # Collect data for warnings during answer iteration
-        numeric_values = {}  # {question_id: [(session_id, value)]}
-        text_answers = []    # [(session_id, question_id, text)]
-        polygon_areas = {}   # {question_id: [(session_id, area)]}
-
-        # Rule 1: Self-intersection + collect data
-        for a in answers_iter:
-            q = a.question
-            if q.input_type == 'polygon' and a.polygon:
+    @staticmethod
+    def crossed_shapes(answers):
+        """{session_id: {question_id}} of polygon answers whose edges cross — the one
+        per-answer note Responses keeps (spec responses-required-unanswered)."""
+        crossed = {}
+        for a in answers:
+            if a.question.input_type == 'polygon' and a.polygon:
                 try:
                     if not a.polygon.valid:
-                        lint_map.setdefault(a.survey_session_id, {})\
-                            .setdefault(str(a.question_id), []).append('self_intersection')
-                    area = a.polygon.area
-                    if area > 0:
-                        polygon_areas.setdefault(q.id, []).append((a.survey_session_id, area))
+                        crossed.setdefault(a.survey_session_id, set()).add(a.question_id)
                 except Exception:
                     pass
-            if q.input_type in ('number', 'range') and a.numeric is not None:
-                numeric_values.setdefault(q.id, []).append((a.survey_session_id, float(a.numeric)))
-            if q.input_type in ('text', 'text_line') and a.text:
-                text_answers.append((a.survey_session_id, q.id, a.text))
-
-        # Rule 2: Empty required — required questions without answer
-        required_questions = [q for q in questions if q.required]
-        if required_questions and session_pks:
-            required_by_section = {}
-            for q in required_questions:
-                required_by_section.setdefault(q.survey_section_id, set()).add(q.id)
-
-            # Get (session_id, question_id) for all answered questions
-            answered_pairs = set(
-                Answer.objects
-                .filter(
-                    survey_session_id__in=session_pks,
-                    parent_answer_id__isnull=True,
-                    question__survey_section__survey_header_id__in=self.scope_ids,
-                )
-                .values_list('survey_session_id', 'question_id')
-            )
-
-            # Determine visited sections per session
-            question_to_section = {q.id: q.survey_section_id for q in questions}
-            for q in required_questions:
-                question_to_section[q.id] = q.survey_section_id
-
-            visited_sections = {}  # {sid: set(section_ids)}
-            for sid, qid in answered_pairs:
-                sec_id = question_to_section.get(qid)
-                if sec_id:
-                    visited_sections.setdefault(sid, set()).add(sec_id)
-
-            answered_by_session = {}
-            for sid, qid in answered_pairs:
-                answered_by_session.setdefault(sid, set()).add(qid)
-
-            # Flag missing required answers
-            for sid in session_pks:
-                visited = visited_sections.get(sid, set())
-                answered = answered_by_session.get(sid, set())
-                for sec_id in visited:
-                    for req_qid in required_by_section.get(sec_id, set()):
-                        if req_qid not in answered:
-                            lint_map.setdefault(sid, {})\
-                                .setdefault(str(req_qid), []).append('empty_required')
-
-        # Build question settings lookup
-        q_settings = {q.id: (q.validation_settings or {}) for q in questions}
-
-        # Warning: numeric outlier (> mean ± Nσ) + min/max validation
-        for qid, values in numeric_values.items():
-            qs = q_settings.get(qid, {})
-            min_val = qs.get('min_value')
-            max_val = qs.get('max_value')
-            # min/max as errors
-            if min_val is not None or max_val is not None:
-                for sid, val in values:
-                    if min_val is not None and val < min_val:
-                        lint_map.setdefault(sid, {})\
-                            .setdefault(str(qid), []).append('out_of_range')
-                    elif max_val is not None and val > max_val:
-                        lint_map.setdefault(sid, {})\
-                            .setdefault(str(qid), []).append('out_of_range')
-            # σ outlier as warning
-            sigma = qs.get('outlier_sigma', 3)
-            if len(values) >= 3 and sigma > 0:
-                nums = [v for _, v in values]
-                mean = sum(nums) / len(nums)
-                std = (sum((x - mean) ** 2 for x in nums) / len(nums)) ** 0.5
-                if std > 0:
-                    for sid, val in values:
-                        if abs(val - mean) > sigma * std:
-                            lint_map.setdefault(sid, {})\
-                                .setdefault(str(qid), []).append('numeric_outlier')
-
-        # Warning: short text (< min_length chars)
-        text_q_settings = {q.id: (q.validation_settings or {}) for q in questions if q.input_type in ('text', 'text_line')}
-        for sid, qid, text in text_answers:
-            min_len = text_q_settings.get(qid, {}).get('min_length', 3)
-            if len(text.strip()) < min_len:
-                lint_map.setdefault(sid, {})\
-                    .setdefault(str(qid), []).append('short_text')
-
-        # Warning: polygon area outlier (> median × factor or < median / factor)
-        for qid, values in polygon_areas.items():
-            if len(values) < 3:
-                continue
-            factor = q_settings.get(qid, {}).get('area_outlier_factor', 10)
-            areas = sorted([a for _, a in values])
-            median_area = areas[len(areas) // 2]
-            if median_area == 0:
-                continue
-            for sid, area in values:
-                if area > median_area * factor or area < median_area / factor:
-                    lint_map.setdefault(sid, {})\
-                        .setdefault(str(qid), []).append('area_outlier')
-
-        return lint_map
+        return crossed
 
     # ── Attribute table ─────────────────────────────────────────────
 
@@ -1584,7 +1262,7 @@ class SurveyAnalyticsService:
 
     def get_table_page(self, page=1, page_size=50, session_ids=None,
                        sort_col=None, sort_dir='asc', col_search=None,
-                       show_trash=False, issues_filter=None, col_filters=None,
+                       show_trash=False, required_filter=None, col_filters=None,
                        v2=False, query=None):
         """Return one page of session rows with formatted answer values.
 
@@ -1596,6 +1274,8 @@ class SurveyAnalyticsService:
             sort_dir: 'asc' or 'desc'
             col_search: dict {col_key: search_string} for per-column text filter
             show_trash: if True, show only trashed sessions
+            required_filter: 'missing' (required questions unanswered), 'complete',
+                or None for every row
 
         Returns:
             dict with columns, rows, page, total_pages, total, page_size, sort_col, sort_dir
@@ -1633,7 +1313,9 @@ class SurveyAnalyticsService:
                 {'key': 'validation_status', 'label': 'Status', 'input_type': None},
                 # Where the answers came from (change operator-entry).
                 {'key': 'source', 'label': 'Source', 'input_type': None},
-                {'key': 'issues', 'label': 'Issues', 'input_type': None},
+                # Required questions unanswered: a quiet marker, never an "issue"
+                # (change responses-required-unanswered).
+                {'key': 'required', 'label': 'Required', 'input_type': None},
             ]
             tail_cols = [
                 {'key': 'tags', 'label': 'Tags', 'input_type': None},
@@ -1648,7 +1330,7 @@ class SurveyAnalyticsService:
                 {'key': 'id', 'label': '#', 'input_type': None},
                 {'key': 'validation_status', 'label': 'Status', 'input_type': None},
                 {'key': 'source', 'label': 'Source', 'input_type': None},
-                {'key': 'issues', 'label': 'Issues', 'input_type': None},
+                {'key': 'required', 'label': 'Required', 'input_type': None},
                 {'key': 'tags', 'label': 'Tags', 'input_type': None},
                 {'key': 'start_datetime', 'label': 'Start time', 'input_type': None},
                 {'key': 'language', 'label': 'Language', 'input_type': None},
@@ -1695,7 +1377,7 @@ class SurveyAnalyticsService:
             .select_related('question', 'upload')
         ) if session_pks else Answer.objects.none()
 
-        # Materialize answers for pivot + lint
+        # Materialize answers for the pivot and the crossed-shape note
         all_answers = list(answer_qs)
 
         def rep_key(qid):
@@ -1729,29 +1411,23 @@ class SurveyAnalyticsService:
             else:
                 cell_map[a.survey_session_id][key] = self._format_cell(a)
 
-        # Compute session issues and answer lints. Lints run against the full
-        # per-version question set (required/validation rules are evaluated
-        # against each session's own version), then remap to rep keys so
-        # badges attach to the merged columns.
-        session_issues = self.compute_session_issues(session_pks) if session_pks else {}
+        # Required questions unanswered: stored per session, named from the
+        # session's own version by code. Empty rows carry their badge and no marker.
+        # Crossed polygon edges: the one per-answer note, remapped to rep keys so it
+        # sits on the merged column.
+        empty_ids = set(
+            empty_sessions(SurveySession.objects.filter(id__in=session_pks))
+            .values_list('id', flat=True)
+        ) if session_pks else set()
+        names_by_header = {}
+        for header_id, code, name in (Question.objects
+                                      .filter(survey_section__survey_header_id__in=self.scope_ids,
+                                              parent_question_id__isnull=True)
+                                      .values_list('survey_section__survey_header_id', 'code', 'name')):
+            names_by_header.setdefault(header_id, {})[code] = strip_tags(name or '').strip() or code
         lint_map = {}
-        if session_pks:
-            lint_questions = list(
-                Question.objects
-                .filter(
-                    survey_section__survey_header_id__in=self.scope_ids,
-                    parent_question_id__isnull=True,
-                )
-                .exclude(input_type__in=('html', 'image'))
-                .select_related('survey_section')
-            )
-            raw_lints = self.compute_answer_lints(session_pks, all_answers, lint_questions)
-            for sid, per_q in raw_lints.items():
-                remapped = {}
-                for qid_str, lints in per_q.items():
-                    key = rep_key(int(qid_str))
-                    remapped.setdefault(key, []).extend(lints)
-                lint_map[sid] = remapped
+        for sid, qids in self.crossed_shapes(all_answers).items():
+            lint_map[sid] = {rep_key(qid): ['self_intersection'] for qid in qids}
 
         # Build rows
         rows = []
@@ -1766,7 +1442,11 @@ class SurveyAnalyticsService:
                 'source_label': s.get_source_display(),
                 'entered_by': s.entered_by.username if s.entered_by_id else '',
                 'is_deleted': s.is_deleted,
-                'issues': session_issues.get(s.id, []),
+                'is_empty': s.id in empty_ids,
+                'required': [] if s.id in empty_ids else [
+                    names_by_header.get(s.survey_id, {}).get(code, code)
+                    for code in (s.required_missing or [])
+                ],
                 'lints': lints,
                 'tags': s.tags or [],
                 'notes': s.notes or '',
@@ -1781,11 +1461,11 @@ class SurveyAnalyticsService:
         # v2 row enrichment: per-survey sequence numbers (stable identity in
         # start order, independent of the current sort/filter) and wall-clock
         # duration from tracked event pairs (None for untracked sessions).
-        completed_ids = set()
-        if v2 or (issues_filter and 'complete' in issues_filter):
-            completed_ids = set(
-                self._completed_filter_qs(self.base_qs).values_list('id', flat=True)
-            )
+        # Complete and Required unanswered partition the shown non-empty rows: the
+        # same stored state `completed_session_filter` reads.
+        def _complete(r):
+            return not r['is_empty'] and r['session_id'] in complete_ids
+        complete_ids = {s.id for s in all_sessions if s.required_complete}
         if v2:
             seq_by_id = self.sequence_numbers()
             # Duration comes off the session row: start → end_datetime when
@@ -1835,63 +1515,23 @@ class SurveyAnalyticsService:
                     if row['cells'].get(key) and row['cells'].get(key) != '—'
                 )
 
-        _WARNING_TYPES = {'numeric_outlier', 'short_text', 'area_outlier'}
-        _ERROR_TYPES = {'self_intersection', 'empty_required', 'out_of_range'}
-
-        # Compute anomaly counts (before filtering)
-        anomaly_counts = {}
-        for r in rows:
-            for issue in r['issues']:
-                anomaly_counts[issue] = anomaly_counts.get(issue, 0) + 1
-            for lint_list in r['lints'].values():
-                for lint in lint_list:
-                    anomaly_counts[lint] = anomaly_counts.get(lint, 0) + 1
-
-        # v2 toolbar chip counts — captured before issues/search/column filters
+        # v2 toolbar chip counts — captured before the chip/search/column filters
         # so the chips always show the whole (FilterManager-scoped) universe.
         v2_counts = None
         if v2:
-            # "Empty" is not an Issues entry on v2: the show/hide control is
-            # the control for empty sessions (spec analytics-data-workspace),
-            # and when they are shown they keep only their row badge.
-            anomaly_counts.pop('empty', None)
             v2_counts = {
                 'all': len(rows),
-                'complete': sum(1 for r in rows if r['session_id'] in completed_ids),
-                'issues': sum(
-                    1 for r in rows
-                    if [i for i in r['issues'] if i != 'empty'] or r['lints']
-                ),
+                'complete': sum(1 for r in rows if _complete(r)),
+                'required': sum(1 for r in rows if r['required']),
             }
 
-        # Issues filter (issues_filter is a list of filter keys, or None)
-        if issues_filter:
-            filter_set = set(issues_filter)
-
-            def _row_matches_filters(r, fset):
-                for f in fset:
-                    if f == 'complete':
-                        if r['session_id'] in completed_ids:
-                            return True
-                    elif f == 'has_errors':
-                        if any(_ERROR_TYPES & set(ls) for ls in r['lints'].values()):
-                            return True
-                    elif f == 'has_warnings':
-                        if any(_WARNING_TYPES & set(ls) for ls in r['lints'].values()):
-                            return True
-                    elif f == 'has_any_violation':
-                        if r['issues'] or r['lints']:
-                            return True
-                    elif f in r['issues']:
-                        return True
-                    elif any(f in ls for ls in r['lints'].values()):
-                        return True
-                return False
-
-            rows = [r for r in rows if _row_matches_filters(r, filter_set)]
+        if required_filter == 'missing':
+            rows = [r for r in rows if r['required']]
+        elif required_filter == 'complete':
+            rows = [r for r in rows if _complete(r)]
 
         # Free-text search across every column (v2 toolbar). Runs after the
-        # chip/issues filter and before column filters, so the counts above
+        # chip filter and before column filters, so the counts above
         # keep describing the unsearched universe.
         if query:
             needle = query.strip().lower()
@@ -1902,7 +1542,7 @@ class SurveyAnalyticsService:
                     str(r.get('language') or ''),
                     str(r.get('version') or ''),
                     str(r.get('validation_status') or ''),
-                    ' '.join(r.get('issues') or []),
+                    ' '.join(r.get('required') or []),
                     ' '.join(str(t) for t in (r.get('tags') or [])),
                     str(r.get('notes') or ''),
                 ]
@@ -1926,7 +1566,7 @@ class SurveyAnalyticsService:
             def matches_search(row):
                 for col_key, search_str in col_search.items():
                     search_lower = search_str.lower()
-                    if col_key in ('id', 'validation_status', 'source', 'issues', 'tags', 'start_datetime', 'language', 'version'):
+                    if col_key in ('id', 'validation_status', 'source', 'required', 'tags', 'start_datetime', 'language', 'version'):
                         val = str(row.get(col_key, ''))
                     else:
                         val = row['cells'].get(col_key, '—')
@@ -1943,7 +1583,7 @@ class SurveyAnalyticsService:
 
         # Compute unique values per column BEFORE col_filters (for dropdowns)
         unique_values = {}
-        _VALUE_SYSTEM_COLS = {'validation_status', 'source', 'language', 'issues', 'tags', 'version'}
+        _VALUE_SYSTEM_COLS = {'validation_status', 'source', 'language', 'tags', 'version'}
         for col in system_cols:
             if col['key'] not in _VALUE_SYSTEM_COLS:
                 continue
@@ -1968,7 +1608,7 @@ class SurveyAnalyticsService:
         col_filters = col_filters or {}
         if col_filters:
             def _get_cell_val(row, col_key):
-                if col_key in ('id', 'validation_status', 'source', 'issues', 'tags', 'start_datetime', 'language', 'version'):
+                if col_key in ('id', 'validation_status', 'source', 'required', 'tags', 'start_datetime', 'language', 'version'):
                     return row.get(col_key, '')
                 return row['cells'].get(col_key, '—')
 
@@ -2019,8 +1659,8 @@ class SurveyAnalyticsService:
 
         # Sort
         reverse = (sort_dir == 'desc')
-        if sort_col == 'issues':
-            rows.sort(key=lambda r: len(r.get('issues', [])), reverse=reverse)
+        if sort_col == 'required':
+            rows.sort(key=lambda r: len(r.get('required', [])), reverse=reverse)
         elif sort_col == 'tags':
             rows.sort(key=lambda r: len(r.get('tags', [])), reverse=reverse)
         elif v2 and sort_col == 'id':
@@ -2069,7 +1709,6 @@ class SurveyAnalyticsService:
             'sort_col': sort_col,
             'sort_dir': sort_dir,
             'col_search': col_search,
-            'anomaly_counts': anomaly_counts,
             'unique_values': unique_values,
             'v2_counts': v2_counts,
             'filtered_ids': filtered_ids,

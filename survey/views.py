@@ -1300,6 +1300,25 @@ def _add_shell_context(ctx, survey, section):
 	return ctx
 
 
+def number_value(question, raw):
+	"""A posted number as a float, or None when it is not a number or falls outside a
+	number question's Min / Max (spec number-question-bounds)."""
+	try:
+		value = float(str(raw).strip())
+	except (TypeError, ValueError):
+		return None
+	if value != value or value in (float('inf'), float('-inf')):
+		return None
+	if question.input_type == 'number':
+		vs = question.validation_settings or {}
+		low, high = vs.get('min_value'), vs.get('max_value')
+		if isinstance(low, (int, float)) and not isinstance(low, bool) and value < low:
+			return None
+		if isinstance(high, (int, float)) and not isinstance(high, bool) and value > high:
+			return None
+	return value
+
+
 def save_section_answers(post, survey_session, session_survey, section, surface=SURFACE_RESPONDENT, only_questions=None):
 	"""Store one section POST on ``survey_session`` and return the final visibility map.
 
@@ -1422,7 +1441,7 @@ def save_section_answers(post, survey_session, session_survey, section, surface=
 										sub_answer.text = first
 								elif sub_question.input_type in ('number', 'range'):
 									if first:
-										sub_answer.numeric = float(first)
+										sub_answer.numeric = number_value(sub_question, first)
 								elif sub_question.input_type in ('choice', 'multichoice', 'rating', 'thumbs'):
 									sub_answer.selected_choices = [int(v) for v in value if v]
 									_raw = properties.get(other_option.field_name(key)) or []
@@ -1455,9 +1474,14 @@ def save_section_answers(post, survey_session, session_survey, section, surface=
 				answer.save()
 
 			elif question.input_type in ('number', 'range'):
-				answer = Answer(survey_session=survey_session, question=question)
-				answer.numeric = float(result[0].strip())
-				answer.save()
+				# A value outside a number question's Min / Max never reaches the
+				# database (spec number-question-bounds): the input refuses it, so
+				# only a tampered or scripted POST gets here — stored as nothing.
+				value = number_value(question, result[0])
+				if value is not None:
+					answer = Answer(survey_session=survey_session, question=question)
+					answer.numeric = value
+					answer.save()
 
 			elif question.input_type == 'ranking':
 				# The submitted order is the DOM order of the widget's hidden
@@ -1548,6 +1572,11 @@ def save_section_answers(post, survey_session, session_survey, section, surface=
 		if not vmap_post.is_question_visible(question.id) or not question.layer_id:
 			continue
 		_save_object_answers(post, survey_session, question, surface=surface)
+	# Required questions unanswered (change responses-required-unanswered): every
+	# answer surface writes through here, forward and Back, so the stored state
+	# follows every section submit.
+	from . import required_state
+	required_state.refresh(survey_session, vmap=vmap_final)
 	return vmap_final
 
 

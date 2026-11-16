@@ -13468,3 +13468,39 @@ msgstr "Jawaban belum cukup untuk menampilkan peta ini tanpa mengungkap siapa pu
 msgid "%(n)s respondent is in an area with fewer than %(k)s people and is not shown."
 msgid_plural "%(n)s respondents are in areas with fewer than %(k)s people and are not shown."
 msgstr[0] "%(n)s responden berada di area dengan kurang dari %(k)s orang dan tidak ditampilkan."
+
+# change responses-required-unanswered (#691)
+msgid "Complete"
+msgstr "Lengkap"
+
+msgid "Required unanswered"
+msgstr "Wajib belum dijawab"
+
+msgid "Responses that left at least one required question unanswered"
+msgstr "Respons yang membiarkan setidaknya satu pertanyaan wajib tidak dijawab"
+
+msgid "Required questions unanswered"
+msgstr "Pertanyaan wajib belum dijawab"
+
+#, python-format
+msgid "Didn't answer %(counter)s required question: %(list)s"
+msgid_plural "Didn't answer %(counter)s required questions: %(list)s"
+msgstr[0] "Tidak menjawab %(counter)s pertanyaan wajib: %(list)s"
+
+msgid "The edges of this shape cross each other. It may not open correctly in GIS software."
+msgstr "Tepi bentuk ini saling bersilangan. Bentuk ini mungkin tidak terbuka dengan benar di perangkat lunak GIS."
+
+msgid "Respondents can't enter a number outside this range."
+msgstr "Responden tidak dapat memasukkan angka di luar rentang ini."
+
+msgid "Move 1 response to trash? You can restore it from the trash."
+msgstr "Pindahkan 1 respons ke tempat sampah? Anda dapat memulihkannya dari tempat sampah."
+
+msgid "Move __N__ responses to trash? You can restore them from the trash."
+msgstr "Pindahkan __N__ respons ke tempat sampah? Anda dapat memulihkan semuanya dari tempat sampah."
+
+msgid "Permanently delete 1 response? This cannot be undone."
+msgstr "Hapus 1 respons secara permanen? Tindakan ini tidak dapat dibatalkan."
+
+msgid "Permanently delete __N__ responses? This cannot be undone."
+msgstr "Hapus __N__ respons secara permanen? Tindakan ini tidak dapat dibatalkan."

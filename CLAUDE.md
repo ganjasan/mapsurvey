@@ -923,13 +923,13 @@ enforces it); the entries are appended by hand like PR #274, not by `makemessage
 **Empty sessions (change `hide-empty-sessions`, issue #226)**: a session with no top-level `Answer`
 (`parent_answer_id IS NULL`) is EMPTY — someone opened the survey and left (71% of external
 sessions in Sept 2026). One definition, `analytics.nonempty_sessions(qs)` / `empty_sessions(qs)`;
-`compute_session_issues`, the v2 Responses page and `export.excluded_sessions` all go through it.
+the completion state, the v2 Responses page and `export.excluded_sessions` all go through it.
 The v2 page hides empties unless the `rv2_show_empty` cookie is `1` (`analytics_views._show_empty`;
 the legacy page and every other `SurveyAnalyticsService` caller keep `include_empty=True` and see
 all sessions). `service.empty_count` feeds the "N opened without answering" line
 (`editor/partials/_empty_sessions_toggle.html`). Response numbers `#N` come from
 `service.sequence_numbers()` — rank among non-empty sessions; empty rows carry none — and
-`comments.session_seq` follows the same rule. "Empty" is not an Issues-menu entry on v2. Exports
+`comments.session_seq` follows the same rule. An empty row keeps its "Empty" badge and no marker. Exports
 never contain empty sessions, whatever `include_all` says, and since `data-scope` neither does the
 public results `response_count`; the funnel/Perf pane (`SurveyEvent`) still counts every session. The section POST treats
 whitespace-only values as blank and stores text/number values stripped.
@@ -1021,6 +1021,32 @@ keeps moderated sessions (`include_moderated=True`) and names them in the headli
 hand outside `data/`**: `SessionFilterGuardTest` (`test_session_scope.py`) fails on a new copy, and its
 allow-list (single-session lookups, staff dashboards, the model) may only shrink. `data/` is a plain
 package until the dataset registry (#667) makes it an app.
+
+**Required questions unanswered / completed (`survey/required_state.py`, change
+`responses-required-unanswered`, #691)**: ONE definition — a session's missing required questions
+are the required top-level questions of ITS version that the visibility engine shows it (operator
+surface for paper/operator sessions, respondent surface otherwise; `html`/`image` never; geo needs
+`min_features`, `layer_objects` needs `min_objects` distinct objects; a blank row does not count).
+*Completed* = not empty AND nothing missing — `analytics.completed_session_filter(qs)` =
+`nonempty_sessions(qs).filter(required_complete=True)`, read by the Overview, the trend, the table's
+Complete / Required unanswered chips (`?required=complete|missing`), the dashboard cards, the export's
+`completed_only`, the REST summary and MCP (`SessionScope(completed=True)`). Reaching the last section
+or the thanks page is NOT part of it. The result is STORED on the session (`required_missing` codes in
+survey order, `required_complete`; both defaults agree) because counts run over thousands of sessions:
+`required_state.refresh(session)` after every write of answers (`save_section_answers` — every answer
+surface, forward and Back —, inline edit, paper supersede, ZIP import), and
+`schedule_survey_refresh(header_id)` (on commit; inline up to `SYNC_LIMIT` non-empty sessions, else the
+`recompute_required_state` task with an inline fallback) when an in-place edit changes the required set
+(`services/questions.py::_required_set_changed`, create of a required question, delete). **A new path
+that writes answers or changes what is required must call one of the two.** Publishing needs nothing:
+old sessions move with their structure. The marker is quiet (`_required_unanswered_mark.html`: grey,
+no count, tooltip names the questions); the one per-answer note left is crossed polygon edges
+(`SurveyAnalyticsService.crossed_shapes`). The old Issues engine (duplicate by User-Agent, fast,
+last-section "incomplete", outliers) and the survey validation-settings dialog are gone on purpose —
+creators deleted real answers because of them; do not bring per-session "issues" back.
+`SurveyHeader.validation_settings` is an unused column. Number questions' `min_value`/`max_value`
+are enforced (input `min`/`max`, `views.number_value` drops an out-of-range POST; spec
+`number-question-bounds`).
 
 **Data export (`survey/export.py`, spec `responses-export-formats`)**: `download_data` is a thin
 view; the work is one collector and several writers. `collect()` walks the database ONCE into an

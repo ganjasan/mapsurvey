@@ -353,7 +353,7 @@ class ExportFormatsTest(TestCase):
 
     def test_completed_only_matches_the_overview(self):
         """
-        GIVEN two sections and 5 clean sessions of which 3 answered the last section
+        GIVEN a required question on page 2 and 5 clean sessions of which 3 answered it
         WHEN the export runs with completed_only=1
         THEN the sessions sheet has 3 rows and the Responses overview counts 3 completed
         """
@@ -361,7 +361,7 @@ class ExportFormatsTest(TestCase):
         self.section.next_section = last
         self.section.save()
         q_last = Question.objects.create(survey_section=last, name='Anything else', code='AE',
-                                         input_type='text', order_number=1)
+                                         input_type='text', order_number=1, required=True)
         sessions = [self._session() for _ in range(5)]
         for s in sessions:
             Answer.objects.create(survey_session=s, question=self.q_weather, selected_choices=['sun'])
@@ -369,6 +369,8 @@ class ExportFormatsTest(TestCase):
             Answer.objects.create(survey_session=s, question=q_last, text='no')
         trashed = self._session(is_deleted=True)
         Answer.objects.create(survey_session=trashed, question=q_last, text='trashed but complete')
+        from survey.required_state import refresh_many
+        refresh_many(SurveySession.objects.filter(survey=self.survey))
 
         wb = self._workbook(self._download(format='xlsx', completed_only=1))
         _, rows = self._rows(wb['sessions'])

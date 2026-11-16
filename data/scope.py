@@ -12,7 +12,7 @@ Owner decisions of 2026-11-14 (ADR-001 §6) live in the callers' choice of switc
 
 Version resolution stays with the caller (``survey.versioning``): a scope takes survey ids.
 """
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from django.db.models import Exists, OuterRef, Q
 
@@ -57,21 +57,19 @@ class SessionScope:
     - ``include_deleted``: keep trashed sessions;
     - ``include_moderated``: keep ``on_hold`` and ``not_approved`` sessions;
     - ``nonempty``: only sessions with a top-level answer;
-    - ``completed_headers``: only sessions that answered a question of their version's last
-      section, judged against these headers (the Responses overview's definition);
+    - ``completed``: only completed sessions — not empty, no required question left
+      unanswered (the Responses overview's definition, `completed_session_filter`);
     - ``external_only``: only sessions opened by people outside the workspace.
     """
     survey_ids: frozenset
     include_deleted: bool = False
     include_moderated: bool = False
     nonempty: bool = False
-    completed_headers: tuple = field(default=None)
+    completed: bool = False
     external_only: bool = False
 
     def __post_init__(self):
         object.__setattr__(self, 'survey_ids', frozenset(self.survey_ids))
-        if self.completed_headers is not None:
-            object.__setattr__(self, 'completed_headers', tuple(self.completed_headers))
 
     # ── constructors ─────────────────────────────────────────────────────
 
@@ -90,7 +88,7 @@ class SessionScope:
         """The same scope with some switches changed."""
         values = {
             'include_deleted': self.include_deleted, 'include_moderated': self.include_moderated,
-            'nonempty': self.nonempty, 'completed_headers': self.completed_headers,
+            'nonempty': self.nonempty, 'completed': self.completed,
             'external_only': self.external_only,
         }
         values.update(switches)
@@ -105,9 +103,9 @@ class SessionScope:
         qs = qs.filter(self._row_q(''))
         if self.nonempty:
             qs = nonempty(qs)
-        if self.completed_headers is not None:
+        if self.completed:
             from survey.analytics import completed_session_filter
-            qs = completed_session_filter(qs, list(self.completed_headers))
+            qs = completed_session_filter(qs)
         return qs
 
     def ids(self):
@@ -119,21 +117,20 @@ class SessionScope:
         nonempty and completed switches become one ``__in`` subquery, so a related query
         never restates the rule."""
         q = self._row_q(prefix + '__') & Q(**{f'{prefix}__survey_id__in': self.survey_ids})
-        if self.nonempty or self.completed_headers is not None:
+        if self.nonempty or self.completed:
             q &= Q(**{f'{prefix}__in': self.sessions().values('pk')})
         return q
 
     def related_q(self, prefix):
         """Like ``q`` but without the survey restriction — for a related query already
         narrowed to the right survey or layer (a shared map's objects, a question's answers,
-        which may belong to a draft copy outside the family). ``completed_headers`` needs the
-        survey ids, so it is refused here — use ``q``."""
-        if self.completed_headers is not None:
-            raise ValueError('related_q cannot apply completed_headers; use q()')
+        which may belong to a draft copy outside the family)."""
         q = self._row_q(prefix + '__')
-        if self.nonempty:
+        if self.nonempty or self.completed:
             from survey.models import SurveySession
             sub = nonempty(SurveySession.objects.filter(self._row_q('')))
+            if self.completed:
+                sub = sub.filter(required_complete=True)
             q &= Q(**{f'{prefix}__in': sub.values('pk')})
         return q
 

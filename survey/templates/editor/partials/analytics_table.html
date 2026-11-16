@@ -16,38 +16,48 @@
 .attr-table thead th:nth-child(2) { z-index: 3; }
 .table-secondary td:nth-child(2) { background: #e2e3e5 !important; }
 {% endif %}
+/* ── Required questions unanswered + crossed shape edges (change
+   responses-required-unanswered, #691): quiet extra information — muted colour,
+   no error red, no count chip. The tooltip (title) carries the words. ───── */
+.rv2-required-mark,
+.rv2-cell-note > .fa-question-circle {
+    color: #9ca3af;
+    cursor: help;
+}
+.rv2-required-mark { font-size: 0.85rem; }
+.rv2-required-mark:hover,
+.rv2-required-mark:focus { color: #6b7280; outline: none; }
+.rv2-cell-note {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    cursor: help;
+}
+.rv2-cell-note > .fa-question-circle { font-size: 0.7rem; }
 </style>
-<script type="application/json" id="anomaly-counts-data">{{ anomaly_counts_json|safe }}</script>
 <script type="application/json" id="unique-values-data">{{ unique_values_json|safe }}</script>
 <script type="application/json" id="col-filters-data">{{ col_filters_json|safe }}</script>
-<script type="text/plain" id="active-issues-filter">{{ issues_filter }}</script>
 
 {% if RESPONSES_V2 %}
 <script type="application/json" id="default-hidden-cols">{{ default_hidden_json|safe }}</script>
 <script type="application/json" id="filtered-session-ids">{{ filtered_ids_json|safe }}</script>
 <script type="application/json" id="table-columns-data">{{ columns_meta_json|safe }}</script>
 {% comment %}
-v2 toolbar — filter chips replace the Violations sidebar, issues select and
-the action-styled Trash button (openspec: responses-v2-refactor, 4.3).
+v2 toolbar — filter chips: All / Complete / Required unanswered / Trash. Complete and
+Required unanswered partition the shown non-empty rows (change
+responses-required-unanswered, #691: the Issues menu labelled normal answers as defects).
 {% endcomment %}
 <div class="attr-table-toolbar" id="toolbar-normal">
     <div class="attr-table-toolbar-left" style="flex-wrap:wrap;row-gap:4px;">
-        <button type="button" class="rv2-chip {% if not issues_filter and not show_trash %}active{% endif %}" onclick="rv2Chip('all')" data-testid="rv2-chip-all">
+        <button type="button" class="rv2-chip {% if not required_filter and not show_trash %}active{% endif %}" onclick="rv2Chip('all')" data-testid="rv2-chip-all">
             All {{ v2_counts.all }}
         </button>
-        <button type="button" class="rv2-chip {% if issues_filter == 'complete' %}active{% endif %}" onclick="rv2Chip('complete')" data-testid="rv2-chip-complete">
+        <button type="button" class="rv2-chip {% if required_filter == 'complete' %}active{% endif %}" onclick="rv2Chip('complete')" data-testid="rv2-chip-complete">
             Complete {{ v2_counts.complete }}
         </button>
-        {% comment %}
-        Issues is a multi-select menu, not a binary chip: the Violations sidebar
-        it replaced let creators pick individual violation types with counts,
-        and losing that was a regression (owner review). The menu writes a
-        comma-separated `issues` param, which the view already parses as a list.
-        {% endcomment %}
-        <button type="button" class="rv2-chip {% if issues_filter_list %}active{% endif %}"
-                onclick="rv2IssuesMenu(event, this)" data-testid="rv2-chip-issues">
-            Issues {% if v2_counts.issues %}<b>{{ v2_counts.issues }}</b>{% else %}0{% endif %}
-            {% if issues_filter_list %}· {{ issues_filter_list|length }} selected{% endif %} ▾
+        <button type="button" class="rv2-chip {% if required_filter == 'missing' %}active{% endif %}" onclick="rv2Chip('missing')"
+                title="{% trans "Responses that left at least one required question unanswered" %}" data-testid="rv2-chip-required">
+            {% trans "Required unanswered" %} {{ v2_counts.required }}
         </button>
         {% if is_editor %}
         <button type="button" class="rv2-chip {% if show_trash %}active{% endif %}" onclick="rv2Chip('trash')" data-testid="rv2-chip-trash">
@@ -72,11 +82,6 @@ the action-styled Trash button (openspec: responses-v2-refactor, 4.3).
         <button type="button" class="rv2-chip" onclick="toggleHideFieldsPopover()" title="{% trans 'Show/hide columns' %}">
             <i class="fas fa-columns"></i> Columns ▾
         </button>
-        {% if is_editor %}
-        <button type="button" class="rv2-chip" onclick="openValidationSettings()" title="{% trans 'Validation settings' %}">
-            <i class="fas fa-cog"></i>
-        </button>
-        {% endif %}
     </div>
 </div>
 {% comment %}
@@ -87,13 +92,13 @@ filter and the sort order move into the bottom sheet.
 {% endcomment %}
 <div id="rv2-m-toolbar"
      data-all="{{ v2_counts.all }}" data-complete="{{ v2_counts.complete }}"
-     data-issues="{{ v2_counts.issues }}" data-trash="{{ trash_count }}">
+     data-required="{{ v2_counts.required }}" data-trash="{{ trash_count }}">
     <span class="rv2-search rv2-m-search">
         <i class="fas fa-search"></i>
         <input type="search" id="rv2-m-search-input" placeholder="{% trans 'Search responses' %}"
                value="{{ search_query }}" oninput="rv2SearchDebounced(this.value, 'rv2-m-search-input')">
     </span>
-    <button type="button" class="rv2-chip {% if issues_filter or show_trash %}active{% endif %}"
+    <button type="button" class="rv2-chip {% if required_filter or show_trash %}active{% endif %}"
             onclick="rv2OpenMobileSheet()" data-testid="rv2-m-filters">
         <i class="fas fa-sliders-h"></i> Filters &amp; sort
     </button>
@@ -114,39 +119,19 @@ filter and the sort order move into the bottom sheet.
         {% endif %}
         <select class="form-control form-control-sm d-inline-block ml-2"
                 style="width:auto;font-size:0.82rem;height:28px;"
-                onchange="changeIssuesFilter(this.value)">
-            <option value="" {% if not issues_filter %}selected{% endif %}>{% trans "All sessions" %}</option>
-            <option value="empty" {% if issues_filter == 'empty' %}selected{% endif %}>{% trans "Empty" %}</option>
-            <option value="incomplete" {% if issues_filter == 'incomplete' %}selected{% endif %}>{% trans "Incomplete" %}</option>
-            <option value="missing_required" {% if issues_filter == 'missing_required' %}selected{% endif %}>{% trans "Missing required" %}</option>
-            <option value="fast" {% if issues_filter == 'fast' %}selected{% endif %}>{% trans "Fast completion" %}</option>
-            <option value="duplicate" {% if issues_filter == 'duplicate' %}selected{% endif %}>{% trans "Duplicate" %}</option>
-            <option value="has_errors" {% if issues_filter == 'has_errors' %}selected{% endif %}>{% trans "Has answer errors" %}</option>
-            <option value="has_warnings" {% if issues_filter == 'has_warnings' %}selected{% endif %}>{% trans "Has answer warnings" %}</option>
+                onchange="changeRequiredFilter(this.value)">
+            <option value="" {% if not required_filter %}selected{% endif %}>{% trans "All sessions" %}</option>
+            <option value="complete" {% if required_filter == 'complete' %}selected{% endif %}>{% trans "Complete" %}</option>
+            <option value="missing" {% if required_filter == 'missing' %}selected{% endif %}>{% trans "Required unanswered" %}</option>
         </select>
         <span class="text-muted ml-2" style="font-size:0.85rem;">
             {{ total }} {% if show_trash %}trashed{% else %}result{{ total|pluralize }}{% endif %}
         </span>
-        {% for f in issues_filter_list %}
-        <span class="badge badge-pill" style="background:#e8f0fe;color:#1a56db;font-size:0.78rem;font-weight:500;margin-left:0.25rem;">
-            {{ f }}
-            <button type="button" style="border:none;background:none;color:#1a56db;font-size:0.85rem;padding:0 0 0 4px;cursor:pointer;line-height:1;"
-                    onclick="toggleIssueFilter('{{ f }}')" title="{% trans 'Remove filter' %}">&times;</button>
-        </span>
-        {% endfor %}
-        {% if issues_filter_list %}
-        <button type="button" class="btn btn-sm btn-link p-0 ml-1" style="font-size:0.75rem;color:#6b7280;" onclick="changeIssuesFilter('')">{% trans "Clear all" %}</button>
-        {% endif %}
         <button type="button" id="show-all-rows-btn" class="btn btn-sm btn-link p-0 ml-2" style="font-size:0.75rem;color:#6b7280;display:none;" onclick="filterManager.showAll()">
             <i class="fas fa-eye"></i> Show hidden
         </button>
     </div>
     <div class="attr-table-toolbar-right">
-        {% if is_editor %}
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="openValidationSettings()" title="{% trans 'Validation settings' %}">
-            <i class="fas fa-cog"></i>
-        </button>
-        {% endif %}
         <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleTableFullscreen()" title="{% trans 'Toggle fullscreen' %}">
             <i class="fas fa-expand"></i>
         </button>
@@ -206,7 +191,7 @@ filter and the sort order move into the bottom sheet.
     <input type="hidden" name="page" value="{{ page }}">
     <input type="hidden" name="page_size" value="{{ page_size }}">
     <input type="hidden" name="trash" value="{% if show_trash %}1{% else %}0{% endif %}">
-    <input type="hidden" name="issues" value="{{ issues_filter }}">
+    <input type="hidden" name="required" value="{{ required_filter }}">
     <input type="hidden" name="q" value="{{ search_query }}">
     {% for key, val in col_search.items %}
     <input type="hidden" name="search_{{ key }}" value="{{ val }}">
@@ -327,7 +312,7 @@ filter and the sort order move into the bottom sheet.
         {% endif %}
         {% for col in columns %}
         <td data-col="{{ col.key }}">
-            {% if col.key == 'id' %}{% if RESPONSES_V2 %}{% if row.seq %}#{{ row.seq }}{% elif 'empty' in row.issues %}—{% else %}#{{ row.id }}{% endif %}{% else %}#{{ row.id }}{% endif %}
+            {% if col.key == 'id' %}{% if RESPONSES_V2 %}{% if row.seq %}#{{ row.seq }}{% elif row.is_empty %}—{% else %}#{{ row.id }}{% endif %}{% else %}#{{ row.id }}{% endif %}
             {% elif col.key == 'duration' %}{{ row.duration_display|default:"—" }}
             {% elif col.key == 'validation_status' %}
                 {% if RESPONSES_V2 %}
@@ -355,17 +340,12 @@ filter and the sort order move into the bottom sheet.
                     {% elif row.validation_status == 'on_hold' %}<span class="badge badge-warning">{% trans "On hold" %}</span>
                     {% else %}—{% endif %}
                 {% endif %}
-            {% elif col.key == 'issues' %}
-                {% for issue in row.issues %}
-                    {% if issue == 'empty' %}<span class="badge badge-dark" style="font-size:0.7rem;cursor:help;" title="{% trans 'Session has 0 answers' %}">{% trans "Empty" %}</span>
-                    {% elif issue == 'incomplete' %}<span class="badge badge-warning text-dark" style="font-size:0.7rem;cursor:help;" title="{% trans 'Session did not reach the last section' %}">{% trans "Incomplete" %}</span>
-                    {% elif issue == 'missing_required' %}<span class="badge badge-danger" style="font-size:0.7rem;cursor:help;" title="{% trans 'Required question was skipped in a visited section' %}">{% trans "Missing req." %}</span>
-                    {% elif issue == 'fast' %}<span class="badge badge-info" style="font-size:0.7rem;cursor:help;" title="{% trans 'Session completed suspiciously fast' %}">{% trans "Fast" %}</span>
-                    {% elif issue == 'duplicate' %}<span class="badge badge-secondary" style="font-size:0.7rem;cursor:help;" title="{% trans 'Same browser submitted multiple sessions within the detection window' %}">{% trans "Duplicate" %}</span>
-                    {% endif %}
-                {% empty %}
-                    <span style="color:#9ca3af;">—</span>
-                {% endfor %}
+            {% elif col.key == 'required' %}
+                {% comment %}Required questions unanswered (change responses-required-unanswered):
+                quiet extra information, never an error colour, a counter or "issue" wording.{% endcomment %}
+                {% if row.is_empty %}<span class="badge badge-dark" style="font-size:0.7rem;cursor:help;" title="{% trans 'Session has 0 answers' %}">{% trans "Empty" %}</span>
+                {% elif row.required %}{% include "editor/partials/_required_unanswered_mark.html" with names=row.required %}
+                {% else %}<span style="color:#9ca3af;">—</span>{% endif %}
             {% elif col.key == 'tags' %}
                 {% for tag in row.tags %}
                     <span class="badge badge-info" style="font-size:0.7rem;font-weight:normal;">{{ tag }}</span>
@@ -378,12 +358,10 @@ filter and the sort order move into the bottom sheet.
             {% elif col.key == 'version' %}<span class="badge badge-light" style="border:1px solid #e5e7eb;color:#6b7280;">{{ row.version|default:"—" }}</span>
             {% else %}
                 {% with cell_lints=row.lints|hash:col.key %}
-                {% with has_error=cell_lints|join:','|truncatechars:1 %}
-                <span class="cell-display{% if is_editor and col.editable %} cell-editable{% endif %}"
+                <span class="cell-display{% if is_editor and col.editable %} cell-editable{% endif %}{% if cell_lints %} rv2-cell-note{% endif %}"
                       {% if is_editor and col.editable %}ondblclick="startCellEdit(this, {{ row.session_id }}, '{{ col.key }}', '{{ col.input_type }}', '{{ col.choices_json|escapejs }}')"{% endif %}
-                      {% if cell_lints %}title="{{ cell_lints|lint_tooltip }}" style="background:{% if 'self_intersection' in cell_lints or 'empty_required' in cell_lints or 'out_of_range' in cell_lints %}#fff5f5{% else %}#fffbeb{% endif %};display:inline-flex;align-items:center;gap:3px;padding:0 3px;border-radius:3px;border:1px solid {% if 'self_intersection' in cell_lints or 'empty_required' in cell_lints or 'out_of_range' in cell_lints %}#fecaca{% else %}#fde68a{% endif %};cursor:help;"{% endif %}>
-                    {% if cell_lints %}{% if 'self_intersection' in cell_lints or 'empty_required' in cell_lints or 'out_of_range' in cell_lints %}<i class="fas fa-exclamation-circle" style="color:#dc3545;font-size:0.7rem;"></i>{% else %}<i class="fas fa-exclamation-triangle" style="color:#f59e0b;font-size:0.7rem;"></i>{% endif %}{% endif %}
-                {% endwith %}
+                      {% if cell_lints %}title="{{ cell_lints|lint_tooltip }}" tabindex="0"{% endif %}>
+                    {% if cell_lints %}<i class="far fa-question-circle" aria-hidden="true"></i>{% endif %}
                     {% with cell_val=row.cells|hash:col.key file_links=row.file_links|hash:col.key %}{% if file_links %}{% for f in file_links %}<a href="{{ f.href }}" target="_blank" rel="noopener">{{ f.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}{{ cell_val|default:"—" }}{% endif %}{% endwith %}
                 </span>
                 {% endwith %}
@@ -411,14 +389,12 @@ is displayed; only one is ever visible.
 <div class="rv2-mcards">
     {% for row in rows %}
     <button type="button" class="rv2-feed-item rv2-mcard" onclick="rv2OpenSession({{ row.session_id }})">
-        <span class="rv2-feed-ava">{% if row.seq %}#{{ row.seq }}{% elif 'empty' in row.issues %}—{% else %}#{{ row.id }}{% endif %}</span>
+        <span class="rv2-feed-ava">{% if row.seq %}#{{ row.seq }}{% elif row.is_empty %}—{% else %}#{{ row.id }}{% endif %}</span>
         <span class="rv2-feed-mid">
             <b>{{ row.start_datetime|date:"j M H:i" }}{% if row.duration_display %} · {{ row.duration_display }}{% endif %}</b>
             <span>{% if row.m_geo %}{{ row.m_geo }} geo · {% endif %}{% if row.m_excerpt %}“{{ row.m_excerpt }}”{% elif not row.m_geo %}no answers{% endif %}</span>
         </span>
-        {% if row.issues %}
-        <span class="rv2-chip-status err">{{ row.issues.0 }}</span>
-        {% elif row.validation_status == 'on_hold' %}
+        {% if row.validation_status == 'on_hold' %}
         <span class="rv2-chip-status warn">{% trans "on hold" %}</span>
         {% elif row.validation_status == 'not_approved' %}
         <span class="rv2-chip-status err">{% trans "rejected" %}</span>
@@ -532,9 +508,9 @@ function changePageSize(size) {
     form.querySelector('[name=page_size]').value = size;
     loadTable({page: '1'});
 }
-function changeIssuesFilter(val) {
+function changeRequiredFilter(val) {
     var form = document.getElementById('table-state-form');
-    form.querySelector('[name=issues]').value = val;
+    form.querySelector('[name=required]').value = val;
     loadTable({page: '1'});
 }
 // Wire checkboxes to SelectionManager

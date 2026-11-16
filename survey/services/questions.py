@@ -28,6 +28,7 @@ from ..versioning import (
     structural_question_changes,
 )
 from . import locks
+from .. import required_state
 from .common import (
     UNSET, bind, check_rule, guard_answer_loss, locked_changes, parse_visibility,
     save_translations, surface_props,
@@ -186,8 +187,8 @@ def _float(value):
 def parse_validation_settings(input_type, data, base=None):
     """The ONE parser of `validation_settings` from the modal's `vs_*` keys.
 
-    number/range: min/max value and outlier sigma; text: min length; polygon:
-    area outlier factor; spray: max dots (empty = unlimited); file types:
+    number: min/max value (they limit what a respondent can submit, spec
+    number-question-bounds); spray: max dots (empty = unlimited); file types:
     size and count limits clamped to the platform ceilings (a creator can
     lower, never raise); every multi-feature geo type: min/max features with
     min <= max. Unparseable values are ignored, as the editor always did.
@@ -198,19 +199,17 @@ def parse_validation_settings(input_type, data, base=None):
         return (data.get(f'vs_{key}') or '').strip()
 
     vs = dict(base or {})
-    if input_type in ('number', 'range'):
-        for key in ('min_value', 'max_value', 'outlier_sigma'):
+    if input_type == 'number':
+        # Range questions take their bounds from their options. An emptied field
+        # removes the bound (the modal always posts both).
+        for key in ('min_value', 'max_value'):
+            if f'vs_{key}' not in data:
+                continue
             value = _float(raw(key)) if raw(key) else None
             if value is not None:
                 vs[key] = value
-    elif input_type in ('text', 'text_line'):
-        value = _int(raw('min_length')) if raw('min_length') else None
-        if value is not None:
-            vs['min_length'] = value
-    elif input_type == 'polygon':
-        value = _float(raw('area_outlier_factor')) if raw('area_outlier_factor') else None
-        if value is not None:
-            vs['area_outlier_factor'] = value
+            else:
+                vs.pop(key, None)
     elif input_type == 'spraycan':
         value = _int(raw('max_dots')) if raw('max_dots') else None
         if value and value > 0:
@@ -256,8 +255,7 @@ def parse_validation_settings(input_type, data, base=None):
             vs['budget'] = budget_rules.normalise_budget_settings(record, input_type)
         except budget_rules.BudgetSettingsError as err:
             raise _failed(Stage.SETTINGS, {f'vs_budget_{err.field}': [str(err)]}, message=str(err))
-    # Feature-count limits apply to every geo type (polygon keeps its area
-    # factor above as well, hence a separate `if`).
+    # Feature-count limits apply to every multi-feature geo type.
     if input_type in MULTI_FEATURE_TYPES:
         for key, floor in (('min_features', 0), ('max_features', 1)):
             value = _int(raw(key)) if raw(key) else None
@@ -598,10 +596,31 @@ def create(actor, section, data, files=None, *, parent=None, group=None,
         _count_budget_map_use(survey, actor)
     if translations is not UNSET:
         save_translations_for(question, survey, translations)
+    if parent is None and (question.required or question.min_objects):
+        # Only a survey that is not live takes a new question in place; its test
+        # sessions now miss it.
+        required_state.schedule_survey_refresh(survey.id)
     return question
 
 
 # ─── Edit ────────────────────────────────────────────────────────────────────
+
+def _required_set_changed(before, question):
+    """Did this save change which questions a session must have answered? `required`,
+    the minimum number of places or objects, and — on a survey that is not live — the
+    rule and audience that decide who sees the question. Every session of the survey is
+    then recomputed (change responses-required-unanswered)."""
+    vs_before = before.get('validation_settings') or {}
+    vs_after = question.validation_settings or {}
+    return (
+        bool(before.get('required')) != bool(question.required)
+        or (before.get('min_objects') or 0) != (question.min_objects or 0)
+        or vs_before.get('min_features') != vs_after.get('min_features')
+        or before.get('visibility_rule') != question.visibility_rule
+        or before.get('audience') != question.audience
+        or before.get('input_type') != question.input_type
+    )
+
 
 @transaction.atomic
 def update(actor, question, data, files=None, *, translations=UNSET, visibility_rule=UNSET,
@@ -615,6 +634,7 @@ def update(actor, question, data, files=None, *, translations=UNSET, visibility_
     _, structure_locked = locks.locks(survey)
     is_subquestion = question.parent_question_id_id is not None
     before = question_snapshot(question)
+    before.update(required=question.required, min_objects=question.min_objects)
     original_choices = list(question.choices or [])
     # A layer created from "answers:<code>" is structure -- never on a live survey.
     if not structure_locked:
@@ -658,6 +678,8 @@ def update(actor, question, data, files=None, *, translations=UNSET, visibility_
             err.form = form
             raise err
     q.save()
+    if _required_set_changed(before, q):
+        required_state.schedule_survey_refresh(survey.id)
     if counted:
         _count_budget_map_use(survey, actor)
     _apply_shared_map_settings(q, data)
@@ -780,8 +802,12 @@ def delete(actor, question, *, acknowledge_answer_loss=False, if_empty=False):
     blocked = delete_blocker(survey, question)
     if blocked:
         raise DeleteBlocked(blocked, body={'blocked': blocked})
-    guard_answer_loss(survey, question.answer_count(), acknowledge_answer_loss)
+    answer_count = question.answer_count()
+    guard_answer_loss(survey, answer_count, acknowledge_answer_loss)
+    affects_required = bool(answer_count or question.required or question.min_objects)
     delete_with_layers(survey, question)
+    if affects_required:
+        required_state.schedule_survey_refresh(survey.id)
     return True
 
 

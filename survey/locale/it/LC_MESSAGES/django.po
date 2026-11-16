@@ -13524,3 +13524,40 @@ msgid "%(n)s respondent is in an area with fewer than %(k)s people and is not sh
 msgid_plural "%(n)s respondents are in areas with fewer than %(k)s people and are not shown."
 msgstr[0] "%(n)s rispondente si trova in un’area con meno di %(k)s persone e non è mostrato."
 msgstr[1] "%(n)s rispondenti si trovano in aree con meno di %(k)s persone e non sono mostrati."
+
+# change responses-required-unanswered (#691)
+msgid "Complete"
+msgstr "Completate"
+
+msgid "Required unanswered"
+msgstr "Obbligatorie senza risposta"
+
+msgid "Responses that left at least one required question unanswered"
+msgstr "Risposte che hanno lasciato almeno una domanda obbligatoria senza risposta"
+
+msgid "Required questions unanswered"
+msgstr "Domande obbligatorie senza risposta"
+
+#, python-format
+msgid "Didn't answer %(counter)s required question: %(list)s"
+msgid_plural "Didn't answer %(counter)s required questions: %(list)s"
+msgstr[0] "Non ha risposto a %(counter)s domanda obbligatoria: %(list)s"
+msgstr[1] "Non ha risposto a %(counter)s domande obbligatorie: %(list)s"
+
+msgid "The edges of this shape cross each other. It may not open correctly in GIS software."
+msgstr "I bordi di questa forma si incrociano. Potrebbe non aprirsi correttamente in un software GIS."
+
+msgid "Respondents can't enter a number outside this range."
+msgstr "I rispondenti non possono inserire un numero fuori da questo intervallo."
+
+msgid "Move 1 response to trash? You can restore it from the trash."
+msgstr "Spostare 1 risposta nel cestino? Potrai ripristinarla dal cestino."
+
+msgid "Move __N__ responses to trash? You can restore them from the trash."
+msgstr "Spostare __N__ risposte nel cestino? Potrai ripristinarle dal cestino."
+
+msgid "Permanently delete 1 response? This cannot be undone."
+msgstr "Eliminare definitivamente 1 risposta? L'operazione non può essere annullata."
+
+msgid "Permanently delete __N__ responses? This cannot be undone."
+msgstr "Eliminare definitivamente __N__ risposte? L'operazione non può essere annullata."
