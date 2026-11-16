@@ -1175,6 +1175,17 @@ links. **CSV and PNG are made from the block's PAYLOAD, never from answers** —
 the CSV and its value is not in the file. Public CSV at `/r/<slug>/block/<id>/data.csv`; an editor's CSV / PNG at
 `editor_report_block_file`; all blocks as one ZIP = the PDF's worker job with `ReportPdf.kind = 'zip'`
 (`reports.tasks.build_zip`). A "Report" block for Sites is not built (a Sites block kind; follow-up).
+**The next round (change `reports-reuse`, #711)**: `drafting.copy_report(actor, report, onto=None)` is still the
+report file's round trip; `onto` (a survey) goes to `files.import_report(onto=)`, which makes it the home survey
+and resolves EVERY data block's survey to it, matching by question code. A block that finds no question is,
+with `onto`, kept as a HIDDEN text block naming it (`unmatched()` in `import_report`) and listed in
+`copy.copy_notes` (the start page flashes them); a plain import keeps leaving it out with a note. Never drop a
+block without a note. `compare` is a block type of its own (not in `QUESTION_BLOCK_TYPES`): `dataset` +
+`question_code` as a chart's, `config = {"other": "<survey uuid>"}`; `services.comparable(question, other)` is
+the ONE rule for "can be compared" (same code, both chart types, both numeric or both not) used at add time and
+at render time; `ReportService._compare_payload` joins two `_choice_data` / `_number_data` aggregations by
+option code — shares of the people who answered, masked per round, no share for a masked cell or a round under
+K. The page, the PDF and the CSV draw the same `rows`. Event `report_reused` (ids and counts).
 **Readers, tags, API and MCP for reports (change `reports-usage-api`, #710)**: `reports/usage.py` counts, per
 report and DAY, `view` / `embed` (`?embed=1`, a block's page included) / `pdf` in `ReportUsage` — one row per
 day and kind, no visitor stored, a signed-in member of the report's workspace not counted, a failed count never

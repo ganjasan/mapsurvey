@@ -82,6 +82,46 @@ def add_question_block(actor, report, question, **values):
     return block
 
 
+def comparable(question, other_survey):
+    """The question with `question`'s code in `other_survey` when the two can be compared (both
+    charts of the same kind), else None."""
+    from data.questions import question_of
+    from reports.render import CHART_INPUT_TYPES
+    from survey.versioning import canonical_of
+    if question is None or other_survey is None or question.input_type not in CHART_INPUT_TYPES:
+        return None
+    twin = question_of(canonical_of(other_survey), question.code)
+    if twin is None or twin.input_type not in CHART_INPUT_TYPES:
+        return None
+    numeric = ('number', 'range')
+    if (question.input_type in numeric) != (twin.input_type in numeric):
+        return None
+    return twin
+
+
+def add_compare_block(actor, report, question, other_survey, **values):
+    """One question in two rounds: `question` (of a survey of the workspace) beside the question
+    with the same code in `other_survey`."""
+    from survey.versioning import canonical_of
+    if other_survey is None or other_survey.organization_id != report.organization_id:
+        raise ReportRefused('no_other', _('Choose the other survey to compare with.'))
+    dataset = dataset_for(question) if question is not None else None
+    if dataset is None or dataset.organization_id != report.organization_id:
+        raise ReportRefused('other_workspace', _('Only a survey of this workspace can be shown.'))
+    other = canonical_of(other_survey)
+    if other.pk == dataset.survey_id:
+        raise ReportRefused('same_survey', _('Choose a different survey: a comparison needs two.'))
+    if comparable(question, other) is None:
+        raise ReportRefused('no_twin', _('“%(survey)s” has no comparable question with the code %(code)s.')
+                            % {'survey': other.name, 'code': question.code})
+    order = values.pop('order', None)
+    block = ReportBlock.objects.create(
+        report=report, block_type='compare', dataset=dataset, question_code=question.code,
+        config={'other': str(other.uuid)}, order=_next_order(report) if order is None else order, **values)
+    bump_version(report)
+    return block
+
+
 def add_view_block(actor, report, block_type, survey, rows='', columns=''):
     """A cross-tab or an engagement block of `survey`: the analysis view is made in the Data
     module (`data.services.create_view`, which refuses what the dataset does not allow) and the
@@ -297,7 +337,7 @@ def unfreeze(actor, report):
     return unfreeze_report(report)
 
 
-__all__ = ['QUESTION_BLOCK_TYPES', 'ReportRefused', 'delete_report', 'add_image_block', 'add_question_block', 'add_story_block',
+__all__ = ['QUESTION_BLOCK_TYPES', 'ReportRefused', 'delete_report', 'add_compare_block', 'comparable', 'add_image_block', 'add_question_block', 'add_story_block',
            'add_text_block', 'add_view_block', 'pdf_stamp', 'ready_pdf', 'request_pdf',
            'create_report', 'delete_block', 'freeze', 'reorder_blocks', 'set_published', 'unfreeze',
            'update_block', 'update_settings']

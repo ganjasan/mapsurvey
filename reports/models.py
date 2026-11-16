@@ -35,6 +35,9 @@ BLOCK_TYPE_CHOICES = (
     # Blocks that show a computed view of the Data module (change reports-live-blocks, #704):
     ('crosstab', _('Cross-tab')),       # two questions against each other
     ('engagement', _('Engagement')),    # opened → answered → finished, and over time
+    # One question in two rounds (change reports-reuse, #711): `dataset` + `question_code` as a
+    # chart's, `config = {"other": "<survey uuid>"}` names the second survey.
+    ('compare', _('Compare two rounds')),
 )
 
 # Block types that show an analysis view (`ReportBlock.view`, kinds of `data.analysis`).

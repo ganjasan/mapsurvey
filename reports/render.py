@@ -164,6 +164,8 @@ class ReportService:
             if block.block_type == 'map':
                 return self._map_payload(block)
             return self._chart_payload(block)
+        if block.block_type == 'compare':
+            return self._compare_payload(block)
         if block.block_type == 'objects':
             if block.question_id is None or block.question is None:
                 return None
@@ -323,6 +325,62 @@ class ReportService:
             payload.update(self._number_data(question))
         else:
             payload['data_type'] = 'unsupported'
+        return payload
+
+    # ---- one question in two rounds (change reports-reuse, #711) -------
+
+    def _round(self, question, survey):
+        """One round of a comparison: who answered, and each option's count and share. A masked
+        option carries no share; a round with fewer than K respondents carries none at all."""
+        answers = self._answers(question)
+        if question.input_type in ('number', 'range'):
+            data = self._number_data(question)
+            people = self._mask(data.get('count', 0))
+            shown = not people['masked'] and data.get('count')
+            return {'name': survey.name, 'n': people, 'cells': {
+                'average': {'display': data['avg'] if shown else '—', 'share': None, 'masked': False},
+                'median': {'display': data['median'] if shown else '—', 'share': None, 'masked': False}}}
+        n = answers.exclude(selected_choices=[]).exclude(selected_choices__isnull=True) \
+            .values('survey_session_id').distinct().count()
+        people = self._mask(n)
+        cells = {}
+        for item in self._choice_data(question)['items']:
+            share = None
+            if not item['masked'] and not people['masked'] and n:
+                share = round(100 * (item['value'] or 0) / n)
+            cells[item['code']] = {'display': item['display'], 'share': share, 'masked': item['masked'],
+                                   'label': item['label']}
+        return {'name': survey.name, 'n': people, 'cells': cells}
+
+    def _compare_payload(self, block):
+        from django.utils.translation import gettext as _
+        from reports.services import comparable
+        from survey.models import SurveyHeader
+        question = block.question if block.question_code else None
+        other = SurveyHeader.objects.filter(
+            uuid=(block.config or {}).get('other') or None, organization_id=self.report.organization_id,
+            deleted_at__isnull=True).first() if (block.config or {}).get('other') else None
+        twin = comparable(question, other)
+        if twin is None or not block.dataset_id or not block.dataset.survey_id:
+            return None
+        rounds = [self._round(question, block.dataset.survey), self._round(twin, other)]
+        payload = self._base(block)
+        numeric = question.input_type in ('number', 'range')
+        if numeric:
+            keys = [('average', _('Average')), ('median', _('Median'))]
+        else:
+            keys, seen = [], set()
+            for source in (question, twin):
+                for choice in (source.choices or []):
+                    if choice['code'] not in seen:
+                        seen.add(choice['code'])
+                        keys.append((choice['code'], source.get_choice_name(choice['code'], self.lang)))
+        empty = {'display': '—', 'share': None, 'masked': False}
+        payload.update(
+            data_type='number' if numeric else 'choices', k=self.k,
+            rounds=[{'name': r['name'], 'n': r['n']['display']} for r in rounds],
+            rows=[{'label': label, 'cells': [dict(r['cells'].get(key, empty)) for r in rounds]} for key, label in keys],
+            masked=any(c.get('masked') for r in rounds for c in r['cells'].values()) or any(r['n']['masked'] for r in rounds))
         return payload
 
     def _answers(self, question):

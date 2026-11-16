@@ -158,7 +158,7 @@ write answers the upgrade page — with the way to Pro in front of it.{% endcomm
     {% if selected_block %}
       {# ---- selected block config ---- #}
       <div class="pr-ctxbar">
-        <span class="ico"><i class="fas {% if selected_block.block_type == 'map' %}fa-map-marked-alt{% elif selected_block.block_type == 'chart' %}fa-chart-bar{% elif selected_block.block_type == 'image' %}fa-image{% elif selected_block.block_type == 'text' %}fa-align-left{% elif selected_block.block_type == 'numbers' %}fa-hashtag{% elif selected_block.block_type == 'quotes' %}fa-quote-right{% elif selected_block.block_type == 'crosstab' %}fa-table{% elif selected_block.block_type == 'engagement' %}fa-users{% else %}fa-heading{% endif %}"></i></span>
+        <span class="ico"><i class="fas {% if selected_block.block_type == 'map' %}fa-map-marked-alt{% elif selected_block.block_type == 'chart' %}fa-chart-bar{% elif selected_block.block_type == 'image' %}fa-image{% elif selected_block.block_type == 'text' %}fa-align-left{% elif selected_block.block_type == 'numbers' %}fa-hashtag{% elif selected_block.block_type == 'quotes' %}fa-quote-right{% elif selected_block.block_type == 'crosstab' %}fa-table{% elif selected_block.block_type == 'engagement' %}fa-users{% elif selected_block.block_type == 'compare' %}fa-columns{% else %}fa-heading{% endif %}"></i></span>
         <div><div class="t">{% trans "Block" %}: {{ selected_block.get_block_type_display }}</div><div class="s">{% if selected_block.question %}{{ selected_block.question.name }}{% endif %}</div></div>
       </div>
       <div class="pr-scroll">

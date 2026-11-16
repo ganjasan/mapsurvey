@@ -1036,13 +1036,13 @@ Permission `surveys:write` · role **editor**
 
 ### `add_report_block`
 
-Add a block at the end of a report. Written by you: heading (`text`), text (`html`, may hold tokens {responses} {opened} {finished} {marks:CODE} {respondents:CODE} that are filled from the home survey), numbers (`items` of value + label), quotes (`items` of text + source — publish a quote only when the person asked for it). Shown from answers: chart, map, objects or budget of one `question` code; crosstab of `rows` and `columns` question codes; engagement. Small groups are hidden in every data block. `show_marks` on a map shows individual marks, which can point at someone's home: off unless the person asks.
+Add a block at the end of a report. Written by you: heading (`text`), text (`html`, may hold tokens {responses} {opened} {finished} {marks:CODE} {respondents:CODE} that are filled from the home survey), numbers (`items` of value + label), quotes (`items` of text + source — publish a quote only when the person asked for it). Shown from answers: chart, map, objects or budget of one `question` code; crosstab of `rows` and `columns` question codes; engagement; compare of one `question` code with the same code in an `other` survey (two rounds side by side). Small groups are hidden in every data block. `show_marks` on a map shows individual marks, which can point at someone's home: off unless the person asks.
 
 Permission `surveys:write` · role **editor**
 
 | Argument | Type | | Notes |
 |---|---|---|---|
-| `type` | `heading` \| `text` \| `numbers` \| `quotes` \| `chart` \| `map` \| `objects` \| `budget` \| `crosstab` \| `engagement` | **required** |  |
+| `type` | `heading` \| `text` \| `numbers` \| `quotes` \| `chart` \| `map` \| `objects` \| `budget` \| `crosstab` \| `engagement` \| `compare` | **required** |  |
 | `title` | string |  | A title above the block. |
 | `width` | `full` \| `half` |  | Two half-width blocks in a row sit side by side. |
 | `hidden` | boolean |  | Kept in the report, not shown on its page. |
@@ -1051,7 +1051,8 @@ Permission `surveys:write` · role **editor**
 | `items` | list of object (`value`, `label`, `text`, `source`) |  | numbers: value + label; quotes: text + source. |
 | `note` | string |  | numbers: a line under them. |
 | `survey` | uuid |  | The survey a data block shows; default: the report's home survey. |
-| `question` | string |  | chart / map / objects / budget: the question code. |
+| `question` | string |  | chart / map / objects / budget / compare: the question code. |
+| `other` | uuid |  | compare: the other survey (another round) that has a question with the same code. |
 | `viz` | `auto` \| `bar` \| `pie` \| `donut` \| `table` |  | chart: how it is drawn. |
 | `rows` | string |  | crosstab: the code of the question in the rows. |
 | `columns` | string |  | crosstab: the code of the question in the columns. |

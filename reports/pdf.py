@@ -345,6 +345,17 @@ def _block(payload, block, styles, width, survey):
             out.append(_Series(data['series'], width))
             out.append(_p('%s – %s · %s: %s' % (data.get('first'), data.get('last'), period,
                                                  _('opened, and answered (dark)')), styles['note']))
+    elif kind == 'compare':
+        rounds = payload.get('rounds') or []
+        first = width * 0.4
+        rest = (width - first) / max(1, len(rounds))
+        rows = [[_p('', styles['cellbold'])] + [_p('%s · %s' % (r['name'], r['n']), styles['cellbold']) for r in rounds]]
+        for line in payload.get('rows') or []:
+            rows.append([_p(line['label'], styles['cell'])]
+                        + [_p(('%s%% (%s)' % (c['share'], c['display'])) if c['share'] is not None else str(c['display']),
+                              styles['cell']) for c in line['cells']])
+        out.append(_table(rows, [first] + [rest] * len(rounds)))
+        out.append(_p(_('Share of the people who answered in each survey, and the number in brackets.'), styles['note']))
     elif kind == 'crosstab':
         data = payload.get('data') or {}
         columns = (data.get('columns') or {}).get('items') or []

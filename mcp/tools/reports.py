@@ -108,7 +108,8 @@ def update_report(request, args):
         '{responses} {opened} {finished} {marks:CODE} {respondents:CODE} that are filled from the home survey), '
         'numbers (`items` of value + label), quotes (`items` of text + source — publish a quote only when the '
         'person asked for it). Shown from answers: chart, map, objects or budget of one `question` code; '
-        'crosstab of `rows` and `columns` question codes; engagement. Small groups are hidden in every data '
+        'crosstab of `rows` and `columns` question codes; engagement; compare of one `question` code with the '
+        'same code in an `other` survey (two rounds side by side). Small groups are hidden in every data '
         'block. `show_marks` on a map shows individual marks, which can point at someone\'s home: off unless '
         'the person asks.'
     ),

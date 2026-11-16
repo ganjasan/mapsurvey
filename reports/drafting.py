@@ -247,16 +247,28 @@ def build_draft(actor, survey, template='summary'):
     return report
 
 
-def copy_report(actor, report):
+def copy_report(actor, report, onto=None):
     """A second report with the same opening and blocks, unpublished and workspace-only — the
-    report file's own round trip, so a copy can never drift from an export and an import."""
+    report file's own round trip, so a copy can never drift from an export and an import.
+
+    `onto` (change reports-reuse, #711) points the copy at another survey of the workspace: the
+    next round. Returns the copy; `copy.copy_notes` names the blocks that found no question."""
     import io
     from reports.files import export_report, import_report
+    from survey import product_events as pe
+    from survey.versioning import canonical_of
+    if onto is not None:
+        onto = canonical_of(onto)
     _name, data = export_report(report)
-    copy, _notes = import_report(actor, report.organization, io.BytesIO(data))
+    copy, notes = import_report(actor, report.organization, io.BytesIO(data), onto=onto)
     intro = dict(copy.intro or {})
     intro['title'] = {'en': str(_('%(title)s (copy)') % {'title': report.title})[:200]}
     copy.intro = intro
     copy.template = report.template
-    copy.save(update_fields=['intro', 'template', 'updated_at'])
+    copy.k_anonymity_threshold = report.k_anonymity_threshold
+    copy.save(update_fields=['intro', 'template', 'k_anonymity_threshold', 'updated_at'])
+    copy.copy_notes = notes
+    pe.emit(pe.REPORT_REUSED, getattr(actor.user, 'pk', None), {
+        'source': str(report.pk), 'report': str(copy.pk), 'onto': onto is not None,
+        'blocks': copy.blocks.count(), 'unmatched': len(notes) if onto is not None else 0})
     return copy
