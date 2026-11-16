@@ -81,6 +81,13 @@
     .quotes cite{display:block;margin-top:6px;font-size:.8rem;font-style:normal;color:var(--text-secondary);}
     .kanon-note{margin-top:10px;font-size:.8rem;color:var(--text-secondary);}
     .xtab-wrap{overflow-x:auto;}
+    .cmp td{position:relative;text-align:left;width:32%;}
+    .cmp thead th{text-align:left;}
+    .cmp .cmp-n{display:block;font-weight:400;font-size:.75rem;}
+    .cmp .cmp-bar{position:absolute;left:0;top:6px;bottom:6px;border-radius:3px;opacity:.22;background:var(--accent,#4f46e5);}
+    .cmp .cmp-bar-2{background:#0f766e;}
+    .cmp .cmp-v{position:relative;font-weight:600;}
+    .cmp .cmp-v small{font-weight:400;color:var(--text-secondary);margin-left:.4rem;}
     .xtab{width:100%;border-collapse:collapse;font-size:.88rem;font-variant-numeric:tabular-nums;}
     .xtab th,.xtab td{padding:7px 10px;border-bottom:1px solid var(--border);text-align:right;}
     .xtab th[scope=row],.xtab thead th:first-child{text-align:left;font-weight:500;}
@@ -182,6 +189,24 @@
           </table>
         </div>
         <div class="kanon-note">{% trans "People who answered both questions." %}{% if block.data.rows.multiple or block.data.columns.multiple %} {% trans "Someone who picked several options counts in each." %}{% endif %}{% if block.data.masked_cells %} {% blocktrans with k=block.k %}A group smaller than {{ k }} reads “<{{ k }}”, and totals that would give it away read “—”.{% endblocktrans %}{% endif %}</div>
+      {% elif block.block_type == 'compare' %}
+        {% comment %}One question in two rounds (change reports-reuse, #711): shares per survey,
+        masked per round by the renderer — the page only draws the rows.{% endcomment %}
+        <div class="xtab-wrap">
+          <table class="xtab cmp">
+            <thead><tr><th scope="col"></th>
+              {% for r in block.rounds %}<th scope="col">{{ r.name }}<span class="cmp-n">{% blocktrans with n=r.n %}{{ n }} answered{% endblocktrans %}</span></th>{% endfor %}</tr></thead>
+            <tbody>
+              {% for line in block.rows %}
+              <tr><th scope="row">{{ line.label }}</th>
+                {% for cell in line.cells %}<td{% if cell.masked %} class="masked"{% endif %}>
+                  {% if cell.share is not None %}<span class="cmp-bar cmp-bar-{{ forloop.counter }}" style="width:{{ cell.share }}%;"></span><span class="cmp-v">{{ cell.share }}%<small>{{ cell.display }}</small></span>{% else %}<span class="cmp-v">{{ cell.display }}</span>{% endif %}
+                </td>{% endfor %}</tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="kanon-note">{% if block.data_type == 'choices' %}{% trans "Share of the people who answered the question in each survey; the small number is how many." %}{% endif %}{% if block.masked %} {% blocktrans with k=block.k %}A group smaller than {{ k }} reads “<{{ k }}” and has no share.{% endblocktrans %}{% endif %}</div>
       {% elif block.block_type == 'engagement' %}
         <ul class="funnel">
           {% for step in block.data.steps %}<li><b>{{ step.display }}</b><span>{% if step.key == 'opened' %}{% trans "opened the survey" %}{% elif step.key == 'answered' %}{% trans "answered" %}{% else %}{% trans "finished" %}{% endif %}</span></li>{% endfor %}

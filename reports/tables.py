@@ -10,7 +10,7 @@ import io
 
 from django.utils.text import slugify
 
-DATA_BLOCK_TYPES = ('chart', 'map', 'crosstab', 'engagement', 'numbers', 'budget', 'objects')
+DATA_BLOCK_TYPES = ('chart', 'map', 'crosstab', 'engagement', 'compare', 'numbers', 'budget', 'objects')
 
 
 def _cell(value):
@@ -48,6 +48,16 @@ def rows_of(payload):
                         + [line['item']['total']['display']])
         rows.append(['total'] + [c['total']['display'] for c in columns]
                     + [(data.get('respondents') or {}).get('display', '')])
+        return rows
+    if kind == 'compare':
+        rounds = payload.get('rounds') or []
+        head = ['']
+        for r in rounds:
+            head += [r['name'], '%s %%' % r['name']]
+        rows = [head, ['people who answered'] + [x for r in rounds for x in (r['n'], '')]]
+        for line in payload.get('rows') or []:
+            rows.append([line['label']] + [x for c in line['cells']
+                                           for x in (c['display'], '' if c['share'] is None else c['share'])])
         return rows
     if kind == 'engagement':
         data = payload.get('data') or {}

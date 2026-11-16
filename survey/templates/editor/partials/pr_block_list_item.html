@@ -1,7 +1,7 @@
 {% load i18n %}
 <li class="section-item pr-block{% if selected_block and selected_block.id == b.id %} active{% endif %}" data-id="{{ b.id }}">
     <span class="drag-handle"><i class="fas fa-grip-vertical"></i></span>
-    <i class="icon fas {% if b.block_type == 'map' %}fa-map-marked-alt{% elif b.block_type == 'chart' %}fa-chart-bar{% elif b.block_type == 'image' %}fa-image{% elif b.block_type == 'text' %}fa-align-left{% elif b.block_type == 'numbers' %}fa-hashtag{% elif b.block_type == 'quotes' %}fa-quote-right{% elif b.block_type == 'crosstab' %}fa-table{% elif b.block_type == 'engagement' %}fa-users{% else %}fa-heading{% endif %}"></i>
+    <i class="icon fas {% if b.block_type == 'map' %}fa-map-marked-alt{% elif b.block_type == 'chart' %}fa-chart-bar{% elif b.block_type == 'image' %}fa-image{% elif b.block_type == 'text' %}fa-align-left{% elif b.block_type == 'numbers' %}fa-hashtag{% elif b.block_type == 'quotes' %}fa-quote-right{% elif b.block_type == 'crosstab' %}fa-table{% elif b.block_type == 'engagement' %}fa-users{% elif b.block_type == 'compare' %}fa-columns{% else %}fa-heading{% endif %}"></i>
     <a class="section-title" href="{{ b.edit_href }}">
         {% if b.custom_title.en %}{{ b.custom_title.en }}{% elif b.question %}{{ b.question.name }}{% elif b.block_type == 'heading' and b.content.en %}{{ b.content.en }}{% elif b.block_type == 'text' and b.content.en %}{{ b.content.en|striptags|truncatechars:42 }}{% elif b.block_type == 'image' and b.content.en %}{{ b.content.en|truncatechars:42 }}{% else %}{{ b.get_block_type_display }}{% endif %}
     </a>

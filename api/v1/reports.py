@@ -44,7 +44,7 @@ class ItemIn(_In):
 
 
 class BlockIn(_In):
-    type: Literal['heading', 'text', 'numbers', 'quotes', 'chart', 'map', 'objects', 'budget', 'crosstab', 'engagement']
+    type: Literal['heading', 'text', 'numbers', 'quotes', 'chart', 'map', 'objects', 'budget', 'crosstab', 'engagement', 'compare']
     title: Optional[str] = Field(None, max_length=300, description='A title above the block.')
     width: Optional[Literal['full', 'half']] = Field(None, description='Two half-width blocks in a row sit side by side.')
     hidden: Optional[bool] = Field(None, description='Kept in the report, not shown on its page.')
@@ -53,7 +53,8 @@ class BlockIn(_In):
     items: Optional[List[ItemIn]] = Field(None, max_length=12, description='numbers: value + label; quotes: text + source.')
     note: Optional[str] = Field(None, max_length=2000, description='numbers: a line under them.')
     survey: Optional[UUID] = Field(None, description='The survey a data block shows; default: the report\'s home survey.')
-    question: Optional[str] = Field(None, max_length=50, description='chart / map / objects / budget: the question code.')
+    question: Optional[str] = Field(None, max_length=50, description='chart / map / objects / budget / compare: the question code.')
+    other: Optional[UUID] = Field(None, description='compare: the other survey (another round) that has a question with the same code.')
     viz: Optional[Literal['auto', 'bar', 'pie', 'donut', 'table']] = Field(None, description='chart: how it is drawn.')
     rows: Optional[str] = Field(None, max_length=50, description='crosstab: the code of the question in the rows.')
     columns: Optional[str] = Field(None, max_length=50, description='crosstab: the code of the question in the columns.')
@@ -273,8 +274,7 @@ def reorder(actor, report, order):
 
 
 def add_block_from(actor, report, spec):
-    if spec.get('survey') is not None:
-        spec = {**spec, 'survey': str(spec['survey'])}
+    spec = {key: str(value) if key in ('survey', 'other') else value for key, value in spec.items()}
     try:
         block = report_blocks.add(actor, report, spec)
     except report_blocks.BlockRefused as exc:

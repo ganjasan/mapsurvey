@@ -23,7 +23,9 @@ import os
 import zipfile
 
 from django.core.files.base import ContentFile
+from django.utils.html import escape
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _lazy
 
 from reports import story
 from reports.models import QUESTION_BLOCK_TYPES, STORY_BLOCK_TYPES, VIEW_BLOCK_TYPES, Report, ReportBlock
@@ -73,6 +75,10 @@ def entry_of(block):
             entry['description'] = _en(block.content)
             if (block.config or {}).get('marks'):
                 entry['marks'] = True
+    elif block.block_type == 'compare':
+        survey = block.dataset.survey if block.dataset_id and block.dataset.survey_id else None
+        entry.update(survey=str(survey.uuid) if survey is not None else None, question=block.question_code,
+                     other=(block.config or {}).get('other'))
     elif block.block_type in VIEW_BLOCK_TYPES:
         survey = block.dataset.survey if block.dataset_id and block.dataset.survey_id else None
         entry['survey'] = str(survey.uuid) if survey is not None else None
@@ -155,9 +161,28 @@ def _surveys(organization, uuids):
                                                                deleted_at__isnull=True)}
 
 
-def import_report(actor, organization, upload):
+_KIND_NAMES = {'chart': _lazy('Chart'), 'map': _lazy('Map'), 'objects': _lazy('Objects'),
+               'budget': _lazy('Budget'), 'crosstab': _lazy('Cross-tab'), 'engagement': _lazy('Engagement'),
+               'compare': _lazy('Comparison')}
+
+
+def _what(raw, block_type):
+    """How a note names a block: its kind, title and question codes."""
+    codes = ', '.join(str(c) for c in (raw.get('question'), raw.get('rows'), raw.get('columns')) if c)
+    title = str(raw.get('title') or '')[:120]
+    name = str(_KIND_NAMES.get(block_type, block_type))
+    if title:
+        name = '%s “%s”' % (name, title)
+    return '%s (%s)' % (name, codes) if codes else name
+
+
+def import_report(actor, organization, upload, onto=None):
     """Create a report of `organization` from a report file. Returns (report, notes): the notes
-    name what could not come along. Raises ReportFileRefused for a file that is not one."""
+    name what could not come along. Raises ReportFileRefused for a file that is not one.
+
+    `onto` (change reports-reuse, #711) re-binds the report to that survey: it becomes the home
+    survey and every data block reads it, matched by question code. A block it cannot back is
+    kept as a HIDDEN text block that names it, so the story shows its author where the hole is."""
     from django.db import transaction
     from data.questions import question_of
     from reports.render import block_type_for_question
@@ -166,9 +191,30 @@ def import_report(actor, organization, upload):
 
     archive, document = _read(upload)
     notes = []
-    block_surveys = [b.get('survey') for b in document['blocks'] if isinstance(b, dict)]
+    block_surveys = [b.get(key) for b in document['blocks'] if isinstance(b, dict) for key in ('survey', 'other')]
     surveys = _surveys(organization, [document.get('survey'), *block_surveys])
     home = surveys.get(str(document.get('survey') or ''))
+    if onto is not None:
+        home = onto
+
+    def source(raw):
+        return onto if onto is not None else surveys.get(str(raw.get('survey') or ''))
+
+    def unmatched(raw, block_type, common):
+        """Name a block that found no question; with `onto`, leave a hidden note in its place."""
+        what = _what(raw, block_type)
+        if onto is None:
+            notes.append(_('%(what)s shows a survey question this workspace does not have; the block was left out.')
+                         % {'what': what})
+            return False
+        notes.append(_('%(what)s: “%(survey)s” has no such question. A hidden note marks its place.')
+                     % {'what': what, 'survey': onto.name})
+        ReportBlock.objects.create(
+            block_type='text', **{**common, 'is_hidden': True},
+            content={'en': story.clean_html('<p>%s</p>' % escape(
+                _('Here the earlier report showed: %(what)s. This survey has no question with that code — '
+                  'add a block for the question that replaced it, or delete this note.') % {'what': what}))})
+        return True
     title = str(document.get('title') or '')[:200]
     intro = {'title': {'en': title}, 'body': {'en': str(document.get('lead') or '')[:2000]}}
     if document.get('eyebrow'):
@@ -210,11 +256,11 @@ def import_report(actor, organization, upload):
                 block.image.save(f'report-{report.pk}-{order}{ext}', ContentFile(data), save=False)
                 block.save()
             elif block_type in QUESTION_BLOCK_TYPES:
-                survey = surveys.get(str(raw.get('survey') or ''))
+                survey = source(raw)
                 question = question_of(canonical_of(survey), raw.get('question')) if survey is not None else None
                 if question is None or block_type_for_question(question) != block_type:
-                    notes.append(_('“%(title)s” shows a survey question this workspace does not have; the block was left out.')
-                                 % {'title': raw.get('title') or raw.get('question') or block_type})
+                    if unmatched(raw, block_type, common):
+                        order += 1
                     continue
                 ReportBlock.objects.create(
                     block_type=block_type, dataset=dataset_for(question), question_code=question.code,
@@ -223,17 +269,31 @@ def import_report(actor, organization, upload):
                     config=story.clean_config('map', raw) if block_type == 'map' else {},
                     content={'en': str(raw.get('description') or '')[:2000]} if block_type == 'map' else {},
                     **common)
+            elif block_type == 'compare':
+                from reports import services
+                survey = source(raw)
+                question = question_of(canonical_of(survey), raw.get('question')) if survey is not None else None
+                try:
+                    if question is None:
+                        raise services.ReportRefused('no_question')
+                    services.add_compare_block(actor, report, question, surveys.get(str(raw.get('other') or '')),
+                                               order=order, width=common['width'], is_hidden=common['is_hidden'],
+                                               custom_title=common['custom_title'])
+                except services.ReportRefused:
+                    if unmatched(raw, block_type, common):
+                        order += 1
+                    continue
             elif block_type in VIEW_BLOCK_TYPES:
                 from reports import services
-                survey = surveys.get(str(raw.get('survey') or ''))
+                survey = source(raw)
                 try:
                     if survey is None:
                         raise services.ReportRefused('no_survey')
                     block = services.add_view_block(actor, report, block_type, survey,
                                                     rows=str(raw.get('rows') or ''), columns=str(raw.get('columns') or ''))
                 except services.ReportRefused:
-                    notes.append(_('“%(title)s” shows a survey question this workspace does not have; the block was left out.')
-                                 % {'title': raw.get('title') or block_type})
+                    if unmatched(raw, block_type, common):
+                        order += 1
                     continue
                 ReportBlock.objects.filter(pk=block.pk).update(
                     order=order, width=common['width'], is_hidden=common['is_hidden'],

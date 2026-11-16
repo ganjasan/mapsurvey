@@ -8,7 +8,8 @@ what both surfaces return for a block: the report file's own entry plus the bloc
 A spec: {"type": heading | text | numbers | quotes | chart | map | objects | budget | crosstab |
 engagement, "title", "width": full | half, "hidden", and what the type holds — "text" (heading),
 "html" (text), "items" + "note" (numbers, quotes), "question" (a question code) + "viz" (chart),
-"question" + "show_marks" + "description" (map), "rows" + "columns" (crosstab), and optionally
+"question" + "show_marks" + "description" (map), "rows" + "columns" (crosstab), "question" +
+"other" (compare: the same question code in another survey's uuid), and optionally
 "survey" (a survey uuid of the workspace; default: the report's home survey)}. Pictures are
 uploaded in the editor; an image block cannot be made from a spec.
 """
@@ -18,7 +19,7 @@ from reports import services
 from reports.models import QUESTION_BLOCK_TYPES, VIEW_BLOCK_TYPES
 
 STORY_TYPES = ('heading', 'text', 'numbers', 'quotes')
-TYPES = STORY_TYPES + QUESTION_BLOCK_TYPES + VIEW_BLOCK_TYPES
+TYPES = STORY_TYPES + QUESTION_BLOCK_TYPES + VIEW_BLOCK_TYPES + ('compare',)
 CHART_VIZ = ('auto', 'bar', 'pie', 'donut', 'table')
 
 
@@ -86,6 +87,18 @@ def add(actor, report, spec):
     try:
         if kind in STORY_TYPES:
             block = services.add_story_block(actor, report, kind)
+        elif kind == 'compare':
+            from survey.models import SurveyHeader
+            survey = _survey(report, spec)
+            question = question_of(survey, str(spec.get('question') or ''))
+            if question is None:
+                raise BlockRefused(_('The survey has no question with that code.'), 'question')
+            other = SurveyHeader.objects.filter(uuid=spec.get('other') or None, organization_id=report.organization_id,
+                                                deleted_at__isnull=True).first() if spec.get('other') else None
+            try:
+                block = services.add_compare_block(actor, report, question, other)
+            except services.ReportRefused as refusal:
+                raise BlockRefused(refusal.message, 'other')
         elif kind in VIEW_BLOCK_TYPES:
             block = services.add_view_block(actor, report, kind, _survey(report, spec),
                                             rows=str(spec.get('rows') or ''), columns=str(spec.get('columns') or ''))

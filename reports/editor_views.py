@@ -235,6 +235,19 @@ def _may_write(organization):
     return gate.may_write(organization)
 
 
+def _compare_surveys(request, survey):
+    """The other surveys of the workspace a Compare block may name: the rounds before or after."""
+    if survey is None:
+        return []
+    from data.datasets import visible_survey_ids
+    from survey.models import SurveyHeader
+    from survey.versioning import canonical_of
+    home = canonical_of(survey)
+    ids = visible_survey_ids(home.organization, request.user)
+    return list(SurveyHeader.objects.filter(pk__in=ids, deleted_at__isnull=True).exclude(pk=home.pk)
+                .order_by('-id')[:50])
+
+
 def _crosstab_questions(survey):
     """The questions a cross-tab of the report's home survey may name."""
     if survey is None:
@@ -325,6 +338,7 @@ def _config(request):
         'export_url': reverse('editor_report_export', args=[page.uuid]),
         'pdf_url': reverse('editor_report_pdf', args=[page.uuid]),
         'crosstab_questions': _crosstab_questions(survey),
+        'compare_surveys': _compare_surveys(request, survey),
         'reports_locked': not _may_write(page.organization),
         'usage': _usage(page),
         'tags_text': ', '.join(t.name for t in page.tags.all()),
@@ -453,6 +467,17 @@ def _block_add(request):
         elif block_type in ('crosstab', 'engagement') and survey is not None:
             block = services.add_view_block(actor, page, block_type, survey,
                                             rows=request.POST.get('rows', ''), columns=request.POST.get('columns', ''))
+        elif block_type == 'compare' and survey is not None:
+            from data.questions import question_of
+            from survey.models import SurveyHeader
+            from survey.versioning import canonical_of
+            other = SurveyHeader.objects.filter(uuid=request.POST.get('other') or None,
+                                                organization_id=page.organization_id,
+                                                deleted_at__isnull=True).first() if request.POST.get('other') else None
+            question = question_of(canonical_of(survey), request.POST.get('compare_question', ''))
+            if question is None:
+                return HttpResponse('Unknown question.', status=400)
+            block = services.add_compare_block(actor, page, question, other)
         elif block_type == 'question' and survey is not None:
             question = get_object_or_404(
                 Question.objects.select_related('survey_section__survey_header'),

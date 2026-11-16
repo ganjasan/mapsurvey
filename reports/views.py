@@ -235,7 +235,10 @@ def report_start(request):
                            if str(r.uuid) == request.POST.get('report')), None)
             if source is None:
                 raise Http404
-            report = drafting.copy_report(actor, source)
+            onto = next((s for s in surveys if str(s.uuid) == request.POST.get('onto')), None)
+            report = drafting.copy_report(actor, source, onto=onto)
+            for note in report.copy_notes:
+                messages.warning(request, note)
         elif kind == 'blank':
             report = services.create_report(actor, org, title=str(_('Untitled report')), visibility='workspace')
         else:

@@ -1699,7 +1699,7 @@ Small groups are hidden in every data block.
 
 | Field | Type | Required | Notes |
 |---|---|---|---|
-| `type` | `heading` | `text` | `numbers` | `quotes` | `chart` | `map` | `objects` | `budget` | `crosstab` | `engagement` | yes |  |
+| `type` | `heading` | `text` | `numbers` | `quotes` | `chart` | `map` | `objects` | `budget` | `crosstab` | `engagement` | `compare` | yes |  |
 | `title` | string or null |  | A title above the block. |
 | `width` | `full` | `half` or null |  | Two half-width blocks in a row sit side by side. |
 | `hidden` | boolean or null |  | Kept in the report, not shown on its page. |
@@ -1708,7 +1708,8 @@ Small groups are hidden in every data block.
 | `items` | list of ItemIn or null |  | numbers: value + label; quotes: text + source. |
 | `note` | string or null |  | numbers: a line under them. |
 | `survey` | uuid or null |  | The survey a data block shows; default: the report's home survey. |
-| `question` | string or null |  | chart / map / objects / budget: the question code. |
+| `question` | string or null |  | chart / map / objects / budget / compare: the question code. |
+| `other` | uuid or null |  | compare: the other survey (another round) that has a question with the same code. |
 | `viz` | `auto` | `bar` | `pie` | `donut` | `table` or null |  | chart: how it is drawn. |
 | `rows` | string or null |  | crosstab: the code of the question in the rows. |
 | `columns` | string or null |  | crosstab: the code of the question in the columns. |

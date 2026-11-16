@@ -39,6 +39,14 @@ You do not have to begin with an empty page. Press **New report** on the **Repor
 
 The draft is built by fixed rules from the answers, not written by an AI. It is not published. Answers to open questions arrive as a hidden **Quotes** block to pick from: delete the lines you do not want, then switch off **Hidden**. Places where you are expected to write arrive as hidden text blocks with a hint; write over the hint and un-hide them. **Blank report** starts empty, and **Copy an earlier report** gives you the same story to change for the next round.
 
+## The next round
+
+When a second survey asks the same questions — the usual way is to duplicate the first survey, which keeps every question's code — you do not rewrite the report. On **New report**, in **Copy an earlier report**, choose the report, choose the new survey under **for the survey**, and press **Copy**. The copy keeps your opening, your text and the order of the blocks; every chart, map, cross-tab and the engagement block now read the new survey. Numbers written as `{responses}` follow too; numbers you typed by hand are yours to change.
+
+A block whose question the new survey does not have is not lost quietly. After the copy a message names each one, and in its place the copy holds a hidden note saying what the earlier report showed there. Add a block for the question that replaced it, or delete the note; hidden notes never reach the published page.
+
+To show both rounds in one picture, add a **Compare** block: pick a question and the other survey. For each answer it shows the share of people in both surveys, with how many answered in each. The other survey needs a question with the same code. Small groups are hidden in each survey separately.
+
 ## Tell it as a story
 
 The page is read top to bottom like an article, so write it like one. Under **Add block**, beside the results of a question, there are blocks you write yourself:

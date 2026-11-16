@@ -95,6 +95,15 @@ confirm" step. The survey a draft is made from is picked once, above the cards.{
         <select id="rs-report" name="report" class="custom-select custom-select-sm" style="flex:1;min-width:0;">
           {% for r in earlier %}<option value="{{ r.uuid }}">{{ r.title }}</option>{% endfor %}
         </select>
+      </span>
+      {% comment %}The next round (change reports-reuse, #711): the copy's charts and maps read the
+      chosen survey, matched by question code.{% endcomment %}
+      <span class="rs-copy">
+        <label for="rs-onto" style="font-size:.8rem;margin:0;white-space:nowrap;">{% trans "for the survey" %}</label>
+        <select id="rs-onto" name="onto" class="custom-select custom-select-sm" style="flex:1;min-width:0;" data-testid="report-copy-onto">
+          <option value="">{% trans "the same as in the report" %}</option>
+          {% for s in surveys %}<option value="{{ s.uuid }}">{{ s.name }}</option>{% endfor %}
+        </select>
         <button type="submit" class="btn btn-sm btn-outline-primary">{% trans "Copy" %}</button>
       </span>
     </form>

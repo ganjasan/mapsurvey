@@ -49,6 +49,7 @@ RESPONSES_VIEWED = 'responses_viewed'
 # Reports (change reports-start, #705): ids and names of choices only, never a title or a slug.
 REPORT_ENTRY_SEEN = 'report_entry_seen'      # surface: reports | responses | data | survey
 REPORT_CREATED = 'report_created'            # surface, start: draft | blank | copy | import, template
+REPORT_REUSED = 'report_reused'              # source, report, onto (bool), blocks, unmatched
 REPORT_PUBLISHED = 'report_published'        # report_id, visibility, mode
 REPORT_PREVIEWED = 'report_previewed'        # browser: device = phone | desktop
 REPORT_PAYWALL_SHOWN = 'report_paywall_shown'     # surface: editor | start | import
