@@ -28,6 +28,8 @@ def report_page(request, slug):
             raise Http404
     from reports import gate
     gate.freeze_if_lapsed(report)       # no Reports feature: the page is its snapshot, never a 404
+    from reports import usage
+    usage.count(request, report, 'embed' if request.GET.get('embed') == '1' else 'view')
     lang = request.GET.get('lang') or 'en'
     return render(request, 'public_results.html', _framed_context(request, report, build_context(report, lang=lang)))
 
@@ -79,6 +81,8 @@ def report_block(request, slug, block_id):
     lang = request.GET.get('lang') or 'en'
     context = build_context(report, lang=lang)
     payload = _block_payload(report, block_id, lang)
+    from reports import usage
+    usage.count(request, report, 'embed' if request.GET.get('embed') == '1' else 'view')
     context.update(rows=[[dict(payload, width='full')]], blocks=[payload], single=True,
                    blocks_json=__import__('json').dumps([payload], ensure_ascii=False),
                    intro_title=payload.get('title') or context['intro_title'])
@@ -144,7 +148,7 @@ def visible_reports(org, user):
         family[hid] = canonical_id or published_id or hid
     rows = []
     for report in (Report.objects.filter(organization=org).select_related('survey')
-                   .order_by('-updated_at', '-id')):
+                   .prefetch_related('tags').order_by('-updated_at', '-id')):
         if report.survey_id is None or family.get(report.survey_id) in visible:
             rows.append(report)
     return rows
@@ -160,12 +164,17 @@ def report_list(request):
         return redirect('editor')
     from django.db.models import Count
     reports = visible_reports(org, request.user)
+    tag = request.GET.get('tag') or ''
+    all_tags = sorted({t.slug: t for r in reports for t in r.tags.all()}.values(), key=lambda t: t.name.lower())
+    if tag:
+        reports = [r for r in reports if any(t.slug == tag for t in r.tags.all())]
     counts = dict(Report.objects.filter(pk__in=[r.pk for r in reports])
                   .annotate(n=Count('blocks')).values_list('pk', 'n'))
     rows = [{'report': r, 'blocks': counts.get(r.pk, 0),
              'public_url': request.build_absolute_uri('/r/{}/'.format(r.slug))} for r in reports]
     return render(request, 'reports/list.html', {'org': org, 'rows': rows, 'can_edit': _can_edit(request.user, org),
-                                                 'reports_locked': not _may_write(org)})
+                                                 'reports_locked': not _may_write(org),
+                                                 'tag': tag, 'tag_filters': all_tags})
 
 
 # ── The report as a file, and deleting one (change reports-story, #704) ──────
@@ -293,6 +302,8 @@ def report_page_pdf(request, slug):
     job = services.ready_pdf(report)
     if job is None or not job.file:
         raise Http404
+    from reports import usage
+    usage.count(request, report, 'pdf')
     return _pdf_response(job, report, request.user.pk if request.user.is_authenticated else None, 'page')
 
 
@@ -339,10 +350,12 @@ def report_delete(request, report_uuid):
     """What goes with the report first, then the confirm. A survey's home report (the one its
     Public results tab opens) is recreated empty the next time that tab opens."""
     from django.contrib import messages
+    from reports import services
+    from survey.services.context import Actor
     report = _editable_report(request, report_uuid)
     if request.method == 'POST':
         title = report.title
-        report.delete()
+        services.delete_report(Actor.from_request(request), report)
         messages.success(request, _('“%(name)s” deleted.') % {'name': title})
         return redirect('editor_reports')
     return render(request, 'reports/delete.html', {'org': report.organization, 'report': report,

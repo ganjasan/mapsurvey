@@ -225,6 +225,11 @@ def _refused(request, refusal, status=400):
     return redirect(_url(request, 'config'))
 
 
+def _usage(report):
+    from reports.usage import summary
+    return summary(report)
+
+
 def _may_write(organization):
     from reports import gate
     return gate.may_write(organization)
@@ -321,6 +326,8 @@ def _config(request):
         'pdf_url': reverse('editor_report_pdf', args=[page.uuid]),
         'crosstab_questions': _crosstab_questions(survey),
         'reports_locked': not _may_write(page.organization),
+        'usage': _usage(page),
+        'tags_text': ', '.join(t.name for t in page.tags.all()),
         **_elsewhere(request, page, selected_block),
         'token_help': _token_help(),
         'reports_url': reverse('editor_reports'),
@@ -417,6 +424,7 @@ def _save_settings(request):
             intro_title=post.get('intro_title', ''), intro_body=post.get('intro_body', ''),
             intro_eyebrow=post.get('intro_eyebrow') if 'intro_eyebrow' in post else None,
             embed_hosts=post.get('embed_hosts') if 'embed_hosts' in post else None,
+            tags=post.get('tags') if 'tags' in post else None,
             show_response_count=post.get('show_response_count') == 'on',
             show_participate_cta=post.get('show_participate_cta') == 'on',
             show_on_thanks=post.get('show_on_thanks') == 'on',

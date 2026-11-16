@@ -237,3 +237,16 @@ class ReportPdf(models.Model):
 
     class Meta:
         ordering = ['-created_at', '-id']
+
+
+class ReportUsage(models.Model):
+    """How many times a report was read on one day (change reports-usage-api, #710): `view` (the
+    page), `embed` (framed by another site), `pdf` (the stored PDF). `reports.usage` writes it;
+    no visitor is stored."""
+    report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name='usage')
+    day = models.DateField()
+    kind = models.CharField(max_length=5)
+    count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['report', 'day', 'kind'], name='reports_usage_once_a_day')]

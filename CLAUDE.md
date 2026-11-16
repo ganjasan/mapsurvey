@@ -1175,6 +1175,20 @@ links. **CSV and PNG are made from the block's PAYLOAD, never from answers** —
 the CSV and its value is not in the file. Public CSV at `/r/<slug>/block/<id>/data.csv`; an editor's CSV / PNG at
 `editor_report_block_file`; all blocks as one ZIP = the PDF's worker job with `ReportPdf.kind = 'zip'`
 (`reports.tasks.build_zip`). A "Report" block for Sites is not built (a Sites block kind; follow-up).
+**Readers, tags, API and MCP for reports (change `reports-usage-api`, #710)**: `reports/usage.py` counts, per
+report and DAY, `view` / `embed` (`?embed=1`, a block's page included) / `pdf` in `ReportUsage` — one row per
+day and kind, no visitor stored, a signed-in member of the report's workspace not counted, a failed count never
+breaks the page; `usage.summary` feeds the editor's Readers card and the API. Do not add per-visitor rows or a
+third-party script to `/r/`. A report takes workspace tags through the Data module's `Tag.reports` and
+`data.tags.set_tags` (`services.update_settings(tags=)`). **API and MCP write blocks from plain values through
+`reports/blocks.py`** (`add` / `change` / `describe`): a spec dict → the SAME `reports.services` calls the
+editor makes; what a block looks like outside the database is `reports.files.entry_of` — the report file and
+the API share it, so a new block type is described once. `api/v1/reports.py` holds the routes AND the functions
+the MCP tools (`mcp/tools/reports.py`) call (`report_for`, `create`, `save_settings`, `publish`, …); scopes are
+the surveys' (`publish` → `surveys:publish`, delete → `surveys:delete`); two gates: `require_pro_api` on the
+workspace and, on writes, `reports.gate.use`. REST publishes a report with quotes or marks only with
+`confirm: true` (409 `conflict`); MCP `publish_report` / `delete_report` answer `confirmation_required`. Image
+blocks are editor-only (no upload in the API).
 **Reports is Pro (change `reports-pro`, #709; owner decision 2026-11-16)**: feature `reports` in
 `billing/features.py`, in the trial UNCAPPED (the trial's limit is its 90 days). `reports/gate.py` is the one
 place: `covered(org)` = plan or a live trial (`Entitlements.covers`, NOT `may` — a report made under the trial

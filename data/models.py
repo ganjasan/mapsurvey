@@ -252,6 +252,8 @@ class Tag(models.Model):
     datasets = models.ManyToManyField(Dataset, related_name='tags', blank=True)
     # The CANONICAL survey; drafts and versions answer with it.
     surveys = models.ManyToManyField('survey.SurveyHeader', related_name='tags', blank=True)
+    # Reports (change reports-usage-api, #710): a report sits beside its surveys and datasets.
+    reports = models.ManyToManyField('reports.Report', related_name='tags', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

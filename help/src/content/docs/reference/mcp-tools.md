@@ -984,6 +984,170 @@ Permission `surveys:write` · role **owner**
 | `survey` | uuid | **required** | The survey uuid (from list_surveys). |
 | `link_id` | integer | **required** | The link id link_dataset returned. |
 
+### `list_reports`
+
+The reports of a workspace you may see: title, home survey, whether each is published, its address, tags and when it last changed. Filter by a tag.
+
+Permission `surveys:read` · role **workspace member** · read-only
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `workspace` | string |  | Workspace slug; needed when you belong to several. |
+| `tag` | string |  | A workspace tag, by name or slug. |
+
+### `get_report`
+
+One report: its title and opening paragraph, settings, how often it was read, and every block in order with its id — the ids feed update_report_block and reorder_report_blocks.
+
+Permission `surveys:read` · role **workspace member** · read-only
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `report` | uuid | **required** | The report uuid (from list_reports). |
+
+### `create_report`
+
+A new report, never published on creation. With `template` (summary, council, update, yousaid) it is drafted from the survey's answers by rules: who took part, a block per answered question, and candidate quotes as a hidden block for a person to pick from. Without it the report is empty. Reports are part of Pro.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `workspace` | string |  | Workspace slug; needed when you belong to several. |
+| `survey` | uuid |  | The home survey. With `template`, the survey the draft is made from. |
+| `template` | `summary` \| `council` \| `update` \| `yousaid` |  | Draft the report from the survey's answers by rules: summary, council paper, engagement update, you said — we did. Left out: an empty report. |
+| `title` | string |  |  |
+
+### `update_report`
+
+Change a report's title, the line above it, the opening paragraph, the privacy threshold K (groups smaller than K are hidden; lowering it shows smaller groups of people), its tags or the sites that may embed it. Only the fields you send change.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `title` | string |  |  |
+| `eyebrow` | string |  | The line above the title. |
+| `lead` | string |  | The opening paragraph; tokens are filled. |
+| `k` | integer |  | Groups smaller than K are hidden. 1 hides nothing. |
+| `tags` | list of string |  |  |
+| `embed_hosts` | list of string |  | Sites that may embed the report; empty = any. |
+| `report` | uuid | **required** | The report uuid (from list_reports). |
+
+### `add_report_block`
+
+Add a block at the end of a report. Written by you: heading (`text`), text (`html`, may hold tokens {responses} {opened} {finished} {marks:CODE} {respondents:CODE} that are filled from the home survey), numbers (`items` of value + label), quotes (`items` of text + source — publish a quote only when the person asked for it). Shown from answers: chart, map, objects or budget of one `question` code; crosstab of `rows` and `columns` question codes; engagement. Small groups are hidden in every data block. `show_marks` on a map shows individual marks, which can point at someone's home: off unless the person asks.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `type` | `heading` \| `text` \| `numbers` \| `quotes` \| `chart` \| `map` \| `objects` \| `budget` \| `crosstab` \| `engagement` | **required** |  |
+| `title` | string |  | A title above the block. |
+| `width` | `full` \| `half` |  | Two half-width blocks in a row sit side by side. |
+| `hidden` | boolean |  | Kept in the report, not shown on its page. |
+| `text` | string |  | heading: the heading. |
+| `html` | string |  | text: rich text (sanitised). Tokens {responses}, {opened}, {finished}, {marks:CODE}, {respondents:CODE} are filled from the home survey. |
+| `items` | list of object (`value`, `label`, `text`, `source`) |  | numbers: value + label; quotes: text + source. |
+| `note` | string |  | numbers: a line under them. |
+| `survey` | uuid |  | The survey a data block shows; default: the report's home survey. |
+| `question` | string |  | chart / map / objects / budget: the question code. |
+| `viz` | `auto` \| `bar` \| `pie` \| `donut` \| `table` |  | chart: how it is drawn. |
+| `rows` | string |  | crosstab: the code of the question in the rows. |
+| `columns` | string |  | crosstab: the code of the question in the columns. |
+| `show_marks` | boolean |  | map: the marks themselves instead of squares that count respondents. A mark can point at someone's home. |
+| `description` | string |  | map: what it shows, in a sentence (also read by screen readers). |
+| `report` | uuid | **required** | The report uuid (from list_reports). |
+
+### `update_report_block`
+
+Change a block's text, items, title, width (full or half — two halves in a row sit side by side) or whether it is hidden. Its type and its question stay: to show another question, add another block.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `title` | string |  |  |
+| `width` | `full` \| `half` |  |  |
+| `hidden` | boolean |  |  |
+| `text` | string |  |  |
+| `html` | string |  |  |
+| `items` | list of object (`value`, `label`, `text`, `source`) |  |  |
+| `note` | string |  |  |
+| `viz` | `auto` \| `bar` \| `pie` \| `donut` \| `table` |  |  |
+| `show_marks` | boolean |  |  |
+| `description` | string |  |  |
+| `report` | uuid | **required** | The report uuid (from list_reports). |
+| `block_id` | integer | **required** | A block id from get_report. |
+
+### `delete_report_block`
+
+Remove one block from a report. The answers it showed are not touched.
+
+Permission `surveys:write` · role **editor** · cannot be undone
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `report` | uuid | **required** | The report uuid (from list_reports). |
+| `block_id` | integer | **required** | A block id from get_report. |
+
+### `reorder_report_blocks`
+
+Put a report's blocks in a new order: every block id of the report, once.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `order` | list of integer | **required** | Every block id of the report, in the new order. |
+| `report` | uuid | **required** | The report uuid (from list_reports). |
+
+### `get_report_checks`
+
+What to look at before a report is published: under `people`, every quote written out and every map that shows individual marks; under `unfinished`, empty blocks, maps without a description, hidden blocks. Read `people` to the user before publish_report when `needs_confirm` is true.
+
+Permission `surveys:read` · role **workspace member** · read-only
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `report` | uuid | **required** | The report uuid (from list_reports). |
+
+### `publish_report`
+
+Publish a report at its address, or take it down with `publish: false`. `visibility`: public (search engines may list it), unlisted (anyone with the link), workspace (signed-in members). `mode`: live follows new answers, frozen keeps the numbers of now. A report that shows quotes or individual marks needs `confirm: true` after the user read them (get_report_checks).
+
+Permission `surveys:publish` · role **editor** · needs `confirm: true`
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `publish` | boolean |  | Default `True`. |
+| `visibility` | `public` \| `unlisted` \| `workspace` |  |  |
+| `mode` | `live` \| `frozen` |  | live follows new answers; frozen keeps the numbers of now. |
+| `confirm` | boolean |  | Required to publish a report that shows quotes or individual marks: the person confirmed having read them. Default `False`. |
+| `report` | uuid | **required** | The report uuid (from list_reports). |
+
+### `freeze_report`
+
+Freeze a report's numbers as they are now ("Data as of …"), or with `frozen: false` return it to numbers that follow new answers.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `frozen` | boolean |  | Default `True`. |
+| `report` | uuid | **required** | The report uuid (from list_reports). |
+
+### `delete_report`
+
+Delete a report with its blocks and pictures; its address stops working. The survey and its answers are not touched. Needs `confirm: true` after the user agreed; it cannot be undone.
+
+Permission `surveys:delete` · role **editor** · needs `confirm: true`
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `report` | uuid | **required** | The report uuid (from list_reports). |
+| `confirm` | boolean |  | Set to true only after the user confirmed this action in the conversation. Default `False`. |
+
 ## Errors
 
 A refused call comes back as a tool error carrying the same envelope as the REST API:
