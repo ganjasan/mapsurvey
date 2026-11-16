@@ -6,13 +6,14 @@ from django.test import TestCase, Client, override_settings
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point
 import json
-from survey.models import SurveyHeader, SurveySection, Question, SurveySession, Answer, Membership, PublicResultsPage, PublicResultsBlock
+from survey.models import SurveyHeader, SurveySection, Question, SurveySession, Answer, Membership
+from reports.models import Report, ReportBlock
 from django.db.utils import IntegrityError
 from survey.tests.helpers import _make_org
 
 
 class PublicResultsPageModelTest(TestCase):
-    """Tests for the PublicResultsPage / PublicResultsBlock models."""
+    """Tests for the Report / ReportBlock models."""
 
     def setUp(self):
         self.org = _make_org("PR Org")
@@ -21,10 +22,10 @@ class PublicResultsPageModelTest(TestCase):
     def test_defaults(self):
         """
         GIVEN a survey
-        WHEN a PublicResultsPage is created with only required fields
+        WHEN a Report is created with only required fields
         THEN it defaults to k=3, mode=live, unpublished, public visibility
         """
-        page = PublicResultsPage.objects.create(survey=self.survey, slug="pr-survey")
+        page = Report.objects.create(survey=self.survey, slug="pr-survey")
         self.assertEqual(page.k_anonymity_threshold, 3)
         self.assertEqual(page.mode, "live")
         self.assertFalse(page.is_published)
@@ -38,21 +39,21 @@ class PublicResultsPageModelTest(TestCase):
         THEN an integrity error is raised
         """
         from django.db import IntegrityError
-        PublicResultsPage.objects.create(survey=self.survey, slug="dup")
+        Report.objects.create(survey=self.survey, slug="dup")
         other = SurveyHeader.objects.create(name="pr_survey2", organization=self.org)
         with self.assertRaises(IntegrityError):
-            PublicResultsPage.objects.create(survey=other, slug="dup")
+            Report.objects.create(survey=other, slug="dup")
 
-    def test_one_to_one_with_survey(self):
+    def test_survey_report_is_its_oldest_report(self):
         """
-        GIVEN a survey that already has a results page
-        WHEN creating a second page for the same survey
-        THEN an integrity error is raised (OneToOne)
+        GIVEN a survey that is home to two reports
+        WHEN the survey's report is read
+        THEN it is the older one, the one its Public results tab opens
         """
-        from django.db import IntegrityError
-        PublicResultsPage.objects.create(survey=self.survey, slug="pr-a")
-        with self.assertRaises(IntegrityError):
-            PublicResultsPage.objects.create(survey=self.survey, slug="pr-b")
+        first = Report.objects.create(survey=self.survey, slug="pr-a")
+        Report.objects.create(survey=self.survey, slug="pr-b")
+        self.assertEqual(self.survey.report, first)
+        self.assertEqual(first.organization_id, self.survey.organization_id)
 
     def test_blocks_cascade_on_page_delete(self):
         """
@@ -60,12 +61,12 @@ class PublicResultsPageModelTest(TestCase):
         WHEN the page is deleted
         THEN its blocks are deleted too
         """
-        page = PublicResultsPage.objects.create(survey=self.survey, slug="pr-cascade")
-        PublicResultsBlock.objects.create(page=page, block_type="text", order=0)
-        PublicResultsBlock.objects.create(page=page, block_type="text", order=1)
-        self.assertEqual(PublicResultsBlock.objects.filter(page=page).count(), 2)
+        page = Report.objects.create(survey=self.survey, slug="pr-cascade")
+        ReportBlock.objects.create(report=page, block_type="text", order=0)
+        ReportBlock.objects.create(report=page, block_type="text", order=1)
+        self.assertEqual(ReportBlock.objects.filter(report=page).count(), 2)
         page.delete()
-        self.assertEqual(PublicResultsBlock.objects.count(), 0)
+        self.assertEqual(ReportBlock.objects.count(), 0)
 
     def test_block_ordering(self):
         """
@@ -73,16 +74,16 @@ class PublicResultsPageModelTest(TestCase):
         WHEN querying the page's blocks
         THEN they are returned ordered by the order field
         """
-        page = PublicResultsPage.objects.create(survey=self.survey, slug="pr-order")
-        PublicResultsBlock.objects.create(page=page, block_type="text", order=2)
-        PublicResultsBlock.objects.create(page=page, block_type="text", order=0)
-        PublicResultsBlock.objects.create(page=page, block_type="chart", order=1)
+        page = Report.objects.create(survey=self.survey, slug="pr-order")
+        ReportBlock.objects.create(report=page, block_type="text", order=2)
+        ReportBlock.objects.create(report=page, block_type="text", order=0)
+        ReportBlock.objects.create(report=page, block_type="chart", order=1)
         orders = list(page.blocks.values_list("order", flat=True))
         self.assertEqual(orders, [0, 1, 2])
 
 
 class PublicResultsServiceTest(TestCase):
-    """Tests for PublicResultsService aggregation and privacy guards."""
+    """Tests for ReportService aggregation and privacy guards."""
 
     def setUp(self):
         self.org = _make_org("PRS Org")
@@ -105,7 +106,7 @@ class PublicResultsServiceTest(TestCase):
             survey_section=self.section, code="Q_TX", name="Comment",
             input_type="text",
         )
-        self.page = PublicResultsPage.objects.create(
+        self.page = Report.objects.create(
             survey=self.survey, slug="prs", is_published=True,
         )
 
@@ -119,8 +120,8 @@ class PublicResultsServiceTest(TestCase):
         return session
 
     def _service(self):
-        from survey.public_results import PublicResultsService
-        return PublicResultsService(self.page)
+        from reports.render import ReportService
+        return ReportService(self.page)
 
     def test_clean_excludes_deleted_and_not_approved(self):
         """
@@ -160,8 +161,8 @@ class PublicResultsServiceTest(TestCase):
         for _ in range(4):
             s = self._session()
             Answer.objects.create(survey_session=s, question=self.choice_q, selected_choices=[2])
-        block = PublicResultsBlock.objects.create(
-            page=self.page, block_type="chart", question=self.choice_q, order=0,
+        block = ReportBlock.objects.create(
+            report=self.page, block_type="chart", question=self.choice_q, order=0,
         )
         payload = self._service()._build_block(block)
         by_code = {i["code"]: i for i in payload["items"]}
@@ -181,8 +182,8 @@ class PublicResultsServiceTest(TestCase):
         for _ in range(3):
             s = self._session()
             Answer.objects.create(survey_session=s, question=self.point_q, point=Point(30.0, 59.0))
-        block = PublicResultsBlock.objects.create(
-            page=self.page, block_type="map", question=self.point_q, order=0,
+        block = ReportBlock.objects.create(
+            report=self.page, block_type="map", question=self.point_q, order=0,
         )
         payload = self._service()._build_block(block)
         self.assertEqual(payload["data_type"], "grid")
@@ -214,8 +215,8 @@ class PublicResultsServiceTest(TestCase):
             pt = Answer.objects.create(survey_session=s, question=self.point_q, point=Point(30.0, 59.0))
             Answer.objects.create(survey_session=s, question=sub_choice, selected_choices=[code], parent_answer_id=pt)
             Answer.objects.create(survey_session=s, question=sub_text, text="secret", parent_answer_id=pt)
-        block = PublicResultsBlock.objects.create(
-            page=self.page, block_type="map", question=self.point_q, order=0,
+        block = ReportBlock.objects.create(
+            report=self.page, block_type="map", question=self.point_q, order=0,
             geo_label_fields=["SQ_ACT", "SQ_TX"],
         )
         payload = self._service()._build_block(block)
@@ -233,8 +234,8 @@ class PublicResultsServiceTest(TestCase):
         """
         s = self._session()
         Answer.objects.create(survey_session=s, question=self.point_q, point=Point(30.0, 59.0))
-        block = PublicResultsBlock.objects.create(
-            page=self.page, block_type="map", question=self.point_q, order=0,
+        block = ReportBlock.objects.create(
+            report=self.page, block_type="map", question=self.point_q, order=0,
         )
         payload = self._service()._build_block(block)
         self.assertEqual(payload["cells"]["features"], [])
@@ -248,8 +249,8 @@ class PublicResultsServiceTest(TestCase):
         """
         s = self._session()
         Answer.objects.create(survey_session=s, question=self.point_q, point=Point(30.0, 59.0))
-        block = PublicResultsBlock.objects.create(
-            page=self.page, block_type="map", question=self.point_q, order=0, basemap="satellite",
+        block = ReportBlock.objects.create(
+            report=self.page, block_type="map", question=self.point_q, order=0, basemap="satellite",
         )
         payload = self._service()._build_block(block)
         self.assertEqual(payload["basemap"], "satellite")
@@ -262,22 +263,21 @@ class PublicResultsServiceTest(TestCase):
         """
         s = self._session()
         Answer.objects.create(survey_session=s, question=self.point_q, point=Point(30.0, 59.0))
-        block = PublicResultsBlock.objects.create(
-            page=self.page, block_type="map", question=self.point_q, order=0,
+        block = ReportBlock.objects.create(
+            report=self.page, block_type="map", question=self.point_q, order=0,
         )
         self.assertEqual(self._service()._build_block(block)["basemap"], "streets")
 
     def test_deleted_question_block_omitted(self):
         """
-        GIVEN a chart block whose question was deleted (FK set to null)
+        GIVEN a chart block whose question was deleted from the survey
         WHEN blocks are built
         THEN that block is silently omitted
         """
-        block = PublicResultsBlock.objects.create(
-            page=self.page, block_type="chart", question=self.choice_q, order=0,
+        ReportBlock.objects.create(
+            report=self.page, block_type="chart", question=self.choice_q, order=0,
         )
-        block.question = None
-        block.save()
+        self.choice_q.delete()
         self.assertEqual(self._service().build_blocks(), [])
 
     def test_text_question_not_chartable(self):
@@ -286,8 +286,8 @@ class PublicResultsServiceTest(TestCase):
         WHEN the block is built
         THEN it produces no payload
         """
-        block = PublicResultsBlock.objects.create(
-            page=self.page, block_type="chart", question=self.text_q, order=0,
+        block = ReportBlock.objects.create(
+            report=self.page, block_type="chart", question=self.text_q, order=0,
         )
         self.assertIsNone(self._service()._build_block(block))
 
@@ -305,8 +305,8 @@ class PublicResultsServiceTest(TestCase):
         WHEN the block is built
         THEN it produces no payload (defensive, mirrors deleted-question blocks)
         """
-        block = PublicResultsBlock.objects.create(
-            page=self.page, block_type="image", order=0,
+        block = ReportBlock.objects.create(
+            report=self.page, block_type="image", order=0,
         )
         self.assertIsNone(self._service()._build_block(block))
 
@@ -321,8 +321,8 @@ class PublicResultsServiceTest(TestCase):
             b'GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff!\xf9\x04'
             b'\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;'
         )
-        block = PublicResultsBlock.objects.create(
-            page=self.page, block_type="image", order=0,
+        block = ReportBlock.objects.create(
+            report=self.page, block_type="image", order=0,
             image=SimpleUploadedFile("pic.gif", gif_bytes, content_type="image/gif"),
             content={"en": "A lovely spot"},
         )
@@ -344,7 +344,7 @@ class PublicResultsFreezeTest(TestCase):
         self.section = SurveySection.objects.create(
             survey_header=self.survey, name="sec", code="S1", is_head=True,
         )
-        self.page = PublicResultsPage.objects.create(
+        self.page = Report.objects.create(
             survey=self.survey, slug="prf", is_published=True,
         )
         self.text_q = Question.objects.create(
@@ -362,9 +362,9 @@ class PublicResultsFreezeTest(TestCase):
         WHEN it is frozen
         THEN the snapshot records the count and the page switches to frozen
         """
-        from survey.public_results import freeze_page
+        from reports.render import freeze_report
         self._add_session(); self._add_session()
-        freeze_page(self.page)
+        freeze_report(self.page)
         self.assertEqual(self.page.mode, "frozen")
         self.assertIsNotNone(self.page.frozen_at)
         self.assertEqual(self.page.snapshot["response_count"], 2)
@@ -375,11 +375,11 @@ class PublicResultsFreezeTest(TestCase):
         WHEN a new response arrives
         THEN the rendered count stays equal to the snapshot
         """
-        from survey.public_results import freeze_page, render_page_data
+        from reports.render import freeze_report, render_data
         self._add_session()
-        freeze_page(self.page)
+        freeze_report(self.page)
         self._add_session()
-        data = render_page_data(self.page)
+        data = render_data(self.page)
         self.assertTrue(data["frozen"])
         self.assertEqual(data["response_count"], 1)
 
@@ -390,12 +390,12 @@ class PublicResultsFreezeTest(TestCase):
         THEN the rendered count increases
         """
         from django.core.cache import cache
-        from survey.public_results import render_page_data
+        from reports.render import render_data
         self._add_session()
-        self.assertEqual(render_page_data(self.page)["response_count"], 1)
+        self.assertEqual(render_data(self.page)["response_count"], 1)
         self._add_session()
         cache.clear()  # simulate TTL expiry
-        self.assertEqual(render_page_data(self.page)["response_count"], 2)
+        self.assertEqual(render_data(self.page)["response_count"], 2)
 
     def test_live_is_cached_within_window(self):
         """
@@ -403,11 +403,11 @@ class PublicResultsFreezeTest(TestCase):
         WHEN a new response arrives but the cache is still warm
         THEN the rendered count is unchanged until the cache expires
         """
-        from survey.public_results import render_page_data
+        from reports.render import render_data
         self._add_session()
-        self.assertEqual(render_page_data(self.page)["response_count"], 1)
+        self.assertEqual(render_data(self.page)["response_count"], 1)
         self._add_session()
-        self.assertEqual(render_page_data(self.page)["response_count"], 1)
+        self.assertEqual(render_data(self.page)["response_count"], 1)
 
     def test_block_deletion_bypasses_live_cache(self):
         """
@@ -415,14 +415,14 @@ class PublicResultsFreezeTest(TestCase):
         WHEN a block is deleted and the page version is bumped
         THEN the next render reflects one block, without clearing the cache manually
         """
-        from survey.public_results import render_page_data, bump_page_version
-        PublicResultsBlock.objects.create(page=self.page, block_type="text", order=0)
-        b2 = PublicResultsBlock.objects.create(page=self.page, block_type="text", order=1)
-        self.assertEqual(len(render_page_data(self.page)["blocks"]), 2)  # prime cache
+        from reports.render import render_data, bump_version
+        ReportBlock.objects.create(report=self.page, block_type="text", order=0)
+        b2 = ReportBlock.objects.create(report=self.page, block_type="text", order=1)
+        self.assertEqual(len(render_data(self.page)["blocks"]), 2)  # prime cache
         b2.delete()
-        bump_page_version(self.page)
+        bump_version(self.page)
         self.page.refresh_from_db()
-        self.assertEqual(len(render_page_data(self.page)["blocks"]), 1)
+        self.assertEqual(len(render_data(self.page)["blocks"]), 1)
 
     def test_new_response_still_cached_with_versioned_key(self):
         """
@@ -431,11 +431,11 @@ class PublicResultsFreezeTest(TestCase):
         THEN the cached render is unchanged within the window
               (config invalidation does not defeat data caching)
         """
-        from survey.public_results import render_page_data
+        from reports.render import render_data
         self._add_session()
-        self.assertEqual(render_page_data(self.page)["response_count"], 1)
+        self.assertEqual(render_data(self.page)["response_count"], 1)
         self._add_session()  # arrives within the TTL window, no version bump
-        self.assertEqual(render_page_data(self.page)["response_count"], 1)
+        self.assertEqual(render_data(self.page)["response_count"], 1)
 
     def test_return_to_live_recomputes(self):
         """
@@ -444,13 +444,13 @@ class PublicResultsFreezeTest(TestCase):
         THEN the rendered count reflects current data
         """
         from django.core.cache import cache
-        from survey.public_results import freeze_page, unfreeze_page, render_page_data
+        from reports.render import freeze_report, unfreeze_report, render_data
         self._add_session()
-        freeze_page(self.page)
-        unfreeze_page(self.page)
+        freeze_report(self.page)
+        unfreeze_report(self.page)
         self._add_session()
         cache.clear()
-        data = render_page_data(self.page)
+        data = render_data(self.page)
         self.assertFalse(data["frozen"])
         self.assertEqual(data["response_count"], 2)
 
@@ -460,11 +460,11 @@ class PublicResultsFreezeTest(TestCase):
         WHEN it is rendered
         THEN it is flagged stale rather than rendering wrong data
         """
-        from survey.public_results import render_page_data
+        from reports.render import render_data
         self.page.mode = "frozen"
         self.page.snapshot = {"snapshot_version": 999, "response_count": 5, "blocks": []}
         self.page.save()
-        data = render_page_data(self.page)
+        data = render_data(self.page)
         self.assertTrue(data["stale"])
         self.assertEqual(data["blocks"], [])
 
@@ -490,13 +490,13 @@ class PublicResultsViewTest(TestCase):
         self.text_q = Question.objects.create(
             survey_section=self.section, code="Q_TX", name="Comment", input_type="text",
         )
-        self.page = PublicResultsPage.objects.create(
+        self.page = Report.objects.create(
             survey=self.survey, slug="prv", is_published=True, visibility="public",
             intro={"title": {"en": "Park results"}, "body": {"en": "Thanks all"}},
         )
-        PublicResultsBlock.objects.create(page=self.page, block_type="text", order=0)
-        PublicResultsBlock.objects.create(
-            page=self.page, block_type="chart", question=self.choice_q, order=1,
+        ReportBlock.objects.create(report=self.page, block_type="text", order=0)
+        ReportBlock.objects.create(
+            report=self.page, block_type="chart", question=self.choice_q, order=1,
         )
 
     def test_chart_block_viz_delivered_to_client(self):
@@ -506,7 +506,7 @@ class PublicResultsViewTest(TestCase):
         THEN the block payload delivered to the client carries viz=pie
               so the chart renderer can honor the selected visualization
         """
-        block = PublicResultsBlock.objects.get(page=self.page, block_type="chart")
+        block = ReportBlock.objects.get(report=self.page, block_type="chart")
         block.viz = "pie"
         block.save()
         r = self.client.get("/r/{}/".format(self.page.slug))
@@ -539,8 +539,8 @@ class PublicResultsViewTest(TestCase):
         self.assertContains(r, "Small groups are masked")
         self.page.k_anonymity_threshold = 1
         self.page.save()
-        from survey.public_results import bump_page_version
-        bump_page_version(self.page)
+        from reports.render import bump_version
+        bump_version(self.page)
         r = self.client.get("/r/{}/".format(self.page.slug))
         self.assertNotContains(r, "Small groups are masked")
 
@@ -555,8 +555,8 @@ class PublicResultsViewTest(TestCase):
             b'GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff!\xf9\x04'
             b'\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;'
         )
-        PublicResultsBlock.objects.create(
-            page=self.page, block_type="image", order=2,
+        ReportBlock.objects.create(
+            report=self.page, block_type="image", order=2,
             image=SimpleUploadedFile("pic.gif", gif_bytes, content_type="image/gif"),
             content={"en": "A lovely spot"},
         )
@@ -691,7 +691,7 @@ class PublicResultsEditorTest(TestCase):
         self._login()
         r = self.client.get(self.base)
         self.assertEqual(r.status_code, 200)
-        self.assertTrue(PublicResultsPage.objects.filter(survey=self.survey).exists())
+        self.assertTrue(Report.objects.filter(survey=self.survey).exists())
 
     def test_k_anonymity_help_escapes_less_than(self):
         """
@@ -716,7 +716,7 @@ class PublicResultsEditorTest(TestCase):
         self.client.login(username="outsider", password="pw12345")
         r = self.client.get(self.base)
         self.assertIn(r.status_code, (302, 403, 404))
-        self.assertFalse(PublicResultsPage.objects.filter(survey=self.survey).exists())
+        self.assertFalse(Report.objects.filter(survey=self.survey).exists())
 
     def test_add_question_block(self):
         """
@@ -728,7 +728,7 @@ class PublicResultsEditorTest(TestCase):
         r = self.client.post(self.base + "blocks/add/", {
             "block_type": "question", "question_id": self.choice_q.id,
         })
-        block = PublicResultsBlock.objects.get(page__survey=self.survey)
+        block = ReportBlock.objects.get(report__survey=self.survey)
         self.assertEqual(block.block_type, "chart")
         self.assertEqual(block.question_id, self.choice_q.id)
         # P3: redirect selects the freshly created block
@@ -749,7 +749,7 @@ class PublicResultsEditorTest(TestCase):
         content = r.content.decode()
         self.assertIn(f"{self.base}preview/", content)
         self.assertNotIn("Live page", content)
-        page = PublicResultsPage.objects.get(survey=self.survey)
+        page = Report.objects.get(survey=self.survey)
         page.is_published = True
         page.save()
         content = self.client.get(self.base).content.decode()
@@ -766,7 +766,7 @@ class PublicResultsEditorTest(TestCase):
             "block_type": "question", "question_id": self.text_q.id,
         })
         self.assertEqual(r.status_code, 400)
-        self.assertFalse(PublicResultsBlock.objects.exists())
+        self.assertFalse(ReportBlock.objects.exists())
 
     def _gif_upload(self, name="pic.gif"):
         from django.core.files.uploadedfile import SimpleUploadedFile
@@ -786,7 +786,7 @@ class PublicResultsEditorTest(TestCase):
         self.client.post(self.base + "blocks/add/", {
             "block_type": "image", "image": self._gif_upload(),
         })
-        block = PublicResultsBlock.objects.get(page__survey=self.survey)
+        block = ReportBlock.objects.get(report__survey=self.survey)
         self.assertEqual(block.block_type, "image")
         self.assertTrue(block.image)
 
@@ -799,7 +799,7 @@ class PublicResultsEditorTest(TestCase):
         self._login()
         r = self.client.post(self.base + "blocks/add/", {"block_type": "image"})
         self.assertEqual(r.status_code, 400)
-        self.assertFalse(PublicResultsBlock.objects.exists())
+        self.assertFalse(ReportBlock.objects.exists())
 
     def test_edit_image_block_caption_and_replace(self):
         """
@@ -808,9 +808,9 @@ class PublicResultsEditorTest(TestCase):
         THEN both changes persist
         """
         self._login()
-        page = self.client.get(self.base) and PublicResultsPage.objects.get(survey=self.survey)
-        block = PublicResultsBlock.objects.create(
-            page=page, block_type="image", image=self._gif_upload("old.gif"), order=0,
+        page = self.client.get(self.base) and Report.objects.get(survey=self.survey)
+        block = ReportBlock.objects.create(
+            report=page, block_type="image", image=self._gif_upload("old.gif"), order=0,
         )
         old_name = block.image.name
         self.client.post(self.base + "blocks/{}/edit/".format(block.id), {
@@ -830,7 +830,7 @@ class PublicResultsEditorTest(TestCase):
         self._login()
         r = self.client.post(self.base + "blocks/add/", {"block_type": "counter"})
         self.assertEqual(r.status_code, 400)
-        self.assertFalse(PublicResultsBlock.objects.exists())
+        self.assertFalse(ReportBlock.objects.exists())
 
     def test_reorder_persists(self):
         """
@@ -839,18 +839,18 @@ class PublicResultsEditorTest(TestCase):
         THEN the stored order matches
         """
         self._login()
-        page = self.client.get(self.base) and PublicResultsPage.objects.get(survey=self.survey)
-        b1 = PublicResultsBlock.objects.create(page=page, block_type="text", order=0)
-        b2 = PublicResultsBlock.objects.create(page=page, block_type="text", order=1)
-        b3 = PublicResultsBlock.objects.create(page=page, block_type="text", order=2)
+        page = self.client.get(self.base) and Report.objects.get(survey=self.survey)
+        b1 = ReportBlock.objects.create(report=page, block_type="text", order=0)
+        b2 = ReportBlock.objects.create(report=page, block_type="text", order=1)
+        b3 = ReportBlock.objects.create(report=page, block_type="text", order=2)
         self.client.post(
             self.base + "blocks/reorder/",
             data=json.dumps({"order": [b3.id, b1.id, b2.id]}),
             content_type="application/json",
         )
-        self.assertEqual(PublicResultsBlock.objects.get(id=b3.id).order, 0)
-        self.assertEqual(PublicResultsBlock.objects.get(id=b1.id).order, 1)
-        self.assertEqual(PublicResultsBlock.objects.get(id=b2.id).order, 2)
+        self.assertEqual(ReportBlock.objects.get(id=b3.id).order, 0)
+        self.assertEqual(ReportBlock.objects.get(id=b1.id).order, 1)
+        self.assertEqual(ReportBlock.objects.get(id=b2.id).order, 2)
 
     def test_delete_block_reflected_in_live_render_immediately(self):
         """
@@ -858,16 +858,16 @@ class PublicResultsEditorTest(TestCase):
         WHEN the editor deletes the block via the view
         THEN the next public render shows zero blocks, without manual cache clearing
         """
-        from survey.public_results import render_page_data
+        from reports.render import render_data
         self._login()
         # Create the page directly: opening the config tab of this published
         # survey would auto-scaffold question blocks and skew the count.
-        page = PublicResultsPage.objects.create(survey=self.survey, slug="pre-live")
-        block = PublicResultsBlock.objects.create(page=page, block_type="text", order=0)
-        self.assertEqual(len(render_page_data(page)["blocks"]), 1)  # prime cache
+        page = Report.objects.create(survey=self.survey, slug="pre-live")
+        block = ReportBlock.objects.create(report=page, block_type="text", order=0)
+        self.assertEqual(len(render_data(page)["blocks"]), 1)  # prime cache
         self.client.post(self.base + "blocks/{}/delete/".format(block.id))
         page.refresh_from_db()
-        self.assertEqual(len(render_page_data(page)["blocks"]), 0)
+        self.assertEqual(len(render_data(page)["blocks"]), 0)
 
     def test_freeze_and_unfreeze(self):
         """
@@ -878,9 +878,9 @@ class PublicResultsEditorTest(TestCase):
         self._login()
         self.client.get(self.base)
         self.client.post(self.base + "freeze/")
-        self.assertEqual(PublicResultsPage.objects.get(survey=self.survey).mode, "frozen")
+        self.assertEqual(Report.objects.get(survey=self.survey).mode, "frozen")
         self.client.post(self.base + "unfreeze/")
-        self.assertEqual(PublicResultsPage.objects.get(survey=self.survey).mode, "live")
+        self.assertEqual(Report.objects.get(survey=self.survey).mode, "live")
 
     def test_publish_action_toggles_live_state(self):
         """
@@ -893,9 +893,9 @@ class PublicResultsEditorTest(TestCase):
         r = self.client.post(self.base + "set-published/", {"publish": "1"}, HTTP_X_REQUESTED_WITH="XMLHttpRequest")
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.json()["is_published"])
-        self.assertTrue(PublicResultsPage.objects.get(survey=self.survey).is_published)
+        self.assertTrue(Report.objects.get(survey=self.survey).is_published)
         self.client.post(self.base + "set-published/", {"publish": "0"}, HTTP_X_REQUESTED_WITH="XMLHttpRequest")
-        self.assertFalse(PublicResultsPage.objects.get(survey=self.survey).is_published)
+        self.assertFalse(Report.objects.get(survey=self.survey).is_published)
 
     def test_publish_action_blocked_on_draft_survey(self):
         """
@@ -909,7 +909,7 @@ class PublicResultsEditorTest(TestCase):
         self.client.get(self.base)
         r = self.client.post(self.base + "set-published/", {"publish": "1"}, HTTP_X_REQUESTED_WITH="XMLHttpRequest")
         self.assertEqual(r.status_code, 400)
-        self.assertFalse(PublicResultsPage.objects.get(survey=self.survey).is_published)
+        self.assertFalse(Report.objects.get(survey=self.survey).is_published)
 
     def test_settings_autosave_does_not_unpublish(self):
         """
@@ -918,7 +918,7 @@ class PublicResultsEditorTest(TestCase):
         THEN the page stays live
         """
         self._login()
-        page = self.client.get(self.base) and PublicResultsPage.objects.get(survey=self.survey)
+        page = self.client.get(self.base) and Report.objects.get(survey=self.survey)
         page.is_published = True
         page.save()
         self.client.post(
@@ -943,7 +943,7 @@ class PublicResultsEditorTest(TestCase):
             "visibility": "public", "is_published": "on", "slug": "pre",
             "k_anonymity_threshold": "3",
         })
-        self.assertFalse(PublicResultsPage.objects.get(survey=self.survey).is_published)
+        self.assertFalse(Report.objects.get(survey=self.survey).is_published)
 
     def test_save_settings_persists(self):
         """
@@ -958,7 +958,7 @@ class PublicResultsEditorTest(TestCase):
             "intro_title": "Hello", "intro_body": "World",
             "show_response_count": "on", "k_anonymity_threshold": "5",
         })
-        page = PublicResultsPage.objects.get(survey=self.survey)
+        page = Report.objects.get(survey=self.survey)
         self.assertEqual(page.visibility, "unlisted")
         self.assertTrue(page.is_published)
         self.assertEqual(page.k_anonymity_threshold, 5)
@@ -974,7 +974,7 @@ class PublicResultsEditorTest(TestCase):
         """
         self._login()
         self.client.get(self.base)
-        page = PublicResultsPage.objects.get(survey=self.survey)
+        page = Report.objects.get(survey=self.survey)
         original_slug = page.slug
         r = self.client.post(
             self.base + "settings/",
@@ -996,12 +996,12 @@ class PublicResultsEditorTest(TestCase):
         """
         self._login()
         self.client.get(self.base)
-        page = PublicResultsPage.objects.get(survey=self.survey)
+        page = Report.objects.get(survey=self.survey)
         original_slug = page.slug
         other = SurveyHeader.objects.create(
             name="other_pre", organization=self.org, status="published",
         )
-        PublicResultsPage.objects.create(survey=other, slug="taken-slug", is_published=True)
+        Report.objects.create(survey=other, slug="taken-slug", is_published=True)
         r = self.client.post(
             self.base + "settings/",
             {"visibility": page.visibility, "k_anonymity_threshold": "3", "slug": "taken-slug"},
@@ -1019,9 +1019,9 @@ class PublicResultsEditorTest(TestCase):
         THEN a JSON ok response is returned and the new viz persists
         """
         self._login()
-        page = self.client.get(self.base) and PublicResultsPage.objects.get(survey=self.survey)
-        block = PublicResultsBlock.objects.create(
-            page=page, block_type="chart", question=self.choice_q, order=0,
+        page = self.client.get(self.base) and Report.objects.get(survey=self.survey)
+        block = ReportBlock.objects.create(
+            report=page, block_type="chart", question=self.choice_q, order=0,
         )
         r = self.client.post(
             self.base + "blocks/{}/edit/".format(block.id),
@@ -1040,9 +1040,9 @@ class PublicResultsEditorTest(TestCase):
         THEN it persists; an invalid value is ignored (keeps the previous one)
         """
         self._login()
-        page = self.client.get(self.base) and PublicResultsPage.objects.get(survey=self.survey)
-        block = PublicResultsBlock.objects.create(
-            page=page, block_type="map", question=self.point_q, order=0,
+        page = self.client.get(self.base) and Report.objects.get(survey=self.survey)
+        block = ReportBlock.objects.create(
+            report=page, block_type="map", question=self.point_q, order=0,
         )
         self.client.post(self.base + "blocks/{}/edit/".format(block.id), {"viz": "heatmap", "basemap": "topo"})
         block.refresh_from_db()
@@ -1060,9 +1060,9 @@ class PublicResultsEditorTest(TestCase):
              shows squares counting respondents (change data-aggregate)
         """
         self._login()
-        page = self.client.get(self.base) and PublicResultsPage.objects.get(survey=self.survey)
-        block = PublicResultsBlock.objects.create(
-            page=page, block_type="map", question=self.point_q, order=0,
+        page = self.client.get(self.base) and Report.objects.get(survey=self.survey)
+        block = ReportBlock.objects.create(
+            report=page, block_type="map", question=self.point_q, order=0,
         )
         html = self.client.get(self.base + "?block={}".format(block.id)).content.decode()
         self.assertNotIn('value="cluster"', html)

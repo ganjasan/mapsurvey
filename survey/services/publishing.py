@@ -18,7 +18,7 @@ from .. import audit
 from .. import product_events as pe
 from ..content_screening import pending_review_for, screen_survey
 from ..models import SurveyHeader, SurveySession
-from ..public_results import scaffold_page
+from reports.render import scaffold_report
 from ..translation_gaps import survey_translation_gaps
 from ..versioning import IncompatibleDraftError, clone_survey_for_draft, publish_draft as _publish_draft
 from .. import schedule
@@ -115,7 +115,7 @@ def transition(actor, survey, status, *, acknowledge_translation_gaps=False, cle
     # A failed scaffold must never block the publish itself -- worst case is
     # no results page draft, and the config tab retries later.
     try:
-        scaffold_page(survey)
+        scaffold_report(survey)
     except Exception:
         logger.exception('public results scaffold failed for survey %s', survey.id)
     # Phishing screening: may HOLD the survey until the owner decides. Fails

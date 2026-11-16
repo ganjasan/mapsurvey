@@ -791,7 +791,7 @@ def survey_card(survey, now=None):
     from . import schedule, share
     from .content_screening import is_held
     from .embedding import survey_url_on
-    from .models import PublicResultsPage
+    from reports.models import Report
 
     card = {'state': CARD_HIDDEN, 'url': '', 'results_url': '', 'opens_at': None,
             'closes_at': None, 'reason': ''}
@@ -812,7 +812,7 @@ def survey_card(survey, now=None):
         card.update(state=CARD_UPCOMING, opens_at=survey.opens_at)
         return card
     card['state'] = CARD_CLOSED
-    page = PublicResultsPage.objects.filter(survey=survey, is_published=True).only('slug').first()
+    page = Report.objects.filter(survey=survey, is_published=True).only('slug').first()
     if page is not None:
         from django.urls import reverse
         card['results_url'] = share.base() + reverse('public_results', args=[page.slug])
@@ -886,7 +886,7 @@ RESULTS_CACHE_SECONDS = 60
 def results_question(survey, code):
     """The canonical survey's current question with `code` (top level, publishable), or None."""
     from .models import Question
-    from .public_results import block_type_for_question
+    from reports.render import block_type_for_question
     q = (Question.objects.filter(survey_section__survey_header=survey, code=code,
                                  parent_question_id__isnull=True).first() if code else None)
     return q if q is not None and block_type_for_question(q) else None
@@ -896,7 +896,7 @@ def results_choices(org):
     """[(survey, [(value, question name, kind)])] for the picker: every publishable top-level
     question of the workspace's linkable surveys; value = '<survey uuid>:<code>'."""
     from .models import Question
-    from .public_results import block_type_for_question
+    from reports.render import block_type_for_question
     out = []
     for survey in linkable_surveys(org):
         rows = []
@@ -911,14 +911,13 @@ def results_choices(org):
 
 
 def results_payload(block, lang='en'):
-    """The PublicResultsService payload of a results block, cached 60 s, or None when its
+    """The ReportService payload of a results block, cached 60 s, or None when its
     question is gone. Same clean sessions and masking as /r/; no popups."""
     from types import SimpleNamespace
 
     from django.core.cache import cache
 
-    from .models import PublicResultsPage
-    from .public_results import PublicResultsService, block_type_for_question
+    from reports.render import ReportService, block_type_for_question, k_for_survey
 
     if block.site_survey is None:
         return None
@@ -933,10 +932,8 @@ def results_payload(block, lang='en'):
     question = results_question(survey, block.data.get('question_code'))
     payload = None
     if question is not None:
-        page = PublicResultsPage.objects.filter(survey=survey).only('k_anonymity_threshold').first()
-        k = page.k_anonymity_threshold if page is not None else \
-            PublicResultsPage._meta.get_field('k_anonymity_threshold').default
-        service = PublicResultsService.for_survey(survey, k, lang=lang)
+        k = k_for_survey(survey)
+        service = ReportService.for_survey(survey, k, lang=lang)
         fake = SimpleNamespace(
             id=f'r{block.pk}', block_type=block_type_for_question(question), viz=block.data.get('viz') or 'auto',
             custom_title={}, question=question, question_id=question.pk, geo_label_fields=[],

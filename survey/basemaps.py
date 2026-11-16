@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from django.conf import settings
 
 from .models import (MAPBOX_ATTRIBUTION, PRESET_BASEMAP_KEYS, STYLE_KEY_PREFIX, MapStyle,
-                     MapStyleVersion, PublicResultsBlock, SurveyHeader, SurveySection)
+                     MapStyleVersion, SurveyHeader, SurveySection)
 
 ESRI_WORLD_IMAGERY_URL = ('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/'
                           'MapServer/tile/{z}/{y}/{x}')
@@ -170,7 +170,8 @@ def referenced_style_uuids(survey):
     keys.update(SurveySection.objects.filter(survey_header=survey)
                 .exclude(override_basemap__isnull=True).exclude(override_basemap='')
                 .values_list('override_basemap', flat=True))
-    keys.update(PublicResultsBlock.objects.filter(page__survey=survey).values_list('basemap', flat=True))
+    from reports.models import ReportBlock
+    keys.update(ReportBlock.objects.filter(report__survey=survey).values_list('basemap', flat=True))
     return {style_uuid_of(k) for k in keys if is_style_key(k)}
 
 

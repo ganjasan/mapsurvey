@@ -6,7 +6,8 @@ from django.views.decorators.http import require_POST
 from django.utils.translation import gettext_lazy as _
 
 from .embedding import normalise_allowed_hosts, snippet_html, public_base_url, InvalidHost
-from .models import TrackedLink, PublicResultsPage
+from reports.models import Report
+from .models import TrackedLink
 from .permissions import survey_permission_required
 from .versioning import canonical_of
 from survey.print.views import default_paper
@@ -84,7 +85,7 @@ def _render_share(request, survey, form=None, embed_form=None, status=200):
     # the canonical row -- that is what respondents reach, whichever version this page
     # was opened on (change embed-surveys).
     canonical = canonical_of(survey)
-    results_page = PublicResultsPage.objects.filter(survey=canonical).first()
+    results_page = Report.objects.filter(survey=canonical).first()
     if embed_form is None:
         embed_form = EmbedHostsForm(initial={'allowed_hosts': '\n'.join(canonical.embed_allowed_hosts or [])})
 

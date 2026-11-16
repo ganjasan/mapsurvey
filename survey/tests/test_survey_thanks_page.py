@@ -10,7 +10,8 @@ from io import BytesIO
 import contextlib
 import json
 import zipfile
-from survey.models import Organization, SurveyHeader, SurveySection, Question, Membership, PublicResultsPage
+from survey.models import Organization, SurveyHeader, SurveySection, Question, Membership
+from reports.models import Report
 from survey.serialization import export_survey_to_zip, import_survey_from_zip
 from io import StringIO
 from survey.tests.helpers import _make_org
@@ -337,8 +338,8 @@ class ThanksPageEditorTest(TestCase):
         THEN the thanks page shows a "See the results" button linking to it;
              turning it off hides the button
         """
-        from survey.models import PublicResultsPage
-        p = PublicResultsPage.objects.create(
+        from reports.models import Report
+        p = Report.objects.create(
             survey=self.survey, slug="thx-res", is_published=True, show_on_thanks=True,
         )
         r = self.client.get(f"/editor/surveys/{self.survey.uuid}/thanks-preview/")
@@ -356,8 +357,8 @@ class ThanksPageEditorTest(TestCase):
         THEN show_on_thanks follows the checkbox; without the marker (stale form)
              it is left unchanged
         """
-        from survey.models import PublicResultsPage
-        p = PublicResultsPage.objects.create(
+        from reports.models import Report
+        p = Report.objects.create(
             survey=self.survey, slug="thx-res2", is_published=True, show_on_thanks=True,
         )
         url = f"/editor/surveys/{self.survey.uuid}/thanks-panel/"

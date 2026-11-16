@@ -13,7 +13,8 @@ from django.urls import reverse
 
 from .audit import record as audit_record
 from .embedding import InvalidHost, normalise_allowed_hosts, snippet_html, survey_url_on
-from .models import PublicResultsPage, TrackedLink
+from reports.models import Report
+from .models import TrackedLink
 from .versioning import canonical_of
 
 MAX_TRACKED_LINKS = 200
@@ -60,7 +61,7 @@ def share_info(survey, can_see_test_link=False):
     if shareable:
         info['url'] = survey_url_on(base(), canonical)
         info['embed_snippet'] = snippet_html(None, canonical, base=base())
-        page = PublicResultsPage.objects.filter(survey=canonical, is_published=True).first()
+        page = Report.objects.filter(survey=canonical, is_published=True).first()
         if page is not None:
             info['results_url'] = base() + reverse('public_results', args=[page.slug])
     if canonical.status == 'testing' and can_see_test_link:

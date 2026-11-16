@@ -37,11 +37,11 @@ Public results tab. The tabs carry colored status dots instead.{% endcomment %}
     </a>
     <a href="{% url 'editor_survey_public_results' survey.uuid %}"
        class="survey-nav-tab{% if active_tab == 'publish' %} active{% endif %}" title="{% trans 'Public results page — a shareable page of aggregated responses' %}">
-        <i class="fas fa-globe"></i> {% trans "Public results" %} <span class="badge-beta">{% trans "beta" %}</span>{% if MOBILE_EDITOR_NAV %}{% with page=survey.public_results_page %} <i class="tabdot {% if page.is_published and page.mode == 'frozen' %}td-frozen{% elif page.is_published %}td-live{% else %}td-off{% endif %}"></i>{% endwith %}{% endif %}
+        <i class="fas fa-globe"></i> {% trans "Public results" %} <span class="badge-beta">{% trans "beta" %}</span>{% if MOBILE_EDITOR_NAV %}{% with page=survey.report %} <i class="tabdot {% if page.is_published and page.mode == 'frozen' %}td-frozen{% elif page.is_published %}td-live{% else %}td-off{% endif %}"></i>{% endwith %}{% endif %}
     </a>
 </div>
 
-{% with page=survey.public_results_page %}
+{% with page=survey.report %}
 {% comment %}With the flag on, Build and Public results carry their own status
 lines with Share/Preview actions — the navbar menus would duplicate them. The
 Responses tab has no status line, so it keeps the navbar menus.{% endcomment %}

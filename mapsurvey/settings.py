@@ -72,6 +72,8 @@ INSTALLED_APPS = [
     'mcp.apps.McpConfig',
     # The Data module (Platform Vision v0.4, epic #676): dataset registry, session scope, aggregation.
     'data.apps.DataConfig',
+    # The Reports module (epic #712): reports over Data datasets; today's /r/ pages are the first.
+    'reports.apps.ReportsConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

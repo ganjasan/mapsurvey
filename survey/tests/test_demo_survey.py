@@ -4,7 +4,8 @@ Moved from survey/tests.py by #273; classes are unchanged.
 """
 from django.test import TestCase, Client, override_settings
 from django.utils import timezone
-from survey.models import Organization, SurveyHeader, SurveySection, Question, SurveySession, Answer, PublicResultsPage
+from survey.models import Organization, SurveyHeader, SurveySection, Question, SurveySession, Answer
+from reports.models import Report
 from io import StringIO
 from django.core.management import call_command
 from survey.tests.helpers import _DEMO_MEDIA
@@ -57,7 +58,7 @@ class SeedDemoSurveyTest(TestCase):
         self.assertEqual(sessions.filter(tags__contains=['sample']).count(), 40)
         self.assertTrue(Answer.objects.filter(survey_session__survey=survey,
                                               layer_object__layer=bridges).exists())
-        page = PublicResultsPage.objects.get(survey=survey)
+        page = Report.objects.get(survey=survey)
         self.assertTrue(page.is_published)
         self.assertEqual(page.slug, 'copenhagen-cycling-demo')
         self.assertEqual(page.visibility, 'unlisted')

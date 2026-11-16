@@ -103,13 +103,13 @@ class SidebarContentsTest(_SidebarFixture):
         """
         GIVEN an owner on the dashboard
         WHEN the sidebar renders
-        THEN it lists Surveys, Sites, Data, API, MCP, Map styles, Members, Plan & billing,
-             General, What's new, in that order
+        THEN it lists Surveys, Sites, Data, Reports, API, MCP, Map styles, Members,
+             Plan & billing, General, What's new, in that order
         """
         html = self.html(reverse('editor') + '?dashboard=1')
         keys = re.findall(r'data-nav-key="([a-z_]+)"', html[html.index(SIDEBAR):])
-        self.assertEqual(keys[:10], ['surveys', 'sites', 'data', 'api', 'mcp', 'map_styles', 'members',
-                                     'billing', 'settings', 'whats_new'])
+        self.assertEqual(keys[:11], ['surveys', 'sites', 'data', 'reports', 'api', 'mcp', 'map_styles',
+                                     'members', 'billing', 'settings', 'whats_new'])
 
     def test_map_styles_for_every_member(self):
         """

@@ -9,7 +9,8 @@ from unittest import mock
 from unittest.mock import patch
 import json
 import zipfile
-from survey.models import Organization, SurveyHeader, SurveySection, Question, SurveySession, Answer, Membership, SurveyCollaborator, PublicResultsPage, PublicResultsBlock
+from survey.models import Organization, SurveyHeader, SurveySection, Question, SurveySession, Answer, Membership, SurveyCollaborator
+from reports.models import Report, ReportBlock
 import os
 import tempfile
 import datetime
@@ -417,8 +418,8 @@ class _CommentFixture(TestCase):
         self.q1 = Question.objects.create(survey_section=self.s1, code="Q_1", order_number=1, name="Which area?", input_type="text")
         self.q2 = Question.objects.create(survey_section=self.s2, code="Q_2", order_number=1, name="White squirrel", input_type="point")
         self.session = SurveySession.objects.create(survey=self.survey)
-        self.page = PublicResultsPage.objects.create(survey=self.survey, slug='cm-results')
-        self.block = PublicResultsBlock.objects.create(page=self.page, block_type='map', question=self.q2, order=0)
+        self.page = Report.objects.create(survey=self.survey, slug='cm-results')
+        self.block = ReportBlock.objects.create(report=self.page, block_type='map', question=self.q2, order=0)
         self.client.login(username='cmowner', password='pw12345678')
 
     def _u(self, name, **kw):

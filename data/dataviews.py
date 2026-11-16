@@ -140,11 +140,8 @@ def objects_geojson(view):
 
 
 def _k_for(survey):
-    from survey.models import PublicResultsPage
-    page = PublicResultsPage.objects.filter(survey=survey).only('k_anonymity_threshold').first()
-    k = page.k_anonymity_threshold if page is not None else \
-        PublicResultsPage._meta.get_field('k_anonymity_threshold').default
-    return max(1, k or 1)
+    from reports.render import k_for_survey
+    return k_for_survey(survey)
 
 
 def grid_geojson(view):

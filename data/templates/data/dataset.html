@@ -218,7 +218,7 @@ download. This page and the object editor are the only places a private field is
       {% if used_by %}
       <ul class="list-unstyled mb-0" style="font-size:.9rem;">
         {% for p in used_by %}
-        <li class="py-1"><span class="badge badge-light mr-1">{% if p.kind == 'survey' %}{% trans "Belongs to survey" %}{% elif p.kind == 'link' %}{% trans "Survey" %}{% elif p.kind == 'site' %}{% trans "Site" %}{% else %}{% trans "Question" %}{% endif %}</span>{% if p.url %}<a href="{{ p.url }}">{{ p.label }}</a>{% else %}{{ p.label }}{% endif %}</li>
+        <li class="py-1"><span class="badge badge-light mr-1">{% if p.kind == 'survey' %}{% trans "Belongs to survey" %}{% elif p.kind == 'link' %}{% trans "Survey" %}{% elif p.kind == 'site' %}{% trans "Site" %}{% elif p.kind == 'report' %}{% trans "Report" %}{% else %}{% trans "Question" %}{% endif %}</span>{% if p.url %}<a href="{{ p.url }}">{{ p.label }}</a>{% else %}{{ p.label }}{% endif %}</li>
         {% endfor %}
       </ul>
       {% else %}

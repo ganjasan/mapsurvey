@@ -5,7 +5,8 @@ Moved from survey/tests.py by #273; classes are unchanged.
 from django.test import TestCase, Client, override_settings
 from django.contrib.auth.models import User
 from django.utils import timezone
-from survey.models import SurveyHeader, SurveySection, Membership, PublicResultsPage
+from survey.models import SurveyHeader, SurveySection, Membership
+from reports.models import Report
 import uuid as _uuid_mod
 from urllib.parse import unquote
 from survey.tests.helpers import _make_org
@@ -38,7 +39,7 @@ class PublicResultsPreviewFallbackTest(TestCase):
         self.preview_url = "/editor/surveys/{}/public-results/preview/".format(self.survey.uuid)
 
     def _publish_page(self, visibility='public'):
-        return PublicResultsPage.objects.create(
+        return Report.objects.create(
             survey=self.survey, slug="prf-results", is_published=True, visibility=visibility,
         )
 
@@ -83,7 +84,7 @@ class PublicResultsPreviewFallbackTest(TestCase):
         WHEN a signed-in outsider requests the preview
         THEN the previous denial stands (404) — there is nowhere public to send them
         """
-        PublicResultsPage.objects.create(
+        Report.objects.create(
             survey=self.survey, slug="prf-draft", is_published=False,
         )
         User.objects.create_user(username="prfoutsider2", password="pw12345")
@@ -97,7 +98,7 @@ class PublicResultsPreviewFallbackTest(TestCase):
         WHEN an anonymous visitor requests the preview
         THEN they go to the login page, carrying the requested path as ?next=
         """
-        PublicResultsPage.objects.create(
+        Report.objects.create(
             survey=self.survey, slug="prf-draft2", is_published=False,
         )
         r = self.client.get(self.preview_url)
@@ -130,13 +131,13 @@ class PublicResultsPreviewFallbackTest(TestCase):
 
     def test_denial_never_creates_a_results_page(self):
         """
-        GIVEN a survey with no PublicResultsPage row at all
+        GIVEN a survey with no Report row at all
         WHEN an anonymous visitor requests the preview
         THEN no page row is created — _get_or_create_page must stay off this path
         """
-        self.assertEqual(PublicResultsPage.objects.filter(survey=self.survey).count(), 0)
+        self.assertEqual(Report.objects.filter(survey=self.survey).count(), 0)
         self.client.get(self.preview_url)
-        self.assertEqual(PublicResultsPage.objects.filter(survey=self.survey).count(), 0)
+        self.assertEqual(Report.objects.filter(survey=self.survey).count(), 0)
 
     def test_owner_still_sees_the_preview_when_published(self):
         """
@@ -211,7 +212,7 @@ class PublicResultsCopyLinkControlTest(TestCase):
         WHEN the editor opens the configuration tab
         THEN a control to copy the /r/<slug>/ URL is present
         """
-        page = PublicResultsPage.objects.create(
+        page = Report.objects.create(
             survey=self.survey, slug="copy-results", is_published=True,
         )
         r = self.client.get(self.config_url)

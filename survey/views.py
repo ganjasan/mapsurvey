@@ -785,8 +785,8 @@ def editor(request):
 		survey_list = survey_list.filter(tags__slug=tag_filter, tags__organization=org)
 	survey_list = survey_list.prefetch_related('tags')
 
-	# Reverse OneToOne used by the "Results live" card chip — avoid N+1
-	survey_list = survey_list.select_related('public_results_page')
+	# The survey's report (`survey.report`) feeds the "Results live" card chip — avoid N+1
+	survey_list = survey_list.prefetch_related('reports')
 
 	# Session counts span the whole version family: publish_draft() moves
 	# sessions onto archived headers, so a per-header Count would collapse to
@@ -1985,21 +1985,9 @@ def story_detail(request, slug):
 
 
 def public_results(request, slug):
-	"""Public, read-only results page served at /r/<slug>/.
-
-	404 unless the page exists and is published. Renders live aggregates
-	or a frozen snapshot. Unlisted pages are reachable here but emit
-	noindex and are excluded from listings/sitemap.
-	"""
-	from .models import PublicResultsPage
-	from .public_results import build_page_context
-
-	page = get_object_or_404(
-		PublicResultsPage.objects.select_related('survey'),
-		slug=slug, is_published=True,
-	)
-	lang = request.GET.get('lang') or 'en'
-	return render(request, 'public_results.html', build_page_context(page, lang=lang))
+	"""A report's public, read-only page at /r/<slug>/ (the view lives in `reports.views`)."""
+	from reports.views import report_page
+	return report_page(request, slug)
 
 
 @survey_permission_required('owner')
@@ -2735,8 +2723,8 @@ def sitemap_xml(request):
 	for survey in surveys:
 		urls.append(f"  <url><loc>{base}/surveys/{survey.uuid}/</loc></url>")
 	# Public (indexable) results pages; unlisted pages are excluded.
-	from .models import PublicResultsPage
-	for page in PublicResultsPage.objects.filter(is_published=True, visibility='public'):
+	from reports.models import Report
+	for page in Report.objects.filter(is_published=True, visibility='public'):
 		urls.append(f"  <url><loc>{base}/r/{page.slug}/</loc></url>")
 	# Sites (change landing-core): public, published and not held for review.
 	from .models import Site
