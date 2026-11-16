@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n l10n %}
 {% load static question_utils survey_filters billing_tags %}
 {% get_current_language as LANGUAGE_CODE %}
 <style>
@@ -570,45 +570,23 @@
         plain strings, dead on the first `True` (the write-in flag) or apostrophe.{% endcomment %}
         {{ question.choices|json_script:"existing-choices-data" }}{% endif %}
 
-        {# Validation settings per question type #}
-        <div id="vs-number-fields" style="display:none;" class="mt-2 p-2" style="background:#f8f9fa;border-radius:4px;">
+        {% comment %}Number bounds (spec number-question-bounds): Min / Max limit what a respondent
+        can enter. Number questions only; a range question takes its bounds from its options.{% endcomment %}
+        <div id="vs-number-fields" style="display:none;" class="mt-2 p-2">
             <label style="font-size:0.8rem;font-weight:600;"><i class="fas fa-cog"></i> {% trans "Validation" %}</label>
             <div class="form-row">
-                <div class="form-group col-4">
+                <div class="form-group col-6">
                     <label style="font-size:0.75rem;">{% trans "Min value" %}</label>
                     <input type="number" step="any" name="vs_min_value" class="form-control form-control-sm"
-                           value="{% if question and question.validation_settings %}{{ question.validation_settings.min_value|default:'' }}{% endif %}">
+                           value="{% if question and question.validation_settings %}{{ question.validation_settings.min_value|default_if_none:''|unlocalize }}{% endif %}">
                 </div>
-                <div class="form-group col-4">
+                <div class="form-group col-6">
                     <label style="font-size:0.75rem;">{% trans "Max value" %}</label>
                     <input type="number" step="any" name="vs_max_value" class="form-control form-control-sm"
-                           value="{% if question and question.validation_settings %}{{ question.validation_settings.max_value|default:'' }}{% endif %}">
-                </div>
-                <div class="form-group col-4">
-                    <label style="font-size:0.75rem;">{% trans "Outlier" %} &sigma;</label>
-                    <input type="number" step="0.5" min="0" name="vs_outlier_sigma" class="form-control form-control-sm"
-                           value="{% if question and question.validation_settings %}{{ question.validation_settings.outlier_sigma|default:'3' }}{% else %}3{% endif %}"
-                           placeholder="3">
+                           value="{% if question and question.validation_settings %}{{ question.validation_settings.max_value|default_if_none:''|unlocalize }}{% endif %}">
                 </div>
             </div>
-        </div>
-        <div id="vs-text-fields" style="display:none;" class="mt-2">
-            <label style="font-size:0.8rem;font-weight:600;"><i class="fas fa-cog"></i> {% trans "Validation" %}</label>
-            <div class="form-group">
-                <label style="font-size:0.75rem;">{% trans "Min text length" %}</label>
-                <input type="number" min="0" name="vs_min_length" class="form-control form-control-sm" style="width:100px;"
-                       value="{% if question and question.validation_settings %}{{ question.validation_settings.min_length|default:'3' }}{% else %}3{% endif %}"
-                       placeholder="3">
-            </div>
-        </div>
-        <div id="vs-polygon-fields" style="display:none;" class="mt-2">
-            <label style="font-size:0.8rem;font-weight:600;"><i class="fas fa-cog"></i> {% trans "Validation" %}</label>
-            <div class="form-group">
-                <label style="font-size:0.75rem;">{% trans "Area outlier factor" %}</label>
-                <input type="number" step="1" min="2" name="vs_area_outlier_factor" class="form-control form-control-sm" style="width:100px;"
-                       value="{% if question and question.validation_settings %}{{ question.validation_settings.area_outlier_factor|default:'10' }}{% else %}10{% endif %}"
-                       placeholder="10">
-            </div>
+            <small class="form-text text-muted">{% trans "Respondents can't enter a number outside this range." %}</small>
         </div>
         {% comment %}Budget block (change budget-question, spec budget-question). One record,
         validated by survey.budget.normalise_budget_settings on save; the live preview
@@ -953,12 +931,8 @@
     function toggleValidationFields() {
         var t = inputTypeSelect ? inputTypeSelect.value : '';
         var numEl = document.getElementById('vs-number-fields');
-        var textEl = document.getElementById('vs-text-fields');
-        var polyEl = document.getElementById('vs-polygon-fields');
         var geoEl = document.getElementById('vs-geo-fields');
-        if (numEl) numEl.style.display = (t === 'number' || t === 'range') ? 'block' : 'none';
-        if (textEl) textEl.style.display = (t === 'text' || t === 'text_line') ? 'block' : 'none';
-        if (polyEl) polyEl.style.display = (t === 'polygon') ? 'block' : 'none';
+        if (numEl) numEl.style.display = (t === 'number') ? 'block' : 'none';
         var sprayEl = document.getElementById('vs-spray-fields');
         if (sprayEl) sprayEl.style.display = (t === 'spraycan') ? 'block' : 'none';
         var budgetEl = document.getElementById('vs-budget-fields');

@@ -229,13 +229,14 @@ class ResponsesV2TableTest(TestCase):
         """
         GIVEN one clean and one empty session
         WHEN GET the table partial
-        THEN the all/complete/issues/trash chips render with counts and the
-             legacy Hide fields / Trash buttons are gone
+        THEN the all/complete/required-unanswered/trash chips render with counts, there is
+             no Issues chip, and the legacy Hide fields / Trash buttons are gone
         """
         response = self.client.get(self.url)
         self.assertContains(response, 'rv2-chip-all')
         self.assertContains(response, 'rv2-chip-complete')
-        self.assertContains(response, 'rv2-chip-issues')
+        self.assertContains(response, 'rv2-chip-required')
+        self.assertNotContains(response, 'rv2-chip-issues')
         self.assertContains(response, 'rv2-chip-trash')
         self.assertContains(response, 'All 2')
         self.assertContains(response, 'Complete 1')
@@ -246,10 +247,10 @@ class ResponsesV2TableTest(TestCase):
     def test_v2_complete_filter(self):
         """
         GIVEN one completed and one empty session
-        WHEN GET the table with issues=complete
+        WHEN GET the table with required=complete
         THEN only the completed session's row is returned
         """
-        response = self.client.get(self.url + '?issues=complete')
+        response = self.client.get(self.url + '?required=complete')
         content = response.content.decode()
         self.assertIn(f'data-session-id="{self.sess_complete.id}"', content)
         self.assertNotIn(
@@ -289,41 +290,6 @@ class ResponsesV2TableTest(TestCase):
         self.assertIn('#1\n', content)
         self.assertIn('#2\n', content)
         self.assertNotIn(f'#{extra.id}\n', content)
-
-    @override_settings(RESPONSES_V2=True)
-    def test_issues_menu_offers_individual_violation_types(self):
-        """
-        GIVEN a survey whose answered session skipped the last section (one
-              violation type) and an empty session, shown
-        WHEN GET the table partial
-        THEN the Issues chip opens a multi-select menu and per-type counts ship
-             with the partial, so individual violations stay selectable — but
-             "empty" is not among them: the show/hide control owns empty sessions
-        """
-        s2 = SurveySection.objects.create(survey_header=self.survey, name='s2', code='S2')
-        self.s1.next_section = s2
-        self.s1.save()
-        Question.objects.create(survey_section=s2, name='Last', code='q2', input_type='text', order_number=1)
-        response = self.client.get(self.url)
-        self.assertContains(response, 'rv2IssuesMenu(event,')
-        self.assertContains(response, 'anomaly-counts-data')
-        content = response.content.decode()
-        self.assertIn('"incomplete"', content)
-        self.assertNotIn('"empty"', content.split('id="anomaly-counts-data">')[1].split('<')[0])
-
-    @override_settings(RESPONSES_V2=True)
-    def test_issues_multi_select_filters_rows(self):
-        """
-        GIVEN sessions flagged with different violation types
-        WHEN GET the table with a comma-separated issues param
-        THEN rows matching any selected type are returned and the chip reports
-             how many types are selected
-        """
-        response = self.client.get(self.url + '?issues=empty,fast')
-        self.assertContains(response, '2 selected')
-        content = response.content.decode()
-        self.assertIn(f'data-session-id="{self.sess_empty.id}"', content)
-        self.assertNotIn(f'data-session-id="{self.sess_complete.id}"', content)
 
     @override_settings(RESPONSES_V2=True)
     def test_free_text_search_across_columns(self):

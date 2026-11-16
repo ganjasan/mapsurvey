@@ -120,7 +120,7 @@ def build_summary(survey, scope):
     sessions = scope.sessions
     session_ids = list(sessions.values_list('id', flat=True))
     responses = len(session_ids)
-    completed = completed_session_filter(sessions, list(scope.headers)).count()
+    completed = completed_session_filter(sessions).count()
     service = SurveyAnalyticsService(survey, version=scope.version, sessions=sessions)
     questions = []
     for section in _get_ordered_sections(survey):

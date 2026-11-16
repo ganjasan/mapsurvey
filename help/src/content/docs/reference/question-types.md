@@ -15,7 +15,7 @@ For procedures, see [Add a map question](/how-to/add-a-map-question/), [Add sub-
 |---|---|---|---|
 | **Text** (`text`) | Types a multi-line answer. The creator can set **Min text length**. | Text | One column, the text as typed |
 | **Single Line Text** (`text_line`) | Types one short line. | Text | One column |
-| **Number** (`number`) | Enters a number. The creator can set **Min value** and **Max value**. | Number | One numeric column |
+| **Number** (`number`) | Enters a number. The creator can set **Min value** and **Max value**; a number outside them cannot be entered. | Number | One numeric column |
 | **Choices** (`choice`) | Picks one option. With **Display as › Dropdown with search** the list becomes a searchable dropdown; with an **Other…** option the respondent can type their own. | One choice code | One column holding the option's name; an **Other…** write-in adds an adjacent column |
 | **Multiple Choices** (`multichoice`) | Ticks any number of options; **Other…** works as above. | List of choice codes | One column, option names separated by `; ` (plus a write-in column if enabled) |
 | **Range** (`range`) | Drags a slider over a numbered scale. The scale's ends come from the lowest and highest option codes; a range with no options still renders. | Number | One numeric column |

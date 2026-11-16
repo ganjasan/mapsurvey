@@ -1036,7 +1036,7 @@ def excluded_sessions(version_surveys, include_all, completed_only):
     kept = SessionScope(
         [header.id for header in headers], include_deleted=bool(include_all),
         include_moderated=bool(include_all), nonempty=True,
-        completed_headers=headers if completed_only else None,
+        completed=bool(completed_only),
     ).ids()
     every = set(SurveySession.objects.filter(survey__in=headers).values_list('id', flat=True))
     return every - kept

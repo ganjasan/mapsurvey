@@ -250,6 +250,13 @@ class SurveySession(models.Model):
     # outlives its images, the session outlives the sheet.
     paper_sheet = models.OneToOneField('PaperSheet', null=True, blank=True, on_delete=models.SET_NULL,
                                        related_name='session')
+    # Required questions unanswered (change responses-required-unanswered, #691):
+    # the codes of the required questions this session saw and left without an
+    # answer, in survey order, and whether that list is empty. Written ONLY by
+    # `survey/required_state.py` after every answer write; "completed" everywhere
+    # is `nonempty AND required_complete` (`analytics.completed_session_filter`).
+    required_missing = models.JSONField(default=list, blank=True)
+    required_complete = models.BooleanField(default=True, db_index=True)
 
     objects = SurveySessionQuerySet.as_manager()
 
@@ -544,7 +551,7 @@ class SurveyHeader(models.Model):
     password_hash = models.CharField(max_length=128, null=True, blank=True)
     test_token = models.UUIDField(default=uuid_module.uuid4, unique=True)
     cover_image = models.ImageField(upload_to='covers/', null=True, blank=True)
-    validation_settings = models.JSONField(default=dict, blank=True, help_text=_('Survey-level validation thresholds: {fast_threshold_seconds, duplicate_window_hours}'))
+    validation_settings = models.JSONField(default=dict, blank=True, help_text=_('Unused since change responses-required-unanswered; kept so no deploy drops a column.'))
     basemaps = models.JSONField(default=default_basemaps, blank=True, help_text=_('Enabled basemaps for respondent map: preset keys ("streets", "satellite", "topo", "paper", "paper_b") or "style:<uuid>" of a workspace map style.'))
     default_basemap = models.CharField(max_length=50, null=True, blank=True, help_text=_('Default basemap shown to respondents. If null, first from basemaps list.'))
     # {style uuid: version number} for the workspace styles this survey shows, written when it
@@ -1156,7 +1163,7 @@ class Question(models.Model):
     input_type = models.CharField(max_length=80, choices=INPUT_TYPE_CHOICES)
     choices = models.JSONField(null=True, blank=True, validators=[ChoicesValidator()])
     required = models.BooleanField(default=False)
-    validation_settings = models.JSONField(default=dict, blank=True, help_text=_('Per-question validation: {min_value, max_value, outlier_sigma, min_length, area_outlier_factor}'))
+    validation_settings = models.JSONField(default=dict, blank=True, help_text=_('Per-question settings: number {min_value, max_value}, geo {min_features, max_features, price}, spray {max_dots}, files {max_file_bytes, max_files}, budget'))
     color = models.CharField(verbose_name=_(u'Color'), max_length=7, help_text=_(u'HEX color, as #RRGGBB'), default="#000000")
     icon_class = models.CharField(default="", max_length=80, help_text=_(u'Must be Font-Awesome class'), blank=True, null=True)
     # `spraycan` only: brush radius in screen pixels, by size name

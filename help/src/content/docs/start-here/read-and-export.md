@@ -11,9 +11,9 @@ By the end of this page you have looked at the first responses on a map and have
 
 Click the **Responses** tab in the editor's top navigation. It has five views:
 
-- **Overview** — counts for the survey: responses, responses today, completion rate, median time, map features and flagged responses, plus a small **Response Map** and **Latest responses**. Until the first respondent finishes, it tells you to share the link.
+- **Overview** — counts for the survey: responses, responses today, completion rate, median time and map features, plus a small **Response Map** and **Latest responses**. A response counts as completed when it answered every required question it was shown. Until the first respondent finishes, it tells you to share the link.
 - **Map** — every pin, line and polygon from every respondent on one map. Click a feature to see the answers attached to it.
-- **Responses** — one row per respondent. Clicking a row opens the response drawer with everything that person answered, where you can add tags and notes or exclude a response you think is spam.
+- **Responses** — one row per respondent. A small grey question mark in the **Required** column means the respondent left some required questions unanswered; point at it to see which. **Complete** and **Required unanswered** above the table filter on it. Clicking a row opens the response drawer with everything that person answered, where you can add tags and notes or exclude a response you think is spam. A response you move to the trash can be restored from **Trash**.
 - **Charts** — one chart per choice, rating and number question. Clicking a bar filters the map and the table to those respondents.
 - **Performance** — how many started each section and where people dropped out.
 
@@ -36,7 +36,7 @@ Responses collected through the test link before you published are not here if y
    | **KML** | One file, one folder per map question | Google Earth |
 
 3. Leave **Include excluded responses** off unless you want responses you trashed or marked as not approved.
-4. Switch on **Completed responses only** to export only respondents who reached the last section; the count matches **completed** on the Overview.
+4. Switch on **Completed responses only** to export only respondents who answered every required question they were shown; the count matches **completed** on the Overview.
 5. Click **Export**. The browser downloads the file.
 
 The dialog remembers your last format. Respondents who opened the survey but answered nothing are never exported. Every detail of each format, including column names, is in [Exports](/reference/exports/).

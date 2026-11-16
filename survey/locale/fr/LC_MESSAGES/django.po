@@ -13563,3 +13563,40 @@ msgid "%(n)s respondent is in an area with fewer than %(k)s people and is not sh
 msgid_plural "%(n)s respondents are in areas with fewer than %(k)s people and are not shown."
 msgstr[0] "%(n)s répondant se trouve dans une zone de moins de %(k)s personnes et n’est pas affiché."
 msgstr[1] "%(n)s répondants se trouvent dans des zones de moins de %(k)s personnes et ne sont pas affichés."
+
+# change responses-required-unanswered (#691)
+msgid "Complete"
+msgstr "Complètes"
+
+msgid "Required unanswered"
+msgstr "Obligatoires sans réponse"
+
+msgid "Responses that left at least one required question unanswered"
+msgstr "Réponses où au moins une question obligatoire est restée sans réponse"
+
+msgid "Required questions unanswered"
+msgstr "Questions obligatoires sans réponse"
+
+#, python-format
+msgid "Didn't answer %(counter)s required question: %(list)s"
+msgid_plural "Didn't answer %(counter)s required questions: %(list)s"
+msgstr[0] "%(counter)s question obligatoire sans réponse : %(list)s"
+msgstr[1] "%(counter)s questions obligatoires sans réponse : %(list)s"
+
+msgid "The edges of this shape cross each other. It may not open correctly in GIS software."
+msgstr "Les bords de cette forme se croisent. Elle risque de ne pas s'ouvrir correctement dans un logiciel SIG."
+
+msgid "Respondents can't enter a number outside this range."
+msgstr "Les répondants ne peuvent pas saisir un nombre hors de cette plage."
+
+msgid "Move 1 response to trash? You can restore it from the trash."
+msgstr "Mettre 1 réponse à la corbeille ? Vous pourrez la restaurer depuis la corbeille."
+
+msgid "Move __N__ responses to trash? You can restore them from the trash."
+msgstr "Mettre __N__ réponses à la corbeille ? Vous pourrez les restaurer depuis la corbeille."
+
+msgid "Permanently delete 1 response? This cannot be undone."
+msgstr "Supprimer définitivement 1 réponse ? Cette action est irréversible."
+
+msgid "Permanently delete __N__ responses? This cannot be undone."
+msgstr "Supprimer définitivement __N__ réponses ? Cette action est irréversible."

@@ -203,7 +203,6 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/analytics/questions/<int:question_id>/text/', analytics_views.analytics_text_answers, name='analytics_text_answers'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/sessions/<int:session_id>/', analytics_views.analytics_session_detail, name='analytics_session_detail'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/table/', analytics_views.analytics_table, name='analytics_table'),
-    path('editor/surveys/<uuid:survey_uuid>/analytics/validation-settings/', analytics_views.analytics_validation_settings, name='analytics_validation_settings'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/sessions/<int:session_id>/tags/', analytics_views.analytics_session_update_tags, name='analytics_session_update_tags'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/sessions/<int:session_id>/answers/<int:question_id>/edit/', analytics_views.analytics_answer_edit, name='analytics_answer_edit'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/sessions/<int:session_id>/status/', analytics_views.analytics_session_set_status, name='analytics_set_status'),

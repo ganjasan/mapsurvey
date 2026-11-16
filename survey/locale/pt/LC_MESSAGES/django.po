@@ -13542,3 +13542,40 @@ msgid "%(n)s respondent is in an area with fewer than %(k)s people and is not sh
 msgid_plural "%(n)s respondents are in areas with fewer than %(k)s people and are not shown."
 msgstr[0] "%(n)s inquirido está numa área com menos de %(k)s pessoas e não é mostrado."
 msgstr[1] "%(n)s inquiridos estão em áreas com menos de %(k)s pessoas e não são mostrados."
+
+# change responses-required-unanswered (#691)
+msgid "Complete"
+msgstr "Completas"
+
+msgid "Required unanswered"
+msgstr "Obrigatórias sem resposta"
+
+msgid "Responses that left at least one required question unanswered"
+msgstr "Respostas que deixaram pelo menos uma pergunta obrigatória sem resposta"
+
+msgid "Required questions unanswered"
+msgstr "Perguntas obrigatórias sem resposta"
+
+#, python-format
+msgid "Didn't answer %(counter)s required question: %(list)s"
+msgid_plural "Didn't answer %(counter)s required questions: %(list)s"
+msgstr[0] "Não respondeu a %(counter)s pergunta obrigatória: %(list)s"
+msgstr[1] "Não respondeu a %(counter)s perguntas obrigatórias: %(list)s"
+
+msgid "The edges of this shape cross each other. It may not open correctly in GIS software."
+msgstr "As arestas desta forma cruzam-se. Pode não abrir corretamente num software SIG."
+
+msgid "Respondents can't enter a number outside this range."
+msgstr "Os respondentes não podem inserir um número fora deste intervalo."
+
+msgid "Move 1 response to trash? You can restore it from the trash."
+msgstr "Mover 1 resposta para a lixeira? Pode restaurá-la a partir da lixeira."
+
+msgid "Move __N__ responses to trash? You can restore them from the trash."
+msgstr "Mover __N__ respostas para a lixeira? Pode restaurá-las a partir da lixeira."
+
+msgid "Permanently delete 1 response? This cannot be undone."
+msgstr "Excluir 1 resposta permanentemente? Isto não pode ser desfeito."
+
+msgid "Permanently delete __N__ responses? This cannot be undone."
+msgstr "Excluir __N__ respostas permanentemente? Isto não pode ser desfeito."
