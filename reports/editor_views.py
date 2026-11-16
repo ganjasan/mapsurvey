@@ -49,6 +49,7 @@ ROUTES = {
     'set_published': ('editor_public_results_set_published', 'editor_report_set_published'),
     'freeze': ('editor_public_results_freeze', 'editor_report_freeze'),
     'unfreeze': ('editor_public_results_unfreeze', 'editor_report_unfreeze'),
+    'checks': ('editor_public_results_checks', 'editor_report_checks'),
 }
 
 
@@ -404,7 +405,8 @@ def _block_edit(request, block_id):
     page = _page(request)
     block = get_object_or_404(ReportBlock, id=block_id, report=page)
     post = request.POST
-    is_text_like = block.block_type in ('text', 'image', 'heading', 'numbers', 'quotes')
+    is_text_like = (block.block_type in ('text', 'image', 'heading', 'numbers', 'quotes')
+                    or (block.block_type == 'map' and 'content' in post))
     items = None
     if block.block_type in ('numbers', 'quotes') and 'items' in post:
         items = story.items_from_lines(block.block_type, post.get('items', ''))['items']
@@ -460,7 +462,9 @@ def _set_published(request):
     page = _page(request)
     publish = request.POST.get('publish') in ('1', 'true', 'on')
     try:
-        services.set_published(Actor.from_request(request), page, publish)
+        services.set_published(Actor.from_request(request), page, publish,
+                               ack=request.POST.get('ack') in ('1', 'true', 'on'),
+                               visibility=request.POST.get('visibility'), mode=request.POST.get('mode'))
     except services.ReportRefused as refusal:
         return _refused(request, refusal)
     if _is_ajax(request):
@@ -480,7 +484,27 @@ def _unfreeze(request):
     return redirect(_url(request, 'config'))
 
 
+def _checks(request):
+    """The "Before you publish" list of the publish dialog (change reports-review): what names or
+    places people first, then what looks unfinished, each with its one-click way to fix it."""
+    from django.shortcuts import render
+    from reports.checks import run
+    page = _page(request)
+    checks = run(page)
+    config = _url(request, 'config')
+    for item in checks.privacy + checks.other:
+        item.open_url = '{}?block={}'.format(config, item.block_id) if item.block_id else config
+        item.delete_url = _url(request, 'block_delete', item.block_id) if item.fix == 'delete' else ''
+    return render(request, 'editor/partials/pr_checks.html', {
+        'page': page, 'checks': checks, 'u': _urls(request),
+        'can_publish': request.survey is None or request.survey.status != 'draft',
+        'visibility_choices': Report._meta.get_field('visibility').choices,
+        'public_url': request.build_absolute_uri('/r/{}/'.format(page.slug)),
+    })
+
+
 # Each view twice: through the survey's tab, and by the report's own address.
+public_results_checks, report_checks = on_survey(_checks), on_report(_checks)
 public_results_config, report_config = on_survey(_config), on_report(_config)
 public_results_save_settings, report_save_settings = on_survey(_save_settings), on_report(_save_settings)
 public_results_block_add, report_block_add = on_survey(_block_add), on_report(_block_add)

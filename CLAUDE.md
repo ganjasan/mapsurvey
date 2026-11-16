@@ -1143,6 +1143,16 @@ the author un-hides it. `copy_report` = the report file's export + import in mem
 export would lose). Entry links: Reports list, Responses of a published survey, the responses dataset.
 Events `report_entry_seen` / `report_created` carry ids and choice names only. `Report.template` records the
 arrangement.
+**Before you publish (change `reports-review`, #706)**: `reports/checks.py::run(report)` is the ONE list —
+`privacy` (every VISIBLE quote written out, every map with marks, K = 1) and `other` (a block the renderer
+returns None for → "Delete the block"; a map without a description; no title; hidden blocks counted). A new
+check is a few lines there. `services.set_published(actor, report, publish, ack, visibility, mode)` refuses
+`ack_required` when `checks.needs_ack` (a visible quote or a map of marks) and the author did not tick the
+box — nothing else blocks, K = 1 is only listed. Every "Publish" button opens the dialog (`prOpenPublish()`,
+body `editor/partials/pr_checks.html` fetched by HTMX from the `checks` route each time), which also posts
+`visibility` and `mode` (live | frozen). A map block's `content` is its description: shown under the map and
+`role="img"` + `aria-label` on the container. The preview pane has phone / computer widths. Comment threads
+exist on blocks of a survey's report only (a thread belongs to a survey).
 **Reports (`reports/`, change `reports-object`, #703; epic #712)**: what was the public results
 page is a **report** — `reports.models.Report` (a workspace object at `/r/<slug>/`, `survey` = its
 HOME survey, nullable and not unique) with ordered `ReportBlock`s. A question block names a

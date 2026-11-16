@@ -390,6 +390,7 @@ class ReportService:
         question = block.question
         payload = self._base(block)
         payload['basemap'] = block.basemap or 'streets'
+        payload['description'] = _localize(getattr(block, 'content', None) or {}, self.lang)
         payload['data_type'] = 'grid'
         payload['color'] = (question.color if (question.color or '').lower() not in ('', '#000000')
                             else ('#d6336c' if question.input_type == 'spraycan' else '#4f46e5'))

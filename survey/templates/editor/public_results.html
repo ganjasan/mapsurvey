@@ -61,7 +61,7 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
             {% if page.is_published %}
             <button class="nm-item" onclick="prSetPublished(false)"><i class="fas fa-eye-slash lead"></i> {% trans "Unpublish" %}<span class="sub">{% blocktrans with slug=page.slug %}/r/{{ slug }}/ stops opening for visitors{% endblocktrans %}</span></button>
             {% else %}
-            <button class="nm-item" onclick="prSetPublished(true)" {% if not can_publish %}disabled{% endif %}><i class="fas fa-globe lead"></i> {% trans "Publish page" %}{% if not can_publish %}<span class="sub">{% trans "publish the survey first" %}</span>{% endif %}</button>
+            <button class="nm-item" onclick="prOpenPublish()" {% if not can_publish %}disabled{% endif %}><i class="fas fa-globe lead"></i> {% trans "Publish page" %}{% if not can_publish %}<span class="sub">{% trans "publish the survey first" %}</span>{% endif %}</button>
             {% endif %}
             <div class="nm-sep"></div>
             <div class="nm-head">{% trans "Data" %}</div>
@@ -95,7 +95,7 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
         <button type="button" class="msb-btn msb-outline cm-toolbar-btn{% if thread_counts.new_total %} cm-has-new{% endif %}" data-cm-open="" aria-label="{% trans 'Comments' %}{% if thread_counts.total %}, {{ thread_counts.total }} {% trans 'open' %}{% endif %}{% if thread_counts.new_total %}, {{ thread_counts.new_total }} {% trans 'new' %}{% endif %}" title="{% trans 'Comments on this page' %}">💬 {% trans "Comments" %} <span class="cm-count" data-thread-total{% if not thread_counts.total %} hidden{% endif %}>{{ thread_counts.total }}</span></button>
         <a class="msb-btn msb-outline msb-desktop" href="{{ public_url }}" target="_blank" title="{% trans 'The live page exactly as visitors see it' %}">{% trans "↗ Open as visitor" %}</a>
     {% else %}
-        <button class="msb-btn msb-green" onclick="prSetPublished(true)" {% if not can_publish %}disabled title="{% trans 'Publish the survey first' %}"{% endif %}>{% trans "🌐 Publish page" %}</button>
+        <button class="msb-btn msb-green" onclick="prOpenPublish()" {% if not can_publish %}disabled title="{% trans 'Publish the survey first' %}"{% endif %}>{% trans "🌐 Publish page" %}</button>
         <button type="button" class="msb-btn msb-outline cm-toolbar-btn{% if thread_counts.new_total %} cm-has-new{% endif %}" data-cm-open="" aria-label="{% trans 'Comments' %}{% if thread_counts.total %}, {{ thread_counts.total }} {% trans 'open' %}{% endif %}{% if thread_counts.new_total %}, {{ thread_counts.new_total }} {% trans 'new' %}{% endif %}" title="{% trans 'Comments on this page' %}">💬 {% trans "Comments" %} <span class="cm-count" data-thread-total{% if not thread_counts.total %} hidden{% endif %}>{{ thread_counts.total }}</span></button>
         <a class="msb-btn msb-outline msb-desktop" href="{{ u.preview }}" target="_blank" title="{% trans 'Private preview — only you can open this URL' %}">{% trans "↗ Open as visitor" %}</a>
     {% endif %}
@@ -126,6 +126,20 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
   </div>
 
   {% include "editor/partials/pr_add_block_modal.html" %}
+  {% comment %}The publish dialog (change reports-review, #706): its body — the "Before you publish"
+  list and the three choices — is fetched by HTMX each time it opens, so it reflects the report as
+  saved.{% endcomment %}
+  <div class="modal fade editor-modal" id="prPublishModal" tabindex="-1" aria-labelledby="prPublishTitle">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="prPublishTitle">{% trans "Publish this report" %}</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="{% trans 'Close' %}"><span>&times;</span></button>
+        </div>
+        <div id="prPublishBody" class="modal-body"><p class="text-muted mb-0">{% trans "Checking the report…" %}</p></div>
+      </div>
+    </div>
+  </div>
   {% if survey %}{% include "editor/partials/_lifecycle_scripts.html" %}{% endif %}
 
   <div class="resize-handle" id="prResizeSidebar"></div>
@@ -168,6 +182,11 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
             <p class="pr-help" data-testid="pr-map-grid-note">{% blocktrans with k=page.k_anonymity_threshold %}The public map shows squares that count respondents; squares with fewer than {{ k }} respondents are hidden. Exact points stay in Responses and the export.{% endblocktrans %}</p>
             {% comment %}The survey owner's choice (owner decision 2026-11-16): the marks themselves
             instead of the grid. Off by default; the hidden marker lets an autosave say "off".{% endcomment %}
+            <div class="pr-field">
+              <label for="prMapDescription">{% trans "What the map shows, in a sentence" %}</label>
+              <textarea class="form-control" id="prMapDescription" name="content" rows="2" placeholder="{% trans 'Most marks sit along the river path and by the east entrance.' %}">{{ selected_block.content.en|default:'' }}</textarea>
+              <div class="pr-help">{% trans "Shown under the map and read aloud to people who cannot see it." %}</div>
+            </div>
             <input type="hidden" name="show_marks_present" value="1">
             <label class="pr-switch" data-testid="pr-map-marks"><span>{% trans "Show the marks themselves" %} <small class="pr-help">{% trans "every place, line or area as it was drawn, instead of the squares. A mark can point at someone's home: you decide whether that is right for this survey." %}</small></span>
               <input type="checkbox" name="show_marks" {% if selected_block.config.marks %}checked{% endif %}></label>
@@ -276,7 +295,7 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
         <a class="btn btn-sm btn-outline-secondary" href="{{ public_url }}" target="_blank" title="{% trans 'The page as visitors see it' %}"><i class="fas fa-globe"></i> {% trans "Live page" %}</a>
         <button type="button" class="btn btn-sm btn-outline-danger" onclick="prSetPublished(false)"><i class="fas fa-eye-slash"></i> {% trans "Unpublish" %}</button>
         {% else %}
-        <button type="button" class="btn btn-sm btn-success" onclick="prSetPublished(true)" {% if not can_publish %}disabled title="{% trans 'Publish the survey first' %}"{% endif %}><i class="fas fa-globe"></i> {% trans "Publish page" %}</button>
+        <button type="button" class="btn btn-sm btn-success" onclick="prOpenPublish()" {% if not can_publish %}disabled title="{% trans 'Publish the survey first' %}"{% endif %}><i class="fas fa-globe"></i> {% trans "Publish page" %}</button>
         {% endif %}
         {% endif %}
       </div>
@@ -372,7 +391,12 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
   <div class="pr-preview">
     <div class="pr-preview-head">
       <span>{% trans "Live preview" %}</span>
-      <button type="button" id="prPreviewRefresh" title="{% trans 'Refresh preview' %}"><i class="fas fa-sync-alt"></i></button>
+      <span>
+        {% comment %}Phone or desktop width of the same preview (change reports-review).{% endcomment %}
+        <button type="button" data-pr-device="phone" title="{% trans 'As on a phone' %}" aria-label="{% trans 'Preview as on a phone' %}"><i class="fas fa-mobile-alt"></i></button>
+        <button type="button" data-pr-device="desktop" title="{% trans 'As on a computer' %}" aria-label="{% trans 'Preview as on a computer' %}"><i class="fas fa-desktop"></i></button>
+        <button type="button" id="prPreviewRefresh" title="{% trans 'Refresh preview' %}"><i class="fas fa-sync-alt"></i></button>
+      </span>
     </div>
     <iframe id="prPreviewFrame" src="{{ u.preview }}"></iframe>
   </div>
@@ -408,6 +432,42 @@ function prSetPublished(publish){
     .then(function(){ window.location.reload(); })
     .catch(function(){ alert('Could not change the page’s published state. Make sure the survey itself is published first.'); });
 }
+// The publish dialog: HTMX loads the checks, then the form posts the choices.
+function prOpenPublish(){
+  $('#prPublishModal').modal('show');
+  htmx.ajax('GET', '{{ u.checks }}', { target: '#prPublishBody', swap: 'innerHTML' });
+}
+function prSubmitPublish(form){
+  var token = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+  var msg = form.querySelector('[data-pr-publish-error]');
+  fetch(form.action, {
+    method: 'POST', headers: { 'X-CSRFToken': token, 'X-Requested-With': 'XMLHttpRequest' }, body: new FormData(form)
+  }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    .then(function(result){
+      if (result.ok) { window.location.reload(); return; }
+      if (msg) {
+        msg.hidden = false;
+        msg.textContent = result.data.error === 'ack_required'
+          ? '{% filter escapejs %}{% trans "Tick the box to confirm you have read the quotes and maps listed above." %}{% endfilter %}'
+          : '{% filter escapejs %}{% trans "The report could not be published. Publish the survey first." %}{% endfilter %}';
+      }
+    });
+  return false;
+}
+function prCheckDelete(button){
+  var token = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+  fetch(button.dataset.url, { method: 'POST', headers: { 'X-CSRFToken': token, 'HX-Request': 'true' } })
+    .then(function(){ prOpenPublish(); });
+}
+// Phone / desktop width of the preview pane.
+document.addEventListener('click', function(event){
+  var button = event.target.closest('[data-pr-device]');
+  if (!button) return;
+  var pane = document.querySelector('.pr-preview');
+  var device = button.dataset.prDevice;
+  if (pane) pane.style.width = device === 'phone' ? '420px' : Math.max(720, Math.round(window.innerWidth * 0.55)) + 'px';
+  if (window.posthog) { try { window.posthog.capture('report_previewed', { device: device }); } catch (e) {} }
+});
 // Copy the public /r/<slug>/ URL. Exists so that sharing results does not mean
 // copying the editor URL out of the address bar — that yields the private
 // preview link, which strangers cannot open.

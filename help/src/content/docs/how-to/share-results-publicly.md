@@ -58,6 +58,16 @@ Set a block's **Width** to *Half width* to put two blocks side by side on a wide
 
 All reports of the workspace are on the **Reports** page of the sidebar. **New report** starts a blank one that belongs to no survey. **Export report** (Page settings → Report file) saves the whole report — text, numbers, quotes, pictures and which questions its charts and maps show — as one file; **Import a report** on the Reports page brings such a file in, here or in another workspace. An imported report is not published and only the workspace sees it until you change that; a chart or map of a survey the workspace does not have is left out, and you are told which.
 
+## Before you publish
+
+**Publish page** opens a short dialog first.
+
+- **People in this report** lists what could point at a person: every quote you chose to show, written out; every map that shows the marks themselves; and a warning if small groups are not hidden. If there are quotes or such maps, tick **I have read the quotes and maps listed above** — the report is not published without it. Whether a quote or a mark may go out is your decision; the dialog makes sure you saw them.
+- Below it are things that would look unfinished, each with a button: a block with nothing in it (**Delete the block**), a map nobody described (**Open the block** and say in a sentence what it shows — the sentence appears under the map and is read aloud by screen readers), a missing title. None of these stops you from publishing.
+- Choose **who can open it** and whether the **numbers** stay live or are frozen as they are now.
+
+In the editor's preview, the phone and screen buttons show the page as on a phone or on a computer.
+
 ## Result
 
 Visitors see the opening, the blocks in your order, and — for a frozen page — a "Data as of" date. Small groups show "Small groups are masked to protect privacy"; every map block shows a grid of how many respondents marked each square, never the individual points, lines, areas or dots; a square's popup lists the chosen sub-question answers in it, small groups masked. Only clean responses count: trashed, not-approved and on-hold responses are left out. The page carries the "Made with Mapsurvey" badge on Free.

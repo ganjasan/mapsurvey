@@ -193,7 +193,8 @@
         <div class="kanon-note">{% trans "Small groups are masked to protect privacy." %}</div>
         {% endif %}
       {% elif block.block_type == 'map' %}
-        <div class="map-holder" id="map-{{ block.id }}"></div>
+        <div class="map-holder" id="map-{{ block.id }}"{% if block.description %} role="img" aria-label="{{ block.description }}"{% endif %}></div>
+        {% if block.description %}<p class="block-note">{{ block.description }}</p>{% endif %}
       {% elif block.block_type == 'budget' and block.budget %}
         {% comment %}Budget block (change budget-question): server-rendered bars, no script.{% endcomment %}
         <p class="budget-meta">{% blocktrans with n=block.budget.respondents.display total=block.budget.total_label %}{{ n }} responses · budget {{ total }}{% endblocktrans %}</p>

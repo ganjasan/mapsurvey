@@ -125,7 +125,8 @@ def update_block(actor, block, *, viz=None, is_hidden=None, custom_title=None, c
         block.width = story.clean_width(width)
     if block.block_type == 'text' and content is not None:
         block.content = {'en': story.clean_html(content)}
-    elif block.block_type in ('image', 'heading', 'numbers', 'quotes') and content is not None:
+    elif block.block_type in ('image', 'heading', 'numbers', 'quotes', 'map') and content is not None:
+        # A map's content is its description for people who use a screen reader.
         block.content = {'en': str(content)[:2000]}
     if block.block_type in ('numbers', 'quotes') and items is not None:
         block.config = story.clean_config(block.block_type, {'items': items})
@@ -168,11 +169,28 @@ def _may_publish(report):
     return report.survey_id is None or report.survey.status != 'draft'
 
 
-def set_published(actor, report, publish):
+def set_published(actor, report, publish, ack=False, visibility=None, mode=None):
+    """Publish or take down. Publishing a report that shows quotes or marks needs `ack`: the
+    author confirmed having read them (`reports.checks`, change reports-review). `visibility` and
+    `mode` ('live' | 'frozen') are the publish dialog's two other choices."""
     if publish and not _may_publish(report):
         raise ReportRefused('publish_survey_first', _('Publish the survey before publishing its results.'))
+    if publish and not ack:
+        from reports.checks import run
+        if run(report).needs_ack:
+            raise ReportRefused('ack_required', _('Read the quotes and maps listed under “Before you publish” and confirm.'))
+    if publish and visibility in VISIBILITIES:
+        report.visibility = visibility
     report.is_published = bool(publish)
-    report.save(update_fields=['is_published'])
+    report.save(update_fields=['is_published', 'visibility'])
+    if publish and mode == 'frozen':
+        freeze_report(report)
+    elif publish and mode == 'live' and report.mode == 'frozen':
+        unfreeze_report(report)
+    if publish:
+        from survey import product_events as pe
+        pe.emit(pe.REPORT_PUBLISHED, getattr(actor, 'user_id', None),
+                {'report_id': str(report.pk), 'visibility': report.visibility, 'mode': report.mode})
     return report
 
 

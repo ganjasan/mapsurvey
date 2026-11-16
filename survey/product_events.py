@@ -49,6 +49,8 @@ RESPONSES_VIEWED = 'responses_viewed'
 # Reports (change reports-start, #705): ids and names of choices only, never a title or a slug.
 REPORT_ENTRY_SEEN = 'report_entry_seen'      # surface: reports | responses | data | survey
 REPORT_CREATED = 'report_created'            # surface, start: draft | blank | copy | import, template
+REPORT_PUBLISHED = 'report_published'        # report_id, visibility, mode
+REPORT_PREVIEWED = 'report_previewed'        # browser: device = phone | desktop
 DATA_EXPORTED = 'data_exported'
 
 # Team collaboration (spec survey-comment-threads). Creator events: who
