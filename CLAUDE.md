@@ -1164,6 +1164,17 @@ which claims the row (`queued → running`), so a redelivered message does nothi
 `editor_report_pdf`. `stamp`: a FROZEN report has one PDF per snapshot, reused and linked from its page
 (`/r/<slug>/pdf/`, the page's own visibility guard); a LIVE report gets a new rendering per request and no public
 link. No PDF is made at freezing time. Tests patch `survey.print.static_map.fetch_basemap` so no test calls Mapbox.
+**A report outside its page (change `reports-embed`, #708)**: embedding REUSES the survey embed mechanism —
+`reports.embed.mark(request, report)` sets `request.survey_frame_ancestors` (so `SurveyEmbedMiddleware` applies
+`frame-ancestors` from `Report.embed_allowed_hosts`, empty = `*`), the page in `?embed=1` posts the same
+`{mapsurvey: "height"}` message and the same `/embed.js` grows the iframe. Only a published `public` /
+`unlisted` report is framable; `workspace` keeps `SAMEORIGIN`. One block has its own page,
+`/r/<slug>/block/<id>/` (the report's template with ONE row, `single=True`); `/oembed/` answers report and block
+links. **CSV and PNG are made from the block's PAYLOAD, never from answers** — `reports/tables.py::rows_of`,
+`reports/pictures.py::block_png` (Pillow: bars, a table, `pdf.map_image`) — so a group the page hides is "<K" in
+the CSV and its value is not in the file. Public CSV at `/r/<slug>/block/<id>/data.csv`; an editor's CSV / PNG at
+`editor_report_block_file`; all blocks as one ZIP = the PDF's worker job with `ReportPdf.kind = 'zip'`
+(`reports.tasks.build_zip`). A "Report" block for Sites is not built (a Sites block kind; follow-up).
 **Reports (`reports/`, change `reports-object`, #703; epic #712)**: what was the public results
 page is a **report** — `reports.models.Report` (a workspace object at `/r/<slug>/`, `survey` = its
 HOME survey, nullable and not unique) with ordered `ReportBlock`s. A question block names a

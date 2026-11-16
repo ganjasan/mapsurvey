@@ -311,6 +311,8 @@ urlpatterns = [
     path('alternatives/metroquest/', views.metroquest_alternative, name='metroquest_alternative'),
     path('r/<slug:slug>/', views.public_results, name='public_results'),
     path('r/<slug:slug>/pdf/', report_views.report_page_pdf, name='report_page_pdf'),
+    path('r/<slug:slug>/block/<int:block_id>/', report_views.report_block, name='report_block'),
+    path('r/<slug:slug>/block/<int:block_id>/data.csv', report_views.report_block_csv, name='report_block_csv'),
     # Sites (change landing-core, #576): the public page and its report form.
     path('p/<slug:slug>/', site_views.site_public, name='site_public'),
     path('p/<slug:slug>/report/', abuse_review_views.site_report, name='site_report'),
@@ -347,6 +349,7 @@ urlpatterns = [
     path('editor/reports/<uuid:report_uuid>/unfreeze/', public_results_editor.report_unfreeze, name='editor_report_unfreeze'),
     path('editor/reports/<uuid:report_uuid>/export/', report_views.report_export, name='editor_report_export'),
     path('editor/reports/<uuid:report_uuid>/pdf/', report_views.report_pdf, name='editor_report_pdf'),
+    path('editor/reports/<uuid:report_uuid>/blocks/<int:block_id>/file.<str:kind>', report_views.report_block_file, name='editor_report_block_file'),
     path('editor/reports/<uuid:report_uuid>/delete/', report_views.report_delete, name='editor_report_delete'),
     path('editor/data/upload/', data_views.upload, name='editor_data_upload'),
     path('editor/data/jobs/', data_views.jobs, name='editor_data_jobs'),

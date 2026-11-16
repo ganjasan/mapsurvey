@@ -74,6 +74,13 @@ Under **Page settings → Report file** press **PDF (A4)**. The PDF is made in t
 
 A **frozen** report's PDF is made once: after that its published page shows a **PDF** link next to "Data as of", for everyone who can open the page. A **live** report's PDF shows the numbers of the moment you ask and is not linked from the page.
 
+## Show it on another site, in slides or in a document
+
+- **Embed the report.** Under **Page settings → Embed on another site** copy the code and paste it into your site's page. It always shows the published report and grows to its height. To put only one chart or map on a page, open that block and copy the code under **Use this block elsewhere**. The code works once the report is published as public or unlisted; list **Sites that may embed it** to keep it off other sites.
+- **A chart or map as a picture, with its numbers.** In a block's settings, **PNG** downloads the block as a picture with its title and **CSV** its numbers. **Charts and maps (ZIP)** under Page settings → Report file gives all of them at once.
+
+The numbers in a CSV are the ones the page shows: a group too small to show reads "<3" there too, and a map lists its squares, not people's marks, unless you chose to show the marks.
+
 ## Result
 
 Visitors see the opening, the blocks in your order, and — for a frozen page — a "Data as of" date. Small groups show "Small groups are masked to protect privacy"; every map block shows a grid of how many respondents marked each square, never the individual points, lines, areas or dots; a square's popup lists the chosen sub-question answers in it, small groups masked. Only clean responses count: trashed, not-approved and on-hold responses are left out. The page carries the "Made with Mapsurvey" badge on Free.

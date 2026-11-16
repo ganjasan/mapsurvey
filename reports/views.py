@@ -27,7 +27,103 @@ def report_page(request, slug):
         if get_org_membership(request.user, report.organization) is None:
             raise Http404
     lang = request.GET.get('lang') or 'en'
-    return render(request, 'public_results.html', build_context(report, lang=lang))
+    return render(request, 'public_results.html', _framed_context(request, report, build_context(report, lang=lang)))
+
+
+def _guard(request, slug):
+    """The published report at `slug` for this visitor, or a response that says why not."""
+    report = get_object_or_404(Report.objects.select_related('survey', 'organization'),
+                               slug=slug, is_published=True)
+    if report.visibility == 'workspace':
+        if not request.user.is_authenticated:
+            return None, redirect_to_login(request.get_full_path())
+        from survey.permissions import get_org_membership
+        if get_org_membership(request.user, report.organization) is None:
+            raise Http404
+    return report, None
+
+
+def _framed_context(request, report, context):
+    """Mark the response framable by the report's allowed hosts and tell the template whether it
+    is shown inside someone's page (`?embed=1`), plus the oEmbed address of this page."""
+    from urllib.parse import urlencode
+    from django.urls import reverse
+    from reports import embed
+    from survey.embedding import public_base_url
+    embed.mark(request, report)
+    context['embed'] = request.GET.get('embed') == '1'
+    if embed.embeddable(report):
+        target = public_base_url(request) + request.path
+        context['oembed_url'] = public_base_url(request) + reverse('oembed') + '?' + urlencode(
+            {'url': target, 'format': 'json'})
+    return context
+
+
+def _block_payload(report, block_id, lang='en'):
+    from reports.render import render_data
+    payload = next((b for b in render_data(report, lang=lang)['blocks'] if b.get('id') == block_id), None)
+    if payload is None:
+        raise Http404
+    return payload
+
+
+def report_block(request, slug, block_id):
+    """One block of a published report on a page of its own — what a single-block embed frames."""
+    report, refusal = _guard(request, slug)
+    if refusal is not None:
+        return refusal
+    lang = request.GET.get('lang') or 'en'
+    context = build_context(report, lang=lang)
+    payload = _block_payload(report, block_id, lang)
+    context.update(rows=[[dict(payload, width='full')]], blocks=[payload], single=True,
+                   blocks_json=__import__('json').dumps([payload], ensure_ascii=False),
+                   intro_title=payload.get('title') or context['intro_title'])
+    return render(request, 'public_results.html', _framed_context(request, report, context))
+
+
+def report_block_csv(request, slug, block_id):
+    """The numbers of one block of a published report as CSV — masked as the page is."""
+    from django.http import HttpResponse
+    from reports.tables import block_csv
+    report, refusal = _guard(request, slug)
+    if refusal is not None:
+        return refusal
+    table = block_csv(_block_payload(report, block_id))
+    if table is None:
+        raise Http404
+    response = HttpResponse(table[1], content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = f'attachment; filename="{table[0]}"'
+    return response
+
+
+@login_required
+def report_block_file(request, report_uuid, block_id, kind):
+    """An editor's download of one block, published or not: `csv` or `png`."""
+    from django.http import HttpResponse
+    from reports.pictures import block_png
+    from reports.render import ReportService
+    from reports.sources import attach_questions
+    from reports.tables import block_csv, file_stem
+    report = _editable_report(request, report_uuid)
+    blocks = attach_questions(report.blocks.filter(pk=block_id).select_related('dataset__survey', 'view__dataset__survey'))
+    if not blocks:
+        raise Http404
+    payload = ReportService(report)._build_block(blocks[0])
+    if payload is None:
+        raise Http404
+    if kind == 'csv':
+        table = block_csv(payload)
+        if table is None:
+            raise Http404
+        response = HttpResponse(table[1], content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="{table[0]}"'
+        return response
+    picture = block_png(payload, report.survey if report.survey_id else None)
+    if picture is None:
+        raise Http404
+    response = HttpResponse(picture, content_type='image/png')
+    response['Content-Disposition'] = f'attachment; filename="{file_stem(payload)}.png"'
+    return response
 
 
 def visible_reports(org, user):
@@ -140,6 +236,10 @@ def _pdf_response(job, report, user_id, surface):
     from django.http import FileResponse
     from survey import product_events as pe
     pe.emit(pe.REPORT_PDF_DOWNLOADED, user_id, {'report_id': str(report.pk), 'surface': surface})
+    if job.kind == 'zip':
+        response = FileResponse(job.file.open('rb'), content_type='application/zip')
+        response['Content-Disposition'] = f'attachment; filename="{report.slug}-charts-and-maps.zip"'
+        return response
     response = FileResponse(job.file.open('rb'), content_type='application/pdf')
     response['Content-Disposition'] = f'inline; filename="{report.slug}.pdf"'
     return response
@@ -154,7 +254,8 @@ def report_pdf(request, report_uuid):
     from survey.services.context import Actor
     report = _editable_report(request, report_uuid)
     if request.method == 'POST':
-        job = services.request_pdf(Actor.from_request(request), report, base_url=request.build_absolute_uri('/')[:-1])
+        job = services.request_pdf(Actor.from_request(request), report, base_url=request.build_absolute_uri('/')[:-1],
+                                   kind=request.POST.get('kind') or 'pdf')
     else:
         job = get_object_or_404(report.pdfs, pk=request.GET.get('job') or 0)
         if request.GET.get('download') and job.status == 'done' and job.file:

@@ -88,6 +88,8 @@ class Report(models.Model):
         default=False, help_text=_('Show a card in the public stories listing (public visibility only).'))
     k_anonymity_threshold = models.PositiveIntegerField(
         default=DEFAULT_K, help_text=_('Mask buckets with 0 < count < K as "<K". Set to 1 to disable.'))
+    # Hosts that may frame the report or one of its blocks (change reports-embed); [] = any site.
+    embed_allowed_hosts = models.JSONField(default=list, blank=True)
     # The arrangement a draft was made with (`reports.drafting.TEMPLATES`); '' = made by hand.
     template = models.CharField(max_length=12, blank=True, default='')
     scaffolded_at = models.DateTimeField(
@@ -220,7 +222,10 @@ class ReportPdf(models.Model):
     """
     STATUS_CHOICES = [('queued', 'queued'), ('running', 'running'), ('done', 'done'), ('failed', 'failed')]
 
+    KIND_PDF, KIND_ZIP = 'pdf', 'zip'     # the A4 document; every block's PNG and CSV in one archive
+
     report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name='pdfs')
+    kind = models.CharField(max_length=3, default='pdf')
     status = models.CharField(max_length=8, choices=STATUS_CHOICES, default='queued', db_index=True)
     stamp = models.CharField(max_length=64)
     file = models.FileField(upload_to=report_pdf_key, storage=_private_storage, max_length=300, blank=True)

@@ -2923,6 +2923,25 @@ def embed_js(request):
 	return response
 
 
+def _report_oembed(request, slug, block_id):
+	"""oEmbed of a report or of one block (change reports-embed): only a report anyone can open."""
+	from reports import embed as report_embed
+	from reports.models import Report
+	report = Report.objects.filter(slug=slug, is_published=True).first()
+	if report is None or not report_embed.embeddable(report):
+		raise Http404
+	height = report_embed.BLOCK_HEIGHT if block_id else report_embed.REPORT_HEIGHT
+	response = JsonResponse({
+		'version': '1.0', 'type': 'rich', 'title': report.title, 'provider_name': 'Mapsurvey',
+		'provider_url': public_base_url(request) + '/',
+		'html': report_embed.snippet(public_base_url(request), report, int(block_id) if block_id else None,
+		                             with_script=False),
+		'width': DEFAULT_WIDTH, 'height': height, 'cache_age': 3600,
+	})
+	response['Access-Control-Allow-Origin'] = '*'
+	return response
+
+
 def oembed(request):
 	"""oEmbed provider for survey links (https://oembed.com).
 
@@ -2939,6 +2958,9 @@ def oembed(request):
 	parsed = urlparse(target)
 	if parsed.scheme not in ('http', 'https') or parsed.netloc.lower() != request.get_host().lower():
 		raise Http404
+	report_match = re.match(r'^/r/([-a-zA-Z0-9_]+)/(?:block/(\d+)/)?$', parsed.path)
+	if report_match:
+		return _report_oembed(request, report_match.group(1), report_match.group(2))
 	match = re.match(r'^/surveys/([0-9a-fA-F-]{36})/?$', parsed.path)
 	if not match:
 		raise Http404

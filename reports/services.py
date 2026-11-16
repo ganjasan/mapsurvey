@@ -195,7 +195,7 @@ def set_published(actor, report, publish, ack=False, visibility=None, mode=None)
 
 
 def update_settings(actor, report, *, is_published=None, visibility=None, intro_title='', intro_body='',
-                    intro_eyebrow=None, show_response_count=False, show_participate_cta=False, show_on_thanks=False,
+                    intro_eyebrow=None, embed_hosts=None, show_response_count=False, show_participate_cta=False, show_on_thanks=False,
                     feature_in_listing=False, k=None, slug=''):
     """Save the report's settings form. Returns True when the requested slug was taken (the
     report then keeps its address). `is_published` None leaves the publication state alone."""
@@ -209,6 +209,14 @@ def update_settings(actor, report, *, is_published=None, visibility=None, intro_
     report.intro = {'title': {'en': intro_title or ''}, 'body': {'en': intro_body or ''}}
     if eyebrow:
         report.intro['eyebrow'] = eyebrow
+    if embed_hosts is not None:
+        from reports.embed import clean_hosts
+        from survey.embedding import InvalidHost
+        try:
+            report.embed_allowed_hosts = clean_hosts(embed_hosts)
+        except InvalidHost as bad:
+            raise ReportRefused('bad_host', _('“%(host)s” is not a site address. Write one per line, like city.example.org.')
+                                % {'host': str(bad)})
     report.show_response_count = bool(show_response_count)
     report.show_participate_cta = bool(show_participate_cta)
     report.show_on_thanks = bool(show_on_thanks)
@@ -244,26 +252,29 @@ def ready_pdf(report):
     hand out: its numbers have moved since any earlier rendering."""
     if report.mode != 'frozen' or not report.frozen_at:
         return None
-    return report.pdfs.filter(status='done', stamp=pdf_stamp(report)).first()
+    return report.pdfs.filter(kind='pdf', status='done', stamp=pdf_stamp(report)).first()
 
 
-def request_pdf(actor, report, base_url=''):
+def request_pdf(actor, report, base_url='', kind='pdf'):
     """The `ReportPdf` to wait for: the stored one of a frozen report, one already on its way, or
-    a new row handed to the worker. Never renders in the caller's request."""
+    a new row handed to the worker. Never renders in the caller's request. `kind` 'zip' is the
+    archive of every block's PNG and CSV (change reports-embed) — the same job, another file."""
     from reports.models import ReportPdf
     from reports.tasks import render_report_pdf
+    kind = 'zip' if kind == 'zip' else 'pdf'
     stamp = pdf_stamp(report)
     if report.mode == 'frozen':
-        existing = report.pdfs.filter(stamp=stamp, status__in=('queued', 'running', 'done')).first()
+        existing = report.pdfs.filter(kind=kind, stamp=stamp, status__in=('queued', 'running', 'done')).first()
         if existing is not None:
             return existing
-    job = ReportPdf.objects.create(report=report, stamp=stamp, requested_by=getattr(actor, 'user', None))
+    job = ReportPdf.objects.create(report=report, kind=kind, stamp=stamp,
+                                   requested_by=getattr(actor, 'user', None))
     try:
         render_report_pdf.delay(job.pk, base_url)
     except Exception:  # noqa: BLE001 — no broker (local dev): render here rather than leave it queued
         render_report_pdf(job.pk, base_url)
     # Keep the three newest renderings of a report; older files go with their rows.
-    for old in report.pdfs.exclude(pk=job.pk).order_by('-created_at')[3:]:
+    for old in report.pdfs.filter(kind=kind).exclude(pk=job.pk).order_by('-created_at')[3:]:
         if old.file:
             old.file.delete(save=False)
         old.delete()
