@@ -33,6 +33,12 @@ confirm" step. The survey a draft is made from is picked once, above the cards.{
   <h4 class="mb-1">{% trans "Start a report" %}</h4>
   <p class="text-muted mb-0" style="font-size:.92rem;">{% trans "Begin with a draft made from a survey's answers and cut it down to what you want to say — or start empty. Nothing is published until you publish it." %}</p>
 
+  {% if reports_locked %}
+  <div class="alert alert-warning d-flex align-items-center flex-wrap" style="gap:.5rem;" data-testid="reports-locked" role="status">
+    <span class="flex-grow-1">{% trans "Reports are part of Pro. On the current plan this workspace's reports are read-only: published ones stay online with the numbers they had, and nothing is deleted." %}</span>
+    <a class="btn btn-sm btn-primary" href="{% url 'org_billing' org.slug %}">{% trans "See Pro" %}</a>
+  </div>
+  {% endif %}
   {% if surveys %}
   <div class="rs-group">{% trans "Draft from a survey" %}</div>
   <form method="get" class="rs-pick" data-testid="report-start-survey">

@@ -9,6 +9,8 @@ You end up with a public results page at `https://mapsurvey.org/r/<slug>/` showi
 
 ## Before you start
 
+Reports are part of **Pro**. On a workspace without Pro a report opens read-only; the first change you make starts a 90-day Pro trial, with no card. When a trial or a subscription ends, published reports stay online at the same address with the numbers they had that day ("Data as of …"), you can still export them and make their PDF, and nothing is deleted.
+
 - The survey is **Published**. A draft survey's results page cannot be published.
 - Decide what the public should see. Text answers are never shown; choice, rating, number, range and thumbs questions become charts; map questions become maps; **Objects on the map** questions become per-object totals.
 

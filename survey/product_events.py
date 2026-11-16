@@ -51,6 +51,7 @@ REPORT_ENTRY_SEEN = 'report_entry_seen'      # surface: reports | responses | da
 REPORT_CREATED = 'report_created'            # surface, start: draft | blank | copy | import, template
 REPORT_PUBLISHED = 'report_published'        # report_id, visibility, mode
 REPORT_PREVIEWED = 'report_previewed'        # browser: device = phone | desktop
+REPORT_PAYWALL_SHOWN = 'report_paywall_shown'     # surface: editor | start | import
 REPORT_PDF_DOWNLOADED = 'report_pdf_downloaded'   # report_id, surface: editor | page
 DATA_EXPORTED = 'data_exported'
 
