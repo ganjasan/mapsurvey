@@ -13466,3 +13466,15 @@ msgstr "Pilkuilla erotettuina, esim. Riverside-suunnitelma 2027"
 #: data/templates/data/dataset.html
 msgid "Tags group the datasets and surveys of one engagement; the Data list and the survey dashboard filter by them."
 msgstr "Tunnisteet ryhmittelevät yhden osallistamishankkeen aineistot ja kyselyt; Data-luettelo ja kyselyjen kojelauta suodattavat niiden mukaan."
+
+#: survey/public_results.py
+#, python-format
+msgid "Not enough answers yet to show this map without revealing anyone: areas with fewer than %(k)s people stay hidden."
+msgstr "Vastauksia ei ole vielä tarpeeksi, jotta kartan voisi näyttää paljastamatta ketään: alueet, joilla on alle %(k)s ihmistä, pysyvät piilossa."
+
+#: survey/public_results.py
+#, python-format
+msgid "%(n)s respondent is in an area with fewer than %(k)s people and is not shown."
+msgid_plural "%(n)s respondents are in areas with fewer than %(k)s people and are not shown."
+msgstr[0] "%(n)s vastaaja on alueella, jolla on alle %(k)s ihmistä, eikä häntä näytetä."
+msgstr[1] "%(n)s vastaajaa on alueilla, joilla on alle %(k)s ihmistä, eikä heitä näytetä."

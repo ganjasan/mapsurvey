@@ -13457,3 +13457,14 @@ msgstr "Pisahkan dengan koma, mis. Rencana Riverside 2027"
 #: data/templates/data/dataset.html
 msgid "Tags group the datasets and surveys of one engagement; the Data list and the survey dashboard filter by them."
 msgstr "Tag mengelompokkan dataset dan survei dari satu kegiatan partisipasi; daftar Data dan dasbor survei memfilter menurutnya."
+
+#: survey/public_results.py
+#, python-format
+msgid "Not enough answers yet to show this map without revealing anyone: areas with fewer than %(k)s people stay hidden."
+msgstr "Jawaban belum cukup untuk menampilkan peta ini tanpa mengungkap siapa pun: area dengan kurang dari %(k)s orang tetap disembunyikan."
+
+#: survey/public_results.py
+#, python-format
+msgid "%(n)s respondent is in an area with fewer than %(k)s people and is not shown."
+msgid_plural "%(n)s respondents are in areas with fewer than %(k)s people and are not shown."
+msgstr[0] "%(n)s responden berada di area dengan kurang dari %(k)s orang dan tidak ditampilkan."

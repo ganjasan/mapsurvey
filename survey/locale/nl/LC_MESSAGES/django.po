@@ -13504,3 +13504,15 @@ msgstr "Gescheiden door komma’s, bijv. Plan Riverside 2027"
 #: data/templates/data/dataset.html
 msgid "Tags group the datasets and surveys of one engagement; the Data list and the survey dashboard filter by them."
 msgstr "Tags groeperen de datasets en enquêtes van één participatietraject; de Data-lijst en het enquêteoverzicht filteren erop."
+
+#: survey/public_results.py
+#, python-format
+msgid "Not enough answers yet to show this map without revealing anyone: areas with fewer than %(k)s people stay hidden."
+msgstr "Nog te weinig antwoorden om deze kaart te tonen zonder iemand herkenbaar te maken: gebieden met minder dan %(k)s mensen blijven verborgen."
+
+#: survey/public_results.py
+#, python-format
+msgid "%(n)s respondent is in an area with fewer than %(k)s people and is not shown."
+msgid_plural "%(n)s respondents are in areas with fewer than %(k)s people and are not shown."
+msgstr[0] "%(n)s respondent bevindt zich in een gebied met minder dan %(k)s mensen en wordt niet getoond."
+msgstr[1] "%(n)s respondenten bevinden zich in gebieden met minder dan %(k)s mensen en worden niet getoond."

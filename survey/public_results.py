@@ -337,7 +337,8 @@ class PublicResultsService:
                             else ('#d6336c' if question.input_type == 'spraycan' else '#4f46e5'))
         empty = {'type': 'FeatureCollection', 'features': []}
         if question.input_type not in GEO_INPUT_TYPES:
-            payload.update(cells=empty, max=0, respondents_total=0, cell_m=0, count=0)
+            payload.update(cells=empty, max=0, respondents_total=0, respondents_hidden=0, cell_m=0, count=0,
+                           note='')
             return payload
         geo_field = geo_column(question.input_type)
         rows = list(
@@ -347,8 +348,9 @@ class PublicResultsService:
         )
         members = [(a.survey_session_id, a.id, getattr(a, geo_field)) for a in rows]
         from data.aggregate import grid
-        cells = grid(members, k=self.k, cells_across=self.MAP_GRID_CELLS,
-                     min_cell_m=self.MAP_GRID_MIN_M)
+        # The finest grid that shows most respondents (change data-grid-adaptive), cells under K
+        # omitted whatever the size.
+        cells = grid(members, k=self.k, min_cell_m=self.MAP_GRID_MIN_M)
         label_codes = set(block.geo_label_fields or []) if question.input_type != 'spraycan' else set()
         fields_by_cell = self._cell_fields(cells['cells'], label_codes) if label_codes else {}
         from django.contrib.gis.geos import Polygon as GeosPolygon
@@ -365,13 +367,29 @@ class PublicResultsService:
         payload['cells'] = {'type': 'FeatureCollection', 'features': features}
         payload['max'] = cells['max']
         payload['respondents_total'] = cells['respondents_total']
+        payload['respondents_hidden'] = cells['respondents_hidden']
         payload['cell_m'] = cells['cell_m']
         payload['count'] = len(features)
+        payload['note'] = self._grid_note(cells)
         return payload
 
-    # Cell size: the answers' bbox is ~MAP_GRID_CELLS across its longer side, never finer
-    # than MAP_GRID_MIN_M (the spray density rule, now for every public map).
-    MAP_GRID_CELLS = 40
+    def _grid_note(self, cells):
+        """What a visitor reads under (or instead of) the map: why nothing or not everyone shows."""
+        from django.utils import translation
+        from django.utils.translation import gettext, ngettext
+        total, hidden = cells['respondents_total'], cells['respondents_hidden']
+        if not total or not hidden:
+            return ''
+        with translation.override(self.lang):
+            if not cells['cells']:
+                return gettext('Not enough answers yet to show this map without revealing anyone: '
+                               'areas with fewer than %(k)s people stay hidden.') % {'k': self.k}
+            return ngettext('%(n)s respondent is in an area with fewer than %(k)s people and is not shown.',
+                            '%(n)s respondents are in areas with fewer than %(k)s people and are not shown.',
+                            hidden) % {'n': hidden, 'k': self.k}
+
+    # Cell size: the finest of data.aggregate.GRID_STEPS cells across the answers' bbox that shows
+    # most respondents, never finer than MAP_GRID_MIN_M (change data-grid-adaptive).
     MAP_GRID_MIN_M = 20.0
 
     def _cell_fields(self, cells, label_codes):

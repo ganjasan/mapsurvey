@@ -13530,3 +13530,15 @@ msgstr "Separadas por comas, p. ej. Plan Riverside 2027"
 #: data/templates/data/dataset.html
 msgid "Tags group the datasets and surveys of one engagement; the Data list and the survey dashboard filter by them."
 msgstr "Las etiquetas agrupan los conjuntos de datos y las encuestas de un mismo proceso participativo; la lista de Datos y el panel de encuestas filtran por ellas."
+
+#: survey/public_results.py
+#, python-format
+msgid "Not enough answers yet to show this map without revealing anyone: areas with fewer than %(k)s people stay hidden."
+msgstr "Aún no hay suficientes respuestas para mostrar este mapa sin revelar a nadie: las zonas con menos de %(k)s personas permanecen ocultas."
+
+#: survey/public_results.py
+#, python-format
+msgid "%(n)s respondent is in an area with fewer than %(k)s people and is not shown."
+msgid_plural "%(n)s respondents are in areas with fewer than %(k)s people and are not shown."
+msgstr[0] "%(n)s participante está en una zona con menos de %(k)s personas y no se muestra."
+msgstr[1] "%(n)s participantes están en zonas con menos de %(k)s personas y no se muestran."

@@ -13530,3 +13530,15 @@ msgstr "Separadas por vírgulas, p. ex. Plano Riverside 2027"
 #: data/templates/data/dataset.html
 msgid "Tags group the datasets and surveys of one engagement; the Data list and the survey dashboard filter by them."
 msgstr "As etiquetas agrupam os conjuntos de dados e os inquéritos de um mesmo processo participativo; a lista de Dados e o painel de inquéritos filtram por elas."
+
+#: survey/public_results.py
+#, python-format
+msgid "Not enough answers yet to show this map without revealing anyone: areas with fewer than %(k)s people stay hidden."
+msgstr "Ainda não há respostas suficientes para mostrar este mapa sem revelar ninguém: as áreas com menos de %(k)s pessoas ficam ocultas."
+
+#: survey/public_results.py
+#, python-format
+msgid "%(n)s respondent is in an area with fewer than %(k)s people and is not shown."
+msgid_plural "%(n)s respondents are in areas with fewer than %(k)s people and are not shown."
+msgstr[0] "%(n)s inquirido está numa área com menos de %(k)s pessoas e não é mostrado."
+msgstr[1] "%(n)s inquiridos estão em áreas com menos de %(k)s pessoas e não são mostrados."
