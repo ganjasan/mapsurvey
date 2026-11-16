@@ -17,6 +17,7 @@
   {% if intro_body %}<meta property="og:description" content="{{ intro_body }}">{% endif %}
   {% if survey.cover_image %}<meta property="og:image" content="{{ survey.cover_image.url }}">{% endif %}
   <meta name="twitter:card" content="summary_large_image">
+  {% if oembed_url %}<link rel="alternate" type="application/json+oembed" href="{{ oembed_url }}" title="{{ intro_title }}">{% endif %}
 
   <link rel="icon" href="{% static 'favicon-32x32.png' %}" type="image/png" sizes="32x32">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css">
@@ -102,11 +103,13 @@
   </style>
 </head>
 <body>
-  {% if noindex %}
+  {% if noindex and not embed %}
   <div class="ribbon">{% if preview %}{% trans "Preview — only editors of this report see this page." %}{% elif report.visibility == 'workspace' %}{% trans "Workspace only — members of this workspace see this report after signing in." %}{% else %}{% trans "Unlisted — viewable by direct link only, not indexed." %}{% endif %}</div>
   {% endif %}
 
   <div class="wrap">
+    {% comment %}A single block on a page of its own (change reports-embed) has no opening.{% endcomment %}
+    {% if not single %}
     <div class="hero">
       <span class="eyebrow">{% if intro_eyebrow %}{{ intro_eyebrow }}{% else %}{% trans "Survey results" %}{% endif %}</span>
       <h1>{{ intro_title }}</h1>
@@ -124,6 +127,8 @@
       <div class="frozen-badge">{% trans "Data as of" %} {{ frozen_at|date:"j M Y" }}{% if pdf_url %} · <a href="{{ pdf_url }}" data-testid="report-pdf-link">{% trans "PDF" %}</a>{% endif %}</div>
       {% endif %}
     </div>
+
+    {% endif %}
 
     {% if stale %}
     <div class="block"><p class="empty">{% trans "This snapshot needs to be refreshed by the survey owner." %}</p></div>
@@ -242,6 +247,25 @@
     {% endif %}
   </div>
 
+  {% if embed %}
+  {% comment %}Framed by another site (change reports-embed): tell the host page how tall the
+  content is, so /embed.js there can grow the iframe — the survey embed's own message.{% endcomment %}
+  <style>body{background:transparent;} .wrap{padding-bottom:16px;} {% if single %}.row{margin-top:8px;}{% endif %}</style>
+  <script>
+  (function(){
+    if (window.parent === window) return;
+    var last = 0;
+    function report(){
+      var h = Math.ceil(document.documentElement.scrollHeight);
+      if (!h || h === last) return;
+      last = h;
+      window.parent.postMessage({mapsurvey: 'height', height: h}, '*');
+    }
+    window.addEventListener('load', function(){ report(); setTimeout(report, 800); });
+    if (window.ResizeObserver) { new ResizeObserver(report).observe(document.body); }
+  })();
+  </script>
+  {% endif %}
   <script id="blocks-data" type="application/json">{{ blocks_json|safe }}</script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js" crossorigin="anonymous"></script>

@@ -205,6 +205,28 @@ def _crosstab_questions(survey):
     return top_level_questions(canonical_of(survey), CROSSTAB_TYPES)
 
 
+def _elsewhere(request, page, block):
+    """What the editor needs to offer a report or a block outside the page (change reports-embed):
+    the embed snippets, the allow-list as text, and a data block's CSV / PNG links."""
+    from reports import embed
+    from reports.pictures import PICTURE_BLOCK_TYPES
+    from reports.tables import DATA_BLOCK_TYPES
+    from survey.embedding import public_base_url
+    base = public_base_url(request)
+    out = {
+        'embed_snippet': embed.snippet(base, page),
+        'embed_hosts_text': '\n'.join(page.embed_allowed_hosts or []),
+        'embeddable': embed.embeddable(page),
+    }
+    if block is not None and block.block_type in DATA_BLOCK_TYPES + ('quotes', 'image', 'text'):
+        out['block_snippet'] = embed.snippet(base, page, block.id)
+    if block is not None and block.block_type in DATA_BLOCK_TYPES:
+        out['block_csv_url'] = reverse('editor_report_block_file', args=[page.uuid, block.id, 'csv'])
+    if block is not None and block.block_type in PICTURE_BLOCK_TYPES:
+        out['block_png_url'] = reverse('editor_report_block_file', args=[page.uuid, block.id, 'png'])
+    return out
+
+
 def _token_help():
     from reports.tokens import HELP
     return HELP
@@ -263,6 +285,7 @@ def _config(request):
         'export_url': reverse('editor_report_export', args=[page.uuid]),
         'pdf_url': reverse('editor_report_pdf', args=[page.uuid]),
         'crosstab_questions': _crosstab_questions(survey),
+        **_elsewhere(request, page, selected_block),
         'token_help': _token_help(),
         'reports_url': reverse('editor_reports'),
         'blocks': blocks,
@@ -357,6 +380,7 @@ def _save_settings(request):
             visibility=post.get('visibility', page.visibility),
             intro_title=post.get('intro_title', ''), intro_body=post.get('intro_body', ''),
             intro_eyebrow=post.get('intro_eyebrow') if 'intro_eyebrow' in post else None,
+            embed_hosts=post.get('embed_hosts') if 'embed_hosts' in post else None,
             show_response_count=post.get('show_response_count') == 'on',
             show_participate_cta=post.get('show_participate_cta') == 'on',
             show_on_thanks=post.get('show_on_thanks') == 'on',

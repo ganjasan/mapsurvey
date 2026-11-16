@@ -268,6 +268,19 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
               <div class="pr-help">{% trans "Two half-width blocks in a row sit side by side on a wide screen." %}</div>
             </div>
             {% endif %}
+            {% if block_snippet or block_csv_url or block_png_url %}
+            <div class="pr-field" data-testid="block-elsewhere">
+              <label>{% trans "Use this block elsewhere" %}</label>
+              <div>
+                {% if block_png_url %}<a class="btn btn-sm btn-outline-secondary" href="{{ block_png_url }}"><i class="far fa-image"></i> PNG</a>{% endif %}
+                {% if block_csv_url %}<a class="btn btn-sm btn-outline-secondary" href="{{ block_csv_url }}"><i class="fas fa-table"></i> CSV</a>{% endif %}
+              </div>
+              {% if block_snippet %}
+              <div class="pr-help" style="margin-top:.5rem;">{% trans "Embed only this block on another site:" %}</div>
+              <textarea class="form-control" rows="3" readonly onclick="this.select()" data-no-autosave style="font-family:ui-monospace,monospace;font-size:.78rem;">{{ block_snippet }}</textarea>
+              {% endif %}
+            </div>
+            {% endif %}
             <label class="pr-switch"><span>{% trans "Hidden" %} <small class="pr-help">{% trans "keep but don't show publicly" %}</small></span>
               <input type="checkbox" name="is_hidden" {% if selected_block.is_hidden %}checked{% endif %}></label>
             <div class="autosave-status" data-autosave-status><i class="fas fa-check"></i> <span>{% trans "Changes save automatically" %}</span></div>
@@ -358,6 +371,16 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
               {% trans "Mask buckets smaller than K as “<K”. Set to 1 to disable." as k_help %}<div class="pr-help">{{ k_help|force_escape }}</div></div>
           </div>
 
+          <div class="pr-card" data-testid="report-embed">
+            <h6>{% trans "Embed on another site" %}</h6>
+            <p class="pr-help" style="margin-top:0;">{% trans "Paste this where the report should appear. It always shows the published version and grows to its height. One block can be embedded on its own: open the block for its code." %}</p>
+            <textarea class="form-control" rows="3" readonly onclick="this.select()" data-no-autosave style="font-family:ui-monospace,monospace;font-size:.78rem;">{{ embed_snippet }}</textarea>
+            {% if not embeddable %}<div class="pr-help">{% trans "The code works once the report is published as public or unlisted." %}</div>{% endif %}
+            <div class="pr-field" style="margin-top:.7rem;"><label for="prEmbedHosts">{% trans "Sites that may embed it" %}</label>
+              <textarea class="form-control" id="prEmbedHosts" name="embed_hosts" rows="2" placeholder="city.example.org">{{ embed_hosts_text }}</textarea>
+              <div class="pr-help">{% trans "One address per line. Empty means any site." %}</div></div>
+          </div>
+
           <div class="autosave-status" data-autosave-status><i class="fas fa-check"></i> <span>{% trans "Changes save automatically" %}</span></div>
           <noscript><button class="btn btn-primary" type="submit"><i class="fas fa-check"></i> {% trans "Save page settings" %}</button></noscript>
         </form>
@@ -369,6 +392,7 @@ visitors cannot open), Freeze snapshots before a public announcement.{% endcomme
           {% comment %}The PDF is made on the worker (change reports-pdf): the button asks for it,
           polls, then opens it.{% endcomment %}
           <button type="button" class="btn btn-sm btn-outline-secondary" id="prPdfButton" data-url="{{ pdf_url }}" onclick="prMakePdf(this)"><i class="fas fa-file-pdf"></i> {% trans "PDF (A4)" %}</button>
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-url="{{ pdf_url }}" data-kind="zip" onclick="prMakePdf(this)" title="{% trans 'Every chart and map as a PNG with its numbers as CSV' %}"><i class="fas fa-file-archive"></i> {% trans "Charts and maps (ZIP)" %}</button>
           <span class="pr-help" id="prPdfStatus" role="status" style="margin-left:.4rem;"></span>
           <div class="pr-help">{% trans "A frozen report's PDF is made once and linked from its page; a live report's PDF shows the numbers of the moment you ask." %}</div>
           {% if not survey %}<a class="btn btn-sm btn-outline-danger" href="{% url 'editor_report_delete' page.uuid %}"><i class="fas fa-trash"></i> {% trans "Delete report…" %}</a>{% endif %}
@@ -479,18 +503,20 @@ function prMakePdf(button){
   var status = document.getElementById('prPdfStatus');
   var url = button.dataset.url;
   button.disabled = true;
-  status.textContent = '{% filter escapejs %}{% trans "Making the PDF…" %}{% endfilter %}';
+  var kind = button.dataset.kind || 'pdf';
+  var form = new FormData(); form.append('kind', kind);
+  status.textContent = '{% filter escapejs %}{% trans "Making the file…" %}{% endfilter %}';
   function done(text){ button.disabled = false; status.textContent = text; }
   function poll(job){
     fetch(url + '?job=' + job, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
       .then(function(r){ return r.json(); })
       .then(function(data){
-        if (data.status === 'done') { done(''); window.open(data.url, '_blank'); }
+        if (data.status === 'done') { done(''); if (kind === 'zip') { window.location = data.url; } else { window.open(data.url, '_blank'); } }
         else if (data.status === 'failed') { done('{% filter escapejs %}{% trans "The PDF could not be made. Try again." %}{% endfilter %}'); }
         else { setTimeout(function(){ poll(job); }, 2000); }
       }).catch(function(){ done('{% filter escapejs %}{% trans "The PDF could not be made. Try again." %}{% endfilter %}'); });
   }
-  fetch(url, { method: 'POST', headers: { 'X-CSRFToken': token, 'X-Requested-With': 'XMLHttpRequest' } })
+  fetch(url, { method: 'POST', headers: { 'X-CSRFToken': token, 'X-Requested-With': 'XMLHttpRequest' }, body: form })
     .then(function(r){ return r.json(); })
     .then(function(data){ poll(data.job); })
     .catch(function(){ done('{% filter escapejs %}{% trans "The PDF could not be made. Try again." %}{% endfilter %}'); });
