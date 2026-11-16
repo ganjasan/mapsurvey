@@ -90,8 +90,81 @@ class GridTest(SimpleTestCase):
         self.assertEqual([c['respondents'] for c in out['cells']], [3])
 
 
+class AdaptiveGridTest(SimpleTestCase):
+    """Requirement: A public map never carries an individual geometry — cell size (change
+    data-grid-adaptive)."""
+
+    # Four respondents within ~400 m of each other and two further out, over ~2 km.
+    TOWN = [(30.000, 59.000), (30.002, 59.001), (30.003, 59.000), (30.001, 59.002),
+            (30.030, 59.010), (30.034, 59.012)]
+
+    def test_a_small_survey_gets_coarser_cells(self):
+        """
+        GIVEN 6 respondents' points a few hundred metres apart, K = 3
+        WHEN the grid is built without a fixed size
+        THEN a 40-across grid would show nobody, and the chosen coarser grid shows most of them
+        """
+        members = [(i, i, Point(x, y)) for i, (x, y) in enumerate(self.TOWN)]
+        fixed = grid(members, k=3, cells_across=40)
+        self.assertEqual(fixed['respondents_shown'], 0)
+        out = grid(members, k=3)
+        self.assertLess(out['cells_across'], 40)
+        self.assertGreaterEqual(out['respondents_shown'], 4)
+        self.assertTrue(all(c['respondents'] >= 3 for c in out['cells']))
+
+    def test_a_busy_survey_keeps_the_fine_grid(self):
+        """
+        GIVEN 30 respondents' points in one small square and 2 elsewhere, K = 3
+        WHEN the grid is built without a fixed size
+        THEN the fine 40-across grid is kept
+        """
+        members = [(i, i, Point(30.0 + (i % 5) * 1e-5, 59.0)) for i in range(30)]
+        members += [(30, 30, Point(30.02, 59.02)), (31, 31, Point(30.03, 59.0))]
+        self.assertEqual(grid(members, k=3)['cells_across'], 40)
+
+    def test_too_few_answers_show_no_cell(self):
+        """
+        GIVEN 2 respondents' points far apart, K = 3
+        WHEN the grid is built
+        THEN no cell is shown and both are counted as hidden
+        """
+        out = grid([(1, 1, Point(30.0, 59.0)), (2, 2, Point(31.0, 60.0))], k=3)
+        self.assertEqual((out['cells'], out['respondents_hidden']), ([], 2))
+
+
 class PublicSurfacesTest(TestCase):
     """Requirements: one path for every public surface; no individual geometry; stale snapshots."""
+
+    def test_too_few_answers_replace_the_map_with_a_note(self):
+        """
+        GIVEN 2 respondents' points far apart, K = 3
+        WHEN the public map block is built
+        THEN it holds no cell and a note saying why, and no answer geometry
+        """
+        from survey.public_results import PublicResultsService
+        self._respondent(1, (30.0, 59.0))
+        self._respondent(1, (31.0, 60.0))
+        block = PublicResultsBlock.objects.create(page=self.page, block_type='map', question=self.point, order=0)
+        payload = PublicResultsService(self.page)._build_block(block)
+        self.assertEqual(payload['cells']['features'], [])
+        self.assertIn('fewer than 3 people', payload['note'])
+        self.assertEqual(payload['respondents_hidden'], 2)
+        self.assertNotIn('"Point"', str(payload))
+
+    def test_hidden_respondents_are_named_in_the_caption(self):
+        """
+        GIVEN 4 respondents in one place and 1 far away, K = 3
+        WHEN the public map block is built
+        THEN one cell of 4 shows and the note says 1 respondent is not shown
+        """
+        from survey.public_results import PublicResultsService
+        for _ in range(4):
+            self._respondent(1, (30.0, 59.0))
+        self._respondent(1, (31.0, 60.0))
+        block = PublicResultsBlock.objects.create(page=self.page, block_type='map', question=self.point, order=0)
+        payload = PublicResultsService(self.page)._build_block(block)
+        self.assertEqual([f['properties']['respondents'] for f in payload['cells']['features']], [4])
+        self.assertIn('1 respondent is in an area with fewer than 3 people', payload['note'])
 
     def setUp(self):
         org = _make_org('AggOrg')

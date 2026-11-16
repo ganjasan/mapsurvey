@@ -13555,3 +13555,15 @@ msgstr "Durch Kommas getrennt, z. B. Riverside-Plan 2027"
 #: data/templates/data/dataset.html
 msgid "Tags group the datasets and surveys of one engagement; the Data list and the survey dashboard filter by them."
 msgstr "Schlagwörter fassen die Datensätze und Umfragen eines Beteiligungsverfahrens zusammen; die Datenliste und die Umfrageübersicht filtern danach."
+
+#: survey/public_results.py
+#, python-format
+msgid "Not enough answers yet to show this map without revealing anyone: areas with fewer than %(k)s people stay hidden."
+msgstr "Noch zu wenige Antworten, um diese Karte zu zeigen, ohne jemanden erkennbar zu machen: Bereiche mit weniger als %(k)s Personen bleiben ausgeblendet."
+
+#: survey/public_results.py
+#, python-format
+msgid "%(n)s respondent is in an area with fewer than %(k)s people and is not shown."
+msgid_plural "%(n)s respondents are in areas with fewer than %(k)s people and are not shown."
+msgstr[0] "%(n)s befragte Person ist in einem Bereich mit weniger als %(k)s Personen und wird nicht gezeigt."
+msgstr[1] "%(n)s Befragte sind in Bereichen mit weniger als %(k)s Personen und werden nicht gezeigt."

@@ -13445,3 +13445,15 @@ msgstr "Komadega eraldatud, nt Riverside’i plaan 2027"
 #: data/templates/data/dataset.html
 msgid "Tags group the datasets and surveys of one engagement; the Data list and the survey dashboard filter by them."
 msgstr "Sildid rühmitavad ühe kaasamisprotsessi andmestikud ja küsitlused; andmete loend ja küsitluste töölaud filtreerivad nende järgi."
+
+#: survey/public_results.py
+#, python-format
+msgid "Not enough answers yet to show this map without revealing anyone: areas with fewer than %(k)s people stay hidden."
+msgstr "Vastuseid on veel liiga vähe, et näidata seda kaarti kedagi paljastamata: alad, kus on vähem kui %(k)s inimest, jäävad peidetuks."
+
+#: survey/public_results.py
+#, python-format
+msgid "%(n)s respondent is in an area with fewer than %(k)s people and is not shown."
+msgid_plural "%(n)s respondents are in areas with fewer than %(k)s people and are not shown."
+msgstr[0] "%(n)s vastaja on alal, kus on vähem kui %(k)s inimest, ja teda ei näidata."
+msgstr[1] "%(n)s vastajat on aladel, kus on vähem kui %(k)s inimest, ja neid ei näidata."

@@ -114,6 +114,16 @@ window.renderResultBlocks = function (blocks, BASEMAPS) {
 
   function renderMap(b){
     var el = document.getElementById('map-' + b.id); if (!el) return;
+    // Nothing above K anywhere (change data-grid-adaptive): say so instead of an empty map
+    // centred on nowhere.
+    if (!(b.cells && b.cells.features && b.cells.features.length) && b.note) {
+      var empty = document.createElement('div');
+      empty.className = 'pr-grid-empty';
+      empty.style.cssText = 'padding:1.5rem;border:1px dashed #d1d5db;border-radius:8px;color:#4b5563;font-size:.9rem;text-align:center;';
+      empty.textContent = b.note;
+      el.parentNode.replaceChild(empty, el);
+      return;
+    }
     var map = L.map(el, { scrollWheelZoom: false });
     var base = BASEMAPS[b.basemap] || BASEMAPS.streets;
     L.tileLayer(base.url, base.opts).addTo(map);
@@ -164,7 +174,8 @@ window.renderResultBlocks = function (blocks, BASEMAPS) {
       var cap = document.createElement('div');
       cap.className = 'pr-grid-caption';
       cap.style.cssText = 'font-size:.8rem;color:#6b7280;margin-top:.35rem;';
-      cap.textContent = (b.respondents_total || 0) + ' respondents · ' + (b.cell_m ? Math.round(b.cell_m) + ' m cells' : '');
+      cap.textContent = (b.respondents_total || 0) + ' respondents · ' + (b.cell_m ? Math.round(b.cell_m) + ' m cells' : '')
+        + (b.note ? ' · ' + b.note : '');
       el.parentNode.insertBefore(cap, el.nextSibling);
     }
   }

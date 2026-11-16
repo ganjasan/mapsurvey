@@ -13594,3 +13594,16 @@ msgstr "Oddzielone przecinkami, np. Plan Riverside 2027"
 #: data/templates/data/dataset.html
 msgid "Tags group the datasets and surveys of one engagement; the Data list and the survey dashboard filter by them."
 msgstr "Tagi grupują zbiory danych i ankiety jednego procesu konsultacji; lista Danych i panel ankiet filtrują według nich."
+
+#: survey/public_results.py
+#, python-format
+msgid "Not enough answers yet to show this map without revealing anyone: areas with fewer than %(k)s people stay hidden."
+msgstr "Za mało odpowiedzi, by pokazać tę mapę bez ujawniania kogokolwiek: obszary z mniej niż %(k)s osobami pozostają ukryte."
+
+#: survey/public_results.py
+#, python-format
+msgid "%(n)s respondent is in an area with fewer than %(k)s people and is not shown."
+msgid_plural "%(n)s respondents are in areas with fewer than %(k)s people and are not shown."
+msgstr[0] "%(n)s respondent jest na obszarze z mniej niż %(k)s osobami i nie jest pokazany."
+msgstr[1] "%(n)s respondentów jest na obszarach z mniej niż %(k)s osobami i nie są pokazani."
+msgstr[2] "%(n)s respondentów jest na obszarach z mniej niż %(k)s osobami i nie są pokazani."
