@@ -12,7 +12,7 @@ named before the confirm; a bound question blocks the delete.{% endcomment %}
   {% if used_by %}
   <p>{% blocktrans count n=used_by|length %}It is used in {{ n }} place:{% plural %}It is used in {{ n }} places:{% endblocktrans %}</p>
   <ul data-testid="delete-used-by">
-    {% for p in used_by %}<li>{% if p.kind == 'site' %}{% trans "Site" %}{% elif p.kind == 'question' %}{% trans "Question" %}{% else %}{% trans "Survey" %}{% endif %} · {% if p.url %}<a href="{{ p.url }}">{{ p.label }}</a>{% else %}{{ p.label }}{% endif %}</li>{% endfor %}
+    {% for p in used_by %}<li>{% if p.kind == 'site' %}{% trans "Site" %}{% elif p.kind == 'question' %}{% trans "Question" %}{% elif p.kind == 'report' %}{% trans "Report" %}{% else %}{% trans "Survey" %}{% endif %} · {% if p.url %}<a href="{{ p.url }}">{{ p.label }}</a>{% else %}{{ p.label }}{% endif %}</li>{% endfor %}
   </ul>
   {% else %}
   <p>{% trans "No survey or site uses it." %}</p>

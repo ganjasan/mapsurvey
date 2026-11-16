@@ -5,7 +5,8 @@ Moved from survey/tests.py by #273; classes are unchanged.
 from django.test import TestCase
 from django.contrib.gis.geos import Point
 import json
-from survey.models import SurveyHeader, SurveySection, Question, SurveySession, Answer, PublicResultsPage, PublicResultsBlock
+from survey.models import SurveyHeader, SurveySection, Question, SurveySession, Answer
+from reports.models import Report, ReportBlock
 from survey.tests.helpers import _make_org
 
 
@@ -19,8 +20,8 @@ class SpraycanPublicGridTest(TestCase):
         self.spray = Question.objects.create(
             survey_section=self.section, code='SP', name='Unsafe', input_type='spraycan', color='#d6336c',
         )
-        self.page = PublicResultsPage.objects.create(survey=self.survey, slug='spraypub', is_published=True)
-        self.block = PublicResultsBlock.objects.create(page=self.page, block_type='map', question=self.spray, order=0)
+        self.page = Report.objects.create(survey=self.survey, slug='spraypub', is_published=True)
+        self.block = ReportBlock.objects.create(report=self.page, block_type='map', question=self.spray, order=0)
 
     def _cloud(self, coords, status=''):
         from django.contrib.gis.geos import MultiPoint
@@ -29,10 +30,10 @@ class SpraycanPublicGridTest(TestCase):
         return Answer.objects.create(survey_session=session, question=self.spray, multipoint=geom)
 
     def _payload(self, k=3):
-        from survey.public_results import PublicResultsService
+        from reports.render import ReportService
         self.page.k_anonymity_threshold = k
         self.page.save()
-        blocks = PublicResultsService(self.page).build_blocks()
+        blocks = ReportService(self.page).build_blocks()
         return blocks[0]
 
     def test_grid_counts_respondents_and_omits_cells_below_k(self):
@@ -96,12 +97,12 @@ class SpraycanPublicGridTest(TestCase):
         WHEN the page data is rendered
         THEN it is flagged stale instead of rendering the old payload
         """
-        from survey.public_results import freeze_page, render_page_data
+        from reports.render import freeze_report, render_data
         self._cloud([(13.300, 52.500)])
-        freeze_page(self.page)
+        freeze_report(self.page)
         self.page.snapshot['snapshot_version'] = 1
         self.page.save(update_fields=['snapshot'])
-        data = render_page_data(self.page)
+        data = render_data(self.page)
         self.assertTrue(data.get('stale'))
 
     def test_block_type_for_spraycan_is_map(self):
@@ -110,5 +111,5 @@ class SpraycanPublicGridTest(TestCase):
         WHEN its public block type is resolved
         THEN it is a map block
         """
-        from survey.public_results import block_type_for_question
+        from reports.render import block_type_for_question
         self.assertEqual(block_type_for_question(self.spray), 'map')

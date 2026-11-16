@@ -146,7 +146,8 @@ class Row:
 def catalogue_rows(org, user):
     """The datasets the member may see, with their facts (rows, used by, last change, link)."""
     from django.urls import reverse
-    from survey.models import (Answer, PublicResultsBlock, Question, SiteBlock, SurveyHeader,
+    from reports.models import ReportBlock
+    from survey.models import (Answer, Question, SiteBlock, SurveyHeader,
                                SurveyMapLayer)
     from survey.models import LayerObject
     visible = visible_survey_ids(org, user)
@@ -190,9 +191,11 @@ def catalogue_rows(org, user):
     links = dict(DatasetLink.objects.filter(dataset__organization=org).values('dataset_id')
                  .annotate(n=Count('id')).values_list('dataset_id', 'n'))
     pr_blocks = defaultdict(int)
-    for sid, code in (PublicResultsBlock.objects.filter(page__survey_id__in=visible, question__isnull=False)
-                      .values_list('page__survey_id', 'question__code')):
-        pr_blocks[(family.get(sid, sid), code)] += 1
+    # Report blocks: a map block counts on its answers dataset, any question block on the
+    # survey's responses (change reports-object).
+    for sid, kind, code in (ReportBlock.objects.filter(dataset__survey_id__in=visible)
+                            .values_list('dataset__survey_id', 'dataset__kind', 'question_code')):
+        pr_blocks[(sid, code if kind == Dataset.KIND_ANSWERS else '')] += 1
     site_blocks = defaultdict(int)
     for sid, data in (SiteBlock.objects.filter(kind='results', site_survey__survey_id__in=visible)
                       .values_list('site_survey__survey_id', 'data')):
@@ -236,7 +239,7 @@ def catalogue_rows(org, user):
             row.link = reverse('editor_survey_analytics', args=[survey.uuid]) if survey else ''
         else:
             row.rows = responses.get(sid, 0)
-            row.used_by = 1 + (1 if any(k[0] == sid for k in pr_blocks) else 0)
+            row.used_by = 1 + pr_blocks.get((sid, ''), 0)
             row.changed = last_seen.get(sid)
             row.link = reverse('editor_survey_analytics', args=[survey.uuid]) if survey else ''
         out.append(row)

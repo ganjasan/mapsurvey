@@ -21,7 +21,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .models import (
-    Comment, CommentAttachment, CommentSeen, CommentThread, Membership, PublicResultsBlock,
+    Comment, CommentAttachment, CommentSeen, CommentThread, Membership,
     Question, QuestionGroup, SurveySection, SurveySession,
 )
 from .versioning import canonical_of, family_ids_with_draft
@@ -202,7 +202,8 @@ def anchor_fields(survey, kind, key):
             raise AnchorError('session not in survey')
         return {'anchor_kind': 'session', 'session': sess}
     if kind == 'block':
-        b = PublicResultsBlock.objects.filter(pk=pk, page__survey=canonical).first()
+        from reports.models import ReportBlock
+        b = ReportBlock.objects.filter(pk=pk, report__survey=canonical).first()
         if b is None:
             raise AnchorError('block not in survey')
         return {'anchor_kind': 'block', 'block': b}
@@ -246,7 +247,7 @@ def decorate(thread):
 
 def threads_for(survey, status='open'):
     qs = (CommentThread.objects.filter(survey=canonical_of(survey))
-          .select_related('created_by', 'resolved_by', 'session', 'block', 'block__question')
+          .select_related('created_by', 'resolved_by', 'session', 'block', 'block__dataset__survey')
           .prefetch_related('comments__author', 'comments__mentions', 'comments__attachments'))
     if status in ('open', 'resolved'):
         qs = qs.filter(status=status)

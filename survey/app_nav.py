@@ -38,6 +38,8 @@ MODULES = (
     NavItem('sites', _('Sites'), 'editor_sites', 'far fa-window-maximize', feature='sites'),
     # Data (change data-catalogue, epic #676): every place dataset of the workspace.
     NavItem('data', _('Data'), 'editor_data', 'fas fa-database'),
+    # Reports (change reports-object, epic #712): what the workspace publishes from its data.
+    NavItem('reports', _('Reports'), 'editor_reports', 'far fa-file-alt'),
 )
 
 # Two items, not one "API & connections" (owner, 2026-11-06): tokens and connected apps for
@@ -77,6 +79,7 @@ _ACTIVE_BY_URL_NAME = {
 _ACTIVE_BY_PREFIX = (
     ('editor_site', 'sites'),
     ('editor_data', 'data'),
+    ('editor_reports', 'reports'),
     ('org_map_styles', 'map_styles'),
     ('org_map_style', 'map_styles'),
     ('org_members', 'members'),

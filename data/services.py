@@ -154,6 +154,9 @@ def delete_view(actor, view):
     if view.links.exists():
         raise DataRefused(_('“%(name)s” is shown in a survey or on a site. Unlink it there first.')
                           % {'name': view.name}, status=409)
+    if view.report_blocks.exists():
+        raise DataRefused(_('“%(name)s” is shown in a report. Remove it from the report first.')
+                          % {'name': view.name}, status=409)
     view.delete()
 
 

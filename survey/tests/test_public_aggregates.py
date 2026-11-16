@@ -7,8 +7,10 @@ from django.contrib.gis.geos import LineString, MultiPoint, Point, Polygon
 from django.test import SimpleTestCase, TestCase
 
 from data.aggregate import grid, mask
-from survey.models import (Answer, PublicResultsBlock, PublicResultsPage, Question, SurveyHeader,
-                           SurveySection, SurveySession, PUBLIC_RESULTS_SNAPSHOT_VERSION)
+from survey.models import (
+    Answer, Question, SurveyHeader, SurveySection, SurveySession,
+)
+from reports.models import ReportBlock, Report, SNAPSHOT_VERSION
 
 from .helpers import _make_org
 
@@ -141,11 +143,11 @@ class PublicSurfacesTest(TestCase):
         WHEN the public map block is built
         THEN it holds no cell and a note saying why, and no answer geometry
         """
-        from survey.public_results import PublicResultsService
+        from reports.render import ReportService
         self._respondent(1, (30.0, 59.0))
         self._respondent(1, (31.0, 60.0))
-        block = PublicResultsBlock.objects.create(page=self.page, block_type='map', question=self.point, order=0)
-        payload = PublicResultsService(self.page)._build_block(block)
+        block = ReportBlock.objects.create(report=self.page, block_type='map', question=self.point, order=0)
+        payload = ReportService(self.page)._build_block(block)
         self.assertEqual(payload['cells']['features'], [])
         self.assertIn('fewer than 3 people', payload['note'])
         self.assertEqual(payload['respondents_hidden'], 2)
@@ -157,12 +159,12 @@ class PublicSurfacesTest(TestCase):
         WHEN the public map block is built
         THEN one cell of 4 shows and the note says 1 respondent is not shown
         """
-        from survey.public_results import PublicResultsService
+        from reports.render import ReportService
         for _ in range(4):
             self._respondent(1, (30.0, 59.0))
         self._respondent(1, (31.0, 60.0))
-        block = PublicResultsBlock.objects.create(page=self.page, block_type='map', question=self.point, order=0)
-        payload = PublicResultsService(self.page)._build_block(block)
+        block = ReportBlock.objects.create(report=self.page, block_type='map', question=self.point, order=0)
+        payload = ReportService(self.page)._build_block(block)
         self.assertEqual([f['properties']['respondents'] for f in payload['cells']['features']], [4])
         self.assertIn('1 respondent is in an area with fewer than 3 people', payload['note'])
 
@@ -174,7 +176,7 @@ class PublicSurfacesTest(TestCase):
             survey_section=section, code='AG_C', name='Pick', input_type='choice',
             choices=[{'code': 1, 'name': 'A'}, {'code': 2, 'name': 'B'}])
         self.point = Question.objects.create(survey_section=section, code='AG_P', name='Where', input_type='point')
-        self.page = PublicResultsPage.objects.create(survey=self.survey, slug='agg', is_published=True)
+        self.page = Report.objects.create(survey=self.survey, slug='agg', is_published=True)
 
     def _respondent(self, code, where=(30.0, 59.0)):
         s = SurveySession.objects.create(survey=self.survey)
@@ -191,15 +193,15 @@ class PublicSurfacesTest(TestCase):
         """
         from types import SimpleNamespace
         from survey.analytics import SurveyAnalyticsService
-        from survey.public_results import PublicResultsService
+        from reports.render import ReportService
         for code in (1, 1, 1, 1, 2, 2):
             self._respondent(code)
-        block = PublicResultsBlock.objects.create(page=self.page, block_type='chart', question=self.choice, order=0)
-        page_payload = PublicResultsService(self.page)._build_block(block)
+        block = ReportBlock.objects.create(report=self.page, block_type='chart', question=self.choice, order=0)
+        page_payload = ReportService(self.page)._build_block(block)
         site_like = SimpleNamespace(id='r1', block_type='chart', viz='auto', custom_title={}, question=self.choice,
                                     question_id=self.choice.pk, geo_label_fields=[], basemap='streets',
                                     content={}, image=None, is_hidden=False)
-        site_payload = PublicResultsService.for_survey(self.survey, 3)._build_block(site_like)
+        site_payload = ReportService.for_survey(self.survey, 3)._build_block(site_like)
         for payload in (page_payload, site_payload):
             b = next(i for i in payload['items'] if i['code'] == 2)
             self.assertEqual((b['display'], b['value']), ('<3', None))
@@ -214,13 +216,13 @@ class PublicSurfacesTest(TestCase):
         THEN its payload is a grid with one cell of 3 and no answer geometry
         """
         from types import SimpleNamespace
-        from survey.public_results import PublicResultsService
+        from reports.render import ReportService
         for _ in range(3):
             self._respondent(1)
         site_like = SimpleNamespace(id='r2', block_type='map', viz='auto', custom_title={}, question=self.point,
                                     question_id=self.point.pk, geo_label_fields=[], basemap='streets',
                                     content={}, image=None, is_hidden=False)
-        payload = PublicResultsService.for_survey(self.survey, 3)._build_block(site_like)
+        payload = ReportService.for_survey(self.survey, 3)._build_block(site_like)
         self.assertEqual(payload['data_type'], 'grid')
         self.assertEqual([f['properties']['respondents'] for f in payload['cells']['features']], [3])
         self.assertNotIn('"Point"', str(payload))
@@ -231,12 +233,12 @@ class PublicSurfacesTest(TestCase):
         WHEN the page data is rendered
         THEN it is in the "refresh needed" state and carries no blocks
         """
-        from survey.public_results import render_page_data
+        from reports.render import render_data
         self.page.mode = 'frozen'
         self.page.snapshot = {'snapshot_version': 2, 'response_count': 1, 'blocks': [
             {'block_type': 'map', 'feature_collection': {'features': [{'geometry': {'type': 'Point'}}]}}]}
         self.page.save()
-        self.assertEqual(PUBLIC_RESULTS_SNAPSHOT_VERSION, 3)
-        data = render_page_data(self.page)
+        self.assertEqual(SNAPSHOT_VERSION, 3)
+        data = render_data(self.page)
         self.assertTrue(data['stale'])
         self.assertEqual(data['blocks'], [])

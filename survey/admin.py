@@ -13,7 +13,6 @@ from .models import (
     Story, StoryImage, FunnelReport, SignupAttribution, AuditLog,
     Cohort, CohortDimension, UserCohort, DomainSegmentRule,
     CreatorNote, CreatorProfile, EmailVerification,
-    PublicResultsPage, PublicResultsBlock,
     AIGenerationEvent,
     ProInterest,
     DemoRequest,
@@ -460,19 +459,7 @@ class FunnelDashboardAdmin(admin.ModelAdmin):
         return super().changelist_view(request, extra_context=extra_context)
 
 
-class PublicResultsBlockInline(admin.TabularInline):
-    model = PublicResultsBlock
-    extra = 0
-    fields = ('order', 'block_type', 'question', 'viz', 'is_hidden')
-
-
-class PublicResultsPageAdmin(admin.ModelAdmin):
-    list_display = ('slug', 'survey', 'visibility', 'is_published', 'mode', 'frozen_at')
-    list_filter = ('visibility', 'is_published', 'mode')
-    inlines = [PublicResultsBlockInline]
-
-
-admin.site.register(PublicResultsPage, PublicResultsPageAdmin)
+# Reports (once the public results pages) are registered in reports/admin.py.
 
 
 @admin.register(AIGenerationEvent)

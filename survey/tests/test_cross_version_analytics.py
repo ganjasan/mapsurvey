@@ -4,7 +4,8 @@ Moved from survey/tests.py by #273; classes are unchanged.
 """
 from django.test import TestCase
 from django.contrib.auth.models import User
-from survey.models import SurveyHeader, SurveySection, Question, SurveySession, Answer, Membership, PublicResultsPage
+from survey.models import SurveyHeader, SurveySection, Question, SurveySession, Answer, Membership
+from reports.models import Report
 from survey.analytics import SurveyAnalyticsService
 from survey.versioning import clone_survey_for_draft, publish_draft
 from survey.tests.helpers import _make_org
@@ -131,14 +132,14 @@ class VersionFamilyHelpersTest(TestCase):
         WHEN the service collects survey ids
         THEN it matches family_ids (refactored onto the shared helper)
         """
-        from survey.public_results import PublicResultsService
+        from reports.render import ReportService
         from survey.versioning import family_ids
-        from survey.models import PublicResultsPage
-        page = PublicResultsPage.objects.create(
+        from reports.models import Report
+        page = Report.objects.create(
             survey=self.canonical, slug='fam-page', is_published=True,
         )
-        svc = PublicResultsService(page)
-        self.assertEqual(svc._survey_ids, family_ids(self.canonical))
+        svc = ReportService(page)
+        self.assertEqual(svc._scope(svc.home)[0], family_ids(self.canonical))
         self.assertEqual(svc.response_count(), 1)  # sess1 only (sess2 deleted)
 
 
@@ -299,13 +300,13 @@ class CrossVersionAnalyticsTest(TestCase):
         WHEN answers are collected
         THEN both resolve to the same lineage-wide set
         """
-        from survey.public_results import PublicResultsService
-        from survey.models import PublicResultsPage
-        page = PublicResultsPage.objects.create(
+        from reports.render import ReportService
+        from reports.models import Report
+        page = Report.objects.create(
             survey=self.canonical, slug='xver-page', is_published=True,
             k_anonymity_threshold=1,
         )
-        svc = PublicResultsService(page)
+        svc = ReportService(page)
         self.assertEqual(svc._answers(self.q_keep).count(), 3)     # archived FK
         self.assertEqual(svc._answers(self.v2_keep).count(), 3)    # current FK
         data = svc._choice_data(self.v2_keep)

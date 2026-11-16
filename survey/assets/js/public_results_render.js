@@ -1,7 +1,7 @@
 /* The browser renderer of public result payloads (change landing-results, #578).
  * Moved verbatim from the inline script of public_results.html so that /r/<slug>/ and site
  * pages draw charts, maps and object tables with ONE code path. `blocks` are the payloads of
- * survey/public_results.py::PublicResultsService; `BASEMAPS` is a basemap table
+ * survey/public_results.py::ReportService; `BASEMAPS` is a basemap table
  * (survey/basemaps.py::table_for) whose Mapbox entries already carry the access token.
  * Element ids: chart-<id>, map-<id>, objects-<id>. */
 window.renderResultBlocks = function (blocks, BASEMAPS) {

@@ -198,6 +198,27 @@ class UsedByTest(_LinkFixture):
         page = self.client.get(reverse('editor_data_dataset', args=[self.dataset.pk])).content.decode()
         self.assertIn('Survey A', page.split('data-testid="used-by"')[1])
 
+    def test_a_report_that_reads_the_dataset_is_listed(self):
+        """
+        GIVEN a report whose map block reads the answers to a geo question of survey A
+        WHEN the owner opens that answers dataset's page
+        THEN the page names the report among the places that use it
+        """
+        from data.links import used_by
+        from reports.models import Report, ReportBlock
+        where = Question.objects.create(survey_section=self.section_a, code='Q_WHERE', name='Where',
+                                        input_type='point')
+        report = Report.objects.create(survey=self.survey_a, slug='what-we-heard',
+                                       intro={'title': {'en': 'What we heard'}})
+        block = ReportBlock.objects.create(report=report, block_type='map', question=where)
+        ReportBlock.objects.create(report=report, block_type='map', question=where, order=1)
+
+        places = [p for p in used_by(block.dataset) if p.kind == 'report']
+        page = self.client.get(reverse('editor_data_dataset', args=[block.dataset.pk])).content.decode()
+
+        self.assertEqual([p.label for p in places], ['What we heard'])
+        self.assertIn('What we heard', page.split('data-testid="used-by"')[1])
+
     def test_deleting_removes_the_links(self):
         """
         GIVEN the dataset is linked into survey A and a Site, and no question is bound to it

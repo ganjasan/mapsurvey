@@ -2,6 +2,7 @@ from django.urls import path, re_path
 from django.views.generic import RedirectView
 
 from data import views as data_views
+from reports import views as report_views
 
 from . import views
 from . import editor_views
@@ -19,7 +20,7 @@ from . import share_views
 from survey.print import views as print_views
 from . import translation_views
 from . import org_views
-from . import public_results_editor
+from reports import editor_views as public_results_editor
 from . import abuse_review_views
 from . import site_views
 from . import site_translation_views
@@ -323,6 +324,8 @@ urlpatterns = [
     path('editor/sites/', site_views.editor_sites, name='editor_sites'),
     # The Data catalogue (change data-catalogue, epic #676; `editor_data*` names light the sidebar row).
     path('editor/data/', data_views.catalogue, name='editor_data'),
+    # Reports (change reports-object, epic #712; `editor_reports*` names light the sidebar row).
+    path('editor/reports/', report_views.report_list, name='editor_reports'),
     path('editor/data/upload/', data_views.upload, name='editor_data_upload'),
     path('editor/data/jobs/', data_views.jobs, name='editor_data_jobs'),
     path('editor/data/jobs/<int:job_id>/dismiss/', data_views.dismiss, name='editor_data_job_dismiss'),

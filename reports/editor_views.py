@@ -1,39 +1,38 @@
-"""Editor views for configuring a survey's public results page.
+"""Editor views for configuring a survey's report (its public results page).
 
 Lives under /editor/surveys/<uuid>/public-results/. All views require editor
 rights on the survey (request.survey is set by the permission decorator).
-The page is lazily created on first visit.
+The report is lazily created on first visit. Every write goes through
+`reports.services`; the story editor (#704) replaces these screens.
 """
 
 import json
 
-from data.scope import SessionScope
-
 from django.conf import settings
 from django.contrib.auth.views import redirect_to_login
-from django.http import HttpResponse, JsonResponse, Http404
-from django.shortcuts import redirect, get_object_or_404
-from django.template.loader import render_to_string
+from django.http import Http404, HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
-from django.utils.text import slugify
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.http import require_POST
 
-from . import basemaps as basemap_registry
-from .models import (
-    PublicResultsPage, PublicResultsBlock, Question, Answer, SurveyHeader,
-    PUBLIC_RESULTS_BLOCK_TYPE_CHOICES,
-)
-from .comments import open_counts as _thread_counts
-from .permissions import (
-    survey_permission_required, get_effective_survey_role, _check_survey_role,
-)
-from .public_results import (
-    freeze_page, unfreeze_page, bump_page_version, scaffold_page,
-    get_or_create_page as _get_or_create_page,
-    block_type_for_question as _block_type_for_question,
+from data.scope import SessionScope
+from reports import services
+from reports.models import Report, ReportBlock
+from reports.sources import attach_questions
+from reports.render import (
     TEXT_INPUT_TYPES,
+    block_type_for_question as _block_type_for_question,
+    report_for_survey as _report_for_survey,
+    scaffold_report,
 )
+from survey import basemaps as basemap_registry
+from survey.comments import open_counts as _thread_counts
+from survey.models import Answer, Question, SurveyHeader
+from survey.permissions import (
+    _check_survey_role, get_effective_survey_role, survey_permission_required,
+)
+from survey.services.context import Actor
 
 
 def _is_ajax(request):
@@ -58,20 +57,20 @@ def _may_edit(request, survey):
 def _preview_denied(request, survey):
     """Response for a preview request from someone without editor rights.
 
-    Forwards to the public results page when one is published — this is the
-    whole point of the view being decorator-free. `visibility` is not consulted:
-    an `unlisted` page is one the creator handed out by link, and `/r/<slug>/`
-    serves it already. Reads only; never creates a page row on a path a
-    stranger can trigger.
+    Forwards to the public page when the survey's report is published — this is the
+    whole point of the view being decorator-free. `visibility` is not consulted here:
+    an `unlisted` report is one the creator handed out by link, and `/r/<slug>/`
+    serves it already (and guards a workspace-only one itself). Reads only; never
+    creates a report row on a path a stranger can trigger.
 
-    With no published page there is nowhere to send them, so the original
+    With no published report there is nowhere to send them, so the original
     denial stands.
     """
     if getattr(settings, 'PUBLIC_RESULTS_PREVIEW_FALLBACK', True):
-        page = PublicResultsPage.objects.filter(
-            survey=survey, is_published=True).only('slug').first()
-        if page is not None:
-            return redirect('public_results', slug=page.slug)
+        report = Report.objects.filter(
+            survey=survey, is_published=True).only('slug').order_by('id').first()
+        if report is not None:
+            return redirect('public_results', slug=report.slug)
 
     if not request.user.is_authenticated:
         return redirect_to_login(request.get_full_path())
@@ -99,6 +98,15 @@ def _survey_questions(survey):
     return rows
 
 
+def _refused(request, survey_uuid, refusal, status=400):
+    """A service refusal as this screen always answered it."""
+    if _is_ajax(request):
+        return JsonResponse({'ok': False, 'error': refusal.code}, status=status)
+    from django.contrib import messages
+    messages.error(request, refusal.message)
+    return redirect('editor_survey_public_results', survey_uuid=survey_uuid)
+
+
 @survey_permission_required('editor')
 def public_results_config(request, survey_uuid):
     """Main config page. ?block=<id> shows that block's config in the center."""
@@ -107,14 +115,15 @@ def public_results_config(request, survey_uuid):
         # Covers surveys published outside the editor transition view (e.g.
         # Django admin): however the survey became published, the first look
         # at this tab shows the drafted blocks. No-op once scaffolded_at set.
-        page = scaffold_page(survey)
+        page = scaffold_report(survey)
     else:
-        page = _get_or_create_page(survey)
+        page = _report_for_survey(survey)
 
     selected_block = None
     block_id = request.GET.get('block')
     if block_id:
-        selected_block = PublicResultsBlock.objects.filter(page=page, id=block_id).first()
+        selected_block = (ReportBlock.objects.filter(report=page, id=block_id)
+                          .select_related('dataset__survey').first())
 
     # Geo popups expose the point's OWN attributes — i.e. the geo question's
     # (non-text) sub-questions — not unrelated top-level form questions.
@@ -127,11 +136,10 @@ def public_results_config(request, survey_uuid):
             .order_by('order_number')
         )
 
-    canonical = survey.canonical_survey or survey
     context = {
         'survey': survey,
         'page': page,
-        'blocks': page.blocks.all(),
+        'blocks': attach_questions(page.blocks.select_related('dataset__survey')),
         'thread_counts': _thread_counts(survey, request.user),
         'question_rows': _survey_questions(survey),
         'geo_subquestions': geo_subquestions,
@@ -140,7 +148,7 @@ def public_results_config(request, survey_uuid):
         'active_tab': 'public_results',
         'can_publish': survey.status != 'draft',
         'public_url': request.build_absolute_uri('/r/{}/'.format(page.slug)),
-        'visibility_choices': PublicResultsPage._meta.get_field('visibility').choices,
+        'visibility_choices': Report._meta.get_field('visibility').choices,
         'chart_viz_options': [
             ('auto', 'Auto (bar chart)'), ('bar', 'Bar chart'), ('pie', 'Pie'),
             ('donut', 'Donut'), ('table', 'Table'),
@@ -156,7 +164,7 @@ def public_results_config(request, survey_uuid):
 
 @xframe_options_sameorigin
 def public_results_preview(request, survey_uuid):
-    """Render the public page inside the editor preview pane (iframe).
+    """Render the report's page inside the editor preview pane (iframe).
 
     Editor-only; renders regardless of publish state so the creator can see
     changes before publishing. Always noindex.
@@ -172,7 +180,7 @@ def public_results_preview(request, survey_uuid):
     to the requester's active org for the preview itself to render.
     """
     from django.shortcuts import render
-    from .public_results import build_page_context
+    from reports.render import build_context
 
     survey = SurveyHeader.objects.filter(
         uuid=survey_uuid, deleted_at__isnull=True).first()
@@ -183,9 +191,9 @@ def public_results_preview(request, survey_uuid):
         return _preview_denied(request, survey)
 
     request.survey = survey
-    page = _get_or_create_page(survey)
+    page = _report_for_survey(survey)
     lang = request.GET.get('lang') or 'en'
-    context = build_page_context(page, lang=lang)
+    context = build_context(page, lang=lang)
     context['noindex'] = True
     context['preview'] = True
     return render(request, 'public_results.html', context)
@@ -194,45 +202,26 @@ def public_results_preview(request, survey_uuid):
 @survey_permission_required('editor')
 @require_POST
 def public_results_save_settings(request, survey_uuid):
-    """Persist page-level settings."""
-    survey = request.survey
-    page = _get_or_create_page(survey)
-
+    """Persist report-level settings."""
+    page = _report_for_survey(request.survey)
+    post = request.POST
     # Publish state is owned by the explicit Publish/Unpublish action
     # (public_results_set_published). The settings form only touches it when the
     # field is present, so autosaving other fields never flips it off.
-    if 'is_published' in request.POST:
-        wants_publish = request.POST.get('is_published') == 'on'
-        if wants_publish and survey.status == 'draft':
-            if _is_ajax(request):
-                return JsonResponse({'ok': False, 'error': 'publish_survey_first'}, status=400)
-            from django.contrib import messages
-            messages.error(request, 'Publish the survey before publishing its results.')
-            return redirect('editor_survey_public_results', survey_uuid=survey_uuid)
-        page.is_published = wants_publish
-
-    page.visibility = request.POST.get('visibility', page.visibility)
-    page.intro = {
-        'title': {'en': request.POST.get('intro_title', '')},
-        'body': {'en': request.POST.get('intro_body', '')},
-    }
-    page.show_response_count = request.POST.get('show_response_count') == 'on'
-    page.show_participate_cta = request.POST.get('show_participate_cta') == 'on'
-    page.show_on_thanks = request.POST.get('show_on_thanks') == 'on'
-    page.feature_in_listing = request.POST.get('feature_in_listing') == 'on'
+    is_published = (post.get('is_published') == 'on') if 'is_published' in post else None
     try:
-        page.k_anonymity_threshold = max(1, int(request.POST.get('k_anonymity_threshold', 3)))
-    except (ValueError, TypeError):
-        page.k_anonymity_threshold = 3
-
-    slug_taken = False
-    new_slug = slugify(request.POST.get('slug', '') or page.slug)
-    if new_slug and new_slug != page.slug:
-        if not PublicResultsPage.objects.filter(slug=new_slug).exclude(id=page.id).exists():
-            page.slug = new_slug
-        else:
-            slug_taken = True
-    page.save()
+        slug_taken = services.update_settings(
+            Actor.from_request(request), page,
+            is_published=is_published,
+            visibility=post.get('visibility', page.visibility),
+            intro_title=post.get('intro_title', ''), intro_body=post.get('intro_body', ''),
+            show_response_count=post.get('show_response_count') == 'on',
+            show_participate_cta=post.get('show_participate_cta') == 'on',
+            show_on_thanks=post.get('show_on_thanks') == 'on',
+            feature_in_listing=post.get('feature_in_listing') == 'on',
+            k=post.get('k_anonymity_threshold', 3), slug=post.get('slug', ''))
+    except services.ReportRefused as refusal:
+        return _refused(request, survey_uuid, refusal)
     if _is_ajax(request):
         return JsonResponse({'ok': True, 'slug': page.slug, 'slug_taken': slug_taken})
     return redirect('editor_survey_public_results', survey_uuid=survey_uuid)
@@ -243,34 +232,24 @@ def public_results_save_settings(request, survey_uuid):
 def public_results_block_add(request, survey_uuid):
     """Add a block. block_type text/image are standalone; chart/map need a question."""
     survey = request.survey
-    page = _get_or_create_page(survey)
+    page = _report_for_survey(survey)
     block_type = request.POST.get('block_type')
+    actor = Actor.from_request(request)
+    try:
+        if block_type == 'text':
+            block = services.add_text_block(actor, page)
+        elif block_type == 'image':
+            block = services.add_image_block(actor, page, request.FILES.get('image'))
+        elif block_type == 'question':
+            question = get_object_or_404(
+                Question.objects.select_related('survey_section__survey_header'),
+                id=request.POST.get('question_id'), survey_section__survey_header=survey)
+            block = services.add_question_block(actor, page, question)
+        else:
+            return HttpResponse('Unknown block type.', status=400)
+    except services.ReportRefused as refusal:
+        return HttpResponse(refusal.message, status=400)
 
-    next_order = page.blocks.count()
-
-    if block_type == 'text':
-        block = PublicResultsBlock.objects.create(page=page, block_type=block_type, order=next_order)
-    elif block_type == 'image':
-        image = request.FILES.get('image')
-        if not image:
-            return HttpResponse('An image file is required.', status=400)
-        block = PublicResultsBlock.objects.create(page=page, block_type=block_type, image=image, order=next_order)
-    elif block_type == 'question':
-        question = get_object_or_404(
-            Question, id=request.POST.get('question_id'),
-            survey_section__survey_header=survey,
-        )
-        resolved = _block_type_for_question(question)
-        if resolved is None:
-            # Text questions are never publishable.
-            return HttpResponse('Question type is not available for publication.', status=400)
-        block = PublicResultsBlock.objects.create(
-            page=page, block_type=resolved, question=question, order=next_order,
-        )
-    else:
-        return HttpResponse('Unknown block type.', status=400)
-
-    bump_page_version(page)
     # Land the editor in the new block's config — the live preview scrolls to it.
     url = reverse('editor_survey_public_results', kwargs={'survey_uuid': survey_uuid})
     return redirect('{}?block={}'.format(url, block.id))
@@ -280,28 +259,20 @@ def public_results_block_add(request, survey_uuid):
 @require_POST
 def public_results_block_edit(request, survey_uuid, block_id):
     """Update a block's visualization, title, content, geo fields, visibility."""
-    survey = request.survey
-    page = _get_or_create_page(survey)
-    block = get_object_or_404(PublicResultsBlock, id=block_id, page=page)
-
-    block.viz = request.POST.get('viz', block.viz)
-    block.is_hidden = request.POST.get('is_hidden') == 'on'
-    if 'custom_title' in request.POST:
-        block.custom_title = {'en': request.POST.get('custom_title', '')}
-    if block.block_type == 'text':
-        block.content = {'en': request.POST.get('content', '')}
-    if block.block_type == 'image':
-        block.content = {'en': request.POST.get('content', '')}
-        if request.FILES.get('image'):
-            block.image = request.FILES['image']
-    if block.block_type == 'map':
-        block.geo_label_fields = request.POST.getlist('geo_label_fields')
-        valid_basemaps = {slug for slug, _ in basemap_registry.choices_for(page.survey.organization)}
-        posted_basemap = request.POST.get('basemap')
-        if posted_basemap in valid_basemaps:
-            block.basemap = posted_basemap
-    block.save()
-    bump_page_version(page)
+    page = _report_for_survey(request.survey)
+    block = get_object_or_404(ReportBlock, id=block_id, report=page)
+    post = request.POST
+    is_text_like = block.block_type in ('text', 'image')
+    services.update_block(
+        Actor.from_request(request), block,
+        viz=post.get('viz', block.viz),
+        is_hidden=post.get('is_hidden') == 'on',
+        custom_title=post.get('custom_title', '') if 'custom_title' in post else None,
+        content=post.get('content', '') if is_text_like else None,
+        image=request.FILES.get('image'),
+        geo_label_fields=post.getlist('geo_label_fields') if block.block_type == 'map' else None,
+        basemap=post.get('basemap'),
+        valid_basemaps={slug for slug, _label in basemap_registry.choices_for(page.organization)})
     if _is_ajax(request):
         return JsonResponse({'ok': True, 'block_id': block.id})
     url = reverse('editor_survey_public_results', kwargs={'survey_uuid': survey_uuid})
@@ -311,11 +282,9 @@ def public_results_block_edit(request, survey_uuid, block_id):
 @survey_permission_required('editor')
 @require_POST
 def public_results_block_delete(request, survey_uuid, block_id):
-    survey = request.survey
-    page = _get_or_create_page(survey)
-    block = get_object_or_404(PublicResultsBlock, id=block_id, page=page)
-    block.delete()
-    bump_page_version(page)
+    page = _report_for_survey(request.survey)
+    block = get_object_or_404(ReportBlock, id=block_id, report=page)
+    services.delete_block(Actor.from_request(request), block)
     if request.headers.get('HX-Request'):
         return HttpResponse('')
     return redirect('editor_survey_public_results', survey_uuid=survey_uuid)
@@ -325,41 +294,29 @@ def public_results_block_delete(request, survey_uuid, block_id):
 @require_POST
 def public_results_blocks_reorder(request, survey_uuid):
     """Persist block order from a JSON list of block ids."""
-    survey = request.survey
-    page = _get_or_create_page(survey)
+    page = _report_for_survey(request.survey)
     try:
         order = json.loads(request.body.decode() or '{}').get('order', [])
     except (ValueError, AttributeError):
         return JsonResponse({'ok': False}, status=400)
-    id_to_block = {b.id: b for b in page.blocks.all()}
-    for index, bid in enumerate(order):
-        block = id_to_block.get(int(bid))
-        if block:
-            block.order = index
-            block.save(update_fields=['order'])
-    bump_page_version(page)
+    services.reorder_blocks(Actor.from_request(request), page, order)
     return JsonResponse({'ok': True})
 
 
 @survey_permission_required('editor')
 @require_POST
 def public_results_set_published(request, survey_uuid):
-    """Explicit publish / unpublish action for the results page.
+    """Explicit publish / unpublish action for the survey's report.
 
-    `publish=1` makes the page live at /r/<slug>/; `publish=0` takes it down.
-    A draft survey cannot publish its results page.
+    `publish=1` makes the report live at /r/<slug>/; `publish=0` takes it down.
+    A draft survey cannot publish its report.
     """
-    survey = request.survey
-    page = _get_or_create_page(survey)
+    page = _report_for_survey(request.survey)
     publish = request.POST.get('publish') in ('1', 'true', 'on')
-    if publish and survey.status == 'draft':
-        if _is_ajax(request):
-            return JsonResponse({'ok': False, 'error': 'publish_survey_first'}, status=400)
-        from django.contrib import messages
-        messages.error(request, 'Publish the survey before publishing its results.')
-        return redirect('editor_survey_public_results', survey_uuid=survey_uuid)
-    page.is_published = publish
-    page.save(update_fields=['is_published'])
+    try:
+        services.set_published(Actor.from_request(request), page, publish)
+    except services.ReportRefused as refusal:
+        return _refused(request, survey_uuid, refusal)
     if _is_ajax(request):
         return JsonResponse({'ok': True, 'is_published': page.is_published})
     return redirect('editor_survey_public_results', survey_uuid=survey_uuid)
@@ -368,16 +325,12 @@ def public_results_set_published(request, survey_uuid):
 @survey_permission_required('editor')
 @require_POST
 def public_results_freeze(request, survey_uuid):
-    survey = request.survey
-    page = _get_or_create_page(survey)
-    freeze_page(page)
+    services.freeze(Actor.from_request(request), _report_for_survey(request.survey))
     return redirect('editor_survey_public_results', survey_uuid=survey_uuid)
 
 
 @survey_permission_required('editor')
 @require_POST
 def public_results_unfreeze(request, survey_uuid):
-    survey = request.survey
-    page = _get_or_create_page(survey)
-    unfreeze_page(page)
+    services.unfreeze(Actor.from_request(request), _report_for_survey(request.survey))
     return redirect('editor_survey_public_results', survey_uuid=survey_uuid)

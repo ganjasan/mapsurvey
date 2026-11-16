@@ -1052,7 +1052,32 @@ creator. Tests wrap web-import POSTs in `_eager_import()`, which turns `.delay` 
 itself — the suite has no broker. The task runs once per job: a redelivered message finds the
 row past `queued` and returns.
 
-**Public results page**: Creators expose aggregated results at `/r/<slug>/` via `PublicResultsPage` (1:1 with `SurveyHeader`) + ordered `PublicResultsBlock`s. Config tab at `/editor/surveys/<uuid>/public-results/`. Rendering logic in `survey/public_results.py` (`PublicResultsService`, `render_page_data`, `freeze_page`/`unfreeze_page`); editor views in `survey/public_results_editor.py`. Aggregates run over CLEAN, NON-EMPTY sessions only (`data.scope.SessionScope.public`: not deleted, excludes `not_approved`/`on_hold`, at least one top-level answer) across the canonical survey + all versions. Privacy goes through `data.aggregate` (change `data-aggregate`, spec `public-aggregates`): `mask()` shows buckets under K as `<K` (default 3), and every map block — points, lines, polygons, spray — is a `grid()` of cells counting DISTINCT respondents with cells under K omitted, never an answer's geometry (owner decision ADR-001 §6.3: exact numbers inside the workspace, K wherever data leaves it; API/MCP stay exact). A cell's popup holds the masked distribution of the creator-selected `geo_label_fields`; individual free-text answers are never published. Map blocks offer no marker/heatmap/cluster choice, on `/r/` or in Site results blocks. Snapshot format 3; an older frozen snapshot renders as stale. Hybrid `live` (60s cache) vs `frozen` (snapshot) mode. Visibility `public` (indexed, in sitemap) vs `unlisted` (noindex). The page config is intentionally NOT included in survey ZIP export/import.
+**Reports (`reports/`, change `reports-object`, #703; epic #712)**: what was the public results
+page is a **report** — `reports.models.Report` (a workspace object at `/r/<slug>/`, `survey` = its
+HOME survey, nullable and not unique) with ordered `ReportBlock`s. A question block names a
+**dataset of the Data module and the question's code**, never a question row (`publish_draft()`
+replaces rows): a map block reads the `answers` dataset of (canonical survey, code), chart / objects
+/ budget blocks the survey's `responses` dataset. `block.question` is a cached property
+(`reports.sources.question_for`; lists go through `attach_questions`), and
+`ReportBlock.objects.create(question=q)` fills dataset and code. So one report may read several
+surveys, and `ReportService` scopes sessions PER BLOCK (`_scope_of(question)`), not per report.
+Rendering is `reports/render.py` (`ReportService`, `render_data`, `freeze_report` /
+`unfreeze_report`, `scaffold_report`, `report_for_survey`, `k_for_survey`); every write is
+`reports/services.py` with an `Actor`. `SurveyHeader.report` (the survey's oldest report) is what
+the Public results tab, the thanks button, Share and the dashboard pill read — never
+`Report.objects.get(survey=…)`, a survey may be home to several. The configuration screens
+(`reports/editor_views.py`, templates still `editor/public_results.html` / `public_results.html`,
+URL names `editor_public_results_*`) stay until the story editor (#704). Aggregates run over CLEAN
+sessions only (not deleted, excludes `not_approved`/`on_hold`) across the canonical survey + all
+versions. Privacy: k-anonymity masks buckets `<K` (default 3); geo popups expose only
+creator-selected `geo_label_fields`; individual free-text answers are not published (hand-picked
+quotes arrive with #704). Hybrid `live` (60s cache) vs `frozen` (snapshot) mode. Visibility
+`public` (indexed, in sitemap), `unlisted` (noindex) or `workspace` (signed-in members of the
+workspace only: anonymous → login, others → 404). "Used by": `data.links.report_places`; a
+`DatasetView` a block shows cannot be deleted (`view` is `RESTRICT`), a dataset that disappears
+leaves the block empty (`SET_NULL`). The Reports list is `/editor/reports/`. Report config is
+intentionally NOT included in survey ZIP export/import. Migration `reports/0002` copied the old
+pages WITH their ids (comment anchors, snapshots, `?block=` links).
 
 **Category landings (`/community-engagement-platform/`, `/civic-engagement/`,
 `/public-consultation-software/`, `/participatory-budgeting/`; change `seo-landings-rewrite`, #251)**:

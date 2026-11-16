@@ -194,7 +194,7 @@ def survey_view(survey, layer_id):
 
 @dataclass
 class Place:
-    kind: str      # survey | link | site | question
+    kind: str      # survey | link | site | question | report
     label: str
     url: str = ''
 
@@ -221,4 +221,24 @@ def used_by(dataset):
                 continue   # a version's or draft's copy of a canonical question
             places.append(Place('question', f'{q.name} · {header.name}',
                                 reverse('editor_survey_detail', args=[header.uuid])))
+    places.extend(report_places(dataset=dataset))
+    return places
+
+
+def report_places(dataset=None, view=None):
+    """The reports whose blocks read a dataset (or show a view), one place per report
+    (change reports-object)."""
+    from django.urls import reverse
+    from reports.models import ReportBlock
+    blocks = ReportBlock.objects.select_related('report__survey')
+    blocks = blocks.filter(view=view) if view is not None else blocks.filter(dataset=dataset)
+    places, seen = [], set()
+    for block in blocks.order_by('report_id', 'order'):
+        report = block.report
+        if report.pk in seen:
+            continue
+        seen.add(report.pk)
+        url = (reverse('editor_survey_public_results', args=[report.survey.uuid]) if report.survey_id
+               else reverse('editor_reports'))
+        places.append(Place('report', report.title, url))
     return places

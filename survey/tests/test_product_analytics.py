@@ -9,13 +9,14 @@ from django.urls import reverse
 from unittest import mock
 import json
 import re
-from survey.models import SurveyHeader, SurveySection, Membership, PublicResultsPage, CreatorPreferences
+from survey.models import SurveyHeader, SurveySection, Membership, CreatorPreferences
+from reports.models import Report
 from django.test import RequestFactory
 from django.conf import settings
 import os
 from django.core.management import call_command
 from django.contrib.auth.models import AnonymousUser
-from survey.models import PublicResultsPage as _PRP
+from reports.models import Report as _PRP
 from survey.tests.helpers import _make_org
 
 
@@ -47,7 +48,7 @@ class PostHogSnippetTest(TestCase):
             start_map_postion=Point(0, 0),
             start_map_zoom=10,
         )
-        self.results_page = PublicResultsPage.objects.create(
+        self.results_page = Report.objects.create(
             survey=self.survey, slug='posthog-results', is_published=True,
         )
 

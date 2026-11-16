@@ -19,8 +19,10 @@ from billing.tests.helpers import make_sub, trial_used_elsewhere
 from survey import basemaps as basemap_registry
 from survey.map_styles import tasks as style_tasks
 from survey.map_styles.generator import MapboxApiError
-from survey.models import (MapStyle, MapStyleVersion, Membership, PublicResultsBlock, PublicResultsPage,
-                           SurveyCollaborator, SurveyHeader, SurveySection)
+from survey.models import (
+    MapStyle, MapStyleVersion, Membership, SurveyCollaborator, SurveyHeader, SurveySection,
+)
+from reports.models import ReportBlock, Report
 from survey.print import static_map
 from survey.serialization import export_survey_to_zip, import_survey_from_zip
 from survey.services.context import Actor
@@ -560,8 +562,8 @@ class PickersAndImportTest(_LibraryFixture):
         THEN its provider table carries the style and the block's key is honoured
         """
         style = ready_style(self.org, mapbox_id='artemkonuchov/public01')
-        page = PublicResultsPage.objects.create(survey=self.survey, slug='style-results', is_published=True)
-        PublicResultsBlock.objects.create(page=page, block_type='text', order=0, basemap=style.basemap_key)
+        page = Report.objects.create(survey=self.survey, slug='style-results', is_published=True)
+        ReportBlock.objects.create(report=page, block_type='text', order=0, basemap=style.basemap_key)
         html = self.client.get('/r/style-results/').content.decode()
         self.assertIn('artemkonuchov/public01', html)
         self.assertIn(style.basemap_key, dict(basemap_registry.choices_for(self.org)))

@@ -44,7 +44,8 @@ class SpraycanTypeSetsTest(SimpleTestCase):
         THEN they are the same object or an equal set, so the next type is one edit
         """
         from survey.question_types import GEO_TYPES, SHARED_MAP_SOURCE_TYPES
-        from survey import export, public_results, layers
+        from reports import render as public_results
+        from survey import export, layers
         from survey.ai import validator
         self.assertEqual(set(export.EXPORT_GEOMETRY_TYPES), set(GEO_TYPES))
         self.assertEqual(set(public_results.GEO_INPUT_TYPES), set(GEO_TYPES))

@@ -10,7 +10,8 @@ from io import BytesIO
 import json
 import re
 import zipfile
-from survey.models import SurveyHeader, SurveySection, Question, SurveySession, Answer, Membership, PublicResultsPage, PublicResultsBlock
+from survey.models import SurveyHeader, SurveySection, Question, SurveySession, Answer, Membership
+from reports.models import Report, ReportBlock
 from survey.serialization import export_survey_to_zip, import_survey_from_zip
 from survey.analytics import SurveyAnalyticsService
 from survey.versioning import clone_survey_for_draft
@@ -281,14 +282,14 @@ class OtherOptionWriteInTest(TestCase):
         WHEN the public chart block and the object aggregates are built
         THEN the option is counted by code and none of the texts appears in either payload
         """
-        from survey.public_results import PublicResultsService
+        from reports.render import ReportService
         from survey.object_stats import object_aggregates
         texts = ['alpha one', 'beta two', 'gamma three']
         for t in texts:
             Answer.objects.create(survey_session=self._session(), question=self.q_cope, selected_choices=[4], text=t)
-        page = PublicResultsPage.objects.create(survey=self.survey, slug='other-prs', is_published=True)
-        block = PublicResultsBlock.objects.create(page=page, block_type='chart', question=self.q_cope, order=0)
-        payload = PublicResultsService(page)._build_block(block)
+        page = Report.objects.create(survey=self.survey, slug='other-prs', is_published=True)
+        block = ReportBlock.objects.create(report=page, block_type='chart', question=self.q_cope, order=0)
+        payload = ReportService(page)._build_block(block)
         self.assertEqual({i['code']: i['display'] for i in payload['items']}[4], '3')
         dumped = json.dumps(payload)
         for t in texts:

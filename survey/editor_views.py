@@ -832,7 +832,7 @@ def editor_survey_thanks_panel(request, survey_uuid):
     """
     survey = request.survey
     langs = list(survey.available_languages) or ['en']
-    results_page = getattr(survey, 'public_results_page', None)
+    results_page = survey.report
 
     if request.method == 'POST':
         blocked = _check_not_shadowed_by_draft(survey)

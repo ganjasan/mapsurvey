@@ -740,6 +740,16 @@ class SurveyHeader(models.Model):
         return self.draft_copies.first()
 
     @property
+    def report(self):
+        """The survey's report (change reports-object): the oldest report whose home survey this
+        is — for a survey that had a public results page, that page — or None. Reads the
+        `reports` prefetch when a list view made one."""
+        cached = getattr(self, '_prefetched_objects_cache', {}).get('reports')
+        if cached is not None:
+            return min(cached, key=lambda r: r.id) if cached else None
+        return self.reports.order_by('id').first()
+
+    @property
     def is_draft_copy(self):
         return self.published_version_id is not None
 
@@ -2294,131 +2304,8 @@ class DemoOpen(models.Model):
         return f"demo open {self.created_at:%Y-%m-%d} by {who}"
 
 
-PUBLIC_RESULTS_VISIBILITY_CHOICES = (
-    ("public", _("Public")),
-    ("unlisted", _("Unlisted")),
-)
-
-PUBLIC_RESULTS_MODE_CHOICES = (
-    ("live", _("Live")),
-    ("frozen", _("Frozen")),
-)
-
-PUBLIC_RESULTS_BLOCK_TYPE_CHOICES = (
-    ("text", _("Text")),
-    ("image", _("Image")),
-    ("chart", _("Chart")),
-    ("map", _("Map")),
-    ("objects", _("Objects")),   # per-object aggregates of an Objects-on-the-map question
-    ("budget", _("Budget")),     # a budget question's aggregate (change budget-question)
-)
-
-# Current snapshot serialization format. Bumped when the per-block payload
-# shape changes so a stale snapshot can show a "re-freeze needed" notice
-# instead of rendering wrong/broken data.
-PUBLIC_RESULTS_SNAPSHOT_VERSION = 3   # 2: spraycan density grid; 3: every map block is a grid (data-aggregate)
-
-
-class PublicResultsPage(models.Model):
-    """Creator-curated public page of aggregated survey results.
-
-    Bound 1:1 to a SurveyHeader. Renders live aggregates through
-    SurveyAnalyticsService (mode='live') or from a stored snapshot
-    (mode='frozen'). Served at /r/<slug>/ only when is_published is True.
-    """
-
-    survey = models.OneToOneField(
-        "SurveyHeader", on_delete=models.CASCADE, related_name="public_results_page"
-    )
-    slug = models.SlugField(max_length=64, unique=True)
-    visibility = models.CharField(
-        max_length=10, choices=PUBLIC_RESULTS_VISIBILITY_CHOICES, default="public",
-        help_text=_('Public is indexable and listable; unlisted is reachable by direct link only.')
-    )
-    is_published = models.BooleanField(default=False)
-    intro = models.JSONField(
-        default=dict, blank=True,
-        help_text=_('Multilingual intro: {"title": {"en": ...}, "body": {"en": ...}} or plain strings.')
-    )
-    mode = models.CharField(max_length=10, choices=PUBLIC_RESULTS_MODE_CHOICES, default="live")
-    snapshot = models.JSONField(null=True, blank=True, help_text=_('Frozen per-block payloads.'))
-    snapshot_version = models.PositiveIntegerField(null=True, blank=True)
-    frozen_at = models.DateTimeField(null=True, blank=True)
-    show_response_count = models.BooleanField(default=True)
-    show_participate_cta = models.BooleanField(default=True)
-    show_on_thanks = models.BooleanField(
-        default=True, help_text=_('Show a "See the results" button on the survey\'s thanks page (only while published).')
-    )
-    feature_in_listing = models.BooleanField(
-        default=False, help_text=_('Show a card in the public stories listing (public visibility only).')
-    )
-    k_anonymity_threshold = models.PositiveIntegerField(
-        default=3, help_text=_('Mask buckets with 0 < count < K as "<K". Set to 1 to disable.')
-    )
-    scaffolded_at = models.DateTimeField(
-        null=True, blank=True,
-        help_text=_('When default blocks were auto-drafted. Set once; blocks the creator deletes are never re-created.')
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        app_label = 'survey'
-
-    def __str__(self):
-        return f"Public results: {self.slug}"
-
-    def is_frozen(self):
-        return self.mode == "frozen"
-
-
-class PublicResultsBlock(models.Model):
-    """One ordered block on a PublicResultsPage.
-
-    A block is either bound to a question (chart/map) or standalone
-    (text/image). Data within the block is live or frozen per the page.
-    """
-
-    page = models.ForeignKey(
-        PublicResultsPage, on_delete=models.CASCADE, related_name="blocks"
-    )
-    question = models.ForeignKey(
-        "Question", on_delete=models.SET_NULL, null=True, blank=True,
-        help_text=_('Bound question for chart/map blocks; null for text/image.')
-    )
-    block_type = models.CharField(max_length=10, choices=PUBLIC_RESULTS_BLOCK_TYPE_CHOICES)
-    viz = models.CharField(
-        max_length=20, default="auto",
-        help_text=_('Visualization override: auto, bar, pie, donut, table, heatmap, ...')
-    )
-    custom_title = models.JSONField(
-        default=dict, blank=True, help_text=_('Optional multilingual title override.')
-    )
-    content = models.JSONField(
-        default=dict, blank=True,
-        help_text=_('Multilingual body for standalone text blocks, or caption for image blocks: {"en": "...", "ru": "..."}.')
-    )
-    image = models.ImageField(
-        upload_to='public_results_blocks/', null=True, blank=True,
-        help_text=_('Image for standalone image blocks.')
-    )
-    geo_label_fields = models.JSONField(
-        default=list, blank=True,
-        help_text=_('Question codes whose values appear in geo popups. Empty = anonymous geometry only.')
-    )
-    basemap = models.CharField(
-        max_length=50, default='streets',
-        help_text=_('Tile basemap for map blocks: a preset key or "style:<uuid>" of a workspace map style.')
-    )
-    is_hidden = models.BooleanField(default=False)
-    order = models.PositiveIntegerField(default=0)
-
-    class Meta:
-        app_label = 'survey'
-        ordering = ['order', 'id']
-
-    def __str__(self):
-        return f"{self.block_type} block on {self.page.slug}"
+# Public results pages are reports now: `reports.models.Report` / `ReportBlock`
+# (change reports-object, #703).
 
 
 # ─── Comment threads (spec survey-comment-threads) ──────────────────────────
@@ -2472,7 +2359,7 @@ class CommentThread(models.Model):
     # deploy, inserts threads without this column.
     group_code = models.CharField(max_length=50, blank=True, default='', db_default='')
     session = models.ForeignKey('SurveySession', null=True, blank=True, on_delete=models.CASCADE, related_name='comment_threads')
-    block = models.ForeignKey('PublicResultsBlock', null=True, blank=True, on_delete=models.CASCADE, related_name='comment_threads')
+    block = models.ForeignKey('reports.ReportBlock', null=True, blank=True, on_delete=models.CASCADE, related_name='comment_threads')
     status = models.CharField(max_length=8, choices=COMMENT_THREAD_STATUS_CHOICES, default='open')
     # Losing an account must not delete the conversation (same rule as
     # CreatorNote.author), hence SET_NULL on every user reference.

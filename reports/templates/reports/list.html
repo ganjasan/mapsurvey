@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ org.name }} — {% trans "Reports" %}{% endblock %}
+
+{% block content %}
+{% comment %}The Reports list (change reports-object, #703): one row per report the member may see.
+A report opens in its home survey's Public results tab until the story editor (#704).{% endcomment %}
+<div class="container mt-4" style="max-width: 980px;">
+  <h4 class="mb-2">{% trans "Reports" %}</h4>
+  <p class="text-muted" style="font-size:.9rem;">
+    {% blocktrans %}What this workspace publishes from its data: pages of charts and maps that never show a single respondent. Each survey's public results page is a report.{% endblocktrans %}
+  </p>
+
+  {% if rows %}
+  <div class="list-group" data-testid="report-rows">
+    {% for row in rows %}
+    <div class="list-group-item d-flex align-items-center justify-content-between flex-wrap" style="gap:.5rem;" data-report="{{ row.report.pk }}">
+      <span class="flex-grow-1" style="min-width:0;">
+        {% if row.report.survey_id %}
+        <a href="{% url 'editor_survey_public_results' row.report.survey.uuid %}"><strong>{{ row.report.title }}</strong></a>
+        {% else %}
+        <strong>{{ row.report.title }}</strong>
+        {% endif %}
+        <span class="d-block text-muted" style="font-size:.82rem;">
+          {% if row.report.survey_id %}{{ row.report.survey.name }} · {% endif %}
+          {% blocktrans count n=row.blocks %}{{ n }} block{% plural %}{{ n }} blocks{% endblocktrans %}
+          · {% blocktrans with when=row.report.updated_at|date:"SHORT_DATE_FORMAT" %}changed {{ when }}{% endblocktrans %}
+        </span>
+      </span>
+      <span class="d-flex align-items-center" style="gap:.4rem;font-size:.8rem;">
+        {% if row.report.is_published %}
+        <span class="badge badge-success" data-state="published">{% trans "Published" %}</span>
+        <span class="badge badge-light">{{ row.report.get_visibility_display }}</span>
+        {% else %}
+        <span class="badge badge-secondary" data-state="unpublished">{% trans "Not published" %}</span>
+        {% endif %}
+        <span class="badge badge-light">{% if row.report.mode == 'frozen' %}{% trans "Frozen" %}{% else %}{% trans "Live" %}{% endif %}</span>
+        {% if row.report.is_published %}
+        <a class="btn btn-sm btn-outline-secondary" href="{{ row.public_url }}" target="_blank" rel="noopener">{% trans "Open" %}</a>
+        {% endif %}
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center text-muted py-5" data-testid="reports-empty">
+    <p class="mb-1">{% trans "No reports yet." %}</p>
+    <p style="font-size:.9rem;">{% trans "Publish a survey and open its Public results tab: the first report is drafted from its questions." %}</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

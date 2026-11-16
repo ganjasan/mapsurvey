@@ -6,7 +6,8 @@ from django.test import TestCase, override_settings
 from django.contrib.auth.models import User
 from django.utils import timezone
 import re
-from survey.models import Organization, SurveyHeader, SurveySection, Question, Membership, SurveyCollaborator, PublicResultsPage, PublicResultsBlock
+from survey.models import Organization, SurveyHeader, SurveySection, Question, Membership, SurveyCollaborator
+from reports.models import Report, ReportBlock
 
 
 class MobileEditorNavTest(TestCase):
@@ -384,7 +385,7 @@ class PublicResultsStatusLineTest(TestCase):
         self.survey = SurveyHeader.objects.create(
             name="pr_status_survey", organization=self.org, status='published',
         )
-        self.page = PublicResultsPage.objects.create(survey=self.survey, slug='pr-status')
+        self.page = Report.objects.create(survey=self.survey, slug='pr-status')
         SurveyCollaborator.objects.create(user=self.user, survey=self.survey, role='owner')
         self.client.force_login(self.user)
 
@@ -452,7 +453,7 @@ class PublicResultsStatusLineTest(TestCase):
         THEN the navbar tabs carry status dots instead of the survey chip and
              block rows show their type badge
         """
-        PublicResultsBlock.objects.create(page=self.page, block_type='text', order=1)
+        ReportBlock.objects.create(report=self.page, block_type='text', order=1)
         html = self._page()
         self.assertIn('tabdot td-published', html)
         self.assertIn('tabdot td-off', html)
