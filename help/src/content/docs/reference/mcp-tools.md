@@ -912,17 +912,30 @@ Permission `surveys:write` · role **editor**
 
 ### `create_dataset_view`
 
-A named view of a dataset: on a layer, conditions on public fields (eq, in, gt, lt) and the fields it keeps; on collected answers, always a grid of counts with small groups hidden. Surveys and site map blocks can show a view instead of the whole dataset.
+A named view of a dataset. On a layer: conditions on public fields (eq, in, gt, lt) and the fields it keeps. On the answers to a map question: kind grid (respondents per cell), coverage (lines and areas: share of respondents per cell) or density (points and spray: marks per cell). On a survey's responses: kind engagement (opened, answered, finished) or crosstab (config.rows and config.columns are the codes of two choice questions). Small groups are always hidden. Read a computed view with get_dataset_view_data.
 
 Permission `surveys:write` · role **editor**
 
 | Argument | Type | | Notes |
 |---|---|---|---|
 | `name` | string | **required** |  |
+| `kind` | `objects` \| `grid` \| `coverage` \| `density` \| `engagement` \| `crosstab` |  | What the view yields; left out, the dataset's default. A layer takes `objects`; the answers to a map question take `grid`, plus `coverage` (lines, areas) or `density` (points, spray); a survey's responses take `engagement` and `crosstab`. |
+| `config` | object (`rows`, `columns`) |  | Settings of the kind: the two questions of a cross-tab. |
 | `color` | string |  | #rrggbb |
 | `conditions` | list of object (`field`, `op`, `value`, `values`) |  | All must hold. Layer datasets only; collected answers are a grid. |
 | `fields` | list of string |  | Public fields the view keeps; empty = all. |
 | `dataset_id` | integer | **required** | A dataset id from list_datasets. |
+
+### `get_dataset_view_data`
+
+What an engagement, crosstab, grid, coverage or density view yields. Every count under the privacy threshold K comes back masked (value null, display "<K") and map cells with fewer than K respondents are left out — for every caller.
+
+Permission `surveys:read` · role **workspace member** · read-only
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `dataset_id` | integer | **required** | A dataset id from list_datasets. |
+| `view_id` | integer | **required** | A view id from get_dataset. |
 
 ### `upload_dataset_version`
 

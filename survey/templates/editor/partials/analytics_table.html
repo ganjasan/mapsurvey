@@ -79,6 +79,33 @@ responses-required-unanswered, #691: the Issues menu labelled normal answers as 
                    value="{{ search_query }}" oninput="rv2SearchDebounced(this.value, 'rv2-search-input')"
                    data-testid="rv2-search">
         </span>
+        {% comment %}Saved views (change data-analysis-views, #692): the table's filter kept as a view of
+        the survey's responses dataset. Opening one reloads the page with ?view=<id>.{% endcomment %}
+        {% if not show_trash %}{% if saved_views or is_editor %}
+        <details class="rv2-views" id="rv2-views" data-testid="rv2-views">
+            <summary class="rv2-chip{% if opened_view %} active{% endif %}" title="{% trans 'Saved filters of this table' %}">
+                <i class="fas fa-bookmark" aria-hidden="true"></i> {% if opened_view %}{{ opened_view.name|truncatechars:24 }}{% else %}{% trans "Views" %}{% endif %} ▾
+            </summary>
+            <div class="rv2-views-menu">
+                {% for v in saved_views %}
+                <div class="rv2-views-row" data-view="{{ v.pk }}">
+                    <a href="{{ v.open_url }}" class="rv2-views-open{% if opened_view and opened_view.pk == v.pk %} active{% endif %}" data-rv2-view-link>{{ v.name }}</a>
+                    {% if is_editor %}<button type="button" class="rv2-views-delete" onclick="rv2DeleteView({{ v.pk }}, this)" aria-label="{% blocktrans with name=v.name %}Delete view {{ name }}{% endblocktrans %}"><i class="fas fa-trash" aria-hidden="true"></i></button>{% endif %}
+                </div>
+                {% empty %}
+                <div class="rv2-views-empty">{% trans "No saved views yet. Filter the table, then save the filter here." %}</div>
+                {% endfor %}
+                {% if is_editor %}
+                <form class="rv2-views-save" onsubmit="rv2SaveView(event)">
+                    <label class="sr-only" for="rv2-view-name">{% trans "Name of the view" %}</label>
+                    <input type="text" id="rv2-view-name" maxlength="120" required placeholder="{% trans 'Save current filter as…' %}">
+                    <button type="submit" class="btn btn-sm btn-primary">{% trans "Save" %}</button>
+                </form>
+                <div class="rv2-views-error" id="rv2-view-error" role="alert" hidden></div>
+                {% endif %}
+            </div>
+        </details>
+        {% endif %}{% endif %}
         <button type="button" class="rv2-chip" onclick="toggleHideFieldsPopover()" title="{% trans 'Show/hide columns' %}">
             <i class="fas fa-columns"></i> Columns ▾
         </button>

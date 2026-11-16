@@ -63,8 +63,18 @@ class ConditionIn(_In):
     values: Optional[List[str]] = None
 
 
+class ViewConfigIn(_In):
+    rows: Optional[str] = Field(None, max_length=50, description='Cross-tab: the code of the question in the rows.')
+    columns: Optional[str] = Field(None, max_length=50, description='Cross-tab: the code of the question in the columns.')
+
+
 class ViewIn(_In):
     name: str = Field(min_length=1, max_length=120)
+    kind: Optional[Literal['objects', 'grid', 'coverage', 'density', 'engagement', 'crosstab']] = Field(
+        None, description=('What the view yields; left out, the dataset\'s default. A layer takes `objects`; the answers '
+                           'to a map question take `grid`, plus `coverage` (lines, areas) or `density` (points, spray); '
+                           'a survey\'s responses take `engagement` and `crosstab`.'))
+    config: Optional[ViewConfigIn] = Field(None, description='Settings of the kind: the two questions of a cross-tab.')
     color: Optional[str] = Field(None, description='#rrggbb')
     conditions: List[ConditionIn] = Field(default_factory=list, max_length=5,
                                           description='All must hold. Layer datasets only; collected answers are a grid.')
@@ -158,7 +168,18 @@ def dataset_out(ds, row=None, detail=False):
 
 def view_out(v):
     return {'id': v.pk, 'name': v.name, 'kind': v.kind, 'conditions': v.conditions, 'fields': v.fields,
-            'color': v.color}
+            'color': v.color, 'config': v.config or {}}
+
+
+def view_data(view, lang='en'):
+    """A computed view's result (change data-analysis-views), masked for every reader; 409 for a
+    saved filter, naming where that one is read."""
+    from data.dataviews import result
+    if view.kind == DatasetView.KIND_OBJECTS:
+        raise ApiError(409, CONFLICT, 'An objects view is read as features: /datasets/{id}/views/{view}/features.')
+    if view.kind == DatasetView.KIND_RESPONSES:
+        raise ApiError(409, CONFLICT, 'A Responses filter is opened on the survey\'s Responses page; it computes nothing.')
+    return result(view, lang=lang)
 
 
 def job_out(job):
@@ -318,12 +339,16 @@ def apply_job(request, job_id: int, payload: ApplyIn):
 
 @router.post('/datasets/{dataset_id}/views', response={201: dict}, auth=WRITE, openapi_extra=errors())
 def create_view(request, dataset_id: int, payload: ViewIn):
-    """A saved view: conditions on public fields and the fields it keeps (layers), or a grid of
-    counts (collected answers — the privacy class decides)."""
+    """A saved view. On a layer: conditions on public fields and the fields it keeps. On the answers
+    to a map question: a grid of counts, a coverage or a density. On a survey's responses: an
+    engagement funnel or a cross-tab of two questions. What the dataset holds decides which kinds
+    it takes; every count is masked under K."""
     ds, _row = dataset_for(request.principal, dataset_id, edit=True)
     try:
         view = services.create_view(deps.actor(request), ds, payload.name, payload.color or '',
-                                    [c.dict(exclude_none=True) for c in payload.conditions], payload.fields)
+                                    [c.dict(exclude_none=True) for c in payload.conditions], payload.fields,
+                                    kind=payload.kind or '',
+                                    config=payload.config.dict(exclude_none=True) if payload.config else None)
     except services.DataRefused as exc:
         raise refused(exc)
     return Status(201, view_out(view))
@@ -341,7 +366,18 @@ def _view(request, dataset_id, view_id, edit=False):
 def view_features(request, dataset_id: int, view_id: int):
     """A view's GeoJSON: the matching objects with its fields, or the grid cells with their counts."""
     from data.dataviews import geojson_response
-    return geojson_response(request, _view(request, dataset_id, view_id))
+    view = _view(request, dataset_id, view_id)
+    if view.kind not in (DatasetView.KIND_OBJECTS,) + DatasetView.CELL_KINDS:
+        raise ApiError(409, CONFLICT, 'This view is a table, not a map: read /datasets/{id}/views/{view}/data.')
+    return geojson_response(request, view)
+
+
+@router.get('/datasets/{dataset_id}/views/{view_id}/data', response=dict, auth=READ, openapi_extra=errors(409))
+def view_data_endpoint(request, dataset_id: int, view_id: int):
+    """What a computed view yields: the steps and series of an engagement view, the table of a
+    cross-tab, the cells of a grid, coverage or density view. Counts under K come back masked
+    (`value: null`, `display: "<K"`) for every caller."""
+    return view_data(_view(request, dataset_id, view_id))
 
 
 @router.delete('/datasets/{dataset_id}/views/{view_id}', response=dict, auth=WRITE, openapi_extra=errors(409))

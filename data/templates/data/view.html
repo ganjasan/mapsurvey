@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ view.name }} — {{ ds.name }}{% endblock %}
+
+{% block content %}
+{% comment %}Preview of a computed view (change data-analysis-views, #692): the result exactly as a
+report, a Site or an API client gets it — masked under K for every reader. Charts and maps of it
+are the report blocks' job (#704).{% endcomment %}
+<div class="container mt-4" style="max-width: 980px;">
+  <nav aria-label="{% trans 'Breadcrumb' %}" class="small mb-2"><a href="{% url 'editor_data' %}">{% trans "Data" %}</a> / <a href="{% url 'editor_data_dataset' ds.pk %}">{{ ds.name }}</a> / {{ view.name }}</nav>
+  <div class="d-flex align-items-center flex-wrap mb-1" style="gap:.5rem;">
+    <h4 class="mb-0">{{ view.name }}</h4>
+    <span class="badge badge-light border">{{ view.get_kind_display }}</span>
+    <span class="badge badge-info" data-testid="privacy">{% blocktrans with k=data.k %}Aggregated · K = {{ k }}{% endblocktrans %}</span>
+  </div>
+  <p class="text-muted small">{% blocktrans with k=data.k %}This is what a report or a site shows of this view. A count under {{ k }} reads “<{{ k }}” and its value is never sent; map cells with fewer than {{ k }} respondents are left out.{% endblocktrans %}</p>
+
+  {% if view.kind == 'engagement' %}
+  <div class="card mb-3" data-testid="engagement">
+    <div class="card-body">
+      <div class="d-flex flex-wrap" style="gap:2rem;">
+        {% for step in data.steps %}
+        <div>
+          <div style="font-size:1.6rem;font-weight:600;line-height:1.1;">{{ step.display }}</div>
+          <div class="text-muted small">{% if step.key == 'opened' %}{% trans "opened" %}{% elif step.key == 'answered' %}{% trans "answered" %}{% else %}{% trans "finished" %}{% endif %}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% if data.series %}
+      <table class="table table-sm mt-3 mb-0" style="font-size:.85rem;max-width:520px;">
+        <thead><tr>
+          <th scope="col">{% if data.period == 'day' %}{% trans "Day" %}{% elif data.period == 'week' %}{% trans "Week of" %}{% else %}{% trans "Month" %}{% endif %}</th>
+          <th scope="col" class="text-right">{% trans "Opened" %}</th>
+          <th scope="col" class="text-right">{% trans "Answered" %}</th>
+          <th scope="col" class="text-right">{% trans "Finished" %}</th>
+        </tr></thead>
+        <tbody>
+          {% for point in data.series %}
+          <tr><th scope="row" style="font-weight:400;">{{ point.start }}</th>
+            <td class="text-right">{{ point.opened.display }}</td>
+            <td class="text-right">{{ point.answered.display }}</td>
+            <td class="text-right">{{ point.finished.display }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="text-muted small mt-3 mb-0">{% trans "Nobody has opened the survey yet." %}</p>
+      {% endif %}
+    </div>
+  </div>
+
+  {% elif view.kind == 'crosstab' %}
+  <div class="card mb-3" data-testid="crosstab">
+    <div class="card-body">
+      {% if data.missing %}
+      <p class="mb-0">{% blocktrans with codes=data.missing|join:", " %}The survey no longer has the question {{ codes }}, so this table cannot be computed.{% endblocktrans %}</p>
+      {% else %}
+      <p class="small mb-2">{% if not data.respondents.masked %}{% blocktrans with n=data.respondents.display %}{{ n }} respondents answered both questions.{% endblocktrans %}{% endif %}
+        {% if data.rows.multiple or data.columns.multiple %}{% trans "A respondent who picked several options counts in each, so a line may add up to more than its total." %}{% endif %}</p>
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered mb-0" style="font-size:.85rem;">
+          <caption class="sr-only">{{ data.rows.name|striptags }} × {{ data.columns.name|striptags }}</caption>
+          <thead>
+            <tr><th scope="col">{{ data.rows.name|striptags|truncatechars:50 }} ↓ / {{ data.columns.name|striptags|truncatechars:50 }} →</th>
+              {% for item in data.columns.items %}<th scope="col" class="text-right">{{ item.label }}</th>{% endfor %}
+              <th scope="col" class="text-right">{% trans "Total" %}</th></tr>
+          </thead>
+          <tbody>
+            {% for line in table_rows %}
+            <tr><th scope="row" style="font-weight:400;">{{ line.item.label }}</th>
+              {% for cell in line.cells %}<td class="text-right{% if cell.masked %} text-muted{% endif %}">{{ cell.display }}</td>{% endfor %}
+              <td class="text-right font-weight-bold">{{ line.item.total.display }}</td></tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr><th scope="row">{% trans "Total" %}</th>
+              {% for item in data.columns.items %}<td class="text-right font-weight-bold">{{ item.total.display }}</td>{% endfor %}
+              <td class="text-right font-weight-bold">{{ data.respondents.display }}</td></tr>
+          </tfoot>
+        </table>
+      </div>
+      {% if data.masked_cells %}
+      <p class="text-muted small mt-2 mb-0">{% blocktrans with k=data.k %}“<{{ k }}” is a group too small to show. The totals of its row and column, and the number of respondents who answered both questions, read “—” because they would give the group away.{% endblocktrans %}</p>
+      {% endif %}
+      {% endif %}
+    </div>
+  </div>
+
+  {% else %}
+  <div class="card mb-3" data-testid="cells">
+    <div class="card-body">
+      <p class="mb-1">
+        {% blocktrans count n=data.features|length %}{{ n }} cell{% plural %}{{ n }} cells{% endblocktrans %}
+        · {% blocktrans with m=data.cell_m|floatformat:0 %}{{ m }} m across{% endblocktrans %}
+        · {% blocktrans count n=data.respondents_total %}{{ n }} respondent{% plural %}{{ n }} respondents{% endblocktrans %}
+        {% if data.respondents_hidden %}· {% blocktrans count n=data.respondents_hidden with k=data.k %}{{ n }} not shown (in an area with fewer than {{ k }} people){% plural %}{{ n }} not shown (in areas with fewer than {{ k }} people){% endblocktrans %}{% endif %}
+      </p>
+      <p class="text-muted small mb-0">
+        {% if view.kind == 'coverage' %}{% blocktrans with max=data.max %}Each cell says how many respondents drew over it and their share of everyone who drew; the busiest cell has {{ max }}.{% endblocktrans %}
+        {% elif view.kind == 'density' %}{% blocktrans with max=data.max_marks %}Each cell says how many marks fall inside it; the busiest cell has {{ max }}.{% endblocktrans %}
+        {% else %}{% blocktrans with max=data.max %}Each cell says how many respondents marked it; the busiest cell has {{ max }}.{% endblocktrans %}{% endif %}
+        {% trans "A report or a Site map block draws it." %}
+      </p>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

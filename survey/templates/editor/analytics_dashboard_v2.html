@@ -405,6 +405,52 @@ function rv2Chip(kind) {
     loadTable({page: '1'});
 }
 
+/* ── Saved views (change data-analysis-views, #692) ─────────────────────── */
+(function () {
+    var m = window.location.search.match(/[?&]view=(\d+)/);
+    if (m) window._rv2OpenView = m[1];
+})();
+function _rv2ViewRequest(url, body) {
+    var errorBox = document.getElementById('rv2-view-error');
+    var headers = {'X-CSRFToken': _getCsrfToken()};
+    if (body) headers['Content-Type'] = 'application/x-www-form-urlencoded';
+    return fetch(url, {method: 'POST', headers: headers, body: body || undefined}).then(function (resp) {
+        return resp.json().then(function (data) {
+            if (!resp.ok && errorBox) { errorBox.textContent = data.error || ''; errorBox.hidden = false; }
+            return resp.ok;
+        });
+    });
+}
+function rv2SaveView(event) {
+    event.preventDefault();
+    var form = document.getElementById('table-state-form');
+    var nameInput = document.getElementById('rv2-view-name');
+    if (!form || !nameInput) return;
+    var body = new URLSearchParams();
+    body.append('name', nameInput.value.trim());
+    body.append('version', _versionScope);
+    ['sort', 'dir', 'required', 'q'].forEach(function (name) {
+        var input = form.querySelector('[name="' + name + '"]');
+        if (input && input.value) body.append(name, input.value);
+    });
+    form.querySelectorAll('input[name^="cf_"]').forEach(function (input) {
+        if (input.value) body.append(input.name, input.value);
+    });
+    _rv2ViewRequest('{% url "analytics_view_save" survey.uuid %}', body.toString())
+        .then(function (ok) { if (ok) loadTable(); });
+}
+function rv2DeleteView(id, button) {
+    _rv2ViewRequest('{% url "analytics_view_delete" survey.uuid 0 %}'.replace('/0/', '/' + id + '/'))
+        .then(function (ok) {
+            var row = button.closest('.rv2-views-row');
+            if (ok && row) row.remove();
+        });
+}
+document.addEventListener('click', function (event) {
+    var menu = document.getElementById('rv2-views');
+    if (menu && menu.open && !menu.contains(event.target)) menu.open = false;
+});
+
 /* ── Free-text search across all columns ───────────────────────────────── */
 var _rv2SearchTimer = null;
 function rv2SearchDebounced(value, focusId) {

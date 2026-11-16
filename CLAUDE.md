@@ -991,7 +991,27 @@ evaluated in Python by `data.dataviews.matches`; collection streamed with `layer
 `SessionScope.public` with the survey's public-results K; polygons + masked counts only). `DatasetLink.view`
 (RESTRICT): the survey's gated GeoJSON, object card and map colour go through `data.links.survey_view`; a Site
 map block stores `data['view']`/`data['choice']` (`<dataset>:<view>`). A grid view is refused as a survey
-layer. Analysis view types and Responses' saved views as views are #692.
+layer.
+**Analysis views (change `data-analysis-views`, #692; Reports epic #712)**: the kinds a dataset takes are ONE
+table, `data.dataviews.kinds_for(dataset)` (first = default) — layer → `objects`; answers → `grid` + `coverage`
+(line/polygon) or `density` (point/spraycan); responses → `engagement`, `crosstab`, `responses`. A new kind is a
+row there plus a function in `data/analysis.py`, never a branch in a view or in Reports (Vision BO-4: Reports
+computes nothing). `DatasetView.config` holds a kind's settings (cross-tab: `{rows, columns}` question CODES,
+resolved by `data.questions.questions_of` — which `reports.sources` imports; Data never imports Reports for it).
+`dataviews.result(view, lang)` is the one reader: steps + per-period series (`engagement`, every clean session —
+"answered" equals the public response count), a table of distinct respondents (`crosstab`: cells in `0<n<K`
+masked; the total of every line holding a masked cell AND the grand total are then withheld, since totals minus
+visible cells would return the masked values), or grid cells (`coverage` adds `share`, `density` adds `marks`; `data.aggregate.grid` counts marks, K stays
+on respondents). **There is no unmasked reading of a view**, for any role, API and MCP included
+(`GET /datasets/{id}/views/{view}/data`, `get_dataset_view_data`) — exact numbers live on Responses and in the
+export. The dataset page previews a computed view at `editor_data_view` (plain table / numbers; drawing is #704).
+**Saved Responses views (`data/responses_views.py`)**: the Responses table's parameters (`required`, `q`,
+`sort`/`dir`, `cf_<column>`, version) saved as a `responses` view of the survey's responses dataset, question
+columns re-keyed `cf_<row id>` → `q:<code>` because publishing replaces the rows. Opening is
+`…/analytics/?view=<id>#responses`: the FIRST table request carries `view=<id>` and `analytics_table` expands it
+into its own parameters, so the rendered `#table-state-form` holds the filter — no second apply path in JS.
+Choice filters keep the option LABELS the table matches by. Not saved: timeline brush, hidden rows, selection,
+column visibility, trash. Save/delete need the editor role (`analytics_view_save`, `analytics_view_delete`).
 **Tags (change `data-tags`, #673)**: `data.models.Tag(organization, name, slug)` with `datasets` and `surveys`
 (canonical) relations declared on the tag — a module that takes tags adds a relation there, never a column.
 `data.tags.set_tags(org, obj, names)` is the ONE writer (dataset page, `editor_survey_tags`, REST

@@ -32,10 +32,12 @@ def link_refusal(dataset, survey=None, view=None):
     from survey.layers import MAX_LAYER_BYTES, MAX_LAYER_FEATURES, MAX_LAYERS_PER_SURVEY, layer_owner
     if view is not None and view.dataset_id != dataset.pk:
         return _('Pick a view of this dataset.')
-    if view is not None and view.kind == 'grid':
+    if view is not None and view.kind in ('grid', 'coverage', 'density'):
         # Aggregated data leaves only as a grid of counts (change data-views): a Site block may
         # show it; a survey's reference layer is objects respondents open, never counts.
         return _('A grid of counts can be shown on a site, not as a survey layer.') if survey is not None else ''
+    if view is not None and view.kind != 'objects':
+        return _('This view is a table, not a map.')
     if not linkable(dataset):
         return _('Only a layer dataset can be shown on a map.')
     if dataset.privacy_class != Dataset.PRIVACY_PUBLIC:

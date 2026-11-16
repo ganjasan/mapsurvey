@@ -1434,8 +1434,10 @@ Errors: `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed
 
 ### `POST /datasets/{dataset_id}/views`
 
-A saved view: conditions on public fields and the fields it keeps (layers), or a grid of
-counts (collected answers — the privacy class decides).
+A saved view. On a layer: conditions on public fields and the fields it keeps. On the answers
+to a map question: a grid of counts, a coverage or a density. On a survey's responses: an
+engagement funnel or a cross-tab of two questions. What the dataset holds decides which kinds
+it takes; every count is masked under K.
 
 | Parameter | In | Type | Required |
 |---|---|---|---|
@@ -1446,6 +1448,8 @@ counts (collected answers — the privacy class decides).
 | Field | Type | Required | Notes |
 |---|---|---|---|
 | `name` | string | yes |  |
+| `kind` | `objects` | `grid` | `coverage` | `density` | `engagement` | `crosstab` or null |  | What the view yields; left out, the dataset's default. A layer takes `objects`; the answers to a map question take `grid`, plus `coverage` (lines, areas) or `density` (points, spray); a survey's responses take `engagement` and `crosstab`. |
+| `config` | ViewConfigIn or null |  | Settings of the kind: the two questions of a cross-tab. |
 | `color` | string or null |  | #rrggbb |
 | `conditions` | list of ConditionIn |  | All must hold. Layer datasets only; collected answers are a grid. |
 | `fields` | list of string |  | Public fields the view keeps; empty = all. |
@@ -1466,6 +1470,21 @@ A view's GeoJSON: the matching objects with its fields, or the grid cells with t
 **200** no body
 
 Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `GET /datasets/{dataset_id}/views/{view_id}/data`
+
+What a computed view yields: the steps and series of an engagement view, the table of a
+cross-tab, the cells of a grid, coverage or density view. Counts under K come back masked
+(`value: null`, `display: "<K"`) for every caller.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `dataset_id` | path | integer | yes |
+| `view_id` | path | integer | yes |
+
+**200** object
+
+Errors: `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
 
 ### `DELETE /datasets/{dataset_id}/views/{view_id}`
 
