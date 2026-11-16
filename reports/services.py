@@ -229,6 +229,47 @@ def update_settings(actor, report, *, is_published=None, visibility=None, intro_
     return slug_taken
 
 
+def pdf_stamp(report):
+    """Which state of the report a PDF shows: the snapshot of a frozen report, else "now"."""
+    from django.utils import timezone
+    if report.mode == 'frozen' and report.frozen_at:
+        import hashlib
+        raw = '%s|%s' % (report.frozen_at.isoformat(), report.updated_at.isoformat())
+        return 'frozen:' + hashlib.sha1(raw.encode()).hexdigest()
+    return 'live:%s' % timezone.now().isoformat()
+
+
+def ready_pdf(report):
+    """The stored PDF of a FROZEN report's current snapshot, or None. A live report has none to
+    hand out: its numbers have moved since any earlier rendering."""
+    if report.mode != 'frozen' or not report.frozen_at:
+        return None
+    return report.pdfs.filter(status='done', stamp=pdf_stamp(report)).first()
+
+
+def request_pdf(actor, report, base_url=''):
+    """The `ReportPdf` to wait for: the stored one of a frozen report, one already on its way, or
+    a new row handed to the worker. Never renders in the caller's request."""
+    from reports.models import ReportPdf
+    from reports.tasks import render_report_pdf
+    stamp = pdf_stamp(report)
+    if report.mode == 'frozen':
+        existing = report.pdfs.filter(stamp=stamp, status__in=('queued', 'running', 'done')).first()
+        if existing is not None:
+            return existing
+    job = ReportPdf.objects.create(report=report, stamp=stamp, requested_by=getattr(actor, 'user', None))
+    try:
+        render_report_pdf.delay(job.pk, base_url)
+    except Exception:  # noqa: BLE001 — no broker (local dev): render here rather than leave it queued
+        render_report_pdf(job.pk, base_url)
+    # Keep the three newest renderings of a report; older files go with their rows.
+    for old in report.pdfs.exclude(pk=job.pk).order_by('-created_at')[3:]:
+        if old.file:
+            old.file.delete(save=False)
+        old.delete()
+    return job
+
+
 def freeze(actor, report):
     return freeze_report(report)
 
@@ -238,6 +279,6 @@ def unfreeze(actor, report):
 
 
 __all__ = ['QUESTION_BLOCK_TYPES', 'ReportRefused', 'add_image_block', 'add_question_block', 'add_story_block',
-           'add_text_block', 'add_view_block',
+           'add_text_block', 'add_view_block', 'pdf_stamp', 'ready_pdf', 'request_pdf',
            'create_report', 'delete_block', 'freeze', 'reorder_blocks', 'set_published', 'unfreeze',
            'update_block', 'update_settings']

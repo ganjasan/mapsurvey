@@ -198,3 +198,37 @@ class ReportBlock(models.Model):
     def source_survey(self):
         """The canonical survey whose answers the block reads (or None)."""
         return self.dataset.survey if self.dataset_id and self.dataset.survey_id else None
+
+
+def report_pdf_key(instance, filename):
+    """report_pdfs/<uuid4>.pdf on the PRIVATE tier: served only through the two PDF views."""
+    import uuid
+    return f'report_pdfs/{uuid.uuid4().hex}.pdf'
+
+
+def _private_storage():
+    from survey.models import _private_media_storage
+    return _private_media_storage()
+
+
+class ReportPdf(models.Model):
+    """One rendering of a report as a PDF (change reports-pdf, #707), made on the worker.
+
+    `stamp` says which state of the report it shows: a frozen report's snapshot time — its PDF is
+    rendered once and reused — or, for a live report, the moment it was asked for, because a live
+    report's numbers move and each request is a new picture of them.
+    """
+    STATUS_CHOICES = [('queued', 'queued'), ('running', 'running'), ('done', 'done'), ('failed', 'failed')]
+
+    report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name='pdfs')
+    status = models.CharField(max_length=8, choices=STATUS_CHOICES, default='queued', db_index=True)
+    stamp = models.CharField(max_length=64)
+    file = models.FileField(upload_to=report_pdf_key, storage=_private_storage, max_length=300, blank=True)
+    size = models.PositiveIntegerField(default=0)
+    error = models.TextField(blank=True, default='')
+    requested_by = models.ForeignKey('auth.User', null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
+    created_at = models.DateTimeField(auto_now_add=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at', '-id']

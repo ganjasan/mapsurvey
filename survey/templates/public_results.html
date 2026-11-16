@@ -121,7 +121,7 @@
         {% endif %}
       </div>
       {% if frozen and not stale %}
-      <div class="frozen-badge">{% trans "Data as of" %} {{ frozen_at|date:"j M Y" }}</div>
+      <div class="frozen-badge">{% trans "Data as of" %} {{ frozen_at|date:"j M Y" }}{% if pdf_url %} · <a href="{{ pdf_url }}" data-testid="report-pdf-link">{% trans "PDF" %}</a>{% endif %}</div>
       {% endif %}
     </div>
 

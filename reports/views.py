@@ -134,6 +134,52 @@ def report_start(request):
     })
 
 
+# ── The PDF (change reports-pdf, #707): asked for here, rendered on the worker ──
+
+def _pdf_response(job, report, user_id, surface):
+    from django.http import FileResponse
+    from survey import product_events as pe
+    pe.emit(pe.REPORT_PDF_DOWNLOADED, user_id, {'report_id': str(report.pk), 'surface': surface})
+    response = FileResponse(job.file.open('rb'), content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="{report.slug}.pdf"'
+    return response
+
+
+@login_required
+def report_pdf(request, report_uuid):
+    """POST asks for a PDF and answers with the job to poll; GET ?job=<id> answers its state, and
+    GET ?job=<id>&download=1 serves the file once it is done."""
+    from django.http import JsonResponse
+    from reports import services
+    from survey.services.context import Actor
+    report = _editable_report(request, report_uuid)
+    if request.method == 'POST':
+        job = services.request_pdf(Actor.from_request(request), report, base_url=request.build_absolute_uri('/')[:-1])
+    else:
+        job = get_object_or_404(report.pdfs, pk=request.GET.get('job') or 0)
+        if request.GET.get('download') and job.status == 'done' and job.file:
+            return _pdf_response(job, report, request.user.pk, 'editor')
+    url = '{}?job={}&download=1'.format(request.path, job.pk) if job.status == 'done' else ''
+    return JsonResponse({'job': job.pk, 'status': job.status, 'url': url,
+                         'error': bool(job.error)}, status=200 if request.method == 'GET' else 202)
+
+
+def report_page_pdf(request, slug):
+    """The stored PDF of a published, FROZEN report, for anyone who may open its page."""
+    from reports import services
+    report = get_object_or_404(Report.objects.select_related('survey', 'organization'), slug=slug, is_published=True)
+    if report.visibility == 'workspace':
+        if not request.user.is_authenticated:
+            return redirect_to_login(request.get_full_path())
+        from survey.permissions import get_org_membership
+        if get_org_membership(request.user, report.organization) is None:
+            raise Http404
+    job = services.ready_pdf(report)
+    if job is None or not job.file:
+        raise Http404
+    return _pdf_response(job, report, request.user.pk if request.user.is_authenticated else None, 'page')
+
+
 @login_required
 def report_export(request, report_uuid):
     """The report as a ZIP: its settings, blocks and pictures (`reports.files`)."""

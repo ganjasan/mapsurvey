@@ -310,6 +310,7 @@ urlpatterns = [
     path('alternatives/social-pinpoint/', views.social_pinpoint_alternative, name='social_pinpoint_alternative'),
     path('alternatives/metroquest/', views.metroquest_alternative, name='metroquest_alternative'),
     path('r/<slug:slug>/', views.public_results, name='public_results'),
+    path('r/<slug:slug>/pdf/', report_views.report_page_pdf, name='report_page_pdf'),
     # Sites (change landing-core, #576): the public page and its report form.
     path('p/<slug:slug>/', site_views.site_public, name='site_public'),
     path('p/<slug:slug>/report/', abuse_review_views.site_report, name='site_report'),
@@ -345,6 +346,7 @@ urlpatterns = [
     path('editor/reports/<uuid:report_uuid>/checks/', public_results_editor.report_checks, name='editor_report_checks'),
     path('editor/reports/<uuid:report_uuid>/unfreeze/', public_results_editor.report_unfreeze, name='editor_report_unfreeze'),
     path('editor/reports/<uuid:report_uuid>/export/', report_views.report_export, name='editor_report_export'),
+    path('editor/reports/<uuid:report_uuid>/pdf/', report_views.report_pdf, name='editor_report_pdf'),
     path('editor/reports/<uuid:report_uuid>/delete/', report_views.report_delete, name='editor_report_delete'),
     path('editor/data/upload/', data_views.upload, name='editor_data_upload'),
     path('editor/data/jobs/', data_views.jobs, name='editor_data_jobs'),
