@@ -56,7 +56,7 @@ Below 768px it is the drawer behind the header's ☰ button.{% endcomment %}
     {% for item in app_nav.modules %}
     <a class="app-item{% if app_nav.active == item.key %} active{% endif %}" href="{% url item.url_name %}{% if item.query %}?{{ item.query }}{% endif %}"
        data-nav-key="{{ item.key }}" data-label="{{ item.label }}" aria-label="{{ item.label }}"{% if app_nav.active == item.key %} aria-current="page"{% endif %}>
-      <i class="{{ item.icon }}" aria-hidden="true"></i><span>{{ item.label }}</span>
+      <i class="{{ item.icon }}" aria-hidden="true"></i><span>{{ item.label }}</span>{% if item.beta %}<em class="app-item-beta" title="Beta" aria-label="Beta">β</em>{% endif %}
       {% if item.feature and active_org %}<em class="app-item-mark">{% pro_nav_mark active_org item.feature %}</em>{% endif %}
     </a>
     {% endfor %}
