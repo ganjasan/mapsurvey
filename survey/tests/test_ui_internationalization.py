@@ -18,6 +18,7 @@ from survey.models import SurveyHeader, SurveySection, Membership
 from survey.serialization import import_survey_from_zip
 from django.conf import settings
 import os
+import pathlib
 import tempfile
 from survey.tests.helpers import _make_org
 
@@ -64,6 +65,14 @@ class TranslationCatalogHygieneTest(SimpleTestCase):
         # section-layout-controls): two editor labels for the same noun, one
         # word in most languages.
         frozenset({'Image', 'Picture'}),
+        # Reports (change reports-i18n). The block row's menu item and the
+        # publish checks' action: the same command with and without "the".
+        frozenset({'Delete block', 'Delete the block'}),
+        # The same link on the dataset page and on a saved view's row.
+        frozenset({'Open in Responses', 'Open on Responses'}),
+        # A count's label in the report PDF and in Responses: most languages
+        # have one word for what a respondent gives.
+        frozenset({'answers', 'responses'}),
     }
 
     @staticmethod
@@ -532,6 +541,83 @@ class RespondentCatalogTest(TestCase):
             'Respondent string untranslated:\n  ' + '\n  '.join(
                 f'{m[:70]!r}: {len(l)} languages ({", ".join(l[:8])}…)'
                 for m, l in missing.items()))
+
+
+class ReportsCatalogTest(SimpleTestCase):
+    """The Reports module is translated in every offered language (change reports-i18n).
+
+    The creator-side guard above only sees entries that are already IN a catalog;
+    the Reports epic added some 260 strings that were in none, so nothing failed.
+    This one starts from the source: every literal handed to gettext in the
+    Reports templates and modules must be in each offered language's compiled
+    catalog.
+    """
+
+    #: Templates and modules whose strings a report's author or reader sees.
+    SOURCES = (
+        'reports/templates/reports/*.html',
+        'reports/*.py',
+        'data/templates/data/view.html',
+        'survey/templates/public_results.html',
+        'survey/templates/editor/public_results.html',
+        'survey/templates/editor/partials/pr_*.html',
+    )
+    #: Field help texts: read in the Django admin only, which is English.
+    ADMIN_ONLY = ('reports/models.py',)
+
+    LITERAL = re.compile(
+        r"""\{%\s*trans\s+(?:"((?:[^"\\]|\\.)+)"|'((?:[^'\\]|\\.)+)')"""
+        r"""|(?<![\w.])(?:_|gettext|gettext_lazy)\(\s*(?:"((?:[^"\\]|\\.)+)"|'((?:[^'\\]|\\.)+)')\s*[,)]""")
+
+    def _literals(self):
+        root = pathlib.Path(__file__).resolve().parent.parent.parent
+        found = {}
+        for pattern in self.SOURCES:
+            for path in sorted(root.glob(pattern)):
+                rel = path.relative_to(root).as_posix()
+                if rel in self.ADMIN_ONLY:
+                    continue
+                for match in self.LITERAL.finditer(path.read_text(encoding='utf-8')):
+                    raw = next(g for g in match.groups() if g)
+                    msgid = raw.encode('utf-8').decode('unicode_escape').encode('latin-1').decode('utf-8') \
+                        if '\\' in raw else raw
+                    found.setdefault(msgid, rel)
+        return found
+
+    def test_the_scan_finds_the_reports_strings(self):
+        """
+        GIVEN the Reports templates and modules
+        WHEN their gettext literals are collected
+        THEN strings of the start page, the checks and the PDF are among them,
+             so an empty scan cannot pass for a complete translation
+        """
+        found = self._literals()
+        for msgid in ('Start a report', 'Before you publish', 'The report has no title.', 'per week'):
+            self.assertIn(msgid, found)
+
+    def test_every_reports_string_is_translated_in_offered_languages(self):
+        """
+        GIVEN a language offered in settings.LANGUAGES
+        WHEN every literal the Reports screens hand to gettext is looked up
+        THEN its compiled catalog translates each one, because a creator who
+             opens Reports in German must not read English between German menus
+        """
+        catalogs = RespondentCatalogTest._catalogs()
+        found = self._literals()
+        offenders = []
+        for code, _name in settings.LANGUAGES:
+            if code == settings.LANGUAGE_CODE:
+                continue
+            # A name that reads the same in every language needs no entry.
+            offenders += [
+                f'{code}: {msgid[:60]!r} ({where})'
+                for msgid, where in sorted(found.items())
+                if msgid not in catalogs[code] and msgid not in self.SAME_EVERYWHERE]
+        self.assertEqual(
+            offenders, [],
+            'A Reports string is English in a language we offer:\n  ' + '\n  '.join(offenders))
+
+    SAME_EVERYWHERE = frozenset({'PDF', 'API', 'MCP', 'Pro'})
 
 
 class EditorJsNumberLocaleTest(TestCase):

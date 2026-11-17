@@ -6074,7 +6074,7 @@ msgstr ""
 #: survey/templates/maptionnaire_alternative.html:52
 #: survey/templates/social_pinpoint_alternative.html:52
 msgid "Free"
-msgstr ""
+msgstr "Free"
 
 #: survey/templates/maptionnaire_alternative.html:54
 msgid "Self-hostable"
@@ -13561,3 +13561,843 @@ msgstr "Eliminare definitivamente 1 risposta? L'operazione non può essere annul
 
 msgid "Permanently delete __N__ responses? This cannot be undone."
 msgstr "Eliminare definitivamente __N__ risposte? L'operazione non può essere annullata."
+
+# Reports epic (#712), change reports-i18n
+msgid "Reports: tell what a survey found, as a page, a PDF or an embed"
+msgstr "Report: racconta cosa ha rilevato un sondaggio, come pagina, PDF o contenuto incorporato"
+
+msgid "Finished"
+msgstr "Completato"
+
+msgid "Reports written"
+msgstr "Report scritti"
+
+msgid "by working on a report"
+msgstr "lavorando a un report"
+
+msgid "A cross-tab needs two questions: one for the rows, one for the columns."
+msgstr "Una tabella incrociata richiede due domande: una per le righe, una per le colonne."
+
+msgid "Pick two different questions."
+msgstr "Scegli due domande diverse."
+
+#, python-format
+msgid "“%(code)s” is not a choice, rating or thumbs question of this survey."
+msgstr "“%(code)s” non è una domanda a scelta, di valutazione o pollice su/giù di questo sondaggio."
+
+msgid "Views are made of layers, of map answers and of responses."
+msgstr "Le viste si creano da livelli, da risposte sulla mappa e da risposte."
+
+#, python-format
+msgid "This dataset takes these views: %(kinds)s."
+msgstr "Questo set di dati ammette queste viste: %(kinds)s."
+
+msgid "This view is a table, not a map."
+msgstr "Questa vista è una tabella, non una mappa."
+
+msgid "Objects"
+msgstr "Oggetti"
+
+msgid "Coverage"
+msgstr "Copertura"
+
+msgid "Density"
+msgstr "Densità"
+
+msgid "Engagement"
+msgstr "Partecipazione"
+
+msgid "Cross-tab"
+msgstr "Tabella incrociata"
+
+msgid "Responses filter"
+msgstr "Filtro delle risposte"
+
+msgid "Filter the table first: this view would show every response."
+msgstr "Filtra prima la tabella: questa vista mostrerebbe tutte le risposte."
+
+#, python-format
+msgid "“%(name)s” is shown in a report. Remove it from the report first."
+msgstr "“%(name)s” è mostrata in un report. Rimuovila prima dal report."
+
+msgid "Make a report"
+msgstr "Crea un report"
+
+msgid "A view of collected answers is a grid: how many respondents marked each cell, small groups hidden. Lines and areas can also be read as coverage, points and spray as density. It can be shown in a Site map block."
+msgstr "Una vista delle risposte raccolte è una griglia: quanti rispondenti hanno segnato ogni cella, con i gruppi piccoli nascosti. Linee e aree si possono leggere anche come copertura, punti e spray come densità. Si può mostrare in un blocco mappa di un Sito."
+
+msgid "A view of responses computes something a report can show: how many people opened, answered and finished, or how two questions relate. Small groups are hidden. Filters saved on the Responses page are listed here too."
+msgstr "Una vista delle risposte calcola qualcosa che un report può mostrare: quante persone hanno aperto, risposto e terminato, o come si relazionano due domande. I gruppi piccoli sono nascosti. Qui sono elencati anche i filtri salvati nella pagina Risposte."
+
+msgid "Open in Responses"
+msgstr "Apri in Risposte"
+
+msgid "What it shows"
+msgstr "Cosa mostra"
+
+msgid "Rows"
+msgstr "Righe"
+
+msgid "Columns"
+msgstr "Colonne"
+
+msgid "Site"
+msgstr "Sito"
+
+msgid "Report"
+msgstr "Report"
+
+#, python-format
+msgid "Aggregated · K = %(k)s"
+msgstr "Aggregato · K = %(k)s"
+
+#, python-format
+msgid "This is what a report or a site shows of this view. A count under %(k)s reads “<%(k)s” and its value is never sent; map cells with fewer than %(k)s respondents are left out."
+msgstr "Questo è ciò che un report o un sito mostra di questa vista. Un conteggio inferiore a %(k)s appare come “<%(k)s” e il suo valore non viene mai inviato; le celle della mappa con meno di %(k)s rispondenti sono omesse."
+
+msgid "opened"
+msgstr "hanno aperto"
+
+msgid "answered"
+msgstr "hanno risposto"
+
+msgid "finished"
+msgstr "hanno terminato"
+
+msgid "Week of"
+msgstr "Settimana del"
+
+msgid "Opened"
+msgstr "Hanno aperto"
+
+msgid "Answered"
+msgstr "Hanno risposto"
+
+msgid "Nobody has opened the survey yet."
+msgstr "Nessuno ha ancora aperto il sondaggio."
+
+#, python-format
+msgid "The survey no longer has the question %(codes)s, so this table cannot be computed."
+msgstr "Il sondaggio non ha più la domanda %(codes)s, quindi questa tabella non può essere calcolata."
+
+#, python-format
+msgid "%(n)s respondents answered both questions."
+msgstr "%(n)s rispondenti hanno risposto a entrambe le domande."
+
+msgid "A respondent who picked several options counts in each, so a line may add up to more than its total."
+msgstr "Un rispondente che ha scelto più opzioni conta in ciascuna, quindi la somma di una riga può superare il suo totale."
+
+#, python-format
+msgid "“<%(k)s” is a group too small to show. The totals of its row and column, and the number of respondents who answered both questions, read “—” because they would give the group away."
+msgstr "“<%(k)s” è un gruppo troppo piccolo per essere mostrato. I totali della sua riga e della sua colonna, e il numero di rispondenti che hanno risposto a entrambe le domande, appaiono come “—” perché rivelerebbero il gruppo."
+
+#, python-format
+msgid "%(n)s cell"
+msgid_plural "%(n)s cells"
+msgstr[0] "%(n)s cella"
+msgstr[1] "%(n)s celle"
+
+#, python-format
+msgid "%(m)s m across"
+msgstr "%(m)s m di lato"
+
+#, python-format
+msgid "%(n)s respondent"
+msgid_plural "%(n)s respondents"
+msgstr[0] "%(n)s rispondente"
+msgstr[1] "%(n)s rispondenti"
+
+#, python-format
+msgid "%(n)s not shown (in an area with fewer than %(k)s people)"
+msgid_plural "%(n)s not shown (in areas with fewer than %(k)s people)"
+msgstr[0] "%(n)s non mostrato (in un’area con meno di %(k)s persone)"
+msgstr[1] "%(n)s non mostrati (in aree con meno di %(k)s persone)"
+
+#, python-format
+msgid "Each cell says how many respondents drew over it and their share of everyone who drew; the busiest cell has %(max)s."
+msgstr "Ogni cella indica quanti rispondenti vi hanno disegnato sopra e la loro quota su tutti quelli che hanno disegnato; la cella più frequentata ne ha %(max)s."
+
+#, python-format
+msgid "Each cell says how many marks fall inside it; the busiest cell has %(max)s."
+msgstr "Ogni cella indica quanti segni vi ricadono; la cella più frequentata ne ha %(max)s."
+
+#, python-format
+msgid "Each cell says how many respondents marked it; the busiest cell has %(max)s."
+msgstr "Ogni cella indica quanti rispondenti l’hanno segnata; la cella più frequentata ne ha %(max)s."
+
+msgid "A report or a Site map block draws it."
+msgstr "La disegna un report o un blocco mappa di un Sito."
+
+msgid "A Responses filter is saved on the Responses page."
+msgstr "Un filtro delle risposte si salva nella pagina Risposte."
+
+msgid "No survey of this workspace has that id."
+msgstr "Nessun sondaggio di questo spazio di lavoro ha questo id."
+
+msgid "This report has no home survey: name the survey the block shows."
+msgstr "Questo report non ha un sondaggio di riferimento: indica il sondaggio che il blocco mostra."
+
+#, python-format
+msgid "A chart is drawn as: %(choices)s."
+msgstr "Un grafico si disegna come: %(choices)s."
+
+#, python-format
+msgid "A block is one of: %(types)s."
+msgstr "Un blocco è uno tra: %(types)s."
+
+msgid "The survey has no question with that code."
+msgstr "Il sondaggio non ha una domanda con questo codice."
+
+#, python-format
+msgid "That question is shown as a %(kind)s block."
+msgstr "Questa domanda si mostra come blocco %(kind)s."
+
+msgid "text answer, which is never published"
+msgstr "risposta di testo, che non viene mai pubblicata"
+
+#, python-format
+msgid "%(n)s quote will be published as written. Check that it names nobody."
+msgid_plural "%(n)s quotes will be published as written. Check that they name nobody."
+msgstr[0] "%(n)s citazione sarà pubblicata così com’è scritta. Controlla che non nomini nessuno."
+msgstr[1] "%(n)s citazioni saranno pubblicate così come sono scritte. Controlla che non nominino nessuno."
+
+#, python-format
+msgid "“%(title)s” has nothing to show and will be left out."
+msgstr "“%(title)s” non ha nulla da mostrare e sarà omesso."
+
+msgid "The report has no title."
+msgstr "Il report non ha un titolo."
+
+#, python-format
+msgid "%(n)s hidden block will not be shown."
+msgid_plural "%(n)s hidden blocks will not be shown."
+msgstr[0] "%(n)s blocco nascosto non sarà mostrato."
+msgstr[1] "%(n)s blocchi nascosti non saranno mostrati."
+
+msgid "Consultation summary"
+msgstr "Sintesi della consultazione"
+
+msgid "Who took part, then every question in the survey's order, quotes to pick from."
+msgstr "Chi ha partecipato, poi ogni domanda nell’ordine del sondaggio, con citazioni tra cui scegliere."
+
+msgid "Council paper"
+msgstr "Relazione per il consiglio"
+
+msgid "Numbered sections, results as tables, a place for recommendations."
+msgstr "Sezioni numerate, risultati in tabelle, uno spazio per le raccomandazioni."
+
+msgid "Engagement update"
+msgstr "Aggiornamento sulla partecipazione"
+
+msgid "Short and live while the survey is open: the numbers, the maps, a link to take part."
+msgstr "Breve e in diretta mentre il sondaggio è aperto: i numeri, le mappe, un link per partecipare."
+
+msgid "You said — we did"
+msgstr "Avete detto — abbiamo fatto"
+
+msgid "Each result followed by a place to say what was done about it."
+msgstr "Ogni risultato seguito da uno spazio per dire che cosa è stato fatto."
+
+msgid "opened the survey"
+msgstr "hanno aperto il sondaggio"
+
+msgid "marks on the map"
+msgstr "segni sulla mappa"
+
+msgid "Write what this part of the survey showed."
+msgstr "Scrivi che cosa ha mostrato questa parte del sondaggio."
+
+msgid "What happens next"
+msgstr "Prossimi passi"
+
+msgid "Say what will be done with these answers, and when."
+msgstr "Spiega che cosa si farà con queste risposte, e quando."
+
+msgid "1. Background"
+msgstr "1. Contesto"
+
+msgid "Why the survey was run, who ran it and when."
+msgstr "Perché è stato fatto il sondaggio, chi l’ha condotto e quando."
+
+msgid "2. Who took part"
+msgstr "2. Chi ha partecipato"
+
+msgid "3. What residents said"
+msgstr "3. Cosa hanno detto i residenti"
+
+msgid "4. Places"
+msgstr "4. Luoghi"
+
+#, python-format
+msgid "%(n)s. Recommendations"
+msgstr "%(n)s. Raccomandazioni"
+
+msgid "What the council is asked to decide."
+msgstr "Che cosa si chiede al consiglio di decidere."
+
+#, python-format
+msgid "You said: %(question)s"
+msgstr "Avete detto: %(question)s"
+
+msgid "We did: say what was done about it."
+msgstr "Abbiamo fatto: spiega che cosa è stato fatto."
+
+#, python-format
+msgid "%(survey)s: what we heard"
+msgstr "%(survey)s: cosa abbiamo ascoltato"
+
+#, python-format
+msgid "%(survey)s: consultation report"
+msgstr "%(survey)s: relazione sulla consultazione"
+
+#, python-format
+msgid "%(survey)s: update"
+msgstr "%(survey)s: aggiornamento"
+
+#, python-format
+msgid "%(survey)s: you said, we did"
+msgstr "%(survey)s: avete detto, abbiamo fatto"
+
+msgid "{responses} people answered. This is what they said."
+msgstr "Hanno risposto {responses} persone. Ecco cosa hanno detto."
+
+#, python-format
+msgid "The report file is larger than %(mb)s MB."
+msgstr "Il file del report supera %(mb)s MB."
+
+msgid "This is not a report file: a .zip exported from Reports is expected."
+msgstr "Questo non è un file di report: serve un .zip esportato da Report."
+
+msgid "This is not a report file: it has no readable report.json."
+msgstr "Questo non è un file di report: non contiene un report.json leggibile."
+
+msgid "This report file was made by a version of Mapsurvey this one cannot read."
+msgstr "Questo file di report è stato creato da una versione di Mapsurvey che questa non sa leggere."
+
+#, python-format
+msgid "A report holds up to %(n)s blocks."
+msgstr "Un report contiene al massimo %(n)s blocchi."
+
+#, python-format
+msgid "%(what)s shows a survey question this workspace does not have; the block was left out."
+msgstr "%(what)s mostra una domanda di un sondaggio che questo spazio di lavoro non ha; il blocco è stato omesso."
+
+#, python-format
+msgid "%(what)s: “%(survey)s” has no such question. A hidden note marks its place."
+msgstr "%(what)s: “%(survey)s” non ha questa domanda. Una nota nascosta ne segna il posto."
+
+msgid "A picture could not be read and was left out."
+msgstr "Un’immagine non è stata letta ed è stata omessa."
+
+msgid "Workspace only"
+msgstr "Solo spazio di lavoro"
+
+msgid "Key numbers"
+msgstr "Numeri chiave"
+
+msgid "Quotes"
+msgstr "Citazioni"
+
+msgid "Compare two rounds"
+msgstr "Confronta due edizioni"
+
+msgid "Full width"
+msgstr "Larghezza intera"
+
+msgid "Half width"
+msgstr "Mezza larghezza"
+
+msgid "answers"
+msgstr "risposte"
+
+msgid "average"
+msgstr "media"
+
+msgid "median"
+msgstr "mediana"
+
+msgid "range"
+msgstr "intervallo"
+
+msgid "per day"
+msgstr "al giorno"
+
+msgid "per week"
+msgstr "alla settimana"
+
+msgid "per month"
+msgstr "al mese"
+
+msgid "opened, and answered (dark)"
+msgstr "hanno aperto e hanno risposto (scuro)"
+
+msgid "Share of the people who answered in each survey, and the number in brackets."
+msgstr "Quota delle persone che hanno risposto in ciascun sondaggio, con il numero tra parentesi."
+
+#, python-format
+msgid "People who answered both questions. Groups too small to show read “<%(k)s”."
+msgstr "Persone che hanno risposto a entrambe le domande. I gruppi troppo piccoli per essere mostrati appaiono come “<%(k)s”."
+
+#, python-format
+msgid "%(n)s marks from %(p)s respondents"
+msgstr "%(n)s segni di %(p)s rispondenti"
+
+#, python-format
+msgid "%(p)s respondents; darker squares were marked by more people"
+msgstr "%(p)s rispondenti; i quadrati più scuri sono stati segnati da più persone"
+
+#, python-format
+msgid "Data as of %(date)s"
+msgstr "Dati al %(date)s"
+
+#, python-format
+msgid "Printed %(date)s"
+msgstr "Stampato il %(date)s"
+
+#, python-format
+msgid "page %(n)s"
+msgstr "pagina %(n)s"
+
+msgid "An image file is required."
+msgstr "È richiesto un file immagine."
+
+msgid "Question type is not available for publication."
+msgstr "Questo tipo di domanda non può essere pubblicato."
+
+msgid "Only a survey of this workspace can be shown."
+msgstr "Si può mostrare solo un sondaggio di questo spazio di lavoro."
+
+msgid "Choose the other survey to compare with."
+msgstr "Scegli l’altro sondaggio con cui confrontare."
+
+msgid "Choose a different survey: a comparison needs two."
+msgstr "Scegli un sondaggio diverso: per un confronto ne servono due."
+
+#, python-format
+msgid "“%(survey)s” has no comparable question with the code %(code)s."
+msgstr "“%(survey)s” non ha una domanda confrontabile con il codice %(code)s."
+
+msgid "Who took part"
+msgstr "Chi ha partecipato"
+
+msgid "Publish the survey before publishing its results."
+msgstr "Pubblica il sondaggio prima di pubblicarne i risultati."
+
+msgid "Read the quotes and maps listed under “Before you publish” and confirm."
+msgstr "Leggi le citazioni e le mappe elencate in “Prima di pubblicare” e conferma."
+
+#, python-format
+msgid "“%(host)s” is not a site address. Write one per line, like city.example.org."
+msgstr "“%(host)s” non è l’indirizzo di un sito. Scrivine uno per riga, ad esempio city.example.org."
+
+msgid "Delete report"
+msgstr "Elimina il report"
+
+msgid "Reports"
+msgstr "Report"
+
+#, python-format
+msgid "It is published at /r/%(slug)s/. That address stops opening."
+msgstr "È pubblicato all’indirizzo /r/%(slug)s/. Questo indirizzo non si aprirà più."
+
+#, python-format
+msgid "Its %(n)s block, with its text and pictures, is deleted. The survey answers it shows stay where they are. This cannot be undone — export the report first if you may want it back."
+msgid_plural "Its %(n)s blocks, with their text and pictures, are deleted. The survey answers they show stay where they are. This cannot be undone — export the report first if you may want it back."
+msgstr[0] "Il suo %(n)s blocco, con testo e immagini, viene eliminato. Le risposte del sondaggio che mostra restano dove sono. L’operazione non si può annullare — esporta prima il report se pensi di volerlo recuperare."
+msgstr[1] "I suoi %(n)s blocchi, con testo e immagini, vengono eliminati. Le risposte del sondaggio che mostrano restano dove sono. L’operazione non si può annullare — esporta prima il report se pensi di volerlo recuperare."
+
+msgid "Export first"
+msgstr "Esporta prima"
+
+msgid "Import a report"
+msgstr "Importa un report"
+
+msgid "New report"
+msgstr "Nuovo report"
+
+msgid "Reports are part of Pro. On the current plan this workspace's reports are read-only: published ones stay online with the numbers they had, and nothing is deleted."
+msgstr "I report fanno parte di Pro. Con il piano attuale i report di questo spazio di lavoro sono in sola lettura: quelli pubblicati restano online con i numeri che avevano e nulla viene eliminato."
+
+msgid "See Pro"
+msgstr "Scopri Pro"
+
+msgid "A report tells what a survey found: text, with charts, maps and quotes between the paragraphs. Each survey's public results page is a report; a report made elsewhere can be imported as a file."
+msgstr "Un report racconta cosa ha rilevato un sondaggio: testo, con grafici, mappe e citazioni tra i paragrafi. La pagina dei risultati pubblici di ogni sondaggio è un report; un report creato altrove si può importare come file."
+
+msgid "No reports yet."
+msgstr "Ancora nessun report."
+
+msgid "A report tells what a survey found."
+msgstr "Un report racconta cosa ha rilevato un sondaggio."
+
+msgid "Start one from a survey's answers."
+msgstr "Iniziane uno dalle risposte di un sondaggio."
+
+msgid "Start a report"
+msgstr "Inizia un report"
+
+msgid "Begin with a draft made from a survey's answers and cut it down to what you want to say — or start empty. Nothing is published until you publish it."
+msgstr "Parti da una bozza creata dalle risposte di un sondaggio e riducila a ciò che vuoi dire, oppure parti da zero. Nulla viene pubblicato finché non lo pubblichi tu."
+
+msgid "Draft from a survey"
+msgstr "Bozza da un sondaggio"
+
+msgid "Choose"
+msgstr "Scegli"
+
+msgid "A draft is made from a published survey's answers. This workspace has none yet, so start empty."
+msgstr "Una bozza si crea dalle risposte di un sondaggio pubblicato. Questo spazio di lavoro non ne ha ancora, quindi parti da zero."
+
+msgid "Or"
+msgstr "Oppure"
+
+msgid "Blank report"
+msgstr "Report vuoto"
+
+msgid "An empty page: add headings, text, pictures, numbers and quotes yourself."
+msgstr "Una pagina vuota: aggiungi tu intestazioni, testo, immagini, numeri e citazioni."
+
+msgid "Copy an earlier report"
+msgstr "Copia un report precedente"
+
+msgid "The same story for the next round: change what changed."
+msgstr "Lo stesso racconto per l’edizione successiva: modifica ciò che è cambiato."
+
+msgid "Report to copy"
+msgstr "Report da copiare"
+
+msgid "for the survey"
+msgstr "per il sondaggio"
+
+msgid "the same as in the report"
+msgstr "lo stesso del report"
+
+msgid "A report made elsewhere? Import its file on the Reports page."
+msgstr "Un report creato altrove? Importa il file nella pagina Report."
+
+msgid "Untitled report"
+msgstr "Report senza titolo"
+
+msgid "Choose a survey to draft a report from."
+msgstr "Scegli un sondaggio da cui creare la bozza del report."
+
+msgid "Report imported. It is not published; only this workspace sees it."
+msgstr "Report importato. Non è pubblicato; lo vede solo questo spazio di lavoro."
+
+#, python-format
+msgid "“%(name)s” deleted."
+msgstr "“%(name)s” eliminato."
+
+msgid "Always"
+msgstr "Sempre"
+
+msgid "File"
+msgstr "File"
+
+msgid "Draft a report from these answers"
+msgstr "Crea la bozza di un report da queste risposte"
+
+msgid "Saved filters of this table"
+msgstr "Filtri salvati di questa tabella"
+
+msgid "No saved views yet. Filter the table, then save the filter here."
+msgstr "Ancora nessuna vista salvata. Filtra la tabella, poi salva qui il filtro."
+
+msgid "Name of the view"
+msgstr "Nome della vista"
+
+msgid "Save current filter as…"
+msgstr "Salva il filtro attuale come…"
+
+msgid "Image (a picture, a chart or a map made elsewhere)"
+msgstr "Immagine (una foto, un grafico o una mappa creati altrove)"
+
+msgid "Cross-tab: two questions against each other"
+msgstr "Tabella incrociata: due domande a confronto"
+
+msgid "Compare: one question in two surveys"
+msgstr "Confronto: una domanda in due sondaggi"
+
+msgid "Engagement: opened, answered, finished"
+msgstr "Partecipazione: hanno aperto, risposto, terminato"
+
+msgid "How many people gave each pair of answers, among those who answered both. Groups too small to show are hidden."
+msgstr "Quante persone hanno dato ciascuna coppia di risposte, tra quelle che hanno risposto a entrambe. I gruppi troppo piccoli per essere mostrati sono nascosti."
+
+msgid "Compare with"
+msgstr "Confronta con"
+
+msgid "The other survey needs a question with the same code — as a second round made by duplicating the first has. Each answer's share is shown for both."
+msgstr "L’altro sondaggio deve avere una domanda con lo stesso codice, come accade in una seconda edizione creata duplicando la prima. Per ogni risposta si mostra la quota di entrambi."
+
+msgid "Before you publish"
+msgstr "Prima di pubblicare"
+
+msgid "Nothing to check: no quotes, no individual marks, no empty blocks."
+msgstr "Niente da controllare: nessuna citazione, nessun segno individuale, nessun blocco vuoto."
+
+msgid "People in this report"
+msgstr "Persone in questo report"
+
+msgid "Open the block"
+msgstr "Apri il blocco"
+
+msgid "Delete the block"
+msgstr "Elimina il blocco"
+
+msgid "Who can open it"
+msgstr "Chi può aprirlo"
+
+msgid "Public can be found by search engines; unlisted opens by its link only; workspace only asks members to sign in."
+msgstr "Pubblico: può essere trovato dai motori di ricerca; non elencato: si apre solo con il link; solo spazio di lavoro: chiede ai membri di accedere."
+
+msgid "Numbers"
+msgstr "Numeri"
+
+msgid "Live — follow new answers"
+msgstr "In diretta — seguono le nuove risposte"
+
+msgid "Frozen — as they are now"
+msgstr "Congelati — come sono ora"
+
+msgid "Address:"
+msgstr "Indirizzo:"
+
+msgid "I have read the quotes and maps listed above and they may be published."
+msgstr "Ho letto le citazioni e le mappe elencate sopra e possono essere pubblicate."
+
+msgid "Not yet"
+msgstr "Non ancora"
+
+msgid "Width"
+msgstr "Larghezza"
+
+msgid "Reports are part of Pro. On the current plan this report is read-only: a published report stays online with the numbers it had, and nothing is deleted. You can still export it and make its PDF."
+msgstr "I report fanno parte di Pro. Con il piano attuale questo report è in sola lettura: un report pubblicato resta online con i numeri che aveva e nulla viene eliminato. Puoi comunque esportarlo e crearne il PDF."
+
+msgid "Publish this report"
+msgstr "Pubblica questo report"
+
+msgid "Checking the report…"
+msgstr "Controllo del report…"
+
+msgid "Starts a section of the story."
+msgstr "Apre una sezione del racconto."
+
+msgid "Title above the block (optional)"
+msgstr "Titolo sopra il blocco (facoltativo)"
+
+msgid "What the map shows, in a sentence"
+msgstr "Cosa mostra la mappa, in una frase"
+
+msgid "Most marks sit along the river path and by the east entrance."
+msgstr "La maggior parte dei segni si trova lungo il sentiero sul fiume e presso l’ingresso est."
+
+msgid "Shown under the map and read aloud to people who cannot see it."
+msgstr "Mostrato sotto la mappa e letto ad alta voce a chi non può vederla."
+
+msgid "Show the marks themselves"
+msgstr "Mostra i segni stessi"
+
+msgid "every place, line or area as it was drawn, instead of the squares. A mark can point at someone's home: you decide whether that is right for this survey."
+msgstr "ogni luogo, linea o area così come è stato disegnato, al posto dei quadrati. Un segno può indicare la casa di qualcuno: decidi tu se è adatto a questo sondaggio."
+
+msgid "A number can follow the answers: write a token and the page fills it in."
+msgstr "Un numero può seguire le risposte: scrivi un token e la pagina lo compila."
+
+msgid "CODE is a question's code. A frozen report keeps the numbers of the day it was frozen."
+msgstr "CODE è il codice di una domanda. Un report congelato conserva i numeri del giorno in cui è stato congelato."
+
+#, python-format
+msgid "Questions %(rows)s (rows) × %(columns)s (columns): how many people gave each pair of answers, among those who answered both. A group smaller than %(k)s is hidden, with the totals that would give it away. To compare other questions, add another cross-tab."
+msgstr "Domande %(rows)s (righe) × %(columns)s (colonne): quante persone hanno dato ciascuna coppia di risposte, tra quelle che hanno risposto a entrambe. Un gruppo più piccolo di %(k)s è nascosto, insieme ai totali che lo rivelerebbero. Per confrontare altre domande, aggiungi un’altra tabella incrociata."
+
+msgid "How many people opened the survey, answered at least one question and finished it, and how that went over time. Trashed and moderated-out responses are not counted."
+msgstr "Quante persone hanno aperto il sondaggio, risposto ad almeno una domanda e l’hanno terminato, e l’andamento nel tempo. Le risposte nel cestino e quelle escluse dalla moderazione non sono conteggiate."
+
+msgid "One per line: the number, then “ | ”, then what it counts. You type these numbers; they do not change when new answers arrive."
+msgstr "Uno per riga: il numero, poi “ | ”, poi che cosa conta. Questi numeri li scrivi tu; non cambiano quando arrivano nuove risposte."
+
+msgid "Note under the numbers (optional)"
+msgstr "Nota sotto i numeri (facoltativa)"
+
+msgid "One quote per line. To name where it comes from, add “ | ” and the source. A quote is published exactly as written here: leave out anything that names a person."
+msgstr "Una citazione per riga. Per indicare da dove viene, aggiungi “ | ” e la fonte. Una citazione è pubblicata esattamente come è scritta qui: togli tutto ciò che nomina una persona."
+
+msgid "Two half-width blocks in a row sit side by side on a wide screen."
+msgstr "Due blocchi a mezza larghezza consecutivi stanno affiancati su uno schermo largo."
+
+msgid "Use this block elsewhere"
+msgstr "Usa questo blocco altrove"
+
+msgid "Embed only this block on another site:"
+msgstr "Incorpora solo questo blocco in un altro sito:"
+
+msgid "Opening"
+msgstr "Apertura"
+
+msgid "Line above the title (optional)"
+msgstr "Riga sopra il titolo (facoltativa)"
+
+msgid "Neighbourhood plan · survey report · September 2026"
+msgstr "Piano di quartiere · report del sondaggio · settembre 2026"
+
+msgid "Opening paragraph"
+msgstr "Paragrafo di apertura"
+
+msgid "Riverside plan 2027"
+msgstr "Piano del lungofiume 2027"
+
+msgid "Comma-separated. The same tags group this report with its surveys and datasets."
+msgstr "Separate da virgole. Le stesse etichette raggruppano questo report con i suoi sondaggi e set di dati."
+
+msgid "Embed on another site"
+msgstr "Incorpora in un altro sito"
+
+msgid "Paste this where the report should appear. It always shows the published version and grows to its height. One block can be embedded on its own: open the block for its code."
+msgstr "Incolla questo codice dove deve comparire il report. Mostra sempre la versione pubblicata e si adatta alla sua altezza. Un blocco si può incorporare da solo: apri il blocco per il suo codice."
+
+msgid "The code works once the report is published as public or unlisted."
+msgstr "Il codice funziona quando il report è pubblicato come pubblico o non elencato."
+
+msgid "Sites that may embed it"
+msgstr "Siti che possono incorporarlo"
+
+msgid "One address per line. Empty means any site."
+msgstr "Un indirizzo per riga. Vuoto significa qualsiasi sito."
+
+msgid "Readers"
+msgstr "Lettori"
+
+msgid "times the page was opened"
+msgstr "volte in cui la pagina è stata aperta"
+
+msgid "times shown inside another site"
+msgstr "volte in cui è stato mostrato in un altro sito"
+
+msgid "PDF downloads"
+msgstr "Download del PDF"
+
+#, python-format
+msgid "In the last 30 days: %(views)s opened, %(embeds)s embedded."
+msgstr "Negli ultimi 30 giorni: %(views)s aperture, %(embeds)s incorporamenti."
+
+msgid "Your own visits and your colleagues' are not counted, and nothing about a reader is stored."
+msgstr "Le tue visite e quelle dei tuoi colleghi non sono conteggiate e non viene memorizzato nulla sui lettori."
+
+msgid "Report file"
+msgstr "File del report"
+
+msgid "The whole report — text, numbers, quotes, pictures and which questions its charts and maps show — as one file. Import it on the Reports page, here or in another workspace."
+msgstr "L’intero report — testo, numeri, citazioni, immagini e le domande mostrate da grafici e mappe — in un unico file. Importalo nella pagina Report, qui o in un altro spazio di lavoro."
+
+msgid "Export report"
+msgstr "Esporta il report"
+
+msgid "PDF (A4)"
+msgstr "PDF (A4)"
+
+msgid "Every chart and map as a PNG with its numbers as CSV"
+msgstr "Ogni grafico e mappa come PNG, con i suoi numeri in CSV"
+
+msgid "Charts and maps (ZIP)"
+msgstr "Grafici e mappe (ZIP)"
+
+msgid "A frozen report's PDF is made once and linked from its page; a live report's PDF shows the numbers of the moment you ask."
+msgstr "Il PDF di un report congelato viene creato una volta e collegato dalla sua pagina; il PDF di un report in diretta mostra i numeri del momento in cui lo richiedi."
+
+msgid "Delete report…"
+msgstr "Elimina il report…"
+
+msgid "As on a phone"
+msgstr "Come su un telefono"
+
+msgid "Preview as on a phone"
+msgstr "Anteprima come su un telefono"
+
+msgid "As on a computer"
+msgstr "Come su un computer"
+
+msgid "Preview as on a computer"
+msgstr "Anteprima come su un computer"
+
+msgid "Tick the box to confirm you have read the quotes and maps listed above."
+msgstr "Spunta la casella per confermare di aver letto le citazioni e le mappe elencate sopra."
+
+msgid "The report could not be published. Publish the survey first."
+msgstr "Non è stato possibile pubblicare il report. Pubblica prima il sondaggio."
+
+msgid "Making the file…"
+msgstr "Creazione del file…"
+
+msgid "The PDF could not be made. Try again."
+msgstr "Non è stato possibile creare il PDF. Riprova."
+
+msgid "Preview — only editors of this report see this page."
+msgstr "Anteprima — solo chi può modificare questo report vede questa pagina."
+
+msgid "Workspace only — members of this workspace see this report after signing in."
+msgstr "Solo spazio di lavoro — i membri di questo spazio di lavoro vedono questo report dopo l’accesso."
+
+msgid "People who answered both questions."
+msgstr "Persone che hanno risposto a entrambe le domande."
+
+msgid "Someone who picked several options counts in each."
+msgstr "Chi ha scelto più opzioni conta in ciascuna."
+
+#, python-format
+msgid "A group smaller than %(k)s reads “<%(k)s”, and totals that would give it away read “—”."
+msgstr "Un gruppo più piccolo di %(k)s appare come “<%(k)s”, e i totali che lo rivelerebbero appaiono come “—”."
+
+#, python-format
+msgid "%(n)s answered"
+msgstr "%(n)s hanno risposto"
+
+msgid "Share of the people who answered the question in each survey; the small number is how many."
+msgstr "Quota delle persone che hanno risposto alla domanda in ciascun sondaggio; il numero piccolo indica quante."
+
+#, python-format
+msgid "A group smaller than %(k)s reads “<%(k)s” and has no share."
+msgstr "Un gruppo più piccolo di %(k)s appare come “<%(k)s” e non ha una quota."
+
+msgid "Opened and answered over time"
+msgstr "Aperture e risposte nel tempo"
+
+msgid "per day: opened, and answered (dark)"
+msgstr "al giorno: hanno aperto e hanno risposto (scuro)"
+
+msgid "per week: opened, and answered (dark)"
+msgstr "alla settimana: hanno aperto e hanno risposto (scuro)"
+
+msgid "per month: opened, and answered (dark)"
+msgstr "al mese: hanno aperto e hanno risposto (scuro)"
+
+#, python-format
+msgid "“%(title)s” shows every mark as it was drawn, not squares. A mark can point at someone's home."
+msgstr "“%(title)s” mostra ogni segno così come è stato disegnato, non i quadrati. Un segno può indicare la casa di qualcuno."
+
+#, python-format
+msgid "“%(title)s” has no description for people who use a screen reader."
+msgstr "“%(title)s” non ha una descrizione per chi usa uno screen reader."
+
+msgid "Small groups are not hidden: the threshold is 1, so a chart can show one person's answer."
+msgstr "I gruppi piccoli non sono nascosti: la soglia è 1, quindi un grafico può mostrare la risposta di una sola persona."
+
+#, python-format
+msgid "Here the earlier report showed: %(what)s. This survey has no question with that code — add a block for the question that replaced it, or delete this note."
+msgstr "Qui il report precedente mostrava: %(what)s. Questo sondaggio non ha una domanda con quel codice — aggiungi un blocco per la domanda che l’ha sostituita, oppure elimina questa nota."
+
+msgid "Comments on this page"
+msgstr "Commenti su questa pagina"
+
+msgid "Spray clouds are published as a density grid: each cell shows how many respondents painted there, and cells below the anonymity threshold are left out. No individual paint is ever shown."
+msgstr "Le nuvole di spray sono pubblicate come griglia di densità: ogni cella mostra quanti rispondenti hanno dipinto lì, e le celle sotto la soglia di anonimato sono omesse. Nessun tratto individuale viene mai mostrato."
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "Gli oggetti con poche risposte sono mascherati per tutelare la privacy."
+
+msgid "Comments"
+msgstr "Commenti"
+
+msgid "new"
+msgstr "nuovi"
