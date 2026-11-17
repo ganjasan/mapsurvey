@@ -56,10 +56,11 @@ def add_story_block(actor, report, block_type):
     return block
 
 
-def add_image_block(actor, report, image):
-    if not image:
-        raise ReportRefused('image_required', _('An image file is required.'))
-    block = ReportBlock.objects.create(report=report, block_type='image', image=image, order=_next_order(report))
+def add_image_block(actor, report, image=None):
+    """A picture block. Without a file it is an empty block the author fills on the page (change
+    reports-canvas-editor); readers do not see it until it has one."""
+    block = ReportBlock.objects.create(report=report, block_type='image', image=image or None,
+                                       order=_next_order(report))
     bump_version(report)
     return block
 

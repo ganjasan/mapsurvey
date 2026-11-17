@@ -823,7 +823,7 @@ is the interest signal per feature.
 workspace members discuss a survey where it lives — the survey as a whole, a question, a section, a respondent
 session or a public-results block — in ONE slide-in drawer (`editor/partials/_comments_drawer.html`, included
 once from `editor_base.html`; `js/comments_drawer.js` + `css/comments.css`). Row badges
-(`section_list_item`, `question_list_item`, `pr_block_list_item`) and the toolbar/modal buttons
+(`section_list_item`, `question_list_item`, a report block's toolbar in `reports/editor/_canvas_block.html`) and the toolbar/modal buttons
 call `CommentsDrawer.open({anchor: "<kind>:<page id>"})`; the panel is an HTMX partial from
 `survey/comment_views.py`. **Anchoring rule**: `thread.survey` is always `canonical_of()`, question
 and section anchors are `code`s (never FKs — `publish_draft()` replaces the rows), session and
@@ -1227,9 +1227,9 @@ Rendering is `reports/render.py` (`ReportService`, `render_data`, `freeze_report
 `unfreeze_report`, `scaffold_report`, `report_for_survey`, `k_for_survey`); every write is
 `reports/services.py` with an `Actor`. `SurveyHeader.report` (the survey's oldest report) is what
 the Public results tab, the thanks button, Share and the dashboard pill read — never
-`Report.objects.get(survey=…)`, a survey may be home to several. The configuration screens
-(`reports/editor_views.py`, templates still `editor/public_results.html` / `public_results.html`,
-URL names `editor_public_results_*`) stay until the story editor (#704). Aggregates run over CLEAN
+`Report.objects.get(survey=…)`, a survey may be home to several. The editor is the report builder
+below (`reports/editor_views.py`; URL names `editor_public_results_*` through a survey,
+`editor_report*` by the report). Aggregates run over CLEAN
 sessions only (not deleted, excludes `not_approved`/`on_hold`) across the canonical survey + all
 versions. Privacy: k-anonymity masks buckets `<K` (default 3); geo popups expose only
 creator-selected `geo_label_fields`; individual free-text answers are not published (hand-picked
@@ -1240,6 +1240,34 @@ workspace only: anonymous → login, others → 404). "Used by": `data.links.rep
 leaves the block empty (`SET_NULL`). The Reports list is `/editor/reports/`. Report config is
 intentionally NOT included in survey ZIP export/import. Migration `reports/0002` copied the old
 pages WITH their ids (comment anchors, snapshots, `?block=` links).
+
+**Report builder (change `reports-canvas-editor`, #731)**: the report editor is the Sites canvas
+builder for a report — `reports/builder.html` runs on the SAME script and stylesheet as Sites
+(`js/site_builder.js`, `css/site_builder.css`, every `lb-` hook) plus `js/report_builder.js` /
+`css/report_builder.css` for what only a report has (publish dialog, PDF job, half-width pairs, the
+library's two forms). Do not fork a second builder script; a change to `site_builder.js` must keep
+both pages working. Left: outline; centre: the report as readers see it, written in place
+(`reports/editor/_canvas_block.html`, `_hero.html`); right: ONE context panel — the selected block's
+form (`_block_panel.html`, the WHOLE block: what is written on the canvas travels in its hidden
+fields) or the report's settings (`_page_panel.html`). `reports/canvas.py` builds one record per
+block, hidden and empty ones included, with the `note` saying why readers do not see it; nothing is
+cached there. A save posted with `autosave=1` is answered with fragments (`block`, `outline`,
+`panel`; settings: `title`, `hero`) computed for THAT block only (`_block_fragments`,
+`_shell_context`) — never rebuild the whole canvas in an autosave answer. Key numbers and quotes
+post parallel lists behind `rows=1`; the `items` textarea dialect stays for the API-less callers and
+tests. Readers' markup is ONE partial, `reports/_block.html`, and ONE stylesheet,
+`css/report_public.css`, every rule under `.rp` with the row class `rp-row` (the canvas lives under
+Bootstrap, whose `.row` is a flex row): a look changed there changes `/r/`, embeds and the canvas.
+A field that shows a live number (`{responses}` in a key number or the opening) carries the token
+in `data-raw` and `plainValue()` returns that until the author clicks into it — never save
+`innerText` of such a field. A question block's empty title means "the question's name", shown as
+the placeholder (`rb-default-title`); `?block=<id>` selects a block (publish checks, comment mail).
+Blocks are added from the library (`_library.html`): `block_type`, or `question_id` for a chart /
+map, with `after` (`top` | block id) — `_place` renumbers through `reorder_blocks`. A picture block
+may be created empty. The builder extends `editor_base.html` (Sites extends `base.html`): through a
+survey it is that survey's Public results tab and keeps the survey's title, tab strip and publishing
+widget above it — tests hold every survey page to that. The old tab's own mobile status line and
+Structure / Edit / Preview bar are gone; on a narrow screen the panel sits under the canvas, as in Sites.
 
 **Category landings (`/community-engagement-platform/`, `/civic-engagement/`,
 `/public-consultation-software/`, `/participatory-budgeting/`; change `seo-landings-rewrite`, #251)**:

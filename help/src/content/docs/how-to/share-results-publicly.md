@@ -16,16 +16,16 @@ Reports are part of **Pro**. On a workspace without Pro a report opens read-only
 
 ## Steps
 
-1. Open the survey and choose the **Public results** tab. Mapsurvey has already drafted a page from your questions, one block per publishable question.
-   <!-- screenshot: the Public results editor with the block list and the preview -->
-2. Arrange the blocks: drag to reorder, switch on **Hidden** for the ones you do not want, and press **Add block** to add a **Text block**, an **Image** or **Question results…** for a question that is not there yet.
-3. Open a map block's **Block settings** and choose its **Point popup fields** — the sub-questions a visitor sees summarised when they click a square of the map. Free-text sub-questions cannot be shown. The public map never shows a respondent's own point, line or area: it shows squares coloured by how many respondents marked them, and hides any square with fewer respondents than the k-anonymity threshold — a single pin at a front door can tell neighbours who answered and what they said. The exact points stay in **Responses** and in the export.
-4. Under **Page settings**, choose:
+1. Open the survey and choose the **Public results** tab. Mapsurvey has already drafted a page from your questions, one block per publishable question. The report itself is in the middle of the screen: you write and arrange it there. The outline of its blocks is on the left, and the panel on the right holds the settings of the block you clicked — or of the whole report when no block is selected.
+   <!-- screenshot: the report builder — outline, the report, the settings panel -->
+2. Arrange the blocks: drag a block by its handle, or use the arrows in the bar that appears over it; switch on **Hidden** in the panel for the ones you do not want; and press **Add block** — or the **+** between two blocks, to add one exactly there. In the library the blocks you write yourself come first; under **Questions** pick a question to add its chart or map.
+3. Click a map block and, in the panel, choose its **Point popup fields** — the sub-questions a visitor sees summarised when they click a square of the map. Free-text sub-questions cannot be shown. The public map never shows a respondent's own point, line or area: it shows squares coloured by how many respondents marked them, and hides any square with fewer respondents than the k-anonymity threshold — a single pin at a front door can tell neighbours who answered and what they said. The exact points stay in **Responses** and in the export.
+4. Click **Title and opening** in the outline for the **Report settings** in the panel, and choose:
    - **Visibility**: **Public** is indexed by search engines and can be listed; **Unlisted** opens only by direct link and is not indexed.
    - **Data mode**: live data, or **Freeze snapshot** to publish a fixed copy. A frozen page keeps showing the snapshot until you press **Update snapshot** or **Back to live**.
    - **k-anonymity threshold**: groups smaller than this number are masked as "<K" on every chart and map. The default is 3; set it to 1 to switch masking off.
    - **Show response counter** and **Show “Take the survey” CTA** (the button shows only while the survey is open).
-5. Press **Publish page**. The address is shown next to **Public URL**; **Copy public link** copies it, and the same link appears under **Results page** on the Share page.
+5. Press **Publish**. Once the report is out, the same button reads **Published**: it shows the address with a button that copies it, and the same link appears under **Results page** on the Share page.
 6. To show the page to respondents after they finish, switch on **Show a “See the results” button** on the thanks page.
 
 ## Start from a draft
@@ -54,8 +54,8 @@ The page is read top to bottom like an article, so write it like one. Under **Ad
 - **Heading** starts a section.
 - **Text** is a paragraph, a list or a few of them, with bold, italics and links.
 - **Image** is a picture with a caption — a photo, or a chart or map you made elsewhere.
-- **Key numbers** is a strip of figures with a word under each. Enter one per line as `447 | residents answered`. You type these numbers; they do not change when new answers arrive.
-- **Quotes** shows what people wrote, one per line, with an optional source after ` | `: `Give us the bridge back. | Pin: needs attention`. A quote is published exactly as you enter it, so leave out anything that names a person.
+- **Key numbers** is a strip of figures with a word under each. Type each figure and the word under it on the page; **Add a number** adds another. You type these numbers; they do not change when new answers arrive.
+- **Quotes** shows what people wrote. Type or paste each quote on the page, with an optional source under it; **Add a quote** adds another. A quote is published exactly as you enter it, so leave out anything that names a person.
 
 Blocks that follow the answers:
 
@@ -64,19 +64,19 @@ Blocks that follow the answers:
 - A **map** block shows squares that count respondents. Switch on **Show the marks themselves** in the block's settings to show every place, line or area as it was drawn instead. A mark can point at someone's home, so decide whether that is right for your survey; the default stays the squares.
 - **Numbers in the text** can follow the answers too. Write `{responses}` in a text, a key number or the opening paragraph and the page fills in how many people answered; `{opened}` and `{finished}` are the other two steps, `{marks:CODE}` the marks placed on a map question and `{respondents:CODE}` the people who answered a question, CODE being the question's code. A frozen page keeps the numbers of the day it was frozen. A count smaller than the privacy threshold reads "<3".
 
-Set a block's **Width** to *Half width* to put two blocks side by side on a wide screen; on a phone they stack. Under **Page settings → Opening** add a line above the title and an opening paragraph.
+Set a block's **Width** to *Half width* to put two blocks side by side on a wide screen; on a phone they stack. The line above the title, the title and the opening paragraph are written at the top of the page itself. A key number or an opening that follows the answers shows the number on the page; click it to see and change its token.
 
-All reports of the workspace are on the **Reports** page of the sidebar. **New report** starts a blank one that belongs to no survey. **Export report** (Page settings → Report file) saves the whole report — text, numbers, quotes, pictures and which questions its charts and maps show — as one file; **Import a report** on the Reports page brings such a file in, here or in another workspace. An imported report is not published and only the workspace sees it until you change that; a chart or map of a survey the workspace does not have is left out, and you are told which.
+All reports of the workspace are on the **Reports** page of the sidebar. **New report** starts a blank one that belongs to no survey. **Export report** (Report settings → Report file) saves the whole report — text, numbers, quotes, pictures and which questions its charts and maps show — as one file; **Import a report** on the Reports page brings such a file in, here or in another workspace. An imported report is not published and only the workspace sees it until you change that; a chart or map of a survey the workspace does not have is left out, and you are told which.
 
 ## Before you publish
 
-**Publish page** opens a short dialog first.
+**Publish** opens a short dialog first.
 
 - **People in this report** lists what could point at a person: every quote you chose to show, written out; every map that shows the marks themselves; and a warning if small groups are not hidden. If there are quotes or such maps, tick **I have read the quotes and maps listed above** — the report is not published without it. Whether a quote or a mark may go out is your decision; the dialog makes sure you saw them.
 - Below it are things that would look unfinished, each with a button: a block with nothing in it (**Delete the block**), a map nobody described (**Open the block** and say in a sentence what it shows — the sentence appears under the map and is read aloud by screen readers), a missing title. None of these stops you from publishing.
 - Choose **who can open it** and whether the **numbers** stay live or are frozen as they are now.
 
-In the editor's preview, the phone and screen buttons show the page as on a phone or on a computer.
+The phone and screen buttons at the top show the report as on a phone or on a computer; **Preview** opens it in a new tab, exactly as readers get it.
 
 ## A PDF for the meeting pack
 

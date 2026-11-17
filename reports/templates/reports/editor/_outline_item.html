@@ -1,0 +1,8 @@
+{% load i18n %}{% comment %}A block's row in the builder's outline (change reports-canvas-editor): its title with the
+name of its type under it, or the type's name once when it has no title of its own.{% endcomment %}<li class="lb-oi rb-oi{% if selected == b.pk|stringformat:'s' %} on{% endif %}" data-block="{{ b.pk }}" data-select-target="{{ b.pk }}" tabindex="0">
+  <i class="{{ item.icon }} lb-oi-k" aria-hidden="true"></i>
+  <span class="lb-oi-t">{% if item.label %}<span class="pr-block-name">{{ item.label }}</span><span class="pr-block-type">{{ item.type_name }}</span>{% else %}<span class="pr-block-name">{{ item.type_name }}</span>{% endif %}</span>
+  {% if b.width == 'half' %}<span class="rb-oi-half" title="{% trans 'Half width' %}">½</span>{% endif %}
+  {% if b.is_hidden %}<span class="rb-oi-off" title="{{ item.note }}"><i class="fas fa-eye-slash" aria-hidden="true"></i></span>{% elif item.note %}<span class="lb-oi-warn" title="{{ item.note }}"><i class="fas fa-circle" aria-hidden="true"></i></span>{% endif %}
+  {% if may_edit %}<span class="lb-oi-h" aria-hidden="true"><i class="fas fa-grip-vertical"></i></span>{% endif %}
+</li>

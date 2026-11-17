@@ -228,10 +228,10 @@ class PreviewTest(_Review):
         """
         GIVEN the report's editor
         WHEN the page is rendered
-        THEN the preview pane offers the phone and the computer width, and Publish opens the dialog
+        THEN the canvas offers the phone and the computer width, and Publish opens the dialog
         """
         html = self.client.get(reverse('editor_report', args=[self.report.uuid])).content.decode()
-        self.assertIn('data-pr-device="phone"', html)
-        self.assertIn('data-pr-device="desktop"', html)
-        self.assertIn('prOpenPublish()', html)
+        self.assertIn('data-width="mobile"', html)
+        self.assertIn('data-width="desktop"', html)
+        self.assertIn('data-rb-publish', html)
         self.assertIn(self.checks_url, html)

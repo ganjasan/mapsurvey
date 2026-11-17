@@ -173,7 +173,7 @@ class ImportTest(_Files):
                  'Every pin', 'Give us the bridge back.', '<cite>Pin: needs attention</cite>']
         positions = [html.index(m) for m in marks]
         self.assertEqual(positions, sorted(positions))
-        self.assertEqual(html.count('class="row pair"'), 1)
+        self.assertEqual(html.count('class="rp-row pair"'), 1)
         for block in report.blocks.all():
             page = self.client.get(reverse('editor_report', args=[report.uuid]) + f'?block={block.id}')
             self.assertEqual(page.status_code, 200)

@@ -1,4 +1,9 @@
-"""The report editor (changes reports-object #703, reports-story #704).
+"""The report editor (changes reports-object #703, reports-story #704, reports-canvas-editor #731).
+
+The editor is a canvas builder like the one of Sites: the report itself in the centre, edited in
+place, an outline on the left and one context panel on the right (`reports/builder.html`, run by
+`js/site_builder.js` + `js/report_builder.js`). A save posted with `autosave=1` is answered with
+the fragments the builder swaps in.
 
 A report is edited on its own at /editor/reports/<uuid>/…; a survey's Public results tab,
 /editor/surveys/<uuid>/public-results/…, is the same editor reached through the survey (the
@@ -13,13 +18,15 @@ import json
 from django.conf import settings
 from django.contrib.auth.views import redirect_to_login
 from django.http import Http404, HttpResponse, JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.views.decorators.clickjacking import xframe_options_sameorigin
+from django.utils.translation import gettext as _, ngettext
 from django.views.decorators.http import require_POST
 
 from data.scope import SessionScope
-from reports import services
+from reports import canvas, services
 from reports.models import Report, ReportBlock
 from reports.sources import attach_questions
 from reports.render import (
@@ -158,6 +165,11 @@ def _is_ajax(request):
     return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
 
+def _is_autosave(request):
+    """A save from the builder, which swaps in the fragments of the answer."""
+    return request.POST.get('autosave') == '1'
+
+
 def _may_edit(request, survey):
     """True if the requester may see the editor preview of this survey.
 
@@ -291,8 +303,175 @@ class _NoThreads(dict):
     new_total = 0
 
 
+def _selected(request):
+    """The block the builder opens with: `?block=<id>` (deep links of the publish checks and of
+    comment mail) or `?select=<id>` (what the builder itself writes into the address)."""
+    raw = request.GET.get('block') or request.GET.get('select') or ''
+    return raw if raw.isdigit() else 'page'
+
+
+def _library(request, survey):
+    """The block library: what the author writes, what the survey's answers show, and one tile
+    per question whose answers may be published."""
+    story = [
+        ('heading', _('Heading'), canvas.ICONS['heading'], _('Starts a section of the story')),
+        ('text', _('Text'), canvas.ICONS['text'], _('Paragraphs, lists, links; numbers that follow the answers')),
+        ('image', _('Picture'), canvas.ICONS['image'], _('A photo, a plan, a chart or a map made elsewhere')),
+        ('numbers', _('Key numbers'), canvas.ICONS['numbers'], _('A strip of big figures you type')),
+        ('quotes', _('Quotes'), canvas.ICONS['quotes'], _('What people wrote, picked by you')),
+    ]
+    groups = [(_('Write'), [dict(kind=k, label=l, icon=i, desc=d) for k, l, i, d in story])]
+    if survey is None:
+        return groups
+    data = [dict(kind='engagement', label=_('Engagement'), icon=canvas.ICONS['engagement'],
+                 desc=_('Opened, answered, finished — and over time'))]
+    if len(_crosstab_questions(survey)) > 1:
+        data.append(dict(kind='crosstab', label=_('Cross-tab'), icon=canvas.ICONS['crosstab'],
+                         desc=_('Two questions against each other'), form='crosstab'))
+    if _compare_surveys(request, survey) and _crosstab_questions(survey):
+        data.append(dict(kind='compare', label=_('Compare two rounds'), icon=canvas.ICONS['compare'],
+                         desc=_('One question in two surveys'), form='compare'))
+    groups.append((_('From the survey'), data))
+    questions = []
+    for row in _survey_questions(survey):
+        if not row['publishable'] or row['block_type'] is None:
+            continue
+        questions.append(dict(question=row['question'].id, label=row['question'].name or row['question'].code,
+                              icon=canvas.ICONS[row['block_type']],
+                              desc='%s · %s' % (row['input_type_display'], ngettext(
+                                  '%(n)s response', '%(n)s responses', row['answer_count']) % {'n': row['answer_count']})))
+    if questions:
+        groups.append((_('Questions: a chart or a map of the answers'), questions))
+    return groups
+
+
+def _shell_context(request, page, selected='page'):
+    """What every piece of the builder draws from, without looking at a block's data: cheap
+    enough for the answer to each autosave."""
+    survey = request.survey
+    may_edit = _may_write(page.organization)
+    intro = page.intro or {}
+    body = canvas._en(intro.get('body'))
+    body_shown = body
+    if survey is not None and '{' in body:
+        from reports.tokens import Tokens
+        from survey.versioning import canonical_of
+        body_shown = Tokens(canonical_of(survey), page.k_anonymity_threshold).fill_plain(body)
+    return {
+        'survey': survey, 'page': page, 'report': page, 'u': _urls(request), 'selected': selected,
+        'may_edit': may_edit, 'reports_locked': not may_edit,
+        'thread_counts': _thread_counts(survey, request.user) if survey is not None else _NoThreads(),
+        'can_publish': survey is None or survey.status != 'draft',
+        'public_url': request.build_absolute_uri('/r/{}/'.format(page.slug)),
+        'visibility_choices': Report._meta.get_field('visibility').choices,
+        'chart_viz_options': [
+            ('auto', _('Auto (bar chart)')), ('bar', _('Bar chart')), ('pie', _('Pie')),
+            ('donut', _('Donut')), ('table', _('Table')),
+        ],
+        'basemap_choices': basemap_registry.choices_for(page.organization),
+        'token_help': _token_help(),
+        'intro_eyebrow': canvas._en(intro.get('eyebrow')), 'intro_title': canvas._en(intro.get('title')),
+        'intro_body': body, 'intro_body_shown': body_shown,
+        'title_fallback': survey.name if survey is not None else page.slug,
+        'show_cta': bool(survey is not None and page.show_participate_cta),
+    }
+
+
+def _hero_context(request, page, service=None):
+    """The shell plus what the opening shows: the response counter, when it is switched on."""
+    context = _shell_context(request, page)
+    context['response_count'] = None
+    if page.show_response_count and request.survey is not None:
+        from reports.render import ReportService
+        context['response_count'] = (service or ReportService(page)).response_count()
+    return context
+
+
+def _decorate(request, page, block, record, geo_subquestions=()):
+    """A canvas record plus what the builder's templates need around it."""
+    from survey.embedding import public_base_url
+    record.update(
+        edit_url=_url(request, 'block_edit', block.id), delete_url=_url(request, 'block_delete', block.id),
+        geo_subquestions=list(geo_subquestions),
+        is_spray=bool(block.question_id and block.question.input_type == 'spraycan'),
+        **_block_elsewhere(public_base_url(request), page, block))
+    return record
+
+
+def _geo_subquestions(question_ids):
+    """{geo question id: its sub-questions whose answers a map popup may show}."""
+    out = {}
+    if question_ids:
+        for sub in (Question.objects.filter(parent_question_id__in=question_ids)
+                    .exclude(input_type__in=TEXT_INPUT_TYPES).order_by('order_number')):
+            out.setdefault(sub.parent_question_id_id, []).append(sub)
+    return out
+
+
+def _canvas_context(request, page, selected='page'):
+    """The whole builder: every block as the canvas, the outline and the panel draw it."""
+    survey = request.survey
+    blocks = canvas.blocks_of(page)
+    records, service = canvas.items(page, blocks)
+    paired = canvas.pair_ids(blocks, records)
+    geo_subs = _geo_subquestions([b.question_id for b in blocks if b.block_type == 'map' and b.question_id])
+    for b in blocks:
+        _decorate(request, page, b, records[b.pk], geo_subs.get(b.question_id, ()) if b.block_type == 'map' else ())
+        records[b.pk]['paired'] = b.pk in paired
+    context = _hero_context(request, page, service)
+    elsewhere = _elsewhere(request, page, None)
+    context.update(
+        blocks=blocks, items=records, selected=selected, last_pk=blocks[-1].pk if blocks else '',
+        library=_library(request, survey),
+        crosstab_questions=_crosstab_questions(survey), compare_surveys=_compare_surveys(request, survey),
+        basemap_table=basemap_registry.table_for(page.organization),
+        export_url=reverse('editor_report_export', args=[page.uuid]),
+        pdf_url=reverse('editor_report_pdf', args=[page.uuid]),
+        usage=_usage(page), tags_text=', '.join(t.name for t in page.tags.all()),
+        reports_url=reverse('editor_reports'),
+        embed_snippet=elsewhere['embed_snippet'], embed_hosts_text=elsewhere['embed_hosts_text'],
+        embeddable=elsewhere['embeddable'],
+        effective_role=request.effective_survey_role, active_tab='public_results',
+    )
+    return context
+
+
+def _block_elsewhere(base, page, block):
+    """A block's embed snippet and its CSV / PNG links (change reports-embed)."""
+    from reports import embed
+    from reports.pictures import PICTURE_BLOCK_TYPES
+    from reports.tables import DATA_BLOCK_TYPES
+    out = {'block_snippet': '', 'block_csv_url': '', 'block_png_url': ''}
+    if block.block_type in DATA_BLOCK_TYPES + ('quotes', 'image', 'text'):
+        out['block_snippet'] = embed.snippet(base, page, block.id)
+    if block.block_type in DATA_BLOCK_TYPES:
+        out['block_csv_url'] = reverse('editor_report_block_file', args=[page.uuid, block.id, 'csv'])
+    if block.block_type in PICTURE_BLOCK_TYPES:
+        out['block_png_url'] = reverse('editor_report_block_file', args=[page.uuid, block.id, 'png'])
+    return out
+
+
+def _block_fragments(request, page, block):
+    """One block as the builder draws it now: on the canvas, in the outline and in the panel.
+    Only this block's data is computed."""
+    from reports.render import ReportService
+    from reports.sources import attach_questions
+    block = attach_questions(ReportBlock.objects.filter(pk=block.pk)
+                             .select_related('dataset__survey', 'view__dataset__survey'))[0]
+    record = canvas.item_for(ReportService(page), block)
+    subs = (_geo_subquestions([block.question_id]).get(block.question_id, ())
+            if block.block_type == 'map' and block.question_id else ())
+    ctx = _shell_context(request, page, selected=str(block.pk))
+    ctx.update(b=block, item=_decorate(request, page, block, record, subs))
+    return {
+        'block': render_to_string('reports/editor/_canvas_block.html', ctx, request=request),
+        'outline': render_to_string('reports/editor/_outline_item.html', ctx, request=request),
+        'panel': render_to_string('reports/editor/_block_panel.html', ctx, request=request),
+    }
+
+
 def _config(request):
-    """The editor page. ?block=<id> shows that block's settings in the centre."""
+    """The builder. `?block=<id>` opens it with that block selected."""
     survey = request.survey
     if request.report is not None:
         page = request.report
@@ -303,69 +482,10 @@ def _config(request):
         page = request.report = scaffold_report(survey)
     else:
         page = request.report = _report_for_survey(survey)
-
-    selected_block = None
-    block_id = request.GET.get('block')
-    if block_id:
-        selected_block = (ReportBlock.objects.filter(report=page, id=block_id)
-                          .select_related('dataset__survey').first())
-
-    # Geo popups expose the point's OWN attributes — i.e. the geo question's
-    # (non-text) sub-questions — not unrelated top-level form questions.
-    geo_subquestions = []
-    if selected_block and selected_block.block_type == 'map' and selected_block.question_id:
-        geo_subquestions = list(
-            Question.objects
-            .filter(parent_question_id=selected_block.question_id)
-            .exclude(input_type__in=TEXT_INPUT_TYPES)
-            .order_by('order_number')
-        )
-
-    from reports import story
-    urls = _urls(request)
-    blocks = attach_questions(page.blocks.select_related('dataset__survey'))
-    for b in blocks:
-        b.edit_href = '{}?block={}'.format(urls['config'], b.id)
-        b.delete_url = _url(request, 'block_delete', b.id)
-    context = {
-        'survey': survey,
-        'page': page,
-        'report': page,
-        'u': urls,
-        'selected_edit_url': _url(request, 'block_edit', selected_block.id) if selected_block else '',
-        'selected_lines': (story.lines_from_items(selected_block.block_type, selected_block.config)
-                           if selected_block and selected_block.block_type in ('numbers', 'quotes') else ''),
-        'export_url': reverse('editor_report_export', args=[page.uuid]),
-        'pdf_url': reverse('editor_report_pdf', args=[page.uuid]),
-        'crosstab_questions': _crosstab_questions(survey),
-        'compare_surveys': _compare_surveys(request, survey),
-        'reports_locked': not _may_write(page.organization),
-        'usage': _usage(page),
-        'tags_text': ', '.join(t.name for t in page.tags.all()),
-        **_elsewhere(request, page, selected_block),
-        'token_help': _token_help(),
-        'reports_url': reverse('editor_reports'),
-        'blocks': blocks,
-        'thread_counts': _thread_counts(survey, request.user) if survey is not None else _NoThreads(),
-        'question_rows': _survey_questions(survey) if survey is not None else [],
-        'geo_subquestions': geo_subquestions,
-        'selected_block': selected_block,
-        'effective_role': request.effective_survey_role,
-        'active_tab': 'public_results',
-        'can_publish': survey is None or survey.status != 'draft',
-        'public_url': request.build_absolute_uri('/r/{}/'.format(page.slug)),
-        'visibility_choices': Report._meta.get_field('visibility').choices,
-        'chart_viz_options': [
-            ('auto', 'Auto (bar chart)'), ('bar', 'Bar chart'), ('pie', 'Pie'),
-            ('donut', 'Donut'), ('table', 'Table'),
-        ],
-        # A spray cloud block has one rendering (density grid) and no popups.
-        'selected_is_spray': bool(selected_block and selected_block.question_id
-                                  and selected_block.question.input_type == 'spraycan'),
-        'basemap_choices': basemap_registry.choices_for(page.organization),
-    }
-    from django.shortcuts import render
-    return render(request, 'editor/public_results.html', context)
+    context = _canvas_context(request, page, selected=_selected(request))
+    if context['selected'] != 'page' and int(context['selected']) not in context['items']:
+        context['selected'] = 'page'
+    return render(request, 'reports/builder.html', context)
 
 
 @xframe_options_sameorigin
@@ -385,7 +505,6 @@ def public_results_preview(request, survey_uuid):
     surveys are excluded, an unknown UUID is a 404, and the survey must belong
     to the requester's active org for the preview itself to render.
     """
-    from django.shortcuts import render
     from reports.render import build_context
 
     survey = SurveyHeader.objects.filter(
@@ -408,7 +527,6 @@ def public_results_preview(request, survey_uuid):
 @xframe_options_sameorigin
 def report_preview(request, report_uuid):
     """A report's page inside its editor's preview pane, whatever its publication state."""
-    from django.shortcuts import render
     from reports.render import build_context
     report = get_object_or_404(Report.objects.select_related('survey', 'organization'), uuid=report_uuid)
     if not may_edit_report(request, report):
@@ -445,7 +563,18 @@ def _save_settings(request):
             feature_in_listing=post.get('feature_in_listing') == 'on',
             k=post.get('k_anonymity_threshold', 3), slug=post.get('slug', ''))
     except services.ReportRefused as refusal:
+        if _is_autosave(request):
+            return JsonResponse({'ok': False, 'errors': {refusal.code: refusal.message}}, status=422)
         return _refused(request, refusal)
+    if _is_autosave(request):
+        if slug_taken:
+            return JsonResponse({'ok': False, 'errors': {
+                'slug': _('That address is taken by another report. The rest was saved.')}}, status=422)
+        ctx = _hero_context(request, page)
+        return JsonResponse({
+            'ok': True, 'slug': page.slug, 'slug_taken': False, 'title': page.title,
+            'public_url': ctx['public_url'],
+            'hero': render_to_string('reports/editor/_hero.html', ctx, request=request)})
     if _is_ajax(request):
         return JsonResponse({'ok': True, 'slug': page.slug, 'slug_taken': slug_taken})
     return redirect(_url(request, 'config'))
@@ -457,7 +586,7 @@ def _block_add(request):
     chart or a map needs a question of the report's home survey."""
     survey = request.survey
     page = _page(request)
-    block_type = request.POST.get('block_type')
+    block_type = request.POST.get('block_type') or ('question' if request.POST.get('question_id') else '')
     actor = Actor.from_request(request)
     try:
         if block_type in ('heading', 'text', 'numbers', 'quotes'):
@@ -488,8 +617,21 @@ def _block_add(request):
     except services.ReportRefused as refusal:
         return HttpResponse(refusal.message, status=400)
 
-    # Land the editor in the new block's config — the live preview scrolls to it.
+    _place(actor, page, block, request.POST.get('after', ''))
+    # Back in the builder with the new block selected.
     return redirect('{}?block={}'.format(_url(request, 'config'), block.id))
+
+
+def _place(actor, page, block, after):
+    """Move a block just added to where its "+" was: `top`, after block `<id>`, or (empty) leave
+    it at the end."""
+    if not after:
+        return
+    ids = [pk for pk in page.blocks.values_list('id', flat=True) if pk != block.id]
+    index = 0 if after == 'top' else (ids.index(int(after)) + 1 if after.isdigit() and int(after) in ids else len(ids))
+    if index < len(ids):
+        ids.insert(index, block.id)
+        services.reorder_blocks(actor, page, ids)
 
 
 @require_POST
@@ -504,6 +646,12 @@ def _block_edit(request, block_id):
     items = None
     if block.block_type in ('numbers', 'quotes') and 'items' in post:
         items = story.items_from_lines(block.block_type, post.get('items', ''))['items']
+    elif block.block_type in ('numbers', 'quotes') and 'rows' in post:
+        # The builder edits the rows on the page and posts them as parallel lists.
+        first, second = ('value', 'label') if block.block_type == 'numbers' else ('text', 'source')
+        seconds = post.getlist(second)
+        items = [{first: a, second: seconds[i] if i < len(seconds) else ''}
+                 for i, a in enumerate(post.getlist(first))]
     services.update_block(
         Actor.from_request(request), block,
         viz=post.get('viz', block.viz),
@@ -519,6 +667,8 @@ def _block_edit(request, block_id):
         show_marks=(post.get('show_marks') == 'on') if 'show_marks_present' in post else None,
         basemap=post.get('basemap'),
         valid_basemaps={slug for slug, _label in basemap_registry.choices_for(page.organization)})
+    if _is_autosave(request):
+        return JsonResponse(dict(ok=True, block_id=block.id, **_block_fragments(request, page, block)))
     if _is_ajax(request):
         return JsonResponse({'ok': True, 'block_id': block.id})
     return redirect('{}?block={}'.format(_url(request, 'config'), block.id))
@@ -581,7 +731,6 @@ def _unfreeze(request):
 def _checks(request):
     """The "Before you publish" list of the publish dialog (change reports-review): what names or
     places people first, then what looks unfinished, each with its one-click way to fix it."""
-    from django.shortcuts import render
     from reports.checks import run
     page = _page(request)
     checks = run(page)

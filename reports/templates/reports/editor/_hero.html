@@ -1,0 +1,14 @@
+{% load i18n %}{% comment %}The report's opening on the canvas (change reports-canvas-editor): the look of the public
+page's opening, with the line above the title, the title and the opening paragraph edited in place and
+saved to the report's settings. An empty line or title shows what readers get instead as its placeholder.{% endcomment %}
+<header class="hero lb-hero rb-hero{% if selected == 'page' %} on{% endif %}" id="lb-hero">
+  <span class="eyebrow rb-default-title" data-page-field="intro_eyebrow" data-placeholder="{% trans 'Survey results' %}">{{ intro_eyebrow }}</span>
+  <h1 class="rb-default-title" data-page-field="intro_title" data-placeholder="{{ title_fallback }}">{{ intro_title }}</h1>
+  <p class="intro" data-page-field="intro_body"{% if intro_body_shown != intro_body %} data-raw="{{ intro_body }}" title="{% trans 'The numbers follow the answers. Click to edit the text and its tokens.' %}"{% endif %} data-placeholder="{% trans 'Opening paragraph: what was asked, of whom, and what this report shows' %}">{{ intro_body_shown }}</p>
+  {% if response_count is not None or show_cta %}
+  <div class="toprow">
+    {% if response_count is not None %}<div class="counter"><span class="num">{{ response_count }}</span><span class="lbl">{% trans "responses" %}</span></div>{% endif %}
+    {% if show_cta %}<span class="cta" title="{% trans 'Shown while the survey is open' %}">{% trans "Take the survey" %}</span>{% endif %}
+  </div>
+  {% endif %}
+</header>

@@ -14334,3 +14334,228 @@ msgstr "Kommentaarid"
 
 msgid "new"
 msgstr "uut"
+
+# Report builder (change reports-canvas-editor, #731)
+msgid "A number may also be a token that follows the answers:"
+msgstr "Arv võib olla ka kohatäide, mis järgib vastuseid:"
+
+msgid "A photo, a plan, a chart or a map made elsewhere"
+msgstr "Mujal tehtud foto, plaan, diagramm või kaart"
+
+msgid "A photo, a plan, or a chart or map made elsewhere"
+msgstr "Mujal tehtud foto, plaan või diagramm või kaart"
+
+msgid "A strip of big figures you type"
+msgstr "Rida suuri arve, mille sisestate ise"
+
+msgid "Add a number"
+msgstr "Lisa arv"
+
+msgid "Add a quote"
+msgstr "Lisa tsitaat"
+
+msgid "Add block — text, key numbers, quotes, a chart or a map of a question…"
+msgstr "Lisa plokk — tekst, põhinäitajad, tsitaadid, küsimuse diagramm või kaart…"
+
+msgid "Add comparison"
+msgstr "Lisa võrdlus"
+
+msgid "Add cross-tab"
+msgstr "Lisa risttabel"
+
+msgid "Applies to the whole report"
+msgstr "Kehtib kogu aruande kohta"
+
+msgid "Auto (bar chart)"
+msgstr "Automaatne (tulpdiagramm)"
+
+msgid "Back to the survey"
+msgstr "Tagasi küsitluse juurde"
+
+msgid "Blocks of the report"
+msgstr "Aruande plokid"
+
+msgid "Changing the address of a published report breaks links already shared."
+msgstr "Avaldatud aruande aadressi muutmisel lakkavad juba jagatud lingid töötamast."
+
+msgid "Comments on this report"
+msgstr "Selle aruande kommentaarid"
+
+msgid "Drop or replace the picture on the page and write its caption under it."
+msgstr "Lohistage pilt lehele või asendage see ja kirjutage selle alla allkiri."
+
+msgid "Embed code of the report"
+msgstr "Aruande manustamiskood"
+
+msgid "Embed code of this block"
+msgstr "Selle ploki manustamiskood"
+
+msgid "From the survey"
+msgstr "Küsitlusest"
+
+msgid "Frozen: readers see the numbers of the day you froze them, whatever arrives later."
+msgstr "Külmutatud: lugejad näevad selle päeva arve, mil need külmutasite, olenemata sellest, mis hiljem lisandub."
+
+msgid "Hidden: readers do not see this block."
+msgstr "Peidetud: lugejad seda plokki ei näe."
+
+msgid "Left out of the report until it has a number."
+msgstr "Jääb aruandest välja, kuni selles on arv."
+
+msgid "Left out of the report until it has a picture."
+msgstr "Jääb aruandest välja, kuni selles on pilt."
+
+msgid "Left out of the report until it has a quote."
+msgstr "Jääb aruandest välja, kuni selles on tsitaat."
+
+msgid "Lowercase letters, digits and dashes. Applied when you leave the field."
+msgstr "Väiketähed, numbrid ja sidekriipsud. Rakendub väljalt lahkumisel."
+
+msgid "Members of this workspace open it at this address after signing in."
+msgstr "Selle tööruumi liikmed avavad selle pärast sisselogimist sellel aadressil."
+
+msgid "Nothing to show yet, so readers do not see this block."
+msgstr "Veel pole midagi näidata, seega lugejad seda plokki ei näe."
+
+msgid "One question in two surveys"
+msgstr "Üks küsimus kahes küsitluses"
+
+msgid "Open as a reader"
+msgstr "Ava lugejana"
+
+msgid "Opened, answered, finished — and over time"
+msgstr "Avatud, vastatud, lõpetatud — ja ajas"
+
+msgid "Opening paragraph: what was asked, of whom, and what this report shows"
+msgstr "Avalõik: mida küsiti, kellelt ja mida see aruanne näitab"
+
+msgid "Paragraphs, lists, links; numbers that follow the answers"
+msgstr "Lõigud, loendid, lingid; arvud, mis järgivad vastuseid"
+
+msgid "Private preview — only editors of this report can open it"
+msgstr "Privaatne eelvaade — avada saavad ainult selle aruande toimetajad"
+
+msgid "Questions answered in free text are not listed: individual answers are never published. Pick what people wrote as quotes instead."
+msgstr "Vabatekstiga vastatud küsimusi loendis pole: üksikuid vastuseid ei avaldata kunagi. Valige selle asemel inimeste kirjutatu tsitaatideks."
+
+msgid "Questions: a chart or a map of the answers"
+msgstr "Küsimused: vastuste diagramm või kaart"
+
+msgid "Readers open it at this address."
+msgstr "Lugejad avavad selle sellel aadressil."
+
+msgid "Readers see a fixed snapshot instead of live numbers — useful before an announcement"
+msgstr "Lugejad näevad otsearvude asemel fikseeritud hetktõmmist — kasulik enne teadaannet"
+
+#, python-format
+msgid "Readers see counts only; a group smaller than %(k)s is hidden."
+msgstr "Lugejad näevad ainult arve; rühm, mis on väiksem kui %(k)s, peidetakse."
+
+#, python-format
+msgid "Readers see the snapshot of %(date)s. What you change here reaches them when you update the snapshot."
+msgstr "Lugejad näevad hetktõmmist kuupäevast %(date)s. Siin tehtud muudatused jõuavad nendeni, kui uuendate hetktõmmist."
+
+msgid "Remove this number"
+msgstr "Eemalda see arv"
+
+msgid "Remove this quote"
+msgstr "Eemalda see tsitaat"
+
+msgid "Report address"
+msgstr "Aruande aadress"
+
+msgid "Report settings"
+msgstr "Aruande seaded"
+
+msgid "Search blocks and questions"
+msgstr "Otsi plokke ja küsimusi"
+
+msgid "Search blocks and questions…"
+msgstr "Otsi plokke ja küsimusi…"
+
+msgid "Shown while the survey is open"
+msgstr "Kuvatakse, kuni küsitlus on avatud"
+
+msgid "Starts a section of the story"
+msgstr "Alustab loo uut osa"
+
+msgid "That address is taken by another report. The rest was saved."
+msgstr "See aadress on teise aruande kasutuses. Ülejäänu salvestati."
+
+msgid "The block is removed from the report. The answers it showed stay in the survey. This cannot be undone."
+msgstr "Plokk eemaldatakse aruandest. Vastused, mida see näitas, jäävad küsitlusse. Seda ei saa tagasi võtta."
+
+msgid "The numbers follow the answers. Click to edit the text and its tokens."
+msgstr "Arvud järgivad vastuseid. Klõpsake, et muuta teksti ja selle kohatäiteid."
+
+msgid "The question this block showed is no longer in the survey, so readers do not see it."
+msgstr "Küsimust, mida see plokk näitas, küsitluses enam pole, seega lugejad seda ei näe."
+
+msgid "The report could not be unpublished. Try again."
+msgstr "Aruande avaldamist ei õnnestunud tühistada. Proovige uuesti."
+
+msgid "The report is live"
+msgstr "Aruanne on otse üleval"
+
+msgid "The report is published, frozen"
+msgstr "Aruanne on avaldatud, külmutatud"
+
+msgid "This number follows the answers. Click to see its token."
+msgstr "See arv järgib vastuseid. Klõpsake, et näha selle kohatäidet."
+
+msgid "Title (optional)"
+msgstr "Ploki pealkiri (valikuline)"
+
+msgid "Title above the numbers (optional)"
+msgstr "Pealkiri arvude kohal (valikuline)"
+
+msgid "Title above the picture (optional)"
+msgstr "Pealkiri pildi kohal (valikuline)"
+
+msgid "Title above the quotes (optional)"
+msgstr "Pealkiri tsitaatide kohal (valikuline)"
+
+msgid "Title above the text (optional)"
+msgstr "Pealkiri teksti kohal (valikuline)"
+
+msgid "Title and opening"
+msgstr "Pealkiri ja sissejuhatus"
+
+msgid "Two questions against each other"
+msgstr "Kaks küsimust teineteise suhtes"
+
+msgid "Type or paste the quotes on the page. A quote is published exactly as written: leave out anything that names a person."
+msgstr "Sisestage või kleepige tsitaadid lehele. Tsitaat avaldatakse täpselt nii, nagu see on kirjutatud: jätke välja kõik, mis nimetab mõnda isikut."
+
+msgid "Type the heading here. An empty heading is left out of the report."
+msgstr "Sisestage jaotise pealkiri siia. Tühi pealkiri jääb aruandest välja."
+
+msgid "Type the heading on the page. It starts a section of the story."
+msgstr "Sisestage jaotise pealkiri lehele. See alustab loo uut osa."
+
+msgid "Type the numbers on the page. You type them; they do not change when new answers arrive."
+msgstr "Sisestage arvud lehele. Sisestate need ise; uute vastuste saabumisel need ei muutu."
+
+msgid "What people wrote, picked by you"
+msgstr "Inimeste kirjutatu, teie valitud"
+
+msgid "What the map shows, in a sentence — shown under the map and read aloud to people who cannot see it"
+msgstr "Mida kaart näitab, ühe lausega — kuvatakse kaardi all ja loetakse ette neile, kes kaarti ei näe"
+
+msgid "What they wrote"
+msgstr "Mida nad kirjutasid"
+
+msgid "Where it comes from (optional)"
+msgstr "Kust see pärineb (valikuline)"
+
+msgid "Write"
+msgstr "Kirjuta"
+
+msgid "Write directly on the page; the toolbar above the text sets headings, bold, lists and links."
+msgstr "Kirjutage otse lehele; teksti kohal olev tööriistariba määrab pealkirjad, paksu kirja, loendid ja lingid."
+
+msgid "Write here. An empty text block is left out of the report."
+msgstr "Kirjutage siia. Tühi tekstiplokk jääb aruandest välja."
+
+msgid "what it counts"
+msgstr "mida see loendab"
