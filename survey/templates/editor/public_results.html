@@ -24,6 +24,9 @@ to the Reports list instead of a survey's tabs.{% endcomment %}
      classes (see editor_base.html) — .pr-block only adds the block-type icon on
      top of the shared .section-item look. */
   .pr-block .icon { width:18px; text-align:center; color:#9ca3af; font-size:.8rem; }
+  /* A block's row is two lines: its title, and under it the name of its type. */
+  .pr-block .pr-block-name, .pr-block .pr-block-type { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pr-block .pr-block-type { font-size:.72rem; color:#9ca3af; line-height:1.25; }
 
   .pr-main { flex:1; min-width:0; overflow-y:auto; }
   /* .pr-ctxbar/.pr-scroll/.pr-card/.pr-field/.pr-help/.pr-switch/.pr-url/.pr-banner
