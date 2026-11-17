@@ -451,13 +451,15 @@ class PublicResultsStatusLineTest(TestCase):
         GIVEN the flag on
         WHEN the PR tab renders with a block
         THEN the navbar tabs carry status dots instead of the survey chip and
-             block rows show their type badge
+             block rows name their type under the title (change
+             reports-block-type-names: the name, no longer a pill with the key)
         """
-        ReportBlock.objects.create(report=self.page, block_type='text', order=1)
+        ReportBlock.objects.create(report=self.page, block_type='text', order=1,
+                                   content={'en': '<p>What we heard.</p>'})
         html = self._page()
         self.assertIn('tabdot td-published', html)
         self.assertIn('tabdot td-off', html)
-        self.assertIn('section-qcount', html)
+        self.assertIn('<span class="pr-block-type">Text</span>', html)
 
     @override_settings(MOBILE_EDITOR_NAV=False)
     def test_flag_off_keeps_legacy_ctxbar(self):

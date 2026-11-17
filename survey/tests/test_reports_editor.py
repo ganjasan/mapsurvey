@@ -106,6 +106,40 @@ class OwnAddressTest(_Editor):
         self.assertEqual(len(ids), 2)
 
 
+class BlockRowTest(_Editor):
+    """Requirement: A block's row names its type."""
+
+    def _rows(self, **extra):
+        html = self.client.get(self.url('editor_report'), **extra).content.decode()
+        return html[html.index('id="pr-blocks-list"'):] if 'id="pr-blocks-list"' in html else html
+
+    def test_a_titled_block_names_its_type_in_the_interface_language(self):
+        """
+        GIVEN a Key numbers block titled "Who took part"
+        WHEN an editor whose interface is German opens the report
+        THEN the row reads the title with "Kennzahlen" under it, and the key "numbers" is not shown
+        """
+        ReportBlock.objects.create(report=self.report, block_type='numbers', order=0,
+                                   custom_title={'en': 'Who took part'},
+                                   config={'items': [{'value': '112', 'label': 'answered'}]})
+        rows = self._rows(HTTP_ACCEPT_LANGUAGE='de')
+        self.assertIn('<span class="pr-block-name">Who took part</span>', rows)
+        self.assertIn('<span class="pr-block-type">Kennzahlen</span>', rows)
+        self.assertNotIn('>numbers<', rows)
+
+    def test_a_block_without_a_title_reads_its_type_once(self):
+        """
+        GIVEN a Quotes block with no title of its own
+        WHEN the editor lists the report's blocks
+        THEN the row's title is the type's name and no second line repeats it
+        """
+        ReportBlock.objects.create(report=self.report, block_type='quotes', order=0,
+                                   config={'items': [{'quote': 'More benches.', 'source': ''}]})
+        rows = self._rows()
+        self.assertIn('<span class="pr-block-name">Quotes</span>', rows)
+        self.assertNotIn('pr-block-type">', rows)
+
+
 class ListTest(_Editor):
     """Requirement: The Reports list opens the editor."""
 
