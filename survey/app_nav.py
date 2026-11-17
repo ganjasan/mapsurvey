@@ -30,6 +30,8 @@ class NavItem:
     query: str = ''
     # The Pro feature whose mark the row carries ('' = none).
     feature: str = ''
+    # A module still in beta: the row carries a "β" (change sidebar-beta-marks).
+    beta: bool = False
 
 
 MODULES = (
@@ -37,9 +39,9 @@ MODULES = (
     # Sites (change landing-core, #576): a workspace's public pages for engagements.
     NavItem('sites', _('Sites'), 'editor_sites', 'far fa-window-maximize', feature='sites'),
     # Data (change data-catalogue, epic #676): every place dataset of the workspace.
-    NavItem('data', _('Data'), 'editor_data', 'fas fa-database'),
+    NavItem('data', _('Data'), 'editor_data', 'fas fa-database', beta=True),
     # Reports (change reports-object, epic #712): what the workspace publishes from its data.
-    NavItem('reports', _('Reports'), 'editor_reports', 'far fa-file-alt'),
+    NavItem('reports', _('Reports'), 'editor_reports', 'far fa-file-alt', beta=True),
 )
 
 # Two items, not one "API & connections" (owner, 2026-11-06): tokens and connected apps for
