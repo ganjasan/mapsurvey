@@ -14618,3 +14618,7 @@ msgstr "Schrijf hier. Een leeg tekstblok blijft buiten het rapport."
 
 msgid "what it counts"
 msgstr "wat het telt"
+
+#, python-format
+msgid "This is the report the Public results tab of “%(survey)s” opens. After it is deleted, that tab opens the survey's next report, or starts an empty one."
+msgstr "Dit is het rapport dat het tabblad ‘Openbare resultaten’ van ‘%(survey)s’ opent. Na het verwijderen opent dat tabblad het volgende rapport van de enquête of begint het een leeg rapport."

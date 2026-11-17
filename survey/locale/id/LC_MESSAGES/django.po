@@ -14563,3 +14563,7 @@ msgstr "Tulis di sini. Blok teks yang kosong tidak dimuat dalam laporan."
 
 msgid "what it counts"
 msgstr "apa yang dihitung"
+
+#, python-format
+msgid "This is the report the Public results tab of “%(survey)s” opens. After it is deleted, that tab opens the survey's next report, or starts an empty one."
+msgstr "Ini laporan yang dibuka tab “Hasil publik” milik “%(survey)s”. Setelah dihapus, tab itu membuka laporan survei berikutnya atau memulai laporan kosong."

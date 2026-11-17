@@ -828,6 +828,86 @@
     }
   }
 
+  /* ─── side panel widths ──────────────────────────────────────────────── */
+  // The outline and the settings panel are resized by dragging their inner edge; a double click
+  // puts the default back. Widths are a per-browser convenience (one pair for every builder page),
+  // so a browser without storage just starts from the defaults.
+  function initPanelResize() {
+    var work = root.querySelector('.lb-work');
+    if (!work) return;
+    var KEY = 'msBuilderPanels';
+    var SIDES = [
+      { el: root.querySelector('.lb-rail'), name: 'rail', prop: '--lb-rail-w', min: 180, max: 480, sign: 1 },
+      { el: panel, name: 'panel', prop: '--lb-panel-w', min: 280, max: 720, sign: -1 }
+    ];
+    var saved = {};
+    try { saved = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { saved = {}; }
+    function keep() {
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) { /* not remembered */ }
+    }
+    // Maps and charts on the canvas measure themselves on a window resize.
+    function settled() {
+      resizeMaps();
+      try { window.dispatchEvent(new Event('resize')); } catch (e) { /* old browser */ }
+    }
+    function apply(side, width) {
+      // The canvas keeps at least 360 px whatever the two panels ask for.
+      var other = SIDES[side === SIDES[0] ? 1 : 0];
+      var otherW = other.el && other.el.offsetParent ? other.el.getBoundingClientRect().width : 0;
+      var room = work.getBoundingClientRect().width - otherW - 360;
+      width = Math.round(Math.max(side.min, Math.min(side.max, room, width)));
+      work.style.setProperty(side.prop, width + 'px');
+      return width;
+    }
+    SIDES.forEach(function (side) {
+      if (!side.el) return;
+      if (saved[side.name]) work.style.setProperty(side.prop, Math.max(side.min, Math.min(side.max, saved[side.name])) + 'px');
+      var handle = document.createElement('div');
+      handle.className = 'lb-resize';
+      handle.setAttribute('role', 'separator');
+      handle.setAttribute('aria-orientation', 'vertical');
+      handle.tabIndex = 0;
+      side.el.appendChild(handle);
+      handle.addEventListener('pointerdown', function (e) {
+        if (e.button) return;
+        e.preventDefault();
+        var startX = e.clientX;
+        var startW = side.el.getBoundingClientRect().width;
+        handle.classList.add('dragging');
+        document.body.classList.add('lb-resizing');
+        handle.setPointerCapture(e.pointerId);
+        function move(ev) { saved[side.name] = apply(side, startW + side.sign * (ev.clientX - startX)); }
+        function up() {
+          handle.classList.remove('dragging');
+          document.body.classList.remove('lb-resizing');
+          handle.removeEventListener('pointermove', move);
+          handle.removeEventListener('pointerup', up);
+          handle.removeEventListener('pointercancel', up);
+          keep();
+          settled();
+        }
+        handle.addEventListener('pointermove', move);
+        handle.addEventListener('pointerup', up);
+        handle.addEventListener('pointercancel', up);
+      });
+      handle.addEventListener('dblclick', function () {
+        work.style.removeProperty(side.prop);
+        delete saved[side.name];
+        keep();
+        settled();
+      });
+      handle.addEventListener('keydown', function (e) {
+        if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+        e.preventDefault();
+        var step = (e.key === 'ArrowRight' ? 16 : -16) * side.sign;
+        saved[side.name] = apply(side, side.el.getBoundingClientRect().width + step);
+        keep();
+        settled();
+      });
+    });
+  }
+  initPanelResize();
+
   /* ─── start ──────────────────────────────────────────────────────────── */
   canvas.querySelectorAll('.lb-blk').forEach(function (blk) { initBlockEditing(blk); initVisuals(blk); });
   initHero();

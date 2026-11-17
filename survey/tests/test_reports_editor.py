@@ -187,6 +187,44 @@ class DeleteTest(_Editor):
         self.assertFalse(Report.objects.filter(pk=self.report.pk).exists())
         self.assertFalse(ReportBlock.objects.exists())
 
+    def test_delete_in_the_list(self):
+        """
+        GIVEN an editor on the Reports list
+        WHEN the list renders
+        THEN the report's row carries a Delete action that leads to the page saying what goes
+        """
+        html = self.client.get(reverse('editor_reports')).content.decode()
+        self.assertIn(self.url('editor_report_delete') + '?from=list', html)
+        self.assertIn('data-testid="report-delete"', html)
+
+    def test_a_member_who_may_not_edit(self):
+        """
+        GIVEN a viewer of the workspace
+        WHEN they open the Reports list
+        THEN no row offers Delete
+        """
+        viewer = make_member(self.org, 'reportlistviewer', role='viewer')
+        self.login(viewer, self.org)
+        html = self.client.get(reverse('editor_reports')).content.decode()
+        self.assertIn('Blank one', html)
+        self.assertNotIn('data-testid="report-delete"', html)
+
+    def test_a_report_made_from_a_survey(self):
+        """
+        GIVEN a report whose home is a survey, the one the survey's Public results tab opens
+        WHEN an editor opens its settings and then the delete page
+        THEN "Delete report…" is offered and the page says what the tab will open afterwards
+        """
+        survey, _section = make_v1_survey(self.org, self.owner)
+        self.report.survey = survey
+        self.report.save()
+        page = self.client.get(self.url('editor_report'))
+        self.assertContains(page, self.url('editor_report_delete'))
+        page = self.client.get(self.url('editor_report_delete'))
+        self.assertContains(page, 'data-testid="report-delete-home"')
+        self.client.post(self.url('editor_report_delete'))
+        self.assertFalse(Report.objects.filter(pk=self.report.pk).exists())
+
 
 class CanvasTest(_Editor):
     """Requirement: The report is the editor's canvas."""

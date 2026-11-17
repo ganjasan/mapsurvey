@@ -22,7 +22,10 @@ confirm" step. The survey a draft is made from is picked once, above the cards.{
   .rs-card:hover { transform: translateY(-2px); border-color: #4f46e5; }
   .rs-card:focus-visible { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 4px #c7d2fe; }
   .rs-card.rs-primary { border-color: #4f46e5; box-shadow: 0 0 0 4px #e0e7ff; }
-  .rs-card i { font-size: 1.3rem; color: #4f46e5; }
+  /* Glyph-sized, never stretched to the card's width: the busy state turns this icon into a
+     spinner, and a spinning full-width box sends the glyph in a circle around the card. */
+  .rs-card i { font-size: 1.3rem; color: #4f46e5; align-self: flex-start; }
+  .rs-card:disabled { cursor: progress; transform: none; }
   .rs-title { font-weight: 700; font-size: 1rem; display: block; }
   .rs-what { font-size: .86rem; color: #5f6368; line-height: 1.4; display: block; }
   .rs-badge { align-self: flex-start; font-size: .68rem; font-weight: 600; background: #e0e7ff; color: #4338ca; border-radius: 999px; padding: 2px 9px; }

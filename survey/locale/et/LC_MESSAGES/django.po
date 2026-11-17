@@ -14559,3 +14559,7 @@ msgstr "Kirjutage siia. Tühi tekstiplokk jääb aruandest välja."
 
 msgid "what it counts"
 msgstr "mida see loendab"
+
+#, python-format
+msgid "This is the report the Public results tab of “%(survey)s” opens. After it is deleted, that tab opens the survey's next report, or starts an empty one."
+msgstr "See on aruanne, mille avab küsitluse „%(survey)s” vahekaart „Avalikud tulemused”. Pärast kustutamist avab vahekaart küsitluse järgmise aruande või alustab tühja."

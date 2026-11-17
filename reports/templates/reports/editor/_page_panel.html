@@ -104,7 +104,7 @@ hidden fields of this form; everything saves by itself, like a block.{% endcomme
       <div class="lb-hint mb-0">{% trans "Frozen: readers see the numbers of the day you froze them, whatever arrives later." %}</div>
     </div>
   </div>
-  {% if may_edit and not survey %}
+  {% if may_edit %}
   <div class="lb-pane-foot">
     <span></span>
     <a class="lb-link lb-danger" href="{% url 'editor_report_delete' page.uuid %}"><i class="far fa-trash-alt" aria-hidden="true"></i> {% trans "Delete report…" %}</a>

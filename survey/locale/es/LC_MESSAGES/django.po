@@ -14644,3 +14644,7 @@ msgstr "Escribe aquí. Un bloque de texto vacío no aparece en el informe."
 
 msgid "what it counts"
 msgstr "qué cuenta"
+
+#, python-format
+msgid "This is the report the Public results tab of “%(survey)s” opens. After it is deleted, that tab opens the survey's next report, or starts an empty one."
+msgstr "Este es el informe que abre la pestaña «Resultados públicos» de «%(survey)s». Cuando se elimine, la pestaña abrirá el siguiente informe de la encuesta o empezará uno vacío."

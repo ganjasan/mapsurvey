@@ -170,9 +170,10 @@ def report_list(request):
         reports = [r for r in reports if any(t.slug == tag for t in r.tags.all())]
     counts = dict(Report.objects.filter(pk__in=[r.pk for r in reports])
                   .annotate(n=Count('blocks')).values_list('pk', 'n'))
-    rows = [{'report': r, 'blocks': counts.get(r.pk, 0),
+    can_edit = _can_edit(request.user, org)
+    rows = [{'report': r, 'blocks': counts.get(r.pk, 0), 'may_edit': can_edit and _may_edit_home(request.user, r),
              'public_url': request.build_absolute_uri('/r/{}/'.format(r.slug))} for r in reports]
-    return render(request, 'reports/list.html', {'org': org, 'rows': rows, 'can_edit': _can_edit(request.user, org),
+    return render(request, 'reports/list.html', {'org': org, 'rows': rows, 'can_edit': can_edit,
                                                  'reports_locked': not _may_write(org),
                                                  'tag': tag, 'tag_filters': all_tags})
 
@@ -188,6 +189,14 @@ def _can_edit(user, org):
     from survey.permissions import get_org_membership
     membership = get_org_membership(user, org)
     return membership is not None and membership.role in ('owner', 'admin', 'editor')
+
+
+def _may_edit_home(user, report):
+    """The survey half of `may_edit_report`: a report with a home survey needs the editor role there."""
+    if report.survey_id is None:
+        return True
+    from survey.permissions import _check_survey_role, get_effective_survey_role
+    return _check_survey_role(get_effective_survey_role(user, report.survey), 'editor')
 
 
 def _editable_report(request, report_uuid):
@@ -361,5 +370,8 @@ def report_delete(request, report_uuid):
         services.delete_report(Actor.from_request(request), report)
         messages.success(request, _('“%(name)s” deleted.') % {'name': title})
         return redirect('editor_reports')
+    home = report.survey.report if report.survey_id else None
     return render(request, 'reports/delete.html', {'org': report.organization, 'report': report,
-                                                   'blocks': report.blocks.count()})
+                                                   'blocks': report.blocks.count(),
+                                                   'is_home': home is not None and home.pk == report.pk,
+                                                   'from_list': request.GET.get('from') == 'list'})

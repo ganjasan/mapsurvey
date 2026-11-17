@@ -1268,6 +1268,11 @@ may be created empty. The builder extends `editor_base.html` (Sites extends `bas
 survey it is that survey's Public results tab and keeps the survey's title, tab strip and publishing
 widget above it — tests hold every survey page to that. The old tab's own mobile status line and
 Structure / Edit / Preview bar are gone; on a narrow screen the panel sits under the canvas, as in Sites.
+Both builders' side panels are resized by dragging their inner edge (`initPanelResize` in
+`site_builder.js`; widths are the `--lb-rail-w` / `--lb-panel-w` variables on `.lb-work`, kept in
+`localStorage['msBuilderPanels']`, double click = default) — a new column rule must keep those variables.
+A report is deleted from its row in the Reports list or from its settings, always through the
+`editor_report_delete` page (change `reports-list-delete`, #733).
 
 **Category landings (`/community-engagement-platform/`, `/civic-engagement/`,
 `/public-consultation-software/`, `/participatory-budgeting/`; change `seo-landings-rewrite`, #251)**:
