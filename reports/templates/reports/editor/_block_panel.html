@@ -1,0 +1,125 @@
+{% load i18n %}{% comment %}The context panel of one block (change reports-canvas-editor, #731): hidden until the block is
+selected. Its form is the WHOLE block — what the author writes on the canvas travels in the hidden fields
+here (kept in sync by site_builder.js), what is not text on the page is set here. Field names are what
+reports.editor_views._block_edit reads. `b` the block, `item` its record.{% endcomment %}
+<div class="lb-pane" data-pane="{{ b.pk }}"{% if selected != b.pk|stringformat:'s' %} hidden{% endif %}>
+  <div class="lb-pane-head">
+    <span class="lb-ico"><i class="{{ item.icon }}" aria-hidden="true"></i></span>
+    <div class="lb-pane-tt"><div class="lb-pane-t">{{ item.type_name }}</div><div class="lb-pane-s">{% if b.question %}{{ b.question.name }}{% elif item.label %}{{ item.label }}{% else %}{% trans "Settings of this block" %}{% endif %}</div></div>
+    {% if b.block_type in 'chart map objects budget crosstab compare engagement' %}<span class="rb-k" title="{% blocktrans with k=item.k %}Readers see counts only; a group smaller than {{ k }} is hidden.{% endblocktrans %}">{% blocktrans with k=item.k %}Aggregated · K = {{ k }}{% endblocktrans %}</span>{% endif %}
+    <button type="button" class="lb-x" data-select-target="page" title="{% trans 'Report settings' %}" aria-label="{% trans 'Close' %}">×</button>
+  </div>
+  <div class="lb-pane-body">
+    {% if item.note %}<p class="lb-warn"><i class="fas fa-info-circle" aria-hidden="true"></i> {{ item.note }}</p>{% endif %}
+    <form method="post" action="{{ item.edit_url }}" enctype="multipart/form-data" class="lb-form" data-kind="{{ b.block_type }}">
+      {% csrf_token %}
+      <div class="lb-errors" role="alert" hidden></div>
+      <fieldset {% if not may_edit %}disabled{% endif %}>
+      {# What is written on the canvas. #}
+      {% if b.block_type == 'heading' %}
+      <input type="hidden" name="content" value="{{ b.content.en|default:'' }}">
+      {% else %}
+      <input type="hidden" name="custom_title" value="{{ b.custom_title.en|default:'' }}">
+      {% endif %}
+      {% if b.block_type == 'text' %}<textarea name="content" hidden>{{ b.content.en|default:'' }}</textarea>{% endif %}
+      {% if b.block_type in 'image numbers map' %}<input type="hidden" name="content" value="{{ b.content.en|default:'' }}">{% endif %}
+      {% if b.block_type == 'numbers' or b.block_type == 'quotes' %}<input type="hidden" name="rows" value="1"><div class="lb-row-sink" hidden></div>{% endif %}
+      {% if b.block_type == 'image' %}<input type="file" name="image" accept="image/*" hidden>{% endif %}
+
+      <div class="lb-card">
+        <h6>{% trans "Settings" %}</h6>
+        {% if b.block_type == 'heading' %}
+        <p class="lb-hint mt-0">{% trans "Type the heading on the page. It starts a section of the story." %}</p>
+
+        {% elif b.block_type == 'text' %}
+        <p class="lb-hint mt-0">{% trans "Write directly on the page; the toolbar above the text sets headings, bold, lists and links." %}</p>
+        {% if survey %}<div class="lb-hint mb-3" data-testid="pr-token-help">{% trans "A number can follow the answers: write a token and the page fills it in." %} {% for token in token_help %}<code>{{ token }}</code> {% endfor %} {% trans "CODE is a question's code. A frozen report keeps the numbers of the day it was frozen." %}</div>{% endif %}
+
+        {% elif b.block_type == 'image' %}
+        <p class="lb-hint mt-0">{% trans "Drop or replace the picture on the page and write its caption under it." %}</p>
+
+        {% elif b.block_type == 'numbers' %}
+        <p class="lb-hint mt-0">{% trans "Type the numbers on the page. You type them; they do not change when new answers arrive." %}{% if survey %} {% trans "A number may also be a token that follows the answers:" %} {% for token in token_help %}<code>{{ token }}</code> {% endfor %}{% endif %}</p>
+
+        {% elif b.block_type == 'quotes' %}
+        <p class="lb-hint mt-0">{% trans "Type or paste the quotes on the page. A quote is published exactly as written: leave out anything that names a person." %}</p>
+
+        {% elif b.block_type == 'chart' %}
+        <div class="lb-field">
+          <label for="rb-viz-{{ b.pk }}">{% trans "Visualization" %}</label>
+          <select class="form-control form-control-sm" id="rb-viz-{{ b.pk }}" name="viz">
+            {% for val, label in chart_viz_options %}<option value="{{ val }}"{% if b.viz == val %} selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+        </div>
+
+        {% elif b.block_type == 'map' %}
+        <p class="lb-hint mt-0" data-testid="pr-map-grid-note">{% blocktrans with k=page.k_anonymity_threshold %}The public map shows squares that count respondents; squares with fewer than {{ k }} respondents are hidden. Exact points stay in Responses and the export.{% endblocktrans %}</p>
+        {% comment %}The survey owner's choice (owner decision 2026-11-16): the marks themselves instead of
+        the grid. Off by default; the hidden marker lets a save say "off".{% endcomment %}
+        <input type="hidden" name="show_marks_present" value="1">
+        <label class="lb-switch" data-testid="pr-map-marks"><span>{% trans "Show the marks themselves" %}<small>{% trans "every place, line or area as it was drawn, instead of the squares. A mark can point at someone's home: you decide whether that is right for this survey." %}</small></span>
+          <input type="checkbox" name="show_marks"{% if b.config.marks %} checked{% endif %}><span class="lb-toggle" aria-hidden="true"></span></label>
+        <div class="lb-field">
+          <label for="rb-basemap-{{ b.pk }}">{% trans "Basemap" %}</label>
+          <select class="form-control form-control-sm" id="rb-basemap-{{ b.pk }}" name="basemap">
+            {% for val, label in basemap_choices %}<option value="{{ val }}"{% if b.basemap == val %} selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+        </div>
+        {% if item.is_spray %}
+        <div class="lb-hint"><i class="fas fa-spray-can" aria-hidden="true"></i> {% trans "Spray clouds are published as a density grid: each cell shows how many respondents painted there, and cells below the anonymity threshold are left out. No individual paint is ever shown." %}</div>
+        {% else %}
+        <div class="lb-field">
+          <label>{% trans "Point popup fields" %}</label>
+          <div class="lb-hint mt-0 mb-1">{% trans "Attributes shown when a point is clicked — the sub-questions this respondent answered" %} <em>{% trans "for that point" %}</em>{% trans ". Empty = anonymous geometry only. Free-text answers can't be shown." %}</div>
+          {% for sq in item.geo_subquestions %}
+          <label class="lb-check"><input type="checkbox" name="geo_label_fields" value="{{ sq.code }}"{% if sq.code in b.geo_label_fields %} checked{% endif %}> {{ sq.name }}</label>
+          {% empty %}
+          <div class="lb-hint mt-0"><i class="fas fa-info-circle" aria-hidden="true"></i> {% trans "This map question has no sub-questions, so points are shown as anonymous geometry." %}</div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% elif b.block_type == 'crosstab' %}
+        <p class="lb-hint mt-0" data-testid="pr-xtab-note">{% blocktrans with rows=b.view.config.rows columns=b.view.config.columns k=page.k_anonymity_threshold %}Questions {{ rows }} (rows) × {{ columns }} (columns): how many people gave each pair of answers, among those who answered both. A group smaller than {{ k }} is hidden, with the totals that would give it away. To compare other questions, add another cross-tab.{% endblocktrans %}</p>
+
+        {% elif b.block_type == 'engagement' %}
+        <p class="lb-hint mt-0">{% trans "How many people opened the survey, answered at least one question and finished it, and how that went over time. Trashed and moderated-out responses are not counted." %}</p>
+        {% endif %}
+
+        {% if b.block_type != 'heading' %}
+        <div class="lb-field">
+          <label>{% trans "Width" %}</label>
+          <div class="lb-seg lb-seg--panel" role="radiogroup" aria-label="{% trans 'Width' %}">
+            <label><input type="radio" name="width" value="full"{% if b.width != 'half' %} checked{% endif %}> {% trans "Full width" %}</label>
+            <label><input type="radio" name="width" value="half"{% if b.width == 'half' %} checked{% endif %}> {% trans "Half width" %}</label>
+          </div>
+          <div class="lb-hint">{% trans "Two half-width blocks in a row sit side by side on a wide screen." %}</div>
+        </div>
+        {% endif %}
+        <label class="lb-switch mb-0"><span>{% trans "Hidden" %}<small>{% trans "keep but don't show publicly" %}</small></span>
+          <input type="checkbox" name="is_hidden"{% if b.is_hidden %} checked{% endif %}><span class="lb-toggle" aria-hidden="true"></span></label>
+      </div>
+      </fieldset>
+    </form>
+
+    {% if item.block_snippet or item.block_csv_url or item.block_png_url %}
+    <div class="lb-card" data-testid="block-elsewhere">
+      <h6>{% trans "Use this block elsewhere" %}</h6>
+      {% if item.block_png_url or item.block_csv_url %}<div class="mb-2">
+        {% if item.block_png_url %}<a class="btn btn-sm btn-outline-secondary" href="{{ item.block_png_url }}"><i class="far fa-image" aria-hidden="true"></i> PNG</a>{% endif %}
+        {% if item.block_csv_url %}<a class="btn btn-sm btn-outline-secondary" href="{{ item.block_csv_url }}"><i class="fas fa-table" aria-hidden="true"></i> CSV</a>{% endif %}
+      </div>{% endif %}
+      {% if item.block_snippet %}
+      <div class="lb-hint mt-0">{% trans "Embed only this block on another site:" %}</div>
+      <textarea class="form-control form-control-sm rb-code" rows="3" readonly onclick="this.select()" aria-label="{% trans 'Embed code of this block' %}">{{ item.block_snippet }}</textarea>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+  {% if may_edit %}
+  <div class="lb-pane-foot">
+    <span></span>
+    <form method="post" action="{{ item.delete_url }}" data-confirm="{% trans 'Delete this block?' %}" data-confirm-action="{% trans 'Delete block' %}" data-confirm-note="{% trans 'The block is removed from the report. The answers it showed stay in the survey. This cannot be undone.' %}">{% csrf_token %}<button type="submit" class="lb-link lb-danger"><i class="far fa-trash-alt" aria-hidden="true"></i> {% trans "Delete block" %}</button></form>
+  </div>
+  {% endif %}
+</div>

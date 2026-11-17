@@ -112,21 +112,19 @@ class MobileContextualPaneBarTest(TestCase):
         self.assertNotIn('data-pane="structure"', html)
 
     @override_settings(MOBILE_EDITOR_NAV=True)
-    def test_public_results_bar_shares_pane_vocabulary(self):
+    def test_public_results_is_the_report_builder_without_a_pane_bar(self):
         """
         GIVEN the mobile nav flag on
-        WHEN the Public results config page renders
-        THEN the bottom bar carries Structure/Edit/Preview and the pane
-             container starts on Structure when no block is selected
+        WHEN the Public results tab renders
+        THEN it is the report builder (change reports-canvas-editor): the report itself with its
+             panel under it on a narrow screen, and no Structure/Edit/Preview bar of its own
         """
         response = self.client.get(f'/editor/surveys/{self.survey.uuid}/public-results/')
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
-        self.assertIn('data-pane="structure"', html)
-        self.assertIn('data-pane="edit"', html)
-        self.assertIn('data-pane="preview"', html)
-        self.assertIn('data-active-pane="structure"', html)
-        self.assertNotIn('data-pane="charts"', html)
+        self.assertIn('data-testid="report-builder"', html)
+        self.assertNotIn('<nav class="mobile-tabbar"', html)
+        self.assertNotIn('data-active-pane=', html)
 
     @override_settings(MOBILE_EDITOR_NAV=False)
     def test_flag_off_no_bars_anywhere(self):
@@ -375,8 +373,8 @@ class SurveyStatusLineTest(TestCase):
 
 
 class PublicResultsStatusLineTest(TestCase):
-    """Survey↔Public-results parity: the PR tab gets the same status-line
-    anatomy (colored chip with lifecycle menu + primary action per state)."""
+    """The Public results tab says what state the report is in and offers that state's actions
+    in the builder's top bar (change reports-canvas-editor; before it, a status line of its own)."""
 
     def setUp(self):
         self.org = Organization.objects.create(name="PR Status Org")
@@ -392,47 +390,41 @@ class PublicResultsStatusLineTest(TestCase):
     def _page(self):
         return self.client.get(f'/editor/surveys/{self.survey.uuid}/public-results/').content.decode()
 
-    @override_settings(MOBILE_EDITOR_NAV=True)
     def test_not_published_state(self):
         """
-        GIVEN an unpublished results page and the flag on
-        WHEN the PR tab renders
-        THEN the status line shows the grey Not published chip and the green
-             Publish page primary, and the legacy ctx-bar buttons stay out
+        GIVEN an unpublished report
+        WHEN the Public results tab renders
+        THEN the top bar reads Not published and offers Publish, and no public address to copy
         """
         html = self._page()
-        self.assertIn('mobile-statusbar', html)
+        self.assertIn('rb-state--draft', html)
         self.assertIn('Not published', html)
-        self.assertIn('pub-chip badge-secondary', html)
-        self.assertIn('Publish page', html)
-        self.assertNotIn('Copy public link', html)
+        self.assertIn('data-rb-publish', html)
+        self.assertNotIn('id="lb-copy"', html)
 
-    @override_settings(MOBILE_EDITOR_NAV=True)
-    def test_live_state_share_freeze_visitor(self):
+    def test_live_state_copy_freeze_reader(self):
         """
-        GIVEN a live results page
-        WHEN the PR tab renders
-        THEN the chip is green Live and the line offers Share (copies /r/),
-             Freeze snapshot and Open as visitor on the real public URL
+        GIVEN a published, live report
+        WHEN the Public results tab renders
+        THEN the state reads Live and the Published menu offers the /r/ address to copy,
+             Freeze snapshot, Open as a reader on the real public URL, and Unpublish
         """
         self.page.is_published = True
         self.page.save(update_fields=['is_published'])
         html = self._page()
-        self.assertIn('pub-chip badge-success', html)
-        self.assertIn('Live', html)
-        self.assertIn('prCopyPublicLink(this)', html)
+        self.assertIn('rb-state--live', html)
+        self.assertIn('id="lb-copy"', html)
         self.assertIn('Freeze snapshot', html)
-        self.assertIn('Open as visitor', html)
+        self.assertIn('Open as a reader', html)
         self.assertIn('/r/pr-status/', html)
-        self.assertIn('Unpublish', html)
+        self.assertIn('data-rb-unpublish', html)
 
-    @override_settings(MOBILE_EDITOR_NAV=True)
     def test_frozen_state_update_snapshot(self):
         """
-        GIVEN a live page in frozen mode
-        WHEN the PR tab renders
-        THEN the chip is the sky Frozen one with its date and the primary
-             action becomes Update snapshot
+        GIVEN a published report in frozen mode
+        WHEN the Public results tab renders
+        THEN the state reads Frozen with its date, the action becomes Update snapshot with the
+             way back to live, and a notice says readers see the snapshot
         """
         from django.utils import timezone
         self.page.is_published = True
@@ -440,18 +432,19 @@ class PublicResultsStatusLineTest(TestCase):
         self.page.frozen_at = timezone.now()
         self.page.save(update_fields=['is_published', 'mode', 'frozen_at'])
         html = self._page()
-        self.assertIn('pub-chip badge-info', html)
+        self.assertIn('rb-state--frozen', html)
         self.assertIn('Frozen ·', html)
         self.assertIn('Update snapshot', html)
-        self.assertIn('Back to live data', html)
+        self.assertIn('Back to live', html)
+        self.assertIn('Readers see the snapshot of', html)
 
     @override_settings(MOBILE_EDITOR_NAV=True)
-    def test_tab_dots_and_block_type_badges(self):
+    def test_tab_dots_and_block_type_names(self):
         """
         GIVEN the flag on
-        WHEN the PR tab renders with a block
+        WHEN the Public results tab renders with a block
         THEN the navbar tabs carry status dots instead of the survey chip and
-             block rows name their type under the title (change
+             the outline names the block's type under its title (change
              reports-block-type-names: the name, no longer a pill with the key)
         """
         ReportBlock.objects.create(report=self.page, block_type='text', order=1,
@@ -461,13 +454,4 @@ class PublicResultsStatusLineTest(TestCase):
         self.assertIn('tabdot td-off', html)
         self.assertIn('<span class="pr-block-type">Text</span>', html)
 
-    @override_settings(MOBILE_EDITOR_NAV=False)
-    def test_flag_off_keeps_legacy_ctxbar(self):
-        """
-        GIVEN the flag explicitly off
-        WHEN the PR tab renders
-        THEN no status line is emitted and the scattered ctx-bar controls stay
-        """
-        html = self._page()
-        self.assertNotIn('mobile-statusbar', html)
-        self.assertIn('Publish page', html)
+

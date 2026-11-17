@@ -14338,3 +14338,228 @@ msgstr "Komentar"
 
 msgid "new"
 msgstr "baru"
+
+# Report builder (change reports-canvas-editor, #731)
+msgid "A number may also be a token that follows the answers:"
+msgstr "Angka juga bisa berupa token yang mengikuti jawaban:"
+
+msgid "A photo, a plan, a chart or a map made elsewhere"
+msgstr "Foto, denah, grafik, atau peta yang dibuat di tempat lain"
+
+msgid "A photo, a plan, or a chart or map made elsewhere"
+msgstr "Foto, denah, atau grafik maupun peta yang dibuat di tempat lain"
+
+msgid "A strip of big figures you type"
+msgstr "Deretan angka besar yang Anda ketik sendiri"
+
+msgid "Add a number"
+msgstr "Tambahkan angka"
+
+msgid "Add a quote"
+msgstr "Tambahkan kutipan"
+
+msgid "Add block — text, key numbers, quotes, a chart or a map of a question…"
+msgstr "Tambahkan blok — teks, angka utama, kutipan, grafik atau peta dari sebuah pertanyaan…"
+
+msgid "Add comparison"
+msgstr "Tambahkan perbandingan"
+
+msgid "Add cross-tab"
+msgstr "Tambahkan tabulasi silang"
+
+msgid "Applies to the whole report"
+msgstr "Berlaku untuk seluruh laporan"
+
+msgid "Auto (bar chart)"
+msgstr "Otomatis (diagram batang)"
+
+msgid "Back to the survey"
+msgstr "Kembali ke survei"
+
+msgid "Blocks of the report"
+msgstr "Blok laporan"
+
+msgid "Changing the address of a published report breaks links already shared."
+msgstr "Mengubah alamat laporan yang sudah terbit akan memutus tautan yang telah dibagikan."
+
+msgid "Comments on this report"
+msgstr "Komentar pada laporan ini"
+
+msgid "Drop or replace the picture on the page and write its caption under it."
+msgstr "Letakkan atau ganti gambar di halaman, lalu tulis keterangannya di bawahnya."
+
+msgid "Embed code of the report"
+msgstr "Kode sematan laporan"
+
+msgid "Embed code of this block"
+msgstr "Kode sematan blok ini"
+
+msgid "From the survey"
+msgstr "Dari survei"
+
+msgid "Frozen: readers see the numbers of the day you froze them, whatever arrives later."
+msgstr "Dibekukan: pembaca melihat angka pada hari Anda membekukannya, apa pun yang masuk setelahnya."
+
+msgid "Hidden: readers do not see this block."
+msgstr "Tersembunyi: pembaca tidak melihat blok ini."
+
+msgid "Left out of the report until it has a number."
+msgstr "Tidak dimuat dalam laporan sampai ada angkanya."
+
+msgid "Left out of the report until it has a picture."
+msgstr "Tidak dimuat dalam laporan sampai ada gambarnya."
+
+msgid "Left out of the report until it has a quote."
+msgstr "Tidak dimuat dalam laporan sampai ada kutipannya."
+
+msgid "Lowercase letters, digits and dashes. Applied when you leave the field."
+msgstr "Huruf kecil, angka, dan tanda hubung. Diterapkan saat Anda meninggalkan kolom ini."
+
+msgid "Members of this workspace open it at this address after signing in."
+msgstr "Anggota ruang kerja ini membukanya di alamat ini setelah masuk."
+
+msgid "Nothing to show yet, so readers do not see this block."
+msgstr "Belum ada yang bisa ditampilkan, jadi pembaca tidak melihat blok ini."
+
+msgid "One question in two surveys"
+msgstr "Satu pertanyaan di dua survei"
+
+msgid "Open as a reader"
+msgstr "Buka sebagai pembaca"
+
+msgid "Opened, answered, finished — and over time"
+msgstr "Dibuka, dijawab, diselesaikan — dan dari waktu ke waktu"
+
+msgid "Opening paragraph: what was asked, of whom, and what this report shows"
+msgstr "Paragraf pembuka: apa yang ditanyakan, kepada siapa, dan apa yang ditunjukkan laporan ini"
+
+msgid "Paragraphs, lists, links; numbers that follow the answers"
+msgstr "Paragraf, daftar, tautan; angka yang mengikuti jawaban"
+
+msgid "Private preview — only editors of this report can open it"
+msgstr "Pratinjau pribadi — hanya editor laporan ini yang dapat membukanya"
+
+msgid "Questions answered in free text are not listed: individual answers are never published. Pick what people wrote as quotes instead."
+msgstr "Pertanyaan yang dijawab dengan teks bebas tidak dicantumkan: jawaban perorangan tidak pernah diterbitkan. Sebagai gantinya, pilih tulisan orang sebagai kutipan."
+
+msgid "Questions: a chart or a map of the answers"
+msgstr "Pertanyaan: grafik atau peta dari jawaban"
+
+msgid "Readers open it at this address."
+msgstr "Pembaca membukanya di alamat ini."
+
+msgid "Readers see a fixed snapshot instead of live numbers — useful before an announcement"
+msgstr "Pembaca melihat cuplikan tetap, bukan angka langsung — berguna sebelum pengumuman"
+
+#, python-format
+msgid "Readers see counts only; a group smaller than %(k)s is hidden."
+msgstr "Pembaca hanya melihat jumlah; kelompok yang lebih kecil dari %(k)s disembunyikan."
+
+#, python-format
+msgid "Readers see the snapshot of %(date)s. What you change here reaches them when you update the snapshot."
+msgstr "Pembaca melihat cuplikan tanggal %(date)s. Perubahan Anda di sini sampai ke mereka saat Anda memperbarui cuplikan."
+
+msgid "Remove this number"
+msgstr "Hapus angka ini"
+
+msgid "Remove this quote"
+msgstr "Hapus kutipan ini"
+
+msgid "Report address"
+msgstr "Alamat laporan"
+
+msgid "Report settings"
+msgstr "Pengaturan laporan"
+
+msgid "Search blocks and questions"
+msgstr "Cari blok dan pertanyaan"
+
+msgid "Search blocks and questions…"
+msgstr "Cari blok dan pertanyaan…"
+
+msgid "Shown while the survey is open"
+msgstr "Ditampilkan selama survei dibuka"
+
+msgid "Starts a section of the story"
+msgstr "Mengawali satu bagian cerita"
+
+msgid "That address is taken by another report. The rest was saved."
+msgstr "Alamat itu sudah dipakai laporan lain. Selebihnya telah disimpan."
+
+msgid "The block is removed from the report. The answers it showed stay in the survey. This cannot be undone."
+msgstr "Blok dihapus dari laporan. Jawaban yang ditampilkannya tetap ada di survei. Tindakan ini tidak dapat dibatalkan."
+
+msgid "The numbers follow the answers. Click to edit the text and its tokens."
+msgstr "Angka-angka ini mengikuti jawaban. Klik untuk mengedit teks dan tokennya."
+
+msgid "The question this block showed is no longer in the survey, so readers do not see it."
+msgstr "Pertanyaan yang ditampilkan blok ini sudah tidak ada di survei, jadi pembaca tidak melihatnya."
+
+msgid "The report could not be unpublished. Try again."
+msgstr "Penerbitan laporan tidak dapat dibatalkan. Coba lagi."
+
+msgid "The report is live"
+msgstr "Laporan sedang tayang langsung"
+
+msgid "The report is published, frozen"
+msgstr "Laporan sudah terbit, dibekukan"
+
+msgid "This number follows the answers. Click to see its token."
+msgstr "Angka ini mengikuti jawaban. Klik untuk melihat tokennya."
+
+msgid "Title (optional)"
+msgstr "Judul (opsional)"
+
+msgid "Title above the numbers (optional)"
+msgstr "Judul di atas angka (opsional)"
+
+msgid "Title above the picture (optional)"
+msgstr "Judul di atas gambar (opsional)"
+
+msgid "Title above the quotes (optional)"
+msgstr "Judul di atas kutipan (opsional)"
+
+msgid "Title above the text (optional)"
+msgstr "Judul di atas teks (opsional)"
+
+msgid "Title and opening"
+msgstr "Judul dan pembuka"
+
+msgid "Two questions against each other"
+msgstr "Dua pertanyaan saling disilangkan"
+
+msgid "Type or paste the quotes on the page. A quote is published exactly as written: leave out anything that names a person."
+msgstr "Ketik atau tempel kutipan di halaman. Kutipan diterbitkan persis seperti tertulis: buang apa pun yang menyebut nama seseorang."
+
+msgid "Type the heading here. An empty heading is left out of the report."
+msgstr "Ketik judul bagian di sini. Judul yang kosong tidak dimuat dalam laporan."
+
+msgid "Type the heading on the page. It starts a section of the story."
+msgstr "Ketik judul bagian di halaman. Judul ini mengawali satu bagian cerita."
+
+msgid "Type the numbers on the page. You type them; they do not change when new answers arrive."
+msgstr "Ketik angka di halaman. Anda sendiri yang mengetiknya; angka tidak berubah saat jawaban baru masuk."
+
+msgid "What people wrote, picked by you"
+msgstr "Tulisan orang, pilihan Anda"
+
+msgid "What the map shows, in a sentence — shown under the map and read aloud to people who cannot see it"
+msgstr "Apa yang ditunjukkan peta, dalam satu kalimat — ditampilkan di bawah peta dan dibacakan bagi orang yang tidak dapat melihatnya"
+
+msgid "What they wrote"
+msgstr "Apa yang mereka tulis"
+
+msgid "Where it comes from (optional)"
+msgstr "Dari mana asalnya (opsional)"
+
+msgid "Write"
+msgstr "Tulis"
+
+msgid "Write directly on the page; the toolbar above the text sets headings, bold, lists and links."
+msgstr "Tulis langsung di halaman; bilah alat di atas teks mengatur judul, huruf tebal, daftar, dan tautan."
+
+msgid "Write here. An empty text block is left out of the report."
+msgstr "Tulis di sini. Blok teks yang kosong tidak dimuat dalam laporan."
+
+msgid "what it counts"
+msgstr "apa yang dihitung"

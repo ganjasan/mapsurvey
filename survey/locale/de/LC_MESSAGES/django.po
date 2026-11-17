@@ -14444,3 +14444,228 @@ msgstr "Kommentare"
 
 msgid "new"
 msgstr "neu"
+
+# Report builder (change reports-canvas-editor, #731)
+msgid "A number may also be a token that follows the answers:"
+msgstr "Eine Zahl kann auch ein Platzhalter sein, der den Antworten folgt:"
+
+msgid "A photo, a plan, a chart or a map made elsewhere"
+msgstr "Ein Foto, ein Plan, ein Diagramm oder eine Karte von anderswo"
+
+msgid "A photo, a plan, or a chart or map made elsewhere"
+msgstr "Ein Foto, ein Plan oder ein Diagramm oder eine Karte von anderswo"
+
+msgid "A strip of big figures you type"
+msgstr "Eine Reihe großer Zahlen, die Sie selbst eingeben"
+
+msgid "Add a number"
+msgstr "Zahl hinzufügen"
+
+msgid "Add a quote"
+msgstr "Zitat hinzufügen"
+
+msgid "Add block — text, key numbers, quotes, a chart or a map of a question…"
+msgstr "Block hinzufügen — Text, Kennzahlen, Zitate, ein Diagramm oder eine Karte zu einer Frage…"
+
+msgid "Add comparison"
+msgstr "Vergleich hinzufügen"
+
+msgid "Add cross-tab"
+msgstr "Kreuztabelle hinzufügen"
+
+msgid "Applies to the whole report"
+msgstr "Gilt für den ganzen Bericht"
+
+msgid "Auto (bar chart)"
+msgstr "Automatisch (Balkendiagramm)"
+
+msgid "Back to the survey"
+msgstr "Zurück zur Umfrage"
+
+msgid "Blocks of the report"
+msgstr "Blöcke des Berichts"
+
+msgid "Changing the address of a published report breaks links already shared."
+msgstr "Wenn Sie die Adresse eines veröffentlichten Berichts ändern, funktionieren bereits geteilte Links nicht mehr."
+
+msgid "Comments on this report"
+msgstr "Kommentare zu diesem Bericht"
+
+msgid "Drop or replace the picture on the page and write its caption under it."
+msgstr "Legen Sie das Bild auf der Seite ab oder ersetzen Sie es, und schreiben Sie die Bildunterschrift darunter."
+
+msgid "Embed code of the report"
+msgstr "Einbettungscode des Berichts"
+
+msgid "Embed code of this block"
+msgstr "Einbettungscode dieses Blocks"
+
+msgid "From the survey"
+msgstr "Aus der Umfrage"
+
+msgid "Frozen: readers see the numbers of the day you froze them, whatever arrives later."
+msgstr "Eingefroren: Leser sehen die Zahlen des Tages, an dem Sie sie eingefroren haben, egal was danach eingeht."
+
+msgid "Hidden: readers do not see this block."
+msgstr "Ausgeblendet: Leser sehen diesen Block nicht."
+
+msgid "Left out of the report until it has a number."
+msgstr "Fehlt im Bericht, bis eine Zahl eingetragen ist."
+
+msgid "Left out of the report until it has a picture."
+msgstr "Fehlt im Bericht, bis ein Bild vorhanden ist."
+
+msgid "Left out of the report until it has a quote."
+msgstr "Fehlt im Bericht, bis ein Zitat eingetragen ist."
+
+msgid "Lowercase letters, digits and dashes. Applied when you leave the field."
+msgstr "Kleinbuchstaben, Ziffern und Bindestriche. Wird übernommen, wenn Sie das Feld verlassen."
+
+msgid "Members of this workspace open it at this address after signing in."
+msgstr "Mitglieder dieses Arbeitsbereichs öffnen ihn nach der Anmeldung unter dieser Adresse."
+
+msgid "Nothing to show yet, so readers do not see this block."
+msgstr "Noch nichts zu zeigen, daher sehen Leser diesen Block nicht."
+
+msgid "One question in two surveys"
+msgstr "Eine Frage in zwei Umfragen"
+
+msgid "Open as a reader"
+msgstr "Als Leser öffnen"
+
+msgid "Opened, answered, finished — and over time"
+msgstr "Geöffnet, beantwortet, abgeschlossen — und im Zeitverlauf"
+
+msgid "Opening paragraph: what was asked, of whom, and what this report shows"
+msgstr "Einleitender Absatz: was gefragt wurde, wen, und was dieser Bericht zeigt"
+
+msgid "Paragraphs, lists, links; numbers that follow the answers"
+msgstr "Absätze, Listen, Links; Zahlen, die den Antworten folgen"
+
+msgid "Private preview — only editors of this report can open it"
+msgstr "Private Vorschau — nur Bearbeiter dieses Berichts können sie öffnen"
+
+msgid "Questions answered in free text are not listed: individual answers are never published. Pick what people wrote as quotes instead."
+msgstr "Fragen mit Freitextantworten sind nicht aufgeführt: Einzelne Antworten werden nie veröffentlicht. Wählen Sie stattdessen als Zitate aus, was die Menschen geschrieben haben."
+
+msgid "Questions: a chart or a map of the answers"
+msgstr "Fragen: ein Diagramm oder eine Karte der Antworten"
+
+msgid "Readers open it at this address."
+msgstr "Leser öffnen ihn unter dieser Adresse."
+
+msgid "Readers see a fixed snapshot instead of live numbers — useful before an announcement"
+msgstr "Leser sehen einen festen Stand statt Live-Zahlen — nützlich vor einer Bekanntgabe"
+
+#, python-format
+msgid "Readers see counts only; a group smaller than %(k)s is hidden."
+msgstr "Leser sehen nur Anzahlen; eine Gruppe mit weniger als %(k)s wird ausgeblendet."
+
+#, python-format
+msgid "Readers see the snapshot of %(date)s. What you change here reaches them when you update the snapshot."
+msgstr "Leser sehen den Stand vom %(date)s. Was Sie hier ändern, erreicht sie, wenn Sie den Stand aktualisieren."
+
+msgid "Remove this number"
+msgstr "Diese Zahl entfernen"
+
+msgid "Remove this quote"
+msgstr "Dieses Zitat entfernen"
+
+msgid "Report address"
+msgstr "Adresse des Berichts"
+
+msgid "Report settings"
+msgstr "Berichtseinstellungen"
+
+msgid "Search blocks and questions"
+msgstr "Blöcke und Fragen durchsuchen"
+
+msgid "Search blocks and questions…"
+msgstr "Blöcke und Fragen durchsuchen…"
+
+msgid "Shown while the survey is open"
+msgstr "Wird angezeigt, solange die Umfrage geöffnet ist"
+
+msgid "Starts a section of the story"
+msgstr "Beginnt einen Abschnitt der Geschichte"
+
+msgid "That address is taken by another report. The rest was saved."
+msgstr "Diese Adresse wird von einem anderen Bericht verwendet. Alles andere wurde gespeichert."
+
+msgid "The block is removed from the report. The answers it showed stay in the survey. This cannot be undone."
+msgstr "Der Block wird aus dem Bericht entfernt. Die Antworten, die er gezeigt hat, bleiben in der Umfrage. Das lässt sich nicht rückgängig machen."
+
+msgid "The numbers follow the answers. Click to edit the text and its tokens."
+msgstr "Die Zahlen folgen den Antworten. Klicken Sie, um den Text und seine Platzhalter zu bearbeiten."
+
+msgid "The question this block showed is no longer in the survey, so readers do not see it."
+msgstr "Die Frage, die dieser Block gezeigt hat, ist nicht mehr in der Umfrage, daher sehen Leser ihn nicht."
+
+msgid "The report could not be unpublished. Try again."
+msgstr "Die Veröffentlichung des Berichts konnte nicht zurückgenommen werden. Versuchen Sie es erneut."
+
+msgid "The report is live"
+msgstr "Der Bericht ist live"
+
+msgid "The report is published, frozen"
+msgstr "Der Bericht ist veröffentlicht, eingefroren"
+
+msgid "This number follows the answers. Click to see its token."
+msgstr "Diese Zahl folgt den Antworten. Klicken Sie, um ihren Platzhalter zu sehen."
+
+msgid "Title (optional)"
+msgstr "Titel (optional)"
+
+msgid "Title above the numbers (optional)"
+msgstr "Titel über den Zahlen (optional)"
+
+msgid "Title above the picture (optional)"
+msgstr "Titel über dem Bild (optional)"
+
+msgid "Title above the quotes (optional)"
+msgstr "Titel über den Zitaten (optional)"
+
+msgid "Title above the text (optional)"
+msgstr "Titel über dem Text (optional)"
+
+msgid "Title and opening"
+msgstr "Titel und Einleitung"
+
+msgid "Two questions against each other"
+msgstr "Zwei Fragen gegeneinander"
+
+msgid "Type or paste the quotes on the page. A quote is published exactly as written: leave out anything that names a person."
+msgstr "Geben Sie die Zitate auf der Seite ein oder fügen Sie sie ein. Ein Zitat wird genau so veröffentlicht, wie es geschrieben ist: Lassen Sie alles weg, was eine Person nennt."
+
+msgid "Type the heading here. An empty heading is left out of the report."
+msgstr "Geben Sie hier die Überschrift ein. Eine leere Überschrift fehlt im Bericht."
+
+msgid "Type the heading on the page. It starts a section of the story."
+msgstr "Geben Sie die Überschrift auf der Seite ein. Sie beginnt einen Abschnitt der Geschichte."
+
+msgid "Type the numbers on the page. You type them; they do not change when new answers arrive."
+msgstr "Geben Sie die Zahlen auf der Seite ein. Sie tragen sie selbst ein; sie ändern sich nicht, wenn neue Antworten eingehen."
+
+msgid "What people wrote, picked by you"
+msgstr "Was Menschen geschrieben haben, von Ihnen ausgewählt"
+
+msgid "What the map shows, in a sentence — shown under the map and read aloud to people who cannot see it"
+msgstr "Was die Karte zeigt, in einem Satz — steht unter der Karte und wird Menschen vorgelesen, die sie nicht sehen können"
+
+msgid "What they wrote"
+msgstr "Was sie geschrieben haben"
+
+msgid "Where it comes from (optional)"
+msgstr "Woher es stammt (optional)"
+
+msgid "Write"
+msgstr "Schreiben"
+
+msgid "Write directly on the page; the toolbar above the text sets headings, bold, lists and links."
+msgstr "Schreiben Sie direkt auf der Seite; die Leiste über dem Text setzt Überschriften, Fettdruck, Listen und Links."
+
+msgid "Write here. An empty text block is left out of the report."
+msgstr "Schreiben Sie hier. Ein leerer Textblock fehlt im Bericht."
+
+msgid "what it counts"
+msgstr "was sie zählt"

@@ -1,0 +1,104 @@
+{% load i18n %}{% comment %}What one block of a report shows (change reports-canvas-editor, #731): the
+inside of its `.block` element, drawn the same on /r/<slug>/, in an embed and on the canvas of the
+report builder. `block` is a payload of reports.render.ReportService, `page` the report; with
+`no_title` the caller draws the title itself (the builder, where it is edited in place).{% endcomment %}
+{% if block.title and not no_title %}<h2>{{ block.title }}</h2>{% endif %}
+{% if block.block_type == 'heading' %}
+{% elif block.block_type == 'text' %}
+  {% comment %}`html` is sanitised by the creator allow-list (reports.story.clean_html); a
+  snapshot frozen before the blocks were rich has `body` only and is escaped.{% endcomment %}
+  {% if block.html %}<div class="rich">{{ block.html|safe }}</div>{% else %}<div class="rich"><p>{{ block.body }}</p></div>{% endif %}
+{% elif block.block_type == 'image' %}
+  <figure>
+    <img src="{{ block.image_url }}" alt="{{ block.caption|default:block.title }}" loading="lazy">
+    {% if block.caption %}<figcaption>{{ block.caption }}</figcaption>{% endif %}
+  </figure>
+{% elif block.block_type == 'numbers' %}
+  <ul class="numbers">
+    {% for item in block.items %}<li><b>{{ item.value }}</b><span>{{ item.label }}</span></li>{% endfor %}
+  </ul>
+  {% if block.note %}<p class="block-note">{{ block.note }}</p>{% endif %}
+{% elif block.block_type == 'quotes' %}
+  <div class="quotes">
+    {% for item in block.items %}<blockquote>“{{ item.text }}”{% if item.source %}<cite>{{ item.source }}</cite>{% endif %}</blockquote>{% endfor %}
+  </div>
+{% elif block.block_type == 'crosstab' %}
+  {% comment %}A cross-tab (change reports-live-blocks): computed by data.analysis, masked
+  cells and withheld totals arrive that way — the page only draws the table.{% endcomment %}
+  <div class="xtab-wrap">
+    <table class="xtab">
+      <caption class="sr-only" style="position:absolute;left:-9999px;">{{ block.data.rows.name }} × {{ block.data.columns.name }}</caption>
+      <thead><tr><th scope="col">{{ block.data.rows.name }}</th>
+        {% for item in block.data.columns.items %}<th scope="col">{{ item.label }}</th>{% endfor %}
+        <th scope="col">{% trans "Total" %}</th></tr></thead>
+      <tbody>
+        {% for line in block.table %}
+        <tr><th scope="row">{{ line.item.label }}</th>
+          {% for cell in line.cells %}<td{% if cell.masked %} class="masked"{% endif %}>{{ cell.display }}</td>{% endfor %}
+          <td class="total">{{ line.item.total.display }}</td></tr>
+        {% endfor %}
+      </tbody>
+      <tfoot><tr><th scope="row">{% trans "Total" %}</th>
+        {% for item in block.data.columns.items %}<td class="total">{{ item.total.display }}</td>{% endfor %}
+        <td class="total">{{ block.data.respondents.display }}</td></tr></tfoot>
+    </table>
+  </div>
+  <div class="kanon-note">{% trans "People who answered both questions." %}{% if block.data.rows.multiple or block.data.columns.multiple %} {% trans "Someone who picked several options counts in each." %}{% endif %}{% if block.data.masked_cells %} {% blocktrans with k=block.k %}A group smaller than {{ k }} reads “<{{ k }}”, and totals that would give it away read “—”.{% endblocktrans %}{% endif %}</div>
+{% elif block.block_type == 'compare' %}
+  {% comment %}One question in two rounds (change reports-reuse, #711): shares per survey,
+  masked per round by the renderer — the page only draws the rows.{% endcomment %}
+  <div class="xtab-wrap">
+    <table class="xtab cmp">
+      <thead><tr><th scope="col"></th>
+        {% for r in block.rounds %}<th scope="col">{{ r.name }}<span class="cmp-n">{% blocktrans with n=r.n %}{{ n }} answered{% endblocktrans %}</span></th>{% endfor %}</tr></thead>
+      <tbody>
+        {% for line in block.rows %}
+        <tr><th scope="row">{{ line.label }}</th>
+          {% for cell in line.cells %}<td{% if cell.masked %} class="masked"{% endif %}>
+            {% if cell.share is not None %}<span class="cmp-bar cmp-bar-{{ forloop.counter }}" style="width:{{ cell.share }}%;"></span><span class="cmp-v">{{ cell.share }}%<small>{{ cell.display }}</small></span>{% else %}<span class="cmp-v">{{ cell.display }}</span>{% endif %}
+          </td>{% endfor %}</tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="kanon-note">{% if block.data_type == 'choices' %}{% trans "Share of the people who answered the question in each survey; the small number is how many." %}{% endif %}{% if block.masked %} {% blocktrans with k=block.k %}A group smaller than {{ k }} reads “<{{ k }}” and has no share.{% endblocktrans %}{% endif %}</div>
+{% elif block.block_type == 'engagement' %}
+  <ul class="funnel">
+    {% for step in block.data.steps %}<li><b>{{ step.display }}</b><span>{% if step.key == 'opened' %}{% trans "opened the survey" %}{% elif step.key == 'answered' %}{% trans "answered" %}{% else %}{% trans "finished" %}{% endif %}</span></li>{% endfor %}
+  </ul>
+  {% if block.data.series|length > 1 %}
+  <div class="series" role="img" aria-label="{% trans 'Opened and answered over time' %}">
+    {% for point in block.data.series %}<div class="bar" style="height:{{ point.opened_percent }}%" title="{{ point.start }}: {{ point.opened.display }} / {{ point.answered.display }}"><i style="height:{% widthratio point.answered_percent point.opened_percent|default:1 100 %}%"></i></div>{% endfor %}
+  </div>
+  <div class="series-axis"><span>{{ block.data.first }}</span><span>{% if block.data.period == 'day' %}{% trans "per day: opened, and answered (dark)" %}{% elif block.data.period == 'week' %}{% trans "per week: opened, and answered (dark)" %}{% else %}{% trans "per month: opened, and answered (dark)" %}{% endif %}</span><span>{{ block.data.last }}</span></div>
+  {% endif %}
+{% elif block.block_type == 'chart' %}
+  <div class="chart-holder"><canvas id="chart-{{ block.id }}"></canvas></div>
+  {% if page.k_anonymity_threshold > 1 %}
+  <div class="kanon-note">{% trans "Small groups are masked to protect privacy." %}</div>
+  {% endif %}
+{% elif block.block_type == 'map' %}
+  <div class="map-holder" id="map-{{ block.id }}"{% if block.description %} role="img" aria-label="{{ block.description }}"{% endif %}></div>
+  {% if block.description %}<p class="block-note">{{ block.description }}</p>{% endif %}
+{% elif block.block_type == 'budget' and block.budget %}
+  {% comment %}Budget block (change budget-question): server-rendered bars, no script.{% endcomment %}
+  <p class="budget-meta">{% blocktrans with n=block.budget.respondents.display total=block.budget.total_label %}{{ n }} responses · budget {{ total }}{% endblocktrans %}</p>
+  <div class="pr-budget">
+    {% for r in block.budget.rows %}
+    <div class="pr-budget__row{% if r.fit %} is-fit{% endif %}{% if r.masked %} masked{% endif %}">
+      <span class="pr-budget__name">{{ r.name }}</span>
+      <span class="pr-budget__bar"><i style="width:{{ r.percent|default:0 }}%;{% if r.color %}background:{{ r.color }};{% endif %}"></i></span>
+      <span class="pr-budget__val">{% if r.masked %}&lt;{{ block.k }}{% else %}{{ r.percent }}%{% if r.detail %} · {{ r.detail }}{% endif %}{% endif %}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% if block.budget.mode == 'split' %}<div class="kanon-note">{% trans "Average share of the budget residents gave each item." %}</div>
+  {% elif block.budget.mode == 'projects' %}<div class="kanon-note">{% trans "Share of residents who funded each project. Green: the most supported projects that fit the budget together." %}</div>
+  {% else %}<div class="kanon-note">{% trans "Share of everything residents spent, by item." %}</div>{% endif %}
+  {% if page.k_anonymity_threshold > 1 %}<div class="kanon-note">{% trans "Small groups are masked to protect privacy." %}</div>{% endif %}
+{% elif block.block_type == 'objects' %}
+  <div class="objects-holder" id="objects-{{ block.id }}"></div>
+  {% if page.k_anonymity_threshold > 1 %}
+  <div class="kanon-note">{% trans "Objects with few answers are masked to protect privacy." %}</div>
+  {% endif %}
+{% endif %}

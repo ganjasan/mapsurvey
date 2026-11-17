@@ -1756,7 +1756,6 @@ class PanelAutosaveErrorReportingTest(SimpleTestCase):
     PANELS = (
         'editor/partials/survey_settings_panel.html',
         'editor/partials/thanks_panel.html',
-        'editor/public_results.html',
     )
 
     def _module(self):

@@ -217,7 +217,7 @@ class PublicResultsCopyLinkControlTest(TestCase):
         )
         r = self.client.get(self.config_url)
         self.assertEqual(r.status_code, 200)
-        self.assertContains(r, "prCopyPublicLink")
+        self.assertContains(r, 'id="lb-copy"')
         self.assertContains(r, "/r/{}/".format(page.slug))
 
     def test_no_copy_control_before_publishing(self):
@@ -228,7 +228,7 @@ class PublicResultsCopyLinkControlTest(TestCase):
         """
         r = self.client.get(self.config_url)
         self.assertEqual(r.status_code, 200)
-        self.assertNotContains(r, 'id="prCopyPublicLink"')
+        self.assertNotContains(r, 'id="lb-copy"')
 
     def test_nav_tabs_use_the_disambiguated_labels(self):
         """

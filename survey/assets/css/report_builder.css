@@ -1,0 +1,102 @@
+/* The report builder (change reports-canvas-editor, #731). The chrome is the site builder's
+ * (site_builder.css, everything `lb-`), the page inside the frame is the report's own
+ * (report_public.css, scoped under `.rp`). Only what differs for a report is here, `rb-`. */
+
+/* Under the editor's navbar (49px), not the app header the site builder sits under. */
+.lb.rb { height: calc(100vh - 49px); }
+@media (max-width: 760px) { .lb.rb { height: auto; } }
+.lb.rb label { margin-bottom: 0; }
+
+/* The frame is the report's white page: one column, as readers get it. */
+.rb .lb-frame { max-width: 900px; font-family: 'DM Sans', -apple-system, sans-serif; font-size: 17px; line-height: 1.6; }
+.rb .lb-frame .wrap { max-width: 820px; padding: 0 40px 60px; }
+.rb .lb-frame.mobile { max-width: 390px; }
+.rb .lb-frame.mobile .wrap { padding: 0 18px 40px; }
+.rb .lb-frame.mobile .hero h1 { font-size: 1.75rem; }
+
+/* state next to the title */
+.rb-state { font-size: 11.5px; font-weight: 600; border-radius: 999px; padding: 2px 10px; white-space: nowrap; }
+.rb-state--draft { background: #eef0f3; color: #4b5563; }
+.rb-state--live { background: #e3f5ea; color: #17663a; }
+.rb-state--frozen { background: #e3eefb; color: #1d4f8f; }
+
+/* the opening */
+.rb-hero { position: relative; cursor: text; }
+.rb-hero::after { content: ""; position: absolute; inset: 30px -14px 0; border: 1.5px solid transparent; border-radius: 10px; pointer-events: none; }
+.rb-hero:hover::after { border-color: #c8d6e8; }
+.rb-hero.on::after { border-color: var(--accent); }
+.rb-hero .eyebrow, .rb-hero h1, .rb-hero .intro { min-height: 1em; }
+.rb-hero .intro:empty { font-size: 1rem; }
+.rb-hero .cta { cursor: default; }
+/* A placeholder that IS what readers see (the question's name, the survey's name) reads as text. */
+.lb .rb-default-title[data-placeholder]:empty::before { color: inherit; font-weight: inherit; opacity: .75; }
+
+/* blocks: one column; two half-width blocks readers see share a row */
+.rb-blocks { display: flex; flex-wrap: wrap; column-gap: 26px; padding-top: 6px; padding-bottom: 40px; }
+.rb-blocks > .lb-item, .rb-blocks > .lb-ins, .rb-blocks > .lb-end-add, .rb-blocks > .empty { flex: 0 0 100%; min-width: 0; }
+.rb-blocks > .lb-item.rb-pair { flex: 0 0 calc(50% - 13px); }
+.rb .lb-frame.mobile .rb-blocks > .lb-item.rb-pair { flex-basis: 100%; }
+@container (max-width: 640px) { .rb-blocks > .lb-item.rb-pair { flex-basis: 100%; } }
+.rb .lb-blk { padding: 24px 0 10px; }
+/* A number that follows the answers: the page shows it, a click shows its token. */
+.rb [data-raw] { text-decoration: underline dotted #a5b4fc; text-underline-offset: 4px; }
+.rb .lb-blk.heading-block { margin-top: 0; padding-top: 26px; }
+.rb .lb-blk h2 { font-size: 1.05rem; margin: 0 0 12px; }
+.rb .lb-blk.heading-block h2 { font-size: 1.6rem; margin: 0; }
+.rb .lb-blk .block-note:empty { min-height: 1.4em; }
+.rb .lb-blk:not(.on) .block-note[data-field]:empty { display: none; }
+.rb .lb-blk .map-holder, .rb .lb-blk .chart-holder { position: relative; z-index: 0; }
+.rb .lb-blk .lb-warn { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.rb .lb-tools .cm-badge { border: 0; border-right: 1px solid var(--line); background: none; min-width: 32px; height: 30px; padding: 0 6px;
+  color: var(--muted); border-radius: 0; opacity: 1; font-size: 12px; }
+.rb .lb-tools .cm-badge:hover { background: var(--soft); color: var(--ink); }
+.rb .lb-rich .ql-editor { font-family: inherit; color: #1f2937; }
+.rb .lb-rich .ql-editor p { margin: 0 0 .8em; }
+
+/* rows written on the page: key numbers and quotes */
+.rb .numbers li, .rb .quotes blockquote { position: relative; }
+.rb .numbers b, .rb .numbers span { min-height: 1.2em; }
+.rb .numbers .lb-row-x, .rb .quotes .lb-row-x { top: 4px; right: 4px; }
+.rb .quotes blockquote { padding-right: 38px; }
+.rb .quotes span[data-row-field] { display: inline; }
+.rb .quotes span[data-row-field]:empty { display: inline-block; min-width: 12em; }
+.rb .lb-row-add-c { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+
+/* outline rows: the title with the type's name under it */
+.rb-oi { align-items: flex-start; }
+.rb-oi .lb-oi-k { margin-top: 3px; }
+.rb-oi .lb-oi-t { white-space: normal; }
+.rb-oi .pr-block-name, .rb-oi .pr-block-type { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rb-oi .pr-block-type { font-size: 11.5px; color: #9ca3af; line-height: 1.25; }
+.rb-oi.on .pr-block-type { color: inherit; opacity: .7; }
+.rb-oi-half { font-size: 11px; color: var(--muted); flex: none; margin-top: 2px; }
+.rb-oi-off { color: #c3c9d0; font-size: 11px; flex: none; margin-top: 3px; }
+
+/* the context panel */
+.rb-k { margin-left: auto; font-size: 11px; font-weight: 600; background: #ecfdf5; color: #065f46; border-radius: 999px; padding: 2px 9px; white-space: nowrap; }
+.rb-k + .lb-x { margin-left: 6px; }
+.lb-pane-body label.lb-switch { display: flex; font-weight: 500; }
+.lb-pane-body label.lb-switch small { font-weight: 400; }
+.lb-pane-body .lb-seg--panel label { font-size: .8rem; }
+.rb-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .74rem; background: var(--soft); }
+.rb-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: .6rem; }
+.rb-stats b { display: block; font-size: 1.3rem; line-height: 1.2; }
+.rb-stats span { display: block; font-size: .74rem; color: #9ca3af; }
+.rb-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: .5rem; }
+.rb-btns form { margin: 0; }
+
+/* publish popover and dialog */
+.rb-pop-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.rb-pop-row form { margin: 0; }
+.rb .lb-pop .lb-link { display: inline-flex; gap: 6px; align-items: center; }
+.rb-checks .pr-banner { border: 1px solid #fde68a; background: #fffbeb; color: #92400e; border-radius: 8px; padding: .7rem .9rem; margin-bottom: 1rem; font-size: .88rem; }
+.rb-checks .pr-help { font-size: .76rem; color: #9ca3af; margin-top: .3rem; }
+.rb-checks .pr-url { font-family: ui-monospace, monospace; font-size: .78rem; color: #4f46e5; word-break: break-all; }
+
+/* library: the questions take the full width, two columns of tiles */
+.rb-lib-wide { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; column-gap: 24px; }
+.rb-lib-wide h4, .rb-lib-wide .lb-hint { grid-column: 1 / -1; }
+.rb-lib-form { background: #f5f7fa; border-radius: 9px; padding: 10px 12px; margin: 2px 0 8px; font-size: 13px; }
+.rb-lib-form[hidden] { display: none; }
+.rb-lib-form label { display: block; font-size: 12px; font-weight: 600; color: #374151; margin: 6px 0 3px; }
+@media (max-width: 640px) { .rb-lib-wide { grid-template-columns: 1fr; } }

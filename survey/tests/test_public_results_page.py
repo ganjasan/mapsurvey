@@ -741,19 +741,19 @@ class PublicResultsEditorTest(TestCase):
         GIVEN a results page that is not yet published
         WHEN the config tab renders
         THEN the Preview button targets the always-available editor preview
-             endpoint (the public /r/ URL would 404), and the "Live page"
+             endpoint (the public /r/ URL would 404), and the "Open as a reader"
              link appears only once the page is published
         """
         self._login()
         r = self.client.get(self.base)
         content = r.content.decode()
         self.assertIn(f"{self.base}preview/", content)
-        self.assertNotIn("Live page", content)
+        self.assertNotIn("Open as a reader", content)
         page = Report.objects.get(survey=self.survey)
         page.is_published = True
         page.save()
         content = self.client.get(self.base).content.decode()
-        self.assertIn("Live page", content)
+        self.assertIn("Open as a reader", content)
 
     def test_text_question_not_addable(self):
         """
@@ -790,16 +790,20 @@ class PublicResultsEditorTest(TestCase):
         self.assertEqual(block.block_type, "image")
         self.assertTrue(block.image)
 
-    def test_add_image_block_without_file_rejected(self):
+    def test_add_image_block_without_file_waits_for_one(self):
         """
         GIVEN no file attached
-        WHEN an attempt is made to add an image block
-        THEN the request is rejected and no block is created
+        WHEN a picture block is added from the block library
+        THEN the block exists without a picture, to be given one on the page, and readers do
+             not see it (change reports-canvas-editor)
         """
         self._login()
         r = self.client.post(self.base + "blocks/add/", {"block_type": "image"})
-        self.assertEqual(r.status_code, 400)
-        self.assertFalse(ReportBlock.objects.exists())
+        block = ReportBlock.objects.get(report__survey=self.survey)
+        self.assertEqual(r.status_code, 302)
+        self.assertFalse(block.image)
+        from reports.render import ReportService
+        self.assertEqual(ReportService(block.report).build_blocks(), [])
 
     def test_edit_image_block_caption_and_replace(self):
         """

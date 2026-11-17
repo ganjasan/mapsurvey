@@ -125,7 +125,12 @@
     return d.contentEditable === 'plaintext-only' ? 'plaintext-only' : 'true';
   })();
 
-  function plainValue(el) { return (el.innerText || '').replace(/[ \t]+\n/g, '\n').trim(); }
+  // A field that shows a live number (report builder) keeps what the author wrote in `data-raw`
+  // until they click into it; its value is that text, not the number on the page.
+  function plainValue(el) {
+    if (el.hasAttribute('data-raw')) return el.getAttribute('data-raw');
+    return (el.innerText || '').replace(/[ \t]+\n/g, '\n').trim();
+  }
 
   function nameHeadings(q) {
     var tb = q.getModule('toolbar');
@@ -414,11 +419,12 @@
         }
       });
     }
-    if (blk.dataset.kind === 'results' && window.renderResultBlocks) {
-      var data = blk.querySelector('script[id^="res-"]');
-      if (data) {
-        try { window.renderResultBlocks([JSON.parse(data.textContent)], BASES); } catch (e) { /* the holder stays empty */ }
-      }
+    // A block that carries a result payload: a site's results block, or — in the report builder,
+    // which runs on this script (change reports-canvas-editor) — a chart, map or objects block.
+    var data = window.renderResultBlocks &&
+      blk.querySelector(blk.dataset.kind === 'results' ? 'script[id^="res-"]' : 'script[data-results]');
+    if (data) {
+      try { window.renderResultBlocks([JSON.parse(data.textContent)], BASES); } catch (e) { /* the holder stays empty */ }
     }
   }
   function dropVisuals(blk) {
@@ -645,7 +651,8 @@
           setTimeout(resizeMaps, 280);
         }
         var heroNow = document.getElementById('lb-hero');
-        if (heroNow && res.body.hero && (force === true || !focusedIn(heroNow))) {
+        // Not while another save is queued: its text is on the page only (the same rule as the panel below).
+        if (heroNow && res.body.hero && !pageTimer && !pageAgain && (force === true || !focusedIn(heroNow))) {
           var fresh = parseFragment(res.body.hero);
           fresh.classList.toggle('on', root.dataset.selected === 'page');
           heroNow.replaceWith(fresh);

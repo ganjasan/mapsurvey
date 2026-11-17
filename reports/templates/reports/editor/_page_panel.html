@@ -1,0 +1,113 @@
+{% load i18n %}{% comment %}The report's settings (change reports-canvas-editor, #731): the context panel while no block is
+selected. The opening (line above the title, title, paragraph) is written on the canvas and travels in the
+hidden fields of this form; everything saves by itself, like a block.{% endcomment %}
+<div class="lb-pane" data-pane="page" id="lb-page-pane"{% if selected and selected != 'page' %} hidden{% endif %}>
+  <div class="lb-pane-head">
+    <span class="lb-ico"><i class="fas fa-sliders-h" aria-hidden="true"></i></span>
+    <div class="lb-pane-tt"><div class="lb-pane-t">{% trans "Report settings" %}</div><div class="lb-pane-s">{% trans "Applies to the whole report" %}</div></div>
+  </div>
+  <div class="lb-pane-body">
+    <form method="post" action="{{ u.save }}" class="lb-form lb-page-form" id="prPageForm">
+      {% csrf_token %}
+      <div class="lb-errors" role="alert" hidden></div>
+      <fieldset {% if not may_edit %}disabled{% endif %}>
+      <input type="hidden" name="intro_eyebrow" value="{{ intro_eyebrow }}">
+      <input type="hidden" name="intro_title" value="{{ intro_title }}">
+      <textarea name="intro_body" hidden>{{ intro_body }}</textarea>
+
+      <div class="lb-card">
+        <h6>{% trans "Visibility & address" %}</h6>
+        <div class="lb-field">
+          <label for="rb-visibility">{% trans "Visibility" %}</label>
+          <select class="form-control form-control-sm" id="rb-visibility" name="visibility">
+            {% for val, label in visibility_choices %}<option value="{{ val }}"{% if page.visibility == val %} selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+          <div class="lb-hint">{% trans "Public is indexable and listable. Unlisted is reachable by direct link only and not indexed." %}</div>
+        </div>
+        <div class="lb-field mb-0">
+          <label for="rb-slug">{% trans "Page address" %}</label>
+          <div class="input-group input-group-sm">
+            <div class="input-group-prepend"><span class="input-group-text">/r/</span></div>
+            <input class="form-control" id="rb-slug" name="slug" maxlength="64" value="{{ page.slug }}" data-autosave="change">
+          </div>
+          <div class="lb-hint">{% if page.is_published %}{% trans "Changing the address of a published report breaks links already shared." %}{% else %}{% trans "Lowercase letters, digits and dashes. Applied when you leave the field." %}{% endif %}</div>
+        </div>
+      </div>
+
+      <div class="lb-card">
+        <h6>{% trans "Display & privacy" %}</h6>
+        <label class="lb-switch"><span>{% trans "Show response counter" %}</span>
+          <input type="checkbox" name="show_response_count"{% if page.show_response_count %} checked{% endif %}><span class="lb-toggle" aria-hidden="true"></span></label>
+        <label class="lb-switch"><span>{% trans "Show “Take the survey” CTA" %}<small>{% trans "only while the survey is open" %}</small></span>
+          <input type="checkbox" name="show_participate_cta"{% if page.show_participate_cta %} checked{% endif %}><span class="lb-toggle" aria-hidden="true"></span></label>
+        <label class="lb-switch"><span>{% trans "Link from the thanks page" %}<small>{% trans "a “See the results” button after respondents submit" %}</small></span>
+          <input type="checkbox" name="show_on_thanks"{% if page.show_on_thanks %} checked{% endif %}><span class="lb-toggle" aria-hidden="true"></span></label>
+        <label class="lb-switch"><span>{% trans "Feature in public stories listing" %}</span>
+          <input type="checkbox" name="feature_in_listing"{% if page.feature_in_listing %} checked{% endif %}><span class="lb-toggle" aria-hidden="true"></span></label>
+        <div class="lb-field mb-0 mt-2">
+          <label for="rb-k">{% trans "k-anonymity threshold" %}</label>
+          <input class="form-control form-control-sm" style="max-width:120px;" type="number" min="1" id="rb-k" name="k_anonymity_threshold" value="{{ page.k_anonymity_threshold }}" data-autosave="change">
+          {% trans "Mask buckets smaller than K as “<K”. Set to 1 to disable." as k_help %}<div class="lb-hint">{{ k_help|force_escape }}</div>
+        </div>
+      </div>
+
+      <div class="lb-card" data-testid="report-tags-card">
+        <h6>{% trans "Tags" %}</h6>
+        <label for="rb-tags" class="sr-only">{% trans "Tags" %}</label>
+        <input class="form-control form-control-sm" id="rb-tags" name="tags" value="{{ tags_text }}" placeholder="{% trans 'Riverside plan 2027' %}" data-autosave="change">
+        <div class="lb-hint">{% trans "Comma-separated. The same tags group this report with its surveys and datasets." %}</div>
+      </div>
+
+      <div class="lb-card" data-testid="report-embed">
+        <h6>{% trans "Embed on another site" %}</h6>
+        <p class="lb-hint mt-0">{% trans "Paste this where the report should appear. It always shows the published version and grows to its height. One block can be embedded on its own: open the block for its code." %}</p>
+        <textarea class="form-control form-control-sm rb-code" rows="3" readonly onclick="this.select()" aria-label="{% trans 'Embed code of the report' %}">{{ embed_snippet }}</textarea>
+        {% if not embeddable %}<div class="lb-hint">{% trans "The code works once the report is published as public or unlisted." %}</div>{% endif %}
+        <div class="lb-field mb-0 mt-2"><label for="rb-embed-hosts">{% trans "Sites that may embed it" %}</label>
+          <textarea class="form-control form-control-sm" id="rb-embed-hosts" name="embed_hosts" rows="2" placeholder="city.example.org" data-autosave="change">{{ embed_hosts_text }}</textarea>
+          <div class="lb-hint">{% trans "One address per line. Empty means any site." %}</div></div>
+      </div>
+      </fieldset>
+    </form>
+
+    {% comment %}Readers (change reports-usage-api, #710): counted on our server, no visitor stored.{% endcomment %}
+    <div class="lb-card" data-testid="report-usage">
+      <h6>{% trans "Readers" %}</h6>
+      <div class="rb-stats">
+        <div><b>{{ usage.view.total }}</b><span>{% trans "times the page was opened" %}</span></div>
+        <div><b>{{ usage.embed.total }}</b><span>{% trans "times shown inside another site" %}</span></div>
+        <div><b>{{ usage.pdf.total }}</b><span>{% trans "PDF downloads" %}</span></div>
+      </div>
+      <p class="lb-hint mb-0">{% blocktrans with views=usage.view.recent embeds=usage.embed.recent %}In the last 30 days: {{ views }} opened, {{ embeds }} embedded.{% endblocktrans %} {% trans "Your own visits and your colleagues' are not counted, and nothing about a reader is stored." %}</p>
+    </div>
+
+    <div class="lb-card" data-testid="report-file">
+      <h6>{% trans "Report file" %}</h6>
+      <p class="lb-hint mt-0">{% trans "The whole report — text, numbers, quotes, pictures and which questions its charts and maps show — as one file. Import it on the Reports page, here or in another workspace." %}</p>
+      <div class="rb-btns">
+        <a class="btn btn-sm btn-outline-secondary" href="{{ export_url }}"><i class="fas fa-file-export" aria-hidden="true"></i> {% trans "Export report" %}</a>
+        {% comment %}The PDF is made on the worker (change reports-pdf): the button asks, polls, opens.{% endcomment %}
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="prPdfButton" data-url="{{ pdf_url }}" data-rb-pdf="pdf"><i class="fas fa-file-pdf" aria-hidden="true"></i> {% trans "PDF (A4)" %}</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-url="{{ pdf_url }}" data-rb-pdf="zip" title="{% trans 'Every chart and map as a PNG with its numbers as CSV' %}"><i class="fas fa-file-archive" aria-hidden="true"></i> {% trans "Charts and maps (ZIP)" %}</button>
+      </div>
+      <div class="lb-hint" id="prPdfStatus" role="status"></div>
+      <div class="lb-hint mb-0">{% trans "A frozen report's PDF is made once and linked from its page; a live report's PDF shows the numbers of the moment you ask." %}</div>
+    </div>
+
+    <div class="lb-card">
+      <h6>{% trans "Data mode" %}</h6>
+      <p class="lb-hint mt-0">{% trans "Current:" %} <strong>{{ page.get_mode_display }}</strong>{% if page.frozen_at %} · {% trans "frozen" %} {{ page.frozen_at|date:"j M Y H:i" }}{% endif %}</p>
+      <div class="rb-btns">
+        <form method="post" action="{{ u.freeze }}">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary" type="submit"{% if not may_edit %} disabled{% endif %}><i class="fas fa-snowflake" aria-hidden="true"></i> {% if page.mode == 'frozen' %}{% trans "Update snapshot" %}{% else %}{% trans "Freeze snapshot" %}{% endif %}</button></form>
+        {% if page.mode == 'frozen' %}<form method="post" action="{{ u.unfreeze }}">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary" type="submit"{% if not may_edit %} disabled{% endif %}><i class="fas fa-bolt" aria-hidden="true"></i> {% trans "Back to live" %}</button></form>{% endif %}
+      </div>
+      <div class="lb-hint mb-0">{% trans "Frozen: readers see the numbers of the day you froze them, whatever arrives later." %}</div>
+    </div>
+  </div>
+  {% if may_edit and not survey %}
+  <div class="lb-pane-foot">
+    <span></span>
+    <a class="lb-link lb-danger" href="{% url 'editor_report_delete' page.uuid %}"><i class="far fa-trash-alt" aria-hidden="true"></i> {% trans "Delete report…" %}</a>
+  </div>
+  {% endif %}
+</div>

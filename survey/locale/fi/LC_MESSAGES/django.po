@@ -14355,3 +14355,228 @@ msgstr "Kommentit"
 
 msgid "new"
 msgstr "uutta"
+
+# Report builder (change reports-canvas-editor, #731)
+msgid "A number may also be a token that follows the answers:"
+msgstr "Luku voi olla myös muuttuja, joka seuraa vastauksia:"
+
+msgid "A photo, a plan, a chart or a map made elsewhere"
+msgstr "Muualla tehty valokuva, suunnitelma, kaavio tai kartta"
+
+msgid "A photo, a plan, or a chart or map made elsewhere"
+msgstr "Muualla tehty valokuva, suunnitelma tai kaavio tai kartta"
+
+msgid "A strip of big figures you type"
+msgstr "Rivi isoja lukuja, jotka kirjoitat itse"
+
+msgid "Add a number"
+msgstr "Lisää luku"
+
+msgid "Add a quote"
+msgstr "Lisää lainaus"
+
+msgid "Add block — text, key numbers, quotes, a chart or a map of a question…"
+msgstr "Lisää lohko — teksti, avainluvut, lainaukset, kysymyksen kaavio tai kartta…"
+
+msgid "Add comparison"
+msgstr "Lisää vertailu"
+
+msgid "Add cross-tab"
+msgstr "Lisää ristiintaulukko"
+
+msgid "Applies to the whole report"
+msgstr "Koskee koko raporttia"
+
+msgid "Auto (bar chart)"
+msgstr "Automaattinen (pylväskaavio)"
+
+msgid "Back to the survey"
+msgstr "Takaisin kyselyyn"
+
+msgid "Blocks of the report"
+msgstr "Raportin lohkot"
+
+msgid "Changing the address of a published report breaks links already shared."
+msgstr "Julkaistun raportin osoitteen muuttaminen rikkoo jo jaetut linkit."
+
+msgid "Comments on this report"
+msgstr "Tämän raportin kommentit"
+
+msgid "Drop or replace the picture on the page and write its caption under it."
+msgstr "Pudota kuva sivulle tai vaihda se ja kirjoita kuvateksti sen alle."
+
+msgid "Embed code of the report"
+msgstr "Raportin upotuskoodi"
+
+msgid "Embed code of this block"
+msgstr "Tämän lohkon upotuskoodi"
+
+msgid "From the survey"
+msgstr "Kyselystä"
+
+msgid "Frozen: readers see the numbers of the day you froze them, whatever arrives later."
+msgstr "Jäädytetty: lukijat näkevät jäädytyspäivän luvut riippumatta siitä, mitä myöhemmin saapuu."
+
+msgid "Hidden: readers do not see this block."
+msgstr "Piilotettu: lukijat eivät näe tätä lohkoa."
+
+msgid "Left out of the report until it has a number."
+msgstr "Jää pois raportista, kunnes siinä on luku."
+
+msgid "Left out of the report until it has a picture."
+msgstr "Jää pois raportista, kunnes siinä on kuva."
+
+msgid "Left out of the report until it has a quote."
+msgstr "Jää pois raportista, kunnes siinä on lainaus."
+
+msgid "Lowercase letters, digits and dashes. Applied when you leave the field."
+msgstr "Pieniä kirjaimia, numeroita ja yhdysmerkkejä. Otetaan käyttöön, kun poistut kentästä."
+
+msgid "Members of this workspace open it at this address after signing in."
+msgstr "Tämän työtilan jäsenet avaavat sen tässä osoitteessa kirjauduttuaan sisään."
+
+msgid "Nothing to show yet, so readers do not see this block."
+msgstr "Ei vielä näytettävää, joten lukijat eivät näe tätä lohkoa."
+
+msgid "One question in two surveys"
+msgstr "Yksi kysymys kahdessa kyselyssä"
+
+msgid "Open as a reader"
+msgstr "Avaa lukijana"
+
+msgid "Opened, answered, finished — and over time"
+msgstr "Avattu, vastattu, viety loppuun — ja ajan kuluessa"
+
+msgid "Opening paragraph: what was asked, of whom, and what this report shows"
+msgstr "Aloituskappale: mitä kysyttiin, keneltä ja mitä tämä raportti näyttää"
+
+msgid "Paragraphs, lists, links; numbers that follow the answers"
+msgstr "Kappaleita, luetteloita, linkkejä; lukuja, jotka seuraavat vastauksia"
+
+msgid "Private preview — only editors of this report can open it"
+msgstr "Yksityinen esikatselu — vain tämän raportin muokkaajat voivat avata sen"
+
+msgid "Questions answered in free text are not listed: individual answers are never published. Pick what people wrote as quotes instead."
+msgstr "Vapaatekstillä vastattuja kysymyksiä ei ole luettelossa: yksittäisiä vastauksia ei koskaan julkaista. Poimi sen sijaan ihmisten kirjoittamaa lainauksiksi."
+
+msgid "Questions: a chart or a map of the answers"
+msgstr "Kysymykset: kaavio tai kartta vastauksista"
+
+msgid "Readers open it at this address."
+msgstr "Lukijat avaavat sen tässä osoitteessa."
+
+msgid "Readers see a fixed snapshot instead of live numbers — useful before an announcement"
+msgstr "Lukijat näkevät kiinteän tilannekuvan reaaliaikaisten lukujen sijaan — hyödyllinen ennen tiedotusta"
+
+#, python-format
+msgid "Readers see counts only; a group smaller than %(k)s is hidden."
+msgstr "Lukijat näkevät vain lukumäärät; ryhmä, joka on pienempi kuin %(k)s, piilotetaan."
+
+#, python-format
+msgid "Readers see the snapshot of %(date)s. What you change here reaches them when you update the snapshot."
+msgstr "Lukijat näkevät tilannekuvan päivältä %(date)s. Täällä tekemäsi muutokset näkyvät heille, kun päivität tilannekuvan."
+
+msgid "Remove this number"
+msgstr "Poista tämä luku"
+
+msgid "Remove this quote"
+msgstr "Poista tämä lainaus"
+
+msgid "Report address"
+msgstr "Raportin osoite"
+
+msgid "Report settings"
+msgstr "Raportin asetukset"
+
+msgid "Search blocks and questions"
+msgstr "Hae lohkoja ja kysymyksiä"
+
+msgid "Search blocks and questions…"
+msgstr "Hae lohkoja ja kysymyksiä…"
+
+msgid "Shown while the survey is open"
+msgstr "Näytetään, kun kysely on avoinna"
+
+msgid "Starts a section of the story"
+msgstr "Aloittaa tarinan osion"
+
+msgid "That address is taken by another report. The rest was saved."
+msgstr "Osoite on toisen raportin käytössä. Muu tallennettiin."
+
+msgid "The block is removed from the report. The answers it showed stay in the survey. This cannot be undone."
+msgstr "Lohko poistetaan raportista. Sen näyttämät vastaukset säilyvät kyselyssä. Tätä ei voi kumota."
+
+msgid "The numbers follow the answers. Click to edit the text and its tokens."
+msgstr "Luvut seuraavat vastauksia. Muokkaa tekstiä ja sen muuttujia napsauttamalla."
+
+msgid "The question this block showed is no longer in the survey, so readers do not see it."
+msgstr "Kysymys, jonka tämä lohko näytti, ei ole enää kyselyssä, joten lukijat eivät näe lohkoa."
+
+msgid "The report could not be unpublished. Try again."
+msgstr "Raportin julkaisua ei voitu perua. Yritä uudelleen."
+
+msgid "The report is live"
+msgstr "Raportti on julki ja päivittyy"
+
+msgid "The report is published, frozen"
+msgstr "Raportti on julkaistu, jäädytetty"
+
+msgid "This number follows the answers. Click to see its token."
+msgstr "Tämä luku seuraa vastauksia. Näet sen muuttujan napsauttamalla."
+
+msgid "Title (optional)"
+msgstr "Lohkon otsikko (valinnainen)"
+
+msgid "Title above the numbers (optional)"
+msgstr "Otsikko lukujen yläpuolella (valinnainen)"
+
+msgid "Title above the picture (optional)"
+msgstr "Otsikko kuvan yläpuolella (valinnainen)"
+
+msgid "Title above the quotes (optional)"
+msgstr "Otsikko lainausten yläpuolella (valinnainen)"
+
+msgid "Title above the text (optional)"
+msgstr "Otsikko tekstin yläpuolella (valinnainen)"
+
+msgid "Title and opening"
+msgstr "Otsikko ja johdanto"
+
+msgid "Two questions against each other"
+msgstr "Kaksi kysymystä vastakkain"
+
+msgid "Type or paste the quotes on the page. A quote is published exactly as written: leave out anything that names a person."
+msgstr "Kirjoita tai liitä lainaukset sivulle. Lainaus julkaistaan täsmälleen kirjoitetussa muodossa: jätä pois kaikki, mikä nimeää henkilön."
+
+msgid "Type the heading here. An empty heading is left out of the report."
+msgstr "Kirjoita osion otsikko tähän. Tyhjä otsikko jää pois raportista."
+
+msgid "Type the heading on the page. It starts a section of the story."
+msgstr "Kirjoita osion otsikko sivulle. Se aloittaa tarinan osion."
+
+msgid "Type the numbers on the page. You type them; they do not change when new answers arrive."
+msgstr "Kirjoita luvut sivulle. Kirjoitat ne itse; ne eivät muutu, kun uusia vastauksia saapuu."
+
+msgid "What people wrote, picked by you"
+msgstr "Ihmisten kirjoittamaa, sinun poimimanasi"
+
+msgid "What the map shows, in a sentence — shown under the map and read aloud to people who cannot see it"
+msgstr "Mitä kartta näyttää, yhdellä virkkeellä — näkyy kartan alla ja luetaan ääneen niille, jotka eivät näe karttaa"
+
+msgid "What they wrote"
+msgstr "Mitä he kirjoittivat"
+
+msgid "Where it comes from (optional)"
+msgstr "Mistä se on peräisin (valinnainen)"
+
+msgid "Write"
+msgstr "Kirjoita"
+
+msgid "Write directly on the page; the toolbar above the text sets headings, bold, lists and links."
+msgstr "Kirjoita suoraan sivulle; tekstin yläpuolella oleva työkalurivi asettaa otsikot, lihavoinnin, luettelot ja linkit."
+
+msgid "Write here. An empty text block is left out of the report."
+msgstr "Kirjoita tähän. Tyhjä tekstilohko jää pois raportista."
+
+msgid "what it counts"
+msgstr "mitä se laskee"

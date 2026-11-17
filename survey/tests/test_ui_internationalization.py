@@ -559,7 +559,7 @@ class ReportsCatalogTest(SimpleTestCase):
         'reports/*.py',
         'data/templates/data/view.html',
         'survey/templates/public_results.html',
-        'survey/templates/editor/public_results.html',
+        'reports/templates/reports/editor/*.html',
         'survey/templates/editor/partials/pr_*.html',
     )
     #: Field help texts: read in the Django admin only, which is English.

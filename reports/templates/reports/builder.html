@@ -1,0 +1,160 @@
+{% extends "editor/editor_base.html" %}
+{% load i18n static question_utils survey_filters %}
+
+{% block page_title %}{% if survey %}{% trans "Public results" %} – {{ survey.name }}{% else %}{{ page.title }} – {% trans "Reports" %}{% endif %}{% endblock %}
+
+{% block navbar_content %}
+{% if survey %}
+{% comment %}Through a survey the builder is that survey's Public results tab: its title (renamed in
+place) and the tab strip stay above it, as on every other page of the survey.{% endcomment %}
+{% survey_title survey %}
+{% include "editor/partials/_survey_nav_tabs.html" with active_tab="publish" %}
+{% endif %}
+{% endblock %}
+
+{% block extra_head %}
+{# editor_base.html already loads Quill, SortableJS, Leaflet, HTMX and the comments drawer. #}
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/report_public.css' %}">
+<link rel="stylesheet" href="{% static 'css/site_builder.css' %}">
+<link rel="stylesheet" href="{% static 'css/report_builder.css' %}">
+{% endblock %}
+
+{% block content %}
+{# The canvas needs the width: the app sidebar is icons only here, as in the site builder. #}
+{% if not survey %}<script>document.body.classList.add('app-rail', 'app-rail-default');</script>{% endif %}
+{% comment %}The report builder (change reports-canvas-editor, #731; epic #712) — the canvas builder of Sites
+(sites/builder.html) for a report, run by the same script, js/site_builder.js, plus js/report_builder.js for
+what only a report has. Top bar: back, title, state, device toggle, save state, comments, preview, publish.
+Left: the outline. Middle: the report as readers see it, written in place (reports/editor/_canvas_block.html).
+Right: the settings of the selected block, or of the report. Everything saves by itself; add and delete are
+plain posts that come back to the builder. Read-only when the workspace's plan has no Reports (may_edit false).
+Reached at the report's own address and through its home survey's Public results tab — `u` holds the URLs
+of whichever way in this was. It extends editor_base.html, not base.html as the site builder does: a report
+of a survey keeps that survey's title and tabs above it.{% endcomment %}
+<div class="lb rb{% if not may_edit %} lb-readonly{% endif %}" id="lb" data-testid="report-builder"
+     data-reorder-url="{{ u.reorder }}" data-settings-url="{{ u.save }}"
+     data-checks-url="{{ u.checks }}" data-publish-url="{{ u.set_published }}"
+     data-may-edit="{{ may_edit|yesno:'1,' }}" data-selected="{{ selected|default:'page' }}">
+
+  <header class="lb-top">
+    <div class="lb-top-left">
+      <a class="lb-back" href="{{ reports_url }}"><i class="fas fa-chevron-left" aria-hidden="true"></i> {% trans "Reports" %}</a>
+      <span class="lb-sep" aria-hidden="true"></span>
+      <span class="lb-title" id="lb-title">{{ page.title }}</span>
+      <span class="rb-state rb-state--{% if page.is_published and page.mode == 'frozen' %}frozen{% elif page.is_published %}live{% else %}draft{% endif %}" id="lb-badge">{% if page.is_published and page.mode == 'frozen' %}{% trans "Frozen" %} · {{ page.frozen_at|date:"j M" }}{% elif page.is_published %}{% trans "Live" %}{% else %}{% trans "Not published" %}{% endif %}</span>
+    </div>
+    <div class="lb-seg" id="lb-device" role="group" aria-label="{% trans 'Preview width' %}">
+      <button type="button" class="on" data-width="desktop" title="{% trans 'As on a computer' %}" aria-label="{% trans 'Preview as on a computer' %}"><i class="fas fa-desktop" aria-hidden="true"></i></button>
+      <button type="button" data-width="mobile" title="{% trans 'As on a phone' %}" aria-label="{% trans 'Preview as on a phone' %}"><i class="fas fa-mobile-alt" aria-hidden="true"></i></button>
+    </div>
+    <div class="lb-top-right">
+      {% if may_edit %}<span class="lb-saved" id="lb-saved" aria-live="polite"><i class="fas fa-check-circle" aria-hidden="true"></i> <span>{% trans "All changes saved" %}</span></span>{% endif %}
+      {% if survey %}<button type="button" class="lb-btn cm-toolbar-btn{% if thread_counts.new_total %} cm-has-new{% endif %}" data-cm-open="" aria-label="{% trans 'Comments' %}{% if thread_counts.total %}, {{ thread_counts.total }} {% trans 'open' %}{% endif %}{% if thread_counts.new_total %}, {{ thread_counts.new_total }} {% trans 'new' %}{% endif %}" title="{% trans 'Comments on this report' %}"><i class="far fa-comment" aria-hidden="true"></i> {% trans "Comments" %} <span class="cm-count" data-thread-total{% if not thread_counts.total %} hidden{% endif %}>{{ thread_counts.total }}</span></button>{% endif %}
+      {% comment %}The preview works before the report is live and is private: creators used to share the
+      editor's address. The copy button in the publish popover is the link readers can open.{% endcomment %}
+      <a class="lb-btn" href="{{ u.preview }}" target="_blank" rel="noopener" id="rb-preview" title="{% trans 'Private preview — only editors of this report can open it' %}"><i class="far fa-eye" aria-hidden="true"></i> {% trans "Preview" %}</a>
+      {% if page.is_published %}
+      <div class="lb-pub">
+        <button type="button" class="lb-btn" id="lb-pub-btn" aria-haspopup="dialog" aria-expanded="false">{% trans "Published" %} <i class="fas fa-chevron-down" aria-hidden="true"></i></button>
+        <div class="lb-pop" id="lb-pop" role="dialog" aria-label="{% trans 'Published' %}" hidden>
+          <h4>{% if page.mode == 'frozen' %}{% trans "The report is published, frozen" %}{% else %}{% trans "The report is live" %}{% endif %}</h4>
+          <p class="lb-hint">{% if page.visibility == 'workspace' %}{% trans "Members of this workspace open it at this address after signing in." %}{% else %}{% trans "Readers open it at this address." %}{% endif %}</p>
+          <div class="lb-url"><input value="{{ public_url }}" readonly id="lb-url" aria-label="{% trans 'Report address' %}"><button type="button" class="lb-btn" id="lb-copy" title="{% trans 'Copy' %}" aria-label="{% trans 'Copy' %}"><i class="far fa-copy" aria-hidden="true"></i></button></div>
+          <a class="lb-link" href="{{ public_url }}" target="_blank" rel="noopener"><i class="fas fa-external-link-alt" aria-hidden="true"></i> {% trans "Open as a reader" %}</a>
+          {% if may_edit %}
+          <div class="rb-pop-row">
+            <form method="post" action="{{ u.freeze }}">{% csrf_token %}<button type="submit" class="lb-btn" title="{% trans 'Readers see a fixed snapshot instead of live numbers — useful before an announcement' %}"><i class="fas fa-snowflake" aria-hidden="true"></i> {% if page.mode == 'frozen' %}{% trans "Update snapshot" %}{% else %}{% trans "Freeze snapshot" %}{% endif %}</button></form>
+            {% if page.mode == 'frozen' %}<form method="post" action="{{ u.unfreeze }}">{% csrf_token %}<button type="submit" class="lb-btn"><i class="fas fa-bolt" aria-hidden="true"></i> {% trans "Back to live" %}</button></form>{% endif %}
+          </div>
+          <div class="lb-pop-actions"><button type="button" class="lb-btn lb-danger-btn" data-rb-unpublish>{% trans "Unpublish" %}</button></div>
+          {% endif %}
+        </div>
+      </div>
+      {% elif may_edit %}
+      <button type="button" class="lb-btn lb-primary" id="rb-publish" data-rb-publish{% if not can_publish %} disabled title="{% trans 'Publish the survey first' %}"{% endif %}><i class="fas fa-globe" aria-hidden="true"></i> {% trans "Publish" %}</button>
+      {% endif %}
+    </div>
+  </header>
+
+  {% if reports_locked or not can_publish or page.scaffolded_at and not page.is_published or page.is_published and page.mode == 'frozen' %}
+  <div class="lb-notices">
+    {% if reports_locked %}
+    {% comment %}No Reports feature (change reports-pro, #709): the report opens read-only — every write
+    answers the upgrade page — with the way to Pro in front of it.{% endcomment %}
+    <div class="alert alert-warning py-2 mb-1" data-testid="reports-locked" role="status"><i class="fas fa-lock" aria-hidden="true"></i> {% trans "Reports are part of Pro. On the current plan this report is read-only: a published report stays online with the numbers it had, and nothing is deleted. You can still export it and make its PDF." %} <a href="{% url 'org_billing' page.organization.slug %}">{% trans "See Pro" %}</a></div>
+    {% endif %}
+    {% if not can_publish %}<div class="alert alert-warning py-2 mb-1"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> {% trans "This survey is a draft. Publish the survey before publishing its results page." %}</div>{% endif %}
+    {% if page.scaffolded_at and not page.is_published %}<div class="alert alert-info py-2 mb-1"><i class="fas fa-magic" aria-hidden="true"></i> {% trans "We drafted this page from your questions — review the blocks, then hit" %} <strong>{% trans "Publish" %}</strong>.</div>{% endif %}
+    {% if page.is_published and page.mode == 'frozen' %}<div class="alert alert-info py-2 mb-1"><i class="fas fa-snowflake" aria-hidden="true"></i> {% blocktrans with date=page.frozen_at|date:"j M Y" %}Readers see the snapshot of {{ date }}. What you change here reaches them when you update the snapshot.{% endblocktrans %}</div>{% endif %}
+  </div>
+  {% endif %}
+
+  <div class="lb-work">
+    <aside class="lb-rail" aria-label="{% trans 'Blocks of the report' %}">
+      <div class="lb-rail-head">{% trans "Outline" %}</div>
+      <ul class="lb-outline">
+        <li class="lb-oi lb-oi-page{% if not selected or selected == 'page' %} on{% endif %}" data-select-target="page" tabindex="0"><i class="fas fa-heading lb-oi-k" aria-hidden="true"></i><span class="lb-oi-t">{% trans "Title and opening" %}</span></li>
+      </ul>
+      <ul class="lb-outline" id="lb-outline">
+        {% for b in blocks %}{% with item=items|get_item:b.pk %}{% include "reports/editor/_outline_item.html" %}{% endwith %}{% endfor %}
+      </ul>
+      {% if may_edit %}<div class="lb-rail-foot"><button type="button" class="lb-btn lb-add-btn" data-add-after="{{ last_pk }}" id="report-add-block"><i class="fas fa-plus" aria-hidden="true"></i> {% trans "Add block" %}</button></div>{% endif %}
+    </aside>
+
+    <main class="lb-canvas" id="lb-canvas">
+      <div class="lb-frame rp" id="lb-frame">
+        <div class="wrap">
+          {% include "reports/editor/_hero.html" %}
+          <div class="lb-blocks rb-blocks" id="lb-blocks">
+            {% if may_edit %}<div class="lb-ins" data-add-after="top"><button type="button" title="{% trans 'Add block here' %}" aria-label="{% trans 'Add block here' %}">+</button></div>{% endif %}
+            {% for b in blocks %}
+            {% with item=items|get_item:b.pk %}
+            <div class="lb-item{% if item.paired %} rb-pair{% endif %}" data-block="{{ b.pk }}">
+              {% include "reports/editor/_canvas_block.html" %}
+              {% if may_edit %}<div class="lb-ins" data-add-after="{{ b.pk }}"><button type="button" title="{% trans 'Add block here' %}" aria-label="{% trans 'Add block here' %}">+</button></div>{% endif %}
+            </div>
+            {% endwith %}
+            {% endfor %}
+            {% if may_edit %}
+            <button type="button" class="lb-end-add" data-add-after="{{ last_pk }}"><i class="fas fa-plus" aria-hidden="true"></i> {% trans "Add block — text, key numbers, quotes, a chart or a map of a question…" %}</button>
+            {% elif not blocks %}
+            <p class="empty">{% trans "No blocks yet." %}</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <aside class="lb-panel" id="lb-panel" aria-label="{% trans 'Settings' %}">
+      {% include "reports/editor/_page_panel.html" %}
+      {% for b in blocks %}{% with item=items|get_item:b.pk %}{% include "reports/editor/_block_panel.html" %}{% endwith %}{% endfor %}
+    </aside>
+  </div>
+</div>
+
+{% if may_edit %}{% include "reports/editor/_library.html" %}{% endif %}
+{% include "sites/editor/_confirm_modal.html" %}
+{% comment %}The publish dialog (change reports-review, #706): its body — the "Before you publish" list and the
+three choices — is fetched each time it opens, so it reflects the report as saved.{% endcomment %}
+<div class="modal fade" id="prPublishModal" tabindex="-1" aria-labelledby="prPublishTitle">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="prPublishTitle">{% trans "Publish this report" %}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="{% trans 'Close' %}"><span>&times;</span></button>
+      </div>
+      <div id="prPublishBody" class="modal-body rb-checks"><p class="text-muted mb-0">{% trans "Checking the report…" %}</p></div>
+    </div>
+  </div>
+</div>
+{{ basemap_table|json_script:"lb-basemaps" }}
+<script>window.LB_MAPBOX_TOKEN = '{{ MAPBOX_ACCESS_TOKEN|escapejs }}';
+window.LB_TEXT = {saving: '{% trans "Saving…" as t %}{{ t|escapejs }}', saved: '{% trans "All changes saved" as t %}{{ t|escapejs }}', failed: '{% trans "Could not save — check the settings on the right" as t %}{{ t|escapejs }}', offline: '{% trans "Could not save — check your connection" as t %}{{ t|escapejs }}', copied: '{% trans "Copied" as t %}{{ t|escapejs }}', heading: '{% trans "Heading" as t %}{{ t|escapejs }}', subheading: '{% trans "Subheading" as t %}{{ t|escapejs }}', normal: '{% trans "Normal text" as t %}{{ t|escapejs }}'};
+window.RB_TEXT = {ack: '{% trans "Tick the box to confirm you have read the quotes and maps listed above." as t %}{{ t|escapejs }}', notPublished: '{% trans "The report could not be published. Publish the survey first." as t %}{{ t|escapejs }}', unpublishFailed: '{% trans "The report could not be unpublished. Try again." as t %}{{ t|escapejs }}', making: '{% trans "Making the file…" as t %}{{ t|escapejs }}', pdfFailed: '{% trans "The PDF could not be made. Try again." as t %}{{ t|escapejs }}'};</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" crossorigin="anonymous"></script>
+<script src="{% static 'js/public_results_render.js' %}"></script>
+<script src="{% static 'js/site_confirm.js' %}"></script>
+<script src="{% static 'js/site_builder.js' %}"></script>
+<script src="{% static 'js/report_builder.js' %}"></script>
+{% endblock %}

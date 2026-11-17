@@ -1,0 +1,64 @@
+{% load i18n %}{% comment %}The block library of the report builder (change reports-canvas-editor, #731): opened by a "+"
+between blocks or "Add block". A tile is one click — it posts the block's type (or the question whose
+chart or map is wanted) with the position (`after`), and the builder comes back with the new block
+selected. A cross-tab and a comparison need two choices first: their tile opens a small form here.{% endcomment %}
+<div class="lb-lib-back" id="lb-lib-back" hidden></div>
+<div class="lb-lib" id="lb-lib" role="dialog" aria-modal="true" aria-labelledby="lb-lib-title" hidden>
+  <div class="lb-lib-head">
+    <h3 id="lb-lib-title">{% trans "Add block" %}</h3>
+    <input type="search" id="lb-lib-search" placeholder="{% trans 'Search blocks and questions…' %}" aria-label="{% trans 'Search blocks and questions' %}">
+    <button type="button" class="lb-x" id="lb-lib-close" aria-label="{% trans 'Close' %}">×</button>
+  </div>
+  <form method="post" action="{{ u.add }}" class="lb-lib-body" id="lb-lib-form">
+    {% csrf_token %}
+    <input type="hidden" name="after" id="lb-lib-after" value="">
+    {% for group_label, tiles in library %}
+    <div class="lb-lib-grp{% if forloop.counter == 3 %} rb-lib-wide{% endif %}">
+      <h4>{{ group_label }}</h4>
+      {% for tile in tiles %}
+      {% if tile.question %}
+      <button type="submit" name="question_id" value="{{ tile.question }}" class="lb-tile" data-search="{{ tile.label|lower }} {{ tile.desc|lower }}">
+        <i class="{{ tile.icon }}" aria-hidden="true"></i><span><b>{{ tile.label|truncatechars:110 }}</b><span>{{ tile.desc }}</span></span>
+      </button>
+      {% elif tile.form %}
+      <button type="button" class="lb-tile" data-lib-form="{{ tile.form }}" aria-expanded="false" data-search="{{ tile.label|lower }} {{ tile.desc|lower }}">
+        <i class="{{ tile.icon }}" aria-hidden="true"></i><span><b>{{ tile.label }}…</b><span>{{ tile.desc }}</span></span>
+      </button>
+      {% if tile.form == 'crosstab' %}
+      <div class="rb-lib-form" data-lib-form-body="crosstab" hidden>
+        <label for="prXtabRows">{% trans "Rows" %}</label>
+        <select name="rows" id="prXtabRows" class="form-control form-control-sm">
+          {% for q in crosstab_questions %}<option value="{{ q.code }}">{{ q.name|default:q.code|striptags|truncatechars:70 }}</option>{% endfor %}
+        </select>
+        <label for="prXtabColumns">{% trans "Columns" %}</label>
+        <select name="columns" id="prXtabColumns" class="form-control form-control-sm">
+          {% for q in crosstab_questions %}<option value="{{ q.code }}"{% if forloop.counter == 2 %} selected{% endif %}>{{ q.name|default:q.code|striptags|truncatechars:70 }}</option>{% endfor %}
+        </select>
+        <p class="lb-hint">{% trans "How many people gave each pair of answers, among those who answered both. Groups too small to show are hidden." %}</p>
+        <button type="submit" name="block_type" value="crosstab" class="btn btn-sm btn-primary"><i class="fas fa-plus" aria-hidden="true"></i> {% trans "Add cross-tab" %}</button>
+      </div>
+      {% elif tile.form == 'compare' %}
+      <div class="rb-lib-form" data-lib-form-body="compare" hidden>
+        <label for="prCompareQ">{% trans "Question" %}</label>
+        <select name="compare_question" id="prCompareQ" class="form-control form-control-sm">
+          {% for q in crosstab_questions %}<option value="{{ q.code }}">{{ q.name|default:q.code|striptags|truncatechars:70 }}</option>{% endfor %}
+        </select>
+        <label for="prCompareOther">{% trans "Compare with" %}</label>
+        <select name="other" id="prCompareOther" class="form-control form-control-sm">
+          {% for s in compare_surveys %}<option value="{{ s.uuid }}">{{ s.name }}</option>{% endfor %}
+        </select>
+        <p class="lb-hint">{% trans "The other survey needs a question with the same code — as a second round made by duplicating the first has. Each answer's share is shown for both." %}</p>
+        <button type="submit" name="block_type" value="compare" class="btn btn-sm btn-primary"><i class="fas fa-plus" aria-hidden="true"></i> {% trans "Add comparison" %}</button>
+      </div>
+      {% endif %}
+      {% else %}
+      <button type="submit" name="block_type" value="{{ tile.kind }}" class="lb-tile" data-kind="{{ tile.kind }}" data-search="{{ tile.label|lower }} {{ tile.desc|lower }}">
+        <i class="{{ tile.icon }}" aria-hidden="true"></i><span><b>{{ tile.label }}</b><span>{{ tile.desc }}</span></span>
+      </button>
+      {% endif %}
+      {% endfor %}
+      {% if forloop.counter == 3 %}<p class="lb-hint">{% trans "Questions answered in free text are not listed: individual answers are never published. Pick what people wrote as quotes instead." %}</p>{% endif %}
+    </div>
+    {% endfor %}
+  </form>
+</div>

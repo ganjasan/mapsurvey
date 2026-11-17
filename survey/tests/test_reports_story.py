@@ -55,7 +55,7 @@ class LinearStoryTest(_Story):
         self.block('heading', content={'en': 'Below'})
         rows = build_context(self.report)['rows']
         self.assertEqual([[b['title'] for b in row] for row in rows], [['Left', 'Right'], ['Below']])
-        self.assertEqual(self.page().count('class="row pair"'), 1)
+        self.assertEqual(self.page().count('class="rp-row pair"'), 1)
 
     def test_a_lone_half_width_block(self):
         """
