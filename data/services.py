@@ -135,10 +135,13 @@ def set_tags(actor, ds_or_survey, names):
 
 # ─── Views ────────────────────────────────────────────────────────────────────
 
-def create_view(actor, ds, name, color='', conditions=(), fields=()):
-    """A view of `ds` (change data-views). `conditions`: [{field, op, value | values}]."""
+def create_view(actor, ds, name, color='', conditions=(), fields=(), kind='', config=None):
+    """A view of `ds` (change data-views). `conditions`: [{field, op, value | values}]; `kind`
+    one of `dataviews.kinds_for(ds)` (default: the first) with its `config` (change
+    data-analysis-views)."""
     from data.dataviews import clean
-    raw = {'name': name, 'color': color, 'fields': list(fields or [])}
+    raw = {'name': name, 'color': color, 'fields': list(fields or []), 'kind': kind or '',
+           'config': config or {}}
     for i, c in enumerate(list(conditions or [])[:5]):
         raw[f'field_{i}'] = c.get('field', '')
         raw[f'op_{i}'] = c.get('op', 'eq')
@@ -150,9 +153,23 @@ def create_view(actor, ds, name, color='', conditions=(), fields=()):
     return DatasetView.objects.create(dataset=ds, created_by=actor.user, **values)
 
 
+def save_responses_view(actor, survey, name, config):
+    """The Responses table's filter as a view of the survey's responses dataset (change
+    data-analysis-views). `config` is `responses_views.config_from_params(...)`."""
+    from data.responses_views import clean_config, is_empty, responses_dataset
+    config = clean_config(config)
+    if is_empty(config):
+        raise DataRefused(_('Filter the table first: this view would show every response.'),
+                          {'config': ['empty']})
+    return create_view(actor, responses_dataset(survey), name, kind=DatasetView.KIND_RESPONSES, config=config)
+
+
 def delete_view(actor, view):
     if view.links.exists():
         raise DataRefused(_('“%(name)s” is shown in a survey or on a site. Unlink it there first.')
+                          % {'name': view.name}, status=409)
+    if view.report_blocks.exists():
+        raise DataRefused(_('“%(name)s” is shown in a report. Remove it from the report first.')
                           % {'name': view.name}, status=409)
     view.delete()
 

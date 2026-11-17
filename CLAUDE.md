@@ -991,7 +991,27 @@ evaluated in Python by `data.dataviews.matches`; collection streamed with `layer
 `SessionScope.public` with the survey's public-results K; polygons + masked counts only). `DatasetLink.view`
 (RESTRICT): the survey's gated GeoJSON, object card and map colour go through `data.links.survey_view`; a Site
 map block stores `data['view']`/`data['choice']` (`<dataset>:<view>`). A grid view is refused as a survey
-layer. Analysis view types and Responses' saved views as views are #692.
+layer.
+**Analysis views (change `data-analysis-views`, #692; Reports epic #712)**: the kinds a dataset takes are ONE
+table, `data.dataviews.kinds_for(dataset)` (first = default) — layer → `objects`; answers → `grid` + `coverage`
+(line/polygon) or `density` (point/spraycan); responses → `engagement`, `crosstab`, `responses`. A new kind is a
+row there plus a function in `data/analysis.py`, never a branch in a view or in Reports (Vision BO-4: Reports
+computes nothing). `DatasetView.config` holds a kind's settings (cross-tab: `{rows, columns}` question CODES,
+resolved by `data.questions.questions_of` — which `reports.sources` imports; Data never imports Reports for it).
+`dataviews.result(view, lang)` is the one reader: steps + per-period series (`engagement`, every clean session —
+"answered" equals the public response count), a table of distinct respondents (`crosstab`: cells in `0<n<K`
+masked; the total of every line holding a masked cell AND the grand total are then withheld, since totals minus
+visible cells would return the masked values), or grid cells (`coverage` adds `share`, `density` adds `marks`; `data.aggregate.grid` counts marks, K stays
+on respondents). **There is no unmasked reading of a view**, for any role, API and MCP included
+(`GET /datasets/{id}/views/{view}/data`, `get_dataset_view_data`) — exact numbers live on Responses and in the
+export. The dataset page previews a computed view at `editor_data_view` (plain table / numbers; drawing is #704).
+**Saved Responses views (`data/responses_views.py`)**: the Responses table's parameters (`required`, `q`,
+`sort`/`dir`, `cf_<column>`, version) saved as a `responses` view of the survey's responses dataset, question
+columns re-keyed `cf_<row id>` → `q:<code>` because publishing replaces the rows. Opening is
+`…/analytics/?view=<id>#responses`: the FIRST table request carries `view=<id>` and `analytics_table` expands it
+into its own parameters, so the rendered `#table-state-form` holds the filter — no second apply path in JS.
+Choice filters keep the option LABELS the table matches by. Not saved: timeline brush, hidden rows, selection,
+column visibility, trash. Save/delete need the editor role (`analytics_view_save`, `analytics_view_delete`).
 **Tags (change `data-tags`, #673)**: `data.models.Tag(organization, name, slug)` with `datasets` and `surveys`
 (canonical) relations declared on the tag — a module that takes tags adds a relation there, never a column.
 `data.tags.set_tags(org, obj, names)` is the ONE writer (dataset page, `editor_survey_tags`, REST
@@ -1078,7 +1098,148 @@ creator. Tests wrap web-import POSTs in `_eager_import()`, which turns `.delay` 
 itself — the suite has no broker. The task runs once per job: a redelivered message finds the
 row past `queued` and returns.
 
-**Public results page**: Creators expose aggregated results at `/r/<slug>/` via `PublicResultsPage` (1:1 with `SurveyHeader`) + ordered `PublicResultsBlock`s. Config tab at `/editor/surveys/<uuid>/public-results/`. Rendering logic in `survey/public_results.py` (`PublicResultsService`, `render_page_data`, `freeze_page`/`unfreeze_page`); editor views in `survey/public_results_editor.py`. Aggregates run over CLEAN, NON-EMPTY sessions only (`data.scope.SessionScope.public`: not deleted, excludes `not_approved`/`on_hold`, at least one top-level answer) across the canonical survey + all versions. Privacy goes through `data.aggregate` (change `data-aggregate`, spec `public-aggregates`): `mask()` shows buckets under K as `<K` (default 3), and every map block — points, lines, polygons, spray — is a `grid()` of cells counting DISTINCT respondents with cells under K omitted, never an answer's geometry (owner decision ADR-001 §6.3: exact numbers inside the workspace, K wherever data leaves it; API/MCP stay exact). A cell's popup holds the masked distribution of the creator-selected `geo_label_fields`; individual free-text answers are never published. Map blocks offer no marker/heatmap/cluster choice, on `/r/` or in Site results blocks. Snapshot format 3; an older frozen snapshot renders as stale. Hybrid `live` (60s cache) vs `frozen` (snapshot) mode. Visibility `public` (indexed, in sitemap) vs `unlisted` (noindex). The page config is intentionally NOT included in survey ZIP export/import.
+**The report as a story (change `reports-story`, #704 part 1; owner direction 2026-11-16)**: Reports is a
+STORYTELLING module and v1 is the LINEAR story — one column, text with charts, maps and quotes between the
+paragraphs. Acceptance rule: every report made by hand can be opened by its customer in Reports and edited
+there. So: (1) **story blocks** — `heading`, `text` (rich, `reports.story.clean_html` = `coerce_creator_html`),
+`image`, `numbers` and `quotes` (`ReportBlock.config = {"items": […]}`, typed by the author: typed numbers are
+ALLOWED; `reports.story.clean_config` is the one cleaner, the editor posts them as lines `value | label` /
+`quote | source`); `ReportBlock.width` `full | half`, two consecutive halves share a row
+(`render.story_rows`) — never a container block. (2) **One editor, two ways in**: every view in
+`reports/editor_views.py` is written once and exported twice, `on_survey(view)` (the survey's Public results
+tab, URL names `editor_public_results_*`) and `on_report(view)` (`/editor/reports/<uuid>/…`, names
+`editor_report*`); both set `request.report` / `request.survey` (None for a blank or imported report) and
+the template takes EVERY url from the `u` dict (`_urls(request)`) — never `{% url … survey.uuid %}` there.
+`may_edit_report` = workspace editor + editor on the home survey when there is one; strangers get 404.
+(3) **The report file** (`reports/files.py`): a ZIP with `report.json` (`format: 1`) + `images/`; question
+blocks by survey uuid + question CODE, re-bound on import (`data.questions.question_of`) or left out with a
+message; an import is always unpublished and `workspace`-only, text re-sanitised. Hand-made HTML reports are
+turned into that file by the ops repo's `scripts/report_html_to_file.py` — customers' reports never enter this
+repo. (4) The page (`public_results.html`) renders `rows`; a text payload carries `html`, and a snapshot frozen
+before this change has only `body`, which the template ESCAPES. A report without a survey has no comment
+threads (threads hang on a survey) and no "N responses".
+**Live blocks (change `reports-live-blocks`, #704 part 2)**: `crosstab` and `engagement` blocks point at a
+`DatasetView` of that kind (`ReportBlock.view`, `VIEW_BLOCK_TYPES`); `services.add_view_block` MAKES the view in
+Data (`data.services.create_view`, or reuses an identical one) — Data's refusals are the block's. The payload is
+`dataviews.result(view, lang, k=<the REPORT's K>)` plus presentation only (`render._view_payload`): no count is
+produced in `reports/`. **A map block may show the marks themselves** — `config = {"marks": true}`, a per-block
+switch, off by default (owner decision 2026-11-16: the survey owner's choice and responsibility); the payload is
+then `data_type: "marks"`, geometry only. That exception is a report block's ALONE: Site results blocks, grid /
+coverage / density views, the Data API and MCP keep the grid (`public-aggregates`). **Live numbers**:
+`reports/tokens.py` fills `{responses}` `{opened}` `{finished}` `{marks:CODE}` `{respondents:CODE}` in Text
+blocks, key numbers and the opening paragraph from the HOME survey, masked with the report's K; a token that
+cannot be filled stays as written; a frozen snapshot stores the filled text (and `intro_body`). The report file
+carries all of it (`crosstab` by survey + two codes, `engagement` by survey, a map's `marks`).
+**Starting a report (change `reports-start`, #705)**: `/editor/reports/start/` (`reports.views.report_start`,
+`reports/start.html`) — one click on a card does its action (each card is the submit button of its own form;
+do not add a "choose, then confirm" step). `reports/drafting.py::build_draft(actor, survey, template)` builds a
+NEW report by RULES, never a model and never into the survey's first report: key numbers and the engagement
+block first, then one block per top-level question that has answers in clean sessions, in respondent order,
+section titles as headings; four arrangements (`TEMPLATES`: `summary`, `council`, `update`, `yousaid`) are
+small builder functions over `_Draft`. **Hidden instead of placeholder**: prompts ("Write what this part…") and
+candidate quotes from free-text questions (≤ 8 recent answers of 30–320 chars) are real blocks with
+`is_hidden=True`, so publishing an unfinished draft shows none of them and a quote reaches the page only after
+the author un-hides it. `copy_report` = the report file's export + import in memory (a copy cannot keep what an
+export would lose). Entry links: Reports list, Responses of a published survey, the responses dataset.
+Events `report_entry_seen` / `report_created` carry ids and choice names only. `Report.template` records the
+arrangement.
+**Before you publish (change `reports-review`, #706)**: `reports/checks.py::run(report)` is the ONE list —
+`privacy` (every VISIBLE quote written out, every map with marks, K = 1) and `other` (a block the renderer
+returns None for → "Delete the block"; a map without a description; no title; hidden blocks counted). A new
+check is a few lines there. `services.set_published(actor, report, publish, ack, visibility, mode)` refuses
+`ack_required` when `checks.needs_ack` (a visible quote or a map of marks) and the author did not tick the
+box — nothing else blocks, K = 1 is only listed. Every "Publish" button opens the dialog (`prOpenPublish()`,
+body `editor/partials/pr_checks.html` fetched by HTMX from the `checks` route each time), which also posts
+`visibility` and `mode` (live | frozen). A map block's `content` is its description: shown under the map and
+`role="img"` + `aria-label` on the container. The preview pane has phone / computer widths. Comment threads
+exist on blocks of a survey's report only (a thread belongs to a survey).
+**The PDF of a report (change `reports-pdf`, #707)**: `reports/pdf.py::build_pdf(report, base_url)` lays out
+the PAGE'S OWN payload (`render.build_context` → `rows`) on A4 with reportlab — NOT a headless browser — so a
+number in the PDF is the number on the page and nothing is counted there; a new block type needs a branch in
+`pdf._block` as it does in the template. Maps = `survey.print.static_map` basemap of the block's extent with
+cells / marks painted by Pillow (no token or a Mapbox error → plain ground). Every block is `KeepTogether` and a
+heading is folded into the block after it. **Never rendered in a web request**: `services.request_pdf` creates
+a `ReportPdf` row (private media tier, `report_pdfs/<uuid>.pdf`) and enqueues `reports.tasks.render_report_pdf`,
+which claims the row (`queued → running`), so a redelivered message does nothing; the editor's button polls
+`editor_report_pdf`. `stamp`: a FROZEN report has one PDF per snapshot, reused and linked from its page
+(`/r/<slug>/pdf/`, the page's own visibility guard); a LIVE report gets a new rendering per request and no public
+link. No PDF is made at freezing time. Tests patch `survey.print.static_map.fetch_basemap` so no test calls Mapbox.
+**A report outside its page (change `reports-embed`, #708)**: embedding REUSES the survey embed mechanism —
+`reports.embed.mark(request, report)` sets `request.survey_frame_ancestors` (so `SurveyEmbedMiddleware` applies
+`frame-ancestors` from `Report.embed_allowed_hosts`, empty = `*`), the page in `?embed=1` posts the same
+`{mapsurvey: "height"}` message and the same `/embed.js` grows the iframe. Only a published `public` /
+`unlisted` report is framable; `workspace` keeps `SAMEORIGIN`. One block has its own page,
+`/r/<slug>/block/<id>/` (the report's template with ONE row, `single=True`); `/oembed/` answers report and block
+links. **CSV and PNG are made from the block's PAYLOAD, never from answers** — `reports/tables.py::rows_of`,
+`reports/pictures.py::block_png` (Pillow: bars, a table, `pdf.map_image`) — so a group the page hides is "<K" in
+the CSV and its value is not in the file. Public CSV at `/r/<slug>/block/<id>/data.csv`; an editor's CSV / PNG at
+`editor_report_block_file`; all blocks as one ZIP = the PDF's worker job with `ReportPdf.kind = 'zip'`
+(`reports.tasks.build_zip`). A "Report" block for Sites is not built (a Sites block kind; follow-up).
+**The next round (change `reports-reuse`, #711)**: `drafting.copy_report(actor, report, onto=None)` is still the
+report file's round trip; `onto` (a survey) goes to `files.import_report(onto=)`, which makes it the home survey
+and resolves EVERY data block's survey to it, matching by question code. A block that finds no question is,
+with `onto`, kept as a HIDDEN text block naming it (`unmatched()` in `import_report`) and listed in
+`copy.copy_notes` (the start page flashes them); a plain import keeps leaving it out with a note. Never drop a
+block without a note. `compare` is a block type of its own (not in `QUESTION_BLOCK_TYPES`): `dataset` +
+`question_code` as a chart's, `config = {"other": "<survey uuid>"}`; `services.comparable(question, other)` is
+the ONE rule for "can be compared" (same code, both chart types, both numeric or both not) used at add time and
+at render time; `ReportService._compare_payload` joins two `_choice_data` / `_number_data` aggregations by
+option code — shares of the people who answered, masked per round, no share for a masked cell or a round under
+K. The page, the PDF and the CSV draw the same `rows`. Event `report_reused` (ids and counts).
+**Readers, tags, API and MCP for reports (change `reports-usage-api`, #710)**: `reports/usage.py` counts, per
+report and DAY, `view` / `embed` (`?embed=1`, a block's page included) / `pdf` in `ReportUsage` — one row per
+day and kind, no visitor stored, a signed-in member of the report's workspace not counted, a failed count never
+breaks the page; `usage.summary` feeds the editor's Readers card and the API. Do not add per-visitor rows or a
+third-party script to `/r/`. A report takes workspace tags through the Data module's `Tag.reports` and
+`data.tags.set_tags` (`services.update_settings(tags=)`). **API and MCP write blocks from plain values through
+`reports/blocks.py`** (`add` / `change` / `describe`): a spec dict → the SAME `reports.services` calls the
+editor makes; what a block looks like outside the database is `reports.files.entry_of` — the report file and
+the API share it, so a new block type is described once. `api/v1/reports.py` holds the routes AND the functions
+the MCP tools (`mcp/tools/reports.py`) call (`report_for`, `create`, `save_settings`, `publish`, …); scopes are
+the surveys' (`publish` → `surveys:publish`, delete → `surveys:delete`); two gates: `require_pro_api` on the
+workspace and, on writes, `reports.gate.use`. REST publishes a report with quotes or marks only with
+`confirm: true` (409 `conflict`); MCP `publish_report` / `delete_report` answer `confirmation_required`. Image
+blocks are editor-only (no upload in the API).
+**Reports is Pro (change `reports-pro`, #709; owner decision 2026-11-16)**: feature `reports` in
+`billing/features.py`, in the trial UNCAPPED (the trial's limit is its 90 days). `reports/gate.py` is the one
+place: `covered(org)` = plan or a live trial (`Entitlements.covers`, NOT `may` — a report made under the trial
+stays alive until the trial ends); `use(org, user)` lets a WRITE through, starting the workspace's trial when it
+never had one; `freeze_if_lapsed(report)` freezes a published live report of an uncovered workspace. **Writes are
+gated, reading never is**: every POST of the report editor passes `_gated` in the `on_survey` / `on_report`
+wrappers, plus `report_create`, `report_start` and `report_import`; the refusal is `editor_views.paywall`
+(`billing.gates.feature_required`, or 403 JSON `pro_required` for autosave) and emits `report_paywall_shown`.
+The editor's GET, export, PDF and ZIP work on any plan (banner `reports_locked`). **The public routes never
+answer 404 or an upgrade page for the plan**: `report_page` and `_guard` (block page, CSV) call
+`freeze_if_lapsed` first, so a lapsed or never-Pro workspace's report is its snapshot at the same address.
+`manage.py freeze_reports_without_pro [--dry-run]` lists and freezes them all (ship day). The survey's first
+report is still drafted for free by `scaffold_report` — the product drafting, not a member writing. A new
+write endpoint for reports must go through the wrappers or call `gate.use`.
+**Reports (`reports/`, change `reports-object`, #703; epic #712)**: what was the public results
+page is a **report** — `reports.models.Report` (a workspace object at `/r/<slug>/`, `survey` = its
+HOME survey, nullable and not unique) with ordered `ReportBlock`s. A question block names a
+**dataset of the Data module and the question's code**, never a question row (`publish_draft()`
+replaces rows): a map block reads the `answers` dataset of (canonical survey, code), chart / objects
+/ budget blocks the survey's `responses` dataset. `block.question` is a cached property
+(`reports.sources.question_for`; lists go through `attach_questions`), and
+`ReportBlock.objects.create(question=q)` fills dataset and code. So one report may read several
+surveys, and `ReportService` scopes sessions PER BLOCK (`_scope_of(question)`), not per report.
+Rendering is `reports/render.py` (`ReportService`, `render_data`, `freeze_report` /
+`unfreeze_report`, `scaffold_report`, `report_for_survey`, `k_for_survey`); every write is
+`reports/services.py` with an `Actor`. `SurveyHeader.report` (the survey's oldest report) is what
+the Public results tab, the thanks button, Share and the dashboard pill read — never
+`Report.objects.get(survey=…)`, a survey may be home to several. The configuration screens
+(`reports/editor_views.py`, templates still `editor/public_results.html` / `public_results.html`,
+URL names `editor_public_results_*`) stay until the story editor (#704). Aggregates run over CLEAN
+sessions only (not deleted, excludes `not_approved`/`on_hold`) across the canonical survey + all
+versions. Privacy: k-anonymity masks buckets `<K` (default 3); geo popups expose only
+creator-selected `geo_label_fields`; individual free-text answers are not published (hand-picked
+quotes arrive with #704). Hybrid `live` (60s cache) vs `frozen` (snapshot) mode. Visibility
+`public` (indexed, in sitemap), `unlisted` (noindex) or `workspace` (signed-in members of the
+workspace only: anonymous → login, others → 404). "Used by": `data.links.report_places`; a
+`DatasetView` a block shows cannot be deleted (`view` is `RESTRICT`), a dataset that disappears
+leaves the block empty (`SET_NULL`). The Reports list is `/editor/reports/`. Report config is
+intentionally NOT included in survey ZIP export/import. Migration `reports/0002` copied the old
+pages WITH their ids (comment anchors, snapshots, `?block=` links).
 
 **Category landings (`/community-engagement-platform/`, `/civic-engagement/`,
 `/public-consultation-software/`, `/participatory-budgeting/`; change `seo-landings-rewrite`, #251)**:

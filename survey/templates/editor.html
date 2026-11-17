@@ -450,7 +450,7 @@
                         </span>
                         <span class="status-pill badge badge-{{ survey.status|status_badge_class }}">{{ survey.get_status_display }}</span>
                         {% if survey.has_unpublished_changes %}<span class="status-pill badge badge-warning" title="{% trans 'Edited, not yet published — respondents still see the live survey' %}">{% trans "Unpublished changes" %}</span>{% endif %}
-                        {% if survey.public_results_page.is_published %}<span class="status-pill badge badge-primary" title="{% trans 'Results page is live' %}">{% trans "Results live" %}</span>{% endif %}
+                        {% if survey.report.is_published %}<span class="status-pill badge badge-primary" title="{% trans 'Results page is live' %}">{% trans "Results live" %}</span>{% endif %}
                     </div>
                     {% if survey.tags.all %}<div class="card-tags" style="font-size:.72rem;margin:-.15rem 0 .35rem;">{% for t in survey.tags.all %}<span class="badge badge-light mr-1" data-card-tag="{{ t.slug }}"><i class="fas fa-tag" aria-hidden="true"></i> {{ t.name }}</span>{% endfor %}</div>{% endif %}
                     <div class="card-kpi">

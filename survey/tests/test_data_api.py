@@ -156,3 +156,81 @@ class RestTest(_ApiFixture):
         versions = self.api.get(f'/datasets/{self.ds_id}').json()['versions']
         self.assertEqual((versions[0]['number'], versions[0]['note']), (2, 'Spring 2027'))
         self.assertTrue(DatasetVersion.objects.filter(dataset_id=self.ds_id, number=2).exists())
+
+
+class AnalysisViewsApiTest(_ApiFixture):
+    """Requirement: Analysis views are created and read through REST and MCP."""
+
+    CHOICES_A = [{'code': 1, 'name': 'Car'}, {'code': 2, 'name': 'Bike'}]
+    CHOICES_B = [{'code': 1, 'name': 'Under 30'}, {'code': 2, 'name': 'Over 60'}]
+
+    def setUp(self):
+        super().setUp()
+        self.api = V1Client(self.client, self.token)
+        a = Question.objects.create(survey_section=self.section, code='TRANSPORT', name='Transport',
+                                    input_type='choice', choices=self.CHOICES_A)
+        b = Question.objects.create(survey_section=self.section, code='AGE', name='Age',
+                                    input_type='choice', choices=self.CHOICES_B)
+        for n, x, y in ((4, 1, 1), (2, 2, 2)):
+            for _i in range(n):
+                s = SurveySession.objects.create(survey=self.survey)
+                Answer.objects.create(survey_session=s, question=a, selected_choices=[x])
+                Answer.objects.create(survey_session=s, question=b, selected_choices=[y])
+        sync(self.org)
+        self.responses = Dataset.objects.get(kind='responses', survey=self.survey)
+
+    def _uploaded(self):
+        r = self.client.post('/api/v1/datasets', {'file': SimpleUploadedFile('trees.csv', CSV.encode())},
+                             HTTP_AUTHORIZATION=f'Bearer {self.token}')
+        return self.api.get(f'/dataset-jobs/{r.json()["id"]}').json()['dataset']
+
+    def test_creating_a_crosstab_over_rest(self):
+        """
+        GIVEN two choice questions answered by 4 + 2 respondents
+        WHEN a client posts a crosstab view naming them and reads its data
+        THEN the view is created and the table holds 4 and a masked cell
+        """
+        view = self.api.post(f'/datasets/{self.responses.pk}/views',
+                             {'name': 'Travel by age', 'kind': 'crosstab',
+                              'config': {'rows': 'TRANSPORT', 'columns': 'AGE'}})
+        self.assertEqual(view.status_code, 201, view.content)
+        self.assertEqual(view.json()['config'], {'rows': 'TRANSPORT', 'columns': 'AGE'})
+        data = self.api.get(f'/datasets/{self.responses.pk}/views/{view.json()["id"]}/data').json()
+        self.assertEqual(data['cells'][0][0]['value'], 4)
+        self.assertEqual(data['cells'][1][1], {'value': None, 'display': '<3', 'masked': True})
+
+    def test_a_kind_the_dataset_does_not_allow(self):
+        """
+        GIVEN a layer dataset
+        WHEN a client posts kind engagement on it
+        THEN the call is refused with 422 naming kind
+        """
+        refused = self.api.post(f'/datasets/{self._uploaded()}/views', {'name': 'Funnel', 'kind': 'engagement'})
+        self.assertEqual(refused.status_code, 422, refused.content)
+        self.assertIn('kind', json.dumps(refused.json()))
+
+    def test_an_agent_reads_engagement(self):
+        """
+        GIVEN an MCP session of the workspace owner
+        WHEN the agent creates an engagement view and calls get_dataset_view_data
+        THEN the result holds the opened, answered and finished steps
+        """
+        mcp = McpClient(self.client, self.token)
+        mcp.initialize()
+        view = data_of(mcp.call('create_dataset_view', {'dataset_id': self.responses.pk, 'name': 'Funnel',
+                                                        'kind': 'engagement'}))
+        data = data_of(mcp.call('get_dataset_view_data', {'dataset_id': self.responses.pk, 'view_id': view['id']}))
+        self.assertEqual([s['key'] for s in data['steps']], ['opened', 'answered', 'finished'])
+        self.assertEqual(data['steps'][1]['value'], 6)
+
+    def test_data_of_an_objects_view(self):
+        """
+        GIVEN an objects view of an uploaded layer
+        WHEN a client reads its data
+        THEN the call is refused with 409 naming the features endpoint
+        """
+        ds_id = self._uploaded()
+        view = self.api.post(f'/datasets/{ds_id}/views', {'name': 'All trees'}).json()
+        refused = self.api.get(f'/datasets/{ds_id}/views/{view["id"]}/data')
+        self.assertEqual(refused.status_code, 409)
+        self.assertIn('features', json.dumps(refused.json()))

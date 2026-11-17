@@ -6012,7 +6012,7 @@ msgstr ""
 #: survey/templates/maptionnaire_alternative.html:52
 #: survey/templates/social_pinpoint_alternative.html:52
 msgid "Free"
-msgstr ""
+msgstr "Tasuta"
 
 #: survey/templates/maptionnaire_alternative.html:54
 msgid "Self-hostable"
@@ -13494,3 +13494,843 @@ msgstr "Kas kustutada 1 vastus jäädavalt? Seda ei saa tagasi võtta."
 
 msgid "Permanently delete __N__ responses? This cannot be undone."
 msgstr "Kas kustutada __N__ vastust jäädavalt? Seda ei saa tagasi võtta."
+
+# Reports epic (#712), change reports-i18n
+msgid "Reports: tell what a survey found, as a page, a PDF or an embed"
+msgstr "Aruanded: rääkige küsitluse tulemustest lehe, PDF-i või manusena"
+
+msgid "Finished"
+msgstr "Lõpetatud"
+
+msgid "Reports written"
+msgstr "Kirjutatud aruanded"
+
+msgid "by working on a report"
+msgstr "aruandega töötades"
+
+msgid "A cross-tab needs two questions: one for the rows, one for the columns."
+msgstr "Risttabel vajab kahte küsimust: üht ridade, teist veergude jaoks."
+
+msgid "Pick two different questions."
+msgstr "Valige kaks erinevat küsimust."
+
+#, python-format
+msgid "“%(code)s” is not a choice, rating or thumbs question of this survey."
+msgstr "„%(code)s“ ei ole selle küsitluse valiku-, hinnangu- ega pöidlaküsimus."
+
+msgid "Views are made of layers, of map answers and of responses."
+msgstr "Vaated tehakse kihtidest, kaardivastustest ja vastustest."
+
+#, python-format
+msgid "This dataset takes these views: %(kinds)s."
+msgstr "Sellest andmestikust saab teha järgmisi vaateid: %(kinds)s."
+
+msgid "This view is a table, not a map."
+msgstr "See vaade on tabel, mitte kaart."
+
+msgid "Objects"
+msgstr "Objektid"
+
+msgid "Coverage"
+msgstr "Katvus"
+
+msgid "Density"
+msgstr "Tihedus"
+
+msgid "Engagement"
+msgstr "Osalus"
+
+msgid "Cross-tab"
+msgstr "Risttabel"
+
+msgid "Responses filter"
+msgstr "Vastuste filter"
+
+msgid "Filter the table first: this view would show every response."
+msgstr "Filtreerige esmalt tabelit: see vaade näitaks kõiki vastuseid."
+
+#, python-format
+msgid "“%(name)s” is shown in a report. Remove it from the report first."
+msgstr "„%(name)s“ on kasutusel aruandes. Eemaldage see esmalt aruandest."
+
+msgid "Make a report"
+msgstr "Loo aruanne"
+
+msgid "A view of collected answers is a grid: how many respondents marked each cell, small groups hidden. Lines and areas can also be read as coverage, points and spray as density. It can be shown in a Site map block."
+msgstr "Kogutud vastuste vaade on ruudustik: mitu vastajat märkis iga lahtri, väikesed rühmad peidetud. Jooni ja alasid saab lugeda ka katvusena, punkte ja pihustust tihedusena. Seda saab näidata saidi kaardiplokis."
+
+msgid "A view of responses computes something a report can show: how many people opened, answered and finished, or how two questions relate. Small groups are hidden. Filters saved on the Responses page are listed here too."
+msgstr "Vastuste vaade arvutab midagi, mida aruanne saab näidata: mitu inimest küsitluse avas, vastas ja lõpetas või kuidas kaks küsimust omavahel seotud on. Väikesed rühmad on peidetud. Siin on loetletud ka lehel Vastused salvestatud filtrid."
+
+msgid "Open in Responses"
+msgstr "Ava lehel Vastused"
+
+msgid "What it shows"
+msgstr "Mida see näitab"
+
+msgid "Rows"
+msgstr "Read"
+
+msgid "Columns"
+msgstr "Veerud"
+
+msgid "Site"
+msgstr "Sait"
+
+msgid "Report"
+msgstr "Aruanne"
+
+#, python-format
+msgid "Aggregated · K = %(k)s"
+msgstr "Koondatud · K = %(k)s"
+
+#, python-format
+msgid "This is what a report or a site shows of this view. A count under %(k)s reads “<%(k)s” and its value is never sent; map cells with fewer than %(k)s respondents are left out."
+msgstr "Seda näitab aruanne või sait sellest vaatest. Arvu asemel, mis on väiksem kui %(k)s, kuvatakse “<%(k)s” ja selle väärtust ei edastata kunagi; kaardi lahtrid, kus on alla %(k)s vastaja, jäetakse välja."
+
+msgid "opened"
+msgstr "avas"
+
+msgid "answered"
+msgstr "vastas"
+
+msgid "finished"
+msgstr "lõpetas"
+
+msgid "Week of"
+msgstr "Nädal alates"
+
+msgid "Opened"
+msgstr "Avas"
+
+msgid "Answered"
+msgstr "Vastas"
+
+msgid "Nobody has opened the survey yet."
+msgstr "Keegi pole küsitlust veel avanud."
+
+#, python-format
+msgid "The survey no longer has the question %(codes)s, so this table cannot be computed."
+msgstr "Küsitluses ei ole enam küsimust %(codes)s, seega ei saa seda tabelit arvutada."
+
+#, python-format
+msgid "%(n)s respondents answered both questions."
+msgstr "Mõlemale küsimusele vastanuid: %(n)s."
+
+msgid "A respondent who picked several options counts in each, so a line may add up to more than its total."
+msgstr "Mitu valikut teinud vastaja loetakse iga valiku juures, seega võib rea summa olla suurem kui selle kogusumma."
+
+#, python-format
+msgid "“<%(k)s” is a group too small to show. The totals of its row and column, and the number of respondents who answered both questions, read “—” because they would give the group away."
+msgstr "“<%(k)s” on näitamiseks liiga väike rühm. Selle rea ja veeru kogusummade ning mõlemale küsimusele vastanute arvu asemel on „—“, sest need reedaksid rühma suuruse."
+
+#, python-format
+msgid "%(n)s cell"
+msgid_plural "%(n)s cells"
+msgstr[0] "%(n)s lahter"
+msgstr[1] "%(n)s lahtrit"
+
+#, python-format
+msgid "%(m)s m across"
+msgstr "laius %(m)s m"
+
+#, python-format
+msgid "%(n)s respondent"
+msgid_plural "%(n)s respondents"
+msgstr[0] "%(n)s vastaja"
+msgstr[1] "%(n)s vastajat"
+
+#, python-format
+msgid "%(n)s not shown (in an area with fewer than %(k)s people)"
+msgid_plural "%(n)s not shown (in areas with fewer than %(k)s people)"
+msgstr[0] "%(n)s jäi näitamata (alal, kus on alla %(k)s inimese)"
+msgstr[1] "%(n)s jäi näitamata (aladel, kus on alla %(k)s inimese)"
+
+#, python-format
+msgid "Each cell says how many respondents drew over it and their share of everyone who drew; the busiest cell has %(max)s."
+msgstr "Iga lahter näitab, mitu vastajat sellest üle joonistas ja kui suure osa nad kõigist joonistanutest moodustavad; kõige tihedamas lahtris on %(max)s."
+
+#, python-format
+msgid "Each cell says how many marks fall inside it; the busiest cell has %(max)s."
+msgstr "Iga lahter näitab, mitu märki sellesse jääb; kõige tihedamas lahtris on %(max)s."
+
+#, python-format
+msgid "Each cell says how many respondents marked it; the busiest cell has %(max)s."
+msgstr "Iga lahter näitab, mitu vastajat selle märkis; kõige tihedamas lahtris on %(max)s."
+
+msgid "A report or a Site map block draws it."
+msgstr "Seda kuvab aruanne või saidi kaardiplokk."
+
+msgid "A Responses filter is saved on the Responses page."
+msgstr "Vastuste filter salvestatakse lehel Vastused."
+
+msgid "No survey of this workspace has that id."
+msgstr "Selles tööruumis pole sellise ID-ga küsitlust."
+
+msgid "This report has no home survey: name the survey the block shows."
+msgstr "Sellel aruandel pole põhiküsitlust: nimetage küsitlus, mida plokk näitab."
+
+#, python-format
+msgid "A chart is drawn as: %(choices)s."
+msgstr "Diagrammi tüüp võib olla: %(choices)s."
+
+#, python-format
+msgid "A block is one of: %(types)s."
+msgstr "Ploki tüüp võib olla: %(types)s."
+
+msgid "The survey has no question with that code."
+msgstr "Küsitluses pole sellise koodiga küsimust."
+
+#, python-format
+msgid "That question is shown as a %(kind)s block."
+msgstr "Seda küsimust näidatakse plokina, mille tüüp on %(kind)s."
+
+msgid "text answer, which is never published"
+msgstr "tekstivastus, mida ei avaldata kunagi"
+
+#, python-format
+msgid "%(n)s quote will be published as written. Check that it names nobody."
+msgid_plural "%(n)s quotes will be published as written. Check that they name nobody."
+msgstr[0] "%(n)s tsitaat avaldatakse täpselt nii, nagu see on kirjutatud. Kontrollige, et see ei nimetaks kedagi."
+msgstr[1] "%(n)s tsitaati avaldatakse täpselt nii, nagu need on kirjutatud. Kontrollige, et need ei nimetaks kedagi."
+
+#, python-format
+msgid "“%(title)s” has nothing to show and will be left out."
+msgstr "Plokil „%(title)s“ pole midagi näidata ja see jäetakse välja."
+
+msgid "The report has no title."
+msgstr "Aruandel pole pealkirja."
+
+#, python-format
+msgid "%(n)s hidden block will not be shown."
+msgid_plural "%(n)s hidden blocks will not be shown."
+msgstr[0] "%(n)s peidetud plokki ei näidata."
+msgstr[1] "%(n)s peidetud plokki ei näidata."
+
+msgid "Consultation summary"
+msgstr "Kaasamise kokkuvõte"
+
+msgid "Who took part, then every question in the survey's order, quotes to pick from."
+msgstr "Kes osalesid, seejärel kõik küsimused küsitluse järjekorras ja tsitaadid, mille seast valida."
+
+msgid "Council paper"
+msgstr "Volikogu ettekanne"
+
+msgid "Numbered sections, results as tables, a place for recommendations."
+msgstr "Nummerdatud jaotised, tulemused tabelitena, koht soovituste jaoks."
+
+msgid "Engagement update"
+msgstr "Kaasamise vahekokkuvõte"
+
+msgid "Short and live while the survey is open: the numbers, the maps, a link to take part."
+msgstr "Lühike ja küsitluse avatud oleku ajal otseandmetega: arvud, kaardid ja link osalemiseks."
+
+msgid "You said — we did"
+msgstr "Teie ütlesite — meie tegime"
+
+msgid "Each result followed by a place to say what was done about it."
+msgstr "Iga tulemuse järel on koht, kuhu kirjutada, mida selle põhjal tehti."
+
+msgid "opened the survey"
+msgstr "avas küsitluse"
+
+msgid "marks on the map"
+msgstr "märki kaardil"
+
+msgid "Write what this part of the survey showed."
+msgstr "Kirjutage, mida see küsitluse osa näitas."
+
+msgid "What happens next"
+msgstr "Mis saab edasi"
+
+msgid "Say what will be done with these answers, and when."
+msgstr "Öelge, mida nende vastustega tehakse ja millal."
+
+msgid "1. Background"
+msgstr "1. Taust"
+
+msgid "Why the survey was run, who ran it and when."
+msgstr "Miks küsitlus korraldati, kes selle korraldas ja millal."
+
+msgid "2. Who took part"
+msgstr "2. Kes osalesid"
+
+msgid "3. What residents said"
+msgstr "3. Mida elanikud ütlesid"
+
+msgid "4. Places"
+msgstr "4. Kohad"
+
+#, python-format
+msgid "%(n)s. Recommendations"
+msgstr "%(n)s. Soovitused"
+
+msgid "What the council is asked to decide."
+msgstr "Mida volikogul palutakse otsustada."
+
+#, python-format
+msgid "You said: %(question)s"
+msgstr "Teie ütlesite: %(question)s"
+
+msgid "We did: say what was done about it."
+msgstr "Meie tegime: kirjutage, mida selle põhjal tehti."
+
+#, python-format
+msgid "%(survey)s: what we heard"
+msgstr "%(survey)s: mida me kuulsime"
+
+#, python-format
+msgid "%(survey)s: consultation report"
+msgstr "%(survey)s: kaasamise aruanne"
+
+#, python-format
+msgid "%(survey)s: update"
+msgstr "%(survey)s: vahekokkuvõte"
+
+#, python-format
+msgid "%(survey)s: you said, we did"
+msgstr "%(survey)s: teie ütlesite, meie tegime"
+
+msgid "{responses} people answered. This is what they said."
+msgstr "Vastas {responses} inimest. Nad ütlesid järgmist."
+
+#, python-format
+msgid "The report file is larger than %(mb)s MB."
+msgstr "Aruandefail on suurem kui %(mb)s MB."
+
+msgid "This is not a report file: a .zip exported from Reports is expected."
+msgstr "See ei ole aruandefail: oodatud on jaotisest Aruanded eksporditud .zip."
+
+msgid "This is not a report file: it has no readable report.json."
+msgstr "See ei ole aruandefail: selles pole loetavat faili report.json."
+
+msgid "This report file was made by a version of Mapsurvey this one cannot read."
+msgstr "Selle aruandefaili loonud Mapsurvey versiooni ei oska praegune versioon lugeda."
+
+#, python-format
+msgid "A report holds up to %(n)s blocks."
+msgstr "Aruandes võib olla kuni %(n)s plokki."
+
+#, python-format
+msgid "%(what)s shows a survey question this workspace does not have; the block was left out."
+msgstr "%(what)s näitab küsitluse küsimust, mida selles tööruumis pole; plokk jäeti välja."
+
+#, python-format
+msgid "%(what)s: “%(survey)s” has no such question. A hidden note marks its place."
+msgstr "%(what)s: küsitluses „%(survey)s“ pole sellist küsimust. Selle kohta tähistab peidetud märkus."
+
+msgid "A picture could not be read and was left out."
+msgstr "Üht pilti ei saanud lugeda ja see jäeti välja."
+
+msgid "Workspace only"
+msgstr "Ainult tööruum"
+
+msgid "Key numbers"
+msgstr "Põhinäitajad"
+
+msgid "Quotes"
+msgstr "Tsitaadid"
+
+msgid "Compare two rounds"
+msgstr "Võrdle kahte vooru"
+
+msgid "Full width"
+msgstr "Täislaius"
+
+msgid "Half width"
+msgstr "Poollaius"
+
+msgid "answers"
+msgstr "vastust"
+
+msgid "average"
+msgstr "keskmine"
+
+msgid "median"
+msgstr "mediaan"
+
+msgid "range"
+msgstr "vahemik"
+
+msgid "per day"
+msgstr "päevas"
+
+msgid "per week"
+msgstr "nädalas"
+
+msgid "per month"
+msgstr "kuus"
+
+msgid "opened, and answered (dark)"
+msgstr "avas ja vastas (tume)"
+
+msgid "Share of the people who answered in each survey, and the number in brackets."
+msgstr "Osakaal kummaski küsitluses vastanutest, sulgudes vastanute arv."
+
+#, python-format
+msgid "People who answered both questions. Groups too small to show read “<%(k)s”."
+msgstr "Mõlemale küsimusele vastanud inimesed. Näitamiseks liiga väikeste rühmade asemel on “<%(k)s”."
+
+#, python-format
+msgid "%(n)s marks from %(p)s respondents"
+msgstr "Märke: %(n)s, vastajaid: %(p)s"
+
+#, python-format
+msgid "%(p)s respondents; darker squares were marked by more people"
+msgstr "Vastajaid: %(p)s; tumedamaid ruute märkis rohkem inimesi"
+
+#, python-format
+msgid "Data as of %(date)s"
+msgstr "Andmed seisuga %(date)s"
+
+#, python-format
+msgid "Printed %(date)s"
+msgstr "Trükitud %(date)s"
+
+#, python-format
+msgid "page %(n)s"
+msgstr "lk %(n)s"
+
+msgid "An image file is required."
+msgstr "Vaja on pildifaili."
+
+msgid "Question type is not available for publication."
+msgstr "Seda tüüpi küsimust ei saa avaldada."
+
+msgid "Only a survey of this workspace can be shown."
+msgstr "Näidata saab ainult selle tööruumi küsitlust."
+
+msgid "Choose the other survey to compare with."
+msgstr "Valige teine küsitlus, millega võrrelda."
+
+msgid "Choose a different survey: a comparison needs two."
+msgstr "Valige mõni teine küsitlus: võrdluseks on vaja kahte."
+
+#, python-format
+msgid "“%(survey)s” has no comparable question with the code %(code)s."
+msgstr "Küsitluses „%(survey)s“ pole võrreldavat küsimust koodiga %(code)s."
+
+msgid "Who took part"
+msgstr "Kes osalesid"
+
+msgid "Publish the survey before publishing its results."
+msgstr "Avaldage küsitlus enne selle tulemuste avaldamist."
+
+msgid "Read the quotes and maps listed under “Before you publish” and confirm."
+msgstr "Lugege läbi jaotises „Enne avaldamist“ loetletud tsitaadid ja kaardid ning kinnitage."
+
+#, python-format
+msgid "“%(host)s” is not a site address. Write one per line, like city.example.org."
+msgstr "„%(host)s“ ei ole saidi aadress. Kirjutage igale reale üks, näiteks city.example.org."
+
+msgid "Delete report"
+msgstr "Kustuta aruanne"
+
+msgid "Reports"
+msgstr "Aruanded"
+
+#, python-format
+msgid "It is published at /r/%(slug)s/. That address stops opening."
+msgstr "See on avaldatud aadressil /r/%(slug)s/. See aadress lakkab avanemast."
+
+#, python-format
+msgid "Its %(n)s block, with its text and pictures, is deleted. The survey answers it shows stay where they are. This cannot be undone — export the report first if you may want it back."
+msgid_plural "Its %(n)s blocks, with their text and pictures, are deleted. The survey answers they show stay where they are. This cannot be undone — export the report first if you may want it back."
+msgstr[0] "Selle %(n)s plokk koos teksti ja piltidega kustutatakse. Küsitluse vastused, mida see näitab, jäävad alles. Seda ei saa tagasi võtta — eksportige aruanne enne, kui võite seda veel vajada."
+msgstr[1] "Selle %(n)s plokki koos teksti ja piltidega kustutatakse. Küsitluse vastused, mida need näitavad, jäävad alles. Seda ei saa tagasi võtta — eksportige aruanne enne, kui võite seda veel vajada."
+
+msgid "Export first"
+msgstr "Ekspordi enne"
+
+msgid "Import a report"
+msgstr "Impordi aruanne"
+
+msgid "New report"
+msgstr "Uus aruanne"
+
+msgid "Reports are part of Pro. On the current plan this workspace's reports are read-only: published ones stay online with the numbers they had, and nothing is deleted."
+msgstr "Aruanded kuuluvad Pro paketti. Praeguse paketiga on selle tööruumi aruanded ainult lugemiseks: avaldatud aruanded jäävad veebi senistel arvudel ja midagi ei kustutata."
+
+msgid "See Pro"
+msgstr "Vaata Pro paketti"
+
+msgid "A report tells what a survey found: text, with charts, maps and quotes between the paragraphs. Each survey's public results page is a report; a report made elsewhere can be imported as a file."
+msgstr "Aruanne räägib, mida küsitlus näitas: tekst, mille lõikude vahel on diagrammid, kaardid ja tsitaadid. Iga küsitluse avalik tulemuste leht on aruanne; mujal tehtud aruande saab importida failina."
+
+msgid "No reports yet."
+msgstr "Aruandeid veel pole."
+
+msgid "A report tells what a survey found."
+msgstr "Aruanne räägib, mida küsitlus näitas."
+
+msgid "Start one from a survey's answers."
+msgstr "Alustage aruannet küsitluse vastustest."
+
+msgid "Start a report"
+msgstr "Alusta aruannet"
+
+msgid "Begin with a draft made from a survey's answers and cut it down to what you want to say — or start empty. Nothing is published until you publish it."
+msgstr "Alustage küsitluse vastustest koostatud mustandiga ja kärpige see selleks, mida soovite öelda — või alustage tühjalt lehelt. Midagi ei avaldata enne, kui te ise avaldate."
+
+msgid "Draft from a survey"
+msgstr "Mustand küsitluse põhjal"
+
+msgid "Choose"
+msgstr "Vali"
+
+msgid "A draft is made from a published survey's answers. This workspace has none yet, so start empty."
+msgstr "Mustand koostatakse avaldatud küsitluse vastustest. Selles tööruumis sellist veel pole, seega alustage tühjalt lehelt."
+
+msgid "Or"
+msgstr "Või"
+
+msgid "Blank report"
+msgstr "Tühi aruanne"
+
+msgid "An empty page: add headings, text, pictures, numbers and quotes yourself."
+msgstr "Tühi leht: lisage pealkirjad, tekst, pildid, arvud ja tsitaadid ise."
+
+msgid "Copy an earlier report"
+msgstr "Kopeeri varasem aruanne"
+
+msgid "The same story for the next round: change what changed."
+msgstr "Sama lugu järgmise vooru jaoks: muutke seda, mis muutus."
+
+msgid "Report to copy"
+msgstr "Kopeeritav aruanne"
+
+msgid "for the survey"
+msgstr "küsitluse jaoks"
+
+msgid "the same as in the report"
+msgstr "sama mis aruandes"
+
+msgid "A report made elsewhere? Import its file on the Reports page."
+msgstr "Aruanne on tehtud mujal? Importige selle fail lehel Aruanded."
+
+msgid "Untitled report"
+msgstr "Nimetu aruanne"
+
+msgid "Choose a survey to draft a report from."
+msgstr "Valige küsitlus, mille põhjal aruande mustand koostada."
+
+msgid "Report imported. It is not published; only this workspace sees it."
+msgstr "Aruanne imporditud. See ei ole avaldatud; seda näeb ainult see tööruum."
+
+#, python-format
+msgid "“%(name)s” deleted."
+msgstr "„%(name)s“ kustutatud."
+
+msgid "Always"
+msgstr "Alati"
+
+msgid "File"
+msgstr "Fail"
+
+msgid "Draft a report from these answers"
+msgstr "Koosta nendest vastustest aruande mustand"
+
+msgid "Saved filters of this table"
+msgstr "Selle tabeli salvestatud filtrid"
+
+msgid "No saved views yet. Filter the table, then save the filter here."
+msgstr "Salvestatud vaateid veel pole. Filtreerige tabelit ja salvestage filter siin."
+
+msgid "Name of the view"
+msgstr "Vaate nimi"
+
+msgid "Save current filter as…"
+msgstr "Salvesta praegune filter nimega…"
+
+msgid "Image (a picture, a chart or a map made elsewhere)"
+msgstr "Pilt (mujal tehtud pilt, diagramm või kaart)"
+
+msgid "Cross-tab: two questions against each other"
+msgstr "Risttabel: kaks küsimust teineteise suhtes"
+
+msgid "Compare: one question in two surveys"
+msgstr "Võrdlus: üks küsimus kahes küsitluses"
+
+msgid "Engagement: opened, answered, finished"
+msgstr "Osalus: avas, vastas, lõpetas"
+
+msgid "How many people gave each pair of answers, among those who answered both. Groups too small to show are hidden."
+msgstr "Mitu inimest andis iga vastusepaari, mõlemale küsimusele vastanute seas. Näitamiseks liiga väikesed rühmad on peidetud."
+
+msgid "Compare with"
+msgstr "Võrdle küsitlusega"
+
+msgid "The other survey needs a question with the same code — as a second round made by duplicating the first has. Each answer's share is shown for both."
+msgstr "Teises küsitluses peab olema sama koodiga küsimus — nagu on teises voorus, mis on tehtud esimese koopiana. Iga vastuse osakaalu näidatakse mõlema kohta."
+
+msgid "Before you publish"
+msgstr "Enne avaldamist"
+
+msgid "Nothing to check: no quotes, no individual marks, no empty blocks."
+msgstr "Pole midagi kontrollida: pole tsitaate, üksikuid märke ega tühje plokke."
+
+msgid "People in this report"
+msgstr "Inimesed selles aruandes"
+
+msgid "Open the block"
+msgstr "Ava plokk"
+
+msgid "Delete the block"
+msgstr "Kustuta plokk"
+
+msgid "Who can open it"
+msgstr "Kes saab seda avada"
+
+msgid "Public can be found by search engines; unlisted opens by its link only; workspace only asks members to sign in."
+msgstr "Avalik on otsingumootoritest leitav; loetlemata avaneb ainult lingiga; ainult tööruum palub liikmetel sisse logida."
+
+msgid "Numbers"
+msgstr "Arvud"
+
+msgid "Live — follow new answers"
+msgstr "Otse — järgivad uusi vastuseid"
+
+msgid "Frozen — as they are now"
+msgstr "Külmutatud — nagu need praegu on"
+
+msgid "Address:"
+msgstr "Aadress:"
+
+msgid "I have read the quotes and maps listed above and they may be published."
+msgstr "Olen ülal loetletud tsitaadid ja kaardid läbi lugenud ja need võib avaldada."
+
+msgid "Not yet"
+msgstr "Mitte veel"
+
+msgid "Width"
+msgstr "Laius"
+
+msgid "Reports are part of Pro. On the current plan this report is read-only: a published report stays online with the numbers it had, and nothing is deleted. You can still export it and make its PDF."
+msgstr "Aruanded kuuluvad Pro paketti. Praeguse paketiga on see aruanne ainult lugemiseks: avaldatud aruanne jääb veebi senistel arvudel ja midagi ei kustutata. Saate selle endiselt eksportida ja teha sellest PDF-i."
+
+msgid "Publish this report"
+msgstr "Avalda see aruanne"
+
+msgid "Checking the report…"
+msgstr "Aruande kontrollimine…"
+
+msgid "Starts a section of the story."
+msgstr "Alustab loo uut osa."
+
+msgid "Title above the block (optional)"
+msgstr "Pealkiri ploki kohal (valikuline)"
+
+msgid "What the map shows, in a sentence"
+msgstr "Mida kaart näitab, ühe lausega"
+
+msgid "Most marks sit along the river path and by the east entrance."
+msgstr "Enamik märke on jõeäärsel teerajal ja idapoolse sissepääsu juures."
+
+msgid "Shown under the map and read aloud to people who cannot see it."
+msgstr "Kuvatakse kaardi all ja loetakse ette inimestele, kes kaarti ei näe."
+
+msgid "Show the marks themselves"
+msgstr "Näita märke endid"
+
+msgid "every place, line or area as it was drawn, instead of the squares. A mark can point at someone's home: you decide whether that is right for this survey."
+msgstr "iga koht, joon või ala nii, nagu see joonistati, ruutude asemel. Märk võib osutada kellegi kodule: teie otsustate, kas see sobib selle küsitluse puhul."
+
+msgid "A number can follow the answers: write a token and the page fills it in."
+msgstr "Arv võib järgida vastuseid: kirjutage kohatäide ja leht täidab selle ise."
+
+msgid "CODE is a question's code. A frozen report keeps the numbers of the day it was frozen."
+msgstr "CODE on küsimuse kood. Külmutatud aruanne säilitab külmutamise päeva arvud."
+
+#, python-format
+msgid "Questions %(rows)s (rows) × %(columns)s (columns): how many people gave each pair of answers, among those who answered both. A group smaller than %(k)s is hidden, with the totals that would give it away. To compare other questions, add another cross-tab."
+msgstr "Küsimused %(rows)s (read) × %(columns)s (veerud): mitu inimest andis iga vastusepaari, mõlemale küsimusele vastanute seas. Rühm, mis on väiksem kui %(k)s, peidetakse koos kogusummadega, mis selle reedaksid. Teiste küsimuste võrdlemiseks lisage veel üks risttabel."
+
+msgid "How many people opened the survey, answered at least one question and finished it, and how that went over time. Trashed and moderated-out responses are not counted."
+msgstr "Mitu inimest küsitluse avas, vähemalt ühele küsimusele vastas ja selle lõpetas ning kuidas see ajas kulges. Prügikastis olevaid ja modereerimisel välja jäetud vastuseid ei arvestata."
+
+msgid "One per line: the number, then “ | ”, then what it counts. You type these numbers; they do not change when new answers arrive."
+msgstr "Üks igal real: arv, seejärel “ | ”, seejärel see, mida arv loendab. Need arvud sisestate teie ise; uute vastuste saabudes need ei muutu."
+
+msgid "Note under the numbers (optional)"
+msgstr "Märkus arvude all (valikuline)"
+
+msgid "One quote per line. To name where it comes from, add “ | ” and the source. A quote is published exactly as written here: leave out anything that names a person."
+msgstr "Üks tsitaat igal real. Päritolu nimetamiseks lisage “ | ” ja allikas. Tsitaat avaldatakse täpselt nii, nagu see on siia kirjutatud: jätke välja kõik, mis nimetab mõnda inimest."
+
+msgid "Two half-width blocks in a row sit side by side on a wide screen."
+msgstr "Kaks järjestikust poollaiusega plokki on laial ekraanil kõrvuti."
+
+msgid "Use this block elsewhere"
+msgstr "Kasuta seda plokki mujal"
+
+msgid "Embed only this block on another site:"
+msgstr "Manusta ainult see plokk teisele saidile:"
+
+msgid "Opening"
+msgstr "Sissejuhatus"
+
+msgid "Line above the title (optional)"
+msgstr "Rida pealkirja kohal (valikuline)"
+
+msgid "Neighbourhood plan · survey report · September 2026"
+msgstr "Asumi planeering · küsitluse aruanne · september 2026"
+
+msgid "Opening paragraph"
+msgstr "Sissejuhatav lõik"
+
+msgid "Riverside plan 2027"
+msgstr "Riverside’i plaan 2027"
+
+msgid "Comma-separated. The same tags group this report with its surveys and datasets."
+msgstr "Komadega eraldatud. Samad sildid rühmitavad selle aruande selle küsitluste ja andmestikega."
+
+msgid "Embed on another site"
+msgstr "Manusta teisele saidile"
+
+msgid "Paste this where the report should appear. It always shows the published version and grows to its height. One block can be embedded on its own: open the block for its code."
+msgstr "Kleepige see sinna, kus aruanne peaks ilmuma. See näitab alati avaldatud versiooni ja kasvab selle kõrguseks. Ühe ploki saab manustada ka eraldi: koodi leiate plokki avades."
+
+msgid "The code works once the report is published as public or unlisted."
+msgstr "Kood töötab siis, kui aruanne on avaldatud avaliku või loetlematuna."
+
+msgid "Sites that may embed it"
+msgstr "Saidid, mis tohivad seda manustada"
+
+msgid "One address per line. Empty means any site."
+msgstr "Üks aadress igal real. Tühi tähendab mis tahes saiti."
+
+msgid "Readers"
+msgstr "Lugejad"
+
+msgid "times the page was opened"
+msgstr "korda avati leht"
+
+msgid "times shown inside another site"
+msgstr "korda näidati teise saidi sees"
+
+msgid "PDF downloads"
+msgstr "PDF-i allalaadimist"
+
+#, python-format
+msgid "In the last 30 days: %(views)s opened, %(embeds)s embedded."
+msgstr "Viimase 30 päeva jooksul: avamisi %(views)s, manusena näitamisi %(embeds)s."
+
+msgid "Your own visits and your colleagues' are not counted, and nothing about a reader is stored."
+msgstr "Teie enda ja teie kolleegide külastusi ei loeta ning lugeja kohta ei salvestata midagi."
+
+msgid "Report file"
+msgstr "Aruandefail"
+
+msgid "The whole report — text, numbers, quotes, pictures and which questions its charts and maps show — as one file. Import it on the Reports page, here or in another workspace."
+msgstr "Kogu aruanne — tekst, arvud, tsitaadid, pildid ning see, milliseid küsimusi selle diagrammid ja kaardid näitavad — ühe failina. Importige see lehel Aruanded, siin või teises tööruumis."
+
+msgid "Export report"
+msgstr "Ekspordi aruanne"
+
+msgid "PDF (A4)"
+msgstr "PDF (A4)"
+
+msgid "Every chart and map as a PNG with its numbers as CSV"
+msgstr "Iga diagramm ja kaart PNG-na ning selle arvud CSV-na"
+
+msgid "Charts and maps (ZIP)"
+msgstr "Diagrammid ja kaardid (ZIP)"
+
+msgid "A frozen report's PDF is made once and linked from its page; a live report's PDF shows the numbers of the moment you ask."
+msgstr "Külmutatud aruande PDF tehakse üks kord ja selle link on aruande lehel; otseandmetega aruande PDF näitab küsimise hetke arve."
+
+msgid "Delete report…"
+msgstr "Kustuta aruanne…"
+
+msgid "As on a phone"
+msgstr "Nagu telefonis"
+
+msgid "Preview as on a phone"
+msgstr "Eelvaade nagu telefonis"
+
+msgid "As on a computer"
+msgstr "Nagu arvutis"
+
+msgid "Preview as on a computer"
+msgstr "Eelvaade nagu arvutis"
+
+msgid "Tick the box to confirm you have read the quotes and maps listed above."
+msgstr "Märkige ruut kinnitamaks, et olete ülal loetletud tsitaadid ja kaardid läbi lugenud."
+
+msgid "The report could not be published. Publish the survey first."
+msgstr "Aruannet ei saanud avaldada. Avaldage esmalt küsitlus."
+
+msgid "Making the file…"
+msgstr "Faili koostamine…"
+
+msgid "The PDF could not be made. Try again."
+msgstr "PDF-i ei saanud koostada. Proovige uuesti."
+
+msgid "Preview — only editors of this report see this page."
+msgstr "Eelvaade — seda lehte näevad ainult selle aruande toimetajad."
+
+msgid "Workspace only — members of this workspace see this report after signing in."
+msgstr "Ainult tööruum — selle tööruumi liikmed näevad seda aruannet pärast sisselogimist."
+
+msgid "People who answered both questions."
+msgstr "Mõlemale küsimusele vastanud inimesed."
+
+msgid "Someone who picked several options counts in each."
+msgstr "Mitu valikut teinud inimene loetakse iga valiku juures."
+
+#, python-format
+msgid "A group smaller than %(k)s reads “<%(k)s”, and totals that would give it away read “—”."
+msgstr "Rühma asemel, mis on väiksem kui %(k)s, on “<%(k)s” ja kogusummade asemel, mis selle reedaksid, on „—“."
+
+#, python-format
+msgid "%(n)s answered"
+msgstr "%(n)s vastas"
+
+msgid "Share of the people who answered the question in each survey; the small number is how many."
+msgstr "Osakaal kummaski küsitluses sellele küsimusele vastanutest; väike arv näitab, mitu neid oli."
+
+#, python-format
+msgid "A group smaller than %(k)s reads “<%(k)s” and has no share."
+msgstr "Rühma asemel, mis on väiksem kui %(k)s, on “<%(k)s” ja selle osakaalu ei näidata."
+
+msgid "Opened and answered over time"
+msgstr "Avamised ja vastamised ajas"
+
+msgid "per day: opened, and answered (dark)"
+msgstr "päevas: avas ja vastas (tume)"
+
+msgid "per week: opened, and answered (dark)"
+msgstr "nädalas: avas ja vastas (tume)"
+
+msgid "per month: opened, and answered (dark)"
+msgstr "kuus: avas ja vastas (tume)"
+
+#, python-format
+msgid "“%(title)s” shows every mark as it was drawn, not squares. A mark can point at someone's home."
+msgstr "„%(title)s“ näitab iga märki nii, nagu see joonistati, mitte ruutudena. Märk võib osutada kellegi kodule."
+
+#, python-format
+msgid "“%(title)s” has no description for people who use a screen reader."
+msgstr "Plokil „%(title)s“ pole kirjeldust ekraanilugeri kasutajatele."
+
+msgid "Small groups are not hidden: the threshold is 1, so a chart can show one person's answer."
+msgstr "Väikeseid rühmi ei peideta: lävi on 1, seega võib diagramm näidata ühe inimese vastust."
+
+#, python-format
+msgid "Here the earlier report showed: %(what)s. This survey has no question with that code — add a block for the question that replaced it, or delete this note."
+msgstr "Siin näitas varasem aruanne: %(what)s. Selles küsitluses pole sellise koodiga küsimust — lisage plokk küsimusele, mis selle asendas, või kustutage see märkus."
+
+msgid "Comments on this page"
+msgstr "Kommentaarid sellel lehel"
+
+msgid "Spray clouds are published as a density grid: each cell shows how many respondents painted there, and cells below the anonymity threshold are left out. No individual paint is ever shown."
+msgstr "Pihustuspilved avaldatakse tihedusruudustikuna: iga lahter näitab, mitu vastajat sinna värvis, ja anonüümsusläve alla jäävad lahtrid jäetakse välja. Üksikuid värvijälgi ei näidata kunagi."
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "Väheste vastustega objektid varjatakse privaatsuse kaitseks."
+
+msgid "Comments"
+msgstr "Kommentaarid"
+
+msgid "new"
+msgstr "uut"

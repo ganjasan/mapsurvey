@@ -42,6 +42,8 @@ HELP_LINKS = {
     'data': 'how-to/data/',
     # Budget questions (change budget-question, #447).
     'budget': 'how-to/budget-questions/',
+    # Reports (epic #712).
+    'reports': 'how-to/share-results-publicly/',
     'faq': 'faq/',
 }
 

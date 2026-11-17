@@ -4,7 +4,8 @@ Moved from survey/tests.py by #273; classes are unchanged.
 """
 from django.test import TestCase
 from django.contrib.auth.models import User
-from survey.models import SurveyHeader, SurveySection, Question, SurveySession, Answer, Membership, SurveyCollaborator, PublicResultsPage
+from survey.models import SurveyHeader, SurveySection, Question, SurveySession, Answer, Membership, SurveyCollaborator
+from reports.models import Report
 from survey.analytics import SurveyAnalyticsService
 from survey.versioning import clone_survey_for_draft
 from survey.tests.helpers import _make_org
@@ -254,10 +255,11 @@ class DraftCopyResultsScopeTest(TestCase):
         WHEN the page's clean session set is built
         THEN the draft's test session is not in it
         """
-        from survey.models import PublicResultsPage
-        from survey.public_results import PublicResultsService
+        from reports.models import Report
+        from reports.render import ReportService
 
-        page = PublicResultsPage.objects.create(survey=self.survey, slug='draft-scope-page')
-        service = PublicResultsService(page)
-        self.assertNotIn(self.draft_session.id, service._clean_ids)
-        self.assertEqual(len(service._clean_ids), 2)
+        page = Report.objects.create(survey=self.survey, slug='draft-scope-page')
+        service = ReportService(page)
+        clean_ids = service._scope(service.home)[1]
+        self.assertNotIn(self.draft_session.id, clean_ids)
+        self.assertEqual(len(clean_ids), 2)

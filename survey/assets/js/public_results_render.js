@@ -1,7 +1,7 @@
 /* The browser renderer of public result payloads (change landing-results, #578).
  * Moved verbatim from the inline script of public_results.html so that /r/<slug>/ and site
  * pages draw charts, maps and object tables with ONE code path. `blocks` are the payloads of
- * survey/public_results.py::PublicResultsService; `BASEMAPS` is a basemap table
+ * survey/public_results.py::ReportService; `BASEMAPS` is a basemap table
  * (survey/basemaps.py::table_for) whose Mapbox entries already carry the access token.
  * Element ids: chart-<id>, map-<id>, objects-<id>. */
 window.renderResultBlocks = function (blocks, BASEMAPS) {
@@ -128,9 +128,39 @@ window.renderResultBlocks = function (blocks, BASEMAPS) {
     var base = BASEMAPS[b.basemap] || BASEMAPS.streets;
     L.tileLayer(base.url, base.opts).addTo(map);
 
-    // Every public map is a grid of respondent counts per cell (change data-aggregate):
-    // the payload carries no answer geometry, so there is nothing else to draw.
+    // A map is a grid of respondent counts per cell (change data-aggregate) unless the report's
+    // author chose to show the marks themselves (change reports-live-blocks).
+    if (b.data_type === 'marks') { renderMarks(map, b); return; }
     renderGrid(map, b);
+  }
+
+  // The marks as respondents placed them: geometry only, nothing to open.
+  function renderMarks(map, b){
+    var paint = b.color || '#4f46e5';
+    var layer = L.geoJSON(b.marks || { features: [] }, {
+      interactive: false,
+      pointToLayer: function(feat, latlng){
+        return L.circleMarker(latlng, { radius: b.spray ? 2 : 5, stroke: !b.spray, color: '#fff', weight: 1,
+                                        fillColor: paint, fillOpacity: b.spray ? 0.35 : 0.75, interactive: false });
+      },
+      style: function(feat){
+        var type = feat && feat.geometry ? feat.geometry.type : '';
+        if (type === 'Point' || type === 'MultiPoint') return {};   // pointToLayer styled them
+        return { color: paint, weight: 3, opacity: 0.6, fillColor: paint, fillOpacity: 0.12 };
+      }
+    }).addTo(map);
+    try {
+      var bounds = layer.getBounds();
+      if (bounds.isValid()) { map.fitBounds(bounds.pad(0.1)); } else { map.setView([52.52, 13.405], 11); }
+    } catch (e) { map.setView([52.52, 13.405], 11); }
+    var el = document.getElementById('map-' + b.id);
+    if (el && el.parentNode) {
+      var cap = document.createElement('div');
+      cap.className = 'pr-grid-caption';
+      cap.style.cssText = 'font-size:.8rem;color:#6b7280;margin-top:.35rem;';
+      cap.textContent = (b.count || 0) + ' marks · ' + (b.respondents_total || 0) + ' respondents';
+      el.parentNode.insertBefore(cap, el.nextSibling);
+    }
   }
 
   // Public maps (spec public-aggregates): a server-side grid of respondent counts per cell,

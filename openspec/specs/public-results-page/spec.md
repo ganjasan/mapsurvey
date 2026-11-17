@@ -41,7 +41,9 @@ Visualization selects SHALL show human labels (e.g. "Bar chart", "Pie", "Donut",
 - **THEN** chart blocks include the masking note
 
 ### Requirement: Public results page existence and addressing
-The system SHALL provide a per-survey public results page, bound 1:1 to a `SurveyHeader`, served at `/r/<slug>/` where `slug` is unique and independent of the survey slug. The page SHALL be reachable only when it is published.
+The system SHALL serve a report at `/r/<slug>/` where `slug` is unique and independent of any survey
+slug. A report is an object of a workspace and MAY have a home survey; it is not bound 1:1 to a
+`SurveyHeader`. The page SHALL be reachable only when it is published.
 
 #### Scenario: Published page is reachable
 - **WHEN** an anonymous visitor opens `/r/<slug>/` for a published results page

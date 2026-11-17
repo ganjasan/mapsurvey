@@ -67,7 +67,18 @@ The **Data** list and the survey dashboard show each item's tags; click a tag to
 A **view** is a saved selection of a dataset that keeps its name: "Trees in poor condition", "Answers to *Where would you plant a tree?* as counts". Surveys and site map blocks can show a view instead of the whole dataset, and it follows every new version of the dataset.
 
 - On a **layer**, open **New view** under **Views**: give it a name and a colour, add up to three conditions (a field *is*, *is one of*, *greater than* or *less than* a value) and tick the fields it keeps. Only public fields can be used.
-- On the **answers** to a map question, a view is always a **grid of counts**: how many respondents marked each cell, with small groups hidden — never anyone's own mark. It can be shown in a site's **Map** block, not as a survey layer.
+- On the **answers** to a map question, a view is always a grid, never anyone's own mark. Choose what a cell says under **What it shows**:
+  - **Grid of counts** — how many respondents marked the cell.
+  - **Coverage** (routes and areas) — how many respondents drew over the cell, and their share of everyone who drew.
+  - **Density** (places and spray) — how many marks fall inside the cell.
+
+  A cell with fewer respondents than the privacy threshold is left out, however many marks it holds. These views can be shown in a site's **Map** block, not as a survey layer.
+- On a survey's **responses**, a view computes a table:
+  - **Engagement** — how many people opened the survey, answered at least one question and finished it, in total and per day, week or month.
+  - **Cross-tab** — two choice, rating or thumbs questions against each other: how many respondents gave each pair of answers, among those who answered both. Pick the question for the rows and the one for the columns.
+
+  Open **Preview** next to a view to see its result exactly as a report will show it. A count under the threshold reads "<3" and its value is never sent, also over the API; the totals of that row and column, and the number of respondents who answered both, then read "—", because they would give the count away.
+- A **Responses filter** is saved on the Responses page, not here: filter the table, open **Views** in its toolbar and name the filter. It is listed with the survey's responses, and **Open in Responses** applies it again. It names questions by their code, so it keeps working after you publish changes; a filter on an answer option matches the option's wording, as the table does.
 
 Pick a view in a survey's **From Data** list or a site's **Map** block — it appears as *Dataset › View*. A view that is shown somewhere cannot be deleted until it is unlinked there.
 

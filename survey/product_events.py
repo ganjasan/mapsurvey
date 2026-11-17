@@ -46,6 +46,14 @@ PAPER_RESPONSE_CREATED = 'paper_response_created'    # survey_id, surface: new_r
 PAPER_PAGE_RECOGNISED = 'paper_page_recognised'      # survey_id, outcome, code_source, doubtful
 PAPER_SHEET_ENTERED = 'paper_sheet_entered'          # survey_id, fields_total, fields_doubtful, fields_changed
 RESPONSES_VIEWED = 'responses_viewed'
+# Reports (change reports-start, #705): ids and names of choices only, never a title or a slug.
+REPORT_ENTRY_SEEN = 'report_entry_seen'      # surface: reports | responses | data | survey
+REPORT_CREATED = 'report_created'            # surface, start: draft | blank | copy | import, template
+REPORT_REUSED = 'report_reused'              # source, report, onto (bool), blocks, unmatched
+REPORT_PUBLISHED = 'report_published'        # report_id, visibility, mode
+REPORT_PREVIEWED = 'report_previewed'        # browser: device = phone | desktop
+REPORT_PAYWALL_SHOWN = 'report_paywall_shown'     # surface: editor | start | import
+REPORT_PDF_DOWNLOADED = 'report_pdf_downloaded'   # report_id, surface: editor | page
 DATA_EXPORTED = 'data_exported'
 
 # Team collaboration (spec survey-comment-threads). Creator events: who

@@ -8,7 +8,8 @@ from io import BytesIO
 import json
 import re
 import zipfile
-from survey.models import Organization, SurveyHeader, SurveySection, Question, SurveySession, Answer, Membership, SurveyCollaborator, PublicResultsPage
+from survey.models import Organization, SurveyHeader, SurveySection, Question, SurveySession, Answer, Membership, SurveyCollaborator
+from reports.models import Report
 from io import StringIO
 from django.core.management import call_command
 from survey.tests.test_operator_entry import _EntryFixture
@@ -748,11 +749,11 @@ class FileAnswersCreatorSurfacesTest(TestCase):
         WHEN the page data is rendered
         THEN neither the filename nor any upload path appears anywhere in it
         """
-        from survey.models import PublicResultsPage
-        from survey.public_results import PublicResultsService, render_page_data
+        from reports.models import Report
+        from reports.render import ReportService, render_data
 
-        page = PublicResultsPage.objects.create(survey=self.survey, slug='fc-results')
-        data = render_page_data(page)
+        page = Report.objects.create(survey=self.survey, slug='fc-results')
+        data = render_data(page)
 
         blob = json.dumps(data, default=str)
         self.assertNotIn('street scene.jpg', blob)

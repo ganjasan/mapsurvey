@@ -157,7 +157,7 @@ def _thread_or_404(request, thread_id):
 
 def _thread_response(request, thread, status=200, announce=None):
     thread = svc.decorate(
-        CommentThread.objects.select_related('survey', 'session', 'block', 'block__question')
+        CommentThread.objects.select_related('survey', 'session', 'block', 'block__dataset__survey')
         .prefetch_related('comments__author', 'comments__mentions', 'comments__attachments')
         .get(pk=thread.pk))
     resp = render(request, 'editor/partials/_comment_thread.html', {

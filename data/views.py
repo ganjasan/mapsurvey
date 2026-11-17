@@ -219,6 +219,7 @@ def dataset(request, dataset_id):
         'versions': list(ds.versions.select_related('created_by')[:20]),
         **_views_context(ds),
         'view_errors': view_errors,
+        'posted_kind': request.POST.get('kind', '') if view_errors else '',
         'condition_rows': range(3),
     })
 
@@ -226,17 +227,37 @@ def dataset(request, dataset_id):
 def _views_context(ds):
     """The views card (change data-views): the dataset's views with how many places use each."""
     from django.db.models import Count
-    from data.dataviews import kind_for, public_fields
+    from django.urls import reverse
+    from data import responses_views
+    from data.dataviews import crosstab_questions, kind_for, kind_labels, kinds_for, public_fields
+    from data.models import DatasetView
     kind = kind_for(ds)
     if kind is None:
         return {'view_kind': None}
     labels = public_fields(ds) if kind == 'objects' else {}
-    views = list(ds.views.annotate(uses=Count('links')).order_by('name'))
+    views = list(ds.views.annotate(link_uses=Count('links', distinct=True),
+                                   block_uses=Count('report_blocks', distinct=True)).order_by('name'))
+    questions = crosstab_questions(ds) if ds.kind == Dataset.KIND_RESPONSES else []
+    names = {q.code: q.name or q.code for q in questions}
     for v in views:   # labels, not raw names, in the summary (change data-metadata)
+        v.uses = v.link_uses + v.block_uses
         v.summary = [{**c, 'label': labels.get(c.get('field'), c.get('field'))} for c in v.conditions or []]
+        v.detail, v.open_url = '', ''
+        if v.kind == DatasetView.KIND_RESPONSES:
+            v.detail, v.open_url = responses_views.summary(v), responses_views.open_url(v)
+        elif v.kind != DatasetView.KIND_OBJECTS:
+            v.open_url = reverse('editor_data_view', args=[ds.pk, v.pk])
+            if v.kind == DatasetView.KIND_CROSSTAB:
+                config = v.config or {}
+                v.detail = '%s × %s' % (names.get(config.get('rows'), config.get('rows')),
+                                       names.get(config.get('columns'), config.get('columns')))
+    # A Responses filter is saved on the Responses page, never typed here.
+    creatable = [k for k in kinds_for(ds) if k != DatasetView.KIND_RESPONSES]
     return {
         'view_kind': kind,
         'dataset_views': views,
+        'view_kind_choices': kind_labels(creatable),
+        'crosstab_questions': questions,
         'view_fields': list(public_fields(ds).items()) if kind == 'objects' else [],
     }
 
@@ -251,12 +272,35 @@ def _create_view(request, ds):
         value = request.POST.get(f'value_{i}') or ''
         conditions.append({'field': field, 'op': op, 'values': [v.strip() for v in value.split(',') if v.strip()]}
                           if op == 'in' else {'field': field, 'op': op, 'value': value})
+    kind = request.POST.get('kind') or ''
+    if kind == 'responses':
+        return {'kind': _('A Responses filter is saved on the Responses page.')}
     try:
         services.create_view(_actor(request), ds, request.POST.get('name', ''), request.POST.get('color', ''),
-                             conditions, request.POST.getlist('fields'))
+                             conditions, request.POST.getlist('fields'), kind=kind,
+                             config={'rows': request.POST.get('rows', ''), 'columns': request.POST.get('columns', '')})
     except services.DataRefused as exc:
         return {k: v[0] for k, v in exc.fields.items()} or {'name': exc.message}
     return {}
+
+
+@login_required
+def view_preview(request, dataset_id, view_id):
+    """What a computed view yields, as its readers will get it (change data-analysis-views): a
+    table for a cross-tab, the three steps and their series for engagement, a summary of the cells
+    for a grid, coverage or density. Masked for everyone — this is the published result."""
+    from data.dataviews import result
+    from data.models import DatasetView
+    org, _membership, row = _dataset_row(request, dataset_id)
+    view = get_object_or_404(DatasetView.objects.select_related('dataset__survey'), pk=view_id, dataset=row.dataset)
+    if view.kind in (DatasetView.KIND_OBJECTS, DatasetView.KIND_RESPONSES):
+        raise Http404
+    data = result(view, lang=getattr(request, 'LANGUAGE_CODE', 'en') or 'en')
+    context = {'org': org, 'ds': row.dataset, 'view': view, 'data': data}
+    if view.kind == DatasetView.KIND_CROSSTAB and 'cells' in data:
+        context['table_rows'] = [{'item': item, 'cells': data['cells'][i]}
+                                 for i, item in enumerate(data['rows']['items'])]
+    return render(request, 'data/view.html', context)
 
 
 def _delete_view(request, ds):

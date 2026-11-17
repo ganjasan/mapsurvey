@@ -1,0 +1,77 @@
+{% load i18n %}
+{% comment %}Body of the publish dialog (change reports-review, #706): "Before you publish" — what
+names or places people first, then what looks unfinished — and the three choices of a publication.
+Only quotes and maps of marks hold it back, and only until the author ticks the box.{% endcomment %}
+<div data-testid="pr-checks">
+  <h6 class="mb-2">{% trans "Before you publish" %}</h6>
+  {% if checks.clean %}
+  <p class="text-success" data-testid="pr-checks-clean"><i class="fas fa-check-circle" aria-hidden="true"></i> {% trans "Nothing to check: no quotes, no individual marks, no empty blocks." %}</p>
+  {% endif %}
+
+  {% if checks.privacy %}
+  <div class="pr-banner" style="background:#fff7ed;border-color:#fed7aa;color:#7c2d12;" data-testid="pr-checks-privacy">
+    <strong>{% trans "People in this report" %}</strong>
+    <ul class="mb-0 pl-3" style="margin-top:.4rem;">
+      {% for item in checks.privacy %}
+      <li style="margin-bottom:.45rem;" data-check="{{ item.key }}">
+        {{ item.message }}
+        {% if item.fix == 'open' %}<a href="{{ item.open_url }}">{% trans "Open the block" %}</a>{% elif item.fix == 'settings' %}<a href="{{ item.open_url }}">{% trans "Page settings" %}</a>{% endif %}
+        {% if item.detail %}
+        <ul class="pl-3" style="margin-top:.3rem;font-style:italic;">
+          {% for quote in item.detail %}<li>“{{ quote }}”</li>{% endfor %}
+        </ul>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% if checks.other %}
+  <ul class="list-unstyled" style="font-size:.9rem;" data-testid="pr-checks-other">
+    {% for item in checks.other %}
+    <li class="d-flex align-items-start py-1" style="gap:.5rem;" data-check="{{ item.key }}">
+      <i class="fas fa-info-circle text-muted" style="margin-top:.2rem;" aria-hidden="true"></i>
+      <span class="flex-grow-1">{{ item.message }}</span>
+      {% if item.fix == 'delete' %}<button type="button" class="btn btn-sm btn-outline-secondary" data-url="{{ item.delete_url }}" onclick="prCheckDelete(this)">{% trans "Delete the block" %}</button>
+      {% elif item.fix == 'open' %}<a class="btn btn-sm btn-outline-secondary" href="{{ item.open_url }}">{% trans "Open the block" %}</a>
+      {% elif item.fix == 'settings' %}<a class="btn btn-sm btn-outline-secondary" href="{{ item.open_url }}">{% trans "Page settings" %}</a>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  <hr>
+  <form method="post" action="{{ u.set_published }}" onsubmit="return prSubmitPublish(this);" data-testid="pr-publish-form">
+    {% csrf_token %}
+    <input type="hidden" name="publish" value="1">
+    <div class="form-row">
+      <div class="form-group col-md-6">
+        <label for="prPubVisibility" class="small mb-0">{% trans "Who can open it" %}</label>
+        <select id="prPubVisibility" name="visibility" class="form-control form-control-sm">
+          {% for value, label in visibility_choices %}<option value="{{ value }}"{% if page.visibility == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+        <div class="pr-help">{% trans "Public can be found by search engines; unlisted opens by its link only; workspace only asks members to sign in." %}</div>
+      </div>
+      <div class="form-group col-md-6">
+        <label for="prPubMode" class="small mb-0">{% trans "Numbers" %}</label>
+        <select id="prPubMode" name="mode" class="form-control form-control-sm">
+          <option value="live"{% if page.mode != 'frozen' %} selected{% endif %}>{% trans "Live — follow new answers" %}</option>
+          <option value="frozen"{% if page.mode == 'frozen' %} selected{% endif %}>{% trans "Frozen — as they are now" %}</option>
+        </select>
+        <div class="pr-help">{% trans "Address:" %} <span class="pr-url">{{ public_url }}</span></div>
+      </div>
+    </div>
+    {% if checks.needs_ack %}
+    <label class="d-flex align-items-start" style="gap:.5rem;font-weight:400;" data-testid="pr-publish-ack">
+      <input type="checkbox" name="ack" value="1" style="margin-top:.25rem;">
+      <span>{% trans "I have read the quotes and maps listed above and they may be published." %}</span>
+    </label>
+    {% endif %}
+    <div class="text-danger small mb-2" data-pr-publish-error role="alert" hidden></div>
+    <div class="d-flex justify-content-end" style="gap:.5rem;">
+      <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Not yet" %}</button>
+      <button type="submit" class="btn btn-success" {% if not can_publish %}disabled title="{% trans 'Publish the survey first' %}"{% endif %}><i class="fas fa-globe" aria-hidden="true"></i> {% trans "Publish" %}</button>
+    </div>
+  </form>
+</div>

@@ -15,8 +15,10 @@ from billing.models import STATUS_FINISHED
 from billing.tests.helpers import make_sub, trial_used_elsewhere
 from survey import sites
 from survey.content_screening import confirm_phishing
-from survey.models import (ContentReview, Site, SiteBlock, SiteFile, SiteSurvey, Membership, Organization,
-                           PublicResultsPage, SurveyHeader)
+from survey.models import (
+    ContentReview, Site, SiteBlock, SiteFile, SiteSurvey, Membership, Organization, SurveyHeader,
+)
+from reports.models import Report
 
 
 def _png():
@@ -333,7 +335,7 @@ class SurveyCardTest(SiteTestBase):
         WHEN its card is drawn
         THEN it is closed and links to /r/<slug>/"""
         SurveyHeader.objects.filter(pk=self.survey.pk).update(status='closed')
-        PublicResultsPage.objects.create(survey=self.survey, slug='park-results', is_published=True)
+        Report.objects.create(survey=self.survey, slug='park-results', is_published=True)
         card = self.card()
         self.assertEqual(card['state'], 'closed')
         self.assertTrue(card['results_url'].endswith('/r/park-results/'))
@@ -778,7 +780,7 @@ class SiteResultsTest(SiteTestBase):
         """GIVEN the survey's results page uses K 5
         WHEN 4 votes are shown on a site
         THEN they are masked as "<5\""""
-        PublicResultsPage.objects.create(survey=self.survey, slug='park-results', k_anonymity_threshold=5)
+        Report.objects.create(survey=self.survey, slug='park-results', k_anonymity_threshold=5)
         self.vote(1, 4)
         self.add_results(self.choice_q)
         self.assertEqual({i['code']: i['display'] for i in self.payload()['items']}[1], '<5')
@@ -811,7 +813,7 @@ class SiteResultsTest(SiteTestBase):
         """GIVEN a published public results page
         WHEN /r/<slug>/ renders
         THEN it loads the shared renderer and calls it"""
-        PublicResultsPage.objects.create(survey=self.survey, slug='park-results', is_published=True)
+        Report.objects.create(survey=self.survey, slug='park-results', is_published=True)
         r = self.client.get('/r/park-results/')
         self.assertContains(r, 'js/public_results_render.')
         self.assertContains(r, 'window.renderResultBlocks(blocks, BASEMAPS)')

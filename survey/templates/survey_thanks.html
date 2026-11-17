@@ -29,7 +29,7 @@
         <i class="fas fa-arrow-right mr-2"></i>{% trans "Continue" %}
     </a>
     {% endif %}
-    {% with page=survey.public_results_page %}
+    {% with page=survey.report %}
     {% if page.is_published and page.show_on_thanks %}
     <a class="btn btn-primary" href="{% url 'public_results' page.slug %}">
         <i class="fas fa-chart-bar mr-2"></i>{% trans "See the results" %}

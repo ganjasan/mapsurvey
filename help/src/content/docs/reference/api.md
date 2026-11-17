@@ -1434,8 +1434,10 @@ Errors: `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed
 
 ### `POST /datasets/{dataset_id}/views`
 
-A saved view: conditions on public fields and the fields it keeps (layers), or a grid of
-counts (collected answers — the privacy class decides).
+A saved view. On a layer: conditions on public fields and the fields it keeps. On the answers
+to a map question: a grid of counts, a coverage or a density. On a survey's responses: an
+engagement funnel or a cross-tab of two questions. What the dataset holds decides which kinds
+it takes; every count is masked under K.
 
 | Parameter | In | Type | Required |
 |---|---|---|---|
@@ -1446,6 +1448,8 @@ counts (collected answers — the privacy class decides).
 | Field | Type | Required | Notes |
 |---|---|---|---|
 | `name` | string | yes |  |
+| `kind` | `objects` | `grid` | `coverage` | `density` | `engagement` | `crosstab` or null |  | What the view yields; left out, the dataset's default. A layer takes `objects`; the answers to a map question take `grid`, plus `coverage` (lines, areas) or `density` (points, spray); a survey's responses take `engagement` and `crosstab`. |
+| `config` | ViewConfigIn or null |  | Settings of the kind: the two questions of a cross-tab. |
 | `color` | string or null |  | #rrggbb |
 | `conditions` | list of ConditionIn |  | All must hold. Layer datasets only; collected answers are a grid. |
 | `fields` | list of string |  | Public fields the view keeps; empty = all. |
@@ -1466,6 +1470,21 @@ A view's GeoJSON: the matching objects with its fields, or the grid cells with t
 **200** no body
 
 Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `GET /datasets/{dataset_id}/views/{view_id}/data`
+
+What a computed view yields: the steps and series of an engagement view, the table of a
+cross-tab, the cells of a grid, coverage or density view. Counts under K come back masked
+(`value: null`, `display: "<K"`) for every caller.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `dataset_id` | path | integer | yes |
+| `view_id` | path | integer | yes |
+
+**200** object
+
+Errors: `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
 
 ### `DELETE /datasets/{dataset_id}/views/{view_id}`
 
@@ -1512,6 +1531,236 @@ Stop showing a linked dataset; refused while a question of the survey shows it.
 **200** object
 
 Errors: `draft_required`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+## Reports
+
+### `GET /reports`
+
+The reports of a workspace that you may see, newest change first; `tag` keeps those carrying
+a workspace tag.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `workspace` | query | string or null |  |
+| `tag` | query | string or null |  |
+
+**200** object
+
+Errors: `bad_cursor`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `POST /reports`
+
+A new report: empty, or — with `template` — drafted from a survey's answers by rules (who
+took part, a block per answered question, quotes to pick from as a hidden block). Never
+published on creation.
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `workspace` | string or null |  | Workspace slug; needed when you belong to several. |
+| `survey` | uuid or null |  | The home survey. With `template`, the survey the draft is made from. |
+| `template` | `summary` | `council` | `update` | `yousaid` or null |  | Draft the report from the survey's answers by rules: summary, council paper, engagement update, you said — we did. Left out: an empty report. |
+| `title` | string or null |  |  |
+
+**201** object
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `GET /reports/{uuid}`
+
+One report: its opening, settings, how often it was read, and every block in order.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+
+**200** object
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `PATCH /reports/{uuid}`
+
+Change the opening, the privacy threshold, the tags or the sites that may embed it.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `title` | string or null |  |  |
+| `eyebrow` | string or null |  | The line above the title. |
+| `lead` | string or null |  | The opening paragraph; tokens are filled. |
+| `k` | integer or null |  | Groups smaller than K are hidden. 1 hides nothing. |
+| `tags` | list of string or null |  |  |
+| `embed_hosts` | list of string or null |  | Sites that may embed the report; empty = any. |
+
+**200** object
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `DELETE /reports/{uuid}`
+
+Delete a report and its blocks. The answers it shows are not touched.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+
+**200** object
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `GET /reports/{uuid}/checks`
+
+What to look at before publishing: quotes and maps of individual marks (`people`), and what
+looks unfinished. `needs_confirm` means publishing takes `confirm: true`.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+
+**200** object
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `POST /reports/{uuid}/publish`
+
+Publish (or, with `publish: false`, take down) a report. A report that shows quotes or
+individual marks answers 409 until `confirm` is true — read `/checks` to the person first.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `publish` | boolean |  |  |
+| `visibility` | `public` | `unlisted` | `workspace` or null |  |  |
+| `mode` | `live` | `frozen` or null |  | live follows new answers; frozen keeps the numbers of now. |
+| `confirm` | boolean |  | Required to publish a report that shows quotes or individual marks: the person confirmed having read them. |
+
+**200** object
+
+Errors: `conflict`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `POST /reports/{uuid}/freeze`
+
+Freeze the report's numbers as they are now, or return it to live numbers.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `frozen` | boolean |  |  |
+
+**200** object
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `PUT /reports/{uuid}/blocks/order`
+
+Put the report's blocks in a new order: every block id, once.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `order` | list of integer | yes | Every block id of the report, in the new order. |
+
+**200** object
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `POST /reports/{uuid}/blocks`
+
+Add a block at the end: something you write (heading, text, numbers, quotes) or something
+the answers show (chart, map, objects, budget of one question; crosstab of two; engagement).
+Small groups are hidden in every data block.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `type` | `heading` | `text` | `numbers` | `quotes` | `chart` | `map` | `objects` | `budget` | `crosstab` | `engagement` | `compare` | yes |  |
+| `title` | string or null |  | A title above the block. |
+| `width` | `full` | `half` or null |  | Two half-width blocks in a row sit side by side. |
+| `hidden` | boolean or null |  | Kept in the report, not shown on its page. |
+| `text` | string or null |  | heading: the heading. |
+| `html` | string or null |  | text: rich text (sanitised). Tokens {responses}, {opened}, {finished}, {marks:CODE}, {respondents:CODE} are filled from the home survey. |
+| `items` | list of ItemIn or null |  | numbers: value + label; quotes: text + source. |
+| `note` | string or null |  | numbers: a line under them. |
+| `survey` | uuid or null |  | The survey a data block shows; default: the report's home survey. |
+| `question` | string or null |  | chart / map / objects / budget / compare: the question code. |
+| `other` | uuid or null |  | compare: the other survey (another round) that has a question with the same code. |
+| `viz` | `auto` | `bar` | `pie` | `donut` | `table` or null |  | chart: how it is drawn. |
+| `rows` | string or null |  | crosstab: the code of the question in the rows. |
+| `columns` | string or null |  | crosstab: the code of the question in the columns. |
+| `show_marks` | boolean or null |  | map: the marks themselves instead of squares that count respondents. A mark can point at someone's home. |
+| `description` | string or null |  | map: what it shows, in a sentence (also read by screen readers). |
+
+**201** object
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `PATCH /reports/{uuid}/blocks/{block_id}`
+
+Change a block's text, items, title, width or visibility. Its type and its question stay:
+to show another question, add another block.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `block_id` | path | integer | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `title` | string or null |  |  |
+| `width` | `full` | `half` or null |  |  |
+| `hidden` | boolean or null |  |  |
+| `text` | string or null |  |  |
+| `html` | string or null |  |  |
+| `items` | list of ItemIn or null |  |  |
+| `note` | string or null |  |  |
+| `viz` | `auto` | `bar` | `pie` | `donut` | `table` or null |  |  |
+| `show_marks` | boolean or null |  |  |
+| `description` | string or null |  |  |
+
+**200** object
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `DELETE /reports/{uuid}/blocks/{block_id}`
+
+Remove a block from the report.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `block_id` | path | integer | yes |
+
+**200** object
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
 
 ## Objects
 

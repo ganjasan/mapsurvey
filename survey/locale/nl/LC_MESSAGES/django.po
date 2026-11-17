@@ -6066,7 +6066,7 @@ msgstr ""
 #: survey/templates/maptionnaire_alternative.html:52
 #: survey/templates/social_pinpoint_alternative.html:52
 msgid "Free"
-msgstr ""
+msgstr "Gratis"
 
 #: survey/templates/maptionnaire_alternative.html:54
 msgid "Self-hostable"
@@ -13553,3 +13553,843 @@ msgstr "1 antwoord definitief verwijderen? Dit kan niet ongedaan worden gemaakt.
 
 msgid "Permanently delete __N__ responses? This cannot be undone."
 msgstr "__N__ antwoorden definitief verwijderen? Dit kan niet ongedaan worden gemaakt."
+
+# Reports epic (#712), change reports-i18n
+msgid "Reports: tell what a survey found, as a page, a PDF or an embed"
+msgstr "Rapporten: vertel wat een enquête heeft opgeleverd, als pagina, als PDF of ingesloten op een andere site"
+
+msgid "Finished"
+msgstr "Voltooid"
+
+msgid "Reports written"
+msgstr "Geschreven rapporten"
+
+msgid "by working on a report"
+msgstr "door aan een rapport te werken"
+
+msgid "A cross-tab needs two questions: one for the rows, one for the columns."
+msgstr "Een kruistabel heeft twee vragen nodig: één voor de rijen, één voor de kolommen."
+
+msgid "Pick two different questions."
+msgstr "Kies twee verschillende vragen."
+
+#, python-format
+msgid "“%(code)s” is not a choice, rating or thumbs question of this survey."
+msgstr "“%(code)s” is geen keuze-, beoordelings- of duimvraag van deze enquête."
+
+msgid "Views are made of layers, of map answers and of responses."
+msgstr "Weergaven worden gemaakt van lagen, van kaartantwoorden en van reacties."
+
+#, python-format
+msgid "This dataset takes these views: %(kinds)s."
+msgstr "Deze dataset heeft deze weergaven: %(kinds)s."
+
+msgid "This view is a table, not a map."
+msgstr "Deze weergave is een tabel, geen kaart."
+
+msgid "Objects"
+msgstr "Objecten"
+
+msgid "Coverage"
+msgstr "Dekking"
+
+msgid "Density"
+msgstr "Dichtheid"
+
+msgid "Engagement"
+msgstr "Deelname"
+
+msgid "Cross-tab"
+msgstr "Kruistabel"
+
+msgid "Responses filter"
+msgstr "Reactiefilter"
+
+msgid "Filter the table first: this view would show every response."
+msgstr "Filter eerst de tabel: deze weergave zou elke reactie tonen."
+
+#, python-format
+msgid "“%(name)s” is shown in a report. Remove it from the report first."
+msgstr "“%(name)s” wordt in een rapport getoond. Haal de weergave eerst uit het rapport."
+
+msgid "Make a report"
+msgstr "Een rapport maken"
+
+msgid "A view of collected answers is a grid: how many respondents marked each cell, small groups hidden. Lines and areas can also be read as coverage, points and spray as density. It can be shown in a Site map block."
+msgstr "Een weergave van verzamelde antwoorden is een raster: hoeveel respondenten elke cel hebben gemarkeerd, kleine groepen verborgen. Lijnen en vlakken kunnen ook als dekking worden gelezen, punten en spray als dichtheid. De weergave kan in een kaartblok van een Site worden getoond."
+
+msgid "A view of responses computes something a report can show: how many people opened, answered and finished, or how two questions relate. Small groups are hidden. Filters saved on the Responses page are listed here too."
+msgstr "Een weergave van reacties berekent iets wat een rapport kan tonen: hoeveel mensen de enquête hebben geopend, beantwoord en afgerond, of hoe twee vragen samenhangen. Kleine groepen worden verborgen. Filters die op de pagina Reacties zijn opgeslagen, staan hier ook."
+
+msgid "Open in Responses"
+msgstr "Openen in Reacties"
+
+msgid "What it shows"
+msgstr "Wat de weergave toont"
+
+msgid "Rows"
+msgstr "Rijen"
+
+msgid "Columns"
+msgstr "Kolommen"
+
+msgid "Site"
+msgstr "Site"
+
+msgid "Report"
+msgstr "Rapport"
+
+#, python-format
+msgid "Aggregated · K = %(k)s"
+msgstr "Geaggregeerd · K = %(k)s"
+
+#, python-format
+msgid "This is what a report or a site shows of this view. A count under %(k)s reads “<%(k)s” and its value is never sent; map cells with fewer than %(k)s respondents are left out."
+msgstr "Dit is wat een rapport of een site van deze weergave toont. Een aantal onder %(k)s wordt weergegeven als “<%(k)s” en de waarde wordt nooit verzonden; kaartcellen met minder dan %(k)s respondenten worden weggelaten."
+
+msgid "opened"
+msgstr "geopend"
+
+msgid "answered"
+msgstr "beantwoord"
+
+msgid "finished"
+msgstr "afgerond"
+
+msgid "Week of"
+msgstr "Week van"
+
+msgid "Opened"
+msgstr "Geopend"
+
+msgid "Answered"
+msgstr "Beantwoord"
+
+msgid "Nobody has opened the survey yet."
+msgstr "Nog niemand heeft de enquête geopend."
+
+#, python-format
+msgid "The survey no longer has the question %(codes)s, so this table cannot be computed."
+msgstr "De enquête heeft de vraag %(codes)s niet meer, dus deze tabel kan niet worden berekend."
+
+#, python-format
+msgid "%(n)s respondents answered both questions."
+msgstr "%(n)s respondenten hebben beide vragen beantwoord."
+
+msgid "A respondent who picked several options counts in each, so a line may add up to more than its total."
+msgstr "Een respondent die meerdere opties koos, telt in elke optie mee; een regel kan dus op meer uitkomen dan het totaal."
+
+#, python-format
+msgid "“<%(k)s” is a group too small to show. The totals of its row and column, and the number of respondents who answered both questions, read “—” because they would give the group away."
+msgstr "“<%(k)s” is een groep die te klein is om te tonen. De totalen van de rij en de kolom, en het aantal respondenten dat beide vragen beantwoordde, worden weergegeven als “—”, omdat ze de groep zouden verraden."
+
+#, python-format
+msgid "%(n)s cell"
+msgid_plural "%(n)s cells"
+msgstr[0] "%(n)s cel"
+msgstr[1] "%(n)s cellen"
+
+#, python-format
+msgid "%(m)s m across"
+msgstr "%(m)s m breed"
+
+#, python-format
+msgid "%(n)s respondent"
+msgid_plural "%(n)s respondents"
+msgstr[0] "%(n)s respondent"
+msgstr[1] "%(n)s respondenten"
+
+#, python-format
+msgid "%(n)s not shown (in an area with fewer than %(k)s people)"
+msgid_plural "%(n)s not shown (in areas with fewer than %(k)s people)"
+msgstr[0] "%(n)s niet getoond (in een gebied met minder dan %(k)s mensen)"
+msgstr[1] "%(n)s niet getoond (in gebieden met minder dan %(k)s mensen)"
+
+#, python-format
+msgid "Each cell says how many respondents drew over it and their share of everyone who drew; the busiest cell has %(max)s."
+msgstr "Elke cel geeft aan hoeveel respondenten eroverheen hebben getekend en hun aandeel in iedereen die tekende; de drukste cel heeft %(max)s."
+
+#, python-format
+msgid "Each cell says how many marks fall inside it; the busiest cell has %(max)s."
+msgstr "Elke cel geeft aan hoeveel markeringen erin vallen; de drukste cel heeft %(max)s."
+
+#, python-format
+msgid "Each cell says how many respondents marked it; the busiest cell has %(max)s."
+msgstr "Elke cel geeft aan hoeveel respondenten haar hebben gemarkeerd; de drukste cel heeft %(max)s."
+
+msgid "A report or a Site map block draws it."
+msgstr "Een rapport of een kaartblok van een Site tekent de weergave."
+
+msgid "A Responses filter is saved on the Responses page."
+msgstr "Een reactiefilter wordt opgeslagen op de pagina Reacties."
+
+msgid "No survey of this workspace has that id."
+msgstr "Geen enquête van deze werkruimte heeft dat id."
+
+msgid "This report has no home survey: name the survey the block shows."
+msgstr "Dit rapport heeft geen eigen enquête: geef aan welke enquête het blok toont."
+
+#, python-format
+msgid "A chart is drawn as: %(choices)s."
+msgstr "Een grafiek wordt getekend als: %(choices)s."
+
+#, python-format
+msgid "A block is one of: %(types)s."
+msgstr "Een blok is een van: %(types)s."
+
+msgid "The survey has no question with that code."
+msgstr "De enquête heeft geen vraag met die code."
+
+#, python-format
+msgid "That question is shown as a %(kind)s block."
+msgstr "Die vraag wordt getoond als een blok van het type %(kind)s."
+
+msgid "text answer, which is never published"
+msgstr "tekstantwoord, dat nooit wordt gepubliceerd"
+
+#, python-format
+msgid "%(n)s quote will be published as written. Check that it names nobody."
+msgid_plural "%(n)s quotes will be published as written. Check that they name nobody."
+msgstr[0] "%(n)s citaat wordt gepubliceerd zoals het is geschreven. Controleer of er niemand in wordt genoemd."
+msgstr[1] "%(n)s citaten worden gepubliceerd zoals ze zijn geschreven. Controleer of er niemand in wordt genoemd."
+
+#, python-format
+msgid "“%(title)s” has nothing to show and will be left out."
+msgstr "“%(title)s” heeft niets te tonen en wordt weggelaten."
+
+msgid "The report has no title."
+msgstr "Het rapport heeft geen titel."
+
+#, python-format
+msgid "%(n)s hidden block will not be shown."
+msgid_plural "%(n)s hidden blocks will not be shown."
+msgstr[0] "%(n)s verborgen blok wordt niet getoond."
+msgstr[1] "%(n)s verborgen blokken worden niet getoond."
+
+msgid "Consultation summary"
+msgstr "Samenvatting van de raadpleging"
+
+msgid "Who took part, then every question in the survey's order, quotes to pick from."
+msgstr "Wie er meedeed, dan elke vraag in de volgorde van de enquête, met citaten om uit te kiezen."
+
+msgid "Council paper"
+msgstr "Raadsstuk"
+
+msgid "Numbered sections, results as tables, a place for recommendations."
+msgstr "Genummerde paragrafen, resultaten als tabellen, een plek voor aanbevelingen."
+
+msgid "Engagement update"
+msgstr "Tussenstand van de participatie"
+
+msgid "Short and live while the survey is open: the numbers, the maps, a link to take part."
+msgstr "Kort en live zolang de enquête open is: de cijfers, de kaarten, een link om mee te doen."
+
+msgid "You said — we did"
+msgstr "U zei — wij deden"
+
+msgid "Each result followed by a place to say what was done about it."
+msgstr "Na elk resultaat een plek om te vertellen wat ermee is gedaan."
+
+msgid "opened the survey"
+msgstr "openden de enquête"
+
+msgid "marks on the map"
+msgstr "markeringen op de kaart"
+
+msgid "Write what this part of the survey showed."
+msgstr "Schrijf wat dit deel van de enquête liet zien."
+
+msgid "What happens next"
+msgstr "Hoe het verdergaat"
+
+msgid "Say what will be done with these answers, and when."
+msgstr "Vertel wat er met deze antwoorden wordt gedaan, en wanneer."
+
+msgid "1. Background"
+msgstr "1. Achtergrond"
+
+msgid "Why the survey was run, who ran it and when."
+msgstr "Waarom de enquête is gehouden, door wie en wanneer."
+
+msgid "2. Who took part"
+msgstr "2. Wie er meedeed"
+
+msgid "3. What residents said"
+msgstr "3. Wat bewoners zeiden"
+
+msgid "4. Places"
+msgstr "4. Plekken"
+
+#, python-format
+msgid "%(n)s. Recommendations"
+msgstr "%(n)s. Aanbevelingen"
+
+msgid "What the council is asked to decide."
+msgstr "Wat de raad wordt gevraagd te besluiten."
+
+#, python-format
+msgid "You said: %(question)s"
+msgstr "U zei: %(question)s"
+
+msgid "We did: say what was done about it."
+msgstr "Wij deden: vertel wat ermee is gedaan."
+
+#, python-format
+msgid "%(survey)s: what we heard"
+msgstr "%(survey)s: wat we hoorden"
+
+#, python-format
+msgid "%(survey)s: consultation report"
+msgstr "%(survey)s: verslag van de raadpleging"
+
+#, python-format
+msgid "%(survey)s: update"
+msgstr "%(survey)s: tussenstand"
+
+#, python-format
+msgid "%(survey)s: you said, we did"
+msgstr "%(survey)s: u zei, wij deden"
+
+msgid "{responses} people answered. This is what they said."
+msgstr "{responses} mensen hebben geantwoord. Dit is wat ze zeiden."
+
+#, python-format
+msgid "The report file is larger than %(mb)s MB."
+msgstr "Het rapportbestand is groter dan %(mb)s MB."
+
+msgid "This is not a report file: a .zip exported from Reports is expected."
+msgstr "Dit is geen rapportbestand: verwacht wordt een .zip dat uit Rapporten is geëxporteerd."
+
+msgid "This is not a report file: it has no readable report.json."
+msgstr "Dit is geen rapportbestand: er zit geen leesbare report.json in."
+
+msgid "This report file was made by a version of Mapsurvey this one cannot read."
+msgstr "Dit rapportbestand is gemaakt met een versie van Mapsurvey die deze versie niet kan lezen."
+
+#, python-format
+msgid "A report holds up to %(n)s blocks."
+msgstr "Een rapport bevat hoogstens %(n)s blokken."
+
+#, python-format
+msgid "%(what)s shows a survey question this workspace does not have; the block was left out."
+msgstr "%(what)s toont een enquêtevraag die deze werkruimte niet heeft; het blok is weggelaten."
+
+#, python-format
+msgid "%(what)s: “%(survey)s” has no such question. A hidden note marks its place."
+msgstr "%(what)s: “%(survey)s” heeft zo'n vraag niet. Een verborgen notitie markeert de plek."
+
+msgid "A picture could not be read and was left out."
+msgstr "Een afbeelding kon niet worden gelezen en is weggelaten."
+
+msgid "Workspace only"
+msgstr "Alleen werkruimte"
+
+msgid "Key numbers"
+msgstr "Kerncijfers"
+
+msgid "Quotes"
+msgstr "Citaten"
+
+msgid "Compare two rounds"
+msgstr "Twee rondes vergelijken"
+
+msgid "Full width"
+msgstr "Volle breedte"
+
+msgid "Half width"
+msgstr "Halve breedte"
+
+msgid "answers"
+msgstr "antwoorden"
+
+msgid "average"
+msgstr "gemiddelde"
+
+msgid "median"
+msgstr "mediaan"
+
+msgid "range"
+msgstr "bereik"
+
+msgid "per day"
+msgstr "per dag"
+
+msgid "per week"
+msgstr "per week"
+
+msgid "per month"
+msgstr "per maand"
+
+msgid "opened, and answered (dark)"
+msgstr "geopend, en beantwoord (donker)"
+
+msgid "Share of the people who answered in each survey, and the number in brackets."
+msgstr "Aandeel van de mensen die in elke enquête antwoordden, met het aantal tussen haakjes."
+
+#, python-format
+msgid "People who answered both questions. Groups too small to show read “<%(k)s”."
+msgstr "Mensen die beide vragen beantwoordden. Groepen die te klein zijn om te tonen, worden weergegeven als “<%(k)s”."
+
+#, python-format
+msgid "%(n)s marks from %(p)s respondents"
+msgstr "%(n)s markeringen van %(p)s respondenten"
+
+#, python-format
+msgid "%(p)s respondents; darker squares were marked by more people"
+msgstr "%(p)s respondenten; donkerdere vakjes zijn door meer mensen gemarkeerd"
+
+#, python-format
+msgid "Data as of %(date)s"
+msgstr "Gegevens per %(date)s"
+
+#, python-format
+msgid "Printed %(date)s"
+msgstr "Afgedrukt op %(date)s"
+
+#, python-format
+msgid "page %(n)s"
+msgstr "pagina %(n)s"
+
+msgid "An image file is required."
+msgstr "Een afbeeldingsbestand is vereist."
+
+msgid "Question type is not available for publication."
+msgstr "Dit vraagtype is niet beschikbaar voor publicatie."
+
+msgid "Only a survey of this workspace can be shown."
+msgstr "Alleen een enquête van deze werkruimte kan worden getoond."
+
+msgid "Choose the other survey to compare with."
+msgstr "Kies de andere enquête om mee te vergelijken."
+
+msgid "Choose a different survey: a comparison needs two."
+msgstr "Kies een andere enquête: voor een vergelijking zijn er twee nodig."
+
+#, python-format
+msgid "“%(survey)s” has no comparable question with the code %(code)s."
+msgstr "“%(survey)s” heeft geen vergelijkbare vraag met de code %(code)s."
+
+msgid "Who took part"
+msgstr "Wie er meedeed"
+
+msgid "Publish the survey before publishing its results."
+msgstr "Publiceer de enquête voordat u de resultaten publiceert."
+
+msgid "Read the quotes and maps listed under “Before you publish” and confirm."
+msgstr "Lees de citaten en kaarten onder “Voordat u publiceert” en bevestig."
+
+#, python-format
+msgid "“%(host)s” is not a site address. Write one per line, like city.example.org."
+msgstr "“%(host)s” is geen siteadres. Schrijf er één per regel, zoals city.example.org."
+
+msgid "Delete report"
+msgstr "Rapport verwijderen"
+
+msgid "Reports"
+msgstr "Rapporten"
+
+#, python-format
+msgid "It is published at /r/%(slug)s/. That address stops opening."
+msgstr "Het is gepubliceerd op /r/%(slug)s/. Dat adres werkt daarna niet meer."
+
+#, python-format
+msgid "Its %(n)s block, with its text and pictures, is deleted. The survey answers it shows stay where they are. This cannot be undone — export the report first if you may want it back."
+msgid_plural "Its %(n)s blocks, with their text and pictures, are deleted. The survey answers they show stay where they are. This cannot be undone — export the report first if you may want it back."
+msgstr[0] "Het %(n)s blok, met tekst en afbeeldingen, wordt verwijderd. De enquête-antwoorden die het toont, blijven waar ze zijn. Dit kan niet ongedaan worden gemaakt — exporteer het rapport eerst als u het misschien terug wilt."
+msgstr[1] "De %(n)s blokken, met hun tekst en afbeeldingen, worden verwijderd. De enquête-antwoorden die ze tonen, blijven waar ze zijn. Dit kan niet ongedaan worden gemaakt — exporteer het rapport eerst als u het misschien terug wilt."
+
+msgid "Export first"
+msgstr "Eerst exporteren"
+
+msgid "Import a report"
+msgstr "Een rapport importeren"
+
+msgid "New report"
+msgstr "Nieuw rapport"
+
+msgid "Reports are part of Pro. On the current plan this workspace's reports are read-only: published ones stay online with the numbers they had, and nothing is deleted."
+msgstr "Rapporten horen bij Pro. In het huidige abonnement zijn de rapporten van deze werkruimte alleen-lezen: gepubliceerde rapporten blijven online met de cijfers die ze hadden, en er wordt niets verwijderd."
+
+msgid "See Pro"
+msgstr "Pro bekijken"
+
+msgid "A report tells what a survey found: text, with charts, maps and quotes between the paragraphs. Each survey's public results page is a report; a report made elsewhere can be imported as a file."
+msgstr "Een rapport vertelt wat een enquête heeft opgeleverd: tekst, met grafieken, kaarten en citaten tussen de alinea's. De pagina met openbare resultaten van elke enquête is een rapport; een rapport dat elders is gemaakt, kan als bestand worden geïmporteerd."
+
+msgid "No reports yet."
+msgstr "Nog geen rapporten."
+
+msgid "A report tells what a survey found."
+msgstr "Een rapport vertelt wat een enquête heeft opgeleverd."
+
+msgid "Start one from a survey's answers."
+msgstr "Begin er een met de antwoorden van een enquête."
+
+msgid "Start a report"
+msgstr "Een rapport beginnen"
+
+msgid "Begin with a draft made from a survey's answers and cut it down to what you want to say — or start empty. Nothing is published until you publish it."
+msgstr "Begin met een concept dat van de antwoorden van een enquête is gemaakt en kort het in tot wat u wilt zeggen — of begin leeg. Er wordt niets gepubliceerd totdat u het publiceert."
+
+msgid "Draft from a survey"
+msgstr "Concept op basis van een enquête"
+
+msgid "Choose"
+msgstr "Kiezen"
+
+msgid "A draft is made from a published survey's answers. This workspace has none yet, so start empty."
+msgstr "Een concept wordt gemaakt van de antwoorden van een gepubliceerde enquête. Deze werkruimte heeft er nog geen, dus begin leeg."
+
+msgid "Or"
+msgstr "Of"
+
+msgid "Blank report"
+msgstr "Leeg rapport"
+
+msgid "An empty page: add headings, text, pictures, numbers and quotes yourself."
+msgstr "Een lege pagina: voeg zelf koppen, tekst, afbeeldingen, cijfers en citaten toe."
+
+msgid "Copy an earlier report"
+msgstr "Een eerder rapport kopiëren"
+
+msgid "The same story for the next round: change what changed."
+msgstr "Hetzelfde verhaal voor de volgende ronde: pas aan wat is veranderd."
+
+msgid "Report to copy"
+msgstr "Te kopiëren rapport"
+
+msgid "for the survey"
+msgstr "voor de enquête"
+
+msgid "the same as in the report"
+msgstr "dezelfde als in het rapport"
+
+msgid "A report made elsewhere? Import its file on the Reports page."
+msgstr "Een rapport dat elders is gemaakt? Importeer het bestand op de pagina Rapporten."
+
+msgid "Untitled report"
+msgstr "Naamloos rapport"
+
+msgid "Choose a survey to draft a report from."
+msgstr "Kies een enquête om een conceptrapport van te maken."
+
+msgid "Report imported. It is not published; only this workspace sees it."
+msgstr "Rapport geïmporteerd. Het is niet gepubliceerd; alleen deze werkruimte ziet het."
+
+#, python-format
+msgid "“%(name)s” deleted."
+msgstr "“%(name)s” verwijderd."
+
+msgid "Always"
+msgstr "Altijd"
+
+msgid "File"
+msgstr "Bestand"
+
+msgid "Draft a report from these answers"
+msgstr "Een conceptrapport maken van deze antwoorden"
+
+msgid "Saved filters of this table"
+msgstr "Opgeslagen filters van deze tabel"
+
+msgid "No saved views yet. Filter the table, then save the filter here."
+msgstr "Nog geen opgeslagen weergaven. Filter de tabel en sla het filter hier op."
+
+msgid "Name of the view"
+msgstr "Naam van de weergave"
+
+msgid "Save current filter as…"
+msgstr "Huidig filter opslaan als…"
+
+msgid "Image (a picture, a chart or a map made elsewhere)"
+msgstr "Afbeelding (een foto, een grafiek of een kaart die elders is gemaakt)"
+
+msgid "Cross-tab: two questions against each other"
+msgstr "Kruistabel: twee vragen tegen elkaar afgezet"
+
+msgid "Compare: one question in two surveys"
+msgstr "Vergelijken: één vraag in twee enquêtes"
+
+msgid "Engagement: opened, answered, finished"
+msgstr "Deelname: geopend, beantwoord, afgerond"
+
+msgid "How many people gave each pair of answers, among those who answered both. Groups too small to show are hidden."
+msgstr "Hoeveel mensen elk paar antwoorden gaven, onder degenen die beide vragen beantwoordden. Groepen die te klein zijn om te tonen, worden verborgen."
+
+msgid "Compare with"
+msgstr "Vergelijken met"
+
+msgid "The other survey needs a question with the same code — as a second round made by duplicating the first has. Each answer's share is shown for both."
+msgstr "De andere enquête moet een vraag met dezelfde code hebben — zoals een tweede ronde die is gemaakt door de eerste te dupliceren. Van elk antwoord wordt het aandeel voor beide getoond."
+
+msgid "Before you publish"
+msgstr "Voordat u publiceert"
+
+msgid "Nothing to check: no quotes, no individual marks, no empty blocks."
+msgstr "Niets te controleren: geen citaten, geen losse markeringen, geen lege blokken."
+
+msgid "People in this report"
+msgstr "Mensen in dit rapport"
+
+msgid "Open the block"
+msgstr "Het blok openen"
+
+msgid "Delete the block"
+msgstr "Het blok verwijderen"
+
+msgid "Who can open it"
+msgstr "Wie het kan openen"
+
+msgid "Public can be found by search engines; unlisted opens by its link only; workspace only asks members to sign in."
+msgstr "Openbaar is vindbaar voor zoekmachines; verborgen opent alleen via de link; bij alleen werkruimte moeten leden inloggen."
+
+msgid "Numbers"
+msgstr "Cijfers"
+
+msgid "Live — follow new answers"
+msgstr "Live — volgen nieuwe antwoorden"
+
+msgid "Frozen — as they are now"
+msgstr "Bevroren — zoals ze nu zijn"
+
+msgid "Address:"
+msgstr "Adres:"
+
+msgid "I have read the quotes and maps listed above and they may be published."
+msgstr "Ik heb de hierboven genoemde citaten en kaarten gelezen en ze mogen worden gepubliceerd."
+
+msgid "Not yet"
+msgstr "Nog niet"
+
+msgid "Width"
+msgstr "Breedte"
+
+msgid "Reports are part of Pro. On the current plan this report is read-only: a published report stays online with the numbers it had, and nothing is deleted. You can still export it and make its PDF."
+msgstr "Rapporten horen bij Pro. In het huidige abonnement is dit rapport alleen-lezen: een gepubliceerd rapport blijft online met de cijfers die het had, en er wordt niets verwijderd. U kunt het nog steeds exporteren en er een PDF van maken."
+
+msgid "Publish this report"
+msgstr "Dit rapport publiceren"
+
+msgid "Checking the report…"
+msgstr "Het rapport wordt gecontroleerd…"
+
+msgid "Starts a section of the story."
+msgstr "Begint een onderdeel van het verhaal."
+
+msgid "Title above the block (optional)"
+msgstr "Titel boven het blok (optioneel)"
+
+msgid "What the map shows, in a sentence"
+msgstr "Wat de kaart laat zien, in één zin"
+
+msgid "Most marks sit along the river path and by the east entrance."
+msgstr "De meeste markeringen liggen langs het pad bij de rivier en bij de oostelijke ingang."
+
+msgid "Shown under the map and read aloud to people who cannot see it."
+msgstr "Wordt onder de kaart getoond en voorgelezen aan mensen die de kaart niet kunnen zien."
+
+msgid "Show the marks themselves"
+msgstr "De markeringen zelf tonen"
+
+msgid "every place, line or area as it was drawn, instead of the squares. A mark can point at someone's home: you decide whether that is right for this survey."
+msgstr "elke plek, lijn of elk vlak zoals het is getekend, in plaats van de vakjes. Een markering kan iemands huis aanwijzen: u beslist of dat bij deze enquête past."
+
+msgid "A number can follow the answers: write a token and the page fills it in."
+msgstr "Een getal kan de antwoorden volgen: schrijf een token en de pagina vult het in."
+
+msgid "CODE is a question's code. A frozen report keeps the numbers of the day it was frozen."
+msgstr "CODE is de code van een vraag. Een bevroren rapport houdt de cijfers van de dag waarop het is bevroren."
+
+#, python-format
+msgid "Questions %(rows)s (rows) × %(columns)s (columns): how many people gave each pair of answers, among those who answered both. A group smaller than %(k)s is hidden, with the totals that would give it away. To compare other questions, add another cross-tab."
+msgstr "Vragen %(rows)s (rijen) × %(columns)s (kolommen): hoeveel mensen elk paar antwoorden gaven, onder degenen die beide vragen beantwoordden. Een groep kleiner dan %(k)s wordt verborgen, samen met de totalen die haar zouden verraden. Voeg nog een kruistabel toe om andere vragen te vergelijken."
+
+msgid "How many people opened the survey, answered at least one question and finished it, and how that went over time. Trashed and moderated-out responses are not counted."
+msgstr "Hoeveel mensen de enquête openden, ten minste één vraag beantwoordden en haar afrondden, en hoe dat in de tijd verliep. Reacties in de prullenbak en reacties die bij moderatie zijn uitgesloten, tellen niet mee."
+
+msgid "One per line: the number, then “ | ”, then what it counts. You type these numbers; they do not change when new answers arrive."
+msgstr "Eén per regel: het getal, dan “ | ”, dan wat het telt. U typt deze getallen zelf; ze veranderen niet als er nieuwe antwoorden binnenkomen."
+
+msgid "Note under the numbers (optional)"
+msgstr "Notitie onder de cijfers (optioneel)"
+
+msgid "One quote per line. To name where it comes from, add “ | ” and the source. A quote is published exactly as written here: leave out anything that names a person."
+msgstr "Eén citaat per regel. Om de bron te noemen, voegt u “ | ” en de bron toe. Een citaat wordt precies zo gepubliceerd als het hier staat: laat alles weg wat een persoon noemt."
+
+msgid "Two half-width blocks in a row sit side by side on a wide screen."
+msgstr "Twee blokken van halve breedte achter elkaar staan op een breed scherm naast elkaar."
+
+msgid "Use this block elsewhere"
+msgstr "Dit blok elders gebruiken"
+
+msgid "Embed only this block on another site:"
+msgstr "Alleen dit blok op een andere site insluiten:"
+
+msgid "Opening"
+msgstr "Opening"
+
+msgid "Line above the title (optional)"
+msgstr "Regel boven de titel (optioneel)"
+
+msgid "Neighbourhood plan · survey report · September 2026"
+msgstr "Buurtplan · enquêterapport · september 2026"
+
+msgid "Opening paragraph"
+msgstr "Openingsalinea"
+
+msgid "Riverside plan 2027"
+msgstr "Plan Rivieroever 2027"
+
+msgid "Comma-separated. The same tags group this report with its surveys and datasets."
+msgstr "Gescheiden door komma's. Dezelfde labels groeperen dit rapport met zijn enquêtes en datasets."
+
+msgid "Embed on another site"
+msgstr "Insluiten op een andere site"
+
+msgid "Paste this where the report should appear. It always shows the published version and grows to its height. One block can be embedded on its own: open the block for its code."
+msgstr "Plak dit waar het rapport moet verschijnen. Het toont altijd de gepubliceerde versie en groeit mee met de hoogte. Eén blok kan apart worden ingesloten: open het blok voor de code."
+
+msgid "The code works once the report is published as public or unlisted."
+msgstr "De code werkt zodra het rapport als openbaar of verborgen is gepubliceerd."
+
+msgid "Sites that may embed it"
+msgstr "Sites die het mogen insluiten"
+
+msgid "One address per line. Empty means any site."
+msgstr "Eén adres per regel. Leeg betekent elke site."
+
+msgid "Readers"
+msgstr "Lezers"
+
+msgid "times the page was opened"
+msgstr "keer dat de pagina is geopend"
+
+msgid "times shown inside another site"
+msgstr "keer getoond binnen een andere site"
+
+msgid "PDF downloads"
+msgstr "PDF-downloads"
+
+#, python-format
+msgid "In the last 30 days: %(views)s opened, %(embeds)s embedded."
+msgstr "In de laatste 30 dagen: %(views)s keer geopend, %(embeds)s keer ingesloten."
+
+msgid "Your own visits and your colleagues' are not counted, and nothing about a reader is stored."
+msgstr "Uw eigen bezoeken en die van uw collega's worden niet geteld, en er wordt niets over een lezer opgeslagen."
+
+msgid "Report file"
+msgstr "Rapportbestand"
+
+msgid "The whole report — text, numbers, quotes, pictures and which questions its charts and maps show — as one file. Import it on the Reports page, here or in another workspace."
+msgstr "Het hele rapport — tekst, cijfers, citaten, afbeeldingen en welke vragen de grafieken en kaarten tonen — als één bestand. Importeer het op de pagina Rapporten, hier of in een andere werkruimte."
+
+msgid "Export report"
+msgstr "Rapport exporteren"
+
+msgid "PDF (A4)"
+msgstr "PDF (A4)"
+
+msgid "Every chart and map as a PNG with its numbers as CSV"
+msgstr "Elke grafiek en kaart als PNG, met de cijfers als CSV"
+
+msgid "Charts and maps (ZIP)"
+msgstr "Grafieken en kaarten (ZIP)"
+
+msgid "A frozen report's PDF is made once and linked from its page; a live report's PDF shows the numbers of the moment you ask."
+msgstr "De PDF van een bevroren rapport wordt één keer gemaakt en op de pagina gelinkt; de PDF van een live rapport toont de cijfers van het moment waarop u hem aanvraagt."
+
+msgid "Delete report…"
+msgstr "Rapport verwijderen…"
+
+msgid "As on a phone"
+msgstr "Zoals op een telefoon"
+
+msgid "Preview as on a phone"
+msgstr "Voorbeeld zoals op een telefoon"
+
+msgid "As on a computer"
+msgstr "Zoals op een computer"
+
+msgid "Preview as on a computer"
+msgstr "Voorbeeld zoals op een computer"
+
+msgid "Tick the box to confirm you have read the quotes and maps listed above."
+msgstr "Vink het vakje aan om te bevestigen dat u de hierboven genoemde citaten en kaarten hebt gelezen."
+
+msgid "The report could not be published. Publish the survey first."
+msgstr "Het rapport kon niet worden gepubliceerd. Publiceer eerst de enquête."
+
+msgid "Making the file…"
+msgstr "Het bestand wordt gemaakt…"
+
+msgid "The PDF could not be made. Try again."
+msgstr "De PDF kon niet worden gemaakt. Probeer het opnieuw."
+
+msgid "Preview — only editors of this report see this page."
+msgstr "Voorbeeld — alleen bewerkers van dit rapport zien deze pagina."
+
+msgid "Workspace only — members of this workspace see this report after signing in."
+msgstr "Alleen werkruimte — leden van deze werkruimte zien dit rapport na het inloggen."
+
+msgid "People who answered both questions."
+msgstr "Mensen die beide vragen beantwoordden."
+
+msgid "Someone who picked several options counts in each."
+msgstr "Wie meerdere opties koos, telt in elke optie mee."
+
+#, python-format
+msgid "A group smaller than %(k)s reads “<%(k)s”, and totals that would give it away read “—”."
+msgstr "Een groep kleiner dan %(k)s wordt weergegeven als “<%(k)s”, en totalen die haar zouden verraden als “—”."
+
+#, python-format
+msgid "%(n)s answered"
+msgstr "%(n)s beantwoord"
+
+msgid "Share of the people who answered the question in each survey; the small number is how many."
+msgstr "Aandeel van de mensen die de vraag in elke enquête beantwoordden; het kleine getal is het aantal."
+
+#, python-format
+msgid "A group smaller than %(k)s reads “<%(k)s” and has no share."
+msgstr "Een groep kleiner dan %(k)s wordt weergegeven als “<%(k)s” en heeft geen aandeel."
+
+msgid "Opened and answered over time"
+msgstr "Geopend en beantwoord in de tijd"
+
+msgid "per day: opened, and answered (dark)"
+msgstr "per dag: geopend, en beantwoord (donker)"
+
+msgid "per week: opened, and answered (dark)"
+msgstr "per week: geopend, en beantwoord (donker)"
+
+msgid "per month: opened, and answered (dark)"
+msgstr "per maand: geopend, en beantwoord (donker)"
+
+#, python-format
+msgid "“%(title)s” shows every mark as it was drawn, not squares. A mark can point at someone's home."
+msgstr "“%(title)s” toont elke markering zoals ze is getekend, geen vakjes. Een markering kan iemands huis aanwijzen."
+
+#, python-format
+msgid "“%(title)s” has no description for people who use a screen reader."
+msgstr "“%(title)s” heeft geen beschrijving voor mensen die een schermlezer gebruiken."
+
+msgid "Small groups are not hidden: the threshold is 1, so a chart can show one person's answer."
+msgstr "Kleine groepen worden niet verborgen: de drempel is 1, dus een grafiek kan het antwoord van één persoon tonen."
+
+#, python-format
+msgid "Here the earlier report showed: %(what)s. This survey has no question with that code — add a block for the question that replaced it, or delete this note."
+msgstr "Hier toonde het eerdere rapport: %(what)s. Deze enquête heeft geen vraag met die code — voeg een blok toe voor de vraag die ervoor in de plaats kwam, of verwijder deze notitie."
+
+msgid "Comments on this page"
+msgstr "Opmerkingen op deze pagina"
+
+msgid "Spray clouds are published as a density grid: each cell shows how many respondents painted there, and cells below the anonymity threshold are left out. No individual paint is ever shown."
+msgstr "Spraywolken worden gepubliceerd als een dichtheidsraster: elke cel toont hoeveel respondenten daar hebben gesprayd, en cellen onder de anonimiteitsdrempel worden weggelaten. Individuele spray wordt nooit getoond."
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "Objecten met weinig antwoorden worden gemaskeerd om de privacy te beschermen."
+
+msgid "Comments"
+msgstr "Opmerkingen"
+
+msgid "new"
+msgstr "nieuw"

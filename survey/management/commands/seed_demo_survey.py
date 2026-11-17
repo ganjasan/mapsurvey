@@ -27,9 +27,10 @@ from django.utils import timezone
 
 from survey import layers as layer_utils
 from survey.models import (
-    Answer, Organization, PublicResultsPage, Question, SurveyHeader, SurveyMapLayer, SurveySession,
+    Answer, Organization, Question, SurveyHeader, SurveyMapLayer, SurveySession,
 )
-from survey.public_results import bump_page_version, scaffold_page
+from reports.models import Report
+from reports.render import bump_version, scaffold_report
 from survey.question_types import THUMBS_DOWN, THUMBS_UP
 from survey.serialization import import_survey_from_zip
 from survey.trash import purge_survey
@@ -193,14 +194,14 @@ def seed_samples(survey, data):
 
 
 def publish_results_page(survey):
-    page = scaffold_page(survey)
-    if not PublicResultsPage.objects.filter(slug=RESULTS_SLUG).exclude(pk=page.pk).exists():
+    page = scaffold_report(survey)
+    if not Report.objects.filter(slug=RESULTS_SLUG).exclude(pk=page.pk).exists():
         page.slug = RESULTS_SLUG
     page.is_published = True
     page.visibility = 'unlisted'
     page.intro = RESULTS_INTRO
     page.save()
-    bump_page_version(page)
+    bump_version(page)
     return page
 
 

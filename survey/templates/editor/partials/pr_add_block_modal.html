@@ -6,18 +6,27 @@
                 <h5 class="modal-title">{% trans "Add block" %}</h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
-            <form method="post" action="{% url 'editor_public_results_block_add' survey.uuid %}" enctype="multipart/form-data">
+            <form method="post" action="{{ u.add }}" enctype="multipart/form-data">
                 {% csrf_token %}
                 <div class="modal-body">
                     <div class="pr-field">
                         <label>{% trans "Block type" %}</label>
                         <select name="block_type" class="form-control" id="prBlockType" onchange="prToggleAddBlockFields();">
-                            <option value="question">{% trans "Question results…" %}</option>
-                            <option value="image">{% trans "Image" %}</option>
-                            <option value="text">{% trans "Text block" %}</option>
+                            {% comment %}A story's blocks (change reports-story): what the author writes
+                            first, then what the survey's answers show. A report without a home
+                            survey has no questions to show.{% endcomment %}
+                            <option value="heading">{% trans "Heading" %}</option>
+                            <option value="text"{% if not question_rows %} selected{% endif %}>{% trans "Text" %}</option>
+                            <option value="image">{% trans "Image (a picture, a chart or a map made elsewhere)" %}</option>
+                            <option value="numbers">{% trans "Key numbers" %}</option>
+                            <option value="quotes">{% trans "Quotes" %}</option>
+                            {% if question_rows %}<option value="question" selected>{% trans "Question results…" %}</option>{% endif %}
+                            {% if crosstab_questions|length > 1 %}<option value="crosstab">{% trans "Cross-tab: two questions against each other" %}</option>{% endif %}
+                            {% if compare_surveys and crosstab_questions %}<option value="compare">{% trans "Compare: one question in two surveys" %}</option>{% endif %}
+                            {% if survey %}<option value="engagement">{% trans "Engagement: opened, answered, finished" %}</option>{% endif %}
                         </select>
                     </div>
-                    <div class="pr-field" id="prQWrap">
+                    <div class="pr-field" id="prQWrap"{% if not question_rows %} style="display:none;"{% endif %}>
                         <label>{% trans "Question" %}</label>
                         <!-- Native <select> {% trans "stays the source of truth for form submission (disabled options = not publishable); a custom listbox on top renders long question text on multiple lines with the type/count on their own muted line, and adds a search box — none of which a native" %} <select> popup can do. -->
                         <div class="pr-custom-select" id="prQCustom">
@@ -44,6 +53,28 @@
                             {% endfor %}
                         </select>
                         <div class="pr-help"><i class="fas fa-info-circle"></i> {% trans "Text questions are not available for publication — individual answers are never shown publicly." %}</div>
+                    </div>
+                    <div class="pr-field" id="prXtabWrap" style="display:none;">
+                        <label for="prXtabRows">{% trans "Rows" %}</label>
+                        <select name="rows" id="prXtabRows" class="form-control mb-2">
+                            {% for q in crosstab_questions %}<option value="{{ q.code }}">{{ q.name|default:q.code|striptags|truncatechars:70 }}</option>{% endfor %}
+                        </select>
+                        <label for="prXtabColumns">{% trans "Columns" %}</label>
+                        <select name="columns" id="prXtabColumns" class="form-control">
+                            {% for q in crosstab_questions %}<option value="{{ q.code }}"{% if forloop.counter == 2 %} selected{% endif %}>{{ q.name|default:q.code|striptags|truncatechars:70 }}</option>{% endfor %}
+                        </select>
+                        <div class="pr-help">{% trans "How many people gave each pair of answers, among those who answered both. Groups too small to show are hidden." %}</div>
+                    </div>
+                    <div class="pr-field" id="prCompareWrap" style="display:none;">
+                        <label for="prCompareQ">{% trans "Question" %}</label>
+                        <select name="compare_question" id="prCompareQ" class="form-control mb-2">
+                            {% for q in crosstab_questions %}<option value="{{ q.code }}">{{ q.name|default:q.code|striptags|truncatechars:70 }}</option>{% endfor %}
+                        </select>
+                        <label for="prCompareOther">{% trans "Compare with" %}</label>
+                        <select name="other" id="prCompareOther" class="form-control">
+                            {% for s in compare_surveys %}<option value="{{ s.uuid }}">{{ s.name }}</option>{% endfor %}
+                        </select>
+                        <div class="pr-help">{% trans "The other survey needs a question with the same code — as a second round made by duplicating the first has. Each answer's share is shown for both." %}</div>
                     </div>
                     <div class="pr-field" id="prImgWrap" style="display:none;">
                         <label>{% trans "Image file" %}</label>
@@ -109,6 +140,8 @@ function prToggleAddBlockFields() {
     var type = document.getElementById('prBlockType').value;
     document.getElementById('prQWrap').style.display = type === 'question' ? '' : 'none';
     document.getElementById('prImgWrap').style.display = type === 'image' ? '' : 'none';
+    document.getElementById('prXtabWrap').style.display = type === 'crosstab' ? '' : 'none';
+    document.getElementById('prCompareWrap').style.display = type === 'compare' ? '' : 'none';
 }
 (function() {
     var select = document.getElementById('prQ');

@@ -273,7 +273,7 @@ def _compare_changes(files, block):
 def _results_target(actor, site, value):
     """(link, question code, result kind) from the picker's '<survey uuid>:<code>', linking the
     survey when it is one of the workspace's; (None, '', '') for anything else."""
-    from ..public_results import block_type_for_question
+    from reports.render import block_type_for_question
     uuid_part, _sep, code = value.partition(':')
     survey = SurveyHeader.objects.filter(uuid=uuid_part).first() if uuid_part and code else None
     if survey is None:

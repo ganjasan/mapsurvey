@@ -46,9 +46,9 @@ question of the survey is bound to.
 
 ### Requirement: Every place that uses a dataset is listed
 The system SHALL list on a dataset's page every place that uses it: the survey that owns it,
-surveys and site blocks that link it, and questions bound to it. Deleting a workspace dataset SHALL
-show that list before the delete is confirmed, SHALL be refused while a question is bound to it,
-and SHALL remove its links otherwise.
+surveys and site blocks that link it, questions bound to it, and reports whose blocks read it.
+Deleting a workspace dataset SHALL show that list before the delete is confirmed, SHALL be refused
+while a question is bound to it, and SHALL remove its links otherwise.
 
 #### Scenario: The delete page lists the places
 - **WHEN** an editor opens the delete page of a dataset linked into a survey and a Site
@@ -61,6 +61,10 @@ and SHALL remove its links otherwise.
 #### Scenario: A bound question blocks the delete
 - **WHEN** a question is bound to the dataset's layer and the editor confirms the delete
 - **THEN** nothing is deleted and the page names the question
+
+#### Scenario: A report reads the dataset
+- **WHEN** a report block reads a survey's answers dataset
+- **THEN** the dataset's page names the report among the places that use it
 
 ### Requirement: Linked layers keep the memory rules
 The system SHALL serve a linked layer's geometry only from gated GeoJSON endpoints; no survey or

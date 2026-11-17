@@ -149,14 +149,14 @@ class SurfaceScopeTest(_ScopeFixture):
         THEN both count 5 (ADR-001 §6.2)
         """
         from survey.analytics import SurveyAnalyticsService
-        from survey.models import PublicResultsPage
-        from survey.public_results import PublicResultsService
+        from reports.models import Report
+        from reports.render import ReportService
         for _ in range(5):
             self._session('approved')
         for _ in range(2):
             self._session('approved', answered=False)
-        page = PublicResultsPage.objects.create(survey=self.survey, slug='scope-pr', is_published=True)
-        self.assertEqual(PublicResultsService(page).response_count(), 5)
+        page = Report.objects.create(survey=self.survey, slug='scope-pr', is_published=True)
+        self.assertEqual(ReportService(page).response_count(), 5)
         overview = SurveyAnalyticsService(self.survey, include_empty=False).get_overview()
         self.assertEqual(overview['total_sessions'], 5)
 

@@ -113,11 +113,31 @@ class DatasetView(models.Model):
     `objects` for a layer, `grid` (counts of distinct respondents, K-masked) for collected answers."""
     KIND_OBJECTS = 'objects'
     KIND_GRID = 'grid'
-    KIND_CHOICES = [(KIND_OBJECTS, _('Objects')), (KIND_GRID, _('Grid of counts'))]
+    # Analysis kinds (change data-analysis-views, #692): computed by `data.analysis`, always
+    # masked. `responses` is a saved filter of the Responses table (`data.responses_views`).
+    KIND_ENGAGEMENT = 'engagement'
+    KIND_CROSSTAB = 'crosstab'
+    KIND_COVERAGE = 'coverage'
+    KIND_DENSITY = 'density'
+    KIND_RESPONSES = 'responses'
+    KIND_CHOICES = [
+        (KIND_OBJECTS, _('Objects')),
+        (KIND_GRID, _('Grid of counts')),
+        (KIND_COVERAGE, _('Coverage')),
+        (KIND_DENSITY, _('Density')),
+        (KIND_ENGAGEMENT, _('Engagement')),
+        (KIND_CROSSTAB, _('Cross-tab')),
+        (KIND_RESPONSES, _('Responses filter')),
+    ]
+    CELL_KINDS = (KIND_GRID, KIND_COVERAGE, KIND_DENSITY)      # a FeatureCollection of cells
+    TABLE_KINDS = (KIND_ENGAGEMENT, KIND_CROSSTAB)             # a JSON result
 
     dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE, related_name='views')
     name = models.CharField(max_length=120)
-    kind = models.CharField(max_length=8, choices=KIND_CHOICES, default=KIND_OBJECTS)
+    kind = models.CharField(max_length=12, choices=KIND_CHOICES, default=KIND_OBJECTS)
+    # What the kind needs: a cross-tab's {'rows': code, 'columns': code}; a Responses filter's
+    # table state. Question CODES, never row ids.
+    config = models.JSONField(default=dict, blank=True)
     # [{'field', 'op' (eq | in | gt | lt), 'value' (str) | 'values' ([str])}], all must hold.
     conditions = models.JSONField(default=list, blank=True)
     # Public field names the view keeps ([] = every public field).
@@ -232,6 +252,8 @@ class Tag(models.Model):
     datasets = models.ManyToManyField(Dataset, related_name='tags', blank=True)
     # The CANONICAL survey; drafts and versions answer with it.
     surveys = models.ManyToManyField('survey.SurveyHeader', related_name='tags', blank=True)
+    # Reports (change reports-usage-api, #710): a report sits beside its surveys and datasets.
+    reports = models.ManyToManyField('reports.Report', related_name='tags', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

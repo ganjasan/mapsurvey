@@ -19,12 +19,63 @@ _HEX = re.compile(r'^#[0-9a-fA-F]{6}$')
 CACHE_SECONDS = 300
 
 
-def kind_for(dataset):
+def kinds_for(dataset):
+    """The view kinds a dataset allows, the default first (change data-analysis-views): what the
+    dataset holds decides, never the creator. () = no views."""
+    from data.analysis import COVERAGE_TYPES, DENSITY_TYPES
+    V = DatasetView
     if dataset.kind == Dataset.KIND_LAYER and dataset.layer_id and dataset.layer.source != 'question':
-        return DatasetView.KIND_OBJECTS
+        return (V.KIND_OBJECTS,)
     if dataset.kind == Dataset.KIND_ANSWERS:
-        return DatasetView.KIND_GRID
-    return None
+        from data.questions import question_of
+        question = question_of(dataset.survey, dataset.question_code)
+        input_type = question.input_type if question is not None else ''
+        if input_type in COVERAGE_TYPES:
+            return (V.KIND_GRID, V.KIND_COVERAGE)
+        if input_type in DENSITY_TYPES:
+            return (V.KIND_GRID, V.KIND_DENSITY)
+        return (V.KIND_GRID,)
+    if dataset.kind == Dataset.KIND_RESPONSES:
+        return (V.KIND_ENGAGEMENT, V.KIND_CROSSTAB, V.KIND_RESPONSES)
+    return ()
+
+
+def kind_for(dataset):
+    """The dataset's default view kind, or None."""
+    kinds = kinds_for(dataset)
+    return kinds[0] if kinds else None
+
+
+def kind_labels(kinds):
+    labels = dict(DatasetView.KIND_CHOICES)
+    return [(k, labels[k]) for k in kinds]
+
+
+def crosstab_questions(dataset):
+    """The questions a cross-tab of a responses dataset may name, in survey order."""
+    from data.analysis import CROSSTAB_TYPES
+    from data.questions import top_level_questions
+    return top_level_questions(dataset.survey, CROSSTAB_TYPES)
+
+
+def _clean_crosstab(dataset, config, errors):
+    from data.analysis import CROSSTAB_TYPES
+    from data.questions import questions_of
+    config = config if isinstance(config, dict) else {}
+    rows, columns = str(config.get('rows') or '').strip(), str(config.get('columns') or '').strip()
+    if not rows or not columns:
+        errors['config'] = _('A cross-tab needs two questions: one for the rows, one for the columns.')
+        return {}
+    if rows == columns:
+        errors['config'] = _('Pick two different questions.')
+        return {}
+    found = questions_of(dataset.survey, [rows, columns])
+    for code in (rows, columns):
+        q = found.get(code)
+        if q is None or q.parent_question_id_id is not None or q.input_type not in CROSSTAB_TYPES:
+            errors['config'] = _('“%(code)s” is not a choice, rating or thumbs question of this survey.') % {'code': code}
+            return {}
+    return {'rows': rows, 'columns': columns}
 
 
 def public_fields(dataset):
@@ -36,9 +87,19 @@ def public_fields(dataset):
 def clean(dataset, raw):
     """(values, errors) for a view posted as {'name', 'color', 'field_n', 'op_n', 'value_n', 'fields'}."""
     errors = {}
-    kind = kind_for(dataset)
-    if kind is None:
-        return {}, {'kind': _('Views are made of layers and of map answers.')}
+    kinds = kinds_for(dataset)
+    if not kinds:
+        return {}, {'kind': _('Views are made of layers, of map answers and of responses.')}
+    kind = str(raw.get('kind') or '').strip() or kinds[0]
+    if kind not in kinds:
+        return {}, {'kind': _('This dataset takes these views: %(kinds)s.')
+                    % {'kinds': ', '.join(str(label) for _k, label in kind_labels(kinds))}}
+    config = {}
+    if kind == DatasetView.KIND_CROSSTAB:
+        config = _clean_crosstab(dataset, raw.get('config'), errors)
+    elif kind == DatasetView.KIND_RESPONSES:
+        from data.responses_views import clean_config
+        config = clean_config(raw.get('config'))
     name = str(raw.get('name') or '').strip()[:120]
     if not name:
         errors['name'] = _('Give the view a name.')
@@ -69,7 +130,8 @@ def clean(dataset, raw):
         fields = [f for f in chosen if f in known]
         if set(fields) == set(known):
             fields = []
-    return {'name': name, 'kind': kind, 'color': color, 'conditions': conditions, 'fields': fields}, errors
+    return {'name': name, 'kind': kind, 'color': color, 'conditions': conditions, 'fields': fields,
+            'config': config}, errors
 
 
 def _number(value):
@@ -140,36 +202,52 @@ def objects_geojson(view):
 
 
 def _k_for(survey):
-    from survey.models import PublicResultsPage
-    page = PublicResultsPage.objects.filter(survey=survey).only('k_anonymity_threshold').first()
-    k = page.k_anonymity_threshold if page is not None else \
-        PublicResultsPage._meta.get_field('k_anonymity_threshold').default
-    return max(1, k or 1)
+    from reports.render import k_for_survey
+    return k_for_survey(survey)
 
 
 def grid_geojson(view):
     """A grid view's FeatureCollection: one polygon per cell with its count of distinct respondents;
     cells under K are omitted by `data.aggregate.grid`. No mark ever leaves."""
-    from data.aggregate import grid
-    from data.features import question_features
-    from data.scope import SessionScope
+    return json.dumps(cells(view), separators=(',', ':'))
+
+
+def cells(view, k=None):
+    """A cell view's FeatureCollection as a dict — `grid`, `coverage` or `density`
+    (`data.analysis.cells`), with the K it used."""
+    from data.analysis import cells as _cells
     ds = view.dataset
-    survey = ds.survey
-    k = _k_for(survey)
-    cells = grid(question_features(survey, ds.question_code, scope=SessionScope.public(survey)), k=k)
-    features = []
-    for cell in cells['cells']:
-        x0, y0, x1, y1 = cell['bbox']
-        features.append({'type': 'Feature', 'properties': {'respondents': cell['respondents']},
-                         'geometry': {'type': 'Polygon',
-                                      'coordinates': [[[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]]]}})
-    return json.dumps({'type': 'FeatureCollection', 'k': k, 'features': features}, separators=(',', ':'))
+    return _cells(ds.survey, ds.question_code, k or _k_for(ds.survey), kind=view.kind)
+
+
+def result(view, lang='en', k=None):
+    """What a computed view yields, as a dict: the cells of a grid / coverage / density view, the
+    steps and series of an engagement view, the table of a cross-tab. Masked for every reader
+    (design decision 6). None for a saved filter (objects, responses)."""
+    from data import analysis
+    ds = view.dataset
+    if view.kind in DatasetView.CELL_KINDS:
+        return cells(view, k)
+    # A report passes its own K; any other reader gets the K of the survey's report.
+    k = max(1, int(k)) if k else _k_for(ds.survey)
+    if view.kind == DatasetView.KIND_ENGAGEMENT:
+        return analysis.engagement(ds.survey, k)
+    if view.kind == DatasetView.KIND_CROSSTAB:
+        from data.questions import questions_of
+        config = view.config or {}
+        found = questions_of(ds.survey, [config.get('rows'), config.get('columns')])
+        rows, columns = found.get(config.get('rows')), found.get(config.get('columns'))
+        if rows is None or columns is None:
+            return {'kind': 'crosstab', 'k': k, 'missing': [c for c in (config.get('rows'), config.get('columns'))
+                                                           if c not in found]}
+        return analysis.crosstab(ds.survey, rows, columns, k, lang=lang)
+    return None
 
 
 def geojson_response(request, view):
     """The view's collection as a response, with an ETag on its content."""
     from django.http import HttpResponse
-    body = grid_geojson(view) if view.kind == DatasetView.KIND_GRID else objects_geojson(view)
+    body = grid_geojson(view) if view.kind in DatasetView.CELL_KINDS else objects_geojson(view)
     etag = '"view-%s-%s"' % (view.pk, hashlib.md5(body.encode('utf-8')).hexdigest()[:16])
     if request.headers.get('If-None-Match') == etag:
         response = HttpResponse(status=304)

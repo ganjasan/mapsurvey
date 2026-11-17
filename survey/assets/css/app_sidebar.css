@@ -85,6 +85,12 @@ body.app-rail .app-sidebar { width: var(--app-rail-w); }
 .app-item > span { overflow: hidden; text-overflow: ellipsis; }
 /* Holds {% pro_nav_mark %}: empty unless the workspace is locked out of the feature. */
 .app-item-mark { margin-left: auto; font-style: normal; flex: none; }
+/* A module in beta (NavItem.beta): a quiet letter beside the label, not a second Pro chip. */
+.app-item-beta {
+    flex: none; margin-left: -4px; font-style: normal; font-size: 11px; font-weight: 700; line-height: 1;
+    color: var(--app-side-ink-3); border: 1px solid var(--app-side-line); border-radius: 4px; padding: 2px 4px;
+}
+.app-item.active .app-item-beta { color: var(--app-side-accent); border-color: currentColor; }
 .app-item .app-dot { position: static; margin-left: auto; display: inline-block; }
 
 .app-side-foot { flex: none; border-top: 1px solid var(--app-side-line); padding: 8px; }
@@ -117,7 +123,7 @@ body.app-rail .app-wn { display: none; }
 /* ── Rail: icons only, the label as a tooltip ─────────────────────────── */
 body.app-rail .app-logo,
 body.app-rail .app-ws-name, body.app-rail .app-ws-plan, body.app-rail .app-ws-caret,
-body.app-rail .app-item > span, body.app-rail .app-item-mark,
+body.app-rail .app-item > span, body.app-rail .app-item-mark, body.app-rail .app-item-beta,
 body.app-rail .app-group-title { display: none; }
 body.app-rail .app-side-head { justify-content: center; padding: 0 8px; }
 body.app-rail .app-ws { width: auto; padding: 5px; }
@@ -164,7 +170,7 @@ body.app-rail .app-item:focus-visible::after {
     body.app-rail .app-ws-name, body.app-rail .app-ws-caret { display: inline; }
     body.app-rail .app-ws-plan { display: inline-block; }
     body.app-rail .app-item > span, body.app-rail .app-group-title { display: block; }
-    body.app-rail .app-item-mark { display: inline; }
+    body.app-rail .app-item-mark, body.app-rail .app-item-beta { display: inline; }
     body.app-rail .app-side-head { justify-content: flex-start; padding: 0 10px; }
     body.app-rail .app-ws { width: 100%; padding: 5px 8px; }
     body.app-rail .app-ws .app-ws-av { width: 22px; height: 22px; font-size: 11px; }

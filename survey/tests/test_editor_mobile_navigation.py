@@ -6,7 +6,8 @@ from django.test import TestCase, override_settings
 from django.contrib.auth.models import User
 from django.utils import timezone
 import re
-from survey.models import Organization, SurveyHeader, SurveySection, Question, Membership, SurveyCollaborator, PublicResultsPage, PublicResultsBlock
+from survey.models import Organization, SurveyHeader, SurveySection, Question, Membership, SurveyCollaborator
+from reports.models import Report, ReportBlock
 
 
 class MobileEditorNavTest(TestCase):
@@ -384,7 +385,7 @@ class PublicResultsStatusLineTest(TestCase):
         self.survey = SurveyHeader.objects.create(
             name="pr_status_survey", organization=self.org, status='published',
         )
-        self.page = PublicResultsPage.objects.create(survey=self.survey, slug='pr-status')
+        self.page = Report.objects.create(survey=self.survey, slug='pr-status')
         SurveyCollaborator.objects.create(user=self.user, survey=self.survey, role='owner')
         self.client.force_login(self.user)
 
@@ -450,13 +451,15 @@ class PublicResultsStatusLineTest(TestCase):
         GIVEN the flag on
         WHEN the PR tab renders with a block
         THEN the navbar tabs carry status dots instead of the survey chip and
-             block rows show their type badge
+             block rows name their type under the title (change
+             reports-block-type-names: the name, no longer a pill with the key)
         """
-        PublicResultsBlock.objects.create(page=self.page, block_type='text', order=1)
+        ReportBlock.objects.create(report=self.page, block_type='text', order=1,
+                                   content={'en': '<p>What we heard.</p>'})
         html = self._page()
         self.assertIn('tabdot td-published', html)
         self.assertIn('tabdot td-off', html)
-        self.assertIn('section-qcount', html)
+        self.assertIn('<span class="pr-block-type">Text</span>', html)
 
     @override_settings(MOBILE_EDITOR_NAV=False)
     def test_flag_off_keeps_legacy_ctxbar(self):

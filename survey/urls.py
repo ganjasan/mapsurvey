@@ -2,6 +2,7 @@ from django.urls import path, re_path
 from django.views.generic import RedirectView
 
 from data import views as data_views
+from reports import views as report_views
 
 from . import views
 from . import editor_views
@@ -19,7 +20,7 @@ from . import share_views
 from survey.print import views as print_views
 from . import translation_views
 from . import org_views
-from . import public_results_editor
+from reports import editor_views as public_results_editor
 from . import abuse_review_views
 from . import site_views
 from . import site_translation_views
@@ -203,6 +204,8 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/analytics/questions/<int:question_id>/text/', analytics_views.analytics_text_answers, name='analytics_text_answers'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/sessions/<int:session_id>/', analytics_views.analytics_session_detail, name='analytics_session_detail'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/table/', analytics_views.analytics_table, name='analytics_table'),
+    path('editor/surveys/<uuid:survey_uuid>/analytics/views/', analytics_views.analytics_view_save, name='analytics_view_save'),
+    path('editor/surveys/<uuid:survey_uuid>/analytics/views/<int:view_id>/delete/', analytics_views.analytics_view_delete, name='analytics_view_delete'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/sessions/<int:session_id>/tags/', analytics_views.analytics_session_update_tags, name='analytics_session_update_tags'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/sessions/<int:session_id>/answers/<int:question_id>/edit/', analytics_views.analytics_answer_edit, name='analytics_answer_edit'),
     path('editor/surveys/<uuid:survey_uuid>/analytics/sessions/<int:session_id>/status/', analytics_views.analytics_session_set_status, name='analytics_set_status'),
@@ -238,6 +241,7 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/public-results/blocks/reorder/', public_results_editor.public_results_blocks_reorder, name='editor_public_results_blocks_reorder'),
     path('editor/surveys/<uuid:survey_uuid>/public-results/set-published/', public_results_editor.public_results_set_published, name='editor_public_results_set_published'),
     path('editor/surveys/<uuid:survey_uuid>/public-results/freeze/', public_results_editor.public_results_freeze, name='editor_public_results_freeze'),
+    path('editor/surveys/<uuid:survey_uuid>/public-results/checks/', public_results_editor.public_results_checks, name='editor_public_results_checks'),
     path('editor/surveys/<uuid:survey_uuid>/public-results/unfreeze/', public_results_editor.public_results_unfreeze, name='editor_public_results_unfreeze'),
 
     # Share & tracking links
@@ -306,6 +310,9 @@ urlpatterns = [
     path('alternatives/social-pinpoint/', views.social_pinpoint_alternative, name='social_pinpoint_alternative'),
     path('alternatives/metroquest/', views.metroquest_alternative, name='metroquest_alternative'),
     path('r/<slug:slug>/', views.public_results, name='public_results'),
+    path('r/<slug:slug>/pdf/', report_views.report_page_pdf, name='report_page_pdf'),
+    path('r/<slug:slug>/block/<int:block_id>/', report_views.report_block, name='report_block'),
+    path('r/<slug:slug>/block/<int:block_id>/data.csv', report_views.report_block_csv, name='report_block_csv'),
     # Sites (change landing-core, #576): the public page and its report form.
     path('p/<slug:slug>/', site_views.site_public, name='site_public'),
     path('p/<slug:slug>/report/', abuse_review_views.site_report, name='site_report'),
@@ -322,11 +329,34 @@ urlpatterns = [
     path('editor/sites/', site_views.editor_sites, name='editor_sites'),
     # The Data catalogue (change data-catalogue, epic #676; `editor_data*` names light the sidebar row).
     path('editor/data/', data_views.catalogue, name='editor_data'),
+    # Reports (change reports-object, epic #712; `editor_reports*` names light the sidebar row).
+    path('editor/reports/', report_views.report_list, name='editor_reports'),
+    # The report's own editor (change reports-story, #704): the same views a survey's Public
+    # results tab reaches, addressed by the report.
+    path('editor/reports/new/', public_results_editor.report_create, name='editor_report_create'),
+    path('editor/reports/start/', report_views.report_start, name='editor_report_start'),
+    path('editor/reports/import/', report_views.report_import, name='editor_report_import'),
+    path('editor/reports/<uuid:report_uuid>/', public_results_editor.report_config, name='editor_report'),
+    path('editor/reports/<uuid:report_uuid>/preview/', public_results_editor.report_preview, name='editor_report_preview'),
+    path('editor/reports/<uuid:report_uuid>/settings/', public_results_editor.report_save_settings, name='editor_report_save'),
+    path('editor/reports/<uuid:report_uuid>/blocks/add/', public_results_editor.report_block_add, name='editor_report_block_add'),
+    path('editor/reports/<uuid:report_uuid>/blocks/<int:block_id>/edit/', public_results_editor.report_block_edit, name='editor_report_block_edit'),
+    path('editor/reports/<uuid:report_uuid>/blocks/<int:block_id>/delete/', public_results_editor.report_block_delete, name='editor_report_block_delete'),
+    path('editor/reports/<uuid:report_uuid>/blocks/reorder/', public_results_editor.report_blocks_reorder, name='editor_report_blocks_reorder'),
+    path('editor/reports/<uuid:report_uuid>/set-published/', public_results_editor.report_set_published, name='editor_report_set_published'),
+    path('editor/reports/<uuid:report_uuid>/freeze/', public_results_editor.report_freeze, name='editor_report_freeze'),
+    path('editor/reports/<uuid:report_uuid>/checks/', public_results_editor.report_checks, name='editor_report_checks'),
+    path('editor/reports/<uuid:report_uuid>/unfreeze/', public_results_editor.report_unfreeze, name='editor_report_unfreeze'),
+    path('editor/reports/<uuid:report_uuid>/export/', report_views.report_export, name='editor_report_export'),
+    path('editor/reports/<uuid:report_uuid>/pdf/', report_views.report_pdf, name='editor_report_pdf'),
+    path('editor/reports/<uuid:report_uuid>/blocks/<int:block_id>/file.<str:kind>', report_views.report_block_file, name='editor_report_block_file'),
+    path('editor/reports/<uuid:report_uuid>/delete/', report_views.report_delete, name='editor_report_delete'),
     path('editor/data/upload/', data_views.upload, name='editor_data_upload'),
     path('editor/data/jobs/', data_views.jobs, name='editor_data_jobs'),
     path('editor/data/jobs/<int:job_id>/dismiss/', data_views.dismiss, name='editor_data_job_dismiss'),
     path('editor/data/<int:dataset_id>/', data_views.dataset, name='editor_data_dataset'),
     path('editor/data/<int:dataset_id>/download/', data_views.download, name='editor_data_download'),
+    path('editor/data/<int:dataset_id>/views/<int:view_id>/', data_views.view_preview, name='editor_data_view'),
     path('editor/data/<int:dataset_id>/delete/', data_views.delete, name='editor_data_delete'),
     path('editor/sites/new/', site_views.editor_site_create, name='editor_site_create'),
     path('editor/sites/<uuid:uuid>/', site_views.editor_site, name='editor_site'),

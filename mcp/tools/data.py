@@ -17,7 +17,7 @@ from data.models import DatasetLink, DatasetView
 from api import scopes
 from api.errors import VALIDATION, ApiError, not_found
 from api.v1.datasets import (DatasetPatchIn, FieldIn, ViewIn, dataset_for, dataset_out, job_for, job_out,
-                             link_out, refused, view_out, workspace_of)
+                             link_out, refused, view_data, view_out, workspace_of)
 
 from .common import actor, survey
 from .registry import args_model, tool
@@ -175,9 +175,11 @@ def set_dataset_fields(request, args):
     'create_dataset_view',
     title='Save a dataset view',
     description=(
-        'A named view of a dataset: on a layer, conditions on public fields (eq, in, gt, lt) and the fields it '
-        'keeps; on collected answers, always a grid of counts with small groups hidden. Surveys and site map '
-        'blocks can show a view instead of the whole dataset.'
+        'A named view of a dataset. On a layer: conditions on public fields (eq, in, gt, lt) and the fields it '
+        'keeps. On the answers to a map question: kind grid (respondents per cell), coverage (lines and areas: '
+        'share of respondents per cell) or density (points and spray: marks per cell). On a survey\'s responses: '
+        'kind engagement (opened, answered, finished) or crosstab (config.rows and config.columns are the codes '
+        'of two choice questions). Small groups are always hidden. Read a computed view with get_dataset_view_data.'
     ),
     scope=scopes.SURVEYS_WRITE, role='editor',
     args=args_model('CreateDatasetViewArgs', ViewIn, dataset_id=DATASET),
@@ -186,10 +188,32 @@ def create_dataset_view(request, args):
     ds, _row = dataset_for(request.principal, args.dataset_id, edit=True)
     try:
         view = services.create_view(actor(request), ds, args.name, args.color or '',
-                                    [c.model_dump(exclude_none=True) for c in args.conditions], args.fields)
+                                    [c.model_dump(exclude_none=True) for c in args.conditions], args.fields,
+                                    kind=args.kind or '',
+                                    config=args.config.model_dump(exclude_none=True) if args.config else None)
     except services.DataRefused as exc:
         raise refused(exc)
     return view_out(view)
+
+
+@tool(
+    'get_dataset_view_data',
+    title='Read a computed dataset view',
+    description=(
+        'What an engagement, crosstab, grid, coverage or density view yields. Every count under the privacy '
+        'threshold K comes back masked (value null, display "<K") and map cells with fewer than K respondents '
+        'are left out — for every caller.'
+    ),
+    scope=scopes.SURVEYS_READ, role='workspace member', read_only=True, idempotent=True,
+    args=args_model('GetDatasetViewDataArgs', dataset_id=DATASET,
+                    view_id=(int, Field(description='A view id from get_dataset.'))),
+)
+def get_dataset_view_data(request, args):
+    ds, _row = dataset_for(request.principal, args.dataset_id)
+    view = DatasetView.objects.filter(pk=args.view_id, dataset=ds).select_related('dataset__survey').first()
+    if view is None:
+        raise not_found()
+    return view_data(view)
 
 
 @tool(

@@ -53,3 +53,27 @@ name how many in its caption.
 - **WHEN** 2 respondents placed points far apart, K = 3
 - **THEN** the payload holds no cell and a note, and the page shows the note instead of a map
 
+### Requirement: The grid counts marks as well as respondents
+The grid SHALL report, for every cell it shows, the number of marks inside it: each point, and each
+dot of a spray cloud, that falls in the cell. A line or polygon SHALL count as one mark in every
+cell it touches. Whether a cell is shown SHALL still depend only on its number of distinct
+respondents.
+
+#### Scenario: Two points from one respondent
+- **WHEN** 3 respondents placed points in one cell, one of them two points, and K = 3
+- **THEN** the cell reports 3 respondents and 4 marks
+
+#### Scenario: Marks do not unlock a cell
+- **WHEN** 2 respondents placed 10 points in one cell and K = 3
+- **THEN** the cell is omitted
+
+### Requirement: Only a report's author can lift the grid, block by block
+The rule that a public map carries no individual geometry SHALL hold for every public surface except
+a report's map block whose editor switched the marks on (spec `reports-live-blocks`). Site results
+blocks, grid, coverage and density views, the Data API and the MCP server SHALL keep the grid
+whatever a report shows.
+
+#### Scenario: A Site block of the same question
+- **WHEN** a report shows the marks of a question and a Site results block shows the same question
+- **THEN** the Site block's payload holds cells and no mark
+

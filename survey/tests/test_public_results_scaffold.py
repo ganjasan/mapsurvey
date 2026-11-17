@@ -6,7 +6,8 @@ from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.utils import timezone
 from unittest.mock import patch
-from survey.models import SurveyHeader, SurveySection, Question, Membership, PublicResultsPage, PublicResultsBlock
+from survey.models import SurveyHeader, SurveySection, Question, Membership
+from reports.models import Report, ReportBlock
 from io import StringIO
 from django.core.management import call_command
 from survey.tests.helpers import _make_org
@@ -58,7 +59,7 @@ class PublicResultsScaffoldTest(TestCase):
              survey order, unlisted, unpublished, with anonymous geo popups
         """
         self._publish()
-        page = PublicResultsPage.objects.get(survey=self.survey)
+        page = Report.objects.get(survey=self.survey)
         self.assertIsNotNone(page.scaffolded_at)
         self.assertFalse(page.is_published)
         self.assertEqual(page.visibility, 'unlisted')
@@ -76,7 +77,7 @@ class PublicResultsScaffoldTest(TestCase):
         WHEN the survey is published
         THEN the existing page is populated and stamped
         """
-        page = PublicResultsPage.objects.create(survey=self.survey, slug='lazy-page')
+        page = Report.objects.create(survey=self.survey, slug='lazy-page')
         self._publish()
         page.refresh_from_db()
         self.assertIsNotNone(page.scaffolded_at)
@@ -92,7 +93,7 @@ class PublicResultsScaffoldTest(TestCase):
         THEN no blocks are recreated
         """
         self._publish()
-        page = PublicResultsPage.objects.get(survey=self.survey)
+        page = Report.objects.get(survey=self.survey)
         page.blocks.all().delete()
         for status in ('closed', 'published'):
             response = self.client.post(
@@ -108,9 +109,9 @@ class PublicResultsScaffoldTest(TestCase):
         WHEN the survey is published
         THEN the existing blocks are unchanged and no defaults are added
         """
-        page = PublicResultsPage.objects.create(survey=self.survey, slug='hand-built')
-        manual = PublicResultsBlock.objects.create(
-            page=page, question=self.choice_q, block_type='chart', viz='pie',
+        page = Report.objects.create(survey=self.survey, slug='hand-built')
+        manual = ReportBlock.objects.create(
+            report=page, question=self.choice_q, block_type='chart', viz='pie',
         )
         self._publish()
         page.refresh_from_db()
@@ -124,7 +125,7 @@ class PublicResultsScaffoldTest(TestCase):
         THEN it 404s until the creator publishes the page
         """
         self._publish()
-        page = PublicResultsPage.objects.get(survey=self.survey)
+        page = Report.objects.get(survey=self.survey)
         response = self.client.get(f'/r/{page.slug}/')
         self.assertEqual(response.status_code, 404)
 
@@ -134,11 +135,11 @@ class PublicResultsScaffoldTest(TestCase):
         WHEN the owner publishes the survey
         THEN the transition still succeeds
         """
-        with patch('survey.services.publishing.scaffold_page', side_effect=RuntimeError('boom')):
+        with patch('survey.services.publishing.scaffold_report', side_effect=RuntimeError('boom')):
             self._publish()
         self.survey.refresh_from_db()
         self.assertEqual(self.survey.status, 'published')
-        self.assertFalse(PublicResultsPage.objects.filter(survey=self.survey).exists())
+        self.assertFalse(Report.objects.filter(survey=self.survey).exists())
 
     def test_admin_published_survey_scaffolds_on_config_open(self):
         """
@@ -151,7 +152,7 @@ class PublicResultsScaffoldTest(TestCase):
         self.client.login(username='scaffold_owner', password='pass')
         response = self.client.get(self.config_url)
         self.assertEqual(response.status_code, 200)
-        page = PublicResultsPage.objects.get(survey=self.survey)
+        page = Report.objects.get(survey=self.survey)
         self.assertEqual(page.blocks.count(), 2)
         self.assertIn('We drafted this page from your questions', response.content.decode())
 
@@ -162,7 +163,7 @@ class PublicResultsScaffoldTest(TestCase):
         THEN the draft banner is no longer shown
         """
         self._publish()
-        page = PublicResultsPage.objects.get(survey=self.survey)
+        page = Report.objects.get(survey=self.survey)
         page.is_published = True
         page.save()
         response = self.client.get(self.config_url)
@@ -177,7 +178,7 @@ class PublicResultsScaffoldTest(TestCase):
         self.client.login(username='scaffold_owner', password='pass')
         response = self.client.get(self.config_url)
         self.assertEqual(response.status_code, 200)
-        page = PublicResultsPage.objects.get(survey=self.survey)
+        page = Report.objects.get(survey=self.survey)
         self.assertIsNone(page.scaffolded_at)
         self.assertEqual(page.blocks.count(), 0)
 
@@ -196,7 +197,7 @@ class ShareResultsPageLinkTest(TestCase):
         SurveySection.objects.create(
             survey_header=self.survey, name='s1', code='S1', is_head=True,
         )
-        self.page = PublicResultsPage.objects.create(
+        self.page = Report.objects.create(
             survey=self.survey, slug='shareres', scaffolded_at=timezone.now(),
         )
         self.share_url = f'/editor/surveys/{self.survey.uuid}/share/'
@@ -263,7 +264,7 @@ class ScaffoldPublicResultsCommandTest(TestCase):
         """
         output = self._run('--dry-run')
         self.assertIn('would scaffold: cmd_test', output)
-        self.assertFalse(PublicResultsPage.objects.filter(survey=self.survey).exists())
+        self.assertFalse(Report.objects.filter(survey=self.survey).exists())
 
     def test_live_run_scaffolds_and_rerun_is_noop(self):
         """
@@ -273,7 +274,7 @@ class ScaffoldPublicResultsCommandTest(TestCase):
         """
         output = self._run()
         self.assertIn('scaffolded: cmd_test', output)
-        page = PublicResultsPage.objects.get(survey=self.survey)
+        page = Report.objects.get(survey=self.survey)
         self.assertEqual(page.blocks.count(), 1)
         output = self._run()
         self.assertIn('Nothing to scaffold', output)

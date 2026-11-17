@@ -12,9 +12,9 @@ from django.test import TestCase
 from billing.tests.helpers import make_sub, trial_used_elsewhere
 from survey import budget, budget_stats
 from survey.models import (
-    Answer, Membership, PublicResultsBlock, PublicResultsPage, Question, QuestionGroup, SurveyHeader,
-    SurveySection, SurveySession,
+    Answer, Membership, Question, QuestionGroup, SurveyHeader, SurveySection, SurveySession,
 )
+from reports.models import ReportBlock, Report
 from survey.question_types import GEO_TYPES, geo_column, normalise_choice_extras
 from survey.services import questions as svc_questions
 from survey.services.context import Actor
@@ -535,10 +535,10 @@ class BudgetAggregateTest(_BudgetFixture):
         for _ in range(3):
             self._answer(q, {'total': 20, 'items': {'1': 10}})
         self._answer(q, {'total': 20, 'items': {'1': 5, '3': 5}})
-        page = PublicResultsPage.objects.create(survey=self.survey, slug='budget-pr', is_published=True)
-        block = PublicResultsBlock.objects.create(page=page, block_type='budget', question=q, order=0)
-        from survey.public_results import PublicResultsService
-        payload = PublicResultsService(page)._build_block(block)
+        page = Report.objects.create(survey=self.survey, slug='budget-pr', is_published=True)
+        block = ReportBlock.objects.create(report=page, block_type='budget', question=q, order=0)
+        from reports.render import ReportService
+        payload = ReportService(page)._build_block(block)
         rows = {r['name']: r for r in payload['budget']['rows']}
         self.assertTrue(rows['Youth']['masked'])
         self.assertFalse(rows['Parks']['masked'])

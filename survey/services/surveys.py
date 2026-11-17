@@ -126,7 +126,7 @@ def set_thanks(actor, survey, html_by_lang, *, show_on_thanks=None, languages=No
             translation_table.record_hashes(survey, lang, [
                 (translation_table.THANKS_KEY, thanks.get(langs[0], ''), translation_table.RICH, thanks.get(lang, ''))])
     locks.rescreen_if_live(survey)
-    results_page = getattr(survey, 'public_results_page', None)
+    results_page = survey.report
     if results_page is not None and show_on_thanks is not None:
         results_page.show_on_thanks = bool(show_on_thanks)
         results_page.save(update_fields=['show_on_thanks'])

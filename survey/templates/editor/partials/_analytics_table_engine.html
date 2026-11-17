@@ -38,7 +38,14 @@ function loadTable(extraParams) {
             if (inp.value) cfParams += '&' + inp.name + '=' + encodeURIComponent(inp.value);
         });
     }
-    var url = _tableUrl + '?sort=' + sort + '&dir=' + dir + '&page=' + page
+    // A saved view named in the page URL (?view=<id>) rides on the FIRST table request only:
+    // the server turns it into the table's own parameters and the state form carries them on.
+    var viewParam = '';
+    if (window._rv2OpenView) {
+        viewParam = '&view=' + encodeURIComponent(window._rv2OpenView);
+        window._rv2OpenView = null;
+    }
+    var url = _tableUrl + '?sort=' + sort + '&dir=' + dir + '&page=' + page + viewParam
               + (pageSize ? '&page_size=' + pageSize : '')
               + (filters ? '&filters=' + encodeURIComponent(filters) : '')
               + (trash === '1' ? '&trash=1' : '')

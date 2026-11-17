@@ -9,7 +9,8 @@ from io import BytesIO
 import json
 import re
 import zipfile
-from survey.models import Organization, SurveyHeader, SurveySection, Question, SurveySession, Answer, Membership, PublicResultsPage, PublicResultsBlock
+from survey.models import Organization, SurveyHeader, SurveySection, Question, SurveySession, Answer, Membership
+from reports.models import Report, ReportBlock
 from survey.analytics import SurveyAnalyticsService
 from django.db.utils import IntegrityError
 from survey.tests.helpers import _objects_layer
@@ -337,12 +338,12 @@ class ObjectAnswersReadTest(TestCase):
         THEN object 1 (3 answers) shows its aggregates, object 2 (1 answer) is masked,
              object 3 shows 0, and no comment text appears anywhere in the payload
         """
-        from survey.models import PublicResultsPage, PublicResultsBlock
-        from survey.public_results import PublicResultsService, block_type_for_question
+        from reports.models import Report, ReportBlock
+        from reports.render import ReportService, block_type_for_question
         self.assertEqual(block_type_for_question(self.q), 'objects')
-        page = PublicResultsPage.objects.create(survey=self.survey, slug="oar", is_published=True, k_anonymity_threshold=3)
-        PublicResultsBlock.objects.create(page=page, block_type="objects", question=self.q, order=0)
-        blocks = PublicResultsService(page).build_blocks()
+        page = Report.objects.create(survey=self.survey, slug="oar", is_published=True, k_anonymity_threshold=3)
+        ReportBlock.objects.create(report=page, block_type="objects", question=self.q, order=0)
+        blocks = ReportService(page).build_blocks()
         block = blocks[0]
         self.assertEqual(block['data_type'], 'objects')
         rows = {r['key']: r for r in block['rows']}
