@@ -5997,7 +5997,7 @@ msgstr ""
 #: survey/templates/maptionnaire_alternative.html:52
 #: survey/templates/social_pinpoint_alternative.html:52
 msgid "Free"
-msgstr ""
+msgstr "Gratis"
 
 #: survey/templates/maptionnaire_alternative.html:54
 msgid "Self-hostable"
@@ -13504,3 +13504,837 @@ msgstr "Hapus 1 respons secara permanen? Tindakan ini tidak dapat dibatalkan."
 
 msgid "Permanently delete __N__ responses? This cannot be undone."
 msgstr "Hapus __N__ respons secara permanen? Tindakan ini tidak dapat dibatalkan."
+
+# Reports epic (#712), change reports-i18n
+msgid "Reports: tell what a survey found, as a page, a PDF or an embed"
+msgstr "Laporan: sampaikan temuan survei sebagai halaman, PDF, atau sematan"
+
+msgid "Finished"
+msgstr "Rampung"
+
+msgid "Reports written"
+msgstr "Laporan yang ditulis"
+
+msgid "by working on a report"
+msgstr "dengan mengerjakan laporan"
+
+msgid "A cross-tab needs two questions: one for the rows, one for the columns."
+msgstr "Tabulasi silang memerlukan dua pertanyaan: satu untuk baris, satu untuk kolom."
+
+msgid "Pick two different questions."
+msgstr "Pilih dua pertanyaan yang berbeda."
+
+#, python-format
+msgid "“%(code)s” is not a choice, rating or thumbs question of this survey."
+msgstr "“%(code)s” bukan pertanyaan pilihan, penilaian, atau jempol di survei ini."
+
+msgid "Views are made of layers, of map answers and of responses."
+msgstr "Tampilan dibuat dari lapisan, jawaban peta, dan tanggapan."
+
+#, python-format
+msgid "This dataset takes these views: %(kinds)s."
+msgstr "Dataset ini menerima tampilan berikut: %(kinds)s."
+
+msgid "This view is a table, not a map."
+msgstr "Tampilan ini berupa tabel, bukan peta."
+
+msgid "Objects"
+msgstr "Objek"
+
+msgid "Coverage"
+msgstr "Cakupan"
+
+msgid "Density"
+msgstr "Kepadatan"
+
+msgid "Engagement"
+msgstr "Keterlibatan"
+
+msgid "Cross-tab"
+msgstr "Tabulasi silang"
+
+msgid "Responses filter"
+msgstr "Filter tanggapan"
+
+msgid "Filter the table first: this view would show every response."
+msgstr "Filter tabel terlebih dahulu: tampilan ini akan menampilkan semua tanggapan."
+
+#, python-format
+msgid "“%(name)s” is shown in a report. Remove it from the report first."
+msgstr "“%(name)s” ditampilkan di sebuah laporan. Hapus dulu dari laporan tersebut."
+
+msgid "Make a report"
+msgstr "Buat laporan"
+
+msgid "A view of collected answers is a grid: how many respondents marked each cell, small groups hidden. Lines and areas can also be read as coverage, points and spray as density. It can be shown in a Site map block."
+msgstr "Tampilan jawaban yang terkumpul adalah kisi: berapa responden menandai tiap sel, kelompok kecil disembunyikan. Garis dan area juga dapat dibaca sebagai cakupan, titik dan semprotan sebagai kepadatan. Dapat ditampilkan di blok peta Situs."
+
+msgid "A view of responses computes something a report can show: how many people opened, answered and finished, or how two questions relate. Small groups are hidden. Filters saved on the Responses page are listed here too."
+msgstr "Tampilan tanggapan menghitung sesuatu yang dapat ditampilkan laporan: berapa orang membuka, menjawab, dan menyelesaikan, atau bagaimana dua pertanyaan saling berhubungan. Kelompok kecil disembunyikan. Filter yang disimpan di halaman Tanggapan juga tercantum di sini."
+
+msgid "Open in Responses"
+msgstr "Buka di Tanggapan"
+
+msgid "What it shows"
+msgstr "Yang ditampilkan"
+
+msgid "Rows"
+msgstr "Baris"
+
+msgid "Columns"
+msgstr "Kolom tabel"
+
+msgid "Site"
+msgstr "Situs"
+
+msgid "Report"
+msgstr "Laporan"
+
+#, python-format
+msgid "Aggregated · K = %(k)s"
+msgstr "Agregat · K = %(k)s"
+
+#, python-format
+msgid "This is what a report or a site shows of this view. A count under %(k)s reads “<%(k)s” and its value is never sent; map cells with fewer than %(k)s respondents are left out."
+msgstr "Inilah yang ditampilkan laporan atau situs dari tampilan ini. Hitungan di bawah %(k)s tertulis “<%(k)s” dan nilainya tidak pernah dikirim; sel peta dengan kurang dari %(k)s responden tidak disertakan."
+
+msgid "opened"
+msgstr "membuka"
+
+msgid "answered"
+msgstr "menjawab"
+
+msgid "finished"
+msgstr "menyelesaikan"
+
+msgid "Week of"
+msgstr "Minggu mulai"
+
+msgid "Opened"
+msgstr "Membuka"
+
+msgid "Answered"
+msgstr "Menjawab"
+
+msgid "Nobody has opened the survey yet."
+msgstr "Belum ada yang membuka survei ini."
+
+#, python-format
+msgid "The survey no longer has the question %(codes)s, so this table cannot be computed."
+msgstr "Survei tidak lagi memiliki pertanyaan %(codes)s, sehingga tabel ini tidak dapat dihitung."
+
+#, python-format
+msgid "%(n)s respondents answered both questions."
+msgstr "%(n)s responden menjawab kedua pertanyaan."
+
+msgid "A respondent who picked several options counts in each, so a line may add up to more than its total."
+msgstr "Responden yang memilih beberapa opsi dihitung di tiap opsi, jadi jumlah satu baris bisa melebihi totalnya."
+
+#, python-format
+msgid "“<%(k)s” is a group too small to show. The totals of its row and column, and the number of respondents who answered both questions, read “—” because they would give the group away."
+msgstr "“<%(k)s” adalah kelompok yang terlalu kecil untuk ditampilkan. Total baris dan kolomnya, serta jumlah responden yang menjawab kedua pertanyaan, tertulis “—” karena dapat mengungkap kelompok itu."
+
+#, python-format
+msgid "%(n)s cell"
+msgid_plural "%(n)s cells"
+msgstr[0] "%(n)s sel"
+
+#, python-format
+msgid "%(m)s m across"
+msgstr "lebar %(m)s m"
+
+#, python-format
+msgid "%(n)s respondent"
+msgid_plural "%(n)s respondents"
+msgstr[0] "%(n)s responden"
+
+#, python-format
+msgid "%(n)s not shown (in an area with fewer than %(k)s people)"
+msgid_plural "%(n)s not shown (in areas with fewer than %(k)s people)"
+msgstr[0] "%(n)s tidak ditampilkan (di area dengan kurang dari %(k)s orang)"
+
+#, python-format
+msgid "Each cell says how many respondents drew over it and their share of everyone who drew; the busiest cell has %(max)s."
+msgstr "Tiap sel menunjukkan berapa responden menggambar di atasnya dan porsinya dari semua yang menggambar; sel teramai berisi %(max)s."
+
+#, python-format
+msgid "Each cell says how many marks fall inside it; the busiest cell has %(max)s."
+msgstr "Tiap sel menunjukkan berapa tanda yang jatuh di dalamnya; sel teramai berisi %(max)s."
+
+#, python-format
+msgid "Each cell says how many respondents marked it; the busiest cell has %(max)s."
+msgstr "Tiap sel menunjukkan berapa responden yang menandainya; sel teramai berisi %(max)s."
+
+msgid "A report or a Site map block draws it."
+msgstr "Laporan atau blok peta Situs yang menggambarnya."
+
+msgid "A Responses filter is saved on the Responses page."
+msgstr "Filter tanggapan disimpan di halaman Tanggapan."
+
+msgid "No survey of this workspace has that id."
+msgstr "Tidak ada survei di ruang kerja ini dengan id tersebut."
+
+msgid "This report has no home survey: name the survey the block shows."
+msgstr "Laporan ini tidak punya survei asal: sebutkan survei yang ditampilkan blok."
+
+#, python-format
+msgid "A chart is drawn as: %(choices)s."
+msgstr "Grafik digambar sebagai: %(choices)s."
+
+#, python-format
+msgid "A block is one of: %(types)s."
+msgstr "Blok adalah salah satu dari: %(types)s."
+
+msgid "The survey has no question with that code."
+msgstr "Survei tidak punya pertanyaan dengan kode tersebut."
+
+#, python-format
+msgid "That question is shown as a %(kind)s block."
+msgstr "Pertanyaan itu ditampilkan sebagai blok %(kind)s."
+
+msgid "text answer, which is never published"
+msgstr "jawaban teks, yang tidak pernah diterbitkan"
+
+#, python-format
+msgid "%(n)s quote will be published as written. Check that it names nobody."
+msgid_plural "%(n)s quotes will be published as written. Check that they name nobody."
+msgstr[0] "%(n)s kutipan akan diterbitkan apa adanya. Pastikan tidak menyebut nama siapa pun."
+
+#, python-format
+msgid "“%(title)s” has nothing to show and will be left out."
+msgstr "“%(title)s” tidak punya isi untuk ditampilkan dan tidak akan disertakan."
+
+msgid "The report has no title."
+msgstr "Laporan belum berjudul."
+
+#, python-format
+msgid "%(n)s hidden block will not be shown."
+msgid_plural "%(n)s hidden blocks will not be shown."
+msgstr[0] "%(n)s blok tersembunyi tidak akan ditampilkan."
+
+msgid "Consultation summary"
+msgstr "Ringkasan konsultasi"
+
+msgid "Who took part, then every question in the survey's order, quotes to pick from."
+msgstr "Siapa yang ikut serta, lalu setiap pertanyaan sesuai urutan survei, dengan kutipan untuk dipilih."
+
+msgid "Council paper"
+msgstr "Naskah untuk dewan"
+
+msgid "Numbered sections, results as tables, a place for recommendations."
+msgstr "Bagian bernomor, hasil dalam tabel, tempat untuk rekomendasi."
+
+msgid "Engagement update"
+msgstr "Kabar terbaru partisipasi"
+
+msgid "Short and live while the survey is open: the numbers, the maps, a link to take part."
+msgstr "Singkat dan langsung selama survei dibuka: angka, peta, tautan untuk ikut serta."
+
+msgid "You said — we did"
+msgstr "Anda menyampaikan — kami melakukan"
+
+msgid "Each result followed by a place to say what was done about it."
+msgstr "Tiap hasil diikuti tempat untuk menyampaikan tindak lanjutnya."
+
+msgid "opened the survey"
+msgstr "membuka survei"
+
+msgid "marks on the map"
+msgstr "tanda di peta"
+
+msgid "Write what this part of the survey showed."
+msgstr "Tulis apa yang ditunjukkan bagian survei ini."
+
+msgid "What happens next"
+msgstr "Langkah selanjutnya"
+
+msgid "Say what will be done with these answers, and when."
+msgstr "Sampaikan apa yang akan dilakukan dengan jawaban ini, dan kapan."
+
+msgid "1. Background"
+msgstr "1. Latar belakang"
+
+msgid "Why the survey was run, who ran it and when."
+msgstr "Mengapa survei diadakan, siapa yang mengadakannya, dan kapan."
+
+msgid "2. Who took part"
+msgstr "2. Siapa yang ikut serta"
+
+msgid "3. What residents said"
+msgstr "3. Apa kata warga"
+
+msgid "4. Places"
+msgstr "4. Tempat"
+
+#, python-format
+msgid "%(n)s. Recommendations"
+msgstr "%(n)s. Rekomendasi"
+
+msgid "What the council is asked to decide."
+msgstr "Hal yang diminta untuk diputuskan dewan."
+
+#, python-format
+msgid "You said: %(question)s"
+msgstr "Anda menyampaikan: %(question)s"
+
+msgid "We did: say what was done about it."
+msgstr "Kami melakukan: sampaikan tindak lanjutnya."
+
+#, python-format
+msgid "%(survey)s: what we heard"
+msgstr "%(survey)s: yang kami dengar"
+
+#, python-format
+msgid "%(survey)s: consultation report"
+msgstr "%(survey)s: laporan konsultasi"
+
+#, python-format
+msgid "%(survey)s: update"
+msgstr "%(survey)s: kabar terbaru"
+
+#, python-format
+msgid "%(survey)s: you said, we did"
+msgstr "%(survey)s: Anda menyampaikan, kami melakukan"
+
+msgid "{responses} people answered. This is what they said."
+msgstr "{responses} orang menjawab. Inilah yang mereka sampaikan."
+
+#, python-format
+msgid "The report file is larger than %(mb)s MB."
+msgstr "Berkas laporan lebih besar dari %(mb)s MB."
+
+msgid "This is not a report file: a .zip exported from Reports is expected."
+msgstr "Ini bukan berkas laporan: yang diharapkan adalah .zip hasil ekspor dari Laporan."
+
+msgid "This is not a report file: it has no readable report.json."
+msgstr "Ini bukan berkas laporan: tidak ada report.json yang dapat dibaca."
+
+msgid "This report file was made by a version of Mapsurvey this one cannot read."
+msgstr "Berkas laporan ini dibuat oleh versi Mapsurvey yang tidak dapat dibaca versi ini."
+
+#, python-format
+msgid "A report holds up to %(n)s blocks."
+msgstr "Satu laporan memuat hingga %(n)s blok."
+
+#, python-format
+msgid "%(what)s shows a survey question this workspace does not have; the block was left out."
+msgstr "%(what)s menampilkan pertanyaan survei yang tidak ada di ruang kerja ini; blok tidak disertakan."
+
+#, python-format
+msgid "%(what)s: “%(survey)s” has no such question. A hidden note marks its place."
+msgstr "%(what)s: “%(survey)s” tidak punya pertanyaan tersebut. Catatan tersembunyi menandai tempatnya."
+
+msgid "A picture could not be read and was left out."
+msgstr "Satu gambar tidak dapat dibaca dan tidak disertakan."
+
+msgid "Workspace only"
+msgstr "Hanya ruang kerja"
+
+msgid "Key numbers"
+msgstr "Angka utama"
+
+msgid "Quotes"
+msgstr "Kutipan"
+
+msgid "Compare two rounds"
+msgstr "Bandingkan dua putaran"
+
+msgid "Full width"
+msgstr "Lebar penuh"
+
+msgid "Half width"
+msgstr "Setengah lebar"
+
+msgid "answers"
+msgstr "jawaban"
+
+msgid "average"
+msgstr "rata-rata"
+
+msgid "median"
+msgstr "median"
+
+msgid "range"
+msgstr "rentang"
+
+msgid "per day"
+msgstr "per hari"
+
+msgid "per week"
+msgstr "per minggu"
+
+msgid "per month"
+msgstr "per bulan"
+
+msgid "opened, and answered (dark)"
+msgstr "membuka, dan menjawab (gelap)"
+
+msgid "Share of the people who answered in each survey, and the number in brackets."
+msgstr "Porsi dari orang yang menjawab di tiap survei, dan jumlahnya dalam kurung."
+
+#, python-format
+msgid "People who answered both questions. Groups too small to show read “<%(k)s”."
+msgstr "Orang yang menjawab kedua pertanyaan. Kelompok yang terlalu kecil untuk ditampilkan tertulis “<%(k)s”."
+
+#, python-format
+msgid "%(n)s marks from %(p)s respondents"
+msgstr "%(n)s tanda dari %(p)s responden"
+
+#, python-format
+msgid "%(p)s respondents; darker squares were marked by more people"
+msgstr "%(p)s responden; kotak yang lebih gelap ditandai lebih banyak orang"
+
+#, python-format
+msgid "Data as of %(date)s"
+msgstr "Data per %(date)s"
+
+#, python-format
+msgid "Printed %(date)s"
+msgstr "Dicetak %(date)s"
+
+#, python-format
+msgid "page %(n)s"
+msgstr "halaman %(n)s"
+
+msgid "An image file is required."
+msgstr "Berkas gambar wajib diisi."
+
+msgid "Question type is not available for publication."
+msgstr "Jenis pertanyaan ini tidak tersedia untuk diterbitkan."
+
+msgid "Only a survey of this workspace can be shown."
+msgstr "Hanya survei dari ruang kerja ini yang dapat ditampilkan."
+
+msgid "Choose the other survey to compare with."
+msgstr "Pilih survei lain sebagai pembanding."
+
+msgid "Choose a different survey: a comparison needs two."
+msgstr "Pilih survei yang berbeda: perbandingan memerlukan dua survei."
+
+#, python-format
+msgid "“%(survey)s” has no comparable question with the code %(code)s."
+msgstr "“%(survey)s” tidak punya pertanyaan yang dapat dibandingkan dengan kode %(code)s."
+
+msgid "Who took part"
+msgstr "Siapa yang ikut serta"
+
+msgid "Publish the survey before publishing its results."
+msgstr "Terbitkan survei sebelum menerbitkan hasilnya."
+
+msgid "Read the quotes and maps listed under “Before you publish” and confirm."
+msgstr "Baca kutipan dan peta yang tercantum di “Sebelum menerbitkan” lalu konfirmasi."
+
+#, python-format
+msgid "“%(host)s” is not a site address. Write one per line, like city.example.org."
+msgstr "“%(host)s” bukan alamat situs. Tulis satu per baris, misalnya city.example.org."
+
+msgid "Delete report"
+msgstr "Hapus laporan"
+
+msgid "Reports"
+msgstr "Laporan"
+
+#, python-format
+msgid "It is published at /r/%(slug)s/. That address stops opening."
+msgstr "Laporan ini terbit di /r/%(slug)s/. Alamat itu tidak akan bisa dibuka lagi."
+
+#, python-format
+msgid "Its %(n)s block, with its text and pictures, is deleted. The survey answers it shows stay where they are. This cannot be undone — export the report first if you may want it back."
+msgid_plural "Its %(n)s blocks, with their text and pictures, are deleted. The survey answers they show stay where they are. This cannot be undone — export the report first if you may want it back."
+msgstr[0] "%(n)s bloknya, beserta teks dan gambarnya, akan dihapus. Jawaban survei yang ditampilkannya tetap di tempatnya. Tindakan ini tidak dapat dibatalkan — ekspor laporan terlebih dahulu jika mungkin Anda memerlukannya lagi."
+
+msgid "Export first"
+msgstr "Ekspor dulu"
+
+msgid "Import a report"
+msgstr "Impor laporan"
+
+msgid "New report"
+msgstr "Laporan baru"
+
+msgid "Reports are part of Pro. On the current plan this workspace's reports are read-only: published ones stay online with the numbers they had, and nothing is deleted."
+msgstr "Laporan adalah bagian dari Pro. Pada paket saat ini, laporan ruang kerja ini hanya dapat dibaca: laporan yang sudah terbit tetap daring dengan angka terakhirnya, dan tidak ada yang dihapus."
+
+msgid "See Pro"
+msgstr "Lihat Pro"
+
+msgid "A report tells what a survey found: text, with charts, maps and quotes between the paragraphs. Each survey's public results page is a report; a report made elsewhere can be imported as a file."
+msgstr "Laporan menyampaikan temuan survei: teks, dengan grafik, peta, dan kutipan di antara paragraf. Halaman hasil publik tiap survei adalah sebuah laporan; laporan yang dibuat di tempat lain dapat diimpor sebagai berkas."
+
+msgid "No reports yet."
+msgstr "Belum ada laporan."
+
+msgid "A report tells what a survey found."
+msgstr "Laporan menyampaikan temuan survei."
+
+msgid "Start one from a survey's answers."
+msgstr "Mulai dari jawaban sebuah survei."
+
+msgid "Start a report"
+msgstr "Mulai laporan"
+
+msgid "Begin with a draft made from a survey's answers and cut it down to what you want to say — or start empty. Nothing is published until you publish it."
+msgstr "Mulailah dengan draf yang dibuat dari jawaban survei lalu pangkas menjadi hal yang ingin Anda sampaikan — atau mulai dari kosong. Tidak ada yang terbit sampai Anda menerbitkannya."
+
+msgid "Draft from a survey"
+msgstr "Draf dari survei"
+
+msgid "Choose"
+msgstr "Pilih"
+
+msgid "A draft is made from a published survey's answers. This workspace has none yet, so start empty."
+msgstr "Draf dibuat dari jawaban survei yang sudah terbit. Ruang kerja ini belum punya, jadi mulailah dari kosong."
+
+msgid "Or"
+msgstr "Atau"
+
+msgid "Blank report"
+msgstr "Laporan kosong"
+
+msgid "An empty page: add headings, text, pictures, numbers and quotes yourself."
+msgstr "Halaman kosong: tambahkan sendiri judul bagian, teks, gambar, angka, dan kutipan."
+
+msgid "Copy an earlier report"
+msgstr "Salin laporan sebelumnya"
+
+msgid "The same story for the next round: change what changed."
+msgstr "Cerita yang sama untuk putaran berikutnya: ubah hal yang berubah."
+
+msgid "Report to copy"
+msgstr "Laporan yang disalin"
+
+msgid "for the survey"
+msgstr "untuk survei"
+
+msgid "the same as in the report"
+msgstr "sama seperti di laporan"
+
+msgid "A report made elsewhere? Import its file on the Reports page."
+msgstr "Laporan dibuat di tempat lain? Impor berkasnya di halaman Laporan."
+
+msgid "Untitled report"
+msgstr "Laporan tanpa judul"
+
+msgid "Choose a survey to draft a report from."
+msgstr "Pilih survei sebagai dasar draf laporan."
+
+msgid "Report imported. It is not published; only this workspace sees it."
+msgstr "Laporan diimpor. Belum diterbitkan; hanya ruang kerja ini yang dapat melihatnya."
+
+#, python-format
+msgid "“%(name)s” deleted."
+msgstr "“%(name)s” dihapus."
+
+msgid "Always"
+msgstr "Selalu"
+
+msgid "File"
+msgstr "Berkas"
+
+msgid "Draft a report from these answers"
+msgstr "Buat draf laporan dari jawaban ini"
+
+msgid "Saved filters of this table"
+msgstr "Filter tersimpan untuk tabel ini"
+
+msgid "No saved views yet. Filter the table, then save the filter here."
+msgstr "Belum ada tampilan tersimpan. Filter tabel, lalu simpan filternya di sini."
+
+msgid "Name of the view"
+msgstr "Nama tampilan"
+
+msgid "Save current filter as…"
+msgstr "Simpan filter saat ini sebagai…"
+
+msgid "Image (a picture, a chart or a map made elsewhere)"
+msgstr "Gambar (foto, grafik, atau peta yang dibuat di tempat lain)"
+
+msgid "Cross-tab: two questions against each other"
+msgstr "Tabulasi silang: dua pertanyaan saling disilangkan"
+
+msgid "Compare: one question in two surveys"
+msgstr "Bandingkan: satu pertanyaan di dua survei"
+
+msgid "Engagement: opened, answered, finished"
+msgstr "Keterlibatan: membuka, menjawab, menyelesaikan"
+
+msgid "How many people gave each pair of answers, among those who answered both. Groups too small to show are hidden."
+msgstr "Berapa orang memberikan tiap pasangan jawaban, di antara mereka yang menjawab keduanya. Kelompok yang terlalu kecil untuk ditampilkan disembunyikan."
+
+msgid "Compare with"
+msgstr "Bandingkan dengan"
+
+msgid "The other survey needs a question with the same code — as a second round made by duplicating the first has. Each answer's share is shown for both."
+msgstr "Survei lainnya memerlukan pertanyaan dengan kode yang sama — seperti pada putaran kedua yang dibuat dengan menduplikasi putaran pertama. Porsi tiap jawaban ditampilkan untuk keduanya."
+
+msgid "Before you publish"
+msgstr "Sebelum menerbitkan"
+
+msgid "Nothing to check: no quotes, no individual marks, no empty blocks."
+msgstr "Tidak ada yang perlu diperiksa: tanpa kutipan, tanpa tanda perorangan, tanpa blok kosong."
+
+msgid "People in this report"
+msgstr "Orang-orang dalam laporan ini"
+
+msgid "Open the block"
+msgstr "Buka blok"
+
+msgid "Delete the block"
+msgstr "Hapus blok"
+
+msgid "Who can open it"
+msgstr "Siapa yang dapat membukanya"
+
+msgid "Public can be found by search engines; unlisted opens by its link only; workspace only asks members to sign in."
+msgstr "Publik dapat ditemukan mesin pencari; tak terdaftar hanya terbuka lewat tautannya; hanya ruang kerja meminta anggota untuk masuk."
+
+msgid "Numbers"
+msgstr "Angka"
+
+msgid "Live — follow new answers"
+msgstr "Langsung — mengikuti jawaban baru"
+
+msgid "Frozen — as they are now"
+msgstr "Dibekukan — seperti saat ini"
+
+msgid "Address:"
+msgstr "Alamat:"
+
+msgid "I have read the quotes and maps listed above and they may be published."
+msgstr "Saya sudah membaca kutipan dan peta yang tercantum di atas, dan semuanya boleh diterbitkan."
+
+msgid "Not yet"
+msgstr "Belum"
+
+msgid "Width"
+msgstr "Ukuran lebar"
+
+msgid "Reports are part of Pro. On the current plan this report is read-only: a published report stays online with the numbers it had, and nothing is deleted. You can still export it and make its PDF."
+msgstr "Laporan adalah bagian dari Pro. Pada paket saat ini, laporan ini hanya dapat dibaca: laporan yang sudah terbit tetap daring dengan angka terakhirnya, dan tidak ada yang dihapus. Anda tetap dapat mengekspornya dan membuat PDF-nya."
+
+msgid "Publish this report"
+msgstr "Terbitkan laporan ini"
+
+msgid "Checking the report…"
+msgstr "Memeriksa laporan…"
+
+msgid "Starts a section of the story."
+msgstr "Mengawali satu bagian cerita."
+
+msgid "Title above the block (optional)"
+msgstr "Judul di atas blok (opsional)"
+
+msgid "What the map shows, in a sentence"
+msgstr "Apa yang ditunjukkan peta, dalam satu kalimat"
+
+msgid "Most marks sit along the river path and by the east entrance."
+msgstr "Sebagian besar tanda berada di sepanjang jalur tepi sungai dan dekat pintu masuk timur."
+
+msgid "Shown under the map and read aloud to people who cannot see it."
+msgstr "Ditampilkan di bawah peta dan dibacakan untuk orang yang tidak dapat melihatnya."
+
+msgid "Show the marks themselves"
+msgstr "Tampilkan tandanya sendiri"
+
+msgid "every place, line or area as it was drawn, instead of the squares. A mark can point at someone's home: you decide whether that is right for this survey."
+msgstr "setiap tempat, garis, atau area sebagaimana digambar, bukan kotak-kotak. Sebuah tanda bisa menunjuk rumah seseorang: Anda yang memutuskan apakah itu pantas untuk survei ini."
+
+msgid "A number can follow the answers: write a token and the page fills it in."
+msgstr "Angka dapat mengikuti jawaban: tulis sebuah token dan halaman akan mengisinya."
+
+msgid "CODE is a question's code. A frozen report keeps the numbers of the day it was frozen."
+msgstr "CODE adalah kode pertanyaan. Laporan yang dibekukan mempertahankan angka pada hari pembekuannya."
+
+#, python-format
+msgid "Questions %(rows)s (rows) × %(columns)s (columns): how many people gave each pair of answers, among those who answered both. A group smaller than %(k)s is hidden, with the totals that would give it away. To compare other questions, add another cross-tab."
+msgstr "Pertanyaan %(rows)s (baris) × %(columns)s (kolom): berapa orang memberikan tiap pasangan jawaban, di antara mereka yang menjawab keduanya. Kelompok yang lebih kecil dari %(k)s disembunyikan, beserta total yang dapat mengungkapnya. Untuk membandingkan pertanyaan lain, tambahkan tabulasi silang lain."
+
+msgid "How many people opened the survey, answered at least one question and finished it, and how that went over time. Trashed and moderated-out responses are not counted."
+msgstr "Berapa orang membuka survei, menjawab setidaknya satu pertanyaan, dan menyelesaikannya, serta perkembangannya dari waktu ke waktu. Tanggapan yang ada di tempat sampah dan yang ditolak moderasi tidak dihitung."
+
+msgid "One per line: the number, then “ | ”, then what it counts. You type these numbers; they do not change when new answers arrive."
+msgstr "Satu per baris: angkanya, lalu “ | ”, lalu apa yang dihitungnya. Angka ini Anda ketik sendiri; tidak berubah saat jawaban baru masuk."
+
+msgid "Note under the numbers (optional)"
+msgstr "Catatan di bawah angka (opsional)"
+
+msgid "One quote per line. To name where it comes from, add “ | ” and the source. A quote is published exactly as written here: leave out anything that names a person."
+msgstr "Satu kutipan per baris. Untuk menyebut asalnya, tambahkan “ | ” dan sumbernya. Kutipan diterbitkan persis seperti tertulis di sini: buang apa pun yang menyebut nama seseorang."
+
+msgid "Two half-width blocks in a row sit side by side on a wide screen."
+msgstr "Dua blok setengah lebar yang berurutan tampil berdampingan di layar lebar."
+
+msgid "Use this block elsewhere"
+msgstr "Gunakan blok ini di tempat lain"
+
+msgid "Embed only this block on another site:"
+msgstr "Sematkan hanya blok ini di situs lain:"
+
+msgid "Opening"
+msgstr "Pembuka"
+
+msgid "Line above the title (optional)"
+msgstr "Baris di atas judul (opsional)"
+
+msgid "Neighbourhood plan · survey report · September 2026"
+msgstr "Rencana lingkungan · laporan survei · September 2026"
+
+msgid "Opening paragraph"
+msgstr "Paragraf pembuka"
+
+msgid "Riverside plan 2027"
+msgstr "Rencana tepi sungai 2027"
+
+msgid "Comma-separated. The same tags group this report with its surveys and datasets."
+msgstr "Dipisahkan koma. Tag yang sama mengelompokkan laporan ini dengan survei dan datasetnya."
+
+msgid "Embed on another site"
+msgstr "Sematkan di situs lain"
+
+msgid "Paste this where the report should appear. It always shows the published version and grows to its height. One block can be embedded on its own: open the block for its code."
+msgstr "Tempel ini di tempat laporan seharusnya muncul. Selalu menampilkan versi yang terbit dan menyesuaikan tingginya. Satu blok dapat disematkan tersendiri: buka blok itu untuk kodenya."
+
+msgid "The code works once the report is published as public or unlisted."
+msgstr "Kode berfungsi setelah laporan diterbitkan sebagai publik atau tak terdaftar."
+
+msgid "Sites that may embed it"
+msgstr "Situs yang boleh menyematkannya"
+
+msgid "One address per line. Empty means any site."
+msgstr "Satu alamat per baris. Kosong berarti situs mana pun."
+
+msgid "Readers"
+msgstr "Pembaca"
+
+msgid "times the page was opened"
+msgstr "kali halaman dibuka"
+
+msgid "times shown inside another site"
+msgstr "kali ditampilkan di dalam situs lain"
+
+msgid "PDF downloads"
+msgstr "Unduhan PDF"
+
+#, python-format
+msgid "In the last 30 days: %(views)s opened, %(embeds)s embedded."
+msgstr "Dalam 30 hari terakhir: %(views)s kali dibuka, %(embeds)s kali lewat sematan."
+
+msgid "Your own visits and your colleagues' are not counted, and nothing about a reader is stored."
+msgstr "Kunjungan Anda sendiri dan rekan Anda tidak dihitung, dan tidak ada data pembaca yang disimpan."
+
+msgid "Report file"
+msgstr "Berkas laporan"
+
+msgid "The whole report — text, numbers, quotes, pictures and which questions its charts and maps show — as one file. Import it on the Reports page, here or in another workspace."
+msgstr "Seluruh laporan — teks, angka, kutipan, gambar, serta pertanyaan mana yang ditampilkan grafik dan petanya — dalam satu berkas. Impor di halaman Laporan, di sini atau di ruang kerja lain."
+
+msgid "Export report"
+msgstr "Ekspor laporan"
+
+msgid "PDF (A4)"
+msgstr "PDF (A4)"
+
+msgid "Every chart and map as a PNG with its numbers as CSV"
+msgstr "Setiap grafik dan peta sebagai PNG dengan angkanya sebagai CSV"
+
+msgid "Charts and maps (ZIP)"
+msgstr "Grafik dan peta (ZIP)"
+
+msgid "A frozen report's PDF is made once and linked from its page; a live report's PDF shows the numbers of the moment you ask."
+msgstr "PDF laporan yang dibekukan dibuat sekali dan ditautkan dari halamannya; PDF laporan langsung menampilkan angka pada saat Anda memintanya."
+
+msgid "Delete report…"
+msgstr "Hapus laporan…"
+
+msgid "As on a phone"
+msgstr "Seperti di ponsel"
+
+msgid "Preview as on a phone"
+msgstr "Pratinjau seperti di ponsel"
+
+msgid "As on a computer"
+msgstr "Seperti di komputer"
+
+msgid "Preview as on a computer"
+msgstr "Pratinjau seperti di komputer"
+
+msgid "Tick the box to confirm you have read the quotes and maps listed above."
+msgstr "Centang kotak untuk mengonfirmasi bahwa Anda sudah membaca kutipan dan peta yang tercantum di atas."
+
+msgid "The report could not be published. Publish the survey first."
+msgstr "Laporan tidak dapat diterbitkan. Terbitkan survei terlebih dahulu."
+
+msgid "Making the file…"
+msgstr "Membuat berkas…"
+
+msgid "The PDF could not be made. Try again."
+msgstr "PDF tidak dapat dibuat. Coba lagi."
+
+msgid "Preview — only editors of this report see this page."
+msgstr "Pratinjau — hanya editor laporan ini yang melihat halaman ini."
+
+msgid "Workspace only — members of this workspace see this report after signing in."
+msgstr "Hanya ruang kerja — anggota ruang kerja ini melihat laporan ini setelah masuk."
+
+msgid "People who answered both questions."
+msgstr "Orang yang menjawab kedua pertanyaan."
+
+msgid "Someone who picked several options counts in each."
+msgstr "Orang yang memilih beberapa opsi dihitung di tiap opsi."
+
+#, python-format
+msgid "A group smaller than %(k)s reads “<%(k)s”, and totals that would give it away read “—”."
+msgstr "Kelompok yang lebih kecil dari %(k)s tertulis “<%(k)s”, dan total yang dapat mengungkapnya tertulis “—”."
+
+#, python-format
+msgid "%(n)s answered"
+msgstr "%(n)s menjawab"
+
+msgid "Share of the people who answered the question in each survey; the small number is how many."
+msgstr "Porsi dari orang yang menjawab pertanyaan di tiap survei; angka kecil menunjukkan jumlahnya."
+
+#, python-format
+msgid "A group smaller than %(k)s reads “<%(k)s” and has no share."
+msgstr "Kelompok yang lebih kecil dari %(k)s tertulis “<%(k)s” dan tidak punya porsi."
+
+msgid "Opened and answered over time"
+msgstr "Membuka dan menjawab dari waktu ke waktu"
+
+msgid "per day: opened, and answered (dark)"
+msgstr "per hari: membuka, dan menjawab (gelap)"
+
+msgid "per week: opened, and answered (dark)"
+msgstr "per minggu: membuka, dan menjawab (gelap)"
+
+msgid "per month: opened, and answered (dark)"
+msgstr "per bulan: membuka, dan menjawab (gelap)"
+
+#, python-format
+msgid "“%(title)s” shows every mark as it was drawn, not squares. A mark can point at someone's home."
+msgstr "“%(title)s” menampilkan setiap tanda sebagaimana digambar, bukan kotak-kotak. Sebuah tanda bisa menunjuk rumah seseorang."
+
+#, python-format
+msgid "“%(title)s” has no description for people who use a screen reader."
+msgstr "“%(title)s” tidak punya deskripsi untuk pengguna pembaca layar."
+
+msgid "Small groups are not hidden: the threshold is 1, so a chart can show one person's answer."
+msgstr "Kelompok kecil tidak disembunyikan: ambangnya 1, jadi grafik bisa menampilkan jawaban satu orang."
+
+#, python-format
+msgid "Here the earlier report showed: %(what)s. This survey has no question with that code — add a block for the question that replaced it, or delete this note."
+msgstr "Di sini laporan sebelumnya menampilkan: %(what)s. Survei ini tidak punya pertanyaan dengan kode tersebut — tambahkan blok untuk pertanyaan penggantinya, atau hapus catatan ini."
+
+msgid "Comments on this page"
+msgstr "Komentar di halaman ini"
+
+msgid "Spray clouds are published as a density grid: each cell shows how many respondents painted there, and cells below the anonymity threshold are left out. No individual paint is ever shown."
+msgstr "Awan semprotan diterbitkan sebagai kisi kepadatan: tiap sel menunjukkan berapa responden yang menyemprot di sana, dan sel di bawah ambang anonimitas tidak disertakan. Semprotan perorangan tidak pernah ditampilkan."
+
+msgid "Objects with few answers are masked to protect privacy."
+msgstr "Objek dengan sedikit jawaban disamarkan demi melindungi privasi."
+
+msgid "Comments"
+msgstr "Komentar"
+
+msgid "new"
+msgstr "baru"
