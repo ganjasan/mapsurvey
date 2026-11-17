@@ -14644,3 +14644,7 @@ msgstr "Escreva aqui. Um bloco de texto vazio fica fora do relatório."
 
 msgid "what it counts"
 msgstr "o que conta"
+
+#, python-format
+msgid "This is the report the Public results tab of “%(survey)s” opens. After it is deleted, that tab opens the survey's next report, or starts an empty one."
+msgstr "Este é o relatório que o separador «Resultados públicos» de «%(survey)s» abre. Depois de eliminado, o separador abre o relatório seguinte do inquérito ou começa um vazio."

@@ -52,7 +52,18 @@
 .lb-notices { padding: 8px 14px 0; flex: none; font-size: 13.5px; }
 
 /* ── three columns ── */
-.lb-work { display: grid; grid-template-columns: 240px minmax(0, 1fr) 340px; flex: 1; min-height: 0; }
+.lb-work { display: grid; grid-template-columns: var(--lb-rail-w, 240px) minmax(0, 1fr) var(--lb-panel-w, 340px); flex: 1; min-height: 0; }
+/* Side panels are resized by dragging their inner edge (js: initPanelResize); the widths are the
+   two variables above, kept per browser. The whole edge is the hit area, as in the survey editor. */
+.lb-rail, .lb-panel { position: relative; }
+.lb-resize { position: absolute; top: 0; bottom: 0; width: 9px; cursor: col-resize; z-index: 5; touch-action: none; }
+.lb-rail > .lb-resize { right: -5px; }
+.lb-panel > .lb-resize { left: -5px; }
+.lb-resize::after { content: ""; position: absolute; top: 0; bottom: 0; left: 3px; width: 3px; background: var(--accent); opacity: 0; transition: opacity .12s; }
+.lb-resize:hover::after, .lb-resize.dragging::after, .lb-resize:focus-visible::after { opacity: .35; }
+.lb-resize:focus-visible { outline: none; }
+body.lb-resizing { cursor: col-resize; user-select: none; }
+body.lb-resizing iframe { pointer-events: none; }
 .lb-rail { background: #fbfbfc; border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
 .lb-rail-head { padding: 12px 16px 6px; font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
 .lb-outline { list-style: none; margin: 0; padding: 2px 8px; }
@@ -307,7 +318,7 @@ fieldset.lb-card { border: 1px solid var(--line); padding: 1rem 1.1rem; }
 
 /* ── narrow screens: the panel goes under the canvas, the outline hides ── */
 @media (max-width: 1100px) {
-  .lb-work { grid-template-columns: minmax(0, 1fr) 320px; }
+  .lb-work { grid-template-columns: minmax(0, 1fr) min(var(--lb-panel-w, 320px), 50vw); }
   .lb-rail { display: none; }
 }
 @media (max-width: 760px) {
@@ -317,6 +328,7 @@ fieldset.lb-card { border: 1px solid var(--line); padding: 1rem 1.1rem; }
   .lb-work { grid-template-columns: 1fr; }
   .lb-canvas { padding: 12px 8px 24px; overflow: visible; }
   .lb-panel { border-left: 0; border-top: 1px solid var(--line); }
+  .lb-resize { display: none; }
   .lb-pop { right: auto; left: 0; width: min(360px, calc(100vw - 24px)); }
 }
 /* Contacts rows on the canvas (change site-contacts-block) */

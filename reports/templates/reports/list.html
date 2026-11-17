@@ -63,6 +63,9 @@ report file.{% endcomment %}
         {% if row.report.is_published %}
         <a class="btn btn-sm btn-outline-secondary" href="{{ row.public_url }}" target="_blank" rel="noopener">{% trans "Open" %}</a>
         {% endif %}
+        {% if row.may_edit %}
+        <a class="btn btn-sm btn-outline-danger" href="{% url 'editor_report_delete' row.report.uuid %}?from=list" title="{% trans 'Delete report' %}" aria-label="{% trans 'Delete report' %}" data-testid="report-delete"><i class="far fa-trash-alt" aria-hidden="true"></i></a>
+        {% endif %}
       </span>
     </div>
     {% endfor %}
