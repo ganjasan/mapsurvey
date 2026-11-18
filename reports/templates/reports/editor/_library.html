@@ -1,7 +1,8 @@
 {% load i18n %}{% comment %}The block library of the report builder (change reports-canvas-editor, #731): opened by a "+"
 between blocks or "Add block". A tile is one click — it posts the block's type (or the question whose
 chart or map is wanted) with the position (`after`), and the builder comes back with the new block
-selected. A cross-tab and a comparison need two choices first: their tile opens a small form here.
+selected. A cross-tab and a comparison are one click too: their questions are set in the block's
+settings (change crosstab-settings-in-block, #751).
 "Charts and maps from" (change report-home-survey, #739) is the survey the data tiles belong to: the
 report's home survey to begin with, any other survey of the workspace on choice — the tiles are then
 fetched from `u.library` and swapped into #rb-lib-groups, and the choice is posted with the tile.{% endcomment %}

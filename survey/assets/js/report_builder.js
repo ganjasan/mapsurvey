@@ -3,7 +3,7 @@
  * reports/builder.html runs on js/site_builder.js — selection, writing in place, rows, drops,
  * autosave, order, the library, the device toggle are that script's. This one holds what only a
  * report has: the publish dialog with its checks, unpublish, the PDF / ZIP job, half-width blocks
- * sitting side by side, the library's two small forms, and an address that is not saved while it is
+ * sitting side by side, quotes picked from the answers, and an address that is not saved while it is
  * being typed. Messages go in with textContent. */
 (function () {
   'use strict';
@@ -170,17 +170,6 @@
   /* ─── the address is applied when the field is left, never while typing ── */
   var slug = document.getElementById('rb-slug');
   if (slug) slug.addEventListener('input', function (e) { e.stopPropagation(); });
-
-  /* ─── library: a tile that needs two choices opens its form ──────────── */
-  document.addEventListener('click', function (e) {
-    var tile = e.target.closest('[data-lib-form]');
-    if (!tile) return;
-    var body = document.querySelector('[data-lib-form-body="' + tile.dataset.libForm + '"]');
-    if (!body) return;
-    body.hidden = !body.hidden;
-    tile.setAttribute('aria-expanded', body.hidden ? 'false' : 'true');
-    if (!body.hidden) { var first = body.querySelector('select'); if (first) first.focus(); }
-  });
 
   /* ─── library: another survey's charts and maps (change report-home-survey) ── */
   document.addEventListener('change', function (e) {

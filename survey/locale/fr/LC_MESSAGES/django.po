@@ -14783,3 +14783,47 @@ msgid "%(n)s quote carries an email address, a phone number or a web address."
 msgid_plural "%(n)s quotes carry an email address, a phone number or a web address."
 msgstr[0] "%(n)s citation contient une adresse e-mail, un numéro de téléphone ou une adresse web."
 msgstr[1] "%(n)s citations contiennent une adresse e-mail, un numéro de téléphone ou une adresse web."
+
+msgid "Bars"
+msgstr "Barres"
+
+
+msgid "Count"
+msgstr "Effectif"
+
+msgid "% of respondents"
+msgstr "% des répondants"
+
+msgid "Sort by value"
+msgstr "Trier par valeur"
+
+msgid "Split by"
+msgstr "Répartir par"
+
+msgid "Stacked 100%"
+msgstr "Empilées 100 %"
+
+msgid "Suggested views"
+msgstr "Vues suggérées"
+
+msgid "Too few answers to draw these as a chart: the table shows what can be shown."
+msgstr "Trop peu de réponses pour un graphique : le tableau montre ce qui peut l’être."
+
+msgid "Values"
+msgstr "Valeurs"
+
+#, python-format
+msgid "Not shown as a share: %(names)s — a group in it is smaller than %(k)s, so its total is not published."
+msgstr "Pas affiché en part : %(names)s — un groupe y est inférieur à %(k)s, son total n’est donc pas publié."
+
+#, python-format
+msgid "Not shown: %(names)s — a group in it is smaller than %(k)s, and its other groups would give it away."
+msgstr "Pas affiché : %(names)s — un groupe y est inférieur à %(k)s, et ses autres groupes le trahiraient."
+
+#, python-format
+msgid "How many people gave each pair of answers, among those who answered both. A group smaller than %(k)s is hidden, with the totals that would give it away."
+msgstr "Combien de personnes ont donné chaque paire de réponses, parmi celles qui ont répondu aux deux. Un groupe inférieur à %(k)s est masqué, avec les totaux qui le trahiraient."
+
+#, python-format
+msgid "Shown as counts: a group smaller than %(k)s keeps the total of everyone unpublished, and a share needs it."
+msgstr "Affiché en effectifs : un groupe inférieur à %(k)s empêche de publier le total, et une part en a besoin."

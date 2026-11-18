@@ -14835,3 +14835,47 @@ msgid_plural "%(n)s quotes carry an email address, a phone number or a web addre
 msgstr[0] "%(n)s cytat zawiera adres e-mail, numer telefonu lub adres strony."
 msgstr[1] "%(n)s cytaty zawierają adres e-mail, numer telefonu lub adres strony."
 msgstr[2] "%(n)s cytatów zawiera adres e-mail, numer telefonu lub adres strony."
+
+msgid "Bars"
+msgstr "Słupki"
+
+
+msgid "Count"
+msgstr "Liczebność"
+
+msgid "% of respondents"
+msgstr "% respondentów"
+
+msgid "Sort by value"
+msgstr "Sortuj według wartości"
+
+msgid "Split by"
+msgstr "Podziel według"
+
+msgid "Stacked 100%"
+msgstr "Skumulowane 100%"
+
+msgid "Suggested views"
+msgstr "Proponowane widoki"
+
+msgid "Too few answers to draw these as a chart: the table shows what can be shown."
+msgstr "Za mało odpowiedzi na wykres: tabela pokazuje to, co można pokazać."
+
+msgid "Values"
+msgstr "Wartości"
+
+#, python-format
+msgid "Not shown as a share: %(names)s — a group in it is smaller than %(k)s, so its total is not published."
+msgstr "Nie pokazano jako udziału: %(names)s — jest w tym grupa mniejsza niż %(k)s, więc jej suma nie jest publikowana."
+
+#, python-format
+msgid "Not shown: %(names)s — a group in it is smaller than %(k)s, and its other groups would give it away."
+msgstr "Nie pokazano: %(names)s — jest w tym grupa mniejsza niż %(k)s, a pozostałe grupy by ją zdradziły."
+
+#, python-format
+msgid "How many people gave each pair of answers, among those who answered both. A group smaller than %(k)s is hidden, with the totals that would give it away."
+msgstr "Ile osób udzieliło każdej pary odpowiedzi spośród tych, które odpowiedziały na oba pytania. Grupa mniejsza niż %(k)s jest ukryta razem z sumami, które by ją zdradziły."
+
+#, python-format
+msgid "Shown as counts: a group smaller than %(k)s keeps the total of everyone unpublished, and a share needs it."
+msgstr "Pokazano jako liczby: grupa mniejsza niż %(k)s sprawia, że suma nie jest publikowana, a udział jej wymaga."

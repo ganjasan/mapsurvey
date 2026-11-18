@@ -55,6 +55,27 @@ body.rp{margin:0;background:#fff;}
 .rp .quotes{display:grid;gap:12px;}
 .rp .quotes blockquote{margin:0;padding:14px 18px;background:#f5f6f8;border-radius:10px;font-size:1rem;line-height:1.5;font-style:italic;color:#1f2937;}
 .rp .quotes cite{display:block;margin-top:6px;font-size:.8rem;font-style:normal;color:var(--text-secondary);}
+/* Views of a cross-tab (change crosstab-settings-in-block, #751). */
+.rp .xc-legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:.82rem;color:var(--text-secondary);margin:0 0 14px;}
+.rp .xc-legend span{display:inline-flex;align-items:center;gap:6px;}
+.rp .xc-legend i{width:12px;height:12px;border-radius:3px;display:inline-block;}
+.rp .xc-legend small{color:var(--text-secondary);opacity:.8;}
+.rp .xc-bars,.rp .xc-stacked{display:grid;grid-template-columns:minmax(110px,30%) 1fr;gap:12px 14px;align-items:center;font-size:.9rem;}
+.rp .xc-cat{font-weight:600;line-height:1.3;}
+.rp .xc-group{display:flex;flex-direction:column;gap:3px;}
+.rp .xc-line{display:flex;align-items:center;gap:6px;min-width:0;}
+.rp .xc-bar{display:block;height:10px;border-radius:2px;background:var(--accent);flex:none;min-width:0;max-width:calc(100% - 52px);}
+.rp .xc-v{font-size:.78rem;color:var(--text-secondary);white-space:nowrap;}
+.rp .xc-v.masked{font-style:italic;}
+.rp .xc-stack{display:flex;height:22px;border-radius:4px;overflow:hidden;background:var(--bg);}
+.rp .xc-stack span{display:flex;align-items:center;justify-content:center;color:#fff;font-size:.72rem;font-weight:600;white-space:nowrap;overflow:hidden;}
+.rp .xc-rank{list-style:none;margin:0;padding:0;display:grid;gap:8px;font-size:.9rem;}
+.rp .xc-rank li{display:grid;grid-template-columns:22px minmax(110px,30%) 1fr;gap:12px;align-items:center;}
+.rp .xc-rank .xc-n{color:var(--text-secondary);font-weight:700;text-align:right;}
+.rp .xc-rank .xc-bar{height:12px;background:var(--accent-light);border:1px solid var(--accent);}
+.rp .xc-left-out{margin-top:10px;}
+@media (max-width:640px){.rp .xc-bars,.rp .xc-stacked{grid-template-columns:1fr;gap:4px 0;}.rp .xc-bars .xc-group,.rp .xc-stacked .xc-stack{margin-bottom:10px;}.rp .xc-rank li{grid-template-columns:22px 1fr;}.rp .xc-rank .xc-line{grid-column:2;}}
+
 /* Layouts of a Quotes block (change report-quotes-from-answers, #749): list is the rule above. */
 .rp .quotes-pull{gap:22px;}
 .rp .quotes-pull blockquote{background:none;border-left:4px solid var(--accent,#4f46e5);border-radius:0;padding:4px 0 4px 20px;font-size:1.3rem;line-height:1.45;}

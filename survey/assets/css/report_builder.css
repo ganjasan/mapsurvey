@@ -103,6 +103,18 @@
 .rb .quotes:not(:has([data-row])) { display: none; }
 .rb .quotes:has([data-row]) ~ .rb-q-empty, .rb .quotes:not(:has([data-row])) ~ .rb-q-more { display: none; }
 
+/* a cross-tab's suggested views, in the block's panel (#751) */
+.rb-views { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.rb-view { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 0; padding: 8px 4px;
+  border: 1px solid var(--color-border); border-radius: 8px; background: var(--surface); color: var(--color-text);
+  font-size: 12px; text-align: center; cursor: pointer; line-height: 1.2; }
+.rb-view input { position: absolute; opacity: 0; pointer-events: none; }
+.rb-view svg { fill: var(--color-action); color: var(--color-text-muted); }
+.rb-view svg[fill="none"] { fill: none; }
+.rb-view:hover { border-color: var(--color-border-strong); }
+.rb-view:has(input:checked) { border: 2px solid var(--color-action); background: var(--color-action-soft); color: var(--color-action); font-weight: 600; padding: 7px 3px; }
+.rb-view:has(input:focus-visible) { outline: 2px solid var(--color-action-line); outline-offset: 2px; }
+
 /* the answers a quote is picked from, in the block's panel */
 .rb-qpick-controls { display: grid; gap: 6px; margin-bottom: 8px; }
 .rb-qpick-count { margin: 0 0 6px; }
@@ -157,7 +169,4 @@
 .rb-lib-groups { display: contents; }
 .rb-lib-groups.rb-busy > * { opacity: .5; }
 .rb-lib-note { grid-column: 1 / -1; margin: 0; }
-.rb-lib-form { background: var(--surface-muted); border-radius: 9px; padding: 10px 12px; margin: 2px 0 8px; font-size: 13px; }
-.rb-lib-form[hidden] { display: none; }
-.rb-lib-form label { display: block; font-size: 12px; font-weight: 600; color: var(--color-text); margin: 6px 0 3px; }
 @media (max-width: 640px) { .rb-lib-wide { grid-template-columns: 1fr; } }
