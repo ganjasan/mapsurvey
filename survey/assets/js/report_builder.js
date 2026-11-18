@@ -70,6 +70,26 @@
     if (!body.hidden) { var first = body.querySelector('select'); if (first) first.focus(); }
   });
 
+  /* ─── library: another survey's charts and maps (change report-home-survey) ── */
+  document.addEventListener('change', function (e) {
+    var t = e.target;
+    if (t.matches('[data-rb-submit]')) { t.form.submit(); return; }
+    if (t.id !== 'rb-lib-source') return;
+    var groups = document.getElementById('rb-lib-groups'), search = document.getElementById('lb-lib-search');
+    groups.classList.add('rb-busy');
+    fetch(t.dataset.url + '?source=' + encodeURIComponent(t.value), {credentials: 'same-origin', headers: {'X-Requested-With': 'XMLHttpRequest'}})
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function (html) {
+        // Our own template, rendered by the `library` route.
+        var doc = new DOMParser().parseFromString(html, 'text/html');
+        groups.replaceChildren.apply(groups, Array.prototype.slice.call(doc.body.childNodes));
+        // The search box keeps what was typed: filter the new tiles by it.
+        if (search) search.dispatchEvent(new Event('input'));
+      })
+      .catch(function () { /* the tiles of the survey shown before stay */ })
+      .then(function () { groups.classList.remove('rb-busy'); });
+  });
+
   /* ─── publish: the dialog loads the checks, its form posts the choices ── */
   function openPublish() {
     if (!window.jQuery || !window.htmx) return;

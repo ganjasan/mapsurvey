@@ -96,6 +96,14 @@
 /* library: the questions take the full width, two columns of tiles */
 .rb-lib-wide { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; column-gap: 24px; }
 .rb-lib-wide h4, .rb-lib-wide .lb-hint { grid-column: 1 / -1; }
+/* "Charts and maps from": the survey the data tiles belong to (change report-home-survey). The tiles'
+   wrapper is `display: contents`, so the groups stay cells of the library's grid. */
+.rb-lib-source { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; }
+.rb-lib-source label { margin: 0; font-size: 12px; font-weight: 600; color: #374151; white-space: nowrap; }
+.rb-lib-source select { max-width: 360px; }
+.rb-lib-groups { display: contents; }
+.rb-lib-groups.rb-busy > * { opacity: .5; }
+.rb-lib-note { grid-column: 1 / -1; margin: 0; }
 .rb-lib-form { background: #f5f7fa; border-radius: 9px; padding: 10px 12px; margin: 2px 0 8px; font-size: 13px; }
 .rb-lib-form[hidden] { display: none; }
 .rb-lib-form label { display: block; font-size: 12px; font-weight: 600; color: #374151; margin: 6px 0 3px; }

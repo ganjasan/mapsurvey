@@ -14720,3 +14720,21 @@ msgstr "co liczy"
 #, python-format
 msgid "This is the report the Public results tab of “%(survey)s” opens. After it is deleted, that tab opens the survey's next report, or starts an empty one."
 msgstr "To raport, który otwiera karta „Wyniki publiczne” ankiety „%(survey)s”. Po jego usunięciu karta otworzy następny raport ankiety albo rozpocznie pusty."
+
+msgid "Charts and maps from"
+msgstr "Wykresy i mapy z"
+
+msgid "Choose a survey above to add its charts, maps and numbers."
+msgstr "Wybierz ankietę powyżej, aby dodać jej wykresy, mapy i liczby."
+
+msgid "Charts and maps of answers appear here once this workspace has a published survey."
+msgstr "Wykresy i mapy odpowiedzi pojawią się tutaj, gdy w tym obszarze roboczym będzie opublikowana ankieta."
+
+msgid "No survey"
+msgstr "Bez ankiety"
+
+msgid "The survey this report is about"
+msgstr "Ankieta, której dotyczy ten raport"
+
+msgid "The survey this report is about: “Add block” opens on its questions, and the response counter and the “Take the survey” link are its. A block can still show another survey."
+msgstr "Ankieta, której dotyczy ten raport: „Dodaj blok” otwiera się na jej pytaniach, a licznik odpowiedzi i link „Wypełnij ankietę” należą do niej. Blok może mimo to pokazywać inną ankietę."

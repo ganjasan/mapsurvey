@@ -7,6 +7,24 @@ hidden fields of this form; everything saves by itself, like a block.{% endcomme
     <div class="lb-pane-tt"><div class="lb-pane-t">{% trans "Report settings" %}</div><div class="lb-pane-s">{% trans "Applies to the whole report" %}</div></div>
   </div>
   <div class="lb-pane-body">
+    {% comment %}The home survey (change report-home-survey, #739): a plain form that reloads the builder,
+    because the opening, the library and the publish rule all follow it. Blocks keep what they read.{% endcomment %}
+    {% if may_edit and home_choices or may_edit and survey %}
+    <form method="post" action="{% url 'editor_report_home' page.uuid %}" data-testid="report-home">
+      {% csrf_token %}
+      <div class="lb-card">
+        <h6>{% trans "Survey" %}</h6>
+        <div class="lb-field mb-0">
+          <label for="rb-home" class="sr-only">{% trans "The survey this report is about" %}</label>
+          <select class="form-control form-control-sm" id="rb-home" name="survey" data-rb-submit>
+            <option value="">{% trans "No survey" %}</option>
+            {% for s in home_choices %}<option value="{{ s.uuid }}"{% if s.pk == page.survey_id %} selected{% endif %}>{{ s.name }}</option>{% endfor %}
+          </select>
+          <div class="lb-hint">{% trans "The survey this report is about: “Add block” opens on its questions, and the response counter and the “Take the survey” link are its. A block can still show another survey." %}</div>
+        </div>
+      </div>
+    </form>
+    {% endif %}
     <form method="post" action="{{ u.save }}" class="lb-form lb-page-form" id="prPageForm">
       {% csrf_token %}
       <div class="lb-errors" role="alert" hidden></div>
@@ -38,10 +56,16 @@ hidden fields of this form; everything saves by itself, like a block.{% endcomme
         <h6>{% trans "Display & privacy" %}</h6>
         <label class="lb-switch"><span>{% trans "Show response counter" %}</span>
           <input type="checkbox" name="show_response_count"{% if page.show_response_count %} checked{% endif %}><span class="lb-toggle" aria-hidden="true"></span></label>
+        {% if survey %}
         <label class="lb-switch"><span>{% trans "Show “Take the survey” CTA" %}<small>{% trans "only while the survey is open" %}</small></span>
           <input type="checkbox" name="show_participate_cta"{% if page.show_participate_cta %} checked{% endif %}><span class="lb-toggle" aria-hidden="true"></span></label>
         <label class="lb-switch"><span>{% trans "Link from the thanks page" %}<small>{% trans "a “See the results” button after respondents submit" %}</small></span>
           <input type="checkbox" name="show_on_thanks"{% if page.show_on_thanks %} checked{% endif %}><span class="lb-toggle" aria-hidden="true"></span></label>
+        {% else %}
+        {# No home survey, nothing for these two to act on; the form reads a missing box as "off", so the stored values travel hidden. #}
+        {% if page.show_participate_cta %}<input type="hidden" name="show_participate_cta" value="on">{% endif %}
+        {% if page.show_on_thanks %}<input type="hidden" name="show_on_thanks" value="on">{% endif %}
+        {% endif %}
         <label class="lb-switch"><span>{% trans "Feature in public stories listing" %}</span>
           <input type="checkbox" name="feature_in_listing"{% if page.feature_in_listing %} checked{% endif %}><span class="lb-toggle" aria-hidden="true"></span></label>
         <div class="lb-field mb-0 mt-2">

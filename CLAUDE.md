@@ -1241,6 +1241,19 @@ leaves the block empty (`SET_NULL`). The Reports list is `/editor/reports/`. Rep
 intentionally NOT included in survey ZIP export/import. Migration `reports/0002` copied the old
 pages WITH their ids (comment anchors, snapshots, `?block=` links).
 
+**Home survey and source surveys (change `report-home-survey`, #739)**: `Report.survey` is a DEFAULT, never
+a restriction — blocks name their own dataset, so one report may read several surveys. The block library
+has "Charts and maps from" (`source=<uuid>`, posted with the tile; tiles for another survey come from the
+`library` route as the `_library_groups.html` fragment). `editor_views._source()` is the one resolver: no
+`source` = the home survey exactly as before; a report without one starts on the workspace's only
+published survey or asks. The first DATA block added in the editor makes its survey the home survey
+(`services.set_home_survey`; editor only — API/MCP name a survey explicitly), and Report settings →
+Survey sets, changes or clears it (`report_home`, a plain form that reloads the builder). Both need the
+editor role on the survey, because `may_edit_report` would otherwise lock the author out. "New report"
+stays one click and blank (#737) — do NOT bring a "choose a survey" step back before the editor. A report
+with `created_by` is never auto-drafted by `scaffold_report`. The CTA / thanks-page switches render only
+with a home survey; their stored values travel as hidden fields.
+
 **Report builder (change `reports-canvas-editor`, #731)**: the report editor is the Sites canvas
 builder for a report — `reports/builder.html` runs on the SAME script and stylesheet as Sites
 (`js/site_builder.js`, `css/site_builder.css`, every `lb-` hook) plus `js/report_builder.js` /

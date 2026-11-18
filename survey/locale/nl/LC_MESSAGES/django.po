@@ -14622,3 +14622,21 @@ msgstr "wat het telt"
 #, python-format
 msgid "This is the report the Public results tab of “%(survey)s” opens. After it is deleted, that tab opens the survey's next report, or starts an empty one."
 msgstr "Dit is het rapport dat het tabblad ‘Openbare resultaten’ van ‘%(survey)s’ opent. Na het verwijderen opent dat tabblad het volgende rapport van de enquête of begint het een leeg rapport."
+
+msgid "Charts and maps from"
+msgstr "Grafieken en kaarten uit"
+
+msgid "Choose a survey above to add its charts, maps and numbers."
+msgstr "Kies hierboven een enquête om de grafieken, kaarten en cijfers ervan toe te voegen."
+
+msgid "Charts and maps of answers appear here once this workspace has a published survey."
+msgstr "Grafieken en kaarten van antwoorden verschijnen hier zodra deze werkruimte een gepubliceerde enquête heeft."
+
+msgid "No survey"
+msgstr "Geen enquête"
+
+msgid "The survey this report is about"
+msgstr "De enquête waar dit rapport over gaat"
+
+msgid "The survey this report is about: “Add block” opens on its questions, and the response counter and the “Take the survey” link are its. A block can still show another survey."
+msgstr "De enquête waar dit rapport over gaat: ‘Blok toevoegen’ opent met de vragen ervan, en de antwoordenteller en de link ‘Vul de enquête in’ horen erbij. Een blok kan nog steeds een andere enquête tonen."

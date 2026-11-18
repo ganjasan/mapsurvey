@@ -14567,3 +14567,21 @@ msgstr "apa yang dihitung"
 #, python-format
 msgid "This is the report the Public results tab of “%(survey)s” opens. After it is deleted, that tab opens the survey's next report, or starts an empty one."
 msgstr "Ini laporan yang dibuka tab “Hasil publik” milik “%(survey)s”. Setelah dihapus, tab itu membuka laporan survei berikutnya atau memulai laporan kosong."
+
+msgid "Charts and maps from"
+msgstr "Grafik dan peta dari"
+
+msgid "Choose a survey above to add its charts, maps and numbers."
+msgstr "Pilih survei di atas untuk menambahkan grafik, peta, dan angkanya."
+
+msgid "Charts and maps of answers appear here once this workspace has a published survey."
+msgstr "Grafik dan peta jawaban muncul di sini setelah ruang kerja ini memiliki survei yang diterbitkan."
+
+msgid "No survey"
+msgstr "Tanpa survei"
+
+msgid "The survey this report is about"
+msgstr "Survei yang dibahas laporan ini"
+
+msgid "The survey this report is about: “Add block” opens on its questions, and the response counter and the “Take the survey” link are its. A block can still show another survey."
+msgstr "Survei yang dibahas laporan ini: “Tambahkan blok” terbuka pada pertanyaannya, dan penghitung jawaban serta tautan “Isi survei” adalah miliknya. Sebuah blok tetap dapat menampilkan survei lain."

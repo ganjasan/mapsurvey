@@ -249,7 +249,14 @@ def report_start(request):
             for note in report.copy_notes:
                 messages.warning(request, note)
         elif kind == 'blank':
-            report = services.create_report(actor, org, title=str(_('Untitled report')), visibility='workspace')
+            # Started from a survey's page ("Make a report"), the blank report is that survey's
+            # (change report-home-survey) — when the member may edit it, or the report's own
+            # editor would refuse its author.
+            from survey.permissions import _check_survey_role, get_effective_survey_role
+            home = chosen if chosen is not None and _check_survey_role(
+                get_effective_survey_role(request.user, chosen), 'editor') else None
+            report = services.create_report(actor, org, survey=home, title=str(_('Untitled report')),
+                                            visibility='workspace')
         else:
             messages.error(request, _('Choose a survey to draft a report from.'))
             return redirect('editor_report_start')
