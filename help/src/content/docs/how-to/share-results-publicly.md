@@ -32,6 +32,8 @@ Reports are part of **Pro**. On a workspace without Pro a report opens read-only
 
 Press **New report** on the **Reports** page. A blank report opens at once: write its title and opening on the page, then add blocks — headings, text, pictures, key numbers, quotes, and the charts and maps of any survey's questions. It is not published until you publish it.
 
+The charts and maps come from a survey you choose in the library: **Add block** has **Charts and maps from** at the top, with the workspace's published surveys. The survey of the first chart or map you add becomes the report's own survey — the library opens on its questions from then on, and the response counter and the "Take the survey" link are its. To show a question of another survey in the same report, choose that survey in **Charts and maps from** before picking the question. The report's survey can be changed or removed under **Report settings → Survey**; the blocks stay as they are.
+
 ## Two rounds in one picture
 
 To show both rounds in one picture, add a **Compare** block: pick a question and the other survey. For each answer it shows the share of people in both surveys, with how many answered in each. The other survey needs a question with the same code. Small groups are hidden in each survey separately.

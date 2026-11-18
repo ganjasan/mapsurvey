@@ -14563,3 +14563,21 @@ msgstr "mida see loendab"
 #, python-format
 msgid "This is the report the Public results tab of “%(survey)s” opens. After it is deleted, that tab opens the survey's next report, or starts an empty one."
 msgstr "See on aruanne, mille avab küsitluse „%(survey)s” vahekaart „Avalikud tulemused”. Pärast kustutamist avab vahekaart küsitluse järgmise aruande või alustab tühja."
+
+msgid "Charts and maps from"
+msgstr "Diagrammid ja kaardid küsitlusest"
+
+msgid "Choose a survey above to add its charts, maps and numbers."
+msgstr "Vali ülal küsitlus, et lisada selle diagramme, kaarte ja arve."
+
+msgid "Charts and maps of answers appear here once this workspace has a published survey."
+msgstr "Vastuste diagrammid ja kaardid ilmuvad siia, kui selles tööruumis on avaldatud küsitlus."
+
+msgid "No survey"
+msgstr "Küsitlust pole"
+
+msgid "The survey this report is about"
+msgstr "Küsitlus, millest see aruanne räägib"
+
+msgid "The survey this report is about: “Add block” opens on its questions, and the response counter and the “Take the survey” link are its. A block can still show another survey."
+msgstr "Küsitlus, millest see aruanne räägib: „Lisa plokk“ avaneb selle küsimustega ning vastuste loendur ja link „Täida küsitlus“ kuuluvad sellele. Plokk võib siiski näidata ka teist küsitlust."

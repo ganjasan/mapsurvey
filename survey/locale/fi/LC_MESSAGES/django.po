@@ -14584,3 +14584,21 @@ msgstr "mitä se laskee"
 #, python-format
 msgid "This is the report the Public results tab of “%(survey)s” opens. After it is deleted, that tab opens the survey's next report, or starts an empty one."
 msgstr "Tämä on raportti, jonka kyselyn ”%(survey)s” Julkiset tulokset -välilehti avaa. Poistamisen jälkeen välilehti avaa kyselyn seuraavan raportin tai aloittaa tyhjän."
+
+msgid "Charts and maps from"
+msgstr "Kaaviot ja kartat kyselystä"
+
+msgid "Choose a survey above to add its charts, maps and numbers."
+msgstr "Valitse yltä kysely, niin voit lisätä sen kaavioita, karttoja ja lukuja."
+
+msgid "Charts and maps of answers appear here once this workspace has a published survey."
+msgstr "Vastausten kaaviot ja kartat näkyvät täällä, kun tässä työtilassa on julkaistu kysely."
+
+msgid "No survey"
+msgstr "Ei kyselyä"
+
+msgid "The survey this report is about"
+msgstr "Kysely, jota tämä raportti käsittelee"
+
+msgid "The survey this report is about: “Add block” opens on its questions, and the response counter and the “Take the survey” link are its. A block can still show another survey."
+msgstr "Kysely, jota tämä raportti käsittelee: ”Lisää lohko” avautuu sen kysymyksiin, ja vastauslaskuri ja linkki ”Vastaa kyselyyn” kuuluvat sille. Lohko voi silti näyttää toista kyselyä."

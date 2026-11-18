@@ -50,6 +50,7 @@ ROUTES = {
     'preview': ('editor_public_results_preview', 'editor_report_preview'),
     'save': ('editor_public_results_save', 'editor_report_save'),
     'add': ('editor_public_results_block_add', 'editor_report_block_add'),
+    'library': ('editor_public_results_library', 'editor_report_library'),
     'block_edit': ('editor_public_results_block_edit', 'editor_report_block_edit'),
     'block_delete': ('editor_public_results_block_delete', 'editor_report_block_delete'),
     'reorder': ('editor_public_results_blocks_reorder', 'editor_report_blocks_reorder'),
@@ -310,6 +311,68 @@ def _selected(request):
     return raw if raw.isdigit() else 'page'
 
 
+def _source_surveys(request, page):
+    """The surveys whose answers a block may show (change report-home-survey, #739): the
+    published surveys of the workspace this member sees, the report's home survey first."""
+    from data.datasets import visible_survey_ids
+    from survey.versioning import canonical_of
+    ids = visible_survey_ids(page.organization, request.user)
+    surveys = list(SurveyHeader.objects.filter(pk__in=ids, deleted_at__isnull=True)
+                   .exclude(status='draft').order_by('-id')[:200])
+    home = canonical_of(page.survey) if page.survey_id else None
+    if home is not None:
+        surveys = [home] + [s for s in surveys if s.pk != home.pk]
+    return surveys
+
+
+def _source(request, page, surveys=None):
+    """The survey the library shows and a posted tile reads: `source=<uuid>` among the surveys
+    offered; without it the home survey exactly as this request came by it, or — for a report
+    that has none — the workspace's only survey. None: nothing to show data from yet."""
+    from survey.versioning import canonical_of
+    raw = request.POST.get('source') or request.GET.get('source') or ''
+    home = request.survey
+    if not raw and home is not None:
+        return home
+    surveys = _source_surveys(request, page) if surveys is None else surveys
+    if raw:
+        chosen = next((s for s in surveys if str(s.uuid) == raw), None)
+        if chosen is not None and home is not None and chosen.pk == canonical_of(home).pk:
+            return home
+        return chosen
+    return surveys[0] if len(surveys) == 1 else None
+
+
+def _home_choices(request, page, surveys):
+    """Of `surveys`, those the member may make the report's home: a report with a home survey is
+    edited only with the editor role on it, so a survey merely seen would lock its author out."""
+    from survey.models import SurveyCollaborator
+    from survey.permissions import get_org_membership
+    membership = get_org_membership(request.user, page.organization)
+    if membership is None:
+        return []
+    if membership.role in ('owner', 'admin'):
+        return list(surveys)
+    editable = set(SurveyCollaborator.objects.filter(
+        user=request.user, survey__organization=page.organization, role__in=('owner', 'editor'))
+        .values_list('survey_id', flat=True))
+    return [s for s in surveys if s.pk in editable or s.pk == page.survey_id]
+
+
+def _library_context(request, page):
+    """What the block library draws: the survey chosen as its source and that survey's tiles."""
+    from survey.versioning import canonical_of
+    surveys = _source_surveys(request, page)
+    source = _source(request, page, surveys)
+    return {
+        'library': _library(request, source),
+        'crosstab_questions': _crosstab_questions(source),
+        'compare_surveys': _compare_surveys(request, source),
+        'source_surveys': surveys,
+        'source_uuid': str(canonical_of(source).uuid) if source is not None else '',
+    }
+
+
 def _library(request, survey):
     """The block library: what the author writes, what the survey's answers show, and one tile
     per question whose answers may be published."""
@@ -422,8 +485,9 @@ def _canvas_context(request, page, selected='page'):
     elsewhere = _elsewhere(request, page, None)
     context.update(
         blocks=blocks, items=records, selected=selected, last_pk=blocks[-1].pk if blocks else '',
-        library=_library(request, survey),
-        crosstab_questions=_crosstab_questions(survey), compare_surveys=_compare_surveys(request, survey),
+        **_library_context(request, page))
+    context.update(
+        home_choices=_home_choices(request, page, context['source_surveys']),
         basemap_table=basemap_registry.table_for(page.organization),
         export_url=reverse('editor_report_export', args=[page.uuid]),
         pdf_url=reverse('editor_report_pdf', args=[page.uuid]),
@@ -584,8 +648,9 @@ def _save_settings(request):
 def _block_add(request):
     """Add a block: a story block (heading, text, image, key numbers, quotes) stands alone; a
     chart or a map needs a question of the report's home survey."""
-    survey = request.survey
     page = _page(request)
+    # The survey chosen in the library; the report's home survey when none was (#739).
+    survey = _source(request, page)
     block_type = request.POST.get('block_type') or ('question' if request.POST.get('question_id') else '')
     actor = Actor.from_request(request)
     try:
@@ -617,9 +682,36 @@ def _block_add(request):
     except services.ReportRefused as refusal:
         return HttpResponse(refusal.message, status=400)
 
+    if page.survey_id is None and block.dataset_id and survey is not None and _may_edit(request, survey):
+        # The first block that shows data says which survey the report is about.
+        services.set_home_survey(actor, page, survey)
     _place(actor, page, block, request.POST.get('after', ''))
     # Back in the builder with the new block selected.
     return redirect('{}?block={}'.format(_url(request, 'config'), block.id))
+
+
+def _library_groups(request):
+    """The library's tiles for another survey (`?source=<uuid>`), swapped in by the builder."""
+    page = _page(request)
+    return render(request, 'reports/editor/_library_groups.html', _library_context(request, page))
+
+
+@require_POST
+def _home(request):
+    """Set, change or clear the report's home survey (the Survey card of Report settings)."""
+    from django.contrib import messages
+    page = _page(request)
+    raw = request.POST.get('survey') or ''
+    survey = None
+    if raw:
+        survey = next((s for s in _source_surveys(request, page) if str(s.uuid) == raw), None)
+        if survey is None or not _may_edit(request, survey):
+            raise Http404
+    try:
+        services.set_home_survey(Actor.from_request(request), page, survey)
+    except services.ReportRefused as refusal:
+        messages.error(request, refusal.message)
+    return redirect('editor_report', report_uuid=page.uuid)
 
 
 def _place(actor, page, block, after):
@@ -751,6 +843,8 @@ public_results_checks, report_checks = on_survey(_checks), on_report(_checks)
 public_results_config, report_config = on_survey(_config), on_report(_config)
 public_results_save_settings, report_save_settings = on_survey(_save_settings), on_report(_save_settings)
 public_results_block_add, report_block_add = on_survey(_block_add), on_report(_block_add)
+public_results_library, report_library = on_survey(_library_groups), on_report(_library_groups)
+report_home = on_report(_home)
 public_results_block_edit, report_block_edit = on_survey(_block_edit), on_report(_block_edit)
 public_results_block_delete, report_block_delete = on_survey(_block_delete), on_report(_block_delete)
 public_results_blocks_reorder, report_blocks_reorder = on_survey(_blocks_reorder), on_report(_blocks_reorder)

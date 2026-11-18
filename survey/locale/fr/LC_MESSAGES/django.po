@@ -14669,3 +14669,21 @@ msgstr "ce qu’il compte"
 #, python-format
 msgid "This is the report the Public results tab of “%(survey)s” opens. After it is deleted, that tab opens the survey's next report, or starts an empty one."
 msgstr "C'est le rapport qu'ouvre l'onglet « Résultats publics » de « %(survey)s ». Après sa suppression, l'onglet ouvrira le rapport suivant de l'enquête ou en commencera un vide."
+
+msgid "Charts and maps from"
+msgstr "Graphiques et cartes de"
+
+msgid "Choose a survey above to add its charts, maps and numbers."
+msgstr "Choisissez une enquête ci-dessus pour ajouter ses graphiques, ses cartes et ses chiffres."
+
+msgid "Charts and maps of answers appear here once this workspace has a published survey."
+msgstr "Les graphiques et les cartes des réponses apparaissent ici dès que cet espace de travail a une enquête publiée."
+
+msgid "No survey"
+msgstr "Aucune enquête"
+
+msgid "The survey this report is about"
+msgstr "L'enquête dont parle ce rapport"
+
+msgid "The survey this report is about: “Add block” opens on its questions, and the response counter and the “Take the survey” link are its. A block can still show another survey."
+msgstr "L'enquête dont parle ce rapport : « Ajouter un bloc » s'ouvre sur ses questions, et le compteur de réponses et le lien « Répondre à l'enquête » sont les siens. Un bloc peut tout de même montrer une autre enquête."
