@@ -1,6 +1,6 @@
 {% load i18n %}
 {% if not event_summary.session_starts %}
-<div class="analytics-section" style="text-align:center;color:#9ca3af;padding:3rem;">
+<div class="analytics-section" style="text-align:center;color:var(--color-text-faint);padding:3rem;">
     <div style="font-size:1.5rem;margin-bottom:0.5rem;">{% trans "No event data yet" %}</div>
     <p>{% trans "Performance events are recorded once respondents start filling out the survey." %}<br>
     {% trans "Events will appear here after the first respondent visits a published survey." %}</p>
@@ -42,14 +42,14 @@
 {% if funnel %}
 <div class="analytics-section">
     <h6>{% trans "Section Funnel" %}</h6>
-    <p style="font-size:0.8rem;color:#9ca3af;margin-bottom:1rem;">{% trans "Share of started sessions that reached each section, and how many left before the next one. One person counts once, however often they reload." %}{% if has_conditional_steps %} {% trans "Sections behind a visibility rule are compared with the people the rule let in, not with everyone." %}{% endif %}</p>
+    <p style="font-size:0.8rem;color:var(--color-text-faint);margin-bottom:1rem;">{% trans "Share of started sessions that reached each section, and how many left before the next one. One person counts once, however often they reload." %}{% if has_conditional_steps %} {% trans "Sections behind a visibility rule are compared with the people the rule let in, not with everyone." %}{% endif %}</p>
 
     {% comment %}
     Small-sample guard (v2 only): below 20 tracked sessions a −100% drop is
     one person closing a tab, not a funnel problem — say so instead of alarming.
     {% endcomment %}
     {% if RESPONSES_V2 and event_summary.session_starts < 20 %}
-    <div class="perf-small-sample" style="background:#f3f4f6;border-radius:6px;padding:0.5rem 0.75rem;font-size:0.8rem;color:#6b7280;margin-bottom:1rem;">
+    <div class="perf-small-sample" style="background:var(--surface-sunken);border-radius:6px;padding:0.5rem 0.75rem;font-size:0.8rem;color:var(--color-text-muted);margin-bottom:1rem;">
         <i class="fas fa-info-circle mr-1"></i>
         {% blocktrans count starts=event_summary.session_starts %}Sample too small for drop rates — only {{ starts }} tracked session so far. Rates appear from 20.{% plural %}Sample too small for drop rates — only {{ starts }} tracked sessions so far. Rates appear from 20.{% endblocktrans %}
     </div>
@@ -114,16 +114,16 @@
     <table style="width:100%;font-size:0.875rem;border-collapse:collapse;">
         <thead>
             <tr style="border-bottom:1px solid var(--border-color);">
-                <th style="text-align:left;padding:0.4rem 0;color:#6b7280;font-weight:500;">{% trans "Source" %}</th>
-                <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">{% trans "Sessions" %}</th>
+                <th style="text-align:left;padding:0.4rem 0;color:var(--color-text-muted);font-weight:500;">{% trans "Source" %}</th>
+                <th style="text-align:right;padding:0.4rem 0;color:var(--color-text-muted);font-weight:500;">{% trans "Sessions" %}</th>
             </tr>
         </thead>
         <tbody>
             {% for row in referrer_breakdown %}
-            <tr style="border-bottom:1px solid #f3f4f6;">
+            <tr style="border-bottom:1px solid var(--color-border);">
                 <td style="padding:0.4rem 0;">
                     {% if row.referrer_type == 'direct' %}
-                        <span style="color:#6b7280;">{% trans "Direct / Unknown" %}</span>
+                        <span style="color:var(--color-text-muted);">{% trans "Direct / Unknown" %}</span>
                     {% elif row.referrer_type == 'google' %}
                         {% trans "Google" %}
                     {% elif row.referrer_type == 'bing' %}
@@ -151,13 +151,13 @@
     <table style="width:100%;font-size:0.875rem;border-collapse:collapse;">
         <thead>
             <tr style="border-bottom:1px solid var(--border-color);">
-                <th style="text-align:left;padding:0.4rem 0;color:#6b7280;font-weight:500;">{% trans "Language" %}</th>
-                <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">{% trans "Sessions" %}</th>
+                <th style="text-align:left;padding:0.4rem 0;color:var(--color-text-muted);font-weight:500;">{% trans "Language" %}</th>
+                <th style="text-align:right;padding:0.4rem 0;color:var(--color-text-muted);font-weight:500;">{% trans "Sessions" %}</th>
             </tr>
         </thead>
         <tbody>
             {% for row in language_breakdown %}
-            <tr style="border-bottom:1px solid #f3f4f6;">
+            <tr style="border-bottom:1px solid var(--color-border);">
                 <td style="padding:0.4rem 0;">{{ row.language }}</td>
                 <td style="padding:0.4rem 0;text-align:right;font-weight:600;">{{ row.count }}</td>
             </tr>
@@ -174,9 +174,9 @@
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;">
         <!-- Device type -->
         <div>
-            <div style="font-size:0.8rem;color:#6b7280;font-weight:500;margin-bottom:0.5rem;">{% trans "Platform" %}</div>
+            <div style="font-size:0.8rem;color:var(--color-text-muted);font-weight:500;margin-bottom:0.5rem;">{% trans "Platform" %}</div>
             {% for row in device_breakdown.device_types %}
-            <div style="display:flex;justify-content:space-between;font-size:0.85rem;padding:0.2rem 0;border-bottom:1px solid #f3f4f6;">
+            <div style="display:flex;justify-content:space-between;font-size:0.85rem;padding:0.2rem 0;border-bottom:1px solid var(--color-border);">
                 <span>{{ row.name|title }}</span>
                 <span style="font-weight:600;">{{ row.count }}</span>
             </div>
@@ -184,9 +184,9 @@
         </div>
         <!-- OS -->
         <div>
-            <div style="font-size:0.8rem;color:#6b7280;font-weight:500;margin-bottom:0.5rem;">OS</div>
+            <div style="font-size:0.8rem;color:var(--color-text-muted);font-weight:500;margin-bottom:0.5rem;">OS</div>
             {% for row in device_breakdown.os %}
-            <div style="display:flex;justify-content:space-between;font-size:0.85rem;padding:0.2rem 0;border-bottom:1px solid #f3f4f6;">
+            <div style="display:flex;justify-content:space-between;font-size:0.85rem;padding:0.2rem 0;border-bottom:1px solid var(--color-border);">
                 <span>{{ row.name }}</span>
                 <span style="font-weight:600;">{{ row.count }}</span>
             </div>
@@ -194,9 +194,9 @@
         </div>
         <!-- Browser -->
         <div>
-            <div style="font-size:0.8rem;color:#6b7280;font-weight:500;margin-bottom:0.5rem;">{% trans "Browser" %}</div>
+            <div style="font-size:0.8rem;color:var(--color-text-muted);font-weight:500;margin-bottom:0.5rem;">{% trans "Browser" %}</div>
             {% for row in device_breakdown.browsers %}
-            <div style="display:flex;justify-content:space-between;font-size:0.85rem;padding:0.2rem 0;border-bottom:1px solid #f3f4f6;">
+            <div style="display:flex;justify-content:space-between;font-size:0.85rem;padding:0.2rem 0;border-bottom:1px solid var(--color-border);">
                 <span>{{ row.name }}</span>
                 <span style="font-weight:600;">{{ row.count }}</span>
             </div>
@@ -213,15 +213,15 @@
     <table style="width:100%;font-size:0.875rem;border-collapse:collapse;">
         <thead>
             <tr style="border-bottom:1px solid var(--border-color);">
-                <th style="text-align:left;padding:0.4rem 0;color:#6b7280;font-weight:500;">{% trans "Source" %}</th>
-                <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">{% trans "Started" %}</th>
-                <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">{% trans "Completed" %}</th>
-                <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">{% trans "Rate" %}</th>
+                <th style="text-align:left;padding:0.4rem 0;color:var(--color-text-muted);font-weight:500;">{% trans "Source" %}</th>
+                <th style="text-align:right;padding:0.4rem 0;color:var(--color-text-muted);font-weight:500;">{% trans "Started" %}</th>
+                <th style="text-align:right;padding:0.4rem 0;color:var(--color-text-muted);font-weight:500;">{% trans "Completed" %}</th>
+                <th style="text-align:right;padding:0.4rem 0;color:var(--color-text-muted);font-weight:500;">{% trans "Rate" %}</th>
             </tr>
         </thead>
         <tbody>
             {% for row in completion_by_referrer %}
-            <tr style="border-bottom:1px solid #f3f4f6;">
+            <tr style="border-bottom:1px solid var(--color-border);">
                 <td style="padding:0.4rem 0;">{{ row.referrer_type }}</td>
                 <td style="padding:0.4rem 0;text-align:right;">{{ row.started }}</td>
                 <td style="padding:0.4rem 0;text-align:right;">{{ row.completed }}</td>
@@ -240,19 +240,19 @@
     <table style="width:100%;font-size:0.875rem;border-collapse:collapse;">
         <thead>
             <tr style="border-bottom:1px solid var(--border-color);">
-                <th style="text-align:left;padding:0.4rem 0;color:#6b7280;font-weight:500;">{% trans "Section" %}</th>
-                <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">{% trans "Avg" %}</th>
-                <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">{% trans "Median" %}</th>
-                <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">{% trans "Samples" %}</th>
+                <th style="text-align:left;padding:0.4rem 0;color:var(--color-text-muted);font-weight:500;">{% trans "Section" %}</th>
+                <th style="text-align:right;padding:0.4rem 0;color:var(--color-text-muted);font-weight:500;">{% trans "Avg" %}</th>
+                <th style="text-align:right;padding:0.4rem 0;color:var(--color-text-muted);font-weight:500;">{% trans "Median" %}</th>
+                <th style="text-align:right;padding:0.4rem 0;color:var(--color-text-muted);font-weight:500;">{% trans "Samples" %}</th>
             </tr>
         </thead>
         <tbody>
             {% for row in time_on_section %}
-            <tr style="border-bottom:1px solid #f3f4f6;">
+            <tr style="border-bottom:1px solid var(--color-border);">
                 <td style="padding:0.4rem 0;">{{ row.section_name }}</td>
                 <td style="padding:0.4rem 0;text-align:right;font-weight:600;">{{ row.avg_seconds }}s</td>
                 <td style="padding:0.4rem 0;text-align:right;">{{ row.median_seconds }}s</td>
-                <td style="padding:0.4rem 0;text-align:right;color:#9ca3af;">{{ row.count }}</td>
+                <td style="padding:0.4rem 0;text-align:right;color:var(--color-text-faint);">{{ row.count }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -267,19 +267,19 @@
     <table style="width:100%;font-size:0.875rem;border-collapse:collapse;">
         <thead>
             <tr style="border-bottom:1px solid var(--border-color);">
-                <th style="text-align:left;padding:0.4rem 0;color:#6b7280;font-weight:500;">{% trans "Section" %}</th>
-                <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">{% trans "Avg" %}</th>
-                <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">{% trans "Median" %}</th>
-                <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">{% trans "Samples" %}</th>
+                <th style="text-align:left;padding:0.4rem 0;color:var(--color-text-muted);font-weight:500;">{% trans "Section" %}</th>
+                <th style="text-align:right;padding:0.4rem 0;color:var(--color-text-muted);font-weight:500;">{% trans "Avg" %}</th>
+                <th style="text-align:right;padding:0.4rem 0;color:var(--color-text-muted);font-weight:500;">{% trans "Median" %}</th>
+                <th style="text-align:right;padding:0.4rem 0;color:var(--color-text-muted);font-weight:500;">{% trans "Samples" %}</th>
             </tr>
         </thead>
         <tbody>
             {% for row in page_load_stats %}
-            <tr style="border-bottom:1px solid #f3f4f6;">
+            <tr style="border-bottom:1px solid var(--color-border);">
                 <td style="padding:0.4rem 0;">{{ row.section_name }}</td>
                 <td style="padding:0.4rem 0;text-align:right;font-weight:600;">{{ row.avg_ms }}ms</td>
                 <td style="padding:0.4rem 0;text-align:right;">{{ row.median_ms }}ms</td>
-                <td style="padding:0.4rem 0;text-align:right;color:#9ca3af;">{{ row.count }}</td>
+                <td style="padding:0.4rem 0;text-align:right;color:var(--color-text-faint);">{{ row.count }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -291,24 +291,24 @@
 {% if campaign_breakdown %}
 <div class="analytics-section">
     <h6>{% trans "Campaign Breakdown" %}</h6>
-    <p style="font-size:0.8rem;color:#9ca3af;margin-bottom:0.75rem;">{% url 'editor_survey_share' survey.uuid as share_url %}{% blocktrans %}Sessions from tracked UTM links. Create links on the <a href="{{ share_url }}">Share</a> page.{% endblocktrans %}</p>
+    <p style="font-size:0.8rem;color:var(--color-text-faint);margin-bottom:0.75rem;">{% url 'editor_survey_share' survey.uuid as share_url %}{% blocktrans %}Sessions from tracked UTM links. Create links on the <a href="{{ share_url }}">Share</a> page.{% endblocktrans %}</p>
     <table style="width:100%;font-size:0.875rem;border-collapse:collapse;">
         <thead>
             <tr style="border-bottom:1px solid var(--border-color);">
-                <th style="text-align:left;padding:0.4rem 0;color:#6b7280;font-weight:500;">{% trans "Source" %}</th>
-                <th style="text-align:left;padding:0.4rem 0;color:#6b7280;font-weight:500;">{% trans "Medium" %}</th>
-                <th style="text-align:left;padding:0.4rem 0;color:#6b7280;font-weight:500;">{% trans "Campaign" %}</th>
-                <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">{% trans "Started" %}</th>
-                <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">{% trans "Completed" %}</th>
-                <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">{% trans "Rate" %}</th>
+                <th style="text-align:left;padding:0.4rem 0;color:var(--color-text-muted);font-weight:500;">{% trans "Source" %}</th>
+                <th style="text-align:left;padding:0.4rem 0;color:var(--color-text-muted);font-weight:500;">{% trans "Medium" %}</th>
+                <th style="text-align:left;padding:0.4rem 0;color:var(--color-text-muted);font-weight:500;">{% trans "Campaign" %}</th>
+                <th style="text-align:right;padding:0.4rem 0;color:var(--color-text-muted);font-weight:500;">{% trans "Started" %}</th>
+                <th style="text-align:right;padding:0.4rem 0;color:var(--color-text-muted);font-weight:500;">{% trans "Completed" %}</th>
+                <th style="text-align:right;padding:0.4rem 0;color:var(--color-text-muted);font-weight:500;">{% trans "Rate" %}</th>
             </tr>
         </thead>
         <tbody>
             {% for row in campaign_breakdown %}
-            <tr style="border-bottom:1px solid #f3f4f6;">
+            <tr style="border-bottom:1px solid var(--color-border);">
                 <td style="padding:0.4rem 0;font-weight:500;">{{ row.utm_source }}</td>
-                <td style="padding:0.4rem 0;color:#6b7280;">{{ row.utm_medium|default:"--" }}</td>
-                <td style="padding:0.4rem 0;color:#6b7280;">{{ row.utm_campaign|default:"--" }}</td>
+                <td style="padding:0.4rem 0;color:var(--color-text-muted);">{{ row.utm_medium|default:"--" }}</td>
+                <td style="padding:0.4rem 0;color:var(--color-text-muted);">{{ row.utm_campaign|default:"--" }}</td>
                 <td style="padding:0.4rem 0;text-align:right;">{{ row.started }}</td>
                 <td style="padding:0.4rem 0;text-align:right;">{{ row.completed }}</td>
                 <td style="padding:0.4rem 0;text-align:right;font-weight:600;">{{ row.rate }}%</td>

@@ -4,13 +4,13 @@
    "free to try" never reads as a second primary button. White on --pro is
    5.67:1. Loaded by base.html and editor/editor_base.html. */
 :root {
-    --pro: var(--color-pro, #6D4AE0);
-    --pro-ink: var(--color-pro-hover, #5A3BC4);
-    --pro-soft: rgba(109, 74, 224, 0.11);
-    --pro-line: rgba(109, 74, 224, 0.35);
-    --pro-lock: #8A94A8;
-    --pro-lock-soft: #F0EEE9;
-    --pro-lock-line: #E4E0D8;
+    --pro: var(--color-pro);
+    --pro-ink: var(--color-pro-hover);
+    --pro-soft: var(--color-pro-soft);
+    --pro-line: var(--color-pro-line);
+    --pro-lock: var(--color-text-faint);
+    --pro-lock-soft: var(--surface-sunken);
+    --pro-lock-line: var(--color-border);
 }
 
 .pro-badge {
@@ -37,7 +37,7 @@
 .pro-badge--trial { color: var(--pro-ink); background: var(--pro-soft); }
 .pro-badge--startable { color: #fff; background: var(--pro); }
 .pro-badge--locked { color: var(--pro-lock); background: var(--pro-lock-soft); border-color: var(--pro-lock-line); }
-a.pro-badge--locked:hover { color: #5A6680; }
+a.pro-badge--locked:hover { color: var(--color-text-muted); }
 
 /* The navigation variant ({% pro_nav_mark %}, change onboarding-friction): a lock and no word,
    only where the workspace is locked out of the feature. */

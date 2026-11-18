@@ -38,7 +38,7 @@
             }
             .site-navbar {
                 background: #fff;
-                border-bottom: 1px solid #e5e7eb;
+                border-bottom: 1px solid var(--color-border);
                 padding: 0.5rem 1rem;
                 display: flex;
                 align-items: center;
@@ -47,29 +47,29 @@
             }
             .site-navbar .navbar-brand {
                 font-weight: 700;
-                color: #111827;
+                color: var(--color-text);
                 font-size: 1.1rem;
                 text-decoration: none;
                 margin-right: auto;
             }
-            .site-navbar .navbar-brand:hover { color: #111827; }
-            .site-navbar a { color: #6b7280; text-decoration: none; font-size: 0.85rem; }
-            .site-navbar a:hover { color: #4f46e5; }
-            .site-navbar .logout-btn { background: none; border: 0; padding: 0; font: inherit; font-size: 0.85rem; color: #6b7280; cursor: pointer; }
-            .site-navbar .logout-btn:hover { color: #4f46e5; }
-            .site-navbar .nav-username { color: #9ca3af; font-size: 0.85rem; }
+            .site-navbar .navbar-brand:hover { color: var(--color-text); }
+            .site-navbar a { color: var(--color-text-muted); text-decoration: none; font-size: 0.85rem; }
+            .site-navbar a:hover { color: var(--color-action); }
+            .site-navbar .logout-btn { background: none; border: 0; padding: 0; font: inherit; font-size: 0.85rem; color: var(--color-text-muted); cursor: pointer; }
+            .site-navbar .logout-btn:hover { color: var(--color-action); }
+            .site-navbar .nav-username { color: var(--color-text-faint); font-size: 0.85rem; }
             .auth-page {
                 min-height: calc(100vh - 49px);
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                background: #f7f5f2;
+                background: var(--page);
                 padding: 2rem 1rem;
             }
             .auth-card {
                 background: #fff;
                 border-radius: 10px;
-                box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+                box-shadow: var(--shadow-md);
                 width: 100%;
                 max-width: 420px;
                 padding: 2.5rem 2rem;
@@ -77,29 +77,29 @@
             .auth-card h2 {
                 font-size: 1.5rem;
                 font-weight: 700;
-                color: #1a1a1a;
+                color: var(--color-text);
                 margin-bottom: 0.25rem;
             }
             .auth-card .auth-subtitle {
-                color: #6b6560;
+                color: var(--color-text-muted);
                 font-size: 0.95rem;
                 margin-bottom: 1.5rem;
             }
             .auth-card .form-control {
                 border-radius: 6px;
-                border: 1px solid #d1ccc5;
+                border: 1px solid var(--color-border-strong);
                 padding: 0.6rem 0.85rem;
                 font-size: 0.95rem;
                 transition: border-color 0.15s;
             }
             .auth-card .form-control:focus {
-                border-color: #2a7f6f;
-                box-shadow: 0 0 0 3px rgba(42,127,111,0.12);
+                border-color: var(--color-action);
+                box-shadow: var(--focus-ring);
             }
             .auth-card label {
                 font-weight: 500;
                 font-size: 0.9rem;
-                color: #374151;
+                color: var(--color-text);
                 margin-bottom: 0.3rem;
             }
             .auth-card .btn-auth {
@@ -108,14 +108,14 @@
                 border-radius: 6px;
                 font-weight: 600;
                 font-size: 0.95rem;
-                background: #2a7f6f;
+                background: var(--color-action);
                 border: none;
                 color: #fff;
                 cursor: pointer;
                 transition: background 0.15s;
             }
             .auth-card .btn-auth:hover {
-                background: #1f6558;
+                background: var(--color-action-hover);
             }
             .auth-card .auth-links {
                 margin-top: 1.25rem;
@@ -123,14 +123,14 @@
                 font-size: 0.9rem;
             }
             .auth-card .auth-links a {
-                color: #2a7f6f;
+                color: var(--color-action);
                 text-decoration: none;
             }
             .auth-card .auth-links a:hover {
                 text-decoration: underline;
             }
             .auth-card .auth-divider {
-                color: #c8c2b8;
+                color: var(--color-text-faint);
                 margin: 0 0.5rem;
             }
             .auth-card .alert {
@@ -149,7 +149,7 @@
                 display: block;
                 width: 100%;
                 border-radius: 6px;
-                border: 1px solid #d1ccc5;
+                border: 1px solid var(--color-border-strong);
                 padding: 0.6rem 0.85rem;
                 font-size: 0.95rem;
                 transition: border-color 0.15s;
@@ -172,7 +172,7 @@
                 height: 1rem;
                 margin: 0.15rem 0 0;
                 padding: 0;
-                accent-color: #2a7f6f;
+                accent-color: var(--color-action);
                 cursor: pointer;
             }
             .auth-card .input-group {
@@ -186,14 +186,14 @@
             .auth-card .form-group input:focus,
             .auth-card .form-group select:focus,
             .auth-card .form-group textarea:focus {
-                border-color: #2a7f6f;
-                box-shadow: 0 0 0 3px rgba(42,127,111,0.12);
+                border-color: var(--color-action);
+                box-shadow: var(--focus-ring);
                 outline: none;
             }
             .auth-card .helptext {
                 display: block;
                 font-size: 0.8rem;
-                color: #6b6560;
+                color: var(--color-text-muted);
                 margin-top: 0.25rem;
             }
             .auth-card .helptext ul {
@@ -202,7 +202,7 @@
             }
             .auth-card .helptext li {
                 font-size: 0.8rem;
-                color: #6b6560;
+                color: var(--color-text-muted);
             }
             /* Errors used to be 0.85rem of red text under the field, with no
                icon and no background. In a four-field form they read as body
@@ -213,12 +213,12 @@
                 list-style: none;
                 padding: 0.5rem 0.65rem;
                 margin: 0.4rem 0 0 0;
-                background: #fdf2f2;
-                border-left: 3px solid #dc3545;
+                background: var(--color-danger-soft);
+                border-left: 3px solid var(--color-danger);
                 border-radius: 4px;
             }
             .auth-card .errorlist li {
-                color: #b02a37;
+                color: var(--color-danger);
                 font-size: 0.85rem;
                 line-height: 1.4;
             }
@@ -234,11 +234,11 @@
             }
             .auth-card .auth-hint {
                 font-size: 0.85rem;
-                color: #6b6560;
+                color: var(--color-text-muted);
                 margin: -0.5rem 0 1rem 0;
             }
             .auth-card .auth-hint a {
-                color: #2a7f6f;
+                color: var(--color-action);
             }
             /* Live password checklist. Neutral until the user types: an
                untouched field covered in red crosses reads as failure before
@@ -250,7 +250,7 @@
             }
             .auth-card .password-checklist li {
                 font-size: 0.8rem;
-                color: #6b6560;
+                color: var(--color-text-muted);
                 line-height: 1.5;
                 display: flex;
                 align-items: baseline;
@@ -259,25 +259,25 @@
                 display: inline-block;
                 width: 1rem;
                 flex: 0 0 1rem;
-                color: #c8c2b8;
+                color: var(--color-text-faint);
             }
             .auth-card .password-checklist__mark::before {
                 content: "\2022";
             }
             .auth-card .password-checklist .is-met {
-                color: #2a7f6f;
+                color: var(--color-action);
             }
             .auth-card .password-checklist .is-met .password-checklist__mark {
-                color: #2a7f6f;
+                color: var(--color-action);
             }
             .auth-card .password-checklist .is-met .password-checklist__mark::before {
                 content: "\2713";
             }
             .auth-card .password-checklist .is-unmet {
-                color: #6b6560;
+                color: var(--color-text-muted);
             }
             .auth-card .password-checklist .is-unmet .password-checklist__mark {
-                color: #b02a37;
+                color: var(--color-danger);
             }
             .auth-card .password-checklist .is-unmet .password-checklist__mark::before {
                 content: "\2717";
@@ -287,10 +287,10 @@
                will not actually block the submission is a lie about what
                happens when they press the button. */
             .auth-card .password-checklist .is-suggested {
-                color: #8a6d3b;
+                color: var(--color-warning);
             }
             .auth-card .password-checklist .is-suggested .password-checklist__mark {
-                color: #d29a2c;
+                color: var(--color-warning);
             }
             .auth-card .password-checklist .is-suggested .password-checklist__mark::before {
                 content: "\26A0";
@@ -303,7 +303,7 @@
                 display: block;
                 width: 100%;
                 border-radius: 6px;
-                border: 1px solid #d1ccc5;
+                border: 1px solid var(--color-border-strong);
                 padding: 0.6rem 0.85rem;
                 font-size: 0.95rem;
                 transition: border-color 0.15s;
@@ -311,8 +311,8 @@
             }
             .auth-card p > input:focus,
             .auth-card p > select:focus {
-                border-color: #2a7f6f;
-                box-shadow: 0 0 0 3px rgba(42,127,111,0.12);
+                border-color: var(--color-action);
+                box-shadow: var(--focus-ring);
                 outline: none;
             }
             .auth-message {
@@ -324,22 +324,22 @@
                 display: block;
             }
             .auth-message p {
-                color: #6b6560;
+                color: var(--color-text-muted);
                 font-size: 0.95rem;
                 line-height: 1.6;
             }
             .pwd-toggle-btn {
-                border: 1px solid #d1ccc5;
+                border: 1px solid var(--color-border-strong);
                 border-left: none;
                 background: #fff;
-                color: #6b7280;
+                color: var(--color-text-muted);
                 cursor: pointer;
                 padding: 0 0.75rem;
                 display: flex;
                 align-items: center;
                 border-radius: 0 6px 6px 0;
             }
-            .pwd-toggle-btn:hover { color: #374151; }
+            .pwd-toggle-btn:hover { color: var(--color-text); }
 
             /* Clipboard status pill — shared between dashboard and editor (issue #16) */
             #clipboardPill {
@@ -347,18 +347,18 @@
                 align-items: center;
                 gap: 0.5rem;
                 padding: 0.25rem 0.45rem 0.25rem 0.7rem;
-                background: #e0e7ff;
-                border: 1px solid #e0e7ff;
+                background: var(--color-action-soft);
+                border: 1px solid var(--color-action-line);
                 border-radius: 999px;
                 font-size: 0.8rem;
-                color: #374151;
+                color: var(--color-text);
                 max-width: 320px;
             }
             #clipboardPill.is-visible { display: inline-flex; }
-            #clipboardPill > i.fa-clipboard { color: #4f46e5; font-size: 0.95rem; }
-            #clipboardPill .clipboard-pill-label { color: #6b7280; }
+            #clipboardPill > i.fa-clipboard { color: var(--color-action); font-size: 0.95rem; }
+            #clipboardPill .clipboard-pill-label { color: var(--color-text-muted); }
             #clipboardPill .clipboard-pill-name {
-                color: #4f46e5;
+                color: var(--color-action);
                 font-weight: 600;
                 max-width: 220px;
                 overflow: hidden;
@@ -370,13 +370,13 @@
             #clipboardPill .clipboard-pill-clear {
                 border: none;
                 background: transparent;
-                color: #6b7280;
+                color: var(--color-text-muted);
                 cursor: pointer;
                 padding: 0 0.2rem;
                 line-height: 1;
                 font-size: 0.85rem;
             }
-            #clipboardPill .clipboard-pill-clear:hover { color: #ef4444; }
+            #clipboardPill .clipboard-pill-clear:hover { color: var(--color-danger); }
         </style>
         {% block extra_head %}{% endblock %}
     </head>
@@ -409,7 +409,7 @@
                       </div>
                       {% if not app_nav.show %}
                       <div class="dropdown d-inline">
-                          <a class="dropdown-toggle" href="#" role="button" data-toggle="dropdown" style="color:#6b7280;font-size:0.85rem;text-decoration:none;">
+                          <a class="dropdown-toggle" href="#" role="button" data-toggle="dropdown" style="color:var(--color-text-muted);font-size:0.85rem;text-decoration:none;">
                               <i class="fas fa-building" style="margin-right:4px;"></i>{{ active_org.name|default:"No organization" }}
                           </a>
                           <div class="dropdown-menu dropdown-menu-right">

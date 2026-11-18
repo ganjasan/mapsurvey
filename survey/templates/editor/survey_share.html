@@ -24,12 +24,12 @@
     }
     .btn-icon {
         border: none; background: none; cursor: pointer;
-        color: #6b7280; padding: 0.25rem 0.4rem; border-radius: 4px;
+        color: var(--color-text-muted); padding: 0.25rem 0.4rem; border-radius: 4px;
     }
     .btn-icon:hover { color: var(--accent); background: var(--accent-light); }
     #qrModal {
         position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0,0,0,0.5); display: none;
+        background: var(--backdrop); display: none;
         align-items: center; justify-content: center; z-index: 1000;
     }
     #qrModal.active { display: flex; }
@@ -38,21 +38,21 @@
         padding: 2rem; text-align: center; max-width: 350px;
     }
     #qrModalContent .qr-url {
-        font-size: 0.75rem; color: #6b7280; margin-top: 1rem;
+        font-size: 0.75rem; color: var(--color-text-muted); margin-top: 1rem;
         word-break: break-all;
     }
     .share-intro h5 { font-weight: 700; margin-bottom: 0.3rem; }
-    .share-intro p { color: #6b7280; font-size: 0.9rem; margin: 0; }
+    .share-intro p { color: var(--color-text-muted); font-size: 0.9rem; margin: 0; }
     .share-gate {
         display: flex; gap: 1rem;
-        background: #fdf7ea; border: 1px solid #efe1bb;
+        background: var(--color-warning-soft); border: 1px solid var(--color-warning-line);
         border-radius: var(--radius); padding: 1.25rem 1.5rem;
     }
-    .share-gate-icon { color: #b7791f; font-size: 1.4rem; margin-top: 0.15rem; }
+    .share-gate-icon { color: var(--color-warning); font-size: 1.4rem; margin-top: 0.15rem; }
     .share-gate-body h5 { font-weight: 700; margin-bottom: 0.35rem; }
-    .share-gate-body p { color: #6b7280; font-size: 0.9rem; margin: 0 0 0.85rem; }
+    .share-gate-body p { color: var(--color-text-muted); font-size: 0.9rem; margin: 0 0 0.85rem; }
     .share-gate-body p:last-child { margin-bottom: 0; }
-    .share-gate-hint { color: #6b7280; font-size: 0.85rem; }
+    .share-gate-hint { color: var(--color-text-muted); font-size: 0.85rem; }
     .share-gate-hint i { color: var(--accent); }
     .share-monitor {
         display: flex; align-items: flex-start; gap: 0.6rem;
@@ -116,7 +116,7 @@
     <!-- Direct link (the shareable link) -->
     <div class="share-section">
         <h6>{% trans "Survey link" %}</h6>
-        <p style="font-size:0.85rem;color:#6b7280;margin-bottom:0.75rem;">
+        <p style="font-size:0.85rem;color:var(--color-text-muted);margin-bottom:0.75rem;">
             {% trans "Anyone with this link can open your survey. Copy it, or show it as a QR code." %}
         </p>
         <div style="display:flex;align-items:center;gap:0.5rem;">
@@ -136,7 +136,7 @@
     <div class="share-section">
         <h6>{% trans "Results page" %}</h6>
         {% if results_page.is_published %}
-        <p style="font-size:0.85rem;color:#6b7280;margin-bottom:0.75rem;">
+        <p style="font-size:0.85rem;color:var(--color-text-muted);margin-bottom:0.75rem;">
             {% trans "Your public results page is live — share it so respondents can see what others said." %}
         </p>
         <div style="display:flex;align-items:center;gap:0.5rem;">
@@ -147,7 +147,7 @@
             </button>
         </div>
         {% else %}
-        <p style="font-size:0.85rem;color:#6b7280;margin-bottom:0.75rem;">
+        <p style="font-size:0.85rem;color:var(--color-text-muted);margin-bottom:0.75rem;">
             {% trans "We drafted a public results page from your questions. Review it and publish to give your audience a live view of the answers." %}
         </p>
         <a class="btn btn-sm btn-outline-primary" href="{% url 'editor_survey_public_results' survey.uuid %}">
@@ -160,7 +160,7 @@
     <!-- Embed on your site (change embed-surveys) -->
     <div class="share-section" id="embed">
         <h6>{% trans "Embed on your site" %}</h6>
-        <p style="font-size:0.85rem;color:#6b7280;margin-bottom:0.75rem;">
+        <p style="font-size:0.85rem;color:var(--color-text-muted);margin-bottom:0.75rem;">
             {% trans "Paste this code where you want the survey to appear — on your own site or anywhere that accepts HTML (Tilda, Webflow, Wix, Squarespace, WordPress). The survey works inside the box, and the responses land here as usual. Forms grow with their content; for a map, set the height you want." %}
         </p>
         <div style="display:flex;align-items:flex-start;gap:0.5rem;">
@@ -170,7 +170,7 @@
                 <i class="fas fa-copy"></i>
             </button>
         </div>
-        <p style="font-size:0.8rem;color:#6b7280;margin:0.5rem 0 1rem;">
+        <p style="font-size:0.8rem;color:var(--color-text-muted);margin:0.5rem 0 1rem;">
             {% trans "In Notion, Ghost or a self-hosted WordPress you can also just paste the survey link: they pick up the survey from it." %}
             {% if survey.show_branding %}{% trans "The “Made with Mapsurvey” badge shows inside the embed too; removing it is part of Pro." %}{% endif %}
             {% if HELP_URL %}<a href="{{ HELP_URL.embedding }}" target="_blank" rel="noopener" class="ms-learn-more">{% trans "Learn more" %} <i class="fas fa-external-link-alt" style="font-size:.7em;"></i></a>{% endif %}
@@ -180,9 +180,9 @@
             <label for="{{ embed_form.allowed_hosts.id_for_label }}" style="font-size:0.8rem;font-weight:500;">{{ embed_form.allowed_hosts.label }}</label>
             {{ embed_form.allowed_hosts }}
             {% for error in embed_form.allowed_hosts.errors %}
-            <div style="color:#ef4444;font-size:0.75rem;margin-top:0.2rem;">{{ error }}</div>
+            <div style="color:var(--color-danger);font-size:0.75rem;margin-top:0.2rem;">{{ error }}</div>
             {% endfor %}
-            <div style="font-size:0.75rem;color:#6b7280;margin-top:0.3rem;">
+            <div style="font-size:0.75rem;color:var(--color-text-muted);margin-top:0.3rem;">
                 {% trans "One site per line. Leave empty to let any site embed the survey. Use *.example.org for all its subdomains. Notion and other platforms that embed from a pasted link check this list from their own servers, so for them it has to stay empty." %}
             </div>
             <button type="submit" class="btn btn-sm btn-outline-primary mt-2">{% trans "Save allowed sites" %}</button>
@@ -193,17 +193,17 @@
     <!-- Create Tracking Link -->
     <div class="share-section">
         <h6>{% trans "Track where responses come from" %}</h6>
-        <p style="font-size:0.85rem;color:#6b7280;margin-bottom:1rem;">
+        <p style="font-size:0.85rem;color:var(--color-text-muted);margin-bottom:1rem;">
             {% trans "Make a separate link per channel — newsletter, Instagram, a printed poster. Every response that arrives through it is tagged with its source, so you can compare channels in" %} <a href="{% url 'editor_survey_analytics' survey.uuid %}#traffic-sources">{% trans "Responses" %}&nbsp;→&nbsp;{% trans "Traffic Sources" %}</a>.
         </p>
         <form method="post">
             {% csrf_token %}
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;">
                 <div>
-                    <label style="font-size:0.8rem;font-weight:500;">{{ form.utm_source.label }} <span style="color:#ef4444;">*</span></label>
+                    <label style="font-size:0.8rem;font-weight:500;">{{ form.utm_source.label }} <span style="color:var(--color-danger);">*</span></label>
                     {{ form.utm_source }}
                     {% if form.utm_source.errors %}
-                    <div style="color:#ef4444;font-size:0.75rem;margin-top:0.2rem;">{{ form.utm_source.errors.0 }}</div>
+                    <div style="color:var(--color-danger);font-size:0.75rem;margin-top:0.2rem;">{{ form.utm_source.errors.0 }}</div>
                     {% endif %}
                 </div>
                 <div>
@@ -228,18 +228,18 @@
         <table style="width:100%;font-size:0.875rem;border-collapse:collapse;">
             <thead>
                 <tr style="border-bottom:1px solid var(--border-color);">
-                    <th style="text-align:left;padding:0.4rem 0;color:#6b7280;font-weight:500;">{% trans "Source" %}</th>
-                    <th style="text-align:left;padding:0.4rem 0;color:#6b7280;font-weight:500;">{% trans "Medium" %}</th>
-                    <th style="text-align:left;padding:0.4rem 0;color:#6b7280;font-weight:500;">{% trans "Campaign" %}</th>
-                    <th style="text-align:right;padding:0.4rem 0;color:#6b7280;font-weight:500;">{% trans "Actions" %}</th>
+                    <th style="text-align:left;padding:0.4rem 0;color:var(--color-text-muted);font-weight:500;">{% trans "Source" %}</th>
+                    <th style="text-align:left;padding:0.4rem 0;color:var(--color-text-muted);font-weight:500;">{% trans "Medium" %}</th>
+                    <th style="text-align:left;padding:0.4rem 0;color:var(--color-text-muted);font-weight:500;">{% trans "Campaign" %}</th>
+                    <th style="text-align:right;padding:0.4rem 0;color:var(--color-text-muted);font-weight:500;">{% trans "Actions" %}</th>
                 </tr>
             </thead>
             <tbody>
                 {% for item in links %}
-                <tr id="link-row-{{ item.obj.id }}" style="border-bottom:1px solid #f3f4f6;">
+                <tr id="link-row-{{ item.obj.id }}" style="border-bottom:1px solid var(--color-border);">
                     <td style="padding:0.5rem 0;font-weight:500;">{{ item.obj.utm_source }}</td>
-                    <td style="padding:0.5rem 0;color:#6b7280;">{{ item.obj.utm_medium|default:"--" }}</td>
-                    <td style="padding:0.5rem 0;color:#6b7280;">{{ item.obj.utm_campaign|default:"--" }}</td>
+                    <td style="padding:0.5rem 0;color:var(--color-text-muted);">{{ item.obj.utm_medium|default:"--" }}</td>
+                    <td style="padding:0.5rem 0;color:var(--color-text-muted);">{{ item.obj.utm_campaign|default:"--" }}</td>
                     <td style="padding:0.5rem 0;text-align:right;white-space:nowrap;">
                         <button class="btn-icon" onclick="copyLink(this, '{{ item.url|escapejs }}')" title="{% trans 'Copy URL' %}">
                             <i class="fas fa-copy"></i>
@@ -255,13 +255,13 @@
                               hx-swap="outerHTML">
                             {% csrf_token %}
                             <button type="submit" class="btn-icon" title="{% trans 'Delete' %}"
-                                    style="color:#ef4444;">
+                                    style="color:var(--color-danger);">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>
                     </td>
                 </tr>
-                <tr style="border-bottom:1px solid #f3f4f6;">
+                <tr style="border-bottom:1px solid var(--color-border);">
                     <td colspan="4" style="padding:0.2rem 0 0.5rem;">
                         <span class="link-url">{{ item.url }}</span>
                     </td>
@@ -274,7 +274,7 @@
             <div>{% trans "See how each link performs — started, completed and completion rate per source — in" %} <a href="{% url 'editor_survey_analytics' survey.uuid %}#traffic-sources">{% trans "Responses" %}&nbsp;→&nbsp;{% trans "Traffic Sources" %}</a>.</div>
         </div>
         {% else %}
-        <p style="color:#9ca3af;font-size:0.9rem;text-align:center;padding:2rem 0;">
+        <p style="color:var(--color-text-faint);font-size:0.9rem;text-align:center;padding:2rem 0;">
             {% url 'editor_survey_analytics' survey.uuid as analytics_url %}{% blocktrans %}No tracking links yet. Create one above, then watch each source's performance in <a href="{{ analytics_url }}#traffic-sources">Responses&nbsp;→&nbsp;Traffic&nbsp;Sources</a>.{% endblocktrans %}
         </p>
         {% endif %}
@@ -284,7 +284,7 @@
     <!-- Printable paper form (change printable-form, #489): every status, every plan -->
     <div class="share-section" id="print-form">
         <h6>{% trans "Print a paper form" %}</h6>
-        <p style="font-size:0.85rem;color:#6b7280;margin-bottom:0.75rem;">
+        <p style="font-size:0.85rem;color:var(--color-text-muted);margin-bottom:0.75rem;">
             {% trans "A PDF of the whole survey as a paper form: every question with boxes and lines, the map of each page with your reference layers and a letter per map question, and a code on every page so the sheets can be matched back. Type the filled sheets in with “Enter a response” on Responses." %}
             {% if HELP_URL.print_form %}<a href="{{ HELP_URL.print_form }}" target="_blank" rel="noopener">{% trans "Learn more" %}</a>{% endif %}
         </p>
@@ -320,14 +320,14 @@
             </div>
             <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-print"></i> {% trans "Download PDF" %}</button>
         </form>
-        <p style="font-size:0.8rem;color:#6b7280;margin:0.5rem 0 0;"><i class="fas fa-hashtag"></i>
+        <p style="font-size:0.8rem;color:var(--color-text-muted);margin:0.5rem 0 0;"><i class="fas fa-hashtag"></i>
             {% if print_copies_printed %}{% blocktrans with n=print_copies_printed next=print_next_copy %}{{ n }} numbered copies printed so far; the next print starts at #{{ next }}.{% endblocktrans %}{% endif %}
             {% trans "Numbered copies carry their own number on every page, so photos and scans of them sort themselves in any order. A copy made on a photocopier repeats its number — print more copies instead. With one copy to photocopy, upload one PDF per filled form, or add photos to a response by hand." %}</p>
         {% if survey.status == 'draft' or survey.status == 'testing' %}
-        <p style="font-size:0.8rem;color:#6b7280;margin:0.5rem 0 0;"><i class="fas fa-info-circle"></i> {% trans "Until the survey is published the form prints with a DRAFT watermark — good for proofing, not for handing out." %}</p>
+        <p style="font-size:0.8rem;color:var(--color-text-muted);margin:0.5rem 0 0;"><i class="fas fa-info-circle"></i> {% trans "Until the survey is published the form prints with a DRAFT watermark — good for proofing, not for handing out." %}</p>
         {% endif %}
         {% if print_cjk %}
-        <p style="font-size:0.8rem;color:#92400e;margin:0.5rem 0 0;"><i class="fas fa-exclamation-triangle"></i> {% trans "Chinese, Japanese and Korean text is not yet supported on the printed form." %}</p>
+        <p style="font-size:0.8rem;color:var(--color-warning);margin:0.5rem 0 0;"><i class="fas fa-exclamation-triangle"></i> {% trans "Chinese, Japanese and Korean text is not yet supported on the printed form." %}</p>
         {% endif %}
     </div>
 

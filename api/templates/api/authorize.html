@@ -19,27 +19,27 @@ Headers (DENY, no-store) come from OAuthResponseHeadersMiddleware.{% endcomment 
   .oa-wrap { padding: 2rem 1rem 3rem; }
   .oa-card { max-width: 560px; margin: 0 auto 1.25rem; background: #fff; border: 1px solid var(--border-color); border-radius: 16px; padding: 1.75rem 2rem; }
   .oa-card h1 { font-size: 1.35rem; font-weight: 700; margin: 0 0 .25rem; }
-  .oa-host { font-size: 1.15rem; font-weight: 700; color: #0f172a; word-break: break-all; }
-  .oa-name { color: #5f6368; font-size: .92rem; margin: .15rem 0 1.25rem; word-break: break-word; }
-  .oa-card h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: #6b7280; font-weight: 600; margin: 1.1rem 0 .4rem; }
+  .oa-host { font-size: 1.15rem; font-weight: 700; color: var(--color-text); word-break: break-all; }
+  .oa-name { color: var(--color-text-muted); font-size: .92rem; margin: .15rem 0 1.25rem; word-break: break-word; }
+  .oa-card h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-muted); font-weight: 600; margin: 1.1rem 0 .4rem; }
   .oa-list { list-style: none; padding: 0; margin: 0; }
   .oa-list li { padding: .3rem 0; font-size: .92rem; display: flex; gap: .6rem; align-items: flex-start; }
-  .oa-list li i { color: #16a34a; margin-top: .2rem; }
-  .oa-switch { display: flex; gap: .6rem; align-items: flex-start; padding: .4rem .6rem; border: 1px solid #fecaca; background: #fef2f2; border-radius: 10px; margin: .3rem 0; font-size: .92rem; }
+  .oa-list li i { color: var(--color-success); margin-top: .2rem; }
+  .oa-switch { display: flex; gap: .6rem; align-items: flex-start; padding: .4rem .6rem; border: 1px solid var(--color-danger-line); background: var(--color-danger-soft); border-radius: 10px; margin: .3rem 0; font-size: .92rem; }
   .oa-switch input { margin-top: .3rem; }
-  .oa-switch small { display: block; color: #991b1b; font-size: .78rem; }
-  .oa-ws { font-size: .9rem; color: #374151; }
-  .oa-plan { display: inline-block; font-size: .72rem; background: #f1f5f9; color: #334155; border-radius: 999px; padding: 1px 8px; margin-left: .35rem; }
-  .oa-plan.pro { background: #e0e7ff; color: #3730a3; }
+  .oa-switch small { display: block; color: var(--color-danger-hover); font-size: .78rem; }
+  .oa-ws { font-size: .9rem; color: var(--color-text); }
+  .oa-plan { display: inline-block; font-size: .72rem; background: var(--surface-sunken); color: var(--color-text); border-radius: 999px; padding: 1px 8px; margin-left: .35rem; }
+  .oa-plan.pro { background: var(--color-action-soft); color: var(--color-action-hover); }
   details.oa-ws summary { cursor: pointer; padding: .35rem 0; }
   details.oa-ws table { width: 100%; border-collapse: collapse; margin-top: .35rem; }
-  details.oa-ws th { text-align: left; font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: #6b7280; font-weight: 600; padding: .3rem .4rem; border-bottom: 1px solid var(--border-color); }
-  details.oa-ws td { padding: .35rem .4rem; border-bottom: 1px solid #f1f5f9; word-break: break-word; }
+  details.oa-ws th { text-align: left; font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-muted); font-weight: 600; padding: .3rem .4rem; border-bottom: 1px solid var(--border-color); }
+  details.oa-ws td { padding: .35rem .4rem; border-bottom: 1px solid var(--color-border); word-break: break-word; }
   details.oa-ws td .oa-plan { margin-left: 0; }
-  .oa-note { background: #fef3c7; color: #92400e; border-radius: 10px; padding: .6rem .9rem; font-size: .85rem; margin: .9rem 0 0; }
+  .oa-note { background: var(--color-warning-soft); color: var(--color-warning); border-radius: 10px; padding: .6rem .9rem; font-size: .85rem; margin: .9rem 0 0; }
   .oa-actions { display: flex; gap: .75rem; justify-content: flex-end; margin-top: 1.5rem; }
-  .oa-error h1 { color: #b91c1c; }
-  .oa-fine { font-size: .78rem; color: #9aa0a6; margin-top: 1rem; }
+  .oa-error h1 { color: var(--color-danger); }
+  .oa-fine { font-size: .78rem; color: var(--color-text-faint); margin-top: 1rem; }
   @media (max-width: 767.98px) { .oa-card { padding: 1.25rem 1rem; } .oa-actions { flex-direction: column-reverse; } .oa-actions .btn { width: 100%; } }
 </style>
 {% endblock %}

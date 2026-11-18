@@ -16,7 +16,7 @@
     }
     .qtp-pv-card {
         display: flex; flex-direction: column;
-        background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 12px;
+        background: var(--surface-muted); border: 1px solid var(--color-border); border-radius: 8px; padding: 12px;
     }
     @media (max-width: 991.98px) {
         .qtp-preview-col { display: none; }
@@ -31,12 +31,12 @@
     }
     .qtp-pv-title {
         font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em;
-        text-transform: uppercase; color: #6b7280; margin-bottom: 8px;
+        text-transform: uppercase; color: var(--color-text-muted); margin-bottom: 8px;
     }
-    .qtp-pv-note { font-size: 0.7rem; color: #9aa0a6; margin-top: 8px; }
+    .qtp-pv-note { font-size: 0.7rem; color: var(--color-text-faint); margin-top: 8px; }
     .qtp-tips-list {
         margin: 0; padding-left: 1.1rem;
-        font-size: 0.76rem; line-height: 1.45; color: #495057;
+        font-size: 0.76rem; line-height: 1.45; color: var(--color-text);
     }
     .qtp-tips-list li { margin-bottom: 7px; }
     .qtp-tips-list li:last-child { margin-bottom: 0; }
@@ -44,69 +44,69 @@
     /* Type picker card grid */
     .qtp-group-caption {
         font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
-        color: #868e96; margin: 10px 0 6px; display: flex; align-items: center; gap: 8px;
+        color: var(--color-text-faint); margin: 10px 0 6px; display: flex; align-items: center; gap: 8px;
     }
     .qtp-group-caption:first-child { margin-top: 0; }
-    .qtp-group-caption::after { content: ""; flex: 1; height: 1px; background: #e9ecef; }
+    .qtp-group-caption::after { content: ""; flex: 1; height: 1px; background: var(--surface-sunken); }
     .qtp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
     .qtp-card {
-        border: 1px solid #dee2e6; border-radius: 8px; padding: 10px 6px 8px;
+        border: 1px solid var(--color-border); border-radius: 8px; padding: 10px 6px 8px;
         text-align: center; cursor: pointer; background: #fff;
         transition: border-color .12s ease, background .12s ease, box-shadow .12s ease;
         user-select: none;
     }
-    .qtp-card:hover { border-color: #80bdff; background: #f5faff; box-shadow: 0 3px 8px rgba(0,0,0,.08); }
-    .qtp-card.selected { border-color: #007bff; background: #e7f1ff; box-shadow: inset 0 0 0 1px #007bff; }
-    .qtp-card .qtp-icon { font-size: 19px; color: #495057; margin-bottom: 6px; }
-    .qtp-card.selected .qtp-icon { color: #007bff; }
-    .qtp-card .qtp-name { font-size: 0.72rem; font-weight: 600; color: #343a40; line-height: 1.2; }
+    .qtp-card:hover { border-color: var(--color-action-line); background: var(--color-action-soft); box-shadow: var(--shadow-md); }
+    .qtp-card.selected { border-color: var(--color-action); background: var(--color-action-soft); box-shadow: inset 0 0 0 1px var(--color-action); }
+    .qtp-card .qtp-icon { font-size: 19px; color: var(--color-text); margin-bottom: 6px; }
+    .qtp-card.selected .qtp-icon { color: var(--color-action); }
+    .qtp-card .qtp-name { font-size: 0.72rem; font-weight: 600; color: var(--color-text); line-height: 1.2; }
     .qtp-off {
-        border: 1px dashed #dee2e6; border-radius: 8px; padding: 10px 6px 8px;
-        text-align: center; background: #f8f9fa; cursor: not-allowed; user-select: none; opacity: .55;
+        border: 1px dashed var(--color-border); border-radius: 8px; padding: 10px 6px 8px;
+        text-align: center; background: var(--surface-muted); cursor: not-allowed; user-select: none; opacity: .55;
     }
-    .qtp-off .qtp-icon { font-size: 19px; color: #adb5bd; margin-bottom: 6px; }
-    .qtp-off .qtp-name { font-size: 0.72rem; font-weight: 600; color: #6c757d; line-height: 1.2; }
-    .qtp-off-reason { font-size: 0.75rem; color: #6c757d; margin-top: 6px; }
-    .qtp-hint-line { font-size: 0.75rem; color: #6c757d; margin-top: 6px; min-height: 1em; }
+    .qtp-off .qtp-icon { font-size: 19px; color: var(--color-text-faint); margin-bottom: 6px; }
+    .qtp-off .qtp-name { font-size: 0.72rem; font-weight: 600; color: var(--color-text-muted); line-height: 1.2; }
+    .qtp-off-reason { font-size: 0.75rem; color: var(--color-text-muted); margin-top: 6px; }
+    .qtp-hint-line { font-size: 0.75rem; color: var(--color-text-muted); margin-top: 6px; min-height: 1em; }
 
     /* Objects on the map — direction A of mockups/Main.dc.html: one card. */
-    .lo-card { border: 1px solid #e5e7eb; border-radius: 8px; background: #fafafa; padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; margin-bottom: 0; }
-    .lo-card--tail { border-top: 0 !important; border-top-left-radius: 0 !important; border-top-right-radius: 0 !important; background: #fafafa !important; padding: 0 16px 14px !important; margin-top: 0 !important; }
-    .lo-card--tail::before { content: ""; display: block; height: 1px; background: #e5e7eb; margin: 0 0 12px; }
+    .lo-card { border: 1px solid var(--color-border); border-radius: 8px; background: var(--surface-muted); padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; margin-bottom: 0; }
+    .lo-card--tail { border-top: 0 !important; border-top-left-radius: 0 !important; border-top-right-radius: 0 !important; background: var(--surface-muted) !important; padding: 0 16px 14px !important; margin-top: 0 !important; }
+    .lo-card--tail::before { content: ""; display: block; height: 1px; background: var(--color-border); margin: 0 0 12px; }
     #fg-layer-objects.lo-card--head { border-bottom-left-radius: 0; border-bottom-right-radius: 0; margin-bottom: 0; }
     .lo-card__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     .lo-card__title { font-size: .95rem; font-weight: 600; }
-    .lo-status { display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; color: #5f6368; background: #fff; border: 1px solid #e5e7eb; border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
-    .lo-status--collects { color: #4f46e5; background: #eef2ff; border-color: #c7d2fe; }
+    .lo-status { display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; color: var(--color-text-muted); background: #fff; border: 1px solid var(--color-border); border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
+    .lo-status--collects { color: var(--color-action); background: var(--color-action-soft); border-color: var(--color-action-line); }
     .lo-field { display: flex; flex-direction: column; gap: 6px; }
     .lo-label { font-size: .85rem; font-weight: 600; margin: 0; }
     .lo-row { display: flex; align-items: center; gap: 10px; }
     .lo-row .form-control { flex: 1; }
     .lo-row input.form-control[type=number] { flex: 0 0 96px; }
     .lo-link { font-size: .85rem; font-weight: 500; white-space: nowrap; }
-    .lo-help { font-size: .78rem; color: #868e96; margin: 0; }
-    .lo-seg { display: flex; border: 1px solid #d1d5db; border-radius: 8px; overflow: hidden; background: #fff; }
+    .lo-help { font-size: .78rem; color: var(--color-text-faint); margin: 0; }
+    .lo-seg { display: flex; border: 1px solid var(--color-border-strong); border-radius: 8px; overflow: hidden; background: #fff; }
     .lo-seg__opt { flex: 1; margin: 0; cursor: pointer; position: relative; }
-    .lo-seg__opt + .lo-seg__opt { border-left: 1px solid #d1d5db; }
+    .lo-seg__opt + .lo-seg__opt { border-left: 1px solid var(--color-border-strong); }
     .lo-seg__opt input { position: absolute; opacity: 0; width: 0; height: 0; }
-    .lo-seg__opt span { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 12px; font-size: .85rem; font-weight: 500; color: #5f6368; }
-    .lo-seg__opt input:checked + span { background: #eef2ff; color: #4f46e5; }
-    .lo-seg__opt input:focus-visible + span { box-shadow: inset 0 0 0 2px #4f46e5; }
-    .lo-source { border: 1px solid #c7d2fe; border-radius: 8px; background: #eef2ff; padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; }
-    .lo-source__title { font-size: .68rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #4f46e5; }
+    .lo-seg__opt span { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 12px; font-size: .85rem; font-weight: 500; color: var(--color-text-muted); }
+    .lo-seg__opt input:checked + span { background: var(--color-action-soft); color: var(--color-action); }
+    .lo-seg__opt input:focus-visible + span { box-shadow: inset 0 0 0 2px var(--color-action); }
+    .lo-source { border: 1px solid var(--color-action-line); border-radius: 8px; background: var(--color-action-soft); padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; }
+    .lo-source__title { font-size: .68rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--color-action); }
     .lo-source__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
     .lo-check { display: flex; align-items: center; gap: 8px; margin: 0; font-size: .85rem; font-weight: 400; cursor: pointer; }
-    .lo-share { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 0 auto; font-size: .76rem; color: #5f6368; white-space: nowrap; cursor: pointer; font-weight: 400; }
+    .lo-share { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 0 auto; font-size: .76rem; color: var(--color-text-muted); white-space: nowrap; cursor: pointer; font-weight: 400; }
     .lo-share input { margin: 0; }
-    .lo-share--none { color: #adb5bd; cursor: default; }
+    .lo-share--none { color: var(--color-text-faint); cursor: default; }
     .lo-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-    .lo-chip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 1px dashed #d1d5db; border-radius: 999px; background: #fff; font-size: .8rem; color: #5f6368; cursor: pointer; }
-    .lo-chip:hover { border-color: #4f46e5; color: #4f46e5; }
+    .lo-chip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 1px dashed var(--color-border-strong); border-radius: 999px; background: #fff; font-size: .8rem; color: var(--color-text-muted); cursor: pointer; }
+    .lo-chip:hover { border-color: var(--color-action); color: var(--color-action); }
 
     /* Hover flyout with a canned example */
-    .qtp-flyout-hint { font-size: 0.7rem; color: #868e96; margin-bottom: 8px; }
+    .qtp-flyout-hint { font-size: 0.7rem; color: var(--color-text-faint); margin-bottom: 8px; }
     .qtp-example-frame {
-        width: 100%; height: 190px; border: 1px solid #dee2e6; border-radius: 8px;
+        width: 100%; height: 190px; border: 1px solid var(--color-border); border-radius: 8px;
         background: #fff;
     }
 </style>
@@ -239,19 +239,19 @@
             semantics survive unchanged.{% endcomment %}
             {% with sdef=survey.get_default_rating_display_style %}
             <div style="display:flex;gap:8px;">
-                <label class="ds-option" data-types="choice multichoice" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;padding:10px 8px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;margin:0;font-size:0.85rem;text-align:center;position:relative;overflow:hidden;">
+                <label class="ds-option" data-types="choice multichoice" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;padding:10px 8px;border:1px solid var(--color-border-strong);border-radius:8px;cursor:pointer;margin:0;font-size:0.85rem;text-align:center;position:relative;overflow:hidden;">
                     <input type="radio" name="display_style" value="default"{% if not form.display_style.value or form.display_style.value == 'default' %} checked{% endif %}>
                     <span class="ds-default-ribbon">{% trans "Default" %}</span>
                     <span class="ds-thumb" style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;">
-                        <i style="display:flex;align-items:center;gap:4px;"><i style="width:9px;height:9px;border:1px solid #9aa0a6;border-radius:50%;"></i><i style="width:56px;height:6px;background:#e5e7eb;border-radius:3px;"></i></i>
-                        <i style="display:flex;align-items:center;gap:4px;"><i style="width:9px;height:9px;border:2px solid #4f46e5;border-radius:50%;"></i><i style="width:44px;height:6px;background:#e5e7eb;border-radius:3px;"></i></i>
-                        <i style="display:flex;align-items:center;gap:4px;"><i style="width:9px;height:9px;border:1px solid #9aa0a6;border-radius:50%;"></i><i style="width:50px;height:6px;background:#e5e7eb;border-radius:3px;"></i></i>
+                        <i style="display:flex;align-items:center;gap:4px;"><i style="width:9px;height:9px;border:1px solid var(--color-border-strong);border-radius:50%;"></i><i style="width:56px;height:6px;background:var(--color-border);border-radius:3px;"></i></i>
+                        <i style="display:flex;align-items:center;gap:4px;"><i style="width:9px;height:9px;border:2px solid var(--color-action);border-radius:50%;"></i><i style="width:44px;height:6px;background:var(--color-border);border-radius:3px;"></i></i>
+                        <i style="display:flex;align-items:center;gap:4px;"><i style="width:9px;height:9px;border:1px solid var(--color-border-strong);border-radius:50%;"></i><i style="width:50px;height:6px;background:var(--color-border);border-radius:3px;"></i></i>
                     </span>
                     <span>{% trans "List" %}</span>
                 </label>
                 {% for radio in form.display_style %}
                 {% if radio.data.value != 'default' %}
-                <label class="ds-option" data-types="{% if radio.data.value == 'dropdown' %}choice{% elif radio.data.value == 'icon_grid' %}choice multichoice{% else %}rating{% endif %}" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;padding:10px 8px;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;margin:0;font-size:0.85rem;text-align:center;position:relative;overflow:hidden;">
+                <label class="ds-option" data-types="{% if radio.data.value == 'dropdown' %}choice{% elif radio.data.value == 'icon_grid' %}choice multichoice{% else %}rating{% endif %}" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;padding:10px 8px;border:1px solid var(--color-border-strong);border-radius:8px;cursor:pointer;margin:0;font-size:0.85rem;text-align:center;position:relative;overflow:hidden;">
                     {% if radio.data.value == sdef %}
                     {# The survey's own default rating style: submits 'default' (inherit), wears the ribbon. #}
                     <input type="radio" name="display_style" value="default"{% if not form.display_style.value or form.display_style.value == 'default' or form.display_style.value == sdef %} checked{% endif %}>
@@ -261,24 +261,24 @@
                     {% endif %}
                     {% if radio.data.value == 'scale_strip' %}
                     <span class="ds-thumb" style="display:flex;gap:3px;">
-                        <i style="width:14px;height:14px;border:1px solid #d1d5db;border-radius:3px;"></i><i style="width:14px;height:14px;border:1px solid #d1d5db;border-radius:3px;"></i><i style="width:14px;height:14px;border-radius:3px;background:#4f46e5;"></i><i style="width:14px;height:14px;border:1px solid #d1d5db;border-radius:3px;"></i><i style="width:14px;height:14px;border:1px solid #d1d5db;border-radius:3px;"></i>
+                        <i style="width:14px;height:14px;border:1px solid var(--color-border-strong);border-radius:3px;"></i><i style="width:14px;height:14px;border:1px solid var(--color-border-strong);border-radius:3px;"></i><i style="width:14px;height:14px;border-radius:3px;background:var(--color-action);"></i><i style="width:14px;height:14px;border:1px solid var(--color-border-strong);border-radius:3px;"></i><i style="width:14px;height:14px;border:1px solid var(--color-border-strong);border-radius:3px;"></i>
                     </span>
                     {% elif radio.data.value == 'stars' %}
-                    <span class="ds-thumb" style="display:flex;gap:2px;color:#f5b301;font-size:13px;">
-                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star" style="color:#d5d8dc;"></i><i class="fas fa-star" style="color:#d5d8dc;"></i>
+                    <span class="ds-thumb" style="display:flex;gap:2px;color:var(--color-rating);font-size:13px;">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star" style="color:var(--color-border-strong);"></i><i class="fas fa-star" style="color:var(--color-border-strong);"></i>
                     </span>
                     {% elif radio.data.value == 'icon_grid' %}
-                    <span class="ds-thumb" style="display:grid;grid-template-columns:repeat(3,20px);gap:3px;color:#6b7280;font-size:9px;">
-                        <i style="display:flex;align-items:center;justify-content:center;height:16px;border:1px solid #d1d5db;border-radius:3px;" class="fas fa-tree"></i><i style="display:flex;align-items:center;justify-content:center;height:16px;border:1px solid #4f46e5;background:#eef2ff;color:#4f46e5;border-radius:3px;" class="fas fa-child"></i><i style="display:flex;align-items:center;justify-content:center;height:16px;border:1px solid #d1d5db;border-radius:3px;" class="fas fa-bus"></i>
-                        <i style="display:flex;align-items:center;justify-content:center;height:16px;border:1px solid #d1d5db;border-radius:3px;" class="fas fa-store"></i><i style="display:flex;align-items:center;justify-content:center;height:16px;border:1px solid #d1d5db;border-radius:3px;" class="fas fa-bicycle"></i><i style="display:flex;align-items:center;justify-content:center;height:16px;border:1px solid #d1d5db;border-radius:3px;" class="fas fa-water"></i>
+                    <span class="ds-thumb" style="display:grid;grid-template-columns:repeat(3,20px);gap:3px;color:var(--color-text-muted);font-size:9px;">
+                        <i style="display:flex;align-items:center;justify-content:center;height:16px;border:1px solid var(--color-border-strong);border-radius:3px;" class="fas fa-tree"></i><i style="display:flex;align-items:center;justify-content:center;height:16px;border:1px solid var(--color-action);background:var(--color-action-soft);color:var(--color-action);border-radius:3px;" class="fas fa-child"></i><i style="display:flex;align-items:center;justify-content:center;height:16px;border:1px solid var(--color-border-strong);border-radius:3px;" class="fas fa-bus"></i>
+                        <i style="display:flex;align-items:center;justify-content:center;height:16px;border:1px solid var(--color-border-strong);border-radius:3px;" class="fas fa-store"></i><i style="display:flex;align-items:center;justify-content:center;height:16px;border:1px solid var(--color-border-strong);border-radius:3px;" class="fas fa-bicycle"></i><i style="display:flex;align-items:center;justify-content:center;height:16px;border:1px solid var(--color-border-strong);border-radius:3px;" class="fas fa-water"></i>
                     </span>
                     {% elif radio.data.value == 'dropdown' %}
-                    <span class="ds-thumb" style="display:flex;align-items:center;justify-content:space-between;width:74px;height:22px;border:1px solid #9aa0a6;border-radius:4px;color:#9aa0a6;padding:0 6px;">
+                    <span class="ds-thumb" style="display:flex;align-items:center;justify-content:space-between;width:74px;height:22px;border:1px solid var(--color-border-strong);border-radius:4px;color:var(--color-text-faint);padding:0 6px;">
                         <i class="fas fa-search" style="font-size:10px;"></i><i class="fas fa-caret-down"></i>
                     </span>
                     {% else %}
                     <span class="ds-thumb" style="display:flex;flex-direction:column;gap:3px;">
-                        <i style="width:74px;height:8px;border:1px solid #d1d5db;border-radius:3px;"></i><i style="width:74px;height:8px;border-radius:3px;background:#4f46e5;"></i><i style="width:74px;height:8px;border:1px solid #d1d5db;border-radius:3px;"></i>
+                        <i style="width:74px;height:8px;border:1px solid var(--color-border-strong);border-radius:3px;"></i><i style="width:74px;height:8px;border-radius:3px;background:var(--color-action);"></i><i style="width:74px;height:8px;border:1px solid var(--color-border-strong);border-radius:3px;"></i>
                     </span>
                     {% endif %}
                     <span>{{ radio.choice_label }}</span>
@@ -302,14 +302,14 @@
         </div>
         <style>
             #display-style-fields .ds-option input[type="radio"] { position:absolute; opacity:0; width:0; height:0; }
-            #display-style-fields .ds-option:has(input:checked) { border-color:#4f46e5; background:#eef2ff; }
+            #display-style-fields .ds-option:has(input:checked) { border-color:var(--color-action); background:var(--color-action-soft); }
             #display-style-fields .ds-default-ribbon {
                 position:absolute; top:6px; right:-18px; transform:rotate(45deg);
-                width:64px; line-height:1.4; background:#9aa0a6; color:#fff;
+                width:64px; line-height:1.4; background:var(--color-text-faint); color:#fff;
                 font-size:0.5rem; font-weight:600; letter-spacing:0.03em;
                 text-transform:uppercase; text-align:center; pointer-events:none;
             }
-            #display-style-fields .ds-option:has(input:checked) .ds-default-ribbon { background:#4f46e5; }
+            #display-style-fields .ds-option:has(input:checked) .ds-default-ribbon { background:var(--color-action); }
         </style>
 
         {# Settings follow the style choice: pick how the question renders first, then tune it. #}
@@ -322,7 +322,7 @@
                     <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
                 </div>
                 {% if field.name == 'tap_to_place' and form.tap_to_place_blocked %}
-                <small class="form-text" style="color:#b45309;"><i class="fas fa-exclamation-triangle"></i> {% trans "Another map question is on this page, so taps on the map do nothing. Respondents use the button." %}</small>
+                <small class="form-text" style="color:var(--color-warning);"><i class="fas fa-exclamation-triangle"></i> {% trans "Another map question is on this page, so taps on the map do nothing. Respondents use the button." %}</small>
                 {% endif %}
             {% else %}
                 <label for="{{ field.id_for_label }}">{{ field.label }}</label>
@@ -421,7 +421,7 @@
 
 
         {% if source_layers %}
-        <div class="form-group" style="font-size:.8rem;color:#6b7280;"><i class="fas fa-users"></i>
+        <div class="form-group" style="font-size:.8rem;color:var(--color-text-muted);"><i class="fas fa-users"></i>
             {% blocktrans with names=source_layers|join:", " %}Respondents' marks on this question feed the reference layer {{ names }}. The question cannot be deleted while that layer exists.{% endblocktrans %}
         </div>
         {% endif %}
@@ -431,7 +431,7 @@
         section list is kept in sync out of band. Shown for parent-capable types by
         toggleTypeScopedFields.{% endcomment %}
         {% if question and not question.parent_question_id_id %}
-        <div class="form-group" id="fg-subquestions" style="display:none;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;">
+        <div class="form-group" id="fg-subquestions" style="display:none;border:1px solid var(--color-border);border-radius:8px;padding:10px 12px;">
             <label style="font-weight:600;margin-bottom:2px;">
                 <span data-lo-subq-title="geo"><i class="fas fa-list-ol"></i> {% trans "Sub-questions" %}
                     <small class="text-muted" style="font-weight:400;">— {% trans "asked about every object the respondent opens or marks" %}</small></span>
@@ -453,11 +453,11 @@
                         {% if vis.broken %}
                         <span class="badge badge-warning" title="{{ vis.reason }}. Shown on every mark until fixed."><i class="fas fa-exclamation-triangle"></i> {% trans "broken rule" %}</span>
                         {% else %}
-                        <span class="badge badge-info" title="{{ vis.label }}" style="background:#e7f1ff;color:#0b5ed7;border:1px solid #b6d4fe;"><i class="fas fa-code-branch"></i> {{ vis.label|truncatechars:40 }}</span>
+                        <span class="badge badge-info" title="{{ vis.label }}" style="background:var(--color-action-soft);color:var(--color-action);border:1px solid var(--color-action-line);"><i class="fas fa-code-branch"></i> {{ vis.label|truncatechars:40 }}</span>
                         {% endif %}
                         {% endif %}{% endwith %}
                         {% with dep_count=subq|visibility_dependents:survey %}{% if dep_count %}
-                        <span class="badge badge-light" title="{{ dep_count }} visibility rule{{ dep_count|pluralize }} depend{{ dep_count|pluralize:'s,' }} on this sub-question's answer" style="border:1px solid #b6d4fe;color:#0b5ed7;"><i class="fas fa-code-branch"></i> {{ dep_count }}</span>
+                        <span class="badge badge-light" title="{{ dep_count }} visibility rule{{ dep_count|pluralize }} depend{{ dep_count|pluralize:'s,' }} on this sub-question's answer" style="border:1px solid var(--color-action-line);color:var(--color-action);"><i class="fas fa-code-branch"></i> {{ dep_count }}</span>
                         {% endif %}{% endwith %}
                         {% if question.input_type == 'layer_objects' %}
                         {% if subq.input_type == 'thumbs' or subq.input_type == 'text' or subq.input_type == 'text_line' %}
@@ -524,13 +524,13 @@
             .choices-editor--budget:not(.choices-editor--grid) .choice-group-cell { display: none; }
             /* Budget items (change budget-question): Description + Cost columns. */
             .choices-editor:not(.choices-editor--budget) .choice-budget-cell { display: none; }
-            .choices-editor--cost-required .choice-cost:placeholder-shown { border-color: #f59e0b; }
+            .choices-editor--cost-required .choice-cost:placeholder-shown { border-color: var(--color-warning); }
             .choices-editor--budget .choice-desc { min-width: 160px; }
             .choice-color-wrap { display: inline-flex; align-items: center; gap: 2px; }
-            .choice-color-wrap .choice-color { width: 32px; height: 28px; padding: 1px; border: 1px solid #d1d5db; border-radius: 4px; background: #fff; cursor: pointer; }
+            .choice-color-wrap .choice-color { width: 32px; height: 28px; padding: 1px; border: 1px solid var(--color-border-strong); border-radius: 4px; background: #fff; cursor: pointer; }
             .choice-color-wrap .choice-color[data-unset] { opacity: 0.3; }
-            .choice-color-clear { border: 0; background: none; color: #9ca3af; padding: 0 2px; line-height: 1; cursor: pointer; }
-            .choice-color-clear:hover { color: #374151; }
+            .choice-color-clear { border: 0; background: none; color: var(--color-text-faint); padding: 0 2px; line-height: 1; cursor: pointer; }
+            .choice-color-clear:hover { color: var(--color-text); }
         </style>
         {% comment %}Icon/Group mean something only to the icon grid (spec survey-editor). Hidden
         cells keep their values, so switching the style back restores them.{% endcomment %}
@@ -543,7 +543,7 @@
                         {% if survey.available_languages|length > 1 %}
                             {# One column per language; the first is the primary and doubles as the base text. No separate "default" column — it silently lost edits. #}
                             {% for lang in survey.available_languages %}
-                            <th {% if forloop.first %}title="{% trans 'Primary language' %}"{% else %}title="{% trans 'Edited on the Translations tab' %}"{% endif %}>{{ lang|upper }}{% if forloop.first %} ({{ lang|language_name }}){% else %} <i class="fas fa-external-link-alt" style="font-size:.65rem;color:#9ca3af;"></i>{% endif %}</th>
+                            <th {% if forloop.first %}title="{% trans 'Primary language' %}"{% else %}title="{% trans 'Edited on the Translations tab' %}"{% endif %}>{{ lang|upper }}{% if forloop.first %} ({{ lang|language_name }}){% else %} <i class="fas fa-external-link-alt" style="font-size:.65rem;color:var(--color-text-faint);"></i>{% endif %}</th>
                             {% endfor %}
                         {% else %}
                         <th>{% trans "Name" %}</th>
@@ -682,11 +682,11 @@
         {% endwith %}
         <style>
             .budget-modes { display:flex; gap:8px; }
-            .budget-mode { flex:1; border:1px solid #d1d5db; border-radius:8px; padding:8px 10px; cursor:pointer; font-weight:400; margin:0; }
+            .budget-mode { flex:1; border:1px solid var(--color-border-strong); border-radius:8px; padding:8px 10px; cursor:pointer; font-weight:400; margin:0; }
             .budget-mode input { position:absolute; opacity:0; width:0; height:0; }
             .budget-mode b { display:block; font-size:.82rem; }
-            .budget-mode small { display:block; color:#6b7280; font-size:.72rem; line-height:1.3; }
-            .budget-mode.on { border-color:#4f46e5; background:#eef2ff; }
+            .budget-mode small { display:block; color:var(--color-text-muted); font-size:.72rem; line-height:1.3; }
+            .budget-mode.on { border-color:var(--color-action); background:var(--color-action-soft); }
             /* Total / Unit / Symbol / Step on one line: same label line, same control height. */
             .budget-settings-row { display:flex; flex-wrap:wrap; gap:10px; align-items:flex-start; margin-top:10px; }
             .budget-settings-row > .form-group > label { display:block; font-size:.75rem; line-height:1.2; margin:0 0 4px; }
@@ -791,11 +791,11 @@
                 <div class="qtp-pv-title"><i class="fas fa-eye"></i> {% trans "Respondent sees" %}</div>
                 <iframe id="question-preview-frame"
                         {% if question %}src="{% url 'editor_question_preview' survey.uuid question.id %}"{% endif %}
-                        style="flex:1;border:1px solid #e5e7eb;border-radius:6px;width:100%;min-height:260px;background:#fff;">
+                        style="flex:1;border:1px solid var(--color-border);border-radius:6px;width:100%;min-height:260px;background:#fff;">
                 </iframe>
                 <div class="qtp-pv-note">{% trans "Updates as you edit — the real respondent-side rendering." %}</div>
                 {% if visibility_enabled and question %}{% load question_utils %}{% with vis=question|visibility_info:survey %}{% if vis and not vis.broken %}
-                <div style="margin-top:8px;font-size:.72rem;background:#e7f1ff;border:1px solid #b6d4fe;color:#0b5ed7;border-radius:14px;padding:3px 10px;display:inline-block;">
+                <div style="margin-top:8px;font-size:.72rem;background:var(--color-action-soft);border:1px solid var(--color-action-line);color:var(--color-action);border-radius:14px;padding:3px 10px;display:inline-block;">
                     <i class="fas fa-code-branch"></i> {% trans "Shown when:" %} {{ vis.label|slice:"3:" }}
                 </div>
                 {% endif %}{% endwith %}{% endif %}

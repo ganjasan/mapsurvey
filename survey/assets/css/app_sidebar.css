@@ -7,14 +7,14 @@
 :root {
     --app-side-w: 256px;
     --app-rail-w: 60px;
-    --app-side-bg: #fafafb;
-    --app-side-line: #e5e7eb;
-    --app-side-ink: #5b6172;
-    --app-side-ink-3: #8a90a0;
-    --app-side-accent: #4f46e5;
-    --app-side-accent-light: #eef0ff;
-    --app-side-pro: var(--pro, #6D4AE0);
-    --app-side-pro-soft: var(--pro-soft, rgba(109, 74, 224, 0.11));
+    --app-side-bg: var(--surface-muted);
+    --app-side-line: var(--color-border);
+    --app-side-ink: var(--color-text-muted);
+    --app-side-ink-3: var(--color-text-faint);
+    --app-side-accent: var(--color-action);
+    --app-side-accent-light: var(--color-action-soft);
+    --app-side-pro: var(--color-pro);
+    --app-side-pro-soft: var(--color-pro-soft);
 }
 
 body.app-has-sidebar { padding-left: var(--app-side-w); }
@@ -39,7 +39,7 @@ body.app-rail .app-sidebar { width: var(--app-rail-w); }
 }
 .app-logo {
     width: 28px; height: 28px; flex: none; border-radius: 8px;
-    background: linear-gradient(135deg, #4f46e5, #12b76a);
+    background: var(--brand-mark);
     display: grid; place-items: center; color: #fff !important; font-weight: 700; font-size: 14px;
     text-decoration: none !important;
 }
@@ -47,12 +47,12 @@ body.app-rail .app-sidebar { width: var(--app-rail-w); }
 .app-ws {
     width: 100%; display: flex; align-items: center; gap: 8px;
     padding: 5px 8px; border: 0; border-radius: 8px; background: none;
-    font: inherit; color: #1f2937; cursor: pointer; text-align: left;
+    font: inherit; color: var(--color-text); cursor: pointer; text-align: left;
 }
-.app-ws:hover, .app-ws:focus-visible { background: #f0f0f4; outline: none; }
+.app-ws:hover, .app-ws:focus-visible { background: var(--surface-sunken); outline: none; }
 .app-ws-av {
     width: 22px; height: 22px; flex: none; border-radius: 6px;
-    background: #dfe3ff; color: var(--app-side-accent);
+    background: var(--color-action-soft); color: var(--app-side-accent);
     display: inline-grid; place-items: center; font-size: 11px; font-weight: 700;
 }
 .app-ws-name { flex: 1; min-width: 0; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -79,7 +79,7 @@ body.app-rail .app-sidebar { width: var(--app-rail-w); }
     font: inherit; white-space: nowrap; cursor: pointer; text-align: left;
 }
 .app-item > i { width: 18px; flex: none; text-align: center; font-size: 14px; color: var(--app-side-ink-3); }
-.app-item:hover, .app-item:focus-visible { background: #f0f0f4; color: #1f2937 !important; outline: none; }
+.app-item:hover, .app-item:focus-visible { background: var(--surface-sunken); color: var(--color-text) !important; outline: none; }
 .app-item.active { background: var(--app-side-accent-light); color: var(--app-side-accent) !important; font-weight: 500; }
 .app-item.active > i { color: var(--app-side-accent); }
 .app-item > span { overflow: hidden; text-overflow: ellipsis; }
@@ -108,11 +108,11 @@ body.app-rail .app-sidebar { width: var(--app-rail-w); }
     position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; border: 0; border-radius: 6px;
     background: none; color: var(--app-side-ink-3); font-size: 12px; cursor: pointer;
 }
-.app-wn-close:hover { background: #f0f0f4; color: #1f2937; }
+.app-wn-close:hover { background: var(--surface-sunken); color: var(--color-text); }
 .app-wn-image { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 6px; margin-bottom: 8px; }
 .app-wn-eyebrow { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; font-weight: 700; color: var(--app-side-accent); padding-right: 22px; }
 .app-wn-eyebrow span { color: var(--app-side-ink-3); font-weight: 500; letter-spacing: 0; text-transform: none; margin-left: 4px; }
-.app-wn-title { margin: 4px 0 8px; font-weight: 600; color: #1f2937; line-height: 1.3; }
+.app-wn-title { margin: 4px 0 8px; font-weight: 600; color: var(--color-text); line-height: 1.3; }
 .app-wn-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; font-size: 12.5px; }
 .app-wn-cta { font-weight: 600; }
 .app-wn-mute { border: 0; background: none; padding: 0; color: var(--app-side-ink-3); font-size: 12px; cursor: pointer; }
@@ -137,7 +137,7 @@ body.app-rail .app-item:hover::after,
 body.app-rail .app-item:focus-visible::after {
     content: attr(data-label);
     position: absolute; left: calc(100% + 8px); top: 50%; transform: translateY(-50%);
-    background: #1f2330; color: #fff; font-size: 12px; font-weight: 400;
+    background: var(--surface-inverse); color: #fff; font-size: 12px; font-weight: 400;
     padding: 4px 8px; border-radius: 6px; white-space: nowrap; z-index: 1;
     pointer-events: none;
 }
@@ -145,9 +145,9 @@ body.app-rail .app-item:focus-visible::after {
 /* ── Header bits added next to today's controls ───────────────────────── */
 .app-burger {
     display: none; width: 34px; height: 34px; margin-left: -6px; flex: none;
-    border: 0; border-radius: 8px; background: none; color: #6b7280; cursor: pointer;
+    border: 0; border-radius: 8px; background: none; color: var(--color-text-muted); cursor: pointer;
 }
-.app-burger:hover { background: #f0f0f4; color: #1f2937; }
+.app-burger:hover { background: var(--surface-sunken); color: var(--color-text); }
 /* The sidebar carries the logo on a desktop; the brand stays on phones next to ☰. */
 @media (min-width: 768px) {
     body.app-has-sidebar .app-brand-desktop-hidden { display: none !important; }
@@ -162,8 +162,8 @@ body.app-rail .app-item:focus-visible::after {
         transform: translateX(-100%); transition: transform .2s ease;
         box-shadow: none;
     }
-    body.app-drawer-open .app-sidebar { transform: none; box-shadow: 0 0 40px rgba(15, 18, 30, .25); }
-    .app-backdrop { position: fixed; inset: 0; z-index: 1034; background: rgba(15, 18, 30, .35); }
+    body.app-drawer-open .app-sidebar { transform: none; box-shadow: var(--shadow-lg); }
+    .app-backdrop { position: fixed; inset: 0; z-index: 1034; background: var(--backdrop); }
     .app-collapse { display: none !important; }
     /* The drawer is always the full sidebar, never the rail. */
     body.app-rail .app-logo { display: grid; }

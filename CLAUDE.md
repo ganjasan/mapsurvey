@@ -1288,9 +1288,20 @@ from the tokens, so plain Bootstrap markup already has the app's look; `btn-seco
 `btn-outline-secondary` are both the quiet white button. The editor's (`--accent`, `--border-color`,
 `--radius`), the builders' (`.lb --ink/--line/--accent`) and the Pro badge's (`--pro`) variables are
 references to the tokens. Tones are written out, not `color-mix()` (old council browsers). **A new
-colour is a token, never a literal**: `ColourRatchetTest` (`test_design_tokens.py`) fails when a creator
-stylesheet or template holds more colour literals than `survey/tests/colour_baseline.json` records;
-after REMOVING literals lower it with `python scripts/colour_baseline.py`. **A new module gets
+colour is a token, never a literal** (change `tokens-editor-shell`, #742, moved every creator file):
+`TokenisedModulesTest` fails when any creator template or stylesheet writes a colour in a CSS
+declaration outside `<script>` — only `WITHOUT_TOKENS` (two emails, the group preview iframe, the
+public site page, `plan_cards.css`, which the pricing page also draws — app token first, landing name as fallback) render without the tokens and
+keep their own; colours inside scripts are data (map palettes, colour inputs, iframe `srcdoc`) and are
+not counted. `ColourRatchetTest` still caps every literal per file at
+`survey/tests/colour_baseline.json`; after removing some, `python scripts/colour_baseline.py`. To put
+foreign CSS onto the tokens, `python scripts/tokenise_colours.py FILE…` maps each colour by its role
+where it stands (the same grey is `--color-text-muted` in `color:` and `--color-border-strong` in
+`border:`), black shadows to `--shadow-sm|md|lg`, and lists what it does not know. A role the file
+lacks is a new purpose token; a picture's colours (`--art-*`, `--brand-*`) and identity colours
+(`--type-*`, `--heat-ramp`) are tokens too, so no page writes one. The older names (`--accent`,
+`--accent-light`, `--border-color`, `--bg-muted`, `--radius`) live in `tokens.css`; never define
+them, or module palettes of literals, in a page's `:root` again. **A new module gets
 no look of its own** (owner 2026-11-18: "one consistent design across the app, not a new design per
 module"): build it from plain Bootstrap markup and the partials other pages already use, and write a
 rule only for what no existing component covers — with tokens.

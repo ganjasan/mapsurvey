@@ -21,31 +21,31 @@ that refuse cookies, not this one.{% endcomment %}
   body.app-has-sidebar { background: #fff; }
   .cx-wrap { max-width: 720px; margin: 0 auto; padding: 1.5rem 15px 3rem; }
   .cx-title { font-size: 1.5rem; font-weight: 500; margin: 0 0 1rem; }
-  .cx-card { margin: 0 0 1.5rem; background: #fff; border: 1px solid rgba(0,0,0,.125); border-radius: .25rem; padding: 1.25rem; }
+  .cx-card { margin: 0 0 1.5rem; background: #fff; border: 1px solid var(--color-border); border-radius: .25rem; padding: 1.25rem; }
   .cx-card h1 { font-size: 1.1rem; font-weight: 600; margin: 0 0 .5rem; }
   .cx-card h2 { font-size: 1.05rem; font-weight: 700; margin: 0 0 .5rem; }
   .cx-card p, .cx-card li, .cx-card td, .cx-card th, .cx-card label { font-size: .92rem; line-height: 1.5; }
-  .cx-hint { color: #5f6368; font-size: .85rem; margin: 0 0 1rem; }
-  .cx-note { background: #fef3c7; color: #92400e; border-radius: 10px; padding: .6rem .9rem; font-size: .85rem; margin: 0 0 1rem; }
-  .cx-once { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px; padding: 1rem 1.1rem; margin: 0 0 1.25rem; }
-  .cx-once code { display: block; font-size: .95rem; word-break: break-all; background: #0f172a; color: #e2e8f0; padding: .7rem .9rem; border-radius: 10px; margin: .5rem 0; user-select: all; }
-  .cx-once small { color: #047857; }
+  .cx-hint { color: var(--color-text-muted); font-size: .85rem; margin: 0 0 1rem; }
+  .cx-note { background: var(--color-warning-soft); color: var(--color-warning); border-radius: 10px; padding: .6rem .9rem; font-size: .85rem; margin: 0 0 1rem; }
+  .cx-once { background: var(--color-success-soft); border: 1px solid var(--color-success-line); border-radius: 12px; padding: 1rem 1.1rem; margin: 0 0 1.25rem; }
+  .cx-once code { display: block; font-size: .95rem; word-break: break-all; background: var(--surface-inverse); color: var(--color-on-inverse-muted); padding: .7rem .9rem; border-radius: 10px; margin: .5rem 0; user-select: all; }
+  .cx-once small { color: var(--color-success); }
   .cx-table { width: 100%; border-collapse: collapse; margin: 0 0 1.25rem; }
-  .cx-table th { text-align: left; font-size: .75rem; text-transform: uppercase; letter-spacing: .03em; color: #6b7280; padding: .4rem .5rem; border-bottom: 1px solid var(--border-color); }
-  .cx-table td { padding: .55rem .5rem; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+  .cx-table th { text-align: left; font-size: .75rem; text-transform: uppercase; letter-spacing: .03em; color: var(--color-text-muted); padding: .4rem .5rem; border-bottom: 1px solid var(--border-color); }
+  .cx-table td { padding: .55rem .5rem; border-bottom: 1px solid var(--color-border); vertical-align: top; }
   .cx-table code { font-size: .85rem; }
-  .cx-chip { display: inline-block; font-size: .72rem; background: #f1f5f9; color: #334155; border-radius: 999px; padding: 1px 8px; margin: 0 4px 3px 0; white-space: nowrap; }
-  .cx-chip.danger { background: #fee2e2; color: #991b1b; }
-  .cx-expired { color: #b91c1c; font-weight: 600; font-size: .78rem; }
+  .cx-chip { display: inline-block; font-size: .72rem; background: var(--surface-sunken); color: var(--color-text); border-radius: 999px; padding: 1px 8px; margin: 0 4px 3px 0; white-space: nowrap; }
+  .cx-chip.danger { background: var(--color-danger-soft); color: var(--color-danger-hover); }
+  .cx-expired { color: var(--color-danger); font-weight: 600; font-size: .78rem; }
   .cx-form fieldset { border: 0; padding: 0; margin: 0 0 1rem; }
   .cx-form legend { font-size: .9rem; font-weight: 600; margin-bottom: .25rem; }
   .cx-form ul { list-style: none; padding: 0; margin: 0; }
   .cx-form li { padding: .15rem 0; }
-  .cx-form input[type=text], .cx-form select { display: block; width: 100%; max-width: 360px; height: calc(1.5em + .75rem + 2px); padding: .375rem .75rem; font-size: .92rem; border: 1px solid #ced4da; border-radius: .25rem; background: #fff; }
+  .cx-form input[type=text], .cx-form select { display: block; width: 100%; max-width: 360px; height: calc(1.5em + .75rem + 2px); padding: .375rem .75rem; font-size: .92rem; border: 1px solid var(--color-border-strong); border-radius: .25rem; background: #fff; }
   .cx-form input[type=checkbox] { margin-right: .35rem; }
   .cx-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1.5rem; }
-  .cx-revoke { background: none; border: 0; color: #b91c1c; font-size: .85rem; padding: 0; cursor: pointer; }
-  .cx-empty { color: #9aa0a6; font-size: .9rem; margin: 0 0 1.25rem; }
+  .cx-revoke { background: none; border: 0; color: var(--color-danger); font-size: .85rem; padding: 0; cursor: pointer; }
+  .cx-empty { color: var(--color-text-faint); font-size: .9rem; margin: 0 0 1.25rem; }
   @media (max-width: 767.98px) {
     .cx-card { padding: 1.25rem 1rem; }
     .cx-grid { grid-template-columns: 1fr; }
@@ -75,7 +75,7 @@ that refuse cookies, not this one.{% endcomment %}
       <code id="cx-token-value">{{ once.value }}</code>
       <small>{% trans "Copy it now: this is the only time it is shown. Lost it? Revoke this one and create another." %}</small>
       <div style="margin-top:.5rem;"><button type="button" class="btn btn-sm btn-outline-secondary" onclick="navigator.clipboard && navigator.clipboard.writeText(document.getElementById('cx-token-value').textContent)">{% trans "Copy" %}</button></div>
-      <div style="margin-top:.75rem;font-size:.82rem;color:#374151;"><code style="display:inline;background:#f1f5f9;color:#0f172a;padding:2px 6px;border-radius:6px;user-select:all;">curl -H "Authorization: Bearer …" {{ request.scheme }}://{{ request.get_host }}{% url 'api_me' %}</code>{% if HELP_URL %} <a href="{{ HELP_URL.rest_api }}" target="_blank" rel="noopener" class="ms-learn-more">{% trans "Learn more" %} <i class="fas fa-external-link-alt" style="font-size:.7em;"></i></a>{% endif %}</div>
+      <div style="margin-top:.75rem;font-size:.82rem;color:var(--color-text);"><code style="display:inline;background:var(--surface-sunken);color:var(--color-text);padding:2px 6px;border-radius:6px;user-select:all;">curl -H "Authorization: Bearer …" {{ request.scheme }}://{{ request.get_host }}{% url 'api_me' %}</code>{% if HELP_URL %} <a href="{{ HELP_URL.rest_api }}" target="_blank" rel="noopener" class="ms-learn-more">{% trans "Learn more" %} <i class="fas fa-external-link-alt" style="font-size:.7em;"></i></a>{% endif %}</div>
     </div>
     {% endif %}
 
@@ -90,8 +90,8 @@ that refuse cookies, not this one.{% endcomment %}
         <td><strong>{{ r.profile.label }}</strong><br><code>{{ r.display }}</code>{% if r.expired %}<br><span class="cx-expired">{% trans "Expired" %}</span>{% endif %}</td>
         <td>{% for s in r.scopes %}<span class="cx-chip{% if s == 'surveys:publish' or s == 'surveys:delete' %} danger{% endif %}">{{ s }}</span>{% endfor %}<br>{% for a in r.profile.audiences %}<span class="cx-chip">{% if a == 'api' %}{% trans "REST API" %}{% else %}{% trans "MCP server" %}{% endif %}</span>{% endfor %}</td>
         <td>{% if r.profile.organization %}{{ r.profile.organization.name }}{% else %}{% trans "All my workspaces" %}{% endif %}</td>
-        <td>{% if r.never_expires %}{% trans "Never" %}{% else %}{{ r.expires|date:"Y-m-d" }}{% endif %}<br><small style="color:#9aa0a6;">{% trans "created" %} {{ r.profile.created_at|date:"Y-m-d" }}</small></td>
-        <td>{% if r.profile.last_used_at %}{{ r.profile.last_used_at|timesince }} {% trans "ago" %}{% else %}<span style="color:#9aa0a6;">{% trans "never" %}</span>{% endif %}</td>
+        <td>{% if r.never_expires %}{% trans "Never" %}{% else %}{{ r.expires|date:"Y-m-d" }}{% endif %}<br><small style="color:var(--color-text-faint);">{% trans "created" %} {{ r.profile.created_at|date:"Y-m-d" }}</small></td>
+        <td>{% if r.profile.last_used_at %}{{ r.profile.last_used_at|timesince }} {% trans "ago" %}{% else %}<span style="color:var(--color-text-faint);">{% trans "never" %}</span>{% endif %}</td>
         <td><form method="post" data-confirm="{% trans "Revoke this token? Anything using it stops working at once." %}" data-confirm-action="{% trans "Revoke" %}">{% csrf_token %}<input type="hidden" name="action" value="revoke"><input type="hidden" name="token_id" value="{{ r.profile.token_id }}"><button type="submit" class="cx-revoke">{% trans "Revoke" %}</button></form></td>
       </tr>
       {% endfor %}
@@ -151,10 +151,10 @@ that refuse cookies, not this one.{% endcomment %}
       <tbody>
       {% for a in apps %}
       <tr>
-        <td><strong>{{ a.host }}</strong><br><small style="color:#5f6368;">{{ a.name }}</small></td>
+        <td><strong>{{ a.host }}</strong><br><small style="color:var(--color-text-muted);">{{ a.name }}</small></td>
         <td>{% for s in a.scopes %}<span class="cx-chip{% if s == 'surveys:publish' or s == 'surveys:delete' %} danger{% endif %}">{{ s }}</span>{% endfor %}<br>{% for au in a.audiences %}<span class="cx-chip">{% if au == 'api' %}{% trans "REST API" %}{% else %}{% trans "MCP server" %}{% endif %}</span>{% endfor %}</td>
         <td>{{ a.created|date:"Y-m-d" }}</td>
-        <td>{% if a.last_used %}{{ a.last_used|timesince }} {% trans "ago" %}{% else %}<span style="color:#9aa0a6;">{% trans "never" %}</span>{% endif %}</td>
+        <td>{% if a.last_used %}{{ a.last_used|timesince }} {% trans "ago" %}{% else %}<span style="color:var(--color-text-faint);">{% trans "never" %}</span>{% endif %}</td>
         <td><form method="post" data-confirm="{% trans "Disconnect this app? It will have to ask for access again." %}" data-confirm-action="{% trans "Disconnect" %}">{% csrf_token %}<input type="hidden" name="action" value="disconnect"><input type="hidden" name="application_id" value="{{ a.application.pk }}"><button type="submit" class="cx-revoke">{% trans "Disconnect" %}</button></form></td>
       </tr>
       {% endfor %}

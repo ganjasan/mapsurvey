@@ -1,15 +1,15 @@
 /* Pro trial band on Plan & billing (change pro-trial-allowances, #471): full width above the
    plan cards, in their look -- same tokens as css/plan_cards.css, same fallbacks under base.html. */
 .trial-band {
-    --tb-text: var(--color-text, #1B2A4A);
+    --tb-text: var(--color-text);
     --tb-text-2: var(--color-text-secondary, #5A6680);
     --tb-text-3: var(--color-text-tertiary, #8A94A8);
-    --tb-bg: var(--color-bg-elevated, #FFFFFF);
-    --tb-border: var(--color-border-light, #E4E0D8);
+    --tb-bg: var(--surface);
+    --tb-border: var(--color-border);
     /* Pro's own violet (change pro-trial-auto, css/pro_badge.css); teal is for actions. */
-    --tb-accent: var(--pro, #6D4AE0);
-    --tb-accent-hover: var(--pro-ink, #5A3BC4);
-    --tb-accent-soft: var(--pro-soft, rgba(109, 74, 224, 0.11));
+    --tb-accent: var(--color-pro);
+    --tb-accent-hover: var(--color-pro-hover);
+    --tb-accent-soft: var(--color-pro-soft);
     --tb-font: var(--font-display, 'Instrument Sans', 'DM Sans', system-ui, -apple-system, sans-serif);
 
     display: grid;

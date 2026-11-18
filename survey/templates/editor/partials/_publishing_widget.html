@@ -37,13 +37,13 @@ show_draft_actions, draft_copy, show_edit_published.
     <button class="nm-item" onclick="showPublishConfirm()"><i class="fas fa-globe lead"></i> {% trans "Publish — open for responses" %}</button>
     <button class="nm-item" onclick="doTransition('draft')"><i class="fas fa-undo lead"></i> {% trans "Back to Draft" %}</button>
     {% elif survey.status == 'published' %}
-    <div class="nm-row"><span class="lab"><i class="fas fa-circle" style="color:#16a34a;font-size:8px;"></i> {% trans "Accepting responses" %}<span class="sub">{% trans "respondents can submit the survey" %}</span></span>
+    <div class="nm-row"><span class="lab"><i class="fas fa-circle" style="color:var(--color-success);font-size:8px;"></i> {% trans "Accepting responses" %}<span class="sub">{% trans "respondents can submit the survey" %}</span></span>
       <button class="pub-toggle" title="{% trans 'Close survey' %}" onclick="doTransition('closed')"></button></div>
     {% if show_back_to_draft %}
     <button class="nm-item" onclick="doTransition('draft')"><i class="fas fa-undo lead"></i> {% trans "Back to Draft" %}<span class="sub">{% trans "nothing collected yet, so publishing can be undone" %}</span></button>
     {% endif %}
     {% elif survey.status == 'closed' %}
-    <div class="nm-row"><span class="lab"><i class="fas fa-circle" style="color:#9ca3af;font-size:8px;"></i> {% trans "Closed to responses" %}<span class="sub">{% trans "reopen to accept submissions again" %}</span></span>
+    <div class="nm-row"><span class="lab"><i class="fas fa-circle" style="color:var(--color-text-faint);font-size:8px;"></i> {% trans "Closed to responses" %}<span class="sub">{% trans "reopen to accept submissions again" %}</span></span>
       <button class="pub-toggle off" title="{% trans 'Reopen survey' %}" onclick="doTransition('published')"></button></div>
     {% if show_back_to_draft %}
     <button class="nm-item" onclick="doTransition('draft')"><i class="fas fa-undo lead"></i> {% trans "Back to Draft" %}<span class="sub">{% trans "nothing collected yet, so publishing can be undone" %}</span></button>
@@ -60,10 +60,10 @@ show_draft_actions, draft_copy, show_edit_published.
     <div class="nm-head">{% trans "Results page" %}</div>
     {% with page=survey.report %}
       {% if page and page.is_published %}
-      <div class="nm-row"><span class="lab"><i class="fas fa-circle" style="color:#16a34a;font-size:8px;"></i> {% trans "Live" %} — /r/{{ page.slug }}/<span class="sub">{% trans "manage in the Public results space" %}</span></span>
+      <div class="nm-row"><span class="lab"><i class="fas fa-circle" style="color:var(--color-success);font-size:8px;"></i> {% trans "Live" %} — /r/{{ page.slug }}/<span class="sub">{% trans "manage in the Public results space" %}</span></span>
         <a class="nm-item" style="width:auto;padding:4px 9px;border:1px solid var(--border-color);border-radius:6px;" href="{% url 'editor_survey_public_results' survey.uuid %}">{% trans "Open" %}</a></div>
       {% elif page %}
-      <div class="nm-row"><span class="lab"><i class="fas fa-circle" style="color:#9ca3af;font-size:8px;"></i> {% trans "Draft — not live yet" %}<span class="sub">{% blocktrans with slug=page.slug %}/r/{{ slug }}/ is prepared but unpublished{% endblocktrans %}</span></span>
+      <div class="nm-row"><span class="lab"><i class="fas fa-circle" style="color:var(--color-text-faint);font-size:8px;"></i> {% trans "Draft — not live yet" %}<span class="sub">{% blocktrans with slug=page.slug %}/r/{{ slug }}/ is prepared but unpublished{% endblocktrans %}</span></span>
         <a class="nm-item" style="width:auto;padding:4px 9px;border:1px solid var(--border-color);border-radius:6px;" href="{% url 'editor_survey_public_results' survey.uuid %}">{% trans "Open" %}</a></div>
       {% else %}
       <a class="nm-item" href="{% url 'editor_survey_public_results' survey.uuid %}"><i class="fas fa-globe lead"></i> {% trans "Set up a results page…" %}</a>

@@ -25,9 +25,9 @@ about 2.5x as often as empty surveys.{% endcomment %}
   .start-wrap { padding: 2rem 1.5rem 3rem; max-width: 860px; margin: 0 auto; }
   .start-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
   .start-head h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -.01em; margin: 0; }
-  .start-head p { color: #5f6368; margin: .35rem 0 0; font-size: .92rem; }
-  .start-skip { font-size: .82rem; color: #5f6368; white-space: nowrap; padding-top: .4rem; }
-  .start-current { font-size: .85rem; color: #5f6368; margin-top: .5rem; }
+  .start-head p { color: var(--color-text-muted); margin: .35rem 0 0; font-size: .92rem; }
+  .start-skip { font-size: .82rem; color: var(--color-text-muted); white-space: nowrap; padding-top: .4rem; }
+  .start-current { font-size: .85rem; color: var(--color-text-muted); margin-top: .5rem; }
 
   .start-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; align-items: stretch; }
   .start-card {
@@ -40,32 +40,32 @@ about 2.5x as often as empty surveys.{% endcomment %}
   }
   .start-form { display: flex; margin: 0; }
   .start-title, .start-what, .start-who { display: block; }
-  .start-card:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px #c7d2fe; }
+  .start-card:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--color-action-line); }
   .start-card:disabled { cursor: progress; transform: none; }
   .start-card:hover { transform: translateY(-2px); border-color: var(--accent); color: inherit; text-decoration: none; }
   .start-label {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .68rem; letter-spacing: .14em;
-    text-transform: uppercase; color: #9aa0a6; padding: 1rem 1.25rem 0; min-height: 2.3rem;
+    text-transform: uppercase; color: var(--color-text-faint); padding: 1rem 1.25rem 0; min-height: 2.3rem;
     display: flex; justify-content: space-between; align-items: center;
   }
-  .start-badge { font-family: inherit; letter-spacing: 0; text-transform: none; font-size: .7rem; font-weight: 600; background: #fef3c7; color: #b45309; border-radius: 999px; padding: 2px 9px; }
+  .start-badge { font-family: inherit; letter-spacing: 0; text-transform: none; font-size: .7rem; font-weight: 600; background: var(--color-warning-soft); color: var(--color-warning); border-radius: 999px; padding: 2px 9px; }
   .start-art { margin: .85rem 1.25rem 0; height: 170px; border-radius: 12px; display: grid; place-items: center; position: relative; overflow: hidden; }
   .start-art i { font-size: 52px; color: #fff; opacity: .95; }
-  .start-art::before { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.14) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.14) 1px, transparent 1px); background-size: 28px 28px; }
-  .start-art.blank { background: linear-gradient(145deg, #0f766e, #14b8a6 60%, #5eead4); }
-  .start-art.ai { background: linear-gradient(145deg, #3730a3, #6366f1 55%, #a5b4fc); }
+  .start-art::before { content: ""; position: absolute; inset: 0; background-image: linear-gradient(var(--art-line) 1px, transparent 1px), linear-gradient(90deg, var(--art-line) 1px, transparent 1px); background-size: 28px 28px; }
+  .start-art.blank { background: var(--art-blank); }
+  .start-art.ai { background: linear-gradient(145deg, var(--color-action-hover), var(--color-action) 55%, var(--color-action-line)); }
   .start-art.ai i { transform: translateY(-38px); }  /* above the example-brief bubble */
-  .start-art .chat { position: absolute; left: 16px; right: 16px; bottom: 14px; background: rgba(255,255,255,.92); color: #1f2937; border-radius: 10px; padding: 7px 10px; font-size: .74rem; line-height: 1.35; }
-  .start-art .chat small { display: block; color: #9aa0a6; font-size: .62rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; margin-bottom: 2px; }
+  .start-art .chat { position: absolute; left: 16px; right: 16px; bottom: 14px; background: var(--surface-glass); color: var(--color-text); border-radius: 10px; padding: 7px 10px; font-size: .74rem; line-height: 1.35; }
+  .start-art .chat small { display: block; color: var(--color-text-faint); font-size: .62rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; margin-bottom: 2px; }
   .start-body { padding: 1rem 1.25rem 1.25rem; display: flex; flex-direction: column; gap: .35rem; flex: 1; }
   .start-title { font-size: 1.1rem; font-weight: 700; margin: 0; }
   .start-what { font-size: .9rem; line-height: 1.4; }
-  .start-who { font-size: .82rem; color: #5f6368; line-height: 1.4; margin-top: auto; padding-top: .5rem; }
+  .start-who { font-size: .82rem; color: var(--color-text-muted); line-height: 1.4; margin-top: auto; padding-top: .5rem; }
   /* The recommended path: AI drafts get published about 2.5x as often as
      surveys started empty (owner's funnel check, 2026-10-15). */
-  .start-card.start-primary { border-color: var(--accent); box-shadow: 0 0 0 4px #e0e7ff, 0 14px 30px -18px rgba(79,70,229,.55); }
+  .start-card.start-primary { border-color: var(--accent); box-shadow: 0 0 0 4px var(--color-action-line), 0 14px 30px -18px var(--color-action-line); }
   .start-card.start-primary .start-label { color: var(--accent); }
-  .start-badge-rec { background: #e0e7ff; color: #4338ca; }
+  .start-badge-rec { background: var(--color-action-soft); color: var(--color-action-hover); }
   .start-card.disabled { opacity: .6; cursor: not-allowed; order: 1; }
   .start-busy { display: none !important; font-size: .85rem; font-weight: 600; color: var(--accent); padding-top: .5rem; }
   .start-busy:not(:empty) { display: block !important; }
@@ -86,7 +86,7 @@ about 2.5x as often as empty surveys.{% endcomment %}
     .start-art .chat, .start-art::before { display: none; }
     .start-body { flex: 1; min-width: 0; padding: .75rem 1rem .5rem; }
     .start-title { font-size: 1rem; }
-    .start-what { font-size: .85rem; color: #5f6368; }
+    .start-what { font-size: .85rem; color: var(--color-text-muted); }
     .start-who { display: none; }
   }
 </style>

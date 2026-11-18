@@ -333,24 +333,24 @@ function copyTestLink(btn) {
              hx-get="{% url 'editor_survey_settings_panel' survey.uuid %}"
              hx-trigger="load"
              hx-swap="innerHTML">
-            <div style="text-align:center;padding:2rem;color:#9ca3af;">{% trans "Loading..." %}</div>
+            <div style="text-align:center;padding:2rem;color:var(--color-text-faint);">{% trans "Loading..." %}</div>
         </div>
         {% elif thanks_panel_active %}
         <div id="section-content"
              hx-get="{% url 'editor_survey_thanks_panel' survey.uuid %}"
              hx-trigger="load"
              hx-swap="innerHTML">
-            <div style="text-align:center;padding:2rem;color:#9ca3af;">{% trans "Loading..." %}</div>
+            <div style="text-align:center;padding:2rem;color:var(--color-text-faint);">{% trans "Loading..." %}</div>
         </div>
         {% elif current_section %}
         <div id="section-content"
              hx-get="{% url 'editor_section_detail' survey.uuid current_section.id %}"
              hx-trigger="load"
              hx-swap="innerHTML">
-            <div style="text-align:center;padding:2rem;color:#9ca3af;">{% trans "Loading..." %}</div>
+            <div style="text-align:center;padding:2rem;color:var(--color-text-faint);">{% trans "Loading..." %}</div>
         </div>
         {% else %}
-        <div style="text-align:center;padding:3rem;color:#9ca3af;">
+        <div style="text-align:center;padding:3rem;color:var(--color-text-faint);">
             <i class="fas fa-layer-group" style="font-size:2rem;margin-bottom:1rem;display:block;"></i>
             <p>{% trans "No sections yet. Create one to get started." %}</p>
         </div>
@@ -370,7 +370,7 @@ function copyTestLink(btn) {
         <div class="preview-header">
             <span>{% trans "Live preview" %}</span>
             {% if survey.available_languages %}
-            <select id="preview-lang" style="border:1px solid var(--border-color);border-radius:4px;padding:2px 6px;font-size:0.75rem;color:#374151;background:#fff;outline:none;text-transform:uppercase;cursor:pointer;">
+            <select id="preview-lang" style="border:1px solid var(--border-color);border-radius:4px;padding:2px 6px;font-size:0.75rem;color:var(--color-text);background:#fff;outline:none;text-transform:uppercase;cursor:pointer;">
                 {% for lang in survey.available_languages %}
                 <option value="{{ lang }}">{{ lang }}</option>
                 {% endfor %}

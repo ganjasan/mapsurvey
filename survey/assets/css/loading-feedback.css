@@ -22,8 +22,8 @@
 .ms-progress__bar {
     height: 100%;
     width: 0;
-    background: #4f46e5;
-    box-shadow: 0 0 8px rgba(79, 70, 229, .6);
+    background: var(--color-action);
+    box-shadow: 0 0 8px var(--color-action-line);
     transition: width .25s ease;
 }
 .ms-progress.is-leaving .ms-progress__bar { transition: width .1s ease; }

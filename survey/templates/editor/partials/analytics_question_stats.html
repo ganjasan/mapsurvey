@@ -9,7 +9,7 @@
     <div class="q-stat-header">
         <div>
             <strong style="font-size:0.95rem;">{{ stat.question.name }}</strong>
-            {% if stat.archived %}<span class="badge badge-light" style="border:1px solid #e5e7eb;color:#92700c;background:#fdf7ea;" title="{% trans 'This question was removed in a newer version — historical answers only' %}">{% trans "archived" %} · {{ stat.versions }}</span>{% endif %}
+            {% if stat.archived %}<span class="badge badge-light" style="border:1px solid var(--color-border);color:var(--color-warning);background:var(--color-warning-soft);" title="{% trans 'This question was removed in a newer version — historical answers only' %}">{% trans "archived" %} · {{ stat.versions }}</span>{% endif %}
             <br><small class="text-muted">{{ stat.section.title|default:stat.section.name }}</small>
         </div>
         <div style="display:flex;align-items:center;gap:0.4rem;">
@@ -122,7 +122,7 @@
         {% for row in stat.object_rows %}
         <tr class="objects-stat-row" data-object-key="{{ row.key }}" data-sessions="{{ row.sessions_json }}"{% if stat.shared %} data-mod-status="{{ row.status }}"{% endif %}
             onclick="if (window.selectionManager) { try { window.selectionManager.setSelection(JSON.parse(this.dataset.sessions)); } catch (e) {} }"
-            style="cursor:pointer;{% if not row.answers %}color:#9ca3af;{% endif %}">
+            style="cursor:pointer;{% if not row.answers %}color:var(--color-text-faint);{% endif %}">
             <td>{{ row.title }}{% if row.category %} <small class="text-muted">· {{ row.category }}</small>{% endif %}
                 {% if stat.shared and row.comments %}<button type="button" class="btn btn-link btn-sm p-0 ml-1" data-mod-expand onclick="event.stopPropagation();" title="{% trans 'Comments' %}"><i class="fas fa-comment"></i> {{ row.comments|length }}</button>{% endif %}</td>
             <td style="text-align:right;">{{ row.answers }}</td>
@@ -145,7 +145,7 @@
         </tr>
         {% if stat.shared and row.comments %}
         <tr class="shared-map-comments" data-mod-comments-for="{{ row.key }}" hidden>
-            <td colspan="{{ stat.sub_questions|length|add:4 }}" style="background:#fafafa;">
+            <td colspan="{{ stat.sub_questions|length|add:4 }}" style="background:var(--surface-muted);">
                 {% for c in row.comments %}
                 <div data-mod-comment="{{ c.id }}" style="display:flex;gap:8px;align-items:flex-start;padding:2px 0;{% if c.hidden %}opacity:.5;{% endif %}">
                     <span style="flex:1;">«{{ c.text }}»</span>
@@ -185,7 +185,7 @@
     {% if stat.hist_labels_json %}
     <div class="q-filter-pills" data-qid="num-{{ stat.question.id }}" style="display:none;flex-wrap:wrap;gap:0.3rem;margin-top:0.5rem;"></div>
     <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.5rem;">
-        <label style="font-size:0.75rem;color:#9ca3af;margin:0;">{% trans "Step:" %}</label>
+        <label style="font-size:0.75rem;color:var(--color-text-faint);margin:0;">{% trans "Step:" %}</label>
         <input type="number" id="bin-step-{{ stat.question.id }}" class="form-control form-control-sm"
                style="width:70px;font-size:0.78rem;" min="0.1" step="any">
     </div>
@@ -357,9 +357,9 @@
     {% endwith %}
     <style>
         .budget-stats__row { display:grid; grid-template-columns:minmax(120px,1.2fr) 2fr minmax(90px,auto); gap:10px; align-items:center; margin:5px 0; font-size:.85rem; }
-        .budget-stats__bar { height:14px; background:#e5e7eb; border-radius:4px; overflow:hidden; }
-        .budget-stats__bar i { display:block; height:100%; background:#4f46e5; }
-        .budget-stats__row.is-fit .budget-stats__bar i, .budget-stats__key { background:#16a34a; }
+        .budget-stats__bar { height:14px; background:var(--color-border); border-radius:4px; overflow:hidden; }
+        .budget-stats__bar i { display:block; height:100%; background:var(--color-action); }
+        .budget-stats__row.is-fit .budget-stats__bar i, .budget-stats__key { background:var(--color-success); }
         .budget-stats__key { display:inline-block; width:10px; height:10px; border-radius:2px; vertical-align:middle; }
         .budget-stats__val { text-align:right; font-variant-numeric:tabular-nums; }
     </style>

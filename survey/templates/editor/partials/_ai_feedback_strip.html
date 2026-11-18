@@ -30,11 +30,11 @@ the generation redirect carries ?draft=.
   .ai-feedback-strip {
     display: flex; align-items: center; gap: .5rem; flex-shrink: 0;
     padding: .4rem .9rem; font-size: .85rem;
-    background: #f5f3ff; border-bottom: 1px solid var(--border-color);
+    background: var(--color-action-soft); border-bottom: 1px solid var(--border-color);
   }
-  .ai-feedback-q { color: #374151; font-weight: 500; }
+  .ai-feedback-q { color: var(--color-text); font-weight: 500; }
   .ai-feedback-strip input { max-width: 320px; font-size: .8rem; }
-  .ai-feedback-dismiss { color: #9ca3af; text-decoration: none; font-size: 1rem; }
+  .ai-feedback-dismiss { color: var(--color-text-faint); text-decoration: none; font-size: 1rem; }
 </style>
 {{ ai_feedback_trace_id|json_script:"ai-feedback-trace" }}
 <script>

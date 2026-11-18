@@ -9,7 +9,7 @@ Only quotes and maps of marks hold it back, and only until the author ticks the 
   {% endif %}
 
   {% if checks.privacy %}
-  <div class="pr-banner" style="background:#fff7ed;border-color:#fed7aa;color:#7c2d12;" data-testid="pr-checks-privacy">
+  <div class="pr-banner" style="background:var(--color-warning-soft);border-color:var(--color-warning-line);color:var(--color-warning);" data-testid="pr-checks-privacy">
     <strong>{% trans "People in this report" %}</strong>
     <ul class="mb-0 pl-3" style="margin-top:.4rem;">
       {% for item in checks.privacy %}

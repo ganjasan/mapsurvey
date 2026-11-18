@@ -7,7 +7,7 @@ from editor_views._visibility_block_context; empty groups = nothing can control
 this item yet, and the block says so instead of rendering a dead picker.{% endcomment %}
 <div class="form-group fg-visibility" data-read-only="{% if structure_locked %}1{% else %}0{% endif %}">
     <label>{% trans "Visibility" %}</label>
-    <div style="border:1px solid var(--border-color, #e9ecef);border-left:3px solid #0b5ed7;border-radius:8px;padding:.65rem .8rem;background:#f8f9fa;">
+    <div style="border:1px solid var(--border-color, var(--color-border));border-left:3px solid var(--color-action);border-radius:8px;padding:.65rem .8rem;background:var(--surface-muted);">
         <label style="display:flex;align-items:center;gap:.45rem;font-weight:400;margin:0 0 .3rem;{% if structure_locked %}opacity:.65;{% endif %}">
             <input type="radio" name="visibility_mode" value="always"
                    {% if not visibility_rule %}checked{% endif %}
@@ -50,7 +50,7 @@ this item yet, and the block says so instead of rendering a dead picker.{% endco
             <div class="form-group visibility-any-of" style="margin-bottom:0;{% if visibility_rule_match == 'answered' %}display:none;{% endif %}">
                 {% for group_section, group_questions in visibility_groups %}{% for gq in group_questions %}
                 <div class="visibility-choices" data-controller="{{ gq.code }}"
-                     style="border:1px solid #dee2e6;border-radius:6px;background:#fff;padding:.5rem .65rem;max-height:170px;overflow-y:auto;{% if gq.code != visibility_rule_question %}display:none;{% endif %}">
+                     style="border:1px solid var(--color-border);border-radius:6px;background:#fff;padding:.5rem .65rem;max-height:170px;overflow-y:auto;{% if gq.code != visibility_rule_question %}display:none;{% endif %}">
                     {% for choice in gq.choices %}
                     <label style="display:flex;align-items:center;gap:.5rem;font-weight:400;margin:0 0 .25rem;font-size:.85rem;">
                         <input type="checkbox" name="visibility_choices" value="{{ choice.code }}"
