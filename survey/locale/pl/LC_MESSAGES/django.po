@@ -14738,3 +14738,24 @@ msgstr "Ankieta, której dotyczy ten raport"
 
 msgid "The survey this report is about: “Add block” opens on its questions, and the response counter and the “Take the survey” link are its. A block can still show another survey."
 msgstr "Ankieta, której dotyczy ten raport: „Dodaj blok” otwiera się na jej pytaniach, a licznik odpowiedzi i link „Wypełnij ankietę” należą do niej. Blok może mimo to pokazywać inną ankietę."
+
+msgid "This number follows the answers. Click to change it."
+msgstr "Ta liczba podąża za odpowiedziami. Kliknij, aby ją zmienić."
+
+msgid "Choose a number"
+msgstr "Wybierz liczbę"
+
+msgid "From the survey — follows new answers"
+msgstr "Z ankiety — podąża za nowymi odpowiedziami"
+
+msgid "A number you type"
+msgstr "Liczba, którą wpisujesz"
+
+msgid "stays as you typed it"
+msgstr "zostaje taka, jak ją wpisano"
+
+msgid "Press “Add a number” to pick a number of the survey — it follows new answers, and a frozen report keeps the numbers of the day it was frozen — or to type your own, which stays as typed. Click a number on the page to change it."
+msgstr "Naciśnij „Dodaj liczbę”, aby wybrać liczbę z ankiety — podąża za nowymi odpowiedziami, a zamrożony raport zachowuje liczby z dnia zamrożenia — albo wpisać własną, która zostaje taka, jak ją wpisano. Kliknij liczbę na stronie, aby ją zmienić."
+
+msgid "Type the numbers on the page; they stay as you typed them. To show numbers of a survey, choose the report's survey in Report settings."
+msgstr "Wpisz liczby na stronie; zostają takie, jak je wpisano. Aby pokazać liczby z ankiety, wybierz ankietę raportu w ustawieniach raportu."

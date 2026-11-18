@@ -653,3 +653,107 @@ class HomeSurveyTest(SourceSurveyTest):
         page = self.client.get(reverse('editor_survey_public_results', args=[self.a.uuid]))
         self.assertEqual(page.context['page'].pk, self.report.pk)
         self.assertEqual(self.report.blocks.count(), 0)
+
+
+class KeyNumbersTest(_Editor):
+    """Requirement: Key numbers arrive filled and are picked, not typed as tokens (change report-key-numbers, #744)."""
+
+    def setUp(self):
+        super().setUp()
+        from django.contrib.gis.geos import Point
+        from survey.models import Answer, Question, SurveySession
+        self.survey, section = make_v1_survey(self.org, self.owner, name='Round one', status='published')
+        choice = Question.objects.create(survey_section=section, code='MODE', name='How do you get here?',
+                                         input_type='choice', choices=[{'code': 1, 'name': {'en': 'On foot'}}])
+        self.spot = Question.objects.create(survey_section=section, code='SPOT', name='Where is it unsafe?',
+                                            input_type='point', order_number=1)
+        for i in range(5):
+            session = SurveySession.objects.create(survey=self.survey)
+            Answer.objects.create(survey_session=session, question=choice, selected_choices=[1])
+            Answer.objects.create(survey_session=session, question=self.spot, point=Point(30.0 + i * 1e-4, 59.0))
+        self.of_survey = Report.objects.create(organization=self.org, survey=self.survey, slug='round-one-report',
+                                               created_by=self.owner)
+
+    def add(self, report, **data):
+        data.setdefault('block_type', 'numbers')
+        self.client.post(reverse('editor_report_block_add', args=[report.uuid]), data)
+        return ReportBlock.objects.get(report=report, block_type='numbers')
+
+    def test_a_filled_block_on_the_first_click(self):
+        """
+        GIVEN a report of a survey with a map question and five answers
+        WHEN an editor adds a Key numbers block
+        THEN the block holds the four numbers a drafted report opens with, the page shows their
+             values as live numbers, and nothing says the block is left out
+        """
+        from reports.numbers import defaults
+        block = self.add(self.of_survey)
+        self.assertEqual(block.config['items'], defaults('SPOT'))
+        self.assertEqual([i['value'] for i in block.config['items']],
+                         ['{opened}', '{responses}', '{finished}', '{marks:SPOT}'])
+        html = self.client.get(reverse('editor_report', args=[self.of_survey.uuid])).content.decode()
+        self.assertEqual(html.count(' data-live '), 4)
+        self.assertIn('data-raw="{marks:SPOT}" data-live', html)
+        self.assertIn('data-placeholder="447">5</b>', html)
+        self.assertNotIn('Left out of the report until it has a number.', html)
+
+    def test_a_report_without_a_survey(self):
+        """
+        GIVEN a report without a home survey, in a workspace with two published surveys
+        WHEN an editor adds a Key numbers block
+        THEN the block is empty, the page offers no menu of survey numbers and tells where to choose a survey
+        """
+        make_v1_survey(self.org, self.owner, name='Round two', status='published')
+        block = self.add(self.report)
+        self.assertEqual(block.config, {})
+        html = self.client.get(self.url('editor_report')).content.decode()
+        self.assertNotIn('id="rb-num-menu"', html)
+        self.assertIn('survey in Report settings', html)
+
+    def test_the_survey_chosen_in_the_library(self):
+        """
+        GIVEN a report without a home survey
+        WHEN an editor adds Key numbers with a survey chosen in the library
+        THEN that survey becomes the report's and the block is filled from it
+        """
+        block = self.add(self.report, source=str(self.survey.uuid))
+        self.report.refresh_from_db()
+        self.assertEqual(self.report.survey_id, self.survey.id)
+        self.assertEqual(len(block.config['items']), 4)
+
+    def test_the_menu_of_survey_numbers(self):
+        """
+        GIVEN a report of a survey with a Key numbers block
+        WHEN its editor is opened
+        THEN the menu offers the survey's numbers with their values now and a number to type,
+             and the block's settings name no token
+        """
+        self.add(self.of_survey)
+        html = self.client.get(reverse('editor_report', args=[self.of_survey.uuid])).content.decode()
+        menu = html[html.index('id="rb-num-menu"'):]
+        menu = menu[:menu.index('</div>\n</div>') if '</div>\n</div>' in menu else 4000]
+        for token in ('{opened}', '{responses}', '{finished}', '{marks:SPOT}'):
+            self.assertIn(f'data-token="{token}" data-shown="5"', menu)
+        self.assertIn('Where is it unsafe?', menu)
+        self.assertIn('data-typed', menu)
+        self.assertNotIn('<code>{responses}</code>', html)
+        self.assertNotIn('<code>{marks:CODE}</code>', html)
+
+    def test_a_typed_number_and_a_mixed_one(self):
+        """
+        GIVEN a Key numbers block of a report of a survey
+        WHEN an editor saves a typed number and a number written as a token inside a phrase
+        THEN the typed one is held as typed and neither is drawn as a picked, live number
+        """
+        block = self.add(self.of_survey)
+        r = self.client.post(reverse('editor_report_block_edit', args=[self.of_survey.uuid, block.id]),
+                             {'rows': '1', 'value': ['77', 'about {responses}'], 'label': ['paper forms', 'people'],
+                              'autosave': '1'}, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(r.status_code, 200, r.content)
+        block.refresh_from_db()
+        self.assertEqual(block.config['items'], [{'value': '77', 'label': 'paper forms'},
+                                                 {'value': 'about {responses}', 'label': 'people'}])
+        fragment = r.json()['block']
+        self.assertNotIn(' data-live ', fragment)
+        self.assertIn('data-raw="about {responses}"', fragment)
+        self.assertIn('>about 5</b>', fragment)

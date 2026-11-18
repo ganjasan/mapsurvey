@@ -14640,3 +14640,24 @@ msgstr "De enquête waar dit rapport over gaat"
 
 msgid "The survey this report is about: “Add block” opens on its questions, and the response counter and the “Take the survey” link are its. A block can still show another survey."
 msgstr "De enquête waar dit rapport over gaat: ‘Blok toevoegen’ opent met de vragen ervan, en de antwoordenteller en de link ‘Vul de enquête in’ horen erbij. Een blok kan nog steeds een andere enquête tonen."
+
+msgid "This number follows the answers. Click to change it."
+msgstr "Dit getal volgt de antwoorden. Klik om het te wijzigen."
+
+msgid "Choose a number"
+msgstr "Kies een getal"
+
+msgid "From the survey — follows new answers"
+msgstr "Uit de enquête — volgt nieuwe antwoorden"
+
+msgid "A number you type"
+msgstr "Een getal dat u typt"
+
+msgid "stays as you typed it"
+msgstr "blijft zoals u het typte"
+
+msgid "Press “Add a number” to pick a number of the survey — it follows new answers, and a frozen report keeps the numbers of the day it was frozen — or to type your own, which stays as typed. Click a number on the page to change it."
+msgstr "Klik op ‘Getal toevoegen’ om een getal uit de enquête te kiezen — het volgt nieuwe antwoorden, en een bevroren rapport houdt de getallen van de dag waarop het werd bevroren — of om uw eigen getal te typen, dat blijft zoals het is. Klik op een getal op de pagina om het te wijzigen."
+
+msgid "Type the numbers on the page; they stay as you typed them. To show numbers of a survey, choose the report's survey in Report settings."
+msgstr "Typ de getallen op de pagina; ze blijven zoals u ze typte. Kies in de rapportinstellingen de enquête van het rapport om getallen uit een enquête te tonen."

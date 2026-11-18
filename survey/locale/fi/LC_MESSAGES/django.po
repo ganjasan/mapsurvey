@@ -14602,3 +14602,24 @@ msgstr "Kysely, jota tämä raportti käsittelee"
 
 msgid "The survey this report is about: “Add block” opens on its questions, and the response counter and the “Take the survey” link are its. A block can still show another survey."
 msgstr "Kysely, jota tämä raportti käsittelee: ”Lisää lohko” avautuu sen kysymyksiin, ja vastauslaskuri ja linkki ”Vastaa kyselyyn” kuuluvat sille. Lohko voi silti näyttää toista kyselyä."
+
+msgid "This number follows the answers. Click to change it."
+msgstr "Tämä luku seuraa vastauksia. Muuta napsauttamalla."
+
+msgid "Choose a number"
+msgstr "Valitse luku"
+
+msgid "From the survey — follows new answers"
+msgstr "Kyselystä — seuraa uusia vastauksia"
+
+msgid "A number you type"
+msgstr "Luku, jonka kirjoitat itse"
+
+msgid "stays as you typed it"
+msgstr "pysyy sellaisena kuin kirjoitit sen"
+
+msgid "Press “Add a number” to pick a number of the survey — it follows new answers, and a frozen report keeps the numbers of the day it was frozen — or to type your own, which stays as typed. Click a number on the page to change it."
+msgstr "Valitse ”Lisää luku”, niin voit valita kyselyn luvun — se seuraa uusia vastauksia, ja jäädytetty raportti säilyttää jäädytyspäivän luvut — tai kirjoittaa oman luvun, joka pysyy sellaisenaan. Muuta lukua napsauttamalla sitä sivulla."
+
+msgid "Type the numbers on the page; they stay as you typed them. To show numbers of a survey, choose the report's survey in Report settings."
+msgstr "Kirjoita luvut sivulle; ne pysyvät sellaisina kuin kirjoitit ne. Jos haluat näyttää kyselyn lukuja, valitse raportin kysely raportin asetuksista."

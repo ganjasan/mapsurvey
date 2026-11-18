@@ -39,7 +39,7 @@ reports.editor_views._block_edit reads. `b` the block, `item` its record.{% endc
         <p class="lb-hint mt-0">{% trans "Drop or replace the picture on the page and write its caption under it." %}</p>
 
         {% elif b.block_type == 'numbers' %}
-        <p class="lb-hint mt-0">{% trans "Type the numbers on the page. You type them; they do not change when new answers arrive." %}{% if survey %} {% trans "A number may also be a token that follows the answers:" %} {% for token in token_help %}<code>{{ token }}</code> {% endfor %}{% endif %}</p>
+        <p class="lb-hint mt-0">{% if survey %}{% trans "Press “Add a number” to pick a number of the survey — it follows new answers, and a frozen report keeps the numbers of the day it was frozen — or to type your own, which stays as typed. Click a number on the page to change it." %}{% else %}{% trans "Type the numbers on the page; they stay as you typed them. To show numbers of a survey, choose the report's survey in Report settings." %}{% endif %}</p>
 
         {% elif b.block_type == 'quotes' %}
         <p class="lb-hint mt-0">{% trans "Type or paste the quotes on the page. A quote is published exactly as written: leave out anything that names a person." %}</p>

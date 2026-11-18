@@ -50,10 +50,122 @@
   document.addEventListener('focusin', function (e) {
     var el = e.target.closest && e.target.closest('[data-raw]');
     if (!el || !el.isContentEditable) return;
+    if (el.hasAttribute('data-live')) return;       // a key number picked from the menu: never its token
     el.textContent = el.getAttribute('data-raw');
     el.removeAttribute('data-raw');
     el.removeAttribute('title');
   });
+
+  /* ─── key numbers: a number of the survey is picked from a menu, never typed as a token
+   * (change report-key-numbers). The menu (#rb-num-menu, drawn once when the report has a survey)
+   * opens from "Add a number" and from a number that follows the answers. Rows themselves are the
+   * shared builder's: a pick fills the row and fires the events its autosave listens to. ───────── */
+  var numMenu = document.getElementById('rb-num-menu'), numTarget = null, numPass = false;
+  var LIVE = '.numbers [data-row-field="value"][data-live]';
+
+  function closeNum() {
+    if (numMenu) numMenu.hidden = true;
+    numTarget = null;
+  }
+  function openNum(anchor, target) {
+    numTarget = target;
+    numMenu.hidden = false;
+    var r = anchor.getBoundingClientRect(), top = r.bottom + 6;
+    if (top + numMenu.offsetHeight > window.innerHeight - 8) top = Math.max(8, r.top - numMenu.offsetHeight - 6);
+    numMenu.style.top = top + 'px';
+    numMenu.style.left = Math.max(8, Math.min(r.left, window.innerWidth - numMenu.offsetWidth - 8)) + 'px';
+    var first = numMenu.querySelector('.rb-num-item');
+    if (first) first.focus();
+  }
+  function setLive(el, item) {
+    el.textContent = item.dataset.shown;
+    el.setAttribute('data-raw', item.dataset.token);
+    el.setAttribute('data-live', '');
+  }
+  function saveRow(el) {
+    el.dispatchEvent(new Event('input', { bubbles: true }));   // queues the block's autosave
+    el.dispatchEvent(new Event('blur'));                       // and sends it now
+  }
+  function isStockLabel(text) {
+    text = text.trim();
+    if (!text) return true;
+    return Array.prototype.some.call(numMenu.querySelectorAll('[data-label]'), function (b) { return b.dataset.label === text; });
+  }
+  // What the menu was opened for, by block id and row number — never by node: the builder swaps a
+  // block's markup in when a save is answered while the caret is elsewhere (here, in the menu).
+  function targetOf(el, adding) {
+    var blk = el.closest('.lb-blk'), row = el.closest('[data-row]');
+    return { block: blk.dataset.block, add: adding,
+             row: row ? Array.prototype.indexOf.call(row.parentNode.querySelectorAll('[data-row]'), row) : -1 };
+  }
+  function pickNumber(item) {
+    var target = numTarget, typed = item.hasAttribute('data-typed');
+    closeNum();
+    var blk = target && document.querySelector('.lb-blk[data-block="' + target.block + '"]');
+    if (!blk) return;
+    var rows = blk.querySelectorAll('.numbers [data-row]'), value, label;
+    if (target.add) {
+      // The shared builder adds the row (and would have on this click, had we not opened the menu).
+      var add = blk.querySelector('[data-row-add]');
+      if (!add) return;
+      numPass = true;
+      add.click();
+      numPass = false;
+      rows = blk.querySelectorAll('.numbers [data-row]');
+      value = rows.length ? rows[rows.length - 1].querySelector('[data-row-field="value"]') : null;
+      if (!value || typed) return;                              // a typed number: the new row has the caret
+    } else {
+      value = rows[target.row] && rows[target.row].querySelector('[data-row-field="value"]');
+      if (!value) return;
+    }
+    label = value.closest('[data-row]').querySelector('[data-row-field="label"]');
+    if (typed) {
+      value.removeAttribute('data-raw');
+      value.removeAttribute('data-live');
+      value.removeAttribute('title');
+      value.textContent = '';
+      value.focus();
+      value.dispatchEvent(new Event('input', { bubbles: true }));
+      return;
+    }
+    setLive(value, item);
+    if (label && isStockLabel(label.textContent)) label.textContent = item.dataset.label;
+    if (document.activeElement === value) value.blur();
+    saveRow(label || value);
+  }
+
+  if (numMenu) {
+    document.addEventListener('click', function (e) {
+      var item = e.target.closest('#rb-num-menu .rb-num-item');
+      if (item) { pickNumber(item); return; }
+      var add = !numPass && e.target.closest('[data-row-add]');
+      if (add && add.closest('.lb-blk') && add.closest('.lb-blk').querySelector('[data-rows="numbers"]')) {
+        e.preventDefault();
+        e.stopPropagation();
+        openNum(add, targetOf(add, true));
+        return;
+      }
+      var live = e.target.closest(LIVE);
+      if (live) { openNum(live, targetOf(live, false)); return; }
+      if (!e.target.closest('#rb-num-menu')) closeNum();
+    }, true);
+    // A live number takes no caret: the mouse opens the menu, the keyboard does with Enter.
+    document.addEventListener('mousedown', function (e) {
+      if (e.target.closest && e.target.closest(LIVE)) e.preventDefault();
+    }, true);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !numMenu.hidden) { closeNum(); return; }
+      var live = e.target.closest && e.target.closest(LIVE);
+      if (!live || e.key === 'Tab') return;
+      e.preventDefault();
+      if (e.key === 'Enter' || e.key === ' ') openNum(live, targetOf(live, false));
+    }, true);
+    document.addEventListener('beforeinput', function (e) {
+      if (e.target.closest && e.target.closest(LIVE)) e.preventDefault();
+    }, true);
+    window.addEventListener('resize', closeNum);
+    document.addEventListener('scroll', function (e) { if (e.target !== numMenu) closeNum(); }, true);
+  }
 
   /* ─── the address is applied when the field is left, never while typing ── */
   var slug = document.getElementById('rb-slug');

@@ -1241,6 +1241,17 @@ leaves the block empty (`SET_NULL`). The Reports list is `/editor/reports/`. Rep
 intentionally NOT included in survey ZIP export/import. Migration `reports/0002` copied the old
 pages WITH their ids (comment anchors, snapshots, `?block=` links).
 
+**Key numbers (change `report-key-numbers`, #744)**: a key number is still `{'value', 'label'}` and a value
+that is ONE token (`reports.tokens`) follows the answers — but the author never types or sees a token in
+that block. `reports/numbers.py` is the one place: `defaults()` is the set a new block arrives with in a
+report of a survey AND the set `drafting` opens a draft with (do not fork the list), `choices()` feeds the
+menu (`_number_menu.html`, drawn once per page; `js/report_builder.js` moves it under "Add a number" or a
+live number), `is_live()` marks a row `data-live` on the canvas — not a text field, a click opens the menu.
+The menu remembers its target by block id + row number, never by node: the shared builder swaps a block's
+markup when a save is answered while the caret is elsewhere. A value mixing text and a token, the note and
+the opening keep the reveal-the-token-on-focus behaviour. Do not put the token list back into the Key
+numbers panel (owner, 2026-11-18: "friendly to the least experienced user").
+
 **Home survey and source surveys (change `report-home-survey`, #739)**: `Report.survey` is a DEFAULT, never
 a restriction — blocks name their own dataset, so one report may read several surveys. The block library
 has "Charts and maps from" (`source=<uuid>`, posted with the tile; tiles for another survey come from the
