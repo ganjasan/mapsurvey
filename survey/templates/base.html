@@ -14,6 +14,7 @@
         {% if GOOGLE_SITE_VERIFICATION %}<meta name="google-site-verification" content="{{ GOOGLE_SITE_VERIFICATION }}">{% endif %}
 
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <link rel="stylesheet" href="{% static 'css/tokens.css' %}{% if debug %}?t={% now 'U' %}{% endif %}">
         <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
         <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="{% static 'css/whats-new.css' %}{% if debug %}?t={% now 'U' %}{% endif %}">
@@ -27,8 +28,8 @@
         <script src="{% static 'js/editor_clipboard.js' %}"></script>
         {% endif %}
         <style>
-            .ms-learn-more { color: #0FA58E; white-space: nowrap; margin-left: .25rem; }
-            .ms-learn-more:hover { text-decoration: underline; color: #0FA58E; }
+            .ms-learn-more { color: var(--color-action); white-space: nowrap; margin-left: .25rem; }
+            .ms-learn-more:hover { text-decoration: underline; color: var(--color-action-hover); }
             html {
                 overflow-x: hidden;
             }

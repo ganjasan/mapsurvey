@@ -1,0 +1,199 @@
+/* Design tokens of the creator app (change design-tokens).
+ *
+ * Loaded by base.html and editor_base.html right after Bootstrap — never by the respondent
+ * templates or the marketing pages, which keep their own looks.
+ *
+ * Two layers. The PALETTE holds raw values and is referred to only from this file. Components
+ * use the SEMANTIC tokens below it, named for what a colour is for. A new colour in creator CSS is
+ * a token here, never a literal in a template (survey/tests/test_design_tokens.py counts them).
+ *
+ * Soft / line / hover tones are written out, not color-mix(): council desktops run old browsers.
+ * The action colour is indigo (owner decision 2026-11-18); teal belongs to the marketing pages.
+ */
+:root {
+  /* ── palette ── */
+  --gray-50: #f9fafb;  --gray-100: #f3f4f6; --gray-200: #e5e7eb; --gray-300: #d1d5db; --gray-400: #9ca3af;
+  --gray-500: #6b7280; --gray-600: #4b5563; --gray-700: #374151; --gray-800: #1f2937; --gray-900: #111827;
+  --indigo-50: #eef2ff; --indigo-200: #c7d2fe; --indigo-600: #4f46e5; --indigo-700: #4338ca;
+  --red-50: #fef2f2;    --red-200: #fecaca;    --red-600: #dc2626;    --red-700: #b91c1c;
+  --green-50: #ecfdf5;  --green-200: #a7f3d0;  --green-700: #047857;  --green-800: #065f46;
+  --amber-50: #fffbeb;  --amber-200: #fde68a;  --amber-700: #b45309;
+  --violet-50: #f3effd; --violet-200: #d6ccf7; --violet-600: #6d4ae0; --violet-700: #5a3bc4;
+
+  /* ── surfaces ── */
+  --page: var(--gray-50);
+  --surface: #fff;
+  --surface-muted: var(--gray-50);
+  --surface-sunken: var(--gray-100);
+
+  /* ── text ── */
+  --color-text: var(--gray-800);
+  --color-text-muted: var(--gray-500);
+  --color-text-faint: var(--gray-400);
+
+  /* ── lines ── */
+  --color-border: var(--gray-200);
+  --color-border-strong: var(--gray-300);
+
+  /* ── action ── */
+  --color-action: var(--indigo-600);
+  --color-on-action: #fff;
+  --color-action-hover: var(--indigo-700);
+  --color-action-soft: var(--indigo-50);
+  --color-action-line: var(--indigo-200);
+
+  /* ── states ── */
+  --color-danger: var(--red-600);
+  --color-on-danger: #fff;
+  --color-danger-hover: var(--red-700);
+  --color-danger-soft: var(--red-50);
+  --color-danger-line: var(--red-200);
+  --color-success: var(--green-700);
+  --color-success-hover: var(--green-800);
+  --color-success-soft: var(--green-50);
+  --color-success-line: var(--green-200);
+  --color-warning: var(--amber-700);
+  --color-warning-soft: var(--amber-50);
+  --color-warning-line: var(--amber-200);
+  --color-pro: var(--violet-600);
+  --color-pro-hover: var(--violet-700);
+  --color-pro-soft: var(--violet-50);
+  --color-pro-line: var(--violet-200);
+
+  --focus-ring: 0 0 0 3px rgba(79, 70, 229, .3);
+  --focus-ring-danger: 0 0 0 3px rgba(220, 38, 38, .3);
+
+  /* ── type ── */
+  --font-sans: 'DM Sans', system-ui, -apple-system, sans-serif;
+  --text-xs: 12px; --text-sm: 13px; --text-md: 14px; --text-lg: 16px; --text-xl: 20px; --text-2xl: 26px;
+  --weight-regular: 400; --weight-medium: 500; --weight-bold: 700;
+
+  /* ── space, radius, shadow ── */
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --space-7: 48px;
+  --radius-chip: 4px; --radius-control: 8px; --radius-card: 14px; --radius-pill: 999px;
+  --shadow-sm: 0 1px 2px rgba(17, 24, 39, .06);
+  --shadow-md: 0 4px 12px rgba(17, 24, 39, .08);
+  --shadow-lg: 0 16px 40px rgba(17, 24, 39, .18);
+}
+
+/* ══ Bootstrap 4 on the tokens: existing markup changes its look without a template edit ══ */
+
+a { color: var(--color-action); }
+a:hover { color: var(--color-action-hover); }
+
+.btn { border-radius: var(--radius-control); }
+.btn:focus, .btn.focus { box-shadow: var(--focus-ring); }
+
+.btn-primary,
+.btn-primary:disabled, .btn-primary.disabled {
+  color: var(--color-on-action); background-color: var(--color-action); border-color: var(--color-action);
+}
+.btn-primary:hover, .btn-primary:focus, .btn-primary.focus,
+.btn-primary:not(:disabled):not(.disabled):active, .btn-primary:not(:disabled):not(.disabled).active,
+.show > .btn-primary.dropdown-toggle {
+  color: var(--color-on-action); background-color: var(--color-action-hover); border-color: var(--color-action-hover);
+}
+.btn-primary:focus, .btn-primary.focus,
+.btn-primary:not(:disabled):not(.disabled):active:focus,
+.btn-outline-primary:focus, .btn-outline-primary.focus,
+.btn-outline-primary:not(:disabled):not(.disabled):active:focus { box-shadow: var(--focus-ring); }
+
+.btn-outline-primary,
+.btn-outline-primary:disabled, .btn-outline-primary.disabled {
+  color: var(--color-action); border-color: var(--color-action); background-color: transparent;
+}
+.btn-outline-primary:hover,
+.btn-outline-primary:not(:disabled):not(.disabled):active, .btn-outline-primary:not(:disabled):not(.disabled).active,
+.show > .btn-outline-primary.dropdown-toggle {
+  color: var(--color-on-action); background-color: var(--color-action); border-color: var(--color-action);
+}
+
+/* "Secondary" is the quiet button: white, a grey frame. Filled and outline read the same. */
+.btn-secondary, .btn-outline-secondary,
+.btn-secondary:disabled, .btn-secondary.disabled,
+.btn-outline-secondary:disabled, .btn-outline-secondary.disabled {
+  color: var(--gray-700); background-color: var(--surface); border-color: var(--color-border-strong);
+}
+.btn-secondary:hover, .btn-outline-secondary:hover,
+.btn-secondary:focus, .btn-secondary.focus,
+.btn-secondary:not(:disabled):not(.disabled):active, .btn-secondary:not(:disabled):not(.disabled).active,
+.btn-outline-secondary:not(:disabled):not(.disabled):active, .btn-outline-secondary:not(:disabled):not(.disabled).active,
+.show > .btn-secondary.dropdown-toggle, .show > .btn-outline-secondary.dropdown-toggle {
+  color: var(--color-text); background-color: var(--surface-sunken); border-color: var(--color-border-strong);
+}
+.btn-secondary:focus, .btn-secondary.focus, .btn-outline-secondary:focus, .btn-outline-secondary.focus,
+.btn-secondary:not(:disabled):not(.disabled):active:focus,
+.btn-outline-secondary:not(:disabled):not(.disabled):active:focus { box-shadow: var(--focus-ring); }
+
+.btn-danger,
+.btn-danger:disabled, .btn-danger.disabled {
+  color: var(--color-on-danger); background-color: var(--color-danger); border-color: var(--color-danger);
+}
+.btn-danger:hover, .btn-danger:focus, .btn-danger.focus,
+.btn-danger:not(:disabled):not(.disabled):active, .btn-danger:not(:disabled):not(.disabled).active {
+  color: var(--color-on-danger); background-color: var(--color-danger-hover); border-color: var(--color-danger-hover);
+}
+.btn-outline-danger,
+.btn-outline-danger:disabled, .btn-outline-danger.disabled {
+  color: var(--color-danger); border-color: var(--color-danger-line); background-color: transparent;
+}
+.btn-outline-danger:hover,
+.btn-outline-danger:not(:disabled):not(.disabled):active, .btn-outline-danger:not(:disabled):not(.disabled).active {
+  color: var(--color-on-danger); background-color: var(--color-danger); border-color: var(--color-danger);
+}
+.btn-danger:focus, .btn-danger.focus, .btn-outline-danger:focus, .btn-outline-danger.focus,
+.btn-danger:not(:disabled):not(.disabled):active:focus,
+.btn-outline-danger:not(:disabled):not(.disabled):active:focus { box-shadow: var(--focus-ring-danger); }
+
+.btn-success,
+.btn-success:disabled, .btn-success.disabled {
+  color: #fff; background-color: var(--color-success); border-color: var(--color-success);
+}
+.btn-success:hover, .btn-success:focus, .btn-success.focus,
+.btn-success:not(:disabled):not(.disabled):active {
+  color: #fff; background-color: var(--color-success-hover); border-color: var(--color-success-hover);
+}
+.btn-outline-success { color: var(--color-success); border-color: var(--color-success-line); }
+.btn-outline-success:hover,
+.btn-outline-success:not(:disabled):not(.disabled):active {
+  color: #fff; background-color: var(--color-success); border-color: var(--color-success);
+}
+
+.btn-link { color: var(--color-action); }
+.btn-link:hover { color: var(--color-action-hover); }
+
+.text-primary { color: var(--color-action) !important; }
+.text-muted   { color: var(--color-text-muted) !important; }
+.text-danger  { color: var(--color-danger) !important; }
+.text-success { color: var(--color-success) !important; }
+.text-warning { color: var(--color-warning) !important; }
+
+.badge-primary   { color: var(--color-action);  background-color: var(--color-action-soft); }
+.badge-info      { color: var(--color-action);  background-color: var(--color-action-soft); }
+.badge-success   { color: var(--color-success); background-color: var(--color-success-soft); }
+.badge-warning   { color: var(--color-warning); background-color: var(--color-warning-soft); }
+.badge-danger    { color: var(--color-danger);  background-color: var(--color-danger-soft); }
+.badge-secondary { color: var(--gray-600);      background-color: var(--surface-sunken); }
+.badge-light     { color: var(--gray-600);      background-color: var(--surface-sunken); }
+
+.alert { border-radius: var(--radius-control); }
+.alert-info, .alert-primary { color: var(--color-text); background-color: var(--color-action-soft);  border-color: var(--color-action-line); }
+.alert-success              { color: var(--color-text); background-color: var(--color-success-soft); border-color: var(--color-success-line); }
+.alert-warning              { color: var(--color-text); background-color: var(--color-warning-soft); border-color: var(--color-warning-line); }
+.alert-danger               { color: var(--color-text); background-color: var(--color-danger-soft);  border-color: var(--color-danger-line); }
+
+.form-control, .custom-select { border-color: var(--color-border-strong); border-radius: var(--radius-control); }
+.form-control:focus, .custom-select:focus { border-color: var(--color-action); box-shadow: var(--focus-ring); }
+.custom-control-input:checked ~ .custom-control-label::before { border-color: var(--color-action); background-color: var(--color-action); }
+.custom-control-input:focus ~ .custom-control-label::before { box-shadow: var(--focus-ring); }
+.dropdown-item.active, .dropdown-item:active { color: var(--color-on-action); background-color: var(--color-action); }
+.page-link { color: var(--color-action); }
+.page-item.active .page-link { background-color: var(--color-action); border-color: var(--color-action); }
+.nav-pills .nav-link.active { background-color: var(--color-action); }
+.progress-bar { background-color: var(--color-action); }
+
+.modal-content { border: 1px solid var(--color-border); border-radius: var(--radius-card); box-shadow: var(--shadow-lg); }
+.modal-header { border-bottom-color: var(--color-border); }
+.modal-footer { border-top-color: var(--color-border); background: var(--surface-muted);
+                border-bottom-left-radius: var(--radius-card); border-bottom-right-radius: var(--radius-card); }
+.modal-title { font-size: var(--text-lg); font-weight: var(--weight-bold); }

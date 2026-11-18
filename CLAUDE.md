@@ -1277,6 +1277,24 @@ blank report in one click; the start page offers the blank card only — the fou
 earlier report" are off the page since 2026-11-18 (owner: get the blank report right first), while the view
 still takes `kind=draft|copy`.
 
+**Design tokens (change `design-tokens`)**: the creator app's colours, text sizes, spacing, radii and
+shadows are `survey/assets/css/tokens.css`, loaded by `base.html` and `editor_base.html` right after
+Bootstrap — never by the respondent or marketing bases. Two layers: a palette (`--gray-500`,
+`--indigo-600`, used only inside that file) and tokens named by purpose (`--color-action`,
+`--color-danger`, `--color-text-muted`, `--color-border`, `--surface`, `--radius-control`,
+`--radius-card`, `--space-4`, …). The action colour is indigo (owner decision 2026-11-18); teal is the
+marketing pages'. The same file sets Bootstrap's buttons, links, badges, alerts, form focus and modals
+from the tokens, so plain Bootstrap markup already has the app's look; `btn-secondary` and
+`btn-outline-secondary` are both the quiet white button. The editor's (`--accent`, `--border-color`,
+`--radius`), the builders' (`.lb --ink/--line/--accent`) and the Pro badge's (`--pro`) variables are
+references to the tokens. Tones are written out, not `color-mix()` (old council browsers). **A new
+colour is a token, never a literal**: `ColourRatchetTest` (`test_design_tokens.py`) fails when a creator
+stylesheet or template holds more colour literals than `survey/tests/colour_baseline.json` records;
+after REMOVING literals lower it with `python scripts/colour_baseline.py`. **A new module gets
+no look of its own** (owner 2026-11-18: "one consistent design across the app, not a new design per
+module"): build it from plain Bootstrap markup and the partials other pages already use, and write a
+rule only for what no existing component covers — with tokens.
+
 **One confirmation dialog (change `one-confirm-dialog`)**: every "are you sure?" a creator sees is
 `partials/_app_dialog.html` (`#editorDialog`), included by `base.html` and `editor_base.html` and driven
 by `js/editor_dialog.js`. From script: `Dialog.confirm(text, {title, note, okLabel, danger})` /

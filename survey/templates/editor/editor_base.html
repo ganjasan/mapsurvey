@@ -11,6 +11,7 @@
     <meta name="theme-color" content="#3aafa9">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{% static 'css/tokens.css' %}{% if debug %}?t={% now 'U' %}{% endif %}">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">
@@ -57,20 +58,21 @@
     {% endif %}
     <style>
         :root {
-            --accent: #4f46e5;
-            --accent-light: #e0e7ff;
+            /* Older names, kept as references to css/tokens.css; new rules use the tokens. */
+            --accent: var(--color-action);
+            --accent-light: var(--color-action-soft);
             --sidebar-width: 260px;
             --preview-width: 380px;
-            --border-color: #e5e7eb;
-            --bg-muted: #f9fafb;
-            --radius: 8px;
+            --border-color: var(--color-border);
+            --bg-muted: var(--surface-muted);
+            --radius: var(--radius-control);
         }
         * { box-sizing: border-box; }
         body {
             font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
             margin: 0;
             background: var(--bg-muted);
-            color: #1f2937;
+            color: var(--color-text);
         }
         .editor-navbar {
             background: #fff;
@@ -751,7 +753,7 @@
         .panel-expand-tab.visible { display: flex; }
 
         /* Modal overrides */
-        .editor-modal .modal-content { border-radius: var(--radius); }
+        .editor-modal .modal-content { border-radius: var(--radius-card); }
         .editor-modal .modal-header { border-bottom: 1px solid var(--border-color); }
         .editor-modal .modal-footer { border-top: 1px solid var(--border-color); }
 
