@@ -1,0 +1,37 @@
+{% load i18n %}{% comment %}The answers a Quotes block may quote (change report-quotes-from-answers, #749), served by the
+`quotes` route into the block's panel. The controls carry what the next request asks for; report_builder.js
+fetches again on a change and adds a quote on "Add". Answers come from clean sessions only.{% endcomment %}
+<div class="rb-qpick-controls">
+  {% if surveys|length > 1 %}
+  <label class="sr-only" for="rb-qpick-src-{{ b.pk }}">{% trans "Survey" %}</label>
+  <select class="form-control form-control-sm" id="rb-qpick-src-{{ b.pk }}" data-qpick-source>
+    {% if not survey %}<option value="">{% trans "Pick a survey…" %}</option>{% endif %}
+    {% for s in surveys %}<option value="{{ s.uuid }}"{% if survey and s.pk == survey.pk %} selected{% endif %}>{{ s.name }}</option>{% endfor %}
+  </select>
+  {% elif survey %}<input type="hidden" data-qpick-source value="{{ survey.uuid }}">{% endif %}
+  {% if questions %}
+  <label class="sr-only" for="rb-qpick-q-{{ b.pk }}">{% trans "Question" %}</label>
+  <select class="form-control form-control-sm" id="rb-qpick-q-{{ b.pk }}" data-qpick-question>
+    {% for q in questions %}<option value="{{ q.code }}"{% if q.code == question.code %} selected{% endif %}>{{ q.name|default:q.code|striptags|truncatechars:80 }}</option>{% endfor %}
+  </select>
+  <input type="search" class="form-control form-control-sm" data-qpick-search value="{{ search }}" placeholder="{% trans 'Search responses' %}" aria-label="{% trans 'Search responses' %}">
+  {% endif %}
+</div>
+{% if not survey %}
+<p class="lb-hint">{% trans "Choose a survey to quote from." %}</p>
+{% elif not questions %}
+<p class="lb-hint">{% trans "This survey has no question with a written answer." %}</p>
+{% elif not answers %}
+<p class="lb-hint">{% if search %}{% trans "No answer holds those words." %}{% else %}{% trans "Nobody has answered this question yet." %}{% endif %}</p>
+{% else %}
+<p class="lb-hint rb-qpick-count">{% blocktrans count n=found %}{{ n }} answer{% plural %}{{ n }} answers{% endblocktrans %}{% if found > answers|length %} · {% blocktrans with shown=answers|length %}showing {{ shown }}{% endblocktrans %}{% endif %}</p>
+<ul class="rb-qpick-list" data-ref="{{ ref }}" data-source="{{ question.name|default:question.code|striptags|truncatechars:160 }}">
+  {% for a in answers %}
+  <li class="{% if a.taken %}is-taken{% endif %}">
+    <span class="rb-qpick-text">{{ a.text }}</span>
+    {% if a.taken %}<span class="rb-qpick-added"><i class="fas fa-check" aria-hidden="true"></i> {% trans "Added" %}</span>
+    {% else %}<button type="button" class="btn btn-sm btn-outline-primary" data-qpick-add><i class="fas fa-plus" aria-hidden="true"></i> {% trans "Add" %}</button>{% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}

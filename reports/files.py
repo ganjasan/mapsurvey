@@ -66,6 +66,8 @@ def entry_of(block):
     elif block.block_type in ('numbers', 'quotes'):
         entry['items'] = (block.config or {}).get('items') or []
         entry['note'] = _en(block.content)
+        if block.block_type == 'quotes':
+            entry['style'] = (block.config or {}).get('style') or 'list'
     elif block.block_type in QUESTION_BLOCK_TYPES:
         survey = block.dataset.survey if block.dataset_id and block.dataset.survey_id else None
         entry.update(survey=str(survey.uuid) if survey is not None else None,

@@ -147,6 +147,11 @@ class ReportService:
         if block.block_type in ('numbers', 'quotes'):
             payload = self._base(block)
             payload['items'] = [dict(item) for item in (block.config or {}).get('items') or []]
+            if block.block_type == 'quotes':
+                # Readers get the words and the source; where a quote was picked is the editor's.
+                payload['items'] = [{'text': item.get('text', ''), 'source': item.get('source', '')}
+                                    for item in payload['items']]
+                payload['style'] = (block.config or {}).get('style') or 'list'
             if block.block_type == 'numbers':
                 for item in payload['items']:      # a key number may be a live token
                     item['value'] = self.tokens.fill_plain(item.get('value', ''))

@@ -14606,3 +14606,77 @@ msgstr "Tekan “Tambahkan angka” untuk memilih angka dari survei — angka it
 
 msgid "Type the numbers on the page; they stay as you typed them. To show numbers of a survey, choose the report's survey in Report settings."
 msgstr "Ketik angka di halaman; angka itu tetap seperti yang Anda ketik. Untuk menampilkan angka dari survei, pilih survei laporan di pengaturan laporan."
+
+msgid "Added"
+msgstr "Ditambahkan"
+
+msgid "an email address"
+msgstr "alamat email"
+
+msgid "a phone number"
+msgstr "nomor telepon"
+
+msgid "a web address"
+msgstr "alamat web"
+
+msgid "Cards in two columns"
+msgstr "Kartu dalam dua kolom"
+
+msgid "Choose a survey to quote from."
+msgstr "Pilih survei yang akan dikutip."
+
+msgid "From answers"
+msgstr "Dari jawaban"
+
+msgid "From answers, shortened"
+msgstr "Dari jawaban, dipersingkat"
+
+msgid "Large, one per row"
+msgstr "Besar, satu per baris"
+
+msgid "Loading the answers…"
+msgstr "Memuat jawaban…"
+
+msgid "No answer holds those words."
+msgstr "Tidak ada jawaban yang memuat kata-kata itu."
+
+msgid "Nobody has answered this question yet."
+msgstr "Belum ada yang menjawab pertanyaan ini."
+
+msgid "One under another"
+msgstr "Satu di bawah yang lain"
+
+msgid "Picked from the answers. Readers do not see this label."
+msgstr "Dipilih dari jawaban. Pembaca tidak melihat label ini."
+
+msgid "Pick from answers"
+msgstr "Pilih dari jawaban"
+
+msgid "Pick quotes from the answers below, or write them on the page. A quote is published exactly as it stands in the block: cut anything that names a person."
+msgstr "Pilih kutipan dari jawaban di bawah, atau tulis di halaman. Kutipan diterbitkan persis seperti di blok: hapus apa pun yang menyebut nama seseorang."
+
+msgid "Quotes are laid out as: %(choices)s."
+msgstr "Kutipan disusun sebagai: %(choices)s."
+
+msgid "Readers see nothing here until the block has a quote."
+msgstr "Pembaca tidak melihat apa pun di sini sampai blok memiliki kutipan."
+
+
+msgid "The answers could not be loaded. Reopen the block to try again."
+msgstr "Jawaban tidak dapat dimuat. Buka kembali blok untuk mencoba lagi."
+
+msgid "This survey has no question with a written answer."
+msgstr "Survei ini tidak memiliki pertanyaan dengan jawaban tertulis."
+
+msgid "Write a quote"
+msgstr "Tulis kutipan"
+
+msgid "Carries %(what)s"
+msgstr "Memuat %(what)s"
+
+msgid "showing %(shown)s"
+msgstr "menampilkan %(shown)s"
+
+msgid "%(n)s quote carries an email address, a phone number or a web address."
+msgid_plural "%(n)s quotes carry an email address, a phone number or a web address."
+msgstr[0] "%(n)s kutipan memuat alamat email, nomor telepon, atau alamat web."

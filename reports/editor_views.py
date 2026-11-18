@@ -58,6 +58,7 @@ ROUTES = {
     'freeze': ('editor_public_results_freeze', 'editor_report_freeze'),
     'unfreeze': ('editor_public_results_unfreeze', 'editor_report_unfreeze'),
     'checks': ('editor_public_results_checks', 'editor_report_checks'),
+    'quotes': ('editor_public_results_block_quotes', 'editor_report_block_quotes'),
 }
 
 
@@ -72,9 +73,10 @@ def _url(request, name, *args):
 def _urls(request):
     """Every URL the editor page needs. `block_edit` / `block_delete` end in `/0/…`: the page
     swaps the 0 for a block id."""
-    urls = {name: _url(request, name) for name in ROUTES if name not in ('block_edit', 'block_delete')}
+    urls = {name: _url(request, name) for name in ROUTES if name not in ('block_edit', 'block_delete', 'quotes')}
     urls['block_edit'] = _url(request, 'block_edit', 0)
     urls['block_delete'] = _url(request, 'block_delete', 0)
+    urls['quotes'] = _url(request, 'quotes', 0)
     return urls
 
 
@@ -455,6 +457,7 @@ def _decorate(request, page, block, record, geo_subquestions=()):
     from survey.embedding import public_base_url
     record.update(
         edit_url=_url(request, 'block_edit', block.id), delete_url=_url(request, 'block_delete', block.id),
+        quotes_url=_url(request, 'quotes', block.id) if block.block_type == 'quotes' else '',
         geo_subquestions=list(geo_subquestions),
         is_spray=bool(block.question_id and block.question.input_type == 'spraycan'),
         **_block_elsewhere(public_base_url(request), page, block))
@@ -760,9 +763,14 @@ def _block_edit(request, block_id):
     elif block.block_type in ('numbers', 'quotes') and 'rows' in post:
         # The builder edits the rows on the page and posts them as parallel lists.
         first, second = ('value', 'label') if block.block_type == 'numbers' else ('text', 'source')
-        seconds = post.getlist(second)
+        seconds, refs = post.getlist(second), post.getlist('ref')
         items = [{first: a, second: seconds[i] if i < len(seconds) else ''}
                  for i, a in enumerate(post.getlist(first))]
+        if block.block_type == 'quotes':
+            # A row picked from the answers carries `<survey uuid>:<question code>` (#749).
+            for i, item in enumerate(items):
+                if i < len(refs) and refs[i]:
+                    item['ref'] = refs[i]
     services.update_block(
         Actor.from_request(request), block,
         viz=post.get('viz', block.viz),
@@ -776,6 +784,7 @@ def _block_edit(request, block_id):
         # The switch posts a hidden marker beside the checkbox, so an autosave that lacks the
         # box means "off" and a form without the field leaves the choice alone.
         show_marks=(post.get('show_marks') == 'on') if 'show_marks_present' in post else None,
+        quote_style=post.get('quote_style') if block.block_type == 'quotes' and 'quote_style' in post else None,
         basemap=post.get('basemap'),
         valid_basemaps={slug for slug, _label in basemap_registry.choices_for(page.organization)})
     if _is_autosave(request):
@@ -783,6 +792,32 @@ def _block_edit(request, block_id):
     if _is_ajax(request):
         return JsonResponse({'ok': True, 'block_id': block.id})
     return redirect('{}?block={}'.format(_url(request, 'config'), block.id))
+
+
+def _quote_answers(request, block_id):
+    """The answers the Quotes block's picker lists (change report-quotes-from-answers, #749): the
+    free-text questions of a survey the member sees (`source`, default the home survey), the
+    answers to one of them (`question`), narrowed by `q`. An HTML fragment for the panel."""
+    from reports import quotes
+    from survey.versioning import canonical_of
+    page = _page(request)
+    block = get_object_or_404(ReportBlock, id=block_id, report=page, block_type='quotes')
+    surveys = _source_surveys(request, page)
+    source = _source(request, page, surveys)
+    survey = canonical_of(source) if source is not None else None
+    questions = quotes.text_questions(survey) if survey is not None else []
+    code = request.GET.get('question') or ''
+    question = next((q for q in questions if q.code == code), questions[0] if questions else None)
+    search = request.GET.get('q', '')[:200]
+    answers, found = quotes.answers_for(survey, question.code, search) if question is not None else ([], 0)
+    taken = {quotes.normalise(item.get('text')) for item in (block.config or {}).get('items') or []}
+    return render(request, 'reports/editor/_quote_answers.html', {
+        'b': block, 'survey': survey, 'surveys': surveys, 'questions': questions, 'question': question,
+        'search': search, 'found': found,
+        'ref': f'{survey.uuid}:{question.code}' if question is not None else '',
+        'answers': [{'text': text, 'taken': text in taken} for text in answers],
+        'quotes_url': _url(request, 'quotes', block.id),
+    })
 
 
 @require_POST
@@ -866,6 +901,7 @@ public_results_library, report_library = on_survey(_library_groups), on_report(_
 report_home = on_report(_home)
 public_results_block_edit, report_block_edit = on_survey(_block_edit), on_report(_block_edit)
 public_results_block_delete, report_block_delete = on_survey(_block_delete), on_report(_block_delete)
+public_results_block_quotes, report_block_quotes = on_survey(_quote_answers), on_report(_quote_answers)
 public_results_blocks_reorder, report_blocks_reorder = on_survey(_blocks_reorder), on_report(_blocks_reorder)
 public_results_set_published, report_set_published = on_survey(_set_published), on_report(_set_published)
 public_results_freeze, report_freeze = on_survey(_freeze), on_report(_freeze)

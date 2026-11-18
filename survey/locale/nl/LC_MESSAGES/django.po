@@ -14661,3 +14661,78 @@ msgstr "Klik op ‘Getal toevoegen’ om een getal uit de enquête te kiezen —
 
 msgid "Type the numbers on the page; they stay as you typed them. To show numbers of a survey, choose the report's survey in Report settings."
 msgstr "Typ de getallen op de pagina; ze blijven zoals u ze typte. Kies in de rapportinstellingen de enquête van het rapport om getallen uit een enquête te tonen."
+
+msgid "Added"
+msgstr "Toegevoegd"
+
+msgid "an email address"
+msgstr "een e-mailadres"
+
+msgid "a phone number"
+msgstr "een telefoonnummer"
+
+msgid "a web address"
+msgstr "een webadres"
+
+msgid "Cards in two columns"
+msgstr "Kaarten in twee kolommen"
+
+msgid "Choose a survey to quote from."
+msgstr "Kies een enquête om uit te citeren."
+
+msgid "From answers"
+msgstr "Uit antwoorden"
+
+msgid "From answers, shortened"
+msgstr "Uit antwoorden, ingekort"
+
+msgid "Large, one per row"
+msgstr "Groot, één per rij"
+
+msgid "Loading the answers…"
+msgstr "Antwoorden laden…"
+
+msgid "No answer holds those words."
+msgstr "Geen antwoord bevat die woorden."
+
+msgid "Nobody has answered this question yet."
+msgstr "Niemand heeft deze vraag nog beantwoord."
+
+msgid "One under another"
+msgstr "Onder elkaar"
+
+msgid "Picked from the answers. Readers do not see this label."
+msgstr "Gekozen uit de antwoorden. Lezers zien dit label niet."
+
+msgid "Pick from answers"
+msgstr "Kiezen uit antwoorden"
+
+msgid "Pick quotes from the answers below, or write them on the page. A quote is published exactly as it stands in the block: cut anything that names a person."
+msgstr "Kies citaten uit de antwoorden hieronder, of schrijf ze op de pagina. Een citaat wordt gepubliceerd precies zoals het in het blok staat: haal alles weg wat een persoon noemt."
+
+msgid "Quotes are laid out as: %(choices)s."
+msgstr "Citaten worden weergegeven als: %(choices)s."
+
+msgid "Readers see nothing here until the block has a quote."
+msgstr "Lezers zien hier niets tot het blok een citaat heeft."
+
+
+msgid "The answers could not be loaded. Reopen the block to try again."
+msgstr "De antwoorden konden niet worden geladen. Open het blok opnieuw om het nog eens te proberen."
+
+msgid "This survey has no question with a written answer."
+msgstr "Deze enquête heeft geen vraag met een geschreven antwoord."
+
+msgid "Write a quote"
+msgstr "Citaat schrijven"
+
+msgid "Carries %(what)s"
+msgstr "Bevat %(what)s"
+
+msgid "showing %(shown)s"
+msgstr "%(shown)s getoond"
+
+msgid "%(n)s quote carries an email address, a phone number or a web address."
+msgid_plural "%(n)s quotes carry an email address, a phone number or a web address."
+msgstr[0] "%(n)s citaat bevat een e-mailadres, een telefoonnummer of een webadres."
+msgstr[1] "%(n)s citaten bevatten een e-mailadres, een telefoonnummer of een webadres."

@@ -10,7 +10,8 @@ reports.editor_views._block_edit reads. `b` the block, `item` its record.{% endc
     <button type="button" class="lb-x" data-select-target="page" title="{% trans 'Report settings' %}" aria-label="{% trans 'Close' %}">×</button>
   </div>
   <div class="lb-pane-body">
-    {% if item.note %}<p class="lb-warn"><i class="fas fa-info-circle" aria-hidden="true"></i> {{ item.note }}</p>{% endif %}
+    {# An empty Quotes block an editor sees says it on the canvas, with its two actions (#749). #}
+    {% if item.note %}{% if b.block_type != 'quotes' or b.is_hidden or not may_edit %}<p class="lb-warn"><i class="fas fa-info-circle" aria-hidden="true"></i> {{ item.note }}</p>{% endif %}{% endif %}
     <form method="post" action="{{ item.edit_url }}" enctype="multipart/form-data" class="lb-form" data-kind="{{ b.block_type }}">
       {% csrf_token %}
       <div class="lb-errors" role="alert" hidden></div>
@@ -42,7 +43,15 @@ reports.editor_views._block_edit reads. `b` the block, `item` its record.{% endc
         <p class="lb-hint mt-0">{% if survey %}{% trans "Press “Add a number” to pick a number of the survey — it follows new answers, and a frozen report keeps the numbers of the day it was frozen — or to type your own, which stays as typed. Click a number on the page to change it." %}{% else %}{% trans "Type the numbers on the page; they stay as you typed them. To show numbers of a survey, choose the report's survey in Report settings." %}{% endif %}</p>
 
         {% elif b.block_type == 'quotes' %}
-        <p class="lb-hint mt-0">{% trans "Type or paste the quotes on the page. A quote is published exactly as written: leave out anything that names a person." %}</p>
+        <p class="lb-hint mt-0">{% trans "Pick quotes from the answers below, or write them on the page. A quote is published exactly as it stands in the block: cut anything that names a person." %}</p>
+        <div class="lb-field">
+          <label for="rb-qstyle-{{ b.pk }}">{% trans "Layout" %}</label>
+          <select class="form-control form-control-sm" id="rb-qstyle-{{ b.pk }}" name="quote_style" data-testid="quote-style">
+            <option value="list"{% if not b.config.style or b.config.style == 'list' %} selected{% endif %}>{% trans "One under another" %}</option>
+            <option value="pull"{% if b.config.style == 'pull' %} selected{% endif %}>{% trans "Large, one per row" %}</option>
+            <option value="cards"{% if b.config.style == 'cards' %} selected{% endif %}>{% trans "Cards in two columns" %}</option>
+          </select>
+        </div>
 
         {% elif b.block_type == 'chart' %}
         <div class="lb-field">
@@ -101,6 +110,15 @@ reports.editor_views._block_edit reads. `b` the block, `item` its record.{% endc
       </div>
       </fieldset>
     </form>
+
+    {% if b.block_type == 'quotes' and may_edit %}
+    {% comment %}Outside the block's form on purpose: choosing a survey or typing a search must not save the
+    block. Filled by report_builder.js from `quotes_url` when the pane is shown (#749).{% endcomment %}
+    <div class="lb-card rb-qpick" data-quote-picker="{{ b.pk }}" data-url="{{ item.quotes_url }}" data-testid="quote-picker">
+      <h6>{% trans "Pick from answers" %}</h6>
+      <div data-qpick-body><p class="lb-hint mt-0">{% trans "Loading the answers…" %}</p></div>
+    </div>
+    {% endif %}
 
     {% if item.block_snippet or item.block_csv_url or item.block_png_url %}
     <div class="lb-card" data-testid="block-elsewhere">

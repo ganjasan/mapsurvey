@@ -74,6 +74,15 @@ def _written(block, fill):
                 # opens the menu on a click, never the token (change report-key-numbers).
                 item['live'] = is_live(item.get('value')) and item['shown'] != item.get('value')
             payload['note_shown'] = fill(payload['note'])
+        if block.block_type == 'quotes':
+            # Picked from the answers or not, cut since, carrying contact details (#749).
+            from reports.quotes import contact_flags, flag_label
+            payload['style'] = config.get('style') or 'list'
+            for item in payload['items']:
+                ref = item.get('ref') or {}
+                item['ref_attr'] = f"{ref['survey']}:{ref['question']}" if ref else ''
+                flags = contact_flags(item.get('text'))
+                item['contact'] = flag_label(flags) if flags else ''
         payload['filled'] = bool(payload['items'])
     return payload
 

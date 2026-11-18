@@ -49,6 +49,7 @@ def _label(block):
 
 def run(report):
     """The checks of a report as it stands now."""
+    from reports.quotes import contact_flags
     from reports.render import ReportService
     from reports.sources import attach_questions
     privacy, other = [], []
@@ -66,6 +67,12 @@ def run(report):
                     '%(n)s quote will be published as written. Check that it names nobody.',
                     '%(n)s quotes will be published as written. Check that they name nobody.',
                     len(quotes)) % {'n': len(quotes)}, block.id, 'open', quotes))
+                carrying = [text for text in quotes if contact_flags(text)]
+                if carrying:
+                    privacy.append(Item('quote_contact', ngettext(
+                        '%(n)s quote carries an email address, a phone number or a web address.',
+                        '%(n)s quotes carry an email address, a phone number or a web address.',
+                        len(carrying)) % {'n': len(carrying)}, block.id, 'open', carrying))
         if block.block_type == 'map' and (block.config or {}).get('marks'):
             privacy.append(Item('marks', _('“%(title)s” shows every mark as it was drawn, not squares. '
                                            'A mark can point at someone\'s home.') % {'title': _label(block)},

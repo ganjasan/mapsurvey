@@ -14623,3 +14623,78 @@ msgstr "Valitse ”Lisää luku”, niin voit valita kyselyn luvun — se seuraa
 
 msgid "Type the numbers on the page; they stay as you typed them. To show numbers of a survey, choose the report's survey in Report settings."
 msgstr "Kirjoita luvut sivulle; ne pysyvät sellaisina kuin kirjoitit ne. Jos haluat näyttää kyselyn lukuja, valitse raportin kysely raportin asetuksista."
+
+msgid "Added"
+msgstr "Lisätty"
+
+msgid "an email address"
+msgstr "sähköpostiosoitteen"
+
+msgid "a phone number"
+msgstr "puhelinnumeron"
+
+msgid "a web address"
+msgstr "verkko-osoitteen"
+
+msgid "Cards in two columns"
+msgstr "Kortit kahdessa sarakkeessa"
+
+msgid "Choose a survey to quote from."
+msgstr "Valitse kysely, josta lainaat."
+
+msgid "From answers"
+msgstr "Vastauksista"
+
+msgid "From answers, shortened"
+msgstr "Vastauksista, lyhennetty"
+
+msgid "Large, one per row"
+msgstr "Suuret, yksi riviä kohden"
+
+msgid "Loading the answers…"
+msgstr "Ladataan vastauksia…"
+
+msgid "No answer holds those words."
+msgstr "Mikään vastaus ei sisällä näitä sanoja."
+
+msgid "Nobody has answered this question yet."
+msgstr "Kukaan ei ole vielä vastannut tähän kysymykseen."
+
+msgid "One under another"
+msgstr "Allekkain"
+
+msgid "Picked from the answers. Readers do not see this label."
+msgstr "Valittu vastauksista. Lukijat eivät näe tätä merkintää."
+
+msgid "Pick from answers"
+msgstr "Valitse vastauksista"
+
+msgid "Pick quotes from the answers below, or write them on the page. A quote is published exactly as it stands in the block: cut anything that names a person."
+msgstr "Valitse lainaukset alla olevista vastauksista tai kirjoita ne sivulle. Lainaus julkaistaan täsmälleen sellaisena kuin se on lohkossa: poista kaikki, mikä nimeää henkilön."
+
+msgid "Quotes are laid out as: %(choices)s."
+msgstr "Lainaukset asetellaan näin: %(choices)s."
+
+msgid "Readers see nothing here until the block has a quote."
+msgstr "Lukijat eivät näe tässä mitään, ennen kuin lohkossa on lainaus."
+
+
+msgid "The answers could not be loaded. Reopen the block to try again."
+msgstr "Vastauksia ei voitu ladata. Avaa lohko uudelleen yrittääksesi uudestaan."
+
+msgid "This survey has no question with a written answer."
+msgstr "Tässä kyselyssä ei ole kysymystä, johon vastataan kirjoittamalla."
+
+msgid "Write a quote"
+msgstr "Kirjoita lainaus"
+
+msgid "Carries %(what)s"
+msgstr "Sisältää %(what)s"
+
+msgid "showing %(shown)s"
+msgstr "näytetään %(shown)s"
+
+msgid "%(n)s quote carries an email address, a phone number or a web address."
+msgid_plural "%(n)s quotes carry an email address, a phone number or a web address."
+msgstr[0] "%(n)s lainaus sisältää sähköpostiosoitteen, puhelinnumeron tai verkko-osoitteen."
+msgstr[1] "%(n)s lainausta sisältää sähköpostiosoitteen, puhelinnumeron tai verkko-osoitteen."

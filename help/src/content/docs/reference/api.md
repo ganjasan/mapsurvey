@@ -1714,6 +1714,7 @@ Small groups are hidden in every data block.
 | `rows` | string or null |  | crosstab: the code of the question in the rows. |
 | `columns` | string or null |  | crosstab: the code of the question in the columns. |
 | `show_marks` | boolean or null |  | map: the marks themselves instead of squares that count respondents. A mark can point at someone's home. |
+| `style` | `list` | `pull` | `cards` or null |  | quotes: one under another (list), each large (pull), or two columns (cards). |
 | `description` | string or null |  | map: what it shows, in a sentence (also read by screen readers). |
 
 **201** object
@@ -1743,6 +1744,7 @@ to show another question, add another block.
 | `note` | string or null |  |  |
 | `viz` | `auto` | `bar` | `pie` | `donut` | `table` or null |  |  |
 | `show_marks` | boolean or null |  |  |
+| `style` | `list` | `pull` | `cards` or null |  |  |
 | `description` | string or null |  |  |
 
 **200** object

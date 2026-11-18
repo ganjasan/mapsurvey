@@ -76,9 +76,43 @@
 .rb-num-item small { display: block; color: var(--color-text-muted); font-size: 12px; }
 .rb-num-typed b { font-size: 13px; color: var(--color-text-muted); }
 .rb-num-sep { height: 1px; background: var(--color-border); margin: 6px 0; }
-.rb .quotes blockquote { padding-right: 38px; }
+/* Quotes (change report-quotes-from-answers, #749): marks only around written text, a quiet × and a
+   grip that show on the row under the pointer, labels the readers never see, the empty state. */
+.rb .quotes blockquote { padding-right: 38px; padding-left: 28px; }
 .rb .quotes span[data-row-field] { display: inline; }
 .rb .quotes span[data-row-field]:empty { display: inline-block; min-width: 12em; }
+.rb .quotes blockquote:has(> span[data-row-field="text"]:empty) .rb-qm { display: none; }
+.rb .quotes .lb-row-x { opacity: 0; transition: opacity .12s; }
+.rb .quotes .lb-row-x:hover { background: var(--surface-sunken); color: var(--color-text); }
+.rb .quotes blockquote:hover .lb-row-x, .rb .quotes blockquote:focus-within .lb-row-x, .rb .quotes .lb-row-x:focus-visible { opacity: 1; }
+.rb .lb-row-grip { position: absolute; left: 6px; top: 14px; width: 16px; text-align: center; color: var(--color-text-faint);
+  cursor: grab; opacity: 0; transition: opacity .12s; font-size: 12px; font-style: normal; }
+.rb .quotes blockquote:hover .lb-row-grip { opacity: 1; }
+.lb-blk:not(.on) .lb-row-grip { display: none; }
+.rb .quotes .sortable-ghost { opacity: .4; }
+.rb-q-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; font-style: normal; }
+.rb-q-tag { font-size: 11.5px; line-height: 1.2; padding: 3px 8px; border-radius: 999px; background: var(--color-action-soft);
+  color: var(--color-action); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.rb-q-tag.rb-q-warn { background: var(--color-warning-soft); color: var(--color-warning); }
+.rb .quotes blockquote.rb-q-contact { box-shadow: inset 3px 0 0 var(--color-warning); }
+.rb-q-empty { border: 1px dashed var(--color-border-strong); border-radius: 10px; padding: 18px; text-align: center;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.rb-q-empty p { margin: 0 0 10px; color: var(--color-text-muted); font-size: 13.5px; }
+.rb-q-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.rb-q-more { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+.rb .quotes:not(:has([data-row])) { display: none; }
+.rb .quotes:has([data-row]) ~ .rb-q-empty, .rb .quotes:not(:has([data-row])) ~ .rb-q-more { display: none; }
+
+/* the answers a quote is picked from, in the block's panel */
+.rb-qpick-controls { display: grid; gap: 6px; margin-bottom: 8px; }
+.rb-qpick-count { margin: 0 0 6px; }
+.rb-qpick-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.rb-qpick-list li { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: start; padding: 8px 10px;
+  border: 1px solid var(--color-border); border-radius: 8px; font-size: 13px; line-height: 1.4; }
+.rb-qpick-list li.is-taken { background: var(--surface-sunken); color: var(--color-text-muted); }
+.rb-qpick-text { white-space: pre-wrap; word-break: break-word; }
+.rb-qpick-added { font-size: 12px; color: var(--color-success); white-space: nowrap; }
+[data-qpick-body].rb-busy > * { opacity: .5; }
 .rb .lb-row-add-c { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
 
 /* outline rows: the title with the type's name under it */

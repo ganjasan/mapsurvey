@@ -15,7 +15,7 @@ uploaded in the editor; an image block cannot be made from a spec.
 """
 from django.utils.translation import gettext as _
 
-from reports import services
+from reports import services, story
 from reports.models import QUESTION_BLOCK_TYPES, VIEW_BLOCK_TYPES
 
 STORY_TYPES = ('heading', 'text', 'numbers', 'quotes')
@@ -63,6 +63,11 @@ def _common(actor, block, spec):
             kwargs['items'] = spec.get('items') or []
         if 'note' in spec:
             kwargs['content'] = spec.get('note') or ''
+        if kind == 'quotes' and 'style' in spec:
+            if spec.get('style') not in story.QUOTE_STYLES:
+                raise BlockRefused(_('Quotes are laid out as: %(choices)s.')
+                                   % {'choices': ', '.join(story.QUOTE_STYLES)}, 'style')
+            kwargs['quote_style'] = spec['style']
     elif kind == 'map':
         if 'show_marks' in spec:
             kwargs['show_marks'] = bool(spec.get('show_marks'))

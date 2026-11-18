@@ -177,9 +177,10 @@ def add_view_block(actor, report, block_type, survey, rows='', columns=''):
 
 def update_block(actor, block, *, viz=None, is_hidden=None, custom_title=None, content=None, image=None,
                  geo_label_fields=None, basemap=None, valid_basemaps=(), width=None, items=None,
-                 show_marks=None):
+                 show_marks=None, quote_style=None):
     """Update what the block's type allows; None leaves a value as it is. `items` is the list of a
-    key-numbers or quotes block ([{value, label}] / [{text, source}])."""
+    key-numbers or quotes block ([{value, label}] / [{text, source, ref?}]); `quote_style` the
+    layout of a quotes block (list | pull | cards)."""
     from reports import story
     if viz is not None:
         block.viz = viz
@@ -194,8 +195,17 @@ def update_block(actor, block, *, viz=None, is_hidden=None, custom_title=None, c
     elif block.block_type in ('image', 'heading', 'numbers', 'quotes', 'map') and content is not None:
         # A map's content is its description for people who use a screen reader.
         block.content = {'en': str(content)[:2000]}
-    if block.block_type in ('numbers', 'quotes') and items is not None:
+    if block.block_type == 'numbers' and items is not None:
         block.config = story.clean_config(block.block_type, {'items': items})
+    if block.block_type == 'quotes' and (items is not None or quote_style is not None):
+        from reports.quotes import mark_origins
+        current = block.config or {}
+        config = story.clean_config('quotes', {
+            'items': items if items is not None else current.get('items') or [],
+            'style': quote_style if quote_style is not None else current.get('style')})
+        if items is not None:
+            mark_origins(config['items'])
+        block.config = config
     if block.block_type == 'image' and image:
         block.image = image
     if block.block_type == 'map':
