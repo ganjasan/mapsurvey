@@ -93,6 +93,25 @@ class LoadingFeedbackTest(SimpleTestCase):
         self.assertIn("if (verb !== 'get') btn = elt;", source)
         self.assertIn('window.LoadingFeedback', source)
 
+    def test_block_library_tiles_keep_their_icon(self):
+        """
+        GIVEN the block libraries of the Sites and report builders, whose tile icon is a
+              36-px tinted square
+        WHEN a tile is clicked and the form is sent
+        THEN the button is busy (disabled, aria-busy) but its icon is not swapped for a
+             spinner — the library dialog carries data-no-spinner, the script honours
+             it, and the top bar is what says the page is working
+        """
+        import pathlib
+
+        source = self._asset(self.SCRIPT)
+        self.assertIn("!btn.closest('[data-no-spinner]')", source)
+        repo = self._app_root().parent
+        for path in ('survey/templates/sites/editor/_library.html',
+                     'reports/templates/reports/editor/_library.html'):
+            html = (repo / path).read_text()
+            self.assertRegex(html, r'<div class="lb-lib" id="lb-lib"[^>]*\bdata-no-spinner\b', path)
+
     def test_rendered_editor_page_carries_the_assets(self):
         """
         GIVEN the editor base rendered through the template engine

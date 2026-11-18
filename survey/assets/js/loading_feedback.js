@@ -13,8 +13,12 @@
  *      in place of its leading icon, aria-busy. A second native submit of the
  *      same form while the first is in flight is dropped.
  *
- * Nothing here is per page. The one knob is `data-no-progress` on a link, a
- * form or an ancestor: no bar, no busy state for it.
+ * Nothing here is per page. Two knobs, on the element or an ancestor:
+ * `data-no-progress` on a link or a form — no bar, no busy state for it;
+ * `data-no-spinner` on a button — busy (disabled, aria-busy, no second
+ * submit) but its icon is left alone. For buttons whose leading icon is a
+ * tile (the builders' block library): swapping it spins the whole tile, and
+ * the bar already says the page is working.
  *
  * Public surface (for hand-written fetch() call sites):
  *   LoadingFeedback.start(delayMs?)  -> hold the bar (counted; shown after delay)
@@ -164,7 +168,7 @@ window.LoadingFeedback = (function () {
         btn.dataset.msBusy = '1';
         btn.classList.add('is-busy');
         btn.setAttribute('aria-busy', 'true');
-        if (btn.tagName === 'BUTTON') {
+        if (btn.tagName === 'BUTTON' && !btn.closest('[data-no-spinner]')) {
             var first = btn.firstElementChild;
             if (first && first.tagName === 'I' && /(^|\s)fa-/.test(first.className)) {
                 rec.icon = first;
