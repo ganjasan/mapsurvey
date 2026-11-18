@@ -82,7 +82,7 @@ Responses tab has no status line, so it keeps the navbar menus.{% endcomment %}
 {% if effective_role == 'owner' and not MOBILE_EDITOR_NAV %}
 <a href="{% url 'editor_survey_detail' survey.uuid %}?panel=settings"
    class="nav-action ml-1" title="{% trans 'Survey settings' %}"
-   style="border:1px solid var(--border-color);border-radius:6px;padding:0.28rem 0.5rem;color:#374151;text-decoration:none;">
+   style="border:1px solid var(--border-color);border-radius:6px;padding:0.28rem 0.5rem;color:var(--color-text);text-decoration:none;">
     <i class="fas fa-cog"></i>
 </a>
 {% endif %}

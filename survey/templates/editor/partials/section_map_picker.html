@@ -7,7 +7,7 @@
 <div class="modal-body" style="padding:0;">
     <div class="picker-map-search picker-map-search--modal" id="map-picker-search"></div>
     <div id="map-picker" class="picker-map picker-map--modal"></div>
-    <div style="padding:0.75rem 1rem;font-size:0.85rem;color:#6b7280;">
+    <div style="padding:0.75rem 1rem;font-size:0.85rem;color:var(--color-text-muted);">
         {% trans "Drag and zoom the map so the pin marks where respondents start on this section. Changes save automatically." %}
         <br>
         <span id="map-coords"></span>
@@ -20,7 +20,7 @@
                    style="font-size:0.85rem;cursor:pointer;"
                    title="{% trans 'When checked, this section inherits map position from the survey default or keeps the respondent’s current view. Moving the map gives the section its own position.' %}">
                 {% trans "Inherit position (don't override)" %}
-                <i class="fas fa-info-circle" style="color:#9ca3af;font-size:0.75rem;"></i>
+                <i class="fas fa-info-circle" style="color:var(--color-text-faint);font-size:0.75rem;"></i>
             </label>
         </div>
         <div class="form-check mb-2">
@@ -30,7 +30,7 @@
                    style="font-size:0.85rem;cursor:pointer;"
                    title="{% trans 'When enabled, the map will fly to the respondent’s browser location on this section.' %}">
                 {% trans "Fly to respondent's geolocation" %}
-                <i class="fas fa-info-circle" style="color:#9ca3af;font-size:0.75rem;"></i>
+                <i class="fas fa-info-circle" style="color:var(--color-text-faint);font-size:0.75rem;"></i>
             </label>
         </div>
         <div class="form-group mb-0" style="font-size:0.85rem;">

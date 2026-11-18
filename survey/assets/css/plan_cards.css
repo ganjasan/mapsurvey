@@ -4,14 +4,14 @@
    and fall back to the light values under base.html + Bootstrap. */
 .plan-cards {
     --pc-text: var(--color-text, #1B2A4A);
-    --pc-text-2: var(--color-text-secondary, #5A6680);
-    --pc-text-3: var(--color-text-tertiary, #8A94A8);
-    --pc-bg: var(--color-bg-elevated, #FFFFFF);
-    --pc-bg-soft: var(--color-bg-warm, #F4F2ED);
-    --pc-border: var(--color-border-light, #E4E0D8);
-    --pc-accent: var(--color-accent, #0FA58E);
-    --pc-accent-hover: var(--color-accent-hover, #0D8F7A);
-    --pc-accent-soft: var(--color-accent-light, rgba(15, 165, 142, 0.12));
+    --pc-text-2: var(--color-text-muted, var(--color-text-secondary, #5A6680));
+    --pc-text-3: var(--color-text-faint, var(--color-text-tertiary, #8A94A8));
+    --pc-bg: var(--surface, var(--color-bg-elevated, #FFFFFF));
+    --pc-bg-soft: var(--surface-sunken, var(--color-bg-warm, #F4F2ED));
+    --pc-border: var(--color-border-light, var(--color-border, #E4E0D8));
+    --pc-accent: var(--color-action, var(--color-accent, #0FA58E));
+    --pc-accent-hover: var(--color-action-hover, var(--color-accent-hover, #0D8F7A));
+    --pc-accent-soft: var(--color-action-soft, var(--color-accent-light, rgba(15, 165, 142, 0.12)));
     --pc-font: var(--font-display, 'Instrument Sans', 'DM Sans', system-ui, -apple-system, sans-serif);
     font-family: var(--pc-font);
     color: var(--pc-text);
@@ -49,7 +49,7 @@
 
 .plan-card--featured {
     border: 2px solid var(--pc-accent);
-    box-shadow: 0 10px 30px rgba(15, 165, 142, 0.10);
+    box-shadow: var(--shadow-md, 0 10px 30px rgba(15, 165, 142, 0.10));
 }
 
 .plan-card--current { border-color: var(--pc-text-3); }

@@ -23,7 +23,7 @@ on a 403 {email_unconfirmed} (editor/partials/_lifecycle_scripts.html).
             </div>
             <div class="modal-body">
                 <p>{% blocktrans with email=email_confirmation.email %}A survey goes live only from a confirmed address. Open the link we sent to {{ email }} — it keeps you signed in — then press Publish again.{% endblocktrans %}</p>
-                <p class="mb-0" style="color:#6b7280;font-size:.9rem;">{% trans "Nothing in your inbox? Check the spam folder; a workplace mail filter may also hold it." %}</p>
+                <p class="mb-0" style="color:var(--color-text-muted);font-size:.9rem;">{% trans "Nothing in your inbox? Check the spam folder; a workplace mail filter may also hold it." %}</p>
             </div>
             <div class="modal-footer">
                 <span class="ms-confirm-email__status mr-auto" data-ms-resend-status aria-live="polite"></span>

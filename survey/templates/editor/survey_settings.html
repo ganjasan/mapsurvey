@@ -145,12 +145,12 @@
     <!-- Default Map Position -->
     <div class="settings-section settings-section--wide">
         <h6><i class="fas fa-map-marker-alt mr-1"></i> {% trans "Default Map Position" %}</h6>
-        <p style="font-size:0.85rem;color:#6b7280;margin-bottom:0.75rem;">
+        <p style="font-size:0.85rem;color:var(--color-text-muted);margin-bottom:0.75rem;">
             {% trans "Set the default starting position and zoom for the survey map. Sections can override this individually." %}
         </p>
         <div class="picker-map-search" id="survey-map-search"></div>
         <div id="survey-map-picker" class="picker-map picker-map--page" style="margin-bottom:0.75rem;"></div>
-        <div style="font-size:0.85rem;color:#6b7280;margin-bottom:0.75rem;">
+        <div style="font-size:0.85rem;color:var(--color-text-muted);margin-bottom:0.75rem;">
             {% trans "Drag and zoom the map so the pin marks where respondents start. Changes save automatically." %}
             <br>
             <span id="survey-map-coords"></span>
@@ -162,7 +162,7 @@
                    style="font-size:0.85rem;cursor:pointer;"
                    title="{% trans 'Auto-center the map on the respondent’s browser location when they first enter the survey.' %}">
                 {% trans "Auto-center on respondent's location" %}
-                <i class="fas fa-info-circle" style="color:#9ca3af;font-size:0.75rem;"></i>
+                <i class="fas fa-info-circle" style="color:var(--color-text-faint);font-size:0.75rem;"></i>
             </label>
         </div>
         <span class="autosave-indicator" id="survey-map-status" data-state="saved" role="status" aria-live="polite">

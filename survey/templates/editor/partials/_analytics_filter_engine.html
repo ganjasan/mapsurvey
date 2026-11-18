@@ -421,7 +421,7 @@ FilterManager.prototype._updatePills = function() {
     while (bar.firstChild) bar.removeChild(bar.firstChild);
 
     var label = document.createElement('span');
-    label.style.cssText = 'font-size:0.8rem;color:#6b7280;align-self:center;';
+    label.style.cssText = 'font-size:0.8rem;color:var(--color-text-muted);align-self:center;';
     label.textContent = 'Filters:';
     bar.appendChild(label);
 

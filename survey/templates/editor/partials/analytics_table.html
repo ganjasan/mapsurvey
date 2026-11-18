@@ -3,30 +3,30 @@
 {# HTMX-swappable partial: attribute table with toolbar, sort, search, pagination #}
 <style>
 .cell-editable { cursor: text; }
-.cell-editable:hover { background: #f0f4ff; border-radius: 2px; }
+.cell-editable:hover { background: var(--color-action-soft); border-radius: 2px; }
 .attr-th-filter { cursor: pointer; padding: 0 2px; }
 .attr-th-filter:hover i { opacity: 0.8 !important; }
-.attr-th-filter.active i { opacity: 1 !important; color: #1a56db !important; }
+.attr-th-filter.active i { opacity: 1 !important; color: var(--color-action) !important; }
 /* Freeze checkbox (and, legacy only, actions) columns */
 .attr-table th:nth-child(1), .attr-table td:nth-child(1) { position: sticky; left: 0; z-index: 2; background: #fff; }
 .attr-table thead th:nth-child(1) { z-index: 3; }
-.table-secondary td:nth-child(1) { background: #e2e3e5 !important; }
+.table-secondary td:nth-child(1) { background: var(--surface-sunken) !important; }
 {% if not RESPONSES_V2 %}
 .attr-table th:nth-child(2), .attr-table td:nth-child(2) { position: sticky; left: 28px; z-index: 2; background: #fff; }
 .attr-table thead th:nth-child(2) { z-index: 3; }
-.table-secondary td:nth-child(2) { background: #e2e3e5 !important; }
+.table-secondary td:nth-child(2) { background: var(--surface-sunken) !important; }
 {% endif %}
 /* ── Required questions unanswered + crossed shape edges (change
    responses-required-unanswered, #691): quiet extra information — muted colour,
    no error red, no count chip. The tooltip (title) carries the words. ───── */
 .rv2-required-mark,
 .rv2-cell-note > .fa-question-circle {
-    color: #9ca3af;
+    color: var(--color-text-faint);
     cursor: help;
 }
 .rv2-required-mark { font-size: 0.85rem; }
 .rv2-required-mark:hover,
-.rv2-required-mark:focus { color: #6b7280; outline: none; }
+.rv2-required-mark:focus { color: var(--color-text-muted); outline: none; }
 .rv2-cell-note {
     display: inline-flex;
     align-items: center;
@@ -68,7 +68,7 @@ responses-required-unanswered, #691: the Issues menu labelled normal answers as 
             {{ total }} shown
         </span>
         {% if not show_trash %}<span class="text-muted ml-2" style="font-size:0.85rem;">{% include "editor/partials/_empty_sessions_toggle.html" %} {% include "editor/partials/_moderated_sessions_line.html" %}</span>{% endif %}
-        <button type="button" id="show-all-rows-btn" class="btn btn-sm btn-link p-0 ml-2" style="font-size:0.75rem;color:#6b7280;display:none;" onclick="filterManager.showAll()">
+        <button type="button" id="show-all-rows-btn" class="btn btn-sm btn-link p-0 ml-2" style="font-size:0.75rem;color:var(--color-text-muted);display:none;" onclick="filterManager.showAll()">
             <i class="fas fa-eye"></i> Show hidden
         </button>
     </div>
@@ -154,7 +154,7 @@ filter and the sort order move into the bottom sheet.
         <span class="text-muted ml-2" style="font-size:0.85rem;">
             {{ total }} {% if show_trash %}trashed{% else %}result{{ total|pluralize }}{% endif %}
         </span>
-        <button type="button" id="show-all-rows-btn" class="btn btn-sm btn-link p-0 ml-2" style="font-size:0.75rem;color:#6b7280;display:none;" onclick="filterManager.showAll()">
+        <button type="button" id="show-all-rows-btn" class="btn btn-sm btn-link p-0 ml-2" style="font-size:0.75rem;color:var(--color-text-muted);display:none;" onclick="filterManager.showAll()">
             <i class="fas fa-eye"></i> Show hidden
         </button>
     </div>
@@ -167,7 +167,7 @@ filter and the sort order move into the bottom sheet.
 {% endif %}
 {# Bulk toolbar — visible when rows are selected #}
 {% if is_editor %}
-<div class="attr-table-toolbar" id="toolbar-bulk" style="display:none;background:#e8f0fe;border-radius:4px;">
+<div class="attr-table-toolbar" id="toolbar-bulk" style="display:none;background:var(--color-action-soft);border-radius:4px;">
     <div class="attr-table-toolbar-left" style="gap:0.5rem;">
         <button type="button" class="btn btn-sm btn-link" onclick="clearSelection()" title="{% trans 'Deselect all' %}" style="padding:0;">
             <i class="fas fa-times"></i>
@@ -196,7 +196,7 @@ filter and the sort order move into the bottom sheet.
             <i class="fas fa-trash-alt"></i> Trash
         </button>
         {% endif %}
-        <span style="border-left:1px solid #bfdbfe;height:20px;margin:0 4px;"></span>
+        <span style="border-left:1px solid var(--color-action-line);height:20px;margin:0 4px;"></span>
         <button type="button" class="btn btn-sm btn-outline-secondary" onclick="filterManager.hideSelected()" title="{% trans 'Hide selected rows' %}">
             <i class="fas fa-eye-slash"></i> Hide
         </button>
@@ -235,15 +235,15 @@ filter and the sort order move into the bottom sheet.
     <label style="display:block;font-size:0.82rem;cursor:pointer;padding:2px 0;">
         <input type="checkbox" checked data-hide-col="{{ col.key }}"
                onchange="setColHidden('{{ col.key }}', !this.checked)">
-        {% if col.input_type == 'point' %}<i class="fas fa-map-marker-alt" style="color:#1E88E5;width:16px;"></i>
-        {% elif col.input_type == 'line' %}<i class="fas fa-route" style="color:#43A047;width:16px;"></i>
-        {% elif col.input_type == 'polygon' %}<i class="fas fa-draw-polygon" style="color:#8E24AA;width:16px;"></i>
-        {% elif col.input_type == 'spraycan' %}<i class="fas fa-spray-can" style="color:#D81B60;width:16px;"></i>
-        {% elif col.input_type == 'number' or col.input_type == 'range' %}<i class="fas fa-hashtag" style="color:#FB8C00;width:16px;"></i>
-        {% elif col.input_type == 'choice' or col.input_type == 'multichoice' or col.input_type == 'rating' %}<i class="fas fa-list" style="color:#00897B;width:16px;"></i>
-        {% elif col.input_type == 'datetime' %}<i class="fas fa-clock" style="color:#6b7280;width:16px;"></i>
-        {% elif col.input_type == 'text' or col.input_type == 'text_line' %}<i class="fas fa-font" style="color:#6b7280;width:16px;"></i>
-        {% elif col.input_type is None %}<i class="fas fa-cog" style="color:#9e9e9e;width:16px;"></i>
+        {% if col.input_type == 'point' %}<i class="fas fa-map-marker-alt" style="color:var(--type-point);width:16px;"></i>
+        {% elif col.input_type == 'line' %}<i class="fas fa-route" style="color:var(--type-line);width:16px;"></i>
+        {% elif col.input_type == 'polygon' %}<i class="fas fa-draw-polygon" style="color:var(--type-polygon);width:16px;"></i>
+        {% elif col.input_type == 'spraycan' %}<i class="fas fa-spray-can" style="color:var(--type-spray);width:16px;"></i>
+        {% elif col.input_type == 'number' or col.input_type == 'range' %}<i class="fas fa-hashtag" style="color:var(--color-warning);width:16px;"></i>
+        {% elif col.input_type == 'choice' or col.input_type == 'multichoice' or col.input_type == 'rating' %}<i class="fas fa-list" style="color:var(--type-choice);width:16px;"></i>
+        {% elif col.input_type == 'datetime' %}<i class="fas fa-clock" style="color:var(--color-text-muted);width:16px;"></i>
+        {% elif col.input_type == 'text' or col.input_type == 'text_line' %}<i class="fas fa-font" style="color:var(--color-text-muted);width:16px;"></i>
+        {% elif col.input_type is None %}<i class="fas fa-cog" style="color:var(--type-other);width:16px;"></i>
         {% endif %}
         {{ col.label|truncatechars:30 }}
     </label>
@@ -255,7 +255,7 @@ filter and the sort order move into the bottom sheet.
 <thead>
     {# Header row with column names + sort + menu #}
     <tr>
-        <th style="width:28px;text-align:center;background:#f8f9fa;">
+        <th style="width:28px;text-align:center;background:var(--surface-muted);">
             <input type="checkbox" id="select-all-cb" title="{% trans 'Select / deselect all' %}"
                    onchange="toggleSelectAll(this.checked)">
         </th>
@@ -265,14 +265,14 @@ filter and the sort order move into the bottom sheet.
             <div class="attr-th-content">
                 <span class="attr-th-grip" title="{% trans 'Drag to reorder' %}"><i class="fas fa-grip-vertical"></i></span>
                 <span class="attr-th-label">
-                    {% if col.input_type == 'point' %}<i class="fas fa-map-marker-alt" style="color:#1E88E5;"></i>
-                    {% elif col.input_type == 'line' %}<i class="fas fa-route" style="color:#43A047;"></i>
-                    {% elif col.input_type == 'polygon' %}<i class="fas fa-draw-polygon" style="color:#8E24AA;"></i>
-                    {% elif col.input_type == 'spraycan' %}<i class="fas fa-spray-can" style="color:#D81B60;"></i>
-                    {% elif col.input_type == 'number' or col.input_type == 'range' %}<i class="fas fa-hashtag" style="color:#FB8C00;"></i>
-                    {% elif col.input_type == 'choice' or col.input_type == 'multichoice' or col.input_type == 'rating' %}<i class="fas fa-list" style="color:#00897B;"></i>
-                    {% elif col.input_type == 'datetime' %}<i class="fas fa-clock" style="color:#6b7280;"></i>
-                    {% elif col.input_type == 'text' or col.input_type == 'text_line' %}<i class="fas fa-font" style="color:#6b7280;"></i>
+                    {% if col.input_type == 'point' %}<i class="fas fa-map-marker-alt" style="color:var(--type-point);"></i>
+                    {% elif col.input_type == 'line' %}<i class="fas fa-route" style="color:var(--type-line);"></i>
+                    {% elif col.input_type == 'polygon' %}<i class="fas fa-draw-polygon" style="color:var(--type-polygon);"></i>
+                    {% elif col.input_type == 'spraycan' %}<i class="fas fa-spray-can" style="color:var(--type-spray);"></i>
+                    {% elif col.input_type == 'number' or col.input_type == 'range' %}<i class="fas fa-hashtag" style="color:var(--color-warning);"></i>
+                    {% elif col.input_type == 'choice' or col.input_type == 'multichoice' or col.input_type == 'rating' %}<i class="fas fa-list" style="color:var(--type-choice);"></i>
+                    {% elif col.input_type == 'datetime' %}<i class="fas fa-clock" style="color:var(--color-text-muted);"></i>
+                    {% elif col.input_type == 'text' or col.input_type == 'text_line' %}<i class="fas fa-font" style="color:var(--color-text-muted);"></i>
                     {% endif %}
                     {{ col.label|truncatechars:25 }}
                 </span>
@@ -303,7 +303,7 @@ filter and the sort order move into the bottom sheet.
         {% if not RESPONSES_V2 %}<td></td>{% endif %}
         {% for col in columns %}
         <td data-col="{{ col.key }}" class="attr-filter-indicator" data-filter-col="{{ col.key }}"
-            style="padding:1px 4px;color:#6b7280;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+            style="padding:1px 4px;color:var(--color-text-muted);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
             onclick="openColFilter(event, '{{ col.key }}', '{{ col.input_type }}')">
         </td>
         {% endfor %}
@@ -324,14 +324,14 @@ filter and the sort order move into the bottom sheet.
             {% if is_editor %}
             {% if row.is_deleted %}
             <button type="button" class="btn btn-sm btn-link p-0" onclick="restoreSession({{ row.session_id }})" title="{% trans 'Restore' %}">
-                <i class="fas fa-undo" style="color:#28a745;"></i>
+                <i class="fas fa-undo" style="color:var(--color-success);"></i>
             </button>
             <button type="button" class="btn btn-sm btn-link p-0" onclick="hardDeleteSession({{ row.session_id }})" title="{% trans 'Delete permanently' %}">
-                <i class="fas fa-times-circle" style="color:#dc3545;"></i>
+                <i class="fas fa-times-circle" style="color:var(--color-danger);"></i>
             </button>
             {% else %}
             <button type="button" class="btn btn-sm btn-link p-0" onclick="trashSession({{ row.session_id }})" title="{% trans 'Move to trash' %}">
-                <i class="fas fa-trash-alt" style="color:#9ca3af;"></i>
+                <i class="fas fa-trash-alt" style="color:var(--color-text-faint);"></i>
             </button>
             {% endif %}
             {% endif %}
@@ -354,7 +354,7 @@ filter and the sort order move into the bottom sheet.
                 {% elif is_editor and not row.is_deleted %}
                 <select class="form-control form-control-sm validation-select"
                         data-session-id="{{ row.session_id }}"
-                        style="font-size:0.75rem;padding:1px 4px;height:24px;width:auto;min-width:90px;{% if row.validation_status == 'approved' %}border-color:#28a745;color:#28a745;{% elif row.validation_status == 'not_approved' %}border-color:#dc3545;color:#dc3545;{% elif row.validation_status == 'on_hold' %}border-color:#fd7e14;color:#fd7e14;{% endif %}"
+                        style="font-size:0.75rem;padding:1px 4px;height:24px;width:auto;min-width:90px;{% if row.validation_status == 'approved' %}border-color:var(--color-success);color:var(--color-success);{% elif row.validation_status == 'not_approved' %}border-color:var(--color-danger);color:var(--color-danger);{% elif row.validation_status == 'on_hold' %}border-color:var(--color-warning);color:var(--color-warning);{% endif %}"
                         onchange="setSessionStatus(this, {{ row.session_id }})">
                     <option value="" {% if not row.validation_status %}selected{% endif %}>—</option>
                     <option value="approved" {% if row.validation_status == 'approved' %}selected{% endif %}>{% trans "Approved" %}</option>
@@ -372,17 +372,17 @@ filter and the sort order move into the bottom sheet.
                 quiet extra information, never an error colour, a counter or "issue" wording.{% endcomment %}
                 {% if row.is_empty %}<span class="badge badge-dark" style="font-size:0.7rem;cursor:help;" title="{% trans 'Session has 0 answers' %}">{% trans "Empty" %}</span>
                 {% elif row.required %}{% include "editor/partials/_required_unanswered_mark.html" with names=row.required %}
-                {% else %}<span style="color:#9ca3af;">—</span>{% endif %}
+                {% else %}<span style="color:var(--color-text-faint);">—</span>{% endif %}
             {% elif col.key == 'tags' %}
                 {% for tag in row.tags %}
                     <span class="badge badge-info" style="font-size:0.7rem;font-weight:normal;">{{ tag }}</span>
                 {% empty %}
-                    <span style="color:#9ca3af;">—</span>
+                    <span style="color:var(--color-text-faint);">—</span>
                 {% endfor %}
             {% elif col.key == 'start_datetime' %}{{ row.start_datetime|date:"M j, Y H:i" }}
             {% elif col.key == 'language' %}{{ row.language }}
             {% elif col.key == 'source' %}{% if row.source == 'online' %}<span class="text-muted">{{ row.source_label }}</span>{% else %}<span class="badge audience-badge--operators" title="{% if row.entered_by %}{{ row.entered_by }}{% endif %}"><i class="fas fa-user-edit"></i> {{ row.source_label }}</span>{% endif %}
-            {% elif col.key == 'version' %}<span class="badge badge-light" style="border:1px solid #e5e7eb;color:#6b7280;">{{ row.version|default:"—" }}</span>
+            {% elif col.key == 'version' %}<span class="badge badge-light" style="border:1px solid var(--color-border);color:var(--color-text-muted);">{{ row.version|default:"—" }}</span>
             {% else %}
                 {% with cell_lints=row.lints|hash:col.key %}
                 <span class="cell-display{% if is_editor and col.editable %} cell-editable{% endif %}{% if cell_lints %} rv2-cell-note{% endif %}"
@@ -463,10 +463,10 @@ is displayed; only one is ever visible.
 </div>
 
 {# Filter dropdown (hidden, positioned by JS) #}
-<div id="col-filter-dropdown" style="display:none;position:absolute;z-index:100;background:#fff;border:1px solid #d1d5db;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.12);padding:8px;min-width:180px;max-width:260px;font-size:0.8rem;">
+<div id="col-filter-dropdown" style="display:none;position:absolute;z-index:100;background:#fff;border:1px solid var(--color-border-strong);border-radius:6px;box-shadow:var(--shadow-md);padding:8px;min-width:180px;max-width:260px;font-size:0.8rem;">
     <div id="cf-header" style="font-weight:600;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">
         <span id="cf-title">{% trans "Filter" %}</span>
-        <button type="button" style="border:none;background:none;cursor:pointer;color:#9ca3af;font-size:0.85rem;" onclick="closeColFilter()">&times;</button>
+        <button type="button" style="border:none;background:none;cursor:pointer;color:var(--color-text-faint);font-size:0.85rem;" onclick="closeColFilter()">&times;</button>
     </div>
     <div id="cf-body"></div>
     <div style="display:flex;gap:4px;margin-top:8px;">

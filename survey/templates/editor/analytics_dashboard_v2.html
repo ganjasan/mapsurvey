@@ -119,7 +119,7 @@
     {# ── Global filter pills — the shared engine's _updatePills renders here. #}
     <div id="filter-pills-bar" class="rv2-filter-pills" style="display:none;"></div>
     <div id="hidden-indicator" style="display:none;padding:0.15rem 1.5rem;flex-shrink:0;">
-        <button class="btn btn-sm btn-link p-0" style="font-size:0.78rem;color:#6b7280;" onclick="filterManager.showAll()">
+        <button class="btn btn-sm btn-link p-0" style="font-size:0.78rem;color:var(--color-text-muted);" onclick="filterManager.showAll()">
             <i class="fas fa-eye"></i> <span id="hidden-count">0</span> {% trans "hidden — Show all" %}
         </button>
     </div>
@@ -200,7 +200,7 @@
             <div class="rv2-drawer-head">
                 <span id="rv2-drawer-title">{% trans "Response" %}</span>
                 <div class="rv2-drawer-nav">
-                    <span id="rv2-drawer-changed" style="display:none;color:#d97706;" title="{% trans 'The list changed since this was opened' %}">
+                    <span id="rv2-drawer-changed" style="display:none;color:var(--color-warning);" title="{% trans 'The list changed since this was opened' %}">
                         <i class="fas fa-exclamation-triangle"></i> {% trans "list changed" %}
                     </span>
                     <button type="button" id="rv2-drawer-prev" onclick="rv2DrawerStep(-1)" title="{% trans 'Previous' %}">‹</button>
@@ -248,8 +248,8 @@ it costs no request. Read-only — no draw or edit controls.
             <div class="modal-body p-0" style="position:relative;">
                 <div id="session-geo-modal-map" style="height:70vh;min-height:360px;"></div>
                 <div id="session-geo-modal-legend"
-                     style="position:absolute;bottom:12px;left:12px;z-index:900;background:rgba(255,255,255,0.94);
-                            border-radius:6px;padding:8px 10px;font-size:0.8rem;box-shadow:0 1px 4px rgba(0,0,0,0.25);
+                     style="position:absolute;bottom:12px;left:12px;z-index:900;background:var(--surface-glass);
+                            border-radius:6px;padding:8px 10px;font-size:0.8rem;box-shadow:var(--shadow-sm);
                             max-width:45%;"></div>
             </div>
         </div>
