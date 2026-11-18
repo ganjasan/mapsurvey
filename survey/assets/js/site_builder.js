@@ -189,8 +189,16 @@
       bindPlain(el, id, !el.matches('.lp-event-desc, .lp-survey-desc'));
     });
     blk.querySelectorAll('[data-rows]').forEach(function (list) {
-      if (!list.querySelector('[data-row]')) addRow(blk, list, false);
+      // `data-rows-empty`: the block draws its own empty state instead of a blank row.
+      if (!list.querySelector('[data-row]') && !list.hasAttribute('data-rows-empty')) addRow(blk, list, false);
       list.querySelectorAll('[data-row]').forEach(function (row) { bindRow(row, id); });
+      // `data-rows-sortable`: rows are dragged by their `.lb-row-grip`, the order saved at once.
+      if (list.hasAttribute('data-rows-sortable') && typeof Sortable !== 'undefined') {
+        Sortable.create(list, {
+          draggable: '[data-row]', handle: '.lb-row-grip', animation: 150,
+          onEnd: function () { flushBlock(id); }
+        });
+      }
     });
   }
 
@@ -328,7 +336,7 @@
         var row = x.closest('[data-row]'), rows = row && row.parentNode;
         if (!row) return;
         row.remove();
-        if (!rows.querySelector('[data-row]')) addRow(blk, rows, false);
+        if (!rows.querySelector('[data-row]') && !rows.hasAttribute('data-rows-empty')) addRow(blk, rows, false);
         if (rows.dataset.rows === 'timeline') markPhases(rows);
         flushBlock(id);
         return;
@@ -455,11 +463,15 @@
     if (!list || !sink) return;
     sink.textContent = '';
     var now = '';
+    // `data-row-attrs="ref"`: each row also posts its `data-ref` (empty when it has none), so the
+    // server zips it with the fields — what a quote picked from the answers remembers.
+    var attrs = (list.dataset.rowAttrs || '').split(' ').filter(Boolean);
     list.querySelectorAll('[data-row]').forEach(function (row, i) {
       row.querySelectorAll('[data-row-field]').forEach(function (el) {
         var rich = el.matches('[data-row-rich]');
         sink.appendChild(hiddenField(rich ? 'textarea' : 'input', el.dataset.rowField, rich ? richValue(el) : plainValue(el)));
       });
+      attrs.forEach(function (name) { sink.appendChild(hiddenField('input', name, row.getAttribute('data-' + name) || '')); });
       if (row.classList.contains('is-now')) now = String(i);
     });
     if (list.dataset.rows === 'timeline') sink.appendChild(hiddenField('input', 'current', now));

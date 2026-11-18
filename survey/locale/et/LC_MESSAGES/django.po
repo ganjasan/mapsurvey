@@ -14602,3 +14602,78 @@ msgstr "Vajuta „Lisa arv“, et valida küsitluse arv — see järgib uusi vas
 
 msgid "Type the numbers on the page; they stay as you typed them. To show numbers of a survey, choose the report's survey in Report settings."
 msgstr "Sisesta arvud lehele; need jäävad selliseks, nagu sisestasid. Küsitluse arvude näitamiseks vali aruande seadetes aruande küsitlus."
+
+msgid "Added"
+msgstr "Lisatud"
+
+msgid "an email address"
+msgstr "e-posti aadressi"
+
+msgid "a phone number"
+msgstr "telefoninumbri"
+
+msgid "a web address"
+msgstr "veebiaadressi"
+
+msgid "Cards in two columns"
+msgstr "Kaardid kahes veerus"
+
+msgid "Choose a survey to quote from."
+msgstr "Vali küsitlus, millest tsiteerida."
+
+msgid "From answers"
+msgstr "Vastustest"
+
+msgid "From answers, shortened"
+msgstr "Vastustest, lühendatud"
+
+msgid "Large, one per row"
+msgstr "Suured, üks rea kohta"
+
+msgid "Loading the answers…"
+msgstr "Vastuste laadimine…"
+
+msgid "No answer holds those words."
+msgstr "Ükski vastus ei sisalda neid sõnu."
+
+msgid "Nobody has answered this question yet."
+msgstr "Sellele küsimusele pole veel keegi vastanud."
+
+msgid "One under another"
+msgstr "Üksteise all"
+
+msgid "Picked from the answers. Readers do not see this label."
+msgstr "Valitud vastuste hulgast. Lugejad seda silti ei näe."
+
+msgid "Pick from answers"
+msgstr "Vali vastustest"
+
+msgid "Pick quotes from the answers below, or write them on the page. A quote is published exactly as it stands in the block: cut anything that names a person."
+msgstr "Vali tsitaadid allolevatest vastustest või kirjuta need lehele. Tsitaat avaldatakse täpselt nii, nagu see plokis on: eemalda kõik, mis nimetab inimest."
+
+msgid "Quotes are laid out as: %(choices)s."
+msgstr "Tsitaadid paigutatakse nii: %(choices)s."
+
+msgid "Readers see nothing here until the block has a quote."
+msgstr "Lugejad ei näe siin midagi, kuni plokis on tsitaat."
+
+
+msgid "The answers could not be loaded. Reopen the block to try again."
+msgstr "Vastuseid ei õnnestunud laadida. Ava plokk uuesti, et uuesti proovida."
+
+msgid "This survey has no question with a written answer."
+msgstr "Selles küsitluses pole kirjaliku vastusega küsimust."
+
+msgid "Write a quote"
+msgstr "Kirjuta tsitaat"
+
+msgid "Carries %(what)s"
+msgstr "Sisaldab %(what)s"
+
+msgid "showing %(shown)s"
+msgstr "näidatakse %(shown)s"
+
+msgid "%(n)s quote carries an email address, a phone number or a web address."
+msgid_plural "%(n)s quotes carry an email address, a phone number or a web address."
+msgstr[0] "%(n)s tsitaat sisaldab e-posti aadressi, telefoninumbrit või veebiaadressi."
+msgstr[1] "%(n)s tsitaati sisaldavad e-posti aadressi, telefoninumbrit või veebiaadressi."

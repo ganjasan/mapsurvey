@@ -59,6 +59,7 @@ class BlockIn(_In):
     rows: Optional[str] = Field(None, max_length=50, description='crosstab: the code of the question in the rows.')
     columns: Optional[str] = Field(None, max_length=50, description='crosstab: the code of the question in the columns.')
     show_marks: Optional[bool] = Field(None, description='map: the marks themselves instead of squares that count respondents. A mark can point at someone\'s home.')
+    style: Optional[Literal['list', 'pull', 'cards']] = Field(None, description='quotes: one under another (list), each large (pull), or two columns (cards).')
     description: Optional[str] = Field(None, max_length=2000, description='map: what it shows, in a sentence (also read by screen readers).')
 
 
@@ -72,6 +73,7 @@ class BlockPatchIn(_In):
     note: Optional[str] = Field(None, max_length=2000)
     viz: Optional[Literal['auto', 'bar', 'pie', 'donut', 'table']] = None
     show_marks: Optional[bool] = None
+    style: Optional[Literal['list', 'pull', 'cards']] = None
     description: Optional[str] = Field(None, max_length=2000)
 
 

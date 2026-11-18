@@ -14712,3 +14712,78 @@ msgstr "Klicken Sie auf „Zahl hinzufügen“, um eine Zahl der Umfrage auszuw�
 
 msgid "Type the numbers on the page; they stay as you typed them. To show numbers of a survey, choose the report's survey in Report settings."
 msgstr "Geben Sie die Zahlen auf der Seite ein; sie bleiben so, wie Sie sie eingegeben haben. Um Zahlen einer Umfrage zu zeigen, wählen Sie in den Berichtseinstellungen die Umfrage des Berichts."
+
+msgid "Added"
+msgstr "Hinzugefügt"
+
+msgid "an email address"
+msgstr "eine E-Mail-Adresse"
+
+msgid "a phone number"
+msgstr "eine Telefonnummer"
+
+msgid "a web address"
+msgstr "eine Webadresse"
+
+msgid "Cards in two columns"
+msgstr "Karten in zwei Spalten"
+
+msgid "Choose a survey to quote from."
+msgstr "Wählen Sie eine Umfrage, aus der Sie zitieren möchten."
+
+msgid "From answers"
+msgstr "Aus den Antworten"
+
+msgid "From answers, shortened"
+msgstr "Aus den Antworten, gekürzt"
+
+msgid "Large, one per row"
+msgstr "Groß, eines pro Zeile"
+
+msgid "Loading the answers…"
+msgstr "Antworten werden geladen…"
+
+msgid "No answer holds those words."
+msgstr "Keine Antwort enthält diese Wörter."
+
+msgid "Nobody has answered this question yet."
+msgstr "Diese Frage hat noch niemand beantwortet."
+
+msgid "One under another"
+msgstr "Untereinander"
+
+msgid "Picked from the answers. Readers do not see this label."
+msgstr "Aus den Antworten gewählt. Leser sehen diese Markierung nicht."
+
+msgid "Pick from answers"
+msgstr "Aus Antworten wählen"
+
+msgid "Pick quotes from the answers below, or write them on the page. A quote is published exactly as it stands in the block: cut anything that names a person."
+msgstr "Wählen Sie Zitate aus den Antworten unten oder schreiben Sie sie auf der Seite. Ein Zitat wird genau so veröffentlicht, wie es im Block steht: Streichen Sie alles, was eine Person nennt."
+
+msgid "Quotes are laid out as: %(choices)s."
+msgstr "Zitate werden angeordnet als: %(choices)s."
+
+msgid "Readers see nothing here until the block has a quote."
+msgstr "Leser sehen hier nichts, bis der Block ein Zitat hat."
+
+
+msgid "The answers could not be loaded. Reopen the block to try again."
+msgstr "Die Antworten konnten nicht geladen werden. Öffnen Sie den Block erneut, um es noch einmal zu versuchen."
+
+msgid "This survey has no question with a written answer."
+msgstr "Diese Umfrage hat keine Frage mit einer geschriebenen Antwort."
+
+msgid "Write a quote"
+msgstr "Zitat schreiben"
+
+msgid "Carries %(what)s"
+msgstr "Enthält %(what)s"
+
+msgid "showing %(shown)s"
+msgstr "%(shown)s angezeigt"
+
+msgid "%(n)s quote carries an email address, a phone number or a web address."
+msgid_plural "%(n)s quotes carry an email address, a phone number or a web address."
+msgstr[0] "%(n)s Zitat enthält eine E-Mail-Adresse, eine Telefonnummer oder eine Webadresse."
+msgstr[1] "%(n)s Zitate enthalten eine E-Mail-Adresse, eine Telefonnummer oder eine Webadresse."

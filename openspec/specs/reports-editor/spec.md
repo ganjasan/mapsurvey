@@ -139,7 +139,7 @@ about a question that no longer exists — and SHALL say which of the three it i
 
 #### Scenario: An empty quotes block
 - **WHEN** a quotes block has no quote
-- **THEN** the canvas shows it with a note that it is left out until it has one
+- **THEN** the canvas shows it with two actions, "Pick from answers" and "Write a quote", and a line that readers see nothing until it has one; no empty quote row
 
 ### Requirement: The editor's side panels can be resized
 The outline and the context panel of the report editor SHALL be resizable by dragging their inner

@@ -54,11 +54,26 @@ site_builder.js and travel in hidden fields of the block's panel form. Never nam
 
   {% elif b.block_type == 'quotes' %}
   <h2 data-field="custom_title" data-placeholder="{% trans 'Title above the quotes (optional)' %}" class="lb-empty-heading">{{ p.title }}</h2>
-  <div class="quotes" data-rows="quotes">
-    {% for row in p.items %}<blockquote data-row>“<span data-row-field="text" data-placeholder="{% trans 'What they wrote' %}">{{ row.text }}</span>”<cite data-row-field="source" data-placeholder="{% trans 'Where it comes from (optional)' %}">{{ row.source }}</cite>{% if may_edit %}<button type="button" class="lb-icon-btn lb-row-x" data-row-remove title="{% trans 'Remove' %}" aria-label="{% trans 'Remove this quote' %}"><i class="fas fa-times" aria-hidden="true"></i></button>{% endif %}</blockquote>{% endfor %}
+  {% comment %}Change report-quotes-from-answers (#749): no blank row — an empty block shows its two actions;
+  a row remembers in `data-ref` the survey and question it was picked from (posted beside its fields), the
+  quote marks are drawn only around written text (CSS), rows are dragged by their grip.{% endcomment %}
+  <div class="quotes quotes-{{ p.style|default:'list' }}" data-rows="quotes" data-rows-empty data-rows-sortable data-row-attrs="ref">
+    {% for row in p.items %}<blockquote data-row data-ref="{{ row.ref_attr }}"{% if row.contact %} class="rb-q-contact"{% endif %}>{% if may_edit %}<span class="lb-row-grip" title="{% trans 'Drag to reorder' %}" aria-hidden="true"><i class="fas fa-grip-vertical"></i></span>{% endif %}<span class="rb-qm" aria-hidden="true">“</span><span data-row-field="text" data-placeholder="{% trans 'What they wrote' %}">{{ row.text }}</span><span class="rb-qm" aria-hidden="true">”</span><cite data-row-field="source" data-placeholder="{% trans 'Where it comes from (optional)' %}">{{ row.source }}</cite>{% if row.ref_attr or row.contact %}<span class="rb-q-tags">{% if row.ref_attr %}<span class="rb-q-tag" title="{% trans 'Picked from the answers. Readers do not see this label.' %}"><i class="fas fa-comment-dots" aria-hidden="true"></i> {% if row.shortened %}{% trans "From answers, shortened" %}{% else %}{% trans "From answers" %}{% endif %}</span>{% endif %}{% if row.contact %}<span class="rb-q-tag rb-q-warn"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> {% blocktrans with what=row.contact %}Carries {{ what }}{% endblocktrans %}</span>{% endif %}</span>{% endif %}{% if may_edit %}<button type="button" class="lb-icon-btn lb-row-x" data-row-remove title="{% trans 'Remove' %}" aria-label="{% trans 'Remove this quote' %}"><i class="fas fa-times" aria-hidden="true"></i></button>{% endif %}</blockquote>{% endfor %}
   </div>
-  <template data-row-template><blockquote data-row>“<span data-row-field="text" data-placeholder="{% trans 'What they wrote' %}"></span>”<cite data-row-field="source" data-placeholder="{% trans 'Where it comes from (optional)' %}"></cite><button type="button" class="lb-icon-btn lb-row-x" data-row-remove title="{% trans 'Remove' %}" aria-label="{% trans 'Remove this quote' %}"><i class="fas fa-times" aria-hidden="true"></i></button></blockquote></template>
-  {% if may_edit %}<button type="button" class="lb-link lb-row-add-c" data-row-add><i class="fas fa-plus" aria-hidden="true"></i> {% trans "Add a quote" %}</button>{% endif %}
+  <template data-row-template><blockquote data-row data-ref=""><span class="lb-row-grip" title="{% trans 'Drag to reorder' %}" aria-hidden="true"><i class="fas fa-grip-vertical"></i></span><span class="rb-qm" aria-hidden="true">“</span><span data-row-field="text" data-placeholder="{% trans 'What they wrote' %}"></span><span class="rb-qm" aria-hidden="true">”</span><cite data-row-field="source" data-placeholder="{% trans 'Where it comes from (optional)' %}"></cite><button type="button" class="lb-icon-btn lb-row-x" data-row-remove title="{% trans 'Remove' %}" aria-label="{% trans 'Remove this quote' %}"><i class="fas fa-times" aria-hidden="true"></i></button></blockquote></template>
+  {% if may_edit %}
+  <div class="rb-q-empty" data-testid="quotes-empty">
+    <p>{% trans "Readers see nothing here until the block has a quote." %}</p>
+    <div class="rb-q-actions">
+      <button type="button" class="btn btn-sm btn-primary" data-quote-pick data-select-target="{{ b.pk }}"><i class="fas fa-comment-dots" aria-hidden="true"></i> {% trans "Pick from answers" %}</button>
+      <button type="button" class="btn btn-sm btn-outline-secondary" data-row-add><i class="fas fa-pen" aria-hidden="true"></i> {% trans "Write a quote" %}</button>
+    </div>
+  </div>
+  <div class="rb-q-more">
+    <button type="button" class="lb-link lb-row-add-c" data-quote-pick data-select-target="{{ b.pk }}"><i class="fas fa-comment-dots" aria-hidden="true"></i> {% trans "Pick from answers" %}</button>
+    <button type="button" class="lb-link lb-row-add-c" data-row-add><i class="fas fa-pen" aria-hidden="true"></i> {% trans "Write a quote" %}</button>
+  </div>
+  {% endif %}
 
   {% else %}
   {# A block that shows data: the title is the author's, the rest is what readers see. #}
@@ -72,6 +87,7 @@ site_builder.js and travel in hidden fields of the block's panel form. Never nam
   {% endif %}
   {% endif %}
 
-  {% if item.note and p or item.note and b.block_type in 'heading text image numbers quotes' %}<p class="lb-warn"><i class="fas {% if b.is_hidden %}fa-eye-slash{% else %}fa-info-circle{% endif %}" aria-hidden="true"></i> {{ item.note }}</p>{% endif %}
+  {% if b.block_type == 'quotes' and may_edit and not b.is_hidden and not p.items %}{# its empty state says it #}
+  {% elif item.note and p or item.note and b.block_type in 'heading text image numbers quotes' %}<p class="lb-warn"><i class="fas {% if b.is_hidden %}fa-eye-slash{% else %}fa-info-circle{% endif %}" aria-hidden="true"></i> {{ item.note }}</p>{% endif %}
 </section>
 {% endwith %}

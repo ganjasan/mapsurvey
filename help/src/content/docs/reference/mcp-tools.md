@@ -1057,6 +1057,7 @@ Permission `surveys:write` · role **editor**
 | `rows` | string |  | crosstab: the code of the question in the rows. |
 | `columns` | string |  | crosstab: the code of the question in the columns. |
 | `show_marks` | boolean |  | map: the marks themselves instead of squares that count respondents. A mark can point at someone's home. |
+| `style` | `list` \| `pull` \| `cards` |  | quotes: one under another (list), each large (pull), or two columns (cards). |
 | `description` | string |  | map: what it shows, in a sentence (also read by screen readers). |
 | `report` | uuid | **required** | The report uuid (from list_reports). |
 
@@ -1077,6 +1078,7 @@ Permission `surveys:write` · role **editor**
 | `note` | string |  |  |
 | `viz` | `auto` \| `bar` \| `pie` \| `donut` \| `table` |  |  |
 | `show_marks` | boolean |  |  |
+| `style` | `list` \| `pull` \| `cards` |  |  |
 | `description` | string |  |  |
 | `report` | uuid | **required** | The report uuid (from list_reports). |
 | `block_id` | integer | **required** | A block id from get_report. |

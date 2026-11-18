@@ -294,6 +294,120 @@
     });
   });
 
+  /* ─── quotes picked from the answers (change report-quotes-from-answers, #749) ──────────────
+   * The Quotes block's pane has a picker card ([data-quote-picker]) outside its form. It is filled
+   * from the `quotes` route when the pane is shown, and again whenever the builder swaps the pane in
+   * after a save — with what the author last chose, kept here per block. "Add" makes a row through
+   * the shared builder's own "Write a quote" button and fills it, so the row saves like a typed one,
+   * with `data-ref` telling the server where it came from. ───────────────────────────────────── */
+  var lbPanel = document.getElementById('lb-panel');
+  var pickState = {}, pickTimer = null;
+
+  function pickerBody(id) {
+    return lbPanel.querySelector('[data-quote-picker="' + id + '"] [data-qpick-body]');
+  }
+  function loadPicker(card, focusSearch) {
+    var id = card.dataset.quotePicker, state = pickState[id] || {};
+    var params = new URLSearchParams();
+    if (state.source) params.set('source', state.source);
+    if (state.question) params.set('question', state.question);
+    if (state.q) params.set('q', state.q);
+    card.dataset.loaded = '1';
+    card.querySelector('[data-qpick-body]').classList.add('rb-busy');
+    fetch(card.dataset.url + '?' + params.toString(), { headers: headers(), credentials: 'same-origin' })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function (html) {
+        var live = pickerBody(id);
+        if (!live) return;
+        // Our own template, rendered by the `quotes` route.
+        var doc = new DOMParser().parseFromString(html, 'text/html');
+        live.replaceChildren.apply(live, Array.prototype.slice.call(doc.body.childNodes));
+        if (focusSearch) {
+          var s = live.querySelector('[data-qpick-search]');
+          if (s) { s.focus(); s.setSelectionRange(s.value.length, s.value.length); }
+        }
+      })
+      .catch(function () { var live = pickerBody(id); if (live) live.textContent = T.quotesFailed || ''; })
+      .then(function () { var live = pickerBody(id); if (live) live.classList.remove('rb-busy'); });
+  }
+  function loadVisiblePickers() {
+    lbPanel.querySelectorAll('[data-quote-picker]').forEach(function (card) {
+      var pane = card.closest('.lb-pane');
+      if (!card.dataset.loaded && pane && !pane.hidden) loadPicker(card, false);
+    });
+  }
+  function readPicker(card) {
+    var id = card.dataset.quotePicker, state = pickState[id] = pickState[id] || {};
+    var src = card.querySelector('[data-qpick-source]'), q = card.querySelector('[data-qpick-question]');
+    var s = card.querySelector('[data-qpick-search]');
+    state.source = src ? src.value : state.source;
+    state.question = q ? q.value : '';
+    state.q = s ? s.value : '';
+    return state;
+  }
+  function addQuote(button) {
+    var card = button.closest('[data-quote-picker]'), list = button.closest('.rb-qpick-list');
+    var li = button.closest('li'), id = card.dataset.quotePicker;
+    var blk = document.querySelector('.lb-blk[data-block="' + id + '"]');
+    var write = blk && blk.querySelector('[data-row-add]');
+    if (!write) return;
+    write.click();                                      // the shared builder adds the row
+    var rows = blk.querySelectorAll('.quotes [data-row]'), row = rows[rows.length - 1];
+    if (!row) return;
+    row.setAttribute('data-ref', list.dataset.ref);
+    var text = row.querySelector('[data-row-field="text"]'), source = row.querySelector('[data-row-field="source"]');
+    text.textContent = li.querySelector('.rb-qpick-text').textContent;
+    if (source) source.textContent = list.dataset.source;
+    if (document.activeElement && row.contains(document.activeElement)) document.activeElement.blur();
+    text.dispatchEvent(new Event('input', { bubbles: true }));   // queues the block's autosave
+    text.dispatchEvent(new Event('blur'));                       // and sends it now
+    li.classList.add('is-taken');
+    var added = document.createElement('span');
+    added.className = 'rb-qpick-added';
+    added.textContent = T.quoteAdded || '✓';
+    button.replaceWith(added);
+  }
+
+  if (lbPanel) {
+    new MutationObserver(loadVisiblePickers).observe(lbPanel, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden'] });
+    loadVisiblePickers();
+    lbPanel.addEventListener('change', function (e) {
+      var card = e.target.closest('[data-quote-picker]');
+      if (!card || !e.target.matches('[data-qpick-source], [data-qpick-question]')) return;
+      var state = readPicker(card);
+      if (e.target.matches('[data-qpick-source]')) state.question = '';
+      state.q = '';
+      loadPicker(card, false);
+    });
+    lbPanel.addEventListener('input', function (e) {
+      var card = e.target.closest('[data-quote-picker]');
+      if (!card || !e.target.matches('[data-qpick-search]')) return;
+      readPicker(card);
+      clearTimeout(pickTimer);
+      pickTimer = setTimeout(function () { loadPicker(card, true); }, 300);
+    });
+    lbPanel.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && e.target.matches && e.target.matches('[data-qpick-search]')) e.preventDefault();
+    });
+    lbPanel.addEventListener('click', function (e) {
+      var add = e.target.closest('[data-qpick-add]');
+      if (add) addQuote(add);
+    });
+  }
+  // "Pick from answers" on the canvas selects the block (data-select-target); then the picker.
+  document.addEventListener('click', function (e) {
+    var pick = e.target.closest('[data-quote-pick]');
+    if (!pick || !lbPanel) return;
+    var id = pick.closest('.lb-blk').dataset.block;
+    setTimeout(function () {
+      var card = lbPanel.querySelector('[data-quote-picker="' + id + '"]');
+      if (!card) return;
+      card.scrollIntoView({ block: 'nearest' });
+      var s = card.querySelector('[data-qpick-search]') || card.querySelector('[data-qpick-source]');
+      if (s) s.focus();
+    }, 80);
+  });
+
   // A link from the publish checks or a comment (`?block=<id>`) lands on the block.
   if (frame && root.dataset.selected && root.dataset.selected !== 'page') {
     var target = document.getElementById('block-' + root.dataset.selected);

@@ -14,6 +14,26 @@ MAX_QUOTE = 1000
 MAX_SOURCE = 160
 
 
+QUOTE_STYLES = ('list', 'pull', 'cards')
+
+
+def clean_ref(raw):
+    """Where a picked quote came from: {survey: <uuid>, question: <code>}, or None. Accepts the
+    dict or the editor's row attribute `<uuid>:<code>`."""
+    import uuid as uuid_module
+    if isinstance(raw, str):
+        survey, _sep, question = raw.partition(':')
+        raw = {'survey': survey, 'question': question}
+    if not isinstance(raw, dict):
+        return None
+    try:
+        survey = str(uuid_module.UUID(str(raw.get('survey') or '')))
+    except ValueError:
+        return None
+    question = str(raw.get('question') or '').strip()[:100]
+    return {'survey': survey, 'question': question} if question else None
+
+
 def _text(value, limit):
     return ' '.join(str(value or '').split())[:limit]
 
@@ -44,9 +64,21 @@ def clean_config(block_type, raw):
             if not isinstance(item, dict):
                 continue
             text = str(item.get('text') or '').strip()[:MAX_QUOTE]
-            if text:
-                out.append({'text': text, 'source': _text(item.get('source'), MAX_SOURCE)})
-        return {'items': out}
+            if not text:
+                continue
+            quote = {'text': text, 'source': _text(item.get('source'), MAX_SOURCE)}
+            ref = clean_ref(item.get('ref'))
+            if ref:
+                # Picked from the answers (change report-quotes-from-answers, #749): where it came
+                # from, and whether the author has cut it since (`quotes.mark_origins` decides).
+                quote['ref'] = ref
+                if item.get('shortened'):
+                    quote['shortened'] = True
+            out.append(quote)
+        config = {'items': out}
+        if raw.get('style') in QUOTE_STYLES and raw.get('style') != 'list':
+            config['style'] = raw['style']
+        return config
     if block_type == 'map':
         # Individual marks instead of the grid: the survey owner's choice (owner, 2026-11-16).
         return {'marks': True} if raw.get('marks') else {}

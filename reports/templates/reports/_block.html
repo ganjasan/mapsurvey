@@ -19,7 +19,7 @@ report builder. `block` is a payload of reports.render.ReportService, `page` the
   </ul>
   {% if block.note %}<p class="block-note">{{ block.note }}</p>{% endif %}
 {% elif block.block_type == 'quotes' %}
-  <div class="quotes">
+  <div class="quotes quotes-{{ block.style|default:'list' }}">
     {% for item in block.items %}<blockquote>“{{ item.text }}”{% if item.source %}<cite>{{ item.source }}</cite>{% endif %}</blockquote>{% endfor %}
   </div>
 {% elif block.block_type == 'crosstab' %}
