@@ -309,6 +309,7 @@ fieldset.lb-card { border: 1px solid var(--line); padding: 1rem 1.1rem; }
 .lb-tile { display: grid; grid-template-columns: 36px 1fr; gap: 10px; align-items: center; padding: 8px; border-radius: 9px; cursor: pointer;
            border: 1px solid transparent; background: none; width: 100%; text-align: left; color: var(--color-text); }
 .lb-tile:hover, .lb-tile:focus-visible { background: var(--color-action-soft); border-color: var(--color-border-strong); outline: none; }
+.lb-tile.is-busy { background: var(--color-action-soft); border-color: var(--color-border-strong); cursor: progress; }
 .lb-tile > i { width: 36px; height: 36px; border-radius: 8px; background: var(--surface-muted); display: grid; place-items: center; color: var(--color-action); font-size: 15px; }
 .lb-tile b { display: block; font-size: 13.5px; }
 .lb-tile span span { font-size: 12px; color: var(--color-text-muted); }

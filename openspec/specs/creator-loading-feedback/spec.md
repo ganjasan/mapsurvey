@@ -80,6 +80,8 @@ first is in flight SHALL be `preventDefault`ed. The button SHALL be restored to 
 markup when the HTMX request completes (success or error), when the page is restored from the
 back/forward cache (`pageshow` with `persisted`), or when the navigation watchdog (30 s) fires.
 Programmatic HTMX submits (`htmx.trigger(form, 'submit')`) SHALL NOT be suppressed.
+A button inside `[data-no-spinner]` (itself or an ancestor) SHALL get the busy state without
+the spinner: its icon is left as it is and nothing is prepended.
 
 #### Scenario: Double click on Save
 - **WHEN** a creator double-clicks the question modal's Save button (HTMX submit)
@@ -104,6 +106,10 @@ Programmatic HTMX submits (`htmx.trigger(form, 'submit')`) SHALL NOT be suppress
 #### Scenario: Section form autosave keeps working
 - **WHEN** the section form autosaves through `htmx.trigger(form, 'submit')` several times in a row
 - **THEN** every save is sent; no button is blocked
+
+#### Scenario: A block library tile keeps its icon
+- **WHEN** a creator clicks a tile in the block library of the report or Sites builder
+- **THEN** the tile is disabled and busy until the page reloads, its icon square does not turn into a spinner, and the top bar shows progress
 
 ### Requirement: Script API for hand-written requests
 The script SHALL expose `window.LoadingFeedback` with `start(delayMs)` and `done()` (counted, so
