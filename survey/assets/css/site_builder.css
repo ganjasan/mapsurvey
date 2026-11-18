@@ -4,8 +4,9 @@
 .lb-empty { border: 1px dashed #d5d9de; border-radius: 8px; }
 
 .lb-content { padding: 0 !important; max-width: none !important; }
-.lb { --ink:#1f2933; --muted:#5f6b76; --line:#e5e7eb; --soft:#f5f7fa; --accent:#4f46e5; --accent-soft:#e0e7ff;
-      --green:#1f8a4c; display: flex; flex-direction: column; height: calc(100vh - 56px); min-height: 520px;
+.lb { --ink:var(--color-text); --muted:var(--color-text-muted); --line:var(--color-border); --soft:var(--surface-muted);
+      --accent:var(--color-action); --accent-soft:var(--color-action-soft);
+      --green:var(--color-success); display: flex; flex-direction: column; height: calc(100vh - 56px); min-height: 520px;
       background: #eceff3; color: var(--ink); font-size: 14px; }
 
 /* ── top bar ── */
