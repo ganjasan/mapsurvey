@@ -164,20 +164,86 @@ def add_view_block(actor, report, block_type, survey, rows='', columns=''):
     else:
         view = dataset.views.filter(kind=DatasetView.KIND_CROSSTAB, config=config).order_by('id').first()
     if view is None:
-        name = ('%s × %s' % (rows, columns)) if block_type == 'crosstab' else str(_('Who took part'))
+        name = _xtab_name(rows, columns) if block_type == 'crosstab' else str(_('Who took part'))
         try:
             view = data_services.create_view(actor, dataset, name[:120], kind=block_type, config=config)
         except data_services.DataRefused as refusal:
             raise ReportRefused('view_refused', refusal.message)
+    # A new cross-tab is drawn as bars (change crosstab-settings-in-block, #751); one made before
+    # carries no settings and stays the table it was.
+    display = {'view': 'bars', 'values': 'percent'} if block_type == 'crosstab' else {}
     block = ReportBlock.objects.create(report=report, block_type=block_type, dataset=dataset, view=view,
-                                       order=_next_order(report))
+                                       order=_next_order(report), config=display)
     bump_version(report)
+    return block
+
+
+def _xtab_name(rows, columns):
+    return ('%s × %s' % (rows, columns))[:120]
+
+
+def set_crosstab_questions(actor, block, rows, columns):
+    """Point a cross-tab block at the analysis view of another pair of questions of the same
+    survey: an identical view is reused, else made in Data (which refuses a pair it does not allow).
+    The view it leaves goes when the report made it (its name is the automatic one) and nothing
+    else shows it. Raises ReportRefused."""
+    from data import services as data_services
+    from data.models import DatasetView
+    if block.block_type != 'crosstab' or block.dataset_id is None:
+        raise ReportRefused('unknown_block', _('Unknown block type.'))
+    rows, columns = str(rows or '').strip(), str(columns or '').strip()
+    old = DatasetView.objects.filter(pk=block.view_id).first() if block.view_id else None   # as stored now
+    if old is not None and (old.config or {}).get('rows') == rows and (old.config or {}).get('columns') == columns:
+        return block
+    if rows and rows == columns:
+        raise ReportRefused('same_question', _('Pick two different questions.'))
+    config = {'rows': rows, 'columns': columns}
+    view = (block.dataset.views.filter(kind=DatasetView.KIND_CROSSTAB, config=config).order_by('id').first())
+    if view is None:
+        try:
+            view = data_services.create_view(actor, block.dataset, _xtab_name(rows, columns),
+                                             kind='crosstab', config=config)
+        except data_services.DataRefused as refusal:
+            raise ReportRefused('view_refused', refusal.message)
+    block.view = view
+    block.save(update_fields=['view'])
+    bump_version(block.report)
+    if old is not None and old.pk != view.pk:
+        auto = _xtab_name((old.config or {}).get('rows', ''), (old.config or {}).get('columns', ''))
+        if old.name == auto and not old.links.exists() and not old.report_blocks.exists():
+            old.delete()
+    return block
+
+
+def set_compare(actor, block, question_code, other_survey):
+    """Change what a Compare block shows: the question (a code of its survey) and the other
+    round. Checked like a new block (`comparable`). Raises ReportRefused."""
+    from data.questions import question_of
+    from survey.versioning import canonical_of
+    if block.block_type != 'compare' or block.dataset_id is None:
+        raise ReportRefused('unknown_block', _('Unknown block type.'))
+    survey = block.dataset.survey
+    question = question_of(survey, question_code or block.question_code)
+    if question is None:
+        raise ReportRefused('no_question', _('The survey has no question with that code.'))
+    if other_survey is None or other_survey.organization_id != block.report.organization_id:
+        raise ReportRefused('no_other', _('Choose the other survey to compare with.'))
+    other = canonical_of(other_survey)
+    if other.pk == survey.pk:
+        raise ReportRefused('same_survey', _('Choose a different survey: a comparison needs two.'))
+    if comparable(question, other) is None:
+        raise ReportRefused('no_twin', _('“%(survey)s” has no comparable question with the code %(code)s.')
+                            % {'survey': other.name, 'code': question.code})
+    block.question_code = question.code
+    block.config = {**(block.config or {}), 'other': str(other.uuid)}
+    block.save(update_fields=['question_code', 'config'])
+    bump_version(block.report)
     return block
 
 
 def update_block(actor, block, *, viz=None, is_hidden=None, custom_title=None, content=None, image=None,
                  geo_label_fields=None, basemap=None, valid_basemaps=(), width=None, items=None,
-                 show_marks=None, quote_style=None):
+                 show_marks=None, quote_style=None, crosstab_display=None):
     """Update what the block's type allows; None leaves a value as it is. `items` is the list of a
     key-numbers or quotes block ([{value, label}] / [{text, source, ref?}]); `quote_style` the
     layout of a quotes block (list | pull | cards)."""
@@ -206,6 +272,8 @@ def update_block(actor, block, *, viz=None, is_hidden=None, custom_title=None, c
         if items is not None:
             mark_origins(config['items'])
         block.config = config
+    if block.block_type == 'crosstab' and crosstab_display is not None:
+        block.config = story.clean_config('crosstab', crosstab_display)
     if block.block_type == 'image' and image:
         block.image = image
     if block.block_type == 'map':

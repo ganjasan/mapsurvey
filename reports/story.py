@@ -15,6 +15,8 @@ MAX_SOURCE = 160
 
 
 QUOTE_STYLES = ('list', 'pull', 'cards')
+XTAB_VIEWS = ('bars', 'stacked', 'ranking', 'table')
+XTAB_VALUES = ('percent', 'count')
 
 
 def clean_ref(raw):
@@ -82,6 +84,16 @@ def clean_config(block_type, raw):
     if block_type == 'map':
         # Individual marks instead of the grid: the survey owner's choice (owner, 2026-11-16).
         return {'marks': True} if raw.get('marks') else {}
+    if block_type == 'crosstab':
+        # How the cross-tab is drawn (change crosstab-settings-in-block, #751). No `view`: a block
+        # made before the settings, drawn as the table it always was.
+        out = {}
+        if raw.get('view') in XTAB_VIEWS:
+            out['view'] = raw['view']
+            out['values'] = raw.get('values') if raw.get('values') in XTAB_VALUES else 'percent'
+            if raw.get('sort'):
+                out['sort'] = True
+        return out
     return {}
 
 

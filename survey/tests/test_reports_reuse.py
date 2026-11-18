@@ -219,6 +219,46 @@ class CompareTest(_Rounds):
         self.assertEqual(copy.copy_notes, [])
 
 
+class CompareInTheBlockTest(_Rounds):
+    """Requirement: A Compare block shows one question in two rounds — added in one click and set
+    up in its settings (change crosstab-settings-in-block, #751)."""
+
+    def test_one_click(self):
+        """
+        GIVEN round one whose PRIO has a twin in round two
+        WHEN an editor clicks the Compare tile (nothing else posted)
+        THEN the report gets a Compare block of PRIO with round two
+        """
+        report = self.report()
+        self.login()
+        response = self.client.post(reverse('editor_report_block_add', args=[report.uuid]), {'block_type': 'compare'})
+        self.assertEqual(response.status_code, 302, response.content)
+        block = report.blocks.get(block_type='compare')
+        self.assertEqual((block.question_code, block.config), ('PRIO', {'other': str(self.two.uuid)}))
+
+    def test_changing_the_other_round(self):
+        """
+        GIVEN a Compare block of PRIO with round two, a round three with PRIO, and a survey without it
+        WHEN its settings name round three, then the survey without PRIO
+        THEN the first is saved, the second refused with a message and the block keeps round three
+        """
+        third, _q = self.round('Round three', {1: 5, 2: 5})
+        bare, _section = make_v1_survey(self.org, self.owner, name='Bare survey', status='published')
+        report = self.report()
+        block = services.add_compare_block(self.actor, report, self.prio1, self.two)
+        self.login()
+        url = reverse('editor_report_block_edit', args=[report.uuid, block.id])
+        ok = self.client.post(url, {'autosave': '1', 'cmp_question': 'PRIO', 'cmp_other': str(third.uuid)},
+                              HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(ok.status_code, 200)
+        refused = self.client.post(url, {'autosave': '1', 'cmp_question': 'PRIO', 'cmp_other': str(bare.uuid)},
+                                   HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(refused.status_code, 422)
+        self.assertIn('no comparable question', refused.content.decode())
+        block.refresh_from_db()
+        self.assertEqual(block.config, {'other': str(third.uuid)})
+
+
 class EventTest(_Rounds):
     """Requirement: Reuse is measured."""
 

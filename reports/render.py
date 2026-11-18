@@ -299,8 +299,12 @@ class ReportService:
         payload['k'] = self.k
         if block.block_type == 'crosstab':
             payload['title'] = payload['title'] or '%s × %s' % (data['rows']['name'], data['columns']['name'])
-            payload['table'] = [{'item': item, 'cells': data['cells'][i]}
-                                for i, item in enumerate(data['rows']['items'])]
+            display = block.config or {}
+            payload['display'] = {'view': display.get('view') or 'table',
+                                  'values': display.get('values') or 'percent', 'sort': bool(display.get('sort'))}
+            order = xtab_order(data, payload['display']['sort'])
+            payload['table'] = [{'item': data['rows']['items'][i], 'cells': data['cells'][i]} for i in order]
+            payload['xtab'] = xtab_view(data, payload['display'], order)
         else:
             peak = max((p['opened']['value'] or 0 for p in data['series']), default=0)
             for point in data['series']:
@@ -583,6 +587,99 @@ class ReportService:
             # The opening paragraph with its live numbers as they stood at the freeze.
             'intro_body': self.tokens.fill_plain(_localize((self.report.intro or {}).get('body'), self.lang)),
         }
+
+
+# ── how a cross-tab is drawn (change crosstab-settings-in-block, #751) ─────────────────────────
+# Presentation only: every number below is a count or a total the Data module published (masked
+# and withheld as it decided); a share is one of them divided by another, never a recount.
+
+XTAB_COLORS = ('#4f46e5', '#d97706', '#0f766e', '#db2777', '#0284c7', '#65a30d', '#7c3aed', '#ea580c')
+
+
+def _visible_sum(cells):
+    return sum(c['value'] or 0 for c in cells if not c['masked'])
+
+
+def xtab_order(data, sort):
+    """The rows (options of the Question) in survey order, or by how many chose them."""
+    order = list(range(len(data['rows']['items'])))
+    if sort:
+        def size(i):
+            total = data['rows']['items'][i]['total']['value']
+            return -(total if total is not None else _visible_sum(data['cells'][i]))
+        order.sort(key=size)
+    return order
+
+
+def _pct(part, whole):
+    return round(100 * part / whole) if whole else 0
+
+
+def xtab_view(data, display, order):
+    """What the chosen view draws: `bars`, `stacked` or `ranking` (the table reads `table`)."""
+    view, percent = display['view'], display['values'] == 'percent'
+    rows, columns, cells = data['rows']['items'], data['columns']['items'], data['cells']
+    series = [{'index': c, 'label': item['label'], 'color': XTAB_COLORS[c % len(XTAB_COLORS)],
+               'total': item['total']} for c, item in enumerate(columns)]
+    out = {'view': view, 'percent': percent, 'series': series, 'left_out': [], 'categories': []}
+    if view == 'bars':
+        # A share needs its group's total; a group whose total is withheld shows no bars.
+        # A group nobody is in has nothing to draw and is no secret: it is just not drawn.
+        shown = [s for s in series if not percent or (s['total']['value'] or 0) > 0]
+        out['left_out'] = [s['label'] for s in series if s not in shown and s['total']['value'] is None]
+        out['series'] = shown
+        peak = max([c['value'] or 0 for line in cells for c in line if not c['masked']] or [0])
+        for r in order:
+            bars = []
+            for s in shown:
+                cell = cells[r][s['index']]
+                if cell['masked']:
+                    bars.append({'color': s['color'], 'width': 0, 'display': cell['display'], 'masked': True})
+                    continue
+                value = cell['value'] or 0
+                share = _pct(value, s['total']['value']) if percent else None
+                bars.append({'color': s['color'], 'masked': False,
+                             'width': share if percent else _pct(value, peak),
+                             'display': '%s%%' % share if percent else str(value)})
+            out['categories'].append({'label': rows[r]['label'], 'bars': bars})
+    elif view == 'stacked':
+        # Each option's people split by group, as a share of the option's answers; an option with
+        # a masked pair is left out — its other pairs would give the hidden one away.
+        for r in order:
+            line = cells[r]
+            if any(c['masked'] for c in line):
+                out['left_out'].append(rows[r]['label'])
+                continue
+            whole = _visible_sum(line)
+            if not whole:
+                continue
+            segments = [{'color': s['color'], 'label': s['label'], 'width': _pct(line[s['index']]['value'] or 0, whole),
+                         'display': ('%s%%' % _pct(line[s['index']]['value'] or 0, whole)) if percent
+                         else str(line[s['index']]['value'] or 0)}
+                        for s in series if line[s['index']]['value']]
+            out['categories'].append({'label': rows[r]['label'], 'segments': segments})
+    elif view == 'ranking':
+        everyone = data['respondents']['value']
+        totals = [(r, rows[r]['total']) for r in range(len(rows))]
+        totals.sort(key=lambda pair: -(pair[1]['value'] if pair[1]['value'] is not None else -1))
+        peak = max([t['value'] or 0 for _r, t in totals] or [0])
+        out['percent'] = percent and bool(everyone)
+        out['counts_instead'] = percent and everyone is None
+        for rank, (r, total) in enumerate(totals, start=1):
+            value = total['value']
+            if value is None:
+                display, width = total['display'], 0
+            elif out['percent']:
+                display, width = '%s%%' % _pct(value, everyone), _pct(value, everyone)
+            else:
+                display, width = str(value), _pct(value, peak)
+            out['categories'].append({'rank': rank, 'label': rows[r]['label'], 'width': width, 'display': display,
+                                      'masked': value is None})
+    # Too few answers to draw anything as chosen: the table says what can be said.
+    drawn = (out['series'] if view == 'bars' else out['categories']) if view != 'table' else True
+    if not drawn:
+        out.update(view='table', fallback=True)
+    return out
 
 
 def k_for_survey(survey):

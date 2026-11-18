@@ -24,7 +24,41 @@ report builder. `block` is a payload of reports.render.ReportService, `page` the
   </div>
 {% elif block.block_type == 'crosstab' %}
   {% comment %}A cross-tab (change reports-live-blocks): computed by data.analysis, masked
-  cells and withheld totals arrive that way — the page only draws the table.{% endcomment %}
+  cells and withheld totals arrive that way. Drawn as the author chose (change
+  crosstab-settings-in-block, #751): block.xtab is laid out by reports.render.xtab_view.{% endcomment %}
+  {% with x=block.xtab %}
+  {% if x.view == 'bars' or x.view == 'stacked' %}
+  <div class="xc-legend" aria-hidden="true">{% for s in x.series %}<span><i style="background:{{ s.color }}"></i>{{ s.label }}{% if x.view == 'bars' and x.percent %} <small>(n = {{ s.total.display }})</small>{% endif %}</span>{% endfor %}</div>
+  {% endif %}
+  {% if x.view == 'bars' %}
+  <div class="xc-bars" role="img" aria-label="{{ block.data.rows.name }} × {{ block.data.columns.name }}">
+    {% for cat in x.categories %}
+    <div class="xc-cat">{{ cat.label }}</div>
+    <div class="xc-group">{% for bar in cat.bars %}<div class="xc-line"><span class="xc-bar" style="width:{{ bar.width }}%;background:{{ bar.color }}"></span><span class="xc-v{% if bar.masked %} masked{% endif %}">{{ bar.display }}</span></div>{% endfor %}</div>
+    {% endfor %}
+  </div>
+  {% elif x.view == 'stacked' %}
+  <div class="xc-stacked" role="img" aria-label="{{ block.data.rows.name }} × {{ block.data.columns.name }}">
+    {% for cat in x.categories %}
+    <div class="xc-cat">{{ cat.label }}</div>
+    <div class="xc-stack">{% for seg in cat.segments %}<span style="width:{{ seg.width }}%;background:{{ seg.color }}" title="{{ seg.label }}: {{ seg.display }}">{% if seg.width >= 9 %}{{ seg.display }}{% endif %}</span>{% endfor %}</div>
+    {% endfor %}
+  </div>
+  {% elif x.view == 'ranking' %}
+  <ol class="xc-rank" aria-label="{{ block.data.rows.name }}">
+    {% for cat in x.categories %}
+    <li><span class="xc-n">{{ cat.rank }}</span><span class="xc-cat">{{ cat.label }}</span><span class="xc-line">{% if not cat.masked %}<span class="xc-bar" style="width:{{ cat.width }}%"></span>{% endif %}<span class="xc-v{% if cat.masked %} masked{% endif %}">{{ cat.display }}</span></span></li>
+    {% endfor %}
+  </ol>
+  {% if x.counts_instead %}<div class="kanon-note xc-left-out">{% blocktrans with k=block.k %}Shown as counts: a group smaller than {{ k }} keeps the total of everyone unpublished, and a share needs it.{% endblocktrans %}</div>{% endif %}
+  {% endif %}
+  {% if x.fallback %}
+  <div class="kanon-note xc-left-out">{% trans "Too few answers to draw these as a chart: the table shows what can be shown." %}</div>
+  {% elif x.left_out %}
+  <div class="kanon-note xc-left-out">{% if x.view == 'stacked' %}{% blocktrans with names=x.left_out|join:", " k=block.k %}Not shown: {{ names }} — a group in it is smaller than {{ k }}, and its other groups would give it away.{% endblocktrans %}{% else %}{% blocktrans with names=x.left_out|join:", " k=block.k %}Not shown as a share: {{ names }} — a group in it is smaller than {{ k }}, so its total is not published.{% endblocktrans %}{% endif %}</div>
+  {% endif %}
+  {% endwith %}
+  {% if not block.xtab or block.xtab.view == 'table' %}{# a snapshot frozen before #751 has no xtab #}
   <div class="xtab-wrap">
     <table class="xtab">
       <caption class="sr-only" style="position:absolute;left:-9999px;">{{ block.data.rows.name }} × {{ block.data.columns.name }}</caption>
@@ -43,6 +77,7 @@ report builder. `block` is a payload of reports.render.ReportService, `page` the
         <td class="total">{{ block.data.respondents.display }}</td></tr></tfoot>
     </table>
   </div>
+  {% endif %}
   <div class="kanon-note">{% trans "People who answered both questions." %}{% if block.data.rows.multiple or block.data.columns.multiple %} {% trans "Someone who picked several options counts in each." %}{% endif %}{% if block.data.masked_cells %} {% blocktrans with k=block.k %}A group smaller than {{ k }} reads “<{{ k }}”, and totals that would give it away read “—”.{% endblocktrans %}{% endif %}</div>
 {% elif block.block_type == 'compare' %}
   {% comment %}One question in two rounds (change reports-reuse, #711): shares per survey,

@@ -130,6 +130,183 @@ class CrosstabBlockTest(_Live):
         self.assertFalse(ReportBlock.objects.exists())
 
 
+class CrosstabSettingsTest(_Live):
+    """Requirement: A cross-tab block shows two questions against each other — added in one click
+    and set up in its settings (change crosstab-settings-in-block, #751)."""
+
+    def edit(self, block, **post):
+        post.setdefault('autosave', '1')
+        return self.client.post(reverse('editor_report_block_edit', args=[self.report.uuid, block.id]), post,
+                                HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+
+    def test_one_click_adds_the_first_two_questions_as_bars(self):
+        """
+        GIVEN a survey whose first two choice questions are transport and age
+        WHEN an editor clicks the Cross-tab tile (no questions posted)
+        THEN the block shows transport by age, drawn as bars, and the library holds no cross-tab form
+        """
+        self.respond(4, transport=1, age=1)
+        library = self.client.get(reverse('editor_report', args=[self.report.uuid])).content.decode()
+        self.assertNotIn('data-lib-form', library)
+        self.assertEqual(self.add(block_type='crosstab').status_code, 302)
+        block = ReportBlock.objects.get(block_type='crosstab')
+        self.assertEqual(block.view.config, {'rows': 'TRANSPORT', 'columns': 'AGE'})
+        self.assertEqual(block.config, {'view': 'bars', 'values': 'percent'})
+
+    def test_changing_the_questions(self):
+        """
+        GIVEN a cross-tab of transport by age
+        WHEN its settings swap Question and Split by
+        THEN the block shows age by transport, and the view made for the old pair is gone from Data
+        """
+        block = services.add_view_block(self.actor, self.report, 'crosstab', self.survey, rows='TRANSPORT', columns='AGE')
+        old = block.view_id
+        self.assertEqual(self.edit(block, xtab_rows='AGE', xtab_columns='TRANSPORT', xtab_view='bars').status_code, 200)
+        block.refresh_from_db()
+        self.assertEqual(block.view.config, {'rows': 'AGE', 'columns': 'TRANSPORT'})
+        self.assertFalse(DatasetView.objects.filter(pk=old).exists())
+
+    def test_a_view_the_author_named_stays(self):
+        """
+        GIVEN a cross-tab whose view was renamed in Data
+        WHEN the block's questions change
+        THEN the renamed view stays in Data
+        """
+        block = services.add_view_block(self.actor, self.report, 'crosstab', self.survey, rows='TRANSPORT', columns='AGE')
+        DatasetView.objects.filter(pk=block.view_id).update(name='Transport by age, 2026')
+        old = block.view_id
+        services.set_crosstab_questions(self.actor, block, 'AGE', 'TRANSPORT')
+        self.assertTrue(DatasetView.objects.filter(pk=old).exists())
+
+    def test_the_same_question_twice_in_the_settings(self):
+        """
+        GIVEN a cross-tab of transport by age
+        WHEN its settings name age for both
+        THEN the save is refused with a message and the block keeps its pair
+        """
+        block = services.add_view_block(self.actor, self.report, 'crosstab', self.survey, rows='TRANSPORT', columns='AGE')
+        response = self.edit(block, xtab_rows='AGE', xtab_columns='AGE', xtab_view='bars')
+        self.assertEqual(response.status_code, 422)
+        self.assertIn('two different questions', response.content.decode())
+        block.refresh_from_db()
+        self.assertEqual(block.view.config, {'rows': 'TRANSPORT', 'columns': 'AGE'})
+
+    def test_the_panel_offers_the_settings(self):
+        """
+        GIVEN a cross-tab block
+        WHEN the builder opens
+        THEN its panel offers Question, Split by, the four views, values and sort, with the current pair chosen
+        """
+        block = services.add_view_block(self.actor, self.report, 'crosstab', self.survey, rows='TRANSPORT', columns='AGE')
+        html = self.client.get(reverse('editor_report', args=[self.report.uuid])).content.decode()
+        pane = html[html.index('data-pane="%d"' % block.id):]
+        for marker in ('name="xtab_rows"', 'name="xtab_columns"', 'value="stacked"', 'value="ranking"',
+                       'value="table"', 'name="xtab_values"', 'name="xtab_sort"'):
+            self.assertIn(marker, pane)
+        rows = pane[pane.index('name="xtab_rows"'):pane.index('name="xtab_columns"')]
+        self.assertIn('<option value="TRANSPORT" selected>', rows)
+
+
+class CrosstabViewsTest(_Live):
+    """Requirement: A cross-tab is drawn the way its author chooses."""
+
+    def block(self, **display):
+        block = services.add_view_block(self.actor, self.report, 'crosstab', self.survey, rows='TRANSPORT', columns='AGE')
+        if display:
+            services.update_block(self.actor, block, crosstab_display={'view': 'bars', 'values': 'percent', **display})
+        return block
+
+    def test_bars_as_shares(self):
+        """
+        GIVEN 4 of the 10 people under 30 and 9 of the 12 people over 60 chose Car
+        WHEN the cross-tab is drawn as bars of shares
+        THEN Car reads 40 % and 75 %
+        """
+        self.respond(4, transport=1, age=1)
+        self.respond(6, transport=2, age=1)
+        self.respond(9, transport=1, age=2)
+        self.respond(3, transport=2, age=2)
+        block = self.block()
+        car = ReportService(self.report)._build_block(block)['xtab']['categories'][0]
+        self.assertEqual(car['label'], 'Car')
+        self.assertEqual([b['display'] for b in car['bars']], ['40%', '75%'])
+        self.assertIn('class="xc-bars"', self.page())
+
+    def test_a_group_that_cannot_be_a_share(self):
+        """
+        GIVEN one person under 30 chose Bike (under K), so the under-30 total is withheld
+        WHEN the cross-tab is drawn as bars
+        THEN the under-30 group has no bars and the note names it; over 60 is drawn
+        """
+        self.respond(4, transport=1, age=1)
+        self.respond(1, transport=2, age=1)
+        self.respond(9, transport=1, age=2)
+        self.respond(3, transport=2, age=2)
+        block = self.block()
+        xtab = ReportService(self.report)._build_block(block)['xtab']
+        self.assertEqual([s['label'] for s in xtab['series']], ['Over 60'])
+        self.assertEqual(xtab['left_out'], ['Under 30'])
+        self.assertIn('Not shown as a share: Under 30', self.page())
+
+    def test_too_few_answers_fall_back_to_the_table(self):
+        """
+        GIVEN every group's total is withheld or empty
+        WHEN the cross-tab is drawn as bars
+        THEN the page shows the table, with a line saying why
+        """
+        self.respond(4, transport=1, age=1)
+        self.respond(1, transport=2, age=1)
+        self.block()
+        html = self.page()
+        self.assertIn('<th scope="row">Car</th>', html)
+        self.assertIn('Too few answers to draw these as a chart', html)
+
+    def test_counts_sorted(self):
+        """
+        GIVEN 7 people chose Car and 15 chose Bike
+        WHEN the author picks Count and Sort by value
+        THEN Bike comes first and the bars show counts
+        """
+        self.respond(3, transport=1, age=1)
+        self.respond(7, transport=2, age=1)
+        self.respond(4, transport=1, age=2)
+        self.respond(8, transport=2, age=2)
+        block = self.block(values='count', sort=True)
+        cats = ReportService(self.report)._build_block(block)['xtab']['categories']
+        self.assertEqual([c['label'] for c in cats], ['Bike', 'Car'])
+        self.assertEqual([b['display'] for b in cats[0]['bars']], ['7', '8'])
+
+    def test_stacked_and_ranking(self):
+        """
+        GIVEN answers with every group above K
+        WHEN the block is drawn stacked, then as a ranking
+        THEN each option is one 100 % bar split by age, then the options are ranked by how many chose them
+        """
+        self.respond(3, transport=1, age=1)
+        self.respond(7, transport=2, age=1)
+        self.respond(4, transport=1, age=2)
+        self.respond(8, transport=2, age=2)
+        block = self.block(view='stacked')
+        car = ReportService(self.report)._build_block(block)['xtab']['categories'][0]
+        self.assertEqual([s['display'] for s in car['segments']], ['43%', '57%'])
+        self.assertIn('class="xc-stacked"', self.page())
+        services.update_block(self.actor, block, crosstab_display={'view': 'ranking', 'values': 'count'})
+        ranking = ReportService(self.report)._build_block(block)['xtab']['categories']
+        self.assertEqual([(c['rank'], c['label'], c['display']) for c in ranking], [(1, 'Bike', '15'), (2, 'Car', '7')])
+
+    def test_a_block_made_before_stays_a_table(self):
+        """
+        GIVEN a cross-tab block without display settings (made before them)
+        WHEN the page is drawn
+        THEN it is the table it always was
+        """
+        self.respond(4, transport=1, age=1)
+        block = self.block()
+        ReportBlock.objects.filter(pk=block.pk).update(config={})
+        self.assertIn('<th scope="row">Car</th>', self.page())
+        self.assertNotIn('class="xc-bars"', self.page())
+
+
 class EngagementBlockTest(_Live):
     """Requirement: An engagement block shows who took part."""
 

@@ -263,6 +263,20 @@ def _compare_surveys(request, survey):
                 .order_by('-id')[:50])
 
 
+def _compare_default(request, survey):
+    """(question, other survey) a new Compare block starts with: the first question of `survey`
+    that has a comparable twin in another survey the member sees, or None."""
+    from survey.versioning import canonical_of
+    others = _compare_surveys(request, survey)
+    if not others:
+        return None
+    for question in _crosstab_questions(survey):
+        for other in others:
+            if services.comparable(question, canonical_of(other)) is not None:
+                return question, other
+    return None
+
+
 def _crosstab_questions(survey):
     """The questions a cross-tab of the report's home survey may name."""
     if survey is None:
@@ -390,12 +404,14 @@ def _library(request, survey):
         return groups
     data = [dict(kind='engagement', label=_('Engagement'), icon=canvas.ICONS['engagement'],
                  desc=_('Opened, answered, finished — and over time'))]
+    # One click each (change crosstab-settings-in-block, #751): the questions are chosen in the
+    # block's settings afterwards.
     if len(_crosstab_questions(survey)) > 1:
         data.append(dict(kind='crosstab', label=_('Cross-tab'), icon=canvas.ICONS['crosstab'],
-                         desc=_('Two questions against each other'), form='crosstab'))
-    if _compare_surveys(request, survey) and _crosstab_questions(survey):
+                         desc=_('Two questions against each other')))
+    if _compare_default(request, survey) is not None:
         data.append(dict(kind='compare', label=_('Compare two rounds'), icon=canvas.ICONS['compare'],
-                         desc=_('One question in two surveys'), form='compare'))
+                         desc=_('One question in two surveys')))
     groups.append((_('From the survey'), data))
     questions = []
     for row in _survey_questions(survey):
@@ -452,12 +468,28 @@ def _hero_context(request, page, service=None):
     return context
 
 
+def _data_choices(request, block):
+    """What a cross-tab's or a comparison's settings offer: the questions of its survey (and the
+    other surveys a comparison may name)."""
+    if block.block_type not in ('crosstab', 'compare') or not block.dataset_id or not block.dataset.survey_id:
+        return {}
+    survey = block.dataset.survey
+    out = {'data_questions': _crosstab_questions(survey)}
+    if block.block_type == 'crosstab':
+        config = block.view.config if block.view_id else {}
+        out.update(xtab_rows=config.get('rows', ''), xtab_columns=config.get('columns', ''))
+    else:
+        out['compare_surveys'] = _compare_surveys(request, survey)
+    return out
+
+
 def _decorate(request, page, block, record, geo_subquestions=()):
     """A canvas record plus what the builder's templates need around it."""
     from survey.embedding import public_base_url
     record.update(
         edit_url=_url(request, 'block_edit', block.id), delete_url=_url(request, 'block_delete', block.id),
         quotes_url=_url(request, 'quotes', block.id) if block.block_type == 'quotes' else '',
+        **_data_choices(request, block),
         geo_subquestions=list(geo_subquestions),
         is_spray=bool(block.question_id and block.question.input_type == 'spraycan'),
         **_block_elsewhere(public_base_url(request), page, block))
@@ -681,16 +713,23 @@ def _block_add(request):
         elif block_type == 'image':
             block = services.add_image_block(actor, page, request.FILES.get('image'))
         elif block_type in ('crosstab', 'engagement') and survey is not None:
-            block = services.add_view_block(actor, page, block_type, survey,
-                                            rows=request.POST.get('rows', ''), columns=request.POST.get('columns', ''))
+            rows, columns = request.POST.get('rows', ''), request.POST.get('columns', '')
+            if block_type == 'crosstab' and not (rows and columns):
+                # The tile is one click: the first two questions; the settings change them.
+                codes = [q.code for q in _crosstab_questions(survey)]
+                rows, columns = (codes + ['', ''])[:2]
+            block = services.add_view_block(actor, page, block_type, survey, rows=rows, columns=columns)
         elif block_type == 'compare' and survey is not None:
             from data.questions import question_of
             from survey.models import SurveyHeader
             from survey.versioning import canonical_of
-            other = SurveyHeader.objects.filter(uuid=request.POST.get('other') or None,
-                                                organization_id=page.organization_id,
-                                                deleted_at__isnull=True).first() if request.POST.get('other') else None
-            question = question_of(canonical_of(survey), request.POST.get('compare_question', ''))
+            if request.POST.get('other') or request.POST.get('compare_question'):
+                other = SurveyHeader.objects.filter(uuid=request.POST.get('other') or None,
+                                                    organization_id=page.organization_id,
+                                                    deleted_at__isnull=True).first() if request.POST.get('other') else None
+                question = question_of(canonical_of(survey), request.POST.get('compare_question', ''))
+            else:
+                question, other = _compare_default(request, survey) or (None, None)
             if question is None:
                 return HttpResponse('Unknown question.', status=400)
             block = services.add_compare_block(actor, page, question, other)
@@ -748,6 +787,25 @@ def _place(actor, page, block, after):
         services.reorder_blocks(actor, page, ids)
 
 
+def _data_settings(request, block):
+    """The Data part of a cross-tab's or a comparison's settings (change crosstab-settings-in-block,
+    #751): which questions, which other survey. None when saved (or nothing asked), else the
+    refusal as the panel's autosave reads it."""
+    from survey.models import SurveyHeader
+    post, actor = request.POST, Actor.from_request(request)
+    try:
+        if block.block_type == 'crosstab' and 'xtab_rows' in post:
+            services.set_crosstab_questions(actor, block, post.get('xtab_rows'), post.get('xtab_columns'))
+        elif block.block_type == 'compare' and 'cmp_question' in post:
+            other = SurveyHeader.objects.filter(uuid=post.get('cmp_other') or None,
+                                                organization_id=block.report.organization_id,
+                                                deleted_at__isnull=True).first() if post.get('cmp_other') else None
+            services.set_compare(actor, block, post.get('cmp_question'), other)
+    except services.ReportRefused as refusal:
+        return JsonResponse({'ok': False, 'errors': {refusal.code: refusal.message}}, status=422)
+    return None
+
+
 @require_POST
 def _block_edit(request, block_id):
     """Update a block's visualization, title, content, items, width, geo fields, visibility."""
@@ -771,6 +829,9 @@ def _block_edit(request, block_id):
             for i, item in enumerate(items):
                 if i < len(refs) and refs[i]:
                     item['ref'] = refs[i]
+    refusal = _data_settings(request, block)
+    if refusal is not None:
+        return refusal
     services.update_block(
         Actor.from_request(request), block,
         viz=post.get('viz', block.viz),
@@ -785,6 +846,9 @@ def _block_edit(request, block_id):
         # box means "off" and a form without the field leaves the choice alone.
         show_marks=(post.get('show_marks') == 'on') if 'show_marks_present' in post else None,
         quote_style=post.get('quote_style') if block.block_type == 'quotes' and 'quote_style' in post else None,
+        crosstab_display=({'view': post.get('xtab_view'), 'values': post.get('xtab_values'),
+                           'sort': post.get('xtab_sort') == 'on'}
+                          if block.block_type == 'crosstab' and 'xtab_view' in post else None),
         basemap=post.get('basemap'),
         valid_basemaps={slug for slug, _label in basemap_registry.choices_for(page.organization)})
     if _is_autosave(request):

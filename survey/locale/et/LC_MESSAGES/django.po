@@ -14677,3 +14677,47 @@ msgid "%(n)s quote carries an email address, a phone number or a web address."
 msgid_plural "%(n)s quotes carry an email address, a phone number or a web address."
 msgstr[0] "%(n)s tsitaat sisaldab e-posti aadressi, telefoninumbrit või veebiaadressi."
 msgstr[1] "%(n)s tsitaati sisaldavad e-posti aadressi, telefoninumbrit või veebiaadressi."
+
+msgid "Bars"
+msgstr "Tulbad"
+
+
+msgid "Count"
+msgstr "Arv"
+
+msgid "% of respondents"
+msgstr "% vastajatest"
+
+msgid "Sort by value"
+msgstr "Sorteeri väärtuse järgi"
+
+msgid "Split by"
+msgstr "Jaota"
+
+msgid "Stacked 100%"
+msgstr "Virnastatud 100%"
+
+msgid "Suggested views"
+msgstr "Soovitatud vaated"
+
+msgid "Too few answers to draw these as a chart: the table shows what can be shown."
+msgstr "Diagrammi jaoks on liiga vähe vastuseid: tabel näitab, mida saab näidata."
+
+msgid "Values"
+msgstr "Väärtused"
+
+#, python-format
+msgid "Not shown as a share: %(names)s — a group in it is smaller than %(k)s, so its total is not published."
+msgstr "Osakaaluna ei näidata: %(names)s — selles on rühm väiksem kui %(k)s, seega selle summat ei avaldata."
+
+#, python-format
+msgid "Not shown: %(names)s — a group in it is smaller than %(k)s, and its other groups would give it away."
+msgstr "Ei näidata: %(names)s — selles on rühm väiksem kui %(k)s ja teised rühmad paljastaksid selle."
+
+#, python-format
+msgid "How many people gave each pair of answers, among those who answered both. A group smaller than %(k)s is hidden, with the totals that would give it away."
+msgstr "Mitu inimest andis iga vastuste paari nende hulgas, kes vastasid mõlemale küsimusele. Rühm, mis on väiksem kui %(k)s, peidetakse koos summadega, mis selle paljastaksid."
+
+#, python-format
+msgid "Shown as counts: a group smaller than %(k)s keeps the total of everyone unpublished, and a share needs it."
+msgstr "Näidatud arvudena: rühm, mis on väiksem kui %(k)s, jätab koguarvu avaldamata, aga osakaal vajab seda."

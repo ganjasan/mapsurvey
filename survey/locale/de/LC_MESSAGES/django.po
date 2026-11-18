@@ -14787,3 +14787,47 @@ msgid "%(n)s quote carries an email address, a phone number or a web address."
 msgid_plural "%(n)s quotes carry an email address, a phone number or a web address."
 msgstr[0] "%(n)s Zitat enthält eine E-Mail-Adresse, eine Telefonnummer oder eine Webadresse."
 msgstr[1] "%(n)s Zitate enthalten eine E-Mail-Adresse, eine Telefonnummer oder eine Webadresse."
+
+msgid "Bars"
+msgstr "Balken"
+
+
+msgid "Count"
+msgstr "Anzahl"
+
+msgid "% of respondents"
+msgstr "% der Befragten"
+
+msgid "Sort by value"
+msgstr "Nach Wert sortieren"
+
+msgid "Split by"
+msgstr "Aufteilen nach"
+
+msgid "Stacked 100%"
+msgstr "Gestapelt 100 %"
+
+msgid "Suggested views"
+msgstr "Vorgeschlagene Ansichten"
+
+msgid "Too few answers to draw these as a chart: the table shows what can be shown."
+msgstr "Zu wenige Antworten für ein Diagramm: Die Tabelle zeigt, was gezeigt werden kann."
+
+msgid "Values"
+msgstr "Werte"
+
+#, python-format
+msgid "Not shown as a share: %(names)s — a group in it is smaller than %(k)s, so its total is not published."
+msgstr "Nicht als Anteil gezeigt: %(names)s — eine Gruppe darin ist kleiner als %(k)s, daher wird ihre Summe nicht veröffentlicht."
+
+#, python-format
+msgid "Not shown: %(names)s — a group in it is smaller than %(k)s, and its other groups would give it away."
+msgstr "Nicht gezeigt: %(names)s — eine Gruppe darin ist kleiner als %(k)s, und die anderen Gruppen würden sie verraten."
+
+#, python-format
+msgid "How many people gave each pair of answers, among those who answered both. A group smaller than %(k)s is hidden, with the totals that would give it away."
+msgstr "Wie viele Personen jedes Antwortpaar gegeben haben, unter denen, die beide Fragen beantwortet haben. Eine Gruppe kleiner als %(k)s wird ausgeblendet, zusammen mit den Summen, die sie verraten würden."
+
+#, python-format
+msgid "Shown as counts: a group smaller than %(k)s keeps the total of everyone unpublished, and a share needs it."
+msgstr "Als Anzahl gezeigt: Eine Gruppe kleiner als %(k)s hält die Gesamtzahl unveröffentlicht, und ein Anteil braucht sie."
