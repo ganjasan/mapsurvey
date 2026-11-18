@@ -45,7 +45,7 @@
           {% endif %}
           {% if not card.pending %}
           <form method="post" action="{% url 'org_map_style_delete' org.slug card.style.uuid %}" class="mb-0 ml-auto"
-                onsubmit="return confirm('{% trans "Delete this map style?" %}');">
+                data-confirm="{% trans "Delete this map style?" %}">
             {% csrf_token %}
             <button type="submit" class="btn btn-sm btn-link text-danger p-0">{% trans "Delete" %}</button>
           </form>

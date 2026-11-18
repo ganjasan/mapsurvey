@@ -148,7 +148,7 @@ def visible_reports(org, user):
         family[hid] = canonical_id or published_id or hid
     rows = []
     for report in (Report.objects.filter(organization=org).select_related('survey')
-                   .prefetch_related('tags').order_by('-updated_at', '-id')):
+                   .prefetch_related('tags', 'survey__reports').order_by('-updated_at', '-id')):
         if report.survey_id is None or family.get(report.survey_id) in visible:
             rows.append(report)
     return rows
@@ -359,8 +359,10 @@ def report_import(request):
 
 @login_required
 def report_delete(request, report_uuid):
-    """What goes with the report first, then the confirm. A survey's home report (the one its
-    Public results tab opens) is recreated empty the next time that tab opens."""
+    """Delete a report. The confirmation is the app dialog on the Reports list and in the builder's
+    settings (`reports/_delete_confirm.html`), so this takes the POST only; an old link to the
+    former confirm page opens the report. A survey's home report (the one its Public results tab
+    opens) is recreated empty the next time that tab opens."""
     from django.contrib import messages
     from reports import services
     from survey.services.context import Actor
@@ -370,8 +372,4 @@ def report_delete(request, report_uuid):
         services.delete_report(Actor.from_request(request), report)
         messages.success(request, _('“%(name)s” deleted.') % {'name': title})
         return redirect('editor_reports')
-    home = report.survey.report if report.survey_id else None
-    return render(request, 'reports/delete.html', {'org': report.organization, 'report': report,
-                                                   'blocks': report.blocks.count(),
-                                                   'is_home': home is not None and home.pk == report.pk,
-                                                   'from_list': request.GET.get('from') == 'list'})
+    return redirect('editor_report', report_uuid=report.uuid)

@@ -134,7 +134,6 @@ of a survey keeps that survey's title and tabs above it.{% endcomment %}
 </div>
 
 {% if may_edit %}{% include "reports/editor/_library.html" %}{% endif %}
-{% include "sites/editor/_confirm_modal.html" %}
 {% comment %}The publish dialog (change reports-review, #706): its body — the "Before you publish" list and the
 three choices — is fetched each time it opens, so it reflects the report as saved.{% endcomment %}
 <div class="modal fade" id="prPublishModal" tabindex="-1" aria-labelledby="prPublishTitle">
@@ -154,7 +153,6 @@ window.LB_TEXT = {saving: '{% trans "Saving…" as t %}{{ t|escapejs }}', saved:
 window.RB_TEXT = {ack: '{% trans "Tick the box to confirm you have read the quotes and maps listed above." as t %}{{ t|escapejs }}', notPublished: '{% trans "The report could not be published. Publish the survey first." as t %}{{ t|escapejs }}', unpublishFailed: '{% trans "The report could not be unpublished. Try again." as t %}{{ t|escapejs }}', making: '{% trans "Making the file…" as t %}{{ t|escapejs }}', pdfFailed: '{% trans "The PDF could not be made. Try again." as t %}{{ t|escapejs }}'};</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" crossorigin="anonymous"></script>
 <script src="{% static 'js/public_results_render.js' %}"></script>
-<script src="{% static 'js/site_confirm.js' %}"></script>
 <script src="{% static 'js/site_builder.js' %}"></script>
 <script src="{% static 'js/report_builder.js' %}"></script>
 {% endblock %}

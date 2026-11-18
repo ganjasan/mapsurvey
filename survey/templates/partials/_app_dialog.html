@@ -1,0 +1,25 @@
+{% load i18n %}{% comment %}The ONE confirmation / notice dialog of the creator app (change one-confirm-dialog):
+title, text, an optional muted note, Cancel + the action. Included once by base.html and
+editor_base.html; driven by js/editor_dialog.js — `Dialog.confirm()` / `Dialog.alert()` from script,
+`data-confirm="<title>"` on a form (optional data-confirm-body, -note, -action, -tone="primary")
+from markup, and every hx-confirm. Do not add another confirm modal, a confirm page or a browser
+confirm(): opt in here.{% endcomment %}
+<div class="modal fade editor-modal" id="editorDialog" tabindex="-1" role="dialog" aria-labelledby="editorDialogTitle" aria-hidden="true"
+     data-confirm-title="{% trans 'Confirm' %}" data-notice-title="{% trans 'Notice' %}" data-ok="{% trans 'OK' %}" data-delete="{% trans 'Delete' %}">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editorDialogTitle">{% trans "Confirm" %}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="{% trans 'Close' %}"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <p id="editorDialogMessage" class="mb-0" style="white-space:pre-line;"></p>
+                <p class="text-muted mb-0 mt-1" id="editorDialogNoteRow" hidden><small id="editorDialogNote"></small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" id="editorDialogCancel">{% trans "Cancel" %}</button>
+                <button type="button" class="btn btn-primary" id="editorDialogOk">{% trans "OK" %}</button>
+            </div>
+        </div>
+    </div>
+</div>

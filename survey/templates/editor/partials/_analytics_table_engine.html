@@ -133,18 +133,20 @@ function setSessionStatus(sel, sid) {
     });
 }
 function trashSession(sid) {
-    if (!confirm('Move session #' + sid + ' to trash?')) return;
     var url = '{% url "analytics_session_trash" survey.uuid 0 %}'.replace(/\/0\//, '/' + sid + '/');
-    _sessionAction(url, function() { $('#sessionDetailModal').modal('hide'); });
+    Dialog.confirm('', {title: 'Move session #' + sid + ' to trash?', okLabel: 'Move to trash', danger: true}).then(function(ok) {
+        if (ok) _sessionAction(url, function() { $('#sessionDetailModal').modal('hide'); });
+    });
 }
 function restoreSession(sid) {
     var url = '{% url "analytics_session_restore" survey.uuid 0 %}'.replace(/\/0\//, '/' + sid + '/');
     _sessionAction(url, function() { $('#sessionDetailModal').modal('hide'); });
 }
 function hardDeleteSession(sid) {
-    if (!confirm('Permanently delete session #' + sid + '? This cannot be undone.')) return;
     var url = '{% url "analytics_session_hard_delete" survey.uuid 0 %}'.replace(/\/0\//, '/' + sid + '/');
-    _sessionAction(url, function() { $('#sessionDetailModal').modal('hide'); });
+    Dialog.confirm('', {title: 'Permanently delete session #' + sid + '?', note: 'This cannot be undone.', okLabel: 'Delete', danger: true}).then(function(ok) {
+        if (ok) _sessionAction(url, function() { $('#sessionDetailModal').modal('hide'); });
+    });
 }
 
 /* Bulk operations */

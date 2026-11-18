@@ -251,10 +251,10 @@
                               style="display:inline;"
                               hx-post="{% url 'editor_survey_share_delete' survey.uuid item.obj.id %}"
                               hx-target="#link-row-{{ item.obj.id }}"
+                              hx-confirm="Delete this link?"
                               hx-swap="outerHTML">
                             {% csrf_token %}
                             <button type="submit" class="btn-icon" title="{% trans 'Delete' %}"
-                                    onclick="return confirm('Delete this link?');"
                                     style="color:#ef4444;">
                                 <i class="fas fa-trash"></i>
                             </button>

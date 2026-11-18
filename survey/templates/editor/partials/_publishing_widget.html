@@ -85,7 +85,7 @@ show_draft_actions, draft_copy, show_edit_published.
       {% for archived in archived_versions %}
       <div class="nm-row"><span class="lab">v{{ archived.version_number }} · {% trans "Closed" %}<span class="sub">{% trans "responses stay visible under All versions" %}</span></span>
         <form method="post" action="{% url 'editor_restore_version' survey.uuid %}" style="margin:0;"
-              onsubmit="return confirm('{% blocktrans with old=archived.version_number next=survey.version_number|add:1 %}Restore v{{ old }} as a new draft? Publishing it will create v{{ next }} with the old questionnaire — nothing is deleted.{% endblocktrans %}');">
+              data-confirm="{% blocktrans with old=archived.version_number next=survey.version_number|add:1 %}Restore v{{ old }} as a new draft? Publishing it will create v{{ next }} with the old questionnaire — nothing is deleted.{% endblocktrans %}" data-confirm-tone="primary">
           {% csrf_token %}
           <input type="hidden" name="version" value="v{{ archived.version_number }}">
           <button type="submit" class="nm-item" style="width:auto;padding:4px 9px;border:1px solid var(--border-color);border-radius:6px;" title="{% trans "Create a draft with this version’s questionnaire" %}"><i class="fas fa-history"></i> {% trans "Restore…" %}</button>

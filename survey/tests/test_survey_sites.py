@@ -1186,7 +1186,7 @@ class SiteConfirmDialogTest(SiteTestBase):
     def test_builder_and_attendees_use_the_app_dialog(self):
         """GIVEN a site with an event block
         WHEN the builder and the attendee list render
-        THEN both carry the #lb-confirm dialog, the delete forms opt in with data-confirm,
+        THEN both carry the app dialog (#editorDialog), the delete forms opt in with data-confirm,
              and no page calls the browser's confirm()"""
         from django.contrib.staticfiles import finders
         self.login(self.editor)
@@ -1195,13 +1195,12 @@ class SiteConfirmDialogTest(SiteTestBase):
         builder = self.client.get(self.url('editor_site')).content.decode()
         attendees = self.client.get(reverse('editor_site_attendees', args=[self.site.uuid, block.pk])).content.decode()
         for html in (builder, attendees):
-            self.assertIn('id="lb-confirm"', html)
-            self.assertIn('js/site_confirm.', html)
+            self.assertIn('id="editorDialog"', html)
+            self.assertIn('js/editor_dialog.', html)
             self.assertNotIn('confirm(', html)
         self.assertIn('everyone registered for the event', builder)
-        for name in ('js/site_builder.js', 'js/site_confirm.js'):
-            with open(finders.find(name)) as fh:
-                self.assertNotIn('window.confirm', fh.read())
+        with open(finders.find('js/site_builder.js')) as fh:
+            self.assertNotIn('window.confirm', fh.read())
 
 
 class SiteOneClickCreateTest(SiteTestBase):

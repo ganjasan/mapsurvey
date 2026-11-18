@@ -58,7 +58,7 @@
                         <td class="text-right">
                             {% if member.user != request.user %}
                                 {% if is_owner or member.role != 'owner' %}
-                                <form method="post" action="{% url 'org_remove_member' org.slug member.user.id %}" class="d-inline" onsubmit="return confirm('{% trans "Remove" %} {{ member.user.username }}?');">
+                                <form method="post" action="{% url 'org_remove_member' org.slug member.user.id %}" class="d-inline" data-confirm="{% trans "Remove" %} {{ member.user.username }}?" data-confirm-action="{% trans "Remove" %}">
                                     {% csrf_token %}
                                     <button type="submit" class="btn btn-outline-danger btn-sm" style="font-size:0.75rem;">{% trans "Remove" %}</button>
                                 </form>

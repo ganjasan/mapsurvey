@@ -4,7 +4,10 @@
  *
  * Public surface:
  *   Dialog.confirm(message, opts) -> Promise<boolean>
- *     opts: { title?: string, okLabel?: string, danger?: boolean }
+ *     opts: { title?: string, note?: string, okLabel?: string, danger?: boolean }
+ *   A form with data-confirm="<title>" (optional data-confirm-body, -note,
+ *   -action, -tone="primary" for an action that destroys nothing) is held on
+ *   submit and sent when the dialog is confirmed.
  *   Dialog.alert(message, opts)   -> Promise<void>
  *     opts: { title?: string, okLabel?: string }
  *
@@ -23,14 +26,16 @@
     var $ = window.jQuery;
     var MODAL_ID = '#editorDialog';
 
-    function _native(message, isConfirm) {
+    function _native(message, isConfirm, opts) {
+        opts = opts || {};
+        message = [opts.title, message, opts.note].filter(Boolean).join('\n\n');
         if (isConfirm) return Promise.resolve(window.confirm(message));
         window.alert(message);
         return Promise.resolve();
     }
 
     function _show(message, opts, isConfirm) {
-        if (!$ || !$(MODAL_ID).length) return _native(message, isConfirm);
+        if (!$ || !$(MODAL_ID).length) return _native(message, isConfirm, opts);
         opts = opts || {};
 
         var modal = $(MODAL_ID);
@@ -54,8 +59,11 @@
         var $cancel = modal.find('#editorDialogCancel');
         var $ok = modal.find('#editorDialogOk');
 
-        $title.text(opts.title || (isConfirm ? 'Confirm' : 'Notice'));
-        $msg.text(message);
+        var words = modal[0].dataset;
+        $title.text(opts.title || (isConfirm ? words.confirmTitle || 'Confirm' : words.noticeTitle || 'Notice'));
+        $msg.text(message || '').prop('hidden', !message);
+        modal.find('#editorDialogNote').text(opts.note || '');
+        modal.find('#editorDialogNoteRow').prop('hidden', !opts.note);
 
         if (isConfirm) {
             $cancel.show();
@@ -63,7 +71,7 @@
             $cancel.hide();
         }
 
-        $ok.text(opts.okLabel || 'OK')
+        $ok.text(opts.okLabel || words.ok || 'OK')
             .removeClass('btn-primary btn-danger btn-warning btn-success')
             .addClass(opts.danger ? 'btn-danger' : 'btn-primary');
 
@@ -102,7 +110,7 @@
         evt.preventDefault();
         Dialog.confirm(evt.detail.question, {
             title: 'Confirm',
-            okLabel: 'Delete',
+            okLabel: (document.querySelector(MODAL_ID) || {dataset: {}}).dataset.delete || 'Delete',
             danger: true,
         }).then(function (ok) {
             if (ok && typeof evt.detail.issueRequest === 'function') {
@@ -110,6 +118,37 @@
             }
         });
     });
+
+    // ─── forms that ask first ───────────────────────────────────────────────
+    // <form data-confirm="Delete “X”?" data-confirm-body="…" data-confirm-note="…"
+    //       data-confirm-action="Delete report">: texts go in with textContent.
+    document.addEventListener('submit', function (evt) {
+        var form = evt.target && evt.target.closest ? evt.target.closest('form[data-confirm]') : null;
+        if (!form || form.dataset.confirmed === '1') return;
+        evt.preventDefault();
+        evt.stopImmediatePropagation();
+        var submitter = evt.submitter;
+        var d = form.dataset;
+        var words = (document.querySelector(MODAL_ID) || {dataset: {}}).dataset;
+        var primary = d.confirmTone === 'primary';
+        Dialog.confirm(d.confirmBody || '', {
+            title: d.confirm,
+            note: d.confirmNote || '',
+            okLabel: d.confirmAction || (primary ? words.ok : words.delete) || 'OK',
+            danger: !primary,
+        }).then(function (ok) {
+            if (!ok) return;
+            form.dataset.confirmed = '1';
+            if (submitter && submitter.name) {
+                var carry = document.createElement('input');
+                carry.type = 'hidden';
+                carry.name = submitter.name;
+                carry.value = submitter.value;
+                form.appendChild(carry);
+            }
+            form.submit();
+        });
+    }, true);
 
     window.Dialog = Dialog;
 })(window);

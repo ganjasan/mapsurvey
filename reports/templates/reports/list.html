@@ -19,7 +19,11 @@ report file.{% endcomment %}
           <input type="file" name="file" accept=".zip,application/zip" hidden onchange="this.form.submit()">
         </label>
       </form>
-      <a class="btn btn-sm btn-primary" href="{% url 'editor_report_start' %}" data-testid="report-create"><i class="fas fa-plus" aria-hidden="true"></i> {% trans "New report" %}</a>
+      {% comment %}One click starts a blank report (owner 2026-11-18): no start page in between.{% endcomment %}
+      <form method="post" action="{% url 'editor_report_start' %}" class="mb-0" data-testid="report-create">
+        {% csrf_token %}<input type="hidden" name="kind" value="blank"><input type="hidden" name="from" value="reports">
+        <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-plus" aria-hidden="true"></i> {% trans "New report" %}</button>
+      </form>
     </div>
     {% endif %}
   </div>
@@ -64,7 +68,9 @@ report file.{% endcomment %}
         <a class="btn btn-sm btn-outline-secondary" href="{{ row.public_url }}" target="_blank" rel="noopener">{% trans "Open" %}</a>
         {% endif %}
         {% if row.may_edit %}
-        <a class="btn btn-sm btn-outline-danger" href="{% url 'editor_report_delete' row.report.uuid %}?from=list" title="{% trans 'Delete report' %}" aria-label="{% trans 'Delete report' %}" data-testid="report-delete"><i class="far fa-trash-alt" aria-hidden="true"></i></a>
+        <form method="post" action="{% url 'editor_report_delete' row.report.uuid %}" class="mb-0" data-testid="report-delete" {% include "reports/_delete_confirm.html" with report=row.report block_count=row.blocks %}>
+          {% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete report' %}" aria-label="{% trans 'Delete report' %}"><i class="far fa-trash-alt" aria-hidden="true"></i></button>
+        </form>
         {% endif %}
       </span>
     </div>
@@ -73,7 +79,7 @@ report file.{% endcomment %}
   {% else %}
   <div class="text-center text-muted py-5" data-testid="reports-empty">
     <p class="mb-1">{% trans "No reports yet." %}</p>
-    <p style="font-size:.9rem;">{% trans "A report tells what a survey found." %}{% if can_edit %} <a href="{% url 'editor_report_start' %}">{% trans "Start one from a survey's answers." %}</a>{% endif %}</p>
+    <p style="font-size:.9rem;">{% trans "A report tells what a survey found." %}</p>
   </div>
   {% endif %}
 </div>

@@ -501,6 +501,7 @@
         });
     });
     </script>
+    {% if user.is_authenticated %}{% include "partials/_app_dialog.html" %}{% endif %}
     {% include "partials/_support_chat.html" with editor_bubble=True %}
     </body>
 </html>

@@ -1271,8 +1271,20 @@ Structure / Edit / Preview bar are gone; on a narrow screen the panel sits under
 Both builders' side panels are resized by dragging their inner edge (`initPanelResize` in
 `site_builder.js`; widths are the `--lb-rail-w` / `--lb-panel-w` variables on `.lb-work`, kept in
 `localStorage['msBuilderPanels']`, double click = default) — a new column rule must keep those variables.
-A report is deleted from its row in the Reports list or from its settings, always through the
-`editor_report_delete` page (change `reports-list-delete`, #733).
+A report is deleted from its row in the Reports list or from its settings (`reports/_delete_confirm.html`
+holds the dialog's wording for both; `editor_report_delete` takes the POST only). "New report" creates a
+blank report in one click; the start page offers the blank card only — the four arrangements and "Copy an
+earlier report" are off the page since 2026-11-18 (owner: get the blank report right first), while the view
+still takes `kind=draft|copy`.
+
+**One confirmation dialog (change `one-confirm-dialog`)**: every "are you sure?" a creator sees is
+`partials/_app_dialog.html` (`#editorDialog`), included by `base.html` and `editor_base.html` and driven
+by `js/editor_dialog.js`. From script: `Dialog.confirm(text, {title, note, okLabel, danger})` /
+`Dialog.alert()`. From markup: a form with `data-confirm="<title>"` and optional `data-confirm-body`,
+`-note`, `-action`, `-tone="primary"` (an action that destroys nothing; default is the red button), or
+`hx-confirm`. Never add a browser `confirm()`, a second confirm modal or a confirmation PAGE — there were
+five kinds before this change. A modal with choices of its own (group delete, the dashboard's Trash /
+Purge) stays a modal of its own.
 
 **Category landings (`/community-engagement-platform/`, `/civic-engagement/`,
 `/public-consultation-software/`, `/participatory-budgeting/`; change `seo-landings-rewrite`, #251)**:
