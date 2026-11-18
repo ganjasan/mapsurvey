@@ -127,7 +127,9 @@ function postTransition(form){
                 var lines = gaps.map(function(g){ return '• ' + g.label + ' — ' + g.missing.join(', '); });
                 var msg = 'Some content has no translation yet; those respondents will see the primary language instead:\n\n'
                         + lines.join('\n') + '\n\nPublish anyway?';
-                if (confirm(msg)) { form.append('ack_translation_gaps','true'); postTransition(form); }
+                Dialog.confirm(msg, {okLabel: 'Publish anyway'}).then(function(ok){
+                    if (ok) { form.append('ack_translation_gaps','true'); postTransition(form); }
+                });
             });
             return;
         }
@@ -189,13 +191,14 @@ function doPublishDraft(force){
               r.json().then(function(data){
                   if (data.translation_gaps) {
                       var lines = data.translation_gaps.map(function(g){ return '• ' + g.label + ' — ' + g.missing.join(', '); });
-                      if (confirm('Some content has no translation yet; those respondents will see the primary language instead:\n\n'
-                                  + lines.join('\n') + '\n\nPublish anyway?')) {
+                      Dialog.confirm('Some content has no translation yet; those respondents will see the primary language instead:\n\n'
+                                  + lines.join('\n') + '\n\nPublish anyway?', {okLabel: 'Publish anyway'}).then(function(ok){
+                          if (!ok) return;
                           form.append('ack_translation_gaps','true');
                           fetch('{% url "editor_publish_draft" survey.uuid %}', {method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}, body:form})
                             .then(function(r2){ if(r2.redirected){ window.location.href=r2.url; } else if(r2.ok){ window.location.reload(); } else { r2.text().then(function(m){ alert(m); }); } })
                             .catch(publishFetchFailed);
-                      }
+                      });
                       return;
                   }
                   // Compatibility issues keep their existing modal flow.

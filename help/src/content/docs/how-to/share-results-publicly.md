@@ -28,22 +28,11 @@ Reports are part of **Pro**. On a workspace without Pro a report opens read-only
 5. Press **Publish**. Once the report is out, the same button reads **Published**: it shows the address with a button that copies it, and the same link appears under **Results page** on the Share page.
 6. To show the page to respondents after they finish, switch on **Show a “See the results” button** on the thanks page.
 
-## Start from a draft
+## Start a report
 
-You do not have to begin with an empty page. Press **New report** on the **Reports** page, or **Make a report** on a survey's Responses page, choose the survey and press one of the cards:
+Press **New report** on the **Reports** page. A blank report opens at once: write its title and opening on the page, then add blocks — headings, text, pictures, key numbers, quotes, and the charts and maps of any survey's questions. It is not published until you publish it.
 
-- **Consultation summary** — who took part, then every question people answered in the survey's order, with the survey's sections as headings.
-- **Council paper** — numbered sections, results as tables, a place for recommendations.
-- **Engagement update** — short, for while the survey is still open: the numbers, the maps and a link to take part.
-- **You said — we did** — each result followed by a place to say what was done about it.
-
-The draft is built by fixed rules from the answers, not written by an AI. It is not published. Answers to open questions arrive as a hidden **Quotes** block to pick from: delete the lines you do not want, then switch off **Hidden**. Places where you are expected to write arrive as hidden text blocks with a hint; write over the hint and un-hide them. **Blank report** starts empty, and **Copy an earlier report** gives you the same story to change for the next round.
-
-## The next round
-
-When a second survey asks the same questions — the usual way is to duplicate the first survey, which keeps every question's code — you do not rewrite the report. On **New report**, in **Copy an earlier report**, choose the report, choose the new survey under **for the survey**, and press **Copy**. The copy keeps your opening, your text and the order of the blocks; every chart, map, cross-tab and the engagement block now read the new survey. Numbers written as `{responses}` follow too; numbers you typed by hand are yours to change.
-
-A block whose question the new survey does not have is not lost quietly. After the copy a message names each one, and in its place the copy holds a hidden note saying what the earlier report showed there. Add a block for the question that replaced it, or delete the note; hidden notes never reach the published page.
+## Two rounds in one picture
 
 To show both rounds in one picture, add a **Compare** block: pick a question and the other survey. For each answer it shows the share of people in both surveys, with how many answered in each. The other survey needs a question with the same code. Small groups are hidden in each survey separately.
 

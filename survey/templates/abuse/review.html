@@ -60,7 +60,7 @@
             </form>
         </div>
         <div class="col-md-6 mb-3">
-            <form method="post" onsubmit="return confirm('Deactivate this account and close all of its surveys?');">
+            <form method="post" data-confirm="Deactivate this account and close all of its surveys?" data-confirm-action="Deactivate">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="confirm">
                 <button type="submit" class="btn btn-danger btn-block">Confirm phishing</button>

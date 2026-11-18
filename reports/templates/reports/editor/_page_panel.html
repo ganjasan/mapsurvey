@@ -107,7 +107,9 @@ hidden fields of this form; everything saves by itself, like a block.{% endcomme
   {% if may_edit %}
   <div class="lb-pane-foot">
     <span></span>
-    <a class="lb-link lb-danger" href="{% url 'editor_report_delete' page.uuid %}"><i class="far fa-trash-alt" aria-hidden="true"></i> {% trans "Delete report…" %}</a>
+    <form method="post" action="{% url 'editor_report_delete' page.uuid %}" data-testid="report-delete" {% include "reports/_delete_confirm.html" with report=page %}>
+      {% csrf_token %}<button type="submit" class="lb-link lb-danger"><i class="far fa-trash-alt" aria-hidden="true"></i> {% trans "Delete report…" %}</button>
+    </form>
   </div>
   {% endif %}
 </div>

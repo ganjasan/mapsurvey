@@ -241,7 +241,17 @@ download. This page and the object editor are the only places a private field is
       {% else %}
       <p class="text-muted small mb-0">{% trans "No survey or site shows this dataset yet. Add it to a survey from its Reference layers card, or to a Site map block." %}</p>
       {% endif %}
-      {% if can_delete %}<a class="btn btn-sm btn-outline-danger mt-3" href="{% url 'editor_data_delete' ds.pk %}">{% trans "Delete dataset" %}</a>{% endif %}
+      {% if can_delete and bound_questions %}
+      <div class="alert alert-warning mt-3 mb-0" data-testid="delete-blocked">{% blocktrans with name=bound_questions.0.name %}The question “{{ name }}” shows this dataset. Remove the question or pick another layer for it first.{% endblocktrans %}</div>
+      {% elif can_delete %}
+      <form method="post" action="{% url 'editor_data_delete' ds.pk %}" class="mt-3 mb-0" data-testid="dataset-delete"
+            data-confirm="{% blocktrans with name=ds.name %}Delete “{{ name }}”?{% endblocktrans %}"
+            {% if not used_by %}data-confirm-body="{% trans 'No survey or site uses it.' %}"{% endif %}
+            data-confirm-note="{% trans 'Surveys and sites stop showing it, and its objects are deleted. This cannot be undone.' %}"
+            data-confirm-action="{% trans 'Delete dataset' %}">
+        {% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-danger">{% trans "Delete dataset" %}</button>
+      </form>
+      {% endif %}
     </div>
   </div>
 

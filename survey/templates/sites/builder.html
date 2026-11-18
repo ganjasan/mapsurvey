@@ -142,7 +142,6 @@ workspace (may_edit false).{% endcomment %}
 </div>
 
 {% if may_edit %}{% include "sites/editor/_library.html" %}{% endif %}
-{% include "sites/editor/_confirm_modal.html" %}
 <datalist id="lb-timezones">{% for z in timezones %}<option value="{{ z }}">{% endfor %}</datalist>
 {{ basemap_table|json_script:"lb-basemaps" }}
 <script>window.LB_MAPBOX_TOKEN = '{{ MAPBOX_ACCESS_TOKEN|escapejs }}';
@@ -150,7 +149,6 @@ window.LB_TEXT = {saving: '{% trans "Saving…" as t %}{{ t|escapejs }}', saved:
 <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" crossorigin="anonymous"></script>
 <script src="{% static 'js/public_results_render.js' %}"></script>
-<script src="{% static 'js/site_confirm.js' %}"></script>
 <script src="{% static 'js/site_media.js' %}"></script>
 <script src="{% static 'js/site_builder.js' %}"></script>
 {% endblock %}

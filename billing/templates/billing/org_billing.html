@@ -95,12 +95,12 @@
             {% if api_configured and is_owner %}
             <hr>
             {% if can_resubscribe %}
-            <form method="post" action="{% url 'org_billing_resubscribe' org.slug %}" class="d-inline" onsubmit="return confirm('{{ _("Resubscribe now? If a payment is overdue, PayPro charges it immediately.")|escapejs }}');">
+            <form method="post" action="{% url 'org_billing_resubscribe' org.slug %}" class="d-inline" data-confirm="{{ _("Resubscribe now? If a payment is overdue, PayPro charges it immediately.") }}" data-confirm-tone="primary">
                 {% csrf_token %}<button type="submit" class="btn btn-success btn-sm mr-1 mb-2">{% trans "Resubscribe" %}</button>
             </form>
             {% endif %}
             {% if entitlements.state == 'active' or entitlements.state == 'past_due' %}
-            <form method="post" action="{% url 'org_billing_switch' org.slug %}" class="d-inline" onsubmit="return confirm('{{ _("Switch billing period? The change takes effect at the next charge.")|escapejs }}');">
+            <form method="post" action="{% url 'org_billing_switch' org.slug %}" class="d-inline" data-confirm="{{ _("Switch billing period? The change takes effect at the next charge.") }}" data-confirm-tone="primary">
                 {% csrf_token %}<button type="submit" class="btn btn-outline-secondary btn-sm mr-1 mb-2">{% if other_period == 'pro_yearly' %}{% trans "Switch to yearly" %}{% else %}{% trans "Switch to monthly" %}{% endif %}</button>
             </form>
             <button type="button" class="btn btn-outline-danger btn-sm mb-2" data-toggle="collapse" data-target="#cancel-box">{% trans "Cancel plan" %}</button>

@@ -92,7 +92,7 @@ that refuse cookies, not this one.{% endcomment %}
         <td>{% if r.profile.organization %}{{ r.profile.organization.name }}{% else %}{% trans "All my workspaces" %}{% endif %}</td>
         <td>{% if r.never_expires %}{% trans "Never" %}{% else %}{{ r.expires|date:"Y-m-d" }}{% endif %}<br><small style="color:#9aa0a6;">{% trans "created" %} {{ r.profile.created_at|date:"Y-m-d" }}</small></td>
         <td>{% if r.profile.last_used_at %}{{ r.profile.last_used_at|timesince }} {% trans "ago" %}{% else %}<span style="color:#9aa0a6;">{% trans "never" %}</span>{% endif %}</td>
-        <td><form method="post" onsubmit="return confirm('{% trans "Revoke this token? Anything using it stops working at once." %}')">{% csrf_token %}<input type="hidden" name="action" value="revoke"><input type="hidden" name="token_id" value="{{ r.profile.token_id }}"><button type="submit" class="cx-revoke">{% trans "Revoke" %}</button></form></td>
+        <td><form method="post" data-confirm="{% trans "Revoke this token? Anything using it stops working at once." %}" data-confirm-action="{% trans "Revoke" %}">{% csrf_token %}<input type="hidden" name="action" value="revoke"><input type="hidden" name="token_id" value="{{ r.profile.token_id }}"><button type="submit" class="cx-revoke">{% trans "Revoke" %}</button></form></td>
       </tr>
       {% endfor %}
       </tbody>
@@ -155,7 +155,7 @@ that refuse cookies, not this one.{% endcomment %}
         <td>{% for s in a.scopes %}<span class="cx-chip{% if s == 'surveys:publish' or s == 'surveys:delete' %} danger{% endif %}">{{ s }}</span>{% endfor %}<br>{% for au in a.audiences %}<span class="cx-chip">{% if au == 'api' %}{% trans "REST API" %}{% else %}{% trans "MCP server" %}{% endif %}</span>{% endfor %}</td>
         <td>{{ a.created|date:"Y-m-d" }}</td>
         <td>{% if a.last_used %}{{ a.last_used|timesince }} {% trans "ago" %}{% else %}<span style="color:#9aa0a6;">{% trans "never" %}</span>{% endif %}</td>
-        <td><form method="post" onsubmit="return confirm('{% trans "Disconnect this app? It will have to ask for access again." %}')">{% csrf_token %}<input type="hidden" name="action" value="disconnect"><input type="hidden" name="application_id" value="{{ a.application.pk }}"><button type="submit" class="cx-revoke">{% trans "Disconnect" %}</button></form></td>
+        <td><form method="post" data-confirm="{% trans "Disconnect this app? It will have to ask for access again." %}" data-confirm-action="{% trans "Disconnect" %}">{% csrf_token %}<input type="hidden" name="action" value="disconnect"><input type="hidden" name="application_id" value="{{ a.application.pk }}"><button type="submit" class="cx-revoke">{% trans "Disconnect" %}</button></form></td>
       </tr>
       {% endfor %}
       </tbody>

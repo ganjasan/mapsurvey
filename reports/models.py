@@ -117,6 +117,14 @@ class Report(models.Model):
         return self.mode == 'frozen'
 
     @property
+    def is_home(self):
+        """Whether this is the report its survey's Public results tab opens (the oldest one)."""
+        if not self.survey_id:
+            return False
+        home = self.survey.report
+        return home is not None and home.pk == self.pk
+
+    @property
     def title(self):
         """What lists call the report: its intro title, else its survey's name, else the slug."""
         value = (self.intro or {}).get('title')

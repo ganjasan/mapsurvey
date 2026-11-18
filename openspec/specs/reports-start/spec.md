@@ -4,16 +4,18 @@
 Starting a report: a start page whose cards each make one on a click — a draft built by rules from what people answered, in four arrangements, a blank report, a copy — with nothing unfinished reaching a visitor, and links to it where the data is. Implementation: `reports/drafting.py`, `reports/views.py` (`report_start`); tests `survey/tests/test_reports_start.py`.
 ## Requirements
 ### Requirement: A report starts from a card
-The system SHALL offer an editor of a workspace a start page whose cards each create a report on one
-click and open it in the editor: a draft from a chosen survey in one of the arrangements, a blank
-report, and a copy of a report the member may see. Members who may not edit SHALL not reach it.
+The system SHALL let an editor of a workspace start a blank report in one click: "New report" on the
+Reports list creates it and opens it in the editor. The start page SHALL offer the blank report
+only; the arrangements drafted from a survey and the copy of an earlier report SHALL NOT be offered
+on it for now, while the same address keeps creating them for callers that ask (the API, MCP and
+earlier links). Members who may not edit SHALL not reach the start page.
 
 #### Scenario: One click drafts a report
-- **WHEN** an editor presses the "Consultation summary" card with a survey chosen
+- **WHEN** a "Consultation summary" draft of a survey is asked for at the start address
 - **THEN** a new unpublished report of that survey exists and its editor opens
 
 #### Scenario: A blank report
-- **WHEN** an editor presses "Blank report"
+- **WHEN** an editor presses "New report" on the Reports list, or "Blank report" on the start page
 - **THEN** an unpublished report without a home survey opens in the editor
 
 #### Scenario: A viewer
@@ -22,7 +24,7 @@ report, and a copy of a report the member may see. Members who may not edit SHAL
 
 #### Scenario: No survey to draft from
 - **WHEN** the workspace has no published survey
-- **THEN** the page offers the blank report and says why no draft is offered
+- **THEN** the page offers the blank report and no arrangement
 
 ### Requirement: The draft is built by rules from what people answered
 The system SHALL build a draft without a language model: an opening with the number of people who

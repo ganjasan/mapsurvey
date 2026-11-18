@@ -61,12 +61,10 @@ class CardsTest(_Start):
 
     def test_one_click_drafts_a_report(self):
         """
-        GIVEN an editor on the start page with a survey chosen
-        WHEN they press the "Consultation summary" card
+        GIVEN an editor and a published survey
+        WHEN a "Consultation summary" draft of it is asked for
         THEN a new unpublished report of that survey exists and its editor opens
         """
-        page = self.client.get(self.start)
-        self.assertContains(page, 'data-template="summary"')
         response = self.post(kind='draft', template='summary')
         report = Report.objects.get()
         self.assertRedirects(response, reverse('editor_report', args=[report.uuid]))
@@ -99,7 +97,7 @@ class CardsTest(_Start):
         """
         GIVEN a workspace without a published survey
         WHEN an editor opens the start page
-        THEN it offers the blank report and says why no draft is offered
+        THEN it offers the blank report and no arrangement drafted from a survey
         """
         other_org, other_owner = make_pro_org('EmptyStartOrg', 'emptystartowner')
         self.client.force_login(other_owner)
@@ -107,7 +105,6 @@ class CardsTest(_Start):
         session['active_org_id'] = other_org.id
         session.save()
         html = self.client.get(self.start).content.decode()
-        self.assertIn('data-testid="report-start-no-survey"', html)
         self.assertIn('data-testid="report-start-blank"', html)
         self.assertNotIn('data-template="summary"', html)
 

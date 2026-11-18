@@ -174,13 +174,16 @@ class DeleteTest(_Editor):
     def test_deleting_an_imported_report(self):
         """
         GIVEN a report with two blocks
-        WHEN an editor opens the delete page and confirms
-        THEN the page first says what goes, then the report and its blocks are gone
+        WHEN an editor presses Delete in its settings and confirms in the dialog
+        THEN the dialog first says what goes, then the report and its blocks are gone
         """
         ReportBlock.objects.create(report=self.report, block_type='heading', content={'en': 'A'}, order=0)
         ReportBlock.objects.create(report=self.report, block_type='text', order=1)
-        page = self.client.get(self.url('editor_report_delete'))
+        page = self.client.get(self.url('editor_report'))
         self.assertContains(page, 'Its 2 blocks')
+        self.assertContains(page, 'id="editorDialog"')
+        # An old link to the former confirm page deletes nothing.
+        self.assertRedirects(self.client.get(self.url('editor_report_delete')), self.url('editor_report'))
         self.assertTrue(Report.objects.filter(pk=self.report.pk).exists())
         r = self.client.post(self.url('editor_report_delete'))
         self.assertRedirects(r, reverse('editor_reports'))
@@ -191,11 +194,15 @@ class DeleteTest(_Editor):
         """
         GIVEN an editor on the Reports list
         WHEN the list renders
-        THEN the report's row carries a Delete action that leads to the page saying what goes
+        THEN the report's row carries a Delete form that asks through the app dialog, saying what goes
         """
         html = self.client.get(reverse('editor_reports')).content.decode()
-        self.assertIn(self.url('editor_report_delete') + '?from=list', html)
-        self.assertIn('data-testid="report-delete"', html)
+        form = html.split('data-testid="report-delete"')[0].rsplit('<form', 1)[1] + html.split('data-testid="report-delete"')[1].split('>')[0]
+        self.assertIn(self.url('editor_report_delete'), form)
+        self.assertIn('data-confirm="Delete “Blank one”?"', form)
+        self.assertIn('Its 0 blocks', form)
+        self.assertIn('id="editorDialog"', html)
+        self.assertNotIn('confirm(', html)
 
     def test_a_member_who_may_not_edit(self):
         """
@@ -212,16 +219,15 @@ class DeleteTest(_Editor):
     def test_a_report_made_from_a_survey(self):
         """
         GIVEN a report whose home is a survey, the one the survey's Public results tab opens
-        WHEN an editor opens its settings and then the delete page
-        THEN "Delete report…" is offered and the page says what the tab will open afterwards
+        WHEN an editor opens its settings
+        THEN "Delete report…" is offered and the dialog says what the tab will open afterwards
         """
         survey, _section = make_v1_survey(self.org, self.owner)
         self.report.survey = survey
         self.report.save()
         page = self.client.get(self.url('editor_report'))
         self.assertContains(page, self.url('editor_report_delete'))
-        page = self.client.get(self.url('editor_report_delete'))
-        self.assertContains(page, 'data-testid="report-delete-home"')
+        self.assertContains(page, 'This is the report the Public results tab of')
         self.client.post(self.url('editor_report_delete'))
         self.assertFalse(Report.objects.filter(pk=self.report.pk).exists())
 

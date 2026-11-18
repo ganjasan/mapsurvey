@@ -185,18 +185,19 @@ class UsedByTest(_LinkFixture):
     def test_delete_page_lists_the_places(self):
         """
         GIVEN the dataset is linked into survey A and a Site
-        WHEN the owner opens its delete page
-        THEN the page names survey A and the site before the confirm button
+        WHEN the owner opens the dataset's page
+        THEN the page names survey A and the site before the Delete button, which asks through the app dialog
         """
         self.link(self.survey_a)
         self.site_with_block()
-        html = self.client.get(reverse('editor_data_delete', args=[self.dataset.pk])).content.decode()
-        listed = html.split('data-testid="delete-used-by"')[1].split('</ul>')[0]
+        page = self.client.get(reverse('editor_data_dataset', args=[self.dataset.pk])).content.decode()
+        listed = page.split('data-testid="used-by"')[1].split('data-testid="dataset-delete"')[0]
         self.assertIn('Survey A', listed)
         self.assertIn('Park plan', listed)
-        self.assertLess(html.index('Park plan'), html.index('btn btn-sm btn-danger'))
-        page = self.client.get(reverse('editor_data_dataset', args=[self.dataset.pk])).content.decode()
-        self.assertIn('Survey A', page.split('data-testid="used-by"')[1])
+        self.assertIn('data-confirm="Delete “', page.split('data-testid="dataset-delete"')[1].split('>')[0])
+        # An old link to the former confirm page deletes nothing.
+        self.client.get(reverse('editor_data_delete', args=[self.dataset.pk]))
+        self.assertTrue(Dataset.objects.filter(pk=self.dataset.pk).exists())
 
     def test_a_report_that_reads_the_dataset_is_listed(self):
         """
@@ -238,13 +239,16 @@ class UsedByTest(_LinkFixture):
     def test_bound_question_blocks_the_delete(self):
         """
         GIVEN a question of survey A is bound to the linked layer
-        WHEN the owner confirms the delete
-        THEN nothing is deleted and the page names the question
+        WHEN the owner opens the dataset's page, or posts the delete anyway
+        THEN the page names the question instead of offering Delete, and nothing is deleted
         """
         self.link(self.survey_a)
         Question.objects.create(survey_section=self.section_a, code='OBJ', name='Rate the trees',
                                 input_type='layer_objects', layer=self.layer)
-        r = self.client.post(reverse('editor_data_delete', args=[self.dataset.pk]))
+        page = self.client.get(reverse('editor_data_dataset', args=[self.dataset.pk])).content.decode()
+        self.assertIn('Rate the trees', page.split('data-testid="delete-blocked"')[1])
+        self.assertNotIn('data-testid="dataset-delete"', page)
+        r = self.client.post(reverse('editor_data_delete', args=[self.dataset.pk]), follow=True)
         self.assertTrue(Dataset.objects.filter(pk=self.dataset.pk).exists())
         self.assertIn('Rate the trees', r.content.decode())
 

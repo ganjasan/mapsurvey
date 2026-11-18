@@ -70,7 +70,7 @@
         <a class="btn btn-outline-secondary" href="{{ home_url }}">← {% trans "Paper responses" %}</a>
         {% if sheet.is_open %}
         <span>
-            <form method="post" action="{% url 'paper_response_delete' survey.uuid sheet.pk %}" class="d-inline" onsubmit="return confirm('{% trans 'Delete this response and its photos? Its copy number can be uploaded again.' %}');">{% csrf_token %}
+            <form method="post" action="{% url 'paper_response_delete' survey.uuid sheet.pk %}" class="d-inline" data-confirm="{% trans 'Delete this response and its photos? Its copy number can be uploaded again.' %}">{% csrf_token %}
                 <button class="btn btn-outline-secondary">{% trans "Delete" %}</button></form>
             {% if sheet.printed_form %}
             <form method="post" action="{% url 'paper_response_check' survey.uuid sheet.pk %}" class="d-inline">{% csrf_token %}

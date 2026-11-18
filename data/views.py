@@ -11,7 +11,7 @@ from django.views.decorators.http import require_POST
 
 from data import services
 from data.datasets import catalogue_rows
-from data.links import used_by
+from data.links import bound_questions, used_by
 from data.models import DataImportJob, Dataset
 
 UPLOAD_EXTENSIONS = ('.gpkg', '.zip', '.kml', '.geojson', '.json', '.csv')
@@ -212,6 +212,7 @@ def dataset(request, dataset_id):
         'used_by': used_by(ds),
         'tags_text': ', '.join(t.name for t in ds.tags.all()),
         'can_delete': can_edit and _deletable(ds),
+        'bound_questions': bound_questions(ds.layer_id) if can_edit and _deletable(ds) else [],
         'versionable': _versionable(ds),
         'version_job': version_job,
         'can_upload_version': (can_edit and _versionable(ds) and bool(ds.layer.key_field)
@@ -353,9 +354,9 @@ def _deletable(ds):
 
 @login_required
 def delete(request, dataset_id):
-    """Every place that uses the dataset first, then the confirm (change data-links). Refused
-    while a question is bound to its layer; links and site blocks let go of it otherwise."""
-    from data.links import bound_questions
+    """Delete a dataset (change data-links). The dataset page lists every place that uses it and
+    asks through the app dialog, so this takes the POST only. Refused while a question is bound to
+    its layer; links and site blocks let go of it otherwise."""
     org, membership, row = _dataset_row(request, dataset_id)
     ds = row.dataset
     if not (_can_edit(request.user, membership, row) and _deletable(ds)):
@@ -365,10 +366,10 @@ def delete(request, dataset_id):
         services.delete_dataset(_actor(request), ds)
         messages.success(request, _('Dataset deleted.'))
         return redirect('editor_data')
-    return render(request, 'data/delete.html', {
-        'org': org, 'ds': ds, 'used_by': used_by(ds), 'questions': questions,
-        'refused': request.method == 'POST',
-    })
+    if request.method == 'POST':
+        messages.error(request, _('The question “%(name)s” shows this dataset. Remove the question or pick '
+                                  'another layer for it first.') % {'name': questions[0].name})
+    return redirect('editor_data_dataset', dataset_id=ds.pk)
 
 
 def _save_dictionary(request, ds):
