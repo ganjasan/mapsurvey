@@ -145,3 +145,75 @@ def grid(members, k=1, cells_across=None, min_cell_m=20.0, steps=GRID_STEPS, tar
         if best is None or result['respondents_shown'] > best['respondents_shown']:
             best = result
     return best
+
+
+# Hot spots (change report-map-views): the places a point question's marks gather, as the reports
+# made by hand drew them — numbered, largest first. 120 m cells and a 150 m merge suited both a
+# housing estate with one pin per resident and a dense neighbourhood.
+HOTSPOT_CELL_M = 120.0
+HOTSPOT_MERGE_M = 150.0
+HOTSPOT_LIMIT = 20
+
+
+def hotspots(members, k=1, every_mark=False, cell_m=HOTSPOT_CELL_M, merge_m=HOTSPOT_MERGE_M,
+             limit=HOTSPOT_LIMIT):
+    """`members`: iterable of (session_id, member_id, Point in WGS 84); other geometry is skipped.
+
+    Returns [{'rank', 'lng', 'lat', 'respondents', 'marks', 'members': {member ids}}], largest
+    first. Points fall into `cell_m` cells; cells are taken busiest first and join a spot whose
+    centre is within `merge_m`. A spot is kept when it holds at least two marks and at least K
+    DISTINCT respondents — its centre is then the mean of at least K people's marks. With
+    `every_mark` (the author chose to show the marks themselves) two marks are enough.
+    ``members`` is for the caller's summaries; never serialise it.
+    """
+    from django.contrib.gis.geos import Point
+    to_merc = CoordTransform(_WGS84, _MERC)
+    points = []
+    for session_id, member_id, geom in members:
+        if geom is None or geom.empty or geom.geom_type != 'Point':
+            continue
+        m = geom.clone()
+        if m.srid is None:
+            m.srid = 4326
+        m.transform(to_merc)
+        points.append((session_id, member_id, m.x, m.y, geom.y))
+    if not points:
+        return []
+    # Web Mercator stretches distances by 1 / cos(latitude).
+    stretch = 1.0 / max(0.05, math.cos(math.radians(sum(p[4] for p in points) / len(points))))
+    cell, merge = cell_m * stretch, merge_m * stretch
+    cells = {}
+    for point in points:
+        cells.setdefault((math.floor(point[2] / cell), math.floor(point[3] / cell)), []).append(point)
+
+    def centre(group):
+        return sum(p[2] for p in group) / len(group), sum(p[3] for p in group) / len(group)
+
+    spots = []
+    for _key, group in sorted(cells.items(), key=lambda item: (-len(item[1]), item[0])):
+        x, y = centre(group)
+        for spot in spots:
+            sx, sy = spot['xy']
+            if math.hypot(x - sx, y - sy) < merge:
+                spot['points'] += group
+                spot['xy'] = centre(spot['points'])
+                break
+        else:
+            spots.append({'xy': (x, y), 'points': list(group)})
+
+    threshold = 1 if every_mark else max(1, int(k or 1))
+    to_wgs = CoordTransform(_MERC, _WGS84)
+    out = []
+    for spot in spots:
+        sessions = {p[0] for p in spot['points']}
+        if len(spot['points']) < 2 or len(sessions) < threshold:
+            continue
+        at = Point(spot['xy'][0], spot['xy'][1], srid=3857)
+        at.transform(to_wgs)
+        out.append({'lng': round(at.x, 6), 'lat': round(at.y, 6), 'respondents': len(sessions),
+                    'marks': len(spot['points']), 'members': {p[1] for p in spot['points']}})
+    out.sort(key=lambda s: (-s['respondents'], -s['marks'], s['lng'], s['lat']))
+    out = out[:limit]
+    for rank, spot in enumerate(out, 1):
+        spot['rank'] = rank
+    return out

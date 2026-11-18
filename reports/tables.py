@@ -67,6 +67,9 @@ def rows_of(payload):
         return rows + [['total'] + [s['display'] for s in data.get('steps') or []]]
     if kind == 'numbers':
         return [['value', 'label']] + [[i.get('value', ''), i.get('label', '')] for i in payload.get('items') or []]
+    if kind == 'map' and payload.get('display') == 'hotspots':
+        return [['rank', 'longitude', 'latitude', 'respondents', 'marks']] + [
+            [s['rank'], s['lng'], s['lat'], s['respondents'], s['marks']] for s in payload.get('hotspots') or []]
     if kind == 'map' and payload.get('data_type') == 'marks':
         rows = [['geometry', 'longitude', 'latitude']]
         for feature in (payload.get('marks') or {}).get('features') or []:

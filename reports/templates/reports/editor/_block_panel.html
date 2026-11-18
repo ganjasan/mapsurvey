@@ -62,31 +62,36 @@ reports.editor_views._block_edit reads. `b` the block, `item` its record.{% endc
         </div>
 
         {% elif b.block_type == 'map' %}
-        <p class="lb-hint mt-0" data-testid="pr-map-grid-note">{% blocktrans with k=page.k_anonymity_threshold %}The public map shows squares that count respondents; squares with fewer than {{ k }} respondents are hidden. Exact points stay in Responses and the export.{% endblocktrans %}</p>
-        {% comment %}The survey owner's choice (owner decision 2026-11-16): the marks themselves instead of
-        the grid. Off by default; the hidden marker lets a save say "off".{% endcomment %}
+        {% comment %}A map is a list of layers (change report-map-views), after the maps of the reports
+        made by hand: the block's own question first, then the other map questions drawn with it.
+        Each layer picks its view and the view's settings (_map_layer.html, fields under its prefix);
+        the basemap, the legend and the frame are the block's. The frame is kept on the canvas
+        ("Keep this view") and travels in the hidden field.{% endcomment %}
+        <input type="hidden" name="map_frame" value="{% if b.config.frame %}{{ b.config.frame|join:',' }}{% endif %}">
+        <input type="hidden" name="map_layers_present" value="1">
         <input type="hidden" name="show_marks_present" value="1">
-        <label class="lb-switch" data-testid="pr-map-marks"><span>{% trans "Show the marks themselves" %}<small>{% trans "every place, line or area as it was drawn, instead of the squares. A mark can point at someone's home: you decide whether that is right for this survey." %}</small></span>
-          <input type="checkbox" name="show_marks"{% if b.config.marks %} checked{% endif %}><span class="lb-toggle" aria-hidden="true"></span></label>
+        <div class="lb-field">
+          <label>{% trans "Layers of the map" %}</label>
+          <div class="rb-layers" data-testid="pr-map-layers">
+            {% for layer in item.map_layers %}{% include "reports/editor/_map_layer.html" with layer=layer k=page.k_anonymity_threshold %}{% endfor %}
+          </div>
+          {% if item.map_layer_choices %}
+          <select class="form-control form-control-sm mt-2" name="map_add_layer" data-save-now aria-label="{% trans 'Layers of the map' %}" data-testid="pr-map-add-layer">
+            <option value="">{% trans "+ Add a map question as a layer…" %}</option>
+            {% for survey_name, options in item.map_layer_choices %}<optgroup label="{{ survey_name }}">{% for value, label in options %}<option value="{{ value }}">{{ label|striptags|truncatechars:70 }}</option>{% endfor %}</optgroup>{% endfor %}
+          </select>
+          {% endif %}
+        </div>
+        <p class="lb-hint mt-0" data-testid="pr-map-grid-note">{% blocktrans with k=page.k_anonymity_threshold %}Readers see only areas marked by at least {{ k }} respondents, unless you switch on “Use every mark” for a layer. Exact points stay in Responses and the export.{% endblocktrans %}</p>
         <div class="lb-field">
           <label for="rb-basemap-{{ b.pk }}">{% trans "Basemap" %}</label>
           <select class="form-control form-control-sm" id="rb-basemap-{{ b.pk }}" name="basemap">
             {% for val, label in basemap_choices %}<option value="{{ val }}"{% if b.basemap == val %} selected{% endif %}>{{ label }}</option>{% endfor %}
           </select>
         </div>
-        {% if item.is_spray %}
-        <div class="lb-hint"><i class="fas fa-spray-can" aria-hidden="true"></i> {% trans "Spray clouds are published as a density grid: each cell shows how many respondents painted there, and cells below the anonymity threshold are left out. No individual paint is ever shown." %}</div>
-        {% else %}
-        <div class="lb-field">
-          <label>{% trans "Point popup fields" %}</label>
-          <div class="lb-hint mt-0 mb-1">{% trans "Attributes shown when a point is clicked — the sub-questions this respondent answered" %} <em>{% trans "for that point" %}</em>{% trans ". Empty = anonymous geometry only. Free-text answers can't be shown." %}</div>
-          {% for sq in item.geo_subquestions %}
-          <label class="lb-check"><input type="checkbox" name="geo_label_fields" value="{{ sq.code }}"{% if sq.code in b.geo_label_fields %} checked{% endif %}> {{ sq.name }}</label>
-          {% empty %}
-          <div class="lb-hint mt-0"><i class="fas fa-info-circle" aria-hidden="true"></i> {% trans "This map question has no sub-questions, so points are shown as anonymous geometry." %}</div>
-          {% endfor %}
-        </div>
-        {% endif %}
+        <label class="lb-check"><input type="checkbox" name="map_legend"{% if item.map_switches.legend %} checked{% endif %}> {% trans "Legend under the map" %}</label>
+        <label class="lb-check"><input type="checkbox" name="map_scale"{% if item.map_switches.scale %} checked{% endif %}> {% trans "Scale bar" %}</label>
+        <label class="lb-check"><input type="checkbox" name="map_toggle"{% if item.map_switches.toggle %} checked{% endif %}> {% trans "Readers can switch layers on and off" %}</label>
 
         {% elif b.block_type == 'crosstab' %}
         {% comment %}Set up in the block, not in the library (change crosstab-settings-in-block, #751): the

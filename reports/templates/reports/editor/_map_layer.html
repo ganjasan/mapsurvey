@@ -1,0 +1,107 @@
+{% load i18n %}{% comment %}One layer of a map block in the block's panel (change report-map-views): its view, the
+view's own settings, colour, name in the legend, and whether it uses every mark. `layer` is a card of
+editor_views._map_panel; every field is named under `layer.prefix`, so the cards of one block share
+one form. The settings of the views not chosen stay in the form (hidden by the stylesheet through
+`:has()`), so switching a view back finds them as they were.{% endcomment %}
+{% with p=layer.prefix o=layer.opts %}
+<details class="rb-layer"{% if layer.primary %} open{% endif %} data-testid="pr-map-layer">
+  <summary><i class="rb-layer-dot" style="background:{{ layer.color }}" aria-hidden="true"></i><span class="rb-layer-t">{{ layer.name|default:layer.title|striptags|truncatechars:60 }}<small>{{ layer.type_name }}{% if layer.survey_name %} · {{ layer.survey_name|truncatechars:40 }}{% endif %}</small></span></summary>
+  <div class="rb-layer-body">
+    <div class="rb-views" role="radiogroup" aria-label="{% trans 'Suggested views' %}" data-testid="pr-map-views">
+      <label class="rb-view"><input type="radio" name="{{ p }}view" value="heat"{% if layer.view == 'heat' %} checked{% endif %}><svg width="40" height="28" viewBox="0 0 40 28" aria-hidden="true"><circle cx="14" cy="12" r="10" opacity=".3"></circle><circle cx="14" cy="12" r="5.5" opacity=".6"></circle><circle cx="29" cy="18" r="7" opacity=".3"></circle><circle cx="29" cy="18" r="3" opacity=".6"></circle></svg><span>{% trans "Heat" %}</span></label>
+      {% if layer.is_point %}<label class="rb-view"><input type="radio" name="{{ p }}view" value="hotspots"{% if layer.view == 'hotspots' %} checked{% endif %}><svg class="rb-view-spots" width="40" height="28" viewBox="0 0 40 28" aria-hidden="true"><circle cx="13" cy="12" r="8"></circle><circle cx="30" cy="18" r="5.5" opacity=".7"></circle><text x="13" y="15.5" font-size="9" text-anchor="middle">1</text><text x="30" y="21" font-size="7" text-anchor="middle">2</text></svg><span>{% trans "Hot spots" %}</span></label>{% endif %}
+      <label class="rb-view"><input type="radio" name="{{ p }}view" value="squares"{% if layer.view == 'squares' %} checked{% endif %}><svg width="40" height="28" viewBox="0 0 40 28" aria-hidden="true"><rect x="6" y="2" width="9" height="8" opacity=".35"></rect><rect x="16" y="2" width="9" height="8" opacity=".8"></rect><rect x="16" y="11" width="9" height="8"></rect><rect x="26" y="11" width="9" height="8" opacity=".5"></rect><rect x="6" y="20" width="9" height="6" opacity=".5"></rect></svg><span>{% trans "Squares" %}</span></label>
+      <label class="rb-view"><input type="radio" name="{{ p }}view" value="marks"{% if layer.view == 'marks' %} checked{% endif %}><svg width="40" height="28" viewBox="0 0 40 28" aria-hidden="true"><circle cx="8" cy="8" r="3"></circle><circle cx="19" cy="18" r="3"></circle><circle cx="27" cy="7" r="3"></circle><circle cx="33" cy="20" r="3"></circle><circle cx="13" cy="22" r="3"></circle></svg><span>{% trans "Marks" %}</span></label>
+    </div>
+
+    <div class="rb-opt rb-opt-heat">
+      <div class="lb-field">
+        <label>{% trans "Spread" %}</label>
+        <div class="lb-seg lb-seg--panel" role="radiogroup" aria-label="{% trans 'Spread' %}">
+          <label><input type="radio" name="{{ p }}spread" value="tight"{% if o.spread == 'tight' %} checked{% endif %}> {% trans "Tight" %}</label>
+          <label><input type="radio" name="{{ p }}spread" value="medium"{% if o.spread == 'medium' %} checked{% endif %}> {% trans "Medium" %}</label>
+          <label><input type="radio" name="{{ p }}spread" value="wide"{% if o.spread == 'wide' %} checked{% endif %}> {% trans "Wide" %}</label>
+        </div>
+      </div>
+      <div class="lb-field">
+        <label for="rb-{{ b.pk }}-{{ p }}strength">{% trans "Strength" %}</label>
+        <input type="range" class="custom-range" id="rb-{{ b.pk }}-{{ p }}strength" name="{{ p }}strength" min="1" max="5" step="1" value="{{ o.strength }}" data-autosave="change">
+      </div>
+    </div>
+
+    {% if layer.is_point %}
+    <div class="rb-opt rb-opt-hotspots">
+      <div class="lb-field">
+        <label>{% trans "How many to number" %}</label>
+        <div class="lb-seg lb-seg--panel" role="radiogroup" aria-label="{% trans 'How many to number' %}">
+          <label><input type="radio" name="{{ p }}top" value="5"{% if o.top == 5 %} checked{% endif %}> {% trans "Top 5" %}</label>
+          <label><input type="radio" name="{{ p }}top" value="10"{% if o.top == 10 %} checked{% endif %}> {% trans "Top 10" %}</label>
+          <label><input type="radio" name="{{ p }}top" value="0"{% if o.top == 0 %} checked{% endif %}> {% trans "All" %}</label>
+        </div>
+      </div>
+      <div class="lb-field">
+        <label>{% trans "What counts as one place" %}</label>
+        <div class="lb-seg lb-seg--panel" role="radiogroup" aria-label="{% trans 'What counts as one place' %}">
+          <label><input type="radio" name="{{ p }}place" value="60"{% if o.place == 60 %} checked{% endif %}> 60 m</label>
+          <label><input type="radio" name="{{ p }}place" value="120"{% if o.place == 120 %} checked{% endif %}> 120 m</label>
+          <label><input type="radio" name="{{ p }}place" value="300"{% if o.place == 300 %} checked{% endif %}> 300 m</label>
+        </div>
+      </div>
+      <label class="lb-check"><input type="checkbox" name="{{ p }}list"{% if o.list %} checked{% endif %}> {% trans "List the places under the map" %}</label>
+      <label class="lb-check"><input type="checkbox" name="{{ p }}shade"{% if o.shade %} checked{% endif %}> {% trans "Shading under the numbers" %}</label>
+    </div>
+    {% endif %}
+
+    <div class="rb-opt rb-opt-squares">
+      <div class="lb-field">
+        <label>{% trans "Size of a square" %}</label>
+        <div class="lb-seg lb-seg--panel" role="radiogroup" aria-label="{% trans 'Size of a square' %}">
+          <label><input type="radio" name="{{ p }}cell" value="auto"{% if o.cell == 'auto' %} checked{% endif %}> {% trans "Automatic" %}</label>
+          <label><input type="radio" name="{{ p }}cell" value="finer"{% if o.cell == 'finer' %} checked{% endif %}> {% trans "Finer" %}</label>
+          <label><input type="radio" name="{{ p }}cell" value="coarser"{% if o.cell == 'coarser' %} checked{% endif %}> {% trans "Coarser" %}</label>
+        </div>
+        <div class="lb-hint">{% trans "Automatic picks the finest squares that still show most respondents. Finer squares hide more people." %}</div>
+      </div>
+    </div>
+
+    <div class="rb-opt rb-opt-marks">
+      <div class="lb-field">
+        <label>{% trans "Size" %}</label>
+        <div class="lb-seg lb-seg--panel" role="radiogroup" aria-label="{% trans 'Size' %}">
+          <label><input type="radio" name="{{ p }}size" value="s"{% if o.size == 's' %} checked{% endif %}> {% trans "Small" %}</label>
+          <label><input type="radio" name="{{ p }}size" value="m"{% if o.size == 'm' %} checked{% endif %}> {% trans "Medium" %}</label>
+          <label><input type="radio" name="{{ p }}size" value="l"{% if o.size == 'l' %} checked{% endif %}> {% trans "Large" %}</label>
+        </div>
+      </div>
+      <label class="lb-check"><input type="checkbox" name="{{ p }}solid"{% if o.solid %} checked{% endif %}> {% trans "Solid colour (overlaps do not come out darker)" %}</label>
+    </div>
+
+    {% if not layer.is_spray and layer.subs %}
+    <div class="lb-field rb-opt rb-opt-fields">
+      <label>{% trans "Sum up in a place" %}</label>
+      <div class="lb-hint mt-0 mb-1">{% trans "The sub-questions answered about the marks of a place: shown in the list of hot spots and when a square is clicked. Free-text answers can't be shown." %}</div>
+      {% for sq in layer.subs %}
+      <label class="lb-check"><input type="checkbox" name="{% if layer.primary %}geo_label_fields{% else %}{{ p }}fields{% endif %}" value="{{ sq.code }}"{% if sq.code in layer.fields %} checked{% endif %}> {{ sq.name }}</label>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="rb-layer-look">
+      <div class="lb-field">
+        <label for="rb-{{ b.pk }}-{{ p }}color">{% trans "Layer colour" %}</label>
+        <input type="color" id="rb-{{ b.pk }}-{{ p }}color" name="{{ p }}color" value="{{ layer.color }}">
+      </div>
+      <div class="lb-field">
+        <label for="rb-{{ b.pk }}-{{ p }}name">{% trans "Name in the legend" %}</label>
+        <input type="text" class="form-control form-control-sm" id="rb-{{ b.pk }}-{{ p }}name" name="{{ p }}name" value="{{ layer.name }}" maxlength="80" placeholder="{{ layer.title|striptags|truncatechars:60 }}">
+      </div>
+    </div>
+
+    {% comment %}The survey owner's choice (owner decision 2026-11-16): the marks themselves leave the
+    workspace — as marks, or as the heat and hot spots made of every one of them. Off by default.{% endcomment %}
+    <label class="lb-switch" data-testid="pr-map-marks"><span>{% trans "Use every mark" %}<small>{% trans "draw from every place, line or area as it was drawn, not only from areas several people marked. A mark can point at someone's home: you decide whether that is right for this survey." %}</small></span>
+      <input type="checkbox" name="{{ layer.marks_field }}"{% if layer.marks %} checked{% endif %}><span class="lb-toggle" aria-hidden="true"></span></label>
+    {% if not layer.primary %}<label class="lb-check rb-layer-remove"><input type="checkbox" name="{{ p }}remove"> {% trans "Remove this layer" %}</label>{% endif %}
+  </div>
+</details>
+{% endwith %}

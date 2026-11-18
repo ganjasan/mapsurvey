@@ -73,7 +73,8 @@ def run(report):
                         '%(n)s quote carries an email address, a phone number or a web address.',
                         '%(n)s quotes carry an email address, a phone number or a web address.',
                         len(carrying)) % {'n': len(carrying)}, block.id, 'open', carrying))
-        if block.block_type == 'map' and (block.config or {}).get('marks'):
+        if block.block_type == 'map' and ((block.config or {}).get('marks') or any(
+                layer.get('marks') for layer in (block.config or {}).get('layers') or [])):
             privacy.append(Item('marks', _('“%(title)s” shows every mark as it was drawn, not squares. '
                                            'A mark can point at someone\'s home.') % {'title': _label(block)},
                                 block.id, 'open'))

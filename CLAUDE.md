@@ -1252,6 +1252,34 @@ markup when a save is answered while the caret is elsewhere. A value mixing text
 the opening keep the reveal-the-token-on-focus behaviour. Do not put the token list back into the Key
 numbers panel (owner, 2026-11-18: "friendly to the least experienced user").
 
+**Map views (change `report-map-views`, #753)**: a map block is drawn as the maps of the hand-made customer
+reports were — `ReportBlock.config = {view, marks, frame}`, cleaned by `story.clean_config('map')`. `view` is
+`heat` (a new block's default) | `hotspots` (point questions only; `story.map_view` falls back to heat) |
+`squares` | `marks`; no `view` = a block made before (squares, or marks). The payload keeps TWO keys apart:
+`data_type` is what it carries (`grid` cells that count respondents, or `marks`), `display` is the look — the
+page script, the PDF (`pdf.map_image`), the PNG and the CSV all read `display` and fall back to `data_type`.
+Privacy did not move: heat is the K-grid blurred, a hot spot (`data.aggregate.hotspots`, 120 m cells merged
+within 150 m, computed in Data) needs K distinct respondents and two marks; `config.marks` ("Use every mark",
+the owner's 2026-11-16 switch) builds both from every mark, the Marks view forces it on, and `checks` still asks
+for the author's confirmation. `frame` = `[w, s, e, n]`, kept on the canvas by "Keep this view" (the shared
+renderer leaves its Leaflet map on the holder as `_rpMap`; `report_builder.js` writes the hidden
+`data-input="map_frame"`). The hot-spot list and the legend are written by `reports/_block.html` (translated),
+never by the script. The report file carries `view` and `frame` (and a cross-tab's `display`).
+**Layers (change `report-map-layers`, same issue)**: a map is a list of layers — the block's own question
+(`dataset` + `question_code`, its look at the top level of `config`) is the first and drawn on top;
+`config['layers']` holds up to `story.MAX_MAP_LAYERS` other map questions `{id, survey (uuid), code, view, marks,
+color, name, opts, fields}` (`services._checked_layers` refuses anything that is not a map question of the
+workspace). One function builds every layer, `render._map_layer(question, look, color, label_fields)`; the
+block's own sits at the top level of the payload (so the PDF, the CSV and old readers of `cells` / `marks` keep
+working), the others under `layers`, plus `legend_rows` / `spot_lists` for the template. A view's settings are
+`opts` (`story.MAP_OPTS`, defaults never stored): heat `spread` / `strength`, hot spots `top` / `place` / `list`
+/ `shade`, squares `cell`, marks `size` / `solid`. In the panel each layer is a card
+(`reports/editor/_map_layer.html`) whose fields carry its prefix (`map_` for the own layer, `L<id>_` for the
+others) inside the block's ONE form; the settings of the views not chosen stay in the form, hidden by `:has()`.
+A new field of a layer is a key in `clean_map_look` + a line in `editor_views._map_look` + the card. Privacy is
+per layer (`marks` on the layer); `checks` looks at every layer. Not built: context layers from Data, areas
+shaded by answers, a filter by sub-question, reordering layers, layers / views through REST and MCP.
+
 **Home survey and source surveys (change `report-home-survey`, #739)**: `Report.survey` is a DEFAULT, never
 a restriction — blocks name their own dataset, so one report may read several surveys. The block library
 has "Charts and maps from" (`source=<uuid>`, posted with the tile; tiles for another survey come from the

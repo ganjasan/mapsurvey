@@ -114,6 +114,27 @@ report builder. `block` is a payload of reports.render.ReportService, `page` the
   {% endif %}
 {% elif block.block_type == 'map' %}
   <div class="map-holder" id="map-{{ block.id }}"{% if block.description %} role="img" aria-label="{{ block.description }}"{% endif %}></div>
+  {% comment %}How the author drew it (change report-map-views): the script shades or numbers the map
+  from the payload; the legend, the lists of places and the notes are written here. A map of one
+  layer drawn as squares or marks keeps the caption the script adds.{% endcomment %}
+  {% if block.legend_rows %}
+  <div class="rp-legend" data-map="map-{{ block.id }}">
+    {% for row in block.legend_rows %}<label class="rp-lg">{% if block.toggle %}<input type="checkbox" checked data-layer="{{ row.id }}" aria-label="{{ row.name }}">{% endif %}<i class="rp-lg-i rp-lg-{{ row.display }}" style="background:{{ row.color }}" aria-hidden="true"></i><span>{{ row.name }}</span></label>{% endfor %}
+  </div>
+  {% for list in block.spot_lists %}{% include "reports/_map_spots.html" with spots=list.spots color=list.color map_id=list.map_id heading=list.name %}{% endfor %}
+  <div class="kanon-note">{% trans "Darker where more people marked." %}{% if block.spot_lists %} {% trans "Numbers: the places most people marked, largest first." %}{% endif %}{% if block.any_grid and block.k > 1 %} {% blocktrans with k=block.k %}Areas marked by fewer than {{ k }} people are not shown.{% endblocktrans %}{% endif %}</div>
+  {% else %}
+  {% if block.display == 'hotspots' %}
+  {% if block.hotspots and block.opts.list %}
+  {% include "reports/_map_spots.html" with spots=block.hotspots color=block.color map_id=block.map_id %}
+  {% elif not block.hotspots and block.count %}
+  <div class="kanon-note">{% if block.data_type == 'marks' %}{% trans "No two marks are close enough to make a hot spot yet." %}{% else %}{% blocktrans with k=block.k %}No place was marked by {{ k }} or more people yet, so no hot spot is numbered.{% endblocktrans %}{% endif %}</div>
+  {% endif %}
+  {% endif %}
+  {% if block.count and block.display == 'heat' or block.count and block.display == 'hotspots' %}
+  <div class="kanon-note rp-map-legend"><i style="background:{{ block.color }}" aria-hidden="true"></i>{% if block.display == 'hotspots' %}{% trans "Numbers: the places most people marked, largest first. Shading: darker where more people marked." %}{% else %}{% trans "Darker where more people marked." %}{% endif %}{% if block.data_type == 'grid' %}{% if block.note %} {{ block.note }}{% elif block.k > 1 %} {% blocktrans with k=block.k %}Areas marked by fewer than {{ k }} people are not shown.{% endblocktrans %}{% endif %}{% endif %}</div>
+  {% endif %}
+  {% endif %}
   {% if block.description %}<p class="block-note">{{ block.description }}</p>{% endif %}
 {% elif block.block_type == 'budget' and block.budget %}
   {% comment %}Budget block (change budget-question): server-rendered bars, no script.{% endcomment %}

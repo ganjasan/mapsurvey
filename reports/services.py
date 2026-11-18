@@ -85,6 +85,12 @@ def add_image_block(actor, report, image=None):
     return block
 
 
+def new_map_config():
+    """What a new map block is drawn as (change report-map-views): soft shading over areas with
+    at least K respondents. Blocks made before keep their squares."""
+    return {'view': 'heat'}
+
+
 def add_question_block(actor, report, question, **values):
     """A block about one question: a map for a geo question, a chart, an objects table or a
     budget otherwise. The question must belong to a survey of the report's workspace."""
@@ -96,6 +102,8 @@ def add_question_block(actor, report, question, **values):
     if dataset.organization_id != report.organization_id:
         raise ReportRefused('other_workspace', _('Only a survey of this workspace can be shown.'))
     order = values.pop('order', None)
+    if block_type == 'map':
+        values.setdefault('config', new_map_config())
     block = ReportBlock.objects.create(
         report=report, block_type=block_type, dataset=dataset, question_code=question.code,
         order=_next_order(report) if order is None else order, **values)
@@ -241,12 +249,40 @@ def set_compare(actor, block, question_code, other_survey):
     return block
 
 
+def _checked_layers(block, layers):
+    """The layers of a map that name a map question of the report's workspace (survey uuid +
+    code), each once and never the block's own question; the rest are dropped."""
+    from django.core.exceptions import ValidationError
+    from data.questions import question_of
+    from survey.models import SurveyHeader
+    from survey.question_types import GEO_TYPES
+    from survey.versioning import canonical_of
+    own = (str(block.dataset.survey.uuid) if block.dataset_id and block.dataset.survey_id else '', block.question_code)
+    out, seen = [], {own}
+    for layer in layers:
+        try:
+            survey = SurveyHeader.objects.filter(uuid=layer.get('survey'), deleted_at__isnull=True,
+                                                 organization_id=block.report.organization_id).first()
+        except (ValueError, ValidationError):
+            survey = None
+        canonical = canonical_of(survey) if survey is not None else None
+        question = question_of(canonical, layer.get('code')) if canonical is not None else None
+        key = (str(canonical.uuid), layer.get('code')) if canonical is not None else None
+        if question is None or question.input_type not in GEO_TYPES or key in seen:
+            continue
+        seen.add(key)
+        out.append(dict(layer, survey=key[0]))
+    return out
+
+
 def update_block(actor, block, *, viz=None, is_hidden=None, custom_title=None, content=None, image=None,
                  geo_label_fields=None, basemap=None, valid_basemaps=(), width=None, items=None,
-                 show_marks=None, quote_style=None, crosstab_display=None):
+                 show_marks=None, quote_style=None, crosstab_display=None, map_display=None):
     """Update what the block's type allows; None leaves a value as it is. `items` is the list of a
     key-numbers or quotes block ([{value, label}] / [{text, source, ref?}]); `quote_style` the
-    layout of a quotes block (list | pull | cards)."""
+    layout of a quotes block (list | pull | cards); `map_display` what changes of a map's config —
+    `view`, `frame` (empty clears it), `color`, `name`, `opts`, `legend`, `scale`, `toggle`, `layers`
+    (the whole list of the other layers); keys left out stay."""
     from reports import story
     if viz is not None:
         block.viz = viz
@@ -281,8 +317,25 @@ def update_block(actor, block, *, viz=None, is_hidden=None, custom_title=None, c
             block.geo_label_fields = list(geo_label_fields)
         if basemap in set(valid_basemaps):
             block.basemap = basemap
-        if show_marks is not None:
-            block.config = story.clean_config('map', {'marks': bool(show_marks)})
+        if show_marks is not None or map_display is not None:
+            before = dict(block.config or {})
+            config = dict(before)
+            for key in ('view', 'frame', 'color', 'name', 'opts', 'legend', 'scale', 'toggle', 'layers'):
+                if map_display is not None and key in map_display:
+                    config[key] = map_display[key]
+            if show_marks is not None:
+                config['marks'] = bool(show_marks)
+                if not show_marks and config.get('view') == 'marks':
+                    if before.get('view') == 'marks' or not before.get('view') and before.get('marks'):
+                        # The marks were showing and the author switched them off.
+                        config['view'] = 'heat' if before.get('view') else 'squares'
+                    # else: the author just picked the Marks view, which switches them on.
+            config = story.clean_config('map', config)
+            if config.get('layers'):
+                config['layers'] = _checked_layers(block, config['layers'])
+                if not config['layers']:
+                    del config['layers']
+            block.config = config
     block.save()
     bump_version(block.report)
     return block

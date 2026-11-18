@@ -225,15 +225,35 @@ def _extent(features):
     return (min(xs), min(ys), max(xs), max(ys)) if xs else None
 
 
+def _map_layers(payload):
+    """The layers of a map payload, the block's own first (change report-map-views)."""
+    return [payload] + list(payload.get('layers') or [])
+
+
+def _layer_parts(layer):
+    """(marks?, display, the features to paint, the numbered spots) of one map layer."""
+    marks = layer.get('data_type') == 'marks'
+    display = layer.get('display') or ('marks' if marks else 'squares')
+    spots = (layer.get('hotspots') or []) if display == 'hotspots' else []
+    features = ((layer.get('marks') if marks else layer.get('cells')) or {}).get('features') or []
+    if display == 'hotspots' and (layer.get('opts') or {}).get('shade') is False:
+        features = []
+    return marks, display, features, spots
+
+
 def map_image(payload, survey=None):
-    """A Pillow image of a map block: the basemap of the block's extent with its cells (opacity
-    by respondents) or its marks painted over it. None when the block has nothing to draw."""
+    """A Pillow image of a map block: the basemap of the block's frame (else of everything there is
+    to draw) with each layer painted over it, the block's own on top — cells by respondents, marks,
+    either blurred into shading, and numbered hot spots. None when the block has nothing to draw."""
     from PIL import Image as PilImage
-    from PIL import ImageDraw
+    from PIL import ImageDraw, ImageFilter
     from survey.print import static_map
-    marks = payload.get('data_type') == 'marks'
-    features = ((payload.get('marks') if marks else payload.get('cells')) or {}).get('features') or []
-    box = _extent(features)
+    layers = _map_layers(payload)
+    everything = []
+    for layer in layers:
+        _marks, _display, features, spots = _layer_parts(layer)
+        everything += features + [{'geometry': {'coordinates': [s['lng'], s['lat']]}} for s in spots]
+    box = tuple(payload['frame']) if payload.get('frame') else _extent(everything)
     if box is None:
         return None
     zoom = min(static_map._zoom_for_bounds(box, MAP_W, MAP_H), 17)
@@ -247,36 +267,59 @@ def map_image(payload, survey=None):
         base = None
     scale = static_map.SCALE
     size = (MAP_W * scale, MAP_H * scale)
-    image = base.resize(size) if base is not None else PilImage.new('RGB', size, '#eef0f3')
-    overlay = PilImage.new('RGBA', size, (0, 0, 0, 0))
-    draw = ImageDraw.Draw(overlay)
+    image = (base.resize(size) if base is not None else PilImage.new('RGB', size, '#eef0f3')).convert('RGBA')
     cx, cy = static_map.project(spec.lng, spec.lat, zoom)
 
     def px(lng, lat):
         x, y = static_map.project(lng, lat, zoom)
         return ((x - cx + MAP_W / 2) * scale, (y - cy + MAP_H / 2) * scale)
 
-    rgb = static_map._hex(payload.get('color') or '#4f46e5')[:3]
-    peak = payload.get('max') or 1
-    for feature in features:
-        geometry = feature.get('geometry') or {}
-        kind, coords = geometry.get('type'), geometry.get('coordinates')
-        if kind == 'Polygon' and not marks:
-            share = ((feature.get('properties') or {}).get('respondents') or 0) / peak
-            draw.polygon([px(x, y) for x, y in coords[0]], fill=rgb + (int(255 * (0.18 + 0.6 * share)),))
-        elif kind == 'Point':
-            x, y = px(*coords[:2])
-            draw.ellipse([x - 7, y - 7, x + 7, y + 7], fill=rgb + (200,), outline=(255, 255, 255, 255), width=2)
-        elif kind == 'MultiPoint':
-            for point in coords:
-                x, y = px(*point[:2])
-                draw.ellipse([x - 3, y - 3, x + 3, y + 3], fill=rgb + (110,))
-        elif kind == 'LineString':
-            draw.line([px(x, y) for x, y in coords], fill=rgb + (170,), width=5)
-        elif kind == 'Polygon':
-            draw.polygon([px(x, y) for x, y in coords[0]], fill=rgb + (40,), outline=rgb + (190,))
-    image = PilImage.alpha_composite(image.convert('RGBA'), overlay).convert('RGB')
-    return image
+    badges = []
+    for layer in reversed(layers):                  # bottom first
+        marks, display, features, spots = _layer_parts(layer)
+        soft = display in ('heat', 'hotspots')
+        overlay = PilImage.new('RGBA', size, (0, 0, 0, 0))
+        draw = ImageDraw.Draw(overlay)
+        rgb = static_map._hex(layer.get('color') or '#4f46e5')[:3]
+        peak = layer.get('max') or 1
+        for feature in features:
+            geometry = feature.get('geometry') or {}
+            kind, coords = geometry.get('type'), geometry.get('coordinates')
+            if kind == 'Polygon' and not marks:
+                share = ((feature.get('properties') or {}).get('respondents') or 0) / peak
+                draw.polygon([px(x, y) for x, y in coords[0]], fill=rgb + (int(255 * (0.18 + 0.6 * share)),))
+            elif kind == 'Point' and soft:
+                x, y = px(*coords[:2])
+                draw.ellipse([x - 26, y - 26, x + 26, y + 26], fill=rgb + (150,))
+            elif kind == 'Point':
+                x, y = px(*coords[:2])
+                draw.ellipse([x - 7, y - 7, x + 7, y + 7], fill=rgb + (200,), outline=(255, 255, 255, 255), width=2)
+            elif kind == 'MultiPoint':
+                for point in coords:
+                    x, y = px(*point[:2])
+                    draw.ellipse([x - 3, y - 3, x + 3, y + 3], fill=rgb + (110,))
+            elif kind == 'LineString':
+                draw.line([px(x, y) for x, y in coords], fill=rgb + (170,), width=9 if soft else 5)
+            elif kind == 'Polygon':
+                draw.polygon([px(x, y) for x, y in coords[0]], fill=rgb + (70 if soft else 40,),
+                             outline=None if soft else rgb + (190,))
+        if soft:
+            # Heat: the same cells or marks, blurred into shading.
+            overlay = overlay.filter(ImageFilter.GaussianBlur(14 if marks else 10))
+        image = PilImage.alpha_composite(image, overlay)
+        badges.append((rgb, spots))
+    # Numbered like the lists under the map, over every layer; the busiest spot is the largest.
+    overlay = PilImage.new('RGBA', size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(overlay)
+    font = static_map._font(13 * scale)
+    for rgb, spots in badges:
+        peak = max((s['respondents'] for s in spots), default=1) or 1
+        for spot in reversed(spots):
+            x, y = px(spot['lng'], spot['lat'])
+            r = (11 + 7 * spot['respondents'] / peak) * scale
+            draw.ellipse([x - r, y - r, x + r, y + r], fill=rgb + (255,), outline=(255, 255, 255, 255), width=2 * scale)
+            draw.text((x, y), str(spot['rank']), fill=(255, 255, 255, 255), font=font, anchor='mm')
+    return PilImage.alpha_composite(image, overlay).convert('RGB')
 
 
 def _picture(image, width, max_height=95 * mm):
@@ -376,10 +419,26 @@ def _block(payload, block, styles, width, survey):
         image = map_image(payload, survey)
         if image is not None:
             out.append(_picture(image, width))
+        layers = _map_layers(payload)
+        several = len(layers) > 1
+        soft = False
+        for layer in layers:
+            marks, display, _features, spots = _layer_parts(layer)
+            soft = soft or display in ('heat', 'hotspots')
+            if several:
+                out.append(_p(str(layer.get('name') or ''), styles['cellbold']))
+            if (layer.get('opts') or {}).get('list', True):
+                for spot in spots:
+                    out.append(_p(_('%(rank)s. %(p)s respondents, %(n)s marks')
+                                  % {'rank': spot['rank'], 'p': spot['respondents'], 'n': spot['marks']}, styles['note']))
         marks = payload.get('data_type') == 'marks'
-        line = (_('%(n)s marks from %(p)s respondents') % {'n': payload.get('count'), 'p': payload.get('respondents_total')}
-                if marks else _('%(p)s respondents; darker squares were marked by more people')
-                % {'p': payload.get('respondents_total')})
+        if soft:
+            line = _('%(p)s respondents; darker where more people marked') % {'p': payload.get('respondents_total')}
+        elif marks:
+            line = _('%(n)s marks from %(p)s respondents') % {'n': payload.get('count'), 'p': payload.get('respondents_total')}
+        else:
+            line = (_('%(p)s respondents; darker squares were marked by more people')
+                    % {'p': payload.get('respondents_total')})
         out.append(_p(' · '.join(x for x in (payload.get('description'), line, payload.get('note'),
                                              '© Mapbox © OpenStreetMap' if image is not None else '') if x),
                       styles['note']))

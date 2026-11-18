@@ -115,6 +115,33 @@
 .rb-view:has(input:checked) { border: 2px solid var(--color-action); background: var(--color-action-soft); color: var(--color-action); font-weight: 600; padding: 7px 3px; }
 .rb-view:has(input:focus-visible) { outline: 2px solid var(--color-action-line); outline-offset: 2px; }
 
+.rb-view svg.rb-view-spots text { fill: var(--surface); font-weight: 700; }
+/* the layers of a map block in its panel: one card each; only the chosen view's settings show */
+.rb-layers { display: grid; gap: 8px; }
+.rb-layer { border: 1px solid var(--color-border); border-radius: 10px; background: var(--surface); }
+.rb-layer > summary { display: flex; align-items: center; gap: 10px; padding: 9px 12px; cursor: pointer; list-style: none; }
+.rb-layer > summary::-webkit-details-marker { display: none; }
+.rb-layer > summary::after { content: "›"; margin-left: auto; color: var(--color-text-muted); transition: transform .12s; }
+.rb-layer[open] > summary::after { transform: rotate(90deg); }
+.rb-layer-dot { flex: none; width: 14px; height: 14px; border-radius: 50%; }
+.rb-layer-t { min-width: 0; font-weight: 600; font-size: 13.5px; line-height: 1.3; }
+.rb-layer-t small { display: block; font-weight: 400; font-size: 12px; color: var(--color-text-muted); }
+.rb-layer-body { padding: 4px 12px 12px; display: grid; gap: 10px; border-top: 1px solid var(--color-border); }
+.rb-layer-body .rb-views { margin-top: 10px; }
+.rb-layer-body .lb-field { margin-bottom: 0; }
+.rb-opt { display: none; }
+.rb-layer:has(input[value="heat"]:checked) .rb-opt-heat,
+.rb-layer:has(input[value="hotspots"]:checked) .rb-opt-hotspots,
+.rb-layer:has(input[value="squares"]:checked) .rb-opt-squares,
+.rb-layer:has(input[value="marks"]:checked) .rb-opt-marks,
+.rb-layer:has(input[value="hotspots"]:checked) .rb-opt-fields,
+.rb-layer:has(input[value="squares"]:checked) .rb-opt-fields { display: grid; gap: 8px; }
+.rb-layer-look { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: end; }
+.rb-layer-look input[type="color"] { width: 44px; height: 31px; padding: 2px; border: 1px solid var(--color-border-strong); border-radius: 6px; background: var(--surface); }
+.rb-layer-remove { color: var(--color-danger); }
+/* a map block's own actions, under the map */
+.rb-map-bar { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-top: 8px; }
+
 /* the answers a quote is picked from, in the block's panel */
 .rb-qpick-controls { display: grid; gap: 6px; margin-bottom: 8px; }
 .rb-qpick-count { margin: 0 0 6px; }

@@ -14721,3 +14721,205 @@ msgstr "Mitu inimest andis iga vastuste paari nende hulgas, kes vastasid mõlema
 #, python-format
 msgid "Shown as counts: a group smaller than %(k)s keeps the total of everyone unpublished, and a share needs it."
 msgstr "Näidatud arvudena: rühm, mis on väiksem kui %(k)s, jätab koguarvu avaldamata, aga osakaal vajab seda."
+
+#: report-map-views (#753)
+msgid "Heat"
+msgstr "Soojus"
+
+#: report-map-views (#753)
+msgid "Hot spots"
+msgstr "Tulipunktid"
+
+#: report-map-views (#753)
+msgid "Squares"
+msgstr "Ruudud"
+
+#: report-map-views (#753)
+msgid "Marks"
+msgstr "Kõik märgid"
+
+#: report-map-views (#753)
+#, python-format
+msgid "Readers see only areas marked by at least %(k)s respondents, unless you switch on “Use every mark”. Exact points stay in Responses and the export."
+msgstr "Lugejad näevad ainult alasid, mille on märkinud vähemalt %(k)s vastajat, kui „Kasuta iga märki“ pole sisse lülitatud. Täpsed punktid jäävad vastustesse ja eksporti."
+
+#: report-map-views (#753)
+msgid "Use every mark"
+msgstr "Kasuta iga märki"
+
+#: report-map-views (#753)
+msgid "draw from every place, line or area as it was drawn, not only from areas several people marked. A mark can point at someone's home: you decide whether that is right for this survey."
+msgstr "joonista igast kohast, joonest või alast nii, nagu see joonistati, mitte ainult aladest, mida märkis mitu inimest. Märk võib osutada kellegi kodule: sina otsustad, kas see sobib selle küsitluse jaoks."
+
+#: report-map-views (#753)
+msgid "Move and zoom the map, then keep the view: readers see this part of it."
+msgstr "Liiguta ja suumi kaarti ning jäta vaade alles: lugejad näevad seda osa."
+
+#: report-map-views (#753)
+msgid "Keep this view"
+msgstr "Jäta see vaade"
+
+#: report-map-views (#753)
+msgid "Show all the answers"
+msgstr "Näita kõiki vastuseid"
+
+#: report-map-views (#753)
+#, python-format
+msgid "average %(mean)s"
+msgstr "keskmine %(mean)s"
+
+#: report-map-views (#753)
+msgid "No two marks are close enough to make a hot spot yet."
+msgstr "Ükski kaks märki pole veel piisavalt lähestikku, et moodustada tulipunkti."
+
+#: report-map-views (#753)
+#, python-format
+msgid "No place was marked by %(k)s or more people yet, so no hot spot is numbered."
+msgstr "Ühtegi kohta pole veel märkinud %(k)s või rohkem inimest, seega pole ükski tulipunkt nummerdatud."
+
+#: report-map-views (#753)
+msgid "Numbers: the places most people marked, largest first. Shading: darker where more people marked."
+msgstr "Numbrid: kohad, mida märkis kõige rohkem inimesi, suurim esimesena. Varjutus: tumedam seal, kus märkis rohkem inimesi."
+
+#: report-map-views (#753)
+msgid "Darker where more people marked."
+msgstr "Tumedam seal, kus märkis rohkem inimesi."
+
+#: report-map-views (#753)
+#, python-format
+msgid "Areas marked by fewer than %(k)s people are not shown."
+msgstr "Alasid, mida märkis vähem kui %(k)s inimest, ei näidata."
+
+#: report-map-views (#753)
+#, python-format
+msgid "%(rank)s. %(p)s respondents, %(n)s marks"
+msgstr "%(rank)s. Vastajaid: %(p)s, märke: %(n)s"
+
+#: report-map-views (#753)
+#, python-format
+msgid "%(p)s respondents; darker where more people marked"
+msgstr "Vastajaid: %(p)s; tumedam seal, kus märkis rohkem inimesi"
+
+#: report-map-views (#753)
+#, python-format
+msgid "%(n)s mark"
+msgid_plural "%(n)s marks"
+msgstr[0] "%(n)s märk"
+msgstr[1] "%(n)s märki"
+
+#: report-map-layers (#753)
+msgid "Layers of the map"
+msgstr "Kaardi kihid"
+
+#: report-map-layers (#753)
+msgid "+ Add a map question as a layer…"
+msgstr "+ Lisa kaardiküsimus kihina…"
+
+#: report-map-layers (#753)
+#, python-format
+msgid "Readers see only areas marked by at least %(k)s respondents, unless you switch on “Use every mark” for a layer. Exact points stay in Responses and the export."
+msgstr "Lugejad näevad ainult alasid, mille on märkinud vähemalt %(k)s vastajat, kui kihil pole „Kasuta iga märki“ sisse lülitatud. Täpsed punktid jäävad vastustesse ja eksporti."
+
+#: report-map-layers (#753)
+msgid "Legend under the map"
+msgstr "Legend kaardi all"
+
+#: report-map-layers (#753)
+msgid "Scale bar"
+msgstr "Mõõtkavajoon"
+
+#: report-map-layers (#753)
+msgid "Readers can switch layers on and off"
+msgstr "Lugejad saavad kihte sisse ja välja lülitada"
+
+#: report-map-layers (#753)
+msgid "Spread"
+msgstr "Hajuvus"
+
+#: report-map-layers (#753)
+msgid "Tight"
+msgstr "Tihe"
+
+#: report-map-layers (#753)
+msgid "Strength"
+msgstr "Tugevus"
+
+#: report-map-layers (#753)
+msgid "How many to number"
+msgstr "Mitu nummerdada"
+
+#: report-map-layers (#753)
+msgid "Top 5"
+msgstr "Esimesed 5"
+
+#: report-map-layers (#753)
+msgid "Top 10"
+msgstr "Esimesed 10"
+
+#: report-map-layers (#753)
+msgid "What counts as one place"
+msgstr "Mis loetakse üheks kohaks"
+
+#: report-map-layers (#753)
+msgid "List the places under the map"
+msgstr "Loetle kohad kaardi all"
+
+#: report-map-layers (#753)
+msgid "Shading under the numbers"
+msgstr "Varjutus numbrite all"
+
+#: report-map-layers (#753)
+msgid "Size of a square"
+msgstr "Ruudu suurus"
+
+#: report-map-layers (#753)
+msgid "Automatic"
+msgstr "Automaatne"
+
+#: report-map-layers (#753)
+msgid "Finer"
+msgstr "Peenem"
+
+#: report-map-layers (#753)
+msgid "Coarser"
+msgstr "Jämedam"
+
+#: report-map-layers (#753)
+msgid "Automatic picks the finest squares that still show most respondents. Finer squares hide more people."
+msgstr "Automaatne valib kõige peenemad ruudud, mis näitavad veel enamikku vastajatest. Peenemad ruudud peidavad rohkem inimesi."
+
+#: report-map-layers (#753)
+msgid "Solid colour (overlaps do not come out darker)"
+msgstr "Läbipaistmatu värv (kattuvused ei tule tumedamad)"
+
+#: report-map-layers (#753)
+msgid "Sum up in a place"
+msgstr "Võta koha kohta kokku"
+
+#: report-map-layers (#753)
+msgid "The sub-questions answered about the marks of a place: shown in the list of hot spots and when a square is clicked. Free-text answers can't be shown."
+msgstr "Koha märkide kohta vastatud alaküsimused: näidatakse tulipunktide loendis ja ruudul klõpsates. Vabatekstilisi vastuseid näidata ei saa."
+
+#: report-map-layers (#753)
+msgid "Layer colour"
+msgstr "Kihi värv"
+
+#: report-map-layers (#753)
+msgid "Name in the legend"
+msgstr "Nimi legendis"
+
+#: report-map-layers (#753)
+msgid "Remove this layer"
+msgstr "Eemalda see kiht"
+
+#: report-map-layers (#753)
+msgid "Numbers: the places most people marked, largest first."
+msgstr "Numbrid: kohad, mida märkis kõige rohkem inimesi, suurim esimesena."
+
+#: report-map-layers (#753)
+msgid "Small"
+msgstr "Väike"
+
+#: report-map-layers (#753)
+msgid "Large"
+msgstr "Suur"

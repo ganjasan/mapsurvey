@@ -44,6 +44,24 @@ body.rp{margin:0;background:#fff;}
 .rp .pr-table td{padding:8px 10px;border-bottom:1px solid var(--border);}
 .rp .pr-table td.val{text-align:right;font-variant-numeric:tabular-nums;color:var(--text-secondary);white-space:nowrap;}
 .rp .map-holder{height:380px;border-radius:10px;overflow:hidden;}
+/* a map drawn as shading or numbered hot spots (change report-map-views) */
+.rp .rp-spot-icon{background:none;border:0;}
+.rp .rp-spot-badge{display:flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%;color:#fff;font-weight:700;font-size:.78rem;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);box-sizing:border-box;}
+.rp .rp-spots{list-style:none;margin:12px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px 18px;font-size:.88rem;}
+.rp .rp-spots li{display:flex;gap:10px;align-items:flex-start;cursor:pointer;line-height:1.35;}
+.rp .rp-spots li:hover .rp-spot-t b{text-decoration:underline;}
+.rp .rp-spot-n{flex:none;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.72rem;}
+.rp .rp-spot-t{color:var(--text-secondary);}
+.rp .rp-spot-t b{color:var(--text-primary);font-weight:600;}
+.rp .rp-spot-t small{display:block;font-size:.78rem;}
+.rp .rp-legend{display:flex;flex-wrap:wrap;gap:4px 20px;margin-top:10px;font-size:.88rem;}
+.rp .rp-lg{display:inline-flex;align-items:center;gap:8px;margin:0;min-height:28px;font-weight:400;cursor:default;}
+.rp .rp-lg input{width:16px;height:16px;margin:0;cursor:pointer;}
+.rp .rp-lg-i{flex:none;width:22px;height:10px;border-radius:5px;opacity:.6;}
+.rp .rp-lg-hotspots,.rp .rp-lg-marks{width:13px;height:13px;border-radius:50%;opacity:1;}
+.rp .rp-lg-squares{width:13px;height:13px;border-radius:2px;}
+.rp .rp-spots-h{margin:12px 0 -6px;font-size:.8rem;font-weight:700;color:var(--text-secondary);}
+.rp .rp-map-legend i{display:inline-block;width:22px;height:10px;border-radius:5px;margin-right:8px;vertical-align:baseline;opacity:.55;}
 .rp .block.image-block figure{margin:0;}
 .rp .block.image-block img{display:block;width:100%;height:auto;border-radius:8px;}
 .rp .block.image-block figcaption{padding-top:8px;color:var(--text-secondary);font-size:.85rem;line-height:1.45;}
