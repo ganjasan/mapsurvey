@@ -1,0 +1,7 @@
+{% load i18n %}{% comment %}The numbered places of one map layer, under the map (change report-map-views): `spots` of
+data.aggregate.hotspots, `color` the layer's, `map_id` the holder a click on a row moves. `heading`
+names the layer when a map lists more than one.{% endcomment %}
+{% if heading %}<div class="rp-spots-h">{{ heading }}</div>{% endif %}
+<ol class="rp-spots" data-map="{{ map_id }}">
+  {% for s in spots %}<li data-lng="{{ s.lng|stringformat:'s' }}" data-lat="{{ s.lat|stringformat:'s' }}"><span class="rp-spot-n" style="background:{{ color }}">{{ s.rank }}</span><span class="rp-spot-t"><b>{% blocktrans count n=s.respondents %}{{ n }} respondent{% plural %}{{ n }} respondents{% endblocktrans %}</b> · {% blocktrans count n=s.marks %}{{ n }} mark{% plural %}{{ n }} marks{% endblocktrans %}{% for f in s.fields %}<small>{{ f.name }}: {% if f.mean is not None %}{% blocktrans with mean=f.mean %}average {{ mean }}{% endblocktrans %}{% else %}{% for v in f.values %}{{ v.label }} {{ v.display }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}</small>{% endfor %}</span></li>{% endfor %}
+</ol>

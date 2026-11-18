@@ -17,6 +17,7 @@ import statistics
 import uuid as uuid_module
 
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.text import slugify
 
@@ -451,24 +452,89 @@ class ReportService:
         }
 
     def _map_payload(self, block):
-        """A public map is a grid of cells counting distinct respondents, cells under K left
-        out (change data-aggregate, ADR-001 §6.3): never an answer's own geometry. Each cell's
-        popup carries the masked distribution of the creator-selected sub-question fields."""
+        """A map block: its own question and the other layers its author put on the same map
+        (change report-map-views). Each layer is `_map_layer`; the block's own sits at the top
+        level of the payload, the others under `layers`, drawn beneath it in that order."""
+        from reports import story
         question = block.question
+        config = getattr(block, 'config', None) or {}
         payload = self._base(block)
         payload['basemap'] = block.basemap or 'streets'
         payload['description'] = _localize(getattr(block, 'content', None) or {}, self.lang)
-        payload['data_type'] = 'grid'
-        payload['color'] = (question.color if (question.color or '').lower() not in ('', '#000000')
-                            else ('#d6336c' if question.input_type == 'spraycan' else '#4f46e5'))
+        color = config.get('color') or (
+            question.color if (question.color or '').lower() not in ('', '#000000')
+            else ('#d6336c' if question.input_type == 'spraycan' else '#4f46e5'))
         view = getattr(block, 'view', None)
-        if view is not None and view.color:
-            payload['color'] = view.color
+        if view is not None and view.color and not config.get('color'):
+            color = view.color
+        payload.update(self._map_layer(question, config, color, block.geo_label_fields))
+        payload['name'] = config.get('name') or question.name
+        if config.get('frame'):
+            payload['frame'] = config['frame']
+        payload['legend'] = config.get('legend') is not False
+        payload['scale'] = config.get('scale') is not False
+        payload['toggle'] = bool(config.get('toggle'))
+        layers = []
+        for index, layer in enumerate(config.get('layers') or []):
+            other = self._layer_question(block, layer)
+            if other is None:
+                continue            # its survey or question is gone: the layer is left out
+            data = self._map_layer(other, layer,
+                                   layer.get('color') or story.MAP_LAYER_COLORS[index % len(story.MAP_LAYER_COLORS)],
+                                   layer.get('fields'))
+            data.update(id=layer['id'], name=layer.get('name') or other.name)
+            layers.append(data)
+        payload['map_id'] = 'map-%s' % block.id
+        if layers:
+            payload['layers'] = layers
+            # What the page writes under a map of several layers: the legend (also where readers
+            # switch layers when the author lets them) and a list of places per layer that has one.
+            drawn = [dict(payload, id='main')] + layers
+            if payload['legend'] or payload['toggle']:
+                payload['legend_rows'] = [{'id': layer['id'], 'name': layer['name'], 'color': layer['color'],
+                                           'display': layer['display']} for layer in drawn]
+            else:
+                payload['legend_rows'] = []
+            payload['spot_lists'] = [
+                {'name': layer['name'], 'color': layer['color'], 'spots': layer['hotspots'],
+                 'map_id': payload['map_id']}
+                for layer in drawn if layer.get('hotspots') and layer['opts']['list']]
+            payload['any_grid'] = any(layer['data_type'] == 'grid' for layer in drawn)
+        return payload
+
+    def _layer_question(self, block, layer):
+        """The map question a layer names (survey uuid + code), of the report's workspace."""
+        from data.questions import question_of
+        from survey.models import SurveyHeader
+        try:
+            survey = SurveyHeader.objects.filter(uuid=layer.get('survey'),
+                                                 organization_id=self.report.organization_id).first()
+        except (ValueError, ValidationError):
+            survey = None
+        if survey is None:
+            return None
+        question = question_of(canonical_of(survey), layer.get('code'))
+        return question if question is not None and question.input_type in GEO_INPUT_TYPES else None
+
+    # Squares finer or coarser than the automatic choice (data.aggregate.GRID_STEPS).
+    MAP_CELL_STEPS = {'finer': (80, 40, 20, 10), 'coarser': (20, 10, 5, 3)}
+
+    def _map_layer(self, question, look, color, label_fields):
+        """One layer of a map. By default cells that count DISTINCT respondents, cells under K left
+        out (change data-aggregate, ADR-001 §6.3) — never an answer's own geometry; with `marks`
+        the geometry of every mark and nothing else. `display` is the look (story.map_view),
+        `data_type` what the layer carries; `opts` what the page needs of the view's settings."""
+        from reports import story
+        look = look or {}
+        opts = story.map_opts(look)
+        layer = {'data_type': 'grid', 'color': color, 'k': self.k,
+                 'display': story.map_view(look, question.input_type),
+                 'opts': {key: opts[key] for key in ('spread', 'strength', 'list', 'shade', 'size', 'solid')}}
         empty = {'type': 'FeatureCollection', 'features': []}
         if question.input_type not in GEO_INPUT_TYPES:
-            payload.update(cells=empty, max=0, respondents_total=0, respondents_hidden=0, cell_m=0, count=0,
-                           note='')
-            return payload
+            layer.update(cells=empty, max=0, respondents_total=0, respondents_hidden=0, cell_m=0, count=0,
+                         note='')
+            return layer
         geo_field = geo_column(question.input_type)
         rows = list(
             self._answers(question)
@@ -476,24 +542,27 @@ class ReportService:
             .only('id', 'survey_session_id', geo_field)
         )
         members = [(a.survey_session_id, a.id, getattr(a, geo_field)) for a in rows]
-        if (getattr(block, 'config', None) or {}).get('marks'):
+        label_codes = set(label_fields or []) if question.input_type != 'spraycan' else set()
+        clean_ids = self._scope_of(question)[1]
+        if layer['display'] == 'hotspots':
+            layer['hotspots'] = self._hotspots(question, members, bool(look.get('marks')), opts, label_codes)
+        if look.get('marks'):
             # The author chose to show the marks themselves (owner decision 2026-11-16: the survey
             # owner answers for that). Geometry only — no answer id, no session, no sub-answers.
-            payload['data_type'] = 'marks'
-            payload['marks'] = {'type': 'FeatureCollection', 'features': [
+            layer['data_type'] = 'marks'
+            layer['marks'] = {'type': 'FeatureCollection', 'features': [
                 {'type': 'Feature', 'properties': {}, 'geometry': json.loads(geom.geojson)}
                 for _session, _answer, geom in members]}
-            payload['count'] = len(members)
-            payload['respondents_total'] = len({session for session, _a, _g in members})
-            payload['spray'] = question.input_type == 'spraycan'
-            return payload
-        from data.aggregate import grid
+            layer['count'] = len(members)
+            layer['respondents_total'] = len({session for session, _a, _g in members})
+            layer['spray'] = question.input_type == 'spraycan'
+            return layer
+        from data.aggregate import GRID_STEPS, grid
         # The finest grid that shows most respondents (change data-grid-adaptive), cells under K
         # omitted whatever the size.
-        cells = grid(members, k=self.k, min_cell_m=self.MAP_GRID_MIN_M)
-        label_codes = set(block.geo_label_fields or []) if question.input_type != 'spraycan' else set()
-        fields_by_cell = (self._cell_fields(cells['cells'], label_codes, self._scope_of(question)[1])
-                          if label_codes else {})
+        cells = grid(members, k=self.k, min_cell_m=self.MAP_GRID_MIN_M,
+                     steps=self.MAP_CELL_STEPS.get(opts['cell'], GRID_STEPS))
+        fields_by_cell = self._cell_fields(cells['cells'], label_codes, clean_ids) if label_codes else {}
         from django.contrib.gis.geos import Polygon as GeosPolygon
         features = []
         for i, cell in enumerate(cells['cells']):
@@ -505,14 +574,31 @@ class ReportService:
                 'geometry': json.loads(GeosPolygon.from_bbox(cell['bbox']).geojson),
                 'properties': props,
             })
-        payload['cells'] = {'type': 'FeatureCollection', 'features': features}
-        payload['max'] = cells['max']
-        payload['respondents_total'] = cells['respondents_total']
-        payload['respondents_hidden'] = cells['respondents_hidden']
-        payload['cell_m'] = cells['cell_m']
-        payload['count'] = len(features)
-        payload['note'] = self._grid_note(cells)
-        return payload
+        layer['cells'] = {'type': 'FeatureCollection', 'features': features}
+        layer['max'] = cells['max']
+        layer['respondents_total'] = cells['respondents_total']
+        layer['respondents_hidden'] = cells['respondents_hidden']
+        layer['cell_m'] = cells['cell_m']
+        layer['count'] = len(features)
+        layer['note'] = self._grid_note(cells)
+        return layer
+
+    def _hotspots(self, question, members, every_mark, opts, label_codes):
+        """The places the marks gather, ranked (data.aggregate.hotspots): at least K respondents
+        each unless the author shows the marks themselves. Each carries the masked summary of the
+        sub-questions the author picked, as a square does."""
+        from data.aggregate import hotspots
+        spots = hotspots(members, k=self.k, every_mark=every_mark, cell_m=float(opts['place']),
+                         merge_m=opts['place'] * 1.25, limit=opts['top'] or 50)
+        fields = (self._cell_fields(spots, label_codes, self._scope_of(question)[1])
+                  if label_codes and spots else {})
+        out = []
+        for i, spot in enumerate(spots):
+            item = {key: spot[key] for key in ('rank', 'lng', 'lat', 'respondents', 'marks')}
+            if fields.get(i):
+                item['fields'] = fields[i]
+            out.append(item)
+        return out
 
     def _grid_note(self, cells):
         """What a visitor reads under (or instead of) the map: why nothing or not everyone shows."""
@@ -826,6 +912,7 @@ def scaffold_report(survey):
             blocks.append(ReportBlock(
                 report=report, dataset=dataset_for(question), question_code=question.code,
                 block_type=block_type, order=len(blocks),
+                config={'view': 'heat'} if block_type == 'map' else {},   # services.new_map_config
             ))
         ReportBlock.objects.bulk_create(blocks)
     # Stamped even when blocks already existed (hand-built report): it is

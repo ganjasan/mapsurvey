@@ -14879,3 +14879,206 @@ msgstr "Ile osób udzieliło każdej pary odpowiedzi spośród tych, które odpo
 #, python-format
 msgid "Shown as counts: a group smaller than %(k)s keeps the total of everyone unpublished, and a share needs it."
 msgstr "Pokazano jako liczby: grupa mniejsza niż %(k)s sprawia, że suma nie jest publikowana, a udział jej wymaga."
+
+#: report-map-views (#753)
+msgid "Heat"
+msgstr "Ciepło"
+
+#: report-map-views (#753)
+msgid "Hot spots"
+msgstr "Skupiska"
+
+#: report-map-views (#753)
+msgid "Squares"
+msgstr "Kwadraty"
+
+#: report-map-views (#753)
+msgid "Marks"
+msgstr "Wszystkie znaczniki"
+
+#: report-map-views (#753)
+#, python-format
+msgid "Readers see only areas marked by at least %(k)s respondents, unless you switch on “Use every mark”. Exact points stay in Responses and the export."
+msgstr "Czytelnicy widzą tylko obszary zaznaczone przez co najmniej %(k)s respondentów, chyba że włączysz „Użyj każdego znacznika”. Dokładne punkty zostają w Odpowiedziach i w eksporcie."
+
+#: report-map-views (#753)
+msgid "Use every mark"
+msgstr "Użyj każdego znacznika"
+
+#: report-map-views (#753)
+msgid "draw from every place, line or area as it was drawn, not only from areas several people marked. A mark can point at someone's home: you decide whether that is right for this survey."
+msgstr "rysuj z każdego miejsca, linii lub obszaru tak, jak został narysowany, a nie tylko z obszarów zaznaczonych przez kilka osób. Znacznik może wskazywać czyjś dom: to Ty decydujesz, czy to właściwe dla tej ankiety."
+
+#: report-map-views (#753)
+msgid "Move and zoom the map, then keep the view: readers see this part of it."
+msgstr "Przesuń i przybliż mapę, a potem zachowaj widok: czytelnicy zobaczą tę część."
+
+#: report-map-views (#753)
+msgid "Keep this view"
+msgstr "Zachowaj ten widok"
+
+#: report-map-views (#753)
+msgid "Show all the answers"
+msgstr "Pokaż wszystkie odpowiedzi"
+
+#: report-map-views (#753)
+#, python-format
+msgid "average %(mean)s"
+msgstr "średnia %(mean)s"
+
+#: report-map-views (#753)
+msgid "No two marks are close enough to make a hot spot yet."
+msgstr "Żadne dwa znaczniki nie leżą jeszcze dość blisko siebie, by utworzyć skupisko."
+
+#: report-map-views (#753)
+#, python-format
+msgid "No place was marked by %(k)s or more people yet, so no hot spot is numbered."
+msgstr "Żadnego miejsca nie zaznaczyło jeszcze %(k)s lub więcej osób, więc żadne skupisko nie ma numeru."
+
+#: report-map-views (#753)
+msgid "Numbers: the places most people marked, largest first. Shading: darker where more people marked."
+msgstr "Liczby: miejsca zaznaczone przez najwięcej osób, od największego. Cieniowanie: ciemniej tam, gdzie zaznaczyło więcej osób."
+
+#: report-map-views (#753)
+msgid "Darker where more people marked."
+msgstr "Ciemniej tam, gdzie zaznaczyło więcej osób."
+
+#: report-map-views (#753)
+#, python-format
+msgid "Areas marked by fewer than %(k)s people are not shown."
+msgstr "Obszary zaznaczone przez mniej niż %(k)s osób nie są pokazywane."
+
+#: report-map-views (#753)
+#, python-format
+msgid "%(rank)s. %(p)s respondents, %(n)s marks"
+msgstr "%(rank)s. Respondenci: %(p)s, znaczniki: %(n)s"
+
+#: report-map-views (#753)
+#, python-format
+msgid "%(p)s respondents; darker where more people marked"
+msgstr "Respondenci: %(p)s; ciemniej tam, gdzie zaznaczyło więcej osób"
+
+#: report-map-views (#753)
+#, python-format
+msgid "%(n)s mark"
+msgid_plural "%(n)s marks"
+msgstr[0] "%(n)s znacznik"
+msgstr[1] "%(n)s znaczniki"
+msgstr[2] "%(n)s znaczników"
+
+#: report-map-layers (#753)
+msgid "Layers of the map"
+msgstr "Warstwy mapy"
+
+#: report-map-layers (#753)
+msgid "+ Add a map question as a layer…"
+msgstr "+ Dodaj pytanie mapowe jako warstwę…"
+
+#: report-map-layers (#753)
+#, python-format
+msgid "Readers see only areas marked by at least %(k)s respondents, unless you switch on “Use every mark” for a layer. Exact points stay in Responses and the export."
+msgstr "Czytelnicy widzą tylko obszary zaznaczone przez co najmniej %(k)s respondentów, chyba że włączysz dla warstwy „Użyj każdego znacznika”. Dokładne punkty zostają w Odpowiedziach i w eksporcie."
+
+#: report-map-layers (#753)
+msgid "Legend under the map"
+msgstr "Legenda pod mapą"
+
+#: report-map-layers (#753)
+msgid "Scale bar"
+msgstr "Podziałka"
+
+#: report-map-layers (#753)
+msgid "Readers can switch layers on and off"
+msgstr "Czytelnicy mogą włączać i wyłączać warstwy"
+
+#: report-map-layers (#753)
+msgid "Spread"
+msgstr "Rozmycie"
+
+#: report-map-layers (#753)
+msgid "Tight"
+msgstr "Wąskie"
+
+#: report-map-layers (#753)
+msgid "Strength"
+msgstr "Intensywność"
+
+#: report-map-layers (#753)
+msgid "How many to number"
+msgstr "Ile ponumerować"
+
+#: report-map-layers (#753)
+msgid "Top 5"
+msgstr "Pierwsze 5"
+
+#: report-map-layers (#753)
+msgid "Top 10"
+msgstr "Pierwsze 10"
+
+#: report-map-layers (#753)
+msgid "What counts as one place"
+msgstr "Co liczy się jako jedno miejsce"
+
+#: report-map-layers (#753)
+msgid "List the places under the map"
+msgstr "Wypisz miejsca pod mapą"
+
+#: report-map-layers (#753)
+msgid "Shading under the numbers"
+msgstr "Cieniowanie pod liczbami"
+
+#: report-map-layers (#753)
+msgid "Size of a square"
+msgstr "Rozmiar kwadratu"
+
+#: report-map-layers (#753)
+msgid "Automatic"
+msgstr "Automatyczny"
+
+#: report-map-layers (#753)
+msgid "Finer"
+msgstr "Drobniejsze"
+
+#: report-map-layers (#753)
+msgid "Coarser"
+msgstr "Grubsze"
+
+#: report-map-layers (#753)
+msgid "Automatic picks the finest squares that still show most respondents. Finer squares hide more people."
+msgstr "Tryb automatyczny wybiera najdrobniejsze kwadraty, które wciąż pokazują większość respondentów. Drobniejsze kwadraty ukrywają więcej osób."
+
+#: report-map-layers (#753)
+msgid "Solid colour (overlaps do not come out darker)"
+msgstr "Pełny kolor (nakładające się miejsca nie są ciemniejsze)"
+
+#: report-map-layers (#753)
+msgid "Sum up in a place"
+msgstr "Podsumuj dla miejsca"
+
+#: report-map-layers (#753)
+msgid "The sub-questions answered about the marks of a place: shown in the list of hot spots and when a square is clicked. Free-text answers can't be shown."
+msgstr "Pytania podrzędne dotyczące znaczników danego miejsca: widoczne na liście skupisk i po kliknięciu kwadratu. Odpowiedzi tekstowych nie można pokazać."
+
+#: report-map-layers (#753)
+msgid "Layer colour"
+msgstr "Kolor warstwy"
+
+#: report-map-layers (#753)
+msgid "Name in the legend"
+msgstr "Nazwa w legendzie"
+
+#: report-map-layers (#753)
+msgid "Remove this layer"
+msgstr "Usuń tę warstwę"
+
+#: report-map-layers (#753)
+msgid "Numbers: the places most people marked, largest first."
+msgstr "Liczby: miejsca zaznaczone przez najwięcej osób, od największego."
+
+#: report-map-layers (#753)
+msgid "Small"
+msgstr "Mały"
+
+#: report-map-layers (#753)
+msgid "Large"
+msgstr "Duży"

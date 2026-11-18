@@ -449,3 +449,331 @@ class TokensTest(_Live):
         ReportBlock.objects.create(report=loose, block_type='text', content={'en': '<p>{responses} answered</p>'})
         html = self.client.get(reverse('public_results', args=['no-home'])).content.decode()
         self.assertIn('{responses} answered', html)
+
+
+class MapViewsTest(_Live):
+    """Requirement: A map block is drawn the way its author chooses (change report-map-views)."""
+
+    def setUp(self):
+        super().setUp()
+        # Three people marked the same corner; a fourth marked a place two kilometres away, alone.
+        for s in self.respond(3):
+            Answer.objects.create(survey_session=s, question=self.spot, point=Point(30.0, 59.0))
+        self.lone = self.respond(1)[0]
+        Answer.objects.create(survey_session=self.lone, question=self.spot, point=Point(30.04, 59.0))
+        self.add(question_id=self.spot.pk)
+        self.block = self.report.blocks.get(block_type='map')
+        self.edit = reverse('editor_report_block_edit', args=[self.report.uuid, self.block.pk])
+
+    def save(self, **post):
+        post.setdefault('show_marks_present', '1')
+        return self.client.post(self.edit, post, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+
+    def payload(self):
+        self.block.refresh_from_db()
+        return ReportService(self.report)._build_block(self.block)
+
+    def test_a_new_map_is_shading_over_areas_with_k_people(self):
+        """
+        GIVEN a point question answered by four people
+        WHEN an editor adds its map block
+        THEN the block is drawn as heat from cells that count respondents, and carries no mark
+        """
+        payload = self.payload()
+        self.assertEqual((payload['display'], payload['data_type']), ('heat', 'grid'))
+        self.assertNotIn('marks', payload)
+        self.assertNotIn('30.04', json.dumps(payload))
+
+    def test_a_block_made_before_keeps_its_squares(self):
+        """
+        GIVEN a map block with no display settings
+        WHEN it is rendered
+        THEN it is drawn as squares, and with the marks switched on as marks
+        """
+        old = ReportBlock.objects.create(report=self.report, block_type='map', question=self.spot)
+        self.assertEqual(ReportService(self.report)._build_block(old)['display'], 'squares')
+        old.config = {'marks': True}
+        old.save()
+        self.assertEqual(ReportService(self.report)._build_block(old)['display'], 'marks')
+
+    def test_hot_spots_need_k_respondents(self):
+        """
+        GIVEN three people marked one corner and one person another place, and K is 3
+        WHEN the editor picks Hot spots
+        THEN one spot is numbered, with 3 respondents and 3 marks, and the lone mark is nowhere in the payload
+        """
+        self.save(map_view='hotspots')
+        payload = self.payload()
+        self.assertEqual(payload['display'], 'hotspots')
+        self.assertEqual([(s['rank'], s['respondents'], s['marks']) for s in payload['hotspots']], [(1, 3, 3)])
+        self.assertAlmostEqual(payload['hotspots'][0]['lng'], 30.0, places=4)
+        self.assertNotIn('30.04', json.dumps(payload))
+        self.assertNotIn('members', json.dumps(payload))
+
+    def test_hot_spots_of_every_mark(self):
+        """
+        GIVEN two people marked a third place, fewer than K
+        WHEN the editor picks Hot spots and switches "Use every mark" on
+        THEN that place is numbered too, and off again it is not
+        """
+        for s in self.respond(2):
+            Answer.objects.create(survey_session=s, question=self.spot, point=Point(30.1, 59.0))
+        self.save(map_view='hotspots')
+        self.assertEqual(len(self.payload()['hotspots']), 1)
+        self.save(map_view='hotspots', show_marks='on')
+        payload = self.payload()
+        self.assertEqual([(s['respondents'], s['marks']) for s in payload['hotspots']], [(3, 3), (2, 2)])
+        self.assertEqual(payload['data_type'], 'marks')
+
+    def test_the_marks_view_switches_the_marks_on(self):
+        """
+        GIVEN a map drawn as heat with the marks off
+        WHEN the editor picks the Marks view
+        THEN every mark is in the payload and publishing asks for the author's confirmation;
+             switching "Use every mark" off returns the block to heat over cells
+        """
+        from reports import checks
+        self.save(map_view='marks')
+        payload = self.payload()
+        self.assertEqual((payload['display'], payload['data_type']), ('marks', 'marks'))
+        self.assertEqual(len(payload['marks']['features']), 4)
+        self.assertTrue(checks.run(self.report).needs_ack)
+        self.save(map_view='marks')            # the box is no longer ticked
+        payload = self.payload()
+        self.assertEqual((payload['display'], payload['data_type']), ('heat', 'grid'))
+        self.assertFalse(checks.run(self.report).needs_ack)
+
+    def test_hot_spots_are_a_point_questions(self):
+        """
+        GIVEN a map block of a line question
+        WHEN Hot spots is posted for it
+        THEN the block is drawn as heat
+        """
+        from django.contrib.gis.geos import LineString
+        route = Question.objects.create(survey_section=self.section, code='ROUTE', name='Route', input_type='line')
+        for s in self.respond(3):
+            Answer.objects.create(survey_session=s, question=route, line=LineString((30.0, 59.0), (30.01, 59.0)))
+        block = ReportBlock.objects.create(report=self.report, block_type='map', question=route,
+                                           config={'view': 'hotspots'})
+        payload = ReportService(self.report)._build_block(block)
+        self.assertEqual(payload['display'], 'heat')
+        self.assertNotIn('hotspots', payload)
+
+    def test_the_author_frames_the_map(self):
+        """
+        GIVEN a map block
+        WHEN the editor keeps a view, then posts a broken one, then clears it
+        THEN the payload carries the kept frame, keeps it against nonsense, and loses it when cleared
+        """
+        self.save(map_view='heat', map_frame='29.9,58.9,30.2,59.1')
+        self.assertEqual(self.payload()['frame'], [29.9, 58.9, 30.2, 59.1])
+        self.block.refresh_from_db()
+        self.assertEqual(self.block.config, {'view': 'heat', 'frame': [29.9, 58.9, 30.2, 59.1]})
+        self.save(map_view='heat', map_frame='')
+        self.assertNotIn('frame', self.payload())
+        self.save(map_view='heat', map_frame='30.2,58.9,29.9,59.1')      # east of west
+        self.assertNotIn('frame', self.payload())
+
+    def test_the_page_lists_the_hot_spots(self):
+        """
+        GIVEN a map drawn as hot spots
+        WHEN a reader opens the report
+        THEN the page lists the spot with its counts under the map, and the legend says what the shading is
+        """
+        self.save(map_view='hotspots')
+        html = self.page()
+        self.assertIn('class="rp-spots"', html)
+        self.assertIn('<b>3 respondents</b> · 3 marks', html)
+        self.assertIn('1 respondent is in an area with fewer than 3 people and is not shown.', html)
+
+    def test_the_panel_offers_the_views(self):
+        """
+        GIVEN a map block of a point question drawn as heat
+        WHEN the builder is opened
+        THEN its panel offers Heat (chosen), Hot spots, Squares and Marks, and the block a "Keep this view" button
+        """
+        html = self.client.get(reverse('editor_report', args=[self.report.uuid]) + '?block=%s' % self.block.pk).content.decode()
+        self.assertIn('name="map_view" value="heat" checked', html)
+        for view in ('hotspots', 'squares', 'marks'):
+            self.assertIn('name="map_view" value="%s"' % view, html)
+        self.assertIn('data-map-keep', html)
+
+    def test_the_report_file_keeps_view_and_frame(self):
+        """
+        GIVEN a map drawn as hot spots with a kept frame, and a cross-tab drawn as a ranking
+        WHEN the report is copied
+        THEN the copy's map has the same view and frame and its cross-tab is still a ranking
+        """
+        from reports import drafting
+        self.respond(3, transport=1, age=1)
+        self.save(map_view='hotspots', map_frame='29.9,58.9,30.2,59.1')
+        xtab = services.add_view_block(self.actor, self.report, 'crosstab', self.survey, rows='TRANSPORT', columns='AGE')
+        services.update_block(self.actor, xtab, crosstab_display={'view': 'ranking', 'values': 'count'})
+        copy = drafting.copy_report(self.actor, self.report)
+        self.assertEqual(copy.blocks.get(block_type='map').config,
+                         {'view': 'hotspots', 'frame': [29.9, 58.9, 30.2, 59.1]})
+        self.assertEqual(copy.blocks.get(block_type='crosstab').config, {'view': 'ranking', 'values': 'count'})
+
+    def test_the_csv_of_hot_spots(self):
+        """
+        GIVEN a map drawn as hot spots
+        WHEN its table is made for the CSV
+        THEN it lists rank, place and counts of the numbered spots only
+        """
+        from reports import tables
+        self.save(map_view='hotspots')
+        rows = tables.rows_of(self.payload())
+        self.assertEqual(rows[0], ['rank', 'longitude', 'latitude', 'respondents', 'marks'])
+        self.assertEqual([r[0] for r in rows[1:]], [1])
+        self.assertEqual(rows[1][3:], [3, 3])
+
+
+class MapLayersTest(_Live):
+    """Requirement: A map block shows several questions as layers (change report-map-views)."""
+
+    def setUp(self):
+        super().setUp()
+        self.cool = Question.objects.create(survey_section=self.section, code='COOL', name='Where is it cool',
+                                            input_type='point')
+        for s in self.respond(4):
+            Answer.objects.create(survey_session=s, question=self.spot, point=Point(30.0, 59.0))
+            Answer.objects.create(survey_session=s, question=self.cool, point=Point(30.02, 59.0))
+        lone = self.respond(1)[0]
+        Answer.objects.create(survey_session=lone, question=self.cool, point=Point(30.09, 59.0))
+        self.add(question_id=self.spot.pk)
+        self.block = self.report.blocks.get(block_type='map')
+        self.edit = reverse('editor_report_block_edit', args=[self.report.uuid, self.block.pk])
+
+    def save(self, **post):
+        for key in ('show_marks_present', 'map_layers_present'):
+            post.setdefault(key, '1')
+        post.setdefault('map_view', 'heat')
+        for key in ('map_legend', 'map_scale', 'map_list', 'map_shade'):
+            post.setdefault(key, 'on')
+        return self.client.post(self.edit, post, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+
+    def payload(self):
+        self.block.refresh_from_db()
+        return ReportService(self.report)._build_block(self.block)
+
+    def add_cool(self):
+        self.save(map_add_layer='%s:COOL' % self.survey.uuid)
+        self.block.refresh_from_db()
+        return self.block.config['layers'][0]
+
+    def test_adding_a_layer(self):
+        """
+        GIVEN a map of one question
+        WHEN the editor adds another map question of the survey as a layer
+        THEN the payload carries that question as a second layer, drawn as heat over cells, in its own colour
+        """
+        layer = self.add_cool()
+        self.assertEqual((layer['id'], layer['code'], layer['view']), ('a', 'COOL', 'heat'))
+        payload = self.payload()
+        self.assertEqual([(l['id'], l['name'], l['display'], l['data_type']) for l in payload['layers']],
+                         [('a', 'Where is it cool', 'heat', 'grid')])
+        self.assertNotEqual(payload['layers'][0]['color'], payload['color'])
+        self.assertNotIn('30.09', json.dumps(payload))        # the lone mark of the second question
+        self.assertEqual([row['name'] for row in payload['legend_rows']], ['Where', 'Where is it cool'])
+
+    def test_a_layer_has_its_own_view_and_settings(self):
+        """
+        GIVEN a map with a second layer
+        WHEN the editor draws that layer as hot spots of 300 m places, in orange, under another name
+        THEN the layer's payload has its spots, colour and name, and the block's own layer is unchanged
+        """
+        self.add_cool()
+        self.save(La_view='hotspots', La_place='300', La_top='10', La_color='#c2410c', La_name='Cool places',
+                  La_list='on', La_shade='on')
+        payload = self.payload()
+        layer = payload['layers'][0]
+        self.assertEqual((layer['display'], layer['color'], layer['name']), ('hotspots', '#c2410c', 'Cool places'))
+        self.assertEqual([(s['rank'], s['respondents']) for s in layer['hotspots']], [(1, 4)])
+        self.assertEqual(payload['display'], 'heat')
+        self.block.refresh_from_db()
+        self.assertEqual(self.block.config['layers'][0]['opts'], {'top': 10, 'place': 300})
+        self.assertEqual([l['name'] for l in payload['spot_lists']], ['Cool places'])
+
+    def test_the_page_draws_the_legend(self):
+        """
+        GIVEN a map of two layers whose author lets readers switch them
+        WHEN a reader opens the report
+        THEN the page has a legend naming both layers, each with a box to switch it
+        """
+        self.add_cool()
+        self.save(map_toggle='on', La_view='heat')
+        html = self.page()
+        self.assertIn('class="rp-legend"', html)
+        self.assertIn('data-layer="main"', html)
+        self.assertIn('data-layer="a"', html)
+        self.assertIn('<span>Where is it cool</span>', html)
+
+    def test_marks_of_a_layer_need_the_authors_confirmation(self):
+        """
+        GIVEN a map whose own layer is built from areas
+        WHEN the editor switches "Use every mark" on for the second layer only
+        THEN that layer carries every mark, the first none, and publishing asks for confirmation
+        """
+        from reports import checks
+        self.add_cool()
+        self.save(La_view='heat', La_marks='on')
+        payload = self.payload()
+        self.assertEqual(payload['data_type'], 'grid')
+        self.assertEqual((payload['layers'][0]['data_type'], len(payload['layers'][0]['marks']['features'])),
+                         ('marks', 5))
+        self.assertTrue(checks.run(self.report).needs_ack)
+
+    def test_removing_a_layer(self):
+        """
+        GIVEN a map with a second layer
+        WHEN the editor ticks "Remove this layer"
+        THEN the map is one layer again
+        """
+        self.add_cool()
+        self.save(La_view='heat', La_remove='on')
+        self.block.refresh_from_db()
+        self.assertNotIn('layers', self.block.config)
+        self.assertNotIn('layers', self.payload())
+
+    def test_a_layer_must_be_a_map_question_of_the_workspace(self):
+        """
+        GIVEN a map block
+        WHEN a choice question, the block's own question, and a question of another workspace are posted as layers
+        THEN none of them is added
+        """
+        other_org, other_owner = make_pro_org('Elsewhere', 'elsewhereowner')
+        foreign, section = make_v1_survey(other_org, other_owner, name='Foreign', status='published')
+        Question.objects.create(survey_section=section, code='PIN', name='Pin', input_type='point')
+        for value in ('%s:TRANSPORT' % self.survey.uuid, '%s:SPOT' % self.survey.uuid, '%s:PIN' % foreign.uuid):
+            self.save(map_add_layer=value)
+            self.block.refresh_from_db()
+            self.assertNotIn('layers', self.block.config, value)
+
+    def test_view_settings_of_the_blocks_own_layer(self):
+        """
+        GIVEN a map drawn as heat
+        WHEN the editor sets a wide spread, strength 5, hides the legend and names the layer
+        THEN the payload carries those settings and the config stores only what differs from the defaults
+        """
+        self.save(map_spread='wide', map_strength='5', map_name='Too hot', map_legend='', map_color='#c2410c')
+        payload = self.payload()
+        self.assertEqual((payload['opts']['spread'], payload['opts']['strength']), ('wide', 5))
+        self.assertEqual((payload['name'], payload['color'], payload['legend']), ('Too hot', '#c2410c', False))
+        self.block.refresh_from_db()
+        self.assertEqual(self.block.config, {'view': 'heat', 'color': '#c2410c', 'name': 'Too hot',
+                                             'opts': {'spread': 'wide', 'strength': 5}, 'legend': False})
+
+    def test_a_copy_onto_another_survey_reads_it_in_every_layer(self):
+        """
+        GIVEN a map of two layers
+        WHEN the report is copied onto a survey that has both questions
+        THEN the copy's second layer names that survey
+        """
+        from reports import drafting
+        self.add_cool()
+        nxt, section = make_v1_survey(self.org, self.owner, name='Riverside 2', status='published')
+        for code, name in (('SPOT', 'Where'), ('COOL', 'Where is it cool')):
+            Question.objects.create(survey_section=section, code=code, name=name, input_type='point')
+        copy = drafting.copy_report(self.actor, self.report, onto=nxt)
+        config = copy.blocks.get(block_type='map').config
+        self.assertEqual([(l['survey'], l['code']) for l in config['layers']], [(str(nxt.uuid), 'COOL')])

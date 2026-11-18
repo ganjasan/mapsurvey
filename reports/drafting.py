@@ -56,7 +56,11 @@ class _Draft:
         return self.add('numbers', config=clean_config('numbers', {'items': items}), content={'en': note})
 
     def question(self, question, **fields):
-        return self.add(block_type_for_question(question), question=question, **fields)
+        block_type = block_type_for_question(question)
+        if block_type == 'map':
+            from reports.services import new_map_config
+            fields.setdefault('config', new_map_config())
+        return self.add(block_type, question=question, **fields)
 
 
 def _answered(survey):

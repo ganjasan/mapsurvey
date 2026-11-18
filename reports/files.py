@@ -10,8 +10,12 @@ here leaves as one and comes back into any workspace its member may edit.
     heading → "text"; text → "html"; image → "image" (path in the ZIP), "caption";
     numbers → "items" [{value, label}], "note"; quotes → "items" [{text, source}];
     chart / map / objects / budget → "survey" (uuid), "question" (code), "viz", "basemap",
-    "popup_fields"; a map also "marks" (true = the marks themselves instead of the grid);
-    crosstab → "survey", "rows", "columns" (question codes); engagement → "survey".
+    "popup_fields"; a map also "marks" (true = made of every mark, not of areas with K people),
+    "view" (heat | hotspots | squares | marks), "frame" ([west, south, east, north]), "color", "name",
+    "opts" (the view's settings), "legend", "scale", "toggle" and "layers" (the other map questions on
+    the same map: [{id, survey, code, view, marks, color, name, opts, fields}]);
+    crosstab → "survey", "rows", "columns" (question codes), "display" ({view, values, sort});
+    engagement → "survey".
 
 An import never publishes: the report arrives unpublished and workspace-only. A question block is
 re-bound when the workspace has that survey and question code, and dropped with a line in the
@@ -75,8 +79,14 @@ def entry_of(block):
                      popup_fields=list(block.geo_label_fields or []))
         if block.block_type == 'map':
             entry['description'] = _en(block.content)
-            if (block.config or {}).get('marks'):
+            config = block.config or {}
+            if config.get('marks'):
                 entry['marks'] = True
+            # How it is drawn and what else is on the map (change report-map-views): the keys of
+            # story.clean_config('map'), written beside "marks".
+            for key in ('view', 'frame', 'color', 'name', 'opts', 'legend', 'scale', 'toggle', 'layers'):
+                if key in config:
+                    entry[key] = config[key]
     elif block.block_type == 'compare':
         survey = block.dataset.survey if block.dataset_id and block.dataset.survey_id else None
         entry.update(survey=str(survey.uuid) if survey is not None else None, question=block.question_code,
@@ -87,7 +97,21 @@ def entry_of(block):
         if block.block_type == 'crosstab' and block.view_id:
             entry.update(rows=(block.view.config or {}).get('rows'),
                          columns=(block.view.config or {}).get('columns'))
+            # How it is drawn; "table" for a block made before the views, which a copy must not
+            # turn into the bars a new cross-tab starts with.
+            entry['display'] = dict(block.config or {}) or {'view': 'table'}
     return entry
+
+
+def _map_config(raw, onto):
+    """A map block's config from its file entry. Copied onto another survey, its other layers read
+    that survey too — the questions are found there by code, as the block's own is."""
+    from reports import story
+    config = story.clean_config('map', raw)
+    if onto is not None:
+        for layer in config.get('layers') or []:
+            layer['survey'] = str(onto.uuid)
+    return config
 
 
 def export_report(report):
@@ -268,7 +292,7 @@ def import_report(actor, organization, upload, onto=None):
                     block_type=block_type, dataset=dataset_for(question), question_code=question.code,
                     viz=str(raw.get('viz') or 'auto')[:20], basemap=str(raw.get('basemap') or 'streets')[:50],
                     geo_label_fields=[str(c) for c in (raw.get('popup_fields') or [])][:20],
-                    config=story.clean_config('map', raw) if block_type == 'map' else {},
+                    config=_map_config(raw, onto) if block_type == 'map' else {},
                     content={'en': str(raw.get('description') or '')[:2000]} if block_type == 'map' else {},
                     **common)
             elif block_type == 'compare':
@@ -297,9 +321,12 @@ def import_report(actor, organization, upload, onto=None):
                     if unmatched(raw, block_type, common):
                         order += 1
                     continue
+                extra = {}
+                if block_type == 'crosstab' and isinstance(raw.get('display'), dict):
+                    extra['config'] = story.clean_config('crosstab', raw['display'])
                 ReportBlock.objects.filter(pk=block.pk).update(
                     order=order, width=common['width'], is_hidden=common['is_hidden'],
-                    custom_title=common['custom_title'])
+                    custom_title=common['custom_title'], **extra)
             else:
                 continue
             order += 1

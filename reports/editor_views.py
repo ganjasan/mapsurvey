@@ -483,6 +483,64 @@ def _data_choices(request, block):
     return out
 
 
+def _map_panel(request, block, record, geo_subquestions):
+    """What a map block's panel draws (change report-map-views): `map_layers` — the block's own
+    layer first, then the others, each with its field prefix, effective view, colour and view
+    settings — and `map_layer_choices`, the map questions that may be added as a layer."""
+    from data.datasets import visible_survey_ids
+    from data.questions import question_of
+    from reports import story
+    from survey.models import Question, SurveyHeader
+    from survey.question_types import GEO_TYPES
+    config = block.config or {}
+    payload = record.get('payload') or {}
+    drawn = {layer.get('id'): layer for layer in payload.get('layers') or []}
+
+    def card(prefix, marks_field, question, look, color, subs, fields, **more):
+        return dict(prefix=prefix, marks_field=marks_field, title=question.name, name=look.get('name', ''),
+                    view=story.map_view(look, question.input_type), marks=bool(look.get('marks')),
+                    opts=story.map_opts(look), color=color, is_point=question.input_type == 'point',
+                    is_spray=question.input_type == 'spraycan', subs=list(subs), fields=list(fields or []),
+                    type_name=question.get_input_type_display(), **more)
+
+    own = block.question
+    layers = [card('map_', 'show_marks', own, config, payload.get('color') or '#4f46e5', geo_subquestions,
+                   block.geo_label_fields, primary=True)]
+    taken = {(str(block.dataset.survey.uuid) if block.dataset.survey_id else '', block.question_code)}
+    surveys = {str(s.uuid): s for s in SurveyHeader.objects.filter(
+        uuid__in=[layer['survey'] for layer in config.get('layers') or [] if layer.get('survey')])}
+    for index, layer in enumerate(config.get('layers') or []):
+        survey = surveys.get(layer['survey'])
+        question = question_of(survey, layer['code']) if survey is not None else None
+        taken.add((layer['survey'], layer['code']))
+        if question is None:
+            continue
+        color = (drawn.get(layer['id']) or {}).get('color') or layer.get('color') or story.MAP_LAYER_COLORS[index % 3]
+        layers.append(card('L%s_' % layer['id'], 'L%s_marks' % layer['id'], question, layer, color,
+                           _geo_subquestions([question.id]).get(question.id, ()), layer.get('fields'),
+                           primary=False, id=layer['id'], survey_name=survey.name))
+    choices = []
+    if len(layers) <= story.MAX_MAP_LAYERS:
+        ids = visible_survey_ids(block.report.organization, request.user)
+        by_survey = {}
+        for q in (Question.objects
+                  .filter(survey_section__survey_header_id__in=ids, input_type__in=GEO_TYPES,
+                          parent_question_id__isnull=True)
+                  .select_related('survey_section__survey_header')
+                  .order_by('survey_section__survey_header__name', 'survey_section_id', 'order_number')[:300]):
+            survey = q.survey_section.survey_header
+            if (str(survey.uuid), q.code) in taken:
+                continue
+            by_survey.setdefault(survey, []).append(('%s:%s' % (survey.uuid, q.code), q.name or q.code))
+        home = block.dataset.survey_id
+        choices = [(survey.name, options) for survey, options in
+                   sorted(by_survey.items(), key=lambda pair: (pair[0].id != home, pair[0].name))]
+    return {'map_layers': layers, 'map_layer_choices': choices, 'map_view': layers[0]['view'],
+            'is_point': layers[0]['is_point'],
+            'map_switches': {'legend': config.get('legend') is not False, 'scale': config.get('scale') is not False,
+                             'toggle': bool(config.get('toggle'))}}
+
+
 def _decorate(request, page, block, record, geo_subquestions=()):
     """A canvas record plus what the builder's templates need around it."""
     from survey.embedding import public_base_url
@@ -492,6 +550,9 @@ def _decorate(request, page, block, record, geo_subquestions=()):
         **_data_choices(request, block),
         geo_subquestions=list(geo_subquestions),
         is_spray=bool(block.question_id and block.question.input_type == 'spraycan'),
+        # How a map is drawn (change report-map-views); hot spots are a point question's.
+        **(_map_panel(request, block, record, geo_subquestions)
+           if block.block_type == 'map' and block.question_id else {}),
         **_block_elsewhere(public_base_url(request), page, block))
     return record
 
@@ -787,6 +848,57 @@ def _place(actor, page, block, after):
         services.reorder_blocks(actor, page, ids)
 
 
+MAP_OPT_FIELDS = ('spread', 'strength', 'top', 'place', 'cell', 'size')
+
+
+def _map_look(post, prefix, marks_field):
+    """One layer's settings as the panel posts them under `prefix` (reports/editor/_map_layer.html)."""
+    opts = {key: post.get(prefix + key) for key in MAP_OPT_FIELDS if prefix + key in post}
+    opts.update(list=post.get(prefix + 'list') == 'on', shade=post.get(prefix + 'shade') == 'on',
+                solid=post.get(prefix + 'solid') == 'on')
+    return {'view': post.get(prefix + 'view'), 'marks': post.get(marks_field) == 'on',
+            'color': post.get(prefix + 'color'), 'name': post.get(prefix + 'name', ''), 'opts': opts}
+
+
+def _map_display(post, block):
+    """What the panel says about how a map is drawn (change report-map-views): the block's own
+    layer, the other layers (changed, removed, one added), the legend switches, and the frame the
+    author kept on the canvas ("w,s,e,n"; empty = the whole of the answers). None when the form
+    carries none of it; a form with the view tile only (an older client, a test) changes the view."""
+    out = {}
+    if 'map_view' in post:
+        out['view'] = post.get('map_view')
+    if 'map_frame' in post:
+        out['frame'] = post.get('map_frame')
+    if 'map_layers_present' not in post:
+        return out or None
+    look = _map_look(post, 'map_', 'show_marks')
+    out.update(color=look['color'], name=look['name'], opts=look['opts'],
+               legend=post.get('map_legend') == 'on', scale=post.get('map_scale') == 'on',
+               toggle=post.get('map_toggle') == 'on')
+    layers = []
+    for layer in (block.config or {}).get('layers') or []:
+        prefix = 'L%s_' % layer['id']
+        if post.get(prefix + 'remove') == 'on':
+            continue
+        if prefix + 'view' not in post:
+            layers.append(layer)                # not in the form: left as it is
+            continue
+        look = _map_look(post, prefix, prefix + 'marks')
+        if look['view'] == 'marks' and not look['marks'] and layer.get('marks'):
+            look['view'] = 'heat'               # the marks were showing and the author switched them off
+        layers.append(dict(look, id=layer['id'], survey=layer['survey'], code=layer['code'],
+                           fields=post.getlist(prefix + 'fields')))
+    added = post.get('map_add_layer') or ''
+    if ':' in added:
+        survey, _sep, code = added.partition(':')
+        taken = {layer['id'] for layer in layers}
+        layers.append({'id': next(i for i in ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h') if i not in taken),
+                       'survey': survey, 'code': code, 'view': 'heat'})
+    out['layers'] = layers
+    return out
+
+
 def _data_settings(request, block):
     """The Data part of a cross-tab's or a comparison's settings (change crosstab-settings-in-block,
     #751): which questions, which other survey. None when saved (or nothing asked), else the
@@ -849,6 +961,7 @@ def _block_edit(request, block_id):
         crosstab_display=({'view': post.get('xtab_view'), 'values': post.get('xtab_values'),
                            'sort': post.get('xtab_sort') == 'on'}
                           if block.block_type == 'crosstab' and 'xtab_view' in post else None),
+        map_display=_map_display(post, block) if block.block_type == 'map' else None,
         basemap=post.get('basemap'),
         valid_basemaps={slug for slug, _label in basemap_registry.choices_for(page.organization)})
     if _is_autosave(request):

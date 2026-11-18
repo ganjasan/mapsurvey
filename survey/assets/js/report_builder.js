@@ -56,6 +56,33 @@
     el.removeAttribute('title');
   });
 
+  /* ─── a map's frame (change report-map-views): the author moves the map to the part readers
+   * should see and keeps it. The view comes from the Leaflet map the shared renderer left on the
+   * holder (`_rpMap`); the hidden field in the block is saved as any field written on the canvas. */
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest && e.target.closest('[data-map-keep], [data-map-reset]');
+    if (!btn) return;
+    var blk = btn.closest('.lb-blk'), input = blk && blk.querySelector('input[data-input="map_frame"]');
+    if (!input) return;
+    if (btn.hasAttribute('data-map-reset')) {
+      input.value = '';
+    } else {
+      var holder = blk.querySelector('.map-holder'), map = holder && holder._rpMap;
+      if (!map) return;
+      var b = map.getBounds();
+      input.value = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]
+        .map(function (v) { return v.toFixed(6); }).join(',');
+    }
+    btn.blur();     // the answer redraws the block, which never happens under the focus
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+
+  /* A select whose choice changes what the panel holds (adding a layer to a map): the shared
+   * builder never redraws a pane under the focus, so the focus leaves the select before it saves. */
+  document.addEventListener('change', function (e) {
+    if (e.target.matches && e.target.matches('select[data-save-now]')) e.target.blur();
+  }, true);
+
   /* ─── key numbers: a number of the survey is picked from a menu, never typed as a token
    * (change report-key-numbers). The menu (#rb-num-menu, drawn once when the report has a survey)
    * opens from "Add a number" and from a number that follows the answers. Rows themselves are the

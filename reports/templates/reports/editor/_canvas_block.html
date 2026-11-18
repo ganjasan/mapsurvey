@@ -81,6 +81,13 @@ site_builder.js and travel in hidden fields of the block's panel form. Never nam
   {% if p %}
   {% include "reports/_block.html" with block=p page=page no_title=True %}
   {% if b.block_type == 'map' %}<p class="block-note" data-field="content" data-placeholder="{% trans 'What the map shows, in a sentence — shown under the map and read aloud to people who cannot see it' %}">{{ b.content.en|default:'' }}</p>{% endif %}
+  {% if b.block_type == 'map' and may_edit %}{# the frame is the author's, set where the map is (change report-map-views) #}
+  <div class="rb-map-bar">
+    <input type="hidden" data-input="map_frame" value="{% if b.config.frame %}{{ b.config.frame|join:',' }}{% endif %}">
+    <button type="button" class="lb-link" data-map-keep data-testid="rb-map-keep" title="{% trans 'Move and zoom the map, then keep the view: readers see this part of it.' %}"><i class="fas fa-crop-alt" aria-hidden="true"></i> {% trans "Keep this view" %}</button>
+    {% if b.config.frame %}<button type="button" class="lb-link" data-map-reset data-testid="rb-map-reset"><i class="fas fa-expand" aria-hidden="true"></i> {% trans "Show all the answers" %}</button>{% endif %}
+  </div>
+  {% endif %}
   {% if item.payload_json %}<script type="application/json" data-results>{{ item.payload_json|safe }}</script>{% endif %}
   {% else %}
   <div class="lb-placeholder" data-select-target="{{ b.pk }}"><i class="{{ item.icon }}" aria-hidden="true"></i><span>{{ item.note }}</span></div>
