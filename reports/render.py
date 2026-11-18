@@ -697,7 +697,8 @@ def scaffold_report(survey):
     from reports.sources import dataset_for
     canonical = canonical_of(survey)
     report = report_for_survey(canonical, visibility='unlisted')
-    if report.scaffolded_at is not None:
+    if report.scaffolded_at is not None or report.created_by_id is not None:
+        # A report somebody started (and gave this survey as its home) is theirs to fill.
         return report
     update_fields = ['scaffolded_at', 'updated_at']
     if not report.blocks.exists():

@@ -32,6 +32,22 @@ def create_report(actor, organization, survey=None, title='', **values):
                                  intro=intro, created_by=actor.user, **values)
 
 
+def set_home_survey(actor, report, survey):
+    """Make `survey` the report's home survey — the one its library starts on, its "Take the
+    survey" link leads to and its publication waits for — or clear it with None (change
+    report-home-survey, #739). Blocks keep reading what they read."""
+    from survey.versioning import canonical_of
+    if survey is not None:
+        survey = canonical_of(survey)
+        if survey.organization_id != report.organization_id:
+            raise ReportRefused('other_workspace', _('Only a survey of this workspace can be shown.'))
+        if report.is_published and survey.status == 'draft':
+            raise ReportRefused('publish_survey_first', _('Publish the survey before publishing its results.'))
+    report.survey = survey
+    report.save(update_fields=['survey', 'updated_at'])   # updated_at is the live cache's stamp
+    return report
+
+
 def delete_report(actor, report):
     """Delete a report with its blocks, pictures and stored PDFs. The answers stay."""
     report.delete()
@@ -47,11 +63,15 @@ def add_text_block(actor, report):
     return block
 
 
-def add_story_block(actor, report, block_type):
-    """An empty heading, text, key-numbers or quotes block at the end of the story."""
+def add_story_block(actor, report, block_type, items=None):
+    """A heading, text, key-numbers or quotes block at the end of the story: empty, or — a
+    key-numbers block the editor fills from the survey (`reports.numbers`) — holding `items`."""
+    from reports import story
     if block_type not in ('heading', 'text', 'numbers', 'quotes'):
         raise ReportRefused('unknown_block', _('Unknown block type.'))
-    block = ReportBlock.objects.create(report=report, block_type=block_type, order=_next_order(report))
+    config = story.clean_config(block_type, {'items': items}) if items and block_type in ('numbers', 'quotes') else {}
+    block = ReportBlock.objects.create(report=report, block_type=block_type, order=_next_order(report),
+                                       config=config)
     bump_version(report)
     return block
 
@@ -340,5 +360,5 @@ def unfreeze(actor, report):
 
 __all__ = ['QUESTION_BLOCK_TYPES', 'ReportRefused', 'delete_report', 'add_compare_block', 'comparable', 'add_image_block', 'add_question_block', 'add_story_block',
            'add_text_block', 'add_view_block', 'pdf_stamp', 'ready_pdf', 'request_pdf',
-           'create_report', 'delete_block', 'freeze', 'reorder_blocks', 'set_published', 'unfreeze',
+           'create_report', 'set_home_survey', 'delete_block', 'freeze', 'reorder_blocks', 'set_published', 'unfreeze',
            'update_block', 'update_settings']

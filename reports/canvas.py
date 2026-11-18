@@ -67,8 +67,12 @@ def _written(block, fill):
         payload['items'] = [dict(item) for item in config.get('items') or []]
         payload['note'] = _en(block.content)
         if block.block_type == 'numbers':
+            from reports.numbers import is_live
             for item in payload['items']:
                 item['shown'] = fill(item.get('value', ''))
+                # Picked from the survey, not typed: the canvas shows it as a live number and
+                # opens the menu on a click, never the token (change report-key-numbers).
+                item['live'] = is_live(item.get('value')) and item['shown'] != item.get('value')
             payload['note_shown'] = fill(payload['note'])
         payload['filled'] = bool(payload['items'])
     return payload

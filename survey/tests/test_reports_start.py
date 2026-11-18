@@ -77,10 +77,34 @@ class CardsTest(_Start):
         WHEN they press "Blank report"
         THEN an unpublished report without a home survey opens in the editor
         """
-        response = self.post(kind='blank')
+        response = self.post(kind='blank', survey='')
         report = Report.objects.get()
         self.assertRedirects(response, reverse('editor_report', args=[report.uuid]))
         self.assertEqual((report.survey_id, report.is_published, report.blocks.count()), (None, False, 0))
+
+    def test_blank_from_responses(self):
+        """
+        GIVEN an editor who followed "Make a report" from a survey's Responses page
+        WHEN they press "Blank report"
+        THEN the new report's home survey is that survey, and it stays empty
+        """
+        response = self.client.post(f'{self.start}?survey={self.survey.uuid}&from=responses', {'kind': 'blank'})
+        report = Report.objects.get()
+        self.assertRedirects(response, reverse('editor_report', args=[report.uuid]))
+        self.assertEqual((report.survey_id, report.is_published), (self.survey.id, False))
+        # The survey's Public results tab opens it and drafts nothing over it.
+        self.client.get(reverse('editor_survey_public_results', args=[self.survey.uuid]))
+        self.assertEqual(report.blocks.count(), 0)
+
+    def test_blank_from_a_survey_the_member_only_views(self):
+        """
+        GIVEN a workspace editor without a role on the survey named in the link
+        WHEN they press "Blank report"
+        THEN the report has no home survey: its own editor would refuse them otherwise
+        """
+        self.login(make_member(self.org, 'startothereditor', role='editor'))
+        self.client.post(f'{self.start}?survey={self.survey.uuid}', {'kind': 'blank'})
+        self.assertIsNone(Report.objects.get().survey_id)
 
     def test_a_viewer(self):
         """

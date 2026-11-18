@@ -14648,3 +14648,42 @@ msgstr "qué cuenta"
 #, python-format
 msgid "This is the report the Public results tab of “%(survey)s” opens. After it is deleted, that tab opens the survey's next report, or starts an empty one."
 msgstr "Este es el informe que abre la pestaña «Resultados públicos» de «%(survey)s». Cuando se elimine, la pestaña abrirá el siguiente informe de la encuesta o empezará uno vacío."
+
+msgid "Charts and maps from"
+msgstr "Gráficos y mapas de"
+
+msgid "Choose a survey above to add its charts, maps and numbers."
+msgstr "Elija una encuesta arriba para añadir sus gráficos, mapas y cifras."
+
+msgid "Charts and maps of answers appear here once this workspace has a published survey."
+msgstr "Los gráficos y mapas de las respuestas aparecen aquí cuando este espacio de trabajo tiene una encuesta publicada."
+
+msgid "No survey"
+msgstr "Sin encuesta"
+
+msgid "The survey this report is about"
+msgstr "La encuesta de la que trata este informe"
+
+msgid "The survey this report is about: “Add block” opens on its questions, and the response counter and the “Take the survey” link are its. A block can still show another survey."
+msgstr "La encuesta de la que trata este informe: «Añadir un bloque» se abre con sus preguntas, y el contador de respuestas y el enlace «Responder la encuesta» son los suyos. Un bloque puede mostrar igualmente otra encuesta."
+
+msgid "This number follows the answers. Click to change it."
+msgstr "Esta cifra sigue las respuestas. Haga clic para cambiarla."
+
+msgid "Choose a number"
+msgstr "Elija una cifra"
+
+msgid "From the survey — follows new answers"
+msgstr "De la encuesta: sigue las nuevas respuestas"
+
+msgid "A number you type"
+msgstr "Una cifra que usted escribe"
+
+msgid "stays as you typed it"
+msgstr "queda tal como la escribió"
+
+msgid "Press “Add a number” to pick a number of the survey — it follows new answers, and a frozen report keeps the numbers of the day it was frozen — or to type your own, which stays as typed. Click a number on the page to change it."
+msgstr "Pulse «Añadir una cifra» para elegir una cifra de la encuesta —sigue las nuevas respuestas, y un informe congelado conserva las cifras del día en que se congeló— o para escribir la suya, que queda tal como la escribió. Haga clic en una cifra de la página para cambiarla."
+
+msgid "Type the numbers on the page; they stay as you typed them. To show numbers of a survey, choose the report's survey in Report settings."
+msgstr "Escriba las cifras en la página; quedan tal como las escribió. Para mostrar cifras de una encuesta, elija la encuesta del informe en los ajustes del informe."

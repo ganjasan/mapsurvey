@@ -479,3 +479,281 @@ class UnseenBlockTest(_Editor):
         html = self.client.get(self.url('editor_report')).content.decode()
         self.assertIn('Left out of the report until it has a quote.', html)
         self.assertIn('data-rows="quotes"', html)
+
+
+class SourceSurveyTest(_Editor):
+    """Requirement: A block can come from any survey of the workspace (change report-home-survey, #739)."""
+
+    def setUp(self):
+        super().setUp()
+        from survey.models import Question
+        self.a, section_a = make_v1_survey(self.org, self.owner, name='Round one', status='published')
+        self.b, section_b = make_v1_survey(self.org, self.owner, name='Round two', status='published')
+        self.qa = Question.objects.create(survey_section=section_a, code='MODE', name='How do you get here?',
+                                          input_type='choice', choices=[{'code': 'a', 'name': {'en': 'On foot'}}])
+        self.qb = Question.objects.create(survey_section=section_b, code='AGE', name='How old are you?',
+                                          input_type='choice', choices=[{'code': 'a', 'name': {'en': 'Under 30'}}])
+
+    def test_a_blank_report_shows_a_chart(self):
+        """
+        GIVEN a report without a home survey in a workspace with two published surveys
+        WHEN an editor opens the library, chooses a survey and picks one of its choice questions
+        THEN the library asked for a survey first, then offered that survey's question, and the chart is added
+        """
+        html = self.client.get(self.url('editor_report')).content.decode()
+        self.assertIn('data-testid="library-no-source"', html)
+        self.assertNotIn('name="question_id"', html)
+        tiles = self.client.get(self.url('editor_report_library'), {'source': str(self.a.uuid)}).content.decode()
+        self.assertIn(f'name="question_id" value="{self.qa.pk}"', tiles)
+        self.assertNotIn(f'value="{self.qb.pk}"', tiles)
+        r = self.client.post(self.url('editor_report_block_add'), {'question_id': self.qa.pk, 'source': str(self.a.uuid)})
+        self.assertEqual(r.status_code, 302)
+        block = ReportBlock.objects.get(report=self.report)
+        self.assertEqual((block.block_type, block.question_code, block.dataset.survey_id), ('chart', 'MODE', self.a.id))
+
+    def test_the_only_survey_needs_no_choice(self):
+        """
+        GIVEN a report without a home survey in a workspace with one published survey
+        WHEN an editor opens the library
+        THEN that survey's questions are offered at once
+        """
+        self.b.status = 'draft'
+        self.b.save(update_fields=['status'])
+        html = self.client.get(self.url('editor_report')).content.decode()
+        self.assertIn(f'name="question_id" value="{self.qa.pk}"', html)
+        self.assertNotIn('data-testid="library-no-source"', html)
+
+    def test_a_second_survey_in_the_same_report(self):
+        """
+        GIVEN a report whose home survey is A
+        WHEN an editor chooses survey B in the library and picks one of B's questions
+        THEN the report has blocks reading B and its home survey is still A
+        """
+        self.report.survey = self.a
+        self.report.save()
+        html = self.client.get(self.url('editor_report')).content.decode()
+        self.assertIn(f'name="question_id" value="{self.qa.pk}"', html)
+        self.client.post(self.url('editor_report_block_add'), {'question_id': self.qb.pk, 'source': str(self.b.uuid)})
+        self.client.post(self.url('editor_report_block_add'), {'block_type': 'engagement', 'source': str(self.b.uuid)})
+        self.report.refresh_from_db()
+        self.assertEqual(self.report.survey_id, self.a.id)
+        self.assertEqual(sorted(self.report.blocks.values_list('block_type', 'dataset__survey_id')),
+                         [('chart', self.b.id), ('engagement', self.b.id)])
+        self.assertEqual(self.client.get(self.url('editor_report_preview')).status_code, 200)
+
+    def test_a_survey_of_another_workspace(self):
+        """
+        GIVEN a survey of another workspace
+        WHEN a block is posted with it as the source
+        THEN nothing is added
+        """
+        from survey.models import Question
+        other_org, other_owner = make_pro_org('ElsewhereOrg', 'elsewhereowner')
+        foreign, section = make_v1_survey(other_org, other_owner, name='Elsewhere', status='published')
+        q = Question.objects.create(survey_section=section, code='X', name='X', input_type='choice',
+                                    choices=[{'code': 'a', 'name': {'en': 'A'}}])
+        r = self.client.post(self.url('editor_report_block_add'), {'question_id': q.pk, 'source': str(foreign.uuid)})
+        self.assertEqual(r.status_code, 400)
+        r = self.client.post(self.url('editor_report_block_add'), {'block_type': 'engagement', 'source': str(foreign.uuid)})
+        self.assertEqual(r.status_code, 400)
+        self.assertFalse(ReportBlock.objects.filter(report=self.report).exists())
+
+
+class HomeSurveyTest(SourceSurveyTest):
+    """Requirement: A report's home survey can be set, changed and cleared."""
+
+    def home(self, survey):
+        return self.client.post(self.url('editor_report_home'), {'survey': str(survey.uuid) if survey else ''})
+
+    def test_the_first_data_block_sets_the_home_survey(self):
+        """
+        GIVEN a report without a home survey
+        WHEN an editor adds a Text block and then a chart of a question of survey A
+        THEN the text leaves it without one and the chart makes A its home survey
+        """
+        self.client.post(self.url('editor_report_block_add'), {'block_type': 'text', 'source': str(self.a.uuid)})
+        self.report.refresh_from_db()
+        self.assertIsNone(self.report.survey_id)
+        self.client.post(self.url('editor_report_block_add'), {'question_id': self.qa.pk, 'source': str(self.a.uuid)})
+        self.report.refresh_from_db()
+        self.assertEqual(self.report.survey_id, self.a.id)
+
+    def test_setting_it_in_settings(self):
+        """
+        GIVEN a report without a home survey
+        WHEN an editor chooses survey A in the Survey card
+        THEN the report's home survey is A, the library offers A's questions and the survey switches appear
+        """
+        before = self.client.get(self.url('editor_report')).content.decode()
+        self.assertIn('data-testid="report-home"', before)
+        self.assertRedirects(self.home(self.a), self.url('editor_report'))
+        self.report.refresh_from_db()
+        self.assertEqual(self.report.survey_id, self.a.id)
+        html = self.client.get(self.url('editor_report')).content.decode()
+        self.assertIn(f'name="question_id" value="{self.qa.pk}"', html)
+        self.assertIn('type="checkbox" name="show_participate_cta"', html)
+
+    def test_clearing_it(self):
+        """
+        GIVEN a report of survey A with three blocks, one of them a chart
+        WHEN an editor chooses "No survey"
+        THEN the report has no home survey and still has its three blocks
+        """
+        self.report.survey = self.a
+        self.report.save()
+        for data in ({'block_type': 'heading'}, {'block_type': 'text'}, {'question_id': self.qa.pk}):
+            self.client.post(self.url('editor_report_block_add'), data)
+        self.home(None)
+        self.report.refresh_from_db()
+        self.assertIsNone(self.report.survey_id)
+        self.assertEqual(self.report.blocks.count(), 3)
+        self.assertEqual(self.client.get(self.url('editor_report')).status_code, 200)
+
+    def test_a_survey_the_member_only_views(self):
+        """
+        GIVEN a workspace editor who is only a viewer of survey A
+        WHEN they post A as the home survey, and add a chart of A to the report
+        THEN the home survey is unchanged both times, and the chart is added
+        """
+        from survey.models import SurveyCollaborator
+        member = make_member(self.org, 'homeviewer', role='editor')
+        SurveyCollaborator.objects.create(user=member, survey=self.a, role='viewer')
+        self.login(member, self.org)
+        self.assertEqual(self.home(self.a).status_code, 404)
+        self.client.post(self.url('editor_report_block_add'), {'question_id': self.qa.pk, 'source': str(self.a.uuid)})
+        self.report.refresh_from_db()
+        self.assertIsNone(self.report.survey_id)
+        self.assertEqual(self.report.blocks.count(), 1)
+        self.assertEqual(self.client.get(self.url('editor_report')).status_code, 200)
+
+    def test_switches_without_a_survey(self):
+        """
+        GIVEN a report without a home survey whose two survey switches are stored as on
+        WHEN its editor is opened and its settings are saved as the form posts them
+        THEN the switches are not shown and their stored values are unchanged
+        """
+        html = self.client.get(self.url('editor_report')).content.decode()
+        self.assertNotIn('type="checkbox" name="show_participate_cta"', html)
+        self.assertNotIn('type="checkbox" name="show_on_thanks"', html)
+        self.assertIn('type="hidden" name="show_participate_cta" value="on"', html)
+        self.assertIn('type="hidden" name="show_on_thanks" value="on"', html)
+        self.client.post(self.url('editor_report_save'), {
+            'visibility': 'workspace', 'slug': self.report.slug, 'intro_title': 'Blank one',
+            'show_participate_cta': 'on', 'show_on_thanks': 'on', 'k_anonymity_threshold': '3'})
+        self.report.refresh_from_db()
+        self.assertTrue(self.report.show_participate_cta and self.report.show_on_thanks)
+
+    def test_an_adopted_blank_report_is_not_drafted_over(self):
+        """
+        GIVEN a blank report that became the only report of a published survey
+        WHEN the survey's Public results tab is opened
+        THEN the tab opens that report and adds no block to it
+        """
+        self.home(self.a)
+        page = self.client.get(reverse('editor_survey_public_results', args=[self.a.uuid]))
+        self.assertEqual(page.context['page'].pk, self.report.pk)
+        self.assertEqual(self.report.blocks.count(), 0)
+
+
+class KeyNumbersTest(_Editor):
+    """Requirement: Key numbers arrive filled and are picked, not typed as tokens (change report-key-numbers, #744)."""
+
+    def setUp(self):
+        super().setUp()
+        from django.contrib.gis.geos import Point
+        from survey.models import Answer, Question, SurveySession
+        self.survey, section = make_v1_survey(self.org, self.owner, name='Round one', status='published')
+        choice = Question.objects.create(survey_section=section, code='MODE', name='How do you get here?',
+                                         input_type='choice', choices=[{'code': 1, 'name': {'en': 'On foot'}}])
+        self.spot = Question.objects.create(survey_section=section, code='SPOT', name='Where is it unsafe?',
+                                            input_type='point', order_number=1)
+        for i in range(5):
+            session = SurveySession.objects.create(survey=self.survey)
+            Answer.objects.create(survey_session=session, question=choice, selected_choices=[1])
+            Answer.objects.create(survey_session=session, question=self.spot, point=Point(30.0 + i * 1e-4, 59.0))
+        self.of_survey = Report.objects.create(organization=self.org, survey=self.survey, slug='round-one-report',
+                                               created_by=self.owner)
+
+    def add(self, report, **data):
+        data.setdefault('block_type', 'numbers')
+        self.client.post(reverse('editor_report_block_add', args=[report.uuid]), data)
+        return ReportBlock.objects.get(report=report, block_type='numbers')
+
+    def test_a_filled_block_on_the_first_click(self):
+        """
+        GIVEN a report of a survey with a map question and five answers
+        WHEN an editor adds a Key numbers block
+        THEN the block holds the four numbers a drafted report opens with, the page shows their
+             values as live numbers, and nothing says the block is left out
+        """
+        from reports.numbers import defaults
+        block = self.add(self.of_survey)
+        self.assertEqual(block.config['items'], defaults('SPOT'))
+        self.assertEqual([i['value'] for i in block.config['items']],
+                         ['{opened}', '{responses}', '{finished}', '{marks:SPOT}'])
+        html = self.client.get(reverse('editor_report', args=[self.of_survey.uuid])).content.decode()
+        self.assertEqual(html.count(' data-live '), 4)
+        self.assertIn('data-raw="{marks:SPOT}" data-live', html)
+        self.assertIn('data-placeholder="447">5</b>', html)
+        self.assertNotIn('Left out of the report until it has a number.', html)
+
+    def test_a_report_without_a_survey(self):
+        """
+        GIVEN a report without a home survey, in a workspace with two published surveys
+        WHEN an editor adds a Key numbers block
+        THEN the block is empty, the page offers no menu of survey numbers and tells where to choose a survey
+        """
+        make_v1_survey(self.org, self.owner, name='Round two', status='published')
+        block = self.add(self.report)
+        self.assertEqual(block.config, {})
+        html = self.client.get(self.url('editor_report')).content.decode()
+        self.assertNotIn('id="rb-num-menu"', html)
+        self.assertIn('survey in Report settings', html)
+
+    def test_the_survey_chosen_in_the_library(self):
+        """
+        GIVEN a report without a home survey
+        WHEN an editor adds Key numbers with a survey chosen in the library
+        THEN that survey becomes the report's and the block is filled from it
+        """
+        block = self.add(self.report, source=str(self.survey.uuid))
+        self.report.refresh_from_db()
+        self.assertEqual(self.report.survey_id, self.survey.id)
+        self.assertEqual(len(block.config['items']), 4)
+
+    def test_the_menu_of_survey_numbers(self):
+        """
+        GIVEN a report of a survey with a Key numbers block
+        WHEN its editor is opened
+        THEN the menu offers the survey's numbers with their values now and a number to type,
+             and the block's settings name no token
+        """
+        self.add(self.of_survey)
+        html = self.client.get(reverse('editor_report', args=[self.of_survey.uuid])).content.decode()
+        menu = html[html.index('id="rb-num-menu"'):]
+        menu = menu[:menu.index('</div>\n</div>') if '</div>\n</div>' in menu else 4000]
+        for token in ('{opened}', '{responses}', '{finished}', '{marks:SPOT}'):
+            self.assertIn(f'data-token="{token}" data-shown="5"', menu)
+        self.assertIn('Where is it unsafe?', menu)
+        self.assertIn('data-typed', menu)
+        self.assertNotIn('<code>{responses}</code>', html)
+        self.assertNotIn('<code>{marks:CODE}</code>', html)
+
+    def test_a_typed_number_and_a_mixed_one(self):
+        """
+        GIVEN a Key numbers block of a report of a survey
+        WHEN an editor saves a typed number and a number written as a token inside a phrase
+        THEN the typed one is held as typed and neither is drawn as a picked, live number
+        """
+        block = self.add(self.of_survey)
+        r = self.client.post(reverse('editor_report_block_edit', args=[self.of_survey.uuid, block.id]),
+                             {'rows': '1', 'value': ['77', 'about {responses}'], 'label': ['paper forms', 'people'],
+                              'autosave': '1'}, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(r.status_code, 200, r.content)
+        block.refresh_from_db()
+        self.assertEqual(block.config['items'], [{'value': '77', 'label': 'paper forms'},
+                                                 {'value': 'about {responses}', 'label': 'people'}])
+        fragment = r.json()['block']
+        self.assertNotIn(' data-live ', fragment)
+        self.assertIn('data-raw="about {responses}"', fragment)
+        self.assertIn('>about 5</b>', fragment)

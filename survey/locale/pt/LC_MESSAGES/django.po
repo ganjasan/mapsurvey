@@ -14648,3 +14648,42 @@ msgstr "o que conta"
 #, python-format
 msgid "This is the report the Public results tab of “%(survey)s” opens. After it is deleted, that tab opens the survey's next report, or starts an empty one."
 msgstr "Este é o relatório que o separador «Resultados públicos» de «%(survey)s» abre. Depois de eliminado, o separador abre o relatório seguinte do inquérito ou começa um vazio."
+
+msgid "Charts and maps from"
+msgstr "Gráficos e mapas de"
+
+msgid "Choose a survey above to add its charts, maps and numbers."
+msgstr "Escolha um inquérito acima para adicionar os seus gráficos, mapas e números."
+
+msgid "Charts and maps of answers appear here once this workspace has a published survey."
+msgstr "Os gráficos e mapas das respostas aparecem aqui quando este espaço de trabalho tiver um inquérito publicado."
+
+msgid "No survey"
+msgstr "Sem inquérito"
+
+msgid "The survey this report is about"
+msgstr "O inquérito de que este relatório trata"
+
+msgid "The survey this report is about: “Add block” opens on its questions, and the response counter and the “Take the survey” link are its. A block can still show another survey."
+msgstr "O inquérito de que este relatório trata: «Adicionar um bloco» abre com as suas perguntas, e o contador de respostas e a ligação «Responder ao inquérito» são os dele. Um bloco pode, ainda assim, mostrar outro inquérito."
+
+msgid "This number follows the answers. Click to change it."
+msgstr "Este número acompanha as respostas. Clique para o alterar."
+
+msgid "Choose a number"
+msgstr "Escolha um número"
+
+msgid "From the survey — follows new answers"
+msgstr "Do inquérito — acompanha as novas respostas"
+
+msgid "A number you type"
+msgstr "Um número que escreve"
+
+msgid "stays as you typed it"
+msgstr "fica como o escreveu"
+
+msgid "Press “Add a number” to pick a number of the survey — it follows new answers, and a frozen report keeps the numbers of the day it was frozen — or to type your own, which stays as typed. Click a number on the page to change it."
+msgstr "Prima «Adicionar um número» para escolher um número do inquérito — acompanha as novas respostas, e um relatório congelado mantém os números do dia em que foi congelado — ou para escrever o seu, que fica como o escreveu. Clique num número da página para o alterar."
+
+msgid "Type the numbers on the page; they stay as you typed them. To show numbers of a survey, choose the report's survey in Report settings."
+msgstr "Escreva os números na página; ficam como os escreveu. Para mostrar números de um inquérito, escolha o inquérito do relatório nas definições do relatório."

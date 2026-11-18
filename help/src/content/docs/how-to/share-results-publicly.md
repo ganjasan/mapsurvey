@@ -32,6 +32,8 @@ Reports are part of **Pro**. On a workspace without Pro a report opens read-only
 
 Press **New report** on the **Reports** page. A blank report opens at once: write its title and opening on the page, then add blocks — headings, text, pictures, key numbers, quotes, and the charts and maps of any survey's questions. It is not published until you publish it.
 
+The charts and maps come from a survey you choose in the library: **Add block** has **Charts and maps from** at the top, with the workspace's published surveys. The survey of the first chart or map you add becomes the report's own survey — the library opens on its questions from then on, and the response counter and the "Take the survey" link are its. To show a question of another survey in the same report, choose that survey in **Charts and maps from** before picking the question. The report's survey can be changed or removed under **Report settings → Survey**; the blocks stay as they are.
+
 ## Two rounds in one picture
 
 To show both rounds in one picture, add a **Compare** block: pick a question and the other survey. For each answer it shows the share of people in both surveys, with how many answered in each. The other survey needs a question with the same code. Small groups are hidden in each survey separately.
@@ -43,7 +45,7 @@ The page is read top to bottom like an article, so write it like one. Under **Ad
 - **Heading** starts a section.
 - **Text** is a paragraph, a list or a few of them, with bold, italics and links.
 - **Image** is a picture with a caption — a photo, or a chart or map you made elsewhere.
-- **Key numbers** is a strip of figures with a word under each. Type each figure and the word under it on the page; **Add a number** adds another. You type these numbers; they do not change when new answers arrive.
+- **Key numbers** is a strip of figures with a word under each. In a report of a survey the block arrives filled with the numbers reports usually open with — how many people opened the survey, answered and finished, and the marks on the map. These follow new answers (a green dot marks them). **Add a number** offers the survey's numbers with their current values, or **A number you type**, which stays as you typed it. Click a number with a green dot to change it; click the word under any number to rewrite it. In a report without a survey you type every number.
 - **Quotes** shows what people wrote. Type or paste each quote on the page, with an optional source under it; **Add a quote** adds another. A quote is published exactly as you enter it, so leave out anything that names a person.
 
 Blocks that follow the answers:
@@ -51,9 +53,9 @@ Blocks that follow the answers:
 - **Cross-tab** puts two questions against each other — transport by age, say: how many people gave each pair of answers, among those who answered both. Pick the question for the rows and the one for the columns when you add it.
 - **Engagement** shows how many people opened the survey, answered and finished, and how that went over time.
 - A **map** block shows squares that count respondents. Switch on **Show the marks themselves** in the block's settings to show every place, line or area as it was drawn instead. A mark can point at someone's home, so decide whether that is right for your survey; the default stays the squares.
-- **Numbers in the text** can follow the answers too. Write `{responses}` in a text, a key number or the opening paragraph and the page fills in how many people answered; `{opened}` and `{finished}` are the other two steps, `{marks:CODE}` the marks placed on a map question and `{respondents:CODE}` the people who answered a question, CODE being the question's code. A frozen page keeps the numbers of the day it was frozen. A count smaller than the privacy threshold reads "<3".
+- **Numbers in the text** can follow the answers too. Write `{responses}` in a text or the opening paragraph and the page fills in how many people answered; `{opened}` and `{finished}` are the other two steps, `{marks:CODE}` the marks placed on a map question and `{respondents:CODE}` the people who answered a question, CODE being the question's code. A frozen page keeps the numbers of the day it was frozen. A count smaller than the privacy threshold reads "<3".
 
-Set a block's **Width** to *Half width* to put two blocks side by side on a wide screen; on a phone they stack. The line above the title, the title and the opening paragraph are written at the top of the page itself. A key number or an opening that follows the answers shows the number on the page; click it to see and change its token.
+Set a block's **Width** to *Half width* to put two blocks side by side on a wide screen; on a phone they stack. The line above the title, the title and the opening paragraph are written at the top of the page itself. An opening that follows the answers shows the number on the page; click it to see and change its token.
 
 All reports of the workspace are on the **Reports** page of the sidebar. **New report** starts a blank one that belongs to no survey. **Export report** (Report settings → Report file) saves the whole report — text, numbers, quotes, pictures and which questions its charts and maps show — as one file; **Import a report** on the Reports page brings such a file in, here or in another workspace. An imported report is not published and only the workspace sees it until you change that; a chart or map of a survey the workspace does not have is left out, and you are told which.
 

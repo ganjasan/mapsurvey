@@ -131,13 +131,9 @@ def _section_title(question):
 
 
 def _key_numbers(draft, questions):
-    items = [{'value': '{opened}', 'label': _('opened the survey')},
-             {'value': '{responses}', 'label': _('answered')},
-             {'value': '{finished}', 'label': _('finished')}]
+    from reports.numbers import defaults
     geo = next((q for q in questions if q.kind == 'map'), None)
-    if geo is not None:
-        items.append({'value': '{marks:%s}' % geo.code, 'label': _('marks on the map')})
-    return draft.numbers(items)
+    return draft.numbers(defaults(geo.code if geo is not None else ''))
 
 
 def _summary(draft, survey, questions):

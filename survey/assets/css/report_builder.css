@@ -57,6 +57,25 @@
 .rb .numbers li, .rb .quotes blockquote { position: relative; }
 .rb .numbers b, .rb .numbers span { min-height: 1.2em; }
 .rb .numbers .lb-row-x, .rb .quotes .lb-row-x { top: 4px; right: 4px; }
+/* A key number picked from the survey (change report-key-numbers): not a text field — a click opens
+   the menu — and marked with a dot (not a word: nothing to translate) so the author can tell it from a
+   number they typed. Colours are tokens (css/tokens.css); the menu sits outside `.lb`. */
+.rb .numbers b[data-live] { cursor: pointer; caret-color: transparent; display: flex; align-items: center; gap: 8px; }
+.rb .numbers b[data-live]::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--color-success);
+  box-shadow: 0 0 0 3px var(--color-success-soft); flex: none; }
+.rb .numbers b[data-live]:hover, .rb .numbers b[data-live]:focus { outline: 2px solid var(--color-action-line); outline-offset: 3px; border-radius: 4px; }
+.rb-num-menu { position: fixed; z-index: 1045; width: 320px; max-width: calc(100vw - 16px); max-height: min(420px, calc(100vh - 16px)); overflow: auto;
+  background: var(--surface); border: 1px solid var(--color-border); border-radius: 12px; box-shadow: var(--shadow-lg); padding: 6px; font-size: 13px; }
+.rb-num-menu[hidden] { display: none; }
+.rb-num-head { font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--color-text-muted); padding: 6px 8px 4px; }
+.rb-num-item { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: none; border: 0; border-radius: 8px;
+  padding: 7px 8px; font: inherit; color: var(--color-text); cursor: pointer; }
+.rb-num-item:hover, .rb-num-item:focus { background: var(--surface-sunken); outline: none; }
+.rb-num-item b { min-width: 58px; font-size: 17px; font-weight: 700; text-align: right; color: var(--color-action); }
+.rb-num-item span { display: block; line-height: 1.3; }
+.rb-num-item small { display: block; color: var(--color-text-muted); font-size: 12px; }
+.rb-num-typed b { font-size: 13px; color: var(--color-text-muted); }
+.rb-num-sep { height: 1px; background: var(--color-border); margin: 6px 0; }
 .rb .quotes blockquote { padding-right: 38px; }
 .rb .quotes span[data-row-field] { display: inline; }
 .rb .quotes span[data-row-field]:empty { display: inline-block; min-width: 12em; }
@@ -96,6 +115,14 @@
 /* library: the questions take the full width, two columns of tiles */
 .rb-lib-wide { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; column-gap: 24px; }
 .rb-lib-wide h4, .rb-lib-wide .lb-hint { grid-column: 1 / -1; }
+/* "Charts and maps from": the survey the data tiles belong to (change report-home-survey). The tiles'
+   wrapper is `display: contents`, so the groups stay cells of the library's grid. */
+.rb-lib-source { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; }
+.rb-lib-source label { margin: 0; font-size: 12px; font-weight: 600; color: var(--color-text); white-space: nowrap; }
+.rb-lib-source select { max-width: 360px; }
+.rb-lib-groups { display: contents; }
+.rb-lib-groups.rb-busy > * { opacity: .5; }
+.rb-lib-note { grid-column: 1 / -1; margin: 0; }
 .rb-lib-form { background: var(--surface-muted); border-radius: 9px; padding: 10px 12px; margin: 2px 0 8px; font-size: 13px; }
 .rb-lib-form[hidden] { display: none; }
 .rb-lib-form label { display: block; font-size: 12px; font-weight: 600; color: var(--color-text); margin: 6px 0 3px; }

@@ -14673,3 +14673,42 @@ msgstr "was sie zählt"
 #, python-format
 msgid "This is the report the Public results tab of “%(survey)s” opens. After it is deleted, that tab opens the survey's next report, or starts an empty one."
 msgstr "Dies ist der Bericht, den der Tab „Öffentliche Ergebnisse“ von „%(survey)s“ öffnet. Nach dem Löschen öffnet der Tab den nächsten Bericht der Umfrage oder beginnt einen leeren."
+
+msgid "Charts and maps from"
+msgstr "Diagramme und Karten aus"
+
+msgid "Choose a survey above to add its charts, maps and numbers."
+msgstr "Wählen Sie oben eine Umfrage, um ihre Diagramme, Karten und Zahlen hinzuzufügen."
+
+msgid "Charts and maps of answers appear here once this workspace has a published survey."
+msgstr "Diagramme und Karten der Antworten erscheinen hier, sobald dieser Arbeitsbereich eine veröffentlichte Umfrage hat."
+
+msgid "No survey"
+msgstr "Keine Umfrage"
+
+msgid "The survey this report is about"
+msgstr "Die Umfrage, um die es in diesem Bericht geht"
+
+msgid "The survey this report is about: “Add block” opens on its questions, and the response counter and the “Take the survey” link are its. A block can still show another survey."
+msgstr "Die Umfrage, um die es in diesem Bericht geht: „Block hinzufügen“ öffnet sich mit ihren Fragen, und der Antwortzähler und der Link „An der Umfrage teilnehmen“ gehören zu ihr. Ein Block kann trotzdem eine andere Umfrage zeigen."
+
+msgid "This number follows the answers. Click to change it."
+msgstr "Diese Zahl folgt den Antworten. Klicken Sie, um sie zu ändern."
+
+msgid "Choose a number"
+msgstr "Zahl auswählen"
+
+msgid "From the survey — follows new answers"
+msgstr "Aus der Umfrage — folgt neuen Antworten"
+
+msgid "A number you type"
+msgstr "Eine Zahl, die Sie eingeben"
+
+msgid "stays as you typed it"
+msgstr "bleibt so, wie Sie sie eingegeben haben"
+
+msgid "Press “Add a number” to pick a number of the survey — it follows new answers, and a frozen report keeps the numbers of the day it was frozen — or to type your own, which stays as typed. Click a number on the page to change it."
+msgstr "Klicken Sie auf „Zahl hinzufügen“, um eine Zahl der Umfrage auszuwählen — sie folgt neuen Antworten, und ein eingefrorener Bericht behält die Zahlen des Tages, an dem er eingefroren wurde — oder um eine eigene einzugeben, die so bleibt, wie sie ist. Klicken Sie auf eine Zahl auf der Seite, um sie zu ändern."
+
+msgid "Type the numbers on the page; they stay as you typed them. To show numbers of a survey, choose the report's survey in Report settings."
+msgstr "Geben Sie die Zahlen auf der Seite ein; sie bleiben so, wie Sie sie eingegeben haben. Um Zahlen einer Umfrage zu zeigen, wählen Sie in den Berichtseinstellungen die Umfrage des Berichts."

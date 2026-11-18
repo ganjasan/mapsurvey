@@ -134,6 +134,7 @@ of a survey keeps that survey's title and tabs above it.{% endcomment %}
 </div>
 
 {% if may_edit %}{% include "reports/editor/_library.html" %}{% endif %}
+{% if may_edit and number_choices %}{% include "reports/editor/_number_menu.html" %}{% endif %}
 {% comment %}The publish dialog (change reports-review, #706): its body — the "Before you publish" list and the
 three choices — is fetched each time it opens, so it reflects the report as saved.{% endcomment %}
 <div class="modal fade" id="prPublishModal" tabindex="-1" aria-labelledby="prPublishTitle">
