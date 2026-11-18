@@ -14687,3 +14687,24 @@ msgstr "L'enquête dont parle ce rapport"
 
 msgid "The survey this report is about: “Add block” opens on its questions, and the response counter and the “Take the survey” link are its. A block can still show another survey."
 msgstr "L'enquête dont parle ce rapport : « Ajouter un bloc » s'ouvre sur ses questions, et le compteur de réponses et le lien « Répondre à l'enquête » sont les siens. Un bloc peut tout de même montrer une autre enquête."
+
+msgid "This number follows the answers. Click to change it."
+msgstr "Ce chiffre suit les réponses. Cliquez pour le changer."
+
+msgid "Choose a number"
+msgstr "Choisir un chiffre"
+
+msgid "From the survey — follows new answers"
+msgstr "De l'enquête — suit les nouvelles réponses"
+
+msgid "A number you type"
+msgstr "Un chiffre que vous saisissez"
+
+msgid "stays as you typed it"
+msgstr "reste tel que vous l'avez saisi"
+
+msgid "Press “Add a number” to pick a number of the survey — it follows new answers, and a frozen report keeps the numbers of the day it was frozen — or to type your own, which stays as typed. Click a number on the page to change it."
+msgstr "Cliquez sur « Ajouter un chiffre » pour choisir un chiffre de l'enquête — il suit les nouvelles réponses, et un rapport figé garde les chiffres du jour où il a été figé — ou pour saisir le vôtre, qui reste tel quel. Cliquez sur un chiffre de la page pour le changer."
+
+msgid "Type the numbers on the page; they stay as you typed them. To show numbers of a survey, choose the report's survey in Report settings."
+msgstr "Saisissez les chiffres sur la page ; ils restent tels que vous les avez saisis. Pour montrer les chiffres d'une enquête, choisissez l'enquête du rapport dans les paramètres du rapport."

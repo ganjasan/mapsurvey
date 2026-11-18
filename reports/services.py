@@ -63,11 +63,15 @@ def add_text_block(actor, report):
     return block
 
 
-def add_story_block(actor, report, block_type):
-    """An empty heading, text, key-numbers or quotes block at the end of the story."""
+def add_story_block(actor, report, block_type, items=None):
+    """A heading, text, key-numbers or quotes block at the end of the story: empty, or — a
+    key-numbers block the editor fills from the survey (`reports.numbers`) — holding `items`."""
+    from reports import story
     if block_type not in ('heading', 'text', 'numbers', 'quotes'):
         raise ReportRefused('unknown_block', _('Unknown block type.'))
-    block = ReportBlock.objects.create(report=report, block_type=block_type, order=_next_order(report))
+    config = story.clean_config(block_type, {'items': items}) if items and block_type in ('numbers', 'quotes') else {}
+    block = ReportBlock.objects.create(report=report, block_type=block_type, order=_next_order(report),
+                                       config=config)
     bump_version(report)
     return block
 

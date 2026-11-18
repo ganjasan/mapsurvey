@@ -471,6 +471,15 @@ def _geo_subquestions(question_ids):
     return out
 
 
+def _number_choices(page, survey):
+    """The numbers of the report's survey the Key numbers menu offers, with their values now."""
+    if survey is None:
+        return []
+    from reports import numbers
+    from survey.versioning import canonical_of
+    return numbers.choices(canonical_of(survey), page.k_anonymity_threshold)
+
+
 def _canvas_context(request, page, selected='page'):
     """The whole builder: every block as the canvas, the outline and the panel draw it."""
     survey = request.survey
@@ -488,6 +497,7 @@ def _canvas_context(request, page, selected='page'):
         **_library_context(request, page))
     context.update(
         home_choices=_home_choices(request, page, context['source_surveys']),
+        number_choices=_number_choices(page, survey),
         basemap_table=basemap_registry.table_for(page.organization),
         export_url=reverse('editor_report_export', args=[page.uuid]),
         pdf_url=reverse('editor_report_pdf', args=[page.uuid]),
@@ -654,7 +664,16 @@ def _block_add(request):
     block_type = request.POST.get('block_type') or ('question' if request.POST.get('question_id') else '')
     actor = Actor.from_request(request)
     try:
-        if block_type in ('heading', 'text', 'numbers', 'quotes'):
+        if block_type == 'numbers':
+            # Filled with the numbers reports open with (change report-key-numbers, #744). They are
+            # read from the home survey, so the survey chosen in the library becomes it first.
+            from reports import numbers
+            from survey.versioning import canonical_of
+            if page.survey_id is None and survey is not None and _may_edit(request, survey):
+                services.set_home_survey(actor, page, survey)
+            items = numbers.defaults_for(canonical_of(page.survey)) if page.survey_id else None
+            block = services.add_story_block(actor, page, 'numbers', items=items)
+        elif block_type in ('heading', 'text', 'quotes'):
             block = services.add_story_block(actor, page, block_type)
         elif block_type == 'image':
             block = services.add_image_block(actor, page, request.FILES.get('image'))

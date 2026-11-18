@@ -14585,3 +14585,24 @@ msgstr "Survei yang dibahas laporan ini"
 
 msgid "The survey this report is about: “Add block” opens on its questions, and the response counter and the “Take the survey” link are its. A block can still show another survey."
 msgstr "Survei yang dibahas laporan ini: “Tambahkan blok” terbuka pada pertanyaannya, dan penghitung jawaban serta tautan “Isi survei” adalah miliknya. Sebuah blok tetap dapat menampilkan survei lain."
+
+msgid "This number follows the answers. Click to change it."
+msgstr "Angka ini mengikuti jawaban. Klik untuk mengubahnya."
+
+msgid "Choose a number"
+msgstr "Pilih angka"
+
+msgid "From the survey — follows new answers"
+msgstr "Dari survei — mengikuti jawaban baru"
+
+msgid "A number you type"
+msgstr "Angka yang Anda ketik"
+
+msgid "stays as you typed it"
+msgstr "tetap seperti yang Anda ketik"
+
+msgid "Press “Add a number” to pick a number of the survey — it follows new answers, and a frozen report keeps the numbers of the day it was frozen — or to type your own, which stays as typed. Click a number on the page to change it."
+msgstr "Tekan “Tambahkan angka” untuk memilih angka dari survei — angka itu mengikuti jawaban baru, dan laporan yang dibekukan menyimpan angka pada hari pembekuannya — atau untuk mengetik angka Anda sendiri, yang tetap seperti yang diketik. Klik angka di halaman untuk mengubahnya."
+
+msgid "Type the numbers on the page; they stay as you typed them. To show numbers of a survey, choose the report's survey in Report settings."
+msgstr "Ketik angka di halaman; angka itu tetap seperti yang Anda ketik. Untuk menampilkan angka dari survei, pilih survei laporan di pengaturan laporan."

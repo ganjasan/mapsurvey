@@ -1,0 +1,16 @@
+{% load i18n %}{% comment %}The menu of a Key numbers block (change report-key-numbers, #744): drawn once per page and
+moved next to whatever opened it — "Add a number", or a number that follows the answers — by
+js/report_builder.js. A survey number is picked here with the value it has now; the author never types
+its token. `data-token` is what the row stores, `data-shown` what the page shows until the next save.{% endcomment %}
+<div class="rb-num-menu" id="rb-num-menu" role="menu" aria-label="{% trans 'Choose a number' %}" hidden>
+  <div class="rb-num-head">{% trans "From the survey — follows new answers" %}</div>
+  {% for n in number_choices %}
+  <button type="button" role="menuitem" class="rb-num-item" data-token="{{ n.token }}" data-shown="{{ n.shown }}" data-label="{{ n.label }}">
+    <b>{{ n.shown }}</b><span>{{ n.label }}{% if n.detail %}<small>{{ n.detail|striptags|truncatechars:60 }}</small>{% endif %}</span>
+  </button>
+  {% endfor %}
+  <div class="rb-num-sep" role="separator"></div>
+  <button type="button" role="menuitem" class="rb-num-item rb-num-typed" data-typed>
+    <b><i class="fas fa-pen" aria-hidden="true"></i></b><span>{% trans "A number you type" %}<small>{% trans "stays as you typed it" %}</small></span>
+  </button>
+</div>

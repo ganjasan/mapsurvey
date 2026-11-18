@@ -14648,3 +14648,24 @@ msgstr "Il sondaggio di cui parla questo report"
 
 msgid "The survey this report is about: “Add block” opens on its questions, and the response counter and the “Take the survey” link are its. A block can still show another survey."
 msgstr "Il sondaggio di cui parla questo report: «Aggiungi un blocco» si apre sulle sue domande, e il contatore delle risposte e il link «Rispondi al sondaggio» sono i suoi. Un blocco può comunque mostrare un altro sondaggio."
+
+msgid "This number follows the answers. Click to change it."
+msgstr "Questo numero segue le risposte. Fai clic per cambiarlo."
+
+msgid "Choose a number"
+msgstr "Scegli un numero"
+
+msgid "From the survey — follows new answers"
+msgstr "Dal sondaggio — segue le nuove risposte"
+
+msgid "A number you type"
+msgstr "Un numero che scrivi tu"
+
+msgid "stays as you typed it"
+msgstr "resta come lo hai scritto"
+
+msgid "Press “Add a number” to pick a number of the survey — it follows new answers, and a frozen report keeps the numbers of the day it was frozen — or to type your own, which stays as typed. Click a number on the page to change it."
+msgstr "Premi «Aggiungi un numero» per scegliere un numero del sondaggio — segue le nuove risposte, e un report congelato conserva i numeri del giorno in cui è stato congelato — oppure per scriverne uno tuo, che resta come lo hai scritto. Fai clic su un numero nella pagina per cambiarlo."
+
+msgid "Type the numbers on the page; they stay as you typed them. To show numbers of a survey, choose the report's survey in Report settings."
+msgstr "Scrivi i numeri nella pagina; restano come li hai scritti. Per mostrare i numeri di un sondaggio, scegli il sondaggio del report nelle impostazioni del report."
