@@ -17,6 +17,14 @@ from .registry import args_model, tool
 
 REPORT = (UUID, Field(description='The report uuid (from list_reports).'))
 BLOCK = (int, Field(description='A block id from get_report.'))
+MAP_SETTINGS = (
+    'A map is drawn as `view` heat, hotspots (point questions only), squares or marks (needs `show_marks`), '
+    'with the view\'s `opts` (send the whole set), `color`, `name`, a kept `frame` [west, south, east, north] '
+    '(null clears it), `legend`, `scale`, `toggle`, `basemap` and `popup_fields`; `layers` are up to 3 other '
+    'map questions drawn on the same map — always the whole list: read it from get_report, change it, send it '
+    'back (ids are kept). A layer\'s `show_marks` is off unless the person asks. A crosstab\'s look is '
+    '`display` {view: bars | stacked | ranking | table, values: percent | count, sort}.'
+)
 CONFIRM = (bool, Field(False, description='Set to true only after the user confirmed this action in the conversation.'))
 
 
@@ -111,7 +119,7 @@ def update_report(request, args):
         'crosstab of `rows` and `columns` question codes; engagement; compare of one `question` code with the '
         'same code in an `other` survey (two rounds side by side). Small groups are hidden in every data '
         'block. `show_marks` on a map shows individual marks, which can point at someone\'s home: off unless '
-        'the person asks.'
+        'the person asks. ' + MAP_SETTINGS
     ),
     scope=scopes.SURVEYS_WRITE, role='editor',
     args=args_model('AddReportBlockArgs', v1.BlockIn, report=REPORT),
@@ -127,7 +135,8 @@ def add_report_block(request, args):
     title='Update a report block',
     description=(
         'Change a block\'s text, items, title, width (full or half — two halves in a row sit side by side) or '
-        'whether it is hidden. Its type and its question stay: to show another question, add another block.'
+        'whether it is hidden. Its type and its question stay: to show another question, add another block. '
+        'Settings left out stay as they are. ' + MAP_SETTINGS
     ),
     scope=scopes.SURVEYS_WRITE, role='editor', idempotent=True,
     args=args_model('UpdateReportBlockArgs', v1.BlockPatchIn, report=REPORT, block_id=BLOCK),

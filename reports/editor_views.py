@@ -28,7 +28,7 @@ from django.views.decorators.http import require_POST
 from data.scope import SessionScope
 from reports import canvas, services
 from reports.models import Report, ReportBlock
-from reports.sources import attach_questions
+from reports.sources import attach_questions, popup_subquestions as _geo_subquestions
 from reports.render import (
     TEXT_INPUT_TYPES,
     block_type_for_question as _block_type_for_question,
@@ -557,16 +557,6 @@ def _decorate(request, page, block, record, geo_subquestions=()):
     return record
 
 
-def _geo_subquestions(question_ids):
-    """{geo question id: its sub-questions whose answers a map popup may show}."""
-    out = {}
-    if question_ids:
-        for sub in (Question.objects.filter(parent_question_id__in=question_ids)
-                    .exclude(input_type__in=TEXT_INPUT_TYPES).order_by('order_number')):
-            out.setdefault(sub.parent_question_id_id, []).append(sub)
-    return out
-
-
 def _number_choices(page, survey):
     """The numbers of the report's survey the Key numbers menu offers, with their values now."""
     if survey is None:
@@ -625,7 +615,7 @@ def _block_fragments(request, page, block):
     """One block as the builder draws it now: on the canvas, in the outline and in the panel.
     Only this block's data is computed."""
     from reports.render import ReportService
-    from reports.sources import attach_questions
+    from reports.sources import attach_questions, popup_subquestions as _geo_subquestions
     block = attach_questions(ReportBlock.objects.filter(pk=block.pk)
                              .select_related('dataset__survey', 'view__dataset__survey'))[0]
     record = canvas.item_for(ReportService(page), block)

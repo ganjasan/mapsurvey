@@ -1036,7 +1036,7 @@ Permission `surveys:write` · role **editor**
 
 ### `add_report_block`
 
-Add a block at the end of a report. Written by you: heading (`text`), text (`html`, may hold tokens {responses} {opened} {finished} {marks:CODE} {respondents:CODE} that are filled from the home survey), numbers (`items` of value + label), quotes (`items` of text + source — publish a quote only when the person asked for it). Shown from answers: chart, map, objects or budget of one `question` code; crosstab of `rows` and `columns` question codes; engagement; compare of one `question` code with the same code in an `other` survey (two rounds side by side). Small groups are hidden in every data block. `show_marks` on a map shows individual marks, which can point at someone's home: off unless the person asks.
+Add a block at the end of a report. Written by you: heading (`text`), text (`html`, may hold tokens {responses} {opened} {finished} {marks:CODE} {respondents:CODE} that are filled from the home survey), numbers (`items` of value + label), quotes (`items` of text + source — publish a quote only when the person asked for it). Shown from answers: chart, map, objects or budget of one `question` code; crosstab of `rows` and `columns` question codes; engagement; compare of one `question` code with the same code in an `other` survey (two rounds side by side). Small groups are hidden in every data block. `show_marks` on a map shows individual marks, which can point at someone's home: off unless the person asks. A map is drawn as `view` heat, hotspots (point questions only), squares or marks (needs `show_marks`), with the view's `opts` (send the whole set), `color`, `name`, a kept `frame` [west, south, east, north] (null clears it), `legend`, `scale`, `toggle`, `basemap` and `popup_fields`; `layers` are up to 3 other map questions drawn on the same map — always the whole list: read it from get_report, change it, send it back (ids are kept). A layer's `show_marks` is off unless the person asks. A crosstab's look is `display` {view: bars | stacked | ranking | table, values: percent | count, sort}.
 
 Permission `surveys:write` · role **editor**
 
@@ -1059,11 +1059,23 @@ Permission `surveys:write` · role **editor**
 | `show_marks` | boolean |  | map: the marks themselves instead of squares that count respondents. A mark can point at someone's home. |
 | `style` | `list` \| `pull` \| `cards` |  | quotes: one under another (list), each large (pull), or two columns (cards). |
 | `description` | string |  | map: what it shows, in a sentence (also read by screen readers). |
+| `view` | `heat` \| `hotspots` \| `squares` \| `marks` |  | map: heat (soft shading), hotspots (numbered places, point questions only), squares (cells that count respondents) or marks (every mark; needs show_marks). |
+| `opts` | object (`spread`, `strength`, `top`, `place`, `list`, `shade`, `cell`, `size`, `solid`) |  | map: the view's settings — the whole set. |
+| `color` | string |  | map: the colour of its own question, #rrggbb. |
+| `name` | string |  | map: the name of its own question in the legend. |
+| `frame` | list of number |  | map: the part kept in view, [west, south, east, north] in degrees; null clears it (the whole of the answers). |
+| `legend` | boolean |  | map: the legend (on by default). |
+| `scale` | boolean |  | map: the scale bar (on by default). |
+| `toggle` | boolean |  | map: readers may switch layers on and off. |
+| `basemap` | string |  | map: a basemap key the workspace offers. |
+| `popup_fields` | list of string |  | map: codes of sub-questions a popup shows (never free text). |
+| `layers` | list of object (`id`, `survey`, `question`, `view`, `show_marks`, `color`, `name`, `opts`, `popup_fields`) |  | map: the other map questions on the same map — the whole list, at most 3; [] removes them. |
+| `display` | object (`view`, `values`, `sort`) |  | crosstab: how it is drawn. |
 | `report` | uuid | **required** | The report uuid (from list_reports). |
 
 ### `update_report_block`
 
-Change a block's text, items, title, width (full or half — two halves in a row sit side by side) or whether it is hidden. Its type and its question stay: to show another question, add another block.
+Change a block's text, items, title, width (full or half — two halves in a row sit side by side) or whether it is hidden. Its type and its question stay: to show another question, add another block. Settings left out stay as they are. A map is drawn as `view` heat, hotspots (point questions only), squares or marks (needs `show_marks`), with the view's `opts` (send the whole set), `color`, `name`, a kept `frame` [west, south, east, north] (null clears it), `legend`, `scale`, `toggle`, `basemap` and `popup_fields`; `layers` are up to 3 other map questions drawn on the same map — always the whole list: read it from get_report, change it, send it back (ids are kept). A layer's `show_marks` is off unless the person asks. A crosstab's look is `display` {view: bars | stacked | ranking | table, values: percent | count, sort}.
 
 Permission `surveys:write` · role **editor**
 
@@ -1080,6 +1092,18 @@ Permission `surveys:write` · role **editor**
 | `show_marks` | boolean |  |  |
 | `style` | `list` \| `pull` \| `cards` |  |  |
 | `description` | string |  |  |
+| `view` | `heat` \| `hotspots` \| `squares` \| `marks` |  | map: heat (soft shading), hotspots (numbered places, point questions only), squares (cells that count respondents) or marks (every mark; needs show_marks). |
+| `opts` | object (`spread`, `strength`, `top`, `place`, `list`, `shade`, `cell`, `size`, `solid`) |  | map: the view's settings — the whole set. |
+| `color` | string |  | map: the colour of its own question, #rrggbb. |
+| `name` | string |  | map: the name of its own question in the legend. |
+| `frame` | list of number |  | map: the part kept in view, [west, south, east, north] in degrees; null clears it (the whole of the answers). |
+| `legend` | boolean |  | map: the legend (on by default). |
+| `scale` | boolean |  | map: the scale bar (on by default). |
+| `toggle` | boolean |  | map: readers may switch layers on and off. |
+| `basemap` | string |  | map: a basemap key the workspace offers. |
+| `popup_fields` | list of string |  | map: codes of sub-questions a popup shows (never free text). |
+| `layers` | list of object (`id`, `survey`, `question`, `view`, `show_marks`, `color`, `name`, `opts`, `popup_fields`) |  | map: the other map questions on the same map — the whole list, at most 3; [] removes them. |
+| `display` | object (`view`, `values`, `sort`) |  | crosstab: how it is drawn. |
 | `report` | uuid | **required** | The report uuid (from list_reports). |
 | `block_id` | integer | **required** | A block id from get_report. |
 

@@ -10,7 +10,7 @@ from typing import List, Literal, Optional
 from uuid import UUID
 
 from ninja import Router, Schema, Status
-from pydantic import ConfigDict, Field
+from pydantic import AliasChoices, ConfigDict, Field
 
 from reports import blocks as report_blocks
 from reports import services
@@ -43,7 +43,64 @@ class ItemIn(_In):
     source: Optional[str] = Field(None, max_length=160, description='Quotes: where it comes from.')
 
 
-class BlockIn(_In):
+MapView = Literal['heat', 'hotspots', 'squares', 'marks']
+_VIEW = ('map: heat (soft shading), hotspots (numbered places, point questions only), squares (cells that '
+         'count respondents) or marks (every mark; needs show_marks).')
+
+
+class MapOptsIn(_In):
+    """A view's own settings. Send the whole set: left-out settings take their defaults."""
+    spread: Optional[Literal['tight', 'medium', 'wide']] = Field(None, description='heat: how far a mark spreads.')
+    strength: Optional[Literal[1, 2, 3, 4, 5]] = Field(None, description='heat: how strong the shading is.')
+    top: Optional[Literal[0, 5, 10]] = Field(None, description='hotspots: how many are numbered; 0 = every one.')
+    place: Optional[Literal[60, 120, 300]] = Field(None, description='hotspots: metres that count as one place.')
+    list: Optional[bool] = Field(None, description='hotspots: the numbered list under the map (on by default).')
+    shade: Optional[bool] = Field(None, description='hotspots: shading around the spots (on by default).')
+    cell: Optional[Literal['auto', 'finer', 'coarser']] = Field(None, description='squares: the size of a cell.')
+    size: Optional[Literal['s', 'm', 'l']] = Field(None, description='marks: the size of a mark.')
+    solid: Optional[bool] = Field(None, description='marks: drawn opaque.')
+
+
+class MapLayerIn(_In):
+    """Another map question drawn on the same map. get_report's names (code, marks, fields) are
+    accepted too, so a layer read there can be sent back as it is."""
+    id: Optional[str] = Field(None, max_length=8, description='The id get_report gave the layer; left out for a new layer.')
+    survey: Optional[UUID] = Field(None, description='A survey of the workspace; default: the block\'s own survey.')
+    question: str = Field(max_length=50, validation_alias=AliasChoices('question', 'code'),
+                          description='The code of a map question (points, lines, areas or spray).')
+    view: Optional[MapView] = Field(None, description=_VIEW + ' Default: heat.')
+    show_marks: Optional[bool] = Field(None, validation_alias=AliasChoices('show_marks', 'marks'),
+                                       description='Build the layer from every mark — individual marks leave the workspace. Off unless the person asks.')
+    color: Optional[str] = Field(None, pattern=r'^#[0-9a-fA-F]{6}$', description='#rrggbb.')
+    name: Optional[str] = Field(None, max_length=80, description='Its name in the legend.')
+    opts: Optional[MapOptsIn] = None
+    popup_fields: Optional[List[str]] = Field(None, max_length=20, validation_alias=AliasChoices('popup_fields', 'fields'),
+                                              description='Codes of the question\'s sub-questions a popup shows (never free text).')
+
+
+class CrosstabDisplayIn(_In):
+    view: Literal['bars', 'stacked', 'ranking', 'table'] = Field(description='How the cross-tab is drawn.')
+    values: Optional[Literal['percent', 'count']] = Field(None, description='Shares (default) or counts.')
+    sort: Optional[bool] = Field(None, description='Largest first.')
+
+
+class _MapFields(_In):
+    view: Optional[MapView] = Field(None, description=_VIEW)
+    opts: Optional[MapOptsIn] = Field(None, description='map: the view\'s settings — the whole set.')
+    color: Optional[str] = Field(None, pattern=r'^#[0-9a-fA-F]{6}$', description='map: the colour of its own question, #rrggbb.')
+    name: Optional[str] = Field(None, max_length=80, description='map: the name of its own question in the legend.')
+    frame: Optional[List[float]] = Field(None, min_length=4, max_length=4,
+                                         description='map: the part kept in view, [west, south, east, north] in degrees; null clears it (the whole of the answers).')
+    legend: Optional[bool] = Field(None, description='map: the legend (on by default).')
+    scale: Optional[bool] = Field(None, description='map: the scale bar (on by default).')
+    toggle: Optional[bool] = Field(None, description='map: readers may switch layers on and off.')
+    basemap: Optional[str] = Field(None, max_length=80, description='map: a basemap key the workspace offers.')
+    popup_fields: Optional[List[str]] = Field(None, max_length=20, description='map: codes of sub-questions a popup shows (never free text).')
+    layers: Optional[List[MapLayerIn]] = Field(None, max_length=3, description='map: the other map questions on the same map — the whole list, at most 3; [] removes them.')
+    display: Optional[CrosstabDisplayIn] = Field(None, description='crosstab: how it is drawn.')
+
+
+class _BlockFields(_In):
     type: Literal['heading', 'text', 'numbers', 'quotes', 'chart', 'map', 'objects', 'budget', 'crosstab', 'engagement', 'compare']
     title: Optional[str] = Field(None, max_length=300, description='A title above the block.')
     width: Optional[Literal['full', 'half']] = Field(None, description='Two half-width blocks in a row sit side by side.')
@@ -63,7 +120,7 @@ class BlockIn(_In):
     description: Optional[str] = Field(None, max_length=2000, description='map: what it shows, in a sentence (also read by screen readers).')
 
 
-class BlockPatchIn(_In):
+class _BlockPatchFields(_In):
     title: Optional[str] = Field(None, max_length=300)
     width: Optional[Literal['full', 'half']] = None
     hidden: Optional[bool] = None
@@ -75,6 +132,14 @@ class BlockPatchIn(_In):
     show_marks: Optional[bool] = None
     style: Optional[Literal['list', 'pull', 'cards']] = None
     description: Optional[str] = Field(None, max_length=2000)
+
+
+class BlockIn(_MapFields, _BlockFields):
+    """A new block; the map and cross-tab settings come last."""
+
+
+class BlockPatchIn(_MapFields, _BlockPatchFields):
+    """What changes of a block; the map and cross-tab settings come last."""
 
 
 class ReportCreateIn(_In):

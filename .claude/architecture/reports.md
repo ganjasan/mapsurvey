@@ -180,9 +180,15 @@ working), the others under `layers`, plus `legend_rows` / `spot_lists` for the t
 / `shade`, squares `cell`, marks `size` / `solid`. In the panel each layer is a card
 (`reports/editor/_map_layer.html`) whose fields carry its prefix (`map_` for the own layer, `L<id>_` for the
 others) inside the block's ONE form; the settings of the views not chosen stay in the form, hidden by `:has()`.
-A new field of a layer is a key in `clean_map_look` + a line in `editor_views._map_look` + the card. Privacy is
-per layer (`marks` on the layer); `checks` looks at every layer. Not built: context layers from Data, areas
-shaded by answers, a filter by sub-question, reordering layers, layers / views through REST and MCP.
+A new field of a layer is a key in `clean_map_look` + a line in `editor_views._map_look` + the card + its
+check in `reports.blocks._map_settings` and its field on `api/v1/reports.py::MapLayerIn` / `_MapFields`.
+Privacy is per layer (`marks` on the layer); `checks` looks at every layer. **REST and MCP write all of it**
+(change `report-api-map-layers`, #756) through the same `update_block(map_display=…, crosstab_display=…)`,
+but STRICTLY: what the editor drops is a 422 naming the field. "A layer this map may have" is ONE rule,
+`services.layer_refusal` (the editor's `_checked_layers` drops, the API raises); the non-text sub-questions a
+popup may show are ONE helper, `reports.sources.popup_subquestions`. A layer is accepted under `get_report`'s
+names (`code`, `marks`, `fields`) too, so a read map goes back unchanged. Not built: context layers from Data,
+areas shaded by answers, a filter by sub-question, reordering layers.
 
 **Home survey and source surveys (change `report-home-survey`, #739)**: `Report.survey` is a DEFAULT, never
 a restriction — blocks name their own dataset, so one report may read several surveys. The block library

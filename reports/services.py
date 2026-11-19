@@ -249,26 +249,47 @@ def set_compare(actor, block, question_code, other_survey):
     return block
 
 
-def _checked_layers(block, layers):
-    """The layers of a map that name a map question of the report's workspace (survey uuid +
-    code), each once and never the block's own question; the rest are dropped."""
+def own_layer_key(block):
+    """(survey uuid, question code) of a map block's own question — the first layer of its map."""
+    return (str(block.dataset.survey.uuid) if block.dataset_id and block.dataset.survey_id else '', block.question_code)
+
+
+def layer_refusal(block, layer, seen):
+    """Whether `layer` ({survey: uuid, code}) may be drawn on the map of `block`: a map question of
+    the report's workspace, by canonical survey + code, never the block's own and never one already
+    in `seen` (a set of keys, the own key included). Returns (message, None, None) when it may not,
+    else (None, key, question) — the caller adds `key` to `seen`. One rule for the editor, which
+    drops what is refused, and the API, which refuses (change report-api-map-layers)."""
     from django.core.exceptions import ValidationError
     from data.questions import question_of
     from survey.models import SurveyHeader
     from survey.question_types import GEO_TYPES
     from survey.versioning import canonical_of
-    own = (str(block.dataset.survey.uuid) if block.dataset_id and block.dataset.survey_id else '', block.question_code)
-    out, seen = [], {own}
+    try:
+        survey = SurveyHeader.objects.filter(uuid=layer.get('survey') or None, deleted_at__isnull=True,
+                                             organization_id=block.report.organization_id).first()
+    except (ValueError, ValidationError):
+        survey = None
+    if survey is None:
+        return _('No survey of this workspace has that id.'), None, None
+    canonical = canonical_of(survey)
+    question = question_of(canonical, layer.get('code'))
+    if question is None or question.input_type not in GEO_TYPES:
+        return _('The survey has no map question with that code.'), None, None
+    key = (str(canonical.uuid), layer.get('code'))
+    if key == own_layer_key(block):
+        return _('That is the question the block already shows.'), None, None
+    if key in seen:
+        return _('That question is already a layer of this map.'), None, None
+    return None, key, question
+
+
+def _checked_layers(block, layers):
+    """The layers of a map that `layer_refusal` admits; the rest are dropped."""
+    out, seen = [], {own_layer_key(block)}
     for layer in layers:
-        try:
-            survey = SurveyHeader.objects.filter(uuid=layer.get('survey'), deleted_at__isnull=True,
-                                                 organization_id=block.report.organization_id).first()
-        except (ValueError, ValidationError):
-            survey = None
-        canonical = canonical_of(survey) if survey is not None else None
-        question = question_of(canonical, layer.get('code')) if canonical is not None else None
-        key = (str(canonical.uuid), layer.get('code')) if canonical is not None else None
-        if question is None or question.input_type not in GEO_TYPES or key in seen:
+        refusal, key, _question = layer_refusal(block, layer, seen)
+        if refusal:
             continue
         seen.add(key)
         out.append(dict(layer, survey=key[0]))
